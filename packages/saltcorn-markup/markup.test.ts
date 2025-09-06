@@ -263,12 +263,12 @@ describe("table", () => {
       { label: "Age", key: "age" },
     ];
     const rows = [
-      { name: "UserName1", age: 25 },
-      { name: "UserName2", age: 30 },
+      { name: "UserName1", age: 25, id: 1 },
+      { name: "UserName2", age: 30, id: 2 },
     ];
     const result = mkTable(headers, rows);
     expect(result).toBe(
-      `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr data-row-id="0"><td>UserName1</td><td>25</td></tr><tr data-row-id="1"><td>UserName2</td><td>30</td></tr></tbody></table></div>`
+      `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr data-row-id="1"><td>UserName1</td><td>25</td></tr><tr data-row-id="2"><td>UserName2</td><td>30</td></tr></tbody></table></div>`
     );
   });
 
@@ -289,7 +289,7 @@ describe("table", () => {
     ];
     const result = mkTable(headers, rows, { transpose: true });
     expect(result).toBe(
-      `<div class="table-responsive"><table class="table table-sm"><tbody><tr data-row-id="0"><th>Name</th><td>UserName1</td><td>UserName2</td></tr><tr data-row-id="1"><th>Age</th><td>25</td><td>30</td></tr></tbody></table></div>`
+      `<div class="table-responsive"><table class="table table-sm"><tbody><tr row-key="name"><th>Name</th><td>UserName1</td><td>UserName2</td></tr><tr row-key="age"><th>Age</th><td>25</td><td>30</td></tr></tbody></table></div>`
     );
   });
 
@@ -311,7 +311,7 @@ describe("table", () => {
 
     const result = mkTable(headers, rows, { transpose: true });
     expect(result).toBe(
-      `<div class="table-responsive"><table class="table table-sm"><tbody><tr data-row-id="0"><th>Name</th><td>UserName1</td><td>UserName2</td></tr><tr data-row-id="1"><th>Age</th><td>25</td><td>30</td></tr></tbody></table></div>`
+      `<div class="table-responsive"><table class="table table-sm"><tbody><tr row-key="name"><th>Name</th><td>UserName1</td><td>UserName2</td></tr><tr row-key="age"><th>Age</th><td>25</td><td>30</td></tr></tbody></table></div>`
     );
   });
 
@@ -321,8 +321,8 @@ describe("table", () => {
       { label: "Age", key: "age" },
     ];
     const rows = [
-      { name: "UserName1", age: 25 },
-      { name: "UserName2", age: 30 },
+      { name: "UserName1", age: 25, id: 1 },
+      { name: "UserName2", age: 30, id: 2 },
     ];
     const paginationOpts = {
       current_page: 1,
@@ -331,7 +331,7 @@ describe("table", () => {
     };
     const result = mkTable(headers, rows, { pagination: paginationOpts });
     expect(result).toBe(
-      `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr data-row-id="0"><td>UserName1</td><td>25</td></tr><tr data-row-id="1"><td>UserName2</td><td>30</td></tr></tbody></table><ul class="pagination"><li class="page-item active"><span class="page-link link-style" onclick="?page=1" role="link">1</span></li><li class="page-item"><span class="page-link link-style" onclick="?page=2" role="link">2</span></li><li class="page-item"><span class="page-link link-style" onclick="?page=3" role="link">3</span></li></ul></div>`
+      `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr data-row-id="1"><td>UserName1</td><td>25</td></tr><tr data-row-id="2"><td>UserName2</td><td>30</td></tr></tbody></table><ul class="pagination"><li class="page-item active"><span class="page-link link-style" onclick="?page=1" role="link">1</span></li><li class="page-item"><span class="page-link link-style" onclick="?page=2" role="link">2</span></li><li class="page-item"><span class="page-link link-style" onclick="?page=3" role="link">3</span></li></ul></div>`
     );
   });
 });

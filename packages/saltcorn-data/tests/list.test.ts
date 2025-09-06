@@ -492,7 +492,7 @@ describe("Misc List views", () => {
     expect(vres1).toContain("<td>Herman Melville</td>");
     expect(vres1).not.toContain("<td>Leo Tolstoy</td>");
     expect(vres1).toContain(
-      `<tr data-row-id="0" onclick="location.href='/view/authorshow?id=1'">`
+      `<tr data-row-id="1" onclick="location.href='/view/authorshow?id=1'">`
     );
   });
   it("field with fieldview config", async () => {
@@ -822,25 +822,50 @@ describe("List sort options", () => {
       },
       name: "BookSortDesc",
     });
-    const tBodyAuthors = (authors: string[]) =>
+    const tBodyAuthors = (authors: Array<{ nm: string; ix: number }>) =>
       `<tbody>${authors
-        .map((nm, ix) => `<tr data-row-id="${ix}"><td>${nm}</td></tr>`)
+        .map(({ nm, ix }) => `<tr data-row-id="${ix}"><td>${nm}</td></tr>`)
         .join("")}</tbody>`;
 
     const vres1 = await viewAsc.run({}, mockReqRes);
-    expect(vres1).toContain(tBodyAuthors(["Herman Melville", "Leo Tolstoy"]));
+    expect(vres1).toContain(
+      tBodyAuthors([
+        { nm: "Herman Melville", ix: 1 },
+        { nm: "Leo Tolstoy", ix: 2 },
+      ])
+    );
 
     const vres2 = await viewDesc.run({}, mockReqRes);
-    expect(vres2).toContain(tBodyAuthors(["Leo Tolstoy", "Herman Melville"]));
+    expect(vres2).toContain(
+      tBodyAuthors([
+        { nm: "Leo Tolstoy", ix: 2 },
+        { nm: "Herman Melville", ix: 1 },
+      ])
+    );
     const vres3 = await viewDesc.run({ _28084_sortby: "pages" }, mockReqRes);
-    expect(vres3).toContain(tBodyAuthors(["Leo Tolstoy", "Herman Melville"]));
+    expect(vres3).toContain(
+      tBodyAuthors([
+        { nm: "Leo Tolstoy", ix: 2 },
+        { nm: "Herman Melville", ix: 1 },
+      ])
+    );
     const vres3a = await viewAsc.run({ _8a82a_sortby: "pages" }, mockReqRes);
-    expect(vres3a).toContain(tBodyAuthors(["Leo Tolstoy", "Herman Melville"]));
+    expect(vres3a).toContain(
+      tBodyAuthors([
+        { nm: "Leo Tolstoy", ix: 2 },
+        { nm: "Herman Melville", ix: 1 },
+      ])
+    );
     const vres4 = await viewDesc.run(
       { _28084_sortby: "pages", _28084_sortdesc: true },
       mockReqRes
     );
-    expect(vres4).toContain(tBodyAuthors(["Herman Melville", "Leo Tolstoy"]));
+    expect(vres4).toContain(
+      tBodyAuthors([
+        { nm: "Herman Melville", ix: 1 },
+        { nm: "Leo Tolstoy", ix: 2 },
+      ])
+    );
   });
 });
 
