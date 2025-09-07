@@ -2170,7 +2170,9 @@ const date = {
         const loc = locale(req);
         return time(
           {
-            datetime: new Date(d).toISOString(),
+            datetime: options?.day_only
+              ? new PlainDate(d).toISOString()
+              : new Date(d).toISOString(),
             "locale-date-format": encodeURIComponent(
               JSON.stringify(options?.format)
             ),
