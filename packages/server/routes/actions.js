@@ -428,7 +428,7 @@ router.get(
       sub2_page: "Edit",
       contents: {
         type: "card",
-        title: req.__("Edit trigger %s", id),
+        title: req.__("Edit trigger %s", trigger.name || trigger.id),
         titleAjaxIndicator: true,
         contents: renderForm(form, req.csrfToken()),
       },
