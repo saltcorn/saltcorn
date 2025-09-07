@@ -12,7 +12,11 @@ const {
   addOnDoneRedirect,
   is_relative_url,
 } = require("./utils.js");
-const { ppVal, jsIdentifierValidator } = require("@saltcorn/data/utils");
+const {
+  ppVal,
+  escapeHtml,
+  jsIdentifierValidator,
+} = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
@@ -1705,7 +1709,11 @@ router.get(
                     : null,
                   tr(
                     th("Context"),
-                    td(pre(text(JSON.stringify(trace.context, null, 2))))
+                    td(
+                      pre(
+                        text(escapeHtml(JSON.stringify(trace.context, null, 2)))
+                      )
+                    )
                   )
                 )
               )
@@ -1753,7 +1761,11 @@ router.get(
                     : null,
                   tr(
                     th("Context"),
-                    td(pre(text(JSON.stringify(run.context, null, 2))))
+                    td(
+                      pre(
+                        text(escapeHtml(JSON.stringify(run.context, null, 2)))
+                      )
+                    )
                   )
                 )
               ) + post_delete_btn("/actions/delete-run/" + run.id, req),
