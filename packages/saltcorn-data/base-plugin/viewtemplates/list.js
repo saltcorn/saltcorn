@@ -1150,6 +1150,7 @@ const run = async (
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
+  page_opts.pk_name = table.pk_name;
   if (
     default_state?._row_click_url_formula &&
     default_state?._row_click_type !== "Nothing" &&
