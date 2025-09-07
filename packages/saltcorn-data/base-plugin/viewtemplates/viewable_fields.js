@@ -1383,7 +1383,7 @@ const headerFilterForField = (f, state, path) => {
         }),
         button(
           {
-            class: "btn btn-outline-secondary",
+            class: "btn btn-outline-secondary btn-border-color-input",
             style: { paddingLeft: "3px", paddingRight: "3px" },
             onclick: `set_state_fields({_fromdate_${f.name}: {unset: true}, _todate_${f.name}: {unset: true} })`,
           },
