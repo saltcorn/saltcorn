@@ -13,6 +13,13 @@
   vertical-align: bottom;
 }
 
+.btn-border-color-input {
+  border-color: var(
+    --mdb-border-color,
+    var(--tblr-border-color, var(--bs-border-color))
+  ) !important;
+}
+
 i.sortdir {
   margin-left: 2px;
 }
