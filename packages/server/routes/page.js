@@ -77,7 +77,7 @@ const runPage = async (page, req, res, tic) => {
               role,
               title: page.name,
               what: req.__("Page"),
-              url: `/pageedit/edit/${encodeURIComponent(page.name)}`,
+              url: `/pageedit/edit/${encodeURIComponent(page.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
               contents,
             })
       );
@@ -149,7 +149,10 @@ router.get(
   "/:pagename",
   error_catcher(async (req, res) => {
     const state = getState();
-    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
     const maintenanceModePage = state.getConfig("maintenance_mode_page", "");
 
     if (
@@ -196,7 +199,10 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const state = getState();
-    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
     if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
@@ -217,7 +223,10 @@ router.post(
   "/:pagename/action/:rndid",
   error_catcher(async (req, res) => {
     const state = getState();
-    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
     if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
