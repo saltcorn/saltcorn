@@ -968,7 +968,6 @@ describe("jsexprToSQL", () => {
     expect(jsexprToSQL('foo=="bar"')).toEqual("(foo)=('bar')");
     expect(jsexprToSQL('foo!="bar"')).toEqual("(foo)!=('bar')");
     expect(jsexprToSQL('!(foo=="bar")')).toEqual("not ((foo)=('bar'))");
-
   });
   it("translates bools", () => {
     expect(jsexprToSQL("foo==true")).toEqual("foo is true");
@@ -979,6 +978,16 @@ describe("jsexprToSQL", () => {
     expect(jsexprToSQL("foo==null")).toEqual("foo is null");
     expect(jsexprToSQL("foo!=null")).toEqual("foo is not null");
     expect(jsexprToSQL("foo!==null")).toEqual("foo is not null");
+  });
+  it("translates and", () => {
+    expect(jsexprToSQL("foo==true && x==2")).toEqual(
+      "(foo is true)and((x)=(2))"
+    );
+  });
+  it("translates something mildly complex", () => {
+    expect(jsexprToSQL('!(name==="roderick" && phone==null)')).toEqual(
+      "not (((name)=('roderick'))and(phone is null))"
+    );
   });
 });
 describe("mergeIntoWhere", () => {
