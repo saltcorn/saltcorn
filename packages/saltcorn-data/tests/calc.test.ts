@@ -962,7 +962,10 @@ describe("interpolation", () => {
 });
 describe("jsexprToSQL", () => {
   it("translates equality", () => {
-    expect(jsexprToSQL("foo==4")).toEqual("(foo)==(4)");
+    expect(jsexprToSQL("foo==4")).toEqual("(foo)=(4)");
+  });
+  it("translates string equality", () => {
+    expect(jsexprToSQL('foo=="bar"')).toEqual("(foo)=('bar')");
   });
   it("translates bools", () => {
     expect(jsexprToSQL("foo==true")).toEqual("foo is true");
