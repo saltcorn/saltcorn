@@ -48,8 +48,5 @@
   "types": "index.d.ts",
   "publishConfig": {
     "access": "public"
-  },
-  "files": [
-    "dist/**/*"
-  ]
+  }
 }
