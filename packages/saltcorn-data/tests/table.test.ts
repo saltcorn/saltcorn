@@ -2086,15 +2086,17 @@ describe("Table constraints", () => {
     const table = Table.findOne({ name: "readings" });
     assertIsSet(table);
     assertIsSet(table.id);
-
-    const con = await TableConstraint.create({
-      table_id: table.id,
-      type: "Formula",
-      configuration: {
-        formula: "Math.round(temperature)<100",
-        errormsg: "Read error",
-      },
+    const con = await db.withTransaction(async () => {
+      return await TableConstraint.create({
+        table_id: table.id,
+        type: "Formula",
+        configuration: {
+          formula: "Math.round(temperature)<100",
+          errormsg: "Read error",
+        },
+      });
     });
+
     await getState().refresh_tables();
     const readings = Table.findOne({ name: "readings" });
     assertIsSet(readings);
