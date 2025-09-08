@@ -2128,8 +2128,8 @@ const prepare = async (
           if (serverResp?.location) row[field.name] = serverResp.location;
         }
       }
-    } else if (body[`__exisiting_file_${field.name}`]) {
-      row[field.name] = body[`__exisiting_file_${field.name}`];
+    } else if (typeof body[`__exisiting_file_${field.name}`] === "string") {
+      row[field.name] = File.normalise(body[`__exisiting_file_${field.name}`]);
       form.values[field.name] = row[field.name];
     } else {
       delete row[field.name];
