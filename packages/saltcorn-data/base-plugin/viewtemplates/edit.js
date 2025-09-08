@@ -1467,6 +1467,13 @@ const runPost = async (
           } else {
             await form.fill_fkey_options(false, optionsQuery, req.user);
             req.flash("error", text_attr(ins_upd_error));
+            for (const file_field of fields.filter((f) => f.type === "File")) {
+              if (!form.values[file_field.name]) continue;
+              form.values[`__exisiting_file_${file_field.name}`] =
+                form.values[file_field.name];
+              form.hidden(`__exisiting_file_${file_field.name}`);
+            }
+
             res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
           }
           return true;
@@ -2046,9 +2053,11 @@ const prepare = async (
   let id;
   if (table.composite_pk_names) {
     id = {};
-    table.fields.filter(f=>f.primary_key).forEach((f) => {
-      id[f.name] = f.type.read(body[f.name]);
-    });
+    table.fields
+      .filter((f) => f.primary_key)
+      .forEach((f) => {
+        id[f.name] = f.type.read(body[f.name]);
+      });
   } else {
     id = pk.type.read(body[pk.name]);
   }
@@ -2081,6 +2090,7 @@ const prepare = async (
             row
           );
           row[field.name] = path_to_serve;
+          form.values[field.name] = path_to_serve;
         }
       }
     } else if (field.fieldviewObj?.editContent) {
@@ -2094,6 +2104,7 @@ const prepare = async (
           "utf8"
         );
         row[field.name] = path_to_serve;
+        form.values[field.name] = path_to_serve;
       }
     } else if (req.files && req.files[field.name]) {
       if (!isWeb(req) && !remote && req.files[field.name].name) {
@@ -2109,6 +2120,7 @@ const prepare = async (
           field?.attributes?.folder
         );
         row[field.name] = file.path_to_serve;
+        form.values[field.name] = file.path_to_serve;
       } else {
         const file = req.files[field.name];
         if (file) {
@@ -2116,6 +2128,9 @@ const prepare = async (
           if (serverResp?.location) row[field.name] = serverResp.location;
         }
       }
+    } else if (typeof body[`__exisiting_file_${field.name}`] === "string") {
+      row[field.name] = File.normalise(body[`__exisiting_file_${field.name}`]);
+      form.values[field.name] = row[field.name];
     } else {
       delete row[field.name];
     }
