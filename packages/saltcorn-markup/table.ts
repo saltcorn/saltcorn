@@ -49,6 +49,7 @@ namespace TableExports {
     width?: string;
     align?: string;
     header_filter?: string;
+    row_key?: string;
   };
 
   export type OptsParams = {
@@ -83,8 +84,11 @@ const transposedBody = (
   vs: any[],
   opts: OptsParams | any = {}
 ): string[] =>
-  hdrs.map((hdr: HeadersParams, ix) =>
-    tr(
+  hdrs.map((hdr: HeadersParams, ix) => {
+    const row_key =
+      hdr.row_key || (typeof hdr.key === "string" ? hdr.key : null);
+    return tr(
+      row_key ? { "row-key": row_key } : {},
       !opts.noHeader && th(hdr.label),
       (vs || []).map((v: any) =>
         td(
@@ -98,8 +102,8 @@ const transposedBody = (
           typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
         )
       )
-    )
-  );
+    );
+  });
 
 /**
  * @function
@@ -113,9 +117,13 @@ const mkTable = (
   vs: any[],
   opts: OptsParams | any = {}
 ): string => {
+  const pk_name = opts.pk_name || "id";
   const val_row = (v: any) =>
     tr(
-      mkClickHandler(opts, v),
+      {
+        ...(v[pk_name] ? { "data-row-id": v[pk_name] } : {}),
+        ...mkClickHandler(opts, v),
+      },
       hdrs.map((hdr: HeadersParams) =>
         td(
           {

@@ -2670,8 +2670,26 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       let data_in = await get_json_list(where, opts);
       return data_in.length;
     },
-    get_child_relations() {
-      return { child_relations: [], child_field_list: [] };
+    async get_child_relations() {
+      const child_relations = [];
+      const child_field_list = [];
+
+      const cfields = await Field.find(
+        { reftable_name: this.name },
+        { cached: true }
+      );
+      for (const f of cfields) {
+        if (f.is_fkey) {
+          const table = Table.findOne({ id: f.table_id });
+          if (!table) {
+            throw new Error(`Unable to find table with id: ${f.table_id}`);
+          }
+          child_field_list.push(`${table.name}.${f.name}`);
+          table.getFields();
+          child_relations.push({ key_field: f, table });
+        }
+      }
+      return { child_relations, child_field_list: [] };
     },
     get_parent_relations() {
       let parent_relations = [];
@@ -2765,7 +2783,9 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
     tbl.updateRow = methods.updateRow;
     tbl.tryUpdateRow = async (...args) => {
       try {
-        return await methods.updateRow(...args);
+        const maybe_err = await methods.updateRow(...args);
+        if (typeof maybe_err === "string") return { error: maybe_err };
+        else return { success: true };
       } catch (error) {
         return { error: error?.message || error };
       }

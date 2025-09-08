@@ -1285,6 +1285,10 @@ module.exports = {
             "Expression for JavaScript object. Example: <code>{first_name: name.split(' ')[0]}</code>",
           type: "String",
           fieldview: "textarea",
+          class: "validate-expression",
+          attributes: {
+            spellcheck: false,
+          },
         },
         ...(mode === "workflow"
           ? [
@@ -1771,21 +1775,21 @@ module.exports = {
         "Actions",
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models.Table-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_table.export_.html",
             target: "_blank",
           },
           "Table"
         ),
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models.File-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_file.export_.html",
             target: "_blank",
           },
           "File"
         ),
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models.User-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_user.export_.html",
             target: "_blank",
           },
           "User"

@@ -53,6 +53,7 @@ const api = require("./routes/api");
 const scapi = require("./routes/scapi");
 const fs = require("fs");
 const PluginRoutesHandler = require("./plugin_routes_handler");
+const compression = require("compression");
 
 const locales = Object.keys(available_languages);
 // jwt config
@@ -147,7 +148,7 @@ const getApp = async (opts = {}) => {
 
   if (cross_domain_iframe) helmetOptions.xFrameOptions = false;
   app.use(helmet(helmetOptions));
-
+  app.use(compression());
   // TODO ch find a better solution
   if (getState().getConfig("cors_enabled", true)) app.use(cors());
   const bodyLimit = getState().getConfig("body_limit");

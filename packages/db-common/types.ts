@@ -34,7 +34,7 @@ export type DbExportsType = {
   withTransaction: (
     fn: () => Promise<any>,
     onError?: (e: Error) => Promise<void>
-  ) => Promise<void>;
+  ) => Promise<any>;
   count: (table: string, where?: Where | undefined) => Promise<number>;
   deleteWhere: (table: string, where: Where) => Promise<any>;
   selectOne: (

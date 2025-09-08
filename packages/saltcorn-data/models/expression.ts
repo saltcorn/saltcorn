@@ -88,7 +88,11 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
             if (cright === val && node.operator == "!=")
               return `${cleft} is not ${val}`;
           }
-          return `(${cleft})${node.operator}(${cright})`;
+          const dblEqToEq = (s: string) => {
+            if (s == "==") return "=";
+            return s;
+          };
+          return `(${cleft})${dblEqToEq(node.operator)}(${cright})`;
         },
         UnaryExpression() {
           return (<StringToFunction>{
@@ -111,6 +115,7 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
           return name;
         },
         Literal({ value }: { value: ExtendedNode }) {
+          if (typeof value == "string") return `'${value}'`;
           return `${value}`;
         },
       })[node.type](node);

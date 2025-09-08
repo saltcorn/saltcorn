@@ -25,6 +25,7 @@ import { Row, sqlBinOp, sqlFun, Where } from "@saltcorn/db-common/internal";
 import { ResultMessage } from "@saltcorn/types/common_types";
 const { freeVariables, jsexprToWhere, add_free_variables_to_aggregations } =
   expressionModule;
+import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -2081,6 +2082,66 @@ describe("Table constraints", () => {
       configuration: { field: "author" },
     });
     await con.delete();
+  });
+  it("should create constraint in transaction", async () => {
+    await runWithTenant("public", async () => {
+      const table = Table.findOne({ name: "readings" });
+      assertIsSet(table);
+      assertIsSet(table.id);
+      const con = await db.withTransaction(async () => {
+        return await TableConstraint.create({
+          table_id: table.id,
+          type: "Formula",
+          configuration: {
+            formula: "Math.round(temperature)<100",
+            errormsg: "Read error",
+          },
+        });
+      });
+
+      await getState().refresh_tables();
+      const readings = Table.findOne({ name: "readings" });
+      assertIsSet(readings);
+
+      const result = await readings.tryInsertRow({
+        patient_id: 1,
+        temperature: 137,
+        date: new Date(),
+      });
+
+      expect((result as any).error).toBe("Read error");
+
+      await con.delete();
+    });
+  });
+  it("should create constraint that is not translatable to SQL in transaction", async () => {
+    await runWithTenant("public", async () => {
+      const table = Table.findOne({ name: "readings" });
+      assertIsSet(table);
+      assertIsSet(table.id);
+      expect(table.constraints.length).toBe(0);
+
+      const con = await db.withTransaction(async () => {
+        return await TableConstraint.create({
+          table_id: table.id,
+          type: "Formula",
+          configuration: {
+            formula: "temperature==='bar'",
+            errormsg: "Read error",
+          },
+        });
+      });
+
+      await getState().refresh_tables();
+      const readings = Table.findOne({ name: "readings" });
+      assertIsSet(readings);
+      expect(readings.constraints.length).toBe(1);
+      expect(readings.constraints[0].configuration.formula).toBe(
+        "temperature==='bar'"
+      );
+
+      await con.delete();
+    });
   });
   it("should create full text search index", async () => {
     const table = await Table.create("TableWithFTS");

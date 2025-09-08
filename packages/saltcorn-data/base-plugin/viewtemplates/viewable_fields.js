@@ -882,6 +882,7 @@ const get_viewable_fields = (
                   "data-bs-toggle": "dropdown",
                   "aria-haspopup": "true",
                   "aria-expanded": "false",
+                  "aria-label": "Additional actions",
                   onclick: in_row_click ? "event.stopPropagation()" : undefined,
                   style:
                     column.action_style === "btn-custom-color"
@@ -956,6 +957,9 @@ const get_viewable_fields = (
                     url.javascript +
                     (column.spinner ? ";spin_action_link(this)" : "") +
                     (in_row_click ? ";event.stopPropagation()" : ""),
+                  ...(!label || label === " "
+                    ? { "aria-label": column.action_name }
+                    : {}),
                 },
                 !!icon &&
                   icon !== "empty" &&
@@ -1379,7 +1383,7 @@ const headerFilterForField = (f, state, path) => {
         }),
         button(
           {
-            class: "btn btn-outline-secondary",
+            class: "btn btn-outline-secondary btn-border-color-input",
             style: { paddingLeft: "3px", paddingRight: "3px" },
             onclick: `set_state_fields({_fromdate_${f.name}: {unset: true}, _todate_${f.name}: {unset: true} })`,
           },
