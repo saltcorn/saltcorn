@@ -2082,6 +2082,33 @@ describe("Table constraints", () => {
     });
     await con.delete();
   });
+  it("should create constraint that is not translatable to SQL in transaction", async () => {
+    const table = Table.findOne({ name: "readings" });
+    assertIsSet(table);
+    assertIsSet(table.id);
+
+    const con = await TableConstraint.create({
+      table_id: table.id,
+      type: "Formula",
+      configuration: {
+        formula: "Math.round(temperature)<100",
+        errormsg: "Read error",
+      },
+    });
+    await getState().refresh_tables();
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+
+    const result = await readings.tryInsertRow({
+      patient_id: 1,
+      temperature: 137,
+      date: new Date(),
+    });
+
+    expect((result as any).error).toBe("Read error");
+
+    await con.delete();
+  });
   it("should create full text search index", async () => {
     const table = await Table.create("TableWithFTS");
     await Field.create({
