@@ -2466,7 +2466,7 @@ const initial_config_all_fields =
 // todo potentially move to utils
 const strictParseInt = (x) => {
   const y = +x;
-  return !isNaN(y) && y ? y : undefined;
+  return !isNaN(y) && (y || y === 0) ? y : undefined;
 };
 
 /**

@@ -343,7 +343,7 @@ router.get(
         return res.status(400).send({ error: "Invalid limit parameter" });
       }
     if (typeof offset !== "undefined")
-      if (isNaN(offset) || !validateNumberMin(offset, 1)) {
+      if (isNaN(offset) || !validateNumberMin(offset, 0)) {
         getState().log(3, `API get ${tableName} Invalid offset parameter`);
         return res.status(400).send({ error: "Invalid offset parameter" });
       }
