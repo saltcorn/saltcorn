@@ -1,5 +1,13 @@
 # Notable changes
 
+## 1.4.0 - In development
+
+### Fixes
+
+* Fix formula constraints to support more translations to SQL
+* Edit: preserve file choices on form errors.
+* Fix format fieldview for only day Dates.
+
 ## 1.3.1 - Released 31 August 2025
 
 * Reduce client assets for some plugins - if a view is not available for a role, its assets can be omitted. 
