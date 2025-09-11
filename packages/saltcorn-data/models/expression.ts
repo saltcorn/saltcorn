@@ -642,7 +642,7 @@ function get_expression_function(
  */
 function eval_expression(
   expression: string,
-  row: any,
+  row?: any,
   user?: any,
   errorLocation?: string
 ): any {
