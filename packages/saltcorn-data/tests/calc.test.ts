@@ -46,6 +46,10 @@ describe("eval_expression", () => {
 
     expect(eval_expression("add58(x)", { x: 5 })).toBe(63);
   });
+  it("evaluates with null row", () => {
+    expect(eval_expression("5+2", undefined)).toBe(7);
+    expect(eval_expression("5+2", null)).toBe(7);
+  });
 });
 
 describe("calculated", () => {
