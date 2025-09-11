@@ -1469,6 +1469,9 @@ const createBasicView = async ({
       }
     });
   }
+
+  const comppk = table.composite_pk_names;
+
   //show link
   if (all_views_created.Show) {
     if (template_view) {
@@ -1487,7 +1490,23 @@ const createBasicView = async ({
           view_label: col.view_label || col.label,
         });
       }
-    } else
+    } else if (comppk)
+      configuration.columns.push({
+        link_url:
+          "`/view/" +
+          all_views_created.Show +
+          "?" +
+          comppk.map((pkNm) => pkNm + "=${" + pkNm + "}").join("&") +
+          "`", //"Street=${Street}&Number=${Number}"
+        link_text: "Show",
+        type: "Link",
+        block: false,
+        link_src: "URL",
+        nofollow: false,
+        link_url_formula: true,
+        header_label: "Show",
+      });
+    else
       configuration.columns.push({
         type: "ViewLink",
         view: `Own:${all_views_created.Show}`,
@@ -1517,7 +1536,23 @@ const createBasicView = async ({
           view_label: col.view_label || col.label,
         });
       }
-    } else
+    } else if (comppk)
+      configuration.columns.push({
+        link_url:
+          "`/view/" +
+          all_views_created.Edit +
+          "?" +
+          comppk.map((pkNm) => pkNm + "=${" + pkNm + "}").join("&") +
+          "`", //"Street=${Street}&Number=${Number}"
+        link_text: "Edit",
+        type: "Link",
+        block: false,
+        link_src: "URL",
+        nofollow: false,
+        link_url_formula: true,
+        header_label: "Edit",
+      });
+    else
       configuration.columns.push({
         type: "ViewLink",
         view: `Own:${all_views_created.Edit}`,
