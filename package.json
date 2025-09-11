@@ -72,8 +72,7 @@
     "parse5": "7.2.1",
     "parse5-htmlparser2-tree-adapter": "7.0.0",
     "typescript": "5.9.2",
-    "htmlnano": "2.1.1",
-    "@babel/runtime": "7.28.2"
+    "htmlnano": "2.1.1"
   },
   "workspaces": [
     "./packages/*"
