@@ -40,9 +40,15 @@ beforeAll(async () => {
   await require("../db/fixtures")();
   if (!db.isSQLite) {
     await db.query(
-      `create table tstcomppk ( name text, age int, address text, primary key(name,age));`
+      `create table tstcomppk ( name text, age int, address text, primary key(name,age));
+      create table "TstAddress" ("Street" text, "Number" integer, "Name" text, primary key("Street", "Number"));
+      create table "TstProject" (id serial primary key, "Street" text not null, "Number" integer not null, "ProjectDescription" text, "Cost" integer, foreign key("Street", "Number") references "TstAddress"("Street", "Number"));`
     );
-    const pack = await discover_tables(["tstcomppk"]);
+    const pack = await discover_tables([
+      "tstcomppk",
+      "TstAddress",
+      "TstProject",
+    ]);
     await implement_discovery(pack);
   }
 });
@@ -129,6 +135,52 @@ describe("Composite PK table properties", () => {
       const rows2 = await tc.getRows({ name: "Peter" });
       expect(rows2.length).toBe(1);
       expect(rows2[0].address).toBe("4 Beach Road");
+    });
+  } else
+    it("should add 2 and 2", async () => {
+      expect(2 + 2).toBe(4);
+    });
+});
+
+describe("Composite PK Address table properties", () => {
+  if (!db.isSQLite) {
+    it("should store attributes", async () => {
+      const tc = Table.findOne("TstAddress");
+      assertIsSet(tc);
+      expect(tc.composite_pk_names?.length).toBe(2);
+      expect(tc.composite_pk_names).toContain("Street");
+      expect(tc.composite_pk_names).toContain("Number");
+    });
+    it("should insert", async () => {
+      const tc = Table.findOne("TstAddress");
+      assertIsSet(tc);
+      await tc.insertRow({
+        Street: "Park Road",
+        Number: 28,
+        Name: "Tom Old house",
+      });
+      const count = await tc.countRows({});
+      expect(count).toBe(1);
+    });
+    it("should try insert", async () => {
+      const tc = Table.findOne("TstAddress");
+      assertIsSet(tc);
+      db.set_sql_logging(true);
+      const ins_res = await tc.tryInsertRow(
+        {
+          Street: "Forest Road",
+          Number: 56,
+          Name: "Another house",
+        },
+        undefined,
+        {}
+      );
+      db.set_sql_logging(false);
+
+      console.log({ ins_res });
+
+      const count = await tc.countRows({});
+      expect(count).toBe(2);
     });
   } else
     it("should add 2 and 2", async () => {
