@@ -459,7 +459,7 @@ class Field implements AbstractField {
           );
       const summary_field =
         this.attributes.summary_field ||
-        (this.type === "File" ? "filename" : "id");
+        (this.type === "File" ? "filename" : pk_name || "id");
       const get_label = this.attributes?.label_formula
         ? (r: Row) =>
             eval_expression(
