@@ -176,7 +176,7 @@ class Field implements AbstractField {
       }
 
       this.reftype = o.reftype || default_reftype || "Integer";
-      this.refname = o.refname || "id";
+      this.refname = o.refname || this.reftable?.pk_name || "id";
     }
 
     this.attributes =
@@ -457,6 +457,8 @@ class Field implements AbstractField {
             whereWithExisting,
             user
           );
+      console.log({ rows });
+
       const summary_field =
         this.attributes.summary_field ||
         (this.type === "File" ? "filename" : pk_name || "id");

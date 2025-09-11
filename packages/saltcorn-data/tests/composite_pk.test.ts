@@ -165,7 +165,6 @@ describe("Composite PK Address table properties", () => {
     it("should try insert", async () => {
       const tc = Table.findOne("TstAddress");
       assertIsSet(tc);
-      db.set_sql_logging(true);
       const ins_res = await tc.tryInsertRow(
         {
           Street: "Forest Road",
@@ -175,12 +174,24 @@ describe("Composite PK Address table properties", () => {
         undefined,
         {}
       );
-      db.set_sql_logging(false);
 
-      console.log({ ins_res });
-
+      expect(!!(ins_res as any).success).toBe(true);
       const count = await tc.countRows({});
       expect(count).toBe(2);
+    });
+    it("should set field options", async () => {
+      const tc = Table.findOne("TstProject");
+      assertIsSet(tc);
+
+      const street_fk = tc.getField("Street");
+      assertIsSet(street_fk);
+
+      expect(street_fk.refname).toBe("Street");
+      expect(street_fk.reftype).toBe("String");
+
+      assertIsSet(street_fk);
+      await street_fk.fill_fkey_options();
+      expect(street_fk.options).toBe(1);
     });
   } else
     it("should add 2 and 2", async () => {
