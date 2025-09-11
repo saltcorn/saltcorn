@@ -2663,6 +2663,13 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       const rows = await getRows(where || {}, rest || {});
       return rows.length > 0 ? rows[0] : null;
     },
+    delete_url(row, moreQuery) {
+      const comppk = tbl.composite_pk_names;      
+      if (!comppk)
+        return `/delete/${tbl.name}/${encodeURIComponent(row[tbl.pk_name])}${moreQuery ? `?${moreQuery}` : ""}`;
+      else
+        return `/delete/${tbl.name}?${comppk.map((pknm) => `${encodeURIComponent(pknm)}=${encodeURIComponent(row[pknm])}`).join("&")}${moreQuery ? `&${moreQuery}` : ""}`;
+    },
     async countRows(where, opts) {
       if (methods?.countRows) {
         return await methods.countRows(where, opts);

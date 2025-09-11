@@ -210,6 +210,13 @@ const view_dropdown = (view, req, on_done_redirect_str = "") =>
         },
         '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
       ),
+        a(
+      {
+        class: "dropdown-item",
+        href: `/registry-editor?etype=view&ename=${encodeURIComponent(view.name)}`,
+      },
+      '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
+    ),
     view.id && div({ class: "dropdown-divider" }),
     view.id &&
       post_dropdown_item(
