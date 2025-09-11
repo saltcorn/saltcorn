@@ -457,7 +457,6 @@ class Field implements AbstractField {
             whereWithExisting,
             user
           );
-      console.log({ rows });
 
       const summary_field =
         this.attributes.summary_field ||
