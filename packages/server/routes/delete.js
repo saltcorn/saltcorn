@@ -75,9 +75,14 @@ router.post(
     // todo check that works after where change
     const table = Table.findOne({ name: tableName });
     const role = req.user && req.user.id ? req.user.role_id : 100;
-    const where = readState({ ...restQuery }, table.fields, req);
-    console.log({where, restQuery});
-    
+    const query = {};
+    table.fields.forEach((f) => {
+      if (typeof restQuery[f.name] !== "undefined")
+        query[f.name] = restQuery[f.name];
+    });
+    const where = readState(query, table.fields, req);
+    console.log({ where, restQuery });
+
     try {
       if (role <= table.min_role_write)
         await table.deleteRows(where, req.user || { role_id: 100 });
