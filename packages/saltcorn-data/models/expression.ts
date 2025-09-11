@@ -647,7 +647,8 @@ function eval_expression(
   errorLocation?: string
 ): any {
   try {
-    const field_names = Object.keys(row).filter(
+    const use_row = row || {};
+    const field_names = Object.keys(use_row).filter(
       (nm) =>
         nm.indexOf(".") === -1 &&
         nm.indexOf(">") === -1 &&
@@ -660,7 +661,7 @@ function eval_expression(
     return runInNewContext(
       `(${args})=>(${expression})`,
       getState().eval_context
-    )(row, row, user);
+    )(use_row, use_row, user);
   } catch (e: any) {
     e.message = `In evaluating the expression ${expression}${
       errorLocation ? ` in ${errorLocation}` : ""
