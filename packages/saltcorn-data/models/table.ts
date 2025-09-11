@@ -1847,6 +1847,14 @@ class Table implements AbstractTable {
     if (row) await this.updateRow({ [field_name]: !row[field_name] }, id, user);
   }
 
+  delete_url(row: Row, moreQuery?: string) {
+    const comppk = this.composite_pk_names;
+    if (!comppk)
+      return `/delete/${this.name}/${encodeURIComponent(row[this.pk_name])}${moreQuery ? `?${moreQuery}` : ""}`;
+    else
+      return `/delete/${this.name}?${comppk.map((pknm) => `${encodeURIComponent(pknm)}=${encodeURIComponent(row[pknm])}`).join("&")}${moreQuery ? `&${moreQuery}` : ""}`;
+  }
+
   get composite_pk_names(): string[] | null {
     const pkFields = this.fields?.filter((f: Field) => f.primary_key);
     if (pkFields.length < 2) return null;

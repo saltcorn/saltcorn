@@ -8,7 +8,7 @@ const Router = require("express-promise-router");
 
 const { error_catcher, is_relative_url } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
-
+const { readState } = require("@saltcorn/data/plugin-helper");
 /**
  * @type {object}
  * @const
@@ -48,6 +48,47 @@ router.post(
           { id },
           { forUser: req.user, forPublic: !req.user }
         );
+        if (row && table.is_owner(req.user, row))
+          await table.deleteRows(where, req.user || { role_id: 100 });
+        else req.flash("error", req.__("Not authorized"));
+      } else
+        req.flash(
+          "error",
+          req.__("Not allowed to write to table %s", table.name)
+        );
+    } catch (e) {
+      console.error(e);
+      req.flash("error", e.message);
+    }
+    if (req.xhr) res.send("OK");
+    else
+      res.redirect(
+        (is_relative_url(redirect) && redirect) || `/list/${table.name}`
+      );
+  })
+);
+router.post(
+  "/:tableName",
+  error_catcher(async (req, res) => {
+    const { tableName } = req.params;
+    const { redirect, ...restQuery } = req.query;
+    // todo check that works after where change
+    const table = Table.findOne({ name: tableName });
+    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const where = readState({ ...restQuery }, table.fields, req);
+    console.log({where, restQuery});
+    
+    try {
+      if (role <= table.min_role_write)
+        await table.deleteRows(where, req.user || { role_id: 100 });
+      else if (
+        (table.ownership_field_id || table.ownership_formula) &&
+        req.user
+      ) {
+        const row = await table.getRow(where, {
+          forUser: req.user,
+          forPublic: !req.user,
+        });
         if (row && table.is_owner(req.user, row))
           await table.deleteRows(where, req.user || { role_id: 100 });
         else req.flash("error", req.__("Not authorized"));

@@ -87,13 +87,13 @@ const action_url = (
   const pk_name = table.pk_name;
   const __ = getReq__();
   const confirmStr = confirm ? `if(confirm('${__("Are you sure?")}'))` : "";
-  if (action_name === "Delete")
+  if (action_name === "Delete") {
     return {
       javascript: `${confirmStr}${isNode() ? "ajax" : "local"}_post_btn('${
         !isNode() ? "post" : ""
-      }/delete/${table.name}/${encodeURIComponent(r[pk_name])}?redirect=/view/${viewname}', true)`,
+      }${table.delete_url(r, `redirect=/view/${viewname}`)}', true)`,
     };
-  else if (action_name === "GoBack")
+  } else if (action_name === "GoBack")
     return {
       javascript: isNode()
         ? "history.back()"
@@ -1783,21 +1783,20 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
         segment.configuration?.after_delete_action == "Reload page"
       ) {
         url = {
-          javascript: `ajax_post('/delete/${table.name}/${encodeURIComponent(
-            row[table.pk_name]
-          )}', {success:()=>{close_saltcorn_modal();location.reload();}})`,
+          javascript: `ajax_post('${table.delete_url(row)}', {success:()=>{close_saltcorn_modal();location.reload();}})`,
         };
         return action_link(url, req, segment);
       } else if (segment.action_name === "Delete")
-        url = `/delete/${table.name}/${encodeURIComponent(
-          row[table.pk_name]
-        )}?redirect=${encodeURIComponent(
-          interpolate(
-            segment.configuration?.after_delete_url || "/",
-            row,
-            req?.user,
-            "delete action: after delete URL"
-          )
+        url = `${table.delete_url(
+          row,
+          `redirect=${encodeURIComponent(
+            interpolate(
+              segment.configuration?.after_delete_url || "/",
+              row,
+              req?.user,
+              "delete action: after delete URL"
+            )
+          )}`
         )}`;
       return action_link(url, req, segment);
     },
