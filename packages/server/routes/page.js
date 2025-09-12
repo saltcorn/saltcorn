@@ -23,6 +23,7 @@ const { add_edit_bar } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
 const db = require("@saltcorn/data/db");
+const Crash = require("@saltcorn/data/models/crash");
 
 /**
  * @type {object}
@@ -255,6 +256,7 @@ router.post(
           res.json({ success: "ok", ...(result || {}) });
         } catch (e) {
           getState().log(2, e?.stack);
+          await Crash.create(e, req);
           res.status(400).json({ error: e.message || e });
         }
       } else res.status(404).json({ error: "Action not found" });
