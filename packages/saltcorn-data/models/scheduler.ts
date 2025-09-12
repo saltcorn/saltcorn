@@ -216,6 +216,7 @@ const runScheduler = async ({
       4,
       `Scheduler tick ${JSON.stringify({ isHourly, isDaily, isWeekly, now: new Date().toISOString() })}`
     );
+    const tenants_crash_log = getState().getConfig("tenants_crash_log");
 
     await eachTenant(async () => {
       try {
@@ -253,7 +254,7 @@ const runScheduler = async ({
               });
             });
           } catch (e) {
-            if (isRoot)
+            if (isRoot || tenants_crash_log)
               await Crash.create(e, {
                 url: `trigger: action ${trigger.action} id ${trigger.id}`,
                 headers: {},
