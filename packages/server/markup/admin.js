@@ -367,7 +367,7 @@ const send_events_page = (args) => {
           ]
         : []),
       { text: "Workflow runs", href: "/actions/runs" },
-      ...(isRoot ? [{ text: "Crash log", href: "/crashlog" }] : []),
+      { text: "Crash log", href: "/crashlog" },
     ],
     ...args,
   });
