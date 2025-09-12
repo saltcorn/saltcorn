@@ -444,6 +444,14 @@ const configTypes: ConfigTypes = {
     label: "Set available npm modules",
     excludeFromMobile: true, // unsure
   },
+  tenants_crash_log: {
+    type: "Bool",
+    root_only: true,
+    label: "Crash log",
+    blurb: "Delegate error handling to tenants",
+    excludeFromMobile: true, // unsure
+    default: false,
+  },
   tenants_unsafe_plugins: {
     type: "Bool",
     root_only: true,

@@ -18,7 +18,7 @@ const {
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const { configTypes } = require("@saltcorn/data/models/config");
-const { getState } = require("@saltcorn/data/db/state");
+const { getState, getRootState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
@@ -354,6 +354,7 @@ const send_tags_page = (args) => {
 const send_events_page = (args) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const isUserAdmin = args.req?.user.role_id === 1;
+  const tenants_crash_log = getRootState().getConfig("tenants_crash_log");
   return send_settings_page({
     main_section: "Events",
     main_section_href: "/events",
@@ -367,7 +368,9 @@ const send_events_page = (args) => {
           ]
         : []),
       { text: "Workflow runs", href: "/actions/runs" },
-      { text: "Crash log", href: "/crashlog" },
+      ...(isRoot || tenants_crash_log
+        ? [{ text: "Crash log", href: "/crashlog" }]
+        : []),
     ],
     ...args,
   });
