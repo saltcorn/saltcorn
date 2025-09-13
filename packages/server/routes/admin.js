@@ -4197,7 +4197,8 @@ router.post(
       await db.deleteWhere("_sc_model_instances");
       await db.deleteWhere("_sc_models");
 
-      const tables = await Table.find();
+      //in revers order of creation in case any provided tables depend on real tables
+      const tables = await Table.find({}, { orderBy: "id", orderDesc: true });
 
       for (const table of tables) {
         await db.deleteWhere("_sc_triggers", {

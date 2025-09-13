@@ -131,7 +131,7 @@ class Form implements AbstractForm {
       // @ts-ignore
       .filter((f) => f?.input_type !== "hidden")
       .map((f) => f.name);
-    const extraCtx = { ...this.values };
+    const extraCtx: GenObj = { ...this.values, row: this.values };
     if (user && !extraCtx.user_id) extraCtx.user_id = user.id;
     if (user && !extraCtx.user) extraCtx.user = user;
     for (const f of this.fields) {
