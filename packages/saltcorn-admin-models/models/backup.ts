@@ -77,7 +77,7 @@ const create_pack_json = async (
 
   // tables
   const tables = await asyncMap(
-    await Table.find({}),
+    await Table.find({}, { orderBy: "id" }),
     async (t: Table) => await table_pack(t) // find already done before
   );
   // views
