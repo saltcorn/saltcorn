@@ -1421,6 +1421,7 @@ function ensure_script_loaded(src) {
   if (!scripts.includes(src)) {
     var tag = document.createElement("script");
     tag.src = src;
+    tag.async = false;
     document.getElementsByTagName("body")[0].appendChild(tag);
   }
 }
