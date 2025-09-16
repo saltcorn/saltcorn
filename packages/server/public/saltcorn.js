@@ -1412,17 +1412,21 @@ function cfu_translate(that) {
   }
 }
 
-function ensure_script_loaded(src) {
+function ensure_script_loaded(src, callback) {
   //https://stackoverflow.com/questions/26331600/load-js-script-only-when-it-has-not-been-loaded-already-and-then-only-once
   let scripts = Array.from(document.querySelectorAll("script")).map(
     (scr) => scr.src
   );
 
-  if (!scripts.includes(src)) {
+  if (!scripts.some((s) => s.endsWith(src))) {
     var tag = document.createElement("script");
     tag.src = src;
+    tag.onload = () => {
+      if (typeof callback === "function") callback();
+    };
     document.getElementsByTagName("body")[0].appendChild(tag);
   }
+  else if (typeof callback === "function") callback();
 }
 
 function ensure_css_loaded(src) {
