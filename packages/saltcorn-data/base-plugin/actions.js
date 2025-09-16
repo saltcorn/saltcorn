@@ -45,6 +45,7 @@ const {
 const db = require("../db");
 const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
 const { available_languages } = require("../models/config");
+const MetaData = require("../models/metadata");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
@@ -181,6 +182,7 @@ const run_code = async ({
     user,
     console: consoleInterceptor(getState()),
     Actions,
+    MetaData,
     emitEvent,
     sleep,
     fetchJSON,

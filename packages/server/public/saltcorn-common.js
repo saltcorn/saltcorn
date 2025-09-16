@@ -157,7 +157,7 @@ function add_extra_state(base_url, extra_state_fml, row, outerState = {}) {
   let extra_state = new Function(
     "row",
     `{${Object.keys(row).join(",")}}`,
-    "return " + extra_state_fml||"{}"
+    "return " + extra_state_fml || "{}"
   )(row, row);
   let qs = Object.entries({ ...outerState, ...extra_state })
     .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
@@ -1879,6 +1879,10 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
       type: "warning",
       text: res.suppressed,
     });
+  }
+  if (res.reload_embedded_view) {
+    let new_state = res.new_state || undefined;
+    reload_embedded_view(res.reload_embedded_view, new_state);
   }
   if (res.eval_js) await handle(res.eval_js, eval_it);
   /// TODO got and resume_workflow - use localStorage

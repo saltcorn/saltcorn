@@ -326,16 +326,14 @@ class Table implements AbstractTable {
       const { fields, constraints, ...updDB } = upd_rec;
       await db.update("_sc_tables", updDB, tbl.id);
       //limited refresh if we do not have a client
-      if (!db.getRequestContext()?.client)
-        await require("../db/state").getState().refresh_tables(true);
+      if (!db.getRequestContext()?.client) await Table.state_refresh(true);
     };
     t.delete = async (upd_rec: Row) => {
       const schema = db.getTenantSchemaPrefix();
       await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
       await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [tbl.id]);
       //limited refresh if we do not have a client
-      if (!db.getRequestContext()?.client)
-        await require("../db/state").getState().refresh_tables(true);
+      if (!db.getRequestContext()?.client) await Table.state_refresh(true);
     };
     return t;
   }
@@ -782,8 +780,7 @@ class Table implements AbstractTable {
     if (table.has_sync_info) await table.create_sync_info_table();
     // refresh tables cache
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
 
     return table;
   }
@@ -857,8 +854,7 @@ class Table implements AbstractTable {
         `drop table if exists ${schema}"${sqlsanitize(this.name)}__history"`
       );
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
   }
 
   /***
@@ -2738,8 +2734,7 @@ class Table implements AbstractTable {
     //1. change record
     await this.update({ name: new_name });
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
   }
 
   /**
@@ -2758,8 +2753,7 @@ class Table implements AbstractTable {
     const { external, fields, constraints, ...upd_rec } = new_table_rec;
     await db.update("_sc_tables", upd_rec, this.id);
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
     const new_table = new Table({ ...this, ...upd_rec });
     if (!new_table) {
       throw new Error(`Unable to find table with id: ${this.id}`);
@@ -2778,8 +2772,12 @@ class Table implements AbstractTable {
     }
   }
 
-  static async state_refresh() {
-    await require("../db/state").getState().refresh_tables();
+  static async state_refresh(noSignal?: boolean) {
+    try {
+      await require("../db/state").getState().refresh_tables(noSignal);
+    } catch {
+      //ignore
+    }
   }
 
   /**
@@ -2928,8 +2926,7 @@ class Table implements AbstractTable {
 
     parse_res.table = table;
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
 
     return parse_res;
   }
@@ -4155,8 +4152,7 @@ where table_schema = '${db.getTenantSchema() || "public"}'
       await pk.update({ attributes: attrs });
     }
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
   }
 
   async move_include_fts_to_search_context() {
