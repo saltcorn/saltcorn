@@ -978,20 +978,31 @@ class State {
       }
     );
     Object.entries(withCfg("fieldviews", {})).forEach(
-      ([k, v]: [k: string, v: any]) => {
-        if (v.type === "Key") {
-          this.keyFieldviews[k] = v;
-          return;
-        }
-        const type = this.types[v.type];
-        if (type) {
-          if (type.fieldviews) type.fieldviews[k] = v;
-          else type.fieldviews = { [k]: v };
-        } else {
-          if (!this.stashed_fieldviews[v.type])
-            this.stashed_fieldviews[v.type] = {};
-          this.stashed_fieldviews[v.type][k] = v;
-        }
+      ([nm, fv]: [nm: string, fv: any]) => {
+        const process_fv = (k: string, v: FieldView) => {
+          if (!v.type) return;
+          if (Array.isArray(v.type)) {
+            v.type.forEach((t) => {
+              process_fv(k, { ...v, type: t });
+            });
+            return;
+          }
+
+          if (v.type === "Key") {
+            this.keyFieldviews[k] = v;
+            return;
+          }
+          const type = this.types[v.type];
+          if (type) {
+            if (type.fieldviews) type.fieldviews[k] = v;
+            else type.fieldviews = { [k]: v };
+          } else {
+            if (!this.stashed_fieldviews[v.type])
+              this.stashed_fieldviews[v.type] = {};
+            this.stashed_fieldviews[v.type][k] = v;
+          }
+        };
+        process_fv(nm, fv);
       }
     );
     const layout = withCfg("layout");
@@ -1531,7 +1542,8 @@ const process_init_time = new Date();
  */
 const get_process_init_time = () => process_init_time;
 /**
- * State Features
+ * State Features - Help modules figure out what features are available in core saltcorn.
+ * This is necessary because modules need to work on different versions of core saltcorn
  */
 const features = {
   serve_static_dependencies: true,
@@ -1555,6 +1567,7 @@ const features = {
   capacitor: true,
   workflows: true,
   metadata: true,
+  multitype_fieldviews: true,
 };
 
 export = {

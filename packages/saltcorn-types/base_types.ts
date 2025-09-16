@@ -403,6 +403,7 @@ type FieldViewFilter = {
 export type FieldView = {
   readFromFormRecord?: Function;
   read?: Function;
+  type?: string;
   blockDisplay?: boolean;
   handlesTextStyle?: boolean;
   description?: string;
