@@ -63,6 +63,7 @@ import { runInContext, createContext } from "vm";
 import faIcons from "./fa5-icons";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
+import MetaData from "../models/metadata";
 
 /**
  * @param v
@@ -1106,6 +1107,7 @@ class State {
           View,
           User,
           Trigger,
+          MetaData,
           setTimeout,
           fetch,
           sleep,
