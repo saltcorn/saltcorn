@@ -895,6 +895,7 @@ const ConfigField = ({
       } else prop[field.name] = v;
     });
     onChange && onChange(field.name, v, setProp);
+    apply_showif();
   };
   let stored_value = configuration
     ? configuration[field.name]
@@ -967,7 +968,26 @@ const ConfigField = ({
             ))}
           </select>
         );
-      } else
+      } 
+      else if (field.attributes?.calcOptions) {        
+        return (
+          <select
+            className={`field-${field?.name} form-control form-select`}
+            name={field?.name}
+            value={value || ""}
+            onChange={(e) => e.target && myOnChange(e.target.value)}
+            onBlur={(e) => e.target && myOnChange(e.target.value)}
+            data-calc-options={encodeURIComponent(
+              JSON.stringify(field.attributes.calcOptions)
+            )}
+            autocomplete= {"off"}
+            data-fieldname={field?.name}
+          >
+            <option value=""></option>
+          </select>
+        );
+      }
+      else
         return (
           <input
             type="text"
@@ -1093,6 +1113,7 @@ const ConfigField = ({
             name={field?.name}
             onChange={(e) => e.target && myOnChange(e.target.value)}
             onBlur={(e) => e.target && myOnChange(e.target.value)}
+            data-fieldname={field?.name}
           >
             {(field.options || []).map((o, ix) =>
               o.name && o.label ? (
