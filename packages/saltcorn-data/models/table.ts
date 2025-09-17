@@ -70,6 +70,7 @@ import utils from "../utils";
 const {
   prefixFieldsInWhere,
   InvalidConfiguration,
+  mergeActionResults,
   InvalidAdminAction,
   satisfies,
   structuredClone,
@@ -979,7 +980,12 @@ class Table implements AbstractTable {
    * @param user - optional user, if null then no authorization will be checked
    * @returns
    */
-  async deleteRows(where: Where, user?: AbstractUser, noTrigger?: boolean) {
+  async deleteRows(
+    where: Where,
+    user?: AbstractUser,
+    noTrigger?: boolean,
+    resultCollector?: any
+  ) {
     //Fast truncate if user is admin and where is blank
     const cfields = await Field.find(
       { reftable_name: this.name },
@@ -1045,7 +1051,10 @@ class Table implements AbstractTable {
         for (const row of rows) {
           // run triggers on delete
           if (trigger.haltOnOnlyIf?.(row, user)) continue;
-          await trigger.run!(row, { user });
+          const runres = await trigger.run!(row, { user });
+
+          if (runres && resultCollector)
+            mergeActionResults(resultCollector, runres);
         }
       }
       if (isNode()) {

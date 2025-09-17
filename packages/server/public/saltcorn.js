@@ -755,7 +755,8 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
       "CSRF-Token": _sc_globalCsrf,
     },
     data: form_data,
-    success: function () {
+    success: function (res) {      
+      common_done(res)
       if (reload_on_done) location.reload();
     },
     error: checkNetworkError,

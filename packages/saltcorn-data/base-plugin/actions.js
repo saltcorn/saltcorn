@@ -1494,11 +1494,17 @@ module.exports = {
       user,
       ...rest
     }) => {
+      const resultCollector = {};
       if (delete_triggering_row) {
         if (!table || !row?.[table.pk_name])
           throw new Error("delete_rows cannot find triggering row");
-        await table.deleteRows({ [table.pk_name]: row[table.pk_name] }, user);
-        return;
+        await table.deleteRows(
+          { [table.pk_name]: row[table.pk_name] },
+          user,
+          false,
+          resultCollector
+        );
+        return resultCollector;
       }
       const where = eval_expression(
         delete_where,
@@ -1507,8 +1513,8 @@ module.exports = {
         "recalculate_stored_fields where"
       );
       const tbl = Table.findOne({ name: table_name });
-      await tbl.deleteRows(where, user);
-      return;
+      await tbl.deleteRows(where, user, false, resultCollector);
+      return resultCollector;
     },
     namespace: "Database",
   },
