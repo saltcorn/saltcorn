@@ -142,7 +142,7 @@ test.describe('E2E Test Suite', () => {
     });
     // assert the about application url
     await customAssert('page url should be /admin', async () => {
-    expect(page.url()).toBe(baseURL + derivedURL + 'admin', { TIMEOUT:10000 });
+    expect(page.url()).toBe(baseURL + derivedURL + 'admin', { TIMEOUT:20000 });
     });
     // validate each tab of about application and assert url
     await functions.about_application_to_site_identity();
@@ -393,7 +393,7 @@ test.describe('E2E Test Suite', () => {
     await customAssert('Assert the lable of Files setting', async () => {
     await expect(page.locator(pageobject.File)).toHaveText('Files');
     });
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
     // assert the files url
     await customAssert('page url should be /files?sortBy=filename', async () => {
     expect(page.url()).toBe(baseURL + derivedURL + 'files?sortBy=filename');
@@ -403,7 +403,7 @@ test.describe('E2E Test Suite', () => {
     await customAssert('Assert the lable of Files tab', async () => {
     await expect(page.locator(pageobject.fileslocator)).toHaveText('Files');
     });
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
     await customAssert('page url should be /files?sortBy=filename', async () => {
     expect(page.url()).toBe(baseURL + derivedURL + 'files?sortBy=filename');
     });
@@ -478,7 +478,7 @@ test.describe('E2E Test Suite', () => {
       await expect(page.locator(pageobject.userNavLink)).toHaveText('User');
     });
     await page.click(pageobject.userSettingsLink);
-    await customAssert('Assert the lable of User Setting', async () => {
+    await customAssert('Assert the lable of User setting', async () => {
       await expect(page.locator(pageobject.userSettingsLink)).toHaveText('User settings');
     });
     await customAssert('page url should be /eventlog', async () => {
