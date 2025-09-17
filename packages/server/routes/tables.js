@@ -1566,7 +1566,7 @@ router.get(
         },
         {
           type: "card",
-          class: "mt-0",
+          class: "mt-0 card-max-full-screen",
           title: cardHeaderTabs([
             { label: req.__("Your tables"), href: "/table", active: true },
             {
@@ -1574,7 +1574,8 @@ router.get(
               href: "/table/relationship-diagram",
             },
           ]),
-          contents: mainCard + createCard,
+          footer: createCard,
+          contents: mainCard,
         },
       ],
     });
