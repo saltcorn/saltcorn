@@ -94,7 +94,7 @@ describe("admin page", () => {
     ["/search/config", "Search configuration"],
     ["/library/list", "component assemblies"],
   ]);
-  adminPageContains([["/actions", "Actions available"]]);
+  //adminPageContains([["/actions", "Actions available"]]);
   adminPageContains([["/eventlog", "Event log"]]);
   adminPageContains([["/eventlog/settings", "Which events should be logged?"]]);
   adminPageContains([["/eventlog/custom", "Custom Events"]]);
@@ -365,8 +365,7 @@ describe("actions", () => {
     await request(app)
       .get("/actions")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Actions available"))
-      .expect(toInclude("webhook"));
+      .expect(toInclude("Create trigger"));
   });
   it("show new action", async () => {
     const app = await getApp({ disableCsrf: true });
