@@ -71,6 +71,7 @@ const {
   li,
   h2,
   h4,
+  p,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -105,7 +106,17 @@ router.get(
       triggers = triggers.filter((t) => tagged_trigger_ids.has(t.id));
       filterOnTag = await Tag.findOne({ id: +req.query._tag });
     }
-    const actions = Trigger.abbreviated_actions;
+    const blurb =
+      p(
+        req.__(
+          `There currently no triggers, but you can create one by clicking the button below. Triggers are actions that are run in response to some event which can be periodic, caused by a database table change, a button click or some other external event.`
+        )
+      ) +
+      p(
+        req.__(
+          `A trigger is defined by a condition (when the trigger will run), an action (which is supplied by a module) and the configuration for that action.`
+        )
+      );
     send_events_page({
       res,
       req,
@@ -114,39 +125,19 @@ router.get(
         above: [
           {
             type: "card",
+            class: "card-max-full-screen",
             title: req.__("Triggers"),
             contents: div(
-              await getTriggerList(triggers, req, { filterOnTag }),
-              a(
-                {
-                  href: "/actions/new",
-                  class: "btn btn-primary",
-                },
-                req.__("Create trigger")
-              )
+              triggers.length
+                ? await getTriggerList(triggers, req, { filterOnTag })
+                : blurb
             ),
-          },
-          {
-            type: "card",
-            contents: table(
-              tbody(
-                tr(
-                  td({ class: "pe-2" }, req.__("Actions available")),
-                  td(
-                    actions
-                      .map((a) => span({ class: "badge bg-primary" }, a.name))
-                      .join("&nbsp;")
-                  )
-                ),
-                tr(
-                  td({ class: "pe-2" }, req.__("Event types")),
-                  td(
-                    Trigger.when_options
-                      .map((a) => span({ class: "badge bg-secondary" }, a))
-                      .join("&nbsp;")
-                  )
-                )
-              )
+            footer: a(
+              {
+                href: "/actions/new",
+                class: "btn btn-primary",
+              },
+              req.__("Create trigger")
             ),
           },
         ],
@@ -918,7 +909,8 @@ router.get(
     let trigger;
     let id = parseInt(idorname);
     if (id) trigger = await Trigger.findOne({ id });
-    else {
+
+    if (!trigger) {
       trigger = await Trigger.findOne({ name: idorname });
       id = trigger.id;
     }

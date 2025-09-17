@@ -64,7 +64,7 @@ const btnStylesForLink = [
   },
 ];
 
-const buildCustomInput = (id, attrs) => {
+const buildCustomInput = (id, attrs, file_name) => {
   const __ = getReq__();
   return (
     button(
@@ -81,7 +81,7 @@ const buildCustomInput = (id, attrs) => {
         id: `${id}-custom-text`,
         class: "custom-file-label",
       },
-      __("No file chosen")
+      !file_name ? __("No file chosen") : ""
     ) +
     script(
       domReady(
@@ -254,7 +254,7 @@ module.exports = {
           accept: attrs.files_accept_filter || undefined,
           ...(customInput ? { hidden: true } : {}),
         }) +
-        (customInput ? buildCustomInput(id, attrs) : "") +
+        (customInput ? buildCustomInput(id, attrs, file_name) : "") +
         span({ class: "file-upload-exising" }, text(file_name || ""))
       );
     },

@@ -36,11 +36,18 @@ router.post(
     const table = Table.findOne({ name: tableName });
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const where = { [table.pk_name]: id };
-
+    const resultCollector = {};
+    let success = false;
     try {
-      if (role <= table.min_role_write)
-        await table.deleteRows(where, req.user || { role_id: 100 });
-      else if (
+      if (role <= table.min_role_write) {
+        await table.deleteRows(
+          where,
+          req.user || { role_id: 100 },
+          false,
+          resultCollector
+        );
+        success = true;
+      } else if (
         (table.ownership_field_id || table.ownership_formula) &&
         req.user
       ) {
@@ -48,9 +55,15 @@ router.post(
           { id },
           { forUser: req.user, forPublic: !req.user }
         );
-        if (row && table.is_owner(req.user, row))
-          await table.deleteRows(where, req.user || { role_id: 100 });
-        else req.flash("error", req.__("Not authorized"));
+        if (row && table.is_owner(req.user, row)) {
+          await table.deleteRows(
+            where,
+            req.user || { role_id: 100 },
+            false,
+            resultCollector
+          );
+          success = true;
+        } else req.flash("error", req.__("Not authorized"));
       } else
         req.flash(
           "error",
@@ -60,8 +73,9 @@ router.post(
       console.error(e);
       req.flash("error", e.message);
     }
-    if (req.xhr) res.send("OK");
-    else
+    if (req.xhr) {
+      res.json({ success, ...resultCollector });
+    } else
       res.redirect(
         (is_relative_url(redirect) && redirect) || `/list/${table.name}`
       );

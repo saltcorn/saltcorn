@@ -1680,5 +1680,7 @@
 	"Custom event for real-time updates": "Custom event for real-time updates",
 	"Responsve collapse": "Responsve collapse",
 	"Horizontal display on smaller screens": "Horizontal display on smaller screens",
-	"Collapse breakpoint (px)": "Collapse breakpoint (px)"
+	"Collapse breakpoint (px)": "Collapse breakpoint (px)",
+	"There currently no triggers, but you can create one by clicking the button below. Triggers are actions that are run in response to some event which can be periodic, caused by a database table change, a button click or some other external event.": "There currently no triggers, but you can create one by clicking the button below. Triggers are actions that are run in response to some event which can be periodic, caused by a database table change, a button click or some other external event.",
+	"A trigger is defined by a condition (when the trigger will run), an action (which is supplied by a module) and the configuration for that action.": "A trigger is defined by a condition (when the trigger will run), an action (which is supplied by a module) and the configuration for that action."
 }

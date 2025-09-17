@@ -91,20 +91,22 @@ router.get(
         },
         {
           type: "card",
-          class: "mt-0",
+          class: "mt-0 card-max-full-screen",
           title: req.__("Your views"),
+          footer:
+            tables.length > 0 &&
+            a(
+              { href: `/viewedit/new`, class: "btn btn-primary" },
+              req.__("Create view")
+            ),
           contents: [
             viewMarkup,
-            tables.length > 0
-              ? a(
-                  { href: `/viewedit/new`, class: "btn btn-primary" },
-                  req.__("Create view")
+            tables.length === 0 &&
+              p(
+                req.__(
+                  "You must create at least one table before you can create views."
                 )
-              : p(
-                  req.__(
-                    "You must create at least one table before you can create views."
-                  )
-                ),
+              ),
           ],
         },
       ],

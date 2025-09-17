@@ -293,7 +293,7 @@ describe("base plugin actions", () => {
       configuration: { delete_triggering_row: true },
       user: { id: 1, role_id: 1 },
     } as any);
-    expect(result).toStrictEqual(undefined);
+    expect(result).toStrictEqual({});
 
     const row1 = await patients.getRow({ name: "Del1" });
     expect(row1).toBe(null);
@@ -308,7 +308,7 @@ describe("base plugin actions", () => {
       },
       user: { id: 1, role_id: 1 },
     } as any);
-    expect(result1).toStrictEqual(undefined);
+    expect(result1).toStrictEqual({});
     const row2 = await patients.getRow({ name: "Del2" });
     expect(row2).toBe(null);
   });

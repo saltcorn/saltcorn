@@ -1282,6 +1282,9 @@ function initialize_page() {
   $("[data-explainers]").change(function () {
     setExplainer(this);
   });
+  $(".card-max-full-screen").each(function () {
+    card_max_full_screen($(this));
+  });
 
   const codes = [];
   $("textarea.to-code").each(function () {
@@ -1423,6 +1426,35 @@ function enlarge_in_code($textarea, cm) {
     cm.refresh();
     $card.css("min-height", newCardHeight + "px");
   }
+}
+function card_max_full_screen($card_outer) {
+  const $card = $card_outer.find(".card-body");
+  const cardTop = $card_outer.offset().top;
+  const cardHeight = $card.outerHeight();
+  const cardFooterHeight = $card_outer.find(".card-footer").outerHeight() || 0;
+  const cardHeaderHeight = $card_outer.find(".card-header").outerHeight() || 0;
+  const vh = $(window).height();
+  const newCardHeight = vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
+  let is_changed = false;
+  if (newCardHeight < cardHeight) {
+    $card.css("max-height", newCardHeight + "px").css("overflow-y", "scroll");
+    is_changed = true;
+  }
+  window.addEventListener(
+    "resize",
+    function () {
+      const vh = $(window).height();
+      const newCardHeight =
+        vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
+      if (is_changed || newCardHeight < cardHeight) {
+        $card
+          .css("max-height", newCardHeight + "px")
+          .css("overflow-y", "scroll");
+        is_changed = true;
+      }
+    },
+    true
+  );
 }
 
 function cancel_inline_edit(e, opts1) {
