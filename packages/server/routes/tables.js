@@ -787,7 +787,8 @@ router.get(
     let id = parseInt(idorname);
     let table;
     if (id) [table] = await Table.find({ id });
-    else {
+    
+    if (!table) {
       [table] = await Table.find({ name: idorname });
     }
 

@@ -918,7 +918,8 @@ router.get(
     let trigger;
     let id = parseInt(idorname);
     if (id) trigger = await Trigger.findOne({ id });
-    else {
+
+    if (!trigger) {
       trigger = await Trigger.findOne({ name: idorname });
       id = trigger.id;
     }
