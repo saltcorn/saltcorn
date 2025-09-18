@@ -2972,7 +2972,10 @@ module.exports = {
           results.push(uptRes);
           for (const field of repeatFields) {
             const childTable = Table.findOne({ id: field.metadata?.table_id });
-            await childTable.deleteRows({ [field.metadata?.relation]: row.id });
+            await childTable.deleteRows(
+              { [field.metadata?.relation]: row.id },
+              req.user || { role_id: 100 }
+            );
             for (const childRow of childRows[field.name]) {
               childRow[field.metadata?.relation] = row.id;
               const insRow = { ...childRow };

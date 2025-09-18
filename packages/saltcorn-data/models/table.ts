@@ -1032,7 +1032,7 @@ class Table implements AbstractTable {
       rows = await this.getJoinedRows({
         where,
         forUser: user,
-        forPublic: !user,
+        forPublic: user?.role_id === 100,
       });
     }
 
@@ -1046,6 +1046,8 @@ class Table implements AbstractTable {
       if (!rows)
         rows = await this.getJoinedRows({
           where,
+          forUser: user,
+          forPublic: user?.role_id === 100,
         });
       for (const trigger of triggers) {
         for (const row of rows) {
