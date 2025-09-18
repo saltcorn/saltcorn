@@ -636,6 +636,8 @@ function get_form_data(e_in, rndid) {
   return data;
 }
 
+let global_join_vals_cache = {};
+
 function get_form_record(e_in, select_labels) {
   const rec = {};
 
@@ -693,10 +695,24 @@ function get_form_record(e_in, select_labels) {
       for (const { ref, target, refTable } of joinFields) {
         if (!rec[ref]) continue;
         keyVals[ref] = rec[ref];
-        $.ajax(`/api/${refTable}?id=${rec[ref]}`, {
+        const url = `/api/${refTable}?id=${rec[ref]}`;
+        if (global_join_vals_cache[url] === "fetching") continue;
+        if (global_join_vals_cache[url]) {
+          const jvs = $(e_in).prop("data-join-values") || {};
+
+          jvs[ref] = global_join_vals_cache[url];
+          $(e_in).prop("data-join-values", jvs);
+          apply_showif();
+          continue;
+        }
+        global_join_vals_cache[url] = "fetching";
+        $.ajax(url, {
           success: (val) => {
             const jvs = $(e_in).prop("data-join-values") || {};
-
+            global_join_vals_cache[url] = val.success[0];
+            setTimeout(() => {
+              global_join_vals_cache = {};
+            }, 2000);
             jvs[ref] = val.success[0];
             $(e_in).prop("data-join-values", jvs);
             apply_showif();
