@@ -169,6 +169,7 @@ function add_extra_state(base_url, extra_state_fml, row, outerState = {}) {
 const apply_showif_fetching_urls = new Set();
 
 const global_fetch_options_cache = {};
+const global_calc_field_cache = {};
 
 function apply_showif() {
   const isNode = getIsNode();
@@ -543,10 +544,13 @@ function apply_showif() {
       activate_onchange_coldef();
       return;
     }
+    const srcurl = e.attr("data-source-url");
+    const cachekey = srcurl + JSON.stringify(rec);
 
     const cb = {
       success: (data) => {
         e.html(data);
+        global_calc_field_cache[cachekey] = data;
         const cacheNow = e.prop("data-source-url-cache") || {};
         e.prop("data-source-url-cache", {
           ...cacheNow,
@@ -557,6 +561,8 @@ function apply_showif() {
       },
       error: (err) => {
         console.error(err);
+        global_calc_field_cache[cachekey] = null;
+
         const cacheNow = e.prop("data-source-url-cache") || {};
         e.prop("data-source-url-cache", {
           ...cacheNow,
@@ -565,9 +571,16 @@ function apply_showif() {
         e.html("");
       },
     };
-    if (isNode) ajax_post_json(e.attr("data-source-url"), rec, cb);
+    if (global_calc_field_cache[cachekey] === "fetching") {
+      //do nothing
+    } else if (global_calc_field_cache[cachekey])
+      cb.success(global_calc_field_cache[cachekey]);
     else {
-      local_post_json(e.attr("data-source-url"), rec, cb);
+      global_calc_field_cache[cachekey] = "fetching";
+      if (isNode) ajax_post_json(srcurl, rec, cb);
+      else {
+        local_post_json(srcurl, rec, cb);
+      }
     }
   });
   const locale =
