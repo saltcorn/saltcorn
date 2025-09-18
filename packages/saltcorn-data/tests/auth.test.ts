@@ -223,6 +223,10 @@ describe("Table with row ownership field", () => {
       { age: 99, lastname: "Tim", owner: owner_user.id },
       owner_user
     );
+    const alexid = await persons.insertRow(
+      { age: 99, lastname: "Alex", owner: owner_user.id },
+      owner_user
+    );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
     //not deleting as nonowner
     await persons.deleteRows({ id: timid }, non_owner_user);
@@ -232,12 +236,12 @@ describe("Table with row ownership field", () => {
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
 
     //deleting without user
-    await persons.deleteRows({ id: joeid });
-    expect(await persons.getRow({ lastname: "Joe" })).toBe(null);
+    await persons.deleteRows({ id: timid });
+    expect(await persons.getRow({ lastname: "Tim" })).toBe(null);
 
     //deleting as owner
-    await persons.deleteRows({ id: timid }, owner_user);
-    expect(await persons.getRow({ lastname: "Tim" })).toBe(null);
+    await persons.deleteRows({ id: alexid }, owner_user);
+    expect(await persons.getRow({ lastname: "Alex" })).toBe(null);
 
     await persons.delete();
   });
