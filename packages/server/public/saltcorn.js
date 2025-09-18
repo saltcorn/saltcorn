@@ -532,6 +532,12 @@ function saveAndContinue(e, k, event) {
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
   var form_data = form.serialize();
+
+  if (form.prop("data-last-save-success") === form_data) {
+    if (k) k(res);
+    return;
+  }
+
   ajax_indicator(true, e);
   $.ajax(url, {
     type: "POST",
@@ -543,6 +549,7 @@ function saveAndContinue(e, k, event) {
       ajax_indicator(false);
       form.removeAttr("data-unsaved-changes");
       form.parent().find(".full-form-error").text("");
+      form.prop("data-last-save-success", form_data);
       if (res.id && form.find("input[name=id")) {
         form.append(
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
@@ -755,8 +762,8 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
       "CSRF-Token": _sc_globalCsrf,
     },
     data: form_data,
-    success: function (res) {      
-      common_done(res)
+    success: function (res) {
+      common_done(res);
       if (reload_on_done) location.reload();
     },
     error: checkNetworkError,
@@ -1426,8 +1433,7 @@ function ensure_script_loaded(src, callback) {
       if (typeof callback === "function") callback();
     };
     document.getElementsByTagName("body")[0].appendChild(tag);
-  }
-  else if (typeof callback === "function") callback();
+  } else if (typeof callback === "function") callback();
 }
 
 function ensure_css_loaded(src) {
