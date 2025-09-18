@@ -518,6 +518,7 @@ const nonGreenlockWorkerSetup = async (appargs, port, host) => {
 };
 
 const tenantFromSocket = (socket, hostPartOffset) => {
+  if (!db.is_it_multi_tenant()) return db.connectObj.default_schema;
   const header = socket.request.headers.host;
   const hostOnly = header?.split(":")[0];
   if (hostOnly) {
