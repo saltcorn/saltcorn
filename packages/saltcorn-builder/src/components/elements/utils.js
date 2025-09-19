@@ -946,6 +946,19 @@ const ConfigField = ({
       }, []);
   }
 
+  const intDispFn = () => (
+    <input
+      type="number"
+      className={`field-${field?.name} form-control`}
+      step={field.step || 1}
+      min={field.min}
+      max={field.max}
+      name={field?.name}
+      value={value || ""}
+      onChange={(e) => e.target && myOnChange(e.target.value)}
+    />
+  );
+
   const dispatch = {
     String() {
       if (field.attributes?.options) {
@@ -1017,18 +1030,8 @@ const ConfigField = ({
           ))}
       </select>
     ),
-    Integer: () => (
-      <input
-        type="number"
-        className={`field-${field?.name} form-control`}
-        step={field.step || 1}
-        min={field.min}
-        max={field.max}
-        name={field?.name}
-        value={value || ""}
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-      />
-    ),
+    Integer: intDispFn,
+    number: intDispFn,
     Float: () => (
       <input
         type="number"
