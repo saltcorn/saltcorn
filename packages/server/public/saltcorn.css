@@ -892,3 +892,7 @@ input[type="file"].file-has-existing {
 .toggle-password-vis {
   cursor: pointer;
 }
+
+.card-max-full-screen .card-body:focus {
+    outline-width: 0;
+}

@@ -166,6 +166,7 @@ export type PluginWrap = (arg0: PluginWrapArg) => string;
 export type PluginLayout = {
   wrap: PluginWrap;
   authWrap?: (arg0: PluginAuthwrapArg) => string;
+  renderBody?: (arg: any) => string;
 };
 
 type Attribute = {

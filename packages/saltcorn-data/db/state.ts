@@ -130,12 +130,6 @@ const get_standard_icons = () => {
   return icons;
 };
 
-const withRenderBody = (layouts: any) => {
-  for (let i = layouts.length - 1; i >= 0; i--)
-    if (layouts[i].renderBody) return layouts[i];
-  throw new Error("No layout with renderBody found");
-};
-
 /**
  * State Class
  * @category saltcorn-data
@@ -168,7 +162,7 @@ class State {
   fonts: Record<string, string>;
   icons: Array<string>;
   layouts: Record<string, PluginLayout>;
-  userLayouts: Record<string, PluginLayout>;
+  userLayouts: Record<string, PluginLayout & { config: GenObj }>;
   headers: Record<string, Array<Header>>;
   assets_by_role: Record<string, Array<Header>>;
   function_context: Record<string, Function>;
@@ -363,7 +357,7 @@ class State {
    * @param {object} user
    * @returns {object}
    */
-  getLayout(user?: User) {
+  getLayout(user?: User): PluginLayout & { config: GenObj } {
     if (user?.email && this.userLayouts[user.email]) {
       return this.userLayouts[user.email];
     } else {
@@ -371,12 +365,33 @@ class State {
       const layout_by_role = this.getConfig("layout_by_role");
       if (layout_by_role && layout_by_role[role_id]) {
         const chosen = this.layouts[layout_by_role[role_id]];
-        if (chosen) return chosen;
+
+        if (chosen)
+          return {
+            ...chosen,
+            config: this.plugin_cfgs[layout_by_role[role_id]],
+          };
       }
-      const layoutvs = Object.values(this.layouts);
-      return isNode()
-        ? layoutvs[layoutvs.length - 1]
+      const withRenderBody = (
+        layouts: [string, PluginLayout][]
+      ): PluginLayout & { config: GenObj } => {
+        for (let i = layouts.length - 1; i >= 0; i--)
+          if (layouts[i][1].renderBody)
+            return {
+              ...layouts[i][1],
+              config: this.plugin_cfgs[layouts[i][0]],
+            };
+        throw new Error("No layout with renderBody found");
+      };
+
+      const layoutvs = Object.entries(this.layouts);
+      const layout = isNode()
+        ? {
+            ...layoutvs[layoutvs.length - 1][1],
+            config: this.plugin_cfgs[layoutvs[layoutvs.length - 1][0]],
+          }
         : withRenderBody(layoutvs);
+      return layout;
     }
   }
 
@@ -570,7 +585,7 @@ class State {
           ...pluginCfg,
           ...user._attributes.layout.config,
         });
-        this.userLayouts[user.email] = userLayout;
+        this.userLayouts[user.email] = { ...userLayout, config: pluginCfg };
       }
     }
   }

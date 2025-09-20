@@ -464,6 +464,7 @@ class File {
     const schema = db.getTenantSchemaPrefix();
     for (const field of fileFields) {
       const table = Table.findOne({ id: field.table_id });
+      if (table.external || table.provider_name) continue;
       await db.query(
         `update ${schema}"${db.sqlsanitize(table.name)}" set "${
           field.name
