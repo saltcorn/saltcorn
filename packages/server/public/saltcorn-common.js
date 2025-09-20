@@ -1440,6 +1440,8 @@ function card_max_full_screen($card_outer) {
     $card.css("max-height", newCardHeight + "px").css("overflow-y", "scroll");
     is_changed = true;
   }
+  $card.attr("tabindex", "-1")
+  $card.focus()
   window.addEventListener(
     "resize",
     function () {
