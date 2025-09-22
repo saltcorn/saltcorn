@@ -552,7 +552,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   trigCfgForm.values = trigger.configuration;
   let copilot_form = "";
 
-  if (getState().functions.copilot_generate_workflow) {
+  if (getState().functions.copilot_generate_workflow && !steps.length) {
     copilot_form = renderForm(
       new Form({
         action: `/actions/gen-copilot/${id}`,
