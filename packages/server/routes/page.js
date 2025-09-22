@@ -19,7 +19,7 @@ const {
   getRandomPage,
 } = require("../routes/utils.js");
 const { isTest } = require("@saltcorn/data/utils");
-const { add_edit_bar } = require("../markup/admin.js");
+const { add_edit_bar, add_results_to_contents } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
 const db = require("@saltcorn/data/db");
@@ -54,14 +54,22 @@ const runPage = async (page, req, res, tic) => {
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
 
-    if (!isTest()) {
-      Trigger.emitEvent("PageLoad", null, req.user, {
-        text: req.__("Page '%s' was loaded", page.name),
-        type: "page",
-        name: page.name,
-        render_time: ms,
-        query: req.query,
-      });
+    const resultCollector = {};
+    if (!isTest() && !req.xhr) {
+      await Trigger.runTableTriggers(
+        "PageLoad",
+        null,
+        {
+          text: req.__("Page '%s' was loaded", page.name),
+          type: "page",
+          name: page.name,
+          render_time: ms,
+          query: req.query,
+        },
+        resultCollector,
+        req.user,
+        { req }
+      );
     }
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
     else
@@ -73,15 +81,18 @@ const runPage = async (page, req, res, tic) => {
           no_menu: page.attributes?.no_menu,
           requestFluidLayout: page.attributes?.request_fluid_layout,
         } || `${page.name} page`,
-        req.smr
-          ? contents
-          : add_edit_bar({
-              role,
-              title: page.name,
-              what: req.__("Page"),
-              url: `/pageedit/edit/${encodeURIComponent(page.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
-              contents,
-            })
+        add_results_to_contents(
+          req.smr
+            ? contents
+            : add_edit_bar({
+                role,
+                title: page.name,
+                what: req.__("Page"),
+                url: `/pageedit/edit/${encodeURIComponent(page.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
+                contents,
+              }),
+          resultCollector
+        )
       );
   } else {
     getState().log(2, `Page ${page.name} not authorized`);
