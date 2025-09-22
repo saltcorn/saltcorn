@@ -25,6 +25,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const { fileUploadForm } = require("../markup/forms");
 const { get_base_url, sendHtmlFile, getEligiblePage } = require("./utils.js");
 const semver = require("semver");
+const { add_results_to_contents } = require("../markup/admin.js");
 
 /**
  * Tables List
@@ -554,10 +555,17 @@ const no_views_logged_in = async (req, res) => {
  */
 const get_config_response = async (role_id, res, req) => {
   const state = getState();
-  const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+  const maintenanceModeEnabled = state.getConfig(
+    "maintenance_mode_enabled",
+    false
+  );
   const maintenanceModePage = state.getConfig("maintenance_mode_page", "");
 
-  if(maintenanceModeEnabled && (!req.user || req.user.role_id > 1) && maintenanceModePage) {
+  if (
+    maintenanceModeEnabled &&
+    (!req.user || req.user.role_id > 1) &&
+    maintenanceModePage
+  ) {
     const db_page = await Page.findOne({ name: maintenanceModePage });
     if (db_page) {
       res.sendWrap(
@@ -583,6 +591,21 @@ const get_config_response = async (role_id, res, req) => {
     no_menu,
     requestFluidLayout
   ) => {
+    const resultCollector = {};
+
+    await Trigger.runTableTriggers(
+      "PageLoad",
+      null,
+      {
+        text: "Homepage loaded",
+        type: "home",
+        query: req.query,
+      },
+      resultCollector,
+      req.user,
+      { req }
+    );
+
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
     else
       res.sendWrap(
@@ -593,7 +616,7 @@ const get_config_response = async (role_id, res, req) => {
           no_menu,
           requestFluidLayout,
         },
-        contents
+        add_results_to_contents(contents, resultCollector)
       );
   };
   const modernCfg = getState().getConfig("home_page_by_role", false);

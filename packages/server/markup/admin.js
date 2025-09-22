@@ -15,6 +15,8 @@ const {
   span,
   ul,
   li,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const { configTypes } = require("@saltcorn/data/models/config");
@@ -148,10 +150,23 @@ const add_edit_bar = ({
     )
   );
 
+  return append_to_contents(contents, bar);
+};
+
+const append_to_contents = (contents, toAppend) => {
   if (contents.above) {
-    contents.above.unshift(bar);
+    contents.above.unshift(toAppend);
     return contents;
-  } else return { above: [bar, contents] };
+  } else return { above: [toAppend, contents] };
+};
+
+const add_results_to_contents = (content, resultCollector) => {
+  if (Object.keys(resultCollector).length) {
+    return append_to_contents(
+      content,
+      script(domReady(`common_done(${JSON.stringify(resultCollector)})`))
+    );
+  } else return content;
 };
 
 /**
@@ -688,4 +703,6 @@ module.exports = {
   flash_restart,
   send_tags_page,
   upload_language_pack,
+  append_to_contents,
+  add_results_to_contents,
 };
