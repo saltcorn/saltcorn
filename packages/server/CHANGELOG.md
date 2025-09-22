@@ -2,11 +2,20 @@
 
 ## 1.4.0 - In development
 
+* When PageLoad triggers return directives (`notify`, `eval_js` etc.) these are now run on the the 
+  client page
+
+* When Table.deleteRows is called without a user argument, it implicitly has admin access, to make 
+  it consistent ith other methods
+
+* Some initial and limited support for composite primary keys in discovered and external tables. 
+
 ### Fixes
 
 * Fix formula constraints to support more translations to SQL
 * Edit: preserve file choices on form errors.
 * Fix format fieldview for only day Dates.
+* Fix full screen width on containers - this conflicted with position, which it now overrides.
 
 ## 1.3.1 - Released 31 August 2025
 
