@@ -683,6 +683,7 @@ const render = ({
           : `${what}: ${segment[what].map((p: string) => p + "px").join(" ")};`;
       let flexStyles = "";
       Object.keys(style || {}).forEach((k) => {
+        if (fullPageWidth && k === "position") return;
         flexStyles += `${k}:${style[k]};`;
       });
       const to_bs5 = (s: string) => {
