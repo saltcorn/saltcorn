@@ -263,7 +263,7 @@ export const tryCatchInTransaction = async (f: Function, onError: Function) => {
   try {
     return await f();
   } catch (error) {
-    await onError(error);
+    return await onError(error);
   }
 };
 

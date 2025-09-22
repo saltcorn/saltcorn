@@ -935,36 +935,45 @@ class Table implements AbstractTable {
   }
 
   private async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
-    if (ids.length > 0) {
-      const schema = db.getTenantSchemaPrefix();
-      const pkName = this.pk_name || "id";
-      if (isNode()) {
-        await db.query(
-          `delete from ${schema}"${db.sqlsanitize(
-            this.name
-          )}_sync_info" where ref in (
+    await db.tryCatchInTransaction(
+      async () => {
+        if (ids.length > 0) {
+          const schema = db.getTenantSchemaPrefix();
+          const pkName = this.pk_name || "id";
+          if (isNode()) {
+            await db.query(
+              `delete from ${schema}"${db.sqlsanitize(
+                this.name
+              )}_sync_info" where ref in (
             ${ids.map((row) => row[pkName]).join(",")})`
-        );
-        await db.query(
-          `insert into ${schema}"${db.sqlsanitize(
-            this.name
-          )}_sync_info" values ${ids
-            .map(
-              (row) =>
-                `(${row[pkName]}, date_trunc('milliseconds', to_timestamp( ${
-                  timestamp.valueOf() / 1000.0
-                } ) ), true)`
-            )
-            .join(",")}`
-        );
-      } else {
-        await db.query(
-          `update "${db.sqlsanitize(this.name)}_sync_info"
+            );
+            await db.query(
+              `insert into ${schema}"${db.sqlsanitize(
+                this.name
+              )}_sync_info" values ${ids
+                .map(
+                  (row) =>
+                    `(${row[pkName]}, date_trunc('milliseconds', to_timestamp( ${
+                      timestamp.valueOf() / 1000.0
+                    } ) ), true)`
+                )
+                .join(",")}`
+            );
+          } else {
+            await db.query(
+              `update "${db.sqlsanitize(this.name)}_sync_info"
            set deleted = true, modified_local = true
            where ref in (${ids.map((row) => row[pkName]).join(",")})`
-        );
+            );
+          }
+        }
+      },
+      (e: Error) => {
+        require("../db/state")
+          .getState()
+          .log(2, `Error in addDeleteSyncInfo: ${e.message}`);
       }
-    }
+    );
   }
 
   /**
@@ -1743,42 +1752,62 @@ class Table implements AbstractTable {
     if (!id && retry <= 3) await this.insert_history_row(v1, retry + 1);
   }
 
-  async latestSyncInfo(id: PrimaryKeyValue) {
+  async latestSyncInfo(id: PrimaryKeyValue): Promise<Row | null> {
     const rows = await this.latestSyncInfos([id]);
     return rows?.length === 1 ? rows[0] : null;
   }
 
-  async latestSyncInfos(ids: PrimaryKeyValue[]) {
-    const schema = db.getTenantSchemaPrefix();
-    const dbResult = await db.query(
-      `select max(last_modified) "last_modified", ref
-       from ${schema}"${db.sqlsanitize(this.name)}_sync_info"
-       group by ref having ref = ${db.isSQLite ? "" : "ANY"} ($1)`,
-      db.isSQLite ? ids : [ids]
+  async latestSyncInfos(ids: PrimaryKeyValue[]): Promise<Row[] | null> {
+    return await db.tryCatchInTransaction(
+      async () => {
+        const schema = db.getTenantSchemaPrefix();
+        const dbResult = await db.query(
+          `select max(last_modified) "last_modified", ref
+        from ${schema}"${db.sqlsanitize(this.name)}_sync_info"
+        group by ref having ref = ${db.isSQLite ? "" : "ANY"} ($1)`,
+          db.isSQLite ? ids : [ids]
+        );
+        return dbResult.rows;
+      },
+      (e: Error) => {
+        require("../db/state")
+          .getState()
+          .log(2, `Error in latestSyncInfos: ${e.message}`);
+        return null;
+      }
     );
-    return dbResult.rows;
   }
 
   private async insertSyncInfo(id: PrimaryKeyValue, syncTimestamp?: Date) {
-    const schema = db.getTenantSchemaPrefix();
-    if (isNode()) {
-      await db.query(
-        `insert into ${schema}"${db.sqlsanitize(
-          this.name
-        )}_sync_info" values($1,
+    await db.tryCatchInTransaction(
+      async () => {
+        const schema = db.getTenantSchemaPrefix();
+        if (isNode()) {
+          await db.query(
+            `insert into ${schema}"${db.sqlsanitize(
+              this.name
+            )}_sync_info" values($1,
         date_trunc('milliseconds', to_timestamp($2)))`,
-        [
-          id,
-          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0,
-        ]
-      );
-    } else {
-      await db.query(
-        `insert into "${db.sqlsanitize(this.name)}_sync_info"
+            [
+              id,
+              (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
+                1000.0,
+            ]
+          );
+        } else {
+          await db.query(
+            `insert into "${db.sqlsanitize(this.name)}_sync_info"
          (ref, modified_local, deleted) 
          values('${id}', true, false)`
-      );
-    }
+          );
+        }
+      },
+      (e: Error) => {
+        require("../db/state")
+          .getState()
+          .log(2, `Error in insertSyncInfo: ${e.message}`);
+      }
+    );
   }
 
   private async updateSyncInfo(
@@ -1786,28 +1815,38 @@ class Table implements AbstractTable {
     oldLastModified: Date,
     syncTimestamp?: Date
   ) {
-    const schema = db.getTenantSchemaPrefix();
-    if (!db.isSQLite) {
-      await db.query(
-        `update ${schema}"${db.sqlsanitize(
-          this.name
-        )}_sync_info" set last_modified=date_trunc('milliseconds', to_timestamp($1)) where ref=$2 and last_modified = to_timestamp($3)`,
-        [
-          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0,
-          id,
-          oldLastModified.valueOf() / 1000.0,
-        ]
-      );
-    } else {
-      await db.query(
-        `update "${db.sqlsanitize(
-          this.name
-        )}_sync_info" set modified_local = true 
+    await db.tryCatchInTransaction(
+      async () => {
+        const schema = db.getTenantSchemaPrefix();
+        if (!db.isSQLite) {
+          await db.query(
+            `update ${schema}"${db.sqlsanitize(
+              this.name
+            )}_sync_info" set last_modified=date_trunc('milliseconds', to_timestamp($1)) where ref=$2 and last_modified = to_timestamp($3)`,
+            [
+              (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
+                1000.0,
+              id,
+              oldLastModified.valueOf() / 1000.0,
+            ]
+          );
+        } else {
+          await db.query(
+            `update "${db.sqlsanitize(
+              this.name
+            )}_sync_info" set modified_local = true 
          where ref = ${id} and last_modified = ${
            oldLastModified ? oldLastModified.valueOf() : "null"
          }`
-      );
-    }
+          );
+        }
+      },
+      (e: Error) => {
+        require("../db/state")
+          .getState()
+          .log(2, `Error in updateSyncInfo: ${e.message}`);
+      }
+    );
   }
 
   /**
@@ -2123,22 +2162,32 @@ class Table implements AbstractTable {
       });
 
     if (this.has_sync_info) {
-      if (isNode()) {
-        const schemaPrefix = db.getTenantSchemaPrefix();
-        await db.query(
-          `insert into ${schemaPrefix}"${db.sqlsanitize(this.name)}_sync_info"
+      await db.tryCatchInTransaction(
+        async () => {
+          if (isNode()) {
+            const schemaPrefix = db.getTenantSchemaPrefix();
+            await db.query(
+              `insert into ${schemaPrefix}"${db.sqlsanitize(this.name)}_sync_info"
            values(${id}, date_trunc('milliseconds', to_timestamp(${
              (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
              1000.0
            })))`
-        );
-      } else {
-        await db.query(
-          `insert into "${db.sqlsanitize(this.name)}_sync_info"
+            );
+          } else {
+            await db.query(
+              `insert into "${db.sqlsanitize(this.name)}_sync_info"
            (last_modified, ref, modified_local, deleted)
            values(NULL, ${id}, true, false)`
-        );
-      }
+            );
+          }
+        },
+        (e: Error) => {
+          state.log(
+            2,
+            `Error inserting sync info for table ${this.name}: ${e.message}`
+          );
+        }
+      );
     }
     const newRow = { [pk_name]: id, ...v };
     await this.auto_update_calc_aggregations(newRow);
@@ -2522,44 +2571,68 @@ class Table implements AbstractTable {
   }
 
   private async create_sync_info_table(): Promise<void> {
-    const schemaPrefix = db.getTenantSchemaPrefix();
-    const fields = this.fields;
-    const pk = fields.find((f) => f.primary_key)?.name;
-    if (!pk) {
-      throw new Error("Unable to find a field with a primary key.");
-    }
-    await db.query(
-      `create table ${schemaPrefix}"${sqlsanitize(
-        this.name
-      )}_sync_info" (ref integer, last_modified timestamp, deleted boolean default false)`
-    );
-    await db.query(
-      `create index "${sqlsanitize(
-        this.name
-      )}_sync_info_ref_index" on ${schemaPrefix}"${sqlsanitize(
-        this.name
-      )}_sync_info"(ref)`
-    );
-    await db.query(
-      `create index "${sqlsanitize(
-        this.name
-      )}_sync_info_lm_index" on ${schemaPrefix}"${sqlsanitize(
-        this.name
-      )}_sync_info"(last_modified)`
-    );
-    await db.query(
-      `create index "${sqlsanitize(
-        this.name
-      )}_sync_info_deleted_index" on ${schemaPrefix}"${sqlsanitize(
-        this.name
-      )}_sync_info"(deleted)`
+    await db.tryCatchInTransaction(
+      async () => {
+        const schemaPrefix = db.getTenantSchemaPrefix();
+        const fields = this.fields;
+        const pk = fields.find((f) => f.primary_key)?.name;
+        if (!pk) {
+          throw new Error("Unable to find a field with a primary key.");
+        }
+        await db.query(
+          `create table ${schemaPrefix}"${sqlsanitize(
+            this.name
+          )}_sync_info" (ref integer, last_modified timestamp, deleted boolean default false)`
+        );
+        await db.query(
+          `create index "${sqlsanitize(
+            this.name
+          )}_sync_info_ref_index" on ${schemaPrefix}"${sqlsanitize(
+            this.name
+          )}_sync_info"(ref)`
+        );
+        await db.query(
+          `create index "${sqlsanitize(
+            this.name
+          )}_sync_info_lm_index" on ${schemaPrefix}"${sqlsanitize(
+            this.name
+          )}_sync_info"(last_modified)`
+        );
+        await db.query(
+          `create index "${sqlsanitize(
+            this.name
+          )}_sync_info_deleted_index" on ${schemaPrefix}"${sqlsanitize(
+            this.name
+          )}_sync_info"(deleted)`
+        );
+      },
+      (e: Error) => {
+        require("../db/state")
+          .getState()
+          .log(
+            2,
+            `Error creating sync_info table for ${this.name}: ${e.message}`
+          );
+      }
     );
   }
 
   private async drop_sync_table(): Promise<void> {
-    const schemaPrefix = db.getTenantSchemaPrefix();
-    await db.query(`
-      drop table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info";`);
+    await db.tryCatchInTransaction(
+      async () => {
+        const schemaPrefix = db.getTenantSchemaPrefix();
+        await db.query(`
+        drop table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info";`);
+      },
+      (e: any) => {
+        require("../db/state")
+          .getState()
+          .log(
+            2,
+            `Error dropping sync_info table for ${this.name}: ${e.message}`
+          );
+      }
+    );
   }
 
   /**
