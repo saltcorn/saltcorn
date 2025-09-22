@@ -150,12 +150,13 @@ router.get(
     }
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
-    if (!isTest())
+    if (!isTest() && !req.xhr)
       Trigger.emitEvent("PageLoad", null, req.user, {
         text: req.__("View '%s' was loaded", viewname),
         type: "view",
         name: viewname,
         render_time: ms,
+        query: req.query,
       });
     if (typeof contents0 === "object" && contents0.goto)
       res.redirect(contents0.goto);

@@ -60,6 +60,7 @@ const runPage = async (page, req, res, tic) => {
         type: "page",
         name: page.name,
         render_time: ms,
+        query: req.query,
       });
     }
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
