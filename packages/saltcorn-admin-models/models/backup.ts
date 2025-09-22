@@ -585,6 +585,8 @@ const restore_tables = async (
   let err;
   const tables = await Table.find();
   for (const table of tables) {
+    getState().log(6, `restoring table ${table.name}`);
+
     const fnm_csv =
       table.name === "users"
         ? join(dirpath, "users.csv")
@@ -599,7 +601,10 @@ const restore_tables = async (
         fnm_json,
         table.name === "users" && !restore_first_user
       );
-      if (instanceOfErrorMsg(res)) err = (err || "") + res.error;
+      if (instanceOfErrorMsg(res)) {
+        console.error(err);
+        err = (err || "") + res.error;
+      }
     } else if (existsSync(fnm_csv)) {
       const res = await table.import_csv_file(fnm_csv, {
         skip_first_data_row: table.name === "users" && !restore_first_user,
@@ -612,14 +617,18 @@ const restore_tables = async (
         "tables",
         sanitiseTableName(table.name) + "__history.json"
       );
-      if (existsSync(fnm_hist_json))
+      if (existsSync(fnm_hist_json)) {
+        getState().log(6, `restoring table history ${table.name}`);
+
         await table.import_json_history_file(fnm_hist_json);
+      }
     }
   }
   for (const table of tables) {
     try {
       await table.enable_fkey_constraints();
     } catch (e: any) {
+      console.error("table restore error", e);
       err = (err || "") + e.message;
     }
   }
