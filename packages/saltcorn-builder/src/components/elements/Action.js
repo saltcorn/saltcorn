@@ -114,6 +114,7 @@ const ActionSettings = () => {
     step_action_names: node.data.props.step_action_names,
     setting_action_n: node.data.props.setting_action_n,
     spinner: node.data.props.spinner,
+    run_asynchron: node.data.props.run_asynchron,
     is_submit_action: node.data.props.is_submit_action,
   }));
   const {
@@ -134,6 +135,7 @@ const ActionSettings = () => {
     step_only_ifs,
     step_action_names,
     spinner,
+    run_asynchron,
     is_submit_action,
   } = node;
   const options = useContext(optionsCtx);
@@ -227,6 +229,8 @@ const ActionSettings = () => {
     step_action_names?.[use_setting_action_n] || "",
     JSON.stringify(configuration?.steps?.[use_setting_action_n]),
   ]);
+
+  const actionFlags = (options.actionAttributes || {})[name] || {};
 
   return (
     <div>
@@ -349,6 +353,18 @@ const ActionSettings = () => {
         />
         <label className="form-check-label">Spinner on click</label>
       </div>
+      {actionFlags.supportsAsync ? (
+        <div className="form-check">
+          <input
+            className="form-check-input"
+            name="block"
+            type="checkbox"
+            checked={run_asynchron}
+            onChange={setAProp("run_asynchron", { checked: true })}
+          />
+          <label className="form-check-label">Run Asynchron</label>
+        </div>
+      ) : null}
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />
       ) : null}

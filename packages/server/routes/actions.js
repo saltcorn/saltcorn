@@ -181,6 +181,10 @@ const triggerForm = async (req, trigger) => {
     workflow: true,
   });
 
+  const asyncActions = [];
+  for (const [name, action] of Object.entries(getState().actions)) {
+    if (action.supportsAsync) asyncActions.push(name);
+  }
   Trigger.when_options.forEach((t) => {
     if (table_triggers.includes(t)) action_options[t] = allActions;
     else action_options[t] = actionsNotRequiringRow;
@@ -345,6 +349,14 @@ const triggerForm = async (req, trigger) => {
         showIf: {
           when_trigger: [...table_triggers, ...additional_triggers_with_onlyif],
         },
+      },
+      {
+        name: "run_asynchron",
+        label: req.__("Run asynchronously"),
+        type: "Bool",
+        parent_field: "configuration",
+        sublabel: req.__("Run action in background and notify on completion"),
+        showIf: { action: asyncActions },
       },
     ],
   });

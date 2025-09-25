@@ -174,6 +174,10 @@ const configuration_workflow = (req) =>
               );
             }
           }
+          const actionAttributes = {};
+          for (const [name, action] of stateActions) {
+            actionAttributes[name] = { supportsAsync: !!action.supportsAsync };
+          }
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
@@ -226,6 +230,7 @@ const configuration_workflow = (req) =>
             builtInActions: edit_build_in_actions,
             //fieldViewConfigForms,
             actionConfigForms,
+            actionAttributes,
             images,
             allowMultiStepAction: true,
             min_role: (myviewrow || {}).min_role,

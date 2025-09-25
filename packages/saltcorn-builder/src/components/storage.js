@@ -204,6 +204,7 @@ const layoutToNodes = (
           step_action_names={segment.step_action_names || ""}
           confirm={segment.confirm}
           spinner={segment.spinner}
+          run_asynchron={segment.run_asynchron || false}
           is_submit_action={segment.is_submit_action}
           configuration={segment.configuration || {}}
           block={segment.block || false}
@@ -702,6 +703,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         confirm: node.props.confirm,
         spinner: node.props.spinner,
         is_submit_action: node.props.is_submit_action,
+        run_asynchron: node.props.run_asynchron,
         nsteps: node.props.nsteps,
         step_only_ifs: node.props.step_only_ifs,
         step_action_names: node.props.step_action_names,
@@ -715,6 +717,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         configuration: node.props.configuration,
         confirm: node.props.confirm,
         is_submit_action: node.props.is_submit_action,
+        run_asynchron: node.props.run_asynchron,
         action_name: node.props.name,
         ...(node.props.name !== "Clear" && node.props.action_row_variable
           ? {

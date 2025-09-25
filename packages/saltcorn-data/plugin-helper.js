@@ -2664,7 +2664,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return rows.length > 0 ? rows[0] : null;
     },
     delete_url(row, moreQuery) {
-      const comppk = tbl.composite_pk_names;      
+      const comppk = tbl.composite_pk_names;
       if (!comppk)
         return `/delete/${tbl.name}/${encodeURIComponent(row[tbl.pk_name])}${moreQuery ? `?${moreQuery}` : ""}`;
       else
@@ -2905,7 +2905,21 @@ const run_action_column = async ({ col, req, ...rest }) => {
       if (result.error || result.halt_steps) break;
     }
     return result;
-  } else return await run_action_step(col.action_name, col.configuration);
+  } else {
+    const promise = run_action_step(col.action_name, col.configuration);
+    if (col.run_asynchron) {
+      promise.then((data) => {
+        const state = getState();
+        state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
+        if (state.getConfig("enable_dynamic_updates")) {
+          const emitData = { ...data };
+          if (req.headers["page-load-tag"])
+            emitData.page_load_tag = req.headers["page-load-tag"];
+          state.emitDynamicUpdate(db.getTenantSchema(), emitData);
+        } else state.log(6, "Dynamic updates disabled, not emitting");
+      });
+    } else return await promise;
+  }
 };
 
 const displayType = (stateFields) =>
