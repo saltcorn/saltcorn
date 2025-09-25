@@ -237,6 +237,25 @@ describe("base plugin actions", () => {
 
     expect(rows.length).toBe(1);
   });
+  it("should insert_any_row on arrays", async () => {
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { x: 3, y: 7 },
+      configuration: {
+        table: "patients",
+        row_expr: '[{name:"Simon2"}, {name:"Simon2"}]',
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toStrictEqual({});
+
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
+    const rows = await patients.getRows({ name: "Simon2" });
+
+    expect(rows.length).toBe(2);
+  });
   it("should insert_any_row with field", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
