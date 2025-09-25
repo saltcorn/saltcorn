@@ -1284,7 +1284,7 @@ module.exports = {
           name: "row_expr",
           label: "Row expression",
           sublabel:
-            "Expression for JavaScript object. Example: <code>{first_name: name.split(' ')[0]}</code>",
+            "Expression for JavaScript object or array of objects. Example: <code>{first_name: name.split(' ')[0]}</code>",
           type: "String",
           fieldview: "textarea",
           class: "validate-expression",
@@ -1328,13 +1328,31 @@ module.exports = {
       );
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
-      const results = {};
-      const res = await table_for_insert.tryInsertRow(calcrow, user, results);
 
-      if (res.error) return res;
-      else if (configuration.id_variable)
-        return { [configuration.id_variable]: res.success, ...results };
-      else return results;
+      if (Array.isArray(calcrow)) {
+        const ids = [];
+        const all_results = {};
+        for (const insrow of calcrow) {
+          const results = {};
+
+          const res = await table_for_insert.insertRow(insrow, user, results);
+
+          ids.push(res);
+          mergeActionResults(all_results, results);
+        }
+        if (configuration.id_variable)
+          return { [configuration.id_variable]: ids, ...all_results };
+        else return all_results;
+      } else {
+        const results = {};
+
+        const res = await table_for_insert.tryInsertRow(calcrow, user, results);
+
+        if (res.error) return res;
+        else if (configuration.id_variable)
+          return { [configuration.id_variable]: res.success, ...results };
+        else return results;
+      }
     },
     namespace: "Database",
   },
