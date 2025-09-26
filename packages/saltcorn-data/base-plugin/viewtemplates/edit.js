@@ -178,6 +178,10 @@ const configuration_workflow = (req) =>
           for (const [name, action] of stateActions) {
             actionAttributes[name] = { supportsAsync: !!action.supportsAsync };
           }
+
+          for (const { name } of Trigger.find({ action: "Workflow" })) {
+            actionAttributes[name] = { supportsAsync: true };
+          }
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");

@@ -195,6 +195,10 @@ const configuration_workflow = (req) =>
           for (const [name, action] of stateActions) {
             actionAttributes[name] = { supportsAsync: !!action.supportsAsync };
           }
+
+          for (const { name } of Trigger.find({ action: "Workflow" })) {
+            actionAttributes[name] = { supportsAsync: true };
+          }
           //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
