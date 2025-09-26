@@ -1389,9 +1389,14 @@ class Table implements AbstractTable {
    * ```
    * @param v_in - columns with values to update
    * @param id - id value
-   * @param _userid - user id
+   * @param user - user
    * @param noTrigger
    * @param resultCollector
+   * @param restore_of_version
+   * @param syncTimestamp
+   * @param additionalTriggerValues
+   * @param autoRecalcIterations
+   * @param extraArgs
    * @returns
    */
   async updateRow(
@@ -1412,7 +1417,8 @@ class Table implements AbstractTable {
     restore_of_version?: number,
     syncTimestamp?: Date,
     additionalTriggerValues?: Row,
-    autoRecalcIterations?: number
+    autoRecalcIterations?: number,
+    extraArgs?: any
   ): Promise<string | void> {
     // migrating to options arg
     if (typeof noTrigger === "object") {
@@ -1571,7 +1577,7 @@ class Table implements AbstractTable {
         { ...(additionalTriggerValues || {}), ...existing, ...v },
         valResCollector,
         user,
-        { old_row: existing, updated_fields: v_in }
+        { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
       );
       if ("error" in valResCollector) return valResCollector.error as string;
       if ("set_fields" in valResCollector)
@@ -1724,7 +1730,7 @@ class Table implements AbstractTable {
         { ...(additionalTriggerValues || {}), ...newRow },
         resultCollector,
         role === 100 ? undefined : user,
-        { old_row: existing, updated_fields: v_in }
+        { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
       );
       if (resultCollector) await trigPromise;
     }
@@ -1861,7 +1867,8 @@ class Table implements AbstractTable {
     v: Row,
     id: PrimaryKeyValue,
     user?: AbstractUser,
-    resultCollector?: object
+    resultCollector?: object,
+    extraArgs?: any
   ): Promise<ResultMessage> {
     try {
       const maybe_err = await this.updateRow(
@@ -1869,7 +1876,12 @@ class Table implements AbstractTable {
         id,
         user,
         false,
-        resultCollector
+        resultCollector,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        extraArgs
       );
       if (typeof maybe_err === "string") return { error: maybe_err };
       else return { success: true };
@@ -2007,7 +2019,9 @@ class Table implements AbstractTable {
    * @param v_in
    * @param user
    * @param resultCollector
-   * @returns {Promise<*>}
+   * @param noTrigger
+   * @param syncTimestamp
+   * @returns
    */
   async insertRow(
     v_in0: Row,

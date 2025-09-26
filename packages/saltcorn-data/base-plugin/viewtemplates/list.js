@@ -190,6 +190,11 @@ const configuration_workflow = (req) =>
               );
             }
           }
+
+          const actionAttributes = {};
+          for (const [name, action] of stateActions) {
+            actionAttributes[name] = { supportsAsync: !!action.supportsAsync };
+          }
           //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
@@ -328,6 +333,7 @@ const configuration_workflow = (req) =>
             triggerActions,
             builtInActions,
             actionConfigForms,
+            actionAttributes,
             //fieldViewConfigForms,
             field_view_options: {
               ...field_view_options,

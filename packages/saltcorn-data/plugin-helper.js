@@ -2664,7 +2664,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return rows.length > 0 ? rows[0] : null;
     },
     delete_url(row, moreQuery) {
-      const comppk = tbl.composite_pk_names;      
+      const comppk = tbl.composite_pk_names;
       if (!comppk)
         return `/delete/${tbl.name}/${encodeURIComponent(row[tbl.pk_name])}${moreQuery ? `?${moreQuery}` : ""}`;
       else
@@ -2814,6 +2814,26 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
 };
 
 /**
+ * check if we should wait for an action or trigger to finish
+ * @param {any} col Action Column from the configuration
+ * @returns true or false
+ */
+const shoudlRunAsync = (col) => {
+  const action_name = col.action_name;
+  const state_action = getState().actions[action_name];
+  if (state_action) return !!col.run_async;
+  else {
+    const trigger = Trigger.findOne({ name: action_name });
+    if (
+      !trigger ||
+      ["Multi-step action", "Workflow"].indexOf(trigger.action) >= 0
+    )
+      return false;
+    else return !!trigger.configuration?.run_async;
+  }
+};
+
+/**
  * Run Action Column
  * @param {object} col
  * @param {object} req
@@ -2821,6 +2841,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
  * @returns {Promise<*>}
  */
 const run_action_column = async ({ col, req, ...rest }) => {
+  const run_async = shoudlRunAsync(col);
   const run_action_step = async (action_name, colcfg) => {
     let state_action = getState().actions[action_name];
     let configuration;
@@ -2905,7 +2926,35 @@ const run_action_column = async ({ col, req, ...rest }) => {
       if (result.error || result.halt_steps) break;
     }
     return result;
-  } else return await run_action_step(col.action_name, col.configuration);
+  } else {
+    const promise = run_action_step(col.action_name, col.configuration);
+    if (run_async) {
+      promise
+        .then((data) => {
+          const state = getState();
+          state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
+          if (state.getConfig("enable_dynamic_updates")) {
+            const emitData = { ...data };
+            if (req.headers["page-load-tag"])
+              emitData.page_load_tag = req.headers["page-load-tag"];
+            state.emitDynamicUpdate(db.getTenantSchema(), emitData);
+          } else state.log(6, "Dynamic updates disabled, not emitting");
+        })
+        .catch((err) => {
+          const state = getState();
+          state.log(2, `Asynchronous action error: ${err.message || err}`);
+          if (
+            state.getConfig("enable_dynamic_updates") &&
+            req.headers["page-load-tag"]
+          ) {
+            state.emitDynamicUpdate(db.getTenantSchema(), {
+              error: err.message || err,
+              page_load_tag: req.headers["page-load-tag"],
+            });
+          }
+        });
+    } else return await promise;
+  }
 };
 
 const displayType = (stateFields) =>
