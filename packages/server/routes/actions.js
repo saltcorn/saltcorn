@@ -355,8 +355,11 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Run asynchronously"),
         type: "Bool",
         parent_field: "configuration",
-        sublabel: req.__("Run action in background and notify on completion"),
-        showIf: { action: asyncActions },
+        sublabel: req.__("Run action in background"),
+        showIf: {
+          action: asyncActions,
+          when_trigger: ["API call", "Never", "Insert", "Update"],
+        },
       },
     ],
   });
