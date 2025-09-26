@@ -2929,16 +2929,30 @@ const run_action_column = async ({ col, req, ...rest }) => {
   } else {
     const promise = run_action_step(col.action_name, col.configuration);
     if (run_async) {
-      promise.then((data) => {
-        const state = getState();
-        state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
-        if (state.getConfig("enable_dynamic_updates")) {
-          const emitData = { ...data };
-          if (req.headers["page-load-tag"])
-            emitData.page_load_tag = req.headers["page-load-tag"];
-          state.emitDynamicUpdate(db.getTenantSchema(), emitData);
-        } else state.log(6, "Dynamic updates disabled, not emitting");
-      });
+      promise
+        .then((data) => {
+          const state = getState();
+          state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
+          if (state.getConfig("enable_dynamic_updates")) {
+            const emitData = { ...data };
+            if (req.headers["page-load-tag"])
+              emitData.page_load_tag = req.headers["page-load-tag"];
+            state.emitDynamicUpdate(db.getTenantSchema(), emitData);
+          } else state.log(6, "Dynamic updates disabled, not emitting");
+        })
+        .catch((err) => {
+          const state = getState();
+          state.log(2, `Asynchronous action error: ${err.message || err}`);
+          if (
+            state.getConfig("enable_dynamic_updates") &&
+            req.headers["page-load-tag"]
+          ) {
+            state.emitDynamicUpdate(db.getTenantSchema(), {
+              error: err.message || err,
+              page_load_tag: req.headers["page-load-tag"],
+            });
+          }
+        });
     } else return await promise;
   }
 };

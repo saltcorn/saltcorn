@@ -386,22 +386,43 @@ class Trigger implements AbstractTrigger {
         else if (user) extraArgs = { user };
         const promise = trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
         if (trigger.configuration?.run_async) {
-          promise.then((res) => {
-            if (res)
-              if (resultCollector) {
-                state.log(
-                  4,
-                  `Warning: resultCollector is ignored in async run for trigger '${trigger.name}'`
-                );
+          promise
+            .then((res) => {
+              if (res)
+                if (resultCollector) {
+                  state.log(
+                    4,
+                    `Warning: resultCollector is ignored in async run for trigger '${trigger.name}'`
+                  );
+                }
+              if (state.getConfig("enable_dynamic_updates")) {
+                if (extraArgs?.req?.headers["page-load-tag"]) {
+                  const emitData = { ...res };
+                  emitData.page_load_tag =
+                    extraArgs.req.headers["page-load-tag"];
+                  state.emitDynamicUpdate(db.getTenantSchema(), emitData);
+                }
+              } else state.log(6, "Dynamic updates disabled, not emitting");
+            })
+            .catch((e) => {
+              Crash.create(e, {
+                url: "/",
+                headers: {
+                  when_trigger,
+                  table: table?.name,
+                  trigger: trigger.name,
+                },
+              });
+              if (
+                state.getConfig("enable_dynamic_updates") &&
+                extraArgs?.req?.headers["page-load-tag"]
+              ) {
+                state.emitDynamicUpdate(db.getTenantSchema(), {
+                  error: e.message || e,
+                  page_load_tag: extraArgs.req.headers["page-load-tag"],
+                });
               }
-            if (state.getConfig("enable_dynamic_updates")) {
-              if (extraArgs?.req?.headers["page-load-tag"]) {
-                const emitData = { ...res };
-                emitData.page_load_tag = extraArgs.req.headers["page-load-tag"];
-                state.emitDynamicUpdate(db.getTenantSchema(), emitData);
-              }
-            } else state.log(6, "Dynamic updates disabled, not emitting");
-          });
+            });
         } else {
           const res = await promise;
           if (res && resultCollector) mergeActionResults(resultCollector, res);
