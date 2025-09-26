@@ -351,8 +351,8 @@ const triggerForm = async (req, trigger) => {
         },
       },
       {
-        name: "run_asynchron",
-        label: req.__("Run asynchronously"),
+        name: "run_async",
+        label: req.__("Run async"),
         type: "Bool",
         parent_field: "configuration",
         sublabel: req.__("Run action in background"),

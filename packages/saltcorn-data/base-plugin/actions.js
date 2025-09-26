@@ -1770,6 +1770,7 @@ module.exports = {
      * @param {object} opts.table
      * @returns {Promise<object[]>}
      */
+    supportsAsync: true,
     description: "Run arbitrary JavaScript code",
     configFormOptions: {
       formStyle: "vert",

@@ -2821,7 +2821,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
 const shoudlRunAsync = (col) => {
   const action_name = col.action_name;
   const state_action = getState().actions[action_name];
-  if (state_action) return !!col.run_asynchron;
+  if (state_action) return !!col.run_async;
   else {
     const trigger = Trigger.findOne({ name: action_name });
     if (
@@ -2829,7 +2829,7 @@ const shoudlRunAsync = (col) => {
       ["Multi-step action", "Workflow"].indexOf(trigger.action) >= 0
     )
       return false;
-    else return !!trigger.configuration?.run_asynchron;
+    else return !!trigger.configuration?.run_async;
   }
 };
 

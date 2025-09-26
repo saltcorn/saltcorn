@@ -114,7 +114,7 @@ const ActionSettings = () => {
     step_action_names: node.data.props.step_action_names,
     setting_action_n: node.data.props.setting_action_n,
     spinner: node.data.props.spinner,
-    run_asynchron: node.data.props.run_asynchron,
+    run_async: node.data.props.run_async,
     is_submit_action: node.data.props.is_submit_action,
   }));
   const {
@@ -135,7 +135,7 @@ const ActionSettings = () => {
     step_only_ifs,
     step_action_names,
     spinner,
-    run_asynchron,
+    run_async,
     is_submit_action,
   } = node;
   const options = useContext(optionsCtx);
@@ -359,10 +359,10 @@ const ActionSettings = () => {
             className="form-check-input"
             name="block"
             type="checkbox"
-            checked={run_asynchron}
-            onChange={setAProp("run_asynchron", { checked: true })}
+            checked={run_async}
+            onChange={setAProp("run_async", { checked: true })}
           />
-          <label className="form-check-label">Run Asynchron</label>
+          <label className="form-check-label">Run async</label>
         </div>
       ) : null}
       {action_style !== "on_page_load" ? (

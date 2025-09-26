@@ -385,7 +385,7 @@ class Trigger implements AbstractTrigger {
         if (extraArgs) extraArgs.user = extraArgs.user || user;
         else if (user) extraArgs = { user };
         const promise = trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
-        if (trigger.configuration?.run_asynchron) {
+        if (trigger.configuration?.run_async) {
           promise.then((res) => {
             if (res)
               if (resultCollector) {
