@@ -2814,6 +2814,26 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
 };
 
 /**
+ * check if we should wait for an action or trigger to finish
+ * @param {any} col Action Column from the configuration
+ * @returns true or false
+ */
+const shoudlRunAsync = (col) => {
+  const action_name = col.action_name;
+  const state_action = getState().actions[action_name];
+  if (state_action) return !!col.run_asynchron;
+  else {
+    const trigger = Trigger.findOne({ name: action_name });
+    if (
+      !trigger ||
+      ["Multi-step action", "Workflow"].indexOf(trigger.action) >= 0
+    )
+      return false;
+    else return !!trigger.configuration?.run_asynchron;
+  }
+};
+
+/**
  * Run Action Column
  * @param {object} col
  * @param {object} req
@@ -2821,6 +2841,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
  * @returns {Promise<*>}
  */
 const run_action_column = async ({ col, req, ...rest }) => {
+  const run_async = shoudlRunAsync(col);
   const run_action_step = async (action_name, colcfg) => {
     let state_action = getState().actions[action_name];
     let configuration;
@@ -2907,7 +2928,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
     return result;
   } else {
     const promise = run_action_step(col.action_name, col.configuration);
-    if (col.run_asynchron) {
+    if (run_async) {
       promise.then((data) => {
         const state = getState();
         state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);

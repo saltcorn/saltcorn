@@ -1442,12 +1442,7 @@ const runPost = async (
           ) {
             //console.log("edit", { id });
 
-            const upd_res = await tryInsertOrUpdateImpl(
-              row,
-              id,
-              table,
-              req.user || { role_id: 100 }
-            );
+            const upd_res = await tryInsertOrUpdateImpl(row, id, table, req);
             if (upd_res.error) {
               ins_upd_error = upd_res.error;
             }
@@ -1562,7 +1557,9 @@ const runPost = async (
               const upd_res = await childTable.tryUpdateRow(
                 childRow,
                 childRow[childTable.pk_name],
-                req.user || { role_id: 100 }
+                req.user || { role_id: 100 },
+                undefined,
+                { req }
               );
               if (upd_res.error) {
                 await rollback();
@@ -2309,19 +2306,20 @@ const combineResults = (results) => {
   return combined;
 };
 
-const tryUpdateImpl = async (row, id, table, user) => {
+const tryUpdateImpl = async (row, id, table, req) => {
   const result = {};
   const upd_res = await table.tryUpdateRow(
     row,
     id,
-    user || { role_id: 100 },
-    result
+    req.user || { role_id: 100 },
+    result,
+    { req }
   );
   upd_res.trigger_return = result;
   return upd_res;
 };
 
-const tryInsertOrUpdateImpl = async (row, id, table, user) => {
+const tryInsertOrUpdateImpl = async (row, id, table, req) => {
   const result = {};
   const exists = await table.getRow(
     typeof id === "object" ? id : { [table.pk_name]: id }
@@ -2330,14 +2328,19 @@ const tryInsertOrUpdateImpl = async (row, id, table, user) => {
     const upd_res = await table.tryUpdateRow(
       row,
       id,
-      user || { role_id: 100 },
-      result
+      req.user || { role_id: 100 },
+      result,
+      { req }
     );
     upd_res.trigger_return = result;
     return upd_res;
   } else {
     const result = {};
-    const ins_res = await table.tryInsertRow(row, user, result);
+    const ins_res = await table.tryInsertRow(
+      row,
+      req.user || { role_id: 100 },
+      result
+    );
     ins_res.trigger_return = result;
     return ins_res;
   }
@@ -2714,7 +2717,7 @@ module.exports = {
 
     async tryUpdateQuery(row, id) {
       const table = Table.findOne(table_id);
-      return await tryUpdateImpl(row, id, table, req.user);
+      return await tryUpdateImpl(row, id, table, req);
     },
     async saveFileQuery(fieldVal, fieldId, fieldView, row) {
       const field = await Field.findOne({ id: fieldId });
@@ -2963,12 +2966,7 @@ module.exports = {
         await db.begin();
         inTransaction = true;
         for (const row of rows) {
-          const uptRes = await tryUpdateImpl(
-            updateVals,
-            row.id,
-            table,
-            req.user
-          );
+          const uptRes = await tryUpdateImpl(updateVals, row.id, table, req);
           if (uptRes.error) {
             inTransaction = false;
             await db.rollback();
