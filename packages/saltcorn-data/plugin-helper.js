@@ -2824,8 +2824,7 @@ const shoudlRunAsync = (col) => {
   if (state_action) return !!col.run_async;
   else {
     const trigger = Trigger.findOne({ name: action_name });
-    if (!trigger) return false;
-    if (trigger.action === "Multi-step action") return false;
+    if (!trigger || trigger.action === "Multi-step action") return false;
     if (trigger.action === "Workflow")
       return !!col.run_async || !!trigger.configuration?.run_async || false;
     else return !!trigger.configuration?.run_async;
