@@ -2827,7 +2827,7 @@ const shoudlRunAsync = (col) => {
     if (!trigger || trigger.action === "Multi-step action") return false;
     if (trigger.action === "Workflow")
       return !!col.run_async || !!trigger.configuration?.run_async || false;
-    else return !!trigger.configuration?.run_async;
+    else return !!col.run_async;
   }
 };
 
@@ -2839,24 +2839,26 @@ const shoudlRunAsync = (col) => {
  * @returns {Promise<*>}
  */
 const run_action_column = async ({ col, req, ...rest }) => {
-  const run_async = shoudlRunAsync(col);
+   let run_async = shoudlRunAsync(col);
+  if (run_async && !getState().getConfig("enable_dynamic_updates")) {
+    run_async = false;
+    getState().log(
+      4,
+      `Warning: '${col.action_name}' is set to run async but dynamic updates are disabled. Running synchronously instead.`
+    );
+  }
   const successAsyncHandler = (data) => {
     const state = getState();
     state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
-    if (state.getConfig("enable_dynamic_updates")) {
-      const emitData = { ...data };
-      if (req.headers["page-load-tag"])
-        emitData.page_load_tag = req.headers["page-load-tag"];
-      state.emitDynamicUpdate(db.getTenantSchema(), emitData);
-    } else state.log(6, "Dynamic updates disabled, not emitting");
+    const emitData = { ...data };
+    if (req.headers["page-load-tag"])
+      emitData.page_load_tag = req.headers["page-load-tag"];
+    state.emitDynamicUpdate(db.getTenantSchema(), emitData);
   };
   const failureAsyncHandler = (err) => {
     const state = getState();
     state.log(2, `Asynchronous action error: ${err.message || err}`);
-    if (
-      state.getConfig("enable_dynamic_updates") &&
-      req.headers["page-load-tag"]
-    ) {
+    if (req.headers["page-load-tag"]) {
       state.emitDynamicUpdate(db.getTenantSchema(), {
         error: err.message || err,
         page_load_tag: req.headers["page-load-tag"],

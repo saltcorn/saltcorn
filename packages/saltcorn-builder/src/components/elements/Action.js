@@ -230,8 +230,6 @@ const ActionSettings = () => {
     JSON.stringify(configuration?.steps?.[use_setting_action_n]),
   ]);
 
-  const actionFlags = (options.actionAttributes || {})[name] || {};
-
   return (
     <div>
       <table className="w-100">
@@ -353,18 +351,16 @@ const ActionSettings = () => {
         />
         <label className="form-check-label">Spinner on click</label>
       </div>
-      {actionFlags.supportsAsync ? (
-        <div className="form-check">
-          <input
-            className="form-check-input"
-            name="block"
-            type="checkbox"
-            checked={run_async}
-            onChange={setAProp("run_async", { checked: true })}
-          />
-          <label className="form-check-label">Run async</label>
-        </div>
-      ) : null}
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={run_async}
+          onChange={setAProp("run_async", { checked: true })}
+        />
+        <label className="form-check-label">Run async</label>
+      </div>
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />
       ) : null}
