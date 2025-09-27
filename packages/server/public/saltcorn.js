@@ -543,6 +543,7 @@ function saveAndContinue(e, k, event) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: form_data,
     success: function (res) {
@@ -673,6 +674,7 @@ function ajaxSubmitForm(e, force_no_reload, event) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: new FormData(form[0]),
     processData: false,
@@ -760,6 +762,7 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: form_data,
     success: function (res) {
@@ -783,6 +786,7 @@ function api_action_call(name, body) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: body,
     success: function (res) {
@@ -1390,6 +1394,7 @@ function check_delete_unsaved(tablename, script_tag) {
         type: "DELETE",
         headers: {
           "CSRF-Token": _sc_globalCsrf,
+          "Page-Load-Tag": _sc_pageloadtag,
         },
       });
   }
