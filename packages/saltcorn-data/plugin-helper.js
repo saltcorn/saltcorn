@@ -2824,11 +2824,9 @@ const shoudlRunAsync = (col) => {
   if (state_action) return !!col.run_async;
   else {
     const trigger = Trigger.findOne({ name: action_name });
-    if (
-      !trigger ||
-      ["Multi-step action", "Workflow"].indexOf(trigger.action) >= 0
-    )
-      return false;
+    if (!trigger || trigger.action === "Multi-step action") return false;
+    if (trigger.action === "Workflow")
+      return !!col.run_async || !!trigger.configuration?.run_async || false;
     else return !!trigger.configuration?.run_async;
   }
 };
@@ -2842,6 +2840,29 @@ const shoudlRunAsync = (col) => {
  */
 const run_action_column = async ({ col, req, ...rest }) => {
   const run_async = shoudlRunAsync(col);
+  const successAsyncHandler = (data) => {
+    const state = getState();
+    state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
+    if (state.getConfig("enable_dynamic_updates")) {
+      const emitData = { ...data };
+      if (req.headers["page-load-tag"])
+        emitData.page_load_tag = req.headers["page-load-tag"];
+      state.emitDynamicUpdate(db.getTenantSchema(), emitData);
+    } else state.log(6, "Dynamic updates disabled, not emitting");
+  };
+  const failureAsyncHandler = (err) => {
+    const state = getState();
+    state.log(2, `Asynchronous action error: ${err.message || err}`);
+    if (
+      state.getConfig("enable_dynamic_updates") &&
+      req.headers["page-load-tag"]
+    ) {
+      state.emitDynamicUpdate(db.getTenantSchema(), {
+        error: err.message || err,
+        page_load_tag: req.headers["page-load-tag"],
+      });
+    }
+  };
   const run_action_step = async (action_name, colcfg) => {
     let state_action = getState().actions[action_name];
     let configuration;
@@ -2878,8 +2899,9 @@ const run_action_column = async ({ col, req, ...rest }) => {
     }
     if (!goRun)
       throw new Error("Runnable action not found: " + text(action_name));
-
-    return await goRun();
+    if (run_async) {
+      goRun().then(successAsyncHandler).catch(failureAsyncHandler);
+    } else return await goRun();
   };
   if (col.action_name === "Multi-step action") {
     let result = {};
@@ -2929,30 +2951,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
   } else {
     const promise = run_action_step(col.action_name, col.configuration);
     if (run_async) {
-      promise
-        .then((data) => {
-          const state = getState();
-          state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
-          if (state.getConfig("enable_dynamic_updates")) {
-            const emitData = { ...data };
-            if (req.headers["page-load-tag"])
-              emitData.page_load_tag = req.headers["page-load-tag"];
-            state.emitDynamicUpdate(db.getTenantSchema(), emitData);
-          } else state.log(6, "Dynamic updates disabled, not emitting");
-        })
-        .catch((err) => {
-          const state = getState();
-          state.log(2, `Asynchronous action error: ${err.message || err}`);
-          if (
-            state.getConfig("enable_dynamic_updates") &&
-            req.headers["page-load-tag"]
-          ) {
-            state.emitDynamicUpdate(db.getTenantSchema(), {
-              error: err.message || err,
-              page_load_tag: req.headers["page-load-tag"],
-            });
-          }
-        });
+      promise.then(successAsyncHandler).catch(failureAsyncHandler);
     } else return await promise;
   }
 };

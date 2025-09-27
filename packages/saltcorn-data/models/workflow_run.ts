@@ -31,6 +31,7 @@ const allReturnDirectives = [
   "notify",
   "notify_success",
   "error",
+  "reload_embedded_view",
 ];
 
 const data_output_to_html = (val: any) => {
@@ -945,9 +946,24 @@ class WorkflowRun {
         delete this.context[k];
       }
     });
+    const secondary_directives: Record<string, string[]> = {
+      reload_embedded_view: ["new_state"],
+      notify: ["remove_delay", "toast_title"],
+      notify_success: ["remove_delay", "toast_title"],
+      error: ["remove_delay", "toast_title"],
+      goto: ["target"],
+    };
+    Object.keys(secondary_directives).forEach((k) => {
+      if (typeof retVals[k] !== "undefined")
+        secondary_directives[k].forEach((secondary_k) => {
+          if (typeof this.context[secondary_k] !== "undefined") {
+            retVals[secondary_k] = this.context[secondary_k];
+            delete this.context[secondary_k];
+          }
+        });
+    });
     if (Object.keys(retVals).length)
       await this.update({ context: this.context });
-
     return retVals;
   }
   static async count(where?: Where): Promise<number> {
