@@ -1882,7 +1882,7 @@ router.post(
         promise
           .then(async (runres) => {
             const retDirs = await run.popReturnDirectives();
-            const emitData = { ...runres, retDirs };
+            const emitData = { ...runres, ...retDirs };
             if (req.headers["page-load-tag"])
               emitData.page_load_tag = req.headers["page-load-tag"];
             getState().emitDynamicUpdate(db.getTenantSchema(), emitData);
