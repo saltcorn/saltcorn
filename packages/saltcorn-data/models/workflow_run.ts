@@ -953,14 +953,13 @@ class WorkflowRun {
       error: ["remove_delay", "toast_title"],
     };
     Object.keys(secondary_directives).forEach((k) => {
-      if (typeof retVals[k] !== "undefined") {
+      if (typeof retVals[k] !== "undefined")
         secondary_directives[k].forEach((secondary_k) => {
-          if (this.context[secondary_k]) {
+          if (typeof this.context[secondary_k] !== "undefined") {
             retVals[secondary_k] = this.context[secondary_k];
             delete this.context[secondary_k];
           }
         });
-      }
     });
     if (Object.keys(retVals).length)
       await this.update({ context: this.context });
