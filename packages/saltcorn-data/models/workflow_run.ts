@@ -949,13 +949,20 @@ class WorkflowRun {
     if (retVals.reload_embedded_view && this.context.new_state) {
       retVals.new_state = this.context.new_state;
       delete this.context.new_state;
-    }
+    }    
     if (
       (retVals.notify || retVals.notify_success || retVals.error) &&
       this.context.remove_delay
     ) {
       retVals.remove_delay = this.context.remove_delay;
       delete this.context.remove_delay;
+    }
+    if (
+      (retVals.notify || retVals.notify_success || retVals.error) &&
+      this.context.toast_title
+    ) {
+      retVals.toast_title = this.context.toast_title;
+      delete this.context.toast_title;
     }
     if (Object.keys(retVals).length)
       await this.update({ context: this.context });
