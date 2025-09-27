@@ -1868,20 +1868,39 @@ router.post(
       const title = "Fill form";
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } else {
+      const run_async =
+        getState().getConfig("enable_dynamic_updates") &&
+        req.headers["page-load-tag"] &&
+        req.xhr;
       await run.provide_form_input(form.values);
-      const runres = await run.run({
+      const promise = run.run({
         user: req.user,
         trace: trigger.configuration?.save_traces,
         interactive: true,
       });
-      if (req.xhr) {
-        const retDirs = await run.popReturnDirectives();
-
-        //if (runres?.popup) retDirs.popup = runres.popup;
-        res.json({ success: "ok", ...runres, ...retDirs });
+      if (run_async) {
+        promise
+          .then(async (runres) => {
+            const retDirs = await run.popReturnDirectives();
+            const emitData = { ...runres, retDirs };
+            if (req.headers["page-load-tag"])
+              emitData.page_load_tag = req.headers["page-load-tag"];
+            getState().emitDynamicUpdate(db.getTenantSchema(), emitData);
+            //if (runres?.popup) retDirs.popup = runres.popup;
+          })
+          .catch((e) => {});
+        res.json({ success: "ok" });
       } else {
-        if (run.context.goto) res.redirect(run.context.goto);
-        else res.redirect("/");
+        const runres = await promise;
+        if (req.xhr) {
+          const retDirs = await run.popReturnDirectives();
+
+          //if (runres?.popup) retDirs.popup = runres.popup;
+          res.json({ success: "ok", ...runres, ...retDirs });
+        } else {
+          if (run.context.goto) res.redirect(run.context.goto);
+          else res.redirect("/");
+        }
       }
     }
   })
