@@ -1516,7 +1516,7 @@ function inline_ajax_submit_with_fielddata(e, opts1) {
   $.ajax(url, {
     type: "POST",
     headers: {
-      "CSRF-Token": _sc_globalCsrf,
+      "CSRF-Token": _sc_globalCsrf,      
     },
     data: form_data,
     success: function (res) {
