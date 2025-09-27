@@ -951,6 +951,7 @@ class WorkflowRun {
       notify: ["remove_delay", "toast_title"],
       notify_success: ["remove_delay", "toast_title"],
       error: ["remove_delay", "toast_title"],
+      goto: ["target"],
     };
     Object.keys(secondary_directives).forEach((k) => {
       if (typeof retVals[k] !== "undefined")
