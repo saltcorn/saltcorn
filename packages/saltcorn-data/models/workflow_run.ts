@@ -889,7 +889,7 @@ class WorkflowRun {
             typeof result === "object" &&
             allReturnDirectives.some((k) => typeof result[k] !== "undefined")
           ) {
-            const ret = await this.popReturnDirectives();
+            const ret = await this.popReturnDirectives(nextUpdate);
             ret.resume_workflow = this.id;
             return ret;
           } else await this.update(nextUpdate);
@@ -937,7 +937,7 @@ class WorkflowRun {
       run_page: `/actions/run/${this.id}`,
     });
   }
-  async popReturnDirectives() {
+  async popReturnDirectives(nextUpdate?: Row) {
     const retVals: any = {};
     allReturnDirectives.forEach((k) => {
       if (typeof this.context[k] !== "undefined") {
@@ -963,7 +963,11 @@ class WorkflowRun {
         });
     });
     //if (Object.keys(retVals).length)
-    await this.update({ context: this.context });
+    if (nextUpdate) {
+      nextUpdate.context = this.context;
+      await this.update(nextUpdate);
+    } else this.update({ context: this.context });
+
     return retVals;
   }
   static async count(where?: Where): Promise<number> {
