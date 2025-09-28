@@ -6,6 +6,7 @@
     "minipass": "3.1.6",
     "supertest": "7.0.0",
     "typedoc": "^0.28.11",
+    "typedoc-plugin-rename-defaults": "^0.7.3",
     "typescript": "5.9.2"
   },
   "scripts": {
