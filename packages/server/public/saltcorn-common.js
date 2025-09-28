@@ -1649,7 +1649,7 @@ function getIsNode() {
   }
 }
 
-function buildToast(txt, type, spin, title) {
+function buildToast(txt, type, spin, title, set_id) {
   const realtype = type === "error" ? "danger" : type;
   const icon =
     realtype === "success"
@@ -1660,7 +1660,8 @@ function buildToast(txt, type, spin, title) {
           ? "fa-exclamation-triangle"
           : "";
   const isNode = getIsNode();
-  const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+  const rndid =
+    set_id || `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   return {
     id: rndid,
     html: `
@@ -1709,6 +1710,42 @@ function buildToast(txt, type, spin, title) {
     </div>
   `,
   };
+}
+
+function progress_toast_update({ id, close, title, message, percent }) {
+  const existing = $("#toast-" + id);
+  if (close) {
+    existing.remove();
+    return;
+  }
+  if (!existing.length) {
+    const { id, html } = buildToast(
+      message,
+      "info",
+      true,
+      title,
+      "toast-" + id
+    );
+    $("#toasts-area").append(html);
+  } else {
+    $("#toast-" + id)
+      .find(".toast-body strong")
+      .html(message);
+  }
+  if (typeof percent !== "undefined") {
+    const exprogress = $("#toast-" + id).find("progress");
+    if (!exprogress.length) {
+      $("#toast-" + id)
+        .find(".toast-body")
+        .append(
+          '<progress value="' +
+            percent +
+            '" max="100">' +
+            percent +
+            " %</progress>"
+        );
+    } else exprogress.val(percent);
+  }
 }
 
 function notifyAlert(note, spin) {
