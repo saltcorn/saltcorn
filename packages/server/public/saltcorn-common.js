@@ -1694,18 +1694,20 @@ function buildToast(txt, type, spin, title, set_id) {
         }
       </div>
       <div 
-        class="toast-body py-2 fs-6 fw-bold d-flex align-items-center"
+        class="toast-body py-2 fs-6 fw-bold"
       >
-        <strong>${txt}</strong>
-        ${
-          spin
-            ? `<span 
-                class="spinner-border ms-auto" 
-                role="status" 
-                aria-hidden="true" 
-                style="width: 1.5rem; height: 1.5rem"></span>`
-            : ""
-        }
+        <div class="d-flex align-items-center">
+          <strong>${txt}</strong>
+          ${
+            spin
+              ? `<span 
+                  class="spinner-border ms-auto" 
+                  role="status" 
+                  aria-hidden="true" 
+                  style="width: 1.5rem; height: 1.5rem"></span>`
+              : ""
+          }
+        </div>
       </div>
     </div>
   `,
@@ -1719,13 +1721,7 @@ function progress_toast_update({ id, close, title, message, percent }) {
     return;
   }
   if (!existing.length) {
-    const { id, html } = buildToast(
-      message,
-      "info",
-      true,
-      title,
-      "toast-" + id
-    );
+    const { html } = buildToast(message, "info", true, title, "toast-" + id);
     $("#toasts-area").append(html);
   } else {
     $("#toast-" + id)

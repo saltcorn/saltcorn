@@ -894,5 +894,5 @@ input[type="file"].file-has-existing {
 }
 
 .card-max-full-screen .card-body:focus {
-    outline-width: 0;
+  outline-width: 0;
 }
