@@ -14,5 +14,6 @@
     "packages/common-code"
   ],
   "out": "docs",
+  "plugin": ["typedoc-plugin-rename-defaults"],
   "readme": "deploy/typedoc/documentation_main.md"
 }
