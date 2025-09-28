@@ -278,7 +278,18 @@ function reset_spinners() {
 
 let last_route_viewname;
 
-function view_post(viewnameOrElem, route, data, onDone, sendState) {
+function view_post(viewnameOrElem, route, data, onDoneOrObj, sendState) {
+  let onDone,
+    sendState1,
+    runAsync = false;
+  if (typeof onDoneOrObj === "object") {
+    onDone = onDoneOrObj.onDone;
+    sendState1 = onDoneOrObj.sendState;
+    runAsync = onDoneOrObj.runAsync;
+  } else {
+    onDone = onDoneOrObj;
+    sendState1 = sendState;
+  }
   const viewname =
     typeof viewnameOrElem === "string"
       ? viewnameOrElem
@@ -286,7 +297,7 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
           .closest("[data-sc-embed-viewname]")
           .attr("data-sc-embed-viewname");
   last_route_viewname = viewname;
-  const query = sendState
+  const query = sendState1
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
     : "";
   const isFormData = data instanceof FormData;
@@ -310,7 +321,7 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
     .done(function (res) {
       if (onDone) onDone(res);
       ajax_done(res, viewnameOrElem);
-      reset_spinners();
+      if (!runAsync) reset_spinners();
     })
     .fail(function (res) {
       if (!checkNetworkError(res))
