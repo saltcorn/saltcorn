@@ -932,7 +932,8 @@ const get_viewable_fields = (
               column.rndid || column.action_name,
               column.rndid ? "rndid" : "action_name",
               column.confirm,
-              index
+              index,
+              column.run_async
             );
             const label = column.action_label_formula
               ? eval_expression(
