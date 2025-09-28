@@ -714,6 +714,15 @@ function ajaxSubmitForm(e, force_no_reload, event) {
 
   return false;
 }
+
+function page_post_action(url) {
+  ajax_post_json(url, {}, {
+    success: () => {
+      if (window.reset_spinners) reset_spinners();
+    },
+  });
+}
+
 function ajax_post_json(url, data, args = {}) {
   ajax_post(url, {
     data: JSON.stringify(data),
