@@ -384,51 +384,8 @@ class Trigger implements AbstractTrigger {
         }
         if (extraArgs) extraArgs.user = extraArgs.user || user;
         else if (user) extraArgs = { user };
-        const dynUpdEnabled = state.getConfig("enable_dynamic_updates");
-        const runAsync = trigger.configuration?.run_async;
-        if (runAsync && !dynUpdEnabled) {
-          state.log(
-            4,
-            `Warning: trigger '${trigger.name}' is set to run async but dynamic updates are disabled. Running synchronously instead.`
-          );
-        }
-        const promise = trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
-        if (runAsync && dynUpdEnabled) {
-          promise
-            .then((res) => {
-              if (res)
-                if (resultCollector) {
-                  state.log(
-                    4,
-                    `Warning: resultCollector is ignored in async run for trigger '${trigger.name}'`
-                  );
-                }
-              if (extraArgs?.req?.headers["page-load-tag"]) {
-                const emitData = { ...res };
-                emitData.page_load_tag = extraArgs.req.headers["page-load-tag"];
-                state.emitDynamicUpdate(db.getTenantSchema(), emitData);
-              }
-            })
-            .catch((e) => {
-              Crash.create(e, {
-                url: "/",
-                headers: {
-                  when_trigger,
-                  table: table?.name,
-                  trigger: trigger.name,
-                },
-              });
-              if (extraArgs?.req?.headers["page-load-tag"]) {
-                state.emitDynamicUpdate(db.getTenantSchema(), {
-                  error: e.message || e,
-                  page_load_tag: extraArgs.req.headers["page-load-tag"],
-                });
-              }
-            });
-        } else {
-          const res = await promise;
-          if (res && resultCollector) mergeActionResults(resultCollector, res);
-        }
+        const res = await trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
+        if (res && resultCollector) mergeActionResults(resultCollector, res);
       } catch (e: any) {
         if (resultCollector)
           resultCollector.error = (resultCollector.error || "") + e.message;
