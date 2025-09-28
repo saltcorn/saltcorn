@@ -2863,7 +2863,11 @@ const run_action_column = async ({ col, req, ...rest }) => {
     if (req.headers["page-load-tag"])
       emitData.page_load_tag = req.headers["page-load-tag"];
     state.emitDynamicUpdate(db.getTenantSchema(), emitData);
-    reset_spinner(state);
+    if (
+      !emitData.resume_workflow &&
+      !emitData.popup?.startsWith?.("/actions/fill-workflow-form/")
+    )
+      reset_spinner(state);
   };
   const failureAsyncHandler = (err) => {
     const state = getState();

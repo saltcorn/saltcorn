@@ -1826,6 +1826,34 @@ router.get(
   })
 );
 
+const workflowRunPromiseHandler = (promise, run, req) => {
+  promise
+    .then(async (runres) => {
+      const retDirs = await run.popReturnDirectives();
+      const emitData = {
+        ...runres,
+        ...retDirs,
+        page_load_tag: req.headers["page-load-tag"],
+      };
+      getState().emitDynamicUpdate(db.getTenantSchema(), emitData);
+      if (
+        !emitData.resume_workflow &&
+        !emitData.popup?.startsWith?.("/actions/fill-workflow-form/")
+      )
+        getState().emitDynamicUpdate(db.getTenantSchema(), {
+          eval_js: "reset_spinners()",
+          page_load_tag: req.headers["page-load-tag"],
+        });
+    })
+    .catch((e) => {
+      console.error(e);
+      getState().emitDynamicUpdate(db.getTenantSchema(), {
+        error: e.message,
+        page_load_tag: req.headers["page-load-tag"],
+      });
+    });
+};
+
 router.post(
   "/fill-workflow-form/:id",
   error_catcher(async (req, res) => {
@@ -1864,23 +1892,7 @@ router.post(
         interactive: true,
       });
       if (run_async) {
-        promise
-          .then(async (runres) => {
-            const retDirs = await run.popReturnDirectives();
-            const emitData = {
-              ...runres,
-              ...retDirs,
-              page_load_tag: req.headers["page-load-tag"],
-            };
-            getState().emitDynamicUpdate(db.getTenantSchema(), emitData);
-          })
-          .catch((e) => {
-            console.error(e);
-            getState().emitDynamicUpdate(db.getTenantSchema(), {
-              error: e.message,
-              page_load_tag: req.headers["page-load-tag"],
-            });
-          });
+        workflowRunPromiseHandler(promise, run, req);
         res.json({ success: "ok" });
       } else {
         const runres = await promise;
@@ -1924,23 +1936,7 @@ router.post(
       trace: trigger.configuration?.save_traces,
     });
     if (run_async) {
-      promise
-        .then(async (runres) => {
-          const retDirs = await run.popReturnDirectives();
-          const emitData = {
-            ...runres,
-            ...retDirs,
-            page_load_tag: req.headers["page-load-tag"],
-          };
-          getState().emitDynamicUpdate(db.getTenantSchema(), emitData);
-        })
-        .catch((e) => {
-          console.error(e);
-          getState().emitDynamicUpdate(db.getTenantSchema(), {
-            error: e.message,
-            page_load_tag: req.headers["page-load-tag"],
-          });
-        });
+      workflowRunPromiseHandler(promise, run, req);
       res.json({ success: "ok" });
     } else {
       const runResult = await promise;
