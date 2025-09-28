@@ -883,7 +883,6 @@ class WorkflowRun {
             nextUpdate.current_step[Math.max(0, this.current_step.length - 1)] =
               step.name;
           }
-          await this.update(nextUpdate);
           if (
             interactive &&
             result &&
@@ -893,7 +892,7 @@ class WorkflowRun {
             const ret = await this.popReturnDirectives();
             ret.resume_workflow = this.id;
             return ret;
-          }
+          } else await this.update(nextUpdate);
         },
         async (e) => {
           if (this.context.__errorHandler) {
@@ -952,6 +951,7 @@ class WorkflowRun {
       notify_success: ["remove_delay", "toast_title"],
       error: ["remove_delay", "toast_title"],
       goto: ["target"],
+      eval_js: ["row", "field_names"],
     };
     Object.keys(secondary_directives).forEach((k) => {
       if (typeof retVals[k] !== "undefined")
@@ -962,8 +962,8 @@ class WorkflowRun {
           }
         });
     });
-    if (Object.keys(retVals).length)
-      await this.update({ context: this.context });
+    //if (Object.keys(retVals).length)
+    await this.update({ context: this.context });
     return retVals;
   }
   static async count(where?: Where): Promise<number> {
