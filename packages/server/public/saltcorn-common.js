@@ -1771,7 +1771,7 @@ function restore_old_button(btnId) {
   if (window.reset_spinners) reset_spinners();
   const btn = btnId instanceof jQuery ? btnId : $(`#${btnId}`);
   const oldText = $(btn).data("old-text");
-  if (!oldText.length) reuturn;
+  if (!oldText.length) return;
   btn.html(oldText);
   btn.css({ width: "", height: "" }).prop("disabled", false);
   btn.removeData("old-text");
