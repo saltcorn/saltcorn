@@ -2912,9 +2912,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
     }
     if (!goRun)
       throw new Error("Runnable action not found: " + text(action_name));
-    if (run_async) {
-      goRun().then(successAsyncHandler).catch(failureAsyncHandler);
-    } else return await goRun();
+    return await goRun();
   };
   if (col.action_name === "Multi-step action") {
     let result = {};
