@@ -1867,13 +1867,20 @@ router.post(
         promise
           .then(async (runres) => {
             const retDirs = await run.popReturnDirectives();
-            const emitData = { ...runres, ...retDirs };
-            if (req.headers["page-load-tag"])
-              emitData.page_load_tag = req.headers["page-load-tag"];
+            const emitData = {
+              ...runres,
+              ...retDirs,
+              page_load_tag: req.headers["page-load-tag"],
+            };
             getState().emitDynamicUpdate(db.getTenantSchema(), emitData);
-            //if (runres?.popup) retDirs.popup = runres.popup;
           })
-          .catch((e) => {});
+          .catch((e) => {
+            console.error(e);
+            getState().emitDynamicUpdate(db.getTenantSchema(), {
+              error: e.message,
+              page_load_tag: req.headers["page-load-tag"],
+            });
+          });
         res.json({ success: "ok" });
       } else {
         const runres = await promise;
@@ -1907,25 +1914,51 @@ router.post(
       return;
     }
     const trigger = await Trigger.findOne({ id: run.trigger_id });
-    const runResult = await run.run({
+    const run_async =
+      getState().getConfig("enable_dynamic_updates") &&
+      req.headers["page-load-tag"] &&
+      req.xhr;
+    const promise = run.run({
       user: req.user,
       interactive: true,
       trace: trigger.configuration?.save_traces,
     });
-    if (req.xhr) {
-      if (
-        runResult &&
-        typeof runResult === "object" &&
-        Object.keys(runResult).length
-      ) {
-        res.json({ success: "ok", ...runResult });
-        return;
-      }
-      const retDirs = await run.popReturnDirectives();
-      res.json({ success: "ok", ...retDirs });
+    if (run_async) {
+      promise
+        .then(async (runres) => {
+          const retDirs = await run.popReturnDirectives();
+          const emitData = {
+            ...runres,
+            ...retDirs,
+            page_load_tag: req.headers["page-load-tag"],
+          };
+          getState().emitDynamicUpdate(db.getTenantSchema(), emitData);
+        })
+        .catch((e) => {
+          console.error(e);
+          getState().emitDynamicUpdate(db.getTenantSchema(), {
+            error: e.message,
+            page_load_tag: req.headers["page-load-tag"],
+          });
+        });
+      res.json({ success: "ok" });
     } else {
-      if (run.context.goto) res.redirect(run.context.goto);
-      else res.redirect("/");
+      const runResult = await promise;
+      if (req.xhr) {
+        if (
+          runResult &&
+          typeof runResult === "object" &&
+          Object.keys(runResult).length
+        ) {
+          res.json({ success: "ok", ...runResult });
+          return;
+        }
+        const retDirs = await run.popReturnDirectives();
+        res.json({ success: "ok", ...retDirs });
+      } else {
+        if (run.context.goto) res.redirect(run.context.goto);
+        else res.redirect("/");
+      }
     }
   })
 );
