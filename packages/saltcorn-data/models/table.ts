@@ -1412,6 +1412,7 @@ class Table implements AbstractTable {
           syncTimestamp?: Date;
           additionalTriggerValues?: Row;
           autoRecalcIterations?: number;
+          extraArgs?: any;
         },
     resultCollector?: object,
     restore_of_version?: number,
@@ -1429,6 +1430,7 @@ class Table implements AbstractTable {
       additionalTriggerValues = extraOptions.additionalTriggerValues;
       autoRecalcIterations = extraOptions.autoRecalcIterations;
       noTrigger = extraOptions.noTrigger;
+      extraArgs = extraOptions.extraArgs;
     }
 
     if (typeof autoRecalcIterations === "number" && autoRecalcIterations > 5)
@@ -1875,13 +1877,8 @@ class Table implements AbstractTable {
         v,
         id,
         user,
-        false,
-        resultCollector,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        extraArgs
+        { noTrigger: false, extraArgs },
+        resultCollector
       );
       if (typeof maybe_err === "string") return { error: maybe_err };
       else return { success: true };
