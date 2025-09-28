@@ -1721,7 +1721,7 @@ function progress_toast_update({ id, close, title, message, percent }) {
     return;
   }
   if (!existing.length) {
-    const { html } = buildToast(message, "info", true, title, "toast-" + id);
+    const { html } = buildToast(message, "info", false, title, "toast-" + id);
     $("#toasts-area").append(html);
   } else {
     $("#toast-" + id)
