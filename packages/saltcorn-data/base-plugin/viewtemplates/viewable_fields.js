@@ -82,7 +82,8 @@ const action_url = (
   colId,
   colIdNm,
   confirm,
-  colIndex
+  colIndex,
+  runAsync
 ) => {
   const pk_name = table.pk_name;
   const __ = getReq__();
@@ -106,7 +107,7 @@ const action_url = (
   return {
     javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
       r ? `, ${pk_name}:'${r?.[pk_name]}'` : ""
-    }${columnIndex(colIndex)}});`,
+    }${columnIndex(colIndex)}}${runAsync ? `,{runAsync:true}` : ""});`,
   };
 };
 
@@ -1776,7 +1777,9 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
         row,
         segment.rndid,
         "rndid",
-        segment.confirm
+        segment.confirm,
+        undefined,
+        !!segment.run_async
       );
       if (
         segment.action_name === "Delete" &&

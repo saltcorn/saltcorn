@@ -1440,8 +1440,8 @@ function card_max_full_screen($card_outer) {
     $card.css("max-height", newCardHeight + "px").css("overflow-y", "scroll");
     is_changed = true;
   }
-  $card.attr("tabindex", "-1")
-  $card.focus()
+  $card.attr("tabindex", "-1");
+  $card.focus();
   window.addEventListener(
     "resize",
     function () {
@@ -1516,7 +1516,7 @@ function inline_ajax_submit_with_fielddata(e, opts1) {
   $.ajax(url, {
     type: "POST",
     headers: {
-      "CSRF-Token": _sc_globalCsrf,      
+      "CSRF-Token": _sc_globalCsrf,
     },
     data: form_data,
     success: function (res) {
@@ -1799,7 +1799,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
     else await fn(element);
   };
   //TODO what if something else is spinning?
-  if (window.reset_spinners) reset_spinners();
+  //if (window.reset_spinners) reset_spinners();
 
   const eval_it = async (s) => {
     if (res.row && res.field_names) {
