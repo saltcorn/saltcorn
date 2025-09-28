@@ -1801,21 +1801,21 @@ module.exports = {
         "Actions",
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models_table.export_.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_table.Table.html",
             target: "_blank",
           },
           "Table"
         ),
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models_file.export_.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_file.File.html",
             target: "_blank",
           },
           "File"
         ),
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models_user.export_.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_user.User.html",
             target: "_blank",
           },
           "User"
