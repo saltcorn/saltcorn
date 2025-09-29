@@ -1412,6 +1412,7 @@ class Table implements AbstractTable {
           syncTimestamp?: Date;
           additionalTriggerValues?: Row;
           autoRecalcIterations?: number;
+          extraArgs?: any;
         },
     resultCollector?: object,
     restore_of_version?: number,
@@ -1429,6 +1430,7 @@ class Table implements AbstractTable {
       additionalTriggerValues = extraOptions.additionalTriggerValues;
       autoRecalcIterations = extraOptions.autoRecalcIterations;
       noTrigger = extraOptions.noTrigger;
+      extraArgs = extraOptions.extraArgs;
     }
 
     if (typeof autoRecalcIterations === "number" && autoRecalcIterations > 5)
@@ -1871,18 +1873,11 @@ class Table implements AbstractTable {
     extraArgs?: any
   ): Promise<ResultMessage> {
     try {
-      const maybe_err = await this.updateRow(
-        v,
-        id,
-        user,
-        false,
+      const maybe_err = await this.updateRow(v, id, user, {
+        noTrigger: false,
         resultCollector,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        extraArgs
-      );
+        extraArgs,
+      });
       if (typeof maybe_err === "string") return { error: maybe_err };
       else return { success: true };
     } catch (e) {
