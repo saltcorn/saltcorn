@@ -1749,14 +1749,15 @@ function progress_toast_update({
               " %</progress>"
         }</div></div>`
       );
-      new bootstrap.Modal($("#scmodal"), {
-        focus: false,
-      }).show();
     } else {
       if (message) $("#scmodal .modal-body .progress-message").html(message);
       if (typeof percent !== "undefined")
         $("#scmodal .modal-body progress").val(percent);
     }
+    if (!$("#scmodal").hasClass("show"))
+      new bootstrap.Modal($("#scmodal"), {
+        focus: false,
+      }).show();
   } else {
     if (id && !existing.length) {
       const { html } = buildToast(message, "info", false, title, "toast-" + id);
