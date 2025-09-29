@@ -1598,9 +1598,9 @@
   "Create an account!": "Maak een account aan!",
   "Login with %s": "Inloggen met %s",
   "Already have an account? Login!": "Heb je al een account? Inloggen!",
-  "Translated %s strings. Click 'Translate with LLM' again to continue": "Vertaald %s strings. Klik opnieuw op 'Vertaal met LLM' om verder te gaan.",
+  "Translated %s strings. Click 'Translate with LLM' again to continue": "Vertaalde %s strings. Klik opnieuw op 'Vertaal met LLM' om verder te gaan.",
   "Translate with LLM": "Vertalen met LLM",
-  "You may need to adjust view relations associated with this table after renaming it": "Mogelijk moet u de weergaverelaties die aan deze tabel zijn gekoppeld aanpassen nadat u deze hebt hernoemd.",
+  "You may need to adjust view relations associated with this table after renaming it": "Het kan nodig zijn om de weergaverelaties die aan deze tabel zijn gekoppeld aan te passen nadat u de tabel hebt hernoemd",
   "Error running workflow": "Fout bij uitvoeren van workflow",
   "Choose File": "Bestand Kiezen",
   "No file chosen": "Geen bestand gekozen"
