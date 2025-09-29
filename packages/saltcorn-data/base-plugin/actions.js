@@ -2291,6 +2291,94 @@ module.exports = {
     },
     namespace: "User interface",
   },
+  progress_bar: {
+    description: "Display or update progress messages and/or progress bar",
+    configFields: [
+      {
+        name: "blocking",
+        label: "Blocking",
+        sublabel:
+          "Display progress in a blocking popup modal, If not checked, display as toast",
+        type: "Bool",
+      },
+      {
+        name: "close",
+        label: "Close",
+        sublabel: "Close this progress window",
+        type: "Bool",
+      },
+      {
+        name: "id",
+        label: "Identifier",
+        type: "String",
+        class: "validate-identifier",
+        required: true,
+        sublabel:
+          "A valid JavaScript identifier for updating existing progress toasts",
+        showIf: { blocking: false, close: false },
+      },
+      {
+        name: "maxHeight",
+        label: "max-height (px)",
+        type: "Integer",
+        sublabel:
+          "If set, progress messages will be added to scrolling container with this maximum height",
+        showIf: { blocking: true, close: false },
+      },
+
+      {
+        name: "title",
+        label: "Title",
+        type: "String",
+        showIf: { close: false },
+      },
+      {
+        name: "message",
+        label: "Message",
+        type: "String",
+        showIf: { close: false },
+      },
+      {
+        name: "percent",
+        label: "Percent",
+        type: "Integer",
+        sublabel: "Optional. 0-100",
+        attributes: {
+          min: 0,
+          max: 100,
+        },
+        showIf: { close: false },
+      },
+    ],
+    run: async ({
+      row,
+      user,
+      configuration: {
+        blocking,
+        id,
+        close,
+        title,
+        message,
+        percent,
+        maxHeight,
+      },
+    }) => {
+      const msg = interpolate(message, row, user, "progress_bar message");
+      const title1 = interpolate(title, row, user, "progress_bar title");
+      const id1 = interpolate(id, row, user, "progress_bar id");
+      let eval_js = `progress_toast_update(${JSON.stringify({
+        blocking,
+        id: id1,
+        close,
+        message: msg,
+        title: title1,
+        percent,
+        maxHeight,
+      })})`;
+      return { eval_js };
+    },
+    namespace: "User interface",
+  },
   sleep: {
     description: "Delay for a set number of seconds",
     configFields: [

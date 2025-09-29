@@ -1721,9 +1721,11 @@ function progress_toast_update({
   message,
   percent,
   blocking,
+  maxHeight,
 }) {
   if (close && blocking) {
-    ensure_modal_exists_and_closed();
+    $("#scmodal .modal-body .progress-message").html("");
+    close_saltcorn_modal();
     return;
   }
   let existing = !blocking && id ? $("#toast-" + id) : $("#scmodal");
@@ -1741,10 +1743,10 @@ function progress_toast_update({
     const exBody = $("#scmodal .modal-body .blocking-progress-modal");
     if (!exBody.length) {
       $("#scmodal .modal-body").html(
-        `<div class="blocking-progress-modal"><div class="progress-message">${message || ""}</div><div class="progress-bar">${
+        `<div class="blocking-progress-modal"><div class="progress-message"${maxHeight ? ` style="max-height: ${maxHeight}px"` : ""}><div>${message || ""}</div></div><div class="progress-bar">${
           typeof percent === "undefined"
             ? ""
-            : '<progress value="' +
+            : '<progress style="width: 100%" value="' +
               percent +
               '" max="100">' +
               percent +
@@ -1752,7 +1754,13 @@ function progress_toast_update({
         }</div></div>`
       );
     } else {
-      if (message) $("#scmodal .modal-body .progress-message").html(message);
+      if (message) {
+        if (maxHeight)
+          $("#scmodal .modal-body .progress-message").prepend(
+            `<div>${message}</div>`
+          );
+        else $("#scmodal .modal-body .progress-message").html(message);
+      }
       if (typeof percent !== "undefined")
         $("#scmodal .modal-body progress").val(percent);
     }
