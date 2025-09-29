@@ -1759,6 +1759,8 @@ function progress_toast_update({
     if (!$("#scmodal").hasClass("show"))
       new bootstrap.Modal($("#scmodal"), {
         focus: false,
+        backdrop: "static",
+        keyboard: false,
       }).show();
   } else {
     if (id && !existing.length) {
