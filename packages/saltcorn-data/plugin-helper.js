@@ -2839,7 +2839,7 @@ const shoudlRunAsync = (col) => {
  * @returns {Promise<*>}
  */
 const run_action_column = async ({ col, req, ...rest }) => {
-   let run_async = shoudlRunAsync(col);
+  let run_async = shoudlRunAsync(col);
   if (run_async && !getState().getConfig("enable_dynamic_updates")) {
     run_async = false;
     getState().log(
@@ -2847,6 +2847,15 @@ const run_action_column = async ({ col, req, ...rest }) => {
       `Warning: '${col.action_name}' is set to run async but dynamic updates are disabled. Running synchronously instead.`
     );
   }
+  const reset_spinner = (state) => {
+    if (!col.spinner) return;
+    if (!req.headers["page-load-tag"]) return;
+    const reset_msg = {
+      eval_js: "reset_spinners()",
+      page_load_tag: req.headers["page-load-tag"],
+    };
+    state.emitDynamicUpdate(db.getTenantSchema(), reset_msg);
+  };
   const successAsyncHandler = (data) => {
     const state = getState();
     state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
@@ -2854,6 +2863,11 @@ const run_action_column = async ({ col, req, ...rest }) => {
     if (req.headers["page-load-tag"])
       emitData.page_load_tag = req.headers["page-load-tag"];
     state.emitDynamicUpdate(db.getTenantSchema(), emitData);
+    if (
+      !emitData.resume_workflow &&
+      !emitData.popup?.startsWith?.("/actions/fill-workflow-form/")
+    )
+      reset_spinner(state);
   };
   const failureAsyncHandler = (err) => {
     const state = getState();
@@ -2864,6 +2878,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
         page_load_tag: req.headers["page-load-tag"],
       });
     }
+    reset_spinner(state);
   };
   const run_action_step = async (action_name, colcfg) => {
     let state_action = getState().actions[action_name];
@@ -2901,9 +2916,7 @@ const run_action_column = async ({ col, req, ...rest }) => {
     }
     if (!goRun)
       throw new Error("Runnable action not found: " + text(action_name));
-    if (run_async) {
-      goRun().then(successAsyncHandler).catch(failureAsyncHandler);
-    } else return await goRun();
+    return await goRun();
   };
   if (col.action_name === "Multi-step action") {
     let result = {};

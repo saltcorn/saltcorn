@@ -734,7 +734,9 @@ const transformForm = async ({
           row,
           segment.rndid,
           "rndid",
-          segment.confirm
+          segment.confirm,
+          undefined,
+          segment.run_async
         );
         if (url.javascript) {
           //redo to include dynamic row

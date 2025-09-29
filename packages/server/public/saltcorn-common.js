@@ -1440,8 +1440,8 @@ function card_max_full_screen($card_outer) {
     $card.css("max-height", newCardHeight + "px").css("overflow-y", "scroll");
     is_changed = true;
   }
-  $card.attr("tabindex", "-1")
-  $card.focus()
+  $card.attr("tabindex", "-1");
+  $card.focus();
   window.addEventListener(
     "resize",
     function () {
@@ -1516,7 +1516,7 @@ function inline_ajax_submit_with_fielddata(e, opts1) {
   $.ajax(url, {
     type: "POST",
     headers: {
-      "CSRF-Token": _sc_globalCsrf,      
+      "CSRF-Token": _sc_globalCsrf,
     },
     data: form_data,
     success: function (res) {
@@ -1649,7 +1649,7 @@ function getIsNode() {
   }
 }
 
-function buildToast(txt, type, spin, title) {
+function buildToast(txt, type, spin, title, set_id) {
   const realtype = type === "error" ? "danger" : type;
   const icon =
     realtype === "success"
@@ -1660,7 +1660,8 @@ function buildToast(txt, type, spin, title) {
           ? "fa-exclamation-triangle"
           : "";
   const isNode = getIsNode();
-  const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+  const rndid =
+    set_id || `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   return {
     id: rndid,
     html: `
@@ -1693,22 +1694,108 @@ function buildToast(txt, type, spin, title) {
         }
       </div>
       <div 
-        class="toast-body py-2 fs-6 fw-bold d-flex align-items-center"
+        class="toast-body py-2 fs-6 fw-bold"
       >
-        <strong>${txt}</strong>
-        ${
-          spin
-            ? `<span 
-                class="spinner-border ms-auto" 
-                role="status" 
-                aria-hidden="true" 
-                style="width: 1.5rem; height: 1.5rem"></span>`
-            : ""
-        }
+        <div class="d-flex align-items-center">
+          <strong>${txt}</strong>
+          ${
+            spin
+              ? `<span 
+                  class="spinner-border ms-auto" 
+                  role="status" 
+                  aria-hidden="true" 
+                  style="width: 1.5rem; height: 1.5rem"></span>`
+              : ""
+          }
+        </div>
       </div>
     </div>
   `,
   };
+}
+
+function progress_toast_update({
+  id,
+  close,
+  title,
+  message,
+  percent,
+  blocking,
+  maxHeight,
+}) {
+  if (close && blocking) {
+    $("#scmodal .modal-body .progress-message").html("");
+    close_saltcorn_modal();
+    return;
+  }
+  let existing = !blocking && id ? $("#toast-" + id) : $("#scmodal");
+  if (close && id) {
+    existing.remove();
+    return;
+  }
+
+  if (blocking) {
+    ensure_modal_exists_and_closed({ open: true, blocking: true }); // no close
+    $("#scmodal .modal-header button.btn-close").css("display", "none");
+
+    existing = $("#scmodal");
+    if (title) $("#scmodal .modal-title").html(title);
+    const exBody = $("#scmodal .modal-body .blocking-progress-modal");
+    if (!exBody.length) {
+      $("#scmodal .modal-body").html(
+        `<div class="blocking-progress-modal"><div class="progress-message"${maxHeight ? ` style="max-height: ${maxHeight}px"` : ""}><div>${message || ""}</div></div><div class="progress-bar">${
+          typeof percent === "undefined"
+            ? ""
+            : '<progress style="width: 100%" value="' +
+              percent +
+              '" max="100">' +
+              percent +
+              " %</progress>"
+        }</div></div>`
+      );
+    } else {
+      if (message) {
+        if (maxHeight)
+          $("#scmodal .modal-body .progress-message").prepend(
+            `<div>${message}</div>`
+          );
+        else $("#scmodal .modal-body .progress-message").html(message);
+      }
+      if (typeof percent !== "undefined")
+        $("#scmodal .modal-body progress").val(percent);
+    }
+    if (!$("#scmodal").hasClass("show"))
+      new bootstrap.Modal($("#scmodal"), {
+        focus: false,
+        backdrop: "static",
+        keyboard: false,
+      }).show();
+  } else {
+    if (id && !existing.length) {
+      const { html } = buildToast(message, "info", false, title, "toast-" + id);
+      $("#toasts-area").append(html);
+      existing = $("#toast-" + id);
+    } else {
+      $("#toast-" + id)
+        .find(".toast-body strong")
+        .html(message);
+    }
+
+    if (typeof percent !== "undefined") {
+      const exprogress = existing.find("progress");
+      if (!exprogress.length) {
+        $("#toast-" + id)
+          .find(".toast-body")
+          .append(
+            '<progress value="' +
+              percent +
+              '" max="100">' +
+              percent +
+              " %</progress>"
+          );
+      } else exprogress.val(percent);
+    }
+  }
 }
 
 function notifyAlert(note, spin) {
@@ -1771,7 +1858,7 @@ function restore_old_button(btnId) {
   if (window.reset_spinners) reset_spinners();
   const btn = btnId instanceof jQuery ? btnId : $(`#${btnId}`);
   const oldText = $(btn).data("old-text");
-  if (!oldText.length) reuturn;
+  if (!oldText.length) return;
   btn.html(oldText);
   btn.css({ width: "", height: "" }).prop("disabled", false);
   btn.removeData("old-text");
@@ -1799,7 +1886,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
     else await fn(element);
   };
   //TODO what if something else is spinning?
-  if (window.reset_spinners) reset_spinners();
+  //if (window.reset_spinners) reset_spinners();
 
   const eval_it = async (s) => {
     if (res.row && res.field_names) {

@@ -50,7 +50,7 @@ const {
   dollarizeObject,
   getSessionId,
   cloneName,
-  isNode, 
+  isNode,
   isOfflineMode,
 } = utils;
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
@@ -277,8 +277,7 @@ class Page implements AbstractPage {
             },
             await view.run(mystate, extraArgs, view.isRemoteTable())
           );
-        }
-        else {
+        } else {
           const response = await saltcorn.mobileApp.api.apiCall({
             method: "GET",
             path: `/view/${encodeURIComponent(view.name)}${qs}`,
@@ -300,13 +299,12 @@ class Page implements AbstractPage {
             },
             await view.run(mystate, extraArgs, view.isRemoteTable())
           );
-        }
-        else {
+        } else {
           const response = await saltcorn.mobileApp.api.apiCall({
             method: "GET",
             path: `/view/${encodeURIComponent(view.name)}${qs}`,
           });
-          segment.contents = response.data;           
+          segment.contents = response.data;
         }
       } else {
         // segment.state === "fixed"
@@ -327,13 +325,12 @@ class Page implements AbstractPage {
             },
             await view.run(mystate, extraArgs, view.isRemoteTable())
           );
-        }
-        else {
+        } else {
           const response = await saltcorn.mobileApp.api.apiCall({
             method: "GET",
             path: `/view/${encodeURIComponent(view.name)}${qs}`,
           });
-          segment.contents = response.data;           
+          segment.contents = response.data;
         }
       }
     });
@@ -387,6 +384,8 @@ class Page implements AbstractPage {
             );
           return;
         }
+
+        //TODO page_post_action for mobile
         const url =
           segment.action_name === "GoBack"
             ? `javascript:${
@@ -395,7 +394,7 @@ class Page implements AbstractPage {
                   : "parent.saltcorn.mobileApp.navigation.goBack()"
               }`
             : `javascript:${
-                isWeb(extraArgs.req) ? "ajax_post_json" : "local_post_json"
+                isWeb(extraArgs.req) ? "page_post_action" : "local_post_json"
               }('/page/${pagename}/action/${segment.rndid}')`;
         const html = action_link(url, extraArgs.req, segment);
         segment.type = "blank";
