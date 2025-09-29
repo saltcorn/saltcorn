@@ -1873,13 +1873,11 @@ class Table implements AbstractTable {
     extraArgs?: any
   ): Promise<ResultMessage> {
     try {
-      const maybe_err = await this.updateRow(
-        v,
-        id,
-        user,
-        { noTrigger: false, extraArgs },
-        resultCollector
-      );
+      const maybe_err = await this.updateRow(v, id, user, {
+        noTrigger: false,
+        resultCollector,
+        extraArgs,
+      });
       if (typeof maybe_err === "string") return { error: maybe_err };
       else return { success: true };
     } catch (e) {
