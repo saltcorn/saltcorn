@@ -3,7 +3,7 @@
 ## 1.4.0 - In development
 
 * When PageLoad triggers return directives (`notify`, `eval_js` etc.) these are now run on the the 
-  client page. `req` is passed to the PageLoad body.
+  client page.
 
 * When Table.deleteRows is called without a user argument, it implicitly has admin access, to make 
   it consistent ith other methods
