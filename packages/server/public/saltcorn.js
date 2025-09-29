@@ -263,8 +263,11 @@ function spin_action_link(e) {
   const height = $e.height();
 
   $e.attr("data-innerhtml-prespin", $e.html());
+  $e.attr("data-previous-onclick", $e.attr("onclick"));
+  $e.attr("onclick", "void(0)");
   $e.html('<i class="fas fa-spinner fa-spin"></i>').width(width).height(height);
   $(document).trigger("activate-spinner", $e);
+  //null onclick
   $e.trigger("spin");
 }
 
@@ -273,6 +276,13 @@ function reset_spinners() {
     $e = $(this);
     $e.html($e.attr("data-innerhtml-prespin"));
     $e.removeAttr("data-innerhtml-prespin");
+    const prevOnclick = $e.attr("data-previous-onclick");
+    if (prevOnclick && prevOnclick !== "void(0)") {
+      $e.attr("onclick", prevOnclick);
+      $e.removeAttr("data-previous-onclick");
+    }
+
+    //reset onclick
   });
 }
 
