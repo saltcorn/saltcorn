@@ -600,7 +600,6 @@ const get_config_response = async (role_id, res, req) => {
         text: "Homepage loaded",
         type: "home",
         query: req.query,
-        req,
       },
       resultCollector,
       req.user,

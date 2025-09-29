@@ -162,7 +162,6 @@ router.get(
           name: viewname,
           render_time: ms,
           query: req.query,
-          req,
         },
         resultCollector,
         req.user,
