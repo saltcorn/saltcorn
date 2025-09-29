@@ -3,12 +3,18 @@
 ## 1.4.0 - In development
 
 * When PageLoad triggers return directives (`notify`, `eval_js` etc.) these are now run on the the 
-  client page
+  client page. `req` is passed to the PageLoad body.
 
 * When Table.deleteRows is called without a user argument, it implicitly has admin access, to make 
   it consistent ith other methods
 
 * Some initial and limited support for composite primary keys in discovered and external tables. 
+
+* insert_any_rows now accepts a list of rows in its row expression and will insert all of them.
+
+* Actions now have an option to run asynchronously from the builder action settings. If this is enabled, and dynamic updates are enabled, the action will run in the background instead of during a HTTP request. This is more robust for long-running actions; there should be no difference in user experience. 
+
+* `progress_bar` action: Display or update the display of a progress message. This can appear in a toast message for actions that can run in parallel; or in a blocking popup-up modal if the progress display is required to freeze the user interface.
 
 ### Fixes
 
@@ -16,6 +22,7 @@
 * Edit: preserve file choices on form errors.
 * Fix format fieldview for only day Dates.
 * Fix full screen width on containers - this conflicted with position, which it now overrides.
+* Fix jsdoc links from code editor
 
 ## 1.3.1 - Released 31 August 2025
 
