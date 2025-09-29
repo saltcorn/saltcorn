@@ -1733,7 +1733,9 @@ function progress_toast_update({
   }
 
   if (blocking) {
-    ensure_modal_exists_and_closed(true); // no close
+    ensure_modal_exists_and_closed({ open: true, blocking: true }); // no close
+    $("#scmodal .modal-header button.btn-close").css("display", "none");
+
     existing = $("#scmodal");
     if (title) $("#scmodal .modal-title").html(title);
     const exBody = $("#scmodal .modal-body .blocking-progress-modal");

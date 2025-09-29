@@ -369,7 +369,7 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
   });
 }
 
-function ensure_modal_exists_and_closed(noClose) {
+function ensure_modal_exists_and_closed(opts) {
   if ($("#scmodal").length === 0) {
     $("body").append(`<div id="scmodal" class="modal">
     <div class="modal-dialog">
@@ -398,13 +398,14 @@ function ensure_modal_exists_and_closed(noClose) {
       </div>
     </div>
   </div>`);
-  } else if ($("#scmodal").hasClass("show") && !noClose) {
+  } else if ($("#scmodal").hasClass("show") && !opts?.open) {
     // remove reload handler added by edit, for when we have popup link
     // in autosave edit in popup
     $("#scmodal").off("hidden.bs.modal");
     close_saltcorn_modal();
   }
   $("#modal-toasts-area").empty();
+  $("#scmodal .modal-header button.btn-close").css("display", "");
 }
 
 function expand_thumbnail(img_id, filename) {
