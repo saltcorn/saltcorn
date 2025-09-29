@@ -65,7 +65,6 @@ const runPage = async (page, req, res, tic) => {
           name: page.name,
           render_time: ms,
           query: req.query,
-          req,
         },
         resultCollector,
         req.user,
