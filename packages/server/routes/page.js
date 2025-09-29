@@ -18,7 +18,7 @@ const {
   getEligiblePage,
   getRandomPage,
 } = require("../routes/utils.js");
-const { isTest, abbreviatedReq } = require("@saltcorn/data/utils");
+const { isTest } = require("@saltcorn/data/utils");
 const { add_edit_bar, add_results_to_contents } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
@@ -65,7 +65,7 @@ const runPage = async (page, req, res, tic) => {
           name: page.name,
           render_time: ms,
           query: req.query,
-          req: abbreviatedReq(req),
+          req,
         },
         resultCollector,
         req.user,
