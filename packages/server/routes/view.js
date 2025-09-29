@@ -20,7 +20,11 @@ const {
   isAdminOrHasConfigMinRole,
 } = require("../routes/utils.js");
 const { add_edit_bar, add_results_to_contents } = require("../markup/admin.js");
-const { InvalidConfiguration, isTest } = require("@saltcorn/data/utils");
+const {
+  InvalidConfiguration,
+  isTest,
+  abbreviatedReq,
+} = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 
 /**
@@ -162,7 +166,7 @@ router.get(
           name: viewname,
           render_time: ms,
           query: req.query,
-          req,
+          req: abbreviatedReq(req),
         },
         resultCollector,
         req.user,

@@ -578,7 +578,19 @@ const isPushEnabled = (user?: User): user is User => {
   return userAttr?.notify_push;
 };
 
+const abbreviatedReq = (req: any) => {
+  //const { socket, parser, ...rest } = req;
+  return { foo: "bar" };
+  /* getHeeaders: req.getHeaders,
+  getHeeader: req.getHeader,
+  headers: req.headersSent,
+  path: req.path,
+  method: req.method,
+  ip: req.ip,*/
+};
+
 export = {
+  abbreviatedReq,
   cloneName,
   dollarizeObject,
   objectToQueryString,

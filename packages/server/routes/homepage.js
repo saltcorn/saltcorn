@@ -26,6 +26,7 @@ const { fileUploadForm } = require("../markup/forms");
 const { get_base_url, sendHtmlFile, getEligiblePage } = require("./utils.js");
 const semver = require("semver");
 const { add_results_to_contents } = require("../markup/admin.js");
+const { abbreviatedReq } = require("@saltcorn/data/utils");
 
 /**
  * Tables List
@@ -600,7 +601,7 @@ const get_config_response = async (role_id, res, req) => {
         text: "Homepage loaded",
         type: "home",
         query: req.query,
-        req,
+        req: abbreviatedReq(req),
       },
       resultCollector,
       req.user,
