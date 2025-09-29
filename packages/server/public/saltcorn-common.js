@@ -1714,33 +1714,74 @@ function buildToast(txt, type, spin, title, set_id) {
   };
 }
 
-function progress_toast_update({ id, close, title, message, percent }) {
-  const existing = $("#toast-" + id);
-  if (close) {
+function progress_toast_update({
+  id,
+  close,
+  title,
+  message,
+  percent,
+  blocking,
+}) {
+  if (close && blocking) {
+    ensure_modal_exists_and_closed();
+    return;
+  }
+  let existing = !blocking && id ? $("#toast-" + id) : $("#scmodal");
+  if (close && id) {
     existing.remove();
     return;
   }
-  if (!existing.length) {
-    const { html } = buildToast(message, "info", false, title, "toast-" + id);
-    $("#toasts-area").append(html);
+
+  if (blocking) {
+    ensure_modal_exists_and_closed(true); // no close
+    existing = $("#scmodal");
+    if (title) $("#scmodal .modal-title").html(title);
+    const exBody = $("#scmodal .modal-body .blocking-progress-modal");
+    if (!exBody.length) {
+      $("#scmodal .modal-body").html(
+        `<div class="blocking-progress-modal"><div class="progress-message">${message || ""}</div><div class="progress-bar">${
+          typeof percent === "undefined"
+            ? ""
+            : '<progress value="' +
+              percent +
+              '" max="100">' +
+              percent +
+              " %</progress>"
+        }</div></div>`
+      );
+      new bootstrap.Modal($("#scmodal"), {
+        focus: false,
+      }).show();
+    } else {
+      if (message) $("#scmodal .modal-body .progress-message").html(message);
+      if (typeof percent !== "undefined")
+        $("#scmodal .modal-body progress").val(percent);
+    }
   } else {
-    $("#toast-" + id)
-      .find(".toast-body strong")
-      .html(message);
-  }
-  if (typeof percent !== "undefined") {
-    const exprogress = $("#toast-" + id).find("progress");
-    if (!exprogress.length) {
+    if (id && !existing.length) {
+      const { html } = buildToast(message, "info", false, title, "toast-" + id);
+      $("#toasts-area").append(html);
+      existing = $("#toast-" + id);
+    } else {
       $("#toast-" + id)
-        .find(".toast-body")
-        .append(
-          '<progress value="' +
-            percent +
-            '" max="100">' +
-            percent +
-            " %</progress>"
-        );
-    } else exprogress.val(percent);
+        .find(".toast-body strong")
+        .html(message);
+    }
+
+    if (typeof percent !== "undefined") {
+      const exprogress = existing.find("progress");
+      if (!exprogress.length) {
+        $("#toast-" + id)
+          .find(".toast-body")
+          .append(
+            '<progress value="' +
+              percent +
+              '" max="100">' +
+              percent +
+              " %</progress>"
+          );
+      } else exprogress.val(percent);
+    }
   }
 }
 
