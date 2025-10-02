@@ -509,6 +509,7 @@ const restore_files = async (dirpath: string): Promise<any> => {
       if (file.isDirectory)
         await mkdir(File.get_new_path(file.location), { recursive: true });
     }
+    state.log(1, `Restoring ${file_rows.length} file...`);
     for (const file of file_rows) {
       try {
         const newPath = File.get_new_path(
@@ -543,6 +544,8 @@ const restore_files = async (dirpath: string): Promise<any> => {
  */
 const correct_fileid_references_to_location = async (newLocations: any) => {
   const fileFields = await Field.find({ type: "File" });
+  getState().log(1, `Correcting file id references to locations`);
+
   for (const field of fileFields) {
     const table = Table.findOne({ id: field.table_id });
 
@@ -563,6 +566,7 @@ const correct_fileid_references_to_location = async (newLocations: any) => {
  * @returns {Promise<void>}
  */
 const restore_file_users = async (file_users: any): Promise<void> => {
+  getState().log(1, `Restoring file users`);
   for (const [id, user_id] of Object.entries(file_users)) {
     if (user_id) {
       const file = await File.findOne(id);
@@ -585,7 +589,7 @@ const restore_tables = async (
   let err;
   const tables = await Table.find();
   for (const table of tables) {
-    getState().log(6, `restoring table ${table.name}`);
+    getState().log(1, `restoring table ${table.name}`);
 
     const fnm_csv =
       table.name === "users"
@@ -618,7 +622,7 @@ const restore_tables = async (
         sanitiseTableName(table.name) + "__history.json"
       );
       if (existsSync(fnm_hist_json)) {
-        getState().log(6, `restoring table history ${table.name}`);
+        getState().log(1, `restoring table history ${table.name}`);
 
         await table.import_json_history_file(fnm_hist_json);
       }
@@ -653,6 +657,7 @@ const restore_config = async (dirpath: string): Promise<void> => {
 const restore_metadata = async (dirpath: string): Promise<void> => {
   const fnm: string = join(dirpath, "metadata.json");
   if (!existsSync(fnm)) return;
+  getState().log(1, `Restoring metadata`);
   const mds = JSON.parse((await readFile(fnm)).toString()) as Array<MetaData>;
 
   for (const md of mds) {
@@ -673,13 +678,13 @@ const restore = async (
   password?: string
 ): Promise<string | void> => {
   const state = getState();
-  state.log(2, `Starting restore to tenant ${db.getTenantSchema()}`);
+  state.log(1, `Starting restore to tenant ${db.getTenantSchema()}`);
 
   const tmpDir = await dir({ unsafeCleanup: true });
 
   await extract(fnm, tmpDir.path, password);
 
-  state.log(6, `Unzip done`);
+  state.log(1, `Unzip done`);
 
   let basePath = tmpDir.path;
   // safari re-compressed. Safari unpacks zip files on download. If the user
@@ -715,7 +720,7 @@ const restore = async (
   }
 
   //install pack
-  state.log(6, `Reading pack`);
+  state.log(1, `Reading pack`);
   const pack = JSON.parse(
     (await readFile(join(basePath, "pack.json"))).toString()
   );
@@ -728,22 +733,22 @@ const restore = async (
     `;
   }
   //config
-  state.log(6, `Restoring config`);
+  state.log(1, `Restoring config`);
   await restore_config(basePath);
 
-  state.log(6, `Restoring pack`);
+  state.log(1, `Restoring pack`);
   await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
   // files
-  state.log(6, `Restoring files`);
+  state.log(1, `Restoring files`);
   const { file_users, newLocations } = await restore_files(basePath);
 
   //table csvs
-  state.log(6, `Restoring tables`);
+  state.log(1, `Restoring tables`);
   const tabres = await restore_tables(basePath, restore_first_user);
   if (tabres) err = (err || "") + tabres;
 
-  state.log(6, `Restoring metadata`);
+  state.log(1, `Restoring metadata`);
   await restore_metadata(basePath);
 
   if (Object.keys(newLocations).length > 0)
@@ -752,7 +757,7 @@ const restore = async (
 
   await tmpDir.cleanup();
   state.log(
-    2,
+    1,
     `Completed restore to tenant ${db.getTenantSchema()}${
       err ? ` with errors ${err}` : " successfully"
     }`
@@ -964,7 +969,7 @@ const auto_backup_now = async () => {
         name: "Success",
         body: {},
       });
-      state.log(6, `Auto backup completed successfully`);
+      state.log(3, `Auto backup completed successfully`);
     } catch (e: any) {
       console.error(e);
       await Crash.create(e, {
