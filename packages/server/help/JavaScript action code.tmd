@@ -189,7 +189,8 @@ return {
     percent: 45,
     maxHeight: 120,
     popupWidth: 600
-  }
+  },
+  page_load_tag // only display on current page; see below
 }
 ```
 ### Emit Client events
