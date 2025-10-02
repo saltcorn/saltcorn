@@ -2369,11 +2369,13 @@ module.exports = {
         maxHeight,
         popupWidth,
       },
+      req,
     }) => {
       const msg = interpolate(message, row, user, "progress_bar message");
       const title1 = interpolate(title, row, user, "progress_bar title");
       const id1 = interpolate(id, row, user, "progress_bar id");
       return {
+        page_load_tag: req?.headers?.["page-load-tag"],
         progress_bar_update: {
           blocking,
           id: id1,
