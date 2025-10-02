@@ -1330,7 +1330,7 @@ function initialize_page() {
                   }
                 } else {
                   cm1.save();
-                  $(el).closest("form").trigger("change");
+                  $(el).trigger("change");
                 }
               },
               500,

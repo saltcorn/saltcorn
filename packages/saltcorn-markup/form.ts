@@ -551,6 +551,9 @@ const innerField =
             ...(maybe_disabled
               ? { disabled: true, "data-disabled": "true" }
               : {}),
+            ...(hdr.attributes?.onChange
+              ? { onchange: hdr.attributes?.onChange }
+              : {}),
             "data-fieldname": text_attr(hdr.form_name),
             name: text_attr(name),
             id: `input${text_attr(name)}`,
