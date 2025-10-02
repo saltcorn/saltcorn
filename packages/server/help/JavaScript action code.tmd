@@ -148,16 +148,6 @@ Execute JavaScript in the browser.
 
 Example: `return { eval_js: 'alert("Hello world")' }`
 
-### Emit Client events
-
-Use `emit_to_client' to send socket.io events to one or multiple clients. For example, to notify the user with id 1:
-```
-emit_to_client({notify: "hello admin"}, 1);
-```
-This event goes to each tab (and window) where the user is logged in. Otherwise, you can use an array or omit the second parameter to emit to default to the originating user. All return directives from the block above can be used.
-
-Include the constant `page_load_tag` in the object to only appear on the originating tab, for instance: `emit_to_client({notify: "Hello", page_load_tag})`.
-
 #### `reload_embedded_view`
 
 Reload the embedded view by name. Optionally, also give a new state (as a string in query string format) with the `new_state` key.
@@ -173,3 +163,14 @@ with new state
 ```
 return { reload_embedded_view: "booklist", new_state: "publisher=5&category=Romance"}
 ```
+
+
+### Emit Client events
+
+Use `emit_to_client' to send socket.io events to one or multiple clients. For example, to notify the user with id 1:
+```
+emit_to_client({notify: "hello admin"}, 1);
+```
+This event goes to each tab (and window) where the user is logged in. Otherwise, you can use an array or omit the second parameter to emit to default to the originating user. All return directives from the block above can be used.
+
+Include the constant `page_load_tag` in the object to only appear on the originating tab, for instance: `emit_to_client({notify: "Hello", page_load_tag})`.
