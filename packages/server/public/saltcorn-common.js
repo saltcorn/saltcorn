@@ -1722,6 +1722,7 @@ function progress_toast_update({
   percent,
   blocking,
   maxHeight,
+  popupWidth,
 }) {
   if (close && blocking) {
     $("#scmodal .modal-body .progress-message").html("");
@@ -1738,7 +1739,7 @@ function progress_toast_update({
     ensure_modal_exists_and_closed({ open: true, blocking: true }); // no close
     $(".sc-modal-linkout").hide();
     $("#scmodal .modal-header button.btn-close").css("display", "none");
-
+    if (popupWidth) $(".modal-dialog").css("max-width", popupWidth);
     existing = $("#scmodal");
     if (title) $("#scmodal .modal-title").html(title);
     const exBody = $("#scmodal .modal-body .blocking-progress-modal");
@@ -2005,6 +2006,9 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
   if (res.reload_embedded_view) {
     let new_state = res.new_state || undefined;
     reload_embedded_view(res.reload_embedded_view, new_state);
+  }
+  if (res.progress_bar_update) {
+    progress_toast_update(res.progress_bar_update);
   }
   if (res.eval_js) await handle(res.eval_js, eval_it);
   /// TODO got and resume_workflow - use localStorage

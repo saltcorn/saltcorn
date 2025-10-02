@@ -2325,6 +2325,12 @@ module.exports = {
           "If set, progress messages will be added to scrolling container with this maximum height",
         showIf: { blocking: true, close: false },
       },
+      {
+        name: "popupWidth",
+        label: "Popup width (px)",
+        type: "Integer",
+        showIf: { blocking: true, close: false },
+      },
 
       {
         name: "title",
@@ -2361,6 +2367,7 @@ module.exports = {
         message,
         percent,
         maxHeight,
+        popupWidth
       },
     }) => {
       const msg = interpolate(message, row, user, "progress_bar message");
@@ -2374,6 +2381,7 @@ module.exports = {
         title: title1,
         percent,
         maxHeight,
+        popupWidth
       })})`;
       return { eval_js };
     },
