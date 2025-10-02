@@ -1736,6 +1736,7 @@ function progress_toast_update({
 
   if (blocking) {
     ensure_modal_exists_and_closed({ open: true, blocking: true }); // no close
+    $(".sc-modal-linkout").hide();
     $("#scmodal .modal-header button.btn-close").css("display", "none");
 
     existing = $("#scmodal");
