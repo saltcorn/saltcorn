@@ -509,7 +509,7 @@ const restore_files = async (dirpath: string): Promise<any> => {
       if (file.isDirectory)
         await mkdir(File.get_new_path(file.location), { recursive: true });
     }
-    state.log(1, `Restoring ${file_rows.length} file...`);
+    state.log(1, `Restoring ${file_rows.length} files...`);
     for (const file of file_rows) {
       try {
         const newPath = File.get_new_path(
