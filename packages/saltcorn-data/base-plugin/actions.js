@@ -2367,23 +2367,24 @@ module.exports = {
         message,
         percent,
         maxHeight,
-        popupWidth
+        popupWidth,
       },
     }) => {
       const msg = interpolate(message, row, user, "progress_bar message");
       const title1 = interpolate(title, row, user, "progress_bar title");
       const id1 = interpolate(id, row, user, "progress_bar id");
-      let eval_js = `progress_toast_update(${JSON.stringify({
-        blocking,
-        id: id1,
-        close,
-        message: msg,
-        title: title1,
-        percent,
-        maxHeight,
-        popupWidth
-      })})`;
-      return { eval_js };
+      return {
+        progress_bar_update: {
+          blocking,
+          id: id1,
+          close,
+          message: msg,
+          title: title1,
+          percent,
+          maxHeight,
+          popupWidth,
+        },
+      };
     },
     namespace: "User interface",
   },
