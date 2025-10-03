@@ -74,8 +74,9 @@ function reset_nearest_form(that) {
   form.find("select").trigger("change");
 }
 
-function add_repeater(nm) {
-  var es = $("div.form-repeat.repeat-" + nm);
+function add_repeater(nm, add_link) {
+  const outer_repeat = $(add_link).prev();
+  var es = outer_repeat.find("div.form-repeat.repeat-" + nm);
   const ncopy = es.length - 1;
   var e = es.last();
   var newix = es.length;
@@ -97,7 +98,7 @@ function add_repeater(nm) {
       if (original) element.selectedIndex = original.selectedIndex;
     }
   });
-  newe.appendTo($("div.repeats-" + nm));
+  newe.appendTo(outer_repeat);
   newe.find("[data-on-cloned]").each(function (ix, element) {
     (function (str) {
       return eval(str);

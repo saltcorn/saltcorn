@@ -877,7 +877,8 @@ const repeater_adder = (form_name: string) =>
   a(
     {
       class: "btn btn-sm btn-outline-primary mb-3",
-      href: `javascript:add_repeater('${form_name}')`,
+      href: `javascript:void(0)`,
+      onclick: `add_repeater('${form_name}', this)`,
       title: "Add",
     },
     i({ class: "fas fa-plus" })
