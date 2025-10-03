@@ -185,6 +185,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         sublabel: req.__("Display data from this table"),
         options: tableOptions,
         disabled: isEdit,
+        help: {
+          topic: "View table",
+          context: {},
+        },
         showIf: isEdit
           ? hasTable.includes(values.viewtemplate)
             ? undefined
