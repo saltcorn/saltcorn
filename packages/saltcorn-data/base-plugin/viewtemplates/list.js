@@ -802,6 +802,16 @@ const configuration_workflow = (req) =>
             default: 760,
             showIf: { _responsive_collapse: true },
           });
+          formfields.push({
+            name: "_row_color_formula",
+            label: req.__("Row color formula"),
+            sublabel: req.__(
+              "Formula for row background color. Ex.: <code>age>65 ?'#aaffaa': null</code>"
+            ),
+            type: "String",
+            tab: "Functionality",
+            class: "validate-expression",
+          });
 
           if (!db.isSQLite && !table.external)
             formfields.push({
@@ -1235,6 +1245,8 @@ const run = async (
   page_opts.header_filters_toggle = (default_state || {})._header_filters_toggle;
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
+  page_opts.row_color_formula = (default_state || {})._row_color_formula;
+
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
   const istop = vpos === "Top";
   const isright = hpos === "right";
@@ -1604,7 +1616,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _responsive_collapse _collapse_breakpoint_px",
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _responsive_collapse _collapse_breakpoint_px _row_color_formula",
       "default_state"
     );
   }
@@ -1661,6 +1673,7 @@ module.exports = {
       _collapse_breakpoint_px,
       _header_filters,
       _header_filters_toggle,
+      _row_color_formula,
       ...ds
     } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));

@@ -110,6 +110,7 @@ namespace TableExports {
     header_filters_toggle?: boolean;
     responsiveCollapse?: boolean;
     collapse_breakpoint_px?: number;
+    row_color_formula?: string;
   };
 }
 type HeadersParams = TableExports.HeadersParams;
@@ -161,17 +162,33 @@ const mkTable = (
   opts: OptsParams | any = {}
 ): string => {
   const pk_name = opts.pk_name || "id";
-  const val_row = (v: any) =>
-    tr(
+  if (opts.row_color_formula && !(opts as any)._rowColorFn) {
+    (opts as any)._rowColorFn = new Function(
+      "row",
+      "with(row){return (" + opts.row_color_formula + ");}"
+    );
+  }
+  const val_row = (v: any) => {
+    let rowColor: string | undefined;
+    if (opts.row_color_formula) {
+      try {
+        rowColor = (opts as any)._rowColorFn?.(v);
+      } catch {
+        rowColor = undefined;
+      }
+    }
+    return tr(
       {
         ...(v[pk_name] ? { "data-row-id": v[pk_name] } : {}),
         ...mkClickHandler(opts, v),
+        ...(rowColor ? { style: { backgroundColor: rowColor } } : {}),
       },
       hdrs.map((hdr: HeadersParams) =>
         td(
           {
             style: {
               ...(hdr.width && opts.noHeader ? { width: hdr.width } : {}),
+              ...(rowColor ? { backgroundColor: rowColor } : {}),
             },
             ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
           },
@@ -179,6 +196,7 @@ const mkTable = (
         )
       )
     );
+  };
   const groupedBody = (groups: any) =>
     Object.entries(groups).map(
       ([group, rows]: [string, any]) =>
