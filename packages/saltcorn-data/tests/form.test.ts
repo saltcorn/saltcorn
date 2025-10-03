@@ -38,6 +38,49 @@ const mkRepForm = () =>
     ],
   });
 
+const mkNestedRepForm = () =>
+  new Form({
+    action: "/",
+    fields: [
+      new Field({
+        name: "subject",
+        label: "Subject",
+        type: "String",
+      }),
+      new FieldRepeat({
+        name: "students",
+        fields: [
+          new Field({
+            name: "name",
+            label: "Name",
+            type: "String",
+          }),
+          new Field({
+            name: "age",
+            label: "Age",
+            type: "Integer",
+            attributes: { min: 16 },
+          }),
+          new FieldRepeat({
+            name: "pets",
+            fields: [
+              new Field({
+                name: "name",
+                label: "Name",
+                type: "String",
+              }),
+              {
+                name: "species",
+                label: "Species",
+                type: "String",
+              },
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+
 describe("Form", () => {
   it("should render", async () => {
     const form = new Form({
@@ -74,6 +117,32 @@ describe("Form", () => {
     expect(form.values.students.length).toBe(2);
     expect(form.values.students[0].name).toBe("Fred");
     expect(form.values.students[1].age).toBe(19);
+  });
+
+  it("should render nested with repeats", async () => {
+    const form = mkNestedRepForm();
+    const html = renderForm(form, "");
+    form.validate({
+      subject: "Maths",
+      age_0: 18,
+      name_0: "Fred",
+      age_1: 19,
+      name_1: "George",
+      name_0_0: "Doggy",
+      species_0_0: "Cat",
+      name_0_1: "Wila",
+      species_0_1: "Tarantula"
+    });
+    expect(html.includes("<form")).toBe(true);
+    expect(html.includes('name="age_0"')).toBe(true);
+    expect(form.values.subject).toBe("Maths");
+    expect(form.values.students.length).toBe(2);
+    expect(form.values.students[0].name).toBe("Fred");
+    expect(form.values.students[1].age).toBe(19);
+    expect(form.values.students[0].pets.length).toBe(2);
+    expect(form.values.students[0].pets[0].name).toBe("Doggy");
+    expect(form.values.students[0].pets[1].name).toBe("Wila");
+
   });
   it("should render with repeats and values", async () => {
     const form = mkRepForm();

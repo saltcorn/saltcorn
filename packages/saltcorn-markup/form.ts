@@ -896,7 +896,8 @@ const mkFormRowForRepeat = (
   errors: any[],
   formStyle: string,
   labelCols: number,
-  hdr: any
+  hdr: any,
+  nameAdd: string = ""
 ): string => {
   const adder = repeater_adder(hdr.form_name);
   if (Array.isArray(v[hdr.form_name]) && v[hdr.form_name].length > 0) {
@@ -916,12 +917,21 @@ const mkFormRowForRepeat = (
             { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
             repeater_icons,
             hdr.fields.map((f: any) => {
+              if (f.isRepeat)
+                return mkFormRowForRepeat(
+                  vi,
+                  errors,
+                  formStyle,
+                  labelCols,
+                  f,
+                  nameAdd + "_" + ix
+                );
               return mkFormRowForField(
                 vi,
                 errors,
                 formStyle,
                 labelCols,
-                "_" + ix
+                nameAdd + "_" + ix
               )(f);
             })
           );
@@ -940,7 +950,22 @@ const mkFormRowForRepeat = (
           { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
           repeater_icons,
           hdr.fields.map((f: any) => {
-            return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
+            if (f.isRepeat)
+              return mkFormRowForRepeat(
+                v,
+                errors,
+                formStyle,
+                labelCols,
+                f,
+                nameAdd + "_0"
+              );
+            return mkFormRowForField(
+              v,
+              errors,
+              formStyle,
+              labelCols,
+              nameAdd + "_0"
+            )(f);
           })
         )
       ) + adder;
@@ -975,7 +1000,22 @@ const mkFormRowForRepeat = (
           { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
           repeater_icons,
           hdr.fields.map((f: any) => {
-            return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
+            if (f.isRepeat)
+              return mkFormRowForRepeat(
+                v,
+                errors,
+                formStyle,
+                labelCols,
+                f,
+                nameAdd + "_0"
+              );
+            return mkFormRowForField(
+              v,
+              errors,
+              formStyle,
+              labelCols,
+              nameAdd + "_0"
+            )(f);
           })
         )
       ),
