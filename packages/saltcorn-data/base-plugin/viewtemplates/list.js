@@ -706,6 +706,7 @@ const configuration_workflow = (req) =>
             name: "_header_filters_toggle",
             label: req.__("Make header filters toggleable"),
             type: "Bool",
+            showIf: { _header_filters: true },
           });
           formfields.push({
             name: "transpose",

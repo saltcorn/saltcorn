@@ -71,7 +71,7 @@ const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
       style:
         "cursor:pointer;margin-left:1rem;display:inline-flex;align-items:center;",
     },
-    i({ class: "fas fa-chevron-up" })
+    i({ class: "fas fa-chevron-down" })
   );
   return th(
     (hdr.align || hdr.width) && {
@@ -234,6 +234,9 @@ const mkTable = (
                   id: opts.header_filters_toggle
                     ? `${opts.tableId || "table"}_header_filters_row`
                     : null,
+                  ...(opts.header_filters_toggle
+                    ? { style: "display:none;" }
+                    : {}),
                 },
                 hdrs.map((hdr: HeadersParams) => headerFilter(hdr))
               )
