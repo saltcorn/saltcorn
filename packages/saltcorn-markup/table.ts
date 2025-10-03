@@ -19,6 +19,7 @@ const {
   span,
   h4,
   style,
+  i,
 } = tags;
 import helpers = require("./helpers");
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
@@ -40,6 +41,47 @@ const headerCell = (hdr: any): string =>
   );
 
 const headerFilter = (hdr: any): string => th(hdr.header_filter || null);
+
+const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
+  if (!(isLast && opts.header_filters && opts.header_filters_toggle))
+    return headerCell(hdr);
+  const idBase = opts.tableId || "table";
+  const filterRowId = `${idBase}_header_filters_row`;
+  const content = hdr.sortlink
+    ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
+    : hdr.label;
+  const toggleIcon = span(
+    {
+      class: "header-filter-toggle link-style",
+      title: "Show/Hide filters",
+      onclick: `var r=document.getElementById('${filterRowId}');
+                  if(r){
+                    var hidden = (r.style.display==='none' || window.getComputedStyle(r).display==='none');
+                    if(hidden){
+                      r.style.display='table-row';
+                      var ic=this.querySelector('i');
+                      if(ic){ ic.classList.remove('fa-chevron-down'); ic.classList.add('fa-chevron-up'); }
+                    } else {
+                      r.style.display='none';
+                      var ic2=this.querySelector('i');
+                      if(ic2){ ic2.classList.remove('fa-chevron-up'); ic2.classList.add('fa-chevron-down'); }
+                    }
+                  }
+                return false;`,
+      style:
+        "cursor:pointer;margin-left:1rem;display:inline-flex;align-items:center;",
+    },
+    i({ class: "fas fa-chevron-down" })
+  );
+  return th(
+    (hdr.align || hdr.width) && {
+      style: hdr.width ? `width: ` + hdr.width : "",
+      ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
+    },
+    content,
+    toggleIcon
+  );
+};
 
 // declaration merging
 namespace TableExports {
@@ -65,8 +107,10 @@ namespace TableExports {
     tableId?: string;
     grouped?: string;
     header_filters?: boolean;
+    header_filters_toggle?: boolean;
     responsiveCollapse?: boolean;
     collapse_breakpoint_px?: number;
+    row_color_formula?: string;
   };
 }
 type HeadersParams = TableExports.HeadersParams;
@@ -118,17 +162,33 @@ const mkTable = (
   opts: OptsParams | any = {}
 ): string => {
   const pk_name = opts.pk_name || "id";
-  const val_row = (v: any) =>
-    tr(
+  if (opts.row_color_formula && !(opts as any)._rowColorFn) {
+    (opts as any)._rowColorFn = new Function(
+      "row",
+      "with(row){return (" + opts.row_color_formula + ");}"
+    );
+  }
+  const val_row = (v: any) => {
+    let rowColor: string | undefined;
+    if (opts.row_color_formula) {
+      try {
+        rowColor = (opts as any)._rowColorFn?.(v);
+      } catch {
+        rowColor = undefined;
+      }
+    }
+    return tr(
       {
         ...(v[pk_name] ? { "data-row-id": v[pk_name] } : {}),
         ...mkClickHandler(opts, v),
+        ...(rowColor ? { style: { backgroundColor: rowColor } } : {}),
       },
       hdrs.map((hdr: HeadersParams) =>
         td(
           {
             style: {
               ...(hdr.width && opts.noHeader ? { width: hdr.width } : {}),
+              ...(rowColor ? { backgroundColor: rowColor } : {}),
             },
             ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
           },
@@ -136,6 +196,7 @@ const mkTable = (
         )
       )
     );
+  };
   const groupedBody = (groups: any) =>
     Object.entries(groups).map(
       ([group, rows]: [string, any]) =>
@@ -161,10 +222,22 @@ const mkTable = (
       !opts.noHeader &&
         !opts.transpose &&
         thead(
-          tr(hdrs.map((hdr: HeadersParams) => headerCell(hdr))),
+          tr(
+            hdrs.map((hdr: HeadersParams, ix: number) =>
+              headerCellWithToggle(hdr, opts, ix === hdrs.length - 1)
+            )
+          ),
           opts.header_filters
             ? tr(
-                { class: "header-filters" },
+                {
+                  class: "header-filters",
+                  id: opts.header_filters_toggle
+                    ? `${opts.tableId || "table"}_header_filters_row`
+                    : null,
+                  ...(opts.header_filters_toggle
+                    ? { style: "display:none;" }
+                    : {}),
+                },
                 hdrs.map((hdr: HeadersParams) => headerFilter(hdr))
               )
             : null
@@ -222,7 +295,13 @@ only screen and (max-width: ${opts.collapse_breakpoint_px || 760}px) {
 	}
 
   ${hdrs.map((hdr: HeadersParams, ix: number) => `#${opts.tableId} td:nth-of-type(${ix + 1}):before { content: "${hdr.label}"; }`).join("\n")}	
-}`)
+}`),
+    opts.header_filters_toggle &&
+      style(
+        `#${opts.tableId || "table"} .header-filter-toggle i{transition:transform .2s;}
+#${opts.tableId || "table"} .header-filter-toggle .fa-chevron-up{transform:rotate(0deg);}
+#${opts.tableId || "table"} .header-filter-toggle .fa-chevron-down{transform:rotate(180deg);}`
+      )
   );
 };
 
