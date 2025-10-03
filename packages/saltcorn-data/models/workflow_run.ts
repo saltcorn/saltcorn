@@ -32,6 +32,7 @@ const allReturnDirectives = [
   "notify_success",
   "error",
   "reload_embedded_view",
+  "progress_bar_update",
 ];
 
 const data_output_to_html = (val: any) => {

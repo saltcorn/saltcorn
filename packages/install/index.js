@@ -422,7 +422,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
       false,
       dryRun
     );
-    await asyncSudo(["sysctl", "--system"], false, dryRun);
+    await asyncSudo(["sysctl", "--system"], true, dryRun);
   }
   if (db === "pg-local" && installer === "dnf") {
     await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);

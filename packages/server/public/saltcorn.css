@@ -896,6 +896,9 @@ input[type="file"].file-has-existing {
 .card-max-full-screen .card-body:focus {
   outline-width: 0;
 }
+.card-max-full-screen .card-body:focus-visible {
+  outline: none !important;
+}
 
 .blocking-progress-modal .progress-message {
   overflow: auto;

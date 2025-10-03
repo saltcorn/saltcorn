@@ -215,6 +215,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         input_type: "select",
         required: true,
         options: roles.map((r) => ({ value: r.id, label: r.role })),
+        help: {
+          topic: "Role to access",
+          context: {},
+        },
       }),
       new Field({
         label: req.__("Description"),
