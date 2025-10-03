@@ -821,6 +821,9 @@ const configuration_workflow = (req) =>
               sublabel: req.__(
                 "Create an SQL view in the database with the fields in this list"
               ),
+              help: {
+                topic: "Create SQL view",
+              },
               type: "Bool",
               tab: "Database options",
             });
@@ -1243,7 +1246,9 @@ const run = async (
 
   page_opts.transpose = (default_state || {}).transpose;
   page_opts.header_filters = (default_state || {})._header_filters;
-  page_opts.header_filters_toggle = (default_state || {})._header_filters_toggle;
+  page_opts.header_filters_toggle = (
+    default_state || {}
+  )._header_filters_toggle;
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
   page_opts.row_color_formula = (default_state || {})._row_color_formula;

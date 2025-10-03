@@ -1,0 +1,5 @@
+Enable this option to create in the database an SQL view (`CREATE VIEW {view name} AS...`) with the same columns as the table. This is mainly useful if you are interacting with the PostgreSQL database backend of Saltcorn application through some other application. 
+
+Enabling this option will have no effect on your view or on your saltcorn application. You don't get any extra tables or views from enabling this. However, you can discover the created view as a table.
+
+This option is deprecated and maybe removed in a future version of Saltcorn
