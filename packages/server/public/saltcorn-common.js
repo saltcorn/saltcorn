@@ -83,8 +83,14 @@ function add_repeater(nm) {
   newe.find("[name]").each(function (ix, element) {
     if ($(element).hasClass("omit-repeater-clone")) $(element).remove();
     const oldnm = element.name || "";
-    var newnm = (element.name || "").replace("_" + ncopy, "_" + newix);
-    var newid = (element.id || "").replace("_" + ncopy, "_" + newix);
+    var newnm = (element.name || "").replace(
+      new RegExp("_" + ncopy + "$"),
+      "_" + newix
+    );
+    var newid = (element.id || "").replace(
+      new RegExp("_" + ncopy + "$"),
+      "_" + newix
+    );
     $(element).attr("name", newnm).attr("id", newid);
     if (element.tagName === "SELECT") {
       const original = document.getElementsByName(oldnm)[0];
