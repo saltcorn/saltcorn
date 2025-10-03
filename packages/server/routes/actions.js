@@ -126,7 +126,8 @@ router.get(
           {
             type: "card",
             class: "card-max-full-screen",
-            title: req.__("Triggers"),
+            title: req.__("Triggers")+
+          `<a href="javascript:ajax_modal('/admin/help/Triggers')"><i class="fas fa-question-circle ms-1"></i></a>`,
             contents: div(
               triggers.length
                 ? await getTriggerList(triggers, req, { filterOnTag })
