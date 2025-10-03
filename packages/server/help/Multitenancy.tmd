@@ -1,0 +1,3 @@
+A Saltcorn server can host more than one application. Each application is known as a "tenant" and has a separate database tables, users and application build. 
+
+Enable this option to allow the server to operate in multi-tenancy mode. when this option is enabled, further configuration appears under the "Site structure" menu.

@@ -377,6 +377,7 @@ const configTypes: ConfigTypes = {
     root_only: true,
     restart_required: true,
     excludeFromSnapshot: true,
+    helpTopic: "Multitenancy",
     label: "Multitenancy enabled",
     default: db.is_it_multi_tenant(),
     onChange(val: boolean) {
