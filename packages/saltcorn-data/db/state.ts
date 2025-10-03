@@ -1585,6 +1585,7 @@ const features = {
   workflows: true,
   metadata: true,
   multitype_fieldviews: true,
+  nested_fieldrepeats: true,
 };
 
 export = {
