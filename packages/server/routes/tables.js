@@ -787,7 +787,7 @@ router.get(
     let id = parseInt(idorname);
     let table;
     if (id) [table] = await Table.find({ id });
-    
+
     if (!table) {
       [table] = await Table.find({ name: idorname });
     }
@@ -808,8 +808,12 @@ router.get(
     const user_can_edit_triggers =
       req.user.role_id === 1 ||
       getState().getConfig("min_role_edit_triggers", 1) >= req.user.role_id;
-
-    const nrows = await table.countRows({}, { forUser: req.user });
+    let nrows;
+    try {
+      nrows = await table.countRows({}, { forUser: req.user });
+    } catch {
+      nrows = NaN;
+    }
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
     const inbound_refs = [
@@ -825,7 +829,9 @@ router.get(
       fieldCard = [
         h4(req.__(`No fields defined in %s table`, table.name)),
         p(req.__("Fields define the columns in your table.")),
-        user_can_edit_tables &&
+        !table.external &&
+          !table.provider_name &&
+          user_can_edit_tables &&
           a(
             {
               href: `/field/new/${table.id}`,
@@ -1189,7 +1195,7 @@ router.get(
           title: req.__("Fields"),
           contents: fieldCard,
         },
-        ...(fields.length > 0
+        ...(fields.length > 0 || table.provider_name
           ? [
               {
                 type: "card",
