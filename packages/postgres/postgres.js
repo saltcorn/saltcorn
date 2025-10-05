@@ -407,7 +407,7 @@ const drop_unique_constraint = async (table_name, field_names) => {
   // TBD check that there are no problems with lenght of constraint name
   const sql = `alter table "${getTenantSchema()}"."${sqlsanitize(
     table_name
-  )}" drop CONSTRAINT "${sqlsanitize(table_name)}_${field_names
+  )}" drop CONSTRAINT IF EXISTS "${sqlsanitize(table_name)}_${field_names
     .map((f) => sqlsanitize(f))
     .join("_")}_unique";`;
   sql_log(sql);
