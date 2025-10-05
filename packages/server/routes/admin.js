@@ -123,6 +123,7 @@ const Docker = require("dockerode");
 const npmFetch = require("npm-registry-fetch");
 const Tag = require("@saltcorn/data/models/tag");
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
+const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 
@@ -4261,6 +4262,24 @@ router.post(
       await db.deleteWhere("_sc_roles", {
         not: { id: { in: [1, 40, 80, 100] } },
       });
+      // delete all constraints
+      const constraints = await TableConstraint.find({ table_id: users1.id });
+      for (const con of constraints) {
+        await con.delete();
+      }
+
+      await users1.update({
+        min_role_read: 1,
+        min_role_write: 1,
+        description: "",
+        ownership_formula: null,
+        ownership_field_id: null,
+        versioned: false,
+        has_sync_info: false,
+        is_user_group: false,
+      });
+      // reset users table row
+      await getState().refresh_tables();
       if (db.reset_sequence) await db.reset_sequence("users");
       await User.destroy_all_tenant_sessions();
       req.logout(function (err) {
