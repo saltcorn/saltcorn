@@ -581,6 +581,7 @@ router.post(
           if (vt.initial_config) v.configuration = await vt.initial_config(v);
           else v.configuration = {};
           //console.log(v);
+          v.name = v.name.trim();
           await View.create(v);
         }
         await getState().refresh_views();
