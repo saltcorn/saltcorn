@@ -738,12 +738,10 @@ class Trigger implements AbstractTrigger {
     tableTriggers,
     apiNeverTriggers,
     noWorkflows,
-    notRequireRow,
   }: {
     tableTriggers?: number;
     apiNeverTriggers?: boolean;
     noWorkflows?: boolean;
-    notRequireRow?: boolean;
   }): string[] {
     let triggerActions: Array<string> = [];
     if (tableTriggers) {
@@ -802,7 +800,6 @@ class Trigger implements AbstractTrigger {
       tableTriggers,
       apiNeverTriggers,
       noWorkflows: !!forWorkflow,
-      notRequireRow: !!notRequireRow,
     });
     const actions = forWorkflow
       ? Trigger.abbreviated_actions.filter((a) => !a.disableInWorkflow)
