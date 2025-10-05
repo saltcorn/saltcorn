@@ -242,6 +242,7 @@ export type Action = {
   disableInBuilder?: boolean;
   disableInList?: boolean;
   disableInWorkflow?: boolean;
+  requireRow?: boolean;
   disableIf?: () => boolean;
 };
 

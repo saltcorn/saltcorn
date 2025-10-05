@@ -25,6 +25,7 @@ import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import expression from "./expression";
 import User = require("./user");
+import type { Action } from "@saltcorn/types/base_types";
 const { eval_expression } = expression;
 
 declare const saltcorn: any;
@@ -719,14 +720,30 @@ class Trigger implements AbstractTrigger {
       });
   }
 
+  static actionsNotRequiringRow(): string[] {
+    const result = [];
+    const { getState } = require("../db/state");
+    for (const [name, action] of Object.entries(getState().actions) as [
+      string,
+      Action,
+    ][]) {
+      if (action.requireRow === false) {
+        result.push(name);
+      }
+    }
+    return result;
+  }
+
   static trigger_actions({
     tableTriggers,
     apiNeverTriggers,
     noWorkflows,
+    notRequireRow,
   }: {
     tableTriggers?: number;
     apiNeverTriggers?: boolean;
     noWorkflows?: boolean;
+    notRequireRow?: boolean;
   }): string[] {
     let triggerActions: Array<string> = [];
     if (tableTriggers) {
@@ -743,9 +760,15 @@ class Trigger implements AbstractTrigger {
         table_id: null,
       });
 
+      const idLookup = new Set(trs.map((t) => t.id));
+      const triggersNotRequiringRow = Trigger.find({
+        when_trigger: { or: ["API call", "Never"] },
+        action: { in: Trigger.actionsNotRequiringRow() },
+      }).filter((t) => !idLookup.has(t.id));
+
       triggerActions = [
         ...triggerActions,
-        ...trs
+        ...[...trs, ...triggersNotRequiringRow]
           .filter((t) => !noWorkflows || t.action !== "Workflow")
           .map((tr) => tr.name as string),
       ];
@@ -779,6 +802,7 @@ class Trigger implements AbstractTrigger {
       tableTriggers,
       apiNeverTriggers,
       noWorkflows: !!forWorkflow,
+      notRequireRow: !!notRequireRow,
     });
     const actions = forWorkflow
       ? Trigger.abbreviated_actions.filter((a) => !a.disableInWorkflow)
