@@ -126,8 +126,9 @@ router.get(
           {
             type: "card",
             class: "card-max-full-screen",
-            title: req.__("Triggers")+
-          `<a href="javascript:ajax_modal('/admin/help/Triggers')"><i class="fas fa-question-circle ms-1"></i></a>`,
+            title:
+              req.__("Triggers") +
+              `<a href="javascript:ajax_modal('/admin/help/Triggers')"><i class="fas fa-question-circle ms-1"></i></a>`,
             contents: div(
               triggers.length
                 ? await getTriggerList(triggers, req, { filterOnTag })
@@ -459,6 +460,7 @@ router.post(
         id = form.values.id;
         await Trigger.update(id, form.values);
       } else {
+        if (form.values.name) form.values.name = form.values.name.trim();
         const tr = await Trigger.create(form.values);
         id = tr.id;
       }
