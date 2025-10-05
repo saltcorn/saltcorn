@@ -689,6 +689,7 @@ const innerField =
                 ? { disabled: true, "data-disabled": "true" }
                 : {}),
               name: text_attr(name),
+              accept: hdr.attributes?.accept,
               id: `input${text_attr(name)}`,
             }),
           ].join("");

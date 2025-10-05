@@ -416,10 +416,17 @@ router.get(
                   {
                     label: req.__("Table name"),
                     name: "name",
-                    input_type: "text",
+                    type: "String",
+                    required: true,
+                    attributes: { spellcheck: false },
                   },
                   // todo implement file mask filter like , accept: "text/csv"
-                  { label: req.__("File"), name: "file", input_type: "file" },
+                  {
+                    label: req.__("File"),
+                    name: "file",
+                    input_type: "file",
+                    attributes: { accept: ".csv" },
+                  },
                 ],
               }),
               req.csrfToken()
