@@ -529,6 +529,7 @@ router.post(
       } else {
         if (!pageRow.layout) pageRow.layout = {};
         if (!pageRow.fixed_states) pageRow.fixed_states = {};
+        pageRow.name = pageRow.name.trim();
         await Page.create(pageRow);
         await getState().refresh_pages();
         Trigger.emitEvent("AppChange", `Page ${pageRow.name}`, req.user, {
