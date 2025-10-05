@@ -1108,7 +1108,7 @@ const configTypes: ConfigTypes = {
   log_level: {
     input_type: "select",
     label: "System logging verbosity",
-    default: "1",
+    default: "2",
 
     excludeFromSnapshot: true,
     options: [

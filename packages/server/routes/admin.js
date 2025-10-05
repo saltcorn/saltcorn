@@ -123,6 +123,7 @@ const Docker = require("dockerode");
 const npmFetch = require("npm-registry-fetch");
 const Tag = require("@saltcorn/data/models/tag");
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
+const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 
@@ -4193,7 +4194,6 @@ router.post(
       await getState().refresh_triggers();
     }
     if (form.values.tables) {
-      await db.deleteWhere("_sc_table_constraints");
       await db.deleteWhere("_sc_model_instances");
       await db.deleteWhere("_sc_models");
 
@@ -4201,6 +4201,12 @@ router.post(
       const tables = await Table.find({}, { orderBy: "id", orderDesc: true });
 
       for (const table of tables) {
+        const constraints = await TableConstraint.find({ table_id: table.id });
+
+        for (const con of constraints) {
+          await con.delete();
+        }
+
         await db.deleteWhere("_sc_triggers", {
           table_id: table.id,
         });
@@ -4215,6 +4221,18 @@ router.post(
       }
       for (const table of tables) {
         if (table.name !== "users") await table.delete();
+        else
+          // reset users table row
+          await table.update({
+            min_role_read: 1,
+            min_role_write: 1,
+            description: "",
+            ownership_formula: null,
+            ownership_field_id: null,
+            versioned: false,
+            has_sync_info: false,
+            is_user_group: false,
+          });
       }
     }
     if (form.values.files) {
