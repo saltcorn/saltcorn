@@ -509,7 +509,7 @@ const restore_files = async (dirpath: string): Promise<any> => {
       if (file.isDirectory)
         await mkdir(File.get_new_path(file.location), { recursive: true });
     }
-    state.log(1, `Restoring ${file_rows.length} files...`);
+    state.log(2, `Restoring ${file_rows.length} files...`);
     for (const file of file_rows) {
       try {
         const newPath = File.get_new_path(
@@ -544,7 +544,7 @@ const restore_files = async (dirpath: string): Promise<any> => {
  */
 const correct_fileid_references_to_location = async (newLocations: any) => {
   const fileFields = await Field.find({ type: "File" });
-  getState().log(1, `Correcting file id references to locations`);
+  getState().log(2, `Correcting file id references to locations`);
 
   for (const field of fileFields) {
     const table = Table.findOne({ id: field.table_id });
@@ -566,7 +566,7 @@ const correct_fileid_references_to_location = async (newLocations: any) => {
  * @returns {Promise<void>}
  */
 const restore_file_users = async (file_users: any): Promise<void> => {
-  getState().log(1, `Restoring file users`);
+  getState().log(2, `Restoring file users`);
   for (const [id, user_id] of Object.entries(file_users)) {
     if (user_id) {
       const file = await File.findOne(id);
@@ -589,7 +589,7 @@ const restore_tables = async (
   let err;
   const tables = await Table.find();
   for (const table of tables) {
-    getState().log(1, `restoring table ${table.name}`);
+    getState().log(2, `restoring table ${table.name}`);
 
     const fnm_csv =
       table.name === "users"
@@ -625,7 +625,7 @@ const restore_tables = async (
         sanitiseTableName(table.name) + "__history.json"
       );
       if (existsSync(fnm_hist_json)) {
-        getState().log(1, `restoring table history ${table.name}`);
+        getState().log(2, `restoring table history ${table.name}`);
 
         await table.import_json_history_file(fnm_hist_json);
       }
@@ -660,7 +660,7 @@ const restore_config = async (dirpath: string): Promise<void> => {
 const restore_metadata = async (dirpath: string): Promise<void> => {
   const fnm: string = join(dirpath, "metadata.json");
   if (!existsSync(fnm)) return;
-  getState().log(1, `Restoring metadata`);
+  getState().log(2, `Restoring metadata`);
   const mds = JSON.parse((await readFile(fnm)).toString()) as Array<MetaData>;
 
   for (const md of mds) {
@@ -681,13 +681,13 @@ const restore = async (
   password?: string
 ): Promise<string | void> => {
   const state = getState();
-  state.log(1, `Starting restore to tenant ${db.getTenantSchema()}`);
+  state.log(2, `Starting restore to tenant ${db.getTenantSchema()}`);
 
   const tmpDir = await dir({ unsafeCleanup: true });
 
   await extract(fnm, tmpDir.path, password);
 
-  state.log(1, `Unzip done`);
+  state.log(2, `Unzip done`);
 
   let basePath = tmpDir.path;
   // safari re-compressed. Safari unpacks zip files on download. If the user
@@ -723,7 +723,7 @@ const restore = async (
   }
 
   //install pack
-  state.log(1, `Reading pack`);
+  state.log(2, `Reading pack`);
   const pack = JSON.parse(
     (await readFile(join(basePath, "pack.json"))).toString()
   );
@@ -736,22 +736,22 @@ const restore = async (
     `;
   }
   //config
-  state.log(1, `Restoring config`);
+  state.log(2, `Restoring config`);
   await restore_config(basePath);
 
-  state.log(1, `Restoring pack`);
+  state.log(2, `Restoring pack`);
   await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
   // files
-  state.log(1, `Restoring files`);
+  state.log(2, `Restoring files`);
   const { file_users, newLocations } = await restore_files(basePath);
 
   //table csvs
-  state.log(1, `Restoring tables`);
+  state.log(2, `Restoring tables`);
   const tabres = await restore_tables(basePath, restore_first_user);
   if (tabres) err = (err || "") + tabres;
 
-  state.log(1, `Restoring metadata`);
+  state.log(2, `Restoring metadata`);
   await restore_metadata(basePath);
 
   if (Object.keys(newLocations).length > 0)
