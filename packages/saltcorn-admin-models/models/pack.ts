@@ -498,6 +498,16 @@ const install_pack = async (
     left.provider_name ? 1 : right.provider_name ? -1 : 0
   );
   for (const tableSpec of packTables) {
+    const {
+      id,
+      ownership_field_id,
+      ownership_field_name,
+      triggers,
+      constraints,
+      fields,
+      ...updrow
+    } = tableSpec;
+
     if (tableSpec.name !== "users") {
       let tbl_pk;
       const existing = Table.findOne({ name: tableSpec.name });
@@ -509,15 +519,6 @@ const install_pack = async (
       );
       if (existing) {
         tbl_pk = await existing.getField(existing.pk_name);
-        const {
-          id,
-          ownership_field_id,
-          ownership_field_name,
-          triggers,
-          constraints,
-          fields,
-          ...updrow
-        } = tableSpec;
 
         await existing.update(updrow);
       } else {
@@ -530,6 +531,8 @@ const install_pack = async (
       if (pack_pk && tbl_pk) {
         await tbl_pk.update(pack_pk);
       }
+    } else {
+      await User.table.update(updrow);
     }
   }
   await getState().refresh_tables(true);
