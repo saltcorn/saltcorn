@@ -1075,6 +1075,7 @@ router.get(
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
+        old_config: trigger.configuration,
         req,
       });
       // create form
@@ -1134,6 +1135,7 @@ router.post(
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
+        old_config: trigger.configuration,
         req,
       });
       form = new Form({
