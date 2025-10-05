@@ -195,7 +195,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Name"),
         type: "String",
         required: true,
-        attributes: { autofocus: true },
+        attributes: { autofocus: true, spellcheck: false },
         sublabel: req.__("Name of action"),
       },
       {
