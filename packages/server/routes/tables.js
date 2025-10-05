@@ -269,7 +269,7 @@ router.get(
                   name: "name",
                   type: "String",
                   required: true,
-                  attributes: { autofocus: true },
+                  attributes: { autofocus: true, spellcheck: false },
                 },
                 ...(table_provider_names.length
                   ? [
