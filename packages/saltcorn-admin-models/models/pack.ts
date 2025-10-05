@@ -667,12 +667,12 @@ const install_pack = async (
   for (const pageGroupSpec of pack.page_groups || []) {
     pageGroupSpec.min_role = old_to_new_role(pageGroupSpec.min_role);
     const { members, ...pageGroupNoMembers } = pageGroupSpec;
-    const existing = PageGroup.findOne({ name: pageGroupSpec.name });
+    let existing = PageGroup.findOne({ name: pageGroupSpec.name });
     if (existing?.id) {
       await existing.clearMembers(); // or merge ?
       await PageGroup.update(existing.id, pageGroupNoMembers);
-    } else await PageGroup.create(pageGroupNoMembers);
-    const group = PageGroup.findOne({ name: pageGroupSpec.name });
+    } else existing = await PageGroup.create(pageGroupNoMembers);
+    const group = existing;
     if (!group)
       throw new Error(`Unable to create page group '${pageGroupSpec.name}'`);
     for (const member of members || []) {
