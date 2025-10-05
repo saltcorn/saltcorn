@@ -38,13 +38,13 @@ module.exports =
     //console.error(err.stack);
     if (!(devmode && log_sql) && createCrash) await Crash.create(err, req);
     else console.error(err);
-
+    const err_message = err.message + (err.detail ? ": " + err.detail : "");
     if (req.xhr) {
       res
         .status(code)
         .send(
           devmode || role === 1
-            ? text(err.message)
+            ? text(err_message)
             : req.__("An error occurred")
         );
     } else {
@@ -53,7 +53,7 @@ module.exports =
         _res.sendWrap(
           req.__(headline),
           devmode ? pre(text(err.stack)) : h3(req.__(headline)),
-          role === 1 && !devmode ? pre(text(err.message)) : "",
+          role === 1 && !devmode ? pre(text(err_message)) : "",
           createCrash
             ? p(
                 req.__(
@@ -66,10 +66,10 @@ module.exports =
         _res.send(
           `<h2>${
             err.message
-              ? err.message
+              ? err_message
               : req.__
-              ? req.__("An error occurred")
-              : "An error occurred"
+                ? req.__("An error occurred")
+                : "An error occurred"
           }</h2>`
         );
     }
