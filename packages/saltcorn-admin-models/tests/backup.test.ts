@@ -123,6 +123,11 @@ describe("Backup and restore", () => {
       provider_name: "provtab",
       provider_cfg: { middle_name: "Robinette" },
     });
+
+    await User.table.update({
+      min_role_read: 40,
+      description: "Users are the best",
+    });
     await getState().refresh_tables();
 
     const fnm = await create_backup();
@@ -140,6 +145,7 @@ describe("Backup and restore", () => {
     });
     assertsObjectIsUser(admu);
     expect(typeof admu.password).toBe("string");
+    expect(User.table.min_role_read).toBe(1);
 
     const t2 = Table.findOne({ name: "books" });
     expect(t2).toBe(null);
@@ -147,9 +153,12 @@ describe("Backup and restore", () => {
     expect(sn0).toBe("Saltcorn");
     const menus0 = await getConfig("menu_items", []);
     expect(menus0.length).toBe(7); // newly liberated menu items
+
+    //restore
     const restore_res = await restore(fnm, (p) => {});
     await unlink(fnm);
     expect(restore_res).toBe(undefined);
+
     const t3 = Table.findOne({ name: "books" });
     assertIsSet(t3);
     expect(!!t3).toBe(true);
@@ -202,5 +211,7 @@ describe("Backup and restore", () => {
     expect(tp?.provider_cfg?.middle_name).toBe("Robinette");
 
     expect(staff.checkPassword("ghrarhr54hg")).toBe(true);
-  }); 
+    expect(User.table.min_role_read).toBe(40);
+    expect(User.table.description).toBe("Users are the best");
+  });
 });
