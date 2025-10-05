@@ -760,7 +760,7 @@ const restore = async (
 
   await tmpDir.cleanup();
   state.log(
-    1,
+    2,
     `Completed restore to tenant ${db.getTenantSchema()}${
       err ? ` with errors ${err}` : " successfully"
     }`
