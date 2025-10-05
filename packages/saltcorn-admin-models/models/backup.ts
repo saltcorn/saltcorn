@@ -613,7 +613,10 @@ const restore_tables = async (
       const res = await table.import_csv_file(fnm_csv, {
         skip_first_data_row: table.name === "users" && !restore_first_user,
       });
-      if (instanceOfErrorMsg(res)) err = (err || "") + res.error;
+      if (instanceOfErrorMsg(res)) {
+        console.error(res);
+        err = (err || "") + res.error;
+      }
     }
     if (table.versioned) {
       const fnm_hist_json = join(
