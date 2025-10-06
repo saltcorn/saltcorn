@@ -292,7 +292,7 @@ function view_post(viewnameOrElem, route, data, onDoneOrObj, sendState) {
   let onDone,
     sendState1,
     runAsync = false;
-  if (typeof onDoneOrObj === "object") {
+  if (onDoneOrObj && typeof onDoneOrObj === "object") {
     onDone = onDoneOrObj.onDone;
     sendState1 = onDoneOrObj.sendState;
     runAsync = onDoneOrObj.runAsync;
