@@ -1731,13 +1731,17 @@ const int = {
         ...(!isdef(field.attributes.max)
           ? [{ name: "max", type: "Integer", required: true, default: 5 }]
           : []),
-        {
-          name: "force_required",
-          label: "Required",
-          sublabel:
-            "User must select a value, even if the table field is not required",
-          type: "Bool",
-        },
+        ...(!field.required
+          ? [
+              {
+                name: "force_required",
+                label: "Required",
+                sublabel:
+                  "User must select a value, even if the table field is not required",
+                type: "Bool",
+              },
+            ]
+          : []),
       ],
       isEdit: true,
       blockDisplay: true,
