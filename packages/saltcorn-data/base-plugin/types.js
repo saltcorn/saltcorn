@@ -1756,7 +1756,7 @@ const int = {
                 name: text_attr(nm),
                 value: starVal,
                 checked: v === starVal,
-                ...(attrs.force_required ? { required: true } : {}),
+                ...(required || attrs.force_required ? { required: true } : {}),
               }) +
               label(
                 { for: `input${text_attr(nm)}-${starVal}` },
