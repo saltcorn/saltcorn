@@ -588,6 +588,8 @@ const restore_tables = async (
 ): Promise<string | void> => {
   let err;
   const tables = await Table.find();
+
+  const restore_history = getState().getConfig("restore_history", true);
   for (const table of tables) {
     getState().log(2, `restoring table ${table.name}`);
 
@@ -618,7 +620,7 @@ const restore_tables = async (
         err = (err || "") + res.error;
       }
     }
-    if (table.versioned) {
+    if (table.versioned && restore_history) {
       const fnm_hist_json = join(
         dirpath,
         "tables",

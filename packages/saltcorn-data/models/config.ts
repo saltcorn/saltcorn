@@ -1316,6 +1316,12 @@ const configTypes: ConfigTypes = {
     default: true,
     excludeFromMobile: true,
   },
+  restore_history: {
+    type: "Bool",
+    label: "Restore history tables",
+    default: true,
+    excludeFromMobile: true,
+  },
   max_relations_layer_depth: {
     type: "Integer",
     label: "Max relations layer depth",
