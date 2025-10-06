@@ -1731,6 +1731,13 @@ const int = {
         ...(!isdef(field.attributes.max)
           ? [{ name: "max", type: "Integer", required: true, default: 5 }]
           : []),
+        {
+          name: "force_required",
+          label: "Required",
+          sublabel:
+            "User must select a value, even if the table field is not required",
+          type: "Bool",
+        },
       ],
       isEdit: true,
       blockDisplay: true,
@@ -1749,6 +1756,7 @@ const int = {
                 name: text_attr(nm),
                 value: starVal,
                 checked: v === starVal,
+                ...(attrs.force_required ? { required: true } : {}),
               }) +
               label(
                 { for: `input${text_attr(nm)}-${starVal}` },
