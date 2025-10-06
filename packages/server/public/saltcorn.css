@@ -364,7 +364,8 @@ table.table-inner-grid td {
   color: #ddd;
 }
 .editStarRating input {
-  display: none;
+  opacity: 0;
+  width: 1px;
 }
 .editStarRating label:hover,
 .editStarRating label:hover ~ label,
