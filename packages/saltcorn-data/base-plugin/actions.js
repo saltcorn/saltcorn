@@ -1659,6 +1659,7 @@ module.exports = {
         required: true,
         attributes: {
           options: [
+            "RequestSubmit",
             "Submit",
             "Save",
             "Reset",
@@ -1674,6 +1675,8 @@ module.exports = {
       switch (form_action) {
         case "Submit":
           return { eval_js: jqGet + ".submit()" };
+        case "RequestSubmit":
+          return { eval_js: jqGet + "[0].requestSubmit()" };
         case "Save":
           if (!row[table.pk_name]) {
             //we will save server side so we can set id
@@ -1713,7 +1716,7 @@ module.exports = {
         case "Ajax Save Form Data":
           return { eval_js: `ajaxSubmitForm(${jqGet}, true)` };
         default:
-          return { eval_js: jqGet + ".submit()" };
+          return { eval_js: jqGet + "[0].requestSubmit()" };
       }
     },
     namespace: "User interface",
