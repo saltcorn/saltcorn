@@ -1685,5 +1685,9 @@
 	"A trigger is defined by a condition (when the trigger will run), an action (which is supplied by a module) and the configuration for that action.": "A trigger is defined by a condition (when the trigger will run), an action (which is supplied by a module) and the configuration for that action.",
 	"Run async": "Run async",
 	"Run action in background": "Run action in background",
-	"Delegate error handling to tenants": "Delegate error handling to tenants"
+	"Delegate error handling to tenants": "Delegate error handling to tenants",
+	"Toggle header filters": "Toggle header filters",
+	"Row color formula": "Row color formula",
+	"Formula for row background color. Ex.: <code>age>65 ?'#aaffaa': null</code>": "Formula for row background color. Ex.: <code>age>65 ?'#aaffaa': null</code>",
+	"Table layout": "Table layout"
 }

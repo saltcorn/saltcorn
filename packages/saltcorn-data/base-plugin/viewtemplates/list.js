@@ -704,7 +704,7 @@ const configuration_workflow = (req) =>
           });
           formfields.push({
             name: "_header_filters_toggle",
-            label: req.__("Make header filters toggleable"),
+            label: req.__("Toggle header filters"),
             type: "Bool",
             showIf: { _header_filters: true },
           });
@@ -802,6 +802,13 @@ const configuration_workflow = (req) =>
             tab: "Layout options",
             default: 760,
             showIf: { _responsive_collapse: true },
+          });
+          formfields.push({
+            name: "_table_layout",
+            label: req.__("Table layout"),
+            input_type: "select",
+            options: ["Auto", "Fixed"],
+            tab: "Layout options",
           });
           formfields.push({
             name: "_row_color_formula",
@@ -1064,6 +1071,18 @@ const run = async (
             ...get_extra_state(row),
           });
           break;
+        case RelationType.CHILD_LIST:
+          stateMany = {
+            or: rows.map((row) => ({
+              [relation.path[0].inboundKey]: row[table.pk_name],
+              ...get_extra_state(row),
+            })),
+          };
+          getRowState = (row) => ({
+            [relation.path[0].inboundKey]: row[table.pk_name],
+            ...get_extra_state(row),
+          });
+          break;
         case RelationType.PARENT_SHOW:
           const refTable = Table.findOne({ id: view.table_id });
           stateMany = {
@@ -1121,7 +1140,17 @@ const run = async (
       const results = [];
 
       for (const row of rows) {
-        const rendered = await view.run(getRowState(row), extraOpts);
+        const rowState = getRowState(row);
+        const qs = stateToQueryString(rowState, true);
+
+        const rendered = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-local-state": `/view/${view.name}${qs}`,
+          },
+          await view.run(rowState, extraOpts)
+        );
         results.push({
           html: rendered,
           row,
@@ -1236,6 +1265,10 @@ const run = async (
   if (default_state?._borderless) {
     page_opts.class += "table-borderless ";
   }
+  if (default_state?._table_layout) {
+    page_opts.table_layout = default_state?._table_layout;
+  }
+
   if (default_state?._responsive_collapse) {
     page_opts.responsiveCollapse = true;
     page_opts.collapse_breakpoint_px = default_state._collapse_breakpoint_px;
@@ -1249,6 +1282,9 @@ const run = async (
   page_opts.header_filters_toggle = (
     default_state || {}
   )._header_filters_toggle;
+  if (page_opts.header_filters_toggle)
+    page_opts.header_filters_open = !!Object.keys(state).length;
+
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
   page_opts.row_color_formula = (default_state || {})._row_color_formula;
@@ -1622,7 +1658,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _responsive_collapse _collapse_breakpoint_px _row_color_formula",
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _responsive_collapse _collapse_breakpoint_px _row_color_formula _table_layout",
       "default_state"
     );
   }
@@ -1675,6 +1711,7 @@ module.exports = {
       _card_rows,
       _borderless,
       _cell_valign,
+      _table_layout,
       _responsive_collapse,
       _collapse_breakpoint_px,
       _header_filters,

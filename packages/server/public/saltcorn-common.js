@@ -2613,6 +2613,35 @@ function handle_identical_fields(event) {
   }
 }
 
+function toggle_header_filters(toggle_icon_elem) {
+  //console.log("toggle headers", elem);
+
+  const r = $(toggle_icon_elem).closest("thead").find("tr.header-filters")[0];
+  
+  //var r = document.getElementById("${filterRowId}");
+  if (r) {
+    var hidden =
+      r.style.display === "none" ||
+      window.getComputedStyle(r).display === "none";
+    if (hidden) {
+      r.style.display = "table-row";
+      var ic = toggle_icon_elem.querySelector("i");
+      if (ic) {
+        ic.classList.remove("fa-chevron-down");
+        ic.classList.add("fa-chevron-up");
+      }
+    } else {
+      r.style.display = "none";
+      var ic2 = toggle_icon_elem.querySelector("i");
+      if (ic2) {
+        ic2.classList.remove("fa-chevron-up");
+        ic2.classList.add("fa-chevron-down");
+      }
+    }
+  }
+  return false;
+}
+
 const observer = new IntersectionObserver(
   (entries, observer) => {
     entries.forEach((entry) => {
