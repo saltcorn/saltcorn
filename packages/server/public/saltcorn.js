@@ -556,7 +556,7 @@ function saveAndContinue(e, k, event) {
   var form_data = form.serialize();
 
   if (form.prop("data-last-save-success") === form_data) {
-    if (k) k(res);
+    if (k) k(valres);
     return;
   }
 
