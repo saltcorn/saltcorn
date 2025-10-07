@@ -45,8 +45,6 @@ const headerFilter = (hdr: any): string => th(hdr.header_filter || null);
 const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
   if (!(isLast && opts.header_filters && opts.header_filters_toggle))
     return headerCell(hdr);
-  const idBase = opts.tableId || "table";
-  const filterRowId = `${idBase}_header_filters_row`;
   const content = hdr.sortlink
     ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
     : hdr.label;
@@ -54,20 +52,7 @@ const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
     {
       class: "header-filter-toggle link-style",
       title: "Show/Hide filters",
-      onclick: `var r=document.getElementById('${filterRowId}');
-                  if(r){
-                    var hidden = (r.style.display==='none' || window.getComputedStyle(r).display==='none');
-                    if(hidden){
-                      r.style.display='table-row';
-                      var ic=this.querySelector('i');
-                      if(ic){ ic.classList.remove('fa-chevron-down'); ic.classList.add('fa-chevron-up'); }
-                    } else {
-                      r.style.display='none';
-                      var ic2=this.querySelector('i');
-                      if(ic2){ ic2.classList.remove('fa-chevron-up'); ic2.classList.add('fa-chevron-down'); }
-                    }
-                  }
-                return false;`,
+      onclick: `toggle_header_filters(this)`,
       style:
         "cursor:pointer;margin-left:1rem;display:inline-flex;align-items:center;",
     },
