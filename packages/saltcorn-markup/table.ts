@@ -40,7 +40,14 @@ const headerCell = (hdr: any): string =>
       : hdr.label
   );
 
-const headerFilter = (hdr: any): string => th(hdr.header_filter || null);
+const headerFilter = (hdr: any): string =>
+  th(
+    (hdr.align || hdr.width) && {
+      style: hdr.width ? `width: ` + hdr.width : "",
+      ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
+    },
+    hdr.header_filter || null
+  );
 
 const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
   if (!(isLast && opts.header_filters && opts.header_filters_toggle))
