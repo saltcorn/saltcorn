@@ -20,6 +20,7 @@ const {
   h4,
   style,
   i,
+  button,
 } = tags;
 import helpers = require("./helpers");
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
@@ -40,13 +41,24 @@ const headerCell = (hdr: any): string =>
       : hdr.label
   );
 
-const headerFilter = (hdr: any): string =>
+const headerFilter = (hdr: any, isLast: boolean): string =>
   th(
     (hdr.align || hdr.width) && {
       style: hdr.width ? `width: ` + hdr.width : "",
       ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
     },
-    hdr.header_filter || null
+    span(hdr.header_filter || null),
+    isLast &&
+      span(
+        button(
+          {
+            type: "button",
+            class: "btn btn-xs btn-outline-secondary",
+            onclick: "clear_state('', this)",
+          },
+          i({ class: "fas fa-times" })
+        )
+      )
   );
 
 const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
@@ -230,7 +242,9 @@ const mkTable = (
                     ? { style: "display:none;" }
                     : {}),
                 },
-                hdrs.map((hdr: HeadersParams) => headerFilter(hdr))
+                hdrs.map((hdr: HeadersParams, ix: number) =>
+                  headerFilter(hdr, ix === hdrs.length - 1)
+                )
               )
             : null
         ),
