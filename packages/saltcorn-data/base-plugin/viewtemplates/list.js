@@ -704,7 +704,7 @@ const configuration_workflow = (req) =>
           });
           formfields.push({
             name: "_header_filters_toggle",
-            label: req.__("Make header filters toggleable"),
+            label: req.__("Toggle header filters"),
             type: "Bool",
             showIf: { _header_filters: true },
           });
@@ -1249,6 +1249,9 @@ const run = async (
   page_opts.header_filters_toggle = (
     default_state || {}
   )._header_filters_toggle;
+  if (page_opts.header_filters_toggle)
+    page_opts.header_filters_open = !!Object.keys(state).length;
+
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
   page_opts.row_color_formula = (default_state || {})._row_color_formula;
