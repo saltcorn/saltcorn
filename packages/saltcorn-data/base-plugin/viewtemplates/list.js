@@ -804,6 +804,16 @@ const configuration_workflow = (req) =>
             showIf: { _responsive_collapse: true },
           });
           formfields.push({
+            name: "_table_layout",
+            label: req.__("Table layout"),
+            type: "String",
+            required: true,
+            attributes: {
+              options: "Auto, Fixed",
+            },
+            tab: "Layout options",
+          });
+          formfields.push({
             name: "_row_color_formula",
             label: req.__("Row color formula"),
             sublabel: req.__(
@@ -1248,6 +1258,10 @@ const run = async (
   if (default_state?._borderless) {
     page_opts.class += "table-borderless ";
   }
+  if (default_state?._table_layout) {
+    page_opts.table_layout = default_state?._table_layout;
+  }
+
   if (default_state?._responsive_collapse) {
     page_opts.responsiveCollapse = true;
     page_opts.collapse_breakpoint_px = default_state._collapse_breakpoint_px;
@@ -1637,7 +1651,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _responsive_collapse _collapse_breakpoint_px _row_color_formula",
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _responsive_collapse _collapse_breakpoint_px _row_color_formula _table_layout",
       "default_state"
     );
   }
@@ -1690,6 +1704,7 @@ module.exports = {
       _card_rows,
       _borderless,
       _cell_valign,
+      _table_layout,
       _responsive_collapse,
       _collapse_breakpoint_px,
       _header_filters,

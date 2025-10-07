@@ -217,7 +217,10 @@ const mkTable = (
         class: [
           "table table-sm",
           opts.class,
-          hdrs.some((h: HeadersParams) => h.width) && "table-layout-fixed",
+          ((hdrs.some((h: HeadersParams) => h.width) &&
+            opts.table_layout !== "Auto") ||
+            opts.table_layout === "Fixed") &&
+            "table-layout-fixed",
           (opts.onRowSelect || (opts.hover && vs && vs.length > 1)) &&
             "table-hover",
         ],
