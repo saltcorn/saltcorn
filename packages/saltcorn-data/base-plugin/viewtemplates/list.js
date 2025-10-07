@@ -1064,6 +1064,18 @@ const run = async (
             ...get_extra_state(row),
           });
           break;
+        case RelationType.CHILD_LIST:
+          stateMany = {
+            or: rows.map((row) => ({
+              [relation.path[0].inboundKey]: row[table.pk_name],
+              ...get_extra_state(row),
+            })),
+          };
+          getRowState = (row) => ({
+            [relation.path[0].inboundKey]: row[table.pk_name],
+            ...get_extra_state(row),
+          });
+          break;
         case RelationType.PARENT_SHOW:
           const refTable = Table.findOne({ id: view.table_id });
           stateMany = {
