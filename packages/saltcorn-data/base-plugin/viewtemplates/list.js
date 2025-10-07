@@ -806,11 +806,8 @@ const configuration_workflow = (req) =>
           formfields.push({
             name: "_table_layout",
             label: req.__("Table layout"),
-            type: "String",
-            required: true,
-            attributes: {
-              options: "Auto, Fixed",
-            },
+            input_type: "select",
+            options: ["Auto", "Fixed"],
             tab: "Layout options",
           });
           formfields.push({
