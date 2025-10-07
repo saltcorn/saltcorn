@@ -1143,7 +1143,17 @@ const run = async (
       const results = [];
 
       for (const row of rows) {
-        const rendered = await view.run(getRowState(row), extraOpts);
+        const rowState = getRowState(row);
+        const qs = stateToQueryString(rowState, true);
+
+        const rendered = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-local-state": `/view/${view.name}${qs}`,
+          },
+          await view.run(rowState, extraOpts)
+        );
         results.push({
           html: rendered,
           row,
