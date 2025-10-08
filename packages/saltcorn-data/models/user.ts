@@ -239,6 +239,8 @@ class User {
         ? { plain_password: password, ...urecord }
         : { ...urecord }
     );
+    if (User.table.fields.find((f) => f.calculated && f.stored))
+      await User.table.updateRow({}, u.id as number);
     return u;
   }
 
@@ -553,8 +555,6 @@ class User {
         return "Password must contain at least one special character";
     }
   }
-
-  
 
   /**
    * Validate email

@@ -649,6 +649,13 @@ const configTypes: ConfigTypes = {
     default: {},
     excludeFromMobile: true,
   },
+  saltcorn_npm_versions: {
+    type: "hidden",
+    label: "@saltcorn/cli npm versions",
+    excludeFromSnapshot: true,
+    default: {},
+    excludeFromMobile: true,
+  },
   event_log_settings: {
     type: "hidden",
     label: "Event log settings",
@@ -1762,6 +1769,51 @@ const get_latest_npm_version = async (
   }
 };
 
+const get_saltcorn_npm_versions = async (
+  timeout_ms?: number
+): Promise<string[]> => {
+  const { getState } = require("../db/state");
+  const { isStale } = (await import("../utils")).default;
+  const pkg = "@saltcorn/cli";
+  const fetch = require("node-fetch");
+  const stored = getState().getConfig("saltcorn_npm_versions", {});
+
+  if (stored?.time && !isStale(stored.time, 6)) {
+    return stored?.versions;
+  }
+
+  const guess: string[] = stored?.versions || []; //default return
+  try {
+    const fetch_it = async () => {
+      const response = await fetch(`https://registry.npmjs.org/${pkg}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
+      }
+      const data = await response.json();
+      if (!data?.versions || data.versions.length === 0)
+        throw new Error("No versions found");
+      const keys = Object.keys(data.versions);
+      await getState().setConfig("saltcorn_npm_versions", {
+        time: new Date(),
+        versions: keys,
+      });
+      return keys;
+    };
+
+    if (timeout_ms) {
+      const canceller = async () => {
+        await sleep(timeout_ms);
+        return guess;
+      };
+      return Promise.race([fetch_it().catch((e) => guess), canceller()]).catch(
+        (e) => guess
+      );
+    } else return await fetch_it();
+  } catch (e) {
+    return guess;
+  }
+};
+
 /**
  * Get base url
  * @param {object} req
@@ -1821,6 +1873,7 @@ const configExports = {
   remove_from_menu,
   available_languages,
   get_latest_npm_version,
+  get_saltcorn_npm_versions,
   get_base_url,
   save_menu_items,
   check_email_mask,
