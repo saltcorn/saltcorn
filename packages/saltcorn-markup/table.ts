@@ -47,18 +47,20 @@ const headerFilter = (hdr: any, isLast: boolean): string =>
       style: hdr.width ? `width: ` + hdr.width : "",
       ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
     },
-    span(hdr.header_filter || null),
-    isLast &&
-      span(
-        button(
-          {
-            type: "button",
-            class: "btn btn-xs btn-outline-secondary",
-            onclick: "clear_state('', this)",
-          },
-          i({ class: "fas fa-times" })
+    isLast
+      ? div(
+          { class: "d-flex" },
+          hdr.header_filter || null,
+          button(
+            {
+              type: "button",
+              class: "btn btn-xs btn-outline-secondary",
+              onclick: "clear_state('', this)",
+            },
+            i({ class: "fas fa-times" })
+          )
         )
-      )
+      : hdr.header_filter || null
   );
 
 const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
