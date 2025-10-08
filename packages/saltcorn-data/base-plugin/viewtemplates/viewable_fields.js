@@ -1427,7 +1427,7 @@ const headerFilterForField = (f, state, path) => {
   if (!fieldviewObjs) return "";
 
   return div(
-    { class: fieldviewObjs.length > 1 ? "d-flex" : "d-inline" },
+    { class: "d-flex" },
     fieldviewObjs
       .map(
         (fvObj) =>
