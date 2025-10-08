@@ -267,6 +267,32 @@ describe("User fields", () => {
     expect(u.height).toBe(183);
     expect(u.upper1).toBe("FOO2@BAR.COM")
   });
+   it("should add stored calculated fields", async () => {
+    const table = User.table;
+    assertIsSet(table);
+    await Field.create({
+      table,
+      label: "upper2",
+      type: "String",
+      calculated: true,
+      expression: "email.toUpperCase()",
+      stored: true,
+    });
+    await User.create({
+      email: "foo3@bar.com",
+      password: "YEge56FGew",
+      height: 183,
+    });
+    const u = await User.authenticate({
+      email: "foo3@bar.com",
+      password: "YEge56FGew",
+    });
+    assertsObjectIsUser(u);
+    expect(u.email).toBe("foo3@bar.com");
+    expect(u.role_id).toBe(80);
+    expect(u.height).toBe(183);
+    expect(u.upper2).toBe("FOO3@BAR.COM")
+  });
 });
 describe("User join fields and aggregations in ownership", () => {
   it("should use join fields in ownership", async () => {
