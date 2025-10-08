@@ -218,7 +218,7 @@ describe("User fields", () => {
   it("should add fields", async () => {
     const table = Table.findOne({ name: "users" });
     assertIsSet(table);
-    const fc = await Field.create({
+    await Field.create({
       table,
       label: "Height",
       type: "Integer",
@@ -241,6 +241,31 @@ describe("User fields", () => {
     assertIsSet(ut);
     expect(ut.email).toBe("foo1@bar.com");
     expect(ut.height).toBe(183);
+  });
+  it("should add calculated fields", async () => {
+    const table = User.table;
+    assertIsSet(table);
+    await Field.create({
+      table,
+      label: "upper1",
+      type: "String",
+      calculated: true,
+      expression: "email.toUpperCase()",
+    });
+    await User.create({
+      email: "foo2@bar.com",
+      password: "YEge56FGew",
+      height: 183,
+    });
+    const u = await User.authenticate({
+      email: "foo2@bar.com",
+      password: "YEge56FGew",
+    });
+    assertsObjectIsUser(u);
+    expect(u.email).toBe("foo2@bar.com");
+    expect(u.role_id).toBe(80);
+    expect(u.height).toBe(183);
+    expect(u.upper1).toBe("FOO2@BAR.COM")
   });
 });
 describe("User join fields and aggregations in ownership", () => {
