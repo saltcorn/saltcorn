@@ -1328,30 +1328,40 @@ module.exports = {
       );
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
+      const all_results = {};
+      const ids = [];
 
+      const upsertOne = async (row) => {
+        const results = {};
+        if (row[table_for_insert.pk_name]) {
+          const existing = await table_for_insert.getRow({
+            [table_for_insert.pk_name]: row[table_for_insert.pk_name],
+          });
+          if (existing) {
+            await table_for_insert.updateRow(
+              row,
+              row[table_for_insert.pk_name],
+              user,
+              { resultCollector: results }
+            );
+            ids.push(row[table_for_insert.pk_name]);
+          } else ids.push(await table_for_insert.insertRow(row, user, results));
+        } else ids.push(await table_for_insert.insertRow(row, user, results));
+
+        mergeActionResults(all_results, results);
+      };
       if (Array.isArray(calcrow)) {
-        const ids = [];
-        const all_results = {};
-        for (const insrow of calcrow) {
-          const results = {};
+        for (const insrow of calcrow) await upsertOne(insrow);
 
-          const res = await table_for_insert.insertRow(insrow, user, results);
-
-          ids.push(res);
-          mergeActionResults(all_results, results);
-        }
         if (configuration.id_variable)
           return { [configuration.id_variable]: ids, ...all_results };
         else return all_results;
       } else {
-        const results = {};
+        await upsertOne(calcrow);
 
-        const res = await table_for_insert.tryInsertRow(calcrow, user, results);
-
-        if (res.error) return res;
-        else if (configuration.id_variable)
-          return { [configuration.id_variable]: res.success, ...results };
-        else return results;
+        if (configuration.id_variable)
+          return { [configuration.id_variable]: ids[0], ...all_results };
+        else return all_results;
       }
     },
     namespace: "Database",
