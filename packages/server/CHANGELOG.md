@@ -10,11 +10,15 @@
 
 * Some initial and limited support for composite primary keys in discovered and external tables. 
 
-* insert_any_rows now accepts a list of rows in its row expression and will insert all of them.
+* insert_any_row action:
+    * now accepts a list of rows in its row expression and will insert all of them.
+    * if the primary key value is set in the row expression, it will upsert the row (update if a row with this primary key value exists, otherwise insert)
 
 * Actions now have an option to run asynchronously from the builder action settings. If this is enabled, and dynamic updates are enabled, the action will run in the background instead of during a HTTP request. This is more robust for long-running actions; there should be no difference in user experience. 
 
 * `progress_bar` action: Display or update the display of a progress message. This can appear in a toast message for actions that can run in parallel; or in a blocking popup-up modal if the progress display is required to freeze the user interface.
+
+* List view now have options for header filters, row colour by formula and table layout setting (corresponds to table-layout CSS property)
 
 ### Fixes
 
