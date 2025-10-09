@@ -1501,7 +1501,8 @@ module.exports = {
           label: "Table",
           sublabel: "Table on which to delete rows",
           input_type: "select",
-          showIf: { delete_triggering_row: false },
+          showIf:
+            mode === "workflow" ? undefined : { delete_triggering_row: false },
           options: tables.map((t) => t.name),
         },
         {
@@ -1511,7 +1512,8 @@ module.exports = {
           sublabel: "Where expression, ex. <code>{manager: id}</code>",
           required: true,
           class: "validate-expression",
-          showIf: { delete_triggering_row: false },
+          showIf:
+            mode === "workflow" ? undefined : { delete_triggering_row: false },
         },
       ];
     },
