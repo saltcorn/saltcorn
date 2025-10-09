@@ -237,6 +237,26 @@ describe("base plugin actions", () => {
 
     expect(rows.length).toBe(1);
   });
+  it("should insert_any_row and return id", async () => {
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { x: 3, y: 7 },
+      configuration: {
+        table: "patients",
+        row_expr: '{name:"Simon9"}',
+        id_variable: "myid",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toStrictEqual({"myid": 4});
+
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
+    const rows = await patients.getRows({ name: "Simon1" });
+
+    expect(rows.length).toBe(1);
+  });
   it("should insert_any_row on arrays", async () => {
     const action = insert_any_row;
     const result = await action.run({
@@ -248,6 +268,26 @@ describe("base plugin actions", () => {
       user: { id: 1, role_id: 1 },
     });
     expect(result).toStrictEqual({});
+
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
+    const rows = await patients.getRows({ name: "Simon2" });
+
+    expect(rows.length).toBe(2);
+  });
+  it("should insert_any_row on arrays and return ids", async () => {
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { x: 3, y: 7 },
+      configuration: {
+        table: "patients",
+        row_expr: '[{name:"Simon10"}, {name:"Simon11"}]',
+        id_variable: "myids",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toStrictEqual({ myids: [7, 8] });
 
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
