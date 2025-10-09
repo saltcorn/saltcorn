@@ -1,5 +1,6 @@
 import { SuccessMessage, Type } from "@saltcorn/types/common_types";
 import User from "../models/user";
+import { Row } from "@saltcorn/db-common/internal";
 
 export function assertIsSet(object: any): asserts object {
   expect(object).not.toBeNull();
@@ -10,6 +11,11 @@ export function assertsObjectIsUser(object: any): asserts object is User {
   assertIsSet(object);
   expect(!("error" in object));
   expect("email" in object && "password" in object);
+}
+
+export function assertIsRow(object: any): asserts object is Row {
+  assertIsSet(object);
+  expect(typeof object).toBe("object");
 }
 
 export function assertIsErrorsMsg(
