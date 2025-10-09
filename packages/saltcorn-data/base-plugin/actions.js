@@ -1328,30 +1328,28 @@ module.exports = {
       );
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
+      const all_results = {};
+      const ids = [];
 
+      const insertOne = async (row) => {
+        const results = {};
+        const res = await table_for_insert.insertRow(row, user, results);
+
+        ids.push(res);
+        mergeActionResults(all_results, results);
+      };
       if (Array.isArray(calcrow)) {
-        const ids = [];
-        const all_results = {};
-        for (const insrow of calcrow) {
-          const results = {};
+        for (const insrow of calcrow) await insertOne(insrow);
 
-          const res = await table_for_insert.insertRow(insrow, user, results);
-
-          ids.push(res);
-          mergeActionResults(all_results, results);
-        }
         if (configuration.id_variable)
           return { [configuration.id_variable]: ids, ...all_results };
         else return all_results;
       } else {
-        const results = {};
+        await insertOne(calcrow);
 
-        const res = await table_for_insert.tryInsertRow(calcrow, user, results);
-
-        if (res.error) return res;
-        else if (configuration.id_variable)
-          return { [configuration.id_variable]: res.success, ...results };
-        else return results;
+        if (configuration.id_variable)
+          return { [configuration.id_variable]: ids[0], ...all_results };
+        else return all_results;
       }
     },
     namespace: "Database",
