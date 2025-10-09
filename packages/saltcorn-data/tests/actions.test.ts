@@ -257,6 +257,30 @@ describe("base plugin actions", () => {
 
     expect(rows.length).toBe(1);
   });
+  it("insert_any_row should upsert", async () => {
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { x: 3, y: 7 },
+      configuration: {
+        table: "patients",
+        row_expr: '{name:"Simon99", id:4}',
+        id_variable: "myid",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toStrictEqual({ myid: 4 });
+
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
+    const rows = await patients.getRows({ name: "Simon99" });
+
+    expect(rows.length).toBe(1);
+    expect(rows[0].id).toBe(4);
+    const rows1 = await patients.getRows({ name: "Simon9" });
+
+    expect(rows1.length).toBe(0);
+  });
   it("should insert_any_row on arrays", async () => {
     const action = insert_any_row;
     const result = await action.run({

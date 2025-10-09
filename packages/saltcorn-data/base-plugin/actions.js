@@ -1331,21 +1331,33 @@ module.exports = {
       const all_results = {};
       const ids = [];
 
-      const insertOne = async (row) => {
+      const upsertOne = async (row) => {
         const results = {};
-        const res = await table_for_insert.insertRow(row, user, results);
+        if (row[table_for_insert.pk_name]) {
+          const existing = await table_for_insert.getRow({
+            [table_for_insert.pk_name]: row[table_for_insert.pk_name],
+          });
+          if (existing) {
+            await table_for_insert.updateRow(
+              row,
+              row[table_for_insert.pk_name],
+              user,
+              { resultCollector: results }
+            );
+            ids.push(row[table_for_insert.pk_name]);
+          } else ids.push(await table_for_insert.insertRow(row, user, results));
+        } else ids.push(await table_for_insert.insertRow(row, user, results));
 
-        ids.push(res);
         mergeActionResults(all_results, results);
       };
       if (Array.isArray(calcrow)) {
-        for (const insrow of calcrow) await insertOne(insrow);
+        for (const insrow of calcrow) await upsertOne(insrow);
 
         if (configuration.id_variable)
           return { [configuration.id_variable]: ids, ...all_results };
         else return all_results;
       } else {
-        await insertOne(calcrow);
+        await upsertOne(calcrow);
 
         if (configuration.id_variable)
           return { [configuration.id_variable]: ids[0], ...all_results };
