@@ -248,12 +248,12 @@ describe("base plugin actions", () => {
       },
       user: { id: 1, role_id: 1 },
     });
-    expect(result).toStrictEqual({"myid": 4});
+    expect(result).toStrictEqual({ myid: 4 });
 
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
 
-    const rows = await patients.getRows({ name: "Simon1" });
+    const rows = await patients.getRows({ name: "Simon9" });
 
     expect(rows.length).toBe(1);
   });
