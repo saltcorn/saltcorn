@@ -541,6 +541,22 @@ class User {
   }
 
   /**
+   * Revoke original API token stored on users.api_token
+   * Also delete any matching row from _sc_api_tokens for this user
+   */
+  async revokeOriginalApiToken(): Promise<void> {
+    if (!this.api_token) return;
+    const original = this.api_token;
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `delete from ${schema}_sc_api_tokens where user_id = $1 and token = $2`,
+      [this.id, original]
+    );
+    await this.update({ api_token: null });
+    this.api_token = null;
+  }
+
+  /**
    * Find user by API token
    */
   static async findByApiToken(token: string): Promise<User | undefined> {
