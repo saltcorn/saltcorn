@@ -995,8 +995,46 @@ router.get(
                           )
                         )
                       ),
+                      ...(user.api_token
+                        ? [
+                            div(
+                              { class: "mt-2" },
+                              code(user.api_token),
+                              span(
+                                { class: "badge bg-secondary ms-2" },
+                                req.__("original")
+                              ),
+                              post_btn(
+                                `/useradmin/revoke-original-api-token/${user.id}`,
+                                req.__("Revoke"),
+                                req.csrfToken(),
+                                { btnClass: "btn-outline-danger btn-sm ms-3", req }
+                              )
+                            ),
+                          ]
+                        : []),
                     ]
-                  : [div(req.__("No API token issued"))],
+                  : [
+                      div(req.__("No API token issued")),
+                      ...(user.api_token
+                        ? [
+                            div(
+                              { class: "mt-2" },
+                              code(user.api_token),
+                              span(
+                                { class: "badge bg-secondary ms-2" },
+                                req.__("original")
+                              ),
+                              post_btn(
+                                `/useradmin/revoke-original-api-token/${user.id}`,
+                                req.__("Revoke"),
+                                req.csrfToken(),
+                                { btnClass: "btn-outline-danger btn-sm ms-3", req }
+                              )
+                            ),
+                          ]
+                        : []),
+                    ],
               },
               // button for generate api token
               div(
@@ -1229,6 +1267,21 @@ router.post(
     const { uid, tokenId } = req.params;
     const u = await User.findOne({ id: uid });
     await u.revokeApiToken(+tokenId);
+    req.flash("success", req.__(`API token revoked`));
+    res.redirect(`/useradmin/${u.id}`);
+  })
+);
+
+/**
+ * Revoke original api token stored on users.api_token
+ */
+router.post(
+  "/revoke-original-api-token/:uid",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { uid } = req.params;
+    const u = await User.findOne({ id: uid });
+    await u.revokeOriginalApiToken();
     req.flash("success", req.__(`API token revoked`));
     res.redirect(`/useradmin/${u.id}`);
   })

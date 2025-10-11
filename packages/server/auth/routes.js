@@ -1601,13 +1601,13 @@ const userSettings = async ({ req, res, pwform, user }) => {
   const show2FAPolicy =
     twoFaPolicy !== "Disabled" || user._attributes.totp_enabled;
   if (user.role_id <= min_role_apikeygen) {
-    const tokens = await user.listApiTokens();
+  const tokens = await user.listApiTokens();
     apikeycard = {
       type: "card",
       title: req.__("API token"),
       contents: [
         div(
-          tokens.length
+          tokens.length || user.api_token
             ? span({ class: "me-1" }, req.__("API tokens for this user:"))
             : req.__("No API token issued")
         ),
@@ -1632,6 +1632,21 @@ const userSettings = async ({ req, res, pwform, user }) => {
                   )
                 ),
               },
+            ]
+          : []),
+        ...(user.api_token
+          ? [
+              div(
+                { class: "mt-2 d-flex align-items-center" },
+                code(user.api_token),
+                span({ class: "badge bg-secondary ms-2" }, req.__("original")),
+                post_btn(
+                  `/auth/revoke-original-api-token`,
+                  req.__("Revoke"),
+                  req.csrfToken(),
+                  { btnClass: "btn-outline-danger btn-sm ms-3", req }
+                )
+              ),
             ]
           : []),
         div(
@@ -1832,6 +1847,23 @@ router.post(
       const u = await User.findOne({ id: req.user.id });
       const tokenId = +req.params.tokenId;
       await u.revokeApiToken(tokenId);
+      req.flash("success", req.__(`API token revoked`));
+    }
+    res.redirect("/auth/settings");
+  })
+);
+
+/**
+ * Revoke original api token on users.api_token
+ */
+router.post(
+  "/revoke-original-api-token",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+    if (req.user.role_id <= min_role_apikeygen) {
+      const u = await User.findOne({ id: req.user.id });
+      await u.revokeOriginalApiToken();
       req.flash("success", req.__(`API token revoked`));
     }
     res.redirect("/auth/settings");
