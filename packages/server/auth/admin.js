@@ -968,36 +968,55 @@ router.get(
             type: "card",
             title: req.__("API token"),
             contents: [
-              // api token for user
+              // list multiple tokens
+              {
+                type: "container",
+                contents: (
+                  await user.listApiTokens()
+                ).length
+                  ? [
+                      span(
+                        { class: "me-1" },
+                        req.__("API tokens for this user:")
+                      ),
+                      ...(await user.listApiTokens()).map((t) =>
+                        div(
+                          { class: "mt-2" },
+                          code(t.token),
+                          span(
+                            { class: "ms-2 text-muted" },
+                            `${new Date(t.created_at).toLocaleString?.() || t.created_at}`
+                          ),
+                          post_btn(
+                            `/useradmin/revoke-api-token/${user.id}/${t.id}`,
+                            req.__("Revoke"),
+                            req.csrfToken(),
+                            { btnClass: "btn-outline-danger btn-sm ms-3", req }
+                          )
+                        )
+                      ),
+                    ]
+                  : [div(req.__("No API token issued"))],
+              },
+              // button for generate api token
               div(
-                user.api_token
-                  ? span(
-                      { class: "me-1" },
-                      req.__("API token for this user: ")
-                    ) + code(user.api_token)
-                  : req.__("No API token issued")
-              ),
-              // button for reset or generate api token
-              div(
-                { class: "mt-4 d-inline-block" },
+                { class: "mt-3 d-inline-block" },
                 post_btn(
                   `/useradmin/gen-api-token/${user.id}`,
-                  user.api_token ? req.__("Reset") : req.__("Generate"),
+                  req.__("Generate"),
                   req.csrfToken()
                 )
               ),
-              // button for remove api token
-              user.api_token &&
-                div(
-                  { class: "mt-4 ms-2 d-inline-block" },
-                  post_btn(
-                    `/useradmin/remove-api-token/${user.id}`,
-                    // TBD localization
-                    user.api_token ? req.__("Remove") : req.__("Generate"),
-                    req.csrfToken(),
-                    { req: req, confirm: true }
-                  )
-                ),
+              // button for remove all api tokens
+              div(
+                { class: "mt-3 ms-2 d-inline-block" },
+                post_btn(
+                  `/useradmin/remove-api-token/${user.id}`,
+                  req.__("Remove all"),
+                  req.csrfToken(),
+                  { req: req, confirm: true, btnClass: "btn-outline-danger" }
+                )
+              ),
             ],
           },
           {
@@ -1193,6 +1212,24 @@ router.post(
     await u.removeAPIToken();
     req.flash("success", req.__(`API token removed`));
 
+    res.redirect(`/useradmin/${u.id}`);
+  })
+);
+
+/**
+ * Revoke a single API token by ID for a user
+ * @name post/revoke-api-token/:uid/:tokenId
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/revoke-api-token/:uid/:tokenId",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { uid, tokenId } = req.params;
+    const u = await User.findOne({ id: uid });
+    await u.revokeApiToken(+tokenId);
+    req.flash("success", req.__(`API token revoked`));
     res.redirect(`/useradmin/${u.id}`);
   })
 );
