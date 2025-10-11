@@ -494,7 +494,7 @@ class User {
       `insert into ${schema}_sc_api_tokens (user_id, token) values ($1, $2)`,
       [this.id, api_token]
     );
-    await this.update({ api_token });
+    // await this.update({ api_token });
     this.api_token = api_token;
     return api_token;
   }
@@ -515,7 +515,6 @@ class User {
     this.api_token = api_token;
     return api_token;
   }
-
 
   /**
    * List API tokens for this user
