@@ -1600,41 +1600,58 @@ const userSettings = async ({ req, res, pwform, user }) => {
   const twoFaPolicy = getState().get2FApolicy(user);
   const show2FAPolicy =
     twoFaPolicy !== "Disabled" || user._attributes.totp_enabled;
-  if (user.role_id <= min_role_apikeygen)
+  if (user.role_id <= min_role_apikeygen) {
+    const tokens = await user.listApiTokens();
     apikeycard = {
       type: "card",
       title: req.__("API token"),
       contents: [
-        // api token for user
         div(
-          user.api_token
-            ? span({ class: "me-1" }, req.__("API token for this user: ")) +
-                code(user.api_token)
+          tokens.length
+            ? span({ class: "me-1" }, req.__("API tokens for this user:"))
             : req.__("No API token issued")
         ),
-        // button for reset or generate api token
+        ...(tokens.length
+          ? [
+              {
+                type: "container",
+                contents: tokens.map((t) =>
+                  div(
+                    { class: "mt-2 d-flex align-items-center" },
+                    code(t.token),
+                    span(
+                      { class: "ms-2 text-muted" },
+                      `${new Date(t.created_at).toLocaleString?.() || t.created_at}`
+                    ),
+                    post_btn(
+                      `/auth/revoke-api-token/${t.id}`,
+                      req.__("Revoke"),
+                      req.csrfToken(),
+                      { btnClass: "btn-outline-danger btn-sm ms-3", req }
+                    )
+                  )
+                ),
+              },
+            ]
+          : []),
         div(
-          { class: "mt-4 d-inline-block" },
-          post_btn(
-            `/auth/gen-api-token`,
-            user.api_token ? req.__("Reset") : req.__("Generate"),
-            req.csrfToken()
-          )
+          { class: "mt-3 d-inline-block" },
+          post_btn(`/auth/gen-api-token`, req.__("Generate"), req.csrfToken())
         ),
-        // button for remove api token
-        user.api_token &&
-          div(
-            { class: "mt-4 ms-2 d-inline-block" },
-            post_btn(
-              `/auth/remove-api-token`,
-              // TBD localization
-              user.api_token ? req.__("Remove") : req.__("Generate"),
-              req.csrfToken(),
-              { req: req, confirm: true }
+        tokens.length
+          ? div(
+              { class: "mt-3 ms-2 d-inline-block" },
+              post_btn(
+                `/auth/remove-api-token`,
+                req.__("Remove all"),
+                req.csrfToken(),
+                { req, confirm: true, btnClass: "btn-outline-danger" }
+              )
             )
-          ),
+          : "",
       ],
     };
+  }
   let themeCfgCard;
   const layoutPlugin = getState().getLayoutPlugin(user);
   const modNames = getState().plugin_module_names;
@@ -1799,6 +1816,28 @@ router.post(
     res.redirect(`/auth/settings`);
   })
 );
+
+/**
+ * Revoke one single api token
+ * @name post/revoke-api-token/:id
+ * @function
+ * @memberof module:auth/admin~auth/adminRouter
+ */
+router.post(
+  "/revoke-api-token/:tokenId",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
+    if (req.user.role_id <= min_role_apikeygen) {
+      const u = await User.findOne({ id: req.user.id });
+      const tokenId = +req.params.tokenId;
+      await u.revokeApiToken(tokenId);
+      req.flash("success", req.__(`API token revoked`));
+    }
+    res.redirect("/auth/settings");
+  })
+);
+
 /**
  * Set language
  * @name post/setlanguage

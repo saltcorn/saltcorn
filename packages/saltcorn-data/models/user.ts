@@ -487,7 +487,13 @@ class User {
    * @returns {Promise<string>}
    */
   async getNewAPIToken(): Promise<string> {
+    // Create new token in tokens table and keep users.api_token for backwards compatibility
     const api_token = uuidv4();
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `insert into ${schema}_sc_api_tokens (user_id, token) values ($1, $2)`,
+      [this.id, api_token]
+    );
     await this.update({ api_token });
     this.api_token = api_token;
     return api_token;
@@ -498,10 +504,54 @@ class User {
    * @returns {Promise<string>}
    */
   async removeAPIToken(): Promise<null> {
+    // remove all tokens for this user and clear users.api_token
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `delete from ${schema}_sc_api_tokens where user_id = $1`,
+      [this.id]
+    );
     const api_token = null;
     await this.update({ api_token });
     this.api_token = api_token;
     return api_token;
+  }
+
+
+  /**
+   * List API tokens for this user
+   */
+  async listApiTokens(): Promise<Array<{ id: number; token: string; created_at: Date | string }>> {
+    const schema = db.getTenantSchemaPrefix();
+    const q = await db.query(
+      `select id, token, created_at from ${schema}_sc_api_tokens where user_id = $1 order by created_at desc, id desc`,
+      [this.id]
+    );
+    return q.rows as Array<{ id: number; token: string; created_at: Date | string }>;
+  }
+
+  /**
+   * Revoke a single API token by id
+   */
+  async revokeApiToken(tokenId: number): Promise<void> {
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `delete from ${schema}_sc_api_tokens where id = $1 and user_id = $2`,
+      [tokenId, this.id]
+    );
+  }
+
+  /**
+   * Find user by API token
+   */
+  static async findByApiToken(token: string): Promise<User | undefined> {
+    if (!token || token.length < 6) return undefined;
+    const schema = db.getTenantSchemaPrefix();
+    const q = await db.query(
+      `select u.* from ${schema}_sc_api_tokens t join ${schema}users u on u.id = t.user_id where t.token = $1 limit 1`,
+      [token]
+    );
+    const u = q.rows && q.rows[0];  
+    return u ? new User(u as any) : undefined;
   }
 
   /**
