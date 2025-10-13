@@ -40,7 +40,6 @@
     "greenlock-express": "^4.0.3",
     "helmet": "^8.0.0",
     "i18n": "^0.15.1",
-    "imapflow": "1.0.178",
     "jsdom": "26.1.0",
     "jsonwebtoken": "^9.0.2",
     "markdown-it": "^14.1.0",
