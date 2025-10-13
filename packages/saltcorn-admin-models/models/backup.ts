@@ -77,7 +77,7 @@ const create_pack_json = async (
 
   // tables
   const tables = await asyncMap(
-    await Table.find({}),
+    await Table.find({}, { orderBy: "id" }),
     async (t: Table) => await table_pack(t) // find already done before
   );
   // views
@@ -509,6 +509,7 @@ const restore_files = async (dirpath: string): Promise<any> => {
       if (file.isDirectory)
         await mkdir(File.get_new_path(file.location), { recursive: true });
     }
+    state.log(2, `Restoring ${file_rows.length} files...`);
     for (const file of file_rows) {
       try {
         const newPath = File.get_new_path(
@@ -543,6 +544,8 @@ const restore_files = async (dirpath: string): Promise<any> => {
  */
 const correct_fileid_references_to_location = async (newLocations: any) => {
   const fileFields = await Field.find({ type: "File" });
+  getState().log(2, `Correcting file id references to locations`);
+
   for (const field of fileFields) {
     const table = Table.findOne({ id: field.table_id });
 
@@ -563,6 +566,7 @@ const correct_fileid_references_to_location = async (newLocations: any) => {
  * @returns {Promise<void>}
  */
 const restore_file_users = async (file_users: any): Promise<void> => {
+  getState().log(2, `Restoring file users`);
   for (const [id, user_id] of Object.entries(file_users)) {
     if (user_id) {
       const file = await File.findOne(id);
@@ -584,7 +588,11 @@ const restore_tables = async (
 ): Promise<string | void> => {
   let err;
   const tables = await Table.find();
+
+  const restore_history = getState().getConfig("restore_history", true);
   for (const table of tables) {
+    getState().log(2, `restoring table ${table.name}`);
+
     const fnm_csv =
       table.name === "users"
         ? join(dirpath, "users.csv")
@@ -599,27 +607,37 @@ const restore_tables = async (
         fnm_json,
         table.name === "users" && !restore_first_user
       );
-      if (instanceOfErrorMsg(res)) err = (err || "") + res.error;
+      if (instanceOfErrorMsg(res)) {
+        console.error(err);
+        err = (err || "") + res.error;
+      }
     } else if (existsSync(fnm_csv)) {
       const res = await table.import_csv_file(fnm_csv, {
         skip_first_data_row: table.name === "users" && !restore_first_user,
       });
-      if (instanceOfErrorMsg(res)) err = (err || "") + res.error;
+      if (instanceOfErrorMsg(res)) {
+        console.error(res);
+        err = (err || "") + res.error;
+      }
     }
-    if (table.versioned) {
+    if (table.versioned && restore_history) {
       const fnm_hist_json = join(
         dirpath,
         "tables",
         sanitiseTableName(table.name) + "__history.json"
       );
-      if (existsSync(fnm_hist_json))
+      if (existsSync(fnm_hist_json)) {
+        getState().log(2, `restoring table history ${table.name}`);
+
         await table.import_json_history_file(fnm_hist_json);
+      }
     }
   }
   for (const table of tables) {
     try {
       await table.enable_fkey_constraints();
     } catch (e: any) {
+      console.error("table restore error", e);
       err = (err || "") + e.message;
     }
   }
@@ -644,6 +662,7 @@ const restore_config = async (dirpath: string): Promise<void> => {
 const restore_metadata = async (dirpath: string): Promise<void> => {
   const fnm: string = join(dirpath, "metadata.json");
   if (!existsSync(fnm)) return;
+  getState().log(2, `Restoring metadata`);
   const mds = JSON.parse((await readFile(fnm)).toString()) as Array<MetaData>;
 
   for (const md of mds) {
@@ -670,7 +689,7 @@ const restore = async (
 
   await extract(fnm, tmpDir.path, password);
 
-  state.log(6, `Unzip done`);
+  state.log(2, `Unzip done`);
 
   let basePath = tmpDir.path;
   // safari re-compressed. Safari unpacks zip files on download. If the user
@@ -706,7 +725,7 @@ const restore = async (
   }
 
   //install pack
-  state.log(6, `Reading pack`);
+  state.log(2, `Reading pack`);
   const pack = JSON.parse(
     (await readFile(join(basePath, "pack.json"))).toString()
   );
@@ -719,22 +738,22 @@ const restore = async (
     `;
   }
   //config
-  state.log(6, `Restoring config`);
+  state.log(2, `Restoring config`);
   await restore_config(basePath);
 
-  state.log(6, `Restoring pack`);
+  state.log(2, `Restoring pack`);
   await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
   // files
-  state.log(6, `Restoring files`);
+  state.log(2, `Restoring files`);
   const { file_users, newLocations } = await restore_files(basePath);
 
   //table csvs
-  state.log(6, `Restoring tables`);
+  state.log(2, `Restoring tables`);
   const tabres = await restore_tables(basePath, restore_first_user);
   if (tabres) err = (err || "") + tabres;
 
-  state.log(6, `Restoring metadata`);
+  state.log(2, `Restoring metadata`);
   await restore_metadata(basePath);
 
   if (Object.keys(newLocations).length > 0)
@@ -955,7 +974,7 @@ const auto_backup_now = async () => {
         name: "Success",
         body: {},
       });
-      state.log(6, `Auto backup completed successfully`);
+      state.log(3, `Auto backup completed successfully`);
     } catch (e: any) {
       console.error(e);
       await Crash.create(e, {

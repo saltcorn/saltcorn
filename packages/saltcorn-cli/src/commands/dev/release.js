@@ -161,10 +161,10 @@ class ReleaseCommand extends Command {
       updatePkgJson(p.dir);
       if (p.publish) {
         await publish(p.dir);
-        await sleep(3000);
+        await sleep(5000);
       }
     }
-    await sleep(5000);
+    await sleep(15000);
 
     runCmd("npm", ["cache", "clear", "--force"], {
       stdio: "inherit",

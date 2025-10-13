@@ -25,6 +25,7 @@ import { Row, sqlBinOp, sqlFun, Where } from "@saltcorn/db-common/internal";
 import { ResultMessage } from "@saltcorn/types/common_types";
 const { freeVariables, jsexprToWhere, add_free_variables_to_aggregations } =
   expressionModule;
+import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -1274,6 +1275,33 @@ Peter Rossi, 212,9,200`;
     assertIsSet(rowDB);
     expect(rowDB.author).toBe("Herman Melville");
   });
+  it("should insert on missing id when blank", async () => {
+    const csv = `id,author,Pages
+1, Noam Chomsky, 541
+,Hadas Thier, 250`;
+    const fnm = "/tmp/testmixedid.csv";
+    await writeFile(fnm, csv);
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const impres = await table.import_csv_file(fnm, { no_table_write: true });
+    assertsIsSuccessMessage(impres);
+
+    const rows = impres.rows;
+    assertIsSet(rows);
+    expect(rows.length).toBe(2);
+
+    await table.import_csv_file(fnm);
+
+    const rowDB = await table.getRow({ id: 1 });
+    assertIsSet(rowDB);
+    expect(rowDB.author).toBe("Noam Chomsky");
+    expect(rowDB.pages).toBe(541);
+    const rowDB2 = await table.getRow({ author: "Hadas Thier" });
+    assertIsSet(rowDB2);
+    expect(rowDB2.pages).toBe(250);
+
+    await table.updateRow({ author: "Herman Melville" }, 1);
+  });
   it("fail on required field", async () => {
     const csv = `author,Pagez
 Joe Celko, 856
@@ -2054,6 +2082,66 @@ describe("Table constraints", () => {
       configuration: { field: "author" },
     });
     await con.delete();
+  });
+  it("should create constraint in transaction", async () => {
+    await runWithTenant("public", async () => {
+      const table = Table.findOne({ name: "readings" });
+      assertIsSet(table);
+      assertIsSet(table.id);
+      const con = await db.withTransaction(async () => {
+        return await TableConstraint.create({
+          table_id: table.id,
+          type: "Formula",
+          configuration: {
+            formula: "Math.round(temperature)<100",
+            errormsg: "Read error",
+          },
+        });
+      });
+
+      await getState().refresh_tables();
+      const readings = Table.findOne({ name: "readings" });
+      assertIsSet(readings);
+
+      const result = await readings.tryInsertRow({
+        patient_id: 1,
+        temperature: 137,
+        date: new Date(),
+      });
+
+      expect((result as any).error).toBe("Read error");
+
+      await con.delete();
+    });
+  });
+  it("should create constraint that is not translatable to SQL in transaction", async () => {
+    await runWithTenant("public", async () => {
+      const table = Table.findOne({ name: "readings" });
+      assertIsSet(table);
+      assertIsSet(table.id);
+      expect(table.constraints.length).toBe(0);
+
+      const con = await db.withTransaction(async () => {
+        return await TableConstraint.create({
+          table_id: table.id,
+          type: "Formula",
+          configuration: {
+            formula: "temperature==='bar'",
+            errormsg: "Read error",
+          },
+        });
+      });
+
+      await getState().refresh_tables();
+      const readings = Table.findOne({ name: "readings" });
+      assertIsSet(readings);
+      expect(readings.constraints.length).toBe(1);
+      expect(readings.constraints[0].configuration.formula).toBe(
+        "temperature==='bar'"
+      );
+
+      await con.delete();
+    });
   });
   it("should create full text search index", async () => {
     const table = await Table.create("TableWithFTS");

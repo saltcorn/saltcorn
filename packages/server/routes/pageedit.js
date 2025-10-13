@@ -119,6 +119,10 @@ const pagePropertiesForm = async (req, isNew) => {
         sublabel: req.__("User role required to access page"),
         input_type: "select",
         options: roles.map((r) => ({ value: r.id, label: r.role })),
+        help: {
+          topic: "Role to access",
+          context: {},
+        },
       },
       ...(htmlOptions.length > 0
         ? [
@@ -201,6 +205,7 @@ const pageBuilderData = async (req, context) => {
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     apiNeverTriggers: true,
+    forBuilder: true,
     builtInLabel: "Page Actions",
     builtIns: ["GoBack"],
   });
@@ -524,6 +529,7 @@ router.post(
       } else {
         if (!pageRow.layout) pageRow.layout = {};
         if (!pageRow.fixed_states) pageRow.fixed_states = {};
+        pageRow.name = pageRow.name.trim();
         await Page.create(pageRow);
         await getState().refresh_pages();
         Trigger.emitEvent("AppChange", `Page ${pageRow.name}`, req.user, {

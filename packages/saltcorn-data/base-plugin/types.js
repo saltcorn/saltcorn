@@ -43,6 +43,7 @@ const _ = require("underscore");
 const { interpolate } = require("../utils");
 const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
 const { select_by_code } = require("./fieldviews");
+const PlainDate = require("@saltcorn/plain-date");
 
 const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
 
@@ -1049,7 +1050,15 @@ const string = {
           name: "input_type",
           label: "Input type",
           input_type: "select",
-          options: ["text", "email", "url", "tel", "password", "hidden"],
+          options: [
+            "text",
+            "email",
+            "url",
+            "tel",
+            "password",
+            "search",
+            "hidden",
+          ],
         },
         {
           name: "autofocus",
@@ -1143,7 +1152,8 @@ const string = {
                   option({ value: "" }, "")
                 )
               : input({
-                  type: attrs.input_type || "text",
+                  type:
+                    attrs.input_type || (attrs.isFilter ? "search" : "text"),
                   disabled: attrs.disabled,
                   readonly: attrs.readonly,
                   class: ["form-control", cls],
@@ -1721,6 +1731,17 @@ const int = {
         ...(!isdef(field.attributes.max)
           ? [{ name: "max", type: "Integer", required: true, default: 5 }]
           : []),
+        ...(!field.required
+          ? [
+              {
+                name: "force_required",
+                label: "Required",
+                sublabel:
+                  "User must select a value, even if the table field is not required",
+                type: "Bool",
+              },
+            ]
+          : []),
       ],
       isEdit: true,
       blockDisplay: true,
@@ -1739,6 +1760,7 @@ const int = {
                 name: text_attr(nm),
                 value: starVal,
                 checked: v === starVal,
+                ...(required || attrs.force_required ? { required: true } : {}),
               }) +
               label(
                 { for: `input${text_attr(nm)}-${starVal}` },
@@ -2160,7 +2182,9 @@ const date = {
         const loc = locale(req);
         return time(
           {
-            datetime: new Date(d).toISOString(),
+            datetime: options?.day_only
+              ? new PlainDate(d).toISOString()
+              : new Date(d).toISOString(),
             "locale-date-format": encodeURIComponent(
               JSON.stringify(options?.format)
             ),
@@ -2180,6 +2204,13 @@ const date = {
       run: (d, req) => {
         if (!d) return "";
         const loc = locale(req);
+        if (d instanceof PlainDate) {
+          const today = new PlainDate();
+          if (today.equals(d)) return req.__("today");
+          let m = moment(d.toDate());
+          if (loc) return text(m.locale(loc).fromNow());
+          else return text(m.fromNow());
+        }
         if (loc) return text(moment(d).locale(loc).fromNow());
         else return text(moment(d).fromNow());
       },
@@ -2267,24 +2298,49 @@ const date = {
    * @subcategory types / date
    */
   presets: {
-    Now: () => new Date(),
+    Now: ({ field }) => {
+      if (field?.attributes?.day_only) return new PlainDate();
+      return new Date();
+    },
   },
   /**
    * @param {object} v
    * @param {object} attrs
    * @returns {object}
    */
-  read: (v, attrs) => {
-    if (v instanceof Date && !isNaN(v)) return v;
-    if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
-      if (attrs && attrs.locale) {
-        const d = moment(v, "L LT", attrs.locale).toDate();
+  read: (v0, attrs) => {
+    const readDate = (v) => {
+      if (v instanceof Date && !isNaN(v)) return v;
+      if (v instanceof PlainDate && v.isValid()) return v.toDate();
+      if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
+        if (attrs && attrs.locale) {
+          const d = moment(v, "L LT", attrs.locale).toDate();
+          if (d instanceof Date && !isNaN(d)) return d;
+        }
+        const d = new Date(v);
         if (d instanceof Date && !isNaN(d)) return d;
+        else return null;
       }
-      const d = new Date(v);
-      if (d instanceof Date && !isNaN(d)) return d;
-      else return null;
-    }
+    };
+    const readPlainDate = (v) => {
+      if (v instanceof Date && !isNaN(v)) return new PlainDate(v);
+      if (v instanceof PlainDate && v.isValid()) return v;
+      if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
+        if (attrs && attrs.locale) {
+          const d = moment(v, "L LT", attrs.locale).toDate();
+          if (d instanceof Date && !isNaN(d)) return new PlainDate(d);
+        }
+        try {
+          const d = new PlainDate(v);
+          if (d.isValid()) return d;
+          else return null;
+        } catch {
+          return null;
+        }
+      }
+    };
+    if (attrs?.day_only) return readPlainDate(v0);
+    else return readDate(v0);
   },
   /**
    * @param {object} param
@@ -2298,7 +2354,10 @@ const date = {
    * @returns true or false
    */
   equals: (a, b) => {
-    if (a instanceof Date && b instanceof Date) {
+    if (
+      (a instanceof Date || a instanceof PlainDate) &&
+      (b instanceof Date || b instanceof PlainDate)
+    ) {
       return a.getTime() === b.getTime();
     }
     return false;

@@ -72,13 +72,7 @@ test.describe('E2E Test Suite', () => {
         // Assert trigger elements
         await customAssert('Triggers tab title should be visible', async () => {
             await expect(page.locator(pageobject.TriggerTitle)).toHaveText('Triggers');
-        });
-        await customAssert('Actions Available cell should be visible', async () => {
-            await expect(page.locator(pageobject.actionsAvailable)).toHaveText('Actions available');
-        });
-        await customAssert('Event Types cell should be visible', async () => {
-            await expect(page.locator(pageobject.eventTypesCell)).toHaveText('Event types');
-        });
+        });      
         await customAssert('Create Trigger Button should be visible and clickable', async () => {
             await expect(page.locator(pageobject.CreateTriggerBtn)).toHaveText('Create trigger');
             await page.click(pageobject.CreateTriggerBtn);
@@ -282,7 +276,7 @@ test.describe('E2E Test Suite', () => {
         });
         await customAssert('Delete button for custom event should be present', async () => {
             // Increase timeout if needed
-            await expect(page.locator(pageobject.deletefieldbutton)).toBeVisible({ timeout: 10000 });
+            await expect(page.locator(pageobject.deletefieldbutton)).toBeVisible({ timeout: 5000 });
             await page.click(pageobject.deletefieldbutton);
         });
     });

@@ -208,7 +208,7 @@ class User {
       false
     );
 
-    const urecord = {
+    const urecord: UserCfg = {
       email: u.email,
       password: hashpw,
       role_id: u.role_id,
@@ -231,11 +231,16 @@ class User {
       Object.assign(urecord, valResCollector.set_fields);
 
     u.id = await db.insert("users", urecord);
+    urecord.id = u.id;
     await Trigger.runTableTriggers(
       "Insert",
       user_table,
-      plain_password_triggers ? { plain_password: password, ...u } : { ...u }
+      plain_password_triggers
+        ? { plain_password: password, ...urecord }
+        : { ...urecord }
     );
+    if (User.table.fields.find((f) => f.calculated && f.stored))
+      await User.table.updateRow({}, u.id as number);
     return u;
   }
 
@@ -504,9 +509,51 @@ class User {
    * @param pw
    * @returns {string}
    */
+  // static unacceptable_password_reason(pw: string): string | undefined {
+  //   if (pw.length < 8) return "Password too short";
+  //   if (check(pw)) return "Password too common";
+  // }
   static unacceptable_password_reason(pw: string): string | undefined {
-    if (pw.length < 8) return "Password too short";
-    if (check(pw)) return "Password too common";
+    const { getState } = require("../db/state");
+    const minLength = getState().getConfig("min_password_length", 8);
+    if (minLength > 0 && pw.length < minLength) return "Password too short";
+    const checkCommon = getState().getConfig("check_common_passwords", true);
+    if (checkCommon && check(pw)) return "Password too common";
+    const complexityRegex = getState().getConfig("password_complexity", "");
+    const complexityError = getState().getConfig(
+      "password_complexity_error",
+      ""
+    );
+    if (complexityRegex && !new RegExp(complexityRegex).test(pw))
+      return (
+        complexityError || "Password does not match complexity requirements"
+      );
+    if (!complexityRegex) {
+      const requireUppercase = getState().getConfig(
+        "password_require_uppercase",
+        false
+      );
+      if (requireUppercase && !/[A-Z]/.test(pw))
+        return "Password must contain at least one uppercase letter";
+      const requireLowercase = getState().getConfig(
+        "password_require_lowercase",
+        false
+      );
+      if (requireLowercase && !/[a-z]/.test(pw))
+        return "Password must contain at least one lowercase letter";
+      const requireNumber = getState().getConfig(
+        "password_require_number",
+        false
+      );
+      if (requireNumber && !/\d/.test(pw))
+        return "Password must contain at least one number";
+      const requireSpecialChar = getState().getConfig(
+        "password_require_special_char",
+        false
+      );
+      if (requireSpecialChar && !/[!@#$%^&*(),.?:{}|<>]/.test(pw))
+        return "Password must contain at least one special character";
+    }
   }
 
   /**
@@ -561,16 +608,19 @@ class User {
    * @param email - email address string
    * @param reset_password_token - reset password token string
    * @param password
+   * @param confirm_password
    * @returns {Promise<{error: string}|{success: boolean}>}
    */
   static async resetPasswordWithToken({
     email,
     reset_password_token,
     password,
+    confirm_password,
   }: {
     email: string;
     reset_password_token: string;
     password: string;
+    confirm_password: string;
   }): Promise<SuccessMessage | ErrorMessage> {
     if (reset_password_token.length < 10)
       return {
@@ -585,6 +635,8 @@ class User {
     ) {
       const match = compareSync(reset_password_token, u.reset_password_token);
       if (match) {
+        if (password !== confirm_password)
+          return { error: "Passwords do not match" };
         if (User.unacceptable_password_reason(password))
           return {
             error:

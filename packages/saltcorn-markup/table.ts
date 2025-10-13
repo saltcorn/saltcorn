@@ -4,8 +4,24 @@
  */
 
 import tags = require("./tags");
-const { a, td, tr, th, text, div, table, thead, tbody, ul, li, span, h4 } =
-  tags;
+const {
+  a,
+  td,
+  tr,
+  th,
+  text,
+  div,
+  table,
+  thead,
+  tbody,
+  ul,
+  li,
+  span,
+  h4,
+  style,
+  i,
+  button,
+} = tags;
 import helpers = require("./helpers");
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
 const { pagination } = helpers;
@@ -17,14 +33,61 @@ const { pagination } = helpers;
 const headerCell = (hdr: any): string =>
   th(
     (hdr.align || hdr.width) && {
-      style:
-        (hdr.align ? `text-align: ${hdr.align};` : "") +
-        (hdr.width ? `width: ` + hdr.width : ""),
+      style: hdr.width ? `width: ` + hdr.width : "",
+      ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
     },
     hdr.sortlink
       ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
       : hdr.label
   );
+
+const headerFilter = (hdr: any, isLast: boolean): string =>
+  th(
+    (hdr.align || hdr.width) && {
+      style: hdr.width ? `width: ` + hdr.width : "",
+      ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
+    },
+    isLast
+      ? div(
+          { class: "d-flex" },
+          hdr.header_filter || null,
+          button(
+            {
+              type: "button",
+              class: "btn btn-xs btn-outline-secondary",
+              onclick: "clear_state('', this)",
+            },
+            i({ class: "fas fa-times" })
+          )
+        )
+      : hdr.header_filter || null
+  );
+
+const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
+  if (!(isLast && opts.header_filters && opts.header_filters_toggle))
+    return headerCell(hdr);
+  const content = hdr.sortlink
+    ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
+    : hdr.label;
+  const toggleIcon = span(
+    {
+      class: "header-filter-toggle link-style",
+      title: "Show/Hide filters",
+      onclick: `toggle_header_filters(this)`,
+      style:
+        "cursor:pointer;margin-left:1rem;display:inline-flex;align-items:center;",
+    },
+    i({ class: "fas fa-chevron-down" })
+  );
+  return th(
+    (hdr.align || hdr.width) && {
+      style: hdr.width ? `width: ` + hdr.width : "",
+      ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
+    },
+    content,
+    toggleIcon
+  );
+};
 
 // declaration merging
 namespace TableExports {
@@ -33,6 +96,8 @@ namespace TableExports {
     key: string | Function;
     width?: string;
     align?: string;
+    header_filter?: string;
+    row_key?: string;
   };
 
   export type OptsParams = {
@@ -47,6 +112,11 @@ namespace TableExports {
     tableClass?: string;
     tableId?: string;
     grouped?: string;
+    header_filters?: boolean;
+    header_filters_toggle?: boolean;
+    responsiveCollapse?: boolean;
+    collapse_breakpoint_px?: number;
+    row_color_formula?: string;
   };
 }
 type HeadersParams = TableExports.HeadersParams;
@@ -64,8 +134,11 @@ const transposedBody = (
   vs: any[],
   opts: OptsParams | any = {}
 ): string[] =>
-  hdrs.map((hdr: HeadersParams, ix) =>
-    tr(
+  hdrs.map((hdr: HeadersParams, ix) => {
+    const row_key =
+      hdr.row_key || (typeof hdr.key === "string" ? hdr.key : null);
+    return tr(
+      row_key ? { "row-key": row_key } : {},
       !opts.noHeader && th(hdr.label),
       (vs || []).map((v: any) =>
         td(
@@ -79,8 +152,8 @@ const transposedBody = (
           typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
         )
       )
-    )
-  );
+    );
+  });
 
 /**
  * @function
@@ -94,21 +167,42 @@ const mkTable = (
   vs: any[],
   opts: OptsParams | any = {}
 ): string => {
-  const val_row = (v: any) =>
-    tr(
-      mkClickHandler(opts, v),
+  const pk_name = opts.pk_name || "id";
+  if (opts.row_color_formula && !(opts as any)._rowColorFn) {
+    (opts as any)._rowColorFn = new Function(
+      "row",
+      "with(row){return (" + opts.row_color_formula + ");}"
+    );
+  }
+  const val_row = (v: any) => {
+    let rowColor: string | undefined;
+    if (opts.row_color_formula) {
+      try {
+        rowColor = (opts as any)._rowColorFn?.(v);
+      } catch {
+        rowColor = undefined;
+      }
+    }
+    return tr(
+      {
+        ...(v[pk_name] ? { "data-row-id": v[pk_name] } : {}),
+        ...mkClickHandler(opts, v),
+        ...(rowColor ? { style: { backgroundColor: rowColor } } : {}),
+      },
       hdrs.map((hdr: HeadersParams) =>
         td(
           {
             style: {
-              ...(hdr.align ? { "text-align": hdr.align } : {}),
               ...(hdr.width && opts.noHeader ? { width: hdr.width } : {}),
+              ...(rowColor ? { backgroundColor: rowColor } : {}),
             },
+            ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
           },
           typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
         )
       )
     );
+  };
   const groupedBody = (groups: any) =>
     Object.entries(groups).map(
       ([group, rows]: [string, any]) =>
@@ -125,7 +219,10 @@ const mkTable = (
         class: [
           "table table-sm",
           opts.class,
-          hdrs.some((h: HeadersParams) => h.width) && "table-layout-fixed",
+          ((hdrs.some((h: HeadersParams) => h.width) &&
+            opts.table_layout !== "Auto") ||
+            opts.table_layout === "Fixed") &&
+            "table-layout-fixed",
           (opts.onRowSelect || (opts.hover && vs && vs.length > 1)) &&
             "table-hover",
         ],
@@ -133,16 +230,89 @@ const mkTable = (
       },
       !opts.noHeader &&
         !opts.transpose &&
-        thead(tr(hdrs.map((hdr: HeadersParams) => headerCell(hdr)))),
+        thead(
+          tr(
+            hdrs.map((hdr: HeadersParams, ix: number) =>
+              headerCellWithToggle(hdr, opts, ix === hdrs.length - 1)
+            )
+          ),
+          opts.header_filters
+            ? tr(
+                {
+                  class: "header-filters",
+                  id: opts.header_filters_toggle
+                    ? `${opts.tableId || "table"}_header_filters_row`
+                    : null,
+                  ...(!opts.header_filters_open
+                    ? { style: "display:none;" }
+                    : {}),
+                },
+                hdrs.map((hdr: HeadersParams, ix: number) =>
+                  headerFilter(hdr, ix === hdrs.length - 1)
+                )
+              )
+            : null
+        ),
       tbody(
         opts.transpose
           ? transposedBody(hdrs, vs, opts)
           : opts.grouped
-          ? groupedBody(vs)
-          : (vs || []).map(val_row)
+            ? groupedBody(vs)
+            : (vs || []).map(val_row)
       )
     ),
-    opts.pagination && pagination(opts.pagination)
+    opts.pagination && pagination(opts.pagination),
+    //https://css-tricks.com/responsive-data-tables/
+    opts.responsiveCollapse &&
+      opts.tableId &&
+      style(`@media 
+only screen and (max-width: ${opts.collapse_breakpoint_px || 760}px) {
+	#${opts.tableId} table, #${opts.tableId} thead, #${opts.tableId} tbody, #${opts.tableId} th, #${opts.tableId} td, #${opts.tableId} tr { 
+		display: block; 
+	}
+
+  #${opts.tableId} tr.header-filter {
+    display: none;
+  }
+  #${opts.tableId} td.text-align-right,
+  #${opts.tableId} td.text-align-right,
+  #${opts.tableId} th.text-align-center,
+  #${opts.tableId} th.text-align-center {
+     text-align: left !important;
+  }
+
+	#${opts.tableId} thead tr { 
+		position: absolute;
+		top: -9999px;
+		left: -9999px;
+	}
+	
+	#${opts.tableId} tr { border: 1px solid #ccc; }
+	
+	#${opts.tableId} td { 
+		border: none;
+		border-bottom: 1px solid #eee; 
+		position: relative;
+		padding-left: 50%; 
+	}
+	
+	#${opts.tableId} td:before { 
+		position: absolute;
+		top: 6px;
+		left: 6px;
+		width: 45%; 
+		padding-right: 10px; 
+		white-space: nowrap;
+	}
+
+  ${hdrs.map((hdr: HeadersParams, ix: number) => `#${opts.tableId} td:nth-of-type(${ix + 1}):before { content: "${hdr.label}"; }`).join("\n")}	
+}`),
+    opts.header_filters_toggle &&
+      style(
+        `#${opts.tableId || "table"} .header-filter-toggle i{transition:transform .2s;}
+#${opts.tableId || "table"} .header-filter-toggle .fa-chevron-up{transform:rotate(0deg);}
+#${opts.tableId || "table"} .header-filter-toggle .fa-chevron-down{transform:rotate(180deg);}`
+      )
   );
 };
 

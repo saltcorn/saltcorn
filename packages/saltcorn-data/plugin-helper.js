@@ -13,6 +13,7 @@ const { getState } = require("./db/state");
 const db = require("./db");
 const { button, a, text, i, text_attr } = require("@saltcorn/markup/tags");
 const mjml = require("@saltcorn/markup/mjml-tags");
+const PlainDate = require("@saltcorn/plain-date");
 const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
 const {
   Relation,
@@ -122,6 +123,7 @@ const link_view = (
             !link_style && "btn btn-link",
             extraClass,
             link_class,
+            "d-inline-block",
           ],
           title: link_title,
           type: "button",
@@ -147,7 +149,14 @@ const link_view = (
       {
         ...(label_attr ? { "data-link-label": text_attr(label) } : {}),
         href: url,
-        class: [textStyle, link_style, link_size, extraClass, link_class],
+        class: [
+          textStyle,
+          link_style,
+          link_size,
+          extraClass,
+          link_class,
+          link_style && link_style.includes("btn") && "d-inline-block",
+        ],
         style,
         title: link_title,
         onclick: in_row_click ? "event.stopPropagation()" : undefined,
@@ -164,18 +173,39 @@ const link_view = (
  */
 const stateToQueryString = (state, include_id) => {
   if (!state || Object.keys(state).length === 0) return "";
+  const bounded = (k, v) => {
+    const parts = [];
+    if (v.gt)
+      parts.push(
+        `_gt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${v.gt}`)}`
+      );
+    if (v.lt)
+      parts.push(
+        `_lt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${v.lt}`)}`
+      );
 
+    return parts.join("&");
+  };
   return (
     "?" +
     Object.entries(state)
       .map(([k, v]) =>
-        (k === "id" && !include_id) || typeof v === "undefined"
-          ? null
-          : `${encodeURIComponent(k)}=${encodeURIComponent(
-              k === "_relation_path_" && typeof v !== "string"
-                ? queryToString(v)
-                : v
-            )}`
+        v?.gt || v?.lt
+          ? bounded(k, v)
+          : Array.isArray(v) && k !== "_relation_path_"
+            ? v
+                .map(
+                  (val) =>
+                    `${encodeURIComponent(k)}=${encodeURIComponent(`${val}`)}`
+                )
+                .join("&")
+            : (k === "id" && !include_id) || typeof v === "undefined"
+              ? null
+              : `${encodeURIComponent(k)}=${encodeURIComponent(
+                  k === "_relation_path_" && typeof v !== "string"
+                    ? queryToString(v)
+                    : v
+                )}`
       )
       .filter((s) => !!s)
       .join("&")
@@ -2057,16 +2087,29 @@ const stateFieldsToWhere = ({
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
-          gt: new Date(v),
+          gt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           equal: true,
           day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_todate_")) {
       const datefield = db.sqlsanitize(k.replace("_todate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);
-      if (dfield)
+      //https://stackoverflow.com/a/22061879/19839414
+      if (
+        dfield &&
+        !dfield?.attributes?.day_only &&
+        v?.match?.(/^\d{4}-\d{2}-\d{2}$/)
+      ) {
+        const date = new Date(v);
+        date.setDate(date.getDate() + 1);
         addOrCreateList(qstate, datefield, {
-          lt: new Date(v),
+          lt: date,
+          equal: true,
+          day_only: dfield.attributes?.day_only,
+        });
+      } else if (dfield)
+        addOrCreateList(qstate, datefield, {
+          lt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           equal: true,
           day_only: dfield.attributes?.day_only,
         });
@@ -2075,7 +2118,7 @@ const stateFieldsToWhere = ({
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
-          gt: new Date(v),
+          gt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_toneqdate_")) {
@@ -2083,7 +2126,7 @@ const stateFieldsToWhere = ({
       const dfield = fields.find((fld) => fld.name === datefield);
       if (dfield)
         addOrCreateList(qstate, datefield, {
-          lt: new Date(v),
+          lt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
           day_only: dfield.attributes?.day_only,
         });
     } else if (k.startsWith("_gte_")) {
@@ -2112,7 +2155,9 @@ const stateFieldsToWhere = ({
     } else if (field && field.type.name === "String" && v && v.slugify) {
       qstate[k] = v;
     } else if (Array.isArray(v) && field && field.type && field.type.read) {
-      qstate[k] = { or: v.map(field.type.read) };
+      qstate[k] = {
+        or: v.map((val) => field.type.read(val, field.attributes)),
+      };
     } else if (
       Array.isArray(v) &&
       field?.is_fkey &&
@@ -2168,8 +2213,8 @@ const stateFieldsToWhere = ({
       qstate[k] = v;
     } else if (field && field.type && field.type.read)
       qstate[k] = Array.isArray(v)
-        ? { or: v.map(field.type.read) }
-        : field.type.read(v);
+        ? { or: v.map((val) => field.type.read(val, field.attributes)) }
+        : field.type.read(v, field.attributes);
     else if (field) qstate[k] = v;
     else if (k.split("->").length === 3) {
       const [jFieldNm, throughPart, finalPart] = k.split(".");
@@ -2297,7 +2342,11 @@ const initial_config_all_fields =
 
     const fields = table
       .getFields()
-      .filter((f) => !f.primary_key && (!isEdit || !f.calculated));
+      .filter(
+        (f) =>
+          (!f.primary_key || f?.attributes?.NonSerial) &&
+          (!isEdit || !f.calculated)
+      );
     let cfg = { columns: [] };
     let aboves = [null];
     const style = {
@@ -2417,7 +2466,7 @@ const initial_config_all_fields =
 // todo potentially move to utils
 const strictParseInt = (x) => {
   const y = +x;
-  return !isNaN(y) && y ? y : undefined;
+  return !isNaN(y) && (y || y === 0) ? y : undefined;
 };
 
 /**
@@ -2431,7 +2480,7 @@ const readState = (state, fields, req) => {
   const read_key = (f, current) =>
     current === "null" || current === "" || current === null
       ? null
-      : getState().types[f.reftype].read(current);
+      : getState().types[f.reftype].read(current, f.attributes);
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
@@ -2443,7 +2492,7 @@ const readState = (state, fields, req) => {
       ) {
         //ignore (this is or statement)
       } else if (Array.isArray(current) && f.type.read) {
-        state[f.name] = current.map(f.type.read);
+        state[f.name] = current.map((val) => f.type.read(val, f.attributes));
       } else if (
         Array.isArray(current) &&
         f.is_fkey &&
@@ -2452,11 +2501,12 @@ const readState = (state, fields, req) => {
         state[f.name] = current.map((v) => read_key(f, v));
       } else if (current && current.slugify)
         state[f.name] = f.type.read
-          ? { slugify: f.type.read(current.slugify) }
+          ? { slugify: f.type.read(current.slugify, f.attributes) }
           : current;
       else if (typeof current === "object") {
         //ignore
-      } else if (f.type?.read) state[f.name] = f.type.read(current);
+      } else if (f.type?.read)
+        state[f.name] = f.type.read(current, f.attributes);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const pname = current.replace("Preset:", "");
         if (Object.prototype.hasOwnProperty.call(f.presets, pname)) {
@@ -2485,7 +2535,7 @@ const readStateStrict = (state, fields) => {
 
     if (typeof current !== "undefined") {
       if (f.type.read) {
-        const readval = f.type.read(current);
+        const readval = f.type.read(current, f.attributes);
         if (typeof readval === "undefined") {
           if (current === "" && !f.required) delete state[f.name];
           else hasErrors = true;
@@ -2522,6 +2572,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
   );
   const getRows = async (where = {}, selopts = {}) => {
     let data_in = await get_json_list(where, selopts);
+    if (methods?.disableFiltering) return data_in;
     const restricts = Object.entries(where);
     const sat =
       (x) =>
@@ -2564,8 +2615,13 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       );
     else return data_filtered;
   };
+  const composite_pk_names = fields
+    .filter((f) => f.primary_key)
+    .map((f) => f.name);
   const tbl = {
     pk_name: fields.find((f) => f.primary_key)?.name,
+    composite_pk_names:
+      composite_pk_names.length < 2 ? null : composite_pk_names,
     getFields() {
       return fields;
     },
@@ -2573,6 +2629,16 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return fields.filter((f) => f.is_fkey && f.type !== "File");
     },
     getField(fnm) {
+      if (typeof fnm !== "string") {
+        // Prevent type confusion if not a string
+        return undefined;
+      }
+      if (fnm.includes(".")) {
+        const [myfld, ...rest] = fnm.split(".");
+        const f = fields.find((f) => f.name === myfld);
+        const tbl = Table.findOne(f.reftable_name);
+        return tbl.getField(rest.join("."));
+      }
       return fields.find((f) => f.name === fnm);
     },
     fields,
@@ -2585,27 +2651,73 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       const roles = getState().getConfig("exttables_min_role_read", {});
       return roles[tbl.name] || 100;
     },
-    getJoinedRows(opts = {}) {
+    async getJoinedRows(opts = {}) {
+      if (methods?.getJoinedRows) {
+        return await methods.getJoinedRows(opts);
+      }
       const { where, ...rest } = opts;
-      return getRows(where || {}, rest || {});
+      return await getRows(where || {}, rest || {});
     },
     async getJoinedRow(opts = {}) {
       const { where, ...rest } = opts;
       const rows = await getRows(where || {}, rest || {});
       return rows.length > 0 ? rows[0] : null;
     },
+    delete_url(row, moreQuery) {
+      const comppk = tbl.composite_pk_names;
+      if (!comppk)
+        return `/delete/${tbl.name}/${encodeURIComponent(row[tbl.pk_name])}${moreQuery ? `?${moreQuery}` : ""}`;
+      else
+        return `/delete/${tbl.name}?${comppk.map((pknm) => `${encodeURIComponent(pknm)}=${encodeURIComponent(row[pknm])}`).join("&")}${moreQuery ? `&${moreQuery}` : ""}`;
+    },
     async countRows(where, opts) {
       if (methods?.countRows) {
-        return await methods?.countRows(where, opts);
+        return await methods.countRows(where, opts);
       }
       let data_in = await get_json_list(where, opts);
       return data_in.length;
     },
-    get_child_relations() {
-      return { child_relations: [], child_field_list: [] };
+    async get_child_relations() {
+      const child_relations = [];
+      const child_field_list = [];
+
+      const cfields = await Field.find(
+        { reftable_name: this.name },
+        { cached: true }
+      );
+      for (const f of cfields) {
+        if (f.is_fkey) {
+          const table = Table.findOne({ id: f.table_id });
+          if (!table) {
+            throw new Error(`Unable to find table with id: ${f.table_id}`);
+          }
+          child_field_list.push(`${table.name}.${f.name}`);
+          table.getFields();
+          child_relations.push({ key_field: f, table });
+        }
+      }
+      return { child_relations, child_field_list: [] };
     },
     get_parent_relations() {
-      return { parent_relations: [], parent_field_list: [] };
+      let parent_relations = [];
+      let parent_field_list = [];
+      for (const f of fields) {
+        if (f.is_fkey && f.type !== "File") {
+          const table = Table.findOne({ name: f.reftable_name });
+          if (!table)
+            throw new Error(`Unable to find table '${f.reftable_name}`);
+          if (!table.fields)
+            throw new Error(`The table '${f.reftable_name} has no fields.`);
+
+          for (const pf of table.fields.filter(
+            (f) => !f.calculated || f.stored
+          )) {
+            parent_field_list.push(`${f.name}.${pf.name}`);
+            parent_relations.push({ key_field: f, table });
+          }
+        }
+      }
+      return { parent_relations, parent_field_list };
     },
     get_relation_options() {
       return [];
@@ -2614,7 +2726,30 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return [];
     },
     get_join_field_options() {
-      return [];
+      const result = [];
+      for (const f of fields) {
+        if (f.is_fkey && f.type !== "File") {
+          const table = Table.findOne({ name: f.reftable_name });
+          const subOne = {
+            name: f.name,
+            table: table.name,
+            subFields: new Array(),
+            fieldPath: f.name,
+          };
+          for (const pf of table.fields.filter(
+            (f) => !f.calculated || f.stored
+          )) {
+            const subTwo = {
+              name: pf.name,
+              subFields: new Array(),
+              fieldPath: `${f.name}.${pf.name}`,
+            };
+            subOne.subFields.push(subTwo);
+          }
+          result.push(subOne);
+        }
+      }
+      return result;
     },
     slug_options() {
       return [];
@@ -2628,6 +2763,8 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return null;
     },
     async distinctValues(fldNm, opts) {
+      if (methods?.distinctValues)
+        return await methods.distinctValues(fldNm, opts);
       let data_in = await get_json_list(opts || {});
       const s = new Set(data_in.map((x) => x[fldNm]));
       return [...s];
@@ -2646,7 +2783,52 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       );
     },
   };
+  if (methods?.aggregationQuery)
+    tbl.aggregationQuery = methods.aggregationQuery;
+  if (methods?.deleteRows) tbl.deleteRows = methods.deleteRows;
+  if (methods?.updateRow) {
+    tbl.updateRow = methods.updateRow;
+    tbl.tryUpdateRow = async (...args) => {
+      try {
+        const maybe_err = await methods.updateRow(...args);
+        if (typeof maybe_err === "string") return { error: maybe_err };
+        else return { success: true };
+      } catch (error) {
+        return { error: error?.message || error };
+      }
+    };
+  }
+  if (methods?.insertRow) {
+    tbl.insertRow = methods.insertRow;
+    tbl.tryInsertRow = async (...args) => {
+      try {
+        const id = await methods.insertRow(...args);
+        return { success: id };
+      } catch (error) {
+        return { error: error?.message || error };
+      }
+    };
+  }
+
   return tbl;
+};
+
+/**
+ * check if we should wait for an action or trigger to finish
+ * @param {any} col Action Column from the configuration
+ * @returns true or false
+ */
+const shoudlRunAsync = (col) => {
+  const action_name = col.action_name;
+  const state_action = getState().actions[action_name];
+  if (state_action) return !!col.run_async;
+  else {
+    const trigger = Trigger.findOne({ name: action_name });
+    if (!trigger || trigger.action === "Multi-step action") return false;
+    if (trigger.action === "Workflow")
+      return !!col.run_async || !!trigger.configuration?.run_async || false;
+    else return !!col.run_async;
+  }
 };
 
 /**
@@ -2657,6 +2839,47 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
  * @returns {Promise<*>}
  */
 const run_action_column = async ({ col, req, ...rest }) => {
+  let run_async = shoudlRunAsync(col);
+  if (run_async && !getState().getConfig("enable_dynamic_updates")) {
+    run_async = false;
+    getState().log(
+      4,
+      `Warning: '${col.action_name}' is set to run async but dynamic updates are disabled. Running synchronously instead.`
+    );
+  }
+  const reset_spinner = (state) => {
+    if (!col.spinner) return;
+    if (!req.headers["page-load-tag"]) return;
+    const reset_msg = {
+      eval_js: "reset_spinners()",
+      page_load_tag: req.headers["page-load-tag"],
+    };
+    state.emitDynamicUpdate(db.getTenantSchema(), reset_msg);
+  };
+  const successAsyncHandler = (data) => {
+    const state = getState();
+    state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
+    const emitData = { ...data };
+    if (req.headers["page-load-tag"])
+      emitData.page_load_tag = req.headers["page-load-tag"];
+    state.emitDynamicUpdate(db.getTenantSchema(), emitData);
+    if (
+      !emitData.resume_workflow &&
+      !emitData.popup?.startsWith?.("/actions/fill-workflow-form/")
+    )
+      reset_spinner(state);
+  };
+  const failureAsyncHandler = (err) => {
+    const state = getState();
+    state.log(2, `Asynchronous action error: ${err.message || err}`);
+    if (req.headers["page-load-tag"]) {
+      state.emitDynamicUpdate(db.getTenantSchema(), {
+        error: err.message || err,
+        page_load_tag: req.headers["page-load-tag"],
+      });
+    }
+    reset_spinner(state);
+  };
   const run_action_step = async (action_name, colcfg) => {
     let state_action = getState().actions[action_name];
     let configuration;
@@ -2693,7 +2916,6 @@ const run_action_column = async ({ col, req, ...rest }) => {
     }
     if (!goRun)
       throw new Error("Runnable action not found: " + text(action_name));
-
     return await goRun();
   };
   if (col.action_name === "Multi-step action") {
@@ -2741,7 +2963,12 @@ const run_action_column = async ({ col, req, ...rest }) => {
       if (result.error || result.halt_steps) break;
     }
     return result;
-  } else return await run_action_step(col.action_name, col.configuration);
+  } else {
+    const promise = run_action_step(col.action_name, col.configuration);
+    if (run_async) {
+      promise.then(successAsyncHandler).catch(failureAsyncHandler);
+    } else return await promise;
+  }
 };
 
 const displayType = (stateFields) =>
@@ -2827,6 +3054,57 @@ const pathToState = (relation, getRowVal) => {
   }
 };
 
+/**
+ * Run custom real-time collaboration events
+ * @param {*} events events from the cfg of a view
+ * @param {*} user
+ * @param {*} actionData data to run the actions on
+ * @returns an array of action results
+ */
+const runCollabEvents = async (events, user, actionData) => {
+  const actionResults = [];
+  const role = user?.role_id || 100;
+  for (const { event } of events || []) {
+    const trigger = Trigger.findOne({ name: event });
+    if (!trigger) {
+      getState().log(6, `Trigger '${event}' not found, skipping`);
+      continue;
+    }
+    if (role > trigger.min_role) {
+      getState().log(6, `Trigger '${event}' not authorized`);
+      continue;
+    }
+
+    let resp;
+    if (trigger.action === "Workflow") {
+      resp = await trigger.runWithoutRow({
+        interactive: true,
+        row: actionData,
+        user: user || { role_id: 100 },
+      });
+      delete resp.__wf_run_id;
+    } else {
+      const action = getState().actions[trigger.action];
+      if (!action) {
+        getState().log(
+          6,
+          `Action '${trigger.action}' for trigger '${event}' not found, skipping`
+        );
+        continue;
+      }
+
+      getState().log(6, `Running trigger '${event}'`);
+      resp = await action.run({
+        configuration: trigger.configuration,
+        row: actionData,
+        user: user,
+      });
+    }
+    if (resp) actionResults.push(resp);
+  }
+  return actionResults;
+};
+
 module.exports = {
   field_picker_fields,
   picked_fields_to_query,
@@ -2857,4 +3135,5 @@ module.exports = {
   displayType,
   sqlBinOp,
   sqlFun,
+  runCollabEvents,
 };

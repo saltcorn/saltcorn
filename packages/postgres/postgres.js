@@ -15,6 +15,12 @@ const {
   mkWhere,
   mkSelectOptions,
 } = require("@saltcorn/db-common/internal");
+const PlainDate = require("@saltcorn/plain-date");
+
+var types = require("pg").types;
+types.setTypeParser(types.builtins.DATE, (d) =>
+  d === null ? null : new PlainDate(d)
+);
 
 let getTenantSchema;
 let getRequestContext;
@@ -136,7 +142,7 @@ const drop_reset_schema = async (schema) => {
  * @param {object} - whereObj - where object
  * @returns {Promise<number>} count of tables
  */
-const count = async (tbl, whereObj) => {
+const count = async (tbl, whereObj, opts) => {
   const { where, values } = mkWhere(whereObj);
   if (!where) {
     try {
@@ -150,9 +156,9 @@ const count = async (tbl, whereObj) => {
       / pg_catalog.current_setting('block_size')::int)
        )::bigint
 FROM   pg_catalog.pg_class c
-WHERE  c.oid = '"${getTenantSchema()}"."${sqlsanitize(tbl)}"'::regclass`;
+WHERE  c.oid = '"${opts?.schema || getTenantSchema()}"."${sqlsanitize(tbl)}"'::regclass`;
       sql_log(sql);
-      const tq = await getMyClient().query(sql, []);
+      const tq = await getMyClient(opts).query(sql, []);
       const n = +tq.rows[0].int8;
       if (n && n > 10000) return n;
     } catch {
@@ -160,11 +166,11 @@ WHERE  c.oid = '"${getTenantSchema()}"."${sqlsanitize(tbl)}"'::regclass`;
     }
   }
 
-  const sql = `SELECT COUNT(*) FROM "${getTenantSchema()}"."${sqlsanitize(
+  const sql = `SELECT COUNT(*) FROM "${opts?.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where}`;
   sql_log(sql, values);
-  const tq = await getMyClient().query(sql, values);
+  const tq = await getMyClient(opts).query(sql, values);
 
   return parseInt(tq.rows[0].count);
 };
@@ -195,7 +201,7 @@ const getVersion = async (short) => {
  */
 const deleteWhere = async (tbl, whereObj, opts = Object.create(null)) => {
   const { where, values } = mkWhere(whereObj);
-  const sql = `delete FROM "${getTenantSchema()}"."${sqlsanitize(
+  const sql = `delete FROM "${opts.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where}`;
   sql_log(sql, values);
@@ -275,10 +281,23 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
   let valList = kvs.map(([k, v]) => v);
   // TBD check that is correct - because in insert function opts.noid ? "*" : opts.pk_name || "id"
   //valList.push(id === "undefined"? obj[opts.pk_name]: id);
-  valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
-  const q = `update "${getTenantSchema()}"."${sqlsanitize(
+  let whereS;
+  if (id && typeof id == "object") {
+    let n = kvs.length + 1;
+    const whereStrs = [];
+    Object.keys(id).forEach((k) => {
+      valList.push(id[k]);
+      whereStrs.push(`"${k}"=$${n}`);
+      n += 1;
+    });
+    whereS = whereStrs.join(" and ");
+  } else {
+    valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
+    whereS = `${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
+  }
+  const q = `update "${opts.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
-  )}" set ${assigns} where ${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
+  )}" set ${assigns} where ${whereS}`;
   sql_log(q, valList);
   await getMyClient(opts).query(q, valList);
 };
@@ -388,7 +407,7 @@ const drop_unique_constraint = async (table_name, field_names) => {
   // TBD check that there are no problems with lenght of constraint name
   const sql = `alter table "${getTenantSchema()}"."${sqlsanitize(
     table_name
-  )}" drop CONSTRAINT "${sqlsanitize(table_name)}_${field_names
+  )}" drop CONSTRAINT IF EXISTS "${sqlsanitize(table_name)}_${field_names
     .map((f) => sqlsanitize(f))
     .join("_")}_unique";`;
   sql_log(sql);
@@ -591,6 +610,14 @@ const withTransaction = async (f, onError) => {
   }
 };
 
+const commitAndBeginNewTransaction = async () => {
+  const client = await getClient();
+  sql_log("COMMIT;");
+  await client.query("COMMIT;");
+  sql_log("BEGIN;");
+  await client.query("BEGIN;");
+};
+
 const tryCatchInTransaction = async (f, onError) => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
   const reqCon = getRequestContext();
@@ -599,7 +626,7 @@ const tryCatchInTransaction = async (f, onError) => {
     return await f();
   } catch (error) {
     if (reqCon?.client) await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
-    await onError(error);
+    return await onError(error);
   } finally {
     if (reqCon?.client) await query(`RELEASE SAVEPOINT sp${rndid}`);
   }
@@ -655,6 +682,7 @@ const postgresExports = {
   truncate,
   withTransaction,
   tryCatchInTransaction,
+  commitAndBeginNewTransaction,
 };
 
 module.exports = (getConnectObjectPara) => {

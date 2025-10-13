@@ -50,8 +50,12 @@ const {
   dollarizeObject,
   getSessionId,
   cloneName,
+  isNode,
+  isOfflineMode,
 } = utils;
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
+
+declare const saltcorn: any;
 
 /**
  * Page Class
@@ -264,28 +268,44 @@ class Page implements AbstractPage {
           ...extra_state,
         });
         const qs = stateToQueryString(mystate, true);
-        segment.contents = div(
-          {
-            class: "d-inline",
-            "data-sc-embed-viewname": view.name,
-            "data-sc-view-source": `/view/${view.name}${qs}`,
-          },
-          await view.run(mystate, extraArgs, view.isRemoteTable())
-        );
+        if (view.renderLocally()) {
+          segment.contents = div(
+            {
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-sc-view-source": `/view/${view.name}${qs}`,
+            },
+            await view.run(mystate, extraArgs, view.isRemoteTable())
+          );
+        } else {
+          const response = await saltcorn.mobileApp.api.apiCall({
+            method: "GET",
+            path: `/view/${encodeURIComponent(view.name)}${qs}`,
+          });
+          segment.contents = response.data;
+        }
       } else if (segment.state === "local") {
         const mystate = view.combine_state_and_default_state({
           ...querystate,
           ...extra_state,
         });
         const qs = stateToQueryString(mystate, true);
-        segment.contents = div(
-          {
-            class: "d-inline",
-            "data-sc-embed-viewname": view.name,
-            "data-sc-local-state": `/view/${view.name}${qs}`,
-          },
-          await view.run(mystate, extraArgs, view.isRemoteTable())
-        );
+        if (isNode() || isOfflineMode()) {
+          segment.contents = div(
+            {
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-sc-local-state": `/view/${view.name}${qs}`,
+            },
+            await view.run(mystate, extraArgs, view.isRemoteTable())
+          );
+        } else {
+          const response = await saltcorn.mobileApp.api.apiCall({
+            method: "GET",
+            path: `/view/${encodeURIComponent(view.name)}${qs}`,
+          });
+          segment.contents = response.data;
+        }
       } else {
         // segment.state === "fixed"
         const table = Table.findOne({ id: view.table_id });
@@ -296,14 +316,22 @@ class Page implements AbstractPage {
         const qs = stateToQueryString(mystate, true);
 
         Object.assign(mystate, extra_state);
-        segment.contents = div(
-          {
-            class: "d-inline",
-            "data-sc-embed-viewname": view.name,
-            "data-sc-view-source": `/view/${view.name}${qs}`,
-          },
-          await view.run(mystate, extraArgs, view.isRemoteTable())
-        );
+        if (view.renderLocally()) {
+          segment.contents = div(
+            {
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-sc-view-source": `/view/${view.name}${qs}`,
+            },
+            await view.run(mystate, extraArgs, view.isRemoteTable())
+          );
+        } else {
+          const response = await saltcorn.mobileApp.api.apiCall({
+            method: "GET",
+            path: `/view/${encodeURIComponent(view.name)}${qs}`,
+          });
+          segment.contents = response.data;
+        }
       }
     });
     await eachPage(this.layout, async (segment: any) => {
@@ -356,6 +384,8 @@ class Page implements AbstractPage {
             );
           return;
         }
+
+        //TODO page_post_action for mobile
         const url =
           segment.action_name === "GoBack"
             ? `javascript:${
@@ -364,7 +394,7 @@ class Page implements AbstractPage {
                   : "parent.saltcorn.mobileApp.navigation.goBack()"
               }`
             : `javascript:${
-                isWeb(extraArgs.req) ? "ajax_post_json" : "local_post_json"
+                isWeb(extraArgs.req) ? "page_post_action" : "local_post_json"
               }('/page/${pagename}/action/${segment.rndid}')`;
         const html = action_link(url, extraArgs.req, segment);
         segment.type = "blank";

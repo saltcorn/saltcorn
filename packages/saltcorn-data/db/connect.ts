@@ -102,6 +102,10 @@ const getConnectObject = (connSpec: any = {}) => {
     default: {},
     transform: stringToJSON,
   });
+  setKey("exposed_configuration", "SALTCORN_EXPOSED_CONFIGURATION", {
+    default: {},
+    transform: stringToJSON,
+  });
   setKey("inherit_configuration", "SALTCORN_INHERIT_CONFIGURATION", {
     default: [],
     transform: stringToJSON,

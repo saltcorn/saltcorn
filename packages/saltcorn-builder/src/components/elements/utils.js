@@ -132,15 +132,19 @@ export const FormulaTooltip = () => {
           ))}
         </Fragment>
       ) : null}
-  
+
       <div>
-        In view formulae, you can use aggregation formulae. The syntax for this is 
-        <code>{inbound_table}${inboundkey_field}${target_field}${aggrgation}</code> 
-        The aggregation (which should be lower case) can be ommitted and defaults to 
-        <code>array_agg</code>. Examples: <code>patients$favbook$id$count</code> or 
-        <code>patients$favbook$id</code>. 
-        This is useful if you want a count in a view link label 
-        without creating a stored calculated field.
+        In view formulae, you can use aggregation formulae. The syntax for this
+        is
+        <code>
+          [inbound_table]$[inboundkey_field]$[target_field]$[aggrgation]
+        </code>
+        The aggregation (which should be lower case) can be ommitted and
+        defaults to
+        <code>array_agg</code>. Examples: <code>patients$favbook$id$count</code>{" "}
+        or
+        <code>patients$favbook$id</code>. This is useful if you want a count in
+        a view link label without creating a stored calculated field.
       </div>
       <a
         className="d-block"
@@ -786,7 +790,7 @@ const ConfigForm = ({
   tableName,
   fieldName,
 }) => (
-  <div>
+  <div className="form-namespace">
     {fields.map((f, ix) => {
       if (f.showIf && configuration) {
         let noshow = false;
@@ -891,6 +895,7 @@ const ConfigField = ({
       } else prop[field.name] = v;
     });
     onChange && onChange(field.name, v, setProp);
+    apply_showif();
   };
   let stored_value = configuration
     ? configuration[field.name]
@@ -941,6 +946,19 @@ const ConfigField = ({
       }, []);
   }
 
+  const intDispFn = () => (
+    <input
+      type="number"
+      className={`field-${field?.name} form-control`}
+      step={field.step || 1}
+      min={field.min}
+      max={field.max}
+      name={field?.name}
+      value={value || ""}
+      onChange={(e) => e.target && myOnChange(e.target.value)}
+    />
+  );
+
   const dispatch = {
     String() {
       if (field.attributes?.options) {
@@ -948,6 +966,7 @@ const ConfigField = ({
         return (
           <select
             className={`field-${field?.name} form-control form-select`}
+            name={field?.name}
             value={value || ""}
             onChange={(e) => e.target && myOnChange(e.target.value)}
             onBlur={(e) => e.target && myOnChange(e.target.value)}
@@ -962,10 +981,30 @@ const ConfigField = ({
             ))}
           </select>
         );
-      } else
+      } 
+      else if (field.attributes?.calcOptions) {        
+        return (
+          <select
+            className={`field-${field?.name} form-control form-select`}
+            name={field?.name}
+            value={value || ""}
+            onChange={(e) => e.target && myOnChange(e.target.value)}
+            onBlur={(e) => e.target && myOnChange(e.target.value)}
+            data-calc-options={encodeURIComponent(
+              JSON.stringify(field.attributes.calcOptions)
+            )}
+            autocomplete= {"off"}
+            data-fieldname={field?.name}
+          >
+            <option value=""></option>
+          </select>
+        );
+      }
+      else
         return (
           <input
             type="text"
+            name={field?.name}
             className={`field-${field?.name} form-control`}
             value={value || ""}
             spellCheck={false}
@@ -977,6 +1016,7 @@ const ConfigField = ({
       <select
         className="fontselect form-control form-select"
         value={value || ""}
+        name={field?.name}
         onChange={(e) => e.target && myOnChange(e.target.value)}
         onBlur={(e) => e.target && myOnChange(e.target.value)}
       >
@@ -990,23 +1030,15 @@ const ConfigField = ({
           ))}
       </select>
     ),
-    Integer: () => (
-      <input
-        type="number"
-        className={`field-${field?.name} form-control`}
-        step={field.step || 1}
-        min={field.min}
-        max={field.max}
-        value={value || ""}
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-      />
-    ),
+    Integer: intDispFn,
+    number: intDispFn,
     Float: () => (
       <input
         type="number"
         className={`field-${field?.name} form-control`}
         value={value || ""}
         step={0.01}
+        name={field?.name}
         max={or_if_undef(field?.attributes?.max, undefined)}
         min={or_if_undef(field?.attributes?.min, undefined)}
         onChange={(e) => e.target && myOnChange(e.target.value)}
@@ -1019,6 +1051,7 @@ const ConfigField = ({
           type="checkbox"
           className={`field-${field?.name} form-check-input`}
           checked={value}
+          name={field?.name}
           onChange={(e) => e.target && myOnChange(e.target.checked)}
         />
         <label className="form-check-label">{field.label}</label>
@@ -1030,6 +1063,7 @@ const ConfigField = ({
         type="text"
         className={`field-${field?.name} form-control`}
         value={value}
+        name={field?.name}
         spellCheck={false}
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
@@ -1040,6 +1074,7 @@ const ConfigField = ({
         type="text"
         className={`field-${field?.name} form-control`}
         value={value}
+        name={field?.name}
         onChange={(e) => e.target && myOnChange(e.target.value)}
         spellCheck={false}
       />
@@ -1056,12 +1091,14 @@ const ConfigField = ({
         return (
           <Select
             options={seloptions}
+            className="react-select selectized-field"
             value={seloptions.find((so) => value === so.value)}
             onChange={(e) =>
               (e.name && myOnChange(e.name)) ||
               (e.value && myOnChange(e.value)) ||
               (typeof e === "string" && myOnChange(e))
             }
+            name={field?.name}
             onBlur={(e) =>
               (e.name && myOnChange(e.name)) ||
               (e.value && myOnChange(e.value)) ||
@@ -1076,8 +1113,10 @@ const ConfigField = ({
           <select
             className={`field-${field?.name} form-control form-select`}
             value={value || ""}
+            name={field?.name}
             onChange={(e) => e.target && myOnChange(e.target.value)}
             onBlur={(e) => e.target && myOnChange(e.target.value)}
+            data-fieldname={field?.name}
           >
             {(field.options || []).map((o, ix) =>
               o.name && o.label ? (
@@ -1790,8 +1829,7 @@ export const buildLayers = (relations, tableName, tableNameCache) => {
         fkeys: [],
         relPath: relation.relationString,
       });
-    }
-    else {
+    } else {
       let currentTbl = relation.sourceTblName;
       for (const pathElement of relation.path) {
         if (pathElement.inboundKey) {

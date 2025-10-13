@@ -146,6 +146,7 @@ describe("Edit view Workflow", () => {
       expect(step.name).toBe("Edit options");
       expect(context).toEqual({
         table_id: 2,
+        update_events: [],
         viewname: "edit_mybook",
         layout: view.configuration.layout,
         columns: view.configuration.columns,
@@ -197,6 +198,7 @@ describe("Edit view Workflow", () => {
       auto_create: false,
       delete_unchanged_auto_create: false,
       split_paste: true,
+      update_events: [],
       enable_realtime: false,
       view_when_done: "authorlist",
       destination_type: "View",
@@ -311,6 +313,7 @@ describe("Edit view Workflow", () => {
       enable_realtime: false,
       view_when_done: "authorlist",
       destination_type: "View",
+      update_events: [],
     });
   });
 });

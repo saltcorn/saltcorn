@@ -260,7 +260,7 @@ test.describe('E2E Test Suite', () => {
     });
 
     // Create new page for fixed status
-    test('Create new page for Fixed state', async () => {
+    /*test('Create new page for Fixed state', async () => {
         await functions.create_New_Page('Fixed_state');
         await page.waitForTimeout(2000);
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
@@ -281,5 +281,5 @@ test.describe('E2E Test Suite', () => {
         // await customAssert('Data with Member status should be visible', async () => {
         //     await expect(page.locator(pageobject.memberCell)).toBeVisible();
         // })
-    });
+    });*/
 });

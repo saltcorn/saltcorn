@@ -1,0 +1,7 @@
+A Trigger in Saltcorn is an action that has been configured in a particular way to do something in response to some event. 
+
+In Saltcorn, actions are supplied by modules and each action comes with a number of configuration fields that need to be filled out before that action can be run. For instance, there is an action for sending a notification to the user. Before that action can run, it needs to know where it is going to get the text message to be sent to the user from. This is done in the configuration of the action.
+
+In addition a trigger is defined by the event that causes it to run. This can be a table event, such as whenever a row is inserted on a particular table, or a periodic event such as every day at a certain time. 
+
+A trigger can be a simple action or it can be more a more complex workflow combining multip actions.

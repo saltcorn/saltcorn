@@ -356,7 +356,6 @@ const auth_settings_form = async (req) =>
     req,
     field_names: [
       "allow_signup",
-      "login_menu",
       "allow_forgot",
       {
         section_header: req.__("Signup and login views"),
@@ -374,6 +373,15 @@ const auth_settings_form = async (req) =>
       "elevate_verified",
       "email_mask",
       "plain_password_triggers",
+      { section_header: req.__("Password Policy") },
+      "min_password_length",
+      "check_common_passwords",
+      "password_require_uppercase",
+      "password_require_lowercase",
+      "password_require_number",
+      "password_require_special_char",
+      "password_complexity",
+      "password_complexity_error",
     ],
     action: "/useradmin/settings",
     submitLabel: req.__("Save"),

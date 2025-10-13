@@ -179,6 +179,14 @@ const resetForm = (body, req) => {
         input_type: "password",
       }),
       new Field({
+        label: req.__("Confirm password"),
+        name: "confirm_password",
+        input_type: "password",
+        attributes: {
+          autocomplete: "new-password",
+        },
+      }),
+      new Field({
         name: "token",
         input_type: "hidden",
       }),
@@ -192,6 +200,8 @@ const resetForm = (body, req) => {
   });
   form.values.email = body && body.email;
   form.values.token = body && body.token;
+  form.values.password = body && body.password;
+  form.values.confirm_password = body && body.confirm_password;
   return form;
 };
 
@@ -475,16 +485,29 @@ router.post(
       email: (req.body || {}).email,
       reset_password_token: (req.body || {}).token,
       password: (req.body || {}).password,
+      confirm_password: (req.body || {}).confirm_password,
     });
     if (result.success) {
       req.flash(
         "success",
         req.__("Password reset. Log in with your new password")
       );
-    } else {
+      res.redirect("/auth/login");
+    } else if (result.error) {
+      console.log({
+        result,
+      });
       req.flash("danger", result.error);
+      const form = resetForm(req.body, req);
+      form.errors = { password: result.error, confirm_password: result.error };
+      res.sendAuthWrap(req.__(`Reset password`), form, {});
+    } else {
+      req.flash(
+        "danger",
+        req.__("Password reset not enabled. Contact your administrator.")
+      );
+      res.redirect("/auth/login");
     }
-    res.redirect("/auth/login");
   })
 );
 
@@ -1311,7 +1334,8 @@ router.post(
       null,
       req.user,
       resultCollector,
-      req.user
+      req.user,
+      { req }
     );
     if (resultCollector.notify) {
       req.flash("warning", resultCollector.notify);
@@ -1429,7 +1453,7 @@ router.post(
  * @param {object} res
  * @returns {void}
  */
-const loginCallback = (req, res) => () => {
+const loginCallback = (req, res) => async () => {
   if (!req.user) return;
   if (!req.user.id) {
     res.redirect("/auth/signup_final_ext");
@@ -1437,7 +1461,28 @@ const loginCallback = (req, res) => () => {
   if (!req.user.email) {
     res.redirect("/auth/set-email");
   } else {
-    Trigger.emitEvent("Login", null, req.user);
+    const resultCollector = {};
+    await Trigger.runTableTriggers(
+      "Login",
+      null,
+      req.user,
+      resultCollector,
+      req.user,
+      { req }
+    );
+    if (resultCollector.notify) {
+      req.flash("warning", resultCollector.notify);
+    }
+    if (resultCollector.error) {
+      req.flash("error", resultCollector.error);
+    }
+    if (resultCollector.notify_success) {
+      req.flash("success", resultCollector.notify_success);
+    }
+    if (resultCollector.goto) {
+      res.redirect(resultCollector.goto);
+      return;
+    }
     req.flash("success", req.__("Welcome, %s!", req.user.email));
     if (req.cookies["login_dest"]) {
       res.clearCookie("login_dest");

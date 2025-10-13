@@ -12,7 +12,11 @@ const {
   addOnDoneRedirect,
   is_relative_url,
 } = require("./utils.js");
-const { ppVal, jsIdentifierValidator } = require("@saltcorn/data/utils");
+const {
+  ppVal,
+  escapeHtml,
+  jsIdentifierValidator,
+} = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
 const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
@@ -67,6 +71,7 @@ const {
   li,
   h2,
   h4,
+  p,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -101,7 +106,17 @@ router.get(
       triggers = triggers.filter((t) => tagged_trigger_ids.has(t.id));
       filterOnTag = await Tag.findOne({ id: +req.query._tag });
     }
-    const actions = Trigger.abbreviated_actions;
+    const blurb =
+      p(
+        req.__(
+          `There currently no triggers, but you can create one by clicking the button below. Triggers are actions that are run in response to some event which can be periodic, caused by a database table change, a button click or some other external event.`
+        )
+      ) +
+      p(
+        req.__(
+          `A trigger is defined by a condition (when the trigger will run), an action (which is supplied by a module) and the configuration for that action.`
+        )
+      );
     send_events_page({
       res,
       req,
@@ -110,39 +125,21 @@ router.get(
         above: [
           {
             type: "card",
-            title: req.__("Triggers"),
+            class: "card-max-full-screen",
+            title:
+              req.__("Triggers") +
+              `<a href="javascript:ajax_modal('/admin/help/Triggers')"><i class="fas fa-question-circle ms-1"></i></a>`,
             contents: div(
-              await getTriggerList(triggers, req, { filterOnTag }),
-              a(
-                {
-                  href: "/actions/new",
-                  class: "btn btn-primary",
-                },
-                req.__("Create trigger")
-              )
+              triggers.length
+                ? await getTriggerList(triggers, req, { filterOnTag })
+                : blurb
             ),
-          },
-          {
-            type: "card",
-            contents: table(
-              tbody(
-                tr(
-                  td({ class: "pe-2" }, req.__("Actions available")),
-                  td(
-                    actions
-                      .map((a) => span({ class: "badge bg-primary" }, a.name))
-                      .join("&nbsp;")
-                  )
-                ),
-                tr(
-                  td({ class: "pe-2" }, req.__("Event types")),
-                  td(
-                    Trigger.when_options
-                      .map((a) => span({ class: "badge bg-secondary" }, a))
-                      .join("&nbsp;")
-                  )
-                )
-              )
+            footer: a(
+              {
+                href: "/actions/new",
+                class: "btn btn-primary",
+              },
+              req.__("Create trigger")
             ),
           },
         ],
@@ -179,6 +176,7 @@ const triggerForm = async (req, trigger) => {
     workflow: true,
   });
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
+  const additional_triggers_with_onlyif = ["Login", "PageLoad"];
   const action_options = {};
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
@@ -197,7 +195,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Name"),
         type: "String",
         required: true,
-        attributes: { autofocus: true },
+        attributes: { autofocus: true, spellcheck: false },
         sublabel: req.__("Name of action"),
       },
       {
@@ -337,6 +335,19 @@ const triggerForm = async (req, trigger) => {
         type: "String",
         showIf: { when_trigger: ["API call"], _raw_output: true },
       },
+      {
+        name: "_only_if",
+        label: req.__("Only if"),
+        type: "String",
+        class: "validate-expression",
+        sublabel: req.__(
+          "Optional JavaScript expression to determine if the trigger should run."
+        ),
+        parent_field: "configuration",
+        showIf: {
+          when_trigger: [...table_triggers, ...additional_triggers_with_onlyif],
+        },
+      },
     ],
   });
   // if (trigger) {
@@ -410,7 +421,7 @@ router.get(
       sub2_page: "Edit",
       contents: {
         type: "card",
-        title: req.__("Edit trigger %s", id),
+        title: req.__("Edit trigger %s", trigger.name || trigger.id),
         titleAjaxIndicator: true,
         contents: renderForm(form, req.csrfToken()),
       },
@@ -449,6 +460,7 @@ router.post(
         id = form.values.id;
         await Trigger.update(id, form.values);
       } else {
+        if (form.values.name) form.values.name = form.values.name.trim();
         const tr = await Trigger.create(form.values);
         id = tr.id;
       }
@@ -543,7 +555,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   trigCfgForm.values = trigger.configuration;
   let copilot_form = "";
 
-  if (getState().functions.copilot_generate_workflow) {
+  if (getState().functions.copilot_generate_workflow && !steps.length) {
     copilot_form = renderForm(
       new Form({
         action: `/actions/gen-copilot/${id}`,
@@ -731,6 +743,7 @@ const getWorkflowStepForm = async (
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
     onChange: step_id ? "saveAndContinueIfValid(this)" : undefined,
     submitLabel: step_id ? req.__("Done") : undefined,
+    onSubmit: "press_store_button(this)",
     additionalButtons: step_id
       ? [
           {
@@ -900,7 +913,8 @@ router.get(
     let trigger;
     let id = parseInt(idorname);
     if (id) trigger = await Trigger.findOne({ id });
-    else {
+
+    if (!trigger) {
       trigger = await Trigger.findOne({ name: idorname });
       id = trigger.id;
     }
@@ -1063,6 +1077,7 @@ router.get(
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
+        old_config: trigger.configuration,
         req,
       });
       // create form
@@ -1122,6 +1137,7 @@ router.post(
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
+        old_config: trigger.configuration,
         req,
       });
       form = new Form({
@@ -1691,7 +1707,11 @@ router.get(
                     : null,
                   tr(
                     th("Context"),
-                    td(pre(text(JSON.stringify(trace.context, null, 2))))
+                    td(
+                      pre(
+                        text(escapeHtml(JSON.stringify(trace.context, null, 2)))
+                      )
+                    )
                   )
                 )
               )
@@ -1739,7 +1759,11 @@ router.get(
                     : null,
                   tr(
                     th("Context"),
-                    td(pre(text(JSON.stringify(run.context, null, 2))))
+                    td(
+                      pre(
+                        text(escapeHtml(JSON.stringify(run.context, null, 2)))
+                      )
+                    )
                   )
                 )
               ) + post_delete_btn("/actions/delete-run/" + run.id, req),
@@ -1808,6 +1832,34 @@ router.get(
   })
 );
 
+const workflowRunPromiseHandler = (promise, run, req) => {
+  promise
+    .then(async (runres) => {
+      const retDirs = await run.popReturnDirectives();
+      const emitData = {
+        ...runres,
+        ...retDirs,
+        page_load_tag: req.headers["page-load-tag"],
+      };
+      getState().emitDynamicUpdate(db.getTenantSchema(), emitData);
+      if (
+        !emitData.resume_workflow &&
+        !emitData.popup?.startsWith?.("/actions/fill-workflow-form/")
+      )
+        getState().emitDynamicUpdate(db.getTenantSchema(), {
+          eval_js: "reset_spinners()",
+          page_load_tag: req.headers["page-load-tag"],
+        });
+    })
+    .catch((e) => {
+      console.error(e);
+      getState().emitDynamicUpdate(db.getTenantSchema(), {
+        error: e.message,
+        page_load_tag: req.headers["page-load-tag"],
+      });
+    });
+};
+
 router.post(
   "/fill-workflow-form/:id",
   error_catcher(async (req, res) => {
@@ -1835,20 +1887,30 @@ router.post(
       const title = "Fill form";
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } else {
+      const run_async =
+        getState().getConfig("enable_dynamic_updates") &&
+        req.headers["page-load-tag"] &&
+        req.xhr;
       await run.provide_form_input(form.values);
-      const runres = await run.run({
+      const promise = run.run({
         user: req.user,
         trace: trigger.configuration?.save_traces,
         interactive: true,
       });
-      if (req.xhr) {
-        const retDirs = await run.popReturnDirectives();
-
-        //if (runres?.popup) retDirs.popup = runres.popup;
-        res.json({ success: "ok", ...runres, ...retDirs });
+      if (run_async) {
+        workflowRunPromiseHandler(promise, run, req);
+        res.json({ success: "ok" });
       } else {
-        if (run.context.goto) res.redirect(run.context.goto);
-        else res.redirect("/");
+        const runres = await promise;
+        if (req.xhr) {
+          const retDirs = await run.popReturnDirectives();
+
+          //if (runres?.popup) retDirs.popup = runres.popup;
+          res.json({ success: "ok", ...runres, ...retDirs });
+        } else {
+          if (run.context.goto) res.redirect(run.context.goto);
+          else res.redirect("/");
+        }
       }
     }
   })
@@ -1870,25 +1932,35 @@ router.post(
       return;
     }
     const trigger = await Trigger.findOne({ id: run.trigger_id });
-    const runResult = await run.run({
+    const run_async =
+      getState().getConfig("enable_dynamic_updates") &&
+      req.headers["page-load-tag"] &&
+      req.xhr;
+    const promise = run.run({
       user: req.user,
       interactive: true,
       trace: trigger.configuration?.save_traces,
     });
-    if (req.xhr) {
-      if (
-        runResult &&
-        typeof runResult === "object" &&
-        Object.keys(runResult).length
-      ) {
-        res.json({ success: "ok", ...runResult });
-        return;
-      }
-      const retDirs = await run.popReturnDirectives();
-      res.json({ success: "ok", ...retDirs });
+    if (run_async) {
+      workflowRunPromiseHandler(promise, run, req);
+      res.json({ success: "ok" });
     } else {
-      if (run.context.goto) res.redirect(run.context.goto);
-      else res.redirect("/");
+      const runResult = await promise;
+      if (req.xhr) {
+        if (
+          runResult &&
+          typeof runResult === "object" &&
+          Object.keys(runResult).length
+        ) {
+          res.json({ success: "ok", ...runResult });
+          return;
+        }
+        const retDirs = await run.popReturnDirectives();
+        res.json({ success: "ok", ...retDirs });
+      } else {
+        if (run.context.goto) res.redirect(run.context.goto);
+        else res.redirect("/");
+      }
     }
   })
 );

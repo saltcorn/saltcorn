@@ -520,6 +520,11 @@ class Field implements AbstractField {
           .map((o: string) => ({ label: o.trim(), value: o.trim() })),
       ];
     }
+    this.fill_table();
+    if (this.table?.provider_name) {
+      const dvs = await this.table.distinctValues(this.name, where);
+      return dvs.map((v) => ({ label: v, value: v }));
+    }
     if (this.is_fkey) {
       await this.fill_fkey_options(
         false,
@@ -539,7 +544,6 @@ class Field implements AbstractField {
         { label: __("False"), value: "off", jsvalue: false },
       ];
     }
-    this.fill_table();
     if (!this.table) return [];
     let whereS = "";
     let values = [];

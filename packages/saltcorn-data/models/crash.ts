@@ -11,6 +11,7 @@ import type {
   SelectOptions,
   Where,
 } from "@saltcorn/db-common/internal";
+
 /**
  * Crash Class
  * @category saltcorn-data
@@ -99,9 +100,10 @@ class Crash {
    */
   static async create(err: any, req: any = {}): Promise<void> {
     const schema = db.getTenantSchema();
+
     const payload = {
       stack: err.stack,
-      message: err.message,
+      message: err.message + (err.detail ? ": " + err.detail : ""),
       occur_at: new Date(),
       tenant: schema,
       user_id: req.user ? req.user.id : null,
@@ -109,12 +111,17 @@ class Crash {
       url: req.url,
       headers: req.headers,
     };
-    const { getState } = require("../db/state");
+    const { getState, getRootState } = require("../db/state");
+    const tenants_crash_log = getRootState().getConfig("tenants_crash_log");
 
     getState().log(1, `ERROR: ${err.stack || err.message}`);
-    await db.runWithTenant(db.connectObj.default_schema, async () => {
+    if (tenants_crash_log) {
       await db.insert("_sc_errors", payload);
-    });
+    } else {
+      await db.runWithTenant(db.connectObj.default_schema, async () => {
+        await db.insert("_sc_errors", payload);
+      });
+    }
     const Trigger = (await import("./trigger")).default;
 
     Trigger.emitEvent("Error", null, req.user, payload);

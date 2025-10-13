@@ -45,6 +45,7 @@ const {
 const db = require("../db");
 const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
 const { available_languages } = require("../models/config");
+const MetaData = require("../models/metadata");
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
@@ -75,6 +76,21 @@ const consoleInterceptor = (state) => {
     error: (message, ...optionalParams) =>
       handle(console.error, 1, message, optionalParams),
   };
+};
+
+const emit_to_client = (user) => (data, userIds) => {
+  const state = getState();
+  const enabled = getState().getConfig("enable_dynamic_updates", true);
+  if (!enabled) {
+    state.log(5, "emit_to_client called, but dynamic updates are disabled");
+    return;
+  }
+  const safeIds = Array.isArray(userIds)
+    ? userIds
+    : userIds
+      ? [userIds]
+      : [user?.id] || [];
+  state.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
 };
 
 /**
@@ -166,12 +182,15 @@ const run_code = async ({
     user,
     console: consoleInterceptor(getState()),
     Actions,
+    MetaData,
     emitEvent,
     sleep,
     fetchJSON,
     fetch,
+    emit_to_client: emit_to_client(user),
     run_js_code,
     tryCatchInTransaction: db.tryCatchInTransaction,
+    commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
     URL,
     File,
     User,
@@ -190,6 +209,7 @@ const run_code = async ({
     channel: table ? table.name : channel,
     session_id: rest.req && getSessionId(rest.req),
     request_headers: rest?.req?.headers,
+    page_load_tag: rest?.req?.headers?.["page-load-tag"],
     request_ip: rest?.req?.ip,
     ...(row || {}),
     ...getState().eval_context,
@@ -333,9 +353,24 @@ module.exports = {
           type: "Bool",
         },
         {
+          name: "interval",
+          label: "Interval (s)",
+          sublabel: "Delay in seconds between action invocations",
+          type: "Float",
+          attributes: { min: 0 },
+        },
+        {
           name: "trigger_id",
           label: "Trigger",
-          sublabel: "The trigger to run for each row",
+          sublabel:
+            "The trigger to run for each row. " +
+            a(
+              {
+                "data-dyn-href": `\`/actions/configure/\${trigger_id}\``,
+                target: "_blank",
+              },
+              "Configure"
+            ),
           input_type: "select",
           options: trigger_actions.map((t) => ({ label: t.name, value: t.id })),
         },
@@ -357,6 +392,7 @@ module.exports = {
         orderBy,
         orderDesc,
         trigger_id,
+        interval,
       },
       user,
       ...rest
@@ -368,8 +404,9 @@ module.exports = {
       const rows = await table.getRows(wh, selOpts);
       const trigger = Trigger.findOne({ id: trigger_id });
       let result = {};
-
+      let first = true;
       for (const row_i of rows) {
+        if (!first && interval) await sleep(interval * 1000);
         const stepres = await trigger.runWithoutRow({
           ...rest,
           table,
@@ -381,6 +418,7 @@ module.exports = {
         } catch (error) {
           console.error(error);
         }
+        first = false;
       }
       return result;
     },
@@ -1246,9 +1284,13 @@ module.exports = {
           name: "row_expr",
           label: "Row expression",
           sublabel:
-            "Expression for JavaScript object. Example: <code>{first_name: name.split(' ')[0]}</code>",
+            "Expression for JavaScript object or array of objects. Example: <code>{first_name: name.split(' ')[0]}</code>",
           type: "String",
           fieldview: "textarea",
+          class: "validate-expression",
+          attributes: {
+            spellcheck: false,
+          },
         },
         ...(mode === "workflow"
           ? [
@@ -1286,13 +1328,41 @@ module.exports = {
       );
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
-      const results = {};
-      const res = await table_for_insert.tryInsertRow(calcrow, user, results);
+      const all_results = {};
+      const ids = [];
 
-      if (res.error) return res;
-      else if (configuration.id_variable)
-        return { [configuration.id_variable]: res.success, ...results };
-      else return results;
+      const upsertOne = async (row) => {
+        const results = {};
+        if (row[table_for_insert.pk_name]) {
+          const existing = await table_for_insert.getRow({
+            [table_for_insert.pk_name]: row[table_for_insert.pk_name],
+          });
+          if (existing) {
+            await table_for_insert.updateRow(
+              row,
+              row[table_for_insert.pk_name],
+              user,
+              { resultCollector: results }
+            );
+            ids.push(row[table_for_insert.pk_name]);
+          } else ids.push(await table_for_insert.insertRow(row, user, results));
+        } else ids.push(await table_for_insert.insertRow(row, user, results));
+
+        mergeActionResults(all_results, results);
+      };
+      if (Array.isArray(calcrow)) {
+        for (const insrow of calcrow) await upsertOne(insrow);
+
+        if (configuration.id_variable)
+          return { [configuration.id_variable]: ids, ...all_results };
+        else return all_results;
+      } else {
+        await upsertOne(calcrow);
+
+        if (configuration.id_variable)
+          return { [configuration.id_variable]: ids[0], ...all_results };
+        else return all_results;
+      }
     },
     namespace: "Database",
   },
@@ -1431,7 +1501,8 @@ module.exports = {
           label: "Table",
           sublabel: "Table on which to delete rows",
           input_type: "select",
-          showIf: { delete_triggering_row: false },
+          showIf:
+            mode === "workflow" ? undefined : { delete_triggering_row: false },
           options: tables.map((t) => t.name),
         },
         {
@@ -1441,7 +1512,8 @@ module.exports = {
           sublabel: "Where expression, ex. <code>{manager: id}</code>",
           required: true,
           class: "validate-expression",
-          showIf: { delete_triggering_row: false },
+          showIf:
+            mode === "workflow" ? undefined : { delete_triggering_row: false },
         },
       ];
     },
@@ -1452,11 +1524,17 @@ module.exports = {
       user,
       ...rest
     }) => {
+      const resultCollector = {};
       if (delete_triggering_row) {
         if (!table || !row?.[table.pk_name])
           throw new Error("delete_rows cannot find triggering row");
-        await table.deleteRows({ [table.pk_name]: row[table.pk_name] }, user);
-        return;
+        await table.deleteRows(
+          { [table.pk_name]: row[table.pk_name] },
+          user,
+          false,
+          resultCollector
+        );
+        return resultCollector;
       }
       const where = eval_expression(
         delete_where,
@@ -1465,8 +1543,8 @@ module.exports = {
         "recalculate_stored_fields where"
       );
       const tbl = Table.findOne({ name: table_name });
-      await tbl.deleteRows(where, user);
-      return;
+      await tbl.deleteRows(where, user, false, resultCollector);
+      return resultCollector;
     },
     namespace: "Database",
   },
@@ -1593,6 +1671,7 @@ module.exports = {
         required: true,
         attributes: {
           options: [
+            "RequestSubmit",
             "Submit",
             "Save",
             "Reset",
@@ -1608,6 +1687,8 @@ module.exports = {
       switch (form_action) {
         case "Submit":
           return { eval_js: jqGet + ".submit()" };
+        case "RequestSubmit":
+          return { eval_js: jqGet + "[0].requestSubmit()" };
         case "Save":
           if (!row[table.pk_name]) {
             //we will save server side so we can set id
@@ -1647,7 +1728,7 @@ module.exports = {
         case "Ajax Save Form Data":
           return { eval_js: `ajaxSubmitForm(${jqGet}, true)` };
         default:
-          return { eval_js: jqGet + ".submit()" };
+          return { eval_js: jqGet + "[0].requestSubmit()" };
       }
     },
     namespace: "User interface",
@@ -1682,18 +1763,23 @@ module.exports = {
         sublabel: "Optional",
         type: "String",
       },
+      {
+        name: "remove_delay",
+        label: "Remove after (s)",
+        type: "Float",
+      },
     ],
     run: async ({
       row,
       user,
-      configuration: { type, notify_type, text, title },
+      configuration: { type, notify_type, text, title, remove_delay },
     }) => {
       //type is legacy. this name gave react problems
       let text1 = interpolate(text, row, user, "Toast text");
       let toast_title = title
         ? { toast_title: interpolate(title, row, user, "Toast title") }
         : {};
-
+      if (remove_delay) toast_title.remove_delay = remove_delay;
       switch (notify_type || type) {
         case "Error":
           return { error: text1, ...toast_title };
@@ -1730,21 +1816,21 @@ module.exports = {
         "Actions",
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models.Table-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_table.Table.html",
             target: "_blank",
           },
           "Table"
         ),
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models.File-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_file.File.html",
             target: "_blank",
           },
           "File"
         ),
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models.User-1.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_user.User.html",
             target: "_blank",
           },
           "User"
@@ -2217,6 +2303,105 @@ module.exports = {
       }
       if (interval) eval_js = `setInterval(()=>{${eval_js}}, ${interval})`;
       return { eval_js };
+    },
+    namespace: "User interface",
+  },
+  progress_bar: {
+    description: "Display or update progress messages and/or progress bar",
+    configFields: [
+      {
+        name: "blocking",
+        label: "Blocking",
+        sublabel:
+          "Display progress in a blocking popup modal, If not checked, display as toast",
+        type: "Bool",
+      },
+      {
+        name: "close",
+        label: "Close",
+        sublabel: "Close this progress window",
+        type: "Bool",
+      },
+      {
+        name: "id",
+        label: "Identifier",
+        type: "String",
+        class: "validate-identifier",
+        required: true,
+        sublabel:
+          "A valid JavaScript identifier for updating existing progress toasts",
+        showIf: { blocking: false, close: false },
+      },
+      {
+        name: "maxHeight",
+        label: "max-height (px)",
+        type: "Integer",
+        sublabel:
+          "If set, progress messages will be added to scrolling container with this maximum height",
+        showIf: { blocking: true, close: false },
+      },
+      {
+        name: "popupWidth",
+        label: "Popup width (px)",
+        type: "Integer",
+        showIf: { blocking: true, close: false },
+      },
+
+      {
+        name: "title",
+        label: "Title",
+        type: "String",
+        showIf: { close: false },
+      },
+      {
+        name: "message",
+        label: "Message",
+        type: "String",
+        showIf: { close: false },
+      },
+      {
+        name: "percent",
+        label: "Percent",
+        type: "Integer",
+        sublabel: "Optional. 0-100",
+        attributes: {
+          min: 0,
+          max: 100,
+        },
+        showIf: { close: false },
+      },
+    ],
+    run: async ({
+      row,
+      user,
+      configuration: {
+        blocking,
+        id,
+        close,
+        title,
+        message,
+        percent,
+        maxHeight,
+        popupWidth,
+      },
+      req,
+    }) => {
+      const msg = interpolate(message, row, user, "progress_bar message");
+      const title1 = interpolate(title, row, user, "progress_bar title");
+      const id1 = interpolate(id, row, user, "progress_bar id");
+      return {
+        page_load_tag: req?.headers?.["page-load-tag"],
+        progress_bar_update: {
+          blocking,
+          id: id1,
+          close,
+          message: msg,
+          title: title1,
+          percent,
+          maxHeight,
+          popupWidth,
+        },
+      };
     },
     namespace: "User interface",
   },

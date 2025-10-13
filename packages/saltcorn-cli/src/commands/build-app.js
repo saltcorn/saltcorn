@@ -27,8 +27,10 @@ class BuildAppCommand extends Command {
           "When 'app target-directory' (-c) is set, a valid 'user email' (-u) is needed"
         );
     }
-    if (!flags.entryPoint) {
-      throw new Error("Please specify an entry point for the first view");
+    if (!flags.entryPoint && flags.entryPointType !== "byrole") {
+      throw new Error(
+        "Please specify an entry point for the first view or use -t byrole"
+      );
     }
     if (!flags.platforms) {
       throw new Error("Please specify a platform (android or iOS)");

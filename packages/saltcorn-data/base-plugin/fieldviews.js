@@ -720,8 +720,19 @@ const search_or_create = {
    */
   run: (nm, v, attrs, cls, reqd, field, row) => {
     const user = db.getRequestContext()?.req?.user;
+    const use_row = { ...(row || {}) };
+    let table;
+    if (field?.table_id) {
+      table = Table.findOne({ id: field.table_id });
+      if (
+        table &&
+        (!Object.keys(use_row).length ||
+          Object.keys(use_row).every((k) => k.startsWith("_") || k === "user"))
+      )
+        table.fields.forEach((f) => (use_row[f.name] = undefined));
+    }
     const qs = attrs.values_formula
-      ? `?${objectToQueryString(eval_expression(attrs.values_formula, row || {}, user, "search_or_create values formula"))}`
+      ? `?${objectToQueryString(eval_expression(attrs.values_formula, use_row, user, "search_or_create values formula"))}`
       : "";
     return (
       tags.select(
@@ -757,8 +768,8 @@ const search_or_create = {
         attrs.label || "Or create new"
       ) +
       script(`
-      const soc_process_${nm} = (elem) => ()=> {
-        $.ajax('/api/${field.reftable_name}', {
+      window.soc_process_${nm} = (elem) => ()=> {
+        $.ajax('/api/${field.reftable_name}?sortBy=${table?.pk_name || "id"}', {
           success: function (res, textStatus, request) {
             var opts = res.success.map(x=>'<option value="'+x.id+'">'+x.${
               attrs.summary_field

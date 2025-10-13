@@ -282,7 +282,7 @@ class PageLocators {
     this.idNumberInput = '#inputid';
     this.roleTextInput = '#inputrole';
     this.userNavLink = 'a[data-bs-target="#collapseUser"]';
-    this.userSettingsLink = 'a.collapse-item >> text="User Settings"';
+    this.userSettingsLink = 'a.collapse-item >> text="User settings"';
     this.logout = 'a[href="/auth/logout"]';
     this.TriggerTitle = 'h5:has-text("Triggers")';
     this.CreateTriggerBtn = 'a:has-text("Create trigger")';
@@ -731,7 +731,37 @@ class PageLocators {
     this.view2relation = 'text=Relation [Checkboxes many-to-many] My_Table';
     this.checkboxAdam = 'input.form-check-input[onchange*="value: \'Adam\'"]';
     this.donaldCheckbox = 'input.form-check-input[onchange*="value: \'Donald\'"]';
-
+    this.fourthrowcolumn2 = '.row:nth-of-type(4) .split-col:nth-of-type(2) .canvas';
+    this.view2modifyoption = 'text=View2_Edit [Edit] csv_Table';
+    this.Dropdownfilter = 'div[title="Dropdown filter"]';
+    this.view2listMyTable = 'text=NewView_List [List] My_Table';
+    this.filterStatus = 'select[name="ddfilterstatus"]';
+    this.clearButton = 'button:has-text("Clear")';
+    this.toaster = '.toast.show';
+    this.toastTitle = 'div[data-field-name="title"] input';
+    this.toastFieldName = 'div[data-field-name="text"] input';  
+    this.actionDropdown = '.react-select.action-selector';
+    this.editview2editlink = 'a[href="/view/View2_Edit?id=2"]';
+    this.addresslocator = '#inputaddress';
+    this.namelocator = '#inputfull_name';
+    this.tab4locator = 'div.tabulator-cell[tabulator-field="year_of_birth"]';
+    this.minlocator = '//input[@id="inputmin"]';
+    this.maxlocator = '//input[@id="inputmax"]';
+    this.yearOfBirthLocator = '//input[@id="inputyear_of_birth"]';
+    this.ageLocator = '.col-10.text-start';
+    this.addmultistepbutton = 'button[title="Add"]';
+    this.stepOne = 'button:has-text("1")';
+    this.stepTwo = 'button:has-text("2")';
+    this.stepThree = 'button:has-text("3")';
+    this.multistepdropdown = 'div[class*="multistep-action-selector"] div[class*="control"]';
+    this.FormActionButton = 'select[name="form_action"]';
+    this.reloadDropdown = '.selectized-field .css-yk16xz-control';
+    this.navActionlocator = 'select[name="nav_action"]';
+    this.checkboxInput = 'input[type="checkbox"]';
+    this.multistepactionbutton = 'a.btn.btn-primary';
+    this.tablelocator = 'table tbody tr'; 
+    this.tablebodylocator= 'div.filelist table tbody tr';
+    this.actionselector="select.form-select"
   }
 }
 

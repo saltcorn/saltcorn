@@ -343,15 +343,15 @@ router.get(
         return res.status(400).send({ error: "Invalid limit parameter" });
       }
     if (typeof offset !== "undefined")
-      if (isNaN(offset) || !validateNumberMin(offset, 1)) {
+      if (isNaN(offset) || !validateNumberMin(offset, 0)) {
         getState().log(3, `API get ${tableName} Invalid offset parameter`);
         return res.status(400).send({ error: "Invalid offset parameter" });
       }
-    const table = Table.findOne(
-      strictParseInt(tableName)
-        ? { id: strictParseInt(tableName) }
-        : { name: tableName }
+    const strictIntId = strictParseInt(tableName);
+    let table = Table.findOne(
+      strictIntId ? { id: strictParseInt(tableName) } : { name: tableName }
     );
+    if (strictIntId && !table) table = Table.findOne({ name: tableName });
     if (!table) {
       getState().log(3, `API get ${tableName} table not found`);
       getState().log(

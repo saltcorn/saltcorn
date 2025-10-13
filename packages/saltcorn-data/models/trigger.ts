@@ -25,6 +25,7 @@ import type Tag from "./tag";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import expression from "./expression";
 import User = require("./user");
+import type { Action } from "@saltcorn/types/base_types";
 const { eval_expression } = expression;
 
 declare const saltcorn: any;
@@ -301,6 +302,15 @@ class Trigger implements AbstractTrigger {
               }
             }
           } else {
+            if (trigger.configuration?._only_if) {
+              if (trigger.haltOnOnlyIf(payload, user)) {
+                state.log(
+                  4,
+                  `Trigger "${trigger.name}" skipped due to _only_if condition.`
+                );
+                continue;
+              }
+            }
             const action = state.actions[trigger.action];
             action &&
               action.run &&
@@ -360,6 +370,21 @@ class Trigger implements AbstractTrigger {
       );
 
       try {
+        // Halt if _only_if condition evaluates to falsy
+        if (
+          trigger.haltOnOnlyIf?.(
+            { ...row, ...extraArgs },
+            user || extraArgs?.user
+          )
+        ) {
+          state.log(
+            4,
+            `Trigger "${trigger.name}" skipped due to _only_if condition.`
+          );
+          continue;
+        }
+        if (extraArgs) extraArgs.user = extraArgs.user || user;
+        else if (user) extraArgs = { user };
         const res = await trigger.run!(row, extraArgs); // getTableTriggers ensures run is set
         if (res && resultCollector) mergeActionResults(resultCollector, res);
       } catch (e: any) {
@@ -393,6 +418,13 @@ class Trigger implements AbstractTrigger {
     const table = this.table_id
       ? require("./table").findOne({ id: this.table_id })
       : undefined;
+
+    // Halt if _only_if condition evaluates to falsy
+    if (this.haltOnOnlyIf(runargs.row, runargs.user)) {
+      state.log(4, `Trigger "${this.name}" skipped due to _only_if condition.`);
+      return;
+    }
+
     if (this.action === "Workflow") {
       const user = runargs?.user || runargs?.req?.user;
       const wfrun = await require("./workflow_run").create({
@@ -488,6 +520,25 @@ class Trigger implements AbstractTrigger {
         trigger_id: this.id,
       })
     );
+  }
+
+  /**
+   * Check if the trigger should halt based on the _only_if condition.
+   * @param row - The row data.
+   * @param user - The user data.
+   * @returns {boolean} - Returns true if the _only_if condition exists and evaluates to falsy.
+   */
+  haltOnOnlyIf(row: Row, user?: Row): boolean {
+    if (this.configuration?._only_if) {
+      const { eval_expression } = require("./expression");
+      return !eval_expression(
+        this.configuration._only_if,
+        row || {},
+        user || {},
+        "Trigger _only_if condition"
+      );
+    }
+    return false;
   }
 
   static setRunFunctions(
@@ -657,14 +708,30 @@ class Trigger implements AbstractTrigger {
         const hasConfig = !!v.configFields;
         const requireRow = !!v.requireRow;
         const disableInWorkflow = !!v.disableInWorkflow;
+        const disableInBuilder = !!v.disableInBuilder;
         return {
           name: k,
           hasConfig,
           requireRow,
           disableInWorkflow,
+          disableInBuilder,
           namespace: v.namespace,
         };
       });
+  }
+
+  static actionsNotRequiringRow(): string[] {
+    const result = [];
+    const { getState } = require("../db/state");
+    for (const [name, action] of Object.entries(getState().actions) as [
+      string,
+      Action,
+    ][]) {
+      if (action.requireRow === false) {
+        result.push(name);
+      }
+    }
+    return result;
   }
 
   static trigger_actions({
@@ -691,9 +758,15 @@ class Trigger implements AbstractTrigger {
         table_id: null,
       });
 
+      const idLookup = new Set(trs.map((t) => t.id));
+      const triggersNotRequiringRow = Trigger.find({
+        when_trigger: { or: ["API call", "Never"] },
+        action: { in: Trigger.actionsNotRequiringRow() },
+      }).filter((t) => !idLookup.has(t.id));
+
       triggerActions = [
         ...triggerActions,
-        ...trs
+        ...[...trs, ...triggersNotRequiringRow]
           .filter((t) => !noWorkflows || t.action !== "Workflow")
           .map((tr) => tr.name as string),
       ];
@@ -711,6 +784,7 @@ class Trigger implements AbstractTrigger {
     workflow,
     noMultiStep,
     forWorkflow,
+    forBuilder,
   }: {
     notRequireRow?: boolean;
     tableTriggers?: number;
@@ -720,6 +794,7 @@ class Trigger implements AbstractTrigger {
     workflow?: boolean;
     noMultiStep?: boolean;
     forWorkflow?: boolean;
+    forBuilder?: boolean;
   }): any[] {
     const triggerActions = Trigger.trigger_actions({
       tableTriggers,
@@ -728,7 +803,9 @@ class Trigger implements AbstractTrigger {
     });
     const actions = forWorkflow
       ? Trigger.abbreviated_actions.filter((a) => !a.disableInWorkflow)
-      : Trigger.abbreviated_actions;
+      : forBuilder
+        ? Trigger.abbreviated_actions.filter((a) => !a.disableInBuilder)
+        : Trigger.abbreviated_actions;
     const action_namespaces = [...new Set(actions.map((a) => a.namespace))]
       .filter(Boolean) //Other last
       .sort();

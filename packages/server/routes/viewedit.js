@@ -91,20 +91,22 @@ router.get(
         },
         {
           type: "card",
-          class: "mt-0",
+          class: "mt-0 card-max-full-screen",
           title: req.__("Your views"),
+          footer:
+            tables.length > 0 &&
+            a(
+              { href: `/viewedit/new`, class: "btn btn-primary" },
+              req.__("Create view")
+            ),
           contents: [
             viewMarkup,
-            tables.length > 0
-              ? a(
-                  { href: `/viewedit/new`, class: "btn btn-primary" },
-                  req.__("Create view")
+            tables.length === 0 &&
+              p(
+                req.__(
+                  "You must create at least one table before you can create views."
                 )
-              : p(
-                  req.__(
-                    "You must create at least one table before you can create views."
-                  )
-                ),
+              ),
           ],
         },
       ],
@@ -183,6 +185,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         sublabel: req.__("Display data from this table"),
         options: tableOptions,
         disabled: isEdit,
+        help: {
+          topic: "View table",
+          context: {},
+        },
         showIf: isEdit
           ? hasTable.includes(values.viewtemplate)
             ? undefined
@@ -213,6 +219,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         input_type: "select",
         required: true,
         options: roles.map((r) => ({ value: r.id, label: r.role })),
+        help: {
+          topic: "Role to access",
+          context: {},
+        },
       }),
       new Field({
         label: req.__("Description"),
@@ -571,6 +581,7 @@ router.post(
           if (vt.initial_config) v.configuration = await vt.initial_config(v);
           else v.configuration = {};
           //console.log(v);
+          v.name = v.name.trim();
           await View.create(v);
         }
         await getState().refresh_views();

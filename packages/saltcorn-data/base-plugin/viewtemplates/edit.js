@@ -65,6 +65,7 @@ const {
   stateToQueryString,
   pathToState,
   displayType,
+  runCollabEvents,
 } = require("../../plugin-helper");
 const {
   splitUniques,
@@ -132,6 +133,7 @@ const configuration_workflow = (req) =>
           const actions = Trigger.action_options({
             tableTriggers: table.id,
             apiNeverTriggers: true,
+            forBuilder: true,
             builtInLabel: "Edit Actions",
             builtIns: edit_build_in_actions,
           });
@@ -172,6 +174,7 @@ const configuration_workflow = (req) =>
               );
             }
           }
+
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
@@ -336,6 +339,7 @@ const configuration_workflow = (req) =>
           );
           const pages = await Page.find();
           const groups = await PageGroup.find();
+          const triggers = Trigger.find();
           return new Form({
             fields: [
               {
@@ -383,6 +387,23 @@ const configuration_workflow = (req) =>
                 type: "Bool",
                 default: false,
               },
+
+              new FieldRepeat({
+                name: "update_events",
+                showIf: { enable_realtime: true },
+                fields: [
+                  {
+                    type: "String",
+                    name: "event",
+                    label: req.__("Update event"),
+                    sublabel: req.__("Custom event for real-time updates"),
+                    attributes: {
+                      options: triggers.map((t) => t.name),
+                    },
+                  },
+                ],
+              }),
+
               {
                 name: "destination_type",
                 label: "Destination type",
@@ -553,7 +574,15 @@ const run = async (
 const runMany = async (
   table_id,
   viewname,
-  { columns, layout, auto_save, split_paste, confirm_leave },
+  {
+    columns,
+    layout,
+    auto_save,
+    split_paste,
+    confirm_leave,
+    enable_realtime,
+    update_events,
+  },
   state,
   extra,
   { editManyQuery, getRowQuery, optionsQuery }
@@ -587,6 +616,8 @@ const runMany = async (
       split_paste,
       isRemote,
       confirm_leave,
+      enable_realtime,
+      update_events,
     });
     return { html, row };
   });
@@ -611,7 +642,9 @@ const transformForm = async ({
   getRowQuery,
   viewname,
   optionsQuery,
+  state,
 }) => {
+  let originalState = state;
   let pseudo_row = {};
   if (!row) {
     table.fields.forEach((f) => {
@@ -663,7 +696,7 @@ const transformForm = async ({
       }
       if (segment.action_name === "Delete") {
         if (form.values && form.values[table.pk_name]) {
-          segment.action_url = `/delete/${table.name}/${encodeURIComponent(form.values[table.pk_name])}`;
+          segment.action_url = table.delete_url(form.values);
         } else {
           segment.type = "blank";
           segment.contents = "";
@@ -701,7 +734,9 @@ const transformForm = async ({
           row,
           segment.rndid,
           "rndid",
-          segment.confirm
+          segment.confirm,
+          undefined,
+          segment.run_async
         );
         if (url.javascript) {
           //redo to include dynamic row
@@ -853,7 +888,10 @@ const transformForm = async ({
         segment.field_repeat = fr;
         return;
       } // end edit in edit
-
+      const outerState = {};
+      Object.entries(originalState || {}).forEach(([k, v]) => {
+        if (k.startsWith("_")) outerState[k] = v;
+      });
       let state = {};
       let urlFormula;
       let needFields = new Set();
@@ -879,7 +917,7 @@ const transformForm = async ({
           const type = relation.type;
           if (!row && type == RelationType.OWN) {
             segment.type = "blank";
-            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -892,7 +930,7 @@ const transformForm = async ({
             type !== RelationType.INDEPENDENT &&
             !relation.isFixedRelation()
           ) {
-            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -907,7 +945,7 @@ const transformForm = async ({
             relation.isFixedRelation() ? () => userId : (k) => row[k]
           );
 
-          urlFormula = `add_extra_state('/view/${view.name}?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row)`;
+          urlFormula = `add_extra_state('/view/${view.name}?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
         }
       } else {
         const isIndependent = view_select.type === "Independent";
@@ -920,23 +958,23 @@ const transformForm = async ({
         switch (view_select.type) {
           case "Own":
             state = { id: row?.id };
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             needFields.add("id");
             break;
           case "Independent":
             state = {};
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             needFields.add("id");
             break;
           case "ChildList":
           case "OneToOneShow":
             state = { [view_select.field_name]: row?.id };
-            urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             needFields.add("id");
             break;
           case "ParentShow":
             state = { id: row?.[view_select.field_name] };
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${view_select.field_name}, ${JSON.stringify(segment.extra_state_fml)}, row)`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${view_select.field_name}, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
             needFields.add(view_select.field_name);
             break;
         }
@@ -963,7 +1001,11 @@ const transformForm = async ({
             `Extra state formula for embedding view ${view.name}`
           )
         : {};
-      const qs = stateToQueryString({ ...state, ...extra_state }, true);
+
+      const qs = stateToQueryString(
+        { ...state, ...outerState, ...extra_state },
+        true
+      );
       segment.contents = div(
         {
           class: "d-inline",
@@ -974,7 +1016,7 @@ const transformForm = async ({
           "data-view-source": encodeURIComponent(urlFormula),
         },
         await view.run(
-          { ...state, ...extra_state },
+          { ...state, ...outerState, ...extra_state },
           { req, res },
           view.isRemoteTable()
         )
@@ -987,20 +1029,33 @@ const transformForm = async ({
   setDateLocales(form, req.getLocale());
 };
 
-const realTimeScript = (viewname, table_id, row) => {
+const realTimeScript = (viewname, table_id, row, scriptId) => {
   const view = View.findOne({ name: viewname });
   const table = Table.findOne({ id: table_id });
   const rowId = row[table.pk_name];
   return `
   const collabCfg = {
     events: {
-      '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': (data) => {
+      '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': async (data) => {
         console.log("Update event received for view ${viewname}", data);
-        if (data.updates) common_done({set_fields: data.updates}, "${viewname}")
+        const script = document.getElementById('${scriptId}');
+        const closestDiv = script?.closest(
+          'div[data-sc-embed-viewname="${viewname}"]'
+        );
+        if (data.updates) {
+          if (closestDiv) await common_done({set_fields: data.updates, no_onchange: true}, closestDiv);
+          else await common_done({set_fields: data.updates, no_onchange: true}, "${viewname}");
+        }
+        if (data.actions) {
+          for (const action of data.actions) {
+            if (closestDiv) await common_done(action, closestDiv);
+            else await common_done(action, "${viewname}");
+          }
+        }
       }
     }
   };
-  init_collab_room('${viewname}', collabCfg);`;
+  init_collab_room('${viewname}', collabCfg);`.trim();
 };
 
 /**
@@ -1058,7 +1113,7 @@ const render = async ({
       for (const field of file_fields) {
         if (field.fieldviewObj?.valueIsFilename && row[field.name]) {
           const file = await File.findOne({ id: row[field.name] });
-          if (file.id) form.values[field.name] = file.filename;
+          if (file?.id) form.values[field.name] = file.filename;
         }
         if (field.fieldviewObj?.editContent && row[field.name]) {
           const file = await File.findOne(row[field.name]);
@@ -1105,12 +1160,16 @@ const render = async ({
   Object.entries(state).forEach(([k, v]) => {
     const field = form.fields.find((f) => f.name === k);
     if (field && ((field.type && field.type.read) || field.is_fkey)) {
-      form.values[k] = field.type.read ? field.type.read(v) : v;
+      form.values[k] = field.type.read
+        ? field.type.read(v, field.attributes)
+        : v;
     } else {
       const tbl_field = fields.find((f) => f.name === k);
       if (tbl_field && !field) {
         form.fields.push(new Field({ name: k, input_type: "hidden" }));
-        form.values[k] = tbl_field.type.read ? tbl_field.type.read(v) : v;
+        form.values[k] = tbl_field.type.read
+          ? tbl_field.type.read(v, tbl_field.attributes)
+          : v;
       }
     }
   });
@@ -1203,11 +1262,24 @@ const render = async ({
     )
   );
 
+  const dynamic_updates_enabled = getState().getConfig(
+    "enable_dynamic_updates",
+    true
+  );
+  const rndid = isTest()
+    ? "test-script-id"
+    : Math.floor(Math.random() * 16777215).toString(16);
   const realTimeCollabScript =
     enable_realtime && row && !(req.headers?.pjaxpageload === "true")
-      ? script({
-          src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
-        }) + script(domReady(realTimeScript(viewname, table.id, row)))
+      ? (!dynamic_updates_enabled
+          ? script({
+              src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
+            })
+          : "") +
+        script(
+          { id: rndid },
+          domReady(realTimeScript(viewname, table.id, row, rndid))
+        )
       : "";
 
   if (actually_auto_save) {
@@ -1225,6 +1297,7 @@ const render = async ({
     getRowQuery,
     viewname,
     optionsQuery,
+    state,
   });
   form.id = formId;
   return (
@@ -1311,6 +1384,9 @@ const runPost = async (
   const safeBody = prepSafeBody(body, columns);
   const table = Table.findOne({ id: table_id });
   const fields = table.getFields();
+  if (safeBody?.password && table_id === User.table.id) {
+    safeBody.password = await User.hashPassword(safeBody.password);
+  }
   const prepResult = await prepare(
     viewname,
     table,
@@ -1358,13 +1434,13 @@ const runPost = async (
             ins_upd_error = ins_res.error;
           }
         } else {
-          if (table.getField(table.pk_name).attributes.NonSerial) {
-            const upd_res = await tryInsertOrUpdateImpl(
-              row,
-              id,
-              table,
-              req.user || { role_id: 100 }
-            );
+          if (
+            table.composite_pk_names ||
+            table.getField(table.pk_name).attributes.NonSerial
+          ) {
+            //console.log("edit", { id });
+
+            const upd_res = await tryInsertOrUpdateImpl(row, id, table, req);
             if (upd_res.error) {
               ins_upd_error = upd_res.error;
             }
@@ -1389,6 +1465,13 @@ const runPost = async (
           } else {
             await form.fill_fkey_options(false, optionsQuery, req.user);
             req.flash("error", text_attr(ins_upd_error));
+            for (const file_field of fields.filter((f) => f.type === "File")) {
+              if (!form.values[file_field.name]) continue;
+              form.values[`__exisiting_file_${file_field.name}`] =
+                form.values[file_field.name];
+              form.hidden(`__exisiting_file_${file_field.name}`);
+            }
+
             res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
           }
           return true;
@@ -1472,7 +1555,9 @@ const runPost = async (
               const upd_res = await childTable.tryUpdateRow(
                 childRow,
                 childRow[childTable.pk_name],
-                req.user || { role_id: 100 }
+                req.user || { role_id: 100 },
+                undefined,
+                { req }
               );
               if (upd_res.error) {
                 await rollback();
@@ -1965,7 +2050,17 @@ const prepare = async (
   }
   let row;
   const pk = fields.find((f) => f.primary_key);
-  let id = pk.type.read(body[pk.name]);
+  let id;
+  if (table.composite_pk_names) {
+    id = {};
+    table.fields
+      .filter((f) => f.primary_key)
+      .forEach((f) => {
+        id[f.name] = f.type.read(body[f.name]);
+      });
+  } else {
+    id = pk.type.read(body[pk.name]);
+  }
   if (typeof id === "undefined") {
     const use_fixed = await fill_presets(table, req, fixed);
     row = { ...use_fixed, ...form.values };
@@ -1995,6 +2090,7 @@ const prepare = async (
             row
           );
           row[field.name] = path_to_serve;
+          form.values[field.name] = path_to_serve;
         }
       }
     } else if (field.fieldviewObj?.editContent) {
@@ -2008,6 +2104,7 @@ const prepare = async (
           "utf8"
         );
         row[field.name] = path_to_serve;
+        form.values[field.name] = path_to_serve;
       }
     } else if (req.files && req.files[field.name]) {
       if (!isWeb(req) && !remote && req.files[field.name].name) {
@@ -2023,6 +2120,7 @@ const prepare = async (
           field?.attributes?.folder
         );
         row[field.name] = file.path_to_serve;
+        form.values[field.name] = file.path_to_serve;
       } else {
         const file = req.files[field.name];
         if (file) {
@@ -2030,6 +2128,9 @@ const prepare = async (
           if (serverResp?.location) row[field.name] = serverResp.location;
         }
       }
+    } else if (typeof body[`__exisiting_file_${field.name}`] === "string") {
+      row[field.name] = File.normalise(body[`__exisiting_file_${field.name}`]);
+      form.values[field.name] = row[field.name];
     } else {
       delete row[field.name];
     }
@@ -2203,33 +2304,41 @@ const combineResults = (results) => {
   return combined;
 };
 
-const tryUpdateImpl = async (row, id, table, user) => {
+const tryUpdateImpl = async (row, id, table, req) => {
   const result = {};
   const upd_res = await table.tryUpdateRow(
     row,
     id,
-    user || { role_id: 100 },
-    result
+    req.user || { role_id: 100 },
+    result,
+    { req }
   );
   upd_res.trigger_return = result;
   return upd_res;
 };
 
-const tryInsertOrUpdateImpl = async (row, id, table, user) => {
+const tryInsertOrUpdateImpl = async (row, id, table, req) => {
   const result = {};
-  const exists = await table.getRow({ [table.pk_name]: id });
+  const exists = await table.getRow(
+    typeof id === "object" ? id : { [table.pk_name]: id }
+  );
   if (exists) {
     const upd_res = await table.tryUpdateRow(
       row,
       id,
-      user || { role_id: 100 },
-      result
+      req.user || { role_id: 100 },
+      result,
+      { req }
     );
     upd_res.trigger_return = result;
     return upd_res;
   } else {
     const result = {};
-    const ins_res = await table.tryInsertRow(row, user, result);
+    const ins_res = await table.tryInsertRow(
+      row,
+      req.user || { role_id: 100 },
+      result
+    );
     ins_res.trigger_return = result;
     return ins_res;
   }
@@ -2341,7 +2450,11 @@ const createBasicView = async ({
   return cfg;
 };
 
-const virtual_triggers = (table_id, viewname, { enable_realtime }) => {
+const virtual_triggers = (
+  table_id,
+  viewname,
+  { enable_realtime, update_events }
+) => {
   if (!enable_realtime) return [];
   const table = Table.findOne({ id: table_id });
   const view = View.findOne({ name: viewname });
@@ -2379,20 +2492,26 @@ const virtual_triggers = (table_id, viewname, { enable_realtime }) => {
           );
         } else {
           // build and emit updates
-          const updateVals = {};
+          const updates = {};
           for (const fieldName of changedLayoutFields) {
             const newVal = row[fieldName];
-            updateVals[fieldName] = newVal;
+            updates[fieldName] = newVal;
           }
           const rowId = row[table.pk_name];
+          const actionResults = await runCollabEvents(update_events, user, {
+            new_row: row,
+            old_row: old_row,
+            updates: updates,
+          });
           getState().log(
             6,
             "Emitting real-time update for row",
             rowId,
-            updateVals
+            updates
           );
           view.emitRealTimeEvent(`UPDATE_EVENT?id=${rowId}`, {
-            updates: updateVals,
+            updates: updates,
+            actions: actionResults,
           });
         }
       },
@@ -2448,6 +2567,7 @@ module.exports = {
       auto_create,
       delete_unchanged_auto_create,
       enable_realtime,
+      update_events,
     },
     req,
     res,
@@ -2505,7 +2625,7 @@ module.exports = {
           if (typeof state[f.name] !== "undefined") {
             if (f.type?.read)
               row[f.name] = f.type?.read
-                ? f.type.read(state[f.name])
+                ? f.type.read(state[f.name], f.attributes)
                 : state[f.name];
           } else if (f.required)
             if (
@@ -2542,6 +2662,7 @@ module.exports = {
         auto_created_row,
         hiddenLoginDest,
         enable_realtime,
+        update_events,
       });
     },
     async editManyQuery(state, { limit, offset, orderBy, orderDesc, where }) {
@@ -2594,7 +2715,7 @@ module.exports = {
 
     async tryUpdateQuery(row, id) {
       const table = Table.findOne(table_id);
-      return await tryUpdateImpl(row, id, table, req.user);
+      return await tryUpdateImpl(row, id, table, req);
     },
     async saveFileQuery(fieldVal, fieldId, fieldView, row) {
       const field = await Field.findOne({ id: fieldId });
@@ -2715,13 +2836,10 @@ module.exports = {
     },
     async getRowByIdQuery(id) {
       const table = Table.findOne({ id: table_id });
-      return await table.getRow(
-        { id },
-        {
-          forUser: req.user,
-          forPublic: !req.user,
-        }
-      );
+      return await table.getRow(typeof id === "object" ? id : { id }, {
+        forUser: req.user,
+        forPublic: !req.user,
+      });
     },
     async actionQuery() {
       const {
@@ -2846,12 +2964,7 @@ module.exports = {
         await db.begin();
         inTransaction = true;
         for (const row of rows) {
-          const uptRes = await tryUpdateImpl(
-            updateVals,
-            row.id,
-            table,
-            req.user
-          );
+          const uptRes = await tryUpdateImpl(updateVals, row.id, table, req);
           if (uptRes.error) {
             inTransaction = false;
             await db.rollback();
@@ -2860,7 +2973,10 @@ module.exports = {
           results.push(uptRes);
           for (const field of repeatFields) {
             const childTable = Table.findOne({ id: field.metadata?.table_id });
-            await childTable.deleteRows({ [field.metadata?.relation]: row.id });
+            await childTable.deleteRows(
+              { [field.metadata?.relation]: row.id },
+              req.user || { role_id: 100 }
+            );
             for (const childRow of childRows[field.name]) {
               childRow[field.metadata?.relation] = row.id;
               const insRow = { ...childRow };

@@ -21,8 +21,12 @@ const { get_reset_link, generate_email } = require("../auth/resetpw");
 const i18n = require("i18n");
 const path = require("path");
 const fs = require("fs");
+const { sleep } = require("@saltcorn/data/utils");
 
-afterAll(db.close);
+afterAll(async () => {
+  await sleep(100);
+  db.close();
+});
 beforeAll(async () => {
   await resetToFixtures();
 });
@@ -194,6 +198,7 @@ describe("AuthTest forgot password", () => {
       .post("/auth/reset")
       .send("email=staff1@foo.com")
       .send("password=bazzRGGR65zoo")
+      .send("confirm_password=bazzRGGR65zoo")
       .send("token=" + token)
       .expect(toRedirect("/auth/login"));
     await request(app)

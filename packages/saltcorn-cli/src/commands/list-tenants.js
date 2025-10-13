@@ -44,7 +44,8 @@ class ListTenantsCommand extends Command {
     }
 
     // print
-    if (!flags.verbose) print_table(tenantDetails, ["domain"], flags.json);
+    if (flags.plain) for (const domain of tenantList) console.log(domain);
+    else if (!flags.verbose) print_table(tenantDetails, ["domain"], flags.json);
     else
       print_table(
         tenantDetails,
@@ -93,6 +94,7 @@ ListTenantsCommand.flags = {
     required: false,
   }),
   json: Flags.boolean({ char: "j", description: "json format" }),
+  plain: Flags.boolean({ char: "p", description: "plain text format" }),
 };
 
 module.exports = ListTenantsCommand;

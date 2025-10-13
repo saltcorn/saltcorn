@@ -11,6 +11,7 @@ export const getHeaders = () => {
     { css: `static_assets/${versionTag}/saltcorn.css` },
     { script: `static_assets/${versionTag}/saltcorn-common.js` },
     { script: `static_assets/${versionTag}/dayjs.min.js` },
+    { script: `static_assets/${versionTag}/socket.io.min.js` },
     { script: "js/iframe_view_utils.js" },
   ];
 

@@ -202,7 +202,7 @@ describe("Table with row ownership field", () => {
     });
     await persons.update({ ownership_field_id: owner.id });
 
-    await persons.insertRow({ lastname: "Joe", age: 12 });
+    const joeid = await persons.insertRow({ lastname: "Joe", age: 12 });
     await persons.insertRow({ lastname: "Sam", age: 13, owner: 1 });
 
     await test_person_table(persons);
@@ -219,11 +219,29 @@ describe("Table with row ownership field", () => {
       non_owner_user
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
-    await persons.insertRow(
+    const timid = await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
       owner_user
     );
+    const alexid = await persons.insertRow(
+      { age: 99, lastname: "Alex", owner: owner_user.id },
+      owner_user
+    );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    //not deleting as nonowner
+    await persons.deleteRows({ id: timid }, non_owner_user);
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    //not deleting as public
+    await persons.deleteRows({ id: timid }, { role_id: 100 });
+    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+
+    //deleting without user
+    await persons.deleteRows({ id: timid });
+    expect(await persons.getRow({ lastname: "Tim" })).toBe(null);
+
+    //deleting as owner
+    await persons.deleteRows({ id: alexid }, owner_user);
+    expect(await persons.getRow({ lastname: "Alex" })).toBe(null);
 
     await persons.delete();
   });
@@ -733,7 +751,7 @@ describe("User group no spaces", () => {
 
     // admin is not "owner" but can still read/write due to min_role etc.
     const adminobj = await User.findForSession({ role_id: 1 });
-    assertIsSet(adminobj)
+    assertIsSet(adminobj);
     expect(projs.is_owner(adminobj, myproj)).toBe(false);
     expect(projs.is_owner(adminobj, myproj1)).toBe(false);
 
@@ -871,7 +889,7 @@ describe("User group with spaces in name", () => {
 
     // admin is not "owner" but can still read/write due to min_role etc.
     const adminobj = await User.findForSession({ role_id: 1 });
-    assertIsSet(adminobj)
+    assertIsSet(adminobj);
     expect(projs.is_owner(adminobj, myproj)).toBe(false);
     expect(projs.is_owner(adminobj, myproj1)).toBe(false);
 

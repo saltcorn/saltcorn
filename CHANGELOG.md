@@ -1,8 +1,40 @@
 # Notable changes
 
-## 1.3.1 - In development
+## 1.4.0 - In development
 
-* Real time collaboration for Edit views. Form fields will update in real time as they change in the database.
+* When PageLoad triggers return directives (`notify`, `eval_js` etc.) these are now run on the the 
+  client page.
+
+* When Table.deleteRows is called without a user argument, it implicitly has admin access, to make 
+  it consistent ith other methods
+
+* Some initial and limited support for composite primary keys in discovered and external tables. 
+
+* insert_any_row action:
+    * now accepts a list of rows in its row expression and will insert all of them.
+    * if the primary key value is set in the row expression, it will upsert the row (update if a row with this primary key value exists, otherwise insert)
+
+* Actions now have an option to run asynchronously from the builder action settings. If this is enabled, and dynamic updates are enabled, the action will run in the background instead of during a HTTP request. This is more robust for long-running actions; there should be no difference in user experience. 
+
+* `progress_bar` action: Display or update the display of a progress message. This can appear in a toast message for actions that can run in parallel; or in a blocking popup-up modal if the progress display is required to freeze the user interface.
+
+* List view now have options for header filters, row colour by formula and table layout setting (corresponds to table-layout CSS property)
+
+### Fixes
+
+* Fix formula constraints to support more translations to SQL
+* Edit: preserve file choices on form errors.
+* Fix format fieldview for only day Dates.
+* Fix full screen width on containers - this conflicted with position, which it now overrides.
+* Fix jsdoc links from code editor
+
+## 1.3.1 - Released 31 August 2025
+
+* Reduce client assets for some plugins - if a view is not available for a role, its assets can be omitted. 
+
+* List view have options for header filters and responsive collapse (under layout options). Header filters place small filters in the table header. Responsive collapse lets you set a breakpoint where the list transitions to a vertical display.
+
+* Real time collaboration for Edit views. Form fields will update in real time as they change in the database. An event can be chosen to run on update.
 
 * loop_rows action: repeat an action for a all or some rows in a table, including an option for a random selection of rows.
 
@@ -10,7 +42,24 @@
 
 * Visibility toggle option for password fieldviews. Click an eye icon to show password
 
-* Enable/disable push notifications per-role in the Users role table. 
+* Enable/disable push notifications per-role in the Users role table.
+
+* Table triggers (Insert, Update, Delete) and Login and PageLoad can now be limited with an only-if formula.
+
+* Date fields with the day only attribute are now handled internally without time or timezone from the database to the client. This should lead to more reliable date handling.
+
+* The menu can now be fully customized from the menu editor, including the admin items (Tables, Vies, Pages and Settings) and the user items (login/signup and the user menu)
+
+* Events can now be sent from a running server scripts to the user's client page. Run the `emit_to_client()` function with the same objects that can be returned from a run_js_code action. For instance: `emit_to_client({notify: "hello admin"}, 1)` will make a toast appear on any tab loaded by the user with ID=1. This facility can be disabled for high performance, less interactive applications, under Event log settings.
+
+* Link, Action and Dropdonw menu buttons are now always the same height.
+
+* List views have a vertical aligment option under Layout options. Use this to adjust the vertical alignment of each cell. The default is middle.
+
+* Provided tables can no by writable (delete, insert and update). For an example of this see the history-control table provider
+
+* Imported CSVs rows can now have a blank in the primary key column, which will be treated as an insert.
+
 
 ## 1.3.0 - Released 2 July 2025
 

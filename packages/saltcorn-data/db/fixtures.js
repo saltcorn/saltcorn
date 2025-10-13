@@ -152,6 +152,7 @@ module.exports =
         },
         view_when_done: "authorlist",
         enable_realtime: true,
+        update_events: [{ event: "custom_update_event" }],
       },
       min_role: 100,
     });
@@ -2568,6 +2569,66 @@ module.exports =
         },
       },
       min_role: 100,
+    });
+    await Trigger.create({
+      name: "emit_to_admin",
+      action: "run_js_code",
+      description: "",
+      table_id: null,
+      run_where: "Server",
+      when_trigger: "API call",
+      configuration: {
+        code: `emit_to_client({notify: "hello admin"}, 1);`,
+      },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "emit_to_staff",
+      action: "run_js_code",
+      description: "",
+      table_id: null,
+      run_where: "Server",
+      when_trigger: "API call",
+      configuration: {
+        code: `emit_to_client({notify: "hello admin"}, 2);`,
+      },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "emit_to_admin_and_staff",
+      action: "run_js_code",
+      description: "",
+      table_id: null,
+      run_where: "Server",
+      when_trigger: "API call",
+      configuration: {
+        code: `emit_to_client({notify: "hello admin and staff"}, [1, 2]);`,
+      },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "emit_tenant_wide",
+      action: "run_js_code",
+      description: "",
+      table_id: null,
+      run_where: "Server",
+      when_trigger: "API call",
+      configuration: {
+        code: `emit_to_client({notify: "hello public"});`,
+      },
+      min_role: null,
+    });
+    await Trigger.create({
+      name: "custom_update_event",
+      action: "run_js_code",
+      description: "",
+      table_id: null,
+      when_trigger: "Never",
+      configuration: {
+        code: `console.log("Custom update event triggered");`,
+        run_where: "Client page",
+      },
+      min_role: null,
     });
     await Trigger.create({
       name: "MySteps",

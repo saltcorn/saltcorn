@@ -14,6 +14,7 @@ const {
   init_multi_tenant,
   restart_tenant,
   add_tenant,
+  get_other_domain_tenant,
 } = require("@saltcorn/data/db/state");
 const { create_tenant } = require("@saltcorn/admin-models/models/tenant");
 
@@ -80,23 +81,17 @@ const ensureJwtSecret = () => {
 };
 
 /**
- * Ensure the engines cache is up to date with the current sc version
- */
-const ensureEnginesCache = async () => {
-  const cacheScVersion = await getConfig("engines_cache_sc_version", "");
-  if (!cacheScVersion || cacheScVersion !== getState().scVersion) {
-    await setConfig("engines_cache", {});
-    await setConfig("engines_cache_sc_version", getState().scVersion);
-  }
-};
-
-/**
  * validate all plugins folders and remove invalid entries
  * A folder is invalid when it has dependencies but not node_modules directory
  */
 const ensurePluginsFolder = async () => {
   const rootFolder = envPaths("saltcorn", { suffix: "plugins" }).data;
-  const staticDeps = ["@saltcorn/markup", "@saltcorn/data", "jest"];
+  const staticDeps = [
+    "@saltcorn/markup",
+    "@saltcorn/data",
+    "@saltcorn/postgres",
+    "jest",
+  ];
   const allPluginFolders = new Set();
   await eachTenant(async () => {
     try {
@@ -205,12 +200,6 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
     const tenants = await getAllTenants();
     await init_multi_tenant(loadAllPlugins, disableMigrate, tenants);
   }
-  eachTenant(async () => {
-    const state = getState();
-    if (state) {
-      await state.setConfig("joined_log_socket_ids", []);
-    }
-  });
   if (useClusterAdaptor) setupPrimary();
 };
 
@@ -234,7 +223,11 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     console.error("no State for tenant", tenant);
     return;
   }
-  if (msg.refresh) getState()[`refresh_${msg.refresh}`](true);
+  if (msg.refresh) {
+    if (msg.refresh === "ephemeral_config")
+      getState().refresh_ephemeral_config(msg.key, msg.value);
+    else getState()[`refresh_${msg.refresh}`](true);
+  }
   if (msg.createTenant) {
     const tenant_template = getState().getConfig("tenant_template");
     add_tenant(msg.createTenant);
@@ -290,7 +283,8 @@ const onMessageFromWorker =
       ///ie from saltcorn
       //broadcast
       Object.entries(cluster.workers).forEach(([wpid, w]) => {
-        if (wpid !== pid) w.send(msg);
+        //if it is plugin refresh, we need sender to get it as wll
+        if (wpid !== pid || msg?.refresh_plugin_cfg) w.send(msg);
       });
       workerDispatchMsg(msg); //also master
       return true;
@@ -322,7 +316,6 @@ module.exports =
   } = {}) => {
     if (cluster.isMaster) {
       ensureJwtSecret();
-      await ensureEnginesCache();
       await ensurePluginsFolder();
       await ensureNotificationSubscriptions();
     }
@@ -382,6 +375,13 @@ module.exports =
               masterState.listeningTo.add(id);
             }
           });
+          getState().sendMessageToWorkers = (msg) => {
+            Object.entries(cluster.workers).forEach(([wpid, w]) => {
+              w.send(msg);
+            });
+            workerDispatchMsg(msg); //also master
+          };
+
           if (masterState.listeningTo.size < useNCpus)
             setTimeout(initMasterListeners, 250);
         };
@@ -420,12 +420,21 @@ module.exports =
 
       if (forkAnyWorkers) {
         for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
+        getState().sendMessageToWorkers = (msg) => {
+          Object.entries(cluster.workers).forEach(([wpid, w]) => {
+            w.send(msg);
+          });
+          workerDispatchMsg(msg); //also master
+        };
 
         cluster.on("exit", (worker, code, signal) => {
           console.log(`worker ${worker.process.pid} died`);
           addWorker(cluster.fork());
         });
       } else {
+        getState().sendMessageToWorkers = (msg) => {
+          workerDispatchMsg(msg); //also master
+        };
         await nonGreenlockWorkerSetup(appargs, port, host);
         runScheduler({
           port,
@@ -508,6 +517,17 @@ const nonGreenlockWorkerSetup = async (appargs, port, host) => {
   getState().processSend("Start");
 };
 
+const tenantFromSocket = (socket, hostPartOffset) => {
+  if (!db.is_it_multi_tenant()) return db.connectObj.default_schema;
+  const header = socket.request.headers.host;
+  const hostOnly = header?.split(":")[0];
+  if (hostOnly) {
+    const tenant = get_other_domain_tenant(hostOnly);
+    if (tenant) return tenant;
+  }
+  return get_tenant_from_req(socket.request, hostPartOffset);
+};
+
 /**
  *
  * @param  {...*} servers
@@ -544,14 +564,29 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
       .emit("log_msg", { text: msg, time, level });
   });
 
-  // Real-time collaboration emitter
+  // Real-time collaboration emitter (tied to views)
   getState().setCollabEmitter((tenant, type, data) => {
     io.of("/").to(`_${tenant}_collab_room_`).emit(type, data);
   });
 
+  // dynamic updates emitter (for run_js_actions)
+  getState().setDynamicUpdateEmitter((tenant, data, userIds) => {
+    if (userIds) {
+      for (const userId of userIds) {
+        io.of("/")
+          .to(`_${tenant}:${userId}_dynamic_update_room`)
+          .emit("dynamic_update", data);
+      }
+    } else {
+      io.of("/")
+        .to(`_${tenant}_dynamic_update_room`)
+        .emit("dynamic_update", data);
+    }
+  });
+
   io.of("/").on("connection", (socket) => {
     socket.on("join_room", ([viewname, room_id]) => {
-      const ten = get_tenant_from_req(socket.request) || "public";
+      const ten = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = () => {
         try {
           const view = View.findOne({ name: viewname });
@@ -571,8 +606,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     });
 
     socket.on("join_log_room", async (callback) => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         try {
           const user = socket.request.user;
@@ -596,14 +630,13 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           callback({ status: "error", msg: err.message || "unknown error" });
         }
       };
-      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
       else await f();
     });
 
     // or join the room more generally and later register views ??
     socket.on("join_collab_room", async (viewname, callback) => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         try {
           const view = View.findOne({ name: viewname });
@@ -612,28 +645,101 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           const role_id = user ? user.role_id : 100;
           if (view.min_role < role_id)
             throw new Error("Not authorized to join collaboration room");
-          socket.join(`_${tenant}_collab_room_`);
-          if (typeof callback === "function") callback({ status: "ok" });
+          const roomName = `_${tenant}_collab_room_`;
+          if (!socket.rooms.has(roomName)) {
+            socket.join(`_${tenant}_collab_room_`);
+            if (typeof callback === "function") callback({ status: "ok" });
+            const socketIds = await getState().getConfig(
+              "joined_real_time_socket_ids",
+              []
+            );
+            socketIds.push(socket.id);
+            await getState().setConfig("joined_real_time_socket_ids", [
+              ...new Set(socketIds),
+            ]);
+          } else if (typeof callback === "function")
+            callback({ status: "already_joined" });
         } catch (err) {
           getState().log(1, `Socket join_collab_room: ${err.stack}`);
           if (typeof callback === "function")
             callback({ status: "error", msg: err.message || "unknown error" });
         }
       };
-      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
+      if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
+      else await f();
+    });
+
+    // join_dynamic_update_room for events emitted from run_js_actions
+    socket.on("join_dynamic_update_room", async (callback) => {
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
+      const f = async () => {
+        try {
+          const enabled = getState().getConfig("enable_dynamic_updates", true);
+          if (!enabled) throw new Error("Dynamic updates are not enabled");
+          const user = socket.request.user;
+          if (!user) throw new Error("Not authorized");
+          socket.join(`_${tenant}_dynamic_update_room`);
+          socket.join(`_${tenant}:${user.id}_dynamic_update_room`);
+          const socketIds = await getState().getConfig(
+            "joined_dynamic_update_socket_ids",
+            []
+          );
+          socketIds.push(socket.id);
+          await getState().setConfig("joined_dynamic_update_socket_ids", [
+            ...new Set(socketIds),
+          ]);
+          if (typeof callback === "function") callback({ status: "ok" });
+        } catch (err) {
+          getState().log(1, `Socket join_dynamic_update_room: ${err.stack}`);
+          if (typeof callback === "function")
+            callback({ status: "error", msg: err.message || "unknown error" });
+        }
+      };
+      if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
       else await f();
     });
 
     socket.on("disconnect", async () => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
-        const socketIds = await getState().getConfig("joined_log_socket_ids");
-        const newSocketIds = socketIds.filter((id) => id !== socket.id);
-        await getState().setConfig("joined_log_socket_ids", newSocketIds);
+        const state = getState();
+        if (state) {
+          const socketIds = state.getConfig("joined_log_socket_ids");
+          const newSocketIds = socketIds.filter((id) => id !== socket.id);
+          await state.setConfig("joined_log_socket_ids", newSocketIds);
+
+          const dynamicSocketIds = state.getConfig(
+            "joined_dynamic_update_socket_ids",
+            []
+          );
+          const newDynamicSocketIds = dynamicSocketIds.filter(
+            (id) => id !== socket.id
+          );
+          await state.setConfig(
+            "joined_dynamic_update_socket_ids",
+            newDynamicSocketIds
+          );
+
+          const realTimeSocketIds = state.getConfig(
+            "joined_real_time_socket_ids",
+            []
+          );
+          const newRealTimeSocketIds = realTimeSocketIds.filter(
+            (id) => id !== socket.id
+          );
+          await state.setConfig(
+            "joined_real_time_socket_ids",
+            newRealTimeSocketIds
+          );
+        } else {
+          console.error("No state found in socket disconnect");
+          console.error("The current tenantSchema is:", db.getTenantSchema());
+          console.error("The current tenant from request is:", tenant);
+          console.error("node version:", process.version);
+        }
       };
-      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
-      else f();
+      if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
+      else await f();
     });
   });
 
@@ -643,8 +749,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     socket.on(
       "open_data_stream",
       async ([viewName, id, fieldName, fieldView, targetOpts], callback) => {
-        const tenant =
-          get_tenant_from_req(socket.request, subdomainOffset) || "public";
+        const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
         const f = async () => {
           try {
             const user = socket.request.user;
@@ -681,8 +786,8 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
             callback({ status: "error", msg: err.message || "unknown error" });
           }
         };
-        if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
-        else f();
+        if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
+        else await f();
       }
     );
     socket.on("write_to_stream", async (data, callback) => {
@@ -723,8 +828,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     });
 
     socket.on("disconnect", async () => {
-      const tenant =
-        get_tenant_from_req(socket.request, subdomainOffset) || "public";
+      const tenant = tenantFromSocket(socket, subdomainOffset) || "public";
       const f = async () => {
         if (dataStream)
           dataStream.close((err) => {
@@ -744,8 +848,8 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
             }
           });
       };
-      if (tenant && tenant !== "public") db.runWithTenant(tenant, f);
-      else f();
+      if (tenant && tenant !== "public") await db.runWithTenant(tenant, f);
+      else await f();
     });
   });
 };

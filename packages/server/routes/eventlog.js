@@ -83,6 +83,18 @@ const logSettingsForm = async (req) => {
     },
     {
       input_type: "section_header",
+      label: req.__("Dynamic server side updates"),
+    },
+    {
+      name: "enable_dynamic_updates",
+      label: req.__("Enable dynamic updates"),
+      type: "Bool",
+      sublabel: req.__(
+        "Enable server side updates from within run_js_code actions"
+      ),
+    },
+    {
+      input_type: "section_header",
       label: req.__("Delete old workflow runs with status after days"),
     },
     {
@@ -168,6 +180,10 @@ router.get(
       "next_weekly_event",
       {}
     );
+    form.values.enable_dynamic_updates = getState().getConfig(
+      "enable_dynamic_updates",
+      true
+    );
     ["error", "finished", "running", "waiting"].forEach((k) => {
       let cfgk = `delete_${k}_workflows_days`;
       form.values[cfgk] = getState().getConfig(cfgk);
@@ -206,7 +222,8 @@ router.get(
       //sub2_page: "Events to log",
       contents: {
         type: "card",
-        title: req.__("Custom Events"),
+        title: req.__("Custom Events")+
+          `<a href="javascript:ajax_modal('/admin/help/Custom%20events?')"><i class="fas fa-question-circle ms-1"></i></a>`,
         contents:
           mkTable(
             [
@@ -377,6 +394,10 @@ router.post(
           delete form.values[k];
         }
       }
+      await getState().setConfig(
+        "enable_dynamic_updates",
+        form.values.enable_dynamic_updates
+      );
       for (const status of ["error", "finished", "running", "waiting"]) {
         let k = `delete_${status}_workflows_days`;
         if (form.values[k]) {

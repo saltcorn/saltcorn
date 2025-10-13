@@ -74,8 +74,9 @@ function reset_nearest_form(that) {
   form.find("select").trigger("change");
 }
 
-function add_repeater(nm) {
-  var es = $("div.form-repeat.repeat-" + nm);
+function add_repeater(nm, add_link) {
+  const outer_repeat = $(add_link).prev();
+  var es = outer_repeat.find("div.form-repeat.repeat-" + nm);
   const ncopy = es.length - 1;
   var e = es.last();
   var newix = es.length;
@@ -83,15 +84,21 @@ function add_repeater(nm) {
   newe.find("[name]").each(function (ix, element) {
     if ($(element).hasClass("omit-repeater-clone")) $(element).remove();
     const oldnm = element.name || "";
-    var newnm = (element.name || "").replace("_" + ncopy, "_" + newix);
-    var newid = (element.id || "").replace("_" + ncopy, "_" + newix);
+    var newnm = (element.name || "").replace(
+      new RegExp("_" + ncopy + "$"),
+      "_" + newix
+    );
+    var newid = (element.id || "").replace(
+      new RegExp("_" + ncopy + "$"),
+      "_" + newix
+    );
     $(element).attr("name", newnm).attr("id", newid);
     if (element.tagName === "SELECT") {
       const original = document.getElementsByName(oldnm)[0];
       if (original) element.selectedIndex = original.selectedIndex;
     }
   });
-  newe.appendTo($("div.repeats-" + nm));
+  newe.appendTo(outer_repeat);
   newe.find("[data-on-cloned]").each(function (ix, element) {
     (function (str) {
       return eval(str);
@@ -151,15 +158,15 @@ function valid_js_var_name(s) {
   return !!s.match(/^[a-zA-Z_$][a-zA-Z_$0-9]*$/);
 }
 
-function add_extra_state(base_url, extra_state_fml, row) {
+function add_extra_state(base_url, extra_state_fml, row, outerState = {}) {
   //console.log("add_extra_state", { base_url, extra_state_fml, row });
-  if (!extra_state_fml) return base_url;
+  if (!extra_state_fml && !Object.keys(outerState).length) return base_url;
   let extra_state = new Function(
     "row",
     `{${Object.keys(row).join(",")}}`,
-    "return " + extra_state_fml
+    "return " + extra_state_fml || "{}"
   )(row, row);
-  let qs = Object.entries(extra_state)
+  let qs = Object.entries({ ...outerState, ...extra_state })
     .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
     .join("&");
   let sepChar = base_url.includes("?") ? "&" : "?";
@@ -1282,6 +1289,9 @@ function initialize_page() {
   $("[data-explainers]").change(function () {
     setExplainer(this);
   });
+  $(".card-max-full-screen").each(function () {
+    card_max_full_screen($(this));
+  });
 
   const codes = [];
   $("textarea.to-code").each(function () {
@@ -1327,7 +1337,7 @@ function initialize_page() {
                   }
                 } else {
                   cm1.save();
-                  $(el).closest("form").trigger("change");
+                  $(el).trigger("change");
                 }
               },
               500,
@@ -1423,6 +1433,37 @@ function enlarge_in_code($textarea, cm) {
     cm.refresh();
     $card.css("min-height", newCardHeight + "px");
   }
+}
+function card_max_full_screen($card_outer) {
+  const $card = $card_outer.find(".card-body");
+  const cardTop = $card_outer.offset().top;
+  const cardHeight = $card.outerHeight();
+  const cardFooterHeight = $card_outer.find(".card-footer").outerHeight() || 0;
+  const cardHeaderHeight = $card_outer.find(".card-header").outerHeight() || 0;
+  const vh = $(window).height();
+  const newCardHeight = vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
+  let is_changed = false;
+  if (newCardHeight < cardHeight) {
+    $card.css("max-height", newCardHeight + "px").css("overflow-y", "scroll");
+    is_changed = true;
+  }
+  $card.attr("tabindex", "-1");
+  $card.focus();
+  window.addEventListener(
+    "resize",
+    function () {
+      const vh = $(window).height();
+      const newCardHeight =
+        vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
+      if (is_changed || newCardHeight < cardHeight) {
+        $card
+          .css("max-height", newCardHeight + "px")
+          .css("overflow-y", "scroll");
+        is_changed = true;
+      }
+    },
+    true
+  );
 }
 
 function cancel_inline_edit(e, opts1) {
@@ -1615,7 +1656,7 @@ function getIsNode() {
   }
 }
 
-function buildToast(txt, type, spin, title) {
+function buildToast(txt, type, spin, title, set_id) {
   const realtype = type === "error" ? "danger" : type;
   const icon =
     realtype === "success"
@@ -1626,7 +1667,8 @@ function buildToast(txt, type, spin, title) {
           ? "fa-exclamation-triangle"
           : "";
   const isNode = getIsNode();
-  const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+  const rndid =
+    set_id || `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   return {
     id: rndid,
     html: `
@@ -1659,22 +1701,110 @@ function buildToast(txt, type, spin, title) {
         }
       </div>
       <div 
-        class="toast-body py-2 fs-6 fw-bold d-flex align-items-center"
+        class="toast-body py-2 fs-6 fw-bold"
       >
-        <strong>${txt}</strong>
-        ${
-          spin
-            ? `<span 
-                class="spinner-border ms-auto" 
-                role="status" 
-                aria-hidden="true" 
-                style="width: 1.5rem; height: 1.5rem"></span>`
-            : ""
-        }
+        <div class="d-flex align-items-center">
+          <strong>${txt}</strong>
+          ${
+            spin
+              ? `<span 
+                  class="spinner-border ms-auto" 
+                  role="status" 
+                  aria-hidden="true" 
+                  style="width: 1.5rem; height: 1.5rem"></span>`
+              : ""
+          }
+        </div>
       </div>
     </div>
   `,
   };
+}
+
+function progress_toast_update({
+  id,
+  close,
+  title,
+  message,
+  percent,
+  blocking,
+  maxHeight,
+  popupWidth,
+}) {
+  if (close && blocking) {
+    $("#scmodal .modal-body .progress-message").html("");
+    close_saltcorn_modal();
+    return;
+  }
+  let existing = !blocking && id ? $("#toast-" + id) : $("#scmodal");
+  if (close && id) {
+    existing.remove();
+    return;
+  }
+
+  if (blocking) {
+    ensure_modal_exists_and_closed({ open: true, blocking: true }); // no close
+    $(".sc-modal-linkout").hide();
+    $("#scmodal .modal-header button.btn-close").css("display", "none");
+    if (popupWidth) $(".modal-dialog").css("max-width", popupWidth);
+    existing = $("#scmodal");
+    if (title) $("#scmodal .modal-title").html(title);
+    const exBody = $("#scmodal .modal-body .blocking-progress-modal");
+    if (!exBody.length) {
+      $("#scmodal .modal-body").html(
+        `<div class="blocking-progress-modal"><div class="progress-message"${maxHeight ? ` style="max-height: ${maxHeight}px"` : ""}><div>${message || ""}</div></div><div class="progress-bar">${
+          typeof percent === "undefined"
+            ? ""
+            : '<progress style="width: 100%" value="' +
+              percent +
+              '" max="100">' +
+              percent +
+              " %</progress>"
+        }</div></div>`
+      );
+    } else {
+      if (message) {
+        if (maxHeight)
+          $("#scmodal .modal-body .progress-message").prepend(
+            `<div>${message}</div>`
+          );
+        else $("#scmodal .modal-body .progress-message").html(message);
+      }
+      if (typeof percent !== "undefined")
+        $("#scmodal .modal-body progress").val(percent);
+    }
+    if (!$("#scmodal").hasClass("show"))
+      new bootstrap.Modal($("#scmodal"), {
+        focus: false,
+        backdrop: "static",
+        keyboard: false,
+      }).show();
+  } else {
+    if (id && !existing.length) {
+      const { html } = buildToast(message, "info", false, title, "toast-" + id);
+      $("#toasts-area").append(html);
+      existing = $("#toast-" + id);
+    } else {
+      $("#toast-" + id)
+        .find(".toast-body strong")
+        .html(message);
+    }
+
+    if (typeof percent !== "undefined") {
+      const exprogress = existing.find("progress");
+      if (!exprogress.length) {
+        $("#toast-" + id)
+          .find(".toast-body")
+          .append(
+            '<progress value="' +
+              percent +
+              '" max="100">' +
+              percent +
+              " %</progress>"
+          );
+      } else exprogress.val(percent);
+    }
+  }
 }
 
 function notifyAlert(note, spin) {
@@ -1699,10 +1829,13 @@ function notifyAlert(note, spin) {
   if ($modal.length && $modal.hasClass("show"))
     $("#modal-toasts-area").append(html);
   else $("#toasts-area").append(html);
-  if (type === "success") {
-    setTimeout(() => {
-      $(`#${id}`).removeClass("show");
-    }, 5000);
+  if (type === "success" || note.remove_delay) {
+    setTimeout(
+      () => {
+        $(`#${id}`).removeClass("show");
+      },
+      note.remove_delay ? note.remove_delay * 1000 : 5000
+    );
   }
 }
 
@@ -1723,6 +1856,8 @@ function press_store_button(clicked, keepOld, disable) {
     .html('<i class="fas fa-spinner fa-spin"></i>')
     .width(width)
     .height(height);
+  $(document).trigger("activate-spinner", $(btn));
+  $(btn).trigger("spin");
   setTimeout(() => {
     $(btn).prop("disabled", true);
   }, 50);
@@ -1732,7 +1867,7 @@ function restore_old_button(btnId) {
   if (window.reset_spinners) reset_spinners();
   const btn = btnId instanceof jQuery ? btnId : $(`#${btnId}`);
   const oldText = $(btn).data("old-text");
-  if (!oldText.length) reuturn;
+  if (!oldText.length) return;
   btn.html(oldText);
   btn.css({ width: "", height: "" }).prop("disabled", false);
   btn.removeData("old-text");
@@ -1751,13 +1886,16 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
           .attr("data-sc-embed-viewname");
   if (window._sc_loglevel > 4)
     console.log("ajax result directives", viewname, res);
+
+  if (res.page_load_tag && res.page_load_tag !== _sc_pageloadtag) return;
+
   const handle = async (element, fn) => {
     if (Array.isArray(element))
       for (const current of element) await fn(current);
     else await fn(element);
   };
   //TODO what if something else is spinning?
-  if (window.reset_spinners) reset_spinners();
+  //if (window.reset_spinners) reset_spinners();
 
   const eval_it = async (s) => {
     if (res.row && res.field_names) {
@@ -1776,23 +1914,42 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
   };
   if (res.notify)
     await handle(res.notify, (text) =>
-      notifyAlert({ type: "info", text, toast_title: res.toast_title })
+      notifyAlert({
+        type: "info",
+        text,
+        toast_title: res.toast_title,
+        remove_delay: res.remove_delay,
+      })
     );
   if (res.error) {
     if (window._sc_loglevel > 4) console.trace("error response", res.error);
     await handle(res.error, (text) =>
-      notifyAlert({ type: "danger", text, toast_title: res.toast_title })
+      notifyAlert({
+        type: "danger",
+        text,
+        toast_title: res.toast_title,
+        remove_delay: res.remove_delay,
+      })
     );
   }
   if (res.notify_success)
     await handle(res.notify_success, (text) =>
-      notifyAlert({ type: "success", text, toast_title: res.toast_title })
+      notifyAlert({
+        type: "success",
+        text,
+        toast_title: res.toast_title,
+        remove_delay: res.remove_delay,
+      })
     );
   if (res.set_fields && (viewname || res.set_fields._viewname)) {
-    const form =
+    let form =
       typeof viewnameOrElem === "string" || res.set_fields._viewname
         ? $(`form[data-viewname="${res.set_fields._viewname || viewname}"]`)
         : $(viewnameOrElem).closest("form[data-viewname]");
+    if (form.length === 0 && viewnameOrElem?.querySelector) {
+      const temp = viewnameOrElem.querySelector("form[data-viewname]");
+      if (temp) form = $(temp);
+    }
     if (form.length === 0 && set_state_fields) {
       // assume this is a filter
       set_state_fields(
@@ -1821,10 +1978,10 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
           input.attr("data-selected", res.set_fields[k]);
         }
 
-        input.trigger("set_form_field");
+        input.trigger("set_form_field", { no_onchange: res.no_onchange });
       });
     }
-    form.trigger("change");
+    if (!res.no_onchange) form.trigger("change");
   }
 
   if (res.download) {
@@ -1852,6 +2009,13 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
       type: "warning",
       text: res.suppressed,
     });
+  }
+  if (res.reload_embedded_view) {
+    let new_state = res.new_state || undefined;
+    reload_embedded_view(res.reload_embedded_view, new_state);
+  }
+  if (res.progress_bar_update) {
+    progress_toast_update(res.progress_bar_update);
   }
   if (res.eval_js) await handle(res.eval_js, eval_it);
   /// TODO got and resume_workflow - use localStorage
@@ -2055,17 +2219,24 @@ function room_older(viewname, room_id, btn) {
   );
 }
 
-function init_room(viewname, room_id) {
-  let socket = null;
-  if (parent?.saltcorn?.data?.state) {
-    const { server_path, jwt } =
-      parent.saltcorn.data.state.getState().mobileConfig;
-    socket = io(server_path, {
-      query: `jwt=${jwt}`,
-      transports: ["websocket"],
-    });
-  } else socket = io({ transports: ["websocket"] });
+function get_shared_socket() {
+  let socket = window.sharedSocket || null;
+  if (!socket) {
+    if (parent?.saltcorn?.data?.state) {
+      const { server_path, jwt } =
+        parent.saltcorn.data.state.getState().mobileConfig;
+      socket = io(server_path, {
+        query: `jwt=${jwt}`,
+        transports: ["websocket"],
+      });
+    } else socket = io({ transports: ["websocket"] });
+    window.sharedSocket = socket;
+  }
+  return socket;
+}
 
+function init_room(viewname, room_id) {
+  let socket = get_shared_socket();
   socket.emit("join_room", [viewname, room_id]);
   socket.on("message", (msg) => {
     if (msg.not_for_user_id) {
@@ -2088,30 +2259,54 @@ function init_room(viewname, room_id) {
 }
 
 function init_collab_room(viewname, eventCfgs) {
-  let socket = null;
-  if (parent?.saltcorn?.data?.state) {
-    const { server_path, jwt } =
-      parent.saltcorn.data.state.getState().mobileConfig;
-    socket = io(server_path, {
-      query: `jwt=${jwt}`,
-      transports: ["websocket"],
-    });
-  } else socket = io({ transports: ["websocket"] });
+  let socket = get_shared_socket();
   for (const [event, callback] of Object.entries(eventCfgs.events)) {
     socket.on(event, callback);
   }
-  socket.on("connect", function () {
+  const joinFn = () => {
     socket.emit("join_collab_room", viewname, (ack) => {
-      if (ack && ack.status === "ok") {
+      if (ack?.status === "ok")
         console.log(`Joined collaboration room for view '${viewname}'`);
-      } else {
-        console.error("Failed to join collaboration room:", ack);
-      }
+      else if (ack?.status === "already_joined") {
+        if (window._sc_loglevel > 5)
+          console.log(
+            `Already joined collaboration room for view '${viewname}'`
+          );
+      } else console.error("Failed to join collaboration room:", ack);
     });
-  });
+  };
+  if (socket.connected) joinFn();
+  else socket.on("connect", joinFn);
   socket.on("disconnect", function () {
     console.log("Disconnected from the server");
   });
+}
+
+function init_dynamic_update_room() {
+  const isNode = getIsNode();
+  if (
+    !window.io ||
+    navigator.userAgent.includes("jsdom") ||
+    (isNode && !dynamic_updates_cfg?.enabled)
+  )
+    return;
+  if (!isNode) {
+    const state = parent.saltcorn.data.state.getState();
+    if (!state.getConfig("enable_dynamic_updates", true)) return;
+  }
+  let socket = get_shared_socket();
+  socket.on("dynamic_update", async (data) => {
+    await common_done(data);
+  });
+  const joinFn = () => {
+    socket.emit("join_dynamic_update_room", (ack) => {
+      if (ack && ack.status === "ok") {
+        if (window._sc_loglevel > 5) console.log("Joined dynamic update room");
+      } else console.error("Failed to join dynamic update room:", ack);
+    });
+  };
+  if (socket.connected) joinFn();
+  else socket.on("connect", joinFn);
 }
 
 function cancel_form(form) {
@@ -2159,7 +2354,7 @@ function check_saltcorn_notifications() {
     .then((resp) => {
       if (resp.success) {
         const n = resp.success;
-        const menu_item = $(`a.notify-menu-item`);
+        const menu_item = $('a[href="/notifications"]');
 
         menu_item.html(
           `<i class="fa-fw mr-05 fas fa-bell"></i>Notifications (${n})`
@@ -2418,6 +2613,35 @@ function handle_identical_fields(event) {
   }
 }
 
+function toggle_header_filters(toggle_icon_elem) {
+  //console.log("toggle headers", elem);
+
+  const r = $(toggle_icon_elem).closest("thead").find("tr.header-filters")[0];
+  
+  //var r = document.getElementById("${filterRowId}");
+  if (r) {
+    var hidden =
+      r.style.display === "none" ||
+      window.getComputedStyle(r).display === "none";
+    if (hidden) {
+      r.style.display = "table-row";
+      var ic = toggle_icon_elem.querySelector("i");
+      if (ic) {
+        ic.classList.remove("fa-chevron-down");
+        ic.classList.add("fa-chevron-up");
+      }
+    } else {
+      r.style.display = "none";
+      var ic2 = toggle_icon_elem.querySelector("i");
+      if (ic2) {
+        ic2.classList.remove("fa-chevron-up");
+        ic2.classList.add("fa-chevron-down");
+      }
+    }
+  }
+  return false;
+}
+
 const observer = new IntersectionObserver(
   (entries, observer) => {
     entries.forEach((entry) => {
@@ -2560,4 +2784,10 @@ async function initPushNotify() {
   } catch (error) {
     console.error("Push notification initialization failed:", error);
   }
+}
+
+if (document.readyState !== "loading") {
+  init_dynamic_update_room();
+} else {
+  document.addEventListener("DOMContentLoaded", init_dynamic_update_room);
 }

@@ -46,6 +46,11 @@ describe("eval_expression", () => {
 
     expect(eval_expression("add58(x)", { x: 5 })).toBe(63);
   });
+  it("evaluates with null row", () => {
+    expect(eval_expression("5+2", undefined)).toBe(7);
+    expect(eval_expression("5+2", null)).toBe(7);
+    expect(eval_expression("5+2")).toBe(7);
+  });
 });
 
 describe("calculated", () => {
@@ -239,6 +244,14 @@ describe("calculated", () => {
       expression: "1+asyncAdd2(x)",
       stored: true,
     });
+    await Field.create({
+      table,
+      label: "td",
+      type: "Date",
+      calculated: true,
+      expression: "today(-5)",
+      stored: true,
+    });
 
     const id = await table.insertRow({ x: 14 });
     const row0 = await table.getRow({});
@@ -247,6 +260,7 @@ describe("calculated", () => {
     await table.updateRow({ x: 15 }, id);
     const rows = await table.getRows({});
     expect(rows[0].z).toBe(18);
+    if (!db.isSQLite) expect(rows[0].td instanceof Date).toBe(true);
   });
 });
 describe("single joinfields in stored calculated fields", () => {
@@ -953,7 +967,12 @@ describe("interpolation", () => {
 });
 describe("jsexprToSQL", () => {
   it("translates equality", () => {
-    expect(jsexprToSQL("foo==4")).toEqual("(foo)==(4)");
+    expect(jsexprToSQL("foo==4")).toEqual("(foo)=(4)");
+  });
+  it("translates string equality", () => {
+    expect(jsexprToSQL('foo=="bar"')).toEqual("(foo)=('bar')");
+    expect(jsexprToSQL('foo!="bar"')).toEqual("(foo)!=('bar')");
+    expect(jsexprToSQL('!(foo=="bar")')).toEqual("not ((foo)=('bar'))");
   });
   it("translates bools", () => {
     expect(jsexprToSQL("foo==true")).toEqual("foo is true");
@@ -964,6 +983,16 @@ describe("jsexprToSQL", () => {
     expect(jsexprToSQL("foo==null")).toEqual("foo is null");
     expect(jsexprToSQL("foo!=null")).toEqual("foo is not null");
     expect(jsexprToSQL("foo!==null")).toEqual("foo is not null");
+  });
+  it("translates and", () => {
+    expect(jsexprToSQL("foo==true && x==2")).toEqual(
+      "(foo is true)and((x)=(2))"
+    );
+  });
+  it("translates something mildly complex", () => {
+    expect(jsexprToSQL('!(name==="roderick" && phone==null)')).toEqual(
+      "not (((name)=('roderick'))and(phone is null))"
+    );
   });
 });
 describe("mergeIntoWhere", () => {

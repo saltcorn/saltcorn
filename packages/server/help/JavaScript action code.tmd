@@ -7,7 +7,7 @@ database queries or other aynchronous code (see example below)
 
 The variable `table` is the associated table (if any; note lowercase). If you want to access a different table,
 use the `Table` variable (note uppercase) to access the Table class of tables (see 
-[documentation for Table class](/admin/jsdoc/classes/_saltcorn_data.models.Table-1.html))
+[documentation for Table class](/admin/jsdoc/classes/_saltcorn_data.models_table.Table.html))
 
 Example:
 
@@ -147,3 +147,58 @@ return { set_fields: {
 Execute JavaScript in the browser.
 
 Example: `return { eval_js: 'alert("Hello world")' }`
+
+#### `reload_embedded_view`
+
+Reload the embedded view by name. Optionally, also give a new state (as a string in query string format) with the `new_state` key.
+
+Examples:
+
+```
+return { reload_embedded_view: "booklist"}
+```
+
+with new state
+
+```
+return { reload_embedded_view: "booklist", new_state: "publisher=5&category=Romance"}
+```
+
+#### `progress_bar_update`
+
+Creates or updates a progress bar. The value for `progress_bar_update` must be an object with the following keys:
+
+* `blocking`: true if this a popup modal which blocks the UI. Must specify `blocking` or `id`
+* `id`: A valid JavaScript identifier, for creating/updating a toast progress bar. Must specify `blocking` or `id`
+* `close`: true if this progress bar is finished and should close
+* `title`: The title of the progress bar
+* `message`: The progress message
+* `percent`: 0-100, set the progress bar value
+* `maxHeight`: Only if blocking=true. Messages will be pushed to scrolling container with this height
+* `popupWidth`: Only if blocking=true. Set the width of the popup.
+
+
+Examples:
+
+```
+return { 
+  progress_bar_update: {
+    blocking: true,
+    message: "Cloning messenger RNA",
+    title: "Cell synthesis",
+    percent: 45,
+    maxHeight: 120,
+    popupWidth: 600
+  },
+  page_load_tag // only display on current page; see below
+}
+```
+### Emit Client events
+
+Use `emit_to_client' to send socket.io events to one or multiple clients. For example, to notify the user with id 1:
+```
+emit_to_client({notify: "hello admin"}, 1);
+```
+This event goes to each tab (and window) where the user is logged in. Otherwise, you can use an array or omit the second parameter to emit to default to the originating user. All return directives from the block above can be used.
+
+Include the constant `page_load_tag` in the object to only appear on the originating tab, for instance: `emit_to_client({notify: "Hello", page_load_tag})`.

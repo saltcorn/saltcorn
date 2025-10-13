@@ -123,6 +123,7 @@ const Docker = require("dockerode");
 const npmFetch = require("npm-registry-fetch");
 const Tag = require("@saltcorn/data/models/tag");
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
+const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 
@@ -500,11 +501,12 @@ router.get(
       "backup_s3_access_secret"
     );
     backupForm.values.backup_s3_region =
-    getState().getConfig("backup_s3_region");
+      getState().getConfig("backup_s3_region");
     aBackupFilePrefixForm.values.backup_with_event_log = getState().getConfig(
       "backup_with_event_log"
     );
-    aBackupFilePrefixForm.values.backup_password = getState().getConfig("backup_password");
+    aBackupFilePrefixForm.values.backup_password =
+      getState().getConfig("backup_password");
     const aSnapshotForm = snapshotForm(req);
     aSnapshotForm.values.snapshots_enabled =
       getState().getConfig("snapshots_enabled");
@@ -2268,7 +2270,7 @@ router.get(
 );
 const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
   `<script>
-  var capacitorBuilderAvailable = ${capacitorBuilderAvailable};
+  var capacitorBuilderAvailable = ${capacitorBuilderAvailable.installed};
   var isSbadmin2 = ${isSbadmin2};
   function showEntrySelect(type) {
     for( const currentType of ["view", "page", "pagegroup"]) {
@@ -2304,19 +2306,50 @@ const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
   }
   else
     console.error('versionInput not found');
+
+  const entryByRoleBox = document.getElementById('entryPointByRoleBoxId');
+  if (entryByRoleBox) {
+    entryByRoleBox.addEventListener('change', () => {
+      const entryByRole = entryByRoleBox.checked;
+      const entryRow = document.getElementById('entryPointRowId');
+      const selector = document.getElementById('entrySelectorsId');
+      if (entryByRole) {
+        entryRow.classList.remove('border', 'border-2', 'p-3', 'rounded');
+        selector.classList.add('d-none');
+      }
+      else {
+        entryRow.classList.add('border', 'border-2', 'p-3', 'rounded');
+        selector.classList.remove('d-none');
+      }
+    });
+  } else
+    console.error('entryByRoleBox not found');
 `)}
   </script>`;
 
-const imageAvailable = async () => {
+const imageAvailable = async (preferedVersion) => {
+  const docker = new Docker();
   try {
-    const state = getState();
-    const image = new Docker().getImage(
-      `saltcorn/capacitor-builder:${state.scVersion}`
+    const image = docker.getImage(
+      `saltcorn/capacitor-builder:${preferedVersion}`
     );
     await image.inspect();
-    return true;
+    return { installed: true, version: preferedVersion };
   } catch (e) {
-    return false;
+    try {
+      const images = await docker.listImages({
+        filters: { reference: ["saltcorn/capacitor-builder:*"] },
+      });
+      const tags = images.flatMap((img) => img.RepoTags || []);
+      if (tags.length > 0)
+        return { installed: true, version: tags[0].split(":")[1] };
+    } catch (err) {
+      getState().log(
+        5,
+        `Error checking for capacitor-builder image: ${err.message || err}`
+      );
+    }
+    return { installed: false };
   }
 };
 
@@ -2372,13 +2405,15 @@ router.get(
       .map((plugin) => plugin.name);
     const builderSettings =
       getState().getConfig("mobile_builder_settings") || {};
-    const dockerAvailable = await imageAvailable();
+    const scVersion = getState().scVersion;
+    const dockerAvailable = await imageAvailable(scVersion);
     const xcodeCheckRes = await checkXcodebuild();
     const xcodebuildAvailable = xcodeCheckRes.installed;
     const xcodebuildVersion = xcodeCheckRes.version;
     const layout = getState().getLayout(req.user);
     const isSbadmin2 = layout === getState().layouts.sbadmin2;
     const pushEnabled = getState().getConfig("enable_push_notify", false);
+    const isEntrypointByRole = builderSettings.entryPointByRole === "on";
     send_admin_page({
       res,
       req,
@@ -2438,152 +2473,188 @@ router.get(
                     )
                   ),
                   div(
-                    { class: "row" },
+                    { class: "row mb-3" },
                     div(
-                      { class: "col-sm-4" },
-                      // 'view/page' tabs
-                      ul(
-                        { class: "nav nav-pills" },
-                        li(
-                          {
-                            class: "nav-item",
-                            onClick: "showEntrySelect('view')",
-                          },
-                          div(
+                      {
+                        class: `col-sm-4 mt-2 ${isEntrypointByRole ? "" : "border border-2 p-3 rounded"}`,
+                        id: "entryPointRowId",
+                      },
+                      div(
+                        { class: "row pb-2" },
+                        div(
+                          { class: "col-sm-6" },
+                          input({
+                            type: "checkbox",
+                            id: "entryPointByRoleBoxId",
+                            class: "form-check-input me-2",
+                            name: "entryPointByRole",
+                            checked: isEntrypointByRole,
+                          }),
+                          label(
                             {
-                              class: `nav-link ${
-                                !builderSettings.entryPointType ||
-                                builderSettings.entryPointType === "view"
-                                  ? "active"
-                                  : ""
-                              }`,
-                              id: "viewNavLinkID",
+                              for: "entryPointByRole",
+                              class: "form-label",
                             },
-                            req.__("View")
-                          )
-                        ),
-                        li(
-                          {
-                            class: "nav-item",
-                            onClick: "showEntrySelect('page')",
-                          },
-                          div(
-                            {
-                              class: `nav-link ${
-                                builderSettings.entryPointType === "page"
-                                  ? "active"
-                                  : ""
-                              }`,
-                              id: "pageNavLinkID",
-                            },
-                            req.__("Page")
-                          ),
-                          li(
-                            {
-                              class: "nav-item",
-                              onClick: "showEntrySelect('pagegroup')",
-                            },
-                            div(
+                            req.__("Entry point by role"),
+                            a(
                               {
-                                class: `nav-link ${
-                                  builderSettings.entryPointType === "pagegroup"
-                                    ? "active"
-                                    : ""
-                                }`,
-                                id: "pagegroupNavLinkID",
+                                href: "javascript:ajax_modal('/admin/help/Entry point by role?')",
                               },
-                              req.__("Pagegroup")
+                              i({ class: "fas fa-question-circle ps-1" })
                             )
                           )
                         )
                       ),
-                      // select entry-view
-                      select(
+                      // 'view/page/pagegroup' tabs
+                      div(
                         {
-                          class: `form-select ${
-                            builderSettings.entryPointType === "page" ||
-                            builderSettings.entryPointType === "pagegroup"
-                              ? "d-none"
-                              : ""
-                          }`,
-                          ...(!builderSettings.entryPointType ||
-                          builderSettings.entryPointType === "view"
-                            ? { name: "entryPoint" }
-                            : {}),
-                          id: "viewInputID",
+                          id: "entrySelectorsId",
+                          class: isEntrypointByRole ? "d-none" : "",
                         },
-                        views
-                          .map((view) =>
-                            option(
+                        ul(
+                          { class: "nav nav-pills" },
+                          li(
+                            {
+                              class: "nav-item",
+                              onClick: "showEntrySelect('view')",
+                            },
+                            div(
                               {
-                                value: view.name,
-                                selected:
-                                  builderSettings.entryPointType === "view" &&
-                                  builderSettings.entryPoint === view.name,
+                                class: `nav-link ${
+                                  !builderSettings.entryPointType ||
+                                  builderSettings.entryPointType === "view"
+                                    ? "active"
+                                    : ""
+                                }`,
+                                id: "viewNavLinkID",
                               },
-                              view.name
+                              req.__("View")
+                            )
+                          ),
+                          li(
+                            {
+                              class: "nav-item",
+                              onClick: "showEntrySelect('page')",
+                            },
+                            div(
+                              {
+                                class: `nav-link ${
+                                  builderSettings.entryPointType === "page"
+                                    ? "active"
+                                    : ""
+                                }`,
+                                id: "pageNavLinkID",
+                              },
+                              req.__("Page")
+                            ),
+                            li(
+                              {
+                                class: "nav-item",
+                                onClick: "showEntrySelect('pagegroup')",
+                              },
+                              div(
+                                {
+                                  class: `nav-link ${
+                                    builderSettings.entryPointType ===
+                                    "pagegroup"
+                                      ? "active"
+                                      : ""
+                                  }`,
+                                  id: "pagegroupNavLinkID",
+                                },
+                                req.__("Pagegroup")
+                              )
                             )
                           )
-                          .join(",")
-                      ),
-                      // select entry-page
-                      select(
-                        {
-                          class: `form-select ${
-                            !builderSettings.entryPointType ||
-                            builderSettings.entryPointType === "view" ||
-                            builderSettings.entryPointType === "pagegroup"
-                              ? "d-none"
-                              : ""
-                          }`,
-                          ...(builderSettings.entryPointType === "page"
-                            ? { name: "entryPoint" }
-                            : {}),
-                          id: "pageInputID",
-                        },
-                        pages
-                          .map((page) =>
-                            option(
-                              {
-                                value: page.name,
-                                selected:
-                                  builderSettings.entryPointType === "page" &&
-                                  builderSettings.entryPoint === page.name,
-                              },
-                              page.name
+                        ),
+                        // select entry-view
+                        select(
+                          {
+                            class: `form-select ${
+                              builderSettings.entryPointType === "page" ||
+                              builderSettings.entryPointType === "pagegroup"
+                                ? "d-none"
+                                : ""
+                            }`,
+                            ...(!builderSettings.entryPointType ||
+                            builderSettings.entryPointType === "view"
+                              ? { name: "entryPoint" }
+                              : {}),
+                            id: "viewInputID",
+                          },
+                          views
+                            .map((view) =>
+                              option(
+                                {
+                                  value: view.name,
+                                  selected:
+                                    builderSettings.entryPointType === "view" &&
+                                    builderSettings.entryPoint === view.name,
+                                },
+                                view.name
+                              )
                             )
-                          )
-                          .join("")
-                      ),
-                      // select entry-pagegroup
-                      select(
-                        {
-                          class: `form-select ${
-                            !builderSettings.entryPointType ||
-                            builderSettings.entryPointType === "view" ||
-                            builderSettings.entryPointType === "page"
-                              ? "d-none"
-                              : ""
-                          }`,
-                          ...(builderSettings.entryPointType === "pagegroup"
-                            ? { name: "entryPoint" }
-                            : {}),
-                          id: "pagegroupInputID",
-                        },
-                        pageGroups
-                          .map((group) =>
-                            option(
-                              {
-                                value: group.name,
-                                selected:
-                                  builderSettings.entryPointType ===
-                                    "pagegroup" &&
-                                  builderSettings.entryPoint === group.name,
-                              },
-                              group.name
+                            .join(",")
+                        ),
+                        // select entry-page
+                        select(
+                          {
+                            class: `form-select ${
+                              !builderSettings.entryPointType ||
+                              builderSettings.entryPointType === "view" ||
+                              builderSettings.entryPointType === "pagegroup"
+                                ? "d-none"
+                                : ""
+                            }`,
+                            ...(builderSettings.entryPointType === "page"
+                              ? { name: "entryPoint" }
+                              : {}),
+                            id: "pageInputID",
+                          },
+                          pages
+                            .map((page) =>
+                              option(
+                                {
+                                  value: page.name,
+                                  selected:
+                                    builderSettings.entryPointType === "page" &&
+                                    builderSettings.entryPoint === page.name,
+                                },
+                                page.name
+                              )
                             )
-                          )
-                          .join("")
+                            .join("")
+                        ),
+                        // select entry-pagegroup
+                        select(
+                          {
+                            class: `form-select ${
+                              !builderSettings.entryPointType ||
+                              builderSettings.entryPointType === "view" ||
+                              builderSettings.entryPointType === "page"
+                                ? "d-none"
+                                : ""
+                            }`,
+                            ...(builderSettings.entryPointType === "pagegroup"
+                              ? { name: "entryPoint" }
+                              : {}),
+                            id: "pagegroupInputID",
+                          },
+                          pageGroups
+                            .map((group) =>
+                              option(
+                                {
+                                  value: group.name,
+                                  selected:
+                                    builderSettings.entryPointType ===
+                                      "pagegroup" &&
+                                    builderSettings.entryPoint === group.name,
+                                },
+                                group.name
+                              )
+                            )
+                            .join("")
+                        )
                       )
                     ),
                     div(
@@ -3132,15 +3203,58 @@ router.get(
                               id: "dockerBuilderStatusId",
                               class: "",
                             },
-                            dockerAvailable
+                            dockerAvailable.installed &&
+                              dockerAvailable.version === scVersion
                               ? span(
                                   req.__("installed"),
                                   i({ class: "ps-2 fas fa-check text-success" })
                                 )
-                              : span(
-                                  req.__("not available"),
-                                  i({ class: "ps-2 fas fa-times text-danger" })
-                                )
+                              : dockerAvailable.installed
+                                ? div(
+                                    {
+                                      id: "mismatchBoxId",
+                                      class: "mt-3 p-3 border rounded bg-light",
+                                    },
+                                    div(
+                                      {
+                                        class: "d-flex align-items-center mb-2",
+                                      },
+                                      req.__("installed"),
+                                      i({
+                                        title: req.__("Information"),
+                                        class:
+                                          "ps-2 fas fa-info-circle text-warning",
+                                      })
+                                    ),
+                                    div(
+                                      { class: "fw-bold text-danger mb-1" },
+                                      "Version Mismatch:"
+                                    ),
+
+                                    ul(
+                                      { class: "list-unstyled mb-0" },
+                                      li(
+                                        span(
+                                          { class: "fw-semibold text-muted" },
+                                          req.__("Docker tag:")
+                                        ),
+                                        dockerAvailable.version
+                                      ),
+                                      li(
+                                        span(
+                                          { class: "fw-semibold text-muted" },
+                                          req.__("SC version:")
+                                        ),
+                                        scVersion
+                                      )
+                                    )
+                                  )
+                                : span(
+                                    req.__("not available"),
+                                    i({
+                                      class: "ps-2 fas fa-times text-danger",
+                                    })
+                                  )
                           )
                         ),
                         div(
@@ -3711,6 +3825,7 @@ router.post(
     let {
       entryPoint,
       entryPointType,
+      entryPointByRole,
       androidPlatform,
       iOSPlatform,
       useDocker,
@@ -3814,10 +3929,12 @@ router.post(
     await File.new_folder(outDirName, "/mobile_app");
     const spawnParams = [
       "build-app",
-      "-e",
-      entryPoint,
       "-t",
-      entryPointType === "pagegroup" ? "page" : entryPointType,
+      entryPointByRole
+        ? "byrole"
+        : entryPointType === "pagegroup"
+          ? "page"
+          : entryPointType,
       "-c",
       outDir,
       "-b",
@@ -3825,6 +3942,7 @@ router.post(
       "-u",
       req.user.email, // ensured by isAdmin
     ];
+    if (!entryPointByRole) spawnParams.push("-e", entryPoint);
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
     if (iOSPlatform) {
@@ -3996,8 +4114,9 @@ router.get(
   "/mobile-app/check-capacitor-builder",
   isAdmin,
   error_catcher(async (req, res) => {
-    const installed = await imageAvailable();
-    res.json({ installed });
+    const state = getState();
+    const { installed, version } = await imageAvailable(state.scVersion);
+    res.json({ installed, version, sc_version: state.scVersion });
   })
 );
 
@@ -4075,13 +4194,19 @@ router.post(
       await getState().refresh_triggers();
     }
     if (form.values.tables) {
-      await db.deleteWhere("_sc_table_constraints");
       await db.deleteWhere("_sc_model_instances");
       await db.deleteWhere("_sc_models");
 
-      const tables = await Table.find();
+      //in revers order of creation in case any provided tables depend on real tables
+      const tables = await Table.find({}, { orderBy: "id", orderDesc: true });
 
       for (const table of tables) {
+        const constraints = await TableConstraint.find({ table_id: table.id });
+
+        for (const con of constraints) {
+          await con.delete();
+        }
+
         await db.deleteWhere("_sc_triggers", {
           table_id: table.id,
         });
@@ -4096,6 +4221,18 @@ router.post(
       }
       for (const table of tables) {
         if (table.name !== "users") await table.delete();
+        else
+          // reset users table row
+          await table.update({
+            min_role_read: 1,
+            min_role_write: 1,
+            description: "",
+            ownership_formula: null,
+            ownership_field_id: null,
+            versioned: false,
+            has_sync_info: false,
+            is_user_group: false,
+          });
       }
     }
     if (form.values.files) {
@@ -4126,6 +4263,8 @@ router.post(
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
     }
     await getState().refresh();
+    await require("@saltcorn/data/standard-menu")();
+
     if (form.values.users) {
       await db.deleteWhere("_sc_notifications");
 
@@ -4329,7 +4468,7 @@ router.get(
             "Only functions declared as <code>function name(...) {...}</code> or <code>async function name(...) {...}</code> will be available in formulae and code actions. Declare a constant <code>k</code> as <code>globalThis.k = ...</code> In scope: " +
             a(
               {
-                href: "/admin/jsdoc/classes/_saltcorn_data.models.Table-1.html",
+                href: "/admin/jsdoc/classes/_saltcorn_data.models_table.Table.html",
                 target: "_blank",
               },
               "Table"
@@ -4532,7 +4671,6 @@ admin_config_route({
   path: "/notifications",
   super_path: "/admin",
   field_names: [
-    "notification_in_menu",
     { section_header: "Progressive Web Application" },
     "pwa_enabled",
     { name: "pwa_display", showIf: { pwa_enabled: true } },

@@ -11,6 +11,7 @@ import {
   mkWhere,
   mkSelectOptions,
   orderByIsObject,
+  Value,
 } from "@saltcorn/db-common/internal";
 import utils from "../../utils";
 const { isNode } = utils;
@@ -163,4 +164,164 @@ export const process_aggregations = (
   );
 
   if (!isNode()) values.unshift(...aggValues);
+};
+
+// TODO this copies a lot of code from above - refactor to share code
+export const aggregation_query_fields = (
+  table_name: string,
+  aggregations: {
+    [nm: string]: {
+      field?: string;
+      valueFormula?: string;
+      aggregate: string;
+    };
+  },
+  options?: {
+    where?: Where;
+    groupBy?: string[] | string;
+    schema?: string;
+  }
+): {
+  fldNms: string[];
+  sql: string;
+  values: Value[];
+  where: string;
+  groupBy: string[] | null;
+} => {
+  let fldNms: string[] = [];
+  const where0 = options?.where || {};
+  const groupBy = Array.isArray(options?.groupBy)
+    ? (options?.groupBy as string[])
+    : options?.groupBy
+      ? [options?.groupBy]
+      : null;
+  const schema = options?.schema
+    ? `"${options?.schema}".`
+    : db.getTenantSchemaPrefix();
+  const { where, values } = mkWhere(where0, db.isSQLite);
+  Object.entries(aggregations).forEach(
+    ([nm, { field, valueFormula, aggregate }]) => {
+      if (
+        field &&
+        (aggregate.startsWith("Percent ") || aggregate.startsWith("Percent "))
+      ) {
+        const targetBoolVal = aggregate.split(" ")[1] === "true";
+
+        fldNms.push(
+          `avg( CASE WHEN "${sqlsanitize(field)}"=${JSON.stringify(
+            !!targetBoolVal
+          )} THEN 100.0 ELSE 0.0 END) as "${sqlsanitize(nm)}"`
+        );
+      } else if (
+        field &&
+        (aggregate.startsWith("Latest ") || aggregate.startsWith("Earliest "))
+      ) {
+        const dateField = aggregate.split(" ")[1];
+        const isLatest = aggregate.startsWith("Latest ");
+
+        let newWhere = where;
+        if (groupBy) {
+          const newClauses = groupBy
+            .map((f) => `innertbl."${f}" = a."${f}"`)
+            .join(" AND ");
+          if (!newWhere) newWhere = "where " + newClauses;
+          else newWhere = `${newWhere} AND ${newClauses}`;
+        }
+        fldNms.push(
+          `(select ${
+            field ? `"${sqlsanitize(field)}"` : valueFormula
+          } from ${schema}"${sqlsanitize(
+            table_name
+          )}" innertbl ${newWhere} order by "${sqlsanitize(dateField)}" ${
+            isLatest ? "DESC" : "ASC"
+          } limit 1) as "${sqlsanitize(nm)}"`
+        );
+      } else
+        fldNms.push(
+          `${getAggAndField(
+            aggregate,
+            field === "Formula" ? undefined : field,
+            field === "Formula" ? valueFormula : undefined
+          )} as "${sqlsanitize(nm)}"`
+        );
+    }
+  );
+  if (groupBy) {
+    fldNms.push(...groupBy);
+  }
+  const sql = `SELECT ${fldNms.join()} FROM ${schema}"${sqlsanitize(
+    table_name
+  )}" a ${where}${
+    groupBy ? ` group by ${groupBy.map((f) => sqlsanitize(f)).join(", ")}` : ""
+  }`;
+
+  return { fldNms, sql, where, values, groupBy };
+};
+
+export const joinfield_renamer = (joinFields: any, aggregations: any) => {
+  let f = (x: any) => x;
+  Object.entries(aggregations || {}).forEach(([k, v]: any) => {
+    if (v.rename_to) {
+      const oldf = f;
+      f = (x: any) => {
+        if (typeof x[k] !== "undefined") {
+          x[v.rename_to] = x[k];
+          delete x[k];
+        }
+        return oldf(x);
+      };
+    }
+  });
+  Object.entries(joinFields || {}).forEach(([k, v]: any) => {
+    if (v.rename_object) {
+      if (v.rename_object.length === 2) {
+        const oldf = f;
+        f = (x: any) => {
+          const origId = x[v.rename_object[0]];
+          x[v.rename_object[0]] = {
+            ...x[v.rename_object[0]],
+            [v.rename_object[1]]: x[k],
+            ...(typeof origId === "number" ? { id: origId } : {}),
+          };
+          return oldf(x);
+        };
+      } else if (v.rename_object.length === 3) {
+        const oldf = f;
+        f = (x: any) => {
+          const origId = x[v.rename_object[0]];
+          x[v.rename_object[0]] = {
+            ...x[v.rename_object[0]],
+            [v.rename_object[1]]: {
+              ...x[v.rename_object[0]]?.[v.rename_object[1]],
+              [v.rename_object[2]]: x[k],
+            },
+            ...(typeof origId === "number" ? { id: origId } : {}),
+          };
+          return oldf(x);
+        };
+      } else if (v.rename_object.length === 4) {
+        const oldf = f;
+        f = (x: any) => {
+          const origId = x[v.rename_object[0]];
+
+          x[v.rename_object[0]] = {
+            ...x[v.rename_object[0]],
+            [v.rename_object[1]]: {
+              ...x[v.rename_object[0]]?.[v.rename_object[1]],
+              [v.rename_object[2]]: {
+                ...x[v.rename_object[0]]?.[v.rename_object[1]]?.[
+                  v.rename_object[2]
+                ],
+                [v.rename_object[3]]: x[k],
+              },
+            },
+            ...(typeof origId === "number" ? { id: origId } : {}),
+          };
+
+          return oldf(x);
+        };
+      }
+    }
+  });
+  return f;
 };

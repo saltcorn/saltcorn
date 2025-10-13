@@ -70,18 +70,18 @@ test.describe('E2E Test Suite', () => {
     test('Add badges view in show people', async () => {
         await functions.views();
         await page.click(pageobject.configureShowPeople);
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
         await customAssert('Select task badge view in view to show dropdown', async () => {
             await page.click(pageobject.View2Showdropdown);
             await page.click(pageobject.view2taskbadge, { force: true });
         });
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.click(pageobject.nextoption);
 
         await functions.views();
         await page.click(pageobject.PeopleList);
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.click(pageobject.showfieldlink);
         await customAssert('Task badge should be visible on people list', async () => {
             await expect(page.locator(pageobject.badgeLocator)).toBeVisible();
@@ -134,26 +134,26 @@ test.describe('E2E Test Suite', () => {
         await functions.click_table();
         await page.click(pageobject.taskHelper);
         await page.click(pageobject.EditlinkLocator);
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         // click on add row button
 
         await customAssert('Select name for helper', async () => {
             await page.click(pageobject.addrowlocator);
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
             await page.click(pageobject.HelperCell);
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
             await page.click('text=Adam', { force: true });
-            await page.waitForTimeout(5000);
+            await page.waitForTimeout(2500);
 
             await page.click(pageobject.addrowlocator);
             await page.click(pageobject.HelperCell);
             await page.click('text=Brandon');
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
 
             await page.click(pageobject.addrowlocator);
             await page.click(pageobject.HelperCell);
             await page.click('text=Cherry');
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
         });
 
         await customAssert('Select task for person', async () => {
@@ -163,7 +163,7 @@ test.describe('E2E Test Suite', () => {
             await page.click('text=Take out trash');
             await page.locator(pageobject.TaskCell).nth(2).click();
             await page.click('text=Empty Fridge');
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
         });
     });
 
@@ -196,19 +196,19 @@ test.describe('E2E Test Suite', () => {
     test('Add task helper in show people', async () => {
         await functions.views();
         await page.click(pageobject.configureShowPeople);
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.click(pageobject.txttaskbadge);
         // await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
         await customAssert('Select task badge view in view to show dropdown', async () => {
             await page.click(pageobject.View2Showdropdown);
             await page.click(pageobject.view2editHelper, { force: true });
         });
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.click(pageobject.nextoption);
 
         await functions.views();
         // Click to open people list
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2500);
         await page.click(pageobject.PeopleList);
         // click on show link
         await page.click(pageobject.showfieldlink);
@@ -218,7 +218,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Add new task badge for person', async () => {
             await page.click(pageobject.plusIconbadge);
             await page.click('text=Buy Milk');
-            await page.waitForTimeout(1000);
+            await page.waitForTimeout(500);
         });
     });
 });

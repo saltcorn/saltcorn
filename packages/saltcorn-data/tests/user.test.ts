@@ -80,6 +80,7 @@ describe("User", () => {
       email: u.email,
       reset_password_token: token,
       password: "passw0rd",
+      confirm_password: "passw0rd",
     });
     assertsIsSuccessMessage(res0);
     expect(!!res0.success).toBe(false);
@@ -87,6 +88,7 @@ describe("User", () => {
       email: u.email,
       reset_password_token: token,
       password: "newpaass",
+      confirm_password: "newpaass",
     });
     assertsIsSuccessMessage(res);
     expect(!!res.success).toBe(true);
@@ -104,12 +106,14 @@ describe("User", () => {
       email: u.email,
       reset_password_token: "somerandomtoken",
       password: "newpaass",
+      confirm_password: "newpaass",
     });
     expect(res1).toEqual({ error: "User not found or expired token" });
     const res2 = await User.resetPasswordWithToken({
       email: u.email,
       reset_password_token: "",
       password: "newpaass",
+      confirm_password: "newpaass",
     });
     expect(res2).toEqual({
       error: "Invalid token or invalid token length or incorrect email",
@@ -214,7 +218,7 @@ describe("User fields", () => {
   it("should add fields", async () => {
     const table = Table.findOne({ name: "users" });
     assertIsSet(table);
-    const fc = await Field.create({
+    await Field.create({
       table,
       label: "Height",
       type: "Integer",
@@ -237,6 +241,57 @@ describe("User fields", () => {
     assertIsSet(ut);
     expect(ut.email).toBe("foo1@bar.com");
     expect(ut.height).toBe(183);
+  });
+  it("should add calculated fields", async () => {
+    const table = User.table;
+    assertIsSet(table);
+    await Field.create({
+      table,
+      label: "upper1",
+      type: "String",
+      calculated: true,
+      expression: "email.toUpperCase()",
+    });
+    await User.create({
+      email: "foo2@bar.com",
+      password: "YEge56FGew",
+      height: 183,
+    });
+    const u = await User.authenticate({
+      email: "foo2@bar.com",
+      password: "YEge56FGew",
+    });
+    assertsObjectIsUser(u);
+    expect(u.email).toBe("foo2@bar.com");
+    expect(u.role_id).toBe(80);
+    expect(u.height).toBe(183);
+    expect(u.upper1).toBe("FOO2@BAR.COM")
+  });
+   it("should add stored calculated fields", async () => {
+    const table = User.table;
+    assertIsSet(table);
+    await Field.create({
+      table,
+      label: "upper2",
+      type: "String",
+      calculated: true,
+      expression: "email.toUpperCase()",
+      stored: true,
+    });
+    await User.create({
+      email: "foo3@bar.com",
+      password: "YEge56FGew",
+      height: 183,
+    });
+    const u = await User.authenticate({
+      email: "foo3@bar.com",
+      password: "YEge56FGew",
+    });
+    assertsObjectIsUser(u);
+    expect(u.email).toBe("foo3@bar.com");
+    expect(u.role_id).toBe(80);
+    expect(u.height).toBe(183);
+    expect(u.upper2).toBe("FOO3@BAR.COM")
   });
 });
 describe("User join fields and aggregations in ownership", () => {

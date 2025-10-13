@@ -240,6 +240,67 @@ const configTypes: ConfigTypes = {
     default: "80",
     required: true,
   },
+  min_password_length: {
+    type: "Integer",
+    label: "Minimum password length",
+    default: 8,
+    required: true,
+    blurb:
+      "The minimum length of passwords for users. Set to 0 to disable password requirements.",
+    excludeFromMobile: true,
+  },
+  check_common_passwords: {
+    type: "Bool",
+    label: "Check common passwords",
+    default: true,
+    blurb:
+      "Check if the password is in the list of common passwords. If enabled, users will not be able to use common passwords.",
+    excludeFromMobile: true,
+  },
+  password_require_uppercase: {
+    type: "Bool",
+    label: "Require uppercase",
+    default: false,
+    blurb: "Require at least one uppercase letter in the password",
+    excludeFromMobile: true,
+  },
+  password_require_lowercase: {
+    type: "Bool",
+    label: "Require lowercase",
+    default: true,
+    blurb: "Require at least one lowercase letter in the password",
+    excludeFromMobile: true,
+  },
+  password_require_number: {
+    type: "Bool",
+    label: "Require number",
+    default: false,
+    blurb: "Require at least one number in the password",
+    excludeFromMobile: true,
+  },
+  password_require_special_char: {
+    type: "Bool",
+    label: "Require special character",
+    default: false,
+    blurb: "Require at least one special character in the password",
+    excludeFromMobile: true,
+  },
+  password_complexity: {
+    type: "String",
+    label: "Password complexity",
+    default: "",
+    blurb:
+      "The regular expression that passwords must match. Set to empty string to disable password complexity requirements.",
+    excludeFromMobile: true,
+  },
+  password_complexity_error: {
+    type: "String",
+    label: "Password complexity error",
+    default: "",
+    blurb:
+      "The error message to show when password does not match the complexity requirements.",
+    excludeFromMobile: true,
+  },
   min_role_upload: {
     type: "Role",
     label: "Role to upload files",
@@ -316,6 +377,7 @@ const configTypes: ConfigTypes = {
     root_only: true,
     restart_required: true,
     excludeFromSnapshot: true,
+    helpTopic: "Multitenancy",
     label: "Multitenancy enabled",
     default: db.is_it_multi_tenant(),
     onChange(val: boolean) {
@@ -382,6 +444,14 @@ const configTypes: ConfigTypes = {
     root_only: true,
     label: "Set available npm modules",
     excludeFromMobile: true, // unsure
+  },
+  tenants_crash_log: {
+    type: "Bool",
+    root_only: true,
+    label: "Crash log",
+    blurb: "Delegate error handling to tenants",
+    excludeFromMobile: true, // unsure
+    default: false,
   },
   tenants_unsafe_plugins: {
     type: "Bool",
@@ -579,6 +649,13 @@ const configTypes: ConfigTypes = {
     default: {},
     excludeFromMobile: true,
   },
+  saltcorn_npm_versions: {
+    type: "hidden",
+    label: "@saltcorn/cli npm versions",
+    excludeFromSnapshot: true,
+    default: {},
+    excludeFromMobile: true,
+  },
   event_log_settings: {
     type: "hidden",
     label: "Event log settings",
@@ -628,6 +705,12 @@ const configTypes: ConfigTypes = {
     label: "Next weekly event",
     excludeFromSnapshot: true,
     default: null,
+  },
+  enable_dynamic_updates: {
+    type: "Bool",
+    label: "Enable dynamic updates",
+    default: true,
+    blurb: "Enable server side updates from within run_js_code actions",
   },
   default_locale: {
     type: "String",
@@ -1032,7 +1115,7 @@ const configTypes: ConfigTypes = {
   log_level: {
     input_type: "select",
     label: "System logging verbosity",
-    default: "1",
+    default: "2",
 
     excludeFromSnapshot: true,
     options: [
@@ -1247,6 +1330,12 @@ const configTypes: ConfigTypes = {
     default: true,
     excludeFromMobile: true,
   },
+  restore_history: {
+    type: "Bool",
+    label: "Restore history tables",
+    default: true,
+    excludeFromMobile: true,
+  },
   max_relations_layer_depth: {
     type: "Integer",
     label: "Max relations layer depth",
@@ -1276,12 +1365,21 @@ const configTypes: ConfigTypes = {
     label: "Joined log socket ids",
     default: [],
     excludeFromMobile: true,
+    ephemeral: true,
   },
   joined_real_time_socket_ids: {
     type: "hidden",
     label: "Joined real time socket ids",
     default: [],
     excludeFromMobile: true,
+    ephemeral: true,
+  },
+  joined_dynamic_update_socket_ids: {
+    type: "hidden",
+    label: "Joined dynamic update socket ids",
+    default: [],
+    excludeFromMobile: true,
+    ephemeral: true,
   },
   prune_session_interval: {
     type: "Integer",
@@ -1298,13 +1396,6 @@ const configTypes: ConfigTypes = {
     type: "JSON",
     label: "Cached plugin version infos",
     default: {},
-    excludeFromMobile: true,
-  },
-  // when this is different from the current version, the engines cache is cleared
-  engines_cache_sc_version: {
-    type: "String",
-    label: "Saltcorn version for engines cache",
-    default: "",
     excludeFromMobile: true,
   },
   delete_finished_workflows_days: {
@@ -1469,7 +1560,7 @@ const getAllConfig = async (): Promise<ConfigTypes | void> => {
   const cfgs = await db.select("_sc_config");
   let cfg: ConfigTypes = {};
   cfgs.forEach(({ key, value }: { key: string; value: string | any }) => {
-    if (key === "testMigration")
+    if (key === "testMigration" || configTypes[key]?.ephemeral)
       //legacy invalid cfg
       return;
 
@@ -1685,6 +1776,51 @@ const get_latest_npm_version = async (
   }
 };
 
+const get_saltcorn_npm_versions = async (
+  timeout_ms?: number
+): Promise<string[]> => {
+  const { getState } = require("../db/state");
+  const { isStale } = (await import("../utils")).default;
+  const pkg = "@saltcorn/cli";
+  const fetch = require("node-fetch");
+  const stored = getState().getConfig("saltcorn_npm_versions", {});
+
+  if (stored?.time && !isStale(stored.time, 6)) {
+    return stored?.versions;
+  }
+
+  const guess: string[] = stored?.versions || []; //default return
+  try {
+    const fetch_it = async () => {
+      const response = await fetch(`https://registry.npmjs.org/${pkg}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
+      }
+      const data = await response.json();
+      if (!data?.versions || data.versions.length === 0)
+        throw new Error("No versions found");
+      const keys = Object.keys(data.versions);
+      await getState().setConfig("saltcorn_npm_versions", {
+        time: new Date(),
+        versions: keys,
+      });
+      return keys;
+    };
+
+    if (timeout_ms) {
+      const canceller = async () => {
+        await sleep(timeout_ms);
+        return guess;
+      };
+      return Promise.race([fetch_it().catch((e) => guess), canceller()]).catch(
+        (e) => guess
+      );
+    } else return await fetch_it();
+  } catch (e) {
+    return guess;
+  }
+};
+
 /**
  * Get base url
  * @param {object} req
@@ -1744,6 +1880,7 @@ const configExports = {
   remove_from_menu,
   available_languages,
   get_latest_npm_version,
+  get_saltcorn_npm_versions,
   get_base_url,
   save_menu_items,
   check_email_mask,

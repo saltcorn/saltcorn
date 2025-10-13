@@ -75,27 +75,45 @@ class FieldRepeat implements AbstractFieldRepeat {
    * @param {*} ix
    * @returns {object}
    */
-  validate_from_ix(whole_rec: any, ix: number): SuccessMessage {
+  validate_from_ix(
+    whole_rec: any,
+    ix: number,
+    nameAdd: string = ""
+  ): SuccessMessage {
     var has_any = false;
     var res: any = {};
 
     this.fields.forEach((f) => {
-      const fval = whole_rec[`${f.name}_${ix}`];
+      if (f.isRepeat) {
+        const valres = (f as FieldRepeat).validate_from_ix(
+          whole_rec,
+          0,
+          "_" + ix
+        );
+
+        if (valres.success.length) {
+          res[f.name] = valres.success;
+          has_any = true;
+        }
+        return;
+      }
+      const fval = whole_rec[`${f.name}${nameAdd}_${ix}`];
+
       if (typeof fval !== "undefined") {
         if (instanceOfType(f.type) && f.type?.read) {
-          res[f.name] = f.type.read(fval);
+          res[f.name] = f.type.read(fval, f.attributes);
         } else res[f.name] = fval;
         has_any = true;
       }
       if (
         f.type === "File" &&
         whole_rec._file_names &&
-        whole_rec._file_names.includes(`${f.name}_${ix}`)
+        whole_rec._file_names.includes(`${f.name}${nameAdd}_${ix}`)
       )
         has_any = true;
     });
     if (has_any) {
-      const rest = this.validate_from_ix(whole_rec, ix + 1);
+      const rest = this.validate_from_ix(whole_rec, ix + 1, nameAdd);
       return { success: [res, ...rest.success] };
     } else return { success: [] };
   }

@@ -15,6 +15,7 @@ const {
   field_picker_fields,
   readState,
   generate_joined_query,
+  stateToQueryString,
 } = require("../plugin-helper");
 const { getState } = require("../db/state");
 const {
@@ -36,6 +37,7 @@ import {
   prepareSimpleTopicPostRelation,
 } from "./common_helpers";
 import { assertIsSet } from "./assertions";
+const PlainDate = require("@saltcorn/plain-date");
 
 const { mockReqRes } = mocks;
 
@@ -54,6 +56,27 @@ describe("string manipulators", () => {
   });
   it("validSqlId", async () => {
     expect(validSqlId("Sr. Søejer")).toBe("sr_soejer");
+  });
+});
+
+describe("stateToQueryString", () => {
+  it("makes query string", async () => {
+    expect(stateToQueryString({ x: "5" })).toBe("?x=5");
+    expect(stateToQueryString({ x: "5", y: "goo" })).toBe("?x=5&y=goo");
+  });
+  it("makes query string with array", async () => {
+    expect(stateToQueryString({ x: [5, 6] })).toBe("?x=5&x=6");
+    expect(stateToQueryString({ x: [5] })).toBe("?x=5");
+    expect(stateToQueryString({ x: [5, 6], z: true })).toBe("?x=5&x=6&z=true");
+  });
+  it("makes query string with lt/gt", async () => {
+    expect(stateToQueryString({ x: { lt: 5 } })).toBe("?_lt_x=5");
+    expect(stateToQueryString({ x: { lt: 5, gt: 1 } })).toBe(
+      "?_gt_x=1&_lt_x=5"
+    );
+    expect(stateToQueryString({ x: { lt: 5 }, y:"foo" })).toBe("?_lt_x=5&y=foo");
+    expect(stateToQueryString({ x: { gt: 5 } })).toBe("?_gt_x=5");
+    expect(stateToQueryString({ x: { lt: 5, equal: true } })).toBe("?_lte_x=5");
   });
 });
 
@@ -402,6 +425,7 @@ describe("stateFieldsToWhere", () => {
     new Field({ name: "astr", type: "String" }),
     new Field({ name: "age", type: "Integer" }),
     new Field({ name: "dob", type: "Date", attributes: { day_only: true } }),
+    new Field({ name: "tob", type: "Date", attributes: { day_only: false } }),
     new Field({ name: "favbook", type: "Key to books" }),
     { name: "props", type: { name: "JSON" } },
     {
@@ -448,8 +472,32 @@ describe("stateFieldsToWhere", () => {
     });
     expect(w).toStrictEqual({
       dob: [
-        { gt: new Date(5), day_only: true },
-        { lt: new Date(15), day_only: true },
+        { gt: new PlainDate(5), day_only: true },
+        { lt: new PlainDate(15), day_only: true },
+      ],
+    });
+  });
+  it("date bounds inclusive", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { _fromdate_dob: "2025-07-24", _todate_dob: "2025-07-27" },
+    });
+    expect(w).toStrictEqual({
+      dob: [
+        { gt: new PlainDate("2025-07-24"), equal: true, day_only: true },
+        { lt: new PlainDate("2025-07-27"), equal: true, day_only: true },
+      ],
+    });
+  });
+  it("date bounds inclusive with time", async () => {
+    const w = stateFieldsToWhere({
+      fields,
+      state: { _fromdate_tob: "2025-07-24", _todate_tob: "2025-07-27" },
+    });
+    expect(w).toStrictEqual({
+      tob: [
+        { gt: new Date("2025-07-24"), equal: true, day_only: false },
+        { lt: new Date("2025-07-28"), equal: true, day_only: false },
       ],
     });
   });
@@ -638,5 +686,6 @@ describe("objectToQueryString", () => {
     expect(objectToQueryString({ a: { or: ["Foo", "Bar"] } })).toBe(
       "a=Foo&a=Bar"
     );
+    expect(objectToQueryString({ a: ["Foo", "Bar"] })).toBe("a=Foo&a=Bar");
   });
 });

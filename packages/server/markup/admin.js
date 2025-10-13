@@ -15,10 +15,12 @@ const {
   span,
   ul,
   li,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const { configTypes } = require("@saltcorn/data/models/config");
-const { getState } = require("@saltcorn/data/db/state");
+const { getState, getRootState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
@@ -148,10 +150,23 @@ const add_edit_bar = ({
     )
   );
 
+  return append_to_contents(contents, bar);
+};
+
+const append_to_contents = (contents, toAppend) => {
   if (contents.above) {
-    contents.above.unshift(bar);
+    contents.above.unshift(toAppend);
     return contents;
-  } else return { above: [bar, contents] };
+  } else return { above: [toAppend, contents] };
+};
+
+const add_results_to_contents = (content, resultCollector) => {
+  if (Object.keys(resultCollector).length) {
+    return append_to_contents(
+      content,
+      script(domReady(`common_done(${JSON.stringify(resultCollector)})`))
+    );
+  } else return content;
 };
 
 /**
@@ -354,6 +369,7 @@ const send_tags_page = (args) => {
 const send_events_page = (args) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const isUserAdmin = args.req?.user.role_id === 1;
+  const tenants_crash_log = getRootState().getConfig("tenants_crash_log");
   return send_settings_page({
     main_section: "Events",
     main_section_href: "/events",
@@ -367,7 +383,9 @@ const send_events_page = (args) => {
           ]
         : []),
       { text: "Workflow runs", href: "/actions/runs" },
-      ...(isRoot ? [{ text: "Crash log", href: "/crashlog" }] : []),
+      ...(isRoot || tenants_crash_log
+        ? [{ text: "Crash log", href: "/crashlog" }]
+        : []),
     ],
     ...args,
   });
@@ -685,4 +703,6 @@ module.exports = {
   flash_restart,
   send_tags_page,
   upload_language_pack,
+  append_to_contents,
+  add_results_to_contents,
 };

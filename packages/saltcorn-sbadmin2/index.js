@@ -233,6 +233,7 @@ const sidebar = (brand, sections, currentUrl) =>
         class: "rounded-circle border-0",
         "data-sidebar-toggler": true,
         id: "sidebarToggle",
+        "aria-label": "Collapse sidebar menu"
       })
     )
   );

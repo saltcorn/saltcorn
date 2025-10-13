@@ -218,6 +218,9 @@ function pjax_to(href, e) {
         }
         $dest.html(res);
         if (localizer.length) localizer.attr("data-sc-local-state", href);
+        let $modal = $("#scmodal");
+        if ($modal.length && $modal.hasClass("show"))
+          $modal.prop("data-modal-state", href);
         initialize_page();
         document.dispatchEvent(new Event("pjax-loaded"));
       },
@@ -260,7 +263,12 @@ function spin_action_link(e) {
   const height = $e.height();
 
   $e.attr("data-innerhtml-prespin", $e.html());
+  $e.attr("data-previous-onclick", $e.attr("onclick"));
+  $e.attr("onclick", "void(0)");
   $e.html('<i class="fas fa-spinner fa-spin"></i>').width(width).height(height);
+  $(document).trigger("activate-spinner", $e);
+  //null onclick
+  $e.trigger("spin");
 }
 
 function reset_spinners() {
@@ -268,12 +276,30 @@ function reset_spinners() {
     $e = $(this);
     $e.html($e.attr("data-innerhtml-prespin"));
     $e.removeAttr("data-innerhtml-prespin");
+    const prevOnclick = $e.attr("data-previous-onclick");
+    if (prevOnclick && prevOnclick !== "void(0)") {
+      $e.attr("onclick", prevOnclick);
+      $e.removeAttr("data-previous-onclick");
+    }
+
+    //reset onclick
   });
 }
 
 let last_route_viewname;
 
-function view_post(viewnameOrElem, route, data, onDone, sendState) {
+function view_post(viewnameOrElem, route, data, onDoneOrObj, sendState) {
+  let onDone,
+    sendState1,
+    runAsync = false;
+  if (onDoneOrObj && typeof onDoneOrObj === "object") {
+    onDone = onDoneOrObj.onDone;
+    sendState1 = onDoneOrObj.sendState;
+    runAsync = onDoneOrObj.runAsync;
+  } else {
+    onDone = onDoneOrObj;
+    sendState1 = sendState;
+  }
   const viewname =
     typeof viewnameOrElem === "string"
       ? viewnameOrElem
@@ -281,7 +307,7 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
           .closest("[data-sc-embed-viewname]")
           .attr("data-sc-embed-viewname");
   last_route_viewname = viewname;
-  const query = sendState
+  const query = sendState1
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
     : "";
   const isFormData = data instanceof FormData;
@@ -289,6 +315,7 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     ...(!isFormData
       ? {
@@ -304,7 +331,7 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
     .done(function (res) {
       if (onDone) onDone(res);
       ajax_done(res, viewnameOrElem);
-      reset_spinners();
+      if (!runAsync) reset_spinners();
     })
     .fail(function (res) {
       if (!checkNetworkError(res))
@@ -342,7 +369,7 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
   });
 }
 
-function ensure_modal_exists_and_closed() {
+function ensure_modal_exists_and_closed(opts) {
   if ($("#scmodal").length === 0) {
     $("body").append(`<div id="scmodal" class="modal">
     <div class="modal-dialog">
@@ -371,13 +398,14 @@ function ensure_modal_exists_and_closed() {
       </div>
     </div>
   </div>`);
-  } else if ($("#scmodal").hasClass("show")) {
+  } else if ($("#scmodal").hasClass("show") && !opts?.open) {
     // remove reload handler added by edit, for when we have popup link
     // in autosave edit in popup
     $("#scmodal").off("hidden.bs.modal");
     close_saltcorn_modal();
   }
   $("#modal-toasts-area").empty();
+  $("#scmodal .modal-header button.btn-close").css("display", "");
 }
 
 function expand_thumbnail(img_id, filename) {
@@ -423,6 +451,7 @@ function ajax_modal(url, opts = {}) {
       new bootstrap.Modal($("#scmodal"), {
         focus: false,
       }).show();
+      $("#scmodal .modal-body").find("[autofocus]").first().focus();
       initialize_page();
       (opts.onOpen || function () {})(res);
       $("#scmodal").on("hidden.bs.modal", function (e) {
@@ -525,17 +554,25 @@ function saveAndContinue(e, k, event) {
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
   var form_data = form.serialize();
+
+  if (form.prop("data-last-save-success") === form_data) {
+    if (k) k(valres);
+    return;
+  }
+
   ajax_indicator(true, e);
   $.ajax(url, {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: form_data,
     success: function (res) {
       ajax_indicator(false);
       form.removeAttr("data-unsaved-changes");
       form.parent().find(".full-form-error").text("");
+      form.prop("data-last-save-success", form_data);
       if (res.id && form.find("input[name=id")) {
         form.append(
           `<input type="hidden" class="form-control  " name="id" value="${res.id}">`
@@ -659,6 +696,7 @@ function ajaxSubmitForm(e, force_no_reload, event) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: new FormData(form[0]),
     processData: false,
@@ -687,6 +725,19 @@ function ajaxSubmitForm(e, force_no_reload, event) {
 
   return false;
 }
+
+function page_post_action(url) {
+  ajax_post_json(
+    url,
+    {},
+    {
+      success: () => {
+        if (window.reset_spinners) reset_spinners();
+      },
+    }
+  );
+}
+
 function ajax_post_json(url, data, args = {}) {
   ajax_post(url, {
     data: JSON.stringify(data),
@@ -702,6 +753,7 @@ function ajax_post(url, args) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     ...(args || {}),
   })
@@ -745,9 +797,11 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: form_data,
-    success: function () {
+    success: function (res) {
+      common_done(res);
       if (reload_on_done) location.reload();
     },
     error: checkNetworkError,
@@ -767,6 +821,7 @@ function api_action_call(name, body) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: body,
     success: function (res) {
@@ -1121,12 +1176,42 @@ function check_capacitor_builder() {
     success: function (res) {
       window.capacitorBuilderAvailable = !!res.installed;
       if (window.capacitorBuilderAvailable) {
-        $("#dockerBuilderStatusId").html(
-          `<span>
-            installed<i class="ps-2 fas fa-check text-success"></i>
-          </span>
-          `
-        );
+        if (res.version !== res.sc_version) {
+          $("#dockerBuilderStatusId").html(`
+    <div
+      id="mismatchBoxId" class="mt-3 p-3 border rounded bg-light"
+    >
+      <div
+        class="d-flex align-items-center mb-2"
+      >
+        installed<i title="Information" class="ps-2 fas fa-info-circle text-warning"></i>
+      </div>
+      <div
+        class="fw-bold text-danger mb-1"
+      >
+        Version Mismatch:
+      </div>
+      <ul
+        class="list-unstyled mb-0"
+      >
+        <li>
+          <span class="fw-semibold text-muted">Docker tag:</span>1.3.1-beta.0
+        </li>
+        <li>
+          <span class="fw-semibold text-muted">SC version:</span>1.3.1-beta.10
+        </li>
+      </ul>
+    </div>`);
+          $("#dockerBuilderVersionBoxId").removeClass("d-none");
+          $("#dockerBuilderVersionId").html(` ${res.version}`);
+        } else {
+          $("#dockerBuilderStatusId").html(
+            `<span>
+              installed<i class="ps-2 fas fa-check text-success"></i>
+            </span>
+            `
+          );
+        }
       } else {
         $("#dockerBuilderStatusId").html(
           `<span>
@@ -1344,6 +1429,7 @@ function check_delete_unsaved(tablename, script_tag) {
         type: "DELETE",
         headers: {
           "CSRF-Token": _sc_globalCsrf,
+          "Page-Load-Tag": _sc_pageloadtag,
         },
       });
   }
@@ -1371,6 +1457,36 @@ function cfu_translate(that) {
     $("label[for=inputdefault_language]").text(translations.language);
     $("label[for=inputemail]").text(translations.email);
     $("label[for=inputpassword]").text(translations.password);
+  }
+}
+
+function ensure_script_loaded(src, callback) {
+  //https://stackoverflow.com/questions/26331600/load-js-script-only-when-it-has-not-been-loaded-already-and-then-only-once
+  let scripts = Array.from(document.querySelectorAll("script")).map(
+    (scr) => scr.src
+  );
+
+  if (!scripts.some((s) => s.endsWith(src))) {
+    var tag = document.createElement("script");
+    tag.src = src;
+    tag.onload = () => {
+      if (typeof callback === "function") callback();
+    };
+    document.getElementsByTagName("body")[0].appendChild(tag);
+  } else if (typeof callback === "function") callback();
+}
+
+function ensure_css_loaded(src) {
+  let links = Array.from(document.querySelectorAll("link[rel=stylesheet]")).map(
+    (scr) => scr.href
+  );
+
+  if (!links.includes(src)) {
+    var fileref = document.createElement("link");
+    fileref.rel = "stylesheet";
+    fileref.type = "text/css";
+    fileref.href = src;
+    document.getElementsByTagName("head")[0].appendChild(fileref);
   }
 }
 

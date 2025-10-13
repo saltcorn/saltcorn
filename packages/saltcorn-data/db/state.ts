@@ -63,11 +63,14 @@ import { runInContext, createContext } from "vm";
 import faIcons from "./fa5-icons";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
+import MetaData from "../models/metadata";
 
 /**
  * @param v
  */
 const process_send = (v: any) => {
+  if (!process.send) console.log("warning: there is no process send");
+
   if (process.send) process.send(v);
 };
 
@@ -127,12 +130,6 @@ const get_standard_icons = () => {
   return icons;
 };
 
-const withRenderBody = (layouts: any) => {
-  for (let i = layouts.length - 1; i >= 0; i--)
-    if (layouts[i].renderBody) return layouts[i];
-  throw new Error("No layout with renderBody found");
-};
-
 /**
  * State Class
  * @category saltcorn-data
@@ -165,8 +162,9 @@ class State {
   fonts: Record<string, string>;
   icons: Array<string>;
   layouts: Record<string, PluginLayout>;
-  userLayouts: Record<string, PluginLayout>;
+  userLayouts: Record<string, PluginLayout & { config: GenObj }>;
   headers: Record<string, Array<Header>>;
+  assets_by_role: Record<string, Array<Header>>;
   function_context: Record<string, Function>;
   codepage_context: Record<string, unknown>;
   plugins_cfg_context: any;
@@ -181,6 +179,8 @@ class State {
   codeNPMmodules: Record<string, any>;
   npm_refresh_in_progess: boolean;
   hasJoinedLogSockets: boolean;
+  hasJoinedDynamicUpdateSockets: boolean;
+  hasJoinedCollabSockets: boolean;
   queriesCache?: Record<string, any>;
   scVersion: string;
   waitingWorkflows?: boolean;
@@ -188,6 +188,7 @@ class State {
   copilot_skills: Array<CopilotSkill>;
   capacitorPlugins: Array<CapacitorPlugin>;
   exchange: Record<string, Array<unknown>>;
+  sendMessageToWorkers?: Function;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -196,6 +197,8 @@ class State {
    * @param {string} tenant description
    */
   constructor(tenant: string) {
+    const { today } = require("../models/expression");
+
     this.tenant = tenant;
     this.views = [];
     this.triggers = [];
@@ -225,8 +228,9 @@ class State {
     this.layouts = { emergency: emergency_layout };
     this.userLayouts = {};
     this.headers = {};
-    this.function_context = { moment, slugify: db.slugify };
-    this.functions = { moment, slugify: db.slugify };
+    this.assets_by_role = {};
+    this.function_context = { moment, today, slugify: db.slugify };
+    this.functions = { moment, today, slugify: db.slugify };
     this.plugins_cfg_context = {};
     this.keyFieldviews = {};
     this.external_tables = {};
@@ -242,6 +246,8 @@ class State {
     this.codeNPMmodules = {};
     this.npm_refresh_in_progess = false;
     this.hasJoinedLogSockets = false;
+    this.hasJoinedDynamicUpdateSockets = false;
+    this.hasJoinedCollabSockets = false;
     try {
       this.scVersion = require("../../package.json").version;
     } catch (e) {
@@ -264,8 +270,85 @@ class State {
     this.capacitorPlugins = [];
   }
 
+  async computeAssetsByRole() {
+    this.assets_by_role = {};
+    let roleIds: number[] = [];
+    const Role = (await import("../models/role")).default;
+    const roles = await Role.find({}, { orderBy: "id" });
+    roleIds = roles.map((r) => +r.id).filter((n: number) => !Number.isNaN(n));
+
+    if (!roleIds.includes(100)) roleIds.push(100);
+    for (const rid of roleIds) this.assets_by_role[rid] = [];
+
+    const allHeaders = Object.values(this.headers).flat();
+    for (const h of allHeaders) {
+      if (!h.onlyViews && !h.onlyFieldviews) {
+        for (const rid of roleIds) this.assets_by_role[rid].push(h);
+        continue;
+      }
+
+      const onlyViews = h.onlyViews
+        ? Array.isArray(h.onlyViews)
+          ? h.onlyViews
+          : [h.onlyViews]
+        : [];
+
+      const onlyFieldviews = h.onlyFieldviews
+        ? Array.isArray(h.onlyFieldviews)
+          ? h.onlyFieldviews
+          : [h.onlyFieldviews]
+        : [];
+
+      const matchedViews = this.views.filter((v) => {
+        if (onlyViews.length) {
+          const tmplName = v.viewtemplateObj?.name || v.viewtemplate;
+          if (
+            onlyViews.includes(tmplName) ||
+            onlyViews.includes(v.viewtemplate)
+          )
+            return true;
+        }
+        if (onlyFieldviews.length) {
+          const columns = Array.isArray(v.configuration?.columns)
+            ? v.configuration!.columns
+            : [];
+          const colFieldviews = columns
+            .map(
+              (col: {
+                type: string; // "Field" | "Action"
+                field_name: string;
+                fieldview: string;
+                configuration: any;
+              }) => (col?.type === "Field" ? col.fieldview : null)
+            )
+            .filter((fv: string) => !!fv);
+          if (colFieldviews.some((fv: string) => onlyFieldviews.includes(fv)))
+            return true;
+        }
+        return false;
+      });
+
+      for (const v of matchedViews) {
+        const min_role = +(v.min_role ?? 100);
+        for (const rid of roleIds) {
+          if (rid <= min_role) this.assets_by_role[rid].push(h);
+        }
+      }
+    }
+
+    for (const ridStr of Object.keys(this.assets_by_role)) {
+      const rid = +ridStr;
+      this.assets_by_role[rid] = Array.from(new Set(this.assets_by_role[rid]));
+    }
+  }
+
   processSend(v: any) {
-    process_send(v);
+    if (!process.send) {
+      if (this.sendMessageToWorkers) this.sendMessageToWorkers(v);
+      else if (singleton.sendMessageToWorkers)
+        singleton.sendMessageToWorkers(v);
+      //else console.warn("nowhere to send msg", v);
+    } else process_send(v);
   }
 
   /**
@@ -274,7 +357,7 @@ class State {
    * @param {object} user
    * @returns {object}
    */
-  getLayout(user?: User) {
+  getLayout(user?: User): PluginLayout & { config: GenObj } {
     if (user?.email && this.userLayouts[user.email]) {
       return this.userLayouts[user.email];
     } else {
@@ -282,12 +365,33 @@ class State {
       const layout_by_role = this.getConfig("layout_by_role");
       if (layout_by_role && layout_by_role[role_id]) {
         const chosen = this.layouts[layout_by_role[role_id]];
-        if (chosen) return chosen;
+
+        if (chosen)
+          return {
+            ...chosen,
+            config: this.plugin_cfgs[layout_by_role[role_id]],
+          };
       }
-      const layoutvs = Object.values(this.layouts);
-      return isNode()
-        ? layoutvs[layoutvs.length - 1]
+      const withRenderBody = (
+        layouts: [string, PluginLayout][]
+      ): PluginLayout & { config: GenObj } => {
+        for (let i = layouts.length - 1; i >= 0; i--)
+          if (layouts[i][1].renderBody)
+            return {
+              ...layouts[i][1],
+              config: this.plugin_cfgs[layouts[i][0]],
+            };
+        throw new Error("No layout with renderBody found");
+      };
+
+      const layoutvs = Object.entries(this.layouts);
+      const layout = isNode()
+        ? {
+            ...layoutvs[layoutvs.length - 1][1],
+            config: this.plugin_cfgs[layoutvs[layoutvs.length - 1][0]],
+          }
         : withRenderBody(layoutvs);
+      return layout;
     }
   }
 
@@ -442,11 +546,24 @@ class State {
     if (db.is_node) {
       // TODO ch mobile i18n
       await this.refresh_i18n();
-      this.hasJoinedLogSockets =
-        (this.configs.joined_log_socket_ids?.value || []).length > 0;
     }
     if (!noSignal && db.is_node)
-      process_send({ refresh: "config", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
+  }
+
+  /**
+   * Set a config value that will not persist into the db
+   * @param key config key
+   * @param value config val
+   */
+  refresh_ephemeral_config(key: string, value: any) {
+    this.configs[key] = { value };
+    this.hasJoinedLogSockets =
+      (this.configs.joined_log_socket_ids?.value || []).length > 0;
+    this.hasJoinedDynamicUpdateSockets =
+      (this.configs.joined_dynamic_update_socket_ids?.value || []).length > 0;
+    this.hasJoinedCollabSockets =
+      (this.configs.joined_real_time_socket_ids?.value || []).length > 0;
   }
 
   async refreshUserLayouts() {
@@ -468,7 +585,7 @@ class State {
           ...pluginCfg,
           ...user._attributes.layout.config,
         });
-        this.userLayouts[user.email] = userLayout;
+        this.userLayouts[user.email] = { ...userLayout, config: pluginCfg };
       }
     }
   }
@@ -514,10 +631,16 @@ class State {
         this.virtual_triggers.push(...trs);
       }
     }
+    // rebuild assets_by_role whenever views change
+    try {
+      await this.computeAssetsByRole();
+    } catch (error) {
+      console.error("Error computing assets by role", error);
+    }
     if (!noSignal) this.log(5, "Refresh views");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "views", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "views", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -530,7 +653,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh triggers");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "triggers", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "triggers", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -544,7 +667,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh pages");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "pages", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "pages", tenant: db.getTenantSchema() });
   }
 
   async refresh_page_groups(noSignal: boolean) {
@@ -560,7 +683,10 @@ class State {
       }
     );
     if (!noSignal && db.is_node)
-      process_send({ refresh: "page_groups", tenant: db.getTenantSchema() });
+      this.processSend({
+        refresh: "page_groups",
+        tenant: db.getTenantSchema(),
+      });
   }
 
   /**
@@ -653,7 +779,7 @@ class State {
     if (!noSignal) this.log(5, "Refresh table");
 
     if (!noSignal && db.is_node)
-      process_send({ refresh: "tables", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "tables", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -665,6 +791,8 @@ class State {
   getConfig(key: string, def?: any) {
     const fixed = db.connectObj.fixed_configuration[key];
     if (typeof fixed !== "undefined") return fixed;
+    const exposed = db.connectObj.exposed_configuration[key];
+    if (typeof exposed !== "undefined") return exposed;
     if (db.connectObj.inherit_configuration.includes(key)) {
       if (typeof singleton.configs[key] !== "undefined")
         return singleton.configs[key].value;
@@ -693,7 +821,6 @@ class State {
   }
 
   /**
-   *
    * Set value of config parameter
    * @param key - key of parameter
    * @param value - value of parameter
@@ -705,16 +832,37 @@ class State {
       this.configs[key].value !== value
     ) {
       const fn = async () => {
-        await setConfig(key, value);
+        const isEphemeral = !!configTypes[key]?.ephemeral;
+        if (!isEphemeral) await setConfig(key, value);
         this.configs[key] = { value };
         if (key.startsWith("localizer_")) await this.refresh_i18n();
         if (key === "log_level") this.logLevel = +value;
         if (key === "joined_log_socket_ids")
           this.hasJoinedLogSockets = (value || []).length > 0;
-        if (db.is_node)
-          process_send({ refresh: "config", tenant: db.getTenantSchema() });
-        else {
-          await this.refresh_config(true);
+        if (key === "joined_dynamic_update_socket_ids")
+          this.hasJoinedDynamicUpdateSockets = (value || []).length > 0;
+        if (key === "joined_real_time_socket_ids")
+          this.hasJoinedCollabSockets = (value || []).length > 0;
+        if (db.is_node) {
+          if (isEphemeral) {
+            // config does not persist, send the whole object
+            this.processSend({
+              refresh: "ephemeral_config",
+              tenant: db.getTenantSchema(),
+              key,
+              value,
+            });
+          } else {
+            // config does persist, just send the key
+            this.processSend({
+              refresh: "config",
+              tenant: db.getTenantSchema(),
+            });
+          }
+        } else {
+          // mobile
+          if (isEphemeral) this.refresh_ephemeral_config(key, value);
+          else await this.refresh_config(true);
         }
       };
       if (db.getTenantSchema() !== this.tenant)
@@ -734,7 +882,7 @@ class State {
         delete this.configs[key];
       }
       if (db.is_node)
-        process_send({ refresh: "config", tenant: db.getTenantSchema() });
+        this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
       else {
         await this.refresh_config(true);
       }
@@ -846,20 +994,31 @@ class State {
       }
     );
     Object.entries(withCfg("fieldviews", {})).forEach(
-      ([k, v]: [k: string, v: any]) => {
-        if (v.type === "Key") {
-          this.keyFieldviews[k] = v;
-          return;
-        }
-        const type = this.types[v.type];
-        if (type) {
-          if (type.fieldviews) type.fieldviews[k] = v;
-          else type.fieldviews = { [k]: v };
-        } else {
-          if (!this.stashed_fieldviews[v.type])
-            this.stashed_fieldviews[v.type] = {};
-          this.stashed_fieldviews[v.type][k] = v;
-        }
+      ([nm, fv]: [nm: string, fv: any]) => {
+        const process_fv = (k: string, v: FieldView) => {
+          if (!v.type) return;
+          if (Array.isArray(v.type)) {
+            v.type.forEach((t) => {
+              process_fv(k, { ...v, type: t });
+            });
+            return;
+          }
+
+          if (v.type === "Key") {
+            this.keyFieldviews[k] = v;
+            return;
+          }
+          const type = this.types[v.type];
+          if (type) {
+            if (type.fieldviews) type.fieldviews[k] = v;
+            else type.fieldviews = { [k]: v };
+          } else {
+            if (!this.stashed_fieldviews[v.type])
+              this.stashed_fieldviews[v.type] = {};
+            this.stashed_fieldviews[v.type][k] = v;
+          }
+        };
+        process_fv(nm, fv);
       }
     );
     const layout = withCfg("layout");
@@ -933,7 +1092,7 @@ class State {
     delete this.plugins[name];
     await this.refresh_plugins();
     if (!noSignal && db.is_node)
-      process_send({ removePlugin: name, tenant: db.getTenantSchema() });
+      this.processSend({ removePlugin: name, tenant: db.getTenantSchema() });
   }
 
   get eval_context() {
@@ -960,14 +1119,40 @@ class State {
           ...this.function_context,
           Table,
           File,
+          View,
           User,
+          Trigger,
+          MetaData,
           setTimeout,
           fetch,
           sleep,
           interpolate,
+          tryCatchInTransaction: db.tryCatchInTransaction,
+          commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
+          emit_to_client: (data: any, userIds: number[]) => {
+            const enabled = this.getConfig("enable_dynamic_updates", true);
+            if (!enabled) {
+              this.log(
+                5,
+                "emit_to_client called, but dynamic updates are disabled"
+              );
+              return;
+            }
+            const safeIds = Array.isArray(userIds)
+              ? userIds
+              : userIds
+                ? [userIds]
+                : [];
+            this.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
+          },
+          Buffer: isNode() ? Buffer : require("buffer"),
           URL,
           console, //TODO consoleInterceptor
           require: (nm: string) => this.codeNPMmodules[nm],
+          setConfig: (k: string, v: any) =>
+            this.isFixedConfig(k) ? undefined : this.setConfig(k, v),
+          getConfig: (k: string) =>
+            this.isFixedConfig(k) ? undefined : this.getConfig(k),
         };
         const funCtxKeys = new Set(Object.keys(myContext));
         const sandbox = createContext(myContext);
@@ -985,7 +1170,7 @@ class State {
       }
     }
     if (!noSignal && db.is_node)
-      process_send({ refresh: "codepages", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "codepages", tenant: db.getTenantSchema() });
     this.oldCodePages = code_pages;
     return errMsg;
   }
@@ -1022,7 +1207,7 @@ class State {
     });
     await this.refresh(true);
     if (!noSignal && db.is_node)
-      process_send({ refresh: "plugins", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "plugins", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -1074,16 +1259,50 @@ class State {
     globalLogEmitter = f;
   }
 
+  /**
+   * @param f Function to emit collaborative editing messages
+   */
   setCollabEmitter(f: Function) {
     globalCollabEmitter = f;
+  }
+
+  /**
+   * @param f Function to emit dynamic update messages triggered from run_js_code actions
+   */
+  setDynamicUpdateEmitter(f: Function) {
+    globalDynamicUpdateEmitter = f;
   }
 
   emitLog(ten: string, min_level: number, msg: string) {
     globalLogEmitter(ten, min_level, msg);
   }
 
-  emitRealTimeUpdate(ten: string, type: string, data: any) {
+  /**
+   * For collaborative editing
+   * @param ten
+   * @param type
+   * @param data
+   */
+  emitCollabMessage(ten: string, type: string, data: any) {
+    if (!this.hasJoinedCollabSockets) {
+      this.log(5, "emitCollabMessage called, but no clients are joined yet");
+      return;
+    }
     globalCollabEmitter(ten, type, data);
+  }
+
+  /**
+   * For dynamic updates triggered from a run_js_code action
+   * @param ten
+   * @param data
+   * @param userIds - optional array of user IDs to send the update to
+   */
+  emitDynamicUpdate(ten: string, data: any, userIds?: number[]) {
+    if (!this.hasJoinedDynamicUpdateSockets) {
+      this.log(5, "emitDynamicUpdate called, but no clients are joined yet");
+      return;
+    }
+    globalDynamicUpdateEmitter(ten, data, userIds);
   }
 
   // default auth methods to enabled
@@ -1180,7 +1399,7 @@ class State {
       }
     }
     if (!noSignal && db.is_node)
-      process_send({ refresh: "npmpkgs", tenant: db.getTenantSchema() });
+      this.processSend({ refresh: "npmpkgs", tenant: db.getTenantSchema() });
     this.npm_refresh_in_progess = false;
   }
 }
@@ -1191,6 +1410,7 @@ class State {
 let globalRoomEmitter: Function = () => {};
 let globalLogEmitter: Function = () => {};
 let globalCollabEmitter: Function = () => {};
+let globalDynamicUpdateEmitter: Function = () => {};
 
 // the root tenant's state is singleton
 const singleton = new State("public");
@@ -1339,7 +1559,8 @@ const process_init_time = new Date();
  */
 const get_process_init_time = () => process_init_time;
 /**
- * State Features
+ * State Features - Help modules figure out what features are available in core saltcorn.
+ * This is necessary because modules need to work on different versions of core saltcorn
  */
 const features = {
   serve_static_dependencies: true,
@@ -1363,6 +1584,9 @@ const features = {
   capacitor: true,
   workflows: true,
   metadata: true,
+  multitype_fieldviews: true,
+  nested_fieldrepeats: true,
+  api_view_route: true,
 };
 
 export = {

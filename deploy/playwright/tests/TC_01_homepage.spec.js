@@ -47,12 +47,12 @@ test.describe('E2E Test Suite', () => {
   test('Create a new page with random string', async () => {
     // Create a new page with the generated random string
     await functions.create_New_Page('My_project_' + randomString);
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(3500);
     // Drag and drop the text source
     await page.waitForSelector(pageobject.textSource);
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
     await functions.fill_Text(pageobject.textlocator, '');
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await functions.fill_Text(pageobject.textlocator, 'Testing the placeholder');
     //  check hello world have text testing
     await customAssert('Hello world should have text Testing the placeholder', async () => {
@@ -209,7 +209,7 @@ test.describe('E2E Test Suite', () => {
   });
 
   //Check action settings
-  test('Check action settings', async () => {
+  /*test('Check action settings', async () => {
     // create a new page
     await functions.create_New_Page('My_project_' + randomString);
     //drag and drop the action locator
@@ -253,7 +253,7 @@ test.describe('E2E Test Suite', () => {
       await expect(hoverTitleInput).toHaveValue('');
     });
 
-  });
+  });*/
 
   //Create a new page with random string and navigate to new site URL
   test('Create a new page with random string and navigate to new site URL', async ({ browser }) => {

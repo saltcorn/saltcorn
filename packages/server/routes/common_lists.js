@@ -138,6 +138,7 @@ const tablesList = async (
         hover: true,
         tableClass: listClass(tagId, showList),
         tableId: domId,
+        class: "table-valign-middle",
       }
     ) +
     (tables.length == 0 && !filterOnTag
@@ -209,6 +210,13 @@ const view_dropdown = (view, req, on_done_redirect_str = "") =>
         },
         '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
       ),
+        a(
+      {
+        class: "dropdown-item",
+        href: `/registry-editor?etype=view&ename=${encodeURIComponent(view.name)}`,
+      },
+      '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
+    ),
     view.id && div({ class: "dropdown-divider" }),
     view.id &&
       post_dropdown_item(
@@ -442,6 +450,7 @@ const viewsList = async (
         hover: true,
         tableClass: listClass(tagId, showList),
         tableId: domId,
+        class: "table-valign-middle",
       }
     ) +
     (views.length == 0 && !filterOnTag
@@ -625,6 +634,7 @@ const getPageList = async (
       hover: true,
       tableClass: tagId ? `collapse ${showList ? "show" : ""}` : "",
       tableId: domId,
+      class: "table-valign-middle",
     }
   );
 };
@@ -657,6 +667,7 @@ const getPageGroupList = (rows, roles, req) => {
     rows,
     {
       hover: true,
+      class: "table-valign-middle",
     }
   );
 };
@@ -729,6 +740,8 @@ const getTriggerList = async (
       )
     );
   };
+  const whenCanHaveTable = (when) =>
+    ["Insert", "Update", "Delete", "Validate", "Never"].includes(when);
   return mkTable(
     [
       { label: req.__("Name"), key: "name" },
@@ -781,7 +794,7 @@ const getTriggerList = async (
       {
         label: req.__("Table or Channel"),
         key: (r) =>
-          r.table_name
+          r.table_name && whenCanHaveTable(r.when_trigger)
             ? user_can_inspect_tables
               ? a({ href: `/table/${r.table_name}` }, r.table_name)
               : r.table_name
@@ -807,6 +820,7 @@ const getTriggerList = async (
       hover: true,
       tableClass: tagId ? `collapse ${showList ? "show" : ""}` : "",
       tableId: domId,
+      class: "table-valign-middle",
     }
   );
 };

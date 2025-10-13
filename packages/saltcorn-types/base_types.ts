@@ -40,6 +40,7 @@ type FieldLikeBasics = {
   validator?: (arg0: any) => boolean | string | undefined;
   attributes?: GenObj;
   showIf?: { [field_name: string]: string | boolean | string[] };
+  isRepeat?: boolean
 };
 type FieldLikeWithSelectInputType = {
   input_type: "select";
@@ -60,6 +61,8 @@ export type Header = {
   script?: string;
   css?: string;
   headerTag?: string;
+  onlyViews?: string[];
+  onlyFieldviews?: string[];
 };
 
 type MenuItem = {
@@ -164,6 +167,7 @@ export type PluginWrap = (arg0: PluginWrapArg) => string;
 export type PluginLayout = {
   wrap: PluginWrap;
   authWrap?: (arg0: PluginAuthwrapArg) => string;
+  renderBody?: (arg: any) => string;
 };
 
 type Attribute = {
@@ -239,6 +243,7 @@ export type Action = {
   disableInBuilder?: boolean;
   disableInList?: boolean;
   disableInWorkflow?: boolean;
+  requireRow?: boolean;
   disableIf?: () => boolean;
 };
 
@@ -248,6 +253,7 @@ export type ViewTemplate = {
   tableless?: boolean;
   table_optional?: boolean;
   singleton?: boolean;
+  mobile_render_server_side?: boolean;
   get_state_fields?: (
     table_id: number | string | undefined,
     viewname: string,
@@ -400,6 +406,7 @@ type FieldViewFilter = {
 export type FieldView = {
   readFromFormRecord?: Function;
   read?: Function;
+  type?: string;
   blockDisplay?: boolean;
   handlesTextStyle?: boolean;
   description?: string;
@@ -499,7 +506,7 @@ export type AuthenticationMethod = {
 export type TableProvider = {
   configuration_workflow: (req: Req) => AbstractWorkflow;
   fields: (cfg: GenObj) => Promise<Array<FieldLike>>;
-  get_table: (cfg: GenObj) => Promise<Partial<AbstractTable>>;
+  get_table: (cfg: GenObj) => Partial<AbstractTable>;
 };
 
 export type CopilotSkill = {
@@ -591,6 +598,7 @@ export type Tablely = AbstractTable | { external: true };
 export type MobileConfig = {
   version_tag: string;
   entry_point: string;
+  entryPointType: "view" | "page" | "byrole";
   // server_path <=> base_url
   localTableIds: number[];
   synchedTables: string[];
@@ -675,6 +683,7 @@ export type ConnectObjType = {
   file_store?: string;
   default_schema?: string;
   fixed_configuration?: any;
+  exposed_configuration?: any;
   inherit_configuration?: any;
   version_tag?: string;
 };

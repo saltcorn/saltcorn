@@ -363,7 +363,7 @@ const render = ({
             }`
           : null;
       return div(
-        { class: "dropdown" },
+        { class: ["dropdown", !segment.block && "d-inline"] },
         button(
           {
             class:
@@ -371,7 +371,7 @@ const render = ({
                 ? "btn btn-link"
                 : `btn ${segment.action_style || "btn-primary"} ${
                     segment.action_size || ""
-                  } dropdown-toggle`,
+                  } d-inline-block dropdown-toggle`,
 
             "data-boundary": "viewport",
             type: "button",
@@ -434,6 +434,9 @@ const render = ({
               segment.link_style || "",
               segment.link_size || "",
               segment.link_class || "",
+              segment.link_style &&
+                segment.link_style.includes("btn") &&
+                "d-inline-block",
             ],
             target: isWeb && segment.target_blank ? "_blank" : false,
             title: segment.link_title,
@@ -680,6 +683,7 @@ const render = ({
           : `${what}: ${segment[what].map((p: string) => p + "px").join(" ")};`;
       let flexStyles = "";
       Object.keys(style || {}).forEach((k) => {
+        if (fullPageWidth && k === "position") return;
         flexStyles += `${k}:${style[k]};`;
       });
       const to_bs5 = (s: string) => {

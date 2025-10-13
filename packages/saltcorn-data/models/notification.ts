@@ -79,10 +79,11 @@ class Notification {
       user_id: o.user_id,
       read: o.read,
     });
+    const state = getState();
     const user = await User.findOne({ id: o.user_id });
     if (user?._attributes?.notify_email) {
       const email = {
-        from: getState()?.getConfig("email_from"),
+        from: state?.getConfig("email_from"),
         to: user.email,
         subject: o.title,
         text: `${o.body}   
@@ -91,13 +92,25 @@ class Notification {
       };
       (await emailModule.getMailTransport())
         .sendMail(email)
-        .catch((e) => getState()?.log(1, e.message));
+        .catch((e) => state?.log(1, e.message));
+    }
+    const enable_dynamic_updates = state?.getConfig("enable_dynamic_updates");
+    if (enable_dynamic_updates && user?.id) {
+      state?.emitDynamicUpdate(
+        db.getTenantSchema(),
+        {
+          toast_title: o.title,
+          remove_delay: 5,
+          notify: `<div>${o.body}</div>
+          ${o.link ? `<a href="${o.link}">${o.link}</a>` : ""}`,
+          eval_js: "check_saltcorn_notifications()",
+        },
+        [user.id]
+      );
     }
     if (isPushEnabled(user)) {
       const pushHelper = new PushMessageHelper(
-        getState()?.getConfig("push_notification_subscriptions", {})[
-          user.id!
-        ] || []
+        state?.getConfig("push_notification_subscriptions", {})[user.id!] || []
       );
       await pushHelper.send(o);
     }

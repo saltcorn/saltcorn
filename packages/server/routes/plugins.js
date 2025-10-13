@@ -238,7 +238,7 @@ const cfg_link = (req, row) => {
   if (plugin.configuration_workflow)
     return a(
       {
-        class: "btn btn-secondary btn-sm d-inline me-1",
+        class: "btn btn-secondary btn-sm d-inline-block",
         role: "button",
         href: `/plugins/configure/${encodeURIComponent(row.name)}`,
         title: req.__("Configure plugin"),
@@ -256,7 +256,7 @@ const cfg_link = (req, row) => {
 const info_link = (req, row) =>
   a(
     {
-      class: "btn btn-secondary btn-sm d-inline",
+      class: "btn btn-secondary btn-sm d-inline-block me-1",
       role: "button",
       href: `/plugins/info/${encodeURIComponent(row.name)}`,
       title: req.__("Information about plugin"),
@@ -306,7 +306,7 @@ const store_item_html = (req) => (item) => ({
       !item.installed &&
         item.plugin &&
         div(
-          { class: "me-2 d-inline" },
+          { class: "d-inline" },
           post_btn(
             `/plugins/install/${encodeURIComponent(item.name)}`,
             req.__("Install"),
@@ -331,10 +331,11 @@ const store_item_html = (req) => (item) => ({
             onClick: "press_store_button(this)",
           }
         ),
-
-      item.installed && item.plugin && cfg_link(req, item),
-      item.installed && item.plugin && info_link(req, item),
-
+      div(
+        { class: "btn-group", role: "group" },
+        item.installed && item.plugin && cfg_link(req, item),
+        item.installed && item.plugin && info_link(req, item)
+      ),
       item.installed &&
         item.pack &&
         post_btn(

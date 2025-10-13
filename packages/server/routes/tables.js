@@ -269,7 +269,7 @@ router.get(
                   name: "name",
                   type: "String",
                   required: true,
-                  attributes: { autofocus: true },
+                  attributes: { autofocus: true, spellcheck: false },
                 },
                 ...(table_provider_names.length
                   ? [
@@ -416,10 +416,17 @@ router.get(
                   {
                     label: req.__("Table name"),
                     name: "name",
-                    input_type: "text",
+                    type: "String",
+                    required: true,
+                    attributes: { spellcheck: false },
                   },
                   // todo implement file mask filter like , accept: "text/csv"
-                  { label: req.__("File"), name: "file", input_type: "file" },
+                  {
+                    label: req.__("File"),
+                    name: "file",
+                    input_type: "file",
+                    attributes: { accept: ".csv" },
+                  },
                 ],
               }),
               req.csrfToken()
@@ -787,7 +794,8 @@ router.get(
     let id = parseInt(idorname);
     let table;
     if (id) [table] = await Table.find({ id });
-    else {
+
+    if (!table) {
       [table] = await Table.find({ name: idorname });
     }
 
@@ -807,8 +815,12 @@ router.get(
     const user_can_edit_triggers =
       req.user.role_id === 1 ||
       getState().getConfig("min_role_edit_triggers", 1) >= req.user.role_id;
-
-    const nrows = await table.countRows({}, { forUser: req.user });
+    let nrows;
+    try {
+      nrows = await table.countRows({}, { forUser: req.user });
+    } catch {
+      nrows = NaN;
+    }
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
     const inbound_refs = [
@@ -824,7 +836,9 @@ router.get(
       fieldCard = [
         h4(req.__(`No fields defined in %s table`, table.name)),
         p(req.__("Fields define the columns in your table.")),
-        user_can_edit_tables &&
+        !table.external &&
+          !table.provider_name &&
+          user_can_edit_tables &&
           a(
             {
               href: `/field/new/${table.id}`,
@@ -848,7 +862,7 @@ router.get(
                   r.typename +
                     span({ class: "badge bg-danger ms-1" }, "Unknown type"),
           },
-          ...(table.external || !user_can_edit_tables
+          ...(table.external || !user_can_edit_tables || table.provider_name
             ? []
             : [
                 {
@@ -865,7 +879,7 @@ router.get(
             key: (r) => attribBadges(r),
           },
           { label: req.__("Variable name"), key: (t) => code(t.name) },
-          ...(table.external || !user_can_edit_tables
+          ...(table.external || !user_can_edit_tables || table.provider_name
             ? []
             : [
                 {
@@ -1188,7 +1202,7 @@ router.get(
           title: req.__("Fields"),
           contents: fieldCard,
         },
-        ...(fields.length > 0
+        ...(fields.length > 0 || table.provider_name
           ? [
               {
                 type: "card",
@@ -1309,6 +1323,17 @@ router.post(
       } else rest.ownership_formula = null;
       await db.withTransaction(async () => {
         await table.update(rest);
+        // Update table field's min_role_write attributes
+        const fields = table.getFields();
+
+        for (const f of fields) {
+          if (f.attributes?.min_role_write) {
+            f.attributes.min_role_write = parseInt(rest.min_role_write);
+            await f.update({
+              attributes: f.attributes,
+            });
+          }
+        }
       });
       await getState().refresh_tables();
       if (!req.xhr) {
@@ -1554,7 +1579,7 @@ router.get(
         },
         {
           type: "card",
-          class: "mt-0",
+          class: "mt-0 card-max-full-screen",
           title: cardHeaderTabs([
             { label: req.__("Your tables"), href: "/table", active: true },
             {
@@ -1562,7 +1587,8 @@ router.get(
               href: "/table/relationship-diagram",
             },
           ]),
-          contents: mainCard + createCard,
+          footer: createCard,
+          contents: mainCard,
         },
       ],
     });

@@ -77,6 +77,7 @@ const {
   extractFromColumns,
   extractViewToCreate,
 } = require("../../diagram/node_extract_utils");
+const { validID } = require("@saltcorn/markup/layout_utils");
 
 /**
  * @param {object} context
@@ -167,6 +168,7 @@ const configuration_workflow = (req) =>
           const actions = Trigger.action_options({
             tableTriggers: table.id,
             apiNeverTriggers: true,
+            forBuilder: true,
             builtInLabel: "List Actions",
             builtIns: builtInActions,
           });
@@ -188,6 +190,7 @@ const configuration_workflow = (req) =>
               );
             }
           }
+
           //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
@@ -695,6 +698,17 @@ const configuration_workflow = (req) =>
             showIf: { _row_click_type: ["Link", "Link new tab", "Popup"] },
           });
           formfields.push({
+            name: "_header_filters",
+            label: req.__("Header filters"),
+            type: "Bool",
+          });
+          formfields.push({
+            name: "_header_filters_toggle",
+            label: req.__("Toggle header filters"),
+            type: "Bool",
+            showIf: { _header_filters: true },
+          });
+          formfields.push({
             name: "transpose",
             label: req.__("Transpose"),
             sublabel: req.__("Display one column per line"),
@@ -764,6 +778,49 @@ const configuration_workflow = (req) =>
             sublabel: req.__("No lines between tables"),
             tab: "Layout options",
           });
+          formfields.push({
+            name: "_cell_valign",
+            label: req.__("Vertical alignment"),
+            type: "String",
+            required: true,
+            attributes: {
+              options: "Middle,Top,Bottom",
+            },
+            tab: "Layout options",
+          });
+          formfields.push({
+            name: "_responsive_collapse",
+            label: req.__("Responsve collapse"),
+            type: "Bool",
+            sublabel: req.__("Horizontal display on smaller screens"),
+            tab: "Layout options",
+          });
+          formfields.push({
+            name: "_collapse_breakpoint_px",
+            label: req.__("Collapse breakpoint (px)"),
+            type: "Integer",
+            tab: "Layout options",
+            default: 760,
+            showIf: { _responsive_collapse: true },
+          });
+          formfields.push({
+            name: "_table_layout",
+            label: req.__("Table layout"),
+            input_type: "select",
+            options: ["Auto", "Fixed"],
+            tab: "Layout options",
+          });
+          formfields.push({
+            name: "_row_color_formula",
+            label: req.__("Row color formula"),
+            sublabel: req.__(
+              "Formula for row background color. Ex.: <code>age>65 ?'#aaffaa': null</code>"
+            ),
+            type: "String",
+            tab: "Functionality",
+            class: "validate-expression",
+          });
+
           if (!db.isSQLite && !table.external)
             formfields.push({
               name: "_create_db_view",
@@ -771,6 +828,9 @@ const configuration_workflow = (req) =>
               sublabel: req.__(
                 "Create an SQL view in the database with the fields in this list"
               ),
+              help: {
+                topic: "Create SQL view",
+              },
               type: "Bool",
               tab: "Database options",
             });
@@ -838,7 +898,9 @@ const initial_config = async ({ table_id, exttable_name }) => {
     table_id ? { id: table_id } : { name: exttable_name }
   );
 
-  const fields = table.getFields().filter((f) => !f.primary_key);
+  const fields = table
+    .getFields()
+    .filter((f) => !f.primary_key || f?.attributes?.NonSerial);
   const columns = [];
   const layoutCols = [];
   fields.forEach((f) => {
@@ -1009,6 +1071,18 @@ const run = async (
             ...get_extra_state(row),
           });
           break;
+        case RelationType.CHILD_LIST:
+          stateMany = {
+            or: rows.map((row) => ({
+              [relation.path[0].inboundKey]: row[table.pk_name],
+              ...get_extra_state(row),
+            })),
+          };
+          getRowState = (row) => ({
+            [relation.path[0].inboundKey]: row[table.pk_name],
+            ...get_extra_state(row),
+          });
+          break;
         case RelationType.PARENT_SHOW:
           const refTable = Table.findOne({ id: view.table_id });
           stateMany = {
@@ -1066,7 +1140,17 @@ const run = async (
       const results = [];
 
       for (const row of rows) {
-        const rendered = await view.run(getRowState(row), extraOpts);
+        const rowState = getRowState(row);
+        const qs = stateToQueryString(rowState, true);
+
+        const rendered = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-local-state": `/view/${view.name}${qs}`,
+          },
+          await view.run(rowState, extraOpts)
+        );
         results.push({
           html: rendered,
           row,
@@ -1115,6 +1199,7 @@ const run = async (
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
+  page_opts.pk_name = table.pk_name;
   if (
     default_state?._row_click_url_formula &&
     default_state?._row_click_type !== "Nothing" &&
@@ -1180,9 +1265,30 @@ const run = async (
   if (default_state?._borderless) {
     page_opts.class += "table-borderless ";
   }
+  if (default_state?._table_layout) {
+    page_opts.table_layout = default_state?._table_layout;
+  }
+
+  if (default_state?._responsive_collapse) {
+    page_opts.responsiveCollapse = true;
+    page_opts.collapse_breakpoint_px = default_state._collapse_breakpoint_px;
+    page_opts.tableId = `${validID(viewname)}_${statehash}`;
+  }
+
+  page_opts.class += `table-valign-${(default_state?._cell_valign || "Middle").toLowerCase()} `;
+
   page_opts.transpose = (default_state || {}).transpose;
+  page_opts.header_filters = (default_state || {})._header_filters;
+  page_opts.header_filters_toggle = (
+    default_state || {}
+  )._header_filters_toggle;
+  if (page_opts.header_filters_toggle)
+    page_opts.header_filters_open = !!Object.keys(state).length;
+
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
+  page_opts.row_color_formula = (default_state || {})._row_color_formula;
+
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
   const istop = vpos === "Top";
   const isright = hpos === "right";
@@ -1424,6 +1530,9 @@ const createBasicView = async ({
       }
     });
   }
+
+  const comppk = table.composite_pk_names;
+
   //show link
   if (all_views_created.Show) {
     if (template_view) {
@@ -1442,7 +1551,23 @@ const createBasicView = async ({
           view_label: col.view_label || col.label,
         });
       }
-    } else
+    } else if (comppk)
+      configuration.columns.push({
+        link_url:
+          "`/view/" +
+          all_views_created.Show +
+          "?" +
+          comppk.map((pkNm) => pkNm + "=${" + pkNm + "}").join("&") +
+          "`", //"Street=${Street}&Number=${Number}"
+        link_text: "Show",
+        type: "Link",
+        block: false,
+        link_src: "URL",
+        nofollow: false,
+        link_url_formula: true,
+        header_label: "Show",
+      });
+    else
       configuration.columns.push({
         type: "ViewLink",
         view: `Own:${all_views_created.Show}`,
@@ -1472,7 +1597,23 @@ const createBasicView = async ({
           view_label: col.view_label || col.label,
         });
       }
-    } else
+    } else if (comppk)
+      configuration.columns.push({
+        link_url:
+          "`/view/" +
+          all_views_created.Edit +
+          "?" +
+          comppk.map((pkNm) => pkNm + "=${" + pkNm + "}").join("&") +
+          "`", //"Street=${Street}&Number=${Number}"
+        link_text: "Edit",
+        type: "Link",
+        block: false,
+        link_src: "URL",
+        nofollow: false,
+        link_url_formula: true,
+        header_label: "Edit",
+      });
+    else
       configuration.columns.push({
         type: "ViewLink",
         view: `Own:${all_views_created.Edit}`,
@@ -1517,7 +1658,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless",
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _responsive_collapse _collapse_breakpoint_px _row_color_formula _table_layout",
       "default_state"
     );
   }
@@ -1558,6 +1699,7 @@ module.exports = {
       _hide_pagination,
       _row_click_url_formula,
       _row_click_url_type,
+      _row_click_type,
       _row_click_url_action,
       transpose,
       transpose_width,
@@ -1568,6 +1710,13 @@ module.exports = {
       _striped_rows,
       _card_rows,
       _borderless,
+      _cell_valign,
+      _table_layout,
+      _responsive_collapse,
+      _collapse_breakpoint_px,
+      _header_filters,
+      _header_filters_toggle,
+      _row_color_formula,
       ...ds
     } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));

@@ -88,7 +88,11 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
             if (cright === val && node.operator == "!=")
               return `${cleft} is not ${val}`;
           }
-          return `(${cleft})${node.operator}(${cright})`;
+          const dblEqToEq = (s: string) => {
+            if (s == "==") return "=";
+            return s;
+          };
+          return `(${cleft})${dblEqToEq(node.operator)}(${cright})`;
         },
         UnaryExpression() {
           return (<StringToFunction>{
@@ -111,6 +115,7 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
           return name;
         },
         Literal({ value }: { value: ExtendedNode }) {
+          if (typeof value == "string") return `'${value}'`;
           return `${value}`;
         },
       })[node.type](node);
@@ -123,32 +128,35 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
     );
   }
 }
+
+const today = (
+  offset?:
+    | number
+    | { startOf: moment.unitOfTime.StartOf }
+    | { endOf: moment.unitOfTime.StartOf }
+) => {
+  let default_locale: string | undefined;
+  const get_locale = (): string => {
+    if (!default_locale) {
+      const { getState } = require("../db/state");
+      default_locale = getState().getConfig("default_locale", "en");
+    }
+    return default_locale as string;
+  };
+  let d = new Date();
+  if (typeof offset === "number") d.setDate(d.getDate() + offset);
+  else if (offset && "startOf" in offset) {
+    d = moment().locale(get_locale()).startOf(offset.startOf).toDate();
+  } else if (offset && "endOf" in offset) {
+    d = moment().locale(get_locale()).endOf(offset.endOf).toDate();
+  }
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+};
+
 function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
   const keys = new Set(Object.keys(extraCtx));
   const field_names = new Set(fields.map((f) => f.name));
-  let default_locale: string | undefined;
-  const today = (
-    offset?:
-      | number
-      | { startOf: moment.unitOfTime.StartOf }
-      | { endOf: moment.unitOfTime.StartOf }
-  ) => {
-    const get_locale = (): string => {
-      if (!default_locale) {
-        const { getState } = require("../db/state");
-        default_locale = getState().getConfig("default_locale", "en");
-      }
-      return default_locale as string;
-    };
-    let d = new Date();
-    if (typeof offset === "number") d.setDate(d.getDate() + offset);
-    else if (offset && "startOf" in offset) {
-      d = moment().locale(get_locale()).startOf(offset.startOf).toDate();
-    } else if (offset && "endOf" in offset) {
-      d = moment().locale(get_locale()).endOf(offset.endOf).toDate();
-    }
-    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-  };
+
   replace(ast, {
     // @ts-ignore
     leave: function (node) {
@@ -634,12 +642,13 @@ function get_expression_function(
  */
 function eval_expression(
   expression: string,
-  row: any,
+  row?: any,
   user?: any,
   errorLocation?: string
 ): any {
   try {
-    const field_names = Object.keys(row).filter(
+    const use_row = row || {};
+    const field_names = Object.keys(use_row).filter(
       (nm) =>
         nm.indexOf(".") === -1 &&
         nm.indexOf(">") === -1 &&
@@ -652,7 +661,7 @@ function eval_expression(
     return runInNewContext(
       `(${args})=>(${expression})`,
       getState().eval_context
-    )(row, row, user);
+    )(use_row, use_row, user);
   } catch (e: any) {
     e.message = `In evaluating the expression ${expression}${
       errorLocation ? ` in ${errorLocation}` : ""
@@ -675,6 +684,7 @@ async function eval_statements(
     const { getState } = require("../db/state");
     const evalStr = `async ()=>{${expression}}`;
     const f = runInNewContext(evalStr, {
+      console,
       ...getState().eval_context,
       ...context,
     });
@@ -924,4 +934,5 @@ export = {
   add_free_variables_to_joinfields,
   add_free_variables_to_aggregations,
   removeComments,
+  today,
 };

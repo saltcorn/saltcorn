@@ -1,6 +1,6 @@
 import * as multiTenant from "./multi-tenant";
 import { ReadStream, WriteStream } from "fs";
-import { Row, Where, SelectOptions } from "./internal";
+import { Row, Where, SelectOptions, PrimaryKeyValue } from "./internal";
 
 export type DbExportsType = {
   tenant: typeof multiTenant;
@@ -14,7 +14,7 @@ export type DbExportsType = {
   update: (
     table: string,
     data: Row,
-    id: number | string | undefined,
+    id: PrimaryKeyValue | Row | undefined,
     opts?: any
   ) => Promise<any>;
   delete: (table: string, where: Where) => Promise<any>;
@@ -26,14 +26,15 @@ export type DbExportsType = {
   reset: () => Promise<void>;
   tryCatchInTransaction: <T>(
     fn: () => Promise<T>,
-    onError?: (err: Error) => Promise<void> | void
+    onError?: (err: Error) => Promise<T | void> | T | void
   ) => Promise<T>;
+  commitAndBeginNewTransaction: () => Promise<void>;
   selectMaybeOne: (table: string, where: Where, opts?: any) => Promise<any>;
   query: (sql: string, params?: any) => Promise<any>;
   withTransaction: (
     fn: () => Promise<any>,
     onError?: (e: Error) => Promise<void>
-  ) => Promise<void>;
+  ) => Promise<any>;
   count: (table: string, where?: Where | undefined) => Promise<number>;
   deleteWhere: (table: string, where: Where) => Promise<any>;
   selectOne: (

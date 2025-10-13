@@ -4,7 +4,17 @@
  * @subcategory base-plugin
  */
 const { post_btn } = require("@saltcorn/markup");
-const { text, a, i, div, button, span } = require("@saltcorn/markup/tags");
+const {
+  text,
+  a,
+  i,
+  div,
+  button,
+  span,
+  script,
+  domReady,
+  input,
+} = require("@saltcorn/markup/tags");
 const { getState, getReq__ } = require("../../db/state");
 const {
   link_view,
@@ -43,6 +53,7 @@ const {
   RelationType,
   ViewDisplayType,
 } = require("@saltcorn/common-code");
+const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
 
 /**
  * formats the column index of a view cfg
@@ -71,18 +82,19 @@ const action_url = (
   colId,
   colIdNm,
   confirm,
-  colIndex
+  colIndex,
+  runAsync
 ) => {
   const pk_name = table.pk_name;
   const __ = getReq__();
   const confirmStr = confirm ? `if(confirm('${__("Are you sure?")}'))` : "";
-  if (action_name === "Delete")
+  if (action_name === "Delete") {
     return {
       javascript: `${confirmStr}${isNode() ? "ajax" : "local"}_post_btn('${
         !isNode() ? "post" : ""
-      }/delete/${table.name}/${encodeURIComponent(r[pk_name])}?redirect=/view/${viewname}', true)`,
+      }${table.delete_url(r, `redirect=/view/${viewname}`)}', true)`,
     };
-  else if (action_name === "GoBack")
+  } else if (action_name === "GoBack")
     return {
       javascript: isNode()
         ? "history.back()"
@@ -95,7 +107,7 @@ const action_url = (
   return {
     javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
       r ? `, ${pk_name}:'${r?.[pk_name]}'` : ""
-    }${columnIndex(colIndex)}});`,
+    }${columnIndex(colIndex)}}${runAsync ? `,{runAsync:true}` : ""});`,
   };
 };
 
@@ -240,7 +252,12 @@ const make_link = (
       const attrs = { href };
       if (link_target_blank) attrs.target = "_blank";
       if (in_dropdown) attrs.class = ["dropdown-item"];
-      if (link_style) attrs.class = [...(attrs.class || []), link_style];
+      if (link_style)
+        attrs.class = [
+          ...(attrs.class || []),
+          link_style,
+          link_style.includes("btn") && "d-inline-block",
+        ];
       if (link_size) attrs.class = [...(attrs.class || []), link_size];
       if (in_row_click) attrs.onclick = "event.stopPropagation()";
       if (in_modal)
@@ -700,7 +717,7 @@ const get_viewable_fields_from_layout = (
           isShow,
           req,
           __,
-          (state = {}),
+          state,
           srcViewName,
           toArray(contents.contents)
         );
@@ -731,7 +748,7 @@ const get_viewable_fields_from_layout = (
     isShow,
     req,
     __,
-    (state = {}),
+    state,
     srcViewName,
     viewResults,
     in_row_click
@@ -841,6 +858,11 @@ const get_viewable_fields = (
           },
         };
       } else if (column.type === "DropdownMenu") {
+        //console.log(column);
+        const btn_label =
+          column.label == " "
+            ? ""
+            : column.label || (column.action_icon ? "" : req.__("Action"));
         return {
           ...setWidth,
           label: column.header_label ? text(__(column.header_label)) : "",
@@ -854,13 +876,14 @@ const get_viewable_fields = (
                       ? "btn btn-link"
                       : `btn ${column.action_style || "btn-primary"} ${
                           column.action_size || ""
-                        } dropdown-toggle`,
+                        } d-inline-block dropdown-toggle`,
                   "data-boundary": "viewport",
                   type: "button",
                   id: `actiondd${r.id}_${index}`, //TODO need unique
                   "data-bs-toggle": "dropdown",
                   "aria-haspopup": "true",
                   "aria-expanded": "false",
+                  "aria-label": "Additional actions",
                   onclick: in_row_click ? "event.stopPropagation()" : undefined,
                   style:
                     column.action_style === "btn-custom-color"
@@ -871,7 +894,7 @@ const get_viewable_fields = (
                         }; color: ${column.action_textcol || "#000000"}`
                       : null,
                 },
-                column.label || req.__("Action")
+                show_icon_and_label(column.action_icon, btn_label)
               ),
               div(
                 {
@@ -909,7 +932,8 @@ const get_viewable_fields = (
               column.rndid || column.action_name,
               column.rndid ? "rndid" : "action_name",
               column.confirm,
-              index
+              index,
+              column.run_async
             );
             const label = column.action_label_formula
               ? eval_expression(
@@ -935,6 +959,9 @@ const get_viewable_fields = (
                     url.javascript +
                     (column.spinner ? ";spin_action_link(this)" : "") +
                     (in_row_click ? ";event.stopPropagation()" : ""),
+                  ...(!label || label === " "
+                    ? { "aria-label": column.action_name }
+                    : {}),
                 },
                 !!icon &&
                   icon !== "empty" &&
@@ -1035,6 +1062,13 @@ const get_viewable_fields = (
             column
           );
         }
+        let header_filter;
+        if (!column.join_field.includes("->") && keypath.length == 2)
+          header_filter = headerFilterForField(
+            field,
+            state,
+            `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`
+          );
         let gofv =
           fieldview && type && type.fieldviews && type.fieldviews[fieldview]
             ? (row) =>
@@ -1055,6 +1089,7 @@ const get_viewable_fields = (
                 })
               : "";
         }
+
         fvrun = {
           ...setWidth,
           label: headerLabelForName(
@@ -1067,6 +1102,7 @@ const get_viewable_fields = (
             statehash
           ),
           row_key: key,
+          header_filter,
           key: gofv ? gofv : (row) => text(row[key]),
           sortlink: sortlinkForName(key, req, viewname, statehash),
         };
@@ -1194,6 +1230,8 @@ const get_viewable_fields = (
         const isNum = f && f.type && f.type.name === "Integer";
         if (isNum && !setWidth.align) setWidth.align = "right";
         let fvrun;
+        let header_filter = headerFilterForField(f, state);
+
         if (
           column.fieldview &&
           f?.type?.fieldviews?.[column.fieldview]?.expandColumns
@@ -1242,6 +1280,7 @@ const get_viewable_fields = (
                       ? (row) => f.type.showAs(row[f_with_val.name])
                       : (row) => text(row[f_with_val.name])
                     : f.listKey,
+            header_filter,
             sortlink:
               !f.calculated || f.stored
                 ? sortlinkForName(f.name, req, viewname, statehash)
@@ -1325,6 +1364,93 @@ const get_viewable_fields = (
   }
   return tfields;
 };
+
+const headerFilterForField = (f, state, path) => {
+  if (f?.type?.name === "Date") {
+    const set_initial =
+      state[`_fromdate_${f.name}`] && state[`_todate_${f.name}`]
+        ? `defaultDate: ["${state[`_fromdate_${f.name}`]}", "${
+            state[`_todate_${f.name}`]
+          }"],`
+        : "";
+    return (
+      div(
+        { class: "input-group hdrfilterdate" },
+        input({
+          type: "text",
+          class: "form-control",
+          name: `daterangefilter${f.name}`,
+          id: `daterangefilter${f.name}`,
+          //placeholder: ,
+        }),
+        button(
+          {
+            class: "btn btn-outline-secondary btn-border-color-input",
+            style: { paddingLeft: "3px", paddingRight: "3px" },
+            onclick: `set_state_fields({_fromdate_${f.name}: {unset: true}, _todate_${f.name}: {unset: true} })`,
+          },
+          i({ class: "fas fa-times" })
+        )
+      ) +
+      script(
+        domReady(
+          `ensure_script_loaded("/static_assets/${db.connectObj.version_tag}/flatpickr.min.js");
+      ensure_css_loaded("/static_assets/${db.connectObj.version_tag}/flatpickr.min.css");
+      $('#daterangefilter${f.name}').flatpickr({mode:'range',
+        dateFormat: "Y-m-d",${set_initial}    
+        onChange: function(selectedDates, dateStr, instance) {
+            if(selectedDates.length==2) {
+          
+               set_state_fields({_fromdate_${f.name}: selectedDates[0].toLocaleDateString('en-CA'), _todate_${f.name}: selectedDates[1].toLocaleDateString('en-CA') })
+              
+                
+            }            
+        },
+    });`
+        )
+      )
+    );
+  }
+
+  let fieldviewObjs;
+  /*if (f.is_fkey) {
+    fieldviewObjs = [getState().keyFieldviews.select];
+  } else */
+  if (f?.type?.name === "Bool") fieldviewObjs = [f.type.fieldviews.tristate];
+  else if (f?.type?.name === "String") fieldviewObjs = [f.type.fieldviews.edit];
+  else if (f?.type?.name === "Integer" || f?.type?.name === "Float")
+    fieldviewObjs = [
+      f.type.fieldviews.above_input,
+      f.type.fieldviews.below_input,
+    ];
+
+  if (!fieldviewObjs) return "";
+
+  return div(
+    { class: "d-flex" },
+    fieldviewObjs
+      .map(
+        (fvObj) =>
+          fvObj?.run(
+            f.name,
+            state[path || f.name],
+            {
+              onChange: `set_state_field('${encodeURIComponent(
+                path || f.name
+              )}', this.value, this)`,
+              isFilter: true,
+              ...f.attributes,
+            },
+            "",
+            false,
+            f,
+            state
+          ) || ""
+      )
+      .join("")
+  );
+};
+
 /**
  * @param {string} fname
  * @param {object} req
@@ -1614,7 +1740,7 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
       }
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
-        return val.map((v) => text(v.toString())).join(", ");
+        return val.map((v) => text(v?.toString?.())).join(", ");
       else if (column.agg_fieldview) {
         const aggField = Table.findOne(table)?.getField?.(column.agg_field);
         const outcomeType =
@@ -1652,28 +1778,29 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
         row,
         segment.rndid,
         "rndid",
-        segment.confirm
+        segment.confirm,
+        undefined,
+        !!segment.run_async
       );
       if (
         segment.action_name === "Delete" &&
         segment.configuration?.after_delete_action == "Reload page"
       ) {
         url = {
-          javascript: `ajax_post('/delete/${table.name}/${encodeURIComponent(
-            row[table.pk_name]
-          )}', {success:()=>{close_saltcorn_modal();location.reload();}})`,
+          javascript: `ajax_post('${table.delete_url(row)}', {success:()=>{close_saltcorn_modal();location.reload();}})`,
         };
         return action_link(url, req, segment);
       } else if (segment.action_name === "Delete")
-        url = `/delete/${table.name}/${encodeURIComponent(
-          row[table.pk_name]
-        )}?redirect=${encodeURIComponent(
-          interpolate(
-            segment.configuration?.after_delete_url || "/",
-            row,
-            req?.user,
-            "delete action: after delete URL"
-          )
+        url = `${table.delete_url(
+          row,
+          `redirect=${encodeURIComponent(
+            interpolate(
+              segment.configuration?.after_delete_url || "/",
+              row,
+              req?.user,
+              "delete action: after delete URL"
+            )
+          )}`
         )}`;
       return action_link(url, req, segment);
     },
@@ -1736,9 +1863,9 @@ const headerLabelForName = (label, fname, req, __, statehash) => {
     _sortby !== fname
       ? ""
       : _sortdesc
-        ? i({ class: "fas fa-caret-down" })
-        : i({ class: "fas fa-caret-up" });
-  return label + arrow;
+        ? i({ class: "fas fa-caret-down sortdir" })
+        : i({ class: "fas fa-caret-up sortdir" });
+  return arrow ? span({ class: "text-nowrap" }, label + arrow) : label;
 };
 
 /**
@@ -1755,14 +1882,14 @@ const splitUniques = (fields, state, fuzzyStrings) => {
     const field = fields.find((f) => f.name === k);
     if (
       field &&
-      field.is_unique &&
+      (field.is_unique || field.primary_key) &&
       fuzzyStrings &&
       field.type &&
       field.type.name === "String"
     )
       uniques[k] = { ilike: v };
-    else if (field && field.is_unique)
-      uniques[k] = field.type.read ? field.type.read(v) : v;
+    else if (field && (field.is_unique || field.primary_key))
+      uniques[k] = field.type.read ? field.type.read(v, field.attributes) : v;
     else nonUniques[k] = v;
   });
   return { uniques, nonUniques };
@@ -1931,7 +2058,12 @@ const fill_presets = async (table, req, fixed) => {
         if (fld) {
           if (table.name === "users" && fld.primary_key)
             fixed[fldnm] = req.user ? req.user.id : null;
-          else fixed[fldnm] = fld.presets[fixed[k]]({ user: req.user, req });
+          else
+            fixed[fldnm] = fld.presets[fixed[k]]({
+              user: req.user,
+              req,
+              field: fld,
+            });
         }
       }
       delete fixed[k];

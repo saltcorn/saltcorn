@@ -1,0 +1,1 @@
+The entry point is the first view/page shown when you open the app. Enable 'Entry point by role' to use the same page as when the user visits the home location (/) on the web version. Disable it to select a fixed entry point.

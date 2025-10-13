@@ -1530,7 +1530,7 @@ router.post(
     const table = Table.findOne({ name: table_name });
     const field = table.getField(field_name);
     let val = field.type?.read
-      ? field.type?.read(req.body[field_name])
+      ? field.type?.read(req.body[field_name], field.attributes)
       : req.body[field_name];
     await db.withTransaction(async () => {
       await table.updateRow({ [field_name]: val }, pk, req.user);
