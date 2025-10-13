@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "universal-router": "9.2.1",
-    "axios": "^0.29.0",
+    "axios": "^0.30.2",
     "jwt-decode": "4.0.0",
     "i18next": "24.2.2",
     "i18next-sprintf-postprocessor": "0.2.2",
