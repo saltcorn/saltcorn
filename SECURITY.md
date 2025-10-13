@@ -32,13 +32,13 @@ Admin users have full control over the server. You should not give admin rights 
 
 Saltcorn is developed and deployed based on the nodejs and npm ecosystem. We may be vulnerable to open source supply chain attacks and in addition there are many libraries with low quality and a low level of security scrutiny.
 
-The library we use for CSRF protection (csurf) is deprecated. We may be vulnerable to a sophisticated CSRF attack.
+There is [some debate](https://github.com/birdofpreyru/csurf/issues/1) about the library we use for CSRF protection ([@dr.pogodin/csurf](https://www.npmjs.com/package/@dr.pogodin/csurf)).
 
 Many other libraries we depend on are deprecated or have security warnings. We have no reason to believe any of these are exploitable but we could be wrong.
 
 You should review the way cookies and sessions are handled and the HTTP headers set. We have disabled some protective measures to allow certain authentication methods.
 
-Our code to use SQLite has received the same degree of scrutiny as that using PostgreSQL as a backend. We recommend using PostgreSQL as a backend for production purposes and only using SQLite for development in desktop environments.
+Our code to use SQLite has not received the same degree of scrutiny as that using PostgreSQL as a backend. We recommend using PostgreSQL as a backend for production purposes and only using SQLite for development in desktop environments.
 
 The windows environment has not received the same amount of scrutiny as deployment options on Linux. We recommend using Linux or another Unix-based system for production deployment. Windows deployments are also likely to be less stable. If you must deploy on Windows we recommend using WSL.
 

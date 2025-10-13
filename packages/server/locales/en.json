@@ -1644,6 +1644,8 @@
 	"Native Android": "Native Android",
 	"Firebase JSON key": "Firebase JSON key",
 	"This is your Firebase Service Account JSON key file. ": "This is your Firebase Service Account JSON key file. ",
+	"Serve HTML files": "Serve HTML files",
+	"Unsafe. HTML files will be rendered in browser instead of as plaintext. Use Page with HTML file setting to safely serve specific HTML files": "Unsafe. HTML files will be rendered in browser instead of as plaintext. Use Page with HTML file setting to safely serve specific HTML files",
 	"Real-time updates": "Real-time updates",
 	"Enable real-time updates for this view": "Enable real-time updates for this view",
 	"today": "today",

@@ -1191,6 +1191,13 @@ const configTypes: ConfigTypes = {
     blurb: "Maximum upload file size in kilobytes",
     excludeFromMobile: true,
   },
+  file_serve_html: {
+    type: "Bool",
+    label: "Serve HTML files",
+    default: false,
+    blurb: "Unsafe. HTML files will be rendered in browser instead of as plaintext. Use Page with HTML file setting to safely serve specific HTML files",
+    excludeFromMobile: true,
+  },
   body_limit: {
     type: "Integer",
     label: "Body size limit (Kb)",

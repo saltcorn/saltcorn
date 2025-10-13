@@ -42,6 +42,8 @@ const path = require("path");
 const Zip = require("adm-zip");
 const stream = require("stream");
 const { extract } = require("@saltcorn/admin-models/models/backup");
+const createDOMPurify = require("dompurify");
+const { JSDOM } = require("jsdom");
 /**
  * @type {object}
  * @const
@@ -55,14 +57,17 @@ module.exports = router;
 router.use(
   error_catcher(async (req, res, next) => {
     const state = getState();
-    const maintenanceModeEnabled =  state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
     if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
       res.status(503).send("Page Unavailable: in maintenance mode");
       return;
     }
     next();
   })
-)
+);
 
 const send_files_picker = async (folder, noSubdirs, inputId, req, res) => {
   res.set("SaltcornModalWidth", "1200px");
@@ -305,10 +310,27 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
-      res.type(file.mimetype);
+      if (
+        (file.mimetype === "text/html" ||
+          file.mimetype === "application/xhtml+xml") &&
+        !getState().getConfig("file_serve_html")
+      )
+        res.type("text/plain");
+      else res.type(file.mimetype);
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       const maxAge = getState().getConfig("files_cache_maxage", 86400);
       res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
+      if (
+        file.mimetype === "image/svg+xml" ||
+        file.mimetype === "application/mathml+xml"
+      ) {
+        const window = new JSDOM("").window;
+        const DOMPurify = createDOMPurify(window);
+        const contents = await fs.promises.readFile(file.location);
+        const clean = DOMPurify.sanitize(contents);
+        res.send(clean);
+        return;
+      }
       if (file.s3_store) s3storage.serveObject(file, res, false);
       else res.sendFile(file.location, { dotfiles: "allow" });
     } else {
@@ -345,7 +367,14 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
-      res.type(file.mimetype);
+      if (
+        (file.mimetype === "text/html" ||
+          file.mimetype === "application/xhtml+xml") &&
+        !getState().getConfig("file_serve_html")
+      )
+        res.type("text/plain");
+      else res.type(file.mimetype);
+
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
       //TODO s3
@@ -676,6 +705,7 @@ const files_settings_form = async (req) => {
       "file_upload_debug",
       "file_upload_limit",
       "file_upload_timeout",
+      "file_serve_html",
     ],
     action: "/files/settings",
   });
