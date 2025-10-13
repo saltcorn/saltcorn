@@ -7,7 +7,7 @@
 # you're doing.
 Vagrant.configure("2") do |config|
 
-  config.vm.box = "bento/ubuntu-22.04"
+  config.vm.box = "generic/ubuntu2204"
 
   config.ssh.forward_agent = true
 
