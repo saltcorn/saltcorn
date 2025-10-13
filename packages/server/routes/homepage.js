@@ -528,12 +528,14 @@ const no_views_logged_in = async (req, res) => {
   else {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const versions = isRoot && (await get_saltcorn_npm_versions(500));
-    const eligible_upgrades = versions?.filter(
-      (v) =>
-        semver.gt(v, packagejson.version) &&
-        (packagejson.version.includes("-") || !v?.includes("-"))
-    );
-    
+    const eligible_upgrades =
+      isRoot &&
+      versions?.filter?.(
+        (v) =>
+          semver.gt(v, packagejson.version) &&
+          (packagejson.version.includes("-") || !v?.includes("-"))
+      );
+
     const can_update =
       eligible_upgrades?.length && !process.env.SALTCORN_DISABLE_UPGRADE;
     if (can_update && isRoot)
