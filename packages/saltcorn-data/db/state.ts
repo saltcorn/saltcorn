@@ -1586,6 +1586,7 @@ const features = {
   metadata: true,
   multitype_fieldviews: true,
   nested_fieldrepeats: true,
+  api_view_route: true,
 };
 
 export = {
