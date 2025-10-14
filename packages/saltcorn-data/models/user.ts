@@ -271,9 +271,6 @@ class User {
       tenant: db.getTenantSchema(),
       attributes: { ...getState().plugins_cfg_context },
     };
-    // Backward compatibility: expose api_token on session object when available
-    if (this.api_token) so.api_token = this.api_token;
-    console.log({so})
     Object.assign(so, safeUserFields(this));
     const userLayout = this._attributes?.layout;
     if (userLayout) {
@@ -397,9 +394,7 @@ class User {
         `select token from ${schema}_sc_api_tokens where user_id = $1 order by created_at desc, id desc limit 1`,
         [newUser.id]
       );
-      console.log({ tokq });
       if ((!newUser.api_token || newUser.api_token === null) && tokq && tokq.rows && tokq.rows[0]) {
-        console.log({ newUser });
         newUser.api_token = tokq.rows[0].token;
       }
     } catch (e) {
