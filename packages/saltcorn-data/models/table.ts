@@ -82,7 +82,7 @@ const {
   applyAsync,
   asyncMap,
 } = utils;
-import tags from "@saltcorn/markup/tags";
+import tags, { em } from "@saltcorn/markup/tags";
 const { text } = tags;
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
@@ -3801,12 +3801,36 @@ ${rejectDetails}`,
     options?: {
       where?: Where;
       groupBy?: string[] | string;
-    }
+    } & ForUserRequest
   ): Promise<Row> {
+    const { forUser, forPublic } = options || {};
+    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const where = { ...(options?.where || {}) };
+    if (
+      role &&
+      this.updateWhereWithOwnership(
+        where,
+        this.fields,
+        forUser || { role_id: 100 },
+        true
+      )?.notAuthorized
+    ) {
+      const emptyRet: Row = {};
+      Object.entries(aggregations).forEach(([nm, aggObj]) => {
+        const agg = aggObj?.aggregate?.toLowerCase?.() || "count";
+        if (agg === "array_agg") emptyRet[nm] = [];
+        if (agg.startsWith("Percent")) emptyRet[nm] = null;
+        if (agg.startsWith("Latest ")) emptyRet[nm] = null;
+        if (agg.startsWith("Earliest ")) emptyRet[nm] = null;
+        else emptyRet[nm] = 0;
+      });
+      return emptyRet;
+    }
+
     const { sql, values, groupBy } = aggregation_query_fields(
       this.name,
       aggregations,
-      options
+      { ...options, where }
     );
 
     const res = await db.query(sql, values);
