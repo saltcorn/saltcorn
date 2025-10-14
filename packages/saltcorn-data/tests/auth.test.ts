@@ -228,6 +228,53 @@ describe("Table with row ownership field", () => {
       owner_user
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    const aggs1 = await persons.aggregationQuery({
+      npers: {
+        field: "id",
+        aggregate: "count",
+      },
+    });
+    expect(+aggs1.npers).toBe(3);
+    const aggs2 = await persons.aggregationQuery(
+      {
+        npers: {
+          field: "id",
+          aggregate: "count",
+        },
+      },
+      { where: { lastname: "Tim" } }
+    );
+    const aggs_pub = await persons.aggregationQuery(
+      {
+        npers: {
+          field: "id",
+          aggregate: "count",
+        },
+      },
+      { forPublic: true }
+    );
+    expect(+aggs_pub.npers).toBe(0);
+    const aggs_owned = await persons.aggregationQuery(
+      {
+        npers: {
+          field: "id",
+          aggregate: "count",
+        },
+      },
+      { forUser: owner_user }
+    );
+    expect(+aggs_owned.npers).toBe(2);
+    const aggs_non_owned = await persons.aggregationQuery(
+      {
+        npers: {
+          field: "id",
+          aggregate: "count",
+        },
+      },
+      { forUser: non_owner_user }
+    );
+    expect(+aggs_non_owned.npers).toBe(0);
+
     //not deleting as nonowner
     await persons.deleteRows({ id: timid }, non_owner_user);
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);

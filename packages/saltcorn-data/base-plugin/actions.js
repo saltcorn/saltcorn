@@ -191,6 +191,10 @@ const run_code = async ({
     run_js_code,
     tryCatchInTransaction: db.tryCatchInTransaction,
     commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
+    commitBeginNewTransactionAndRefreshCache: async () => {
+      await db.commitAndBeginNewTransaction();
+      await sysState.refresh();
+    },
     URL,
     File,
     User,

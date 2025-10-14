@@ -319,7 +319,11 @@ const run = async (
             aggregate: stat,
           },
         },
-        { where }
+        {
+          where,
+          forPublic: !extra.req.user || extra.req.user.role_id === 100,
+          forUser: extra.req.user,
+        }
       );
       const fld = table.getField(agg_field);
       segment.type = "blank";
@@ -946,10 +950,14 @@ module.exports = {
           const field = fields.find((f) => f.name === col.field_name);
           if (table.external || table.provider_name) {
             distinct_values[col.field_name] = (
-              await table.distinctValues(col.field_name, {}, {
-                forPublic: !req.user,
-                forUser: req.user,
-              })
+              await table.distinctValues(
+                col.field_name,
+                {},
+                {
+                  forPublic: !req.user,
+                  forUser: req.user,
+                }
+              )
             ).map((x) => ({ label: x, value: x }));
           } else if (field) {
             distinct_values[col.field_name] = await field.distinct_values(
