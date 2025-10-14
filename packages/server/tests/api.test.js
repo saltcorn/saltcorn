@@ -424,12 +424,15 @@ describe("API authentication", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin/1"));
     const u = await User.findOne({ id: 1 });
-    expect(!!u.api_token).toBe(true);
+    const tokens = await u.listApiTokens();
+    expect(tokens.length).toBeGreaterThan(0);
   });
   it("should allow access to patients with query string ", async () => {
     const app = await getApp();
     const u = await User.findOne({ id: 1 });
-    const url = "/api/patients/?access_token=" + u.api_token;
+    const tokens = await u.listApiTokens();
+    const token = tokens[0] ? tokens[0].token : u.api_token;
+    const url = "/api/patients/?access_token=" + token;
     await request(app)
       .get(url)
       .expect(succeedJsonWith((rows) => rows.length == 2));
@@ -437,11 +440,12 @@ describe("API authentication", () => {
   it("should allow access to patients with bearer token", async () => {
     const app = await getApp();
     const u = await User.findOne({ id: 1 });
+    const tokens = await u.listApiTokens();
+    const token = tokens[0] ? tokens[0].token : u.api_token;
     const url = "/api/patients/";
     await request(app)
       .get(url)
-      .set("Authorization", "Bearer " + u.api_token)
-
+      .set("Authorization", "Bearer " + token)
       .expect(succeedJsonWith((rows) => rows.length == 2));
   });
   it("should not show file to public", async () => {
@@ -453,9 +457,11 @@ describe("API authentication", () => {
   it("should show file to user", async () => {
     const app = await getApp();
     const u = await User.findOne({ id: 1 });
+    const tokens = await u.listApiTokens();
+    const token = tokens[0] ? tokens[0].token : u.api_token;
     await request(app)
       .get("/api/serve-files/rick1.png")
-      .set("Authorization", "Bearer " + u.api_token)
+      .set("Authorization", "Bearer " + token)
       .expect(200);
   });
   describe("action authentication", () => {

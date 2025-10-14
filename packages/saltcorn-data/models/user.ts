@@ -566,7 +566,9 @@ class User {
       [token]
     );
     const u = q.rows && q.rows[0];  
-    return u ? new User(u as any) : undefined;
+    if (u) return new User(u as any);
+    const q2 = await db.selectMaybeOne("users", { api_token: token });
+    return q2 ? new User(q2 as any) : undefined;
   }
 
   /**
