@@ -4031,7 +4031,7 @@ ${rejectDetails}`,
     )}" a ${joinq} ${where}  ${mkSelectOptions(
       selectopts,
       values,
-      db.is_sqlite
+      db.isSQLite
     )}`;
 
     return { sql, values, joinFields, aggregations };
