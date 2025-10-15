@@ -1,9 +1,13 @@
 const js = async () => {
+  const db = require("../db");
   if (db.isSQLite) return;
   const Field = require("../models/field");
   const Table = require("../models/table");
+  const { getState } = require("../db/state");
 
-  const db = require("../db");
+  const state = getState();
+  await state?.refresh_tables(false);
+
   const schema = db.getTenantSchemaPrefix();
 
   const dateFields = await Field.find({ type: "Date" });
