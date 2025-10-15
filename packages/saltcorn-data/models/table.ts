@@ -3098,6 +3098,7 @@ class Table implements AbstractTable {
       no_table_write?: boolean;
       no_transaction?: boolean;
       method?: "Auto" | "copy" | "row-by-row";
+      delimiter?: string;
     }
   ): Promise<ResultMessage> {
     if (typeof options === "boolean") {
@@ -3109,6 +3110,7 @@ class Table implements AbstractTable {
       headerStr = await getLines(filePath, 1);
       [headers] = await csvtojson({
         output: "csv",
+        delimiter: options?.delimiter || "auto",
         noheader: true,
       }).fromString(headerStr); // todo argument type unknown
     } catch (e) {
@@ -3230,6 +3232,7 @@ class Table implements AbstractTable {
           const summary_field_cache: any = {};
           csvtojson({
             includeColumns: colRe,
+            delimiter: options?.delimiter || "auto",
           })
             .fromStream(readStream)
             .subscribe(
