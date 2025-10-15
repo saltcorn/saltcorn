@@ -1639,11 +1639,20 @@ router.get(
         }
       }
     }
+    const localize = getState().getConfig("localize_csv_download");
+
     const csvOpts = {};
+    const cast = {
+      date: (value) => value.toISOString(),
+      boolean: (v) => (v ? "true" : "false"),
+    };
     const locale = req.getLocale();
-    if (locale) {
+    if (locale && localize) {
       const numSep = (1.1).toLocaleString(locale)[1];
-      if (numSep === ",") csvOpts.delimiter = ";";
+      if (numSep === ",") {
+        csvOpts.delimiter = ";";
+        //cast.nu
+      }
     }
     const bom = getState().getConfig("bom_csv_download");
 
@@ -1651,10 +1660,7 @@ router.get(
       header: true,
       columns,
       bom: !!bom,
-      cast: {
-        date: (value) => value.toISOString(),
-        boolean: (v) => (v ? "true" : "false"),
-      },
+      cast,
       ...csvOpts,
     }).pipe(res);
   })

@@ -1152,6 +1152,12 @@ const configTypes: ConfigTypes = {
     default: false,
     excludeFromMobile: true,
   },
+  localize_csv_download: {
+    type: "Bool",
+    label: "Localize CSV downloads",
+    default: false,
+    excludeFromMobile: true,
+  },
 
   file_accept_filter_default: {
     type: "String",
