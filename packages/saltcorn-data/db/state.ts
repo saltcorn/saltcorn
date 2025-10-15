@@ -1114,6 +1114,7 @@ class State {
     let errMsg;
     if (Object.keys(code_pages).length > 0) {
       const fetch = require("node-fetch");
+      const Page = (await import("../models/page")).default;
       try {
         const myContext = {
           ...this.function_context,
@@ -1121,6 +1122,8 @@ class State {
           File,
           View,
           User,
+          Page,
+          Field,
           Trigger,
           MetaData,
           setTimeout,
