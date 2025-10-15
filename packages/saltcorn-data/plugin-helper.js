@@ -174,7 +174,7 @@ const link_view = (
 const stateToQueryString = (state, include_id) => {
   if (!state || Object.keys(state).length === 0) return "";
   const prim = (x) => {
-    if (x instanceof Date) return x.toISOString();
+    if (x?.toISOString) return x.toISOString();
     else return x;
   };
   const bounded = (k, v) => {
