@@ -1639,6 +1639,12 @@ router.get(
         }
       }
     }
+    const csvOpts = {};
+    const locale = req.getLocale();
+    if (locale) {
+      const numSep = (1.1).toLocaleString(locale)[1];
+      if (numSep === ",") csvOpts.delimiter = ";";
+    }
     stringify(rows, {
       header: true,
       columns,
@@ -1646,6 +1652,7 @@ router.get(
         date: (value) => value.toISOString(),
         boolean: (v) => (v ? "true" : "false"),
       },
+      ...csvOpts,
     }).pipe(res);
   })
 );
