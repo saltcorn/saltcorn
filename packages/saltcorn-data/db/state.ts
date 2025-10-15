@@ -1181,6 +1181,8 @@ class State {
    * @returns {Promise<void>}
    */
   async refresh_plugins(noSignal?: boolean) {
+    const { today } = require("../models/expression");
+
     this.viewtemplates = {};
     this.modelpatterns = {};
     this.types = {};
@@ -1192,8 +1194,8 @@ class State {
     this.copilot_skills = [];
     this.layouts = { emergency: emergency_layout };
     this.headers = {};
-    this.function_context = { moment, slugify: db.slugify };
-    this.functions = { moment, slugify: db.slugify };
+    this.function_context = { moment, today, slugify: db.slugify };
+    this.functions = { moment, today, slugify: db.slugify };
     this.keyFieldviews = {};
     this.external_tables = {};
     this.eventTypes = {};
