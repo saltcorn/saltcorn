@@ -1645,9 +1645,12 @@ router.get(
       const numSep = (1.1).toLocaleString(locale)[1];
       if (numSep === ",") csvOpts.delimiter = ";";
     }
+    const bom = getState().getConfig("bom_csv_download");
+
     stringify(rows, {
       header: true,
       columns,
+      bom: !!bom,
       cast: {
         date: (value) => value.toISOString(),
         boolean: (v) => (v ? "true" : "false"),
