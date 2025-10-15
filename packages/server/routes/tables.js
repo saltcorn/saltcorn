@@ -1651,7 +1651,7 @@ router.get(
       const numSep = (1.1).toLocaleString(locale)[1];
       if (numSep === ",") {
         csvOpts.delimiter = ";";
-        //cast.nu
+        cast.number = (v) => v.toLocaleString(locale);
       }
     }
     const bom = getState().getConfig("bom_csv_download");

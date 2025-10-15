@@ -1693,5 +1693,6 @@
 	"Formula for row background color. Ex.: <code>age>65 ?'#aaffaa': null</code>": "Formula for row background color. Ex.: <code>age>65 ?'#aaffaa': null</code>",
 	"Table layout": "Table layout",
 	"CSV BOM": "CSV BOM",
-	"Include the Byte-Order Mark in downloaded CSV files": "Include the Byte-Order Mark in downloaded CSV files"
+	"Include the Byte-Order Mark in downloaded CSV files": "Include the Byte-Order Mark in downloaded CSV files",
+	"Localize CSV downloads": "Localize CSV downloads"
 }
