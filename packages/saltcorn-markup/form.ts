@@ -904,12 +904,15 @@ const mkFormRowForRepeat = (
   const adder = repeater_adder(hdr.form_name);
   if (Array.isArray(v[hdr.form_name]) && v[hdr.form_name].length > 0) {
     return div(
-      hdr.showIf
-        ? {
-            "data-show-if": mkShowIf(hdr.showIf),
-            style: "display: none;",
-          }
-        : {},
+      {
+        ...(hdr.showIf
+          ? {
+              "data-show-if": mkShowIf(hdr.showIf),
+              style: "display: none;",
+            }
+          : {}),
+        class: "field-repeat-wrapper",
+      },
       div(
         {
           class: `repeats-${hdr.form_name}`,
