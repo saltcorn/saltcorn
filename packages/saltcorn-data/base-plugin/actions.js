@@ -11,6 +11,8 @@ const Table = require("../models/table");
 const EventLog = require("../models/eventlog");
 const View = require("../models/view");
 const Model = require("../models/model");
+const Page = require("../models/page");
+const Field = require("../models/field");
 const File = require("../models/file");
 const { getState } = require("../db/state");
 const User = require("../models/user");
@@ -199,6 +201,8 @@ const run_code = async ({
     File,
     User,
     View,
+    Page,
+    Field,
     EventLog,
     Buffer: isNode() ? Buffer : require("buffer"),
     Trigger,

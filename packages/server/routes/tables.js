@@ -1639,13 +1639,30 @@ router.get(
         }
       }
     }
+    const localize = getState().getConfig("localize_csv_download");
+
+    const csvOpts = {};
+    const cast = {
+      date: (value) => value.toISOString(),
+      boolean: (v) => (v ? "true" : "false"),
+    };
+    const locale = req.getLocale();
+    if (locale && localize) {
+      const numSep = (1.1).toLocaleString(locale)[1];
+      if (numSep === ",") {
+        csvOpts.delimiter = ";";
+        // this opens a can of worms - how to read CSV back again
+        //cast.number = (v) => v.toLocaleString(locale);
+      }
+    }
+    const bom = getState().getConfig("bom_csv_download");
+
     stringify(rows, {
       header: true,
       columns,
-      cast: {
-        date: (value) => value.toISOString(),
-        boolean: (v) => (v ? "true" : "false"),
-      },
+      bom: !!bom,
+      cast,
+      ...csvOpts,
     }).pipe(res);
   })
 );

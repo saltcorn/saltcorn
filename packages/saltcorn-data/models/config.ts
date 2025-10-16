@@ -1145,6 +1145,20 @@ const configTypes: ConfigTypes = {
     default: false,
     excludeFromMobile: true,
   },
+  bom_csv_download: {
+    type: "Bool",
+    label: "CSV BOM",
+    sublabel: "Include the Byte-Order Mark in downloaded CSV files",
+    default: false,
+    excludeFromMobile: true,
+  },
+  localize_csv_download: {
+    type: "Bool",
+    label: "Localize CSV downloads",
+    default: false,
+    excludeFromMobile: true,
+  },
+
   file_accept_filter_default: {
     type: "String",
     label: "Default File accept filter",
@@ -1195,7 +1209,8 @@ const configTypes: ConfigTypes = {
     type: "Bool",
     label: "Serve HTML files",
     default: false,
-    blurb: "Unsafe. HTML files will be rendered in browser instead of as plaintext. Use Page with HTML file setting to safely serve specific HTML files",
+    blurb:
+      "Unsafe. HTML files will be rendered in browser instead of as plaintext. Use Page with HTML file setting to safely serve specific HTML files",
     excludeFromMobile: true,
   },
   body_limit: {

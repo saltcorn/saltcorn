@@ -74,9 +74,26 @@ describe("stateToQueryString", () => {
     expect(stateToQueryString({ x: { lt: 5, gt: 1 } })).toBe(
       "?_gt_x=1&_lt_x=5"
     );
-    expect(stateToQueryString({ x: { lt: 5 }, y:"foo" })).toBe("?_lt_x=5&y=foo");
+    expect(stateToQueryString({ x: { lt: 5 }, y: "foo" })).toBe(
+      "?_lt_x=5&y=foo"
+    );
     expect(stateToQueryString({ x: { gt: 5 } })).toBe("?_gt_x=5");
     expect(stateToQueryString({ x: { lt: 5, equal: true } })).toBe("?_lte_x=5");
+  });
+  it("handles date", async () => {
+    expect(stateToQueryString({ pubdate: new PlainDate("2025-10-15") })).toBe(
+      "?pubdate=2025-10-15"
+    );
+    expect(
+      stateToQueryString({ pubdate: { gt: new PlainDate("2025-10-15") } })
+    ).toBe("?_gt_pubdate=2025-10-15");
+
+    expect(stateToQueryString({ pubdate: new Date("2025-10-15") })).toBe(
+      "?pubdate=2025-10-15T00%3A00%3A00.000Z"
+    );
+    expect(
+      stateToQueryString({ pubdate: { lt: new Date("2025-10-15") } })
+    ).toBe("?_lt_pubdate=2025-10-15T00%3A00%3A00.000Z");
   });
 });
 

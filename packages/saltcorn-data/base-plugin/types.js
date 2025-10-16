@@ -2313,9 +2313,16 @@ const date = {
       if (v instanceof Date && !isNaN(v)) return v;
       if (v instanceof PlainDate && v.isValid()) return v.toDate();
       if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
-        if (attrs && attrs.locale) {
-          const d = moment(v, "L LT", attrs.locale).toDate();
-          if (d instanceof Date && !isNaN(d)) return d;
+        if (attrs && attrs.locale && typeof v === "string") {
+          if (
+            !v.match(
+              /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})[+-](\d{2}):(\d{2})/
+            ) &&
+            !v.match(/\d{4}-\d{2}-\d{2}/)
+          ) {
+            const d = moment(v, "L LT", attrs.locale).toDate();
+            if (d instanceof Date && !isNaN(d)) return d;
+          }
         }
         const d = new Date(v);
         if (d instanceof Date && !isNaN(d)) return d;
@@ -2326,9 +2333,11 @@ const date = {
       if (v instanceof Date && !isNaN(v)) return new PlainDate(v);
       if (v instanceof PlainDate && v.isValid()) return v;
       if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
-        if (attrs && attrs.locale) {
-          const d = moment(v, "L LT", attrs.locale).toDate();
-          if (d instanceof Date && !isNaN(d)) return new PlainDate(d);
+        if (attrs && attrs.locale && typeof v === "string") {
+          if (!v.match(/\d{4}-\d{2}-\d{2}/)) {
+            const d = moment(v, "L LT", attrs.locale).toDate();
+            if (d instanceof Date && !isNaN(d)) return new PlainDate(d);
+          }
         }
         try {
           const d = new PlainDate(v);

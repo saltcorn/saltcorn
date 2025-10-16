@@ -173,15 +173,19 @@ const link_view = (
  */
 const stateToQueryString = (state, include_id) => {
   if (!state || Object.keys(state).length === 0) return "";
+  const prim = (x) => {
+    if (x?.toISOString) return x.toISOString();
+    else return x;
+  };
   const bounded = (k, v) => {
     const parts = [];
     if (v.gt)
       parts.push(
-        `_gt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${v.gt}`)}`
+        `_gt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${prim(v.gt)}`)}`
       );
     if (v.lt)
       parts.push(
-        `_lt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${v.lt}`)}`
+        `_lt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${prim(v.lt)}`)}`
       );
 
     return parts.join("&");
@@ -196,7 +200,7 @@ const stateToQueryString = (state, include_id) => {
             ? v
                 .map(
                   (val) =>
-                    `${encodeURIComponent(k)}=${encodeURIComponent(`${val}`)}`
+                    `${encodeURIComponent(k)}=${encodeURIComponent(`${prim(val)}`)}`
                 )
                 .join("&")
             : (k === "id" && !include_id) || typeof v === "undefined"
@@ -204,7 +208,7 @@ const stateToQueryString = (state, include_id) => {
               : `${encodeURIComponent(k)}=${encodeURIComponent(
                   k === "_relation_path_" && typeof v !== "string"
                     ? queryToString(v)
-                    : v
+                    : prim(v)
                 )}`
       )
       .filter((s) => !!s)

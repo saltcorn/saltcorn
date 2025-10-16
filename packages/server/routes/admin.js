@@ -4381,6 +4381,8 @@ admin_config_route({
         "log_ip_address",
         "log_level",
         ...(isRoot || tenants_set_npm_modules ? ["npm_available_js_code"] : []),
+        "localize_csv_download",
+        "bom_csv_download",
       ],
       action: "/admin/dev",
     });
