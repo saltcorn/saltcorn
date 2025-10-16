@@ -812,7 +812,7 @@ const get_viewable_fields = (
       if (column.type === "FormulaValue") {
         return {
           ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) =>
             text(
               eval_expression(
@@ -826,7 +826,7 @@ const get_viewable_fields = (
       } else if (column.type === "Text") {
         return {
           ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) =>
             column.interpolator
               ? column.interpolator(r)
@@ -835,7 +835,7 @@ const get_viewable_fields = (
       } else if (column.type === "Container") {
         return {
           ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) => {
             const layout = structuredClone({ ...column, type: "container" });
             traverseSync(
@@ -865,7 +865,7 @@ const get_viewable_fields = (
             : column.label || (column.action_icon ? "" : req.__("Action"));
         return {
           ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) =>
             div(
               { class: "dropdown" },
@@ -918,7 +918,7 @@ const get_viewable_fields = (
         }
         const action_col = {
           ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) => {
             if (action_requires_write(column.action_name)) {
               if (table.min_role_write < role && !table.is_owner(req.user, r))
@@ -1008,7 +1008,7 @@ const get_viewable_fields = (
           undefined,
           in_row_click
         );
-        if (column.header_label) r.label = text(__(column.header_label));
+        if (column.header_label) r.label = __(column.header_label);
         Object.assign(r, setWidth);
         if (column.in_dropdown) {
           dropdown_actions.push(r);
@@ -1016,7 +1016,7 @@ const get_viewable_fields = (
         } else return r;
       } else if (column.type === "Link") {
         const r = make_link(column, fields, __, in_row_click);
-        if (column.header_label) r.label = text(__(column.header_label));
+        if (column.header_label) r.label = __(column.header_label);
         Object.assign(r, setWidth);
         if (column.in_dropdown) {
           dropdown_actions.push(r);
@@ -1093,9 +1093,7 @@ const get_viewable_fields = (
         fvrun = {
           ...setWidth,
           label: headerLabelForName(
-            column.header_label
-              ? text(__(column.header_label))
-              : text(targetNm),
+            column.header_label ? __(column.header_label) : targetNm,
             key,
             req,
             __,
@@ -1207,8 +1205,8 @@ const get_viewable_fields = (
           ...setWidth,
           label: headerLabelForName(
             column.header_label
-              ? text(column.header_label)
-              : text(column.stat + " " + table),
+              ? column.header_label
+              : column.stat + " " + table,
 
             targetNm,
             req,
@@ -1248,9 +1246,7 @@ const get_viewable_fields = (
           fvrun = f && {
             ...setWidth,
             label: headerLabelForName(
-              column.header_label
-                ? text(__(column.header_label))
-                : text(__(f.label)),
+              column.header_label ? __(column.header_label) : __(f.label),
               f.name,
               req,
               __,
