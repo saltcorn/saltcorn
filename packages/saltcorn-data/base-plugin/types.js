@@ -2316,7 +2316,7 @@ const date = {
         if (attrs && attrs.locale && typeof v === "string") {
           if (
             !v.match(
-              /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})[+-](\d{2}):(\d{2})/
+              /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/
             ) &&
             !v.match(/\d{4}-\d{2}-\d{2}/)
           ) {
@@ -2336,7 +2336,7 @@ const date = {
         if (attrs && attrs.locale && typeof v === "string") {
           if (
             !v.match(
-              /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})[+-](\d{2}):(\d{2})/
+              /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/
             ) &&
             !v.match(/\d{4}-\d{2}-\d{2}/)
           ) {
