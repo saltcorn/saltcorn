@@ -742,8 +742,10 @@ function apply_calculated_fields(
         if (!field.expression) throw new Error(`The field has no expression`);
         f = get_expression_function(field.expression, fields);
       } catch (e: any) {
-        if (!ignore_errors)
-          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+        if (!ignore_errors) {
+          e.message = `Error in calculating "${field.name}": ${e.message}`;
+          throw e;
+        }
       }
       const oldf = transform;
       transform = (row) => {
@@ -753,7 +755,7 @@ function apply_calculated_fields(
         } catch (e: any) {
           if (!ignore_errors) {
             e.message = `Error in calculating "${field.name}": ${e.message}`;
-            throw new Error(e);
+            throw e;
           }
         }
         return oldf(row);
