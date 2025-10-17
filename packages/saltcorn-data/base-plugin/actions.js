@@ -336,7 +336,7 @@ module.exports = {
         },
         {
           name: "where",
-          label: "Recalculate where",
+          label: "Where",
           sublabel: "Where-expression for subset of rows to loop over",
           type: "String",
           class: "validate-expression",
