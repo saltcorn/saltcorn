@@ -751,10 +751,10 @@ function apply_calculated_fields(
           const x = f(row);
           row[field.name] = x;
         } catch (e: any) {
-          if (!ignore_errors)
-            throw new Error(
-              `Error in calculating "${field.name}": ${e.message}`
-            );
+          if (!ignore_errors) {
+            e.message = `Error in calculating "${field.name}": ${e.message}`;
+            throw new Error(e);
+          }
         }
         return oldf(row);
       };
@@ -850,7 +850,8 @@ const apply_calculated_fields_stored = async (
         if (!field.expression) throw new Error(`The fields has no expression`);
         f = get_async_expression_function(field.expression, fields);
       } catch (e: any) {
-        throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+        e.message = `Error in calculating "${field.name}": ${e.message}`;
+        throw e;
       }
       const oldf = transform;
       transform = async (row) => {
@@ -858,7 +859,7 @@ const apply_calculated_fields_stored = async (
           const x = await f(row);
           row[field.name] = x;
         } catch (e: any) {
-          e.message = `Error in calculating "${field.name}": ${e.message}`
+          e.message = `Error in calculating "${field.name}": ${e.message}`;
           throw e;
         }
         return await oldf(row);
