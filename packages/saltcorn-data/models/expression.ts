@@ -858,7 +858,8 @@ const apply_calculated_fields_stored = async (
           const x = await f(row);
           row[field.name] = x;
         } catch (e: any) {
-          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+          e.message = `Error in calculating "${field.name}": ${e.message}`
+          throw e;
         }
         return await oldf(row);
       };
