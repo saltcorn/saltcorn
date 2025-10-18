@@ -68,8 +68,8 @@ const translateInsertFks = async (allChanges, allTranslations) => {
               where "${db.sqlsanitize(
                 fk.name
               )}" = ${from} and "${db.sqlsanitize(pkName)}" in (${ids.join(
-                ","
-              )})`
+              ","
+            )})`
           );
         }
       }
@@ -133,8 +133,7 @@ const applyInserts = async (changes, syncTimestamp, user) => {
         );
       }
     } catch (error) {
-      error.message = table.normalise_error_message(error.message);
-      throw new Error(error);
+      throw new Error(table.normalise_error_message(error.message));
     }
   }
   return { allTranslations, allUniqueConflicts };
@@ -171,8 +170,7 @@ const applyUpdates = async (changes, allTranslations, syncTimestamp, user) => {
           if (result) throw new Error(`Unable to update ${tblName}: ${result}`);
         }
       } catch (error) {
-        error.message = table.normalise_error_message(error.message);
-        throw new Error(error);
+        throw new Error(table.normalise_error_message(error.message));
       }
     }
   }
