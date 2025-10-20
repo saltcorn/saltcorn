@@ -682,8 +682,23 @@ describe("Table with row ownership double joined", () => {
     await persons.update({
       ownership_formula: "department?.manager?.supervisor===user.id",
     });
-    expect(persons.ownership_formula_where(owner_user)).toStrictEqual("???");
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      department: {
+        inSelect: {
+          field: "id",
+          table: "_Department",
+          tenant: "public",
+          through: "users",
+          valField: "manager",
+          where: { supervisor: 1 },
+        },
+      },
+    });
 
+    const owned_rows = await persons.getRows(
+      persons.ownership_formula_where(owner_user)
+    );
+    expect(owned_rows.length).toBe(0);
     await persons.delete();
     await department.delete();
   });

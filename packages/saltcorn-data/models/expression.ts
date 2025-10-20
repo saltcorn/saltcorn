@@ -337,6 +337,43 @@ function jsexprToWhere(
           return compile(node.expression!);
         },
         MemberExpression() {
+          if (node?.object?.type === "MemberExpression") {
+            //double join
+            const cleft = compile(node.object!.object!);
+            const cleftName =
+              typeof cleft === "symbol" ? cleft.description : cleft;
+            const c2 = compile(node.object!.property!);
+            const c3 = compile(node.property!);
+            const field = fields.find((f) => f.name === cleftName);
+            if (!field) {
+              //console.log({ cleftName, cleft, cright, crightName });
+              throw new Error(
+                `Field not found: ${cleftName}  in fields ${fields.map((f) => f.name)}`
+              );
+            }
+            const throughTable = Table.findOne({ name: field.reftable_name });
+            const throughField = throughTable.fields.find(
+              (f: Field) => f.name === c2.description
+            );
+            const finalTable = Table.findOne({
+              name: throughField.reftable_name,
+            });
+            return (val: any) => ({
+              [cleftName]: {
+                inSelect: {
+                  table: db.sqlsanitize(throughTable.name),
+                  tenant: db.getTenantSchema(),
+                  through: finalTable.name,
+                  valField: c2.description,
+                  field:
+                    Table.findOne({ name: field.reftable_name })?.pk_name ||
+                    "id",
+
+                  where: { [c3.description]: val },
+                },
+              },
+            });
+          }
           const cleft = compile(node.object!);
           const cleftName =
             typeof cleft === "symbol" ? cleft.description : cleft;
@@ -397,7 +434,7 @@ function jsexprToWhere(
     // @ts-ignore
     return compile(ast);
   } catch (e: any) {
-    //console.error(e);
+    console.error(e);
     throw new Error(
       `Expression "${expression}" is too complicated, I do not understand`
     );
