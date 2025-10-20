@@ -915,18 +915,19 @@ router.get(
     const { filename } = req.params;
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const backup_file_prefix = getState().getConfig("backup_file_prefix");
+    const auto_backup_directory = getState().getConfig("auto_backup_directory");
+    const fp = File.normalise_in_base(auto_backup_directory, filename);
+
     if (
       !isRoot ||
-      !(
-        path.resolve(filename).startsWith(backup_file_prefix) &&
-        filename.endsWith(".zip")
-      )
+      !(filename.startsWith(backup_file_prefix) && filename.endsWith(".zip")) ||
+      !fp
     ) {
       res.redirect("/admin/backup");
       return;
     }
-    const auto_backup_directory = getState().getConfig("auto_backup_directory");
-    res.download(path.join(auto_backup_directory, filename), filename, {
+
+    res.download(fp, filename, {
       dotfiles: "allow",
     });
   })
