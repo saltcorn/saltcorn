@@ -1915,7 +1915,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
   if (res.notify)
     await handle(res.notify, (text) =>
       notifyAlert({
-        type: "info",
+        type: res.notify_type || "info",
         text,
         toast_title: res.toast_title,
         remove_delay: res.remove_delay,
@@ -2617,7 +2617,7 @@ function toggle_header_filters(toggle_icon_elem) {
   //console.log("toggle headers", elem);
 
   const r = $(toggle_icon_elem).closest("thead").find("tr.header-filters")[0];
-  
+
   //var r = document.getElementById("${filterRowId}");
   if (r) {
     var hidden =

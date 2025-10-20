@@ -1756,7 +1756,7 @@ module.exports = {
         type: "String",
         required: true,
         attributes: {
-          options: ["Notify", "Error", "Success"],
+          options: ["Notify", "Error", "Success", "Warning"],
         },
       },
       {
@@ -1793,6 +1793,8 @@ module.exports = {
           return { error: text1, ...toast_title };
         case "Success":
           return { notify_success: text1, ...toast_title };
+        case "Warning":
+          return { notify: text1, notify_type: "warning", ...toast_title };
         default:
           return { notify: text1, ...toast_title };
       }
