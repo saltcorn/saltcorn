@@ -468,7 +468,16 @@ describe("Table with row ownership formula", () => {
     expect(persons.ownership_formula_where(non_owner_user)).toStrictEqual({
       owner: 3,
     });
+    const tstWhere = {};
 
+    const ures = persons.updateWhereWithOwnership(tstWhere, owner_user, true);
+    expect(ures).toBe(undefined);
+
+    expect(tstWhere).toStrictEqual({ owner: 1 });
+
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      owner: 1,
+    });
     await persons.delete();
   });
 });
