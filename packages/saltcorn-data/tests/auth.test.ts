@@ -641,6 +641,53 @@ describe("Table with row ownership joined formula nocalc", () => {
     await department.delete();
   });
 });
+
+describe("Table with row ownership double joined", () => {
+  it("should create and delete table", async () => {
+    const department = await Table.create("_Department");
+    await Field.create({
+      table: department,
+      name: "name",
+      type: "String",
+    });
+    const manager = await Field.create({
+      table: department,
+      name: "manager",
+      type: "Key to users",
+    });
+    await Field.create({
+      table: User.table,
+      name: "supervisor",
+      type: "Key to users",
+    });
+    await department.update({ ownership_field_id: manager.id });
+
+    const persons = await Table.create("TableOwnedJnFml");
+    await Field.create({
+      table: persons,
+      name: "lastname",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    const deptkey = await Field.create({
+      table: persons,
+      name: "department",
+      type: "Key to _Department",
+    });
+
+    await persons.update({
+      ownership_formula: "department?.manager?.supervisor===user.id",
+    });
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual("???");
+
+    await persons.delete();
+    await department.delete();
+  });
+});
 describe("Table with row ownership joined formula and stored calc", () => {
   it("should create and delete table", async () => {
     const department = await Table.create("_Department");
