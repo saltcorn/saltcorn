@@ -364,9 +364,9 @@ function jsexprToWhere(
                   table: db.sqlsanitize(throughTable.name),
                   tenant: db.getTenantSchema(),
                   through: finalTable.name,
-                  valField: c2.description,
-                  field:
-                    c2.description,
+                  through_pk: finalTable.pk_name,
+                  valField: throughTable.pk_name,
+                  field: c2.description,
                   where: { [c3.description]: val },
                 },
               },
