@@ -290,6 +290,12 @@ describe("Table with row ownership field", () => {
     await persons.deleteRows({ id: alexid }, owner_user);
     expect(await persons.getRow({ lastname: "Alex" })).toBe(null);
 
+    const tstWhere = {};
+
+    const ures = persons.updateWhereWithOwnership(tstWhere, owner_user, true);
+    expect(ures).toBe(undefined);
+
+    expect(tstWhere).toStrictEqual({ owner: 1 });
     await persons.delete();
   });
 });
