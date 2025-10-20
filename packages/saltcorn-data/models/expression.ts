@@ -366,9 +366,7 @@ function jsexprToWhere(
                   through: finalTable.name,
                   valField: c2.description,
                   field:
-                    Table.findOne({ name: field.reftable_name })?.pk_name ||
-                    "id",
-
+                    c2.description,
                   where: { [c3.description]: val },
                 },
               },
