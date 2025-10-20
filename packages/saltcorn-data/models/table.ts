@@ -590,7 +590,7 @@ class Table implements AbstractTable {
             const path = refTable.ownership_formula
               .replace("===user.id", "")
               .replace("==user.id", "")
-              .split(".");
+              .split(/\??\./);
             const fldNms = new Set((refTable?.fields || []).map((f) => f.name));
             if (fldNms.has(path[0])) {
               opts.push({
