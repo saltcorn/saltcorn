@@ -61,6 +61,7 @@ import {
   S3,
   S3Client,
   ListObjectsV2Command,
+  ListObjectsV2CommandOutput,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
@@ -787,44 +788,70 @@ const delete_old_backups = async () => {
     for (const file of files) {
       if (!file.startsWith(backup_file_prefix)) continue;
       const stats = await stat(path.join(directory, file));
-      const ageDays =
-        (new Date().getTime() - stats.birthtime.getTime()) / (1000 * 3600 * 24);
+      const fileTime = (stats as any).birthtime?.getTime
+        ? (stats as any).birthtime.getTime()
+        : stats.mtime.getTime();
+      const ageMs = new Date().getTime() - fileTime;
+      const ageDays = ageMs / (1000 * 3600 * 24);
       if (ageDays > expire_days) await unlink(path.join(directory, file));
     }
   } else if (destination === "S3") {
+    const s3EndpointCfg = getState().getConfig("backup_s3_endpoint");
+    const s3Secure = getState().getConfig("backup_s3_secure", true);
+    const endpoint = s3EndpointCfg
+    ? /:\/\//.test(s3EndpointCfg)
+    ? s3EndpointCfg
+    : `${s3Secure ? "https" : "http"}://${s3EndpointCfg}`
+    : undefined;
     const s3 = new S3Client({
       credentials: {
         accessKeyId: getState().getConfig("backup_s3_access_key"),
         secretAccessKey: getState().getConfig("backup_s3_access_secret"),
       },
       region: getState().getConfig("backup_s3_region"),
-      endpoint: getState()
-        .getConfig("backup_s3_endpoint")
-        ?.replace(/^(http:\/\/)?/, "https://"),
+      ...(endpoint ? { endpoint } : {}),
+    });
+    
+    const bucket = getState().getConfig("backup_s3_bucket");
+    const keyPrefix = (getState().getConfig("backup_s3_path_prefix", "") || "")
+    .toString()
+    .replace(/^\/+|\/+$/g, "");
+    // Only match our backup files; include optional folder path if configured
+    const listPrefix = [keyPrefix, backup_file_prefix]
+    .filter((s) => s && s.length)
+    .join("/");
+    
+    const listParams: any = {
+      Bucket: bucket,
+      Prefix: listPrefix,
+    };
+    console.log({
+      label: "DELETING OLD BACKUPS",
+      ...listParams
     });
 
-    const bucket = getState().getConfig("backup_s3_bucket");
-
-    const listParams = {
-      Bucket: bucket,
-      Prefix: backup_file_prefix,
-    };
-
     try {
-      const listedObjects = await s3.send(new ListObjectsV2Command(listParams));
-      if (listedObjects.Contents) {
-        for (const obj of listedObjects.Contents) {
-          if (!obj.Key || !obj.LastModified) continue;
-          const ageDays =
-            (new Date().getTime() - new Date(obj.LastModified).getTime()) /
-            (1000 * 3600 * 24);
-          if (ageDays > expire_days) {
-            await s3.send(
-              new DeleteObjectCommand({ Bucket: bucket, Key: obj.Key })
-            );
+      let continuationToken: string | undefined = undefined;
+      do {
+        const listedObjects: ListObjectsV2CommandOutput = await s3.send(
+          new ListObjectsV2Command({ ...listParams, ContinuationToken: continuationToken })
+        );
+        if (listedObjects.Contents) {
+          for (const obj of listedObjects.Contents) {
+            if (!obj.Key || !obj.LastModified) continue;
+            const ageMs = new Date().getTime() - new Date(obj.LastModified).getTime();
+            const ageDays = ageMs / (1000 * 3600 * 24);
+            if (ageDays > expire_days) {
+              await s3.send(
+                new DeleteObjectCommand({ Bucket: bucket, Key: obj.Key })
+              );
+            }
           }
         }
-      }
+        continuationToken = listedObjects.IsTruncated
+          ? listedObjects.NextContinuationToken
+          : undefined;
+      } while (continuationToken);
     } catch (err: any) {
       console.error(`Error deleting old backups from S3: ${err.message}`);
     }
@@ -902,19 +929,29 @@ const auto_backup_now_tenant = async (state: any) => {
       await unlink(fileName);
       break;
     case "S3":
+      const bEndpointCfg = state.getConfig("backup_s3_endpoint");
+      const bSecure = state.getConfig("backup_s3_secure", true);
+      const bEndpoint = bEndpointCfg
+        ? /:\/\//.test(bEndpointCfg)
+          ? bEndpointCfg
+          : `${bSecure ? "https" : "http"}://${bEndpointCfg}`
+        : undefined;
       const s3 = new S3({
         credentials: {
           accessKeyId: state.getConfig("backup_s3_access_key"),
           secretAccessKey: state.getConfig("backup_s3_access_secret"),
         },
         region: state.getConfig("backup_s3_region"),
-        endpoint: state
-          .getConfig("backup_s3_endpoint")
-          ?.replace(/^(http:\/\/)?/, "https://"),
+        ...(bEndpoint ? { endpoint: bEndpoint } : {}),
       });
 
       const bucket = state.getConfig("backup_s3_bucket");
-      const s3Key = basename(fileName);
+      const pathPrefix = (state.getConfig("backup_s3_path_prefix", "") || "")
+        .toString()
+        .replace(/^\/+|\/+$/g, "");
+      const s3Key = [pathPrefix, basename(fileName)]
+        .filter((s) => s && s.length)
+        .join("/");
       const fileStream = () => createReadStream(fileName);
       try {
         const uploadResult = await new Upload({

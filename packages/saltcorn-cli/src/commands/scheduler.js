@@ -20,7 +20,11 @@ class ScheduleCommand extends Command {
       db.set_sql_logging();
     }
     const { runScheduler } = require("@saltcorn/data/models/scheduler");
-    await runScheduler({});
+    const opts = {};
+    if (typeof flags.tickSeconds === "number" && !isNaN(flags.tickSeconds)) {
+      opts.tickSeconds = flags.tickSeconds;
+    }
+    await runScheduler(opts);
   }
 }
 
@@ -34,6 +38,9 @@ ScheduleCommand.description = `Run the Saltcorn scheduler`;
  */
 ScheduleCommand.flags = {
   verbose: Flags.boolean({ char: "v", description: "Verbose" }),
+  tickSeconds: Flags.integer({
+    description: "Scheduler tick interval in seconds (default 300)",
+  }),
 };
 
 module.exports = ScheduleCommand;
