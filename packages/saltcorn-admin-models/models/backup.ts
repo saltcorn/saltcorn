@@ -799,10 +799,10 @@ const delete_old_backups = async () => {
     const s3EndpointCfg = getState().getConfig("backup_s3_endpoint");
     const s3Secure = getState().getConfig("backup_s3_secure", true);
     const endpoint = s3EndpointCfg
-    ? /:\/\//.test(s3EndpointCfg)
-    ? s3EndpointCfg
-    : `${s3Secure ? "https" : "http"}://${s3EndpointCfg}`
-    : undefined;
+      ? /:\/\//.test(s3EndpointCfg)
+        ? s3EndpointCfg
+        : `${s3Secure ? "https" : "http"}://${s3EndpointCfg}`
+      : undefined;
     const s3 = new S3Client({
       credentials: {
         accessKeyId: getState().getConfig("backup_s3_access_key"),
@@ -811,35 +811,34 @@ const delete_old_backups = async () => {
       region: getState().getConfig("backup_s3_region"),
       ...(endpoint ? { endpoint } : {}),
     });
-    
+
     const bucket = getState().getConfig("backup_s3_bucket");
     const keyPrefix = (getState().getConfig("backup_s3_path_prefix", "") || "")
-    .toString()
-    .replace(/^\/+|\/+$/g, "");
-    // Only match our backup files; include optional folder path if configured
+      .toString()
+      .replace(/^\/+|\/+$/g, "");
     const listPrefix = [keyPrefix, backup_file_prefix]
-    .filter((s) => s && s.length)
-    .join("/");
-    
+      .filter((s) => s && s.length)
+      .join("/");
+
     const listParams: any = {
       Bucket: bucket,
       Prefix: listPrefix,
     };
-    console.log({
-      label: "DELETING OLD BACKUPS",
-      ...listParams
-    });
 
     try {
       let continuationToken: string | undefined = undefined;
       do {
         const listedObjects: ListObjectsV2CommandOutput = await s3.send(
-          new ListObjectsV2Command({ ...listParams, ContinuationToken: continuationToken })
+          new ListObjectsV2Command({
+            ...listParams,
+            ContinuationToken: continuationToken,
+          })
         );
         if (listedObjects.Contents) {
           for (const obj of listedObjects.Contents) {
             if (!obj.Key || !obj.LastModified) continue;
-            const ageMs = new Date().getTime() - new Date(obj.LastModified).getTime();
+            const ageMs =
+              new Date().getTime() - new Date(obj.LastModified).getTime();
             const ageDays = ageMs / (1000 * 3600 * 24);
             if (ageDays > expire_days) {
               await s3.send(
