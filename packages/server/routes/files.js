@@ -313,7 +313,8 @@ router.get(
       if (
         (file.mimetype === "text/html" ||
           file.mimetype === "application/xhtml+xml") &&
-        !getState().getConfig("file_serve_html")
+        !getState().getConfig("file_serve_html") &&
+        user_id !== file.user_id
       )
         res.type("text/plain");
       else res.type(file.mimetype);

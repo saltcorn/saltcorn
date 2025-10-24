@@ -3097,6 +3097,8 @@ class Table implements AbstractTable {
       skip_first_data_row?: boolean;
       no_table_write?: boolean;
       no_transaction?: boolean;
+      extra_row_values?: Row;
+      overwrite_csv_fields?: boolean;
       method?: "Auto" | "copy" | "row-by-row";
       delimiter?: string;
     }
@@ -3207,7 +3209,8 @@ class Table implements AbstractTable {
         options?.method === "copy" ||
         (options?.method !== "row-by-row" &&
           db.copyFrom &&
-          fileSizeInMegabytes > 1)
+          fileSizeInMegabytes > 1 &&
+          !options?.extra_row_values)
       ) {
         let theError;
 
@@ -3244,6 +3247,23 @@ class Table implements AbstractTable {
                     rec[to] = rec[from];
                     delete rec[from];
                   });
+
+                  if (options?.extra_row_values && options.extra_row_values !== null) {
+                    const extras = options.extra_row_values;
+                    const overwrite = options.overwrite_csv_fields !== false; // default true
+                    if (overwrite) {
+                      Object.assign(rec, extras);
+                    } else {
+                      for (const [k, v] of Object.entries(extras)) {
+                        if (
+                          typeof rec[k] === "undefined" ||
+                          rec[k] === "" ||
+                          rec[k] === null
+                        )
+                          rec[k] = v;
+                      }
+                    }
+                  }
 
                   for (const jfield of json_schema_fields) {
                     const sf = jfield.attributes.subfield;

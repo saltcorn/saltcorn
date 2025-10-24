@@ -1694,5 +1694,6 @@
 	"Table layout": "Table layout",
 	"CSV BOM": "CSV BOM",
 	"Include the Byte-Order Mark in downloaded CSV files": "Include the Byte-Order Mark in downloaded CSV files",
-	"Localize CSV downloads": "Localize CSV downloads"
+	"Localize CSV downloads": "Localize CSV downloads",
+	"Sticky headers": "Sticky headers"
 }
