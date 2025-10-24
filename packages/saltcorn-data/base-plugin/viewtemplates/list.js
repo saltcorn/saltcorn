@@ -811,6 +811,12 @@ const configuration_workflow = (req) =>
             tab: "Layout options",
           });
           formfields.push({
+            name: "_sticky_header",
+            label: req.__("Sticky headers"),
+            type: "Bool",
+            tab: "Layout options",
+          });
+          formfields.push({
             name: "_row_color_formula",
             label: req.__("Row color formula"),
             sublabel: req.__(
@@ -1269,6 +1275,10 @@ const run = async (
     page_opts.table_layout = default_state?._table_layout;
   }
 
+  if (default_state?._sticky_header) {
+    page_opts.sticky_header = default_state?._sticky_header;
+  }
+  
   if (default_state?._responsive_collapse) {
     page_opts.responsiveCollapse = true;
     page_opts.collapse_breakpoint_px = default_state._collapse_breakpoint_px;
@@ -1282,8 +1292,11 @@ const run = async (
   page_opts.header_filters_toggle = (
     default_state || {}
   )._header_filters_toggle;
-  if (page_opts.header_filters_toggle)
-    page_opts.header_filters_open = !!Object.keys(state).length;
+  if (page_opts.header_filters_toggle) {
+    page_opts.header_filters_open = !!Object.keys(state).filter(
+      (k) => !k.startsWith("_") || k.startsWith("_from") || k.startsWith("_to")
+    ).length;
+  }
 
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
@@ -1658,7 +1671,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _responsive_collapse _collapse_breakpoint_px _row_color_formula _table_layout",
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout",
       "default_state"
     );
   }
@@ -1717,6 +1730,7 @@ module.exports = {
       _header_filters,
       _header_filters_toggle,
       _row_color_formula,
+      _sticky_header,
       ...ds
     } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));

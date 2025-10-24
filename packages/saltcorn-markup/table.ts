@@ -211,7 +211,7 @@ const mkTable = (
     );
   return div(
     {
-      class: ["table-responsive", opts.tableClass],
+      class: [!opts.sticky_header && "table-responsive", opts.tableClass],
       id: opts.tableId,
     },
     table(
@@ -231,6 +231,7 @@ const mkTable = (
       !opts.noHeader &&
         !opts.transpose &&
         thead(
+          opts.sticky_header ? { class: "sticky-top" } : "",
           tr(
             hdrs.map((hdr: HeadersParams, ix: number) =>
               headerCellWithToggle(hdr, opts, ix === hdrs.length - 1)
@@ -243,7 +244,7 @@ const mkTable = (
                   id: opts.header_filters_toggle
                     ? `${opts.tableId || "table"}_header_filters_row`
                     : null,
-                  ...(!opts.header_filters_open
+                  ...(!opts.header_filters_open && opts.header_filters_toggle
                     ? { style: "display:none;" }
                     : {}),
                 },
