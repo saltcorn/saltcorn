@@ -1287,7 +1287,6 @@ const run = async (
       (k) => !k.startsWith("_") || k.startsWith("_from") || k.startsWith("_to")
     ).length;
   }
-  console.log({ state });
 
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
