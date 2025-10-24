@@ -1282,8 +1282,12 @@ const run = async (
   page_opts.header_filters_toggle = (
     default_state || {}
   )._header_filters_toggle;
-  if (page_opts.header_filters_toggle)
-    page_opts.header_filters_open = !!Object.keys(state).length;
+  if (page_opts.header_filters_toggle) {
+    page_opts.header_filters_open = !!Object.keys(state).filter(
+      (k) => !k.startsWith("_") || k.startsWith("_from") || k.startsWith("_to")
+    ).length;
+  }
+  console.log({ state });
 
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
