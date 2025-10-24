@@ -243,7 +243,7 @@ const mkTable = (
                   id: opts.header_filters_toggle
                     ? `${opts.tableId || "table"}_header_filters_row`
                     : null,
-                  ...(!opts.header_filters_open
+                  ...(!opts.header_filters_open && opts.header_filters_toggle
                     ? { style: "display:none;" }
                     : {}),
                 },
