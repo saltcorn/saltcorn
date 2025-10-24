@@ -153,7 +153,7 @@ class ReleaseResumeCommand extends Command {
         stdio: "inherit",
         cwd: `packages/saltcorn-cli/`,
       });*/
-    await publish("saltcorn-cli", "next");
+    await publish("saltcorn-cli");
     fs.writeFileSync(
       `package.json`,
       JSON.stringify(
