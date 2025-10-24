@@ -18,12 +18,12 @@
 
 * `progress_bar` action: Display or update the display of a progress message. This can appear in a toast message for actions that can run in parallel; or in a blocking popup-up modal if the progress display is required to freeze the user interface.
 
-* List view now have options for header filters, row colour by formula and table layout setting (corresponds to table-layout CSS property)
+* List view now have options for header filters, row colour by formula,  table layout setting (corresponds to table-layout CSS property) and sticky header.
 
 ### Security
 
 * Filter aggregations (count, average over a table subset) previously ignored ownership. There is now a partial implementation of the owbership restriction, however this is still incomplete for ownership formulas involving joinfields.
-* When serving HTML files that have been uploaded to the file store, the mime type is now set to text/plain to prevent user-uploaded files performing session hijacking. This can be disabled in the securioty settings if you trust all uploaded html files and need to serve them.. MathJax and svg files are cleaned with dompurify before serving. 
+* When serving HTML files that have been uploaded to the file store, the mime type is now set to text/plain (unless the user is the owner of the file) to prevent user-uploaded files performing session hijacking. This can be disabled in the securioty settings if you trust all uploaded html files and need to serve them.. MathJax and svg files are cleaned with dompurify before serving. 
 * It was previously possibly for a logged-in user to craft a request to change their own password without supplying their old password. This is now checked. 
 
 
