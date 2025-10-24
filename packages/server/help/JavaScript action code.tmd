@@ -77,7 +77,20 @@ Valid return values are:
 
 Send a pop-up notification indicating success to the user
 
-Example: `return { notify: "Order completed!" }`
+You can additionally set in the object:
+* remove_delay: seconds before remove
+* notify_type: `"info"`, `"warning"`, `"danger"`, `"success"`
+* toast_title: the popup title string
+
+Example: 
+
+```
+return { 
+  notify: "Order completed!", 
+  notify_type: "warning", 
+  remove_delay: 5
+}
+```
 
 #### `error`
 
