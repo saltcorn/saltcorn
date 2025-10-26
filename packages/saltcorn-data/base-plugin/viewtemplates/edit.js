@@ -47,6 +47,7 @@ const {
   interpolate,
   asyncMap,
   removeEmptyStrings,
+  renderServerSide,
 } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
@@ -1015,11 +1016,17 @@ const transformForm = async ({
           "data-view-source-need-fields": [...needFields].join(","),
           "data-view-source": encodeURIComponent(urlFormula),
         },
-        await view.run(
-          { ...state, ...outerState, ...extra_state },
-          { req, res },
-          view.isRemoteTable()
-        )
+        view.renderLocally()
+          ? await view.run(
+              { ...state, ...outerState, ...extra_state },
+              { req, res },
+              view.isRemoteTable()
+            )
+          : await renderServerSide(view.name, {
+              ...state,
+              ...outerState,
+              ...extra_state,
+            })
       );
     },
   });

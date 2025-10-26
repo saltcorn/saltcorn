@@ -253,6 +253,7 @@ const isPublicJwt = (jwt) => {
 };
 
 const isPublicEntryPoint = async (entryPoint) => {
+  if (!entryPoint) return false;
   try {
     const tokens = entryPoint.split("/");
     if (tokens.length < 3) throw new Error("The format is incorrect");
@@ -354,6 +355,17 @@ const readSiteLogo = async (state) => {
   }
 };
 
+// fixed entry point or by role
+const getEntryPoint = (roleId, state, mobileConfig) => {
+  let entryPoint = null;
+  if (mobileConfig.entryPointType === "byrole") {
+    const homepageByRole = state.getConfig("home_page_by_role", {})[roleId];
+    if (homepageByRole) entryPoint = `get/page/${homepageByRole}`;
+  } else entryPoint = mobileConfig.entry_point;
+
+  return entryPoint;
+};
+
 // device is ready
 export async function init(mobileConfig) {
   try {
@@ -400,7 +412,6 @@ export async function init(mobileConfig) {
       mobileConfig.localUserTables
     );
     await state.setConfig("base_url", mobileConfig.server_path);
-    const entryPoint = mobileConfig.entry_point;
     await initI18Next();
     state.mobileConfig.encodedSiteLogo = await readSiteLogo();
     state.mobileConfig.networkState = (
@@ -469,6 +480,12 @@ export async function init(mobileConfig) {
         if (shareData && notEmpty(shareData)) return await postShare(shareData);
       }
       let page = null;
+      const entryPoint = getEntryPoint(
+        mobileConfig.user.role_id,
+        state,
+        mobileConfig
+      );
+      if (!entryPoint) throw new Error("No entry point defined for this role.");
       if (!lastLocation) {
         addRoute({ route: entryPoint, query: undefined });
         page = await router.resolve({
@@ -494,15 +511,21 @@ export async function init(mobileConfig) {
       config.user = { role_id: 100, email: "public", language: "en" };
       config.isPublicUser = true;
       i18next.changeLanguage(config.user.language);
-      addRoute({ route: entryPoint, query: undefined });
-      const page = await router.resolve({
-        pathname: entryPoint,
-        fullWrap: true,
-        alerts,
-      });
-      if (page.content) await replaceIframe(page.content, page.isFile);
+      const entryPoint = getEntryPoint(100, state, state.mobileConfig);
+      if (!entryPoint) await showLogin(alerts);
+      else {
+        addRoute({ route: entryPoint, query: undefined });
+        const page = await router.resolve({
+          pathname: entryPoint,
+          fullWrap: true,
+          alerts,
+        });
+        if (page.content) await replaceIframe(page.content, page.isFile);
+      }
     } else if (
-      (await isPublicEntryPoint(entryPoint)) &&
+      (await isPublicEntryPoint(
+        getEntryPoint(100, state, state.mobileConfig)
+      )) &&
       state.mobileConfig.autoPublicLogin
     ) {
       if (networkDisabled)
@@ -510,7 +533,7 @@ export async function init(mobileConfig) {
           "No internet connection or previous login is available. " +
             "Please go online and reload, the public login is not yet supported."
         );
-      await publicLogin(entryPoint);
+      await publicLogin(getEntryPoint(100, state, state.mobileConfig));
     } else await showLogin(alerts);
   } catch (error) {
     if (typeof saltcorn === "undefined" || typeof router === "undefined") {
