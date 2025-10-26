@@ -22,6 +22,8 @@ const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
 // import { ResultType, StepResType } from "types";'
 
+declare const saltcorn: any;
+
 const getFetchProxyOptions = () => {
   if (process.env["HTTPS_PROXY"]) {
     const agent = new HttpsProxyAgent(process.env["HTTPS_PROXY"]);
@@ -578,6 +580,22 @@ const isPushEnabled = (user?: User): user is User => {
   return userAttr?.notify_push;
 };
 
+/**
+ * Mobile helper to render views with the 'mobile_render_server_side' flag server-side
+ * @param viewname
+ * @param state
+ * @returns html string
+ */
+const renderServerSide = async (viewname: string, state: any) => {
+  const response = await saltcorn.mobileApp.api.apiCall({
+    method: "GET",
+    path: `/view/${encodeURIComponent(viewname)}`,
+    params: state,
+  });
+  const data = response.data;
+  return data;
+};
+
 export = {
   cloneName,
   dollarizeObject,
@@ -633,4 +651,5 @@ export = {
   jsIdentifierValidator,
   escapeHtml,
   isPushEnabled,
+  renderServerSide,
 };

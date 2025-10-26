@@ -54,6 +54,7 @@ const {
   getSessionId,
   mergeIntoWhere,
   isWeb,
+  renderServerSide,
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
@@ -407,7 +408,9 @@ const run = async (
             "data-sc-embed-viewname": view.name,
             "data-sc-local-state": `/view/${view.name}${qs}`,
           },
-          await view.run(state1, extra)
+          view.renderLocally()
+            ? await view.run(state1, extra)
+            : await renderServerSide(view.name, state1)
         );
       } else {
         const state1 = { ...state, ...extra_state };
@@ -419,7 +422,9 @@ const run = async (
             "data-sc-embed-viewname": view.name,
             "data-sc-view-source": `/view/${view.name}${qs}`,
           },
-          await view.run(state1, extra)
+          view.renderLocally()
+            ? await view.run(state1, extra)
+            : await renderServerSide(view.name, state1)
         );
       }
     },
