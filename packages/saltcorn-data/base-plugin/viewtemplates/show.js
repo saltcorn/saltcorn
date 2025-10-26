@@ -78,6 +78,7 @@ const {
   getSessionId,
   interpolate,
   validSqlId,
+  renderServerSide,
 } = require("../../utils");
 const { traverseSync } = require("../../models/layout");
 const {
@@ -602,7 +603,9 @@ const renderRows = async (
               "data-sc-embed-viewname": view.name,
               "data-sc-local-state": `/view/${view.name}${qs}`,
             },
-            await view.run(state2, subviewExtra, view.isRemoteTable())
+            view.renderLocally()
+              ? await view.run(state2, subviewExtra, view.isRemoteTable())
+              : await renderServerSide(view.name, state2)
           );
         } else {
           const state2 = { ...outerState, ...state1, ...extra_state };
@@ -621,7 +624,9 @@ const renderRows = async (
               "data-sc-embed-viewname": view.name,
               "data-sc-view-source": `/view/${view.name}${qs}`,
             },
-            await view.run(state2, subviewExtra, view.isRemoteTable())
+            view.renderLocally()
+              ? await view.run(state2, subviewExtra, view.isRemoteTable())
+              : await renderServerSide(view.name, state2)
           );
         }
       }
