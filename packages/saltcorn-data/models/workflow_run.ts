@@ -797,12 +797,15 @@ class WorkflowRun {
             if (array.length) {
               this.current_step.push(0);
               this.current_step.push(step.configuration.loop_body_initial_step);
+              const new_context = {
+                ...this.context,
+                [step.configuration.item_variable]: array[0],
+              };
+              if (step.configuration.index_variable)
+                new_context[step.configuration.index_variable] = 0;
               await this.update({
                 current_step: this.current_step,
-                context: {
-                  ...this.context,
-                  [step.configuration.item_variable]: array[0],
-                },
+                context: new_context,
               });
 
               step = steps.find(
@@ -847,13 +850,17 @@ class WorkflowRun {
                 this.set_current_step(
                   forStep.configuration.loop_body_initial_step
                 );
-                const nextVar =
-                  array_data1[this.current_step[this.current_step.length - 2]];
+                const next_index =
+                  this.current_step[this.current_step.length - 2];
+                const nextVar = array_data1[next_index];
 
                 nextUpdate.context = {
                   ...this.context,
                   [forStep.configuration.item_variable]: nextVar,
                 };
+                if (forStep.configuration.index_variable)
+                  nextUpdate.context[forStep.configuration.index_variable] =
+                    next_index;
                 nextUpdate.current_step = this.current_step;
               } else {
                 //no more items
@@ -861,14 +868,19 @@ class WorkflowRun {
                 this.current_step.pop();
                 const afterForStep = this.get_next_step(forStep, user);
 
-                if (afterForStep) this.set_current_step(afterForStep.name);
-                else {
+                if (afterForStep) {
+                  this.set_current_step(afterForStep.name);
+                  nextUpdate.current_step = this.current_step;
+                } else {
                   //TODO what if there is another level of forloops
                   step = null;
                   nextUpdate.status = "Finished";
                 }
                 //remove variable from context
                 delete this.context[forStep.configuration.item_variable];
+                if (forStep.configuration.index_variable)
+                  delete this.context[forStep.configuration.index_variable];
+
                 nextUpdate.context = this.context;
                 //nextUpdate.current_step = this.current_step;
               }
@@ -945,6 +957,7 @@ class WorkflowRun {
         retVals[k] = this.context[k];
         delete this.context[k];
       }
+      if (typeof nextUpdate?.[k] !== "undefined") delete nextUpdate[k];
     });
     const secondary_directives: Record<string, string[]> = {
       reload_embedded_view: ["new_state"],
@@ -961,11 +974,12 @@ class WorkflowRun {
             retVals[secondary_k] = this.context[secondary_k];
             delete this.context[secondary_k];
           }
+          if (typeof nextUpdate?.[secondary_k] !== "undefined")
+            delete nextUpdate[secondary_k];
         });
     });
     //if (Object.keys(retVals).length)
     if (nextUpdate) {
-      nextUpdate.context = this.context;
       await this.update(nextUpdate);
     } else this.update({ context: this.context });
 

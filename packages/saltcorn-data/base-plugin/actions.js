@@ -2340,7 +2340,7 @@ module.exports = {
         required: true,
         sublabel:
           "A valid JavaScript identifier for updating existing progress toasts",
-        showIf: { blocking: false, close: false },
+        showIf: { blocking: false },
       },
       {
         name: "maxHeight",
@@ -2372,12 +2372,9 @@ module.exports = {
       {
         name: "percent",
         label: "Percent",
-        type: "Integer",
-        sublabel: "Optional. 0-100",
-        attributes: {
-          min: 0,
-          max: 100,
-        },
+        type: "String",
+        sublabel:
+          "Optional. 0-100. Use interpolations <code>{{ }}</code> to calculate from context",
         showIf: { close: false },
       },
     ],
@@ -2399,6 +2396,7 @@ module.exports = {
       const msg = interpolate(message, row, user, "progress_bar message");
       const title1 = interpolate(title, row, user, "progress_bar title");
       const id1 = interpolate(id, row, user, "progress_bar id");
+      const percent1 = interpolate(percent, row, user, "progress_bar id");
       return {
         page_load_tag: req?.headers?.["page-load-tag"],
         progress_bar_update: {
@@ -2407,7 +2405,7 @@ module.exports = {
           close,
           message: msg,
           title: title1,
-          percent,
+          percent: +percent1,
           maxHeight,
           popupWidth,
         },
