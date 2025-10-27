@@ -432,7 +432,7 @@ function jsexprToWhere(
     // @ts-ignore
     return compile(ast);
   } catch (e: any) {
-    console.error(e);
+    //console.error(e);
     throw new Error(
       `Expression "${expression}" is too complicated, I do not understand`
     );
