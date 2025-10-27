@@ -452,6 +452,15 @@ class WorkflowStep {
       showIf: { wf_action_name: "ForLoop" },
     });
     actionConfigFields.push({
+      label: "Loop index variable",
+      sublabel:
+        "Optional. Javascript identifier; the name of the variable the loop counter index (starting from 0) will be set to in each loop iteration",
+      name: "index_variable",
+      class: "validate-identifier",
+      type: "String",
+      showIf: { wf_action_name: "ForLoop" },
+    });
+    actionConfigFields.push({
       label: "Loop body step",
       sublabel:
         "The name of the first step in the loop body. The workflow execution inside the loop will start at this step, and continue from that step's next_step, until a step with blank next_step is encountered, which is the end of the loop body",
