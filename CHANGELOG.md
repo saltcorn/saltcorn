@@ -6,7 +6,7 @@
   client page.
 
 * When Table.deleteRows is called without a user argument, it implicitly has admin access, to make 
-  it consistent ith other methods
+  it consistent with other methods
 
 * Some initial and limited support for composite primary keys in discovered and external tables. 
 
@@ -65,7 +65,7 @@
 
 * List views have a vertical aligment option under Layout options. Use this to adjust the vertical alignment of each cell. The default is middle.
 
-* Provided tables can no by writable (delete, insert and update). For an example of this see the history-control table provider
+* Provided tables can now by writable (delete, insert and update). For an example of this see the history-control table provider
 
 * Imported CSVs rows can now have a blank in the primary key column, which will be treated as an insert.
 
