@@ -126,11 +126,14 @@ describe("User", () => {
     expect(token.length > 5).toBe(true);
     const u1 = await User.findOne({ email: "foo@bar.com" });
     assertIsSet(u1);
-    expect(u1.api_token).toEqual(token);
-    await u1.getNewAPIToken();
+    const tokens1 = await u1.listApiTokens();
+    expect(tokens1.find((t) => t.token === token)).toBeDefined();
+    const token2 = await u1.getNewAPIToken();
     const u2 = await User.findOne({ email: "foo@bar.com" });
     assertIsSet(u2);
-    expect(u2.api_token).not.toEqual(token);
+    const tokens2 = await u2.listApiTokens();
+    expect(tokens2.find((t) => t.token === token2)).toBeDefined();
+    expect(u2.api_token).toBeNull();
   });
   it("should set language ", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });

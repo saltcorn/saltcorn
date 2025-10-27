@@ -386,6 +386,20 @@ class User {
           });
       }
     }
+    // Backfill legacy api_token field for backward compatibility: if user record
+    // doesn't have api_token set, fetch latest token from _sc_api_tokens
+    try {
+      const schema = db.getTenantSchemaPrefix();
+      const tokq = await db.query(
+        `select token from ${schema}_sc_api_tokens where user_id = $1 order by created_at desc, id desc limit 1`,
+        [newUser.id]
+      );
+      if ((!newUser.api_token || newUser.api_token === null) && tokq && tokq.rows && tokq.rows[0]) {
+        newUser.api_token = tokq.rows[0].token;
+      }
+    } catch (e) {
+      // ignore if table doesn't exist or any other error during lookup
+    }
     return newUser;
   }
 
@@ -487,8 +501,14 @@ class User {
    * @returns {Promise<string>}
    */
   async getNewAPIToken(): Promise<string> {
+    // Create new token in tokens table and keep users.api_token for backwards compatibility
     const api_token = uuidv4();
-    await this.update({ api_token });
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `insert into ${schema}_sc_api_tokens (user_id, token) values ($1, $2)`,
+      [this.id, api_token]
+    );
+    // await this.update({ api_token });
     this.api_token = api_token;
     return api_token;
   }
@@ -498,10 +518,71 @@ class User {
    * @returns {Promise<string>}
    */
   async removeAPIToken(): Promise<null> {
+    // remove all tokens for this user and clear users.api_token
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `delete from ${schema}_sc_api_tokens where user_id = $1`,
+      [this.id]
+    );
     const api_token = null;
     await this.update({ api_token });
     this.api_token = api_token;
     return api_token;
+  }
+
+  /**
+   * List API tokens for this user
+   */
+  async listApiTokens(): Promise<Array<{ id: number; token: string; created_at: Date | string }>> {
+    const schema = db.getTenantSchemaPrefix();
+    const q = await db.query(
+      `select id, token, created_at from ${schema}_sc_api_tokens where user_id = $1 order by created_at desc, id desc`,
+      [this.id]
+    );
+    return q.rows as Array<{ id: number; token: string; created_at: Date | string }>;
+  }
+
+  /**
+   * Revoke a single API token by id
+   */
+  async revokeApiToken(tokenId: number): Promise<void> {
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `delete from ${schema}_sc_api_tokens where id = $1 and user_id = $2`,
+      [tokenId, this.id]
+    );
+  }
+
+  /**
+   * Revoke original API token stored on users.api_token
+   * Also delete any matching row from _sc_api_tokens for this user
+   */
+  async revokeOriginalApiToken(): Promise<void> {
+    if (!this.api_token) return;
+    const original = this.api_token;
+    const schema = db.getTenantSchemaPrefix();
+    await db.query(
+      `delete from ${schema}_sc_api_tokens where user_id = $1 and token = $2`,
+      [this.id, original]
+    );
+    await this.update({ api_token: null });
+    this.api_token = null;
+  }
+
+  /**
+   * Find user by API token
+   */
+  static async findByApiToken(token: string): Promise<User | undefined> {
+    if (!token || token.length < 6) return undefined;
+    const schema = db.getTenantSchemaPrefix();
+    const q = await db.query(
+      `select u.* from ${schema}_sc_api_tokens t join ${schema}users u on u.id = t.user_id where t.token = $1 limit 1`,
+      [token]
+    );
+    const u = q.rows && q.rows[0];  
+    if (u) return new User(u as any);
+    const q2 = await db.selectMaybeOne("users", { api_token: token });
+    return q2 ? new User(q2 as any) : undefined;
   }
 
   /**
