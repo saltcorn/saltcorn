@@ -685,11 +685,12 @@ describe("Table with row ownership double joined", () => {
     expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
       department: {
         inSelect: {
-          field: "id",
+          field: "manager",
           table: "_Department",
           tenant: "public",
           through: "users",
-          valField: "manager",
+          through_pk: "id",
+          valField: "id",
           where: { supervisor: 1 },
         },
       },
