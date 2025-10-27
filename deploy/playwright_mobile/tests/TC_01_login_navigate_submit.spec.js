@@ -179,12 +179,12 @@ test.describe("Login Navigate Upload", () => {
         'div[data-sc-embed-viewname="list_processed"]'
       );
       const dateElement = processedItem.locator("time");
-      await expect(dateElement).toHaveCount(3);
+      await expect(dateElement).toHaveCount(5);
 
       const timeElement = newIframe.locator(
         'time[datetime="2025-08-25T00:00:00.000Z"]'
       );
-      await expect(timeElement).toBeVisible();
+      await expect(timeElement).toHaveCount(3);
     } catch (error) {
       await dumpHTML(page);
       throw error;

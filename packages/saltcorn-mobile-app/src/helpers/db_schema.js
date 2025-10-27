@@ -55,7 +55,8 @@ export async function updateScTables(tablesJSON, skipScPlugins = true) {
       (skipScPlugins && table === "_sc_plugins") ||
       table === "_sc_workflow_runs" ||
       table === "_sc_workflow_trace" ||
-      table === "_sc_metadata"
+      table === "_sc_metadata" ||
+      table === "_sc_api_tokens"
     )
       continue;
     if (table === "_sc_tables") await dropDeletedTables(rows);

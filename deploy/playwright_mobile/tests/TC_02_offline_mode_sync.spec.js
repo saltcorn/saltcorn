@@ -192,7 +192,7 @@ test.describe("Login Navigate Upload", () => {
         'div[data-sc-embed-viewname="list_processed"]'
       );
       const dateElement = processedItem.locator("time");
-      await expect(dateElement).toHaveCount(4);
+      await expect(dateElement).toHaveCount(6);
     } catch (error) {
       await dumpHTML(page);
       throw error;
@@ -251,7 +251,7 @@ test.describe("Login Navigate Upload", () => {
       'div[data-sc-embed-viewname="list_processed"]'
     );
     const dateElement = processedItem.locator("time");
-    await expect(dateElement).toHaveCount(3);
+    await expect(dateElement).toHaveCount(5);
   });
 
   test("sync offline data", async () => {
@@ -297,6 +297,6 @@ test.describe("Login Navigate Upload", () => {
       'div[data-sc-embed-viewname="list_processed"]'
     );
     const dateElement = processedItem.locator("time");
-    await expect(dateElement).toHaveCount(4);
+    await expect(dateElement).toHaveCount(6);
   });
 });
