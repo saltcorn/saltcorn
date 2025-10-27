@@ -2340,7 +2340,7 @@ module.exports = {
         required: true,
         sublabel:
           "A valid JavaScript identifier for updating existing progress toasts",
-        showIf: { blocking: false, close: false },
+        showIf: { blocking: false },
       },
       {
         name: "maxHeight",
