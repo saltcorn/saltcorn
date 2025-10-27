@@ -1081,11 +1081,14 @@ describe("jsexprToWhere", () => {
     expect(
       jsexprToWhere("favbook.publisher.name=='AK Press'", {}, patients?.fields)
     ).toEqual({
-      publisher: {
+      favbook: {
         inSelect: {
-          field: "id",
-          table: "publisher",
+          field: "publisher",
+          table: "books",
           tenant: "public",
+          through: "publisher",
+          through_pk: "id",
+          valField: "id",
           where: { name: "AK Press" },
         },
       },
