@@ -797,12 +797,15 @@ class WorkflowRun {
             if (array.length) {
               this.current_step.push(0);
               this.current_step.push(step.configuration.loop_body_initial_step);
+              const new_context = {
+                ...this.context,
+                [step.configuration.item_variable]: array[0],
+              };
+              if (step.configuration.index_variable)
+                new_context[step.configuration.index_variable] = 0;
               await this.update({
                 current_step: this.current_step,
-                context: {
-                  ...this.context,
-                  [step.configuration.item_variable]: array[0],
-                },
+                context: new_context,
               });
 
               step = steps.find(
@@ -847,13 +850,17 @@ class WorkflowRun {
                 this.set_current_step(
                   forStep.configuration.loop_body_initial_step
                 );
-                const nextVar =
-                  array_data1[this.current_step[this.current_step.length - 2]];
+                const next_index =
+                  this.current_step[this.current_step.length - 2];
+                const nextVar = array_data1[next_index];
 
                 nextUpdate.context = {
                   ...this.context,
                   [forStep.configuration.item_variable]: nextVar,
                 };
+                if (forStep.configuration.index_variable)
+                  nextUpdate.context[forStep.configuration.index_variable] =
+                    next_index;
                 nextUpdate.current_step = this.current_step;
               } else {
                 //no more items
@@ -869,6 +876,9 @@ class WorkflowRun {
                 }
                 //remove variable from context
                 delete this.context[forStep.configuration.item_variable];
+                if (forStep.configuration.index_variable)
+                  delete this.context[forStep.configuration.index_variable];
+
                 nextUpdate.context = this.context;
                 //nextUpdate.current_step = this.current_step;
               }
