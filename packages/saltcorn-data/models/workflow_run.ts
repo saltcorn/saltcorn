@@ -955,6 +955,7 @@ class WorkflowRun {
         retVals[k] = this.context[k];
         delete this.context[k];
       }
+      if (typeof nextUpdate?.[k] !== "undefined") delete nextUpdate[k];
     });
     const secondary_directives: Record<string, string[]> = {
       reload_embedded_view: ["new_state"],
@@ -971,11 +972,12 @@ class WorkflowRun {
             retVals[secondary_k] = this.context[secondary_k];
             delete this.context[secondary_k];
           }
+          if (typeof nextUpdate?.[secondary_k] !== "undefined")
+            delete nextUpdate[secondary_k];
         });
     });
     //if (Object.keys(retVals).length)
     if (nextUpdate) {
-      nextUpdate.context = this.context;
       await this.update(nextUpdate);
     } else this.update({ context: this.context });
 
