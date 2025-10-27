@@ -868,8 +868,10 @@ class WorkflowRun {
                 this.current_step.pop();
                 const afterForStep = this.get_next_step(forStep, user);
 
-                if (afterForStep) this.set_current_step(afterForStep.name);
-                else {
+                if (afterForStep) {
+                  this.set_current_step(afterForStep.name);
+                  nextUpdate.current_step = this.current_step;
+                } else {
                   //TODO what if there is another level of forloops
                   step = null;
                   nextUpdate.status = "Finished";
