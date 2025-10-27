@@ -1064,13 +1064,31 @@ describe("jsexprToWhere", () => {
   });
   it("translates join field", async () => {
     const books = Table.findOne({ name: "books" });
-    const fields = await books?.getFields();
+    const fields = books?.getFields();
     expect(jsexprToWhere("publisher.name=='AK Press'", {}, fields)).toEqual({
       publisher: {
         inSelect: {
           field: "id",
           table: "publisher",
           tenant: "public",
+          where: { name: "AK Press" },
+        },
+      },
+    });
+  });
+  it("translates double join field", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    expect(
+      jsexprToWhere("favbook.publisher.name=='AK Press'", {}, patients?.fields)
+    ).toEqual({
+      favbook: {
+        inSelect: {
+          field: "publisher",
+          table: "books",
+          tenant: "public",
+          through: "publisher",
+          through_pk: "id",
+          valField: "id",
           where: { name: "AK Press" },
         },
       },

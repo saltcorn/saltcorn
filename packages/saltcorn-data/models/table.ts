@@ -590,7 +590,7 @@ class Table implements AbstractTable {
             const path = refTable.ownership_formula
               .replace("===user.id", "")
               .replace("==user.id", "")
-              .split(".");
+              .split(/\??\./);
             const fldNms = new Set((refTable?.fields || []).map((f) => f.name));
             if (fldNms.has(path[0])) {
               opts.push({
@@ -891,9 +891,8 @@ class Table implements AbstractTable {
    * @param user
    * @param forRead
    */
-  private updateWhereWithOwnership(
+  updateWhereWithOwnership(
     where: Where,
-    fields: Field[],
     user?: AbstractUser,
     forRead?: boolean
   ): { notAuthorized?: boolean } | undefined {
@@ -912,7 +911,9 @@ class Table implements AbstractTable {
       role > min_role &&
       this.ownership_field_id
     ) {
-      const owner_field = fields.find((f) => f.id === this.ownership_field_id);
+      const owner_field = this.fields.find(
+        (f) => f.id === this.ownership_field_id
+      );
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
       mergeIntoWhere(where, {
@@ -1019,7 +1020,7 @@ class Table implements AbstractTable {
     const triggers = await Trigger.getTableTriggers("Delete", this);
     const fields = this.fields;
 
-    if (this.updateWhereWithOwnership(where, fields, user)?.notAuthorized) {
+    if (this.updateWhereWithOwnership(where, user)?.notAuthorized) {
       const state = require("../db/state").getState();
       state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
       return;
@@ -1249,12 +1250,8 @@ class Table implements AbstractTable {
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
     if (
       role &&
-      this.updateWhereWithOwnership(
-        where,
-        fields,
-        forUser || { role_id: 100 },
-        true
-      )?.notAuthorized
+      this.updateWhereWithOwnership(where, forUser || { role_id: 100 }, true)
+        ?.notAuthorized
     ) {
       return [];
     }
@@ -3248,7 +3245,10 @@ class Table implements AbstractTable {
                     delete rec[from];
                   });
 
-                  if (options?.extra_row_values && options.extra_row_values !== null) {
+                  if (
+                    options?.extra_row_values &&
+                    options.extra_row_values !== null
+                  ) {
                     const extras = options.extra_row_values;
                     const overwrite = options.overwrite_csv_fields !== false; // default true
                     if (overwrite) {
@@ -3831,12 +3831,8 @@ ${rejectDetails}`,
     const where = { ...(options?.where || {}) };
     if (
       role &&
-      this.updateWhereWithOwnership(
-        where,
-        this.fields,
-        forUser || { role_id: 100 },
-        true
-      )?.notAuthorized
+      this.updateWhereWithOwnership(where, forUser || { role_id: 100 }, true)
+        ?.notAuthorized
     ) {
       const emptyRet: Row = {};
       Object.entries(aggregations).forEach(([nm, aggObj]) => {
