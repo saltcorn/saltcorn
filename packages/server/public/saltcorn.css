@@ -38,6 +38,10 @@ div.hdrfilterdate input {
   border-right: none;
 }
 
+thead.sticky-top {
+  z-index: 900;
+}
+
 .text-align-right {
   text-align: right;
 }
