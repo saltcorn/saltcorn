@@ -52,7 +52,7 @@ const headerCell = (hdr: any, opts: any, ix: number): string =>
         button(
           {
             class: [
-              `btn btn-${opts.header_filters_open?.includes?.(hdr.row_key) ? "" : "outline-"}secondary btn-sm`,
+              `btn btn-${opts.header_filters_open?.includes?.(hdr.row_key) ? "" : "outline-"}secondary btn-sm btn-xs`,
               opts.header_filters_open?.includes?.(hdr.row_key) && "hdr-open",
             ],
             "data-boundary": "viewport",
