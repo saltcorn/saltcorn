@@ -7,7 +7,7 @@ export type StyleVal =
   | string
   | null
   | (string | Falsy)[]
-  | { [key: string]: string | number };
+  | { [key: string]: string | number | Falsy };
 export type AttributeVal = string | boolean | number | undefined | null;
 export type Element = string | number | boolean | null | undefined | Element[];
 export type Attributes = {
