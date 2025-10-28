@@ -706,7 +706,13 @@ const configuration_workflow = (req) =>
             name: "_header_filters_toggle",
             label: req.__("Toggle header filters"),
             type: "Bool",
-            showIf: { _header_filters: true },
+            showIf: { _header_filters: true, _header_filters_dropdown: false },
+          });
+          formfields.push({
+            name: "_header_filters_dropdown",
+            label: req.__("Dropdown header filters"),
+            type: "Bool",
+            showIf: { _header_filters: true, _header_filters_toggle: false },
           });
           formfields.push({
             name: "transpose",
@@ -1278,7 +1284,7 @@ const run = async (
   if (default_state?._sticky_header) {
     page_opts.sticky_header = default_state?._sticky_header;
   }
-  
+
   if (default_state?._responsive_collapse) {
     page_opts.responsiveCollapse = true;
     page_opts.collapse_breakpoint_px = default_state._collapse_breakpoint_px;
@@ -1292,6 +1298,9 @@ const run = async (
   page_opts.header_filters_toggle = (
     default_state || {}
   )._header_filters_toggle;
+  page_opts.header_filters_dropdown = (
+    default_state || {}
+  )._header_filters_dropdown;
   if (page_opts.header_filters_toggle) {
     page_opts.header_filters_open = !!Object.keys(state).filter(
       (k) => !k.startsWith("_") || k.startsWith("_from") || k.startsWith("_to")
@@ -1671,7 +1680,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout",
+      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout",
       "default_state"
     );
   }
@@ -1729,6 +1738,7 @@ module.exports = {
       _collapse_breakpoint_px,
       _header_filters,
       _header_filters_toggle,
+      _header_filters_dropdown,
       _row_color_formula,
       _sticky_header,
       ...ds
