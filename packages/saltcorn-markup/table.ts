@@ -71,7 +71,7 @@ const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
     : hdr.label;
   const toggleIcon = span(
     {
-      class: "header-filter-toggle link-style",
+      class: "header-filter-toggle link-style float-end",
       title: "Show/Hide filters",
       onclick: `toggle_header_filters(this)`,
       style:
