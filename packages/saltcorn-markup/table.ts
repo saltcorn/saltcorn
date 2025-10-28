@@ -73,7 +73,15 @@ const headerCell = (hdr: any, opts: any, ix: number): string => {
           div(
             { class: "p-2" },
             div("Filter ", hdr.row_label || ""),
-            hdr.header_filter
+            hdr.header_filter,
+            button(
+              {
+                type: "button",
+                class: "btn btn-secondary btn-sm mt-1",
+                onclick: "clear_state('', this)",
+              },
+              "Clear all"
+            )
           )
         )
       )
