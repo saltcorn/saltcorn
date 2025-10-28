@@ -1700,5 +1700,6 @@
 	"Revoke": "Revoke",
 	"original": "original",
 	"Remove all": "Remove all",
-	"API token revoked": "API token revoked"
+	"API token revoked": "API token revoked",
+	"Dropdown header filters": "Dropdown header filters"
 }
