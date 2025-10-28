@@ -30,8 +30,14 @@ const { pagination } = helpers;
  * @param {any} hdr
  * @returns {th}
  */
-const headerCell = (hdr: any, opts: any, ix: number): string =>
-  th(
+const headerCell = (hdr: any, opts: any, ix: number): string => {
+  const is_open =
+    opts.header_filters_open?.has?.(hdr.row_key) ||
+    opts.header_filters_open?.has?.(`_fromdate_${hdr.row_key}`) ||
+    opts.header_filters_open?.has?.(`_todate_${hdr.row_key}`) ||
+    opts.header_filters_open?.has?.(`_gte_${hdr.row_key}`) ||
+    opts.header_filters_open?.has?.(`_lte_${hdr.row_key}`);
+  return th(
     (hdr.align ||
       hdr.width ||
       (opts.header_filters_dropdown && hdr.header_filter)) && {
@@ -51,8 +57,8 @@ const headerCell = (hdr: any, opts: any, ix: number): string =>
         { class: "dropdown float-end" },
         button({
           class: [
-            `btn btn-${opts.header_filters_open?.includes?.(hdr.row_key) ? "" : "outline-"}secondary btn-sm btn-xs dropdown-toggle`,
-            opts.header_filters_open?.includes?.(hdr.row_key) && "hdr-open",
+            `btn btn-${is_open ? "" : "outline-"}secondary btn-sm btn-xs dropdown-toggle`,
+            is_open && "hdr-open",
           ],
           "data-boundary": "viewport",
           type: "button",
@@ -72,7 +78,7 @@ const headerCell = (hdr: any, opts: any, ix: number): string =>
         )
       )
   );
-
+};
 const headerFilter = (hdr: any, isLast: boolean): string =>
   th(
     (hdr.align || hdr.width) && {
@@ -290,7 +296,7 @@ const mkTable = (
                     ? `${opts.tableId || "table"}_header_filters_row`
                     : null,
                   ...(opts.header_filters_toggle &&
-                  !opts.header_filters_open?.length
+                  !opts.header_filters_open?.size
                     ? { style: "display:none;" }
                     : {}),
                 },

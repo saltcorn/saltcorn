@@ -1302,13 +1302,15 @@ const run = async (
     default_state || {}
   )._header_filters_dropdown;
   if (page_opts.header_filters_toggle || page_opts.header_filters_dropdown) {
-    page_opts.header_filters_open = Object.keys(state).filter(
-      (k) =>
-        !k.startsWith("_") ||
-        k.startsWith("_from") ||
-        k.startsWith("_to") ||
-        k.startsWith("_lt") ||
-        k.startsWith("_gt")
+    page_opts.header_filters_open = new Set(
+      Object.keys(state).filter(
+        (k) =>
+          !k.startsWith("_") ||
+          k.startsWith("_from") ||
+          k.startsWith("_to") ||
+          k.startsWith("_lt") ||
+          k.startsWith("_gt")
+      )
     );
   }
 
