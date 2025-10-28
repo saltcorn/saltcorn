@@ -1301,10 +1301,10 @@ const run = async (
   page_opts.header_filters_dropdown = (
     default_state || {}
   )._header_filters_dropdown;
-  if (page_opts.header_filters_toggle) {
-    page_opts.header_filters_open = !!Object.keys(state).filter(
+  if (page_opts.header_filters_toggle || page_opts.header_filters_dropdown) {
+    page_opts.header_filters_open = Object.keys(state).filter(
       (k) => !k.startsWith("_") || k.startsWith("_from") || k.startsWith("_to")
-    ).length;
+    );
   }
 
   page_opts.transpose_width = (default_state || {}).transpose_width;

@@ -51,7 +51,10 @@ const headerCell = (hdr: any, opts: any, ix: number): string =>
         { class: "dropdown float-end" },
         button(
           {
-            class: "btn btn-outline-secondary btn-sm",
+            class: [
+              `btn btn-${opts.header_filters_open?.includes?.(hdr.row_key) ? "" : "outline-"}secondary btn-sm`,
+              opts.header_filters_open?.includes?.(hdr.row_key) && "hdr-open",
+            ],
             "data-boundary": "viewport",
             type: "button",
             "data-bs-toggle": "dropdown",
@@ -64,7 +67,7 @@ const headerCell = (hdr: any, opts: any, ix: number): string =>
           {
             class: ["dropdown-menu", ix > 0 && "dropdown-menu-end"],
           },
-          "Foo"
+          hdr.header_filter
         )
       )
   );
@@ -242,6 +245,8 @@ const mkTable = (
         tr(td({ colspan: "1000" }, h4({ class: "list-group-header" }, group))) +
         rows.map(val_row).join("")
     );
+  console.log(hdrs);
+
   return div(
     {
       class: [!opts.sticky_header && "table-responsive", opts.tableClass],
@@ -284,7 +289,8 @@ const mkTable = (
                   id: opts.header_filters_toggle
                     ? `${opts.tableId || "table"}_header_filters_row`
                     : null,
-                  ...(!opts.header_filters_open && opts.header_filters_toggle
+                  ...(!opts.header_filters_open.length &&
+                  opts.header_filters_toggle
                     ? { style: "display:none;" }
                     : {}),
                 },
