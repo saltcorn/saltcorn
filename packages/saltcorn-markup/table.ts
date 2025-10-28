@@ -30,7 +30,7 @@ const { pagination } = helpers;
  * @param {any} hdr
  * @returns {th}
  */
-const headerCell = (hdr: any, opts: any): string =>
+const headerCell = (hdr: any, opts: any, ix: number): string =>
   th(
     (hdr.align ||
       hdr.width ||
@@ -62,7 +62,7 @@ const headerCell = (hdr: any, opts: any): string =>
         ),
         div(
           {
-            class: "dropdown-menu dropdown-menu-end",
+            class: ["dropdown-menu", ix > 0 && "dropdown-menu-end"],
           },
           "Foo"
         )
@@ -91,9 +91,14 @@ const headerFilter = (hdr: any, isLast: boolean): string =>
       : hdr.header_filter || null
   );
 
-const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
+const headerCellWithToggle = (
+  hdr: any,
+  opts: any,
+  isLast: boolean,
+  ix: number
+): string => {
   if (!(isLast && opts.header_filters && opts.header_filters_toggle))
-    return headerCell(hdr, opts);
+    return headerCell(hdr, opts, ix);
   const content = hdr.sortlink
     ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
     : hdr.label;
@@ -269,7 +274,7 @@ const mkTable = (
             : "",
           tr(
             hdrs.map((hdr: HeadersParams, ix: number) =>
-              headerCellWithToggle(hdr, opts, ix === hdrs.length - 1)
+              headerCellWithToggle(hdr, opts, ix === hdrs.length - 1, ix)
             )
           ),
           opts.header_filters && !opts.header_filters_dropdown
