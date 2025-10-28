@@ -43,6 +43,7 @@ const ppStyle = (cs: StyleVal): string => {
           ? cs.filter((c) => c).join(";")
           : typeof cs === "object"
             ? Object.entries(cs)
+                .filter(([k, v]) => v || v === 0)
                 .map(([k, v]) => `${camelToCssCase(k)}:${v}`)
                 .join(";")
             : "";
