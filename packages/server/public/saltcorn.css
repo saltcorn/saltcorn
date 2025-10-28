@@ -42,6 +42,19 @@ thead.sticky-top {
   z-index: 900;
 }
 
+thead.header-filter-dropdown span.dropdown {
+  position: absolute;
+  right: 0px;
+}
+
+thead.header-filter-dropdown button[data-bs-toggle="dropdown"] {
+  visibility: hidden;
+}
+
+thead.header-filter-dropdown th:hover button[data-bs-toggle="dropdown"] {
+  visibility: visible;
+}
+
 .text-align-right {
   text-align: right;
 }
@@ -256,7 +269,7 @@ table.table-layout-fixed {
   table-layout: fixed;
 }
 
-tr.header-filters th input[type=number] {
+tr.header-filters th input[type="number"] {
   max-width: 100px;
 }
 

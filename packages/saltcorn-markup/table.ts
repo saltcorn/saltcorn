@@ -30,15 +30,43 @@ const { pagination } = helpers;
  * @param {any} hdr
  * @returns {th}
  */
-const headerCell = (hdr: any): string =>
+const headerCell = (hdr: any, opts: any): string =>
   th(
-    (hdr.align || hdr.width) && {
-      style: hdr.width ? `width: ` + hdr.width : "",
+    (hdr.align ||
+      hdr.width ||
+      (opts.header_filters_dropdown && hdr.header_filter)) && {
+      style: {
+        width: hdr.width || null,
+        position:
+          opts.header_filters_dropdown && hdr.header_filter ? "relative" : null,
+      },
       ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
     },
     hdr.sortlink
       ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
-      : hdr.label
+      : hdr.label,
+    opts.header_filters_dropdown &&
+      hdr.header_filter &&
+      span(
+        { class: "dropdown float-end" },
+        button(
+          {
+            class: "btn btn-outline-secondary btn-sm",
+            "data-boundary": "viewport",
+            type: "button",
+            "data-bs-toggle": "dropdown",
+            "aria-haspopup": "true",
+            "aria-expanded": "false",
+          },
+          i({ class: "fas fa-caret-down" })
+        ),
+        div(
+          {
+            class: "dropdown-menu dropdown-menu-end",
+          },
+          "Foo"
+        )
+      )
   );
 
 const headerFilter = (hdr: any, isLast: boolean): string =>
@@ -65,7 +93,7 @@ const headerFilter = (hdr: any, isLast: boolean): string =>
 
 const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
   if (!(isLast && opts.header_filters && opts.header_filters_toggle))
-    return headerCell(hdr);
+    return headerCell(hdr, opts);
   const content = hdr.sortlink
     ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
     : hdr.label;
@@ -231,13 +259,20 @@ const mkTable = (
       !opts.noHeader &&
         !opts.transpose &&
         thead(
-          opts.sticky_header ? { class: "sticky-top" } : "",
+          opts.sticky_header || opts.header_filters_dropdown
+            ? {
+                class: [
+                  opts.sticky_header && "sticky-top",
+                  opts.header_filters_dropdown && "header-filter-dropdown",
+                ],
+              }
+            : "",
           tr(
             hdrs.map((hdr: HeadersParams, ix: number) =>
               headerCellWithToggle(hdr, opts, ix === hdrs.length - 1)
             )
           ),
-          opts.header_filters
+          opts.header_filters && !opts.header_filters_dropdown
             ? tr(
                 {
                   class: "header-filters",
