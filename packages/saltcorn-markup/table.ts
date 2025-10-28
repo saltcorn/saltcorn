@@ -245,7 +245,6 @@ const mkTable = (
         tr(td({ colspan: "1000" }, h4({ class: "list-group-header" }, group))) +
         rows.map(val_row).join("")
     );
-  console.log(hdrs);
 
   return div(
     {
