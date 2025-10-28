@@ -1100,6 +1100,7 @@ const get_viewable_fields = (
             statehash
           ),
           row_key: key,
+          row_label: field?.label,
           header_filter,
           key: gofv ? gofv : (row) => text(row[key]),
           sortlink: sortlinkForName(key, req, viewname, statehash),
@@ -1253,6 +1254,7 @@ const get_viewable_fields = (
               statehash
             ),
             row_key: f_with_val.name,
+            row_label: f.label,
             key:
               column.fieldview && f.type === "File"
                 ? (row) =>
@@ -1395,6 +1397,7 @@ const headerFilterForField = (f, state, path) => {
       $('#daterangefilter${f.name}').flatpickr({mode:'range',
         dateFormat: "Y-m-d",${set_initial}    
         onChange: function(selectedDates, dateStr, instance) {
+            set_header_filter($(instance.element));
             if(selectedDates.length==2) {
           
                set_state_fields({_fromdate_${f.name}: selectedDates[0].toLocaleDateString('en-CA'), _todate_${f.name}: selectedDates[1].toLocaleDateString('en-CA') })
@@ -1412,8 +1415,12 @@ const headerFilterForField = (f, state, path) => {
   /*if (f.is_fkey) {
     fieldviewObjs = [getState().keyFieldviews.select];
   } else */
-  if (f?.type?.name === "Bool") fieldviewObjs = [f.type.fieldviews.tristate];
-  else if (f?.type?.name === "String") fieldviewObjs = [f.type.fieldviews.edit];
+  let extraAttrs = {};
+  if (f?.type?.name === "Bool") {
+    fieldviewObjs = [f.type.fieldviews.tristate];
+    extraAttrs.outline_buttons = true;
+  } else if (f?.type?.name === "String")
+    fieldviewObjs = [f.type.fieldviews.edit];
   else if (f?.type?.name === "Integer" || f?.type?.name === "Float")
     fieldviewObjs = [
       f.type.fieldviews.above_input,
@@ -1431,11 +1438,13 @@ const headerFilterForField = (f, state, path) => {
             f.name,
             state[path || f.name],
             {
-              onChange: `set_state_field('${encodeURIComponent(
+              preOnChange: `set_header_filter(this);`,
+              onChange: `set_header_filter(this);set_state_field('${encodeURIComponent(
                 path || f.name
               )}', this.value, this)`,
               isFilter: true,
               ...f.attributes,
+              ...extraAttrs,
             },
             "",
             false,

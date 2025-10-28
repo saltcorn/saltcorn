@@ -429,7 +429,7 @@ const number_limit = (direction) => ({
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
   run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
-    const onChange = `set_state_field('_${direction}_${nm}', this.value, this)`;
+    const onChange = `${attrs.preOnChange || ""}set_state_field('_${direction}_${nm}', this.value, this)`;
     return attrs?.stepper_btns
       ? number_stepper(
           undefined,
@@ -438,7 +438,7 @@ const number_limit = (direction) => ({
             : undefined,
           {
             ...attrs,
-            onChange: `set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val(), this)`,
+            onChange: `${attrs.preOnChange || ""}set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val(), this)`,
           },
           cls,
           undefined,
@@ -2315,9 +2315,7 @@ const date = {
       if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
         if (attrs && attrs.locale && typeof v === "string") {
           if (
-            !v.match(
-              /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/
-            ) &&
+            !v.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/) &&
             !v.match(/\d{4}-\d{2}-\d{2}/)
           ) {
             const d = moment(v, "L LT", attrs.locale).toDate();
@@ -2335,9 +2333,7 @@ const date = {
       if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
         if (attrs && attrs.locale && typeof v === "string") {
           if (
-            !v.match(
-              /(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/
-            ) &&
+            !v.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/) &&
             !v.match(/\d{4}-\d{2}-\d{2}/)
           ) {
             const d = moment(v, "L LT", attrs.locale).toDate();
@@ -2542,6 +2538,11 @@ const bool = {
           label: "True label",
           type: "String",
         },
+        {
+          name: "outline_buttons",
+          label: "Outline buttons",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.disabled
@@ -2569,10 +2570,10 @@ const bool = {
                 class: [
                   "btn btn-xs",
                   !isdef(v) || v === null
-                    ? "btn-secondary"
+                    ? `btn-${attrs.outline_buttons ? "outline-" : ""}secondary`
                     : v
-                      ? "btn-success"
-                      : "btn-danger",
+                      ? `btn-${attrs.outline_buttons ? "outline-" : ""}success`
+                      : `btn-${attrs.outline_buttons ? "outline-" : ""}danger`,
                 ],
                 id: `trib${text_attr(nm)}`,
               },

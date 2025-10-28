@@ -97,6 +97,18 @@ describe("tags", () => {
     expect(
       div({ style: { marginRight: "1px", borderTopLeftRadius: "3px" } }, 5)
     ).toBe('<div style="margin-right:1px;border-top-left-radius:3px">5</div>');
+    expect(hr({ style: { color: "red", display: null } }, 5)).toBe(
+      '<hr style="color:red">'
+    );
+    expect(hr({ style: { color: "red", display: "" } }, 5)).toBe(
+      '<hr style="color:red">'
+    );
+    expect(hr({ style: { color: "red", display: "none" } }, 5)).toBe(
+      '<hr style="color:red;display:none">'
+    );
+    expect(hr({ style: { color: "", display: null } }, 5)).toBe(
+      '<hr>'
+    );
     expect(hr({ style: { color: "red" } }, 5)).toBe('<hr style="color:red">');
     expect(hr({ style: {} })).toBe("<hr>");
     expect(hr({ style: null })).toBe("<hr>");
