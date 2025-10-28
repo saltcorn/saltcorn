@@ -1397,6 +1397,7 @@ const headerFilterForField = (f, state, path) => {
       $('#daterangefilter${f.name}').flatpickr({mode:'range',
         dateFormat: "Y-m-d",${set_initial}    
         onChange: function(selectedDates, dateStr, instance) {
+        set_header_filter($(instance.element));
             if(selectedDates.length==2) {
           
                set_state_fields({_fromdate_${f.name}: selectedDates[0].toLocaleDateString('en-CA'), _todate_${f.name}: selectedDates[1].toLocaleDateString('en-CA') })
