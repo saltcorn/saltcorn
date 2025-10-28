@@ -429,7 +429,7 @@ const number_limit = (direction) => ({
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
   run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
-    const onChange = `set_state_field('_${direction}_${nm}', this.value, this)`;
+    const onChange = `${attrs.preOnChange || ""}set_state_field('_${direction}_${nm}', this.value, this)`;
     return attrs?.stepper_btns
       ? number_stepper(
           undefined,
@@ -438,7 +438,7 @@ const number_limit = (direction) => ({
             : undefined,
           {
             ...attrs,
-            onChange: `set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val(), this)`,
+            onChange: `${attrs.preOnChange || ""}set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val(), this)`,
           },
           cls,
           undefined,
