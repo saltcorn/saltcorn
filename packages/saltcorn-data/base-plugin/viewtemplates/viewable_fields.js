@@ -1412,8 +1412,12 @@ const headerFilterForField = (f, state, path) => {
   /*if (f.is_fkey) {
     fieldviewObjs = [getState().keyFieldviews.select];
   } else */
-  if (f?.type?.name === "Bool") fieldviewObjs = [f.type.fieldviews.tristate];
-  else if (f?.type?.name === "String") fieldviewObjs = [f.type.fieldviews.edit];
+  let extraAttrs = {};
+  if (f?.type?.name === "Bool") {
+    fieldviewObjs = [f.type.fieldviews.tristate];
+    extraAttrs.outline_buttons = true;
+  } else if (f?.type?.name === "String")
+    fieldviewObjs = [f.type.fieldviews.edit];
   else if (f?.type?.name === "Integer" || f?.type?.name === "Float")
     fieldviewObjs = [
       f.type.fieldviews.above_input,
@@ -1436,6 +1440,7 @@ const headerFilterForField = (f, state, path) => {
               )}', this.value, this)`,
               isFilter: true,
               ...f.attributes,
+              ...extraAttrs,
             },
             "",
             false,
