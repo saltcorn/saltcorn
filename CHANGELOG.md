@@ -1,5 +1,9 @@
 # Notable changes
 
+## 1.4.1 - In development
+
+* Dropdown option for List header filters - mutually exclusive with togglable header filters. Filters are activated with a hidden (revealed on hover) dropdown menu.
+
 ## 1.4.0 - Released 24 October 2025
 
 * When PageLoad triggers return directives (`notify`, `eval_js` etc.) these are now run on the the 
