@@ -1100,6 +1100,7 @@ const get_viewable_fields = (
             statehash
           ),
           row_key: key,
+          row_label: field?.label,
           header_filter,
           key: gofv ? gofv : (row) => text(row[key]),
           sortlink: sortlinkForName(key, req, viewname, statehash),
@@ -1253,6 +1254,7 @@ const get_viewable_fields = (
               statehash
             ),
             row_key: f_with_val.name,
+            row_label: f.label,
             key:
               column.fieldview && f.type === "File"
                 ? (row) =>
