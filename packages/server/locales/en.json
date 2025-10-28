@@ -1695,5 +1695,10 @@
 	"CSV BOM": "CSV BOM",
 	"Include the Byte-Order Mark in downloaded CSV files": "Include the Byte-Order Mark in downloaded CSV files",
 	"Localize CSV downloads": "Localize CSV downloads",
-	"Sticky headers": "Sticky headers"
+	"Sticky headers": "Sticky headers",
+	"API tokens for this user:": "API tokens for this user:",
+	"Revoke": "Revoke",
+	"original": "original",
+	"Remove all": "Remove all",
+	"API token revoked": "API token revoked"
 }
