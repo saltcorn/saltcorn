@@ -67,7 +67,7 @@ const headerCell = (hdr: any, opts: any, ix: number): string =>
           {
             class: ["dropdown-menu", ix > 0 && "dropdown-menu-end"],
           },
-          hdr.header_filter
+          div({ class: "p-2" }, div("Filter"), hdr.header_filter)
         )
       )
   );
