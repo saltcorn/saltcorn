@@ -1437,7 +1437,7 @@ const headerFilterForField = (f, state, path) => {
             f.name,
             state[path || f.name],
             {
-              onChange: `set_state_field('${encodeURIComponent(
+              onChange: `set_header_filter(this);set_state_field('${encodeURIComponent(
                 path || f.name
               )}', this.value, this)`,
               isFilter: true,

@@ -49,23 +49,20 @@ const headerCell = (hdr: any, opts: any, ix: number): string =>
       hdr.header_filter &&
       span(
         { class: "dropdown float-end" },
-        button(
-          {
-            class: [
-              `btn btn-${opts.header_filters_open?.includes?.(hdr.row_key) ? "" : "outline-"}secondary btn-sm btn-xs`,
-              opts.header_filters_open?.includes?.(hdr.row_key) && "hdr-open",
-            ],
-            "data-boundary": "viewport",
-            type: "button",
-            "data-bs-toggle": "dropdown",
-            "aria-haspopup": "true",
-            "aria-expanded": "false",
-          },
-          i({ class: "fas fa-caret-down" })
-        ),
+        button({
+          class: [
+            `btn btn-${opts.header_filters_open?.includes?.(hdr.row_key) ? "" : "outline-"}secondary btn-sm btn-xs dropdown-toggle`,
+            opts.header_filters_open?.includes?.(hdr.row_key) && "hdr-open",
+          ],
+          "data-boundary": "viewport",
+          type: "button",
+          "data-bs-toggle": "dropdown",
+          "aria-haspopup": "true",
+          "aria-expanded": "false",
+        }),
         div(
           {
-            class: ["dropdown-menu", ix > 0 && "dropdown-menu-end"],
+            class: ["hdrfiltdrop dropdown-menu", ix > 0 && "dropdown-menu-end"],
           },
           div(
             { class: "p-2" },

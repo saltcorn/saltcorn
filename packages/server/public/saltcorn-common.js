@@ -53,6 +53,10 @@ function get_current_state_url(e) {
   else return $modal.prop("data-modal-state");
 }
 
+function set_header_filter(elem) {
+  $(elem).closest("div.hdrfiltdrop").hide();
+}
+
 //avoids hiding in overflow:hidden
 function init_bs5_dropdowns() {
   $("body").on(
