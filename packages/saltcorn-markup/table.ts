@@ -30,17 +30,63 @@ const { pagination } = helpers;
  * @param {any} hdr
  * @returns {th}
  */
-const headerCell = (hdr: any): string =>
-  th(
-    (hdr.align || hdr.width) && {
-      style: hdr.width ? `width: ` + hdr.width : "",
+const headerCell = (hdr: any, opts: any, ix: number): string => {
+  const is_open =
+    opts.header_filters_open?.has?.(hdr.row_key) ||
+    opts.header_filters_open?.has?.(`_fromdate_${hdr.row_key}`) ||
+    opts.header_filters_open?.has?.(`_todate_${hdr.row_key}`) ||
+    opts.header_filters_open?.has?.(`_gte_${hdr.row_key}`) ||
+    opts.header_filters_open?.has?.(`_lte_${hdr.row_key}`);
+  return th(
+    (hdr.align ||
+      hdr.width ||
+      (opts.header_filters_dropdown && hdr.header_filter)) && {
+      style: {
+        width: hdr.width || null,
+        position:
+          opts.header_filters_dropdown && hdr.header_filter ? "relative" : null,
+      },
       ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
     },
     hdr.sortlink
       ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
-      : hdr.label
+      : hdr.label,
+    opts.header_filters_dropdown &&
+      hdr.header_filter &&
+      span(
+        { class: "dropdown float-end" },
+        button({
+          class: [
+            `btn btn-${is_open ? "" : "outline-"}secondary btn-sm btn-xs dropdown-toggle`,
+            is_open && "hdr-open",
+          ],
+          "data-boundary": "viewport",
+          type: "button",
+          "data-bs-toggle": "dropdown",
+          "aria-haspopup": "true",
+          "aria-expanded": "false",
+        }),
+        div(
+          {
+            class: ["hdrfiltdrop dropdown-menu", ix > 0 && "dropdown-menu-end"],
+          },
+          div(
+            { class: "p-2" },
+            div("Filter ", hdr.row_label || ""),
+            hdr.header_filter,
+            button(
+              {
+                type: "button",
+                class: "btn btn-secondary btn-sm mt-1",
+                onclick: "clear_state('', this)",
+              },
+              "Clear all"
+            )
+          )
+        )
+      )
   );
-
+};
 const headerFilter = (hdr: any, isLast: boolean): string =>
   th(
     (hdr.align || hdr.width) && {
@@ -63,15 +109,20 @@ const headerFilter = (hdr: any, isLast: boolean): string =>
       : hdr.header_filter || null
   );
 
-const headerCellWithToggle = (hdr: any, opts: any, isLast: boolean): string => {
+const headerCellWithToggle = (
+  hdr: any,
+  opts: any,
+  isLast: boolean,
+  ix: number
+): string => {
   if (!(isLast && opts.header_filters && opts.header_filters_toggle))
-    return headerCell(hdr);
+    return headerCell(hdr, opts, ix);
   const content = hdr.sortlink
     ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
     : hdr.label;
   const toggleIcon = span(
     {
-      class: "header-filter-toggle link-style",
+      class: "header-filter-toggle link-style float-end",
       title: "Show/Hide filters",
       onclick: `toggle_header_filters(this)`,
       style:
@@ -209,6 +260,7 @@ const mkTable = (
         tr(td({ colspan: "1000" }, h4({ class: "list-group-header" }, group))) +
         rows.map(val_row).join("")
     );
+
   return div(
     {
       class: [!opts.sticky_header && "table-responsive", opts.tableClass],
@@ -231,20 +283,28 @@ const mkTable = (
       !opts.noHeader &&
         !opts.transpose &&
         thead(
-          opts.sticky_header ? { class: "sticky-top" } : "",
+          opts.sticky_header || opts.header_filters_dropdown
+            ? {
+                class: [
+                  opts.sticky_header && "sticky-top",
+                  opts.header_filters_dropdown && "header-filter-dropdown",
+                ],
+              }
+            : "",
           tr(
             hdrs.map((hdr: HeadersParams, ix: number) =>
-              headerCellWithToggle(hdr, opts, ix === hdrs.length - 1)
+              headerCellWithToggle(hdr, opts, ix === hdrs.length - 1, ix)
             )
           ),
-          opts.header_filters
+          opts.header_filters && !opts.header_filters_dropdown
             ? tr(
                 {
                   class: "header-filters",
                   id: opts.header_filters_toggle
                     ? `${opts.tableId || "table"}_header_filters_row`
                     : null,
-                  ...(!opts.header_filters_open && opts.header_filters_toggle
+                  ...(opts.header_filters_toggle &&
+                  !opts.header_filters_open?.size
                     ? { style: "display:none;" }
                     : {}),
                 },
