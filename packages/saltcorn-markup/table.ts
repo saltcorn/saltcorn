@@ -37,6 +37,10 @@ const headerCell = (hdr: any, opts: any, ix: number): string => {
     opts.header_filters_open?.has?.(`_todate_${hdr.row_key}`) ||
     opts.header_filters_open?.has?.(`_gte_${hdr.row_key}`) ||
     opts.header_filters_open?.has?.(`_lte_${hdr.row_key}`);
+  const rndid =
+    opts.header_filters_dropdown &&
+    `hfdd${Math.floor(Math.random() * 16777215).toString(16)}`;
+
   return th(
     (hdr.align ||
       hdr.width ||
@@ -65,15 +69,17 @@ const headerCell = (hdr: any, opts: any, ix: number): string => {
           "data-bs-toggle": "dropdown",
           "aria-haspopup": "true",
           "aria-expanded": "false",
+          id: rndid,
         }),
         div(
           {
             class: ["hdrfiltdrop dropdown-menu", ix > 0 && "dropdown-menu-end"],
+            "aria-labelledby": rndid,
           },
           div(
             { class: "p-2" },
             div("Filter ", hdr.row_label || ""),
-            hdr.header_filter,
+            hdr.header_filter(rndid),
             button(
               {
                 type: "button",
@@ -96,7 +102,7 @@ const headerFilter = (hdr: any, isLast: boolean): string =>
     isLast
       ? div(
           { class: "d-flex" },
-          hdr.header_filter || null,
+          hdr.header_filter() || null,
           button(
             {
               type: "button",
@@ -106,7 +112,7 @@ const headerFilter = (hdr: any, isLast: boolean): string =>
             i({ class: "fas fa-times" })
           )
         )
-      : hdr.header_filter || null
+      : hdr.header_filter() || null
   );
 
 const headerCellWithToggle = (
@@ -147,7 +153,7 @@ namespace TableExports {
     key: string | Function;
     width?: string;
     align?: string;
-    header_filter?: string;
+    header_filter?: (id?: string) => string;
     row_key?: string;
   };
 

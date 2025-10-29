@@ -1363,7 +1363,7 @@ const get_viewable_fields = (
   return tfields;
 };
 
-const headerFilterForField = (f, state, path) => {
+const headerFilterForField = (f, state, path) => (id) => {
   if (f?.type?.name === "Date") {
     const set_initial =
       state[`_fromdate_${f.name}`] && state[`_todate_${f.name}`]
@@ -1441,7 +1441,7 @@ const headerFilterForField = (f, state, path) => {
               preOnChange: `set_header_filter(this);`,
               onChange: `set_header_filter(this);set_state_field('${encodeURIComponent(
                 path || f.name
-              )}', this.value, this)`,
+              )}', this.value, ${id ? `document.getElementById('${id}')` : "this"})`,
               isFilter: true,
               ...f.attributes,
               ...extraAttrs,
