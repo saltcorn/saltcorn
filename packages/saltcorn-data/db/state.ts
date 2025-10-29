@@ -419,7 +419,11 @@ class State {
 
   // TODO auto is poorly supported
   getLightDarkMode(user?: User): "dark" | "light" | "auto" {
+    if (user?.email && this.userLayouts[user.email])
+      return this.userLayouts[user.email].config.mode;
+
     if (user?._attributes?.layout?.config?.mode)
+      //return this.userLayouts[user.email];
       return user?._attributes?.layout?.config?.mode;
     if (user?.attributes?.layout?.config?.mode)
       return user?.attributes?.layout?.config?.mode;
@@ -584,7 +588,10 @@ class State {
           ...pluginCfg,
           ...user._attributes.layout.config,
         });
-        this.userLayouts[user.email] = { ...userLayout, config: pluginCfg };
+        this.userLayouts[user.email] = {
+          ...userLayout,
+          config: { ...pluginCfg, ...user._attributes.layout.config },
+        };
       }
     }
   }
