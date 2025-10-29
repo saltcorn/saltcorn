@@ -444,24 +444,6 @@ class State {
     const { config } = this.getLayout(user);
     if (config?.mode) return config.mode;
 
-    if (user?.email && this.userLayouts[user.email])
-      return this.userLayouts[user.email].config.mode;
-
-    if (user?._attributes?.layout?.config?.mode)
-      //return this.userLayouts[user.email];
-      return user?._attributes?.layout?.config?.mode;
-    if (user?.attributes?.layout?.config?.mode)
-      return user?.attributes?.layout?.config?.mode;
-    if (this.plugin_cfgs) {
-      const layout_name = this.getLayoutPlugin(user)?.plugin_name as string;
-      if (user?._attributes?.[layout_name]?.mode)
-        return user?._attributes[layout_name]?.mode;
-      if (user?.attributes?.[layout_name]?.mode)
-        return user?.attributes[layout_name]?.mode;
-      const plugin_cfg = this.plugin_cfgs[layout_name];
-      if (plugin_cfg?.mode) return plugin_cfg.mode;
-    }
-
     return "light";
   }
 
