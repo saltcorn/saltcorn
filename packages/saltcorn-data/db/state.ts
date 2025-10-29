@@ -358,7 +358,7 @@ class State {
    * @returns {object}
    */
   getLayout(user?: User): PluginLayout & { config: GenObj } {
-    // if role set
+    // first, try if role set
     const role_id = user ? +user.role_id : 100;
     const layout_by_role = this.getConfig("layout_by_role");
     if (layout_by_role && layout_by_role[role_id]) {
@@ -407,7 +407,16 @@ class State {
     return layout;
   }
 
-  getLayoutPlugin(user?: User) {
+  getLayoutPlugin(user?: User): Plugin {
+    //try this for consistency
+    const { pluginName } = this.getLayout(user);
+    if (pluginName) {
+      let plugin = this.plugins[pluginName];
+      if (!plugin) plugin = this.plugins[this.plugin_module_names[pluginName]];
+      if (plugin) return plugin;
+    }
+
+    // legacy follows TODO we probably dont need this
     if (user?._attributes?.layout) {
       const pluginName = user._attributes.layout.plugin;
       let plugin = this.plugins[pluginName];
@@ -432,6 +441,9 @@ class State {
 
   // TODO auto is poorly supported
   getLightDarkMode(user?: User): "dark" | "light" | "auto" {
+    const { config } = this.getLayout(user);
+    if (config?.mode) return config.mode;
+
     if (user?.email && this.userLayouts[user.email])
       return this.userLayouts[user.email].config.mode;
 
@@ -449,6 +461,7 @@ class State {
       const plugin_cfg = this.plugin_cfgs[layout_name];
       if (plugin_cfg?.mode) return plugin_cfg.mode;
     }
+
     return "light";
   }
 
