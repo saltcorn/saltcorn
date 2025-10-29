@@ -611,7 +611,7 @@ const withTransaction = async (f, onError) => {
 };
 
 const commitAndBeginNewTransaction = async () => {
-  const client = await getClient();
+  const client = await getMyClient();
   sql_log("COMMIT;");
   await client.query("COMMIT;");
   sql_log("BEGIN;");

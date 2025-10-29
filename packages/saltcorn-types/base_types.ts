@@ -40,7 +40,7 @@ type FieldLikeBasics = {
   validator?: (arg0: any) => boolean | string | undefined;
   attributes?: GenObj;
   showIf?: { [field_name: string]: string | boolean | string[] };
-  isRepeat?: boolean
+  isRepeat?: boolean;
 };
 type FieldLikeWithSelectInputType = {
   input_type: "select";
@@ -168,6 +168,7 @@ export type PluginLayout = {
   wrap: PluginWrap;
   authWrap?: (arg0: PluginAuthwrapArg) => string;
   renderBody?: (arg: any) => string;
+  pluginName?: string;
 };
 
 type Attribute = {

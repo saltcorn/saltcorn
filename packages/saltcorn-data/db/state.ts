@@ -358,44 +358,65 @@ class State {
    * @returns {object}
    */
   getLayout(user?: User): PluginLayout & { config: GenObj } {
-    if (user?.email && this.userLayouts[user.email]) {
-      return this.userLayouts[user.email];
-    } else {
-      const role_id = user ? +user.role_id : 100;
-      const layout_by_role = this.getConfig("layout_by_role");
-      if (layout_by_role && layout_by_role[role_id]) {
-        const chosen = this.layouts[layout_by_role[role_id]];
+    // first, try if role set
+    const role_id = user ? +user.role_id : 100;
+    const layout_by_role = this.getConfig("layout_by_role");
+    if (layout_by_role && layout_by_role[role_id]) {
+      const pluginName = layout_by_role[role_id];
+      const chosen = this.layouts[layout_by_role[role_id]];
 
-        if (chosen)
-          return {
-            ...chosen,
-            config: this.plugin_cfgs[layout_by_role[role_id]],
-          };
+      if (chosen) {
+        if (
+          user?.email &&
+          this.userLayouts[user.email] &&
+          this.userLayouts[user.email].pluginName === pluginName
+        )
+          return this.userLayouts[user.email];
+        return {
+          ...chosen,
+          pluginName,
+          config: this.plugin_cfgs[layout_by_role[role_id]],
+        };
       }
-      const withRenderBody = (
-        layouts: [string, PluginLayout][]
-      ): PluginLayout & { config: GenObj } => {
-        for (let i = layouts.length - 1; i >= 0; i--)
-          if (layouts[i][1].renderBody)
-            return {
-              ...layouts[i][1],
-              config: this.plugin_cfgs[layouts[i][0]],
-            };
-        throw new Error("No layout with renderBody found");
-      };
-
-      const layoutvs = Object.entries(this.layouts);
-      const layout = isNode()
-        ? {
-            ...layoutvs[layoutvs.length - 1][1],
-            config: this.plugin_cfgs[layoutvs[layoutvs.length - 1][0]],
-          }
-        : withRenderBody(layoutvs);
-      return layout;
     }
+
+    //if there is a user layout
+    if (user?.email && this.userLayouts[user.email])
+      return this.userLayouts[user.email];
+
+    const withRenderBody = (
+      layouts: [string, PluginLayout][]
+    ): PluginLayout & { config: GenObj } => {
+      for (let i = layouts.length - 1; i >= 0; i--)
+        if (layouts[i][1].renderBody)
+          return {
+            ...layouts[i][1],
+            config: this.plugin_cfgs[layouts[i][0]],
+          };
+      throw new Error("No layout with renderBody found");
+    };
+
+    //last installed
+    const layoutvs = Object.entries(this.layouts);
+    const layout = isNode()
+      ? {
+          ...layoutvs[layoutvs.length - 1][1],
+          config: this.plugin_cfgs[layoutvs[layoutvs.length - 1][0]],
+        }
+      : withRenderBody(layoutvs);
+    return layout;
   }
 
-  getLayoutPlugin(user?: User) {
+  getLayoutPlugin(user?: User): Plugin {
+    //try this for consistency
+    const { pluginName } = this.getLayout(user);
+    if (pluginName) {
+      let plugin = this.plugins[pluginName];
+      if (!plugin) plugin = this.plugins[this.plugin_module_names[pluginName]];
+      if (plugin) return plugin;
+    }
+
+    // legacy follows TODO we probably dont need this
     if (user?._attributes?.layout) {
       const pluginName = user._attributes.layout.plugin;
       let plugin = this.plugins[pluginName];
@@ -420,19 +441,9 @@ class State {
 
   // TODO auto is poorly supported
   getLightDarkMode(user?: User): "dark" | "light" | "auto" {
-    if (user?._attributes?.layout?.config?.mode)
-      return user?._attributes?.layout?.config?.mode;
-    if (user?.attributes?.layout?.config?.mode)
-      return user?.attributes?.layout?.config?.mode;
-    if (this.plugin_cfgs) {
-      const layout_name = this.getLayoutPlugin(user)?.plugin_name as string;
-      if (user?._attributes?.[layout_name]?.mode)
-        return user?._attributes[layout_name]?.mode;
-      if (user?.attributes?.[layout_name]?.mode)
-        return user?.attributes[layout_name]?.mode;
-      const plugin_cfg = this.plugin_cfgs[layout_name];
-      if (plugin_cfg?.mode) return plugin_cfg.mode;
-    }
+    const { config } = this.getLayout(user);
+    if (config?.mode) return config.mode;
+
     return "light";
   }
 
@@ -585,7 +596,11 @@ class State {
           ...pluginCfg,
           ...user._attributes.layout.config,
         });
-        this.userLayouts[user.email] = { ...userLayout, config: pluginCfg };
+        this.userLayouts[user.email] = {
+          ...userLayout,
+          pluginName,
+          config: { ...pluginCfg, ...user._attributes.layout.config },
+        };
       }
     }
   }
