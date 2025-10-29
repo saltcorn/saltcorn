@@ -347,8 +347,10 @@ only screen and (max-width: ${opts.collapse_breakpoint_px || 760}px) {
 		top: -9999px;
 		left: -9999px;
 	}
+    
 	
 	#${opts.tableId} tr { border: 1px solid #ccc; }
+	#${opts.tableId} tr:not(:first-child) { border-top-width: 3px }
 	
 	#${opts.tableId} td { 
 		border: none;
