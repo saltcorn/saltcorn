@@ -84,19 +84,9 @@ const get_extra_menu = (
           if (item.in_modal) return `javascript:mobile_modal('${url}')`;
           return url;
         };
-        return {
-          label: __(item.label),
-          icon: item.icon,
-          isUser: item.user_menu_header,
-          location: item.location,
-          style: item.style || "",
-          target_blank: item.target_blank,
-          in_modal: item.in_modal,
-          type: item.type,
-          mobile_item_html: item.mobile_item_html,
-          tooltip: item.tooltip,
-          altlinks: get_altlinks(item),
-          link:
+        let link;
+        try {
+          link =
             item.type === "Link" && item.url_formula
               ? expression.eval_expression(item.url, { locale, role }, user)
               : item.type === "Link"
@@ -129,7 +119,24 @@ const get_extra_menu = (
                                   `/page/${encodeURIComponent(item.page_group)}`
                                 )
                               : `javascript:execNavbarLink('/page/${item.page_group}')`
-                            : undefined,
+                            : undefined;
+        } catch (error) {
+          console.error(error);
+          link = "http://Invalid_Link_URL";
+        }
+        return {
+          label: __(item.label),
+          icon: item.icon,
+          isUser: item.user_menu_header,
+          location: item.location,
+          style: item.style || "",
+          target_blank: item.target_blank,
+          in_modal: item.in_modal,
+          type: item.type,
+          mobile_item_html: item.mobile_item_html,
+          tooltip: item.tooltip,
+          altlinks: get_altlinks(item),
+          link,
           ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
         };
       });
