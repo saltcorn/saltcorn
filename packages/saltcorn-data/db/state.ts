@@ -590,6 +590,7 @@ class State {
         });
         this.userLayouts[user.email] = {
           ...userLayout,
+          pluginName,
           config: { ...pluginCfg, ...user._attributes.layout.config },
         };
       }
