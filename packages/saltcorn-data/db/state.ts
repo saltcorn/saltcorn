@@ -358,20 +358,32 @@ class State {
    * @returns {object}
    */
   getLayout(user?: User): PluginLayout & { config: GenObj } {
-    if (user?.email && this.userLayouts[user.email])
-      return this.userLayouts[user.email];
-
+    // if role set
     const role_id = user ? +user.role_id : 100;
     const layout_by_role = this.getConfig("layout_by_role");
     if (layout_by_role && layout_by_role[role_id]) {
+      const pluginName = layout_by_role[role_id];
       const chosen = this.layouts[layout_by_role[role_id]];
 
-      if (chosen)
+      if (chosen) {
+        if (
+          user?.email &&
+          this.userLayouts[user.email] &&
+          this.userLayouts[user.email].pluginName === pluginName
+        )
+          return this.userLayouts[user.email];
         return {
           ...chosen,
+          pluginName,
           config: this.plugin_cfgs[layout_by_role[role_id]],
         };
+      }
     }
+
+    //if there is a user layout
+    if (user?.email && this.userLayouts[user.email])
+      return this.userLayouts[user.email];
+
     const withRenderBody = (
       layouts: [string, PluginLayout][]
     ): PluginLayout & { config: GenObj } => {
@@ -384,6 +396,7 @@ class State {
       throw new Error("No layout with renderBody found");
     };
 
+    //last installed
     const layoutvs = Object.entries(this.layouts);
     const layout = isNode()
       ? {
