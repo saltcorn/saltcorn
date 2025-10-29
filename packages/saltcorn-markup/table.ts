@@ -102,7 +102,7 @@ const headerFilter = (hdr: any, isLast: boolean): string =>
     isLast
       ? div(
           { class: "d-flex" },
-          hdr.header_filter() || null,
+          hdr.header_filter?.() || null,
           button(
             {
               type: "button",
@@ -112,7 +112,7 @@ const headerFilter = (hdr: any, isLast: boolean): string =>
             i({ class: "fas fa-times" })
           )
         )
-      : hdr.header_filter() || null
+      : hdr.header_filter?.() || null
   );
 
 const headerCellWithToggle = (
