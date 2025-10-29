@@ -1363,7 +1363,7 @@ const get_viewable_fields = (
   return tfields;
 };
 
-const headerFilterForField = (f, state, path) => {
+const headerFilterForField = (f, state, path) => (id) => {
   if (f?.type?.name === "Date") {
     const set_initial =
       state[`_fromdate_${f.name}`] && state[`_todate_${f.name}`]
@@ -1400,7 +1400,7 @@ const headerFilterForField = (f, state, path) => {
             set_header_filter($(instance.element));
             if(selectedDates.length==2) {
           
-               set_state_fields({_fromdate_${f.name}: selectedDates[0].toLocaleDateString('en-CA'), _todate_${f.name}: selectedDates[1].toLocaleDateString('en-CA') })
+               set_state_fields({_fromdate_${f.name}: selectedDates[0].toLocaleDateString('en-CA'), _todate_${f.name}: selectedDates[1].toLocaleDateString('en-CA') }, false, ${id ? `document.getElementById('${id}')` : "this"})
               
                 
             }            
@@ -1441,7 +1441,7 @@ const headerFilterForField = (f, state, path) => {
               preOnChange: `set_header_filter(this);`,
               onChange: `set_header_filter(this);set_state_field('${encodeURIComponent(
                 path || f.name
-              )}', this.value, this)`,
+              )}', this.value, ${id ? `document.getElementById('${id}')` : "this"})`,
               isFilter: true,
               ...f.attributes,
               ...extraAttrs,
