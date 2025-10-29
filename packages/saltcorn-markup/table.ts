@@ -336,8 +336,8 @@ only screen and (max-width: ${opts.collapse_breakpoint_px || 760}px) {
     display: none;
   }
   #${opts.tableId} td.text-align-right,
-  #${opts.tableId} td.text-align-right,
-  #${opts.tableId} th.text-align-center,
+  #${opts.tableId} td.text-align-center,
+  #${opts.tableId} th.text-align-right,
   #${opts.tableId} th.text-align-center {
      text-align: left !important;
   }
