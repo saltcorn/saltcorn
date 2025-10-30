@@ -1063,12 +1063,12 @@ const get_viewable_fields = (
           );
         }
         let header_filter;
-        if (!column.join_field.includes("->") && keypath.length == 2)
-          header_filter = headerFilterForField(
-            field,
-            state,
-            `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`
-          );
+        let statekey;
+
+        if (!column.join_field.includes("->") && keypath.length == 2) {
+          statekey = `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`;
+          header_filter = headerFilterForField(field, state, statekey);
+        }
         let gofv =
           fieldview && type && type.fieldviews && type.fieldviews[fieldview]
             ? (row) =>
@@ -1101,6 +1101,7 @@ const get_viewable_fields = (
           ),
           row_key: key,
           row_label: field?.label,
+          statekey,
           header_filter,
           key: gofv ? gofv : (row) => text(row[key]),
           sortlink: sortlinkForName(key, req, viewname, statehash),
