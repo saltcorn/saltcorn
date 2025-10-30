@@ -125,10 +125,14 @@ const get_headers = (req, version_tag, description, extras = []) => {
   const assets_by_role = state.assets_by_role || {};
   const roleHeaders = assets_by_role[req.user?.role_id || 100];
   if (roleHeaders && roleHeaders.length) {
-    state_headers.push(...roleHeaders);
+    for (const h of roleHeaders) {
+      if (!h.only_if || h.only_if() === true) state_headers.push(h);
+    }
   } else {
     for (const hs of Object.values(state.headers)) {
-      state_headers.push(...hs);
+      for (const h of hs) {
+        if (!h.only_if || h.only_if() === true) state_headers.push(h);
+      }
     }
   }
 
