@@ -1008,6 +1008,14 @@ const get_viewable_fields = (
           undefined,
           in_row_click
         );
+        //console.log(column);
+        if (column.view_label_formula) {
+          const fml_field = table.getField(column.view_label);
+          if (fml_field) {
+            r.header_filter = headerFilterForField(fml_field, state);
+          }
+        }
+
         if (column.header_label) r.label = __(column.header_label);
         Object.assign(r, setWidth);
         if (column.in_dropdown) {
