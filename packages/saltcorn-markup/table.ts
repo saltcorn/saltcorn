@@ -33,6 +33,7 @@ const { pagination } = helpers;
 const headerCell = (hdr: any, opts: any, ix: number): string => {
   const is_open =
     opts.header_filters_open?.has?.(hdr.row_key) ||
+    opts.header_filters_open?.has?.(hdr.statekey) ||
     opts.header_filters_open?.has?.(`_fromdate_${hdr.row_key}`) ||
     opts.header_filters_open?.has?.(`_todate_${hdr.row_key}`) ||
     opts.header_filters_open?.has?.(`_gte_${hdr.row_key}`) ||
