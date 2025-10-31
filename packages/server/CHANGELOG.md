@@ -1,12 +1,16 @@
 # Notable changes
 
-## 1.4.0 - In development
+## 1.4.1 - In development
+
+* Dropdown option for List header filters - mutually exclusive with togglable header filters. Filters are activated with a hidden (revealed on hover) dropdown menu.
+
+## 1.4.0 - Released 24 October 2025
 
 * When PageLoad triggers return directives (`notify`, `eval_js` etc.) these are now run on the the 
   client page.
 
 * When Table.deleteRows is called without a user argument, it implicitly has admin access, to make 
-  it consistent ith other methods
+  it consistent with other methods
 
 * Some initial and limited support for composite primary keys in discovered and external tables. 
 
@@ -18,7 +22,14 @@
 
 * `progress_bar` action: Display or update the display of a progress message. This can appear in a toast message for actions that can run in parallel; or in a blocking popup-up modal if the progress display is required to freeze the user interface.
 
-* List view now have options for header filters, row colour by formula and table layout setting (corresponds to table-layout CSS property)
+* List view now have options for header filters, row colour by formula,  table layout setting (corresponds to table-layout CSS property) and sticky header.
+
+### Security
+
+* Filter aggregations (count, average over a table subset) previously ignored ownership. There is now a partial implementation of the owbership restriction, however this is still incomplete for ownership formulas involving joinfields. 
+* When serving HTML files that have been uploaded to the file store, the mime type is now set to text/plain (unless the user is the owner of the file) to prevent user-uploaded files performing session hijacking. This can be disabled in the securioty settings if you trust all uploaded html files and need to serve them.. MathJax and svg files are cleaned with dompurify before serving. Reported by luriel at Hakai Security.
+* It was previously possibly for a logged-in user to craft a request to change their own password without supplying their old password. This is now checked. Reported by luriel at Hakai Security.
+
 
 ### Fixes
 
@@ -27,6 +38,8 @@
 * Fix format fieldview for only day Dates.
 * Fix full screen width on containers - this conflicted with position, which it now overrides.
 * Fix jsdoc links from code editor
+* Fix date parsing when using flatpickr with locale and format
+
 
 ## 1.3.1 - Released 31 August 2025
 
@@ -56,7 +69,7 @@
 
 * List views have a vertical aligment option under Layout options. Use this to adjust the vertical alignment of each cell. The default is middle.
 
-* Provided tables can no by writable (delete, insert and update). For an example of this see the history-control table provider
+* Provided tables can now by writable (delete, insert and update). For an example of this see the history-control table provider
 
 * Imported CSVs rows can now have a blank in the primary key column, which will be treated as an insert.
 
