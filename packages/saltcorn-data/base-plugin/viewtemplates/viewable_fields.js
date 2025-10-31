@@ -1008,6 +1008,24 @@ const get_viewable_fields = (
           undefined,
           in_row_click
         );
+        //console.log(column);
+        if (column.view_label_formula) {
+          const fml_field = table.getField(column.view_label);
+          if (fml_field) {
+            if (column.view_label.includes(".")) {
+              const path = column.view_label.split(".");
+              if (path.length === 2) {
+                const [refNm, targetNm] = path;
+                r.statekey = `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`;
+                r.header_filter = headerFilterForField(fml_field, state, r.statekey);
+              }
+            } else {
+              r.header_filter = headerFilterForField(fml_field, state);
+              r.statekey = fml_field.name;
+            }
+          }
+        }
+
         if (column.header_label) r.label = __(column.header_label);
         Object.assign(r, setWidth);
         if (column.in_dropdown) {
