@@ -63,6 +63,7 @@ export type Header = {
   headerTag?: string;
   onlyViews?: string[];
   onlyFieldviews?: string[];
+  only_if?: (req: Req) => boolean | undefined;
 };
 
 type MenuItem = {
