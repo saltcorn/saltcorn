@@ -1012,8 +1012,17 @@ const get_viewable_fields = (
         if (column.view_label_formula) {
           const fml_field = table.getField(column.view_label);
           if (fml_field) {
-            r.header_filter = headerFilterForField(fml_field, state);
-            r.statekey = fml_field.name
+            if (column.view_label.includes(".")) {
+              const path = column.view_label.split(".");
+              if (path.length === 2) {
+                const [refNm, targetNm] = path;
+                r.statekey = `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`;
+                r.header_filter = headerFilterForField(fml_field, state, r.statekey);
+              }
+            } else {
+              r.header_filter = headerFilterForField(fml_field, state);
+              r.statekey = fml_field.name;
+            }
           }
         }
 
