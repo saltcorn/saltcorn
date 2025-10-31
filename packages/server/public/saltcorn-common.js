@@ -2046,7 +2046,28 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
     }
   }
   if (res.resume_workflow) {
-    ajax_post_json(`/actions/resume-workflow/${res.resume_workflow}`, {});
+    if (dynamic_update_connection_status === "connecting") {
+      let retries = 0;
+      let delay = 50;
+      let go = () => {
+        setTimeout(() => {
+          if (
+            retries < 8 &&
+            dynamic_update_connection_status === "connecting"
+          ) {
+            delay = delay * 2;
+            retries += 1;
+            go();
+          } else
+            ajax_post_json(
+              `/actions/resume-workflow/${res.resume_workflow}`,
+              {}
+            );
+        }, delay);
+      };
+      go();
+    } else
+      ajax_post_json(`/actions/resume-workflow/${res.resume_workflow}`, {});
   }
   if (res.reload_page) {
     (isWeb ? location : parent.saltcorn.mobileApp.navigation).reload(); //TODO notify to cookie if reload or goto
@@ -2286,6 +2307,8 @@ function init_collab_room(viewname, eventCfgs) {
   });
 }
 
+let dynamic_update_connection_status = "not_connected";
+
 function init_dynamic_update_room() {
   const isNode = getIsNode();
   if (
@@ -2305,12 +2328,20 @@ function init_dynamic_update_room() {
   const joinFn = () => {
     socket.emit("join_dynamic_update_room", (ack) => {
       if (ack && ack.status === "ok") {
+        dynamic_update_connection_status = "connected";
         if (window._sc_loglevel > 5) console.log("Joined dynamic update room");
-      } else console.error("Failed to join dynamic update room:", ack);
+      } else {
+        dynamic_update_connection_status = "failed";
+        console.error("Failed to join dynamic update room:", ack);
+      }
     });
   };
-  if (socket.connected) joinFn();
-  else socket.on("connect", joinFn);
+  dynamic_update_connection_status = "connecting";
+  if (socket.connected) {
+    joinFn();
+  } else {
+    socket.on("connect", joinFn);
+  }
 }
 
 function cancel_form(form) {
