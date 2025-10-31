@@ -1013,6 +1013,7 @@ const get_viewable_fields = (
           const fml_field = table.getField(column.view_label);
           if (fml_field) {
             r.header_filter = headerFilterForField(fml_field, state);
+            r.statekey = fml_field.name
           }
         }
 
