@@ -16,6 +16,7 @@ const {
   ppVal,
   escapeHtml,
   jsIdentifierValidator,
+  returnDirectivesOnly,
 } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
@@ -1277,7 +1278,11 @@ router.get(
           "Action %s run successfully with no console output",
           trigger.action
         ) + runres
-          ? script(domReady(`common_done(${JSON.stringify(runres)})`))
+          ? script(
+              domReady(
+                `common_done(${JSON.stringify(returnDirectivesOnly(runres))})`
+              )
+            )
           : ""
       );
       if (trigger.action === "Workflow")
@@ -1305,7 +1310,11 @@ router.get(
           contents: div(
             div({ class: "testrunoutput" }, output),
             runres
-              ? script(domReady(`common_done(${JSON.stringify(runres)})`))
+              ? script(
+                  domReady(
+                    `common_done(${JSON.stringify(returnDirectivesOnly(runres))})`
+                  )
+                )
               : "",
             a(
               { href: `/actions`, class: "mt-4 btn btn-primary me-1" },

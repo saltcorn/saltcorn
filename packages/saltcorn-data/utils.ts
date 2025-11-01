@@ -618,9 +618,25 @@ const secondaryReturnDirectives: Record<string, string[]> = {
   eval_js: ["row", "field_names"],
 };
 
+const returnDirectivesOnly = (o: GenObj): GenObj => {
+  const r: GenObj = {};
+  allReturnDirectives.forEach((k) => {
+    if (typeof o[k] !== "undefined") {
+      r[k] = o[k];
+      secondaryReturnDirectives[k].forEach((secondary_k) => {
+        if (typeof o[secondary_k] !== "undefined") {
+          r[secondary_k] = o[secondary_k];
+        }
+      });
+    }
+  });
+  return r;
+};
+
 export = {
   allReturnDirectives,
   secondaryReturnDirectives,
+  returnDirectivesOnly,
   cloneName,
   dollarizeObject,
   objectToQueryString,
