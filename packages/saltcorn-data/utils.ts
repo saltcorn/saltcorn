@@ -607,6 +607,9 @@ const allReturnDirectives = [
   "error",
   "reload_embedded_view",
   "progress_bar_update",
+  "suppressed",
+  "reload_page",
+  "resume_workflow",
 ];
 
 const secondaryReturnDirectives: Record<string, string[]> = {
@@ -616,6 +619,7 @@ const secondaryReturnDirectives: Record<string, string[]> = {
   error: ["remove_delay", "toast_title"],
   goto: ["target"],
   eval_js: ["row", "field_names"],
+  set_fields: ["no_onchange"],
 };
 
 const returnDirectivesOnly = (
