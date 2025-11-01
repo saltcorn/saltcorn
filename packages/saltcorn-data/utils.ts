@@ -618,7 +618,10 @@ const secondaryReturnDirectives: Record<string, string[]> = {
   eval_js: ["row", "field_names"],
 };
 
-const returnDirectivesOnly = (o: GenObj): GenObj => {
+const returnDirectivesOnly = (
+  o: GenObj | undefined | null
+): GenObj | undefined | null => {
+  if (!o) return o;
   const r: GenObj = {};
   allReturnDirectives.forEach((k) => {
     if (typeof o[k] !== "undefined") {
