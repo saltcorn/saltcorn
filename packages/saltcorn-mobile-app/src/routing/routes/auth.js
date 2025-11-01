@@ -74,6 +74,8 @@ const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
     }
   }
 
+  const assets_by_role = state.assets_by_role || {};
+  const roleHeaders = assets_by_role[100];
   return layout.authWrap({
     title: "login",
     form: form,
@@ -82,6 +84,7 @@ const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
     headers: [
       { css: `static_assets/${versionTag}/saltcorn.css` },
       { script: "js/iframe_view_utils.js" },
+      ...(roleHeaders ? roleHeaders : []),
     ],
     csrfToken: false,
   });
