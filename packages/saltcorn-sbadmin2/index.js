@@ -68,6 +68,13 @@ const subItem = (currentUrl) => (item) =>
             ],
             href: text(item.link),
             target: item.target_blank ? "_blank" : undefined,
+            ...(item.tooltip
+              ? {
+                  "data-bs-toggle": "tooltip",
+                  "data-bs-placement": "right",
+                  title: item.tooltip,
+                }
+              : {}),
           },
           show_icon(item.icon, "mr-05"),
           item.label
@@ -131,6 +138,12 @@ const sideBarItem = (currentUrl) => (item) => {
               "data-bs-target": `#collapse${labelToId(item)}`,
               "aria-expanded": "true",
               "aria-controls": `collapse${labelToId(item)}`,
+              ...(item.tooltip
+                ? {
+                    "data-bs-placement": "right",
+                    title: item.tooltip,
+                  }
+                : {}),
             },
             show_icon(item.icon),
             span(text(item.label))
@@ -153,6 +166,13 @@ const sideBarItem = (currentUrl) => (item) => {
               class: "nav-link",
               href: text(item.link),
               target: item.target_blank ? "_blank" : undefined,
+              ...(item.tooltip
+                ? {
+                    "data-bs-toggle": "tooltip",
+                    "data-bs-placement": "right",
+                    title: item.tooltip,
+                  }
+                : {}),
             },
             show_icon(item.icon),
             span(text(item.label))
@@ -233,7 +253,7 @@ const sidebar = (brand, sections, currentUrl) =>
         class: "rounded-circle border-0",
         "data-sidebar-toggler": true,
         id: "sidebarToggle",
-        "aria-label": "Collapse sidebar menu"
+        "aria-label": "Collapse sidebar menu",
       })
     )
   );
@@ -401,6 +421,15 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
             <script src="${linkPrefix()}/public/sbadmin2${verstring}/bootstrap.bundle.min.js"></script>
             <script src="${linkPrefix()}/public/sbadmin2${verstring}/jquery.easing.min.js"></script>
             <script src="${linkPrefix()}/public/sbadmin2${verstring}/sb-admin-2.min.js"></script>
+            <script>
+              // Initialize Bootstrap tooltips
+              document.addEventListener('DOMContentLoaded', function() {
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                  return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+              });
+            </script>
     ${headersInBody(headers)}
     </body>
   </html>`;
