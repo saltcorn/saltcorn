@@ -596,7 +596,31 @@ const renderServerSide = async (viewname: string, state: any) => {
   return data;
 };
 
+const allReturnDirectives = [
+  "popup",
+  "goto",
+  "eval_js",
+  "download",
+  "set_fields",
+  "notify",
+  "notify_success",
+  "error",
+  "reload_embedded_view",
+  "progress_bar_update",
+];
+
+const secondaryReturnDirectives: Record<string, string[]> = {
+  reload_embedded_view: ["new_state"],
+  notify: ["remove_delay", "toast_title", "notify_type"],
+  notify_success: ["remove_delay", "toast_title"],
+  error: ["remove_delay", "toast_title"],
+  goto: ["target"],
+  eval_js: ["row", "field_names"],
+};
+
 export = {
+  allReturnDirectives,
+  secondaryReturnDirectives,
   cloneName,
   dollarizeObject,
   objectToQueryString,
