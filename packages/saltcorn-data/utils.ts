@@ -596,7 +596,55 @@ const renderServerSide = async (viewname: string, state: any) => {
   return data;
 };
 
+const allReturnDirectives = [
+  "popup",
+  "goto",
+  "eval_js",
+  "download",
+  "set_fields",
+  "notify",
+  "notify_success",
+  "error",
+  "reload_embedded_view",
+  "progress_bar_update",
+  "suppressed",
+  "reload_page",
+  "resume_workflow",
+];
+
+const secondaryReturnDirectives: Record<string, string[]> = {
+  reload_embedded_view: ["new_state"],
+  notify: ["remove_delay", "toast_title", "notify_type"],
+  notify_success: ["remove_delay", "toast_title"],
+  error: ["remove_delay", "toast_title"],
+  goto: ["target"],
+  eval_js: ["row", "field_names"],
+  set_fields: ["no_onchange"],
+};
+
+const returnDirectivesOnly = (
+  o: GenObj | undefined | null
+): GenObj | undefined | null => {
+  if (!o) return o;
+  const r: GenObj = {};
+  allReturnDirectives.forEach((k) => {
+    if (typeof o[k] !== "undefined") {
+      r[k] = o[k];
+      if (secondaryReturnDirectives[k])
+        secondaryReturnDirectives[k].forEach((secondary_k) => {
+          if (typeof o[secondary_k] !== "undefined") {
+            r[secondary_k] = o[secondary_k];
+          }
+        });
+    }
+  });
+  return r;
+};
+
 export = {
+  allReturnDirectives,
+  secondaryReturnDirectives,
+  returnDirectivesOnly,
   cloneName,
   dollarizeObject,
   objectToQueryString,

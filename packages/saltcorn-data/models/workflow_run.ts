@@ -18,22 +18,14 @@ import { mkTable } from "@saltcorn/markup/index";
 import mocks from "../tests/mocks";
 import { FieldLike } from "@saltcorn/types/base_types";
 const { mockReqRes } = mocks;
-const { ensure_final_slash, interpolate } = utils;
+const {
+  ensure_final_slash,
+  interpolate,
+  allReturnDirectives,
+  secondaryReturnDirectives,
+} = utils;
 const { eval_expression } = Expression;
 const { getState } = require("../db/state");
-
-const allReturnDirectives = [
-  "popup",
-  "goto",
-  "eval_js",
-  "download",
-  "set_fields",
-  "notify",
-  "notify_success",
-  "error",
-  "reload_embedded_view",
-  "progress_bar_update",
-];
 
 const data_output_to_html = (val: any) => {
   if (Array.isArray(val) && typeof val[0] === "object") {
@@ -959,17 +951,10 @@ class WorkflowRun {
       }
       if (typeof nextUpdate?.[k] !== "undefined") delete nextUpdate[k];
     });
-    const secondary_directives: Record<string, string[]> = {
-      reload_embedded_view: ["new_state"],
-      notify: ["remove_delay", "toast_title", "notify_type"],
-      notify_success: ["remove_delay", "toast_title"],
-      error: ["remove_delay", "toast_title"],
-      goto: ["target"],
-      eval_js: ["row", "field_names"],
-    };
-    Object.keys(secondary_directives).forEach((k) => {
+
+    Object.keys(secondaryReturnDirectives).forEach((k) => {
       if (typeof retVals[k] !== "undefined")
-        secondary_directives[k].forEach((secondary_k) => {
+        secondaryReturnDirectives[k].forEach((secondary_k) => {
           if (typeof this.context[secondary_k] !== "undefined") {
             retVals[secondary_k] = this.context[secondary_k];
             delete this.context[secondary_k];
