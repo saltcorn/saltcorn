@@ -626,11 +626,12 @@ const returnDirectivesOnly = (
   allReturnDirectives.forEach((k) => {
     if (typeof o[k] !== "undefined") {
       r[k] = o[k];
-      secondaryReturnDirectives[k].forEach((secondary_k) => {
-        if (typeof o[secondary_k] !== "undefined") {
-          r[secondary_k] = o[secondary_k];
-        }
-      });
+      if (secondaryReturnDirectives[k])
+        secondaryReturnDirectives[k].forEach((secondary_k) => {
+          if (typeof o[secondary_k] !== "undefined") {
+            r[secondary_k] = o[secondary_k];
+          }
+        });
     }
   });
   return r;
