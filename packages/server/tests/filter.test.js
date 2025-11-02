@@ -55,7 +55,7 @@ describe("JSDOM-E2E filter test", () => {
       "http://localhost/view/authorfilter1"
     );
     //console.log(dom.serialize());
-    const input = dom.window.document.querySelector("input[name=author]");
+    const input = dom.window.document.querySelector("input[id=inputauthor]");
     input.value = "Leo";
     input.dispatchEvent(new dom.window.Event("change"));
     await sleep(1000);
