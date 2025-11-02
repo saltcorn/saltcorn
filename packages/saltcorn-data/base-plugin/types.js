@@ -1077,7 +1077,7 @@ const string = {
             ? input({
                 type: "text",
                 class: ["form-control", "form-select", cls],
-                name: text_attr(nm),
+                name: attrs.isFilter ? undefined : text_attr(nm),
                 "data-fieldname": text_attr(field.name),
                 id: `input${text_attr(nm)}`,
                 onChange: attrs.onChange,
@@ -1092,7 +1092,7 @@ const string = {
                     cls,
                     attrs.selectizable ? "selectizable" : false,
                   ],
-                  name: text_attr(nm),
+                  name: attrs.isFilter ? undefined : text_attr(nm),
                   "data-fieldname": text_attr(field.name),
                   id: `input${text_attr(nm)}`,
                   disabled: attrs.disabled,
@@ -1137,7 +1137,7 @@ const string = {
               ? select(
                   {
                     class: ["form-control", "form-select", cls],
-                    name: text_attr(nm),
+                    name: attrs.isFilter ? undefined : text_attr(nm),
                     disabled: attrs.disabled,
                     "data-fieldname": text_attr(field.name),
                     id: `input${text_attr(nm)}`,
@@ -1161,7 +1161,7 @@ const string = {
                   onChange: attrs.onChange,
                   spellcheck: attrs.spellcheck === false ? "false" : undefined,
                   "data-fieldname": text_attr(field.name),
-                  name: text_attr(nm),
+                  name: attrs.isFilter ? undefined : text_attr(nm),
                   required: !!(required || attrs.force_required),
                   maxlength: isdef(attrs.max_length) && attrs.max_length,
                   minlength: isdef(attrs.min_length) && attrs.min_length,
@@ -2554,7 +2554,7 @@ const bool = {
           : input({
               type: "hidden",
               "data-fieldname": text_attr(field.name),
-              name: text_attr(nm),
+              name: attrs.isFilter ? undefined : text_attr(nm),
               onChange: attrs.onChange,
               "data-postprocess": `it=='on'?true:it=='off'?false:null`,
               id: `input${text_attr(nm)}`,
