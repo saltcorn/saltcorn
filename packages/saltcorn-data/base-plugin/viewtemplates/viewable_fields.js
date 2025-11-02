@@ -1017,7 +1017,11 @@ const get_viewable_fields = (
               if (path.length === 2) {
                 const [refNm, targetNm] = path;
                 r.statekey = `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`;
-                r.header_filter = headerFilterForField(fml_field, state, r.statekey);
+                r.header_filter = headerFilterForField(
+                  fml_field,
+                  state,
+                  r.statekey
+                );
               }
             } else {
               r.header_filter = headerFilterForField(fml_field, state);
@@ -1396,7 +1400,6 @@ const headerFilterForField = (f, state, path) => (id) => {
         input({
           type: "text",
           class: "form-control",
-          name: `daterangefilter${f.name}`,
           id: `daterangefilter${f.name}`,
           //placeholder: ,
         }),
