@@ -78,7 +78,7 @@ export async function updateScPlugins(tablesJSON) {
 
 export async function updateUserDefinedTables() {
   const existingTables = await saltcorn.data.db.listUserDefinedTables();
-  const tables = await saltcorn.data.models.Table.find();
+  const tables = await saltcorn.data.models.Table.find({}, { cached: true });
   for (const table of tables) {
     const sanitized = saltcorn.data.db.sqlsanitize(table.name);
     if (
