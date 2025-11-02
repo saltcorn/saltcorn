@@ -64,6 +64,7 @@ const get_extra_menu = (
   if (!cfg || cfg.length === 0) {
     cfg = getState().getConfig("menu_items", []);
   }
+  if (!Array.isArray(cfg)) return [];
   const is_node = isNode();
   const transform = (items: any) =>
     items
