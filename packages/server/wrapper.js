@@ -32,7 +32,13 @@ const get_menu = (req) => {
 
   const locale = req.getLocale();
   const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
-  const extra_menu_all = get_extra_menu(role, __, req.user || {}, locale, req);
+  const extra_menu_all = get_extra_menu(
+    role,
+    __,
+    req.user || { role_id: 100 },
+    locale,
+    req
+  );
   const extra_menu = extra_menu_all.filter((item) => !item.isUser);
   const user_menu = extra_menu_all.filter((item) => item.isUser);
   // return menu
