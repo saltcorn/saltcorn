@@ -577,7 +577,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   }
   return (
     copilot_form +
-    pre({ class: "mermaid" }, WorkflowStep.generate_diagram(steps)) +
+    pre({ class: "mermaid workflow-config" }, WorkflowStep.generate_diagram(steps)) +
     script(
       { defer: "defer" },
       `function tryAddWFNodes() {

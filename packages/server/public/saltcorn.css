@@ -553,14 +553,21 @@ i.add-btw-nodes {
   cursor: pointer;
 }
 
-pre.mermaid g.node[class*=" wfstep"] {
+pre.mermaid.workflow-config g.node[class*=" wfstep"] {
   cursor: pointer;
 }
 
-pre.mermaid g.node[class*=" wfadd"] {
+pre.mermaid.workflow-config g.node[class*=" wfadd"] {
   cursor: pointer;
 }
 
+pre.mermaid.workflow-config {
+  visibility: hidden;
+}
+
+pre.mermaid.workflow-config[data-processed="true"] {
+  visibility: visible;
+}
 .link-style {
   cursor: pointer;
   text-decoration: underline;
