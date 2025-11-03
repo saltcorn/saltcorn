@@ -660,7 +660,9 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           } else if (typeof callback === "function")
             callback({ status: "already_joined" });
         } catch (err) {
-          getState().log(1, `Socket join_collab_room: ${err.stack}`);
+          const state = getState();
+          if (state) state.log(1, `Socket join_collab_room: ${err.stack}`);
+          else console.error("Socket join_collab_room:", err);
           if (typeof callback === "function")
             callback({ status: "error", msg: err.message || "unknown error" });
         }
