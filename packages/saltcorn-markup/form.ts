@@ -1524,10 +1524,10 @@ const renderFormLayout = (form: Form): string => {
             ? `onClick="${spinnerStr}${
                 form.onSubmit ? `${form.onSubmit};` : ""
               }ajaxSubmitForm(this, true)" type="button"`
-            : 'type="submit"';
+            : `onClick="${spinnerStr}sc_form_submit_in_progress()" type="submit"`;
         return mkBtn(submitAttr);
       }
-      return mkBtn('type="submit"');
+      return mkBtn(`onClick="${spinnerStr}sc_form_submit_in_progress()" type="submit"`);
     },
   };
   const role = form.req?.user?.role_id || 100;

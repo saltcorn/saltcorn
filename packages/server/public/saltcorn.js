@@ -766,9 +766,16 @@ function ajax_post(url, args) {
     });
 }
 
+let sc_form_submit_is_in_progress = false;
+
+function sc_form_submit_in_progress() {
+  sc_form_submit_is_in_progress = true;
+}
+
 function checkNetworkError(e) {
   if (e.readyState == 0 && !e.responseText && !e.responseJSON) {
     //network error
+    if (sc_form_submit_is_in_progress) return true;
     if (scNetworkErrorSignaled) return true;
     scNetworkErrorSignaled = true;
     setTimeout(() => {
