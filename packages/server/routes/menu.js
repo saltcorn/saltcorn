@@ -386,6 +386,13 @@ const menuForm = async (req) => {
         options: roles.map((r) => ({ label: r.role, value: r.id })),
       },
       {
+        name: "showif",
+        label: req.__("Show if"),
+        class: "item-menu validate-expression",
+        type: "String",
+        sublabel: req.__("Optional expression. Show only if true. In scope: <code>user</code>, <code>url</code>, <code>query</code>")
+      },
+      {
         name: "disable_on_mobile",
         label: req.__("Disable on mobile"),
         type: "Bool",

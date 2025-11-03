@@ -22,6 +22,7 @@ const {
   calcfldViewConfig,
 } = require("@saltcorn/data/plugin-helper");
 import viewableFields from "./base-plugin/viewtemplates/viewable_fields";
+import { Req } from "@saltcorn/types/base_types";
 const { getForm } = viewableFields;
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
@@ -58,7 +59,8 @@ const get_extra_menu = (
   role: number,
   __: (str: string) => string,
   user?: User,
-  locale?: string
+  locale?: string,
+  req?: Req
 ) => {
   let cfg = getState().getConfig("unrolled_menu_items", []);
   if (!cfg || cfg.length === 0) {
@@ -66,10 +68,26 @@ const get_extra_menu = (
   }
   if (!Array.isArray(cfg)) return [];
   const is_node = isNode();
+  const safe_eval_showif = (item: any) => {
+    try {
+      return !!expression.eval_expression(
+        item.showif,
+        req ? { url: req.originalUrl, query: req.query } : {},
+        user,
+        "Show if for menu item labelled "+item.label
+      );
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
   const transform = (items: any) =>
     items
       .filter(
-        (item: any) => role <= +item.min_role && role >= +(item.max_role || 1)
+        (item: any) =>
+          role <= +item.min_role &&
+          role >= +(item.max_role || 1) &&
+          (!item.showif || safe_eval_showif(item))
       )
       .filter((item: any) =>
         is_node

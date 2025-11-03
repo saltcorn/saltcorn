@@ -50,7 +50,9 @@ const getMenu = (req) => {
   const role = mobileCfg.user.role_id || 100;
   const extraMenu = saltcorn.data.web_mobile_commons.get_extra_menu(
     role,
-    req.__
+    req.__,
+    undefined,
+    req
   );
   if (mobileCfg.inErrorState) {
     const entryLink = mobileCfg.entry_point?.startsWith("get")
