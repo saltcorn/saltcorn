@@ -1802,7 +1802,7 @@ const mkForm = (
             }ajaxSubmitForm(this, true)">${text(
               form.submitLabel || "Save"
             )}</button>`
-          : `<button type="submit" class="btn ${
+          : `<button onClick="sc_form_submit_in_progress()" type="submit" class="btn ${
               form.submitButtonClass || "btn-primary"
             }">${text(form.submitLabel || "Save")}</button>`
     }${
