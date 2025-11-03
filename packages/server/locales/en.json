@@ -1701,5 +1701,7 @@
 	"original": "original",
 	"Remove all": "Remove all",
 	"API token revoked": "API token revoked",
-	"Dropdown header filters": "Dropdown header filters"
+	"Dropdown header filters": "Dropdown header filters",
+	"Show if": "Show if",
+	"Optional expression. Show only if true. In scope: <code>user</code>, <code>url</code>, <code>query</code>": "Optional expression. Show only if true. In scope: <code>user</code>, <code>url</code>, <code>query</code>"
 }
