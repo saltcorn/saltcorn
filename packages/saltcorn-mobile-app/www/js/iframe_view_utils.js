@@ -124,6 +124,8 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb, matchingState) {
   }
 }
 
+function sc_form_submit_in_progress() {}
+
 async function ajaxSubmitForm(e, force_no_reload, event) {
   const form = $(e).closest("form");
   const action = form.attr("action");
@@ -405,8 +407,8 @@ async function pjax_to(href, query, e) {
   let $dest = localizer.length
     ? localizer
     : inModal
-    ? $("#scmodal .modal-body")
-    : $("#page-inner-content");
+      ? $("#scmodal .modal-body")
+      : $("#page-inner-content");
   if (!$dest.length)
     await parent.saltcorn.mobileApp.navigation.handleRoute(safeHref, query);
   else
