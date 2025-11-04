@@ -1433,7 +1433,7 @@ let globalCollabEmitter: Function = () => {};
 let globalDynamicUpdateEmitter: Function = () => {};
 
 // the root tenant's state is singleton
-const singleton = new State("public");
+const singleton = new State(db.connectObj.default_schema || "public");
 
 // return current State object
 
@@ -1450,7 +1450,9 @@ const getState = (): State | undefined => {
   else return tenants[ten];
 };
 // list of all tenants
-const tenants: Record<string, State> = { public: singleton };
+const tenants: Record<string, State> = {
+  [db.connectObj.default_schema || "public"]: singleton,
+};
 // list of tenants with other domains
 const otherdomaintenants: Record<string, string> = {};
 
@@ -1468,7 +1470,8 @@ const get_other_domain_tenant = (hostname: string) =>
  */
 const getTenant = (ten: string) => {
   //console.log({ ten, tenants });
-  if (ten === "public") return singleton;
+  if (ten === "public" || ten === db.connectObj.default_schema)
+    return singleton;
   return tenants[ten];
 };
 
@@ -1532,7 +1535,7 @@ const init_multi_tenant = async (
   // for each domain
   if (singleton?.configs?.base_url?.value) {
     const cfg_domain = get_domain(singleton?.configs?.base_url.value);
-    otherdomaintenants[cfg_domain] = "public";
+    otherdomaintenants[cfg_domain] = db.connectObj.default_schema || "public";
   }
 
   for (const domain of tenantList) {
