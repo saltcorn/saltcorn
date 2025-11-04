@@ -421,15 +421,6 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
             <script src="${linkPrefix()}/public/sbadmin2${verstring}/bootstrap.bundle.min.js"></script>
             <script src="${linkPrefix()}/public/sbadmin2${verstring}/jquery.easing.min.js"></script>
             <script src="${linkPrefix()}/public/sbadmin2${verstring}/sb-admin-2.min.js"></script>
-            <script>
-              // Initialize Bootstrap tooltips
-              document.addEventListener('DOMContentLoaded', function() {
-                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-                var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                  return new bootstrap.Tooltip(tooltipTriggerEl);
-                });
-              });
-            </script>
     ${headersInBody(headers)}
     </body>
   </html>`;
