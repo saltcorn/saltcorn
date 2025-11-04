@@ -4192,6 +4192,7 @@ router.post(
       await db.deleteWhere("_sc_workflow_runs");
       await db.deleteWhere("_sc_workflow_steps");
       await db.deleteWhere("_sc_triggers");
+      if (db.reset_sequence) await db.reset_sequence("_sc_triggers");
       await getState().refresh_triggers();
     }
     if (form.values.tables) {
