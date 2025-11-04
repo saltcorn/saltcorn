@@ -450,6 +450,7 @@ const view_linker = (
       subTable ? subTable.name : "",
       ViewDisplayType.NO_ROW_LIMIT
     );
+    relObj.subView = subview
     const type = relObj.type;
     return {
       label: view,
