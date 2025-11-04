@@ -888,6 +888,7 @@ class View implements AbstractView {
 
   rewrite_query_from_slug(query: any, params: any): void {
     let pix = 0;
+    if (!params) return;
     if (this.slug && this.slug.steps && this.slug.steps.length > 0) {
       for (const step of this.slug.steps) {
         if (step.unique && params[pix]) {
