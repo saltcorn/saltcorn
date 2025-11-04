@@ -692,7 +692,11 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           ]);
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
-          getState().log(1, `Socket join_dynamic_update_room: ${err.stack}`);
+          const state = getState();
+          if (state)
+            state.log(1, `Socket join_dynamic_update_room: ${err.stack}`);
+          else console.error("Socket join_dynamic_update_room: ", err);
+
           if (typeof callback === "function")
             callback({ status: "error", msg: err.message || "unknown error" });
         }
