@@ -669,10 +669,13 @@ const run = async (
       create_view &&
       (create_link_showif_pass ||
         role <= table.min_role_write ||
-        (table.ownership_field_id && (about_user || always_create_view)) ||
-        create_view?.configuration?.fixed?.[
-          `preset_${ownership_field?.name}`
-        ] === "LoggedIn")
+        (role < 100 &&
+          table.ownership_field_id &&
+          (about_user ||
+            always_create_view ||
+            create_view?.configuration?.fixed?.[
+              `preset_${ownership_field?.name}`
+            ] === "LoggedIn")))
     ) {
       if (create_view_display === "Embedded") {
         if (!create_view)
