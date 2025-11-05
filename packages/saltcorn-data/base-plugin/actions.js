@@ -1690,7 +1690,14 @@ module.exports = {
       },
     ],
 
-    run: async ({ row, table, user, req, configuration: { form_action } }) => {
+    run: async ({
+      row,
+      table,
+      user,
+      req,
+      configuration: { form_action },
+      ...rest
+    }) => {
       const jqGet = `$('form[data-viewname="'+viewname+'"]')`;
       switch (form_action) {
         case "Submit":
@@ -1701,21 +1708,27 @@ module.exports = {
           if (!row[table.pk_name]) {
             //we will save server side so we can set id
 
-            console.log({
-              row,
-              tableFields: table.fields.map((f) => {
-                return { name: f.name, type: f.type };
-              }),
-              reqFiles: req?.files,
-            });
-
+            const viewColumns = rest?.columns;
             for (const field of table.fields) {
               if (field.type === "File" && req?.files[field.name]) {
+                let folder = field?.attributes?.folder;
+                if (Array.isArray(viewColumns)) {
+                  const col = viewColumns.find(
+                    (c) => c?.type === "Field" && c.field_name === field.name
+                  );
+                  let cfgFolder = col?.configuration?.folder;
+                  if (typeof cfgFolder === "string" && cfgFolder.length) {
+                    // allow simple interpolations like {{user.id}} if present
+                    folder = cfgFolder.includes("{{")
+                      ? interpolate(cfgFolder, row, user, "Upload folder")
+                      : cfgFolder;
+                  }
+                }
                 const file = await File.from_req_files(
                   req.files[field.name],
                   user ? user.id : null,
                   (field.attributes && +field.attributes.min_role_read) || 1,
-                  field?.attributes?.folder
+                  folder
                 );
                 row[field.name] = file.path_to_serve;
               }
