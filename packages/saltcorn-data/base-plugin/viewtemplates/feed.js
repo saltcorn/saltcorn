@@ -659,34 +659,45 @@ const run = async (
         "Create view show if formula"
       )
     : undefined;
-  if (
-    create_link_showif_pass !== false &&
-    view_to_create &&
-    (create_link_showif_pass ||
-      role <= table.min_role_write ||
-      (table.ownership_field_id && (about_user || always_create_view)))
-  ) {
-    if (create_view_display === "Embedded") {
-      const create_view = await View.findOne({ name: view_to_create });
-      if (!create_view)
-        throw new InvalidConfiguration(
-          `View ${viewname} incorrectly configured: cannot find embedded view to create ${view_to_create}`
+  if (view_to_create) {
+    const create_view = await View.findOne({ name: view_to_create });
+    const ownership_field =
+      table.ownership_field_id &&
+      table.fields.find((f) => f.id === table.ownership_field_id);
+    if (
+      create_link_showif_pass !== false &&
+      create_view &&
+      (create_link_showif_pass ||
+        role <= table.min_role_write ||
+        (role < 100 &&
+          table.ownership_field_id &&
+          (about_user ||
+            always_create_view ||
+            create_view?.configuration?.fixed?.[
+              `preset_${ownership_field?.name}`
+            ] === "LoggedIn")))
+    ) {
+      if (create_view_display === "Embedded") {
+        if (!create_view)
+          throw new InvalidConfiguration(
+            `View ${viewname} incorrectly configured: cannot find embedded view to create ${view_to_create}`
+          );
+        create_link = await create_view.run(state, extraArgs);
+      } else {
+        const target = `/view/${encodeURIComponent(
+          view_to_create
+        )}${stateToQueryString(state)}`;
+        const hrefVal = isWeb(extraArgs.req)
+          ? target
+          : `javascript:execLink('${target}');`;
+        create_link = link_view(
+          hrefVal,
+          __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
+          create_view_display === "Popup" ? { reload_view: viewname } : false,
+          create_link_style,
+          create_link_size
         );
-      create_link = await create_view.run(state, extraArgs);
-    } else {
-      const target = `/view/${encodeURIComponent(
-        view_to_create
-      )}${stateToQueryString(state)}`;
-      const hrefVal = isWeb(extraArgs.req)
-        ? target
-        : `javascript:execLink('${target}');`;
-      create_link = link_view(
-        hrefVal,
-        __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
-        create_view_display === "Popup" ? { reload_view: viewname } : false,
-        create_link_style,
-        create_link_size
-      );
+      }
     }
   }
   const create_link_div = isright
