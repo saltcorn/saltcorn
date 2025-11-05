@@ -1701,6 +1701,14 @@ module.exports = {
           if (!row[table.pk_name]) {
             //we will save server side so we can set id
 
+            console.log({
+              row,
+              tableFields: table.fields.map((f) => {
+                return { name: f.name, type: f.type };
+              }),
+              reqFiles: req?.files,
+            });
+
             for (const field of table.fields) {
               if (field.type === "File" && req?.files[field.name]) {
                 const file = await File.from_req_files(
