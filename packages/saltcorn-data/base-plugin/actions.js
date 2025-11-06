@@ -1705,12 +1705,12 @@ module.exports = {
         case "RequestSubmit":
           return { eval_js: jqGet + "[0].requestSubmit()" };
         case "Save":
-          if (!row[table.pk_name]) {
-            //we will save server side so we can set id
-
+          const applyUploadedFiles = async () => {
+            if (!req?.files) return false;
             const viewColumns = rest?.columns;
+            let processed = false;
             for (const field of table.fields) {
-              if (field.type === "File" && req?.files[field.name]) {
+              if (field.type === "File" && req.files[field.name]) {
                 let folder = field?.attributes?.folder;
                 if (Array.isArray(viewColumns)) {
                   const col = viewColumns.find(
@@ -1731,8 +1731,14 @@ module.exports = {
                   folder
                 );
                 row[field.name] = file.path_to_serve;
+                processed = true;
               }
             }
+            return processed;
+          };
+          if (!row[table.pk_name]) {
+            // insert: process uploaded file fields server-side, then insert
+            await applyUploadedFiles();
             const result = await table.tryInsertRow(row, user);
             if (result.success)
               return {
@@ -1748,8 +1754,29 @@ module.exports = {
               );
               return { eval_js: `return saveAndContinueAsync(${jqGet})` };
             }
+          } else {
+            // update: if any file uploads present, process server-side and update row
+            const hasUploads = await applyUploadedFiles();
+            if (hasUploads) {
+              const updateres = await table.tryUpdateRow(
+                row,
+                row[table.pk_name],
+                user
+              );
+              if (!updateres?.error)
+                return { notify_success: req ? req.__("Saved") : "Saved" };
+              else {
+                getState().log(
+                  3,
+                  `form_actions Save update failed server side, result: ${JSON.stringify(
+                    updateres
+                  )} row ${JSON.stringify(row)}`
+                );
+                return { eval_js: `return saveAndContinueAsync(${jqGet})` };
+              }
+            }
+            return { eval_js: `return saveAndContinueAsync(${jqGet})` };
           }
-          return { eval_js: `return saveAndContinueAsync(${jqGet})` };
         case "Reset":
           return { eval_js: jqGet + ".trigger('reset')" };
         case "Submit with Ajax":
