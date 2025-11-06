@@ -644,7 +644,7 @@ const transformForm = async ({
   viewname,
   optionsQuery,
   state,
-}) => {
+}) => {  
   let originalState = state;
   let pseudo_row = {};
   if (!row) {
@@ -745,7 +745,14 @@ const transformForm = async ({
             ? `if(confirm('Are you sure?'))`
             : "";
 
-          url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
+          // If this is a Multi-step action or the form/table contains File fields,
+          // post multipart FormData so req.files is populated server-side.
+          const hasFileFields = table.fields?.some((f) => f.type === "File");
+          if (segment.action_name === "Multi-step action" || hasFileFields) {
+            url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
+          } else {
+            url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
+          }
         }
         segment.action_link = action_link(url, req, segment);
       }
@@ -2940,6 +2947,8 @@ module.exports = {
               row,
               res,
               referrer: req?.get?.("Referrer"),
+              columns,
+              viewname: name,
             });
             //console.log("result", result);
             return { json: { success: "ok", ...(result || {}) } };
