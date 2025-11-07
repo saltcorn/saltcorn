@@ -1731,7 +1731,7 @@ class Table implements AbstractTable {
         role === 100 ? undefined : user,
         { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
       );
-      if (resultCollector) await trigPromise;
+      await trigPromise;
     }
   }
 
