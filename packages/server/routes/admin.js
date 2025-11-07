@@ -4690,6 +4690,8 @@ admin_config_route({
       name: "pwa_icons",
       showIf: { pwa_enabled: true },
     },
+    { section_header: "Email Notifications" },
+    "mail_throttle_per_user",
     { section_header: "Push Notifications" },
     "enable_push_notify",
     {

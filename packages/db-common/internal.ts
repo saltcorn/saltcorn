@@ -701,6 +701,7 @@ export type SelectOptions = {
     | string;
   limit?: string | number;
   offset?: string | number;
+  forupdate?: boolean;
   nocase?: boolean;
   orderDesc?: boolean;
   cached?: boolean;
@@ -804,7 +805,8 @@ export const mkSelectOptions = (
               : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
-  return [orderby, limit, offset].filter((s) => s).join(" ");
+  const forupdate = selopts.forupdate ? "FOR UPDATE" : "";
+  return [orderby, limit, offset, forupdate].filter((s) => s).join(" ");
 };
 
 export type Row = { [key: string]: any };

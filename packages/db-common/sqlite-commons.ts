@@ -267,6 +267,26 @@ export const tryCatchInTransaction = async (f: Function, onError: Function) => {
   }
 };
 
+/**
+ * just a wrapper for withTransaction for pg compatibility
+ * @param f logic to run
+ * @param onError error callback
+ * @returns
+ */
+export const openOrUseTransaction = async (f: Function, onError: Function) => {
+  return await withTransaction(f, onError);
+};
+
+/**
+ * just a wrapper for withTransaction for pg compatibility
+ * @param f logic to run
+ * @param onError error callback
+ * @returns
+ */
+export const whenTransactionisFree = async (f: Function, onError: Function) => {
+  return await withTransaction(f, onError);
+};
+
 export const commitAndBeginNewTransaction = async () => {};
 /**
  *
