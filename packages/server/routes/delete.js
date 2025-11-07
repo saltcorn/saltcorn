@@ -51,10 +51,10 @@ router.post(
         (table.ownership_field_id || table.ownership_formula) &&
         req.user
       ) {
-        const row = await table.getRow(
-          { id },
-          { forUser: req.user, forPublic: !req.user }
-        );
+        const row = await table.getRow(where, {
+          forUser: req.user,
+          forPublic: !req.user,
+        });
         if (row && table.is_owner(req.user, row)) {
           await table.deleteRows(
             where,
