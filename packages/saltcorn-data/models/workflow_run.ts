@@ -744,6 +744,7 @@ class WorkflowRun {
               if (trace) this.createTrace(step.name, user);
               setTimeout(
                 () => {
+                  //remove client from request context
                   db.runWithTenant(
                     { tenant: db.getTenantSchema(), req, client: null },
                     () => {
