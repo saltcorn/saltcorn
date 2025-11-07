@@ -9,6 +9,10 @@ const Router = require("express-promise-router");
 const { error_catcher, is_relative_url } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const { readState } = require("@saltcorn/data/plugin-helper");
+const {
+  freeVariables,
+  add_free_variables_to_joinfields,
+} = require("@saltcorn/data/models/expression");
 /**
  * @type {object}
  * @const
@@ -51,7 +55,14 @@ router.post(
         (table.ownership_field_id || table.ownership_formula) &&
         req.user
       ) {
-        const row = await table.getRow(where, {
+        const joinFields = {};
+        if (table.ownership_formula) {
+          const freeVars = freeVariables(table.ownership_formula);
+          add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
+        }
+        const row = await table.getJoinedRow({
+          where,
+          joinFields,
           forUser: req.user,
           forPublic: !req.user,
         });
