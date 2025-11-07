@@ -1723,7 +1723,7 @@ class Table implements AbstractTable {
     }
 
     if (!noTrigger) {
-      const trigPromise = Trigger.runTableTriggers(
+      await Trigger.runTableTriggers(
         "Update",
         this,
         { ...(additionalTriggerValues || {}), ...newRow },
@@ -1731,7 +1731,6 @@ class Table implements AbstractTable {
         role === 100 ? undefined : user,
         { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
       );
-      await trigPromise;
     }
   }
 
