@@ -122,10 +122,10 @@ const getAllEntities = async () => {
  */
 const entityTypeBadge = (type) => {
   const badges = {
-    table: { class: "primary", icon: "table", label: "Table" },
-    view: { class: "success", icon: "eye", label: "View" },
-    page: { class: "info", icon: "file", label: "Page" },
-    trigger: { class: "warning", icon: "calendar-check", label: "Trigger" },
+    table: { class: "primary p-2", icon: "table", label: "Table" },
+    view: { class: "success p-2", icon: "eye", label: "View" },
+    page: { class: "info p-2", icon: "file", label: "Page" },
+    trigger: { class: "warning p-2", icon: "play", label: "Trigger" },
   };
   const badge = badges[type];
   return span(
@@ -184,7 +184,7 @@ const entityRow = (entity) => {
 
   return div(
     {
-      class: "entity-row p-3 border-bottom hover-highlight",
+      class: "entity-row p-3 border-bottom",
       "data-entity-type": entity.type,
       "data-entity-name": entity.name.toLowerCase(),
       "data-searchable": searchableValues.join(" "),
@@ -194,26 +194,27 @@ const entityRow = (entity) => {
       div(
         { class: "flex-grow-1" },
         div(
-          { class: "mb-1" },
+          { class: "mb-1 d-flex align-items-center" },
           entityTypeBadge(entity.type),
           a(
-            { href: entity.viewLink, class: "fw-bold entity-name" },
+            { href: entity.viewLink, class: "fw-bold" },
             text(entity.name)
           )
         ),
-        metadata.length > 0 && div({ class: "entity-metadata" }, ...metadata)
+        metadata.length > 0 && div({ class: "small text-muted" }, ...metadata)
       ),
       div(
-        { class: "btn-group" },
+        { class: "btn-group btn-group-sm" },
         a(
-          { href: entity.viewLink, class: "btn btn-sm btn-outline-secondary" },
+          { href: entity.viewLink, class: "btn btn-outline-secondary", title: "View" },
           i({ class: "fas fa-eye" })
         ),
         entity.editLink &&
           a(
             {
               href: entity.editLink,
-              class: "btn btn-sm btn-outline-secondary",
+              class: "btn btn-outline-secondary",
+              title: "Edit"
             },
             i({ class: "fas fa-edit" })
           )
@@ -244,7 +245,7 @@ router.get(
           "data-entity-type": "table",
         },
         i({ class: "fas fa-table me-1" }),
-        "Tables"
+        req.__("Tables")
       ),
       button(
         {
@@ -253,7 +254,7 @@ router.get(
           "data-entity-type": "view",
         },
         i({ class: "fas fa-eye me-1" }),
-        "Views"
+        req.__("Views")
       ),
       button(
         {
@@ -262,7 +263,7 @@ router.get(
           "data-entity-type": "page",
         },
         i({ class: "fas fa-file me-1" }),
-        "Pages"
+        req.__("Pages")
       ),
       button(
         {
@@ -270,8 +271,8 @@ router.get(
           class: "btn btn-outline-warning active entity-filter-btn",
           "data-entity-type": "trigger",
         },
-        i({ class: "fas fa-zap me-1" }),
-        "Triggers"
+        i({ class: "fas fa-play me-1" }),
+        req.__("Triggers")
       )
     );
 
@@ -279,9 +280,9 @@ router.get(
       { class: "mb-3" },
       input({
         type: "text",
-        class: "form-control form-control-lg",
+        class: "form-control",
         id: "entity-search",
-        placeholder: "Search entities by name or type...",
+        placeholder: req.__("Search entities by name or type..."),
         autocomplete: "off",
       })
     );
@@ -296,17 +297,17 @@ router.get(
         id: "no-results",
         class: "text-center text-muted py-5 d-none",
       },
-      div({ class: "h5" }, "No entities found"),
-      div("Try adjusting your search or filter options")
+      div({ class: "h5" }, req.__("No entities found")),
+      div(req.__("Try adjusting your search or filter options"))
     );
 
     const clientScript = script(
       domReady(`
         const searchInput = document.getElementById("entity-search");
         const entitiesList = document.getElementById("entities-list");
-        const noReasults = document.getElementById("no-results");
+        const noResults = document.getElementById("no-results");
         const filterButtons = document.querySelectorAll(".entity-filter-btn");
-        const entityRows = document.querySelectorAll(".entity-row")
+        const entityRows = document.querySelectorAll(".entity-row");
 
         // Track active filters
         const activeFilters = new Set(["table", "view", "page", "trigger"]);
@@ -315,8 +316,6 @@ router.get(
         function filterEntities() {
           const searchTerm = searchInput.value.toLowerCase();
           let visibleCount = 0;
-
-          console.log({ entityRows });
 
           entityRows.forEach((row) => {
             const entityType = row.dataset.entityType;
@@ -343,10 +342,10 @@ router.get(
           // Show/hide no results message
           if (visibleCount === 0) {
             entitiesList.classList.add("d-none");
-            noReasults.classList.remove("d-none");
+            noResults.classList.remove("d-none");
           } else {
             entitiesList.classList.remove("d-none");
-            noReasults.classList.add("d-none");
+            noResults.classList.add("d-none");
           }
         }
 
@@ -378,67 +377,67 @@ router.get(
     const styles = `
       <style>
         .entity-row {
-          transition: background-color 0.2s;
+          transition: background-color 0.15s ease-in-out;
         }
-        .hover-highlight:hover {
+        .entity-row:hover {
           background-color: #f8f9fa;
         }
         .entity-filter-btn {
-          transition: all 0.2s;
+          transition: all 0.15s ease-in-out;
         }
         .entity-filter-btn:not(.active) {
-          opacity: 0.5;
+          opacity: 0.6;
         }
-        #entity-search:focus {
-          border-color: #0d6efd;
-          box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        .entity-filter-btn:hover:not(.active) {
+          opacity: 0.8;
         }
       </style>
     `;
+
+    // const createButtons = div(
+    //   { class: "btn-group" },
+    //   a(
+    //     { href: "/table/new", class: "btn btn-primary" },
+    //     i({ class: "fas fa-plus me-1" }),
+    //     req.__("Table")
+    //   ),
+    //   a(
+    //     { href: "/viewedit/new", class: "btn btn-success" },
+    //     i({ class: "fas fa-plus me-1" }),
+    //     req.__("View")
+    //   ),
+    //   a(
+    //     { href: "/pageedit/new", class: "btn btn-info" },
+    //     i({ class: "fas fa-plus me-1" }),
+    //     req.__("Page")
+    //   ),
+    //   a(
+    //     { href: "/actions/new", class: "btn btn-warning" },
+    //     i({ class: "fas fa-plus me-1" }),
+    //     req.__("Trigger")
+    //   )
+    // );
 
     res.sendWrap(
       {
         title: req.__("Entities"),
         headers: [{ headerTag: styles }],
       },
-      div(
-        div(
-          { class: "d-flex justify-content-between align-items-center mb-4" },
-          div(
-            { class: "h3 mb-0" },
-            i({ class: "fas fa-list me-2" }),
-            req.__("All Entities")
-          ),
-          div(
-            { class: "btn-group" },
-            a(
-              { href: "/table/new", class: "btn btn-primary" },
-              i({ class: "fas fa-plus me-1" }),
-              "Table"
-            ),
-            a(
-              { href: "/viewedit/new", class: "btn btn-success" },
-              i({ class: "fas fa-plus me-1" }),
-              "View"
-            ),
-            a(
-              { href: "/pageedit/new", class: "btn btn-info" },
-              i({ class: "fas fa-plus me-1" }),
-              "Page"
-            ),
-            a(
-              { href: "/actions/new", class: "btn btn-warning" },
-              i({ class: "fas fa-plus me-1" }),
-              "Trigger"
-            )
-          )
-        ),
-        searchBox,
-        filterToggles,
-        entitiesList,
-        noResultsMessage,
-        clientScript
-      )
+      {
+        above: [
+          {
+            type: "breadcrumbs",
+            crumbs: [{ text: req.__("Entities") }],
+          },
+          {
+            type: "card",
+            class: "mt-0",
+            title: req.__("All entities"),
+            // footer: createButtons,
+            contents: [searchBox, filterToggles, entitiesList, noResultsMessage, clientScript],
+          },
+        ],
+      }
     );
   })
 );
