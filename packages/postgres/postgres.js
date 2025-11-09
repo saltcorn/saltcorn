@@ -658,7 +658,7 @@ const whenTransactionisFree = (f, onError) => {
     let counter = 0;
     const interval = setInterval(async () => {
       const reqCon = getRequestContext();
-      if (!reqCon.client) {
+      if (!reqCon?.client) {
         clearInterval(interval);
         try {
           resolve(await withTransaction(f, onError));

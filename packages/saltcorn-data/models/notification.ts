@@ -47,6 +47,7 @@ class Notification {
     this.link = o.link;
     this.user_id = o.user_id;
     this.read = !!o.read;
+    this.send_status = o.send_status;
   }
   /**
    * @param {*} where
@@ -70,7 +71,7 @@ class Notification {
     return u ? new Notification(u) : u;
   }
 
-  static async create(notin: NotificationCfg): Promise<void> {
+  static async create(notin: NotificationCfg): Promise<Notification> {
     const o = new Notification(notin);
     const id = await db.insert("_sc_notifications", {
       created: o.created,
@@ -107,6 +108,7 @@ class Notification {
       );
       await pushHelper.send(o);
     }
+    return o;
   }
 
   async mark_as_read(): Promise<void> {

@@ -131,14 +131,18 @@ export class MailQueue {
   }
 
   private static async loadNotifications(userId: number, sendStatus?: string) {
+    const dateLimit = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const rows = await db.select(
       "_sc_notifications",
       {
         user_id: userId,
-        created: { gt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
+        created: { gt: !db.isSQLite ? dateLimit : dateLimit.valueOf() },
         ...(sendStatus ? { send_status: sendStatus } : {}),
       },
-      { forupdate: true, orderBy: "id" }
+      {
+        ...(!db.isSQLite ? { forupdate: true } : {}),
+        orderBy: "id",
+      }
     );
     return rows;
   }
@@ -150,15 +154,37 @@ export class MailQueue {
     const schema = db.getTenantSchemaPrefix();
     const now = new Date();
     if (status === "sent") {
-      await db.query(
-        `UPDATE ${schema}_sc_notifications SET send_status=$1, created=$2 WHERE id = ANY($3)`,
-        [status, now, notificationIds]
-      );
+      if (!db.isSQLite) {
+        // pg
+        await db.query(
+          `UPDATE ${schema}_sc_notifications SET send_status=$1, created=$2 WHERE id = ANY($3)`,
+          [status, now, notificationIds]
+        );
+      } else {
+        // sqlite
+        await db.query(
+          `UPDATE _sc_notifications
+           SET send_status = ?, created = ?
+           WHERE id IN (${notificationIds.map(() => "?").join(",")})`,
+          [status, now.valueOf(), ...notificationIds]
+        );
+      }
     } else {
-      await db.query(
-        `UPDATE ${schema}_sc_notifications SET send_status=$1 WHERE id = ANY($2)`,
-        [status, notificationIds]
-      );
+      if (!db.isSQLite) {
+        //pg
+        await db.query(
+          `UPDATE ${schema}_sc_notifications SET send_status=$1 WHERE id = ANY($2)`,
+          [status, notificationIds]
+        );
+      } else {
+        // sqlite
+        await db.query(
+          `UPDATE _sc_notifications
+           SET send_status = ?
+           WHERE id IN (${notificationIds.map(() => "?").join(",")})`,
+          [status, ...notificationIds]
+        );
+      }
     }
   }
 
