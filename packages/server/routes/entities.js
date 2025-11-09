@@ -326,19 +326,19 @@ router.get(
       th(req.__("Name")),
       th(req.__("Details")),
       th(req.__("Access | Read/Write")),
-      // th(req.__("Tags")),
-      th({ class: "text-end" }, req.__("Actions"))
+      th(req.__("Tags")),
+      th(req.__("Actions"))
     );
 
     const bodyRows = entities.map((entity) => {
-      // const key = `${entity.type}:${entity.id}`;
-      // const tagIds = tagsByEntityKey.get(key) || [];
-      // const tagBadges = tagIds.map((tid) =>
-      //   span(
-      //     { class: "badge bg-secondary me-1" },
-      //     text(tagsById[tid]?.name || "")
-      //   )
-      // );
+      const key = `${entity.type}:${entity.id}`;
+      const tagIds = tagsByEntityKey.get(key) || [];
+      const tagBadges = tagIds.map((tid) =>
+        span(
+          { class: "badge bg-secondary me-1" },
+          text(tagsById[tid]?.name || "")
+        )
+      );
 
       // searchable content
       const searchableValues = [entity.name.toLowerCase(), entity.type];
@@ -352,7 +352,7 @@ router.get(
           "data-entity-type": entity.type,
           "data-entity-name": entity.name.toLowerCase(),
           "data-searchable": searchableValues.join(" "),
-          // "data-tags": tagIds.join(" "),
+          "data-tags": tagIds.join(" "),
         },
         td(entityTypeBadge(entity.type)),
         td(a({ href: entity.viewLink, class: "fw-bold" }, text(entity.name))),
@@ -381,9 +381,8 @@ router.get(
             )
           )
         ),
-        // td(div(...tagBadges)),
+        td(div(...tagBadges)),
         td(
-          { class: "text-end" },
           div(
             { class: "btn-group btn-group-sm" },
             a(
