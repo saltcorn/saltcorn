@@ -17,6 +17,7 @@ const File = require("../models/file");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const Trigger = require("../models/trigger");
+const WorkflowRun = require("../models/workflow_run");
 const Notification = require("../models/notification");
 const {
   getMailTransport,
@@ -207,6 +208,7 @@ const run_code = async ({
     Buffer: isNode() ? Buffer : require("buffer"),
     Trigger,
     Notification,
+    WorkflowRun,
     setTimeout,
     interpolate,
     require,
