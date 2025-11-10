@@ -632,6 +632,48 @@ const tryCatchInTransaction = async (f, onError) => {
   }
 };
 
+/**
+ * Should be used for code that is sometimes called from within a withTransaction block
+ * and sometimes not.
+ * @param {Function} f logic to execute
+ * @param {Function} onError error handler
+ * @returns
+ */
+const openOrUseTransaction = async (f, onError) => {
+  const reqCon = getRequestContext();
+  if (reqCon?.client) return await f();
+  else return await withTransaction(f, onError);
+};
+
+/**
+ * Wait some time until current transaction COMMITs,
+ * then open another transaction.
+ * @param {Function} f logic to execute
+ * @param {Function} onError error handler
+ * @returns
+ */
+const whenTransactionisFree = (f, onError) => {
+  return new Promise((resolve, reject) => {
+    // wait until transaction is free
+    let counter = 0;
+    const interval = setInterval(async () => {
+      const reqCon = getRequestContext();
+      if (!reqCon?.client) {
+        clearInterval(interval);
+        try {
+          resolve(await withTransaction(f, onError));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      if (++counter > 100) {
+        clearInterval(interval);
+        reject(new Error("Timeout waiting for transaction to be free"));
+      }
+    }, 200);
+  });
+};
+
 const query = (text, params) => {
   sql_log(text, params);
   return getMyClient().query(text, params);
@@ -682,6 +724,8 @@ const postgresExports = {
   truncate,
   withTransaction,
   tryCatchInTransaction,
+  openOrUseTransaction,
+  whenTransactionisFree,
   commitAndBeginNewTransaction,
 };
 

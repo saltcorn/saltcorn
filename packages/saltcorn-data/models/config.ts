@@ -1516,6 +1516,15 @@ const configTypes: ConfigTypes = {
     default: {},
     excludeFromMobile: true,
   },
+  mail_throttle_per_user: {
+    type: "Integer",
+    label: "Throttle time per user",
+    default: 30,
+    blurb:
+      "Interval in seconds to wait before sending another email to the same user. " +
+      "Set to 0 to disable throttling.",
+    excludeFromMobile: true,
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

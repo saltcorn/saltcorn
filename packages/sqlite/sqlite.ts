@@ -34,9 +34,17 @@ import {
   slugify,
   withTransaction,
   tryCatchInTransaction,
+  openOrUseTransaction,
+  whenTransactionisFree,
 } from "@saltcorn/db-common/sqlite-commons";
 
-export { slugify, withTransaction, tryCatchInTransaction };
+export {
+  slugify,
+  withTransaction,
+  tryCatchInTransaction,
+  openOrUseTransaction,
+  whenTransactionisFree,
+};
 
 let sqliteDatabase: Database | null = null;
 let connectObj: any = null;

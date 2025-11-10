@@ -13,9 +13,9 @@ import type {
 } from "@saltcorn/db-common/internal";
 import User from "./user";
 import state from "../db/state";
-import emailModule from "./email";
 import { PushMessageHelper } from "./internal/push_message_helper";
 import utils from "../utils";
+import { MailQueue } from "./internal/mail_queue";
 
 const { getState } = state;
 const { isPushEnabled } = utils;
@@ -33,6 +33,7 @@ class Notification {
   link?: string;
   user_id: number;
   read: boolean;
+  send_status?: "pending" | "sent";
 
   /**
    * Notification constructor
@@ -46,6 +47,7 @@ class Notification {
     this.link = o.link;
     this.user_id = o.user_id;
     this.read = !!o.read;
+    this.send_status = o.send_status;
   }
   /**
    * @param {*} where
@@ -69,30 +71,22 @@ class Notification {
     return u ? new Notification(u) : u;
   }
 
-  static async create(notin: NotificationCfg): Promise<void> {
+  static async create(notin: NotificationCfg): Promise<Notification> {
     const o = new Notification(notin);
-    await db.insert("_sc_notifications", {
+    const id = await db.insert("_sc_notifications", {
       created: o.created,
       title: o.title,
       body: o.body,
       link: o.link,
       user_id: o.user_id,
       read: o.read,
+      send_status: null,
     });
+    o.id = id;
     const state = getState();
     const user = await User.findOne({ id: o.user_id });
     if (user?._attributes?.notify_email) {
-      const email = {
-        from: state?.getConfig("email_from"),
-        to: user.email,
-        subject: o.title,
-        text: `${o.body}   
-          ${o.link}`,
-        html: `${o.body}<br/><a href="${o.link}">${o.link}</a>`,
-      };
-      (await emailModule.getMailTransport())
-        .sendMail(email)
-        .catch((e) => state?.log(1, e.message));
+      await MailQueue.handleNotification(o, user);
     }
     const enable_dynamic_updates = state?.getConfig("enable_dynamic_updates");
     if (enable_dynamic_updates && user?.id) {
@@ -114,6 +108,7 @@ class Notification {
       );
       await pushHelper.send(o);
     }
+    return o;
   }
 
   async mark_as_read(): Promise<void> {
