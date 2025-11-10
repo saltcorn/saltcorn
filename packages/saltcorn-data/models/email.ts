@@ -119,7 +119,7 @@ const convertToGraphMail = (mail: MailOpts) => {
   };
 };
 
-async function sendGraphMail(mail: any, tokenStr: string) {
+async function sendGraphMail(mail: any, tokenStr: string, retryCount = 0) {
   const response = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
     method: "POST",
     headers: {
@@ -139,6 +139,23 @@ async function sendGraphMail(mail: any, tokenStr: string) {
     };
   } else {
     const error = await response.json();
+    const errorCode = error.error?.code;
+    if (errorCode === "ApplicationThrottled" && retryCount < 5) {
+      const retryAfterHeader = response.headers.get("Retry-After");
+      let waitTime = 0;
+      if (retryAfterHeader) {
+        waitTime = parseInt(retryAfterHeader, 10) * 1000;
+        getState().log(
+          5,
+          `Graph API throttled. Using Retry-After header: ${waitTime}ms`
+        );
+      } else {
+        waitTime = Math.pow(2, retryCount) * 1000;
+        getState().log(`Graph API throttled. Backing off for ${waitTime}ms`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+      return sendGraphMail(mail, tokenStr, retryCount + 1);
+    }
     throw new Error("Failed to send email: " + JSON.stringify(error));
   }
 }
