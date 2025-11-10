@@ -67,7 +67,10 @@ export class MailQueue {
    *
    * @param notification Notification
    */
-  static async handleNotification(notification: Notification, user: User) {
+  public static async handleNotification(
+    notification: Notification,
+    user: User
+  ) {
     await db.openOrUseTransaction(async () => {
       const minDelay =
         getState().getConfig("mail_throttle_per_user", 30) * 1000;
@@ -82,19 +85,7 @@ export class MailQueue {
           await MailQueue.setSendStatus([notification.id!], "pending");
         } else {
           // check if delay has passed or schedule the next send
-          let lastSendTimestamp: Date | null = null;
-          for (const row of rows) {
-            if (
-              row.send_status === "sent" &&
-              row.created &&
-              (!lastSendTimestamp || row.created > lastSendTimestamp)
-            ) {
-              lastSendTimestamp = row.created;
-            }
-          }
-          const passedDelay = lastSendTimestamp
-            ? new Date().valueOf() - lastSendTimestamp.valueOf()
-            : Infinity;
+          const passedDelay = MailQueue.getPassedDelay(rows);
           if (passedDelay >= minDelay) {
             // intervall passed - send now
             await MailQueue.send(buildSingleMail(notification, user.email));
@@ -109,28 +100,47 @@ export class MailQueue {
     });
   }
 
-  private static scheduleSend(delay: number, user: User) {
-    setTimeout(async () => {
-      return await db.whenTransactionisFree(async () => {
-        const rows = await MailQueue.loadNotifications(user.id!, "pending");
-        if (rows.length > 0) {
-          await MailQueue.send(
-            rows.length === 1
-              ? buildSingleMail(rows[0], user.email)
-              : buildCombinedMail(rows, user.email)
-          );
-          await MailQueue.setSendStatus(
-            rows.map((r: Notification) => r.id!),
-            "sent"
-          );
-        } else {
-          console.log("No pending notifications for user", user.email);
-        }
-      });
-    }, delay);
+  /**
+   * calc time since last sent
+   * @param notifications
+   * @returns
+   */
+  public static getPassedDelay(notifications: Notification[]) {
+    let lastSendTimestamp: Date | null = null;
+    for (const row of notifications) {
+      if (
+        row.send_status === "sent" &&
+        row.created &&
+        (!lastSendTimestamp || row.created > lastSendTimestamp)
+      ) {
+        lastSendTimestamp = row.created;
+      }
+    }
+    return lastSendTimestamp
+      ? new Date().valueOf() - lastSendTimestamp.valueOf()
+      : Infinity;
   }
 
-  private static async loadNotifications(userId: number, sendStatus?: string) {
+  public static async emptyQueue(user: User) {
+    return await db.whenTransactionisFree(async () => {
+      const rows = await MailQueue.loadNotifications(user.id!, "pending");
+      if (rows.length > 0) {
+        await MailQueue.send(
+          rows.length === 1
+            ? buildSingleMail(rows[0], user.email)
+            : buildCombinedMail(rows, user.email)
+        );
+        await MailQueue.setSendStatus(
+          rows.map((r: Notification) => r.id!),
+          "sent"
+        );
+      } else {
+        console.log("No pending notifications for user", user.email);
+      }
+    });
+  }
+
+  public static async loadNotifications(userId: number, sendStatus?: string) {
     const dateLimit = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     const rows = await db.select(
       "_sc_notifications",
@@ -145,6 +155,10 @@ export class MailQueue {
       }
     );
     return rows;
+  }
+
+  private static scheduleSend(delay: number, user: User) {
+    setTimeout(() => MailQueue.emptyQueue(user), delay);
   }
 
   private static async setSendStatus(
