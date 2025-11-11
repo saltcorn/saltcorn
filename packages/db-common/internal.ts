@@ -454,7 +454,8 @@ const whereClause =
                             ? `${quote(sqlsanitizeAllowDots(k))} ${
                                 phs.is_sqlite ? "LIKE" : "ILIKE"
                               } '%' || ${phs.push(v.ilike)} || '%'`
-                            : v instanceof RegExp
+                            : v instanceof RegExp ||
+                                v?.constructor?.name === "RegExp"
                               ? `${quote(sqlsanitizeAllowDots(k))} ${
                                   phs.is_sqlite ? "REGEXP" : "~"
                                 } ${phs.push(v.source)}`

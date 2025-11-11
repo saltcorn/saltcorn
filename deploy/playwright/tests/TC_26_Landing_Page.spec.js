@@ -210,6 +210,9 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.configureEditPlan);
     await page.click(pageobject.nextoption);
     // select destination view
+    await page.selectOption(pageobject.destinationtype, { label: 'View' });
+        
+    await page.waitForTimeout(500);
     await page.click(pageobject.destinationview);
     await page.selectOption(pageobject.destinationview, { label: 'Plan_List [List on Subscription_Plan]' });
     // Finish the page
