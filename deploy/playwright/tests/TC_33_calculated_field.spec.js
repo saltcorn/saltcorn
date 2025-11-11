@@ -165,6 +165,10 @@ test.describe('E2E Test Suite', () => {
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
         // click on finish button
+        await page.selectOption(pageobject.destinationtype, { label: 'View' });
+        
+        await page.waitForTimeout(500);
+
         await functions.submit();
     });
 
