@@ -126,6 +126,7 @@ const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
+const semver = require("semver");
 
 const router = new Router();
 module.exports = router;
@@ -1629,7 +1630,10 @@ router.get(
       );
       if (!pkgInfo?.versions)
         throw new Error(req.__("Unable to fetch versions"));
-      const versions = Object.keys(pkgInfo.versions);
+      const versions = Object.keys(pkgInfo.versions)
+        .filter((v) => !!semver.valid(v))
+        .sort(semver.rcompare);
+
       if (versions.length === 0) throw new Error(req.__("No versions found"));
       const tags = pkgInfo["dist-tags"] || {};
       res.set("Page-Title", req.__("%s versions", "Saltcorn"));
