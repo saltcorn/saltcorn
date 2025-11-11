@@ -607,6 +607,13 @@ const configTypes: ConfigTypes = {
       "The email address from which emails are sent. For instance, hello@saltcorn.com",
     excludeFromMobile: true,
   },
+  email_wait_timestamp: {
+    type: "hidden",
+    label: "Timestamp when email wait ends",
+    default: null,
+    excludeFromMobile: true,
+    ephemeral: true,
+  },
   custom_ssl_certificate: {
     type: "String",
     fieldview: "textarea",
