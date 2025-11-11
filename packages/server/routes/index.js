@@ -38,6 +38,7 @@ const tagentries = require("./tag_entries");
 const diagram = require("./diagram");
 const registry = require("./registry");
 const sync = require("./sync");
+const entities = require("./entities");
 
 module.exports =
   /**
@@ -81,4 +82,5 @@ module.exports =
     app.use("/diagram", diagram);
     app.use("/registry-editor", registry);
     app.use("/sync", sync);
+    app.use("/entities", entities);
   };

@@ -161,6 +161,7 @@ const menuForm = async (req) => {
           "Tables",
           "Views",
           "Pages",
+          "Entities",
           "About application",
           "Modules",
           "Users and security",
