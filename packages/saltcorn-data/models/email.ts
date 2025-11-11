@@ -119,7 +119,36 @@ const convertToGraphMail = (mail: MailOpts) => {
   };
 };
 
-async function sendGraphMail(mail: any, tokenStr: string) {
+const getWaitTime = () => {
+  let result = 0;
+  const cfg = getState().getConfig("email_wait_timestamp", null);
+  if (cfg)
+    try {
+      const now = new Date();
+      const waitTimestamp = new Date(+cfg);
+      const waitTime = waitTimestamp.valueOf() - now.valueOf();
+      if (waitTime > 0) result = waitTime;
+    } catch (error) {
+      getState().log(5, `Error parsing email_wait_timestamp: ${error}`);
+    }
+  return result;
+};
+
+const setWaitTimestamp = async (waitTime: number) => {
+  try {
+    const newTimestamp = new Date().valueOf() + waitTime;
+    const oldTimestamp = getState().getConfig("email_wait_timestamp", null);
+    if (!oldTimestamp || newTimestamp > +oldTimestamp)
+      await getState().setConfig("email_wait_timestamp", newTimestamp);
+  } catch (error) {
+    getState().log(5, `Error setting email_wait_timestamp: ${error}`);
+  }
+};
+
+async function sendGraphMail(mail: any, tokenStr: string, retryCount = 0) {
+  const waitTimeFromCfg = getWaitTime();
+  if (waitTimeFromCfg > 0)
+    await new Promise((resolve) => setTimeout(resolve, waitTimeFromCfg));
   const response = await fetch("https://graph.microsoft.com/v1.0/me/sendMail", {
     method: "POST",
     headers: {
@@ -139,6 +168,24 @@ async function sendGraphMail(mail: any, tokenStr: string) {
     };
   } else {
     const error = await response.json();
+    const errorCode = error.error?.code;
+    if (errorCode === "ApplicationThrottled" && retryCount < 5) {
+      const retryAfterHeader = response.headers.get("Retry-After");
+      let waitTime = 0;
+      if (retryAfterHeader) {
+        waitTime = parseInt(retryAfterHeader, 10) * 1000;
+        getState().log(
+          5,
+          `Graph API throttled. Using Retry-After header: ${waitTime}ms`
+        );
+      } else {
+        waitTime = Math.pow(2, retryCount) * 1000;
+        getState().log(`Graph API throttled. Backing off for ${waitTime}ms`);
+      }
+      await setWaitTimestamp(waitTime);
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
+      return sendGraphMail(mail, tokenStr, retryCount + 1);
+    }
     throw new Error("Failed to send email: " + JSON.stringify(error));
   }
 }
