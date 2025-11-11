@@ -30,6 +30,7 @@ const {
   th,
   td,
 } = require("@saltcorn/markup/tags");
+const { post_dropdown_item } = require("@saltcorn/markup");
 const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
 
 /**
@@ -220,6 +221,9 @@ router.get(
     const roles = await User.get_roles();
     const tags = await Tag.find();
     const tagEntries = await TagEntry.find();
+    const on_done_redirect_str = `?on_done_redirect=${encodeURIComponent(
+      req.originalUrl.replace("/", "")
+    )}`;
 
     const tagsById = {};
     tags.forEach((t) => (tagsById[t.id] = t));
@@ -239,14 +243,14 @@ router.get(
 
     const filterToggles = div(
       {
-        class: "btn-group btn-group-sm mb-3",
+        class: "btn-group btn-group-sm",
         role: "group",
         "aria-label": "Entity type filters",
       },
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-primary entity-filter-btn",
+          class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "table",
         },
         i({ class: "fas fa-table me-1" }),
@@ -255,7 +259,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-primary entity-filter-btn",
+          class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "view",
         },
         i({ class: "fas fa-eye me-1" }),
@@ -264,7 +268,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-primary entity-filter-btn",
+          class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "page",
         },
         i({ class: "fas fa-file me-1" }),
@@ -273,7 +277,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-primary entity-filter-btn",
+          class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "trigger",
         },
         i({ class: "fas fa-play me-1" }),
@@ -294,19 +298,11 @@ router.get(
 
     // Tag filter buttons
     const tagFilterBar = div(
-      { class: "mb-2 d-flex flex-wrap align-items-center gap-1" },
+      { class: "d-flex flex-wrap align-items-center gap-1" },
       span(
         { class: "me-2 text-muted" },
         i({ class: "fas fa-tags me-1" }),
         req.__("Tags:")
-      ),
-      button(
-        {
-          type: "button",
-          class: "btn btn-sm btn-secondary tag-filter-btn active",
-          "data-tag-id": "all",
-        },
-        req.__("All")
       ),
       ...tags.map((t) =>
         button(
@@ -320,6 +316,24 @@ router.get(
       )
     );
 
+    // One row for type filters and tag filters
+    const filtersRow = div(
+      {
+        class:
+          "d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2",
+      },
+      div(
+        { class: "d-flex align-items-center gap-2" },
+        span(
+          { class: "me-1 text-muted" },
+          i({ class: "fas fa-filter me-1" }),
+          req.__("Types:")
+        ),
+        filterToggles
+      ),
+      tagFilterBar
+    );
+
     // Build table
     const headerRow = tr(
       th(req.__("Type")),
@@ -330,13 +344,51 @@ router.get(
       th(req.__("Actions"))
     );
 
+    const typePlural = (t) =>
+      ({ table: "tables", view: "views", page: "pages", trigger: "triggers" })[
+        t
+      ];
+
     const bodyRows = entities.map((entity) => {
       const key = `${entity.type}:${entity.id}`;
       const tagIds = tagsByEntityKey.get(key) || [];
       const tagBadges = tagIds.map((tid) =>
-        span(
-          { class: "badge bg-secondary me-1" },
+        a(
+          {
+            class: "badge bg-secondary me-1",
+            href: `/tag/${tid}?show_list=${typePlural(entity.type)}`,
+          },
           text(tagsById[tid]?.name || "")
+        )
+      );
+
+      // Add-tag dropdown (appears on hover)
+      const addTagDropdown = div(
+        { class: "dropdown d-inline ms-1" },
+        span(
+          {
+            class: "badge bg-secondary add-tag",
+            "data-bs-toggle": "dropdown",
+            "aria-haspopup": "true",
+            "aria-expanded": "false",
+            "data-boundary": "viewport",
+            title: req.__("Add tag"),
+          },
+          i({ class: "fas fa-plus fa-sm" })
+        ),
+        div(
+          { class: "dropdown-menu dropdown-menu-end" },
+          ...tags
+            .filter((t) => !tagIds.includes(t.id))
+            .map((t) =>
+              post_dropdown_item(
+                `/tag-entries/add-tag-entity/${encodeURIComponent(
+                  t.name
+                )}/${typePlural(entity.type)}/${entity.id}${on_done_redirect_str}`,
+                t.name,
+                req
+              )
+            )
         )
       );
 
@@ -381,7 +433,7 @@ router.get(
             )
           )
         ),
-        td(div(...tagBadges)),
+        td(div(...tagBadges, addTagDropdown)),
         td(
           div(
             { class: "btn-group btn-group-sm" },
@@ -435,11 +487,62 @@ router.get(
         const noResults = document.getElementById("no-results");
         const filterButtons = document.querySelectorAll(".entity-filter-btn");
         const entityRows = document.querySelectorAll(".entity-row");
-        const tagButtons = document.querySelectorAll('.tag-filter-btn');
+        const tagButtons = document.querySelectorAll(".tag-filter-btn");
 
         // Track active filters
-        const activeFilters = new Set(["table", "view", "page", "trigger"]);
-        let activeTag = 'all';
+        const activeFilters = new Set([]);
+        const activeTags = new Set([]);
+
+        // URL state helpers
+        const TYPES = ["table","view","page","trigger"];
+        const updateUrl = () => {
+          const params = new URLSearchParams(window.location.search);
+          // search
+          if (searchInput.value) params.set('q', searchInput.value);
+          else params.delete('q');
+          // types
+          TYPES.forEach(t => {
+            if (activeFilters.has(t)) params.set(t+'s', 'on');
+            else params.delete(t+'s');
+          });
+          // tags (comma-separated ids)
+          if (activeTags.size > 0) params.set('tags', Array.from(activeTags).join(','));
+          else params.delete('tags');
+          const newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
+          window.history.replaceState(null, '', newUrl);
+        };
+
+        const initFromUrl = () => {
+          const params = new URLSearchParams(window.location.search);
+          // search
+          const q = params.get('q') || '';
+          if (q) searchInput.value = q;
+          // types
+          TYPES.forEach(t => {
+            if (params.get(t+'s') === 'on') activeFilters.add(t);
+          });
+          // apply button classes for types
+          filterButtons.forEach((btn) => {
+            const t = btn.dataset.entityType;
+            if (activeFilters.has(t)) {
+              btn.classList.add('btn-primary');
+              btn.classList.remove('btn-outline-primary');
+            }
+          });
+          // tags
+          const tagsParam = params.get('tags');
+          if (tagsParam) {
+            tagsParam.split(',').filter(Boolean).forEach(id => activeTags.add(id));
+          }
+          // apply button classes for tags
+          tagButtons.forEach((btn) => {
+            const id = btn.dataset.tagId;
+            if (activeTags.has(id)) {
+              btn.classList.add('active', 'btn-secondary');
+              btn.classList.remove('btn-outline-secondary');
+            }
+          });
+        };
 
         // Filter function
         function filterEntities() {
@@ -449,7 +552,7 @@ router.get(
           entityRows.forEach((row) => {
             const entityType = row.dataset.entityType;
             const searchableText = row.dataset.searchable;
-            const rowTags = (row.dataset.tags || '').split(' ').filter(Boolean);
+            const rowTags = (row.dataset.tags || "").split(" ").filter(Boolean);
 
             // Check if entity type is active
             const typeMatch = activeFilters.has(entityType);
@@ -460,14 +563,14 @@ router.get(
               searchMatch = searchableText.includes(searchTerm);
             }
 
-            // Check tag match
+            // Check tag match (OR across selected tags). If none selected, match all
             let tagMatch = true;
-            if (activeTag !== 'all') {
-              tagMatch = rowTags.includes(String(activeTag));
+            if (activeTags.size > 0) {
+              tagMatch = rowTags.some((tid) => activeTags.has(tid));
             }
 
             // Show/hide row
-            if (typeMatch && searchMatch && tagMatch) {
+            if ((activeFilters.size === 0 || typeMatch) && searchMatch && tagMatch) {
               row.style.display = "";
               visibleCount++;
             } else {
@@ -483,6 +586,8 @@ router.get(
             entitiesList.parentElement.classList.remove("d-none");
             noResults.classList.add("d-none");
           }
+
+          updateUrl();
         }
 
         // Search input handler
@@ -493,34 +598,40 @@ router.get(
           btn.addEventListener("click", function () {
             const entityType = this.dataset.entityType;
 
-            if (activeFilters.has(entityType)) {
-              activeFilters.delete(entityType);
-              this.classList.remove('btn-primary');
-              this.classList.add('btn-outline-primary');
-            } else {
+            if (!activeFilters.has(entityType)) {
               activeFilters.add(entityType);
-              this.classList.add('btn-primary');
-              this.classList.remove('btn-outline-primary');
+              this.classList.add("btn-primary");
+              this.classList.remove("btn-outline-primary");
+            } else {
+              activeFilters.delete(entityType);
+              this.classList.remove("btn-primary");
+              this.classList.add("btn-outline-primary");
             }
 
             filterEntities();
           });
         });
 
-        // Tag filter handlers (single select)
+        // Tag filter handlers (multi-select, OR). No "All" button needed
         tagButtons.forEach((btn) => {
-          btn.addEventListener('click', function () {
-            // clear previous active
-            tagButtons.forEach(b => b.classList.remove('active', 'btn-secondary'));
-            tagButtons.forEach(b => b.classList.add('btn-outline-secondary'));
-            // set new
-            this.classList.add('active', 'btn-secondary');
-            this.classList.remove('btn-outline-secondary');
-            activeTag = this.dataset.tagId || 'all';
+          btn.addEventListener("click", function () {
+            const tid = this.dataset.tagId;
+            if (!activeTags.has(tid)) {
+              activeTags.add(tid);
+              this.classList.add("active", "btn-secondary");
+              this.classList.remove("btn-outline-secondary");
+            } else {
+              activeTags.delete(tid);
+              this.classList.remove("active", "btn-secondary");
+              this.classList.add("btn-outline-secondary");
+            }
             filterEntities();
           });
         });
 
+        // Init from URL and run first filter
+        initFromUrl();
+        filterEntities();
         // Focus search on load
         searchInput.focus();
       `)
@@ -531,6 +642,9 @@ router.get(
         .entity-row td { vertical-align: middle; }
         .entity-filter-btn { transition: all 0.15s ease-in-out; }
         .tag-filter-btn { transition: all 0.15s ease-in-out; }
+        /* Show plus badge only on hover over tag cell */
+        td:nth-child(5) .add-tag { visibility: hidden; cursor: pointer; }
+        tr:hover td:nth-child(5) .add-tag { visibility: visible; }
       </style>
     `;
 
@@ -542,17 +656,12 @@ router.get(
       {
         above: [
           {
-            type: "breadcrumbs",
-            crumbs: [{ text: req.__("Entities") }],
-          },
-          {
             type: "card",
             class: "mt-0",
             title: req.__("All entities"),
             contents: [
               searchBox,
-              filterToggles,
-              tagFilterBar,
+              filtersRow,
               entitiesList,
               noResultsMessage,
               clientScript,
