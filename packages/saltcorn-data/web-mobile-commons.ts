@@ -179,6 +179,8 @@ const admin_page_url = (page: string): string => {
       return "/viewedit";
     case "Pages":
       return "/pageedit";
+    case "Entities":
+      return "/entities";
     case "Tables":
       return "/table";
     case "About application":

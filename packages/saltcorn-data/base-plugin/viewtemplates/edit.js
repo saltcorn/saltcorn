@@ -416,12 +416,12 @@ const configuration_workflow = (req) =>
                 //fieldview: "radio_group",
                 attributes: {
                   options: [
+                    "Back to referer",
                     "View",
                     "Page",
                     "PageGroup",
                     "Formula",
                     "URL formula",
-                    "Back to referer",
                   ],
                 },
               },

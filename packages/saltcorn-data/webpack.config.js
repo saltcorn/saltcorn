@@ -34,6 +34,7 @@ const saltcornMocks = {
   "../models/pack": join(mocksDir, "models", "pack"),
   "./email": join(mocksDir, "models", "email"),
   "../models/email": join(mocksDir, "models", "email"),
+  "./internal/mail_queue": join(mocksDir, "models", "internal", "mail_queue"),
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "@saltcorn/html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),

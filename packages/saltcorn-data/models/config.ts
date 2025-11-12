@@ -607,6 +607,13 @@ const configTypes: ConfigTypes = {
       "The email address from which emails are sent. For instance, hello@saltcorn.com",
     excludeFromMobile: true,
   },
+  email_wait_timestamp: {
+    type: "hidden",
+    label: "Timestamp when email wait ends",
+    default: null,
+    excludeFromMobile: true,
+    ephemeral: true,
+  },
   custom_ssl_certificate: {
     type: "String",
     fieldview: "textarea",
@@ -1514,6 +1521,15 @@ const configTypes: ConfigTypes = {
     type: "hidden",
     label: "Notify subscriptions",
     default: {},
+    excludeFromMobile: true,
+  },
+  mail_throttle_per_user: {
+    type: "Integer",
+    label: "Throttle time per user",
+    default: 30,
+    blurb:
+      "Interval in seconds to wait before sending another email to the same user. " +
+      "Set to 0 to disable throttling.",
     excludeFromMobile: true,
   },
 };
