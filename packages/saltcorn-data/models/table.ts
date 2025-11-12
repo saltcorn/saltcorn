@@ -2198,14 +2198,13 @@ class Table implements AbstractTable {
     await this.auto_update_calc_aggregations(newRow);
     if (!noTrigger) {
       apply_calculated_fields([newRow], this.fields);
-      const trigPromise = Trigger.runTableTriggers(
+      await Trigger.runTableTriggers(
         "Insert",
         this,
         newRow,
         resultCollector,
         user
       );
-      if (resultCollector) await trigPromise;
     }
     return id;
   }
