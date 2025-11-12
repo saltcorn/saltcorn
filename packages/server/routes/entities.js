@@ -645,6 +645,9 @@ router.get(
         /* Show plus badge only on hover over tag cell */
         td:nth-child(5) .add-tag { visibility: hidden; cursor: pointer; }
         tr:hover td:nth-child(5) .add-tag { visibility: visible; }
+        /* Fixed-height card with scrollable list area */
+        .entities-card-body { height: calc(100vh - 260px); min-height: 50vh; }
+        .entities-scroll { overflow: auto; }
       </style>
     `;
 
@@ -660,12 +663,40 @@ router.get(
             class: "mt-0",
             title: req.__("All entities"),
             contents: [
-              searchBox,
-              filtersRow,
-              entitiesList,
-              noResultsMessage,
+              div(
+                { class: "entities-card-body d-flex flex-column gap-2" },
+                searchBox,
+                filtersRow,
+                div(
+                  { class: "flex-grow-1 entities-scroll" },
+                  entitiesList,
+                  noResultsMessage
+                )
+              ),
               clientScript,
             ],
+            footer: div(
+              {
+                class:
+                  "d-flex flex-wrap gap-2",
+              },
+              a(
+                { href: "/table/new/", class: "btn btn-primary" },
+                req.__("Create table")
+              ),
+              a(
+                { href: "/viewedit/new", class: "btn btn-primary" },
+                req.__("Create view")
+              ),
+              a(
+                { href: "/pageedit/new", class: "btn btn-primary" },
+                req.__("Create page")
+              ),
+              a(
+                { href: "/actions/new", class: "btn btn-primary" },
+                req.__("Create trigger")
+              )
+            ),
           },
         ],
       }
