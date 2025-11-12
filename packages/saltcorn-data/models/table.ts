@@ -1723,7 +1723,7 @@ class Table implements AbstractTable {
     }
 
     if (!noTrigger) {
-      const trigPromise = Trigger.runTableTriggers(
+      await Trigger.runTableTriggers(
         "Update",
         this,
         { ...(additionalTriggerValues || {}), ...newRow },
@@ -1731,7 +1731,6 @@ class Table implements AbstractTable {
         role === 100 ? undefined : user,
         { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
       );
-      if (resultCollector) await trigPromise;
     }
   }
 
@@ -2199,14 +2198,13 @@ class Table implements AbstractTable {
     await this.auto_update_calc_aggregations(newRow);
     if (!noTrigger) {
       apply_calculated_fields([newRow], this.fields);
-      const trigPromise = Trigger.runTableTriggers(
+      await Trigger.runTableTriggers(
         "Insert",
         this,
         newRow,
         resultCollector,
         user
       );
-      if (resultCollector) await trigPromise;
     }
     return id;
   }

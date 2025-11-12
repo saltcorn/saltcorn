@@ -744,7 +744,17 @@ class WorkflowRun {
               if (trace) this.createTrace(step.name, user);
               setTimeout(
                 () => {
-                  runNow().catch((e) => console.error("Workflow bg error", e));
+                  //remove client from request context
+                  db.runWithTenant(
+                    { tenant: db.getTenantSchema(), req, client: null },
+                    () => {
+                      db.withTransaction(() =>
+                        runNow().catch((e) =>
+                          console.error("Workflow bg error", e)
+                        )
+                      );
+                    }
+                  );
                 },
                 (step.configuration.wait_delay || 0) * 1000
               );

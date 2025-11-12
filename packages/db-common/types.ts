@@ -2,6 +2,12 @@ import * as multiTenant from "./multi-tenant";
 import { ReadStream, WriteStream } from "fs";
 import { Row, Where, SelectOptions, PrimaryKeyValue } from "./internal";
 
+type RequestContext = {
+  tenant: string;
+  client?: any;
+  req?: any;
+};
+
 export type DbExportsType = {
   tenant: typeof multiTenant;
   sqlsanitize: (s?: string) => string;
@@ -89,7 +95,7 @@ export type DbExportsType = {
   updateWhere: (table: string, data: Row, where: Where) => Promise<any>;
   slugify: (str: string) => string;
   runWithTenant: (
-    tenantId: string,
+    tenantId: string | RequestContext,
     // fn: (tenantId?: string) => Promise<void | string>
     fn: any
   ) => Promise<any>;
