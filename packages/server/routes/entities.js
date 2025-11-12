@@ -660,7 +660,7 @@ router.get(
         above: [
           {
             type: "card",
-            class: "mt-0",
+            class: "mt-0 card-max-full-screen",
             title: req.__("All entities"),
             contents: [
               div(
@@ -681,19 +681,23 @@ router.get(
                   "d-flex flex-wrap gap-2",
               },
               a(
-                { href: "/table/new/", class: "btn btn-primary" },
+                { href: `/table/new/${on_done_redirect_str}` , class: "btn btn-primary" },
+                i({ class: "fas fa-table me-1" }),
                 req.__("Create table")
               ),
               a(
-                { href: "/viewedit/new", class: "btn btn-primary" },
+                { href: `/viewedit/new${on_done_redirect_str}` , class: "btn btn-primary" },
+                i({ class: "fas fa-eye me-1" }),
                 req.__("Create view")
               ),
               a(
-                { href: "/pageedit/new", class: "btn btn-primary" },
+                { href: `/pageedit/new${on_done_redirect_str}` , class: "btn btn-primary" },
+                i({ class: "fas fa-file me-1" }),
                 req.__("Create page")
               ),
               a(
-                { href: "/actions/new", class: "btn btn-primary" },
+                { href: `/actions/new${on_done_redirect_str}` , class: "btn btn-primary" },
+                i({ class: "fas fa-play me-1" }),
                 req.__("Create trigger")
               )
             ),
