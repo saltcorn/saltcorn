@@ -1261,7 +1261,7 @@ module.exports = {
           user,
           "recalculate_stored_fields where"
         );
-        recalculate_for_stored(table_for_recalc, where);
+        await recalculate_for_stored(table_for_recalc, where);
       } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
     },
