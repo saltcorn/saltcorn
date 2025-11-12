@@ -527,15 +527,21 @@ module.exports = {
       };
       if (method !== "GET") {
         let postBody;
-        if (body && table) {
-          const f = get_async_expression_function(body, table.fields, {
-            row: row || {},
-            user,
-          });
+        if (body && row) {
+          const f = get_async_expression_function(
+            body,
+            table?.fields || Object.keys(row).map((k) => ({ name: k })),
+            {
+              row: row || {},
+              user,
+            }
+          );
           postBody = JSON.stringify(await f(row, user));
         } else if (body) postBody = body;
         else postBody = JSON.stringify(row);
         fetchOpts.body = postBody;
+        console.log({postBody});
+        
       }
       if (authorization)
         fetchOpts.headers.Authorization = interpolate(
