@@ -115,6 +115,7 @@ const Page = require("@saltcorn/data/models/page");
 const {
   getSafeSaltcornCmd,
   getFetchProxyOptions,
+  sleep,
 } = require("@saltcorn/data/utils");
 const stream = require("stream");
 const Crash = require("@saltcorn/data/models/crash");
@@ -4561,6 +4562,7 @@ router.get(
       sub2_page: req.__(`%s code page`, name),
       contents: {
         type: "card",
+        titleAjaxIndicator: true,
         title: req.__(`%s code page`, name),
         contents: [
           renderForm(form, req.csrfToken()),
@@ -4601,6 +4603,9 @@ router.post(
       ...code_pages,
       [name]: code,
     });
+    //allow workers to sync cfg before refresh code pages
+    //TODO we need a better way to sync codepage after all workers have updated cfg
+    await sleep(500)
     const err = await getState().refresh_codepages();
     if (err)
       res.json({
