@@ -96,6 +96,7 @@ const getConnectObject = (connSpec: any = {}) => {
   setKey("sslrootcert", "PGSSLROOTCERT");
   setKey("jwt_secret", "SALTCORN_JWT_SECRET");
   setKey("multi_tenant", "SALTCORN_MULTI_TENANT", { default: false });
+  setKey("multi_node", "SALTCORN_MULTI_NODE", { default: false });
   setKey("file_store", "SALTCORN_FILE_STORE", { default: pathsWithApp.data });
   setKey("default_schema", "SALTCORN_DEFAULT_SCHEMA", { default: "public" });
   setKey("fixed_configuration", "SALTCORN_FIXED_CONFIGURATION", {
