@@ -122,6 +122,20 @@ const eachView = async (layout: Layout, f: any, state?: any): Promise<void> => {
         }
         return;
       }
+      if (
+        segment.tabsStyle === "Accordion" &&
+        segment.lazyLoadViews &&
+        Array.isArray(segment.contents)
+      ) {
+        const curIx = 0;
+        for (let index = 0; index < segment.contents.length; index++) {
+          const seg = segment.contents[index];
+          const makingLazy = index !== curIx;
+
+          await go(seg, inLazy || makingLazy);
+        }
+        return;
+      }
 
       if (typeof segment.contents !== "string")
         await go(segment.contents, inLazy);
