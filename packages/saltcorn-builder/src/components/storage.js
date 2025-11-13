@@ -301,6 +301,7 @@ const layoutToNodes = (
           acc_init_opens={segment.acc_init_opens}
           disable_inactive={segment.disable_inactive}
           serverRendered={segment.serverRendered}
+          lazyLoadViews={segment.lazyLoadViews}
           tabId={segment.tabId}
           field={segment.field}
           tabsStyle={segment.tabsStyle}
@@ -658,6 +659,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         deeplink: node.props.deeplink,
         disable_inactive: node.props.disable_inactive,
         serverRendered: node.props.serverRendered,
+        lazyLoadViews: node.props.lazyLoadViews,
         tabId: node.props.tabId,
         ntabs: node.props.ntabs,
         setting_tab_n: node.props.setting_tab_n,

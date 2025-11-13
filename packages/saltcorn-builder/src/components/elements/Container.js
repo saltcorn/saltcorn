@@ -945,25 +945,23 @@ const ContainerSettings = () => {
           {["show", "edit", "filter", "list"].includes(options.mode) && (
             <SettingsSectionHeaderRow title="Formula - show if true" />
           )}
-          {["show", "edit", "filter", "list"].includes(options.mode) && (
-            <tr>
-              <td colSpan={2}>
-                <input
-                  type="text"
-                  className="form-control text-to-display"
-                  value={showIfFormula}
-                  spellCheck={false}
-                  onChange={setAProp("showIfFormula")}
-                  onInput={(e) => validate_expression_elem($(e.target))}
-                />
-                <div style={{ marginTop: "-5px" }}>
-                  <small className="text-muted font-monospace">
-                    FORMULA <FormulaTooltip />
-                  </small>
-                </div>
-              </td>
-            </tr>
-          )}
+          <tr>
+            <td colSpan={2}>
+              <input
+                type="text"
+                className="form-control text-to-display"
+                value={showIfFormula}
+                spellCheck={false}
+                onChange={setAProp("showIfFormula")}
+                onInput={(e) => validate_expression_elem($(e.target))}
+              />
+              <div style={{ marginTop: "-5px" }}>
+                <small className="text-muted font-monospace">
+                  FORMULA <FormulaTooltip />
+                </small>
+              </div>
+            </td>
+          </tr>
           <SettingsSectionHeaderRow title="Role" />
           {options.roles.map(({ role, id }) => (
             <tr key={id}>

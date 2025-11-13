@@ -761,6 +761,7 @@ namespace LayoutExports {
     ntabs?: any;
     deeplink?: boolean;
     serverRendered?: boolean;
+    lazyLoadViews?: boolean;
     tabId?: string;
     bodyClass?: string;
     outerClass?: string;
@@ -808,6 +809,7 @@ const renderTabs = (
     startClosed,
     acc_init_opens,
     serverRendered,
+    lazyLoadViews,
     tabId,
     tabClass,
     contentWrapperClass,
@@ -824,7 +826,7 @@ const renderTabs = (
   if (tabsStyle === "Accordion")
     return (
       div(
-        { class: ["accordion", outerClass], id: `${rndid}top` },
+        { class: ["accordion", lazyLoadViews && "lazy-accoordion", outerClass], id: `${rndid}top` },
         contents.map((t, ix) =>
           div(
             { class: "accordion-item" },

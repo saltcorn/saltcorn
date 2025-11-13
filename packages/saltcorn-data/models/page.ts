@@ -242,98 +242,110 @@ class Page implements AbstractPage {
     require("../db/state")
       .getState()
       .log(5, `Run page ${this.name} with query ${JSON.stringify(querystate)}`);
-    await eachView(this.layout, async (segment: any) => {
-      const view = await View.findOne({ name: segment.view });
-      const extra_state = segment.extra_state_fml
-        ? eval_expression(
-            segment.extra_state_fml,
-            {
-              ...dollarizeObject(querystate || {}),
-              session_id: getSessionId(extraArgs.req),
-            },
-            extraArgs.req.user,
-            `Extra state formula when embedding view ${view?.name}`
-          )
-        : {};
-      if (!view) {
-        throw new InvalidConfiguration(
-          `Page ${this.name} configuration error in embedded view: ` +
-            (segment.view
-              ? `view "${segment.view}" not found`
-              : "no view specified")
-        );
-      } else if (segment.state === "shared") {
-        const mystate = view.combine_state_and_default_state({
-          ...querystate,
-          ...extra_state,
-        });
-        const qs = stateToQueryString(mystate, true);
-        if (view.renderLocally()) {
-          segment.contents = div(
-            {
-              class: "d-inline",
-              "data-sc-embed-viewname": view.name,
-              "data-sc-view-source": `/view/${view.name}${qs}`,
-            },
-            await view.run(mystate, extraArgs, view.isRemoteTable())
+    await eachView(
+      this.layout,
+      async (segment: any, inLazy: boolean) => {
+        const view = await View.findOne({ name: segment.view });
+        const extra_state = segment.extra_state_fml
+          ? eval_expression(
+              segment.extra_state_fml,
+              {
+                ...dollarizeObject(querystate || {}),
+                session_id: getSessionId(extraArgs.req),
+              },
+              extraArgs.req.user,
+              `Extra state formula when embedding view ${view?.name}`
+            )
+          : {};
+        if (!view) {
+          throw new InvalidConfiguration(
+            `Page ${this.name} configuration error in embedded view: ` +
+              (segment.view
+                ? `view "${segment.view}" not found`
+                : "no view specified")
           );
-        } else {
-          const response = await saltcorn.mobileApp.api.apiCall({
-            method: "GET",
-            path: `/view/${encodeURIComponent(view.name)}${qs}`,
+        } else if (segment.state === "shared") {
+          const mystate = view.combine_state_and_default_state({
+            ...querystate,
+            ...extra_state,
           });
-          segment.contents = response.data;
-        }
-      } else if (segment.state === "local") {
-        const mystate = view.combine_state_and_default_state({
-          ...querystate,
-          ...extra_state,
-        });
-        const qs = stateToQueryString(mystate, true);
-        if (isNode() || isOfflineMode()) {
-          segment.contents = div(
-            {
-              class: "d-inline",
-              "data-sc-embed-viewname": view.name,
-              "data-sc-local-state": `/view/${view.name}${qs}`,
-            },
-            await view.run(mystate, extraArgs, view.isRemoteTable())
-          );
-        } else {
-          const response = await saltcorn.mobileApp.api.apiCall({
-            method: "GET",
-            path: `/view/${encodeURIComponent(view.name)}${qs}`,
+          const qs = stateToQueryString(mystate, true);
+          if (view.renderLocally()) {
+            segment.contents = div(
+              {
+                class: "d-inline",
+                "data-sc-embed-viewname": view.name,
+                "data-sc-view-source": `/view/${view.name}${qs}`,
+              },
+              inLazy
+                ? ""
+                : await view.run(mystate, extraArgs, view.isRemoteTable())
+            );
+          } else {
+            const response = await saltcorn.mobileApp.api.apiCall({
+              method: "GET",
+              path: `/view/${encodeURIComponent(view.name)}${qs}`,
+            });
+            segment.contents = response.data;
+          }
+        } else if (segment.state === "local") {
+          const mystate = view.combine_state_and_default_state({
+            ...querystate,
+            ...extra_state,
           });
-          segment.contents = response.data;
-        }
-      } else {
-        // segment.state === "fixed"
-        const table = Table.findOne({ id: view.table_id });
-        const state = segment.configuration || this.fixed_states[segment.name];
-        const filled = await fill_presets(table, extraArgs.req, state);
+          const qs = stateToQueryString(mystate, true);
+          if (isNode() || isOfflineMode()) {
+            segment.contents = div(
+              {
+                class: "d-inline",
+                "data-sc-embed-viewname": view.name,
+                "data-sc-local-state": `/view/${view.name}${qs}`,
+                "data-sc-view-source": `/view/${view.name}${qs}`,
+              },
+              inLazy
+                ? ""
+                : await view.run(mystate, extraArgs, view.isRemoteTable())
+            );
+          } else {
+            const response = await saltcorn.mobileApp.api.apiCall({
+              method: "GET",
+              path: `/view/${encodeURIComponent(view.name)}${qs}`,
+            });
+            segment.contents = response.data;
+          }
+        } else {
+          // segment.state === "fixed"
+          const table = Table.findOne({ id: view.table_id });
+          const state =
+            segment.configuration || this.fixed_states[segment.name];
+          const filled = await fill_presets(table, extraArgs.req, state);
 
-        const mystate = view.combine_state_and_default_state(filled || {});
-        const qs = stateToQueryString(mystate, true);
+          const mystate = view.combine_state_and_default_state(filled || {});
+          const qs = stateToQueryString(mystate, true);
 
-        Object.assign(mystate, extra_state);
-        if (view.renderLocally()) {
-          segment.contents = div(
-            {
-              class: "d-inline",
-              "data-sc-embed-viewname": view.name,
-              "data-sc-view-source": `/view/${view.name}${qs}`,
-            },
-            await view.run(mystate, extraArgs, view.isRemoteTable())
-          );
-        } else {
-          const response = await saltcorn.mobileApp.api.apiCall({
-            method: "GET",
-            path: `/view/${encodeURIComponent(view.name)}${qs}`,
-          });
-          segment.contents = response.data;
+          Object.assign(mystate, extra_state);
+          if (view.renderLocally()) {
+            segment.contents = div(
+              {
+                class: "d-inline",
+                "data-sc-embed-viewname": view.name,
+                "data-sc-view-source": `/view/${view.name}${qs}`,
+              },
+              inLazy
+                ? ""
+                : await view.run(mystate, extraArgs, view.isRemoteTable())
+            );
+          } else {
+            const response = await saltcorn.mobileApp.api.apiCall({
+              method: "GET",
+              path: `/view/${encodeURIComponent(view.name)}${qs}`,
+            });
+            segment.contents = response.data;
+          }
         }
-      }
-    });
+      },
+      querystate
+    );
     await eachPage(this.layout, async (segment: any) => {
       const page = await Page.findOne({ name: segment.page });
       if (!page) {
@@ -419,6 +431,16 @@ class Page implements AbstractPage {
           segment.url +=
             (segment.transfer_state ? "&" : `?`) +
             objectToQueryString(extra_state || {});
+        }
+      },
+      container: (segment) => {
+        if (segment.showIfFormula) {
+          const do_show = eval_expression(
+            segment.showIfFormula,
+            dollarizeObject(querystate),
+            extraArgs.req?.user
+          );
+          if (!do_show) segment.hide = true;
         }
       },
       image: async (segment) => {

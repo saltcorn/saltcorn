@@ -509,128 +509,141 @@ const renderRows = async (
     subviewExtra.req = { ...extra.req, isSubView: true };
   }
   return await asyncMap(rows, async (row) => {
-    await eachView(layout, async (segment) => {
-      // do all the parsing with data here? make a factory
-      const view = await getView(segment.view, segment.relation);
-      if (!view)
-        throw new InvalidConfiguration(
-          `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
-        );
-      view.check_viewtemplate();
-      if (view.viewtemplateObj.renderRows && view.view_select.type === "Own") {
-        segment.contents = (
-          await view.viewtemplateObj.renderRows(
-            view.table,
-            view.name,
-            view.configuration,
-            subviewExtra,
-            [row],
-            state
-          )
-        )[0];
-      } else {
-        let state1 = {};
-        const pk_name = table.pk_name;
-        const get_row_val = (k) => {
-          //handle expanded joinfields
-          if (row[k] === null) return null;
-          if (row[k]?.id === null) return null;
-          return row[k]?.id || row[k];
-        };
-        const get_user_id = () => (extra.req.user ? extra.req.user.id : 0);
-        if (view.view_select.type === "RelationPath" && view.table_id) {
-          const targetTbl = Table.findOne({ id: view.table_id });
-          const relation = new Relation(
-            segment.relation,
-            targetTbl.name,
-            displayType(await view.get_state_fields())
+    await eachView(
+      layout,
+      async (segment, inLazy) => {
+        // do all the parsing with data here? make a factory
+        const view = await getView(segment.view, segment.relation);
+        if (!view)
+          throw new InvalidConfiguration(
+            `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
           );
-          state1 = pathToState(
-            relation,
-            relation.isFixedRelation() ? get_user_id : get_row_val
-          );
+       
+        if (
+          view.viewtemplateObj.renderRows &&
+          view.view_select.type === "Own"
+        ) {
+          segment.contents = (
+            await view.viewtemplateObj.renderRows(
+              view.table,
+              view.name,
+              view.configuration,
+              subviewExtra,
+              [row],
+              state
+            )
+          )[0];
         } else {
-          switch (view.view_select.type) {
-            case "Own":
-              state1 = { [pk_name]: get_row_val(pk_name) };
-              break;
-            case "Independent":
-              state1 = {};
-              break;
-            case "ChildList":
-            case "OneToOneShow":
-              state1 = {
-                [view.view_select.through
-                  ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
-                  : view.view_select.field_name]: get_row_val(pk_name),
-              };
-              break;
-            case "ParentShow":
-              //todo set by pk name of parent tablr
-              state1 = {
-                id: get_row_val(view.view_select.field_name),
-              };
-              break;
+          let state1 = {};
+          const pk_name = table.pk_name;
+          const get_row_val = (k) => {
+            //handle expanded joinfields
+            if (row[k] === null) return null;
+            if (row[k]?.id === null) return null;
+            return row[k]?.id || row[k];
+          };
+          const get_user_id = () => (extra.req.user ? extra.req.user.id : 0);
+          if (view.view_select.type === "RelationPath" && view.table_id) {
+            const targetTbl = Table.findOne({ id: view.table_id });
+            const relation = new Relation(
+              segment.relation,
+              targetTbl.name,
+              displayType(await view.get_state_fields())
+            );
+            state1 = pathToState(
+              relation,
+              relation.isFixedRelation() ? get_user_id : get_row_val
+            );
+          } else {
+            switch (view.view_select.type) {
+              case "Own":
+                state1 = { [pk_name]: get_row_val(pk_name) };
+                break;
+              case "Independent":
+                state1 = {};
+                break;
+              case "ChildList":
+              case "OneToOneShow":
+                state1 = {
+                  [view.view_select.through
+                    ? `${view.view_select.throughTable}.${view.view_select.through}.${view.view_select.table_name}.${view.view_select.field_name}`
+                    : view.view_select.field_name]: get_row_val(pk_name),
+                };
+                break;
+              case "ParentShow":
+                //todo set by pk name of parent tablr
+                state1 = {
+                  id: get_row_val(view.view_select.field_name),
+                };
+                break;
+            }
+          }
+          const extra_state = segment.extra_state_fml
+            ? eval_expression(
+                segment.extra_state_fml,
+                {
+                  ...dollarizeObject(state),
+                  session_id: getSessionId(extra.req),
+                  ...row,
+                },
+                extra.req.user,
+                `Extra state formula for view ${view.name}`
+              )
+            : {};
+          const { id, ...outerState } = state;
+          //console.log(segment);
+          if (segment.state === "local") {
+            const state2 = { ...state1, ...extra_state };
+            const qs = stateToQueryString(state2, true);
+            if (
+              view.name === viewname &&
+              JSON.stringify(state) === JSON.stringify(state2)
+            )
+              throw new InvalidConfiguration(
+                `View ${view.name} embeds itself with same state; inifinite loop detected`
+              );
+            segment.contents = div(
+              {
+                class: "d-inline",
+                "data-sc-embed-viewname": view.name,
+                "data-sc-local-state": `/view/${view.name}${qs}`,
+                "data-sc-view-source": `/view/${view.name}${qs}`,
+              },
+              inLazy
+                ? ""
+                : view.renderLocally()
+                  ? await view.run(state2, subviewExtra, view.isRemoteTable())
+                  : await renderServerSide(view.name, state2)
+            );
+          } else {
+            const state2 = { ...outerState, ...state1, ...extra_state };
+            const qs = stateToQueryString(state2, true);
+
+            if (
+              view.name === viewname &&
+              JSON.stringify(state) === JSON.stringify(state2)
+            )
+              throw new InvalidConfiguration(
+                `View ${view.name} embeds itself with same state; inifinite loop detected`
+              );
+              
+            segment.contents = div(
+              {
+                class: "d-inline",
+                "data-sc-embed-viewname": view.name,
+                "data-sc-view-source": `/view/${view.name}${qs}`,
+              },
+              inLazy
+                ? ""
+                : view.renderLocally()
+                  ? await view.run(state2, subviewExtra, view.isRemoteTable())
+                  : await renderServerSide(view.name, state2)
+            );
           }
         }
-        const extra_state = segment.extra_state_fml
-          ? eval_expression(
-              segment.extra_state_fml,
-              {
-                ...dollarizeObject(state),
-                session_id: getSessionId(extra.req),
-                ...row,
-              },
-              extra.req.user,
-              `Extra state formula for view ${view.name}`
-            )
-          : {};
-        const { id, ...outerState } = state;
-        //console.log(segment);
-        if (segment.state === "local") {
-          const state2 = { ...state1, ...extra_state };
-          const qs = stateToQueryString(state2, true);
-          if (
-            view.name === viewname &&
-            JSON.stringify(state) === JSON.stringify(state2)
-          )
-            throw new InvalidConfiguration(
-              `View ${view.name} embeds itself with same state; inifinite loop detected`
-            );
-          segment.contents = div(
-            {
-              class: "d-inline",
-              "data-sc-embed-viewname": view.name,
-              "data-sc-local-state": `/view/${view.name}${qs}`,
-            },
-            view.renderLocally()
-              ? await view.run(state2, subviewExtra, view.isRemoteTable())
-              : await renderServerSide(view.name, state2)
-          );
-        } else {
-          const state2 = { ...outerState, ...state1, ...extra_state };
-          const qs = stateToQueryString(state2, true);
-
-          if (
-            view.name === viewname &&
-            JSON.stringify(state) === JSON.stringify(state2)
-          )
-            throw new InvalidConfiguration(
-              `View ${view.name} embeds itself with same state; inifinite loop detected`
-            );
-          segment.contents = div(
-            {
-              class: "d-inline",
-              "data-sc-embed-viewname": view.name,
-              "data-sc-view-source": `/view/${view.name}${qs}`,
-            },
-            view.renderLocally()
-              ? await view.run(state2, subviewExtra, view.isRemoteTable())
-              : await renderServerSide(view.name, state2)
-          );
-        }
-      }
-    });
+      },
+      state
+    );
     const user_id = extra.req.user ? extra.req.user.id : null;
 
     const is_owner =
