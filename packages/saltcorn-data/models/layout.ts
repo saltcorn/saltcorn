@@ -92,7 +92,7 @@ const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
  * @param f
  * @returns
  */
-const eachView = async (layout: Layout, f: any): Promise<void> => {
+const eachView = async (layout: Layout, f: any, state?: any): Promise<void> => {
   const go = async (segment: any, inLazy?: boolean) => {
     if (!segment) return;
     if (segment.type === "view") {
@@ -107,9 +107,21 @@ const eachView = async (layout: Layout, f: any): Promise<void> => {
       if (typeof segment.footer !== "string") await go(segment.footer, inLazy);
     }
     if (segment.contents) {
-      const thisIsLazy = inLazy || segment.serverRendered;
+      let makingLazy = false;
+      if (segment.serverRendered && Array.isArray(segment.contents)) {
+        const tabid = segment.tabId || "_tab";
+        const curIx = +state[tabid] || 0;
+        for (let index = 0; index < segment.contents.length; index++) {
+          const seg = segment.contents[index];
+          makingLazy = index !== curIx;
+
+          await go(seg, inLazy || makingLazy);
+        }
+        return;
+      }
+
       if (typeof segment.contents !== "string")
-        await go(segment.contents, thisIsLazy);
+        await go(segment.contents, inLazy);
       return;
     }
     if (segment.above) {
