@@ -130,7 +130,9 @@ const eachView = async (layout: Layout, f: any, state?: any): Promise<void> => {
         const curIx = 0;
         for (let index = 0; index < segment.contents.length; index++) {
           const seg = segment.contents[index];
-          const makingLazy = index !== curIx;
+          const makingLazy =
+            !segment.acc_init_opens?.[index] &&
+            (index !== curIx || segment.startClosed);
 
           await go(seg, inLazy || makingLazy);
         }
