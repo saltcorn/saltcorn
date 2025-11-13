@@ -607,7 +607,7 @@ const renderRows = async (
                 class: "d-inline",
                 "data-sc-embed-viewname": view.name,
                 "data-sc-local-state": `/view/${view.name}${qs}`,
-                "data-sc-lazy-load": inLazy || undefined,
+                "data-sc-view-source": `/view/${view.name}${qs}`,
               },
               inLazy
                 ? ""
@@ -632,7 +632,6 @@ const renderRows = async (
                 class: "d-inline",
                 "data-sc-embed-viewname": view.name,
                 "data-sc-view-source": `/view/${view.name}${qs}`,
-                "data-sc-lazy-load": inLazy || undefined,
               },
               inLazy
                 ? ""
