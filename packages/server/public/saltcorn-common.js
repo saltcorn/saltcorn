@@ -1392,26 +1392,29 @@ function initialize_page() {
   }, 5000);
 
   $(".lazy-accoordion").on("show.bs.collapse", function (e) {
-    const $e = $(e.target).find("[data-sc-view-source]");
-    if ($.trim($e.html()) == "") {
-      const url = $e.attr("data-sc-view-source");
-      $e.html("Loading...");
-      $.ajax(url, {
-        headers: {
-          pjaxpageload: "true",
-          localizedstate: "true", //no admin bar
-        },
-        success: function (res, textStatus, request) {
-          $e.html(res);
-          initialize_page();
-        },
-        error: function (res) {
-          if (!checkNetworkError(res))
-            notifyAlert({ type: "danger", text: res.responseText });
-          if ($e.html() === "Loading...") $e.html("");
-        },
-      });
-    }
+    const $es = $(e.target).find("[data-sc-view-source]");
+    $es.each(function () {
+      const $e = $(this);
+      if ($.trim($e.html()) == "") {
+        const url = $e.attr("data-sc-view-source");
+        $e.html("Loading...");
+        $.ajax(url, {
+          headers: {
+            pjaxpageload: "true",
+            localizedstate: "true", //no admin bar
+          },
+          success: function (res, textStatus, request) {
+            $e.html(res);
+            initialize_page();
+          },
+          error: function (res) {
+            if (!checkNetworkError(res))
+              notifyAlert({ type: "danger", text: res.responseText });
+            if ($e.html() === "Loading...") $e.html("");
+          },
+        });
+      }
+    });
   });
 
   $('input[type="file"].file-has-existing').on("change", (e) => {
