@@ -107,13 +107,16 @@ const eachView = async (layout: Layout, f: any, state?: any): Promise<void> => {
       if (typeof segment.footer !== "string") await go(segment.footer, inLazy);
     }
     if (segment.contents) {
-      let makingLazy = false;
-      if (segment.serverRendered && Array.isArray(segment.contents)) {
+      if (
+        segment.tabsStyle === "Tabs" &&
+        segment.serverRendered &&
+        Array.isArray(segment.contents)
+      ) {
         const tabid = segment.tabId || "_tab";
         const curIx = +state[tabid] || 0;
         for (let index = 0; index < segment.contents.length; index++) {
           const seg = segment.contents[index];
-          makingLazy = index !== curIx;
+          const makingLazy = index !== curIx;
 
           await go(seg, inLazy || makingLazy);
         }
