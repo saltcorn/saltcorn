@@ -92,8 +92,37 @@ const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
  * @param f
  * @returns
  */
-const eachView = (layout: Layout, f: any): Promise<void> =>
-  traverse(layout, { view: f });
+const eachView = async (layout: Layout, f: any): Promise<void> => {
+  const go = async (segment: any, inLazy?: boolean) => {
+    if (!segment) return;
+    if (segment.type === "view") {
+      const vres = f(segment, inLazy);
+      if (vres && vres instanceof Promise) await vres;
+    }
+    if (Array.isArray(segment)) {
+      for (const seg of segment) await go(seg, inLazy);
+      return;
+    }
+    if (segment.footer) {
+      if (typeof segment.footer !== "string") await go(segment.footer, inLazy);
+    }
+    if (segment.contents) {
+      const thisIsLazy = inLazy || segment.serverRendered;
+      if (typeof segment.contents !== "string")
+        await go(segment.contents, thisIsLazy);
+      return;
+    }
+    if (segment.above) {
+      for (const seg of segment.above) await go(seg, inLazy);
+      return;
+    }
+    if (segment.besides) {
+      for (const seg of segment.besides) await go(seg, inLazy);
+      return;
+    }
+  };
+  await go(layout);
+};
 
 /**
  * execute a function on each page in the layout

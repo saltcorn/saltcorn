@@ -509,7 +509,7 @@ const renderRows = async (
     subviewExtra.req = { ...extra.req, isSubView: true };
   }
   return await asyncMap(rows, async (row) => {
-    await eachView(layout, async (segment) => {
+    await eachView(layout, async (segment, inLazy) => {
       // do all the parsing with data here? make a factory
       const view = await getView(segment.view, segment.relation);
       if (!view)
