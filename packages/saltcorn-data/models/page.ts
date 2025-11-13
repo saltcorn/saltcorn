@@ -421,6 +421,16 @@ class Page implements AbstractPage {
             objectToQueryString(extra_state || {});
         }
       },
+      container: (segment) => {
+        if (segment.showIfFormula) {
+          const do_show = eval_expression(
+            segment.showIfFormula,
+            dollarizeObject(querystate),
+            extraArgs.req?.user
+          );
+          if (!do_show) segment.hide = true;
+        }
+      },
       image: async (segment) => {
         if (extraArgs.req.isSplashPage) {
           try {
