@@ -448,7 +448,7 @@ router.get(
             entity.editLink &&
               a(
                 {
-                  href: entity.editLink,
+                  href: entity.editLink + on_done_redirect_str,
                   class: "btn btn-outline-secondary",
                   title: "Edit",
                 },
@@ -645,9 +645,6 @@ router.get(
         /* Show plus badge only on hover over tag cell */
         td:nth-child(5) .add-tag { visibility: hidden; cursor: pointer; }
         tr:hover td:nth-child(5) .add-tag { visibility: visible; }
-        /* Fixed-height card with scrollable list area */
-        .entities-card-body { height: calc(100vh - 260px); min-height: 50vh; }
-        .entities-scroll { overflow: auto; }
       </style>
     `;
 
@@ -664,11 +661,11 @@ router.get(
             title: req.__("All entities"),
             contents: [
               div(
-                { class: "entities-card-body d-flex flex-column gap-2" },
+                { class: "d-flex flex-column gap-2" },
                 searchBox,
                 filtersRow,
                 div(
-                  { class: "flex-grow-1 entities-scroll" },
+                  { class: "flex-grow-1 card-max-full-screen-scroll" },
                   entitiesList,
                   noResultsMessage
                 )
@@ -677,26 +674,37 @@ router.get(
             ],
             footer: div(
               {
-                class:
-                  "d-flex flex-wrap gap-2",
+                class: "d-flex flex-wrap gap-2",
               },
               a(
-                { href: `/table/new/${on_done_redirect_str}` , class: "btn btn-primary" },
+                {
+                  href: `/table/new/${on_done_redirect_str}`,
+                  class: "btn btn-primary",
+                },
                 i({ class: "fas fa-table me-1" }),
                 req.__("Create table")
               ),
               a(
-                { href: `/viewedit/new${on_done_redirect_str}` , class: "btn btn-primary" },
+                {
+                  href: `/viewedit/new${on_done_redirect_str}`,
+                  class: "btn btn-primary",
+                },
                 i({ class: "fas fa-eye me-1" }),
                 req.__("Create view")
               ),
               a(
-                { href: `/pageedit/new${on_done_redirect_str}` , class: "btn btn-primary" },
+                {
+                  href: `/pageedit/new${on_done_redirect_str}`,
+                  class: "btn btn-primary",
+                },
                 i({ class: "fas fa-file me-1" }),
                 req.__("Create page")
               ),
               a(
-                { href: `/actions/new${on_done_redirect_str}` , class: "btn btn-primary" },
+                {
+                  href: `/actions/new${on_done_redirect_str}`,
+                  class: "btn btn-primary",
+                },
                 i({ class: "fas fa-play me-1" }),
                 req.__("Create trigger")
               )
