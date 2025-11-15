@@ -1442,35 +1442,70 @@ function enlarge_in_code($textarea, cm) {
   }
 }
 function card_max_full_screen($card_outer) {
-  const $card = $card_outer.find(".card-body");
-  const cardTop = $card_outer.offset().top;
-  const cardHeight = $card.outerHeight();
+  const $cardBody = $card_outer.find(".card-body");
+  const $scrollTarget = $card_outer
+    .find(".card-max-full-screen-scroll")
+    .first();
   const cardFooterHeight = $card_outer.find(".card-footer").outerHeight() || 0;
   const cardHeaderHeight = $card_outer.find(".card-header").outerHeight() || 0;
-  const vh = $(window).height();
-  const newCardHeight = vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
-  let is_changed = false;
-  if (newCardHeight < cardHeight) {
-    $card.css("max-height", newCardHeight + "px").css("overflow-y", "scroll");
-    is_changed = true;
-  }
-  $card.attr("tabindex", "-1");
-  $card.focus();
-  window.addEventListener(
-    "resize",
-    function () {
-      const vh = $(window).height();
-      const newCardHeight =
-        vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
-      if (is_changed || newCardHeight < cardHeight) {
-        $card
-          .css("max-height", newCardHeight + "px")
-          .css("overflow-y", "scroll");
-        is_changed = true;
+  const origBodyHeight = $cardBody.outerHeight();
+
+  const computeHeights = () => {
+    const vh = $(window).height();
+    const cardTop = $card_outer.offset().top;
+
+    let available = vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
+
+    if ($scrollTarget.length) {
+      $cardBody.css({
+        "max-height": "",
+        "overflow-y": "visible",
+      });
+
+      let innerAvailable = available;
+      if ($cardBody.length) {
+        const cs = window.getComputedStyle($cardBody[0]);
+        innerAvailable -=
+          (parseFloat(cs.paddingTop) || 0) +
+          (parseFloat(cs.paddingBottom) || 0);
       }
-    },
-    true
-  );
+
+      const $siblings = $scrollTarget.siblings(":visible");
+      const siblingsHeight = $siblings
+        .toArray()
+        .reduce((acc, el) => acc + $(el).outerHeight(true), 0);
+
+      const $container = $scrollTarget.parent();
+      let gapsTotal = 0;
+      if ($container.length) {
+        const cs = window.getComputedStyle($container[0]);
+        const rowGap = parseFloat(cs.rowGap || cs.gap || "0") || 0;
+        const childrenCount = $container.children(":visible").length;
+        gapsTotal = rowGap * Math.max(childrenCount - 1, 0);
+      }
+
+      const scrollMax = innerAvailable - siblingsHeight - gapsTotal;
+
+      if (scrollMax > 50) {
+        $scrollTarget.css({
+          "max-height": scrollMax + "px",
+          "overflow-y": "auto",
+        });
+      }
+
+      return;
+    }
+
+    $cardBody.css({
+      "max-height": available + "px",
+      "overflow-y": "auto",
+    });
+  };
+
+  computeHeights();
+
+  ($scrollTarget.length ? $scrollTarget : $cardBody).attr("tabindex", "-1");
+  window.addEventListener("resize", computeHeights, true);
 }
 
 function cancel_inline_edit(e, opts1) {
