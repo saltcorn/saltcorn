@@ -161,6 +161,30 @@ const ensureNotificationSubscriptions = async () => {
   }
 };
 
+const getMultiNodeListener = (client) => {
+  return async () => {
+    await client.query(`LISTEN ${db.getTenantSchema()}_events`);
+    client.on("notification", (msg) => {
+      if (msg.processId === client.processID)
+        return; // check self echo via connection pid
+      else {
+        try {
+          const payload = JSON.parse(msg.payload);
+          Object.entries(cluster.workers).forEach(([wpid, w]) => {
+            w.send(payload);
+          });
+          workerDispatchMsg(payload); //also master
+        } catch (e) {
+          getState().log(
+            2,
+            `Error while handling a multinode msg: ${e.message}`
+          );
+        }
+      }
+    });
+  };
+};
+
 // helpful https://gist.github.com/jpoehls/2232358
 /**
  * @param {object} opts
@@ -196,9 +220,19 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   await loadAllPlugins(true);
   // switch on sql logging - but it was initiated before???
   if (getState().getConfig("log_sql", false)) db.set_sql_logging();
+
+  // listen on node updates channel for this tenant
+  if (db.connectObj.multi_node)
+    await getMultiNodeListener(await db.getClient())();
+
   if (db.is_it_multi_tenant()) {
     const tenants = await getAllTenants();
-    await init_multi_tenant(loadAllPlugins, disableMigrate, tenants);
+    await init_multi_tenant(
+      loadAllPlugins,
+      disableMigrate,
+      tenants,
+      db.connectObj.multi_node ? getMultiNodeListener : null
+    );
   }
   if (useClusterAdaptor) setupPrimary();
 };
@@ -260,7 +294,10 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  * @returns {function}
  */
 const onMessageFromWorker =
-  (masterState, { port, host, watchReaper, disableScheduler, pid }) =>
+  (
+    masterState,
+    { port, host, watchReaper, disableScheduler, pid, nodesDispatchMsg }
+  ) =>
   (msg) => {
     //console.log("worker msg", typeof msg, msg);
     if (msg === "Start" && !masterState.started) {
@@ -287,6 +324,7 @@ const onMessageFromWorker =
         if (wpid !== pid || msg?.refresh_plugin_cfg) w.send(msg);
       });
       workerDispatchMsg(msg); //also master
+      if (nodesDispatchMsg) nodesDispatchMsg(msg);
       return true;
     }
   };
@@ -340,6 +378,28 @@ module.exports =
       listeningTo: new Set([]),
     };
 
+    let nodesDispatchMsg = null;
+    if (db.connectObj.multi_node) {
+      const client = await db.getClient();
+      nodesDispatchMsg = async ({ tenant, ...msg }) => {
+        if (tenant) {
+          db.runWithTenant(tenant, () => nodesDispatchMsg(msg));
+          return;
+        }
+        if (
+          msg.restart_tenant ||
+          msg.installPlugin ||
+          msg.removePlugin ||
+          msg.refresh_plugin_cfg ||
+          (msg.refresh && msg.refresh !== "ephemeral_config")
+        ) {
+          await client.query(
+            `NOTIFY ${db.getTenantSchema()}_events, '${JSON.stringify(msg)}'`
+          );
+        }
+      };
+    }
+
     const addWorker = (worker) => {
       worker.on(
         "message",
@@ -349,6 +409,7 @@ module.exports =
           watchReaper,
           disableScheduler,
           pid: worker.process.pid,
+          nodesDispatchMsg,
         })
       );
     };

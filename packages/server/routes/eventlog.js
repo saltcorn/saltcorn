@@ -222,7 +222,8 @@ router.get(
       //sub2_page: "Events to log",
       contents: {
         type: "card",
-        title: req.__("Custom Events")+
+        title:
+          req.__("Custom Events") +
           `<a href="javascript:ajax_modal('/admin/help/Custom%20events?')"><i class="fas fa-question-circle ms-1"></i></a>`,
         contents:
           mkTable(
