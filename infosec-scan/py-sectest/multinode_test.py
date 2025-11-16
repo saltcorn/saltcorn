@@ -166,6 +166,7 @@ class Test:
     assert self.sess2.status == 200
     assert 'New Sitename on Sess1' in self.sess2.content
 
+
   # TEST 4:
   # install plugin on sess1 and verify on sess2
   def test_install_plugin(self):
@@ -252,3 +253,56 @@ class Test:
     login(self.sess2)
     self.sess2.get('/')
     assert 'data-bs-theme="dark"' in self.sess2.content
+
+
+  # TEST 6:
+  # edit page groups on sess1 and verify on sess2
+  def test_edit_page_groups(self):
+    # 1. edit on sess1
+    logger.info("sess1 logging in")
+    login(self.sess1)
+
+    self.sess1.get('/page_groupedit/new')
+    self.sess1.postForm('/page_groupedit/edit-properties',
+      {'_csrf':  self.sess1.csrf(),
+      'name': 'page__group_from_sess1',
+      'description': '',
+      'min_role': '1',
+      }
+    )
+    assert self.sess1.status == 302
+
+    # 2. verify on sess2
+    logger.info("sess2 logging in")
+    login(self.sess2)
+    self.sess2.get('/page_groupedit/page__group_from_sess1')
+    assert self.sess2.status == 200
+    assert 'An error occurred' not in self.sess2.content
+
+
+  # TEST 7:
+  # edit triggers on sess1 and verify on sess2
+  def test_edit_triggers(self):
+    # 1. edit on sess1
+    logger.info("sess1 logging in")
+    login(self.sess1)
+
+    self.sess1.get('/actions/new')
+    self.sess1.postForm('/actions/new',
+      {'_csrf':  self.sess1.csrf(),
+      'name': 'trigger_from_sess1',
+      'when_trigger': 'Insert',
+      'table_id': '18',
+      'action': 'run_js_code',
+      'description': '',
+      'configuration__only_if': ''
+      }
+    )
+    assert self.sess1.status == 302
+    
+    # 2. verify on sess2
+    logger.info("sess2 logging in")
+    login(self.sess2)
+    self.sess2.get('/actions/configure/trigger_from_sess1')
+    assert self.sess2.status == 200
+    assert 'An error occurred' not in self.sess2.content
