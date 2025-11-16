@@ -441,6 +441,10 @@ module.exports =
               w.send(msg);
             });
             workerDispatchMsg(msg); //also master
+            if (nodesDispatchMsg && useNCpus === 1)
+              nodesDispatchMsg(msg).catch((e) => {
+                console.log("Error sending multinode message", e.message);
+              });
           };
 
           if (masterState.listeningTo.size < useNCpus)
@@ -495,6 +499,10 @@ module.exports =
       } else {
         getState().sendMessageToWorkers = (msg) => {
           workerDispatchMsg(msg); //also master
+          if (nodesDispatchMsg)
+            nodesDispatchMsg(msg).catch((e) => {
+              console.log("Error sending multinode message", e.message);
+            });
         };
         await nonGreenlockWorkerSetup(appargs, port, host);
         runScheduler({
