@@ -814,6 +814,21 @@ class User {
         : date.toISOString();
     await this.update({ last_mobile_login: dateVal as unknown as Date });
   }
+
+  /**
+   * Return the light/dark mode (`"light"`, `"dark"` or `"auto"`) of the given user, 
+   * or public if no user is given.
+   * @param user - User object 
+   * 
+   * @example
+   * ```
+   * User.lightDarkMode(user)
+   * ```
+   */
+  static lightDarkMode(user?: User): "dark" | "light" | "auto" {
+    const { getState } = require("../db/state");
+    return getState().getLightDarkMode(user);
+  }
 }
 
 type UserCfg = PartialSome<User, "email" | "password">;
