@@ -471,8 +471,6 @@ const run = async (
   await eachView(
     layout,
     async (segment, inLazy) => {
-      console.log("view segment", segment, inLazy);
-      
       const view = await View.findOne({ name: segment.view });
       if (!view)
         throw new InvalidConfiguration(
@@ -520,8 +518,6 @@ const run = async (
               : await renderServerSide(view.name, state1)
         );
       }
-      console.log("final contents", segment);
-      
     },
     state
   );
