@@ -661,15 +661,17 @@ const configuration_workflow = (req) =>
             default: 20,
             attributes: { min: 0 },
           });
-          formfields.push({
-            name: "_max_pages",
-            label: req.__("Maximum pages"),
-            type: "Integer",
-          });
+          
           formfields.push({
             name: "_hide_pagination",
             label: req.__("Hide pagination"),
             type: "Bool",
+          });
+          formfields.push({
+            name: "_full_page_count",
+            label: req.__("Full page count"),
+            type: "Bool",
+            default: true,
           });
           formfields.push({
             name: "_row_click_type",
@@ -1706,7 +1708,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _max_pages _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout",
+      "_rows_per_page _full_page_count _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout",
       "default_state"
     );
   }
@@ -1743,7 +1745,7 @@ module.exports = {
       exclusion_relation,
       exclusion_where,
       _rows_per_page,
-      _max_pages,
+      _full_page_count,
       _group_by,
       _hide_pagination,
       _row_click_url_formula,
