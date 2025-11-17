@@ -1354,7 +1354,9 @@ function initialize_page() {
     });
 
   if ($.fn.historyTabs && $.fn.tab)
-    $('a[data-bs-toggle="tab"].deeplink').historyTabs();
+    setTimeout(() => {
+      $('a[data-bs-toggle="tab"].deeplink').historyTabs();
+    });
   init_bs5_dropdowns();
 
   // Initialize Sliders - https://stackoverflow.com/a/31083391
@@ -1416,7 +1418,6 @@ function initialize_page() {
       }
     });
   };
-
   $(".lazy-accoordion").on("show.bs.collapse", lazyAccHandler);
   $(".lazy-tabs").on("show.bs.tab", function (e) {
     const link = $(e.target);
