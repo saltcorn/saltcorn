@@ -123,7 +123,7 @@ const eachView = async (layout: Layout, f: any, state?: any): Promise<void> => {
         return;
       }
       if (
-        segment.tabsStyle === "Accordion" &&
+        (segment.tabsStyle === "Accordion" || segment.tabsStyle === "Tabs") &&
         segment.lazyLoadViews &&
         Array.isArray(segment.contents)
       ) {
