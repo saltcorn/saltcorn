@@ -198,7 +198,7 @@ const create_standard_menu = async () => {
           target_blank: false,
           disable_on_mobile: false,
         },
-         {
+        {
           href: "",
           icon: "fas fa-list",
           text: "All entities",
