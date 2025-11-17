@@ -1391,7 +1391,7 @@ function initialize_page() {
       .removeClass("show");
   }, 5000);
 
-  $(".lazy-accoordion").on("show.bs.collapse", function (e) {
+  const lazyAccHandler = function (e) {
     const $es = $(e.target).find("[data-sc-view-source]");
     $es.each(function () {
       const $e = $(this);
@@ -1415,6 +1415,13 @@ function initialize_page() {
         });
       }
     });
+  };
+
+  $(".lazy-accoordion").on("show.bs.collapse", lazyAccHandler);
+  $(".lazy-tabs").on("show.bs.tab", function (e) {
+    const link = $(e.target);
+    const container = $(link.attr("href"));
+    lazyAccHandler({ target: container });
   });
 
   $('input[type="file"].file-has-existing').on("change", (e) => {
