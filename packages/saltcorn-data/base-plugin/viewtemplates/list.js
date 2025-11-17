@@ -673,7 +673,14 @@ const configuration_workflow = (req) =>
             type: "String",
             required: true,
             attributes: {
-              options: ["Nothing", "Link", "Link new tab", "Popup", "Action"],
+              options: [
+                "Nothing",
+                "Link",
+                "Link new tab",
+                "Popup",
+                "Anchor link",
+                "Action",
+              ],
             },
           });
           formfields.push({
@@ -695,7 +702,9 @@ const configuration_workflow = (req) =>
               req.__("Example: <code>`/view/TheOtherView?id=${id}`</code>"),
             type: "String",
             class: "validate-expression",
-            showIf: { _row_click_type: ["Link", "Link new tab", "Popup"] },
+            showIf: {
+              _row_click_type: ["Link", "Link new tab", "Popup", "Anchor link"],
+            },
           });
           formfields.push({
             name: "_header_filters",
@@ -1227,7 +1236,10 @@ const run = async (
     else if (default_state?._row_click_type === "Popup")
       page_opts.onRowSelect = (row) =>
         `ajax_modal('${fUrl(row, extraOpts.req.user)}')`;
-    else
+    else if (default_state?._row_click_type === "Anchor link") {
+      page_opts.onRowSelect = (row) => fUrl(row, extraOpts.req.user);
+      page_opts.rowAnchorLink = true;
+    } else
       page_opts.onRowSelect = (row) =>
         `location.href='${fUrl(row, extraOpts.req.user)}'`;
   } else if (default_state?._row_click_type === "Action") {
