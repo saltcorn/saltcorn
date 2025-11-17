@@ -265,9 +265,9 @@ export class CapacitorHelper {
       buildType: this.buildType,
       appVersion: this.appVersion,
       serverDomain: extractDomain(this.serverURL),
-      keyStoreFile: this.keyStoreFile,
-      keyStoreAlias: this.keyStoreAlias,
-      keyStorePassword: this.keyStorePassword,
+      keystoreFile: this.keyStoreFile,
+      keystoreAlias: this.keyStoreAlias,
+      keystorePassword: this.keyStorePassword,
       permissions: androidPermissions(),
       features: androidFeatures(),
     };
