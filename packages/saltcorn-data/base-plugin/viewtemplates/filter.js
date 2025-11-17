@@ -384,50 +384,6 @@ const run = async (
       );
       segment.field = field;
     },
-    view: async (segment) => {
-      const view = await View.findOne({ name: segment.view });
-      if (!view)
-        throw new InvalidConfiguration(
-          `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
-        );
-      const extra_state = segment.extra_state_fml
-        ? eval_expression(
-            segment.extra_state_fml,
-            evalCtx,
-            extra.req.user,
-            `Extra state formula for view ${view.name}`
-          )
-        : {};
-      if (segment.state === "local") {
-        const state1 = { ...extra_state };
-        const qs = stateToQueryString(state1, true);
-
-        segment.contents = div(
-          {
-            class: "d-inline",
-            "data-sc-embed-viewname": view.name,
-            "data-sc-local-state": `/view/${view.name}${qs}`,
-          },
-          view.renderLocally()
-            ? await view.run(state1, extra)
-            : await renderServerSide(view.name, state1)
-        );
-      } else {
-        const state1 = { ...state, ...extra_state };
-        const qs = stateToQueryString(state1, true);
-
-        segment.contents = div(
-          {
-            class: "d-inline",
-            "data-sc-embed-viewname": view.name,
-            "data-sc-view-source": `/view/${view.name}${qs}`,
-          },
-          view.renderLocally()
-            ? await view.run(state1, extra)
-            : await renderServerSide(view.name, state1)
-        );
-      }
-    },
     link: (segment) => {
       //console.log("link:", segment, state);
       if (segment.transfer_state) {
@@ -512,6 +468,59 @@ const run = async (
       }
     },
   });
+  await eachView(
+    layout,
+    async (segment, inLazy) => {
+      const view = await View.findOne({ name: segment.view });
+      if (!view)
+        throw new InvalidConfiguration(
+          `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
+        );
+      const extra_state = segment.extra_state_fml
+        ? eval_expression(
+            segment.extra_state_fml,
+            evalCtx,
+            extra.req.user,
+            `Extra state formula for view ${view.name}`
+          )
+        : {};
+      if (segment.state === "local") {
+        const state1 = { ...extra_state };
+        const qs = stateToQueryString(state1, true);
+
+        segment.contents = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-local-state": `/view/${view.name}${qs}`,
+            "data-sc-view-source": `/view/${view.name}${qs}`,
+          },
+          inLazy
+            ? ""
+            : view.renderLocally()
+              ? await view.run(state1, extra)
+              : await renderServerSide(view.name, state1)
+        );
+      } else {
+        const state1 = { ...state, ...extra_state };
+        const qs = stateToQueryString(state1, true);
+
+        segment.contents = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-view-source": `/view/${view.name}${qs}`,
+          },
+          inLazy
+            ? ""
+            : view.renderLocally()
+              ? await view.run(state1, extra)
+              : await renderServerSide(view.name, state1)
+        );
+      }
+    },
+    state
+  );
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
     field(segment) {

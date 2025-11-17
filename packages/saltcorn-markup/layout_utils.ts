@@ -902,6 +902,7 @@ const renderTabs = (
             id: `${rndid}`,
             class: [
               "nav",
+              lazyLoadViews && "lazy-tabs",
               tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills",
               tabClass,
               hints?.tabClass && tabsStyle === "Tabs" && hints?.tabClass,

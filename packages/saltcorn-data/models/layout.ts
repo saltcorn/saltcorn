@@ -122,11 +122,7 @@ const eachView = async (layout: Layout, f: any, state?: any): Promise<void> => {
         }
         return;
       }
-      if (
-        segment.tabsStyle === "Accordion" &&
-        segment.lazyLoadViews &&
-        Array.isArray(segment.contents)
-      ) {
+      if (segment.lazyLoadViews && Array.isArray(segment.contents)) {
         const curIx = 0;
         for (let index = 0; index < segment.contents.length; index++) {
           const seg = segment.contents[index];

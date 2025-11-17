@@ -1555,6 +1555,7 @@ function ensure_css_loaded(src) {
           // Shows the first element if there are no query parameters.
           $(element).tab("show");
         } else if ($(this).attr("href") === window.location.hash) {
+          $(element).trigger("show.bs.tab")
           $(element).tab("show");
         }
       });
