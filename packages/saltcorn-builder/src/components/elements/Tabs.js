@@ -359,6 +359,22 @@ const TabsSettings = () => {
                     </td>
                   </tr>
                 ) : null}
+                <tr>
+                  <td colSpan="2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        name="block"
+                        type="checkbox"
+                        checked={lazyLoadViews}
+                        onChange={setAProp("lazyLoadViews", { checked: true })}
+                      />
+                      <label className="form-check-label">
+                        Lazy load views
+                      </label>
+                    </div>
+                  </td>
+                </tr>
               </Fragment>
             )}
             {tabsStyle === "Accordion" ? (
