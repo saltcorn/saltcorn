@@ -1880,10 +1880,12 @@ module.exports = {
 
       const rowCount = default_state?._hide_pagination
         ? undefined
-        : await table.countRows(whereForCount, {
-            forPublic: !req.user,
-            forUser: req.user,
-          });
+        : q.limit && rows.length < q.limit
+          ? rows.length
+          : await table.countRows(whereForCount, {
+              forPublic: !req.user,
+              forUser: req.user,
+            });
       return { rows, rowCount };
     },
     async getRowQuery(id) {
