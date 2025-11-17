@@ -578,7 +578,7 @@ class Field implements AbstractField {
     const { rows } = await db.query(
       `select distinct "${db.sqlsanitize(this.name)}" from ${
         this.table?.sql_name
-      } ${whereS} order by "${db.sqlsanitize(this.name)}"`,
+      } ${whereS}order by "${db.sqlsanitize(this.name)}" limit 500`,
       values
     );
     const dbOpts = rows.map((r: Row) => ({
