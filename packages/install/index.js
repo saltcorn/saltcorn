@@ -623,6 +623,7 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
       session_secret,
       jwt_secret,
       multi_tenant: false,
+      multi_node: false,
     },
     user,
     dryRun

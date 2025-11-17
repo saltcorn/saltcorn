@@ -1530,7 +1530,8 @@ const set_tenant_base_url = (tenant_subdomain: string, value?: string) => {
 const init_multi_tenant = async (
   plugin_loader: (s: string) => Promise<void>,
   disableMigrate: boolean,
-  tenantList: string[]
+  tenantList: string[],
+  setupMultiNodeListener: Function
 ): Promise<void> => {
   // for each domain
   if (singleton?.configs?.base_url?.value) {
@@ -1549,6 +1550,12 @@ const init_multi_tenant = async (
       await db.runWithTenant(domain, plugin_loader);
       // set base_url
       set_tenant_base_url(domain, tenants[domain].configs.base_url?.value);
+      if (setupMultiNodeListener) {
+        // listen on node updates channel for this tenant
+        await db.runWithTenant(domain, async () =>
+          setupMultiNodeListener(await db.getClient())
+        );
+      }
     } catch (err: any) {
       console.error(`init_multi_tenant error in domain ${domain}: `, err.stack);
     }
