@@ -40,7 +40,7 @@ function xattr_get(fp: string, attrName: string): Promise<string> {
 }
 
 const dirCache: Record<string, File[] | null> = {};
-let enableDirCache = false;
+const enableDirCache: Record<string, boolean> = {};
 
 /**
  * File Descriptor class
@@ -202,11 +202,12 @@ class File {
    * @returns
    */
   static async allDirectories(ignoreCache?: boolean): Promise<Array<File>> {
+    const tenant = db.getTenantSchema();
     if (!ignoreCache) {
       const cache = File.getDirCache();
       if (cache) {
         return cache;
-      } else if (enableDirCache) {
+      } else if (enableDirCache[tenant]) {
         await File.reallyBuildDirCache();
         const cache = File.getDirCache();
         if (cache) {
@@ -214,7 +215,6 @@ class File {
         }
       }
     }
-    const tenant = db.getTenantSchema();
     const root = path.join(db.connectObj.file_store, tenant);
     const allPaths: string[] = [];
     const iterFolder = async (folder: string) => {
@@ -235,7 +235,7 @@ class File {
   }
 
   static async buildDirCache() {
-    enableDirCache = true;
+    enableDirCache[db.getTenantSchema()] = true;
   }
   static async reallyBuildDirCache() {
     dirCache[db.getTenantSchema()] = await File.allDirectories();
@@ -246,7 +246,7 @@ class File {
   }
 
   static destroyDirCache() {
-    enableDirCache = false;
+    enableDirCache[db.getTenantSchema()] = false;
     dirCache[db.getTenantSchema()] = null;
   }
 
