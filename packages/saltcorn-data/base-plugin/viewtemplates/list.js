@@ -594,6 +594,7 @@ const configuration_workflow = (req) =>
             name: "_order_field",
             label: req.__("Default order by"),
             type: "String",
+            default: table.pk_name, 
             attributes: {
               asideNext: true,
               options: [
@@ -1834,9 +1835,8 @@ module.exports = {
         (default_state && default_state._rows_per_page) || 20;
       if (!q.limit) q.limit = rows_per_page;
       const sort_from_state = !!q.orderBy;
-      if (!q.orderBy)
-        q.orderBy =
-          (default_state && default_state._order_field) || table.pk_name;
+      if (!q.orderBy && default_state?._order_field)
+        q.orderBy = default_state?._order_field;
       if (!q.orderDesc && !sort_from_state)
         q.orderDesc = default_state && default_state._descending;
 
