@@ -542,7 +542,6 @@ module.exports = {
         } else if (body) postBody = body;
         else postBody = JSON.stringify(row);
         fetchOpts.body = postBody;
-        console.log({postBody});
         
       }
       if (authorization)

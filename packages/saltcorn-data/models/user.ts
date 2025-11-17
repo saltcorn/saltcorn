@@ -394,7 +394,12 @@ class User {
         `select token from ${schema}_sc_api_tokens where user_id = $1 order by created_at desc, id desc limit 1`,
         [newUser.id]
       );
-      if ((!newUser.api_token || newUser.api_token === null) && tokq && tokq.rows && tokq.rows[0]) {
+      if (
+        (!newUser.api_token || newUser.api_token === null) &&
+        tokq &&
+        tokq.rows &&
+        tokq.rows[0]
+      ) {
         newUser.api_token = tokq.rows[0].token;
       }
     } catch (e) {
@@ -520,10 +525,9 @@ class User {
   async removeAPIToken(): Promise<null> {
     // remove all tokens for this user and clear users.api_token
     const schema = db.getTenantSchemaPrefix();
-    await db.query(
-      `delete from ${schema}_sc_api_tokens where user_id = $1`,
-      [this.id]
-    );
+    await db.query(`delete from ${schema}_sc_api_tokens where user_id = $1`, [
+      this.id,
+    ]);
     const api_token = null;
     await this.update({ api_token });
     this.api_token = api_token;
@@ -533,13 +537,19 @@ class User {
   /**
    * List API tokens for this user
    */
-  async listApiTokens(): Promise<Array<{ id: number; token: string; created_at: Date | string }>> {
+  async listApiTokens(): Promise<
+    Array<{ id: number; token: string; created_at: Date | string }>
+  > {
     const schema = db.getTenantSchemaPrefix();
     const q = await db.query(
       `select id, token, created_at from ${schema}_sc_api_tokens where user_id = $1 order by created_at desc, id desc`,
       [this.id]
     );
-    return q.rows as Array<{ id: number; token: string; created_at: Date | string }>;
+    return q.rows as Array<{
+      id: number;
+      token: string;
+      created_at: Date | string;
+    }>;
   }
 
   /**
@@ -579,7 +589,7 @@ class User {
       `select u.* from ${schema}_sc_api_tokens t join ${schema}users u on u.id = t.user_id where t.token = $1 limit 1`,
       [token]
     );
-    const u = q.rows && q.rows[0];  
+    const u = q.rows && q.rows[0];
     if (u) return new User(u as any);
     const q2 = await db.selectMaybeOne("users", { api_token: token });
     return q2 ? new User(q2 as any) : undefined;
@@ -813,6 +823,21 @@ class User {
         ? date.valueOf()
         : date.toISOString();
     await this.update({ last_mobile_login: dateVal as unknown as Date });
+  }
+
+  /**
+   * Return the light/dark mode (`"light"`, `"dark"` or `"auto"`) of the given user, 
+   * or public if no user is given.
+   * @param user - User object 
+   * 
+   * @example
+   * ```
+   * User.lightDarkMode(user)
+   * ```
+   */
+  static lightDarkMode(user?: User): "dark" | "light" | "auto" {
+    const { getState } = require("../db/state");
+    return getState().getLightDarkMode(user);
   }
 }
 

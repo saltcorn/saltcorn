@@ -1703,5 +1703,13 @@
 	"API token revoked": "API token revoked",
 	"Dropdown header filters": "Dropdown header filters",
 	"Show if": "Show if",
-	"Optional expression. Show only if true. In scope: <code>user</code>, <code>url</code>, <code>query</code>": "Optional expression. Show only if true. In scope: <code>user</code>, <code>url</code>, <code>query</code>"
+	"Optional expression. Show only if true. In scope: <code>user</code>, <code>url</code>, <code>query</code>": "Optional expression. Show only if true. In scope: <code>user</code>, <code>url</code>, <code>query</code>",
+	"Search entities by name or type...": "Search entities by name or type...",
+	"Tags:": "Tags:",
+	"Types:": "Types:",
+	"Access | Read/Write": "Access | Read/Write",
+	"No entities found": "No entities found",
+	"Try adjusting your search or filter options": "Try adjusting your search or filter options",
+	"Entities": "Entities",
+	"Sessions": "Sessions"
 }
