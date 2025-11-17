@@ -241,6 +241,13 @@ const mkTable = (
         rowColor = undefined;
       }
     }
+    const cellWrapper = opts.rowAnchorLink
+      ? (val: any) => {
+          const href = opts.onRowSelect(v);
+          if (!href) return val;
+          return a({ class: "anchor-row-link", href }, val || "&nbsp;");
+        }
+      : (val: any) => val;
     return tr(
       {
         ...(v[pk_name] ? { "data-row-id": v[pk_name] } : {}),
@@ -256,7 +263,9 @@ const mkTable = (
             },
             ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
           },
-          typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
+          cellWrapper(
+            typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
+          )
         )
       )
     );
@@ -393,7 +402,7 @@ only screen and (max-width: ${opts.collapse_breakpoint_px || 760}px) {
  */
 const mkClickHandler = (opts: any, v: any): any => {
   var attrs: any = {};
-  if (opts.onRowSelect)
+  if (opts.onRowSelect && !opts.rowAnchorLink)
     attrs.onclick =
       typeof opts.onRowSelect === "function"
         ? opts.onRowSelect(v)

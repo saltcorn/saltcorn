@@ -457,6 +457,14 @@ table.table-inner-grid td {
   text-decoration: underline;
 }
 
+a.anchor-row-link {
+  text-decoration: none;
+  color: inherit !important;
+  display: inline-block;
+  height: 100%;
+  width: 100%;
+}
+
 @supports (zoom: 2) {
   input[type="radio"].large,
   input[type="checkbox"].large {
