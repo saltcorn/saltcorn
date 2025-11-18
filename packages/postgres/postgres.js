@@ -166,9 +166,14 @@ WHERE  c.oid = '"${opts?.schema || getTenantSchema()}"."${sqlsanitize(tbl)}"'::r
     }
   }
 
-  const sql = `SELECT COUNT(*) FROM "${opts?.schema || getTenantSchema()}"."${sqlsanitize(
+  const core_sql = `FROM "${opts?.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where}`;
+  //https://pganalyze.com/blog/5mins-postgres-limited-count
+  const sql = opts?.limit
+    ? `SELECT count(*) AS count FROM (
+  SELECT 1 ${core_sql} limit ${+opts?.limit}) limited_count`
+    : `SELECT COUNT(*) ${core_sql}`;
   sql_log(sql, values);
   const tq = await getMyClient(opts).query(sql, values);
 
