@@ -662,10 +662,18 @@ const configuration_workflow = (req) =>
             default: 20,
             attributes: { min: 0 },
           });
+
           formfields.push({
             name: "_hide_pagination",
             label: req.__("Hide pagination"),
             type: "Bool",
+          });
+          formfields.push({
+            name: "_full_page_count",
+            label: req.__("Full page count"),
+            type: "Bool",
+            sublabel: req.__("Disable for to increase performance for large tables"),
+            default: true,
           });
           formfields.push({
             name: "_row_click_type",
@@ -1269,6 +1277,7 @@ const run = async (
       page_opts.pagination = {
         current_page,
         pages: Math.ceil(nrows / rows_per_page),
+        noMaxPage: default_state?._full_page_count===false,
         get_page_link: (n) =>
           `gopage(${n}, ${rows_per_page}, '${statehash}', {}, this)`,
       };
@@ -1702,7 +1711,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout",
+      "_rows_per_page _full_page_count _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout",
       "default_state"
     );
   }
@@ -1739,6 +1748,7 @@ module.exports = {
       exclusion_relation,
       exclusion_where,
       _rows_per_page,
+      _full_page_count,
       _group_by,
       _hide_pagination,
       _row_click_url_formula,
@@ -1881,6 +1891,7 @@ module.exports = {
           mergeIntoWhere(whereForCount, mergeObj);
         }
       }
+
       let rows = await table.getJoinedRows({
         where,
         joinFields,
@@ -1897,6 +1908,9 @@ module.exports = {
           : await table.countRows(whereForCount, {
               forPublic: !req.user,
               forUser: req.user,
+              ...(default_state?._full_page_count === false
+                ? { limit: (q.offset || 0) + 4 * (q.limit || 100)+1 }
+                : {}),
             });
       return { rows, rowCount };
     },

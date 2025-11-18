@@ -156,6 +156,25 @@ describe("Table create basic tests", () => {
     rows = await table.getRows();
     expect(rows.length).toBe(0);
   });
+  it("should count limited rows", async () => {
+    const table = Table.findOne({ name: "mytable1" });
+    assertIsSet(table);
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 2 });
+    await table.insertRow({ height1: 3 });
+    await table.insertRow({ height1: 4 });
+    await table.insertRow({ height1: 5 });
+    await table.insertRow({ height1: 6 });
+    expect(await table.countRows({})).toBe(9);
+    expect(await table.countRows({ height1: 1 })).toBe(4);
+    expect(await table.countRows({}, { limit: 5 })).toBe(5);
+    expect(await table.countRows({}, { limit: 500 })).toBe(9);
+    expect(await table.countRows({ height1: 1 }, { limit: 3 })).toBe(3);
+    expect(await table.countRows({ height1: 1 }, { limit: 100 })).toBe(4);
+  });
   it("should delete", async () => {
     const table = Table.findOne({ name: "mytable1" });
     assertIsSet(table);
