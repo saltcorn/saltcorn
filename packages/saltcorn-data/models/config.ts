@@ -1774,10 +1774,12 @@ const get_latest_npm_version = async (
   const { isStale } = (await import("../utils")).default;
   const fetch = require("node-fetch");
   const stored = getState().getConfig("latest_npm_version", {});
+  const airgap = getState().getConfig("airgap", false);
 
-  if (stored[pkg] && !isStale(stored[pkg].time, 6)) {
+  if (stored[pkg] && (!isStale(stored[pkg].time, 6) || airgap)) {
     return stored[pkg].version;
   }
+  if (airgap) return "";
 
   const guess = stored[pkg]?.version || ""; //default return
   try {
