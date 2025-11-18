@@ -162,10 +162,10 @@ export const doCount = async (
 ) => {
   const { where, values } = mkWhere(whereObj, true);
   const sql = limit
-    ? `SELECT count(*) AS count FROM (
+    ? `SELECT COUNT(*) FROM (
   SELECT 1 FROM "${sqlsanitize(tbl)}" ${where} limit ${+limit}) limited_count`
     : `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
-  const tq = await queryFunc(sql, values);
+  const tq = await queryFunc(sql, values);  
   return parseInt(tq.rows[0]["COUNT(*)"]);
 };
 
