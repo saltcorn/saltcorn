@@ -671,6 +671,7 @@ const configuration_workflow = (req) =>
             name: "_full_page_count",
             label: req.__("Full page count"),
             type: "Bool",
+            sublabel: req.__("Disable for to increase performance for large tables"),
             default: true,
           });
           formfields.push({

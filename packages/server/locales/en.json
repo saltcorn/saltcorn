@@ -1712,5 +1712,6 @@
 	"Try adjusting your search or filter options": "Try adjusting your search or filter options",
 	"Entities": "Entities",
 	"Sessions": "Sessions",
-	"Full page count": "Full page count"
+	"Full page count": "Full page count",
+	"Disable for to increase performance for large tables": "Disable for to increase performance for large tables"
 }
