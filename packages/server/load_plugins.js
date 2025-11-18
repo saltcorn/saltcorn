@@ -30,8 +30,10 @@ const isFixedPlugin = (plugin) =>
 const getEngineInfos = async (plugin, forceFetch) => {
   const rootState = getRootState();
   const cached = rootState.getConfig("engines_cache", {}) || {};
-  if (cached[plugin.location] && !forceFetch) {
-    return cached[plugin.location];
+  const airgap = rootState.getConfig("airgap", false);
+
+  if (airgap || (cached[plugin.location] && !forceFetch)) {
+    return cached[plugin.location] || {};
   } else {
     getState().log(5, `Fetching versions for '${plugin.location}'`);
     const pkgInfo = await npmFetch.json(
