@@ -641,6 +641,13 @@ const configTypes: ConfigTypes = {
     blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
     excludeFromMobile: true,
   },
+  airgap: {
+    type: "Bool",
+    label: "Air gap deployment",
+    default: true,
+    blurb:
+      "Disable updates from NPM and Saltcorn module store for isolated network environments",
+  },
   timeout: {
     type: "Integer",
     label: "HTTP timeout (s)",
@@ -960,7 +967,7 @@ const configTypes: ConfigTypes = {
     label: "Module Store endpoint",
     default: "https://store.saltcorn.com/api/extensions",
     //root_only: true,
-    blurb: "The endpoint of plugins store.",
+    blurb: "The endpoint of module store.",
     excludeFromMobile: true,
   },
   packs_store_endpoint: {

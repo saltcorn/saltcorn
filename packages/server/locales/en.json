@@ -1711,5 +1711,10 @@
 	"No entities found": "No entities found",
 	"Try adjusting your search or filter options": "Try adjusting your search or filter options",
 	"Entities": "Entities",
-	"Sessions": "Sessions"
+	"Sessions": "Sessions",
+	"Updates and module store": "Updates and module store",
+	"Air gap deployment": "Air gap deployment",
+	"Disable updates from NPM and Saltcorn module store for isolated network environments": "Disable updates from NPM and Saltcorn module store for isolated network environments",
+	"The endpoint of module store.": "The endpoint of module store.",
+	"Maintenance mode": "Maintenance mode"
 }
