@@ -644,7 +644,6 @@ const configTypes: ConfigTypes = {
   airgap: {
     type: "Bool",
     label: "Air gap deployment",
-    default: true,
     blurb:
       "Disable updates from NPM and Saltcorn module store for isolated network environments",
   },
@@ -1822,10 +1821,12 @@ const get_saltcorn_npm_versions = async (
   const pkg = "@saltcorn/cli";
   const fetch = require("node-fetch");
   const stored = getState().getConfig("saltcorn_npm_versions", {});
+  const airgap = getState().getConfig("airgap", false);
 
-  if (stored?.time && !isStale(stored.time, 6)) {
+  if (stored?.time && (!isStale(stored.time, 6) || airgap)) {
     return stored?.versions;
   }
+  if (airgap) return [];
 
   const guess: string[] = stored?.versions || []; //default return
   try {
