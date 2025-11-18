@@ -1891,8 +1891,6 @@ module.exports = {
         }
       }
 
-      console.log({ q, stateHash });
-
       let rows = await table.getJoinedRows({
         where,
         joinFields,
