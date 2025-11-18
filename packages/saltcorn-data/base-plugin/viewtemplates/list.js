@@ -661,7 +661,7 @@ const configuration_workflow = (req) =>
             default: 20,
             attributes: { min: 0 },
           });
-          
+
           formfields.push({
             name: "_hide_pagination",
             label: req.__("Hide pagination"),
@@ -1275,6 +1275,7 @@ const run = async (
       page_opts.pagination = {
         current_page,
         pages: Math.ceil(nrows / rows_per_page),
+        noMaxPage: default_state?._full_page_count===false,
         get_page_link: (n) =>
           `gopage(${n}, ${rows_per_page}, '${statehash}', {}, this)`,
       };
@@ -1889,6 +1890,9 @@ module.exports = {
           mergeIntoWhere(whereForCount, mergeObj);
         }
       }
+
+      console.log({ q, stateHash });
+
       let rows = await table.getJoinedRows({
         where,
         joinFields,
@@ -1905,6 +1909,9 @@ module.exports = {
           : await table.countRows(whereForCount, {
               forPublic: !req.user,
               forUser: req.user,
+              ...(default_state?._full_page_count === false
+                ? { limit: (q.offset || 0) + 4 * (q.limit || 100)+1 }
+                : {}),
             });
       return { rows, rowCount };
     },

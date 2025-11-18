@@ -163,6 +163,7 @@ namespace TableExports {
       current_page: number;
       pages: number;
       get_page_link: Function;
+      noMaxPage?: boolean;
     };
     noHeader?: boolean;
     hover?: boolean;
