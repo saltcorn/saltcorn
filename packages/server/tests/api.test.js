@@ -821,7 +821,7 @@ describe("test share handler", () => {
       (r) =>
         r.title === "share_as_admin" &&
         r.user ===
-          '{"email":"admin@foo.com","id":1,"role_id":1,"language":null,"tenant":"public","attributes":{}}'
+          '{"email":"admin@foo.com","id":1,"role_id":1,"language":null,"tenant":"public","lightDarkMode":"light","attributes":{}}'
     );
     expect(row).toBeDefined();
   });
