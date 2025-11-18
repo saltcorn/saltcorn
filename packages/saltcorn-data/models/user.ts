@@ -263,13 +263,17 @@ class User {
    */
   get session_object(): any {
     const { getState } = require("../db/state");
+    const state = getState();
     const so: any = {
       email: this.email,
       id: this.id,
       role_id: this.role_id,
       language: this.language,
       tenant: db.getTenantSchema(),
-      attributes: { ...getState().plugins_cfg_context },
+      lightDarkMode: state.getLightDarkMode(this),
+      attributes: {
+        ...state.plugins_cfg_context,
+      },
     };
     Object.assign(so, safeUserFields(this));
     const userLayout = this._attributes?.layout;
@@ -826,10 +830,10 @@ class User {
   }
 
   /**
-   * Return the light/dark mode (`"light"`, `"dark"` or `"auto"`) of the given user, 
+   * Return the light/dark mode (`"light"`, `"dark"` or `"auto"`) of the given user,
    * or public if no user is given.
-   * @param user - User object 
-   * 
+   * @param user - User object
+   *
    * @example
    * ```
    * User.lightDarkMode(user)
