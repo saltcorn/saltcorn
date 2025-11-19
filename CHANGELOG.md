@@ -1,8 +1,10 @@
 # Notable changes
 
-## 1.4.1 - In development
+## 1.4.1 - Released 19 November 2025
 
 * Dropdown option for List header filters - mutually exclusive with togglable header filters. Filters are activated with a hidden (revealed on hover) dropdown menu.
+
+* Bug fixes backported from 1.5.0 branch
 
 ## 1.4.0 - Released 24 October 2025
 
