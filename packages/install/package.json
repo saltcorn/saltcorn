@@ -10,7 +10,7 @@
     "dateformat": "^4.6.3",
     "env-paths": "^2.2.1",
     "inquirer": "^12.3.3",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^3.14.2",
     "node-fetch": "2.6.9",
     "sudo": "^1.0.3",
     "systeminformation": "^5.25.11",
