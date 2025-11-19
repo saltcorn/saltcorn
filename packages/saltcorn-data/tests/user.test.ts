@@ -20,7 +20,7 @@ beforeAll(async () => {
 
 afterAll(db.close);
 
-describe("User", () => {
+describe("User model", () => {
   it("should create", async () => {
     await User.create({ email: "foo@bar.com", password: "YEgege46gew" });
     const u = await User.findOne({ email: "foo@bar.com" });
@@ -60,6 +60,23 @@ describe("User", () => {
       password: "YEgege46gew",
     });
     expect(u00).toBe(false);
+    const uci = await User.authenticate({
+      email: "FOO@bar.com",
+      password: "YEgege46gew",
+    });
+    assertIsSet(uci);
+
+    expect(uci.email).toBe("foo@bar.com");
+    const uci0 = await User.authenticate({
+      email: "OO@bar.co",
+      password: "YEgege46gew",
+    });
+    expect(uci0).toBe(false);
+    const uci1 = await User.authenticate({
+      email: "oo@bar.co",
+      password: "YEgege46gew",
+    });
+    expect(uci1).toBe(false);
   });
   it("should survive nonexistant fields", async () => {
     const u = await User.authenticate({
@@ -268,9 +285,9 @@ describe("User fields", () => {
     expect(u.email).toBe("foo2@bar.com");
     expect(u.role_id).toBe(80);
     expect(u.height).toBe(183);
-    expect(u.upper1).toBe("FOO2@BAR.COM")
+    expect(u.upper1).toBe("FOO2@BAR.COM");
   });
-   it("should add stored calculated fields", async () => {
+  it("should add stored calculated fields", async () => {
     const table = User.table;
     assertIsSet(table);
     await Field.create({
@@ -294,7 +311,7 @@ describe("User fields", () => {
     expect(u.email).toBe("foo3@bar.com");
     expect(u.role_id).toBe(80);
     expect(u.height).toBe(183);
-    expect(u.upper2).toBe("FOO3@BAR.COM")
+    expect(u.upper2).toBe("FOO3@BAR.COM");
   });
 });
 describe("User join fields and aggregations in ownership", () => {
