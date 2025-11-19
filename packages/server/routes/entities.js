@@ -127,7 +127,9 @@ const getAllEntities = async () => {
 
   // Sort by name
   entities.sort((a, b) =>
-    a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+    (a.name || "").localeCompare(b.name || "", undefined, {
+      sensitivity: "base",
+    })
   );
 
   return entities;

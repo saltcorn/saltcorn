@@ -210,6 +210,7 @@ namespace HelpersExports {
     pages: number;
     get_page_link: (index: number) => string;
     trailing_ellipsis?: boolean;
+    noMaxPage?: boolean;
   };
 }
 type PaginationOpts = HelpersExports.PaginationOpts;
@@ -227,6 +228,7 @@ const pagination = ({
   pages,
   get_page_link,
   trailing_ellipsis,
+  noMaxPage,
 }: PaginationOpts): string => {
   const from = Math.max(1, current_page - 3);
   const to = Math.min(pages, current_page + 3);
@@ -265,19 +267,20 @@ const pagination = ({
   }
   if (to < pages) {
     lis.push(li({ class: `page-item` }, span({ class: "page-link" }, "...")));
-    lis.push(
-      li(
-        { class: `page-item` },
-        span(
-          {
-            class: "page-link link-style",
-            onclick: get_page_link(pages),
-            role: "link",
-          },
-          pages
+    !noMaxPage &&
+      lis.push(
+        li(
+          { class: `page-item` },
+          span(
+            {
+              class: "page-link link-style",
+              onclick: get_page_link(pages),
+              role: "link",
+            },
+            pages
+          )
         )
-      )
-    );
+      );
   }
   if (trailing_ellipsis)
     lis.push(li({ class: `page-item` }, span({ class: "page-link" }, "...")));
