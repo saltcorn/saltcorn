@@ -39,7 +39,7 @@ function xattr_get(fp: string, attrName: string): Promise<string> {
   );
 }
 
-const dirCache: Record<string, File[] | null> = {};
+const dirCache: Record<string, File[] | null | "building"> = {};
 const enableDirCache: Record<string, boolean> = {};
 
 /**
@@ -205,12 +205,29 @@ class File {
     const tenant = db.getTenantSchema();
     if (!ignoreCache) {
       const cache = File.getDirCache();
-      if (cache) {
+      if (cache === "building") {
+        return new Promise((resolve, reject) => {
+          function go(waitms: number) {
+            const cache = File.getDirCache();
+            if (!cache)
+              reject(new Error("Timeout in File.allDirectories cache"));
+            else if (cache === "building") {
+              if (waitms > 120 * 1000)
+                reject(new Error("Timeout in File.allDirectories cache"));
+              else
+                setTimeout(() => {
+                  go(waitms * 1.5);
+                }, waitms);
+            } else resolve(cache);
+          }
+          go(50);
+        });
+      } else if (cache) {
         return cache;
       } else if (enableDirCache[tenant]) {
         await File.reallyBuildDirCache();
         const cache = File.getDirCache();
-        if (cache) {
+        if (cache && cache !== "building") {
           return cache;
         }
       }
@@ -238,7 +255,8 @@ class File {
     enableDirCache[db.getTenantSchema()] = true;
   }
   static async reallyBuildDirCache() {
-    dirCache[db.getTenantSchema()] = await File.allDirectories();
+    dirCache[db.getTenantSchema()] = "building";
+    dirCache[db.getTenantSchema()] = await File.allDirectories(true);
   }
 
   static getDirCache() {
