@@ -641,6 +641,12 @@ const configTypes: ConfigTypes = {
     blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
     excludeFromMobile: true,
   },
+  airgap: {
+    type: "Bool",
+    label: "Air gap deployment",
+    blurb:
+      "Disable updates from NPM and Saltcorn module store for isolated network environments",
+  },
   timeout: {
     type: "Integer",
     label: "HTTP timeout (s)",
@@ -960,7 +966,7 @@ const configTypes: ConfigTypes = {
     label: "Module Store endpoint",
     default: "https://store.saltcorn.com/api/extensions",
     //root_only: true,
-    blurb: "The endpoint of plugins store.",
+    blurb: "The endpoint of module store.",
     excludeFromMobile: true,
   },
   packs_store_endpoint: {
@@ -1768,10 +1774,12 @@ const get_latest_npm_version = async (
   const { isStale } = (await import("../utils")).default;
   const fetch = require("node-fetch");
   const stored = getState().getConfig("latest_npm_version", {});
+  const airgap = getState().getConfig("airgap", false);
 
-  if (stored[pkg] && !isStale(stored[pkg].time, 6)) {
+  if (stored[pkg] && (!isStale(stored[pkg].time, 6) || airgap)) {
     return stored[pkg].version;
   }
+  if (airgap) return "";
 
   const guess = stored[pkg]?.version || ""; //default return
   try {
@@ -1815,10 +1823,12 @@ const get_saltcorn_npm_versions = async (
   const pkg = "@saltcorn/cli";
   const fetch = require("node-fetch");
   const stored = getState().getConfig("saltcorn_npm_versions", {});
+  const airgap = getState().getConfig("airgap", false);
 
-  if (stored?.time && !isStale(stored.time, 6)) {
+  if (stored?.time && (!isStale(stored.time, 6) || airgap)) {
     return stored?.versions;
   }
+  if (airgap) return [];
 
   const guess: string[] = stored?.versions || []; //default return
   try {

@@ -831,8 +831,10 @@ const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
     "available_packs_fetched_at",
     false
   );
+  const airgap = getState().getConfig("airgap", false);
+
   //console.log("in fetch", stored_at, stored)
-  if (!stored || !stored_at || isStale(stored_at)) {
+  if (!airgap && (!stored || !stored_at || isStale(stored_at))) {
     try {
       const from_api = await fetch_available_packs_from_store();
       await getState().setConfig("available_packs", from_api);
@@ -842,7 +844,7 @@ const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
       console.error("fetch store error", e);
       return [];
     }
-  } else return stored;
+  } else return stored || [];
 };
 
 /**

@@ -141,10 +141,10 @@ class Plugin {
     const vt_names = Array.isArray(myViewTemplates)
       ? myViewTemplates.map((vt) => vt.name)
       : typeof myViewTemplates === "function"
-      ? myViewTemplates(getState().plugin_cfgs[this.name]).map(
-          (vt: ViewTemplate) => vt.name
-        )
-      : Object.keys(myViewTemplates);
+        ? myViewTemplates(getState().plugin_cfgs[this.name]).map(
+            (vt: ViewTemplate) => vt.name
+          )
+        : Object.keys(myViewTemplates);
     return views
       .filter((v) => vt_names.includes(v.viewtemplate) && !v.singleton)
       .map((v) => v.name);
@@ -175,9 +175,11 @@ class Plugin {
       "available_plugins_fetched_at",
       false
     );
+    const airgap = getState().getConfig("airgap", false);
+
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
-    if (!stored || !stored_at || isStale(stored_at)) {
+    if (!airgap && (!stored || !stored_at || isStale(stored_at))) {
       try {
         const from_api = await Plugin.store_plugins_available_from_store();
         await getState().setConfig("available_plugins", from_api);
@@ -192,7 +194,7 @@ class Plugin {
         else return [];
       }
     } else
-      return stored
+      return (stored || [])
         .map((p: Plugin) => new Plugin(p))
         .filter((p: Plugin) => isRoot || !p.has_auth);
   }

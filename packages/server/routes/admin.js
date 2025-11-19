@@ -195,9 +195,11 @@ admin_config_route({
     { section_header: "Custom code" },
     "page_custom_css",
     "page_custom_html",
-    { section_header: "Extension store" },
+    { section_header: "Updates and module store" },
+    "airgap",
     "plugins_store_endpoint",
     "packs_store_endpoint",
+    { section_header: "Maintenance mode" },
     "maintenance_mode_enabled",
     "maintenance_mode_page",
   ],
@@ -4605,7 +4607,7 @@ router.post(
     });
     //allow workers to sync cfg before refresh code pages
     //TODO we need a better way to sync codepage after all workers have updated cfg
-    await sleep(500)
+    await sleep(500);
     const err = await getState().refresh_codepages();
     if (err)
       res.json({

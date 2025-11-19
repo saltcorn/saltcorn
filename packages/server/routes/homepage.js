@@ -526,10 +526,13 @@ const no_views_logged_in = async (req, res) => {
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
     res.sendWrap(req.__("Hello"), req.__("Welcome to Saltcorn!"));
   else {
+    const airgap = getState().getConfig("airgap", false);
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-    const versions = isRoot && (await get_saltcorn_npm_versions(500));
+    const versions =
+      isRoot && !airgap && (await get_saltcorn_npm_versions(500));
     const eligible_upgrades =
       isRoot &&
+      !airgap &&
       versions?.filter?.(
         (v) =>
           semver.gt(v, packagejson.version) &&
