@@ -1,10 +1,32 @@
 # Notable changes
 
-## 1.4.1 - In development
+## 1.5.0 - In development
+
+* Multi-node support: Updates other Saltcorn nodes when data changes using PostgreSQL LISTEN/NOTIFY. Disabled by default (see README).
+
+* Mail queue: The mail throttle time (in Notification settings) controls how many email notifications are sent to the same user. When the queue is empty, a notification is sent immediately; otherwise, all emails are combined and sent after the throttle time has passed.
+
+* Entities list - a new page for admin at `/entities`, a filterable, searchable list of all entities (tables, views, pages and triggers). 
+
+* Airgap configuration option - informs Saltcorn that it is in an isolated network environment - prevents background connections to npm and the Saltcorn module store but does not enforce isolation in user or admin actions.
+
+* Performance enhancements for large tables and large file counts. Options to disable sort order and full pagination count. 
+
+* Light mode variables: `user.lightDarkMode` to detect mode
+
+* Lazy view settings in tab elements (tabs, accordions and pills). Any views inside the tab will be loaded when the tab is displayed. 
+
+* Table.updateRow and insertRow now always runs their triggers syncronously. Async trigger runs caused problems when in transactions.
+
+* Files can now be uploaded with the Save form_action button
+
+* Show-if expressions in menu items and page containers
+
+## 1.4.1 - Released 19 November 2025
 
 * Dropdown option for List header filters - mutually exclusive with togglable header filters. Filters are activated with a hidden (revealed on hover) dropdown menu.
-* Multi-node support: Updates other Saltcorn nodes when data changes using PostgreSQL LISTEN/NOTIFY. Disabled by default (see README).
-* Mail queue: The mail throttle time (in Notification settings) controls how many email notifications are sent to the same user. When the queue is empty, a notification is sent immediately; otherwise, all emails are combined and sent after the throttle time has passed.
+
+* Bug fixes backported from 1.5.0 branch
 
 ## 1.4.0 - Released 24 October 2025
 
