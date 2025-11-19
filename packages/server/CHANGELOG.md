@@ -3,6 +3,8 @@
 ## 1.4.1 - In development
 
 * Dropdown option for List header filters - mutually exclusive with togglable header filters. Filters are activated with a hidden (revealed on hover) dropdown menu.
+* Multi-node support: Updates other Saltcorn nodes when data changes using PostgreSQL LISTEN/NOTIFY. Disabled by default (see README).
+* Mail queue: The mail throttle time (in Notification settings) controls how many email notifications are sent to the same user. When the queue is empty, a notification is sent immediately; otherwise, all emails are combined and sent after the throttle time has passed.
 
 ## 1.4.0 - Released 24 October 2025
 
