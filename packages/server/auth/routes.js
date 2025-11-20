@@ -521,7 +521,9 @@ router.post(
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_forgot")) {
       const { email } = req.body || {};
-      const u = await User.findOne({ email });
+      const u = await User.findOne({
+        email: { ilike: email, fullMatch: true },
+      });
       const respond = () => {
         req.flash("success", req.__("Email with password reset link sent"));
         res.redirect("/auth/login");
@@ -1601,7 +1603,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
   const show2FAPolicy =
     twoFaPolicy !== "Disabled" || user._attributes.totp_enabled;
   if (user.role_id <= min_role_apikeygen) {
-  const tokens = await user.listApiTokens();
+    const tokens = await user.listApiTokens();
     apikeycard = {
       type: "card",
       title: req.__("API token"),

@@ -23,6 +23,7 @@ import type {
   SuccessMessage,
 } from "@saltcorn/types/common_types";
 import generators from "@saltcorn/types/generators";
+import { em } from "@saltcorn/markup/tags";
 const { generateString } = generators;
 
 /**
@@ -359,6 +360,8 @@ class User {
     for (const wk of Object.keys(where)) {
       const field = fields?.find((f) => f.name === wk);
       if (!field) delete where[wk];
+      if (field?.name === "email")
+        where[wk] = { ilike: where[wk], fullMatch: true };
     }
 
     const us = await user_table!.getJoinedRows({
