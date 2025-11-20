@@ -828,3 +828,60 @@ router.delete(
     )(req, res, next);
   })
 );
+
+/**
+ * Upload Files using POST
+ * @name post/files/upload
+ * @function
+ * @memberof module:routes/api~apiRouter
+ */
+router.post(
+  "/files/upload",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      ["api-bearer", "jwt"],
+      { session: false },
+      async function (err, user, info) {
+        const authUser = req.user || user;
+        let jsonResp = {};
+        const min_role_upload = getState().getConfig("min_role_upload", 1);
+        const role = authUser && authUser.id ? authUser.role_id : 100;
+        if (role > +min_role_upload) {
+          jsonResp = { error: "Not authorized" };
+          res.status(401).json(jsonResp);
+          return;
+        }
+        if (!req.files || !req.files.file) {
+          res.status(400).json({ error: "No file found" });
+          return;
+        }
+        const { folder } = req.body || {};
+        const min_role_read = req.body?.min_role_read || 1;
+        try {
+          const f = await File.from_req_files(
+            req.files.file,
+            authUser.id,
+            +min_role_read,
+            folder ? File.normalise(folder) : undefined
+          );
+          const many = Array.isArray(f);
+          jsonResp = {
+            success: {
+              filename: many ? f.map((fl) => fl.filename) : f.filename,
+              location: many
+                ? f.map((fl) => fl.path_to_serve)
+                : f.path_to_serve,
+              url: many
+                ? f.map((fl) => `/files/serve/${fl.path_to_serve}`)
+                : `/files/serve/${f.path_to_serve}`,
+            },
+          };
+          res.json(jsonResp);
+        } catch (e) {
+          console.error(e);
+          res.status(500).json({ error: e.message });
+        }
+      }
+    )(req, res, next);
+  })
+);
