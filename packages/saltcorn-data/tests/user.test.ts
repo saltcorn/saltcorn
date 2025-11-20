@@ -77,6 +77,12 @@ describe("User model", () => {
       password: "YEgege46gew",
     });
     expect(uci1).toBe(false);
+    //password is case sensitive
+    const uci2 = await User.authenticate({
+      email: "FOO@bar.com",
+      password: "yEgege46gew",
+    });
+    expect(uci2).toBe(false);
   });
   it("should survive nonexistant fields", async () => {
     const u = await User.authenticate({
