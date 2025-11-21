@@ -839,3 +839,50 @@ describe("test share handler", () => {
     expect(row).toBeUndefined();
   });
 });
+
+describe("API upload-files", () => {
+  let adminToken;
+  beforeAll(async () => {
+    const admin = await User.findOne({ email: "admin@foo.com" });
+    adminToken = await admin.getNewAPIToken();
+  });
+
+  it("should upload file with bearer token", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .post("/api/upload-files")
+      .set("Authorization", "Bearer " + adminToken)
+      .field("min_role_read", "80")
+      .field("folder", "apitests")
+      .attach("file", Buffer.from("helloiamasmallfile", "utf-8"), "file.txt")
+      .expect(200);
+    const body = res.body;
+    expect(body.success).toBeDefined();
+    expect(body.success.filename).toBe("file.txt");
+    // location may have a numeric suffix if file already exists
+    expect(body.success.location).toMatch(/^apitests\/file(_\d+)?\.txt$/);
+    expect(body.success.url).toBe("/files/serve/" + body.success.location);
+    const f = await File.findOne(body.success.location);
+    expect(f).toBeDefined();
+    expect(f.min_role_read).toBe(80);
+    expect(f.user_id).toBe(1);
+    expect(f.path_to_serve).toBe(body.success.location);
+  });
+
+  it("should not allow public upload", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/upload-files")
+      .attach("file", Buffer.from("hellopublic", "utf-8"), "publicupload.txt")
+      .expect(notAuthorized);
+  });
+
+  it("should reject missing file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/upload-files")
+      .set("Authorization", "Bearer " + adminToken)
+      .field("min_role_read", "80")
+      .expect(respondJsonWith(400, (resp) => resp.error === "No file found"));
+  });
+});
