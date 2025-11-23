@@ -1617,6 +1617,7 @@ const features = {
   multitype_fieldviews: true,
   nested_fieldrepeats: true,
   api_view_route: true,
+  file_fieldviews_cfg_workflows: true,
 };
 
 export = {
