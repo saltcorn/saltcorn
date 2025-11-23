@@ -108,6 +108,7 @@ class Workflow implements AbstractWorkflow {
       else if (f.type === "File") {
         if (f.fieldview && !f.fieldviewObj)
           f.fieldviewObj = getState().fileviews[f.fieldview];
+        await f.fill_fkey_options();
       }
     };
     await asyncMap(form.fields, iter);
