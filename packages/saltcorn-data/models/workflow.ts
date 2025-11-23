@@ -20,7 +20,7 @@ import { build_schema_data } from "../plugin-helper";
 import FieldRepeat from "./fieldrepeat";
 
 const { getState } = require("../db/state");
-const { applyAsync, apply } = require("../utils");
+const { applyAsync, apply, asyncMap } = require("../utils");
 
 /**
  * Workflow class
@@ -103,14 +103,14 @@ class Workflow implements AbstractWorkflow {
   }
 
   async prepareForm(form: Form) {
-    const iter = (f: Field | FieldRepeat) => {
-      if (f instanceof FieldRepeat) f.fields.forEach(iter);
+    const iter = async (f: Field | FieldRepeat) => {
+      if (f instanceof FieldRepeat) await asyncMap(f.fields, iter);
       else if (f.type === "File") {
         if (f.fieldview && !f.fieldviewObj)
           f.fieldviewObj = getState().fileviews[f.fieldview];
       }
     };
-    form.fields.forEach(iter);
+    await asyncMap(form.fields, iter);
   }
 
   /**
