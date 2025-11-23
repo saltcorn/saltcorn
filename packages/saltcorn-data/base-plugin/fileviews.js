@@ -349,13 +349,14 @@ module.exports = {
               id: `${inputId}-custom-text`,
               class: "custom-file-label",
             },
-            "No file chosen"
+            file_id || "No file chosen"
           ),
           input({
             type: "hidden",
             id: inputId,
             name: text_attr(nm),
             "data-fieldname": field.form_name,
+            value: file_id || false,
           })
         );
       } else {
