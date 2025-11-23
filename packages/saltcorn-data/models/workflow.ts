@@ -17,6 +17,7 @@ import type Field from "./field";
 import Form from "./form";
 
 import { build_schema_data } from "../plugin-helper";
+import FieldRepeat from "./fieldrepeat";
 
 const { getState } = require("../db/state");
 const { applyAsync, apply } = require("../utils");
@@ -100,6 +101,18 @@ class Workflow implements AbstractWorkflow {
       };
     }
   }
+
+  async prepareForm(form: Form) {
+    const iter = (f: Field | FieldRepeat) => {
+      if (f instanceof FieldRepeat) f.fields.forEach(iter);
+      else if (f.type === "File") {
+        if (f.fieldview && !f.fieldviewObj)
+          f.fieldviewObj = getState().fileviews[f.fieldview];
+      }
+    };
+    form.fields.forEach(iter);
+  }
+
   /**
    * @param {object} body
    * @param {object} req
@@ -130,6 +143,7 @@ class Workflow implements AbstractWorkflow {
       const form = await applyAsync(step.form, context);
       if (this.modifyForm) this.modifyForm(form);
 
+      await this.prepareForm(form);
       const valres = form.validate(stepBody);
       if (valres.errors) {
         form.hidden("stepName", "contextEnc");
@@ -206,6 +220,7 @@ class Workflow implements AbstractWorkflow {
     if (step.form) {
       const form = await applyAsync(step.form, context);
       if (this.modifyForm) this.modifyForm(form);
+      await this.prepareForm(form);
 
       form.hidden("stepName", "contextEnc");
       form.values.stepName = step.name;
