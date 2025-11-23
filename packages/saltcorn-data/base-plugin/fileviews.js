@@ -264,7 +264,31 @@ module.exports = {
     isEdit: true,
     setsFileId: true,
     description: "Select existing file",
-
+    fill_options: async (field) => {
+      const files = await File.find(
+        field.attributes.folder
+          ? { folder: field.attributes.folder }
+          : field.attributes.select_file_where || {}
+      );
+      const extRe =
+        field.attributes.file_exts &&
+        new RegExp(
+          `\\.(${field.attributes.file_exts
+            .split(",")
+            .map((s) => s.trim())
+            .join("|")})$`,
+          "i"
+        );
+      field.options = files
+        .filter(
+          (f) => !f.isDirectory && (!extRe || extRe.test(f.path_to_serve))
+        )
+        .map((f) => ({
+          label: f.filename,
+          value: f.path_to_serve,
+        }));
+      if (!this.required) field.options.unshift({ label: "", value: "" });
+    },
     configFields: async () => {
       const dirs = await File.allDirectories();
       return [
@@ -289,16 +313,18 @@ module.exports = {
           showIf: { use_picker: true },
           default: false,
         },
-        /*{
-          name: "name_regex",
-          label: "Name regex",
-          type: "String"
-        },
+        {
+          name: "file_exts",
+          label: "File extensions",
+          type: "String",
+          subfolder:
+            "Comma separated file extensions. Example: <code>jpg,png</code>",
+        } /*
         {
           name: "mime_regex",
           label: "MIME regex",
           type: "String"
-        }*/
+        }*/,
       ];
     },
     // run
