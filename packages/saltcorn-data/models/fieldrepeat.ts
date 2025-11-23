@@ -20,7 +20,7 @@ class FieldRepeat implements AbstractFieldRepeat {
   label: string;
   name: string;
   type: string;
-  fields: Array<FieldLike>;
+  fields: Array<Field | FieldRepeat>;
   layout?: Layout;
   isRepeat = true;
   showIf?: any;
@@ -46,7 +46,12 @@ class FieldRepeat implements AbstractFieldRepeat {
     this.fancyMenuEditor = o.fancyMenuEditor || false;
     this.defaultNone = o.defaultNone || false;
   }
-
+  get required() {
+    return false;
+  }
+  get attributes() {
+    return {};
+  }
   /**
    * @returns {Promise<void>}
    */
