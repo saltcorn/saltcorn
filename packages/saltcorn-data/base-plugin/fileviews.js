@@ -331,7 +331,7 @@ module.exports = {
     run: (nm, file_id, attrs, cls, reqd, field) => {
       if (attrs?.use_picker) {
         const folder = attrs?.folder || "";
-        const inputId = `input${text_attr(nm)}`;
+        const inputId = `input${text_attr(nm)}__${Math.floor(Math.random() * 16777215).toString(16)}`;
         return span(
           a(
             {
