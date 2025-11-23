@@ -38,7 +38,11 @@ class FieldRepeat implements AbstractFieldRepeat {
     this.type = "FieldRepeat";
     this.fields = o.fields
       .filter((f) => f.name || f.label)
-      .map((f) => (f.constructor.name === Object.name ? new Field(f) : f));
+      .map((f) =>
+        f.constructor.name === Object.name
+          ? new Field(f)
+          : (f as Field | FieldRepeat)
+      );
     this.layout = o.layout;
     this.isRepeat = true;
     this.showIf = o.showIf;
@@ -131,6 +135,11 @@ class FieldRepeat implements AbstractFieldRepeat {
   }
 }
 
-type FieldRepeatCfg = PartialSome<FieldRepeat, "name" | "fields">;
+type FieldRepeatCfg = Omit<
+  PartialSome<FieldRepeat, "name" | "fields">,
+  "fields"
+> & {
+  fields: Array<Field | FieldRepeat | FieldLike>;
+};
 
 export = FieldRepeat;
