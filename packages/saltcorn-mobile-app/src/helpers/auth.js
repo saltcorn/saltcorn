@@ -12,6 +12,11 @@ import {
   unregisterPushNotifications,
 } from "../helpers/notifications";
 
+/**
+ * internal helper for the normal login/signup and public login
+ * @param {any} param0
+ * @returns
+ */
 async function loginRequest({ email, password, isSignup, isPublic }) {
   const opts = isPublic
     ? {
@@ -39,6 +44,70 @@ async function loginRequest({ email, password, isSignup, isPublic }) {
   return response.data;
 }
 
+/**
+ * helper for normal logins and auth provider logins
+ * @param {string} token
+ */
+export async function handleToken(token) {
+  const decodedJwt = jwtDecode(token);
+  const state = saltcorn.data.state.getState();
+  const config = state.mobileConfig;
+  config.user = decodedJwt.user;
+  config.isPublicUser = false;
+  config.isOfflineMode = false;
+  await insertUser(config.user);
+  await setJwt(token);
+  config.jwt = token;
+  i18next.changeLanguage(config.user.language);
+  const alerts = [];
+  if (config.allowOfflineMode) {
+    const { offlineUser, hasOfflineData } =
+      (await getLastOfflineSession()) || {};
+    if (!offlineUser || offlineUser === config.user.email) {
+      await sync();
+    } else {
+      if (hasOfflineData)
+        alerts.push({
+          type: "warning",
+          msg: `'${offlineUser}' has not yet uploaded offline data.`,
+        });
+      else {
+        await deleteOfflineData(true);
+        await sync();
+      }
+    }
+  }
+  if (saltcorn.data.utils.isPushEnabled(config.user)) {
+    initPushNotifications();
+  } else {
+    await unregisterPushNotifications();
+  }
+  alerts.push({
+    type: "success",
+    msg: i18next.t("Welcome, %s!", {
+      postProcess: "sprintf",
+      sprintf: [config.user.email],
+    }),
+  });
+
+  let entryPoint = null;
+  if (config.entryPointType === "byrole") {
+    const homepageByRole = state.getConfig("home_page_by_role", {})[
+      config.user.role_id
+    ];
+    if (homepageByRole) entryPoint = `get/page/${homepageByRole}`;
+    else throw new Error("No homepage defined for this role.");
+  } else entryPoint = config.entry_point;
+
+  addRoute({ route: entryPoint, query: undefined });
+  const page = await router.resolve({
+    pathname: entryPoint,
+    fullWrap: true,
+    alerts,
+  });
+  if (page.content) await replaceIframe(page.content, page.isFile);
+}
+
 export async function login({ email, password, isSignup }) {
   const loginResult = await loginRequest({
     email,
@@ -47,63 +116,7 @@ export async function login({ email, password, isSignup }) {
   });
   if (typeof loginResult === "string") {
     // use it as a token
-    const decodedJwt = jwtDecode(loginResult);
-    const state = saltcorn.data.state.getState();
-    const config = state.mobileConfig;
-    config.user = decodedJwt.user;
-    config.isPublicUser = false;
-    config.isOfflineMode = false;
-    await insertUser(config.user);
-    await setJwt(loginResult);
-    config.jwt = loginResult;
-    i18next.changeLanguage(config.user.language);
-    const alerts = [];
-    if (config.allowOfflineMode) {
-      const { offlineUser, hasOfflineData } =
-        (await getLastOfflineSession()) || {};
-      if (!offlineUser || offlineUser === config.user.email) {
-        await sync();
-      } else {
-        if (hasOfflineData)
-          alerts.push({
-            type: "warning",
-            msg: `'${offlineUser}' has not yet uploaded offline data.`,
-          });
-        else {
-          await deleteOfflineData(true);
-          await sync();
-        }
-      }
-    }
-    if (saltcorn.data.utils.isPushEnabled(config.user)) {
-      initPushNotifications();
-    } else {
-      await unregisterPushNotifications();
-    }
-    alerts.push({
-      type: "success",
-      msg: i18next.t("Welcome, %s!", {
-        postProcess: "sprintf",
-        sprintf: [config.user.email],
-      }),
-    });
-
-    let entryPoint = null;
-    if (config.entryPointType === "byrole") {
-      const homepageByRole = state.getConfig("home_page_by_role", {})[
-        config.user.role_id
-      ];
-      if (homepageByRole) entryPoint = `get/page/${homepageByRole}`;
-      else throw new Error("No homepage defined for this role.");
-    } else entryPoint = config.entry_point;
-
-    addRoute({ route: entryPoint, query: undefined });
-    const page = await router.resolve({
-      pathname: entryPoint,
-      fullWrap: true,
-      alerts,
-    });
-    if (page.content) await replaceIframe(page.content, page.isFile);
+    await handleToken(loginResult);
   } else if (loginResult?.alerts) {
     showAlerts(loginResult?.alerts);
   } else {

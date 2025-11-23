@@ -12,7 +12,8 @@ import { router } from "./routing/index";
 const plugins = {};
 const context = require.context("./plugins-code", true, /index\.js$/);
 context.keys().forEach((key) => {
-  const pluginName = key.split("/")[1];
+  const tokens = key.split("/");
+  const pluginName = tokens[tokens.length - 2];
   plugins[pluginName] = context(key);
 });
 

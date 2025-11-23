@@ -2,6 +2,9 @@ import { Capacitor } from "@capacitor/core";
 import { apiCall } from "./api";
 import { showAlerts } from "./common";
 
+/**
+ * @capacitor/push-notifications isn't always included in the build
+ */
 async function loadNotificationsPlugin() {
   try {
     const { PushNotifications } = await import("@capacitor/push-notifications");
@@ -12,6 +15,9 @@ async function loadNotificationsPlugin() {
   }
 }
 
+/**
+ * @capacitor/device isn't always included in the build
+ */
 async function loadDevicePlugin() {
   try {
     const { Device } = await import("@capacitor/device");

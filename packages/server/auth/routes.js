@@ -1436,7 +1436,7 @@ router.post(
       passport.authenticate(method, passportParams)(
         req,
         res,
-        loginCallback(req, res)
+        loginCallback(req, res, method)
       );
     } else {
       req.flash(
@@ -1448,12 +1448,28 @@ router.post(
   })
 );
 
+const generateTokenForUser = async (user, now) => {
+  const userDb = await User.findOne({ email: user.email });
+  const tokenUser = { ...userDb.session_object };
+  const token = jwt.sign(
+    {
+      sub: user.email,
+      user: tokenUser,
+      iss: "saltcorn@saltcorn",
+      aud: "saltcorn-mobile-app",
+      iat: now.valueOf(),
+      tenant: db.getTenantSchema(),
+    },
+    db.connectObj.jwt_secret
+  );
+  return token;
+};
 /**
  * @param {object} req
  * @param {object} res
  * @returns {void}
  */
-const loginCallback = (req, res) => async () => {
+const loginCallback = (req, res, method) => async () => {
   if (!req.user) return;
   if (!req.user.id) {
     res.redirect("/auth/signup_final_ext");
@@ -1489,8 +1505,15 @@ const loginCallback = (req, res) => async () => {
       res.redirect(req.cookies["login_dest"]);
       return;
     }
-
-    res.redirect("/");
+    const source = req.query.state;
+    if (source === "mobile_app") {
+      const now = new Date();
+      const user = await User.findOne({ email: req.user.email });
+      if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
+      res.redirect(
+        `mobileapp://auth/callback?token=${await generateTokenForUser(req.user, now)}&method=${encodeURIComponent(method)}`
+      );
+    } else res.redirect("/");
   }
 };
 
@@ -1506,7 +1529,7 @@ const callbackFn = async (req, res, next) => {
     passport.authenticate(method, passportParams)(
       req,
       res,
-      loginCallback(req, res)
+      loginCallback(req, res, method)
     );
   }
 };
@@ -1601,7 +1624,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
   const show2FAPolicy =
     twoFaPolicy !== "Disabled" || user._attributes.totp_enabled;
   if (user.role_id <= min_role_apikeygen) {
-  const tokens = await user.listApiTokens();
+    const tokens = await user.listApiTokens();
     apikeycard = {
       type: "card",
       title: req.__("API token"),
