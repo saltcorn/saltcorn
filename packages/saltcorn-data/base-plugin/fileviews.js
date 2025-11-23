@@ -340,7 +340,7 @@ module.exports = {
                 folder
               )}&input_id=${encodeURIComponent(inputId)}${
                 attrs?.show_subdirs === false ? "&no_subdirs=true" : ""
-              }')`,
+              }${attrs?.file_exts ? "&file_exts=" + attrs?.file_exts : ""}')`,
             },
             "select"
           ),
