@@ -160,7 +160,7 @@ class State {
   routesChangedCb?: Function;
   eventTypes: Record<string, { hasChannel: boolean; name?: string }>;
   fonts: Record<string, string>;
-  icons: Array<string>;
+  iconSet: Set<string>;
   layouts: Record<string, PluginLayout>;
   userLayouts: Record<string, PluginLayout & { config: GenObj }>;
   headers: Record<string, Array<Header>>;
@@ -224,7 +224,7 @@ class State {
     this.copilot_skills = [];
     this.eventTypes = {};
     this.fonts = standard_fonts;
-    this.icons = get_standard_icons();
+    this.iconSet = new Set(get_standard_icons());
     this.layouts = { emergency: emergency_layout };
     this.userLayouts = {};
     this.headers = {};
@@ -980,7 +980,7 @@ class State {
       this.fonts[k] = v as string;
     });
     withCfg("icons", []).forEach((icon: string) => {
-      this.icons.push(icon);
+      this.iconSet.add(icon);
     });
     Object.entries(withCfg("table_providers", {})).forEach(([k, v]) => {
       this.table_providers[k] = v as TableProvider;
@@ -1220,7 +1220,7 @@ class State {
     this.exchange = {};
     this.verifier = null;
     this.fonts = standard_fonts;
-    this.icons = get_standard_icons();
+    this.iconSet = new Set(get_standard_icons());
 
     Object.entries(this.plugins).forEach(([k, v]: [k: string, v: Plugin]) => {
       this.registerPlugin(k, v, this.plugin_cfgs[k]);
@@ -1323,6 +1323,10 @@ class State {
       return;
     }
     globalDynamicUpdateEmitter(ten, data, userIds);
+  }
+
+  get icons() {
+    return [...this.iconSet];
   }
 
   // default auth methods to enabled
@@ -1617,6 +1621,7 @@ const features = {
   multitype_fieldviews: true,
   nested_fieldrepeats: true,
   api_view_route: true,
+  file_fieldviews_cfg_workflows: true,
 };
 
 export = {

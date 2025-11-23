@@ -69,7 +69,14 @@ router.use(
   })
 );
 
-const send_files_picker = async (folder, noSubdirs, inputId, req, res) => {
+const send_files_picker = async (
+  folder,
+  noSubdirs,
+  inputId,
+  req,
+  res,
+  file_exts
+) => {
   res.set("SaltcornModalWidth", "1200px");
   res.sendWrap(req.__("Please select a file"), {
     above: [
@@ -91,6 +98,7 @@ const send_files_picker = async (folder, noSubdirs, inputId, req, res) => {
         folder: folder,
         input_id: inputId,
         ...(noSubdirs ? { no_subdirs: "true" } : {}),
+        ...(file_exts ? { file_exts } : {}),
       }),
     ],
   });
@@ -99,8 +107,8 @@ const send_files_picker = async (folder, noSubdirs, inputId, req, res) => {
 router.get(
   "/picker",
   error_catcher(async (req, res) => {
-    const { folder, input_id, no_subdirs } = req.query;
-    send_files_picker(folder, no_subdirs, input_id, req, res);
+    const { folder, input_id, no_subdirs, file_exts } = req.query;
+    send_files_picker(folder, no_subdirs, input_id, req, res, file_exts);
   })
 );
 
@@ -109,7 +117,7 @@ router.get(
   error_catcher(async (req, res) => {
     const role = req.user?.role_id ? req.user.role_id : 100;
     const userId = req.user?.id;
-    const { dir, no_subdirs } = req.query;
+    const { dir, no_subdirs, file_exts } = req.query;
     const noSubdirs = no_subdirs === "true";
     const safeDir = File.normalise(dir || "/");
     const absFolder = File.normalise_in_base(
@@ -130,7 +138,7 @@ router.get(
       res.json({ files: [], roles: [], directories: [] });
       return;
     }
-    const rows = (
+    let rows = (
       await File.find({ folder: dir }, { orderBy: "filename" })
     ).filter((f) => {
       if (noSubdirs && f.isDirectory) return false;
@@ -153,6 +161,16 @@ router.get(
 
     for (const file of rows) {
       file.location = file.path_to_serve;
+    }
+    if (file_exts) {
+      const re = new RegExp(
+        `\\.(${file_exts
+          .split(",")
+          .map((s) => s.trim())
+          .join("|")})$`,
+        "i"
+      );
+      rows = rows.filter((f) => re.test(f.location));
     }
     const directories = !noSubdirs
       ? (await File.allDirectories(true)).filter(

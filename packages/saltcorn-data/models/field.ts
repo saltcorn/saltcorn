@@ -193,6 +193,10 @@ class Field implements AbstractField {
     this.exclude_from_mobile = o.exclude_from_mobile;
   }
 
+  get isRepeat() {
+    return false;
+  }
+
   /**
    * To Json
    * @type {object}
