@@ -2298,9 +2298,12 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string"
-                ? new Date(v).toLocaleDateString(attrs.locale)
-                : v.toLocaleDateString(attrs.locale)
+              ((v1) =>
+                attrs.date_picker
+                  ? v1.toISOString()
+                  : v1.toLocaleDateString(attrs.locale))(
+                typeof v === "string" ? new Date(v) : v
+              )
             ),
           }),
         }),
