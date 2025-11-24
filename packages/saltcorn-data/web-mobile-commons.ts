@@ -74,7 +74,7 @@ const get_extra_menu = (
         item.showif,
         req ? { url: req.originalUrl, query: req.query } : {},
         user,
-        "Show if for menu item labelled "+item.label
+        "Show if for menu item labelled " + item.label
       );
     } catch (e) {
       console.error(e);
@@ -143,8 +143,17 @@ const get_extra_menu = (
           console.error(error);
           link = "http://Invalid_Link_URL";
         }
+
+        const user_translated = __(item.label);
+        let translated_label =
+          user_translated !== item.label
+            ? user_translated
+            : req?.__
+              ? req.__(item.label)
+              : item.label;
+
         return {
-          label: __(item.label),
+          label: translated_label,
           icon: item.icon,
           isUser: item.user_menu_header,
           location: item.location,
