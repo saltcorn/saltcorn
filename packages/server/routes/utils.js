@@ -134,6 +134,9 @@ const setLanguage = (req, res, state) => {
   } else if (req.cookies?.lang) {
     req.setLocale(req.cookies?.lang);
   }
+  const rtlLanguages = ['ar', 'he', 'fa', 'ur', 'yi'];
+  const currentLocale = req.getLocale();
+  req.isRTL = rtlLanguages.some(lang => currentLocale.startsWith(lang));
   if (req.user) Object.freeze(req.user);
   set_custom_http_headers(res, req, state);
 };
