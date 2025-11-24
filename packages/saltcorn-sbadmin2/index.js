@@ -397,9 +397,9 @@ const linkPrefix = () => (isNode() ? "/plugins" : "sc_plugins");
  * @param {string} rest
  * @returns {string}
  */
-const wrapIt = (headers, title, bodyAttr, rest) =>
+const wrapIt = (headers, title, bodyAttr, rest, req) =>
   `<!doctype html>
-  <html lang="en">
+  <html lang="${req?.getLocale()}" ${req?.isRTL ? 'dir="rtl"' : ""}>
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -484,7 +484,8 @@ const authWrap = ({
       >
         ${alerts.map((a) => toast(a.type, a.msg)).join("")}
       </div>
-    </div>`
+    </div>`,
+    req
   );
 
 /**
@@ -539,7 +540,8 @@ const wrap = ({
       >
         ${alerts.map((a) => toast(a.type, a.msg)).join("")}
       </div>
-    </div>`
+    </div>`,
+    req
   );
 
 /**
