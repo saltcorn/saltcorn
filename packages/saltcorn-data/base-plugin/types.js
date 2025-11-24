@@ -2240,9 +2240,16 @@ const date = {
       blockDisplay: true,
       description:
         "Ask user to enter a date string. For a better user experience install the flatpickr module.",
+      configFields: [
+        { label: "Date picker", name: "date_picker", type: "Bool" },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
-          type: "text",
+          type: !attrs.date_picker
+            ? "text"
+            : attrs.day_only
+              ? "date"
+              : "datetime-local",
           class: ["form-control", cls],
           "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
@@ -2253,9 +2260,14 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string"
-                ? new Date(v).toLocaleString(attrs.locale)
-                : v.toLocaleString(attrs.locale)
+              ((v1) =>
+                attrs.date_picker
+                  ? v1.toISOString()
+                  : attrs.day_only
+                    ? v1.toLocaleDateString(attrs.locale)
+                    : v1.toLocaleString(attrs.locale))(
+                typeof v === "string" ? new Date(v) : v
+              )
             ),
           }),
         }),
@@ -2270,10 +2282,12 @@ const date = {
       blockDisplay: true,
       description:
         "Ask user to enter a day string. For a better user experience install the flatpickr module.",
-
+      configFields: [
+        { label: "Date picker", name: "date_picker", type: "Bool" },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
-          type: "text",
+          type: attrs.date_picker ? "date" : "text",
           class: ["form-control", cls],
           "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
@@ -2284,9 +2298,12 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string"
-                ? new Date(v).toLocaleDateString(attrs.locale)
-                : v.toLocaleDateString(attrs.locale)
+              ((v1) =>
+                attrs.date_picker
+                  ? v1.toISOString()
+                  : v1.toLocaleDateString(attrs.locale))(
+                typeof v === "string" ? new Date(v) : v
+              )
             ),
           }),
         }),
