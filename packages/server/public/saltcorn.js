@@ -1453,6 +1453,12 @@ function delprevwfroomrun(viewname, e, runid) {
 function cfu_translate(that) {
   const locale = that.value;
   const translations = window.cfu_translations[locale];
+  const rtlLanguages = ["ar", "he", "fa", "ur", "yi"];
+  const isRTL = rtlLanguages.includes(locale);
+  $("html").attr("lang", locale);
+  if (isRTL) $("html").attr("dir", "rtl");
+  else $("html").attr("dir", "ltr");
+
   if (translations) {
     $("button[type=submit]").text(translations.submitLabel);
     $("h1").text(translations.header);
@@ -1555,7 +1561,7 @@ function ensure_css_loaded(src) {
           // Shows the first element if there are no query parameters.
           $(element).tab("show");
         } else if ($(this).attr("href") === window.location.hash) {
-          $(element).trigger("show.bs.tab")
+          $(element).trigger("show.bs.tab");
           $(element).tab("show");
         }
       });
