@@ -284,6 +284,14 @@ class WorkflowRun {
             type: "String",
             attributes: { autofocus: ix === 0 || undefined },
           };
+        case "Date":
+          return {
+            type: "Date",
+            attributes: { day_only: q.day_only },
+            fieldview: getState().types.Date?.fieldviews?.flatpickr
+              ? "flatpickr"
+              : "edit",
+          };
         case "Multiple choice":
           let options = q.options;
           if (typeof options === "string" && options.includes("{{")) {

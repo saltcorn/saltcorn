@@ -702,6 +702,7 @@ class WorkflowStep {
                 "Multiple checks",
                 "Integer",
                 "Float",
+                "Date"
                 //"File upload",
               ],
             },
@@ -713,6 +714,14 @@ class WorkflowStep {
             sublabel: "Comma separated list of multiple choice options",
             showIf: { qtype: ["Multiple choice", "Multiple checks"] },
           },
+          {
+            label: "Day only",
+            name: "day_only",
+            type: "Bool",
+            sublabel: "Do not ask for time",
+            showIf: { qtype: ["Date"] },
+          },
+
         ],
       })
     );
