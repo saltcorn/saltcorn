@@ -3952,7 +3952,15 @@ ${rejectDetails}`,
       if (!reftable)
         throw new InvalidConfiguration(`Field ${ref} is not a key field`);
       const reftable_table = reffield.reftable || Table.findOne(reftable);
-      if (reftable_table?.external || reftable_table?.provider_name) continue;
+      if (reftable_table?.external || reftable_table?.provider_name) {
+        joinFields[fldnm].lookupFunction = async (row: GenObj) => {
+          const rpk = reftable_table.pk_name;
+          const rpkval = row[ref];
+          const refrow = await reftable_table.getRow({ [rpk]: rpkval });
+          return refrow?.[target];
+        };
+        continue;
+      }
 
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
@@ -4146,6 +4154,13 @@ ${rejectDetails}`,
     ) {
       const f = joinfield_renamer(joinFields, aggregations);
       calcRow = calcRow.map(f);
+    }
+
+    for (const k of Object.keys(joinFields || {})) {
+      if (!joinFields?.[k].lookupFunction) continue;
+      for (const row of calcRow) {
+        row[k] = await joinFields[k].lookupFunction(row);
+      }
     }
 
     if (role && role > this.min_role_read) {

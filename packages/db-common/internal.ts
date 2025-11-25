@@ -747,6 +747,7 @@ export type JoinField = {
   through?: any;
   rename_object?: any;
   ontable?: any;
+  lookupFunction?: any
 };
 
 export type JoinFields = {
