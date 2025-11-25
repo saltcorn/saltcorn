@@ -991,7 +991,11 @@ export async function prepareSplashPage(
     const sbadmin2 = state.plugins["sbadmin2"];
     const html = (<PluginLayout>sbadmin2.layout).wrap({
       title: page.title,
-      body: contents.above ? contents : { above: [contents] },
+      body: !contents
+        ? { above: [] }
+        : contents.above
+          ? contents
+          : { above: [contents] },
       alerts: [],
       role: role,
       menu: [],

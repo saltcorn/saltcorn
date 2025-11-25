@@ -145,8 +145,9 @@ const get_extra_menu = (
         }
 
         const user_translated = __(item.label);
-        let translated_label =
-          user_translated !== item.label
+        let translated_label = !item.label
+          ? item.label
+          : user_translated !== item.label
             ? user_translated
             : req?.__
               ? req.__(item.label)
