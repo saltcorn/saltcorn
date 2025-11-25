@@ -371,14 +371,24 @@ export async function init(mobileConfig) {
     });
 
     App.addListener("appUrlOpen", async (event) => {
-      const url = event.url;
-      if (url.startsWith("mobileapp://auth/callback")) {
-        const token = new URL(url).searchParams.get("token");
-        const method = new URL(url).searchParams.get("method");
-        const methods = saltcorn.data.state.getState().auth_methods;
-        const modName = methods[method].module_name;
-        const authModule = saltcorn.mobileApp.plugins[modName];
-        await authModule.finishLogin(token);
+      try {
+        const url = event.url;
+        if (url.startsWith("mobileapp://auth/callback")) {
+          const token = new URL(url).searchParams.get("token");
+          const method = new URL(url).searchParams.get("method");
+          const methods = saltcorn.data.state.getState().auth_methods;
+          if (!methods[method])
+            throw new Error(`Authentication method '${method}' not found.`);
+          const modName = methods[method].module_name;
+          if (!modName)
+            throw new Error(`Module name for '${method}' is not defined.`);
+          const authModule = saltcorn.mobileApp.plugins[modName];
+          if (!authModule)
+            throw new Error(`Authentication module '${modName}' not found.`);
+          await authModule.finishLogin(token);
+        }
+      } catch (error) {
+        await showErrorPage(error);
       }
     });
 
