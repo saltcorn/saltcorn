@@ -640,16 +640,18 @@ const get_config_response = async (role_id, res, req) => {
     homeCfg = getState().getConfig(legacy_role + "_home");
   if (homeCfg) {
     const db_page = Page.findOne({ name: homeCfg });
-    if (db_page)
+    if (db_page) {
+      const pgcontents = await db_page.run(req.query, { res, req });
+      if (!pgcontents) return true;
       wrap(
-        await db_page.run(req.query, { res, req }),
+        pgcontents,
         homeCfg,
         db_page.title,
         db_page.description,
         db_page.attributes?.no_menu,
         db_page.attributes?.request_fluid_layout
       );
-    else {
+    } else {
       const group = PageGroup.findOne({ name: homeCfg });
       if (group) {
         const eligible = await getEligiblePage(group, req, res);
