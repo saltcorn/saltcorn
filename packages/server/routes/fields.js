@@ -363,7 +363,6 @@ const fieldFlow = (req) =>
           const fkey_opts = [
             "File",
             ...tables
-              .filter((t) => !t.provider_name && !t.external)
               .map((t) => `Key to ${t.name}`),
           ];
           const form = await fieldForm(
