@@ -287,6 +287,24 @@ async function loginFormSubmit(e, entryView) {
   }
 }
 
+async function loginWith(strategyName) {
+  try {
+    console.log("login with", strategyName);
+    const methods = parent.saltcorn.data.state.getState().auth_methods;
+    if (!methods[strategyName])
+      throw new Error(`No such auth strategy: ${strategyName}`);
+    const modName = methods[strategyName].module_name;
+    if (!modName)
+      throw new Error(`Module name for '${strategyName}' is not defined.`);
+    const authModule = parent.saltcorn.mobileApp.plugins[modName];
+    if (!authModule)
+      throw new Error(`Authentication module '${modName}' not found.`);
+    await authModule.startLogin(strategyName);
+  } catch (error) {
+    parent.saltcorn.mobileApp.common.errorAlert(error);
+  }
+}
+
 async function local_post_btn(e) {
   try {
     showLoadSpinner();

@@ -221,7 +221,8 @@ export function androidFeatures() {
 export async function modifyAndroidManifest(
   buildDir: string,
   allowShareTo: boolean,
-  allowFCM: boolean
+  allowFCM: boolean,
+  allowAuthIntent: boolean
 ) {
   console.log("modifyAndroidManifest");
   try {
@@ -302,6 +303,28 @@ export async function modifyAndroidManifest(
       ];
     }
 
+    if (allowAuthIntent) {
+      parsed.manifest.application[0].activity[0]["intent-filter"] = [
+        ...(parsed.manifest.application[0].activity[0]["intent-filter"] || []),
+        {
+          $: { "android:autoVerify": "true" },
+          action: [{ $: { "android:name": "android.intent.action.VIEW" } }],
+          category: [
+            { $: { "android:name": "android.intent.category.DEFAULT" } },
+            { $: { "android:name": "android.intent.category.BROWSABLE" } },
+          ],
+          data: [
+            {
+              $: {
+                "android:scheme": "mobileapp",
+                "android:host": "auth",
+                "android:path": "/callback",
+              },
+            },
+          ],
+        },
+      ];
+    }
     const xmlBuilder = new Builder();
     const newCfg = xmlBuilder.buildObject(parsed);
     writeFileSync(androidManifest, newCfg);
@@ -312,6 +335,18 @@ export async function modifyAndroidManifest(
       }`
     );
   }
+}
+
+export function hasAuthMethod(plugins: string[]) {
+  console.log("hasAuthMethod", plugins);
+  const state = getState();
+  for (const pluginName of plugins) {
+    const plugin = state!.plugins[pluginName];
+    console.log("plugin", pluginName, plugin);
+
+    if (plugin && plugin.authentication) return true;
+  }
+  return false;
 }
 
 export function writeDataExtractionRules(buildDir: string) {

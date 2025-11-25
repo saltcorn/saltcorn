@@ -219,17 +219,6 @@ const onResume = async () => {
         await startOfflineMode();
         clearHistory();
         if (mobileConfig.user?.id) await gotoEntryView();
-        else {
-          const decodedJwt = jwtDecode(mobileConfig.jwt);
-          mobileConfig.user = decodedJwt.user;
-          mobileConfig.isPublicUser = false;
-        }
-        addRoute({ route: mobileConfig.entry_point, query: undefined });
-        const page = await router.resolve({
-          pathname: mobileConfig.entry_point,
-          fullWrap: true,
-          alerts: [],
-        });
       } catch (error) {
         await showErrorPage(error);
       }
@@ -337,7 +326,7 @@ const readSchemaIfNeeded = async () => {
   }
 };
 
-const readSiteLogo = async (state) => {
+const readSiteLogo = async () => {
   if (Capacitor.platform === "web") return "";
   try {
     const base64 = await readTextCordova(
@@ -379,6 +368,28 @@ export async function init(mobileConfig) {
 
     App.addListener("backButton", async ({ canGoBack }) => {
       await saltcorn.mobileApp.navigation.goBack(1, true);
+    });
+
+    App.addListener("appUrlOpen", async (event) => {
+      try {
+        const url = event.url;
+        if (url.startsWith("mobileapp://auth/callback")) {
+          const token = new URL(url).searchParams.get("token");
+          const method = new URL(url).searchParams.get("method");
+          const methods = saltcorn.data.state.getState().auth_methods;
+          if (!methods[method])
+            throw new Error(`Authentication method '${method}' not found.`);
+          const modName = methods[method].module_name;
+          if (!modName)
+            throw new Error(`Module name for '${method}' is not defined.`);
+          const authModule = saltcorn.mobileApp.plugins[modName];
+          if (!authModule)
+            throw new Error(`Authentication module '${modName}' not found.`);
+          await authModule.finishLogin(token);
+        }
+      } catch (error) {
+        await showErrorPage(error);
+      }
     });
 
     const lastLocation = takeLastLocation();

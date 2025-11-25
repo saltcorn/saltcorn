@@ -38,6 +38,15 @@ const getAuthLinks = (current, entryPoint) => {
     links.signup = "javascript:execLink('/auth/signup')";
   if (state.getConfig("public_user_link"))
     links.publicUser = `javascript:publicLogin('${entryPoint}')`;
+  for (const [name, auth] of Object.entries(state.auth_methods)) {
+    links.methods.push({
+      icon: auth.icon,
+      label: auth.label,
+      name,
+      url: `javascript:loginWith('${name}')`,
+    });
+  }
+
   return links;
 };
 
@@ -87,6 +96,7 @@ const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
       ...(roleHeaders ? roleHeaders : []),
     ],
     csrfToken: false,
+    req: new MobileRequest(),
   });
 };
 
@@ -107,6 +117,11 @@ const renderSignupView = (entryPoint, versionTag) => {
   });
 };
 
+/**
+ *
+ * @param {*} context
+ * @returns
+ */
 export const getLoginView = async (context) => {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   return {
@@ -119,6 +134,10 @@ export const getLoginView = async (context) => {
   };
 };
 
+/**
+ *
+ * @returns
+ */
 export const getSignupView = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   return {
@@ -127,6 +146,10 @@ export const getSignupView = async () => {
   };
 };
 
+/**
+ *
+ * @returns
+ */
 export const logoutAction = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   const response = await apiCall({ method: "GET", path: "/auth/logout" });

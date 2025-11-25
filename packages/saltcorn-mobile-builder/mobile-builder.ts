@@ -24,6 +24,7 @@ import {
   writeDataExtractionRules,
   writeNetworkSecurityConfig,
   modifyGradleConfig,
+  hasAuthMethod,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
@@ -318,7 +319,8 @@ export class MobileBuilder {
     await modifyAndroidManifest(
       this.buildDir,
       this.allowShareTo,
-      !!this.googleServicesFile
+      !!this.googleServicesFile,
+      hasAuthMethod(this.includedPlugins)
     );
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);
