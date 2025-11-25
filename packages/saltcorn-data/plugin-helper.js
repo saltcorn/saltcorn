@@ -2624,6 +2624,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
     .map((f) => f.name);
   const tbl = {
     pk_name: fields.find((f) => f.primary_key)?.name,
+    pk_type: fields.find((f) => f.primary_key)?.type,
     composite_pk_names:
       composite_pk_names.length < 2 ? null : composite_pk_names,
     getFields() {

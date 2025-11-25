@@ -618,7 +618,16 @@ class Field implements AbstractField {
       const schema = db.getTenantSchemaPrefix();
       const { getState } = require("../db/state");
       const on_delete = this.on_delete_sql;
-
+      const Table = require("./table");
+      const reftable = Table.findOne(this.reftable_name);
+      if (reftable?.external || reftable?.provider_name) {
+        const ref_pk = reftable.fields.find((f: Field) => f.primary_key);
+        if (!ref_pk)
+          throw new Error(
+            `Table ${this.reftable_name} does not have a primary key`
+          );
+        return ref_pk.sql_type;
+      }
       return `${apply(
         getState().types[
           typeof this.reftype === "string" ? this.reftype : this.reftype.name

@@ -2544,6 +2544,24 @@ describe("table providers", () => {
     assertIsSet(table);
     expect(table.min_role_read).toBe(40);
   });
+  it("should make keys to provider table", async () => {
+    const tc = await Table.create("key_to_provider");
+    await Field.create({
+      table: tc,
+      label: "Person",
+      name: "person",
+      type: "Key to JoeTable",
+    });
+    await tc.insertRow({ person: "Robinette" });
+    //db.set_sql_logging(true);
+    const rows = await tc.getJoinedRows({
+      joinFields: {
+        person_age: { ref: "person", target: "age" },
+      },
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].person_age).toBe(36);
+  });
 });
 
 describe("distance ordering", () => {
