@@ -106,7 +106,7 @@ const plugin_with_routes = () => ({
           ],
         }),
       fields: async (cfg: any) => [
-        { name: "name", label: "Name", type: "String" },
+        { name: "name", label: "Name", type: "String", primary_key: true },
         { name: "age", label: "Age", type: "Integer" },
       ],
       get_table(cfg: any) {
