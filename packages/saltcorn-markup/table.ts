@@ -85,7 +85,7 @@ const headerCell = (hdr: any, opts: any, ix: number): string => {
               {
                 type: "button",
                 class: "btn btn-secondary btn-sm mt-1",
-                onclick: "clear_state('', this)",
+                onclick: `clear_state('', ${rndid ? `document.getElementById('${rndid}')` : "this"})`,
               },
               "Clear all"
             )
