@@ -3951,6 +3951,9 @@ ${rejectDetails}`,
       const reftable = ontable || reffield.reftable_name;
       if (!reftable)
         throw new InvalidConfiguration(`Field ${ref} is not a key field`);
+      const reftable_table = reffield.reftable || Table.findOne(reftable);
+      if (reftable_table?.external || reftable_table?.provider_name) continue;
+
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);

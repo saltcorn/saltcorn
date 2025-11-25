@@ -2553,6 +2553,13 @@ describe("table providers", () => {
       type: "Key to JoeTable",
     });
     await tc.insertRow({ person: "Robinette" });
+    db.set_sql_logging(true)
+    const rows = await tc.getJoinedRows({
+      joinFields: {
+        person_age: { ref: "person", target: "age" },
+      },
+    });
+    expect(rows).toHaveLength(1);
   });
 });
 
