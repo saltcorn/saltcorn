@@ -136,7 +136,7 @@ const loadPlugin = async (plugin, force, forceFetch) => {
       );
     }
   }
-  if (res.plugin_module.user_config_form) await getState().refreshUserLayouts();
+  if (res.plugin_module.user_config_form) await getState().refresh_userlayouts();
   if (res.plugin_module.onLoad) {
     try {
       await res.plugin_module.onLoad(plugin.configuration);
@@ -189,7 +189,7 @@ const loadAllPlugins = async (force) => {
       console.error(e);
     }
   }
-  await getState().refreshUserLayouts();
+  await getState().refresh_userlayouts();
   await getState().refresh(true, true);
   if (!isRoot()) reloadAuthFromRoot();
 };

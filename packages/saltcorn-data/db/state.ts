@@ -577,7 +577,11 @@ class State {
       (this.configs.joined_real_time_socket_ids?.value || []).length > 0;
   }
 
+  //legacy
   async refreshUserLayouts() {
+    await this.refresh_userlayouts(false);
+  }
+  async refresh_userlayouts(noSignal: boolean) {
     this.userLayouts = {};
     const usersWithLayout = (await User.find({})).filter(
       (user) => user._attributes?.layout
@@ -603,6 +607,11 @@ class State {
         };
       }
     }
+    if (!noSignal && db.is_node)
+      this.processSend({
+        refresh: "userlayouts",
+        tenant: db.getTenantSchema(),
+      });
   }
 
   /**
