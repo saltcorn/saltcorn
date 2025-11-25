@@ -50,6 +50,7 @@ const runPage = async (page, req, res, tic) => {
   // let resultCollector = {};
   if (role <= page.min_role) {
     const contents = await page.run(req.query, { res, req });
+    if (!contents) return;
     const title = scan_for_page_title(contents, page.title);
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();

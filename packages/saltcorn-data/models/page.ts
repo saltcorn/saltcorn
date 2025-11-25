@@ -238,7 +238,7 @@ class Page implements AbstractPage {
    * @param extraArgs
    * @returns {Promise<any>}
    */
-  async run(querystate: any, extraArgs: RunExtra): Promise<Layout> {
+  async run(querystate: any, extraArgs: RunExtra): Promise<Layout | null> {
     require("../db/state")
       .getState()
       .log(5, `Run page ${this.name} with query ${JSON.stringify(querystate)}`);
@@ -373,6 +373,7 @@ class Page implements AbstractPage {
       }
     });
     const pagename = this.name;
+    let exit_from_redirect = false;
     await traverse(this.layout, {
       async action(segment: any) {
         if (segment.action_style === "on_page_load") {
@@ -390,6 +391,11 @@ class Page implements AbstractPage {
             req: extraArgs.req,
             res: extraArgs.res,
           });
+          if (actionResult?.goto && extraArgs?.res) {
+            extraArgs.res.redirect(actionResult?.goto);
+            exit_from_redirect = true;
+            return;
+          }
           if (actionResult)
             segment.contents = script(
               domReady(`common_done(${JSON.stringify(actionResult)})`)
@@ -467,7 +473,7 @@ class Page implements AbstractPage {
         }
       },
     });
-
+    if (exit_from_redirect) return null;
     translateLayout(this.layout, extraArgs.req.getLocale());
     return this.layout;
   }
