@@ -30,7 +30,7 @@ const resizer = require("resize-with-sharp-or-jimp");
  * and install the capacitor and cordova modules to node_modules (cap sync will be run later)
  * @param buildDir directory where the app will be build
  * @param templateDir directory of the template code that will be copied to 'buildDir'
- * @param fcmEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications@6.0.4"
+ * @param fcmEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications"
  */
 export function prepareBuildDir(
   buildDir: string,
@@ -55,19 +55,19 @@ export function prepareBuildDir(
 
   console.log("installing capacitor deps and plugins");
   const capDepsAndPlugins = [
-    "@capacitor/cli@6.1.2",
-    "@capacitor/core@6.1.2",
+    "@capacitor/cli@7.4.4",
+    "@capacitor/core@7.4.4",
     "@capacitor/assets@3.0.5",
-    "@capacitor/filesystem@6.0.2",
-    "@capacitor/camera@6.1.1",
-    "@capacitor/network@6.0.3",
-    "@capacitor-community/sqlite@6.0.2",
-    "@capacitor/screen-orientation@6.0.3",
-    "@capacitor/app@6.0.2",
-    "send-intent@6.0.3",
+    "@capacitor/filesystem@7.1.5",
+    "@capacitor/camera@7.0.2",
+    "@capacitor/network@7.0.2",
+    "@capacitor-community/sqlite@7.0.2",
+    "@capacitor/screen-orientation@7.0.2",
+    "@capacitor/app@7.1.0",
+    "send-intent@7.0.0",
     ...additionalPlugins,
     ...(fcmEnabled
-      ? ["@capacitor/device@6.0.2", "@capacitor/push-notifications@6.0.4"]
+      ? ["@capacitor/device@7.0.2", "@capacitor/push-notifications@7.0.3"]
       : []),
   ];
   console.log("capDepsAndPlugins", capDepsAndPlugins);

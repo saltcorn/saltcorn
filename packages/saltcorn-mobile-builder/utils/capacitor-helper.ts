@@ -149,7 +149,7 @@ export class CapacitorHelper {
     const addFn = (platform: string) => {
       let result = spawnSync(
         "npm",
-        ["install", `@capacitor/${platform}@6.1.2`],
+        ["install", `@capacitor/${platform}@7.4.4`],
         {
           cwd: this.buildDir,
           maxBuffer: 1024 * 1024 * 10,
@@ -180,7 +180,8 @@ export class CapacitorHelper {
             `\n\n${result.error.toString()}`
         );
     };
-    for (const platform of this.platforms) if (platform !== "web") addFn(platform);
+    for (const platform of this.platforms)
+      if (platform !== "web") addFn(platform);
   }
 
   public generateAssets() {

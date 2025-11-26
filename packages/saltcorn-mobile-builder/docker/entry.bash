@@ -18,11 +18,12 @@ echo "KEYSTORE_FILE: $KEYSTORE_FILE"
 echo "KEYSTORE_ALIAS: $KEYSTORE_ALIAS"
 #echo "KEYSTORE_PASSWORD: $KEYSTORE_PASSWORD"
 
-export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+export JAVA_HOME=/opt/java/openjdk
+export PATH="$JAVA_HOME/bin:$PATH"
 export ANDROID_SDK_ROOT=/android_sdk
 export ANDROID_HOME=/android_sdk
-export GRADLE_HOME=/opt/gradle-8.4
-export PATH=$PATH:/opt/gradle-8.4/bin
+export GRADLE_HOME=/opt/gradle-8.9
+export PATH=$PATH:/opt/gradle-8.9/bin
 
 # data extraction rules
 cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/data_extraction_rules.xml
@@ -60,7 +61,7 @@ npx cap sync
 cat <<EOF > /saltcorn-mobile-app/android/gradle/wrapper/gradle-wrapper.properties
 distributionBase=GRADLE_USER_HOME
 distributionPath=wrapper/dists
-distributionUrl=file\:/gradle-8.4-all.zip
+distributionUrl=file\:/gradle-8.9-all.zip
 networkTimeout=10000
 validateDistributionUrl=true
 zipStoreBase=GRADLE_USER_HOME
