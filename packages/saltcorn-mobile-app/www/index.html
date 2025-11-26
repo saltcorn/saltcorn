@@ -16,7 +16,7 @@
       if (window.saltcorn) window.saltcorn.mobileApp = mobileApp;
       else window.saltcorn = { mobileApp };
 
-      if (Capacitor.platform !== "web") {
+      if (Capacitor.getPlatform() !== "web") {
         document.addEventListener("deviceready", () => {
           saltcorn.mobileApp.init(_sc_mobile_config);
         });

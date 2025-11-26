@@ -171,7 +171,7 @@ const initI18Next = async () => {
   for (const key of Object.keys(
     saltcorn.data.models.config.available_languages
   )) {
-    if (Capacitor.platform !== "web") {
+    if (Capacitor.getPlatform() !== "web") {
       const localeFile = await readJSONCordova(
         `${key}.json`,
         `${cordova.file.applicationDirectory}public/data/locales`
@@ -306,7 +306,7 @@ const postShare = async (shareData) => {
 };
 
 const readSchemaIfNeeded = async () => {
-  if (Capacitor.platform !== "web") {
+  if (Capacitor.getPlatform() !== "web") {
     let tablesJSON = null;
     const { created_at } = await readJSONCordova(
       "tables_created_at.json",
@@ -327,7 +327,7 @@ const readSchemaIfNeeded = async () => {
 };
 
 const readSiteLogo = async () => {
-  if (Capacitor.platform === "web") return "";
+  if (Capacitor.getPlatform() === "web") return "";
   try {
     const base64 = await readTextCordova(
       "encoded_site_logo.txt",
@@ -358,7 +358,7 @@ const getEntryPoint = (roleId, state, mobileConfig) => {
 // device is ready
 export async function init(mobileConfig) {
   try {
-    if (Capacitor.platform === "web") {
+    if (Capacitor.getPlatform() === "web") {
       defineCustomElements(window);
       await customElements.whenDefined("jeep-sqlite");
       const jeepSqlite = document.createElement("jeep-sqlite");
@@ -428,10 +428,10 @@ export async function init(mobileConfig) {
     state.mobileConfig.networkState = (
       await Network.getStatus()
     ).connectionType;
-    if (Capacitor.platform === "android") {
+    if (Capacitor.getPlatform() === "android") {
       const shareData = await checkSendIntentReceived();
       if (shareData) return await postShare(shareData);
-    } else if (Capacitor.platform === "ios") {
+    } else if (Capacitor.getPlatform() === "ios") {
       window.addEventListener("sendIntentReceived", async () => {
         const shareData = await checkSendIntentReceived();
         if (shareData && notEmpty(shareData)) return await postShare(shareData);
@@ -486,7 +486,7 @@ export async function init(mobileConfig) {
         }
       }
 
-      if (Capacitor.platform === "ios") {
+      if (Capacitor.getPlatform() === "ios") {
         const shareData = await checkSendIntentReceived();
         if (shareData && notEmpty(shareData)) return await postShare(shareData);
       }
