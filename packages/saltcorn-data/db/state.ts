@@ -1625,6 +1625,7 @@ const features = {
   stringify_json_fields: true,
   dynamic_auth_parameters: true,
   capacitor: true,
+  capacitor_version: 7,
   workflows: true,
   metadata: true,
   multitype_fieldviews: true,
