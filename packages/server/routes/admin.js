@@ -3243,7 +3243,7 @@ router.get(
                                 ? div(
                                     {
                                       id: "mismatchBoxId",
-                                      class: "mt-3 p-3 border rounded bg-light",
+                                      class: "mt-3 p-3 border rounded",
                                     },
                                     div(
                                       {
