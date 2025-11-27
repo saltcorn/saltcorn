@@ -1186,7 +1186,7 @@ function check_capacitor_builder() {
         if (res.version !== res.sc_version) {
           $("#dockerBuilderStatusId").html(`
     <div
-      id="mismatchBoxId" class="mt-3 p-3 border rounded bg-light"
+      id="mismatchBoxId" class="mt-3 p-3 border rounded"
     >
       <div
         class="d-flex align-items-center mb-2"

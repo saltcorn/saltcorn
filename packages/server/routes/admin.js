@@ -2897,6 +2897,28 @@ router.get(
                       )
                     )
                   ),
+                  // show continue as public user link
+                  div(
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-4" },
+                      input({
+                        type: "checkbox",
+                        id: "showContAsPublId",
+                        class: "form-check-input me-2",
+                        name: "showContinueAsPublicUser",
+                        checked:
+                          builderSettings.showContinueAsPublicUser === "on",
+                      }),
+                      label(
+                        {
+                          for: "showContAsPublId",
+                          class: "form-label",
+                        },
+                        req.__("Show 'Continue as public user' link")
+                      )
+                    )
+                  ),
                   // allow offline mode box
                   div(
                     { class: "row pb-2" },
@@ -3221,7 +3243,7 @@ router.get(
                                 ? div(
                                     {
                                       id: "mismatchBoxId",
-                                      class: "mt-3 p-3 border rounded bg-light",
+                                      class: "mt-3 p-3 border rounded",
                                     },
                                     div(
                                       {
@@ -3844,6 +3866,7 @@ router.post(
       serverURL,
       splashPage,
       autoPublicLogin,
+      showContinueAsPublicUser,
       allowOfflineMode,
       synchedTables,
       includedPlugins,
@@ -3977,6 +4000,8 @@ router.post(
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
     if (allowShareTo) spawnParams.push("--allowShareTo");
     if (autoPublicLogin) spawnParams.push("--autoPublicLogin");
+    if (showContinueAsPublicUser)
+      spawnParams.push("--showContinueAsPublicUser");
     if (synchedTables.length > 0)
       spawnParams.push("--synchedTables", ...synchedTables.map((tbl) => tbl));
     if (includedPlugins.length > 0)

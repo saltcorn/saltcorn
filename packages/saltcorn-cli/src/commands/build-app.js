@@ -135,6 +135,7 @@ class BuildAppCommand extends Command {
         serverURL: flags.serverURL,
         splashPage: flags.splashPage,
         autoPublicLogin: flags.autoPublicLogin,
+        showContinueAsPublicUser: flags.showContinueAsPublicUser,
         allowOfflineMode: flags.allowOfflineMode,
         allowShareTo: flags.allowShareTo,
         plugins: await this.uniquePlugins(flags.includedPlugins),
@@ -300,6 +301,12 @@ BuildAppCommand.flags = {
     name: "auto public login",
     string: "autoPublicLogin",
     description: "Show public entry points before the login as a public user.",
+  }),
+  showContinueAsPublicUser: Flags.boolean({
+    name: "show continue as public user",
+    string: "showContinueAsPublicUser",
+    description:
+      "Show a button to continue as public user on the login screen.",
   }),
   allowOfflineMode: Flags.boolean({
     name: "Allow offline mode",

@@ -825,6 +825,7 @@ export function writeCfgFile({
   synchedTables,
   tenantAppName,
   autoPublicLogin,
+  showContinueAsPublicUser,
   allowOfflineMode,
   allowShareTo,
 }: any) {
@@ -838,6 +839,7 @@ export function writeCfgFile({
     localUserTables,
     synchedTables,
     autoPublicLogin,
+    showContinueAsPublicUser,
     allowOfflineMode,
     allowShareTo,
   };

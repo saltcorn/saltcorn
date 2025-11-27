@@ -33,10 +33,11 @@ const prepareAuthForm = () => {
 const getAuthLinks = (current, entryPoint) => {
   const links = { methods: [] };
   const state = saltcorn.data.state.getState();
+  const mobileConfig = state.mobileConfig;
   if (current !== "login") links.login = "javascript:execLink('/auth/login')";
   if (current !== "signup" && state.getConfig("allow_signup"))
     links.signup = "javascript:execLink('/auth/signup')";
-  if (state.getConfig("public_user_link"))
+  if (mobileConfig.showContinueAsPublicUser)
     links.publicUser = `javascript:publicLogin('${entryPoint}')`;
   for (const [name, auth] of Object.entries(state.auth_methods)) {
     links.methods.push({

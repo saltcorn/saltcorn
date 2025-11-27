@@ -605,6 +605,7 @@ export type MobileConfig = {
   localTableIds: number[];
   synchedTables: string[];
   autoPublicLogin: boolean;
+  showContinueAsPublicUser?: boolean;
   allowOfflineMode?: boolean;
   allowShareTo?: boolean;
   isOfflineMode?: boolean;

@@ -269,7 +269,6 @@ const getAuthLinks = (current, noMethods, req) => {
  */
 const loginWithJwt = async (email, password, saltcornApp, res, req) => {
   const loginFn = async () => {
-    const publicUserLink = getState().getConfig("public_user_link");
     const jwt_secret = db.connectObj.jwt_secret;
     if (email !== undefined && password !== undefined) {
       // with credentials
@@ -301,7 +300,7 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
           ],
         });
       }
-    } else if (publicUserLink) {
+    } else {
       // public login
       const token = jwt.sign(
         {
@@ -318,12 +317,6 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
         jwt_secret
       );
       res.json(token);
-    } else {
-      res.json({
-        alerts: [
-          { type: "danger", msg: req.__("The public login is deactivated") },
-        ],
-      });
     }
   };
   if (saltcornApp && saltcornApp !== db.connectObj.default_schema) {

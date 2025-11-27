@@ -70,6 +70,7 @@ type MobileBuilderConfig = {
   serverURL: string;
   splashPage?: string;
   autoPublicLogin: string;
+  showContinueAsPublicUser?: boolean;
   allowOfflineMode: string;
   plugins: Plugin[];
   copyTargetDir?: string;
@@ -105,6 +106,7 @@ export class MobileBuilder {
   serverURL: string;
   splashPage?: string;
   autoPublicLogin: string;
+  showContinueAsPublicUser: boolean;
   allowOfflineMode: string;
   pluginManager: any;
   plugins: Plugin[];
@@ -149,6 +151,7 @@ export class MobileBuilder {
     this.serverURL = cfg.serverURL;
     this.splashPage = cfg.splashPage;
     this.autoPublicLogin = cfg.autoPublicLogin;
+    this.showContinueAsPublicUser = !!cfg.showContinueAsPublicUser;
     this.allowOfflineMode = cfg.allowOfflineMode;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
@@ -236,6 +239,7 @@ export class MobileBuilder {
         synchedTables: this.synchedTables,
         tenantAppName: this.tenantAppName,
         autoPublicLogin: this.autoPublicLogin,
+        showContinueAsPublicUser: this.showContinueAsPublicUser,
         allowOfflineMode: this.allowOfflineMode,
         allowShareTo: this.allowShareTo,
       });
