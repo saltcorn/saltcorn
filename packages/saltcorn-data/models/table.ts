@@ -3113,8 +3113,9 @@ class Table implements AbstractTable {
         delimiter: options?.delimiter || "auto",
         noheader: true,
       }).fromString(headerStr); // todo argument type unknown
-    } catch (e) {
-      return { error: `Error processing CSV file header: ${headerStr}` };
+    } catch (e: any) {
+      console.error(e);
+      return { error: `Error processing CSV file header: ${e.message || e}` };
     }
     const fields = this.fields.filter((f) => !f.calculated);
     const okHeaders: any = {};
