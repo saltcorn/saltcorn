@@ -32,6 +32,8 @@ import {
   buildTableCaches,
 } from "@saltcorn/common-code";
 
+import Editor, { useMonaco } from "@monaco-editor/react";
+
 export /**
  * @param {object} props
  * @param {string} props.name
@@ -318,6 +320,15 @@ const ViewLinkSettings = () => {
                 value={extra_state_fml}
                 onChange={setAProp("extra_state_fml")}
                 spellCheck={false}
+              />
+              <Editor
+                height="18px"
+                defaultLanguage="mySpecialLanguage"
+                defaultValue="{}"
+                //onMount={handleEditorDidMount}
+                //beforeMount={handleEditorWillMount}
+                //options={DefaultOptions}
+                //theme="myCoolTheme"
               />
               {errorString ? (
                 <small className="text-danger font-monospace d-block">
