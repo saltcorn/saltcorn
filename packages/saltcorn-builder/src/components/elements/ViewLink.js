@@ -362,7 +362,6 @@ const ViewLinkSettings = () => {
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
       <table>
         <tbody>
-          <MinRoleSettingRow minRole={minRole} setProp={setProp} />
           {use_view_name ? (
             <tr>
               <td colSpan="2">
