@@ -682,7 +682,11 @@ router.get(
                 pre(
                   {
                     class: "mermaid",
-                    style: "height: calc(100vh - 250px); color: transparent;",
+                    style:
+                      "height: calc(100vh - 250px); color: transparent;" +
+                      (req.isRTL
+                        ? " direction: ltr; unicode-bidi: isolate;"
+                        : ""),
                   },
                   buildMermaidMarkup(tables)
                 ),

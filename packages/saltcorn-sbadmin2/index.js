@@ -410,6 +410,7 @@ const wrapIt = (headers, title, bodyAttr, rest, req) =>
 
     <!-- Custom styles for this template-->
     <link rel="stylesheet" href="${linkPrefix()}/public/sbadmin2${verstring}/sb-admin-2.min.css">
+    ${req?.isRTL ? `<link rel="stylesheet" href="${linkPrefix()}/public/sbadmin2${verstring}/bootstrap.rtl.min.css">` : ""}
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
