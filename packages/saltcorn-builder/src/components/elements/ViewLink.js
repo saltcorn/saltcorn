@@ -322,9 +322,13 @@ const ViewLinkSettings = () => {
                 spellCheck={false}
               />
               <Editor
-                height="18px"
-                defaultLanguage="mySpecialLanguage"
-                defaultValue="{}"
+                height="36px"
+                value={extra_state_fml}
+                onChange={(value) =>
+                  setProp((prop) => (prop.extra_state_fml = value))
+                }
+                defaultLanguage="JavaScript"
+
                 //onMount={handleEditorDidMount}
                 //beforeMount={handleEditorWillMount}
                 //options={DefaultOptions}
