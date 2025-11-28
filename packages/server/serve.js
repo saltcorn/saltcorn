@@ -170,10 +170,18 @@ const getMultiNodeListener = (client) => {
       else {
         try {
           const payload = JSON.parse(msg.payload);
-          Object.entries(cluster.workers).forEach(([wpid, w]) => {
-            w.send(payload);
-          });
-          workerDispatchMsg(payload); //also master
+          if (payload.dynamic_update) {
+            const workers = Object.values(cluster.workers || {});
+            if (workers.length > 0) {
+              // use only one worker, master has no serversocket
+              workers[0].send(payload);
+            }
+          } else {
+            Object.entries(cluster.workers).forEach(([wpid, w]) => {
+              w.send(payload);
+            });
+            workerDispatchMsg(payload); //also master
+          }
         } catch (e) {
           getState().log(
             2,
@@ -190,8 +198,13 @@ const getMultiNodeListener = (client) => {
  * @param {object} opts
  * @param {boolean} opts.disableMigrate
  * @param {boolean} [useClusterAdaptor = true]
+ * @param {any} multiNodeClient pg client for multi-node LISTEN/NOTIFY
  */
-const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
+const initMaster = async (
+  { disableMigrate },
+  useClusterAdaptor = true,
+  multiNodeClient
+) => {
   let sql_log;
   try {
     sql_log = await getConfig("log_sql");
@@ -222,8 +235,7 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   if (getState().getConfig("log_sql", false)) db.set_sql_logging();
 
   // listen on node updates channel for this tenant
-  if (db.connectObj.multi_node)
-    await getMultiNodeListener(await db.getClient())();
+  if (db.connectObj.multi_node) await getMultiNodeListener(multiNodeClient)();
 
   if (db.is_it_multi_tenant()) {
     const tenants = await getAllTenants();
@@ -256,6 +268,14 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   if (!getState()) {
     console.error("no State for tenant", tenant);
     return;
+  }
+  if (msg.dynamic_update) {
+    getState().emitDynamicUpdate(
+      tenant || "public",
+      msg.dynamic_update,
+      msg.userIds,
+      true
+    );
   }
   if (msg.refresh) {
     if (msg.refresh === "ephemeral_config")
@@ -316,6 +336,8 @@ const onMessageFromWorker =
     } else if (msg === "RestartServer") {
       process.exit(0);
       return true;
+    } else if (msg.dynamic_update && nodesDispatchMsg) {
+      nodesDispatchMsg(msg);
     } else if (msg.tenant || msg.createTenant) {
       ///ie from saltcorn
       //broadcast
@@ -379,8 +401,9 @@ module.exports =
     };
 
     let nodesDispatchMsg = null;
+    let multiNodeClient = null;
     if (db.connectObj.multi_node) {
-      const client = await db.getClient();
+      multiNodeClient = await db.getClient();
       nodesDispatchMsg = async ({ tenant, ...msg }) => {
         if (tenant) {
           db.runWithTenant(tenant, () => nodesDispatchMsg(msg));
@@ -391,9 +414,10 @@ module.exports =
           msg.installPlugin ||
           msg.removePlugin ||
           msg.refresh_plugin_cfg ||
+          msg.dynamic_update ||
           (msg.refresh && msg.refresh !== "ephemeral_config")
         ) {
-          await client.query(
+          await multiNodeClient.query(
             `NOTIFY ${db.getTenantSchema()}_events, '${JSON.stringify(msg)}'`
           );
         }
@@ -471,7 +495,7 @@ module.exports =
             getState().processSend("Start");
           })
           .master(() => {
-            initMaster(appargs).then(initMasterListeners);
+            initMaster(appargs, true, multiNodeClient).then(initMasterListeners);
           });
 
         return; // none of stuff below will execute
@@ -481,7 +505,7 @@ module.exports =
 
     if (cluster.isMaster) {
       const forkAnyWorkers = useNCpus > 1 && process.platform !== "win32";
-      await initMaster(appargs, forkAnyWorkers);
+      await initMaster(appargs, forkAnyWorkers, multiNodeClient);
 
       if (forkAnyWorkers) {
         for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());

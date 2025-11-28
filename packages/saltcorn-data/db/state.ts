@@ -1325,13 +1325,26 @@ class State {
    * @param ten
    * @param data
    * @param userIds - optional array of user IDs to send the update to
+   * @param noMultiNodePropagate - if true, do not propagate to other nodes in multi-node setup
    */
-  emitDynamicUpdate(ten: string, data: any, userIds?: number[]) {
+  emitDynamicUpdate(
+    ten: string,
+    data: any,
+    userIds?: number[],
+    noMultiNodePropagate?: boolean
+  ) {
     if (!this.hasJoinedDynamicUpdateSockets) {
       this.log(5, "emitDynamicUpdate called, but no clients are joined yet");
       return;
     }
     globalDynamicUpdateEmitter(ten, data, userIds);
+    if (!noMultiNodePropagate && db.connectObj.multi_node) {
+      this.processSend({
+        dynamic_update: data,
+        tenant: ten,
+        userIds: userIds || [],
+      });
+    }
   }
 
   get icons() {
