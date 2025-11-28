@@ -327,8 +327,7 @@ const ViewLinkSettings = () => {
                 onChange={(value) =>
                   setProp((prop) => (prop.extra_state_fml = value))
                 }
-                defaultLanguage="JavaScript"
-
+                defaultLanguage="javascript"
                 //onMount={handleEditorDidMount}
                 //beforeMount={handleEditorWillMount}
                 options={EditorOptions}
@@ -431,7 +430,6 @@ ViewLink.craft = {
   },
 };
 
-
 const EditorOptions = {
   fontSize: "14px",
   fontWeight: "normal",
@@ -449,13 +447,13 @@ const EditorOptions = {
     horizontal: "hidden",
     vertical: "hidden",
     // avoid can not scroll page when hover monaco
-    alwaysConsumeMouseWheel: false
+    alwaysConsumeMouseWheel: false,
   },
   // disable `Find`
   find: {
     addExtraSpaceOnTop: false,
     autoFindInSelection: "never",
-    seedSearchStringFromSelection: false
+    seedSearchStringFromSelection: false,
   },
   minimap: { enabled: false },
   // see: https://github.com/microsoft/monaco-editor/issues/1746
@@ -474,12 +472,12 @@ const EditorOptions = {
   hover: {
     // unit: ms
     // default: 300
-    delay: 100
+    delay: 100,
   },
   acceptSuggestionOnEnter: "on",
   // auto adjust width and height to parent
   // see: https://github.com/Microsoft/monaco-editor/issues/543#issuecomment-321767059
   automaticLayout: true,
   // if monaco is inside a table, hover tips or completion may casue table body scroll
-  fixedOverflowWidgets: true
+  fixedOverflowWidgets: true,
 };
