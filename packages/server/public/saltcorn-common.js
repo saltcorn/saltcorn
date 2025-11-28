@@ -644,6 +644,11 @@ function get_form_data(e_in, rndid) {
   const form = $(e).closest("form");
   const data = new FormData(form[0]);
   data.append("rndid", rndid);
+  const rec = get_form_record(e_in);
+  Object.keys(rec).forEach((k) => {
+    if (data.has(k)) return;
+    data.append(k, rec[k]);
+  });
   return data;
 }
 
