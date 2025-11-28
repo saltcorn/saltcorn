@@ -949,6 +949,7 @@ const ContainerSettings = () => {
             <td colSpan={2}>
               <input
                 type="text"
+                placeholder="Example: x === y"
                 className="form-control text-to-display"
                 value={showIfFormula}
                 spellCheck={false}
