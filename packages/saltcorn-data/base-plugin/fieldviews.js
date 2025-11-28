@@ -60,6 +60,7 @@ const select = {
       help: {
         topic: "Where formula",
       },
+      attributes: { placeholder: "Example: x === $x" },
       sublabel: "Limit selectable options",
     },
     {
