@@ -149,7 +149,9 @@ const get_extra_menu = (
           ? item.label
           : user_translated !== item.label
             ? user_translated
-            : req?.__
+            : req?.__ &&
+                (["User Page", "Admin Page"].includes(item.type) ||
+                  ["Settings", "User"].includes(item.label))
               ? req.__(item.label)
               : item.label;
 
