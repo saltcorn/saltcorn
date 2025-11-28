@@ -313,6 +313,7 @@ const ViewLinkSettings = () => {
               </label>
               <input
                 type="text"
+                placeholder="Example: {x: y}"
                 className="viewlink-label form-control"
                 value={extra_state_fml}
                 onChange={setAProp("extra_state_fml")}
@@ -362,7 +363,6 @@ const ViewLinkSettings = () => {
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
       <table>
         <tbody>
-          <MinRoleSettingRow minRole={minRole} setProp={setProp} />
           {use_view_name ? (
             <tr>
               <td colSpan="2">

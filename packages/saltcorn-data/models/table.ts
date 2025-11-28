@@ -1334,7 +1334,7 @@ class Table implements AbstractTable {
       const res = await db.query(
         `select distinct "${db.sqlsanitize(fieldnm)}" from ${
           this.sql_name
-        } ${where} order by "${db.sqlsanitize(fieldnm)}" limit 500`,
+        } ${where} order by "${db.sqlsanitize(fieldnm)}" limit 1000`,
         values
       );
       return res.rows.map((r: Row) => r[fieldnm]);
@@ -1342,7 +1342,7 @@ class Table implements AbstractTable {
       const res = await db.query(
         `select distinct "${db.sqlsanitize(fieldnm)}" from ${
           this.sql_name
-        } order by "${db.sqlsanitize(fieldnm)}" limit 500`
+        } order by "${db.sqlsanitize(fieldnm)}" limit 1000`
       );
       return res.rows.map((r: Row) => r[fieldnm]);
     }
@@ -3113,8 +3113,9 @@ class Table implements AbstractTable {
         delimiter: options?.delimiter || "auto",
         noheader: true,
       }).fromString(headerStr); // todo argument type unknown
-    } catch (e) {
-      return { error: `Error processing CSV file header: ${headerStr}` };
+    } catch (e: any) {
+      console.error(e);
+      return { error: `Error processing CSV file header: ${e.message || e}` };
     }
     const fields = this.fields.filter((f) => !f.calculated);
     const okHeaders: any = {};

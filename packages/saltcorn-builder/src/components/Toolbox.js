@@ -467,6 +467,7 @@ const ActionElem = ({ connectors, options }) => (
       block={false}
       minRole={100}
       confirm={false}
+      spinner={true}
       action_label={""}
       isFormula={{}}
       rndid={rand_ident()}

@@ -156,7 +156,7 @@ const satisfies = (where: Where) => (obj: any) =>
 
 // https://gist.github.com/jadaradix/fd1ef195af87f6890448
 const getLines = (filename: string, lineCount: number): Promise<string> =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     let stream = createReadStream(filename, {
       flags: "r",
       encoding: "utf-8",
@@ -179,9 +179,9 @@ const getLines = (filename: string, lineCount: number): Promise<string> =>
       }
     });
 
-    /*stream.on("error", function () {
-    callback("Error");
-  });*/
+    stream.on("error", function (err) {
+      reject(err);
+    });
 
     stream.on("end", function () {
       resolve(lines.join("\n"));

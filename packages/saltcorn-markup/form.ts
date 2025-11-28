@@ -1511,7 +1511,6 @@ const renderFormLayout = (form: Form): string => {
         );
       }
       if (action_name === "Sign up") {
-        console.log("signup_from_edit_view", action_name);
         return mkBtn(
           `onClick="${spinnerStr}signup_from_edit_view(event)" type="button"`
         );

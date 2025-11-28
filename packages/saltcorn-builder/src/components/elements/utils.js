@@ -981,8 +981,7 @@ const ConfigField = ({
             ))}
           </select>
         );
-      } 
-      else if (field.attributes?.calcOptions) {        
+      } else if (field.attributes?.calcOptions) {
         return (
           <select
             className={`field-${field?.name} form-control form-select`}
@@ -993,18 +992,18 @@ const ConfigField = ({
             data-calc-options={encodeURIComponent(
               JSON.stringify(field.attributes.calcOptions)
             )}
-            autocomplete= {"off"}
+            autocomplete={"off"}
             data-fieldname={field?.name}
           >
             <option value=""></option>
           </select>
         );
-      }
-      else
+      } else
         return (
           <input
             type="text"
             name={field?.name}
+            placeholder={field.attributes?.placeholder || ""}
             className={`field-${field?.name} form-control`}
             value={value || ""}
             spellCheck={false}

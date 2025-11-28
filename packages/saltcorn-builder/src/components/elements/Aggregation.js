@@ -233,6 +233,7 @@ const AggregationSettings = () => {
                 type="text"
                 className="form-control"
                 value={aggwhere}
+                placeholder="Example: x === y"
                 spellCheck={false}
                 onChange={setAProp("aggwhere")}
                 onInput={(e) => validate_expression_elem($(e.target))}
