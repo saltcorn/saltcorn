@@ -2,18 +2,48 @@ import React, { Fragment, useState, useEffect, useRef } from "react";
 import optionsCtx from "../context";
 
 import Editor, { useMonaco } from "@monaco-editor/react";
-//https://codesandbox.io/p/sandbox/react-monaco-single-line-forked-nsmhp6?file=%2Fsrc%2FApp.js%3A28%2C31
+
+// for code ending in return: https://github.com/microsoft/monaco-editor/issues/1661
+
+/*
+  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+      //noSemanticValidation: false,
+      //noSyntaxValidation: false,
+      diagnosticCodesToIgnore: [/ * top-level return * / 1108],
+    });
+  
+*/
+
+const scTypeToTsType = (tynm) => {
+  return (
+    {
+      String: "string",
+      Integer: "number",
+      Float: "number",
+      Bool: "boolean",
+      Date: "Date",
+      HTML: "string",
+    }[tynm] || "any"
+  );
+};
 export const SingleLineEditor = ({ setProp, value, propKey }) => {
+  const options = React.useContext(optionsCtx);
+
   const handleEditorWillMount = (monaco) => {
     monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
       noLib: true,
       allowNonTsExtensions: true,
     });
-    monaco.languages.typescript.typescriptDefaults.addExtraLib(
+    /*monaco.languages.typescript.typescriptDefaults.addExtraLib(
       [
         "declare function Foo(a: number,b: number, name: string (optional)) :void",
         "const someString: string ",
       ].join("\n")
+    );*/
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(
+      options.fields
+        .map((f) => `const ${f.name}: ${scTypeToTsType(f.type)}`)
+        .join("\n")
     );
   };
   return (
@@ -35,6 +65,7 @@ export const SingleLineEditor = ({ setProp, value, propKey }) => {
   );
 };
 
+//https://codesandbox.io/p/sandbox/react-monaco-single-line-forked-nsmhp6?file=%2Fsrc%2FApp.js%3A28%2C31
 const singleLineEditorOptions = {
   fontSize: "14px",
   fontWeight: "normal",
