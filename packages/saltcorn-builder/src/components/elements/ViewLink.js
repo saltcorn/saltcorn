@@ -245,7 +245,6 @@ const ViewLinkSettings = () => {
     value: name,
   }));
   const selectedView = viewOptions.find((v) => v.value === use_view_name);
-  console.log({extra_state_fml})
   return (
     <div>
       <table className="w-100">
@@ -316,7 +315,7 @@ const ViewLinkSettings = () => {
              <SingleLineEditor 
                 setProp={setProp} 
                 value={extra_state_fml}
-                key="extra_state_fml"
+                propKey="extra_state_fml"
              />
               {errorString ? (
                 <small className="text-danger font-monospace d-block">

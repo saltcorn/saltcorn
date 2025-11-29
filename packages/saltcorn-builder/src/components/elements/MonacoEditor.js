@@ -3,14 +3,13 @@ import optionsCtx from "../context";
 
 import Editor, { useMonaco } from "@monaco-editor/react";
 
-export const SingleLineEditor = ({setProp, value, key}) =>
+export const SingleLineEditor = ({setProp, value, propKey}) =>
      <div className="form-control p-0 pt-2">
         <Editor
             height="26px"
             value={value}
             onChange={(value) =>{
-                console.log("got value", value)
-                setProp((prop) => (prop[key] = value))}
+                setProp((prop) => (prop[propKey] = value))}
             }
             defaultLanguage="javascript"
             //onMount={handleEditorDidMount}
