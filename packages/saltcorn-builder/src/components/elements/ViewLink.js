@@ -312,27 +312,21 @@ const ViewLinkSettings = () => {
               <label>
                 Extra state Formula
                 <HelpTopicLink topic="Extra state formula" {...helpContext} />
-              </label>
-              <input
-                type="text"
-                placeholder="Example: {x: y}"
-                className="viewlink-label form-control"
-                value={extra_state_fml}
-                onChange={setAProp("extra_state_fml")}
-                spellCheck={false}
-              />
-              <Editor
-                height="36px"
-                value={extra_state_fml}
-                onChange={(value) =>
-                  setProp((prop) => (prop.extra_state_fml = value))
-                }
-                defaultLanguage="javascript"
-                //onMount={handleEditorDidMount}
-                //beforeMount={handleEditorWillMount}
-                options={EditorOptions}
-                //theme="myCoolTheme"
-              />
+              </label>             
+              <div className="form-control p-0 pt-2">
+                <Editor
+                  height="26px"
+                  value={extra_state_fml}
+                  onChange={(value) =>
+                    setProp((prop) => (prop.extra_state_fml = value))
+                  }
+                  defaultLanguage="javascript"
+                  //onMount={handleEditorDidMount}
+                  //beforeMount={handleEditorWillMount}
+                  options={EditorOptions}
+                  //theme="myCoolTheme"
+                />
+              </div>
               {errorString ? (
                 <small className="text-danger font-monospace d-block">
                   {errorString}
