@@ -1,9 +1,21 @@
-import React, { Fragment, useState, useEffect } from "react";
+import React, { Fragment, useState, useEffect, useRef } from "react";
 import optionsCtx from "../context";
 
 import Editor, { useMonaco } from "@monaco-editor/react";
-
+//https://codesandbox.io/p/sandbox/react-monaco-single-line-forked-nsmhp6?file=%2Fsrc%2FApp.js%3A28%2C31
 export const SingleLineEditor = ({ setProp, value, propKey }) => {
+  const handleEditorWillMount = (monaco) => {
+    monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+      noLib: true,
+      allowNonTsExtensions: true,
+    });
+    monaco.languages.typescript.typescriptDefaults.addExtraLib(
+      [
+        "declare function Foo(a: number,b: number, name: string (optional)) :void",
+        "const someString: string ",
+      ].join("\n")
+    );
+  };
   return (
     <div className="form-control p-0 pt-2">
       <Editor
@@ -12,11 +24,12 @@ export const SingleLineEditor = ({ setProp, value, propKey }) => {
         onChange={(value) => {
           setProp((prop) => (prop[propKey] = value));
         }}
-        defaultLanguage="javascript"
+        defaultLanguage="typescript"
         //onMount={handleEditorDidMount}
         //beforeMount={handleEditorWillMount}
         options={singleLineEditorOptions}
         //theme="myCoolTheme"
+        beforeMount={handleEditorWillMount}
       />
     </div>
   );
