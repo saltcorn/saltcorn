@@ -3,22 +3,24 @@ import optionsCtx from "../context";
 
 import Editor, { useMonaco } from "@monaco-editor/react";
 
-export const SingleLineEditor = ({setProp, value, propKey}) =>
-     <div className="form-control p-0 pt-2">
-        <Editor
-            height="26px"
-            value={value}
-            onChange={(value) =>{
-                setProp((prop) => (prop[propKey] = value))}
-            }
-            defaultLanguage="javascript"
-            //onMount={handleEditorDidMount}
-            //beforeMount={handleEditorWillMount}
-            options={singleLineEditorOptions}
-            //theme="myCoolTheme"
-        />
-        </div>
-
+export const SingleLineEditor = ({ setProp, value, propKey }) => {
+  return (
+    <div className="form-control p-0 pt-2">
+      <Editor
+        height="26px"
+        value={value}
+        onChange={(value) => {
+          setProp((prop) => (prop[propKey] = value));
+        }}
+        defaultLanguage="javascript"
+        //onMount={handleEditorDidMount}
+        //beforeMount={handleEditorWillMount}
+        options={singleLineEditorOptions}
+        //theme="myCoolTheme"
+      />
+    </div>
+  );
+};
 
 const singleLineEditorOptions = {
   fontSize: "14px",

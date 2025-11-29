@@ -311,12 +311,12 @@ const ViewLinkSettings = () => {
               <label>
                 Extra state Formula
                 <HelpTopicLink topic="Extra state formula" {...helpContext} />
-              </label>             
-             <SingleLineEditor 
-                setProp={setProp} 
+              </label>
+              <SingleLineEditor
+                setProp={setProp}
                 value={extra_state_fml}
                 propKey="extra_state_fml"
-             />
+              />
               {errorString ? (
                 <small className="text-danger font-monospace d-block">
                   {errorString}
@@ -413,4 +413,3 @@ ViewLink.craft = {
     ],
   },
 };
-
