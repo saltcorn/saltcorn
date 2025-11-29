@@ -8,6 +8,20 @@
 import db from "../db";
 import { v4 as uuidv4 } from "uuid";
 import { join, parse } from "path";
+import {
+  isS3Enabled as isS3StorageEnabled,
+  listS3Folder,
+  headObject as headS3Object,
+  setObjectMetadata as setS3ObjectMetadata,
+  deleteObject as deleteS3Object,
+  copyObject as copyS3Object,
+  uploadBuffer as uploadBufferToS3,
+  downloadBuffer as downloadBufferFromS3,
+  buildKeyFromRelative as buildS3KeyFromRelative,
+  relativeKeyToPath as relativePathFromS3Key,
+  type S3HeadResult,
+  type S3ListResult,
+} from "./s3_helpers";
 const { asyncMap } = require("../utils");
 import { mkdir, unlink } from "fs/promises";
 import type {
@@ -22,6 +36,7 @@ import { renameSync, statSync, existsSync } from "fs";
 import { lookup } from "mime-types";
 import type User from "./user";
 const path = require("path");
+const posix = path.posix;
 const fsp = require("fs").promises;
 const fs = require("fs");
 const fsx = require("fs-extended-attributes");
@@ -41,6 +56,7 @@ function xattr_get(fp: string, attrName: string): Promise<string> {
 
 const dirCache: Record<string, File[] | null | "building"> = {};
 const enableDirCache: Record<string, boolean> = {};
+const DEFAULT_MIN_ROLE_READ = 100;
 
 /**
  * File Descriptor class
@@ -98,14 +114,9 @@ class File {
     where?: Where,
     selectopts: SelectOptions = {}
   ): Promise<Array<File>> {
-    const { getState } = require("../db/state");
-    const state = getState();
-
-    const useS3 = state?.getConfig("storage_s3_enabled");
-    if (useS3 || where?.inDB) {
-      if (where?.inDB) delete where.inDB;
-      const db_flds = await db.select("_sc_files", where, selectopts);
-      return db_flds.map((dbf: FileCfg) => new File(dbf));
+    const useS3 = isS3StorageEnabled();
+    if (useS3) {
+      return await File.findInS3(where, selectopts);
     } else {
       const relativeSearchFolder = where?.folder || "/";
       const tenant = db.getTenantSchema();
@@ -176,6 +187,7 @@ class File {
     else return null;
   }
   static async rootFolder(): Promise<File> {
+    if (isS3StorageEnabled()) return File.directoryFromS3Path("/");
     const tenant = db.getTenantSchema();
 
     return await File.from_file_on_disk(
@@ -184,6 +196,10 @@ class File {
     );
   }
   static absPathToServePath(absPath: string | number): string {
+    if (isS3StorageEnabled()) {
+      const rel = File.normalise(`${absPath}`);
+      return rel.startsWith("/") ? rel.slice(1) : rel;
+    }
     if (typeof absPath === "number") return `${absPath}`;
     const tenant = db.getTenantSchema();
     const s = absPath.replace(path.join(db.connectObj.file_store, tenant), "");
@@ -202,6 +218,24 @@ class File {
    * @returns
    */
   static async allDirectories(ignoreCache?: boolean): Promise<Array<File>> {
+    if (isS3StorageEnabled()) {
+      const { files } = await listS3Folder("/", { recursive: true });
+      const dirs = new Set<string>(["/"]);
+      for (const obj of files) {
+        const relPath = obj.relativePath || "";
+        const dirName = relPath.includes("/")
+          ? posix.dirname(relPath)
+          : "";
+        if (!dirName || dirName === ".") continue;
+        const parts = dirName.split("/").filter(Boolean);
+        for (let i = 1; i <= parts.length; i++) {
+          dirs.add(parts.slice(0, i).join("/"));
+        }
+      }
+      return Array.from(dirs).map((dir) =>
+        File.directoryFromS3Path(dir === "" ? "/" : dir)
+      );
+    }
     const tenant = db.getTenantSchema();
     if (!ignoreCache) {
       const cache = File.getDirCache();
@@ -266,6 +300,103 @@ class File {
   static destroyDirCache() {
     enableDirCache[db.getTenantSchema()] = false;
     dirCache[db.getTenantSchema()] = null;
+  }
+
+  private static async findInS3(
+    where?: Where,
+    selectopts: SelectOptions = {}
+  ): Promise<Array<File>> {
+    const folder = typeof where?.folder === "string" ? where.folder : "/";
+    const recursive = !!selectopts.recursive || !!where?.search;
+    const { files, directories } = await listS3Folder(folder, { recursive });
+    const results: File[] = [];
+
+    for (const dir of directories) {
+      const dirFile = File.directoryFromS3Path(dir || "/");
+      if (dirFile.filename?.startsWith(".") && !where?.hiddenFiles) continue;
+      results.push(dirFile);
+    }
+
+    const headResults = await Promise.all(
+      files.map((obj) => headS3Object(obj.relativePath))
+    );
+    for (const head of headResults) {
+      if (!head) continue;
+      const file = File.fileFromS3Head(head);
+      if (file.filename?.startsWith(".") && !where?.hiddenFiles) continue;
+      results.push(file);
+    }
+
+    let filtered = results;
+    if (where?.filename) {
+      filtered = filtered.filter((f) => f.filename === where.filename);
+    }
+    if (where?.mime_super) {
+      filtered = filtered.filter((f) => f.mime_super === where.mime_super);
+    }
+    if (where?.mime_sub) {
+      filtered = filtered.filter((f) => f.mime_sub === where.mime_sub);
+    }
+    if (where?.isDirectory !== undefined) {
+      filtered = filtered.filter(
+        (f) => !!f.isDirectory === !!where.isDirectory
+      );
+    }
+    if (where?.search) {
+      filtered = filtered.filter((f) => f.filename.includes(where.search));
+    }
+    return filtered.sort((a, b) => a.filename.localeCompare(b.filename));
+  }
+
+  private static async findOneS3(where: Where | string): Promise<File | null> {
+    if (typeof where === "string") {
+      const safePath = File.normalise(where);
+      const head = await headS3Object(safePath);
+      return head ? File.fileFromS3Head(head) : null;
+    }
+    const results = await File.findInS3(where);
+    return results[0] || null;
+  }
+
+  private static fileFromS3Head(info: S3HeadResult): File {
+    const metadata = info.metadata || {};
+    const mime = metadata.mime_super && metadata.mime_sub
+      ? `${metadata.mime_super}/${metadata.mime_sub}`
+      : File.nameToMimeType(metadata.filename || info.relativePath) || "";
+    const [mime_super, mime_sub] = mime ? mime.split("/") : ["", ""];
+    return new File({
+      filename: metadata.filename || posix.basename(info.relativePath),
+      location: info.relativePath,
+      uploaded_at: info.lastModified || new Date(),
+      size_kb: Math.max(1, Math.round((info.size || 0) / 1024)),
+      mime_super,
+      mime_sub,
+      min_role_read: metadata.min_role_read || DEFAULT_MIN_ROLE_READ,
+      user_id: metadata.user_id,
+      s3_store: true,
+    });
+  }
+
+  private static directoryFromS3Path(dirPath: string): File {
+    const normalised = File.normalise(dirPath) || "/";
+    const filename = normalised === "/" ? "/" : posix.basename(normalised);
+    return new File({
+      filename,
+      location: normalised,
+      uploaded_at: new Date(),
+      size_kb: 0,
+      mime_super: "",
+      mime_sub: "",
+      min_role_read: DEFAULT_MIN_ROLE_READ,
+      s3_store: true,
+      isDirectory: true,
+    });
+  }
+
+  private static relativeS3Path(key: string): string {
+    const normalised = File.normalise(key);
+    const rel = relativePathFromS3Key(normalised);
+    return rel.startsWith("/") ? rel.slice(1) : rel;
   }
 
   async is_symlink(): Promise<boolean> {
@@ -339,7 +470,7 @@ class File {
     if (typeof where === "string") {
       const { getState } = require("../db/state");
       const state = getState();
-      const useS3 = state?.getConfig("storage_s3_enabled");
+      const useS3 = isS3StorageEnabled();
       //legacy serving ids
       if (/^\d+$/.test(where)) {
         const legacy_file_id_locations = state?.getConfig(
@@ -356,29 +487,27 @@ class File {
       }
 
       if (useS3) {
-        const files = await File.find({ id: +where });
-        return files[0];
-      } else {
-        const tenant = db.getTenantSchema();
+        return await File.findOneS3(where);
+      }
+      const tenant = db.getTenantSchema();
 
-        const safeDir = path.normalize(where).replace(/^(\.\.(\/|\\|$))+/, "");
-        const absoluteFolder = path.join(
-          db.connectObj.file_store,
-          tenant,
-          safeDir
-        );
-        const name = path.basename(absoluteFolder);
-        const dir = path.dirname(absoluteFolder);
-        try {
-          return await File.from_file_on_disk(name, dir);
-        } catch (e: any) {
-          state?.log(2, e?.toString ? e.toString() : e);
-          return null;
-        }
+      const safeDir = path.normalize(where).replace(/^(\.\.(\/|\\|$))+/, "");
+      const absoluteFolder = path.join(
+        db.connectObj.file_store,
+        tenant,
+        safeDir
+      );
+      const name = path.basename(absoluteFolder);
+      const dir = path.dirname(absoluteFolder);
+      try {
+        return await File.from_file_on_disk(name, dir);
+      } catch (e: any) {
+        state?.log(2, e?.toString ? e.toString() : e);
+        return null;
       }
     }
     const files = await File.find(where);
-    return files.length > 0 ? new File(files[0]) : null;
+    return files.length > 0 ? files[0] : null;
   }
 
   /**
@@ -387,6 +516,23 @@ class File {
    * @param inFolder
    */
   static async new_folder(name: string, inFolder: string = ""): Promise<void> {
+    if (isS3StorageEnabled()) {
+      const folderName = File.normalise(name).replace(/\\/g, "/");
+      const parent = File.normalise(inFolder).replace(/\\/g, "/");
+      const target = [parent, folderName]
+        .filter((s) => s && s !== ".")
+        .join("/");
+      const placeholder = target
+        ? `${target.replace(/\/$/, "")}/.keep`
+        : ".keep";
+      await uploadBufferToS3(placeholder, Buffer.alloc(0), "application/octet-stream", {
+        min_role_read: DEFAULT_MIN_ROLE_READ,
+        filename: ".keep",
+        mime_super: "application",
+        mime_sub: "octet-stream",
+      });
+      return;
+    }
     const tenant = db.getTenantSchema();
 
     const safeDir = path.normalize(name).replace(/^(\.\.(\/|\\|$))+/, "");
@@ -405,8 +551,11 @@ class File {
   /**
    * Get path to serve
    */
-  get path_to_serve(): string | number {
-    if (this.s3_store && this.id) return this.id;
+  get path_to_serve(): string {
+    if (this.s3_store) {
+      const rel = File.normalise(this.location);
+      return rel.startsWith("/") ? rel.slice(1) : rel;
+    }
     const tenant = db.getTenantSchema();
     const s = this.location.replace(
       path.join(db.connectObj.file_store, tenant),
@@ -437,6 +586,11 @@ class File {
    * @param min_role_read target Role for file to read
    */
   async set_role(min_role_read: number) {
+    this.min_role_read = min_role_read;
+    if (this.s3_store) {
+      await this.persistS3Metadata();
+      return;
+    }
     if (this.id) {
       await File.update(this.id, { min_role_read });
     } else {
@@ -446,7 +600,6 @@ class File {
         `${min_role_read}`
       );
     }
-    this.min_role_read = min_role_read;
   }
 
   /**
@@ -454,12 +607,27 @@ class File {
    * @param user_id target user_id
    */
   async set_user(user_id: number) {
+    this.user_id = user_id;
+    if (this.s3_store) {
+      await this.persistS3Metadata();
+      return;
+    }
     if (this.id) {
       await File.update(this.id, { user_id });
     } else {
       await xattr_set(this.location, "user.saltcorn.user_id", `${user_id}`);
     }
-    this.user_id = user_id;
+  }
+
+  private async persistS3Metadata() {
+    if (!this.s3_store) return;
+    await setS3ObjectMetadata(this.location, {
+      min_role_read: this.min_role_read,
+      user_id: this.user_id,
+      mime_super: this.mime_super,
+      mime_sub: this.mime_sub,
+      filename: this.filename,
+    });
   }
 
   /**
@@ -468,6 +636,31 @@ class File {
    */
   async rename(filenameIn: string): Promise<void> {
     const filename = File.normalise(filenameIn);
+    if (this.s3_store) {
+      const currentDir = this.location.includes("/")
+        ? posix.dirname(this.location)
+        : "";
+      const newRel = currentDir
+        ? `${currentDir}/${filename}`.replace(/\\/g, "/")
+        : filename;
+      await copyS3Object(this.location, newRel, {
+        metadata: {
+          min_role_read: this.min_role_read,
+          user_id: this.user_id,
+          mime_super: this.mime_super,
+          mime_sub: this.mime_sub,
+          filename,
+        },
+      });
+      await deleteS3Object(this.location);
+      await File.update_table_references(
+        this.path_to_serve as string,
+        newRel
+      );
+      this.location = newRel;
+      this.filename = filename;
+      return;
+    }
     if (this.id) {
       await File.update(this.id, { filename });
     } else {
@@ -511,6 +704,31 @@ class File {
    */
   async move_to_dir(newFolder: string): Promise<void> {
     const newFolderNormd = File.normalise(newFolder);
+    if (this.s3_store) {
+      const relative = newFolderNormd
+        .replace(/\\/g, "/")
+        .replace(/^(\/)+/, "")
+        .replace(/\/$/, "");
+      const newRel = relative
+        ? `${relative}/${this.filename}`
+        : this.filename;
+      await copyS3Object(this.location, newRel, {
+        metadata: {
+          min_role_read: this.min_role_read,
+          user_id: this.user_id,
+          mime_super: this.mime_super,
+          mime_sub: this.mime_sub,
+          filename: this.filename,
+        },
+      });
+      await deleteS3Object(this.location);
+      await File.update_table_references(
+        this.path_to_serve as string,
+        newRel
+      );
+      this.location = newRel;
+      return;
+    }
     const tenant = db.getTenantSchema();
 
     const file_store = db.connectObj.file_store;
@@ -536,14 +754,15 @@ class File {
    * @returns {string} - path to file
    */
   static get_new_path(suggest?: string, renameIfExisting?: boolean): string {
-    const { getState } = require("../db/state");
-    const state = getState();
-
-    // Check if it uses S3, then use a default "saltcorn" folder
-    const useS3 = state?.getConfig("storage_s3_enabled");
+    const useS3 = isS3StorageEnabled();
     const tenant = db.getTenantSchema();
 
-    const file_store = !useS3 ? db.connectObj.file_store : "saltcorn/";
+    if (useS3) {
+      const relative = (suggest || uuidv4()).replace(/\\/g, "/");
+      return buildS3KeyFromRelative(relative);
+    }
+
+    const file_store = db.connectObj.file_store;
 
     const newFnm = suggest || uuidv4();
     let newPath = join(file_store, tenant, newFnm);
@@ -641,6 +860,12 @@ class File {
   async get_contents(
     encoding?: "utf8" | "base64" | "base64url" | "hex" | "ascii"
   ): Promise<Buffer> {
+    if (this.s3_store) {
+      const buffer = await downloadBufferFromS3(this.location);
+      return encoding
+        ? (buffer.toString(encoding) as unknown as Buffer)
+        : buffer;
+    }
     return await fsp.readFile(this.location, encoding);
   }
   /**
@@ -668,6 +893,27 @@ class File {
     // move file in file system to newPath
     const contents1 =
       contents instanceof ArrayBuffer ? Buffer.from(contents) : contents;
+    if (isS3StorageEnabled()) {
+      const relativePath = File.relativeS3Path(newPath);
+      await uploadBufferToS3(relativePath, Buffer.from(contents1), mimetype, {
+        min_role_read,
+        user_id,
+        mime_super,
+        mime_sub,
+        filename: path.basename(name),
+      });
+      return await File.create({
+        filename: path.basename(name),
+        location: relativePath,
+        uploaded_at: new Date(),
+        size_kb: Math.round(contents1.length / 1024),
+        user_id,
+        mime_super,
+        mime_sub,
+        min_role_read,
+        s3_store: true,
+      });
+    }
     await fsp.writeFile(newPath, contents1);
     // create file
     const file = await File.create({
@@ -687,7 +933,19 @@ class File {
   async overwrite_contents(
     contents: string | Buffer | ArrayBuffer
   ): Promise<void> {
-    await fsp.writeFile(this.location, contents);
+    const data =
+      contents instanceof ArrayBuffer ? Buffer.from(contents) : contents;
+    if (this.s3_store) {
+      await uploadBufferToS3(this.location, Buffer.from(data), this.mimetype, {
+        min_role_read: this.min_role_read,
+        user_id: this.user_id,
+        mime_super: this.mime_super,
+        mime_sub: this.mime_sub,
+        filename: this.filename,
+      });
+      return;
+    }
+    await fsp.writeFile(this.location, data);
   }
 
   /**
@@ -702,6 +960,19 @@ class File {
       // delete file from database
       if (this.id) await db.deleteWhere("_sc_files", { id: this.id });
       // delete name and possible file from file system
+      if (this.s3_store) {
+        if (this.isDirectory) {
+          const { files } = await listS3Folder(this.location, {
+            recursive: true,
+          });
+          for (const obj of files) {
+            await deleteS3Object(obj.relativePath);
+          }
+        } else {
+          await deleteS3Object(this.location);
+        }
+        return;
+      }
       if (unlinker) await unlinker(this);
       else if (this.isDirectory) {
         //delete all resized before attempting to delete dir
@@ -740,12 +1011,13 @@ class File {
    */
   static async create(f: FileCfg): Promise<File> {
     const file = new File(f);
-    //const { id, ...rest } = file;
-    // insert file descriptor row to database
-    //file.id = await db.insert("_sc_files", rest);
-    // refresh file list cache
-    await file.set_role(file.min_role_read);
-    if (file.user_id) await file.set_user(file.user_id);
+    if (file.s3_store) {
+      file.location = File.relativeS3Path(file.location);
+      await file.persistS3Metadata();
+    } else {
+      await file.set_role(file.min_role_read);
+      if (file.user_id) await file.set_user(file.user_id);
+    }
     return file;
   }
 

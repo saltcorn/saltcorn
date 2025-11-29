@@ -269,7 +269,10 @@ router.get(
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
       res.type(file.mimetype);
-      if (file.s3_store) s3storage.serveObject(file, res, true);
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, true);
+        return;
+      }
       else res.download(file.location, file.filename, { dotfiles: "allow" });
     } else {
       res
@@ -350,7 +353,10 @@ router.get(
         res.send(clean);
         return;
       }
-      if (file.s3_store) s3storage.serveObject(file, res, false);
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, false);
+        return;
+      }
       else res.sendFile(file.location, { dotfiles: "allow" });
     } else {
       getState().log(
@@ -396,9 +402,10 @@ router.get(
 
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
-      //TODO s3
-      if (file.s3_store) s3storage.serveObject(file, res, false);
-      else {
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, false);
+        return;
+      } else {
         const width = strictParseInt(width_str);
         const height =
           height_str && height_str !== "0" ? strictParseInt(height_str) : null;
