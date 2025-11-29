@@ -133,6 +133,10 @@ div.testrunoutput code {
 .mr-05 {
   margin-right: 0.125rem !important;
 }
+[dir="rtl"] .mr-05 {
+  margin-right: unset !important;
+  margin-left: 0.125rem !important;
+}
 
 div[data-inline-edit-dest-url] .editicon {
   visibility: hidden;
@@ -543,12 +547,20 @@ div.unread-notify {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 0.2em;
 }
+[dir="rtl"] .er-navigation-panel {
+  right: unset;
+  left: 1em;
+}
 
 .er-screenshot-panel {
   position: absolute;
   top: 1em;
   right: 1em;
   z-index: 1;
+}
+[dir="rtl"] .er-screenshot-panel {
+  right: unset;
+  left: 1em;
 }
 
 .er-up {
