@@ -175,7 +175,7 @@ const getMultiNodeListener = (client) => {
             if (workers.length > 0) {
               // use only one worker, master has no serversocket
               workers[0].send(payload);
-            }
+            } else workerDispatchMsg(payload); // only master
           } else {
             Object.entries(cluster.workers).forEach(([wpid, w]) => {
               w.send(payload);
@@ -495,7 +495,9 @@ module.exports =
             getState().processSend("Start");
           })
           .master(() => {
-            initMaster(appargs, true, multiNodeClient).then(initMasterListeners);
+            initMaster(appargs, true, multiNodeClient).then(
+              initMasterListeners
+            );
           });
 
         return; // none of stuff below will execute
@@ -522,7 +524,7 @@ module.exports =
         });
       } else {
         getState().sendMessageToWorkers = (msg) => {
-          workerDispatchMsg(msg); //also master
+          if (!msg.dynamic_update) workerDispatchMsg(msg); //also master
           if (nodesDispatchMsg)
             nodesDispatchMsg(msg).catch((e) => {
               console.log("Error sending multinode message", e.message);
