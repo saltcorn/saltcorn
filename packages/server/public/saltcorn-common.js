@@ -1303,15 +1303,20 @@ function initialize_page() {
   });
 
   const codes = [];
-  $("div.to-code").each(function () {
+  $("textarea.to-code").each(function () {
     codes.push(this);
   });
   if (codes.length > 0)
     enable_monaco(() => {
       codes.forEach((el) => {
         const value = $(el).val();
+        const enlarge = $(el).hasClass("enlarge-in-card");
+
         const div = document.createElement("div");
         el.replaceWith(div);
+        if (enlarge) {
+          enlarge_in_code(div);
+        } else div.classList.add("h-500");
         const editor = monaco.editor.create(div, {
           value,
           language: "typescript",
@@ -1446,18 +1451,19 @@ function initialize_page() {
 
 $(initialize_page);
 
-function enlarge_in_code($textarea, cm) {
-  const $card = $textarea.closest("div.card");
+function enlarge_in_code(el) {
+  const $card = $(el).closest("div.card");
   if (!$card.length) return;
   const cardTop = $card.position().top;
   const cardHeight = $card.height();
   const vh = $(window).height();
-  const cmHeight = cm.getWrapperElement().offsetHeight;
+  const cmHeight = el.offsetHeight;
   const newCardHeight = vh - cardTop - 35;
   if (newCardHeight > cardHeight) {
     const extending = newCardHeight - cardHeight;
-    cm.setSize("100%", `${cmHeight + extending}px`);
-    cm.refresh();
+    console.log({ cmHeight, extending, el });
+    el.style.height = `${cmHeight + extending}px`;
+    //cm.refresh();
     $card.css("min-height", newCardHeight + "px");
   }
 }
