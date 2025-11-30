@@ -170,7 +170,7 @@ const getMultiNodeListener = (client) => {
       else {
         try {
           const payload = JSON.parse(msg.payload);
-          if (payload.dynamic_update) {
+          if (payload.dynamic_update || payload.real_time_collab_event) {
             const workers = Object.values(cluster.workers || {});
             if (workers.length > 0) {
               // use only one worker, master has no serversocket
@@ -277,6 +277,14 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
       true
     );
   }
+  if (msg.real_time_collab_event) {
+    getState().emitCollabMessage(
+      tenant || "public",
+      msg.real_time_collab_event.type,
+      msg.real_time_collab_event.data,
+      true
+    );
+  }
   if (msg.refresh) {
     if (msg.refresh === "ephemeral_config")
       getState().refresh_ephemeral_config(msg.key, msg.value);
@@ -336,7 +344,10 @@ const onMessageFromWorker =
     } else if (msg === "RestartServer") {
       process.exit(0);
       return true;
-    } else if (msg.dynamic_update && nodesDispatchMsg) {
+    } else if (
+      (msg.dynamic_update || msg.real_time_collab_event) &&
+      nodesDispatchMsg
+    ) {
       nodesDispatchMsg(msg);
     } else if (msg.tenant || msg.createTenant) {
       ///ie from saltcorn
@@ -415,6 +426,7 @@ module.exports =
           msg.removePlugin ||
           msg.refresh_plugin_cfg ||
           msg.dynamic_update ||
+          msg.real_time_collab_event ||
           (msg.refresh && msg.refresh !== "ephemeral_config")
         ) {
           await multiNodeClient.query(
@@ -524,7 +536,8 @@ module.exports =
         });
       } else {
         getState().sendMessageToWorkers = (msg) => {
-          if (!msg.dynamic_update) workerDispatchMsg(msg); //also master
+          if (!msg.dynamic_update || msg.real_time_collab_event)
+            workerDispatchMsg(msg); //also master
           if (nodesDispatchMsg)
             nodesDispatchMsg(msg).catch((e) => {
               console.log("Error sending multinode message", e.message);

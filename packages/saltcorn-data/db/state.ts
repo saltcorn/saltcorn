@@ -1311,13 +1311,25 @@ class State {
    * @param ten
    * @param type
    * @param data
+   * @param noMultiNodePropagate - if true, do not propagate to other nodes in multi-node setup
    */
-  emitCollabMessage(ten: string, type: string, data: any) {
-    if (!this.hasJoinedCollabSockets) {
-      this.log(5, "emitCollabMessage called, but no clients are joined yet");
-      return;
+  emitCollabMessage(
+    ten: string,
+    type: string,
+    data: any,
+    noMultiNodePropagate?: boolean
+  ) {
+    if (this.hasJoinedCollabSockets) globalCollabEmitter(ten, type, data);
+    else this.log(5, "emitCollabMessage called, but no clients are joined yet");
+    if (!noMultiNodePropagate && db.connectObj.multi_node) {
+      this.processSend({
+        real_time_collab_event: {
+          data,
+          type,
+        },
+        tenant: ten,
+      });
     }
-    globalCollabEmitter(ten, type, data);
   }
 
   /**
@@ -1333,11 +1345,9 @@ class State {
     userIds?: number[],
     noMultiNodePropagate?: boolean
   ) {
-    if (!this.hasJoinedDynamicUpdateSockets) {
-      this.log(5, "emitDynamicUpdate called, but no clients are joined yet");
-      return;
-    }
-    globalDynamicUpdateEmitter(ten, data, userIds);
+    if (this.hasJoinedDynamicUpdateSockets)
+      globalDynamicUpdateEmitter(ten, data, userIds);
+    else this.log(5, "emitDynamicUpdate called, but no clients are joined yet");
     if (!noMultiNodePropagate && db.connectObj.multi_node) {
       this.processSend({
         dynamic_update: data,
