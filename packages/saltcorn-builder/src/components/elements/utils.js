@@ -28,6 +28,7 @@ import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
 import Select from "react-select";
+import { MultiLineCodeEditor } from "./MonacoEditor";
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -1068,14 +1069,10 @@ const ConfigField = ({
       />
     ),
     code: () => (
-      <textarea
-        rows="6"
-        type="text"
-        className={`field-${field?.name} form-control`}
+      <MultiLineCodeEditor
+        setProp={setProp}
         value={value}
-        name={field?.name}
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-        spellCheck={false}
+        onChange={myOnChange}
       />
     ),
     select: () => {
