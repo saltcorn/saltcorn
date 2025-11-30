@@ -40,6 +40,11 @@ const setMonacoLanguage = (monaco, options) => {
         (f) => `const ${f.name}: ${scTypeToTsType(f.type)}`
       ),
       consoleTS,
+      `const row: {
+      ${options.fields.map(
+        (f) => `${f.name}: ${scTypeToTsType(f.type)};`
+      ).join("\n")}
+      }`
     ].join("\n")
   );
   //or code ending in return: https://github.com/microsoft/monaco-editor/issues/1661
