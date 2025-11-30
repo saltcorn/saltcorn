@@ -20,6 +20,9 @@
   ) !important;
 }
 
+div.h-500 {
+  height: 500px
+}
 i.sortdir {
   margin-left: 2px;
 }
