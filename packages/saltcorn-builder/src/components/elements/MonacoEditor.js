@@ -28,39 +28,38 @@ interface Console {
 declare var console: Console;
 `;
 
-const setMonacoLanguage = (monaco, options) => {
+const setMonacoLanguage = (monaco, options, isStatements) => {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     noLib: true,
     allowNonTsExtensions: true,
   });
 
-  monaco.languages.typescript.typescriptDefaults.addExtraLib(
-    [
-      ...options.fields.map(
-        (f) => `const ${f.name}: ${scTypeToTsType(f.type)}`
-      ),
-      consoleTS,
-      `const row: {
-      ${options.fields.map(
-        (f) => `${f.name}: ${scTypeToTsType(f.type)};`
-      ).join("\n")}
-      }`
-    ].join("\n")
-  );
+  const tsDs = [
+    ...options.fields.map((f) => `const ${f.name}: ${scTypeToTsType(f.type)}`),
+    `const row: {
+      ${options.fields
+        .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
+        .join("\n")}
+      }`,
+      //`const user: {}`
+  ];
+  if (isStatements) tsDs.push(consoleTS);
+  monaco.languages.typescript.typescriptDefaults.addExtraLib(tsDs.join("\n"));
   // for code ending in return: https://github.com/microsoft/monaco-editor/issues/1661
   // codes for await ignore are shown by hover card
-  monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-    //noSemanticValidation: false,
-    //noSyntaxValidation: false,
-    diagnosticCodesToIgnore: [/* top-level return */ 1108, 1378, 1375],
-  });
+  if (isStatements)
+    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+      //noSemanticValidation: false,
+      //noSyntaxValidation: false,
+      diagnosticCodesToIgnore: [/* top-level return */ 1108, 1378, 1375],
+    });
 };
 
 export const SingleLineEditor = ({ setProp, value, propKey }) => {
   const options = React.useContext(optionsCtx);
 
   const handleEditorWillMount = (monaco) => {
-    setMonacoLanguage(monaco, options);
+    setMonacoLanguage(monaco, options, false);
   };
   return (
     <div className="form-control p-0 pt-2">
@@ -85,7 +84,7 @@ export const MultiLineCodeEditor = ({ setProp, value, onChange }) => {
   const options = React.useContext(optionsCtx);
 
   const handleEditorWillMount = (monaco) => {
-    setMonacoLanguage(monaco, options);
+    setMonacoLanguage(monaco, options, true);
   };
   return (
     <div className="form-control p-0 pt-2">
