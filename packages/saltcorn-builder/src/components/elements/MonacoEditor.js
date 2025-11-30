@@ -47,11 +47,12 @@ const setMonacoLanguage = (monaco, options) => {
       }`
     ].join("\n")
   );
-  //or code ending in return: https://github.com/microsoft/monaco-editor/issues/1661
+  // for code ending in return: https://github.com/microsoft/monaco-editor/issues/1661
+  // codes for await ignore are shown by hover card
   monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
     //noSemanticValidation: false,
     //noSyntaxValidation: false,
-    diagnosticCodesToIgnore: [/* top-level return */ 1108],
+    diagnosticCodesToIgnore: [/* top-level return */ 1108, 1378, 1375],
   });
 };
 
