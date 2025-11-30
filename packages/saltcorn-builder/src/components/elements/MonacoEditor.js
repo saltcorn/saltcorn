@@ -16,6 +16,18 @@ const scTypeToTsType = (tynm) => {
   );
 };
 
+// from lib.dom.d.ts
+const consoleTS = `
+interface Console {
+    error(...data: any[]): void;
+    log(...data: any[]): void;
+    info(...data: any[]): void;
+    debug(...data: any[]): void;
+    warn(...data: any[]): void;
+}
+declare var console: Console;
+`;
+
 const setMonacoLanguage = (monaco, options) => {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     noLib: true,
@@ -23,9 +35,12 @@ const setMonacoLanguage = (monaco, options) => {
   });
 
   monaco.languages.typescript.typescriptDefaults.addExtraLib(
-    options.fields
-      .map((f) => `const ${f.name}: ${scTypeToTsType(f.type)}`)
-      .join("\n")
+    [
+      ...options.fields.map(
+        (f) => `const ${f.name}: ${scTypeToTsType(f.type)}`
+      ),
+      consoleTS,
+    ].join("\n")
   );
   //or code ending in return: https://github.com/microsoft/monaco-editor/issues/1661
   monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
