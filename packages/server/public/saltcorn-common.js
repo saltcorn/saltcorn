@@ -1303,59 +1303,66 @@ function initialize_page() {
   });
 
   const codes = [];
-  $("textarea.to-code").each(function () {
+  $("div.to-code").each(function () {
     codes.push(this);
   });
   if (codes.length > 0)
-    enable_codemirror(() => {
-      setTimeout(() => {
-        codes.forEach((el) => {
-          //console.log($(el).attr("mode"), el);
-          if ($(el).hasClass("codemirror-enabled")) return;
-          const cmOpts = {
-            lineNumbers: true,
-            mode: $(el).attr("mode"),
-          };
-          if (_sc_lightmode === "dark") cmOpts.theme = "blackboard";
-          const cm = CodeMirror.fromTextArea(el, cmOpts);
-          $(el).addClass("codemirror-enabled");
-          if ($(el).hasClass("enlarge-in-card")) enlarge_in_code($(el), cm);
-          cm.on(
-            "change",
-            $.debounce(
-              (cm1) => {
-                cm1.save();
-                if ($(el).hasClass("validate-statements")) {
-                  try {
-                    let AsyncFunction = Object.getPrototypeOf(
-                      async function () {}
-                    ).constructor;
-                    AsyncFunction(cm.getValue());
-                    $(el).closest("form").trigger("change");
-                  } catch (e) {
-                    const form = $(el).closest("form");
-                    const errorArea = form.parent().find(".full-form-error");
-                    if (errorArea.length) errorArea.text(e.message);
-                    else
-                      form
-                        .parent()
-                        .append(
-                          `<p class="text-danger full-form-error">${e.message}</p>`
-                        );
-                    return;
-                  }
-                } else {
-                  cm1.save();
-                  $(el).trigger("change");
-                }
-              },
-              500,
-              null,
-              true
-            )
-          );
+    enable_monaco(() => {
+      codes.forEach((el) => {
+        const value = $(el).val();
+        const div = document.createElement("div");
+        el.replaceWith(div);
+        const editor = monaco.editor.create(div, {
+          value,
+          language: "typescript",
+          //theme: "vs-dark",
         });
-      }, 100);
+        return;
+        //console.log($(el).attr("mode"), el);
+        if ($(el).hasClass("codemirror-enabled")) return;
+        const cmOpts = {
+          lineNumbers: true,
+          mode: $(el).attr("mode"),
+        };
+        if (_sc_lightmode === "dark") cmOpts.theme = "blackboard";
+        const cm = CodeMirror.fromTextArea(el, cmOpts);
+        $(el).addClass("codemirror-enabled");
+        if ($(el).hasClass("enlarge-in-card")) enlarge_in_code($(el), cm);
+        cm.on(
+          "change",
+          $.debounce(
+            (cm1) => {
+              cm1.save();
+              if ($(el).hasClass("validate-statements")) {
+                try {
+                  let AsyncFunction = Object.getPrototypeOf(
+                    async function () {}
+                  ).constructor;
+                  AsyncFunction(cm.getValue());
+                  $(el).closest("form").trigger("change");
+                } catch (e) {
+                  const form = $(el).closest("form");
+                  const errorArea = form.parent().find(".full-form-error");
+                  if (errorArea.length) errorArea.text(e.message);
+                  else
+                    form
+                      .parent()
+                      .append(
+                        `<p class="text-danger full-form-error">${e.message}</p>`
+                      );
+                  return;
+                }
+              } else {
+                cm1.save();
+                $(el).trigger("change");
+              }
+            },
+            500,
+            null,
+            true
+          )
+        );
+      });
     });
 
   if ($.fn.historyTabs && $.fn.tab)
@@ -1665,6 +1672,31 @@ function enable_codemirror(f) {
     error: checkNetworkError,
   });
 }
+
+function enable_monaco(f) {
+  $("<link/>", {
+    rel: "stylesheet",
+    type: "text/css",
+    href: `/static_assets/${_sc_version_tag}/monaco/editor/editor.main.css`,
+  }).appendTo("head");
+  $.ajax({
+    url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,
+    dataType: "script",
+    cache: true,
+    success: () => {
+      require.config({
+        paths: {
+          vs: `/static_assets/${_sc_version_tag}/monaco/`,
+        },
+      });
+      require(["vs/editor/editor.main"], function () {
+        f();
+      });
+    },
+    error: checkNetworkError,
+  });
+}
+
 function tristateClick(e, required) {
   const btn = $(e);
   const input = btn.prev();
