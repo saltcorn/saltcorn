@@ -4535,6 +4535,13 @@ class RegExp {
           .join("\n")
       );
     }
+
+    if (req.query.table) {
+      const table = Table.findOne(req.query.table);
+      if (table) {
+        ds.push(`declare var table: Table`);
+      }
+    }
     res.send(ds.join("\n"));
   })
 );
