@@ -1334,7 +1334,7 @@ function initialize_page() {
         const editor = monaco.editor.create(div, {
           value,
           language,
-          //theme: "vs-dark",
+          theme: _sc_lightmode === "dark" ? "vs-dark" : "vs",
           minimap: { enabled: false },
         });
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
