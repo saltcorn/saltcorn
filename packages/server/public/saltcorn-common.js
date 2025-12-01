@@ -1341,8 +1341,9 @@ function initialize_page() {
           noLib: true,
           allowNonTsExtensions: true,
         });
-        monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
-
+        const addlibres = monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
+        console.log("add lib res", addlibres);
+        
         //top level await and return
         if (!codepages)
           monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
