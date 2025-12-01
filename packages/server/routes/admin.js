@@ -4508,6 +4508,19 @@ class RegExp {
 `,
     ];
 
+    const scTypeToTsType = (tynm) => {
+      return (
+        {
+          String: "string",
+          Integer: "number",
+          Float: "number",
+          Bool: "boolean",
+          Date: "Date",
+          HTML: "string",
+        }[tynm] || "any"
+      );
+    };
+
     const cachedTableNames = getState().tables.map((t) => `"${t.name}"`);
 
     const dsPaths = [
@@ -4540,6 +4553,14 @@ class RegExp {
       const table = Table.findOne(req.query.table);
       if (table) {
         ds.push(`declare var table: Table`);
+        ds.push(`declare var row: {
+         ${table.fields
+           .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
+           .join("\n")}
+      }`);
+        table.fields.forEach((f) =>
+          ds.push(`declare var ${f.name}: ${scTypeToTsType(f.type)}`)
+        );
       }
     }
     res.send(ds.join("\n"));
