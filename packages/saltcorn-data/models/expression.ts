@@ -38,6 +38,19 @@ function expressionValidator(s: string): true | string {
   }
 }
 
+function identifiersInCodepage(s: string): Set<string> {
+  const top = parse(s, {
+    ecmaVersion: 2020,
+    locations: false,
+  });
+  const fs = top.body
+    .filter((n) => n.type === "FunctionDeclaration")
+    .map((n) => n.id.name)
+    .filter(Boolean);
+
+  return new Set(fs);
+}
+
 function expressionChecker(s: string, prefix: string, errors: string[]) {
   const result = expressionValidator(s);
   if (typeof result === "string") errors.push(prefix + result);
@@ -974,4 +987,5 @@ export = {
   add_free_variables_to_aggregations,
   removeComments,
   today,
+  identifiersInCodepage,
 };
