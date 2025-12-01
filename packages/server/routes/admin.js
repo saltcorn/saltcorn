@@ -4494,7 +4494,16 @@ router.get(
     debug(...data: any[]): void;
     warn(...data: any[]): void;
 }
-declare var console: Console;`,
+declare var console: Console;
+class RegExp {
+    constructor(pattern:string, flags?: string);
+    match(string: string): RegExpMatchArray | null;   
+    replace(string: string, replaceValue: string): string;  
+    replace(string: string, replacer: (substring: string, ...args: any[]) => string): string;
+    search(string: string): number;
+    split(string: string, limit?: number): string[];
+}
+`,
     ];
     res.send(ds.join("\n"));
   })
