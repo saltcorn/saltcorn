@@ -4483,6 +4483,24 @@ admin_config_route({
 });
 
 router.get(
+  "/ts-declares",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const ds = [
+      `interface Console {
+    error(...data: any[]): void;
+    log(...data: any[]): void;
+    info(...data: any[]): void;
+    debug(...data: any[]): void;
+    warn(...data: any[]): void;
+}
+declare var console: Console;`,
+    ];
+    res.send(ds.join("\n"));
+  })
+);
+
+router.get(
   "/edit-codepage/:name",
   isAdmin,
   error_catcher(async (req, res) => {
