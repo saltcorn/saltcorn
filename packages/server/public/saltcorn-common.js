@@ -1309,6 +1309,8 @@ function initialize_page() {
   if (codes.length > 0)
     enable_monaco(() => {
       codes.forEach((el) => {
+        if ($(el).hasClass("monaco-enabled")) return;
+        $(el).addClass("monaco-enabled");
         const value = $(el).val();
         const enlarge = $(el).hasClass("enlarge-in-card");
 
