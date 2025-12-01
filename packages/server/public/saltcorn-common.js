@@ -1713,7 +1713,7 @@ function enable_monaco({ textarea }, f) {
         success: () => {
           require.config({
             paths: {
-              vs: `/static_assets/${_sc_version_tag}/monaco/`,
+              vs: `/static_assets/${_sc_version_tag}/monaco`,
             },
           });
           require(["vs/editor/editor.main"], function () {
