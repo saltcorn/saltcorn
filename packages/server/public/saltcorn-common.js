@@ -1341,50 +1341,6 @@ function initialize_page() {
         );
 
         return;
-        //console.log($(el).attr("mode"), el);
-        if ($(el).hasClass("codemirror-enabled")) return;
-        const cmOpts = {
-          lineNumbers: true,
-          mode: $(el).attr("mode"),
-        };
-        if (_sc_lightmode === "dark") cmOpts.theme = "blackboard";
-        const cm = CodeMirror.fromTextArea(el, cmOpts);
-        $(el).addClass("codemirror-enabled");
-        if ($(el).hasClass("enlarge-in-card")) enlarge_in_code($(el), cm);
-        cm.on(
-          "change",
-          $.debounce(
-            (cm1) => {
-              cm1.save();
-              if ($(el).hasClass("validate-statements")) {
-                try {
-                  let AsyncFunction = Object.getPrototypeOf(
-                    async function () {}
-                  ).constructor;
-                  AsyncFunction(cm.getValue());
-                  $(el).closest("form").trigger("change");
-                } catch (e) {
-                  const form = $(el).closest("form");
-                  const errorArea = form.parent().find(".full-form-error");
-                  if (errorArea.length) errorArea.text(e.message);
-                  else
-                    form
-                      .parent()
-                      .append(
-                        `<p class="text-danger full-form-error">${e.message}</p>`
-                      );
-                  return;
-                }
-              } else {
-                cm1.save();
-                $(el).trigger("change");
-              }
-            },
-            500,
-            null,
-            true
-          )
-        );
       });
     });
 
