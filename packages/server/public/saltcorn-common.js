@@ -1315,7 +1315,6 @@ function initialize_page() {
         const enlarge = $(el).hasClass("enlarge-in-card");
 
         const div = document.createElement("div");
-        el.style.display = "none";
         el.after(div);
         if (enlarge) {
           enlarge_in_code(div);

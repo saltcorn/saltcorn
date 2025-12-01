@@ -21,7 +21,11 @@
 }
 
 div.h-350 {
-  height: 350px
+  height: 350px;
+}
+
+textarea.to-code {
+  display: none;
 }
 i.sortdir {
   margin-left: 2px;
