@@ -1702,8 +1702,9 @@ function enable_monaco({ textarea }, f) {
     href: `/static_assets/${_sc_version_tag}/monaco/editor/editor.main.css`,
   }).appendTo("head");
   const tableName = $(textarea).attr("tableName");
+  const hasUser = $(textarea).attr("user");
   $.ajax({
-    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}`,
+    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}`,
     success: (ds) => {
       $.ajax({
         url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,

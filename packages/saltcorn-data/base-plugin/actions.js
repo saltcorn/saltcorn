@@ -1871,7 +1871,7 @@ module.exports = {
     configFormOptions: {
       formStyle: "vert",
     },
-    configFields: async ({ table }) => {
+    configFields: async ({ table, when_trigger }) => {
       const fields = table ? table.getFields().map((f) => f.name) : [];
       const vars = [
         ...(table ? ["row"] : []),
@@ -1905,7 +1905,11 @@ module.exports = {
         .map((f) => code(f))
         .join(", ");
       const clientvars = [...fields].map((f) => code(f)).join(", ");
-
+      const has_user = ["Hourly", "Weekly", "Daily", "Often", "Startup"].includes(
+        when_trigger
+      )
+        ? undefined
+        : "maybe";
       return [
         {
           name: "code",
@@ -1914,6 +1918,7 @@ module.exports = {
           attributes: {
             mode: "application/javascript",
             table: table?.name || undefined,
+            user: has_user,
           },
           class: "validate-statements enlarge-in-card",
           validator(s) {
