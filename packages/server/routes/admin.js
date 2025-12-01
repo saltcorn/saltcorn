@@ -4507,18 +4507,23 @@ class RegExp {
 }
 `,
     ];
-    
+
     const dsPaths = [
-      //path.join(dbCommonModulePath, "/internal.d.ts")
-      //path.join(dataModulePath, "/models/table.d.ts")
-      ];
+      path.join(dbCommonModulePath, "/internal.d.ts"),
+      path.join(dataModulePath, "/models/table.d.ts")
+    ];
 
     for (const dsPath of dsPaths) {
       const fileContents = await fs.promises.readFile(dsPath, {
         encoding: "utf-8",
       });
       const lines = fileContents.split("\n");
-      ds.push(lines.filter((ln) => !ln.startsWith("import ")).join("\n"));
+      ds.push(
+        lines
+          .filter((ln) => !ln.startsWith("import "))
+          .map((ln) => ln.replace(/^export /, ""))
+          .join("\n")
+      );
     }
     console.log(ds);
 
