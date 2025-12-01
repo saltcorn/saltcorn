@@ -1317,10 +1317,21 @@ function initialize_page() {
         el.after(div);
         if (enlarge) {
           enlarge_in_code(div);
-        } else div.classList.add("h-500");
+        } else div.classList.add("h-350");
+        let language = "typescript";
+        switch ($(el).attr("mode")) {
+          case "text/css":
+            language = "css";
+            break;
+          case "text/html":
+            language = "html";
+            break;
+        }
+        const codepages = $(el).attr("codepages");
+
         const editor = monaco.editor.create(div, {
           value,
-          language: "typescript",
+          language,
           //theme: "vs-dark",
           minimap: { enabled: false },
         });
@@ -1328,6 +1339,11 @@ function initialize_page() {
           noLib: true,
           allowNonTsExtensions: true,
         });
+        //top level await and return
+        if (!codepages)
+          monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+            diagnosticCodesToIgnore: [1108, 1378, 1375],
+          });
         editor.onDidChangeModelContent(
           $.debounce(
             function (e) {

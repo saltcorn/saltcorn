@@ -4510,7 +4510,7 @@ router.get(
               "Table"
             ),
           input_type: "code",
-          attributes: { mode: "text/javascript" },
+          attributes: { mode: "text/javascript", codepages: true },
           class: "validate-statements enlarge-in-card",
           validator(s) {
             try {
