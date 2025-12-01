@@ -4498,18 +4498,8 @@ router.get(
     warn(...data: any[]): void;
 }
 declare var console: Console;
-interface Promise<T> {}
-class RegExp {
-    constructor(pattern:string, flags?: string);
-    match(string: string): RegExpMatchArray | null;   
-    replace(string: string, replaceValue: string): string;  
-    replace(string: string, replacer: (substring: string, ...args: any[]) => string): string;
-    search(string: string): number;
-    split(string: string, limit?: number): string[];
-}
 `,
     ];
-
     const scTypeToTsType = (tynm) => {
       return (
         {
@@ -4526,6 +4516,7 @@ class RegExp {
     const cachedTableNames = getState().tables.map((t) => `"${t.name}"`);
 
     const dsPaths = [
+      path.join(__dirname, "lib.es5.d.ts"),
       path.join(dbCommonModulePath, "/dbtypes.d.ts"),
       path.join(dataModulePath, "/models/table.d.ts"),
       path.join(dataModulePath, "/models/user.d.ts"),
