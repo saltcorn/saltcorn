@@ -641,7 +641,10 @@ const returnDirectivesOnly = (
   return r;
 };
 
+const dataModulePath = __dirname
+
 export = {
+  dataModulePath,
   allReturnDirectives,
   secondaryReturnDirectives,
   returnDirectivesOnly,
