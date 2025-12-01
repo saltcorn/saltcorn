@@ -858,3 +858,5 @@ export const sqlBinOp = (name: string, ...args: any[]) => ({
   name,
   args,
 });
+
+export const dbCommonModulePath = __dirname

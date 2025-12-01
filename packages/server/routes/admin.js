@@ -116,6 +116,7 @@ const {
   getSafeSaltcornCmd,
   getFetchProxyOptions,
   sleep,
+  dataModulePath,
 } = require("@saltcorn/data/utils");
 const stream = require("stream");
 const Crash = require("@saltcorn/data/models/crash");
@@ -128,6 +129,7 @@ const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 const semver = require("semver");
+const { dbCommonModulePath } = require("@saltcorn/db-common/internal");
 
 const router = new Router();
 module.exports = router;
@@ -4505,6 +4507,21 @@ class RegExp {
 }
 `,
     ];
+    
+    const dsPaths = [
+      //path.join(dbCommonModulePath, "/internal.d.ts")
+      //path.join(dataModulePath, "/models/table.d.ts")
+      ];
+
+    for (const dsPath of dsPaths) {
+      const fileContents = await fs.promises.readFile(dsPath, {
+        encoding: "utf-8",
+      });
+      const lines = fileContents.split("\n");
+      ds.push(lines.filter((ln) => !ln.startsWith("import ")).join("\n"));
+    }
+    console.log(ds);
+
     res.send(ds.join("\n"));
   })
 );
