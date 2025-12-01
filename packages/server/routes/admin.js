@@ -27,6 +27,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const path = require("path");
 const { X509Certificate } = require("crypto");
 const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+const { identifiersInCodepage } = require("@saltcorn/data/models/expression");
 const {
   post_btn,
   renderForm,
@@ -4585,12 +4586,18 @@ class RegExp {
         );
       } else ds.push(`declare const ${nm}: Function;`);
     }
-    if (!req.query.codepage)
-      for (const [nm, f] of Object.entries(getState().codepage_context)) {
-        if (f.constructor.name === "AsyncFunction")
-          ds.push(`declare var ${nm}: AsyncFunction;`);
-        else ds.push(`declare var ${nm}: Function;`);
-      }
+    let exclude_cp_ids = req.query.codepage
+      ? identifiersInCodepage(
+          getState().getConfig("function_code_pages", {})[req.query.codepage]
+        )
+      : new Set([]);
+
+    for (const [nm, f] of Object.entries(getState().codepage_context)) {
+      if (exclude_cp_ids.has(nm)) continue;
+      if (f.constructor.name === "AsyncFunction")
+        ds.push(`declare var ${nm}: AsyncFunction;`);
+      else ds.push(`declare var ${nm}: Function;`);
+    }
 
     res.send(ds.join("\n"));
   })
