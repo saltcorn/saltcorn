@@ -4498,8 +4498,15 @@ router.get(
     warn(...data: any[]): void;
 }
 declare var console: Console;
+function setTimeout(f:Function, timeout?:number)
+declare const page_load_tag: string
+function emit_to_client(message: object, to_user_ids?: number | number[])
+async function sleep(milliseconds: number)
 `,
     ];
+    if (req.query.codepage) {
+      ds.push("declare var globalThis: any");
+    }
     const scTypeToTsType = (tynm) => {
       return (
         {
@@ -4516,7 +4523,13 @@ declare var console: Console;
     const cachedTableNames = getState().tables.map((t) => `"${t.name}"`);
 
     const dsPaths = [
-      path.join(__dirname, "lib.es5.d.ts"),
+      path.join(__dirname, "tsdecls/lib.es5.d.ts"),
+      path.join(__dirname, "tsdecls/es2015.core.d.ts"),
+      path.join(__dirname, "tsdecls/es2015.collection.d.ts"),
+      path.join(__dirname, "tsdecls/es2015.promise.d.ts"),
+      path.join(__dirname, "tsdecls/es2017.object.d.ts"),
+      path.join(__dirname, "tsdecls/es2017.string.d.ts"),
+      path.join(__dirname, "tsdecls/es2019.object.d.ts"),
       path.join(dbCommonModulePath, "/dbtypes.d.ts"),
       path.join(dataModulePath, "/models/table.d.ts"),
       path.join(dataModulePath, "/models/user.d.ts"),
@@ -4586,9 +4599,10 @@ declare var console: Console;
 
     for (const [nm, f] of Object.entries(getState().codepage_context)) {
       if (exclude_cp_ids.has(nm)) continue;
-      if (f.constructor.name === "AsyncFunction")
+      if (f.constructor?.name === "AsyncFunction")
         ds.push(`declare var ${nm}: AsyncFunction;`);
-      else ds.push(`declare var ${nm}: Function;`);
+      else if (f.constructor?.name === "Function")
+        ds.push(`declare var ${nm}: Function;`);
     }
 
     res.send(ds.join("\n"));
