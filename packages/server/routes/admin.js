@@ -4570,7 +4570,7 @@ class RegExp {
          ${table.fields
            .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
            .join("\n")}
-      }`);
+      }${req.query.user === "maybe" ? " | undefined" : ""}`);
       }
     }
     res.send(ds.join("\n"));
