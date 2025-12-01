@@ -4563,6 +4563,16 @@ class RegExp {
         );
       }
     }
+    if (req.query.user) {
+      const table = User.table;
+      if (table) {
+        ds.push(`declare var user: {
+         ${table.fields
+           .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
+           .join("\n")}
+      }`);
+      }
+    }
     res.send(ds.join("\n"));
   })
 );
