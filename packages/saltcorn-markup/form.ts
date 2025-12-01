@@ -547,6 +547,7 @@ const innerField =
         return textarea(
           {
             mode: (hdr.attributes || {}).mode || "",
+            codepages: (hdr.attributes || {}).codepages || false,
             class: `to-code form-control ${validClass} ${hdr.class || ""}`,
             ...(maybe_disabled
               ? { disabled: true, "data-disabled": "true" }
@@ -1526,7 +1527,9 @@ const renderFormLayout = (form: Form): string => {
             : `onClick="${spinnerStr}sc_form_submit_in_progress()" type="submit"`;
         return mkBtn(submitAttr);
       }
-      return mkBtn(`onClick="${spinnerStr}sc_form_submit_in_progress()" type="submit"`);
+      return mkBtn(
+        `onClick="${spinnerStr}sc_form_submit_in_progress()" type="submit"`
+      );
     },
   };
   const role = form.req?.user?.role_id || 100;
