@@ -1307,55 +1307,88 @@ function initialize_page() {
     codes.push(this);
   });
   if (codes.length > 0)
-    enable_codemirror(() => {
-      setTimeout(() => {
-        codes.forEach((el) => {
-          //console.log($(el).attr("mode"), el);
-          if ($(el).hasClass("codemirror-enabled")) return;
-          const cmOpts = {
-            lineNumbers: true,
-            mode: $(el).attr("mode"),
-          };
-          if (_sc_lightmode === "dark") cmOpts.theme = "blackboard";
-          const cm = CodeMirror.fromTextArea(el, cmOpts);
-          $(el).addClass("codemirror-enabled");
-          if ($(el).hasClass("enlarge-in-card")) enlarge_in_code($(el), cm);
-          cm.on(
-            "change",
-            $.debounce(
-              (cm1) => {
-                cm1.save();
-                if ($(el).hasClass("validate-statements")) {
-                  try {
-                    let AsyncFunction = Object.getPrototypeOf(
-                      async function () {}
-                    ).constructor;
-                    AsyncFunction(cm.getValue());
-                    $(el).closest("form").trigger("change");
-                  } catch (e) {
-                    const form = $(el).closest("form");
-                    const errorArea = form.parent().find(".full-form-error");
-                    if (errorArea.length) errorArea.text(e.message);
-                    else
-                      form
-                        .parent()
-                        .append(
-                          `<p class="text-danger full-form-error">${e.message}</p>`
-                        );
-                    return;
-                  }
-                } else {
-                  cm1.save();
-                  $(el).trigger("change");
-                }
-              },
-              500,
-              null,
-              true
-            )
-          );
+    enable_monaco({ textarea: codes[0] }, (ts_ds) => {
+      codes.forEach((el) => {
+        if ($(el).hasClass("monaco-enabled")) return;
+        $(el).addClass("monaco-enabled");
+        const value = $(el).val();
+        const enlarge = $(el).hasClass("enlarge-in-card");
+
+        const div = document.createElement("div");
+        el.style.display = "none";
+        el.after(div);
+        if (enlarge) {
+          enlarge_in_code(div);
+        } else div.classList.add("h-350");
+        let language = "typescript";
+        switch ($(el).attr("mode")) {
+          case "text/css":
+            language = "css";
+            break;
+          case "text/html":
+            language = "html";
+            break;
+        }
+        const codepages = $(el).attr("codepage");
+
+        const editor = monaco.editor.create(div, {
+          value,
+          language,
+          //theme: "vs-dark",
+          minimap: { enabled: false },
         });
-      }, 100);
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+          noLib: true,
+          allowNonTsExtensions: true,
+        });
+        monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
+
+        //top level await and return, any
+        if (!codepages)
+          monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+            diagnosticCodesToIgnore: [1108, 1378, 1375, 7044],
+          });
+        else // any
+          monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+            diagnosticCodesToIgnore: [7044],
+          });
+        editor.onDidChangeModelContent(
+          $.debounce(
+            function (e) {
+              const txtval = editor.getValue();
+              if ($(el).hasClass("validate-statements")) {
+                try {
+                  let AsyncFunction = Object.getPrototypeOf(
+                    async function () {}
+                  ).constructor;
+                  AsyncFunction(txtval);
+                  $(el).val(txtval);
+                  $(el).trigger("change");
+                } catch (e) {
+                  const form = $(el).closest("form");
+                  const errorArea = form.parent().find(".full-form-error");
+                  if (errorArea.length) errorArea.text(e.message);
+                  else
+                    form
+                      .parent()
+                      .append(
+                        `<p class="text-danger full-form-error">${e.message}</p>`
+                      );
+                  return;
+                }
+              } else {
+                $(el).val(txtval);
+                $(el).trigger("change");
+              }
+            },
+            500,
+            null,
+            true
+          )
+        );
+
+        return;
+      });
     });
 
   if ($.fn.historyTabs && $.fn.tab)
@@ -1439,18 +1472,18 @@ function initialize_page() {
 
 $(initialize_page);
 
-function enlarge_in_code($textarea, cm) {
-  const $card = $textarea.closest("div.card");
+function enlarge_in_code(el) {
+  const $card = $(el).closest("div.card");
   if (!$card.length) return;
   const cardTop = $card.position().top;
   const cardHeight = $card.height();
   const vh = $(window).height();
-  const cmHeight = cm.getWrapperElement().offsetHeight;
+  const cmHeight = el.offsetHeight;
   const newCardHeight = vh - cardTop - 35;
   if (newCardHeight > cardHeight) {
     const extending = newCardHeight - cardHeight;
-    cm.setSize("100%", `${cmHeight + extending}px`);
-    cm.refresh();
+    el.style.height = `${cmHeight + extending}px`;
+    //cm.refresh();
     $card.css("min-height", newCardHeight + "px");
   }
 }
@@ -1665,6 +1698,41 @@ function enable_codemirror(f) {
     error: checkNetworkError,
   });
 }
+
+function enable_monaco({ textarea }, f) {
+  $("<link/>", {
+    rel: "stylesheet",
+    type: "text/css",
+    href: `/static_assets/${_sc_version_tag}/monaco/editor/editor.main.css`,
+  }).appendTo("head");
+  const tableName = $(textarea).attr("tableName");
+  const hasUser = $(textarea).attr("user");
+  const codepage = $(textarea).attr("codepage");
+  console.log({ codepage });
+
+  $.ajax({
+    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}`,
+    success: (ds) => {
+      $.ajax({
+        url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,
+        dataType: "script",
+        cache: true,
+        success: () => {
+          require.config({
+            paths: {
+              vs: `/static_assets/${_sc_version_tag}/monaco`,
+            },
+          });
+          require(["vs/editor/editor.main"], function () {
+            f(ds);
+          });
+        },
+        error: checkNetworkError,
+      });
+    },
+  });
+}
+
 function tristateClick(e, required) {
   const btn = $(e);
   const input = btn.prev();

@@ -8,6 +8,7 @@ const { plugin_with_routes, sleep } = mocks;
 import expression from "../models/expression";
 const {
   eval_expression,
+  identifiersInCodepage,
   get_expression_function,
   transform_for_async,
   expressionValidator,
@@ -32,6 +33,15 @@ jest.setTimeout(30000);
 beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
+});
+
+describe("identifiersInCodepage", () => {
+  it("gets Function", () => {
+    const ids = identifiersInCodepage(
+      `function foobar(){};async function baz(){}`
+    );
+    expect(ids).toEqual(new Set(["foobar", "baz"]));
+  });
 });
 
 describe("eval_expression", () => {
