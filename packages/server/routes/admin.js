@@ -4525,7 +4525,7 @@ class RegExp {
     const cachedTableNames = getState().tables.map((t) => `"${t.name}"`);
 
     const dsPaths = [
-      path.join(dbCommonModulePath, "/internal.d.ts"),
+      path.join(dbCommonModulePath, "/dbtypes.d.ts"),
       path.join(dataModulePath, "/models/table.d.ts"),
       path.join(dataModulePath, "/models/user.d.ts"),
       path.join(dataModulePath, "/models/file.d.ts"),
