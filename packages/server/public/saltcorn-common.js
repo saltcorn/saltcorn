@@ -1327,6 +1327,16 @@ function initialize_page() {
           case "text/html":
             language = "html";
             break;
+          case "message/http":
+            language = "";
+            break;
+          case "application/x-python-code":
+          case "text/x-python":
+            language = "python";
+            break;
+          case "text/x-shellscript":
+            language = "shell";
+            break;
         }
         const codepages = $(el).attr("codepage");
 
