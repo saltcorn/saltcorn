@@ -1343,10 +1343,14 @@ function initialize_page() {
         });
         monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
 
-        //top level await and return
+        //top level await and return, any
         if (!codepages)
           monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-            diagnosticCodesToIgnore: [1108, 1378, 1375],
+            diagnosticCodesToIgnore: [1108, 1378, 1375, 7044],
+          });
+        else // any
+          monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+            diagnosticCodesToIgnore: [7044],
           });
         editor.onDidChangeModelContent(
           $.debounce(
