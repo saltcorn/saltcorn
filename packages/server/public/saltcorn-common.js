@@ -1313,7 +1313,8 @@ function initialize_page() {
         const enlarge = $(el).hasClass("enlarge-in-card");
 
         const div = document.createElement("div");
-        el.replaceWith(div);
+        el.style.display = "none";
+        el.after(div);
         if (enlarge) {
           enlarge_in_code(div);
         } else div.classList.add("h-500");
@@ -1321,7 +1322,24 @@ function initialize_page() {
           value,
           language: "typescript",
           //theme: "vs-dark",
+          minimap: { enabled: false },
         });
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+          noLib: true,
+          allowNonTsExtensions: true,
+        });
+        editor.onDidChangeModelContent(
+          $.debounce(
+            function (e) {
+              $(el).val(editor.getValue());
+              $(el).trigger("change");
+            },
+            500,
+            null,
+            true
+          )
+        );
+
         return;
         //console.log($(el).attr("mode"), el);
         if ($(el).hasClass("codemirror-enabled")) return;
@@ -1461,7 +1479,6 @@ function enlarge_in_code(el) {
   const newCardHeight = vh - cardTop - 35;
   if (newCardHeight > cardHeight) {
     const extending = newCardHeight - cardHeight;
-    console.log({ cmHeight, extending, el });
     el.style.height = `${cmHeight + extending}px`;
     //cm.refresh();
     $card.css("min-height", newCardHeight + "px");
