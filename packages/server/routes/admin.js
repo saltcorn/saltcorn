@@ -4605,6 +4605,25 @@ async function sleep(milliseconds: number)
         ds.push(`declare var ${nm}: Function;`);
     }
 
+    if (!req.query.codepage) {
+      const trigger_actions = await Trigger.find({
+        when_trigger: { or: ["API call", "Never"] },
+      });
+      ds.push(
+        `declare const Actions: {
+        ${Object.keys(getState().actions)
+          .map(
+            (nm) =>
+              `${nm}: ({row, table}?:{row?: Row, table?: Table})=>Promise<void>,`
+          )
+          .join("\n")}
+        ${trigger_actions
+          .map((tr) => `${tr.name}: ({row}?:{row?: Row})=>Promise<void>,`)
+          .join("\n")}
+        }`
+      );
+    }
+
     res.send(ds.join("\n"));
   })
 );

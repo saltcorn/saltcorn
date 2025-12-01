@@ -1315,7 +1315,6 @@ function initialize_page() {
         const enlarge = $(el).hasClass("enlarge-in-card");
 
         const div = document.createElement("div");
-        el.style.display = "none";
         el.after(div);
         if (enlarge) {
           enlarge_in_code(div);
@@ -1328,13 +1327,23 @@ function initialize_page() {
           case "text/html":
             language = "html";
             break;
+          case "message/http":
+            language = "";
+            break;
+          case "application/x-python-code":
+          case "text/x-python":
+            language = "python";
+            break;
+          case "text/x-shellscript":
+            language = "shell";
+            break;
         }
         const codepages = $(el).attr("codepage");
 
         const editor = monaco.editor.create(div, {
           value,
           language,
-          //theme: "vs-dark",
+          theme: _sc_lightmode === "dark" ? "vs-dark" : "vs",
           minimap: { enabled: false },
         });
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
@@ -1343,14 +1352,15 @@ function initialize_page() {
         });
         monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
 
-        //top level await and return, any
+        //top level await and return, any, require
         if (!codepages)
           monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-            diagnosticCodesToIgnore: [1108, 1378, 1375, 7044],
+            diagnosticCodesToIgnore: [1108, 1378, 1375, 7044, 2580, 80005],
           });
-        else // any
+        // any, require
+        else
           monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-            diagnosticCodesToIgnore: [7044],
+            diagnosticCodesToIgnore: [7044, 2580, 80005],
           });
         editor.onDidChangeModelContent(
           $.debounce(
