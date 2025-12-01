@@ -542,7 +542,6 @@ module.exports = {
         } else if (body) postBody = body;
         else postBody = JSON.stringify(row);
         fetchOpts.body = postBody;
-        
       }
       if (authorization)
         fetchOpts.headers.Authorization = interpolate(
@@ -1912,7 +1911,10 @@ module.exports = {
           name: "code",
           label: "Code",
           input_type: "code",
-          attributes: { mode: "application/javascript" },
+          attributes: {
+            mode: "application/javascript",
+            table: table?.name || undefined,
+          },
           class: "validate-statements enlarge-in-card",
           validator(s) {
             try {

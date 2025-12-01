@@ -1307,7 +1307,7 @@ function initialize_page() {
     codes.push(this);
   });
   if (codes.length > 0)
-    enable_monaco((ts_ds) => {
+    enable_monaco({ textarea: codes[0] }, (ts_ds) => {
       codes.forEach((el) => {
         if ($(el).hasClass("monaco-enabled")) return;
         $(el).addClass("monaco-enabled");
@@ -1341,9 +1341,8 @@ function initialize_page() {
           noLib: true,
           allowNonTsExtensions: true,
         });
-        const addlibres = monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
-        console.log("add lib res", addlibres);
-        
+        monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
+
         //top level await and return
         if (!codepages)
           monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
@@ -1696,14 +1695,15 @@ function enable_codemirror(f) {
   });
 }
 
-function enable_monaco(f) {
+function enable_monaco({ textarea }, f) {
   $("<link/>", {
     rel: "stylesheet",
     type: "text/css",
     href: `/static_assets/${_sc_version_tag}/monaco/editor/editor.main.css`,
   }).appendTo("head");
+  const tableName = $(textarea).attr("tableName");
   $.ajax({
-    url: `/admin/ts-declares`,
+    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}`,
     success: (ds) => {
       $.ajax({
         url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,
