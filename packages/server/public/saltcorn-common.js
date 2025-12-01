@@ -1307,7 +1307,7 @@ function initialize_page() {
     codes.push(this);
   });
   if (codes.length > 0)
-    enable_monaco(() => {
+    enable_monaco((ts_ds) => {
       codes.forEach((el) => {
         if ($(el).hasClass("monaco-enabled")) return;
         $(el).addClass("monaco-enabled");
@@ -1341,6 +1341,8 @@ function initialize_page() {
           noLib: true,
           allowNonTsExtensions: true,
         });
+        monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
+
         //top level await and return
         if (!codepages)
           monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
@@ -1700,20 +1702,25 @@ function enable_monaco(f) {
     href: `/static_assets/${_sc_version_tag}/monaco/editor/editor.main.css`,
   }).appendTo("head");
   $.ajax({
-    url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,
-    dataType: "script",
-    cache: true,
-    success: () => {
-      require.config({
-        paths: {
-          vs: `/static_assets/${_sc_version_tag}/monaco/`,
+    url: `/admin/ts-declares`,
+    success: (ds) => {
+      $.ajax({
+        url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,
+        dataType: "script",
+        cache: true,
+        success: () => {
+          require.config({
+            paths: {
+              vs: `/static_assets/${_sc_version_tag}/monaco/`,
+            },
+          });
+          require(["vs/editor/editor.main"], function () {
+            f(ds);
+          });
         },
-      });
-      require(["vs/editor/editor.main"], function () {
-        f();
+        error: checkNetworkError,
       });
     },
-    error: checkNetworkError,
   });
 }
 
