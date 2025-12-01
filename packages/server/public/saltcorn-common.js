@@ -1331,8 +1331,31 @@ function initialize_page() {
         editor.onDidChangeModelContent(
           $.debounce(
             function (e) {
-              $(el).val(editor.getValue());
-              $(el).trigger("change");
+              const txtval = editor.getValue();
+              if ($(el).hasClass("validate-statements")) {
+                try {
+                  let AsyncFunction = Object.getPrototypeOf(
+                    async function () {}
+                  ).constructor;
+                  AsyncFunction(txtval);
+                  $(el).val(txtval);
+                  $(el).trigger("change");
+                } catch (e) {
+                  const form = $(el).closest("form");
+                  const errorArea = form.parent().find(".full-form-error");
+                  if (errorArea.length) errorArea.text(e.message);
+                  else
+                    form
+                      .parent()
+                      .append(
+                        `<p class="text-danger full-form-error">${e.message}</p>`
+                      );
+                  return;
+                }
+              } else {
+                $(el).val(txtval);
+                $(el).trigger("change");
+              }
             },
             500,
             null,
