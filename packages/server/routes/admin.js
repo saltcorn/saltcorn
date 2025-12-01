@@ -4642,6 +4642,7 @@ router.post(
       res.json({
         success: false,
         error: `Error evaluating code pages: ${err}`,
+        remove_delay: "5",
       });
     else res.json({ success: true });
   })
