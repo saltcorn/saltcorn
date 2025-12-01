@@ -4552,27 +4552,40 @@ class RegExp {
     if (req.query.table) {
       const table = Table.findOne(req.query.table);
       if (table) {
-        ds.push(`declare var table: Table`);
-        ds.push(`declare var row: {
+        ds.push(`declare const table: Table`);
+        ds.push(`declare const row: {
          ${table.fields
            .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
            .join("\n")}
       }`);
         table.fields.forEach((f) =>
-          ds.push(`declare var ${f.name}: ${scTypeToTsType(f.type)}`)
+          ds.push(`declare const ${f.name}: ${scTypeToTsType(f.type)}`)
         );
       }
     }
     if (req.query.user) {
       const table = User.table;
       if (table) {
-        ds.push(`declare var user: {
+        ds.push(`declare const user: {
          ${table.fields
            .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
            .join("\n")}
       }${req.query.user === "maybe" ? " | undefined" : ""}`);
       }
     }
+
+    for (const [nm, f] of Object.entries(getState().functions)) {
+      if (f.run) {
+        const args = (f["arguments"] || []).map(
+          ({ name, type, tstype }) =>
+            `${name}: ${tstype || scTypeToTsType(type)}`
+        );
+        ds.push(
+          `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
+        );
+      } else ds.push(`declare var ${nm}: Function;`);
+    }
+
     res.send(ds.join("\n"));
   })
 );
