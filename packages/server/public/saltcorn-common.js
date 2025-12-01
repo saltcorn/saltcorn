@@ -1329,7 +1329,7 @@ function initialize_page() {
             language = "html";
             break;
         }
-        const codepages = $(el).attr("codepages");
+        const codepages = $(el).attr("codepage");
 
         const editor = monaco.editor.create(div, {
           value,
@@ -1703,8 +1703,11 @@ function enable_monaco({ textarea }, f) {
   }).appendTo("head");
   const tableName = $(textarea).attr("tableName");
   const hasUser = $(textarea).attr("user");
+  const codepage = $(textarea).attr("codepage");
+  console.log({ codepage });
+
   $.ajax({
-    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}`,
+    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}`,
     success: (ds) => {
       $.ajax({
         url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,

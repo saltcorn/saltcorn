@@ -547,7 +547,7 @@ const innerField =
         return textarea(
           {
             mode: (hdr.attributes || {}).mode || "",
-            codepages: (hdr.attributes || {}).codepages || false,
+            codepage: (hdr.attributes || {}).codepage || false,
             tableName: (hdr.attributes || {}).table || false,
             user: (hdr.attributes || {}).user || false,
             class: `to-code form-control ${validClass} ${hdr.class || ""}`,

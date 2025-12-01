@@ -4583,8 +4583,14 @@ class RegExp {
         ds.push(
           `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
         );
-      } else ds.push(`declare var ${nm}: Function;`);
+      } else ds.push(`declare const ${nm}: Function;`);
     }
+    if (!req.query.codepage)
+      for (const [nm, f] of Object.entries(getState().codepage_context)) {
+        if (f.constructor.name === "AsyncFunction")
+          ds.push(`declare var ${nm}: AsyncFunction;`);
+        else ds.push(`declare var ${nm}: Function;`);
+      }
 
     res.send(ds.join("\n"));
   })
@@ -4618,7 +4624,7 @@ router.get(
               "Table"
             ),
           input_type: "code",
-          attributes: { mode: "text/javascript", codepages: true },
+          attributes: { mode: "text/javascript", codepage: name },
           class: "validate-statements enlarge-in-card",
           validator(s) {
             try {
