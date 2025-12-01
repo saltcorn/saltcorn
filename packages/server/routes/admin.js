@@ -4508,9 +4508,13 @@ class RegExp {
 `,
     ];
 
+    const cachedTableNames = getState().tables.map((t) => `"${t.name}"`);
+
     const dsPaths = [
       path.join(dbCommonModulePath, "/internal.d.ts"),
-      path.join(dataModulePath, "/models/table.d.ts")
+      path.join(dataModulePath, "/models/table.d.ts"),
+      path.join(dataModulePath, "/models/user.d.ts"),
+      path.join(dataModulePath, "/models/file.d.ts"),
     ];
 
     for (const dsPath of dsPaths) {
@@ -4522,11 +4526,15 @@ class RegExp {
         lines
           .filter((ln) => !ln.startsWith("import "))
           .map((ln) => ln.replace(/^export /, ""))
+          .map((ln) =>
+            ln.replace(
+              "static findOne(where: Where | Table | number | string): Table | null;",
+              `static findOne(where: Where | ${cachedTableNames.join(" | ")} | number): Table | null;`
+            )
+          )
           .join("\n")
       );
     }
-    console.log(ds);
-
     res.send(ds.join("\n"));
   })
 );
