@@ -4498,6 +4498,7 @@ router.get(
     warn(...data: any[]): void;
 }
 declare var console: Console;
+interface Promise<T> {}
 class RegExp {
     constructor(pattern:string, flags?: string);
     match(string: string): RegExpMatchArray | null;   
