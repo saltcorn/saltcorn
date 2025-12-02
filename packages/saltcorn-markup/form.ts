@@ -544,6 +544,9 @@ const innerField =
           text(v[hdr.form_name] || "")
         );
       case "code":
+        const monaco = !["row", "query"].includes(
+          (hdr.attributes || {}).expression_type
+        );
         return textarea(
           {
             mode: (hdr.attributes || {}).mode || "",
@@ -551,7 +554,7 @@ const innerField =
             tableName: (hdr.attributes || {}).table || false,
             singleline: (hdr.attributes || {}).singleline ? "yes" : false,
             user: (hdr.attributes || {}).user ? "yes" : false,
-            class: `to-code form-control ${validClass} ${hdr.class || ""}`,
+            class: `${monaco ? "to-code" : "d-block font-monospace"} form-control ${validClass} ${hdr.class || ""}`,
             ...(maybe_disabled
               ? { disabled: true, "data-disabled": "true" }
               : {}),
@@ -560,6 +563,7 @@ const innerField =
               : {}),
             "data-fieldname": text_attr(hdr.form_name),
             name: text_attr(name),
+            spellcheck: !monaco ? "false" : undefined,
             id: `input${text_attr(name)}`,
           },
           v[hdr.form_name] || ""
