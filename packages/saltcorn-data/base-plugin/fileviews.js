@@ -251,6 +251,7 @@ module.exports = {
           disabled: attrs.disabled,
           onChange: attrs.onChange,
           readonly: attrs.readonly,
+          "data-on-cloned": "clear_cloned_file_input(this)",
           accept: attrs.files_accept_filter || undefined,
           ...(customInput ? { hidden: true } : {}),
         }) +

@@ -78,6 +78,12 @@ function reset_nearest_form(that) {
   form.find("select").trigger("change");
 }
 
+function clear_cloned_file_input(e) {
+  const $e = $(e);
+  $e.val("");
+  $e.parent().find(".file-upload-exising").html("");
+}
+
 function add_repeater(nm, add_link) {
   const outer_repeat = $(add_link).prev();
   var es = outer_repeat.find("div.form-repeat.repeat-" + nm);
