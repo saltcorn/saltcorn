@@ -73,7 +73,7 @@ const buildCustomInput = (id, attrs, file_name) => {
         type: "button",
         id: `${id}-custom-button`,
         class: attrs.button_style,
-        onclick: `document.getElementById('${id}').click()`,
+        onclick: `$(this).parent().find("input").click()`,
       },
       attrs?.label ? attrs.label : __("Choose File")
     ) +
