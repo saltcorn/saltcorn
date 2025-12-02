@@ -4525,7 +4525,12 @@ declare const fetch: (
        method?: "POST" | "GET" | "PUT" | "DELETE" | "HEAD" | "OPTIONS" | "TRACE",
        body?: string | Blob | FormData}
     ) => Promise<Response>
-`,
+declare const View: any
+declare const  Page : any
+declare const  Field : any
+declare const  Trigger : any
+declare const  MetaData : any
+    `,
     ];
     if (req.query.codepage) {
       ds.push("declare var globalThis: any");
