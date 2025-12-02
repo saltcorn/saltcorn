@@ -1340,7 +1340,6 @@ function initialize_page() {
         }
         const codepages = $(el).attr("codepage");
         const singleline = $(el).attr("singleline");
-        console.log({ singleline, issingle: !!singleline });
         if (singleline) {
           div.style.height = "30px";
         }
