@@ -20,6 +20,7 @@ const {
   video,
   source,
   textarea,
+  with_curScript,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
@@ -84,11 +85,9 @@ const buildCustomInput = (id, attrs, file_name) => {
       !file_name ? __("No file chosen") : ""
     ) +
     script(
-      domReady(
-        `document.getElementById('${id}').addEventListener('change', (e) => {
-          document.getElementById('${id}-custom-text').textContent = e.target.files[0].name;
-        })`
-      )
+      with_curScript(`curScript.parentNode.querySelector("input").addEventListener('change', (e) => {
+          curScript.parentNode.querySelector("span").textContent = e.target.files[0].name;
+        });`)
     )
   );
 };
