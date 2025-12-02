@@ -4624,6 +4624,11 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
         ds.push(
           `function today(offset_days?: number | {startOf:  "year" | "quarter" | "month" | "week" | "day" | "hour"} | {endOf:  "year" | "quarter" | "month" | "week" | "day" | "hour"}): Date`
         );
+      }
+      if (nm === "slugify") {
+        ds.push(
+          `function slugify(s: string): string`
+        );
       } else if (f.run) {
         const args = (f["arguments"] || []).map(
           ({ name, type, tstype }) =>
