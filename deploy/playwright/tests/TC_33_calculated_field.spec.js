@@ -121,7 +121,9 @@ test.describe('E2E Test Suite', () => {
         // JavaScript / TypeScript
         const editor = page.locator('div.monaco-editor');
         await editor.click();
+        await page.waitForTimeout(500);
         await page.keyboard.type("2025-year_of_birth");
+        await page.waitForTimeout(500);
         // click on finish button
         await functions.submit();
     });
