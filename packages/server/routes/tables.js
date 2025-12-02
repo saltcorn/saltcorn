@@ -157,7 +157,14 @@ const tableForm = async (table, req) => {
               name: "ownership_formula",
               label: req.__("Ownership formula"),
               validator: expressionValidator,
-              type: "String",
+              input_type: "code",
+              attributes: {
+                mode: "application/javascript",
+                singleline: true,
+                table: table.name,
+                user: true,
+                expression_type: "boolean",
+              },
               class: "validate-expression",
               help: {
                 topic: "Ownership formula",
@@ -1353,7 +1360,7 @@ router.post(
           );
         else if (!hasError) req.flash("success", req.__("Table saved"));
         res.redirect(`/table/${id}`);
-      } else res.json({ success: "ok", notify });
+      } else res.json({ success: "ok", notify, remove_delay: 3 });
     }
   })
 );
