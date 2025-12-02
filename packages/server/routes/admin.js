@@ -4502,10 +4502,48 @@ function setTimeout(f:Function, timeout?:number)
 declare const page_load_tag: string
 function emit_to_client(message: object, to_user_ids?: number | number[])
 async function sleep(milliseconds: number)
+interface UserLike {
+      id: number,
+      email: string
+}
+function interpolate(s: string,
+  row: Row,
+  user?: UserLike,
+  errorLocation?: string) : string:
+declare const tryCatchInTransaction: <T>(
+    fn: () => Promise<T>,
+    onError?: (err: Error) => Promise<T | void>
+  ) => Promise<T>;
+declare const commitAndBeginNewTransaction: () => Promise<void>;
+interface Response {
+json: ()=>Promise<any>, text: ()=>Promise<string>, status: number, statusTest: string, ok: boolean,
+}
+declare const fetch: (
+    url: string | URL, 
+    fetchOptions?: 
+    {  headers?: Record<string, string>, 
+       method?: "POST" | "GET" | "PUT" | "DELETE" | "HEAD" | "OPTIONS" | "TRACE",
+       body?: string | Blob | FormData}
+    ) => Promise<Response>
+declare const View: any
+declare const  Page : any
+declare const  Field : any
+declare const  Trigger : any
+declare const  MetaData : any
+function setConfig(key: string, v:any)
+function getConfig(key: string): any
 `,
     ];
     if (req.query.codepage) {
       ds.push("declare var globalThis: any");
+    } else {
+      ds.push(`
+declare const commitBeginNewTransactionAndRefreshCache: () => Promise<void>;
+declare const  EventLog : any
+declare const  Notification : any
+declare const  WorkflowRun : any
+async function run_js_code({code, row, table}:{ code: string, row?: Row, table?: Table})
+`);
     }
     const scTypeToTsType = (tynm) => {
       return (
@@ -4516,7 +4554,7 @@ async function sleep(milliseconds: number)
           Bool: "boolean",
           Date: "Date",
           HTML: "string",
-        }[tynm] || "any"
+        }[tynm?.name || tynm] || "any"
       );
     };
 
@@ -4564,9 +4602,10 @@ async function sleep(milliseconds: number)
            .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
            .join("\n")}
       }`);
-        table.fields.forEach((f) =>
-          ds.push(`declare const ${f.name}: ${scTypeToTsType(f.type)}`)
-        );
+        table.fields.forEach((f) => {
+          ds.push(`declare const ${f.name}: ${scTypeToTsType(f.type)}`);
+          console.log(`declare const ${f.name}: ${scTypeToTsType(f.type)}`);
+        });
       }
     }
     if (req.query.user) {
@@ -4581,7 +4620,16 @@ async function sleep(milliseconds: number)
     }
 
     for (const [nm, f] of Object.entries(getState().functions)) {
-      if (f.run) {
+      if (nm === "today") {
+        ds.push(
+          `function today(offset_days?: number | {startOf:  "year" | "quarter" | "month" | "week" | "day" | "hour"} | {endOf:  "year" | "quarter" | "month" | "week" | "day" | "hour"}): Date`
+        );
+      }
+      if (nm === "slugify") {
+        ds.push(
+          `function slugify(s: string): string`
+        );
+      } else if (f.run) {
         const args = (f["arguments"] || []).map(
           ({ name, type, tstype }) =>
             `${name}: ${tstype || scTypeToTsType(type)}`

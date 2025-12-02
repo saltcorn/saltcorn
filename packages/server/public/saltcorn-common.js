@@ -1313,12 +1313,13 @@ function initialize_page() {
         $(el).addClass("monaco-enabled");
         const value = $(el).val();
         const enlarge = $(el).hasClass("enlarge-in-card");
-
+        const compact = $(el).attr("compact");
         const div = document.createElement("div");
         el.after(div);
         if (enlarge) {
           enlarge_in_code(div);
-        } else div.classList.add("h-350");
+        } else if (compact) div.style.height = "90px";
+        else div.classList.add("h-350");
         let language = "typescript";
         switch ($(el).attr("mode")) {
           case "text/css":
@@ -1337,14 +1338,26 @@ function initialize_page() {
           case "text/x-shellscript":
             language = "shell";
             break;
+          case "application/json":
+            language = "json";
+            break;
         }
         const codepages = $(el).attr("codepage");
-
+        const singleline = $(el).attr("singleline");
+        if (singleline) {
+          div.style.height = "30px";
+        }
         const editor = monaco.editor.create(div, {
           value,
           language,
           theme: _sc_lightmode === "dark" ? "vs-dark" : "vs",
           minimap: { enabled: false },
+          ...(singleline || compact
+            ? {
+                extraEditorClassName: "form-control",
+                ...singleLineMonacoEditorOptions,
+              }
+            : {}),
         });
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
           noLib: true,
@@ -1718,8 +1731,6 @@ function enable_monaco({ textarea }, f) {
   const tableName = $(textarea).attr("tableName");
   const hasUser = $(textarea).attr("user");
   const codepage = $(textarea).attr("codepage");
-  console.log({ codepage });
-
   $.ajax({
     url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}`,
     success: (ds) => {
@@ -2955,3 +2966,56 @@ if (document.readyState !== "loading") {
 } else {
   document.addEventListener("DOMContentLoaded", init_dynamic_update_room);
 }
+
+//https://codesandbox.io/p/sandbox/react-monaco-single-line-forked-nsmhp6?file=%2Fsrc%2FApp.js%3A28%2C31
+const singleLineMonacoEditorOptions = {
+  fontSize: "14px",
+  fontWeight: "normal",
+  wordWrap: "off",
+  lineNumbers: "off",
+  lineNumbersMinChars: 0,
+  overviewRulerLanes: 0,
+  overviewRulerBorder: false,
+  hideCursorInOverviewRuler: true,
+  lineDecorationsWidth: 10,
+  glyphMargin: false,
+  folding: false,
+  scrollBeyondLastColumn: 0,
+  scrollbar: {
+    horizontal: "hidden",
+    vertical: "hidden",
+    // avoid can not scroll page when hover monaco
+    alwaysConsumeMouseWheel: false,
+  },
+  // disable `Find`
+  find: {
+    addExtraSpaceOnTop: false,
+    autoFindInSelection: "never",
+    seedSearchStringFromSelection: false,
+  },
+  minimap: { enabled: false },
+  // see: https://github.com/microsoft/monaco-editor/issues/1746
+  wordBasedSuggestions: false,
+  // avoid links underline
+  links: false,
+  // avoid highlight hover word
+  occurrencesHighlight: false,
+  cursorStyle: "line-thin",
+  // hide current row highlight grey border
+  // see: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html#renderlinehighlight
+  renderLineHighlight: "none",
+  contextmenu: false,
+  // default selection is rounded
+  roundedSelection: false,
+  hover: {
+    // unit: ms
+    // default: 300
+    delay: 100,
+  },
+  acceptSuggestionOnEnter: "on",
+  // auto adjust width and height to parent
+  // see: https://github.com/Microsoft/monaco-editor/issues/543#issuecomment-321767059
+  automaticLayout: true,
+  // if monaco is inside a table, hover tips or completion may casue table body scroll
+  fixedOverflowWidgets: true,
+};

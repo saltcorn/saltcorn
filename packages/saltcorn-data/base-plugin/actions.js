@@ -1395,7 +1395,7 @@ module.exports = {
           sublabel:
             "Expression for JavaScript object. For example, <code>{points: 34}</code>",
           input_type: "code",
-          attributes: { mode: "application/javascript" },
+          attributes: { mode: "application/javascript", expression_type: "row" },
         },
         ...(mode === "edit" ||
         mode === "filter" ||
@@ -1905,9 +1905,13 @@ module.exports = {
         .map((f) => code(f))
         .join(", ");
       const clientvars = [...fields].map((f) => code(f)).join(", ");
-      const has_user = ["Hourly", "Weekly", "Daily", "Often", "Startup"].includes(
-        when_trigger
-      )
+      const has_user = [
+        "Hourly",
+        "Weekly",
+        "Daily",
+        "Often",
+        "Startup",
+      ].includes(when_trigger)
         ? undefined
         : "maybe";
       return [

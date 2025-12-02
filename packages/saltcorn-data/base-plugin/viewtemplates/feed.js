@@ -148,7 +148,14 @@ const configuration_workflow = (req) =>
               {
                 name: "create_view_showif",
                 label: req.__("Show if formula"),
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table.name,
+                  user: true,
+                  expression_type: "boolean",
+                },
                 sublabel: req.__(
                   "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
                 ),
@@ -295,7 +302,14 @@ const configuration_workflow = (req) =>
               {
                 name: "groupby",
                 label: req.__("Group by"),
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table.name,
+                  user: true,
+                  expression_type: "value",
+                },
                 sublabel: "Formula for the group headings",
                 class: "validate-expression",
               },
@@ -333,7 +347,14 @@ const configuration_workflow = (req) =>
                 name: "title_formula",
                 label: req.__("Title formula"),
                 class: "validate-expression",
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table.name,
+                  user: true,
+                  expression_type: "value",
+                },
                 showIf: { view_decoration: ["Card", "Accordion", "Tabs"] },
               },
               {
@@ -386,7 +407,14 @@ const configuration_workflow = (req) =>
                   ]
                     .map((s) => code(s))
                     .join(", "),
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table.name,
+                  user: true,
+                  expression_type: "boolean",
+                },
                 help: {
                   topic: "Inclusion Formula",
                   context: { table_name: table.name },
