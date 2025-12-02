@@ -20,6 +20,7 @@ const {
   video,
   source,
   textarea,
+  with_curScript,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
@@ -72,7 +73,7 @@ const buildCustomInput = (id, attrs, file_name) => {
         type: "button",
         id: `${id}-custom-button`,
         class: attrs.button_style,
-        onclick: `document.getElementById('${id}').click()`,
+        onclick: `$(this).parent().find("input").click()`,
       },
       attrs?.label ? attrs.label : __("Choose File")
     ) +
@@ -84,11 +85,9 @@ const buildCustomInput = (id, attrs, file_name) => {
       !file_name ? __("No file chosen") : ""
     ) +
     script(
-      domReady(
-        `document.getElementById('${id}').addEventListener('change', (e) => {
-          document.getElementById('${id}-custom-text').textContent = e.target.files[0].name;
-        })`
-      )
+      with_curScript(`curScript.parentNode.querySelector("input").addEventListener('change', (e) => {
+          curScript.parentNode.querySelector("span").textContent = e.target.files[0].name;
+        });`)
     )
   );
 };
@@ -251,6 +250,7 @@ module.exports = {
           disabled: attrs.disabled,
           onChange: attrs.onChange,
           readonly: attrs.readonly,
+          "data-on-cloned": "clear_cloned_file_input(this)",
           accept: attrs.files_accept_filter || undefined,
           ...(customInput ? { hidden: true } : {}),
         }) +
@@ -458,6 +458,7 @@ module.exports = {
             name: text_attr(nm),
             id: id,
             type: "file",
+            "data-on-cloned": "$(this).val('')",
             accept: `${mimebase}/*;capture=${attrs.device}`,
             ...(customInput ? { hidden: true } : {}),
           }) + (customInput ? buildCustomInput(id, attrs) : "")
