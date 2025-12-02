@@ -1337,6 +1337,9 @@ function initialize_page() {
           case "text/x-shellscript":
             language = "shell";
             break;
+          case "application/json":
+            language = "json";
+            break;
         }
         const codepages = $(el).attr("codepage");
         const singleline = $(el).attr("singleline");
