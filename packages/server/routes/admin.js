@@ -4542,6 +4542,7 @@ declare const commitBeginNewTransactionAndRefreshCache: () => Promise<void>;
 declare const  EventLog : any
 declare const  Notification : any
 declare const  WorkflowRun : any
+async function run_js_code({code, row, table}:{ code: string, row?: Row, table?: Table})
 `);
     }
     const scTypeToTsType = (tynm) => {
