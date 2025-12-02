@@ -1313,12 +1313,13 @@ function initialize_page() {
         $(el).addClass("monaco-enabled");
         const value = $(el).val();
         const enlarge = $(el).hasClass("enlarge-in-card");
-
+        const compact = $(el).attr("compact");
         const div = document.createElement("div");
         el.after(div);
         if (enlarge) {
           enlarge_in_code(div);
-        } else div.classList.add("h-350");
+        } else if (compact) div.style.height = "90px";
+        else div.classList.add("h-350");
         let language = "typescript";
         switch ($(el).attr("mode")) {
           case "text/css":
@@ -1351,7 +1352,7 @@ function initialize_page() {
           language,
           theme: _sc_lightmode === "dark" ? "vs-dark" : "vs",
           minimap: { enabled: false },
-          ...(singleline
+          ...(singleline || compact
             ? {
                 extraEditorClassName: "form-control",
                 ...singleLineMonacoEditorOptions,
