@@ -625,7 +625,7 @@ const configuration_workflow = (req) =>
               singleline: true,
               table: table.name,
               user: true,
-              expression_type: "boolean",
+              expression_type: "value",
             },
             sublabel: "Formula for the group headings",
             class: "validate-expression",
