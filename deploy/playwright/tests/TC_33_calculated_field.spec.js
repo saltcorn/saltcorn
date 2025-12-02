@@ -119,8 +119,9 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
 
         // JavaScript / TypeScript
-        const textarea = page.locator('div.monaco-editor');
-        await textarea.fill('2025-year_of_birth');
+        const editor = page.locator('div.monaco-editor');
+        await editor.click();
+        await page.keyboard.type("2025-year_of_birth");
         // click on finish button
         await functions.submit();
     });
