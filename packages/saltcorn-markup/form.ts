@@ -553,6 +553,7 @@ const innerField =
             codepage: (hdr.attributes || {}).codepage || false,
             tableName: (hdr.attributes || {}).table || false,
             singleline: (hdr.attributes || {}).singleline ? "yes" : false,
+            compact: (hdr.attributes || {}).compact ? "yes" : false,
             user: (hdr.attributes || {}).user ? "yes" : false,
             class: `${monaco ? "to-code" : "d-block font-monospace"} form-control ${validClass} ${hdr.class || ""}`,
             ...(maybe_disabled

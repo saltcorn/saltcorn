@@ -4620,7 +4620,11 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
     }
 
     for (const [nm, f] of Object.entries(getState().functions)) {
-      if (f.run) {
+      if (nm === "today") {
+        ds.push(
+          `function today(offset_days?: number | {startOf:  "year" | "quarter" | "month" | "week" | "day" | "hour"} | {endOf:  "year" | "quarter" | "month" | "week" | "day" | "hour"}): Date`
+        );
+      } else if (f.run) {
         const args = (f["arguments"] || []).map(
           ({ name, type, tstype }) =>
             `${name}: ${tstype || scTypeToTsType(type)}`
