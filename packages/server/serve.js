@@ -384,6 +384,8 @@ const onMessageFromWorker =
     }
   };
 
+const escapeSingleQuotes = (value) => value.replace(/'/g, "''");
+
 module.exports =
   /**
    * @function
@@ -453,9 +455,18 @@ module.exports =
           msg.log_event ||
           (msg.refresh && msg.refresh !== "ephemeral_config")
         ) {
-          await multiNodeClient.query(
-            `NOTIFY ${db.getTenantSchema()}_events, '${JSON.stringify(msg)}'`
-          );
+          const payload = escapeSingleQuotes(JSON.stringify(msg));
+          const payloadBytes = Buffer.byteLength(payload, "utf8");
+          if (payloadBytes < 8000) {
+            await multiNodeClient.query(
+              `NOTIFY ${db.getTenantSchema()}_events, '${payload}'`
+            );
+          } else {
+            getState().log(
+              2,
+              `Not sending multinode message, too large (${payloadBytes} bytes)`
+            );
+          }
         }
       };
     }
