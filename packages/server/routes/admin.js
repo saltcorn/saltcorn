@@ -4530,10 +4530,19 @@ declare const  Page : any
 declare const  Field : any
 declare const  Trigger : any
 declare const  MetaData : any
-    `,
+function setConfig(key: string, v:any)
+function getConfig(key: string): any
+`,
     ];
     if (req.query.codepage) {
       ds.push("declare var globalThis: any");
+    } else {
+      ds.push(`
+declare const commitBeginNewTransactionAndRefreshCache: () => Promise<void>;
+declare const  EventLog : any
+declare const  Notification : any
+declare const  WorkflowRun : any
+`);
     }
     const scTypeToTsType = (tynm) => {
       return (
