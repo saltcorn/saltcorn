@@ -4502,6 +4502,29 @@ function setTimeout(f:Function, timeout?:number)
 declare const page_load_tag: string
 function emit_to_client(message: object, to_user_ids?: number | number[])
 async function sleep(milliseconds: number)
+interface UserLike {
+      id: number,
+      email: string
+}
+function interpolate(s: string,
+  row: Row,
+  user?: UserLike,
+  errorLocation?: string) : string:
+declare const tryCatchInTransaction: <T>(
+    fn: () => Promise<T>,
+    onError?: (err: Error) => Promise<T | void>
+  ) => Promise<T>;
+declare const commitAndBeginNewTransaction: () => Promise<void>;
+interface Response {
+json: ()=>Promise<any>, text: ()=>Promise<string>, status: number, statusTest: string, ok: boolean,
+}
+declare const fetch: (
+    url: string | URL, 
+    fetchOptions?: 
+    {  headers?: Record<string, string>, 
+       method?: "POST" | "GET" | "PUT" | "DELETE" | "HEAD" | "OPTIONS" | "TRACE",
+       body?: string | Blob | FormData}
+    ) => Promise<Response>
 `,
     ];
     if (req.query.codepage) {
