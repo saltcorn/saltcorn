@@ -1281,7 +1281,21 @@ class State {
    * @param {...*} args
    */
   emitRoom(...args: any[]) {
+    let noMultiNodePropagate = false;
+    const last = args.length > 0 ? args[args.length - 1] : null;
+    if (last && typeof last === "object" && "noMultiNodePropagate" in last) {
+      const opts = args.pop() as { noMultiNodePropagate?: boolean };
+      noMultiNodePropagate = !!opts.noMultiNodePropagate;
+    }
+
     globalRoomEmitter(...args);
+    if (!noMultiNodePropagate && db.connectObj.multi_node) {
+      this.processSend({
+        real_time_chat_event: {
+          ...args,
+        },
+      });
+    }
   }
 
   setLogEmitter(f: Function) {

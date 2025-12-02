@@ -170,7 +170,11 @@ const getMultiNodeListener = (client) => {
       else {
         try {
           const payload = JSON.parse(msg.payload);
-          if (payload.dynamic_update || payload.real_time_collab_event) {
+          if (
+            payload.dynamic_update ||
+            payload.real_time_collab_event ||
+            payload.real_time_chat_event
+          ) {
             const workers = Object.values(cluster.workers || {});
             if (workers.length > 0) {
               // use only one worker, master has no serversocket
@@ -285,6 +289,12 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
       true
     );
   }
+  if (msg.real_time_chat_event) {
+    getState().emitRoom(...Object.values(msg.real_time_chat_event), {
+      noMultiNodePropagate: true,
+    });
+  }
+
   if (msg.refresh) {
     if (msg.refresh === "ephemeral_config")
       getState().refresh_ephemeral_config(msg.key, msg.value);
@@ -345,7 +355,9 @@ const onMessageFromWorker =
       process.exit(0);
       return true;
     } else if (
-      (msg.dynamic_update || msg.real_time_collab_event) &&
+      (msg.dynamic_update ||
+        msg.real_time_collab_event ||
+        msg.real_time_chat_event) &&
       nodesDispatchMsg
     ) {
       nodesDispatchMsg(msg);
@@ -427,6 +439,7 @@ module.exports =
           msg.refresh_plugin_cfg ||
           msg.dynamic_update ||
           msg.real_time_collab_event ||
+          msg.real_time_chat_event ||
           (msg.refresh && msg.refresh !== "ephemeral_config")
         ) {
           await multiNodeClient.query(
@@ -536,7 +549,11 @@ module.exports =
         });
       } else {
         getState().sendMessageToWorkers = (msg) => {
-          if (!msg.dynamic_update || msg.real_time_collab_event)
+          if (
+            !msg.dynamic_update &&
+            !msg.real_time_collab_event &&
+            !msg.real_time_chat_event
+          )
             workerDispatchMsg(msg); //also master
           if (nodesDispatchMsg)
             nodesDispatchMsg(msg).catch((e) => {
