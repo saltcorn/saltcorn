@@ -459,6 +459,7 @@ module.exports = {
             name: text_attr(nm),
             id: id,
             type: "file",
+            "data-on-cloned": "$(this).val('')",
             accept: `${mimebase}/*;capture=${attrs.device}`,
             ...(customInput ? { hidden: true } : {}),
           }) + (customInput ? buildCustomInput(id, attrs) : "")
