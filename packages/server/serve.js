@@ -173,7 +173,8 @@ const getMultiNodeListener = (client) => {
           if (
             payload.dynamic_update ||
             payload.real_time_collab_event ||
-            payload.real_time_chat_event
+            payload.real_time_chat_event ||
+            payload.log_event
           ) {
             const workers = Object.values(cluster.workers || {});
             if (workers.length > 0) {
@@ -294,6 +295,14 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
       noMultiNodePropagate: true,
     });
   }
+  if (msg.log_event) {
+    getState().emitLog(
+      tenant || "public",
+      msg.log_event.min_level,
+      msg.log_event.msg,
+      true
+    );
+  }
 
   if (msg.refresh) {
     if (msg.refresh === "ephemeral_config")
@@ -357,7 +366,8 @@ const onMessageFromWorker =
     } else if (
       (msg.dynamic_update ||
         msg.real_time_collab_event ||
-        msg.real_time_chat_event) &&
+        msg.real_time_chat_event ||
+        msg.log_event) &&
       nodesDispatchMsg
     ) {
       nodesDispatchMsg(msg);
@@ -440,6 +450,7 @@ module.exports =
           msg.dynamic_update ||
           msg.real_time_collab_event ||
           msg.real_time_chat_event ||
+          msg.log_event ||
           (msg.refresh && msg.refresh !== "ephemeral_config")
         ) {
           await multiNodeClient.query(
@@ -552,7 +563,8 @@ module.exports =
           if (
             !msg.dynamic_update &&
             !msg.real_time_collab_event &&
-            !msg.real_time_chat_event
+            !msg.real_time_chat_event &&
+            !msg.log_event
           )
             workerDispatchMsg(msg); //also master
           if (nodesDispatchMsg)

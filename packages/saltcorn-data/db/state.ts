@@ -473,7 +473,7 @@ class State {
       const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
       if (min_level === 1) console.error(s);
       else console.log(s);
-      if (this.hasJoinedLogSockets) this.emitLog(ten, min_level, msg);
+      this.emitLog(ten, min_level, msg);
     }
   }
 
@@ -1316,8 +1316,29 @@ class State {
     globalDynamicUpdateEmitter = f;
   }
 
-  emitLog(ten: string, min_level: number, msg: string) {
-    globalLogEmitter(ten, min_level, msg);
+  /**
+   * emit a log message for the log viewer
+   * @param ten
+   * @param min_level
+   * @param msg
+   * @param noMultiNodePropagate - if true, do not propagate to other nodes in multi-node setup
+   */
+  emitLog(
+    ten: string,
+    min_level: number,
+    msg: string,
+    noMultiNodePropagate?: boolean
+  ) {
+    if (this.hasJoinedLogSockets) globalLogEmitter(ten, min_level, msg);
+    if (!noMultiNodePropagate && db.connectObj.multi_node) {
+      this.processSend({
+        log_event: {
+          min_level,
+          msg,
+        },
+        tenant: ten,
+      });
+    }
   }
 
   /**
