@@ -635,7 +635,12 @@ const configuration_workflow = (req) =>
                 .map((s) => code(s))
                 .join(", "),
             input_type: "code",
-            attributes: { mode: "application/javascript", singleline: true },
+            attributes: {
+              mode: "application/javascript",
+              singleline: true,
+              table: table.name,
+              user: true,
+            },
             help: {
               topic: "Inclusion Formula",
               context: { table_name: table.name },

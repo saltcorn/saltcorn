@@ -550,7 +550,7 @@ const innerField =
             codepage: (hdr.attributes || {}).codepage || false,
             tableName: (hdr.attributes || {}).table || false,
             singleline: (hdr.attributes || {}).singleline ? "yes" : false,
-            user: (hdr.attributes || {}).user || false,
+            user: (hdr.attributes || {}).user ? "yes" : false,
             class: `to-code form-control ${validClass} ${hdr.class || ""}`,
             ...(maybe_disabled
               ? { disabled: true, "data-disabled": "true" }

@@ -1341,12 +1341,20 @@ function initialize_page() {
         const codepages = $(el).attr("codepage");
         const singleline = $(el).attr("singleline");
         console.log({ singleline, issingle: !!singleline });
-
+        if (singleline) {
+          div.style.height = "30px";
+        }
         const editor = monaco.editor.create(div, {
           value,
           language,
           theme: _sc_lightmode === "dark" ? "vs-dark" : "vs",
           minimap: { enabled: false },
+          ...(singleline
+            ? {
+                extraEditorClassName: "form-control",
+                ...singleLineMonacoEditorOptions,
+              }
+            : {}),
         });
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
           noLib: true,
