@@ -4554,7 +4554,7 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
           Bool: "boolean",
           Date: "Date",
           HTML: "string",
-        }[tynm] || "any"
+        }[tynm?.name || tynm] || "any"
       );
     };
 
@@ -4602,9 +4602,10 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
            .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
            .join("\n")}
       }`);
-        table.fields.forEach((f) =>
-          ds.push(`declare const ${f.name}: ${scTypeToTsType(f.type)}`)
-        );
+        table.fields.forEach((f) => {
+          ds.push(`declare const ${f.name}: ${scTypeToTsType(f.type)}`);
+          console.log(`declare const ${f.name}: ${scTypeToTsType(f.type)}`);
+        });
       }
     }
     if (req.query.user) {
