@@ -549,6 +549,7 @@ const innerField =
             mode: (hdr.attributes || {}).mode || "",
             codepage: (hdr.attributes || {}).codepage || false,
             tableName: (hdr.attributes || {}).table || false,
+            singleline: (hdr.attributes || {}).singleline ? "yes" : false,
             user: (hdr.attributes || {}).user || false,
             class: `to-code form-control ${validClass} ${hdr.class || ""}`,
             ...(maybe_disabled
