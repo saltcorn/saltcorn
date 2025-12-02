@@ -1322,7 +1322,12 @@ router.post(
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);
         if (typeof fmlValidRes === "string") {
-          notify = req.__(`Invalid ownership formula: %s`, fmlValidRes);
+          notify = req.__(
+            `Invalid ownership formula: %s`,
+            fmlValidRes === "Unexpected token ')'"
+              ? "Syntax error"
+              : fmlValidRes
+          );
           hasError = true;
         }
       } else if (
