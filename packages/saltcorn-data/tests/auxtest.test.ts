@@ -37,6 +37,8 @@ import {
   prepareSimpleTopicPostRelation,
 } from "./common_helpers";
 import { assertIsSet } from "./assertions";
+import expression from "../models/expression";
+const { freeVariables } = expression;
 const PlainDate = require("@saltcorn/plain-date");
 
 const { mockReqRes } = mocks;
@@ -177,6 +179,24 @@ describe("generate_joined_query", () => {
     const rows = await table.getJoinedRows(q);
     expect(rows.length).toBe(1);
   });
+});
+
+describe("Hangul-A notation for joinfields", () => {
+  // deciding between ㅏ Ⱶ Ͱ
+  // publisherͰname
+  // publisherⱵname
+  // publisherㅏname
+  it("free variables", () => {
+    expect([...freeVariables("2+xㅏk")]).toEqual(["xㅏk"]);
+  });
+  /*it("should generate formulas with heta", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const q = generate_joined_query({ table, formulas: ["publisherⱵname"] });
+    expect(q?.joinFields?.publisher_name?.target).toBe("name");
+    const rows = await table.getJoinedRows(q);
+    expect(rows.length).toBe(2);
+  });*/
 });
 
 describe("plugin helper", () => {
