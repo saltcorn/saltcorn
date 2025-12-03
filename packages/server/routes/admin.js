@@ -4546,7 +4546,7 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
 `);
     }
     const scTypeToTsType = (type, field) => {
-      if (field?.is_fkey) {        
+      if (field?.is_fkey) {
         if (field.reftype) return scTypeToTsType(field.reftype);
       }
       return (
@@ -4607,6 +4607,15 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
       }`);
         table.fields.forEach((f) => {
           ds.push(`declare const ${f.name}: ${scTypeToTsType(f.type, f)}`);
+          if (f.is_fkey) {
+            const reftable = Table.findOne(f.reftable_name);
+            if (reftable)
+              reftable.fields.forEach((rf) => {
+                ds.push(
+                  `declare const ${f.name}Ⱶ${rf.name}: ${scTypeToTsType(rf.type, rf)}`
+                );
+              });
+          }
         });
       }
     }
