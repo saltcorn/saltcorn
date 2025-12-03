@@ -625,9 +625,9 @@ const add_free_variables_to_joinfields = (
         }
     });
   [...freeVars]
-    .filter((v) => v.includes("ㅏ"))
+    .filter((v) => v.includes("Ⱶ"))
     .forEach((v) => {
-      const kpath = v.split("ㅏ");
+      const kpath = v.split("Ⱶ");
       if (joinFieldNames.has(kpath[0]))
         if (kpath.length === 2) {
           const [refNm, targetNm] = kpath;

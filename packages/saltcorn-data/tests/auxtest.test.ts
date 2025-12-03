@@ -181,22 +181,22 @@ describe("generate_joined_query", () => {
   });
 });
 
-describe("Hangul-A notation for joinfields", () => {
+describe("Half-H notation for joinfields", () => {
   // deciding between ㅏ Ⱶ Ͱ
   // publisherͰname
   // publisherⱵname
   // publisherㅏname
   it("freeVariables", () => {
-    expect([...freeVariables("2+xㅏk")]).toEqual(["xㅏk"]);
+    expect([...freeVariables("2+xⱵk")]).toEqual(["xⱵk"]);
   });
   it("add_free_variables_to_joinfields", () => {
     const table = Table.findOne({ name: "books" });
     assertIsSet(table);
     const joinFields = {};
-    const freeVars = freeVariables("publisherㅏname");
+    const freeVars = freeVariables("publisherⱵname");
     add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
     expect(joinFields).toStrictEqual({
-      publisherㅏname: {
+      publisherⱵname: {
         ref: "publisher",
         target: "name",
       },
@@ -208,14 +208,14 @@ describe("Hangul-A notation for joinfields", () => {
     const q = generate_joined_query({
       table,
       state: { pages: 728 },
-      formulas: ["publisherㅏname"],
+      formulas: ["publisherⱵname"],
     });
 
-    expect(q?.joinFields?.publisherㅏname?.target).toBe("name");
+    expect(q?.joinFields?.publisherⱵname?.target).toBe("name");
     const rows = await table.getJoinedRows(q);
     expect(rows.length).toBe(1);
     expect(rows[0].publisher).toBe(1);
-    expect(rows[0].publisherㅏname).toBe("AK Press");
+    expect(rows[0].publisherⱵname).toBe("AK Press");
   });
 });
 
