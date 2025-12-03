@@ -1728,7 +1728,19 @@ function enable_codemirror(f) {
   });
 }
 
+let monaco_enabled_declares = false;
+const monaco_init_queue = [];
+
 function enable_monaco({ textarea }, f) {
+  if (monaco_enabled_declares === "initializing") {
+    monaco_init_queue.push(f);
+    return;
+  }
+  if (monaco_enabled_declares) {
+    f(monaco_enabled_declares);
+    return;
+  }
+  monaco_enabled_declares = "initializing";
   $("<link/>", {
     rel: "stylesheet",
     type: "text/css",
@@ -1751,6 +1763,8 @@ function enable_monaco({ textarea }, f) {
             },
           });
           require(["vs/editor/editor.main"], function () {
+            monaco_enabled_declares = ds;
+            monaco_init_queue.forEach((qf) => qf(ds));
             f(ds);
           });
         },
