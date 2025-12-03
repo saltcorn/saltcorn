@@ -4545,7 +4545,10 @@ declare const  WorkflowRun : any
 async function run_js_code({code, row, table}:{ code: string, row?: Row, table?: Table})
 `);
     }
-    const scTypeToTsType = (tynm) => {
+    const scTypeToTsType = (type, field) => {
+      if (field?.is_fkey) {        
+        if (field.reftype) return scTypeToTsType(field.reftype);
+      }
       return (
         {
           String: "string",
@@ -4554,7 +4557,7 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
           Bool: "boolean",
           Date: "Date",
           HTML: "string",
-        }[tynm?.name || tynm] || "any"
+        }[type?.name || type] || "any"
       );
     };
 
@@ -4599,12 +4602,11 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
         ds.push(`declare const table: Table`);
         ds.push(`declare const row: {
          ${table.fields
-           .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
+           .map((f) => `${f.name}: ${scTypeToTsType(f.type, f)};`)
            .join("\n")}
       }`);
         table.fields.forEach((f) => {
-          ds.push(`declare const ${f.name}: ${scTypeToTsType(f.type)}`);
-          console.log(`declare const ${f.name}: ${scTypeToTsType(f.type)}`);
+          ds.push(`declare const ${f.name}: ${scTypeToTsType(f.type, f)}`);
         });
       }
     }
@@ -4613,7 +4615,7 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
       if (table) {
         ds.push(`declare const user: {
          ${table.fields
-           .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
+           .map((f) => `${f.name}: ${scTypeToTsType(f.type, f)};`)
            .join("\n")}
       }${req.query.user === "maybe" ? " | undefined" : ""}`);
       }
@@ -4626,9 +4628,7 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
         );
       }
       if (nm === "slugify") {
-        ds.push(
-          `function slugify(s: string): string`
-        );
+        ds.push(`function slugify(s: string): string`);
       } else if (f.run) {
         const args = (f["arguments"] || []).map(
           ({ name, type, tstype }) =>
