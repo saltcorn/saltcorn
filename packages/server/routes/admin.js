@@ -4599,6 +4599,11 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
     if (req.query.table) {
       const table = Table.findOne(req.query.table);
       if (table) {
+        const tsFields = []
+        const addTsFields = (table, path, nrecurse) => {
+          
+        }
+        addTsFields(table, "", 3)
         ds.push(`declare const table: Table`);
         ds.push(`declare const row: {
          ${table.fields
