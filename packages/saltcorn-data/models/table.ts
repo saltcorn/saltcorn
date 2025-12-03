@@ -1607,7 +1607,7 @@ class Table implements AbstractTable {
             v
           )}, id=${id}`
         );
-        this.stringify_json_fields(v);
+        this.prepare_row_for_writing(v);
         stringified = true;
         await db.update(this.name, v, id, {
           pk_name,
@@ -1673,7 +1673,7 @@ class Table implements AbstractTable {
         });
     }
     state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
-    if (!stringified) this.stringify_json_fields(v);
+    if (!stringified) this.prepare_row_for_writing(v);
     const really_changed_field_names: Set<string> = existing
       ? new Set(Object.keys(v).filter((k) => v[k] !== (existing as Row)[k]))
       : changedFieldNames;
@@ -1750,7 +1750,7 @@ class Table implements AbstractTable {
     });
     if (this.name === "users") delete v1.last_mobile_login;
 
-    this.stringify_json_fields(v1);
+    this.prepare_row_for_writing(v1);
 
     const id = await db.insert(this.name + "__history", v1, {
       onConflictDoNothing: true,
@@ -2099,7 +2099,7 @@ class Table implements AbstractTable {
         6,
         `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
       );
-      this.stringify_json_fields(v_in);
+      this.prepare_row_for_writing(v_in);
       id = await db.insert(this.name, v_in, { pk_name, ...sqliteJsonCols });
       let existing = await this.getJoinedRows({
         where: { [pk_name]: id },
@@ -2132,7 +2132,7 @@ class Table implements AbstractTable {
       await db.update(this.name, v, id, { pk_name, ...sqliteJsonCols });
     } else {
       v = await apply_calculated_fields_stored(v_in, fields, this);
-      this.stringify_json_fields(v);
+      this.prepare_row_for_writing(v);
       state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
       id = await db.insert(this.name, v, {
         pk_name,
@@ -3336,7 +3336,7 @@ class Table implements AbstractTable {
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
-                      this.stringify_json_fields(rec);
+                      this.prepare_row_for_writing(rec);
                       if (options?.no_table_write) {
                         if (existing) {
                           Object.entries(existing).forEach(([k, v]) => {
@@ -3449,7 +3449,17 @@ ${rejectDetails}`,
     };
   }
 
-  stringify_json_fields(v1: Row) {
+  private prepare_row_for_writing(v1: Row) {
+    this.fields.forEach((f) => {
+      if (
+        typeof f.type !== "string" &&
+        f?.type?.name === "Integer" &&
+        !f.required &&
+        typeof v1[f.name] === "number" &&
+        isNaN(v1[f.name])
+      )
+        v1[f.name] = null;
+    });
     if (db.isSQLite) return;
     this.fields
       .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
@@ -3458,7 +3468,7 @@ ${rejectDetails}`,
           v1[f.name] = JSON.stringify(v1[f.name]);
       });
   }
-  parse_json_fields(v1: Row): Row {
+  private parse_json_fields(v1: Row): Row {
     if (db.isSQLite)
       this.fields
         .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
