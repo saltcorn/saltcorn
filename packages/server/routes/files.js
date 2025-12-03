@@ -268,12 +268,12 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
-      res.type(file.mimetype);
       if (file.s3_store) {
         await s3storage.redirectToObject(file, res, true);
         return;
       }
-      else res.download(file.location, file.filename, { dotfiles: "allow" });
+      res.type(file.mimetype);
+      res.download(file.location, file.filename, { dotfiles: "allow" });
     } else {
       res
         .status(404)
@@ -331,6 +331,10 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, false);
+        return;
+      }
       if (
         (file.mimetype === "text/html" ||
           file.mimetype === "application/xhtml+xml") &&
@@ -353,11 +357,7 @@ router.get(
         res.send(clean);
         return;
       }
-      if (file.s3_store) {
-        await s3storage.redirectToObject(file, res, false);
-        return;
-      }
-      else res.sendFile(file.location, { dotfiles: "allow" });
+      res.sendFile(file.location, { dotfiles: "allow" });
     } else {
       getState().log(
         5,
@@ -392,6 +392,10 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, false);
+        return;
+      }
       if (
         (file.mimetype === "text/html" ||
           file.mimetype === "application/xhtml+xml") &&
@@ -402,32 +406,27 @@ router.get(
 
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
-      if (file.s3_store) {
-        await s3storage.redirectToObject(file, res, false);
+      const width = strictParseInt(width_str);
+      const height =
+        height_str && height_str !== "0" ? strictParseInt(height_str) : null;
+      if (!width) {
+        res.sendFile(file.location, { dotfiles: "allow" });
         return;
-      } else {
-        const width = strictParseInt(width_str);
-        const height =
-          height_str && height_str !== "0" ? strictParseInt(height_str) : null;
-        if (!width) {
-          res.sendFile(file.location, { dotfiles: "allow" });
-          return;
-        }
-        const basenm = path.join(
-          path.dirname(file.location),
-          "_resized_" + path.basename(file.location)
-        );
-        const fnm = `${basenm}_w${width}${height ? `_h${height}` : ""}`;
-        if (!fs.existsSync(fnm)) {
-          await resizer({
-            fromFileName: file.location,
-            width,
-            height,
-            toFileName: fnm,
-          });
-        }
-        res.sendFile(fnm, { dotfiles: "allow" });
       }
+      const basenm = path.join(
+        path.dirname(file.location),
+        "_resized_" + path.basename(file.location)
+      );
+      const fnm = `${basenm}_w${width}${height ? `_h${height}` : ""}`;
+      if (!fs.existsSync(fnm)) {
+        await resizer({
+          fromFileName: file.location,
+          width,
+          height,
+          toFileName: fnm,
+        });
+      }
+      res.sendFile(fnm, { dotfiles: "allow" });
     } else {
       res
         .status(404)
@@ -645,7 +644,6 @@ const storage_form = async (req) => {
     field_names: [
       "storage_s3_enabled",
       "storage_s3_bucket",
-      "storage_s3_path_prefix",
       "storage_s3_endpoint",
       "storage_s3_region",
       "storage_s3_access_key",

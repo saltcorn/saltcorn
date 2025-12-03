@@ -19,7 +19,6 @@ const posixPath = path.posix;
 
 type S3Settings = {
   bucket?: string;
-  pathPrefix?: string;
   endpoint?: string;
   region?: string;
   secure: boolean;
@@ -101,9 +100,6 @@ const getS3Settings = (): S3Settings => {
   const state = getStateInstance();
   return {
     bucket: state?.getConfig("storage_s3_bucket"),
-    pathPrefix: stripUrlPrefix(
-      state?.getConfig("storage_s3_path_prefix") || ""
-    ),
     endpoint: normaliseEndpoint(
       state?.getConfig("storage_s3_endpoint"),
       state?.getConfig("storage_s3_secure", true)
@@ -118,14 +114,7 @@ const getS3Settings = (): S3Settings => {
 export const isS3Enabled = (): boolean =>
   !!getStateInstance()?.getConfig("storage_s3_enabled");
 
-const getTenantRoot = (): string => {
-  const tenant = db.getTenantSchema();
-  const { pathPrefix } = getS3Settings();
-  const cleanedPrefix = cleanSegment(pathPrefix);
-  return [cleanedPrefix, tenant]
-    .filter((part) => part && part.length)
-    .join("/");
-};
+const getTenantRoot = (): string => cleanSegment(db.getTenantSchema());
 
 const cleanRelativePath = (relPath?: string): string => {
   if (!relPath) return "";
@@ -483,6 +472,3 @@ export const getServeUrl = async (
   }
 };
 
-export const metadataForStorage = (meta: MetadataInput) => encodeMetadata(meta);
-export const metadataFromStorage = (meta?: Record<string, string>) =>
-  decodeMetadata(meta);

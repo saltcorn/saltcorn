@@ -76,8 +76,5 @@
   },
   "workspaces": [
     "./packages/*"
-  ],
-  "dependencies": {
-    "@aws-sdk/s3-request-presigner": "^3.940.0"
-  }
+  ]
 }
