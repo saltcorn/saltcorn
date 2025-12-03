@@ -4599,28 +4599,24 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
     if (req.query.table) {
       const table = Table.findOne(req.query.table);
       if (table) {
-        const tsFields = []
+        const tsFields = [];
         const addTsFields = (table, path, nrecurse) => {
-          
-        }
-        addTsFields(table, "", 3)
+          table.fields.forEach((f) => {
+            tsFields.push(`${path}${f.name}: ${scTypeToTsType(f.type, f)};`);
+            if (f.is_fkey && nrecurse >= 0) {
+              const reftable = Table.findOne(f.reftable_name);
+              if (reftable)
+                addTsFields(reftable, `${path}${f.name}Ⱶ`, nrecurse - 1);
+            }
+          });
+        };
+        addTsFields(table, "", 2);
         ds.push(`declare const table: Table`);
         ds.push(`declare const row: {
-         ${table.fields
-           .map((f) => `${f.name}: ${scTypeToTsType(f.type, f)};`)
-           .join("\n")}
+         ${tsFields.join("\n")}
       }`);
-        table.fields.forEach((f) => {
-          ds.push(`declare const ${f.name}: ${scTypeToTsType(f.type, f)}`);
-          if (f.is_fkey) {
-            const reftable = Table.findOne(f.reftable_name);
-            if (reftable)
-              reftable.fields.forEach((rf) => {
-                ds.push(
-                  `declare const ${f.name}Ⱶ${rf.name}: ${scTypeToTsType(rf.type, rf)}`
-                );
-              });
-          }
+        tsFields.forEach((tsf) => {
+          ds.push(`declare const ${tsf}`);
         });
       }
     }
