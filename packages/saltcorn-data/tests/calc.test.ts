@@ -202,6 +202,35 @@ describe("calculated", () => {
     expect(rowlast.z).toBe(9);
     expect(rowlast.x).toBe(7);
   });
+  it("avoid nans in integer fields", async () => {
+    const table = await Table.create("withcalcsintnans");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "y",
+      type: "Integer",
+    });
+
+    const fz = await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression:
+        "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
+      stored: true,
+    });
+    const id1 = await table.insertRow({ x: 7, y: 2 });
+
+    const row0 = await table.getRow({ id: id1 });
+    assertIsSet(row0);
+    expect(row0.x).toBe(7);
+    expect(row0.z).toBe(null);
+  });
   it("use supplied function", async () => {
     const table = await Table.create("withcalcs5");
     await Field.create({
