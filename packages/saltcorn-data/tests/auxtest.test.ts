@@ -202,14 +202,21 @@ describe("Hangul-A notation for joinfields", () => {
       },
     });
   });
-  /*it("should generate formulas with heta", async () => {
+  it("should generate formulas", async () => {
     const table = Table.findOne({ name: "books" });
     assertIsSet(table);
-    const q = generate_joined_query({ table, formulas: ["publisherⱵname"] });
-    expect(q?.joinFields?.publisher_name?.target).toBe("name");
+    const q = generate_joined_query({
+      table,
+      state: { pages: 728 },
+      formulas: ["publisherㅏname"],
+    });
+
+    expect(q?.joinFields?.publisherㅏname?.target).toBe("name");
     const rows = await table.getJoinedRows(q);
-    expect(rows.length).toBe(2);
-  });*/
+    expect(rows.length).toBe(1);
+    expect(rows[0].publisher).toBe(1);
+    expect(rows[0].publisherㅏname).toBe("AK Press");
+  });
 });
 
 describe("plugin helper", () => {
