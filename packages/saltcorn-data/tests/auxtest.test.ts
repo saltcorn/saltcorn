@@ -38,7 +38,7 @@ import {
 } from "./common_helpers";
 import { assertIsSet } from "./assertions";
 import expression from "../models/expression";
-const { freeVariables } = expression;
+const { freeVariables, add_free_variables_to_joinfields } = expression;
 const PlainDate = require("@saltcorn/plain-date");
 
 const { mockReqRes } = mocks;
@@ -186,8 +186,21 @@ describe("Hangul-A notation for joinfields", () => {
   // publisherͰname
   // publisherⱵname
   // publisherㅏname
-  it("free variables", () => {
+  it("freeVariables", () => {
     expect([...freeVariables("2+xㅏk")]).toEqual(["xㅏk"]);
+  });
+  it("add_free_variables_to_joinfields", () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const joinFields = {};
+    const freeVars = freeVariables("publisherㅏname");
+    add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
+    expect(joinFields).toStrictEqual({
+      publisherㅏname: {
+        ref: "publisher",
+        target: "name",
+      },
+    });
   });
   /*it("should generate formulas with heta", async () => {
     const table = Table.findOne({ name: "books" });
