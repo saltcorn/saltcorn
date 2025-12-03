@@ -215,10 +215,19 @@ describe("calculated", () => {
       type: "Integer",
     });
 
-    const fz = await Field.create({
+    await Field.create({
       table,
       label: "z",
       type: "Integer",
+      calculated: true,
+      expression:
+        "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
+      stored: true,
+    });
+     await Field.create({
+      table,
+      label: "fz",
+      type: "Float",
       calculated: true,
       expression:
         "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
@@ -230,6 +239,7 @@ describe("calculated", () => {
     assertIsSet(row0);
     expect(row0.x).toBe(7);
     expect(row0.z).toBe(null);
+    expect(row0.fz).toBe(NaN);
   });
   it("use supplied function", async () => {
     const table = await Table.create("withcalcs5");
