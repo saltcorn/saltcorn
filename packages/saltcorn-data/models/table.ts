@@ -3455,6 +3455,7 @@ ${rejectDetails}`,
         typeof f.type !== "string" &&
         f?.type?.name === "Integer" &&
         !f.required &&
+        typeof v1[f.name] === "number" &&
         isNaN(v1[f.name])
       )
         v1[f.name] = null;
