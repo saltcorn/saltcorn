@@ -224,7 +224,7 @@ describe("calculated", () => {
         "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
       stored: true,
     });
-     await Field.create({
+    await Field.create({
       table,
       label: "fz",
       type: "Float",
@@ -233,6 +233,8 @@ describe("calculated", () => {
         "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
       stored: true,
     });
+    await table.update({ versioned: true });
+
     const id1 = await table.insertRow({ x: 7, y: 2 });
 
     const row0 = await table.getRow({ id: id1 });
