@@ -555,7 +555,7 @@ const innerField =
             singleline: (hdr.attributes || {}).singleline ? "yes" : false,
             compact: (hdr.attributes || {}).compact ? "yes" : false,
             user: (hdr.attributes || {}).user ? "yes" : false,
-            class: `${monaco ? "to-code" : "d-block font-monospace"} form-control ${validClass} ${hdr.class || ""}`,
+            class: `${monaco ? "to-code" : "d-block font-monospace validate-expression"} form-control ${validClass} ${hdr.class || ""}`,
             ...(maybe_disabled
               ? { disabled: true, "data-disabled": "true" }
               : {}),

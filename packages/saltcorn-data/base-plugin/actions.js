@@ -340,8 +340,12 @@ module.exports = {
           name: "where",
           label: "Where",
           sublabel: "Where-expression for subset of rows to loop over",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
         {
           name: "limit",
@@ -1234,8 +1238,12 @@ module.exports = {
           name: "where",
           label: "Recalculate where",
           sublabel: "Where-expression for subset of rows to recalculate",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
       ];
     },
@@ -1395,7 +1403,11 @@ module.exports = {
           sublabel:
             "Expression for JavaScript object. For example, <code>{points: 34}</code>",
           input_type: "code",
-          attributes: { mode: "application/javascript", expression_type: "row" },
+          attributes: {
+            mode: "application/javascript",
+            compact: true,
+            expression_type: "row",
+          },
         },
         ...(mode === "edit" ||
         mode === "filter" ||
@@ -1435,7 +1447,12 @@ module.exports = {
               {
                 name: "query",
                 label: "Query object",
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  expression_type: "query",
+                },
                 required: true,
                 showIf: { where: "Database" },
               },
@@ -2182,8 +2199,12 @@ module.exports = {
           label: "Query",
           sublabel:
             "Query-expression on source table for subset of rows to synchronize. Example: <code>{ status: 'Open' }</code>",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
         {
           name: "table_dest",
@@ -2702,8 +2723,12 @@ module.exports = {
           label: "Where",
           fieldview: "textarea",
           sublabel: "Where-expression for subset of rows to train on. Optional",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
         {
           name: "hyperparameters",
