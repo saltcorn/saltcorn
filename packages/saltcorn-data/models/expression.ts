@@ -624,6 +624,33 @@ const add_free_variables_to_joinfields = (
           };
         }
     });
+  [...freeVars]
+    .filter((v) => v.includes("Ⱶ"))
+    .forEach((v) => {
+      const kpath = v.split("Ⱶ");
+      if (joinFieldNames.has(kpath[0]))
+        if (kpath.length === 2) {
+          const [refNm, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+          };
+        } else if (kpath.length === 3) {
+          const [refNm, through, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+            through,
+          };
+        } else if (kpath.length === 4) {
+          const [refNm, through1, through2, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+            through: [through1, through2],
+          };
+        }
+    });
 };
 
 function isIdentifierWithName(node: any): node is Identifier {
