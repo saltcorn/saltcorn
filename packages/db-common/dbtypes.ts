@@ -81,7 +81,7 @@ export type JoinFields = {
 export type JoinOptions = {
   joinFields?: JoinFields;
   aggregations?: { [nm: string]: AggregationOptions };
-  where: any;
+  where?: Where;
   starFields?: boolean;
 } & SelectOptions;
 

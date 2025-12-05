@@ -3898,9 +3898,7 @@ ${rejectDetails}`,
    * @returns {Promise<{values, sql: string}>}
    */
   async getJoinedQuery(
-    opts:
-      | (JoinOptions & ForUserRequest & { ignoreExternal?: boolean })
-      | any = {}
+    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {}
   ): Promise<
     Partial<JoinOptions> & {
       sql?: string;
@@ -3932,7 +3930,12 @@ ${rejectDetails}`,
       mergeIntoWhere(opts.where, {
         [owner_field.name]: (forUser as AbstractUser).id,
       });
-    } else if (role && role > this.min_role_read && this.ownership_formula) {
+    } else if (
+      forUser &&
+      role &&
+      role > this.min_role_read &&
+      this.ownership_formula
+    ) {
       if (!opts.where) opts.where = {};
       if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
       try {
@@ -4082,11 +4085,13 @@ ${rejectDetails}`,
         opts.orderBy &&
         (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
-          : joinFields[opts.orderBy] || aggregations[opts.orderBy]
+          : typeof opts.orderBy === "string" &&
+              (joinFields[opts.orderBy] || aggregations[opts.orderBy])
             ? opts.orderBy
             : joinFields[odbUnderscore]
               ? odbUnderscore
-              : opts.orderBy.toLowerCase?.() === "random()"
+              : typeof opts.orderBy === "string" &&
+                  opts.orderBy.toLowerCase?.() === "random()"
                 ? opts.orderBy
                 : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
@@ -4152,9 +4157,7 @@ ${rejectDetails}`,
    * @returns {Promise<object[]>}
    */
   async getJoinedRows(
-    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {
-      where: {},
-    }
+    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {}
   ): Promise<Array<Row>> {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = opts;
