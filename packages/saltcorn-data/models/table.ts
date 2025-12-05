@@ -3968,7 +3968,27 @@ ${rejectDetails}`,
           const rpk = reftable_table.pk_name;
           const rpkval = row[ref];
           const refrow = await reftable_table.getRow({ [rpk]: rpkval });
-          return refrow?.[target];
+          let val = refrow?.[target];
+          if (through) {
+            const throughs = Array.isArray(through) ? through : [through];
+            let prevTable = reftable_table;
+            let prevRow = refrow;
+            for (const thr of throughs) {
+              if (!prevRow) {
+                val = null;
+                break;
+              }
+              const kfield = prevTable.getField(thr);
+              const nextTable = Table.findOne({ name: kfield!.reftable_name });
+              const nextRow = await nextTable!.getRow({
+                [nextTable!.pk_name]: prevRow[thr],
+              });
+              val = nextRow?.[target];
+              prevRow = nextRow;
+              prevTable = nextTable!;
+            }
+          }
+          return val;
         };
         continue;
       }
