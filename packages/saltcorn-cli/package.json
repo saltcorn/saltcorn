@@ -21,7 +21,7 @@
     "contractis": "^0.1.0",
     "dateformat": "^4.6.3",
     "inquirer": "^12.3.3",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^3.14.2",
     "node-fetch": "2.6.9",
     "node-watch": "^0.7.4",
     "source-map-support": "^0.5.21",
