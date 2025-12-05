@@ -2664,6 +2664,10 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return await getRows(where || {}, rest || {});
     },
     async getJoinedRow(opts = {}) {
+      if (methods?.getJoinedRows) {
+        const rows = await methods.getJoinedRows(opts);
+        return rows.length > 0 ? rows[0] : null;
+      }
       const { where, ...rest } = opts;
       const rows = await getRows(where || {}, rest || {});
       return rows.length > 0 ? rows[0] : null;
