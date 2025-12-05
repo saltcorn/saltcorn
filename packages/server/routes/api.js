@@ -31,6 +31,7 @@ const File = require("@saltcorn/data/models/file");
 //const load_plugins = require("../load_plugins");
 const passport = require("passport");
 const path = require("path");
+const s3storage = require("../s3storage");
 
 const {
   readState,
@@ -223,14 +224,16 @@ router.get(
           file &&
           (role <= file.min_role_read || (user_id && user_id === file.user_id))
         ) {
+          if (file.s3_store) {
+            await s3storage.redirectToObject(file, res, false);
+            return;
+          }
           res.type(file.mimetype);
           const cacheability =
             file.min_role_read === 100 ? "public" : "private";
           const maxAge = getState().getConfig("files_cache_maxage", 86400);
           res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
-          if (file.s3_store)
-            res.status(404).json({ error: req.__("Not found") });
-          else res.sendFile(file.location, { dotfiles: "allow" });
+          res.sendFile(file.location, { dotfiles: "allow" });
         } else {
           res.status(404).json({ error: req.__("Not found") });
         }

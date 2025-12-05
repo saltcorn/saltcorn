@@ -839,14 +839,6 @@ const configTypes: ConfigTypes = {
     blurb: "Name you selected for your S3 bucket in AWS.",
     excludeFromMobile: true,
   },
-  storage_s3_path_prefix: {
-    type: "String",
-    label: "Amazon S3 Path Prefix",
-    excludeFromSnapshot: true,
-    default: "",
-    blurb: "Prefix you selected for your S3 bucket in AWS.",
-    excludeFromMobile: true,
-  },
   storage_s3_endpoint: {
     type: "String",
     label: "Amazon S3 Endpoint",
