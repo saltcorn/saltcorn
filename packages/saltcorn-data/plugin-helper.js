@@ -2664,6 +2664,10 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return await getRows(where || {}, rest || {});
     },
     async getJoinedRow(opts = {}) {
+      if (methods?.getJoinedRows) {
+        const rows = await methods.getJoinedRows(opts);
+        return rows.length > 0 ? rows[0] : null;
+      }
       const { where, ...rest } = opts;
       const rows = await getRows(where || {}, rest || {});
       return rows.length > 0 ? rows[0] : null;
@@ -2682,14 +2686,14 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       let data_in = await get_json_list(where, opts);
       return data_in.length;
     },
-    async get_child_relations() {
-      const child_relations = [];
-      const child_field_list = [];
-
+    //copied from table
+    async get_child_relations(allow_join_aggregations) {
       const cfields = await Field.find(
-        { reftable_name: this.name },
+        { reftable_name: tbl.name },
         { cached: true }
       );
+      let child_relations = [];
+      let child_field_list = [];
       for (const f of cfields) {
         if (f.is_fkey) {
           const table = Table.findOne({ id: f.table_id });
@@ -2701,9 +2705,27 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
           child_relations.push({ key_field: f, table });
         }
       }
-      return { child_relations, child_field_list: [] };
+      if (allow_join_aggregations) {
+        for (const f of fields) {
+          if (f.is_fkey && f.type !== "File") {
+            const refTable = Table.findOne({ name: f.reftable_name });
+            if (!refTable)
+              throw new Error(`Unable to find table '${f.reftable_name}`);
+
+            const join_crels = await refTable.get_child_relations(false);
+            join_crels.child_relations.forEach(({ key_field, table }) => {
+              child_field_list.push(
+                `${f.name}->${table.name}.${key_field.name}`
+              );
+              child_relations.push({ key_field, table, through: f });
+            });
+          }
+        }
+      }
+      return { child_relations, child_field_list };
     },
-    get_parent_relations() {
+    //copied from table
+    async get_parent_relations(allow_double, allow_triple) {
       let parent_relations = [];
       let parent_field_list = [];
       for (const f of fields) {
@@ -2711,6 +2733,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
           const table = Table.findOne({ name: f.reftable_name });
           if (!table)
             throw new Error(`Unable to find table '${f.reftable_name}`);
+          table.getFields();
           if (!table.fields)
             throw new Error(`The table '${f.reftable_name} has no fields.`);
 
@@ -2718,27 +2741,119 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
             (f) => !f.calculated || f.stored
           )) {
             parent_field_list.push(`${f.name}.${pf.name}`);
-            parent_relations.push({ key_field: f, table });
+            if (pf.is_fkey && pf.type !== "File" && allow_double) {
+              const table1 = Table.findOne({ name: pf.reftable_name });
+              if (!table1)
+                throw new Error(`Unable to find table '${pf.reftable_name}`);
+              await table1.getFields();
+              if (!table1.fields)
+                throw new Error(
+                  `The table '${pf.reftable_name} has no fields.`
+                );
+              if (table1.fields)
+                for (const gpf of table1.fields.filter(
+                  (f) => !f.calculated || f.stored
+                )) {
+                  parent_field_list.push(`${f.name}.${pf.name}.${gpf.name}`);
+                  if (allow_triple && gpf.is_fkey && gpf.type !== "File") {
+                    const gpfTbl = Table.findOne({
+                      name: gpf.reftable_name,
+                    });
+                    if (gpfTbl) {
+                      const gpfFields = await gpfTbl.getFields();
+                      for (const ggpf of gpfFields.filter(
+                        (f) => !f.calculated || f.stored
+                      )) {
+                        parent_field_list.push(
+                          `${f.name}.${pf.name}.${gpf.name}.${ggpf.name}`
+                        );
+                      }
+                    }
+                  }
+                }
+
+              parent_relations.push({
+                key_field: pf,
+                through: f,
+                table: table1,
+              });
+            }
+          }
+          parent_relations.push({ key_field: f, table });
+        }
+      }
+      const o2o_rels = await Field.find(
+        {
+          reftable_name: tbl.name,
+          is_unique: true,
+        },
+        { cached: true }
+      );
+      for (const relation of o2o_rels) {
+        const related_table = Table.findOne({ id: relation.table_id });
+        if (related_table) {
+          const relfields = await related_table.getFields();
+          for (const relfield of relfields) {
+            parent_field_list.push(
+              `${related_table.name}.${relation.name}->${relfield.name}`
+            );
+            parent_relations.push({
+              key_field: relation,
+              ontable: related_table,
+            });
           }
         }
       }
+
       return { parent_relations, parent_field_list };
     },
-    get_relation_options() {
-      return [];
+    //copied from table
+    async get_relation_options() {
+      return await Promise.all(
+        (await tbl.get_relation_data()).map(
+          async ({ relationTable, relationField }) => {
+            const path = `${relationTable.name}.${relationField.name}`;
+            const relFields = await relationTable.getFields();
+            const names = relFields
+              .filter((f) => f.type !== "Key")
+              .map((f) => f.name);
+            return { relationPath: path, relationFields: names };
+          }
+        )
+      );
     },
-    get_relation_data() {
-      return [];
+    //copied from table
+    async get_relation_data(unique = true) {
+      const result = [];
+      const o2o_rels = await Field.find(
+        {
+          reftable_name: tbl.name,
+          is_unique: unique,
+        },
+        { cached: true }
+      );
+      for (const field of o2o_rels) {
+        const relTbl = Table.findOne({ id: field.table_id });
+        if (relTbl)
+          result.push({ relationTable: relTbl, relationField: field });
+      }
+      return result;
     },
-    get_join_field_options() {
+    //copied from table
+    async get_join_field_options(allow_double, allow_triple) {
       const result = [];
       for (const f of fields) {
         if (f.is_fkey && f.type !== "File") {
           const table = Table.findOne({ name: f.reftable_name });
+          if (!table)
+            throw new Error(`Unable to find table '${f.reftable_name}`);
+          table.getFields();
+          if (!table.fields)
+            throw new Error(`The table '${f.reftable_name} has no fields.`);
           const subOne = {
             name: f.name,
             table: table.name,
-            subFields: new Array(),
+            subFields: [],
             fieldPath: f.name,
           };
           for (const pf of table.fields.filter(
@@ -2746,9 +2861,48 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
           )) {
             const subTwo = {
               name: pf.name,
-              subFields: new Array(),
+              subFields: [],
               fieldPath: `${f.name}.${pf.name}`,
             };
+            if (pf.is_fkey && pf.type !== "File" && allow_double) {
+              const table1 = Table.findOne({ name: pf.reftable_name });
+              if (!table1)
+                throw new Error(`Unable to find table '${pf.reftable_name}`);
+              await table1.getFields();
+              subTwo.table = table1.name;
+              if (!table1.fields)
+                throw new Error(
+                  `The table '${pf.reftable_name} has no fields.`
+                );
+              if (table1.fields)
+                for (const gpf of table1.fields.filter(
+                  (f) => !f.calculated || f.stored
+                )) {
+                  const subThree = {
+                    name: gpf.name,
+                    subFields: [],
+                    fieldPath: `${f.name}.${pf.name}.${gpf.name}`,
+                  };
+                  if (allow_triple && gpf.is_fkey && gpf.type !== "File") {
+                    const gpfTbl = Table.findOne({
+                      name: gpf.reftable_name,
+                    });
+                    if (gpfTbl) {
+                      subThree.table = gpfTbl.name;
+                      const gpfFields = await gpfTbl.getFields();
+                      for (const ggpf of gpfFields.filter(
+                        (f) => !f.calculated || f.stored
+                      )) {
+                        subThree.subFields.push({
+                          name: ggpf.name,
+                          fieldPath: `${f.name}.${pf.name}.${gpf.name}.${ggpf.name}`,
+                        });
+                      }
+                    }
+                  }
+                  subTwo.subFields.push(subThree);
+                }
+            }
             subOne.subFields.push(subTwo);
           }
           result.push(subOne);

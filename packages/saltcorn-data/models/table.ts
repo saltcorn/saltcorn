@@ -3898,7 +3898,7 @@ ${rejectDetails}`,
    * @returns {Promise<{values, sql: string}>}
    */
   async getJoinedQuery(
-    opts: (JoinOptions & ForUserRequest) | any = {}
+    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {}
   ): Promise<
     Partial<JoinOptions> & {
       sql?: string;
@@ -3930,7 +3930,12 @@ ${rejectDetails}`,
       mergeIntoWhere(opts.where, {
         [owner_field.name]: (forUser as AbstractUser).id,
       });
-    } else if (role && role > this.min_role_read && this.ownership_formula) {
+    } else if (
+      forUser &&
+      role &&
+      role > this.min_role_read &&
+      this.ownership_formula
+    ) {
       if (!opts.where) opts.where = {};
       if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
       try {
@@ -3963,12 +3968,35 @@ ${rejectDetails}`,
       if (!reftable)
         throw new InvalidConfiguration(`Field ${ref} is not a key field`);
       const reftable_table = reffield.reftable || Table.findOne(reftable);
-      if (reftable_table?.external || reftable_table?.provider_name) {
+      if (
+        !opts.ignoreExternal &&
+        (reftable_table?.external || reftable_table?.provider_name)
+      ) {
         joinFields[fldnm].lookupFunction = async (row: GenObj) => {
           const rpk = reftable_table.pk_name;
           const rpkval = row[ref];
           const refrow = await reftable_table.getRow({ [rpk]: rpkval });
-          return refrow?.[target];
+          let val = refrow?.[target];
+          if (through) {
+            const throughs = Array.isArray(through) ? through : [through];
+            let prevTable = reftable_table;
+            let prevRow = refrow;
+            for (const thr of throughs) {
+              if (!prevRow) {
+                val = null;
+                break;
+              }
+              const kfield = prevTable.getField(thr);
+              const nextTable = Table.findOne({ name: kfield!.reftable_name });
+              const nextRow = await nextTable!.getRow({
+                [nextTable!.pk_name]: prevRow[thr],
+              });
+              val = nextRow?.[target];
+              prevRow = nextRow;
+              prevTable = nextTable!;
+            }
+          }
+          return val;
         };
         continue;
       }
@@ -4057,11 +4085,13 @@ ${rejectDetails}`,
         opts.orderBy &&
         (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
-          : joinFields[opts.orderBy] || aggregations[opts.orderBy]
+          : typeof opts.orderBy === "string" &&
+              (joinFields[opts.orderBy] || aggregations[opts.orderBy])
             ? opts.orderBy
             : joinFields[odbUnderscore]
               ? odbUnderscore
-              : opts.orderBy.toLowerCase?.() === "random()"
+              : typeof opts.orderBy === "string" &&
+                  opts.orderBy.toLowerCase?.() === "random()"
                 ? opts.orderBy
                 : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
@@ -4127,7 +4157,7 @@ ${rejectDetails}`,
    * @returns {Promise<object[]>}
    */
   async getJoinedRows(
-    opts: (JoinOptions & ForUserRequest) | any = {}
+    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {}
   ): Promise<Array<Row>> {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = opts;

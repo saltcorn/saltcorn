@@ -280,7 +280,7 @@ class Field implements AbstractField {
 
   static async select_options_query(
     table_name: string,
-    where: string,
+    where: Where,
     attributes: any,
     extra_joinfields: any = {},
     user?: any

@@ -39,7 +39,7 @@ export type Operator =
   | "field"
   | { type: string; name: string; args: Operator[] };
 
-  export type SelectOptions = {
+export type SelectOptions = {
   orderBy?:
     | { distance: CoordOpts }
     | { operator: Operator | string; target: string; field: string }
@@ -66,12 +66,12 @@ export type Operator =
   schema?: any;
 };
 export type JoinField = {
-  ref: any;
-  target: any;
-  through?: any;
-  rename_object?: any;
-  ontable?: any;
-  lookupFunction?: any;
+  ref: string;
+  target: string;
+  through?: string | string[];
+  rename_object?: string[];
+  ontable?: string;
+  lookupFunction?: (row: Row) => Promise<Value>;
 };
 
 export type JoinFields = {
@@ -81,7 +81,7 @@ export type JoinFields = {
 export type JoinOptions = {
   joinFields?: JoinFields;
   aggregations?: { [nm: string]: AggregationOptions };
-  where: any;
+  where?: Where;
   starFields?: boolean;
 } & SelectOptions;
 
@@ -108,7 +108,6 @@ export type SubselectOptions = {
 export type DatabaseClient = {
   query: (sql: String, parameters?: any[]) => Promise<{ rows: Row[] }>;
 };
-
 
 export type Row = { [key: string]: any };
 export type StrongRow = { [key: string]: Value };
