@@ -3898,7 +3898,9 @@ ${rejectDetails}`,
    * @returns {Promise<{values, sql: string}>}
    */
   async getJoinedQuery(
-    opts: (JoinOptions & ForUserRequest) | any = {}
+    opts:
+      | (JoinOptions & ForUserRequest & { ignoreExternal?: boolean })
+      | any = {}
   ): Promise<
     Partial<JoinOptions> & {
       sql?: string;
@@ -3963,7 +3965,10 @@ ${rejectDetails}`,
       if (!reftable)
         throw new InvalidConfiguration(`Field ${ref} is not a key field`);
       const reftable_table = reffield.reftable || Table.findOne(reftable);
-      if (reftable_table?.external || reftable_table?.provider_name) {
+      if (
+        !opts.ignoreExternal &&
+        (reftable_table?.external || reftable_table?.provider_name)
+      ) {
         joinFields[fldnm].lookupFunction = async (row: GenObj) => {
           const rpk = reftable_table.pk_name;
           const rpkval = row[ref];
@@ -4147,7 +4152,9 @@ ${rejectDetails}`,
    * @returns {Promise<object[]>}
    */
   async getJoinedRows(
-    opts: (JoinOptions & ForUserRequest) | any = {}
+    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {
+      where: {},
+    }
   ): Promise<Array<Row>> {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = opts;
