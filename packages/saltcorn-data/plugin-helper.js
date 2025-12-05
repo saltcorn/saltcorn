@@ -2682,43 +2682,45 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       let data_in = await get_json_list(where, opts);
       return data_in.length;
     },
-     async get_child_relations(
-    allow_join_aggregations
-  ) {
-    const cfields = await Field.find(
-      { reftable_name: tbl.name },
-      { cached: true }
-    );
-    let child_relations = [];
-    let child_field_list = [];
-    for (const f of cfields) {
-      if (f.is_fkey) {
-        const table = Table.findOne({ id: f.table_id });
-        if (!table) {
-          throw new Error(`Unable to find table with id: ${f.table_id}`);
+    //copied from table
+    async get_child_relations(allow_join_aggregations) {
+      const cfields = await Field.find(
+        { reftable_name: tbl.name },
+        { cached: true }
+      );
+      let child_relations = [];
+      let child_field_list = [];
+      for (const f of cfields) {
+        if (f.is_fkey) {
+          const table = Table.findOne({ id: f.table_id });
+          if (!table) {
+            throw new Error(`Unable to find table with id: ${f.table_id}`);
+          }
+          child_field_list.push(`${table.name}.${f.name}`);
+          table.getFields();
+          child_relations.push({ key_field: f, table });
         }
-        child_field_list.push(`${table.name}.${f.name}`);
-        table.getFields();
-        child_relations.push({ key_field: f, table });
       }
-    }
-    if (allow_join_aggregations) {      
-      for (const f of fields) {
-        if (f.is_fkey && f.type !== "File") {
-          const refTable = Table.findOne({ name: f.reftable_name });
-          if (!refTable)
-            throw new Error(`Unable to find table '${f.reftable_name}`);
+      if (allow_join_aggregations) {
+        for (const f of fields) {
+          if (f.is_fkey && f.type !== "File") {
+            const refTable = Table.findOne({ name: f.reftable_name });
+            if (!refTable)
+              throw new Error(`Unable to find table '${f.reftable_name}`);
 
-          const join_crels = await refTable.get_child_relations(false);
-          join_crels.child_relations.forEach(({ key_field, table }) => {
-            child_field_list.push(`${f.name}->${table.name}.${key_field.name}`);
-            child_relations.push({ key_field, table, through: f });
-          });
+            const join_crels = await refTable.get_child_relations(false);
+            join_crels.child_relations.forEach(({ key_field, table }) => {
+              child_field_list.push(
+                `${f.name}->${table.name}.${key_field.name}`
+              );
+              child_relations.push({ key_field, table, through: f });
+            });
+          }
         }
       }
-    }
-    return { child_relations, child_field_list };
-  },
+      return { child_relations, child_field_list };
+    },
+    //copied from table
     async get_parent_relations(allow_double, allow_triple) {
       let parent_relations = [];
       let parent_field_list = [];
@@ -2801,6 +2803,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
 
       return { parent_relations, parent_field_list };
     },
+    //copied from table
     async get_relation_options() {
       return await Promise.all(
         (await tbl.get_relation_data()).map(
@@ -2815,6 +2818,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
         )
       );
     },
+    //copied from table
     async get_relation_data(unique = true) {
       const result = [];
       const o2o_rels = await Field.find(
@@ -2831,6 +2835,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       }
       return result;
     },
+    //copied from table
     async get_join_field_options(allow_double, allow_triple) {
       const result = [];
       for (const f of fields) {
