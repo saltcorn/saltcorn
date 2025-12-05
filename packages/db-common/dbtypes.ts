@@ -66,11 +66,11 @@ export type Operator =
   schema?: any;
 };
 export type JoinField = {
-  ref: any;
-  target: any;
-  through?: any;
+  ref: string;
+  target: string;
+  through?: string | string[];
   rename_object?: any;
-  ontable?: any;
+  ontable?: string;
   lookupFunction?: any;
 };
 
