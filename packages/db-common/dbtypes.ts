@@ -115,3 +115,10 @@ export type PrimaryKeyValue = number | string;
 
 //https://stackoverflow.com/a/57390160/19839414
 export type PartialSome<T, K extends keyof T> = Partial<T> & Pick<T, K>;
+
+export interface UserLike {
+  id: number;
+  email: string;
+  role_id: number;
+  _attributes?: any;
+}

@@ -64,6 +64,7 @@ import faIcons from "./fa5-icons";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
 import MetaData from "../models/metadata";
+import { UserLike } from "@saltcorn/db-common/dbtypes";
 
 /**
  * @param v
@@ -357,7 +358,7 @@ class State {
    * @param {object} user
    * @returns {object}
    */
-  getLayout(user?: User): PluginLayout & { config: GenObj } {
+  getLayout(user?: UserLike): PluginLayout & { config: GenObj } {
     // first, try if role set
     const role_id = user ? +user.role_id : 100;
     const layout_by_role = this.getConfig("layout_by_role");
@@ -407,7 +408,7 @@ class State {
     return layout;
   }
 
-  getLayoutPlugin(user?: User): Plugin {
+  getLayoutPlugin(user?: UserLike): Plugin {
     //try this for consistency
     const { pluginName } = this.getLayout(user);
     if (pluginName) {
@@ -440,7 +441,7 @@ class State {
   }
 
   // TODO auto is poorly supported
-  getLightDarkMode(user?: User): "dark" | "light" | "auto" {
+  getLightDarkMode(user?: UserLike): "dark" | "light" | "auto" {
     const { config } = this.getLayout(user);
     if (config?.mode) return config.mode;
 
@@ -453,7 +454,7 @@ class State {
    * @param {object} user
    * @returns {string}
    */
-  get2FApolicy(user: User) {
+  get2FApolicy(user: UserLike) {
     const role_id = user ? +user.role_id : 100;
     const twofa_policy_by_role = this.getConfig("twofa_policy_by_role");
     if (twofa_policy_by_role && twofa_policy_by_role[role_id])

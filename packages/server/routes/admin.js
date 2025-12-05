@@ -4502,10 +4502,6 @@ function setTimeout(f:Function, timeout?:number)
 declare const page_load_tag: string
 function emit_to_client(message: object, to_user_ids?: number | number[])
 async function sleep(milliseconds: number)
-interface UserLike {
-      id: number,
-      email: string
-}
 function interpolate(s: string,
   row: Row,
   user?: UserLike,
@@ -4627,6 +4623,8 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
          ${table.fields
            .map((f) => `${f.name}: ${scTypeToTsType(f.type, f)};`)
            .join("\n")}
+         lightDarkMode: "light" | "dark";
+         language: string;
       }${req.query.user === "maybe" ? " | undefined" : ""}`);
       }
     }
