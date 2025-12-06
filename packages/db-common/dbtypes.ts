@@ -63,7 +63,7 @@ export type SelectOptions = {
   description?: string;
   recursive?: boolean; // for File.find()
   client?: DatabaseClient;
-  schema?: any;
+  schema?: string;
 };
 export type JoinField = {
   ref: string;
