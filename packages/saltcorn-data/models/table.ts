@@ -2505,6 +2505,8 @@ class Table implements AbstractTable {
       // Prevent type confusion if not a string
       return undefined;
     }
+    const hasDot = path.includes(".");
+    const hasHalfH = path.includes("Ⱶ");
     if (path.includes("->")) {
       const joinPath = path.split(".");
       const tableName = joinPath[0];
@@ -2514,9 +2516,9 @@ class Table implements AbstractTable {
       const joinedField = joinPath[1].split("->")[1];
       const fields = joinTable.getFields();
       return fields.find((f) => f.name === joinedField);
-    } else if (path.includes(".")) {
+    } else if (hasDot || hasHalfH) {
       //TODO the recusive implementation in json_list_to_external_table is better
-      const keypath = path.split(".");
+      const keypath = path.split(hasDot ? "." : "Ⱶ");
       let field,
         theFields = fields;
       for (let i = 0; i < keypath.length; i++) {
