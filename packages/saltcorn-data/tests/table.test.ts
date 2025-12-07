@@ -2626,8 +2626,10 @@ describe("getField", () => {
     assertIsSet(table);
     const field = table.getField("favbook.pages");
     expect(field?.name).toBe("pages");
-
     expect(field?.id).toBe(6);
+    const field1 = table.getField("favbookⱵpages");
+    expect(field1?.name).toBe("pages");
+    expect(field1?.id).toBe(6);
   });
   it("should find double join field", async () => {
     const table = Table.findOne({ name: "patients" });
@@ -2635,6 +2637,9 @@ describe("getField", () => {
     const field = table.getField("favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(20);
+    const field1 = table.getField("favbookⱵpublisherⱵname");
+    expect(field1?.name).toBe("name");
+    expect(field1?.id).toBe(20);
   });
   it("should find triple join field", async () => {
     const table = Table.findOne({ name: "readings" });
@@ -2642,6 +2647,9 @@ describe("getField", () => {
     const field = table.getField("patient_id.favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(20);
+    const field1 = table.getField("patient_idⱵfavbookⱵpublisherⱵname");
+    expect(field1?.name).toBe("name");
+    expect(field1?.id).toBe(20);
   });
   it("should find own key field", async () => {
     const table = Table.findOne({ name: "patients" });
