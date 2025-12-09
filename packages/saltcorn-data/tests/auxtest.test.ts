@@ -37,6 +37,8 @@ import {
   prepareSimpleTopicPostRelation,
 } from "./common_helpers";
 import { assertIsSet } from "./assertions";
+import expression from "../models/expression";
+const { freeVariables, add_free_variables_to_joinfields } = expression;
 const PlainDate = require("@saltcorn/plain-date");
 
 const { mockReqRes } = mocks;
@@ -176,6 +178,44 @@ describe("generate_joined_query", () => {
     );
     const rows = await table.getJoinedRows(q);
     expect(rows.length).toBe(1);
+  });
+});
+
+describe("Half-H notation for joinfields", () => {
+  // deciding between ㅏ Ⱶ Ͱ
+  // publisherͰname
+  // publisherⱵname
+  // publisherㅏname
+  it("freeVariables", () => {
+    expect([...freeVariables("2+xⱵk")]).toEqual(["xⱵk"]);
+  });
+  it("add_free_variables_to_joinfields", () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const joinFields = {};
+    const freeVars = freeVariables("publisherⱵname");
+    add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
+    expect(joinFields).toStrictEqual({
+      publisherⱵname: {
+        ref: "publisher",
+        target: "name",
+      },
+    });
+  });
+  it("should generate formulas", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const q = generate_joined_query({
+      table,
+      state: { pages: 728 },
+      formulas: ["publisherⱵname"],
+    });
+
+    expect(q?.joinFields?.publisherⱵname?.target).toBe("name");
+    const rows = await table.getJoinedRows(q);
+    expect(rows.length).toBe(1);
+    expect(rows[0].publisher).toBe(1);
+    expect(rows[0].publisherⱵname).toBe("AK Press");
   });
 });
 

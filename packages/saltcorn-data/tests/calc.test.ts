@@ -8,6 +8,7 @@ const { plugin_with_routes, sleep } = mocks;
 import expression from "../models/expression";
 const {
   eval_expression,
+  identifiersInCodepage,
   get_expression_function,
   transform_for_async,
   expressionValidator,
@@ -32,6 +33,15 @@ jest.setTimeout(30000);
 beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
+});
+
+describe("identifiersInCodepage", () => {
+  it("gets Function", () => {
+    const ids = identifiersInCodepage(
+      `function foobar(){};async function baz(){}`
+    );
+    expect(ids).toEqual(new Set(["foobar", "baz"]));
+  });
 });
 
 describe("eval_expression", () => {
@@ -191,6 +201,48 @@ describe("calculated", () => {
     assertIsSet(rowlast);
     expect(rowlast.z).toBe(9);
     expect(rowlast.x).toBe(7);
+  });
+  it("avoid nans in integer fields", async () => {
+    const table = await Table.create("withcalcsintnans");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "y",
+      type: "Integer",
+    });
+
+    await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression:
+        "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
+      stored: true,
+    });
+    await Field.create({
+      table,
+      label: "fz",
+      type: "Float",
+      calculated: true,
+      expression:
+        "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
+      stored: true,
+    });
+    await table.update({ versioned: true });
+
+    const id1 = await table.insertRow({ x: 7, y: 2 });
+
+    const row0 = await table.getRow({ id: id1 });
+    assertIsSet(row0);
+    expect(row0.x).toBe(7);
+    expect(row0.z).toBe(null);
+    //seems some differences in pg or node versions
+    expect(isNaN(row0.fz) || row0.fz === null).toBe(true);
   });
   it("use supplied function", async () => {
     const table = await Table.create("withcalcs5");

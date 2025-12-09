@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/sbadmin2",
-  "version": "1.5.0-beta.6",
+  "version": "1.5.0-beta.11",
   "description": "SB Admin 2 layout plugin",
   "main": "index.js",
   "scripts": {
@@ -9,8 +9,8 @@
     "clean": "echo \"Error: no TypeScript support yet\""
   },
   "dependencies": {
-    "@saltcorn/data": "1.5.0-beta.6",
-    "@saltcorn/markup": "1.5.0-beta.6"
+    "@saltcorn/data": "1.5.0-beta.11",
+    "@saltcorn/markup": "1.5.0-beta.11"
   },
   "author": "Tom Nielsen",
   "license": "MIT",

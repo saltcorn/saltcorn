@@ -151,6 +151,7 @@ export interface TagExports extends TagFunctionExports {
     attributes_or_first_child?: Attributes | Element,
     ...children: Element[]
   ) => string;
+  with_curScript: (js: string) => string;
   domReady: (js: string) => string;
   text: (t: string | number, customWhiteList?: IWhiteList) => string;
   text_attr: (t: string | number) => string;

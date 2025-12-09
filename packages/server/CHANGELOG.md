@@ -2,7 +2,13 @@
 
 ## 1.5.0 - In development
 
-* Multi-node support: Updates other Saltcorn nodes when data changes using PostgreSQL LISTEN/NOTIFY. Disabled by default (see README).
+* Improved code editor based on Monaco, with intellisense autocomplete. This is also applied to some one-line formula inputs
+
+* Mobile applications: upgrade to capacitor 7. 
+
+* Support for RTL languages. Currently works with sb-admin2 and material-design themes. 
+
+* Multi-node support: Updates other Saltcorn nodes when data changes or real-time events using PostgreSQL LISTEN/NOTIFY. Disabled by default (see README).
 
 * Mail queue: The mail throttle time (in Notification settings) controls how many email notifications are sent to the same user. When the queue is empty, a notification is sent immediately; otherwise, all emails are combined and sent after the throttle time has passed.
 

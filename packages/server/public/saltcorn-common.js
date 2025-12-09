@@ -78,6 +78,12 @@ function reset_nearest_form(that) {
   form.find("select").trigger("change");
 }
 
+function clear_cloned_file_input(e) {
+  const $e = $(e);
+  $e.val("");
+  $e.parent().find(".file-upload-exising").html("");
+}
+
 function add_repeater(nm, add_link) {
   const outer_repeat = $(add_link).prev();
   var es = outer_repeat.find("div.form-repeat.repeat-" + nm);
@@ -1313,13 +1319,13 @@ function initialize_page() {
         $(el).addClass("monaco-enabled");
         const value = $(el).val();
         const enlarge = $(el).hasClass("enlarge-in-card");
-
+        const compact = $(el).attr("compact");
         const div = document.createElement("div");
-        el.style.display = "none";
         el.after(div);
         if (enlarge) {
           enlarge_in_code(div);
-        } else div.classList.add("h-350");
+        } else if (compact) div.style.height = "90px";
+        else div.classList.add("h-350");
         let language = "typescript";
         switch ($(el).attr("mode")) {
           case "text/css":
@@ -1328,14 +1334,36 @@ function initialize_page() {
           case "text/html":
             language = "html";
             break;
+          case "message/http":
+            language = "";
+            break;
+          case "application/x-python-code":
+          case "text/x-python":
+            language = "python";
+            break;
+          case "text/x-shellscript":
+            language = "shell";
+            break;
+          case "application/json":
+            language = "json";
+            break;
         }
-        const codepages = $(el).attr("codepages");
-
+        const codepages = $(el).attr("codepage");
+        const singleline = $(el).attr("singleline");
+        if (singleline) {
+          div.style.height = "30px";
+        }
         const editor = monaco.editor.create(div, {
           value,
           language,
-          //theme: "vs-dark",
+          theme: _sc_lightmode === "dark" ? "vs-dark" : "vs",
           minimap: { enabled: false },
+          ...(singleline || compact
+            ? {
+                extraEditorClassName: "form-control",
+                ...singleLineMonacoEditorOptions,
+              }
+            : {}),
         });
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
           noLib: true,
@@ -1343,10 +1371,15 @@ function initialize_page() {
         });
         monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
 
-        //top level await and return
+        //top level await and return, any, require
         if (!codepages)
           monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
-            diagnosticCodesToIgnore: [1108, 1378, 1375],
+            diagnosticCodesToIgnore: [1108, 1378, 1375, 7044, 2580, 80005],
+          });
+        // any, require
+        else
+          monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+            diagnosticCodesToIgnore: [7044, 2580, 80005],
           });
         editor.onDidChangeModelContent(
           $.debounce(
@@ -1695,7 +1728,19 @@ function enable_codemirror(f) {
   });
 }
 
+let monaco_enabled_declares = false;
+const monaco_init_queue = [];
+
 function enable_monaco({ textarea }, f) {
+  if (monaco_enabled_declares === "initializing") {
+    monaco_init_queue.push(f);
+    return;
+  }
+  if (monaco_enabled_declares) {
+    f(monaco_enabled_declares);
+    return;
+  }
+  monaco_enabled_declares = "initializing";
   $("<link/>", {
     rel: "stylesheet",
     type: "text/css",
@@ -1703,8 +1748,9 @@ function enable_monaco({ textarea }, f) {
   }).appendTo("head");
   const tableName = $(textarea).attr("tableName");
   const hasUser = $(textarea).attr("user");
+  const codepage = $(textarea).attr("codepage");
   $.ajax({
-    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}`,
+    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}`,
     success: (ds) => {
       $.ajax({
         url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,
@@ -1717,6 +1763,8 @@ function enable_monaco({ textarea }, f) {
             },
           });
           require(["vs/editor/editor.main"], function () {
+            monaco_enabled_declares = ds;
+            monaco_init_queue.forEach((qf) => qf(ds));
             f(ds);
           });
         },
@@ -2938,3 +2986,56 @@ if (document.readyState !== "loading") {
 } else {
   document.addEventListener("DOMContentLoaded", init_dynamic_update_room);
 }
+
+//https://codesandbox.io/p/sandbox/react-monaco-single-line-forked-nsmhp6?file=%2Fsrc%2FApp.js%3A28%2C31
+const singleLineMonacoEditorOptions = {
+  fontSize: "14px",
+  fontWeight: "normal",
+  wordWrap: "off",
+  lineNumbers: "off",
+  lineNumbersMinChars: 0,
+  overviewRulerLanes: 0,
+  overviewRulerBorder: false,
+  hideCursorInOverviewRuler: true,
+  lineDecorationsWidth: 10,
+  glyphMargin: false,
+  folding: false,
+  scrollBeyondLastColumn: 0,
+  scrollbar: {
+    horizontal: "hidden",
+    vertical: "hidden",
+    // avoid can not scroll page when hover monaco
+    alwaysConsumeMouseWheel: false,
+  },
+  // disable `Find`
+  find: {
+    addExtraSpaceOnTop: false,
+    autoFindInSelection: "never",
+    seedSearchStringFromSelection: false,
+  },
+  minimap: { enabled: false },
+  // see: https://github.com/microsoft/monaco-editor/issues/1746
+  wordBasedSuggestions: false,
+  // avoid links underline
+  links: false,
+  // avoid highlight hover word
+  occurrencesHighlight: false,
+  cursorStyle: "line-thin",
+  // hide current row highlight grey border
+  // see: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html#renderlinehighlight
+  renderLineHighlight: "none",
+  contextmenu: false,
+  // default selection is rounded
+  roundedSelection: false,
+  hover: {
+    // unit: ms
+    // default: 300
+    delay: 100,
+  },
+  acceptSuggestionOnEnter: "on",
+  // auto adjust width and height to parent
+  // see: https://github.com/Microsoft/monaco-editor/issues/543#issuecomment-321767059
+  automaticLayout: true,
+  // if monaco is inside a table, hover tips or completion may casue table body scroll
+  fixedOverflowWidgets: true,
+};

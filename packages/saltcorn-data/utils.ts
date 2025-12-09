@@ -456,7 +456,7 @@ const interpolate = (
   row: any,
   user?: any,
   errorLocation?: string
-) => {
+): string => {
   try {
     if (s && typeof s === "string") {
       const template = _.template(s, {
@@ -641,7 +641,7 @@ const returnDirectivesOnly = (
   return r;
 };
 
-const dataModulePath = __dirname
+const dataModulePath = __dirname;
 
 export = {
   dataModulePath,
