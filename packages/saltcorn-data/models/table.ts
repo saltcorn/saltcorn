@@ -935,19 +935,6 @@ class Table implements AbstractTable {
     }
   }
 
-  private processWhereQuery(where: Where) {
-    //protect against key fields being expanded by a formula with joinfields
-    for (const field of this.fields) {
-      if (!field.is_fkey) continue;
-      if (where[field.name] && typeof where[field.name] === "object") {
-        const reftable = Table.findOne({ name: field.reftable_name });
-        if (reftable && where[field.name][reftable?.pk_name]) {
-          where[field.name] = where[field.name][reftable?.pk_name];
-        }
-      }
-    }
-  }
-
   private async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
     await db.tryCatchInTransaction(
       async () => {
@@ -1038,7 +1025,7 @@ class Table implements AbstractTable {
       state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
       return;
     }
-    this.processWhereQuery(where);
+    this.normalise_fkey_values(where);
     const calc_agg_fields = await Field.find(
       {
         calculated: true,
@@ -1203,7 +1190,7 @@ class Table implements AbstractTable {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = selopts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
-    this.processWhereQuery(where);
+    this.normalise_fkey_values(where);
     const row = await db.selectMaybeOne(
       this.name,
       where,
@@ -1270,7 +1257,7 @@ class Table implements AbstractTable {
     ) {
       return [];
     }
-    this.processWhereQuery(where);
+    this.normalise_fkey_values(where);
     let rows = await db.select(
       this.name,
       where,
@@ -1334,7 +1321,7 @@ class Table implements AbstractTable {
     where?: Where,
     opts?: SelectOptions & ForUserRequest
   ): Promise<number> {
-    if (where) this.processWhereQuery(where);
+    if (where) this.normalise_fkey_values(where);
     return await db.count(this.name, where, opts);
   }
 
@@ -1997,7 +1984,7 @@ class Table implements AbstractTable {
     return undefined;
   }
 
-  normalise_fkey_values(v_in: Row) {
+  private normalise_fkey_values(v_in: Row | Where) {
     for (const field of this.fields)
       if (
         field.is_fkey &&
@@ -2006,7 +1993,7 @@ class Table implements AbstractTable {
       ) {
         //get pkey
         const pk = Table.findOne({ name: field.reftable_name })?.pk_name;
-        if (pk) v_in[field.name] = v_in[field.name][pk];
+        if (pk && v_in[field.name][pk]) v_in[field.name] = v_in[field.name][pk];
       }
   }
 
@@ -3963,7 +3950,7 @@ ${rejectDetails}`,
         // TODO user groups
       }
     }
-    this.processWhereQuery(opts.where);
+    this.normalise_fkey_values(opts.where);
 
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
       joinFields
