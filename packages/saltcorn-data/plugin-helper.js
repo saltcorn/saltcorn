@@ -3030,7 +3030,8 @@ const run_action_column = async ({ col, req, ...rest }) => {
   };
   const failureAsyncHandler = (err) => {
     const state = getState();
-    state.log(2, `Asynchronous action error: ${err.message || err}`);
+    //state.log(2, `Asynchronous action error: ${err.message || err}`);
+    console.error(`Asynchronous action error:`, err);
     if (req.headers["page-load-tag"]) {
       state.emitDynamicUpdate(db.getTenantSchema(), {
         error: err.message || err,
