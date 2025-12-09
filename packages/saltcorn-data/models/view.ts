@@ -743,7 +743,7 @@ class View implements AbstractView {
         remote
       );
     } catch (error: any) {
-      state.log(2, error.stack);
+      state.log(1, error);
       error.message = `In POST ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
     }
