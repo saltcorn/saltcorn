@@ -1025,6 +1025,7 @@ class Table implements AbstractTable {
       state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
       return;
     }
+    this.normalise_fkey_values(where);
     const calc_agg_fields = await Field.find(
       {
         calculated: true,
@@ -1189,6 +1190,7 @@ class Table implements AbstractTable {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = selopts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    this.normalise_fkey_values(where);
     const row = await db.selectMaybeOne(
       this.name,
       where,
@@ -1255,7 +1257,7 @@ class Table implements AbstractTable {
     ) {
       return [];
     }
-
+    this.normalise_fkey_values(where);
     let rows = await db.select(
       this.name,
       where,
@@ -1319,6 +1321,7 @@ class Table implements AbstractTable {
     where?: Where,
     opts?: SelectOptions & ForUserRequest
   ): Promise<number> {
+    if (where) this.normalise_fkey_values(where);
     return await db.count(this.name, where, opts);
   }
 
@@ -1981,7 +1984,7 @@ class Table implements AbstractTable {
     return undefined;
   }
 
-  normalise_fkey_values(v_in: Row) {
+  private normalise_fkey_values(v_in: Row | Where) {
     for (const field of this.fields)
       if (
         field.is_fkey &&
@@ -1990,7 +1993,7 @@ class Table implements AbstractTable {
       ) {
         //get pkey
         const pk = Table.findOne({ name: field.reftable_name })?.pk_name;
-        if (pk) v_in[field.name] = v_in[field.name][pk];
+        if (pk && v_in[field.name][pk]) v_in[field.name] = v_in[field.name][pk];
       }
   }
 
@@ -3923,12 +3926,13 @@ ${rejectDetails}`,
       const freeVars = freeVariables(this.ownership_formula);
       add_free_variables_to_joinfields(freeVars, joinFields, fields);
     }
+    if (!opts.where) opts.where = {};
     if (role && role > this.min_role_read && this.ownership_field_id) {
       if (forPublic) return { notAuthorized: true };
       const owner_field = fields.find((f) => f.id === this.ownership_field_id);
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
-      if (!opts.where) opts.where = {};
+
       mergeIntoWhere(opts.where, {
         [owner_field.name]: (forUser as AbstractUser).id,
       });
@@ -3938,7 +3942,6 @@ ${rejectDetails}`,
       role > this.min_role_read &&
       this.ownership_formula
     ) {
-      if (!opts.where) opts.where = {};
       if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
       try {
         mergeIntoWhere(opts.where, this.ownership_formula_where(forUser));
@@ -3947,6 +3950,7 @@ ${rejectDetails}`,
         // TODO user groups
       }
     }
+    this.normalise_fkey_values(opts.where);
 
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
       joinFields

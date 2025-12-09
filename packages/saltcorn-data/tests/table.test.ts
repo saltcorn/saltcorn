@@ -208,6 +208,16 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].name).toStrictEqual("Michael Douglas");
   });
+  it("should get rows by expanded key", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const michaels = await patients.getRows({ favbook: 1 });
+    expect(michaels.length).toStrictEqual(1);
+    //expect(michaels[0].name).toStrictEqual("Michael Douglas");
+    const michaels1 = await patients.getRows({ favbook: { id: 1 } });
+    expect(michaels1.length).toStrictEqual(1);
+    expect(michaels1[0].name).toStrictEqual(michaels[0].name);
+  });
   it("should get by regex", async () => {
     if (!db.isSQLite) {
       const patients = Table.findOne({ name: "patients" });
