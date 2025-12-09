@@ -1334,6 +1334,7 @@ class Table implements AbstractTable {
     where?: Where,
     opts?: SelectOptions & ForUserRequest
   ): Promise<number> {
+    if (where) this.processWhereQuery(where);
     return await db.count(this.name, where, opts);
   }
 
