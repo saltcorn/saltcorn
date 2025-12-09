@@ -468,12 +468,17 @@ class State {
    * @param min_level
    * @param msg
    */
-  log(min_level: number, msg: string) {
+  log(min_level: number, ...msgs: any[]) {
     if (min_level <= this.logLevel) {
       const ten = db.getTenantSchema();
-      const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
-      if (min_level === 1) console.error(s);
-      else console.log(s);
+      const s = ten !== "public" ? `Tenant=${ten} ` : "";
+      if (min_level === 1) console.error(...(s ? [s] : []), ...msgs);
+      else console.log(...(s ? [s] : []), ...msgs);
+      const msg = msgs
+        .map((m) =>
+          typeof m === "string" ? m : m.toString ? m.toString() : `${m}`
+        )
+        .join(" ");
       this.emitLog(ten, min_level, msg);
     }
   }
