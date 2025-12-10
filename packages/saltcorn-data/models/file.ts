@@ -23,7 +23,7 @@ import {
   publicUrlToRelativePath,
   type S3HeadResult,
   type S3ListResult,
-} from "./s3_helpers";
+} from "./internal/s3_helpers";
 const { asyncMap } = require("../utils");
 import { mkdir, unlink } from "fs/promises";
 import type {

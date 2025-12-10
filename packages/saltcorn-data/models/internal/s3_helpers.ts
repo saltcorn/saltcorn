@@ -1,6 +1,6 @@
-import db from "../db";
+import db from "../../db";
 const getStateInstance = () => {
-  const { getState } = require("../db/state");
+  const { getState } = require("../../db/state");
   return getState();
 };
 import {

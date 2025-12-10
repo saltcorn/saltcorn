@@ -5,7 +5,7 @@ const {
   getS3Client,
   getServeUrl: getS3ServeUrl,
   deleteObject: deleteS3Object,
-} = require("@saltcorn/data/models/s3_helpers");
+} = require("@saltcorn/data/models/internal/s3_helpers");
 const fileUpload = require("express-fileupload");
 const { v4: uuidv4 } = require("uuid");
 const fs = require("fs");
