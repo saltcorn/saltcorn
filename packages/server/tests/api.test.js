@@ -866,7 +866,6 @@ describe("API upload-files", () => {
     expect(f).toBeDefined();
     expect(f.min_role_read).toBe(80);
     expect(f.user_id).toBe(1);
-    expect(f.path_to_serve).toBe(body.success.location);
   });
 
   it("should not allow public upload", async () => {

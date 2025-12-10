@@ -38,7 +38,12 @@ const Image = ({ fileid, block, srctype, url, alt, style, customClass }) => {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  const theurl = srctype === "File" ? `/files/serve/${fileid}` : url;
+  const theurl =
+    srctype === "File"
+      ? /^(?:[a-z]+:)?\/\//i.test(fileid)
+        ? fileid
+        : `/files/serve/${fileid}`
+      : url;
   return fileid === 0 ? (
     <span
       {...blockProps(block)}

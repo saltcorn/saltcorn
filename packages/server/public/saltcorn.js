@@ -410,8 +410,10 @@ function ensure_modal_exists_and_closed(opts) {
 
 function expand_thumbnail(img_id, filename) {
   ensure_modal_exists_and_closed();
+  const isAbsolute = /^(?:[a-z]+:)?\/\//i.test(img_id);
+  const src = isAbsolute ? img_id : `/files/serve/${img_id}`;
   $("#scmodal .modal-body").html(
-    `<img src="/files/serve/${img_id}" style="width: 100%">`
+    `<img src="${src}" style="width: 100%">`
   );
   $("#scmodal .modal-title").html(decodeURIComponent(filename));
   new bootstrap.Modal($("#scmodal")).show();
