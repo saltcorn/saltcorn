@@ -492,7 +492,7 @@ class Field implements AbstractField {
         .filter((f) => !f.isDirectory)
         .map((f) => ({
           label: f.filename,
-          value: f.path_to_serve,
+          value: f.field_value,
         }));
       if (!this.required) this.options.unshift({ label: "", value: "" });
     }

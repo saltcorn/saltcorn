@@ -29,6 +29,8 @@ const {
   style,
   link,
   domReady,
+  img,
+  a,
 } = require("@saltcorn/markup/tags");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
@@ -160,7 +162,7 @@ router.get(
     }
 
     for (const file of rows) {
-      file.location = file.path_to_serve;
+      file.location = file.isDirectory ? file.path_to_serve : file.field_value;
     }
     if (file_exts) {
       const re = new RegExp(
@@ -217,7 +219,9 @@ router.get(
     }
     if (req.xhr) {
       for (const file of rows) {
-        file.location = file.path_to_serve;
+        file.location = file.isDirectory
+          ? file.path_to_serve
+          : file.field_value;
       }
       const directories = await File.allDirectories(true);
       for (const file of directories) {
@@ -268,9 +272,12 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, true);
+        return;
+      }
       res.type(file.mimetype);
-      if (file.s3_store) s3storage.serveObject(file, res, true);
-      else res.download(file.location, file.filename, { dotfiles: "allow" });
+      res.download(file.location, file.filename, { dotfiles: "allow" });
     } else {
       res
         .status(404)
@@ -308,6 +315,62 @@ router.post(
   })
 );
 
+router.get(
+  "/view/*serve_path",
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const user_id = req.user && req.user.id;
+    const serve_path = path.join(...req.params.serve_path);
+    const file = await File.findOne(serve_path);
+    const authorized =
+      file &&
+      (role <= file.min_role_read || (user_id && user_id === file.user_id));
+    if (!file || !authorized) {
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
+      return;
+    }
+    if (file.mime_super !== "image") {
+      res.redirect(`/files/serve/${file.path_to_serve}`);
+      return;
+    }
+    let imgSrc;
+    if (file.s3_store) {
+      try {
+        imgSrc = await s3storage.getObjectUrl(file, false);
+      } catch (e) {
+        getState().log(3, e?.message || e);
+        res.redirect(`/files/serve/${file.path_to_serve}`);
+        return;
+      }
+    } else {
+      imgSrc = `/files/serve/${file.path_to_serve}`;
+    }
+    const downloadUrl = `/files/download/${file.path_to_serve}`;
+    res.sendWrap(req.__("Image preview"), {
+      type: "card",
+      contents: [
+        div(
+          { class: "mb-3" },
+          a(
+            { href: downloadUrl, class: "btn btn-secondary" },
+            req.__("Download")
+          )
+        ),
+        div(
+          { class: "text-center" },
+          img({
+            src: imgSrc,
+            alt: file.filename,
+            style: "max-width: 100%; height: auto;",
+          })
+        ),
+      ],
+    });
+  })
+);
+
 /**
  * @name get/serve/:id
  * @function
@@ -328,6 +391,10 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, false);
+        return;
+      }
       if (
         (file.mimetype === "text/html" ||
           file.mimetype === "application/xhtml+xml") &&
@@ -350,8 +417,7 @@ router.get(
         res.send(clean);
         return;
       }
-      if (file.s3_store) s3storage.serveObject(file, res, false);
-      else res.sendFile(file.location, { dotfiles: "allow" });
+      res.sendFile(file.location, { dotfiles: "allow" });
     } else {
       getState().log(
         5,
@@ -386,6 +452,10 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, false);
+        return;
+      }
       if (
         (file.mimetype === "text/html" ||
           file.mimetype === "application/xhtml+xml") &&
@@ -396,31 +466,27 @@ router.get(
 
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
-      //TODO s3
-      if (file.s3_store) s3storage.serveObject(file, res, false);
-      else {
-        const width = strictParseInt(width_str);
-        const height =
-          height_str && height_str !== "0" ? strictParseInt(height_str) : null;
-        if (!width) {
-          res.sendFile(file.location, { dotfiles: "allow" });
-          return;
-        }
-        const basenm = path.join(
-          path.dirname(file.location),
-          "_resized_" + path.basename(file.location)
-        );
-        const fnm = `${basenm}_w${width}${height ? `_h${height}` : ""}`;
-        if (!fs.existsSync(fnm)) {
-          await resizer({
-            fromFileName: file.location,
-            width,
-            height,
-            toFileName: fnm,
-          });
-        }
-        res.sendFile(fnm, { dotfiles: "allow" });
+      const width = strictParseInt(width_str);
+      const height =
+        height_str && height_str !== "0" ? strictParseInt(height_str) : null;
+      if (!width) {
+        res.sendFile(file.location, { dotfiles: "allow" });
+        return;
       }
+      const basenm = path.join(
+        path.dirname(file.location),
+        "_resized_" + path.basename(file.location)
+      );
+      const fnm = `${basenm}_w${width}${height ? `_h${height}` : ""}`;
+      if (!fs.existsSync(fnm)) {
+        await resizer({
+          fromFileName: file.location,
+          width,
+          height,
+          toFileName: fnm,
+        });
+      }
+      res.sendFile(fnm, { dotfiles: "allow" });
     } else {
       res
         .status(404)
@@ -563,15 +629,16 @@ router.post(
         `File %s uploaded`,
         many ? f.map((fl) => text(fl.filename)).join(", ") : text(f.filename)
       );
+      const asLocation = (fl) => File.fieldValueFromRelative(fl.path_to_serve);
+      const asUrl = (fl) =>
+        File.pathToServeUrl(asLocation(fl), { filename: fl.filename });
       if (!req.xhr) req.flash("success", successMsg);
       else
         jsonResp = {
           success: {
             filename: many ? f.map((fl) => fl.filename) : f.filename,
-            location: many ? f.map((fl) => fl.path_to_serve) : f.path_to_serve,
-            url: many
-              ? f.map((fl) => `/files/serve/${fl.path_to_serve}`)
-              : `/files/serve/${f.path_to_serve}`,
+            location: many ? f.map(asLocation) : asLocation(f),
+            url: many ? f.map(asUrl) : asUrl(f),
             msg: successMsg,
           },
         };
@@ -638,12 +705,12 @@ const storage_form = async (req) => {
     field_names: [
       "storage_s3_enabled",
       "storage_s3_bucket",
-      "storage_s3_path_prefix",
       "storage_s3_endpoint",
       "storage_s3_region",
       "storage_s3_access_key",
       "storage_s3_access_secret",
       "storage_s3_secure",
+      "files_direct_s3_links",
     ],
     action: "/files/storage",
   });
@@ -660,7 +727,7 @@ router.get(
   error_catcher(async (req, res) => {
     const form = await storage_form(req);
     form.blurb = [
-      `<div class="alert alert-warning">S3 storage options may not work for this release. Enabling S3 storage is not recommended</div>`,
+      `<div class="alert alert-warning">S3 storage is experimental</div>`,
     ];
     send_files_page({
       res,
@@ -721,6 +788,7 @@ const files_settings_form = async (req) => {
       "min_role_upload",
       "file_accept_filter_default",
       "files_cache_maxage",
+      // "files_direct_s3_links",
       "file_upload_debug",
       "file_upload_limit",
       "file_upload_timeout",

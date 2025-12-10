@@ -798,6 +798,14 @@ const configTypes: ConfigTypes = {
     default: 86400,
     excludeFromMobile: true,
   },
+  files_direct_s3_links: {
+    type: "Bool",
+    label: "Serve files directly from S3",
+    sublabel:
+      "Return public S3 URLs instead of /files routes (requires public bucket or CDN).",
+    default: false,
+    excludeFromMobile: true,
+  },
   cookie_duration_remember: {
     type: "Integer",
     label: "Cookie duration (hours) when remember ticked",
@@ -837,14 +845,6 @@ const configTypes: ConfigTypes = {
     excludeFromSnapshot: true,
     default: "",
     blurb: "Name you selected for your S3 bucket in AWS.",
-    excludeFromMobile: true,
-  },
-  storage_s3_path_prefix: {
-    type: "String",
-    label: "Amazon S3 Path Prefix",
-    excludeFromSnapshot: true,
-    default: "",
-    blurb: "Prefix you selected for your S3 bucket in AWS.",
     excludeFromMobile: true,
   },
   storage_s3_endpoint: {

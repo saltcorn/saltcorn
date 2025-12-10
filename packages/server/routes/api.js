@@ -31,6 +31,7 @@ const File = require("@saltcorn/data/models/file");
 //const load_plugins = require("../load_plugins");
 const passport = require("passport");
 const path = require("path");
+const s3storage = require("../s3storage");
 
 const {
   readState,
@@ -223,14 +224,16 @@ router.get(
           file &&
           (role <= file.min_role_read || (user_id && user_id === file.user_id))
         ) {
+          if (file.s3_store) {
+            await s3storage.redirectToObject(file, res, false);
+            return;
+          }
           res.type(file.mimetype);
           const cacheability =
             file.min_role_read === 100 ? "public" : "private";
           const maxAge = getState().getConfig("files_cache_maxage", 86400);
           res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
-          if (file.s3_store)
-            res.status(404).json({ error: req.__("Not found") });
-          else res.sendFile(file.location, { dotfiles: "allow" });
+          res.sendFile(file.location, { dotfiles: "allow" });
         } else {
           res.status(404).json({ error: req.__("Not found") });
         }
@@ -275,15 +278,20 @@ router.post(
             folder ? File.normalise(folder) : undefined
           );
           const many = Array.isArray(f);
+          const formatLocation = (fl) => File.fieldValueFromRelative(fl.path_to_serve);
+          const formatUrl = (loc, filename) =>
+            File.pathToServeUrl(loc, { filename });
           jsonResp = {
             success: {
               filename: many ? f.map((fl) => fl.filename) : f.filename,
               location: many
-                ? f.map((fl) => fl.path_to_serve)
-                : f.path_to_serve,
+                ? f.map((fl) => formatLocation(fl))
+                : formatLocation(f),
               url: many
-                ? f.map((fl) => `/files/serve/${fl.path_to_serve}`)
-                : `/files/serve/${f.path_to_serve}`,
+                ? f.map((fl) =>
+                    formatUrl(formatLocation(fl), fl.filename)
+                  )
+                : formatUrl(formatLocation(f), f.filename),
             },
           };
           res.json(jsonResp);

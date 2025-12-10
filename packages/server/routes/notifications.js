@@ -497,7 +497,9 @@ router.get(
     }
     if (Array.isArray(pwa_icons) && pwa_icons.length > 0)
       manifest.icons = pwa_icons.map(({ image, size, maskable }) => ({
-        src: `/files/serve/${image}`,
+        src: /^(?:[a-z]+:)?\/\//i.test(image)
+          ? image
+          : `/files/serve/${image}`,
         type: File.nameToMimeType(image),
         sizes: size ? `${size}x${size}` : "144x144",
         ...(maskable ? { purpose: "maskable" } : {}),
@@ -505,7 +507,9 @@ router.get(
     else if (site_logo)
       manifest.icons = [
         {
-          src: `/files/serve/${site_logo}`,
+          src: /^(?:[a-z]+:)?\/\//i.test(site_logo)
+            ? site_logo
+            : `/files/serve/${site_logo}`,
           type: File.nameToMimeType(site_logo),
           sizes: "144x144",
         },
