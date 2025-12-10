@@ -90,7 +90,7 @@
     "crypto-browserify": "3.12.1",
     "https-browserify": "1.0.0",
     "browserify-zlib": "0.2.0",
-    "nodemailer": "^6.10.0",
+    "nodemailer": "^7.0.11",
     "mjml": "5.0.0-alpha.6",
     "underscore": "^1.13.1",
     "unidecode": "1.1.0",
