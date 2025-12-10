@@ -60,6 +60,14 @@ const Card = ({
   style,
   footer,
   hasFooter,
+  hAlign,
+  bgType,
+  bgColor,
+  bgFileId,
+  imageSize,
+  gradStartColor,
+  gradEndColor,
+  gradDirection,
 }) => {
   const {
     selected,
@@ -68,10 +76,33 @@ const Card = ({
 
   return (
     <div
-      className={`card ${shadow ? "shadow" : ""} builder ${
+      className={`card ${shadow ? "shadow" : ""} text-${hAlign} builder ${
         selected ? "selected-node" : ""
       }`}
-      style={reactifyStyles(style)}
+      style={{
+        ...reactifyStyles(style),
+        ...(bgType === "Image" && bgFileId
+          ? {
+              backgroundImage: `url('/files/serve/${bgFileId}')`,
+              backgroundSize:
+                imageSize === "repeat" ? undefined : imageSize || "contain",
+              backgroundRepeat:
+                imageSize === "repeat" ? imageSize : "no-repeat",
+            }
+          : {}),
+        ...(bgType === "Color"
+          ? {
+              backgroundColor: bgColor,
+            }
+          : {}),
+        ...(bgType === "Gradient"
+          ? {
+              backgroundImage: `linear-gradient(${
+                gradDirection || 0
+              }deg, ${gradStartColor}, ${gradEndColor})`,
+            }
+          : {}),
+      }}
       ref={(dom) => connect(drag(dom))}
     >
       {title && title.length > 0 && (
@@ -196,20 +227,6 @@ const CardSettings = () => {
       <table className="w-100" accordiontitle="Contents">
         <tbody>
           <SettingsSectionHeaderRow title="Align" />
-          <SettingsRow
-            field={{
-              name: "vAlign",
-              label: "Vertical",
-              type: "btn_select",
-              options: [
-                { value: "top", title: "All", label: <AlignTop /> },
-                { value: "middle", title: "All", label: <AlignMiddle /> },
-                { value: "bottom", title: "All", label: <AlignBottom /> },
-              ],
-            }}
-            node={node}
-            setProp={setProp}
-          />
           <SettingsRow
             field={{
               name: "hAlign",
@@ -436,7 +453,6 @@ const fields = [
   { label: "Footer", name: "footer", type: "Nodes", nodeID: "cardfooter" },
   { name: "style", default: {} },
   { label: "Class", name: "class", type: "String", canBeFormula: true },
-  { name: "vAlign" },
   { name: "hAlign" },
   { name: "bgType" },
   { name: "gradStartColor" },
@@ -447,15 +463,6 @@ const fields = [
   { name: "imageSize" },
   { name: "imgResponsiveWidths" },
   { name: "bgColor" },
-  { name: "" },
-  { name: "" },
-  { name: "" },
-  { name: "" },
-  { name: "" },
-  { name: "" },
-  { name: "" },
-  { name: "" },
-  { name: "" },
 ];
 
 /**
