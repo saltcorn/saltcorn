@@ -3,31 +3,6 @@ import optionsCtx from "../context";
 
 import Editor, { useMonaco } from "@monaco-editor/react";
 
-const scTypeToTsType = (tynm) => {
-  return (
-    {
-      String: "string",
-      Integer: "number",
-      Float: "number",
-      Bool: "boolean",
-      Date: "Date",
-      HTML: "string",
-    }[tynm] || "any"
-  );
-};
-
-// from lib.dom.d.ts
-const consoleTS = `
-interface Console {
-    error(...data: any[]): void;
-    log(...data: any[]): void;
-    info(...data: any[]): void;
-    debug(...data: any[]): void;
-    warn(...data: any[]): void;
-}
-declare var console: Console;
-`;
-
 const setMonacoLanguage = async (monaco, options, isStatements) => {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     noLib: true,
