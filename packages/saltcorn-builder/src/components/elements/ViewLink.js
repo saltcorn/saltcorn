@@ -33,6 +33,15 @@ import {
 } from "@saltcorn/common-code";
 import { SingleLineEditor } from "./MonacoEditor";
 
+/*
+  <SingleLineEditor
+                setProp={setProp}
+                value={extra_state_fml}
+                propKey="extra_state_fml"
+              />
+
+*/
+
 export /**
  * @param {object} props
  * @param {string} props.name
@@ -312,10 +321,13 @@ const ViewLinkSettings = () => {
                 Extra state Formula
                 <HelpTopicLink topic="Extra state formula" {...helpContext} />
               </label>
-              <SingleLineEditor
-                setProp={setProp}
+              <input
+                type="text"
+                placeholder="Example: {x: y}"
+                className="viewlink-label form-control"
                 value={extra_state_fml}
-                propKey="extra_state_fml"
+                onChange={setAProp("extra_state_fml")}
+                spellCheck={false}
               />
               {errorString ? (
                 <small className="text-danger font-monospace d-block">
