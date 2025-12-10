@@ -229,6 +229,7 @@ const ContainerSettings = () => {
     animateDelay: node.data.props.animateDelay,
     animateDuration: node.data.props.animateDuration,
     animateInitialHide: node.data.props.animateInitialHide,
+    currentSettingsTab: node.data.props.currentSettingsTab,
   }));
   const {
     actions: { setProp },
@@ -263,6 +264,7 @@ const ContainerSettings = () => {
     style,
     transform,
     bgField,
+    currentSettingsTab,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -277,7 +279,10 @@ const ContainerSettings = () => {
   //console.log("transform", transform);
 
   return (
-    <Accordion>
+    <Accordion
+      value={currentSettingsTab}
+      onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
+    >
       <div accordiontitle="Box" className="w-100">
         <BoxModelEditor setProp={setProp} node={node} />
       </div>

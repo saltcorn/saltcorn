@@ -153,7 +153,9 @@ export /**
  */
 const CardSettings = () => {
   const node = useNode((node) => {
-    const ps = {};
+    const ps = {
+      currentSettingsTab: node.data.props.currentSettingsTab,
+    };
     fields.forEach((f) => {
       ps[f.name] = node.data.props[f.name];
     });
@@ -173,13 +175,17 @@ const CardSettings = () => {
     imageLocation,
     bgColor,
     isFormula,
+    currentSettingsTab,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
   const setAProp = setAPropGen(setProp);
 
   return (
-    <Accordion>
+    <Accordion
+      value={currentSettingsTab}
+      onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
+    >
       <table className="w-100" accordiontitle="Card properties">
         <tbody>
           <SettingsRow

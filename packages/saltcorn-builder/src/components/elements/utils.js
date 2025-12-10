@@ -483,8 +483,12 @@ export /**
  * @subcategory components / elements / utils
  * @namespace
  */
-const Accordion = ({ titles, children }) => {
-  const [currentTab, setCurrentTab] = useState(0);
+const Accordion = ({ titles, children, value, onChange }) => {
+  const [currentTab, setCurrentTab] = useState(value || 0);
+  const setTab = (ix) => {
+    setCurrentTab(ix);
+    onChange && onChange(ix);
+  };
   return (
     <Fragment>
       {children.map((child, ix) => {
@@ -495,7 +499,7 @@ const Accordion = ({ titles, children }) => {
               className={`bg-${
                 isCurrent ? "primary" : "secondary"
               } ps-1 text-white w-100 mt-1`}
-              onClick={() => setCurrentTab(ix)}
+              onClick={() => setTab(ix)}
             >
               <span className="w-1em">
                 {isCurrent ? (
