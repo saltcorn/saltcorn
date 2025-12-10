@@ -28,6 +28,7 @@ import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
 import Select from "react-select";
+import { MultiLineCodeEditor, SingleLineEditor } from "./MonacoEditor";
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -204,17 +205,12 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
     <Fragment>
       <div className="input-group  input-group-sm w-100">
         {isFormula[nodekey] ? (
-          <input
-            type="text"
-            className="form-control text-to-display"
+          <SingleLineEditor
             value={node[nodekey] || ""}
-            spellCheck={false}
-            onChange={(e) => {
-              if (e.target) {
-                const target_value = e.target.value;
-                setProp((prop) => (prop[nodekey] = target_value));
-              }
+            onChange={(target_value) => {
+              setProp((prop) => (prop[nodekey] = target_value));
             }}
+            className="text-to-display"
           />
         ) : (
           children
@@ -487,8 +483,12 @@ export /**
  * @subcategory components / elements / utils
  * @namespace
  */
-const Accordion = ({ titles, children }) => {
-  const [currentTab, setCurrentTab] = useState(0);
+const Accordion = ({ titles, children, value, onChange }) => {
+  const [currentTab, setCurrentTab] = useState(value || 0);
+  const setTab = (ix) => {
+    setCurrentTab(ix);
+    onChange && onChange(ix);
+  };
   return (
     <Fragment>
       {children.map((child, ix) => {
@@ -499,7 +499,7 @@ const Accordion = ({ titles, children }) => {
               className={`bg-${
                 isCurrent ? "primary" : "secondary"
               } ps-1 text-white w-100 mt-1`}
-              onClick={() => setCurrentTab(ix)}
+              onClick={() => setTab(ix)}
             >
               <span className="w-1em">
                 {isCurrent ? (
@@ -1067,17 +1067,25 @@ const ConfigField = ({
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
-    code: () => (
-      <textarea
-        rows="6"
-        type="text"
-        className={`field-${field?.name} form-control`}
-        value={value}
-        name={field?.name}
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-        spellCheck={false}
-      />
-    ),
+    code: () =>
+      field?.attributes?.expression_type === "row" ||
+      field?.attributes?.expression_type === "query" ? (
+        <textarea
+          rows="6"
+          type="text"
+          className={`field-${field?.name} form-control`}
+          value={value}
+          name={field?.name}
+          onChange={(e) => e.target && myOnChange(e.target.value)}
+          spellCheck={false}
+        />
+      ) : (
+        <MultiLineCodeEditor
+          setProp={setProp}
+          value={value}
+          onChange={myOnChange}
+        />
+      ),
     select: () => {
       if (field.class?.includes?.("selectizable")) {
         const seloptions = field.options.map((o, ix) =>

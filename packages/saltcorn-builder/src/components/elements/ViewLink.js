@@ -31,6 +31,16 @@ import {
   Relation,
   buildTableCaches,
 } from "@saltcorn/common-code";
+import { SingleLineEditor } from "./MonacoEditor";
+
+/*
+  <SingleLineEditor
+                setProp={setProp}
+                value={extra_state_fml}
+                propKey="extra_state_fml"
+              />
+
+*/
 
 export /**
  * @param {object} props

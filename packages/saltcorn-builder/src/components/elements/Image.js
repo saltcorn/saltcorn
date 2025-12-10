@@ -88,6 +88,7 @@ const ImageSettings = () => {
     isFormula: node.data.props.isFormula,
     customClass: node.data.props.customClass,
     imgResponsiveWidths: node.data.props.imgResponsiveWidths,
+    currentSettingsTab: node.data.props.currentSettingsTab,
   }));
   const {
     actions: { setProp },
@@ -102,6 +103,7 @@ const ImageSettings = () => {
     imgResponsiveWidths,
     customClass,
     style,
+    currentSettingsTab,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles, setUploadedFiles } = useContext(previewCtx);
@@ -141,7 +143,10 @@ const ImageSettings = () => {
   const sourceOpts = ["File", "URL", "Upload"];
   if (options.mode === "show") sourceOpts.push("Field");
   return (
-    <Accordion>
+    <Accordion
+      value={currentSettingsTab}
+      onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
+    >
       <table accordiontitle="Select image">
         <tbody>
           <tr>

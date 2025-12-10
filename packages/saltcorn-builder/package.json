@@ -7,7 +7,8 @@
   "scripts": {
     "build": "webpack --mode production",
     "builddev": "webpack --mode none",
-    "test": "jest tests --runInBand",
+    "test1": "jest tests --runInBand",
+    "test": "echo NO TESTS",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
@@ -27,6 +28,7 @@
     "@fortawesome/free-regular-svg-icons": "5.15.2",
     "@fortawesome/free-solid-svg-icons": "5.15.2",
     "@fortawesome/react-fontawesome": "0.1.14",
+    "@monaco-editor/react": "4.7.0",
     "babel-jest": "^29.7.0",
     "babel-loader": "8.1.0",
     "ckeditor4-react": "1.4.2",

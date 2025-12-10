@@ -4,13 +4,38 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment } from "react";
+import React, { Fragment, useContext } from "react";
 import { Text } from "./Text";
-import { OrFormula, SettingsRow, Accordion, reactifyStyles } from "./utils";
+import {
+  OrFormula,
+  SettingsRow,
+  Accordion,
+  reactifyStyles,
+  SettingsSectionHeaderRow,
+  setAPropGen,
+  buildOptions,
+} from "./utils";
 import { Column } from "./Column";
 
 import { Element, useNode } from "@craftjs/core";
 import { BoxModelEditor } from "./BoxModelEditor";
+import {
+  AlignTop,
+  AlignMiddle,
+  AlignStart,
+  AlignEnd,
+  AlignCenter,
+  AlignBottom,
+  SlashCircle,
+  Image,
+  Images,
+  Rainbow,
+  Palette,
+} from "react-bootstrap-icons";
+
+import optionsCtx from "../context";
+import previewCtx from "../preview_context";
+
 import { bstyleopt } from "./utils";
 
 export /**
@@ -35,6 +60,15 @@ const Card = ({
   style,
   footer,
   hasFooter,
+  hAlign,
+  bgType,
+  bgColor,
+  bgFileId,
+  imageSize,
+  imageLocation,
+  gradStartColor,
+  gradEndColor,
+  gradDirection,
 }) => {
   const {
     selected,
@@ -43,12 +77,38 @@ const Card = ({
 
   return (
     <div
-      className={`card ${shadow ? "shadow" : ""} builder ${
+      className={`card ${shadow ? "shadow" : ""} text-${hAlign} builder ${
         selected ? "selected-node" : ""
       }`}
-      style={reactifyStyles(style)}
+      style={{
+        ...reactifyStyles(style),
+        ...(bgType === "Image" && bgFileId && imageLocation === "Card"
+          ? {
+              backgroundImage: `url('/files/serve/${bgFileId}')`,
+              backgroundSize:
+                imageSize === "repeat" ? undefined : imageSize || "contain",
+              backgroundRepeat:
+                imageSize === "repeat" ? imageSize : "no-repeat",
+            }
+          : {}),
+        ...(bgType === "Color"
+          ? {
+              backgroundColor: bgColor,
+            }
+          : {}),
+        ...(bgType === "Gradient"
+          ? {
+              backgroundImage: `linear-gradient(${
+                gradDirection || 0
+              }deg, ${gradStartColor}, ${gradEndColor})`,
+            }
+          : {}),
+      }}
       ref={(dom) => connect(drag(dom))}
     >
+      {bgType === "Image" && bgFileId && imageLocation === "Top" ? (
+        <img src={`/files/serve/${bgFileId}`} className="card-img-top" />
+      ) : null}
       {title && title.length > 0 && (
         <div className="card-header">
           {isFormula?.title ? (
@@ -58,7 +118,20 @@ const Card = ({
           )}
         </div>
       )}
-      <div className={`card-body ${noPadding ? "p-0" : ""}`}>
+      <div
+        className={`card-body ${noPadding ? "p-0" : ""}`}
+        style={
+          bgType === "Image" && bgFileId && imageLocation === "Body"
+            ? {
+                backgroundImage: `url('/files/serve/${bgFileId}')`,
+                backgroundSize:
+                  imageSize === "repeat" ? undefined : imageSize || "contain",
+                backgroundRepeat:
+                  imageSize === "repeat" ? imageSize : "no-repeat",
+              }
+            : {}
+        }
+      >
         <div className="canvas">{children}</div>
       </div>
       {hasFooter ? (
@@ -80,7 +153,9 @@ export /**
  */
 const CardSettings = () => {
   const node = useNode((node) => {
-    const ps = {};
+    const ps = {
+      currentSettingsTab: node.data.props.currentSettingsTab,
+    };
     fields.forEach((f) => {
       ps[f.name] = node.data.props[f.name];
     });
@@ -90,10 +165,27 @@ const CardSettings = () => {
   });
   const {
     actions: { setProp },
+    bgType,
+    gradStartColor,
+    gradEndColor,
+    gradDirection,
+    bgFileId,
+    bgField,
+    imageSize,
+    imageLocation,
+    bgColor,
+    isFormula,
+    currentSettingsTab,
   } = node;
+  const options = useContext(optionsCtx);
+  const { uploadedFiles } = useContext(previewCtx);
+  const setAProp = setAPropGen(setProp);
 
   return (
-    <Accordion>
+    <Accordion
+      value={currentSettingsTab}
+      onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
+    >
       <table className="w-100" accordiontitle="Card properties">
         <tbody>
           <SettingsRow
@@ -108,7 +200,7 @@ const CardSettings = () => {
           />
           <SettingsRow
             field={{
-              label: "URL",
+              label: "Click URL",
               name: "url",
               type: "String",
               canBeFormula: true,
@@ -155,6 +247,214 @@ const CardSettings = () => {
       <div accordiontitle="Box" className="w-100">
         <BoxModelEditor setProp={setProp} node={node} sizeWithStyle={true} />
       </div>
+      <table className="w-100" accordiontitle="Contents">
+        <tbody>
+          <SettingsSectionHeaderRow title="Align" />
+          <SettingsRow
+            field={{
+              name: "hAlign",
+              label: "Horizontal",
+              type: "btn_select",
+              options: [
+                { value: "start", title: "Left", label: <AlignStart /> },
+                { value: "center", title: "Center", label: <AlignCenter /> },
+                { value: "end", title: "Right", label: <AlignEnd /> },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+          />
+          <SettingsSectionHeaderRow title="Background" />
+          <SettingsRow
+            field={{
+              name: "bgType",
+              label: "Type",
+              type: "btn_select",
+              options: [
+                { value: "None", label: <SlashCircle /> },
+                { value: "Image", label: <Image /> },
+                ...(options.mode === "show"
+                  ? [{ value: "Image Field", label: <Images /> }]
+                  : []),
+                { value: "Color", label: <Palette /> },
+                { value: "Gradient", label: <Rainbow /> },
+              ],
+            }}
+            node={node}
+            setProp={setProp}
+            onChange={(v) =>
+              setProp((prop) => {
+                prop.bgFileId =
+                  prop.bgFileId ||
+                  ((options.images || []).length + uploadedFiles.length > 0 &&
+                    options.images?.[0]?.location);
+              })
+            }
+          />
+          {bgType === "Gradient" && (
+            <Fragment>
+              <tr>
+                <td>Start</td>
+                <td>
+                  <OrFormula
+                    nodekey="gradStartColor"
+                    {...{ setProp, isFormula, node }}
+                  >
+                    <input
+                      type="color"
+                      value={gradStartColor}
+                      className="form-control-sm w-50"
+                      onChange={setAProp("gradStartColor")}
+                    />
+                  </OrFormula>
+                </td>
+              </tr>
+              <tr>
+                <td>End</td>
+                <td>
+                  <OrFormula
+                    nodekey="gradEndColor"
+                    {...{ setProp, isFormula, node }}
+                  >
+                    <input
+                      type="color"
+                      value={gradEndColor}
+                      className="form-control-sm w-50"
+                      onChange={setAProp("gradEndColor")}
+                    />
+                  </OrFormula>
+                </td>
+              </tr>
+              <tr>
+                <td>Direction (&deg;)</td>
+                <td>
+                  <OrFormula
+                    nodekey="gradDirection"
+                    {...{ setProp, isFormula, node }}
+                  >
+                    <input
+                      type="number"
+                      min="0"
+                      max="360"
+                      value={gradDirection}
+                      className="form-control-sm w-50"
+                      onChange={setAProp("gradDirection")}
+                    />
+                  </OrFormula>
+                </td>
+              </tr>
+            </Fragment>
+          )}
+          {bgType === "Image" && (
+            <tr>
+              <td>
+                <label>File</label>
+              </td>
+              <td>
+                <select
+                  value={bgFileId}
+                  className="form-control-sm w-100 form-select"
+                  onChange={setAProp("bgFileId")}
+                >
+                  {options.images.map((f, ix) => (
+                    <option key={ix} value={f.id}>
+                      {f.filename}
+                    </option>
+                  ))}
+                  {(uploadedFiles || []).map((uf, ix) => (
+                    <option key={ix} value={uf.id}>
+                      {uf.filename}
+                    </option>
+                  ))}{" "}
+                </select>
+              </td>
+            </tr>
+          )}
+          {bgType === "Image Field" && (
+            <tr>
+              <td>
+                <label>File field</label>
+              </td>
+              <td>
+                <select
+                  value={bgField}
+                  className="form-control-sm w-100 form-select"
+                  onChange={setAProp("bgField")}
+                >
+                  {options.fields
+                    .filter(
+                      (f) =>
+                        f.type === "String" ||
+                        (f.type && f.type.name === "String") ||
+                        (f.type && f.type === "File")
+                    )
+                    .map((f, ix) => (
+                      <option key={ix} value={f.name}>
+                        {f.label}
+                      </option>
+                    ))}
+                </select>
+              </td>
+            </tr>
+          )}
+          {(bgType === "Image" || bgType === "Image Field") && (
+            <Fragment>
+              <tr>
+                <td>
+                  <label>Location</label>
+                </td>
+
+                <td>
+                  <select
+                    value={imageLocation}
+                    className="form-control-sm  form-select"
+                    onChange={setAProp("imageLocation")}
+                  >
+                    <option>Card</option>
+                    <option>Body</option>
+                    <option>Top</option>
+                  </select>
+                </td>
+              </tr>
+            </Fragment>
+          )}
+          {(bgType === "Image" || bgType === "Image Field") &&
+            imageLocation !== "Top" && (
+              <Fragment>
+                <tr>
+                  <td>
+                    <label>Size</label>
+                  </td>
+
+                  <td>
+                    <select
+                      value={imageSize}
+                      className="form-control-sm  form-select"
+                      onChange={setAProp("imageSize")}
+                    >
+                      {buildOptions(["contain", "cover", "repeat"])}
+                    </select>
+                  </td>
+                </tr>
+              </Fragment>
+            )}
+          {bgType === "Color" && (
+            <tr>
+              <td>Color</td>
+              <td>
+                <OrFormula nodekey="bgColor" {...{ setProp, isFormula, node }}>
+                  <input
+                    type="color"
+                    value={bgColor}
+                    className="form-control-sm w-50"
+                    onChange={setAProp("bgColor")}
+                  />
+                </OrFormula>
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
     </Accordion>
   );
 };
@@ -174,6 +474,17 @@ const fields = [
   { label: "No padding", name: "noPadding", type: "Bool" },
   { label: "Footer", name: "footer", type: "Nodes", nodeID: "cardfooter" },
   { name: "style", default: {} },
+  { label: "Class", name: "class", type: "String", canBeFormula: true },
+  { name: "hAlign" },
+  { name: "bgType" },
+  { name: "gradStartColor" },
+  { name: "gradEndColor" },
+  { name: "gradDirection" },
+  { name: "bgFileId" },
+  { name: "bgField" },
+  { name: "imageSize" },
+  { name: "imageLocation" },
+  { name: "bgColor" },
 ];
 
 /**

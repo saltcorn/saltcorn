@@ -137,6 +137,7 @@ const ColumnsSettings = () => {
     colClasses: node.data.props.colClasses,
     colStyles: node.data.props.colStyles,
     customClass: node.data.props.customClass,
+    currentSettingsTab: node.data.props.currentSettingsTab,
   }));
   const {
     actions: { setProp },
@@ -150,6 +151,7 @@ const ColumnsSettings = () => {
     colClasses,
     colStyles,
     customClass,
+    currentSettingsTab,
   } = node;
   const colSetsNode = {
     vAlign: vAligns?.[setting_col_n - 1],
@@ -158,7 +160,10 @@ const ColumnsSettings = () => {
     colStyle: colStyles?.[setting_col_n - 1] || "",
   };
   return (
-    <Accordion>
+    <Accordion
+      value={currentSettingsTab}
+      onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
+    >
       <table accordiontitle="Column properties">
         <tbody>
           <tr>
