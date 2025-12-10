@@ -306,12 +306,14 @@ export class CapacitorHelper {
 
     const spawnParams = [
       "run",
+      "--pull",
+      "never",
       ...userParams,
       "--network",
       "host",
       "-v",
       `${this.buildDir}:/saltcorn-mobile-app`,
-      `saltcorn/capacitor-builder:${"1.5.0-beta.7"}`,
+      `saltcorn/capacitor-builder:${imageVersion}`,
     ];
     const result = spawnSync("docker", spawnParams, {
       cwd: ".",
