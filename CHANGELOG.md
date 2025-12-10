@@ -2,6 +2,12 @@
 
 ## 1.5.0 - In development
 
+* Builder: set the horizontal aligment and background colour or background image of cards. 
+
+* The option to store files in S3-compatible services instead of on local disk is now working again. 
+
+* Joinfields in formulas can now be accessed by using a Claudian half-H (Ⱶ) instead of a dot. This avoids a non-determinism where adding a join field to a formula would change the type of the key field from a value to an expanded object, a source of much confusion and app breakage. The half-H expressions are available with autocomplete in formula inputs.
+
 * Improved code editor based on Monaco, with intellisense autocomplete. This is also applied to some one-line formula inputs
 
 * Mobile applications: upgrade to capacitor 7. 
