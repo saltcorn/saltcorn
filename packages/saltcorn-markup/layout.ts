@@ -448,6 +448,8 @@ const render = ({
       );
     }
     if (segment.type === "card") {
+      console.log("card", segment);
+
       return wrap(
         segment,
         isTop,
@@ -470,7 +472,12 @@ const render = ({
                   : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
-            style: segment.style,
+            style: {
+              ...segment.style,
+              ...(segment.bgType === "Color"
+                ? { backgroundColor: segment.bgColor }
+                : {}),
+            },
           },
           segment.title &&
             span(
