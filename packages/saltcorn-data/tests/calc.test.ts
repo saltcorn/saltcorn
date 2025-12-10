@@ -23,6 +23,7 @@ import { mkWhere } from "@saltcorn/db-common/internal";
 import { assertIsSet } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
 import utils from "../utils";
+import PlainDate from "@saltcorn/plain-date";
 const { interpolate, mergeIntoWhere } = utils;
 
 getState().registerPlugin("base", require("../base-plugin"));
@@ -56,6 +57,14 @@ describe("eval_expression", () => {
 
     expect(eval_expression("add58(x)", { x: 5 })).toBe(63);
   });
+  it("uses moment with plain date", () => {
+    expect(
+      eval_expression("moment(mydate).format('DD.MM.YYYY')", {
+        mydate: new PlainDate("2026-10-04"),
+      })
+    ).toBe("04.10.2026");
+  });
+
   it("evaluates with null row", () => {
     expect(eval_expression("5+2", undefined)).toBe(7);
     expect(eval_expression("5+2", null)).toBe(7);
