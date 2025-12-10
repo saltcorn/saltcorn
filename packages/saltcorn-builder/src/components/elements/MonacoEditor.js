@@ -52,19 +52,27 @@ const setMonacoLanguage = async (monaco, options, isStatements) => {
     });
 };
 
-export const SingleLineEditor = ({ setProp, value, propKey }) => {
+export const SingleLineEditor = ({
+  setProp,
+  value,
+  propKey,
+  onChange,
+  className,
+}) => {
   const options = React.useContext(optionsCtx);
 
   const handleEditorWillMount = (monaco) => {
     setMonacoLanguage(monaco, options, false);
   };
   return (
-    <div className="form-control p-0 pt-2">
+    <div className="form-control p-0 pt-1">
       <Editor
-        height="26px"
+        className={className || ""}
+        height="22px"
         value={value}
         onChange={(value) => {
-          setProp((prop) => (prop[propKey] = value));
+          onChange && onChange(value);
+          setProp && propKey && setProp((prop) => (prop[propKey] = value));
         }}
         defaultLanguage="typescript"
         //onMount={handleEditorDidMount}
