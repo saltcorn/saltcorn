@@ -65,6 +65,7 @@ const Card = ({
   bgColor,
   bgFileId,
   imageSize,
+  imageLocation,
   gradStartColor,
   gradEndColor,
   gradDirection,
@@ -81,7 +82,7 @@ const Card = ({
       }`}
       style={{
         ...reactifyStyles(style),
-        ...(bgType === "Image" && bgFileId
+        ...(bgType === "Image" && bgFileId && imageLocation === "Card"
           ? {
               backgroundImage: `url('/files/serve/${bgFileId}')`,
               backgroundSize:
@@ -105,6 +106,9 @@ const Card = ({
       }}
       ref={(dom) => connect(drag(dom))}
     >
+      {bgType === "Image" && bgFileId && imageLocation === "Top" ? (
+        <img src={`/files/serve/${bgFileId}`} className="card-img-top" />
+      ) : null}
       {title && title.length > 0 && (
         <div className="card-header">
           {isFormula?.title ? (
@@ -114,7 +118,20 @@ const Card = ({
           )}
         </div>
       )}
-      <div className={`card-body ${noPadding ? "p-0" : ""}`}>
+      <div
+        className={`card-body ${noPadding ? "p-0" : ""}`}
+        style={
+          bgType === "Image" && bgFileId && imageLocation === "Body"
+            ? {
+                backgroundImage: `url('/files/serve/${bgFileId}')`,
+                backgroundSize:
+                  imageSize === "repeat" ? undefined : imageSize || "contain",
+                backgroundRepeat:
+                  imageSize === "repeat" ? imageSize : "no-repeat",
+              }
+            : {}
+        }
+      >
         <div className="canvas">{children}</div>
       </div>
       {hasFooter ? (
@@ -153,7 +170,7 @@ const CardSettings = () => {
     bgFileId,
     bgField,
     imageSize,
-    imgResponsiveWidths,
+    imageLocation,
     bgColor,
     isFormula,
   } = node;
@@ -378,44 +395,43 @@ const CardSettings = () => {
             <Fragment>
               <tr>
                 <td>
-                  <label>Size</label>
+                  <label>Location</label>
                 </td>
 
                 <td>
                   <select
-                    value={imageSize}
+                    value={imageLocation}
                     className="form-control-sm  form-select"
-                    onChange={setAProp("imageSize")}
+                    onChange={setAProp("imageLocation")}
                   >
-                    {buildOptions(["contain", "cover", "repeat"])}
+                    <option>Card</option>
+                    <option>Body</option>
+                    <option>Top</option>
                   </select>
                 </td>
               </tr>
-              {imageSize !== "repeat" && (
+            </Fragment>
+          )}
+          {(bgType === "Image" || bgType === "Image Field") &&
+            imageLocation !== "Top" && (
+              <Fragment>
                 <tr>
                   <td>
-                    <label>Responsive widths</label>
+                    <label>Size</label>
                   </td>
 
                   <td>
-                    <input
-                      type="text"
-                      value={imgResponsiveWidths}
-                      className="form-control"
-                      onChange={setAProp("imgResponsiveWidths")}
-                      spellCheck={false}
-                    />
-                    <small>
-                      <i>
-                        List of widths to serve resized images, e.g. 300, 400,
-                        600
-                      </i>
-                    </small>
+                    <select
+                      value={imageSize}
+                      className="form-control-sm  form-select"
+                      onChange={setAProp("imageSize")}
+                    >
+                      {buildOptions(["contain", "cover", "repeat"])}
+                    </select>
                   </td>
                 </tr>
-              )}
-            </Fragment>
-          )}
+              </Fragment>
+            )}
           {bgType === "Color" && (
             <tr>
               <td>Color</td>
@@ -461,7 +477,7 @@ const fields = [
   { name: "bgFileId" },
   { name: "bgField" },
   { name: "imageSize" },
-  { name: "imgResponsiveWidths" },
+  { name: "imageLocation" },
   { name: "bgColor" },
 ];
 

@@ -455,6 +455,9 @@ const render = ({
         gradDirection,
         gradStartColor,
         gradEndColor,
+        bgFileId,
+        imageSize,
+        imageLocation,
       } = segment;
       return wrap(
         segment,
@@ -481,17 +484,34 @@ const render = ({
               : false,
             style: {
               ...segment.style,
-              ...(segment.bgType === "Color"
+              ...(bgType === "Color"
                 ? { backgroundColor: segment.bgColor }
-                : segment.bgType === "Gradient"
+                : bgType === "Gradient"
                   ? {
                       backgroundImage: `linear-gradient(${
                         gradDirection || 0
                       }deg, ${gradStartColor}, ${gradEndColor});`,
                     }
-                  : {}),
+                  : bgType === "Image" && bgFileId && imageLocation === "Card"
+                    ? {
+                        backgroundImage: `url('/files/serve/${bgFileId}')`,
+                        backgroundSize:
+                          imageSize === "repeat"
+                            ? undefined
+                            : imageSize || "contain",
+                        backgroundRepeat:
+                          imageSize === "repeat" ? imageSize : "no-repeat",
+                      }
+                    : {}),
             },
           },
+          bgType === "Image" &&
+            bgFileId &&
+            imageLocation === "Top" &&
+            img({
+              src: `/files/serve/${bgFileId}`,
+              class: "card-img-top",
+            }),
           segment.title &&
             span(
               { class: "card-header" },
@@ -603,6 +623,21 @@ const render = ({
                       segment.bodyClass,
                       segment.noPadding && "p-0",
                     ],
+                    style: {
+                      ...(bgType === "Image" &&
+                      bgFileId &&
+                      imageLocation === "Body"
+                        ? {
+                            backgroundImage: `url('/files/serve/${bgFileId}')`,
+                            backgroundSize:
+                              imageSize === "repeat"
+                                ? undefined
+                                : imageSize || "contain",
+                            backgroundRepeat:
+                              imageSize === "repeat" ? imageSize : "no-repeat",
+                          }
+                        : {}),
+                    },
                   },
                   go(segment.contents)
                 )),
