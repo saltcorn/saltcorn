@@ -28,30 +28,27 @@ interface Console {
 declare var console: Console;
 `;
 
-const setMonacoLanguage = (monaco, options, isStatements) => {
+const setMonacoLanguage = async (monaco, options, isStatements) => {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     noLib: true,
     allowNonTsExtensions: true,
   });
+  if (options.setMonaco) return;
 
-  const tsDs = [
-    ...options.fields.map((f) => `const ${f.name}: ${scTypeToTsType(f.type)}`),
-    `const row: {
-      ${options.fields
-        .map((f) => `${f.name}: ${scTypeToTsType(f.type)};`)
-        .join("\n")}
-      }`,
-      //`const user: {}`
-  ];
-  if (isStatements) tsDs.push(consoleTS);
-  monaco.languages.typescript.typescriptDefaults.addExtraLib(tsDs.join("\n"));
+  options.setMonaco = true;
+  const tsres = await fetch(
+    `/admin/ts-declares?${options.tableName ? `table=${options.tableName}` : ""}&user=yes`
+  );
+  const tsds = await tsres.text();
+
+  monaco.languages.typescript.typescriptDefaults.addExtraLib(tsds);
   // for code ending in return: https://github.com/microsoft/monaco-editor/issues/1661
   // codes for await ignore are shown by hover card
   if (isStatements)
     monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
       //noSemanticValidation: false,
       //noSyntaxValidation: false,
-      diagnosticCodesToIgnore: [/* top-level return */ 1108, 1378, 1375],
+      diagnosticCodesToIgnore: [1108, 1378, 1375, 7044, 2580, 80005],
     });
 };
 
