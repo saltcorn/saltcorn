@@ -65,6 +65,8 @@ import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
 import MetaData from "../models/metadata";
 import { PushMessageHelper } from "../models/internal/push_message_helper";
+import { UserLike } from "@saltcorn/db-common/dbtypes";
+import PlainDate from "@saltcorn/plain-date";
 
 /**
  * @param v
@@ -130,6 +132,15 @@ const get_standard_icons = () => {
   );
   return icons;
 };
+
+const myMoment: Function = (...args: any[]) =>
+  moment(
+    ...args.map((d) =>
+      d && (d instanceof PlainDate || d?.constructor?.name === "PlainDate")
+        ? d.toDate()
+        : d
+    )
+  );
 
 /**
  * State Class
@@ -232,8 +243,8 @@ class State {
     this.userLayouts = {};
     this.headers = {};
     this.assets_by_role = {};
-    this.function_context = { moment, today, slugify: db.slugify };
-    this.functions = { moment, today, slugify: db.slugify };
+    this.function_context = { moment: myMoment, today, slugify: db.slugify };
+    this.functions = { moment: myMoment, today, slugify: db.slugify };
     this.plugins_cfg_context = {};
     this.keyFieldviews = {};
     this.external_tables = {};
@@ -361,7 +372,7 @@ class State {
    * @param {object} user
    * @returns {object}
    */
-  getLayout(user?: User): PluginLayout & { config: GenObj } {
+  getLayout(user?: UserLike): PluginLayout & { config: GenObj } {
     // first, try if role set
     const role_id = user ? +user.role_id : 100;
     const layout_by_role = this.getConfig("layout_by_role");
@@ -411,7 +422,7 @@ class State {
     return layout;
   }
 
-  getLayoutPlugin(user?: User): Plugin {
+  getLayoutPlugin(user?: UserLike): Plugin {
     //try this for consistency
     const { pluginName } = this.getLayout(user);
     if (pluginName) {
@@ -444,7 +455,7 @@ class State {
   }
 
   // TODO auto is poorly supported
-  getLightDarkMode(user?: User): "dark" | "light" | "auto" {
+  getLightDarkMode(user?: UserLike): "dark" | "light" | "auto" {
     const { config } = this.getLayout(user);
     if (config?.mode) return config.mode;
 
@@ -457,7 +468,7 @@ class State {
    * @param {object} user
    * @returns {string}
    */
-  get2FApolicy(user: User) {
+  get2FApolicy(user: UserLike) {
     const role_id = user ? +user.role_id : 100;
     const twofa_policy_by_role = this.getConfig("twofa_policy_by_role");
     if (twofa_policy_by_role && twofa_policy_by_role[role_id])
@@ -471,13 +482,18 @@ class State {
    * @param min_level
    * @param msg
    */
-  log(min_level: number, msg: string) {
+  log(min_level: number, ...msgs: any[]) {
     if (min_level <= this.logLevel) {
       const ten = db.getTenantSchema();
-      const s = `${ten !== "public" ? `Tenant=${ten} ` : ""}${msg}`;
-      if (min_level === 1) console.error(s);
-      else console.log(s);
-      if (this.hasJoinedLogSockets) this.emitLog(ten, min_level, msg);
+      if (ten !== "public") msgs.unshift(`Tenant=${ten}`);
+      if (min_level === 1) console.error(...msgs);
+      else console.log(...msgs);
+      const msg = msgs
+        .map((m) =>
+          typeof m === "string" ? m : m.toString ? m.toString() : `${m}`
+        )
+        .join(" ");
+      this.emitLog(ten, min_level, msg);
     }
   }
 
@@ -1265,8 +1281,8 @@ class State {
     this.copilot_skills = [];
     this.layouts = { emergency: emergency_layout };
     this.headers = {};
-    this.function_context = { moment, today, slugify: db.slugify };
-    this.functions = { moment, today, slugify: db.slugify };
+    this.function_context = { moment: myMoment, today, slugify: db.slugify };
+    this.functions = { moment: myMoment, today, slugify: db.slugify };
     this.keyFieldviews = {};
     this.external_tables = {};
     this.eventTypes = {};
@@ -1325,7 +1341,21 @@ class State {
    * @param {...*} args
    */
   emitRoom(...args: any[]) {
+    let noMultiNodePropagate = false;
+    const last = args.length > 0 ? args[args.length - 1] : null;
+    if (last && typeof last === "object" && "noMultiNodePropagate" in last) {
+      const opts = args.pop() as { noMultiNodePropagate?: boolean };
+      noMultiNodePropagate = !!opts.noMultiNodePropagate;
+    }
+
     globalRoomEmitter(...args);
+    if (!noMultiNodePropagate && db.connectObj.multi_node) {
+      this.processSend({
+        real_time_chat_event: {
+          ...args,
+        },
+      });
+    }
   }
 
   setLogEmitter(f: Function) {
@@ -1346,8 +1376,29 @@ class State {
     globalDynamicUpdateEmitter = f;
   }
 
-  emitLog(ten: string, min_level: number, msg: string) {
-    globalLogEmitter(ten, min_level, msg);
+  /**
+   * emit a log message for the log viewer
+   * @param ten
+   * @param min_level
+   * @param msg
+   * @param noMultiNodePropagate - if true, do not propagate to other nodes in multi-node setup
+   */
+  emitLog(
+    ten: string,
+    min_level: number,
+    msg: string,
+    noMultiNodePropagate?: boolean
+  ) {
+    if (this.hasJoinedLogSockets) globalLogEmitter(ten, min_level, msg);
+    if (!noMultiNodePropagate && db.connectObj.multi_node) {
+      this.processSend({
+        log_event: {
+          min_level,
+          msg,
+        },
+        tenant: ten,
+      });
+    }
   }
 
   /**
@@ -1355,13 +1406,25 @@ class State {
    * @param ten
    * @param type
    * @param data
+   * @param noMultiNodePropagate - if true, do not propagate to other nodes in multi-node setup
    */
-  emitCollabMessage(ten: string, type: string, data: any) {
-    if (!this.hasJoinedCollabSockets) {
-      this.log(5, "emitCollabMessage called, but no clients are joined yet");
-      return;
+  emitCollabMessage(
+    ten: string,
+    type: string,
+    data: any,
+    noMultiNodePropagate?: boolean
+  ) {
+    if (this.hasJoinedCollabSockets) globalCollabEmitter(ten, type, data);
+    else this.log(5, "emitCollabMessage called, but no clients are joined yet");
+    if (!noMultiNodePropagate && db.connectObj.multi_node) {
+      this.processSend({
+        real_time_collab_event: {
+          data,
+          type,
+        },
+        tenant: ten,
+      });
     }
-    globalCollabEmitter(ten, type, data);
   }
 
   /**
@@ -1369,13 +1432,24 @@ class State {
    * @param ten
    * @param data
    * @param userIds - optional array of user IDs to send the update to
+   * @param noMultiNodePropagate - if true, do not propagate to other nodes in multi-node setup
    */
-  emitDynamicUpdate(ten: string, data: any, userIds?: number[]) {
-    if (!this.hasJoinedDynamicUpdateSockets) {
-      this.log(5, "emitDynamicUpdate called, but no clients are joined yet");
-      return;
+  emitDynamicUpdate(
+    ten: string,
+    data: any,
+    userIds?: number[],
+    noMultiNodePropagate?: boolean
+  ) {
+    if (this.hasJoinedDynamicUpdateSockets)
+      globalDynamicUpdateEmitter(ten, data, userIds);
+    else this.log(5, "emitDynamicUpdate called, but no clients are joined yet");
+    if (!noMultiNodePropagate && db.connectObj.multi_node) {
+      this.processSend({
+        dynamic_update: data,
+        tenant: ten,
+        userIds: userIds || [],
+      });
     }
-    globalDynamicUpdateEmitter(ten, data, userIds);
   }
 
   get icons() {

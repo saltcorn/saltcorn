@@ -170,10 +170,23 @@ const getMultiNodeListener = (client) => {
       else {
         try {
           const payload = JSON.parse(msg.payload);
-          Object.entries(cluster.workers).forEach(([wpid, w]) => {
-            w.send(payload);
-          });
-          workerDispatchMsg(payload); //also master
+          if (
+            payload.dynamic_update ||
+            payload.real_time_collab_event ||
+            payload.real_time_chat_event ||
+            payload.log_event
+          ) {
+            const workers = Object.values(cluster.workers || {});
+            if (workers.length > 0) {
+              // use only one worker, master has no serversocket
+              workers[0].send(payload);
+            } else workerDispatchMsg(payload); // only master
+          } else {
+            Object.entries(cluster.workers).forEach(([wpid, w]) => {
+              w.send(payload);
+            });
+            workerDispatchMsg(payload); //also master
+          }
         } catch (e) {
           getState().log(
             2,
@@ -190,8 +203,13 @@ const getMultiNodeListener = (client) => {
  * @param {object} opts
  * @param {boolean} opts.disableMigrate
  * @param {boolean} [useClusterAdaptor = true]
+ * @param {any} multiNodeClient pg client for multi-node LISTEN/NOTIFY
  */
-const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
+const initMaster = async (
+  { disableMigrate },
+  useClusterAdaptor = true,
+  multiNodeClient
+) => {
   let sql_log;
   try {
     sql_log = await getConfig("log_sql");
@@ -222,8 +240,7 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   if (getState().getConfig("log_sql", false)) db.set_sql_logging();
 
   // listen on node updates channel for this tenant
-  if (db.connectObj.multi_node)
-    await getMultiNodeListener(await db.getClient())();
+  if (db.connectObj.multi_node) await getMultiNodeListener(multiNodeClient)();
 
   if (db.is_it_multi_tenant()) {
     const tenants = await getAllTenants();
@@ -257,6 +274,36 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     console.error("no State for tenant", tenant);
     return;
   }
+  if (msg.dynamic_update) {
+    getState().emitDynamicUpdate(
+      tenant || "public",
+      msg.dynamic_update,
+      msg.userIds,
+      true
+    );
+  }
+  if (msg.real_time_collab_event) {
+    getState().emitCollabMessage(
+      tenant || "public",
+      msg.real_time_collab_event.type,
+      msg.real_time_collab_event.data,
+      true
+    );
+  }
+  if (msg.real_time_chat_event) {
+    getState().emitRoom(...Object.values(msg.real_time_chat_event), {
+      noMultiNodePropagate: true,
+    });
+  }
+  if (msg.log_event) {
+    getState().emitLog(
+      tenant || "public",
+      msg.log_event.min_level,
+      msg.log_event.msg,
+      true
+    );
+  }
+
   if (msg.refresh) {
     if (msg.refresh === "ephemeral_config")
       getState().refresh_ephemeral_config(msg.key, msg.value);
@@ -316,6 +363,14 @@ const onMessageFromWorker =
     } else if (msg === "RestartServer") {
       process.exit(0);
       return true;
+    } else if (
+      (msg.dynamic_update ||
+        msg.real_time_collab_event ||
+        msg.real_time_chat_event ||
+        msg.log_event) &&
+      nodesDispatchMsg
+    ) {
+      nodesDispatchMsg(msg);
     } else if (msg.tenant || msg.createTenant) {
       ///ie from saltcorn
       //broadcast
@@ -328,6 +383,8 @@ const onMessageFromWorker =
       return true;
     }
   };
+
+const escapeSingleQuotes = (value) => value.replace(/'/g, "''");
 
 module.exports =
   /**
@@ -379,8 +436,9 @@ module.exports =
     };
 
     let nodesDispatchMsg = null;
+    let multiNodeClient = null;
     if (db.connectObj.multi_node) {
-      const client = await db.getClient();
+      multiNodeClient = await db.getClient();
       nodesDispatchMsg = async ({ tenant, ...msg }) => {
         if (tenant) {
           db.runWithTenant(tenant, () => nodesDispatchMsg(msg));
@@ -391,11 +449,24 @@ module.exports =
           msg.installPlugin ||
           msg.removePlugin ||
           msg.refresh_plugin_cfg ||
+          msg.dynamic_update ||
+          msg.real_time_collab_event ||
+          msg.real_time_chat_event ||
+          msg.log_event ||
           (msg.refresh && msg.refresh !== "ephemeral_config")
         ) {
-          await client.query(
-            `NOTIFY ${db.getTenantSchema()}_events, '${JSON.stringify(msg)}'`
-          );
+          const payload = escapeSingleQuotes(JSON.stringify(msg));
+          const payloadBytes = Buffer.byteLength(payload, "utf8");
+          if (payloadBytes < 8000) {
+            await multiNodeClient.query(
+              `NOTIFY ${db.getTenantSchema()}_events, '${payload}'`
+            );
+          } else {
+            getState().log(
+              2,
+              `Not sending multinode message, too large (${payloadBytes} bytes)`
+            );
+          }
         }
       };
     }
@@ -471,7 +542,9 @@ module.exports =
             getState().processSend("Start");
           })
           .master(() => {
-            initMaster(appargs).then(initMasterListeners);
+            initMaster(appargs, true, multiNodeClient).then(
+              initMasterListeners
+            );
           });
 
         return; // none of stuff below will execute
@@ -481,7 +554,7 @@ module.exports =
 
     if (cluster.isMaster) {
       const forkAnyWorkers = useNCpus > 1 && process.platform !== "win32";
-      await initMaster(appargs, forkAnyWorkers);
+      await initMaster(appargs, forkAnyWorkers, multiNodeClient);
 
       if (forkAnyWorkers) {
         for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
@@ -498,7 +571,13 @@ module.exports =
         });
       } else {
         getState().sendMessageToWorkers = (msg) => {
-          workerDispatchMsg(msg); //also master
+          if (
+            !msg.dynamic_update &&
+            !msg.real_time_collab_event &&
+            !msg.real_time_chat_event &&
+            !msg.log_event
+          )
+            workerDispatchMsg(msg); //also master
           if (nodesDispatchMsg)
             nodesDispatchMsg(msg).catch((e) => {
               console.log("Error sending multinode message", e.message);

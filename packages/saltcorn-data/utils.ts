@@ -457,7 +457,7 @@ const interpolate = (
   row: any,
   user?: any,
   errorLocation?: string
-) => {
+): string => {
   try {
     if (s && typeof s === "string") {
       const template = _.template(s, {
@@ -642,6 +642,8 @@ const returnDirectivesOnly = (
   return r;
 };
 
+const dataModulePath = __dirname;
+
 const imageAvailable = async (imageName: string, preferedVersion: string) => {
   const docker = new Docker();
   try {
@@ -666,6 +668,7 @@ const imageAvailable = async (imageName: string, preferedVersion: string) => {
 };
 
 export = {
+  dataModulePath,
   allReturnDirectives,
   secondaryReturnDirectives,
   returnDirectivesOnly,

@@ -360,11 +360,7 @@ const fieldFlow = (req) =>
           const nrows = await table.countRows({});
           const existing_fields = table.getFields();
           const existingNames = existing_fields.map((f) => f.name);
-          const fkey_opts = [
-            "File",
-            ...tables
-              .map((t) => `Key to ${t.name}`),
-          ];
+          const fkey_opts = ["File", ...tables.map((t) => `Key to ${t.name}`)];
           const form = await fieldForm(
             req,
             fkey_opts,
@@ -625,10 +621,17 @@ const fieldFlow = (req) =>
                 name: "expression",
                 label: req.__("Formula"),
                 // todo sublabel
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  table: table.name,
+                  user: true,
+                  expression_type: "value",
+                  unsafe: true,
+                  compact: true,
+                },
                 class: "validate-expression",
                 fieldview: "textarea",
-                attributes: { rows: 2, unsafe: true },
                 validator: expressionValidator,
                 showIf: { expression_type: "JavaScript expression" },
               }),

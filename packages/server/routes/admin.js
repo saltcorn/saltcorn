@@ -27,6 +27,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const path = require("path");
 const { X509Certificate } = require("crypto");
 const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
+const { identifiersInCodepage } = require("@saltcorn/data/models/expression");
 const {
   post_btn,
   renderForm,
@@ -116,6 +117,7 @@ const {
   getSafeSaltcornCmd,
   getFetchProxyOptions,
   sleep,
+  dataModulePath,
   imageAvailable,
 } = require("@saltcorn/data/utils");
 const stream = require("stream");
@@ -128,6 +130,7 @@ const TableConstraint = require("@saltcorn/data/models/table_constraints");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 const semver = require("semver");
+const { dbCommonModulePath } = require("@saltcorn/db-common/internal");
 
 const router = new Router();
 module.exports = router;
@@ -4591,6 +4594,205 @@ admin_config_route({
 });
 
 router.get(
+  "/ts-declares",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const ds = [
+      `interface Console {
+    error(...data: any[]): void;
+    log(...data: any[]): void;
+    info(...data: any[]): void;
+    debug(...data: any[]): void;
+    warn(...data: any[]): void;
+}
+declare var console: Console;
+function setTimeout(f:Function, timeout?:number)
+declare const page_load_tag: string
+function emit_to_client(message: object, to_user_ids?: number | number[])
+async function sleep(milliseconds: number)
+function interpolate(s: string,
+  row: Row,
+  user?: UserLike,
+  errorLocation?: string) : string:
+declare const tryCatchInTransaction: <T>(
+    fn: () => Promise<T>,
+    onError?: (err: Error) => Promise<T | void>
+  ) => Promise<T>;
+declare const commitAndBeginNewTransaction: () => Promise<void>;
+interface Response {
+json: ()=>Promise<any>, text: ()=>Promise<string>, status: number, statusTest: string, ok: boolean,
+}
+declare const fetch: (
+    url: string | URL, 
+    fetchOptions?: 
+    {  headers?: Record<string, string>, 
+       method?: "POST" | "GET" | "PUT" | "DELETE" | "HEAD" | "OPTIONS" | "TRACE",
+       body?: string | Blob | FormData}
+    ) => Promise<Response>
+declare const View: any
+declare const  Page : any
+declare const  Field : any
+declare const  Trigger : any
+declare const  MetaData : any
+function setConfig(key: string, v:any)
+function getConfig(key: string): any
+`,
+    ];
+    if (req.query.codepage) {
+      ds.push("declare var globalThis: any");
+    } else {
+      ds.push(`
+declare const commitBeginNewTransactionAndRefreshCache: () => Promise<void>;
+declare const  EventLog : any
+declare const  Notification : any
+declare const  WorkflowRun : any
+async function run_js_code({code, row, table}:{ code: string, row?: Row, table?: Table})
+`);
+    }
+    const scTypeToTsType = (type, field) => {
+      if (field?.is_fkey) {
+        if (field.reftype) return scTypeToTsType(field.reftype);
+      }
+      return (
+        {
+          String: "string",
+          Integer: "number",
+          Float: "number",
+          Bool: "boolean",
+          Date: "Date",
+          HTML: "string",
+        }[type?.name || type] || "any"
+      );
+    };
+
+    const cachedTableNames = getState().tables.map((t) => `"${t.name}"`);
+
+    const dsPaths = [
+      path.join(__dirname, "tsdecls/lib.es5.d.ts"),
+      path.join(__dirname, "tsdecls/es2015.core.d.ts"),
+      path.join(__dirname, "tsdecls/es2015.collection.d.ts"),
+      path.join(__dirname, "tsdecls/es2015.promise.d.ts"),
+      path.join(__dirname, "tsdecls/es2017.object.d.ts"),
+      path.join(__dirname, "tsdecls/es2017.string.d.ts"),
+      path.join(__dirname, "tsdecls/es2019.object.d.ts"),
+      path.join(dbCommonModulePath, "/dbtypes.d.ts"),
+      path.join(dataModulePath, "/models/table.d.ts"),
+      path.join(dataModulePath, "/models/user.d.ts"),
+      path.join(dataModulePath, "/models/file.d.ts"),
+    ];
+
+    for (const dsPath of dsPaths) {
+      const fileContents = await fs.promises.readFile(dsPath, {
+        encoding: "utf-8",
+      });
+      const lines = fileContents.split("\n");
+      ds.push(
+        lines
+          .filter((ln) => !ln.startsWith("import "))
+          .map((ln) => ln.replace(/^export /, ""))
+          .map((ln) =>
+            ln.replace(
+              "static findOne(where: Where | Table | number | string): Table | null;",
+              `static findOne(where: Where | ${cachedTableNames.join(" | ")} | number): Table | null;`
+            )
+          )
+          .join("\n")
+      );
+    }
+
+    if (req.query.table) {
+      const table = Table.findOne(req.query.table);
+      if (table) {
+        const tsFields = [];
+        const addTsFields = (table, path, nrecurse) => {
+          table.fields.forEach((f) => {
+            tsFields.push(`${path}${f.name}: ${scTypeToTsType(f.type, f)};`);
+            if (f.is_fkey && nrecurse >= 0) {
+              const reftable = Table.findOne(f.reftable_name);
+              if (reftable)
+                addTsFields(reftable, `${path}${f.name}Ⱶ`, nrecurse - 1);
+            }
+          });
+        };
+        addTsFields(table, "", 2);
+        ds.push(`declare const table: Table`);
+        ds.push(`declare const row: {
+         ${tsFields.join("\n")}
+      }`);
+        tsFields.forEach((tsf) => {
+          ds.push(`declare const ${tsf}`);
+        });
+      }
+    }
+    if (req.query.user) {
+      const table = User.table;
+      if (table) {
+        ds.push(`declare const user: {
+         ${table.fields
+           .map((f) => `${f.name}: ${scTypeToTsType(f.type, f)};`)
+           .join("\n")}
+         lightDarkMode: "light" | "dark";
+         language: string;
+      }${req.query.user === "maybe" ? " | undefined" : ""}`);
+      }
+    }
+
+    for (const [nm, f] of Object.entries(getState().functions)) {
+      if (nm === "today") {
+        ds.push(
+          `function today(offset_days?: number | {startOf:  "year" | "quarter" | "month" | "week" | "day" | "hour"} | {endOf:  "year" | "quarter" | "month" | "week" | "day" | "hour"}): Date`
+        );
+      }
+      if (nm === "slugify") {
+        ds.push(`function slugify(s: string): string`);
+      } else if (f.run) {
+        const args = (f["arguments"] || []).map(
+          ({ name, type, tstype }) =>
+            `${name}: ${tstype || scTypeToTsType(type)}`
+        );
+        ds.push(
+          `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
+        );
+      } else ds.push(`declare const ${nm}: Function;`);
+    }
+    let exclude_cp_ids = req.query.codepage
+      ? identifiersInCodepage(
+          getState().getConfig("function_code_pages", {})[req.query.codepage]
+        )
+      : new Set([]);
+
+    for (const [nm, f] of Object.entries(getState().codepage_context)) {
+      if (exclude_cp_ids.has(nm)) continue;
+      if (f.constructor?.name === "AsyncFunction")
+        ds.push(`declare var ${nm}: AsyncFunction;`);
+      else if (f.constructor?.name === "Function")
+        ds.push(`declare var ${nm}: Function;`);
+    }
+
+    if (!req.query.codepage) {
+      const trigger_actions = await Trigger.find({
+        when_trigger: { or: ["API call", "Never"] },
+      });
+      ds.push(
+        `declare const Actions: {
+        ${Object.keys(getState().actions)
+          .map(
+            (nm) =>
+              `${nm}: ({row, table}?:{row?: Row, table?: Table})=>Promise<void>,`
+          )
+          .join("\n")}
+        ${trigger_actions
+          .map((tr) => `${tr.name}: ({row}?:{row?: Row})=>Promise<void>,`)
+          .join("\n")}
+        }`
+      );
+    }
+
+    res.send(ds.join("\n"));
+  })
+);
+
+router.get(
   "/edit-codepage/:name",
   isAdmin,
   error_catcher(async (req, res) => {
@@ -4618,7 +4820,7 @@ router.get(
               "Table"
             ),
           input_type: "code",
-          attributes: { mode: "text/javascript" },
+          attributes: { mode: "text/javascript", codepage: name },
           class: "validate-statements enlarge-in-card",
           validator(s) {
             try {
@@ -4750,6 +4952,7 @@ router.post(
       res.json({
         success: false,
         error: `Error evaluating code pages: ${err}`,
+        remove_delay: "5",
       });
     else res.json({ success: true });
   })

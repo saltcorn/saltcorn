@@ -1025,6 +1025,7 @@ class Table implements AbstractTable {
       state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
       return;
     }
+    this.normalise_fkey_values(where);
     const calc_agg_fields = await Field.find(
       {
         calculated: true,
@@ -1193,6 +1194,7 @@ class Table implements AbstractTable {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = selopts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    this.normalise_fkey_values(where);
     const row = await db.selectMaybeOne(
       this.name,
       where,
@@ -1259,7 +1261,7 @@ class Table implements AbstractTable {
     ) {
       return [];
     }
-
+    this.normalise_fkey_values(where);
     let rows = await db.select(
       this.name,
       where,
@@ -1323,6 +1325,7 @@ class Table implements AbstractTable {
     where?: Where,
     opts?: SelectOptions & ForUserRequest
   ): Promise<number> {
+    if (where) this.normalise_fkey_values(where);
     return await db.count(this.name, where, opts);
   }
 
@@ -1611,7 +1614,7 @@ class Table implements AbstractTable {
             v
           )}, id=${id}`
         );
-        this.stringify_json_fields(v);
+        this.prepare_row_for_writing(v);
         stringified = true;
         await db.update(this.name, v, id, {
           pk_name,
@@ -1677,7 +1680,7 @@ class Table implements AbstractTable {
         });
     }
     state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
-    if (!stringified) this.stringify_json_fields(v);
+    if (!stringified) this.prepare_row_for_writing(v);
     const really_changed_field_names: Set<string> = existing
       ? new Set(Object.keys(v).filter((k) => v[k] !== (existing as Row)[k]))
       : changedFieldNames;
@@ -1755,7 +1758,7 @@ class Table implements AbstractTable {
     });
     if (this.name === "users") delete v1.last_mobile_login;
 
-    this.stringify_json_fields(v1);
+    this.prepare_row_for_writing(v1);
 
     const id = await db.insert(this.name + "__history", v1, {
       onConflictDoNothing: true,
@@ -1986,7 +1989,7 @@ class Table implements AbstractTable {
     return undefined;
   }
 
-  normalise_fkey_values(v_in: Row) {
+  private normalise_fkey_values(v_in: Row | Where) {
     for (const field of this.fields)
       if (
         field.is_fkey &&
@@ -1995,7 +1998,7 @@ class Table implements AbstractTable {
       ) {
         //get pkey
         const pk = Table.findOne({ name: field.reftable_name })?.pk_name;
-        if (pk) v_in[field.name] = v_in[field.name][pk];
+        if (pk && v_in[field.name][pk]) v_in[field.name] = v_in[field.name][pk];
       }
   }
 
@@ -2104,7 +2107,7 @@ class Table implements AbstractTable {
         6,
         `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
       );
-      this.stringify_json_fields(v_in);
+      this.prepare_row_for_writing(v_in);
       id = await db.insert(this.name, v_in, { pk_name, ...sqliteJsonCols });
       let existing = await this.getJoinedRows({
         where: { [pk_name]: id },
@@ -2137,7 +2140,7 @@ class Table implements AbstractTable {
       await db.update(this.name, v, id, { pk_name, ...sqliteJsonCols });
     } else {
       v = await apply_calculated_fields_stored(v_in, fields, this);
-      this.stringify_json_fields(v);
+      this.prepare_row_for_writing(v);
       state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
       id = await db.insert(this.name, v, {
         pk_name,
@@ -2511,6 +2514,8 @@ class Table implements AbstractTable {
       // Prevent type confusion if not a string
       return undefined;
     }
+    const hasDot = path.includes(".");
+    const hasHalfH = path.includes("Ⱶ");
     if (path.includes("->")) {
       const joinPath = path.split(".");
       const tableName = joinPath[0];
@@ -2520,9 +2525,9 @@ class Table implements AbstractTable {
       const joinedField = joinPath[1].split("->")[1];
       const fields = joinTable.getFields();
       return fields.find((f) => f.name === joinedField);
-    } else if (path.includes(".")) {
+    } else if (hasDot || hasHalfH) {
       //TODO the recusive implementation in json_list_to_external_table is better
-      const keypath = path.split(".");
+      const keypath = path.split(hasDot ? "." : "Ⱶ");
       let field,
         theFields = fields;
       for (let i = 0; i < keypath.length; i++) {
@@ -3342,7 +3347,7 @@ class Table implements AbstractTable {
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
-                      this.stringify_json_fields(rec);
+                      this.prepare_row_for_writing(rec);
                       if (options?.no_table_write) {
                         if (existing) {
                           Object.entries(existing).forEach(([k, v]) => {
@@ -3455,7 +3460,17 @@ ${rejectDetails}`,
     };
   }
 
-  stringify_json_fields(v1: Row) {
+  private prepare_row_for_writing(v1: Row) {
+    this.fields.forEach((f) => {
+      if (
+        typeof f.type !== "string" &&
+        f?.type?.name === "Integer" &&
+        !f.required &&
+        typeof v1[f.name] === "number" &&
+        isNaN(v1[f.name])
+      )
+        v1[f.name] = null;
+    });
     if (db.isSQLite) return;
     this.fields
       .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
@@ -3464,7 +3479,7 @@ ${rejectDetails}`,
           v1[f.name] = JSON.stringify(v1[f.name]);
       });
   }
-  parse_json_fields(v1: Row): Row {
+  private parse_json_fields(v1: Row): Row {
     if (db.isSQLite)
       this.fields
         .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
@@ -3894,7 +3909,7 @@ ${rejectDetails}`,
    * @returns {Promise<{values, sql: string}>}
    */
   async getJoinedQuery(
-    opts: (JoinOptions & ForUserRequest) | any = {}
+    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {}
   ): Promise<
     Partial<JoinOptions> & {
       sql?: string;
@@ -3917,17 +3932,22 @@ ${rejectDetails}`,
       const freeVars = freeVariables(this.ownership_formula);
       add_free_variables_to_joinfields(freeVars, joinFields, fields);
     }
+    if (!opts.where) opts.where = {};
     if (role && role > this.min_role_read && this.ownership_field_id) {
       if (forPublic) return { notAuthorized: true };
       const owner_field = fields.find((f) => f.id === this.ownership_field_id);
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
-      if (!opts.where) opts.where = {};
+
       mergeIntoWhere(opts.where, {
         [owner_field.name]: (forUser as AbstractUser).id,
       });
-    } else if (role && role > this.min_role_read && this.ownership_formula) {
-      if (!opts.where) opts.where = {};
+    } else if (
+      forUser &&
+      role &&
+      role > this.min_role_read &&
+      this.ownership_formula
+    ) {
       if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
       try {
         mergeIntoWhere(opts.where, this.ownership_formula_where(forUser));
@@ -3936,6 +3956,7 @@ ${rejectDetails}`,
         // TODO user groups
       }
     }
+    this.normalise_fkey_values(opts.where);
 
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
       joinFields
@@ -3959,12 +3980,35 @@ ${rejectDetails}`,
       if (!reftable)
         throw new InvalidConfiguration(`Field ${ref} is not a key field`);
       const reftable_table = reffield.reftable || Table.findOne(reftable);
-      if (reftable_table?.external || reftable_table?.provider_name) {
+      if (
+        !opts.ignoreExternal &&
+        (reftable_table?.external || reftable_table?.provider_name)
+      ) {
         joinFields[fldnm].lookupFunction = async (row: GenObj) => {
           const rpk = reftable_table.pk_name;
           const rpkval = row[ref];
           const refrow = await reftable_table.getRow({ [rpk]: rpkval });
-          return refrow?.[target];
+          let val = refrow?.[target];
+          if (through) {
+            const throughs = Array.isArray(through) ? through : [through];
+            let prevTable = reftable_table;
+            let prevRow = refrow;
+            for (const thr of throughs) {
+              if (!prevRow) {
+                val = null;
+                break;
+              }
+              const kfield = prevTable.getField(thr);
+              const nextTable = Table.findOne({ name: kfield!.reftable_name });
+              const nextRow = await nextTable!.getRow({
+                [nextTable!.pk_name]: prevRow[thr],
+              });
+              val = nextRow?.[target];
+              prevRow = nextRow;
+              prevTable = nextTable!;
+            }
+          }
+          return val;
         };
         continue;
       }
@@ -4053,11 +4097,13 @@ ${rejectDetails}`,
         opts.orderBy &&
         (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
-          : joinFields[opts.orderBy] || aggregations[opts.orderBy]
+          : typeof opts.orderBy === "string" &&
+              (joinFields[opts.orderBy] || aggregations[opts.orderBy])
             ? opts.orderBy
             : joinFields[odbUnderscore]
               ? odbUnderscore
-              : opts.orderBy.toLowerCase?.() === "random()"
+              : typeof opts.orderBy === "string" &&
+                  opts.orderBy.toLowerCase?.() === "random()"
                 ? opts.orderBy
                 : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
@@ -4123,7 +4169,7 @@ ${rejectDetails}`,
    * @returns {Promise<object[]>}
    */
   async getJoinedRows(
-    opts: (JoinOptions & ForUserRequest) | any = {}
+    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {}
   ): Promise<Array<Row>> {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = opts;

@@ -145,15 +145,16 @@ const get_extra_menu = (
         }
 
         const user_translated = __(item.label);
-        let translated_label = !item.label
-          ? item.label
-          : user_translated !== item.label
-            ? user_translated
-            : req?.__ &&
-                (["User Page", "Admin Page"].includes(item.type) ||
-                  ["Settings", "User"].includes(item.label))
-              ? req.__(item.label)
-              : item.label;
+        let translated_label =
+          !item.label || item.label === " "
+            ? item.label
+            : user_translated !== item.label
+              ? user_translated
+              : req?.__ &&
+                  (["User Page", "Admin Page"].includes(item.type) ||
+                    ["Settings", "User"].includes(item.label))
+                ? req.__(item.label)
+                : item.label;
 
         return {
           label: translated_label,

@@ -373,7 +373,8 @@ only screen and (max-width: ${opts.collapse_breakpoint_px || 760}px) {
 		border: none;
 		border-bottom: 1px solid #eee; 
 		position: relative;
-		padding-left: 50%; 
+		padding-left: 50%;
+    min-height: 1.5lh;
 	}
 	
 	#${opts.tableId} td:before { 

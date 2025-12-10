@@ -340,8 +340,12 @@ module.exports = {
           name: "where",
           label: "Where",
           sublabel: "Where-expression for subset of rows to loop over",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
         {
           name: "limit",
@@ -542,7 +546,6 @@ module.exports = {
         } else if (body) postBody = body;
         else postBody = JSON.stringify(row);
         fetchOpts.body = postBody;
-        
       }
       if (authorization)
         fetchOpts.headers.Authorization = interpolate(
@@ -1235,8 +1238,12 @@ module.exports = {
           name: "where",
           label: "Recalculate where",
           sublabel: "Where-expression for subset of rows to recalculate",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
       ];
     },
@@ -1396,7 +1403,11 @@ module.exports = {
           sublabel:
             "Expression for JavaScript object. For example, <code>{points: 34}</code>",
           input_type: "code",
-          attributes: { mode: "application/javascript" },
+          attributes: {
+            mode: "application/javascript",
+            compact: true,
+            expression_type: "row",
+          },
         },
         ...(mode === "edit" ||
         mode === "filter" ||
@@ -1436,7 +1447,12 @@ module.exports = {
               {
                 name: "query",
                 label: "Query object",
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  expression_type: "query",
+                },
                 required: true,
                 showIf: { where: "Database" },
               },
@@ -1872,7 +1888,7 @@ module.exports = {
     configFormOptions: {
       formStyle: "vert",
     },
-    configFields: async ({ table }) => {
+    configFields: async ({ table, when_trigger }) => {
       const fields = table ? table.getFields().map((f) => f.name) : [];
       const vars = [
         ...(table ? ["row"] : []),
@@ -1906,13 +1922,25 @@ module.exports = {
         .map((f) => code(f))
         .join(", ");
       const clientvars = [...fields].map((f) => code(f)).join(", ");
-
+      const has_user = [
+        "Hourly",
+        "Weekly",
+        "Daily",
+        "Often",
+        "Startup",
+      ].includes(when_trigger)
+        ? undefined
+        : "maybe";
       return [
         {
           name: "code",
           label: "Code",
           input_type: "code",
-          attributes: { mode: "application/javascript" },
+          attributes: {
+            mode: "application/javascript",
+            table: table?.name || undefined,
+            user: has_user,
+          },
           class: "validate-statements enlarge-in-card",
           validator(s) {
             try {
@@ -2171,8 +2199,12 @@ module.exports = {
           label: "Query",
           sublabel:
             "Query-expression on source table for subset of rows to synchronize. Example: <code>{ status: 'Open' }</code>",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
         {
           name: "table_dest",
@@ -2691,8 +2723,12 @@ module.exports = {
           label: "Where",
           fieldview: "textarea",
           sublabel: "Where-expression for subset of rows to train on. Optional",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
         {
           name: "hyperparameters",
