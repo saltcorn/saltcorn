@@ -1063,13 +1063,25 @@ const ConfigField = ({
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
-    code: () => (
-      <MultiLineCodeEditor
-        setProp={setProp}
-        value={value}
-        onChange={myOnChange}
-      />
-    ),
+    code: () =>
+      field?.attributes?.expression_type === "row" ||
+      field?.attributes?.expression_type === "query" ? (
+        <textarea
+          rows="6"
+          type="text"
+          className={`field-${field?.name} form-control`}
+          value={value}
+          name={field?.name}
+          onChange={(e) => e.target && myOnChange(e.target.value)}
+          spellCheck={false}
+        />
+      ) : (
+        <MultiLineCodeEditor
+          setProp={setProp}
+          value={value}
+          onChange={myOnChange}
+        />
+      ),
     select: () => {
       if (field.class?.includes?.("selectizable")) {
         const seloptions = field.options.map((o, ix) =>
