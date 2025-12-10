@@ -194,7 +194,7 @@ const CardSettings = () => {
           />
           <SettingsRow
             field={{
-              label: "URL",
+              label: "Click URL",
               name: "url",
               type: "String",
               canBeFormula: true,
