@@ -225,9 +225,9 @@ const create_standard_menu = async () => {
           {
             href: "",
             icon: "fas fa-user-plus",
-            text: "Signup",
+            text: "Sign up",
             type: "User Page",
-            label: "Signup",
+            label: "Sign up",
             style: "",
             title: "",
             target: "_self",

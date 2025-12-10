@@ -31,13 +31,16 @@ var logViewerHelpers = (() => {
   const buildLogRow = (date, level, text) => {
     return `
     <tr>
-      <td>
+      <td style="white-space: pre-line;">
         ${new Date(date).toLocaleDateString(
           window.detected_locale || "en",
           dateOptions
         )}
       </td>
-      <td class="${logLevelColor(level)} fw-bold">
+      <td 
+        class="${logLevelColor(level)} fw-bold"
+        style="white-space: pre-line;"
+      >
         ${text}
       </td>
     </tr>

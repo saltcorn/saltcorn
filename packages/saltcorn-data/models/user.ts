@@ -16,6 +16,7 @@ import {
   SelectOptions,
   Where,
   PartialSome,
+  UserLike,
 } from "@saltcorn/db-common/internal";
 import type {
   ErrorMessage,
@@ -245,7 +246,7 @@ class User {
     return u;
   }
 
-  static async matches_existing_user(uo: any): Promise<boolean> {
+  static async matches_existing_user(uo: Row): Promise<boolean> {
     const existingCondition: any = [];
     for (const field of User.table.fields.filter((f) => f.is_unique))
       if (uo[field.name])
@@ -297,7 +298,7 @@ class User {
    * @param uo - user object
    * @returns {Promise<boolean|User>}
    */
-  static async authenticate(uo: any): Promise<User | false> {
+  static async authenticate(uo: Row): Promise<User | false> {
     const { password, ...uoSearch } = uo;
     const urow = await User.findForSession(uoSearch);
     if (!urow) return false;
@@ -842,7 +843,7 @@ class User {
    * User.lightDarkMode(user)
    * ```
    */
-  static lightDarkMode(user?: User): "dark" | "light" | "auto" {
+  static lightDarkMode(user?: UserLike): "dark" | "light" | "auto" {
     const { getState } = require("../db/state");
     return getState().getLightDarkMode(user);
   }

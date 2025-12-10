@@ -644,7 +644,7 @@ const transformForm = async ({
   viewname,
   optionsQuery,
   state,
-}) => {  
+}) => {
   let originalState = state;
   let pseudo_row = {};
   if (!row) {
@@ -652,6 +652,13 @@ const transformForm = async ({
       pseudo_row[f.name] = undefined;
     });
   }
+  const appState = getState();
+  const __ =
+    db.is_node && appState
+      ? (s) => appState.i18n.__({ phrase: s, locale: req.getLocale() }) || s
+      : (s) => {
+          return s;
+        };
   await traverse(form.layout, {
     container(segment) {
       if (segment.click_action) {
@@ -687,7 +694,7 @@ const transformForm = async ({
               )
             );
         } catch (e) {
-          getState().log(
+          appState.log(
             5,
             `Error in Edit ${viewname} on page load action: ${e.message}`
           );
@@ -723,7 +730,7 @@ const transformForm = async ({
             : "";
           url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
         }
-        segment.action_link = action_link(url, req, segment);
+        segment.action_link = action_link(url, req, segment, __);
       } else if (
         !["Sign up", ...edit_build_in_actions].includes(segment.action_name) &&
         !segment.action_name.startsWith("Login")
@@ -754,7 +761,7 @@ const transformForm = async ({
             url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
           }
         }
-        segment.action_link = action_link(url, req, segment);
+        segment.action_link = action_link(url, req, segment, __);
       }
     },
     join_field(segment) {
@@ -1545,7 +1552,10 @@ const runPost = async (
               (f) => f.type === "File"
             )) {
               const key = `${file_field.name}_${repeatIx}`;
-              if (req.files?.[key]) {
+              if (
+                req.files?.[key] &&
+                (!file_field.fieldviewObj || file_field.fieldviewObj.isEdit)
+              ) {
                 const file = await File.from_req_files(
                   req.files[key],
                   req.user ? req.user.id : null,

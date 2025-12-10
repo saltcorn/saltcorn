@@ -256,6 +256,7 @@ router.post(
  */
 router.post(
   "/:viewname/:route",
+  setTenant,
   error_catcher(async (req, res, next) => {
     const state = getState();
     const maintenanceModeEnabled = state.getConfig(

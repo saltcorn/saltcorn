@@ -416,7 +416,14 @@ const configuration_workflow = (req) =>
               {
                 name: "create_view_showif",
                 label: req.__("Show if formula"),
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table.name,
+                  user: true,
+                  expression_type: "boolean",
+                },
                 sublabel: req.__(
                   "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
                 ),
@@ -594,7 +601,7 @@ const configuration_workflow = (req) =>
             name: "_order_field",
             label: req.__("Default order by"),
             type: "String",
-            default: table.pk_name, 
+            default: table.pk_name,
             attributes: {
               asideNext: true,
               options: [
@@ -612,7 +619,14 @@ const configuration_workflow = (req) =>
           formfields.push({
             name: "_group_by",
             label: req.__("Group by"),
-            type: "String",
+            input_type: "code",
+            attributes: {
+              mode: "application/javascript",
+              singleline: true,
+              table: table.name,
+              user: true,
+              expression_type: "value",
+            },
             sublabel: "Formula for the group headings",
             class: "validate-expression",
           });
@@ -634,7 +648,14 @@ const configuration_workflow = (req) =>
               ]
                 .map((s) => code(s))
                 .join(", "),
-            type: "String",
+            input_type: "code",
+            attributes: {
+              mode: "application/javascript",
+              singleline: true,
+              table: table.name,
+              user: true,
+              expression_type: "boolean",
+            },
             help: {
               topic: "Inclusion Formula",
               context: { table_name: table.name },
@@ -672,7 +693,9 @@ const configuration_workflow = (req) =>
             name: "_full_page_count",
             label: req.__("Full page count"),
             type: "Bool",
-            sublabel: req.__("Disable for to increase performance for large tables"),
+            sublabel: req.__(
+              "Disable for to increase performance for large tables"
+            ),
             default: true,
           });
           formfields.push({
@@ -1277,7 +1300,7 @@ const run = async (
       page_opts.pagination = {
         current_page,
         pages: Math.ceil(nrows / rows_per_page),
-        noMaxPage: default_state?._full_page_count===false,
+        noMaxPage: default_state?._full_page_count === false,
         get_page_link: (n) =>
           `gopage(${n}, ${rows_per_page}, '${statehash}', {}, this)`,
       };
@@ -1909,7 +1932,7 @@ module.exports = {
               forPublic: !req.user,
               forUser: req.user,
               ...(default_state?._full_page_count === false
-                ? { limit: (q.offset || 0) + 4 * (q.limit || 100)+1 }
+                ? { limit: (q.offset || 0) + 4 * (q.limit || 100) + 1 }
                 : {}),
             });
       return { rows, rowCount };

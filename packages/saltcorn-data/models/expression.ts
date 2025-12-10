@@ -38,6 +38,19 @@ function expressionValidator(s: string): true | string {
   }
 }
 
+function identifiersInCodepage(s: string): Set<string> {
+  const top = parse(s, {
+    ecmaVersion: 2020,
+    locations: false,
+  });
+  const fs = top.body
+    .filter((n) => n.type === "FunctionDeclaration")
+    .map((n) => n.id.name)
+    .filter(Boolean);
+
+  return new Set(fs);
+}
+
 function expressionChecker(s: string, prefix: string, errors: string[]) {
   const result = expressionValidator(s);
   if (typeof result === "string") errors.push(prefix + result);
@@ -611,6 +624,33 @@ const add_free_variables_to_joinfields = (
           };
         }
     });
+  [...freeVars]
+    .filter((v) => v.includes("Ⱶ"))
+    .forEach((v) => {
+      const kpath = v.split("Ⱶ");
+      if (joinFieldNames.has(kpath[0]))
+        if (kpath.length === 2) {
+          const [refNm, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+          };
+        } else if (kpath.length === 3) {
+          const [refNm, through, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+            through,
+          };
+        } else if (kpath.length === 4) {
+          const [refNm, through1, through2, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+            through: [through1, through2],
+          };
+        }
+    });
 };
 
 function isIdentifierWithName(node: any): node is Identifier {
@@ -974,4 +1014,5 @@ export = {
   add_free_variables_to_aggregations,
   removeComments,
   today,
+  identifiersInCodepage,
 };

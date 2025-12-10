@@ -2178,7 +2178,8 @@ const date = {
       ],
       run: (d, req, options) => {
         if (!d) return "";
-        if (req?.noHTML) return moment(d).format(options?.format);
+        const jsdate = options?.day_only && d.toDate ? d.toDate() : d;
+        if (req?.noHTML) return moment(jsdate).format(options?.format);
         const loc = locale(req);
         return time(
           {
@@ -2189,7 +2190,7 @@ const date = {
               JSON.stringify(options?.format)
             ),
           },
-          moment(d).locale(loc).format(options?.format)
+          moment(jsdate).locale(loc).format(options?.format)
         );
       },
     },
@@ -2204,7 +2205,7 @@ const date = {
       run: (d, req) => {
         if (!d) return "";
         const loc = locale(req);
-        if (d instanceof PlainDate) {
+        if (d instanceof PlainDate || d?.constructor?.name === "PlainDate") {
           const today = new PlainDate();
           if (today.equals(d)) return req.__("today");
           let m = moment(d.toDate());
@@ -2328,7 +2329,11 @@ const date = {
   read: (v0, attrs) => {
     const readDate = (v) => {
       if (v instanceof Date && !isNaN(v)) return v;
-      if (v instanceof PlainDate && v.isValid()) return v.toDate();
+      if (
+        (v instanceof PlainDate || v?.constructor?.name === "PlainDate") &&
+        v.isValid()
+      )
+        return v.toDate();
       if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
         if (attrs && attrs.locale && typeof v === "string") {
           if (
@@ -2346,7 +2351,11 @@ const date = {
     };
     const readPlainDate = (v) => {
       if (v instanceof Date && !isNaN(v)) return new PlainDate(v);
-      if (v instanceof PlainDate && v.isValid()) return v;
+      if (
+        (v instanceof PlainDate || v?.constructor?.name === "PlainDate") &&
+        v.isValid()
+      )
+        return v;
       if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
         if (attrs && attrs.locale && typeof v === "string") {
           if (
