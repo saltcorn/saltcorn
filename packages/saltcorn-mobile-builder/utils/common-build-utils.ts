@@ -35,7 +35,8 @@ const resizer = require("resize-with-sharp-or-jimp");
 export function prepareBuildDir(
   buildDir: string,
   templateDir: string,
-  fcmEnabled: boolean
+  fcmEnabled: boolean,
+  backgroundFetchEnabled: boolean,
 ) {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
@@ -68,6 +69,9 @@ export function prepareBuildDir(
     ...additionalPlugins,
     ...(fcmEnabled
       ? ["@capacitor/device@7.0.2", "@capacitor/push-notifications@7.0.3"]
+      : []),
+    ...(backgroundFetchEnabled
+      ? ["@transistorsoft/capacitor-background-fetch@7.1.0"]
       : []),
   ];
   console.log("capDepsAndPlugins", capDepsAndPlugins);
@@ -827,6 +831,8 @@ export function writeCfgFile({
   autoPublicLogin,
   showContinueAsPublicUser,
   allowOfflineMode,
+  pushSync,
+  syncInterval,
   allowShareTo,
 }: any) {
   const wwwDir = join(buildDir, "www");
@@ -841,6 +847,8 @@ export function writeCfgFile({
     autoPublicLogin,
     showContinueAsPublicUser,
     allowOfflineMode,
+    pushSync,
+    syncInterval,
     allowShareTo,
   };
   if (entryPointType !== "byrole") {

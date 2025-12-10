@@ -1,4 +1,4 @@
-const { error_catcher } = require("./utils.js");
+const { error_catcher, loggedIn } = require("./utils.js");
 const Router = require("express-promise-router");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
@@ -334,6 +334,85 @@ router.post(
     } catch (error) {
       getState().log(2, `POST /sync/clean_sync_dir: '${error.message}'`);
       res.status(400).json({ error: error.message || error });
+    }
+  })
+);
+
+router.post(
+  "/push_subscribe",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const { token, deviceId, synchedTables } = req.body || {};
+    if (!token) {
+      res.status(400).json({
+        error: req.__("FCM token is required"),
+      });
+      return;
+    }
+
+    const user = req.user;
+    const state = getState();
+    const allSubs = state.getConfig("push_sync_subscriptions", {});
+    let userSubs = allSubs[user.id] || [];
+    const existingSub = userSubs.find(
+      (s) => s.token === token && s.deviceId === deviceId
+    );
+    if (existingSub) {
+      res.json({
+        success: "ok",
+        message: req.__("sync push subscription already exists"),
+      });
+    } else {
+      userSubs.push({
+        token,
+        deviceId,
+        synchedTables,
+      });
+      await getState().setConfig("push_sync_subscriptions", {
+        ...allSubs,
+        [user.id]: userSubs,
+      });
+      res.json({
+        success: "ok",
+        message: req.__("sync push subscription saved"),
+      });
+    }
+  })
+);
+
+router.post(
+  "/push_unsubscribe",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const { token, deviceId } = req.body || {};
+    if (!token) {
+      res.status(400).json({
+        error: req.__("FCM token is required"),
+      });
+      return;
+    }
+
+    const user = req.user;
+    const state = getState();
+    const allSubs = state.getConfig("push_sync_subscriptions", {});
+    let userSubs = allSubs[user.id] || [];
+    const newUserSubs = userSubs.filter(
+      (s) => s.deviceId !== deviceId
+    );
+    if (newUserSubs.length === userSubs.length) {
+      res.json({
+        success: "ok",
+        message: req.__("FCM token not found"),
+      });
+    } else {
+      await getState().setConfig("push_sync_subscriptions", {
+        ...allSubs,
+        [user.id]: newUserSubs,
+      });
+      res.json({
+        success: "ok",
+        message: req.__("sync push subscription removed"),
+      });
     }
   })
 );

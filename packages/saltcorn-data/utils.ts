@@ -20,6 +20,7 @@ import { existsSync } from "fs-extra";
 import _ from "underscore";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
+import Docker from "dockerode";
 // import { ResultType, StepResType } from "types";'
 
 declare const saltcorn: any;
@@ -641,6 +642,29 @@ const returnDirectivesOnly = (
   return r;
 };
 
+const imageAvailable = async (imageName: string, preferedVersion: string) => {
+  const docker = new Docker();
+  try {
+    const image = docker.getImage(`${imageName}:${preferedVersion}`);
+    await image.inspect();
+    return { installed: true, version: preferedVersion };
+  } catch (e) {
+    try {
+      const images = await docker.listImages({
+        filters: { reference: [`${imageName}:*`] },
+      });
+      const tags = images.flatMap((img: any) => img.RepoTags || []);
+      if (tags.length > 0)
+        return { installed: true, version: tags[0].split(":")[1] };
+    } catch (err: any) {
+      require("./db/state")
+        .getState()
+        .log(5, `Error checking for ${imageName} image: ${err.message || err}`);
+    }
+    return { installed: false };
+  }
+};
+
 export = {
   allReturnDirectives,
   secondaryReturnDirectives,
@@ -700,4 +724,5 @@ export = {
   escapeHtml,
   isPushEnabled,
   renderServerSide,
+  imageAvailable,
 };

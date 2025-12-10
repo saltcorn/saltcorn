@@ -6,6 +6,10 @@ import { removeJwt } from "../../helpers/auth";
 import { sbAdmin2Layout, getHeaders } from "../utils";
 import { clearHistory } from "../../helpers/navigation";
 
+/**
+ * internal helper to prepare the login or signup form
+ * @returns
+ */
 const prepareAuthForm = () => {
   return new saltcorn.data.models.Form({
     class: "login",
@@ -29,7 +33,13 @@ const prepareAuthForm = () => {
   });
 };
 
-// TODO delete this and integrate getAuthLinks() from '/server/auth/routes.js'
+/**
+ * internal helper to get auth links
+ * TODO delete this and integrate getAuthLinks() from '/server/auth/routes.js'
+ * @param {*} current
+ * @param {*} entryPoint
+ * @returns
+ */
 const getAuthLinks = (current, entryPoint) => {
   const links = { methods: [] };
   const state = saltcorn.data.state.getState();
@@ -51,6 +61,13 @@ const getAuthLinks = (current, entryPoint) => {
   return links;
 };
 
+/**
+ * internal helper to render login view
+ * @param {*} entryPoint
+ * @param {*} versionTag
+ * @param {*} alerts
+ * @returns
+ */
 const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
   const state = saltcorn.data.state.getState();
   const form = prepareAuthForm(entryPoint);
@@ -101,6 +118,12 @@ const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
   });
 };
 
+/**
+ * internal helper to render signup view
+ * @param {*} entryPoint
+ * @param {*} versionTag
+ * @returns
+ */
 const renderSignupView = (entryPoint, versionTag) => {
   const form = prepareAuthForm(entryPoint);
   form.onSubmit = `javascript:signupFormSubmit(this, '${entryPoint}')`;
@@ -116,6 +139,42 @@ const renderSignupView = (entryPoint, versionTag) => {
     ],
     csrfToken: false,
   });
+};
+
+/**
+ * internal helper to end the push system, if available
+ */
+const tryUnregisterPush = async () => {
+  try {
+    const { unregisterPushNotifications } = await import(
+      "../../helpers/notifications.js"
+    );
+    try {
+      await unregisterPushNotifications();
+    } catch (error) {
+      console.error("Error unregistering push notifications:", error);
+    }
+  } catch (error) {
+    console.log("Push notifications module not available:", error);
+  }
+};
+
+/**
+ * internal helper to stop background sync, if available
+ */
+const tryStopBackgroundSync = async () => {
+  try {
+    const { stopPeriodicBackgroundSync } = await import(
+      "../../helpers/background_sync.js"
+    );
+    try {
+      await stopPeriodicBackgroundSync();
+    } catch (error) {
+      console.error("Error stopping periodic background sync:", error);
+    }
+  } catch (error) {
+    console.error("Push notifications module not available:", error);
+  }
 };
 
 /**
@@ -153,6 +212,8 @@ export const getSignupView = async () => {
  */
 export const logoutAction = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
+  await tryUnregisterPush();
+  await tryStopBackgroundSync();
   const response = await apiCall({ method: "GET", path: "/auth/logout" });
   if (response.data.success) {
     await removeJwt();

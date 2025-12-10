@@ -445,8 +445,8 @@ const setSpinnerText = () => {
   }
 };
 
-export async function sync() {
-  setSpinnerText();
+export async function sync(background = false) {
+  if (!background) setSpinnerText();
   const state = saltcorn.data.state.getState();
   const { user } = state.mobileConfig;
   const { offlineUser, hasOfflineData, uploadStarted, uploadStartTime } =
@@ -465,12 +465,14 @@ export async function sync() {
     const syncTimestamp = await getSyncTimestamp();
     await setUploadStarted(true, syncTimestamp);
     let lock = null;
-    try {
-      if (window.navigator?.wakeLock?.request)
-        lock = await window.navigator.wakeLock.request();
-    } catch (error) {
-      console.log("wakeLock not available");
-      console.log(error);
+    if (!background) {
+      try {
+        if (window.navigator?.wakeLock?.request)
+          lock = await window.navigator.wakeLock.request();
+      } catch (error) {
+        console.log("wakeLock not available");
+        console.log(error);
+      }
     }
     let transactionOpen = false;
     try {
@@ -482,7 +484,7 @@ export async function sync() {
       await syncRemoteDeletes(syncInfos, syncTimestamp);
       syncDir = await syncOfflineData(synchedTables, syncTimestamp);
       await syncRemoteData(syncInfos, syncTimestamp);
-      await endOfflineMode(true);
+      if (!background) await endOfflineMode(true);
       await setUploadStarted(false);
       await saltcorn.data.db.query("COMMIT");
       transactionOpen = false;
@@ -602,7 +604,7 @@ export async function hasOfflineRows() {
     const table = saltcorn.data.models.Table.findOne({ name: tblName });
     const pkName = table.pk_name;
     const { rows } = await saltcorn.data.db.query(
-      `select count(info_tbl.ref) 
+      `select count(info_tbl.ref) as total
            from "${saltcorn.data.db.sqlsanitize(
              tblName
            )}_sync_info" as info_tbl 
@@ -610,7 +612,7 @@ export async function hasOfflineRows() {
            on info_tbl.ref = data_tbl."${saltcorn.data.db.sqlsanitize(pkName)}"
            where info_tbl.modified_local = true`
     );
-    if (rows?.length > 0 && parseInt(rows[0].count) > 0) return true;
+    if (rows?.length > 0 && parseInt(rows[0].total) > 0) return true;
   }
   return false;
 }
@@ -642,4 +644,17 @@ export async function deleteOfflineData(noFeedback) {
     mobileConfig.inLoadState = false;
     if (!noFeedback) removeLoadSpinner();
   }
+}
+
+export function addPushSyncHandler() {
+  const state = saltcorn.data.state.getState();
+  state.mobile_push_handler["push_sync"] = async (notification) => {
+    console.log("Push sync received:", notification);
+    try {
+      await sync(true);
+    }
+    catch(error) {
+      console.log("Error during push sync:", error);
+    }
+  };
 }

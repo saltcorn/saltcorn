@@ -1522,6 +1522,12 @@ const configTypes: ConfigTypes = {
     default: {},
     excludeFromMobile: true,
   },
+  push_sync_subscriptions: {
+    type: "hidden",
+    label: "Push sync subscriptions",
+    default: {},
+    excludeFromMobile: true,
+  },
   mail_throttle_per_user: {
     type: "Integer",
     label: "Throttle time per user",

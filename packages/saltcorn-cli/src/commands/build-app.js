@@ -137,6 +137,8 @@ class BuildAppCommand extends Command {
         autoPublicLogin: flags.autoPublicLogin,
         showContinueAsPublicUser: flags.showContinueAsPublicUser,
         allowOfflineMode: flags.allowOfflineMode,
+        pushSync: flags.pushSync,
+        syncInterval: flags.syncInterval,
         allowShareTo: flags.allowShareTo,
         plugins: await this.uniquePlugins(flags.includedPlugins),
         copyTargetDir: flags.copyAppDirectory,
@@ -313,6 +315,19 @@ BuildAppCommand.flags = {
     string: "allowOfflineMode",
     description:
       "Switch to offline mode when there is no internet, sync the data when a connection is available again.",
+  }),
+  pushSync: Flags.boolean({
+    name: "Push sync",
+    string: "pushSync",
+    description:
+      "When offline mode is enabled, synchronize the synchedTables tables when a push notification is received.",
+  }),
+  syncInterval: Flags.string({
+    name: "Periodic Sync Interval",
+    string: "syncInterval",
+    description:
+      "Perdiodic interval (in minutes) to run synchronizations in the background. " +
+      "This is just a min interval, depending on system conditions, the actual time may be longer.",
   }),
   provisioningProfile: Flags.string({
     name: "provisioning profile",

@@ -116,11 +116,11 @@ const {
   getSafeSaltcornCmd,
   getFetchProxyOptions,
   sleep,
+  imageAvailable,
 } = require("@saltcorn/data/utils");
 const stream = require("stream");
 const Crash = require("@saltcorn/data/models/crash");
 const { get_help_markup } = require("../help/index.js");
-const Docker = require("dockerode");
 const npmFetch = require("npm-registry-fetch");
 const Tag = require("@saltcorn/data/models/tag");
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
@@ -2335,32 +2335,6 @@ const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
 `)}
   </script>`;
 
-const imageAvailable = async (preferedVersion) => {
-  const docker = new Docker();
-  try {
-    const image = docker.getImage(
-      `saltcorn/capacitor-builder:${preferedVersion}`
-    );
-    await image.inspect();
-    return { installed: true, version: preferedVersion };
-  } catch (e) {
-    try {
-      const images = await docker.listImages({
-        filters: { reference: ["saltcorn/capacitor-builder:*"] },
-      });
-      const tags = images.flatMap((img) => img.RepoTags || []);
-      if (tags.length > 0)
-        return { installed: true, version: tags[0].split(":")[1] };
-    } catch (err) {
-      getState().log(
-        5,
-        `Error checking for capacitor-builder image: ${err.message || err}`
-      );
-    }
-    return { installed: false };
-  }
-};
-
 const checkXcodebuild = () => {
   return new Promise((resolve) => {
     exec("xcodebuild -version", (error, stdout, stderr) => {
@@ -2414,7 +2388,10 @@ router.get(
     const builderSettings =
       getState().getConfig("mobile_builder_settings") || {};
     const scVersion = getState().scVersion;
-    const dockerAvailable = await imageAvailable(scVersion);
+    const dockerAvailable = await imageAvailable(
+      "saltcorn/capacitor-builder",
+      scVersion
+    );
     const xcodeCheckRes = await checkXcodebuild();
     const xcodebuildAvailable = xcodeCheckRes.installed;
     const xcodebuildVersion = xcodeCheckRes.version;
@@ -2880,7 +2857,7 @@ router.get(
                   div(
                     { class: "row pb-2" },
                     div(
-                      { class: "col-sm-4" },
+                      { class: "col-sm-8" },
                       input({
                         type: "checkbox",
                         id: "autoPublLoginId",
@@ -2891,9 +2868,15 @@ router.get(
                       label(
                         {
                           for: "autoPublLoginId",
-                          class: "form-label",
+                          class: "form-label fw-bold  mb-0",
                         },
                         req.__("Auto public login")
+                      ),
+                      div(),
+                      i(
+                        req.__(
+                          "When enabled, you will be logged in as a public user without any login screen."
+                        )
                       )
                     )
                   ),
@@ -2901,7 +2884,7 @@ router.get(
                   div(
                     { class: "row pb-2" },
                     div(
-                      { class: "col-sm-4" },
+                      { class: "col-sm-8" },
                       input({
                         type: "checkbox",
                         id: "showContAsPublId",
@@ -2913,138 +2896,68 @@ router.get(
                       label(
                         {
                           for: "showContAsPublId",
-                          class: "form-label",
+                          class: "form-label fw-bold mb-0",
                         },
                         req.__("Show 'Continue as public user' link")
+                      ),
+                      div(),
+                      i(
+                        req.__(
+                          "When enabled, the login screen shows you a link to login as public user."
+                        )
                       )
                     )
                   ),
-                  // allow offline mode box
+
+                  // build type
                   div(
-                    { class: "row pb-2" },
+                    { class: "row pb-3 pt-2" },
                     div(
-                      { class: "col-sm-4" },
-                      input({
-                        type: "checkbox",
-                        id: "offlineModeBoxId",
-                        class: "form-check-input me-2",
-                        name: "allowOfflineMode",
-                        onClick: "toggle_tbl_sync()",
-                        checked: builderSettings.allowOfflineMode === "on",
-                      }),
+                      { class: "col-sm-8" },
                       label(
                         {
-                          for: "offlineModeBoxId",
-                          class: "form-label",
+                          for: "splashPageInputId",
+                          class: "form-label fw-bold",
                         },
-                        req.__("Allow offline mode")
-                      )
-                    )
-                  ),
-                  // synched/unsynched tables
-                  div(
-                    {
-                      id: "tblSyncSelectorId",
-                      class: "row pb-3",
-                      hidden: builderSettings.allowOfflineMode !== "on",
-                    },
-                    div(
-                      label(
-                        { class: "form-label fw-bold" },
-                        req.__("Table Synchronization")
-                      )
-                    ),
-                    div(
-                      { class: "container" },
+                        req.__("Build type")
+                      ),
+
                       div(
-                        { class: "row" },
-                        div(
-                          { class: "col-sm-4 text-center" },
-                          req.__("unsynched")
-                        ),
-                        div({ class: "col-sm-1" }),
-                        div(
-                          { class: "col-sm-4 text-center" },
-                          req.__("synched")
+                        { class: "form-check" },
+                        input({
+                          type: "radio",
+                          id: "debugBuildTypeId",
+                          class: "form-check-input me-2",
+                          name: "buildType",
+                          value: "debug",
+                          checked: builderSettings.buildType === "debug",
+                        }),
+                        label(
+                          {
+                            for: "debugBuildTypeId",
+                            class: "form-label",
+                          },
+                          req.__("debug")
                         )
                       ),
                       div(
-                        { class: "row" },
-                        div(
-                          { class: "col-sm-4" },
-                          select(
-                            {
-                              id: "unsynched-tbls-select-id",
-                              class: "form-control form-select",
-                              multiple: true,
-                            },
-                            withSyncInfo
-                              .filter(
-                                (table) =>
-                                  !builderSettings.synchedTables ||
-                                  builderSettings.synchedTables.indexOf(
-                                    table.name
-                                  ) < 0
-                              )
-                              .map((table) =>
-                                option({
-                                  id: `${table.name}_unsynched_opt`,
-                                  value: table.name,
-                                  label: table.name,
-                                })
-                              )
-                          )
-                        ),
-                        div(
-                          { class: "col-sm-1 d-flex justify-content-center" },
-                          div(
-                            div(
-                              button(
-                                {
-                                  id: "move-right-btn-id",
-                                  type: "button",
-                                  onClick: `move_to_synched()`,
-                                  class: "btn btn-light pt-1 mb-1",
-                                },
-                                i({ class: "fas fa-arrow-right" })
-                              )
-                            ),
-                            div(
-                              button(
-                                {
-                                  id: "move-left-btn-id",
-                                  type: "button",
-                                  onClick: `move_to_unsynched()`,
-                                  class: "btn btn-light pt-1",
-                                },
-                                i({ class: "fas fa-arrow-left" })
-                              )
-                            )
-                          )
-                        ),
-                        div(
-                          { class: "col-sm-4" },
-                          select(
-                            {
-                              id: "synched-tbls-select-id",
-                              class: "form-control form-select",
-                              multiple: true,
-                            },
-                            withSyncInfo
-                              .filter(
-                                (table) =>
-                                  builderSettings.synchedTables?.indexOf(
-                                    table.name
-                                  ) >= 0
-                              )
-                              .map((table) =>
-                                option({
-                                  id: `${table.name}_synched_opt`,
-                                  value: table.name,
-                                  label: table.name,
-                                })
-                              )
-                          )
+                        { class: "form-check" },
+                        input({
+                          type: "radio",
+                          id: "releaseBuildTypeId",
+                          class: "form-check-input me-2",
+                          name: "buildType",
+                          value: "release",
+                          checked:
+                            builderSettings.buildType === "release" ||
+                            !builderSettings.buildType,
+                        }),
+                        label(
+                          {
+                            for: "releaseBuildTypeId",
+                            class: "form-label",
+                          },
+                          req.__("release")
                         )
                       )
                     )
@@ -3053,7 +2966,7 @@ router.get(
                   div(
                     {
                       id: "pluginsSelectorId",
-                      class: "row pb-2",
+                      class: "row pb-4",
                     },
                     div(
                       label({ class: "form-label fw-bold" }, req.__("Plugins"))
@@ -3153,59 +3066,225 @@ router.get(
                       )
                     )
                   ),
-                  // build type
+
+                  // allow offline mode box
                   div(
-                    { class: "row pb-3 pt-2" },
+                    { class: "row pb-2 mt-2" },
                     div(
                       { class: "col-sm-8" },
+                      input({
+                        type: "checkbox",
+                        id: "offlineModeBoxId",
+                        class: "form-check-input me-2 mb-0 ",
+                        name: "allowOfflineMode",
+                        onClick: "toggle_tbl_sync()",
+                        checked: builderSettings.allowOfflineMode === "on",
+                      }),
                       label(
                         {
-                          for: "splashPageInputId",
-                          class: "form-label fw-bold",
+                          for: "offlineModeBoxId",
+                          class: "form-label fw-bold mb-0",
                         },
-                        req.__("Build type")
+                        req.__("Allow offline mode")
                       ),
-
-                      div(
-                        { class: "form-check" },
-                        input({
-                          type: "radio",
-                          id: "debugBuildTypeId",
-                          class: "form-check-input me-2",
-                          name: "buildType",
-                          value: "debug",
-                          checked: builderSettings.buildType === "debug",
-                        }),
-                        label(
-                          {
-                            for: "debugBuildTypeId",
-                            class: "form-label",
-                          },
-                          req.__("debug")
-                        )
-                      ),
-                      div(
-                        { class: "form-check" },
-                        input({
-                          type: "radio",
-                          id: "releaseBuildTypeId",
-                          class: "form-check-input me-2",
-                          name: "buildType",
-                          value: "release",
-                          checked:
-                            builderSettings.buildType === "release" ||
-                            !builderSettings.buildType,
-                        }),
-                        label(
-                          {
-                            for: "releaseBuildTypeId",
-                            class: "form-label",
-                          },
-                          req.__("release")
+                      div(),
+                      i(
+                        req.__(
+                          "Enable this to integrate offline/online Synchronization into your app."
                         )
                       )
                     )
                   ),
+
+                  div(
+                    {
+                      id: "tblSyncSelectorId",
+                      class: "mb-3 mt-1",
+                      hidden: builderSettings.allowOfflineMode !== "on",
+                    },
+                    p({ class: "h3 ps-3" }, "Synchronization settings"),
+                    div(
+                      { class: "form-group border border-2 p-3 rounded" },
+
+                      div(
+                        div(
+                          {
+                            class: "row pb-3",
+                          },
+                          div(
+                            label(
+                              { class: "form-label fw-bold" },
+                              req.__("Tables to synchronize") +
+                                a(
+                                  {
+                                    href: "javascript:ajax_modal('/admin/help/Capacitor Builder?')",
+                                  },
+                                  i({ class: "fas fa-question-circle ps-1" })
+                                )
+                            )
+                          ),
+                          div(
+                            { class: "container" },
+                            div(
+                              { class: "row" },
+                              div(
+                                { class: "col-sm-4 text-center" },
+                                req.__("unsynched")
+                              ),
+                              div({ class: "col-sm-1" }),
+                              div(
+                                { class: "col-sm-4 text-center" },
+                                req.__("synched")
+                              )
+                            ),
+                            div(
+                              { class: "row" },
+                              div(
+                                { class: "col-sm-4" },
+                                select(
+                                  {
+                                    id: "unsynched-tbls-select-id",
+                                    class: "form-control form-select",
+                                    multiple: true,
+                                  },
+                                  withSyncInfo
+                                    .filter(
+                                      (table) =>
+                                        !builderSettings.synchedTables ||
+                                        builderSettings.synchedTables.indexOf(
+                                          table.name
+                                        ) < 0
+                                    )
+                                    .map((table) =>
+                                      option({
+                                        id: `${table.name}_unsynched_opt`,
+                                        value: table.name,
+                                        label: table.name,
+                                      })
+                                    )
+                                )
+                              ),
+                              div(
+                                {
+                                  class:
+                                    "col-sm-1 d-flex justify-content-center",
+                                },
+                                div(
+                                  div(
+                                    button(
+                                      {
+                                        id: "move-right-btn-id",
+                                        type: "button",
+                                        onClick: `move_to_synched()`,
+                                        class: "btn btn-light pt-1 mb-1",
+                                      },
+                                      i({ class: "fas fa-arrow-right" })
+                                    )
+                                  ),
+                                  div(
+                                    button(
+                                      {
+                                        id: "move-left-btn-id",
+                                        type: "button",
+                                        onClick: `move_to_unsynched()`,
+                                        class: "btn btn-light pt-1",
+                                      },
+                                      i({ class: "fas fa-arrow-left" })
+                                    )
+                                  )
+                                )
+                              ),
+                              div(
+                                { class: "col-sm-4" },
+                                select(
+                                  {
+                                    id: "synched-tbls-select-id",
+                                    class: "form-control form-select",
+                                    multiple: true,
+                                  },
+                                  withSyncInfo
+                                    .filter(
+                                      (table) =>
+                                        builderSettings.synchedTables?.indexOf(
+                                          table.name
+                                        ) >= 0
+                                    )
+                                    .map((table) =>
+                                      option({
+                                        id: `${table.name}_synched_opt`,
+                                        value: table.name,
+                                        label: table.name,
+                                      })
+                                    )
+                                )
+                              )
+                            )
+                          )
+                        )
+                      ),
+                      // push sync
+                      div(
+                        { class: "row pb-2 my-2" },
+                        div(
+                          { class: "col-sm-8" },
+                          input({
+                            type: "checkbox",
+                            id: "pushSyncBoxId",
+                            class: "form-check-input me-2 mb-0 ",
+                            name: "pushSync",
+                            checked: builderSettings.pushSync === "on",
+                          }),
+                          label(
+                            {
+                              for: "pushSyncBoxId",
+                              class: "form-label fw-bold mb-0",
+                            },
+                            req.__("Push sync")
+                          ),
+                          div(),
+                          i(
+                            req.__(
+                              "Perdiodic interval (in minutes) to run synchronizations in the background. " +
+                                "This is just a min interval, depending on system conditions, the actual time may be longer."
+                            )
+                          )
+                        )
+                      ),
+
+                      // periodic sync interval
+                      div(
+                        { class: "row pb-2 mt-2" },
+                        div(
+                          { class: "col-sm-8" },
+                          input({
+                            type: "text",
+                            class: "form-control mb-0",
+                            name: "syncInterval",
+                            id: "syncIntervalInputId",
+                            value: builderSettings.syncInterval || "",
+                          }),
+                          label(
+                            {
+                              for: "syncIntervalInputId",
+                              class: "form-label fw-bold mb-0 ",
+                            },
+                            req.__("Background Sync interval")
+                          ),
+                          div(),
+                          i(
+                            req.__(
+                              "Min-interval between background sync runs in minutes. " +
+                                "Especially on iOS the time can vary. " +
+                                "It must be at least 15 minutes. To disable it, leave it empty or set it to 0."
+                            )
+                          )
+                        )
+                      )
+                    )
+                  ),
+
+                  div({}, "&nbsp;"),
+
                   div(
                     { class: "mt-3 mb-3" },
                     p({ class: "h3 ps-3" }, "Android configuration"),
@@ -3215,8 +3294,8 @@ router.get(
                       div(
                         { class: "row pb-3 pt-2" },
                         div(
-                          label(
-                            { class: "form-label fw-bold" },
+                          h5(
+                            { class: "form-label mb-3" },
                             req.__("Capacitor builder") +
                               a(
                                 {
@@ -3307,6 +3386,15 @@ router.get(
                           )
                         )
                       ),
+
+                      div(
+                        { class: "form-group row" },
+                        div(
+                          { class: "col-sm-12" },
+                          h5({ class: "" }, req.__("Release Signing"))
+                        )
+                      ),
+
                       // keystore file
                       div(
                         { class: "row pb-3" },
@@ -3392,6 +3480,18 @@ router.get(
                           })
                         )
                       ),
+
+                      // google-services.json file
+                      pushEnabled
+                        ? div(
+                            { class: "form-group row my-3" },
+                            div(
+                              { class: "col-sm-12 mt-2 fw-bold" },
+                              h5({ class: "" }, req.__("Push Notifications"))
+                            )
+                          )
+                        : "",
+
                       // google-services.json file
                       pushEnabled
                         ? div(
@@ -3437,6 +3537,7 @@ router.get(
                         : ""
                     )
                   ),
+                  div({}, "&nbsp;"),
                   div(
                     { class: "mt-3" },
                     p({ class: "h3 ps-3 mt-3" }, "iOS Configuration"),
@@ -3868,6 +3969,8 @@ router.post(
       autoPublicLogin,
       showContinueAsPublicUser,
       allowOfflineMode,
+      pushSync,
+      syncInterval,
       synchedTables,
       includedPlugins,
       provisioningProfile,
@@ -3998,6 +4101,8 @@ router.post(
     if (serverURL) spawnParams.push("-s", serverURL);
     if (splashPage) spawnParams.push("--splashPage", splashPage);
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
+    if (syncInterval) spawnParams.push("--syncInterval", syncInterval);
+    if (pushSync) spawnParams.push("--pushSync");
     if (allowShareTo) spawnParams.push("--allowShareTo");
     if (autoPublicLogin) spawnParams.push("--autoPublicLogin");
     if (showContinueAsPublicUser)
@@ -4148,7 +4253,10 @@ router.get(
   isAdmin,
   error_catcher(async (req, res) => {
     const state = getState();
-    const { installed, version } = await imageAvailable(state.scVersion);
+    const { installed, version } = await imageAvailable(
+      "saltcorn/capacitor-builder",
+      state.scVersion
+    );
     res.json({ installed, version, sc_version: state.scVersion });
   })
 );

@@ -64,6 +64,7 @@ import faIcons from "./fa5-icons";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
 import MetaData from "../models/metadata";
+import { PushMessageHelper } from "../models/internal/push_message_helper";
 
 /**
  * @param v
@@ -189,6 +190,8 @@ class State {
   capacitorPlugins: Array<CapacitorPlugin>;
   exchange: Record<string, Array<unknown>>;
   sendMessageToWorkers?: Function;
+  mobile_push_handler: Record<string, Function>;
+  pushHelper?: PushMessageHelper;
 
   private oldCodePages: Record<string, string> | undefined;
 
@@ -268,6 +271,7 @@ class State {
       "tada",
     ];
     this.capacitorPlugins = [];
+    this.mobile_push_handler = {};
   }
 
   async computeAssetsByRole() {
@@ -555,8 +559,8 @@ class State {
     this.logLevel = +(this.configs.log_level.value || 1);
     if (!noSignal) this.log(5, "Refresh config");
     if (db.is_node) {
-      // TODO ch mobile i18n
       await this.refresh_i18n();
+      await this.refresh_push_helper();
     }
     if (!noSignal && db.is_node)
       this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
@@ -634,6 +638,46 @@ class State {
       mustacheConfig: { disable: true },
       defaultLocale: this.getConfig("default_locale"),
     });
+  }
+
+  async refresh_push_helper() {
+    try {
+      const pushConfig: any = {
+        icon: this.getConfig("push_notification_icon"),
+        badge: this.getConfig("push_notification_badge"),
+        vapidPublicKey: this.getConfig("vapid_public_key"),
+        vapidPrivateKey: this.getConfig("vapid_private_key"),
+        vapidEmail: this.getConfig("vapid_email"),
+        firebase: {
+          jsonPath: this.getConfig("firebase_json_key"),
+          jsonContent: null,
+        },
+        notificationSubs: this.getConfig("push_notification_subscriptions", {}),
+        syncSubs: this.getConfig("push_sync_subscriptions", {}),
+      };
+
+      if (!this.pushHelper) {
+        const fireBaseFile =
+          typeof pushConfig.firebase.jsonPath === "string" &&
+          pushConfig.firebase.jsonPath.length > 0
+            ? await File.findOne(pushConfig.firebase.jsonPath)
+            : null;
+        if (fireBaseFile)
+          pushConfig.firebase.jsonContent = require(fireBaseFile?.absolutePath);
+        this.pushHelper = new PushMessageHelper(pushConfig);
+      } else {
+        if (pushConfig.firebase.jsonPath !== this.pushHelper.firebaseJsonPath) {
+          const fireBaseFile = await File.findOne(pushConfig.firebase.jsonPath);
+          if (fireBaseFile)
+            pushConfig.firebase.jsonContent = require(
+              fireBaseFile?.absolutePath
+            );
+        }
+        this.pushHelper.updateConfig(pushConfig);
+      }
+    } catch (error) {
+      console.error("Error initializing push helper", error);
+    }
   }
 
   /**

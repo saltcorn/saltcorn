@@ -54,7 +54,6 @@ cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/network_security_c
 </network-security-config>
 EOF
 
-npm run modify-android-manifest
 npx cap sync
 
 # gradle wrapper

@@ -129,11 +129,12 @@ export async function copyPublicDirs(buildDir: string) {
   }
 }
 
-/*
-  Copy 'mobile-app' directories from pluginDir to buildDir in:
-  buildDir/src/plugins-code/[plugin_name]
-*/
-export function copyMobileAppDirs(buildDir: string) {
+/**
+ * Copy 'mobile-app' directories from plugins to buildDir
+ * so that they can be included in the build
+ * @param buildDir directory where the app will be build
+ */
+export function copyPluginMobileAppDirs(buildDir: string) {
   const state = getState();
   const srcDir = join(buildDir, "src");
   for (const k of Object.keys(state.plugins)) {
@@ -146,5 +147,16 @@ export function copyMobileAppDirs(buildDir: string) {
         });
       }
     }
+  }
+}
+
+export function copyOptionalSource(buildDir: string, fileToCopy: string) {
+  const srcFile = join(
+    dirname(require.resolve("@saltcorn/mobile-app")),
+    "optional_sources",
+    fileToCopy
+  );  
+  if (existsSync(srcFile)) {
+    copySync(srcFile, join(buildDir, "src", "helpers", fileToCopy));
   }
 }
