@@ -363,6 +363,7 @@ router.post(
         message: req.__("sync push subscription already exists"),
       });
     } else {
+      userSubs = userSubs.filter((s) => s.deviceId !== deviceId);
       userSubs.push({
         token,
         deviceId,
@@ -396,9 +397,7 @@ router.post(
     const state = getState();
     const allSubs = state.getConfig("push_sync_subscriptions", {});
     let userSubs = allSubs[user.id] || [];
-    const newUserSubs = userSubs.filter(
-      (s) => s.deviceId !== deviceId
-    );
+    const newUserSubs = userSubs.filter((s) => s.deviceId !== deviceId);
     if (newUserSubs.length === userSubs.length) {
       res.json({
         success: "ok",

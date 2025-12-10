@@ -20,7 +20,7 @@ import { existsSync } from "fs-extra";
 import _ from "underscore";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
-import Docker from "dockerode";
+const Docker = require("dockerode");
 // import { ResultType, StepResType } from "types";'
 
 declare const saltcorn: any;

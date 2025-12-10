@@ -103,7 +103,7 @@
     "@types/i18n": "^0.13.2",
     "@types/bcryptjs": "^2.4.2",
     "@types/dateformat": "^5.0.0",
-    "@types/dockerode": "3.3.47",
+    "@types/dockerode": "^3.3.47",
     "@types/dumb-passwords": "^0.2.1",
     "@types/estraverse": "^5.1.1",
     "@types/jest": "29.5.14",

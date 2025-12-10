@@ -97,15 +97,19 @@ export async function initPushNotifications() {
         "registration",
         async (token) => {
           console.log("Push registration success, token:", token.value);
-          const { identifier } = await Device.getId();
           const config = saltcorn.data.state.getState().mobileConfig;
-          config.pushConfiguration = {
-            token: token.value,
-            deviceId: identifier,
-          };
-          await notifyTokenApi(config, true);
-          if (config.allowOfflineMode && config.pushSync)
-            await syncTokenApi(config, true);
+          if (config.pushConfiguration) {
+            console.log("Push already registered");
+          } else {
+            const { identifier } = await Device.getId();
+            config.pushConfiguration = {
+              token: token.value,
+              deviceId: identifier,
+            };
+            await notifyTokenApi(config, true);
+            if (config.allowOfflineMode && config.pushSync)
+              await syncTokenApi(config, true);
+          }
         }
       );
 
@@ -135,6 +139,7 @@ export async function unregisterPushNotifications() {
       if (config.allowOfflineMode && config.pushSync)
         await syncTokenApi(config, false);
       await removePushListeners();
+      config.pushConfiguration = null;
       console.log("Push notifications unregistered successfully");
     } catch (error) {
       console.error("Error unregistering push notifications:", error);
@@ -165,4 +170,3 @@ async function removePushListeners() {
   registrationErrorListener = null;
   pushReceivedListener = null;
 }
-
