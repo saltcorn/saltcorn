@@ -65,6 +65,7 @@ import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
 import MetaData from "../models/metadata";
 import { UserLike } from "@saltcorn/db-common/dbtypes";
+import PlainDate from "@saltcorn/plain-date";
 
 /**
  * @param v
@@ -130,6 +131,15 @@ const get_standard_icons = () => {
   );
   return icons;
 };
+
+const myMoment: Function = (...args: any[]) =>
+  moment(
+    ...args.map((d) =>
+      d && (d instanceof PlainDate || d?.constructor?.name === "PlainDate")
+        ? d.toDate()
+        : d
+    )
+  );
 
 /**
  * State Class
@@ -230,8 +240,8 @@ class State {
     this.userLayouts = {};
     this.headers = {};
     this.assets_by_role = {};
-    this.function_context = { moment, today, slugify: db.slugify };
-    this.functions = { moment, today, slugify: db.slugify };
+    this.function_context = { moment: myMoment, today, slugify: db.slugify };
+    this.functions = { moment: myMoment, today, slugify: db.slugify };
     this.plugins_cfg_context = {};
     this.keyFieldviews = {};
     this.external_tables = {};
@@ -1227,8 +1237,8 @@ class State {
     this.copilot_skills = [];
     this.layouts = { emergency: emergency_layout };
     this.headers = {};
-    this.function_context = { moment, today, slugify: db.slugify };
-    this.functions = { moment, today, slugify: db.slugify };
+    this.function_context = { moment: myMoment, today, slugify: db.slugify };
+    this.functions = { moment: myMoment, today, slugify: db.slugify };
     this.keyFieldviews = {};
     this.external_tables = {};
     this.eventTypes = {};
