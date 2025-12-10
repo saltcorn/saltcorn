@@ -25,9 +25,6 @@ import { ViewLinkSettings } from "../src/components/elements/ViewLink";
 jest.mock("@craftjs/core", () => ({
   useNode: jest.fn(),
 }));
-jest.mock("@monaco-editor/react", () => ({
-  useNode: jest.fn(),
-}));
 
 const doTest = (
   tables,
@@ -50,7 +47,6 @@ const doTest = (
     name: view || viewName,
   });
   require("@craftjs/core").useNode.mockImplementation(useNodeMock);
-  require("@monaco-editor/react").useNode.mockImplementation(useNodeMock);
   let relationsCache = {};
   const setRelationsCache = (newVal) => {
     relationsCache = newVal;
