@@ -448,8 +448,14 @@ const render = ({
       );
     }
     if (segment.type === "card") {
-      console.log("card", segment);
-
+      const {
+        vAlign,
+        hAlign,
+        bgType,
+        gradDirection,
+        gradStartColor,
+        gradEndColor,
+      } = segment;
       return wrap(
         segment,
         isTop,
@@ -463,6 +469,7 @@ const render = ({
               segment.class,
               segment.url && "with-link",
               hints.cardClass,
+              hAlign && `text-${hAlign}`,
             ],
             ...(segment.id ? { id: segment.id } : {}),
             onclick: segment.url
@@ -476,7 +483,13 @@ const render = ({
               ...segment.style,
               ...(segment.bgType === "Color"
                 ? { backgroundColor: segment.bgColor }
-                : {}),
+                : segment.bgType === "Gradient"
+                  ? {
+                      backgroundImage: `linear-gradient(${
+                        gradDirection || 0
+                      }deg, ${gradStartColor}, ${gradEndColor});`,
+                    }
+                  : {}),
             },
           },
           segment.title &&
