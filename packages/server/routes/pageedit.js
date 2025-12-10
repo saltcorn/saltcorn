@@ -172,7 +172,7 @@ const pageBuilderData = async (req, context) => {
   const pages = await Page.find();
   const page_groups = (await PageGroup.find()).map((g) => ({ name: g.name }));
   const images = await File.find({ mime_super: "image" });
-  images.forEach((im) => (im.location = im.path_to_serve));
+  images.forEach((im) => (im.location = im.field_value));
   const roles = await User.get_roles();
   const stateActions = getState().actions;
   const actions = [

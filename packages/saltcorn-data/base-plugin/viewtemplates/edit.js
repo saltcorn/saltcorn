@@ -1554,7 +1554,7 @@ const runPost = async (
                     1,
                   file_field?.attributes?.folder
                 );
-                childRow[file_field.name] = file.path_to_serve;
+                childRow[file_field.name] = file.field_value;
               }
             }
             getState().log(
@@ -2103,8 +2103,9 @@ const prepare = async (
             field.fieldview,
             row
           );
-          row[field.name] = path_to_serve;
-          form.values[field.name] = path_to_serve;
+          const storedValue = File.fieldValueFromRelative(path_to_serve);
+          row[field.name] = storedValue;
+          form.values[field.name] = storedValue;
         }
       }
     } else if (field.fieldviewObj?.editContent) {
@@ -2117,8 +2118,9 @@ const prepare = async (
           body[field.name],
           "utf8"
         );
-        row[field.name] = path_to_serve;
-        form.values[field.name] = path_to_serve;
+        const storedValue = File.fieldValueFromRelative(path_to_serve);
+        row[field.name] = storedValue;
+        form.values[field.name] = storedValue;
       }
     } else if (req.files && req.files[field.name]) {
       if (!isWeb(req) && !remote && req.files[field.name].name) {
@@ -2133,17 +2135,22 @@ const prepare = async (
           (field.attributes && +field.attributes.min_role_read) || 1,
           field?.attributes?.folder
         );
-        row[field.name] = file.path_to_serve;
-        form.values[field.name] = file.path_to_serve;
+        row[field.name] = file.field_value;
+        form.values[field.name] = file.field_value;
       } else {
         const file = req.files[field.name];
         if (file) {
           const serverResp = await File.upload(req.files[field.name]);
-          if (serverResp?.location) row[field.name] = serverResp.location;
+          if (serverResp?.location)
+            row[field.name] = File.normalizeFieldValueInput(
+              serverResp.location
+            );
         }
       }
     } else if (typeof body[`__exisiting_file_${field.name}`] === "string") {
-      row[field.name] = File.normalise(body[`__exisiting_file_${field.name}`]);
+      row[field.name] = File.normalizeFieldValueInput(
+        body[`__exisiting_file_${field.name}`]
+      );
       form.values[field.name] = row[field.name];
     } else {
       delete row[field.name];
@@ -2758,7 +2765,7 @@ module.exports = {
         field.attributes.min_role_read || 1,
         folder
       );
-      return file.path_to_serve;
+      return File.fieldValueFromRelative(file.path_to_serve);
     },
     async saveFileFromContentsQuery(
       fieldVal,
@@ -2791,7 +2798,7 @@ module.exports = {
       if (existing_file) {
         if (existing_file.min_role_read >= (req.user?.role_id || 100)) {
           await existing_file.overwrite_contents(buffer);
-          return existing_file.path_to_serve;
+          return File.fieldValueFromRelative(existing_file.path_to_serve);
         } else throw new Error("Not authorized to write file");
       }
 
@@ -2802,7 +2809,7 @@ module.exports = {
         req.user?.id,
         field.attributes.min_role_read || 1
       );
-      return file.path_to_serve;
+      return File.fieldValueFromRelative(file.path_to_serve);
     },
     async authorizePostQuery(body, table_id /*overwrites*/) {
       return await doAuthPost({ body, table_id, req });

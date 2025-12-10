@@ -136,7 +136,11 @@ const Container = ({
         minHeight: minHeight ? `${minHeight}${minHeightUnit || "px"}` : null,
         ...(bgType === "Image" && bgFileId
           ? {
-              backgroundImage: `url('/files/serve/${bgFileId}')`,
+              backgroundImage: `url('${
+                /^(?:[a-z]+:)?\/\//i.test(bgFileId)
+                  ? bgFileId
+                  : `/files/serve/${bgFileId}`
+              }')`,
               backgroundSize:
                 imageSize === "repeat" ? undefined : imageSize || "contain",
               backgroundRepeat:

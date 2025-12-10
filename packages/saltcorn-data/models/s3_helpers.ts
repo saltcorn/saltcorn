@@ -26,6 +26,10 @@ type S3Settings = {
   accessSecret?: string;
 };
 
+type NormalizedS3Settings = S3Settings & {
+  bucketInEndpointHost?: boolean;
+};
+
 type MetadataInput = {
   min_role_read?: number;
   user_id?: number;
@@ -65,6 +69,66 @@ const normaliseEndpoint = (endpoint?: string, secure: boolean = true) => {
   return `${secure ? "https" : "http"}://${endpoint}`;
 };
 
+const normaliseEndpointAndBucket = (
+  rawSettings: S3Settings
+): NormalizedS3Settings => {
+  const secure = rawSettings.secure;
+  const endpoint = normaliseEndpoint(rawSettings.endpoint, secure);
+  let bucket = rawSettings.bucket?.trim();
+  let bucketInEndpointHost = false;
+
+  if (!endpoint) return { ...rawSettings, endpoint, bucket };
+
+  try {
+    const url = new URL(endpoint);
+    const pathParts = url.pathname.split("/").filter((p: string) => p.length);
+
+    if (
+      bucket &&
+      url.hostname.toLowerCase().startsWith(`${bucket.toLowerCase()}.`)
+    )
+      bucketInEndpointHost = true;
+
+    const bucketFromPath = !bucket && pathParts.length ? pathParts[0] : undefined;
+    bucket = bucket || bucketFromPath;
+
+    let endpointHost = url.hostname;
+    if (
+      bucket &&
+      endpointHost.toLowerCase().startsWith(`${bucket.toLowerCase()}.`)
+    ) {
+      bucketInEndpointHost = true;
+      endpointHost = endpointHost.slice(bucket.length + 1);
+    }
+
+    let cleanedPath = "/";
+    if (
+      bucket &&
+      pathParts[0] &&
+      pathParts[0].toLowerCase() === bucket.toLowerCase()
+    ) {
+      const remainder = pathParts.slice(1).join("/");
+      cleanedPath = remainder ? `/${remainder}` : "/";
+    } else if (pathParts.length) cleanedPath = `/${pathParts.join("/")}`;
+
+    const portSegment = url.port ? `:${url.port}` : "";
+    const normalizedEndpoint =
+      `${url.protocol}//${endpointHost}${portSegment}${cleanedPath}`.replace(
+        /\/+$/,
+        ""
+      );
+
+    return {
+      ...rawSettings,
+      endpoint: normalizedEndpoint,
+      bucket,
+      bucketInEndpointHost,
+    };
+  } catch (e) {
+    return { ...rawSettings, endpoint, bucket };
+  }
+};
+
 const stripUrlPrefix = (input?: string): string => {
   if (!input) return "";
   const trimmed = input.trim();
@@ -96,19 +160,17 @@ const ensureTrailingSlash = (input?: string): string => {
   return input.endsWith("/") ? input : `${input}/`;
 };
 
-const getS3Settings = (): S3Settings => {
+const getS3Settings = (): NormalizedS3Settings => {
   const state = getStateInstance();
-  return {
+  const raw: S3Settings = {
     bucket: state?.getConfig("storage_s3_bucket"),
-    endpoint: normaliseEndpoint(
-      state?.getConfig("storage_s3_endpoint"),
-      state?.getConfig("storage_s3_secure", true)
-    ),
+    endpoint: state?.getConfig("storage_s3_endpoint"),
     region: state?.getConfig("storage_s3_region") || "us-east-1",
     secure: !!state?.getConfig("storage_s3_secure", true),
     accessKey: state?.getConfig("storage_s3_access_key"),
     accessSecret: state?.getConfig("storage_s3_access_secret"),
   };
+  return normaliseEndpointAndBucket(raw);
 };
 
 export const isS3Enabled = (): boolean =>
@@ -148,6 +210,11 @@ const folderPrefix = (folder?: string): string => {
 const requireBucket = (): string => {
   const { bucket } = getS3Settings();
   if (!bucket) throw new Error("S3 bucket is not configured");
+  return bucket;
+};
+
+export const getResolvedBucket = (): string | undefined => {
+  const { bucket } = getS3Settings();
   return bucket;
 };
 
@@ -257,7 +324,6 @@ export const listS3Folder = async (
         ContinuationToken,
       })
     );
-    console.log({ contents: resp.Contents });
     const contents = resp.Contents || [];
     for (const obj of contents) {
       if (!obj.Key) continue;
@@ -472,3 +538,41 @@ export const getServeUrl = async (
   }
 };
 
+export const publicUrlToRelativePath = (url?: string): string | null => {
+  if (!url) return null;
+  const trimmed = url.trim();
+  if (!trimmed) return null;
+  const settings = getS3Settings();
+  const bucket = settings.bucket;
+  if (!bucket) return null;
+  const bases: string[] = [];
+  const endpointBase = settings.endpoint?.replace(/\/$/, "");
+  if (endpointBase) {
+    bases.push(`${endpointBase}/${bucket}/`);
+    try {
+      const parsed = new URL(endpointBase);
+      const pathPrefix = parsed.pathname.replace(/\/+$/, "");
+      const suffix = pathPrefix ? `${pathPrefix}/` : "/";
+      bases.push(`${parsed.protocol}//${bucket}.${parsed.host}${suffix}`);
+    } catch (e) {
+      const host = endpointBase.replace(/^https?:\/\//i, "");
+      bases.push(`https://${bucket}.${host}/`);
+    }
+  }
+  const region = settings.region || "us-east-1";
+  bases.push(`https://${bucket}.s3.${region}.amazonaws.com/`);
+  bases.push(`https://${bucket}.s3.amazonaws.com/`);
+  for (const base of bases) {
+    if (trimmed.startsWith(base)) {
+      const remainder = trimmed.slice(base.length);
+      const withoutQuery = remainder.split("?")[0];
+      try {
+        const decoded = decodeURI(withoutQuery);
+        return cleanRelativePath(decoded);
+      } catch (e) {
+        return cleanRelativePath(withoutQuery);
+      }
+    }
+  }
+  return null;
+};

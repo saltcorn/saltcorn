@@ -278,15 +278,20 @@ router.post(
             folder ? File.normalise(folder) : undefined
           );
           const many = Array.isArray(f);
+          const formatLocation = (fl) => File.fieldValueFromRelative(fl.path_to_serve);
+          const formatUrl = (loc, filename) =>
+            File.pathToServeUrl(loc, { filename });
           jsonResp = {
             success: {
               filename: many ? f.map((fl) => fl.filename) : f.filename,
               location: many
-                ? f.map((fl) => fl.path_to_serve)
-                : f.path_to_serve,
+                ? f.map((fl) => formatLocation(fl))
+                : formatLocation(f),
               url: many
-                ? f.map((fl) => `/files/serve/${fl.path_to_serve}`)
-                : `/files/serve/${f.path_to_serve}`,
+                ? f.map((fl) =>
+                    formatUrl(formatLocation(fl), fl.filename)
+                  )
+                : formatUrl(formatLocation(f), f.filename),
             },
           };
           res.json(jsonResp);

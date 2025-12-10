@@ -19,6 +19,8 @@ import {
   downloadBuffer as downloadBufferFromS3,
   buildKeyFromRelative as buildS3KeyFromRelative,
   relativeKeyToPath as relativePathFromS3Key,
+  getPublicFileUrl as getS3PublicFileUrl,
+  publicUrlToRelativePath,
   type S3HeadResult,
   type S3ListResult,
 } from "./s3_helpers";
@@ -41,6 +43,8 @@ const fsp = require("fs").promises;
 const fs = require("fs");
 const fsx = require("fs-extended-attributes");
 declare let window: any;
+
+const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//;
 
 function xattr_set(fp: string, attrName: string, value: string): Promise<void> {
   return new Promise((resolve) => fsx.set(fp, attrName, value, resolve));
@@ -186,6 +190,73 @@ class File {
     if (joined_path.startsWith(trusted_base)) return joined_path;
     else return null;
   }
+
+  static isAbsoluteURL(value?: string): boolean {
+    return typeof value === "string" && ABSOLUTE_URL_RE.test(value);
+  }
+
+  static fieldValueFromRelative(relPath?: string): string {
+    if (!relPath) return relPath || "";
+    const cleaned = relPath.replace(/^[\/]+/, "").replace(/\\/g, "/");
+    return cleaned;
+  }
+
+  static relativePathFromFieldValue(value?: string): string | null {
+    if (typeof value !== "string") return null;
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    if (File.isAbsoluteURL(trimmed)) {
+      if (isS3StorageEnabled()) {
+        const rel = publicUrlToRelativePath(trimmed);
+        if (rel) return rel;
+      }
+      return null;
+    }
+    const normalised = File.normalise(trimmed).replace(/\\/g, "/");
+    return normalised.startsWith("/") ? normalised.slice(1) : normalised;
+  }
+
+  static normalizeFieldValueInput(value?: string): string {
+    if (typeof value !== "string") return value || "";
+    const relative = File.relativePathFromFieldValue(value);
+    if (relative === null) return value.trim();
+    return File.fieldValueFromRelative(relative);
+  }
+
+  static pathToServeUrl(
+    value?: string,
+    opts: {
+      download?: boolean;
+      filename?: string;
+      targetPrefix?: string;
+      preferDirect?: boolean;
+    } = {}
+  ): string {
+    if (!value) return "";
+    const trimmed = value.trim();
+    if (File.isAbsoluteURL(trimmed)) return trimmed;
+    const relative = File.relativePathFromFieldValue(trimmed);
+    if (relative === null) return trimmed;
+    if (isS3StorageEnabled()) {
+      try {
+        const { getState } = require("../db/state");
+        const direct = !!getState()?.getConfig("files_direct_s3_links");
+        if (direct && opts.preferDirect !== false) {
+          return getS3PublicFileUrl(relative, {
+            download: opts.download,
+            filename: opts.filename || posix.basename(relative),
+          });
+        }
+      } catch (e) {
+        // ignore and fall back to proxied serving
+      }
+    }
+    const cleaned = File.fieldValueFromRelative(relative);
+    const safePath = cleaned.replace(/^[\/]+/, "");
+    const route = opts.download ? "download" : "serve";
+    const prefix = opts.targetPrefix || "";
+    return `${prefix}/files/${route}/${safePath}`;
+  }
   static async rootFolder(): Promise<File> {
     if (isS3StorageEnabled()) return File.directoryFromS3Path("/");
     const tenant = db.getTenantSchema();
@@ -223,9 +294,7 @@ class File {
       const dirs = new Set<string>(["/"]);
       for (const obj of files) {
         const relPath = obj.relativePath || "";
-        const dirName = relPath.includes("/")
-          ? posix.dirname(relPath)
-          : "";
+        const dirName = relPath.includes("/") ? posix.dirname(relPath) : "";
         if (!dirName || dirName === ".") continue;
         const parts = dirName.split("/").filter(Boolean);
         for (let i = 1; i <= parts.length; i++) {
@@ -360,9 +429,10 @@ class File {
 
   private static fileFromS3Head(info: S3HeadResult): File {
     const metadata = info.metadata || {};
-    const mime = metadata.mime_super && metadata.mime_sub
-      ? `${metadata.mime_super}/${metadata.mime_sub}`
-      : File.nameToMimeType(metadata.filename || info.relativePath) || "";
+    const mime =
+      metadata.mime_super && metadata.mime_sub
+        ? `${metadata.mime_super}/${metadata.mime_sub}`
+        : File.nameToMimeType(metadata.filename || info.relativePath) || "";
     const [mime_super, mime_sub] = mime ? mime.split("/") : ["", ""];
     return new File({
       filename: metadata.filename || posix.basename(info.relativePath),
@@ -487,7 +557,9 @@ class File {
       }
 
       if (useS3) {
-        return await File.findOneS3(where);
+        const relative = File.relativePathFromFieldValue(where);
+        const lookup = relative === null ? where : relative;
+        return await File.findOneS3(lookup);
       }
       const tenant = db.getTenantSchema();
 
@@ -525,12 +597,17 @@ class File {
       const placeholder = target
         ? `${target.replace(/\/$/, "")}/.keep`
         : ".keep";
-      await uploadBufferToS3(placeholder, Buffer.alloc(0), "application/octet-stream", {
-        min_role_read: DEFAULT_MIN_ROLE_READ,
-        filename: ".keep",
-        mime_super: "application",
-        mime_sub: "octet-stream",
-      });
+      await uploadBufferToS3(
+        placeholder,
+        Buffer.alloc(0),
+        "application/octet-stream",
+        {
+          min_role_read: DEFAULT_MIN_ROLE_READ,
+          filename: ".keep",
+          mime_super: "application",
+          mime_sub: "octet-stream",
+        }
+      );
       return;
     }
     const tenant = db.getTenantSchema();
@@ -562,6 +639,11 @@ class File {
       ""
     );
     return s[0] === "/" ? s.substring(1) : s;
+  }
+
+  get field_value(): string {
+    if (this.isDirectory) return this.path_to_serve;
+    return File.fieldValueFromRelative(this.path_to_serve as string);
   }
 
   /**
@@ -653,10 +735,7 @@ class File {
         },
       });
       await deleteS3Object(this.location);
-      await File.update_table_references(
-        this.path_to_serve as string,
-        newRel
-      );
+      await File.update_table_references(this.path_to_serve as string, newRel);
       this.location = newRel;
       this.filename = filename;
       return;
@@ -686,15 +765,22 @@ class File {
     const Table = require("./table");
     const fileFields = await Field.find({ type: "File" }, { cached: true });
     const schema = db.getTenantSchemaPrefix();
+    const targetValue = File.fieldValueFromRelative(to);
+    const fromValues = new Set<string>([from]);
+    if (isS3StorageEnabled()) {
+      fromValues.add(File.fieldValueFromRelative(from));
+    }
     for (const field of fileFields) {
       const table = Table.findOne({ id: field.table_id });
       if (table.external || table.provider_name) continue;
-      await db.query(
-        `update ${schema}"${db.sqlsanitize(table.name)}" set "${
-          field.name
-        }" = $1 where "${field.name}" = $2`,
-        [to, from]
-      );
+      for (const fromValue of fromValues) {
+        await db.query(
+          `update ${schema}"${db.sqlsanitize(table.name)}" set "${
+            field.name
+          }" = $1 where "${field.name}" = $2`,
+          [targetValue, fromValue]
+        );
+      }
     }
   }
 
@@ -709,9 +795,7 @@ class File {
         .replace(/\\/g, "/")
         .replace(/^(\/)+/, "")
         .replace(/\/$/, "");
-      const newRel = relative
-        ? `${relative}/${this.filename}`
-        : this.filename;
+      const newRel = relative ? `${relative}/${this.filename}` : this.filename;
       await copyS3Object(this.location, newRel, {
         metadata: {
           min_role_read: this.min_role_read,
@@ -722,10 +806,7 @@ class File {
         },
       });
       await deleteS3Object(this.location);
-      await File.update_table_references(
-        this.path_to_serve as string,
-        newRel
-      );
+      await File.update_table_references(this.path_to_serve as string, newRel);
       this.location = newRel;
       return;
     }

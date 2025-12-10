@@ -28,6 +28,17 @@ const File = require("../models/file");
 const path = require("path");
 const { getReq__ } = require("../db/state");
 
+const buildNodeFileUrl = (filePath, cfg = {}, opts = {}) =>
+  File.pathToServeUrl(filePath, {
+    download: opts.download,
+    filename: opts.filename,
+    targetPrefix: cfg.targetPrefix || "",
+    preferDirect: opts.preferDirect,
+  });
+
+const buildNodeFileLinkUrl = (filePath, cfg = {}) =>
+  buildNodeFileUrl(filePath, cfg);
+
 const btnStyles = [
   { name: "default", label: "Default selector" },
   { name: "btn btn-primary", label: "Primary button" },
@@ -112,7 +123,10 @@ module.exports = {
       if (!filePath) return "";
       return link(
         isNode()
-          ? `${cfg.targetPrefix || ""}/files/download/${filePath}`
+          ? buildNodeFileUrl(filePath, cfg, {
+              download: true,
+              filename: file_name,
+            })
           : `javascript:notifyAlert('File donwloads are not supported.')`,
         path.basename(filePath) || "Download",
         cfg?.button_style && cfg?.button_style !== " "
@@ -141,7 +155,7 @@ module.exports = {
         ? ""
         : link(
             isNode()
-              ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
+              ? buildNodeFileLinkUrl(filePath, cfg)
               : `javascript:openFile('${filePath}')`,
             path.basename(filePath) || "Open",
             cfg?.button_style && cfg?.button_style !== " "
@@ -169,7 +183,7 @@ module.exports = {
         ? ""
         : link(
             isNode()
-              ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
+              ? buildNodeFileLinkUrl(filePath, cfg)
               : `javascript:openFile('${filePath}')`,
             path.basename(filePath) || "Open",
             cfg?.button_style && cfg?.button_style !== " "
@@ -185,7 +199,8 @@ module.exports = {
       if (!filePath) return "";
       if (isNode())
         return img({
-          src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+          // Prefer proxied /files/serve URLs so CSP does not block inline images
+          src: buildNodeFileUrl(filePath, cfg, { preferDirect: false }),
           style: "width: 100%",
         });
       else {
@@ -504,7 +519,7 @@ module.exports = {
       if (!filePath) return "";
 
       return audio({
-        src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+        src: buildNodeFileUrl(filePath, cfg),
         controls: true,
       });
     },
@@ -536,7 +551,7 @@ module.exports = {
             : undefined,
         },
         source({
-          src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+          src: buildNodeFileUrl(filePath, cfg),
           type: File.nameToMimeType(filePath),
         })
       );

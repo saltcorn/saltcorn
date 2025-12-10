@@ -798,6 +798,14 @@ const configTypes: ConfigTypes = {
     default: 86400,
     excludeFromMobile: true,
   },
+  files_direct_s3_links: {
+    type: "Bool",
+    label: "Serve files directly from S3",
+    sublabel:
+      "Return public S3 URLs instead of /files routes (requires public bucket or CDN).",
+    default: false,
+    excludeFromMobile: true,
+  },
   cookie_duration_remember: {
     type: "Integer",
     label: "Cookie duration (hours) when remember ticked",

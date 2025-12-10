@@ -29,6 +29,8 @@ const {
   style,
   link,
   domReady,
+  img,
+  a,
 } = require("@saltcorn/markup/tags");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
@@ -160,7 +162,7 @@ router.get(
     }
 
     for (const file of rows) {
-      file.location = file.path_to_serve;
+      file.location = file.isDirectory ? file.path_to_serve : file.field_value;
     }
     if (file_exts) {
       const re = new RegExp(
@@ -217,7 +219,9 @@ router.get(
     }
     if (req.xhr) {
       for (const file of rows) {
-        file.location = file.path_to_serve;
+        file.location = file.isDirectory
+          ? file.path_to_serve
+          : file.field_value;
       }
       const directories = await File.allDirectories(true);
       for (const file of directories) {
@@ -308,6 +312,62 @@ router.post(
       `${getState().getConfig("site_name", db.getTenantSchema())}-files.zip`
     );
     readStream.pipe(res);
+  })
+);
+
+router.get(
+  "/view/*serve_path",
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const user_id = req.user && req.user.id;
+    const serve_path = path.join(...req.params.serve_path);
+    const file = await File.findOne(serve_path);
+    const authorized =
+      file &&
+      (role <= file.min_role_read || (user_id && user_id === file.user_id));
+    if (!file || !authorized) {
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
+      return;
+    }
+    if (file.mime_super !== "image") {
+      res.redirect(`/files/serve/${file.path_to_serve}`);
+      return;
+    }
+    let imgSrc;
+    if (file.s3_store) {
+      try {
+        imgSrc = await s3storage.getObjectUrl(file, false);
+      } catch (e) {
+        getState().log(3, e?.message || e);
+        res.redirect(`/files/serve/${file.path_to_serve}`);
+        return;
+      }
+    } else {
+      imgSrc = `/files/serve/${file.path_to_serve}`;
+    }
+    const downloadUrl = `/files/download/${file.path_to_serve}`;
+    res.sendWrap(req.__("Image preview"), {
+      type: "card",
+      contents: [
+        div(
+          { class: "mb-3" },
+          a(
+            { href: downloadUrl, class: "btn btn-secondary" },
+            req.__("Download")
+          )
+        ),
+        div(
+          { class: "text-center" },
+          img({
+            src: imgSrc,
+            alt: file.filename,
+            style: "max-width: 100%; height: auto;",
+          })
+        ),
+      ],
+    });
   })
 );
 
@@ -569,15 +629,16 @@ router.post(
         `File %s uploaded`,
         many ? f.map((fl) => text(fl.filename)).join(", ") : text(f.filename)
       );
+      const asLocation = (fl) => File.fieldValueFromRelative(fl.path_to_serve);
+      const asUrl = (fl) =>
+        File.pathToServeUrl(asLocation(fl), { filename: fl.filename });
       if (!req.xhr) req.flash("success", successMsg);
       else
         jsonResp = {
           success: {
             filename: many ? f.map((fl) => fl.filename) : f.filename,
-            location: many ? f.map((fl) => fl.path_to_serve) : f.path_to_serve,
-            url: many
-              ? f.map((fl) => `/files/serve/${fl.path_to_serve}`)
-              : `/files/serve/${f.path_to_serve}`,
+            location: many ? f.map(asLocation) : asLocation(f),
+            url: many ? f.map(asUrl) : asUrl(f),
             msg: successMsg,
           },
         };
@@ -649,6 +710,7 @@ const storage_form = async (req) => {
       "storage_s3_access_key",
       "storage_s3_access_secret",
       "storage_s3_secure",
+      "files_direct_s3_links",
     ],
     action: "/files/storage",
   });
@@ -726,6 +788,7 @@ const files_settings_form = async (req) => {
       "min_role_upload",
       "file_accept_filter_default",
       "files_cache_maxage",
+      // "files_direct_s3_links",
       "file_upload_debug",
       "file_upload_limit",
       "file_upload_timeout",
