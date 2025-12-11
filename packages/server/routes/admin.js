@@ -2378,7 +2378,11 @@ router.get(
     const images = (await File.find({ mime_super: "image" })).filter((image) =>
       image.filename?.endsWith(".png")
     );
-    const files = await File.find({ folder: "/" });
+    const pushCfgFiles = await File.find({
+      folder: "/mobile-app-configurations",
+      mime_super: "application",
+      min_role_read: 100,
+    });
     const keystoreFiles = await File.find({ folder: "keystore_files" });
     const provisioningFiles = await File.find({ folder: "provisioning_files" });
     const withSyncInfo = await Table.find({ has_sync_info: true });
@@ -2400,8 +2404,16 @@ router.get(
     const xcodebuildVersion = xcodeCheckRes.version;
     const layout = getState().getLayout(req.user);
     const isSbadmin2 = layout === getState().layouts.sbadmin2;
-    const pushEnabled = getState().getConfig("enable_push_notify", false);
     const isEntrypointByRole = builderSettings.entryPointByRole === "on";
+
+    const fbJSONKey = path.basename(
+      getState().getConfig("firebase_json_key"),
+      ""
+    );
+    const fbAppServices = path.basename(
+      getState().getConfig("firebase_app_services")
+    );
+
     send_admin_page({
       res,
       req,
@@ -2699,7 +2711,7 @@ router.get(
                   div(
                     { class: "row pb-2" },
                     div(
-                      { class: "col-sm-8" },
+                      { class: "col-sm-10" },
                       label(
                         {
                           for: "appFileInputId",
@@ -2721,7 +2733,7 @@ router.get(
                   div(
                     { class: "row pb-2" },
                     div(
-                      { class: "col-sm-8" },
+                      { class: "col-sm-10" },
                       label(
                         {
                           for: "appIdInputId",
@@ -2743,7 +2755,7 @@ router.get(
                   div(
                     { class: "row pb-2" },
                     div(
-                      { class: "col-sm-8" },
+                      { class: "col-sm-10" },
                       label(
                         {
                           for: "appVersionInputId",
@@ -2771,7 +2783,7 @@ router.get(
                   div(
                     { class: "row pb-2" },
                     div(
-                      { class: "col-sm-8" },
+                      { class: "col-sm-10" },
                       label(
                         {
                           for: "serverURLInputId",
@@ -2793,7 +2805,7 @@ router.get(
                   div(
                     { class: "row pb-2" },
                     div(
-                      { class: "col-sm-8" },
+                      { class: "col-sm-10" },
                       label(
                         {
                           for: "appIconInputId",
@@ -2826,7 +2838,7 @@ router.get(
                   div(
                     { class: "row pb-3" },
                     div(
-                      { class: "col-sm-8" },
+                      { class: "col-sm-10" },
                       label(
                         {
                           for: "splashPageInputId",
@@ -2860,7 +2872,7 @@ router.get(
                   div(
                     { class: "row pb-2" },
                     div(
-                      { class: "col-sm-8" },
+                      { class: "col-sm-10" },
                       input({
                         type: "checkbox",
                         id: "autoPublLoginId",
@@ -2887,7 +2899,7 @@ router.get(
                   div(
                     { class: "row pb-2" },
                     div(
-                      { class: "col-sm-8" },
+                      { class: "col-sm-10" },
                       input({
                         type: "checkbox",
                         id: "showContAsPublId",
@@ -2916,7 +2928,7 @@ router.get(
                   div(
                     { class: "row pb-3 pt-2" },
                     div(
-                      { class: "col-sm-8" },
+                      { class: "col-sm-10" },
                       label(
                         {
                           for: "splashPageInputId",
@@ -3074,7 +3086,7 @@ router.get(
                   div(
                     { class: "row pb-2 mt-2" },
                     div(
-                      { class: "col-sm-8" },
+                      { class: "col-sm-10" },
                       input({
                         type: "checkbox",
                         id: "offlineModeBoxId",
@@ -3229,7 +3241,7 @@ router.get(
                       div(
                         { class: "row pb-2 my-2" },
                         div(
-                          { class: "col-sm-8" },
+                          { class: "col-sm-10" },
                           input({
                             type: "checkbox",
                             id: "pushSyncBoxId",
@@ -3258,14 +3270,7 @@ router.get(
                       div(
                         { class: "row pb-2 mt-2" },
                         div(
-                          { class: "col-sm-8" },
-                          input({
-                            type: "text",
-                            class: "form-control mb-0",
-                            name: "syncInterval",
-                            id: "syncIntervalInputId",
-                            value: builderSettings.syncInterval || "",
-                          }),
+                          { class: "col-sm-10" },
                           label(
                             {
                               for: "syncIntervalInputId",
@@ -3273,6 +3278,13 @@ router.get(
                             },
                             req.__("Background Sync interval")
                           ),
+                          input({
+                            type: "text",
+                            class: "form-control mb-0",
+                            name: "syncInterval",
+                            id: "syncIntervalInputId",
+                            value: builderSettings.syncInterval || "",
+                          }),
                           div(),
                           i(
                             req.__(
@@ -3402,7 +3414,7 @@ router.get(
                       div(
                         { class: "row pb-3" },
                         div(
-                          { class: "col-sm-8" },
+                          { class: "col-sm-10" },
                           label(
                             {
                               for: "keystoreInputId",
@@ -3443,7 +3455,7 @@ router.get(
                       div(
                         { class: "row pb-2" },
                         div(
-                          { class: "col-sm-8" },
+                          { class: "col-sm-10" },
                           label(
                             {
                               for: "keystoreAliasInputId",
@@ -3465,7 +3477,7 @@ router.get(
                       div(
                         { class: "row pb-2" },
                         div(
-                          { class: "col-sm-8" },
+                          { class: "col-sm-10" },
                           label(
                             {
                               for: "keystorePasswordInputId",
@@ -3484,60 +3496,112 @@ router.get(
                         )
                       ),
 
-                      // google-services.json file
-                      pushEnabled
-                        ? div(
-                            { class: "form-group row my-3" },
-                            div(
-                              { class: "col-sm-12 mt-2 fw-bold" },
-                              h5({ class: "" }, req.__("Push Notifications"))
-                            )
-                          )
-                        : "",
+                      // Push Notifications section
+                      div(
+                        { class: "form-group row my-3" },
+                        div(
+                          { class: "col-sm-12 mt-2 fw-bold" },
+                          h5({ class: "" }, req.__("Push Notifications"))
+                        )
+                      ),
 
-                      // google-services.json file
-                      pushEnabled
-                        ? div(
-                            { class: "row pb-3" },
-                            div(
-                              { class: "col-sm-8" },
-                              label(
-                                {
-                                  for: "googleServicesInputId",
-                                  class: "form-label fw-bold",
-                                },
-                                req.__("Google Services File"),
-                                a(
+                      // firebase JSON key file
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-10" },
+                          label(
+                            {
+                              for: "fireBaseJSONKeyInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Firebase JSON Key"),
+                            a(
+                              {
+                                href: "javascript:ajax_modal('/admin/help/Firebase JSON key?')",
+                              },
+                              i({ class: "fas fa-question-circle ps-1" })
+                            )
+                          ),
+                          select(
+                            {
+                              class: "form-select",
+                              name: "firebaseJSONKey",
+                              id: "fireBaseJSONKeyInputId",
+                            },
+                            [
+                              option({ value: "" }, ""),
+                              ...pushCfgFiles.map((file) =>
+                                option(
                                   {
-                                    href: "javascript:ajax_modal('/admin/help/Google Services File?')",
+                                    value: file.location,
+                                    selected: fbJSONKey === file.filename,
                                   },
-                                  i({ class: "fas fa-question-circle ps-1" })
+                                  file.filename
                                 )
                               ),
-                              select(
-                                {
-                                  class: "form-select",
-                                  name: "googleServicesFile",
-                                  id: "googleServicesInputId",
-                                },
-                                [
-                                  option({ value: "" }, ""),
-                                  ...files.map((file) =>
-                                    option(
-                                      {
-                                        value: file.location,
-                                        selected:
-                                          builderSettings.googleServicesFile ===
-                                          file.location,
-                                      },
-                                      file.filename
-                                    )
-                                  ),
-                                ].join("")
-                              )
+                            ].join("")
+                          ),
+                          div(),
+                          i(
+                            req.__(
+                              "This is a private key file for your Firebase project. " +
+                                "Your Saltcorn server uses it to send push notifications or push-based synchronizations to your Android mobile app. " +
+                                "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
+                                "You can configure it here or in the 'Notifications' Menu."
                             )
                           )
-                        : ""
+                        )
+                      ),
+                      // google-services.json file
+                      div(
+                        { class: "row pb-3" },
+                        div(
+                          { class: "col-sm-10" },
+                          label(
+                            {
+                              for: "googleServicesInputId",
+                              class: "form-label fw-bold",
+                            },
+                            req.__("Google Services File"),
+                            a(
+                              {
+                                href: "javascript:ajax_modal('/admin/help/Google Services File?')",
+                              },
+                              i({ class: "fas fa-question-circle ps-1" })
+                            )
+                          ),
+                          select(
+                            {
+                              class: "form-select",
+                              name: "googleServicesFile",
+                              id: "googleServicesInputId",
+                            },
+                            [
+                              option({ value: "" }, ""),
+                              ...pushCfgFiles.map((file) =>
+                                option(
+                                  {
+                                    value: file.location,
+                                    selected: fbAppServices === file.filename,
+                                  },
+                                  file.filename
+                                )
+                              ),
+                            ].join("")
+                          ),
+                          div(),
+                          i(
+                            req.__(
+                              "This is a configuration file specific to your mobile app. " +
+                                "It contains, among other things, your App ID, the Firebase project ID, and an API key. " +
+                                "The file gets bundled into the client and will be used to subscribe to push notifications or push-based synchronizations from the server. " +
+                                "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
+                                "You can configure it here or in the 'Notifications' Menu."
+                            )
+                          )
+                        )
+                      )
                     )
                   ),
                   div({}, "&nbsp;"),
@@ -3630,7 +3694,7 @@ router.get(
                       div(
                         { class: "row pb-3" },
                         div(
-                          { class: "col-sm-8" },
+                          { class: "col-sm-10" },
                           label(
                             {
                               for: "provisioningProfileInputId",
@@ -3671,7 +3735,7 @@ router.get(
                       div(
                         { class: "row pb-3" },
                         div(
-                          { class: "col-sm-8" },
+                          { class: "col-sm-10" },
                           label(
                             {
                               for: "shareProvisioningProfileInputId",
@@ -3982,6 +4046,7 @@ router.post(
       keystoreFile,
       keystoreAlias,
       keystorePassword,
+      firebaseJSONKey,
       googleServicesFile,
     } = req.body || {};
     const receiveShareTriggers = Trigger.find({
@@ -5063,11 +5128,16 @@ admin_config_route({
       name: "vapid_email",
       showIf: { enable_push_notify: true },
     },
-    { section_header: "Native Android" },
+    { section_header: "Native Android Mobile App" },
     {
       name: "firebase_json_key",
       showIf: { enable_push_notify: true },
       help: { topic: "Firebas JSON key" },
+    },
+    {
+      name: "firebase_app_services",
+      showIf: { enable_push_notify: true },
+      help: { topic: "Firebase App Services" },
     },
   ],
   response(form, req, res) {
