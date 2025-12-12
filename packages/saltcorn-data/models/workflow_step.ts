@@ -523,6 +523,16 @@ class WorkflowStep {
       showIf: { wf_action_name: "EditViewForm" },
     });
     actionConfigFields.push({
+      label: "Extra state Formula",
+      name: "extra_state_fml",
+      sublabel:
+        "JavaScript object expression for the state to be passed to the view, for prepoulating fields or providing context for filtering. Example <code>{manager: manager_id}</code> will fill the <code>manager</code> ",
+      class: "validate-expression",
+      type: "String",
+      default: "{}",
+      showIf: { wf_action_name: "EditViewForm" },
+    });
+    actionConfigFields.push({
       label: "Response variable",
       name: "response_variable",
       sublabel: "Context variable to write the form response to",
@@ -702,7 +712,7 @@ class WorkflowStep {
                 "Multiple checks",
                 "Integer",
                 "Float",
-                "Date"
+                "Date",
                 //"File upload",
               ],
             },
@@ -721,7 +731,6 @@ class WorkflowStep {
             sublabel: "Do not ask for time",
             showIf: { qtype: ["Date"] },
           },
-
         ],
       })
     );
