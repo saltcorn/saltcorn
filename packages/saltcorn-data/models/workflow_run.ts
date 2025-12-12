@@ -596,6 +596,7 @@ class WorkflowRun {
             !skip_because_only_if
           ) {
             let user_id;
+            let extra_state = {};
             if (step.configuration.user_id_expression) {
               user_id = eval_expression(
                 step.configuration.user_id_expression,
@@ -604,6 +605,14 @@ class WorkflowRun {
                 `User id expression in step ${step.name}`
               );
             } else user_id = user?.id;
+            if (step.configuration.extra_state_fml) {
+              extra_state = eval_expression(
+                step.configuration.extra_state,
+                this.context,
+                user,
+                `Extra state formula in step ${step.name}`
+              );
+            }
             if (user_id && !interactive && !noNotifications) {
               //TODO send notification
               const base_url = state.getConfig("base_url", "");
@@ -618,7 +627,7 @@ class WorkflowRun {
 
             await this.update({
               status: "Waiting",
-              wait_info: { form: true, user_id: user_id },
+              wait_info: { form: true, user_id: user_id, extra_state },
             });
 
             if (trace) this.createTrace(step.name, user);
