@@ -3,6 +3,7 @@ const { PluginManager } = require("live-plugin-manager");
 import { join, basename } from "path";
 import { copySync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
+import File from "@saltcorn/data/models/file";
 import {
   buildTablesFile,
   copySiteLogo,
@@ -262,9 +263,11 @@ export class MobileBuilder {
         await loadAllPlugins();
         this.pluginsLoaded = true;
       }
-      copyPluginMobileAppDirs(this.buildDir);      
-      if (this.googleServicesFile) copyOptionalSource(this.buildDir, "notifications.js");
-      if (this.syncInterval && this.syncInterval > 0) copyOptionalSource(this.buildDir, "background_sync.js");
+      copyPluginMobileAppDirs(this.buildDir);
+      if (this.googleServicesFile)
+        copyOptionalSource(this.buildDir, "notifications.js");
+      if (this.syncInterval && this.syncInterval > 0)
+        copyOptionalSource(this.buildDir, "background_sync.js");
       resultCode = bundleMobileAppCode(this.buildDir);
       if (resultCode !== 0) return resultCode;
       await copyPublicDirs(this.buildDir);
@@ -329,7 +332,8 @@ export class MobileBuilder {
         "app",
         "google-services.json"
       );
-      copySync(this.googleServicesFile, dest);
+      const servicesFile = await File.findOne(this.googleServicesFile);
+      if (servicesFile) copySync(servicesFile.location, dest);
     }
 
     await modifyAndroidManifest(

@@ -3256,8 +3256,8 @@ router.get(
                           div(),
                           i(
                             req.__(
-                              "Perdiodic interval (in minutes) to run synchronizations in the background. " +
-                                "This is just a min interval, depending on system conditions, the actual time may be longer."
+                              "Run Synchronizations when the server sends a push notification. " +
+                                "On Android, this requires a Firebase JSON key and a Google Services File (see below)."
                             )
                           )
                         )
@@ -3285,9 +3285,8 @@ router.get(
                           div(),
                           i(
                             req.__(
-                              "Min-interval between background sync runs in minutes. " +
-                                "Especially on iOS the time can vary. " +
-                                "It must be at least 15 minutes. To disable it, leave it empty or set it to 0."
+                              "Perdiodic interval (in minutes) to run synchronizations in the background. " +
+                                "This is just a min interval, depending on system conditions, the actual time may be longer."
                             )
                           )
                         )
@@ -3531,7 +3530,7 @@ router.get(
                               ...pushCfgFiles.map((file) =>
                                 option(
                                   {
-                                    value: file.location,
+                                    value: file.path_to_serve,
                                     selected: fbJSONKey === file.filename,
                                   },
                                   file.filename
@@ -3579,7 +3578,7 @@ router.get(
                               ...pushCfgFiles.map((file) =>
                                 option(
                                   {
-                                    value: file.location,
+                                    value: file.path_to_serve,
                                     selected: fbAppServices === file.filename,
                                   },
                                   file.filename
@@ -4121,6 +4120,18 @@ router.post(
         ),
       });
     }
+    if (
+      pushSync &&
+      androidPlatform &&
+      (!firebaseJSONKey || !googleServicesFile)
+    ) {
+      return res.json({
+        error: req.__(
+          "To use the push sync please provide a Firebase JSON Key and a Google Services File."
+        ),
+      });
+    }
+
     const outDirName = `build_${new Date().valueOf()}`;
     const buildDir = `${os.userInfo().homedir}/mobile_app_build`;
     const rootFolder = await File.rootFolder();
@@ -4349,6 +4360,11 @@ router.post(
         .map((plugin) => plugin.name);
       newCfg.excludedPlugins = excludedPlugins;
       await getState().setConfig("mobile_builder_settings", newCfg);
+      await getState().setConfig("firebase_json_key", newCfg.firebaseJSONKey);
+      await getState().setConfig(
+        "firebase_app_services",
+        newCfg.googleServicesFile
+      );
       res.json({ success: true });
     } catch (e) {
       getState().log(1, `Unable to save mobile builder config: ${e.message}`);
