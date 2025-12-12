@@ -25,35 +25,6 @@ export ANDROID_HOME=/android_sdk
 export GRADLE_HOME=/opt/gradle-8.9
 export PATH=$PATH:/opt/gradle-8.9/bin
 
-# data extraction rules
-cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/data_extraction_rules.xml
-<?xml version="1.0" encoding="utf-8"?>
-<data-extraction-rules>
-    <cloud-backup>
-      <exclude domain="root" />
-      <exclude domain="database" />
-      <exclude domain="sharedpref" />
-      <exclude domain="external" />
-    </cloud-backup>
-    <device-transfer>
-      <exclude domain="root" />
-      <exclude domain="database" />
-      <exclude domain="sharedpref" />
-      <exclude domain="external" />
-    </device-transfer>
-</data-extraction-rules>
-EOF
-
-# network security config
-cat <<EOF > /saltcorn-mobile-app/android/app/src/main/res/xml/network_security_config.xml
-<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-  <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="true">$SERVER_DOMAIN</domain>
-  </domain-config>
-</network-security-config>
-EOF
-
 npx cap sync
 
 # gradle wrapper
@@ -73,9 +44,6 @@ npx cap sync
 # copy prepopulated db
 mkdir -p /saltcorn-mobile-app/android/app/src/main/assets/public/assets/databases
 cp /saltcorn-mobile-app/www/scdb.sqlite /saltcorn-mobile-app/android/app/src/main/assets/public/assets/databases/prepopulated.db
-
-# set app version and code in build.gradle
-npm run modify-gradle-cfg -- --app-version=$APP_VERSION
 
 # .aab files are generated with 'npx cap build'
 if [ "$BUILD_TYPE" == "release" ]; then
