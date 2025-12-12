@@ -2406,13 +2406,10 @@ router.get(
     const isSbadmin2 = layout === getState().layouts.sbadmin2;
     const isEntrypointByRole = builderSettings.entryPointByRole === "on";
 
-    const fbJSONKey = path.basename(
-      getState().getConfig("firebase_json_key"),
-      ""
-    );
-    const fbAppServices = path.basename(
-      getState().getConfig("firebase_app_services")
-    );
+    const keyCfg = getState().getConfig("firebase_json_key");
+    const fbJSONKey = keyCfg ? path.basename(keyCfg) : null;
+    const servicesCfg = getState().getConfig("firebase_app_services");
+    const fbAppServices = servicesCfg ? path.basename(servicesCfg) : null;
 
     send_admin_page({
       res,

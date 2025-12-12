@@ -1488,29 +1488,39 @@ const configTypes: ConfigTypes = {
     type: "File",
     name: "firebase_json_key",
     label: "Firebase JSON key",
-    default: 0,
+    default: null,
     attributes: {
-      select_file_where: { min_role_read: 100, mime_super: "application", folder: "/mobile-app-configurations" },
+      select_file_where: {
+        min_role_read: 100,
+        mime_super: "application",
+        folder: "/mobile-app-configurations",
+      },
     },
-    sublabel: "This is a private key file for your Firebase project. " + 
-    "Your Saltcorn server uses it to send push notifications or push-based synchronizations to your Android mobile app. " + 
-    "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
-    "You can configure it here or in the 'Mobile app' Menu.",
+    sublabel:
+      "This is a private key file for your Firebase project. " +
+      "Your Saltcorn server uses it to send push notifications or push-based synchronizations to your Android mobile app. " +
+      "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
+      "You can configure it here or in the 'Mobile app' Menu.",
     helpTopic: "Firebase JSON key",
   },
   firebase_app_services: {
     type: "File",
     name: "firebase_app_services",
     label: "Firebase app services",
-    default: 0,
+    default: null,
     attributes: {
-      select_file_where: { min_role_read: 100, mime_super: "application", folder: "/mobile-app-configurations" },
+      select_file_where: {
+        min_role_read: 100,
+        mime_super: "application",
+        folder: "/mobile-app-configurations",
+      },
     },
-    sublabel: "This is a configuration file specific to your mobile app. " +
-    "It contains, among other things, your App ID, the Firebase project ID, and an API key. " +
-    "The file gets bundled into the client and will be used to subscribe to push notifications or push-based synchronizations from the server. " +
-    "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
-    "You can configure it here or in the 'Mobile app' Menu.",
+    sublabel:
+      "This is a configuration file specific to your mobile app. " +
+      "It contains, among other things, your App ID, the Firebase project ID, and an API key. " +
+      "The file gets bundled into the client and will be used to subscribe to push notifications or push-based synchronizations from the server. " +
+      "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
+      "You can configure it here or in the 'Mobile app' Menu.",
     helpTopic: "Firebase app services",
   },
   push_notification_icon: {

@@ -135,7 +135,6 @@ export class PushMessageHelper {
   }
 
   public async pushSync(tableName: string) {
-    console.log("Push sync called");
     if (!this.firebaseApp) {
       this.state.log(5, "Firebase app not initialized");
     } else {
@@ -226,4 +225,5 @@ export class PushMessageHelper {
     );
     this.firebaseApp = app;
     this.state.log(5, `Initialized Firebase app: ${appName}`);
-  }}
+  }
+}

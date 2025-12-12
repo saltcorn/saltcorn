@@ -678,13 +678,13 @@ class State {
           pushConfig.firebase.jsonPath.length > 0
             ? await File.findOne(pushConfig.firebase.jsonPath)
             : null;
-        if (fireBaseFile)
+        if (fireBaseFile && !fireBaseFile.isDirectory)
           pushConfig.firebase.jsonContent = require(fireBaseFile?.absolutePath);
         this.pushHelper = new PushMessageHelper(pushConfig);
       } else {
         if (pushConfig.firebase.jsonPath !== this.pushHelper.firebaseJsonPath) {
           const fireBaseFile = await File.findOne(pushConfig.firebase.jsonPath);
-          if (fireBaseFile)
+          if (fireBaseFile && !fireBaseFile.isDirectory)
             pushConfig.firebase.jsonContent = require(
               fireBaseFile?.absolutePath
             );
