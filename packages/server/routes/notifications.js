@@ -14,6 +14,7 @@ const Form = require("@saltcorn/data/models/form");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
 const Trigger = require("@saltcorn/data/models/trigger");
+const Table = require("@saltcorn/data/models/table");
 const { renderForm, post_btn } = require("@saltcorn/markup");
 const db = require("@saltcorn/data/db");
 
@@ -23,7 +24,10 @@ module.exports = router;
 router.use(
   error_catcher(async (req, res, next) => {
     const state = getState();
-    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
     if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
       res.status(503).send("Page Unavailable: in maintenance mode");
       return;
@@ -348,55 +352,45 @@ router.post(
 );
 
 router.post(
-  "/fcm-token",
+  "/mobile-subscribe",
   loggedIn,
   error_catcher(async (req, res) => {
-    const enabled = getState().getConfig("enable_push_notify", false);
-    if (!enabled) {
-      res.status(403).json({
-        error: req.__("Notifications are not enabled on this server"),
+    const { token, deviceId, synchedTables } = req.body || {};
+    if (!token) {
+      res.status(400).json({
+        error: req.__("FCM token is required"),
+      });
+      return;
+    }
+    const user = req.user;
+    const allSubs = getState().getConfig("push_notification_subscriptions", {});
+    let userSubs = allSubs[user.id] || [];
+    const existingSub = userSubs.find(
+      (s) =>
+        s.type === "fcm-push" && s.token === token && s.deviceId === deviceId
+    );
+    if (existingSub) {
+      res.json({
+        success: "ok",
+        message: req.__("FCM token already uploaded"),
       });
     } else {
-      const { token, deviceId } = req.body || {};
-      if (!token) {
-        res.status(400).json({
-          error: req.__("FCM token is required"),
-        });
-        return;
-      }
-      const user = req.user;
-      const allSubs = getState().getConfig(
-        "push_notification_subscriptions",
-        {}
+      userSubs = userSubs.filter(
+        (s) => s.type !== "fcm-push" || s.deviceId !== deviceId
       );
-      let userSubs = allSubs[user.id] || [];
-      const existingSub = userSubs.find(
-        (s) =>
-          s.type === "fcm-push" && s.token === token && s.deviceId === deviceId
-      );
-      if (existingSub) {
-        res.json({
-          success: "ok",
-          message: req.__("FCM token already uploaded"),
-        });
-      } else {
-        userSubs = userSubs.filter(
-          (s) => s.type !== "fcm-push" || s.deviceId !== deviceId
-        );
-        userSubs.push({
-          type: "fcm-push",
-          token: token,
-          deviceId: deviceId,
-        });
-        await getState().setConfig("push_notification_subscriptions", {
-          ...allSubs,
-          [user.id]: userSubs,
-        });
-        res.json({
-          success: "ok",
-          message: req.__("FCM token uploaded"),
-        });
-      }
+      userSubs.push({
+        type: "fcm-push",
+        token: token,
+        deviceId: deviceId,
+      });
+      await getState().setConfig("push_notification_subscriptions", {
+        ...allSubs,
+        [user.id]: userSubs,
+      });
+      res.json({
+        success: "ok",
+        message: req.__("FCM token uploaded"),
+      });
     }
   })
 );
@@ -430,6 +424,48 @@ router.post(
           [user.id]: userSubs,
         });
       }
+      res.json({
+        success: "ok",
+        message: req.__("Unsubscribed from notifications"),
+      });
+    }
+  })
+);
+
+// TODO
+router.post(
+  "/mobile-remove-subscription",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    res.json({
+      success: "ok",
+      message: req.__("Unsubscribed from notifications"),
+    });
+  })
+);
+
+router.post(
+  "/mobile-remove-subscription",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const { token, deviceId } = req.body || {};
+    if (!token) {
+      res.status(400).json({
+        error: req.__("FCM token is required"),
+      });
+      return;
+    }
+    const user = req.user;
+    const oldSubs = getState().getConfig("push_notification_subscriptions", {});
+    let userSubs = oldSubs[user.id];
+    if (userSubs) {
+      userSubs = userSubs.filter(
+        (s) => s.type !== "fcm-push" || s.deviceId !== deviceId
+      );
+      await getState().setConfig("push_notification_subscriptions", {
+        ...oldSubs,
+        [user.id]: userSubs,
+      });
       res.json({
         success: "ok",
         message: req.__("Unsubscribed from notifications"),

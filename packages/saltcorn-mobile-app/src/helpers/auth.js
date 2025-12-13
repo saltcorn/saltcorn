@@ -4,13 +4,14 @@ import { jwtDecode } from "jwt-decode";
 import i18next from "i18next";
 import { apiCall } from "./api";
 import { router } from "../routing/index";
-import { getLastOfflineSession, deleteOfflineData, sync } from "./offline_mode";
-import { addRoute, replaceIframe } from "../helpers/navigation";
-import { showAlerts } from "./common";
 import {
-  initPushNotifications,
-  unregisterPushNotifications,
-} from "../helpers/notifications";
+  getLastOfflineSession,
+  deleteOfflineData,
+  addPushSyncHandler,
+  sync,
+} from "./offline_mode";
+import { addRoute, replaceIframe, clearHistory } from "../helpers/navigation";
+import { showAlerts } from "./common";
 
 /**
  * internal helper for the normal login/signup and public login
@@ -45,78 +46,171 @@ async function loginRequest({ email, password, isSignup, isPublic }) {
 }
 
 /**
- * helper for normal logins and auth provider logins
- * @param {string} token
+ * internal helper to process a JWT token
+ * @param {string} tokenStr
  */
-export async function handleToken(token) {
-  const decodedJwt = jwtDecode(token);
-  const state = saltcorn.data.state.getState();
-  const config = state.mobileConfig;
-  config.user = decodedJwt.user;
+const handleToken = async (tokenStr, config) => {
+  const token = jwtDecode(tokenStr);
+  const user = token.user;
+  config.user = user;
   config.isPublicUser = false;
   config.isOfflineMode = false;
-  await insertUser(config.user);
-  await setJwt(token);
-  config.jwt = token;
-  i18next.changeLanguage(config.user.language);
+  await insertUser(user);
+  await setJwt(tokenStr);
+  config.jwt = tokenStr;
+  i18next.changeLanguage(user.language);
+};
+
+/**
+ * internal helper to run the first sync
+ */
+const initialSync = async (config) => {
   const alerts = [];
-  if (config.allowOfflineMode) {
-    const { offlineUser, hasOfflineData } =
-      (await getLastOfflineSession()) || {};
-    if (!offlineUser || offlineUser === config.user.email) {
+  const { offlineUser, hasOfflineData } = (await getLastOfflineSession()) || {};
+  if (!offlineUser || offlineUser === config.user.email) {
+    await sync();
+  } else {
+    if (hasOfflineData)
+      alerts.push({
+        type: "warning",
+        msg: `'${offlineUser}' has not yet uploaded offline data.`,
+      });
+    else {
+      await deleteOfflineData(true);
       await sync();
-    } else {
-      if (hasOfflineData)
-        alerts.push({
-          type: "warning",
-          msg: `'${offlineUser}' has not yet uploaded offline data.`,
-        });
-      else {
-        await deleteOfflineData(true);
-        await sync();
-      }
     }
   }
-  if (saltcorn.data.utils.isPushEnabled(config.user)) {
-    initPushNotifications();
-  } else {
-    await unregisterPushNotifications();
-  }
-  alerts.push({
-    type: "success",
-    msg: i18next.t("Welcome, %s!", {
-      postProcess: "sprintf",
-      sprintf: [config.user.email],
-    }),
-  });
+  return alerts;
+};
 
+/**
+ * internal helper to get the path to the first page
+ */
+const getEntryPoint = (config) => {
   let entryPoint = null;
   if (config.entryPointType === "byrole") {
+    const state = saltcorn.data.state.getState();
     const homepageByRole = state.getConfig("home_page_by_role", {})[
       config.user.role_id
     ];
     if (homepageByRole) entryPoint = `get/page/${homepageByRole}`;
     else throw new Error("No homepage defined for this role.");
   } else entryPoint = config.entry_point;
+  return entryPoint;
+};
 
-  addRoute({ route: entryPoint, query: undefined });
-  const page = await router.resolve({
-    pathname: entryPoint,
-    fullWrap: true,
-    alerts,
-  });
-  if (page.content) await replaceIframe(page.content, page.isFile);
-}
+/**
+ * internal helper to init the push system, if available
+ */
+const tryInitPush = async (config) => {
+  try {
+    const { initPushNotifications, addPusNotifyHandler } = await import(
+      "../helpers/notifications.js"
+    );
+    try {
+      await initPushNotifications();
+      if (saltcorn.data.utils.isPushEnabled(config.user)) addPusNotifyHandler();
+      if (config.pushSync) addPushSyncHandler();
+    } catch (error) {
+      console.error("Error initializing push notifications:", error);
+    }
+  } catch (error) {
+    console.log("Push notifications module not available:", error);
+  }
+};
 
-export async function login({ email, password, isSignup }) {
-  const loginResult = await loginRequest({
-    email,
-    password,
-    isSignup,
-  });
+/**
+ * internal helper to init background sync, if available
+ */
+const tryInitBackgroundSync = async (config) => {
+  try {
+    const { startPeriodicBackgroundSync } = await import(
+      "../helpers/background_sync.js"
+    );
+    try {
+      if (config.syncInterval && config.syncInterval > 0)
+        await startPeriodicBackgroundSync(config.syncInterval);
+    } catch (error) {
+      console.error("Error initializing background sync:", error);
+    }
+  } catch (error) {
+    console.log("Background sync module not available:", error);
+  }
+};
+
+/**
+ * internal helper to end the push system, if available
+ */
+const tryUnregisterPush = async () => {
+  try {
+    const { unregisterPushNotifications } = await import(
+      "../helpers/notifications.js"
+    );
+    try {
+      await unregisterPushNotifications();
+    } catch (error) {
+      console.error("Error unregistering push notifications:", error);
+    }
+  } catch (error) {
+    console.log("Push notifications module not available:", error);
+  }
+};
+
+/**
+ * internal helper to stop background sync, if available
+ */
+const tryStopBackgroundSync = async () => {
+  try {
+    const { stopPeriodicBackgroundSync } = await import(
+      "../helpers/background_sync.js"
+    );
+    try {
+      await stopPeriodicBackgroundSync();
+    } catch (error) {
+      console.error("Error stopping periodic background sync:", error);
+    }
+  } catch (error) {
+    console.error("Push notifications module not available:", error);
+  }
+};
+
+/**
+ * For normal login/signup email and password are used
+ * When called from auth provider login (see google-auth plugin), token is used
+ * @param {*} param0
+ */
+export async function login({ email, password, isSignup, token }) {
+  const loginResult = !token
+    ? await loginRequest({
+        email,
+        password,
+        isSignup,
+      })
+    : token;
   if (typeof loginResult === "string") {
-    // use it as a token
-    await handleToken(loginResult);
+    const alerts = [];
+    const config = saltcorn.data.state.getState().mobileConfig;
+    await handleToken(loginResult, config);
+    if (config.allowOfflineMode) alerts.push(await initialSync(config));
+    await tryInitPush(config);
+    await tryInitBackgroundSync(config);
+    alerts.push({
+      type: "success",
+      msg: i18next.t("Welcome, %s!", {
+        postProcess: "sprintf",
+        sprintf: [config.user.email],
+      }),
+    });
+
+    // open first page
+    const entryPoint = getEntryPoint(config);
+    addRoute({ route: entryPoint, query: undefined });
+    const page = await router.resolve({
+      pathname: entryPoint,
+      fullWrap: true,
+      alerts,
+    });
+    if (page.content) await replaceIframe(page.content, page.isFile);
   } else if (loginResult?.alerts) {
     showAlerts(loginResult?.alerts);
   } else {
@@ -179,13 +273,22 @@ export async function publicLogin(entryPoint) {
 export async function logout() {
   try {
     const config = saltcorn.data.state.getState().mobileConfig;
-    const page = await router.resolve({
-      pathname: "get/auth/logout",
-      entryView: config.entry_point,
-      versionTag: config.version_tag,
-    });
-    await replaceIframe(page.content);
+    await tryUnregisterPush();
+    await tryStopBackgroundSync();
+    const response = await apiCall({ method: "GET", path: "/auth/logout" });
+    if (response.data.success) {
+      await removeJwt();
+      clearHistory();
+      config.jwt = undefined;
+      const page = await router.resolve({
+        pathname: "get/auth/login",
+        entryView: config.entry_point,
+        versionTag: config.version_tag,
+      });
+      await replaceIframe(page.content);
+    } else throw new Error("Unable to logout.");
   } catch (error) {
+    console.error("unable to logout:", error);
     showAlerts([
       {
         type: "error",

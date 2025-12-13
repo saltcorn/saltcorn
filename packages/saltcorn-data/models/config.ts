@@ -1488,12 +1488,40 @@ const configTypes: ConfigTypes = {
     type: "File",
     name: "firebase_json_key",
     label: "Firebase JSON key",
-    default: 0,
+    default: null,
     attributes: {
-      select_file_where: { min_role_read: 100, mime_super: "application" },
+      select_file_where: {
+        min_role_read: 100,
+        mime_super: "application",
+        folder: "/mobile-app-configurations",
+      },
     },
-    sublabel: "This is your Firebase Service Account JSON key file. ",
-    helpTopic: "Firebase JSON key",
+    sublabel:
+      "This is a private key file for your Firebase project. " +
+      "Your Saltcorn server uses it to send push notifications or push-based synchronizations to your Android mobile app. " +
+      "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
+      "You can configure it here or in the 'Mobile app' Menu.",
+    helpTopic: "Firebase Configurations",
+  },
+  firebase_app_services: {
+    type: "File",
+    name: "firebase_app_services",
+    label: "Firebase app services",
+    default: null,
+    attributes: {
+      select_file_where: {
+        min_role_read: 100,
+        mime_super: "application",
+        folder: "/mobile-app-configurations",
+      },
+    },
+    sublabel:
+      "This is a configuration file specific to your mobile app. " +
+      "It contains, among other things, your App ID, the Firebase project ID, and an API key. " +
+      "The file gets bundled into the client and will be used to subscribe to push notifications or push-based synchronizations from the server. " +
+      "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
+      "You can configure it here or in the 'Mobile app' Menu.",
+    helpTopic: "Firebase Configurations",
   },
   push_notification_icon: {
     type: "File",
@@ -1519,6 +1547,12 @@ const configTypes: ConfigTypes = {
   push_notification_subscriptions: {
     type: "hidden",
     label: "Notify subscriptions",
+    default: {},
+    excludeFromMobile: true,
+  },
+  push_sync_subscriptions: {
+    type: "hidden",
+    label: "Push sync subscriptions",
     default: {},
     excludeFromMobile: true,
   },

@@ -7,8 +7,6 @@
   "scripts": {
     "build": "webpack",
     "add-platform": "npx cap add",
-    "modify-gradle-cfg": "node build_scripts/modify_gradle_cfg.js",
-    "modify-android-manifest": "node build_scripts/modify_android_manifest.js",
     "test": "echo NO TESTS"
   },
   "author": "Christian Hugo",

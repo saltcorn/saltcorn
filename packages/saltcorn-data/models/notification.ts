@@ -102,12 +102,8 @@ class Notification {
         [user.id]
       );
     }
-    if (isPushEnabled(user)) {
-      const pushHelper = new PushMessageHelper(
-        state?.getConfig("push_notification_subscriptions", {})[user.id!] || []
-      );
-      await pushHelper.send(o);
-    }
+    if (isPushEnabled(user) && state?.pushHelper)
+      state.pushHelper.pushNotification(o);
     return o;
   }
 

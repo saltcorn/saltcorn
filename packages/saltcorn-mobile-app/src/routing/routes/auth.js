@@ -1,11 +1,12 @@
 /*global saltcorn */
 import { MobileRequest } from "../mocks/request";
 import { MobileResponse } from "../mocks/response";
-import { apiCall } from "../../helpers/api";
-import { removeJwt } from "../../helpers/auth";
 import { sbAdmin2Layout, getHeaders } from "../utils";
-import { clearHistory } from "../../helpers/navigation";
 
+/**
+ * internal helper to prepare the login or signup form
+ * @returns
+ */
 const prepareAuthForm = () => {
   return new saltcorn.data.models.Form({
     class: "login",
@@ -29,7 +30,13 @@ const prepareAuthForm = () => {
   });
 };
 
-// TODO delete this and integrate getAuthLinks() from '/server/auth/routes.js'
+/**
+ * internal helper to get auth links
+ * TODO delete this and integrate getAuthLinks() from '/server/auth/routes.js'
+ * @param {*} current
+ * @param {*} entryPoint
+ * @returns
+ */
 const getAuthLinks = (current, entryPoint) => {
   const links = { methods: [] };
   const state = saltcorn.data.state.getState();
@@ -51,6 +58,13 @@ const getAuthLinks = (current, entryPoint) => {
   return links;
 };
 
+/**
+ * internal helper to render login view
+ * @param {*} entryPoint
+ * @param {*} versionTag
+ * @param {*} alerts
+ * @returns
+ */
 const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
   const state = saltcorn.data.state.getState();
   const form = prepareAuthForm(entryPoint);
@@ -101,6 +115,12 @@ const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
   });
 };
 
+/**
+ * internal helper to render signup view
+ * @param {*} entryPoint
+ * @param {*} versionTag
+ * @returns
+ */
 const renderSignupView = (entryPoint, versionTag) => {
   const form = prepareAuthForm(entryPoint);
   form.onSubmit = `javascript:signupFormSubmit(this, '${entryPoint}')`;
@@ -145,24 +165,4 @@ export const getSignupView = async () => {
     content: renderSignupView(config.entry_point, config.version_tag),
     replaceIframe: true,
   };
-};
-
-/**
- *
- * @returns
- */
-export const logoutAction = async () => {
-  const config = saltcorn.data.state.getState().mobileConfig;
-  const response = await apiCall({ method: "GET", path: "/auth/logout" });
-  if (response.data.success) {
-    await removeJwt();
-    clearHistory();
-    config.jwt = undefined;
-    return {
-      content: await renderLoginView(config.entry_point, config.version_tag),
-    };
-  } else {
-    console.log("unable to logout");
-    return {};
-  }
 };

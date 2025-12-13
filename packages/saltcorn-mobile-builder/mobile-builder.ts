@@ -1,8 +1,9 @@
-const { PluginManager } = require("live-plugin-manager");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+const { PluginManager } = require("live-plugin-manager");
 import { join, basename } from "path";
 import { copySync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
+import File from "@saltcorn/data/models/file";
 import {
   buildTablesFile,
   copySiteLogo,
@@ -29,8 +30,9 @@ import {
 import {
   bundlePackagesAndPlugins,
   copyPublicDirs,
-  copyMobileAppDirs,
+  copyPluginMobileAppDirs,
   bundleMobileAppCode,
+  copyOptionalSource,
 } from "./utils/package-bundle-utils";
 import User from "@saltcorn/data/models/user";
 import { CapacitorHelper } from "./utils/capacitor-helper";
@@ -72,6 +74,8 @@ type MobileBuilderConfig = {
   autoPublicLogin: string;
   showContinueAsPublicUser?: boolean;
   allowOfflineMode: string;
+  pushSync: boolean;
+  syncInterval?: number;
   plugins: Plugin[];
   copyTargetDir?: string;
   user?: User;
@@ -108,6 +112,8 @@ export class MobileBuilder {
   autoPublicLogin: string;
   showContinueAsPublicUser: boolean;
   allowOfflineMode: string;
+  pushSync: boolean;
+  syncInterval?: number;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
@@ -153,6 +159,8 @@ export class MobileBuilder {
     this.autoPublicLogin = cfg.autoPublicLogin;
     this.showContinueAsPublicUser = !!cfg.showContinueAsPublicUser;
     this.allowOfflineMode = cfg.allowOfflineMode;
+    this.pushSync = cfg.pushSync;
+    this.syncInterval = cfg.syncInterval ? +cfg.syncInterval : undefined;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
     });
@@ -202,7 +210,8 @@ export class MobileBuilder {
       prepareBuildDir(
         this.buildDir,
         this.templateDir,
-        !!this.googleServicesFile
+        !!this.googleServicesFile,
+        !!this.syncInterval && this.syncInterval > 0
       );
       writeCapacitorConfig(this.buildDir, {
         appName: this.appName,
@@ -241,6 +250,8 @@ export class MobileBuilder {
         autoPublicLogin: this.autoPublicLogin,
         showContinueAsPublicUser: this.showContinueAsPublicUser,
         allowOfflineMode: this.allowOfflineMode,
+        pushSync: this.pushSync,
+        syncInterval: this.syncInterval ? this.syncInterval : 0,
         allowShareTo: this.allowShareTo,
       });
       let resultCode = await bundlePackagesAndPlugins(
@@ -252,7 +263,11 @@ export class MobileBuilder {
         await loadAllPlugins();
         this.pluginsLoaded = true;
       }
-      copyMobileAppDirs(this.buildDir);
+      copyPluginMobileAppDirs(this.buildDir);
+      if (this.googleServicesFile)
+        copyOptionalSource(this.buildDir, "notifications.js");
+      if (this.syncInterval && this.syncInterval > 0)
+        copyOptionalSource(this.buildDir, "background_sync.js");
       resultCode = bundleMobileAppCode(this.buildDir);
       if (resultCode !== 0) return resultCode;
       await copyPublicDirs(this.buildDir);
@@ -317,7 +332,8 @@ export class MobileBuilder {
         "app",
         "google-services.json"
       );
-      copySync(this.googleServicesFile, dest);
+      const servicesFile = await File.findOne(this.googleServicesFile);
+      if (servicesFile) copySync(servicesFile.location, dest);
     }
 
     await modifyAndroidManifest(
