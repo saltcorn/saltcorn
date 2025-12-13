@@ -1,10 +1,7 @@
 /*global saltcorn */
 import { MobileRequest } from "../mocks/request";
 import { MobileResponse } from "../mocks/response";
-import { apiCall } from "../../helpers/api";
-import { removeJwt } from "../../helpers/auth";
 import { sbAdmin2Layout, getHeaders } from "../utils";
-import { clearHistory } from "../../helpers/navigation";
 
 /**
  * internal helper to prepare the login or signup form
@@ -142,42 +139,6 @@ const renderSignupView = (entryPoint, versionTag) => {
 };
 
 /**
- * internal helper to end the push system, if available
- */
-const tryUnregisterPush = async () => {
-  try {
-    const { unregisterPushNotifications } = await import(
-      "../../helpers/notifications.js"
-    );
-    try {
-      await unregisterPushNotifications();
-    } catch (error) {
-      console.error("Error unregistering push notifications:", error);
-    }
-  } catch (error) {
-    console.log("Push notifications module not available:", error);
-  }
-};
-
-/**
- * internal helper to stop background sync, if available
- */
-const tryStopBackgroundSync = async () => {
-  try {
-    const { stopPeriodicBackgroundSync } = await import(
-      "../../helpers/background_sync.js"
-    );
-    try {
-      await stopPeriodicBackgroundSync();
-    } catch (error) {
-      console.error("Error stopping periodic background sync:", error);
-    }
-  } catch (error) {
-    console.error("Push notifications module not available:", error);
-  }
-};
-
-/**
  *
  * @param {*} context
  * @returns
@@ -204,26 +165,4 @@ export const getSignupView = async () => {
     content: renderSignupView(config.entry_point, config.version_tag),
     replaceIframe: true,
   };
-};
-
-/**
- *
- * @returns
- */
-export const logoutAction = async () => {
-  const config = saltcorn.data.state.getState().mobileConfig;
-  await tryUnregisterPush();
-  await tryStopBackgroundSync();
-  const response = await apiCall({ method: "GET", path: "/auth/logout" });
-  if (response.data.success) {
-    await removeJwt();
-    clearHistory();
-    config.jwt = undefined;
-    return {
-      content: await renderLoginView(config.entry_point, config.version_tag),
-    };
-  } else {
-    console.log("unable to logout");
-    return {};
-  }
 };

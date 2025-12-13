@@ -10,7 +10,7 @@ import {
   addPushSyncHandler,
   sync,
 } from "./offline_mode";
-import { addRoute, replaceIframe } from "../helpers/navigation";
+import { addRoute, replaceIframe, clearHistory } from "../helpers/navigation";
 import { showAlerts } from "./common";
 
 /**
@@ -114,9 +114,14 @@ const tryInitPush = async (config) => {
     } catch (error) {
       console.error("Error initializing push notifications:", error);
     }
-  } catch (error) {}
+  } catch (error) {
+    console.log("Push notifications module not available:", error);
+  }
 };
 
+/**
+ * internal helper to init background sync, if available
+ */
 const tryInitBackgroundSync = async (config) => {
   try {
     const { startPeriodicBackgroundSync } = await import(
@@ -130,6 +135,42 @@ const tryInitBackgroundSync = async (config) => {
     }
   } catch (error) {
     console.log("Background sync module not available:", error);
+  }
+};
+
+/**
+ * internal helper to end the push system, if available
+ */
+const tryUnregisterPush = async () => {
+  try {
+    const { unregisterPushNotifications } = await import(
+      "../helpers/notifications.js"
+    );
+    try {
+      await unregisterPushNotifications();
+    } catch (error) {
+      console.error("Error unregistering push notifications:", error);
+    }
+  } catch (error) {
+    console.log("Push notifications module not available:", error);
+  }
+};
+
+/**
+ * internal helper to stop background sync, if available
+ */
+const tryStopBackgroundSync = async () => {
+  try {
+    const { stopPeriodicBackgroundSync } = await import(
+      "../helpers/background_sync.js"
+    );
+    try {
+      await stopPeriodicBackgroundSync();
+    } catch (error) {
+      console.error("Error stopping periodic background sync:", error);
+    }
+  } catch (error) {
+    console.error("Push notifications module not available:", error);
   }
 };
 
@@ -232,14 +273,22 @@ export async function publicLogin(entryPoint) {
 export async function logout() {
   try {
     const config = saltcorn.data.state.getState().mobileConfig;
-    const page = await router.resolve({
-      pathname: "get/auth/logout",
-      entryView: config.entry_point,
-      versionTag: config.version_tag,
-    });
-
-    await replaceIframe(page.content);
+    await tryUnregisterPush();
+    await tryStopBackgroundSync();
+    const response = await apiCall({ method: "GET", path: "/auth/logout" });
+    if (response.data.success) {
+      await removeJwt();
+      clearHistory();
+      config.jwt = undefined;
+      const page = await router.resolve({
+        pathname: "get/auth/login",
+        entryView: config.entry_point,
+        versionTag: config.version_tag,
+      });
+      await replaceIframe(page.content);
+    } else throw new Error("Unable to logout.");
   } catch (error) {
+    console.error("unable to logout:", error);
     showAlerts([
       {
         type: "error",
