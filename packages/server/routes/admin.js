@@ -2383,8 +2383,17 @@ router.get(
       mime_super: "application",
       min_role_read: 100,
     });
-    const keystoreFiles = await File.find({ folder: "keystore_files" });
-    const provisioningFiles = await File.find({ folder: "provisioning_files" });
+    const allAppCfgFiles = await File.find({
+      folder: "mobile-app-configurations",
+    });
+    const keystoreFiles = [
+      ...(await File.find({ folder: "keystore_files" })),
+      ...allAppCfgFiles,
+    ];
+    const provisioningFiles = [
+      ...(await File.find({ folder: "provisioning_files" })),
+      ...allAppCfgFiles,
+    ];
     const withSyncInfo = await Table.find({ has_sync_info: true });
     const plugins = (await Plugin.find()).filter(
       (plugin) => ["base", "sbadmin2"].indexOf(plugin.name) < 0
