@@ -1501,7 +1501,7 @@ const configTypes: ConfigTypes = {
       "Your Saltcorn server uses it to send push notifications or push-based synchronizations to your Android mobile app. " +
       "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
       "You can configure it here or in the 'Mobile app' Menu.",
-    helpTopic: "Firebase JSON key",
+    helpTopic: "Firebase Configurations",
   },
   firebase_app_services: {
     type: "File",
@@ -1521,7 +1521,7 @@ const configTypes: ConfigTypes = {
       "The file gets bundled into the client and will be used to subscribe to push notifications or push-based synchronizations from the server. " +
       "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
       "You can configure it here or in the 'Mobile app' Menu.",
-    helpTopic: "Firebase app services",
+    helpTopic: "Firebase Configurations",
   },
   push_notification_icon: {
     type: "File",

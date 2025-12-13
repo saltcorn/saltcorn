@@ -3523,7 +3523,7 @@ router.get(
                             req.__("Firebase JSON Key"),
                             a(
                               {
-                                href: "javascript:ajax_modal('/admin/help/Firebase JSON key?')",
+                                href: "javascript:ajax_modal('/admin/help/Firebase Configurations?')",
                               },
                               i({ class: "fas fa-question-circle ps-1" })
                             )
@@ -3571,7 +3571,7 @@ router.get(
                             req.__("Google Services File"),
                             a(
                               {
-                                href: "javascript:ajax_modal('/admin/help/Google Services File?')",
+                                href: "javascript:ajax_modal('/admin/help/Firebase Configurations?')",
                               },
                               i({ class: "fas fa-question-circle ps-1" })
                             )
