@@ -4,14 +4,15 @@ import { jwtDecode } from "jwt-decode";
 import i18next from "i18next";
 import { apiCall } from "./api";
 import { router } from "../routing/index";
-import {
-  getLastOfflineSession,
-  deleteOfflineData,
-  addPushSyncHandler,
-  sync,
-} from "./offline_mode";
+import { getLastOfflineSession, deleteOfflineData, sync } from "./offline_mode";
 import { addRoute, replaceIframe, clearHistory } from "../helpers/navigation";
-import { showAlerts } from "./common";
+import {
+  showAlerts,
+  tryInitBackgroundSync,
+  tryInitPush,
+  tryStopBackgroundSync,
+  tryUnregisterPush,
+} from "./common";
 
 /**
  * internal helper for the normal login/signup and public login
@@ -97,81 +98,6 @@ const getEntryPoint = (config) => {
     else throw new Error("No homepage defined for this role.");
   } else entryPoint = config.entry_point;
   return entryPoint;
-};
-
-/**
- * internal helper to init the push system, if available
- */
-const tryInitPush = async (config) => {
-  try {
-    const { initPushNotifications, addPusNotifyHandler } = await import(
-      "../helpers/notifications.js"
-    );
-    try {
-      await initPushNotifications();
-      if (saltcorn.data.utils.isPushEnabled(config.user)) addPusNotifyHandler();
-      if (config.pushSync) addPushSyncHandler();
-    } catch (error) {
-      console.error("Error initializing push notifications:", error);
-    }
-  } catch (error) {
-    console.log("Push notifications module not available:", error);
-  }
-};
-
-/**
- * internal helper to init background sync, if available
- */
-const tryInitBackgroundSync = async (config) => {
-  try {
-    const { startPeriodicBackgroundSync } = await import(
-      "../helpers/background_sync.js"
-    );
-    try {
-      if (config.syncInterval && config.syncInterval > 0)
-        await startPeriodicBackgroundSync(config.syncInterval);
-    } catch (error) {
-      console.error("Error initializing background sync:", error);
-    }
-  } catch (error) {
-    console.log("Background sync module not available:", error);
-  }
-};
-
-/**
- * internal helper to end the push system, if available
- */
-const tryUnregisterPush = async () => {
-  try {
-    const { unregisterPushNotifications } = await import(
-      "../helpers/notifications.js"
-    );
-    try {
-      await unregisterPushNotifications();
-    } catch (error) {
-      console.error("Error unregistering push notifications:", error);
-    }
-  } catch (error) {
-    console.log("Push notifications module not available:", error);
-  }
-};
-
-/**
- * internal helper to stop background sync, if available
- */
-const tryStopBackgroundSync = async () => {
-  try {
-    const { stopPeriodicBackgroundSync } = await import(
-      "../helpers/background_sync.js"
-    );
-    try {
-      await stopPeriodicBackgroundSync();
-    } catch (error) {
-      console.error("Error stopping periodic background sync:", error);
-    }
-  } catch (error) {
-    console.error("Push notifications module not available:", error);
-  }
 };
 
 /**
