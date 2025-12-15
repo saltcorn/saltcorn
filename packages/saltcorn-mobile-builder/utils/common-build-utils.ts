@@ -35,7 +35,8 @@ const resizer = require("resize-with-sharp-or-jimp");
 export function prepareBuildDir(
   buildDir: string,
   templateDir: string,
-  fcmEnabled: boolean
+  fcmEnabled: boolean,
+  backgroundFetchEnabled: boolean,
 ) {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
@@ -68,6 +69,9 @@ export function prepareBuildDir(
     ...additionalPlugins,
     ...(fcmEnabled
       ? ["@capacitor/device@7.0.2", "@capacitor/push-notifications@7.0.3"]
+      : []),
+    ...(backgroundFetchEnabled
+      ? ["@transistorsoft/capacitor-background-fetch@7.1.0"]
       : []),
   ];
   console.log("capDepsAndPlugins", capDepsAndPlugins);
@@ -189,7 +193,7 @@ export function prepAppIcon(buildDir: string, appIcon: string) {
   }
 }
 
-export function androidPermissions() {
+export function androidPermissions(allowFCM: boolean) {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
   const permissions = new Set<String>([
@@ -198,6 +202,10 @@ export function androidPermissions() {
     "android.permission.INTERNET",
     "android.permission.CAMERA",
   ]);
+  if (allowFCM) {
+    permissions.add("android.permission.POST_NOTIFICATIONS");
+    permissions.add("com.google.android.c2dm.permission.RECEIVE");
+  }
   for (const capPlugin of state.capacitorPlugins) {
     for (const perm of capPlugin.androidPermissions || []) {
       permissions.add(perm);
@@ -237,21 +245,13 @@ export async function modifyAndroidManifest(
     const content = readFileSync(androidManifest);
     const parsed = await parseStringPromise(content);
 
-    parsed.manifest["uses-permission"] = [
-      { $: { "android:name": "android.permission.READ_EXTERNAL_STORAGE" } },
-      { $: { "android:name": "android.permission.WRITE_EXTERNAL_STORAGE" } },
-      { $: { "android:name": "android.permission.INTERNET" } },
-      ...(allowFCM
-        ? [
-            { $: { "android:name": "android.permission.POST_NOTIFICATIONS" } },
-            {
-              $: {
-                "android:name": "com.google.android.c2dm.permission.RECEIVE",
-              },
-            },
-          ]
-        : []),
-    ];
+    parsed.manifest["uses-permission"] = androidPermissions(allowFCM).map((perm) => ({
+      $: { "android:name": perm },
+    }));
+    parsed.manifest["uses-feature"] = androidFeatures().map((feat) => ({
+      $: { "android:name": feat },
+    }));
+    
     parsed.manifest.application[0].$ = {
       ...parsed.manifest.application[0].$,
       "android:allowBackup": "false",
@@ -827,6 +827,8 @@ export function writeCfgFile({
   autoPublicLogin,
   showContinueAsPublicUser,
   allowOfflineMode,
+  pushSync,
+  syncInterval,
   allowShareTo,
 }: any) {
   const wwwDir = join(buildDir, "www");
@@ -841,6 +843,8 @@ export function writeCfgFile({
     autoPublicLogin,
     showContinueAsPublicUser,
     allowOfflineMode,
+    pushSync,
+    syncInterval,
     allowShareTo,
   };
   if (entryPointType !== "byrole") {

@@ -4,6 +4,7 @@ import { apiCall } from "./api";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
 import { SendIntent } from "send-intent";
+import { addPushSyncHandler } from "./offline_mode";
 
 const orientationChangeListeners = new Set();
 
@@ -187,5 +188,80 @@ export async function checkSendIntentReceived() {
   } catch (error) {
     console.log("Error in checkSendIntentReceived: ", error);
     return null;
+  }
+}
+
+/**
+ * init the push system, if available
+ */
+export async function tryInitPush(config) {
+  try {
+    const { initPushNotifications, addPusNotifyHandler } = await import(
+      "../helpers/notifications.js"
+    );
+    try {
+      await initPushNotifications();
+      if (saltcorn.data.utils.isPushEnabled(config.user)) addPusNotifyHandler();
+      if (config.pushSync) addPushSyncHandler();
+    } catch (error) {
+      console.error("Error initializing push notifications:", error);
+    }
+  } catch (error) {
+    console.log("Push notifications module not available:", error);
+  }
+}
+
+/**
+ * init background sync, if available
+ */
+export async function tryInitBackgroundSync(config) {
+  try {
+    const { startPeriodicBackgroundSync } = await import(
+      "../helpers/background_sync.js"
+    );
+    try {
+      if (config.syncInterval && config.syncInterval > 0)
+        await startPeriodicBackgroundSync(config.syncInterval);
+    } catch (error) {
+      console.error("Error initializing background sync:", error);
+    }
+  } catch (error) {
+    console.log("Background sync module not available:", error);
+  }
+}
+
+/**
+ * end the push system, if available
+ */
+export async function tryUnregisterPush() {
+  try {
+    const { unregisterPushNotifications } = await import(
+      "../helpers/notifications.js"
+    );
+    try {
+      await unregisterPushNotifications();
+    } catch (error) {
+      console.error("Error unregistering push notifications:", error);
+    }
+  } catch (error) {
+    console.log("Push notifications module not available:", error);
+  }
+}
+
+/**
+ * stop background sync, if available
+ */
+export async function tryStopBackgroundSync() {
+  try {
+    const { stopPeriodicBackgroundSync } = await import(
+      "../helpers/background_sync.js"
+    );
+    try {
+      await stopPeriodicBackgroundSync();
+    } catch (error) {
+      console.error("Error stopping periodic background sync:", error);
+    }
+  } catch (error) {
+    console.error("Push notifications module not available:", error);
   }
 }

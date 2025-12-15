@@ -22,7 +22,11 @@ import {
   gotoEntryView,
   addRoute,
 } from "./helpers/navigation.js";
-import { checkSendIntentReceived } from "./helpers/common.js";
+import {
+  checkSendIntentReceived,
+  tryInitBackgroundSync,
+  tryInitPush,
+} from "./helpers/common.js";
 import { readJSONCordova, readTextCordova } from "./helpers/file_system.js";
 
 import i18next from "i18next";
@@ -443,6 +447,7 @@ export async function init(mobileConfig) {
     const jwt = state.mobileConfig.jwt;
     const alerts = [];
     if ((networkDisabled && jwt) || (await checkJWT(jwt))) {
+      // already logged in, continue
       const mobileConfig = state.mobileConfig;
       const decodedJwt = jwtDecode(mobileConfig.jwt);
       mobileConfig.user = decodedJwt.user;
@@ -486,6 +491,9 @@ export async function init(mobileConfig) {
         }
       }
 
+      await tryInitPush(mobileConfig);
+      await tryInitBackgroundSync(mobileConfig);
+
       if (Capacitor.getPlatform() === "ios") {
         const shareData = await checkSendIntentReceived();
         if (shareData && notEmpty(shareData)) return await postShare(shareData);
@@ -518,6 +526,7 @@ export async function init(mobileConfig) {
       }
       if (page.content) await replaceIframe(page.content, page.isFile);
     } else if (isPublicJwt(jwt)) {
+      // already logged in as public
       const config = state.mobileConfig;
       config.user = { role_id: 100, email: "public", language: "en" };
       config.isPublicUser = true;
@@ -539,13 +548,17 @@ export async function init(mobileConfig) {
       )) &&
       state.mobileConfig.autoPublicLogin
     ) {
+      // try autoPublicLogin
       if (networkDisabled)
         throw new Error(
           "No internet connection or previous login is available. " +
             "Please go online and reload, the public login is not yet supported."
         );
       await publicLogin(getEntryPoint(100, state, state.mobileConfig));
-    } else await showLogin(alerts);
+     } else {
+      // open login page
+      await showLogin(alerts);
+    }
   } catch (error) {
     if (typeof saltcorn === "undefined" || typeof router === "undefined") {
       const msg = `An error occured: ${

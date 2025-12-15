@@ -6,7 +6,7 @@ import {
   updateTableRow,
   insertTableRow,
 } from "./routes/api";
-import { getLoginView, logoutAction, getSignupView } from "./routes/auth";
+import { getLoginView, getSignupView } from "./routes/auth";
 import { deleteRows } from "./routes/delete";
 import { postToggleField } from "./routes/edit";
 import { getErrorView } from "./routes/error";
@@ -55,15 +55,11 @@ const routes = [
     action: getLoginView,
   },
   {
-    path: "get/auth/logout",
-    action: logoutAction,
-  },
-  {
     path: "get/auth/signup",
     action: getSignupView,
   },
+
   // delete
-  
   {
     path: "post/delete/:tableName/:id", // legacy
     action: deleteRows,
@@ -72,7 +68,7 @@ const routes = [
     path: "delete/api/:tableName/:id",
     action: deleteRows,
   },
-  
+
   // edit
   {
     path: "post/edit/toggle/:name/:id/:field_name",

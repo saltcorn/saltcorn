@@ -445,57 +445,72 @@ const setSpinnerText = () => {
   }
 };
 
-export async function sync() {
-  setSpinnerText();
-  const state = saltcorn.data.state.getState();
-  const { user } = state.mobileConfig;
-  const { offlineUser, hasOfflineData, uploadStarted, uploadStartTime } =
-    (await getLastOfflineSession()) || {};
-  if (offlineUser && hasOfflineData && offlineUser !== user.email) {
-    throw new Error(
-      `The sync is not available, '${offlineUser}' has not yet uploaded offline data.`
-    );
-  } else {
-    let syncDir = null;
-    let cleanSync = await checkCleanSync(
-      uploadStarted,
-      uploadStartTime,
-      user.email
-    );
-    const syncTimestamp = await getSyncTimestamp();
-    await setUploadStarted(true, syncTimestamp);
-    let lock = null;
-    try {
-      if (window.navigator?.wakeLock?.request)
-        lock = await window.navigator.wakeLock.request();
-    } catch (error) {
-      console.log("wakeLock not available");
-      console.log(error);
+let syncInProgress = false;
+
+export async function isSyncInProgress() {
+  return syncInProgress;
+}
+
+export async function sync(background = false) {
+  if (syncInProgress)
+    throw new Error("A synchronization is already in progress.");
+
+  try {
+    if (!background) setSpinnerText();
+    const state = saltcorn.data.state.getState();
+    const { user } = state.mobileConfig;
+    const { offlineUser, hasOfflineData, uploadStarted, uploadStartTime } =
+      (await getLastOfflineSession()) || {};
+    if (offlineUser && hasOfflineData && offlineUser !== user.email) {
+      throw new Error(
+        `The sync is not available, '${offlineUser}' has not yet uploaded offline data.`
+      );
+    } else {
+      let syncDir = null;
+      let cleanSync = await checkCleanSync(
+        uploadStarted,
+        uploadStartTime,
+        user.email
+      );
+      const syncTimestamp = await getSyncTimestamp();
+      await setUploadStarted(true, syncTimestamp);
+      let lock = null;
+      if (!background) {
+        try {
+          if (window.navigator?.wakeLock?.request)
+            lock = await window.navigator.wakeLock.request();
+        } catch (error) {
+          console.log("wakeLock not available");
+          console.log(error);
+        }
+      }
+      let transactionOpen = false;
+      try {
+        await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
+        await saltcorn.data.db.query("BEGIN");
+        transactionOpen = true;
+        if (cleanSync) await clearLocalData(true);
+        const { synchedTables, syncInfos } = await prepare();
+        await syncRemoteDeletes(syncInfos, syncTimestamp);
+        syncDir = await syncOfflineData(synchedTables, syncTimestamp);
+        await syncRemoteData(syncInfos, syncTimestamp);
+        if (!background) await endOfflineMode(true);
+        await setUploadStarted(false);
+        await saltcorn.data.db.query("COMMIT");
+        transactionOpen = false;
+        await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
+      } catch (error) {
+        if (transactionOpen) await saltcorn.data.db.query("ROLLBACK");
+        await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
+        console.log(error);
+        throw error;
+      } finally {
+        if (syncDir) await cleanSyncDir(syncDir);
+        if (lock) await lock.release();
+      }
     }
-    let transactionOpen = false;
-    try {
-      await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
-      await saltcorn.data.db.query("BEGIN");
-      transactionOpen = true;
-      if (cleanSync) await clearLocalData(true);
-      const { synchedTables, syncInfos } = await prepare();
-      await syncRemoteDeletes(syncInfos, syncTimestamp);
-      syncDir = await syncOfflineData(synchedTables, syncTimestamp);
-      await syncRemoteData(syncInfos, syncTimestamp);
-      await endOfflineMode(true);
-      await setUploadStarted(false);
-      await saltcorn.data.db.query("COMMIT");
-      transactionOpen = false;
-      await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
-    } catch (error) {
-      if (transactionOpen) await saltcorn.data.db.query("ROLLBACK");
-      await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
-      console.log(error);
-      throw error;
-    } finally {
-      if (syncDir) await cleanSyncDir(syncDir);
-      if (lock) await lock.release();
-    }
+  } finally {
+    syncInProgress = false;
   }
 }
 
@@ -602,7 +617,7 @@ export async function hasOfflineRows() {
     const table = saltcorn.data.models.Table.findOne({ name: tblName });
     const pkName = table.pk_name;
     const { rows } = await saltcorn.data.db.query(
-      `select count(info_tbl.ref) 
+      `select count(info_tbl.ref) as total
            from "${saltcorn.data.db.sqlsanitize(
              tblName
            )}_sync_info" as info_tbl 
@@ -610,7 +625,7 @@ export async function hasOfflineRows() {
            on info_tbl.ref = data_tbl."${saltcorn.data.db.sqlsanitize(pkName)}"
            where info_tbl.modified_local = true`
     );
-    if (rows?.length > 0 && parseInt(rows[0].count) > 0) return true;
+    if (rows?.length > 0 && parseInt(rows[0].total) > 0) return true;
   }
   return false;
 }
@@ -642,4 +657,16 @@ export async function deleteOfflineData(noFeedback) {
     mobileConfig.inLoadState = false;
     if (!noFeedback) removeLoadSpinner();
   }
+}
+
+export function addPushSyncHandler() {
+  const state = saltcorn.data.state.getState();
+  state.mobile_push_handler["push_sync"] = async (notification) => {
+    console.log("Push sync received:", notification);
+    try {
+      await sync(true);
+    } catch (error) {
+      console.log("Error during push sync:", error);
+    }
+  };
 }

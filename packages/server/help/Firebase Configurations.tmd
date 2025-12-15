@@ -1,0 +1,35 @@
+## What is Firebase
+Firebase is a Google Cloud platform that provides backend services for web and mobile applications.  
+The mobile app uses **Firebase Cloud Messaging (FCM)** to receive push notifications sent from your server.
+
+To enable push notifications, you need:
+- a **Firebase Service Account JSON key** (for the backend),
+- a **Google Services configuration file** (`google-services.json`) for the Android app,
+- **Cloud Messaging** enabled in the Firebase project.
+
+### Create a Firebase JSON Key
+1. Open the Firebase Console:  
+   https://console.firebase.google.com  
+   (a Google account is required).
+2. Create a new project (e.g. **sc-mobile-project**) and wait until it is fully prepared.
+3. Open **Project settings**, navigate to the **Service accounts** tab, and click **Generate new private key**.
+4. When the JSON file is downloaded, move it to the **`/mobile-app-configurations`** directory.
+
+### Create a Google Services File
+1. Go back to the project overview (e.g.  
+   https://console.firebase.google.com/project/sc-mobile-project/overview).
+2. Click **Add app** and select the **Android** icon.
+3. Enter your **App ID** as the **Android package name**  
+   (e.g. `com.saltcorn.pushtest`).
+4. Download the **`google-services.json`** file and place it into  
+   **`/mobile-app-configurations`**.
+5. Skip the **Add Firebase SDK** step (the builder takes care of this) and continue to the console.
+
+### Check Cloud Messaging
+Cloud Messaging must be enabled at the **project level** (it is usually enabled by default).
+
+1. Open **Project settings**
+2. Navigate to the **Cloud Messaging** tab
+3. Verify that:
+   - **Firebase Cloud Messaging API (V1)** is enabled
+   - a **Sender ID** is present
