@@ -227,6 +227,32 @@ describe("Form missing values", () => {
     form.values = {};
     form.validate({});
     expect(form.values.name).toBeUndefined();
+    expect(form.hasErrors).toBe(false);
+  });
+  it("errors on required strings", async () => {
+    const form = new Form({
+      action: "/",
+      fields: [
+        new Field({
+          name: "name",
+          label: "Name",
+          type: "String",
+          required: true,
+        }),
+      ],
+    });
+    form.values = {};
+    form.validate({ name: "Sam" });
+    expect(form.values.name).toBe("Sam");
+    form.values = {};
+    form.validate({ name: "" });
+    expect(form.values.name).toBe("");
+    expect(form.hasErrors).toBe(false);
+    form.values = {};
+    form.validate({});
+    expect(form.values.name).toBeUndefined();
+    expect(form.hasErrors).toBe(true);
+    expect(form.errors).toStrictEqual({ name: "Unable to read String" });
   });
   it("validates missing integers", async () => {
     const form = new Form({
