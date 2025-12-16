@@ -131,7 +131,7 @@ describe("Form", () => {
       name_0_0: "Doggy",
       species_0_0: "Cat",
       name_0_1: "Wila",
-      species_0_1: "Tarantula"
+      species_0_1: "Tarantula",
     });
     expect(html.includes("<form")).toBe(true);
     expect(html.includes('name="age_0"')).toBe(true);
@@ -142,7 +142,6 @@ describe("Form", () => {
     expect(form.values.students[0].pets.length).toBe(2);
     expect(form.values.students[0].pets[0].name).toBe("Doggy");
     expect(form.values.students[0].pets[1].name).toBe("Wila");
-
   });
   it("should render with repeats and values", async () => {
     const form = mkRepForm();
@@ -187,86 +186,95 @@ describe("Form", () => {
 });
 
 describe("Bool Form", () => {
-  const form = new Form({
-    action: "/",
-    fields: [
-      new Field({
-        name: "done",
-        label: "Done",
-        type: "Bool",
-      }),
-    ],
+  it("validates", async () => {
+    const form = new Form({
+      action: "/",
+      fields: [
+        new Field({
+          name: "done",
+          label: "Done",
+          type: "Bool",
+        }),
+      ],
+    });
+    form.validate({ done: "off" });
+    expect(form.values.done).toBe(false);
+    form.validate({});
+    expect(typeof form.values.done).toBe("boolean");
+    expect(form.values.done).toBe(false);
+    form.validate({ done: "on" });
+    expect(form.values.done).toBe(true);
   });
-  form.validate({ done: "off" });
-  expect(form.values.done).toBe(false);
-  form.validate({});
-  expect(form.values.done).toBe(false);
-  form.validate({ done: "on" });
-  expect(form.values.done).toBe(true);
 });
 
 describe("parent field", () => {
-  const form = new Form({
-    action: "/",
-    fields: [
-      new Field({
-        name: "age",
-        label: "Age",
-        parent_field: "person",
-        type: "Integer",
-      }),
-    ],
+  it("validates", async () => {
+    const form = new Form({
+      action: "/",
+      fields: [
+        new Field({
+          name: "age",
+          label: "Age",
+          parent_field: "person",
+          type: "Integer",
+        }),
+      ],
+    });
+    const html = renderForm(form, "");
+    expect(html.includes("<form")).toBe(true);
+    expect(html.includes('name="person_age"')).toBe(true);
+    form.validate({ person_age: 16 });
+    expect(form.values.age).toBe(undefined);
+    expect(!!form.values.person).toBe(true);
+    expect(form.values.person.age).toBe(16);
   });
-  const html = renderForm(form, "");
-  expect(html.includes("<form")).toBe(true);
-  expect(html.includes('name="person_age"')).toBe(true);
-  form.validate({ person_age: 16 });
-  expect(form.values.age).toBe(undefined);
-  expect(!!form.values.person).toBe(true);
-  expect(form.values.person.age).toBe(16);
 });
 
 describe("String form with validator failure ", () => {
-  const form = new Form({
-    action: "/",
-    fields: [
-      new Field({
-        name: "name",
-        label: "Name",
-        type: "String",
-        validator(s) {
-          if (s?.length < 3) return "Too short";
-        },
-      }),
-    ],
+  it("validates", async () => {
+    const form = new Form({
+      action: "/",
+      fields: [
+        new Field({
+          name: "name",
+          label: "Name",
+          type: "String",
+          validator(s) {
+            if (s?.length < 3) return "Too short";
+          },
+        }),
+      ],
+    });
+    const html = renderForm(form, "");
+    expect(html.includes("<form")).toBe(true);
+    form.validate({ name: "Si" });
+    expect(form.errors).toStrictEqual({ name: "Too short" });
+    expect(form.values).toStrictEqual({ name: "Si" });
+    expect(form.hasErrors).toBe(true);
   });
-  const html = renderForm(form, "");
-  expect(html.includes("<form")).toBe(true);
-  form.validate({ name: "Si" });
-  expect(form.errors).toStrictEqual({ name: "Too short" });
-  expect(form.values).toStrictEqual({ name: "Si" });
-  expect(form.hasErrors).toBe(true);
 });
 
 describe("String form with validator success", () => {
-  const form = new Form({
-    action: "/",
-    fields: [
-      new Field({
-        name: "name",
-        label: "Name",
-        type: "String",
-        validator(s) {
-          if (s?.length < 3) return "Too short";
-        },
-      }),
-    ],
-  });
-  const html = renderForm(form, "");
-  expect(html.includes("<form")).toBe(true);
+  it("validates", async () => {
+    const form = new Form({
+      action: "/",
+      fields: [
+        new Field({
+          name: "name",
+          label: "Name",
+          type: "String",
+          validator(s) {
+            if (s?.length < 3) return "Too short";
+          },
+        }),
+      ],
+    });
+    const html = renderForm(form, "");
+    expect(html.includes("<form")).toBe(true);
 
-  form.validate({ name: "Simon" });
-  expect(form.values.name).toBe("Simon");
-  expect(form.errors).toStrictEqual({});
-  expect(form.hasErrors).toBe(false);
+    form.validate({ name: "Simon" });
+    expect(form.values.name).toBe("Simon");
+    expect(form.errors).toStrictEqual({});
+    expect(form.hasErrors).toBe(false);
+  });
 });
