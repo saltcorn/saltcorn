@@ -525,7 +525,7 @@ class WorkflowStep {
     actionConfigFields.push({
       label: "Response variable",
       name: "response_variable",
-      sublabel: "Context variable to write the form response to",
+      sublabel: "Context variable to read and write the form response",
       class: "validate-identifier",
       type: "String",
       validator: jsIdentifierValidator,

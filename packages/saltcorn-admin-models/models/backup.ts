@@ -43,7 +43,7 @@ const {
 } = pack;
 import config from "@saltcorn/data/models/config";
 const { configTypes } = config;
-const { asyncMap } = require("@saltcorn/data/utils");
+const { asyncMap, isTest } = require("@saltcorn/data/utils");
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
 import Tag from "@saltcorn/data/models/tag";
@@ -510,7 +510,7 @@ const restore_files = async (dirpath: string): Promise<any> => {
       if (file.isDirectory)
         await mkdir(File.get_new_path(file.location), { recursive: true });
     }
-    state.log(2, `Restoring ${file_rows.length} files...`);
+    if (!isTest()) state.log(2, `Restoring ${file_rows.length} files...`);
     for (const file of file_rows) {
       try {
         const newPath = File.get_new_path(
@@ -739,22 +739,22 @@ const restore = async (
     `;
   }
   //config
-  state.log(2, `Restoring config`);
+  if (!isTest()) state.log(2, `Restoring config`);
   await restore_config(basePath);
 
-  state.log(2, `Restoring pack`);
+  if (!isTest()) state.log(2, `Restoring pack`);
   await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
   // files
-  state.log(2, `Restoring files`);
+  if (!isTest()) state.log(2, `Restoring files`);
   const { file_users, newLocations } = await restore_files(basePath);
 
   //table csvs
-  state.log(2, `Restoring tables`);
+  if (!isTest()) state.log(2, `Restoring tables`);
   const tabres = await restore_tables(basePath, restore_first_user);
   if (tabres) err = (err || "") + tabres;
 
-  state.log(2, `Restoring metadata`);
+  if (!isTest()) state.log(2, `Restoring metadata`);
   await restore_metadata(basePath);
 
   if (Object.keys(newLocations).length > 0)
