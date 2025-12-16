@@ -743,6 +743,7 @@ class Field implements AbstractField {
       !fvObj?.readFromFormRecord &&
       !typeObj?.readFromFormRecord &&
       (fvObj?.read || typeObj?.read) &&
+      !this.required &&
       typeof whole_rec[this.form_name] === "undefined"
     )
       return {};

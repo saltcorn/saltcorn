@@ -66,7 +66,7 @@ const wfbuild = new Workflow({
   ],
 });
 
-describe("Workflow", () => {
+describe("Workflow context processing", () => {
   beforeAll(async () => {
     await require("../db/reset_schema")();
     await require("../db/fixtures")();
