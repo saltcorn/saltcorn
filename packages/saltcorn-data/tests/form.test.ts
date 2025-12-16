@@ -228,6 +228,27 @@ describe("Form missing values", () => {
     form.validate({});
     expect(form.values.name).toBeUndefined();
   });
+  it("validates missing integers", async () => {
+    const form = new Form({
+      action: "/",
+      fields: [
+        new Field({
+          name: "name",
+          label: "Name",
+          type: "Integer",
+        }),
+      ],
+    });
+    form.values = {};
+    form.validate({ name: "5" });
+    expect(form.values.name).toBe(5);
+    form.values = {};
+    form.validate({ name: "" });
+    expect(form.values.name).toBe(null);
+    form.values = {};
+    form.validate({});
+    expect(form.values.name).toBeUndefined();
+  });
 });
 
 describe("parent field", () => {
