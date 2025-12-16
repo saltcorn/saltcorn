@@ -732,7 +732,7 @@ class Field implements AbstractField {
     return !!fileview?.multipartFormData;
   }
 
-  validate(whole_rec: any): ResultMessage | null {
+  validate(whole_rec: any): ResultMessage | {} {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     let readval = null;
     let typeObj = this.type as Type;
@@ -745,7 +745,7 @@ class Field implements AbstractField {
       (fvObj?.read || typeObj?.read) &&
       typeof whole_rec[this.form_name] === "undefined"
     )
-      return null;
+      return {};
     if (this.is_fkey) {
       readval = readKey(whole_rec[this.form_name], this);
     } else {
