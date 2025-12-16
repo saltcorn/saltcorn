@@ -206,6 +206,29 @@ describe("Bool Form", () => {
     expect(form.values.done).toBe(true);
   });
 });
+describe("Form missing values", () => {
+  it("validates missing strings", async () => {
+    const form = new Form({
+      action: "/",
+      fields: [
+        new Field({
+          name: "name",
+          label: "Name",
+          type: "String",
+        }),
+      ],
+    });
+    form.values = {};
+    form.validate({ name: "Sam" });
+    expect(form.values.name).toBe("Sam");
+    form.values = {};
+    form.validate({ name: "" });
+    expect(form.values.name).toBe("");
+    form.values = {};
+    form.validate({});
+    expect(form.values.name).toBeUndefined();
+  });
+});
 
 describe("parent field", () => {
   it("validates", async () => {
