@@ -9,6 +9,10 @@ const {
 const fileUpload = require("express-fileupload");
 const { v4: uuidv4 } = require("uuid");
 const fs = require("fs");
+const {
+  CopyObjectCommand,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
 
 module.exports = {
   /**
@@ -83,8 +87,19 @@ module.exports = {
       return;
     }
 
-    // Create S3 object
-    const s3 = getS3Client();
+    const v3 = getS3Client();
+    const s3 = {
+      copyObject(params, cb) {
+        v3.send(new CopyObjectCommand(params))
+          .then((data) => cb(null, data))
+          .catch((err) => cb(err));
+      },
+      deleteObject(params, cb) {
+        v3.send(new DeleteObjectCommand(params))
+          .then((data) => cb(null, data))
+          .catch((err) => cb(err));
+      },
+    };
     const bucket = getState().getConfig("storage_s3_bucket");
 
     let newFileObject = {};
@@ -133,12 +148,10 @@ module.exports = {
    */
   serveObject: function (file, res, download) {
     if (file.s3_store) {
-      module.exports
-        .redirectToObject(file, res, download)
-        .catch((e) => {
-          getState().log(3, e.message || e);
-          res.status(500).send("Unable to redirect to object");
-        });
+      module.exports.redirectToObject(file, res, download).catch((e) => {
+        getState().log(3, e.message || e);
+        res.status(500).send("Unable to redirect to object");
+      });
     } else {
       res.download(file.location, file.filename, { dotfiles: "allow" });
     }
