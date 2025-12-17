@@ -291,16 +291,9 @@ export const getS3Client = (): S3 => {
         }
       }
       try {
-        console.log("S3 send", name, command?.input);
         const out = await origSend(command);
         return out;
       } catch (e: any) {
-        console.error("S3 error", name, {
-          name: e?.name,
-          message: e?.message,
-          httpStatusCode: e?.$metadata?.httpStatusCode,
-          requestId: e?.$metadata?.requestId,
-        });
         throw e;
       }
     };
