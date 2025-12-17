@@ -69,6 +69,22 @@ const normaliseEndpoint = (endpoint?: string, secure: boolean = true) => {
   return `${secure ? "https" : "http"}://${endpoint}`;
 };
 
+// Check is the endpoint is of Google Cloud Storage
+const isGcsEndpoint = (endpoint?: string): boolean => {
+  if (!endpoint) return false;
+  try {
+    const host = new URL(
+      normaliseEndpoint(endpoint) as string
+    ).hostname.toLowerCase();
+    return (
+      host === "storage.googleapis.com" ||
+      host.endsWith(".storage.googleapis.com")
+    );
+  } catch (e) {
+    return /storage\.googleapis\.com/i.test(endpoint);
+  }
+};
+
 const normaliseEndpointAndBucket = (
   rawSettings: S3Settings
 ): NormalizedS3Settings => {
@@ -89,7 +105,8 @@ const normaliseEndpointAndBucket = (
     )
       bucketInEndpointHost = true;
 
-    const bucketFromPath = !bucket && pathParts.length ? pathParts[0] : undefined;
+    const bucketFromPath =
+      !bucket && pathParts.length ? pathParts[0] : undefined;
     bucket = bucket || bucketFromPath;
 
     let endpointHost = url.hostname;
@@ -165,7 +182,9 @@ const getS3Settings = (): NormalizedS3Settings => {
   const raw: S3Settings = {
     bucket: state?.getConfig("storage_s3_bucket"),
     endpoint: state?.getConfig("storage_s3_endpoint"),
-    region: state?.getConfig("storage_s3_region") || "us-east-1",
+    region: isGcsEndpoint(state?.getConfig("storage_s3_endpoint"))
+      ? "auto"
+      : state?.getConfig("storage_s3_region") || "us-east-1",
     secure: !!state?.getConfig("storage_s3_secure", true),
     accessKey: state?.getConfig("storage_s3_access_key"),
     accessSecret: state?.getConfig("storage_s3_access_secret"),
@@ -241,7 +260,45 @@ export const getS3Client = (): S3 => {
         secretAccessKey: settings.accessSecret,
       };
     }
-    cachedClient = new S3(cfg);
+    const client = new S3(cfg);
+    const isGcs = isGcsEndpoint(settings.endpoint);
+
+    // Wrap send() to (optionally) sanitize requests for GCS and to log errors
+    const origSend = client.send.bind(client) as any;
+    (client as any).send = async (command: any) => {
+      const name = command?.constructor?.name;
+      if (isGcs && command?.input) {
+        const input = command.input as any;
+        if (name === "PutObjectCommand") {
+          // GCS does reject some AWS-only headers
+          delete input.ACL;
+          delete input.StorageClass;
+          if (input.CacheControl == null) delete input.CacheControl;
+          if (input.ServerSideEncryption == null)
+            delete input.ServerSideEncryption;
+          if (input.SSEKMSKeyId == null) delete input.SSEKMSKeyId;
+        } else if (name === "CopyObjectCommand") {
+          // Ensure CopySource format is acceptable to GCS and remove AWS-only headers
+          if (typeof input.CopySource === "string") {
+            const src = input.CopySource.replace(/^\/+/, "");
+            input.CopySource = `/${src}`;
+          }
+          delete input.ACL;
+          delete input.StorageClass;
+          if (input.ServerSideEncryption == null)
+            delete input.ServerSideEncryption;
+          if (input.SSEKMSKeyId == null) delete input.SSEKMSKeyId;
+        }
+      }
+      try {
+        const out = await origSend(command);
+        return out;
+      } catch (e: any) {
+        throw e;
+      }
+    };
+
+    cachedClient = client;
     cachedClientKey = cacheKey;
   }
   return cachedClient as S3;
