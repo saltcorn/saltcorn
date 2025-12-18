@@ -77,6 +77,13 @@ const configTypes: ConfigTypes = {
     blurb:
       "This is the email of the last user who created offline data in the mobile app.",
   },
+  mobile_sync_timestamp: {
+    type: "Date",
+    label: "Last mobile sync",
+    default: null,
+    blurb:
+      "This is the timestamp up to which data has been synced to the mobile app.",
+  },
   mobile_builder_settings: {
     type: "Object",
     label: "Mobile builder settings",

@@ -318,6 +318,17 @@ const handleUniqueConflicts = async (uniqueConflicts, translatedIds) => {
   }
 };
 
+const handleUpdateConflicts = async (dataConflicts) => {
+  for (const [tblName, updates] of Object.entries(dataConflicts)) {
+    const table = saltcorn.data.models.Table.findOne({ name: tblName });
+    const pkName = table.pk_name || "id";
+    for (const update of updates) {
+      const { [pkName]: _sc_pkValue, ...rest } = update;
+      await table.updateRow(rest, _sc_pkValue);
+    }
+  }
+};
+
 const updateSyncInfos = async (
   offlineChanges,
   allTranslations,
@@ -365,7 +376,8 @@ const syncOfflineData = async (synchedTables, syncTimestamp) => {
     path: "/sync/offline_changes",
     body: {
       changes: offlineChanges,
-      syncTimestamp,
+      oldSyncTimestamp: await getLocalSyncTimestamp(),
+      newSyncTimestamp: syncTimestamp,
     },
   });
   const { syncDir } = uploadResp.data;
@@ -377,10 +389,12 @@ const syncOfflineData = async (synchedTables, syncTimestamp) => {
       path: `/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`,
     });
     pollCount++;
-    const { finished, translatedIds, uniqueConflicts, error } = pollResp.data;
+    const { finished, translatedIds, uniqueConflicts, dataConflicts, error } =
+      pollResp.data;
     if (finished) {
       if (error) throw new Error(error.message);
       else {
+        await handleUpdateConflicts(dataConflicts);
         await handleUniqueConflicts(uniqueConflicts, translatedIds);
         await handleTranslatedIds(uniqueConflicts, translatedIds);
         await updateSyncInfos(offlineChanges, translatedIds, syncTimestamp);
@@ -425,12 +439,22 @@ const checkCleanSync = async (uploadStarted, uploadStartTime, userName) => {
   return false;
 };
 
-const getSyncTimestamp = async () => {
+const getServerTime = async () => {
   const resp = await apiCall({
     method: "GET",
     path: `/sync/sync_timestamp`,
   });
   return resp.data.syncTimestamp;
+};
+
+const setLocalSyncTimestamp = async (syncTimestamp) => {
+  const state = saltcorn.data.state.getState();
+  await state.setConfig("mobile_sync_timestamp", syncTimestamp);
+};
+
+const getLocalSyncTimestamp = async () => {
+  const state = saltcorn.data.state.getState();
+  return await state.getConfig("mobile_sync_timestamp");
 };
 
 const setSpinnerText = () => {
@@ -472,7 +496,7 @@ export async function sync(background = false) {
         uploadStartTime,
         user.email
       );
-      const syncTimestamp = await getSyncTimestamp();
+      const syncTimestamp = await getServerTime();
       await setUploadStarted(true, syncTimestamp);
       let lock = null;
       if (!background) {
@@ -494,6 +518,7 @@ export async function sync(background = false) {
         await syncRemoteDeletes(syncInfos, syncTimestamp);
         syncDir = await syncOfflineData(synchedTables, syncTimestamp);
         await syncRemoteData(syncInfos, syncTimestamp);
+        await setLocalSyncTimestamp(syncTimestamp);
         if (!background) await endOfflineMode(true);
         await setUploadStarted(false);
         await saltcorn.data.db.query("COMMIT");
