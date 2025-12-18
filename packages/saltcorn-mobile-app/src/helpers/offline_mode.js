@@ -318,14 +318,24 @@ const handleUniqueConflicts = async (uniqueConflicts, translatedIds) => {
   }
 };
 
-const handleUpdateConflicts = async (dataConflicts) => {
+const handleUpdateConflicts = async (dataConflicts, alerts) => {
+  let hasConflicts = false;
   for (const [tblName, updates] of Object.entries(dataConflicts)) {
     const table = saltcorn.data.models.Table.findOne({ name: tblName });
     const pkName = table.pk_name || "id";
     for (const update of updates) {
       const { [pkName]: _sc_pkValue, ...rest } = update;
       await table.updateRow(rest, _sc_pkValue);
+      hasConflicts = true;
     }
+  }
+  if (hasConflicts) {
+    alerts.push({
+      type: "info",
+      msg:
+        "Some of your changes could not be applied because the data has changed on the server. " +
+        "Your local data has been updated accordingly.",
+    });
   }
 };
 
@@ -368,7 +378,7 @@ const updateSyncInfos = async (
   }
 };
 
-const syncOfflineData = async (synchedTables, syncTimestamp) => {
+const syncOfflineData = async (synchedTables, syncTimestamp, alerts) => {
   const offlineChanges = await loadOfflineChanges(synchedTables);
   if (Object.keys(offlineChanges).length === 0) return null;
   const uploadResp = await apiCall({
@@ -394,7 +404,7 @@ const syncOfflineData = async (synchedTables, syncTimestamp) => {
     if (finished) {
       if (error) throw new Error(error.message);
       else {
-        await handleUpdateConflicts(dataConflicts);
+        await handleUpdateConflicts(dataConflicts, alerts);
         await handleUniqueConflicts(uniqueConflicts, translatedIds);
         await handleTranslatedIds(uniqueConflicts, translatedIds);
         await updateSyncInfos(offlineChanges, translatedIds, syncTimestamp);
@@ -475,7 +485,7 @@ export async function isSyncInProgress() {
   return syncInProgress;
 }
 
-export async function sync(background = false) {
+export async function sync(background = false, alerts = []) {
   if (syncInProgress)
     throw new Error("A synchronization is already in progress.");
 
@@ -516,7 +526,7 @@ export async function sync(background = false) {
         if (cleanSync) await clearLocalData(true);
         const { synchedTables, syncInfos } = await prepare();
         await syncRemoteDeletes(syncInfos, syncTimestamp);
-        syncDir = await syncOfflineData(synchedTables, syncTimestamp);
+        syncDir = await syncOfflineData(synchedTables, syncTimestamp, alerts);
         await syncRemoteData(syncInfos, syncTimestamp);
         await setLocalSyncTimestamp(syncTimestamp);
         if (!background) await endOfflineMode(true);
@@ -688,8 +698,10 @@ export function addPushSyncHandler() {
   const state = saltcorn.data.state.getState();
   state.mobile_push_handler["push_sync"] = async (notification) => {
     console.log("Push sync received:", notification);
+    const alerts = [];
     try {
-      await sync(true);
+      await sync(true, alerts);
+      if (alerts.length > 0) showAlerts(alerts);
     } catch (error) {
       console.log("Error during push sync:", error);
     }

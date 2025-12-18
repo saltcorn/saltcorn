@@ -892,15 +892,15 @@ async function callSync() {
     } else {
       const wasOffline = mobileConfig.isOfflineMode;
       showLoadSpinner();
-      await parent.saltcorn.mobileApp.offlineMode.sync();
+      const alerts = [];
+      await parent.saltcorn.mobileApp.offlineMode.sync(false, alerts);
       parent.saltcorn.mobileApp.common.clearAlerts();
       if (!wasOffline) {
-        parent.saltcorn.mobileApp.common.showAlerts([
-          {
-            type: "info",
-            msg: "Synchronized your offline data.",
-          },
-        ]);
+        alerts.push({
+          type: "info",
+          msg: "Synchronized your offline data.",
+        });
+        parent.saltcorn.mobileApp.common.showAlerts(alerts);
       } else {
         setNetworSwitcherOn();
         parent.saltcorn.mobileApp.navigation.clearHistory();
@@ -908,12 +908,11 @@ async function callSync() {
         parent.saltcorn.mobileApp.navigation.addRoute({
           route: "get/sync/sync_settings",
         });
-        parent.saltcorn.mobileApp.common.showAlerts([
-          {
-            type: "info",
-            msg: "Synchronized your offline data, you are online again.",
-          },
-        ]);
+        alerts.push({
+          type: "info",
+          msg: "Synchronized your offline data, you are online again.",
+        });
+        parent.saltcorn.mobileApp.common.showAlerts(alerts);
         parent.saltcorn.mobileApp.common.clearTopAlerts();
       }
     }
