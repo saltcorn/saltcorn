@@ -472,7 +472,7 @@ export async function init(mobileConfig) {
             }
         } else if (offlineUser) {
           if (offlineUser === mobileConfig.user.email) {
-            await sync();
+            await sync(false, alerts);
             alerts.push({
               type: "info",
               msg: "Synchronized your offline data.",
@@ -483,7 +483,7 @@ export async function init(mobileConfig) {
               msg: `'${offlineUser}' has not yet uploaded offline data.`,
             });
         } else {
-          await sync();
+          await sync(false, alerts);
           alerts.push({
             type: "info",
             msg: "Synchronized your offline data.",
@@ -555,7 +555,7 @@ export async function init(mobileConfig) {
             "Please go online and reload, the public login is not yet supported."
         );
       await publicLogin(getEntryPoint(100, state, state.mobileConfig));
-     } else {
+    } else {
       // open login page
       await showLogin(alerts);
     }
