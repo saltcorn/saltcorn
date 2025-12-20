@@ -24,6 +24,7 @@ const {
   select,
   textarea,
   option,
+  escape,
 } = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
@@ -567,7 +568,7 @@ const innerField =
             spellcheck: !monaco ? "false" : undefined,
             id: `input${text_attr(name)}`,
           },
-          v[hdr.form_name] || ""
+          escape(v[hdr.form_name] || "")
         );
       case "time_of_day":
         return [

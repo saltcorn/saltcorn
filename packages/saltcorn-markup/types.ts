@@ -155,6 +155,7 @@ export interface TagExports extends TagFunctionExports {
   domReady: (js: string) => string;
   text: (t: string | number, customWhiteList?: IWhiteList) => string;
   text_attr: (t: string | number) => string;
+  escape: (t: string) => string;
   nbsp: string;
   mkTag: (tnm: string, voidTag?: boolean) => TagFunction;
 }

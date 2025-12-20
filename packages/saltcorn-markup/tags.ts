@@ -92,6 +92,7 @@ const tagsExports: TagExports = {
   nbsp: "&nbsp;",
   /** @type {module:mktag} */
   mkTag,
+  escape,
 } as TagExports;
 
 export = tagsExports;
