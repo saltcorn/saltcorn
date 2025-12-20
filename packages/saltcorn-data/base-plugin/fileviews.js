@@ -21,6 +21,7 @@ const {
   source,
   textarea,
   with_curScript,
+  escape,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
@@ -605,7 +606,7 @@ module.exports = {
             id: `input${text_attr(nm)}`,
             mode: file_name ? File.nameToMimeType(file_name) : undefined,
           },
-          contents
+          escape(contents)
         )
       );
     },
