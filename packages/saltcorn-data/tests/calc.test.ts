@@ -86,15 +86,22 @@ describe("code pages in eval", () => {
   it("async codepages", async () => {
     await getState().setConfig("function_code_pages", {
       mypage: `
+      globalThis.barconst = 17;
+      function add8(x){return x+8}
       runAsync(async () => {
         const book = await Table.findOne("books").getRow({id:1});
         globalThis.bookpages = book.pages;      
       })
+      globalThis.bazconst = 12;
       `,
     });
     await getState().refresh_codepages();
 
     expect(eval_expression("bookpages", {})).toBe(967);
+    expect(eval_expression("barconst", {})).toBe(17);
+    expect(eval_expression("bazconst", {})).toBe(12);
+    expect(eval_expression("add8(bazconst)", {})).toBe(20);
+
   });
   it("user driven constant change in codepages", async () => {
     const table = Table.findOne("books");
