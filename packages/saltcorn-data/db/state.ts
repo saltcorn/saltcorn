@@ -1251,7 +1251,7 @@ class State {
         const codeStr = Object.values(code_pages).join(";\n");
         runInContext(codeStr, sandbox);
         for (const f of asyncFs) {
-          await f();          
+          await f();
         }
         Object.keys(sandbox).forEach((k) => {
           if (!funCtxKeys.has(k)) {
