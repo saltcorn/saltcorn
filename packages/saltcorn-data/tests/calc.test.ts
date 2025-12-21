@@ -123,6 +123,7 @@ describe("code pages in eval", () => {
     const id = await table.insertRow({ author: "Giuseppe Tomasi", pages: 209 });
     expect(eval_expression("sumbookpages", {})).toBe(1695 + 209);
     await table.deleteRows({ id });
+    await sleep(500);
   });
 });
 
