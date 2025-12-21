@@ -72,6 +72,19 @@ describe("eval_expression", () => {
   });
 });
 
+describe("code pages in eval", () => {
+  it("sync codepages", async () => {
+    await getState().setConfig("function_code_pages", {
+      mypage: `function add59(x){return x+59};
+      globalThis.fooconst = 13;
+      `,
+    });
+    await getState().refresh_codepages();
+
+    expect(eval_expression("add59(fooconst)", {})).toBe(59 + 13);
+  });
+});
+
 describe("calculated", () => {
   it("how to use functions", () => {
     const f = new Function("{x,y}", "return x+y");
