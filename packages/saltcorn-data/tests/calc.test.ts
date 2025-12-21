@@ -83,6 +83,16 @@ describe("code pages in eval", () => {
 
     expect(eval_expression("add59(fooconst)", {})).toBe(59 + 13);
   });
+  it("async codepages", async () => {
+    await getState().setConfig("function_code_pages", {
+      mypage: `const book = await Table.findOne("books").getRows({id:1});
+      globalThis.bookpages = book.pages;
+      `,
+    });
+    await getState().refresh_codepages();
+
+    expect(eval_expression("bookpages", {})).toBe(1);
+  });
 });
 
 describe("calculated", () => {
