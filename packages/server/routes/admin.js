@@ -4857,6 +4857,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
         ds.push(`declare var ${nm}: AsyncFunction;`);
       else if (f.constructor?.name === "Function")
         ds.push(`declare var ${nm}: Function;`);
+      else ds.push(`declare var ${nm}: ${typeof f};`);
     }
 
     if (!req.query.codepage) {
