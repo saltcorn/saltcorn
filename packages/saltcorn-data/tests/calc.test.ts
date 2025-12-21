@@ -112,7 +112,7 @@ describe("code pages in eval", () => {
     await getState().refresh_codepages();
 
     expect(eval_expression("sumbookpages", {})).toBe(1695);
-    await Trigger.create({
+    const tr = await Trigger.create({
       action: "run_js_code",
       table_id: table.id,
       when_trigger: "Insert",
@@ -124,6 +124,7 @@ describe("code pages in eval", () => {
     expect(eval_expression("sumbookpages", {})).toBe(1695 + 209);
     await table.deleteRows({ id });
     await sleep(500);
+    await tr.delete()
   });
 });
 
@@ -503,8 +504,8 @@ describe("single joinfields in stored calculated fields", () => {
     await books.updateRow({ pages: 728 }, book.id);
     const bid = await books.insertRow({ author: "Terry Eagleton", pages: 456 });
     const book1 = await books.getRow({ id: bid });
-    assertIsSet(book1);
-    expect(book1.storedsum).toBe(4);
+    assertIsSet(book1);  
+    expect(book1.storedsum).toBe(bid+1);
 
     await books.getField("number_of_fans")!.delete();
     await books.getField("idp1")!.delete();
