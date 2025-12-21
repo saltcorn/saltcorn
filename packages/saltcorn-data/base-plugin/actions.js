@@ -177,6 +177,10 @@ const run_code = async ({
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
   const sysState = getState();
   const require = (nm) => sysState.codeNPMmodules[nm];
+  const refreshSystemCache = async (which) => {
+    if (which) await sysState[`refresh_${which}`]();
+    else await sysState.refresh();
+  };
   const f = vm.runInNewContext(`async () => {${code}\n}`, {
     Table,
     table,
@@ -212,6 +216,7 @@ const run_code = async ({
     setTimeout,
     interpolate,
     require,
+    refreshSystemCache,
     setConfig: (k, v) =>
       sysState.isFixedConfig(k) ? undefined : sysState.setConfig(k, v),
     getConfig: (k) =>
