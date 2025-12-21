@@ -1194,11 +1194,14 @@ class State {
       {}
     );
     if (keepUnchanged && flatEqual(code_pages, this.oldCodePages)) return;
-    this.codepage_context = {};
     let errMsg;
     if (Object.keys(code_pages).length > 0) {
       const fetch = require("node-fetch");
       const Page = (await import("../models/page")).default;
+      const asyncFs: Function[] = [];
+      const runAsync = (f: Function) => {
+        asyncFs.push(f);
+      };
       try {
         const myContext = {
           ...this.function_context,
@@ -1214,6 +1217,7 @@ class State {
           fetch,
           sleep,
           interpolate,
+          runAsync,
           tryCatchInTransaction: db.tryCatchInTransaction,
           commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
           emit_to_client: (data: any, userIds: number[]) => {
@@ -1245,7 +1249,10 @@ class State {
         const sandbox = createContext(myContext);
         const codeStr = Object.values(code_pages).join(";\n");
         runInContext(codeStr, sandbox);
-
+        for (const f of asyncFs) {
+          await f();
+        }
+        this.codepage_context = {};
         Object.keys(sandbox).forEach((k) => {
           if (!funCtxKeys.has(k)) {
             this.codepage_context[k] = sandbox[k];
