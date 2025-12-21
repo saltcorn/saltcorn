@@ -1194,7 +1194,6 @@ class State {
       {}
     );
     if (keepUnchanged && flatEqual(code_pages, this.oldCodePages)) return;
-    this.codepage_context = {};
     let errMsg;
     if (Object.keys(code_pages).length > 0) {
       const fetch = require("node-fetch");
@@ -1253,6 +1252,7 @@ class State {
         for (const f of asyncFs) {
           await f();
         }
+        this.codepage_context = {};
         Object.keys(sandbox).forEach((k) => {
           if (!funCtxKeys.has(k)) {
             this.codepage_context[k] = sandbox[k];
