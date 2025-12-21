@@ -118,6 +118,9 @@ class File {
     where?: Where,
     selectopts: SelectOptions = {}
   ): Promise<Array<File>> {
+    if (where?.inDB) {
+      return [];
+    }
     const useS3 = isS3StorageEnabled();
     if (useS3) {
       return await File.findInS3(where, selectopts);
