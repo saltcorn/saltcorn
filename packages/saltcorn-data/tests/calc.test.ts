@@ -85,13 +85,16 @@ describe("code pages in eval", () => {
   });
   it("async codepages", async () => {
     await getState().setConfig("function_code_pages", {
-      mypage: `const book = await Table.findOne("books").getRows({id:1});
-      globalThis.bookpages = book.pages;
+      mypage: `
+      runAsync(async () => {
+        const book = await Table.findOne("books").getRow({id:1});
+        globalThis.bookpages = book.pages;      
+      })      
       `,
     });
     await getState().refresh_codepages();
 
-    expect(eval_expression("bookpages", {})).toBe(1);
+    expect(eval_expression("bookpages", {})).toBe(967);
   });
 });
 
