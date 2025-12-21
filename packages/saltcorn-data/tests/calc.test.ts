@@ -89,7 +89,7 @@ describe("code pages in eval", () => {
       runAsync(async () => {
         const book = await Table.findOne("books").getRow({id:1});
         globalThis.bookpages = book.pages;      
-      })      
+      })
       `,
     });
     await getState().refresh_codepages();
