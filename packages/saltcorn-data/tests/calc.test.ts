@@ -96,6 +96,34 @@ describe("code pages in eval", () => {
 
     expect(eval_expression("bookpages", {})).toBe(967);
   });
+  it("user driven constant change in codepages", async () => {
+    const table = Table.findOne("books");
+    assertIsSet(table);
+    await getState().setConfig("function_code_pages", {
+      mypage: `
+      runAsync(async () => {
+        const books = await Table.findOne("books").getRows({});
+        let sum = 0
+        for(const b of books) sum += b.pages
+        globalThis.sumbookpages = sum;
+      })
+      `,
+    });
+    await getState().refresh_codepages();
+
+    expect(eval_expression("sumbookpages", {})).toBe(1695);
+    await Trigger.create({
+      action: "run_js_code",
+      table_id: table.id,
+      when_trigger: "Insert",
+      configuration: {
+        code: `await refreshSystemCache("codepages");`,
+      },
+    });
+    await table.insertRow({ author: "Giuseppe Tomasi", pages: 209 });
+    expect(eval_expression("sumbookpages", {})).toBe(1695+209);
+
+  });
 });
 
 describe("calculated", () => {
