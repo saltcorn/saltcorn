@@ -1,11 +1,26 @@
 (function () {
-  console.log("Multi-file upload script loaded");
-  // const FILEPOND_JS = "https://unpkg.com/filepond@4.36.2/dist/filepond.min.js";
-  const FILEPOND_JS =
-    "https://cdn.jsdelivr.net/npm/filepond@4.32.10/dist/filepond.min.js";
-  // const FILEPOND_CSS = "https://unpkg.com/filepond@4.36.2/dist/filepond.min.css";
-  const FILEPOND_CSS =
-    "https://cdn.jsdelivr.net/npm/filepond@4.32.10/dist/filepond.min.css";
+  // Resolve static asset URLs using the server-provided version tag or the script source
+  const resolveAssetUrl = (filename) => {
+    const versionTag = window._sc_version_tag;
+    if (!versionTag) return `/static_assets/${versionTag}/${filename}`;
+    const script =
+      document.currentScript ||
+      Array.from(document.getElementsByTagName("script")).find((el) =>
+        el.src?.includes("multi-file-upload.js")
+      );
+    if (script?.src) {
+      const url = new URL(script.src, window.location.origin);
+      url.pathname = url.pathname.replace(/\/[^/]*$/, `/${filename}`);
+      url.search = "";
+      url.hash = "";
+      return url.toString();
+    }
+    return `/${filename}`;
+  };
+
+  const FILEPOND_JS = resolveAssetUrl("filepond.min.js");
+  const FILEPOND_CSS = resolveAssetUrl("filepond.min.css");
+
   const ready = (fn) =>
     document.readyState !== "loading"
       ? fn()
@@ -72,7 +87,7 @@
     updateStatus(root, message || (busy ? root._mfuCfg.uploadingText : ""));
   };
 
-  const fetchJson = (url, options = {}) => {
+  const fetchJson = async (url, options = {}) => {
     const headers = options.headers || {};
     headers["CSRF-Token"] =
       window._sc_globalCsrf || headers["CSRF-Token"] || "";
@@ -85,7 +100,6 @@
   };
 
   const uploadFiles = (root, files) => {
-    console.log("Uploading files", files, root);
     const cfg = root._mfuCfg;
     if (!cfg?.rowId || !files?.length) return;
     const formData = new FormData();

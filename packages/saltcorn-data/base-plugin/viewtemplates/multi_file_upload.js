@@ -392,7 +392,7 @@ const renderControls = (configuration, req) => {
       { class: "mb-2" },
       span({ class: "form-label fw-semibold" }, req.__("Files")),
       div(
-        { class: "sc-mfu-input" },
+        { class: ["sc-mfu-input", showDrop && "d-none"] },
         `<input type="file" class="form-control" data-mfu-input="true" ${
           configuration.accept
             ? `accept="${text_attr(configuration.accept)}"`

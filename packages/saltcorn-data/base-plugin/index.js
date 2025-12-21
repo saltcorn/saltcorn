@@ -39,13 +39,7 @@ const fieldviews = require("./fieldviews");
 const actions = require("./actions");
 const { string, int, bool, date, float, color } = require("./types");
 const multifileupload = require("./viewtemplates/multi_file_upload");
-// const pkg = require("../package.json");
 
-// console.log({
-//   version: pkg.version,
-// });
-
-const vers = (db.connectObj && db.connectObj.version_tag) || "dev";
 const types = [string, int, bool, date, float, color];
 const viewtemplates = [
   list,
@@ -61,7 +55,7 @@ const viewtemplates = [
 
 const pluginHeaders = [
   {
-    script: `/static_assets/${vers}/multi-file-upload.js`,
+    script: `/static_assets/${db.connectObj.version_tag}/multi-file-upload.js`,
     onlyViews: [multifileupload.name],
   },
   {
@@ -84,7 +78,7 @@ module.exports = {
   /** @type {object[]} */
   types,
   /** @type {object[]} */
-  viewtemplates,
+  viewtemplates,  
   /** @type {base-plugin/fileviews} */
   fileviews,
   /** @type {base-plugin/actions} */
