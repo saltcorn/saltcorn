@@ -178,8 +178,10 @@ const run_code = async ({
   const sysState = getState();
   const require = (nm) => sysState.codeNPMmodules[nm];
   const refreshSystemCache = async (which) => {
-    if (which) await sysState[`refresh_${which}`]();
-    else await sysState.refresh();
+    db.whenTransactionisFree(async () => {
+      if (which) await getState()[`refresh_${which}`]();
+      else await getState().refresh();
+    });
   };
   const f = vm.runInNewContext(`async () => {${code}\n}`, {
     Table,
