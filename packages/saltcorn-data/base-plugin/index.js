@@ -34,11 +34,11 @@ const room = require("./viewtemplates/room");
 const wfroom = require("./viewtemplates/workflow-room");
 const edit = require("./viewtemplates/edit");
 const filter = require("./viewtemplates/filter");
+const multifileupload = require("./viewtemplates/multi_file_upload");
 const fileviews = require("./fileviews");
 const fieldviews = require("./fieldviews");
 const actions = require("./actions");
 const { string, int, bool, date, float, color } = require("./types");
-const multifileupload = require("./viewtemplates/multi_file_upload");
 
 const types = [string, int, bool, date, float, color];
 const viewtemplates = [
@@ -53,38 +53,19 @@ const viewtemplates = [
   multifileupload,
 ];
 
-const pluginHeaders = [
-  {
-    script: `/static_assets/${db.connectObj.version_tag}/multi-file-upload.js`,
-    onlyViews: [multifileupload.name],
-  },
-  {
-    style: `
-.sc-mfu { border: 1px solid var(--bs-border-color, #dee2e6); border-radius: 0.5rem; padding: 1rem; }
-.sc-mfu-list { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
-.sc-mfu-row { background: rgba(0,0,0,0.02); border-radius: 0.35rem; padding: 0.5rem 0.75rem; }
-.sc-mfu-dropzone { border: 2px dashed var(--bs-border-color, #ced4da); border-radius: 0.5rem; padding: 1rem; text-align: center; cursor: pointer; color: var(--bs-secondary-color, #6c757d); transition: background 0.15s ease, border-color 0.15s ease; }
-.sc-mfu-dropzone:hover { background: rgba(0,0,0,0.03); border-color: var(--bs-primary, #0d6efd); color: var(--bs-primary, #0d6efd); }
-.sc-mfu-dropzone--active { border-color: var(--bs-primary, #0d6efd); color: var(--bs-primary, #0d6efd); background: rgba(13,110,253,0.08); }
-.sc-mfu.sc-mfu-disabled, .sc-mfu.sc-mfu-uploading { opacity: 0.6; pointer-events: none; }
-    `,
-    onlyViews: [multifileupload.name],
-  },
-];
-
 module.exports = {
   /** @type {number} */
   sc_plugin_api_version: 1,
   /** @type {object[]} */
   types,
   /** @type {object[]} */
-  viewtemplates,  
+  viewtemplates,
   /** @type {base-plugin/fileviews} */
   fileviews,
   /** @type {base-plugin/actions} */
   actions,
   /** @type {base-plugin/fieldviews} */
   fieldviews,
-  headers: pluginHeaders,
+  headers: [...multifileupload.headers],
   /** @type {object} */
 };

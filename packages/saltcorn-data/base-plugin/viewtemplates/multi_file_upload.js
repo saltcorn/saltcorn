@@ -9,8 +9,6 @@ const Form = require("../../models/form");
 const Workflow = require("../../models/workflow");
 const File = require("../../models/file");
 const User = require("../../models/user");
-const FieldRepeat = require("../../models/fieldrepeat");
-const { eval_expression } = require("../../models/expression");
 const { InvalidConfiguration } = require("../../utils");
 const {
   div,
@@ -24,8 +22,8 @@ const {
   strong,
 } = require("@saltcorn/markup/tags");
 const { basename } = require("path");
+const db = require("../../db");
 
-const ACCEPT_SEP = /\s*,\s*/;
 const VIEW_NAME = "Multi file upload";
 
 const isFileField = (field) =>
@@ -56,8 +54,6 @@ const buildChildOptions = async (table) => {
     if (!childTables[rel.table.name]) childTables[rel.table.name] = rel.table;
   }
   const fileFieldOptions = [];
-  const childFieldOptions = [];
-  const orderFieldOptions = [];
   for (const childName of Object.keys(childTables)) {
     const childTable = childTables[childName];
     await childTable.getFields();
@@ -67,8 +63,6 @@ const buildChildOptions = async (table) => {
       if (isFileField(f)) {
         fileFieldOptions.push(option);
       }
-      orderFieldOptions.push(option);
-      childFieldOptions.push(option);
     });
   }
   const unique = (list) =>
@@ -78,10 +72,19 @@ const buildChildOptions = async (table) => {
   return {
     relationOptions,
     fileFieldOptions: unique(fileFieldOptions),
-    childFieldOptions: unique(childFieldOptions),
-    orderFieldOptions: unique(orderFieldOptions),
   };
 };
+
+const buildDefaultCopy = (req) => ({
+  dropLabel: req.__("Drop files here or click to browse"),
+  emptyText: req.__("No files uploaded yet"),
+  disabledText: req.__("Save this record before uploading files."),
+  uploadLabel: req.__("Select files"),
+  uploadingText: req.__("Uploading..."),
+  successText: req.__("Files uploaded"),
+  errorText: req.__("Could not upload files"),
+  deleteConfirm: req.__("Remove this file?"),
+});
 
 const configuration_workflow = (req) =>
   new Workflow({
@@ -91,12 +94,8 @@ const configuration_workflow = (req) =>
         form: async (context) => {
           const table = Table.findOne({ id: context.table_id });
           await table.getFields();
-          const {
-            relationOptions,
-            fileFieldOptions,
-            childFieldOptions,
-            orderFieldOptions,
-          } = await buildChildOptions(table);
+          const { relationOptions, fileFieldOptions } =
+            await buildChildOptions(table);
           const roles = await User.get_roles();
           if (!relationOptions.length) {
             return new Form({
@@ -151,9 +150,8 @@ const configuration_workflow = (req) =>
                 name: "file_min_role",
                 label: req.__("Minimum role to read files"),
                 type: "Integer",
-                attributes: {
-                  options: roles.map((r) => ({ value: r.id, label: r.role })),
-                },
+                input_type: "select",
+                options: roles.map((r) => ({ value: r.id, label: r.role })),
                 default: 1,
               },
               {
@@ -163,14 +161,6 @@ const configuration_workflow = (req) =>
                 required: true,
                 default: "input",
                 attributes: { options: modeOptions },
-              },
-              {
-                name: "accept",
-                label: req.__("Accepted file types"),
-                type: "String",
-                sublabel: req.__(
-                  "Example: image/* or .pdf,.docx. Leave blank to allow any file."
-                ),
               },
               {
                 name: "show_existing",
@@ -186,62 +176,14 @@ const configuration_workflow = (req) =>
                 showIf: { show_existing: true },
               },
               {
-                name: "order_field",
-                label: req.__("Order by"),
-                type: "String",
-                attributes: { options: ["", ...orderFieldOptions] },
+                name: "delete_from_store",
+                label: req.__("Remove stored file when deleting"),
+                type: "Bool",
+                showIf: { allow_delete: true },
                 sublabel: req.__(
-                  "Optional field used to sort the child rows when rendering"
+                  "If enabled, deleting a child row also deletes the uploaded file from the file store."
                 ),
               },
-              {
-                name: "order_desc",
-                label: req.__("Descending order"),
-                type: "Bool",
-                showIf: { order_field: orderFieldOptions.map((o) => o.value) },
-              },
-              {
-                name: "drop_label",
-                label: req.__("Drop zone text"),
-                type: "String",
-                default: req.__("Drop files here or click to browse"),
-              },
-              {
-                name: "empty_text",
-                label: req.__("Empty state text"),
-                type: "String",
-                default: req.__("No files uploaded yet"),
-              },
-              {
-                name: "disabled_text",
-                label: req.__("Message before record is saved"),
-                type: "String",
-                default: req.__("Save this record before uploading files."),
-              },
-              new FieldRepeat({
-                name: "extra_values",
-                label: req.__("Extra child field values"),
-                fields: [
-                  {
-                    name: "field",
-                    label: req.__("Child field"),
-                    type: "String",
-                    attributes: { options: childFieldOptions },
-                  },
-                  {
-                    name: "formula",
-                    label: req.__("Formula"),
-                    input_type: "code",
-                    attributes: {
-                      mode: "application/javascript",
-                      singleline: true,
-                    },
-                    sublabel: req.__(
-                      "Use parent row values via their field names, or the special objects parent, file, and user"
-                    ),
-                  },
-                ],
-              }),
             ],
           });
         },
@@ -271,16 +213,6 @@ const resolveConfig = async (table_id, configuration) => {
     throw new InvalidConfiguration(
       `Field ${fileFieldName} on ${childTable.name} must be a File field`
     );
-  const extraValues = (configuration.extra_values || [])
-    .filter((row) => row && row.field && row.formula)
-    .map(({ field, formula }) => {
-      const { field: parsedName } = parseFieldRef(field);
-      return { field: parsedName, formula };
-    })
-    .filter(({ field }) => !!childTable.getField(field));
-  const orderField = configuration.order_field
-    ? childTable.getField(parseFieldRef(configuration.order_field).field)
-    : null;
   return {
     parentTable,
     parentPk: parentTable.pk_name,
@@ -288,38 +220,15 @@ const resolveConfig = async (table_id, configuration) => {
     childPk: childTable.pk_name,
     fkField,
     fileField,
-    extraValues,
-    orderField,
   };
 };
 
-const fileMatchesAccept = (upload, accept) => {
-  if (!accept) return true;
-  const accepts = accept.split(ACCEPT_SEP).filter((s) => s.length);
-  if (!accepts.length) return true;
-  const mime = (upload.mimetype || "").toLowerCase();
-  const extension = basename(upload.name || "")
-    .split(".")
-    .pop()
-    ?.toLowerCase();
-  return accepts.some((entry) => {
-    if (!entry) return false;
-    const token = entry.toLowerCase();
-    if (token.endsWith("/*")) {
-      const prefix = token.replace("/*", "");
-      return mime.startsWith(prefix + "/");
-    }
-    if (token.startsWith(".")) return extension === token.replace(/^\./, "");
-    return mime === token;
-  });
-};
-
-const buildListHtml = (rows, childTable, fileField, cfg, req) => {
+const buildListHtml = (rows, childTable, fileField, cfg, req, copy) => {
   if (!cfg.show_existing) return "";
   if (!rows || rows.length === 0)
     return div(
       { class: "sc-mfu-empty text-muted", "data-mfu-empty": "true" },
-      cfg.empty_text || req.__("No files uploaded yet")
+      copy.emptyText
     );
   const allowDelete = cfg.allow_delete !== false;
   return rows
@@ -362,30 +271,25 @@ const buildListHtml = (rows, childTable, fileField, cfg, req) => {
     .join("");
 };
 
-const buildClientConfig = (viewname, parentId, configuration, req) => ({
+const buildClientConfig = (viewname, parentId, configuration, copy) => ({
   viewname,
   rowId: parentId || null,
   mode: configuration.ui_mode || "input",
-  accept: configuration.accept || "",
   allowDelete:
     configuration.allow_delete !== false &&
     configuration.show_existing !== false,
   showList: configuration.show_existing !== false,
-  dropLabel:
-    configuration.drop_label || req.__("Drop files here or click to browse"),
-  emptyText: configuration.empty_text || req.__("No files uploaded yet"),
-  disabledText:
-    configuration.disabled_text ||
-    req.__("Save this record before uploading files."),
-  uploadLabel: req.__("Select files"),
-  uploadingText: req.__("Uploading..."),
-  successText: req.__("Files uploaded"),
-  errorText: req.__("Could not upload files"),
-  deleteConfirm: req.__("Remove this file?"),
+  dropLabel: copy.dropLabel,
+  emptyText: copy.emptyText,
+  disabledText: copy.disabledText,
+  uploadLabel: copy.uploadLabel,
+  uploadingText: copy.uploadingText,
+  successText: copy.successText,
+  errorText: copy.errorText,
+  deleteConfirm: copy.deleteConfirm,
 });
 
-const renderControls = (configuration, req) => {
-  console.log("Rendering controls");
+const renderControls = (configuration, req, copy) => {
   const showDrop = configuration.ui_mode === "dropzone";
   return (
     div(
@@ -393,11 +297,7 @@ const renderControls = (configuration, req) => {
       span({ class: "form-label fw-semibold" }, req.__("Files")),
       div(
         { class: ["sc-mfu-input", showDrop && "d-none"] },
-        `<input type="file" class="form-control" data-mfu-input="true" ${
-          configuration.accept
-            ? `accept="${text_attr(configuration.accept)}"`
-            : ""
-        } multiple />`
+        `<input type="file" class="form-control" data-mfu-input="true" multiple />`
       ),
       div(
         {
@@ -405,10 +305,7 @@ const renderControls = (configuration, req) => {
           "data-mfu-dropzone": "true",
         },
         i({ class: "fas fa-cloud-upload-alt me-2" }),
-        span(
-          configuration.drop_label ||
-            req.__("Drop files here or click to browse")
-        )
+        span(copy.dropLabel)
       ),
       div({ class: "text-muted small mt-2", "data-mfu-status": "true" })
     ) +
@@ -417,8 +314,7 @@ const renderControls = (configuration, req) => {
         class: "alert alert-warning mt-3 d-none",
         "data-mfu-disabled": "true",
       },
-      configuration.disabled_text ||
-        req.__("Save this record before uploading files.")
+      copy.disabledText
     )
   );
 };
@@ -437,28 +333,24 @@ const get_state_fields = async (table_id) => {
 
 const run = async (table_id, viewname, configuration, state, extra) => {
   const req = extra.req;
-  const { parentTable, parentPk, childTable, fileField, orderField, fkField } =
+  const { parentTable, parentPk, childTable, fileField, fkField } =
     await resolveConfig(table_id, configuration);
   const parentId = state?.[parentPk];
   let listRows = [];
   if (configuration.show_existing !== false && parentId) {
     const where = { [fkField.name]: parentId };
-    const selectOpts = orderField
-      ? {
-          orderBy: orderField.name,
-          orderDesc: !!configuration.order_desc,
-        }
-      : {};
-    listRows = await childTable.getRows(where, selectOpts);
+    listRows = await childTable.getRows(where);
   }
+  const copy = buildDefaultCopy(req);
   const listHtml = buildListHtml(
     listRows,
     childTable,
     fileField,
     configuration,
-    req
+    req,
+    copy
   );
-  const clientCfg = buildClientConfig(viewname, parentId, configuration, req);
+  const clientCfg = buildClientConfig(viewname, parentId, configuration, copy);
   return div(
     {
       class: "sc-mfu",
@@ -469,32 +361,8 @@ const run = async (table_id, viewname, configuration, state, extra) => {
     configuration.show_existing !== false
       ? div({ class: "sc-mfu-list", "data-mfu-list": "true" }, listHtml)
       : "",
-    renderControls(configuration, req)
+    renderControls(configuration, req, copy)
   );
-};
-
-const applyExtraValues = (extraValues, parentRow, upload, req, childTable) => {
-  const env = {
-    ...parentRow,
-    parent: parentRow,
-    file: {
-      filename: upload.name,
-      mimetype: upload.mimetype,
-      size: upload.size,
-    },
-  };
-  const values = {};
-  for (const extra of extraValues) {
-    const field = childTable.getField(extra.field);
-    if (!field) continue;
-    values[field.name] = eval_expression(
-      extra.formula,
-      env,
-      req.user,
-      `Multi file upload extra value (${field.name})`
-    );
-  }
-  return values;
 };
 
 const upload_files = async (
@@ -505,8 +373,8 @@ const upload_files = async (
   { req }
 ) => {
   try {
-    console.log("Upload files called");
     const parsed = await resolveConfig(table_id, configuration);
+    const copy = buildDefaultCopy(req);
     const parentId = Number(body.row_id);
     if (!parentId) return { json: { error: req.__("Missing parent row id") } };
     const uploadsRaw = req.files && req.files.files;
@@ -519,12 +387,9 @@ const upload_files = async (
     if (!parentRow) return { json: { error: req.__("Parent row not found") } };
     const inserted = [];
     for (const upload of uploads) {
-      if (!fileMatchesAccept(upload, configuration.accept)) {
-        continue;
-      }
       const stored = await File.from_req_files(
         upload,
-        req.user?.id || 1,
+        req.user?.id,
         configuration.file_min_role || 1,
         configuration.target_folder || "/"
       );
@@ -533,38 +398,22 @@ const upload_files = async (
         [parsed.fkField.name]: parentId,
         [parsed.fileField.name]: file.field_value,
       };
-      Object.assign(
-        newRow,
-        applyExtraValues(
-          parsed.extraValues,
-          parentRow,
-          upload,
-          req,
-          parsed.childTable
-        )
-      );
       const result = await parsed.childTable.tryInsertRow(newRow, req.user);
       if (result?.error) throw new Error(result.error);
       inserted.push(newRow);
     }
     let listHtml;
     if (configuration.show_existing !== false) {
-      const selectOpts = parsed.orderField
-        ? {
-            orderBy: parsed.orderField.name,
-            orderDesc: !!configuration.order_desc,
-          }
-        : {};
-      const rows = await parsed.childTable.getRows(
-        { [parsed.fkField.name]: parentId },
-        selectOpts
-      );
+      const rows = await parsed.childTable.getRows({
+        [parsed.fkField.name]: parentId,
+      });
       listHtml = buildListHtml(
         rows,
         parsed.childTable,
         parsed.fileField,
         configuration,
-        req
+        req,
+        copy
       );
     }
     return {
@@ -588,6 +437,7 @@ const delete_file = async (
 ) => {
   try {
     const parsed = await resolveConfig(table_id, configuration);
+    const copy = buildDefaultCopy(req);
     const parentId = Number(body.row_id);
     const childId = Number(body.child_id);
     if (!parentId || !childId)
@@ -596,25 +446,25 @@ const delete_file = async (
     const row = rows?.[0];
     if (!row || row[parsed.fkField.name] !== parentId)
       return { json: { error: req.__("File not found") } };
+    let fileRecord = null;
+    if (configuration.delete_from_store) {
+      const storedFile = row[parsed.fileField.name];
+      if (storedFile) fileRecord = await File.findOne(storedFile);
+    }
     await parsed.childTable.deleteRows({ [parsed.childPk]: childId }, req.user);
+    if (fileRecord) await fileRecord.delete();
     let listHtml;
     if (configuration.show_existing !== false) {
-      const selectOpts = parsed.orderField
-        ? {
-            orderBy: parsed.orderField.name,
-            orderDesc: !!configuration.order_desc,
-          }
-        : {};
-      const rowsAfter = await parsed.childTable.getRows(
-        { [parsed.fkField.name]: parentId },
-        selectOpts
-      );
+      const rowsAfter = await parsed.childTable.getRows({
+        [parsed.fkField.name]: parentId,
+      });
       listHtml = buildListHtml(
         rowsAfter,
         parsed.childTable,
         parsed.fileField,
         configuration,
-        req
+        req,
+        copy
       );
     }
     return { json: { success: true, listHtml } };
@@ -622,6 +472,25 @@ const delete_file = async (
     return { json: { error: e.message } };
   }
 };
+
+const headers = [
+  {
+    script: `/static_assets/${db.connectObj.version_tag}/multi-file-upload.js`,
+    onlyViews: [VIEW_NAME],
+  },
+  {
+    style: `
+.sc-mfu { border: 1px solid var(--bs-border-color, #dee2e6); border-radius: 0.5rem; padding: 1rem; }
+.sc-mfu-list { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.35rem; }
+.sc-mfu-row { background: rgba(0,0,0,0.02); border-radius: 0.35rem; padding: 0.5rem 0.75rem; }
+.sc-mfu-dropzone { border: 2px dashed var(--bs-border-color, #ced4da); border-radius: 0.5rem; padding: 1rem; text-align: center; cursor: pointer; color: var(--bs-secondary-color, #6c757d); transition: background 0.15s ease, border-color 0.15s ease; }
+.sc-mfu-dropzone:hover { background: rgba(0,0,0,0.03); border-color: var(--bs-primary, #0d6efd); color: var(--bs-primary, #0d6efd); }
+.sc-mfu-dropzone--active { border-color: var(--bs-primary, #0d6efd); color: var(--bs-primary, #0d6efd); background: rgba(13,110,253,0.08); }
+.sc-mfu.sc-mfu-disabled, .sc-mfu.sc-mfu-uploading { opacity: 0.6; pointer-events: none; }
+    `,
+    onlyViews: [VIEW_NAME],
+  },
+];
 
 module.exports = {
   name: VIEW_NAME,
@@ -631,4 +500,5 @@ module.exports = {
   get_state_fields,
   run,
   routes: { upload_files, delete_file },
+  headers,
 };
