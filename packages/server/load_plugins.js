@@ -28,9 +28,8 @@ const isFixedPlugin = (plugin) =>
  * @param plugin plugin to load
  */
 const getEngineInfos = async (plugin, forceFetch) => {
-  const rootState = getRootState();
-  const cached = rootState.getConfig("engines_cache", {}) || {};
-  const airgap = rootState.getConfig("airgap", false);
+  const cached = getRootState().getConfig("engines_cache", {}) || {};
+  const airgap = getState().getConfig("airgap", false);
 
   if (airgap || (cached[plugin.location] && !forceFetch)) {
     return cached[plugin.location] || {};
@@ -48,7 +47,7 @@ const getEngineInfos = async (plugin, forceFetch) => {
         : {};
     }
     cached[plugin.location] = newCached;
-    await rootState.setConfig("engines_cache", { ...cached });
+    await getRootState().setConfig("engines_cache", { ...cached });
     return newCached;
   }
 };
@@ -72,11 +71,17 @@ const ensurePluginSupport = async (plugin, forceFetch) => {
     versions,
     packagejson.version
   );
-  if (!supported)
-    throw new Error(
-      `Unable to find a supported version for '${plugin.location}'`
-    );
-  else if (
+  if (!supported) {
+    if (getState().getConfig("airgap", false))
+      getState().log(
+        5,
+        `Warning: No supported version for '${plugin.location}' in airgap mode"}`
+      );
+    else
+      throw new Error(
+        `Unable to find a supported version for '${plugin.location}'`
+      );
+  } else if (
     supported !== plugin.version ||
     (plugin.version === "latest" && supported !== resolveLatest(versions))
   )
