@@ -131,7 +131,9 @@ const typeToGridType = (t, field) => {
   if (t.name === "String" && field.attributes && field.attributes.options) {
     jsgField.editor = "list";
 
-    const values = field.attributes.options.split(",").map((o) => o.trim());
+    const values = Array.isArray(field.attributes.options)
+      ? field.attributes.options
+      : field.attributes.options.split(",").map((o) => o.trim());
     if (!field.required) values.unshift("");
 
     jsgField.editorParams = { values };
