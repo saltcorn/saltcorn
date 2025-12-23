@@ -498,7 +498,12 @@ const page_group_dropdown = (page_group, req) =>
  * @param {object} req
  * @returns {string}
  */
-const page_dropdown = (page, req, on_done_redirect_str = "") =>
+const page_dropdown = (
+  page,
+  req,
+  on_done_redirect_str = "",
+  includeTestRun = false
+) =>
   settingsDropdown(`dropdownMenuButton${page.id}`, [
     a(
       {
@@ -507,13 +512,14 @@ const page_dropdown = (page, req, on_done_redirect_str = "") =>
       },
       '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
     ),
-    a(
-      {
-        class: "dropdown-item",
-        href: `/pageedit/edit/${encodeURIComponent(page.name)}${on_done_redirect_str}`,
-      },
-      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
-    ),
+    includeTestRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/pageedit/edit-properties/${encodeURIComponent(page.name)}${on_done_redirect_str}`,
+        },
+        '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+      ),
     post_dropdown_item(
       `/pageedit/add-to-menu/${page.id}${on_done_redirect_str}`,
       '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
@@ -531,6 +537,16 @@ const page_dropdown = (page, req, on_done_redirect_str = "") =>
       },
       '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
     ),
+    includeTestRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/registry-editor?etype=page&ename=${encodeURIComponent(
+            page.name
+          )}`,
+        },
+        '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
+      ),
     div({ class: "dropdown-divider" }),
     post_dropdown_item(
       `/pageedit/delete/${page.id}${on_done_redirect_str}`,
@@ -709,6 +725,16 @@ const trigger_dropdown = (
       },
       '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
     ),
+    includeTestRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/registry-editor?etype=trigger&ename=${encodeURIComponent(
+            trigger.name
+          )}`,
+        },
+        '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
+      ),
     post_dropdown_item(
       `/actions/clone/${trigger.id}${on_done_redirect_str}`,
       '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),

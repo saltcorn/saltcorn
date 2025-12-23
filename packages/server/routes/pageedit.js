@@ -525,7 +525,14 @@ router.post(
           entity_name: dbPage.name,
         });
         if (req.xhr) res.json({ success: "ok" });
-        else res.redirect(`/pageedit/`);
+        else {
+          let redirectTarget =
+            req.query.on_done_redirect &&
+            is_relative_url("/" + req.query.on_done_redirect)
+              ? `/${req.query.on_done_redirect}`
+              : "/pageedit";
+          res.redirect(redirectTarget);
+        }
       } else {
         if (!pageRow.layout) pageRow.layout = {};
         if (!pageRow.fixed_states) pageRow.fixed_states = {};

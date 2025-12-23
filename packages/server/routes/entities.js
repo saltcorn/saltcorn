@@ -59,6 +59,7 @@ const stripLeadingSlash = (path = "") =>
  */
 const getAllEntities = async () => {
   const tables = await Table.find({}, { cached: true });
+  const tableNameById = new Map(tables.map((t) => [t.id, t.name]));
   const views = await View.find({}, { cached: true });
   const pages = await Page.find({}, { cached: true });
   const triggers = await Trigger.findAllWithTableName();
@@ -98,6 +99,7 @@ const getAllEntities = async () => {
       metadata: {
         viewtemplate: v.viewtemplate,
         table_id: v.table_id,
+        table_name: v.table_id ? tableNameById.get(v.table_id) : null,
         singleton: v.singleton,
         min_role: v.min_role,
       },
@@ -175,7 +177,21 @@ const detailsContent = (entity, req) => {
       bits.push(span({ class: "badge bg-success me-1" }, req.__("History")));
     if (entity.metadata.isOwned)
       bits.push(span({ class: "badge bg-primary me-1" }, req.__("Owned")));
+    if (entity.metadata.provider_name)
+      bits.push(
+        span(
+          { class: "badge bg-success me-1" },
+          text(entity.metadata.provider_name)
+        )
+      );
   } else if (entity.type === "view" && entity.metadata.viewtemplate) {
+    if (entity.metadata.table_name)
+      bits.push(
+        span(
+          { class: "badge bg-secondary me-1" },
+          text(entity.metadata.table_name)
+        )
+      );
     bits.push(
       span({ class: "text-muted small" }, text(entity.metadata.viewtemplate))
     );
@@ -257,6 +273,15 @@ const tableActionsDropdown = (entity, req, user_can_edit_tables) => {
         req,
         true
       ),
+    a(
+      {
+        class: "dropdown-item",
+        href: `/registry-editor?etype=table&ename=${encodeURIComponent(
+          entity.name
+        )}`,
+      },
+      '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
+    ),
     user_can_edit_tables &&
       entity.name !== "users" &&
       post_dropdown_item(
@@ -304,7 +329,7 @@ router.get(
       if (entity.type === "view")
         return view_dropdown(entity, req, on_done_redirect_str);
       if (entity.type === "page")
-        return page_dropdown(entity, req, on_done_redirect_str);
+        return page_dropdown(entity, req, on_done_redirect_str, true);
       if (entity.type === "trigger")
         return trigger_dropdown(entity, req, on_done_redirect_str, true);
       return "";
@@ -434,6 +459,13 @@ router.get(
         t
       ];
 
+    const legacyLinkMeta = {
+      table: { href: "/table", label: req.__("Go to tables list") },
+      view: { href: "/viewedit", label: req.__("Go to views list") },
+      page: { href: "/pageedit", label: req.__("Go to pages list") },
+      trigger: { href: "/actions", label: req.__("Go to triggers list") },
+    };
+
     const bodyRows = entities.map((entity) => {
       const key = `${entity.type}:${entity.id}`;
       const tagIds = tagsByEntityKey.get(key) || [];
@@ -560,6 +592,9 @@ router.get(
         const filterButtons = document.querySelectorAll(".entity-filter-btn");
         const entityRows = document.querySelectorAll(".entity-row");
         const tagButtons = document.querySelectorAll(".tag-filter-btn");
+        const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};
+        const legacyButton = document.getElementById("legacy-entity-link");
+        const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
 
         // Track active filters
         const activeFilters = new Set([]);
@@ -613,6 +648,21 @@ router.get(
           document
             .querySelectorAll('form[action*="on_done_redirect="]')
             .forEach((form) => updateAttr(form, "action"));
+        };
+
+        const updateLegacyButton = () => {
+          if (!legacyButton) return;
+          const activeTypes = Array.from(activeFilters);
+          if (activeTypes.length === 1) {
+            const meta = LEGACY_LINK_META[activeTypes[0]];
+            if (meta) {
+              legacyButton.classList.remove("d-none");
+              legacyButton.setAttribute("href", meta.href);
+              if (legacyLabel) legacyLabel.textContent = meta.label;
+              return;
+            }
+          }
+          legacyButton.classList.add("d-none");
         };
 
         const initFromUrl = () => {
@@ -692,6 +742,7 @@ router.get(
 
           updateUrl();
           updateOnDoneRedirectTargets();
+          updateLegacyButton();
         }
 
         // Search input handler
@@ -783,7 +834,7 @@ router.get(
               a(
                 {
                   href: `/table/new/${on_done_redirect_str}`,
-                  class: "btn btn-primary",
+                  class: "btn btn-secondary",
                 },
                 i({ class: "fas fa-table me-1" }),
                 req.__("Create table")
@@ -791,7 +842,7 @@ router.get(
               a(
                 {
                   href: `/viewedit/new${on_done_redirect_str}`,
-                  class: "btn btn-primary",
+                  class: "btn btn-secondary",
                 },
                 i({ class: "fas fa-eye me-1" }),
                 req.__("Create view")
@@ -799,7 +850,7 @@ router.get(
               a(
                 {
                   href: `/pageedit/new${on_done_redirect_str}`,
-                  class: "btn btn-primary",
+                  class: "btn btn-secondary",
                 },
                 i({ class: "fas fa-file me-1" }),
                 req.__("Create page")
@@ -807,10 +858,19 @@ router.get(
               a(
                 {
                   href: `/actions/new${on_done_redirect_str}`,
-                  class: "btn btn-primary",
+                  class: "btn btn-secondary",
                 },
                 i({ class: "fas fa-play me-1" }),
                 req.__("Create trigger")
+              ),
+              a(
+                {
+                  id: "legacy-entity-link",
+                  class: "btn btn-outline-secondary d-none",
+                  href: "#",
+                },
+                i({ class: "fas fa-list me-1" }),
+                span({ class: "legacy-label" }, req.__("Open legacy list"))
               )
             ),
           },
