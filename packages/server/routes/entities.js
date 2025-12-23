@@ -13,6 +13,8 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const Tag = require("@saltcorn/data/models/tag");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const User = require("@saltcorn/data/models/user");
+const db = require("@saltcorn/data/db");
+const { getState } = require("@saltcorn/data/db/state");
 const {
   div,
   input,
@@ -30,7 +32,12 @@ const {
   th,
   td,
 } = require("@saltcorn/markup/tags");
-const { post_dropdown_item } = require("@saltcorn/markup");
+const { post_dropdown_item, settingsDropdown } = require("@saltcorn/markup");
+const {
+  view_dropdown,
+  page_dropdown,
+  trigger_dropdown,
+} = require("./common_lists.js");
 const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
 
 /**
@@ -42,6 +49,10 @@ const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
  */
 const router = new Router();
 module.exports = router;
+
+// Ensure on_done_redirect values remain relative to the app root
+const stripLeadingSlash = (path = "") =>
+  path.startsWith("/") ? path.slice(1) : path;
 
 /**
  * Get all entities with their type and metadata
@@ -69,6 +80,7 @@ const getAllEntities = async () => {
         isOwned: t.ownership_field_id || t.ownership_formula,
         min_role_read: t.min_role_read,
         min_role_write: t.min_role_write,
+        provider_name: t.provider_name,
       },
     });
   });
@@ -211,6 +223,62 @@ const roleLabel = (entity, roles) => {
   }
 };
 
+const tableActionsDropdown = (entity, req, user_can_edit_tables) => {
+  const metadata = entity.metadata || {};
+  if (metadata.external || metadata.provider_name) return "";
+  const items = [
+    !db.isSQLite &&
+      user_can_edit_tables &&
+      entity.name !== "users" &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/table/rename/${entity.id}`,
+        },
+        '<i class="fas fa-edit"></i>&nbsp;' + req.__("Rename table")
+      ),
+    post_dropdown_item(
+      `/table/recalc-stored/${encodeURIComponent(entity.name)}`,
+      '<i class="fas fa-sync"></i>&nbsp;' + req.__("Recalculate stored fields"),
+      req
+    ),
+    user_can_edit_tables &&
+      post_dropdown_item(
+        `/table/delete-all-rows/${encodeURIComponent(entity.name)}`,
+        '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete all rows"),
+        req,
+        true
+      ),
+    user_can_edit_tables &&
+      entity.name !== "users" &&
+      post_dropdown_item(
+        `/table/forget-table/${entity.id}`,
+        '<i class="fas fa-recycle"></i>&nbsp;' + req.__("Forget table"),
+        req,
+        true
+      ),
+    user_can_edit_tables &&
+      entity.name !== "users" &&
+      post_dropdown_item(
+        `/table/delete/${entity.id}`,
+        '<i class="fas fa-trash"></i>&nbsp;' + req.__("Delete table"),
+        req,
+        true
+      ),
+    req.user?.role_id === 1 &&
+      entity.name !== "users" &&
+      post_dropdown_item(
+        `/table/delete-with-trig-views/${entity.id}`,
+        '<i class="fas fa-trash"></i>&nbsp;' +
+          req.__("Delete table+views+triggers"),
+        req,
+        true
+      ),
+  ].filter(Boolean);
+  if (!items.length) return "";
+  return settingsDropdown(`entityTableDropdown${entity.id}`, items);
+};
+
 /**
  * Main entities list page
  */
@@ -223,9 +291,24 @@ router.get(
     const roles = await User.get_roles();
     const tags = await Tag.find();
     const tagEntries = await TagEntry.find();
+    const userRoleId = req.user?.role_id ?? Infinity;
+    const user_can_edit_tables =
+      userRoleId === 1 ||
+      getState().getConfig("min_role_edit_tables", 1) >= userRoleId;
     const on_done_redirect_str = `?on_done_redirect=${encodeURIComponent(
-      req.originalUrl.replace("/", "")
+      stripLeadingSlash(req.originalUrl || "")
     )}`;
+    const buildActionMenu = (entity) => {
+      if (entity.type === "table")
+        return tableActionsDropdown(entity, req, user_can_edit_tables);
+      if (entity.type === "view")
+        return view_dropdown(entity, req, on_done_redirect_str);
+      if (entity.type === "page")
+        return page_dropdown(entity, req, on_done_redirect_str);
+      if (entity.type === "trigger")
+        return trigger_dropdown(entity, req, on_done_redirect_str, true);
+      return "";
+    };
 
     const tagsById = {};
     tags.forEach((t) => (tagsById[t.id] = t));
@@ -400,6 +483,14 @@ router.get(
         if (v && typeof v === "string") searchableValues.push(v.toLowerCase());
       });
 
+      // Compute main link: configure entity for pages/views, otherwise default
+      const mainLinkHref =
+        entity.type === "page"
+          ? `/pageedit/edit/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
+          : entity.type === "view"
+            ? `/viewedit/config/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
+            : entity.viewLink;
+      const actionsMenu = buildActionMenu(entity);
       return tr(
         {
           class: "entity-row",
@@ -409,7 +500,7 @@ router.get(
           "data-tags": tagIds.join(" "),
         },
         td(entityTypeBadge(entity.type)),
-        td(a({ href: entity.viewLink, class: "fw-bold" }, text(entity.name))),
+        td(a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))),
         td(detailsContent(entity, req)),
         td(
           text(
@@ -436,28 +527,7 @@ router.get(
           )
         ),
         td(div(...tagBadges, addTagDropdown)),
-        td(
-          div(
-            { class: "btn-group btn-group-sm" },
-            a(
-              {
-                href: entity.viewLink,
-                class: "btn btn-outline-secondary",
-                title: "View",
-              },
-              i({ class: "fas fa-eye" })
-            ),
-            entity.editLink &&
-              a(
-                {
-                  href: entity.editLink + on_done_redirect_str,
-                  class: "btn btn-outline-secondary",
-                  title: "Edit",
-                },
-                i({ class: "fas fa-edit" })
-              )
-          )
-        )
+        td(actionsMenu || "")
       );
     });
 
@@ -512,6 +582,37 @@ router.get(
           else params.delete('tags');
           const newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
           window.history.replaceState(null, '', newUrl);
+        };
+
+        const updateOnDoneRedirectTargets = () => {
+          const path = window.location.pathname.startsWith("/")
+            ? window.location.pathname.slice(1)
+            : window.location.pathname;
+          const currentTarget = path + window.location.search;
+          const toRelativeHref = (raw) => {
+            if (!raw) return null;
+            try {
+              const url = new URL(raw, window.location.origin);
+              url.searchParams.set("on_done_redirect", currentTarget);
+              return url.pathname + url.search + url.hash;
+            } catch (e) {
+              return null;
+            }
+          };
+          const shouldSkip = (raw) =>
+            raw && raw.trim().toLowerCase().startsWith("javascript:");
+          const updateAttr = (el, attr) => {
+            const raw = el.getAttribute(attr) || el[attr];
+            if (!raw || shouldSkip(raw)) return;
+            const updated = toRelativeHref(raw);
+            if (updated) el.setAttribute(attr, updated);
+          };
+          document
+            .querySelectorAll('a[href*="on_done_redirect="]')
+            .forEach((link) => updateAttr(link, "href"));
+          document
+            .querySelectorAll('form[action*="on_done_redirect="]')
+            .forEach((form) => updateAttr(form, "action"));
         };
 
         const initFromUrl = () => {
@@ -590,6 +691,7 @@ router.get(
           }
 
           updateUrl();
+          updateOnDoneRedirectTargets();
         }
 
         // Search input handler

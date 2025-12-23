@@ -210,7 +210,7 @@ const view_dropdown = (view, req, on_done_redirect_str = "") =>
         },
         '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
       ),
-        a(
+    a(
       {
         class: "dropdown-item",
         href: `/registry-editor?etype=view&ename=${encodeURIComponent(view.name)}`,
@@ -498,7 +498,7 @@ const page_group_dropdown = (page_group, req) =>
  * @param {object} req
  * @returns {string}
  */
-const page_dropdown = (page, req) =>
+const page_dropdown = (page, req, on_done_redirect_str = "") =>
   settingsDropdown(`dropdownMenuButton${page.id}`, [
     a(
       {
@@ -507,13 +507,20 @@ const page_dropdown = (page, req) =>
       },
       '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
     ),
+    a(
+      {
+        class: "dropdown-item",
+        href: `/pageedit/edit/${encodeURIComponent(page.name)}${on_done_redirect_str}`,
+      },
+      '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+    ),
     post_dropdown_item(
-      `/pageedit/add-to-menu/${page.id}`,
+      `/pageedit/add-to-menu/${page.id}${on_done_redirect_str}`,
       '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
       req
     ),
     post_dropdown_item(
-      `/pageedit/clone/${page.id}`,
+      `/pageedit/clone/${page.id}${on_done_redirect_str}`,
       '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
       req
     ),
@@ -526,7 +533,7 @@ const page_dropdown = (page, req) =>
     ),
     div({ class: "dropdown-divider" }),
     post_dropdown_item(
-      `/pageedit/delete/${page.id}`,
+      `/pageedit/delete/${page.id}${on_done_redirect_str}`,
       '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
       req,
       true,
@@ -672,7 +679,12 @@ const getPageGroupList = (rows, roles, req) => {
   );
 };
 
-const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
+const trigger_dropdown = (
+  trigger,
+  req,
+  on_done_redirect_str = "",
+  includeTestRun = false
+) =>
   settingsDropdown(`dropdownMenuButton${trigger.id}`, [
     a(
       {
@@ -681,6 +693,14 @@ const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
       },
       '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
     ),
+    includeTestRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/actions/testrun/${trigger.id}${on_done_redirect_str}`,
+        },
+        '<i class="fas fa-running"></i>&nbsp;' + req.__("Test run")
+      ),
 
     a(
       {
@@ -832,4 +852,7 @@ module.exports = {
   getPageList,
   getPageGroupList,
   getTriggerList,
+  view_dropdown,
+  page_dropdown,
+  trigger_dropdown,
 };
