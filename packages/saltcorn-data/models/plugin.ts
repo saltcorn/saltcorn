@@ -166,6 +166,15 @@ class Plugin {
     const stored = getState().getConfigCopy("available_plugins", false);
     return stored || [];
   }
+
+  private static async read_local_store_entries(): Promise<any> {
+    return JSON.parse(
+      await fs.readFile(
+        path.join(pluginsFolderRoot, "store_entries.json"),
+        "utf8"
+      )
+    );
+  }
   /**
    * List plugins available in store
    * @param msgs - optional packages/plugins-loader/plugin_installer.jsmessages array
@@ -186,21 +195,12 @@ class Plugin {
 
     if (airgap) {
       try {
-        // TODO handle file does not exist
-        const data = await fs.readFile(
-          path.join(pluginsFolderRoot, "store_entries.json"),
-          "utf8"
-        );
-        const json: any = JSON.parse(data);
-        return json
+        return (await Plugin.read_local_store_entries())
           .map((p: PluginCfg) => new Plugin(p))
           .filter((p: Plugin) => isRoot || !p.has_auth);
       } catch (e) {
         getState().log(2, `Error reading store_entries.json: ${e}`);
-        if (msgs)
-          msgs.push(
-            "Error reading local plugins store entries. Please contact your system administrator."
-          );
+        if (msgs) msgs.push("Error reading local plugin store entries.");
         return [];
       }
     } else if (!stored || !stored_at || isStale(stored_at)) {
@@ -210,12 +210,24 @@ class Plugin {
         await getState().setConfig("available_plugins_fetched_at", new Date());
         return from_api.filter((p) => isRoot || !p.has_auth);
       } catch (e) {
-        console.error(e);
-        if (stored)
+        getState().log(2, `Error fetching plugin store entries: ${e}`);
+        if (stored) {
           return stored
             .map((p: Plugin) => new Plugin(p))
             .filter((p: Plugin) => isRoot || !p.has_auth);
-        else return [];
+        }
+        try {
+          return (await Plugin.read_local_store_entries())
+            .map((p: Plugin) => new Plugin(p))
+            .filter((p: Plugin) => isRoot || !p.has_auth);
+        } catch (e2) {
+          getState().log(2, `Error reading store_entries.json: ${e2}`);
+          if (msgs)
+            msgs.push(
+              "The store is not reachable and reading the local entries failed."
+            );
+          return [];
+        }
       }
     } else
       return (stored || [])
