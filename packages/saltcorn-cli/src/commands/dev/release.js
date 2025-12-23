@@ -234,6 +234,17 @@ class ReleaseCommand extends Command {
         `cli@${version} --omit=dev`,
       ),
     );
+    const isolatedDockerfile = fs.readFileSync(
+      `Dockerfile.isolated.release`,
+      "utf8",
+    );
+    fs.writeFileSync(
+      `Dockerfile.isolated.release`,
+      isolatedDockerfile.replace(
+        /cli@.* --omit=dev/,
+        `cli@${version} --omit=dev`,
+      ),
+    );
     //git commit tag and push
     runCmd("git", ["commit", "-am", "v" + version], {
       stdio: "inherit",
