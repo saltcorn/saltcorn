@@ -258,7 +258,7 @@ module.exports = {
       const id = `input${text_attr(nm)}`;
       return (
         input({
-          class: [cls, field.class, file_name && "file-has-existing"],
+          class: ["form-control", cls, field.class, file_name && "file-has-existing"],
           "data-fieldname": field.form_name,
           name: text_attr(nm),
           id: id,
