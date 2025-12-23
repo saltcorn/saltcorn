@@ -13,6 +13,8 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const Tag = require("@saltcorn/data/models/tag");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const User = require("@saltcorn/data/models/user");
+const db = require("@saltcorn/data/db");
+const { getState } = require("@saltcorn/data/db/state");
 const {
   div,
   input,
@@ -30,7 +32,12 @@ const {
   th,
   td,
 } = require("@saltcorn/markup/tags");
-const { post_dropdown_item } = require("@saltcorn/markup");
+const { post_dropdown_item, settingsDropdown } = require("@saltcorn/markup");
+const {
+  view_dropdown,
+  page_dropdown,
+  trigger_dropdown,
+} = require("./common_lists.js");
 const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
 
 /**
@@ -43,11 +50,16 @@ const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
 const router = new Router();
 module.exports = router;
 
+// Ensure on_done_redirect values remain relative to the app root
+const stripLeadingSlash = (path = "") =>
+  path.startsWith("/") ? path.slice(1) : path;
+
 /**
  * Get all entities with their type and metadata
  */
 const getAllEntities = async () => {
   const tables = await Table.find({}, { cached: true });
+  const tableNameById = new Map(tables.map((t) => [t.id, t.name]));
   const views = await View.find({}, { cached: true });
   const pages = await Page.find({}, { cached: true });
   const triggers = await Trigger.findAllWithTableName();
@@ -69,6 +81,7 @@ const getAllEntities = async () => {
         isOwned: t.ownership_field_id || t.ownership_formula,
         min_role_read: t.min_role_read,
         min_role_write: t.min_role_write,
+        provider_name: t.provider_name,
       },
     });
   });
@@ -86,6 +99,7 @@ const getAllEntities = async () => {
       metadata: {
         viewtemplate: v.viewtemplate,
         table_id: v.table_id,
+        table_name: v.table_id ? tableNameById.get(v.table_id) : null,
         singleton: v.singleton,
         min_role: v.min_role,
       },
@@ -163,7 +177,21 @@ const detailsContent = (entity, req) => {
       bits.push(span({ class: "badge bg-success me-1" }, req.__("History")));
     if (entity.metadata.isOwned)
       bits.push(span({ class: "badge bg-primary me-1" }, req.__("Owned")));
+    if (entity.metadata.provider_name)
+      bits.push(
+        span(
+          { class: "badge bg-success me-1" },
+          text(entity.metadata.provider_name)
+        )
+      );
   } else if (entity.type === "view" && entity.metadata.viewtemplate) {
+    if (entity.metadata.table_name)
+      bits.push(
+        span(
+          { class: "badge bg-secondary me-1" },
+          text(entity.metadata.table_name)
+        )
+      );
     bits.push(
       span({ class: "text-muted small" }, text(entity.metadata.viewtemplate))
     );
@@ -211,6 +239,71 @@ const roleLabel = (entity, roles) => {
   }
 };
 
+const tableActionsDropdown = (entity, req, user_can_edit_tables) => {
+  const metadata = entity.metadata || {};
+  if (metadata.external || metadata.provider_name) return "";
+  const items = [
+    !db.isSQLite &&
+      user_can_edit_tables &&
+      entity.name !== "users" &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/table/rename/${entity.id}`,
+        },
+        '<i class="fas fa-edit"></i>&nbsp;' + req.__("Rename table")
+      ),
+    post_dropdown_item(
+      `/table/recalc-stored/${encodeURIComponent(entity.name)}`,
+      '<i class="fas fa-sync"></i>&nbsp;' + req.__("Recalculate stored fields"),
+      req
+    ),
+    user_can_edit_tables &&
+      post_dropdown_item(
+        `/table/delete-all-rows/${encodeURIComponent(entity.name)}`,
+        '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete all rows"),
+        req,
+        true
+      ),
+    user_can_edit_tables &&
+      entity.name !== "users" &&
+      post_dropdown_item(
+        `/table/forget-table/${entity.id}`,
+        '<i class="fas fa-recycle"></i>&nbsp;' + req.__("Forget table"),
+        req,
+        true
+      ),
+    a(
+      {
+        class: "dropdown-item",
+        href: `/registry-editor?etype=table&ename=${encodeURIComponent(
+          entity.name
+        )}`,
+      },
+      '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
+    ),
+    user_can_edit_tables &&
+      entity.name !== "users" &&
+      post_dropdown_item(
+        `/table/delete/${entity.id}`,
+        '<i class="fas fa-trash"></i>&nbsp;' + req.__("Delete table"),
+        req,
+        true
+      ),
+    req.user?.role_id === 1 &&
+      entity.name !== "users" &&
+      post_dropdown_item(
+        `/table/delete-with-trig-views/${entity.id}`,
+        '<i class="fas fa-trash"></i>&nbsp;' +
+          req.__("Delete table+views+triggers"),
+        req,
+        true
+      ),
+  ].filter(Boolean);
+  if (!items.length) return "";
+  return settingsDropdown(`entityTableDropdown${entity.id}`, items);
+};
+
 /**
  * Main entities list page
  */
@@ -223,9 +316,24 @@ router.get(
     const roles = await User.get_roles();
     const tags = await Tag.find();
     const tagEntries = await TagEntry.find();
+    const userRoleId = req.user?.role_id ?? Infinity;
+    const user_can_edit_tables =
+      userRoleId === 1 ||
+      getState().getConfig("min_role_edit_tables", 1) >= userRoleId;
     const on_done_redirect_str = `?on_done_redirect=${encodeURIComponent(
-      req.originalUrl.replace("/", "")
+      stripLeadingSlash(req.originalUrl || "")
     )}`;
+    const buildActionMenu = (entity) => {
+      if (entity.type === "table")
+        return tableActionsDropdown(entity, req, user_can_edit_tables);
+      if (entity.type === "view")
+        return view_dropdown(entity, req, on_done_redirect_str);
+      if (entity.type === "page")
+        return page_dropdown(entity, req, on_done_redirect_str, true);
+      if (entity.type === "trigger")
+        return trigger_dropdown(entity, req, on_done_redirect_str, true);
+      return "";
+    };
 
     const tagsById = {};
     tags.forEach((t) => (tagsById[t.id] = t));
@@ -351,6 +459,13 @@ router.get(
         t
       ];
 
+    const legacyLinkMeta = {
+      table: { href: "/table", label: req.__("Go to tables list") },
+      view: { href: "/viewedit", label: req.__("Go to views list") },
+      page: { href: "/pageedit", label: req.__("Go to pages list") },
+      trigger: { href: "/actions", label: req.__("Go to triggers list") },
+    };
+
     const bodyRows = entities.map((entity) => {
       const key = `${entity.type}:${entity.id}`;
       const tagIds = tagsByEntityKey.get(key) || [];
@@ -400,6 +515,14 @@ router.get(
         if (v && typeof v === "string") searchableValues.push(v.toLowerCase());
       });
 
+      // Compute main link: configure entity for pages/views, otherwise default
+      const mainLinkHref =
+        entity.type === "page"
+          ? `/pageedit/edit/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
+          : entity.type === "view"
+            ? `/viewedit/config/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
+            : entity.viewLink;
+      const actionsMenu = buildActionMenu(entity);
       return tr(
         {
           class: "entity-row",
@@ -409,7 +532,7 @@ router.get(
           "data-tags": tagIds.join(" "),
         },
         td(entityTypeBadge(entity.type)),
-        td(a({ href: entity.viewLink, class: "fw-bold" }, text(entity.name))),
+        td(a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))),
         td(detailsContent(entity, req)),
         td(
           text(
@@ -436,28 +559,7 @@ router.get(
           )
         ),
         td(div(...tagBadges, addTagDropdown)),
-        td(
-          div(
-            { class: "btn-group btn-group-sm" },
-            a(
-              {
-                href: entity.viewLink,
-                class: "btn btn-outline-secondary",
-                title: "View",
-              },
-              i({ class: "fas fa-eye" })
-            ),
-            entity.editLink &&
-              a(
-                {
-                  href: entity.editLink + on_done_redirect_str,
-                  class: "btn btn-outline-secondary",
-                  title: "Edit",
-                },
-                i({ class: "fas fa-edit" })
-              )
-          )
-        )
+        td(actionsMenu || "")
       );
     });
 
@@ -490,6 +592,9 @@ router.get(
         const filterButtons = document.querySelectorAll(".entity-filter-btn");
         const entityRows = document.querySelectorAll(".entity-row");
         const tagButtons = document.querySelectorAll(".tag-filter-btn");
+        const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};
+        const legacyButton = document.getElementById("legacy-entity-link");
+        const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
 
         // Track active filters
         const activeFilters = new Set([]);
@@ -512,6 +617,52 @@ router.get(
           else params.delete('tags');
           const newUrl = window.location.pathname + (params.toString() ? ('?' + params.toString()) : '');
           window.history.replaceState(null, '', newUrl);
+        };
+
+        const updateOnDoneRedirectTargets = () => {
+          const path = window.location.pathname.startsWith("/")
+            ? window.location.pathname.slice(1)
+            : window.location.pathname;
+          const currentTarget = path + window.location.search;
+          const toRelativeHref = (raw) => {
+            if (!raw) return null;
+            try {
+              const url = new URL(raw, window.location.origin);
+              url.searchParams.set("on_done_redirect", currentTarget);
+              return url.pathname + url.search + url.hash;
+            } catch (e) {
+              return null;
+            }
+          };
+          const shouldSkip = (raw) =>
+            raw && raw.trim().toLowerCase().startsWith("javascript:");
+          const updateAttr = (el, attr) => {
+            const raw = el.getAttribute(attr) || el[attr];
+            if (!raw || shouldSkip(raw)) return;
+            const updated = toRelativeHref(raw);
+            if (updated) el.setAttribute(attr, updated);
+          };
+          document
+            .querySelectorAll('a[href*="on_done_redirect="]')
+            .forEach((link) => updateAttr(link, "href"));
+          document
+            .querySelectorAll('form[action*="on_done_redirect="]')
+            .forEach((form) => updateAttr(form, "action"));
+        };
+
+        const updateLegacyButton = () => {
+          if (!legacyButton) return;
+          const activeTypes = Array.from(activeFilters);
+          if (activeTypes.length === 1) {
+            const meta = LEGACY_LINK_META[activeTypes[0]];
+            if (meta) {
+              legacyButton.classList.remove("d-none");
+              legacyButton.setAttribute("href", meta.href);
+              if (legacyLabel) legacyLabel.textContent = meta.label;
+              return;
+            }
+          }
+          legacyButton.classList.add("d-none");
         };
 
         const initFromUrl = () => {
@@ -590,6 +741,8 @@ router.get(
           }
 
           updateUrl();
+          updateOnDoneRedirectTargets();
+          updateLegacyButton();
         }
 
         // Search input handler
@@ -681,7 +834,7 @@ router.get(
               a(
                 {
                   href: `/table/new/${on_done_redirect_str}`,
-                  class: "btn btn-primary",
+                  class: "btn btn-secondary",
                 },
                 i({ class: "fas fa-table me-1" }),
                 req.__("Create table")
@@ -689,7 +842,7 @@ router.get(
               a(
                 {
                   href: `/viewedit/new${on_done_redirect_str}`,
-                  class: "btn btn-primary",
+                  class: "btn btn-secondary",
                 },
                 i({ class: "fas fa-eye me-1" }),
                 req.__("Create view")
@@ -697,7 +850,7 @@ router.get(
               a(
                 {
                   href: `/pageedit/new${on_done_redirect_str}`,
-                  class: "btn btn-primary",
+                  class: "btn btn-secondary",
                 },
                 i({ class: "fas fa-file me-1" }),
                 req.__("Create page")
@@ -705,10 +858,19 @@ router.get(
               a(
                 {
                   href: `/actions/new${on_done_redirect_str}`,
-                  class: "btn btn-primary",
+                  class: "btn btn-secondary",
                 },
                 i({ class: "fas fa-play me-1" }),
                 req.__("Create trigger")
+              ),
+              a(
+                {
+                  id: "legacy-entity-link",
+                  class: "btn btn-outline-secondary d-none",
+                  href: "#",
+                },
+                i({ class: "fas fa-list me-1" }),
+                span({ class: "legacy-label" }, req.__("Open legacy list"))
               )
             ),
           },
