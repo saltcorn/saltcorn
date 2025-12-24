@@ -9,6 +9,7 @@ const {
   removeTarball,
 } = require("./download_utils");
 const { getState } = require("@saltcorn/data/db/state");
+const Plugin = require("@saltcorn/data/models/plugin");
 const { rm, rename, cp, readFile, readdir } = require("fs").promises;
 const envPaths = require("env-paths");
 const semver = require("semver");
@@ -20,11 +21,12 @@ const staticDeps = [
   "@saltcorn/postgres",
   "jest",
 ];
-const fixedPlugins = ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"];
 
 const isGitCheckout = async () => {
-  const gitPath = join(__dirname, "..", "..", "Dockerfile.release");
-  return await pathExists(gitPath);
+  return (
+    (await pathExists(join(__dirname, "..", "..", "Dockerfile.release"))) ||
+    (await pathExists(join(__dirname, "..", "..", ".git")))
+  );
 };
 
 const readPackageJson = async (filePath) => {
@@ -94,7 +96,7 @@ class PluginInstaller {
   async install(force = false, preInstall = false) {
     getState().log(5, `loading plugin ${this.plugin.name}`);
     await this._ensurePluginsRootFolders();
-    if (fixedPlugins.includes(this.plugin.location))
+    if (Plugin.is_fixed_plugin(this.plugin.location))
       return {
         location: path.join(require.resolve(this.plugin.location), ".."),
         plugin_module: require(this.plugin.location),

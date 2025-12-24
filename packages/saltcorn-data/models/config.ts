@@ -1565,6 +1565,12 @@ const configTypes: ConfigTypes = {
       "Set to 0 to disable throttling.",
     excludeFromMobile: true,
   },
+  pre_installed_module_infos: {
+    type: "JSON",
+    label: "Pre-installed module infos",
+    default: [],
+    excludeFromMobile: true,
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {

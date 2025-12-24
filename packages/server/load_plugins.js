@@ -104,6 +104,14 @@ const loadPlugin = async (plugin, force, forceFetch) => {
       );
     }
   }
+
+  const airgap = getState().getConfig("airgap", false);
+  if (airgap && !Plugin.is_fixed_plugin(plugin.location))
+    ensureAirgapedVersion(
+      plugin,
+      getRootState().getConfig("pre_installed_module_infos", {})
+    );
+
   // load plugin
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
@@ -141,7 +149,8 @@ const loadPlugin = async (plugin, force, forceFetch) => {
       );
     }
   }
-  if (res.plugin_module.user_config_form) await getState().refresh_userlayouts();
+  if (res.plugin_module.user_config_form)
+    await getState().refresh_userlayouts();
   if (res.plugin_module.onLoad) {
     try {
       await res.plugin_module.onLoad(plugin.configuration);
@@ -173,11 +182,41 @@ const reloadAuthFromRoot = () => {
  * @returns {Promise<{plugin_module: *}|{plugin_module: any}>}
  */
 const requirePlugin = async (plugin, force) => {
+  const airgap = getState().getConfig("airgap", false);
+  if (airgap && !Plugin.is_fixed_plugin(plugin.location))
+    ensureAirgapedVersion(
+      plugin,
+      getRootState().getConfig("pre_installed_module_infos", {})
+    );
+
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
     envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
   });
   return await loader.install(force);
+};
+
+/**
+ * When the databse has another plugin version then don't override the pr-installed module
+ * @param {Plugin} plugin plugin from database
+ * @param {any} airgapedStore json content from store_entries.json
+ */
+const ensureAirgapedVersion = (plugin, airgapedStore) => {
+  const airgapedPlugin = airgapedStore.find(
+    (p) => p.location === plugin.location
+  );
+  if (!airgapedPlugin) {
+    throw new Error(
+      `Plugin ${plugin.name} from location ${plugin.location} not found in local airgapped store`
+    );
+  }
+  if (airgapedPlugin.version !== plugin.version) {
+    getState().log(
+      5,
+      `Overriding plugin ${plugin.name} version ${plugin.version} with airgapped store version ${airgapedPlugin.version}`
+    );
+    plugin.version = airgapedPlugin.version;
+  }
 };
 
 /**

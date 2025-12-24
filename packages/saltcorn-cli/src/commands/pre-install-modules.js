@@ -1,6 +1,5 @@
 const { Command, Flags, Args } = require("@oclif/core");
 const fs = require("fs");
-const os = require("os");
 const path = require("path");
 const Plugin = require("@saltcorn/data/models/plugin");
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");

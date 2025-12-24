@@ -167,7 +167,7 @@ class Plugin {
     return stored || [];
   }
 
-  private static async read_local_store_entries(): Promise<any> {
+  static async read_local_store_entries(): Promise<any> {
     return JSON.parse(
       await fs.readFile(
         path.join(pluginsFolderRoot, "store_entries.json"),
@@ -183,7 +183,7 @@ class Plugin {
   static async store_plugins_available(
     msgs?: Array<string>
   ): Promise<Array<Plugin>> {
-    const { getState } = require("../db/state");
+    const { getState, getRootState } = require("../db/state");
     const stored = getState().getConfig("available_plugins", false);
     const stored_at = getState().getConfig(
       "available_plugins_fetched_at",
@@ -195,7 +195,11 @@ class Plugin {
 
     if (airgap) {
       try {
-        return (await Plugin.read_local_store_entries())
+        const modInfos = getRootState().getConfig(
+          "pre_installed_module_infos",
+          []
+        );
+        return modInfos
           .map((p: PluginCfg) => new Plugin(p))
           .filter((p: Plugin) => isRoot || !p.has_auth);
       } catch (e) {
@@ -217,7 +221,11 @@ class Plugin {
             .filter((p: Plugin) => isRoot || !p.has_auth);
         }
         try {
-          return (await Plugin.read_local_store_entries())
+          const modInfos = getRootState().getConfig(
+            "pre_installed_module_infos",
+            []
+          );
+          return modInfos
             .map((p: Plugin) => new Plugin(p))
             .filter((p: Plugin) => isRoot || !p.has_auth);
         } catch (e2) {
@@ -284,6 +292,15 @@ class Plugin {
     if (json.success.length == 1)
       return new Plugin({ version: "latest", ...json.success[0] });
     else return null;
+  }
+
+  /**
+   * check if plugin is base-plugin or sbadmin2
+   * @param name
+   * @returns
+   */
+  static is_fixed_plugin(name: string): boolean {
+    return ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"].includes(name);
   }
 }
 
