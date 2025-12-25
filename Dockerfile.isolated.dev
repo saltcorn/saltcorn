@@ -28,15 +28,11 @@ WORKDIR /opt/saltcorn
 COPY . /opt/saltcorn
 
 
-RUN npm config set install-strategy nested  \
- && npm config set fund false                \
- && npm config set audit false
-
 RUN npm install --legacy-peer-deps
 RUN npm run tsc --build
 ENV NODE_ENV "production"
 
 ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin"
-RUN NO_DB_CONNECTION="true" saltcorn pre-install-modules badges
+RUN NO_DB_CONNECTION="true" saltcorn pre-install-modules all
 
 ENTRYPOINT ["/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"]

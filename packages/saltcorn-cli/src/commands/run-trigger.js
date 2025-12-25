@@ -21,7 +21,7 @@ class RunTriggerCommand extends Command {
     const { flags, args } = await this.parse(RunTriggerCommand);
     await init_some_tenants(flags.tenant);
 
-    const { mockReqRes } = require("@saltcorn/data/tests/mocks");
+    const { mockReqRes } = require("@saltcorn/data/test-utils/mocks");
     const Trigger = require(`@saltcorn/data/models/trigger`);
     const that = this;
     await maybe_as_tenant_in_transaction(flags.tenant, async () => {

@@ -7,7 +7,7 @@ import scheduler from "../models/scheduler";
 const { runScheduler } = scheduler;
 import db from "../db";
 const { getState } = require("../db/state");
-import mocks from "../tests/mocks";
+import mocks from "../test-utils/mocks";
 const {
   plugin_with_routes,
   getActionCounter,

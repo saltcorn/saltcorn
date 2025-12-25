@@ -18,7 +18,7 @@ class ListUsersCommand extends Command {
     const { flags, args } = await this.parse(ListUsersCommand);
     await init_some_tenants(flags.tenant);
 
-    const { mockReqRes } = require("@saltcorn/data/tests/mocks");
+    const { mockReqRes } = require("@saltcorn/data/test-utils/mocks");
     const User = require(`@saltcorn/data/models/user`);
     //const that = this;
     await maybe_as_tenant(flags.tenant, async () => {

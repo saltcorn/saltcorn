@@ -22,7 +22,7 @@ class ListTriggersCommand extends Command {
     const { flags, args } = await this.parse(ListTriggersCommand);
     await init_some_tenants(flags.tenant);
 
-    const { mockReqRes } = require("@saltcorn/data/tests/mocks");
+    const { mockReqRes } = require("@saltcorn/data/test-utils/mocks");
     const Trigger = require(`@saltcorn/data/models/trigger`);
     //const that = this;
     await maybe_as_tenant(flags.tenant, async () => {

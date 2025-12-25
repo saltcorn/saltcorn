@@ -20,7 +20,7 @@ class ConfigurationCheckCommand extends Command {
     const {
       runConfigurationCheck,
     } = require("@saltcorn/admin-models/models/config-check");
-    const { mockReqRes } = require("@saltcorn/data/tests/mocks");
+    const { mockReqRes } = require("@saltcorn/data/test-utils/mocks");
 
     const that = this;
     await maybe_as_tenant(flags.tenant, async () => {

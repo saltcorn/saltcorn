@@ -15,7 +15,7 @@ const {
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const User = require("@saltcorn/data/models/user");
-const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
+const { plugin_with_routes } = require("@saltcorn/data/test-utils/mocks");
 const { getState } = require("@saltcorn/data/db/state");
 const { sleep } = require("@saltcorn/data/utils");
 

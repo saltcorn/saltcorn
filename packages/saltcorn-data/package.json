@@ -107,6 +107,7 @@
     "@types/dockerode": "^3.3.47",
     "@types/dumb-passwords": "^0.2.1",
     "@types/estraverse": "^5.1.1",
+    "@types/estree": "^1.0.8",
     "@types/fs-extra": "^11.0.4",
     "@types/jest": "29.5.14",
     "@types/jsonwebtoken": "^9.0.0",

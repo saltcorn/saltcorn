@@ -5,7 +5,7 @@ const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
-const { plugin_with_routes, sleep } = require("@saltcorn/data/tests/mocks");
+const { plugin_with_routes, sleep } = require("@saltcorn/data/test-utils/mocks");
 
 afterAll(db.close);
 beforeAll(async () => {

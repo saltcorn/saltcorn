@@ -8,7 +8,7 @@ const {
 const load_plugins = require("@saltcorn/server/load_plugins");
 const { restore } = require("@saltcorn/admin-models/models/backup");
 const { getState } = require("@saltcorn/data/db/state");
-const { mockReqRes } = require("@saltcorn/data/tests/mocks");
+const { mockReqRes } = require("@saltcorn/data/test-utils/mocks");
 const getApp = require("@saltcorn/server/app");
 
 afterAll(db.close);

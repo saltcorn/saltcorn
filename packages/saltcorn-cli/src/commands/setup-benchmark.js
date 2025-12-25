@@ -73,7 +73,7 @@ class SetupBenchmarkCommand extends Command {
       const { install_pack } = require("@saltcorn/admin-models/models/pack");
       await install_pack(simple_page_pack, flags.name, () => {});
       // install file
-      const { rick_file } = require("@saltcorn/data/tests/mocks");
+      const { rick_file } = require("@saltcorn/data/test-utils/mocks");
       await rick_file();
     });
   }

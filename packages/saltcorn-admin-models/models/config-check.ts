@@ -4,7 +4,7 @@ import View from "@saltcorn/data/models/view";
 import File from "@saltcorn/data/models/file";
 import Page from "@saltcorn/data/models/page";
 import Trigger from "@saltcorn/data/models/trigger";
-import mocks from "@saltcorn/data/tests/mocks";
+import mocks from "@saltcorn/data/test-utils/mocks";
 
 const { chaos_guinea_pig, set_seed } = require("chaos-guinea-pig");
 

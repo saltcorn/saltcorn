@@ -13,7 +13,7 @@ const {
   respondJsonWith,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
-const { sleep } = require("@saltcorn/data/tests/mocks");
+const { sleep } = require("@saltcorn/data/test-utils/mocks");
 const fs = require("fs").promises;
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");

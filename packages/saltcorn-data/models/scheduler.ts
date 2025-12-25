@@ -9,7 +9,7 @@ import db from "../db";
 const { getState } = require("../db/state");
 import fetch from "node-fetch";
 import EventLog from "./eventlog";
-import mocks from "../tests/mocks";
+import mocks from "../test-utils/mocks";
 import WorkflowRun from "./workflow_run";
 import Notification from "./notification";
 import { MailQueue } from "./internal/mail_queue";
