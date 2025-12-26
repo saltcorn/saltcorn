@@ -31,7 +31,7 @@ class RunSQLCommand extends Command {
 
     await init_some_tenants(flags.tenant);
 
-    //const { mockReqRes } = require("@saltcorn/data/test-utils/mocks");
+    //const { mockReqRes } = require("@saltcorn/data/tests/mocks");
 
     const that = this;
     await maybe_as_tenant(flags.tenant, async () => {

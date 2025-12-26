@@ -21,7 +21,7 @@ class ConfigurationCheckBackupsCommand extends Command {
     const {
       runConfigurationCheck,
     } = require("@saltcorn/admin-models/models/config-check");
-    const { mockReqRes } = require("@saltcorn/data/test-utils/mocks");
+    const { mockReqRes } = require("@saltcorn/data/tests/mocks");
     const db = require("@saltcorn/data/db");
     const {
       insertTenant,

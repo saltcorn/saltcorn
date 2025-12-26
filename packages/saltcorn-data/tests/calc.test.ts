@@ -3,7 +3,7 @@ import Field from "../models/field";
 import Trigger from "../models/trigger";
 import db from "../db";
 const { getState } = require("../db/state");
-import mocks from "../test-utils/mocks";
+import mocks from "./mocks";
 const { plugin_with_routes, sleep } = mocks;
 import expression from "../models/expression";
 const {

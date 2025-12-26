@@ -11,7 +11,7 @@ const {
 } = require("../auth/testhelp");
 const load_plugins = require("../load_plugins");
 const db = require("@saltcorn/data/db");
-const { sleep } = require("@saltcorn/data/test-utils/mocks");
+const { sleep } = require("@saltcorn/data/tests/mocks");
 
 const Table = require("@saltcorn/data/models/table");
 const TableConstraint = require("@saltcorn/data/models/table_constraints");

@@ -8,7 +8,7 @@ import type Table from "./table";
 import type File from "./file";
 import { v4 as uuidv4 } from "uuid";
 import User from "./user";
-import mocks from "../test-utils/mocks";
+import mocks from "../tests/mocks";
 import mjml2html from "mjml";
 const { mockReqRes } = mocks;
 import { AuthorizationCode } from "simple-oauth2";

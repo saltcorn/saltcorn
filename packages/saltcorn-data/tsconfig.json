@@ -19,6 +19,11 @@
     "module": "commonjs",
     "target": "ES2021"
   },
+ "include": [
+    "**/*",
+    "**/*.json"
+  ],
+
   "exclude": [
     "node_modules",
     "dist/**",
@@ -26,9 +31,7 @@
     "./mobile-mocks/node/vm.js",
     "**/*.test.*",
     "**/*.spec.*",
-    "**/tests/**",
     "**/__tests__/**"
-  ],
-  "include": ["**/*", "**/*.json"]
+  ]
 }
 

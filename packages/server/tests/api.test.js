@@ -23,7 +23,7 @@ const {
   toSucceed,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
-const { sleep } = require("@saltcorn/data/test-utils/mocks");
+const { sleep } = require("@saltcorn/data/tests/mocks");
 
 beforeAll(async () => {
   await resetToFixtures();

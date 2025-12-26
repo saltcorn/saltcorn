@@ -2,7 +2,7 @@ import Table from "../models/table";
 import Field from "../models/field";
 import View from "../models/view";
 import db from "../db";
-import mocks from "../test-utils/mocks";
+import mocks from "./mocks";
 const { plugin_with_routes, mockReqRes } = mocks;
 const { getState } = require("../db/state");
 import { assertIsSet } from "./assertions";

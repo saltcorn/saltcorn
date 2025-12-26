@@ -12,7 +12,7 @@ import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
-import mocks from "../test-utils/mocks";
+import mocks from "./mocks";
 import User from "../models/user";
 import Table from "../models/table";
 import WorkflowTrace from "../models/workflow_trace";

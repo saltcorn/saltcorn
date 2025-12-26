@@ -4,7 +4,7 @@ import View from "../models/view";
 import db from "../db";
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
-import mocks from "../test-utils/mocks";
+import mocks from "./mocks";
 const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
 import {
   assertIsSet,

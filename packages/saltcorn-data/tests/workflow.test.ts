@@ -9,7 +9,7 @@ import { GenObj } from "@saltcorn/types/common_types";
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
-import mocks from "../test-utils/mocks";
+import mocks from "./mocks";
 const { mockReqRes } = mocks;
 
 afterAll(db.close);

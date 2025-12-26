@@ -27,7 +27,7 @@ const {
 } = require("../utils");
 
 import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
-import mocks from "../test-utils/mocks";
+import mocks from "./mocks";
 import {
   createAnotherUserField,
   createSecondTopicField,

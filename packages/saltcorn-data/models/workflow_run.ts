@@ -15,7 +15,7 @@ import Notification from "./notification";
 import utils from "../utils";
 import moment from "moment";
 import { mkTable } from "@saltcorn/markup/index";
-import mocks from "../test-utils/mocks";
+import mocks from "../tests/mocks";
 import { FieldLike } from "@saltcorn/types/base_types";
 const { mockReqRes } = mocks;
 const {

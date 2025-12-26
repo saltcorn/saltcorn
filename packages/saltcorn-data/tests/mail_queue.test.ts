@@ -4,7 +4,7 @@ import User from "../models/user";
 import { MailQueue } from "models/internal/mail_queue";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { createTransport } from "nodemailer";
-import mocks from "../test-utils/mocks";
+import mocks from "./mocks";
 const { sleep } = mocks;
 import { assertIsSet } from "./assertions";
 const { getState } = require("../db/state");

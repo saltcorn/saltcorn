@@ -18,7 +18,7 @@ import { unlink } from "fs/promises";
 import backup from "../models/backup";
 const { create_backup, restore, create_csv_from_rows } = backup;
 const reset = require("@saltcorn/data/db/reset_schema");
-import mocks from "@saltcorn/data/test-utils/mocks";
+import mocks from "@saltcorn/data/tests/mocks";
 const { mockReqRes, plugin_with_routes } = mocks;
 import Table from "@saltcorn/data/models/table";
 import Field from "@saltcorn/data/models/field";

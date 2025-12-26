@@ -22,7 +22,7 @@ import {
 } from "../../saltcorn-data/tests/assertions";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import Field from "@saltcorn/data/models/field";
-import mocks from "@saltcorn/data/test-utils/mocks";
+import mocks from "@saltcorn/data/tests/mocks";
 const { mockReqRes, plugin_with_routes } = mocks;
 
 afterAll(db.close);

@@ -26,7 +26,7 @@ const {
 const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
 const { isNode, nubBy, objectToQueryString } = require("../utils");
-const { mockReqRes } = require("../test-utils/mocks");
+const { mockReqRes } = require("../tests/mocks");
 const db = require("../db");
 
 /**

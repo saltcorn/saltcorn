@@ -4,7 +4,7 @@ const { getState } = require("@saltcorn/data/db/state");
 
 import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 const { runConfigurationCheck } = require("../models/config-check");
-import mocks from "@saltcorn/data/test-utils/mocks";
+import mocks from "@saltcorn/data/tests/mocks";
 
 const { mockReqRes } = mocks;
 

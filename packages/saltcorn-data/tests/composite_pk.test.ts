@@ -8,7 +8,7 @@ getState().registerPlugin("base", require("../base-plugin"));
 import discovery from "../models/discovery";
 const { discoverable_tables, discover_tables, implement_discovery } = discovery;
 import { writeFile } from "fs/promises";
-import mocks from "../test-utils/mocks";
+import mocks from "./mocks";
 const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
 import {
   assertIsSet,

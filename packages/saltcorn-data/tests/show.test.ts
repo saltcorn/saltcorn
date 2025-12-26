@@ -5,7 +5,7 @@ import TableConstraint from "../models/table_constraints";
 
 import View from "../models/view";
 import db from "../db";
-import mocks from "../test-utils/mocks";
+import mocks from "./mocks";
 const { mockReqRes } = mocks;
 const { getState } = require("../db/state");
 import Page from "../models/page";

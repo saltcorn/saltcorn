@@ -5,7 +5,7 @@ import View from "../models/view";
 import Table from "../models/table";
 import User from "../models/user";
 import { createTransport } from "nodemailer";
-import mocks from "../test-utils/mocks";
+import mocks from "./mocks";
 const { mockReqRes } = mocks;
 import { assertIsSet } from "./assertions";
 const { getState } = require("../db/state");
