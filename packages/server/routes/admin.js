@@ -4680,6 +4680,7 @@ admin_config_route({
   },
 });
 
+// get type declarations for monaco
 router.get(
   "/ts-declares",
   isAdmin,
@@ -4727,6 +4728,7 @@ function getConfig(key: string): any
     ];
     if (req.query.codepage) {
       ds.push("declare var globalThis: any");
+      ds.push("function runAsync(f:AsyncFunction)");
     } else {
       ds.push(`
 declare const commitBeginNewTransactionAndRefreshCache: () => Promise<void>;
@@ -4734,6 +4736,7 @@ declare const  EventLog : any
 declare const  Notification : any
 declare const  WorkflowRun : any
 async function run_js_code({code, row, table}:{ code: string, row?: Row, table?: Table})
+async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | "triggers" | "pages" | "page_groups"|"config"|"npmpkgs"|"userlayouts"|"i18n"|"push_helper"|"ephemeral_config"|"plugins");
 `);
     }
     const scTypeToTsType = (type, field) => {
@@ -4854,6 +4857,7 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
         ds.push(`declare var ${nm}: AsyncFunction;`);
       else if (f.constructor?.name === "Function")
         ds.push(`declare var ${nm}: Function;`);
+      else ds.push(`declare var ${nm}: ${typeof f};`);
     }
 
     if (!req.query.codepage) {

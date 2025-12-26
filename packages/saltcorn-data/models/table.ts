@@ -951,7 +951,8 @@ class Table implements AbstractTable {
             await db.query(
               `insert into ${schema}"${db.sqlsanitize(
                 this.name
-              )}_sync_info" values ${ids
+              )}_sync_info" (ref, last_modified, deleted)
+              values ${ids
                 .map(
                   (row) =>
                     `(${row[pkName]}, date_trunc('milliseconds', to_timestamp( ${
@@ -1708,10 +1709,11 @@ class Table implements AbstractTable {
       if (oldInfo && !oldInfo.deleted)
         await this.updateSyncInfo(
           id as PrimaryKeyValue,
+          v,
           oldInfo.last_modified,
           syncTimestamp
         );
-      else await this.insertSyncInfo(id as PrimaryKeyValue, syncTimestamp);
+      else await this.insertSyncInfo(id as PrimaryKeyValue, v, syncTimestamp);
       if (state.pushHelper) state.pushHelper.pushSync(this.name);
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
@@ -1776,13 +1778,26 @@ class Table implements AbstractTable {
     return await db.tryCatchInTransaction(
       async () => {
         const schema = db.getTenantSchemaPrefix();
-        const dbResult = await db.query(
-          `select max(last_modified) "last_modified", ref
-        from ${schema}"${db.sqlsanitize(this.name)}_sync_info"
-        group by ref having ref = ${db.isSQLite ? "" : "ANY"} ($1)`,
-          db.isSQLite ? ids : [ids]
-        );
-        return dbResult.rows;
+        const sql = !db.isSQLite
+          ? `
+  SELECT s.last_modified, s.ref, s.updated_fields
+  FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info" s
+  JOIN (
+    SELECT
+      ref,
+      MAX(last_modified) AS last_modified
+    FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info"
+    WHERE ref = ${db.isSQLite ? "" : "ANY"} ($1)
+    GROUP BY ref
+  ) m
+    ON s.ref = m.ref
+   AND s.last_modified = m.last_modified`
+          : `
+  SELECT MAX(last_modified) "last_modified", ref
+  FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info"
+  GROUP BY ref HAVING ref = ($1)`;
+        const result = await db.query(sql, db.isSQLite ? ids : [ids]);
+        return result.rows;
       },
       (e: Error) => {
         require("../db/state")
@@ -1793,21 +1808,33 @@ class Table implements AbstractTable {
     );
   }
 
-  private async insertSyncInfo(id: PrimaryKeyValue, syncTimestamp?: Date) {
+  private async insertSyncInfo(
+    id: PrimaryKeyValue,
+    updates: Row,
+    syncTimestamp?: Date
+  ) {
     await db.tryCatchInTransaction(
       async () => {
         const schema = db.getTenantSchemaPrefix();
         if (isNode()) {
+          const timestamp = syncTimestamp ? syncTimestamp : await db.time();
+          const fieldTimestamps: any = {};
+          for (const k of Object.keys(updates).filter(
+            (key) => key !== this.pk_name
+          )) {
+            fieldTimestamps[k] = timestamp;
+          }
+
           await db.query(
             `insert into ${schema}"${db.sqlsanitize(
               this.name
-            )}_sync_info" values($1,
-        date_trunc('milliseconds', to_timestamp($2)))`,
-            [
-              id,
-              (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
-                1000.0,
-            ]
+            )}_sync_info" (ref, last_modified, updated_fields)
+            values(
+              $1,
+              date_trunc('milliseconds', to_timestamp($2)),
+              $3::jsonb
+            )`,
+            [id, timestamp.valueOf() / 1000.0, JSON.stringify(fieldTimestamps)]
           );
         } else {
           await db.query(
@@ -1827,22 +1854,36 @@ class Table implements AbstractTable {
 
   private async updateSyncInfo(
     id: PrimaryKeyValue,
+    v: Row,
     oldLastModified: Date,
-    syncTimestamp?: Date
+    syncTimestamp?: Date | number
   ) {
     await db.tryCatchInTransaction(
       async () => {
         const schema = db.getTenantSchemaPrefix();
         if (!db.isSQLite) {
+          const timestamp = syncTimestamp
+            ? new Date(syncTimestamp)
+            : await db.time();
+          const fieldTimestamps: any = {};
+          for (const k of Object.keys(v).filter(
+            (key) => key !== this.pk_name
+          )) {
+            fieldTimestamps[k] = timestamp;
+          }
           await db.query(
-            `update ${schema}"${db.sqlsanitize(
-              this.name
-            )}_sync_info" set last_modified=date_trunc('milliseconds', to_timestamp($1)) where ref=$2 and last_modified = to_timestamp($3)`,
+            `update ${schema}"${db.sqlsanitize(this.name)}_sync_info" 
+            set 
+              last_modified=date_trunc('milliseconds', to_timestamp($1)),
+              updated_fields =
+                coalesce(updated_fields, '{}'::jsonb) || $4::jsonb
+            where 
+              ref=$2 and last_modified = to_timestamp($3)`,
             [
-              (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
-                1000.0,
+              timestamp.valueOf() / 1000.0,
               id,
               oldLastModified.valueOf() / 1000.0,
+              JSON.stringify(fieldTimestamps),
             ]
           );
         } else {
@@ -2181,13 +2222,15 @@ class Table implements AbstractTable {
       await db.tryCatchInTransaction(
         async () => {
           if (isNode()) {
+            // sync_info for insert
             const schemaPrefix = db.getTenantSchemaPrefix();
             await db.query(
               `insert into ${schemaPrefix}"${db.sqlsanitize(this.name)}_sync_info"
-           values(${id}, date_trunc('milliseconds', to_timestamp(${
-             (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
-             1000.0
-           })))`
+              (ref, last_modified) values(
+              ${id}, date_trunc('milliseconds', to_timestamp(${
+                (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
+                1000.0
+              })))`
             );
           } else {
             await db.query(
@@ -2598,9 +2641,11 @@ class Table implements AbstractTable {
           throw new Error("Unable to find a field with a primary key.");
         }
         await db.query(
-          `create table ${schemaPrefix}"${sqlsanitize(
-            this.name
-          )}_sync_info" (ref integer, last_modified timestamp, deleted boolean default false)`
+          `create table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info" (
+            ref integer,
+            last_modified timestamp,
+            deleted boolean default false,
+            updated_fields jsonb)`
         );
         await db.query(
           `create index "${sqlsanitize(

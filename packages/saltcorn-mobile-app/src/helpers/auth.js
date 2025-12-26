@@ -69,7 +69,7 @@ const initialSync = async (config) => {
   const alerts = [];
   const { offlineUser, hasOfflineData } = (await getLastOfflineSession()) || {};
   if (!offlineUser || offlineUser === config.user.email) {
-    await sync();
+    await sync(false, alerts);
   } else {
     if (hasOfflineData)
       alerts.push({
@@ -78,7 +78,7 @@ const initialSync = async (config) => {
       });
     else {
       await deleteOfflineData(true);
-      await sync();
+      await sync(false, alerts);
     }
   }
   return alerts;

@@ -24,7 +24,7 @@ beforeAll(async () => {
 });
 afterAll(db.close);
 
-jest.setTimeout(10000);
+jest.setTimeout(30000);
 
 const initSyncInfo = async (tbls) => {
   for (const tbl of tbls) {
@@ -353,77 +353,93 @@ describe("load remote insert/updates", () => {
 });
 
 // describe("load remote deletes", () => {});
+const doUpload = async (
+  app,
+  loginCookie,
+  newSyncTimestamp,
+  oldSyncTimestamp,
+  changes
+) => {
+  const resp = await request(app)
+    .post("/sync/offline_changes")
+    .set("Cookie", loginCookie)
+    .send({
+      oldSyncTimestamp,
+      newSyncTimestamp,
+      changes,
+    });
+  return resp;
+};
 
-describe("Upload changes", () => {
-  const doUpload = async (app, loginCookie, syncTimestamp, changes) => {
+const getResult = async (app, loginCookie, syncDir) => {
+  let pollCount = 0;
+  while (pollCount < 10) {
     const resp = await request(app)
-      .post("/sync/offline_changes")
-      .set("Cookie", loginCookie)
-      .send({
-        syncTimestamp,
-        changes,
-      });
-    return resp;
-  };
-
-  const getResult = async (app, loginCookie, syncDir) => {
-    let pollCount = 0;
-    while (pollCount < 10) {
-      const resp = await request(app)
-        .get(`/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`)
-        .set("Cookie", loginCookie);
-      expect(resp.status).toBe(200);
-      const { finished, translatedIds, uniqueConflicts, error } = resp._body;
-      if (finished)
-        return translatedIds ? { translatedIds, uniqueConflicts } : error;
-      await sleep(1000);
-    }
-    return null;
-  };
-
-  const cleanSyncDir = async (app, loginCookie, syncDir) => {
-    const resp = await request(app)
-      .post("/sync/clean_sync_dir")
-      .send({ dir_name: syncDir })
+      .get(`/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`)
       .set("Cookie", loginCookie);
     expect(resp.status).toBe(200);
-  };
+    const { finished, translatedIds, uniqueConflicts, dataConflicts, error } =
+      resp._body;
+    if (finished)
+      return translatedIds
+        ? { translatedIds, uniqueConflicts, dataConflicts }
+        : error;
+    await sleep(1000);
+  }
+  return null;
+};
 
-  const maxId = async (tblName) => {
-    const table = Table.findOne({ name: tblName });
-    const pkName = table.pk_name;
-    const rows = await table.getRows({}, { orderBy: pkName, orderDesc: true });
-    return rows.length === 0 ? 0 : rows[0][pkName];
-  };
+const cleanSyncDir = async (app, loginCookie, syncDir) => {
+  const resp = await request(app)
+    .post("/sync/clean_sync_dir")
+    .send({ dir_name: syncDir })
+    .set("Cookie", loginCookie);
+  expect(resp.status).toBe(200);
+};
 
+const maxId = async (tblName) => {
+  const table = Table.findOne({ name: tblName });
+  const pkName = table.pk_name;
+  const rows = await table.getRows({}, { orderBy: pkName, orderDesc: true });
+  return rows.length === 0 ? 0 : rows[0][pkName];
+};
+
+describe("Upload changes", () => {
   if (!db.isSQLite) {
     beforeAll(async () => {
       await initSyncInfo(["books", "publisher"]);
     });
 
     it("inserts with translations", async () => {
+      const oldTimestamp = new Date().valueOf();
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getAdminLoginCookie();
-      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
-        books: {
-          inserts: [
-            {
-              id: 1,
-              author: "app agi",
-              pages: 1,
-              publisher: 1,
-            },
-          ],
-        },
-        publisher: {
-          inserts: [
-            {
-              id: 1,
-              name: "agi",
-            },
-          ],
-        },
-      });
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            inserts: [
+              {
+                id: 1,
+                author: "app agi",
+                pages: 1,
+                publisher: 1,
+              },
+            ],
+          },
+          publisher: {
+            inserts: [
+              {
+                id: 1,
+                name: "agi",
+              },
+            ],
+          },
+        }
+      );
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
       const { translatedIds } = await getResult(app, loginCookie, syncDir);
@@ -440,6 +456,7 @@ describe("Upload changes", () => {
     });
 
     it("upload json", async () => {
+      const oldTimestamp = new Date().valueOf();
       await createAnswersTbl();
       const table = Table.findOne({ name: "Answers" });
       expect(table).toBeDefined();
@@ -463,11 +480,17 @@ describe("Upload changes", () => {
           answer: ["latte", "americano", "filter"],
         },
       ];
-      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
-        Answers: {
-          inserts: rows,
-        },
-      });
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          Answers: {
+            inserts: rows,
+          },
+        }
+      );
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
       const result = await getResult(app, loginCookie, syncDir);
@@ -475,7 +498,8 @@ describe("Upload changes", () => {
       expect(await table.getRows()).toEqual(rows);
     });
 
-    it("handles inserts with TableConstraint conflicts", async () => {
+    it("denies inserts because of TableConstraint conflicts", async () => {
+      const oldTimestamp = new Date().valueOf();
       const books = Table.findOne({ name: "books" });
       const oldCount = await books.countRows();
       // unique constraint for author + pages
@@ -489,22 +513,28 @@ describe("Upload changes", () => {
 
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getAdminLoginCookie();
-      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
-        books: {
-          inserts: [
-            {
-              author: "Herman Melville",
-              pages: 967,
-              publisher: 1,
-            },
-            {
-              author: "Leo Tolstoy",
-              pages: "728",
-              publisher: 2,
-            },
-          ],
-        },
-      });
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            inserts: [
+              {
+                author: "Herman Melville",
+                pages: 967,
+                publisher: 1,
+              },
+              {
+                author: "Leo Tolstoy",
+                pages: "728",
+                publisher: 2,
+              },
+            ],
+          },
+        }
+      );
 
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
@@ -522,9 +552,9 @@ describe("Upload changes", () => {
       expect(newCount).toBe(oldCount);
     });
 
-    it("denies updates with TableConstraint conflicts", async () => {
+    it("denies updates because of TableConstraint conflicts", async () => {
+      const oldTimestamp = new Date().valueOf();
       const books = Table.findOne({ name: "books" });
-      const oldCount = await books.countRows();
       // unique constraint for author + pages
       const constraint = await TableConstraint.create({
         table: books,
@@ -536,17 +566,23 @@ describe("Upload changes", () => {
 
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getAdminLoginCookie();
-      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
-        books: {
-          updates: [
-            {
-              id: 2,
-              author: "Herman Melville",
-              pages: 967,
-            },
-          ],
-        },
-      });
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            updates: [
+              {
+                id: 2,
+                author: "Herman Melville",
+                pages: 967,
+              },
+            ],
+          },
+        }
+      );
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
       const error = await getResult(app, loginCookie, syncDir);
@@ -559,27 +595,34 @@ describe("Upload changes", () => {
     });
 
     it("update with translation", async () => {
+      const oldTimestamp = new Date().valueOf();
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getAdminLoginCookie();
       const maxPublId = await maxId("publisher");
-      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
-        books: {
-          updates: [
-            {
-              id: 1,
-              publisher: 1,
-            },
-          ],
-        },
-        publisher: {
-          inserts: [
-            {
-              id: 1,
-              name: "my_agi",
-            },
-          ],
-        },
-      });
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            updates: [
+              {
+                id: 1,
+                publisher: 1,
+              },
+            ],
+          },
+          publisher: {
+            inserts: [
+              {
+                id: 1,
+                name: "my_agi",
+              },
+            ],
+          },
+        }
+      );
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
       const { translatedIds } = await getResult(app, loginCookie, syncDir);
@@ -594,6 +637,7 @@ describe("Upload changes", () => {
     });
 
     it("deletes normal", async () => {
+      const oldTimestamp = new Date().valueOf();
       const books = Table.findOne({ name: "books" });
       const syncTimeStamp = new Date();
       const oldRows = await books.getRows();
@@ -608,16 +652,22 @@ describe("Upload changes", () => {
       expect(newRows.length).toBe(oldRows.length + 1);
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getAdminLoginCookie();
-      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
-        books: {
-          deletes: [
-            {
-              id: newId,
-              last_modified: syncTimeStamp.valueOf(),
-            },
-          ],
-        },
-      });
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            deletes: [
+              {
+                id: newId,
+                last_modified: syncTimeStamp.valueOf(),
+              },
+            ],
+          },
+        }
+      );
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
       const { translatedIds } = await getResult(app, loginCookie, syncDir);
@@ -629,6 +679,7 @@ describe("Upload changes", () => {
 
     // skip delete because of larger last_modified on the server side
     it("deletes with conflicts", async () => {
+      const oldTimestamp = new Date().valueOf();
       const books = Table.findOne({ name: "books" });
       const syncTimeStamp = new Date();
       const oldRows = await books.getRows();
@@ -652,16 +703,22 @@ describe("Upload changes", () => {
       expect(newRows.length).toBe(oldRows.length + 1);
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getAdminLoginCookie();
-      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
-        books: {
-          deletes: [
-            {
-              id: newId,
-              last_modified: syncTimeStamp.valueOf(),
-            },
-          ],
-        },
-      });
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            deletes: [
+              {
+                id: newId,
+                last_modified: syncTimeStamp.valueOf(),
+              },
+            ],
+          },
+        }
+      );
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
       const { translatedIds } = await getResult(app, loginCookie, syncDir);
@@ -672,31 +729,38 @@ describe("Upload changes", () => {
     });
 
     it("insert not authorized", async () => {
+      const oldTimestamp = new Date().valueOf();
       const books = Table.findOne({ name: "books" });
       books.min_role_write = 1;
       await books.update(books);
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getUserLoginCookie();
-      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
-        books: {
-          inserts: [
-            {
-              id: 1,
-              author: "app agi",
-              pages: 1,
-              publisher: 1,
-            },
-          ],
-        },
-        publisher: {
-          inserts: [
-            {
-              id: 1,
-              name: "agi",
-            },
-          ],
-        },
-      });
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            inserts: [
+              {
+                id: 1,
+                author: "app agi",
+                pages: 1,
+                publisher: 1,
+              },
+            ],
+          },
+          publisher: {
+            inserts: [
+              {
+                id: 1,
+                name: "agi",
+              },
+            ],
+          },
+        }
+      );
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
       const error = await getResult(app, loginCookie, syncDir);
@@ -708,22 +772,29 @@ describe("Upload changes", () => {
     });
 
     it("update not authorized", async () => {
+      const oldTimestamp = new Date().valueOf();
       const books = Table.findOne({ name: "books" });
       books.min_role_write = 1;
       await books.update(books);
 
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getUserLoginCookie();
-      const resp = await doUpload(app, loginCookie, new Date().valueOf(), {
-        books: {
-          updates: [
-            {
-              id: 1,
-              pages: 1,
-            },
-          ],
-        },
-      });
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            updates: [
+              {
+                id: 1,
+                pages: 1,
+              },
+            ],
+          },
+        }
+      );
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
       const error = await getResult(app, loginCookie, syncDir);
@@ -737,6 +808,7 @@ describe("Upload changes", () => {
     });
 
     it("delete not authorized", async () => {
+      const oldTimestamp = new Date().valueOf();
       const syncTimeStamp = new Date();
       const books = Table.findOne({ name: "books" });
       books.min_role_write = 1;
@@ -744,16 +816,22 @@ describe("Upload changes", () => {
 
       const app = await getApp({ disableCsrf: true });
       const loginCookie = await getUserLoginCookie();
-      const resp = await doUpload(app, loginCookie, syncTimeStamp.valueOf(), {
-        books: {
-          deletes: [
-            {
-              id: 1,
-              last_modified: syncTimeStamp.valueOf() + 1,
-            },
-          ],
-        },
-      });
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        syncTimeStamp.valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            deletes: [
+              {
+                id: 1,
+                last_modified: syncTimeStamp.valueOf() + 1,
+              },
+            ],
+          },
+        }
+      );
       expect(resp.status).toBe(200);
       const { syncDir } = resp._body;
       const error = await getResult(app, loginCookie, syncDir);
@@ -764,6 +842,110 @@ describe("Upload changes", () => {
       });
       books.min_role_write = 100;
       await books.update(books);
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
+
+describe("field level conflicts", () => {
+  if (!db.isSQLite) {
+    beforeAll(async () => {
+      await initSyncInfo(["books"]);
+    });
+    it("merges non-conflicting fields on update", async () => {
+      const oldTimestamp = new Date().valueOf();
+      const books = Table.findOne({ name: "books" });
+      // insert and update a row
+      const id = await books.insertRow({
+        author: "Original Author",
+        pages: 100,
+      });
+      await books.updateRow({ author: "Author changed on web" }, id);
+
+      // sync a non conflicting field
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            updates: [
+              {
+                id: id,
+                pages: 1,
+              },
+            ],
+          },
+        }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const result = await getResult(app, loginCookie, syncDir);
+
+      expect(result.translatedIds).toEqual({});
+      expect(result.uniqueConflicts).toEqual({});
+      expect(result.dataConflicts).toEqual({});
+
+      const row = await books.getRow({ id: id });
+      expect(row.author).toBe("Author changed on web");
+      expect(row.pages).toBe(1);
+    });
+
+    it("detects conflicting fields on update", async () => {
+      const oldTimestamp = new Date().valueOf();
+
+      const books = Table.findOne({ name: "books" });
+      // insert and update a row
+      const id = await books.insertRow({
+        author: "Original Author",
+        pages: 100,
+      });
+      await books.updateRow({ author: "Author changed on web" }, id);
+
+      // sync a conflicting field
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            updates: [
+              {
+                id: id,
+                author: "Author changed offline",
+                pages: 200,
+              },
+            ],
+          },
+        }
+      );
+
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const result = await getResult(app, loginCookie, syncDir);
+
+      expect(result.translatedIds).toEqual({});
+      expect(result.uniqueConflicts).toEqual({});
+      expect(result.dataConflicts).toEqual({
+        books: [
+          {
+            id: id,
+            author: "Author changed on web",
+          },
+        ],
+      });
+
+      const row = await books.getRow({ id: id });
+      expect(row.author).toBe("Author changed on web");
+      expect(row.pages).toBe(200);
     });
   } else
     it("only pq support", () => {

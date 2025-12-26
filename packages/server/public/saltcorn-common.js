@@ -1331,6 +1331,9 @@ function initialize_page() {
           case "text/css":
             language = "css";
             break;
+          case "text/x-sql":
+            language = "sql";
+            break;
           case "text/html":
             language = "html";
             break;
