@@ -109,7 +109,7 @@ const loadPlugin = async (plugin, force, forceFetch) => {
   if (airgap && !Plugin.is_fixed_plugin(plugin.location))
     ensureAirgapedVersion(
       plugin,
-      getRootState().getConfig("pre_installed_module_infos", {})
+      getRootState().getConfig("pre_installed_module_infos", [])
     );
 
   // load plugin
@@ -186,7 +186,7 @@ const requirePlugin = async (plugin, force) => {
   if (airgap && !Plugin.is_fixed_plugin(plugin.location))
     ensureAirgapedVersion(
       plugin,
-      getRootState().getConfig("pre_installed_module_infos", {})
+      getRootState().getConfig("pre_installed_module_infos", [])
     );
 
   const loader = new PluginInstaller(plugin, {
@@ -280,7 +280,14 @@ const loadAndSaveNewPlugin = async (
       return;
     }
   }
-  if (plugin.source === "npm") await ensurePluginSupport(plugin);
+  const airgap = getState().getConfig("airgap", false);
+  if (plugin.source === "npm" && !airgap) await ensurePluginSupport(plugin);
+  if (airgap && !Plugin.is_fixed_plugin(plugin.location))
+    ensureAirgapedVersion(
+      plugin,
+      getRootState().getConfig("pre_installed_module_infos", [])
+    );
+
   const loadMsgs = [];
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
