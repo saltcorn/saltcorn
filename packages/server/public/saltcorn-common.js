@@ -1535,6 +1535,28 @@ function card_max_full_screen($card_outer) {
     let available = vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
 
     if ($scrollTarget.length) {
+      const transferKey = "cardMaxScrollPaddingTransferred";
+      const transferPaddingBottom = () => {
+        if ($cardBody.data(transferKey)) return;
+        if (!$cardBody.length || !$scrollTarget.length) return;
+        const bodyStyles = window.getComputedStyle($cardBody[0]);
+        const bodyPadBottom = parseFloat(bodyStyles.paddingBottom || "0") || 0;
+        if (!bodyPadBottom) {
+          $cardBody.data(transferKey, true);
+          return;
+        }
+        const scrollStyles = window.getComputedStyle($scrollTarget[0]);
+        const scrollPadBottom =
+          parseFloat(scrollStyles.paddingBottom || "0") || 0;
+        $cardBody.css("padding-bottom", "0px");
+        $scrollTarget.css(
+          "padding-bottom",
+          scrollPadBottom + bodyPadBottom + "px"
+        );
+        $cardBody.data(transferKey, true);
+      };
+
+      transferPaddingBottom();
       $cardBody.css({
         "max-height": "",
         "overflow-y": "visible",
