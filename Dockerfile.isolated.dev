@@ -27,6 +27,8 @@ WORKDIR /opt/saltcorn
 
 COPY . /opt/saltcorn
 
+RUN npm config set fund false \
+ && npm config set audit false
 
 RUN npm install --legacy-peer-deps
 RUN npm run tsc --build
