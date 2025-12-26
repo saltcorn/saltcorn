@@ -17,7 +17,7 @@ import layoutModel from "../models/layout";
 const { getViews } = layoutModel;
 
 const { getState } = require("../db/state");
-import mocks from "./mocks";
+import mocks from "../test-utils/mocks";
 const { rick_file, mockReqRes } = mocks;
 import Library from "../models/library";
 import { assertIsSet } from "./assertions";

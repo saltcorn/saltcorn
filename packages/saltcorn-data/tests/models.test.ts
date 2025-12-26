@@ -17,11 +17,11 @@ import layoutModel from "../models/layout";
 const { getViews } = layoutModel;
 
 const { getState } = require("../db/state");
-import mocks from "./mocks";
+import mocks from "../test-utils/mocks";
 const { rick_file, mockReqRes } = mocks;
 import Library from "../models/library";
 import { assertIsSet } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { existsSync } from "fs";
 import { join } from "path";
 import MetaData from "../models/metadata";

@@ -6,8 +6,7 @@ const { discoverable_tables, discover_tables, implement_discovery } = discovery;
 const { getState } = require("../db/state");
 import db from "../db";
 import Table from "../models/table";
-
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { Row } from "@saltcorn/db-common/internal";
 import { assertIsSet } from "./assertions";
 

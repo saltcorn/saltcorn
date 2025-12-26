@@ -16,7 +16,7 @@ const {
   sleep,
 } = mocks;
 import { assertIsRow, assertIsSet } from "../tests/assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import baseactions, { emit_event, notify_user } from "../base-plugin/actions";
 const {
   duplicate_row,

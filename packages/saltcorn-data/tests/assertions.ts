@@ -1,6 +1,7 @@
 import { SuccessMessage, Type } from "@saltcorn/types/common_types";
 import User from "../models/user";
 import { Row } from "@saltcorn/db-common/internal";
+import { expect } from "@jest/globals";
 
 export function assertIsSet(object: any): asserts object {
   expect(object).not.toBeNull();

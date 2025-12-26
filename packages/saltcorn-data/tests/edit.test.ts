@@ -5,12 +5,12 @@ import TableConstraint from "../models/table_constraints";
 
 import View from "../models/view";
 import db from "../db";
-import mocks from "./mocks";
+import mocks from "../test-utils/mocks";
 const { mockReqRes } = mocks;
 const { getState } = require("../db/state");
 import Page from "../models/page";
 import type { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { assertIsSet } from "./assertions";
 import {
   prepareQueryEnviroment,

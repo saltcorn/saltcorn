@@ -6,7 +6,7 @@ import db from "../db";
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 import { writeFile } from "fs/promises";
-import mocks from "./mocks";
+import mocks from "../test-utils/mocks";
 const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
 import {
   assertIsSet,
@@ -14,7 +14,7 @@ import {
   assertIsErrorMsg,
   assertIsType,
 } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { add_free_variables_to_joinfields } from "../plugin-helper";
 import expressionModule from "../models/expression";
 import { text } from "stream/consumers";

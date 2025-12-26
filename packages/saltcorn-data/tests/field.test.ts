@@ -5,7 +5,7 @@ const { getState } = require("../db/state");
 
 import { assertIsSet, assertsIsSuccessMessage } from "./assertions";
 import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
-import mocks from "./mocks";
+import mocks from "../test-utils/mocks";
 import { Type } from "@saltcorn/types/common_types";
 import { writeFile } from "fs/promises";
 const PlainDate = require("@saltcorn/plain-date");

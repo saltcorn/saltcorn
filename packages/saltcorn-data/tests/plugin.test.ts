@@ -3,7 +3,7 @@ import db from "../db/index";
 
 const { getState } = require("../db/state");
 import { assertIsSet } from "./assertions";
-import { afterAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 
 getState().registerPlugin("base", require("../base-plugin"));
 jest.setTimeout(30000);

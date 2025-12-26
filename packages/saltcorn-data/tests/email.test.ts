@@ -1,11 +1,11 @@
 import { writeFileSync } from "fs";
 import email from "../models/email";
-import { describe, it, expect, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import View from "../models/view";
 import Table from "../models/table";
 import User from "../models/user";
 import { createTransport } from "nodemailer";
-import mocks from "./mocks";
+import mocks from "../test-utils/mocks";
 const { mockReqRes } = mocks;
 import { assertIsSet } from "./assertions";
 const { getState } = require("../db/state");
