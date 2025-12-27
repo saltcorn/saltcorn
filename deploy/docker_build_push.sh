@@ -31,4 +31,3 @@ docker push saltcorn/saltcorn-isolated:$VERSION
 docker build -t saltcorn/saltcorn:dev -f Dockerfile.dev .
 docker push saltcorn/saltcorn:dev
 
-
