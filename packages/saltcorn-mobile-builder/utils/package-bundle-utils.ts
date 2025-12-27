@@ -122,7 +122,7 @@ export async function copyPublicDirs(buildDir: string) {
               versionedName,
               pluginCfgs[k].alt_css_file
             ),
-            { recursive: true }
+            {}
           );
       }
     }
@@ -142,9 +142,7 @@ export function copyPluginMobileAppDirs(buildDir: string) {
     if (location) {
       const mobileAppDir = join(location, "mobile-app");
       if (existsSync(mobileAppDir)) {
-        copySync(mobileAppDir, join(srcDir, "plugins-code", k), {
-          recursive: true,
-        });
+        copySync(mobileAppDir, join(srcDir, "plugins-code", k), {});
       }
     }
   }
@@ -155,7 +153,7 @@ export function copyOptionalSource(buildDir: string, fileToCopy: string) {
     dirname(require.resolve("@saltcorn/mobile-app")),
     "optional_sources",
     fileToCopy
-  );  
+  );
   if (existsSync(srcFile)) {
     copySync(srcFile, join(buildDir, "src", "helpers", fileToCopy));
   }
