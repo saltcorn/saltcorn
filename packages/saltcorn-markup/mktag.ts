@@ -70,7 +70,9 @@ const ppAttrib = ([k, v]: [
         ? ppClass(v as ClassVal)
         : k === "style"
           ? ppStyle(v as StyleVal)
-          : `${k}="${v}"`;
+          : typeof v === "string"
+            ? `${k}="${v.replaceAll('"', "&quot;")}"`
+            : `${k}="${v}"`;
 
 /**
  * @param {string} tnm
