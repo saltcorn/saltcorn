@@ -1718,5 +1718,10 @@
 	"The endpoint of module store.": "The endpoint of module store.",
 	"Maintenance mode": "Maintenance mode",
 	"Full page count": "Full page count",
-	"Disable for to increase performance for large tables": "Disable for to increase performance for large tables"
+	"Disable for to increase performance for large tables": "Disable for to increase performance for large tables",
+	"Go to tables list": "Go to tables list",
+	"Go to views list": "Go to views list",
+	"Go to pages list": "Go to pages list",
+	"Go to triggers list": "Go to triggers list",
+	"Open legacy list": "Open legacy list"
 }
