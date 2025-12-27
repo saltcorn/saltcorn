@@ -147,7 +147,9 @@ const getConnectObject = (connSpec: any = {}) => {
     .digest("hex")
     .slice(0, 16);
 
-  if (process.env.FORCE_SQLITE === "true") {
+  if (process.env.NO_DB_CONNECTION === "true") {
+    return connObj;
+  } else if (process.env.FORCE_SQLITE === "true") {
     delete connObj["user"];
     delete connObj["password"];
     delete connObj["database"];

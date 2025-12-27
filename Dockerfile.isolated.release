@@ -1,0 +1,17 @@
+FROM debian:12
+
+ENV NODE_ENV "production"
+ENV SALTCORN_DISABLE_UPGRADE "true"
+
+RUN apt update && apt install -qqy libpq-dev build-essential python-is-python3 postgresql-client git chromium npm nodejs zip unzip python3-setuptools python3-venv
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD "true"
+
+RUN npm config set install-strategy nested  \
+ && npm config set fund false                \
+ && npm config set audit false
+
+RUN npm install -g @saltcorn/cli@1.5.0-beta.15 --omit=dev
+RUN saltcorn pre-install-modules all
+
+ENTRYPOINT ["/usr/local/bin/saltcorn"]

@@ -14,11 +14,24 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
-    "lib": ["ES2021"],
+    "lib": ["ES2021", "dom"],
+    "types": ["node", "estree"],
     "module": "commonjs",
     "target": "ES2021"
   },
-  "exclude": ["node_modules", "dist/**", "webpack.config.js", "./mobile-mocks/node/vm.js"],
-  "include": ["**/*", "**/*.json"]
+ "include": [
+    "**/*",
+    "**/*.json"
+  ],
+
+  "exclude": [
+    "node_modules",
+    "dist/**",
+    "webpack.config.js",
+    "./mobile-mocks/node/vm.js",
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/__tests__/**"
+  ]
 }
 

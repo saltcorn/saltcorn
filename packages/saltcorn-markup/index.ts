@@ -90,6 +90,7 @@ const post_btn = (
     confirm,
     icon,
     title,
+    body,
   }: PostBtnOpts | any = {}
 ): string =>
   form(
@@ -100,6 +101,11 @@ const post_btn = (
     },
     [
       ajax ? "" : input({ type: "hidden", name: "_csrf", value: csrfToken }),
+      ...(!body
+        ? []
+        : Object.entries(body).map(([k, v]: any) =>
+            input({ type: "hidden", name: k, value: v })
+          )),
       button(
         {
           ...(ajax ? { type: "button" } : { type: "submit" }),

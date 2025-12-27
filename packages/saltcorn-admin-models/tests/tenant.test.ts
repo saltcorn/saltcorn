@@ -20,7 +20,7 @@ const {
 } = tenant;
 import config from "@saltcorn/data/models/config";
 const { getConfig } = config;
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 
 afterAll(db.close);
 

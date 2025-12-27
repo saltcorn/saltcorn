@@ -167,7 +167,7 @@ async function sendGraphMail(mail: any, tokenStr: string, retryCount = 0) {
       ),
     };
   } else {
-    const error = await response.json();
+    const error: any = await response.json();
     const errorCode = error.error?.code;
     if (errorCode === "ApplicationThrottled" && retryCount < 5) {
       const retryAfterHeader = response.headers.get("Retry-After");

@@ -7,7 +7,7 @@ import scheduler from "../models/scheduler";
 const { runScheduler } = scheduler;
 import db from "../db";
 const { getState } = require("../db/state");
-import mocks from "../tests/mocks";
+import mocks from "./mocks";
 const {
   plugin_with_routes,
   getActionCounter,
@@ -16,7 +16,7 @@ const {
   sleep,
 } = mocks;
 import { assertIsRow, assertIsSet } from "../tests/assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import baseactions, { emit_event, notify_user } from "../base-plugin/actions";
 const {
   duplicate_row,

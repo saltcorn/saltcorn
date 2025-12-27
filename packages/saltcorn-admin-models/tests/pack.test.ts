@@ -25,11 +25,11 @@ const { getState } = require("@saltcorn/data/db/state");
 import Table from "@saltcorn/data/models/table";
 import Tag from "@saltcorn/data/models/tag";
 import { Pack } from "@saltcorn/types/base_types";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import Trigger from "@saltcorn/data/models/trigger";
 import PageGroup from "@saltcorn/data/models/page_group";
 import WorkflowStep from "@saltcorn/data/models/workflow_step";
-import { assertIsSet } from "@saltcorn/data/tests/assertions";
+import { assertIsSet } from "../../saltcorn-data/tests/assertions";
 import View from "@saltcorn/data/models/view";
 import { instanceOfType } from "@saltcorn/types/common_types";
 

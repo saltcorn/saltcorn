@@ -26,7 +26,7 @@ const {
   validSqlId,
 } = require("../utils");
 
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import mocks from "./mocks";
 import {
   createAnotherUserField,

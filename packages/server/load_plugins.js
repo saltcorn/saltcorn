@@ -28,9 +28,8 @@ const isFixedPlugin = (plugin) =>
  * @param plugin plugin to load
  */
 const getEngineInfos = async (plugin, forceFetch) => {
-  const rootState = getRootState();
-  const cached = rootState.getConfig("engines_cache", {}) || {};
-  const airgap = rootState.getConfig("airgap", false);
+  const cached = getRootState().getConfig("engines_cache", {}) || {};
+  const airgap = getState().getConfig("airgap", false);
 
   if (airgap || (cached[plugin.location] && !forceFetch)) {
     return cached[plugin.location] || {};
@@ -48,7 +47,7 @@ const getEngineInfos = async (plugin, forceFetch) => {
         : {};
     }
     cached[plugin.location] = newCached;
-    await rootState.setConfig("engines_cache", { ...cached });
+    await getRootState().setConfig("engines_cache", { ...cached });
     return newCached;
   }
 };
@@ -72,11 +71,17 @@ const ensurePluginSupport = async (plugin, forceFetch) => {
     versions,
     packagejson.version
   );
-  if (!supported)
-    throw new Error(
-      `Unable to find a supported version for '${plugin.location}'`
-    );
-  else if (
+  if (!supported) {
+    if (getState().getConfig("airgap", false))
+      getState().log(
+        5,
+        `Warning: No supported version for '${plugin.location}' in airgap mode"}`
+      );
+    else
+      throw new Error(
+        `Unable to find a supported version for '${plugin.location}'`
+      );
+  } else if (
     supported !== plugin.version ||
     (plugin.version === "latest" && supported !== resolveLatest(versions))
   )
@@ -99,6 +104,14 @@ const loadPlugin = async (plugin, force, forceFetch) => {
       );
     }
   }
+
+  const airgap = getState().getConfig("airgap", false);
+  if (airgap && !Plugin.is_fixed_plugin(plugin.location))
+    ensureAirgapedVersion(
+      plugin,
+      getRootState().getConfig("pre_installed_module_infos", [])
+    );
+
   // load plugin
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
@@ -136,7 +149,8 @@ const loadPlugin = async (plugin, force, forceFetch) => {
       );
     }
   }
-  if (res.plugin_module.user_config_form) await getState().refresh_userlayouts();
+  if (res.plugin_module.user_config_form)
+    await getState().refresh_userlayouts();
   if (res.plugin_module.onLoad) {
     try {
       await res.plugin_module.onLoad(plugin.configuration);
@@ -168,11 +182,41 @@ const reloadAuthFromRoot = () => {
  * @returns {Promise<{plugin_module: *}|{plugin_module: any}>}
  */
 const requirePlugin = async (plugin, force) => {
+  const airgap = getState().getConfig("airgap", false);
+  if (airgap && !Plugin.is_fixed_plugin(plugin.location))
+    ensureAirgapedVersion(
+      plugin,
+      getRootState().getConfig("pre_installed_module_infos", [])
+    );
+
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
     envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
   });
   return await loader.install(force);
+};
+
+/**
+ * When the databse has another plugin version then don't override the pr-installed module
+ * @param {Plugin} plugin plugin from database
+ * @param {any} airgapedStore json content from store_entries.json
+ */
+const ensureAirgapedVersion = (plugin, airgapedStore) => {
+  const airgapedPlugin = airgapedStore.find(
+    (p) => p.location === plugin.location
+  );
+  if (!airgapedPlugin) {
+    throw new Error(
+      `Plugin ${plugin.name} from location ${plugin.location} not found in local airgapped store`
+    );
+  }
+  if (airgapedPlugin.version !== plugin.version) {
+    getState().log(
+      5,
+      `Overriding plugin ${plugin.name} version ${plugin.version} with airgapped store version ${airgapedPlugin.version}`
+    );
+    plugin.version = airgapedPlugin.version;
+  }
 };
 
 /**
@@ -236,7 +280,14 @@ const loadAndSaveNewPlugin = async (
       return;
     }
   }
-  if (plugin.source === "npm") await ensurePluginSupport(plugin);
+  const airgap = getState().getConfig("airgap", false);
+  if (plugin.source === "npm" && !airgap) await ensurePluginSupport(plugin);
+  if (airgap && !Plugin.is_fixed_plugin(plugin.location))
+    ensureAirgapedVersion(
+      plugin,
+      getRootState().getConfig("pre_installed_module_infos", [])
+    );
+
   const loadMsgs = [];
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
