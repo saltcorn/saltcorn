@@ -2,7 +2,7 @@ import email from "../models/email";
 import Notification from "../models/notification";
 import User from "../models/user";
 import { MailQueue } from "models/internal/mail_queue";
-import { describe, it, expect, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { createTransport } from "nodemailer";
 import mocks from "./mocks";
 const { sleep } = mocks;

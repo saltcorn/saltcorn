@@ -21,6 +21,8 @@ import _ from "underscore";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
 const Docker = require("dockerode");
+import path from "path";
+import os from "os";
 // import { ResultType, StepResType } from "types";'
 
 declare const saltcorn: any;
@@ -667,6 +669,13 @@ const imageAvailable = async (imageName: string, preferedVersion: string) => {
   }
 };
 
+const pluginsFolderRoot = path.join(
+  os.homedir(),
+  ".local",
+  "share",
+  "saltcorn-plugins"
+);
+
 export = {
   dataModulePath,
   allReturnDirectives,
@@ -728,4 +737,5 @@ export = {
   isPushEnabled,
   renderServerSide,
   imageAvailable,
+  pluginsFolderRoot,
 };

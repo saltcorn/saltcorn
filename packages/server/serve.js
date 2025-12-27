@@ -11,6 +11,7 @@ const db = require("@saltcorn/data/db");
 const { getConfigFile, configFilePath } = require("@saltcorn/data/db/connect");
 const {
   getState,
+  getRootState,
   init_multi_tenant,
   restart_tenant,
   add_tenant,
@@ -386,6 +387,24 @@ const onMessageFromWorker =
 
 const escapeSingleQuotes = (value) => value.replace(/'/g, "''");
 
+// read 'store_entries.json' into a config
+// on pre-install time no db connection exists, that's why we nee a file
+// but for the server it's better to have a config instead of reading a file each time
+const initOfflineStoreCfg = async () => {
+  const rootState = getState();
+  try {
+    const entries = await Plugin.read_local_store_entries();
+    await rootState.setConfig("pre_installed_module_infos", entries);
+  } catch (e) {
+    console.log(
+      `Unable to read pre_installed_module_infos: ${
+        e.message ? e.message : "Unknown error"
+      }`
+    );
+    await rootState.setConfig("pre_installed_module_infos", []);
+  }
+};
+
 module.exports =
   /**
    * @function
@@ -484,6 +503,7 @@ module.exports =
         })
       );
     };
+    await initOfflineStoreCfg();
 
     if (port === 80 && letsEncrypt) {
       const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });

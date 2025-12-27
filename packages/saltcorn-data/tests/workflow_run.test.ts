@@ -6,7 +6,7 @@ import Trigger from "../models/trigger";
 
 import db from "../db";
 import { assertIsSet } from "./assertions";
-import { afterAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { GenObj } from "@saltcorn/types/common_types";
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 

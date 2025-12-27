@@ -22,6 +22,12 @@ docker push saltcorn/capacitor-builder:$VERSION
 docker build -t saltcorn/capacitor-builder:$TAG -f packages/saltcorn-mobile-builder/docker/Dockerfile packages/saltcorn-mobile-builder/docker
 docker push saltcorn/capacitor-builder:$TAG
 
+docker build -t saltcorn/saltcorn-isolated:$TAG -f Dockerfile.isolated.release .
+docker push saltcorn/saltcorn-isolated:$TAG
+
+docker build -t saltcorn/saltcorn-isolated:$VERSION -f Dockerfile.isolated.release .
+docker push saltcorn/saltcorn-isolated:$VERSION
+
 docker build -t saltcorn/saltcorn:dev -f Dockerfile.dev .
 docker push saltcorn/saltcorn:dev
 

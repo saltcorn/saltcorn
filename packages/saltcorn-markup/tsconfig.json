@@ -15,9 +15,10 @@
     "strict": true,
     "forceConsistentCasingInFileNames": true,
     /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
-    "lib": ["ES2021"],
+    "lib": ["ES2021", "dom"],
+    "types": ["node", "estree"],
     "module": "commonjs",
     "target": "ES2021"
   },
-  "exclude": ["node_modules", "dist", "*.test.*", "webpack.config.js"]
+  "exclude": ["node_modules", "dist", "webpack.config.js"]
 }

@@ -1,7 +1,7 @@
 import db from "@saltcorn/data/db/index";
 import { spawnSync } from "child_process";
 import Plugin from "@saltcorn/data/models/plugin";
-import { assertIsSet } from "@saltcorn/data/tests/assertions";
+import { assertIsSet } from "../../saltcorn-data/tests/assertions";
 import { rmSync, existsSync } from "fs";
 import { join } from "path";
 const load_plugins = require("@saltcorn/server/load_plugins");

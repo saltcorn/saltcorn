@@ -12,7 +12,7 @@ import {
   assertIsErrorMsg,
   assertIsType,
 } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { add_free_variables_to_joinfields } from "../plugin-helper";
 import expressionModule from "../models/expression";
 import User from "../models/user";

@@ -21,7 +21,7 @@ const {
 import { mkWhere } from "@saltcorn/db-common/internal";
 
 import { assertIsSet } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import utils from "../utils";
 import PlainDate from "@saltcorn/plain-date";
 const { interpolate, mergeIntoWhere } = utils;

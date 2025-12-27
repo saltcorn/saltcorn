@@ -2,6 +2,7 @@ import Page from "../models/page";
 import db from "../db";
 const { getState } = require("../db/state");
 import { assertIsSet } from "./assertions";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import mocks from "./mocks";
 const { mockReqRes } = mocks;
 getState().registerPlugin("base", require("../base-plugin"));
