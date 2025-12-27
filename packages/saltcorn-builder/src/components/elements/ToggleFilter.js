@@ -131,7 +131,7 @@ const ToggleFilterSettings = () => {
             ) : (
               <input
                 value={value}
-                className="w-100"
+                className="form-control"
                 onChange={setAProp("value")}
               />
             )}
@@ -165,7 +165,7 @@ const ToggleFilterSettings = () => {
           <td>
             <input
               value={label}
-              className="w-100"
+              className="form-control"
               onChange={setAProp("label")}
             />
           </td>
