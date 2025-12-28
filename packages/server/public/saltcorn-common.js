@@ -1317,7 +1317,12 @@ function initialize_page() {
       codes.forEach((el) => {
         if ($(el).hasClass("monaco-enabled")) return;
         $(el).addClass("monaco-enabled");
-        const value = $(el).val();
+        let value = $(el).val();
+        const addHiddenPrefix = el.hasAttribute("is-expression");
+        if (addHiddenPrefix && !value.startsWith("const prefix: Row =")) {
+          value = `const prefix: Row = 
+${value}`;
+        }
         const enlarge = $(el).hasClass("enlarge-in-card");
         const compact = $(el).attr("compact");
         const div = document.createElement("div");
@@ -1374,70 +1379,89 @@ function initialize_page() {
         });
         monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
 
-        // hide prefix line
-        editor.setHiddenAreas([
-          {
-            startLineNumber: 1,
-            endLineNumber: 1,
-          },
-        ]);
-        // allow editing from line 2 downwards
-        const model = editor.getModel();
-        const constrainedInstance = constrainedEditor(monaco);
-        constrainedInstance.initializeIn(editor);
-        constrainedInstance.addRestrictionsTo(model, [
-          {
-            range: [2, 1, 2, model.getLineMaxColumn(2)],
-            allowMultiline: true,
-          },
-        ]);
-        // prevent cursor from going to line 1
-        editor.onDidChangeCursorPosition((e) => {
-          if (e.position.lineNumber < 2) {
-            editor.setPosition({
-              lineNumber: 2,
-              column: 1,
-            });
-          }
-        });
-        // no backspacing to line 1
-        editor.onKeyDown((e) => {
-          const position = editor.getPosition();
-          if (
-            position.lineNumber === 2 &&
-            position.column === 1 &&
-            e.keyCode === monaco.KeyCode.Backspace
-          ) {
-            e.preventDefault();
-            e.stopPropagation();
-          }
-        });
-        // copy without the prefix line
-        editor.addAction({
-          id: "copy-editable-only",
-          label: "Copy Only User Content",
-          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
-          run: (ed) => {
-            const selection = ed.getSelection();
-            if (selection.isEmpty()) return;
-            // intersect selected area with editable area
-            const safeSelection = selection.intersectRanges(
-              new monaco.Range(
-                2,
-                1,
-                model.getLineCount(),
-                model.getLineMaxColumn(model.getLineCount())
-              )
-            );
-            if (safeSelection) {
-              // write text in intersection to clipboard
-              navigator.clipboard.writeText(
-                model.getValueInRange(safeSelection)
-              );
+        if (addHiddenPrefix) {
+          // hide prefix line
+          editor.setHiddenAreas([
+            {
+              startLineNumber: 1,
+              endLineNumber: 1,
+            },
+          ]);
+          // allow editing from line 2 downwards
+          const model = editor.getModel();
+          const constrainedInstance = constrainedEditor(monaco);
+          constrainedInstance.initializeIn(editor);
+          constrainedInstance.addRestrictionsTo(model, [
+            {
+              range: [2, 1, 2, model.getLineMaxColumn(2)],
+              allowMultiline: true,
+            },
+          ]);
+          // prevent cursor from going to line 1
+          editor.onDidChangeCursorPosition((e) => {
+            if (e.position.lineNumber < 2) {
+              editor.setPosition({
+                lineNumber: 2,
+                column: 1,
+              });
             }
-          },
-        });
+          });
+          // no backspacing to line 1
+          editor.onKeyDown((e) => {
+            const position = editor.getPosition();
+            if (
+              position.lineNumber === 2 &&
+              position.column === 1 &&
+              e.keyCode === monaco.KeyCode.Backspace
+            ) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          });
+          // copy without the prefix line
+          editor.addAction({
+            id: "copy-editable-only",
+            label: "Copy Only User Content",
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
+            run: (ed) => {
+              const selection = ed.getSelection();
+              if (selection.isEmpty()) return;
+              // intersect selected area with editable area
+              const safeSelection = selection.intersectRanges(
+                new monaco.Range(
+                  2,
+                  1,
+                  model.getLineCount(),
+                  model.getLineMaxColumn(model.getLineCount())
+                )
+              );
+              if (safeSelection) {
+                // write text in intersection to clipboard
+                navigator.clipboard.writeText(
+                  model.getValueInRange(safeSelection)
+                );
+              }
+            },
+          });
 
+          const form = $(el).closest("form")[0];
+          form.addEventListener("formdata", (e) => {
+            // get the editor value without the prefix line
+            const fullModelRange = model.getFullModelRange();
+            const editableRange = new monaco.Range(
+              2,
+              1,
+              model.getLineCount(),
+              model.getLineMaxColumn(model.getLineCount())
+            );
+            const safeSelection = fullModelRange.intersectRanges(editableRange);
+            let editorValue = "";
+            if (safeSelection) {
+              editorValue = model.getValueInRange(safeSelection);
+            }
+            e.formData.set($(el).attr("name"), editorValue);
+          });
+        }
         //top level await and return, any, require
         if (!codepages)
           monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
