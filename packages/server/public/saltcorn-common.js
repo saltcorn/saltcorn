@@ -1374,6 +1374,70 @@ function initialize_page() {
         });
         monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
 
+        // hide prefix line
+        editor.setHiddenAreas([
+          {
+            startLineNumber: 1,
+            endLineNumber: 1,
+          },
+        ]);
+        // allow editing from line 2 downwards
+        const model = editor.getModel();
+        const constrainedInstance = constrainedEditor(monaco);
+        constrainedInstance.initializeIn(editor);
+        constrainedInstance.addRestrictionsTo(model, [
+          {
+            range: [2, 1, 2, model.getLineMaxColumn(2)],
+            allowMultiline: true,
+          },
+        ]);
+        // prevent cursor from going to line 1
+        editor.onDidChangeCursorPosition((e) => {
+          if (e.position.lineNumber < 2) {
+            editor.setPosition({
+              lineNumber: 2,
+              column: 1,
+            });
+          }
+        });
+        // no backspacing to line 1
+        editor.onKeyDown((e) => {
+          const position = editor.getPosition();
+          if (
+            position.lineNumber === 2 &&
+            position.column === 1 &&
+            e.keyCode === monaco.KeyCode.Backspace
+          ) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        });
+        // copy without the prefix line
+        editor.addAction({
+          id: "copy-editable-only",
+          label: "Copy Only User Content",
+          keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
+          run: (ed) => {
+            const selection = ed.getSelection();
+            if (selection.isEmpty()) return;
+            // intersect selected area with editable area
+            const safeSelection = selection.intersectRanges(
+              new monaco.Range(
+                2,
+                1,
+                model.getLineCount(),
+                model.getLineMaxColumn(model.getLineCount())
+              )
+            );
+            if (safeSelection) {
+              // write text in intersection to clipboard
+              navigator.clipboard.writeText(
+                model.getValueInRange(safeSelection)
+              );
+            }
+          },
+        });
+
         //top level await and return, any, require
         if (!codepages)
           monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
@@ -1770,6 +1834,15 @@ function enable_monaco({ textarea }, f) {
     rel: "stylesheet",
     type: "text/css",
     href: `/static_assets/${_sc_version_tag}/monaco/editor/editor.main.css`,
+  }).appendTo("head");
+  $("<link/>", {
+    rel: "stylesheet",
+    type: "text/css",
+    href: `/static_assets/${_sc_version_tag}/monaco/constrainedEditorPlugin.css`,
+  }).appendTo("head");
+  $("<script/>", {
+    type: "text/javascript",
+    src: `/static_assets/${_sc_version_tag}/monaco/constrainedEditorPlugin.js`,
   }).appendTo("head");
   const tableName = $(textarea).attr("tableName");
   const hasUser = $(textarea).attr("user");
