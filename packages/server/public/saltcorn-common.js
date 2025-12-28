@@ -1318,9 +1318,9 @@ function initialize_page() {
         if ($(el).hasClass("monaco-enabled")) return;
         $(el).addClass("monaco-enabled");
         let value = $(el).val();
-        const addHiddenPrefix = el.hasAttribute("is-expression");
+        const addHiddenPrefix = el.getAttribute("is-expression") === "yes";
         if (addHiddenPrefix && !value.startsWith("const prefix: Row =")) {
-          value = `const prefix: Row = 
+          value = `const prefix: Row =
 ${value}`;
         }
         const enlarge = $(el).hasClass("enlarge-in-card");
@@ -1866,7 +1866,7 @@ function enable_monaco({ textarea }, f) {
   }).appendTo("head");
   $("<script/>", {
     type: "text/javascript",
-    src: `/static_assets/${_sc_version_tag}/monaco/constrainedEditorPlugin.js`,
+    src: `/static_assets/${_sc_version_tag}/monaco/constrainedEditorPlugin.min.js`,
   }).appendTo("head");
   const tableName = $(textarea).attr("tableName");
   const hasUser = $(textarea).attr("user");
