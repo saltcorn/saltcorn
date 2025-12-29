@@ -603,15 +603,19 @@ function saveAndContinue(e, k, event) {
   return false;
 }
 
+/**
+ * search textareas with is-expression="yes" and remove virtual monaco prefix
+ * before the formdata is serialized
+ * @param {Form} form
+ */
 function removeVirtualMonacoPrefix(form) {
   const textareas = form.find('textarea[is-expression="yes"]');
   const virtualMonacoPrefix = "const prefix: Row =";
   textareas.each(function () {
     const jThis = $(this);
-    jThis.data("original-value", jThis.val());
     const val = jThis.val();
-
-    if (val.startsWith(virtualMonacoPrefix)) {
+    if (val?.startsWith(virtualMonacoPrefix)) {
+      jThis.data("original-value", val);
       const match = val.match(/\r?\n/);
       if (match) jThis.val(val.substring(match.index + match[0].length));
       else jThis.val("");
@@ -619,11 +623,20 @@ function removeVirtualMonacoPrefix(form) {
   });
 }
 
+/**
+ * search textareas with is-expression="yes" and restore virtual monaco prefix
+ * after the formdata is serialized
+ * @param {Form} form
+ */
 function restoreVirtualMonacoPrefix(form) {
   const textareas = form.find('textarea[is-expression="yes"]');
   textareas.each(function () {
     const jThis = $(this);
-    jThis.val(jThis.data("original-value"));
+    const orginalVal = jThis.data("original-value");
+    if (orginalVal !== undefined) {
+      jThis.val(orginalVal);
+      jThis.removeData("original-value");
+    }
   });
 }
 
