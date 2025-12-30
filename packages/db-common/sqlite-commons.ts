@@ -165,7 +165,7 @@ export const doCount = async (
     ? `SELECT COUNT(*) FROM (
   SELECT 1 FROM "${sqlsanitize(tbl)}" ${where} limit ${+limit}) limited_count`
     : `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
-  const tq = await queryFunc(sql, values);  
+  const tq = await queryFunc(sql, values);
   return parseInt(tq.rows[0]["COUNT(*)"]);
 };
 
@@ -291,8 +291,8 @@ export const openOrUseTransaction = async (f: Function, onError: Function) => {
  * @param onError error callback
  * @returns
  */
-export const whenTransactionisFree = async (f: Function, onError: Function) => {
-  return await withTransaction(f, onError);
+export const whenTransactionisFree = async (f: Function) => {
+  return await f();
 };
 
 export const commitAndBeginNewTransaction = async () => {};

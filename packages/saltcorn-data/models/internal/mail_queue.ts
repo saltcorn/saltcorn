@@ -123,20 +123,22 @@ export class MailQueue {
 
   public static async emptyQueue(user: User) {
     return await db.whenTransactionisFree(async () => {
-      const rows = await MailQueue.loadNotifications(user.id!, "pending");
-      if (rows.length > 0) {
-        await MailQueue.send(
-          rows.length === 1
-            ? buildSingleMail(rows[0], user.email)
-            : buildCombinedMail(rows, user.email)
-        );
-        await MailQueue.setSendStatus(
-          rows.map((r: Notification) => r.id!),
-          "sent"
-        );
-      } else {
-        console.log("No pending notifications for user", user.email);
-      }
+      await db.withTransaction(async () => {
+        const rows = await MailQueue.loadNotifications(user.id!, "pending");
+        if (rows.length > 0) {
+          await MailQueue.send(
+            rows.length === 1
+              ? buildSingleMail(rows[0], user.email)
+              : buildCombinedMail(rows, user.email)
+          );
+          await MailQueue.setSendStatus(
+            rows.map((r: Notification) => r.id!),
+            "sent"
+          );
+        } else {
+          console.log("No pending notifications for user", user.email);
+        }
+      });
     });
   }
 

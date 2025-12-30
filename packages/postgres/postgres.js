@@ -654,10 +654,9 @@ const openOrUseTransaction = async (f, onError) => {
  * Wait some time until current transaction COMMITs,
  * then open another transaction.
  * @param {Function} f logic to execute
- * @param {Function} onError error handler
  * @returns
  */
-const whenTransactionisFree = (f, onError) => {
+const whenTransactionisFree = (f) => {
   return new Promise((resolve, reject) => {
     // wait until transaction is free
     let counter = 0;
@@ -666,7 +665,7 @@ const whenTransactionisFree = (f, onError) => {
       if (!reqCon?.client) {
         clearInterval(interval);
         try {
-          resolve(await withTransaction(f, onError));
+          resolve(await f());
         } catch (e) {
           reject(e);
         }

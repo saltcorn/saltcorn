@@ -1340,7 +1340,9 @@ class Field implements AbstractField {
         const table1 = Table.findOne({ id: f.table_id });
 
         //intentionally omit await
-        recalculate_for_stored(table1); //not waiting as there could be a lot of data
+        db.whenTransactionisFree(async () => {
+          recalculate_for_stored(table1); //not waiting as there could be a lot of data
+        });
       }
     }
     if (fld.table && fld.table.fields) {
