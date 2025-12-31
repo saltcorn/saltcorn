@@ -1318,9 +1318,17 @@ function initialize_page() {
         if ($(el).hasClass("monaco-enabled")) return;
         $(el).addClass("monaco-enabled");
         let value = $(el).val();
-        const addHiddenPrefix = el.getAttribute("is-expression") === "yes";
-        if (addHiddenPrefix && !value.startsWith("const prefix: Row =")) {
-          value = `const prefix: Row =
+        const isExpression = el.getAttribute("is-expression") === "yes";
+        const virtualPrefix = "const prefix: Row =";
+        let valIsEmpty = value.trim() === "";
+        if (
+          isExpression &&
+          !(
+            new RegExp("^\\s*" + virtualPrefix).test(value) ||
+            new RegExp("^\\s*//\\s*" + virtualPrefix).test(value)
+          )
+        ) {
+          value = `${valIsEmpty ? "//" : ""} ${virtualPrefix}
 ${value}`;
         }
         const enlarge = $(el).hasClass("enlarge-in-card");
@@ -1379,7 +1387,7 @@ ${value}`;
         });
         monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
 
-        if (addHiddenPrefix) {
+        if (isExpression) {
           // hide prefix line
           editor.setHiddenAreas([
             {
@@ -1387,16 +1395,7 @@ ${value}`;
               endLineNumber: 1,
             },
           ]);
-          // allow editing from line 2 downwards
           const model = editor.getModel();
-          const constrainedInstance = constrainedEditor(monaco);
-          constrainedInstance.initializeIn(editor);
-          constrainedInstance.addRestrictionsTo(model, [
-            {
-              range: [2, 1, 2, model.getLineMaxColumn(2)],
-              allowMultiline: true,
-            },
-          ]);
           // prevent cursor from going to line 1
           editor.onDidChangeCursorPosition((e) => {
             if (e.position.lineNumber < 2) {
@@ -1444,6 +1443,23 @@ ${value}`;
             },
           });
 
+          // select all without the prefix line
+          editor.addAction({
+            id: "select-editable-only",
+            label: "Select Only User Content",
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyA],
+            run: (ed) => {
+              ed.setSelection(
+                new monaco.Range(
+                  2,
+                  1,
+                  model.getLineCount(),
+                  model.getLineMaxColumn(model.getLineCount())
+                )
+              );
+            },
+          });
+
           const form = $(el).closest("form")[0];
           form.addEventListener("formdata", (e) => {
             // get the editor value without the prefix line
@@ -1460,6 +1476,31 @@ ${value}`;
               editorValue = model.getValueInRange(safeSelection);
             }
             e.formData.set($(el).attr("name"), editorValue);
+          });
+
+          editor.onDidChangeModelContent(() => {
+            const rawVal = editor.getValue();
+            const userVal = rawVal.substring(rawVal.indexOf("\n") + 1);
+            const newValIsEmpty = userVal.trim().length === 0;
+            if (valIsEmpty && !newValIsEmpty) {
+              valIsEmpty = false;
+              editor.executeEdits("remove-comment-source", [
+                {
+                  range: new monaco.Range(1, 1, 1, 3),
+                  text: "",
+                  forceMoveMarkers: true,
+                },
+              ]);
+            } else if (!valIsEmpty && newValIsEmpty) {
+              valIsEmpty = true;
+              editor.executeEdits("add-comment-source", [
+                {
+                  range: new monaco.Range(1, 1, 1, 1),
+                  text: "// ",
+                  forceMoveMarkers: true,
+                },
+              ]);
+            }
           });
         }
         //top level await and return, any, require
@@ -1858,15 +1899,6 @@ function enable_monaco({ textarea }, f) {
     rel: "stylesheet",
     type: "text/css",
     href: `/static_assets/${_sc_version_tag}/monaco/editor/editor.main.css`,
-  }).appendTo("head");
-  $("<link/>", {
-    rel: "stylesheet",
-    type: "text/css",
-    href: `/static_assets/${_sc_version_tag}/monaco/constrainedEditorPlugin.css`,
-  }).appendTo("head");
-  $("<script/>", {
-    type: "text/javascript",
-    src: `/static_assets/${_sc_version_tag}/monaco/constrainedEditorPlugin.min.js`,
   }).appendTo("head");
   const tableName = $(textarea).attr("tableName");
   const hasUser = $(textarea).attr("user");

@@ -614,7 +614,10 @@ function removeVirtualMonacoPrefix(form) {
   textareas.each(function () {
     const jThis = $(this);
     const val = jThis.val();
-    if (val?.startsWith(virtualMonacoPrefix)) {
+    if (
+      new RegExp("^\\s*" + virtualMonacoPrefix).test(val) ||
+      new RegExp("^\\s*//\\s*" + virtualMonacoPrefix).test(val)
+    ) {
       jThis.data("original-value", val);
       const match = val.match(/\r?\n/);
       if (match) jThis.val(val.substring(match.index + match[0].length));
