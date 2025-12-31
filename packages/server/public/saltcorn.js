@@ -412,9 +412,7 @@ function expand_thumbnail(img_id, filename) {
   ensure_modal_exists_and_closed();
   const isAbsolute = /^(?:[a-z]+:)?\/\//i.test(img_id);
   const src = isAbsolute ? img_id : `/files/serve/${img_id}`;
-  $("#scmodal .modal-body").html(
-    `<img src="${src}" style="width: 100%">`
-  );
+  $("#scmodal .modal-body").html(`<img src="${src}" style="width: 100%">`);
   $("#scmodal .modal-title").html(decodeURIComponent(filename));
   new bootstrap.Modal($("#scmodal")).show();
 }
@@ -555,7 +553,9 @@ function saveAndContinue(e, k, event) {
   if (!valres) return;
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
+  removeVirtualMonacoPrefix(form);
   var form_data = form.serialize();
+  restoreVirtualMonacoPrefix(form);
 
   if (form.prop("data-last-save-success") === form_data) {
     if (k) k(valres);
@@ -601,6 +601,46 @@ function saveAndContinue(e, k, event) {
   });
 
   return false;
+}
+
+/**
+ * search textareas with is-expression="yes" and remove virtual monaco prefix
+ * before the formdata is serialized
+ * @param {Form} form
+ */
+function removeVirtualMonacoPrefix(form) {
+  const textareas = form.find('textarea[is-expression="yes"]');
+  const virtualMonacoPrefix = "const prefix: Row =";
+  textareas.each(function () {
+    const jThis = $(this);
+    const val = jThis.val();
+    if (
+      new RegExp("^\\s*" + virtualMonacoPrefix).test(val) ||
+      new RegExp("^\\s*//\\s*" + virtualMonacoPrefix).test(val)
+    ) {
+      jThis.data("original-value", val);
+      const match = val.match(/\r?\n/);
+      if (match) jThis.val(val.substring(match.index + match[0].length));
+      else jThis.val("");
+    }
+  });
+}
+
+/**
+ * search textareas with is-expression="yes" and restore virtual monaco prefix
+ * after the formdata is serialized
+ * @param {Form} form
+ */
+function restoreVirtualMonacoPrefix(form) {
+  const textareas = form.find('textarea[is-expression="yes"]');
+  textareas.each(function () {
+    const jThis = $(this);
+    const orginalVal = jThis.data("original-value");
+    if (orginalVal !== undefined) {
+      jThis.val(orginalVal);
+      jThis.removeData("original-value");
+    }
+  });
 }
 
 function updateMatchingRows(e, viewname) {

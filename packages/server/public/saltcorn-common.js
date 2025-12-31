@@ -1317,7 +1317,20 @@ function initialize_page() {
       codes.forEach((el) => {
         if ($(el).hasClass("monaco-enabled")) return;
         $(el).addClass("monaco-enabled");
-        const value = $(el).val();
+        let value = $(el).val();
+        const isExpression = el.getAttribute("is-expression") === "yes";
+        const virtualPrefix = "const prefix: Row =";
+        let valIsEmpty = value.trim() === "";
+        if (
+          isExpression &&
+          !(
+            new RegExp("^\\s*" + virtualPrefix).test(value) ||
+            new RegExp("^\\s*//\\s*" + virtualPrefix).test(value)
+          )
+        ) {
+          value = `${valIsEmpty ? "//" : ""} ${virtualPrefix}
+${value}`;
+        }
         const enlarge = $(el).hasClass("enlarge-in-card");
         const compact = $(el).attr("compact");
         const div = document.createElement("div");
@@ -1374,6 +1387,122 @@ function initialize_page() {
         });
         monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
 
+        if (isExpression) {
+          // hide prefix line
+          editor.setHiddenAreas([
+            {
+              startLineNumber: 1,
+              endLineNumber: 1,
+            },
+          ]);
+          const model = editor.getModel();
+          // prevent cursor from going to line 1
+          editor.onDidChangeCursorPosition((e) => {
+            if (e.position.lineNumber < 2) {
+              editor.setPosition({
+                lineNumber: 2,
+                column: 1,
+              });
+            }
+          });
+          // no backspacing to line 1
+          editor.onKeyDown((e) => {
+            const position = editor.getPosition();
+            if (
+              position.lineNumber === 2 &&
+              position.column === 1 &&
+              e.keyCode === monaco.KeyCode.Backspace
+            ) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          });
+          // copy without the prefix line
+          editor.addAction({
+            id: "copy-editable-only",
+            label: "Copy Only User Content",
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
+            run: (ed) => {
+              const selection = ed.getSelection();
+              if (selection.isEmpty()) return;
+              // intersect selected area with editable area
+              const safeSelection = selection.intersectRanges(
+                new monaco.Range(
+                  2,
+                  1,
+                  model.getLineCount(),
+                  model.getLineMaxColumn(model.getLineCount())
+                )
+              );
+              if (safeSelection) {
+                // write text in intersection to clipboard
+                navigator.clipboard.writeText(
+                  model.getValueInRange(safeSelection)
+                );
+              }
+            },
+          });
+
+          // select all without the prefix line
+          editor.addAction({
+            id: "select-editable-only",
+            label: "Select Only User Content",
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyA],
+            run: (ed) => {
+              ed.setSelection(
+                new monaco.Range(
+                  2,
+                  1,
+                  model.getLineCount(),
+                  model.getLineMaxColumn(model.getLineCount())
+                )
+              );
+            },
+          });
+
+          const form = $(el).closest("form")[0];
+          form.addEventListener("formdata", (e) => {
+            // get the editor value without the prefix line
+            const fullModelRange = model.getFullModelRange();
+            const editableRange = new monaco.Range(
+              2,
+              1,
+              model.getLineCount(),
+              model.getLineMaxColumn(model.getLineCount())
+            );
+            const safeSelection = fullModelRange.intersectRanges(editableRange);
+            let editorValue = "";
+            if (safeSelection) {
+              editorValue = model.getValueInRange(safeSelection);
+            }
+            e.formData.set($(el).attr("name"), editorValue);
+          });
+
+          editor.onDidChangeModelContent(() => {
+            const rawVal = editor.getValue();
+            const userVal = rawVal.substring(rawVal.indexOf("\n") + 1);
+            const newValIsEmpty = userVal.trim().length === 0;
+            if (valIsEmpty && !newValIsEmpty) {
+              valIsEmpty = false;
+              editor.executeEdits("remove-comment-source", [
+                {
+                  range: new monaco.Range(1, 1, 1, 3),
+                  text: "",
+                  forceMoveMarkers: true,
+                },
+              ]);
+            } else if (!valIsEmpty && newValIsEmpty) {
+              valIsEmpty = true;
+              editor.executeEdits("add-comment-source", [
+                {
+                  range: new monaco.Range(1, 1, 1, 1),
+                  text: "// ",
+                  forceMoveMarkers: true,
+                },
+              ]);
+            }
+          });
+        }
         //top level await and return, any, require
         if (!codepages)
           monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
