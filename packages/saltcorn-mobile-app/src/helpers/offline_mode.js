@@ -318,12 +318,28 @@ const handleUniqueConflicts = async (uniqueConflicts, translatedIds) => {
   }
 };
 
-const handleUpdateConflicts = async (dataConflicts, alerts) => {
+/**
+ * If there was a field level data conflict, the server version is applied
+ * When it also was translated, change the untranslated row and translate it later the normal way
+ * @param {*} dataConflicts
+ * @param {*} translatedIds
+ * @param {*} alerts
+ */
+const handleUpdateConflicts = async (dataConflicts, translatedIds, alerts) => {
   let hasConflicts = false;
   for (const [tblName, updates] of Object.entries(dataConflicts)) {
     const table = saltcorn.data.models.Table.findOne({ name: tblName });
     const pkName = table.pk_name || "id";
+    const translations = translatedIds[tblName] || {};
     for (const update of updates) {
+      // search a translation where the current row is the target
+      // and if found, make sure the untranslated row is updated
+      for (const [from, to] of Object.entries(translations)) {
+        if (to === update[pkName]) {
+          update[pkName] = from;
+        }
+      }
+
       const { [pkName]: _sc_pkValue, ...rest } = update;
       await table.updateRow(rest, _sc_pkValue);
       hasConflicts = true;
@@ -404,7 +420,7 @@ const syncOfflineData = async (synchedTables, syncTimestamp, alerts) => {
     if (finished) {
       if (error) throw new Error(error.message);
       else {
-        await handleUpdateConflicts(dataConflicts, alerts);
+        await handleUpdateConflicts(dataConflicts, translatedIds, alerts);
         await handleUniqueConflicts(uniqueConflicts, translatedIds);
         await handleTranslatedIds(uniqueConflicts, translatedIds);
         await updateSyncInfos(offlineChanges, translatedIds, syncTimestamp);
