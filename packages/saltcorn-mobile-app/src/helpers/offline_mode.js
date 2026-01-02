@@ -2,8 +2,10 @@
 
 import { apiCall } from "./api";
 import {
-  showAlerts,
+  showToasts,
+  clearToasts,
   clearAlerts,
+  showAlerts,
   errorAlert,
   showLoadSpinner,
   removeLoadSpinner,
@@ -497,16 +499,26 @@ const setSpinnerText = () => {
 
 let syncInProgress = false;
 
-export async function isSyncInProgress() {
+export function isSyncInProgress() {
   return syncInProgress;
 }
 
-export async function sync(background = false, alerts = []) {
+/**
+ *
+ * @param {boolean} withWakelock try request a wakelock and show a spinner during sync (propably not in background mode)
+ * @param {boolean} switchOnline end the offline mode and go online again after sync
+ * @param {string[]} alerts output alerts collected during sync
+ */
+export async function sync(
+  withWakelock = true,
+  switchOnline = true,
+  alerts = []
+) {
   if (syncInProgress)
     throw new Error("A synchronization is already in progress.");
-
+  syncInProgress = true;
   try {
-    if (!background) setSpinnerText();
+    if (withWakelock) setSpinnerText();
     const state = saltcorn.data.state.getState();
     const { user } = state.mobileConfig;
     const { offlineUser, hasOfflineData, uploadStarted, uploadStartTime } =
@@ -525,7 +537,7 @@ export async function sync(background = false, alerts = []) {
       const syncTimestamp = await getServerTime();
       await setUploadStarted(true, syncTimestamp);
       let lock = null;
-      if (!background) {
+      if (withWakelock) {
         try {
           if (window.navigator?.wakeLock?.request)
             lock = await window.navigator.wakeLock.request();
@@ -545,7 +557,7 @@ export async function sync(background = false, alerts = []) {
         syncDir = await syncOfflineData(synchedTables, syncTimestamp, alerts);
         await syncRemoteData(syncInfos, syncTimestamp);
         await setLocalSyncTimestamp(syncTimestamp);
-        if (!background) await endOfflineMode(true);
+        if (switchOnline) await endOfflineMode(true);
         await setUploadStarted(false);
         await saltcorn.data.db.query("COMMIT");
         transactionOpen = false;
@@ -642,21 +654,50 @@ export async function clearLocalData(inTransaction) {
   }
 }
 
-export function networkChangeCallback(status) {
+export async function networkChangeCallback(status) {
   console.log("Network status changed", status);
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   if (status.connectionType !== "none" && mobileConfig.isOfflineMode) {
     const iframeWindow = $("#content-iframe")[0].contentWindow;
-    if (iframeWindow) {
-      clearAlerts();
-      iframeWindow.notifyAlert(
-        `An internet connection is available, to end the offline mode click ${saltcorn.markup.a(
-          {
-            href: "javascript:execLink('/sync/sync_settings')",
-          },
-          "here"
-        )}`
-      );
+    if (mobileConfig.syncOnReconnect) {
+      if (isSyncInProgress()) {
+        console.log("Sync already in progress, skipping automatic sync");
+        return;
+      }
+      console.log("Network restored, starting automatic sync");
+      const toasts = [];
+      try {
+        await sync(false, true, toasts);
+        if (iframeWindow) {
+          clearAlerts();
+          showAlerts([
+            {
+              type: "info",
+              msg: "You are online again.",
+            },
+          ]);
+        }
+        toasts.push({
+          type: "info",
+          msg: "Synchronized your offline data.",
+        });
+      } catch (error) {
+        console.log("Error during push sync:", error);
+      }
+      if (toasts.length > 0) showToasts(toasts);
+    } else {
+      const iframeWindow = $("#content-iframe")[0].contentWindow;
+      if (iframeWindow) {
+        clearToasts();
+        iframeWindow.notifyAlert(
+          `An internet connection is available, to end the offline mode click ${saltcorn.markup.a(
+            {
+              href: "javascript:execLink('/sync/sync_settings')",
+            },
+            "here"
+          )}`
+        );
+      }
     }
   }
   mobileConfig.networkState = status.connectionType;
@@ -696,7 +737,7 @@ export async function deleteOfflineData(noFeedback) {
     await clearLocalData(false);
     await setHasOfflineData(false);
     if (!noFeedback)
-      showAlerts([
+      showToasts([
         {
           type: "info",
           msg: "Deleted your offline data.",
@@ -716,8 +757,8 @@ export function addPushSyncHandler() {
     console.log("Push sync received:", notification);
     const alerts = [];
     try {
-      await sync(true, alerts);
-      if (alerts.length > 0) showAlerts(alerts);
+      await sync(false, false, alerts);
+      if (alerts.length > 0) showToasts(alerts);
     } catch (error) {
       console.log("Error during push sync:", error);
     }

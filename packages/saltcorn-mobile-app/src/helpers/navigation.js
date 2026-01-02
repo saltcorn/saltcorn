@@ -3,7 +3,7 @@ import i18next from "i18next";
 
 import { router } from "../routing/index";
 import { startOfflineMode } from "./offline_mode";
-import { showAlerts } from "./common";
+import { showToasts } from "./common";
 
 export let routingHistory = [];
 
@@ -186,7 +186,7 @@ export async function handleRoute(route, query, files, data) {
           await replaceIframeInnerContent(page.content);
         else await replaceIframe(page.content, page.isFile);
       } else {
-        showAlerts([
+        showToasts([
           {
             type: "warning",
             msg: i18next.t("%s finished without a result", {
@@ -199,7 +199,7 @@ export async function handleRoute(route, query, files, data) {
     }
   } catch (error) {
     if (routeAdded) popRoute();
-    showAlerts([
+    showToasts([
       {
         type: "error",
         msg: `${i18next.t("In %s", {
@@ -253,7 +253,7 @@ export async function gotoEntryView() {
     addRoute({ route: mobileConfig.entry_point, query: undefined });
     await replaceIframeInnerContent(page.content);
   } catch (error) {
-    showAlerts([
+    showToasts([
       {
         type: "error",
         msg: error.message ? error.message : "An error occured.",

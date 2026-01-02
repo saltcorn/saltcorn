@@ -2,7 +2,7 @@
 
 import { Capacitor } from "@capacitor/core";
 import { apiCall } from "./api";
-import { showAlerts } from "./common";
+import { showToasts } from "./common";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { Device } from "@capacitor/device";
 
@@ -151,7 +151,7 @@ export function addPusNotifyHandler() {
   const state = saltcorn.data.state.getState();
   state.mobile_push_handler["push_notification"] = (notification) => {
     console.log("Push notification received:", notification);
-    showAlerts([
+    showToasts([
       {
         type: "info",
         msg: notification.body,

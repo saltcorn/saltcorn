@@ -472,7 +472,7 @@ export async function init(mobileConfig) {
             }
         } else if (offlineUser) {
           if (offlineUser === mobileConfig.user.email) {
-            await sync(false, alerts);
+            await sync(true, true, alerts);
             alerts.push({
               type: "info",
               msg: "Synchronized your offline data.",
@@ -483,7 +483,7 @@ export async function init(mobileConfig) {
               msg: `'${offlineUser}' has not yet uploaded offline data.`,
             });
         } else {
-          await sync(false, alerts);
+          await sync(true, true, alerts);
           alerts.push({
             type: "info",
             msg: "Synchronized your offline data.",

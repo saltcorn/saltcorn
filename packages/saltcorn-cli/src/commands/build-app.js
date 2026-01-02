@@ -137,6 +137,7 @@ class BuildAppCommand extends Command {
         autoPublicLogin: flags.autoPublicLogin,
         showContinueAsPublicUser: flags.showContinueAsPublicUser,
         allowOfflineMode: flags.allowOfflineMode,
+        syncOnReconnect: flags.syncOnReconnect,
         pushSync: flags.pushSync,
         syncInterval: flags.syncInterval,
         allowShareTo: flags.allowShareTo,
@@ -315,6 +316,13 @@ BuildAppCommand.flags = {
     string: "allowOfflineMode",
     description:
       "Switch to offline mode when there is no internet, sync the data when a connection is available again.",
+  }),
+  syncOnReconnect: Flags.boolean({
+    name: "Sync on connection restored",
+    string: "syncOnReconnect",
+    description:
+      "Run Synchronizations and return into online mode when the network connection is restored. " +
+      "When disabled, you still can do this manually.",
   }),
   pushSync: Flags.boolean({
     name: "Push sync",

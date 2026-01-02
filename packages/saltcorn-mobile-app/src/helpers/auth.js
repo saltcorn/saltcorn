@@ -7,7 +7,7 @@ import { router } from "../routing/index";
 import { getLastOfflineSession, deleteOfflineData, sync } from "./offline_mode";
 import { addRoute, replaceIframe, clearHistory } from "../helpers/navigation";
 import {
-  showAlerts,
+  showToasts,
   tryInitBackgroundSync,
   tryInitPush,
   tryStopBackgroundSync,
@@ -69,7 +69,7 @@ const initialSync = async (config) => {
   const alerts = [];
   const { offlineUser, hasOfflineData } = (await getLastOfflineSession()) || {};
   if (!offlineUser || offlineUser === config.user.email) {
-    await sync(false, alerts);
+    await sync(true, true, alerts);
   } else {
     if (hasOfflineData)
       alerts.push({
@@ -78,7 +78,7 @@ const initialSync = async (config) => {
       });
     else {
       await deleteOfflineData(true);
-      await sync(false, alerts);
+      await sync(true, true, alerts);
     }
   }
   return alerts;
@@ -138,7 +138,7 @@ export async function login({ email, password, isSignup, token }) {
     });
     if (page.content) await replaceIframe(page.content, page.isFile);
   } else if (loginResult?.alerts) {
-    showAlerts(loginResult?.alerts);
+    showToasts(loginResult?.alerts);
   } else {
     throw new Error("The login failed.");
   }
@@ -180,13 +180,13 @@ export async function publicLogin(entryPoint) {
       });
       if (page.content) await replaceIframe(page.content, page.isFile);
     } else if (loginResult?.alerts) {
-      showAlerts(loginResult?.alerts);
+      showToasts(loginResult?.alerts);
     } else {
       throw new Error("The login failed.");
     }
   } catch (error) {
     console.error(error);
-    showAlerts([
+    showToasts([
       {
         type: "error",
         msg: error.message ? error.message : "An error occured.",
@@ -215,7 +215,7 @@ export async function logout() {
     } else throw new Error("Unable to logout.");
   } catch (error) {
     console.error("unable to logout:", error);
-    showAlerts([
+    showToasts([
       {
         type: "error",
         msg: error.message ? error.message : "An error occured.",
