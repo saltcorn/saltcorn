@@ -17,7 +17,7 @@ Saltcorn is using [PostgreSQL](https://github.com/postgres/postgres), [node.js](
 #### Online
 
 A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new application under a subdomain at [https://saltcorn.com/tenant/create](https://saltcorn.com/tenant/create).
-This service is free but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of Saltcorn.
+This service is free, but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of Saltcorn.
 
 #### Desktop
 
@@ -31,7 +31,7 @@ export SQLITE_FILEPATH=~/saltcorn.sqlite
 .local/bin/saltcorn serve
 ```
 
-Now open http://localhost:3000/ in your browser. When you want to run this again, you need to run the `export` line and the `saltcorn serve` line. or simply run `SQLITE_FILEPATH=~/saltcorn.sqlite .local/bin/saltcorn serve`.
+Now open http://localhost:3000/ in your browser. When you want to run this again, you need to run the `export` line and the `saltcorn serve` line. Or simply run `SQLITE_FILEPATH=~/saltcorn.sqlite .local/bin/saltcorn serve`.
 
 #### Server
 
@@ -70,7 +70,7 @@ The first two lines will install Node.js 22 (you can also use 18, 20, or 24). Th
 accepting all the defaults, which installs PostgreSQL and sets up Saltcorn as a service
 listening on port 80.
 
-If you want a different port, different database backend, or to not install as a service, you
+If you want a different port, a different database backend, or to not install as a service, you
 can omit the final `-y` to get an interactive installation:
 
 ```
@@ -94,7 +94,7 @@ wget -qO - https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev build-essential python-is-python3
 ```
 
-You can also any Node version 18-24.
+You can also use any Node version between 18-24.
 
 ### Install Saltcorn
 
@@ -112,7 +112,7 @@ it subsequently:
 
 ### Setup (automated)
 
-if you are `root`, create a user with sudo and switch to that user:
+If you are `root`, create a user with sudo and switch to that user:
 
 ```
 adduser saltcorn
@@ -128,7 +128,7 @@ then run
 
 ### Setup (manual)
 
-NOTE: this is somewhat out of date; see instead https://wiki.saltcorn.com/view/ShowPage?title=Install%20on%20Ubuntu, in paticular the last section.
+NOTE: this is somewhat out of date; see instead https://wiki.saltcorn.com/view/ShowPage?title=Install%20on%20Ubuntu, in particular the last section.
 
 Skip this section if you ran `saltcorn setup` or `npx saltcorn-install`
 
@@ -177,9 +177,9 @@ Skip this section if you ran `saltcorn setup` or `npx saltcorn-install`
 
 #### Install Saltcorn as a service
 
-Installing saltcorn as a service will mean it runs in the background and restarts automatically if the system reboots.
+Installing Saltcorn as a service will mean it runs in the background and restarts automatically if the system reboots.
 
-create a file `/lib/systemd/system/saltcorn.service` with these contents:
+Create a file `/lib/systemd/system/saltcorn.service` with these contents:
 
 ```
 [Unit]
@@ -236,7 +236,7 @@ sudo apt-get install -y nodejs libpq-dev
 
 ### Prepare Node
 
-assuming you have cloned this repository to \$HOME/saltcorn (otherwise adjust PATH)
+Assuming you have cloned this repository to \$HOME/saltcorn (otherwise adjust PATH)
 
 ```
 npm config set prefix ~/.local
@@ -285,11 +285,11 @@ cd to your saltcorn repository clone, then run this in shell:
 
 `npm run tsc; while [ 1 ]; do SALTCORN_NWORKERS=1 saltcorn serve --dev;done`
 
-This will restart the server and rebuild with tsc every time you save a file in the saltcorn repo or in a local plugin.
+This will restart the server and rebuild with tsc every time you save a file in the Saltcorn repo or in a local plugin.
 
 ### Working with local plugins
 
-A Local plugin means that the code lives in your home directory and when you edit it, the plugin updates in the instance after a restart (which will happen automatically on save, when running the dev server)
+A Local plugin means that the code lives in your home directory, and when you edit it, the plugin updates in the instance after a restart (which will happen automatically on save, when running the dev server).
 
 If you have a plugin checked out in a directory, you can install it in the running instance through the CLI in two different ways:
 
@@ -336,7 +336,7 @@ npm run build
 
 ### React rebuild on save
 
-in `saltcorn/packages/saltcorn-builder/` run:
+In `saltcorn/packages/saltcorn-builder/` run:
 
 `git ls-files | entr npm run builddev`
 
