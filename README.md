@@ -281,7 +281,7 @@ to install everything. If successful, you should now be able to run `saltcorn` i
 
 ### Dev server
 
-cd to your saltcorn repository clone, then then run this in shell:
+cd to your saltcorn repository clone, then run this in shell:
 
 `npm run tsc; while [ 1 ]; do SALTCORN_NWORKERS=1 saltcorn serve --dev;done`
 
@@ -295,7 +295,7 @@ If you have a plugin checked out in a directory, you can install it in the runni
 
 * If the plugin is not already installed in the instance, run `saltcorn install-plugin -d path_to_plugin` (if the plugin is checked out in path_to_plugin)
 
-* if the plugin is already installed in the instance, you can convert it to a local plugin with the `dev:localize-plugin` CLI command: `saltcorn dev:localize-plugin plugin_name {path_to_plugin}`.
+* If the plugin is already installed in the instance, you can convert it to a local plugin with the `dev:localize-plugin` CLI command: `saltcorn dev:localize-plugin plugin_name {path_to_plugin}`.
 
 * You can also unlocalize a plugin, see the help for `dev:localize-plugin`
 
