@@ -521,6 +521,8 @@ const run = async (
     },
     state
   );
+  await Page.renderEachEmbeddedPageInLayout(layout, state, extra);
+
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
     field(segment) {

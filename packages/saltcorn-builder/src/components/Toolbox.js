@@ -654,6 +654,7 @@ const ToolboxFilter = ({ expanded }) => {
     field_view_options,
     child_field_list,
     agg_field_opts,
+    pages,
   } = options;
   return chunkToolBox(
     [
@@ -682,6 +683,7 @@ const ToolboxFilter = ({ expanded }) => {
       <LinkElem connectors={connectors} />,
       <TableElem connectors={connectors} />,
       <DropMenuElem connectors={connectors} />,
+      <PageElem connectors={connectors} pages={pages} />,
     ],
     expanded
   );
