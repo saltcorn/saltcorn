@@ -54,6 +54,29 @@ describe("layout", () => {
       '<section style="    ">bar</section>'
     );
   });
+  it("renders a container custom class", () => {
+    const blockDispatch = {};
+    const markup = {
+      type: "container",
+      contents: { type: "blank", contents: "bar" },
+      customClass: "py-5",
+    };
+    expect(render({ blockDispatch, layout: markup })).toBe(
+      '<div class="py-5" style="    ">bar</div>'
+    );
+  });
+  it("renders a container custom element with class", () => {
+    const blockDispatch = {};
+    const markup = {
+      type: "container",
+      htmlElement: "section",
+      contents: { type: "blank", contents: "bar" },
+      customClass: "py-5",
+    };
+    expect(render({ blockDispatch, layout: markup })).toBe(
+      '<section class="py-5" style="    ">bar</section>'
+    );
+  });
   it("renders a nested container custom element", () => {
     const blockDispatch = {};
     const markup = {
