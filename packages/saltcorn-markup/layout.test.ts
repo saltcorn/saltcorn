@@ -382,6 +382,19 @@ describe("render", () => {
     expect(result).toContain('<div class="card-body">Card Body</div>');
     expect(result).toContain('<div class="card-footer">Card Footer</div>');
   });
+  it("renders a card layout with class", () => {
+    const blockDispatch = {};
+    const markup = {
+      type: "card",
+      title: "Card Title",
+      contents: { type: "blank", contents: "Card Body" },
+      class: "foo",
+    };
+    const result = render({ blockDispatch, layout: markup });
+    expect(result).toBe(
+      '<div class="card mt-4 shadow foo"><span class="card-header"><h5 class="m-0 fw-bold text-primary d-inline">Card Title</h5></span><div class="card-body">Card Body</div></div>'
+    );
+  });
 
   it("renders a layout with a container and background image", () => {
     const blockDispatch = {};
