@@ -43,6 +43,33 @@ describe("layout", () => {
       '<div class="row"><div class="col-6">hello</div><div class="col-6">world</div></div><div class="row"><div class="col-6">bar</div><div class="col-6">foo</div></div>'
     );
   });
+  it("renders a container custom element", () => {
+    const blockDispatch = {};
+    const markup = {
+      type: "container",
+      htmlElement: "section",
+      contents: { type: "blank", contents: "bar" },
+    };
+    expect(render({ blockDispatch, layout: markup })).toBe(
+      '<section style="    ">bar</section>'
+    );
+  });
+  it("renders a nested container custom element", () => {
+    const blockDispatch = {};
+    const markup = {
+      type: "container",
+      htmlElement: "section",
+      contents: {
+        type: "container",
+        htmlElement: "section",
+        contents: { type: "blank", contents: "bar" },
+      },
+      customClass: "py-5",
+    };
+    expect(render({ blockDispatch, layout: markup })).toBe(
+      '<section class="py-5" style="    "><section style="    ">bar</section></section>'
+    );
+  });
   it("renders a container with padding", () => {
     const blockDispatch = {};
     const markup = {
@@ -307,7 +334,9 @@ describe("render", () => {
     };
     const result = render({ blockDispatch, layout: markup });
     expect(result).toContain('<div class="dropdown d-inline">');
-    expect(result).toContain('class="btn btn-secondary  d-inline-block dropdown-toggle"');
+    expect(result).toContain(
+      'class="btn btn-secondary  d-inline-block dropdown-toggle"'
+    );
     expect(result).toContain(">Menu</button>");
     expect(result).toContain('<div class="dropdown-menu"');
     expect(result).toContain("Action 1Action 2Action 3</div>");
@@ -478,7 +507,7 @@ describe("render", () => {
       contents: { type: "blank", contents: "Transformed Content" },
     };
     const result = render({ blockDispatch, layout: markup });
-    expect(result).toContain('transform: rotate(45deg) scaleX(1.5)');
+    expect(result).toContain("transform: rotate(45deg) scaleX(1.5)");
     expect(result).toContain("Transformed Content");
   });
 });
