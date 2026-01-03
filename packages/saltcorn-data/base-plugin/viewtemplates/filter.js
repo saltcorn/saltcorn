@@ -213,6 +213,9 @@ const configuration_workflow = (req) =>
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
+          const has_select2 = Object.keys(getState().keyFieldviews).includes(
+            "select2"
+          );         
 
           return {
             fields: fields
@@ -236,6 +239,7 @@ const configuration_workflow = (req) =>
             actionConfigForms,
             //fieldViewConfigForms,
             mode: "filter",
+            has_select2,
           };
         },
       },

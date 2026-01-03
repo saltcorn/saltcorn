@@ -57,6 +57,7 @@ const DropDownFilterSettings = () => {
     full_width,
     where,
     all_options,
+    apply_select2,
   } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
@@ -65,6 +66,7 @@ const DropDownFilterSettings = () => {
     label_formula: node.data.props.label_formula,
     where: node.data.props.where,
     all_options: node.data.props.all_options,
+    apply_select2: node.data.props.apply_select2,
   }));
   const options = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
@@ -175,6 +177,23 @@ const DropDownFilterSettings = () => {
             </td>
           </tr>
         ) : null}
+        {options.has_select2 ? (
+          <tr>
+            <td></td>
+            <td>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  name="block"
+                  type="checkbox"
+                  checked={apply_select2}
+                  onChange={setAProp("apply_select2", { checked: true })}
+                />
+                <label className="form-check-label">Apply select2</label>
+              </div>
+            </td>
+          </tr>
+        ) : null}
       </tbody>
     </table>
   );
@@ -197,6 +216,7 @@ DropDownFilter.craft = {
       "where",
       "all_options",
       "block",
+      "apply_select2",
     ],
   },
 };
