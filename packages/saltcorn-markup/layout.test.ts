@@ -302,7 +302,7 @@ describe("render", () => {
     };
     const result = render({ blockDispatch, layout: markup });
     expect(result).toBe(
-      '<span class="custom-class"><div class="custom-class" style="    ">Content with class</div></span>'
+      '<div class="custom-class" style="    ">Content with class</div>'
     );
   });
 
