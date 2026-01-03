@@ -74,6 +74,7 @@ type MobileBuilderConfig = {
   autoPublicLogin: string;
   showContinueAsPublicUser?: boolean;
   allowOfflineMode: string;
+  syncOnReconnect: boolean;
   pushSync: boolean;
   syncInterval?: number;
   plugins: Plugin[];
@@ -112,6 +113,7 @@ export class MobileBuilder {
   autoPublicLogin: string;
   showContinueAsPublicUser: boolean;
   allowOfflineMode: string;
+  syncOnReconnect: boolean;
   pushSync: boolean;
   syncInterval?: number;
   pluginManager: any;
@@ -160,6 +162,7 @@ export class MobileBuilder {
     this.showContinueAsPublicUser = !!cfg.showContinueAsPublicUser;
     this.allowOfflineMode = cfg.allowOfflineMode;
     this.pushSync = cfg.pushSync;
+    this.syncOnReconnect = cfg.syncOnReconnect;
     this.syncInterval = cfg.syncInterval ? +cfg.syncInterval : undefined;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
@@ -250,6 +253,7 @@ export class MobileBuilder {
         autoPublicLogin: this.autoPublicLogin,
         showContinueAsPublicUser: this.showContinueAsPublicUser,
         allowOfflineMode: this.allowOfflineMode,
+        syncOnReconnect: this.syncOnReconnect,
         pushSync: this.pushSync,
         syncInterval: this.syncInterval ? this.syncInterval : 0,
         allowShareTo: this.allowShareTo,

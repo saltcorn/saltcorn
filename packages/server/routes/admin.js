@@ -3243,6 +3243,36 @@ router.get(
                           )
                         )
                       ),
+
+                      // sync when connection restored
+                      div(
+                        { class: "row pb-2 my-2" },
+                        div(
+                          { class: "col-sm-10" },
+                          input({
+                            type: "checkbox",
+                            id: "connRestoredBoxId",
+                            class: "form-check-input me-2 mb-0 ",
+                            name: "syncOnReconnect",
+                            checked: builderSettings.syncOnReconnect === "on",
+                          }),
+                          label(
+                            {
+                              for: "connRestoredBoxId",
+                              class: "form-label fw-bold mb-0",
+                            },
+                            req.__("Sync on reconnect")
+                          ),
+                          div(),
+                          i(
+                            req.__(
+                              "Synchronize when the internet reconnects and automatically end the offline mode. " +
+                                "When disabled, you'll see a prompt to do it manually."
+                            )
+                          )
+                        )
+                      ),
+
                       // push sync
                       div(
                         { class: "row pb-2 my-2" },
@@ -4041,6 +4071,7 @@ router.post(
       autoPublicLogin,
       showContinueAsPublicUser,
       allowOfflineMode,
+      syncOnReconnect,
       pushSync,
       syncInterval,
       synchedTables,
@@ -4188,6 +4219,7 @@ router.post(
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
     if (syncInterval) spawnParams.push("--syncInterval", syncInterval);
     if (pushSync) spawnParams.push("--pushSync");
+    if (syncOnReconnect) spawnParams.push("--syncOnReconnect");
     if (allowShareTo) spawnParams.push("--allowShareTo");
     if (autoPublicLogin) spawnParams.push("--autoPublicLogin");
     if (showContinueAsPublicUser)

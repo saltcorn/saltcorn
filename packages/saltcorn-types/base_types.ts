@@ -607,6 +607,7 @@ export type MobileConfig = {
   autoPublicLogin: boolean;
   showContinueAsPublicUser?: boolean;
   allowOfflineMode?: boolean;
+  syncOnReconnect?: boolean;
   pushSync?: boolean;
   syncInterval?: number;
   allowShareTo?: boolean;
@@ -632,7 +633,7 @@ export type MobileConfig = {
   pushConfiguration?: {
     token: string;
     devideId: string;
-  }
+  };
 };
 
 export type JoinFieldOption = {
