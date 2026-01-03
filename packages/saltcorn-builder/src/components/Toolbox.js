@@ -544,6 +544,7 @@ const ToolboxShow = ({ expanded }) => {
     agg_field_opts,
     views,
     images,
+    pages,
   } = options;
   return chunkToolBox(
     [
@@ -572,6 +573,7 @@ const ToolboxShow = ({ expanded }) => {
       <HTMLElem connectors={connectors} />,
       <DropMenuElem connectors={connectors} />,
       <TableElem connectors={connectors} />,
+      <PageElem connectors={connectors} pages={pages} />,
     ],
     expanded
   );
