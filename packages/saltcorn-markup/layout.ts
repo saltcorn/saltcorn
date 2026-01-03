@@ -133,7 +133,8 @@ const applyTextStyle = (segment: any, inner: string): string => {
     Object.keys(style).length > 0 && !selfStylingTypes.has(segment.type);
 
   if (inline_h) style.display = "inline-block";
-  if (segment.customClass) klasses.push(segment.customClass);
+  if (segment.customClass && segment.type !== "container")
+    klasses.push(segment.customClass);
   const klass = klasses.join(" ");
 
   switch (hs) {

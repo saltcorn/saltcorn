@@ -346,32 +346,7 @@ class Page implements AbstractPage {
       },
       querystate
     );
-    await eachPage(this.layout, async (segment: any) => {
-      const page = await Page.findOne({ name: segment.page });
-      if (!page) {
-        throw new InvalidConfiguration(
-          `Page ${this.name} configuration error in embedded page: ` +
-            (segment.page
-              ? `page "${segment.page}" not found`
-              : "no page specified")
-        );
-      } else if (page.name === this.name) {
-        throw new InvalidConfiguration(
-          `Page ${this.name} configuration error in embedded page: Infinite loop page-in-page`
-        );
-      } else {
-        const role = (extraArgs.req.user || {}).role_id || 100;
-        const pageContent = await page.run(querystate, extraArgs);
-        const { getState } = require("../db/state");
-        segment.contents = getState().getLayout(extraArgs.req.user).renderBody({
-          title: "",
-          body: pageContent,
-          req: extraArgs.req,
-          role,
-          alerts: [],
-        });
-      }
-    });
+    await Page.renderEachEmbeddedPageInLayout(this.layout, querystate, extraArgs);
     const pagename = this.name;
     let exit_from_redirect = false;
     await traverse(this.layout, {
@@ -490,6 +465,39 @@ class Page implements AbstractPage {
   async getTags(): Promise<Array<AbstractTag>> {
     const Tag = (await import("./tag")).default;
     return await Tag.findWithEntries({ page_id: this.id });
+  }
+
+  static async renderEachEmbeddedPageInLayout(
+    layout: Layout,
+    querystate: Row,
+    extraArgs: RunExtra
+  ) {
+    await eachPage(layout, async (segment: any) => {
+      const page = await Page.findOne({ name: segment.page });
+      if (!page) {
+        throw new InvalidConfiguration(
+          `Page ${this.name} configuration error in embedded page: ` +
+            (segment.page
+              ? `page "${segment.page}" not found`
+              : "no page specified")
+        );
+      } else if (page.name === this.name) {
+        throw new InvalidConfiguration(
+          `Page ${this.name} configuration error in embedded page: Infinite loop page-in-page`
+        );
+      } else {
+        const role = (extraArgs.req.user || {}).role_id || 100;
+        const pageContent = await page.run(querystate, extraArgs);
+        const { getState } = require("../db/state");
+        segment.contents = getState().getLayout(extraArgs.req.user).renderBody({
+          title: "",
+          body: pageContent,
+          req: extraArgs.req,
+          role,
+          alerts: [],
+        });
+      }
+    });
   }
 }
 

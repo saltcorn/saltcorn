@@ -213,6 +213,9 @@ const configuration_workflow = (req) =>
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
+          const has_select2 = Object.keys(getState().keyFieldviews).includes(
+            "select2"
+          );
 
           return {
             fields: fields
@@ -236,6 +239,7 @@ const configuration_workflow = (req) =>
             actionConfigForms,
             //fieldViewConfigForms,
             mode: "filter",
+            has_select2,
           };
         },
       },
@@ -521,6 +525,8 @@ const run = async (
     },
     state
   );
+  await Page.renderEachEmbeddedPageInLayout(layout, state, extra);
+
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
     field(segment) {
@@ -589,7 +595,13 @@ const run = async (
       });
     },
     dropdown_filter(segment) {
-      const { field_name, neutral_label, full_width, label_formula } = segment;
+      const {
+        field_name,
+        neutral_label,
+        full_width,
+        label_formula,
+        apply_select2,
+      } = segment;
 
       const dvs = distinct_values[field_name] || [];
       dvs.sort((a, b) =>
@@ -621,20 +633,27 @@ const run = async (
               : label
         )
       );
-      return select(
-        {
-          name: `ddfilter${field_name}`,
-          class:
-            "form-control form-select d-inline-maybe scfilter selectizable",
-          style: full_width ? undefined : "width: unset;",
-          required: true,
-          onchange: `this.value=='' ? unset_state_field('${encodeURIComponent(
-            field_name
-          )}', this): set_state_field('${encodeURIComponent(
-            field_name
-          )}', this.value, this)`,
-        },
-        options
+      return (
+        select(
+          {
+            name: `ddfilter${field_name}`,
+            class:
+              "form-control form-select d-inline-maybe scfilter selectizable",
+            style: full_width ? undefined : "width: unset;",
+            required: true,
+            onchange: `this.value=='' ? unset_state_field('${encodeURIComponent(
+              field_name
+            )}', this): set_state_field('${encodeURIComponent(
+              field_name
+            )}', this.value, this)`,
+          },
+          options
+        ) +
+        (apply_select2
+          ? script(
+              domReady(`$('select[name=ddfilter${field_name}]').select2();`)
+            )
+          : "")
       );
     },
     action(segment) {

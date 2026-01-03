@@ -324,6 +324,12 @@ const ContainerSettings = () => {
                 "main",
                 "aside",
                 "footer",
+                "p",
+                "strong",
+                "ul",
+                "li",
+                "label",
+                "style",
               ],
             }}
             node={node}

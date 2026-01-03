@@ -518,7 +518,7 @@ const renderRows = async (
           throw new InvalidConfiguration(
             `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
           );
-       
+
         if (
           view.viewtemplateObj.renderRows &&
           view.view_select.type === "Own"
@@ -626,7 +626,7 @@ const renderRows = async (
               throw new InvalidConfiguration(
                 `View ${view.name} embeds itself with same state; inifinite loop detected`
               );
-              
+
             segment.contents = div(
               {
                 class: "d-inline",
@@ -644,6 +644,8 @@ const renderRows = async (
       },
       state
     );
+    await Page.renderEachEmbeddedPageInLayout(layout, state, extra);
+
     const user_id = extra.req.user ? extra.req.user.id : null;
 
     const is_owner =
