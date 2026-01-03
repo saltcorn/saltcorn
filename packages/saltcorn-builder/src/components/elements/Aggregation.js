@@ -16,6 +16,7 @@ import {
   ConfigForm,
   HelpTopicLink,
 } from "./utils";
+import { SingleLineEditor } from "./MonacoEditor";
 
 export /**
  * @param {object} props
@@ -229,14 +230,11 @@ const AggregationSettings = () => {
               </label>
             </td>
             <td>
-              <input
-                type="text"
-                className="form-control"
+              <SingleLineEditor
                 value={aggwhere}
-                placeholder="Example: x === y"
-                spellCheck={false}
                 onChange={setAProp("aggwhere")}
                 onInput={(e) => validate_expression_elem($(e.target))}
+                propKey="aggwhere"
               />
             </td>
           </tr>

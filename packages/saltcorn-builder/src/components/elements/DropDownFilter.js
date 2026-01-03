@@ -8,6 +8,7 @@ import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow, setAPropGen } from "./utils";
+import { SingleLineEditor } from "./MonacoEditor";
 
 export /**
  * @param {object} props
@@ -115,10 +116,10 @@ const DropDownFilterSettings = () => {
             <label>Where</label>
           </td>
           <td>
-            <input
+            <SingleLineEditor
               value={where}
-              className="form-control"
               onChange={setAProp("where")}
+              propKey="where"
             />
           </td>
         </tr>
