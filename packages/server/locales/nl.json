@@ -912,7 +912,7 @@
   "Backup successful": "Backup succesvol",
   "Invalid ownership formula: %s": "Ongeldige eigendomsformule: %s",
   "Expiration in days": "Vervaldatum in dagen",
-  "Delete old backup files in this directory after the set number of days": "Verwijder oude back-up bestanden in deze folder na het ingestelde aantal dagen.",
+  "Delete old backup files in this directory after the set number of days": "Verwijder oude back-upbestanden in deze folder na het ingestelde aantal dagen.",
   "Mobile app": "Mobiele app",
   "Build mobile app": "Bouw mobiele app",
   "Build Result": "Bouwresultaat",
