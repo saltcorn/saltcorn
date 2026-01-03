@@ -7,8 +7,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "builddev": "webpack --mode none",
-    "test1": "jest tests --runInBand",
-    "test": "echo NO TESTS",
+    "test": "jest tests --runInBand",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
