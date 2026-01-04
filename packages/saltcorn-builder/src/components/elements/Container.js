@@ -328,8 +328,16 @@ const ContainerSettings = () => {
                 "strong",
                 "ul",
                 "li",
+                "ol",
                 "label",
-                "style",
+                "details",
+                "summary",
+                "blockquote",
+                "pre",
+                "code",
+                "abbr",
+                "kbd",
+                "small",
               ],
             }}
             node={node}
