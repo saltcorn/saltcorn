@@ -77,8 +77,15 @@ const doTest = (
   );
 
   renderer.create(<ViewLinkSettings></ViewLinkSettings>);
-  expect(spy.mock.calls).toHaveLength(4);
-  const vLinkcallArgs = spy.mock.calls[2];
+  const useStateCalls = spy.mock.calls;
+  expect(useStateCalls).toHaveLength(8);
+  expect(useStateCalls[0][0]).toEqual(
+    expect.objectContaining({ relations: expect.any(Array) })
+  );
+  expect(useStateCalls[4][0]).toEqual(
+    expect.objectContaining({ relations: expect.any(Array) })
+  );
+  const vLinkcallArgs = useStateCalls[4];
   expect(vLinkcallArgs[0].relations).toBeDefined();
   expect(vLinkcallArgs[0].relations).toHaveLength(expected.length);
   expect(vLinkcallArgs[0].relations.map((rel) => rel.relationString)).toEqual(
