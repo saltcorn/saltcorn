@@ -379,7 +379,7 @@ class PageLocators {
     this.pageinputstatus = 'input[name="status"]';
     this.configureFilterview = 'a[href="/viewedit/config/Filter"]';
     this.togglesource = 'div[title="Toggle filter"]';
-    this.inputValueField = 'input.w-100:first-of-type';
+    this.inputValueField = 'input.togglevalue:first-of-type';
     this.membertoggle = 'button:has-text("Member")';
     this.Prospecttoggle = 'button:has-text("Prospect")';
     this.Lapsedtoggle = 'button:has-text("Lapsed")';
