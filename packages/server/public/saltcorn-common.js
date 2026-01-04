@@ -1039,14 +1039,18 @@ function doMobileTransforms() {
 }
 
 function validate_expression_elem(target) {
-  const next = target.next();
-  if (next.hasClass("expr-error")) next.remove();
-  const val = target.val();
-  if (target.hasClass("validate-expression-conditional")) {
-    const box = target
+  let val = null;
+  if (typeof target === "string") val = target;
+  else {
+    const next = target.next();
+    if (next.hasClass("expr-error")) next.remove();
+    val = target.val();
+    if (target.hasClass("validate-expression-conditional")) {
+      const box = target
       .closest(".form-namespace")
       .find(`[name="${target.attr("name")}_formula"]`);
-    if (!box.prop("checked")) return;
+      if (!box.prop("checked")) return;
+    }
   }
   if (!val) return;
   try {

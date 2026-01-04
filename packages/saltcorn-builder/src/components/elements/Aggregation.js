@@ -233,7 +233,7 @@ const AggregationSettings = () => {
               <SingleLineEditor
                 value={aggwhere}
                 onChange={setAProp("aggwhere")}
-                onInput={(e) => validate_expression_elem($(e.target))}
+                onInput={(value) => validate_expression_elem(value)}
                 propKey="aggwhere"
               />
             </td>

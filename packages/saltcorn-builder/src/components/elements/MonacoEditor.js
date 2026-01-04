@@ -32,6 +32,7 @@ export const SingleLineEditor = ({
   value,
   propKey,
   onChange,
+  onInput,
   className,
 }) => {
   const options = React.useContext(optionsCtx);
@@ -39,6 +40,16 @@ export const SingleLineEditor = ({
   const handleEditorWillMount = (monaco) => {
     setMonacoLanguage(monaco, options, false);
   };
+
+  const handleEditorDidMount = (editor, monaco) => {
+    if (!onInput) return;
+  
+    editor.onDidChangeModelContent(() => {
+      const value = editor.getValue();
+      onInput(value);
+    });
+  };
+
   return (
     <div className="form-control p-0 pt-1">
       <Editor
@@ -55,6 +66,7 @@ export const SingleLineEditor = ({
         options={singleLineEditorOptions}
         //theme="myCoolTheme"
         beforeMount={handleEditorWillMount}
+        onMount={handleEditorDidMount}
       />
     </div>
   );
