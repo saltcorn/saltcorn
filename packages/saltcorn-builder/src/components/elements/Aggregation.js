@@ -4,7 +4,13 @@
  * @subcategory components / elements
  */
 
-import React, { useContext, useState, useEffect, Fragment } from "react";
+import React, {
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+  Fragment,
+} from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
@@ -75,6 +81,7 @@ const AggregationSettings = () => {
   }));
   const options = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
+  const editorRef = useRef(null);
 
   const targetField = options.agg_field_opts[agg_relation]?.find?.(
     (f) => f.name === agg_field
@@ -231,9 +238,12 @@ const AggregationSettings = () => {
             </td>
             <td>
               <SingleLineEditor
+                ref={editorRef}
                 value={aggwhere}
                 onChange={setAProp("aggwhere")}
-                onInput={(value) => validate_expression_elem(value)}
+                onInput={(value) =>
+                  validate_expression_elem(value, editorRef.current)
+                }
                 propKey="aggwhere"
               />
             </td>

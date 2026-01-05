@@ -27,50 +27,46 @@ const setMonacoLanguage = async (monaco, options, isStatements) => {
     });
 };
 
-export const SingleLineEditor = ({
-  setProp,
-  value,
-  propKey,
-  onChange,
-  onInput,
-  className,
-}) => {
-  const options = React.useContext(optionsCtx);
+export const SingleLineEditor = React.forwardRef(
+  ({ setProp, value, propKey, onChange, onInput, className }, ref) => {
+    const options = React.useContext(optionsCtx);
 
-  const handleEditorWillMount = (monaco) => {
-    setMonacoLanguage(monaco, options, false);
-  };
+    const handleEditorWillMount = (monaco) => {
+      setMonacoLanguage(monaco, options, false);
+    };
 
-  const handleEditorDidMount = (editor, monaco) => {
-    if (!onInput) return;
-  
-    editor.onDidChangeModelContent(() => {
-      const value = editor.getValue();
-      onInput(value);
-    });
-  };
+    const handleEditorDidMount = (editor, monaco) => {
+      if (!onInput) return;
 
-  return (
-    <div className="form-control p-0 pt-1">
-      <Editor
-        className={className || ""}
-        height="22px"
-        value={value}
-        onChange={(value) => {
-          onChange && onChange(value);
-          setProp && propKey && setProp((prop) => (prop[propKey] = value));
-        }}
-        defaultLanguage="typescript"
-        //onMount={handleEditorDidMount}
-        //beforeMount={handleEditorWillMount}
-        options={singleLineEditorOptions}
-        //theme="myCoolTheme"
-        beforeMount={handleEditorWillMount}
-        onMount={handleEditorDidMount}
-      />
-    </div>
-  );
-};
+      editor.onDidChangeModelContent(() => {
+        const value = editor.getValue();
+        onInput(value);
+      });
+    };
+
+    return (
+      <div ref={ref} className="form-control p-0 pt-1">
+        <Editor
+          placeholder={"sdfffsd"}
+          className={className || ""}
+          height="22px"
+          value={value}
+          onChange={(value) => {
+            onChange && onChange(value);
+            setProp && propKey && setProp((prop) => (prop[propKey] = value));
+          }}
+          defaultLanguage="typescript"
+          //onMount={handleEditorDidMount}
+          //beforeMount={handleEditorWillMount}
+          options={singleLineEditorOptions}
+          //theme="myCoolTheme"
+          beforeMount={handleEditorWillMount}
+          onMount={handleEditorDidMount}
+        />
+      </div>
+    );
+  }
+);
 
 export const MultiLineCodeEditor = ({ setProp, value, onChange }) => {
   const options = React.useContext(optionsCtx);

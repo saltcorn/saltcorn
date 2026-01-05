@@ -1038,19 +1038,28 @@ function doMobileTransforms() {
   );
 }
 
-function validate_expression_elem(target) {
+/**
+ * @param {any|string} targetOrVal either the target or the string to validate
+ * @param {any} ref the target when targetOrVal is a string (see builder/MonacoEditor)
+ */
+function validate_expression_elem(targetOrVal, ref = null) {
   let val = null;
-  if (typeof target === "string") val = target;
-  else {
-    const next = target.next();
-    if (next.hasClass("expr-error")) next.remove();
+  let target = null;
+  if (typeof targetOrVal === "string") {
+    val = targetOrVal;
+    target = $(ref);
+  } else {
+    target = targetOrVal;
     val = target.val();
-    if (target.hasClass("validate-expression-conditional")) {
-      const box = target
+  }
+
+  const next = target.next();
+  if (next.hasClass("expr-error")) next.remove();
+  if (target.hasClass("validate-expression-conditional")) {
+    const box = target
       .closest(".form-namespace")
       .find(`[name="${target.attr("name")}_formula"]`);
-      if (!box.prop("checked")) return;
-    }
+    if (!box.prop("checked")) return;
   }
   if (!val) return;
   try {
