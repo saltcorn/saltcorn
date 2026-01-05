@@ -1747,6 +1747,15 @@ class Table implements AbstractTable {
     }
   }
 
+  static async analyze_all_indexed_tables() {
+    const tables = await Table.find({}, { cached: true });
+    const schemaPrefix = db.getTenantSchemaPrefix();
+
+    for (const table of tables)
+      if (table.constraints.some((c) => c.type === "Index"))
+        await db.query(`analyze ${schemaPrefix}"${sqlsanitize(table.name)}";`);
+  }
+
   async insert_history_row(v0: Row, retry = 0) {
     // sometimes there is a race condition in history inserts
     // https://dba.stackexchange.com/questions/212580/concurrent-transactions-result-in-race-condition-with-unique-constraint-on-inser
