@@ -133,20 +133,21 @@ test.describe("Login Navigate Upload", () => {
       await expect(calendar).toBeVisible();
 
       // select a date and check the input
-      // TODO seems not to update year, but looks good when tested manually
-      // const yearInput = iframe.locator(".numInput.cur-year");
-      // await yearInput.fill("2025");
+      const yearInput = iframe.locator(".numInput.cur-year");
+      await yearInput.fill("2025");
+      await yearInput.press("Enter");
+
       const monthSelect = iframe.locator(
         "select.flatpickr-monthDropdown-months"
       );
       await monthSelect.selectOption("7");
       const dayToSelect = iframe.locator(
-        '.flatpickr-day[aria-label="August 25, 2026"]'
+        '.flatpickr-day[aria-label="August 25, 2025"]'
       );
       await dayToSelect.click();
       const dateInput = iframe.locator("input.flatpickr-input");
       const inputValue = await dateInput.inputValue();
-      expect(inputValue).toBe("2026-08-25");
+      expect(inputValue).toBe("2025-08-25");
 
       // select a guitar
       const guitarInput = iframe.locator("select#inputguitar");
@@ -183,9 +184,9 @@ test.describe("Login Navigate Upload", () => {
       await expect(dateElement).toHaveCount(5);
 
       const timeElement = newIframe.locator(
-        'time[datetime="2026-08-25T00:00:00.000Z"]'
+        'time[datetime="2025-08-25T00:00:00.000Z"]'
       );
-      await expect(timeElement).toHaveCount(1);
+      await expect(timeElement).toHaveCount(3);
     } catch (error) {
       await dumpHTML(page);
       throw error;

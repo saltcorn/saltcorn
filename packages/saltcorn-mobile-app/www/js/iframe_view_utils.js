@@ -192,7 +192,7 @@ async function inline_local_submit(e, opts1) {
     });
     inline_submit_success(e, form, opts);
   } catch (error) {
-    parent.saltcorn.mobileApp.common.showAlerts([
+    parent.saltcorn.mobileApp.common.showToasts([
       {
         type: "error",
         msg: error.message ? error.message : "An error occured.",
@@ -565,7 +565,7 @@ async function mobile_modal(url, opts = {}) {
       // onOpen onClose initialize_page?
     }
   } catch (error) {
-    parent.saltcorn.mobileApp.common.showAlerts([
+    parent.saltcorn.mobileApp.common.showToasts([
       {
         type: "error",
         msg: error.message ? error.message : "An error occured.",
@@ -665,7 +665,7 @@ async function make_unique_field(
       );
     }
   } catch (error) {
-    parent.saltcorn.mobileApp.common.showAlerts([
+    parent.saltcorn.mobileApp.common.showToasts([
       {
         type: "error",
         msg: "unable to 'make_unique_field'",
@@ -835,16 +835,13 @@ async function switchNetworkMode() {
       parent.saltcorn.mobileApp.navigation.addRoute({
         route: "get/sync/sync_settings",
       });
-      parent.saltcorn.mobileApp.common.showAlerts(
-        [
-          {
-            type: "info",
-            msg: parent.saltcorn.mobileApp.offlineMode.getOfflineMsg(),
-          },
-        ],
-        false
-      );
-      parent.saltcorn.mobileApp.common.clearAlerts();
+      parent.saltcorn.mobileApp.common.showAlerts([
+        {
+          type: "info",
+          msg: parent.saltcorn.mobileApp.offlineMode.getOfflineMsg(),
+        },
+      ]);
+      parent.saltcorn.mobileApp.common.clearToasts();
     } else {
       if (networkState === "none")
         throw new Error("No internet connection is available.");
@@ -854,16 +851,16 @@ async function switchNetworkMode() {
       parent.saltcorn.mobileApp.navigation.addRoute({
         route: "get/sync/sync_settings",
       });
-      parent.saltcorn.mobileApp.common.showAlerts([
+      parent.saltcorn.mobileApp.common.showToasts([
         {
           type: "info",
           msg: "You are online again.",
         },
       ]);
-      parent.saltcorn.mobileApp.common.clearTopAlerts();
+      parent.saltcorn.mobileApp.common.clearAlerts();
     }
   } catch (error) {
-    parent.saltcorn.mobileApp.common.showAlerts([
+    parent.saltcorn.mobileApp.common.showToasts([
       {
         type: "error",
         msg: `Unable to change the network mode: ${
@@ -883,7 +880,7 @@ async function callSync() {
   try {
     const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
     if (mobileConfig.networkState === "none") {
-      parent.saltcorn.mobileApp.common.showAlerts([
+      parent.saltcorn.mobileApp.common.showToasts([
         {
           type: "error",
           msg: "You don't have an internet connection.",
@@ -893,14 +890,14 @@ async function callSync() {
       const wasOffline = mobileConfig.isOfflineMode;
       showLoadSpinner();
       const alerts = [];
-      await parent.saltcorn.mobileApp.offlineMode.sync(false, alerts);
-      parent.saltcorn.mobileApp.common.clearAlerts();
+      await parent.saltcorn.mobileApp.offlineMode.sync(true, true, alerts);
+      parent.saltcorn.mobileApp.common.clearToasts();
       if (!wasOffline) {
         alerts.push({
           type: "info",
           msg: "Synchronized your offline data.",
         });
-        parent.saltcorn.mobileApp.common.showAlerts(alerts);
+        parent.saltcorn.mobileApp.common.showToasts(alerts);
       } else {
         setNetworSwitcherOn();
         parent.saltcorn.mobileApp.navigation.clearHistory();
@@ -912,8 +909,8 @@ async function callSync() {
           type: "info",
           msg: "Synchronized your offline data, you are online again.",
         });
-        parent.saltcorn.mobileApp.common.showAlerts(alerts);
-        parent.saltcorn.mobileApp.common.clearTopAlerts();
+        parent.saltcorn.mobileApp.common.showToasts(alerts);
+        parent.saltcorn.mobileApp.common.clearAlerts();
       }
     }
   } catch (error) {
@@ -929,14 +926,14 @@ async function deleteOfflineDataClicked() {
     await parent.saltcorn.mobileApp.offlineMode.getLastOfflineSession();
   const { user } = parent.saltcorn.data.state.getState().mobileConfig;
   if (!lastOfflineSession?.offlineUser) {
-    parent.saltcorn.mobileApp.common.showAlerts([
+    parent.saltcorn.mobileApp.common.showToasts([
       {
         type: "error",
         msg: "You don't have any offline data.",
       },
     ]);
   } else if (lastOfflineSession.offlineUser !== user.email) {
-    parent.saltcorn.mobileApp.common.showAlerts([
+    parent.saltcorn.mobileApp.common.showToasts([
       {
         type: "error",
         msg: `The offline data is owned by '${lastOfflineSession.offlineUser}'.`,

@@ -36,7 +36,7 @@ export function prepareBuildDir(
   buildDir: string,
   templateDir: string,
   fcmEnabled: boolean,
-  backgroundFetchEnabled: boolean,
+  backgroundFetchEnabled: boolean
 ) {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
@@ -245,13 +245,15 @@ export async function modifyAndroidManifest(
     const content = readFileSync(androidManifest);
     const parsed = await parseStringPromise(content);
 
-    parsed.manifest["uses-permission"] = androidPermissions(allowFCM).map((perm) => ({
-      $: { "android:name": perm },
-    }));
+    parsed.manifest["uses-permission"] = androidPermissions(allowFCM).map(
+      (perm) => ({
+        $: { "android:name": perm },
+      })
+    );
     parsed.manifest["uses-feature"] = androidFeatures().map((feat) => ({
       $: { "android:name": feat },
     }));
-    
+
     parsed.manifest.application[0].$ = {
       ...parsed.manifest.application[0].$,
       "android:allowBackup": "false",
@@ -827,6 +829,7 @@ export function writeCfgFile({
   autoPublicLogin,
   showContinueAsPublicUser,
   allowOfflineMode,
+  syncOnReconnect,
   pushSync,
   syncInterval,
   allowShareTo,
@@ -843,6 +846,7 @@ export function writeCfgFile({
     autoPublicLogin,
     showContinueAsPublicUser,
     allowOfflineMode,
+    syncOnReconnect,
     pushSync,
     syncInterval,
     allowShareTo,
