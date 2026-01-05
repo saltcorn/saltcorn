@@ -120,7 +120,7 @@ const DropDownFilterSettings = () => {
           <td>
             <SingleLineEditor
               value={where}
-              onChange={setAProp("where")}
+              setProp={setProp}
               propKey="where"
             />
           </td>

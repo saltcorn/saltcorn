@@ -240,7 +240,7 @@ const AggregationSettings = () => {
               <SingleLineEditor
                 ref={editorRef}
                 value={aggwhere}
-                onChange={setAProp("aggwhere")}
+                setProp={setProp}
                 onInput={(value) =>
                   validate_expression_elem(value, editorRef.current)
                 }
