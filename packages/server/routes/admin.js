@@ -2345,24 +2345,233 @@ const checkXcodebuild = () => {
         resolve({ installed: false });
       } else {
         const tokens = stdout.split(" ");
+        const version = tokens.length > 1 ? tokens[1] : undefined;
         resolve({
           installed: true,
-          version: tokens.length > 1 ? tokens[1] : undefined,
+          version: version,
+          fullfilled: version ? versFullfilled(version, 11) : false,
         });
       }
     });
   });
 };
 
-const versionMarker = (version) => {
-  const tokens = version.split(".");
-  const majVers = parseInt(tokens[0]);
-  return i({
-    id: "versionMarkerId",
-    class: `fas ${
-      majVers >= 11 ? "fa-check text-success" : "fa-times text-danger"
-    }`,
+const checkCocoaPods = () => {
+  return new Promise((resolve) => {
+    exec("pod --version", (error, stdout, stderr) => {
+      if (error) {
+        resolve({ installed: false });
+      } else {
+        const version = stdout?.length > 1 ? stdout : undefined;
+        resolve({
+          installed: true,
+          version: version,
+          fullfilled: version ? versFullfilled(version, 1) : false,
+        });
+      }
+    });
   });
+};
+
+const versFullfilled = (version, minMajVersion) => {
+  const vTokens = version.split(".");
+  const majVers = parseInt(vTokens[0]);
+  return majVers >= minMajVersion;
+};
+
+const buildIosConfigBox = ({
+  req,
+  isMac,
+  xcodebuildAvailable,
+  xcodebuildVersion,
+  cocoaPodsAvailable,
+  cocoaPodsVersion,
+  provisioningFiles,
+  builderSettings,
+}) => {
+  const xCodeFullfilled = versFullfilled(xcodebuildVersion || "0.0.0", 11);
+  const cocoaPodsFullfilled = versFullfilled(cocoaPodsVersion || "0.0.0", 1);
+
+  // xcodebuild and cocoapods infos
+  const toolsInfoBox = () => {
+    return div(
+      { class: "row pb-3 pt-2" },
+      div(
+        h5(
+          { class: "form-label mb-3" },
+          req.__("Build tools") +
+            a(
+              {
+                href: "javascript:ajax_modal('/admin/help/iOS Build tools?')",
+              },
+              i({ class: "fas fa-question-circle ps-1" })
+            )
+        )
+      ),
+      div(
+        { class: "col-sm-12" },
+        isMac
+          ? div(
+              div(
+                {
+                  id: "iosBuilderStatusId",
+                  class: "row",
+                },
+                // xcodebuild status
+                div(
+                  { class: "col-sm-4" },
+                  div({ class: "fw-bold form-label label" }, "xcodebuild"),
+                  span(
+                    { id: "xcodebuildStatusId" },
+                    xcodebuildAvailable
+                      ? xcodebuildVersion
+                      : req.__("not available"),
+                    i({
+                      class: `fas p-2 ${
+                        xCodeFullfilled
+                          ? "fa-check text-success"
+                          : "fa-times text-danger"
+                      }`,
+                    })
+                  )
+                ),
+                // refresh button
+                div(
+                  { class: "col-sm-4" },
+                  span(
+                    {
+                      role: "button",
+                      onClick: "check_ios_build_deps()",
+                    },
+                    span({ class: "ps-3" }, req.__("refresh")),
+                    i({ class: "ps-2 fas fa-undo" })
+                  )
+                )
+              ),
+              div(
+                {
+                  class: "row",
+                },
+                // cocoapods status
+                div(
+                  { class: "col-sm-4" },
+                  div({ class: "fw-bold form-label label" }, "cocoapods"),
+                  span(
+                    { id: "cocoapodsStatusId" },
+                    cocoaPodsAvailable
+                      ? span(cocoaPodsVersion)
+                      : span(req.__("not available")),
+                    i({
+                      class: `fas p-2 ${
+                        cocoaPodsFullfilled
+                          ? "fa-check text-success"
+                          : "fa-times text-danger"
+                      }`,
+                    })
+                  )
+                )
+              )
+            )
+          : span(
+              req.__("Not a Mac OS system"),
+              i({
+                class: "ps-2 fas",
+              })
+            )
+      )
+    );
+  };
+
+  return div(
+    { class: "mt-3" },
+    p({ class: "h3 ps-3 mt-3" }, "iOS Configuration"),
+    div(
+      { class: "form-group border border-2 p-3 rounded" },
+      toolsInfoBox(),
+
+      // provisioning profile file
+      div(
+        { class: "row pb-3" },
+        div(
+          { class: "col-sm-10" },
+          label(
+            {
+              for: "provisioningProfileInputId",
+              class: "form-label fw-bold",
+            },
+            req.__("Provisioning Profile"),
+            a(
+              {
+                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
+              },
+              i({ class: "fas fa-question-circle ps-1" })
+            )
+          ),
+          select(
+            {
+              class: "form-select",
+              name: "provisioningProfile",
+              id: "provisioningProfileInputId",
+            },
+            [
+              option({ value: "" }, ""),
+              ...provisioningFiles.map((file) =>
+                option(
+                  {
+                    value: file.location,
+                    selected:
+                      builderSettings.provisioningProfile === file.location,
+                  },
+                  file.filename
+                )
+              ),
+            ].join("")
+          )
+        )
+      ),
+      // Share Extension provisioning profile
+      div(
+        { class: "row pb-3" },
+        div(
+          { class: "col-sm-10" },
+          label(
+            {
+              for: "shareProvisioningProfileInputId",
+              class: "form-label fw-bold",
+            },
+            req.__("Share Extension Provisioning Profile"),
+            a(
+              {
+                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
+              },
+              i({ class: "fas fa-question-circle ps-1" })
+            )
+          ),
+          select(
+            {
+              class: "form-select",
+              name: "shareProvisioningProfile",
+              id: "shareProvisioningProfileInputId",
+            },
+            [
+              option({ value: "" }, ""),
+              ...provisioningFiles.map((file) =>
+                option(
+                  {
+                    value: file.location,
+                    selected:
+                      builderSettings.shareProvisioningProfile ===
+                      file.location,
+                  },
+                  file.filename
+                )
+              ),
+            ].join("")
+          )
+        )
+      )
+    )
+  );
 };
 
 /**
@@ -2411,6 +2620,10 @@ router.get(
     const xcodeCheckRes = await checkXcodebuild();
     const xcodebuildAvailable = xcodeCheckRes.installed;
     const xcodebuildVersion = xcodeCheckRes.version;
+    const isMac = process.platform === "darwin";
+    const cocoaPodCheckRes = await checkCocoaPods();
+    const cocoaPodsAvailable = cocoaPodCheckRes.installed;
+    const cocoaPodsVersion = cocoaPodCheckRes.version;
     const layout = getState().getLayout(req.user);
     const isSbadmin2 = layout === getState().layouts.sbadmin2;
     const isEntrypointByRole = builderSettings.entryPointByRole === "on";
@@ -3640,175 +3853,17 @@ router.get(
                     )
                   ),
                   div({}, "&nbsp;"),
-                  div(
-                    { class: "mt-3" },
-                    p({ class: "h3 ps-3 mt-3" }, "iOS Configuration"),
-                    div(
-                      { class: "form-group border border-2 p-3 rounded" },
-                      div(
-                        { class: "mb-3" },
-                        div(
-                          { class: "row pb-3 pt-2" },
-                          div(
-                            label(
-                              { class: "form-label fw-bold" },
-                              req.__("xcodebuild") +
-                                a(
-                                  {
-                                    href: "javascript:ajax_modal('/admin/help/xcodebuild?')",
-                                  },
-                                  i({ class: "fas fa-question-circle ps-1" })
-                                )
-                            )
-                          ),
-                          div(
-                            { class: "col-sm-4" },
-                            div(
-                              {
-                                id: "xcodebuildStatusId",
-                                class: "",
-                              },
-                              xcodebuildAvailable
-                                ? span(
-                                    req.__("installed"),
-                                    i({
-                                      class: "ps-2 fas fa-check text-success",
-                                    })
-                                  )
-                                : span(
-                                    req.__("not available"),
-                                    i({
-                                      class: "ps-2 fas fa-times text-danger",
-                                    })
-                                  )
-                            )
-                          ),
-                          div(
-                            { class: "col-sm-4" },
-                            // not sure if we should provide this
-                            // button(
-                            //   {
-                            //     id: "installXCodeBtnId",
-                            //     type: "button",
-                            //     onClick: `install_xcode(this);`,
-                            //     class: "btn btn-warning",
-                            //   },
-                            //   req.__("install")
-                            // ),
-                            span(
-                              {
-                                role: "button",
-                                onClick: "check_xcodebuild()",
-                              },
-                              span({ class: "ps-3" }, req.__("refresh")),
-                              i({ class: "ps-2 fas fa-undo" })
-                            )
-                          )
-                        ),
-                        div(
-                          {
-                            class: `row mb-3 pb-3 ${
-                              xcodebuildAvailable ? "" : "d-none"
-                            }`,
-                            id: "xcodebuildVersionBoxId",
-                          },
-                          div(
-                            { class: "col-sm-4" },
-                            span(
-                              req.__("Version") +
-                                span(
-                                  { id: "xcodebuildVersionId", class: "pe-2" },
-                                  `: ${xcodebuildVersion || "unknown"}`
-                                ),
-                              versionMarker(xcodebuildVersion || "0")
-                            )
-                          )
-                        )
-                      ),
-                      // provisioning profile file
-                      div(
-                        { class: "row pb-3" },
-                        div(
-                          { class: "col-sm-10" },
-                          label(
-                            {
-                              for: "provisioningProfileInputId",
-                              class: "form-label fw-bold",
-                            },
-                            req.__("Provisioning Profile"),
-                            a(
-                              {
-                                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
-                              },
-                              i({ class: "fas fa-question-circle ps-1" })
-                            )
-                          ),
-                          select(
-                            {
-                              class: "form-select",
-                              name: "provisioningProfile",
-                              id: "provisioningProfileInputId",
-                            },
-                            [
-                              option({ value: "" }, ""),
-                              ...provisioningFiles.map((file) =>
-                                option(
-                                  {
-                                    value: file.location,
-                                    selected:
-                                      builderSettings.provisioningProfile ===
-                                      file.location,
-                                  },
-                                  file.filename
-                                )
-                              ),
-                            ].join("")
-                          )
-                        )
-                      ),
-                      // Share Extension provisioning profile
-                      div(
-                        { class: "row pb-3" },
-                        div(
-                          { class: "col-sm-10" },
-                          label(
-                            {
-                              for: "shareProvisioningProfileInputId",
-                              class: "form-label fw-bold",
-                            },
-                            req.__("Share Extension Provisioning Profile"),
-                            a(
-                              {
-                                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
-                              },
-                              i({ class: "fas fa-question-circle ps-1" })
-                            )
-                          ),
-                          select(
-                            {
-                              class: "form-select",
-                              name: "shareProvisioningProfile",
-                              id: "shareProvisioningProfileInputId",
-                            },
-                            [
-                              option({ value: "" }, ""),
-                              ...provisioningFiles.map((file) =>
-                                option(
-                                  {
-                                    value: file.location,
-                                    selected:
-                                      builderSettings.shareProvisioningProfile ===
-                                      file.location,
-                                  },
-                                  file.filename
-                                )
-                              ),
-                            ].join("")
-                          )
-                        )
-                      )
-                    )
-                  )
+
+                  buildIosConfigBox({
+                    req,
+                    isMac,
+                    xcodebuildAvailable,
+                    xcodebuildVersion,
+                    cocoaPodsAvailable,
+                    cocoaPodsVersion,
+                    provisioningFiles,
+                    builderSettings,
+                  })
                 ),
                 button(
                   {
@@ -4379,10 +4434,13 @@ router.get(
 );
 
 router.get(
-  "/mobile-app/check-xcodebuild",
+  "/mobile-app/check-ios-build-tools",
   isAdmin,
   error_catcher(async (req, res) => {
-    res.json(await checkXcodebuild());
+    const xcodebuild = await checkXcodebuild();
+    const cocoapods = await checkCocoaPods();
+    const isMac = process.platform === "darwin";
+    res.json({ xcodebuild, cocoapods, isMac });
   })
 );
 
