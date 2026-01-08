@@ -761,6 +761,7 @@ export function copyServerFiles(buildDir: string) {
     "saltcorn-common.js",
     "saltcorn.js",
     "saltcorn.css",
+    "saltcorn-mobile.css",
     "codemirror.js",
     "codemirror.css",
     "socket.io.min.js",
