@@ -2379,6 +2379,10 @@ const versFullfilled = (version, minMajVersion) => {
   return majVers >= minMajVersion;
 };
 
+/**
+ * iOS Config Box
+ * @param {any} param0
+ */
 const buildIosConfigBox = ({
   req,
   isMac,
@@ -2482,14 +2486,39 @@ const buildIosConfigBox = ({
     );
   };
 
-  return div(
-    { class: "mt-3" },
-    p({ class: "h3 ps-3 mt-3" }, "iOS Configuration"),
-    div(
-      { class: "form-group border border-2 p-3 rounded" },
-      toolsInfoBox(),
+  const buildWithoutProfileParam = () => {
+    return div(
+      { class: "row pb-2 my-2" },
+      div(
+        { class: "col-sm-10" },
+        input({
+          type: "checkbox",
+          id: "buildWithoutProfileId",
+          class: "form-check-input me-2 mb-0 ",
+          name: "noProvisioningProfile",
+          checked: builderSettings.noProvisioningProfile === "on",
+        }),
+        label(
+          {
+            for: "buildWithoutProfileId",
+            class: "form-label fw-bold mb-0",
+          },
+          req.__("No Provisioning Profile")
+        ),
+        div(),
+        i(
+          req.__(
+            "Only create the project directory without building an .ipa file. " +
+              "This can be useful if you want to open the project in Xcode and run it in the Simulator."
+          )
+        )
+      )
+    );
+  };
 
-      // provisioning profile file
+  const provisioningFilesBox = () => {
+    return (
+      // App Provisioning profile
       div(
         { class: "row pb-3" },
         div(
@@ -2528,7 +2557,7 @@ const buildIosConfigBox = ({
             ].join("")
           )
         )
-      ),
+      ) +
       // Share Extension provisioning profile
       div(
         { class: "row pb-3" },
@@ -2570,6 +2599,17 @@ const buildIosConfigBox = ({
           )
         )
       )
+    );
+  };
+
+  return div(
+    { class: "mt-3" },
+    p({ class: "h3 ps-3 mt-3" }, "iOS Configuration"),
+    div(
+      { class: "form-group border border-2 p-3 rounded" },
+      toolsInfoBox(),
+      buildWithoutProfileParam(),
+      provisioningFilesBox()
     )
   );
 };
@@ -4131,6 +4171,7 @@ router.post(
       syncInterval,
       synchedTables,
       includedPlugins,
+      noProvisioningProfile,
       provisioningProfile,
       shareProvisioningProfile,
       buildType,
@@ -4190,7 +4231,7 @@ router.post(
       });
     }
     if (iOSPlatform) {
-      if (!provisioningProfile)
+      if (!provisioningProfile && !noProvisioningProfile)
         return res.json({
           error: req.__(
             "Please provide a Provisioning Profile for the iOS build."
@@ -4250,20 +4291,16 @@ router.post(
     if (!entryPointByRole) spawnParams.push("-e", entryPoint);
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
-    if (iOSPlatform) {
+    if (iOSPlatform) spawnParams.push("-p", "ios");
+    if (noProvisioningProfile) spawnParams.push("--noProvisioningProfile");
+    if (provisioningProfile)
+      spawnParams.push("--provisioningProfile", provisioningProfile);
+    if (allowShareTo) {
+      mode = "prepare";
       spawnParams.push(
-        "-p",
-        "ios",
-        "--provisioningProfile",
-        provisioningProfile
+        "--shareExtensionProvisioningProfile",
+        shareProvisioningProfile
       );
-      if (allowShareTo) {
-        mode = "prepare";
-        spawnParams.push(
-          "--shareExtensionProvisioningProfile",
-          shareProvisioningProfile
-        );
-      }
     }
     if (appName) spawnParams.push("--appName", appName);
     if (appId) spawnParams.push("--appId", appId);

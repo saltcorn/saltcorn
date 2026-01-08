@@ -43,8 +43,9 @@ const appIdDefault = "saltcorn.mobile.app";
 const appNameDefault = "SaltcornMobileApp";
 
 export type IosCfg = {
-  appleTeamId: string;
-  mainProvisioningProfile: {
+  noProvisioningProfile?: boolean;
+  appleTeamId?: string;
+  mainProvisioningProfile?: {
     guuid: string;
   };
   shareExtensionProvisioningProfile?: {
@@ -287,7 +288,11 @@ export class MobileBuilder {
       resultCode = await createSqliteDb(this.buildDir);
       if (resultCode !== 0) return resultCode;
 
-      if (this.platforms.includes("ios")) await this.handleIosPlatform();
+      if (
+        this.platforms.includes("ios") &&
+        this.iosParams?.noProvisioningProfile !== true
+      )
+        await this.handleIosPlatform();
       if (this.platforms.includes("android"))
         await this.handleAndroidPlatform();
       if (this.platforms.find((p) => p === "ios" || p === "android")) {
