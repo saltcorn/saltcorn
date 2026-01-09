@@ -9,6 +9,7 @@ export const getHeaders = () => {
   const versionTag = config.version_tag;
   const stdHeaders = [
     { css: `static_assets/${versionTag}/saltcorn.css` },
+    { css: `static_assets/${versionTag}/saltcorn-mobile.css` },
     { script: `static_assets/${versionTag}/saltcorn-common.js` },
     { script: `static_assets/${versionTag}/dayjs.min.js` },
     { script: `static_assets/${versionTag}/socket.io.min.js` },

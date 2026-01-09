@@ -44,7 +44,7 @@ class BuildAppCommand extends Command {
       );
     }
 
-    if (flags.platforms.includes("ios")) {
+    if (flags.platforms.includes("ios") && !flags.noProvisioningProfile) {
       if (!flags.provisioningProfile)
         throw new Error("Please specify a provisioning profile");
       if (flags.allowShareTo && !flags.shareExtensionProvisioningProfile)
@@ -73,26 +73,32 @@ class BuildAppCommand extends Command {
   async buildIosParams(flags) {
     let result = undefined;
     if (flags.platforms.includes("ios")) {
-      const mainProfileVals = await decodeProvisioningProfile(
-        flags.buildDirectory,
-        flags.provisioningProfile
-      );
-      result = {
-        appleTeamId: mainProfileVals.teamId,
-        mainProvisioningProfile: {
-          guuid: mainProfileVals.guuid,
-        },
-      };
-      if (flags.allowShareTo) {
-        const shareExtProfileVals = await decodeProvisioningProfile(
-          flags.buildDirectory,
-          flags.shareExtensionProvisioningProfile
-        );
-        result.shareExtensionProvisioningProfile = {
-          guuid: shareExtProfileVals.guuid,
-          specifier: shareExtProfileVals.specifier,
-          identifier: shareExtProfileVals.identifier,
+      if (flags.noProvisioningProfile)
+        result = {
+          noProvisioningProfile: true,
         };
+      else {
+        const mainProfileVals = await decodeProvisioningProfile(
+          flags.buildDirectory,
+          flags.provisioningProfile
+        );
+        result = {
+          appleTeamId: mainProfileVals.teamId,
+          mainProvisioningProfile: {
+            guuid: mainProfileVals.guuid,
+          },
+        };
+        if (flags.allowShareTo) {
+          const shareExtProfileVals = await decodeProvisioningProfile(
+            flags.buildDirectory,
+            flags.shareExtensionProvisioningProfile
+          );
+          result.shareExtensionProvisioningProfile = {
+            guuid: shareExtProfileVals.guuid,
+            specifier: shareExtProfileVals.specifier,
+            identifier: shareExtProfileVals.identifier,
+          };
+        }
       }
     }
     return result;
@@ -336,6 +342,13 @@ BuildAppCommand.flags = {
     description:
       "Perdiodic interval (in minutes) to run synchronizations in the background. " +
       "This is just a min interval, depending on system conditions, the actual time may be longer.",
+  }),
+  noProvisioningProfile: Flags.boolean({
+    name: "no provisioning profile",
+    string: "noProvisioningProfile",
+    description:
+      "Do not use a provisioning profile, only for simulator builds (iOS only)",
+    default: false,
   }),
   provisioningProfile: Flags.string({
     name: "provisioning profile",

@@ -86,7 +86,8 @@ export class CapacitorHelper {
         this.buildWithDocker(version);
       }
     }
-    if (this.isIOS) this.xCodeBuild();
+    if (this.isIOS && this.iosParams?.noProvisioningProfile !== true)
+      this.xCodeBuild();
   }
 
   public tryCopyAppFiles(copyDir: string, user: User, appName?: string) {
@@ -295,7 +296,7 @@ export class CapacitorHelper {
     const dockerMode = this.getDockerMode();
     console.log(`docker mode: ${dockerMode}`);
     console.log(`image version: ${imageVersion}`);
-    
+
     const userParams = [];
     if (dockerMode === "Rootful") {
       if (process.getuid && process.getgid)
@@ -333,7 +334,7 @@ export class CapacitorHelper {
       let buffer = execSync(
         `xcodebuild -workspace ios/App/App.xcworkspace ` +
           `-scheme App -destination "generic/platform=iOS" ` +
-          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.iosParams?.mainProvisioningProfile.guuid}" ` +
+          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.iosParams?.mainProvisioningProfile?.guuid}" ` +
           ' CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="iPhone Distribution" ' +
           ` DEVELOPMENT_TEAM="${this.iosParams?.appleTeamId}" `,
         { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }

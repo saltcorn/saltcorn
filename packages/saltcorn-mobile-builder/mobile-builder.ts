@@ -26,6 +26,7 @@ import {
   writeNetworkSecurityConfig,
   modifyGradleConfig,
   hasAuthMethod,
+  modifyAppDelegate,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
@@ -43,8 +44,9 @@ const appIdDefault = "saltcorn.mobile.app";
 const appNameDefault = "SaltcornMobileApp";
 
 export type IosCfg = {
-  appleTeamId: string;
-  mainProvisioningProfile: {
+  noProvisioningProfile?: boolean;
+  appleTeamId?: string;
+  mainProvisioningProfile?: {
     guuid: string;
   };
   shareExtensionProvisioningProfile?: {
@@ -116,6 +118,7 @@ export class MobileBuilder {
   syncOnReconnect: boolean;
   pushSync: boolean;
   syncInterval?: number;
+  backgroundSyncEnabled: boolean;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
@@ -164,6 +167,7 @@ export class MobileBuilder {
     this.pushSync = cfg.pushSync;
     this.syncOnReconnect = cfg.syncOnReconnect;
     this.syncInterval = cfg.syncInterval ? +cfg.syncInterval : undefined;
+    this.backgroundSyncEnabled = !!this.syncInterval && this.syncInterval > 0;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
     });
@@ -309,16 +313,23 @@ export class MobileBuilder {
   }
 
   private async handleIosPlatform() {
-    prepareExportOptionsPlist({
-      buildDir: this.buildDir,
-      appId: this.appId,
-      iosParams: this.iosParams,
-    });
-    modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
+    if (this.iosParams?.noProvisioningProfile !== true) {
+      prepareExportOptionsPlist({
+        buildDir: this.buildDir,
+        appId: this.appId,
+        iosParams: this.iosParams,
+      });
+      modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
+    }
     writePodfile(this.buildDir);
-    writePrivacyInfo(this.buildDir);
-    modifyInfoPlist(this.buildDir, this.allowShareTo);
+    writePrivacyInfo(this.buildDir, this.backgroundSyncEnabled);
+    modifyInfoPlist(
+      this.buildDir,
+      this.allowShareTo,
+      this.backgroundSyncEnabled
+    );
     if (this.allowShareTo) copyShareExtFiles(this.buildDir);
+    modifyAppDelegate(this.buildDir, this.backgroundSyncEnabled);
   }
 
   private async handleAndroidPlatform() {
