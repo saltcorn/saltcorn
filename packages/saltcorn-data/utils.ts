@@ -17,7 +17,6 @@ import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
 import type User from "./models/user"; // only type, shouldn't cause require loop
 import { existsSync } from "fs-extra";
-import _ from "underscore";
 import { VM } from "vm2";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
@@ -463,11 +462,6 @@ const interpolate = (
 ): string => {
   try {
     if (s && typeof s === "string") {
-      // const template = _.template(s, {
-      //   interpolate: /\{\{!(.+?)\}\}/g,
-      //   escape: /\{\{([^!].+?)\}\}/g,
-      // });
-      // return template({ row, user, ...(row || {}) });
       const sandbox = {
         row,
         user,
@@ -486,11 +480,6 @@ const interpolate = (
         timeout: 200,
       });
       const renderToken = (_match: string, bang: string, code: string) => {
-        console.log({
-          _match,
-          bang,
-          code,
-        });
         const val = vm.run(`(${code.trim()})`);
         const strVal =
           val === null || typeof val === "undefined" ? "" : String(val);
