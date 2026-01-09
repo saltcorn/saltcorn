@@ -630,11 +630,28 @@ export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
   }
 }
 
-export function modifyInfoPlist(buildDir: string, allowShareTo: boolean) {
+export function modifyInfoPlist(
+  buildDir: string,
+  allowShareTo: boolean,
+  backgroundSyncEnabled: boolean
+) {
   const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
   const content = readFileSync(infoPlist, "utf8");
 
   const newCfgs = `
+  ${
+    backgroundSyncEnabled
+      ? `<key>BGTaskSchedulerPermittedIdentifiers</key>
+  <array>
+    <string>com.transistorsoft.fetch</string>
+  </array>
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>fetch</string>
+  </array>
+  `
+      : ""
+  }
   <key>NSCameraUsageDescription</key>
   <string>This app requires access to the camera to take photos</string>
   <key>NSPhotoLibraryUsageDescription</key>
@@ -720,7 +737,62 @@ export async function decodeProvisioningProfile(
   }
 }
 
-export function writePrivacyInfo(buildDir: string) {
+export function modifyAppDelegate(
+  buildDir: string,
+  backgroundSyncEnabled: boolean
+) {
+  if (backgroundSyncEnabled) {
+    const appDelegateFile = join(
+      buildDir,
+      "ios",
+      "App",
+      "App",
+      "AppDelegate.swift"
+    );
+    let content = readFileSync(appDelegateFile, "utf8");
+
+    // add "import TSBackgroundFetch" before "@UIApplicationMain"
+    content = content.replace(
+      /@UIApplicationMain/,
+      `import TSBackgroundFetch
+
+@UIApplicationMain`
+    );
+
+    // modify cusomization point after application launch
+    content = content.replace(
+      /func application\(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: \[UIApplication.LaunchOptionsKey: Any\]\?\) -> Bool {/,
+      `func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Override point for customization after application launch.
+
+       // [capacitor-background-fetch]
+       let fetchManager = TSBackgroundFetch.sharedInstance();
+       fetchManager?.didFinishLaunching();
+        `
+    );
+
+    // add fetch handler at the end of the file, before the last }
+    content = content.replace(
+      /}\s*$/,
+      `
+    // [capacitor-background-fetch]
+   func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+       print("BackgroundFetchPlugin AppDelegate received fetch event");
+       let fetchManager = TSBackgroundFetch.sharedInstance();
+       fetchManager?.perform(completionHandler: completionHandler, applicationState: application.applicationState);
+   }
+}
+`
+    );
+
+    writeFileSync(appDelegateFile, content, "utf8");
+  }
+}
+
+export function writePrivacyInfo(
+  buildDir: string,
+  backgroundSyncEnabled: boolean
+) {
   const infoFile = join(buildDir, "ios", "App", "PrivacyInfo.xcprivacy");
   const content = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -737,6 +809,22 @@ export function writePrivacyInfo(buildDir: string) {
           <string>C617.1</string>
         </array>
       </dict>
+
+      ${
+        backgroundSyncEnabled
+          ? `
+      <!-- [1] background_fetch: UserDefaults -->
+      <dict>
+          <key>NSPrivacyAccessedAPIType</key>
+          <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+
+          <key>NSPrivacyAccessedAPITypeReasons</key>
+          <array>
+              <string>CA92.1</string>
+          </array>
+        </dict>`
+          : ""
+      }
     </array>
   </dict>
 </plist>`;
