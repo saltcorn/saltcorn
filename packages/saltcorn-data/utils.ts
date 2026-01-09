@@ -18,6 +18,7 @@ import type Field from "./models/field"; // only type, shouldn't cause require l
 import type User from "./models/user"; // only type, shouldn't cause require loop
 import { existsSync } from "fs-extra";
 import _ from "underscore";
+import { VM } from "vm2";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
 const Docker = require("dockerode");
@@ -462,11 +463,40 @@ const interpolate = (
 ): string => {
   try {
     if (s && typeof s === "string") {
-      const template = _.template(s, {
-        interpolate: /\{\{!(.+?)\}\}/g,
-        escape: /\{\{([^!].+?)\}\}/g,
+      // const template = _.template(s, {
+      //   interpolate: /\{\{!(.+?)\}\}/g,
+      //   escape: /\{\{([^!].+?)\}\}/g,
+      // });
+      // return template({ row, user, ...(row || {}) });
+      const sandbox = {
+        row,
+        user,
+        ...(row || {}),
+        global: undefined,
+        globalThis: undefined,
+        process: undefined,
+        require: undefined,
+        module: undefined,
+        Function: undefined,
+      };
+      const vm = new VM({
+        sandbox,
+        eval: false,
+        wasm: false,
+        timeout: 200,
       });
-      return template({ row, user, ...(row || {}) });
+      const renderToken = (_match: string, bang: string, code: string) => {
+        console.log({
+          _match,
+          bang,
+          code,
+        });
+        const val = vm.run(`(${code.trim()})`);
+        const strVal =
+          val === null || typeof val === "undefined" ? "" : String(val);
+        return bang === "!" ? strVal : escapeHtml(strVal);
+      };
+      return s.replace(/\{\{(!?)([\s\S]+?)\}\}/g, renderToken);
     } else return s;
   } catch (e: any) {
     e.message = `In evaluating the interpolation ${s}${
