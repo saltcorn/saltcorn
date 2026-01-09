@@ -26,6 +26,7 @@ import {
   writeNetworkSecurityConfig,
   modifyGradleConfig,
   hasAuthMethod,
+  modifyAppDelegate,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
@@ -117,6 +118,7 @@ export class MobileBuilder {
   syncOnReconnect: boolean;
   pushSync: boolean;
   syncInterval?: number;
+  backgroundSyncEnabled: boolean;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
@@ -165,6 +167,7 @@ export class MobileBuilder {
     this.pushSync = cfg.pushSync;
     this.syncOnReconnect = cfg.syncOnReconnect;
     this.syncInterval = cfg.syncInterval ? +cfg.syncInterval : undefined;
+    this.backgroundSyncEnabled = !!this.syncInterval && this.syncInterval > 0;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
     });
@@ -288,11 +291,7 @@ export class MobileBuilder {
       resultCode = await createSqliteDb(this.buildDir);
       if (resultCode !== 0) return resultCode;
 
-      if (
-        this.platforms.includes("ios") &&
-        this.iosParams?.noProvisioningProfile !== true
-      )
-        await this.handleIosPlatform();
+      if (this.platforms.includes("ios")) await this.handleIosPlatform();
       if (this.platforms.includes("android"))
         await this.handleAndroidPlatform();
       if (this.platforms.find((p) => p === "ios" || p === "android")) {
@@ -314,16 +313,23 @@ export class MobileBuilder {
   }
 
   private async handleIosPlatform() {
-    prepareExportOptionsPlist({
-      buildDir: this.buildDir,
-      appId: this.appId,
-      iosParams: this.iosParams,
-    });
-    modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
+    if (this.iosParams?.noProvisioningProfile !== true) {
+      prepareExportOptionsPlist({
+        buildDir: this.buildDir,
+        appId: this.appId,
+        iosParams: this.iosParams,
+      });
+      modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
+    }
     writePodfile(this.buildDir);
-    writePrivacyInfo(this.buildDir);
-    modifyInfoPlist(this.buildDir, this.allowShareTo);
+    writePrivacyInfo(this.buildDir, this.backgroundSyncEnabled);
+    modifyInfoPlist(
+      this.buildDir,
+      this.allowShareTo,
+      this.backgroundSyncEnabled
+    );
     if (this.allowShareTo) copyShareExtFiles(this.buildDir);
+    modifyAppDelegate(this.buildDir, this.backgroundSyncEnabled);
   }
 
   private async handleAndroidPlatform() {
