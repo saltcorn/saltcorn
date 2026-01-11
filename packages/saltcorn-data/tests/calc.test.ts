@@ -1076,9 +1076,13 @@ describe("free variables", () => {
     ]).toEqual(["x.k", "y.z"]);
   });
 });
-describe("interpolation", () => {
+describe("interpolation function", () => {
   it("interpolates simple", () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
     expect(interpolate("hello {{ x }}", { x: 1 })).toBe("hello 1");
+    expect(interpolate("hello {{ x+1 }}", { x: 1 })).toBe("hello 2");
+    expect(interpolate("hello {{ add3(x) }}", { x: 1 })).toBe("hello 4");
     expect(
       interpolate("hello {{ x }}", { x: "<script>alert(1)</script>" })
     ).toBe("hello &lt;script&gt;alert(1)&lt;/script&gt;");
@@ -1086,7 +1090,7 @@ describe("interpolation", () => {
       interpolate("hello {{! x }}", { x: "<script>alert(1)</script>" })
     ).toBe("hello <script>alert(1)</script>");
 
-    //expect(interpolate("hello {{x}}", { x: 1 })).toBe("hello 1"); TODO
+    expect(interpolate("hello {{x}}", { x: 1 })).toBe("hello 1");
   });
 });
 describe("jsexprToSQL", () => {
