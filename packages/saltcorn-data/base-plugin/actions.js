@@ -1823,6 +1823,38 @@ module.exports = {
     },
     namespace: "User interface",
   },
+  copy_to_clipboard: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Copy text based on the current row to clipboard",
+    requireRow: true,
+
+    configFields: [
+      {
+        name: "text_template",
+        label: "Text template",
+        type: "String",
+        required: true,
+      },
+    ],
+
+    run: async ({
+      row,
+      table,
+      user,
+      req,
+      configuration: { text_template },
+      ...rest
+    }) => {
+      return {
+        eval_js: `navigator.clipboard.writeText(${JSON.stringify(interpolate(text_template || "", row || {}, user))})`,
+      };
+    },
+    namespace: "User interface",
+  },
 
   toast: {
     /**
