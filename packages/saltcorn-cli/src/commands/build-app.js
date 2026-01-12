@@ -79,7 +79,6 @@ class BuildAppCommand extends Command {
         };
       else {
         const mainProfileVals = await decodeProvisioningProfile(
-          flags.buildDirectory,
           flags.provisioningProfile
         );
         result = {
@@ -90,7 +89,6 @@ class BuildAppCommand extends Command {
         };
         if (flags.allowShareTo) {
           const shareExtProfileVals = await decodeProvisioningProfile(
-            flags.buildDirectory,
             flags.shareExtensionProvisioningProfile
           );
           result.shareExtensionProvisioningProfile = {

@@ -709,12 +709,9 @@ export function copyShareExtFiles(buildDir: string) {
   );
 }
 
-export async function decodeProvisioningProfile(
-  buildDir: string,
-  provisioningProfile: string
-) {
-  console.log("decodeProvisioningProfile", buildDir, provisioningProfile);
-  const outFile = join(buildDir, "provisioningProfile.xml");
+export async function decodeProvisioningProfile(provisioningProfile: string) {
+  console.log("decodeProvisioningProfile", provisioningProfile);
+  const outFile = join("/tmp", "provisioningProfile.xml");
   try {
     execSync(`security cms -D -i "${provisioningProfile}" > ${outFile}`);
     const content = readFileSync(outFile);
@@ -1158,6 +1155,16 @@ export async function prepareSplashPage(
 }
 
 export function writePodfile(buildDir: string) {
+  const state = getState();
+  let hasGeolocation = false;
+  if (state) {
+    for (const plugin of state.capacitorPlugins || []) {
+      if (plugin.name === "@capacitor/geolocation") {
+        hasGeolocation = true;
+      }
+    }
+  }
+
   const podfileContent = `
   require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
   
@@ -1175,7 +1182,7 @@ export function writePodfile(buildDir: string) {
     pod 'CapacitorCommunitySqlite', :path => '../../node_modules/@capacitor-community/sqlite'
     pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
-    pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'
+    ${hasGeolocation ? `pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'` : ""}
     pod 'CapacitorNetwork', :path => '../../node_modules/@capacitor/network'
     pod 'CapacitorScreenOrientation', :path => '../../node_modules/@capacitor/screen-orientation'
     pod 'SendIntent', :path => '../../node_modules/send-intent'
