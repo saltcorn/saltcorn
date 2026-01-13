@@ -378,9 +378,25 @@ const zipFolder = async (folder: string, zipFileName: string) => {
   if (backup_with_system_zip) {
     return await new Promise((resolve, reject) => {
       const absZipPath = path.join(process.cwd(), zipFileName);
-      const cmd = `zip -5 -rq ${backup_password ? `-P "${backup_password}" ` : ""}"${absZipPath}" .`;
-      exec(cmd, { cwd: folder }, (error: any) => {
-        if (error) reject(error);
+      const args = [
+        "-5",
+        "-rq",
+        ...(backup_password ? [`-P`, backup_password] : []),
+        absZipPath,
+        ".",
+      ];
+
+      const subprocess = spawn("zip", args, { cwd: folder });
+      subprocess.stdout.on("data", (data: any) => {
+        getState().log(6, data.toString());
+      });
+
+      subprocess.stderr.on("data", (data: any) => {
+        getState().log(1, data.toString());
+      });
+
+      subprocess.on("close", (exitCode: any) => {
+        if (exitCode !== 0) reject(new Error("zip failed"));
         else resolve(undefined);
       });
     });
@@ -567,7 +583,7 @@ const correct_fileid_references_to_location = async (newLocations: any) => {
  * @returns {Promise<void>}
  */
 const restore_file_users = async (file_users: any): Promise<void> => {
-  getState().log(2, `Restoring file users`);
+  if (!isTest()) getState().log(2, `Restoring file users`);
   for (const [id, user_id] of Object.entries(file_users)) {
     if (user_id) {
       const file = await File.findOne(id);
@@ -592,7 +608,7 @@ const restore_tables = async (
 
   const restore_history = getState().getConfig("restore_history", true);
   for (const table of tables) {
-    getState().log(2, `restoring table ${table.name}`);
+    if (!isTest()) getState().log(2, `restoring table ${table.name}`);
 
     const fnm_csv =
       table.name === "users"
@@ -628,7 +644,8 @@ const restore_tables = async (
         sanitiseTableName(table.name) + "__history.json"
       );
       if (existsSync(fnm_hist_json)) {
-        getState().log(2, `restoring table history ${table.name}`);
+        if (!isTest())
+          getState().log(2, `restoring table history ${table.name}`);
 
         await table.import_json_history_file(fnm_hist_json);
       }
@@ -663,7 +680,7 @@ const restore_config = async (dirpath: string): Promise<void> => {
 const restore_metadata = async (dirpath: string): Promise<void> => {
   const fnm: string = join(dirpath, "metadata.json");
   if (!existsSync(fnm)) return;
-  getState().log(2, `Restoring metadata`);
+  if (!isTest()) getState().log(2, `Restoring metadata`);
   const mds = JSON.parse((await readFile(fnm)).toString()) as Array<MetaData>;
 
   for (const md of mds) {
@@ -726,7 +743,7 @@ const restore = async (
   }
 
   //install pack
-  state.log(2, `Reading pack`);
+  if (!isTest()) state.log(2, `Reading pack`);
   const pack = JSON.parse(
     (await readFile(join(basePath, "pack.json"))).toString()
   );

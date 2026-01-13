@@ -6,6 +6,7 @@ const {
   toRedirect,
   itShouldRedirectUnauthToLogin,
   itShouldIncludeTextForAdmin,
+  itShouldNotIncludeTextForAdmin,
   toInclude,
   toSucceed,
   //toNotInclude,
@@ -624,6 +625,11 @@ describe("tags", () => {
 describe("server logs viewer", () => {
   itShouldRedirectUnauthToLogin("/admin/dev/logs_viewer");
   itShouldIncludeTextForAdmin("/admin/dev/logs_viewer", "Server logs");
+});
+
+
+describe("admin reflective xss", () => {
+  itShouldNotIncludeTextForAdmin("/admin/edit-codepage/%3Cimg%20src%3Dx%20onerror%3Dalert%281%29%3E%0A", "<img src=x onerror=alert(1)>");
 });
 
 /**
