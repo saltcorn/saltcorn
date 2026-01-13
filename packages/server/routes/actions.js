@@ -48,6 +48,7 @@ const {
   link,
   mkTable,
   localeDateTime,
+  renderWorkflow,
   post_delete_btn,
 } = require("@saltcorn/markup");
 const Form = require("@saltcorn/data/models/form");
@@ -82,6 +83,93 @@ const {
   blocklyImportScripts,
   blocklyToolbox,
 } = require("../markup/blockly.js");
+
+const serializeWorkflowStep = (s) => ({
+  id: s.id,
+  name: s.name,
+  trigger_id: s.trigger_id,
+  next_step: s.next_step || "",
+  only_if: s.only_if || "",
+  action_name: s.action_name,
+  initial_step: !!s.initial_step,
+  configuration: s.configuration || {},
+});
+
+const buildWorkflowActionExplainers = async (trigger) => {
+  const actionExplainers = {};
+  const stateActions = getState().actions;
+  for (const [name, action] of Object.entries(stateActions)) {
+    if (action.disableInWorkflow) continue;
+    if (action.description) actionExplainers[name] = action.description;
+  }
+  const triggers = await Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  });
+  triggers.forEach((tr) => {
+    if (tr.description) actionExplainers[tr.name] = tr.description;
+  });
+  Object.assign(
+    actionExplainers,
+    WorkflowStep.builtInActionExplainers({
+      api_call: trigger.when_trigger == "API call",
+    })
+  );
+  return actionExplainers;
+};
+
+const workflowStrings = (req, trigger) => ({
+  addStep: req.__("Add step"),
+  editStep: req.__("Edit step"),
+  addAfter: req.__("Add after"),
+  setAsStart: req.__("Set as start"),
+  deleteStep: req.__("Delete"),
+  confirmDelete: req.__("Are you sure?"),
+  start: req.__("Start"),
+  runs: req.__("Show runs"),
+  refresh: req.__("Refresh"),
+  layout: req.__("Auto layout"),
+  empty: req.__("No steps yet"),
+  loading: req.__("Loading"),
+  action: req.__("Action"),
+  nextStep: req.__("Next step"),
+  onlyIf: req.__("Only if"),
+  loopBody: req.__("Loop body"),
+  openRuns: req.__("Show runs &raquo;"),
+  configure: req.__(`%s configuration`, trigger.name),
+});
+
+const getWorkflowEditorData = async (req, trigger, stepsIn) => {
+  let steps =
+    stepsIn ||
+    (await WorkflowStep.find(
+      { trigger_id: trigger.id },
+      { orderBy: "id" }
+    ));
+  const initial_step = steps.find((step) => step.initial_step);
+  if (initial_step)
+    steps = [initial_step, ...steps.filter((s) => !s.initial_step)];
+
+  return {
+    trigger: {
+      id: trigger.id,
+      name: trigger.name,
+      when_trigger: trigger.when_trigger,
+    },
+    steps: steps.map(serializeWorkflowStep),
+    actionExplainers: await buildWorkflowActionExplainers(trigger),
+    csrfToken: req.csrfToken(),
+    strings: workflowStrings(req, trigger),
+    urls: {
+      stepForm: `/actions/stepedit/${trigger.id}`,
+      data: `/actions/workflow/data/${trigger.id}`,
+      connect: `/actions/workflow/connect/${trigger.id}`,
+      deleteStep: `/actions/delete-step`,
+      configure: `/actions/configure/${trigger.id}`,
+      runs: `/actions/runs/?trigger=${trigger.id}`,
+    },
+    config: trigger.configuration || {},
+  };
+};
 
 /**
  * Show list of Actions (Triggers) (HTTP GET)
@@ -533,13 +621,10 @@ router.post(
 );
 
 const getWorkflowConfig = async (req, id, table, trigger) => {
-  let steps = await WorkflowStep.find(
+  const steps = await WorkflowStep.find(
     { trigger_id: trigger.id },
     { orderBy: "id" }
   );
-  const initial_step = steps.find((step) => step.initial_step);
-  if (initial_step)
-    steps = [initial_step, ...steps.filter((s) => !s.initial_step)];
   const trigCfgForm = new Form({
     action: addOnDoneRedirect(`/actions/configure/${id}`, req),
     onChange: "saveAndContinue(this)",
@@ -575,72 +660,70 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
       req.csrfToken()
     );
   }
+  const workflowData = await getWorkflowEditorData(req, trigger, steps);
   return (
     copilot_form +
-    pre(
-      { class: "mermaid workflow-config" },
-      WorkflowStep.generate_diagram(steps)
-    ) +
-    script(
-      { defer: "defer" },
-      `function tryAddWFNodes() {
-  const ns = $("g.node");
-  if(!ns.length) setTimeout(tryAddWFNodes, 200)
-  else {
-    $("i.add-btw-nodes").on("click", (e)=>{
-      const $e = $(e.target || e);
-      const cls = $e.attr('class');
-      const idnext = cls.split(" ").find(c=>c.startsWith("btw-nodes-")).
-          substr(10);
-      const [idprev, nmnext] = idnext.split("-");
-      if(cls.includes("init-for-body"))
-        location.href = '/actions/stepedit/${trigger.id}?after_step_for='+idprev+'&before_step='+nmnext;
-      else
-        location.href = '/actions/stepedit/${trigger.id}?after_step='+idprev+'&before_step='+nmnext;
-    })
-    $("g.node").on("click", (e)=>{
-       const $e = $(e.target || e).closest("g.node")
-       const cls = $e.attr('class')
-       if(!cls) return;      
-       //console.log(cls)
-       if(cls.includes("wfstep")) {
-       const id = cls.split(" ").find(c=>c.startsWith("wfstep")).
-          substr(6);
-       location.href = '/actions/stepedit/${trigger.id}/'+id;
-       }
-       if(cls.includes("wfaddstart")) {
-         location.href = '/actions/stepedit/${trigger.id}?initial_step=true';
-       } else if(cls.includes("wfadd")) {
-         const id = cls.split(" ").find(c=>c.startsWith("wfadd")).
-          substr(5);
-         location.href = '/actions/stepedit/${trigger.id}?after_step='+id;
-       }
-      //console.log($e.attr('class'), id)
-     })
-  }
-}
-window.addEventListener('DOMContentLoaded',tryAddWFNodes)`
-    ) +
-    a(
-      {
-        href: `/actions/stepedit/${trigger.id}${
-          initial_step ? "" : "?initial_step=true"
-        }`,
-        class: "btn btn-secondary",
-      },
-      i({ class: "fas fa-plus me-2" }),
-      "Add step"
-    ) +
-    a(
-      {
-        href: `/actions/runs/?trigger=${trigger.id}`,
-        class: "d-block",
-      },
-      "Show runs &raquo;"
-    ) +
-    renderForm(trigCfgForm, req.csrfToken())
+    renderWorkflow(workflowData, db.connectObj.version_tag) +
+    div(
+      { class: "mt-3" },
+      a(
+        {
+          href: `/actions/runs/?trigger=${trigger.id}`,
+          class: "d-block mb-2",
+        },
+        req.__("Show runs &raquo;")
+      ),
+      renderForm(trigCfgForm, req.csrfToken())
+    )
   );
 };
+
+router.get(
+  "/workflow/data/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req, res) => {
+    const { trigger_id } = req.params;
+    const trigger = await Trigger.findOne({ id: trigger_id });
+    if (!trigger) return res.status(404).json({ error: "Trigger not found" });
+    const data = await getWorkflowEditorData(req, trigger);
+    res.json(data);
+  })
+);
+
+router.post(
+  "/workflow/connect/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req, res) => {
+    const { trigger_id } = req.params;
+    const { step_id, next_step, initial_step, loop_body_step } = req.body || {};
+    const stepId = step_id ? +step_id : null;
+    const step = await WorkflowStep.findOne({ id: stepId, trigger_id });
+    if (!step) return res.status(404).json({ error: "Step not found" });
+    const updateRow = {};
+    if (typeof next_step !== "undefined")
+      updateRow.next_step = next_step || null;
+    if (initial_step !== undefined)
+      updateRow.initial_step = initial_step === "true" || initial_step === true;
+    if (typeof loop_body_step !== "undefined" && step.action_name === "ForLoop") {
+      updateRow.configuration = {
+        ...step.configuration,
+        loop_body_initial_step: loop_body_step || "",
+      };
+    }
+    await step.update(updateRow);
+    const trigger = await Trigger.findOne({ id: trigger_id });
+    Trigger.emitEvent(
+      "AppChange",
+      `Trigger ${trigger?.name || step.trigger_id}`,
+      req.user,
+      {
+        entity_type: "Trigger",
+        entity_name: trigger?.name || step.trigger_id,
+      }
+    );
+    res.json({ success: "ok" });
+  })
+);
 
 const getWorkflowStepForm = async (
   trigger,
@@ -964,18 +1047,6 @@ router.get(
         active_sub: "Triggers",
         sub2_page: "Configure",
         page_title: req.__(`%s configuration`, trigger.name),
-        headers: [
-          {
-            script: `/static_assets/${db.connectObj.version_tag}/mermaid.min.js`,
-          },
-          {
-            headerTag: `<script type="module">mermaid.initialize({securityLevel: 'loose'${
-              getState().getLightDarkMode(req.user) === "dark"
-                ? ",theme: 'dark',"
-                : ""
-            }});</script>`,
-          },
-        ],
         contents: {
           type: "card",
           titleAjaxIndicator: true,
@@ -1407,6 +1478,15 @@ router.get(
       while (stepNames.has(`step${name_ix}`)) name_ix += 1;
       form.values.wf_step_name = `step${name_ix}`;
     }
+    const formHtml = renderForm(form, req.csrfToken());
+    const titleText = req.__(`%s configuration`, trigger.name);
+    if (req.xhr || req.query.render === "dialog") {
+      res.json({
+        title: titleText,
+        form: formHtml,
+      });
+      return;
+    }
     send_events_page({
       res,
       req,
@@ -1420,7 +1500,7 @@ router.get(
           "Configure trigger %s",
           a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
         ),
-        contents: renderForm(form, req.csrfToken()),
+        contents: formHtml,
       },
     });
   })
