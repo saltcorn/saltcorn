@@ -43,7 +43,7 @@ const {
 } = pack;
 import config from "@saltcorn/data/models/config";
 const { configTypes } = config;
-const { asyncMap } = require("@saltcorn/data/utils");
+const { asyncMap, isTest } = require("@saltcorn/data/utils");
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
 import Tag from "@saltcorn/data/models/tag";
