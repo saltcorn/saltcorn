@@ -828,7 +828,6 @@ const getWorkflowStepForm = async (
 
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
-    onChange: step_id ? "saveAndContinueIfValid(this)" : undefined,
     submitLabel: step_id ? req.__("Done") : undefined,
     onSubmit: "press_store_button(this)",
     additionalButtons: step_id
@@ -1547,6 +1546,9 @@ router.post(
       _after_step_for,
       ...configuration
     } = form.values;
+    const existingStep = wf_step_id
+      ? await WorkflowStep.findOne({ id: wf_step_id, trigger_id })
+      : null;
     Object.entries(configuration).forEach(([k, v]) => {
       if (v === null) delete configuration[k];
     });
@@ -1603,6 +1605,25 @@ router.post(
               loop_body_initial_step: step.name,
             },
           });
+      }
+
+      // if the step was renamed, update references from other steps
+      if (existingStep && existingStep.name !== step.name) {
+        const stepsForTrigger = await WorkflowStep.find({ trigger_id });
+        for (const s of stepsForTrigger) {
+          const update = {};
+          if (s.next_step === existingStep.name) update.next_step = step.name;
+          if (
+            s.action_name === "ForLoop" &&
+            s.configuration?.loop_body_initial_step === existingStep.name
+          ) {
+            update.configuration = {
+              ...s.configuration,
+              loop_body_initial_step: step.name,
+            };
+          }
+          if (Object.keys(update).length) await s.update(update);
+        }
       }
     } catch (e) {
       console.error(e);
