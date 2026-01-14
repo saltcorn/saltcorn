@@ -6,7 +6,6 @@ import React, {
   useState,
 } from "react";
 import ReactFlow, {
-  addEdge,
   Background,
   Controls,
   Handle,
@@ -18,120 +17,113 @@ import ReactFlow, {
 import "reactflow/dist/style.css";
 import "./workflow.css";
 
-const StartNode = ({ data }) => {
-  console.log({ data });
-  return (
-    <div className="wf-start-node">
-      <div className="wf-start-title">{data.strings.start}</div>
-      <div className="wf-start-actions">
+const StartNode = ({ data }) => (
+  <div className="wf-start-node">
+    <div className="wf-start-title">{data.strings.start}</div>
+    <div className="wf-start-actions">
+      <button
+        className="btn btn-sm btn-light"
+        onClick={(e) => {
+          e.stopPropagation();
+          data.onAddInitial();
+        }}
+      >
+        {data.strings.addStep}
+      </button>
+    </div>
+    <Handle id="start" type="source" position={Position.Right} />
+  </div>
+);
+
+const StepNode = ({ data }) => (
+  <div className="wf-node">
+    <div className="wf-node__header">
+      <div className="wf-node__title">{data.name}</div>
+      <div className="wf-node__chips">
+        {data.initial_step ? (
+          <span className="badge bg-primary">{data.strings.start}</span>
+        ) : null}
+      </div>
+    </div>
+    <div className="wf-node__action">{data.action_name}</div>
+    {data.actionDescription ? (
+      <div className="wf-node__desc">{data.actionDescription}</div>
+    ) : null}
+    {data.only_if ? (
+      <div className="wf-node__meta">
+        <span className="wf-label">{data.strings.onlyIf}:</span> {data.only_if}
+      </div>
+    ) : null}
+    {data.next_step ? (
+      <div className="wf-node__meta">
+        <span className="wf-label">{data.strings.nextStep}:</span>{" "}
+        {data.next_step}
+      </div>
+    ) : null}
+    {data.isLoop && data.loop_body_initial_step ? (
+      <div className="wf-node__meta">
+        <span className="wf-label">{data.strings.loopBody}:</span>{" "}
+        {data.loop_body_initial_step}
+      </div>
+    ) : null}
+    <div className="wf-node__footer">
+      <button
+        className="btn btn-sm btn-outline-secondary"
+        onClick={(e) => {
+          e.stopPropagation();
+          data.onEdit(data.id);
+        }}
+      >
+        {data.strings.editStep}
+      </button>
+      <button
+        className="btn btn-sm btn-outline-primary"
+        onClick={(e) => {
+          e.stopPropagation();
+          data.onAddAfter(data.id);
+        }}
+      >
+        {data.strings.addAfter}
+      </button>
+      {!data.initial_step ? (
         <button
-          className="btn btn-sm btn-light"
+          className="btn btn-sm btn-outline-success"
           onClick={(e) => {
             e.stopPropagation();
-            data.onAddInitial();
+            data.onSetStart(data.id);
           }}
         >
-          {data.strings.addStep}
+          {data.strings.setAsStart}
         </button>
-      </div>
-      <Handle id="start" type="source" position={Position.Right} />
-    </div>
-  );
-};
-
-const StepNode = ({ data }) => {
-  console.log({ data }, "StepNode data");
-  return (
-    <div className="wf-node">
-      <div className="wf-node__header">
-        <div className="wf-node__title">{data.name}</div>
-        <div className="wf-node__chips">
-          {data.initial_step ? (
-            <span className="badge bg-primary">{data.strings.start}</span>
-          ) : null}
-        </div>
-      </div>
-      <div className="wf-node__action">{data.action_name}</div>
-      {data.actionDescription ? (
-        <div className="wf-node__desc">{data.actionDescription}</div>
-      ) : null}
-      {data.only_if ? (
-        <div className="wf-node__meta">
-          <span className="wf-label">{data.strings.onlyIf}:</span>{" "}
-          {data.only_if}
-        </div>
       ) : null}
       {data.next_step ? (
-        <div className="wf-node__meta">
-          <span className="wf-label">{data.strings.nextStep}:</span>{" "}
-          {data.next_step}
-        </div>
-      ) : null}
-      {data.isLoop && data.loop_body_initial_step ? (
-        <div className="wf-node__meta">
-          <span className="wf-label">{data.strings.loopBody}:</span>{" "}
-          {data.loop_body_initial_step}
-        </div>
-      ) : null}
-      <div className="wf-node__footer">
         <button
-          className="btn btn-sm btn-outline-secondary"
+          className="btn btn-sm btn-outline-warning"
           onClick={(e) => {
             e.stopPropagation();
-            data.onEdit(data.id);
+            data.onClearNext(data.id);
           }}
         >
-          {data.strings.editStep}
+          {data.strings.nextStep} x
         </button>
-        <button
-          className="btn btn-sm btn-outline-primary"
-          onClick={(e) => {
-            e.stopPropagation();
-            data.onAddAfter(data.id);
-          }}
-        >
-          {data.strings.addAfter}
-        </button>
-        {!data.initial_step ? (
-          <button
-            className="btn btn-sm btn-outline-success"
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onSetStart(data.id);
-            }}
-          >
-            {data.strings.setAsStart}
-          </button>
-        ) : null}
-        {data.next_step ? (
-          <button
-            className="btn btn-sm btn-outline-warning"
-            onClick={(e) => {
-              e.stopPropagation();
-              data.onClearNext(data.id);
-            }}
-          >
-            {data.strings.nextStep} x
-          </button>
-        ) : null}
-        <button
-          className="btn btn-sm btn-outline-danger"
-          onClick={(e) => {
-            e.stopPropagation();
-            data.onDelete(data.id);
-          }}
-        >
-          {data.strings.deleteStep}
-        </button>
-      </div>
-      <Handle type="target" position={Position.Left} />
-      <Handle id="main" type="source" position={Position.Right} />
-      {data.isLoop ? (
-        <Handle id="loop" type="source" position={Position.Bottom} />
       ) : null}
+      <button
+        className="btn btn-sm btn-outline-danger"
+        onClick={(e) => {
+          e.stopPropagation();
+          data.onDelete(data.id);
+        }}
+      >
+        {data.strings.deleteStep}
+      </button>
     </div>
-  );
-};
+    <Handle type="target" position={Position.Left} />
+    <Handle id="main" type="source" position={Position.Right} />
+    {data.isLoop ? (
+      <Handle id="loop" type="source" position={Position.Bottom} />
+    ) : null}
+  </div>
+);
 
 const nodeTypes = {
   start: StartNode,
@@ -151,7 +143,8 @@ const buildGraph = (steps, strings, actionExplainers) => {
   const adjacency = new Map();
   steps.forEach((s) => {
     const targets = [];
-    if (s.next_step && idByName[s.next_step]) targets.push(idByName[s.next_step]);
+    if (s.next_step && idByName[s.next_step])
+      targets.push(idByName[s.next_step]);
     adjacency.set(String(s.id), targets);
   });
 
@@ -256,10 +249,7 @@ const buildGraph = (steps, strings, actionExplainers) => {
           source: String(step.id),
           target: loopId || String(step.id),
           type: "default",
-          style: {
-            stroke: "#f59f00",
-            // strokeDasharray: "6 4"
-          },
+          style: { stroke: "#f59f00", strokeDasharray: "6 4" },
           label: strings.loopBody,
           markerEnd: "arrowclosed",
           data: { loop: true, missing: !loopId },
@@ -426,6 +416,14 @@ const WorkflowEditor = ({ data }) => {
       if (typeof window !== "undefined" && window.apply_showif)
         window.apply_showif();
     }, 0);
+
+    const actionSelect = formEl.querySelector('[name="wf_action_name"]');
+    const handleActionChange = () => {
+      if (typeof window !== "undefined" && window.apply_showif)
+        window.apply_showif();
+    };
+    if (actionSelect) actionSelect.addEventListener("change", handleActionChange);
+
     const submitHandler = async (e) => {
       e.preventDefault();
       try {
@@ -437,7 +435,11 @@ const WorkflowEditor = ({ data }) => {
       }
     };
     formEl.addEventListener("submit", submitHandler);
-    return () => formEl.removeEventListener("submit", submitHandler);
+    return () => {
+      formEl.removeEventListener("submit", submitHandler);
+      if (actionSelect)
+        actionSelect.removeEventListener("change", handleActionChange);
+    };
   }, [handleModalSubmit, modal]);
 
   const updateConnection = useCallback(
