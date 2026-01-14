@@ -146,6 +146,60 @@ const buildGraph = (steps, strings, actionExplainers) => {
     nameById[String(s.id)] = s.name;
   });
 
+  const initial = steps.find((s) => s.initial_step);
+
+  const adjacency = new Map();
+  steps.forEach((s) => {
+    const targets = [];
+    if (s.next_step && idByName[s.next_step]) targets.push(idByName[s.next_step]);
+    adjacency.set(String(s.id), targets);
+  });
+
+  const depths = {};
+  const queue = [];
+  if (initial) {
+    depths[String(initial.id)] = 1;
+    queue.push(String(initial.id));
+  }
+
+  while (queue.length) {
+    const current = queue.shift();
+    const d = depths[current];
+    (adjacency.get(current) || []).forEach((n) => {
+      if (depths[n] === undefined) {
+        depths[n] = d + 1;
+        queue.push(n);
+      }
+    });
+  }
+
+  let maxDepth = Object.values(depths).reduce((m, v) => Math.max(m, v), 0);
+  const sortedRemaining = steps
+    .map((s) => String(s.id))
+    .filter((id) => depths[id] === undefined)
+    .sort();
+  sortedRemaining.forEach((id) => {
+    maxDepth += 1;
+    depths[id] = maxDepth;
+  });
+
+  const groupByDepth = new Map();
+  steps.forEach((s) => {
+    const d = depths[String(s.id)] || 1;
+    if (!groupByDepth.has(d)) groupByDepth.set(d, []);
+    groupByDepth.get(d).push(String(s.id));
+  });
+  [...groupByDepth.values()].forEach((arr) => arr.sort());
+
+  const X_STEP = 260;
+  const Y_STEP = 160;
+  const positions = {};
+  [...groupByDepth.entries()].forEach(([d, ids]) => {
+    ids.forEach((id, idx) => {
+      positions[id] = { x: d * X_STEP, y: idx * Y_STEP };
+    });
+  });
+
   const nodes = [
     {
       id: "start",
@@ -156,7 +210,10 @@ const buildGraph = (steps, strings, actionExplainers) => {
     ...steps.map((step, ix) => ({
       id: String(step.id),
       type: "step",
-      position: { x: (ix % 3) * 260, y: Math.floor(ix / 3) * 180 + 10 },
+      position: positions[String(step.id)] || {
+        x: (ix % 3) * 260,
+        y: Math.floor(ix / 3) * 180 + 10,
+      },
       data: {
         ...step,
         id: String(step.id),
@@ -169,7 +226,6 @@ const buildGraph = (steps, strings, actionExplainers) => {
   ];
 
   const edges = [];
-  const initial = steps.find((s) => s.initial_step);
   if (initial)
     edges.push({
       id: `e-start-${initial.id}`,
@@ -187,7 +243,7 @@ const buildGraph = (steps, strings, actionExplainers) => {
         source: String(step.id),
         target: targetId || String(step.id),
         type: "smoothstep",
-        animated: true,
+        // animated: true,
         data: { missing: !targetId },
       });
     }
@@ -200,7 +256,10 @@ const buildGraph = (steps, strings, actionExplainers) => {
           source: String(step.id),
           target: loopId || String(step.id),
           type: "default",
-          style: { stroke: "#f59f00", strokeDasharray: "6 4" },
+          style: {
+            stroke: "#f59f00",
+            // strokeDasharray: "6 4"
+          },
           label: strings.loopBody,
           markerEnd: "arrowclosed",
           data: { loop: true, missing: !loopId },
@@ -253,7 +312,7 @@ const StepModal = ({ modal, innerRef, onClose, submitting, error }) => {
 const WorkflowEditor = ({ data }) => {
   const [steps, setSteps] = useState(data.steps || []);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [edges, setEdges, rfOnEdgesChange] = useEdgesState([]);
   const [nameById, setNameById] = useState({});
   const [idByName, setIdByName] = useState({});
   const [loading, setLoading] = useState(false);
@@ -362,6 +421,11 @@ const WorkflowEditor = ({ data }) => {
     if (!modal) return undefined;
     const formEl = modalRef.current?.querySelector("form");
     if (!formEl) return undefined;
+    // Re-run show-if logic so action-specific fields render correctly
+    setTimeout(() => {
+      if (typeof window !== "undefined" && window.apply_showif)
+        window.apply_showif();
+    }, 0);
     const submitHandler = async (e) => {
       e.preventDefault();
       try {
@@ -414,6 +478,42 @@ const WorkflowEditor = ({ data }) => {
       await reload();
     },
     [idByName, nameById, reload, updateConnection]
+  );
+
+  const onEdgesChange = useCallback(
+    (changes) => {
+      const removed = changes.filter((c) => c.type === "remove");
+      if (removed.length) {
+        const updates = [];
+        removed.forEach((chg) => {
+          const edge = edges.find((e) => e.id === chg.id);
+          if (!edge) return;
+          if (edge.source === "start") {
+            updates.push(
+              updateConnection({
+                step_id: edge.target,
+                initial_step: false,
+              })
+            );
+            return;
+          }
+          if (edge.data?.loop) {
+            updates.push(
+              updateConnection({ step_id: edge.source, loop_body_step: "" })
+            );
+          } else {
+            updates.push(
+              updateConnection({ step_id: edge.source, next_step: "" })
+            );
+          }
+        });
+        Promise.all(updates)
+          .then(() => reload())
+          .catch((e) => setError(e.message));
+      }
+      rfOnEdgesChange(changes);
+    },
+    [edges, reload, rfOnEdgesChange, updateConnection]
   );
 
   const onAddAfter = useCallback(
