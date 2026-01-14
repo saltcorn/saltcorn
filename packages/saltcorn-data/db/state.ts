@@ -1111,7 +1111,11 @@ class State {
   }
 
   get eval_context() {
-    return { ...this.function_context, ...this.codepage_context };
+    return {
+      process: undefined,
+      ...this.function_context,
+      ...this.codepage_context,
+    };
   }
 
   /**

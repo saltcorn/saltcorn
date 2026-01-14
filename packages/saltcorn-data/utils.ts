@@ -463,7 +463,7 @@ const interpolate = (
         interpolate: /\{\{!(.+?)\}\}/g,
         escape: /\{\{([^!].+?)\}\}/g,
       });
-      return template({ row, user, ...(row || {}) });
+      return template({ row, user, process: undefined, ...(row || {}) });
     } else return s;
   } catch (e: any) {
     e.message = `In evaluating the interpolation ${s}${
