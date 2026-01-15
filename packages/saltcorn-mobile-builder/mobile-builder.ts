@@ -18,6 +18,8 @@ import {
   writeCapacitorConfig,
   prepAppIcon,
   modifyInfoPlist,
+  writeEntitlementsPlist,
+  runAddEntitlementsScript,
   writePodfile,
   modifyXcodeProjectFile,
   writePrivacyInfo,
@@ -217,8 +219,9 @@ export class MobileBuilder {
       prepareBuildDir(
         this.buildDir,
         this.templateDir,
-        !!this.googleServicesFile,
-        !!this.syncInterval && this.syncInterval > 0
+        !!this.googleServicesFile || this.pushSync,
+        !!this.syncInterval && this.syncInterval > 0,
+        this.pushSync
       );
       writeCapacitorConfig(this.buildDir, {
         appName: this.appName,
@@ -272,7 +275,7 @@ export class MobileBuilder {
         this.pluginsLoaded = true;
       }
       copyPluginMobileAppDirs(this.buildDir);
-      if (this.googleServicesFile)
+      if (this.googleServicesFile || this.pushSync)
         copyOptionalSource(this.buildDir, "notifications.js");
       if (this.syncInterval && this.syncInterval > 0)
         copyOptionalSource(this.buildDir, "background_sync.js");
@@ -326,10 +329,14 @@ export class MobileBuilder {
     modifyInfoPlist(
       this.buildDir,
       this.allowShareTo,
-      this.backgroundSyncEnabled
+      this.backgroundSyncEnabled,
+      this.pushSync,
+      true // TODO clearText on off
     );
+    writeEntitlementsPlist(this.buildDir);
+    runAddEntitlementsScript(this.buildDir);
     if (this.allowShareTo) copyShareExtFiles(this.buildDir);
-    modifyAppDelegate(this.buildDir, this.backgroundSyncEnabled);
+    modifyAppDelegate(this.buildDir, this.backgroundSyncEnabled, this.pushSync);
   }
 
   private async handleAndroidPlatform() {

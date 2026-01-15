@@ -30,13 +30,14 @@ const resizer = require("resize-with-sharp-or-jimp");
  * and install the capacitor and cordova modules to node_modules (cap sync will be run later)
  * @param buildDir directory where the app will be build
  * @param templateDir directory of the template code that will be copied to 'buildDir'
- * @param fcmEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications"
+ * @param pushEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications"
  */
 export function prepareBuildDir(
   buildDir: string,
   templateDir: string,
-  fcmEnabled: boolean,
-  backgroundFetchEnabled: boolean
+  pushEnabled: boolean,
+  backgroundFetchEnabled: boolean,
+  pushSyncEnabled: boolean
 ) {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
@@ -67,12 +68,13 @@ export function prepareBuildDir(
     "@capacitor/app@7.1.0",
     "send-intent@7.0.0",
     ...additionalPlugins,
-    ...(fcmEnabled
+    ...(pushEnabled
       ? ["@capacitor/device@7.0.2", "@capacitor/push-notifications@7.0.3"]
       : []),
     ...(backgroundFetchEnabled
       ? ["@transistorsoft/capacitor-background-fetch@7.1.0"]
       : []),
+    ...(pushSyncEnabled ? ["capacitor-plugin-silent-notifications@7.0.1"] : []),
   ];
   console.log("capDepsAndPlugins", capDepsAndPlugins);
 
@@ -633,7 +635,9 @@ export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
 export function modifyInfoPlist(
   buildDir: string,
   allowShareTo: boolean,
-  backgroundSyncEnabled: boolean
+  backgroundSyncEnabled: boolean,
+  pushSyncEnabled: boolean,
+  allowClearTextTraffic: boolean
 ) {
   const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
   const content = readFileSync(infoPlist, "utf8");
@@ -648,6 +652,16 @@ export function modifyInfoPlist(
   <key>UIBackgroundModes</key>
   <array>
     <string>fetch</string>
+  </array>
+  `
+      : ""
+  }
+
+  ${
+    pushSyncEnabled
+      ? `<key>UIBackgroundModes</key>
+  <array>
+    <string>remote-notification</string>
   </array>
   `
       : ""
@@ -683,10 +697,61 @@ export function modifyInfoPlist(
   </array>`
       : ""
   }
-  `;
+  ${
+    allowClearTextTraffic
+      ? `<key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+  </dict>`
+      : ""
+  }
+`;
   // add newCfgs after the first <dict> tag
   const newContent = content.replace(/<dict>/, `<dict>${newCfgs}`);
   writeFileSync(infoPlist, newContent, "utf8");
+}
+
+export function writeEntitlementsPlist(buildDir: string) {
+  const file = join(buildDir, "ios", "App", "App", "App.entitlements");
+  try {
+    writeFileSync(
+      file,
+      `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>aps-environment</key>
+    <string>production</string>
+    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>group.saltcorn.com</string>
+    </array>
+</dict>
+</plist>`
+    );
+  } catch (error: any) {
+    console.log(
+      `Unable to write the Entitlements plist file: ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+export function runAddEntitlementsScript(buildDir: string) {
+  try {
+    const result = spawnSync("ruby", ["add_entitlements.rb"], {
+      cwd: buildDir,
+    });
+    console.log(result.output.toString());
+  } catch (error: any) {
+    console.log(
+      `Unable to run the add_entitlements.rb script: ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
 }
 
 export function copyShareExtFiles(buildDir: string) {
@@ -736,18 +801,18 @@ export async function decodeProvisioningProfile(provisioningProfile: string) {
 
 export function modifyAppDelegate(
   buildDir: string,
-  backgroundSyncEnabled: boolean
+  backgroundSyncEnabled: boolean,
+  pushSyncEnabled: boolean
 ) {
+  const appDelegateFile = join(
+    buildDir,
+    "ios",
+    "App",
+    "App",
+    "AppDelegate.swift"
+  );
+  let content = readFileSync(appDelegateFile, "utf8");
   if (backgroundSyncEnabled) {
-    const appDelegateFile = join(
-      buildDir,
-      "ios",
-      "App",
-      "App",
-      "AppDelegate.swift"
-    );
-    let content = readFileSync(appDelegateFile, "utf8");
-
     // add "import TSBackgroundFetch" before "@UIApplicationMain"
     content = content.replace(
       /@UIApplicationMain/,
@@ -781,9 +846,60 @@ export function modifyAppDelegate(
 }
 `
     );
-
-    writeFileSync(appDelegateFile, content, "utf8");
   }
+  if (pushSyncEnabled) {
+    content = content.replace(
+      /}\s*$/,
+      `
+
+  // [capacitor-push-notifications]
+  func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+  }
+
+  // [capacitor-push-notifications]
+  func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+    NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+  }
+
+  // ------------------------------
+
+  // [silent push notification handler]
+  func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+    // debug
+    print("Received by: didReceiveRemoteNotification w/ fetchCompletionHandler")
+
+    // Perform background operation, need to create a plugin
+    NotificationCenter.default.post(name: Notification.Name(rawValue: "silentNotificationReceived"), object: nil, userInfo: userInfo)
+
+    // Give the listener a few seconds to complete, system allows for 30 - we give 25. The system will kill this after 30 seconds.
+    DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
+        // Execute after 25 seconds
+        completionHandler(.newData)
+    }
+  }
+    
+  // [silent push notification handler]
+  // we just add this to deal with an iOS simulator bug, this method is deprecated as of iOS 13
+  func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+      // debug
+      print("Received by: performFetchWithCompletionHandler")
+      
+      // Perform background operation, need to create a plugin
+      NotificationCenter.default.post(name: Notification.Name(rawValue: "silentNotificationReceived"), object: nil, userInfo: nil)
+
+      // Give the listener a few seconds to complete, system allows for 30 - we give 25. The system will kill this after 30 seconds.
+      DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
+          // Execute after 25 seconds
+          completionHandler(.newData)
+      }
+  }
+}
+`
+    );
+  }
+
+  writeFileSync(appDelegateFile, content, "utf8");
 }
 
 export function writePrivacyInfo(
@@ -1157,6 +1273,8 @@ export async function prepareSplashPage(
 export function writePodfile(buildDir: string) {
   const state = getState();
   let hasGeolocation = false;
+  let hasPush = true;
+  let hasSilentPush = true;
   if (state) {
     for (const plugin of state.capacitorPlugins || []) {
       if (plugin.name === "@capacitor/geolocation") {
@@ -1179,6 +1297,7 @@ export function writePodfile(buildDir: string) {
   def capacitor_pods
     pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
     pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+    pod 'CapacitorApp', :path => '../../node_modules/@capacitor/app'
     pod 'CapacitorCommunitySqlite', :path => '../../node_modules/@capacitor-community/sqlite'
     pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
@@ -1188,6 +1307,8 @@ export function writePodfile(buildDir: string) {
     pod 'SendIntent', :path => '../../node_modules/send-intent'
     pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
     pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'
+    ${hasPush ? `pod 'CapacitorPushNotifications', :path => '../../node_modules/@capacitor/push-notifications'` : ""}
+    ${hasSilentPush ? `pod 'CapacitorPluginSilentNotifications', :path => '../../node_modules/capacitor-plugin-silent-notifications'` : ""}
   end
   
   target 'App' do
