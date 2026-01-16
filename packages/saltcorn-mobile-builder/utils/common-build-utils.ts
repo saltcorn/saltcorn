@@ -232,7 +232,8 @@ export async function modifyAndroidManifest(
   buildDir: string,
   allowShareTo: boolean,
   allowFCM: boolean,
-  allowAuthIntent: boolean
+  allowAuthIntent: boolean,
+  allowClearTextTraffic: boolean
 ) {
   console.log("modifyAndroidManifest");
   try {
@@ -262,7 +263,9 @@ export async function modifyAndroidManifest(
       "android:fullBackupContent": "false",
       "android:dataExtractionRules": "@xml/data_extraction_rules",
       "android:networkSecurityConfig": "@xml/network_security_config",
-      "android:usesCleartextTraffic": "true",
+      ...(allowClearTextTraffic
+        ? { "android:usesCleartextTraffic": "true" }
+        : {}),
     };
 
     if (allowFCM) {

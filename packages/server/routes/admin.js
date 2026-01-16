@@ -3183,6 +3183,34 @@ router.get(
                     )
                   ),
 
+                  // allow clear text traffic
+                  div(
+                    { class: "row pb-2" },
+                    div(
+                      { class: "col-sm-10" },
+                      input({
+                        type: "checkbox",
+                        id: "allowClearTextTrafficId",
+                        class: "form-check-input me-2 mb-0 ",
+                        name: "allowClearTextTraffic",
+                        checked: builderSettings.allowClearTextTraffic === "on",
+                      }),
+                      label(
+                        {
+                          for: "allowClearTextTrafficId",
+                          class: "form-label fw-bold mb-0",
+                        },
+                        req.__("Allow clear text traffic")
+                      ),
+                      div(),
+                      i(
+                        req.__(
+                          "Enable this to allow unsecure HTTP connections. Useful for local testing."
+                        )
+                      )
+                    )
+                  ),
+
                   // build type
                   div(
                     { class: "row pb-3 pt-2" },
@@ -4175,6 +4203,7 @@ router.post(
       provisioningProfile,
       shareProvisioningProfile,
       buildType,
+      allowClearTextTraffic,
       keystoreFile,
       keystoreAlias,
       keystorePassword,
@@ -4331,6 +4360,7 @@ router.post(
     }
 
     if (buildType) spawnParams.push("--buildType", buildType);
+    if (allowClearTextTraffic) spawnParams.push("--allowClearTextTraffic");
     if (keystoreFile) spawnParams.push("--androidKeystore", keystoreFile);
     if (keystoreAlias)
       spawnParams.push("--androidKeyStoreAlias", keystoreAlias);

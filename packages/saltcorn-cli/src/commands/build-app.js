@@ -151,6 +151,7 @@ class BuildAppCommand extends Command {
         iosParams: iosParams,
         tenantAppName: flags.tenantAppName,
         buildType: flags.buildType,
+        allowClearTextTraffic: flags.allowClearTextTraffic,
         keyStorePath: flags.androidKeystore,
         keyStoreAlias: flags.androidKeyStoreAlias,
         keyStorePassword: flags.androidKeystorePassword,
@@ -363,6 +364,13 @@ BuildAppCommand.flags = {
     name: "build type",
     string: "buildType",
     description: "debug or release build",
+  }),
+  allowClearTextTraffic: Flags.boolean({
+    name: "allow clear text traffic",
+    string: "allowClearTextTraffic",
+    description:
+      "Enable this to allow unsecure HTTP connections. Useful for local testing.",
+    default: false,
   }),
   androidKeystore: Flags.string({
     name: "android key store",

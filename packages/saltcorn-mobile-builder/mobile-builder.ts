@@ -92,6 +92,7 @@ type MobileBuilderConfig = {
   keyStorePassword?: string;
   googleServicesFile?: string;
   buildType: "debug" | "release";
+  allowClearTextTraffic?: boolean;
 };
 
 /**
@@ -134,6 +135,7 @@ export class MobileBuilder {
   isUnsecureKeyStore: boolean;
   googleServicesFile?: string;
   buildType: "debug" | "release";
+  allowClearTextTraffic: boolean;
   iosParams?: IosCfg;
 
   private capacitorHelper: CapacitorHelper;
@@ -191,6 +193,7 @@ export class MobileBuilder {
     }
     this.googleServicesFile = cfg.googleServicesFile;
     this.buildType = cfg.buildType;
+    this.allowClearTextTraffic = !!cfg.allowClearTextTraffic;
     this.iosParams = cfg.iosParams;
     this.capacitorHelper = new CapacitorHelper({
       ...this,
@@ -331,7 +334,7 @@ export class MobileBuilder {
       this.allowShareTo,
       this.backgroundSyncEnabled,
       this.pushSync,
-      true // TODO clearText on off
+      this.allowClearTextTraffic,
     );
     writeEntitlementsPlist(this.buildDir);
     runAddEntitlementsScript(this.buildDir);
@@ -362,7 +365,8 @@ export class MobileBuilder {
       this.buildDir,
       this.allowShareTo,
       !!this.googleServicesFile,
-      hasAuthMethod(this.includedPlugins)
+      hasAuthMethod(this.includedPlugins),
+      this.allowClearTextTraffic,
     );
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);
