@@ -1399,7 +1399,11 @@ ${value}`;
           allowNonTsExtensions: true,
         });
         monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
-
+        // Observe the container for changes
+        const resizeObserver = new ResizeObserver((entries) => {
+          editor.layout();
+        });
+        resizeObserver.observe(el.parentNode);
         if (isExpression) {
           // hide prefix line
           editor.setHiddenAreas([
