@@ -4902,11 +4902,11 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
         ${Object.keys(getState().actions)
           .map(
             (nm) =>
-              `${nm}: ({row, table}?:{row?: Row, table?: Table})=>Promise<void>,`
+              `["${nm}"]: ({row, table}?:{row?: Row, table?: Table})=>Promise<void>,`
           )
           .join("\n")}
         ${trigger_actions
-          .map((tr) => `${tr.name}: ({row}?:{row?: Row})=>Promise<void>,`)
+          .map((tr) => `["${tr.name}"]: ({row}?:{row?: Row})=>Promise<void>,`)
           .join("\n")}
         }`
       );
