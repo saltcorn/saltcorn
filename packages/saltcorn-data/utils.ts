@@ -561,8 +561,12 @@ const flatEqual = (a: any, b: any) => {
   return true;
 };
 
-const jsIdentifierValidator = (s: string) => {
-  if (!s) return "An identifier is required";
+const jsIdentifierValidator = (
+  s: string,
+  _: any,
+  field?: { required: boolean }
+) => {
+  if (!s && field?.required) return "An identifier is required";
   if (s.includes(" ")) return "Spaces not allowd";
   let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
     .split("")
