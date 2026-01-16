@@ -4823,7 +4823,9 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       );
     }
 
-    if (req.query.table) {
+    if (req.query.workflow) {
+      ds.push(`declare const row: Row;`);
+    } else if (req.query.table) {
       const table = Table.findOne(req.query.table);
       if (table) {
         const tsFields = [];
@@ -4911,7 +4913,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
         }`
       );
     }
-
+    //fs.writeFileSync("/tmp/tsdecls.ts", ds.join("\n"));
     res.send(ds.join("\n"));
   })
 );

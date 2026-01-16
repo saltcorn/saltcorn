@@ -1933,7 +1933,7 @@ module.exports = {
     configFormOptions: {
       formStyle: "vert",
     },
-    configFields: async ({ table, when_trigger }) => {
+    configFields: async ({ table, when_trigger, mode }) => {
       const fields = table ? table.getFields().map((f) => f.name) : [];
       const vars = [
         ...(table ? ["row"] : []),
@@ -1985,6 +1985,7 @@ module.exports = {
             mode: "application/javascript",
             table: table?.name || undefined,
             user: has_user,
+            workflow: mode === "workflow",
           },
           class: "validate-statements enlarge-in-card",
           validator(s) {

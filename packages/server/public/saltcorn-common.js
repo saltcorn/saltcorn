@@ -1899,7 +1899,7 @@ let monaco_enabled_declares = false;
 const monaco_init_queue = [];
 
 function enable_monaco(codes, f) {
-  const textarea = codes[0]; 
+  const textarea = codes[0];
   if (monaco_enabled_declares === "initializing") {
     monaco_init_queue.push(f);
     return;
@@ -1918,10 +1918,13 @@ function enable_monaco(codes, f) {
   const hasUser = codes
     .find((c) => c.getAttribute("user"))
     ?.getAttribute?.("user");
+  const isWorkflow = codes
+    .find((c) => c.getAttribute("workflow"))
+    ?.getAttribute?.("workflow");
   const codepage = $(textarea).attr("codepage");
 
   $.ajax({
-    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}`,
+    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}&${isWorkflow ? `workflow=${isWorkflow}` : ""}`,
     success: (ds) => {
       $.ajax({
         url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,
