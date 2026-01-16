@@ -1987,7 +1987,10 @@ module.exports = {
             user: has_user,
             workflow: mode === "workflow",
           },
-          class: "validate-statements enlarge-in-card",
+          class: [
+            "validate-statements",
+            mode !== "workflow" && "enlarge-in-card",
+          ],
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
