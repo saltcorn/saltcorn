@@ -4525,9 +4525,10 @@ router.post(
       //config+crashes
       await db.deleteWhere("_sc_errors");
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
+      await getState().refresh();
+      await require("@saltcorn/data/standard-menu")();
     }
     await getState().refresh();
-    await require("@saltcorn/data/standard-menu")();
 
     if (form.values.users) {
       await db.deleteWhere("_sc_notifications");
@@ -4822,7 +4823,9 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       );
     }
 
-    if (req.query.table) {
+    if (req.query.workflow) {
+      ds.push(`declare const row: Row;`);
+    } else if (req.query.table) {
       const table = Table.findOne(req.query.table);
       if (table) {
         const tsFields = [];
@@ -4868,13 +4871,18 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       if (nm === "slugify") {
         ds.push(`function slugify(s: string): string`);
       } else if (f.run) {
-        const args = (f["arguments"] || []).map(
-          ({ name, type, tstype }) =>
-            `${name}: ${tstype || scTypeToTsType(type)}`
-        );
-        ds.push(
-          `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
-        );
+        if (f["arguments"]) {
+          const args = (f["arguments"] || []).map(
+            ({ name, type, tstype, required }) =>
+              `${name}${required ? "" : "?"}: ${tstype || scTypeToTsType(type)}`
+          );
+          ds.push(
+            `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
+          );
+        } else
+          ds.push(
+            `declare var ${nm}: ${f.isAsync ? "AsyncFunction" : "Function"}`
+          );
       } else ds.push(`declare const ${nm}: Function;`);
     }
     let exclude_cp_ids = req.query.codepage
@@ -4901,16 +4909,16 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
         ${Object.keys(getState().actions)
           .map(
             (nm) =>
-              `${nm}: ({row, table}?:{row?: Row, table?: Table})=>Promise<void>,`
+              `["${nm}"]: ({row, table}?:{row?: Row, table?: Table})=>Promise<void>,`
           )
           .join("\n")}
         ${trigger_actions
-          .map((tr) => `${tr.name}: ({row}?:{row?: Row})=>Promise<void>,`)
+          .map((tr) => `["${tr.name}"]: ({row}?:{row?: Row})=>Promise<void>,`)
           .join("\n")}
         }`
       );
     }
-
+    //fs.writeFileSync("/tmp/tsdecls.ts", ds.join("\n"));
     res.send(ds.join("\n"));
   })
 );

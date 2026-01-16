@@ -28,7 +28,9 @@ qualifications, for any particular purpose.
 
 ## Risks
 
-Admin users have full control over the server. You should not give admin rights to any user you do not fully trust. Anyone with administrator privileges has the ability to insert security vulnerabilities into your application. Text entered by admin is not escaped for cross-site scripting vulnerabilities. There are some efforts to limit what subdomain tenants can do and install but these are likely easier to exploit. You should not operate Saltcorn with open tenant creation (minimum role to create tenant=public) unless you are consigned to such a server being extremely vulnerable.
+Admin users have full control over the server. You should not give admin rights to any user you do not fully trust. Anyone with administrator privileges has the ability to insert security vulnerabilities into your application. Text entered by admin is not escaped for cross-site scripting vulnerabilities. 
+
+By operating Saltcorn with open tenant creation (minimum role to create tenant=public) or giving tenant admin rights to untrusted parties you are exposing the server and all the data on it (including other and root tenants) to full system takeover. There an ongoing effort to limit what subdomain tenant admins can do but this is work in progess.
 
 Saltcorn is developed and deployed based on the nodejs and npm ecosystem. We may be vulnerable to open source supply chain attacks and in addition there are many libraries with low quality and a low level of security scrutiny.
 
@@ -49,6 +51,8 @@ Modules are not sandboxed. A module can run any code and cause a full system tak
 The implmentation of ownership formulas in Filter aggregations (which are used to show counts, averages etc) is incomplete. For complex ownership formulas, in particular those that include join fields, aggregations may include rows that the user does not have access to.
 
 In List, Show and Edit views, rows in different tables accessed as join fields and aggregations may not check for ownership.
+
+There are known ways for subdomain tenant admins to execute remote shell code.
 
 ## Disclosing new vulnerabilities
 
