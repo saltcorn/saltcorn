@@ -1903,7 +1903,10 @@ router.post(
         getState().getConfig("enable_dynamic_updates") &&
         req.headers["page-load-tag"] &&
         req.xhr;
-      await run.provide_form_input(form.values);
+      await run.provide_form_input(
+        form.values,
+        step.configuration.response_variable
+      );
       const promise = run.run({
         user: req.user,
         trace: trigger.configuration?.save_traces,
