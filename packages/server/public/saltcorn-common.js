@@ -1326,7 +1326,7 @@ function initialize_page() {
     codes.push(this);
   });
   if (codes.length > 0)
-    enable_monaco({ textarea: codes[0] }, (ts_ds) => {
+    enable_monaco(codes, (ts_ds) => {
       codes.forEach((el) => {
         if ($(el).hasClass("monaco-enabled")) return;
         $(el).addClass("monaco-enabled");
@@ -1898,7 +1898,8 @@ function enable_codemirror(f) {
 let monaco_enabled_declares = false;
 const monaco_init_queue = [];
 
-function enable_monaco({ textarea }, f) {
+function enable_monaco(codes, f) {
+  const textarea = codes[0]; 
   if (monaco_enabled_declares === "initializing") {
     monaco_init_queue.push(f);
     return;
@@ -1914,8 +1915,11 @@ function enable_monaco({ textarea }, f) {
     href: `/static_assets/${_sc_version_tag}/monaco/editor/editor.main.css`,
   }).appendTo("head");
   const tableName = $(textarea).attr("tableName");
-  const hasUser = $(textarea).attr("user");
+  const hasUser = codes
+    .find((c) => c.getAttribute("user"))
+    ?.getAttribute?.("user");
   const codepage = $(textarea).attr("codepage");
+
   $.ajax({
     url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}`,
     success: (ds) => {
