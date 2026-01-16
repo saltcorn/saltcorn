@@ -70,7 +70,7 @@ class Field implements AbstractField {
   label: string;
   name: string;
   fieldview?: string;
-  validator: (value: any, whole_rec?: Row, field?: Field) => boolean | string | undefined;
+  validator: (value: any, whole_rec?: Row, field?: {required: boolean}) => boolean | string | undefined;
   showIf?: { [field_name: string]: string | boolean | string[] };
   parent_field?: string;
   postText?: string;
