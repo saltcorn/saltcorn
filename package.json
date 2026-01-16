@@ -78,7 +78,6 @@
     "./packages/*"
   ],
   "dependencies": {
-    "elkjs": "^0.11.0",
     "reactflow": "^11.11.4"
   }
 }
