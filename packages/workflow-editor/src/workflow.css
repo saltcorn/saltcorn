@@ -1,8 +1,5 @@
 .wf-shell {
-  border: 1px solid #e2e6ea;
-  border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  padding: 0;
 }
 
 .wf-toolbar {
@@ -11,7 +8,7 @@
   align-items: center;
   padding: 10px 12px;
   border-bottom: 1px solid #e2e6ea;
-  background: #f8f9fb;
+  background: transparent;
 }
 
 .wf-toolbar__actions button,
@@ -21,6 +18,7 @@
 
 .wf-canvas {
   height: 560px;
+  background: #fafbfc;
 }
 
 .wf-empty {
@@ -35,13 +33,21 @@
   padding: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   min-width: 200px;
+  cursor: pointer;
 }
 
 .wf-node__header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 4px;
+}
+
+.wf-node__title-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
 }
 
 .wf-node__title {
@@ -52,13 +58,24 @@
 .wf-node__action {
   font-weight: 600;
   color: #0d6efd;
-  margin-bottom: 4px;
+  font-size: 12px;
 }
 
 .wf-node__desc {
   font-size: 12px;
   color: #495057;
   margin-bottom: 4px;
+}
+
+.wf-node__summary {
+  font-size: 12px;
+  color: #495057;
+  margin: 4px 0 6px;
+  padding-left: 16px;
+}
+
+.wf-node__summary li {
+  margin-bottom: 2px;
 }
 
 .wf-node__meta {
@@ -95,6 +112,26 @@
   color: #0d6efd;
   background: #fff;
   border-color: #fff;
+}
+
+.wf-add-node {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px dashed #adb5bd;
+  color: #0d6efd;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+.wf-add-node:focus {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
 }
 
 .wf-modal-backdrop {
