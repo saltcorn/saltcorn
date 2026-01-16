@@ -70,7 +70,7 @@ class Field implements AbstractField {
   label: string;
   name: string;
   fieldview?: string;
-  validator: (value: any, whole_rec?: Row) => boolean | string | undefined;
+  validator: (value: any, whole_rec?: Row, field?: {required: boolean}) => boolean | string | undefined;
   showIf?: { [field_name: string]: string | boolean | string[] };
   parent_field?: string;
   postText?: string;
@@ -777,7 +777,7 @@ class Field implements AbstractField {
         ? type.validate(this.attributes || {})(readval)
         : readval;
     if (tyvalres.error) return tyvalres;
-    const fvalres = this.validator(readval, whole_rec);
+    const fvalres = this.validator(readval, whole_rec, this);
     if (typeof fvalres === "string") return { error: fvalres };
     if (typeof fvalres === "undefined" || fvalres) return { success: readval };
     else return { error: "Not accepted" };

@@ -23,7 +23,8 @@ const {
 } = require("@saltcorn/data/plugin-helper");
 import viewableFields from "./base-plugin/viewtemplates/viewable_fields";
 import { Req } from "@saltcorn/types/base_types";
-const { getForm } = viewableFields;
+import FieldRepeat from "./models/fieldrepeat";
+const { getForm, transformForm } = viewableFields;
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 
@@ -523,7 +524,8 @@ const getWorkflowStepUserForm = async (
   run: WorkflowRun,
   trigger: Trigger,
   step: WorkflowStep,
-  req: any
+  req: any,
+  res: any
 ) => {
   if (step.action_name === "EditViewForm") {
     const view = View.findOne({ name: step.configuration.edit_view });
@@ -540,13 +542,28 @@ const getWorkflowStepUserForm = async (
     form.isWorkflow = true;
     if (!isWeb(req)) form.onSubmit = "";
     await form.fill_fkey_options(false, undefined, req?.user);
+    await transformForm({
+      form,
+      table,
+      req,
+      row: {},
+      res,
+      viewname: "wfuserform",
+      state: {},
+    } as any);
     form.action = `/actions/fill-workflow-form/${run.id}`;
-    if (run.context[step.configuration.response_variable])
+    if (run.context[step.configuration.response_variable]) {
       Object.assign(
         form.values,
         run.context[step.configuration.response_variable]
       );
-
+      for (const field of form.fields) {
+        if (!field.isRepeat) continue;
+        if (Array.isArray(form.values[field.name]))
+          (field as FieldRepeat).metadata.rows = form.values[field.name];
+      }
+    }
+  
     return form;
   }
 
