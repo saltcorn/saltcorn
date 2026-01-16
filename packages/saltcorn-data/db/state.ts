@@ -854,7 +854,14 @@ class State {
       const models = allModels.filter((m: any) => m.table_id == table.id);
       for (const model of models) {
         const predictor_function = model.predictor_function;
-        this.functions[model.name] = { isAsync: true, run: predictor_function };
+        this.functions[model.name] = {
+          isAsync: true,
+          run: predictor_function,
+          arguments: [
+            { name: "arg1", type: "JSON", tstype: "string | Row"  },
+            { name: "arg2", type: "JSON", tstype: "Row" },
+          ],
+        };
         this.function_context[model.name] = predictor_function;
       }
     }
