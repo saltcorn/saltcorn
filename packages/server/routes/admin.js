@@ -4871,13 +4871,18 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       if (nm === "slugify") {
         ds.push(`function slugify(s: string): string`);
       } else if (f.run) {
-        const args = (f["arguments"] || []).map(
-          ({ name, type, tstype, required }) =>
-            `${name}${required ? "" : "?"}: ${tstype || scTypeToTsType(type)}`
-        );
-        ds.push(
-          `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
-        );
+        if (f["arguments"]) {
+          const args = (f["arguments"] || []).map(
+            ({ name, type, tstype, required }) =>
+              `${name}${required ? "" : "?"}: ${tstype || scTypeToTsType(type)}`
+          );
+          ds.push(
+            `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
+          );
+        } else
+          ds.push(
+            `declare var ${nm}: ${f.isAsync ? "AsyncFunction" : "Function"}`
+          );
       } else ds.push(`declare const ${nm}: Function;`);
     }
     let exclude_cp_ids = req.query.codepage
