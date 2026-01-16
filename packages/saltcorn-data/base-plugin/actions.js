@@ -1836,6 +1836,8 @@ module.exports = {
       {
         name: "text_template",
         label: "Text template",
+        sublabel:
+          "Use interpolations <code>{{ }}</code> to access row variables",
         type: "String",
         required: true,
       },
