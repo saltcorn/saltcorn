@@ -35,99 +35,136 @@ const StartNode = ({ data }) => (
   </div>
 );
 
-const StepNode = ({ data }) => (
-  <div className="wf-node">
-    <div className="wf-node__header">
-      <div className="wf-node__title">{data.name}</div>
-      <div className="wf-node__chips">
-        {data.initial_step ? (
-          <span className="badge bg-primary">{data.strings.start}</span>
-        ) : null}
-      </div>
+const AddNode = ({ data }) => {
+  const handleClick = (e) => {
+    e.stopPropagation();
+    data.onAddAfter?.(data.afterStepId);
+  };
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      data.onAddAfter?.(data.afterStepId);
+    }
+  };
+  return (
+    <div
+      className="wf-add-node"
+      role="button"
+      tabIndex={0}
+      aria-label={data.strings.addStep}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
+    >
+      <span aria-hidden>+</span>
+      <Handle type="target" position={Position.Left} />
     </div>
-    <div className="wf-node__action">{data.action_name}</div>
-    {data.actionDescription ? (
-      <div className="wf-node__desc">{data.actionDescription}</div>
-    ) : null}
-    {data.only_if ? (
-      <div className="wf-node__meta">
-        <span className="wf-label">{data.strings.onlyIf}:</span> {data.only_if}
+  );
+};
+
+const StepNode = ({ data }) => {
+  const summaryLines = Array.isArray(data.actionSummary)
+    ? data.actionSummary
+    : data.actionSummary
+      ? String(data.actionSummary)
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : data.actionDescription
+        ? [data.actionDescription]
+        : [];
+
+  const handleClick = (e) => {
+    if (e.target?.closest(".react-flow__handle")) return;
+    e.stopPropagation();
+    if (data.onEdit) data.onEdit(data.id);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      if (data.onEdit) data.onEdit(data.id);
+    }
+  };
+
+  return (
+    <div
+      className="wf-node"
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
+    >
+      <div className="wf-node__header">
+        <div className="wf-node__title-row">
+          <div className="wf-node__title">{data.name}</div>
+          <div className="wf-node__action">{data.action_name}</div>
+        </div>
+        <div className="wf-node__chips">
+          {data.initial_step ? (
+            <span className="badge bg-primary">{data.strings.start}</span>
+          ) : null}
+        </div>
       </div>
-    ) : null}
-    {data.next_step ? (
-      <div className="wf-node__meta">
-        <span className="wf-label">{data.strings.nextStep}:</span>{" "}
-        {data.next_step}
-      </div>
-    ) : null}
-    {data.isLoop && data.loop_body_initial_step ? (
-      <div className="wf-node__meta">
-        <span className="wf-label">{data.strings.loopBody}:</span>{" "}
-        {data.loop_body_initial_step}
-      </div>
-    ) : null}
-    <div className="wf-node__footer">
-      <button
-        className="btn btn-sm btn-outline-secondary"
-        onClick={(e) => {
-          e.stopPropagation();
-          data.onEdit(data.id);
-        }}
-      >
-        {data.strings.editStep}
-      </button>
-      <button
-        className="btn btn-sm btn-outline-primary"
-        onClick={(e) => {
-          e.stopPropagation();
-          data.onAddAfter(data.id);
-        }}
-      >
-        {data.strings.addAfter}
-      </button>
-      {!data.initial_step ? (
-        <button
-          className="btn btn-sm btn-outline-success"
-          onClick={(e) => {
-            e.stopPropagation();
-            data.onSetStart(data.id);
-          }}
-        >
-          {data.strings.setAsStart}
-        </button>
+      {summaryLines.length ? (
+        <ul className="wf-node__summary">
+          {summaryLines.map((line, ix) => (
+            <li key={ix}>{line}</li>
+          ))}
+        </ul>
+      ) : null}
+      {data.only_if ? (
+        <div className="wf-node__meta">
+          <span className="wf-label">{data.strings.onlyIf}:</span>{" "}
+          {data.only_if}
+        </div>
       ) : null}
       {data.next_step ? (
-        <button
-          className="btn btn-sm btn-outline-warning"
-          onClick={(e) => {
-            e.stopPropagation();
-            data.onClearNext(data.id);
-          }}
-        >
-          {data.strings.nextStep} x
-        </button>
+        <div className="wf-node__meta">
+          <span className="wf-label">{data.strings.nextStep}:</span>{" "}
+          {data.next_step}
+        </div>
       ) : null}
-      <button
-        className="btn btn-sm btn-outline-danger"
-        onClick={(e) => {
-          e.stopPropagation();
-          data.onDelete(data.id);
-        }}
-      >
-        {data.strings.deleteStep}
-      </button>
+      {data.isLoop && data.loop_body_initial_step ? (
+        <div className="wf-node__meta">
+          <span className="wf-label">{data.strings.loopBody}:</span>{" "}
+          {data.loop_body_initial_step}
+        </div>
+      ) : null}
+      <Handle type="target" position={Position.Left} />
+      <Handle id="main" type="source" position={Position.Right} />
+      {/* {data.isLoop ? (
+        <Handle id="loop" type="source" position={Position.Bottom} />
+      ) : null} */}
     </div>
-    <Handle type="target" position={Position.Left} />
-    <Handle id="main" type="source" position={Position.Right} />
-    {data.isLoop ? (
-      <Handle id="loop" type="source" position={Position.Bottom} />
-    ) : null}
-  </div>
-);
+  );
+};
 
 const nodeTypes = {
   start: StartNode,
   step: StepNode,
+  add: AddNode,
+};
+
+const findLoopBackLinks = (steps) => {
+  const byName = new Map(steps.map((s) => [s.name, s]));
+  const loopBacks = {};
+  steps
+    .filter((s) => s.action_name === "ForLoop")
+    .forEach((forStep) => {
+      const visited = new Set();
+      let cursor = byName.get(forStep.configuration?.loop_body_initial_step);
+      let lastStep = null;
+      while (cursor && !visited.has(cursor.name)) {
+        visited.add(cursor.name);
+        lastStep = cursor;
+        if (!cursor.next_step || cursor.next_step === forStep.name) break;
+        cursor = byName.get(cursor.next_step);
+      }
+      if (lastStep && !lastStep.next_step) {
+        loopBacks[lastStep.name] = forStep.name;
+      }
+    });
+  return loopBacks;
 };
 
 const buildGraph = (steps, strings, actionExplainers) => {
@@ -139,6 +176,7 @@ const buildGraph = (steps, strings, actionExplainers) => {
   });
 
   const initial = steps.find((s) => s.initial_step);
+  const loopBackLinks = findLoopBackLinks(steps);
 
   const adjacency = new Map();
   steps.forEach((s) => {
@@ -193,6 +231,36 @@ const buildGraph = (steps, strings, actionExplainers) => {
     });
   });
 
+  // Nudge ForLoop bodies to be vertical under their loop parent for readability
+  const positionOverrides = {};
+  steps
+    .filter((s) => s.action_name === "ForLoop")
+    .forEach((loopStep) => {
+      const loopPos =
+        loopStep.configuration?.workflow_position ||
+        positions[String(loopStep.id)];
+      if (!loopPos) return;
+      const byName = new Map(steps.map((s) => [s.name, s]));
+      const body = [];
+      const seen = new Set();
+      let cursor = byName.get(loopStep.configuration?.loop_body_initial_step);
+      while (cursor && !seen.has(cursor.name)) {
+        seen.add(cursor.name);
+        body.push(cursor);
+        if (!cursor.next_step || cursor.next_step === loopStep.name) break;
+        cursor = byName.get(cursor.next_step);
+      }
+
+      body.forEach((s, idx) => {
+        if (s.configuration?.workflow_position) return; // respect saved positions
+        positionOverrides[String(s.id)] = {
+          x: loopPos.x,
+          y: loopPos.y + (idx + 1) * Y_STEP,
+        };
+      });
+    });
+
+  const nodePositions = {};
   const nodes = [
     {
       id: "start",
@@ -203,20 +271,31 @@ const buildGraph = (steps, strings, actionExplainers) => {
     ...steps.map((step, ix) => ({
       id: String(step.id),
       type: "step",
-      position: positions[String(step.id)] || {
-        x: (ix % 3) * 260,
-        y: Math.floor(ix / 3) * 180 + 10,
-      },
+      position: step.configuration?.workflow_position ||
+        positionOverrides[String(step.id)] ||
+        positions[String(step.id)] || {
+          x: (ix % 3) * 260,
+          y: Math.floor(ix / 3) * 180 + 10,
+        },
       data: {
         ...step,
         id: String(step.id),
         loop_body_initial_step: step.configuration?.loop_body_initial_step,
         isLoop: step.action_name === "ForLoop",
+        actionSummary:
+          step.summary ||
+          (actionExplainers[step.action_name]
+            ? [actionExplainers[step.action_name]]
+            : []),
         actionDescription: actionExplainers[step.action_name],
         strings,
       },
     })),
   ];
+
+  nodes.forEach((n) => {
+    if (n.type === "step") nodePositions[n.id] = n.position;
+  });
 
   const edges = [];
   if (initial)
@@ -236,7 +315,7 @@ const buildGraph = (steps, strings, actionExplainers) => {
         source: String(step.id),
         target: targetId || String(step.id),
         type: "smoothstep",
-        // animated: true,
+        animated: true,
         data: { missing: !targetId },
       });
     }
@@ -256,9 +335,53 @@ const buildGraph = (steps, strings, actionExplainers) => {
         });
       }
     }
+
+    if (!step.next_step && loopBackLinks[step.name]) {
+      const forLoopName = loopBackLinks[step.name];
+      const loopId = idByName[forLoopName];
+      if (loopId) {
+        edges.push({
+          id: `loopback-${step.id}-${forLoopName}`,
+          source: String(step.id),
+          target: loopId,
+          type: "default",
+          style: { stroke: "#f59f00", strokeDasharray: "6 4" },
+          data: { loop: true, loopBack: true },
+          markerEnd: "arrowclosed",
+          deletable: false,
+        });
+      }
+    }
   });
 
-  return { nodes, edges, idByName, nameById };
+  const addNodes = [];
+  steps.forEach((step) => {
+    if (step.next_step || loopBackLinks[step.name]) return;
+    const basePos = nodePositions[String(step.id)] || { x: 0, y: 0 };
+    const addId = `add-${step.id}`;
+    addNodes.push({
+      id: addId,
+      type: "add",
+      position: { x: basePos.x + 90, y: basePos.y },
+      data: { strings, afterStepId: String(step.id) },
+      draggable: false,
+      selectable: false,
+      deletable: false,
+    });
+    edges.push({
+      id: `e-${step.id}-adder`,
+      source: String(step.id),
+      target: addId,
+      type: "straight",
+      animated: false,
+      deletable: false,
+      style: { strokeDasharray: "4 2", stroke: "#adb5bd" },
+    });
+  });
+
+  const allNodes = [...nodes, ...addNodes];
+
+  return { nodes: allNodes, edges, idByName, nameById };
 };
 
 const StepModal = ({ modal, innerRef, onClose, submitting, error }) => {
@@ -305,11 +428,13 @@ const WorkflowEditor = ({ data }) => {
   const [edges, setEdges, rfOnEdgesChange] = useEdgesState([]);
   const [nameById, setNameById] = useState({});
   const [idByName, setIdByName] = useState({});
+  const pendingAddRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [modal, setModal] = useState(null);
   const [savingModal, setSavingModal] = useState(false);
+  const [savingPositions, setSavingPositions] = useState(false);
   const modalRef = useRef(null);
 
   const strings = data.strings || {};
@@ -357,6 +482,23 @@ const WorkflowEditor = ({ data }) => {
     try {
       const fresh = await fetchJson(data.urls.data);
       setSteps(fresh.steps || []);
+
+      // If a step was just added via an adder node, link it as next_step
+      if (pendingAddRef.current) {
+        const { afterStepId, prevIds } = pendingAddRef.current;
+        const newSteps = (fresh.steps || []).filter(
+          (s) => !prevIds.has(String(s.id))
+        );
+        if (newSteps.length === 1) {
+          const newStep = newSteps[0];
+          await updateConnection({
+            step_id: afterStepId,
+            next_step: newStep.name,
+          });
+        }
+        pendingAddRef.current = null;
+      }
+
       setMessage(strings.refresh);
       setTimeout(() => setMessage(""), 1200);
     } catch (e) {
@@ -365,6 +507,24 @@ const WorkflowEditor = ({ data }) => {
       setLoading(false);
     }
   }, [data.urls.data, fetchJson, strings.refresh]);
+
+  const persistPositions = useCallback(
+    async (positions = []) => {
+      if (!positions.length) return;
+      try {
+        setSavingPositions(true);
+        await fetchJson(data.urls.positions, {
+          method: "POST",
+          body: JSON.stringify({ positions }),
+        });
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setSavingPositions(false);
+      }
+    },
+    [data.urls.positions, fetchJson]
+  );
 
   const openStepForm = useCallback(
     async ({ stepId, initial_step, after_step } = {}) => {
@@ -422,7 +582,8 @@ const WorkflowEditor = ({ data }) => {
       if (typeof window !== "undefined" && window.apply_showif)
         window.apply_showif();
     };
-    if (actionSelect) actionSelect.addEventListener("change", handleActionChange);
+    if (actionSelect)
+      actionSelect.addEventListener("change", handleActionChange);
 
     const submitHandler = async (e) => {
       e.preventDefault();
@@ -518,9 +679,26 @@ const WorkflowEditor = ({ data }) => {
     [edges, reload, rfOnEdgesChange, updateConnection]
   );
 
+  const onNodesChangeWrapped = useCallback(
+    (changes) => {
+      const finishedPositions = changes
+        .filter((c) => c.type === "position" && c.position && !c.dragging)
+        .map((c) => ({ id: c.id, x: c.position.x, y: c.position.y }));
+      if (finishedPositions.length) persistPositions(finishedPositions);
+      onNodesChange(changes);
+    },
+    [onNodesChange, persistPositions]
+  );
+
   const onAddAfter = useCallback(
-    (id) => openStepForm({ after_step: id }),
-    [openStepForm]
+    (id) => {
+      pendingAddRef.current = {
+        afterStepId: id,
+        prevIds: new Set(steps.map((s) => String(s.id))),
+      };
+      openStepForm({ after_step: id });
+    },
+    [openStepForm, steps]
   );
 
   const onSetStart = useCallback(
@@ -564,6 +742,14 @@ const WorkflowEditor = ({ data }) => {
                 onAddInitial: () => openStepForm({ initial_step: true }),
               },
             }
+          : n.type === "add"
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  onAddAfter: (afterId) => onAddAfter(afterId),
+                },
+              }
           : {
               ...n,
               data: {
@@ -623,7 +809,7 @@ const WorkflowEditor = ({ data }) => {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
+          onNodesChange={onNodesChangeWrapped}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}

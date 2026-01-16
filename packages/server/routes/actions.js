@@ -84,7 +84,7 @@ const {
   blocklyToolbox,
 } = require("../markup/blockly.js");
 
-const serializeWorkflowStep = (s) => ({
+const serializeWorkflowStep = (s, opts = {}) => ({
   id: s.id,
   name: s.name,
   trigger_id: s.trigger_id,
@@ -93,6 +93,10 @@ const serializeWorkflowStep = (s) => ({
   action_name: s.action_name,
   initial_step: !!s.initial_step,
   configuration: s.configuration || {},
+  summary: WorkflowStep.actionSummary(s, {
+    req: opts.req,
+    trigger: opts.trigger,
+  }),
 });
 
 const buildWorkflowActionExplainers = async (trigger) => {
@@ -155,7 +159,7 @@ const getWorkflowEditorData = async (req, trigger, stepsIn) => {
       name: trigger.name,
       when_trigger: trigger.when_trigger,
     },
-    steps: steps.map(serializeWorkflowStep),
+    steps: steps.map((s) => serializeWorkflowStep(s, { req, trigger })),
     actionExplainers: await buildWorkflowActionExplainers(trigger),
     csrfToken: req.csrfToken(),
     strings: workflowStrings(req, trigger),
@@ -163,6 +167,7 @@ const getWorkflowEditorData = async (req, trigger, stepsIn) => {
       stepForm: `/actions/stepedit/${trigger.id}`,
       data: `/actions/workflow/data/${trigger.id}`,
       connect: `/actions/workflow/connect/${trigger.id}`,
+      positions: `/actions/workflow/positions/${trigger.id}`,
       deleteStep: `/actions/delete-step`,
       configure: `/actions/configure/${trigger.id}`,
       runs: `/actions/runs/?trigger=${trigger.id}`,
@@ -720,6 +725,49 @@ router.post(
         entity_type: "Trigger",
         entity_name: trigger?.name || step.trigger_id,
       }
+    );
+    res.json({ success: "ok" });
+  })
+);
+
+router.post(
+  "/workflow/positions/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req, res) => {
+    const { trigger_id } = req.params;
+    const { positions } = req.body || {};
+    if (!Array.isArray(positions))
+      return res.status(400).json({ error: "positions array required" });
+
+    const numeric = (v) => (typeof v === "string" ? +v : v);
+
+    for (const pos of positions) {
+      if (!pos || !pos.id) continue;
+      const step = await WorkflowStep.findOne({ id: +pos.id, trigger_id });
+      if (!step) continue;
+      const x = numeric(pos.x);
+      const y = numeric(pos.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      await step.update({
+        configuration: {
+          ...(step.configuration || {}),
+          workflow_position: { x, y },
+        },
+      });
+    }
+
+    const trigger = await Trigger.findOne({ id: trigger_id });
+    Trigger.emitEvent(
+      "AppChange",
+      trigger,
+      req.user
+        ? {
+            user_id: req.user.id,
+            role_id: req.user.role_id,
+            entity_type: "Trigger",
+            entity_name: trigger?.name || trigger_id,
+          }
+        : undefined
     );
     res.json({ success: "ok" });
   })
