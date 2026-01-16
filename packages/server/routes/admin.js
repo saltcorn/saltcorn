@@ -4870,8 +4870,8 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
         ds.push(`function slugify(s: string): string`);
       } else if (f.run) {
         const args = (f["arguments"] || []).map(
-          ({ name, type, tstype }) =>
-            `${name}: ${tstype || scTypeToTsType(type)}`
+          ({ name, type, tstype, required }) =>
+            `${name}${required ? "" : "?"}: ${tstype || scTypeToTsType(type)}`
         );
         ds.push(
           `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
