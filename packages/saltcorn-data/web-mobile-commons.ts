@@ -23,6 +23,7 @@ const {
 } = require("@saltcorn/data/plugin-helper");
 import viewableFields from "./base-plugin/viewtemplates/viewable_fields";
 import { Req } from "@saltcorn/types/base_types";
+import FieldRepeat from "./models/fieldrepeat";
 const { getForm, transformForm } = viewableFields;
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
@@ -551,12 +552,18 @@ const getWorkflowStepUserForm = async (
       state: {},
     } as any);
     form.action = `/actions/fill-workflow-form/${run.id}`;
-    if (run.context[step.configuration.response_variable])
+    if (run.context[step.configuration.response_variable]) {
       Object.assign(
         form.values,
         run.context[step.configuration.response_variable]
       );
-
+      for (const field of form.fields) {
+        if (!field.isRepeat) continue;
+        if (Array.isArray(form.values[field.name]))
+          (field as FieldRepeat).metadata.rows = form.values[field.name];
+      }
+    }
+  
     return form;
   }
 
