@@ -20,6 +20,8 @@ const {
   link_view,
   displayType,
   run_action_column,
+  stateToQueryString,
+  pathToState,
 } = require("../../plugin-helper");
 const {
   eval_expression,
@@ -27,8 +29,13 @@ const {
   get_expression_function,
 } = require("../../models/expression");
 const Field = require("../../models/field");
+const FieldRepeat = require("../../models/fieldrepeat");
 const Form = require("../../models/form");
-const { traverseSync } = require("../../models/layout");
+const {
+  traverseSync,
+  traverse,
+  translateLayout,
+} = require("../../models/layout");
 const {
   structuredClone,
   isWeb,
@@ -37,6 +44,8 @@ const {
   interpolate,
   objectToQueryString,
   validSqlId,
+  InvalidConfiguration,
+  renderServerSide,
 } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
@@ -450,7 +459,7 @@ const view_linker = (
       subTable ? subTable.name : "",
       ViewDisplayType.NO_ROW_LIMIT
     );
-    relObj.subView = subview
+    relObj.subView = subview;
     const type = relObj.type;
     return {
       label: view,
@@ -2069,6 +2078,444 @@ const getForm = async (
   return form;
 };
 
+const transformForm = async ({
+  form,
+  table,
+  req,
+  row,
+  res,
+  getRowQuery,
+  viewname,
+  optionsQuery,
+  state,
+}) => {
+  let originalState = state;
+  let pseudo_row = {};
+  if (!row) {
+    table.fields.forEach((f) => {
+      pseudo_row[f.name] = undefined;
+    });
+  }
+  const appState = getState();
+  const __ =
+    db.is_node && appState
+      ? (s) => appState.i18n.__({ phrase: s, locale: req.getLocale() }) || s
+      : (s) => {
+          return s;
+        };
+  await traverse(form.layout, {
+    container(segment) {
+      if (segment.click_action) {
+        segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
+      }
+    },
+    async action(segment) {
+      if (segment.action_style === "on_page_load") {
+        segment.type = "blank";
+        segment.style = {};
+        if (segment.minRole && segment.minRole != 100) {
+          const minRole = +segment.minRole;
+          const userRole = req?.user?.role_id || 100;
+          if (minRole < userRole) return;
+        }
+        if (req.method === "POST") return;
+
+        //run action
+        try {
+          const actionResult = await run_action_column({
+            col: { ...segment },
+            referrer: req?.get?.("Referrer"),
+            req,
+            res,
+            table,
+            row: row || pseudo_row,
+          });
+
+          if (actionResult)
+            segment.contents = script(
+              domReady(
+                `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
+              )
+            );
+        } catch (e) {
+          appState.log(
+            5,
+            `Error in Edit ${viewname} on page load action: ${e.message}`
+          );
+          e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
+          throw e;
+        }
+      }
+      if (segment.action_name === "Delete") {
+        if (form.values && form.values[table.pk_name]) {
+          segment.action_url = table.delete_url(form.values);
+        } else {
+          segment.type = "blank";
+          segment.contents = "";
+        }
+      } else if (
+        segment.action_name === "form_action" &&
+        segment.configuration?.form_action === "Save" &&
+        table.fields.some((f) => f.type === "File")
+      ) {
+        let url = action_url(
+          viewname,
+          table,
+          segment.action_name,
+          row,
+          segment.rndid,
+          "rndid",
+          segment.confirm
+        );
+        if (url.javascript) {
+          //redo to include dynamic row
+          const confirmStr = segment.confirm
+            ? `if(confirm('Are you sure?'))`
+            : "";
+          url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
+        }
+        segment.action_link = action_link(url, req, segment, __);
+      } else if (
+        !["Sign up", ...edit_build_in_actions].includes(segment.action_name) &&
+        !segment.action_name.startsWith("Login")
+      ) {
+        let url = action_url(
+          viewname,
+          table,
+          segment.action_name,
+          row,
+          segment.rndid,
+          "rndid",
+          segment.confirm,
+          undefined,
+          segment.run_async
+        );
+        if (url.javascript) {
+          //redo to include dynamic row
+          const confirmStr = segment.confirm
+            ? `if(confirm('Are you sure?'))`
+            : "";
+
+          // If this is a Multi-step action or the form/table contains File fields,
+          // post multipart FormData so req.files is populated server-side.
+          const hasFileFields = table.fields?.some((f) => f.type === "File");
+          if (segment.action_name === "Multi-step action" || hasFileFields) {
+            url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
+          } else {
+            url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
+          }
+        }
+        segment.action_link = action_link(url, req, segment, __);
+      }
+    },
+    join_field(segment) {
+      const qs = objToQueryString(segment.configuration);
+      segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
+    },
+    tabs(segment) {
+      const to_delete = new Set();
+      (segment.showif || []).forEach((sif, ix) => {
+        if (sif) {
+          const showit = eval_expression(
+            sif,
+            row || pseudo_row,
+            req.user,
+            "Tab show if formula"
+          );
+          if (!showit) to_delete.add(ix);
+        }
+      });
+
+      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
+      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
+
+      (segment.titles || []).forEach((t, ix) => {
+        if (typeof t === "string" && t.includes("{{")) {
+          segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
+        }
+      });
+    },
+    view_link(segment) {
+      segment.type = "blank";
+      const view_select = parse_view_select(segment.view);
+      if (!row && view_select.type !== "Independent") {
+        segment.contents = "";
+      } else {
+        const prefix =
+          req.generate_email && req.get_base_url ? req.get_base_url() : "";
+        const { key } = view_linker(
+          segment,
+          table.fields,
+          (s) => s,
+          isWeb(req),
+          req.user,
+          prefix,
+          req.query,
+          req,
+          viewname
+        );
+        segment.contents = key(row || {});
+      }
+    },
+    async view(segment) {
+      //console.log(segment);
+      const view_select = parse_view_select(segment.view, segment.relation);
+      //console.log({ view_select });
+
+      const view = View.findOne({ name: view_select.viewname });
+      if (!view)
+        throw new InvalidConfiguration(
+          `Cannot find embedded view: ${view_select.viewname}`
+        );
+      // check if the relation path matches a ChildList relations
+      let childListRelPath = false;
+      if (segment.relation && view.table_id) {
+        const targetTbl = Table.findOne({ id: view.table_id });
+        const relation = new Relation(
+          segment.relation,
+          targetTbl.name,
+          displayType(await view.get_state_fields())
+        );
+        childListRelPath = relation.type === RelationType.CHILD_LIST;
+      }
+      // Edit-in-edit
+      if (
+        view.viewtemplate === "Edit" &&
+        (view_select.type === "ChildList" || childListRelPath)
+      ) {
+        if (childListRelPath) updateViewSelect(view_select);
+        const childTable = Table.findOne({ id: view.table_id });
+        const childForm = await getForm(
+          childTable,
+          view.name,
+          view.configuration.columns,
+          view.configuration.layout,
+          row?.id,
+          req,
+          !isWeb(req)
+        );
+        traverseSync(childForm.layout, {
+          field(segment) {
+            segment.field_name = `${view_select.field_name}.${segment.field_name}`;
+          },
+        });
+        for (const field of childForm.fields) {
+          if (field.name === childTable.pk_name) {
+            field.class = field.class
+              ? `${field.class} omit-repeater-clone`
+              : "omit-repeater-clone";
+          }
+        }
+        await childForm.fill_fkey_options(false, optionsQuery, req.user);
+
+        const fr = new FieldRepeat({
+          name: view_select.field_name,
+          label: view_select.field_name,
+          fields: childForm.fields,
+          layout: childForm.layout,
+          metadata: {
+            table_id: childTable.id,
+            view: segment.view,
+            relation: view_select.field_name,
+            relation_path: segment.relation,
+            order_field: segment.order_field,
+          },
+        });
+        if (row?.id) {
+          const childRows = getRowQuery
+            ? await getRowQuery(
+                view.table_id,
+                view_select,
+                row.id,
+                segment.order_field
+              )
+            : await childTable.getRows(
+                {
+                  [view_select.field_name]: row.id,
+                },
+                segment.order_field ? { orderBy: segment.order_field } : {}
+              );
+          fr.metadata.rows = childRows;
+          if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
+            fr.fields.push({
+              name: childTable.pk_name,
+              input_type: "hidden",
+            });
+        }
+        form.fields.push(fr);
+        segment.type = "field_repeat";
+        segment.field_repeat = fr;
+        return;
+      } // end edit in edit
+      const outerState = {};
+      Object.entries(originalState || {}).forEach(([k, v]) => {
+        if (k.startsWith("_")) outerState[k] = v;
+      });
+      let state = {};
+      let urlFormula;
+      let needFields = new Set();
+      if (view_select.type === "RelationPath" && view.table_id) {
+        const pathToUrlFormula = (relation) => {
+          const st = pathToState(relation, (k) => `row.` + k);
+          return Object.entries(st)
+            .map(([k, v]) => {
+              needFields.add(v.split(".")[1]);
+              return `${k}='+${v}+'`;
+            })
+            .join("&");
+        };
+
+        const targetTbl = Table.findOne({ id: view.table_id });
+        if (targetTbl) {
+          const relation = new Relation(
+            segment.relation,
+            targetTbl.name,
+            displayType(await view.get_state_fields())
+          );
+          const relFmlQS = pathToUrlFormula(relation);
+          const type = relation.type;
+          if (!row && type == RelationType.OWN) {
+            segment.type = "blank";
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            segment.contents = segment.contents = div({
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-view-source-need-fields": [...needFields].join(","),
+              "data-view-source": encodeURIComponent(urlFormula),
+            });
+            return;
+          } else if (
+            !row &&
+            type !== RelationType.INDEPENDENT &&
+            !relation.isFixedRelation()
+          ) {
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            segment.contents = segment.contents = div({
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-view-source-need-fields": [...needFields].join(","),
+              "data-view-source": encodeURIComponent(urlFormula),
+            });
+            return;
+          }
+          const userId = req?.user?.id;
+          state = pathToState(
+            relation,
+            relation.isFixedRelation() ? () => userId : (k) => row[k]
+          );
+
+          urlFormula = `add_extra_state('/view/${view.name}?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+        }
+      } else {
+        const isIndependent = view_select.type === "Independent";
+        // legacy none check ?
+
+        if (!view)
+          throw new InvalidConfiguration(
+            `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
+          );
+        switch (view_select.type) {
+          case "Own":
+            state = { id: row?.id };
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            needFields.add("id");
+            break;
+          case "Independent":
+            state = {};
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            needFields.add("id");
+            break;
+          case "ChildList":
+          case "OneToOneShow":
+            state = { [view_select.field_name]: row?.id };
+            urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            needFields.add("id");
+            break;
+          case "ParentShow":
+            state = { id: row?.[view_select.field_name] };
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${view_select.field_name}, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            needFields.add(view_select.field_name);
+            break;
+        }
+        if (!row && !isIndependent) {
+          segment.type = "blank";
+          segment.contents = div({
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-view-source-need-fields": [...needFields].join(","),
+            "data-view-source": encodeURIComponent(urlFormula),
+          });
+          return;
+        }
+      }
+      const extra_state = segment.extra_state_fml
+        ? eval_expression(
+            segment.extra_state_fml,
+            {
+              ...dollarizeObject(req.query),
+              session_id: getSessionId(req),
+              ...(row || pseudo_row),
+            },
+            req.user,
+            `Extra state formula for embedding view ${view.name}`
+          )
+        : {};
+
+      const qs = stateToQueryString(
+        { ...state, ...outerState, ...extra_state },
+        true
+      );
+      segment.contents = div(
+        {
+          class: "d-inline",
+          "data-sc-embed-viewname": view.name,
+          "data-sc-view-source": `/view/${view.name}${qs}`,
+          "data-view-source-current": `/view/${view.name}${qs}`,
+          "data-view-source-need-fields": [...needFields].join(","),
+          "data-view-source": encodeURIComponent(urlFormula),
+        },
+        view.renderLocally()
+          ? await view.run(
+              { ...state, ...outerState, ...extra_state },
+              { req, res },
+              view.isRemoteTable()
+            )
+          : await renderServerSide(view.name, {
+              ...state,
+              ...outerState,
+              ...extra_state,
+            })
+      );
+    },
+  });
+  translateLayout(form.layout, req.getLocale());
+
+  if (req.headers?.saltcornmodalrequest) form.xhrSubmit = true;
+  setDateLocales(form, req.getLocale());
+};
+
+const setDateLocales = (form, locale) => {
+  form.fields.forEach((f) => {
+    if (f.type && f.type.name === "Date") {
+      f.attributes.locale = locale;
+    }
+  });
+};
+
+/**
+ * update viewSelect so that it looks like a normal ChildList
+ */
+const updateViewSelect = (viewSelect) => {
+  if (viewSelect.path.length === 1) {
+    viewSelect.field_name = viewSelect.path[0].inboundKey;
+    viewSelect.table_name = viewSelect.path[0].table;
+  } else if (viewSelect.path.length === 2) {
+    viewSelect.field_name = viewSelect.path[1].inboundKey;
+    viewSelect.table_name = viewSelect.path[1].table;
+    viewSelect.throughTable = viewSelect.path[0].inboundKey;
+    viewSelect.through = viewSelect.path[0].table;
+  }
+};
 /**
  * @param {object} table
  * @param {object} req
@@ -2136,4 +2583,7 @@ module.exports = {
   edit_build_in_actions,
   standardBlockDispatch,
   standardLayoutRowVisitor,
+  setDateLocales,
+  transformForm,
+  updateViewSelect,
 };
