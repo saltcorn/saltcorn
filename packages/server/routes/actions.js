@@ -734,20 +734,26 @@ router.post(
   "/workflow/positions/:trigger_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
-    const { trigger_id } = req.params;
+    const trigger_id = +req.params.trigger_id;
     const { positions } = req.body || {};
     if (!Array.isArray(positions))
       return res.status(400).json({ error: "positions array required" });
 
     const numeric = (v) => (typeof v === "string" ? +v : v);
 
+    let startPos = null;
+
     for (const pos of positions) {
       if (!pos || !pos.id) continue;
-      const step = await WorkflowStep.findOne({ id: +pos.id, trigger_id });
-      if (!step) continue;
       const x = numeric(pos.x);
       const y = numeric(pos.y);
       if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      if (String(pos.id) === "start") {
+        startPos = { x, y };
+        continue;
+      }
+      const step = await WorkflowStep.findOne({ id: +pos.id, trigger_id });
+      if (!step) continue;
       await step.update({
         configuration: {
           ...(step.configuration || {}),
@@ -757,6 +763,14 @@ router.post(
     }
 
     const trigger = await Trigger.findOne({ id: trigger_id });
+    if (startPos) {
+      await Trigger.update(trigger_id, {
+        configuration: {
+          ...(trigger?.configuration || {}),
+          workflow_start_position: startPos,
+        },
+      });
+    }
     Trigger.emitEvent(
       "AppChange",
       trigger,

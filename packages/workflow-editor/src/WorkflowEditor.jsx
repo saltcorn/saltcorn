@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -16,6 +10,14 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import "./workflow.css";
+
+const handleStyle = {
+  width: "10px",
+  height: "10px",
+  borderRadius: "50%",
+  border: "1px solid #5f5f5f",
+  background: "#fff",
+};
 
 const StartNode = ({ data }) => (
   <div className="wf-start-node">
@@ -31,7 +33,12 @@ const StartNode = ({ data }) => (
         {data.strings.addStep}
       </button>
     </div>
-    <Handle id="start" type="source" position={Position.Right} />
+    <Handle
+      style={handleStyle}
+      id="start"
+      type="source"
+      position={Position.Right}
+    />
   </div>
 );
 
@@ -130,11 +137,13 @@ const StepNode = ({ data }) => {
           {data.loop_body_initial_step}
         </div>
       ) : null}
-      <Handle type="target" position={Position.Left} />
-      <Handle id="main" type="source" position={Position.Right} />
-      {/* {data.isLoop ? (
-        <Handle id="loop" type="source" position={Position.Bottom} />
-      ) : null} */}
+      <Handle style={handleStyle} type="target" position={Position.Left} />
+      <Handle
+        style={handleStyle}
+        id="main"
+        type="source"
+        position={Position.Right}
+      />
     </div>
   );
 };
@@ -167,7 +176,12 @@ const findLoopBackLinks = (steps) => {
   return loopBacks;
 };
 
-const buildGraph = (steps, strings, actionExplainers) => {
+const buildGraph = (
+  steps,
+  strings,
+  actionExplainers,
+  { startPosition, addPositions } = {}
+) => {
   const idByName = {};
   const nameById = {};
   steps.forEach((s) => {
@@ -266,7 +280,15 @@ const buildGraph = (steps, strings, actionExplainers) => {
       id: "start",
       type: "start",
       data: { strings },
-      position: { x: -180, y: 40 },
+      position:
+        startPosition ||
+        (initial
+          ? {
+              x: positions[String(initial.id)]?.x - 180 || -180,
+              y: positions[String(initial.id)]?.y || 40,
+            }
+          : { x: -180, y: 40 }),
+      draggable: true,
     },
     ...steps.map((step, ix) => ({
       id: String(step.id),
@@ -327,7 +349,8 @@ const buildGraph = (steps, strings, actionExplainers) => {
           id: `loop-${step.id}-${loopTarget}`,
           source: String(step.id),
           target: loopId || String(step.id),
-          type: "default",
+          // type: "default",
+          type: "smoothstep",
           style: { stroke: "#f59f00", strokeDasharray: "6 4" },
           label: strings.loopBody,
           markerEnd: "arrowclosed",
@@ -344,7 +367,8 @@ const buildGraph = (steps, strings, actionExplainers) => {
           id: `loopback-${step.id}-${forLoopName}`,
           source: String(step.id),
           target: loopId,
-          type: "default",
+          // type: "default",
+          type: "smoothstep",
           style: { stroke: "#f59f00", strokeDasharray: "6 4" },
           data: { loop: true, loopBack: true },
           markerEnd: "arrowclosed",
@@ -362,9 +386,9 @@ const buildGraph = (steps, strings, actionExplainers) => {
     addNodes.push({
       id: addId,
       type: "add",
-      position: { x: basePos.x + 90, y: basePos.y },
+      position: addPositions?.[addId] || { x: basePos.x + 220, y: basePos.y },
       data: { strings, afterStepId: String(step.id) },
-      draggable: false,
+      draggable: true,
       selectable: false,
       deletable: false,
     });
@@ -372,10 +396,10 @@ const buildGraph = (steps, strings, actionExplainers) => {
       id: `e-${step.id}-adder`,
       source: String(step.id),
       target: addId,
-      type: "straight",
+      type: "bezier",
       animated: false,
       deletable: false,
-      style: { strokeDasharray: "4 2", stroke: "#adb5bd" },
+      style: { strokeDasharray: "4 2", stroke: "#0d6efd" },
     });
   });
 
@@ -428,6 +452,10 @@ const WorkflowEditor = ({ data }) => {
   const [edges, setEdges, rfOnEdgesChange] = useEdgesState([]);
   const [nameById, setNameById] = useState({});
   const [idByName, setIdByName] = useState({});
+  const [startPosition, setStartPosition] = useState(
+    data.config?.workflow_start_position || null
+  );
+  const [addPositions, setAddPositions] = useState({});
   const pendingAddRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -446,13 +474,23 @@ const WorkflowEditor = ({ data }) => {
         edges: e,
         idByName: idMap,
         nameById: nameMap,
-      } = buildGraph(nextSteps, strings, data.actionExplainers || {});
+      } = buildGraph(nextSteps, strings, data.actionExplainers || {}, {
+        startPosition,
+        addPositions,
+      });
       setNodes(n);
       setEdges(e);
       setIdByName(idMap);
       setNameById(nameMap);
     },
-    [data.actionExplainers, setEdges, setNodes, strings]
+    [
+      addPositions,
+      data.actionExplainers,
+      setEdges,
+      setNodes,
+      startPosition,
+      strings,
+    ]
   );
 
   useEffect(() => {
@@ -510,20 +548,39 @@ const WorkflowEditor = ({ data }) => {
 
   const persistPositions = useCallback(
     async (positions = []) => {
+      console.log("Persisting positions", positions);
       if (!positions.length) return;
       try {
         setSavingPositions(true);
         await fetchJson(data.urls.positions, {
           method: "POST",
           body: JSON.stringify({ positions }),
+          headers: {
+            "X-CSRF-Token": data.csrfToken || "",
+          },
         });
+        // keep local state in sync so refresh uses saved positions
+        setSteps((prev) =>
+          prev.map((s) => {
+            const hit = positions.find((p) => String(p.id) === String(s.id));
+            return hit
+              ? {
+                  ...s,
+                  configuration: {
+                    ...(s.configuration || {}),
+                    workflow_position: { x: hit.x, y: hit.y },
+                  },
+                }
+              : s;
+          })
+        );
       } catch (e) {
         setError(e.message);
       } finally {
         setSavingPositions(false);
       }
     },
-    [data.urls.positions, fetchJson]
+    [data.urls.positions, fetchJson, setSteps]
   );
 
   const openStepForm = useCallback(
@@ -682,12 +739,35 @@ const WorkflowEditor = ({ data }) => {
   const onNodesChangeWrapped = useCallback(
     (changes) => {
       const finishedPositions = changes
-        .filter((c) => c.type === "position" && c.position && !c.dragging)
+        .filter((c) => c.type === "position" && c.position && c.dragging)
         .map((c) => ({ id: c.id, x: c.position.x, y: c.position.y }));
-      if (finishedPositions.length) persistPositions(finishedPositions);
+
+      if (finishedPositions.length) {
+        finishedPositions
+          .filter((p) => p.id === "start")
+          .forEach((p) => setStartPosition({ x: p.x, y: p.y }));
+
+        const addUpdates = finishedPositions.filter((p) =>
+          p.id.startsWith("add-")
+        );
+        if (addUpdates.length) {
+          setAddPositions((prev) => {
+            const next = { ...prev };
+            addUpdates.forEach((p) => {
+              next[p.id] = { x: p.x, y: p.y };
+            });
+            return next;
+          });
+        }
+
+        const stepPositions = finishedPositions.filter(
+          (p) => /^[0-9]+$/.test(p.id) || p.id === "start"
+        );
+        if (stepPositions.length) persistPositions(stepPositions);
+      }
       onNodesChange(changes);
     },
-    [onNodesChange, persistPositions]
+    [onNodesChange, persistPositions, setAddPositions, setStartPosition]
   );
 
   const onAddAfter = useCallback(
@@ -750,17 +830,17 @@ const WorkflowEditor = ({ data }) => {
                   onAddAfter: (afterId) => onAddAfter(afterId),
                 },
               }
-          : {
-              ...n,
-              data: {
-                ...n.data,
-                onEdit: (id) => openStepForm({ stepId: id }),
-                onAddAfter,
-                onSetStart,
-                onClearNext,
-                onDelete,
-              },
-            }
+            : {
+                ...n,
+                data: {
+                  ...n.data,
+                  onEdit: (id) => openStepForm({ stepId: id }),
+                  onAddAfter,
+                  onSetStart,
+                  onClearNext,
+                  onDelete,
+                },
+              }
       )
     );
   }, [
@@ -784,6 +864,11 @@ const WorkflowEditor = ({ data }) => {
             <span className="text-success ms-2">{message}</span>
           ) : null}
           {error ? <span className="text-danger ms-2">{error}</span> : null}
+          {/* {savingPositions ? (
+            <span className="text-muted ms-2">
+              {strings.loading || "Saving positions..."}
+            </span>
+          ) : null} */}
         </div>
         <div className="wf-toolbar__actions">
           <button
