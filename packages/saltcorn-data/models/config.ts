@@ -1530,6 +1530,35 @@ const configTypes: ConfigTypes = {
       "You can configure it here or in the 'Mobile app' Menu.",
     helpTopic: "Firebase Configurations",
   },
+  apn_signing_key: {
+    type: "File",
+    name: "apn_signing_key",
+    label: "APN signing key",
+    default: null,
+    attributes: {
+      select_file_where: {
+        min_role_read: 100,
+        mime_super: "application",
+        folder: "/mobile-app-configurations",
+      },
+    },
+    sublabel:
+      "This is the private key file for your Apple Push Notification service (APNs). " +
+      "Your Saltcorn server uses it to send push notifications or push-based synchronizations to your iOS mobile app. " +
+      "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
+      "You can configure it here or in the 'Mobile app' Menu.",
+    helpTopic: "APN Configurations",
+  },
+  apn_signing_key_id: {
+    type: "String",
+    label: "APN signing key ID",
+    default: "",
+    blurb:
+      "The Key ID obtained from your Apple Developer account for the APN signing key. " +
+      "You can configure it here or in the 'Mobile app' Menu.",
+    helpTopic: "APN Configurations",
+    excludeFromMobile: true,
+  },
   push_notification_icon: {
     type: "File",
     name: "push_notification_icon",

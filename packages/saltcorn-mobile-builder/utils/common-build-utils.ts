@@ -727,9 +727,7 @@ export function writeEntitlementsPlist(buildDir: string) {
     <key>aps-environment</key>
     <string>production</string>
     <key>com.apple.security.application-groups</key>
-    <array>
-        <string>group.saltcorn.com</string>
-    </array>
+    <array />
 </dict>
 </plist>`
     );
