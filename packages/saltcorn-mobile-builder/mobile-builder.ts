@@ -18,6 +18,8 @@ import {
   writeCapacitorConfig,
   prepAppIcon,
   modifyInfoPlist,
+  writeEntitlementsPlist,
+  runAddEntitlementsScript,
   writePodfile,
   modifyXcodeProjectFile,
   writePrivacyInfo,
@@ -26,6 +28,7 @@ import {
   writeNetworkSecurityConfig,
   modifyGradleConfig,
   hasAuthMethod,
+  modifyAppDelegate,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
@@ -43,8 +46,9 @@ const appIdDefault = "saltcorn.mobile.app";
 const appNameDefault = "SaltcornMobileApp";
 
 export type IosCfg = {
-  appleTeamId: string;
-  mainProvisioningProfile: {
+  noProvisioningProfile?: boolean;
+  appleTeamId?: string;
+  mainProvisioningProfile?: {
     guuid: string;
   };
   shareExtensionProvisioningProfile?: {
@@ -88,6 +92,7 @@ type MobileBuilderConfig = {
   keyStorePassword?: string;
   googleServicesFile?: string;
   buildType: "debug" | "release";
+  allowClearTextTraffic?: boolean;
 };
 
 /**
@@ -116,6 +121,7 @@ export class MobileBuilder {
   syncOnReconnect: boolean;
   pushSync: boolean;
   syncInterval?: number;
+  backgroundSyncEnabled: boolean;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
@@ -129,6 +135,7 @@ export class MobileBuilder {
   isUnsecureKeyStore: boolean;
   googleServicesFile?: string;
   buildType: "debug" | "release";
+  allowClearTextTraffic: boolean;
   iosParams?: IosCfg;
 
   private capacitorHelper: CapacitorHelper;
@@ -164,6 +171,7 @@ export class MobileBuilder {
     this.pushSync = cfg.pushSync;
     this.syncOnReconnect = cfg.syncOnReconnect;
     this.syncInterval = cfg.syncInterval ? +cfg.syncInterval : undefined;
+    this.backgroundSyncEnabled = !!this.syncInterval && this.syncInterval > 0;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
     });
@@ -185,6 +193,7 @@ export class MobileBuilder {
     }
     this.googleServicesFile = cfg.googleServicesFile;
     this.buildType = cfg.buildType;
+    this.allowClearTextTraffic = !!cfg.allowClearTextTraffic;
     this.iosParams = cfg.iosParams;
     this.capacitorHelper = new CapacitorHelper({
       ...this,
@@ -213,8 +222,9 @@ export class MobileBuilder {
       prepareBuildDir(
         this.buildDir,
         this.templateDir,
-        !!this.googleServicesFile,
-        !!this.syncInterval && this.syncInterval > 0
+        !!this.googleServicesFile || this.pushSync,
+        !!this.syncInterval && this.syncInterval > 0,
+        this.pushSync
       );
       writeCapacitorConfig(this.buildDir, {
         appName: this.appName,
@@ -268,7 +278,7 @@ export class MobileBuilder {
         this.pluginsLoaded = true;
       }
       copyPluginMobileAppDirs(this.buildDir);
-      if (this.googleServicesFile)
+      if (this.googleServicesFile || this.pushSync)
         copyOptionalSource(this.buildDir, "notifications.js");
       if (this.syncInterval && this.syncInterval > 0)
         copyOptionalSource(this.buildDir, "background_sync.js");
@@ -309,16 +319,27 @@ export class MobileBuilder {
   }
 
   private async handleIosPlatform() {
-    prepareExportOptionsPlist({
-      buildDir: this.buildDir,
-      appId: this.appId,
-      iosParams: this.iosParams,
-    });
-    modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
+    if (this.iosParams?.noProvisioningProfile !== true) {
+      prepareExportOptionsPlist({
+        buildDir: this.buildDir,
+        appId: this.appId,
+        iosParams: this.iosParams,
+      });
+      modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
+    }
     writePodfile(this.buildDir);
-    writePrivacyInfo(this.buildDir);
-    modifyInfoPlist(this.buildDir, this.allowShareTo);
+    writePrivacyInfo(this.buildDir, this.backgroundSyncEnabled);
+    modifyInfoPlist(
+      this.buildDir,
+      this.allowShareTo,
+      this.backgroundSyncEnabled,
+      this.pushSync,
+      this.allowClearTextTraffic,
+    );
+    writeEntitlementsPlist(this.buildDir);
+    runAddEntitlementsScript(this.buildDir);
     if (this.allowShareTo) copyShareExtFiles(this.buildDir);
+    modifyAppDelegate(this.buildDir, this.backgroundSyncEnabled, this.pushSync);
   }
 
   private async handleAndroidPlatform() {
@@ -344,7 +365,8 @@ export class MobileBuilder {
       this.buildDir,
       this.allowShareTo,
       !!this.googleServicesFile,
-      hasAuthMethod(this.includedPlugins)
+      hasAuthMethod(this.includedPlugins),
+      this.allowClearTextTraffic,
     );
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);

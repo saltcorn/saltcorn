@@ -361,7 +361,7 @@ router.post(
   "/push_subscribe",
   loggedIn,
   error_catcher(async (req, res) => {
-    const { token, deviceId, synchedTables } = req.body || {};
+    const { token, deviceId, synchedTables, platform } = req.body || {};
     if (!token) {
       res.status(400).json({
         error: req.__("FCM token is required"),
@@ -382,10 +382,12 @@ router.post(
         message: req.__("sync push subscription already exists"),
       });
     } else {
+      // remove old subscriptions for this deviceId before adding
       userSubs = userSubs.filter((s) => s.deviceId !== deviceId);
       userSubs.push({
         token,
         deviceId,
+        platform,
         synchedTables,
       });
       await getState().setConfig("push_sync_subscriptions", {

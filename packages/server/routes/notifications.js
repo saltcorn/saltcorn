@@ -355,7 +355,7 @@ router.post(
   "/mobile-subscribe",
   loggedIn,
   error_catcher(async (req, res) => {
-    const { token, deviceId, synchedTables } = req.body || {};
+    const { token, deviceId, platform } = req.body || {};
     if (!token) {
       res.status(400).json({
         error: req.__("FCM token is required"),
@@ -375,11 +375,14 @@ router.post(
         message: req.__("FCM token already uploaded"),
       });
     } else {
+      // web based subscriptions and other device subscriptions for this user
       userSubs = userSubs.filter(
-        (s) => s.type !== "fcm-push" || s.deviceId !== deviceId
+        (s) =>
+          (s.type !== "fcm-push" && s.type !== "apns-push") ||
+          s.deviceId !== deviceId
       );
       userSubs.push({
-        type: "fcm-push",
+        type: platform === "android" ? "fcm-push" : "apns-push",
         token: token,
         deviceId: deviceId,
       });
@@ -429,18 +432,6 @@ router.post(
         message: req.__("Unsubscribed from notifications"),
       });
     }
-  })
-);
-
-// TODO
-router.post(
-  "/mobile-remove-subscription",
-  loggedIn,
-  error_catcher(async (req, res) => {
-    res.json({
-      success: "ok",
-      message: req.__("Unsubscribed from notifications"),
-    });
   })
 );
 
@@ -533,9 +524,7 @@ router.get(
     }
     if (Array.isArray(pwa_icons) && pwa_icons.length > 0)
       manifest.icons = pwa_icons.map(({ image, size, maskable }) => ({
-        src: /^(?:[a-z]+:)?\/\//i.test(image)
-          ? image
-          : `/files/serve/${image}`,
+        src: /^(?:[a-z]+:)?\/\//i.test(image) ? image : `/files/serve/${image}`,
         type: File.nameToMimeType(image),
         sizes: size ? `${size}x${size}` : "144x144",
         ...(maskable ? { purpose: "maskable" } : {}),
