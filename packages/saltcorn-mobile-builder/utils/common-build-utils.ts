@@ -1308,7 +1308,12 @@ export function writePodfile(buildDir: string) {
     pod 'SendIntent', :path => '../../node_modules/send-intent'
     pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
     pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'
-    ${hasPush ? `pod 'CapacitorPushNotifications', :path => '../../node_modules/@capacitor/push-notifications'` : ""}
+    ${
+      hasPush
+        ? `pod 'CapacitorPushNotifications', :path => '../../node_modules/@capacitor/push-notifications'
+    pod 'CapacitorDevice', :path => '../../node_modules/@capacitor/device'`
+        : ""
+    }
     ${hasSilentPush ? `pod 'CapacitorPluginSilentNotifications', :path => '../../node_modules/capacitor-plugin-silent-notifications'` : ""}
   end
   
