@@ -1723,5 +1723,18 @@
 	"Go to views list": "Go to views list",
 	"Go to pages list": "Go to pages list",
 	"Go to triggers list": "Go to triggers list",
-	"Open legacy list": "Open legacy list"
+	"Open legacy list": "Open legacy list",
+	"Set context": "Set context",
+	"Array": "Array",
+	"Add step": "Add step",
+	"Edit step": "Edit step",
+	"Add after": "Add after",
+	"Set as start": "Set as start",
+	"Start": "Start",
+	"Show runs": "Show runs",
+	"Auto layout": "Auto layout",
+	"No steps yet": "No steps yet",
+	"Loading": "Loading",
+	"Loop body": "Loop body",
+	"Show runs &raquo;": "Show runs &raquo;"
 }
