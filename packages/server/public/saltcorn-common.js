@@ -2021,7 +2021,7 @@ function thumbsUpDownClick(e, required) {
       case "off":
         return set_to(true);
       case "on":
-        return set_to(null);
+        if (!required) return set_to(null);
     }
   // thumbs down clicked
   else
@@ -2030,7 +2030,7 @@ function thumbsUpDownClick(e, required) {
       case "on":
         return set_to(false);
       case "off":
-        return set_to(null);
+        if (!required) return set_to(null);
     }
 }
 
