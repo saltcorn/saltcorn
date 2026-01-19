@@ -48,6 +48,7 @@
     "@saltcorn/sqlite-mobile": "1.5.0-beta.18",
     "@saltcorn/plain-date": "0.2.5",
     "acorn": "^8.14.0",
+    "apns2": "^12.2.0",
     "assert": "^2.1.0",
     "astring": "^1.9.0",
     "axios": "^0.30.2",
@@ -96,7 +97,8 @@
     "mjml": "5.0.0-alpha.6",
     "underscore": "^1.13.1",
     "unidecode": "1.1.0",
-    "tough-cookie": "2.5.0"
+    "tough-cookie": "2.5.0",
+    "xml2js": "0.6.2"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {

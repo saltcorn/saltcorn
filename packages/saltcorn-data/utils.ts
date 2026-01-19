@@ -23,6 +23,9 @@ import { HttpsProxyAgent } from "https-proxy-agent";
 const Docker = require("dockerode");
 import path from "path";
 import os from "os";
+import { execSync } from "child_process";
+import { readFileSync } from "fs";
+import { parseStringPromise } from "xml2js";
 // import { ResultType, StepResType } from "types";'
 
 declare const saltcorn: any;
@@ -676,6 +679,31 @@ const pluginsFolderRoot = path.join(
   "saltcorn-plugins"
 );
 
+const decodeProvisioningProfile = async (provisioningProfile: string) => {
+  require("./db/state").getState().log(5, `Decoding provisioning profile ${provisioningProfile}`);
+  const outFile = join("/tmp", "provisioningProfile.xml");
+  try {
+    execSync(`security cms -D -i "${provisioningProfile}" > ${outFile}`);
+    const content = readFileSync(outFile);
+    const parsed = await parseStringPromise(content);
+    const dict = parsed.plist.dict[0];
+    const guuid = dict.string[dict.string.length - 1];
+    const teamId = dict.array[0].string[0];
+    const specifier = dict.string[1];
+    const identifier = dict.dict[0].string[0];
+    const result = { guuid, teamId, specifier, identifier };
+    console.log(result);
+    return result;
+  } catch (error: any) {
+    require("./db/state").getState().log(5,
+      `Unable to decode the provisioning profile '${provisioningProfile}': ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+    throw error;
+  }
+}
+
 export = {
   dataModulePath,
   allReturnDirectives,
@@ -738,4 +766,5 @@ export = {
   renderServerSide,
   imageAvailable,
   pluginsFolderRoot,
+  decodeProvisioningProfile,
 };

@@ -387,7 +387,7 @@ router.post(
       userSubs.push({
         token,
         deviceId,
-        platform,
+        type: platform === "android" ? "fcm-push" : "apns-push",
         synchedTables,
       });
       await getState().setConfig("push_sync_subscriptions", {

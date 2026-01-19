@@ -775,31 +775,6 @@ export function copyShareExtFiles(buildDir: string) {
   );
 }
 
-export async function decodeProvisioningProfile(provisioningProfile: string) {
-  console.log("decodeProvisioningProfile", provisioningProfile);
-  const outFile = join("/tmp", "provisioningProfile.xml");
-  try {
-    execSync(`security cms -D -i "${provisioningProfile}" > ${outFile}`);
-    const content = readFileSync(outFile);
-    const parsed = await parseStringPromise(content);
-    const dict = parsed.plist.dict[0];
-    const guuid = dict.string[dict.string.length - 1];
-    const teamId = dict.array[0].string[0];
-    const specifier = dict.string[1];
-    const identifier = dict.dict[0].string[0];
-    const result = { guuid, teamId, specifier, identifier };
-    console.log(result);
-    return result;
-  } catch (error: any) {
-    console.log(
-      `Unable to decode the provisioning profile '${provisioningProfile}': ${
-        error.message ? error.message : "Unknown error"
-      }`
-    );
-    throw error;
-  }
-}
-
 export function modifyAppDelegate(
   buildDir: string,
   backgroundSyncEnabled: boolean,

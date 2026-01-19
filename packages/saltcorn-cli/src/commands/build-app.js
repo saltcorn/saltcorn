@@ -2,9 +2,7 @@ const { Command, Flags } = require("@oclif/core");
 const path = require("path");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
-const {
-  decodeProvisioningProfile,
-} = require("@saltcorn/mobile-builder/utils/common-build-utils");
+const { decodeProvisioningProfile } = require("@saltcorn/data/utils");
 const { init_multi_tenant, getState } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const User = require("@saltcorn/data/models/user");
