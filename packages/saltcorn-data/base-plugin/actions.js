@@ -1603,31 +1603,64 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Navigation action",
-    configFields: [
-      {
-        name: "nav_action",
-        label: "Nav Action",
-        type: "String",
-        required: true,
-        attributes: {
-          options: [
-            "Go to URL",
-            "Popup modal",
-            "Back",
-            "Reload page",
-            "Close modal",
-            "Close tab",
-          ],
+    configFields: async () => {
+      const pages = await Page.find({}, { cached: true });
+      const views = await View.find({}, { cached: true });
+      return [
+        {
+          name: "nav_action",
+          label: "Nav Action",
+          type: "String",
+          required: true,
+          attributes: {
+            options: [
+              "Go to URL",
+              "Go to View",
+              "Go to Page",
+              "Popup modal",
+              "Back",
+              "Reload page",
+              "Close modal",
+              "Close tab",
+            ],
+          },
         },
-      },
-      {
-        name: "url",
-        label: "URL",
-        type: "String",
-        required: true,
-        showIf: { nav_action: ["Go to URL", "Popup modal"] },
-      },
-    ],
+        {
+          name: "url",
+          label: "URL",
+          type: "String",
+          required: true,
+          showIf: { nav_action: ["Go to URL", "Popup modal"] },
+        },
+        {
+          name: "page",
+          label: "Page",
+          input_type: "select",
+          options: pages.map((p) => p.name),
+          showIf: { nav_action: "Go to Page" },
+        },
+        {
+          name: "view",
+          label: "View",
+          input_type: "select",
+          options: views.map((p) => p.name),
+          showIf: { nav_action: "Go to View" },
+        },
+        {
+          name: "state_formula",
+          label: "State",
+          type: "String",
+          class: "validate-expression",
+          showIf: { nav_action: ["Go to Page", "Go to View"] },
+        },
+        {
+          name: "new_tab",
+          label: "Open in new tab",
+          type: "Bool",
+          showIf: { nav_action: ["Go to URL", "Go to Page", "Go to View"] },
+        },
+      ];
+    },
     run: async ({ row, user, configuration: { nav_action, url }, req }) => {
       let url1 = interpolate(url, row, user, "navigate URL");
 
