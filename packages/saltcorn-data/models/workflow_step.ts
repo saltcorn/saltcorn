@@ -331,7 +331,7 @@ class WorkflowStep {
         linkLines.push(
           `  _Start-- <i class="fas fa-plus add-btw-nodes btw-nodes-${0}-${
             step.name
-          }"></i> ---${step.mmname}`
+          }"></i> --- ${step.mmname}`
         );
       if (stepNames.includes(step.next_step as string)) {
         linkLines.push(
