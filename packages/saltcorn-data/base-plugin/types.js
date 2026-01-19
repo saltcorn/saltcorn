@@ -2614,7 +2614,42 @@ const bool = {
       isEdit: true,
       description:
         "Edit with Thumb up/down for True, False and Null (missing) values",
+      configFields: [
+        {
+          name: "icons",
+          label: "Icons",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["Thumb", "Arrow", "Caret", "Smile", "Check"],
+          },
+        },
+      ],
       run: (nm, v, attrs, cls, required, field) => {
+        let yes, no;
+        switch (attrs.icons) {
+          case "Arrow":
+            yes = i({ class: "fas fa-arrow-up" });
+            no = i({ class: "fas fa-arrow-down" });
+            break;
+          case "Caret":
+            yes = i({ class: "fas fa-caret-up" });
+            no = i({ class: "fas fa-caret-down" });
+            break;
+          case "Smile":
+            yes = i({ class: "far fa-smile" });
+            no = i({ class: "far fa-frown" });
+            break;
+          case "Check":
+            yes = i({ class: "fas fa-check" });
+            no = i({ class: "fas fa-times" });
+            break;
+
+          default:
+            yes = i({ class: "far fa-thumbs-up" });
+            no = i({ class: "far fa-thumbs-down" });
+            break;
+        }
         return (
           input({
             type: "hidden",
@@ -2635,7 +2670,7 @@ const bool = {
 
                 id: `trib${text_attr(nm)}`,
               },
-              i({ class: "far fa-thumbs-up" })
+              yes
             ),
             button(
               {
@@ -2645,7 +2680,7 @@ const bool = {
 
                 id: `trib${text_attr(nm)}`,
               },
-              i({ class: "far fa-thumbs-down" })
+              no
             )
           )
         );
