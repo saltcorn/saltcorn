@@ -2610,6 +2610,47 @@ const bool = {
                   : attrs?.false_label || "F"
             ),
     },
+    thumbs_up_down: {
+      isEdit: true,
+      description:
+        "Edit with Thumb up/down for True, False and Null (missing) values",
+      run: (nm, v, attrs, cls, required, field) => {
+        return (
+          input({
+            type: "hidden",
+            "data-fieldname": text_attr(field.name),
+            name: attrs.isFilter ? undefined : text_attr(nm),
+            onChange: attrs.onChange,
+            "data-postprocess": `it=='on'?true:it=='off'?false:null`,
+            id: `input${text_attr(nm)}`,
+            value: !isdef(v) || v === null ? "?" : v ? "on" : "off",
+          }) +
+          div(
+            { class: "btn-group" },
+            button(
+              {
+                onClick: `thumbsUpDownClick(this, ${JSON.stringify(required)})`,
+                type: "button",
+                class: `btn btn-xs btn-${v === true ? "" : "outline-"}success thumbsup`,
+
+                id: `trib${text_attr(nm)}`,
+              },
+              i({ class: "far fa-thumbs-up" })
+            ),
+            button(
+              {
+                onClick: `thumbsUpDownClick(this, ${JSON.stringify(required)})`,
+                type: "button",
+                class: `btn btn-xs btn-${v === false ? "" : "outline-"}danger thumbsdown`,
+
+                id: `trib${text_attr(nm)}`,
+              },
+              i({ class: "far fa-thumbs-down" })
+            )
+          )
+        );
+      },
+    },
   },
   /** @type {object[]} */
   attributes: [],

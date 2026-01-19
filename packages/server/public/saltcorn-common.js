@@ -1989,6 +1989,51 @@ function tristateClick(e, required) {
   }
 }
 
+function thumbsUpDownClick(e, required) {
+  const clicked_btn = $(e);
+  const container = clicked_btn.parent();
+  const input = container.prev();
+  const btn_up = container.find("button.thumbsup");
+  const btn_down = container.find("button.thumbsdown");
+  const current = input.val();
+  const set_to = (val) => {
+    switch (val) {
+      case true:
+        btn_up.addClass("btn-success").removeClass("btn-outline-success");
+        btn_down.removeClass("btn-danger").addClass("btn-outline-danger");
+        input.val("on").trigger("change");
+        break;
+      case false:
+        btn_up.removeClass("btn-success").addClass("btn-outline-success");
+        btn_down.addClass("btn-danger").removeClass("btn-outline-danger");
+        input.val("off").trigger("change");
+        break;
+      default:
+        btn_up.removeClass("btn-success").addClass("btn-outline-success");
+        btn_down.removeClass("btn-danger").addClass("btn-outline-danger");
+        input.val("?").trigger("change");
+        break;
+    }
+  };
+  if (clicked_btn.hasClass("thumbsup"))
+    switch (current) {
+      case "?":
+      case "off":
+        return set_to(true);
+      case "on":
+        return set_to(null);
+    }
+  // thumbs down clicked
+  else
+    switch (current) {
+      case "?":
+      case "on":
+        return set_to(false);
+      case "off":
+        return set_to(null);
+    }
+}
+
 function getIsNode() {
   try {
     return typeof parent?.saltcorn?.data?.state === "undefined";
