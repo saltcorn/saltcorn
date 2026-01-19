@@ -1661,14 +1661,41 @@ module.exports = {
         },
       ];
     },
-    run: async ({ row, user, configuration: { nav_action, url }, req }) => {
-      let url1 = interpolate(url, row, user, "navigate URL");
-
+    run: async ({
+      row,
+      user,
+      configuration: { nav_action, url, state_formula, new_tab, view, page },
+      req,
+    }) => {
+      let qs = "";
+      if (["Go to Page", "Go to View"].includes(nav_action) && state_formula) {
+        const new_state = eval_expression(
+          state_formula,
+          row || {},
+          user,
+          "navigate state formula"
+        );
+        qs = "?" + objectToQueryString(new_state);
+      }
       switch (nav_action) {
         case "Go to URL":
-          return { goto: url1 };
+          return {
+            goto: interpolate(url, row, user, "navigate URL"),
+            ...(new_tab ? { target: "_blank" } : {}),
+          };
+        case "Go to Page":
+          return {
+            goto: `/page/${page}${qs}`,
+            ...(new_tab ? { target: "_blank" } : {}),
+          };
+        case "Go to View":
+          return {
+            goto: `/view/${view}${qs}`,
+            ...(new_tab ? { target: "_blank" } : {}),
+          };
+
         case "Popup modal":
-          return { popup: url1 };
+          return { popup: interpolate(url, row, user, "navigate URL") };
         case "Back":
           return {
             eval_js: isWeb(req)
