@@ -563,7 +563,12 @@ const getWorkflowStepUserForm = async (
           (field as FieldRepeat).metadata.rows = form.values[field.name];
       }
     }
-  
+
+    if (view?.attributes?.popup_width)
+      form.popup_width = `${view.attributes?.popup_width}${
+        view!.attributes?.popup_width_units || "px"
+      }`;
+
     return form;
   }
 

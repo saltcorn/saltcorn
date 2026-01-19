@@ -1834,6 +1834,7 @@ router.get(
       const title =
         step.configuration?.popup_title ||
         (run.wait_info.output ? "Workflow output" : "Fill form");
+      if (form.popup_width) res.set("SaltcornModalWidth", form.popup_width);
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } catch (e) {
       console.error(e);
