@@ -2,6 +2,8 @@
 
 ## 1.5.0 - In development
 
+* thumbs_up_down fieldview for booleans fields, as an alternative to tristate
+
 * Workflow EditViewForm previously ignored the response variable setting for writing data. This is now correctly used to set the data to a context variable. If you use the EditViewForm, this is will likely break your workflow.
 
 * Workflow EditViewForm steps can now be used with Edit-in-Edit (An Edit view with an embedded Edit view based on a child). Uee this to allow the user to edit arrays in a workflow context.

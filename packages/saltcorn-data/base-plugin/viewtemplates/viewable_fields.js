@@ -1511,7 +1511,7 @@ const standardLayoutRowVisitor = (viewname, state, table, row, req) => {
   const fields = table.fields;
 
   const evalMaybeExpr = (segment, key, fmlkey) => {
-    if (segment.isFormula && segment.isFormula[fmlkey || key]) {
+    if (segment.isFormula && segment.isFormula[fmlkey || key] && segment[key]) {
       segment[key] = eval_expression(
         segment[key],
         { session_id, locale, ...row },

@@ -13,6 +13,8 @@ import View from "./view";
 import Table from "./table";
 import Expression from "./expression";
 import FieldRepeat from "./fieldrepeat";
+import tags from "@saltcorn/markup/tags";
+const { a } = tags;
 const { jsIdentifierValidator } = require("../utils");
 
 const { eval_expression, get_async_expression_function } = Expression;
@@ -331,7 +333,7 @@ class WorkflowStep {
         linkLines.push(
           `  _Start-- <i class="fas fa-plus add-btw-nodes btw-nodes-${0}-${
             step.name
-          }"></i> ---${step.mmname}`
+          }"></i> --- ${step.mmname}`
         );
       if (stepNames.includes(step.next_step as string)) {
         linkLines.push(
@@ -488,7 +490,14 @@ class WorkflowStep {
       type: "String",
       required: true,
       sublabel:
-        "Edit view should have a Save button. Other actions and edit view settings will be ignored.",
+        "Edit view should have a Save button. Other actions and edit view settings will be ignored. " +
+        a(
+          {
+            "data-dyn-href": `\`/viewedit/config/\${edit_view}\``,
+            target: "_blank",
+          },
+          "Configure"
+        ),
       attributes: {
         options: (await View.find({ viewtemplate: "Edit" })).map((t) => t.name),
       },
@@ -702,7 +711,7 @@ class WorkflowStep {
                 "Multiple checks",
                 "Integer",
                 "Float",
-                "Date"
+                "Date",
                 //"File upload",
               ],
             },
@@ -721,7 +730,6 @@ class WorkflowStep {
             sublabel: "Do not ask for time",
             showIf: { qtype: ["Date"] },
           },
-
         ],
       })
     );
