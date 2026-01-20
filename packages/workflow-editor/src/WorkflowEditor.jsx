@@ -22,7 +22,7 @@ const handleStyle = {
 const StartNode = ({ data }) => (
   <div className="wf-start-node">
     <div className="wf-start-title">{data.strings.start}</div>
-    <div className="wf-start-actions">
+    {/* <div className="wf-start-actions">
       <button
         className="btn btn-sm btn-light"
         onClick={(e) => {
@@ -32,7 +32,7 @@ const StartNode = ({ data }) => (
       >
         {data.strings.addStep}
       </button>
-    </div>
+    </div> */}
     <Handle
       style={handleStyle}
       id="start"
@@ -106,11 +106,6 @@ const StepNode = ({ data }) => {
           <div className="wf-node__title">{data.name}</div>
           <div className="wf-node__action">{data.action_name}</div>
         </div>
-        <div className="wf-node__chips">
-          {data.initial_step ? (
-            <span className="badge bg-primary">{data.strings.start}</span>
-          ) : null}
-        </div>
       </div>
       {summaryLines.length ? (
         <ul className="wf-node__summary">
@@ -125,18 +120,18 @@ const StepNode = ({ data }) => {
           {data.only_if}
         </div>
       ) : null}
-      {data.next_step ? (
+      {/* {data.next_step ? (
         <div className="wf-node__meta">
           <span className="wf-label">{data.strings.nextStep}:</span>{" "}
           {data.next_step}
         </div>
-      ) : null}
-      {data.isLoop && data.loop_body_initial_step ? (
+      ) : null} */}
+      {/* {data.isLoop && data.loop_body_initial_step ? (
         <div className="wf-node__meta">
           <span className="wf-label">{data.strings.loopBody}:</span>{" "}
           {data.loop_body_initial_step}
         </div>
-      ) : null}
+      ) : null} */}
       <Handle style={handleStyle} type="target" position={Position.Left} />
       <Handle
         style={handleStyle}
@@ -189,15 +184,45 @@ const buildGraph = (
     nameById[String(s.id)] = s.name;
   });
 
+  const allStepNames = steps.map((s) => s.name).filter(Boolean);
+
+  const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const extractNextStepNames = (rawNextStep) => {
+    if (!rawNextStep) return [];
+    const trimmed = String(rawNextStep).trim();
+
+    // Simple case: next_step is directly a step name
+    if (idByName[trimmed]) return [trimmed];
+
+    // Expression case: find all step names referenced in the expression
+    const expr = trimmed;
+    const hits = new Set();
+    allStepNames.forEach((name) => {
+      if (!name) return;
+      try {
+        const re = new RegExp(`\\b${escapeRegExp(name)}\\b`);
+        if (re.test(expr)) hits.add(name);
+      } catch (e) {
+        // Fallback: simple substring match if regex construction fails
+        if (expr.includes(name)) hits.add(name);
+      }
+    });
+    return [...hits];
+  };
+
   const initial = steps.find((s) => s.initial_step);
   const loopBackLinks = findLoopBackLinks(steps);
 
   const adjacency = new Map();
   steps.forEach((s) => {
     const targets = [];
-    if (s.next_step && idByName[s.next_step])
-      targets.push(idByName[s.next_step]);
-    adjacency.set(String(s.id), targets);
+    const nextNames = extractNextStepNames(s.next_step);
+    nextNames.forEach((name) => {
+      const id = idByName[name];
+      if (id) targets.push(id);
+    });
+    adjacency.set(String(s.id), [...new Set(targets)]);
   });
 
   const depths = {};
@@ -331,14 +356,17 @@ const buildGraph = (
 
   steps.forEach((step) => {
     if (step.next_step) {
-      const targetId = idByName[step.next_step];
-      edges.push({
-        id: `e-${step.id}-${step.next_step}`,
-        source: String(step.id),
-        target: targetId || String(step.id),
-        type: "smoothstep",
-        animated: true,
-        data: { missing: !targetId },
+      const nextNames = extractNextStepNames(step.next_step);
+      nextNames.forEach((name) => {
+        const targetId = idByName[name];
+        if (!targetId) return;
+        edges.push({
+          id: `e-${step.id}-${name}`,
+          source: String(step.id),
+          target: targetId,
+          type: "smoothstep",
+          animated: true,
+        });
       });
     }
     if (step.action_name === "ForLoop") {
@@ -380,7 +408,8 @@ const buildGraph = (
 
   const addNodes = [];
   steps.forEach((step) => {
-    if (step.next_step || loopBackLinks[step.name]) return;
+    const hasNextTargets = extractNextStepNames(step.next_step).length > 0;
+    if (hasNextTargets || loopBackLinks[step.name]) return;
     const basePos = nodePositions[String(step.id)] || { x: 0, y: 0 };
     const addId = `add-${step.id}`;
     addNodes.push({
@@ -548,7 +577,6 @@ const WorkflowEditor = ({ data }) => {
 
   const persistPositions = useCallback(
     async (positions = []) => {
-      console.log("Persisting positions", positions);
       if (!positions.length) return;
       try {
         setSavingPositions(true);

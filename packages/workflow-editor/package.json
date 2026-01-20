@@ -6,6 +6,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "builddev": "webpack --mode none",
+    "watch": "webpack --mode none --watch",
     "test": "echo \"NO TESTS\""
   },
   "repository": "github:saltcorn/saltcorn",
