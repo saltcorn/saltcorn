@@ -1367,8 +1367,8 @@ export function modifyXcodeProjectFile(
       fileContent = fileContent.replace(targetCfgBlock, newCfgBlock);
     }
   }
-  fileContent = fileContent.replace(
-    /MARKETING_VERSION = 1.0;/,
+  fileContent = fileContent.replaceAll(
+    /MARKETING_VERSION = 1.0;/g,
     `MARKETING_VERSION = ${appVersion};`
   );
   writeFileSync(projectFile, fileContent, "utf8");
