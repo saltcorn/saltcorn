@@ -100,12 +100,15 @@
   background: linear-gradient(135deg, #0d6efd, #5ab2ff);
   color: #fff;
   box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
-  min-width: 140px;
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .wf-start-title {
   font-weight: 700;
-  margin-bottom: 6px;
 }
 
 .wf-start-actions button {

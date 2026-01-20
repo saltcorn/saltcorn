@@ -145,10 +145,7 @@ const workflowStrings = (req, trigger) => ({
 const getWorkflowEditorData = async (req, trigger, stepsIn) => {
   let steps =
     stepsIn ||
-    (await WorkflowStep.find(
-      { trigger_id: trigger.id },
-      { orderBy: "id" }
-    ));
+    (await WorkflowStep.find({ trigger_id: trigger.id }, { orderBy: "id" }));
   const initial_step = steps.find((step) => step.initial_step);
   if (initial_step)
     steps = [initial_step, ...steps.filter((s) => !s.initial_step)];
@@ -699,17 +696,33 @@ router.post(
   "/workflow/connect/:trigger_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
+    console.log("POST /workflow/connect/:trigger_id");
     const { trigger_id } = req.params;
     const { step_id, next_step, initial_step, loop_body_step } = req.body || {};
     const stepId = step_id ? +step_id : null;
     const step = await WorkflowStep.findOne({ id: stepId, trigger_id });
     if (!step) return res.status(404).json({ error: "Step not found" });
+    const allSteps = await WorkflowStep.find({ trigger_id });
+    const previouslyInitial = allSteps.find(
+      (s) => s.initial_step && s.id !== step.id
+    );
     const updateRow = {};
     if (typeof next_step !== "undefined")
       updateRow.next_step = next_step || null;
     if (initial_step !== undefined)
       updateRow.initial_step = initial_step === "true" || initial_step === true;
-    if (typeof loop_body_step !== "undefined" && step.action_name === "ForLoop") {
+    if (
+      updateRow.initial_step === true &&
+      previouslyInitial &&
+      typeof updateRow.next_step === "undefined" &&
+      !step.next_step
+    ) {
+      updateRow.next_step = previouslyInitial.name;
+    }
+    if (
+      typeof loop_body_step !== "undefined" &&
+      step.action_name === "ForLoop"
+    ) {
       updateRow.configuration = {
         ...step.configuration,
         loop_body_initial_step: loop_body_step || "",
@@ -1611,6 +1624,12 @@ router.post(
     const existingStep = wf_step_id
       ? await WorkflowStep.findOne({ id: wf_step_id, trigger_id })
       : null;
+    const stepsForTrigger = await WorkflowStep.find({ trigger_id });
+    const previouslyInitial = existingStep
+      ? stepsForTrigger.find(
+          (s) => s.initial_step && s.id !== existingStep.id
+        )
+      : stepsForTrigger.find((s) => s.initial_step);
     Object.entries(configuration).forEach(([k, v]) => {
       if (v === null) delete configuration[k];
     });
@@ -1628,6 +1647,14 @@ router.post(
         const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
 
         await wfStep.update(step);
+        if (
+          wf_initial_step &&
+          previouslyInitial &&
+          previouslyInitial.id !== wfStep.id &&
+          !wfStep.next_step
+        ) {
+          await wfStep.update({ next_step: previouslyInitial.name });
+        }
         if (req.xhr) res.json({ success: "ok" });
         else {
           req.flash("success", req.__("Step saved"));
@@ -1637,6 +1664,11 @@ router.post(
         //insert
 
         const id = await WorkflowStep.create(step);
+        if (wf_initial_step && previouslyInitial && !step.next_step) {
+          const newStep = await WorkflowStep.findOne({ id, trigger_id });
+          if (newStep && !newStep.next_step)
+            await newStep.update({ next_step: previouslyInitial.name });
+        }
         if (req.xhr)
           res.json({ success: "ok", set_fields: { wf_step_id: id } });
         else {
