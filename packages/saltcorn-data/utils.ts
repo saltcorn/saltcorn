@@ -469,7 +469,7 @@ const interpolate = (
         interpolate: /\{\{!(.+?)\}\}/g,
         escape: /\{\{([^!].+?)\}\}/g,
       });
-      return template({ row, user, ...(row || {}) });
+      return template({ row, user, process: undefined, ...(row || {}) });
     } else return s;
   } catch (e: any) {
     e.message = `In evaluating the interpolation ${s}${
@@ -564,8 +564,12 @@ const flatEqual = (a: any, b: any) => {
   return true;
 };
 
-const jsIdentifierValidator = (s: string) => {
-  if (!s) return "An identifier is required";
+const jsIdentifierValidator = (
+  s: string,
+  _: any,
+  field?: { required: boolean }
+) => {
+  if (!s && field?.required) return "An identifier is required";
   if (s.includes(" ")) return "Spaces not allowd";
   let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
     .split("")

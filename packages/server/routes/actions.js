@@ -577,7 +577,10 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   }
   return (
     copilot_form +
-    pre({ class: "mermaid workflow-config" }, WorkflowStep.generate_diagram(steps)) +
+    pre(
+      { class: "mermaid workflow-config" },
+      WorkflowStep.generate_diagram(steps)
+    ) +
     script(
       { defer: "defer" },
       `function tryAddWFNodes() {
@@ -1826,11 +1829,12 @@ router.get(
       name: run.current_step_name,
     });
     try {
-      const form = await getWorkflowStepUserForm(run, trigger, step, req);
+      const form = await getWorkflowStepUserForm(run, trigger, step, req, res);
       if (req.xhr) form.xhrSubmit = true;
       const title =
         step.configuration?.popup_title ||
         (run.wait_info.output ? "Workflow output" : "Fill form");
+      if (form.popup_width) res.set("SaltcornModalWidth", form.popup_width);
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } catch (e) {
       console.error(e);
@@ -1890,7 +1894,7 @@ router.post(
       name: run.current_step_name,
     });
 
-    const form = await getWorkflowStepUserForm(run, trigger, step, req);
+    const form = await getWorkflowStepUserForm(run, trigger, step, req, res);
     form.validate(req.body || {});
     if (form.hasErrors) {
       const title = "Fill form";
@@ -1900,7 +1904,10 @@ router.post(
         getState().getConfig("enable_dynamic_updates") &&
         req.headers["page-load-tag"] &&
         req.xhr;
-      await run.provide_form_input(form.values);
+      await run.provide_form_input(
+        form.values,
+        step.configuration.response_variable
+      );
       const promise = run.run({
         user: req.user,
         trace: trigger.configuration?.save_traces,

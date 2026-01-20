@@ -227,7 +227,7 @@ describe("calculated", () => {
     } catch (e: any) {
       error = e;
     }
-    expect(error.constructor.name).toBe("ReferenceError");
+    expect(error.constructor.name).toContain("Error");
   });
   it("stored existing", async () => {
     const table = await Table.create("withcalcs3");

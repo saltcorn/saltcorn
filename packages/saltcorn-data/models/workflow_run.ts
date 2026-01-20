@@ -170,9 +170,13 @@ class WorkflowRun {
     Object.assign(this, useRow);
   }
 
-  async provide_form_input(form_values: any) {
+  async provide_form_input(form_values: any, response_variable?: string) {
     //write values
-    Object.assign(this.context, form_values);
+    if (response_variable) {
+      if (!this.context[response_variable])
+        this.context[response_variable] = {};
+      Object.assign(this.context[response_variable], form_values);
+    } else Object.assign(this.context, form_values);
 
     this.wait_info.form = false;
     this.wait_info.output = false;

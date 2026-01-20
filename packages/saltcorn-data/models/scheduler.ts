@@ -9,6 +9,7 @@ import db from "../db";
 const { getState } = require("../db/state");
 import fetch from "node-fetch";
 import EventLog from "./eventlog";
+import Table from "./table";
 import mocks from "../tests/mocks";
 import WorkflowRun from "./workflow_run";
 import Notification from "./notification";
@@ -270,7 +271,10 @@ const runScheduler = async ({
           await take_snapshot();
         }
         await WorkflowRun.runResumableWorkflows();
-        if (isDaily) await WorkflowRun.prune();
+        if (isDaily) {
+          await WorkflowRun.prune();
+          await Table.analyze_all_indexed_tables();
+        }
       } catch (e) {
         console.error(`scheduler error in tenant ${db.getTenantSchema()}: `, e);
         if (db.getTenantSchema() === db.connectObj.default_schema)

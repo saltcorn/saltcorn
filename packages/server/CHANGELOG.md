@@ -2,7 +2,22 @@
 
 ## 1.5.0 - In development
 
-* Builder: set the horizontal aligment and background colour or background image of cards. 
+* Workflow EditViewForm previously ignored the response variable setting for writing data. This is now correctly used to set the data to a context variable. If you use the EditViewForm, this is will likely break your workflow.
+
+* Workflow EditViewForm steps can now be used with Edit-in-Edit (An Edit view with an embedded Edit view based on a child). Uee this to allow the user to edit arrays in a workflow context.
+
+* `copy_to_clipboard action, based on interpolations.
+
+* The SQL `ANALYZE` command is now run daily on ever table that contains an index.
+
+* A new docker image has all available modules pre-installed. This allows you to build application completely isolated from the internet. 
+
+* Ability to run asynchronous code in code pages. Use this for instance to set constants in the global environment from database tables
+
+* Builder: 
+    - set the horizontal aligment and background colour or background image of cards. 
+    - Embed pages in Filter and Show views (previously only in other pages). 
+    - Option to apply select2, if installed as a module, to drop down filters.
 
 * The option to store files in S3-compatible services instead of on local disk is now working again. 
 
@@ -10,7 +25,10 @@
 
 * Improved code editor based on Monaco, with intellisense autocomplete. This is also applied to some one-line formula inputs
 
-* Mobile applications: upgrade to capacitor 7. 
+* Mobile applications: 
+    - upgrade to capacitor 7. Node 20+ is now required to build mobile application
+    - Push/Periodic sync option: option to sync on-device tables periodically or with server push as the data changes
+    - Field level conflict resolution on sync
 
 * Support for RTL languages. Currently works with sb-admin2 and material-design themes. 
 
@@ -33,6 +51,8 @@
 * Files can now be uploaded with the Save form_action button
 
 * Show-if expressions in menu items and page containers
+
+### Security
 
 ## 1.4.1 - Released 19 November 2025
 

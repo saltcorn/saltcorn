@@ -1038,10 +1038,23 @@ function doMobileTransforms() {
   );
 }
 
-function validate_expression_elem(target) {
+/**
+ * @param {any|string} targetOrVal either the target or the string to validate
+ * @param {any} ref the target when targetOrVal is a string (see builder/MonacoEditor)
+ */
+function validate_expression_elem(targetOrVal, ref = null) {
+  let val = null;
+  let target = null;
+  if (typeof targetOrVal === "string") {
+    val = targetOrVal;
+    target = $(ref);
+  } else {
+    target = targetOrVal;
+    val = target.val();
+  }
+
   const next = target.next();
   if (next.hasClass("expr-error")) next.remove();
-  const val = target.val();
   if (target.hasClass("validate-expression-conditional")) {
     const box = target
       .closest(".form-namespace")
@@ -1313,7 +1326,7 @@ function initialize_page() {
     codes.push(this);
   });
   if (codes.length > 0)
-    enable_monaco({ textarea: codes[0] }, (ts_ds) => {
+    enable_monaco(codes, (ts_ds) => {
       codes.forEach((el) => {
         if ($(el).hasClass("monaco-enabled")) return;
         $(el).addClass("monaco-enabled");
@@ -1386,7 +1399,11 @@ ${value}`;
           allowNonTsExtensions: true,
         });
         monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
-
+        // Observe the container for changes
+        const resizeObserver = new ResizeObserver((entries) => {
+          editor.layout();
+        });
+        resizeObserver.observe(el.parentNode);
         if (isExpression) {
           // hide prefix line
           editor.setHiddenAreas([
@@ -1885,7 +1902,8 @@ function enable_codemirror(f) {
 let monaco_enabled_declares = false;
 const monaco_init_queue = [];
 
-function enable_monaco({ textarea }, f) {
+function enable_monaco(codes, f) {
+  const textarea = codes[0];
   if (monaco_enabled_declares === "initializing") {
     monaco_init_queue.push(f);
     return;
@@ -1901,10 +1919,16 @@ function enable_monaco({ textarea }, f) {
     href: `/static_assets/${_sc_version_tag}/monaco/editor/editor.main.css`,
   }).appendTo("head");
   const tableName = $(textarea).attr("tableName");
-  const hasUser = $(textarea).attr("user");
+  const hasUser = codes
+    .find((c) => c.getAttribute("user"))
+    ?.getAttribute?.("user");
+  const isWorkflow = codes
+    .find((c) => c.getAttribute("workflow"))
+    ?.getAttribute?.("workflow");
   const codepage = $(textarea).attr("codepage");
+
   $.ajax({
-    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}`,
+    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}&${isWorkflow ? `workflow=${isWorkflow}` : ""}`,
     success: (ds) => {
       $.ajax({
         url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,
@@ -1963,6 +1987,51 @@ function tristateClick(e, required) {
       }
       break;
   }
+}
+
+function thumbsUpDownClick(e, required) {
+  const clicked_btn = $(e);
+  const container = clicked_btn.parent();
+  const input = container.prev();
+  const btn_up = container.find("button.thumbsup");
+  const btn_down = container.find("button.thumbsdown");
+  const current = input.val();
+  const set_to = (val) => {
+    switch (val) {
+      case true:
+        btn_up.addClass("btn-success").removeClass("btn-outline-success");
+        btn_down.removeClass("btn-danger").addClass("btn-outline-danger");
+        input.val("on").trigger("change");
+        break;
+      case false:
+        btn_up.removeClass("btn-success").addClass("btn-outline-success");
+        btn_down.addClass("btn-danger").removeClass("btn-outline-danger");
+        input.val("off").trigger("change");
+        break;
+      default:
+        btn_up.removeClass("btn-success").addClass("btn-outline-success");
+        btn_down.removeClass("btn-danger").addClass("btn-outline-danger");
+        input.val("?").trigger("change");
+        break;
+    }
+  };
+  if (clicked_btn.hasClass("thumbsup"))
+    switch (current) {
+      case "?":
+      case "off":
+        return set_to(true);
+      case "on":
+        if (!required) return set_to(null);
+    }
+  // thumbs down clicked
+  else
+    switch (current) {
+      case "?":
+      case "on":
+        return set_to(false);
+      case "off":
+        if (!required) return set_to(null);
+    }
 }
 
 function getIsNode() {

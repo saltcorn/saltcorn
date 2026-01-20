@@ -41,6 +41,7 @@ type FieldLikeBasics = {
   attributes?: GenObj;
   showIf?: { [field_name: string]: string | boolean | string[] };
   isRepeat?: boolean;
+  tstype?: string;
 };
 type FieldLikeWithSelectInputType = {
   input_type: "select";
@@ -369,7 +370,7 @@ export type RouteAction = (
 export type PluginFunction = {
   run: (...arg0: any[]) => any;
   returns?: string;
-  arguments?: string[];
+  arguments?: string[] | FieldLike[];
   isAsync?: boolean;
 };
 

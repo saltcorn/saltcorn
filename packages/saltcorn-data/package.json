@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "1.5.0-beta.18",
+  "version": "1.5.0-rc.1",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -37,15 +37,15 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "optionalDependencies": {
-    "@saltcorn/postgres": "1.5.0-beta.18",
-    "@saltcorn/sqlite": "1.5.0-beta.18"
+    "@saltcorn/postgres": "1.5.0-rc.1",
+    "@saltcorn/sqlite": "1.5.0-rc.1"
   },
   "dependencies": {
-    "@saltcorn/types": "1.5.0-beta.18",
-    "@saltcorn/markup": "1.5.0-beta.18",
-    "@saltcorn/common-code": "1.5.0-beta.18",
-    "@saltcorn/db-common": "1.5.0-beta.18",
-    "@saltcorn/sqlite-mobile": "1.5.0-beta.18",
+    "@saltcorn/types": "1.5.0-rc.1",
+    "@saltcorn/markup": "1.5.0-rc.1",
+    "@saltcorn/common-code": "1.5.0-rc.1",
+    "@saltcorn/db-common": "1.5.0-rc.1",
+    "@saltcorn/sqlite-mobile": "1.5.0-rc.1",
     "@saltcorn/plain-date": "0.2.5",
     "acorn": "^8.14.0",
     "apns2": "11.8.0",
@@ -95,7 +95,7 @@
     "browserify-zlib": "0.2.0",
     "nodemailer": "^6.10.0",
     "mjml": "5.0.0-alpha.6",
-    "underscore": "^1.13.1",
+    "underscore": "1.13.7",
     "unidecode": "1.1.0",
     "tough-cookie": "2.5.0",
     "xml2js": "0.6.2"
