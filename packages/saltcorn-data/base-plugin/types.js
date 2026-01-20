@@ -1709,18 +1709,19 @@ const int = {
       ],
       isEdit: false,
       blockDisplay: true,
-      run: (v, req, attrs = {}) =>
-        div(
+      run: (v, req, attrs = {}) => {
+        return div(
           Array.from(
-            { length: attrs.max - attrs.min + 1 },
-            (_, i) => i + attrs.min
+            { length: +attrs.max - +attrs.min + 1 },
+            (_, i) => i + +attrs.min
           ).map((starVal) =>
             i({
               class: "fas fa-star",
               style: { color: starVal <= v ? "#ffc107" : "#ddd" },
             })
           )
-        ),
+        );
+      },
     },
     edit_star_rating: {
       description: "Input by clicking filled stars out of maximum.",
@@ -1750,8 +1751,8 @@ const int = {
         return div(
           { class: "editStarRating" },
           Array.from(
-            { length: attrs.max - attrs.min + 1 },
-            (_, i) => attrs.max - i
+            { length: +attrs.max - +attrs.min + 1 },
+            (_, i) => +attrs.max - i
           ).map(
             (starVal) =>
               input({
