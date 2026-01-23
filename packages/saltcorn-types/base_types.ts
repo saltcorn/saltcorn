@@ -507,7 +507,7 @@ export type AuthenticationMethod = {
   strategy: any;
 };
 export type TableProvider = {
-  configuration_workflow: (req: Req) => AbstractWorkflow;
+  configuration_workflow: (req?: Req) => AbstractWorkflow;
   fields: (cfg: GenObj) => Promise<Array<FieldLike>>;
   get_table: (cfg: GenObj) => Partial<AbstractTable>;
 };
