@@ -1659,12 +1659,26 @@ module.exports = {
           type: "Bool",
           showIf: { nav_action: ["Go to URL", "Go to Page", "Go to View"] },
         },
+        {
+          name: "in_popup",
+          label: "Open in popup modal",
+          type: "Bool",
+          showIf: { nav_action: ["Go to URL", "Go to Page", "Go to View"] },
+        },
       ];
     },
     run: async ({
       row,
       user,
-      configuration: { nav_action, url, state_formula, new_tab, view, page },
+      configuration: {
+        nav_action,
+        url,
+        state_formula,
+        new_tab,
+        view,
+        page,
+        in_popup,
+      },
       req,
     }) => {
       let qs = "";
@@ -1677,20 +1691,22 @@ module.exports = {
         );
         qs = "?" + objectToQueryString(new_state);
       }
+      const kgoto = in_popup ? "popup" : "goto";
+
       switch (nav_action) {
         case "Go to URL":
           return {
-            goto: interpolate(url, row, user, "navigate URL"),
+            [kgoto]: interpolate(url, row, user, "navigate URL"),
             ...(new_tab ? { target: "_blank" } : {}),
           };
         case "Go to Page":
           return {
-            goto: `/page/${page}${qs}`,
+            [kgoto]: `/page/${page}${qs}`,
             ...(new_tab ? { target: "_blank" } : {}),
           };
         case "Go to View":
           return {
-            goto: `/view/${view}${qs}`,
+            [kgoto]: `/view/${view}${qs}`,
             ...(new_tab ? { target: "_blank" } : {}),
           };
 
