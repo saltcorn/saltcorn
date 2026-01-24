@@ -140,6 +140,7 @@ class BuildAppCommand extends Command {
         showContinueAsPublicUser: flags.showContinueAsPublicUser,
         allowOfflineMode: flags.allowOfflineMode,
         syncOnReconnect: flags.syncOnReconnect,
+        syncOnAppResume: flags.syncOnAppResume,
         pushSync: flags.pushSync,
         syncInterval: flags.syncInterval,
         allowShareTo: flags.allowShareTo,
@@ -326,6 +327,12 @@ BuildAppCommand.flags = {
     description:
       "Run Synchronizations and return into online mode when the network connection is restored. " +
       "When disabled, you still can do this manually.",
+  }),
+  syncOnAppResume: Flags.boolean({
+    name: "Sync on app resume",
+    string: "syncOnAppResume",
+    description:
+      "When offline mode is enabled, synchronize the synchedTables tables when the app is resumed.",
   }),
   pushSync: Flags.boolean({
     name: "Push sync",

@@ -211,18 +211,23 @@ const showErrorPage = async (error) => {
 const onResume = async () => {
   if (typeof saltcorn === "undefined") return;
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
-  if (mobileConfig?.allowOfflineMode) {
+  if (mobileConfig?.allowOfflineMode && mobileConfig.jwt) {
     const netStatus = await Network.getStatus();
     mobileConfig.networkState = netStatus.connectionType;
-    if (
-      mobileConfig.networkState === "none" &&
-      !mobileConfig.isOfflineMode &&
-      mobileConfig.jwt
-    ) {
+    if (mobileConfig.networkState === "none" && !mobileConfig.isOfflineMode) {
       try {
         await startOfflineMode();
         clearHistory();
         if (mobileConfig.user?.id) await gotoEntryView();
+      } catch (error) {
+        await showErrorPage(error);
+      }
+    } else if (
+      mobileConfig.networkState !== "none" &&
+      mobileConfig.syncOnAppResume
+    ) {
+      try {
+        await sync(false, false, []);
       } catch (error) {
         await showErrorPage(error);
       }

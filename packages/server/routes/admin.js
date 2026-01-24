@@ -3683,8 +3683,35 @@ router.get(
                             div(),
                             i(
                               req.__(
-                                "Synchronize when the internet reconnects and automatically end the offline mode. " +
-                                  "When disabled, you'll see a prompt to do it manually."
+                                "Run Synchronizations when the network connection is restored."
+                              )
+                            )
+                          )
+                        ),
+
+                        // sync when the app resumes
+                        div(
+                          { class: "row pb-2 my-2" },
+                          div(
+                            { class: "col-sm-10" },
+                            input({
+                              type: "checkbox",
+                              id: "appResumeSyncBoxId",
+                              class: "form-check-input me-2 mb-0 ",
+                              name: "syncOnAppResume",
+                              checked: builderSettings.syncOnAppResume === "on",
+                            }),
+                            label(
+                              {
+                                for: "appResumeSyncBoxId",
+                                class: "form-label fw-bold mb-0",
+                              },
+                              req.__("Sync on app resume")
+                            ),
+                            div(),
+                            i(
+                              req.__(
+                                "Run Synchronizations when the app is resumed from background."
                               )
                             )
                           )
@@ -4346,6 +4373,7 @@ router.post(
       showContinueAsPublicUser,
       allowOfflineMode,
       syncOnReconnect,
+      syncOnAppResume,
       pushSync,
       syncInterval,
       synchedTables,
@@ -4488,6 +4516,7 @@ router.post(
     if (syncInterval) spawnParams.push("--syncInterval", syncInterval);
     if (pushSync) spawnParams.push("--pushSync");
     if (syncOnReconnect) spawnParams.push("--syncOnReconnect");
+    if (syncOnAppResume) spawnParams.push("--syncOnAppResume");
     if (allowShareTo) spawnParams.push("--allowShareTo");
     if (autoPublicLogin) spawnParams.push("--autoPublicLogin");
     if (showContinueAsPublicUser)

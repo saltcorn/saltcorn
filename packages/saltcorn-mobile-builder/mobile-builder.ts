@@ -79,6 +79,7 @@ type MobileBuilderConfig = {
   showContinueAsPublicUser?: boolean;
   allowOfflineMode: string;
   syncOnReconnect: boolean;
+  syncOnAppResume: boolean;
   pushSync: boolean;
   syncInterval?: number;
   plugins: Plugin[];
@@ -119,6 +120,7 @@ export class MobileBuilder {
   showContinueAsPublicUser: boolean;
   allowOfflineMode: string;
   syncOnReconnect: boolean;
+  syncOnAppResume: boolean;
   pushSync: boolean;
   syncInterval?: number;
   backgroundSyncEnabled: boolean;
@@ -170,6 +172,7 @@ export class MobileBuilder {
     this.allowOfflineMode = cfg.allowOfflineMode;
     this.pushSync = cfg.pushSync;
     this.syncOnReconnect = cfg.syncOnReconnect;
+    this.syncOnAppResume = cfg.syncOnAppResume;
     this.syncInterval = cfg.syncInterval ? +cfg.syncInterval : undefined;
     this.backgroundSyncEnabled = !!this.syncInterval && this.syncInterval > 0;
     this.pluginManager = new PluginManager({
@@ -264,6 +267,7 @@ export class MobileBuilder {
         showContinueAsPublicUser: this.showContinueAsPublicUser,
         allowOfflineMode: this.allowOfflineMode,
         syncOnReconnect: this.syncOnReconnect,
+        syncOnAppResume: this.syncOnAppResume,
         pushSync: this.pushSync,
         syncInterval: this.syncInterval ? this.syncInterval : 0,
         allowShareTo: this.allowShareTo,
@@ -334,7 +338,7 @@ export class MobileBuilder {
       this.allowShareTo,
       this.backgroundSyncEnabled,
       this.pushSync,
-      this.allowClearTextTraffic,
+      this.allowClearTextTraffic
     );
     writeEntitlementsPlist(this.buildDir);
     runAddEntitlementsScript(this.buildDir);
