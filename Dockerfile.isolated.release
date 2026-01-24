@@ -11,7 +11,7 @@ RUN npm config set install-strategy nested  \
  && npm config set fund false                \
  && npm config set audit false
 
-RUN npm install -g @saltcorn/cli@1.5.0-rc.1 --omit=dev
+RUN npm install -g @saltcorn/cli@1.5.0-rc.2 --omit=dev
 RUN NO_DB_CONNECTION="true" saltcorn pre-install-modules all
 
 ENTRYPOINT ["/usr/local/bin/saltcorn"]

@@ -370,6 +370,21 @@ export class MobileBuilder {
     );
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);
-    modifyGradleConfig(this.buildDir, this.appVersion);
+    modifyGradleConfig(
+      this.buildDir,
+      this.appVersion,
+      this.buildType === "debug"
+        ? {
+            keystorePath: this.useDocker
+              ? this.isUnsecureKeyStore
+                ? "/saltcorn-mobile-app/unsecure-default-key.jks"
+                : join("/", "saltcorn-mobile-app", basename(this.keyStorePath))
+              : this.keyStorePath,
+            keystorePassword: this.keyStorePassword,
+            keyAlias: this.keyStoreAlias,
+            keyPassword: this.keyStorePassword,
+          }
+        : undefined
+    );
   }
 }
