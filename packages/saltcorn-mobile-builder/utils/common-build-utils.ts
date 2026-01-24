@@ -905,6 +905,40 @@ export async function buildTablesFile(
     return plugin;
   };
 
+  const filterTableFunc = async (table: any) => {
+    let result = table;
+    if (table.provider_name) {
+      const oldProviderCfg = JSON.parse(
+        JSON.stringify(table.provider_cfg || {})
+      );
+      const provider = state.table_providers[table.provider_name];
+      if (provider?.configuration_workflow) {
+        try {
+          const flow = await provider.configuration_workflow();
+          for (const step of flow?.steps || []) {
+            if (step.form) {
+              const form = await step.form(oldProviderCfg);
+              for (const field of form?.fields || []) {
+                if (
+                  field.exclude_from_mobile ||
+                  field.input_type === "password"
+                ) {
+                  delete result.provider_cfg[field.name];
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.log(
+            `Error in configuration_workflow of table provider ${table.provider_name}`
+          );
+          console.log(error);
+        }
+      }
+    }
+    return result;
+  };
+
   const filterFunc = async (table: string, rows: any) => {
     switch (table) {
       case "_sc_plugins":
@@ -921,6 +955,8 @@ export async function buildTablesFile(
             cfg && !(cfg.excludeFromMobile || cfg.input_type === "password")
           );
         });
+      case "_sc_tables":
+        return await Promise.all(rows.map(filterTableFunc));
       default:
         return rows;
     }
@@ -1187,7 +1223,16 @@ export function generateAndroidVersionCode(appVersion: string) {
   );
 }
 
-export function modifyGradleConfig(buildDir: string, appVersion: string) {
+export function modifyGradleConfig(
+  buildDir: string,
+  appVersion: string,
+  keyStoreData?: {
+    keystorePath: string;
+    keystorePassword: string;
+    keyAlias: string;
+    keyPassword: string;
+  }
+) {
   console.log("modifyGradleConfig");
   const gradleFile = join(buildDir, "android", "app", "build.gradle");
   const gradleContent = readFileSync(gradleFile, "utf8");
@@ -1195,5 +1240,34 @@ export function modifyGradleConfig(buildDir: string, appVersion: string) {
   let newGradleContent = gradleContent
     .replace(/versionName "1.0"/, `versionName "${appVersion}"`)
     .replace(/versionCode 1/, `versionCode ${versionCode}`);
+
+  if (keyStoreData) {
+    const signingConfigs = `
+    signingConfigs {
+      debug {
+        storeFile file("${keyStoreData.keystorePath}")
+        storePassword "${keyStoreData.keystorePassword}"
+        keyAlias "${keyStoreData.keyAlias}"
+        keyPassword "${keyStoreData.keyPassword}"
+      }
+  }`;
+    // add a new line with signingConfigs above     "defaultConfig {"
+    newGradleContent = newGradleContent.replace(
+      /defaultConfig \{/,
+      `${signingConfigs}
+    defaultConfig {`
+    );
+
+    const debugBuildTypesBlock = `
+    debug {
+      signingConfig signingConfigs.debug
+    }`;
+    // add the debug build type block above   "release {"
+    newGradleContent = newGradleContent.replace(
+      /release \{/,
+      `${debugBuildTypesBlock}
+    release {`
+    );
+  }
   writeFileSync(gradleFile, newGradleContent, "utf8");
 }

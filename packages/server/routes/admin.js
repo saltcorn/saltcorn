@@ -4142,12 +4142,6 @@ router.post(
           ),
         });
     }
-    if (buildType === "debug" && keystoreFile) {
-      msgs.push({
-        type: "warning",
-        text: req.__("Keystore file is not applied for debug builds."),
-      });
-    }
 
     if (
       buildType === "release" &&
