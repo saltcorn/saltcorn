@@ -908,13 +908,16 @@ export async function buildTablesFile(
   const filterTableFunc = async (table: any) => {
     let result = table;
     if (table.provider_name) {
+      const oldProviderCfg = JSON.parse(
+        JSON.stringify(table.provider_cfg || {})
+      );
       const provider = state.table_providers[table.provider_name];
       if (provider?.configuration_workflow) {
         try {
           const flow = await provider.configuration_workflow();
           for (const step of flow?.steps || []) {
             if (step.form) {
-              const form = await step.form({});
+              const form = await step.form(oldProviderCfg);
               for (const field of form?.fields || []) {
                 if (
                   field.exclude_from_mobile ||

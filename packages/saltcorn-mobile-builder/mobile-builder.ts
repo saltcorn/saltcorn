@@ -356,7 +356,7 @@ export class MobileBuilder {
             keystorePath: this.useDocker
               ? this.isUnsecureKeyStore
                 ? "/saltcorn-mobile-app/unsecure-default-key.jks"
-                : this.keyStorePath // TODO path in container ?
+                : join("/", "saltcorn-mobile-app", basename(this.keyStorePath))
               : this.keyStorePath,
             keystorePassword: this.keyStorePassword,
             keyAlias: this.keyStoreAlias,
