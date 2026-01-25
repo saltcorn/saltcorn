@@ -788,6 +788,26 @@ export function modifyAppDelegate(
     "AppDelegate.swift"
   );
   let content = readFileSync(appDelegateFile, "utf8");
+
+  // modify cusomization point after application launch
+  content = content.replace(
+    /func application\(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: \[UIApplication.LaunchOptionsKey: Any\]\?\) -> Bool {/,
+    `func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Override point for customization after application launch.
+
+       
+       ${
+         backgroundSyncEnabled
+           ? `// [capacitor-background-fetch]
+       let fetchManager = TSBackgroundFetch.sharedInstance();
+       fetchManager?.didFinishLaunching();`
+           : ""
+       }
+
+       self.window?.rootViewController?.navigationController?.interactivePopGestureRecognizer?.isEnabled = false;
+`
+  );
+
   if (backgroundSyncEnabled) {
     // add "import TSBackgroundFetch" before "@UIApplicationMain"
     content = content.replace(
@@ -795,18 +815,6 @@ export function modifyAppDelegate(
       `import TSBackgroundFetch
 
 @UIApplicationMain`
-    );
-
-    // modify cusomization point after application launch
-    content = content.replace(
-      /func application\(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: \[UIApplication.LaunchOptionsKey: Any\]\?\) -> Bool {/,
-      `func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
-        // Override point for customization after application launch.
-
-       // [capacitor-background-fetch]
-       let fetchManager = TSBackgroundFetch.sharedInstance();
-       fetchManager?.didFinishLaunching();
-        `
     );
 
     // add fetch handler at the end of the file, before the last }

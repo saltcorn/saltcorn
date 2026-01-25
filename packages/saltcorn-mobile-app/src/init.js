@@ -367,17 +367,19 @@ const getEntryPoint = (roleId, state, mobileConfig) => {
 // device is ready
 export async function init(mobileConfig) {
   try {
-    if (Capacitor.getPlatform() === "web") {
+    const platform = Capacitor.getPlatform();
+    if (platform === "web") {
       defineCustomElements(window);
       await customElements.whenDefined("jeep-sqlite");
       const jeepSqlite = document.createElement("jeep-sqlite");
       document.body.appendChild(jeepSqlite);
       await jeepSqlite.componentOnReady();
+    } else if (platform === "android") {
+      App.addListener("backButton", async ({ canGoBack }) => {
+        await saltcorn.mobileApp.navigation.goBack(1, true);
+      });
     }
-
-    App.addListener("backButton", async ({ canGoBack }) => {
-      await saltcorn.mobileApp.navigation.goBack(1, true);
-    });
+    // see navigation.js for ios
 
     App.addListener("appUrlOpen", async (event) => {
       try {
