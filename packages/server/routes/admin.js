@@ -5508,6 +5508,17 @@ admin_config_route({
       showIf: { enable_push_notify: true },
       help: { topic: "Firebase App Services" },
     },
+    { section_header: "Native iOS Mobile App" },
+    {
+      name: "apn_signing_key",
+      showIf: { enable_push_notify: true },
+      help: { topic: "APN Signing Key" },
+    },
+    {
+      name: "apn_signing_key_id",
+      showIf: { enable_push_notify: true },
+      help: { topic: "APN Signing Key ID" },
+    },
   ],
   response(form, req, res) {
     send_admin_page({
