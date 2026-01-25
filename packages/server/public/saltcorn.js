@@ -305,7 +305,8 @@ function view_post(viewnameOrElem, route, data, onDoneOrObj, sendState) {
       ? viewnameOrElem
       : $(viewnameOrElem)
           .closest("[data-sc-embed-viewname]")
-          .attr("data-sc-embed-viewname");
+          .attr("data-sc-embed-viewname") ||
+        $(viewnameOrElem).closest("form[data-viewname]").attr("data-viewname");
   last_route_viewname = viewname;
   const query = sendState1
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
