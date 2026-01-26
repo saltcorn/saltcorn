@@ -725,7 +725,7 @@ function get_form_record(e_in, select_labels) {
       if (rec[ref] != kvals[ref]) differentKeys = true;
     }
     if (!joinVals || differentKeys) {
-      $(e_in).prop("data-join-values", {});
+      //$(e_in).prop("data-join-values", {});
       const keyVals = {};
       for (const { ref, target, refTable } of joinFields) {
         if (!rec[ref]) continue;
