@@ -1,6 +1,6 @@
 # Notable changes
 
-## 1.5.0 - Released 26 November 2026
+## 1.5.0 - Released 26 January 2026
 
 * thumbs_up_down fieldview for booleans fields, as an alternative to tristate
 
@@ -57,6 +57,10 @@
 ### Security
 
 * Several [XSS vulnerabilities](https://github.com/saltcorn/saltcorn/security/advisories/GHSA-cr3w-cw5w-h3fj) were discovered by Mathis Zscheischler. These allow an attacker who can trick a logged-in administrator into clicking a malicious link to run arbitrary client-side JavaSscript, which can be exploited for session hijacking, site reconfiguration or command injection.
+
+## 1.4.2 - Released 14 January 2026
+
+Backport the security fix from 1.5.0
 
 ## 1.4.1 - Released 19 November 2025
 
