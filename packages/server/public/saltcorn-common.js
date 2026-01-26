@@ -718,46 +718,28 @@ function get_form_record(e_in, select_labels) {
   if (joinFieldsStr) {
     const joinFields = JSON.parse(decodeURIComponent(joinFieldsStr));
 
-    const joinVals = $(e_in).prop("data-join-values");
-    const kvals = $(e_in).prop("data-join-key-values") || {};
-    let differentKeys = false;
-    for (const { ref } of joinFields) {
-      if (rec[ref] != kvals[ref]) differentKeys = true;
-    }
-    if (!joinVals || differentKeys) {
-      //$(e_in).prop("data-join-values", {});
-      const keyVals = {};
-      for (const { ref, target, refTable } of joinFields) {
-        if (!rec[ref]) continue;
-        keyVals[ref] = rec[ref];
-        const url = `/api/${refTable}?id=${rec[ref]}`;
-        if (global_join_vals_cache[url] === "fetching") continue;
-        if (global_join_vals_cache[url]) {
-          const jvs = $(e_in).prop("data-join-values") || {};
+    for (const { ref, target, refTable } of joinFields) {
+      const keyval = rec[ref]?.id || rec[ref]; // TODO pk name
 
-          jvs[ref] = global_join_vals_cache[url];
-          $(e_in).prop("data-join-values", jvs);
-          apply_showif();
-          continue;
-        }
-        global_join_vals_cache[url] = "fetching";
-        $.ajax(url, {
-          success: (val) => {
-            const jvs = $(e_in).prop("data-join-values") || {};
-            global_join_vals_cache[url] = val.success[0];
-            setTimeout(() => {
-              global_join_vals_cache = {};
-            }, 2000);
-            jvs[ref] = val.success[0];
-            $(e_in).prop("data-join-values", jvs);
-            apply_showif();
-          },
-          error: checkNetworkError,
-        });
+      if (!keyval) continue;
+
+      const url = `/api/${refTable}?id=${keyval}`;
+      if (global_join_vals_cache[url] === "fetching") continue;
+      if (global_join_vals_cache[url]) {
+        rec[ref] = global_join_vals_cache[url];
+        continue;
       }
-      $(e_in).prop("data-join-key-values", keyVals);
-    } else if (joinFieldsStr) {
-      Object.assign(rec, joinVals);
+      global_join_vals_cache[url] = "fetching";
+      $.ajax(url, {
+        success: (val) => {
+          global_join_vals_cache[url] = val.success[0];
+          setTimeout(() => {
+            global_join_vals_cache = {};
+          }, 5000);
+          apply_showif();
+        },
+        error: checkNetworkError,
+      });
     }
   }
   return rec;
