@@ -717,13 +717,13 @@ function get_form_record(e_in, select_labels) {
     typeof e_in !== "string" && $(e_in).attr("data-show-if-joinfields");
   if (joinFieldsStr) {
     const joinFields = JSON.parse(decodeURIComponent(joinFieldsStr));
-
-    for (const { ref, target, refTable } of joinFields) {
-      const keyval = rec[ref]?.id || rec[ref]; // TODO pk name
+    for (const { ref, target, refTable, refTablePK } of joinFields) {
+      const pk = refTablePK || "id";
+      const keyval = rec[ref]?.[pk] || rec[ref]; // TODO pk name
 
       if (!keyval) continue;
 
-      const url = `/api/${refTable}?id=${keyval}`;
+      const url = `/api/${refTable}?${pk}=${keyval}`;
       if (global_join_vals_cache[url] === "fetching") continue;
       if (global_join_vals_cache[url]) {
         rec[ref] = global_join_vals_cache[url];
