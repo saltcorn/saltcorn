@@ -2270,7 +2270,8 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
       ? viewnameOrElem
       : $(viewnameOrElem)
           .closest("[data-sc-embed-viewname]")
-          .attr("data-sc-embed-viewname");
+          .attr("data-sc-embed-viewname") ||
+        $(viewnameOrElem).closest("form[data-viewname]").attr("data-viewname");
   if (window._sc_loglevel > 4)
     console.log("ajax result directives", viewname, res);
 
