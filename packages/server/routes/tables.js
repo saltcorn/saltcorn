@@ -157,7 +157,14 @@ const tableForm = async (table, req) => {
               name: "ownership_formula",
               label: req.__("Ownership formula"),
               validator: expressionValidator,
-              type: "String",
+              input_type: "code",
+              attributes: {
+                mode: "application/javascript",
+                singleline: true,
+                table: table.name,
+                user: true,
+                expression_type: "boolean",
+              },
               class: "validate-expression",
               help: {
                 topic: "Ownership formula",
@@ -269,7 +276,7 @@ router.get(
                   name: "name",
                   type: "String",
                   required: true,
-                  attributes: { autofocus: true },
+                  attributes: { autofocus: true, spellcheck: false },
                 },
                 ...(table_provider_names.length
                   ? [
@@ -416,10 +423,17 @@ router.get(
                   {
                     label: req.__("Table name"),
                     name: "name",
-                    input_type: "text",
+                    type: "String",
+                    required: true,
+                    attributes: { spellcheck: false },
                   },
                   // todo implement file mask filter like , accept: "text/csv"
-                  { label: req.__("File"), name: "file", input_type: "file" },
+                  {
+                    label: req.__("File"),
+                    name: "file",
+                    input_type: "file",
+                    attributes: { accept: ".csv" },
+                  },
                 ],
               }),
               req.csrfToken()
@@ -675,7 +689,11 @@ router.get(
                 pre(
                   {
                     class: "mermaid",
-                    style: "height: calc(100vh - 250px); color: transparent;",
+                    style:
+                      "height: calc(100vh - 250px); color: transparent;" +
+                      (req.isRTL
+                        ? " direction: ltr; unicode-bidi: isolate;"
+                        : ""),
                   },
                   buildMermaidMarkup(tables)
                 ),
@@ -787,7 +805,7 @@ router.get(
     let id = parseInt(idorname);
     let table;
     if (id) [table] = await Table.find({ id });
-    
+
     if (!table) {
       [table] = await Table.find({ name: idorname });
     }
@@ -808,8 +826,12 @@ router.get(
     const user_can_edit_triggers =
       req.user.role_id === 1 ||
       getState().getConfig("min_role_edit_triggers", 1) >= req.user.role_id;
-
-    const nrows = await table.countRows({}, { forUser: req.user });
+    let nrows;
+    try {
+      nrows = await table.countRows({}, { forUser: req.user });
+    } catch {
+      nrows = NaN;
+    }
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
     const inbound_refs = [
@@ -825,7 +847,9 @@ router.get(
       fieldCard = [
         h4(req.__(`No fields defined in %s table`, table.name)),
         p(req.__("Fields define the columns in your table.")),
-        user_can_edit_tables &&
+        !table.external &&
+          !table.provider_name &&
+          user_can_edit_tables &&
           a(
             {
               href: `/field/new/${table.id}`,
@@ -1189,7 +1213,7 @@ router.get(
           title: req.__("Fields"),
           contents: fieldCard,
         },
-        ...(fields.length > 0
+        ...(fields.length > 0 || table.provider_name
           ? [
               {
                 type: "card",
@@ -1298,7 +1322,12 @@ router.post(
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);
         if (typeof fmlValidRes === "string") {
-          notify = req.__(`Invalid ownership formula: %s`, fmlValidRes);
+          notify = req.__(
+            `Invalid ownership formula: %s`,
+            fmlValidRes === "Unexpected token ')'"
+              ? "Syntax error"
+              : fmlValidRes
+          );
           hasError = true;
         }
       } else if (
@@ -1336,7 +1365,7 @@ router.post(
           );
         else if (!hasError) req.flash("success", req.__("Table saved"));
         res.redirect(`/table/${id}`);
-      } else res.json({ success: "ok", notify });
+      } else res.json({ success: "ok", notify, remove_delay: 3 });
     }
   })
 );
@@ -1626,13 +1655,30 @@ router.get(
         }
       }
     }
+    const localize = getState().getConfig("localize_csv_download");
+
+    const csvOpts = {};
+    const cast = {
+      date: (value) => value.toISOString(),
+      boolean: (v) => (v ? "true" : "false"),
+    };
+    const locale = req.getLocale();
+    if (locale && localize) {
+      const numSep = (1.1).toLocaleString(locale)[1];
+      if (numSep === ",") {
+        csvOpts.delimiter = ";";
+        // this opens a can of worms - how to read CSV back again
+        //cast.number = (v) => v.toLocaleString(locale);
+      }
+    }
+    const bom = getState().getConfig("bom_csv_download");
+
     stringify(rows, {
       header: true,
       columns,
-      cast: {
-        date: (value) => value.toISOString(),
-        boolean: (v) => (v ? "true" : "false"),
-      },
+      bom: !!bom,
+      cast,
+      ...csvOpts,
     }).pipe(res);
   })
 );

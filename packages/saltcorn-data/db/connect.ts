@@ -28,6 +28,10 @@ const defaultDataPath = pathsWithApp.data;
  * @returns
  */
 const stringToJSON = (x: any) => (typeof x === "string" ? JSON.parse(x) : x);
+
+const stringToBool = (x: any) =>
+  typeof x === "string" ? x === "true" || x === "True" : x;
+
 /**
  * Get Git revision of Saltcorn source.
  * Required to work:
@@ -96,6 +100,10 @@ const getConnectObject = (connSpec: any = {}) => {
   setKey("sslrootcert", "PGSSLROOTCERT");
   setKey("jwt_secret", "SALTCORN_JWT_SECRET");
   setKey("multi_tenant", "SALTCORN_MULTI_TENANT", { default: false });
+  setKey("multi_node", "SALTCORN_MULTI_NODE", {
+    default: false,
+    transform: stringToBool,
+  });
   setKey("file_store", "SALTCORN_FILE_STORE", { default: pathsWithApp.data });
   setKey("default_schema", "SALTCORN_DEFAULT_SCHEMA", { default: "public" });
   setKey("fixed_configuration", "SALTCORN_FIXED_CONFIGURATION", {
@@ -139,7 +147,9 @@ const getConnectObject = (connSpec: any = {}) => {
     .digest("hex")
     .slice(0, 16);
 
-  if (process.env.FORCE_SQLITE === "true") {
+  if (process.env.NO_DB_CONNECTION === "true") {
+    return connObj;
+  } else if (process.env.FORCE_SQLITE === "true") {
     delete connObj["user"];
     delete connObj["password"];
     delete connObj["database"];

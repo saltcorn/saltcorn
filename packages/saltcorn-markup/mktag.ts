@@ -43,6 +43,7 @@ const ppStyle = (cs: StyleVal): string => {
           ? cs.filter((c) => c).join(";")
           : typeof cs === "object"
             ? Object.entries(cs)
+                .filter(([k, v]) => v || v === 0)
                 .map(([k, v]) => `${camelToCssCase(k)}:${v}`)
                 .join(";")
             : "";
@@ -69,7 +70,9 @@ const ppAttrib = ([k, v]: [
         ? ppClass(v as ClassVal)
         : k === "style"
           ? ppStyle(v as StyleVal)
-          : `${k}="${v}"`;
+          : typeof v === "string"
+            ? `${k}="${v.replaceAll('"', "&quot;")}"`
+            : `${k}="${v}"`;
 
 /**
  * @param {string} tnm

@@ -6,7 +6,7 @@ import Trigger from "../models/trigger";
 
 import db from "../db";
 import { assertIsSet } from "./assertions";
-import { afterAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { GenObj } from "@saltcorn/types/common_types";
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 
@@ -629,6 +629,108 @@ describe("Workflow run userform", () => {
     });
     await wfrun.run({ user });
     expect(wfrun.context.x).toBe(2);
+    expect(wfrun.status).toBe("Finished");
+  });
+});
+
+describe("Workflow with notify in ForLoop", () => {
+  it("should create steps", async () => {
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "forloopnotifywf",
+    });
+    const trigger_id = trigger.id!;
+    await WorkflowStep.create({
+      trigger_id,
+      name: "set_xs",
+      next_step: "loop",
+      only_if: "",
+      action_name: "SetContext",
+      initial_step: true,
+      configuration: {
+        ctx_values: "{xs: [1,2,3,4,5,6,7,8,9]}",
+      },
+    });
+    await WorkflowStep.create({
+      trigger_id,
+      name: "loop",
+      next_step: "step5",
+      only_if: "",
+      action_name: "ForLoop",
+      initial_step: false,
+      configuration: {
+        item_variable: "x",
+        index_variable: "ix",
+        array_expression: "xs",
+        loop_body_initial_step: "step3",
+      },
+    });
+    await WorkflowStep.create({
+      name: "step3",
+      trigger_id,
+      next_step: "step4",
+      only_if: "",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: {
+        code: "let y = x+ix;\r\n\r\nawait sleep(100+y)",
+        run_where: "Server",
+      },
+    });
+    await WorkflowStep.create({
+      name: "step4",
+      trigger_id,
+      next_step: "",
+      only_if: "",
+      action_name: "toast",
+      initial_step: false,
+      configuration: {
+        text: "{{ix+1}}",
+        title: "",
+        notify_type: "Notify",
+        remove_delay: 1,
+      },
+    });
+    await WorkflowStep.create({
+      name: "step5",
+      trigger_id,
+      next_step: "",
+      only_if: "",
+      action_name: "run_js_code",
+      initial_step: false,
+      configuration: {
+        code: "1",
+        run_where: "Server",
+      },
+    });
+  });
+
+  it("should run interactively", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = Trigger.findOne({ name: "forloopnotifywf" });
+    assertIsSet(trigger);
+    const wfrun = await WorkflowRun.create({
+      trigger_id: trigger.id,
+    });
+    const runres0 = await wfrun.run({ user, interactive: true });
+
+    expect(runres0.notify).toBe("1");
+    expect(runres0.resume_workflow).toBe(wfrun.id);
+
+    expect(wfrun.context.x).toBe(2);
+    const runres1 = await wfrun.run({
+      user,
+      interactive: true,
+    });
+
+    expect(runres1.notify).toBe("2");
+    expect(runres1.resume_workflow).toBe(wfrun.id);
+
+    await wfrun.run({
+      user,
+    });
     expect(wfrun.status).toBe("Finished");
   });
 });

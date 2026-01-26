@@ -467,6 +467,7 @@ const ActionElem = ({ connectors, options }) => (
       block={false}
       minRole={100}
       confirm={false}
+      spinner={true}
       action_label={""}
       isFormula={{}}
       rndid={rand_ident()}
@@ -543,6 +544,7 @@ const ToolboxShow = ({ expanded }) => {
     agg_field_opts,
     views,
     images,
+    pages,
   } = options;
   return chunkToolBox(
     [
@@ -571,6 +573,7 @@ const ToolboxShow = ({ expanded }) => {
       <HTMLElem connectors={connectors} />,
       <DropMenuElem connectors={connectors} />,
       <TableElem connectors={connectors} />,
+      <PageElem connectors={connectors} pages={pages} />,
     ],
     expanded
   );
@@ -653,6 +656,7 @@ const ToolboxFilter = ({ expanded }) => {
     field_view_options,
     child_field_list,
     agg_field_opts,
+    pages,
   } = options;
   return chunkToolBox(
     [
@@ -681,6 +685,7 @@ const ToolboxFilter = ({ expanded }) => {
       <LinkElem connectors={connectors} />,
       <TableElem connectors={connectors} />,
       <DropMenuElem connectors={connectors} />,
+      <PageElem connectors={connectors} pages={pages} />,
     ],
     expanded
   );

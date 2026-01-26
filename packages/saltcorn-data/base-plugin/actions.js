@@ -11,10 +11,13 @@ const Table = require("../models/table");
 const EventLog = require("../models/eventlog");
 const View = require("../models/view");
 const Model = require("../models/model");
+const Page = require("../models/page");
+const Field = require("../models/field");
 const File = require("../models/file");
 const { getState } = require("../db/state");
 const User = require("../models/user");
 const Trigger = require("../models/trigger");
+const WorkflowRun = require("../models/workflow_run");
 const Notification = require("../models/notification");
 const {
   getMailTransport,
@@ -174,6 +177,16 @@ const run_code = async ({
   const fetchJSON = async (...args) => await (await fetch(...args)).json();
   const sysState = getState();
   const require = (nm) => sysState.codeNPMmodules[nm];
+  const refreshSystemCache = async (which) => {
+    //this worker
+    if (which) await sysState[`refresh_${which}`](true);
+    else await sysState.refresh(true);
+    //other workers
+    db.whenTransactionisFree(async () => {
+      if (which) await getState()[`refresh_${which}`]();
+      else await getState().refresh();
+    });
+  };
   const f = vm.runInNewContext(`async () => {${code}\n}`, {
     Table,
     table,
@@ -191,17 +204,25 @@ const run_code = async ({
     run_js_code,
     tryCatchInTransaction: db.tryCatchInTransaction,
     commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
+    commitBeginNewTransactionAndRefreshCache: async () => {
+      await db.commitAndBeginNewTransaction();
+      await sysState.refresh();
+    },
     URL,
     File,
     User,
     View,
+    Page,
+    Field,
     EventLog,
     Buffer: isNode() ? Buffer : require("buffer"),
     Trigger,
     Notification,
+    WorkflowRun,
     setTimeout,
     interpolate,
     require,
+    refreshSystemCache,
     setConfig: (k, v) =>
       sysState.isFixedConfig(k) ? undefined : sysState.setConfig(k, v),
     getConfig: (k) =>
@@ -328,10 +349,14 @@ module.exports = {
         },
         {
           name: "where",
-          label: "Recalculate where",
+          label: "Where",
           sublabel: "Where-expression for subset of rows to loop over",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
         {
           name: "limit",
@@ -519,11 +544,15 @@ module.exports = {
       };
       if (method !== "GET") {
         let postBody;
-        if (body && table) {
-          const f = get_async_expression_function(body, table.fields, {
-            row: row || {},
-            user,
-          });
+        if (body && row) {
+          const f = get_async_expression_function(
+            body,
+            table?.fields || Object.keys(row).map((k) => ({ name: k })),
+            {
+              row: row || {},
+              user,
+            }
+          );
           postBody = JSON.stringify(await f(row, user));
         } else if (body) postBody = body;
         else postBody = JSON.stringify(row);
@@ -1220,8 +1249,12 @@ module.exports = {
           name: "where",
           label: "Recalculate where",
           sublabel: "Where-expression for subset of rows to recalculate",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
       ];
     },
@@ -1251,7 +1284,7 @@ module.exports = {
           user,
           "recalculate_stored_fields where"
         );
-        recalculate_for_stored(table_for_recalc, where);
+        await recalculate_for_stored(table_for_recalc, where);
       } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
     },
@@ -1284,7 +1317,7 @@ module.exports = {
           name: "row_expr",
           label: "Row expression",
           sublabel:
-            "Expression for JavaScript object. Example: <code>{first_name: name.split(' ')[0]}</code>",
+            "Expression for JavaScript object or array of objects. Example: <code>{first_name: name.split(' ')[0]}</code>",
           type: "String",
           fieldview: "textarea",
           class: "validate-expression",
@@ -1328,13 +1361,41 @@ module.exports = {
       );
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
-      const results = {};
-      const res = await table_for_insert.tryInsertRow(calcrow, user, results);
+      const all_results = {};
+      const ids = [];
 
-      if (res.error) return res;
-      else if (configuration.id_variable)
-        return { [configuration.id_variable]: res.success, ...results };
-      else return results;
+      const upsertOne = async (row) => {
+        const results = {};
+        if (row[table_for_insert.pk_name]) {
+          const existing = await table_for_insert.getRow({
+            [table_for_insert.pk_name]: row[table_for_insert.pk_name],
+          });
+          if (existing) {
+            await table_for_insert.updateRow(
+              row,
+              row[table_for_insert.pk_name],
+              user,
+              { resultCollector: results }
+            );
+            ids.push(row[table_for_insert.pk_name]);
+          } else ids.push(await table_for_insert.insertRow(row, user, results));
+        } else ids.push(await table_for_insert.insertRow(row, user, results));
+
+        mergeActionResults(all_results, results);
+      };
+      if (Array.isArray(calcrow)) {
+        for (const insrow of calcrow) await upsertOne(insrow);
+
+        if (configuration.id_variable)
+          return { [configuration.id_variable]: ids, ...all_results };
+        else return all_results;
+      } else {
+        await upsertOne(calcrow);
+
+        if (configuration.id_variable)
+          return { [configuration.id_variable]: ids[0], ...all_results };
+        else return all_results;
+      }
     },
     namespace: "Database",
   },
@@ -1353,7 +1414,11 @@ module.exports = {
           sublabel:
             "Expression for JavaScript object. For example, <code>{points: 34}</code>",
           input_type: "code",
-          attributes: { mode: "application/javascript" },
+          attributes: {
+            mode: "application/javascript",
+            compact: true,
+            expression_type: "row",
+          },
         },
         ...(mode === "edit" ||
         mode === "filter" ||
@@ -1393,7 +1458,12 @@ module.exports = {
               {
                 name: "query",
                 label: "Query object",
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  expression_type: "query",
+                },
                 required: true,
                 showIf: { where: "Database" },
               },
@@ -1473,7 +1543,8 @@ module.exports = {
           label: "Table",
           sublabel: "Table on which to delete rows",
           input_type: "select",
-          showIf: { delete_triggering_row: false },
+          showIf:
+            mode === "workflow" ? undefined : { delete_triggering_row: false },
           options: tables.map((t) => t.name),
         },
         {
@@ -1483,7 +1554,8 @@ module.exports = {
           sublabel: "Where expression, ex. <code>{manager: id}</code>",
           required: true,
           class: "validate-expression",
-          showIf: { delete_triggering_row: false },
+          showIf:
+            mode === "workflow" ? undefined : { delete_triggering_row: false },
         },
       ];
     },
@@ -1531,39 +1603,115 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Navigation action",
-    configFields: [
-      {
-        name: "nav_action",
-        label: "Nav Action",
-        type: "String",
-        required: true,
-        attributes: {
-          options: [
-            "Go to URL",
-            "Popup modal",
-            "Back",
-            "Reload page",
-            "Close modal",
-            "Close tab",
-          ],
+    configFields: async () => {
+      const pages = await Page.find({}, { cached: true });
+      const views = await View.find({}, { cached: true });
+      return [
+        {
+          name: "nav_action",
+          label: "Nav Action",
+          type: "String",
+          required: true,
+          attributes: {
+            options: [
+              "Go to URL",
+              "Go to View",
+              "Go to Page",
+              "Popup modal",
+              "Back",
+              "Reload page",
+              "Close modal",
+              "Close tab",
+            ],
+          },
         },
+        {
+          name: "url",
+          label: "URL",
+          type: "String",
+          required: true,
+          showIf: { nav_action: ["Go to URL", "Popup modal"] },
+        },
+        {
+          name: "page",
+          label: "Page",
+          input_type: "select",
+          options: pages.map((p) => p.name),
+          showIf: { nav_action: "Go to Page" },
+        },
+        {
+          name: "view",
+          label: "View",
+          input_type: "select",
+          options: views.map((p) => p.name),
+          showIf: { nav_action: "Go to View" },
+        },
+        {
+          name: "state_formula",
+          label: "State",
+          type: "String",
+          class: "validate-expression",
+          showIf: { nav_action: ["Go to Page", "Go to View"] },
+        },
+        {
+          name: "new_tab",
+          label: "Open in new tab",
+          type: "Bool",
+          showIf: { nav_action: ["Go to URL", "Go to Page", "Go to View"] },
+        },
+        {
+          name: "in_popup",
+          label: "Open in popup modal",
+          type: "Bool",
+          showIf: { nav_action: ["Go to URL", "Go to Page", "Go to View"] },
+        },
+      ];
+    },
+    run: async ({
+      row,
+      user,
+      configuration: {
+        nav_action,
+        url,
+        state_formula,
+        new_tab,
+        view,
+        page,
+        in_popup,
       },
-      {
-        name: "url",
-        label: "URL",
-        type: "String",
-        required: true,
-        showIf: { nav_action: ["Go to URL", "Popup modal"] },
-      },
-    ],
-    run: async ({ row, user, configuration: { nav_action, url }, req }) => {
-      let url1 = interpolate(url, row, user, "navigate URL");
+      req,
+    }) => {
+      let qs = "";
+      if (["Go to Page", "Go to View"].includes(nav_action) && state_formula) {
+        const new_state = eval_expression(
+          state_formula,
+          row || {},
+          user,
+          "navigate state formula"
+        );
+        qs = "?" + objectToQueryString(new_state);
+      }
+      const kgoto = in_popup ? "popup" : "goto";
 
       switch (nav_action) {
         case "Go to URL":
-          return { goto: url1 };
+          return {
+            [kgoto]: interpolate(url, row, user, "navigate URL"),
+            ...(new_tab ? { target: "_blank" } : {}),
+          };
+        case "Go to Page":
+          return {
+            [kgoto]: `/page/${page}${qs}`,
+            ...(new_tab ? { target: "_blank" } : {}),
+          };
+        case "Go to View":
+          return {
+            [kgoto]: `/view/${view}${qs}`,
+            ...(new_tab ? { target: "_blank" } : {}),
+          };
+
         case "Popup modal":
-          return { popup: url1 };
+          return { popup: interpolate(url, row, user, "navigate URL") };
         case "Back":
           return {
             eval_js: isWeb(req)
@@ -1641,6 +1789,7 @@ module.exports = {
         required: true,
         attributes: {
           options: [
+            "RequestSubmit",
             "Submit",
             "Save",
             "Reset",
@@ -1651,26 +1800,55 @@ module.exports = {
       },
     ],
 
-    run: async ({ row, table, user, req, configuration: { form_action } }) => {
+    run: async ({
+      row,
+      table,
+      user,
+      req,
+      configuration: { form_action },
+      ...rest
+    }) => {
       const jqGet = `$('form[data-viewname="'+viewname+'"]')`;
       switch (form_action) {
         case "Submit":
           return { eval_js: jqGet + ".submit()" };
+        case "RequestSubmit":
+          return { eval_js: jqGet + "[0].requestSubmit()" };
         case "Save":
-          if (!row[table.pk_name]) {
-            //we will save server side so we can set id
-
+          const applyUploadedFiles = async () => {
+            if (!req?.files) return false;
+            const viewColumns = rest?.columns;
+            let processed = false;
             for (const field of table.fields) {
-              if (field.type === "File" && req?.files[field.name]) {
+              if (field.type === "File" && req.files[field.name]) {
+                let folder = field?.attributes?.folder;
+                if (Array.isArray(viewColumns)) {
+                  const col = viewColumns.find(
+                    (c) => c?.type === "Field" && c.field_name === field.name
+                  );
+                  let cfgFolder = col?.configuration?.folder;
+                  if (typeof cfgFolder === "string" && cfgFolder.length) {
+                    // allow simple interpolations like {{user.id}} if present
+                    folder = cfgFolder.includes("{{")
+                      ? interpolate(cfgFolder, row, user, "Upload folder")
+                      : cfgFolder;
+                  }
+                }
                 const file = await File.from_req_files(
                   req.files[field.name],
                   user ? user.id : null,
                   (field.attributes && +field.attributes.min_role_read) || 1,
-                  field?.attributes?.folder
+                  folder
                 );
                 row[field.name] = file.path_to_serve;
+                processed = true;
               }
             }
+            return processed;
+          };
+          if (!row[table.pk_name]) {
+            // insert: process uploaded file fields server-side, then insert
+            await applyUploadedFiles();
             const result = await table.tryInsertRow(row, user);
             if (result.success)
               return {
@@ -1686,8 +1864,29 @@ module.exports = {
               );
               return { eval_js: `return saveAndContinueAsync(${jqGet})` };
             }
+          } else {
+            // update: if any file uploads present, process server-side and update row
+            const hasUploads = await applyUploadedFiles();
+            if (hasUploads) {
+              const updateres = await table.tryUpdateRow(
+                row,
+                row[table.pk_name],
+                user
+              );
+              if (!updateres?.error)
+                return { notify_success: req ? req.__("Saved") : "Saved" };
+              else {
+                getState().log(
+                  3,
+                  `form_actions Save update failed server side, result: ${JSON.stringify(
+                    updateres
+                  )} row ${JSON.stringify(row)}`
+                );
+                return { eval_js: `return saveAndContinueAsync(${jqGet})` };
+              }
+            }
+            return { eval_js: `return saveAndContinueAsync(${jqGet})` };
           }
-          return { eval_js: `return saveAndContinueAsync(${jqGet})` };
         case "Reset":
           return { eval_js: jqGet + ".trigger('reset')" };
         case "Submit with Ajax":
@@ -1695,8 +1894,42 @@ module.exports = {
         case "Ajax Save Form Data":
           return { eval_js: `ajaxSubmitForm(${jqGet}, true)` };
         default:
-          return { eval_js: jqGet + ".submit()" };
+          return { eval_js: jqGet + "[0].requestSubmit()" };
       }
+    },
+    namespace: "User interface",
+  },
+  copy_to_clipboard: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Copy text based on the current row to clipboard",
+    requireRow: true,
+
+    configFields: [
+      {
+        name: "text_template",
+        label: "Text template",
+        sublabel:
+          "Use interpolations <code>{{ }}</code> to access row variables",
+        type: "String",
+        required: true,
+      },
+    ],
+
+    run: async ({
+      row,
+      table,
+      user,
+      req,
+      configuration: { text_template },
+      ...rest
+    }) => {
+      return {
+        eval_js: `navigator.clipboard.writeText(${JSON.stringify(interpolate(text_template || "", row || {}, user))})`,
+      };
     },
     namespace: "User interface",
   },
@@ -1715,7 +1948,7 @@ module.exports = {
         type: "String",
         required: true,
         attributes: {
-          options: ["Notify", "Error", "Success"],
+          options: ["Notify", "Error", "Success", "Warning"],
         },
       },
       {
@@ -1752,6 +1985,8 @@ module.exports = {
           return { error: text1, ...toast_title };
         case "Success":
           return { notify_success: text1, ...toast_title };
+        case "Warning":
+          return { notify: text1, notify_type: "warning", ...toast_title };
         default:
           return { notify: text1, ...toast_title };
       }
@@ -1774,7 +2009,7 @@ module.exports = {
     configFormOptions: {
       formStyle: "vert",
     },
-    configFields: async ({ table }) => {
+    configFields: async ({ table, when_trigger, mode }) => {
       const fields = table ? table.getFields().map((f) => f.name) : [];
       const vars = [
         ...(table ? ["row"] : []),
@@ -1783,21 +2018,21 @@ module.exports = {
         "Actions",
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models_table.export_.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_table.Table.html",
             target: "_blank",
           },
           "Table"
         ),
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models_file.export_.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_file.File.html",
             target: "_blank",
           },
           "File"
         ),
         a(
           {
-            href: "/admin/jsdoc/classes/_saltcorn_data.models_user.export_.html",
+            href: "/admin/jsdoc/classes/_saltcorn_data.models_user.User.html",
             target: "_blank",
           },
           "User"
@@ -1808,14 +2043,30 @@ module.exports = {
         .map((f) => code(f))
         .join(", ");
       const clientvars = [...fields].map((f) => code(f)).join(", ");
-
+      const has_user = [
+        "Hourly",
+        "Weekly",
+        "Daily",
+        "Often",
+        "Startup",
+      ].includes(when_trigger)
+        ? undefined
+        : "maybe";
       return [
         {
           name: "code",
           label: "Code",
           input_type: "code",
-          attributes: { mode: "application/javascript" },
-          class: "validate-statements enlarge-in-card",
+          attributes: {
+            mode: "application/javascript",
+            table: table?.name || undefined,
+            user: has_user,
+            workflow: mode === "workflow",
+          },
+          class: [
+            "validate-statements",
+            mode !== "workflow" && "enlarge-in-card",
+          ],
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
@@ -2073,8 +2324,12 @@ module.exports = {
           label: "Query",
           sublabel:
             "Query-expression on source table for subset of rows to synchronize. Example: <code>{ status: 'Open' }</code>",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
         {
           name: "table_dest",
@@ -2270,6 +2525,103 @@ module.exports = {
       }
       if (interval) eval_js = `setInterval(()=>{${eval_js}}, ${interval})`;
       return { eval_js };
+    },
+    namespace: "User interface",
+  },
+  progress_bar: {
+    description: "Display or update progress messages and/or progress bar",
+    configFields: [
+      {
+        name: "blocking",
+        label: "Blocking",
+        sublabel:
+          "Display progress in a blocking popup modal, If not checked, display as toast",
+        type: "Bool",
+      },
+      {
+        name: "close",
+        label: "Close",
+        sublabel: "Close this progress window",
+        type: "Bool",
+      },
+      {
+        name: "id",
+        label: "Identifier",
+        type: "String",
+        class: "validate-identifier",
+        required: true,
+        sublabel:
+          "A valid JavaScript identifier for updating existing progress toasts",
+        showIf: { blocking: false },
+      },
+      {
+        name: "maxHeight",
+        label: "max-height (px)",
+        type: "Integer",
+        sublabel:
+          "If set, progress messages will be added to scrolling container with this maximum height",
+        showIf: { blocking: true, close: false },
+      },
+      {
+        name: "popupWidth",
+        label: "Popup width (px)",
+        type: "Integer",
+        showIf: { blocking: true, close: false },
+      },
+
+      {
+        name: "title",
+        label: "Title",
+        type: "String",
+        showIf: { close: false },
+      },
+      {
+        name: "message",
+        label: "Message",
+        type: "String",
+        showIf: { close: false },
+      },
+      {
+        name: "percent",
+        label: "Percent",
+        type: "String",
+        sublabel:
+          "Optional. 0-100. Use interpolations <code>{{ }}</code> to calculate from context",
+        showIf: { close: false },
+      },
+    ],
+    run: async ({
+      row,
+      user,
+      configuration: {
+        blocking,
+        id,
+        close,
+        title,
+        message,
+        percent,
+        maxHeight,
+        popupWidth,
+      },
+      req,
+    }) => {
+      const msg = interpolate(message, row, user, "progress_bar message");
+      const title1 = interpolate(title, row, user, "progress_bar title");
+      const id1 = interpolate(id, row, user, "progress_bar id");
+      const percent1 = interpolate(percent, row, user, "progress_bar id");
+      return {
+        page_load_tag: req?.headers?.["page-load-tag"],
+        progress_bar_update: {
+          blocking,
+          id: id1,
+          close,
+          message: msg,
+          title: title1,
+          percent: +percent1,
+          maxHeight,
+          popupWidth,
+        },
+      };
     },
     namespace: "User interface",
   },
@@ -2496,8 +2848,12 @@ module.exports = {
           label: "Where",
           fieldview: "textarea",
           sublabel: "Where-expression for subset of rows to train on. Optional",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+          },
         },
         {
           name: "hyperparameters",

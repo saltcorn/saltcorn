@@ -34,9 +34,17 @@ import {
   slugify,
   withTransaction,
   tryCatchInTransaction,
+  openOrUseTransaction,
+  whenTransactionisFree,
 } from "@saltcorn/db-common/sqlite-commons";
 
-export { slugify, withTransaction, tryCatchInTransaction };
+export {
+  slugify,
+  withTransaction,
+  tryCatchInTransaction,
+  openOrUseTransaction,
+  whenTransactionisFree,
+};
 
 let sqliteDatabase: Database | null = null;
 let connectObj: any = null;
@@ -354,8 +362,13 @@ export const selectMaybeOne = async (
  * @returns {Promise<number>} count of tables
  * @function
  */
-export const count = async (tbl: string, whereObj: Where) => {
-  return await doCount(tbl, whereObj, query);
+export const count = async (
+  tbl: string,
+  whereObj: Where,
+  opts?: SelectOptions
+) => {
+  if (opts?.limit) return await doCount(tbl, whereObj, query, +opts?.limit);
+  else return await doCount(tbl, whereObj, query);
 };
 
 /**

@@ -103,7 +103,7 @@ class Crash {
 
     const payload = {
       stack: err.stack,
-      message: err.message,
+      message: err.message + (err.detail ? ": " + err.detail : ""),
       occur_at: new Date(),
       tenant: schema,
       user_id: req.user ? req.user.id : null,

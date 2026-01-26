@@ -54,6 +54,7 @@ const {
   getSessionId,
   mergeIntoWhere,
   isWeb,
+  renderServerSide,
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
@@ -212,6 +213,9 @@ const configuration_workflow = (req) =>
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
+          const has_select2 = Object.keys(getState().keyFieldviews).includes(
+            "select2"
+          );
 
           return {
             fields: fields
@@ -235,6 +239,7 @@ const configuration_workflow = (req) =>
             actionConfigForms,
             //fieldViewConfigForms,
             mode: "filter",
+            has_select2,
           };
         },
       },
@@ -319,7 +324,11 @@ const run = async (
             aggregate: stat,
           },
         },
-        { where }
+        {
+          where,
+          forPublic: !extra.req.user || extra.req.user.role_id === 100,
+          forUser: extra.req.user,
+        }
       );
       const fld = table.getField(agg_field);
       segment.type = "blank";
@@ -378,46 +387,6 @@ const run = async (
         extra.req.user || { role_id: 100 }
       );
       segment.field = field;
-    },
-    view: async (segment) => {
-      const view = await View.findOne({ name: segment.view });
-      if (!view)
-        throw new InvalidConfiguration(
-          `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
-        );
-      const extra_state = segment.extra_state_fml
-        ? eval_expression(
-            segment.extra_state_fml,
-            evalCtx,
-            extra.req.user,
-            `Extra state formula for view ${view.name}`
-          )
-        : {};
-      if (segment.state === "local") {
-        const state1 = { ...extra_state };
-        const qs = stateToQueryString(state1, true);
-
-        segment.contents = div(
-          {
-            class: "d-inline",
-            "data-sc-embed-viewname": view.name,
-            "data-sc-local-state": `/view/${view.name}${qs}`,
-          },
-          await view.run(state1, extra)
-        );
-      } else {
-        const state1 = { ...state, ...extra_state };
-        const qs = stateToQueryString(state1, true);
-
-        segment.contents = div(
-          {
-            class: "d-inline",
-            "data-sc-embed-viewname": view.name,
-            "data-sc-view-source": `/view/${view.name}${qs}`,
-          },
-          await view.run(state1, extra)
-        );
-      }
     },
     link: (segment) => {
       //console.log("link:", segment, state);
@@ -503,6 +472,61 @@ const run = async (
       }
     },
   });
+  await eachView(
+    layout,
+    async (segment, inLazy) => {
+      const view = await View.findOne({ name: segment.view });
+      if (!view)
+        throw new InvalidConfiguration(
+          `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
+        );
+      const extra_state = segment.extra_state_fml
+        ? eval_expression(
+            segment.extra_state_fml,
+            evalCtx,
+            extra.req.user,
+            `Extra state formula for view ${view.name}`
+          )
+        : {};
+      if (segment.state === "local") {
+        const state1 = { ...extra_state };
+        const qs = stateToQueryString(state1, true);
+
+        segment.contents = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-local-state": `/view/${view.name}${qs}`,
+            "data-sc-view-source": `/view/${view.name}${qs}`,
+          },
+          inLazy
+            ? ""
+            : view.renderLocally()
+              ? await view.run(state1, extra)
+              : await renderServerSide(view.name, state1)
+        );
+      } else {
+        const state1 = { ...state, ...extra_state };
+        const qs = stateToQueryString(state1, true);
+
+        segment.contents = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-view-source": `/view/${view.name}${qs}`,
+          },
+          inLazy
+            ? ""
+            : view.renderLocally()
+              ? await view.run(state1, extra)
+              : await renderServerSide(view.name, state1)
+        );
+      }
+    },
+    state
+  );
+  await Page.renderEachEmbeddedPageInLayout(layout, state, extra);
+
   translateLayout(layout, extra.req.getLocale());
   const blockDispatch = {
     field(segment) {
@@ -571,7 +595,13 @@ const run = async (
       });
     },
     dropdown_filter(segment) {
-      const { field_name, neutral_label, full_width, label_formula } = segment;
+      const {
+        field_name,
+        neutral_label,
+        full_width,
+        label_formula,
+        apply_select2,
+      } = segment;
 
       const dvs = distinct_values[field_name] || [];
       dvs.sort((a, b) =>
@@ -603,20 +633,27 @@ const run = async (
               : label
         )
       );
-      return select(
-        {
-          name: `ddfilter${field_name}`,
-          class:
-            "form-control form-select d-inline-maybe scfilter selectizable",
-          style: full_width ? undefined : "width: unset;",
-          required: true,
-          onchange: `this.value=='' ? unset_state_field('${encodeURIComponent(
-            field_name
-          )}', this): set_state_field('${encodeURIComponent(
-            field_name
-          )}', this.value, this)`,
-        },
-        options
+      return (
+        select(
+          {
+            name: `ddfilter${field_name}`,
+            class:
+              "form-control form-select d-inline-maybe scfilter selectizable",
+            style: full_width ? undefined : "width: unset;",
+            required: true,
+            onchange: `this.value=='' ? unset_state_field('${encodeURIComponent(
+              field_name
+            )}', this): set_state_field('${encodeURIComponent(
+              field_name
+            )}', this.value, this)`,
+          },
+          options
+        ) +
+        (apply_select2
+          ? script(
+              domReady(`$('select[name=ddfilter${field_name}]').select2();`)
+            )
+          : "")
       );
     },
     action(segment) {
@@ -946,10 +983,14 @@ module.exports = {
           const field = fields.find((f) => f.name === col.field_name);
           if (table.external || table.provider_name) {
             distinct_values[col.field_name] = (
-              await table.distinctValues(col.field_name, {}, {
-                forPublic: !req.user,
-                forUser: req.user,
-              })
+              await table.distinctValues(
+                col.field_name,
+                {},
+                {
+                  forPublic: !req.user,
+                  forUser: req.user,
+                }
+              )
             ).map((x) => ({ label: x, value: x }));
           } else if (field) {
             distinct_values[col.field_name] = await field.distinct_values(

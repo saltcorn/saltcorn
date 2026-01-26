@@ -1,0 +1,40 @@
+FROM debian:12
+
+ENV SALTCORN_DISABLE_UPGRADE "true"
+
+RUN apt update && apt install -qqy \  
+  curl \
+  ca-certificates \
+  gnupg \
+  libpq-dev \
+  build-essential \
+  python-is-python3 \
+  postgresql-client \
+  git \
+  chromium \
+  zip \
+  unzip \
+  python3-setuptools \
+  python3-venv
+
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+ && apt install -y nodejs
+RUN node -v && npm -v
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD "true"
+
+WORKDIR /opt/saltcorn
+
+COPY . /opt/saltcorn
+
+RUN npm config set fund false \
+ && npm config set audit false
+
+RUN npm install --legacy-peer-deps
+RUN npm run tsc --build
+ENV NODE_ENV "production"
+
+ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin"
+RUN NO_DB_CONNECTION="true" saltcorn pre-install-modules all
+
+ENTRYPOINT ["/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"]

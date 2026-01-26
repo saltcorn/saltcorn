@@ -263,8 +263,11 @@ function spin_action_link(e) {
   const height = $e.height();
 
   $e.attr("data-innerhtml-prespin", $e.html());
+  $e.attr("data-previous-onclick", $e.attr("onclick"));
+  $e.attr("onclick", "void(0)");
   $e.html('<i class="fas fa-spinner fa-spin"></i>').width(width).height(height);
   $(document).trigger("activate-spinner", $e);
+  //null onclick
   $e.trigger("spin");
 }
 
@@ -273,20 +276,39 @@ function reset_spinners() {
     $e = $(this);
     $e.html($e.attr("data-innerhtml-prespin"));
     $e.removeAttr("data-innerhtml-prespin");
+    const prevOnclick = $e.attr("data-previous-onclick");
+    if (prevOnclick && prevOnclick !== "void(0)") {
+      $e.attr("onclick", prevOnclick);
+      $e.removeAttr("data-previous-onclick");
+    }
+
+    //reset onclick
   });
 }
 
 let last_route_viewname;
 
-function view_post(viewnameOrElem, route, data, onDone, sendState) {
+function view_post(viewnameOrElem, route, data, onDoneOrObj, sendState) {
+  let onDone,
+    sendState1,
+    runAsync = false;
+  if (onDoneOrObj && typeof onDoneOrObj === "object") {
+    onDone = onDoneOrObj.onDone;
+    sendState1 = onDoneOrObj.sendState;
+    runAsync = onDoneOrObj.runAsync;
+  } else {
+    onDone = onDoneOrObj;
+    sendState1 = sendState;
+  }
   const viewname =
     typeof viewnameOrElem === "string"
       ? viewnameOrElem
       : $(viewnameOrElem)
           .closest("[data-sc-embed-viewname]")
-          .attr("data-sc-embed-viewname");
+          .attr("data-sc-embed-viewname") ||
+        $(viewnameOrElem).closest("form[data-viewname]").attr("data-viewname");
   last_route_viewname = viewname;
-  const query = sendState
+  const query = sendState1
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
     : "";
   const isFormData = data instanceof FormData;
@@ -310,7 +332,7 @@ function view_post(viewnameOrElem, route, data, onDone, sendState) {
     .done(function (res) {
       if (onDone) onDone(res);
       ajax_done(res, viewnameOrElem);
-      reset_spinners();
+      if (!runAsync) reset_spinners();
     })
     .fail(function (res) {
       if (!checkNetworkError(res))
@@ -348,7 +370,7 @@ function globalErrorCatcher(message, source, lineno, colno, error) {
   });
 }
 
-function ensure_modal_exists_and_closed() {
+function ensure_modal_exists_and_closed(opts) {
   if ($("#scmodal").length === 0) {
     $("body").append(`<div id="scmodal" class="modal">
     <div class="modal-dialog">
@@ -377,20 +399,21 @@ function ensure_modal_exists_and_closed() {
       </div>
     </div>
   </div>`);
-  } else if ($("#scmodal").hasClass("show")) {
+  } else if ($("#scmodal").hasClass("show") && !opts?.open) {
     // remove reload handler added by edit, for when we have popup link
     // in autosave edit in popup
     $("#scmodal").off("hidden.bs.modal");
     close_saltcorn_modal();
   }
   $("#modal-toasts-area").empty();
+  $("#scmodal .modal-header button.btn-close").css("display", "");
 }
 
 function expand_thumbnail(img_id, filename) {
   ensure_modal_exists_and_closed();
-  $("#scmodal .modal-body").html(
-    `<img src="/files/serve/${img_id}" style="width: 100%">`
-  );
+  const isAbsolute = /^(?:[a-z]+:)?\/\//i.test(img_id);
+  const src = isAbsolute ? img_id : `/files/serve/${img_id}`;
+  $("#scmodal .modal-body").html(`<img src="${src}" style="width: 100%">`);
   $("#scmodal .modal-title").html(decodeURIComponent(filename));
   new bootstrap.Modal($("#scmodal")).show();
 }
@@ -531,10 +554,12 @@ function saveAndContinue(e, k, event) {
   if (!valres) return;
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
+  removeVirtualMonacoPrefix(form);
   var form_data = form.serialize();
+  restoreVirtualMonacoPrefix(form);
 
   if (form.prop("data-last-save-success") === form_data) {
-    if (k) k(res);
+    if (k) k(valres);
     return;
   }
 
@@ -543,6 +568,7 @@ function saveAndContinue(e, k, event) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: form_data,
     success: function (res) {
@@ -576,6 +602,46 @@ function saveAndContinue(e, k, event) {
   });
 
   return false;
+}
+
+/**
+ * search textareas with is-expression="yes" and remove virtual monaco prefix
+ * before the formdata is serialized
+ * @param {Form} form
+ */
+function removeVirtualMonacoPrefix(form) {
+  const textareas = form.find('textarea[is-expression="yes"]');
+  const virtualMonacoPrefix = "const prefix: Row =";
+  textareas.each(function () {
+    const jThis = $(this);
+    const val = jThis.val();
+    if (
+      new RegExp("^\\s*" + virtualMonacoPrefix).test(val) ||
+      new RegExp("^\\s*//\\s*" + virtualMonacoPrefix).test(val)
+    ) {
+      jThis.data("original-value", val);
+      const match = val.match(/\r?\n/);
+      if (match) jThis.val(val.substring(match.index + match[0].length));
+      else jThis.val("");
+    }
+  });
+}
+
+/**
+ * search textareas with is-expression="yes" and restore virtual monaco prefix
+ * after the formdata is serialized
+ * @param {Form} form
+ */
+function restoreVirtualMonacoPrefix(form) {
+  const textareas = form.find('textarea[is-expression="yes"]');
+  textareas.each(function () {
+    const jThis = $(this);
+    const orginalVal = jThis.data("original-value");
+    if (orginalVal !== undefined) {
+      jThis.val(orginalVal);
+      jThis.removeData("original-value");
+    }
+  });
 }
 
 function updateMatchingRows(e, viewname) {
@@ -673,6 +739,7 @@ function ajaxSubmitForm(e, force_no_reload, event) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: new FormData(form[0]),
     processData: false,
@@ -701,6 +768,19 @@ function ajaxSubmitForm(e, force_no_reload, event) {
 
   return false;
 }
+
+function page_post_action(url) {
+  ajax_post_json(
+    url,
+    {},
+    {
+      success: () => {
+        if (window.reset_spinners) reset_spinners();
+      },
+    }
+  );
+}
+
 function ajax_post_json(url, data, args = {}) {
   ajax_post(url, {
     data: JSON.stringify(data),
@@ -729,9 +809,16 @@ function ajax_post(url, args) {
     });
 }
 
+let sc_form_submit_is_in_progress = false;
+
+function sc_form_submit_in_progress() {
+  sc_form_submit_is_in_progress = true;
+}
+
 function checkNetworkError(e) {
   if (e.readyState == 0 && !e.responseText && !e.responseJSON) {
     //network error
+    if (sc_form_submit_is_in_progress) return true;
     if (scNetworkErrorSignaled) return true;
     scNetworkErrorSignaled = true;
     setTimeout(() => {
@@ -760,6 +847,7 @@ function ajax_post_btn(e, reload_on_done, reload_delay) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: form_data,
     success: function (res) {
@@ -783,6 +871,7 @@ function api_action_call(name, body) {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
+      "Page-Load-Tag": _sc_pageloadtag,
     },
     data: body,
     success: function (res) {
@@ -1140,7 +1229,7 @@ function check_capacitor_builder() {
         if (res.version !== res.sc_version) {
           $("#dockerBuilderStatusId").html(`
     <div
-      id="mismatchBoxId" class="mt-3 p-3 border rounded bg-light"
+      id="mismatchBoxId" class="mt-3 p-3 border rounded"
     >
       <div
         class="d-flex align-items-center mb-2"
@@ -1390,6 +1479,7 @@ function check_delete_unsaved(tablename, script_tag) {
         type: "DELETE",
         headers: {
           "CSRF-Token": _sc_globalCsrf,
+          "Page-Load-Tag": _sc_pageloadtag,
         },
       });
   }
@@ -1406,6 +1496,12 @@ function delprevwfroomrun(viewname, e, runid) {
 function cfu_translate(that) {
   const locale = that.value;
   const translations = window.cfu_translations[locale];
+  const rtlLanguages = ["ar", "he", "fa", "ur", "yi"];
+  const isRTL = rtlLanguages.includes(locale);
+  $("html").attr("lang", locale);
+  if (isRTL) $("html").attr("dir", "rtl");
+  else $("html").attr("dir", "ltr");
+
   if (translations) {
     $("button[type=submit]").text(translations.submitLabel);
     $("h1").text(translations.header);
@@ -1508,6 +1604,7 @@ function ensure_css_loaded(src) {
           // Shows the first element if there are no query parameters.
           $(element).tab("show");
         } else if ($(this).attr("href") === window.location.hash) {
+          $(element).trigger("show.bs.tab");
           $(element).tab("show");
         }
       });

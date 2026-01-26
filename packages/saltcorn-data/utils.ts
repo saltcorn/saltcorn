@@ -20,7 +20,12 @@ import { existsSync } from "fs-extra";
 import _ from "underscore";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
+const Docker = require("dockerode");
+import path from "path";
+import os from "os";
 // import { ResultType, StepResType } from "types";'
+
+declare const saltcorn: any;
 
 const getFetchProxyOptions = () => {
   if (process.env["HTTPS_PROXY"]) {
@@ -154,7 +159,7 @@ const satisfies = (where: Where) => (obj: any) =>
 
 // https://gist.github.com/jadaradix/fd1ef195af87f6890448
 const getLines = (filename: string, lineCount: number): Promise<string> =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     let stream = createReadStream(filename, {
       flags: "r",
       encoding: "utf-8",
@@ -177,9 +182,9 @@ const getLines = (filename: string, lineCount: number): Promise<string> =>
       }
     });
 
-    /*stream.on("error", function () {
-    callback("Error");
-  });*/
+    stream.on("error", function (err) {
+      reject(err);
+    });
 
     stream.on("end", function () {
       resolve(lines.join("\n"));
@@ -454,14 +459,14 @@ const interpolate = (
   row: any,
   user?: any,
   errorLocation?: string
-) => {
+): string => {
   try {
     if (s && typeof s === "string") {
       const template = _.template(s, {
         interpolate: /\{\{!(.+?)\}\}/g,
         escape: /\{\{([^!].+?)\}\}/g,
       });
-      return template({ row, user, ...(row || {}) });
+      return template({ row, user, process: undefined, ...(row || {}) });
     } else return s;
   } catch (e: any) {
     e.message = `In evaluating the interpolation ${s}${
@@ -556,8 +561,12 @@ const flatEqual = (a: any, b: any) => {
   return true;
 };
 
-const jsIdentifierValidator = (s: string) => {
-  if (!s) return "An identifier is required";
+const jsIdentifierValidator = (
+  s: string,
+  _: any,
+  field?: { required: boolean }
+) => {
+  if (!s && field?.required) return "An identifier is required";
   if (s.includes(" ")) return "Spaces not allowd";
   let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
     .split("")
@@ -578,7 +587,104 @@ const isPushEnabled = (user?: User): user is User => {
   return userAttr?.notify_push;
 };
 
+/**
+ * Mobile helper to render views with the 'mobile_render_server_side' flag server-side
+ * @param viewname
+ * @param state
+ * @returns html string
+ */
+const renderServerSide = async (viewname: string, state: any) => {
+  const response = await saltcorn.mobileApp.api.apiCall({
+    method: "GET",
+    path: `/view/${encodeURIComponent(viewname)}`,
+    params: state,
+  });
+  const data = response.data;
+  return data;
+};
+
+const allReturnDirectives = [
+  "popup",
+  "goto",
+  "eval_js",
+  "download",
+  "set_fields",
+  "notify",
+  "notify_success",
+  "error",
+  "reload_embedded_view",
+  "progress_bar_update",
+  "suppressed",
+  "reload_page",
+  "resume_workflow",
+];
+
+const secondaryReturnDirectives: Record<string, string[]> = {
+  reload_embedded_view: ["new_state"],
+  notify: ["remove_delay", "toast_title", "notify_type"],
+  notify_success: ["remove_delay", "toast_title"],
+  error: ["remove_delay", "toast_title"],
+  goto: ["target"],
+  eval_js: ["row", "field_names"],
+  set_fields: ["no_onchange"],
+};
+
+const returnDirectivesOnly = (
+  o: GenObj | undefined | null
+): GenObj | undefined | null => {
+  if (!o) return o;
+  const r: GenObj = {};
+  allReturnDirectives.forEach((k) => {
+    if (typeof o[k] !== "undefined") {
+      r[k] = o[k];
+      if (secondaryReturnDirectives[k])
+        secondaryReturnDirectives[k].forEach((secondary_k) => {
+          if (typeof o[secondary_k] !== "undefined") {
+            r[secondary_k] = o[secondary_k];
+          }
+        });
+    }
+  });
+  return r;
+};
+
+const dataModulePath = __dirname;
+
+const imageAvailable = async (imageName: string, preferedVersion: string) => {
+  const docker = new Docker();
+  try {
+    const image = docker.getImage(`${imageName}:${preferedVersion}`);
+    await image.inspect();
+    return { installed: true, version: preferedVersion };
+  } catch (e) {
+    try {
+      const images = await docker.listImages({
+        filters: { reference: [`${imageName}:*`] },
+      });
+      const tags = images.flatMap((img: any) => img.RepoTags || []);
+      if (tags.length > 0)
+        return { installed: true, version: tags[0].split(":")[1] };
+    } catch (err: any) {
+      require("./db/state")
+        .getState()
+        .log(5, `Error checking for ${imageName} image: ${err.message || err}`);
+    }
+    return { installed: false };
+  }
+};
+
+const pluginsFolderRoot = path.join(
+  os.homedir(),
+  ".local",
+  "share",
+  "saltcorn-plugins"
+);
+
 export = {
+  dataModulePath,
+  allReturnDirectives,
+  secondaryReturnDirectives,
+  returnDirectivesOnly,
   cloneName,
   dollarizeObject,
   objectToQueryString,
@@ -633,4 +739,7 @@ export = {
   jsIdentifierValidator,
   escapeHtml,
   isPushEnabled,
+  renderServerSide,
+  imageAvailable,
+  pluginsFolderRoot,
 };

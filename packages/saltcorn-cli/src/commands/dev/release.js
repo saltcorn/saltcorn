@@ -31,8 +31,7 @@ class ReleaseCommand extends Command {
    */
   async run() {
     const {
-      args: { version },
-      flags,
+      args: { version, tag },   
     } = await this.parse(ReleaseCommand);
     runCmd("git", ["pull"], {
       stdio: "inherit",
@@ -124,8 +123,7 @@ class ReleaseCommand extends Command {
       });
     };
     const publish = async (dir, tags0) => {
-      const tags = !tags0 ? [] : Array.isArray(tags0) ? tags0 : [tags0];
-      if (flags.tag) tags.push(flags.tag);
+      const tags = !tags0 ? [] : Array.isArray(tags0) ? tags0 : [tags0];    
       const firstTag = tags[0];
       runCmd(
         "npm",
@@ -217,7 +215,7 @@ class ReleaseCommand extends Command {
         stdio: "inherit",
         cwd: `packages/saltcorn-cli/`,
       });*/
-    await publish("saltcorn-cli", "next");
+    await publish("saltcorn-cli", tag);
     fs.writeFileSync(`package.json`, JSON.stringify(rootPackageJson, null, 2));
     // update Dockerfile
     const dockerfile = fs.readFileSync(`Dockerfile.release`, "utf8");
@@ -232,6 +230,17 @@ class ReleaseCommand extends Command {
     fs.writeFileSync(
       `Dockerfile.mobile.release`,
       dockerfileWithMobile.replace(
+        /cli@.* --omit=dev/,
+        `cli@${version} --omit=dev`,
+      ),
+    );
+    const isolatedDockerfile = fs.readFileSync(
+      `Dockerfile.isolated.release`,
+      "utf8",
+    );
+    fs.writeFileSync(
+      `Dockerfile.isolated.release`,
+      isolatedDockerfile.replace(
         /cli@.* --omit=dev/,
         `cli@${version} --omit=dev`,
       ),
@@ -268,12 +277,10 @@ ReleaseCommand.args = {
     required: true,
     description: "New version number",
   }),
-};
-
-ReleaseCommand.flags = {
-  tag: Flags.string({
-    char: "t",
-    description: "NPM tag",
+  tag: Args.string({
+    required: true,
+    description: "NPM tag to give this release",
   }),
 };
+
 module.exports = ReleaseCommand;

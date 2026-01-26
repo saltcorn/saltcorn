@@ -30,12 +30,13 @@ const resizer = require("resize-with-sharp-or-jimp");
  * and install the capacitor and cordova modules to node_modules (cap sync will be run later)
  * @param buildDir directory where the app will be build
  * @param templateDir directory of the template code that will be copied to 'buildDir'
- * @param fcmEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications@6.0.4"
+ * @param fcmEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications"
  */
 export function prepareBuildDir(
   buildDir: string,
   templateDir: string,
-  fcmEnabled: boolean
+  fcmEnabled: boolean,
+  backgroundFetchEnabled: boolean
 ) {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
@@ -55,19 +56,22 @@ export function prepareBuildDir(
 
   console.log("installing capacitor deps and plugins");
   const capDepsAndPlugins = [
-    "@capacitor/cli@6.1.2",
-    "@capacitor/core@6.1.2",
+    "@capacitor/cli@7.4.4",
+    "@capacitor/core@7.4.4",
     "@capacitor/assets@3.0.5",
-    "@capacitor/filesystem@6.0.2",
-    "@capacitor/camera@6.1.1",
-    "@capacitor/network@6.0.3",
-    "@capacitor-community/sqlite@6.0.2",
-    "@capacitor/screen-orientation@6.0.3",
-    "@capacitor/app@6.0.2",
-    "send-intent@6.0.3",
+    "@capacitor/filesystem@7.1.5",
+    "@capacitor/camera@7.0.2",
+    "@capacitor/network@7.0.2",
+    "@capacitor-community/sqlite@7.0.2",
+    "@capacitor/screen-orientation@7.0.2",
+    "@capacitor/app@7.1.0",
+    "send-intent@7.0.0",
     ...additionalPlugins,
     ...(fcmEnabled
-      ? ["@capacitor/device@6.0.2", "@capacitor/push-notifications@6.0.4"]
+      ? ["@capacitor/device@7.0.2", "@capacitor/push-notifications@7.0.3"]
+      : []),
+    ...(backgroundFetchEnabled
+      ? ["@transistorsoft/capacitor-background-fetch@7.1.0"]
       : []),
   ];
   console.log("capDepsAndPlugins", capDepsAndPlugins);
@@ -189,7 +193,7 @@ export function prepAppIcon(buildDir: string, appIcon: string) {
   }
 }
 
-export function androidPermissions() {
+export function androidPermissions(allowFCM: boolean) {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
   const permissions = new Set<String>([
@@ -198,6 +202,10 @@ export function androidPermissions() {
     "android.permission.INTERNET",
     "android.permission.CAMERA",
   ]);
+  if (allowFCM) {
+    permissions.add("android.permission.POST_NOTIFICATIONS");
+    permissions.add("com.google.android.c2dm.permission.RECEIVE");
+  }
   for (const capPlugin of state.capacitorPlugins) {
     for (const perm of capPlugin.androidPermissions || []) {
       permissions.add(perm);
@@ -221,7 +229,8 @@ export function androidFeatures() {
 export async function modifyAndroidManifest(
   buildDir: string,
   allowShareTo: boolean,
-  allowFCM: boolean
+  allowFCM: boolean,
+  allowAuthIntent: boolean
 ) {
   console.log("modifyAndroidManifest");
   try {
@@ -236,21 +245,15 @@ export async function modifyAndroidManifest(
     const content = readFileSync(androidManifest);
     const parsed = await parseStringPromise(content);
 
-    parsed.manifest["uses-permission"] = [
-      { $: { "android:name": "android.permission.READ_EXTERNAL_STORAGE" } },
-      { $: { "android:name": "android.permission.WRITE_EXTERNAL_STORAGE" } },
-      { $: { "android:name": "android.permission.INTERNET" } },
-      ...(allowFCM
-        ? [
-            { $: { "android:name": "android.permission.POST_NOTIFICATIONS" } },
-            {
-              $: {
-                "android:name": "com.google.android.c2dm.permission.RECEIVE",
-              },
-            },
-          ]
-        : []),
-    ];
+    parsed.manifest["uses-permission"] = androidPermissions(allowFCM).map(
+      (perm) => ({
+        $: { "android:name": perm },
+      })
+    );
+    parsed.manifest["uses-feature"] = androidFeatures().map((feat) => ({
+      $: { "android:name": feat },
+    }));
+
     parsed.manifest.application[0].$ = {
       ...parsed.manifest.application[0].$,
       "android:allowBackup": "false",
@@ -302,6 +305,28 @@ export async function modifyAndroidManifest(
       ];
     }
 
+    if (allowAuthIntent) {
+      parsed.manifest.application[0].activity[0]["intent-filter"] = [
+        ...(parsed.manifest.application[0].activity[0]["intent-filter"] || []),
+        {
+          $: { "android:autoVerify": "true" },
+          action: [{ $: { "android:name": "android.intent.action.VIEW" } }],
+          category: [
+            { $: { "android:name": "android.intent.category.DEFAULT" } },
+            { $: { "android:name": "android.intent.category.BROWSABLE" } },
+          ],
+          data: [
+            {
+              $: {
+                "android:scheme": "mobileapp",
+                "android:host": "auth",
+                "android:path": "/callback",
+              },
+            },
+          ],
+        },
+      ];
+    }
     const xmlBuilder = new Builder();
     const newCfg = xmlBuilder.buildObject(parsed);
     writeFileSync(androidManifest, newCfg);
@@ -312,6 +337,18 @@ export async function modifyAndroidManifest(
       }`
     );
   }
+}
+
+export function hasAuthMethod(plugins: string[]) {
+  console.log("hasAuthMethod", plugins);
+  const state = getState();
+  for (const pluginName of plugins) {
+    const plugin = state!.plugins[pluginName];
+    console.log("plugin", pluginName, plugin);
+
+    if (plugin && plugin.authentication) return true;
+  }
+  return false;
 }
 
 export function writeDataExtractionRules(buildDir: string) {
@@ -790,7 +827,11 @@ export function writeCfgFile({
   synchedTables,
   tenantAppName,
   autoPublicLogin,
+  showContinueAsPublicUser,
   allowOfflineMode,
+  syncOnReconnect,
+  pushSync,
+  syncInterval,
   allowShareTo,
 }: any) {
   const wwwDir = join(buildDir, "www");
@@ -803,7 +844,11 @@ export function writeCfgFile({
     localUserTables,
     synchedTables,
     autoPublicLogin,
+    showContinueAsPublicUser,
     allowOfflineMode,
+    syncOnReconnect,
+    pushSync,
+    syncInterval,
     allowShareTo,
   };
   if (entryPointType !== "byrole") {
@@ -860,6 +905,40 @@ export async function buildTablesFile(
     return plugin;
   };
 
+  const filterTableFunc = async (table: any) => {
+    let result = table;
+    if (table.provider_name) {
+      const oldProviderCfg = JSON.parse(
+        JSON.stringify(table.provider_cfg || {})
+      );
+      const provider = state.table_providers[table.provider_name];
+      if (provider?.configuration_workflow) {
+        try {
+          const flow = await provider.configuration_workflow();
+          for (const step of flow?.steps || []) {
+            if (step.form) {
+              const form = await step.form(oldProviderCfg);
+              for (const field of form?.fields || []) {
+                if (
+                  field.exclude_from_mobile ||
+                  field.input_type === "password"
+                ) {
+                  delete result.provider_cfg[field.name];
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.log(
+            `Error in configuration_workflow of table provider ${table.provider_name}`
+          );
+          console.log(error);
+        }
+      }
+    }
+    return result;
+  };
+
   const filterFunc = async (table: string, rows: any) => {
     switch (table) {
       case "_sc_plugins":
@@ -876,6 +955,8 @@ export async function buildTablesFile(
             cfg && !(cfg.excludeFromMobile || cfg.input_type === "password")
           );
         });
+      case "_sc_tables":
+        return await Promise.all(rows.map(filterTableFunc));
       default:
         return rows;
     }
@@ -991,7 +1072,11 @@ export async function prepareSplashPage(
     const sbadmin2 = state.plugins["sbadmin2"];
     const html = (<PluginLayout>sbadmin2.layout).wrap({
       title: page.title,
-      body: contents.above ? contents : { above: [contents] },
+      body: !contents
+        ? { above: [] }
+        : contents.above
+          ? contents
+          : { above: [contents] },
       alerts: [],
       role: role,
       menu: [],
@@ -1138,7 +1223,16 @@ export function generateAndroidVersionCode(appVersion: string) {
   );
 }
 
-export function modifyGradleConfig(buildDir: string, appVersion: string) {
+export function modifyGradleConfig(
+  buildDir: string,
+  appVersion: string,
+  keyStoreData?: {
+    keystorePath: string;
+    keystorePassword: string;
+    keyAlias: string;
+    keyPassword: string;
+  }
+) {
   console.log("modifyGradleConfig");
   const gradleFile = join(buildDir, "android", "app", "build.gradle");
   const gradleContent = readFileSync(gradleFile, "utf8");
@@ -1146,5 +1240,34 @@ export function modifyGradleConfig(buildDir: string, appVersion: string) {
   let newGradleContent = gradleContent
     .replace(/versionName "1.0"/, `versionName "${appVersion}"`)
     .replace(/versionCode 1/, `versionCode ${versionCode}`);
+
+  if (keyStoreData) {
+    const signingConfigs = `
+    signingConfigs {
+      debug {
+        storeFile file("${keyStoreData.keystorePath}")
+        storePassword "${keyStoreData.keystorePassword}"
+        keyAlias "${keyStoreData.keyAlias}"
+        keyPassword "${keyStoreData.keyPassword}"
+      }
+  }`;
+    // add a new line with signingConfigs above     "defaultConfig {"
+    newGradleContent = newGradleContent.replace(
+      /defaultConfig \{/,
+      `${signingConfigs}
+    defaultConfig {`
+    );
+
+    const debugBuildTypesBlock = `
+    debug {
+      signingConfig signingConfigs.debug
+    }`;
+    // add the debug build type block above   "release {"
+    newGradleContent = newGradleContent.replace(
+      /release \{/,
+      `${debugBuildTypesBlock}
+    release {`
+    );
+  }
   writeFileSync(gradleFile, newGradleContent, "utf8");
 }

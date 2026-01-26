@@ -204,6 +204,7 @@ const layoutToNodes = (
           step_action_names={segment.step_action_names || ""}
           confirm={segment.confirm}
           spinner={segment.spinner}
+          run_async={segment.run_async || false}
           is_submit_action={segment.is_submit_action}
           configuration={segment.configuration || {}}
           block={segment.block || false}
@@ -300,6 +301,7 @@ const layoutToNodes = (
           acc_init_opens={segment.acc_init_opens}
           disable_inactive={segment.disable_inactive}
           serverRendered={segment.serverRendered}
+          lazyLoadViews={segment.lazyLoadViews}
           tabId={segment.tabId}
           field={segment.field}
           tabsStyle={segment.tabsStyle}
@@ -657,6 +659,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         deeplink: node.props.deeplink,
         disable_inactive: node.props.disable_inactive,
         serverRendered: node.props.serverRendered,
+        lazyLoadViews: node.props.lazyLoadViews,
         tabId: node.props.tabId,
         ntabs: node.props.ntabs,
         setting_tab_n: node.props.setting_tab_n,
@@ -702,6 +705,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         confirm: node.props.confirm,
         spinner: node.props.spinner,
         is_submit_action: node.props.is_submit_action,
+        run_async: node.props.run_async,
         nsteps: node.props.nsteps,
         step_only_ifs: node.props.step_only_ifs,
         step_action_names: node.props.step_action_names,
@@ -715,6 +719,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         configuration: node.props.configuration,
         confirm: node.props.confirm,
         is_submit_action: node.props.is_submit_action,
+        run_async: node.props.run_async,
         action_name: node.props.name,
         ...(node.props.name !== "Clear" && node.props.action_row_variable
           ? {

@@ -21,6 +21,7 @@ const npmMocks = {
   tar: join(mocksDir, "npm", "tar"),
   "live-plugin-manager": join(mocksDir, "npm", "live-plugin-manager"),
   "firebase-admin": join(mocksDir, "npm", "firebase-admin"),
+  "dockerode": join(mocksDir, "npm", "dockerode"),
 };
 
 const saltcornMocks = {
@@ -34,6 +35,7 @@ const saltcornMocks = {
   "../models/pack": join(mocksDir, "models", "pack"),
   "./email": join(mocksDir, "models", "email"),
   "../models/email": join(mocksDir, "models", "email"),
+  "./internal/mail_queue": join(mocksDir, "models", "internal", "mail_queue"),
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "@saltcorn/html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
@@ -50,6 +52,7 @@ module.exports = {
   externals: {
     "@saltcorn/sqlite": "@saltcorn/sqlite",
     "@saltcorn/postgres": "@saltcorn/postgres",
+    "cpu-features": "commonjs cpu-features",
   },
   optimization: {
     minimize: false, // debug
@@ -76,6 +79,7 @@ module.exports = {
       tls: false,
       dns: false,
       net: false,
+      http2: false,
       punycode: require.resolve("punycode/"),
       console: require.resolve("console-browserify"),
       assert: require.resolve("assert/"),

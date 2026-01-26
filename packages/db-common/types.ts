@@ -2,6 +2,12 @@ import * as multiTenant from "./multi-tenant";
 import { ReadStream, WriteStream } from "fs";
 import { Row, Where, SelectOptions, PrimaryKeyValue } from "./internal";
 
+type RequestContext = {
+  tenant: string;
+  client?: any;
+  req?: any;
+};
+
 export type DbExportsType = {
   tenant: typeof multiTenant;
   sqlsanitize: (s?: string) => string;
@@ -26,7 +32,7 @@ export type DbExportsType = {
   reset: () => Promise<void>;
   tryCatchInTransaction: <T>(
     fn: () => Promise<T>,
-    onError?: (err: Error) => Promise<void> | void
+    onError?: (err: Error) => Promise<T | void> | T | void
   ) => Promise<T>;
   commitAndBeginNewTransaction: () => Promise<void>;
   selectMaybeOne: (table: string, where: Where, opts?: any) => Promise<any>;
@@ -35,7 +41,11 @@ export type DbExportsType = {
     fn: () => Promise<any>,
     onError?: (e: Error) => Promise<void>
   ) => Promise<any>;
-  count: (table: string, where?: Where | undefined) => Promise<number>;
+  count: (
+    table: string,
+    where?: Where | undefined,
+    opts?: SelectOptions
+  ) => Promise<number>;
   deleteWhere: (table: string, where: Where) => Promise<any>;
   selectOne: (
     table: string,
@@ -89,7 +99,7 @@ export type DbExportsType = {
   updateWhere: (table: string, data: Row, where: Where) => Promise<any>;
   slugify: (str: string) => string;
   runWithTenant: (
-    tenantId: string,
+    tenantId: string | RequestContext,
     // fn: (tenantId?: string) => Promise<void | string>
     fn: any
   ) => Promise<any>;

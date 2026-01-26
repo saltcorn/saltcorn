@@ -166,9 +166,14 @@ WHERE  c.oid = '"${opts?.schema || getTenantSchema()}"."${sqlsanitize(tbl)}"'::r
     }
   }
 
-  const sql = `SELECT COUNT(*) FROM "${opts?.schema || getTenantSchema()}"."${sqlsanitize(
+  const core_sql = `FROM "${opts?.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where}`;
+  //https://pganalyze.com/blog/5mins-postgres-limited-count
+  const sql = opts?.limit
+    ? `SELECT count(*) AS count FROM (
+  SELECT 1 ${core_sql} limit ${+opts?.limit}) limited_count`
+    : `SELECT COUNT(*) ${core_sql}`;
   sql_log(sql, values);
   const tq = await getMyClient(opts).query(sql, values);
 
@@ -407,7 +412,7 @@ const drop_unique_constraint = async (table_name, field_names) => {
   // TBD check that there are no problems with lenght of constraint name
   const sql = `alter table "${getTenantSchema()}"."${sqlsanitize(
     table_name
-  )}" drop CONSTRAINT "${sqlsanitize(table_name)}_${field_names
+  )}" drop CONSTRAINT IF EXISTS "${sqlsanitize(table_name)}_${field_names
     .map((f) => sqlsanitize(f))
     .join("_")}_unique";`;
   sql_log(sql);
@@ -611,7 +616,7 @@ const withTransaction = async (f, onError) => {
 };
 
 const commitAndBeginNewTransaction = async () => {
-  const client = await getClient();
+  const client = await getMyClient();
   sql_log("COMMIT;");
   await client.query("COMMIT;");
   sql_log("BEGIN;");
@@ -626,10 +631,52 @@ const tryCatchInTransaction = async (f, onError) => {
     return await f();
   } catch (error) {
     if (reqCon?.client) await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
-    await onError(error);
+    if (onError) return await onError(error);
   } finally {
     if (reqCon?.client) await query(`RELEASE SAVEPOINT sp${rndid}`);
   }
+};
+
+/**
+ * Should be used for code that is sometimes called from within a withTransaction block
+ * and sometimes not.
+ * @param {Function} f logic to execute
+ * @param {Function} onError error handler
+ * @returns
+ */
+const openOrUseTransaction = async (f, onError) => {
+  const reqCon = getRequestContext();
+  if (reqCon?.client) return await f();
+  else return await withTransaction(f, onError);
+};
+
+/**
+ * Wait some time until current transaction COMMITs,
+ * then open another transaction.
+ * @param {Function} f logic to execute
+ * @param {Function} onError error handler
+ * @returns
+ */
+const whenTransactionisFree = (f, onError) => {
+  return new Promise((resolve, reject) => {
+    // wait until transaction is free
+    let counter = 0;
+    const interval = setInterval(async () => {
+      const reqCon = getRequestContext();
+      if (!reqCon?.client) {
+        clearInterval(interval);
+        try {
+          resolve(await withTransaction(f, onError));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      if (++counter > 100) {
+        clearInterval(interval);
+        reject(new Error("Timeout waiting for transaction to be free"));
+      }
+    }, 200);
+  });
 };
 
 const query = (text, params) => {
@@ -682,6 +729,8 @@ const postgresExports = {
   truncate,
   withTransaction,
   tryCatchInTransaction,
+  openOrUseTransaction,
+  whenTransactionisFree,
   commitAndBeginNewTransaction,
 };
 

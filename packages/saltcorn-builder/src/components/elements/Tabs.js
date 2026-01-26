@@ -181,6 +181,7 @@ const TabsSettings = () => {
     deeplink: node.data.props.deeplink,
     disable_inactive: node.data.props.disable_inactive,
     serverRendered: node.data.props.serverRendered,
+    lazyLoadViews: node.data.props.lazyLoadViews,
     setting_tab_n: node.data.props.setting_tab_n,
     tabId: node.data.props.tabId,
     titles: node.data.props.titles,
@@ -200,6 +201,7 @@ const TabsSettings = () => {
     ntabs,
     field,
     serverRendered,
+    lazyLoadViews,
     tabId,
     showif,
     setting_tab_n,
@@ -275,22 +277,40 @@ const TabsSettings = () => {
         ) : (
           <Fragment>
             {tabsStyle === "Accordion" ? (
-              <tr>
-                <td colSpan="2">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      name="block"
-                      type="checkbox"
-                      checked={independent}
-                      onChange={setAProp("independent", { checked: true })}
-                    />
-                    <label className="form-check-label">
-                      Open independently
-                    </label>
-                  </div>
-                </td>
-              </tr>
+              <Fragment>
+                <tr>
+                  <td colSpan="2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        name="block"
+                        type="checkbox"
+                        checked={independent}
+                        onChange={setAProp("independent", { checked: true })}
+                      />
+                      <label className="form-check-label">
+                        Open independently
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan="2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        name="block"
+                        type="checkbox"
+                        checked={lazyLoadViews}
+                        onChange={setAProp("lazyLoadViews", { checked: true })}
+                      />
+                      <label className="form-check-label">
+                        Lazy load views
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+              </Fragment>
             ) : (
               <Fragment>
                 <tr>
@@ -339,6 +359,22 @@ const TabsSettings = () => {
                     </td>
                   </tr>
                 ) : null}
+                <tr>
+                  <td colSpan="2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        name="block"
+                        type="checkbox"
+                        checked={lazyLoadViews}
+                        onChange={setAProp("lazyLoadViews", { checked: true })}
+                      />
+                      <label className="form-check-label">
+                        Lazy load views
+                      </label>
+                    </div>
+                  </td>
+                </tr>
               </Fragment>
             )}
             {tabsStyle === "Accordion" ? (

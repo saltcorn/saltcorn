@@ -136,7 +136,11 @@ const Container = ({
         minHeight: minHeight ? `${minHeight}${minHeightUnit || "px"}` : null,
         ...(bgType === "Image" && bgFileId
           ? {
-              backgroundImage: `url('/files/serve/${bgFileId}')`,
+              backgroundImage: `url('${
+                /^(?:[a-z]+:)?\/\//i.test(bgFileId)
+                  ? bgFileId
+                  : `/files/serve/${bgFileId}`
+              }')`,
               backgroundSize:
                 imageSize === "repeat" ? undefined : imageSize || "contain",
               backgroundRepeat:
@@ -229,6 +233,7 @@ const ContainerSettings = () => {
     animateDelay: node.data.props.animateDelay,
     animateDuration: node.data.props.animateDuration,
     animateInitialHide: node.data.props.animateInitialHide,
+    currentSettingsTab: node.data.props.currentSettingsTab,
   }));
   const {
     actions: { setProp },
@@ -263,6 +268,7 @@ const ContainerSettings = () => {
     style,
     transform,
     bgField,
+    currentSettingsTab,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -277,7 +283,10 @@ const ContainerSettings = () => {
   //console.log("transform", transform);
 
   return (
-    <Accordion>
+    <Accordion
+      value={currentSettingsTab}
+      onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
+    >
       <div accordiontitle="Box" className="w-100">
         <BoxModelEditor setProp={setProp} node={node} />
       </div>
@@ -315,6 +324,20 @@ const ContainerSettings = () => {
                 "main",
                 "aside",
                 "footer",
+                "p",
+                "strong",
+                "ul",
+                "li",
+                "ol",
+                "label",
+                "details",
+                "summary",
+                "blockquote",
+                "pre",
+                "code",
+                "abbr",
+                "kbd",
+                "small",
               ],
             }}
             node={node}
@@ -945,25 +968,24 @@ const ContainerSettings = () => {
           {["show", "edit", "filter", "list"].includes(options.mode) && (
             <SettingsSectionHeaderRow title="Formula - show if true" />
           )}
-          {["show", "edit", "filter", "list"].includes(options.mode) && (
-            <tr>
-              <td colSpan={2}>
-                <input
-                  type="text"
-                  className="form-control text-to-display"
-                  value={showIfFormula}
-                  spellCheck={false}
-                  onChange={setAProp("showIfFormula")}
-                  onInput={(e) => validate_expression_elem($(e.target))}
-                />
-                <div style={{ marginTop: "-5px" }}>
-                  <small className="text-muted font-monospace">
-                    FORMULA <FormulaTooltip />
-                  </small>
-                </div>
-              </td>
-            </tr>
-          )}
+          <tr>
+            <td colSpan={2}>
+              <input
+                type="text"
+                placeholder="Example: x === y"
+                className="form-control text-to-display"
+                value={showIfFormula}
+                spellCheck={false}
+                onChange={setAProp("showIfFormula")}
+                onInput={(e) => validate_expression_elem($(e.target))}
+              />
+              <div style={{ marginTop: "-5px" }}>
+                <small className="text-muted font-monospace">
+                  FORMULA <FormulaTooltip />
+                </small>
+              </div>
+            </td>
+          </tr>
           <SettingsSectionHeaderRow title="Role" />
           {options.roles.map(({ role, id }) => (
             <tr key={id}>

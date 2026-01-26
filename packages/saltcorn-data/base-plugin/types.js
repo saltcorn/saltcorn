@@ -429,7 +429,7 @@ const number_limit = (direction) => ({
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
   run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
-    const onChange = `set_state_field('_${direction}_${nm}', this.value, this)`;
+    const onChange = `${attrs.preOnChange || ""}set_state_field('_${direction}_${nm}', this.value, this)`;
     return attrs?.stepper_btns
       ? number_stepper(
           undefined,
@@ -438,7 +438,7 @@ const number_limit = (direction) => ({
             : undefined,
           {
             ...attrs,
-            onChange: `set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val(), this)`,
+            onChange: `${attrs.preOnChange || ""}set_state_field('_${direction}_${nm}', $('#numlim_${nm}_${direction}').val(), this)`,
           },
           cls,
           undefined,
@@ -1077,7 +1077,7 @@ const string = {
             ? input({
                 type: "text",
                 class: ["form-control", "form-select", cls],
-                name: text_attr(nm),
+                name: attrs.isFilter ? undefined : text_attr(nm),
                 "data-fieldname": text_attr(field.name),
                 id: `input${text_attr(nm)}`,
                 onChange: attrs.onChange,
@@ -1092,7 +1092,7 @@ const string = {
                     cls,
                     attrs.selectizable ? "selectizable" : false,
                   ],
-                  name: text_attr(nm),
+                  name: attrs.isFilter ? undefined : text_attr(nm),
                   "data-fieldname": text_attr(field.name),
                   id: `input${text_attr(nm)}`,
                   disabled: attrs.disabled,
@@ -1137,7 +1137,7 @@ const string = {
               ? select(
                   {
                     class: ["form-control", "form-select", cls],
-                    name: text_attr(nm),
+                    name: attrs.isFilter ? undefined : text_attr(nm),
                     disabled: attrs.disabled,
                     "data-fieldname": text_attr(field.name),
                     id: `input${text_attr(nm)}`,
@@ -1161,7 +1161,7 @@ const string = {
                   onChange: attrs.onChange,
                   spellcheck: attrs.spellcheck === false ? "false" : undefined,
                   "data-fieldname": text_attr(field.name),
-                  name: text_attr(nm),
+                  name: attrs.isFilter ? undefined : text_attr(nm),
                   required: !!(required || attrs.force_required),
                   maxlength: isdef(attrs.max_length) && attrs.max_length,
                   minlength: isdef(attrs.min_length) && attrs.min_length,
@@ -1709,18 +1709,19 @@ const int = {
       ],
       isEdit: false,
       blockDisplay: true,
-      run: (v, req, attrs = {}) =>
-        div(
+      run: (v, req, attrs = {}) => {
+        return div(
           Array.from(
-            { length: attrs.max - attrs.min + 1 },
-            (_, i) => i + attrs.min
+            { length: +attrs.max - +attrs.min + 1 },
+            (_, i) => i + +attrs.min
           ).map((starVal) =>
             i({
               class: "fas fa-star",
               style: { color: starVal <= v ? "#ffc107" : "#ddd" },
             })
           )
-        ),
+        );
+      },
     },
     edit_star_rating: {
       description: "Input by clicking filled stars out of maximum.",
@@ -1731,6 +1732,17 @@ const int = {
         ...(!isdef(field.attributes.max)
           ? [{ name: "max", type: "Integer", required: true, default: 5 }]
           : []),
+        ...(!field.required
+          ? [
+              {
+                name: "force_required",
+                label: "Required",
+                sublabel:
+                  "User must select a value, even if the table field is not required",
+                type: "Bool",
+              },
+            ]
+          : []),
       ],
       isEdit: true,
       blockDisplay: true,
@@ -1739,8 +1751,8 @@ const int = {
         return div(
           { class: "editStarRating" },
           Array.from(
-            { length: attrs.max - attrs.min + 1 },
-            (_, i) => attrs.max - i
+            { length: +attrs.max - +attrs.min + 1 },
+            (_, i) => +attrs.max - i
           ).map(
             (starVal) =>
               input({
@@ -1749,6 +1761,7 @@ const int = {
                 name: text_attr(nm),
                 value: starVal,
                 checked: v === starVal,
+                ...(required || attrs.force_required ? { required: true } : {}),
               }) +
               label(
                 { for: `input${text_attr(nm)}-${starVal}` },
@@ -2166,7 +2179,8 @@ const date = {
       ],
       run: (d, req, options) => {
         if (!d) return "";
-        if (req?.noHTML) return moment(d).format(options?.format);
+        const jsdate = options?.day_only && d.toDate ? d.toDate() : d;
+        if (req?.noHTML) return moment(jsdate).format(options?.format);
         const loc = locale(req);
         return time(
           {
@@ -2177,7 +2191,7 @@ const date = {
               JSON.stringify(options?.format)
             ),
           },
-          moment(d).locale(loc).format(options?.format)
+          moment(jsdate).locale(loc).format(options?.format)
         );
       },
     },
@@ -2192,7 +2206,7 @@ const date = {
       run: (d, req) => {
         if (!d) return "";
         const loc = locale(req);
-        if (d instanceof PlainDate) {
+        if (d instanceof PlainDate || d?.constructor?.name === "PlainDate") {
           const today = new PlainDate();
           if (today.equals(d)) return req.__("today");
           let m = moment(d.toDate());
@@ -2228,9 +2242,16 @@ const date = {
       blockDisplay: true,
       description:
         "Ask user to enter a date string. For a better user experience install the flatpickr module.",
+      configFields: [
+        { label: "Date picker", name: "date_picker", type: "Bool" },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
-          type: "text",
+          type: !attrs.date_picker
+            ? "text"
+            : attrs.day_only
+              ? "date"
+              : "datetime-local",
           class: ["form-control", cls],
           "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
@@ -2241,9 +2262,14 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string"
-                ? new Date(v).toLocaleString(attrs.locale)
-                : v.toLocaleString(attrs.locale)
+              ((v1) =>
+                attrs.date_picker
+                  ? v1.toISOString()
+                  : attrs.day_only
+                    ? v1.toLocaleDateString(attrs.locale)
+                    : v1.toLocaleString(attrs.locale))(
+                typeof v === "string" ? new Date(v) : v
+              )
             ),
           }),
         }),
@@ -2258,10 +2284,12 @@ const date = {
       blockDisplay: true,
       description:
         "Ask user to enter a day string. For a better user experience install the flatpickr module.",
-
+      configFields: [
+        { label: "Date picker", name: "date_picker", type: "Bool" },
+      ],
       run: (nm, v, attrs, cls, required, field) =>
         input({
-          type: "text",
+          type: attrs.date_picker ? "date" : "text",
           class: ["form-control", cls],
           "data-fieldname": text_attr(field.name),
           name: text_attr(nm),
@@ -2272,9 +2300,12 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              typeof v === "string"
-                ? new Date(v).toLocaleDateString(attrs.locale)
-                : v.toLocaleDateString(attrs.locale)
+              ((v1) =>
+                attrs.date_picker
+                  ? v1.toISOString()
+                  : v1.toLocaleDateString(attrs.locale))(
+                typeof v === "string" ? new Date(v) : v
+              )
             ),
           }),
         }),
@@ -2299,11 +2330,20 @@ const date = {
   read: (v0, attrs) => {
     const readDate = (v) => {
       if (v instanceof Date && !isNaN(v)) return v;
-      if (v instanceof PlainDate && v.isValid()) return v.toDate();
+      if (
+        (v instanceof PlainDate || v?.constructor?.name === "PlainDate") &&
+        v.isValid()
+      )
+        return v.toDate();
       if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
-        if (attrs && attrs.locale) {
-          const d = moment(v, "L LT", attrs.locale).toDate();
-          if (d instanceof Date && !isNaN(d)) return d;
+        if (attrs && attrs.locale && typeof v === "string") {
+          if (
+            !v.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/) &&
+            !v.match(/\d{4}-\d{2}-\d{2}/)
+          ) {
+            const d = moment(v, "L LT", attrs.locale).toDate();
+            if (d instanceof Date && !isNaN(d)) return d;
+          }
         }
         const d = new Date(v);
         if (d instanceof Date && !isNaN(d)) return d;
@@ -2312,11 +2352,20 @@ const date = {
     };
     const readPlainDate = (v) => {
       if (v instanceof Date && !isNaN(v)) return new PlainDate(v);
-      if (v instanceof PlainDate && v.isValid()) return v;
+      if (
+        (v instanceof PlainDate || v?.constructor?.name === "PlainDate") &&
+        v.isValid()
+      )
+        return v;
       if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
-        if (attrs && attrs.locale) {
-          const d = moment(v, "L LT", attrs.locale).toDate();
-          if (d instanceof Date && !isNaN(d)) return new PlainDate(d);
+        if (attrs && attrs.locale && typeof v === "string") {
+          if (
+            !v.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/) &&
+            !v.match(/\d{4}-\d{2}-\d{2}/)
+          ) {
+            const d = moment(v, "L LT", attrs.locale).toDate();
+            if (d instanceof Date && !isNaN(d)) return new PlainDate(d);
+          }
         }
         try {
           const d = new PlainDate(v);
@@ -2516,6 +2565,11 @@ const bool = {
           label: "True label",
           type: "String",
         },
+        {
+          name: "outline_buttons",
+          label: "Outline buttons",
+          type: "Bool",
+        },
       ],
       run: (nm, v, attrs, cls, required, field) =>
         attrs.disabled
@@ -2527,7 +2581,7 @@ const bool = {
           : input({
               type: "hidden",
               "data-fieldname": text_attr(field.name),
-              name: text_attr(nm),
+              name: attrs.isFilter ? undefined : text_attr(nm),
               onChange: attrs.onChange,
               "data-postprocess": `it=='on'?true:it=='off'?false:null`,
               id: `input${text_attr(nm)}`,
@@ -2543,10 +2597,10 @@ const bool = {
                 class: [
                   "btn btn-xs",
                   !isdef(v) || v === null
-                    ? "btn-secondary"
+                    ? `btn-${attrs.outline_buttons ? "outline-" : ""}secondary`
                     : v
-                      ? "btn-success"
-                      : "btn-danger",
+                      ? `btn-${attrs.outline_buttons ? "outline-" : ""}success`
+                      : `btn-${attrs.outline_buttons ? "outline-" : ""}danger`,
                 ],
                 id: `trib${text_attr(nm)}`,
               },
@@ -2556,6 +2610,82 @@ const bool = {
                   ? attrs?.true_label || "T"
                   : attrs?.false_label || "F"
             ),
+    },
+    thumbs_up_down: {
+      isEdit: true,
+      description:
+        "Edit with Thumb up/down for True, False and Null (missing) values",
+      configFields: [
+        {
+          name: "icons",
+          label: "Icons",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["Thumb", "Arrow", "Caret", "Smile", "Check"],
+          },
+        },
+      ],
+      run: (nm, v, attrs, cls, required, field) => {
+        let yes, no;
+        switch (attrs.icons) {
+          case "Arrow":
+            yes = i({ class: "fas fa-arrow-up" });
+            no = i({ class: "fas fa-arrow-down" });
+            break;
+          case "Caret":
+            yes = i({ class: "fas fa-caret-up" });
+            no = i({ class: "fas fa-caret-down" });
+            break;
+          case "Smile":
+            yes = i({ class: "far fa-smile" });
+            no = i({ class: "far fa-frown" });
+            break;
+          case "Check":
+            yes = i({ class: "fas fa-check" });
+            no = i({ class: "fas fa-times" });
+            break;
+
+          default:
+            yes = i({ class: "far fa-thumbs-up" });
+            no = i({ class: "far fa-thumbs-down" });
+            break;
+        }
+        return (
+          input({
+            type: "hidden",
+            "data-fieldname": text_attr(field.name),
+            name: attrs.isFilter ? undefined : text_attr(nm),
+            onChange: attrs.onChange,
+            "data-postprocess": `it=='on'?true:it=='off'?false:null`,
+            id: `input${text_attr(nm)}`,
+            value: !isdef(v) || v === null ? "?" : v ? "on" : "off",
+          }) +
+          div(
+            { class: "btn-group" },
+            button(
+              {
+                onClick: `thumbsUpDownClick(this, ${JSON.stringify(required)})`,
+                type: "button",
+                class: `btn btn-xs btn-${v === true ? "" : "outline-"}success thumbsup`,
+
+                id: `trib${text_attr(nm)}`,
+              },
+              yes
+            ),
+            button(
+              {
+                onClick: `thumbsUpDownClick(this, ${JSON.stringify(required)})`,
+                type: "button",
+                class: `btn btn-xs btn-${v === false ? "" : "outline-"}danger thumbsdown`,
+
+                id: `trib${text_attr(nm)}`,
+              },
+              no
+            )
+          )
+        );
+      },
     },
   },
   /** @type {object[]} */

@@ -135,7 +135,11 @@ class BuildAppCommand extends Command {
         serverURL: flags.serverURL,
         splashPage: flags.splashPage,
         autoPublicLogin: flags.autoPublicLogin,
+        showContinueAsPublicUser: flags.showContinueAsPublicUser,
         allowOfflineMode: flags.allowOfflineMode,
+        syncOnReconnect: flags.syncOnReconnect,
+        pushSync: flags.pushSync,
+        syncInterval: flags.syncInterval,
         allowShareTo: flags.allowShareTo,
         plugins: await this.uniquePlugins(flags.includedPlugins),
         copyTargetDir: flags.copyAppDirectory,
@@ -301,11 +305,37 @@ BuildAppCommand.flags = {
     string: "autoPublicLogin",
     description: "Show public entry points before the login as a public user.",
   }),
+  showContinueAsPublicUser: Flags.boolean({
+    name: "show continue as public user",
+    string: "showContinueAsPublicUser",
+    description:
+      "Show a button to continue as public user on the login screen.",
+  }),
   allowOfflineMode: Flags.boolean({
     name: "Allow offline mode",
     string: "allowOfflineMode",
     description:
       "Switch to offline mode when there is no internet, sync the data when a connection is available again.",
+  }),
+  syncOnReconnect: Flags.boolean({
+    name: "Sync on connection restored",
+    string: "syncOnReconnect",
+    description:
+      "Run Synchronizations and return into online mode when the network connection is restored. " +
+      "When disabled, you still can do this manually.",
+  }),
+  pushSync: Flags.boolean({
+    name: "Push sync",
+    string: "pushSync",
+    description:
+      "When offline mode is enabled, synchronize the synchedTables tables when a push notification is received.",
+  }),
+  syncInterval: Flags.string({
+    name: "Periodic Sync Interval",
+    string: "syncInterval",
+    description:
+      "Perdiodic interval (in minutes) to run synchronizations in the background. " +
+      "This is just a min interval, depending on system conditions, the actual time may be longer.",
   }),
   provisioningProfile: Flags.string({
     name: "provisioning profile",

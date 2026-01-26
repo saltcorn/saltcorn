@@ -331,7 +331,6 @@ class PageLocators {
     this.PageHeader = 'h5.text-primary'; 
     this.s3EnabledCheckbox = 'input[type="checkbox"][name="storage_s3_enabled"]'; 
     this.s3BucketInput = 'input[type="text"][name="storage_s3_bucket"]';
-    this.s3PathPrefixInput = 'input[type="text"][name="storage_s3_path_prefix"]';
     this.s3EndpointInput = 'input[type="text"][name="storage_s3_endpoint"]';
     this.s3RegionInput = 'input[type="text"][name="storage_s3_region"]'; 
     this.s3AccessKeyInput = 'input[type="text"][name="storage_s3_access_key"]';
@@ -380,7 +379,7 @@ class PageLocators {
     this.pageinputstatus = 'input[name="status"]';
     this.configureFilterview = 'a[href="/viewedit/config/Filter"]';
     this.togglesource = 'div[title="Toggle filter"]';
-    this.inputValueField = 'input.w-100:first-of-type';
+    this.inputValueField = 'input.togglevalue';
     this.membertoggle = 'button:has-text("Member")';
     this.Prospecttoggle = 'button:has-text("Prospect")';
     this.Lapsedtoggle = 'button:has-text("Lapsed")';

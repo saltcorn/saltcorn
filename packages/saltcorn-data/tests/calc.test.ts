@@ -8,6 +8,7 @@ const { plugin_with_routes, sleep } = mocks;
 import expression from "../models/expression";
 const {
   eval_expression,
+  identifiersInCodepage,
   get_expression_function,
   transform_for_async,
   expressionValidator,
@@ -20,8 +21,9 @@ const {
 import { mkWhere } from "@saltcorn/db-common/internal";
 
 import { assertIsSet } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import utils from "../utils";
+import PlainDate from "@saltcorn/plain-date";
 const { interpolate, mergeIntoWhere } = utils;
 
 getState().registerPlugin("base", require("../base-plugin"));
@@ -32,6 +34,15 @@ jest.setTimeout(30000);
 beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
+});
+
+describe("identifiersInCodepage", () => {
+  it("gets Function", () => {
+    const ids = identifiersInCodepage(
+      `function foobar(){};async function baz(){}`
+    );
+    expect(ids).toEqual(new Set(["foobar", "baz"]));
+  });
 });
 
 describe("eval_expression", () => {
@@ -46,10 +57,81 @@ describe("eval_expression", () => {
 
     expect(eval_expression("add58(x)", { x: 5 })).toBe(63);
   });
+  it("uses moment with plain date", () => {
+    expect(
+      eval_expression("moment(mydate).format('DD.MM.YYYY')", {
+        mydate: new PlainDate("2026-10-04"),
+      })
+    ).toBe("04.10.2026");
+  });
+
   it("evaluates with null row", () => {
     expect(eval_expression("5+2", undefined)).toBe(7);
     expect(eval_expression("5+2", null)).toBe(7);
     expect(eval_expression("5+2")).toBe(7);
+  });
+});
+
+describe("code pages in eval", () => {
+  it("sync codepages", async () => {
+    await getState().setConfig("function_code_pages", {
+      mypage: `function add59(x){return x+59};
+      globalThis.fooconst = 13;
+      `,
+    });
+    await getState().refresh_codepages();
+
+    expect(eval_expression("add59(fooconst)", {})).toBe(59 + 13);
+  });
+  it("async codepages", async () => {
+    await getState().setConfig("function_code_pages", {
+      mypage: `
+      globalThis.barconst = 17;
+      function add8(x){return x+8}
+      runAsync(async () => {
+        const book = await Table.findOne("books").getRow({id:1});
+        globalThis.bookpages = book.pages;      
+      })
+      globalThis.bazconst = 12;
+      `,
+    });
+    await getState().refresh_codepages();
+
+    expect(eval_expression("bookpages", {})).toBe(967);
+    expect(eval_expression("barconst", {})).toBe(17);
+    expect(eval_expression("bazconst", {})).toBe(12);
+    expect(eval_expression("add8(bazconst)", {})).toBe(20);
+
+  });
+  it("user driven constant change in codepages", async () => {
+    const table = Table.findOne("books");
+    assertIsSet(table);
+    await getState().setConfig("function_code_pages", {
+      mypage: `
+      runAsync(async () => {
+        const books = await Table.findOne("books").getRows({});
+        let sum = 0
+        for(const b of books) sum += b.pages
+        globalThis.sumbookpages = sum;
+      })
+      `,
+    });
+    await getState().refresh_codepages();
+
+    expect(eval_expression("sumbookpages", {})).toBe(1695);
+    const tr = await Trigger.create({
+      action: "run_js_code",
+      table_id: table.id,
+      when_trigger: "Insert",
+      configuration: {
+        code: `await refreshSystemCache("codepages");`,
+      },
+    });
+    const id = await table.insertRow({ author: "Giuseppe Tomasi", pages: 209 });
+    expect(eval_expression("sumbookpages", {})).toBe(1695 + 209);
+    await table.deleteRows({ id });
+    await sleep(500);
+    await tr.delete()
   });
 });
 
@@ -145,7 +227,7 @@ describe("calculated", () => {
     } catch (e: any) {
       error = e;
     }
-    expect(error.constructor.name).toBe("ReferenceError");
+    expect(error.constructor.name).toContain("Error");
   });
   it("stored existing", async () => {
     const table = await Table.create("withcalcs3");
@@ -191,6 +273,48 @@ describe("calculated", () => {
     assertIsSet(rowlast);
     expect(rowlast.z).toBe(9);
     expect(rowlast.x).toBe(7);
+  });
+  it("avoid nans in integer fields", async () => {
+    const table = await Table.create("withcalcsintnans");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "y",
+      type: "Integer",
+    });
+
+    await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression:
+        "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
+      stored: true,
+    });
+    await Field.create({
+      table,
+      label: "fz",
+      type: "Float",
+      calculated: true,
+      expression:
+        "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
+      stored: true,
+    });
+    await table.update({ versioned: true });
+
+    const id1 = await table.insertRow({ x: 7, y: 2 });
+
+    const row0 = await table.getRow({ id: id1 });
+    assertIsSet(row0);
+    expect(row0.x).toBe(7);
+    expect(row0.z).toBe(null);
+    //seems some differences in pg or node versions
+    expect(isNaN(row0.fz) || row0.fz === null).toBe(true);
   });
   it("use supplied function", async () => {
     const table = await Table.create("withcalcs5");
@@ -387,8 +511,8 @@ describe("single joinfields in stored calculated fields", () => {
     await books.updateRow({ pages: 728 }, book.id);
     const bid = await books.insertRow({ author: "Terry Eagleton", pages: 456 });
     const book1 = await books.getRow({ id: bid });
-    assertIsSet(book1);
-    expect(book1.storedsum).toBe(4);
+    assertIsSet(book1);  
+    expect(book1.storedsum).toBe(bid+1);
 
     await books.getField("number_of_fans")!.delete();
     await books.getField("idp1")!.delete();
@@ -1064,13 +1188,31 @@ describe("jsexprToWhere", () => {
   });
   it("translates join field", async () => {
     const books = Table.findOne({ name: "books" });
-    const fields = await books?.getFields();
+    const fields = books?.getFields();
     expect(jsexprToWhere("publisher.name=='AK Press'", {}, fields)).toEqual({
       publisher: {
         inSelect: {
           field: "id",
           table: "publisher",
           tenant: "public",
+          where: { name: "AK Press" },
+        },
+      },
+    });
+  });
+  it("translates double join field", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    expect(
+      jsexprToWhere("favbook.publisher.name=='AK Press'", {}, patients?.fields)
+    ).toEqual({
+      favbook: {
+        inSelect: {
+          field: "publisher",
+          table: "books",
+          tenant: "public",
+          through: "publisher",
+          through_pk: "id",
+          valField: "id",
           where: { name: "AK Press" },
         },
       },

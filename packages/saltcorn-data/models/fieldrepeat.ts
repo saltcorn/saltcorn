@@ -20,7 +20,7 @@ class FieldRepeat implements AbstractFieldRepeat {
   label: string;
   name: string;
   type: string;
-  fields: Array<FieldLike>;
+  fields: Array<Field | FieldRepeat>;
   layout?: Layout;
   isRepeat = true;
   showIf?: any;
@@ -38,7 +38,11 @@ class FieldRepeat implements AbstractFieldRepeat {
     this.type = "FieldRepeat";
     this.fields = o.fields
       .filter((f) => f.name || f.label)
-      .map((f) => (f.constructor.name === Object.name ? new Field(f) : f));
+      .map((f) =>
+        f.constructor.name === Object.name
+          ? new Field(f)
+          : (f as Field | FieldRepeat)
+      );
     this.layout = o.layout;
     this.isRepeat = true;
     this.showIf = o.showIf;
@@ -46,7 +50,12 @@ class FieldRepeat implements AbstractFieldRepeat {
     this.fancyMenuEditor = o.fancyMenuEditor || false;
     this.defaultNone = o.defaultNone || false;
   }
-
+  get required() {
+    return false;
+  }
+  get attributes() {
+    return {};
+  }
   /**
    * @returns {Promise<void>}
    */
@@ -75,12 +84,30 @@ class FieldRepeat implements AbstractFieldRepeat {
    * @param {*} ix
    * @returns {object}
    */
-  validate_from_ix(whole_rec: any, ix: number): SuccessMessage {
+  validate_from_ix(
+    whole_rec: any,
+    ix: number,
+    nameAdd: string = ""
+  ): SuccessMessage {
     var has_any = false;
     var res: any = {};
 
     this.fields.forEach((f) => {
-      const fval = whole_rec[`${f.name}_${ix}`];
+      if (f.isRepeat) {
+        const valres = (f as FieldRepeat).validate_from_ix(
+          whole_rec,
+          0,
+          "_" + ix
+        );
+
+        if (valres.success.length) {
+          res[f.name] = valres.success;
+          has_any = true;
+        }
+        return;
+      }
+      const fval = whole_rec[`${f.name}${nameAdd}_${ix}`];
+
       if (typeof fval !== "undefined") {
         if (instanceOfType(f.type) && f.type?.read) {
           res[f.name] = f.type.read(fval, f.attributes);
@@ -90,12 +117,12 @@ class FieldRepeat implements AbstractFieldRepeat {
       if (
         f.type === "File" &&
         whole_rec._file_names &&
-        whole_rec._file_names.includes(`${f.name}_${ix}`)
+        whole_rec._file_names.includes(`${f.name}${nameAdd}_${ix}`)
       )
         has_any = true;
     });
     if (has_any) {
-      const rest = this.validate_from_ix(whole_rec, ix + 1);
+      const rest = this.validate_from_ix(whole_rec, ix + 1, nameAdd);
       return { success: [res, ...rest.success] };
     } else return { success: [] };
   }
@@ -108,6 +135,11 @@ class FieldRepeat implements AbstractFieldRepeat {
   }
 }
 
-type FieldRepeatCfg = PartialSome<FieldRepeat, "name" | "fields">;
+type FieldRepeatCfg = Omit<
+  PartialSome<FieldRepeat, "name" | "fields">,
+  "fields"
+> & {
+  fields: Array<Field | FieldRepeat | FieldLike>;
+};
 
 export = FieldRepeat;

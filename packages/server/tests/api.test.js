@@ -424,12 +424,15 @@ describe("API authentication", () => {
       .set("Cookie", loginCookie)
       .expect(toRedirect("/useradmin/1"));
     const u = await User.findOne({ id: 1 });
-    expect(!!u.api_token).toBe(true);
+    const tokens = await u.listApiTokens();
+    expect(tokens.length).toBeGreaterThan(0);
   });
   it("should allow access to patients with query string ", async () => {
     const app = await getApp();
     const u = await User.findOne({ id: 1 });
-    const url = "/api/patients/?access_token=" + u.api_token;
+    const tokens = await u.listApiTokens();
+    const token = tokens[0] ? tokens[0].token : u.api_token;
+    const url = "/api/patients/?access_token=" + token;
     await request(app)
       .get(url)
       .expect(succeedJsonWith((rows) => rows.length == 2));
@@ -437,11 +440,12 @@ describe("API authentication", () => {
   it("should allow access to patients with bearer token", async () => {
     const app = await getApp();
     const u = await User.findOne({ id: 1 });
+    const tokens = await u.listApiTokens();
+    const token = tokens[0] ? tokens[0].token : u.api_token;
     const url = "/api/patients/";
     await request(app)
       .get(url)
-      .set("Authorization", "Bearer " + u.api_token)
-
+      .set("Authorization", "Bearer " + token)
       .expect(succeedJsonWith((rows) => rows.length == 2));
   });
   it("should not show file to public", async () => {
@@ -453,9 +457,11 @@ describe("API authentication", () => {
   it("should show file to user", async () => {
     const app = await getApp();
     const u = await User.findOne({ id: 1 });
+    const tokens = await u.listApiTokens();
+    const token = tokens[0] ? tokens[0].token : u.api_token;
     await request(app)
       .get("/api/serve-files/rick1.png")
-      .set("Authorization", "Bearer " + u.api_token)
+      .set("Authorization", "Bearer " + token)
       .expect(200);
   });
   describe("action authentication", () => {
@@ -815,7 +821,7 @@ describe("test share handler", () => {
       (r) =>
         r.title === "share_as_admin" &&
         r.user ===
-          '{"email":"admin@foo.com","id":1,"role_id":1,"language":null,"tenant":"public","attributes":{}}'
+          '{"email":"admin@foo.com","id":1,"role_id":1,"language":null,"tenant":"public","lightDarkMode":"light","attributes":{}}'
     );
     expect(row).toBeDefined();
   });
@@ -831,5 +837,51 @@ describe("test share handler", () => {
     const rows = await sharedData.getRows({});
     const row = rows.find((r) => r.title === "does_not_share_as_public");
     expect(row).toBeUndefined();
+  });
+});
+
+describe("API upload-files", () => {
+  let adminToken;
+  beforeAll(async () => {
+    const admin = await User.findOne({ email: "admin@foo.com" });
+    adminToken = await admin.getNewAPIToken();
+  });
+
+  it("should upload file with bearer token", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .post("/api/upload-files")
+      .set("Authorization", "Bearer " + adminToken)
+      .field("min_role_read", "80")
+      .field("folder", "apitests")
+      .attach("file", Buffer.from("helloiamasmallfile", "utf-8"), "file.txt")
+      .expect(200);
+    const body = res.body;
+    expect(body.success).toBeDefined();
+    expect(body.success.filename).toBe("file.txt");
+    // location may have a numeric suffix if file already exists
+    expect(body.success.location).toMatch(/^apitests\/file(_\d+)?\.txt$/);
+    expect(body.success.url).toBe("/files/serve/" + body.success.location);
+    const f = await File.findOne(body.success.location);
+    expect(f).toBeDefined();
+    expect(f.min_role_read).toBe(80);
+    expect(f.user_id).toBe(1);
+  });
+
+  it("should not allow public upload", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/upload-files")
+      .attach("file", Buffer.from("hellopublic", "utf-8"), "publicupload.txt")
+      .expect(notAuthorized);
+  });
+
+  it("should reject missing file", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/upload-files")
+      .set("Authorization", "Bearer " + adminToken)
+      .field("min_role_read", "80")
+      .expect(respondJsonWith(400, (resp) => resp.error === "No file found"));
   });
 });

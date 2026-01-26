@@ -31,6 +31,7 @@ const File = require("@saltcorn/data/models/file");
 //const load_plugins = require("../load_plugins");
 const passport = require("passport");
 const path = require("path");
+const s3storage = require("../s3storage");
 
 const {
   readState,
@@ -223,16 +224,80 @@ router.get(
           file &&
           (role <= file.min_role_read || (user_id && user_id === file.user_id))
         ) {
+          if (file.s3_store) {
+            await s3storage.redirectToObject(file, res, false);
+            return;
+          }
           res.type(file.mimetype);
           const cacheability =
             file.min_role_read === 100 ? "public" : "private";
           const maxAge = getState().getConfig("files_cache_maxage", 86400);
           res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
-          if (file.s3_store)
-            res.status(404).json({ error: req.__("Not found") });
-          else res.sendFile(file.location, { dotfiles: "allow" });
+          res.sendFile(file.location, { dotfiles: "allow" });
         } else {
           res.status(404).json({ error: req.__("Not found") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
+/**
+ * Upload Files using POST
+ * @name post/upload-files
+ * @function
+ * @memberof module:routes/api~apiRouter
+ */
+router.post(
+  "/upload-files",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      ["api-bearer", "jwt"],
+      { session: false },
+      async function (err, user, info) {
+        const authUser = req.user || user;
+        let jsonResp = {};
+        const min_role_upload = getState().getConfig("min_role_upload", 1);
+        const role = authUser && authUser.id ? authUser.role_id : 100;
+        if (role > +min_role_upload) {
+          jsonResp = { error: "Not authorized" };
+          res.status(401).json(jsonResp);
+          return;
+        }
+        if (!req.files || !req.files.file) {
+          res.status(400).json({ error: "No file found" });
+          return;
+        }
+        const { folder } = req.body || {};
+        const min_role_read = req.body?.min_role_read || 1;
+        try {
+          const f = await File.from_req_files(
+            req.files.file,
+            authUser.id,
+            +min_role_read,
+            folder ? File.normalise(folder) : undefined
+          );
+          const many = Array.isArray(f);
+          const formatLocation = (fl) => File.fieldValueFromRelative(fl.path_to_serve);
+          const formatUrl = (loc, filename) =>
+            File.pathToServeUrl(loc, { filename });
+          jsonResp = {
+            success: {
+              filename: many ? f.map((fl) => fl.filename) : f.filename,
+              location: many
+                ? f.map((fl) => formatLocation(fl))
+                : formatLocation(f),
+              url: many
+                ? f.map((fl) =>
+                    formatUrl(formatLocation(fl), fl.filename)
+                  )
+                : formatUrl(formatLocation(f), f.filename),
+            },
+          };
+          res.json(jsonResp);
+        } catch (e) {
+          console.error(e);
+          res.status(500).json({ error: e.message });
         }
       }
     )(req, res, next);

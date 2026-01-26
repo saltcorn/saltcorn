@@ -119,6 +119,10 @@ const pagePropertiesForm = async (req, isNew) => {
         sublabel: req.__("User role required to access page"),
         input_type: "select",
         options: roles.map((r) => ({ value: r.id, label: r.role })),
+        help: {
+          topic: "Role to access",
+          context: {},
+        },
       },
       ...(htmlOptions.length > 0
         ? [
@@ -168,7 +172,7 @@ const pageBuilderData = async (req, context) => {
   const pages = await Page.find();
   const page_groups = (await PageGroup.find()).map((g) => ({ name: g.name }));
   const images = await File.find({ mime_super: "image" });
-  images.forEach((im) => (im.location = im.path_to_serve));
+  images.forEach((im) => (im.location = im.field_value));
   const roles = await User.get_roles();
   const stateActions = getState().actions;
   const actions = [
@@ -521,10 +525,18 @@ router.post(
           entity_name: dbPage.name,
         });
         if (req.xhr) res.json({ success: "ok" });
-        else res.redirect(`/pageedit/`);
+        else {
+          let redirectTarget =
+            req.query.on_done_redirect &&
+            is_relative_url("/" + req.query.on_done_redirect)
+              ? `/${req.query.on_done_redirect}`
+              : "/pageedit/";
+          res.redirect(redirectTarget);
+        }
       } else {
         if (!pageRow.layout) pageRow.layout = {};
         if (!pageRow.fixed_states) pageRow.fixed_states = {};
+        pageRow.name = pageRow.name.trim();
         await Page.create(pageRow);
         await getState().refresh_pages();
         Trigger.emitEvent("AppChange", `Page ${pageRow.name}`, req.user, {

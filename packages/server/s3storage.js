@@ -1,21 +1,18 @@
-const { S3 } = require("@aws-sdk/client-s3");
 const multer = require("multer");
 const multerS3 = require("multer-s3");
 const { getState } = require("@saltcorn/data/db/state");
+const {
+  getS3Client,
+  getServeUrl: getS3ServeUrl,
+  deleteObject: deleteS3Object,
+} = require("@saltcorn/data/models/internal/s3_helpers");
 const fileUpload = require("express-fileupload");
 const { v4: uuidv4 } = require("uuid");
-const contentDisposition = require("content-disposition");
 const fs = require("fs");
-function createS3Client() {
-  return new S3({
-    credentials: {
-      secretAccessKey: getState().getConfig("storage_s3_access_secret"),
-      accessKeyId: getState().getConfig("storage_s3_access_key"),
-    },
-    region: getState().getConfig("storage_s3_region") || "us-east-1",
-    endpoint: getState().getConfig("storage_s3_endpoint"),
-  });
-}
+const {
+  CopyObjectCommand,
+  DeleteObjectCommand,
+} = require("@aws-sdk/client-s3");
 
 module.exports = {
   /**
@@ -34,7 +31,7 @@ module.exports = {
       // Create multer function
       const s3upload = multer({
         storage: multerS3({
-          s3: createS3Client(),
+          s3: getS3Client(),
           bucket: getState().getConfig("storage_s3_bucket"),
           metadata: function (req, file, cb) {
             cb(null, { fieldName: file.fieldname });
@@ -90,8 +87,19 @@ module.exports = {
       return;
     }
 
-    // Create S3 object
-    const s3 = createS3Client();
+    const v3 = getS3Client();
+    const s3 = {
+      copyObject(params, cb) {
+        v3.send(new CopyObjectCommand(params))
+          .then((data) => cb(null, data))
+          .catch((err) => cb(err));
+      },
+      deleteObject(params, cb) {
+        v3.send(new DeleteObjectCommand(params))
+          .then((data) => cb(null, data))
+          .catch((err) => cb(err));
+      },
+    };
     const bucket = getState().getConfig("storage_s3_bucket");
 
     let newFileObject = {};
@@ -140,44 +148,33 @@ module.exports = {
    */
   serveObject: function (file, res, download) {
     if (file.s3_store) {
-      const s3 = createS3Client();
-      const bucket = getState().getConfig("storage_s3_bucket");
-
-      const params = {
-        Bucket: bucket,
-        Key: file.location,
-      };
-
-      // Forward the object
-      s3.getObject(params)
-        .on("httpHeaders", function (statusCode, headers) {
-          if (download)
-            res.set("Content-Disposition", contentDisposition(file.filename));
-          res.set("Content-Length", headers["content-length"]);
-          this.response.httpResponse.createUnbufferedStream().pipe(res);
-        })
-        .send();
+      module.exports.redirectToObject(file, res, download).catch((e) => {
+        getState().log(3, e.message || e);
+        res.status(500).send("Unable to redirect to object");
+      });
     } else {
-      // Use legacy file download
       res.download(file.location, file.filename, { dotfiles: "allow" });
     }
   },
 
+  redirectToObject: async function (file, res, download) {
+    const url = await getS3ServeUrl(file.location, {
+      download,
+      filename: file.filename,
+    });
+    res.redirect(url);
+  },
+
+  getObjectUrl: async function (file, download) {
+    return await getS3ServeUrl(file.location, {
+      download,
+      filename: file.filename,
+    });
+  },
+
   unlinkObject: function (file) {
     if (file.s3_store) {
-      const s3 = createS3Client();
-      return new Promise((resolve, reject) => {
-        s3.deleteObject(
-          {
-            Bucket: getState().getConfig("storage_s3_bucket"),
-            Key: file.location,
-          },
-          (err, data) => {
-            if (err) reject(err);
-            else resolve(data);
-          }
-        );
-      });
+      return deleteS3Object(file.location);
     } else {
       return fs.unlink(file.location);
     }

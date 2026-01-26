@@ -10,7 +10,7 @@ const { mockReqRes } = mocks;
 const { getState } = require("../db/state");
 import Page from "../models/page";
 import type { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { assertIsSet } from "./assertions";
 import {
   prepareQueryEnviroment,
@@ -473,10 +473,10 @@ describe("Edit-in-edit", () => {
     assertIsSet(v);
     const vres0 = await v.run({}, mockReqRes);
     expect(vres0).toContain("<form");
-    expect(vres0).toContain("add_repeater('publisher')");
+    expect(vres0).toContain("add_repeater('publisher', this)");
     const vres1 = await v.run({ id: 1 }, mockReqRes);
     expect(vres1).toContain("<form");
-    expect(vres1).toContain("add_repeater('publisher')");
+    expect(vres1).toContain("add_repeater('publisher', this)");
     expect(vres1).toContain("Leo Tolstoy");
     expect(vres1).not.toContain("Melville");
   });

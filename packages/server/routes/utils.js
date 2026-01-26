@@ -14,7 +14,7 @@ const {
 } = require("@saltcorn/data/db/state");
 const { get_base_url } = require("@saltcorn/data/models/config");
 const { hash } = require("@saltcorn/data/utils");
-const { input, script, domReady, a } = require("@saltcorn/markup/tags");
+const { input, script, domReady, a, text } = require("@saltcorn/markup/tags");
 const session = require("express-session");
 const cookieSession = require("cookie-session");
 const is = require("contractis/is");
@@ -134,6 +134,9 @@ const setLanguage = (req, res, state) => {
   } else if (req.cookies?.lang) {
     req.setLocale(req.cookies?.lang);
   }
+  const rtlLanguages = ["ar", "he", "fa", "ur", "yi"];
+  const currentLocale = req.getLocale();
+  req.isRTL = rtlLanguages.some((lang) => currentLocale.startsWith(lang));
   if (req.user) Object.freeze(req.user);
   set_custom_http_headers(res, req, state);
 };
@@ -278,7 +281,23 @@ const csrfField = (req) =>
  * @param {function} fn
  * @returns {function}
  */
+
+const escape_param = (val) =>
+  Array.isArray(val)
+    ? val.map(escape_param)
+    : val === "__proto__" || val === "constructor"
+      ? ""
+      : typeof val === "string"
+        ? text(val)
+        : val;
+
 const error_catcher = (fn) => (request, response, next) => {
+  Object.entries(request.query || {}).forEach(([nm, val]) => {
+    request.query[nm] = escape_param(val);
+  });
+  Object.entries(request.params || {}).forEach(([nm, val]) => {
+    request.params[nm] = escape_param(val);
+  });
   Promise.resolve(fn(request, response, next)).catch(next);
 };
 

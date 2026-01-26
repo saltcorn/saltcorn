@@ -1,4 +1,4 @@
-const { error_catcher } = require("./utils.js");
+const { error_catcher, loggedIn } = require("./utils.js");
 const Router = require("express-promise-router");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
@@ -226,10 +226,10 @@ router.post(
 router.post(
   "/offline_changes",
   error_catcher(async (req, res) => {
-    const { changes, syncTimestamp } = req.body || {};
+    const { changes, newSyncTimestamp, oldSyncTimestamp } = req.body || {};
     const rootFolder = await File.rootFolder();
     try {
-      const syncDirName = `${syncTimestamp}_${req.user?.email || "public"}`;
+      const syncDirName = `${newSyncTimestamp}_${req.user?.email || "public"}`;
       const syncDir = path.join(
         rootFolder.location,
         "mobile_app",
@@ -250,8 +250,8 @@ router.post(
       ) {
         spawnParams.push("--tenantAppName", db.getTenantSchema());
       }
-      spawnParams.push("--syncTimestamp", syncTimestamp);
-
+      spawnParams.push("--newSyncTimestamp", newSyncTimestamp);
+      spawnParams.push("--oldSyncTimestamp", oldSyncTimestamp);
       res.json({ syncDir: syncDirName });
       const child = spawn(getSafeSaltcornCmd(), spawnParams, {
         stdio: ["pipe", "pipe", "pipe"],
@@ -278,6 +278,13 @@ router.post(
   })
 );
 
+const readOutFile = async (entries, syncDir, fileName) => {
+  if (entries.indexOf(fileName) >= 0) {
+    return JSON.parse(await fs.readFile(path.join(syncDir, fileName)));
+  }
+  return null;
+};
+
 router.get(
   "/upload_finished",
   error_catcher(async (req, res) => {
@@ -296,22 +303,34 @@ router.get(
       } catch (error) {
         return res.json({ finished: false });
       }
-      if (entries.indexOf("translated-ids.json") >= 0) {
-        const translatedIds = JSON.parse(
-          await fs.readFile(path.join(syncDir, "translated-ids.json"))
-        );
-        const uniqueConflicts = JSON.parse(
-          await fs.readFile(path.join(syncDir, "unique-conflicts.json"))
-        );
-        res.json({ finished: true, translatedIds, uniqueConflicts });
-      } else if (entries.indexOf("error.json") >= 0) {
-        const error = JSON.parse(
-          await fs.readFile(path.join(syncDir, "error.json"))
-        );
+      const translatedIds = await readOutFile(
+        entries,
+        syncDir,
+        "translated-ids.json"
+      );
+      const uniqueConflicts = await readOutFile(
+        entries,
+        syncDir,
+        "unique-conflicts.json"
+      );
+      const dataConflicts = await readOutFile(
+        entries,
+        syncDir,
+        "data-conflicts.json"
+      );
+      const error = await readOutFile(entries, syncDir, "error.json");
+      if (error) {
         res.json({ finished: true, error });
-      } else {
-        res.json({ finished: false });
-      }
+      } else if (translatedIds && uniqueConflicts && dataConflicts) {
+        // all files complete
+        // the syncer writes into a temp file and then renames it when complete
+        res.json({
+          finished: true,
+          translatedIds,
+          uniqueConflicts,
+          dataConflicts,
+        });
+      } else res.json({ finished: false });
     } catch (error) {
       getState().log(2, `GET /sync/upload_finished: '${error.message}'`);
       res.status(400).json({ error: error.message || error });
@@ -334,6 +353,84 @@ router.post(
     } catch (error) {
       getState().log(2, `POST /sync/clean_sync_dir: '${error.message}'`);
       res.status(400).json({ error: error.message || error });
+    }
+  })
+);
+
+router.post(
+  "/push_subscribe",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const { token, deviceId, synchedTables } = req.body || {};
+    if (!token) {
+      res.status(400).json({
+        error: req.__("FCM token is required"),
+      });
+      return;
+    }
+
+    const user = req.user;
+    const state = getState();
+    const allSubs = state.getConfig("push_sync_subscriptions", {});
+    let userSubs = allSubs[user.id] || [];
+    const existingSub = userSubs.find(
+      (s) => s.token === token && s.deviceId === deviceId
+    );
+    if (existingSub) {
+      res.json({
+        success: "ok",
+        message: req.__("sync push subscription already exists"),
+      });
+    } else {
+      userSubs = userSubs.filter((s) => s.deviceId !== deviceId);
+      userSubs.push({
+        token,
+        deviceId,
+        synchedTables,
+      });
+      await getState().setConfig("push_sync_subscriptions", {
+        ...allSubs,
+        [user.id]: userSubs,
+      });
+      res.json({
+        success: "ok",
+        message: req.__("sync push subscription saved"),
+      });
+    }
+  })
+);
+
+router.post(
+  "/push_unsubscribe",
+  loggedIn,
+  error_catcher(async (req, res) => {
+    const { token, deviceId } = req.body || {};
+    if (!token) {
+      res.status(400).json({
+        error: req.__("FCM token is required"),
+      });
+      return;
+    }
+
+    const user = req.user;
+    const state = getState();
+    const allSubs = state.getConfig("push_sync_subscriptions", {});
+    let userSubs = allSubs[user.id] || [];
+    const newUserSubs = userSubs.filter((s) => s.deviceId !== deviceId);
+    if (newUserSubs.length === userSubs.length) {
+      res.json({
+        success: "ok",
+        message: req.__("FCM token not found"),
+      });
+    } else {
+      await getState().setConfig("push_sync_subscriptions", {
+        ...allSubs,
+        [user.id]: newUserSubs,
+      });
+      res.json({
+        success: "ok",
+        message: req.__("sync push subscription removed"),
+      });
     }
   })
 );

@@ -14,7 +14,8 @@ import type {
   Element,
   Attributes,
   AttributeVal,
-  TagFunction,TagExports
+  TagFunction,
+  TagExports,
 } from "./types";
 
 const voidHtmlTagsSet = new Set<string>(voidHtmlTags);
@@ -26,6 +27,9 @@ const voidHtmlTagsSet = new Set<string>(voidHtmlTags);
  */
 const domReady = (js: string): string =>
   `(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){${js}});`;
+
+const with_curScript = (js: string): string =>
+  `((curScript)=>{${js}})(document.currentScript)`;
 
 whiteList.kbd = [];
 whiteList.span = ["style"];
@@ -81,12 +85,14 @@ const tagsExports: TagExports = {
     ...children: Element[]
   ) => mkTag(tagName, false)(attributes_or_first_child, ...children),
   domReady,
+  with_curScript,
   text,
   text_attr,
   /** @type {string} */
   nbsp: "&nbsp;",
   /** @type {module:mktag} */
   mkTag,
+  escape,
 } as TagExports;
 
 export = tagsExports;

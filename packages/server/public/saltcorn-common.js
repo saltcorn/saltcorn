@@ -53,6 +53,10 @@ function get_current_state_url(e) {
   else return $modal.prop("data-modal-state");
 }
 
+function set_header_filter(elem) {
+  $(elem).closest("div.hdrfiltdrop").hide();
+}
+
 //avoids hiding in overflow:hidden
 function init_bs5_dropdowns() {
   $("body").on(
@@ -74,8 +78,15 @@ function reset_nearest_form(that) {
   form.find("select").trigger("change");
 }
 
-function add_repeater(nm) {
-  var es = $("div.form-repeat.repeat-" + nm);
+function clear_cloned_file_input(e) {
+  const $e = $(e);
+  $e.val("");
+  $e.parent().find(".file-upload-exising").html("");
+}
+
+function add_repeater(nm, add_link) {
+  const outer_repeat = $(add_link).prev();
+  var es = outer_repeat.find("div.form-repeat.repeat-" + nm);
   const ncopy = es.length - 1;
   var e = es.last();
   var newix = es.length;
@@ -83,15 +94,21 @@ function add_repeater(nm) {
   newe.find("[name]").each(function (ix, element) {
     if ($(element).hasClass("omit-repeater-clone")) $(element).remove();
     const oldnm = element.name || "";
-    var newnm = (element.name || "").replace("_" + ncopy, "_" + newix);
-    var newid = (element.id || "").replace("_" + ncopy, "_" + newix);
+    var newnm = (element.name || "").replace(
+      new RegExp("_" + ncopy + "$"),
+      "_" + newix
+    );
+    var newid = (element.id || "").replace(
+      new RegExp("_" + ncopy + "$"),
+      "_" + newix
+    );
     $(element).attr("name", newnm).attr("id", newid);
     if (element.tagName === "SELECT") {
       const original = document.getElementsByName(oldnm)[0];
       if (original) element.selectedIndex = original.selectedIndex;
     }
   });
-  newe.appendTo($("div.repeats-" + nm));
+  newe.appendTo(outer_repeat);
   newe.find("[data-on-cloned]").each(function (ix, element) {
     (function (str) {
       return eval(str);
@@ -646,6 +663,11 @@ function get_form_data(e_in, rndid) {
   const form = $(e).closest("form");
   const data = new FormData(form[0]);
   data.append("rndid", rndid);
+  const rec = get_form_record(e_in);
+  Object.keys(rec).forEach((k) => {
+    if (data.has(k)) return;
+    data.append(k, rec[k]);
+  });
   return data;
 }
 
@@ -1045,10 +1067,23 @@ function doMobileTransforms() {
   );
 }
 
-function validate_expression_elem(target) {
+/**
+ * @param {any|string} targetOrVal either the target or the string to validate
+ * @param {any} ref the target when targetOrVal is a string (see builder/MonacoEditor)
+ */
+function validate_expression_elem(targetOrVal, ref = null) {
+  let val = null;
+  let target = null;
+  if (typeof targetOrVal === "string") {
+    val = targetOrVal;
+    target = $(ref);
+  } else {
+    target = targetOrVal;
+    val = target.val();
+  }
+
   const next = target.next();
   if (next.hasClass("expr-error")) next.remove();
-  const val = target.val();
   if (target.hasClass("validate-expression-conditional")) {
     const box = target
       .closest(".form-namespace")
@@ -1320,59 +1355,253 @@ function initialize_page() {
     codes.push(this);
   });
   if (codes.length > 0)
-    enable_codemirror(() => {
-      setTimeout(() => {
-        codes.forEach((el) => {
-          //console.log($(el).attr("mode"), el);
-          if ($(el).hasClass("codemirror-enabled")) return;
-          const cmOpts = {
-            lineNumbers: true,
-            mode: $(el).attr("mode"),
-          };
-          if (_sc_lightmode === "dark") cmOpts.theme = "blackboard";
-          const cm = CodeMirror.fromTextArea(el, cmOpts);
-          $(el).addClass("codemirror-enabled");
-          if ($(el).hasClass("enlarge-in-card")) enlarge_in_code($(el), cm);
-          cm.on(
-            "change",
-            $.debounce(
-              (cm1) => {
-                cm1.save();
-                if ($(el).hasClass("validate-statements")) {
-                  try {
-                    let AsyncFunction = Object.getPrototypeOf(
-                      async function () {}
-                    ).constructor;
-                    AsyncFunction(cm.getValue());
-                    $(el).closest("form").trigger("change");
-                  } catch (e) {
-                    const form = $(el).closest("form");
-                    const errorArea = form.parent().find(".full-form-error");
-                    if (errorArea.length) errorArea.text(e.message);
-                    else
-                      form
-                        .parent()
-                        .append(
-                          `<p class="text-danger full-form-error">${e.message}</p>`
-                        );
-                    return;
-                  }
-                } else {
-                  cm1.save();
-                  $(el).closest("form").trigger("change");
-                }
-              },
-              500,
-              null,
-              true
-            )
-          );
+    enable_monaco(codes, (ts_ds) => {
+      codes.forEach((el) => {
+        if ($(el).hasClass("monaco-enabled")) return;
+        $(el).addClass("monaco-enabled");
+        let value = $(el).val();
+        const isExpression = el.getAttribute("is-expression") === "yes";
+        const virtualPrefix = "const prefix: Row =";
+        let valIsEmpty = value.trim() === "";
+        if (
+          isExpression &&
+          !(
+            new RegExp("^\\s*" + virtualPrefix).test(value) ||
+            new RegExp("^\\s*//\\s*" + virtualPrefix).test(value)
+          )
+        ) {
+          value = `${valIsEmpty ? "//" : ""} ${virtualPrefix}
+${value}`;
+        }
+        const enlarge = $(el).hasClass("enlarge-in-card");
+        const compact = $(el).attr("compact");
+        const div = document.createElement("div");
+        el.after(div);
+        if (enlarge) {
+          enlarge_in_code(div);
+        } else if (compact) div.style.height = "90px";
+        else div.classList.add("h-350");
+        let language = "typescript";
+        switch ($(el).attr("mode")) {
+          case "text/css":
+            language = "css";
+            break;
+          case "text/x-sql":
+            language = "sql";
+            break;
+          case "text/html":
+            language = "html";
+            break;
+          case "message/http":
+            language = "";
+            break;
+          case "application/x-python-code":
+          case "text/x-python":
+            language = "python";
+            break;
+          case "text/x-shellscript":
+            language = "shell";
+            break;
+          case "application/json":
+            language = "json";
+            break;
+        }
+        const codepages = $(el).attr("codepage");
+        const singleline = $(el).attr("singleline");
+        if (singleline) {
+          div.style.height = "30px";
+        }
+        const editor = monaco.editor.create(div, {
+          value,
+          language,
+          theme: _sc_lightmode === "dark" ? "vs-dark" : "vs",
+          minimap: { enabled: false },
+          ...(singleline || compact
+            ? {
+                extraEditorClassName: "form-control",
+                ...singleLineMonacoEditorOptions,
+              }
+            : {}),
         });
-      }, 100);
+        monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+          noLib: true,
+          allowNonTsExtensions: true,
+        });
+        monaco.languages.typescript.typescriptDefaults.addExtraLib(ts_ds);
+        // Observe the container for changes
+        const resizeObserver = new ResizeObserver((entries) => {
+          editor.layout();
+        });
+        resizeObserver.observe(el.parentNode);
+        if (isExpression) {
+          // hide prefix line
+          editor.setHiddenAreas([
+            {
+              startLineNumber: 1,
+              endLineNumber: 1,
+            },
+          ]);
+          const model = editor.getModel();
+          // prevent cursor from going to line 1
+          editor.onDidChangeCursorPosition((e) => {
+            if (e.position.lineNumber < 2) {
+              editor.setPosition({
+                lineNumber: 2,
+                column: 1,
+              });
+            }
+          });
+          // no backspacing to line 1
+          editor.onKeyDown((e) => {
+            const position = editor.getPosition();
+            if (
+              position.lineNumber === 2 &&
+              position.column === 1 &&
+              e.keyCode === monaco.KeyCode.Backspace
+            ) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
+          });
+          // copy without the prefix line
+          editor.addAction({
+            id: "copy-editable-only",
+            label: "Copy Only User Content",
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
+            run: (ed) => {
+              const selection = ed.getSelection();
+              if (selection.isEmpty()) return;
+              // intersect selected area with editable area
+              const safeSelection = selection.intersectRanges(
+                new monaco.Range(
+                  2,
+                  1,
+                  model.getLineCount(),
+                  model.getLineMaxColumn(model.getLineCount())
+                )
+              );
+              if (safeSelection) {
+                // write text in intersection to clipboard
+                navigator.clipboard.writeText(
+                  model.getValueInRange(safeSelection)
+                );
+              }
+            },
+          });
+
+          // select all without the prefix line
+          editor.addAction({
+            id: "select-editable-only",
+            label: "Select Only User Content",
+            keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyA],
+            run: (ed) => {
+              ed.setSelection(
+                new monaco.Range(
+                  2,
+                  1,
+                  model.getLineCount(),
+                  model.getLineMaxColumn(model.getLineCount())
+                )
+              );
+            },
+          });
+
+          const form = $(el).closest("form")[0];
+          form.addEventListener("formdata", (e) => {
+            // get the editor value without the prefix line
+            const fullModelRange = model.getFullModelRange();
+            const editableRange = new monaco.Range(
+              2,
+              1,
+              model.getLineCount(),
+              model.getLineMaxColumn(model.getLineCount())
+            );
+            const safeSelection = fullModelRange.intersectRanges(editableRange);
+            let editorValue = "";
+            if (safeSelection) {
+              editorValue = model.getValueInRange(safeSelection);
+            }
+            e.formData.set($(el).attr("name"), editorValue);
+          });
+
+          editor.onDidChangeModelContent(() => {
+            const rawVal = editor.getValue();
+            const userVal = rawVal.substring(rawVal.indexOf("\n") + 1);
+            const newValIsEmpty = userVal.trim().length === 0;
+            if (valIsEmpty && !newValIsEmpty) {
+              valIsEmpty = false;
+              editor.executeEdits("remove-comment-source", [
+                {
+                  range: new monaco.Range(1, 1, 1, 3),
+                  text: "",
+                  forceMoveMarkers: true,
+                },
+              ]);
+            } else if (!valIsEmpty && newValIsEmpty) {
+              valIsEmpty = true;
+              editor.executeEdits("add-comment-source", [
+                {
+                  range: new monaco.Range(1, 1, 1, 1),
+                  text: "// ",
+                  forceMoveMarkers: true,
+                },
+              ]);
+            }
+          });
+        }
+        //top level await and return, any, require
+        if (!codepages)
+          monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+            diagnosticCodesToIgnore: [1108, 1378, 1375, 7044, 2580, 80005],
+          });
+        // any, require
+        else
+          monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+            diagnosticCodesToIgnore: [7044, 2580, 80005],
+          });
+        editor.onDidChangeModelContent(
+          $.debounce(
+            function (e) {
+              const txtval = editor.getValue();
+              if ($(el).hasClass("validate-statements")) {
+                try {
+                  let AsyncFunction = Object.getPrototypeOf(
+                    async function () {}
+                  ).constructor;
+                  AsyncFunction(txtval);
+                  $(el).val(txtval);
+                  $(el).trigger("change");
+                } catch (e) {
+                  const form = $(el).closest("form");
+                  const errorArea = form.parent().find(".full-form-error");
+                  if (errorArea.length) errorArea.text(e.message);
+                  else
+                    form
+                      .parent()
+                      .append(
+                        `<p class="text-danger full-form-error">${e.message}</p>`
+                      );
+                  return;
+                }
+              } else {
+                $(el).val(txtval);
+                $(el).trigger("change");
+              }
+            },
+            500,
+            null,
+            true
+          )
+        );
+
+        return;
+      });
     });
 
   if ($.fn.historyTabs && $.fn.tab)
-    $('a[data-bs-toggle="tab"].deeplink').historyTabs();
+    setTimeout(() => {
+      $('a[data-bs-toggle="tab"].deeplink').historyTabs();
+    });
   init_bs5_dropdowns();
 
   // Initialize Sliders - https://stackoverflow.com/a/31083391
@@ -1409,27 +1638,36 @@ function initialize_page() {
       .removeClass("show");
   }, 5000);
 
-  $(".lazy-accoordion").on("show.bs.collapse", function (e) {
-    const $e = $(e.target).find("[data-sc-view-source]");
-    if ($.trim($e.html()) == "") {
-      const url = $e.attr("data-sc-view-source");
-      $e.html("Loading...");
-      $.ajax(url, {
-        headers: {
-          pjaxpageload: "true",
-          localizedstate: "true", //no admin bar
-        },
-        success: function (res, textStatus, request) {
-          $e.html(res);
-          initialize_page();
-        },
-        error: function (res) {
-          if (!checkNetworkError(res))
-            notifyAlert({ type: "danger", text: res.responseText });
-          if ($e.html() === "Loading...") $e.html("");
-        },
-      });
-    }
+  const lazyAccHandler = function (e) {
+    const $es = $(e.target).find("[data-sc-view-source]");
+    $es.each(function () {
+      const $e = $(this);
+      if ($.trim($e.html()) == "") {
+        const url = $e.attr("data-sc-view-source");
+        $e.html("Loading...");
+        $.ajax(url, {
+          headers: {
+            pjaxpageload: "true",
+            localizedstate: "true", //no admin bar
+          },
+          success: function (res, textStatus, request) {
+            $e.html(res);
+            initialize_page();
+          },
+          error: function (res) {
+            if (!checkNetworkError(res))
+              notifyAlert({ type: "danger", text: res.responseText });
+            if ($e.html() === "Loading...") $e.html("");
+          },
+        });
+      }
+    });
+  };
+  $(".lazy-accoordion").on("show.bs.collapse", lazyAccHandler);
+  $(".lazy-tabs").on("show.bs.tab", function (e) {
+    const link = $(e.target);
+    const container = $(link.attr("href"));
+    lazyAccHandler({ target: container });
   });
 
   $('input[type="file"].file-has-existing').on("change", (e) => {
@@ -1441,49 +1679,108 @@ function initialize_page() {
 
 $(initialize_page);
 
-function enlarge_in_code($textarea, cm) {
-  const $card = $textarea.closest("div.card");
+function enlarge_in_code(el) {
+  const $card = $(el).closest("div.card");
   if (!$card.length) return;
   const cardTop = $card.position().top;
   const cardHeight = $card.height();
   const vh = $(window).height();
-  const cmHeight = cm.getWrapperElement().offsetHeight;
+  const cmHeight = el.offsetHeight;
   const newCardHeight = vh - cardTop - 35;
   if (newCardHeight > cardHeight) {
     const extending = newCardHeight - cardHeight;
-    cm.setSize("100%", `${cmHeight + extending}px`);
-    cm.refresh();
+    el.style.height = `${cmHeight + extending}px`;
+    //cm.refresh();
     $card.css("min-height", newCardHeight + "px");
   }
 }
 function card_max_full_screen($card_outer) {
-  const $card = $card_outer.find(".card-body");
-  const cardTop = $card_outer.offset().top;
-  const cardHeight = $card.outerHeight();
+  const $cardBody = $card_outer.find(".card-body");
+  const $scrollTarget = $card_outer
+    .find(".card-max-full-screen-scroll")
+    .first();
   const cardFooterHeight = $card_outer.find(".card-footer").outerHeight() || 0;
   const cardHeaderHeight = $card_outer.find(".card-header").outerHeight() || 0;
-  const vh = $(window).height();
-  const newCardHeight = vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
-  let is_changed = false;
-  if (newCardHeight < cardHeight) {
-    $card.css("max-height", newCardHeight + "px").css("overflow-y", "scroll");
-    is_changed = true;
-  }
-  window.addEventListener(
-    "resize",
-    function () {
-      const vh = $(window).height();
-      const newCardHeight =
-        vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
-      if (is_changed || newCardHeight < cardHeight) {
-        $card
-          .css("max-height", newCardHeight + "px")
-          .css("overflow-y", "scroll");
-        is_changed = true;
+  const origBodyHeight = $cardBody.outerHeight();
+
+  const computeHeights = () => {
+    const vh = $(window).height();
+    const cardTop = $card_outer.offset().top;
+
+    let available = vh - cardTop - cardFooterHeight - cardHeaderHeight - 20;
+
+    if ($scrollTarget.length) {
+      const transferKey = "cardMaxScrollPaddingTransferred";
+      const transferPaddingBottom = () => {
+        if ($cardBody.data(transferKey)) return;
+        if (!$cardBody.length || !$scrollTarget.length) return;
+        const bodyStyles = window.getComputedStyle($cardBody[0]);
+        const bodyPadBottom = parseFloat(bodyStyles.paddingBottom || "0") || 0;
+        if (!bodyPadBottom) {
+          $cardBody.data(transferKey, true);
+          return;
+        }
+        const scrollStyles = window.getComputedStyle($scrollTarget[0]);
+        const scrollPadBottom =
+          parseFloat(scrollStyles.paddingBottom || "0") || 0;
+        $cardBody.css("padding-bottom", "0px");
+        $scrollTarget.css(
+          "padding-bottom",
+          scrollPadBottom + bodyPadBottom + "px"
+        );
+        $cardBody.data(transferKey, true);
+      };
+
+      transferPaddingBottom();
+      $cardBody.css({
+        "max-height": "",
+        "overflow-y": "visible",
+      });
+
+      let innerAvailable = available;
+      if ($cardBody.length) {
+        const cs = window.getComputedStyle($cardBody[0]);
+        innerAvailable -=
+          (parseFloat(cs.paddingTop) || 0) +
+          (parseFloat(cs.paddingBottom) || 0);
       }
-    },
-    true
-  );
+
+      const $siblings = $scrollTarget.siblings(":visible");
+      const siblingsHeight = $siblings
+        .toArray()
+        .reduce((acc, el) => acc + $(el).outerHeight(true), 0);
+
+      const $container = $scrollTarget.parent();
+      let gapsTotal = 0;
+      if ($container.length) {
+        const cs = window.getComputedStyle($container[0]);
+        const rowGap = parseFloat(cs.rowGap || cs.gap || "0") || 0;
+        const childrenCount = $container.children(":visible").length;
+        gapsTotal = rowGap * Math.max(childrenCount - 1, 0);
+      }
+
+      const scrollMax = innerAvailable - siblingsHeight - gapsTotal;
+
+      if (scrollMax > 50) {
+        $scrollTarget.css({
+          "max-height": scrollMax + "px",
+          "overflow-y": "auto",
+        });
+      }
+
+      return;
+    }
+
+    $cardBody.css({
+      "max-height": available + "px",
+      "overflow-y": "auto",
+    });
+  };
+
+  computeHeights();
+
+  ($scrollTarget.length ? $scrollTarget : $cardBody).attr("tabindex", "-1");
+  window.addEventListener("resize", computeHeights, true);
 }
 
 function cancel_inline_edit(e, opts1) {
@@ -1630,6 +1927,60 @@ function enable_codemirror(f) {
     error: checkNetworkError,
   });
 }
+
+let monaco_enabled_declares = false;
+const monaco_init_queue = [];
+
+function enable_monaco(codes, f) {
+  const textarea = codes[0];
+  if (monaco_enabled_declares === "initializing") {
+    monaco_init_queue.push(f);
+    return;
+  }
+  if (monaco_enabled_declares) {
+    f(monaco_enabled_declares);
+    return;
+  }
+  monaco_enabled_declares = "initializing";
+  $("<link/>", {
+    rel: "stylesheet",
+    type: "text/css",
+    href: `/static_assets/${_sc_version_tag}/monaco/editor/editor.main.css`,
+  }).appendTo("head");
+  const tableName = $(textarea).attr("tableName");
+  const hasUser = codes
+    .find((c) => c.getAttribute("user"))
+    ?.getAttribute?.("user");
+  const isWorkflow = codes
+    .find((c) => c.getAttribute("workflow"))
+    ?.getAttribute?.("workflow");
+  const codepage = $(textarea).attr("codepage");
+
+  $.ajax({
+    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}&${isWorkflow ? `workflow=${isWorkflow}` : ""}`,
+    success: (ds) => {
+      $.ajax({
+        url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,
+        dataType: "script",
+        cache: true,
+        success: () => {
+          require.config({
+            paths: {
+              vs: `/static_assets/${_sc_version_tag}/monaco`,
+            },
+          });
+          require(["vs/editor/editor.main"], function () {
+            monaco_enabled_declares = ds;
+            monaco_init_queue.forEach((qf) => qf(ds));
+            f(ds);
+          });
+        },
+        error: checkNetworkError,
+      });
+    },
+  });
+}
+
 function tristateClick(e, required) {
   const btn = $(e);
   const input = btn.prev();
@@ -1667,6 +2018,51 @@ function tristateClick(e, required) {
   }
 }
 
+function thumbsUpDownClick(e, required) {
+  const clicked_btn = $(e);
+  const container = clicked_btn.parent();
+  const input = container.prev();
+  const btn_up = container.find("button.thumbsup");
+  const btn_down = container.find("button.thumbsdown");
+  const current = input.val();
+  const set_to = (val) => {
+    switch (val) {
+      case true:
+        btn_up.addClass("btn-success").removeClass("btn-outline-success");
+        btn_down.removeClass("btn-danger").addClass("btn-outline-danger");
+        input.val("on").trigger("change");
+        break;
+      case false:
+        btn_up.removeClass("btn-success").addClass("btn-outline-success");
+        btn_down.addClass("btn-danger").removeClass("btn-outline-danger");
+        input.val("off").trigger("change");
+        break;
+      default:
+        btn_up.removeClass("btn-success").addClass("btn-outline-success");
+        btn_down.removeClass("btn-danger").addClass("btn-outline-danger");
+        input.val("?").trigger("change");
+        break;
+    }
+  };
+  if (clicked_btn.hasClass("thumbsup"))
+    switch (current) {
+      case "?":
+      case "off":
+        return set_to(true);
+      case "on":
+        if (!required) return set_to(null);
+    }
+  // thumbs down clicked
+  else
+    switch (current) {
+      case "?":
+      case "on":
+        return set_to(false);
+      case "off":
+        if (!required) return set_to(null);
+    }
+}
+
 function getIsNode() {
   try {
     return typeof parent?.saltcorn?.data?.state === "undefined";
@@ -1676,7 +2072,7 @@ function getIsNode() {
   }
 }
 
-function buildToast(txt, type, spin, title) {
+function buildToast(txt, type, spin, title, set_id) {
   const realtype = type === "error" ? "danger" : type;
   const icon =
     realtype === "success"
@@ -1687,7 +2083,8 @@ function buildToast(txt, type, spin, title) {
           ? "fa-exclamation-triangle"
           : "";
   const isNode = getIsNode();
-  const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+  const rndid =
+    set_id || `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
   return {
     id: rndid,
     html: `
@@ -1720,22 +2117,110 @@ function buildToast(txt, type, spin, title) {
         }
       </div>
       <div 
-        class="toast-body py-2 fs-6 fw-bold d-flex align-items-center"
+        class="toast-body py-2 fs-6 fw-bold"
       >
-        <strong>${txt}</strong>
-        ${
-          spin
-            ? `<span 
-                class="spinner-border ms-auto" 
-                role="status" 
-                aria-hidden="true" 
-                style="width: 1.5rem; height: 1.5rem"></span>`
-            : ""
-        }
+        <div class="d-flex align-items-center">
+          <strong>${txt}</strong>
+          ${
+            spin
+              ? `<span 
+                  class="spinner-border ms-auto" 
+                  role="status" 
+                  aria-hidden="true" 
+                  style="width: 1.5rem; height: 1.5rem"></span>`
+              : ""
+          }
+        </div>
       </div>
     </div>
   `,
   };
+}
+
+function progress_toast_update({
+  id,
+  close,
+  title,
+  message,
+  percent,
+  blocking,
+  maxHeight,
+  popupWidth,
+}) {
+  if (close && blocking) {
+    $("#scmodal .modal-body .progress-message").html("");
+    close_saltcorn_modal();
+    return;
+  }
+  let existing = !blocking && id ? $("#toast-" + id) : $("#scmodal");
+  if (close && id) {
+    existing.remove();
+    return;
+  }
+
+  if (blocking) {
+    ensure_modal_exists_and_closed({ open: true, blocking: true }); // no close
+    $(".sc-modal-linkout").hide();
+    $("#scmodal .modal-header button.btn-close").css("display", "none");
+    if (popupWidth) $(".modal-dialog").css("max-width", popupWidth);
+    existing = $("#scmodal");
+    if (title) $("#scmodal .modal-title").html(title);
+    const exBody = $("#scmodal .modal-body .blocking-progress-modal");
+    if (!exBody.length) {
+      $("#scmodal .modal-body").html(
+        `<div class="blocking-progress-modal"><div class="progress-message"${maxHeight ? ` style="max-height: ${maxHeight}px"` : ""}><div>${message || ""}</div></div><div class="progress-bar">${
+          typeof percent === "undefined"
+            ? ""
+            : '<progress style="width: 100%" value="' +
+              percent +
+              '" max="100">' +
+              percent +
+              " %</progress>"
+        }</div></div>`
+      );
+    } else {
+      if (message) {
+        if (maxHeight)
+          $("#scmodal .modal-body .progress-message").prepend(
+            `<div>${message}</div>`
+          );
+        else $("#scmodal .modal-body .progress-message").html(message);
+      }
+      if (typeof percent !== "undefined")
+        $("#scmodal .modal-body progress").val(percent);
+    }
+    if (!$("#scmodal").hasClass("show"))
+      new bootstrap.Modal($("#scmodal"), {
+        focus: false,
+        backdrop: "static",
+        keyboard: false,
+      }).show();
+  } else {
+    if (id && !existing.length) {
+      const { html } = buildToast(message, "info", false, title, "toast-" + id);
+      $("#toasts-area").append(html);
+      existing = $("#toast-" + id);
+    } else {
+      $("#toast-" + id)
+        .find(".toast-body strong")
+        .html(message);
+    }
+
+    if (typeof percent !== "undefined") {
+      const exprogress = existing.find("progress");
+      if (!exprogress.length) {
+        $("#toast-" + id)
+          .find(".toast-body")
+          .append(
+            '<progress value="' +
+              percent +
+              '" max="100">' +
+              percent +
+              " %</progress>"
+          );
+      } else exprogress.val(percent);
+    }
+  }
 }
 
 function notifyAlert(note, spin) {
@@ -1798,7 +2283,7 @@ function restore_old_button(btnId) {
   if (window.reset_spinners) reset_spinners();
   const btn = btnId instanceof jQuery ? btnId : $(`#${btnId}`);
   const oldText = $(btn).data("old-text");
-  if (!oldText.length) reuturn;
+  if (!oldText.length) return;
   btn.html(oldText);
   btn.css({ width: "", height: "" }).prop("disabled", false);
   btn.removeData("old-text");
@@ -1826,7 +2311,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
     else await fn(element);
   };
   //TODO what if something else is spinning?
-  if (window.reset_spinners) reset_spinners();
+  //if (window.reset_spinners) reset_spinners();
 
   const eval_it = async (s) => {
     if (res.row && res.field_names) {
@@ -1846,7 +2331,7 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
   if (res.notify)
     await handle(res.notify, (text) =>
       notifyAlert({
-        type: "info",
+        type: res.notify_type || "info",
         text,
         toast_title: res.toast_title,
         remove_delay: res.remove_delay,
@@ -1945,6 +2430,9 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
     let new_state = res.new_state || undefined;
     reload_embedded_view(res.reload_embedded_view, new_state);
   }
+  if (res.progress_bar_update) {
+    progress_toast_update(res.progress_bar_update);
+  }
   if (res.eval_js) await handle(res.eval_js, eval_it);
   /// TODO got and resume_workflow - use localStorage
   if (res.goto) {
@@ -1970,7 +2458,28 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
     }
   }
   if (res.resume_workflow) {
-    ajax_post_json(`/actions/resume-workflow/${res.resume_workflow}`, {});
+    if (dynamic_update_connection_status === "connecting") {
+      let retries = 0;
+      let delay = 50;
+      let go = () => {
+        setTimeout(() => {
+          if (
+            retries < 8 &&
+            dynamic_update_connection_status === "connecting"
+          ) {
+            delay = delay * 2;
+            retries += 1;
+            go();
+          } else
+            ajax_post_json(
+              `/actions/resume-workflow/${res.resume_workflow}`,
+              {}
+            );
+        }, delay);
+      };
+      go();
+    } else
+      ajax_post_json(`/actions/resume-workflow/${res.resume_workflow}`, {});
   }
   if (res.reload_page) {
     (isWeb ? location : parent.saltcorn.mobileApp.navigation).reload(); //TODO notify to cookie if reload or goto
@@ -2210,6 +2719,8 @@ function init_collab_room(viewname, eventCfgs) {
   });
 }
 
+let dynamic_update_connection_status = "not_connected";
+
 function init_dynamic_update_room() {
   const isNode = getIsNode();
   if (
@@ -2229,12 +2740,20 @@ function init_dynamic_update_room() {
   const joinFn = () => {
     socket.emit("join_dynamic_update_room", (ack) => {
       if (ack && ack.status === "ok") {
+        dynamic_update_connection_status = "connected";
         if (window._sc_loglevel > 5) console.log("Joined dynamic update room");
-      } else console.error("Failed to join dynamic update room:", ack);
+      } else {
+        dynamic_update_connection_status = "failed";
+        console.error("Failed to join dynamic update room:", ack);
+      }
     });
   };
-  if (socket.connected) joinFn();
-  else socket.on("connect", joinFn);
+  dynamic_update_connection_status = "connecting";
+  if (socket.connected) {
+    joinFn();
+  } else {
+    socket.on("connect", joinFn);
+  }
 }
 
 function cancel_form(form) {
@@ -2541,6 +3060,35 @@ function handle_identical_fields(event) {
   }
 }
 
+function toggle_header_filters(toggle_icon_elem) {
+  //console.log("toggle headers", elem);
+
+  const r = $(toggle_icon_elem).closest("thead").find("tr.header-filters")[0];
+
+  //var r = document.getElementById("${filterRowId}");
+  if (r) {
+    var hidden =
+      r.style.display === "none" ||
+      window.getComputedStyle(r).display === "none";
+    if (hidden) {
+      r.style.display = "table-row";
+      var ic = toggle_icon_elem.querySelector("i");
+      if (ic) {
+        ic.classList.remove("fa-chevron-down");
+        ic.classList.add("fa-chevron-up");
+      }
+    } else {
+      r.style.display = "none";
+      var ic2 = toggle_icon_elem.querySelector("i");
+      if (ic2) {
+        ic2.classList.remove("fa-chevron-up");
+        ic2.classList.add("fa-chevron-down");
+      }
+    }
+  }
+  return false;
+}
+
 const observer = new IntersectionObserver(
   (entries, observer) => {
     entries.forEach((entry) => {
@@ -2690,3 +3238,56 @@ if (document.readyState !== "loading") {
 } else {
   document.addEventListener("DOMContentLoaded", init_dynamic_update_room);
 }
+
+//https://codesandbox.io/p/sandbox/react-monaco-single-line-forked-nsmhp6?file=%2Fsrc%2FApp.js%3A28%2C31
+const singleLineMonacoEditorOptions = {
+  fontSize: "14px",
+  fontWeight: "normal",
+  wordWrap: "off",
+  lineNumbers: "off",
+  lineNumbersMinChars: 0,
+  overviewRulerLanes: 0,
+  overviewRulerBorder: false,
+  hideCursorInOverviewRuler: true,
+  lineDecorationsWidth: 10,
+  glyphMargin: false,
+  folding: false,
+  scrollBeyondLastColumn: 0,
+  scrollbar: {
+    horizontal: "hidden",
+    vertical: "hidden",
+    // avoid can not scroll page when hover monaco
+    alwaysConsumeMouseWheel: false,
+  },
+  // disable `Find`
+  find: {
+    addExtraSpaceOnTop: false,
+    autoFindInSelection: "never",
+    seedSearchStringFromSelection: false,
+  },
+  minimap: { enabled: false },
+  // see: https://github.com/microsoft/monaco-editor/issues/1746
+  wordBasedSuggestions: false,
+  // avoid links underline
+  links: false,
+  // avoid highlight hover word
+  occurrencesHighlight: false,
+  cursorStyle: "line-thin",
+  // hide current row highlight grey border
+  // see: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html#renderlinehighlight
+  renderLineHighlight: "none",
+  contextmenu: false,
+  // default selection is rounded
+  roundedSelection: false,
+  hover: {
+    // unit: ms
+    // default: 300
+    delay: 100,
+  },
+  acceptSuggestionOnEnter: "on",
+  // auto adjust width and height to parent
+  // see: https://github.com/Microsoft/monaco-editor/issues/543#issuecomment-321767059
+  automaticLayout: true,
+  // if monaco is inside a table, hover tips or completion may casue table body scroll
+  fixedOverflowWidgets: true,
+};

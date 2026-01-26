@@ -47,6 +47,7 @@ const {
   interpolate,
   asyncMap,
   removeEmptyStrings,
+  renderServerSide,
 } = require("../../utils");
 const Library = require("../../models/library");
 const { check_view_columns } = require("../../plugin-testing");
@@ -70,6 +71,8 @@ const {
 const {
   splitUniques,
   getForm,
+  setDateLocales,
+  transformForm,
   fill_presets,
   parse_view_select,
   get_view_link_query,
@@ -78,6 +81,7 @@ const {
   action_link,
   view_linker,
   edit_build_in_actions,
+  updateViewSelect,
 } = require("./viewable_fields");
 const {
   traverse,
@@ -174,6 +178,7 @@ const configuration_workflow = (req) =>
               );
             }
           }
+
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
@@ -414,12 +419,12 @@ const configuration_workflow = (req) =>
                 //fieldview: "radio_group",
                 attributes: {
                   options: [
+                    "Back to referer",
                     "View",
                     "Page",
                     "PageGroup",
                     "Formula",
                     "URL formula",
-                    "Back to referer",
                   ],
                 },
               },
@@ -510,28 +515,6 @@ const get_state_fields = async (table_id, viewname, { columns }) => [
  * @param {Form} form
  * @param {string} locale
  */
-const setDateLocales = (form, locale) => {
-  form.fields.forEach((f) => {
-    if (f.type && f.type.name === "Date") {
-      f.attributes.locale = locale;
-    }
-  });
-};
-
-/**
- * update viewSelect so that it looks like a normal ChildList
- */
-const updateViewSelect = (viewSelect) => {
-  if (viewSelect.path.length === 1) {
-    viewSelect.field_name = viewSelect.path[0].inboundKey;
-    viewSelect.table_name = viewSelect.path[0].table;
-  } else if (viewSelect.path.length === 2) {
-    viewSelect.field_name = viewSelect.path[1].inboundKey;
-    viewSelect.table_name = viewSelect.path[1].table;
-    viewSelect.throughTable = viewSelect.path[0].inboundKey;
-    viewSelect.through = viewSelect.path[0].table;
-  }
-};
 
 /** @type {function} */
 const initial_config = initial_config_all_fields(true);
@@ -632,399 +615,6 @@ const runMany = async (
  * @throws {InvalidConfiguration}
  * @returns {Promise<void>}
  */
-const transformForm = async ({
-  form,
-  table,
-  req,
-  row,
-  res,
-  getRowQuery,
-  viewname,
-  optionsQuery,
-  state,
-}) => {
-  let originalState = state;
-  let pseudo_row = {};
-  if (!row) {
-    table.fields.forEach((f) => {
-      pseudo_row[f.name] = undefined;
-    });
-  }
-  await traverse(form.layout, {
-    container(segment) {
-      if (segment.click_action) {
-        segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
-      }
-    },
-    async action(segment) {
-      if (segment.action_style === "on_page_load") {
-        segment.type = "blank";
-        segment.style = {};
-        if (segment.minRole && segment.minRole != 100) {
-          const minRole = +segment.minRole;
-          const userRole = req?.user?.role_id || 100;
-          if (minRole < userRole) return;
-        }
-        if (req.method === "POST") return;
-
-        //run action
-        try {
-          const actionResult = await run_action_column({
-            col: { ...segment },
-            referrer: req?.get?.("Referrer"),
-            req,
-            res,
-            table,
-            row: row || pseudo_row,
-          });
-
-          if (actionResult)
-            segment.contents = script(
-              domReady(
-                `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
-              )
-            );
-        } catch (e) {
-          getState().log(
-            5,
-            `Error in Edit ${viewname} on page load action: ${e.message}`
-          );
-          e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
-          throw e;
-        }
-      }
-      if (segment.action_name === "Delete") {
-        if (form.values && form.values[table.pk_name]) {
-          segment.action_url = table.delete_url(form.values);
-        } else {
-          segment.type = "blank";
-          segment.contents = "";
-        }
-      } else if (
-        segment.action_name === "form_action" &&
-        segment.configuration?.form_action === "Save" &&
-        table.fields.some((f) => f.type === "File")
-      ) {
-        let url = action_url(
-          viewname,
-          table,
-          segment.action_name,
-          row,
-          segment.rndid,
-          "rndid",
-          segment.confirm
-        );
-        if (url.javascript) {
-          //redo to include dynamic row
-          const confirmStr = segment.confirm
-            ? `if(confirm('Are you sure?'))`
-            : "";
-          url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
-        }
-        segment.action_link = action_link(url, req, segment);
-      } else if (
-        !["Sign up", ...edit_build_in_actions].includes(segment.action_name) &&
-        !segment.action_name.startsWith("Login")
-      ) {
-        let url = action_url(
-          viewname,
-          table,
-          segment.action_name,
-          row,
-          segment.rndid,
-          "rndid",
-          segment.confirm
-        );
-        if (url.javascript) {
-          //redo to include dynamic row
-          const confirmStr = segment.confirm
-            ? `if(confirm('Are you sure?'))`
-            : "";
-
-          url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
-        }
-        segment.action_link = action_link(url, req, segment);
-      }
-    },
-    join_field(segment) {
-      const qs = objToQueryString(segment.configuration);
-      segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
-    },
-    tabs(segment) {
-      const to_delete = new Set();
-      (segment.showif || []).forEach((sif, ix) => {
-        if (sif) {
-          const showit = eval_expression(
-            sif,
-            row || pseudo_row,
-            req.user,
-            "Tab show if formula"
-          );
-          if (!showit) to_delete.add(ix);
-        }
-      });
-
-      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
-      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
-
-      (segment.titles || []).forEach((t, ix) => {
-        if (typeof t === "string" && t.includes("{{")) {
-          segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
-        }
-      });
-    },
-    view_link(segment) {
-      segment.type = "blank";
-      const view_select = parse_view_select(segment.view);
-      if (!row && view_select.type !== "Independent") {
-        segment.contents = "";
-      } else {
-        const prefix =
-          req.generate_email && req.get_base_url ? req.get_base_url() : "";
-        const { key } = view_linker(
-          segment,
-          table.fields,
-          (s) => s,
-          isWeb(req),
-          req.user,
-          prefix,
-          req.query,
-          req,
-          viewname
-        );
-        segment.contents = key(row || {});
-      }
-    },
-    async view(segment) {
-      //console.log(segment);
-      const view_select = parse_view_select(segment.view, segment.relation);
-      //console.log({ view_select });
-
-      const view = View.findOne({ name: view_select.viewname });
-      if (!view)
-        throw new InvalidConfiguration(
-          `Cannot find embedded view: ${view_select.viewname}`
-        );
-      // check if the relation path matches a ChildList relations
-      let childListRelPath = false;
-      if (segment.relation && view.table_id) {
-        const targetTbl = Table.findOne({ id: view.table_id });
-        const relation = new Relation(
-          segment.relation,
-          targetTbl.name,
-          displayType(await view.get_state_fields())
-        );
-        childListRelPath = relation.type === RelationType.CHILD_LIST;
-      }
-      // Edit-in-edit
-      if (
-        view.viewtemplate === "Edit" &&
-        (view_select.type === "ChildList" || childListRelPath)
-      ) {
-        if (childListRelPath) updateViewSelect(view_select);
-        const childTable = Table.findOne({ id: view.table_id });
-        const childForm = await getForm(
-          childTable,
-          view.name,
-          view.configuration.columns,
-          view.configuration.layout,
-          row?.id,
-          req,
-          !isWeb(req)
-        );
-        traverseSync(childForm.layout, {
-          field(segment) {
-            segment.field_name = `${view_select.field_name}.${segment.field_name}`;
-          },
-        });
-        for (const field of childForm.fields) {
-          if (field.name === childTable.pk_name) {
-            field.class = field.class
-              ? `${field.class} omit-repeater-clone`
-              : "omit-repeater-clone";
-          }
-        }
-        await childForm.fill_fkey_options(false, optionsQuery, req.user);
-
-        const fr = new FieldRepeat({
-          name: view_select.field_name,
-          label: view_select.field_name,
-          fields: childForm.fields,
-          layout: childForm.layout,
-          metadata: {
-            table_id: childTable.id,
-            view: segment.view,
-            relation: view_select.field_name,
-            relation_path: segment.relation,
-            order_field: segment.order_field,
-          },
-        });
-        if (row?.id) {
-          const childRows = getRowQuery
-            ? await getRowQuery(
-                view.table_id,
-                view_select,
-                row.id,
-                segment.order_field
-              )
-            : await childTable.getRows(
-                {
-                  [view_select.field_name]: row.id,
-                },
-                segment.order_field ? { orderBy: segment.order_field } : {}
-              );
-          fr.metadata.rows = childRows;
-          if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
-            fr.fields.push({
-              name: childTable.pk_name,
-              input_type: "hidden",
-            });
-        }
-        form.fields.push(fr);
-        segment.type = "field_repeat";
-        segment.field_repeat = fr;
-        return;
-      } // end edit in edit
-      const outerState = {};
-      Object.entries(originalState || {}).forEach(([k, v]) => {
-        if (k.startsWith("_")) outerState[k] = v;
-      });
-      let state = {};
-      let urlFormula;
-      let needFields = new Set();
-      if (view_select.type === "RelationPath" && view.table_id) {
-        const pathToUrlFormula = (relation) => {
-          const st = pathToState(relation, (k) => `row.` + k);
-          return Object.entries(st)
-            .map(([k, v]) => {
-              needFields.add(v.split(".")[1]);
-              return `${k}='+${v}+'`;
-            })
-            .join("&");
-        };
-
-        const targetTbl = Table.findOne({ id: view.table_id });
-        if (targetTbl) {
-          const relation = new Relation(
-            segment.relation,
-            targetTbl.name,
-            displayType(await view.get_state_fields())
-          );
-          const relFmlQS = pathToUrlFormula(relation);
-          const type = relation.type;
-          if (!row && type == RelationType.OWN) {
-            segment.type = "blank";
-            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
-            segment.contents = segment.contents = div({
-              class: "d-inline",
-              "data-sc-embed-viewname": view.name,
-              "data-view-source-need-fields": [...needFields].join(","),
-              "data-view-source": encodeURIComponent(urlFormula),
-            });
-            return;
-          } else if (
-            !row &&
-            type !== RelationType.INDEPENDENT &&
-            !relation.isFixedRelation()
-          ) {
-            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
-            segment.contents = segment.contents = div({
-              class: "d-inline",
-              "data-sc-embed-viewname": view.name,
-              "data-view-source-need-fields": [...needFields].join(","),
-              "data-view-source": encodeURIComponent(urlFormula),
-            });
-            return;
-          }
-          const userId = req?.user?.id;
-          state = pathToState(
-            relation,
-            relation.isFixedRelation() ? () => userId : (k) => row[k]
-          );
-
-          urlFormula = `add_extra_state('/view/${view.name}?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
-        }
-      } else {
-        const isIndependent = view_select.type === "Independent";
-        // legacy none check ?
-
-        if (!view)
-          throw new InvalidConfiguration(
-            `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
-          );
-        switch (view_select.type) {
-          case "Own":
-            state = { id: row?.id };
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
-            needFields.add("id");
-            break;
-          case "Independent":
-            state = {};
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
-            needFields.add("id");
-            break;
-          case "ChildList":
-          case "OneToOneShow":
-            state = { [view_select.field_name]: row?.id };
-            urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
-            needFields.add("id");
-            break;
-          case "ParentShow":
-            state = { id: row?.[view_select.field_name] };
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${view_select.field_name}, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
-            needFields.add(view_select.field_name);
-            break;
-        }
-        if (!row && !isIndependent) {
-          segment.type = "blank";
-          segment.contents = div({
-            class: "d-inline",
-            "data-sc-embed-viewname": view.name,
-            "data-view-source-need-fields": [...needFields].join(","),
-            "data-view-source": encodeURIComponent(urlFormula),
-          });
-          return;
-        }
-      }
-      const extra_state = segment.extra_state_fml
-        ? eval_expression(
-            segment.extra_state_fml,
-            {
-              ...dollarizeObject(req.query),
-              session_id: getSessionId(req),
-              ...(row || pseudo_row),
-            },
-            req.user,
-            `Extra state formula for embedding view ${view.name}`
-          )
-        : {};
-
-      const qs = stateToQueryString(
-        { ...state, ...outerState, ...extra_state },
-        true
-      );
-      segment.contents = div(
-        {
-          class: "d-inline",
-          "data-sc-embed-viewname": view.name,
-          "data-sc-view-source": `/view/${view.name}${qs}`,
-          "data-view-source-current": `/view/${view.name}${qs}`,
-          "data-view-source-need-fields": [...needFields].join(","),
-          "data-view-source": encodeURIComponent(urlFormula),
-        },
-        await view.run(
-          { ...state, ...outerState, ...extra_state },
-          { req, res },
-          view.isRemoteTable()
-        )
-      );
-    },
-  });
-  translateLayout(form.layout, req.getLocale());
-
-  if (req.headers?.saltcornmodalrequest) form.xhrSubmit = true;
-  setDateLocales(form, req.getLocale());
-};
 
 const realTimeScript = (viewname, table_id, row, scriptId) => {
   const view = View.findOne({ name: viewname });
@@ -1437,12 +1027,7 @@ const runPost = async (
           ) {
             //console.log("edit", { id });
 
-            const upd_res = await tryInsertOrUpdateImpl(
-              row,
-              id,
-              table,
-              req.user || { role_id: 100 }
-            );
+            const upd_res = await tryInsertOrUpdateImpl(row, id, table, req);
             if (upd_res.error) {
               ins_upd_error = upd_res.error;
             }
@@ -1533,7 +1118,10 @@ const runPost = async (
               (f) => f.type === "File"
             )) {
               const key = `${file_field.name}_${repeatIx}`;
-              if (req.files?.[key]) {
+              if (
+                req.files?.[key] &&
+                (!file_field.fieldviewObj || file_field.fieldviewObj.isEdit)
+              ) {
                 const file = await File.from_req_files(
                   req.files[key],
                   req.user ? req.user.id : null,
@@ -1542,7 +1130,7 @@ const runPost = async (
                     1,
                   file_field?.attributes?.folder
                 );
-                childRow[file_field.name] = file.path_to_serve;
+                childRow[file_field.name] = file.field_value;
               }
             }
             getState().log(
@@ -1557,7 +1145,9 @@ const runPost = async (
               const upd_res = await childTable.tryUpdateRow(
                 childRow,
                 childRow[childTable.pk_name],
-                req.user || { role_id: 100 }
+                req.user || { role_id: 100 },
+                undefined,
+                { req }
               );
               if (upd_res.error) {
                 await rollback();
@@ -2089,8 +1679,9 @@ const prepare = async (
             field.fieldview,
             row
           );
-          row[field.name] = path_to_serve;
-          form.values[field.name] = path_to_serve;
+          const storedValue = File.fieldValueFromRelative(path_to_serve);
+          row[field.name] = storedValue;
+          form.values[field.name] = storedValue;
         }
       }
     } else if (field.fieldviewObj?.editContent) {
@@ -2103,8 +1694,9 @@ const prepare = async (
           body[field.name],
           "utf8"
         );
-        row[field.name] = path_to_serve;
-        form.values[field.name] = path_to_serve;
+        const storedValue = File.fieldValueFromRelative(path_to_serve);
+        row[field.name] = storedValue;
+        form.values[field.name] = storedValue;
       }
     } else if (req.files && req.files[field.name]) {
       if (!isWeb(req) && !remote && req.files[field.name].name) {
@@ -2119,17 +1711,22 @@ const prepare = async (
           (field.attributes && +field.attributes.min_role_read) || 1,
           field?.attributes?.folder
         );
-        row[field.name] = file.path_to_serve;
-        form.values[field.name] = file.path_to_serve;
+        row[field.name] = file.field_value;
+        form.values[field.name] = file.field_value;
       } else {
         const file = req.files[field.name];
         if (file) {
           const serverResp = await File.upload(req.files[field.name]);
-          if (serverResp?.location) row[field.name] = serverResp.location;
+          if (serverResp?.location)
+            row[field.name] = File.normalizeFieldValueInput(
+              serverResp.location
+            );
         }
       }
     } else if (typeof body[`__exisiting_file_${field.name}`] === "string") {
-      row[field.name] = File.normalise(body[`__exisiting_file_${field.name}`]);
+      row[field.name] = File.normalizeFieldValueInput(
+        body[`__exisiting_file_${field.name}`]
+      );
       form.values[field.name] = row[field.name];
     } else {
       delete row[field.name];
@@ -2304,19 +1901,20 @@ const combineResults = (results) => {
   return combined;
 };
 
-const tryUpdateImpl = async (row, id, table, user) => {
+const tryUpdateImpl = async (row, id, table, req) => {
   const result = {};
   const upd_res = await table.tryUpdateRow(
     row,
     id,
-    user || { role_id: 100 },
-    result
+    req.user || { role_id: 100 },
+    result,
+    { req }
   );
   upd_res.trigger_return = result;
   return upd_res;
 };
 
-const tryInsertOrUpdateImpl = async (row, id, table, user) => {
+const tryInsertOrUpdateImpl = async (row, id, table, req) => {
   const result = {};
   const exists = await table.getRow(
     typeof id === "object" ? id : { [table.pk_name]: id }
@@ -2325,14 +1923,19 @@ const tryInsertOrUpdateImpl = async (row, id, table, user) => {
     const upd_res = await table.tryUpdateRow(
       row,
       id,
-      user || { role_id: 100 },
-      result
+      req.user || { role_id: 100 },
+      result,
+      { req }
     );
     upd_res.trigger_return = result;
     return upd_res;
   } else {
     const result = {};
-    const ins_res = await table.tryInsertRow(row, user, result);
+    const ins_res = await table.tryInsertRow(
+      row,
+      req.user || { role_id: 100 },
+      result
+    );
     ins_res.trigger_return = result;
     return ins_res;
   }
@@ -2709,7 +2312,7 @@ module.exports = {
 
     async tryUpdateQuery(row, id) {
       const table = Table.findOne(table_id);
-      return await tryUpdateImpl(row, id, table, req.user);
+      return await tryUpdateImpl(row, id, table, req);
     },
     async saveFileQuery(fieldVal, fieldId, fieldView, row) {
       const field = await Field.findOne({ id: fieldId });
@@ -2738,7 +2341,7 @@ module.exports = {
         field.attributes.min_role_read || 1,
         folder
       );
-      return file.path_to_serve;
+      return File.fieldValueFromRelative(file.path_to_serve);
     },
     async saveFileFromContentsQuery(
       fieldVal,
@@ -2771,7 +2374,7 @@ module.exports = {
       if (existing_file) {
         if (existing_file.min_role_read >= (req.user?.role_id || 100)) {
           await existing_file.overwrite_contents(buffer);
-          return existing_file.path_to_serve;
+          return File.fieldValueFromRelative(existing_file.path_to_serve);
         } else throw new Error("Not authorized to write file");
       }
 
@@ -2782,7 +2385,7 @@ module.exports = {
         req.user?.id,
         field.attributes.min_role_read || 1
       );
-      return file.path_to_serve;
+      return File.fieldValueFromRelative(file.path_to_serve);
     },
     async authorizePostQuery(body, table_id /*overwrites*/) {
       return await doAuthPost({ body, table_id, req });
@@ -2927,6 +2530,8 @@ module.exports = {
               row,
               res,
               referrer: req?.get?.("Referrer"),
+              columns,
+              viewname: name,
             });
             //console.log("result", result);
             return { json: { success: "ok", ...(result || {}) } };
@@ -2958,12 +2563,7 @@ module.exports = {
         await db.begin();
         inTransaction = true;
         for (const row of rows) {
-          const uptRes = await tryUpdateImpl(
-            updateVals,
-            row.id,
-            table,
-            req.user
-          );
+          const uptRes = await tryUpdateImpl(updateVals, row.id, table, req);
           if (uptRes.error) {
             inTransaction = false;
             await db.rollback();

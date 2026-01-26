@@ -163,17 +163,18 @@ const local_has_theme = (name) => {
  * Get Pluging store itmes
  * @returns {Promise<Object[]>}
  */
-const get_store_items = async () => {
+const get_store_items = async (req) => {
   const installed_plugins = await Plugin.find({});
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
     false
   );
-  const instore = await Plugin.store_plugins_available();
+  const msgs = [];
+  const instore = await Plugin.store_plugins_available(msgs);
+  if (msgs.length > 0) req.flash("warning", msgs.join("<br>"));
   const packs_available = await fetch_available_packs();
   const packs_installed = getState().getConfig("installed_packs", []);
-  const schema = db.getTenantSchema();
   const installed_plugin_names = installed_plugins.map((p) => p.name);
   const store_plugin_names = instore.map((p) => p.name);
   const plugins_item = instore
@@ -187,6 +188,7 @@ const get_store_items = async () => {
       has_auth: plugin.has_auth,
       unsafe: plugin.unsafe,
       source: plugin.source,
+      version: plugin.version,
       ready_for_mobile:
         plugin.ready_for_mobile && plugin.ready_for_mobile(plugin.name),
     }))
@@ -316,6 +318,13 @@ const store_item_html = (req) => (item) => ({
               small: true,
               onClick: "press_store_button(this)",
               formClass: "d-inline",
+              ...(item.version
+                ? {
+                    body: {
+                      version: item.version,
+                    },
+                  }
+                : {}),
             }
           )
         ),
@@ -597,7 +606,7 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req, res) => {
-    const items = await get_store_items();
+    const items = await get_store_items(req);
     const relevant_items = filter_items(items, req.query);
     res.sendWrap(
       req.__("Module store"),
@@ -1229,7 +1238,7 @@ router.get(
       return;
     }
     const mod = await load_plugins.requirePlugin(plugin_db);
-    const store_items = await get_store_items();
+    const store_items = await get_store_items(req);
     const store_item = store_items.find((item) => item.name === name);
     const update_permitted = plugin_db.source === "npm";
 

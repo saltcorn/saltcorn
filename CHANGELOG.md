@@ -1,12 +1,109 @@
 # Notable changes
 
-## 1.4.0 - In development
+## 1.5.0 - Released 26 January 2026
+
+* thumbs_up_down fieldview for booleans fields, as an alternative to tristate
+
+* Workflow EditViewForm previously ignored the response variable setting for writing data. This is now correctly used to set the data to a context variable. If you use the EditViewForm, this is will likely break your workflow.
+
+* Workflow EditViewForm steps can now be used with Edit-in-Edit (An Edit view with an embedded Edit view based on a child). Uee this to allow the user to edit arrays in a workflow context.
+
+* `copy_to_clipboard action, based on interpolations.
+
+* The SQL `ANALYZE` command is now run daily on ever table that contains an index.
+
+* A new docker image has all available modules pre-installed. This allows you to build application completely isolated from the internet. 
+
+* Ability to run asynchronous code in code pages. Use this for instance to set constants in the global environment from database tables
+
+* Builder: 
+    - set the horizontal aligment and background colour or background image of cards. 
+    - Embed pages in Filter and Show views (previously only in other pages). 
+    - Option to apply select2, if installed as a module, to drop down filters.
+
+* The option to store files in S3-compatible services instead of on local disk is now working again. 
+
+* Joinfields in formulas can now be accessed by using a Claudian half-H (Ⱶ) instead of a dot. This avoids a non-determinism where adding a join field to a formula would change the type of the key field from a value to an expanded object, a source of much confusion and app breakage. The half-H expressions are available with autocomplete in formula inputs.
+
+* Improved code editor based on Monaco, with intellisense autocomplete. This is also applied to some one-line formula inputs
+
+* Mobile applications: 
+    - upgrade to capacitor 7. Node 20+ is now required to build mobile application
+    - Push/Periodic sync option: option to sync on-device tables periodically or with server push as the data changes
+    - Field level conflict resolution on sync
+
+* Support for RTL languages. Currently works with sb-admin2 and material-design themes. 
+
+* Multi-node support: Updates other Saltcorn nodes when data changes or real-time events using PostgreSQL LISTEN/NOTIFY. Disabled by default (see README).
+
+* Mail queue: The mail throttle time (in Notification settings) controls how many email notifications are sent to the same user. When the queue is empty, a notification is sent immediately; otherwise, all emails are combined and sent after the throttle time has passed.
+
+* Entities list - a new page for admin at `/entities`, a filterable, searchable list of all entities (tables, views, pages and triggers). 
+
+* Airgap configuration option - informs Saltcorn that it is in an isolated network environment - prevents background connections to npm and the Saltcorn module store but does not enforce isolation in user or admin actions.
+
+* Performance enhancements for large tables and large file counts. Options to disable sort order and full pagination count. 
+
+* Light mode variables: `user.lightDarkMode` to detect mode
+
+* Lazy view settings in tab elements (tabs, accordions and pills). Any views inside the tab will be loaded when the tab is displayed. 
+
+* Table.updateRow and insertRow now always runs their triggers syncronously. Async trigger runs caused problems when in transactions.
+
+* Files can now be uploaded with the Save form_action button
+
+* Show-if expressions in menu items and page containers
+
+### Security
+
+* Several [XSS vulnerabilities](https://github.com/saltcorn/saltcorn/security/advisories/GHSA-cr3w-cw5w-h3fj) were discovered by Mathis Zscheischler. These allow an attacker who can trick a logged-in administrator into clicking a malicious link to run arbitrary client-side JavaSscript, which can be exploited for session hijacking, site reconfiguration or command injection.
+
+## 1.4.2 - Released 14 January 2026
+
+Backport the security fix from 1.5.0
+
+## 1.4.1 - Released 19 November 2025
+
+* Dropdown option for List header filters - mutually exclusive with togglable header filters. Filters are activated with a hidden (revealed on hover) dropdown menu.
+
+* Bug fixes backported from 1.5.0 branch
+
+## 1.4.0 - Released 24 October 2025
+
+* When PageLoad triggers return directives (`notify`, `eval_js` etc.) these are now run on the the 
+  client page.
+
+* When Table.deleteRows is called without a user argument, it implicitly has admin access, to make 
+  it consistent with other methods
+
+* Some initial and limited support for composite primary keys in discovered and external tables. 
+
+* insert_any_row action:
+    * now accepts a list of rows in its row expression and will insert all of them.
+    * if the primary key value is set in the row expression, it will upsert the row (update if a row with this primary key value exists, otherwise insert)
+
+* Actions now have an option to run asynchronously from the builder action settings. If this is enabled, and dynamic updates are enabled, the action will run in the background instead of during a HTTP request. This is more robust for long-running actions; there should be no difference in user experience. 
+
+* `progress_bar` action: Display or update the display of a progress message. This can appear in a toast message for actions that can run in parallel; or in a blocking popup-up modal if the progress display is required to freeze the user interface.
+
+* List view now have options for header filters, row colour by formula,  table layout setting (corresponds to table-layout CSS property) and sticky header.
+
+### Security
+
+* Filter aggregations (count, average over a table subset) previously ignored ownership. There is now a partial implementation of the owbership restriction, however this is still incomplete for ownership formulas involving joinfields. 
+* When serving HTML files that have been uploaded to the file store, the mime type is now set to text/plain (unless the user is the owner of the file) to prevent user-uploaded files performing session hijacking. This can be disabled in the securioty settings if you trust all uploaded html files and need to serve them.. MathJax and svg files are cleaned with dompurify before serving. Reported by luriel at Hakai Security.
+* It was previously possibly for a logged-in user to craft a request to change their own password without supplying their old password. This is now checked. Reported by luriel at Hakai Security.
+
 
 ### Fixes
 
 * Fix formula constraints to support more translations to SQL
 * Edit: preserve file choices on form errors.
 * Fix format fieldview for only day Dates.
+* Fix full screen width on containers - this conflicted with position, which it now overrides.
+* Fix jsdoc links from code editor
+* Fix date parsing when using flatpickr with locale and format
+
 
 ## 1.3.1 - Released 31 August 2025
 
@@ -36,7 +133,7 @@
 
 * List views have a vertical aligment option under Layout options. Use this to adjust the vertical alignment of each cell. The default is middle.
 
-* Provided tables can no by writable (delete, insert and update). For an example of this see the history-control table provider
+* Provided tables can now by writable (delete, insert and update). For an example of this see the history-control table provider
 
 * Imported CSVs rows can now have a blank in the primary key column, which will be treated as an insert.
 

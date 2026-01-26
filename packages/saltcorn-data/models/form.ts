@@ -62,6 +62,7 @@ class Form implements AbstractForm {
   __?: any;
   isWorkflow?: boolean;
   pk_name?: string;
+  popup_width?: string;
 
   /**
    * Constructor
@@ -236,6 +237,7 @@ class Form implements AbstractForm {
       if (f.showIf && Object.entries(f.showIf).some(showIfFailed)) return;
 
       const valres = f.validate(v);
+
       if (instanceOfErrorMsg(valres)) {
         this.errors[f.name] = valres.error;
         this.values[f.name] = v[f.name];

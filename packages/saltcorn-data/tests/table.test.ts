@@ -14,7 +14,7 @@ import {
   assertIsErrorMsg,
   assertIsType,
 } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import {
   add_free_variables_to_joinfields,
   stateFieldsToQuery,
@@ -156,6 +156,25 @@ describe("Table create basic tests", () => {
     rows = await table.getRows();
     expect(rows.length).toBe(0);
   });
+  it("should count limited rows", async () => {
+    const table = Table.findOne({ name: "mytable1" });
+    assertIsSet(table);
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 2 });
+    await table.insertRow({ height1: 3 });
+    await table.insertRow({ height1: 4 });
+    await table.insertRow({ height1: 5 });
+    await table.insertRow({ height1: 6 });
+    expect(await table.countRows({})).toBe(9);
+    expect(await table.countRows({ height1: 1 })).toBe(4);
+    expect(await table.countRows({}, { limit: 5 })).toBe(5);
+    expect(await table.countRows({}, { limit: 500 })).toBe(9);
+    expect(await table.countRows({ height1: 1 }, { limit: 3 })).toBe(3);
+    expect(await table.countRows({ height1: 1 }, { limit: 100 })).toBe(4);
+  });
   it("should delete", async () => {
     const table = Table.findOne({ name: "mytable1" });
     assertIsSet(table);
@@ -188,6 +207,16 @@ describe("Table get data", () => {
     );
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].name).toStrictEqual("Michael Douglas");
+  });
+  it("should get rows by expanded key", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const michaels = await patients.getRows({ favbook: 1 });
+    expect(michaels.length).toStrictEqual(1);
+    //expect(michaels[0].name).toStrictEqual("Michael Douglas");
+    const michaels1 = await patients.getRows({ favbook: { id: 1 } });
+    expect(michaels1.length).toStrictEqual(1);
+    expect(michaels1[0].name).toStrictEqual(michaels[0].name);
   });
   it("should get by regex", async () => {
     if (!db.isSQLite) {
@@ -2525,6 +2554,24 @@ describe("table providers", () => {
     assertIsSet(table);
     expect(table.min_role_read).toBe(40);
   });
+  it("should make keys to provider table", async () => {
+    const tc = await Table.create("key_to_provider");
+    await Field.create({
+      table: tc,
+      label: "Person",
+      name: "person",
+      type: "Key to JoeTable",
+    });
+    await tc.insertRow({ person: "Robinette" });
+    //db.set_sql_logging(true);
+    const rows = await tc.getJoinedRows({
+      joinFields: {
+        person_age: { ref: "person", target: "age" },
+      },
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].person_age).toBe(36);
+  });
 });
 
 describe("distance ordering", () => {
@@ -2589,8 +2636,10 @@ describe("getField", () => {
     assertIsSet(table);
     const field = table.getField("favbook.pages");
     expect(field?.name).toBe("pages");
-
     expect(field?.id).toBe(6);
+    const field1 = table.getField("favbookⱵpages");
+    expect(field1?.name).toBe("pages");
+    expect(field1?.id).toBe(6);
   });
   it("should find double join field", async () => {
     const table = Table.findOne({ name: "patients" });
@@ -2598,6 +2647,9 @@ describe("getField", () => {
     const field = table.getField("favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(20);
+    const field1 = table.getField("favbookⱵpublisherⱵname");
+    expect(field1?.name).toBe("name");
+    expect(field1?.id).toBe(20);
   });
   it("should find triple join field", async () => {
     const table = Table.findOne({ name: "readings" });
@@ -2605,6 +2657,9 @@ describe("getField", () => {
     const field = table.getField("patient_id.favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(20);
+    const field1 = table.getField("patient_idⱵfavbookⱵpublisherⱵname");
+    expect(field1?.name).toBe("name");
+    expect(field1?.id).toBe(20);
   });
   it("should find own key field", async () => {
     const table = Table.findOne({ name: "patients" });

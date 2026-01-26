@@ -11,6 +11,7 @@ const db = require("@saltcorn/data/db");
 const { getConfigFile, configFilePath } = require("@saltcorn/data/db/connect");
 const {
   getState,
+  getRootState,
   init_multi_tenant,
   restart_tenant,
   add_tenant,
@@ -161,13 +162,55 @@ const ensureNotificationSubscriptions = async () => {
   }
 };
 
+const getMultiNodeListener = (client) => {
+  return async () => {
+    await client.query(`LISTEN ${db.getTenantSchema()}_events`);
+    client.on("notification", (msg) => {
+      if (msg.processId === client.processID)
+        return; // check self echo via connection pid
+      else {
+        try {
+          const payload = JSON.parse(msg.payload);
+          if (
+            payload.dynamic_update ||
+            payload.real_time_collab_event ||
+            payload.real_time_chat_event ||
+            payload.log_event
+          ) {
+            const workers = Object.values(cluster.workers || {});
+            if (workers.length > 0) {
+              // use only one worker, master has no serversocket
+              workers[0].send(payload);
+            } else workerDispatchMsg(payload); // only master
+          } else {
+            Object.entries(cluster.workers).forEach(([wpid, w]) => {
+              w.send(payload);
+            });
+            workerDispatchMsg(payload); //also master
+          }
+        } catch (e) {
+          getState().log(
+            2,
+            `Error while handling a multinode msg: ${e.message}`
+          );
+        }
+      }
+    });
+  };
+};
+
 // helpful https://gist.github.com/jpoehls/2232358
 /**
  * @param {object} opts
  * @param {boolean} opts.disableMigrate
  * @param {boolean} [useClusterAdaptor = true]
+ * @param {any} multiNodeClient pg client for multi-node LISTEN/NOTIFY
  */
-const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
+const initMaster = async (
+  { disableMigrate },
+  useClusterAdaptor = true,
+  multiNodeClient
+) => {
   let sql_log;
   try {
     sql_log = await getConfig("log_sql");
@@ -196,9 +239,18 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   await loadAllPlugins(true);
   // switch on sql logging - but it was initiated before???
   if (getState().getConfig("log_sql", false)) db.set_sql_logging();
+
+  // listen on node updates channel for this tenant
+  if (db.connectObj.multi_node) await getMultiNodeListener(multiNodeClient)();
+
   if (db.is_it_multi_tenant()) {
     const tenants = await getAllTenants();
-    await init_multi_tenant(loadAllPlugins, disableMigrate, tenants);
+    await init_multi_tenant(
+      loadAllPlugins,
+      disableMigrate,
+      tenants,
+      db.connectObj.multi_node ? getMultiNodeListener : null
+    );
   }
   if (useClusterAdaptor) setupPrimary();
 };
@@ -223,6 +275,36 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     console.error("no State for tenant", tenant);
     return;
   }
+  if (msg.dynamic_update) {
+    getState().emitDynamicUpdate(
+      tenant || "public",
+      msg.dynamic_update,
+      msg.userIds,
+      true
+    );
+  }
+  if (msg.real_time_collab_event) {
+    getState().emitCollabMessage(
+      tenant || "public",
+      msg.real_time_collab_event.type,
+      msg.real_time_collab_event.data,
+      true
+    );
+  }
+  if (msg.real_time_chat_event) {
+    getState().emitRoom(...Object.values(msg.real_time_chat_event), {
+      noMultiNodePropagate: true,
+    });
+  }
+  if (msg.log_event) {
+    getState().emitLog(
+      tenant || "public",
+      msg.log_event.min_level,
+      msg.log_event.msg,
+      true
+    );
+  }
+
   if (msg.refresh) {
     if (msg.refresh === "ephemeral_config")
       getState().refresh_ephemeral_config(msg.key, msg.value);
@@ -260,7 +342,10 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  * @returns {function}
  */
 const onMessageFromWorker =
-  (masterState, { port, host, watchReaper, disableScheduler, pid }) =>
+  (
+    masterState,
+    { port, host, watchReaper, disableScheduler, pid, nodesDispatchMsg }
+  ) =>
   (msg) => {
     //console.log("worker msg", typeof msg, msg);
     if (msg === "Start" && !masterState.started) {
@@ -279,6 +364,14 @@ const onMessageFromWorker =
     } else if (msg === "RestartServer") {
       process.exit(0);
       return true;
+    } else if (
+      (msg.dynamic_update ||
+        msg.real_time_collab_event ||
+        msg.real_time_chat_event ||
+        msg.log_event) &&
+      nodesDispatchMsg
+    ) {
+      nodesDispatchMsg(msg);
     } else if (msg.tenant || msg.createTenant) {
       ///ie from saltcorn
       //broadcast
@@ -287,9 +380,30 @@ const onMessageFromWorker =
         if (wpid !== pid || msg?.refresh_plugin_cfg) w.send(msg);
       });
       workerDispatchMsg(msg); //also master
+      if (nodesDispatchMsg) nodesDispatchMsg(msg);
       return true;
     }
   };
+
+const escapeSingleQuotes = (value) => value.replace(/'/g, "''");
+
+// read 'store_entries.json' into a config
+// on pre-install time no db connection exists, that's why we nee a file
+// but for the server it's better to have a config instead of reading a file each time
+const initOfflineStoreCfg = async () => {
+  const rootState = getState();
+  try {
+    const entries = await Plugin.read_local_store_entries();
+    await rootState.setConfig("pre_installed_module_infos", entries);
+  } catch (e) {
+    console.log(
+      `Unable to read pre_installed_module_infos: ${
+        e.message ? e.message : "Unknown error"
+      }`
+    );
+    await rootState.setConfig("pre_installed_module_infos", []);
+  }
+};
 
 module.exports =
   /**
@@ -340,6 +454,42 @@ module.exports =
       listeningTo: new Set([]),
     };
 
+    let nodesDispatchMsg = null;
+    let multiNodeClient = null;
+    if (db.connectObj.multi_node) {
+      multiNodeClient = await db.getClient();
+      nodesDispatchMsg = async ({ tenant, ...msg }) => {
+        if (tenant) {
+          db.runWithTenant(tenant, () => nodesDispatchMsg(msg));
+          return;
+        }
+        if (
+          msg.restart_tenant ||
+          msg.installPlugin ||
+          msg.removePlugin ||
+          msg.refresh_plugin_cfg ||
+          msg.dynamic_update ||
+          msg.real_time_collab_event ||
+          msg.real_time_chat_event ||
+          msg.log_event ||
+          (msg.refresh && msg.refresh !== "ephemeral_config")
+        ) {
+          const payload = escapeSingleQuotes(JSON.stringify(msg));
+          const payloadBytes = Buffer.byteLength(payload, "utf8");
+          if (payloadBytes < 8000) {
+            await multiNodeClient.query(
+              `NOTIFY ${db.getTenantSchema()}_events, '${payload}'`
+            );
+          } else {
+            getState().log(
+              2,
+              `Not sending multinode message, too large (${payloadBytes} bytes)`
+            );
+          }
+        }
+      };
+    }
+
     const addWorker = (worker) => {
       worker.on(
         "message",
@@ -349,9 +499,11 @@ module.exports =
           watchReaper,
           disableScheduler,
           pid: worker.process.pid,
+          nodesDispatchMsg,
         })
       );
     };
+    await initOfflineStoreCfg();
 
     if (port === 80 && letsEncrypt) {
       const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
@@ -380,6 +532,10 @@ module.exports =
               w.send(msg);
             });
             workerDispatchMsg(msg); //also master
+            if (nodesDispatchMsg && useNCpus === 1)
+              nodesDispatchMsg(msg).catch((e) => {
+                console.log("Error sending multinode message", e.message);
+              });
           };
 
           if (masterState.listeningTo.size < useNCpus)
@@ -406,7 +562,9 @@ module.exports =
             getState().processSend("Start");
           })
           .master(() => {
-            initMaster(appargs).then(initMasterListeners);
+            initMaster(appargs, true, multiNodeClient).then(
+              initMasterListeners
+            );
           });
 
         return; // none of stuff below will execute
@@ -416,7 +574,7 @@ module.exports =
 
     if (cluster.isMaster) {
       const forkAnyWorkers = useNCpus > 1 && process.platform !== "win32";
-      await initMaster(appargs, forkAnyWorkers);
+      await initMaster(appargs, forkAnyWorkers, multiNodeClient);
 
       if (forkAnyWorkers) {
         for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
@@ -433,7 +591,17 @@ module.exports =
         });
       } else {
         getState().sendMessageToWorkers = (msg) => {
-          workerDispatchMsg(msg); //also master
+          if (
+            !msg.dynamic_update &&
+            !msg.real_time_collab_event &&
+            !msg.real_time_chat_event &&
+            !msg.log_event
+          )
+            workerDispatchMsg(msg); //also master
+          if (nodesDispatchMsg)
+            nodesDispatchMsg(msg).catch((e) => {
+              console.log("Error sending multinode message", e.message);
+            });
         };
         await nonGreenlockWorkerSetup(appargs, port, host);
         runScheduler({
@@ -660,7 +828,9 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           } else if (typeof callback === "function")
             callback({ status: "already_joined" });
         } catch (err) {
-          getState().log(1, `Socket join_collab_room: ${err.stack}`);
+          const state = getState();
+          if (state) state.log(1, `Socket join_collab_room: ${err.stack}`);
+          else console.error("Socket join_collab_room:", err);
           if (typeof callback === "function")
             callback({ status: "error", msg: err.message || "unknown error" });
         }
@@ -690,7 +860,11 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           ]);
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
-          getState().log(1, `Socket join_dynamic_update_room: ${err.stack}`);
+          const state = getState();
+          if (state)
+            state.log(1, `Socket join_dynamic_update_room: ${err.stack}`);
+          else console.error("Socket join_dynamic_update_room: ", err);
+
           if (typeof callback === "function")
             callback({ status: "error", msg: err.message || "unknown error" });
         }

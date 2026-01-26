@@ -26,6 +26,7 @@ import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import fas from "@fortawesome/free-solid-svg-icons";
 import far from "@fortawesome/free-regular-svg-icons";
+import { SingleLineEditor } from "./MonacoEditor";
 const ckConfig = {
   toolbarGroups: [
     { name: "document", groups: ["mode", "document", "doctools"] },
@@ -202,13 +203,7 @@ const TextSettings = () => {
       )}
       <label>Text to display</label>
       {allowFormula && isFormula.text ? (
-        <input
-          type="text"
-          className="text-to-display form-control"
-          value={text}
-          onChange={setAProp("text")}
-          spellCheck={false}
-        />
+        <SingleLineEditor setProp={setProp} value={text} propKey="text" />
       ) : (
         <ErrorBoundary>
           <div className="border">

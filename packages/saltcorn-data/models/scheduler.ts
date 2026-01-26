@@ -9,8 +9,12 @@ import db from "../db";
 const { getState } = require("../db/state");
 import fetch from "node-fetch";
 import EventLog from "./eventlog";
+import Table from "./table";
 import mocks from "../tests/mocks";
 import WorkflowRun from "./workflow_run";
+import Notification from "./notification";
+import { MailQueue } from "./internal/mail_queue";
+import User from "./user";
 const { mockReqRes } = mocks;
 
 /**
@@ -267,7 +271,10 @@ const runScheduler = async ({
           await take_snapshot();
         }
         await WorkflowRun.runResumableWorkflows();
-        if (isDaily) await WorkflowRun.prune();
+        if (isDaily) {
+          await WorkflowRun.prune();
+          await Table.analyze_all_indexed_tables();
+        }
       } catch (e) {
         console.error(`scheduler error in tenant ${db.getTenantSchema()}: `, e);
         if (db.getTenantSchema() === db.connectObj.default_schema)
@@ -275,6 +282,43 @@ const runScheduler = async ({
             url: `Scheduler tenant ${db.getTenantSchema()}`,
             headers: {},
           });
+      }
+
+      // check pending emails
+      try {
+        const minDelay =
+          getState().getConfig("mail_throttle_per_user", 30) * 1000;
+        const now = Date.now();
+        const pendingNotifications = await Notification.find({
+          send_status: "pending",
+          created: {
+            gt: new Date(now - 7 * 24 * 60 * 60 * 1000),
+            lt: new Date(now - minDelay * 8), // 4 minutes when using the default
+          },
+        });
+        const pending: Record<number, Notification> = {};
+        for (const pn of pendingNotifications) {
+          if (pending[pn.user_id]) continue;
+          pending[pn.user_id] = pn;
+        }
+        const usersWithPending = await User.find({
+          id: { in: Object.keys(pending) },
+        });
+        for (const user of usersWithPending) {
+          const passedDelay = MailQueue.getPassedDelay(
+            await MailQueue.loadNotifications(user.id!)
+          );
+          if (passedDelay >= minDelay) {
+            getState().log(5, `Emptying mail queue for user ${user.email}`);
+            await MailQueue.emptyQueue(user);
+          }
+        }
+      } catch (e) {
+        console.error(`scheduler error check pending mails: `, e);
+        await Crash.create(e, {
+          url: `Scheduler check pending mail`,
+          headers: {},
+        });
       }
     });
     //auto backup

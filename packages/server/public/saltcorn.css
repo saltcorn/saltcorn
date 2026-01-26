@@ -20,6 +20,13 @@
   ) !important;
 }
 
+div.h-350 {
+  height: 350px;
+}
+
+textarea.to-code {
+  display: none;
+}
 i.sortdir {
   margin-left: 2px;
 }
@@ -36,6 +43,26 @@ div.hdrfilterdate button.btn {
 
 div.hdrfilterdate input {
   border-right: none;
+}
+
+thead.sticky-top {
+  z-index: 900;
+}
+
+thead.header-filter-dropdown span.dropdown {
+  position: absolute;
+  right: 0px;
+}
+
+thead.header-filter-dropdown button[data-bs-toggle="dropdown"] {
+  visibility: hidden;
+}
+thead.header-filter-dropdown button[data-bs-toggle="dropdown"].hdr-open {
+  visibility: visible;
+}
+
+thead.header-filter-dropdown th:hover button[data-bs-toggle="dropdown"] {
+  visibility: visible;
 }
 
 .text-align-right {
@@ -113,6 +140,10 @@ div.testrunoutput code {
 .mr-05 {
   margin-right: 0.125rem !important;
 }
+[dir="rtl"] .mr-05 {
+  margin-right: unset !important;
+  margin-left: 0.125rem !important;
+}
 
 div[data-inline-edit-dest-url] .editicon {
   visibility: hidden;
@@ -137,6 +168,17 @@ div[data-inline-edit-dest-url]:hover .editicon {
   padding-left: 0.3rem;
 }
 
+[dir="rtl"] .search-bar input[type="search"]:not(.hasbl) {
+  border-right: none;
+  border-left: 1px solid #95a5a6;
+  padding-left: unset;
+  padding-right: 0.3rem;
+  border-bottom-left-radius: 0.35rem !important;
+  border-top-left-radius: 0.35rem !important;
+  border-bottom-right-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+}
+
 .search-bar input[type="search"] {
   border-color: #95a5a6;
   padding-left: 0.3rem;
@@ -148,6 +190,16 @@ div[data-inline-edit-dest-url]:hover .editicon {
   border-top: 1px solid #95a5a6 !important;
   border-bottom: 1px solid #95a5a6 !important;
 }
+
+[dir="rtl"] .search-bar button.search-bar {
+  border-left: none !important;
+  border-right: 1px solid #95a5a6 !important;
+  border-bottom-right-radius: 0.35rem !important;
+  border-top-right-radius: 0.35rem !important;
+  border-bottom-left-radius: 0 !important;
+  border-top-left-radius: 0 !important;
+}
+
 .search-bar button.dropdown-toggle {
   border-left: none;
 }
@@ -155,6 +207,11 @@ div[data-inline-edit-dest-url]:hover .editicon {
 #button-search-submit {
   border-right: none;
   padding-right: 0.3rem;
+}
+
+[dir="rtl"] #button-search-submit {
+  padding-right: 1rem;
+  padding-left: 0.3rem !important;
 }
 
 form.menusearch button {
@@ -250,6 +307,10 @@ input.dimunit {
 }
 table.table-layout-fixed {
   table-layout: fixed;
+}
+
+tr.header-filters th input[type="number"] {
+  max-width: 100px;
 }
 
 footer.bs-mobile-nav-footer {
@@ -349,6 +410,11 @@ section.range-slider input[type="range"]::-moz-focus-outer {
   padding: 0.1rem 0.4rem !important;
 }
 
+div.field-repeat-wrapper div.field-repeat-wrapper {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
 table.table-inner-grid,
 table.table-inner-grid th,
 table.table-inner-grid td {
@@ -364,7 +430,8 @@ table.table-inner-grid td {
   color: #ddd;
 }
 .editStarRating input {
-  display: none;
+  opacity: 0;
+  width: 1px;
 }
 .editStarRating label:hover,
 .editStarRating label:hover ~ label,
@@ -427,6 +494,14 @@ table.table-inner-grid td {
   text-decoration: underline;
 }
 
+a.anchor-row-link {
+  text-decoration: none;
+  color: inherit !important;
+  display: inline-block;
+  height: 100%;
+  width: 100%;
+}
+
 @supports (zoom: 2) {
   input[type="radio"].large,
   input[type="checkbox"].large {
@@ -479,12 +554,20 @@ div.unread-notify {
   grid-template-columns: 1fr 1fr 1fr;
   gap: 0.2em;
 }
+[dir="rtl"] .er-navigation-panel {
+  right: unset;
+  left: 1em;
+}
 
 .er-screenshot-panel {
   position: absolute;
   top: 1em;
   right: 1em;
   z-index: 1;
+}
+[dir="rtl"] .er-screenshot-panel {
+  right: unset;
+  left: 1em;
 }
 
 .er-up {
@@ -523,14 +606,21 @@ i.add-btw-nodes {
   cursor: pointer;
 }
 
-pre.mermaid g.node[class*=" wfstep"] {
+pre.mermaid.workflow-config g.node[class*=" wfstep"] {
   cursor: pointer;
 }
 
-pre.mermaid g.node[class*=" wfadd"] {
+pre.mermaid.workflow-config g.node[class*=" wfadd"] {
   cursor: pointer;
 }
 
+pre.mermaid.workflow-config {
+  visibility: hidden;
+}
+
+pre.mermaid.workflow-config[data-processed="true"] {
+  visibility: visible;
+}
 .link-style {
   cursor: pointer;
   text-decoration: underline;
@@ -891,4 +981,17 @@ input[type="file"].file-has-existing {
 
 .toggle-password-vis {
   cursor: pointer;
+}
+
+.card-max-full-screen .card-body:focus {
+  outline-width: 0;
+}
+.card-max-full-screen .card-body:focus-visible {
+  outline: none !important;
+}
+
+.blocking-progress-modal .progress-message {
+  overflow: auto;
+  display: flex;
+  flex-direction: column-reverse;
 }

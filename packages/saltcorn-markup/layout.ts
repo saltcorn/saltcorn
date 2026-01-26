@@ -133,7 +133,8 @@ const applyTextStyle = (segment: any, inner: string): string => {
     Object.keys(style).length > 0 && !selfStylingTypes.has(segment.type);
 
   if (inline_h) style.display = "inline-block";
-  if (segment.customClass) klasses.push(segment.customClass);
+  if (segment.customClass && segment.type !== "container")
+    klasses.push(segment.customClass);
   const klass = klasses.join(" ");
 
   switch (hs) {
@@ -448,6 +449,17 @@ const render = ({
       );
     }
     if (segment.type === "card") {
+      const {
+        vAlign,
+        hAlign,
+        bgType,
+        gradDirection,
+        gradStartColor,
+        gradEndColor,
+        bgFileId,
+        imageSize,
+        imageLocation,
+      } = segment;
       return wrap(
         segment,
         isTop,
@@ -461,6 +473,7 @@ const render = ({
               segment.class,
               segment.url && "with-link",
               hints.cardClass,
+              hAlign && `text-${hAlign}`,
             ],
             ...(segment.id ? { id: segment.id } : {}),
             onclick: segment.url
@@ -470,8 +483,36 @@ const render = ({
                   : `location.href='${segment.url}'`
                 : `execLink('${segment.url}')`
               : false,
-            style: segment.style,
+            style: {
+              ...segment.style,
+              ...(bgType === "Color"
+                ? { backgroundColor: segment.bgColor }
+                : bgType === "Gradient"
+                  ? {
+                      backgroundImage: `linear-gradient(${
+                        gradDirection || 0
+                      }deg, ${gradStartColor}, ${gradEndColor});`,
+                    }
+                  : bgType === "Image" && bgFileId && imageLocation === "Card"
+                    ? {
+                        backgroundImage: `url('/files/serve/${bgFileId}')`,
+                        backgroundSize:
+                          imageSize === "repeat"
+                            ? undefined
+                            : imageSize || "contain",
+                        backgroundRepeat:
+                          imageSize === "repeat" ? imageSize : "no-repeat",
+                      }
+                    : {}),
+            },
           },
+          bgType === "Image" &&
+            bgFileId &&
+            imageLocation === "Top" &&
+            img({
+              src: `/files/serve/${bgFileId}`,
+              class: "card-img-top",
+            }),
           segment.title &&
             span(
               { class: "card-header" },
@@ -583,6 +624,21 @@ const render = ({
                       segment.bodyClass,
                       segment.noPadding && "p-0",
                     ],
+                    style: {
+                      ...(bgType === "Image" &&
+                      bgFileId &&
+                      imageLocation === "Body"
+                        ? {
+                            backgroundImage: `url('/files/serve/${bgFileId}')`,
+                            backgroundSize:
+                              imageSize === "repeat"
+                                ? undefined
+                                : imageSize || "contain",
+                            backgroundRepeat:
+                              imageSize === "repeat" ? imageSize : "no-repeat",
+                          }
+                        : {}),
+                    },
                   },
                   go(segment.contents)
                 )),
@@ -683,6 +739,7 @@ const render = ({
           : `${what}: ${segment[what].map((p: string) => p + "px").join(" ")};`;
       let flexStyles = "";
       Object.keys(style || {}).forEach((k) => {
+        if (fullPageWidth && k === "position") return;
         flexStyles += `${k}:${style[k]};`;
       });
       const to_bs5 = (s: string) => {

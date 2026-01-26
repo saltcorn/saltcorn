@@ -246,6 +246,7 @@ const install_db = async () => {
     session_secret,
     jwt_secret,
     multi_tenant: false,
+    multi_node: false,
   });
 };
 
@@ -301,6 +302,7 @@ const prompt_connection = async () => {
     session_secret,
     jwt_secret,
     multi_tenant: false,
+    multi_node: false,
   };
 };
 

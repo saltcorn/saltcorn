@@ -13,6 +13,8 @@ import View from "./view";
 import Table from "./table";
 import Expression from "./expression";
 import FieldRepeat from "./fieldrepeat";
+import tags from "@saltcorn/markup/tags";
+const { a } = tags;
 const { jsIdentifierValidator } = require("../utils");
 
 const { eval_expression, get_async_expression_function } = Expression;
@@ -331,7 +333,7 @@ class WorkflowStep {
         linkLines.push(
           `  _Start-- <i class="fas fa-plus add-btw-nodes btw-nodes-${0}-${
             step.name
-          }"></i> ---${step.mmname}`
+          }"></i> --- ${step.mmname}`
         );
       if (stepNames.includes(step.next_step as string)) {
         linkLines.push(
@@ -452,6 +454,15 @@ class WorkflowStep {
       showIf: { wf_action_name: "ForLoop" },
     });
     actionConfigFields.push({
+      label: "Loop index variable",
+      sublabel:
+        "Optional. Javascript identifier; the name of the variable the loop counter index (starting from 0) will be set to in each loop iteration",
+      name: "index_variable",
+      class: "validate-identifier",
+      type: "String",
+      showIf: { wf_action_name: "ForLoop" },
+    });
+    actionConfigFields.push({
       label: "Loop body step",
       sublabel:
         "The name of the first step in the loop body. The workflow execution inside the loop will start at this step, and continue from that step's next_step, until a step with blank next_step is encountered, which is the end of the loop body",
@@ -479,7 +490,14 @@ class WorkflowStep {
       type: "String",
       required: true,
       sublabel:
-        "Edit view should have a Save button. Other actions and edit view settings will be ignored.",
+        "Edit view should have a Save button. Other actions and edit view settings will be ignored. " +
+        a(
+          {
+            "data-dyn-href": `\`/viewedit/config/\${edit_view}\``,
+            target: "_blank",
+          },
+          "Configure"
+        ),
       attributes: {
         options: (await View.find({ viewtemplate: "Edit" })).map((t) => t.name),
       },
@@ -516,7 +534,7 @@ class WorkflowStep {
     actionConfigFields.push({
       label: "Response variable",
       name: "response_variable",
-      sublabel: "Context variable to write the form response to",
+      sublabel: "Context variable to read and write the form response",
       class: "validate-identifier",
       type: "String",
       validator: jsIdentifierValidator,
@@ -693,6 +711,7 @@ class WorkflowStep {
                 "Multiple checks",
                 "Integer",
                 "Float",
+                "Date",
                 //"File upload",
               ],
             },
@@ -703,6 +722,13 @@ class WorkflowStep {
             type: "String",
             sublabel: "Comma separated list of multiple choice options",
             showIf: { qtype: ["Multiple choice", "Multiple checks"] },
+          },
+          {
+            label: "Day only",
+            name: "day_only",
+            type: "Bool",
+            sublabel: "Do not ask for time",
+            showIf: { qtype: ["Date"] },
           },
         ],
       })

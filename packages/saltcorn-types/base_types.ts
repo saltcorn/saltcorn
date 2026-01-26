@@ -40,6 +40,8 @@ type FieldLikeBasics = {
   validator?: (arg0: any) => boolean | string | undefined;
   attributes?: GenObj;
   showIf?: { [field_name: string]: string | boolean | string[] };
+  isRepeat?: boolean;
+  tstype?: string;
 };
 type FieldLikeWithSelectInputType = {
   input_type: "select";
@@ -62,6 +64,7 @@ export type Header = {
   headerTag?: string;
   onlyViews?: string[];
   onlyFieldviews?: string[];
+  only_if?: (req: Req) => boolean | undefined;
 };
 
 type MenuItem = {
@@ -166,6 +169,8 @@ export type PluginWrap = (arg0: PluginWrapArg) => string;
 export type PluginLayout = {
   wrap: PluginWrap;
   authWrap?: (arg0: PluginAuthwrapArg) => string;
+  renderBody?: (arg: any) => string;
+  pluginName?: string;
 };
 
 type Attribute = {
@@ -241,6 +246,7 @@ export type Action = {
   disableInBuilder?: boolean;
   disableInList?: boolean;
   disableInWorkflow?: boolean;
+  requireRow?: boolean;
   disableIf?: () => boolean;
 };
 
@@ -364,7 +370,7 @@ export type RouteAction = (
 export type PluginFunction = {
   run: (...arg0: any[]) => any;
   returns?: string;
-  arguments?: string[];
+  arguments?: string[] | FieldLike[];
   isAsync?: boolean;
 };
 
@@ -501,7 +507,7 @@ export type AuthenticationMethod = {
   strategy: any;
 };
 export type TableProvider = {
-  configuration_workflow: (req: Req) => AbstractWorkflow;
+  configuration_workflow: (req?: Req) => AbstractWorkflow;
   fields: (cfg: GenObj) => Promise<Array<FieldLike>>;
   get_table: (cfg: GenObj) => Partial<AbstractTable>;
 };
@@ -600,7 +606,11 @@ export type MobileConfig = {
   localTableIds: number[];
   synchedTables: string[];
   autoPublicLogin: boolean;
+  showContinueAsPublicUser?: boolean;
   allowOfflineMode?: boolean;
+  syncOnReconnect?: boolean;
+  pushSync?: boolean;
+  syncInterval?: number;
   allowShareTo?: boolean;
   isOfflineMode?: boolean;
   networkState?:
@@ -620,6 +630,11 @@ export type MobileConfig = {
   inErrorState?: boolean;
   inLoadState?: boolean;
   encodedSiteLogo?: string;
+
+  pushConfiguration?: {
+    token: string;
+    devideId: string;
+  };
 };
 
 export type JoinFieldOption = {

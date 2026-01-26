@@ -4,7 +4,13 @@
  * @subcategory components / elements
  */
 
-import React, { useContext, useState, useEffect, Fragment } from "react";
+import React, {
+  useContext,
+  useState,
+  useRef,
+  useEffect,
+  Fragment,
+} from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
@@ -16,6 +22,7 @@ import {
   ConfigForm,
   HelpTopicLink,
 } from "./utils";
+import { SingleLineEditor } from "./MonacoEditor";
 
 export /**
  * @param {object} props
@@ -74,6 +81,7 @@ const AggregationSettings = () => {
   }));
   const options = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
+  const editorRef = useRef(null);
 
   const targetField = options.agg_field_opts[agg_relation]?.find?.(
     (f) => f.name === agg_field
@@ -229,13 +237,14 @@ const AggregationSettings = () => {
               </label>
             </td>
             <td>
-              <input
-                type="text"
-                className="form-control"
+              <SingleLineEditor
+                ref={editorRef}
                 value={aggwhere}
-                spellCheck={false}
-                onChange={setAProp("aggwhere")}
-                onInput={(e) => validate_expression_elem($(e.target))}
+                setProp={setProp}
+                onInput={(value) =>
+                  validate_expression_elem(value, editorRef.current)
+                }
+                propKey="aggwhere"
               />
             </td>
           </tr>

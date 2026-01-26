@@ -45,7 +45,7 @@ describe("form render", () => {
 </div></div><div class="form-group row">
   <div class="col-sm-2"></div>
   <div class="col-sm-10">
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button onClick="sc_form_submit_in_progress()" type="submit" class="btn btn-primary">Save</button>
   </div>
 </div>
 </form>`;
@@ -121,7 +121,7 @@ describe("form render", () => {
 </div></div><div class="form-group row">
   <div class="col-sm-2"></div>
   <div class="col-sm-10">
-        <button type="submit" class="btn btn-primary">Save</button>
+        <button onClick="sc_form_submit_in_progress()" type="submit" class="btn btn-primary">Save</button>
   </div>
 </div>
 </form>`;
@@ -204,7 +204,7 @@ describe("mkForm", () => {
     expect(result).toContain('type="text"');
     expect(result).toContain('class="form-control');
     expect(result).toContain(
-      '<button type="submit" class="btn btn-primary">Submit</button>'
+      '<button onClick="sc_form_submit_in_progress()" type="submit" class="btn btn-primary">Submit</button>'
     );
   });
 

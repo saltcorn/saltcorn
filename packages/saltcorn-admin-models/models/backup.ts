@@ -43,7 +43,7 @@ const {
 } = pack;
 import config from "@saltcorn/data/models/config";
 const { configTypes } = config;
-const { asyncMap } = require("@saltcorn/data/utils");
+const { asyncMap, isTest } = require("@saltcorn/data/utils");
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
 import Tag from "@saltcorn/data/models/tag";
@@ -61,6 +61,7 @@ import {
   S3,
   S3Client,
   ListObjectsV2Command,
+  ListObjectsV2CommandOutput,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
@@ -377,9 +378,25 @@ const zipFolder = async (folder: string, zipFileName: string) => {
   if (backup_with_system_zip) {
     return await new Promise((resolve, reject) => {
       const absZipPath = path.join(process.cwd(), zipFileName);
-      const cmd = `zip -5 -rq ${backup_password ? `-P "${backup_password}" ` : ""}"${absZipPath}" .`;
-      exec(cmd, { cwd: folder }, (error: any) => {
-        if (error) reject(error);
+      const args = [
+        "-5",
+        "-rq",
+        ...(backup_password ? [`-P`, backup_password] : []),
+        absZipPath,
+        ".",
+      ];
+
+      const subprocess = spawn("zip", args, { cwd: folder });
+      subprocess.stdout.on("data", (data: any) => {
+        getState().log(6, data.toString());
+      });
+
+      subprocess.stderr.on("data", (data: any) => {
+        getState().log(1, data.toString());
+      });
+
+      subprocess.on("close", (exitCode: any) => {
+        if (exitCode !== 0) reject(new Error("zip failed"));
         else resolve(undefined);
       });
     });
@@ -509,6 +526,7 @@ const restore_files = async (dirpath: string): Promise<any> => {
       if (file.isDirectory)
         await mkdir(File.get_new_path(file.location), { recursive: true });
     }
+    if (!isTest()) state.log(2, `Restoring ${file_rows.length} files...`);
     for (const file of file_rows) {
       try {
         const newPath = File.get_new_path(
@@ -543,6 +561,8 @@ const restore_files = async (dirpath: string): Promise<any> => {
  */
 const correct_fileid_references_to_location = async (newLocations: any) => {
   const fileFields = await Field.find({ type: "File" });
+  getState().log(2, `Correcting file id references to locations`);
+
   for (const field of fileFields) {
     const table = Table.findOne({ id: field.table_id });
 
@@ -563,6 +583,7 @@ const correct_fileid_references_to_location = async (newLocations: any) => {
  * @returns {Promise<void>}
  */
 const restore_file_users = async (file_users: any): Promise<void> => {
+  if (!isTest()) getState().log(2, `Restoring file users`);
   for (const [id, user_id] of Object.entries(file_users)) {
     if (user_id) {
       const file = await File.findOne(id);
@@ -584,7 +605,11 @@ const restore_tables = async (
 ): Promise<string | void> => {
   let err;
   const tables = await Table.find();
+
+  const restore_history = getState().getConfig("restore_history", true);
   for (const table of tables) {
+    if (!isTest()) getState().log(2, `restoring table ${table.name}`);
+
     const fnm_csv =
       table.name === "users"
         ? join(dirpath, "users.csv")
@@ -599,27 +624,38 @@ const restore_tables = async (
         fnm_json,
         table.name === "users" && !restore_first_user
       );
-      if (instanceOfErrorMsg(res)) err = (err || "") + res.error;
+      if (instanceOfErrorMsg(res)) {
+        console.error(err);
+        err = (err || "") + res.error;
+      }
     } else if (existsSync(fnm_csv)) {
       const res = await table.import_csv_file(fnm_csv, {
         skip_first_data_row: table.name === "users" && !restore_first_user,
       });
-      if (instanceOfErrorMsg(res)) err = (err || "") + res.error;
+      if (instanceOfErrorMsg(res)) {
+        console.error(res);
+        err = (err || "") + res.error;
+      }
     }
-    if (table.versioned) {
+    if (table.versioned && restore_history) {
       const fnm_hist_json = join(
         dirpath,
         "tables",
         sanitiseTableName(table.name) + "__history.json"
       );
-      if (existsSync(fnm_hist_json))
+      if (existsSync(fnm_hist_json)) {
+        if (!isTest())
+          getState().log(2, `restoring table history ${table.name}`);
+
         await table.import_json_history_file(fnm_hist_json);
+      }
     }
   }
   for (const table of tables) {
     try {
       await table.enable_fkey_constraints();
     } catch (e: any) {
+      console.error("table restore error", e);
       err = (err || "") + e.message;
     }
   }
@@ -644,6 +680,7 @@ const restore_config = async (dirpath: string): Promise<void> => {
 const restore_metadata = async (dirpath: string): Promise<void> => {
   const fnm: string = join(dirpath, "metadata.json");
   if (!existsSync(fnm)) return;
+  if (!isTest()) getState().log(2, `Restoring metadata`);
   const mds = JSON.parse((await readFile(fnm)).toString()) as Array<MetaData>;
 
   for (const md of mds) {
@@ -670,7 +707,7 @@ const restore = async (
 
   await extract(fnm, tmpDir.path, password);
 
-  state.log(6, `Unzip done`);
+  state.log(2, `Unzip done`);
 
   let basePath = tmpDir.path;
   // safari re-compressed. Safari unpacks zip files on download. If the user
@@ -706,7 +743,7 @@ const restore = async (
   }
 
   //install pack
-  state.log(6, `Reading pack`);
+  if (!isTest()) state.log(2, `Reading pack`);
   const pack = JSON.parse(
     (await readFile(join(basePath, "pack.json"))).toString()
   );
@@ -719,22 +756,22 @@ const restore = async (
     `;
   }
   //config
-  state.log(6, `Restoring config`);
+  if (!isTest()) state.log(2, `Restoring config`);
   await restore_config(basePath);
 
-  state.log(6, `Restoring pack`);
+  if (!isTest()) state.log(2, `Restoring pack`);
   await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
 
   // files
-  state.log(6, `Restoring files`);
+  if (!isTest()) state.log(2, `Restoring files`);
   const { file_users, newLocations } = await restore_files(basePath);
 
   //table csvs
-  state.log(6, `Restoring tables`);
+  if (!isTest()) state.log(2, `Restoring tables`);
   const tabres = await restore_tables(basePath, restore_first_user);
   if (tabres) err = (err || "") + tabres;
 
-  state.log(6, `Restoring metadata`);
+  if (!isTest()) state.log(2, `Restoring metadata`);
   await restore_metadata(basePath);
 
   if (Object.keys(newLocations).length > 0)
@@ -768,44 +805,69 @@ const delete_old_backups = async () => {
     for (const file of files) {
       if (!file.startsWith(backup_file_prefix)) continue;
       const stats = await stat(path.join(directory, file));
-      const ageDays =
-        (new Date().getTime() - stats.birthtime.getTime()) / (1000 * 3600 * 24);
+      const fileTime = (stats as any).birthtime?.getTime
+        ? (stats as any).birthtime.getTime()
+        : stats.mtime.getTime();
+      const ageMs = new Date().getTime() - fileTime;
+      const ageDays = ageMs / (1000 * 3600 * 24);
       if (ageDays > expire_days) await unlink(path.join(directory, file));
     }
   } else if (destination === "S3") {
+    const s3EndpointCfg = getState().getConfig("backup_s3_endpoint");
+    const s3Secure = getState().getConfig("backup_s3_secure", true);
+    const endpoint = s3EndpointCfg
+      ? /:\/\//.test(s3EndpointCfg)
+        ? s3EndpointCfg
+        : `${s3Secure ? "https" : "http"}://${s3EndpointCfg}`
+      : undefined;
     const s3 = new S3Client({
       credentials: {
         accessKeyId: getState().getConfig("backup_s3_access_key"),
         secretAccessKey: getState().getConfig("backup_s3_access_secret"),
       },
       region: getState().getConfig("backup_s3_region"),
-      endpoint: getState()
-        .getConfig("backup_s3_endpoint")
-        ?.replace(/^(http:\/\/)?/, "https://"),
+      ...(endpoint ? { endpoint } : {}),
     });
 
     const bucket = getState().getConfig("backup_s3_bucket");
+    const keyPrefix = (getState().getConfig("backup_s3_path_prefix", "") || "")
+      .toString()
+      .replace(/^\/+|\/+$/g, "");
+    const listPrefix = [keyPrefix, backup_file_prefix]
+      .filter((s) => s && s.length)
+      .join("/");
 
-    const listParams = {
+    const listParams: any = {
       Bucket: bucket,
-      Prefix: backup_file_prefix,
+      Prefix: listPrefix,
     };
 
     try {
-      const listedObjects = await s3.send(new ListObjectsV2Command(listParams));
-      if (listedObjects.Contents) {
-        for (const obj of listedObjects.Contents) {
-          if (!obj.Key || !obj.LastModified) continue;
-          const ageDays =
-            (new Date().getTime() - new Date(obj.LastModified).getTime()) /
-            (1000 * 3600 * 24);
-          if (ageDays > expire_days) {
-            await s3.send(
-              new DeleteObjectCommand({ Bucket: bucket, Key: obj.Key })
-            );
+      let continuationToken: string | undefined = undefined;
+      do {
+        const listedObjects: ListObjectsV2CommandOutput = await s3.send(
+          new ListObjectsV2Command({
+            ...listParams,
+            ContinuationToken: continuationToken,
+          })
+        );
+        if (listedObjects.Contents) {
+          for (const obj of listedObjects.Contents) {
+            if (!obj.Key || !obj.LastModified) continue;
+            const ageMs =
+              new Date().getTime() - new Date(obj.LastModified).getTime();
+            const ageDays = ageMs / (1000 * 3600 * 24);
+            if (ageDays > expire_days) {
+              await s3.send(
+                new DeleteObjectCommand({ Bucket: bucket, Key: obj.Key })
+              );
+            }
           }
         }
-      }
+        continuationToken = listedObjects.IsTruncated
+          ? listedObjects.NextContinuationToken
+          : undefined;
+      } while (continuationToken);
     } catch (err: any) {
       console.error(`Error deleting old backups from S3: ${err.message}`);
     }
@@ -883,19 +945,29 @@ const auto_backup_now_tenant = async (state: any) => {
       await unlink(fileName);
       break;
     case "S3":
+      const bEndpointCfg = state.getConfig("backup_s3_endpoint");
+      const bSecure = state.getConfig("backup_s3_secure", true);
+      const bEndpoint = bEndpointCfg
+        ? /:\/\//.test(bEndpointCfg)
+          ? bEndpointCfg
+          : `${bSecure ? "https" : "http"}://${bEndpointCfg}`
+        : undefined;
       const s3 = new S3({
         credentials: {
           accessKeyId: state.getConfig("backup_s3_access_key"),
           secretAccessKey: state.getConfig("backup_s3_access_secret"),
         },
         region: state.getConfig("backup_s3_region"),
-        endpoint: state
-          .getConfig("backup_s3_endpoint")
-          ?.replace(/^(http:\/\/)?/, "https://"),
+        ...(bEndpoint ? { endpoint: bEndpoint } : {}),
       });
 
       const bucket = state.getConfig("backup_s3_bucket");
-      const s3Key = basename(fileName);
+      const pathPrefix = (state.getConfig("backup_s3_path_prefix", "") || "")
+        .toString()
+        .replace(/^\/+|\/+$/g, "");
+      const s3Key = [pathPrefix, basename(fileName)]
+        .filter((s) => s && s.length)
+        .join("/");
       const fileStream = () => createReadStream(fileName);
       try {
         const uploadResult = await new Upload({
@@ -955,7 +1027,7 @@ const auto_backup_now = async () => {
         name: "Success",
         body: {},
       });
-      state.log(6, `Auto backup completed successfully`);
+      state.log(3, `Auto backup completed successfully`);
     } catch (e: any) {
       console.error(e);
       await Crash.create(e, {

@@ -173,15 +173,19 @@ const link_view = (
  */
 const stateToQueryString = (state, include_id) => {
   if (!state || Object.keys(state).length === 0) return "";
+  const prim = (x) => {
+    if (x?.toISOString) return x.toISOString();
+    else return x;
+  };
   const bounded = (k, v) => {
     const parts = [];
     if (v.gt)
       parts.push(
-        `_gt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${v.gt}`)}`
+        `_gt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${prim(v.gt)}`)}`
       );
     if (v.lt)
       parts.push(
-        `_lt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${v.lt}`)}`
+        `_lt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${prim(v.lt)}`)}`
       );
 
     return parts.join("&");
@@ -196,7 +200,7 @@ const stateToQueryString = (state, include_id) => {
             ? v
                 .map(
                   (val) =>
-                    `${encodeURIComponent(k)}=${encodeURIComponent(`${val}`)}`
+                    `${encodeURIComponent(k)}=${encodeURIComponent(`${prim(val)}`)}`
                 )
                 .join("&")
             : (k === "id" && !include_id) || typeof v === "undefined"
@@ -204,7 +208,7 @@ const stateToQueryString = (state, include_id) => {
               : `${encodeURIComponent(k)}=${encodeURIComponent(
                   k === "_relation_path_" && typeof v !== "string"
                     ? queryToString(v)
-                    : v
+                    : prim(v)
                 )}`
       )
       .filter((s) => !!s)
@@ -2620,6 +2624,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
     .map((f) => f.name);
   const tbl = {
     pk_name: fields.find((f) => f.primary_key)?.name,
+    pk_type: fields.find((f) => f.primary_key)?.type,
     composite_pk_names:
       composite_pk_names.length < 2 ? null : composite_pk_names,
     getFields() {
@@ -2659,12 +2664,16 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return await getRows(where || {}, rest || {});
     },
     async getJoinedRow(opts = {}) {
+      if (methods?.getJoinedRows) {
+        const rows = await methods.getJoinedRows(opts);
+        return rows.length > 0 ? rows[0] : null;
+      }
       const { where, ...rest } = opts;
       const rows = await getRows(where || {}, rest || {});
       return rows.length > 0 ? rows[0] : null;
     },
     delete_url(row, moreQuery) {
-      const comppk = tbl.composite_pk_names;      
+      const comppk = tbl.composite_pk_names;
       if (!comppk)
         return `/delete/${tbl.name}/${encodeURIComponent(row[tbl.pk_name])}${moreQuery ? `?${moreQuery}` : ""}`;
       else
@@ -2677,14 +2686,14 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       let data_in = await get_json_list(where, opts);
       return data_in.length;
     },
-    async get_child_relations() {
-      const child_relations = [];
-      const child_field_list = [];
-
+    //copied from table
+    async get_child_relations(allow_join_aggregations) {
       const cfields = await Field.find(
-        { reftable_name: this.name },
+        { reftable_name: tbl.name },
         { cached: true }
       );
+      let child_relations = [];
+      let child_field_list = [];
       for (const f of cfields) {
         if (f.is_fkey) {
           const table = Table.findOne({ id: f.table_id });
@@ -2696,9 +2705,27 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
           child_relations.push({ key_field: f, table });
         }
       }
-      return { child_relations, child_field_list: [] };
+      if (allow_join_aggregations) {
+        for (const f of fields) {
+          if (f.is_fkey && f.type !== "File") {
+            const refTable = Table.findOne({ name: f.reftable_name });
+            if (!refTable)
+              throw new Error(`Unable to find table '${f.reftable_name}`);
+
+            const join_crels = await refTable.get_child_relations(false);
+            join_crels.child_relations.forEach(({ key_field, table }) => {
+              child_field_list.push(
+                `${f.name}->${table.name}.${key_field.name}`
+              );
+              child_relations.push({ key_field, table, through: f });
+            });
+          }
+        }
+      }
+      return { child_relations, child_field_list };
     },
-    get_parent_relations() {
+    //copied from table
+    async get_parent_relations(allow_double, allow_triple) {
       let parent_relations = [];
       let parent_field_list = [];
       for (const f of fields) {
@@ -2706,6 +2733,7 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
           const table = Table.findOne({ name: f.reftable_name });
           if (!table)
             throw new Error(`Unable to find table '${f.reftable_name}`);
+          table.getFields();
           if (!table.fields)
             throw new Error(`The table '${f.reftable_name} has no fields.`);
 
@@ -2713,27 +2741,119 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
             (f) => !f.calculated || f.stored
           )) {
             parent_field_list.push(`${f.name}.${pf.name}`);
-            parent_relations.push({ key_field: f, table });
+            if (pf.is_fkey && pf.type !== "File" && allow_double) {
+              const table1 = Table.findOne({ name: pf.reftable_name });
+              if (!table1)
+                throw new Error(`Unable to find table '${pf.reftable_name}`);
+              await table1.getFields();
+              if (!table1.fields)
+                throw new Error(
+                  `The table '${pf.reftable_name} has no fields.`
+                );
+              if (table1.fields)
+                for (const gpf of table1.fields.filter(
+                  (f) => !f.calculated || f.stored
+                )) {
+                  parent_field_list.push(`${f.name}.${pf.name}.${gpf.name}`);
+                  if (allow_triple && gpf.is_fkey && gpf.type !== "File") {
+                    const gpfTbl = Table.findOne({
+                      name: gpf.reftable_name,
+                    });
+                    if (gpfTbl) {
+                      const gpfFields = await gpfTbl.getFields();
+                      for (const ggpf of gpfFields.filter(
+                        (f) => !f.calculated || f.stored
+                      )) {
+                        parent_field_list.push(
+                          `${f.name}.${pf.name}.${gpf.name}.${ggpf.name}`
+                        );
+                      }
+                    }
+                  }
+                }
+
+              parent_relations.push({
+                key_field: pf,
+                through: f,
+                table: table1,
+              });
+            }
+          }
+          parent_relations.push({ key_field: f, table });
+        }
+      }
+      const o2o_rels = await Field.find(
+        {
+          reftable_name: tbl.name,
+          is_unique: true,
+        },
+        { cached: true }
+      );
+      for (const relation of o2o_rels) {
+        const related_table = Table.findOne({ id: relation.table_id });
+        if (related_table) {
+          const relfields = await related_table.getFields();
+          for (const relfield of relfields) {
+            parent_field_list.push(
+              `${related_table.name}.${relation.name}->${relfield.name}`
+            );
+            parent_relations.push({
+              key_field: relation,
+              ontable: related_table,
+            });
           }
         }
       }
+
       return { parent_relations, parent_field_list };
     },
-    get_relation_options() {
-      return [];
+    //copied from table
+    async get_relation_options() {
+      return await Promise.all(
+        (await tbl.get_relation_data()).map(
+          async ({ relationTable, relationField }) => {
+            const path = `${relationTable.name}.${relationField.name}`;
+            const relFields = await relationTable.getFields();
+            const names = relFields
+              .filter((f) => f.type !== "Key")
+              .map((f) => f.name);
+            return { relationPath: path, relationFields: names };
+          }
+        )
+      );
     },
-    get_relation_data() {
-      return [];
+    //copied from table
+    async get_relation_data(unique = true) {
+      const result = [];
+      const o2o_rels = await Field.find(
+        {
+          reftable_name: tbl.name,
+          is_unique: unique,
+        },
+        { cached: true }
+      );
+      for (const field of o2o_rels) {
+        const relTbl = Table.findOne({ id: field.table_id });
+        if (relTbl)
+          result.push({ relationTable: relTbl, relationField: field });
+      }
+      return result;
     },
-    get_join_field_options() {
+    //copied from table
+    async get_join_field_options(allow_double, allow_triple) {
       const result = [];
       for (const f of fields) {
         if (f.is_fkey && f.type !== "File") {
           const table = Table.findOne({ name: f.reftable_name });
+          if (!table)
+            throw new Error(`Unable to find table '${f.reftable_name}`);
+          table.getFields();
+          if (!table.fields)
+            throw new Error(`The table '${f.reftable_name} has no fields.`);
           const subOne = {
             name: f.name,
             table: table.name,
-            subFields: new Array(),
+            subFields: [],
             fieldPath: f.name,
           };
           for (const pf of table.fields.filter(
@@ -2741,9 +2861,48 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
           )) {
             const subTwo = {
               name: pf.name,
-              subFields: new Array(),
+              subFields: [],
               fieldPath: `${f.name}.${pf.name}`,
             };
+            if (pf.is_fkey && pf.type !== "File" && allow_double) {
+              const table1 = Table.findOne({ name: pf.reftable_name });
+              if (!table1)
+                throw new Error(`Unable to find table '${pf.reftable_name}`);
+              await table1.getFields();
+              subTwo.table = table1.name;
+              if (!table1.fields)
+                throw new Error(
+                  `The table '${pf.reftable_name} has no fields.`
+                );
+              if (table1.fields)
+                for (const gpf of table1.fields.filter(
+                  (f) => !f.calculated || f.stored
+                )) {
+                  const subThree = {
+                    name: gpf.name,
+                    subFields: [],
+                    fieldPath: `${f.name}.${pf.name}.${gpf.name}`,
+                  };
+                  if (allow_triple && gpf.is_fkey && gpf.type !== "File") {
+                    const gpfTbl = Table.findOne({
+                      name: gpf.reftable_name,
+                    });
+                    if (gpfTbl) {
+                      subThree.table = gpfTbl.name;
+                      const gpfFields = await gpfTbl.getFields();
+                      for (const ggpf of gpfFields.filter(
+                        (f) => !f.calculated || f.stored
+                      )) {
+                        subThree.subFields.push({
+                          name: ggpf.name,
+                          fieldPath: `${f.name}.${pf.name}.${gpf.name}.${ggpf.name}`,
+                        });
+                      }
+                    }
+                  }
+                  subTwo.subFields.push(subThree);
+                }
+            }
             subOne.subFields.push(subTwo);
           }
           result.push(subOne);
@@ -2814,6 +2973,24 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
 };
 
 /**
+ * check if we should wait for an action or trigger to finish
+ * @param {any} col Action Column from the configuration
+ * @returns true or false
+ */
+const shoudlRunAsync = (col) => {
+  const action_name = col.action_name;
+  const state_action = getState().actions[action_name];
+  if (state_action) return !!col.run_async;
+  else {
+    const trigger = Trigger.findOne({ name: action_name });
+    if (!trigger || trigger.action === "Multi-step action") return false;
+    if (trigger.action === "Workflow")
+      return !!col.run_async || !!trigger.configuration?.run_async || false;
+    else return !!col.run_async;
+  }
+};
+
+/**
  * Run Action Column
  * @param {object} col
  * @param {object} req
@@ -2821,6 +2998,47 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
  * @returns {Promise<*>}
  */
 const run_action_column = async ({ col, req, ...rest }) => {
+  let run_async = shoudlRunAsync(col);
+  if (run_async && !getState().getConfig("enable_dynamic_updates")) {
+    run_async = false;
+    getState().log(
+      4,
+      `Warning: '${col.action_name}' is set to run async but dynamic updates are disabled. Running synchronously instead.`
+    );
+  }
+  const reset_spinner = (state) => {
+    if (!col.spinner) return;
+    if (!req.headers["page-load-tag"]) return;
+    const reset_msg = {
+      eval_js: "reset_spinners()",
+      page_load_tag: req.headers["page-load-tag"],
+    };
+    state.emitDynamicUpdate(db.getTenantSchema(), reset_msg);
+  };
+  const successAsyncHandler = (data) => {
+    const state = getState();
+    state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
+    const emitData = { ...data };
+    if (req.headers["page-load-tag"])
+      emitData.page_load_tag = req.headers["page-load-tag"];
+    state.emitDynamicUpdate(db.getTenantSchema(), emitData);
+    if (
+      !emitData.resume_workflow &&
+      !emitData.popup?.startsWith?.("/actions/fill-workflow-form/")
+    )
+      reset_spinner(state);
+  };
+  const failureAsyncHandler = (err) => {
+    const state = getState();
+    state.log(2, `Asynchronous action error`, err);
+    if (req.headers["page-load-tag"]) {
+      state.emitDynamicUpdate(db.getTenantSchema(), {
+        error: err.message || err,
+        page_load_tag: req.headers["page-load-tag"],
+      });
+    }
+    reset_spinner(state);
+  };
   const run_action_step = async (action_name, colcfg) => {
     let state_action = getState().actions[action_name];
     let configuration;
@@ -2857,7 +3075,6 @@ const run_action_column = async ({ col, req, ...rest }) => {
     }
     if (!goRun)
       throw new Error("Runnable action not found: " + text(action_name));
-
     return await goRun();
   };
   if (col.action_name === "Multi-step action") {
@@ -2905,7 +3122,12 @@ const run_action_column = async ({ col, req, ...rest }) => {
       if (result.error || result.halt_steps) break;
     }
     return result;
-  } else return await run_action_step(col.action_name, col.configuration);
+  } else {
+    const promise = run_action_step(col.action_name, col.configuration);
+    if (run_async) {
+      promise.then(successAsyncHandler).catch(failureAsyncHandler);
+    } else return await promise;
+  }
 };
 
 const displayType = (stateFields) =>

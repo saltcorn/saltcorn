@@ -12,7 +12,7 @@ import {
   assertIsErrorMsg,
   assertIsType,
 } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { add_free_variables_to_joinfields } from "../plugin-helper";
 import expressionModule from "../models/expression";
 import User from "../models/user";
@@ -228,6 +228,53 @@ describe("Table with row ownership field", () => {
       owner_user
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    const aggs1 = await persons.aggregationQuery({
+      npers: {
+        field: "id",
+        aggregate: "count",
+      },
+    });
+    expect(+aggs1.npers).toBe(3);
+    const aggs2 = await persons.aggregationQuery(
+      {
+        npers: {
+          field: "id",
+          aggregate: "count",
+        },
+      },
+      { where: { lastname: "Tim" } }
+    );
+    const aggs_pub = await persons.aggregationQuery(
+      {
+        npers: {
+          field: "id",
+          aggregate: "count",
+        },
+      },
+      { forPublic: true }
+    );
+    expect(+aggs_pub.npers).toBe(0);
+    const aggs_owned = await persons.aggregationQuery(
+      {
+        npers: {
+          field: "id",
+          aggregate: "count",
+        },
+      },
+      { forUser: owner_user }
+    );
+    expect(+aggs_owned.npers).toBe(2);
+    const aggs_non_owned = await persons.aggregationQuery(
+      {
+        npers: {
+          field: "id",
+          aggregate: "count",
+        },
+      },
+      { forUser: non_owner_user }
+    );
+    expect(+aggs_non_owned.npers).toBe(0);
+
     //not deleting as nonowner
     await persons.deleteRows({ id: timid }, non_owner_user);
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
@@ -243,6 +290,12 @@ describe("Table with row ownership field", () => {
     await persons.deleteRows({ id: alexid }, owner_user);
     expect(await persons.getRow({ lastname: "Alex" })).toBe(null);
 
+    const tstWhere = {};
+
+    const ures = persons.updateWhereWithOwnership(tstWhere, owner_user, true);
+    expect(ures).toBe(undefined);
+
+    expect(tstWhere).toStrictEqual({ owner: 1 });
     await persons.delete();
   });
 });
@@ -415,7 +468,16 @@ describe("Table with row ownership formula", () => {
     expect(persons.ownership_formula_where(non_owner_user)).toStrictEqual({
       owner: 3,
     });
+    const tstWhere = {};
 
+    const ures = persons.updateWhereWithOwnership(tstWhere, owner_user, true);
+    expect(ures).toBe(undefined);
+
+    expect(tstWhere).toStrictEqual({ owner: 1 });
+
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      owner: 1,
+    });
     await persons.delete();
   });
 });
@@ -575,6 +637,69 @@ describe("Table with row ownership joined formula nocalc", () => {
       owner_user
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
+    await persons.delete();
+    await department.delete();
+  });
+});
+
+describe("Table with row ownership double joined", () => {
+  it("should create and delete table", async () => {
+    const department = await Table.create("_Department");
+    await Field.create({
+      table: department,
+      name: "name",
+      type: "String",
+    });
+    const manager = await Field.create({
+      table: department,
+      name: "manager",
+      type: "Key to users",
+    });
+    await Field.create({
+      table: User.table,
+      name: "supervisor",
+      type: "Key to users",
+    });
+    await department.update({ ownership_field_id: manager.id });
+
+    const persons = await Table.create("TableOwnedJnFml");
+    await Field.create({
+      table: persons,
+      name: "lastname",
+      type: "String",
+    });
+    await Field.create({
+      table: persons,
+      name: "age",
+      type: "Integer",
+    });
+    const deptkey = await Field.create({
+      table: persons,
+      name: "department",
+      type: "Key to _Department",
+    });
+
+    await persons.update({
+      ownership_formula: "department?.manager?.supervisor===user.id",
+    });
+    expect(persons.ownership_formula_where(owner_user)).toStrictEqual({
+      department: {
+        inSelect: {
+          field: "manager",
+          table: "_Department",
+          tenant: "public",
+          through: "users",
+          through_pk: "id",
+          valField: "id",
+          where: { supervisor: 1 },
+        },
+      },
+    });
+
+    const owned_rows = await persons.getRows(
+      persons.ownership_formula_where(owner_user)
+    );
+    expect(owned_rows.length).toBe(0);
     await persons.delete();
     await department.delete();
   });

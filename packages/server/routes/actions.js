@@ -16,6 +16,7 @@ const {
   ppVal,
   escapeHtml,
   jsIdentifierValidator,
+  returnDirectivesOnly,
 } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 const Trigger = require("@saltcorn/data/models/trigger");
@@ -126,7 +127,9 @@ router.get(
           {
             type: "card",
             class: "card-max-full-screen",
-            title: req.__("Triggers"),
+            title:
+              req.__("Triggers") +
+              `<a href="javascript:ajax_modal('/admin/help/Triggers')"><i class="fas fa-question-circle ms-1"></i></a>`,
             contents: div(
               triggers.length
                 ? await getTriggerList(triggers, req, { filterOnTag })
@@ -193,7 +196,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Name"),
         type: "String",
         required: true,
-        attributes: { autofocus: true },
+        attributes: { autofocus: true, spellcheck: false },
         sublabel: req.__("Name of action"),
       },
       {
@@ -458,6 +461,7 @@ router.post(
         id = form.values.id;
         await Trigger.update(id, form.values);
       } else {
+        if (form.values.name) form.values.name = form.values.name.trim();
         const tr = await Trigger.create(form.values);
         id = tr.id;
       }
@@ -552,7 +556,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   trigCfgForm.values = trigger.configuration;
   let copilot_form = "";
 
-  if (getState().functions.copilot_generate_workflow) {
+  if (getState().functions.copilot_generate_workflow && !steps.length) {
     copilot_form = renderForm(
       new Form({
         action: `/actions/gen-copilot/${id}`,
@@ -573,7 +577,10 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   }
   return (
     copilot_form +
-    pre({ class: "mermaid" }, WorkflowStep.generate_diagram(steps)) +
+    pre(
+      { class: "mermaid workflow-config" },
+      WorkflowStep.generate_diagram(steps)
+    ) +
     script(
       { defer: "defer" },
       `function tryAddWFNodes() {
@@ -740,6 +747,7 @@ const getWorkflowStepForm = async (
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
     onChange: step_id ? "saveAndContinueIfValid(this)" : undefined,
     submitLabel: step_id ? req.__("Done") : undefined,
+    onSubmit: "press_store_button(this)",
     additionalButtons: step_id
       ? [
           {
@@ -1073,6 +1081,7 @@ router.get(
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
+        old_config: trigger.configuration,
         req,
       });
       // create form
@@ -1132,6 +1141,7 @@ router.post(
       const cfgFields = await getActionConfigFields(action, table, {
         mode: "trigger",
         when_trigger: trigger.when_trigger,
+        old_config: trigger.configuration,
         req,
       });
       form = new Form({
@@ -1271,7 +1281,11 @@ router.get(
           "Action %s run successfully with no console output",
           trigger.action
         ) + runres
-          ? script(domReady(`common_done(${JSON.stringify(runres)})`))
+          ? script(
+              domReady(
+                `common_done(${JSON.stringify(returnDirectivesOnly(runres))})`
+              )
+            )
           : ""
       );
       if (trigger.action === "Workflow")
@@ -1299,7 +1313,11 @@ router.get(
           contents: div(
             div({ class: "testrunoutput" }, output),
             runres
-              ? script(domReady(`common_done(${JSON.stringify(runres)})`))
+              ? script(
+                  domReady(
+                    `common_done(${JSON.stringify(returnDirectivesOnly(runres))})`
+                  )
+                )
               : "",
             a(
               { href: `/actions`, class: "mt-4 btn btn-primary me-1" },
@@ -1811,11 +1829,12 @@ router.get(
       name: run.current_step_name,
     });
     try {
-      const form = await getWorkflowStepUserForm(run, trigger, step, req);
+      const form = await getWorkflowStepUserForm(run, trigger, step, req, res);
       if (req.xhr) form.xhrSubmit = true;
       const title =
         step.configuration?.popup_title ||
         (run.wait_info.output ? "Workflow output" : "Fill form");
+      if (form.popup_width) res.set("SaltcornModalWidth", form.popup_width);
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } catch (e) {
       console.error(e);
@@ -1825,6 +1844,34 @@ router.get(
     }
   })
 );
+
+const workflowRunPromiseHandler = (promise, run, req) => {
+  promise
+    .then(async (runres) => {
+      const retDirs = await run.popReturnDirectives();
+      const emitData = {
+        ...runres,
+        ...retDirs,
+        page_load_tag: req.headers["page-load-tag"],
+      };
+      getState().emitDynamicUpdate(db.getTenantSchema(), emitData);
+      if (
+        !emitData.resume_workflow &&
+        !emitData.popup?.startsWith?.("/actions/fill-workflow-form/")
+      )
+        getState().emitDynamicUpdate(db.getTenantSchema(), {
+          eval_js: "reset_spinners()",
+          page_load_tag: req.headers["page-load-tag"],
+        });
+    })
+    .catch((e) => {
+      console.error(e);
+      getState().emitDynamicUpdate(db.getTenantSchema(), {
+        error: e.message,
+        page_load_tag: req.headers["page-load-tag"],
+      });
+    });
+};
 
 router.post(
   "/fill-workflow-form/:id",
@@ -1847,26 +1894,39 @@ router.post(
       name: run.current_step_name,
     });
 
-    const form = await getWorkflowStepUserForm(run, trigger, step, req);
+    const form = await getWorkflowStepUserForm(run, trigger, step, req, res);
     form.validate(req.body || {});
     if (form.hasErrors) {
       const title = "Fill form";
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } else {
-      await run.provide_form_input(form.values);
-      const runres = await run.run({
+      const run_async =
+        getState().getConfig("enable_dynamic_updates") &&
+        req.headers["page-load-tag"] &&
+        req.xhr;
+      await run.provide_form_input(
+        form.values,
+        step.configuration.response_variable
+      );
+      const promise = run.run({
         user: req.user,
         trace: trigger.configuration?.save_traces,
         interactive: true,
       });
-      if (req.xhr) {
-        const retDirs = await run.popReturnDirectives();
-
-        //if (runres?.popup) retDirs.popup = runres.popup;
-        res.json({ success: "ok", ...runres, ...retDirs });
+      if (run_async) {
+        workflowRunPromiseHandler(promise, run, req);
+        res.json({ success: "ok" });
       } else {
-        if (run.context.goto) res.redirect(run.context.goto);
-        else res.redirect("/");
+        const runres = await promise;
+        if (req.xhr) {
+          const retDirs = await run.popReturnDirectives();
+
+          //if (runres?.popup) retDirs.popup = runres.popup;
+          res.json({ success: "ok", ...runres, ...retDirs });
+        } else {
+          if (run.context.goto) res.redirect(run.context.goto);
+          else res.redirect("/");
+        }
       }
     }
   })
@@ -1888,25 +1948,35 @@ router.post(
       return;
     }
     const trigger = await Trigger.findOne({ id: run.trigger_id });
-    const runResult = await run.run({
+    const run_async =
+      getState().getConfig("enable_dynamic_updates") &&
+      req.headers["page-load-tag"] &&
+      req.xhr;
+    const promise = run.run({
       user: req.user,
       interactive: true,
       trace: trigger.configuration?.save_traces,
     });
-    if (req.xhr) {
-      if (
-        runResult &&
-        typeof runResult === "object" &&
-        Object.keys(runResult).length
-      ) {
-        res.json({ success: "ok", ...runResult });
-        return;
-      }
-      const retDirs = await run.popReturnDirectives();
-      res.json({ success: "ok", ...retDirs });
+    if (run_async) {
+      workflowRunPromiseHandler(promise, run, req);
+      res.json({ success: "ok" });
     } else {
-      if (run.context.goto) res.redirect(run.context.goto);
-      else res.redirect("/");
+      const runResult = await promise;
+      if (req.xhr) {
+        if (
+          runResult &&
+          typeof runResult === "object" &&
+          Object.keys(runResult).length
+        ) {
+          res.json({ success: "ok", ...runResult });
+          return;
+        }
+        const retDirs = await run.popReturnDirectives();
+        res.json({ success: "ok", ...retDirs });
+      } else {
+        if (run.context.goto) res.redirect(run.context.goto);
+        else res.redirect("/");
+      }
     }
   })
 );

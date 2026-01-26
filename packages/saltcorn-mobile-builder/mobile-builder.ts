@@ -1,8 +1,9 @@
-const { PluginManager } = require("live-plugin-manager");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+const { PluginManager } = require("live-plugin-manager");
 import { join, basename } from "path";
 import { copySync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
+import File from "@saltcorn/data/models/file";
 import {
   buildTablesFile,
   copySiteLogo,
@@ -24,12 +25,14 @@ import {
   writeDataExtractionRules,
   writeNetworkSecurityConfig,
   modifyGradleConfig,
+  hasAuthMethod,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
   copyPublicDirs,
-  copyMobileAppDirs,
+  copyPluginMobileAppDirs,
   bundleMobileAppCode,
+  copyOptionalSource,
 } from "./utils/package-bundle-utils";
 import User from "@saltcorn/data/models/user";
 import { CapacitorHelper } from "./utils/capacitor-helper";
@@ -69,7 +72,11 @@ type MobileBuilderConfig = {
   serverURL: string;
   splashPage?: string;
   autoPublicLogin: string;
+  showContinueAsPublicUser?: boolean;
   allowOfflineMode: string;
+  syncOnReconnect: boolean;
+  pushSync: boolean;
+  syncInterval?: number;
   plugins: Plugin[];
   copyTargetDir?: string;
   user?: User;
@@ -104,7 +111,11 @@ export class MobileBuilder {
   serverURL: string;
   splashPage?: string;
   autoPublicLogin: string;
+  showContinueAsPublicUser: boolean;
   allowOfflineMode: string;
+  syncOnReconnect: boolean;
+  pushSync: boolean;
+  syncInterval?: number;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
@@ -148,7 +159,11 @@ export class MobileBuilder {
     this.serverURL = cfg.serverURL;
     this.splashPage = cfg.splashPage;
     this.autoPublicLogin = cfg.autoPublicLogin;
+    this.showContinueAsPublicUser = !!cfg.showContinueAsPublicUser;
     this.allowOfflineMode = cfg.allowOfflineMode;
+    this.pushSync = cfg.pushSync;
+    this.syncOnReconnect = cfg.syncOnReconnect;
+    this.syncInterval = cfg.syncInterval ? +cfg.syncInterval : undefined;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
     });
@@ -198,7 +213,8 @@ export class MobileBuilder {
       prepareBuildDir(
         this.buildDir,
         this.templateDir,
-        !!this.googleServicesFile
+        !!this.googleServicesFile,
+        !!this.syncInterval && this.syncInterval > 0
       );
       writeCapacitorConfig(this.buildDir, {
         appName: this.appName,
@@ -235,7 +251,11 @@ export class MobileBuilder {
         synchedTables: this.synchedTables,
         tenantAppName: this.tenantAppName,
         autoPublicLogin: this.autoPublicLogin,
+        showContinueAsPublicUser: this.showContinueAsPublicUser,
         allowOfflineMode: this.allowOfflineMode,
+        syncOnReconnect: this.syncOnReconnect,
+        pushSync: this.pushSync,
+        syncInterval: this.syncInterval ? this.syncInterval : 0,
         allowShareTo: this.allowShareTo,
       });
       let resultCode = await bundlePackagesAndPlugins(
@@ -247,7 +267,11 @@ export class MobileBuilder {
         await loadAllPlugins();
         this.pluginsLoaded = true;
       }
-      copyMobileAppDirs(this.buildDir);
+      copyPluginMobileAppDirs(this.buildDir);
+      if (this.googleServicesFile)
+        copyOptionalSource(this.buildDir, "notifications.js");
+      if (this.syncInterval && this.syncInterval > 0)
+        copyOptionalSource(this.buildDir, "background_sync.js");
       resultCode = bundleMobileAppCode(this.buildDir);
       if (resultCode !== 0) return resultCode;
       await copyPublicDirs(this.buildDir);
@@ -312,16 +336,33 @@ export class MobileBuilder {
         "app",
         "google-services.json"
       );
-      copySync(this.googleServicesFile, dest);
+      const servicesFile = await File.findOne(this.googleServicesFile);
+      if (servicesFile) copySync(servicesFile.location, dest);
     }
 
     await modifyAndroidManifest(
       this.buildDir,
       this.allowShareTo,
-      !!this.googleServicesFile
+      !!this.googleServicesFile,
+      hasAuthMethod(this.includedPlugins)
     );
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);
-    modifyGradleConfig(this.buildDir, this.appVersion);
+    modifyGradleConfig(
+      this.buildDir,
+      this.appVersion,
+      this.buildType === "debug"
+        ? {
+            keystorePath: this.useDocker
+              ? this.isUnsecureKeyStore
+                ? "/saltcorn-mobile-app/unsecure-default-key.jks"
+                : join("/", "saltcorn-mobile-app", basename(this.keyStorePath))
+              : this.keyStorePath,
+            keystorePassword: this.keyStorePassword,
+            keyAlias: this.keyStoreAlias,
+            keyPassword: this.keyStorePassword,
+          }
+        : undefined
+    );
   }
 }

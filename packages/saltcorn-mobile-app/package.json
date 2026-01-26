@@ -1,14 +1,12 @@
 {
   "name": "@saltcorn/mobile-app",
   "displayName": "Saltcorn mobile app",
-  "version": "1.4.0-beta.4",
+  "version": "1.5.0",
   "description": "Saltcorn mobile app for Android and iOS",
   "main": "index.js",
   "scripts": {
     "build": "webpack",
     "add-platform": "npx cap add",
-    "modify-gradle-cfg": "node build_scripts/modify_gradle_cfg.js",
-    "modify-android-manifest": "node build_scripts/modify_android_manifest.js",
     "test": "echo NO TESTS"
   },
   "author": "Christian Hugo",
@@ -18,7 +16,7 @@
   },
   "dependencies": {
     "universal-router": "9.2.1",
-    "axios": "^0.29.0",
+    "axios": "^0.30.2",
     "jwt-decode": "4.0.0",
     "i18next": "24.2.2",
     "i18next-sprintf-postprocessor": "0.2.2",

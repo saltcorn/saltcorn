@@ -77,6 +77,13 @@ const configTypes: ConfigTypes = {
     blurb:
       "This is the email of the last user who created offline data in the mobile app.",
   },
+  mobile_sync_timestamp: {
+    type: "Date",
+    label: "Last mobile sync",
+    default: null,
+    blurb:
+      "This is the timestamp up to which data has been synced to the mobile app.",
+  },
   mobile_builder_settings: {
     type: "Object",
     label: "Mobile builder settings",
@@ -156,13 +163,6 @@ const configTypes: ConfigTypes = {
     label: "Login in menu",
     default: true,
     blurb: "Show the login link in the menu",
-  },
-  public_user_link: {
-    type: "Bool",
-    label: "Show public user link",
-    default: true,
-    blurb:
-      "Show a link on the login menu to continue as public user. Only on mobile logins.",
   },
   cookie_sessions: {
     type: "Bool",
@@ -377,6 +377,7 @@ const configTypes: ConfigTypes = {
     root_only: true,
     restart_required: true,
     excludeFromSnapshot: true,
+    helpTopic: "Multitenancy",
     label: "Multitenancy enabled",
     default: db.is_it_multi_tenant(),
     onChange(val: boolean) {
@@ -606,6 +607,13 @@ const configTypes: ConfigTypes = {
       "The email address from which emails are sent. For instance, hello@saltcorn.com",
     excludeFromMobile: true,
   },
+  email_wait_timestamp: {
+    type: "hidden",
+    label: "Timestamp when email wait ends",
+    default: null,
+    excludeFromMobile: true,
+    ephemeral: true,
+  },
   custom_ssl_certificate: {
     type: "String",
     fieldview: "textarea",
@@ -633,6 +641,12 @@ const configTypes: ConfigTypes = {
     blurb: "Enable SSL certificate from Let's Encrypt for HTTPS traffic",
     excludeFromMobile: true,
   },
+  airgap: {
+    type: "Bool",
+    label: "Air gap deployment",
+    blurb:
+      "Disable updates from NPM and Saltcorn module store for isolated network environments",
+  },
   timeout: {
     type: "Integer",
     label: "HTTP timeout (s)",
@@ -644,6 +658,13 @@ const configTypes: ConfigTypes = {
   latest_npm_version: {
     type: "hidden",
     label: "Latest npm version cache",
+    excludeFromSnapshot: true,
+    default: {},
+    excludeFromMobile: true,
+  },
+  saltcorn_npm_versions: {
+    type: "hidden",
+    label: "@saltcorn/cli npm versions",
     excludeFromSnapshot: true,
     default: {},
     excludeFromMobile: true,
@@ -784,6 +805,14 @@ const configTypes: ConfigTypes = {
     default: 86400,
     excludeFromMobile: true,
   },
+  files_direct_s3_links: {
+    type: "Bool",
+    label: "Serve files directly from S3",
+    sublabel:
+      "Return public S3 URLs instead of /files routes (requires public bucket or CDN).",
+    default: false,
+    excludeFromMobile: true,
+  },
   cookie_duration_remember: {
     type: "Integer",
     label: "Cookie duration (hours) when remember ticked",
@@ -823,14 +852,6 @@ const configTypes: ConfigTypes = {
     excludeFromSnapshot: true,
     default: "",
     blurb: "Name you selected for your S3 bucket in AWS.",
-    excludeFromMobile: true,
-  },
-  storage_s3_path_prefix: {
-    type: "String",
-    label: "Amazon S3 Path Prefix",
-    excludeFromSnapshot: true,
-    default: "",
-    blurb: "Prefix you selected for your S3 bucket in AWS.",
     excludeFromMobile: true,
   },
   storage_s3_endpoint: {
@@ -945,7 +966,7 @@ const configTypes: ConfigTypes = {
     label: "Module Store endpoint",
     default: "https://store.saltcorn.com/api/extensions",
     //root_only: true,
-    blurb: "The endpoint of plugins store.",
+    blurb: "The endpoint of module store.",
     excludeFromMobile: true,
   },
   packs_store_endpoint: {
@@ -1107,7 +1128,7 @@ const configTypes: ConfigTypes = {
   log_level: {
     input_type: "select",
     label: "System logging verbosity",
-    default: "1",
+    default: "2",
 
     excludeFromSnapshot: true,
     options: [
@@ -1137,6 +1158,20 @@ const configTypes: ConfigTypes = {
     default: false,
     excludeFromMobile: true,
   },
+  bom_csv_download: {
+    type: "Bool",
+    label: "CSV BOM",
+    sublabel: "Include the Byte-Order Mark in downloaded CSV files",
+    default: false,
+    excludeFromMobile: true,
+  },
+  localize_csv_download: {
+    type: "Bool",
+    label: "Localize CSV downloads",
+    default: false,
+    excludeFromMobile: true,
+  },
+
   file_accept_filter_default: {
     type: "String",
     label: "Default File accept filter",
@@ -1181,6 +1216,14 @@ const configTypes: ConfigTypes = {
     type: "Integer",
     label: "Upload size limit (Kb)",
     blurb: "Maximum upload file size in kilobytes",
+    excludeFromMobile: true,
+  },
+  file_serve_html: {
+    type: "Bool",
+    label: "Serve HTML files",
+    default: false,
+    blurb:
+      "Unsafe. HTML files will be rendered in browser instead of as plaintext. Use Page with HTML file setting to safely serve specific HTML files",
     excludeFromMobile: true,
   },
   body_limit: {
@@ -1315,6 +1358,12 @@ const configTypes: ConfigTypes = {
     default: true,
     excludeFromMobile: true,
   },
+  restore_history: {
+    type: "Bool",
+    label: "Restore history tables",
+    default: true,
+    excludeFromMobile: true,
+  },
   max_relations_layer_depth: {
     type: "Integer",
     label: "Max relations layer depth",
@@ -1446,12 +1495,40 @@ const configTypes: ConfigTypes = {
     type: "File",
     name: "firebase_json_key",
     label: "Firebase JSON key",
-    default: 0,
+    default: null,
     attributes: {
-      select_file_where: { min_role_read: 100, mime_super: "application" },
+      select_file_where: {
+        min_role_read: 100,
+        mime_super: "application",
+        folder: "/mobile-app-configurations",
+      },
     },
-    sublabel: "This is your Firebase Service Account JSON key file. ",
-    helpTopic: "Firebase JSON key",
+    sublabel:
+      "This is a private key file for your Firebase project. " +
+      "Your Saltcorn server uses it to send push notifications or push-based synchronizations to your Android mobile app. " +
+      "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
+      "You can configure it here or in the 'Mobile app' Menu.",
+    helpTopic: "Firebase Configurations",
+  },
+  firebase_app_services: {
+    type: "File",
+    name: "firebase_app_services",
+    label: "Firebase app services",
+    default: null,
+    attributes: {
+      select_file_where: {
+        min_role_read: 100,
+        mime_super: "application",
+        folder: "/mobile-app-configurations",
+      },
+    },
+    sublabel:
+      "This is a configuration file specific to your mobile app. " +
+      "It contains, among other things, your App ID, the Firebase project ID, and an API key. " +
+      "The file gets bundled into the client and will be used to subscribe to push notifications or push-based synchronizations from the server. " +
+      "Upload it to the '/mobile-app-configurations' directory (if it does not exist, create it). " +
+      "You can configure it here or in the 'Mobile app' Menu.",
+    helpTopic: "Firebase Configurations",
   },
   push_notification_icon: {
     type: "File",
@@ -1478,6 +1555,27 @@ const configTypes: ConfigTypes = {
     type: "hidden",
     label: "Notify subscriptions",
     default: {},
+    excludeFromMobile: true,
+  },
+  push_sync_subscriptions: {
+    type: "hidden",
+    label: "Push sync subscriptions",
+    default: {},
+    excludeFromMobile: true,
+  },
+  mail_throttle_per_user: {
+    type: "Integer",
+    label: "Throttle time per user",
+    default: 30,
+    blurb:
+      "Interval in seconds to wait before sending another email to the same user. " +
+      "Set to 0 to disable throttling.",
+    excludeFromMobile: true,
+  },
+  pre_installed_module_infos: {
+    type: "JSON",
+    label: "Pre-installed module infos",
+    default: [],
     excludeFromMobile: true,
   },
 };
@@ -1716,10 +1814,12 @@ const get_latest_npm_version = async (
   const { isStale } = (await import("../utils")).default;
   const fetch = require("node-fetch");
   const stored = getState().getConfig("latest_npm_version", {});
+  const airgap = getState().getConfig("airgap", false);
 
-  if (stored[pkg] && !isStale(stored[pkg].time, 6)) {
+  if (stored[pkg] && (!isStale(stored[pkg].time, 6) || airgap)) {
     return stored[pkg].version;
   }
+  if (airgap) return "";
 
   const guess = stored[pkg]?.version || ""; //default return
   try {
@@ -1739,6 +1839,53 @@ const get_latest_npm_version = async (
         [pkg]: { time: new Date(), version: latest },
       });
       return latest;
+    };
+
+    if (timeout_ms) {
+      const canceller = async () => {
+        await sleep(timeout_ms);
+        return guess;
+      };
+      return Promise.race([fetch_it().catch((e) => guess), canceller()]).catch(
+        (e) => guess
+      );
+    } else return await fetch_it();
+  } catch (e) {
+    return guess;
+  }
+};
+
+const get_saltcorn_npm_versions = async (
+  timeout_ms?: number
+): Promise<string[]> => {
+  const { getState } = require("../db/state");
+  const { isStale } = (await import("../utils")).default;
+  const pkg = "@saltcorn/cli";
+  const fetch = require("node-fetch");
+  const stored = getState().getConfig("saltcorn_npm_versions", {});
+  const airgap = getState().getConfig("airgap", false);
+
+  if (stored?.time && (!isStale(stored.time, 6) || airgap)) {
+    return stored?.versions;
+  }
+  if (airgap) return [];
+
+  const guess: string[] = stored?.versions || []; //default return
+  try {
+    const fetch_it = async () => {
+      const response = await fetch(`https://registry.npmjs.org/${pkg}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch data: ${response.statusText}`);
+      }
+      const data = await response.json();
+      if (!data?.versions || data.versions.length === 0)
+        throw new Error("No versions found");
+      const keys = Object.keys(data.versions);
+      await getState().setConfig("saltcorn_npm_versions", {
+        time: new Date(),
+        versions: keys,
+      });
+      return keys;
     };
 
     if (timeout_ms) {
@@ -1814,6 +1961,7 @@ const configExports = {
   remove_from_menu,
   available_languages,
   get_latest_npm_version,
+  get_saltcorn_npm_versions,
   get_base_url,
   save_menu_items,
   check_email_mask,

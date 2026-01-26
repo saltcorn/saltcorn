@@ -31,6 +31,7 @@ import {
   Relation,
   buildTableCaches,
 } from "@saltcorn/common-code";
+import { SingleLineEditor } from "./MonacoEditor";
 
 export /**
  * @param {object} props
@@ -311,12 +312,11 @@ const ViewLinkSettings = () => {
                 Extra state Formula
                 <HelpTopicLink topic="Extra state formula" {...helpContext} />
               </label>
-              <input
-                type="text"
-                className="viewlink-label form-control"
+              <SingleLineEditor
+                setProp={setProp}
                 value={extra_state_fml}
+                propKey="extra_state_fml"
                 onChange={setAProp("extra_state_fml")}
-                spellCheck={false}
               />
               {errorString ? (
                 <small className="text-danger font-monospace d-block">
@@ -362,7 +362,6 @@ const ViewLinkSettings = () => {
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
       <table>
         <tbody>
-          <MinRoleSettingRow minRole={minRole} setProp={setProp} />
           {use_view_name ? (
             <tr>
               <td colSpan="2">

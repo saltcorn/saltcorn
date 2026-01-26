@@ -402,7 +402,9 @@ test.describe('E2E Test Suite', () => {
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
-
+        await page.selectOption(pageobject.destinationtype, { label: 'View' });
+        
+        await page.waitForTimeout(500);
         // Select room view for destination after message add
         await page.selectOption(pageobject.destinationview, { label: 'Room.room' });
         // click on next button

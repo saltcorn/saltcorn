@@ -38,6 +38,19 @@ function expressionValidator(s: string): true | string {
   }
 }
 
+function identifiersInCodepage(s: string): Set<string> {
+  const top = parse(s, {
+    ecmaVersion: 2020,
+    locations: false,
+  });
+  const fs = top.body
+    .filter((n) => n.type === "FunctionDeclaration")
+    .map((n) => n.id.name)
+    .filter(Boolean);
+
+  return new Set(fs);
+}
+
 function expressionChecker(s: string, prefix: string, errors: string[]) {
   const result = expressionValidator(s);
   if (typeof result === "string") errors.push(prefix + result);
@@ -337,6 +350,41 @@ function jsexprToWhere(
           return compile(node.expression!);
         },
         MemberExpression() {
+          if (node?.object?.type === "MemberExpression") {
+            //double join
+            const cleft = compile(node.object!.object!);
+            const cleftName =
+              typeof cleft === "symbol" ? cleft.description : cleft;
+            const c2 = compile(node.object!.property!);
+            const c3 = compile(node.property!);
+            const field = fields.find((f) => f.name === cleftName);
+            if (!field) {
+              //console.log({ cleftName, cleft, cright, crightName });
+              throw new Error(
+                `Field not found: ${cleftName}  in fields ${fields.map((f) => f.name)}`
+              );
+            }
+            const throughTable = Table.findOne({ name: field.reftable_name });
+            const throughField = throughTable.fields.find(
+              (f: Field) => f.name === c2.description
+            );
+            const finalTable = Table.findOne({
+              name: throughField.reftable_name,
+            });
+            return (val: any) => ({
+              [cleftName]: {
+                inSelect: {
+                  table: db.sqlsanitize(throughTable.name),
+                  tenant: db.getTenantSchema(),
+                  through: finalTable.name,
+                  through_pk: finalTable.pk_name,
+                  valField: throughTable.pk_name,
+                  field: c2.description,
+                  where: { [c3.description]: val },
+                },
+              },
+            });
+          }
           const cleft = compile(node.object!);
           const cleftName =
             typeof cleft === "symbol" ? cleft.description : cleft;
@@ -576,6 +624,33 @@ const add_free_variables_to_joinfields = (
           };
         }
     });
+  [...freeVars]
+    .filter((v) => v.includes("Ⱶ"))
+    .forEach((v) => {
+      const kpath = v.split("Ⱶ");
+      if (joinFieldNames.has(kpath[0]))
+        if (kpath.length === 2) {
+          const [refNm, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+          };
+        } else if (kpath.length === 3) {
+          const [refNm, through, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+            through,
+          };
+        } else if (kpath.length === 4) {
+          const [refNm, through1, through2, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+            through: [through1, through2],
+          };
+        }
+    });
 };
 
 function isIdentifierWithName(node: any): node is Identifier {
@@ -742,8 +817,10 @@ function apply_calculated_fields(
         if (!field.expression) throw new Error(`The field has no expression`);
         f = get_expression_function(field.expression, fields);
       } catch (e: any) {
-        if (!ignore_errors)
-          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+        if (!ignore_errors) {
+          e.message = `Error in calculating "${field.name}": ${e.message}`;
+          throw e;
+        }
       }
       const oldf = transform;
       transform = (row) => {
@@ -751,10 +828,10 @@ function apply_calculated_fields(
           const x = f(row);
           row[field.name] = x;
         } catch (e: any) {
-          if (!ignore_errors)
-            throw new Error(
-              `Error in calculating "${field.name}": ${e.message}`
-            );
+          if (!ignore_errors) {
+            e.message = `Error in calculating "${field.name}": ${e.message}`;
+            throw e;
+          }
         }
         return oldf(row);
       };
@@ -850,7 +927,8 @@ const apply_calculated_fields_stored = async (
         if (!field.expression) throw new Error(`The fields has no expression`);
         f = get_async_expression_function(field.expression, fields);
       } catch (e: any) {
-        throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+        e.message = `Error in calculating "${field.name}": ${e.message}`;
+        throw e;
       }
       const oldf = transform;
       transform = async (row) => {
@@ -858,7 +936,8 @@ const apply_calculated_fields_stored = async (
           const x = await f(row);
           row[field.name] = x;
         } catch (e: any) {
-          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+          e.message = `Error in calculating "${field.name}": ${e.message}`;
+          throw e;
         }
         return await oldf(row);
       };
@@ -935,4 +1014,5 @@ export = {
   add_free_variables_to_aggregations,
   removeComments,
   today,
+  identifiersInCodepage,
 };

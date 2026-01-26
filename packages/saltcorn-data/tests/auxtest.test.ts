@@ -26,7 +26,7 @@ const {
   validSqlId,
 } = require("../utils");
 
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import mocks from "./mocks";
 import {
   createAnotherUserField,
@@ -37,6 +37,8 @@ import {
   prepareSimpleTopicPostRelation,
 } from "./common_helpers";
 import { assertIsSet } from "./assertions";
+import expression from "../models/expression";
+const { freeVariables, add_free_variables_to_joinfields } = expression;
 const PlainDate = require("@saltcorn/plain-date");
 
 const { mockReqRes } = mocks;
@@ -74,9 +76,26 @@ describe("stateToQueryString", () => {
     expect(stateToQueryString({ x: { lt: 5, gt: 1 } })).toBe(
       "?_gt_x=1&_lt_x=5"
     );
-    expect(stateToQueryString({ x: { lt: 5 }, y:"foo" })).toBe("?_lt_x=5&y=foo");
+    expect(stateToQueryString({ x: { lt: 5 }, y: "foo" })).toBe(
+      "?_lt_x=5&y=foo"
+    );
     expect(stateToQueryString({ x: { gt: 5 } })).toBe("?_gt_x=5");
     expect(stateToQueryString({ x: { lt: 5, equal: true } })).toBe("?_lte_x=5");
+  });
+  it("handles date", async () => {
+    expect(stateToQueryString({ pubdate: new PlainDate("2025-10-15") })).toBe(
+      "?pubdate=2025-10-15"
+    );
+    expect(
+      stateToQueryString({ pubdate: { gt: new PlainDate("2025-10-15") } })
+    ).toBe("?_gt_pubdate=2025-10-15");
+
+    expect(stateToQueryString({ pubdate: new Date("2025-10-15") })).toBe(
+      "?pubdate=2025-10-15T00%3A00%3A00.000Z"
+    );
+    expect(
+      stateToQueryString({ pubdate: { lt: new Date("2025-10-15") } })
+    ).toBe("?_lt_pubdate=2025-10-15T00%3A00%3A00.000Z");
   });
 });
 
@@ -159,6 +178,44 @@ describe("generate_joined_query", () => {
     );
     const rows = await table.getJoinedRows(q);
     expect(rows.length).toBe(1);
+  });
+});
+
+describe("Half-H notation for joinfields", () => {
+  // deciding between ㅏ Ⱶ Ͱ
+  // publisherͰname
+  // publisherⱵname
+  // publisherㅏname
+  it("freeVariables", () => {
+    expect([...freeVariables("2+xⱵk")]).toEqual(["xⱵk"]);
+  });
+  it("add_free_variables_to_joinfields", () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const joinFields = {};
+    const freeVars = freeVariables("publisherⱵname");
+    add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
+    expect(joinFields).toStrictEqual({
+      publisherⱵname: {
+        ref: "publisher",
+        target: "name",
+      },
+    });
+  });
+  it("should generate formulas", async () => {
+    const table = Table.findOne({ name: "books" });
+    assertIsSet(table);
+    const q = generate_joined_query({
+      table,
+      state: { pages: 728 },
+      formulas: ["publisherⱵname"],
+    });
+
+    expect(q?.joinFields?.publisherⱵname?.target).toBe("name");
+    const rows = await table.getJoinedRows(q);
+    expect(rows.length).toBe(1);
+    expect(rows[0].publisher).toBe(1);
+    expect(rows[0].publisherⱵname).toBe("AK Press");
   });
 });
 

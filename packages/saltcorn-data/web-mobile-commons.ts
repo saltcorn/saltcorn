@@ -22,7 +22,9 @@ const {
   calcfldViewConfig,
 } = require("@saltcorn/data/plugin-helper");
 import viewableFields from "./base-plugin/viewtemplates/viewable_fields";
-const { getForm } = viewableFields;
+import { Req } from "@saltcorn/types/base_types";
+import FieldRepeat from "./models/fieldrepeat";
+const { getForm, transformForm } = viewableFields;
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 
@@ -58,17 +60,35 @@ const get_extra_menu = (
   role: number,
   __: (str: string) => string,
   user?: User,
-  locale?: string
+  locale?: string,
+  req?: Req
 ) => {
   let cfg = getState().getConfig("unrolled_menu_items", []);
   if (!cfg || cfg.length === 0) {
     cfg = getState().getConfig("menu_items", []);
   }
+  if (!Array.isArray(cfg)) return [];
   const is_node = isNode();
+  const safe_eval_showif = (item: any) => {
+    try {
+      return !!expression.eval_expression(
+        item.showif,
+        req ? { url: req.originalUrl, query: req.query } : {},
+        user,
+        "Show if for menu item labelled " + item.label
+      );
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+  };
   const transform = (items: any) =>
     items
       .filter(
-        (item: any) => role <= +item.min_role && role >= +(item.max_role || 1)
+        (item: any) =>
+          role <= +item.min_role &&
+          role >= +(item.max_role || 1) &&
+          (!item.showif || safe_eval_showif(item))
       )
       .filter((item: any) =>
         is_node
@@ -84,19 +104,9 @@ const get_extra_menu = (
           if (item.in_modal) return `javascript:mobile_modal('${url}')`;
           return url;
         };
-        return {
-          label: __(item.label),
-          icon: item.icon,
-          isUser: item.user_menu_header,
-          location: item.location,
-          style: item.style || "",
-          target_blank: item.target_blank,
-          in_modal: item.in_modal,
-          type: item.type,
-          mobile_item_html: item.mobile_item_html,
-          tooltip: item.tooltip,
-          altlinks: get_altlinks(item),
-          link:
+        let link;
+        try {
+          link =
             item.type === "Link" && item.url_formula
               ? expression.eval_expression(item.url, { locale, role }, user)
               : item.type === "Link"
@@ -129,7 +139,37 @@ const get_extra_menu = (
                                   `/page/${encodeURIComponent(item.page_group)}`
                                 )
                               : `javascript:execNavbarLink('/page/${item.page_group}')`
-                            : undefined,
+                            : undefined;
+        } catch (error) {
+          console.error(error);
+          link = "http://Invalid_Link_URL";
+        }
+
+        const user_translated = __(item.label);
+        let translated_label =
+          !item.label || item.label === " "
+            ? item.label
+            : user_translated !== item.label
+              ? user_translated
+              : req?.__ &&
+                  (["User Page", "Admin Page"].includes(item.type) ||
+                    ["Settings", "User"].includes(item.label))
+                ? req.__(item.label)
+                : item.label;
+
+        return {
+          label: translated_label,
+          icon: item.icon,
+          isUser: item.user_menu_header,
+          location: item.location,
+          style: item.style || "",
+          target_blank: item.target_blank,
+          in_modal: item.in_modal,
+          type: item.type,
+          mobile_item_html: item.mobile_item_html,
+          tooltip: item.tooltip,
+          altlinks: get_altlinks(item),
+          link,
           ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
         };
       });
@@ -153,6 +193,8 @@ const admin_page_url = (page: string): string => {
       return "/viewedit";
     case "Pages":
       return "/pageedit";
+    case "Entities":
+      return "/entities";
     case "Tables":
       return "/table";
     case "About application":
@@ -482,7 +524,8 @@ const getWorkflowStepUserForm = async (
   run: WorkflowRun,
   trigger: Trigger,
   step: WorkflowStep,
-  req: any
+  req: any,
+  res: any
 ) => {
   if (step.action_name === "EditViewForm") {
     const view = View.findOne({ name: step.configuration.edit_view });
@@ -499,12 +542,32 @@ const getWorkflowStepUserForm = async (
     form.isWorkflow = true;
     if (!isWeb(req)) form.onSubmit = "";
     await form.fill_fkey_options(false, undefined, req?.user);
+    await transformForm({
+      form,
+      table,
+      req,
+      row: {},
+      res,
+      viewname: "wfuserform",
+      state: {},
+    } as any);
     form.action = `/actions/fill-workflow-form/${run.id}`;
-    if (run.context[step.configuration.response_variable])
+    if (run.context[step.configuration.response_variable]) {
       Object.assign(
         form.values,
         run.context[step.configuration.response_variable]
       );
+      for (const field of form.fields) {
+        if (!field.isRepeat) continue;
+        if (Array.isArray(form.values[field.name]))
+          (field as FieldRepeat).metadata.rows = form.values[field.name];
+      }
+    }
+
+    if (view?.attributes?.popup_width)
+      form.popup_width = `${view.attributes?.popup_width}${
+        view!.attributes?.popup_width_units || "px"
+      }`;
 
     return form;
   }

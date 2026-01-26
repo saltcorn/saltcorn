@@ -20,6 +20,8 @@ const {
   video,
   source,
   textarea,
+  with_curScript,
+  escape,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
@@ -27,6 +29,17 @@ const { select_options } = require("@saltcorn/markup/helpers");
 const File = require("../models/file");
 const path = require("path");
 const { getReq__ } = require("../db/state");
+
+const buildNodeFileUrl = (filePath, cfg = {}, opts = {}) =>
+  File.pathToServeUrl(filePath, {
+    download: opts.download,
+    filename: opts.filename,
+    targetPrefix: cfg.targetPrefix || "",
+    preferDirect: opts.preferDirect,
+  });
+
+const buildNodeFileLinkUrl = (filePath, cfg = {}) =>
+  buildNodeFileUrl(filePath, cfg);
 
 const btnStyles = [
   { name: "default", label: "Default selector" },
@@ -72,7 +85,7 @@ const buildCustomInput = (id, attrs, file_name) => {
         type: "button",
         id: `${id}-custom-button`,
         class: attrs.button_style,
-        onclick: `document.getElementById('${id}').click()`,
+        onclick: `$(this).parent().find("input").click()`,
       },
       attrs?.label ? attrs.label : __("Choose File")
     ) +
@@ -84,11 +97,9 @@ const buildCustomInput = (id, attrs, file_name) => {
       !file_name ? __("No file chosen") : ""
     ) +
     script(
-      domReady(
-        `document.getElementById('${id}').addEventListener('change', (e) => {
-          document.getElementById('${id}-custom-text').textContent = e.target.files[0].name;
-        })`
-      )
+      with_curScript(`curScript.parentNode.querySelector("input").addEventListener('change', (e) => {
+          curScript.parentNode.querySelector("span").textContent = e.target.files[0].name;
+        });`)
     )
   );
 };
@@ -112,7 +123,10 @@ module.exports = {
       if (!filePath) return "";
       return link(
         isNode()
-          ? `${cfg.targetPrefix || ""}/files/download/${filePath}`
+          ? buildNodeFileUrl(filePath, cfg, {
+              download: true,
+              filename: file_name,
+            })
           : `javascript:notifyAlert('File donwloads are not supported.')`,
         path.basename(filePath) || "Download",
         cfg?.button_style && cfg?.button_style !== " "
@@ -141,7 +155,7 @@ module.exports = {
         ? ""
         : link(
             isNode()
-              ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
+              ? buildNodeFileLinkUrl(filePath, cfg)
               : `javascript:openFile('${filePath}')`,
             path.basename(filePath) || "Open",
             cfg?.button_style && cfg?.button_style !== " "
@@ -169,7 +183,7 @@ module.exports = {
         ? ""
         : link(
             isNode()
-              ? `${cfg.targetPrefix || ""}/files/serve/${filePath}`
+              ? buildNodeFileLinkUrl(filePath, cfg)
               : `javascript:openFile('${filePath}')`,
             path.basename(filePath) || "Open",
             cfg?.button_style && cfg?.button_style !== " "
@@ -185,7 +199,8 @@ module.exports = {
       if (!filePath) return "";
       if (isNode())
         return img({
-          src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+          // Prefer proxied /files/serve URLs so CSP does not block inline images
+          src: buildNodeFileUrl(filePath, cfg, { preferDirect: false }),
           style: "width: 100%",
         });
       else {
@@ -243,7 +258,7 @@ module.exports = {
       const id = `input${text_attr(nm)}`;
       return (
         input({
-          class: [cls, field.class, file_name && "file-has-existing"],
+          class: ["form-control", cls, field.class, file_name && "file-has-existing"],
           "data-fieldname": field.form_name,
           name: text_attr(nm),
           id: id,
@@ -251,6 +266,7 @@ module.exports = {
           disabled: attrs.disabled,
           onChange: attrs.onChange,
           readonly: attrs.readonly,
+          "data-on-cloned": "clear_cloned_file_input(this)",
           accept: attrs.files_accept_filter || undefined,
           ...(customInput ? { hidden: true } : {}),
         }) +
@@ -264,7 +280,31 @@ module.exports = {
     isEdit: true,
     setsFileId: true,
     description: "Select existing file",
-
+    fill_options: async (field) => {
+      const files = await File.find(
+        field.attributes.folder
+          ? { folder: field.attributes.folder }
+          : field.attributes.select_file_where || {}
+      );
+      const extRe =
+        field.attributes.file_exts &&
+        new RegExp(
+          `\\.(${field.attributes.file_exts
+            .split(",")
+            .map((s) => s.trim())
+            .join("|")})$`,
+          "i"
+        );
+      field.options = files
+        .filter(
+          (f) => !f.isDirectory && (!extRe || extRe.test(f.path_to_serve))
+        )
+        .map((f) => ({
+          label: f.filename,
+          value: f.path_to_serve,
+        }));
+      if (!this.required) field.options.unshift({ label: "", value: "" });
+    },
     configFields: async () => {
       const dirs = await File.allDirectories();
       return [
@@ -289,23 +329,25 @@ module.exports = {
           showIf: { use_picker: true },
           default: false,
         },
-        /*{
-          name: "name_regex",
-          label: "Name regex",
-          type: "String"
-        },
+        {
+          name: "file_exts",
+          label: "File extensions",
+          type: "String",
+          subfolder:
+            "Comma separated file extensions. Example: <code>jpg,png</code>",
+        } /*
         {
           name: "mime_regex",
           label: "MIME regex",
           type: "String"
-        }*/
+        }*/,
       ];
     },
     // run
     run: (nm, file_id, attrs, cls, reqd, field) => {
       if (attrs?.use_picker) {
         const folder = attrs?.folder || "";
-        const inputId = `input${text_attr(nm)}`;
+        const inputId = `input${text_attr(nm)}__${Math.floor(Math.random() * 16777215).toString(16)}`;
         return span(
           a(
             {
@@ -314,7 +356,7 @@ module.exports = {
                 folder
               )}&input_id=${encodeURIComponent(inputId)}${
                 attrs?.show_subdirs === false ? "&no_subdirs=true" : ""
-              }')`,
+              }${attrs?.file_exts ? "&file_exts=" + attrs?.file_exts : ""}')`,
             },
             "select"
           ),
@@ -323,13 +365,14 @@ module.exports = {
               id: `${inputId}-custom-text`,
               class: "custom-file-label",
             },
-            "No file chosen"
+            file_id || "No file chosen"
           ),
           input({
             type: "hidden",
             id: inputId,
             name: text_attr(nm),
             "data-fieldname": field.form_name,
+            value: file_id || false,
           })
         );
       } else {
@@ -431,6 +474,7 @@ module.exports = {
             name: text_attr(nm),
             id: id,
             type: "file",
+            "data-on-cloned": "$(this).val('')",
             accept: `${mimebase}/*;capture=${attrs.device}`,
             ...(customInput ? { hidden: true } : {}),
           }) + (customInput ? buildCustomInput(id, attrs) : "")
@@ -477,7 +521,7 @@ module.exports = {
       if (!filePath) return "";
 
       return audio({
-        src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+        src: buildNodeFileUrl(filePath, cfg),
         controls: true,
       });
     },
@@ -509,7 +553,7 @@ module.exports = {
             : undefined,
         },
         source({
-          src: `${cfg.targetPrefix || ""}/files/serve/${filePath}`,
+          src: buildNodeFileUrl(filePath, cfg),
           type: File.nameToMimeType(filePath),
         })
       );
@@ -562,7 +606,7 @@ module.exports = {
             id: `input${text_attr(nm)}`,
             mode: file_name ? File.nameToMimeType(file_name) : undefined,
           },
-          contents
+          escape(contents)
         )
       );
     },

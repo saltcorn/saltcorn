@@ -19,6 +19,7 @@
 
   export let currentFolder = "/";
   export let noSubdirs = false;
+  export let file_exts = null; 
   export let inputId = "";
 
   let files = [];
@@ -34,10 +35,13 @@
   });
 
   const fetchAndReset = async function () {
-    const response = await fetch(
-      `/files/visible_entries?dir=${encodeURIComponent(currentFolder)}${
+    const url = `/files/visible_entries?dir=${encodeURIComponent(currentFolder)}${
         noSubdirs ? "&no_subdirs=true" : ""
-      }`,
+      }${
+        file_exts ? "&file_exts="+file_exts : ""
+      }`
+    const response = await fetch(
+      url,
       {
         headers: { "X-Requested-With": "XMLHttpRequest" },
       }

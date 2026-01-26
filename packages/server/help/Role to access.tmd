@@ -1,0 +1,14 @@
+Each user in Saltcorn has a role and the roles have an order, 
+which you [can edit](/roleadmin). The ordering means that users in a role can access
+everything the users in the role "below" then can acceess, but the users in the role
+"above" have further access. 
+
+Each view and each page has a settting for the minimum role, which is the lowest role
+that is allowed to access that view or page. All users of the chosen minimum role, 
+and those with more powerful roles, can run the view.
+
+To make a page or a view accessible to users who have not logged in, select the "public" role.
+
+In order to see data from a table in the view, the user also needs to have permission 
+to access that table. Access to the table is set in the table properties and can also be
+set by role, or by more complex authorization schemes. See table properties help.

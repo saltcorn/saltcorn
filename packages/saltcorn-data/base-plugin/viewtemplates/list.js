@@ -190,6 +190,7 @@ const configuration_workflow = (req) =>
               );
             }
           }
+
           //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,
@@ -415,7 +416,14 @@ const configuration_workflow = (req) =>
               {
                 name: "create_view_showif",
                 label: req.__("Show if formula"),
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table.name,
+                  user: true,
+                  expression_type: "boolean",
+                },
                 sublabel: req.__(
                   "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
                 ),
@@ -593,6 +601,7 @@ const configuration_workflow = (req) =>
             name: "_order_field",
             label: req.__("Default order by"),
             type: "String",
+            default: table.pk_name,
             attributes: {
               asideNext: true,
               options: [
@@ -610,7 +619,14 @@ const configuration_workflow = (req) =>
           formfields.push({
             name: "_group_by",
             label: req.__("Group by"),
-            type: "String",
+            input_type: "code",
+            attributes: {
+              mode: "application/javascript",
+              singleline: true,
+              table: table.name,
+              user: true,
+              expression_type: "value",
+            },
             sublabel: "Formula for the group headings",
             class: "validate-expression",
           });
@@ -632,7 +648,14 @@ const configuration_workflow = (req) =>
               ]
                 .map((s) => code(s))
                 .join(", "),
-            type: "String",
+            input_type: "code",
+            attributes: {
+              mode: "application/javascript",
+              singleline: true,
+              table: table.name,
+              user: true,
+              expression_type: "boolean",
+            },
             help: {
               topic: "Inclusion Formula",
               context: { table_name: table.name },
@@ -660,10 +683,20 @@ const configuration_workflow = (req) =>
             default: 20,
             attributes: { min: 0 },
           });
+
           formfields.push({
             name: "_hide_pagination",
             label: req.__("Hide pagination"),
             type: "Bool",
+          });
+          formfields.push({
+            name: "_full_page_count",
+            label: req.__("Full page count"),
+            type: "Bool",
+            sublabel: req.__(
+              "Disable for to increase performance for large tables"
+            ),
+            default: true,
           });
           formfields.push({
             name: "_row_click_type",
@@ -672,7 +705,14 @@ const configuration_workflow = (req) =>
             type: "String",
             required: true,
             attributes: {
-              options: ["Nothing", "Link", "Link new tab", "Popup", "Action"],
+              options: [
+                "Nothing",
+                "Link",
+                "Link new tab",
+                "Popup",
+                "Anchor link",
+                "Action",
+              ],
             },
           });
           formfields.push({
@@ -694,12 +734,26 @@ const configuration_workflow = (req) =>
               req.__("Example: <code>`/view/TheOtherView?id=${id}`</code>"),
             type: "String",
             class: "validate-expression",
-            showIf: { _row_click_type: ["Link", "Link new tab", "Popup"] },
+            showIf: {
+              _row_click_type: ["Link", "Link new tab", "Popup", "Anchor link"],
+            },
           });
           formfields.push({
             name: "_header_filters",
             label: req.__("Header filters"),
             type: "Bool",
+          });
+          formfields.push({
+            name: "_header_filters_toggle",
+            label: req.__("Toggle header filters"),
+            type: "Bool",
+            showIf: { _header_filters: true, _header_filters_dropdown: false },
+          });
+          formfields.push({
+            name: "_header_filters_dropdown",
+            label: req.__("Dropdown header filters"),
+            type: "Bool",
+            showIf: { _header_filters: true, _header_filters_toggle: false },
           });
           formfields.push({
             name: "transpose",
@@ -796,6 +850,29 @@ const configuration_workflow = (req) =>
             default: 760,
             showIf: { _responsive_collapse: true },
           });
+          formfields.push({
+            name: "_table_layout",
+            label: req.__("Table layout"),
+            input_type: "select",
+            options: ["Auto", "Fixed"],
+            tab: "Layout options",
+          });
+          formfields.push({
+            name: "_sticky_header",
+            label: req.__("Sticky headers"),
+            type: "Bool",
+            tab: "Layout options",
+          });
+          formfields.push({
+            name: "_row_color_formula",
+            label: req.__("Row color formula"),
+            sublabel: req.__(
+              "Formula for row background color. Ex.: <code>age>65 ?'#aaffaa': null</code>"
+            ),
+            type: "String",
+            tab: "Functionality",
+            class: "validate-expression",
+          });
 
           if (!db.isSQLite && !table.external)
             formfields.push({
@@ -804,6 +881,9 @@ const configuration_workflow = (req) =>
               sublabel: req.__(
                 "Create an SQL view in the database with the fields in this list"
               ),
+              help: {
+                topic: "Create SQL view",
+              },
               type: "Bool",
               tab: "Database options",
             });
@@ -1044,6 +1124,18 @@ const run = async (
             ...get_extra_state(row),
           });
           break;
+        case RelationType.CHILD_LIST:
+          stateMany = {
+            or: rows.map((row) => ({
+              [relation.path[0].inboundKey]: row[table.pk_name],
+              ...get_extra_state(row),
+            })),
+          };
+          getRowState = (row) => ({
+            [relation.path[0].inboundKey]: row[table.pk_name],
+            ...get_extra_state(row),
+          });
+          break;
         case RelationType.PARENT_SHOW:
           const refTable = Table.findOne({ id: view.table_id });
           stateMany = {
@@ -1101,7 +1193,17 @@ const run = async (
       const results = [];
 
       for (const row of rows) {
-        const rendered = await view.run(getRowState(row), extraOpts);
+        const rowState = getRowState(row);
+        const qs = stateToQueryString(rowState, true);
+
+        const rendered = div(
+          {
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-sc-local-state": `/view/${view.name}${qs}`,
+          },
+          await view.run(rowState, extraOpts)
+        );
         results.push({
           html: rendered,
           row,
@@ -1166,7 +1268,10 @@ const run = async (
     else if (default_state?._row_click_type === "Popup")
       page_opts.onRowSelect = (row) =>
         `ajax_modal('${fUrl(row, extraOpts.req.user)}')`;
-    else
+    else if (default_state?._row_click_type === "Anchor link") {
+      page_opts.onRowSelect = (row) => fUrl(row, extraOpts.req.user);
+      page_opts.rowAnchorLink = true;
+    } else
       page_opts.onRowSelect = (row) =>
         `location.href='${fUrl(row, extraOpts.req.user)}'`;
   } else if (default_state?._row_click_type === "Action") {
@@ -1195,6 +1300,7 @@ const run = async (
       page_opts.pagination = {
         current_page,
         pages: Math.ceil(nrows / rows_per_page),
+        noMaxPage: default_state?._full_page_count === false,
         get_page_link: (n) =>
           `gopage(${n}, ${rows_per_page}, '${statehash}', {}, this)`,
       };
@@ -1216,6 +1322,14 @@ const run = async (
   if (default_state?._borderless) {
     page_opts.class += "table-borderless ";
   }
+  if (default_state?._table_layout) {
+    page_opts.table_layout = default_state?._table_layout;
+  }
+
+  if (default_state?._sticky_header) {
+    page_opts.sticky_header = default_state?._sticky_header;
+  }
+
   if (default_state?._responsive_collapse) {
     page_opts.responsiveCollapse = true;
     page_opts.collapse_breakpoint_px = default_state._collapse_breakpoint_px;
@@ -1226,8 +1340,29 @@ const run = async (
 
   page_opts.transpose = (default_state || {}).transpose;
   page_opts.header_filters = (default_state || {})._header_filters;
+  page_opts.header_filters_toggle = (
+    default_state || {}
+  )._header_filters_toggle;
+  page_opts.header_filters_dropdown = (
+    default_state || {}
+  )._header_filters_dropdown;
+  if (page_opts.header_filters_toggle || page_opts.header_filters_dropdown) {
+    page_opts.header_filters_open = new Set(
+      Object.keys(state).filter(
+        (k) =>
+          !k.startsWith("_") ||
+          k.startsWith("_from") ||
+          k.startsWith("_to") ||
+          k.startsWith("_lt") ||
+          k.startsWith("_gt")
+      )
+    );
+  }
+
   page_opts.transpose_width = (default_state || {}).transpose_width;
   page_opts.transpose_width_units = (default_state || {}).transpose_width_units;
+  page_opts.row_color_formula = (default_state || {})._row_color_formula;
+
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
   const istop = vpos === "Top";
   const isright = hpos === "right";
@@ -1264,9 +1399,11 @@ const run = async (
     if (
       create_link_showif_pass ||
       role <= table.min_role_write ||
-      (ownership_field?.reftable_name === "users" && about_user) ||
-      create_view?.configuration?.fixed?.[`preset_${ownership_field?.name}`] ===
-        "LoggedIn"
+      (role < 100 &&
+        ((ownership_field?.reftable_name === "users" && about_user) ||
+          create_view?.configuration?.fixed?.[
+            `preset_${ownership_field?.name}`
+          ] === "LoggedIn"))
     ) {
       if (create_view_display === "Embedded") {
         if (!create_view)
@@ -1597,7 +1734,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _responsive_collapse _collapse_breakpoint_px",
+      "_rows_per_page _full_page_count _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout",
       "default_state"
     );
   }
@@ -1634,6 +1771,7 @@ module.exports = {
       exclusion_relation,
       exclusion_where,
       _rows_per_page,
+      _full_page_count,
       _group_by,
       _hide_pagination,
       _row_click_url_formula,
@@ -1650,9 +1788,14 @@ module.exports = {
       _card_rows,
       _borderless,
       _cell_valign,
+      _table_layout,
       _responsive_collapse,
       _collapse_breakpoint_px,
       _header_filters,
+      _header_filters_toggle,
+      _header_filters_dropdown,
+      _row_color_formula,
+      _sticky_header,
       ...ds
     } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));
@@ -1725,9 +1868,8 @@ module.exports = {
         (default_state && default_state._rows_per_page) || 20;
       if (!q.limit) q.limit = rows_per_page;
       const sort_from_state = !!q.orderBy;
-      if (!q.orderBy)
-        q.orderBy =
-          (default_state && default_state._order_field) || table.pk_name;
+      if (!q.orderBy && default_state?._order_field)
+        q.orderBy = default_state?._order_field;
       if (!q.orderDesc && !sort_from_state)
         q.orderDesc = default_state && default_state._descending;
 
@@ -1772,6 +1914,7 @@ module.exports = {
           mergeIntoWhere(whereForCount, mergeObj);
         }
       }
+
       let rows = await table.getJoinedRows({
         where,
         joinFields,
@@ -1783,10 +1926,15 @@ module.exports = {
 
       const rowCount = default_state?._hide_pagination
         ? undefined
-        : await table.countRows(whereForCount, {
-            forPublic: !req.user,
-            forUser: req.user,
-          });
+        : q.limit && rows.length < q.limit
+          ? rows.length
+          : await table.countRows(whereForCount, {
+              forPublic: !req.user,
+              forUser: req.user,
+              ...(default_state?._full_page_count === false
+                ? { limit: (q.offset || 0) + 4 * (q.limit || 100) + 1 }
+                : {}),
+            });
       return { rows, rowCount };
     },
     async getRowQuery(id) {

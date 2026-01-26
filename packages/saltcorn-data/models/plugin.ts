@@ -6,7 +6,6 @@
  */
 import db from "../db";
 import View from "./view";
-const { isStale, getFetchProxyOptions } = require("../utils");
 import fetch from "node-fetch";
 import { Where } from "@saltcorn/db-common/internal";
 import { ViewTemplate, PluginSourceType } from "@saltcorn/types/base_types";
@@ -14,8 +13,11 @@ import type {
   PluginCfg,
   PluginPack,
 } from "@saltcorn/types/model-abstracts/abstract_plugin";
-
-const { stringToJSON } = require("../utils");
+import fs from "fs/promises";
+import path from "path";
+import utils from "../utils";
+const { stringToJSON, isStale, getFetchProxyOptions, pluginsFolderRoot } =
+  utils;
 
 /**
  * Plugin Class
@@ -104,7 +106,7 @@ class Plugin {
     await db.deleteWhere("_sc_plugins", { id: this.id });
     const { getState } = require("../db/state");
     await getState().remove_plugin(this.name);
-    await getState().refreshUserLayouts();
+    await getState().refresh_userlayouts();
   }
 
   /**
@@ -141,10 +143,10 @@ class Plugin {
     const vt_names = Array.isArray(myViewTemplates)
       ? myViewTemplates.map((vt) => vt.name)
       : typeof myViewTemplates === "function"
-      ? myViewTemplates(getState().plugin_cfgs[this.name]).map(
-          (vt: ViewTemplate) => vt.name
-        )
-      : Object.keys(myViewTemplates);
+        ? myViewTemplates(getState().plugin_cfgs[this.name]).map(
+            (vt: ViewTemplate) => vt.name
+          )
+        : Object.keys(myViewTemplates);
     return views
       .filter((v) => vt_names.includes(v.viewtemplate) && !v.singleton)
       .map((v) => v.name);
@@ -164,35 +166,79 @@ class Plugin {
     const stored = getState().getConfigCopy("available_plugins", false);
     return stored || [];
   }
+
+  static async read_local_store_entries(): Promise<any> {
+    return JSON.parse(
+      await fs.readFile(
+        path.join(pluginsFolderRoot, "store_entries.json"),
+        "utf8"
+      )
+    );
+  }
   /**
    * List plugins available in store
+   * @param msgs - optional packages/plugins-loader/plugin_installer.jsmessages array
    * @returns {Promise<*>}
    */
-  static async store_plugins_available(): Promise<Array<Plugin>> {
-    const { getState } = require("../db/state");
+  static async store_plugins_available(
+    msgs?: Array<string>
+  ): Promise<Array<Plugin>> {
+    const { getState, getRootState } = require("../db/state");
     const stored = getState().getConfig("available_plugins", false);
     const stored_at = getState().getConfig(
       "available_plugins_fetched_at",
       false
     );
+    const airgap = getState().getConfig("airgap", false);
+
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
-    if (!stored || !stored_at || isStale(stored_at)) {
+    if (airgap) {
+      try {
+        const modInfos = getRootState().getConfig(
+          "pre_installed_module_infos",
+          []
+        );
+        return modInfos
+          .map((p: PluginCfg) => new Plugin(p))
+          .filter((p: Plugin) => isRoot || !p.has_auth);
+      } catch (e) {
+        getState().log(2, `Error reading store_entries.json: ${e}`);
+        if (msgs) msgs.push("Error reading local plugin store entries.");
+        return [];
+      }
+    } else if (!stored || !stored_at || isStale(stored_at)) {
       try {
         const from_api = await Plugin.store_plugins_available_from_store();
         await getState().setConfig("available_plugins", from_api);
         await getState().setConfig("available_plugins_fetched_at", new Date());
         return from_api.filter((p) => isRoot || !p.has_auth);
       } catch (e) {
-        console.error(e);
-        if (stored)
+        getState().log(2, `Error fetching plugin store entries: ${e}`);
+        if (stored) {
           return stored
             .map((p: Plugin) => new Plugin(p))
             .filter((p: Plugin) => isRoot || !p.has_auth);
-        else return [];
+        }
+        try {
+          const modInfos = getRootState().getConfig(
+            "pre_installed_module_infos",
+            []
+          );
+          return modInfos
+            .map((p: Plugin) => new Plugin(p))
+            .filter((p: Plugin) => isRoot || !p.has_auth);
+        } catch (e2) {
+          getState().log(2, `Error reading store_entries.json: ${e2}`);
+          if (msgs)
+            msgs.push(
+              "The store is not reachable and reading the local entries failed."
+            );
+          return [];
+        }
       }
     } else
-      return stored
+      return (stored || [])
         .map((p: Plugin) => new Plugin(p))
         .filter((p: Plugin) => isRoot || !p.has_auth);
   }
@@ -201,13 +247,13 @@ class Plugin {
    *
    * @returns {Promise<*>}
    */
-  static async store_plugins_available_from_store(): Promise<Array<Plugin>> {
+  static async store_plugins_available_from_store(
+    endpoint?: string
+  ): Promise<Array<Plugin>> {
     //console.log("fetch plugins");
     const { getState } = require("../db/state");
-    const plugins_store_endpoint = getState().getConfig(
-      "plugins_store_endpoint",
-      false
-    );
+    const plugins_store_endpoint =
+      endpoint || getState().getConfig("plugins_store_endpoint", false);
     // console.log(`[store_plugins_available_from_store] plugins_store_endpoint:%s`, plugins_store_endpoint);
 
     const fetchOptions = getFetchProxyOptions();
@@ -229,12 +275,13 @@ class Plugin {
    * @param name
    * @returns {Promise<null|Plugin>}
    */
-  static async store_by_name(name: string): Promise<Plugin | null> {
+  static async store_by_name(
+    name: string,
+    endpoint?: string
+  ): Promise<Plugin | null> {
     const { getState } = require("../db/state");
-    const plugins_store_endpoint = getState().getConfig(
-      "plugins_store_endpoint",
-      false
-    );
+    const plugins_store_endpoint =
+      endpoint || getState().getConfig("plugins_store_endpoint", false);
     // console.log(`[store_by_name] plugins_store_endpoint:%s`, plugins_store_endpoint);
 
     const response = await fetch(
@@ -245,6 +292,15 @@ class Plugin {
     if (json.success.length == 1)
       return new Plugin({ version: "latest", ...json.success[0] });
     else return null;
+  }
+
+  /**
+   * check if plugin is base-plugin or sbadmin2
+   * @param name
+   * @returns
+   */
+  static is_fixed_plugin(name: string): boolean {
+    return ["@saltcorn/base-plugin", "@saltcorn/sbadmin2"].includes(name);
   }
 }
 

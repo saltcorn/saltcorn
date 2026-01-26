@@ -216,6 +216,12 @@ describe("mkWhere", () => {
       values: ["imon"],
       where: `where "name" ILIKE '%' || $1 || '%'`,
     });
+    expect(
+      mkWhere({ name: { ilike: "Simon", fullMatch: true } })
+    ).toStrictEqual({
+      values: ["Simon"],
+      where: `where "name" ILIKE $1`,
+    });
   });
   it("should query ilike on sqlite", () => {
     expect(mkWhere({ name: { ilike: "imon" } }, true)).toStrictEqual({
@@ -323,6 +329,28 @@ describe("mkWhere", () => {
       where:
         'where "id" in (select ss1."id" from "sub1"."foo" ss1 join "sub1"."baz" ss2 on ss2."id" = ss1."bar" where "ss2"."baz"=$1)',
     });
+    //where "id" in (select foo."iz" from "foo" join "bazzy"  on bazzy."id" = foo."bar" where "ss2"."baz"=$1)
+    expect(
+      mkWhere({
+        id: [
+          {
+            inSelect: {
+              table: "foo",
+              field: "bar",
+              tenant: "sub1",
+              valField: "iz",
+              through: "bazzy",
+              where: { baz: 7 },
+            },
+          },
+        ],
+      })
+    ).toStrictEqual({
+      values: [7],
+      where:
+        'where "id" in (select ss1."iz" from "sub1"."foo" ss1 join "sub1"."bazzy" ss2 on ss2."id" = ss1."bar" where "ss2"."baz"=$1)',
+    });
+
     expect(
       mkWhere({
         age: 45,

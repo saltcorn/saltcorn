@@ -19,7 +19,7 @@ const {
   setTenant,
   isAdminOrHasConfigMinRole,
 } = require("../routes/utils.js");
-const { add_edit_bar } = require("../markup/admin.js");
+const { add_edit_bar, add_results_to_contents } = require("../markup/admin.js");
 const { InvalidConfiguration, isTest } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 
@@ -150,13 +150,23 @@ router.get(
     }
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
-    if (!isTest())
-      Trigger.emitEvent("PageLoad", null, req.user, {
-        text: req.__("View '%s' was loaded", viewname),
-        type: "view",
-        name: viewname,
-        render_time: ms,
-      });
+    const resultCollector = {};
+
+    if (!isTest() && !req.xhr)
+      await Trigger.runTableTriggers(
+        "PageLoad",
+        null,
+        {
+          text: req.__("View '%s' was loaded", viewname),
+          type: "view",
+          name: viewname,
+          render_time: ms,
+          query: req.query,
+        },
+        resultCollector,
+        req.user,
+        { req }
+      );
     if (typeof contents0 === "object" && contents0.goto)
       res.redirect(contents0.goto);
     else {
@@ -174,20 +184,23 @@ router.get(
           : contents0;
       res.sendWrap(
         title,
-        !req.smr && !req.rvr
-          ? add_edit_bar({
-              role,
-              title: view.name,
-              what: req.__("View"),
-              url: `/viewedit/edit/${encodeURIComponent(view.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
-              cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
-              contents,
-              req,
-              view,
-              viewtemplate: view.viewtemplate,
-              table: view.table_id || view.exttable_name,
-            })
-          : contents
+        add_results_to_contents(
+          !req.smr && !req.rvr
+            ? add_edit_bar({
+                role,
+                title: view.name,
+                what: req.__("View"),
+                url: `/viewedit/edit/${encodeURIComponent(view.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
+                cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
+                contents,
+                req,
+                view,
+                viewtemplate: view.viewtemplate,
+                table: view.table_id || view.exttable_name,
+              })
+            : contents,
+          resultCollector
+        )
       );
     }
   })
@@ -243,6 +256,7 @@ router.post(
  */
 router.post(
   "/:viewname/:route",
+  setTenant,
   error_catcher(async (req, res, next) => {
     const state = getState();
     const maintenanceModeEnabled = state.getConfig(

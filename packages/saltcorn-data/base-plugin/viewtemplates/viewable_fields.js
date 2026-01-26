@@ -20,6 +20,8 @@ const {
   link_view,
   displayType,
   run_action_column,
+  stateToQueryString,
+  pathToState,
 } = require("../../plugin-helper");
 const {
   eval_expression,
@@ -27,8 +29,13 @@ const {
   get_expression_function,
 } = require("../../models/expression");
 const Field = require("../../models/field");
+const FieldRepeat = require("../../models/fieldrepeat");
 const Form = require("../../models/form");
-const { traverseSync } = require("../../models/layout");
+const {
+  traverseSync,
+  traverse,
+  translateLayout,
+} = require("../../models/layout");
 const {
   structuredClone,
   isWeb,
@@ -37,6 +44,8 @@ const {
   interpolate,
   objectToQueryString,
   validSqlId,
+  InvalidConfiguration,
+  renderServerSide,
 } = require("../../utils");
 const db = require("../../db");
 const View = require("../../models/view");
@@ -82,7 +91,8 @@ const action_url = (
   colId,
   colIdNm,
   confirm,
-  colIndex
+  colIndex,
+  runAsync
 ) => {
   const pk_name = table.pk_name;
   const __ = getReq__();
@@ -106,7 +116,7 @@ const action_url = (
   return {
     javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
       r ? `, ${pk_name}:'${r?.[pk_name]}'` : ""
-    }${columnIndex(colIndex)}});`,
+    }${columnIndex(colIndex)}}${runAsync ? `,{runAsync:true}` : ""});`,
   };
 };
 
@@ -449,6 +459,7 @@ const view_linker = (
       subTable ? subTable.name : "",
       ViewDisplayType.NO_ROW_LIMIT
     );
+    relObj.subView = subview;
     const type = relObj.type;
     return {
       label: view,
@@ -811,7 +822,7 @@ const get_viewable_fields = (
       if (column.type === "FormulaValue") {
         return {
           ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) =>
             text(
               eval_expression(
@@ -825,7 +836,7 @@ const get_viewable_fields = (
       } else if (column.type === "Text") {
         return {
           ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) =>
             column.interpolator
               ? column.interpolator(r)
@@ -834,7 +845,7 @@ const get_viewable_fields = (
       } else if (column.type === "Container") {
         return {
           ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) => {
             const layout = structuredClone({ ...column, type: "container" });
             traverseSync(
@@ -864,7 +875,7 @@ const get_viewable_fields = (
             : column.label || (column.action_icon ? "" : req.__("Action"));
         return {
           ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) =>
             div(
               { class: "dropdown" },
@@ -917,7 +928,7 @@ const get_viewable_fields = (
         }
         const action_col = {
           ...setWidth,
-          label: column.header_label ? text(__(column.header_label)) : "",
+          label: column.header_label ? __(column.header_label) : "",
           key: (r) => {
             if (action_requires_write(column.action_name)) {
               if (table.min_role_write < role && !table.is_owner(req.user, r))
@@ -931,7 +942,8 @@ const get_viewable_fields = (
               column.rndid || column.action_name,
               column.rndid ? "rndid" : "action_name",
               column.confirm,
-              index
+              index,
+              column.run_async
             );
             const label = column.action_label_formula
               ? eval_expression(
@@ -1006,7 +1018,29 @@ const get_viewable_fields = (
           undefined,
           in_row_click
         );
-        if (column.header_label) r.label = text(__(column.header_label));
+        //console.log(column);
+        if (column.view_label_formula) {
+          const fml_field = table.getField(column.view_label);
+          if (fml_field) {
+            if (column.view_label.includes(".")) {
+              const path = column.view_label.split(".");
+              if (path.length === 2) {
+                const [refNm, targetNm] = path;
+                r.statekey = `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`;
+                r.header_filter = headerFilterForField(
+                  fml_field,
+                  state,
+                  r.statekey
+                );
+              }
+            } else {
+              r.header_filter = headerFilterForField(fml_field, state);
+              r.statekey = fml_field.name;
+            }
+          }
+        }
+
+        if (column.header_label) r.label = __(column.header_label);
         Object.assign(r, setWidth);
         if (column.in_dropdown) {
           dropdown_actions.push(r);
@@ -1014,7 +1048,7 @@ const get_viewable_fields = (
         } else return r;
       } else if (column.type === "Link") {
         const r = make_link(column, fields, __, in_row_click);
-        if (column.header_label) r.label = text(__(column.header_label));
+        if (column.header_label) r.label = __(column.header_label);
         Object.assign(r, setWidth);
         if (column.in_dropdown) {
           dropdown_actions.push(r);
@@ -1061,12 +1095,12 @@ const get_viewable_fields = (
           );
         }
         let header_filter;
-        if (!column.join_field.includes("->") && keypath.length == 2)
-          header_filter = headerFilterForField(
-            field,
-            state,
-            `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`
-          );
+        let statekey;
+
+        if (!column.join_field.includes("->") && keypath.length == 2) {
+          statekey = `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`;
+          header_filter = headerFilterForField(field, state, statekey);
+        }
         let gofv =
           fieldview && type && type.fieldviews && type.fieldviews[fieldview]
             ? (row) =>
@@ -1091,15 +1125,15 @@ const get_viewable_fields = (
         fvrun = {
           ...setWidth,
           label: headerLabelForName(
-            column.header_label
-              ? text(__(column.header_label))
-              : text(targetNm),
+            column.header_label ? __(column.header_label) : targetNm,
             key,
             req,
             __,
             statehash
           ),
           row_key: key,
+          row_label: field?.label,
+          statekey,
           header_filter,
           key: gofv ? gofv : (row) => text(row[key]),
           sortlink: sortlinkForName(key, req, viewname, statehash),
@@ -1205,8 +1239,8 @@ const get_viewable_fields = (
           ...setWidth,
           label: headerLabelForName(
             column.header_label
-              ? text(column.header_label)
-              : text(column.stat + " " + table),
+              ? column.header_label
+              : column.stat + " " + table,
 
             targetNm,
             req,
@@ -1246,15 +1280,14 @@ const get_viewable_fields = (
           fvrun = f && {
             ...setWidth,
             label: headerLabelForName(
-              column.header_label
-                ? text(__(column.header_label))
-                : text(__(f.label)),
+              column.header_label ? __(column.header_label) : __(f.label),
               f.name,
               req,
               __,
               statehash
             ),
             row_key: f_with_val.name,
+            row_label: f.label,
             key:
               column.fieldview && f.type === "File"
                 ? (row) =>
@@ -1363,7 +1396,7 @@ const get_viewable_fields = (
   return tfields;
 };
 
-const headerFilterForField = (f, state, path) => {
+const headerFilterForField = (f, state, path) => (id) => {
   if (f?.type?.name === "Date") {
     const set_initial =
       state[`_fromdate_${f.name}`] && state[`_todate_${f.name}`]
@@ -1377,7 +1410,6 @@ const headerFilterForField = (f, state, path) => {
         input({
           type: "text",
           class: "form-control",
-          name: `daterangefilter${f.name}`,
           id: `daterangefilter${f.name}`,
           //placeholder: ,
         }),
@@ -1397,9 +1429,10 @@ const headerFilterForField = (f, state, path) => {
       $('#daterangefilter${f.name}').flatpickr({mode:'range',
         dateFormat: "Y-m-d",${set_initial}    
         onChange: function(selectedDates, dateStr, instance) {
+            set_header_filter($(instance.element));
             if(selectedDates.length==2) {
           
-               set_state_fields({_fromdate_${f.name}: selectedDates[0].toLocaleDateString('en-CA'), _todate_${f.name}: selectedDates[1].toLocaleDateString('en-CA') })
+               set_state_fields({_fromdate_${f.name}: selectedDates[0].toLocaleDateString('en-CA'), _todate_${f.name}: selectedDates[1].toLocaleDateString('en-CA') }, false, ${id ? `document.getElementById('${id}')` : "this"})
               
                 
             }            
@@ -1414,8 +1447,12 @@ const headerFilterForField = (f, state, path) => {
   /*if (f.is_fkey) {
     fieldviewObjs = [getState().keyFieldviews.select];
   } else */
-  if (f?.type?.name === "Bool") fieldviewObjs = [f.type.fieldviews.tristate];
-  else if (f?.type?.name === "String") fieldviewObjs = [f.type.fieldviews.edit];
+  let extraAttrs = {};
+  if (f?.type?.name === "Bool") {
+    fieldviewObjs = [f.type.fieldviews.tristate];
+    extraAttrs.outline_buttons = true;
+  } else if (f?.type?.name === "String")
+    fieldviewObjs = [f.type.fieldviews.edit];
   else if (f?.type?.name === "Integer" || f?.type?.name === "Float")
     fieldviewObjs = [
       f.type.fieldviews.above_input,
@@ -1433,11 +1470,13 @@ const headerFilterForField = (f, state, path) => {
             f.name,
             state[path || f.name],
             {
-              onChange: `set_state_field('${encodeURIComponent(
+              preOnChange: `set_header_filter(this);`,
+              onChange: `set_header_filter(this);set_state_field('${encodeURIComponent(
                 path || f.name
-              )}', this.value, this)`,
+              )}', this.value, ${id ? `document.getElementById('${id}')` : "this"})`,
               isFilter: true,
               ...f.attributes,
+              ...extraAttrs,
             },
             "",
             false,
@@ -1472,7 +1511,7 @@ const standardLayoutRowVisitor = (viewname, state, table, row, req) => {
   const fields = table.fields;
 
   const evalMaybeExpr = (segment, key, fmlkey) => {
-    if (segment.isFormula && segment.isFormula[fmlkey || key]) {
+    if (segment.isFormula && segment.isFormula[fmlkey || key] && segment[key]) {
       segment[key] = eval_expression(
         segment[key],
         { session_id, locale, ...row },
@@ -1776,7 +1815,9 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
         row,
         segment.rndid,
         "rndid",
-        segment.confirm
+        segment.confirm,
+        undefined,
+        !!segment.run_async
       );
       if (
         segment.action_name === "Delete" &&
@@ -2037,6 +2078,444 @@ const getForm = async (
   return form;
 };
 
+const transformForm = async ({
+  form,
+  table,
+  req,
+  row,
+  res,
+  getRowQuery,
+  viewname,
+  optionsQuery,
+  state,
+}) => {
+  let originalState = state;
+  let pseudo_row = {};
+  if (!row) {
+    table.fields.forEach((f) => {
+      pseudo_row[f.name] = undefined;
+    });
+  }
+  const appState = getState();
+  const __ =
+    db.is_node && appState
+      ? (s) => appState.i18n.__({ phrase: s, locale: req.getLocale() }) || s
+      : (s) => {
+          return s;
+        };
+  await traverse(form.layout, {
+    container(segment) {
+      if (segment.click_action) {
+        segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
+      }
+    },
+    async action(segment) {
+      if (segment.action_style === "on_page_load") {
+        segment.type = "blank";
+        segment.style = {};
+        if (segment.minRole && segment.minRole != 100) {
+          const minRole = +segment.minRole;
+          const userRole = req?.user?.role_id || 100;
+          if (minRole < userRole) return;
+        }
+        if (req.method === "POST") return;
+
+        //run action
+        try {
+          const actionResult = await run_action_column({
+            col: { ...segment },
+            referrer: req?.get?.("Referrer"),
+            req,
+            res,
+            table,
+            row: row || pseudo_row,
+          });
+
+          if (actionResult)
+            segment.contents = script(
+              domReady(
+                `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
+              )
+            );
+        } catch (e) {
+          appState.log(
+            5,
+            `Error in Edit ${viewname} on page load action: ${e.message}`
+          );
+          e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
+          throw e;
+        }
+      }
+      if (segment.action_name === "Delete") {
+        if (form.values && form.values[table.pk_name]) {
+          segment.action_url = table.delete_url(form.values);
+        } else {
+          segment.type = "blank";
+          segment.contents = "";
+        }
+      } else if (
+        segment.action_name === "form_action" &&
+        segment.configuration?.form_action === "Save" &&
+        table.fields.some((f) => f.type === "File")
+      ) {
+        let url = action_url(
+          viewname,
+          table,
+          segment.action_name,
+          row,
+          segment.rndid,
+          "rndid",
+          segment.confirm
+        );
+        if (url.javascript) {
+          //redo to include dynamic row
+          const confirmStr = segment.confirm
+            ? `if(confirm('Are you sure?'))`
+            : "";
+          url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
+        }
+        segment.action_link = action_link(url, req, segment, __);
+      } else if (
+        !["Sign up", ...edit_build_in_actions].includes(segment.action_name) &&
+        !segment.action_name.startsWith("Login")
+      ) {
+        let url = action_url(
+          viewname,
+          table,
+          segment.action_name,
+          row,
+          segment.rndid,
+          "rndid",
+          segment.confirm,
+          undefined,
+          segment.run_async
+        );
+        if (url.javascript) {
+          //redo to include dynamic row
+          const confirmStr = segment.confirm
+            ? `if(confirm('Are you sure?'))`
+            : "";
+
+          // If this is a Multi-step action or the form/table contains File fields,
+          // post multipart FormData so req.files is populated server-side.
+          const hasFileFields = table.fields?.some((f) => f.type === "File");
+          if (segment.action_name === "Multi-step action" || hasFileFields) {
+            url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
+          } else {
+            url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
+          }
+        }
+        segment.action_link = action_link(url, req, segment, __);
+      }
+    },
+    join_field(segment) {
+      const qs = objToQueryString(segment.configuration);
+      segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
+    },
+    tabs(segment) {
+      const to_delete = new Set();
+      (segment.showif || []).forEach((sif, ix) => {
+        if (sif) {
+          const showit = eval_expression(
+            sif,
+            row || pseudo_row,
+            req.user,
+            "Tab show if formula"
+          );
+          if (!showit) to_delete.add(ix);
+        }
+      });
+
+      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
+      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
+
+      (segment.titles || []).forEach((t, ix) => {
+        if (typeof t === "string" && t.includes("{{")) {
+          segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
+        }
+      });
+    },
+    view_link(segment) {
+      segment.type = "blank";
+      const view_select = parse_view_select(segment.view);
+      if (!row && view_select.type !== "Independent") {
+        segment.contents = "";
+      } else {
+        const prefix =
+          req.generate_email && req.get_base_url ? req.get_base_url() : "";
+        const { key } = view_linker(
+          segment,
+          table.fields,
+          (s) => s,
+          isWeb(req),
+          req.user,
+          prefix,
+          req.query,
+          req,
+          viewname
+        );
+        segment.contents = key(row || {});
+      }
+    },
+    async view(segment) {
+      //console.log(segment);
+      const view_select = parse_view_select(segment.view, segment.relation);
+      //console.log({ view_select });
+
+      const view = View.findOne({ name: view_select.viewname });
+      if (!view)
+        throw new InvalidConfiguration(
+          `Cannot find embedded view: ${view_select.viewname}`
+        );
+      // check if the relation path matches a ChildList relations
+      let childListRelPath = false;
+      if (segment.relation && view.table_id) {
+        const targetTbl = Table.findOne({ id: view.table_id });
+        const relation = new Relation(
+          segment.relation,
+          targetTbl.name,
+          displayType(await view.get_state_fields())
+        );
+        childListRelPath = relation.type === RelationType.CHILD_LIST;
+      }
+      // Edit-in-edit
+      if (
+        view.viewtemplate === "Edit" &&
+        (view_select.type === "ChildList" || childListRelPath)
+      ) {
+        if (childListRelPath) updateViewSelect(view_select);
+        const childTable = Table.findOne({ id: view.table_id });
+        const childForm = await getForm(
+          childTable,
+          view.name,
+          view.configuration.columns,
+          view.configuration.layout,
+          row?.id,
+          req,
+          !isWeb(req)
+        );
+        traverseSync(childForm.layout, {
+          field(segment) {
+            segment.field_name = `${view_select.field_name}.${segment.field_name}`;
+          },
+        });
+        for (const field of childForm.fields) {
+          if (field.name === childTable.pk_name) {
+            field.class = field.class
+              ? `${field.class} omit-repeater-clone`
+              : "omit-repeater-clone";
+          }
+        }
+        await childForm.fill_fkey_options(false, optionsQuery, req.user);
+
+        const fr = new FieldRepeat({
+          name: view_select.field_name,
+          label: view_select.field_name,
+          fields: childForm.fields,
+          layout: childForm.layout,
+          metadata: {
+            table_id: childTable.id,
+            view: segment.view,
+            relation: view_select.field_name,
+            relation_path: segment.relation,
+            order_field: segment.order_field,
+          },
+        });
+        if (row?.id) {
+          const childRows = getRowQuery
+            ? await getRowQuery(
+                view.table_id,
+                view_select,
+                row.id,
+                segment.order_field
+              )
+            : await childTable.getRows(
+                {
+                  [view_select.field_name]: row.id,
+                },
+                segment.order_field ? { orderBy: segment.order_field } : {}
+              );
+          fr.metadata.rows = childRows;
+          if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
+            fr.fields.push({
+              name: childTable.pk_name,
+              input_type: "hidden",
+            });
+        }
+        form.fields.push(fr);
+        segment.type = "field_repeat";
+        segment.field_repeat = fr;
+        return;
+      } // end edit in edit
+      const outerState = {};
+      Object.entries(originalState || {}).forEach(([k, v]) => {
+        if (k.startsWith("_")) outerState[k] = v;
+      });
+      let state = {};
+      let urlFormula;
+      let needFields = new Set();
+      if (view_select.type === "RelationPath" && view.table_id) {
+        const pathToUrlFormula = (relation) => {
+          const st = pathToState(relation, (k) => `row.` + k);
+          return Object.entries(st)
+            .map(([k, v]) => {
+              needFields.add(v.split(".")[1]);
+              return `${k}='+${v}+'`;
+            })
+            .join("&");
+        };
+
+        const targetTbl = Table.findOne({ id: view.table_id });
+        if (targetTbl) {
+          const relation = new Relation(
+            segment.relation,
+            targetTbl.name,
+            displayType(await view.get_state_fields())
+          );
+          const relFmlQS = pathToUrlFormula(relation);
+          const type = relation.type;
+          if (!row && type == RelationType.OWN) {
+            segment.type = "blank";
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            segment.contents = segment.contents = div({
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-view-source-need-fields": [...needFields].join(","),
+              "data-view-source": encodeURIComponent(urlFormula),
+            });
+            return;
+          } else if (
+            !row &&
+            type !== RelationType.INDEPENDENT &&
+            !relation.isFixedRelation()
+          ) {
+            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            segment.contents = segment.contents = div({
+              class: "d-inline",
+              "data-sc-embed-viewname": view.name,
+              "data-view-source-need-fields": [...needFields].join(","),
+              "data-view-source": encodeURIComponent(urlFormula),
+            });
+            return;
+          }
+          const userId = req?.user?.id;
+          state = pathToState(
+            relation,
+            relation.isFixedRelation() ? () => userId : (k) => row[k]
+          );
+
+          urlFormula = `add_extra_state('/view/${view.name}?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+        }
+      } else {
+        const isIndependent = view_select.type === "Independent";
+        // legacy none check ?
+
+        if (!view)
+          throw new InvalidConfiguration(
+            `Edit view incorrectly configured: cannot find embedded view ${view_select.viewname}`
+          );
+        switch (view_select.type) {
+          case "Own":
+            state = { id: row?.id };
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            needFields.add("id");
+            break;
+          case "Independent":
+            state = {};
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            needFields.add("id");
+            break;
+          case "ChildList":
+          case "OneToOneShow":
+            state = { [view_select.field_name]: row?.id };
+            urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            needFields.add("id");
+            break;
+          case "ParentShow":
+            state = { id: row?.[view_select.field_name] };
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${view_select.field_name}, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            needFields.add(view_select.field_name);
+            break;
+        }
+        if (!row && !isIndependent) {
+          segment.type = "blank";
+          segment.contents = div({
+            class: "d-inline",
+            "data-sc-embed-viewname": view.name,
+            "data-view-source-need-fields": [...needFields].join(","),
+            "data-view-source": encodeURIComponent(urlFormula),
+          });
+          return;
+        }
+      }
+      const extra_state = segment.extra_state_fml
+        ? eval_expression(
+            segment.extra_state_fml,
+            {
+              ...dollarizeObject(req.query),
+              session_id: getSessionId(req),
+              ...(row || pseudo_row),
+            },
+            req.user,
+            `Extra state formula for embedding view ${view.name}`
+          )
+        : {};
+
+      const qs = stateToQueryString(
+        { ...state, ...outerState, ...extra_state },
+        true
+      );
+      segment.contents = div(
+        {
+          class: "d-inline",
+          "data-sc-embed-viewname": view.name,
+          "data-sc-view-source": `/view/${view.name}${qs}`,
+          "data-view-source-current": `/view/${view.name}${qs}`,
+          "data-view-source-need-fields": [...needFields].join(","),
+          "data-view-source": encodeURIComponent(urlFormula),
+        },
+        view.renderLocally()
+          ? await view.run(
+              { ...state, ...outerState, ...extra_state },
+              { req, res },
+              view.isRemoteTable()
+            )
+          : await renderServerSide(view.name, {
+              ...state,
+              ...outerState,
+              ...extra_state,
+            })
+      );
+    },
+  });
+  translateLayout(form.layout, req.getLocale());
+
+  if (req.headers?.saltcornmodalrequest) form.xhrSubmit = true;
+  setDateLocales(form, req.getLocale());
+};
+
+const setDateLocales = (form, locale) => {
+  form.fields.forEach((f) => {
+    if (f.type && f.type.name === "Date") {
+      f.attributes.locale = locale;
+    }
+  });
+};
+
+/**
+ * update viewSelect so that it looks like a normal ChildList
+ */
+const updateViewSelect = (viewSelect) => {
+  if (viewSelect.path.length === 1) {
+    viewSelect.field_name = viewSelect.path[0].inboundKey;
+    viewSelect.table_name = viewSelect.path[0].table;
+  } else if (viewSelect.path.length === 2) {
+    viewSelect.field_name = viewSelect.path[1].inboundKey;
+    viewSelect.table_name = viewSelect.path[1].table;
+    viewSelect.throughTable = viewSelect.path[0].inboundKey;
+    viewSelect.through = viewSelect.path[0].table;
+  }
+};
 /**
  * @param {object} table
  * @param {object} req
@@ -2104,4 +2583,7 @@ module.exports = {
   edit_build_in_actions,
   standardBlockDispatch,
   standardLayoutRowVisitor,
+  setDateLocales,
+  transformForm,
+  updateViewSelect,
 };

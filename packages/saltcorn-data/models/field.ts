@@ -70,7 +70,7 @@ class Field implements AbstractField {
   label: string;
   name: string;
   fieldview?: string;
-  validator: (value: any, whole_rec?: Row) => boolean | string | undefined;
+  validator: (value: any, whole_rec?: Row, field?: {required: boolean}) => boolean | string | undefined;
   showIf?: { [field_name: string]: string | boolean | string[] };
   parent_field?: string;
   postText?: string;
@@ -193,6 +193,10 @@ class Field implements AbstractField {
     this.exclude_from_mobile = o.exclude_from_mobile;
   }
 
+  get isRepeat() {
+    return false;
+  }
+
   /**
    * To Json
    * @type {object}
@@ -276,7 +280,7 @@ class Field implements AbstractField {
 
   static async select_options_query(
     table_name: string,
-    where: string,
+    where: Where,
     attributes: any,
     extra_joinfields: any = {},
     user?: any
@@ -488,7 +492,7 @@ class Field implements AbstractField {
         .filter((f) => !f.isDirectory)
         .map((f) => ({
           label: f.filename,
-          value: f.path_to_serve,
+          value: f.field_value,
         }));
       if (!this.required) this.options.unshift({ label: "", value: "" });
     }
@@ -578,7 +582,7 @@ class Field implements AbstractField {
     const { rows } = await db.query(
       `select distinct "${db.sqlsanitize(this.name)}" from ${
         this.table?.sql_name
-      } ${whereS} order by "${db.sqlsanitize(this.name)}"`,
+      } ${whereS} order by "${db.sqlsanitize(this.name)}" limit 1000`,
       values
     );
     const dbOpts = rows.map((r: Row) => ({
@@ -614,7 +618,16 @@ class Field implements AbstractField {
       const schema = db.getTenantSchemaPrefix();
       const { getState } = require("../db/state");
       const on_delete = this.on_delete_sql;
-
+      const Table = require("./table");
+      const reftable = Table.findOne(this.reftable_name);
+      if (reftable?.external || reftable?.provider_name) {
+        const ref_pk = reftable.fields.find((f: Field) => f.primary_key);
+        if (!ref_pk)
+          throw new Error(
+            `Table ${this.reftable_name} does not have a primary key`
+          );
+        return ref_pk.sql_type;
+      }
       return `${apply(
         getState().types[
           typeof this.reftype === "string" ? this.reftype : this.reftype.name
@@ -719,13 +732,21 @@ class Field implements AbstractField {
     return !!fileview?.multipartFormData;
   }
 
-  validate(whole_rec: any): ResultMessage {
+  validate(whole_rec: any): ResultMessage | {} {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     let readval = null;
     let typeObj = this.type as Type;
     let fvObj = this.fieldview
       ? typeObj?.fieldviews?.[this.fieldview]
       : undefined;
+    if (
+      !fvObj?.readFromFormRecord &&
+      !typeObj?.readFromFormRecord &&
+      (fvObj?.read || typeObj?.read) &&
+      !this.required &&
+      typeof whole_rec[this.form_name] === "undefined"
+    )
+      return {};
     if (this.is_fkey) {
       readval = readKey(whole_rec[this.form_name], this);
     } else {
@@ -756,7 +777,7 @@ class Field implements AbstractField {
         ? type.validate(this.attributes || {})(readval)
         : readval;
     if (tyvalres.error) return tyvalres;
-    const fvalres = this.validator(readval, whole_rec);
+    const fvalres = this.validator(readval, whole_rec, this);
     if (typeof fvalres === "string") return { error: fvalres };
     if (typeof fvalres === "undefined" || fvalres) return { success: readval };
     else return { error: "Not accepted" };

@@ -148,7 +148,14 @@ const configuration_workflow = (req) =>
               {
                 name: "create_view_showif",
                 label: req.__("Show if formula"),
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table.name,
+                  user: true,
+                  expression_type: "boolean",
+                },
                 sublabel: req.__(
                   "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
                 ),
@@ -295,7 +302,14 @@ const configuration_workflow = (req) =>
               {
                 name: "groupby",
                 label: req.__("Group by"),
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table.name,
+                  user: true,
+                  expression_type: "value",
+                },
                 sublabel: "Formula for the group headings",
                 class: "validate-expression",
               },
@@ -333,7 +347,14 @@ const configuration_workflow = (req) =>
                 name: "title_formula",
                 label: req.__("Title formula"),
                 class: "validate-expression",
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table.name,
+                  user: true,
+                  expression_type: "value",
+                },
                 showIf: { view_decoration: ["Card", "Accordion", "Tabs"] },
               },
               {
@@ -386,7 +407,14 @@ const configuration_workflow = (req) =>
                   ]
                     .map((s) => code(s))
                     .join(", "),
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table.name,
+                  user: true,
+                  expression_type: "boolean",
+                },
                 help: {
                   topic: "Inclusion Formula",
                   context: { table_name: table.name },
@@ -659,34 +687,45 @@ const run = async (
         "Create view show if formula"
       )
     : undefined;
-  if (
-    create_link_showif_pass !== false &&
-    view_to_create &&
-    (create_link_showif_pass ||
-      role <= table.min_role_write ||
-      (table.ownership_field_id && (about_user || always_create_view)))
-  ) {
-    if (create_view_display === "Embedded") {
-      const create_view = await View.findOne({ name: view_to_create });
-      if (!create_view)
-        throw new InvalidConfiguration(
-          `View ${viewname} incorrectly configured: cannot find embedded view to create ${view_to_create}`
+  if (view_to_create) {
+    const create_view = await View.findOne({ name: view_to_create });
+    const ownership_field =
+      table.ownership_field_id &&
+      table.fields.find((f) => f.id === table.ownership_field_id);
+    if (
+      create_link_showif_pass !== false &&
+      create_view &&
+      (create_link_showif_pass ||
+        role <= table.min_role_write ||
+        (role < 100 &&
+          table.ownership_field_id &&
+          (about_user ||
+            always_create_view ||
+            create_view?.configuration?.fixed?.[
+              `preset_${ownership_field?.name}`
+            ] === "LoggedIn")))
+    ) {
+      if (create_view_display === "Embedded") {
+        if (!create_view)
+          throw new InvalidConfiguration(
+            `View ${viewname} incorrectly configured: cannot find embedded view to create ${view_to_create}`
+          );
+        create_link = await create_view.run(state, extraArgs);
+      } else {
+        const target = `/view/${encodeURIComponent(
+          view_to_create
+        )}${stateToQueryString(state)}`;
+        const hrefVal = isWeb(extraArgs.req)
+          ? target
+          : `javascript:execLink('${target}');`;
+        create_link = link_view(
+          hrefVal,
+          __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
+          create_view_display === "Popup" ? { reload_view: viewname } : false,
+          create_link_style,
+          create_link_size
         );
-      create_link = await create_view.run(state, extraArgs);
-    } else {
-      const target = `/view/${encodeURIComponent(
-        view_to_create
-      )}${stateToQueryString(state)}`;
-      const hrefVal = isWeb(extraArgs.req)
-        ? target
-        : `javascript:execLink('${target}');`;
-      create_link = link_view(
-        hrefVal,
-        __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
-        create_view_display === "Popup" ? { reload_view: viewname } : false,
-        create_link_style,
-        create_link_size
-      );
+      }
     }
   }
   const create_link_div = isright

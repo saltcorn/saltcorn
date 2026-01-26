@@ -7,7 +7,7 @@ export type StyleVal =
   | string
   | null
   | (string | Falsy)[]
-  | { [key: string]: string | number };
+  | { [key: string]: string | number | Falsy };
 export type AttributeVal = string | boolean | number | undefined | null;
 export type Element = string | number | boolean | null | undefined | Element[];
 export type Attributes = {
@@ -151,9 +151,11 @@ export interface TagExports extends TagFunctionExports {
     attributes_or_first_child?: Attributes | Element,
     ...children: Element[]
   ) => string;
+  with_curScript: (js: string) => string;
   domReady: (js: string) => string;
   text: (t: string | number, customWhiteList?: IWhiteList) => string;
   text_attr: (t: string | number) => string;
+  escape: (t: string) => string;
   nbsp: string;
   mkTag: (tnm: string, voidTag?: boolean) => TagFunction;
 }

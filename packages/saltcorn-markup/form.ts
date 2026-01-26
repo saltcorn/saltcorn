@@ -24,6 +24,7 @@ const {
   select,
   textarea,
   option,
+  escape,
 } = tags;
 import renderLayout = require("./layout");
 import helpers = require("./helpers");
@@ -547,15 +548,30 @@ const innerField =
         return textarea(
           {
             mode: (hdr.attributes || {}).mode || "",
+            codepage: (hdr.attributes || {}).codepage || false,
+            tableName: (hdr.attributes || {}).table || false,
+            singleline: (hdr.attributes || {}).singleline ? "yes" : false,
+            compact: (hdr.attributes || {}).compact ? "yes" : false,
+            user: (hdr.attributes || {}).user ? "yes" : false,
+            workflow: (hdr.attributes || {}).workflow ? "yes" : false,
             class: `to-code form-control ${validClass} ${hdr.class || ""}`,
             ...(maybe_disabled
               ? { disabled: true, "data-disabled": "true" }
               : {}),
+            ...(hdr.attributes?.onChange
+              ? { onchange: hdr.attributes?.onChange }
+              : {}),
             "data-fieldname": text_attr(hdr.form_name),
             name: text_attr(name),
+            spellcheck: undefined,
+            "is-expression": ["row", "query"].includes(
+              (hdr.attributes || {}).expression_type
+            )
+              ? "yes"
+              : false,
             id: `input${text_attr(name)}`,
           },
-          v[hdr.form_name] || ""
+          escape(v[hdr.form_name] || "")
         );
       case "time_of_day":
         return [
@@ -686,6 +702,7 @@ const innerField =
                 ? { disabled: true, "data-disabled": "true" }
                 : {}),
               name: text_attr(name),
+              accept: hdr.attributes?.accept,
               id: `input${text_attr(name)}`,
             }),
           ].join("");
@@ -874,7 +891,8 @@ const repeater_adder = (form_name: string) =>
   a(
     {
       class: "btn btn-sm btn-outline-primary mb-3",
-      href: `javascript:add_repeater('${form_name}')`,
+      href: `javascript:void(0)`,
+      onclick: `add_repeater('${form_name}', this)`,
       title: "Add",
     },
     i({ class: "fas fa-plus" })
@@ -893,17 +911,21 @@ const mkFormRowForRepeat = (
   errors: any[],
   formStyle: string,
   labelCols: number,
-  hdr: any
+  hdr: any,
+  nameAdd: string = ""
 ): string => {
   const adder = repeater_adder(hdr.form_name);
   if (Array.isArray(v[hdr.form_name]) && v[hdr.form_name].length > 0) {
     return div(
-      hdr.showIf
-        ? {
-            "data-show-if": mkShowIf(hdr.showIf),
-            style: "display: none;",
-          }
-        : {},
+      {
+        ...(hdr.showIf
+          ? {
+              "data-show-if": mkShowIf(hdr.showIf),
+              style: "display: none;",
+            }
+          : {}),
+        class: "field-repeat-wrapper",
+      },
       div(
         {
           class: `repeats-${hdr.form_name}`,
@@ -913,12 +935,21 @@ const mkFormRowForRepeat = (
             { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
             repeater_icons,
             hdr.fields.map((f: any) => {
+              if (f.isRepeat)
+                return mkFormRowForRepeat(
+                  vi,
+                  errors,
+                  formStyle,
+                  labelCols,
+                  f,
+                  nameAdd + "_" + ix
+                );
               return mkFormRowForField(
                 vi,
                 errors,
                 formStyle,
                 labelCols,
-                "_" + ix
+                nameAdd + "_" + ix
               )(f);
             })
           );
@@ -937,7 +968,22 @@ const mkFormRowForRepeat = (
           { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
           repeater_icons,
           hdr.fields.map((f: any) => {
-            return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
+            if (f.isRepeat)
+              return mkFormRowForRepeat(
+                v,
+                errors,
+                formStyle,
+                labelCols,
+                f,
+                nameAdd + "_0"
+              );
+            return mkFormRowForField(
+              v,
+              errors,
+              formStyle,
+              labelCols,
+              nameAdd + "_0"
+            )(f);
           })
         )
       ) + adder;
@@ -972,7 +1018,22 @@ const mkFormRowForRepeat = (
           { class: `form-repeat form-namespace repeat-${hdr.form_name}` },
           repeater_icons,
           hdr.fields.map((f: any) => {
-            return mkFormRowForField(v, errors, formStyle, labelCols, "_0")(f);
+            if (f.isRepeat)
+              return mkFormRowForRepeat(
+                v,
+                errors,
+                formStyle,
+                labelCols,
+                f,
+                nameAdd + "_0"
+              );
+            return mkFormRowForField(
+              v,
+              errors,
+              formStyle,
+              labelCols,
+              nameAdd + "_0"
+            )(f);
           })
         )
       ),
@@ -1463,7 +1524,6 @@ const renderFormLayout = (form: Form): string => {
         );
       }
       if (action_name === "Sign up") {
-        console.log("signup_from_edit_view", action_name);
         return mkBtn(
           `onClick="${spinnerStr}signup_from_edit_view(event)" type="button"`
         );
@@ -1476,10 +1536,12 @@ const renderFormLayout = (form: Form): string => {
             ? `onClick="${spinnerStr}${
                 form.onSubmit ? `${form.onSubmit};` : ""
               }ajaxSubmitForm(this, true)" type="button"`
-            : 'type="submit"';
+            : `onClick="${spinnerStr}sc_form_submit_in_progress()" type="submit"`;
         return mkBtn(submitAttr);
       }
-      return mkBtn('type="submit"');
+      return mkBtn(
+        `onClick="${spinnerStr}sc_form_submit_in_progress()" type="submit"`
+      );
     },
   };
   const role = form.req?.user?.role_id || 100;
@@ -1754,7 +1816,7 @@ const mkForm = (
             }ajaxSubmitForm(this, true)">${text(
               form.submitLabel || "Save"
             )}</button>`
-          : `<button type="submit" class="btn ${
+          : `<button onClick="sc_form_submit_in_progress()" type="submit" class="btn ${
               form.submitButtonClass || "btn-primary"
             }">${text(form.submitLabel || "Save")}</button>`
     }${

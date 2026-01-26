@@ -68,6 +68,13 @@ const subItem = (currentUrl) => (item) =>
             ],
             href: text(item.link),
             target: item.target_blank ? "_blank" : undefined,
+            ...(item.tooltip
+              ? {
+                  "data-bs-toggle": "tooltip",
+                  "data-bs-placement": "right",
+                  title: item.tooltip,
+                }
+              : {}),
           },
           show_icon(item.icon, "mr-05"),
           item.label
@@ -131,6 +138,12 @@ const sideBarItem = (currentUrl) => (item) => {
               "data-bs-target": `#collapse${labelToId(item)}`,
               "aria-expanded": "true",
               "aria-controls": `collapse${labelToId(item)}`,
+              ...(item.tooltip
+                ? {
+                    "data-bs-placement": "right",
+                    title: item.tooltip,
+                  }
+                : {}),
             },
             show_icon(item.icon),
             span(text(item.label))
@@ -153,6 +166,13 @@ const sideBarItem = (currentUrl) => (item) => {
               class: "nav-link",
               href: text(item.link),
               target: item.target_blank ? "_blank" : undefined,
+              ...(item.tooltip
+                ? {
+                    "data-bs-toggle": "tooltip",
+                    "data-bs-placement": "right",
+                    title: item.tooltip,
+                  }
+                : {}),
             },
             show_icon(item.icon),
             span(text(item.label))
@@ -233,7 +253,7 @@ const sidebar = (brand, sections, currentUrl) =>
         class: "rounded-circle border-0",
         "data-sidebar-toggler": true,
         id: "sidebarToggle",
-        "aria-label": "Collapse sidebar menu"
+        "aria-label": "Collapse sidebar menu",
       })
     )
   );
@@ -377,9 +397,9 @@ const linkPrefix = () => (isNode() ? "/plugins" : "sc_plugins");
  * @param {string} rest
  * @returns {string}
  */
-const wrapIt = (headers, title, bodyAttr, rest) =>
+const wrapIt = (headers, title, bodyAttr, rest, req) =>
   `<!doctype html>
-  <html lang="en">
+  <html lang="${req?.getLocale()}" ${req?.isRTL ? 'dir="rtl"' : ""}>
   <head>
     <!-- Required meta tags -->
     <meta charset="utf-8">
@@ -390,6 +410,7 @@ const wrapIt = (headers, title, bodyAttr, rest) =>
 
     <!-- Custom styles for this template-->
     <link rel="stylesheet" href="${linkPrefix()}/public/sbadmin2${verstring}/sb-admin-2.min.css">
+    ${req?.isRTL ? `<link rel="stylesheet" href="${linkPrefix()}/public/sbadmin2${verstring}/bootstrap.rtl.min.css">` : ""}
     ${headersInHead(headers)}
     <title>${text(title)}</title>
   </head>
@@ -464,7 +485,8 @@ const authWrap = ({
       >
         ${alerts.map((a) => toast(a.type, a.msg)).join("")}
       </div>
-    </div>`
+    </div>`,
+    req
   );
 
 /**
@@ -519,7 +541,8 @@ const wrap = ({
       >
         ${alerts.map((a) => toast(a.type, a.msg)).join("")}
       </div>
-    </div>`
+    </div>`,
+    req
   );
 
 /**

@@ -755,6 +755,10 @@ describe("view slug", () => {
     const query: any = {};
     v.rewrite_query_from_slug(query, ["1"]);
     expect(query.id).toBe("1");
+    const query1: any = { id: 1 };
+    v.rewrite_query_from_slug(query1, undefined);
+    expect(query1.id).toBe(1);
+
     //const res = await v.run({}, mockReqRes);
   });
   it("set link", async () => {

@@ -17,7 +17,7 @@ Saltcorn is using [PostgreSQL](https://github.com/postgres/postgres), [node.js](
 #### Online
 
 A multitenant instance of Saltcorn is running at [saltcorn.com](https://saltcorn.com), and you can create a new application under a subdomain at [https://saltcorn.com/tenant/create](https://saltcorn.com/tenant/create).
-This service is free but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of Saltcorn.
+This service is free, but there are no guarantees about the security or availability of your application or the information you are storing. This service should only be used to explore the capabilities of Saltcorn.
 
 #### Desktop
 
@@ -31,7 +31,7 @@ export SQLITE_FILEPATH=~/saltcorn.sqlite
 .local/bin/saltcorn serve
 ```
 
-Now open http://localhost:3000/ in your browser. When you want to run this again, you need to run the `export` line and the `saltcorn serve` line. or simply run `SQLITE_FILEPATH=~/saltcorn.sqlite .local/bin/saltcorn serve`.
+Now open http://localhost:3000/ in your browser. When you want to run this again, you need to run the `export` line and the `saltcorn serve` line. Or simply run `SQLITE_FILEPATH=~/saltcorn.sqlite .local/bin/saltcorn serve`.
 
 #### Server
 
@@ -70,7 +70,7 @@ The first two lines will install Node.js 22 (you can also use 18, 20, or 24). Th
 accepting all the defaults, which installs PostgreSQL and sets up Saltcorn as a service
 listening on port 80.
 
-If you want a different port, different database backend, or to not install as a service, you
+If you want a different port, a different database backend, or to not install as a service, you
 can omit the final `-y` to get an interactive installation:
 
 ```
@@ -94,7 +94,7 @@ wget -qO - https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev build-essential python-is-python3
 ```
 
-You can also any Node version 18-24.
+You can also use any Node version between 18-24.
 
 ### Install Saltcorn
 
@@ -112,7 +112,7 @@ it subsequently:
 
 ### Setup (automated)
 
-if you are `root`, create a user with sudo and switch to that user:
+If you are `root`, create a user with sudo and switch to that user:
 
 ```
 adduser saltcorn
@@ -128,7 +128,7 @@ then run
 
 ### Setup (manual)
 
-NOTE: this is somewhat out of date; see instead https://wiki.saltcorn.com/view/ShowPage?title=Install%20on%20Ubuntu, in paticular the last section.
+NOTE: this is somewhat out of date; see instead https://wiki.saltcorn.com/view/ShowPage?title=Install%20on%20Ubuntu, in particular the last section.
 
 Skip this section if you ran `saltcorn setup` or `npx saltcorn-install`
 
@@ -148,6 +148,7 @@ Skip this section if you ran `saltcorn setup` or `npx saltcorn-install`
      - `sslrootcert`: PostgreSQL [SSL Root Certificate](https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLROOTCERT)
      - `session_secret`: Saltcorn session secret
      - `multi_tenant`: run as multi-tenant (true/false)
+     - `multi_node`: update other Saltcorn nodes when data changes with Postgres LISTEN/NOTIFY (true/false)
 
      For example:
 
@@ -159,13 +160,14 @@ Skip this section if you ran `saltcorn setup` or `npx saltcorn-install`
         "user":"tomn",
         "password":"dgg2342vfB",
         "session_secret":"hrh64b45b3",
-        "multi_tenant":true
+        "multi_tenant":true,
+        "multi_node":false
      }
      ```
 
      Or,
 
-   - Set environment variables. `SALTCORN_SESSION_SECRET`, `SALTCORN_MULTI_TENANT` (defaults to `false`), and either `DATABASE_URL` or `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE`, `PGPASSWORD`. You can also set `PGSSLMODE`, `PGSSLCERT`, `PGSSLKEY`, `PGSSLROOTCERT` (see [Postgres Documentation](https://www.postgresql.org/docs/current/libpq-envars.html))
+   - Set environment variables. `SALTCORN_SESSION_SECRET`, `SALTCORN_MULTI_TENANT` (defaults to `false`), `SALTCORN_MULTI_NODE` (defaults to `false`), and either `DATABASE_URL` or `PGHOST`, `PGPORT`, `PGUSER`, `PGDATABASE`, `PGPASSWORD`. You can also set `PGSSLMODE`, `PGSSLCERT`, `PGSSLKEY`, `PGSSLROOTCERT` (see [Postgres Documentation](https://www.postgresql.org/docs/current/libpq-envars.html))
 
 ### Run
 
@@ -175,9 +177,9 @@ Skip this section if you ran `saltcorn setup` or `npx saltcorn-install`
 
 #### Install Saltcorn as a service
 
-Installing saltcorn as a service will mean it runs in the background and restarts automatically if the system reboots.
+Installing Saltcorn as a service will mean it runs in the background and restarts automatically if the system reboots.
 
-create a file `/lib/systemd/system/saltcorn.service` with these contents:
+Create a file `/lib/systemd/system/saltcorn.service` with these contents:
 
 ```
 [Unit]
@@ -234,7 +236,7 @@ sudo apt-get install -y nodejs libpq-dev
 
 ### Prepare Node
 
-assuming you have cloned this repository to \$HOME/saltcorn (otherwise adjust PATH)
+Assuming you have cloned this repository to \$HOME/saltcorn (otherwise adjust PATH)
 
 ```
 npm config set prefix ~/.local
@@ -268,26 +270,32 @@ to install everything. If successful, you should now be able to run `saltcorn` i
     ProxyPass / http://localhost:3000/ upgrade=websocket 
     ```
 - If a mobile app build gives you `Error: EACCES: permission denied, rmdir '/home/saltcorn/mobile_app_build/android/.gradle/8.4'` or similar, try running `sudo rm -rf /home/saltcorn/mobile_app_build/android/.gradle/8.4` once. From version 1.3.0-beta.5 on, it should disappear.
+- When building mobile apps using your own Android SDK, Java 21 is required. Make sure the `JAVA_HOME` environment variable as well as `ANDROID_HOME` and `ANDROID_SDK_ROOT` are set correctly.
+### Multi-node
+
+* Saltcorn's `multi_node` mode only works when using **PostgreSQL** as the database backend.
+  * When running multiple Saltcorn nodes on **different machines**, all nodes must share the same **tenant folder** and **Saltcorn file system**.
+  * Use a **shared drive** so all nodes read and write from a single central location.
 
 ## Development tips
 
 ### Dev server
 
-cd to your saltcorn repository clone, then then run this in shell:
+cd to your saltcorn repository clone, then run this in shell:
 
 `npm run tsc; while [ 1 ]; do SALTCORN_NWORKERS=1 saltcorn serve --dev;done`
 
-This will restart the server and rebuild with tsc every time you save a file in the saltcorn repo or in a local plugin.
+This will restart the server and rebuild with tsc every time you save a file in the Saltcorn repo or in a local plugin.
 
 ### Working with local plugins
 
-A Local plugin means that the code lives in your home directory and when you edit it, the plugin updates in the instance after a restart (which will happen automatically on save, when running the dev server)
+A Local plugin means that the code lives in your home directory, and when you edit it, the plugin updates in the instance after a restart (which will happen automatically on save, when running the dev server).
 
 If you have a plugin checked out in a directory, you can install it in the running instance through the CLI in two different ways:
 
 * If the plugin is not already installed in the instance, run `saltcorn install-plugin -d path_to_plugin` (if the plugin is checked out in path_to_plugin)
 
-* if the plugin is already installed in the instance, you can convert it to a local plugin with the `dev:localize-plugin` CLI command: `saltcorn dev:localize-plugin plugin_name {path_to_plugin}`.
+* If the plugin is already installed in the instance, you can convert it to a local plugin with the `dev:localize-plugin` CLI command: `saltcorn dev:localize-plugin plugin_name {path_to_plugin}`.
 
 * You can also unlocalize a plugin, see the help for `dev:localize-plugin`
 
@@ -328,7 +336,7 @@ npm run build
 
 ### React rebuild on save
 
-in `saltcorn/packages/saltcorn-builder/` run:
+In `saltcorn/packages/saltcorn-builder/` run:
 
 `git ls-files | entr npm run builddev`
 
