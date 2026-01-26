@@ -87,32 +87,31 @@ const installPlugin = async (plugin) => {
   return location;
 };
 
-const removeOldPlugin = async (plugin) => {
-  const byName = await Plugin.findOne({ name: plugin.name });
+const removeOldPlugin = async (newPlugin) => {
+  const byName = await Plugin.findOne({ name: newPlugin.name });
   if (byName) {
     await byName.delete();
     await new PluginInstaller(byName).remove();
   }
-  let oldPlugin = null;
-  if (!plugin.name.startsWith("@saltcorn/")) {
-    const withOrg = await Plugin.findOne({ name: `@saltcorn/${plugin.name}` });
+  let oldDbPlugin = null;
+  if (!newPlugin.name.startsWith("@saltcorn/")) {
+    const withOrg = await Plugin.findOne({
+      name: `@saltcorn/${newPlugin.name}`,
+    });
     if (withOrg) {
       await withOrg.delete();
-      oldPlugin = withOrg;
+      oldDbPlugin = withOrg;
     }
   } else {
     const withoutOrg = await Plugin.findOne({
-      name: plugin.name.replace(/^@saltcorn\//, ""),
+      name: newPlugin.name.replace(/^@saltcorn\//, ""),
     });
     if (withoutOrg) {
       await withoutOrg.delete();
-      oldPlugin = withoutOrg;
+      oldDbPlugin = withoutOrg;
     }
   }
-  if (oldPlugin) {
-    const installer = new PluginInstaller(oldPlugin);
-    await installer.remove();
-  }
+  await new PluginInstaller(oldDbPlugin || newPlugin).remove();
 };
 
 const getPluginLocation = (pluginName) => {
