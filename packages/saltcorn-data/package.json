@@ -96,7 +96,7 @@
     "mjml": "5.0.0-alpha.6",
     "underscore": "1.13.7",
     "unidecode": "1.1.0",
-    "tough-cookie": "2.5.0"
+    "tough-cookie": "4.1.3"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
