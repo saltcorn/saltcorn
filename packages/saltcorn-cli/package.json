@@ -20,6 +20,7 @@
     "@saltcorn/server": "1.6.0-alpha.1",
     "contractis": "^0.1.0",
     "dateformat": "^4.6.3",
+    "env-paths": "^2.2.1",
     "inquirer": "^12.3.3",
     "js-yaml": "^4.1.0",
     "node-fetch": "2.6.9",

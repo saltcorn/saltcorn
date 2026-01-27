@@ -7,15 +7,19 @@ const Plugin = require("@saltcorn/data/models/plugin");
 const { prep_test_db } = require("../../common");
 const { loadAndSaveNewPlugin } = require("@saltcorn/server/load_plugins");
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
+const envPaths = require("env-paths");
 
 const pluginsPath = path.join(__dirname, "test_plugin_packages");
+
+const rootFolder = envPaths("saltcorn", { suffix: "plugins" }).data;
+const pluginsFolder = path.join(rootFolder, "plugins_folder");
 
 const removePluginsDir = () => {
   if (fs.existsSync(pluginsPath))
     fs.rmSync(pluginsPath, { force: true, recursive: true });
 };
 
-const writeJestConfigIntoPluginDir = (location) => {
+const writeJestConfigIntoPluginDir = (location, overwrites) => {
   fs.writeFileSync(
     path.join(location, "jest.config.js"),
     `const sqliteDir = process.env.JEST_SC_SQLITE_DIR;
@@ -35,6 +39,12 @@ const config = {
     "@saltcorn/markup$": markupDir,
     "@saltcorn/markup/(.*)": markupDir + "/$1",
     "@saltcorn/admin-models/(.*)": adminModelsDir + "/$1",
+    ${Object.entries(overwrites || {})
+      .map(([pkgName, localPath]) => {
+        const pckJSON = require(path.join(localPath, "package.json"));
+        return `"${pkgName}": "${path.join(pluginsFolder, pckJSON.name, "unknownversion")}",`;
+      })
+      .join("\n    ")}
   },
   modulePaths: [modulePath],
 };
@@ -77,13 +87,20 @@ const spawnTest = async (installDir, env) => {
   return ret.status;
 };
 
-const installPlugin = async (plugin) => {
+const installPlugin = async (plugin, overwrites) => {
   await removeOldPlugin(plugin);
   removePluginsDir();
-  await loadAndSaveNewPlugin(plugin, false, false);
+  await loadAndSaveNewPlugin(
+    plugin,
+    false,
+    false,
+    (str) => str,
+    false,
+    overwrites
+  );
   const location = getPluginLocation(plugin.name);
   writeMockFilesIntoPluginDir(location);
-  writeJestConfigIntoPluginDir(location);
+  writeJestConfigIntoPluginDir(location, overwrites);
   return location;
 };
 
@@ -122,7 +139,7 @@ const getPluginLocation = (pluginName) => {
   );
 };
 
-const testLocalPlugin = async (dir, env, backupFile) => {
+const testLocalPlugin = async (dir, env, backupFile, overwrites) => {
   if (backupFile) {
     await prep_test_db(path.join(dir, "tests", backupFile));
   } else await require("@saltcorn/data/db/reset_schema")();
@@ -134,19 +151,32 @@ const testLocalPlugin = async (dir, env, backupFile) => {
     source: "local",
     location: path.resolve(dir),
   });
-  const installDir = await installPlugin(plugin);
+  const installDir = await installPlugin(plugin, overwrites);
   return await spawnTest(installDir, env);
 };
 
-const testReleasedPlugin = async (pluginName, env, backupFile) => {
+const testReleasedPlugin = async (pluginName, env, backupFile, overwrites) => {
   await require("@saltcorn/data/db/reset_schema")();
   const plugin = await Plugin.store_by_name(pluginName);
   delete plugin.id;
-  const installDir = await installPlugin(plugin);
+  const installDir = await installPlugin(plugin, overwrites);
   if (backupFile) {
     await prep_test_db(path.join(installDir, "tests", backupFile));
   }
   return await spawnTest(installDir, env);
+};
+
+const parseOverwriteDependencies = (overWrites) => {
+  const result = {};
+  if (overWrites) {
+    for (const flag of overWrites) {
+      const [pkgName, localPath] = flag.split("=");
+      if (pkgName && localPath) {
+        result[pkgName] = localPath;
+      }
+    }
+  }
+  return result;
 };
 
 /**
@@ -155,6 +185,7 @@ const testReleasedPlugin = async (pluginName, env, backupFile) => {
 class PluginTestCommand extends Command {
   async run() {
     const { flags } = await this.parse(PluginTestCommand);
+    const overwrites = parseOverwriteDependencies(flags.overwriteDependency);
     const dbname = flags.database ? flags.database : "saltcorn_test";
     let env = null;
     const db = require("@saltcorn/data/db");
@@ -173,14 +204,16 @@ class PluginTestCommand extends Command {
         jestStatus = await testLocalPlugin(
           flags.directory,
           env,
-          flags.backupFile
+          flags.backupFile,
+          overwrites
         );
       } else if (flags.name) {
         console.log(`Testing released plugin '${flags.name}'`);
         jestStatus = await testReleasedPlugin(
           flags.name,
           env,
-          flags.backupFile
+          flags.backupFile,
+          overwrites
         );
       }
     } catch (error) {
@@ -216,6 +249,12 @@ PluginTestCommand.flags = {
   database: Flags.string({
     string: "database",
     description: "Run on specified database. Default is 'saltcorn_test''",
+  }),
+  overwriteDependency: Flags.string({
+    description:
+      "Dependency to overwrite with a local plugin (can be used multiple times) " +
+      "in the form 'package-name=/path/to/local/plugin'",
+    multiple: true,
   }),
 };
 
