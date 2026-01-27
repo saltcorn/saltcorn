@@ -7,19 +7,17 @@ const Plugin = require("@saltcorn/data/models/plugin");
 const { prep_test_db } = require("../../common");
 const { loadAndSaveNewPlugin } = require("@saltcorn/server/load_plugins");
 const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
-const envPaths = require("env-paths");
 
 const pluginsPath = path.join(__dirname, "test_plugin_packages");
-
-const rootFolder = envPaths("saltcorn", { suffix: "plugins" }).data;
-const pluginsFolder = path.join(rootFolder, "plugins_folder");
 
 const removePluginsDir = () => {
   if (fs.existsSync(pluginsPath))
     fs.rmSync(pluginsPath, { force: true, recursive: true });
 };
 
-const writeJestConfigIntoPluginDir = (location, overwrites) => {
+const writeJestConfigIntoPluginDir = (location, plugin) => {
+  const state = getState();
+  const module = state.plugins[plugin.name];
   fs.writeFileSync(
     path.join(location, "jest.config.js"),
     `const sqliteDir = process.env.JEST_SC_SQLITE_DIR;
@@ -39,10 +37,15 @@ const config = {
     "@saltcorn/markup$": markupDir,
     "@saltcorn/markup/(.*)": markupDir + "/$1",
     "@saltcorn/admin-models/(.*)": adminModelsDir + "/$1",
-    ${Object.entries(overwrites || {})
-      .map(([pkgName, localPath]) => {
-        const pckJSON = require(path.join(localPath, "package.json"));
-        return `"${pkgName}": "${path.join(pluginsFolder, pckJSON.name, "unknownversion")}",`;
+    ${(module?.dependencies || [])
+      .map((dep) => {
+        let pluginLocation = state.plugin_locations[dep];
+        if (!pluginLocation) {
+          // try without org
+          const orgRemoved = dep.replace(/^@[^/]+\//, "");
+          pluginLocation = state.plugin_locations[orgRemoved];
+        }
+        return pluginLocation ? `"${dep}": "${pluginLocation}",` : "";
       })
       .join("\n    ")}
   },
@@ -87,7 +90,7 @@ const spawnTest = async (installDir, env) => {
   return ret.status;
 };
 
-const installPlugin = async (plugin, overwrites) => {
+const preparePlugin = async (plugin, overwrites) => {
   await removeOldPlugin(plugin);
   removePluginsDir();
   await loadAndSaveNewPlugin(
@@ -100,7 +103,7 @@ const installPlugin = async (plugin, overwrites) => {
   );
   const location = getPluginLocation(plugin.name);
   writeMockFilesIntoPluginDir(location);
-  writeJestConfigIntoPluginDir(location, overwrites);
+  writeJestConfigIntoPluginDir(location, plugin);
   return location;
 };
 
@@ -151,7 +154,7 @@ const testLocalPlugin = async (dir, env, backupFile, overwrites) => {
     source: "local",
     location: path.resolve(dir),
   });
-  const installDir = await installPlugin(plugin, overwrites);
+  const installDir = await preparePlugin(plugin, overwrites);
   return await spawnTest(installDir, env);
 };
 
@@ -159,7 +162,7 @@ const testReleasedPlugin = async (pluginName, env, backupFile, overwrites) => {
   await require("@saltcorn/data/db/reset_schema")();
   const plugin = await Plugin.store_by_name(pluginName);
   delete plugin.id;
-  const installDir = await installPlugin(plugin, overwrites);
+  const installDir = await preparePlugin(plugin, overwrites);
   if (backupFile) {
     await prep_test_db(path.join(installDir, "tests", backupFile));
   }
