@@ -2491,7 +2491,19 @@ const buildIosConfigBox = ({
 
   const provisioningFilesBox = () => {
     return (
-      div(h5({ class: "form-label mb-3" }, req.__("Provisioning profiles"))) +
+      div(
+        h5(
+          { class: "form-label mb-3" },
+          req.__("Provisioning profiles"),
+
+          a(
+            {
+              href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
+            },
+            i({ class: "fas fa-question-circle ps-1" })
+          )
+        )
+      ) +
       // Build without provisioning profile
       div(
         { class: "row pb-2 my-2" },
@@ -2530,13 +2542,7 @@ const buildIosConfigBox = ({
               for: "provisioningProfileInputId",
               class: "form-label fw-bold",
             },
-            req.__("Provisioning Profile"),
-            a(
-              {
-                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
-              },
-              i({ class: "fas fa-question-circle ps-1" })
-            )
+            req.__("Provisioning Profile")
           ),
           select(
             {
@@ -2570,13 +2576,7 @@ const buildIosConfigBox = ({
               for: "shareProvisioningProfileInputId",
               class: "form-label fw-bold",
             },
-            req.__("Share Extension Provisioning Profile"),
-            a(
-              {
-                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
-              },
-              i({ class: "fas fa-question-circle ps-1" })
-            )
+            req.__("Share Extension Provisioning Profile")
           ),
           select(
             {
@@ -2616,13 +2616,7 @@ const buildIosConfigBox = ({
               for: "apnSigningKeyInputId",
               class: "form-label fw-bold",
             },
-            req.__("APN Signing Key (.p8 file)"),
-            a(
-              {
-                href: "javascript:ajax_modal('/admin/help/APN Signing Key?')",
-              },
-              i({ class: "fas fa-question-circle ps-1" })
-            )
+            req.__("APN Signing Key (.p8 file)")
           ),
           select(
             {
@@ -2657,13 +2651,7 @@ const buildIosConfigBox = ({
               for: "apnSigningKeyIdInputId",
               class: "form-label fw-bold",
             },
-            req.__("APN Signing Key ID"),
-            a(
-              {
-                href: "javascript:ajax_modal('/admin/help/APN Signing Key Id?')",
-              },
-              i({ class: "fas fa-question-circle ps-1" })
-            )
+            req.__("APN Signing Key ID")
           ),
           input({
             type: "text",
@@ -2711,7 +2699,16 @@ const buildIosConfigBox = ({
         { class: "form-group row my-3" },
         div(
           { class: "col-sm-12 mt-2 fw-bold" },
-          h5({ class: "" }, req.__("Push Notifications"))
+          h5(
+            { class: "" },
+            req.__("Push Notifications"),
+            a(
+              {
+                href: "javascript:ajax_modal('/admin/help/APN Signing Key?')",
+              },
+              i({ class: "fas fa-question-circle ps-1" })
+            )
+          )
         )
       ),
       iosPushConfigBox()

@@ -1,1 +1,31 @@
-sdf
+To send push notifications via APNs, you need to create an **APNs Auth Key (.p8 file)** in your Apple Developer account.
+
+Follow these steps:
+
+### 1. Log in to the Apple Developer Portal
+1. Go to: https://developer.apple.com/account
+2. Sign in with your Apple Developer account.
+3. Navigate to **Certificates, Identifiers & Profiles**.
+
+### 2. Create a New Key
+1. In the left menu, click **Keys**.
+2. Click the **“+” (Add)** button to create a new key.
+3. Enter a name for the key (e.g., `MyApp APNs Key`).
+4. Enable **Apple Push Notifications service (APNs)**.
+5. Click **Continue**.
+6. Click **Register**.
+
+### 3. Download the .p8 File
+1. Click **Download** to download the key file.
+2. The file will be downloaded as a `.p8` file.
+3. Store this file in a secure location — it can only be downloaded once.
+
+### 4. Configure the builder menu
+1. Upload your **.p8** file to the **`/mobile-app-configurations`** directory.
+2. Select the file in the **APN Signing Key (.p8 file)** input field.
+3. In the Apple Developer Portal under **Keys**, copy the **APNs Key ID** and paste it into the corresponding input field.
+
+---
+
+⚠️ **Important:**  
+The `.p8` file can only be downloaded once. If you lose it, you must revoke the key and create a new one.
