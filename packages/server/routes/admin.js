@@ -2674,7 +2674,7 @@ const buildIosConfigBox = ({
   return div(
     { class: "my-3" },
     p(
-      { class: "h3 ps-3 mt-3" },
+      { class: "h3 ps-1 mt-3" },
       button(
         {
           class: "btn btn-outline-secondary p-1 me-2",
@@ -2803,8 +2803,13 @@ router.get(
                 id: "buildMobileAppForm",
               },
               p(
-                "This menu allows you to build a native Android or iOS app for your Saltcorn web application. " +
-                  "For Android, installing the capacitor-builder Docker image is recommended. To build for iOS, an Apple machine running Xcode is required."
+                "This menu allows building Android or iOS apps for your web app. " +
+                  "On Android, installing the capacitor-builder Docker image is recommended, for iOS, an Apple machine is required. "
+              ),
+              p(
+                "To select files (like an Android keystore or iOS provisioning profile), " +
+                  "upload them to the 'mobile-app-configurations' folder (create it if it not yet exists). " +
+                  "Results are shown once on completion, and the builder adds a result folder to the 'mobile_app' directory."
               ),
               fieldset(
                 input({
@@ -2822,7 +2827,7 @@ router.get(
                 div(
                   { class: "container ps-2" },
                   p(
-                    { class: "h3 ps-3" },
+                    { class: "h3 ps-1" },
                     button(
                       {
                         class: "btn btn-outline-secondary p-1 me-2",
@@ -3777,7 +3782,7 @@ router.get(
                   div(
                     { class: "mt-3 mb-3" },
                     p(
-                      { class: "h3 ps-3" },
+                      { class: "h3 ps-1" },
                       button(
                         {
                           class: "btn btn-outline-secondary p-1 me-2",
