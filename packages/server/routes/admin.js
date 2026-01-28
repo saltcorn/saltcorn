@@ -2619,7 +2619,7 @@ const buildIosConfigBox = ({
             req.__("APN Signing Key (.p8 file)"),
             a(
               {
-                href: "javascript:ajax_modal('/admin/help/Firebase Configurations?')",
+                href: "javascript:ajax_modal('/admin/help/APN Signing Key?')",
               },
               i({ class: "fas fa-question-circle ps-1" })
             )
@@ -2660,7 +2660,7 @@ const buildIosConfigBox = ({
             req.__("APN Signing Key ID"),
             a(
               {
-                href: "javascript:ajax_modal('/admin/help/Firebase Configurations?')",
+                href: "javascript:ajax_modal('/admin/help/APN Signing Key Id?')",
               },
               i({ class: "fas fa-question-circle ps-1" })
             )
