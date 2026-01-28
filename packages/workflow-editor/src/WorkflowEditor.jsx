@@ -15,7 +15,7 @@ const handleStyle = {
   width: "10px",
   height: "10px",
   borderRadius: "50%",
-  border: "1px solid #5f5f5f",
+  border: "2px solid #3f3f3f",
   background: "#fff",
 };
 
@@ -408,6 +408,7 @@ const buildGraph = (
 
   const addNodes = [];
   steps.forEach((step) => {
+    console.log({ step });
     const hasNextTargets = extractNextStepNames(step.next_step).length > 0;
     if (hasNextTargets || loopBackLinks[step.name]) return;
     const basePos = nodePositions[String(step.id)] || { x: 0, y: 0 };
@@ -494,10 +495,18 @@ const WorkflowEditor = ({ data }) => {
   const [savingPositions, setSavingPositions] = useState(false);
   const modalRef = useRef(null);
 
-  const strings = data.strings || {};
+  const rfInstanceRef = useRef(null);
 
+  console.log({ rfInstanceRef: rfInstanceRef.current });
+
+  const onInit = useCallback((instance) => {
+    rfInstanceRef.current = instance;
+  }, []);
+
+  const strings = data.strings || {};
   const refreshGraph = useCallback(
     (nextSteps) => {
+      console.log({ nextSteps });
       const {
         nodes: n,
         edges: e,
@@ -526,7 +535,70 @@ const WorkflowEditor = ({ data }) => {
     refreshGraph(steps);
   }, [steps, refreshGraph]);
 
+  console.log({ nodes });
+
+  useEffect(() => {
+    if (!rfInstanceRef.current) return;
+
+    const currentNodes = rfInstanceRef.current.getNodes();
+
+    // Ensure all step nodes have dimensions
+    const stepNodes = currentNodes.filter(
+      (n) => n.type === "step" && n.width && n.height
+    );
+    if (!stepNodes.length) return;
+
+    console.log("Current nodes", stepNodes);
+    const stepById = new Map(stepNodes.map((n) => [n.id, n]));
+    const updates = [];
+
+    currentNodes.forEach((node) => {
+      if (!node.id.startsWith("add-")) return;
+      // Respect user-dragged add nodes
+      if (addPositions?.[node.id]) return;
+
+      console.log({addPositions})
+
+      const stepNode = stepById.get(node.id.replace("add-", ""));
+      console.log({ stepNode });
+      if (!stepNode) return;
+
+      const ADD_GAP = 24;
+
+      const nextX = stepNode.position.x + stepNode.width + ADD_GAP;
+
+      const nextY =
+        stepNode.position.y + stepNode.height / 2 - (node.height || 24) / 2;
+
+      const nextPosition = { x: nextX, y: nextY };
+
+      // Only update if the position actually changed to avoid infinite loops
+      if (
+        node.position &&
+        node.position.x === nextPosition.x &&
+        node.position.y === nextPosition.y
+      ) {
+        return;
+      }
+
+      updates.push({
+        id: node.id,
+        position: nextPosition,
+      });
+    });
+
+    if (!updates.length) return;
+
+    setNodes((nds) =>
+      nds.map((n) => {
+        const u = updates.find((x) => x.id === n.id);
+        return u ? { ...n, position: u.position } : n;
+      })
+    );
+  }, [nodes, addPositions, setNodes]);
+
   const fetchJson = useCallback(async (url, options = {}) => {
+    console.log({ url, options }, "Need toi BE CHECKED");
     const baseHeaders = {
       "x-requested-with": "XMLHttpRequest",
     };
@@ -548,6 +620,7 @@ const WorkflowEditor = ({ data }) => {
     setError("");
     try {
       const fresh = await fetchJson(data.urls.data);
+      console.log({ fresh });
       setSteps(fresh.steps || []);
 
       // If a step was just added via an adder node, link it as next_step
@@ -591,12 +664,17 @@ const WorkflowEditor = ({ data }) => {
         setSteps((prev) =>
           prev.map((s) => {
             const hit = positions.find((p) => String(p.id) === String(s.id));
+            console.log({ hit });
             return hit
               ? {
                   ...s,
                   configuration: {
                     ...(s.configuration || {}),
                     workflow_position: { x: hit.x, y: hit.y },
+                  },
+                  size: {
+                    width: nodes.find((n) => n.id === String(s.id))?.width,
+                    height: nodes.find((n) => n.id === String(s.id))?.height,
                   },
                 }
               : s;
@@ -926,6 +1004,7 @@ const WorkflowEditor = ({ data }) => {
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
           nodeTypes={nodeTypes}
+          onInit={onInit}
           fitView
           proOptions={{ hideAttribution: true }}
           defaultEdgeOptions={{ animated: true }}

@@ -696,7 +696,6 @@ router.post(
   "/workflow/connect/:trigger_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
-    console.log("POST /workflow/connect/:trigger_id");
     const { trigger_id } = req.params;
     const { step_id, next_step, initial_step, loop_body_step } = req.body || {};
     const stepId = step_id ? +step_id : null;
