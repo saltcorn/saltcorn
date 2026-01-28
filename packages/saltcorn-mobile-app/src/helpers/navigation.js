@@ -1,4 +1,4 @@
-/*global saltcorn*/
+/*global saltcorn, Capacitor*/
 import i18next from "i18next";
 
 import { router } from "../routing/index";
@@ -80,7 +80,11 @@ export async function goBack(steps = 1, exitOnFirstPage = false) {
     routingHistory.length === 0 ||
     (exitOnFirstPage && routingHistory.length === 1)
   ) {
-    navigator.app.exitApp();
+    if (Capacitor.getPlatform() === "android") {
+      navigator.app.exitApp();
+    } else if (Capacitor.getPlatform() === "ios") {
+      console.log("iOS app exit not supported");
+    }
   } else if (routingHistory.length <= steps) {
     try {
       if (iframe?.contentWindow?.showLoadSpinner)
@@ -262,9 +266,27 @@ export async function gotoEntryView() {
   }
 }
 
+const iosSwipeBackHandler = () => {
+  const iframe = document.getElementById("content-iframe");
+  let touchStartX = 0;
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.addEventListener("pointerdown", (e) => {
+    touchStartX = e.clientX;
+  });
+
+  doc.addEventListener("pointerup", (e) => {
+    const deltaX = e.clientX - touchStartX;
+    if (touchStartX < 20 && deltaX > 100) {
+      saltcorn.mobileApp.navigation.goBack(1, true);
+    }
+  });
+};
+
 export async function replaceIframe(content, isFile = false) {
   const iframe = document.getElementById("content-iframe");
   iframe.srcdoc = content;
+  if (Capacitor.getPlatform() === "ios")
+    iframe.addEventListener("load", iosSwipeBackHandler);
   if (isFile) {
     iframe.setAttribute("is-html-file", true);
     await new Promise((resolve, reject) => {

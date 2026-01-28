@@ -51,7 +51,7 @@ You have to permit using the Certificate's private key; otherwise, the build blo
 4. Choose any name for the profile, click **Generate**, and download the file.
 5. Double-click the downloaded file to install the Provisioning Profile on your local Mac.
 
-Finally, upload the Provisioning Profile into the 'provisioning_files' directory of your Saltcorn installation, so you can select it here.
+Finally, upload the Provisioning Profile into the **mobile-app-configurations** or **provisioning_files** directory of your Saltcorn installation, so you can select it here.
 ### 4 Upload to App Store Connect
 When you run a build with a valid provisioning profile, the builder generates an .ipa file. 
 You can download this file and upload it to [App Store Connect](https://appstoreconnect.apple.com/apps) 

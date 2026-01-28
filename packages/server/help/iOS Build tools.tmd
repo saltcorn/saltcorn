@@ -1,0 +1,18 @@
+To build iOS apps, your server must run on **macOS** with the **xcodebuild** command-line tool and the **CocoaPods** dependency manager installed.  
+The **Build tools** section shows whether they are installed and which version is available.
+
+### xcodebuild
+The **xcodebuild** command-line tool is required to compile your app and export `.ipa` files. It is automatically installed when you install the **Xcode** IDE from the App Store.
+
+### CocoaPods
+The **CocoaPods** dependency manager is required to manage and install Capacitor plugins on iOS. To install it, run:
+
+`
+sudo gem install cocoapods
+`
+
+or with Homebrew:
+
+`
+brew install cocoapods
+`

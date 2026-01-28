@@ -658,39 +658,9 @@ class State {
 
   async refresh_push_helper() {
     try {
-      const pushConfig: any = {
-        icon: this.getConfig("push_notification_icon"),
-        badge: this.getConfig("push_notification_badge"),
-        vapidPublicKey: this.getConfig("vapid_public_key"),
-        vapidPrivateKey: this.getConfig("vapid_private_key"),
-        vapidEmail: this.getConfig("vapid_email"),
-        firebase: {
-          jsonPath: this.getConfig("firebase_json_key"),
-          jsonContent: null,
-        },
-        notificationSubs: this.getConfig("push_notification_subscriptions", {}),
-        syncSubs: this.getConfig("push_sync_subscriptions", {}),
-      };
-
-      if (!this.pushHelper) {
-        const fireBaseFile =
-          typeof pushConfig.firebase.jsonPath === "string" &&
-          pushConfig.firebase.jsonPath.length > 0
-            ? await File.findOne(pushConfig.firebase.jsonPath)
-            : null;
-        if (fireBaseFile && !fireBaseFile.isDirectory)
-          pushConfig.firebase.jsonContent = require(fireBaseFile?.absolutePath);
-        this.pushHelper = new PushMessageHelper(pushConfig);
-      } else {
-        if (pushConfig.firebase.jsonPath !== this.pushHelper.firebaseJsonPath) {
-          const fireBaseFile = await File.findOne(pushConfig.firebase.jsonPath);
-          if (fireBaseFile && !fireBaseFile.isDirectory)
-            pushConfig.firebase.jsonContent = require(
-              fireBaseFile?.absolutePath
-            );
-        }
-        this.pushHelper.updateConfig(pushConfig);
-      }
+      if (!this.pushHelper)
+        this.pushHelper = await PushMessageHelper.createInstance();
+      else await this.pushHelper.refreshInstance();
     } catch (error) {
       console.error("Error initializing push helper", error);
     }

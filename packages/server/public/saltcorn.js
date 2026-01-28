@@ -1177,44 +1177,41 @@ function pull_capacitor_builder() {
   });
 }
 
-function check_xcodebuild() {
-  const handleVersion = (version) => {
-    const tokens = version.split(".");
-    const majVers = parseInt(tokens[0]);
-    const marker = $("#versionMarkerId");
-    if (majVers >= 11) {
-      marker.removeClass("text-danger");
-      marker.addClass("text-success");
-      marker.removeClass("fa-times");
-      marker.addClass("fa-check");
-    } else {
-      marker.removeClass("text-success");
-      marker.addClass("text-danger");
-      marker.removeClass("fa-check");
-      marker.addClass("fa-times");
-    }
-  };
-  $.ajax("/admin/mobile-app/check-xcodebuild", {
+function check_ios_build_deps() {
+  $.ajax("/admin/mobile-app/check-ios-build-tools", {
     type: "GET",
     success: function (res) {
-      if (res.installed) {
-        $("#xcodebuildStatusId").html(
-          `<span>
-            installed<i class="ps-2 fas fa-check text-success"></i>
-          </span>
-          `
-        );
-        $("#xcodebuildVersionBoxId").removeClass("d-none");
-        $("#xcodebuildVersionId").html(` ${res.version}`);
-        handleVersion(res.version || "0");
-      } else {
-        $("#xcodebuildStatusId").html(
-          `<span>
-            not available<i class="ps-2 fas fa-times text-danger"></i>
-          </span>
-          `
-        );
-        $("#xcodebuildVersionBoxId").addClass("d-none");
+      const { xcodebuild, cocoapods, isMac } = res;
+      if (isMac) {
+        // update xcodebuild status
+        if (xcodebuild.installed) {
+          $("#xcodebuildStatusId").html(
+            `${xcodebuild.version}<i class="p-2 fas ${
+              xcodebuild.fullfilled
+                ? "fa-check text-success"
+                : "fa-times text-danger"
+            }"></i>`
+          );
+        } else {
+          $("#xcodebuildStatusId").html(
+            `not available<i class="p-2 fas fa-times text-danger"></i>`
+          );
+        }
+
+        // update cocoapods status
+        if (cocoapods.installed) {
+          $("#cocoapodsStatusId").html(
+            `${cocoapods.version}<i class="p-2 fas ${
+              cocoapods.fullfilled
+                ? "fa-check text-success"
+                : "fa-times text-danger"
+            }"></i>`
+          );
+        } else {
+          $("#cocoapodsStatusId").html(
+            `not available<i class="p-2 fas fa-times text-danger"></i>`
+          );
+        }
       }
     },
   });

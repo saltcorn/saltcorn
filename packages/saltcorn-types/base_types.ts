@@ -609,6 +609,7 @@ export type MobileConfig = {
   showContinueAsPublicUser?: boolean;
   allowOfflineMode?: boolean;
   syncOnReconnect?: boolean;
+  syncOnAppResume?: boolean;
   pushSync?: boolean;
   syncInterval?: number;
   allowShareTo?: boolean;
