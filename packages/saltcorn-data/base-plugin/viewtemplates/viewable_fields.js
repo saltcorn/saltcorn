@@ -2036,6 +2036,7 @@ const getForm = async (
                 ref: ref.replace("?", ""),
                 target,
                 refTable: refField.reftable_name,
+                refTablePK: Table.findOne(refField.reftable_name).pk_name,
               };
             })
             .filter(Boolean);

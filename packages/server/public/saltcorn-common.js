@@ -186,6 +186,7 @@ function add_extra_state(base_url, extra_state_fml, row, outerState = {}) {
 const apply_showif_fetching_urls = new Set();
 
 const global_fetch_options_cache = {};
+const global_calc_field_cache = {};
 
 function apply_showif() {
   const isNode = getIsNode();
@@ -560,10 +561,13 @@ function apply_showif() {
       activate_onchange_coldef();
       return;
     }
+    const srcurl = e.attr("data-source-url");
+    const cachekey = srcurl + JSON.stringify(rec);
 
     const cb = {
       success: (data) => {
         e.html(data);
+        global_calc_field_cache[cachekey] = data;
         const cacheNow = e.prop("data-source-url-cache") || {};
         e.prop("data-source-url-cache", {
           ...cacheNow,
@@ -574,6 +578,8 @@ function apply_showif() {
       },
       error: (err) => {
         console.error(err);
+        global_calc_field_cache[cachekey] = null;
+
         const cacheNow = e.prop("data-source-url-cache") || {};
         e.prop("data-source-url-cache", {
           ...cacheNow,
@@ -582,9 +588,16 @@ function apply_showif() {
         e.html("");
       },
     };
-    if (isNode) ajax_post_json(e.attr("data-source-url"), rec, cb);
+    if (global_calc_field_cache[cachekey] === "fetching") {
+      //do nothing
+    } else if (global_calc_field_cache[cachekey])
+      cb.success(global_calc_field_cache[cachekey]);
     else {
-      local_post_json(e.attr("data-source-url"), rec, cb);
+      global_calc_field_cache[cachekey] = "fetching";
+      if (isNode) ajax_post_json(srcurl, rec, cb);
+      else {
+        local_post_json(srcurl, rec, cb);
+      }
     }
   });
   const locale =
@@ -658,6 +671,8 @@ function get_form_data(e_in, rndid) {
   return data;
 }
 
+let global_join_vals_cache = {};
+
 function get_form_record(e_in, select_labels) {
   const rec = {};
 
@@ -702,47 +717,45 @@ function get_form_record(e_in, select_labels) {
     typeof e_in !== "string" && $(e_in).attr("data-show-if-joinfields");
   if (joinFieldsStr) {
     const joinFields = JSON.parse(decodeURIComponent(joinFieldsStr));
+    for (const { ref, target, refTable, refTablePK } of joinFields) {
+      const pk = refTablePK || "id";
+      const keyval = rec[ref]?.[pk] || rec[ref]; // TODO pk name
 
-    const joinVals = $(e_in).prop("data-join-values");
-    const kvals = $(e_in).prop("data-join-key-values") || {};
-    let differentKeys = false;
-    for (const { ref } of joinFields) {
-      if (rec[ref] != kvals[ref]) differentKeys = true;
-    }
-    if (!joinVals || differentKeys) {
-      $(e_in).prop("data-join-values", {});
-      const keyVals = {};
-      for (const { ref, target, refTable } of joinFields) {
-        if (!rec[ref]) continue;
-        keyVals[ref] = rec[ref];
-        $.ajax(`/api/${refTable}?id=${rec[ref]}`, {
-          success: (val) => {
-            const jvs = $(e_in).prop("data-join-values") || {};
+      if (!keyval) continue;
 
-            jvs[ref] = val.success[0];
-            $(e_in).prop("data-join-values", jvs);
-            apply_showif();
-          },
-          error: checkNetworkError,
-        });
+      const url = `/api/${refTable}?${pk}=${keyval}`;
+      if (global_join_vals_cache[url] === "fetching") continue;
+      if (global_join_vals_cache[url]) {
+        rec[ref] = global_join_vals_cache[url];
+        continue;
       }
-      $(e_in).prop("data-join-key-values", keyVals);
-    } else if (joinFieldsStr) {
-      Object.assign(rec, joinVals);
+      global_join_vals_cache[url] = "fetching";
+      $.ajax(url, {
+        success: (val) => {
+          global_join_vals_cache[url] = val.success[0];
+          setTimeout(() => {
+            global_join_vals_cache = {};
+          }, 5000);
+          apply_showif();
+        },
+        error: checkNetworkError,
+      });
     }
   }
   return rec;
 }
 function showIfFormulaInputs(e, fml) {
   const rec = get_form_record(e);
-  if (window._sc_loglevel > 4)
-    console.log(`show if fml ${fml} form_record`, rec);
+
   try {
-    return new Function(
+    const result = new Function(
       "row",
       `{${Object.keys(rec).join(",")}}`,
       "return " + fml
     )(rec, rec);
+    if (window._sc_loglevel > 4)
+      console.log(`show if fml ${fml} form_record`, result, rec);
+    return result;
   } catch (e) {
     throw new Error(
       `Error in evaluating showIf formula ${fml} with values ${JSON.stringify(
@@ -2270,7 +2283,8 @@ async function common_done(res, viewnameOrElem0, isWeb = true) {
       ? viewnameOrElem
       : $(viewnameOrElem)
           .closest("[data-sc-embed-viewname]")
-          .attr("data-sc-embed-viewname");
+          .attr("data-sc-embed-viewname") ||
+        $(viewnameOrElem).closest("form[data-viewname]").attr("data-viewname");
   if (window._sc_loglevel > 4)
     console.log("ajax result directives", viewname, res);
 
