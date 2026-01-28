@@ -276,6 +276,7 @@ router.get(
                     placeholder: "Search",
                     name: "q",
                     value: q,
+                    autofocus: true,
                     "aria-label": "Search",
                     "aria-describedby": "button-search-submit",
                   }),
