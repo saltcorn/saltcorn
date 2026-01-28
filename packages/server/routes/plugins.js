@@ -572,6 +572,7 @@ const plugin_store_html = (items, req) => {
             search_bar("q", req.query.q || "", {
               placeHolder: req.__("Search for..."),
               stateField: "q",
+              autofocus: true,
             })
           ),
           div(store_actions_dropdown(req))

@@ -393,6 +393,10 @@ const escapeSingleQuotes = (value) => value.replace(/'/g, "''");
 const initOfflineStoreCfg = async () => {
   const rootState = getState();
   try {
+    if (!Plugin.local_store_entries_exists) {
+      await rootState.setConfig("pre_installed_module_infos", []);
+      return;
+    }
     const entries = await Plugin.read_local_store_entries();
     await rootState.setConfig("pre_installed_module_infos", entries);
   } catch (e) {

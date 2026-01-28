@@ -14,6 +14,7 @@ import type {
   PluginPack,
 } from "@saltcorn/types/model-abstracts/abstract_plugin";
 import fs from "fs/promises";
+import { existsSync } from "fs";
 import path from "path";
 import utils from "../utils";
 const { stringToJSON, isStale, getFetchProxyOptions, pluginsFolderRoot } =
@@ -167,12 +168,15 @@ class Plugin {
     return stored || [];
   }
 
+  static get local_store_entries_filepath(): string {
+    return path.join(pluginsFolderRoot, "store_entries.json");
+  }
+  static get local_store_entries_exists(): boolean {
+    return existsSync(Plugin.local_store_entries_filepath);
+  }
   static async read_local_store_entries(): Promise<any> {
     return JSON.parse(
-      await fs.readFile(
-        path.join(pluginsFolderRoot, "store_entries.json"),
-        "utf8"
-      )
+      await fs.readFile(Plugin.local_store_entries_filepath, "utf8")
     );
   }
   /**
