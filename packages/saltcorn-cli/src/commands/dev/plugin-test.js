@@ -169,14 +169,22 @@ const testReleasedPlugin = async (pluginName, env, backupFile, overwrites) => {
   return await spawnTest(installDir, env);
 };
 
-const parseOverwriteDependencies = (overWrites) => {
+/**
+ *
+ * @param {string[]} overwrites paths to local plugins
+ * @returns an object mapping module names to paths
+ */
+const prepOverwritesCfg = (overwrites) => {
   const result = {};
-  if (overWrites) {
-    for (const flag of overWrites) {
-      const [pkgName, localPath] = flag.split("=");
-      if (pkgName && localPath) {
-        result[pkgName] = localPath;
-      }
+  if (overwrites) {
+    for (const flag of overwrites) {
+      const pkgpath = path.join(flag, "package.json");
+      if (!fs.existsSync(pkgpath))
+        throw new Error(
+          `Overwrite dependency package.json not found in ${flag}`
+        );
+      const pkg = require(pkgpath);
+      result[pkg.name] = flag;
     }
   }
   return result;
@@ -188,7 +196,7 @@ const parseOverwriteDependencies = (overWrites) => {
 class PluginTestCommand extends Command {
   async run() {
     const { flags } = await this.parse(PluginTestCommand);
-    const overwrites = parseOverwriteDependencies(flags.overwriteDependency);
+    const overwrites = prepOverwritesCfg(flags.overwriteDependency);
     const dbname = flags.database ? flags.database : "saltcorn_test";
     let env = null;
     const db = require("@saltcorn/data/db");
@@ -254,9 +262,10 @@ PluginTestCommand.flags = {
     description: "Run on specified database. Default is 'saltcorn_test''",
   }),
   overwriteDependency: Flags.string({
+    char: "o",
     description:
-      "Dependency to overwrite with a local plugin (can be used multiple times) " +
-      "in the form 'package-name=/path/to/local/plugin'",
+      "Dependency to overwrite with a local plugin (can be used multiple times). " +
+      "Please specify the path to the local plugin, the module name will be taken from there.",
     multiple: true,
   }),
 };
