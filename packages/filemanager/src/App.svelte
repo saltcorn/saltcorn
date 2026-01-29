@@ -323,6 +323,17 @@
     e.preventDefault();
     if (e.dataTransfer?.files?.length > 0) uploadFiles(e.dataTransfer.files);
   }
+
+  const editableExtensions = [
+    'html', 'css', 'js', 'jsx',
+    'ts', 'tsx', 'sql', 'py',
+    'bash', 'sh', 'txt', 'json',
+    'md', 'yml'
+  ];
+
+  $: extension = lastSelected?.location?.split('.').pop()?.toLowerCase();
+  $: isEditable = editableExtensions.includes(extension);
+
 </script>
 
 <main>
@@ -514,6 +525,10 @@
           <a href={`/files/serve/${lastSelected.location}`}>Link</a>
           &nbsp;|&nbsp;
           <a href={`/files/download/${lastSelected.location}`}>Download</a>
+          {#if isEditable}
+          &nbsp;|&nbsp;
+          <a href={`/files/edit/${lastSelected.location}`}>Edit</a>
+        {/if}
         </div>
         {#if selectedList.length > 1}
           <strong

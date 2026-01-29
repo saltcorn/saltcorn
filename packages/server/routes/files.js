@@ -8,6 +8,7 @@
 const Router = require("express-promise-router");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
+const Form = require("@saltcorn/data/models/form");
 const { getState } = require("@saltcorn/data/db/state");
 const s3storage = require("../s3storage");
 const resizer = require("resize-with-sharp-or-jimp");
@@ -851,6 +852,99 @@ router.post(
         req.flash("success", req.__("Files settings updated"));
         res.redirect("/files/settings");
       } else res.json({ success: "ok" });
+    }
+  })
+);
+
+/**
+ * GET load the file editor
+ */
+router.get(
+  "/edit/*serve_path",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const user_id = req.user && req.user.id;
+    const serve_path = path.join(...req.params.serve_path);
+    const file = await File.findOne(serve_path);
+    if (
+      file &&
+      (role <= file.min_role_read || (user_id && user_id === file.user_id))
+    ) {
+      try {
+        const fileContent = await fs.promises.readFile(file.location, "utf8");
+        const form = new Form({
+          action: `/files/edit/${encodeURIComponent(serve_path)}`,
+          onChange: "saveAndContinue(this)",
+          submitLabel: req.__("Done"),
+          fields: [
+            {
+              name: "value",
+              input_type: "code",
+              class: ["validate-statements", "enlarge-in-card"],
+              attributes: {
+                mode: `${file.mime_super}/${file.mime_sub}`,
+              },
+            },
+          ],
+        });
+
+        form.values = { value: fileContent };
+        res.sendWrap(req.__("Edit file"), {
+          type: "card",
+          contents: renderForm(form, req.csrfToken()),
+        });
+      } catch (err) {
+        getState().log(3, `Error reading file ${serve_path}: ${err.message}`);
+        res
+          .status(500)
+          .sendWrap(
+            req.__("Error"),
+            h1(req.__("Error reading file")) + div(err.message)
+          );
+      }
+    } else {
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
+    }
+  })
+);
+
+/**
+ * POST edit a file from the editor
+ */
+router.post(
+  "/edit/*serve_path",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const user_id = req.user && req.user.id;
+    const serve_path = path.join(...req.params.serve_path);
+    const file = await File.findOne(serve_path);
+    if (
+      file &&
+      (role <= file.min_role_read || (user_id && user_id === file.user_id))
+    ) {
+      try {
+        const newContent = req.body.value;
+        await fs.promises.writeFile(file.location, newContent, "utf8");
+        if (req.xhr) res.json({ success: true });
+        else res.redirect(`/files`);
+      } catch (err) {
+        getState().log(3, `Error writing file ${serve_path}: ${err.message}`);
+        if (req.xhr) res.json({ error: err.message });
+        else {
+          req.flash("error", err.message);
+          res.redirect(`/files/edit/${encodeURIComponent(serve_path)}`);
+        }
+      }
+    } else {
+      if (req.xhr) res.json({ error: "File not found" });
+      else {
+        req.flash("error", req.__("File not found"));
+        res.redirect("/files");
+      }
     }
   })
 );
