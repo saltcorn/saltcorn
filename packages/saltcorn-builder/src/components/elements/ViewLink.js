@@ -20,6 +20,8 @@ import {
   HelpTopicLink,
   initialRelation,
   buildLayers,
+  reactSelectStyles,
+  builderSelectClassName,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
@@ -245,6 +247,7 @@ const ViewLinkSettings = () => {
     value: name,
   }));
   const selectedView = viewOptions.find((v) => v.value === use_view_name);
+
   return (
     <div>
       <table className="w-100">
@@ -255,14 +258,13 @@ const ViewLinkSettings = () => {
               {options.inJestTestingMode ? null : (
                 <Select
                   options={viewOptions}
-                  className="react-select viewlink-selector"
+                  className={builderSelectClassName("react-select viewlink-selector")}
+                  classNamePrefix="builder-select"
                   value={selectedView}
                   onChange={set_view_name}
                   onBlur={set_view_name}
                   menuPortalTarget={document.body}
-                  styles={{
-                    menuPortal: (base) => ({ ...base, zIndex: 19999 }),
-                  }}
+                  styles={reactSelectStyles()}
                 ></Select>
               )}
             </td>

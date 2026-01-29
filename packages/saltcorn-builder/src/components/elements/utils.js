@@ -30,6 +30,97 @@ import { RelationType } from "@saltcorn/common-code";
 import Select from "react-select";
 import { MultiLineCodeEditor, SingleLineEditor } from "./MonacoEditor";
 
+const isDarkMode = () => {
+  if (typeof window !== "undefined" && window._sc_lightmode === "dark")
+    return true;
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  )
+    return true;
+  return false;
+};
+
+/** ClassName for builder Select when dark (for CSS targeting). */
+export const builderSelectClassName = (base = "") =>
+  [base, isDarkMode() ? "builder-select-dark" : ""].filter(Boolean).join(" ");
+
+/**
+ * Shared react-select styles that respect dark mode.
+ */
+export const reactSelectStyles = (overrides = {}) => {
+  const dark = isDarkMode();
+  const base = {
+    menuPortal: (baseStyles) => ({ ...baseStyles, zIndex: 19999 }),
+  };
+  if (!dark) return { ...base, ...overrides };
+  return {
+    ...base,
+    control: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#212529",
+      borderColor: "#495057",
+      color: "#f8f9fa",
+    }),
+    valueContainer: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "transparent",
+    }),
+    singleValue: (baseStyles) => ({
+      ...baseStyles,
+      color: "#f8f9fa",
+    }),
+    input: (baseStyles) => ({
+      ...baseStyles,
+      color: "#f8f9fa",
+    }),
+    placeholder: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    menu: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#212529",
+      border: "1px solid #495057",
+    }),
+    menuList: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#212529",
+    }),
+    option: (baseStyles, state) => ({
+      ...baseStyles,
+      backgroundColor: state.isFocused
+        ? "#343a40"
+        : state.isSelected
+          ? "#0d6efd"
+          : "transparent",
+      color: state.isSelected ? "#fff" : "#f8f9fa",
+    }),
+    dropdownIndicator: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    clearIndicator: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    indicatorSeparator: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#495057",
+    }),
+    groupHeading: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    menuNotice: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    ...overrides,
+  };
+};
+
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
   return <i className={`${icon} ${className || ""}`}></i>;
@@ -1098,7 +1189,8 @@ const ConfigField = ({
         return (
           <Select
             options={seloptions}
-            className="react-select selectized-field"
+            className={builderSelectClassName("react-select selectized-field")}
+            classNamePrefix="builder-select"
             value={seloptions.find((so) => value === so.value)}
             onChange={(e) =>
               (e.name && myOnChange(e.name)) ||
@@ -1112,7 +1204,7 @@ const ConfigField = ({
               (typeof e === "string" && myOnChange(e))
             }
             menuPortalTarget={document.body}
-            styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+            styles={reactSelectStyles()}
           ></Select>
         );
       } else

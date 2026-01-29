@@ -112,6 +112,14 @@ export = /**
       domReady(`enable_error_catcher();
       window.set_state_fields = ()=>{};
       window.set_state_field = ()=>{};
-      window.pjax_to = ()=>{};`)
+      window.pjax_to = ()=>{};
+      if (typeof _sc_lightmode !== "undefined" && _sc_lightmode === "dark") {
+        document.body.setAttribute("data-bs-theme", "dark");
+        document.body.classList.add("builder-dark");
+      } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        // Fallback: if Saltcorn user preference is light but browser/OS is dark, use dark mode
+        document.body.setAttribute("data-bs-theme", "dark");
+        document.body.classList.add("builder-dark");
+      }`)
     )
   );

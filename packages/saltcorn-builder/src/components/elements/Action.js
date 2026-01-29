@@ -19,6 +19,8 @@ import {
   setAPropGen,
   buildOptions,
   ConfigField,
+  reactSelectStyles,
+  builderSelectClassName,
 } from "./utils";
 import { ntimes } from "./Columns";
 import { ArrayManager } from "./ArrayManager";
@@ -229,6 +231,7 @@ const ActionSettings = () => {
     step_action_names?.[use_setting_action_n] || "",
     JSON.stringify(configuration?.steps?.[use_setting_action_n]),
   ]);
+  
 
   return (
     <div>
@@ -242,14 +245,13 @@ const ActionSettings = () => {
               {options.inJestTestingMode ? null : (
                 <Select
                   options={actionOptions}
-                  className="react-select action-selector"
+                  className={builderSelectClassName("react-select action-selector")}
+                  classNamePrefix="builder-select"
                   value={selectedAction}
                   defaultValue={selectedAction}
                   onChange={setAction}
                   menuPortalTarget={document.body}
-                  styles={{
-                    menuPortal: (base) => ({ ...base, zIndex: 19999 }),
-                  }}
+                  styles={reactSelectStyles()}
                 ></Select>
               )}
             </td>
@@ -392,18 +394,17 @@ const ActionSettings = () => {
             ]}
           ></ArrayManager>
 
-          <label>Action</label>
+          <label>Actionaa</label>
           {options.inJestTestingMode ? null : (
             <Select
               options={multiStepActionOptions}
-              className="react-select multistep-action-selector"
+              className={builderSelectClassName("react-select multistep-action-selector")}
+              classNamePrefix="builder-select"
               value={selectedMultiStepAction}
               defaultValue={selectedMultiStepAction}
               onChange={setMultistepAction}
               menuPortalTarget={document.body}
-              styles={{
-                menuPortal: (base) => ({ ...base, zIndex: 19999 }),
-              }}
+              styles={reactSelectStyles()}
             ></Select>
           )}
           {options.mode !== "page" ? (

@@ -525,3 +525,82 @@ div.componets-and-library-accordion {
 .toolbox-card:nth-child(2) {
   margin-bottom: 0px;
 }
+
+/* react-select dark mode: control scoped by .builder-select-dark on Select wrapper,
+   menu scoped by body.builder-dark (menu is portaled to body). All !important to override Emotion. */
+.builder-select-dark .builder-select__control,
+.builder-select-dark .builder-select__control:hover {
+  background-color: #212529 !important;
+  border-color: #495057 !important;
+  color: #f8f9fa !important;
+}
+
+.builder-select-dark .builder-select__value-container {
+  background-color: transparent !important;
+}
+
+.builder-select-dark .builder-select__single-value,
+.builder-select-dark .builder-select__input-container {
+  color: #f8f9fa !important;
+}
+
+.builder-select-dark .builder-select__input-container input {
+  color: #f8f9fa !important;
+}
+
+.builder-select-dark .builder-select__placeholder {
+  color: #adb5bd !important;
+}
+
+.builder-select-dark .builder-select__dropdown-indicator,
+.builder-select-dark .builder-select__clear-indicator {
+  color: #adb5bd !important;
+}
+
+.builder-select-dark .builder-select__indicator-separator {
+  background-color: #495057 !important;
+}
+
+/* Dropdown menu (portaled to body) – needs body.builder-dark */
+body.builder-dark .builder-select__menu,
+[data-bs-theme="dark"] .builder-select__menu {
+  background-color: #212529 !important;
+  border: 1px solid #495057 !important;
+}
+
+body.builder-dark .builder-select__menu-list,
+[data-bs-theme="dark"] .builder-select__menu-list {
+  background-color: #212529 !important;
+}
+
+body.builder-dark .builder-select__option,
+[data-bs-theme="dark"] .builder-select__option {
+  background-color: transparent !important;
+  color: #f8f9fa !important;
+}
+
+body.builder-dark .builder-select__option--is-focused,
+[data-bs-theme="dark"] .builder-select__option--is-focused {
+  background-color: #343a40 !important;
+}
+
+body.builder-dark .builder-select__option--is-selected,
+[data-bs-theme="dark"] .builder-select__option--is-selected {
+  background-color: #c78e14 !important;
+  color: #fff !important;
+}
+
+body.builder-dark .builder-select__option--is-selected.builder-select__option--is-focused,
+[data-bs-theme="dark"] .builder-select__option--is-selected.builder-select__option--is-focused {
+  background-color: #0b5ed7 !important;
+}
+
+body.builder-dark .builder-select__group-heading,
+[data-bs-theme="dark"] .builder-select__group-heading {
+  color: #adb5bd !important;
+}
+
+body.builder-dark .builder-select__menu-notice,
+[data-bs-theme="dark"] .builder-select__menu-notice {
+  color: #adb5bd !important;
+}
