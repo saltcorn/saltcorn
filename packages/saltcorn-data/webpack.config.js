@@ -22,6 +22,8 @@ const npmMocks = {
   "live-plugin-manager": join(mocksDir, "npm", "live-plugin-manager"),
   "firebase-admin": join(mocksDir, "npm", "firebase-admin"),
   "dockerode": join(mocksDir, "npm", "dockerode"),
+  "xml2js": join(mocksDir, "npm", "xml2js"),
+  "apns2": join(mocksDir, "npm", "apns2"),
 };
 
 const saltcornMocks = {
