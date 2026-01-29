@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState, useLayoutEffect } from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -18,6 +18,24 @@ const handleStyle = {
   border: "2px solid #3f3f3f",
   background: "#fff",
 };
+
+const DEFAULT_NODE_WIDTH = 220;
+const DEFAULT_NODE_HEIGHT = 120;
+const H_GAP = 60;
+const V_GAP = 60;
+const ADD_NODE_SIZE = 32;
+const ADD_GAP = 24;
+
+const normalizeSize = (size) => {
+  if (!size) return null;
+  const width = Number(size.width);
+  const height = Number(size.height);
+  if (!Number.isFinite(width) || !Number.isFinite(height)) return null;
+  return { width, height };
+};
+
+const getWorkflowSize = (step) =>
+  normalizeSize(step?.configuration?.workflow_size);
 
 const StartNode = ({ data }) => (
   <div className="wf-start-node">
@@ -179,9 +197,13 @@ const buildGraph = (
 ) => {
   const idByName = {};
   const nameById = {};
+  const sizeById = {};
   steps.forEach((s) => {
     idByName[s.name] = String(s.id);
     nameById[String(s.id)] = s.name;
+    const size = getWorkflowSize(s);
+    sizeById[String(s.id)] =
+      size || { width: DEFAULT_NODE_WIDTH, height: DEFAULT_NODE_HEIGHT };
   });
 
   const allStepNames = steps.map((s) => s.name).filter(Boolean);
@@ -261,12 +283,24 @@ const buildGraph = (
   });
   [...groupByDepth.values()].forEach((arr) => arr.sort());
 
-  const X_STEP = 260;
-  const Y_STEP = 160;
   const positions = {};
-  [...groupByDepth.entries()].forEach(([d, ids]) => {
-    ids.forEach((id, idx) => {
-      positions[id] = { x: d * X_STEP, y: idx * Y_STEP };
+  const depthEntries = [...groupByDepth.entries()].sort(
+    ([a], [b]) => a - b
+  );
+  const depthX = {};
+  let xCursor = 0;
+  depthEntries.forEach(([d, ids]) => {
+    const colWidth = Math.max(
+      ...ids.map((id) => sizeById[id]?.width || DEFAULT_NODE_WIDTH)
+    );
+    depthX[d] = xCursor;
+    xCursor += colWidth + H_GAP;
+  });
+  depthEntries.forEach(([d, ids]) => {
+    let yCursor = 0;
+    ids.forEach((id) => {
+      positions[id] = { x: depthX[d], y: yCursor };
+      yCursor += (sizeById[id]?.height || DEFAULT_NODE_HEIGHT) + V_GAP;
     });
   });
 
@@ -290,12 +324,23 @@ const buildGraph = (
         cursor = byName.get(cursor.next_step);
       }
 
-      body.forEach((s, idx) => {
+      const loopSize = sizeById[String(loopStep.id)] || {
+        width: DEFAULT_NODE_WIDTH,
+        height: DEFAULT_NODE_HEIGHT,
+      };
+      let yCursor = loopPos.y + loopSize.height + V_GAP;
+
+      body.forEach((s) => {
         if (s.configuration?.workflow_position) return; // respect saved positions
+        const bodySize = sizeById[String(s.id)] || {
+          width: DEFAULT_NODE_WIDTH,
+          height: DEFAULT_NODE_HEIGHT,
+        };
         positionOverrides[String(s.id)] = {
           x: loopPos.x,
-          y: loopPos.y + (idx + 1) * Y_STEP,
+          y: yCursor,
         };
+        yCursor += bodySize.height + V_GAP;
       });
     });
 
@@ -315,29 +360,32 @@ const buildGraph = (
           : { x: -180, y: 40 }),
       draggable: true,
     },
-    ...steps.map((step, ix) => ({
-      id: String(step.id),
-      type: "step",
-      position: step.configuration?.workflow_position ||
-        positionOverrides[String(step.id)] ||
-        positions[String(step.id)] || {
-          x: (ix % 3) * 260,
-          y: Math.floor(ix / 3) * 180 + 10,
-        },
-      data: {
-        ...step,
+    ...steps.map((step, ix) => {
+      return {
         id: String(step.id),
-        loop_body_initial_step: step.configuration?.loop_body_initial_step,
-        isLoop: step.action_name === "ForLoop",
-        actionSummary:
-          step.summary ||
-          (actionExplainers[step.action_name]
-            ? [actionExplainers[step.action_name]]
-            : []),
-        actionDescription: actionExplainers[step.action_name],
-        strings,
-      },
-    })),
+        type: "step",
+        position:
+          step.configuration?.workflow_position ||
+          positionOverrides[String(step.id)] ||
+          positions[String(step.id)] || {
+            x: (ix % 3) * 260,
+            y: Math.floor(ix / 3) * 180 + 10,
+          },
+        data: {
+          ...step,
+          id: String(step.id),
+          loop_body_initial_step: step.configuration?.loop_body_initial_step,
+          isLoop: step.action_name === "ForLoop",
+          actionSummary:
+            step.summary ||
+            (actionExplainers[step.action_name]
+              ? [actionExplainers[step.action_name]]
+              : []),
+          actionDescription: actionExplainers[step.action_name],
+          strings,
+        },
+      };
+    }),
   ];
 
   nodes.forEach((n) => {
@@ -408,15 +456,23 @@ const buildGraph = (
 
   const addNodes = [];
   steps.forEach((step) => {
-    console.log({ step });
     const hasNextTargets = extractNextStepNames(step.next_step).length > 0;
     if (hasNextTargets || loopBackLinks[step.name]) return;
     const basePos = nodePositions[String(step.id)] || { x: 0, y: 0 };
+    const baseSize = sizeById[String(step.id)] || {
+      width: DEFAULT_NODE_WIDTH,
+      height: DEFAULT_NODE_HEIGHT,
+    };
     const addId = `add-${step.id}`;
     addNodes.push({
       id: addId,
       type: "add",
-      position: addPositions?.[addId] || { x: basePos.x + 220, y: basePos.y },
+      position:
+        addPositions?.[addId] ||
+        {
+          x: basePos.x + baseSize.width + ADD_GAP,
+          y: basePos.y + baseSize.height / 2 - ADD_NODE_SIZE / 2,
+        },
       data: { strings, afterStepId: String(step.id) },
       draggable: true,
       selectable: false,
@@ -493,11 +549,10 @@ const WorkflowEditor = ({ data }) => {
   const [modal, setModal] = useState(null);
   const [savingModal, setSavingModal] = useState(false);
   const [savingPositions, setSavingPositions] = useState(false);
+  const [sizeSyncing, setSizeSyncing] = useState(false);
   const modalRef = useRef(null);
 
   const rfInstanceRef = useRef(null);
-
-  console.log({ rfInstanceRef: rfInstanceRef.current });
 
   const onInit = useCallback((instance) => {
     rfInstanceRef.current = instance;
@@ -506,7 +561,6 @@ const WorkflowEditor = ({ data }) => {
   const strings = data.strings || {};
   const refreshGraph = useCallback(
     (nextSteps) => {
-      console.log({ nextSteps });
       const {
         nodes: n,
         edges: e,
@@ -535,8 +589,6 @@ const WorkflowEditor = ({ data }) => {
     refreshGraph(steps);
   }, [steps, refreshGraph]);
 
-  console.log({ nodes });
-
   useEffect(() => {
     if (!rfInstanceRef.current) return;
 
@@ -548,7 +600,6 @@ const WorkflowEditor = ({ data }) => {
     );
     if (!stepNodes.length) return;
 
-    console.log("Current nodes", stepNodes);
     const stepById = new Map(stepNodes.map((n) => [n.id, n]));
     const updates = [];
 
@@ -557,10 +608,7 @@ const WorkflowEditor = ({ data }) => {
       // Respect user-dragged add nodes
       if (addPositions?.[node.id]) return;
 
-      console.log({addPositions})
-
       const stepNode = stepById.get(node.id.replace("add-", ""));
-      console.log({ stepNode });
       if (!stepNode) return;
 
       const ADD_GAP = 24;
@@ -597,8 +645,29 @@ const WorkflowEditor = ({ data }) => {
     );
   }, [nodes, addPositions, setNodes]);
 
+  useLayoutEffect(() => {
+    if (sizeSyncing) return;
+    if (!rfInstanceRef.current) return;
+    const currentNodes = rfInstanceRef.current.getNodes();
+    const stepNodes = currentNodes.filter(
+      (n) => n.type === "step" && n.width && n.height
+    );
+    if (!stepNodes.length) return;
+    const updates = [];
+    stepNodes.forEach((node) => {
+      const step = steps.find((s) => String(s.id) === String(node.id));
+      if (!step) return;
+      const stored = getWorkflowSize(step);
+      const width = Math.round(node.width);
+      const height = Math.round(node.height);
+      if (!stored || stored.width !== width || stored.height !== height) {
+        updates.push({ id: node.id, width, height });
+      }
+    });
+    if (updates.length) persistSizes(updates);
+  }, [nodes, persistSizes, sizeSyncing, steps]);
+
   const fetchJson = useCallback(async (url, options = {}) => {
-    console.log({ url, options }, "Need toi BE CHECKED");
     const baseHeaders = {
       "x-requested-with": "XMLHttpRequest",
     };
@@ -620,7 +689,6 @@ const WorkflowEditor = ({ data }) => {
     setError("");
     try {
       const fresh = await fetchJson(data.urls.data);
-      console.log({ fresh });
       setSteps(fresh.steps || []);
 
       // If a step was just added via an adder node, link it as next_step
@@ -664,17 +732,12 @@ const WorkflowEditor = ({ data }) => {
         setSteps((prev) =>
           prev.map((s) => {
             const hit = positions.find((p) => String(p.id) === String(s.id));
-            console.log({ hit });
             return hit
               ? {
                   ...s,
                   configuration: {
                     ...(s.configuration || {}),
                     workflow_position: { x: hit.x, y: hit.y },
-                  },
-                  size: {
-                    width: nodes.find((n) => n.id === String(s.id))?.width,
-                    height: nodes.find((n) => n.id === String(s.id))?.height,
                   },
                 }
               : s;
@@ -687,6 +750,41 @@ const WorkflowEditor = ({ data }) => {
       }
     },
     [data.urls.positions, fetchJson, setSteps]
+  );
+
+  const persistSizes = useCallback(
+    async (sizes = []) => {
+      if (!sizes.length) return;
+      try {
+        setSizeSyncing(true);
+        await fetchJson(data.urls.sizes, {
+          method: "POST",
+          body: JSON.stringify({ sizes }),
+          headers: {
+            "X-CSRF-Token": data.csrfToken || "",
+          },
+        });
+        setSteps((prev) =>
+          prev.map((s) => {
+            const hit = sizes.find((p) => String(p.id) === String(s.id));
+            return hit
+              ? {
+                  ...s,
+                  configuration: {
+                    ...(s.configuration || {}),
+                    workflow_size: { width: hit.width, height: hit.height },
+                  },
+                }
+              : s;
+          })
+        );
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setSizeSyncing(false);
+      }
+    },
+    [data.csrfToken, data.urls.sizes, fetchJson, setSteps]
   );
 
   const openStepForm = useCallback(
