@@ -345,19 +345,21 @@ const buildGraph = (
     });
 
   const nodePositions = {};
+  const startNodePosition =
+    startPosition ||
+    (initial
+      ? {
+          x: positions[String(initial.id)]?.x - 180 || -180,
+          y: positions[String(initial.id)]?.y || 40,
+        }
+      : { x: -180, y: 40 });
+
   const nodes = [
     {
       id: "start",
       type: "start",
       data: { strings },
-      position:
-        startPosition ||
-        (initial
-          ? {
-              x: positions[String(initial.id)]?.x - 180 || -180,
-              y: positions[String(initial.id)]?.y || 40,
-            }
-          : { x: -180, y: 40 }),
+      position: startNodePosition,
       draggable: true,
     },
     ...steps.map((step, ix) => {
@@ -401,6 +403,18 @@ const buildGraph = (
       type: "smoothstep",
       animated: true,
     });
+  else {
+    const addId = "add-start";
+    edges.push({
+      id: "e-start-adder",
+      source: "start",
+      target: addId,
+      type: "bezier",
+      animated: false,
+      deletable: false,
+      style: { strokeDasharray: "4 2", stroke: "#0d6efd" },
+    });
+  }
 
   steps.forEach((step) => {
     if (step.next_step) {
@@ -425,8 +439,8 @@ const buildGraph = (
           id: `loop-${step.id}-${loopTarget}`,
           source: String(step.id),
           target: loopId || String(step.id),
-          // type: "default",
-          type: "smoothstep",
+          type: "default",
+          // type: "smoothstep",
           style: { stroke: "#f59f00", strokeDasharray: "6 4" },
           label: strings.loopBody,
           markerEnd: "arrowclosed",
@@ -443,8 +457,8 @@ const buildGraph = (
           id: `loopback-${step.id}-${forLoopName}`,
           source: String(step.id),
           target: loopId,
-          // type: "default",
-          type: "smoothstep",
+          type: "default",
+          // type: "smoothstep",
           style: { stroke: "#f59f00", strokeDasharray: "6 4" },
           data: { loop: true, loopBack: true },
           markerEnd: "arrowclosed",
@@ -455,6 +469,23 @@ const buildGraph = (
   });
 
   const addNodes = [];
+  if (!steps.length) {
+    const addId = "add-start";
+    addNodes.push({
+      id: addId,
+      type: "add",
+      position:
+        addPositions?.[addId] ||
+        {
+          x: startNodePosition.x + 160,
+          y: startNodePosition.y,
+        },
+      data: { strings, afterStepId: "start" },
+      draggable: true,
+      selectable: false,
+      deletable: false,
+    });
+  }
   steps.forEach((step) => {
     const hasNextTargets = extractNextStepNames(step.next_step).length > 0;
     if (hasNextTargets || loopBackLinks[step.name]) return;
@@ -1003,6 +1034,10 @@ const WorkflowEditor = ({ data }) => {
 
   const onAddAfter = useCallback(
     (id) => {
+      if (id === "start") {
+        openStepForm({ initial_step: true });
+        return;
+      }
       pendingAddRef.current = {
         afterStepId: id,
         prevIds: new Set(steps.map((s) => String(s.id))),
