@@ -526,13 +526,74 @@ div.componets-and-library-accordion {
   margin-bottom: 0px;
 }
 
+/* Builder left column & Layers panel dark theme */
+.builder-dark-panel .toolbox-card,
+.builder-dark-panel .componets-and-library-accordion .card {
+  background-color: #212529 !important;
+  border-color: #495057 !important;
+  color: #f8f9fa !important;
+}
+
+.builder-dark-panel .toolbox-card .card-header,
+.builder-dark-panel .componets-and-library-accordion .card-header,
+.builder-dark-panel .accordion .card-header {
+  background-color: #343a40 !important;
+  border-color: #495057 !important;
+  color: #f8f9fa !important;
+}
+
+.builder-dark-panel .toolbox-card .card-body,
+.builder-dark-panel .componets-and-library-accordion .card-body {
+  background-color: #212529 !important;
+  color: #f8f9fa !important;
+}
+
+.builder-dark-panel .builder-layers,
+.builder-layers-dark {
+  background-color: #212529 !important;
+  color: #f8f9fa !important;
+}
+
+.builder-dark-panel .builder-layers *,
+.builder-layers-dark * {
+  color: inherit;
+}
+
+.builder-dark-panel .builder-layers a,
+.builder-layers-dark a {
+  color: #6ea8fe !important;
+}
+
+.builder-dark-panel .builder-layers .collapse-item,
+.builder-dark-panel .accordion-button,
+.builder-dark-panel .accordion-button:not(.collapsed) {
+  background-color: #212529 !important;
+  color: #f8f9fa !important;
+  border-color: #495057 !important;
+}
+
+.builder-dark-panel .accordion-button::after {
+  filter: invert(1);
+}
+
+.builder-dark-panel .accordion-body {
+  background-color: #212529 !important;
+  color: #f8f9fa !important;
+  border-color: #495057 !important;
+}
+
+.builder-dark-panel .builder-expand-toggle-left,
+.builder-dark-panel .builder-expand-toggle-right {
+  color: #adb5bd !important;
+}
+
 /* react-select dark mode: control scoped by .builder-select-dark on Select wrapper,
    menu scoped by body.builder-dark (menu is portaled to body). All !important to override Emotion. */
 .builder-select-dark .builder-select__control,
 .builder-select-dark .builder-select__control:hover {
   background-color: #212529 !important;
   border-color: #495057 !important;
-  color: #f8f9fa !important;
+  color: #1e416423 !important;
 }
 
 .builder-select-dark .builder-select__value-container {
