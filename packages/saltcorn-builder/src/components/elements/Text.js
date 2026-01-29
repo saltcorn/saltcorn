@@ -21,7 +21,7 @@ import {
 } from "./utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
-import CKEditor from "ckeditor4-react";
+import { CKEditor } from "ckeditor4-react";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import fas from "@fortawesome/free-solid-svg-icons";
