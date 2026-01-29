@@ -165,6 +165,7 @@ const getWorkflowEditorData = async (req, trigger, stepsIn) => {
       data: `/actions/workflow/data/${trigger.id}`,
       connect: `/actions/workflow/connect/${trigger.id}`,
       positions: `/actions/workflow/positions/${trigger.id}`,
+      sizes: `/actions/workflow/sizes/${trigger.id}`,
       deleteStep: `/actions/delete-step`,
       configure: `/actions/configure/${trigger.id}`,
       runs: `/actions/runs/?trigger=${trigger.id}`,
@@ -783,6 +784,49 @@ router.post(
         },
       });
     }
+    Trigger.emitEvent(
+      "AppChange",
+      trigger,
+      req.user
+        ? {
+            user_id: req.user.id,
+            role_id: req.user.role_id,
+            entity_type: "Trigger",
+            entity_name: trigger?.name || trigger_id,
+          }
+        : undefined
+    );
+    res.json({ success: "ok" });
+  })
+);
+
+router.post(
+  "/workflow/sizes/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req, res) => {
+    const trigger_id = +req.params.trigger_id;
+    const { sizes } = req.body || {};
+    if (!Array.isArray(sizes))
+      return res.status(400).json({ error: "sizes array required" });
+
+    const numeric = (v) => (typeof v === "string" ? +v : v);
+
+    for (const size of sizes) {
+      if (!size || !size.id) continue;
+      const width = numeric(size.width);
+      const height = numeric(size.height);
+      if (!Number.isFinite(width) || !Number.isFinite(height)) continue;
+      const step = await WorkflowStep.findOne({ id: +size.id, trigger_id });
+      if (!step) continue;
+      await step.update({
+        configuration: {
+          ...(step.configuration || {}),
+          workflow_size: { width, height },
+        },
+      });
+    }
+
+    const trigger = await Trigger.findOne({ id: trigger_id });
     Trigger.emitEvent(
       "AppChange",
       trigger,
@@ -1620,6 +1664,8 @@ router.post(
       _after_step_for,
       ...configuration
     } = form.values;
+    const DEFAULT_NODE_WIDTH = 220;
+    const H_GAP = 60;
     const existingStep = wf_step_id
       ? await WorkflowStep.findOne({ id: wf_step_id, trigger_id })
       : null;
@@ -1632,6 +1678,31 @@ router.post(
     Object.entries(configuration).forEach(([k, v]) => {
       if (v === null) delete configuration[k];
     });
+    // set position if not set and after_step is given
+    if (
+      (!wf_step_id || wf_step_id === "undefined") &&
+      _after_step &&
+      _after_step !== "undefined" &&
+      !configuration.workflow_position
+    ) {
+      const afterStep = await WorkflowStep.findOne({
+        id: _after_step,
+        trigger_id,
+      });
+      const afterPos = afterStep?.configuration?.workflow_position;
+      if (afterPos) {
+        const size = afterStep?.configuration?.workflow_size || {};
+        const width = Number(size.width);
+        const useWidth = Number.isFinite(width) ? width : DEFAULT_NODE_WIDTH;
+        const x = Number(afterPos.x);
+        const y = Number(afterPos.y);
+        if (Number.isFinite(x) && Number.isFinite(y))
+          configuration.workflow_position = {
+            x: x + useWidth + H_GAP,
+            y,
+          };
+      }
+    }
     const step = {
       name: wf_step_name,
       action_name: wf_action_name,
