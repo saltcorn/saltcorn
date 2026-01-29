@@ -21,7 +21,7 @@ const handleStyle = {
 
 const DEFAULT_NODE_WIDTH = 220;
 const DEFAULT_NODE_HEIGHT = 120;
-const H_GAP = 60;
+const H_GAP = 80;
 const V_GAP = 60;
 const ADD_NODE_SIZE = 32;
 const ADD_GAP = 24;
@@ -543,6 +543,8 @@ const WorkflowEditor = ({ data }) => {
   );
   const [addPositions, setAddPositions] = useState({});
   const pendingAddRef = useRef(null);
+  const positionDebounceRef = useRef(null);
+  const pendingPositionRef = useRef(new Map());
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -751,6 +753,31 @@ const WorkflowEditor = ({ data }) => {
     },
     [data.urls.positions, fetchJson, setSteps]
   );
+
+  const schedulePersistPositions = useCallback(
+    (positions = []) => {
+      if (!positions.length) return;
+      positions.forEach((p) =>
+        pendingPositionRef.current.set(String(p.id), p)
+      );
+      if (positionDebounceRef.current)
+        clearTimeout(positionDebounceRef.current);
+      positionDebounceRef.current = setTimeout(() => {
+        const toSave = Array.from(pendingPositionRef.current.values());
+        pendingPositionRef.current.clear();
+        positionDebounceRef.current = null;
+        persistPositions(toSave);
+      }, 300);
+    },
+    [persistPositions]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (positionDebounceRef.current)
+        clearTimeout(positionDebounceRef.current);
+    };
+  }, []);
 
   const persistSizes = useCallback(
     async (sizes = []) => {
@@ -967,11 +994,11 @@ const WorkflowEditor = ({ data }) => {
         const stepPositions = finishedPositions.filter(
           (p) => /^[0-9]+$/.test(p.id) || p.id === "start"
         );
-        if (stepPositions.length) persistPositions(stepPositions);
+        if (stepPositions.length) schedulePersistPositions(stepPositions);
       }
       onNodesChange(changes);
     },
-    [onNodesChange, persistPositions, setAddPositions, setStartPosition]
+    [onNodesChange, schedulePersistPositions, setAddPositions, setStartPosition]
   );
 
   const onAddAfter = useCallback(
