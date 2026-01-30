@@ -1,7 +1,7 @@
 const React = require("react");
 const ReactDOM = require("react-dom");
-const WorkflowEditor = require("./WorkflowEditor").default ||
-  require("./WorkflowEditor");
+const WorkflowEditor =
+  require("./WorkflowEditor").default || require("./WorkflowEditor");
 let createRoot;
 try {
   ({ createRoot } = require("react-dom/client"));
@@ -21,10 +21,10 @@ function renderWorkflowEditor(id, encoded) {
   }
   if (createRoot) {
     const root = createRoot(mount);
-    root.render(<WorkflowEditor data={data} />);
+    root.render(React.createElement(WorkflowEditor, { data }));
     return;
   }
-  ReactDOM.render(<WorkflowEditor data={data} />, mount);
+  ReactDOM.render(React.createElement(WorkflowEditor, { data }), mount);
 }
 
 module.exports = { renderWorkflowEditor };
