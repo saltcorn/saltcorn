@@ -27,6 +27,7 @@ const relevantPackages = [
   "server",
   "sqlite",
   "filemanager",
+  "workflow-editor",
 ];
 
 /**
@@ -91,7 +92,7 @@ const watchCfg = {
     for (const excludePattern of excludePatterns) {
       if (excludePattern.test(file)) return skip;
     }
-    return /(\.js|\.ts)$/.test(file);
+    return /(\.js|\.jsx|\.ts)$/.test(file);
   },
 };
 
