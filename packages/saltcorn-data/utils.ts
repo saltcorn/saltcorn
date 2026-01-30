@@ -492,13 +492,21 @@ const interpolate = (
         wasm: false,
         timeout: 200,
       });
+
+      const go_interp = (s: string): string =>
+        s.replace(/\{\{([!=]?)([\s\S]+?)\}\}/g, renderToken);
+
       const renderToken = (_match: string, bang: string, code: string) => {
         const val = vm.run(`(${code.trim()})`);
         const strVal =
           val === null || typeof val === "undefined" ? "" : String(val);
-        return bang === "!" ? strVal : escapeHtml(strVal);
+        return bang === "="
+          ? go_interp(escapeHtml(strVal))
+          : bang === "!"
+            ? strVal
+            : escapeHtml(strVal);
       };
-      return s.replace(/\{\{(!?)([\s\S]+?)\}\}/g, renderToken);
+      return go_interp(s);
     } else return s;
   } catch (e: any) {
     e.message = `In evaluating the interpolation ${s}${
