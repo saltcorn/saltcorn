@@ -2345,24 +2345,375 @@ const checkXcodebuild = () => {
         resolve({ installed: false });
       } else {
         const tokens = stdout.split(" ");
+        const version = tokens.length > 1 ? tokens[1] : undefined;
         resolve({
           installed: true,
-          version: tokens.length > 1 ? tokens[1] : undefined,
+          version: version,
+          fullfilled: version ? versFullfilled(version, 11) : false,
         });
       }
     });
   });
 };
 
-const versionMarker = (version) => {
-  const tokens = version.split(".");
-  const majVers = parseInt(tokens[0]);
-  return i({
-    id: "versionMarkerId",
-    class: `fas ${
-      majVers >= 11 ? "fa-check text-success" : "fa-times text-danger"
-    }`,
+const checkCocoaPods = () => {
+  return new Promise((resolve) => {
+    exec("pod --version", (error, stdout, stderr) => {
+      if (error) {
+        resolve({ installed: false });
+      } else {
+        const version = stdout?.length > 1 ? stdout : undefined;
+        resolve({
+          installed: true,
+          version: version,
+          fullfilled: version ? versFullfilled(version, 1) : false,
+        });
+      }
+    });
   });
+};
+
+const versFullfilled = (version, minMajVersion) => {
+  const vTokens = version.split(".");
+  const majVers = parseInt(vTokens[0]);
+  return majVers >= minMajVersion;
+};
+
+/**
+ * iOS Config Box
+ * @param {any} param0
+ */
+const buildIosConfigBox = ({
+  req,
+  isMac,
+  xcodebuildAvailable,
+  xcodebuildVersion,
+  cocoaPodsAvailable,
+  cocoaPodsVersion,
+  provisioningFiles,
+  allAppCfgFiles,
+  builderSettings,
+}) => {
+  const xCodeFullfilled = versFullfilled(xcodebuildVersion || "0.0.0", 11);
+  const cocoaPodsFullfilled = versFullfilled(cocoaPodsVersion || "0.0.0", 1);
+  const keyCfg = getState().getConfig("apn_signing_key", "");
+  const apnSigningKey = keyCfg ? path.basename(keyCfg) : null;
+
+  // xcodebuild and cocoapods infos
+  const toolsInfoBox = () => {
+    return div(
+      { class: "row pb-3 pt-2" },
+      div(
+        h5(
+          { class: "form-label mb-3" },
+          req.__("Build tools") +
+            a(
+              {
+                href: "javascript:ajax_modal('/admin/help/iOS Build tools?')",
+              },
+              i({ class: "fas fa-question-circle ps-1" })
+            )
+        )
+      ),
+      div(
+        { class: "col-sm-12" },
+        isMac
+          ? div(
+              div(
+                {
+                  id: "iosBuilderStatusId",
+                  class: "row",
+                },
+                // xcodebuild status
+                div(
+                  { class: "col-sm-4" },
+                  div({ class: "fw-bold form-label label" }, "xcodebuild"),
+                  span(
+                    { id: "xcodebuildStatusId" },
+                    xcodebuildAvailable
+                      ? xcodebuildVersion
+                      : req.__("not available"),
+                    i({
+                      class: `fas p-2 ${
+                        xCodeFullfilled
+                          ? "fa-check text-success"
+                          : "fa-times text-danger"
+                      }`,
+                    })
+                  )
+                ),
+                // refresh button
+                div(
+                  { class: "col-sm-4" },
+                  span(
+                    {
+                      role: "button",
+                      onClick: "check_ios_build_deps()",
+                    },
+                    span({ class: "ps-3" }, req.__("refresh")),
+                    i({ class: "ps-2 fas fa-undo" })
+                  )
+                )
+              ),
+              div(
+                {
+                  class: "row",
+                },
+                // cocoapods status
+                div(
+                  { class: "col-sm-4" },
+                  div({ class: "fw-bold form-label label" }, "cocoapods"),
+                  span(
+                    { id: "cocoapodsStatusId" },
+                    cocoaPodsAvailable
+                      ? span(cocoaPodsVersion)
+                      : span(req.__("not available")),
+                    i({
+                      class: `fas p-2 ${
+                        cocoaPodsFullfilled
+                          ? "fa-check text-success"
+                          : "fa-times text-danger"
+                      }`,
+                    })
+                  )
+                )
+              )
+            )
+          : span(
+              req.__("Not a Mac OS system"),
+              i({
+                class: "ps-2 fas",
+              })
+            )
+      )
+    );
+  };
+
+  const provisioningFilesBox = () => {
+    return (
+      div(
+        h5(
+          { class: "form-label mb-3" },
+          req.__("Provisioning profiles"),
+
+          a(
+            {
+              href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
+            },
+            i({ class: "fas fa-question-circle ps-1" })
+          )
+        )
+      ) +
+      // Build without provisioning profile
+      div(
+        { class: "row pb-2 my-2" },
+        div(
+          { class: "col-sm-10" },
+          input({
+            type: "checkbox",
+            id: "buildWithoutProfileId",
+            class: "form-check-input me-2 mb-0 ",
+            name: "noProvisioningProfile",
+            checked: builderSettings.noProvisioningProfile === "on",
+          }),
+          label(
+            {
+              for: "buildWithoutProfileId",
+              class: "form-label fw-bold mb-0",
+            },
+            req.__("No Provisioning Profile")
+          ),
+          div(),
+          i(
+            req.__(
+              "Only create the project directory without building an .ipa file. " +
+                "This can be useful if you want to open the project in Xcode and run it in the Simulator."
+            )
+          )
+        )
+      ) +
+      // App Provisioning profile
+      div(
+        { class: "row pb-3" },
+        div(
+          { class: "col-sm-10" },
+          label(
+            {
+              for: "provisioningProfileInputId",
+              class: "form-label fw-bold",
+            },
+            req.__("Provisioning Profile")
+          ),
+          select(
+            {
+              class: "form-select",
+              name: "provisioningProfile",
+              id: "provisioningProfileInputId",
+            },
+            [
+              option({ value: "" }, ""),
+              ...provisioningFiles.map((file) =>
+                option(
+                  {
+                    value: file.location,
+                    selected:
+                      builderSettings.provisioningProfile === file.location,
+                  },
+                  file.filename
+                )
+              ),
+            ].join("")
+          )
+        )
+      ) +
+      // Share Extension provisioning profile
+      div(
+        { class: "row pb-3" },
+        div(
+          { class: "col-sm-10" },
+          label(
+            {
+              for: "shareProvisioningProfileInputId",
+              class: "form-label fw-bold",
+            },
+            req.__("Share Extension Provisioning Profile")
+          ),
+          select(
+            {
+              class: "form-select",
+              name: "shareProvisioningProfile",
+              id: "shareProvisioningProfileInputId",
+            },
+            [
+              option({ value: "" }, ""),
+              ...provisioningFiles.map((file) =>
+                option(
+                  {
+                    value: file.location,
+                    selected:
+                      builderSettings.shareProvisioningProfile ===
+                      file.location,
+                  },
+                  file.filename
+                )
+              ),
+            ].join("")
+          )
+        )
+      )
+    );
+  };
+
+  const iosPushConfigBox = () => {
+    return (
+      // APN Signing Key
+      div(
+        { class: "row pb-3" },
+        div(
+          { class: "col-sm-10" },
+          label(
+            {
+              for: "apnSigningKeyInputId",
+              class: "form-label fw-bold",
+            },
+            req.__("APN Signing Key (.p8 file)")
+          ),
+          select(
+            {
+              class: "form-select",
+              name: "apnSigningKey",
+              id: "apnSigningKeyInputId",
+            },
+            [
+              option({ value: "" }, ""),
+              ...allAppCfgFiles.map((file) =>
+                option(
+                  {
+                    value: file.path_to_serve,
+                    selected: apnSigningKey === file.filename,
+                  },
+                  file.filename
+                )
+              ),
+            ].join("")
+          ),
+          div(),
+          i(req.__("This is a private key file"))
+        )
+      ) +
+      // APN Signing Key ID
+      div(
+        { class: "row pb-3" },
+        div(
+          { class: "col-sm-10" },
+          label(
+            {
+              for: "apnSigningKeyIdInputId",
+              class: "form-label fw-bold",
+            },
+            req.__("APN Signing Key ID")
+          ),
+          input({
+            type: "text",
+            class: "form-control",
+            name: "apnSigningKeyId",
+            id: "apnSigningKeyIdInputId",
+            value: builderSettings.apnSigningKeyId || "",
+          }),
+          div(),
+          i(
+            req.__(
+              "The 10-character Key ID obtained from Apple developer account"
+            )
+          )
+        )
+      )
+    );
+  };
+
+  return div(
+    { class: "my-3" },
+    p(
+      { class: "h3 ps-1 mt-3" },
+      button(
+        {
+          class: "btn btn-outline-secondary p-1 me-2",
+          type: "button",
+          "data-bs-toggle": "collapse",
+          "data-bs-target": "#iOSConfigFormGroupId",
+          "aria-expanded": "false",
+          "aria-controls": "iOSConfigFormGroupId",
+        },
+        i({ class: "fas fa-chevron-down" })
+      ) + "iOS Configuration"
+    ),
+    div(
+      {
+        id: "iOSConfigFormGroupId",
+        class: "form-group border border-2 p-3 rounded collapse",
+      },
+      toolsInfoBox(),
+      provisioningFilesBox(),
+      // Push Notifications section
+      div(
+        { class: "form-group row my-3" },
+        div(
+          { class: "col-sm-12 mt-2 fw-bold" },
+          h5(
+            { class: "" },
+            req.__("Push Notifications"),
+            a(
+              {
+                href: "javascript:ajax_modal('/admin/help/APN Signing Key?')",
+              },
+              i({ class: "fas fa-question-circle ps-1" })
+            )
+          )
+        )
+      ),
+      iosPushConfigBox()
+    )
+  );
 };
 
 /**
@@ -2411,6 +2762,10 @@ router.get(
     const xcodeCheckRes = await checkXcodebuild();
     const xcodebuildAvailable = xcodeCheckRes.installed;
     const xcodebuildVersion = xcodeCheckRes.version;
+    const isMac = process.platform === "darwin";
+    const cocoaPodCheckRes = await checkCocoaPods();
+    const cocoaPodsAvailable = cocoaPodCheckRes.installed;
+    const cocoaPodsVersion = cocoaPodCheckRes.version;
     const layout = getState().getLayout(req.user);
     const isSbadmin2 = layout === getState().layouts.sbadmin2;
     const isEntrypointByRole = builderSettings.entryPointByRole === "on";
@@ -2447,7 +2802,15 @@ router.get(
                 onchange: "builderMenuChanged(this)",
                 id: "buildMobileAppForm",
               },
-
+              p(
+                "This menu allows building Android or iOS apps for your web app. " +
+                  "On Android, installing the capacitor-builder Docker image is recommended, for iOS, an Apple machine is required. "
+              ),
+              p(
+                "To select files (like an Android keystore or iOS provisioning profile), " +
+                  "upload them to the 'mobile-app-configurations' folder (create it if it not yet exists). " +
+                  "Results are shown once on completion, and the builder adds a result folder to the 'mobile_app' directory."
+              ),
               fieldset(
                 input({
                   type: "hidden",
@@ -2460,856 +2823,984 @@ router.get(
                   value: builderSettings.entryPointType || "view",
                   id: "entryPointTypeID",
                 }),
+
                 div(
                   { class: "container ps-2" },
-                  div(
-                    { class: "row pb-2" },
-                    div({ class: "col-sm-4 fw-bold" }, req.__("Entry point")),
-                    div({ class: "col-sm-4 fw-bold" }, req.__("Platform")),
-                    div(
+                  p(
+                    { class: "h3 ps-1" },
+                    button(
                       {
-                        class: `col-sm-1 fw-bold d-flex justify-content-center ${
-                          builderSettings.androidPlatform !== "on"
-                            ? "d-none"
-                            : ""
-                        }`,
-                        id: "dockerLabelId",
+                        class: "btn btn-outline-secondary p-1 me-2",
+                        type: "button",
+                        "data-bs-toggle": "collapse",
+                        "data-bs-target": "#commonSettingsContainerId",
+                        "aria-expanded": "true",
+                        "aria-controls": "commonSettingsContainerId",
                       },
-                      req.__("docker")
-                    )
+                      i({ class: "fas fa-chevron-down" })
+                    ) + "Common configuration"
                   ),
                   div(
-                    { class: "row mb-3" },
+                    {
+                      id: "commonSettingsContainerId",
+                      class:
+                        "form-group border border-2 p-3 rounded collapse show",
+                    },
                     div(
-                      {
-                        class: `col-sm-4 mt-2 ${isEntrypointByRole ? "" : "border border-2 p-3 rounded"}`,
-                        id: "entryPointRowId",
-                      },
-                      div(
-                        { class: "row pb-2" },
-                        div(
-                          { class: "col-sm-6" },
-                          input({
-                            type: "checkbox",
-                            id: "entryPointByRoleBoxId",
-                            class: "form-check-input me-2",
-                            name: "entryPointByRole",
-                            checked: isEntrypointByRole,
-                          }),
-                          label(
-                            {
-                              for: "entryPointByRole",
-                              class: "form-label",
-                            },
-                            req.__("Entry point by role"),
-                            a(
-                              {
-                                href: "javascript:ajax_modal('/admin/help/Entry point by role?')",
-                              },
-                              i({ class: "fas fa-question-circle ps-1" })
-                            )
-                          )
-                        )
-                      ),
-                      // 'view/page/pagegroup' tabs
+                      { class: "row pb-2" },
+                      div({ class: "col-sm-4 fw-bold" }, req.__("Entry point")),
+                      div({ class: "col-sm-4 fw-bold" }, req.__("Platform")),
                       div(
                         {
-                          id: "entrySelectorsId",
-                          class: isEntrypointByRole ? "d-none" : "",
+                          class: `col-sm-1 fw-bold d-flex justify-content-center ${
+                            builderSettings.androidPlatform !== "on"
+                              ? "d-none"
+                              : ""
+                          }`,
+                          id: "dockerLabelId",
                         },
-                        ul(
-                          { class: "nav nav-pills" },
-                          li(
-                            {
-                              class: "nav-item",
-                              onClick: "showEntrySelect('view')",
-                            },
-                            div(
+                        req.__("docker")
+                      )
+                    ),
+                    div(
+                      { class: "row mb-3" },
+                      div(
+                        {
+                          class: `col-sm-4 mt-2 ms-3 me-2 ${isEntrypointByRole ? "" : "border border-2 p-3 rounded"}`,
+                          id: "entryPointRowId",
+                        },
+                        div(
+                          { class: "row pb-2" },
+                          div(
+                            { class: "col-sm-6" },
+                            input({
+                              type: "checkbox",
+                              id: "entryPointByRoleBoxId",
+                              class: "form-check-input me-2",
+                              name: "entryPointByRole",
+                              checked: isEntrypointByRole,
+                            }),
+                            label(
                               {
-                                class: `nav-link ${
-                                  !builderSettings.entryPointType ||
-                                  builderSettings.entryPointType === "view"
-                                    ? "active"
-                                    : ""
-                                }`,
-                                id: "viewNavLinkID",
+                                for: "entryPointByRole",
+                                class: "form-label",
                               },
-                              req.__("View")
+                              req.__("Entry point by role"),
+                              a(
+                                {
+                                  href: "javascript:ajax_modal('/admin/help/Entry point by role?')",
+                                },
+                                i({ class: "fas fa-question-circle ps-1" })
+                              )
                             )
-                          ),
-                          li(
-                            {
-                              class: "nav-item",
-                              onClick: "showEntrySelect('page')",
-                            },
-                            div(
-                              {
-                                class: `nav-link ${
-                                  builderSettings.entryPointType === "page"
-                                    ? "active"
-                                    : ""
-                                }`,
-                                id: "pageNavLinkID",
-                              },
-                              req.__("Page")
-                            ),
+                          )
+                        ),
+                        // 'view/page/pagegroup' tabs
+                        div(
+                          {
+                            id: "entrySelectorsId",
+                            class: isEntrypointByRole ? "d-none" : "",
+                          },
+                          ul(
+                            { class: "nav nav-pills" },
                             li(
                               {
                                 class: "nav-item",
-                                onClick: "showEntrySelect('pagegroup')",
+                                onClick: "showEntrySelect('view')",
                               },
                               div(
                                 {
                                   class: `nav-link ${
-                                    builderSettings.entryPointType ===
-                                    "pagegroup"
+                                    !builderSettings.entryPointType ||
+                                    builderSettings.entryPointType === "view"
                                       ? "active"
                                       : ""
                                   }`,
-                                  id: "pagegroupNavLinkID",
+                                  id: "viewNavLinkID",
                                 },
-                                req.__("Pagegroup")
+                                req.__("View")
                               )
+                            ),
+                            li(
+                              {
+                                class: "nav-item",
+                                onClick: "showEntrySelect('page')",
+                              },
+                              div(
+                                {
+                                  class: `nav-link ${
+                                    builderSettings.entryPointType === "page"
+                                      ? "active"
+                                      : ""
+                                  }`,
+                                  id: "pageNavLinkID",
+                                },
+                                req.__("Page")
+                              ),
+                              li(
+                                {
+                                  class: "nav-item",
+                                  onClick: "showEntrySelect('pagegroup')",
+                                },
+                                div(
+                                  {
+                                    class: `nav-link ${
+                                      builderSettings.entryPointType ===
+                                      "pagegroup"
+                                        ? "active"
+                                        : ""
+                                    }`,
+                                    id: "pagegroupNavLinkID",
+                                  },
+                                  req.__("Pagegroup")
+                                )
+                              )
+                            )
+                          ),
+                          // select entry-view
+                          select(
+                            {
+                              class: `form-select ${
+                                builderSettings.entryPointType === "page" ||
+                                builderSettings.entryPointType === "pagegroup"
+                                  ? "d-none"
+                                  : ""
+                              }`,
+                              ...(!builderSettings.entryPointType ||
+                              builderSettings.entryPointType === "view"
+                                ? { name: "entryPoint" }
+                                : {}),
+                              id: "viewInputID",
+                            },
+                            views
+                              .map((view) =>
+                                option(
+                                  {
+                                    value: view.name,
+                                    selected:
+                                      builderSettings.entryPointType ===
+                                        "view" &&
+                                      builderSettings.entryPoint === view.name,
+                                  },
+                                  view.name
+                                )
+                              )
+                              .join(",")
+                          ),
+                          // select entry-page
+                          select(
+                            {
+                              class: `form-select ${
+                                !builderSettings.entryPointType ||
+                                builderSettings.entryPointType === "view" ||
+                                builderSettings.entryPointType === "pagegroup"
+                                  ? "d-none"
+                                  : ""
+                              }`,
+                              ...(builderSettings.entryPointType === "page"
+                                ? { name: "entryPoint" }
+                                : {}),
+                              id: "pageInputID",
+                            },
+                            pages
+                              .map((page) =>
+                                option(
+                                  {
+                                    value: page.name,
+                                    selected:
+                                      builderSettings.entryPointType ===
+                                        "page" &&
+                                      builderSettings.entryPoint === page.name,
+                                  },
+                                  page.name
+                                )
+                              )
+                              .join("")
+                          ),
+                          // select entry-pagegroup
+                          select(
+                            {
+                              class: `form-select ${
+                                !builderSettings.entryPointType ||
+                                builderSettings.entryPointType === "view" ||
+                                builderSettings.entryPointType === "page"
+                                  ? "d-none"
+                                  : ""
+                              }`,
+                              ...(builderSettings.entryPointType === "pagegroup"
+                                ? { name: "entryPoint" }
+                                : {}),
+                              id: "pagegroupInputID",
+                            },
+                            pageGroups
+                              .map((group) =>
+                                option(
+                                  {
+                                    value: group.name,
+                                    selected:
+                                      builderSettings.entryPointType ===
+                                        "pagegroup" &&
+                                      builderSettings.entryPoint === group.name,
+                                  },
+                                  group.name
+                                )
+                              )
+                              .join("")
+                          )
+                        )
+                      ),
+                      div(
+                        { class: "col-sm-4" },
+                        // android
+                        div(
+                          { class: "container ps-0" },
+                          div(
+                            { class: "row" },
+                            div({ class: "col-sm-8" }, req.__("android")),
+                            div(
+                              { class: "col-sm" },
+                              input({
+                                type: "checkbox",
+                                class: "form-check-input",
+                                name: "androidPlatform",
+                                id: "androidCheckboxId",
+                                onClick: "toggle_android_platform()",
+                                checked:
+                                  builderSettings.androidPlatform === "on",
+                              })
+                            )
+                          ),
+                          // iOS
+                          div(
+                            { class: "row" },
+                            div({ class: "col-sm-8" }, req.__("iOS")),
+                            div(
+                              { class: "col-sm" },
+                              input({
+                                type: "checkbox",
+                                class: "form-check-input",
+                                name: "iOSPlatform",
+                                id: "iOSCheckboxId",
+                                checked: builderSettings.iOSPlatform === "on",
+                              })
                             )
                           )
+                        )
+                      ),
+                      // android with docker
+                      div(
+                        { class: "col-sm-1 d-flex justify-content-center" },
+                        input({
+                          type: "checkbox",
+                          class: "form-check-input",
+                          name: "useDocker",
+                          id: "dockerCheckboxId",
+                          hidden: builderSettings.androidPlatform !== "on",
+                          checked: builderSettings.useDocker === "on",
+                        })
+                      )
+                    ),
+                    // app name
+                    div(
+                      { class: "row pb-2" },
+                      div(
+                        { class: "col-sm-10" },
+                        label(
+                          {
+                            for: "appFileInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("App name")
                         ),
-                        // select entry-view
+                        input({
+                          type: "text",
+                          class: "form-control",
+                          name: "appName",
+                          id: "appNameInputId",
+                          placeholder: "SaltcornMobileApp",
+                          value: builderSettings.appName || "",
+                        })
+                      )
+                    ),
+                    // app id
+                    div(
+                      { class: "row pb-2" },
+                      div(
+                        { class: "col-sm-10" },
+                        label(
+                          {
+                            for: "appIdInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("App ID")
+                        ),
+                        input({
+                          type: "text",
+                          class: "form-control",
+                          name: "appId",
+                          id: "appIdInputId",
+                          placeholder: "com.saltcorn.mobile.app",
+                          value: builderSettings.appId || "",
+                        })
+                      )
+                    ),
+                    // app version
+                    div(
+                      { class: "row pb-2" },
+                      div(
+                        { class: "col-sm-10" },
+                        label(
+                          {
+                            for: "appVersionInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("App version")
+                        ),
+                        input({
+                          type: "text",
+                          class: "form-control",
+                          name: "appVersion",
+                          id: "appVersionInputId",
+                          placeholder: "0.0.1",
+                          value: builderSettings.appVersion || "",
+                        }),
+                        div(
+                          { class: "invalid-feedback" },
+                          req.__(
+                            "Please enter a version in the format 'x.y.z' (e.g. 0.0.1 with numbers from 0 to 999) or leave it empty."
+                          )
+                        )
+                      )
+                    ),
+                    // server url
+                    div(
+                      { class: "row pb-2" },
+                      div(
+                        { class: "col-sm-10" },
+                        label(
+                          {
+                            for: "serverURLInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("Server URL")
+                        ),
+                        input({
+                          type: "text",
+                          class: "form-control",
+                          name: "serverURL",
+                          id: "serverURLInputId",
+                          value: builderSettings.serverURL || "",
+                          placeholder: getState().getConfig("base_url") || "",
+                        })
+                      )
+                    ),
+                    // app icon
+                    div(
+                      { class: "row pb-2" },
+                      div(
+                        { class: "col-sm-10" },
+                        label(
+                          {
+                            for: "appIconInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("App icon")
+                        ),
                         select(
                           {
-                            class: `form-select ${
-                              builderSettings.entryPointType === "page" ||
-                              builderSettings.entryPointType === "pagegroup"
-                                ? "d-none"
-                                : ""
-                            }`,
-                            ...(!builderSettings.entryPointType ||
-                            builderSettings.entryPointType === "view"
-                              ? { name: "entryPoint" }
-                              : {}),
-                            id: "viewInputID",
+                            class: "form-select",
+                            name: "appIcon",
+                            id: "appIconInputId",
                           },
-                          views
-                            .map((view) =>
+                          [
+                            option({ value: "" }, ""),
+                            ...images.map((image) =>
                               option(
                                 {
-                                  value: view.name,
+                                  value: image.location,
                                   selected:
-                                    builderSettings.entryPointType === "view" &&
-                                    builderSettings.entryPoint === view.name,
+                                    builderSettings.appIcon === image.location,
                                 },
-                                view.name
+                                image.filename
                               )
-                            )
-                            .join(",")
+                            ),
+                          ].join("")
+                        )
+                      )
+                    ),
+                    div(
+                      { class: "row pb-3" },
+                      div(
+                        { class: "col-sm-10" },
+                        label(
+                          {
+                            for: "splashPageInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("Splash Page")
                         ),
-                        // select entry-page
                         select(
                           {
-                            class: `form-select ${
-                              !builderSettings.entryPointType ||
-                              builderSettings.entryPointType === "view" ||
-                              builderSettings.entryPointType === "pagegroup"
-                                ? "d-none"
-                                : ""
-                            }`,
-                            ...(builderSettings.entryPointType === "page"
-                              ? { name: "entryPoint" }
-                              : {}),
-                            id: "pageInputID",
+                            class: "form-select",
+                            name: "splashPage",
+                            id: "splashPageInputId",
                           },
-                          pages
-                            .map((page) =>
+                          [
+                            option({ value: "" }, ""),
+                            ...pages.map((page) =>
                               option(
                                 {
                                   value: page.name,
                                   selected:
-                                    builderSettings.entryPointType === "page" &&
-                                    builderSettings.entryPoint === page.name,
+                                    builderSettings.splashPage === page.name,
                                 },
                                 page.name
                               )
-                            )
-                            .join("")
-                        ),
-                        // select entry-pagegroup
-                        select(
-                          {
-                            class: `form-select ${
-                              !builderSettings.entryPointType ||
-                              builderSettings.entryPointType === "view" ||
-                              builderSettings.entryPointType === "page"
-                                ? "d-none"
-                                : ""
-                            }`,
-                            ...(builderSettings.entryPointType === "pagegroup"
-                              ? { name: "entryPoint" }
-                              : {}),
-                            id: "pagegroupInputID",
-                          },
-                          pageGroups
-                            .map((group) =>
-                              option(
-                                {
-                                  value: group.name,
-                                  selected:
-                                    builderSettings.entryPointType ===
-                                      "pagegroup" &&
-                                    builderSettings.entryPoint === group.name,
-                                },
-                                group.name
-                              )
-                            )
-                            .join("")
+                            ),
+                          ].join("")
                         )
                       )
                     ),
+                    // auto public login box
                     div(
-                      { class: "col-sm-4" },
-                      // android
+                      { class: "row pb-2" },
                       div(
-                        { class: "container ps-0" },
-                        div(
-                          { class: "row" },
-                          div({ class: "col-sm-8" }, req.__("android")),
-                          div(
-                            { class: "col-sm" },
-                            input({
-                              type: "checkbox",
-                              class: "form-check-input",
-                              name: "androidPlatform",
-                              id: "androidCheckboxId",
-                              onClick: "toggle_android_platform()",
-                              checked: builderSettings.androidPlatform === "on",
-                            })
-                          )
-                        ),
-                        // iOS
-                        div(
-                          { class: "row" },
-                          div({ class: "col-sm-8" }, req.__("iOS")),
-                          div(
-                            { class: "col-sm" },
-                            input({
-                              type: "checkbox",
-                              class: "form-check-input",
-                              name: "iOSPlatform",
-                              id: "iOSCheckboxId",
-                              checked: builderSettings.iOSPlatform === "on",
-                            })
-                          )
-                        )
-                      )
-                    ),
-                    // android with docker
-                    div(
-                      { class: "col-sm-1 d-flex justify-content-center" },
-                      input({
-                        type: "checkbox",
-                        class: "form-check-input",
-                        name: "useDocker",
-                        id: "dockerCheckboxId",
-                        hidden: builderSettings.androidPlatform !== "on",
-                        checked: builderSettings.useDocker === "on",
-                      })
-                    )
-                  ),
-                  // app name
-                  div(
-                    { class: "row pb-2" },
-                    div(
-                      { class: "col-sm-10" },
-                      label(
-                        {
-                          for: "appFileInputId",
-                          class: "form-label fw-bold",
-                        },
-                        req.__("App name")
-                      ),
-                      input({
-                        type: "text",
-                        class: "form-control",
-                        name: "appName",
-                        id: "appNameInputId",
-                        placeholder: "SaltcornMobileApp",
-                        value: builderSettings.appName || "",
-                      })
-                    )
-                  ),
-                  // app id
-                  div(
-                    { class: "row pb-2" },
-                    div(
-                      { class: "col-sm-10" },
-                      label(
-                        {
-                          for: "appIdInputId",
-                          class: "form-label fw-bold",
-                        },
-                        req.__("App ID")
-                      ),
-                      input({
-                        type: "text",
-                        class: "form-control",
-                        name: "appId",
-                        id: "appIdInputId",
-                        placeholder: "com.saltcorn.mobile.app",
-                        value: builderSettings.appId || "",
-                      })
-                    )
-                  ),
-                  // app version
-                  div(
-                    { class: "row pb-2" },
-                    div(
-                      { class: "col-sm-10" },
-                      label(
-                        {
-                          for: "appVersionInputId",
-                          class: "form-label fw-bold",
-                        },
-                        req.__("App version")
-                      ),
-                      input({
-                        type: "text",
-                        class: "form-control",
-                        name: "appVersion",
-                        id: "appVersionInputId",
-                        placeholder: "0.0.1",
-                        value: builderSettings.appVersion || "",
-                      }),
-                      div(
-                        { class: "invalid-feedback" },
-                        req.__(
-                          "Please enter a version in the format 'x.y.z' (e.g. 0.0.1 with numbers from 0 to 999) or leave it empty."
-                        )
-                      )
-                    )
-                  ),
-                  // server url
-                  div(
-                    { class: "row pb-2" },
-                    div(
-                      { class: "col-sm-10" },
-                      label(
-                        {
-                          for: "serverURLInputId",
-                          class: "form-label fw-bold",
-                        },
-                        req.__("Server URL")
-                      ),
-                      input({
-                        type: "text",
-                        class: "form-control",
-                        name: "serverURL",
-                        id: "serverURLInputId",
-                        value: builderSettings.serverURL || "",
-                        placeholder: getState().getConfig("base_url") || "",
-                      })
-                    )
-                  ),
-                  // app icon
-                  div(
-                    { class: "row pb-2" },
-                    div(
-                      { class: "col-sm-10" },
-                      label(
-                        {
-                          for: "appIconInputId",
-                          class: "form-label fw-bold",
-                        },
-                        req.__("App icon")
-                      ),
-                      select(
-                        {
-                          class: "form-select",
-                          name: "appIcon",
-                          id: "appIconInputId",
-                        },
-                        [
-                          option({ value: "" }, ""),
-                          ...images.map((image) =>
-                            option(
-                              {
-                                value: image.location,
-                                selected:
-                                  builderSettings.appIcon === image.location,
-                              },
-                              image.filename
-                            )
-                          ),
-                        ].join("")
-                      )
-                    )
-                  ),
-                  div(
-                    { class: "row pb-3" },
-                    div(
-                      { class: "col-sm-10" },
-                      label(
-                        {
-                          for: "splashPageInputId",
-                          class: "form-label fw-bold",
-                        },
-                        req.__("Splash Page")
-                      ),
-                      select(
-                        {
-                          class: "form-select",
-                          name: "splashPage",
-                          id: "splashPageInputId",
-                        },
-                        [
-                          option({ value: "" }, ""),
-                          ...pages.map((page) =>
-                            option(
-                              {
-                                value: page.name,
-                                selected:
-                                  builderSettings.splashPage === page.name,
-                              },
-                              page.name
-                            )
-                          ),
-                        ].join("")
-                      )
-                    )
-                  ),
-                  // auto public login box
-                  div(
-                    { class: "row pb-2" },
-                    div(
-                      { class: "col-sm-10" },
-                      input({
-                        type: "checkbox",
-                        id: "autoPublLoginId",
-                        class: "form-check-input me-2",
-                        name: "autoPublicLogin",
-                        checked: builderSettings.autoPublicLogin === "on",
-                      }),
-                      label(
-                        {
-                          for: "autoPublLoginId",
-                          class: "form-label fw-bold  mb-0",
-                        },
-                        req.__("Auto public login")
-                      ),
-                      div(),
-                      i(
-                        req.__(
-                          "When enabled, you will be logged in as a public user without any login screen."
-                        )
-                      )
-                    )
-                  ),
-                  // show continue as public user link
-                  div(
-                    { class: "row pb-2" },
-                    div(
-                      { class: "col-sm-10" },
-                      input({
-                        type: "checkbox",
-                        id: "showContAsPublId",
-                        class: "form-check-input me-2",
-                        name: "showContinueAsPublicUser",
-                        checked:
-                          builderSettings.showContinueAsPublicUser === "on",
-                      }),
-                      label(
-                        {
-                          for: "showContAsPublId",
-                          class: "form-label fw-bold mb-0",
-                        },
-                        req.__("Show 'Continue as public user' link")
-                      ),
-                      div(),
-                      i(
-                        req.__(
-                          "When enabled, the login screen shows you a link to login as public user."
-                        )
-                      )
-                    )
-                  ),
-
-                  // build type
-                  div(
-                    { class: "row pb-3 pt-2" },
-                    div(
-                      { class: "col-sm-10" },
-                      label(
-                        {
-                          for: "splashPageInputId",
-                          class: "form-label fw-bold",
-                        },
-                        req.__("Build type")
-                      ),
-
-                      div(
-                        { class: "form-check" },
+                        { class: "col-sm-10" },
                         input({
-                          type: "radio",
-                          id: "debugBuildTypeId",
+                          type: "checkbox",
+                          id: "autoPublLoginId",
                           class: "form-check-input me-2",
-                          name: "buildType",
-                          value: "debug",
-                          checked: builderSettings.buildType === "debug",
+                          name: "autoPublicLogin",
+                          checked: builderSettings.autoPublicLogin === "on",
                         }),
                         label(
                           {
-                            for: "debugBuildTypeId",
-                            class: "form-label",
+                            for: "autoPublLoginId",
+                            class: "form-label fw-bold  mb-0",
                           },
-                          req.__("debug")
+                          req.__("Auto public login")
+                        ),
+                        div(),
+                        i(
+                          req.__(
+                            "When enabled, you will be logged in as a public user without any login screen."
+                          )
                         )
-                      ),
+                      )
+                    ),
+                    // show continue as public user link
+                    div(
+                      { class: "row pb-2" },
                       div(
-                        { class: "form-check" },
+                        { class: "col-sm-10" },
                         input({
-                          type: "radio",
-                          id: "releaseBuildTypeId",
+                          type: "checkbox",
+                          id: "showContAsPublId",
                           class: "form-check-input me-2",
-                          name: "buildType",
-                          value: "release",
+                          name: "showContinueAsPublicUser",
                           checked:
-                            builderSettings.buildType === "release" ||
-                            !builderSettings.buildType,
+                            builderSettings.showContinueAsPublicUser === "on",
                         }),
                         label(
                           {
-                            for: "releaseBuildTypeId",
-                            class: "form-label",
+                            for: "showContAsPublId",
+                            class: "form-label fw-bold mb-0",
                           },
-                          req.__("release")
+                          req.__("Show 'Continue as public user' link")
+                        ),
+                        div(),
+                        i(
+                          req.__(
+                            "When enabled, the login screen shows you a link to login as public user."
+                          )
                         )
                       )
-                    )
-                  ),
-                  // included/excluded plugins
-                  div(
-                    {
-                      id: "pluginsSelectorId",
-                      class: "row pb-4",
-                    },
-                    div(
-                      label({ class: "form-label fw-bold" }, req.__("Plugins"))
                     ),
-                    div(
-                      { class: "container" },
-                      div(
-                        { class: "row" },
-                        div(
-                          { class: "col-sm-4 text-center" },
-                          req.__("exclude")
-                        ),
-                        div({ class: "col-sm-1" }),
-                        div(
-                          { class: "col-sm-4 text-center" },
-                          req.__("include")
-                        )
-                      ),
-                      div(
-                        { class: "row" },
-                        div(
-                          { class: "col-sm-4" },
-                          select(
-                            {
-                              id: "excluded-plugins-select-id",
-                              class: "form-control form-select",
-                              multiple: true,
-                            },
-                            plugins
-                              .filter(
-                                (plugin) =>
-                                  builderSettings.excludedPlugins?.indexOf(
-                                    plugin.name
-                                  ) >= 0
-                              )
-                              .map((plugin) =>
-                                option({
-                                  id: `${plugin.name}_excluded_opt`,
-                                  value: plugin.name,
-                                  label: plugin.name,
-                                })
-                              )
-                          )
-                        ),
-                        div(
-                          { class: "col-sm-1 d-flex justify-content-center" },
-                          div(
-                            div(
-                              button(
-                                {
-                                  id: "move-plugin-right-btn-id",
-                                  type: "button",
-                                  onClick: `move_plugin_to_included()`,
-                                  class: "btn btn-light pt-1 mb-1",
-                                },
-                                i({ class: "fas fa-arrow-right" })
-                              )
-                            ),
-                            div(
-                              button(
-                                {
-                                  id: "move-plugin-left-btn-id",
-                                  type: "button",
-                                  onClick: `move_plugin_to_excluded()`,
-                                  class: "btn btn-light pt-1",
-                                },
-                                i({ class: "fas fa-arrow-left" })
-                              )
-                            )
-                          )
-                        ),
-                        div(
-                          { class: "col-sm-4" },
-                          select(
-                            {
-                              id: "included-plugins-select-id",
-                              class: "form-control form-select",
-                              multiple: true,
-                            },
-                            plugins
-                              .filter(
-                                (plugin) =>
-                                  !builderSettings.excludedPlugins ||
-                                  builderSettings.excludedPlugins.indexOf(
-                                    plugin.name
-                                  ) < 0
-                              )
-                              .map((plugin) =>
-                                option({
-                                  id: `${plugin.name}_included_opt`,
-                                  value: plugin.name,
-                                  label: plugin.name,
-                                })
-                              )
-                          )
-                        )
-                      )
-                    )
-                  ),
 
-                  // allow offline mode box
-                  div(
-                    { class: "row pb-2 mt-2" },
+                    // allow clear text traffic
                     div(
-                      { class: "col-sm-10" },
-                      input({
-                        type: "checkbox",
-                        id: "offlineModeBoxId",
-                        class: "form-check-input me-2 mb-0 ",
-                        name: "allowOfflineMode",
-                        onClick: "toggle_tbl_sync()",
-                        checked: builderSettings.allowOfflineMode === "on",
-                      }),
-                      label(
-                        {
-                          for: "offlineModeBoxId",
-                          class: "form-label fw-bold mb-0",
-                        },
-                        req.__("Allow offline mode")
-                      ),
-                      div(),
-                      i(
-                        req.__(
-                          "Enable this to integrate offline/online Synchronization into your app."
-                        )
-                      )
-                    )
-                  ),
-
-                  div(
-                    {
-                      id: "tblSyncSelectorId",
-                      class: "mb-3 mt-1",
-                      hidden: builderSettings.allowOfflineMode !== "on",
-                    },
-                    p({ class: "h3 ps-3" }, "Synchronization settings"),
-                    div(
-                      { class: "form-group border border-2 p-3 rounded" },
-
+                      { class: "row pb-2" },
                       div(
-                        div(
+                        { class: "col-sm-10" },
+                        input({
+                          type: "checkbox",
+                          id: "allowClearTextTrafficId",
+                          class: "form-check-input me-2 mb-0 ",
+                          name: "allowClearTextTraffic",
+                          checked:
+                            builderSettings.allowClearTextTraffic === "on",
+                        }),
+                        label(
                           {
-                            class: "row pb-3",
+                            for: "allowClearTextTrafficId",
+                            class: "form-label fw-bold mb-0",
                           },
+                          req.__("Allow clear text traffic")
+                        ),
+                        div(),
+                        i(
+                          req.__(
+                            "Enable this to allow unsecure HTTP connections. Useful for local testing."
+                          )
+                        )
+                      )
+                    ),
+
+                    // build type
+                    div(
+                      { class: "row pb-3 pt-2" },
+                      div(
+                        { class: "col-sm-10" },
+                        label(
+                          {
+                            for: "splashPageInputId",
+                            class: "form-label fw-bold",
+                          },
+                          req.__("Build type")
+                        ),
+
+                        div(
+                          { class: "form-check" },
+                          input({
+                            type: "radio",
+                            id: "debugBuildTypeId",
+                            class: "form-check-input me-2",
+                            name: "buildType",
+                            value: "debug",
+                            checked: builderSettings.buildType === "debug",
+                          }),
+                          label(
+                            {
+                              for: "debugBuildTypeId",
+                              class: "form-label",
+                            },
+                            req.__("debug")
+                          )
+                        ),
+                        div(
+                          { class: "form-check" },
+                          input({
+                            type: "radio",
+                            id: "releaseBuildTypeId",
+                            class: "form-check-input me-2",
+                            name: "buildType",
+                            value: "release",
+                            checked:
+                              builderSettings.buildType === "release" ||
+                              !builderSettings.buildType,
+                          }),
+                          label(
+                            {
+                              for: "releaseBuildTypeId",
+                              class: "form-label",
+                            },
+                            req.__("release")
+                          )
+                        )
+                      )
+                    ),
+                    // included/excluded plugins
+                    div(
+                      {
+                        id: "pluginsSelectorId",
+                        class: "row pb-4",
+                      },
+                      div(
+                        label(
+                          { class: "form-label fw-bold" },
+                          req.__("Plugins")
+                        )
+                      ),
+                      div(
+                        { class: "container" },
+                        div(
+                          { class: "row" },
                           div(
-                            label(
-                              { class: "form-label fw-bold" },
-                              req.__("Tables to synchronize") +
-                                a(
-                                  {
-                                    href: "javascript:ajax_modal('/admin/help/Capacitor Builder?')",
-                                  },
-                                  i({ class: "fas fa-question-circle ps-1" })
+                            { class: "col-sm-4 text-center" },
+                            req.__("exclude")
+                          ),
+                          div({ class: "col-sm-1" }),
+                          div(
+                            { class: "col-sm-4 text-center" },
+                            req.__("include")
+                          )
+                        ),
+                        div(
+                          { class: "row" },
+                          div(
+                            { class: "col-sm-4" },
+                            select(
+                              {
+                                id: "excluded-plugins-select-id",
+                                class: "form-control form-select",
+                                multiple: true,
+                              },
+                              plugins
+                                .filter(
+                                  (plugin) =>
+                                    builderSettings.excludedPlugins?.indexOf(
+                                      plugin.name
+                                    ) >= 0
+                                )
+                                .map((plugin) =>
+                                  option({
+                                    id: `${plugin.name}_excluded_opt`,
+                                    value: plugin.name,
+                                    label: plugin.name,
+                                  })
                                 )
                             )
                           ),
                           div(
-                            { class: "container" },
+                            { class: "col-sm-1 d-flex justify-content-center" },
                             div(
-                              { class: "row" },
                               div(
-                                { class: "col-sm-4 text-center" },
-                                req.__("unsynched")
-                              ),
-                              div({ class: "col-sm-1" }),
-                              div(
-                                { class: "col-sm-4 text-center" },
-                                req.__("synched")
-                              )
-                            ),
-                            div(
-                              { class: "row" },
-                              div(
-                                { class: "col-sm-4" },
-                                select(
+                                button(
                                   {
-                                    id: "unsynched-tbls-select-id",
-                                    class: "form-control form-select",
-                                    multiple: true,
+                                    id: "move-plugin-right-btn-id",
+                                    type: "button",
+                                    onClick: `move_plugin_to_included()`,
+                                    class: "btn btn-light pt-1 mb-1",
                                   },
-                                  withSyncInfo
-                                    .filter(
-                                      (table) =>
-                                        !builderSettings.synchedTables ||
-                                        builderSettings.synchedTables.indexOf(
-                                          table.name
-                                        ) < 0
-                                    )
-                                    .map((table) =>
-                                      option({
-                                        id: `${table.name}_unsynched_opt`,
-                                        value: table.name,
-                                        label: table.name,
-                                      })
-                                    )
+                                  i({ class: "fas fa-arrow-right" })
                                 )
                               ),
                               div(
-                                {
-                                  class:
-                                    "col-sm-1 d-flex justify-content-center",
-                                },
+                                button(
+                                  {
+                                    id: "move-plugin-left-btn-id",
+                                    type: "button",
+                                    onClick: `move_plugin_to_excluded()`,
+                                    class: "btn btn-light pt-1",
+                                  },
+                                  i({ class: "fas fa-arrow-left" })
+                                )
+                              )
+                            )
+                          ),
+                          div(
+                            { class: "col-sm-4" },
+                            select(
+                              {
+                                id: "included-plugins-select-id",
+                                class: "form-control form-select",
+                                multiple: true,
+                              },
+                              plugins
+                                .filter(
+                                  (plugin) =>
+                                    !builderSettings.excludedPlugins ||
+                                    builderSettings.excludedPlugins.indexOf(
+                                      plugin.name
+                                    ) < 0
+                                )
+                                .map((plugin) =>
+                                  option({
+                                    id: `${plugin.name}_included_opt`,
+                                    value: plugin.name,
+                                    label: plugin.name,
+                                  })
+                                )
+                            )
+                          )
+                        )
+                      )
+                    ),
+
+                    // allow offline mode box
+                    div(
+                      { class: "row pb-2 mt-2" },
+                      div(
+                        { class: "col-sm-10" },
+                        input({
+                          type: "checkbox",
+                          id: "offlineModeBoxId",
+                          class: "form-check-input me-2 mb-0 ",
+                          name: "allowOfflineMode",
+                          onClick: "toggle_tbl_sync()",
+                          checked: builderSettings.allowOfflineMode === "on",
+                        }),
+                        label(
+                          {
+                            for: "offlineModeBoxId",
+                            class: "form-label fw-bold mb-0",
+                          },
+                          req.__("Allow offline mode")
+                        ),
+                        div(),
+                        i(
+                          req.__(
+                            "Enable this to integrate offline/online Synchronization into your app."
+                          )
+                        )
+                      )
+                    ),
+
+                    div(
+                      {
+                        id: "tblSyncSelectorId",
+                        class: "mb-3 mt-1",
+                        hidden: builderSettings.allowOfflineMode !== "on",
+                      },
+                      p({ class: "h3 ps-3" }, "Synchronization settings"),
+                      div(
+                        { class: "form-group border border-2 p-3 rounded" },
+
+                        div(
+                          div(
+                            {
+                              class: "row pb-3",
+                            },
+                            div(
+                              label(
+                                { class: "form-label fw-bold" },
+                                req.__("Tables to synchronize") +
+                                  a(
+                                    {
+                                      href: "javascript:ajax_modal('/admin/help/Capacitor Builder?')",
+                                    },
+                                    i({ class: "fas fa-question-circle ps-1" })
+                                  )
+                              )
+                            ),
+                            div(
+                              { class: "container" },
+                              div(
+                                { class: "row" },
                                 div(
+                                  { class: "col-sm-4 text-center" },
+                                  req.__("unsynched")
+                                ),
+                                div({ class: "col-sm-1" }),
+                                div(
+                                  { class: "col-sm-4 text-center" },
+                                  req.__("synched")
+                                )
+                              ),
+                              div(
+                                { class: "row" },
+                                div(
+                                  { class: "col-sm-4" },
+                                  select(
+                                    {
+                                      id: "unsynched-tbls-select-id",
+                                      class: "form-control form-select",
+                                      multiple: true,
+                                    },
+                                    withSyncInfo
+                                      .filter(
+                                        (table) =>
+                                          !builderSettings.synchedTables ||
+                                          builderSettings.synchedTables.indexOf(
+                                            table.name
+                                          ) < 0
+                                      )
+                                      .map((table) =>
+                                        option({
+                                          id: `${table.name}_unsynched_opt`,
+                                          value: table.name,
+                                          label: table.name,
+                                        })
+                                      )
+                                  )
+                                ),
+                                div(
+                                  {
+                                    class:
+                                      "col-sm-1 d-flex justify-content-center",
+                                  },
                                   div(
-                                    button(
-                                      {
-                                        id: "move-right-btn-id",
-                                        type: "button",
-                                        onClick: `move_to_synched()`,
-                                        class: "btn btn-light pt-1 mb-1",
-                                      },
-                                      i({ class: "fas fa-arrow-right" })
-                                    )
-                                  ),
-                                  div(
-                                    button(
-                                      {
-                                        id: "move-left-btn-id",
-                                        type: "button",
-                                        onClick: `move_to_unsynched()`,
-                                        class: "btn btn-light pt-1",
-                                      },
-                                      i({ class: "fas fa-arrow-left" })
+                                    div(
+                                      button(
+                                        {
+                                          id: "move-right-btn-id",
+                                          type: "button",
+                                          onClick: `move_to_synched()`,
+                                          class: "btn btn-light pt-1 mb-1",
+                                        },
+                                        i({ class: "fas fa-arrow-right" })
+                                      )
+                                    ),
+                                    div(
+                                      button(
+                                        {
+                                          id: "move-left-btn-id",
+                                          type: "button",
+                                          onClick: `move_to_unsynched()`,
+                                          class: "btn btn-light pt-1",
+                                        },
+                                        i({ class: "fas fa-arrow-left" })
+                                      )
                                     )
                                   )
-                                )
-                              ),
-                              div(
-                                { class: "col-sm-4" },
-                                select(
-                                  {
-                                    id: "synched-tbls-select-id",
-                                    class: "form-control form-select",
-                                    multiple: true,
-                                  },
-                                  withSyncInfo
-                                    .filter(
-                                      (table) =>
-                                        builderSettings.synchedTables?.indexOf(
-                                          table.name
-                                        ) >= 0
-                                    )
-                                    .map((table) =>
-                                      option({
-                                        id: `${table.name}_synched_opt`,
-                                        value: table.name,
-                                        label: table.name,
-                                      })
-                                    )
+                                ),
+                                div(
+                                  { class: "col-sm-4" },
+                                  select(
+                                    {
+                                      id: "synched-tbls-select-id",
+                                      class: "form-control form-select",
+                                      multiple: true,
+                                    },
+                                    withSyncInfo
+                                      .filter(
+                                        (table) =>
+                                          builderSettings.synchedTables?.indexOf(
+                                            table.name
+                                          ) >= 0
+                                      )
+                                      .map((table) =>
+                                        option({
+                                          id: `${table.name}_synched_opt`,
+                                          value: table.name,
+                                          label: table.name,
+                                        })
+                                      )
+                                  )
                                 )
                               )
                             )
                           )
-                        )
-                      ),
-                      // push sync
-                      div(
-                        { class: "row pb-2 my-2" },
+                        ),
+
+                        // sync when connection restored
                         div(
-                          { class: "col-sm-10" },
-                          input({
-                            type: "checkbox",
-                            id: "pushSyncBoxId",
-                            class: "form-check-input me-2 mb-0 ",
-                            name: "pushSync",
-                            checked: builderSettings.pushSync === "on",
-                          }),
-                          label(
-                            {
-                              for: "pushSyncBoxId",
-                              class: "form-label fw-bold mb-0",
-                            },
-                            req.__("Push sync")
-                          ),
-                          div(),
-                          i(
-                            req.__(
-                              "Run Synchronizations when the server sends a push notification. " +
-                                "On Android, this requires a Firebase JSON key and a Google Services File (see below)."
+                          { class: "row pb-2 my-2" },
+                          div(
+                            { class: "col-sm-10" },
+                            input({
+                              type: "checkbox",
+                              id: "connRestoredBoxId",
+                              class: "form-check-input me-2 mb-0 ",
+                              name: "syncOnReconnect",
+                              checked: builderSettings.syncOnReconnect === "on",
+                            }),
+                            label(
+                              {
+                                for: "connRestoredBoxId",
+                                class: "form-label fw-bold mb-0",
+                              },
+                              req.__("Sync on reconnect")
+                            ),
+                            div(),
+                            i(
+                              req.__(
+                                "Run Synchronizations when the network connection is restored."
+                              )
                             )
                           )
-                        )
-                      ),
+                        ),
 
-                      // periodic sync interval
-                      div(
-                        { class: "row pb-2 mt-2" },
+                        // sync when the app resumes
                         div(
-                          { class: "col-sm-10" },
-                          label(
-                            {
-                              for: "syncIntervalInputId",
-                              class: "form-label fw-bold mb-0 ",
-                            },
-                            req.__("Background Sync interval")
-                          ),
-                          input({
-                            type: "text",
-                            class: "form-control mb-0",
-                            name: "syncInterval",
-                            id: "syncIntervalInputId",
-                            value: builderSettings.syncInterval || "",
-                          }),
-                          div(),
-                          i(
-                            req.__(
-                              "Perdiodic interval (in minutes) to run synchronizations in the background. " +
-                                "This is just a min interval, depending on system conditions, the actual time may be longer."
+                          { class: "row pb-2 my-2" },
+                          div(
+                            { class: "col-sm-10" },
+                            input({
+                              type: "checkbox",
+                              id: "appResumeSyncBoxId",
+                              class: "form-check-input me-2 mb-0 ",
+                              name: "syncOnAppResume",
+                              checked: builderSettings.syncOnAppResume === "on",
+                            }),
+                            label(
+                              {
+                                for: "appResumeSyncBoxId",
+                                class: "form-label fw-bold mb-0",
+                              },
+                              req.__("Sync on app resume")
+                            ),
+                            div(),
+                            i(
+                              req.__(
+                                "Run Synchronizations when the app is resumed from background."
+                              )
+                            )
+                          )
+                        ),
+
+                        // push sync
+                        div(
+                          { class: "row pb-2 my-2" },
+                          div(
+                            { class: "col-sm-10" },
+                            input({
+                              type: "checkbox",
+                              id: "pushSyncBoxId",
+                              class: "form-check-input me-2 mb-0 ",
+                              name: "pushSync",
+                              checked: builderSettings.pushSync === "on",
+                            }),
+                            label(
+                              {
+                                for: "pushSyncBoxId",
+                                class: "form-label fw-bold mb-0",
+                              },
+                              req.__("Push sync")
+                            ),
+                            div(),
+                            i(
+                              req.__(
+                                "Run Synchronizations when the server sends a push notification. " +
+                                  "On Android, this requires a Firebase JSON key and a Google Services File (see below)."
+                              )
+                            )
+                          )
+                        ),
+
+                        // periodic sync interval
+                        div(
+                          { class: "row pb-2 mt-2" },
+                          div(
+                            { class: "col-sm-10" },
+                            label(
+                              {
+                                for: "syncIntervalInputId",
+                                class: "form-label fw-bold mb-0 ",
+                              },
+                              req.__("Background Sync interval")
+                            ),
+                            input({
+                              type: "text",
+                              class: "form-control mb-0",
+                              name: "syncInterval",
+                              id: "syncIntervalInputId",
+                              value: builderSettings.syncInterval || "",
+                            }),
+                            div(),
+                            i(
+                              req.__(
+                                "Perdiodic interval (in minutes) to run synchronizations in the background. " +
+                                  "This is just a min interval, depending on system conditions, the actual time may be longer."
+                              )
                             )
                           )
                         )
                       )
                     )
                   ),
-
-                  div({}, "&nbsp;"),
-
                   div(
                     { class: "mt-3 mb-3" },
-                    p({ class: "h3 ps-3" }, "Android configuration"),
+                    p(
+                      { class: "h3 ps-1" },
+                      button(
+                        {
+                          class: "btn btn-outline-secondary p-1 me-2",
+                          type: "button",
+                          "data-bs-toggle": "collapse",
+                          "data-bs-target": "#androidConfigFormGroupId",
+                          "aria-expanded": "false",
+                          "aria-controls": "androidConfigFormGroupId",
+                        },
+                        i({ class: "fas fa-chevron-down" })
+                      ) + "Android configuration"
+                    ),
                     div(
-                      { class: "form-group border border-2 p-3 rounded" },
+                      {
+                        id: "androidConfigFormGroupId",
+                        class:
+                          "form-group border border-2 p-3 rounded collapse",
+                      },
 
                       div(
                         { class: "row pb-3 pt-2" },
@@ -3609,176 +4100,18 @@ router.get(
                       )
                     )
                   ),
-                  div({}, "&nbsp;"),
-                  div(
-                    { class: "mt-3" },
-                    p({ class: "h3 ps-3 mt-3" }, "iOS Configuration"),
-                    div(
-                      { class: "form-group border border-2 p-3 rounded" },
-                      div(
-                        { class: "mb-3" },
-                        div(
-                          { class: "row pb-3 pt-2" },
-                          div(
-                            label(
-                              { class: "form-label fw-bold" },
-                              req.__("xcodebuild") +
-                                a(
-                                  {
-                                    href: "javascript:ajax_modal('/admin/help/xcodebuild?')",
-                                  },
-                                  i({ class: "fas fa-question-circle ps-1" })
-                                )
-                            )
-                          ),
-                          div(
-                            { class: "col-sm-4" },
-                            div(
-                              {
-                                id: "xcodebuildStatusId",
-                                class: "",
-                              },
-                              xcodebuildAvailable
-                                ? span(
-                                    req.__("installed"),
-                                    i({
-                                      class: "ps-2 fas fa-check text-success",
-                                    })
-                                  )
-                                : span(
-                                    req.__("not available"),
-                                    i({
-                                      class: "ps-2 fas fa-times text-danger",
-                                    })
-                                  )
-                            )
-                          ),
-                          div(
-                            { class: "col-sm-4" },
-                            // not sure if we should provide this
-                            // button(
-                            //   {
-                            //     id: "installXCodeBtnId",
-                            //     type: "button",
-                            //     onClick: `install_xcode(this);`,
-                            //     class: "btn btn-warning",
-                            //   },
-                            //   req.__("install")
-                            // ),
-                            span(
-                              {
-                                role: "button",
-                                onClick: "check_xcodebuild()",
-                              },
-                              span({ class: "ps-3" }, req.__("refresh")),
-                              i({ class: "ps-2 fas fa-undo" })
-                            )
-                          )
-                        ),
-                        div(
-                          {
-                            class: `row mb-3 pb-3 ${
-                              xcodebuildAvailable ? "" : "d-none"
-                            }`,
-                            id: "xcodebuildVersionBoxId",
-                          },
-                          div(
-                            { class: "col-sm-4" },
-                            span(
-                              req.__("Version") +
-                                span(
-                                  { id: "xcodebuildVersionId", class: "pe-2" },
-                                  `: ${xcodebuildVersion || "unknown"}`
-                                ),
-                              versionMarker(xcodebuildVersion || "0")
-                            )
-                          )
-                        )
-                      ),
-                      // provisioning profile file
-                      div(
-                        { class: "row pb-3" },
-                        div(
-                          { class: "col-sm-10" },
-                          label(
-                            {
-                              for: "provisioningProfileInputId",
-                              class: "form-label fw-bold",
-                            },
-                            req.__("Provisioning Profile"),
-                            a(
-                              {
-                                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
-                              },
-                              i({ class: "fas fa-question-circle ps-1" })
-                            )
-                          ),
-                          select(
-                            {
-                              class: "form-select",
-                              name: "provisioningProfile",
-                              id: "provisioningProfileInputId",
-                            },
-                            [
-                              option({ value: "" }, ""),
-                              ...provisioningFiles.map((file) =>
-                                option(
-                                  {
-                                    value: file.location,
-                                    selected:
-                                      builderSettings.provisioningProfile ===
-                                      file.location,
-                                  },
-                                  file.filename
-                                )
-                              ),
-                            ].join("")
-                          )
-                        )
-                      ),
-                      // Share Extension provisioning profile
-                      div(
-                        { class: "row pb-3" },
-                        div(
-                          { class: "col-sm-10" },
-                          label(
-                            {
-                              for: "shareProvisioningProfileInputId",
-                              class: "form-label fw-bold",
-                            },
-                            req.__("Share Extension Provisioning Profile"),
-                            a(
-                              {
-                                href: "javascript:ajax_modal('/admin/help/Provisioning Profile?')",
-                              },
-                              i({ class: "fas fa-question-circle ps-1" })
-                            )
-                          ),
-                          select(
-                            {
-                              class: "form-select",
-                              name: "shareProvisioningProfile",
-                              id: "shareProvisioningProfileInputId",
-                            },
-                            [
-                              option({ value: "" }, ""),
-                              ...provisioningFiles.map((file) =>
-                                option(
-                                  {
-                                    value: file.location,
-                                    selected:
-                                      builderSettings.shareProvisioningProfile ===
-                                      file.location,
-                                  },
-                                  file.filename
-                                )
-                              ),
-                            ].join("")
-                          )
-                        )
-                      )
-                    )
-                  )
+
+                  buildIosConfigBox({
+                    req,
+                    isMac,
+                    xcodebuildAvailable,
+                    xcodebuildVersion,
+                    cocoaPodsAvailable,
+                    cocoaPodsVersion,
+                    provisioningFiles,
+                    allAppCfgFiles,
+                    builderSettings,
+                  })
                 ),
                 button(
                   {
@@ -4041,13 +4374,19 @@ router.post(
       autoPublicLogin,
       showContinueAsPublicUser,
       allowOfflineMode,
+      syncOnReconnect,
+      syncOnAppResume,
       pushSync,
       syncInterval,
       synchedTables,
       includedPlugins,
+      noProvisioningProfile,
       provisioningProfile,
       shareProvisioningProfile,
+      apnSigningKey,
+      apnSigningKeyId,
       buildType,
+      allowClearTextTraffic,
       keystoreFile,
       keystoreAlias,
       keystorePassword,
@@ -4104,18 +4443,12 @@ router.post(
       });
     }
     if (iOSPlatform) {
-      if (!provisioningProfile)
+      if (!provisioningProfile && !noProvisioningProfile)
         return res.json({
           error: req.__(
             "Please provide a Provisioning Profile for the iOS build."
           ),
         });
-    }
-    if (buildType === "debug" && keystoreFile) {
-      msgs.push({
-        type: "warning",
-        text: req.__("Keystore file is not applied for debug builds."),
-      });
     }
 
     if (
@@ -4164,20 +4497,16 @@ router.post(
     if (!entryPointByRole) spawnParams.push("-e", entryPoint);
     if (useDocker) spawnParams.push("-d");
     if (androidPlatform) spawnParams.push("-p", "android");
-    if (iOSPlatform) {
+    if (iOSPlatform) spawnParams.push("-p", "ios");
+    if (noProvisioningProfile) spawnParams.push("--noProvisioningProfile");
+    if (provisioningProfile)
+      spawnParams.push("--provisioningProfile", provisioningProfile);
+    if (allowShareTo) {
+      mode = "prepare";
       spawnParams.push(
-        "-p",
-        "ios",
-        "--provisioningProfile",
-        provisioningProfile
+        "--shareExtensionProvisioningProfile",
+        shareProvisioningProfile
       );
-      if (allowShareTo) {
-        mode = "prepare";
-        spawnParams.push(
-          "--shareExtensionProvisioningProfile",
-          shareProvisioningProfile
-        );
-      }
     }
     if (appName) spawnParams.push("--appName", appName);
     if (appId) spawnParams.push("--appId", appId);
@@ -4188,6 +4517,8 @@ router.post(
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
     if (syncInterval) spawnParams.push("--syncInterval", syncInterval);
     if (pushSync) spawnParams.push("--pushSync");
+    if (syncOnReconnect) spawnParams.push("--syncOnReconnect");
+    if (syncOnAppResume) spawnParams.push("--syncOnAppResume");
     if (allowShareTo) spawnParams.push("--allowShareTo");
     if (autoPublicLogin) spawnParams.push("--autoPublicLogin");
     if (showContinueAsPublicUser)
@@ -4207,6 +4538,7 @@ router.post(
     }
 
     if (buildType) spawnParams.push("--buildType", buildType);
+    if (allowClearTextTraffic) spawnParams.push("--allowClearTextTraffic");
     if (keystoreFile) spawnParams.push("--androidKeystore", keystoreFile);
     if (keystoreAlias)
       spawnParams.push("--androidKeyStoreAlias", keystoreAlias);
@@ -4347,10 +4679,13 @@ router.get(
 );
 
 router.get(
-  "/mobile-app/check-xcodebuild",
+  "/mobile-app/check-ios-build-tools",
   isAdmin,
   error_catcher(async (req, res) => {
-    res.json(await checkXcodebuild());
+    const xcodebuild = await checkXcodebuild();
+    const cocoapods = await checkCocoaPods();
+    const isMac = process.platform === "darwin";
+    res.json({ xcodebuild, cocoapods, isMac });
   })
 );
 
@@ -4374,6 +4709,8 @@ router.post(
         "firebase_app_services",
         newCfg.googleServicesFile
       );
+      await getState().setConfig("apn_signing_key", newCfg.apnSigningKey);
+      await getState().setConfig("apn_signing_key_id", newCfg.apnSigningKeyId);
       res.json({ success: true });
     } catch (e) {
       getState().log(1, `Unable to save mobile builder config: ${e.message}`);
@@ -4493,9 +4830,10 @@ router.post(
       //config+crashes
       await db.deleteWhere("_sc_errors");
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
+      await getState().refresh();
+      await require("@saltcorn/data/standard-menu")();
     }
     await getState().refresh();
-    await require("@saltcorn/data/standard-menu")();
 
     if (form.values.users) {
       await db.deleteWhere("_sc_notifications");
@@ -4790,7 +5128,9 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       );
     }
 
-    if (req.query.table) {
+    if (req.query.workflow) {
+      ds.push(`declare const row: Row;`);
+    } else if (req.query.table) {
       const table = Table.findOne(req.query.table);
       if (table) {
         const tsFields = [];
@@ -4836,13 +5176,18 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       if (nm === "slugify") {
         ds.push(`function slugify(s: string): string`);
       } else if (f.run) {
-        const args = (f["arguments"] || []).map(
-          ({ name, type, tstype }) =>
-            `${name}: ${tstype || scTypeToTsType(type)}`
-        );
-        ds.push(
-          `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
-        );
+        if (f["arguments"]) {
+          const args = (f["arguments"] || []).map(
+            ({ name, type, tstype, required }) =>
+              `${name}${required ? "" : "?"}: ${tstype || scTypeToTsType(type)}`
+          );
+          ds.push(
+            `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
+          );
+        } else
+          ds.push(
+            `declare var ${nm}: ${f.isAsync ? "AsyncFunction" : "Function"}`
+          );
       } else ds.push(`declare const ${nm}: Function;`);
     }
     let exclude_cp_ids = req.query.codepage
@@ -4869,16 +5214,16 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
         ${Object.keys(getState().actions)
           .map(
             (nm) =>
-              `${nm}: ({row, table}?:{row?: Row, table?: Table})=>Promise<void>,`
+              `["${nm}"]: ({row, table}?:{row?: Row, table?: Table})=>Promise<void>,`
           )
           .join("\n")}
         ${trigger_actions
-          .map((tr) => `${tr.name}: ({row}?:{row?: Row})=>Promise<void>,`)
+          .map((tr) => `["${tr.name}"]: ({row}?:{row?: Row})=>Promise<void>,`)
           .join("\n")}
         }`
       );
     }
-
+    //fs.writeFileSync("/tmp/tsdecls.ts", ds.join("\n"));
     res.send(ds.join("\n"));
   })
 );
@@ -5164,6 +5509,17 @@ admin_config_route({
       name: "firebase_app_services",
       showIf: { enable_push_notify: true },
       help: { topic: "Firebase App Services" },
+    },
+    { section_header: "Native iOS Mobile App" },
+    {
+      name: "apn_signing_key",
+      showIf: { enable_push_notify: true },
+      help: { topic: "APN Signing Key" },
+    },
+    {
+      name: "apn_signing_key_id",
+      showIf: { enable_push_notify: true },
+      help: { topic: "APN Signing Key ID" },
     },
   ],
   response(form, req, res) {

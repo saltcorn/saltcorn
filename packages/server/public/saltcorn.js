@@ -305,7 +305,8 @@ function view_post(viewnameOrElem, route, data, onDoneOrObj, sendState) {
       ? viewnameOrElem
       : $(viewnameOrElem)
           .closest("[data-sc-embed-viewname]")
-          .attr("data-sc-embed-viewname");
+          .attr("data-sc-embed-viewname") ||
+        $(viewnameOrElem).closest("form[data-viewname]").attr("data-viewname");
   last_route_viewname = viewname;
   const query = sendState1
     ? `?${new URL(get_current_state_url()).searchParams.toString()}`
@@ -412,9 +413,7 @@ function expand_thumbnail(img_id, filename) {
   ensure_modal_exists_and_closed();
   const isAbsolute = /^(?:[a-z]+:)?\/\//i.test(img_id);
   const src = isAbsolute ? img_id : `/files/serve/${img_id}`;
-  $("#scmodal .modal-body").html(
-    `<img src="${src}" style="width: 100%">`
-  );
+  $("#scmodal .modal-body").html(`<img src="${src}" style="width: 100%">`);
   $("#scmodal .modal-title").html(decodeURIComponent(filename));
   new bootstrap.Modal($("#scmodal")).show();
 }
@@ -555,7 +554,9 @@ function saveAndContinue(e, k, event) {
   if (!valres) return;
   submitWithEmptyAction(form[0]);
   var url = form.attr("action");
+  removeVirtualMonacoPrefix(form);
   var form_data = form.serialize();
+  restoreVirtualMonacoPrefix(form);
 
   if (form.prop("data-last-save-success") === form_data) {
     if (k) k(valres);
@@ -601,6 +602,46 @@ function saveAndContinue(e, k, event) {
   });
 
   return false;
+}
+
+/**
+ * search textareas with is-expression="yes" and remove virtual monaco prefix
+ * before the formdata is serialized
+ * @param {Form} form
+ */
+function removeVirtualMonacoPrefix(form) {
+  const textareas = form.find('textarea[is-expression="yes"]');
+  const virtualMonacoPrefix = "const prefix: Row =";
+  textareas.each(function () {
+    const jThis = $(this);
+    const val = jThis.val();
+    if (
+      new RegExp("^\\s*" + virtualMonacoPrefix).test(val) ||
+      new RegExp("^\\s*//\\s*" + virtualMonacoPrefix).test(val)
+    ) {
+      jThis.data("original-value", val);
+      const match = val.match(/\r?\n/);
+      if (match) jThis.val(val.substring(match.index + match[0].length));
+      else jThis.val("");
+    }
+  });
+}
+
+/**
+ * search textareas with is-expression="yes" and restore virtual monaco prefix
+ * after the formdata is serialized
+ * @param {Form} form
+ */
+function restoreVirtualMonacoPrefix(form) {
+  const textareas = form.find('textarea[is-expression="yes"]');
+  textareas.each(function () {
+    const jThis = $(this);
+    const orginalVal = jThis.data("original-value");
+    if (orginalVal !== undefined) {
+      jThis.val(orginalVal);
+      jThis.removeData("original-value");
+    }
+  });
 }
 
 function updateMatchingRows(e, viewname) {
@@ -1136,44 +1177,41 @@ function pull_capacitor_builder() {
   });
 }
 
-function check_xcodebuild() {
-  const handleVersion = (version) => {
-    const tokens = version.split(".");
-    const majVers = parseInt(tokens[0]);
-    const marker = $("#versionMarkerId");
-    if (majVers >= 11) {
-      marker.removeClass("text-danger");
-      marker.addClass("text-success");
-      marker.removeClass("fa-times");
-      marker.addClass("fa-check");
-    } else {
-      marker.removeClass("text-success");
-      marker.addClass("text-danger");
-      marker.removeClass("fa-check");
-      marker.addClass("fa-times");
-    }
-  };
-  $.ajax("/admin/mobile-app/check-xcodebuild", {
+function check_ios_build_deps() {
+  $.ajax("/admin/mobile-app/check-ios-build-tools", {
     type: "GET",
     success: function (res) {
-      if (res.installed) {
-        $("#xcodebuildStatusId").html(
-          `<span>
-            installed<i class="ps-2 fas fa-check text-success"></i>
-          </span>
-          `
-        );
-        $("#xcodebuildVersionBoxId").removeClass("d-none");
-        $("#xcodebuildVersionId").html(` ${res.version}`);
-        handleVersion(res.version || "0");
-      } else {
-        $("#xcodebuildStatusId").html(
-          `<span>
-            not available<i class="ps-2 fas fa-times text-danger"></i>
-          </span>
-          `
-        );
-        $("#xcodebuildVersionBoxId").addClass("d-none");
+      const { xcodebuild, cocoapods, isMac } = res;
+      if (isMac) {
+        // update xcodebuild status
+        if (xcodebuild.installed) {
+          $("#xcodebuildStatusId").html(
+            `${xcodebuild.version}<i class="p-2 fas ${
+              xcodebuild.fullfilled
+                ? "fa-check text-success"
+                : "fa-times text-danger"
+            }"></i>`
+          );
+        } else {
+          $("#xcodebuildStatusId").html(
+            `not available<i class="p-2 fas fa-times text-danger"></i>`
+          );
+        }
+
+        // update cocoapods status
+        if (cocoapods.installed) {
+          $("#cocoapodsStatusId").html(
+            `${cocoapods.version}<i class="p-2 fas ${
+              cocoapods.fullfilled
+                ? "fa-check text-success"
+                : "fa-times text-danger"
+            }"></i>`
+          );
+        } else {
+          $("#cocoapodsStatusId").html(
+            `not available<i class="p-2 fas fa-times text-danger"></i>`
+          );
+        }
       }
     },
   });

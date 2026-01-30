@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "1.5.0-beta.17",
+  "version": "1.6.0-alpha.1",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -37,17 +37,18 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "optionalDependencies": {
-    "@saltcorn/postgres": "1.5.0-beta.17",
-    "@saltcorn/sqlite": "1.5.0-beta.17"
+    "@saltcorn/postgres": "1.6.0-alpha.1",
+    "@saltcorn/sqlite": "1.6.0-alpha.1"
   },
   "dependencies": {
-    "@saltcorn/types": "1.5.0-beta.17",
-    "@saltcorn/markup": "1.5.0-beta.17",
-    "@saltcorn/common-code": "1.5.0-beta.17",
-    "@saltcorn/db-common": "1.5.0-beta.17",
-    "@saltcorn/sqlite-mobile": "1.5.0-beta.17",
+    "@saltcorn/types": "1.6.0-alpha.1",
+    "@saltcorn/markup": "1.6.0-alpha.1",
+    "@saltcorn/common-code": "1.6.0-alpha.1",
+    "@saltcorn/db-common": "1.6.0-alpha.1",
+    "@saltcorn/sqlite-mobile": "1.6.0-alpha.1",
     "@saltcorn/plain-date": "0.2.5",
     "acorn": "^8.14.0",
+    "apns2": "11.8.0",
     "assert": "^2.1.0",
     "astring": "^1.9.0",
     "axios": "^0.30.2",
@@ -94,10 +95,11 @@
     "browserify-zlib": "0.2.0",
     "nodemailer": "^6.10.0",
     "mjml": "5.0.0-alpha.6",
-    "underscore": "^1.13.1",
+    "underscore": "1.13.7",
     "unidecode": "1.1.0",
     "tough-cookie": "2.5.0",
-    "vm2": "^3.10.0"
+    "vm2": "^3.10.3",
+    "xml2js": "0.6.2"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {

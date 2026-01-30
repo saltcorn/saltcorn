@@ -1,14 +1,13 @@
 {
   "name": "@saltcorn/builder",
-  "version": "1.5.0-beta.17",
+  "version": "1.6.0-alpha.1",
   "description": "Drag and drop view builder for Saltcorn, open-source no-code platform",
   "main": "index.js",
   "homepage": "https://saltcorn.com",
   "scripts": {
     "build": "webpack --mode production",
     "builddev": "webpack --mode none",
-    "test1": "jest tests --runInBand",
-    "test": "echo NO TESTS",
+    "test": "jest tests --runInBand",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
@@ -21,7 +20,7 @@
     "@babel/preset-react": "7.24.7",
     "@craftjs/core": "0.1.0-beta.20",
     "@craftjs/utils": "0.1.0-beta.20",
-    "@saltcorn/common-code": "1.5.0-beta.17",
+    "@saltcorn/common-code": "1.6.0-alpha.1",
     "saltcorn-craft-layers-noeye": "0.1.0-beta.22",
     "@fonticonpicker/react-fonticonpicker": "1.2.0",
     "@fortawesome/fontawesome-svg-core": "1.2.34",

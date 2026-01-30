@@ -2,9 +2,7 @@ const { Command, Flags } = require("@oclif/core");
 const path = require("path");
 const Plugin = require("@saltcorn/data/models/plugin");
 const { MobileBuilder } = require("@saltcorn/mobile-builder/mobile-builder");
-const {
-  decodeProvisioningProfile,
-} = require("@saltcorn/mobile-builder/utils/common-build-utils");
+const { decodeProvisioningProfile } = require("@saltcorn/data/utils");
 const { init_multi_tenant, getState } = require("@saltcorn/data/db/state");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
 const User = require("@saltcorn/data/models/user");
@@ -44,7 +42,7 @@ class BuildAppCommand extends Command {
       );
     }
 
-    if (flags.platforms.includes("ios")) {
+    if (flags.platforms.includes("ios") && !flags.noProvisioningProfile) {
       if (!flags.provisioningProfile)
         throw new Error("Please specify a provisioning profile");
       if (flags.allowShareTo && !flags.shareExtensionProvisioningProfile)
@@ -73,26 +71,30 @@ class BuildAppCommand extends Command {
   async buildIosParams(flags) {
     let result = undefined;
     if (flags.platforms.includes("ios")) {
-      const mainProfileVals = await decodeProvisioningProfile(
-        flags.buildDirectory,
-        flags.provisioningProfile
-      );
-      result = {
-        appleTeamId: mainProfileVals.teamId,
-        mainProvisioningProfile: {
-          guuid: mainProfileVals.guuid,
-        },
-      };
-      if (flags.allowShareTo) {
-        const shareExtProfileVals = await decodeProvisioningProfile(
-          flags.buildDirectory,
-          flags.shareExtensionProvisioningProfile
-        );
-        result.shareExtensionProvisioningProfile = {
-          guuid: shareExtProfileVals.guuid,
-          specifier: shareExtProfileVals.specifier,
-          identifier: shareExtProfileVals.identifier,
+      if (flags.noProvisioningProfile)
+        result = {
+          noProvisioningProfile: true,
         };
+      else {
+        const mainProfileVals = await decodeProvisioningProfile(
+          flags.provisioningProfile
+        );
+        result = {
+          appleTeamId: mainProfileVals.teamId,
+          mainProvisioningProfile: {
+            guuid: mainProfileVals.guuid,
+          },
+        };
+        if (flags.allowShareTo) {
+          const shareExtProfileVals = await decodeProvisioningProfile(
+            flags.shareExtensionProvisioningProfile
+          );
+          result.shareExtensionProvisioningProfile = {
+            guuid: shareExtProfileVals.guuid,
+            specifier: shareExtProfileVals.specifier,
+            identifier: shareExtProfileVals.identifier,
+          };
+        }
       }
     }
     return result;
@@ -137,6 +139,8 @@ class BuildAppCommand extends Command {
         autoPublicLogin: flags.autoPublicLogin,
         showContinueAsPublicUser: flags.showContinueAsPublicUser,
         allowOfflineMode: flags.allowOfflineMode,
+        syncOnReconnect: flags.syncOnReconnect,
+        syncOnAppResume: flags.syncOnAppResume,
         pushSync: flags.pushSync,
         syncInterval: flags.syncInterval,
         allowShareTo: flags.allowShareTo,
@@ -146,6 +150,7 @@ class BuildAppCommand extends Command {
         iosParams: iosParams,
         tenantAppName: flags.tenantAppName,
         buildType: flags.buildType,
+        allowClearTextTraffic: flags.allowClearTextTraffic,
         keyStorePath: flags.androidKeystore,
         keyStoreAlias: flags.androidKeyStoreAlias,
         keyStorePassword: flags.androidKeystorePassword,
@@ -316,6 +321,19 @@ BuildAppCommand.flags = {
     description:
       "Switch to offline mode when there is no internet, sync the data when a connection is available again.",
   }),
+  syncOnReconnect: Flags.boolean({
+    name: "Sync on connection restored",
+    string: "syncOnReconnect",
+    description:
+      "Run Synchronizations and return into online mode when the network connection is restored. " +
+      "When disabled, you still can do this manually.",
+  }),
+  syncOnAppResume: Flags.boolean({
+    name: "Sync on app resume",
+    string: "syncOnAppResume",
+    description:
+      "When offline mode is enabled, synchronize the synchedTables tables when the app is resumed.",
+  }),
   pushSync: Flags.boolean({
     name: "Push sync",
     string: "pushSync",
@@ -328,6 +346,13 @@ BuildAppCommand.flags = {
     description:
       "Perdiodic interval (in minutes) to run synchronizations in the background. " +
       "This is just a min interval, depending on system conditions, the actual time may be longer.",
+  }),
+  noProvisioningProfile: Flags.boolean({
+    name: "no provisioning profile",
+    string: "noProvisioningProfile",
+    description:
+      "Do not use a provisioning profile, only for simulator builds (iOS only)",
+    default: false,
   }),
   provisioningProfile: Flags.string({
     name: "provisioning profile",
@@ -344,6 +369,13 @@ BuildAppCommand.flags = {
     name: "build type",
     string: "buildType",
     description: "debug or release build",
+  }),
+  allowClearTextTraffic: Flags.boolean({
+    name: "allow clear text traffic",
+    string: "allowClearTextTraffic",
+    description:
+      "Enable this to allow unsecure HTTP connections. Useful for local testing.",
+    default: false,
   }),
   androidKeystore: Flags.string({
     name: "android key store",

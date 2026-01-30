@@ -272,6 +272,18 @@ const itShouldRedirectUnauthToLogin = (path, dest) => {
   });
 };
 
+const itShouldNotIncludeTextForAdmin = (path, text) => {
+  it(`should show admin ${text} on ${path}`, async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get(path)
+      .set("Cookie", loginCookie)
+      .expect(200)
+      .expect(toNotInclude(text));
+  });
+};
+
 const itShouldIncludeTextForAdmin = (path, text) => {
   it(`should show admin ${text} on ${path}`, async () => {
     const app = await getApp({ disableCsrf: true });
@@ -474,5 +486,6 @@ module.exports = {
   succeedJsonWithWholeBody,
   resToLoginCookie,
   itShouldIncludeTextForAdmin,
+  itShouldNotIncludeTextForAdmin,
   load_url_dom,
 };

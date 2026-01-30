@@ -2,7 +2,7 @@
 
 import { Capacitor } from "@capacitor/core";
 import { apiCall } from "./api";
-import { showAlerts } from "./common";
+import { showToasts } from "./common";
 import { PushNotifications } from "@capacitor/push-notifications";
 import { Device } from "@capacitor/device";
 
@@ -12,11 +12,12 @@ import { Device } from "@capacitor/device";
 async function notifyTokenApi(config, isSubscribe) {
   console.log("notifyTokenApi subscribe:", isSubscribe);
   const { token, deviceId } = config.pushConfiguration;
+  const platform = Capacitor.getPlatform();
   try {
     const response = await apiCall({
       method: "POST",
       path: `/notifications/mobile-${isSubscribe ? "subscribe" : "remove-subscription"}`,
-      body: { token, deviceId },
+      body: { token, deviceId, platform },
     });
     const data = response.data;
     if (data.success === "ok")
@@ -45,11 +46,12 @@ async function notifyTokenApi(config, isSubscribe) {
 async function syncTokenApi(config, isSubscribe) {
   console.log("syncTokenApi subscribe:", isSubscribe);
   const { token, deviceId } = config.pushConfiguration;
+  const platform = Capacitor.getPlatform();
   try {
     const response = await apiCall({
       method: "POST",
       path: `/sync/push_${isSubscribe ? "subscribe" : "unsubscribe"}`,
-      body: { token, deviceId, synchedTables: config.synchedTables },
+      body: { token, deviceId, synchedTables: config.synchedTables, platform },
     });
     const data = response.data;
     if (data.success === "ok")
@@ -151,7 +153,7 @@ export function addPusNotifyHandler() {
   const state = saltcorn.data.state.getState();
   state.mobile_push_handler["push_notification"] = (notification) => {
     console.log("Push notification received:", notification);
-    showAlerts([
+    showToasts([
       {
         type: "info",
         msg: notification.body,

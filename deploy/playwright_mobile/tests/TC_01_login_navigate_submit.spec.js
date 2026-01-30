@@ -135,6 +135,8 @@ test.describe("Login Navigate Upload", () => {
       // select a date and check the input
       const yearInput = iframe.locator(".numInput.cur-year");
       await yearInput.fill("2025");
+      await yearInput.press("Enter");
+
       const monthSelect = iframe.locator(
         "select.flatpickr-monthDropdown-months"
       );

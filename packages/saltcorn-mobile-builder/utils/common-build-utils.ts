@@ -30,13 +30,14 @@ const resizer = require("resize-with-sharp-or-jimp");
  * and install the capacitor and cordova modules to node_modules (cap sync will be run later)
  * @param buildDir directory where the app will be build
  * @param templateDir directory of the template code that will be copied to 'buildDir'
- * @param fcmEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications"
+ * @param pushEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications"
  */
 export function prepareBuildDir(
   buildDir: string,
   templateDir: string,
-  fcmEnabled: boolean,
+  pushEnabled: boolean,
   backgroundFetchEnabled: boolean,
+  pushSyncEnabled: boolean
 ) {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
@@ -67,12 +68,13 @@ export function prepareBuildDir(
     "@capacitor/app@7.1.0",
     "send-intent@7.0.0",
     ...additionalPlugins,
-    ...(fcmEnabled
+    ...(pushEnabled
       ? ["@capacitor/device@7.0.2", "@capacitor/push-notifications@7.0.3"]
       : []),
     ...(backgroundFetchEnabled
       ? ["@transistorsoft/capacitor-background-fetch@7.1.0"]
       : []),
+    ...(pushSyncEnabled ? ["capacitor-plugin-silent-notifications@7.0.1"] : []),
   ];
   console.log("capDepsAndPlugins", capDepsAndPlugins);
 
@@ -230,7 +232,8 @@ export async function modifyAndroidManifest(
   buildDir: string,
   allowShareTo: boolean,
   allowFCM: boolean,
-  allowAuthIntent: boolean
+  allowAuthIntent: boolean,
+  allowClearTextTraffic: boolean
 ) {
   console.log("modifyAndroidManifest");
   try {
@@ -245,20 +248,24 @@ export async function modifyAndroidManifest(
     const content = readFileSync(androidManifest);
     const parsed = await parseStringPromise(content);
 
-    parsed.manifest["uses-permission"] = androidPermissions(allowFCM).map((perm) => ({
-      $: { "android:name": perm },
-    }));
+    parsed.manifest["uses-permission"] = androidPermissions(allowFCM).map(
+      (perm) => ({
+        $: { "android:name": perm },
+      })
+    );
     parsed.manifest["uses-feature"] = androidFeatures().map((feat) => ({
       $: { "android:name": feat },
     }));
-    
+
     parsed.manifest.application[0].$ = {
       ...parsed.manifest.application[0].$,
       "android:allowBackup": "false",
       "android:fullBackupContent": "false",
       "android:dataExtractionRules": "@xml/data_extraction_rules",
       "android:networkSecurityConfig": "@xml/network_security_config",
-      "android:usesCleartextTraffic": "true",
+      ...(allowClearTextTraffic
+        ? { "android:usesCleartextTraffic": "true" }
+        : {}),
     };
 
     if (allowFCM) {
@@ -628,11 +635,40 @@ export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
   }
 }
 
-export function modifyInfoPlist(buildDir: string, allowShareTo: boolean) {
+export function modifyInfoPlist(
+  buildDir: string,
+  allowShareTo: boolean,
+  backgroundSyncEnabled: boolean,
+  pushSyncEnabled: boolean,
+  allowClearTextTraffic: boolean
+) {
   const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
   const content = readFileSync(infoPlist, "utf8");
 
   const newCfgs = `
+  ${
+    backgroundSyncEnabled
+      ? `<key>BGTaskSchedulerPermittedIdentifiers</key>
+  <array>
+    <string>com.transistorsoft.fetch</string>
+  </array>
+  <key>UIBackgroundModes</key>
+  <array>
+    <string>fetch</string>
+  </array>
+  `
+      : ""
+  }
+
+  ${
+    pushSyncEnabled
+      ? `<key>UIBackgroundModes</key>
+  <array>
+    <string>remote-notification</string>
+  </array>
+  `
+      : ""
+  }
   <key>NSCameraUsageDescription</key>
   <string>This app requires access to the camera to take photos</string>
   <key>NSPhotoLibraryUsageDescription</key>
@@ -664,10 +700,59 @@ export function modifyInfoPlist(buildDir: string, allowShareTo: boolean) {
   </array>`
       : ""
   }
-  `;
+  ${
+    allowClearTextTraffic
+      ? `<key>NSAppTransportSecurity</key>
+  <dict>
+    <key>NSAllowsArbitraryLoads</key>
+    <true/>
+  </dict>`
+      : ""
+  }
+`;
   // add newCfgs after the first <dict> tag
   const newContent = content.replace(/<dict>/, `<dict>${newCfgs}`);
   writeFileSync(infoPlist, newContent, "utf8");
+}
+
+export function writeEntitlementsPlist(buildDir: string) {
+  const file = join(buildDir, "ios", "App", "App", "App.entitlements");
+  try {
+    writeFileSync(
+      file,
+      `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>aps-environment</key>
+    <string>production</string>
+    <key>com.apple.security.application-groups</key>
+    <array />
+</dict>
+</plist>`
+    );
+  } catch (error: any) {
+    console.log(
+      `Unable to write the Entitlements plist file: ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
+}
+
+export function runAddEntitlementsScript(buildDir: string) {
+  try {
+    const result = spawnSync("ruby", ["add_entitlements.rb"], {
+      cwd: buildDir,
+    });
+    console.log(result.output.toString());
+  } catch (error: any) {
+    console.log(
+      `Unable to run the add_entitlements.rb script: ${
+        error.message ? error.message : "Unknown error"
+      }`
+    );
+  }
 }
 
 export function copyShareExtFiles(buildDir: string) {
@@ -690,35 +775,121 @@ export function copyShareExtFiles(buildDir: string) {
   );
 }
 
-export async function decodeProvisioningProfile(
+export function modifyAppDelegate(
   buildDir: string,
-  provisioningProfile: string
+  backgroundSyncEnabled: boolean,
+  pushSyncEnabled: boolean
 ) {
-  console.log("decodeProvisioningProfile", buildDir, provisioningProfile);
-  const outFile = join(buildDir, "provisioningProfile.xml");
-  try {
-    execSync(`security cms -D -i "${provisioningProfile}" > ${outFile}`);
-    const content = readFileSync(outFile);
-    const parsed = await parseStringPromise(content);
-    const dict = parsed.plist.dict[0];
-    const guuid = dict.string[dict.string.length - 1];
-    const teamId = dict.array[0].string[0];
-    const specifier = dict.string[1];
-    const identifier = dict.dict[0].string[0];
-    const result = { guuid, teamId, specifier, identifier };
-    console.log(result);
-    return result;
-  } catch (error: any) {
-    console.log(
-      `Unable to decode the provisioning profile '${provisioningProfile}': ${
-        error.message ? error.message : "Unknown error"
-      }`
+  const appDelegateFile = join(
+    buildDir,
+    "ios",
+    "App",
+    "App",
+    "AppDelegate.swift"
+  );
+  let content = readFileSync(appDelegateFile, "utf8");
+
+  // modify cusomization point after application launch
+  content = content.replace(
+    /func application\(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: \[UIApplication.LaunchOptionsKey: Any\]\?\) -> Bool {/,
+    `func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
+        // Override point for customization after application launch.
+
+       
+       ${
+         backgroundSyncEnabled
+           ? `// [capacitor-background-fetch]
+       let fetchManager = TSBackgroundFetch.sharedInstance();
+       fetchManager?.didFinishLaunching();`
+           : ""
+       }
+
+       self.window?.rootViewController?.navigationController?.interactivePopGestureRecognizer?.isEnabled = false;
+`
+  );
+
+  if (backgroundSyncEnabled) {
+    // add "import TSBackgroundFetch" before "@UIApplicationMain"
+    content = content.replace(
+      /@UIApplicationMain/,
+      `import TSBackgroundFetch
+
+@UIApplicationMain`
     );
-    throw error;
+
+    // add fetch handler at the end of the file, before the last }
+    content = content.replace(
+      /}\s*$/,
+      `
+    // [capacitor-background-fetch]
+   func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+       print("BackgroundFetchPlugin AppDelegate received fetch event");
+       let fetchManager = TSBackgroundFetch.sharedInstance();
+       fetchManager?.perform(completionHandler: completionHandler, applicationState: application.applicationState);
+   }
+}
+`
+    );
+  }
+  if (pushSyncEnabled) {
+    content = content.replace(
+      /}\s*$/,
+      `
+
+  // [capacitor-push-notifications]
+  func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+    NotificationCenter.default.post(name: .capacitorDidRegisterForRemoteNotifications, object: deviceToken)
+  }
+
+  // [capacitor-push-notifications]
+  func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+    NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
+  }
+
+  // ------------------------------
+
+  // [silent push notification handler]
+  func application(_ application: UIApplication, didReceiveRemoteNotification userInfo: [AnyHashable : Any], fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+    // debug
+    print("Received by: didReceiveRemoteNotification w/ fetchCompletionHandler")
+
+    // Perform background operation, need to create a plugin
+    NotificationCenter.default.post(name: Notification.Name(rawValue: "silentNotificationReceived"), object: nil, userInfo: userInfo)
+
+    // Give the listener a few seconds to complete, system allows for 30 - we give 25. The system will kill this after 30 seconds.
+    DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
+        // Execute after 25 seconds
+        completionHandler(.newData)
+    }
+  }
+    
+  // [silent push notification handler]
+  // we just add this to deal with an iOS simulator bug, this method is deprecated as of iOS 13
+  func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+      // debug
+      print("Received by: performFetchWithCompletionHandler")
+      
+      // Perform background operation, need to create a plugin
+      NotificationCenter.default.post(name: Notification.Name(rawValue: "silentNotificationReceived"), object: nil, userInfo: nil)
+
+      // Give the listener a few seconds to complete, system allows for 30 - we give 25. The system will kill this after 30 seconds.
+      DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
+          // Execute after 25 seconds
+          completionHandler(.newData)
+      }
   }
 }
+`
+    );
+  }
 
-export function writePrivacyInfo(buildDir: string) {
+  writeFileSync(appDelegateFile, content, "utf8");
+}
+
+export function writePrivacyInfo(
+  buildDir: string,
+  backgroundSyncEnabled: boolean
+) {
   const infoFile = join(buildDir, "ios", "App", "PrivacyInfo.xcprivacy");
   const content = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -735,6 +906,22 @@ export function writePrivacyInfo(buildDir: string) {
           <string>C617.1</string>
         </array>
       </dict>
+
+      ${
+        backgroundSyncEnabled
+          ? `
+      <!-- [1] background_fetch: UserDefaults -->
+      <dict>
+          <key>NSPrivacyAccessedAPIType</key>
+          <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+
+          <key>NSPrivacyAccessedAPITypeReasons</key>
+          <array>
+              <string>CA92.1</string>
+          </array>
+        </dict>`
+          : ""
+      }
     </array>
   </dict>
 </plist>`;
@@ -759,6 +946,7 @@ export function copyServerFiles(buildDir: string) {
     "saltcorn-common.js",
     "saltcorn.js",
     "saltcorn.css",
+    "saltcorn-mobile.css",
     "codemirror.js",
     "codemirror.css",
     "socket.io.min.js",
@@ -827,6 +1015,8 @@ export function writeCfgFile({
   autoPublicLogin,
   showContinueAsPublicUser,
   allowOfflineMode,
+  syncOnReconnect,
+  syncOnAppResume,
   pushSync,
   syncInterval,
   allowShareTo,
@@ -843,6 +1033,8 @@ export function writeCfgFile({
     autoPublicLogin,
     showContinueAsPublicUser,
     allowOfflineMode,
+    syncOnReconnect,
+    syncOnAppResume,
     pushSync,
     syncInterval,
     allowShareTo,
@@ -901,6 +1093,40 @@ export async function buildTablesFile(
     return plugin;
   };
 
+  const filterTableFunc = async (table: any) => {
+    let result = table;
+    if (table.provider_name) {
+      const oldProviderCfg = JSON.parse(
+        JSON.stringify(table.provider_cfg || {})
+      );
+      const provider = state.table_providers[table.provider_name];
+      if (provider?.configuration_workflow) {
+        try {
+          const flow = await provider.configuration_workflow();
+          for (const step of flow?.steps || []) {
+            if (step.form) {
+              const form = await step.form(oldProviderCfg);
+              for (const field of form?.fields || []) {
+                if (
+                  field.exclude_from_mobile ||
+                  field.input_type === "password"
+                ) {
+                  delete result.provider_cfg[field.name];
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.log(
+            `Error in configuration_workflow of table provider ${table.provider_name}`
+          );
+          console.log(error);
+        }
+      }
+    }
+    return result;
+  };
+
   const filterFunc = async (table: string, rows: any) => {
     switch (table) {
       case "_sc_plugins":
@@ -917,6 +1143,8 @@ export async function buildTablesFile(
             cfg && !(cfg.excludeFromMobile || cfg.input_type === "password")
           );
         });
+      case "_sc_tables":
+        return await Promise.all(rows.map(filterTableFunc));
       default:
         return rows;
     }
@@ -1065,6 +1293,18 @@ export async function prepareSplashPage(
 }
 
 export function writePodfile(buildDir: string) {
+  const state = getState();
+  let hasGeolocation = false;
+  let hasPush = true;
+  let hasSilentPush = true;
+  if (state) {
+    for (const plugin of state.capacitorPlugins || []) {
+      if (plugin.name === "@capacitor/geolocation") {
+        hasGeolocation = true;
+      }
+    }
+  }
+
   const podfileContent = `
   require_relative '../../node_modules/@capacitor/ios/scripts/pods_helpers'
   
@@ -1079,15 +1319,23 @@ export function writePodfile(buildDir: string) {
   def capacitor_pods
     pod 'Capacitor', :path => '../../node_modules/@capacitor/ios'
     pod 'CapacitorCordova', :path => '../../node_modules/@capacitor/ios'
+    pod 'CapacitorApp', :path => '../../node_modules/@capacitor/app'
     pod 'CapacitorCommunitySqlite', :path => '../../node_modules/@capacitor-community/sqlite'
     pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
-    pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'
+    ${hasGeolocation ? `pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'` : ""}
     pod 'CapacitorNetwork', :path => '../../node_modules/@capacitor/network'
     pod 'CapacitorScreenOrientation', :path => '../../node_modules/@capacitor/screen-orientation'
     pod 'SendIntent', :path => '../../node_modules/send-intent'
     pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
     pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'
+    ${
+      hasPush
+        ? `pod 'CapacitorPushNotifications', :path => '../../node_modules/@capacitor/push-notifications'
+    pod 'CapacitorDevice', :path => '../../node_modules/@capacitor/device'`
+        : ""
+    }
+    ${hasSilentPush ? `pod 'CapacitorPluginSilentNotifications', :path => '../../node_modules/capacitor-plugin-silent-notifications'` : ""}
   end
   
   target 'App' do
@@ -1165,8 +1413,8 @@ export function modifyXcodeProjectFile(
       fileContent = fileContent.replace(targetCfgBlock, newCfgBlock);
     }
   }
-  fileContent = fileContent.replace(
-    /MARKETING_VERSION = 1.0;/,
+  fileContent = fileContent.replaceAll(
+    /MARKETING_VERSION = 1.0;/g,
     `MARKETING_VERSION = ${appVersion};`
   );
   writeFileSync(projectFile, fileContent, "utf8");
@@ -1183,7 +1431,16 @@ export function generateAndroidVersionCode(appVersion: string) {
   );
 }
 
-export function modifyGradleConfig(buildDir: string, appVersion: string) {
+export function modifyGradleConfig(
+  buildDir: string,
+  appVersion: string,
+  keyStoreData?: {
+    keystorePath: string;
+    keystorePassword: string;
+    keyAlias: string;
+    keyPassword: string;
+  }
+) {
   console.log("modifyGradleConfig");
   const gradleFile = join(buildDir, "android", "app", "build.gradle");
   const gradleContent = readFileSync(gradleFile, "utf8");
@@ -1191,5 +1448,34 @@ export function modifyGradleConfig(buildDir: string, appVersion: string) {
   let newGradleContent = gradleContent
     .replace(/versionName "1.0"/, `versionName "${appVersion}"`)
     .replace(/versionCode 1/, `versionCode ${versionCode}`);
+
+  if (keyStoreData) {
+    const signingConfigs = `
+    signingConfigs {
+      debug {
+        storeFile file("${keyStoreData.keystorePath}")
+        storePassword "${keyStoreData.keystorePassword}"
+        keyAlias "${keyStoreData.keyAlias}"
+        keyPassword "${keyStoreData.keyPassword}"
+      }
+  }`;
+    // add a new line with signingConfigs above     "defaultConfig {"
+    newGradleContent = newGradleContent.replace(
+      /defaultConfig \{/,
+      `${signingConfigs}
+    defaultConfig {`
+    );
+
+    const debugBuildTypesBlock = `
+    debug {
+      signingConfig signingConfigs.debug
+    }`;
+    // add the debug build type block above   "release {"
+    newGradleContent = newGradleContent.replace(
+      /release \{/,
+      `${debugBuildTypesBlock}
+    release {`
+    );
+  }
   writeFileSync(gradleFile, newGradleContent, "utf8");
 }

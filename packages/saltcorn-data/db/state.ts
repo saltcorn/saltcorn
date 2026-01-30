@@ -658,39 +658,9 @@ class State {
 
   async refresh_push_helper() {
     try {
-      const pushConfig: any = {
-        icon: this.getConfig("push_notification_icon"),
-        badge: this.getConfig("push_notification_badge"),
-        vapidPublicKey: this.getConfig("vapid_public_key"),
-        vapidPrivateKey: this.getConfig("vapid_private_key"),
-        vapidEmail: this.getConfig("vapid_email"),
-        firebase: {
-          jsonPath: this.getConfig("firebase_json_key"),
-          jsonContent: null,
-        },
-        notificationSubs: this.getConfig("push_notification_subscriptions", {}),
-        syncSubs: this.getConfig("push_sync_subscriptions", {}),
-      };
-
-      if (!this.pushHelper) {
-        const fireBaseFile =
-          typeof pushConfig.firebase.jsonPath === "string" &&
-          pushConfig.firebase.jsonPath.length > 0
-            ? await File.findOne(pushConfig.firebase.jsonPath)
-            : null;
-        if (fireBaseFile && !fireBaseFile.isDirectory)
-          pushConfig.firebase.jsonContent = require(fireBaseFile?.absolutePath);
-        this.pushHelper = new PushMessageHelper(pushConfig);
-      } else {
-        if (pushConfig.firebase.jsonPath !== this.pushHelper.firebaseJsonPath) {
-          const fireBaseFile = await File.findOne(pushConfig.firebase.jsonPath);
-          if (fireBaseFile && !fireBaseFile.isDirectory)
-            pushConfig.firebase.jsonContent = require(
-              fireBaseFile?.absolutePath
-            );
-        }
-        this.pushHelper.updateConfig(pushConfig);
-      }
+      if (!this.pushHelper)
+        this.pushHelper = await PushMessageHelper.createInstance();
+      else await this.pushHelper.refreshInstance();
     } catch (error) {
       console.error("Error initializing push helper", error);
     }
@@ -854,7 +824,14 @@ class State {
       const models = allModels.filter((m: any) => m.table_id == table.id);
       for (const model of models) {
         const predictor_function = model.predictor_function;
-        this.functions[model.name] = { isAsync: true, run: predictor_function };
+        this.functions[model.name] = {
+          isAsync: true,
+          run: predictor_function,
+          arguments: [
+            { name: "arg1", type: "JSON", tstype: "string | Row"  },
+            { name: "arg2", type: "JSON", tstype: "Row" },
+          ],
+        };
         this.function_context[model.name] = predictor_function;
       }
     }
@@ -1180,7 +1157,11 @@ class State {
   }
 
   get eval_context() {
-    return { ...this.function_context, ...this.codepage_context };
+    return {
+      process: undefined,
+      ...this.function_context,
+      ...this.codepage_context,
+    };
   }
 
   /**

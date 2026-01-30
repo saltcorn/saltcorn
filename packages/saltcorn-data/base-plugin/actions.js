@@ -1603,39 +1603,115 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Navigation action",
-    configFields: [
-      {
-        name: "nav_action",
-        label: "Nav Action",
-        type: "String",
-        required: true,
-        attributes: {
-          options: [
-            "Go to URL",
-            "Popup modal",
-            "Back",
-            "Reload page",
-            "Close modal",
-            "Close tab",
-          ],
+    configFields: async () => {
+      const pages = await Page.find({}, { cached: true });
+      const views = await View.find({}, { cached: true });
+      return [
+        {
+          name: "nav_action",
+          label: "Nav Action",
+          type: "String",
+          required: true,
+          attributes: {
+            options: [
+              "Go to URL",
+              "Go to View",
+              "Go to Page",
+              "Popup modal",
+              "Back",
+              "Reload page",
+              "Close modal",
+              "Close tab",
+            ],
+          },
         },
+        {
+          name: "url",
+          label: "URL",
+          type: "String",
+          required: true,
+          showIf: { nav_action: ["Go to URL", "Popup modal"] },
+        },
+        {
+          name: "page",
+          label: "Page",
+          input_type: "select",
+          options: pages.map((p) => p.name),
+          showIf: { nav_action: "Go to Page" },
+        },
+        {
+          name: "view",
+          label: "View",
+          input_type: "select",
+          options: views.map((p) => p.name),
+          showIf: { nav_action: "Go to View" },
+        },
+        {
+          name: "state_formula",
+          label: "State",
+          type: "String",
+          class: "validate-expression",
+          showIf: { nav_action: ["Go to Page", "Go to View"] },
+        },
+        {
+          name: "new_tab",
+          label: "Open in new tab",
+          type: "Bool",
+          showIf: { nav_action: ["Go to URL", "Go to Page", "Go to View"] },
+        },
+        {
+          name: "in_popup",
+          label: "Open in popup modal",
+          type: "Bool",
+          showIf: { nav_action: ["Go to URL", "Go to Page", "Go to View"] },
+        },
+      ];
+    },
+    run: async ({
+      row,
+      user,
+      configuration: {
+        nav_action,
+        url,
+        state_formula,
+        new_tab,
+        view,
+        page,
+        in_popup,
       },
-      {
-        name: "url",
-        label: "URL",
-        type: "String",
-        required: true,
-        showIf: { nav_action: ["Go to URL", "Popup modal"] },
-      },
-    ],
-    run: async ({ row, user, configuration: { nav_action, url }, req }) => {
-      let url1 = interpolate(url, row, user, "navigate URL");
+      req,
+    }) => {
+      let qs = "";
+      if (["Go to Page", "Go to View"].includes(nav_action) && state_formula) {
+        const new_state = eval_expression(
+          state_formula,
+          row || {},
+          user,
+          "navigate state formula"
+        );
+        qs = "?" + objectToQueryString(new_state);
+      }
+      const kgoto = in_popup ? "popup" : "goto";
 
       switch (nav_action) {
         case "Go to URL":
-          return { goto: url1 };
+          return {
+            [kgoto]: interpolate(url, row, user, "navigate URL"),
+            ...(new_tab ? { target: "_blank" } : {}),
+          };
+        case "Go to Page":
+          return {
+            [kgoto]: `/page/${page}${qs}`,
+            ...(new_tab ? { target: "_blank" } : {}),
+          };
+        case "Go to View":
+          return {
+            [kgoto]: `/view/${view}${qs}`,
+            ...(new_tab ? { target: "_blank" } : {}),
+          };
+
         case "Popup modal":
-          return { popup: url1 };
+          return { popup: interpolate(url, row, user, "navigate URL") };
         case "Back":
           return {
             eval_js: isWeb(req)
@@ -1823,6 +1899,40 @@ module.exports = {
     },
     namespace: "User interface",
   },
+  copy_to_clipboard: {
+    /**
+     * @param {object} opts
+     * @param {*} opts.table
+     * @returns {Promise<object[]>}
+     */
+    description: "Copy text based on the current row to clipboard",
+    requireRow: true,
+
+    configFields: [
+      {
+        name: "text_template",
+        label: "Text template",
+        sublabel:
+          "Use interpolations <code>{{ }}</code> to access row variables",
+        type: "String",
+        required: true,
+      },
+    ],
+
+    run: async ({
+      row,
+      table,
+      user,
+      req,
+      configuration: { text_template },
+      ...rest
+    }) => {
+      return {
+        eval_js: `navigator.clipboard.writeText(${JSON.stringify(interpolate(text_template || "", row || {}, user))})`,
+      };
+    },
+    namespace: "User interface",
+  },
 
   toast: {
     /**
@@ -1899,7 +2009,7 @@ module.exports = {
     configFormOptions: {
       formStyle: "vert",
     },
-    configFields: async ({ table, when_trigger }) => {
+    configFields: async ({ table, when_trigger, mode }) => {
       const fields = table ? table.getFields().map((f) => f.name) : [];
       const vars = [
         ...(table ? ["row"] : []),
@@ -1951,8 +2061,12 @@ module.exports = {
             mode: "application/javascript",
             table: table?.name || undefined,
             user: has_user,
+            workflow: mode === "workflow",
           },
-          class: "validate-statements enlarge-in-card",
+          class: [
+            "validate-statements",
+            mode !== "workflow" && "enlarge-in-card",
+          ],
           validator(s) {
             try {
               let AsyncFunction = Object.getPrototypeOf(

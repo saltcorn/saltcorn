@@ -1709,18 +1709,19 @@ const int = {
       ],
       isEdit: false,
       blockDisplay: true,
-      run: (v, req, attrs = {}) =>
-        div(
+      run: (v, req, attrs = {}) => {
+        return div(
           Array.from(
-            { length: attrs.max - attrs.min + 1 },
-            (_, i) => i + attrs.min
+            { length: +attrs.max - +attrs.min + 1 },
+            (_, i) => i + +attrs.min
           ).map((starVal) =>
             i({
               class: "fas fa-star",
               style: { color: starVal <= v ? "#ffc107" : "#ddd" },
             })
           )
-        ),
+        );
+      },
     },
     edit_star_rating: {
       description: "Input by clicking filled stars out of maximum.",
@@ -1750,8 +1751,8 @@ const int = {
         return div(
           { class: "editStarRating" },
           Array.from(
-            { length: attrs.max - attrs.min + 1 },
-            (_, i) => attrs.max - i
+            { length: +attrs.max - +attrs.min + 1 },
+            (_, i) => +attrs.max - i
           ).map(
             (starVal) =>
               input({
@@ -2609,6 +2610,82 @@ const bool = {
                   ? attrs?.true_label || "T"
                   : attrs?.false_label || "F"
             ),
+    },
+    thumbs_up_down: {
+      isEdit: true,
+      description:
+        "Edit with Thumb up/down for True, False and Null (missing) values",
+      configFields: [
+        {
+          name: "icons",
+          label: "Icons",
+          type: "String",
+          required: true,
+          attributes: {
+            options: ["Thumb", "Arrow", "Caret", "Smile", "Check"],
+          },
+        },
+      ],
+      run: (nm, v, attrs, cls, required, field) => {
+        let yes, no;
+        switch (attrs.icons) {
+          case "Arrow":
+            yes = i({ class: "fas fa-arrow-up" });
+            no = i({ class: "fas fa-arrow-down" });
+            break;
+          case "Caret":
+            yes = i({ class: "fas fa-caret-up" });
+            no = i({ class: "fas fa-caret-down" });
+            break;
+          case "Smile":
+            yes = i({ class: "far fa-smile" });
+            no = i({ class: "far fa-frown" });
+            break;
+          case "Check":
+            yes = i({ class: "fas fa-check" });
+            no = i({ class: "fas fa-times" });
+            break;
+
+          default:
+            yes = i({ class: "far fa-thumbs-up" });
+            no = i({ class: "far fa-thumbs-down" });
+            break;
+        }
+        return (
+          input({
+            type: "hidden",
+            "data-fieldname": text_attr(field.name),
+            name: attrs.isFilter ? undefined : text_attr(nm),
+            onChange: attrs.onChange,
+            "data-postprocess": `it=='on'?true:it=='off'?false:null`,
+            id: `input${text_attr(nm)}`,
+            value: !isdef(v) || v === null ? "?" : v ? "on" : "off",
+          }) +
+          div(
+            { class: "btn-group" },
+            button(
+              {
+                onClick: `thumbsUpDownClick(this, ${JSON.stringify(required)})`,
+                type: "button",
+                class: `btn btn-xs btn-${v === true ? "" : "outline-"}success thumbsup`,
+
+                id: `trib${text_attr(nm)}`,
+              },
+              yes
+            ),
+            button(
+              {
+                onClick: `thumbsUpDownClick(this, ${JSON.stringify(required)})`,
+                type: "button",
+                class: `btn btn-xs btn-${v === false ? "" : "outline-"}danger thumbsdown`,
+
+                id: `trib${text_attr(nm)}`,
+              },
+              no
+            )
+          )
+        );
+      },
     },
   },
   /** @type {object[]} */

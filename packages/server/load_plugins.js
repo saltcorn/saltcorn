@@ -18,7 +18,7 @@ const {
   supportedVersion,
   resolveLatest,
 } = require("@saltcorn/plugins-loader/stable_versioning");
-
+const path = require("path");
 const isFixedPlugin = (plugin) =>
   plugin.location === "@saltcorn/sbadmin2" ||
   plugin.location === "@saltcorn/base-plugin";
@@ -244,6 +244,8 @@ const loadAllPlugins = async (force) => {
  * @param force
  * @param noSignalOrDB
  * @param __ translation function
+ * @param allowUnsafeOnTenantsWithoutConfigSetting
+ * @param overwriteDependencies plugin dependencies to overwrite with local paths. Please only use this in testing (the force flag could cause trouble in multi process environments)
  * @returns {Promise<void>}
  */
 const loadAndSaveNewPlugin = async (
@@ -251,7 +253,8 @@ const loadAndSaveNewPlugin = async (
   force,
   noSignalOrDB,
   __ = (str) => str,
-  allowUnsafeOnTenantsWithoutConfigSetting
+  allowUnsafeOnTenantsWithoutConfigSetting,
+  overwriteDependencies
 ) => {
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
@@ -298,17 +301,31 @@ const loadAndSaveNewPlugin = async (
   if (msgs) loadMsgs.push(...msgs);
   // install dependecies
   for (const loc of plugin_module.dependencies || []) {
-    const existing = await Plugin.findOne({ location: loc });
-    if (!existing && loc !== plugin.location) {
+    const overwrite = (overwriteDependencies || {})[loc];
+    if (overwrite) {
+      const pckJson = require(path.join(overwrite, "package.json"));
       await loadAndSaveNewPlugin(
         new Plugin({
-          name: loc.replace("@saltcorn/", ""),
-          location: loc,
-          source: "npm",
+          name: pckJson.name,
+          location: overwrite,
+          source: "local",
         }),
-        force,
+        true,
         noSignalOrDB
       );
+    } else {
+      const existing = await Plugin.findOne({ location: loc });
+      if (!existing && loc !== plugin.location) {
+        await loadAndSaveNewPlugin(
+          new Plugin({
+            name: loc.replace("@saltcorn/", ""),
+            location: loc,
+            source: "npm",
+          }),
+          force,
+          noSignalOrDB
+        );
+      }
     }
   }
   let registeredWithReload = false;
