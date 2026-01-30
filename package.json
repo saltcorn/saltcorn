@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "nodemon packages/saltcorn/index.js",
     "test": "jest",
-    "tsc": "tsc --build && node ./packages/saltcorn-data/mobile-mocks/copy_excluded_files.js && npm run builddev --workspace @saltcorn/workflow",
+    "tsc": "tsc --build && node ./packages/saltcorn-data/mobile-mocks/copy_excluded_files.js",
     "clean": "tsc --build --clean",
     "docs": "typedoc --options typedoc_cfg.json",
     "jsondocs": "typedoc --json packages/server/docs.json --options typedoc_cfg.json"
@@ -77,8 +77,5 @@
   },
   "workspaces": [
     "./packages/*"
-  ],
-  "dependencies": {
-    "reactflow": "^11.11.4"
-  }
+  ]
 }

@@ -1,7 +1,13 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
-import ReactDOM from "react-dom";
-import WorkflowEditor from "./WorkflowEditor";
+const React = require("react");
+const ReactDOM = require("react-dom");
+const WorkflowEditor = require("./WorkflowEditor").default ||
+  require("./WorkflowEditor");
+let createRoot;
+try {
+  ({ createRoot } = require("react-dom/client"));
+} catch (e) {
+  createRoot = null;
+}
 
 function renderWorkflowEditor(id, encoded) {
   const mount = document.getElementById(id);
@@ -21,4 +27,4 @@ function renderWorkflowEditor(id, encoded) {
   ReactDOM.render(<WorkflowEditor data={data} />, mount);
 }
 
-export { renderWorkflowEditor };
+module.exports = { renderWorkflowEditor };
