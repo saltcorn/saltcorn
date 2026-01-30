@@ -1003,7 +1003,7 @@ router.post(
         }
       }
     } else {
-      if (req.xhr) res.json({ error: "File not found" });
+      if (req.xhr) res.status(404).json({ error: "File not found" });
       else {
         req.flash("error", req.__("File not found"));
         res.redirect("/files");
