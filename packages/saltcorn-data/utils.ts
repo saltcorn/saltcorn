@@ -26,6 +26,7 @@ import os from "os";
 import { execSync } from "child_process";
 import { readFileSync } from "fs";
 import { parseStringPromise } from "xml2js";
+import _ from "underscore";
 // import { ResultType, StepResType } from "types";'
 
 declare const saltcorn: any;
@@ -465,6 +466,15 @@ const interpolate = (
 ): string => {
   try {
     if (s && typeof s === "string") {
+      if (!s.includes("{{")) return s;
+      if (!isNode()) {
+        //mobile without vm2
+        const template = _.template(s, {
+          interpolate: /\{\{!(.+?)\}\}/g,
+          escape: /\{\{([^!].+?)\}\}/g,
+        });
+        return template({ row, user, process: undefined, ...(row || {}) });
+      }
       const sandbox = {
         row,
         user,
@@ -703,7 +713,9 @@ const pluginsFolderRoot = path.join(
 );
 
 const decodeProvisioningProfile = async (provisioningProfile: string) => {
-  require("./db/state").getState().log(5, `Decoding provisioning profile ${provisioningProfile}`);
+  require("./db/state")
+    .getState()
+    .log(5, `Decoding provisioning profile ${provisioningProfile}`);
   const outFile = join("/tmp", "provisioningProfile.xml");
   try {
     execSync(`security cms -D -i "${provisioningProfile}" > ${outFile}`);
@@ -718,14 +730,17 @@ const decodeProvisioningProfile = async (provisioningProfile: string) => {
     console.log(result);
     return result;
   } catch (error: any) {
-    require("./db/state").getState().log(5,
-      `Unable to decode the provisioning profile '${provisioningProfile}': ${
-        error.message ? error.message : "Unknown error"
-      }`
-    );
+    require("./db/state")
+      .getState()
+      .log(
+        5,
+        `Unable to decode the provisioning profile '${provisioningProfile}': ${
+          error.message ? error.message : "Unknown error"
+        }`
+      );
     throw error;
   }
-}
+};
 
 export = {
   dataModulePath,
