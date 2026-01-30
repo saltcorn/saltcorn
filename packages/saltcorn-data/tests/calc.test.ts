@@ -101,7 +101,6 @@ describe("code pages in eval", () => {
     expect(eval_expression("barconst", {})).toBe(17);
     expect(eval_expression("bazconst", {})).toBe(12);
     expect(eval_expression("add8(bazconst)", {})).toBe(20);
-
   });
   it("user driven constant change in codepages", async () => {
     const table = Table.findOne("books");
@@ -131,7 +130,7 @@ describe("code pages in eval", () => {
     expect(eval_expression("sumbookpages", {})).toBe(1695 + 209);
     await table.deleteRows({ id });
     await sleep(500);
-    await tr.delete()
+    await tr.delete();
   });
 });
 
@@ -511,8 +510,8 @@ describe("single joinfields in stored calculated fields", () => {
     await books.updateRow({ pages: 728 }, book.id);
     const bid = await books.insertRow({ author: "Terry Eagleton", pages: 456 });
     const book1 = await books.getRow({ id: bid });
-    assertIsSet(book1);  
-    expect(book1.storedsum).toBe(bid+1);
+    assertIsSet(book1);
+    expect(book1.storedsum).toBe(bid + 1);
 
     await books.getField("number_of_fans")!.delete();
     await books.getField("idp1")!.delete();
@@ -1082,7 +1081,7 @@ describe("interpolation function", () => {
 
     expect(interpolate("hello {{ x }}", { x: 1 })).toBe("hello 1");
     expect(interpolate("hello {{ x+1 }}", { x: 1 })).toBe("hello 2");
-    //expect(interpolate("hello {{ add3(x) }}", { x: 1 })).toBe("hello 4");
+    expect(interpolate("hello {{ add3(x) }}", { x: 1 })).toBe("hello 4");
     expect(
       interpolate("hello {{ x }}", { x: "<script>alert(1)</script>" })
     ).toBe("hello &lt;script&gt;alert(1)&lt;/script&gt;");
@@ -1091,6 +1090,19 @@ describe("interpolation function", () => {
     ).toBe("hello <script>alert(1)</script>");
 
     expect(interpolate("hello {{x}}", { x: 1 })).toBe("hello 1");
+  });
+  it("reinterpolation", () => {
+    // this would be dynamically set by a trusted user without needing admin role. E.g. a row in a table
+    const config = { greeter: "Hello {{ firstName }}!" };
+
+    // a row from a database
+    const dataRow = { firstName: "John", age: 34 };
+
+    const letterTemplate = `{{= greeter }} It has come to our attention...`;
+
+    const letter = interpolate(letterTemplate, { ...config, ...dataRow });
+
+    expect(letter).toBe("Hello John! It has come to our attention...");
   });
 });
 describe("jsexprToSQL", () => {
