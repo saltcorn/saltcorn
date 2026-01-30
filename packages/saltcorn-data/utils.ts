@@ -476,16 +476,16 @@ const interpolate = (
         return template({ row, user, process: undefined, ...(row || {}) });
       }
       const sandbox = {
-        row,
-        user,
-        ...(row || {}),
+        ...require("./db/state").getState().eval_context,
         global: undefined,
         globalThis: undefined,
         process: undefined,
         require: undefined,
         module: undefined,
         Function: undefined,
-        ...require("./db/state").getState().eval_context,
+        row,
+        user,
+        ...(row || {}),
       };
       const vm = new VM({
         sandbox,
