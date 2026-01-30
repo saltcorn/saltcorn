@@ -260,7 +260,7 @@ const runScheduler = async ({
           } catch (e) {
             if (isRoot || tenants_crash_log)
               await Crash.create(e, {
-                url: `trigger: action ${trigger.action} id ${trigger.id}`,
+                url: `trigger: action ${trigger.action} id ${trigger.id} name ${trigger.name}`,
                 headers: {},
               });
           }
