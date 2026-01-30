@@ -485,6 +485,7 @@ const interpolate = (
         require: undefined,
         module: undefined,
         Function: undefined,
+        ...require("./db/state").getState().eval_context,
       };
       const vm = new VM({
         sandbox,

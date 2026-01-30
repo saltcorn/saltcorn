@@ -1081,7 +1081,7 @@ describe("interpolation function", () => {
 
     expect(interpolate("hello {{ x }}", { x: 1 })).toBe("hello 1");
     expect(interpolate("hello {{ x+1 }}", { x: 1 })).toBe("hello 2");
-    //expect(interpolate("hello {{ add3(x) }}", { x: 1 })).toBe("hello 4");
+    expect(interpolate("hello {{ add3(x) }}", { x: 1 })).toBe("hello 4");
     expect(
       interpolate("hello {{ x }}", { x: "<script>alert(1)</script>" })
     ).toBe("hello &lt;script&gt;alert(1)&lt;/script&gt;");
