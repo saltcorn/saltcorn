@@ -24,6 +24,7 @@ const npmMocks = {
   "dockerode": join(mocksDir, "npm", "dockerode"),
   "xml2js": join(mocksDir, "npm", "xml2js"),
   "apns2": join(mocksDir, "npm", "apns2"),
+  "vm2": join(mocksDir, "npm", "vm2"),
 };
 
 const saltcornMocks = {
