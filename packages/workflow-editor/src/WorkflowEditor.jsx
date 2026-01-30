@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState, useLayoutEffect } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useLayoutEffect,
+} from "react";
 import ReactFlow, {
   Background,
   Controls,
@@ -39,18 +45,7 @@ const getWorkflowSize = (step) =>
 
 const StartNode = ({ data }) => (
   <div className="wf-start-node">
-    <div className="wf-start-title">{data.strings.start}</div>
-    {/* <div className="wf-start-actions">
-      <button
-        className="btn btn-sm btn-light"
-        onClick={(e) => {
-          e.stopPropagation();
-          data.onAddInitial();
-        }}
-      >
-        {data.strings.addStep}
-      </button>
-    </div> */}
+    <div className="wf-start-title">{data.strings.start}YUPYIiopS</div>
     <Handle
       style={handleStyle}
       id="start"
@@ -111,6 +106,12 @@ const StepNode = ({ data }) => {
     }
   };
 
+  const isLoopBody = data.inLoopBody;
+  const useVerticalHandles =
+    isLoopBody && String(data.action_name) !== "ForLoop";
+  const targetPosition = useVerticalHandles ? Position.Top : Position.Left;
+  const sourcePosition = useVerticalHandles ? Position.Bottom : Position.Right;
+
   return (
     <div
       className="wf-node"
@@ -150,12 +151,12 @@ const StepNode = ({ data }) => {
           {data.loop_body_initial_step}
         </div>
       ) : null} */}
-      <Handle style={handleStyle} type="target" position={Position.Left} />
+      <Handle style={handleStyle} type="target" position={targetPosition} />
       <Handle
         style={handleStyle}
         id="main"
         type="source"
-        position={Position.Right}
+        position={sourcePosition}
       />
     </div>
   );
@@ -189,6 +190,24 @@ const findLoopBackLinks = (steps) => {
   return loopBacks;
 };
 
+const findLoopBodyStepIds = (steps) => {
+  const byName = new Map(steps.map((s) => [s.name, s]));
+  const loopBodyIds = new Set();
+  steps
+    .filter((s) => s.action_name === "ForLoop")
+    .forEach((loopStep) => {
+      const visited = new Set();
+      let cursor = byName.get(loopStep.configuration?.loop_body_initial_step);
+      while (cursor && !visited.has(cursor.name)) {
+        visited.add(cursor.name);
+        loopBodyIds.add(String(cursor.id));
+        if (!cursor.next_step || cursor.next_step === loopStep.name) break;
+        cursor = byName.get(cursor.next_step);
+      }
+    });
+  return loopBodyIds;
+};
+
 const buildGraph = (
   steps,
   strings,
@@ -202,8 +221,10 @@ const buildGraph = (
     idByName[s.name] = String(s.id);
     nameById[String(s.id)] = s.name;
     const size = getWorkflowSize(s);
-    sizeById[String(s.id)] =
-      size || { width: DEFAULT_NODE_WIDTH, height: DEFAULT_NODE_HEIGHT };
+    sizeById[String(s.id)] = size || {
+      width: DEFAULT_NODE_WIDTH,
+      height: DEFAULT_NODE_HEIGHT,
+    };
   });
 
   const allStepNames = steps.map((s) => s.name).filter(Boolean);
@@ -235,6 +256,7 @@ const buildGraph = (
 
   const initial = steps.find((s) => s.initial_step);
   const loopBackLinks = findLoopBackLinks(steps);
+  const loopBodyIds = findLoopBodyStepIds(steps);
 
   const adjacency = new Map();
   steps.forEach((s) => {
@@ -270,10 +292,13 @@ const buildGraph = (
     .map((s) => String(s.id))
     .filter((id) => depths[id] === undefined)
     .sort();
-  sortedRemaining.forEach((id) => {
-    maxDepth += 1;
-    depths[id] = maxDepth;
-  });
+  if (sortedRemaining.length) {
+    const orphanDepth = maxDepth + 1;
+    sortedRemaining.forEach((id) => {
+      depths[id] = orphanDepth;
+    });
+    maxDepth = orphanDepth;
+  }
 
   const groupByDepth = new Map();
   steps.forEach((s) => {
@@ -284,9 +309,7 @@ const buildGraph = (
   [...groupByDepth.values()].forEach((arr) => arr.sort());
 
   const positions = {};
-  const depthEntries = [...groupByDepth.entries()].sort(
-    ([a], [b]) => a - b
-  );
+  const depthEntries = [...groupByDepth.entries()].sort(([a], [b]) => a - b);
   const depthX = {};
   let xCursor = 0;
   depthEntries.forEach(([d, ids]) => {
@@ -366,8 +389,7 @@ const buildGraph = (
       return {
         id: String(step.id),
         type: "step",
-        position:
-          step.configuration?.workflow_position ||
+        position: step.configuration?.workflow_position ||
           positionOverrides[String(step.id)] ||
           positions[String(step.id)] || {
             x: (ix % 3) * 260,
@@ -378,6 +400,7 @@ const buildGraph = (
           id: String(step.id),
           loop_body_initial_step: step.configuration?.loop_body_initial_step,
           isLoop: step.action_name === "ForLoop",
+          inLoopBody: loopBodyIds.has(String(step.id)),
           actionSummary:
             step.summary ||
             (actionExplainers[step.action_name]
@@ -439,8 +462,7 @@ const buildGraph = (
           id: `loop-${step.id}-${loopTarget}`,
           source: String(step.id),
           target: loopId || String(step.id),
-          type: "default",
-          // type: "smoothstep",
+          type: "smoothstep",
           style: { stroke: "#f59f00", strokeDasharray: "6 4" },
           label: strings.loopBody,
           markerEnd: "arrowclosed",
@@ -457,8 +479,7 @@ const buildGraph = (
           id: `loopback-${step.id}-${forLoopName}`,
           source: String(step.id),
           target: loopId,
-          type: "default",
-          // type: "smoothstep",
+          type: "smoothstep",
           style: { stroke: "#f59f00", strokeDasharray: "6 4" },
           data: { loop: true, loopBack: true },
           markerEnd: "arrowclosed",
@@ -474,12 +495,10 @@ const buildGraph = (
     addNodes.push({
       id: addId,
       type: "add",
-      position:
-        addPositions?.[addId] ||
-        {
-          x: startNodePosition.x + 160,
-          y: startNodePosition.y,
-        },
+      position: addPositions?.[addId] || {
+        x: startNodePosition.x + 160,
+        y: startNodePosition.y,
+      },
       data: { strings, afterStepId: "start" },
       draggable: true,
       selectable: false,
@@ -498,12 +517,10 @@ const buildGraph = (
     addNodes.push({
       id: addId,
       type: "add",
-      position:
-        addPositions?.[addId] ||
-        {
-          x: basePos.x + baseSize.width + ADD_GAP,
-          y: basePos.y + baseSize.height / 2 - ADD_NODE_SIZE / 2,
-        },
+      position: addPositions?.[addId] || {
+        x: basePos.x + baseSize.width + ADD_GAP,
+        y: basePos.y + baseSize.height / 2 - ADD_NODE_SIZE / 2,
+      },
       data: { strings, afterStepId: String(step.id) },
       draggable: true,
       selectable: false,
@@ -788,9 +805,7 @@ const WorkflowEditor = ({ data }) => {
   const schedulePersistPositions = useCallback(
     (positions = []) => {
       if (!positions.length) return;
-      positions.forEach((p) =>
-        pendingPositionRef.current.set(String(p.id), p)
-      );
+      positions.forEach((p) => pendingPositionRef.current.set(String(p.id), p));
       if (positionDebounceRef.current)
         clearTimeout(positionDebounceRef.current);
       positionDebounceRef.current = setTimeout(() => {
