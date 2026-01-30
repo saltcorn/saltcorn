@@ -856,12 +856,28 @@ router.post(
   })
 );
 
+const editableExtensions = [
+  "html",
+  "css",
+  "js",
+  "jsx",
+  "ts",
+  "tsx",
+  "sql",
+  "py",
+  "bash",
+  "sh",
+  "txt",
+  "json",
+  "md",
+  "yml",
+];
+
 /**
  * GET load the file editor
  */
 router.get(
   "/edit/*serve_path",
-  isAdmin,
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
@@ -872,6 +888,27 @@ router.get(
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
       try {
+        if (file.isDirectory) {
+          res
+            .status(400)
+            .sendWrap(
+              req.__("Error"),
+              h1(req.__("File not editable")) +
+                div(req.__("Directories cannot be edited"))
+            );
+          return;
+        }
+        const ext = path.extname(file.filename).toLowerCase().slice(1);
+        if (!editableExtensions.includes(ext)) {
+          res
+            .status(400)
+            .sendWrap(
+              req.__("Error"),
+              h1(req.__("File not editable")) +
+                div(req.__("Files of this type cannot be edited"))
+            );
+          return;
+        }
         const fileContent = await fs.promises.readFile(file.location, "utf8");
         const form = new Form({
           action: `/files/edit/${encodeURIComponent(serve_path)}`,
@@ -916,7 +953,6 @@ router.get(
  */
 router.post(
   "/edit/*serve_path",
-  isAdmin,
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
@@ -927,6 +963,33 @@ router.post(
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
       try {
+        if (file.isDirectory) {
+          if (req.xhr) res.json({ error: "Directories cannot be edited" });
+          else
+            res
+              .status(400)
+              .sendWrap(
+                req.__("Error"),
+                h1(req.__("File not editable")) +
+                  div(req.__("Directories cannot be edited"))
+              );
+
+          return;
+        }
+        const ext = path.extname(file.filename).toLowerCase().slice(1);
+        if (!editableExtensions.includes(ext)) {
+          if (req.xhr)
+            res.json({ error: "Files of this type cannot be edited" });
+          else
+            res
+              .status(400)
+              .sendWrap(
+                req.__("Error"),
+                h1(req.__("File not editable")) +
+                  div(req.__("Files of this type cannot be edited"))
+              );
+          return;
+        }
         const newContent = req.body.value;
         await fs.promises.writeFile(file.location, newContent, "utf8");
         if (req.xhr) res.json({ success: true });
