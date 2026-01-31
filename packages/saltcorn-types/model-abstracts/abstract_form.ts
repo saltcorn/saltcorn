@@ -24,6 +24,7 @@ export interface AbstractForm {
   submitLabel?: string;
   submitButtonClass?: string;
   noSubmitButton?: boolean;
+  noLabelCols?: boolean;
   additionalButtons?: Array<AdditionalButton>;
   onChange?: string;
   xhrSubmit: boolean;
