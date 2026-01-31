@@ -914,14 +914,25 @@ router.get(
           action: `/files/edit/${encodeURIComponent(serve_path)}`,
           onChange: "saveAndContinue(this)",
           submitLabel: req.__("Done"),
+          noSubmitButton: true,
+          noLabelCols: true,
           fields: [
             {
               name: "value",
+              label: " ",
               input_type: "code",
               class: ["validate-statements", "enlarge-in-card"],
               attributes: {
                 mode: `${file.mime_super}/${file.mime_sub}`,
               },
+            },
+          ],
+          additionalButtons: [
+            {
+              label: req.__("Save"),
+              id: "btnSaveId",
+              class: "btn btn-primary",
+              type: "submit",
             },
           ],
         });
