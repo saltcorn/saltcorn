@@ -934,13 +934,33 @@ router.get(
               class: "btn btn-primary",
               type: "submit",
             },
+            {
+              label: req.__("Close"),
+              class: "btn btn-secondary ms-2",
+              onclick: `location.href='/files?dir=${encodeURIComponent(
+                file.current_folder
+              )}'`,
+            },
           ],
         });
 
         form.values = { value: fileContent };
         res.sendWrap(req.__("Edit file"), {
-          type: "card",
-          contents: renderForm(form, req.csrfToken()),
+          above: [
+            {
+              type: "breadcrumbs",
+              crumbs: [
+                { text: req.__("Settings"), href: "/settings" },
+                { text: req.__("Files"), href: "/files" },
+                { text: req.__("Edit"), href: null },
+              ],
+            },
+            {
+              title: req.__("Editing %s", file.filename),
+              type: "card",
+              contents: renderForm(form, req.csrfToken()),
+            },
+          ],
         });
       } catch (err) {
         getState().log(3, `Error reading file ${serve_path}: ${err.message}`);
