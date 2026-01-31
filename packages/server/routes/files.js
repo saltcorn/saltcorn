@@ -1004,7 +1004,10 @@ router.post(
         const newContent = req.body.value;
         await fs.promises.writeFile(file.location, newContent, "utf8");
         if (req.xhr) res.json({ success: true });
-        else res.redirect(`/files`);
+        else {
+          const currentFolder = file.current_folder;
+          res.redirect(`/files${currentFolder ? `?dir=${currentFolder}` : ""}`);
+        }
       } catch (err) {
         getState().log(3, `Error writing file ${serve_path}: ${err.message}`);
         if (req.xhr) res.json({ error: err.message });

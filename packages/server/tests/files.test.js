@@ -225,7 +225,7 @@ describe("files admin", () => {
         )
         .set("Cookie", loginCookie)
         .send("value=console.log('I have been edited');")
-        .expect(toRedirect("/files"));
+        .expect(toRedirect("/files?dir=_sc_test_subfolder_one"));
     });
 
     it("does not open for non-existing files", async () => {
