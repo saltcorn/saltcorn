@@ -161,6 +161,12 @@ export class PushMessageHelper {
   >;
   syncSubs: Record<string, Array<MobileSubscription>>;
 
+  private syncQueued = false;
+  private syncTimer: NodeJS.Timeout | null = null;
+  private lastSyncSentAt = 0;
+  private readonly syncDebounceMs = 5000;
+  private readonly minSyncIntervalMs = 30000;
+
   /**
    * normal first init
    * @param config - PushMessageHelper configuration
@@ -255,10 +261,37 @@ export class PushMessageHelper {
   }
 
   /**
-   * Send a push sync notification. Silent push on iOS, data-only on Android.
-   * @param tableName
+   * queue a sync or do nothing if already queued
+   * @returns true if queued
    */
-  public async pushSync(tableName: string) {
+  public queuePushSync() {
+    if (!this.syncQueued) {
+      this.syncQueued = true;
+      this.syncTimer = setTimeout(async () => {
+        this.syncTimer = null;
+        const now = Date.now();
+        const timeSinceLast = now - this.lastSyncSentAt;
+        if (timeSinceLast < this.minSyncIntervalMs) {
+          const delay = this.minSyncIntervalMs - timeSinceLast;
+          this.state.log(
+            5,
+            `Delaying sync push by ${delay}ms to respect min interval`
+          );
+          setTimeout(() => this.flushSyncQueue(), delay);
+        } else {
+          await this.flushSyncQueue();
+        }
+      }, this.syncDebounceMs);
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Sends a sync push to all sync subscriptions.
+   * APNS or FCM
+   */
+  public async pushSync() {
     for (const userSubs of Object.values(this.syncSubs)) {
       const pushedDeviceIds = new Set<string>();
       for (const userSub of userSubs) {
@@ -286,7 +319,7 @@ export class PushMessageHelper {
                 throw new Error("Firebase app not initialized");
               const messageId = await admin.messaging(this.firebaseApp).send({
                 token: token,
-                data: { type: "push_sync", table: tableName },
+                data: { type: "push_sync" },
               });
               this.state.log(
                 5,
@@ -301,6 +334,17 @@ export class PushMessageHelper {
           this.state.log(5, `Error sending sync push: ${error}`);
         }
       }
+    }
+  }
+
+  private async flushSyncQueue() {
+    try {
+      this.syncQueued = false;
+      this.lastSyncSentAt = Date.now();
+      this.state.log(5, "Flushing sync push");
+      await this.pushSync();
+    } catch (error) {
+      this.state.log(5, `Error flushing sync queue: ${error}`);
     }
   }
 
