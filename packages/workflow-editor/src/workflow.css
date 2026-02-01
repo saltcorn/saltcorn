@@ -4,6 +4,12 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  /* --wf-edge: #6c757d;
+  --wf-edge-adder: #0d6efd;
+  --wf-edge-loop: #f59f00;
+  --wf-edge-label: #495057;
+  --wf-handle-border: #3f3f3f;
+  --wf-handle-bg: #fff; */
 }
 
 .wf-toolbar {
@@ -33,8 +39,8 @@
 }
 
 .wf-node {
-  background: #fff;
-  border: 1px solid #dce0e6;
+  background: var(--xy-node-background-color-default, #fff);
+  border: 1px solid var(--xy-node-border-default, #dce0e6);
   border-radius: 10px;
   padding: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
@@ -76,7 +82,7 @@
 
 .wf-node__summary {
   font-size: 12px;
-  color: #495057;
+  color: var(--xy-node-color-default, #495057);
   margin: 4px 0 6px;
   padding-left: 16px;
 }
@@ -128,8 +134,8 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #fff;
-  border: 1px dashed #adb5bd;
+  background: var(--xy-node-background-color-default, #fff);
+  border: 1px dashed var(--xy-node-border-default, #adb5bd);
   color: #0d6efd;
   font-weight: 700;
   display: flex;
@@ -191,4 +197,97 @@
   gap: 8px;
   justify-content: flex-end;
   border-top: 1px solid #e2e6ea;
+}
+
+.wf-shell .react-flow__edge-path {
+  stroke: var(--wf-edge);
+}
+
+.wf-shell .react-flow__edge-text {
+  fill: var(--wf-edge-label);
+}
+
+.wf-shell .react-flow__handle {
+  background: var(--wf-handle-bg);
+  border-color: var(--wf-handle-border);
+}
+
+[data-bs-theme="dark"] .wf-shell {
+  --wf-edge: #aeb3bd;
+  --wf-edge-adder: #6ea8fe;
+  --wf-edge-loop: #f0ad4e;
+  --wf-edge-label: #c0c4cf;
+  --wf-handle-border: #c0c4cf;
+  --wf-handle-bg: #2f3139;
+}
+
+[data-bs-theme="dark"] .wf-toolbar {
+  border-bottom-color: #4a4c57;
+}
+
+[data-bs-theme="dark"] .wf-canvas {
+  background: #2b2d35;
+}
+
+[data-bs-theme="dark"] .wf-empty {
+  color: #adb5bd;
+}
+
+[data-bs-theme="dark"] .wf-node {
+  background: #2f3139;
+  border-color: #4a4c57;
+  color: #e9ecef;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+[data-bs-theme="dark"] .wf-node__action {
+  color: #7da7ff;
+}
+
+[data-bs-theme="dark"] .wf-node__desc,
+[data-bs-theme="dark"] .wf-node__summary,
+[data-bs-theme="dark"] .wf-node__meta {
+  color: #c0c4cf;
+}
+
+[data-bs-theme="dark"] .wf-add-node {
+  background: #2f3139;
+  border-color: #6c757d;
+  color: #7da7ff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+[data-bs-theme="dark"] .wf-modal {
+  background: #2b2d35;
+  color: #e9ecef;
+  border: 1px solid #4a4c57;
+}
+
+[data-bs-theme="dark"] .wf-modal__header,
+[data-bs-theme="dark"] .wf-modal__footer {
+  border-color: #4a4c57;
+}
+
+[data-bs-theme="dark"] .wf-modal__body {
+  color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .wf-modal .card,
+[data-bs-theme="dark"] .wf-modal .card-header,
+[data-bs-theme="dark"] .wf-modal .card-footer {
+  background: #2f3139;
+  color: #e9ecef;
+  border-color: #4a4c57;
+}
+
+[data-bs-theme="dark"] .wf-modal .card-body {
+  color: #e9ecef;
+}
+
+[data-bs-theme="dark"] .react-flow__background {
+  background-color: #2b2d35;
+}
+
+[data-bs-theme="dark"] .react-flow__background pattern path {
+  stroke: #3d3f47;
 }

@@ -946,18 +946,20 @@ const getWorkflowStepForm = async (
 
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
-    submitLabel: step_id ? req.__("Done") : undefined,
-    onSubmit: "press_store_button(this)",
-    additionalButtons: step_id
-      ? [
-          {
-            label: req.__("Delete"),
-            class: "btn btn-outline-danger",
-            onclick: `ajax_post('/actions/delete-step/${+step_id}')`,
-            afterSave: true,
-          },
-        ]
-      : undefined,
+    // submitLabel: step_id ? req.__("Done") : undefined,
+    // submitLabel: null,
+    // onSubmit: "press_store_button(this)",
+    // additionalButtons: step_id
+    //   ? [
+    //       {
+    //         label: req.__("Delete"),
+    //         class: "btn btn-outline-danger",
+    //         onclick: `ajax_post('/actions/delete-step/${+step_id}')`,
+    //         afterSave: true,
+    //       },
+    //     ]
+    //   : undefined,
+    noSubmitButton: true,
     fields: [
       {
         input_type: "section_header",
@@ -1666,14 +1668,13 @@ router.post(
     } = form.values;
     const DEFAULT_NODE_WIDTH = 220;
     const H_GAP = 60;
-    const existingStep = wf_step_id
-      ? await WorkflowStep.findOne({ id: wf_step_id, trigger_id })
-      : null;
+    const existingStep =
+      wf_step_id && wf_step_id !== "undefined"
+        ? await WorkflowStep.findOne({ id: wf_step_id, trigger_id })
+        : null;
     const stepsForTrigger = await WorkflowStep.find({ trigger_id });
     const previouslyInitial = existingStep
-      ? stepsForTrigger.find(
-          (s) => s.initial_step && s.id !== existingStep.id
-        )
+      ? stepsForTrigger.find((s) => s.initial_step && s.id !== existingStep.id)
       : stepsForTrigger.find((s) => s.initial_step);
     Object.entries(configuration).forEach(([k, v]) => {
       if (v === null) delete configuration[k];

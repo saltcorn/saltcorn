@@ -5,7 +5,7 @@ import React, {
   useState,
   useLayoutEffect,
 } from "react";
-import ReactFlow, {
+import {
   Background,
   Controls,
   Handle,
@@ -13,16 +13,17 @@ import ReactFlow, {
   Position,
   useEdgesState,
   useNodesState,
-} from "reactflow";
-import "reactflow/dist/style.css";
+  ReactFlow,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
 import "./workflow.css";
 
 const handleStyle = {
   width: "10px",
   height: "10px",
   borderRadius: "50%",
-  border: "2px solid #3f3f3f",
-  background: "#fff",
+  border: "2px solid var(--wf-handle-border, #3f3f3f)",
+  background: "var(--wf-handle-bg, #fff)",
 };
 
 const DEFAULT_NODE_WIDTH = 220;
@@ -30,7 +31,7 @@ const DEFAULT_NODE_HEIGHT = 120;
 const H_GAP = 80;
 const V_GAP = 60;
 const ADD_NODE_SIZE = 32;
-const ADD_GAP = 24;
+const ADD_GAP = 32;
 
 const normalizeSize = (size) => {
   if (!size) return null;
@@ -45,7 +46,7 @@ const getWorkflowSize = (step) =>
 
 const StartNode = ({ data }) => (
   <div className="wf-start-node">
-    <div className="wf-start-title">{data.strings.start}YUPYIiopS</div>
+    <div className="wf-start-title">{data.strings.start}</div>
     <Handle
       style={handleStyle}
       id="start"
@@ -435,7 +436,10 @@ const buildGraph = (
       type: "bezier",
       animated: false,
       deletable: false,
-      style: { strokeDasharray: "4 2", stroke: "#0d6efd" },
+      style: {
+        strokeDasharray: "4 2",
+        stroke: "var(--wf-edge-adder, #0d6efd)",
+      },
     });
   }
 
@@ -463,7 +467,10 @@ const buildGraph = (
           source: String(step.id),
           target: loopId || String(step.id),
           type: "smoothstep",
-          style: { stroke: "#f59f00", strokeDasharray: "6 4" },
+          style: {
+            stroke: "var(--wf-edge-loop, #f59f00)",
+            strokeDasharray: "6 4",
+          },
           label: strings.loopBody,
           markerEnd: "arrowclosed",
           data: { loop: true, missing: !loopId },
@@ -480,7 +487,10 @@ const buildGraph = (
           source: String(step.id),
           target: loopId,
           type: "smoothstep",
-          style: { stroke: "#f59f00", strokeDasharray: "6 4" },
+          style: {
+            stroke: "var(--wf-edge-loop, #f59f00)",
+            strokeDasharray: "6 4",
+          },
           data: { loop: true, loopBack: true },
           markerEnd: "arrowclosed",
           deletable: false,
@@ -533,7 +543,10 @@ const buildGraph = (
       type: "bezier",
       animated: false,
       deletable: false,
-      style: { strokeDasharray: "4 2", stroke: "#0d6efd" },
+      style: {
+        strokeDasharray: "4 2",
+        stroke: "var(--wf-edge-adder, #0d6efd)",
+      },
     });
   });
 
@@ -542,7 +555,15 @@ const buildGraph = (
   return { nodes: allNodes, edges, idByName, nameById };
 };
 
-const StepModal = ({ modal, innerRef, onClose, submitting, error }) => {
+const StepModal = ({
+  modal,
+  innerRef,
+  onClose,
+  submitting,
+  error,
+  data,
+  onDelete,
+}) => {
   if (!modal) return null;
   return (
     <div className="wf-modal-backdrop">
@@ -558,6 +579,15 @@ const StepModal = ({ modal, innerRef, onClose, submitting, error }) => {
         />
         {error ? <div className="alert alert-danger m-3">{error}</div> : null}
         <div className="wf-modal__footer">
+          <button
+            className="btn btn-sm btn-outline-danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(modal.stepId);
+            }}
+          >
+            {data.strings.deleteStep}
+          </button>
           <button className="btn btn-secondary" onClick={onClose}>
             Close
           </button>
@@ -601,6 +631,7 @@ const WorkflowEditor = ({ data }) => {
   const [savingPositions, setSavingPositions] = useState(false);
   const [sizeSyncing, setSizeSyncing] = useState(false);
   const modalRef = useRef(null);
+
 
   const rfInstanceRef = useRef(null);
 
@@ -660,8 +691,6 @@ const WorkflowEditor = ({ data }) => {
 
       const stepNode = stepById.get(node.id.replace("add-", ""));
       if (!stepNode) return;
-
-      const ADD_GAP = 24;
 
       const nextX = stepNode.position.x + stepNode.width + ADD_GAP;
 
@@ -736,6 +765,7 @@ const WorkflowEditor = ({ data }) => {
 
   const reload = useCallback(async () => {
     setLoading(true);
+    setModal(null);
     setError("");
     try {
       const fresh = await fetchJson(data.urls.data);
@@ -870,7 +900,7 @@ const WorkflowEditor = ({ data }) => {
         if (initial_step) url.searchParams.set("initial_step", "true");
         if (after_step) url.searchParams.set("after_step", after_step);
         const res = await fetchJson(url.toString());
-        setModal({ title: res.title, body: res.form });
+        setModal({ title: res.title, body: res.form, stepId: stepId || null });
       } catch (e) {
         setError(e.message);
       }
@@ -1083,7 +1113,7 @@ const WorkflowEditor = ({ data }) => {
       if (!window.confirm(strings.confirmDelete)) return;
       const formData = new FormData();
       formData.append("_csrf", data.csrfToken || "");
-      await fetchJson(`/actions/delete-step/${id}`, {
+      await fetchJson(`${data.urls.deleteStep}/${id}`, {
         method: "POST",
         body: formData,
       });
@@ -1183,6 +1213,7 @@ const WorkflowEditor = ({ data }) => {
           fitView
           proOptions={{ hideAttribution: true }}
           defaultEdgeOptions={{ animated: true }}
+          colorMode={window._sc_lightmode || "light"}
         >
           <MiniMap pannable zoomable />
           <Controls />
@@ -1198,6 +1229,8 @@ const WorkflowEditor = ({ data }) => {
         }}
         submitting={savingModal}
         error={error && modal ? error : ""}
+        data={data}
+        onDelete={onDelete}
       />
     </div>
   );
