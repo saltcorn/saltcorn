@@ -47,6 +47,7 @@ class Form implements AbstractForm {
   submitLabel?: string;
   submitButtonClass?: string;
   noSubmitButton?: boolean;
+  noLabelCols?: boolean;
   additionalButtons?: Array<_AdditionalButton>;
   // only for workflow and userConfig Forms
   additionalHeaders?: Array<Header>;
@@ -87,6 +88,7 @@ class Form implements AbstractForm {
     this.submitLabel = o.submitLabel;
     this.submitButtonClass = o.submitButtonClass;
     this.noSubmitButton = o.noSubmitButton;
+    this.noLabelCols = o.noLabelCols;
     this.additionalButtons = o.additionalButtons;
     this.additionalHeaders = o.additionalHeaders;
     this.onChange = o.onChange;
@@ -300,6 +302,7 @@ namespace Form {
     submitLabel?: string;
     submitButtonClass?: string;
     noSubmitButton?: boolean;
+    noLabelCols?: boolean;
     additionalButtons?: Array<_AdditionalButton>;
     additionalHeaders?: Array<Header>;
     onChange?: string;
