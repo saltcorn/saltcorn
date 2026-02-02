@@ -51,8 +51,6 @@ const runPage = async (page, req, res, tic) => {
   if (role <= page.min_role) {
     const contents = await page.run(req.query, { res, req });
     if (!contents) return;
-    console.log({contents});
-    
     const title = scan_for_page_title(contents, page.title);
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
@@ -75,8 +73,10 @@ const runPage = async (page, req, res, tic) => {
       );
     }
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
-    if (contents.html_string) await res.html(contents.html_string);
-    else
+    else if (contents.html_string) {
+      res.set("Content-Type", "text/html");
+      await res.send(contents.html_string);
+    } else
       res.sendWrap(
         {
           title,

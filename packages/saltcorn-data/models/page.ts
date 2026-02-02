@@ -242,7 +242,6 @@ class Page implements AbstractPage {
     require("../db/state")
       .getState()
       .log(5, `Run page ${this.name} with query ${JSON.stringify(querystate)}`);
-    console.log("run", this);
 
     await eachView(
       this.layout,
@@ -457,9 +456,35 @@ class Page implements AbstractPage {
     if (exit_from_redirect) return null;
     translateLayout(this.layout, extraArgs.req.getLocale());
     if (instanceOWithHtmlFile(this.layout)) {
-      const html_string = await readFile(this.layout.html_file);
+      const file = await File.findOne(this.layout.html_file);
+      const html_string = (await file?.get_contents("utf8")) as string;
+
       if (html_string.includes("<embed-view")) {
-        
+        const viewContents: Record<string, string> = {};
+
+        const embeds = html_string.toString().matchAll(/<embed-view(\s*.*?)>/g);
+        for (const match of embeds) {
+          const attrs: Record<string, string> = {};
+          for (const attrStr of match[1]
+            .split(" ")
+            .map((s) => s.trim())
+            .filter(Boolean)) {
+            const [anm, aval] = attrStr.split("=");
+            attrs[anm] = aval.replaceAll('"', "");
+          }
+          const { viewname, local, ...embedstate } = attrs;
+          const view = View.findOne({ name: viewname });
+          if (!view) continue;
+          viewContents[match[0]] = await view.run(
+            { ...querystate, ...embedstate },
+            extraArgs
+          );
+        }
+        const replacer = (match: string) => viewContents[match] || match;
+
+        return {
+          html_string: html_string.replace(/<embed-view(\s*.*?)>/, replacer),
+        };
       }
     }
     return this.layout;
