@@ -472,7 +472,7 @@ class Page implements AbstractPage {
             const [anm, aval] = attrStr.split("=");
             attrs[anm] = aval.replaceAll('"', "");
           }
-          const { viewname, local, ...embedstate } = attrs;
+          const { viewname, ...embedstate } = attrs;
           const view = View.findOne({ name: viewname });
           if (!view) continue;
           viewContents[match[0]] = await view.run(
