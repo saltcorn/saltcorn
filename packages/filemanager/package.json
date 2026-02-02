@@ -3,6 +3,7 @@
   "version": "1.6.0-alpha.2",
   "scripts": {
     "build": "rollup -c",
+    "builddev": "rollup -c",
     "dev": "rollup -c -w",
     "start": "sirv public --no-clear",
     "test": "echo NO TESTS"

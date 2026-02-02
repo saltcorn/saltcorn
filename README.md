@@ -283,7 +283,7 @@ to install everything. If successful, you should now be able to run `saltcorn` i
 
 cd to your saltcorn repository clone, then run this in shell:
 
-`npm run tsc; while [ 1 ]; do SALTCORN_NWORKERS=1 saltcorn serve --dev;done`
+`saltcorn dev:serve`
 
 This will restart the server and rebuild with tsc every time you save a file in the Saltcorn repo or in a local plugin.
 
@@ -324,30 +324,19 @@ to format code:
 
 Run this before every pull request.
 
+### Editing React/svelte components (builder, filemanager, workflow-editor)
 
-### React build builder
+These are now rebuilt on save if you run `saltcorn dev:serve`.
 
-```
-cd packages/saltcorn-builder
-npm install
-npm install styled-components@4.4.1
-npm run build
-```
+The new development workflow is:
 
-### React rebuild on save
-
-In `saltcorn/packages/saltcorn-builder/` run:
-
-`git ls-files | entr npm run builddev`
-
-but this is not a production build, so run
-
-`npm run build`
-
-when done.
-
-If you get this error: `Error: error:0308010C:digital envelope routines::unsupported`,
-run this and try again: `export NODE_OPTIONS=--openssl-legacy-provider`.
+1. Launch `saltcorn dev:serve`
+2. Load the page with the component you want to work on. E.g. if working on the builder, open a page or a view in the builder.
+3. Open your browser's Dev Tools and disable caching. Caching in saltcorn is invalidated by a new release (if deploying from npm) or git commit (if deploying from git). You will have to disable cache to not get stale contents if you haven't committed.
+4. Now edit files in the compenent you are working on. The server will rebuild and restart on every save automatically.
+5. As you make progress, commit your code as usual but do not commit the bundle.
+6. When you would like to sumbit a pull request, you need to make an optimised bundle. Run `saltcorn dev:build` optionally followed by the name of the compnent you have edited (`builder|filemanager|workflow-editor`).
+7. Commit the bundle file. Git or VS code will give you a warning, but you can ignore this. The bundle should be staged and you commit and push to the branch.
 
 ### Build tsdocs
 
