@@ -459,7 +459,7 @@ class Page implements AbstractPage {
       const file = await File.findOne(this.layout.html_file);
       const html_string = (await file?.get_contents("utf8")) as string;
 
-      if (html_string.includes("<embed-view")) {
+      if (html_string?.includes("<embed-view")) {
         const viewContents: Record<string, string> = {};
 
         const embeds = html_string.toString().matchAll(/<embed-view(\s*.*?)>/g);
