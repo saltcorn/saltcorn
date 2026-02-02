@@ -242,6 +242,8 @@ class Page implements AbstractPage {
     require("../db/state")
       .getState()
       .log(5, `Run page ${this.name} with query ${JSON.stringify(querystate)}`);
+    console.log("run", this);
+
     await eachView(
       this.layout,
       async (segment: any, inLazy: boolean) => {
@@ -346,7 +348,11 @@ class Page implements AbstractPage {
       },
       querystate
     );
-    await Page.renderEachEmbeddedPageInLayout(this.layout, querystate, extraArgs);
+    await Page.renderEachEmbeddedPageInLayout(
+      this.layout,
+      querystate,
+      extraArgs
+    );
     const pagename = this.name;
     let exit_from_redirect = false;
     await traverse(this.layout, {
@@ -450,6 +456,12 @@ class Page implements AbstractPage {
     });
     if (exit_from_redirect) return null;
     translateLayout(this.layout, extraArgs.req.getLocale());
+    if (instanceOWithHtmlFile(this.layout)) {
+      const html_string = await readFile(this.layout.html_file);
+      if (html_string.includes("<embed-view")) {
+        
+      }
+    }
     return this.layout;
   }
 
