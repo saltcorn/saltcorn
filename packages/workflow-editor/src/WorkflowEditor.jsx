@@ -567,18 +567,21 @@ const StepModal = ({
   if (!modal) return null;
   return (
     <div className="wf-modal-backdrop">
-      <div className="wf-modal">
-        <div className="wf-modal__header">
-          <div className="wf-modal__title">{modal.title}</div>
+      <div className="wf-modal card shadow">
+        <div className="card-header d-flex justify-content-between align-items-center">
+          <h5 className="mb-0">{modal.title}</h5>
           <button className="btn-close" onClick={onClose} aria-label="Close" />
         </div>
-        <div
-          className="wf-modal__body"
-          ref={innerRef}
-          dangerouslySetInnerHTML={{ __html: modal.body }}
-        />
-        {error ? <div className="alert alert-danger m-3">{error}</div> : null}
-        <div className="wf-modal__footer">
+        <div className="card-body">
+          <div
+            ref={innerRef}
+            dangerouslySetInnerHTML={{ __html: modal.body }}
+          />
+          {error ? (
+            <div className="alert alert-danger mt-3">{error}</div>
+          ) : null}
+        </div>
+        <div className="card-footer d-flex justify-content-end gap-2">
           <button
             className="btn btn-sm btn-outline-danger"
             onClick={(e) => {
@@ -632,12 +635,38 @@ const WorkflowEditor = ({ data }) => {
   const [sizeSyncing, setSizeSyncing] = useState(false);
   const modalRef = useRef(null);
 
-
   const rfInstanceRef = useRef(null);
 
   const onInit = useCallback((instance) => {
     rfInstanceRef.current = instance;
   }, []);
+
+  const [selectedNodes, setSelectedNodes] = useState([]);
+
+  const handleSelectionChange = useCallback(({ nodes = [] }) => {
+    console.log("selection change", nodes);
+    setSelectedNodes(nodes);
+  }, []);
+  const handleKeyDelete = useCallback(
+    (e) => {
+      if (modal) return;
+      const tag = e.target?.tagName?.toLowerCase();
+      if (
+        tag === "input" ||
+        tag === "textarea" ||
+        tag === "select" ||
+        tag === "button" ||
+        e.target?.isContentEditable
+      )
+        return;
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      const stepNode = selectedNodes.find((n) => n.type === "step");
+      if (!stepNode) return;
+      e.preventDefault();
+      onDelete(stepNode.id);
+    },
+    [modal, onDelete, selectedNodes]
+  );
 
   const strings = data.strings || {};
   const refreshGraph = useCallback(
@@ -671,6 +700,11 @@ const WorkflowEditor = ({ data }) => {
   }, [steps, refreshGraph]);
 
   useEffect(() => {
+    window.addEventListener("keydown", handleKeyDelete);
+    return () => window.removeEventListener("keydown", handleKeyDelete);
+  }, [handleKeyDelete]);
+
+  useEffect(() => {
     if (!rfInstanceRef.current) return;
 
     const currentNodes = rfInstanceRef.current.getNodes();
@@ -688,6 +722,8 @@ const WorkflowEditor = ({ data }) => {
       if (!node.id.startsWith("add-")) return;
       // Respect user-dragged add nodes
       if (addPositions?.[node.id]) return;
+
+      const ADD_GAP = 32;
 
       const stepNode = stepById.get(node.id.replace("add-", ""));
       if (!stepNode) return;
@@ -1203,11 +1239,15 @@ const WorkflowEditor = ({ data }) => {
       {!hasSteps ? <div className="wf-empty">{strings.empty}</div> : null}
       <div className="wf-canvas">
         <ReactFlow
+          nodesFocusable={true}
+          edgesFocusable={true}
+          disableKeyboardA11y={false}
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChangeWrapped}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onSelectionChange={handleSelectionChange}
           nodeTypes={nodeTypes}
           onInit={onInit}
           fitView
