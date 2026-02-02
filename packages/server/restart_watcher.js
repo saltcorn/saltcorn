@@ -142,7 +142,7 @@ const listenForChanges = (projectDirs, pluginDirs) => {
             stdio: "inherit",
             cwd: buildDir,
           });
-          process.exit(status);
+          process.exit(status ? 2 : 0);
         }
       )
     );
@@ -161,7 +161,7 @@ const listenForChanges = (projectDirs, pluginDirs) => {
           const { status } = spawnSync("npm", ["run", "tsc"], {
             stdio: "inherit",
           });
-          process.exit(status);
+          process.exit(status ? 3 : 0);
         }
       )
     );
