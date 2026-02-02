@@ -95,6 +95,17 @@ const watchCfg = {
   },
 };
 
+const reactPackages = [
+  {
+    watchDir: "packages/saltcorn-builder/src",
+    buildDir: "packages/saltcorn-builder/",
+  },
+  {
+    watchDir: "packages/filemanager/src",
+    buildDir: "packages/filemanager",
+  },
+];
+
 let activeWatchers = [];
 
 /**
@@ -117,16 +128,7 @@ const closeWatchers = () => {
  */
 const listenForChanges = (projectDirs, pluginDirs) => {
   // watch react packages
-  const reactPackages = [
-    {
-      watchDir: "packages/saltcorn-builder/src",
-      buildDir: "packages/saltcorn-builder/",
-    },
-    {
-      watchDir: "packages/filemanager/src",
-      buildDir: "packages/filemanager",
-    },
-  ];
+
   for (const { watchDir, buildDir } of reactPackages) {
     activeWatchers.push(
       watch(
@@ -136,11 +138,11 @@ const listenForChanges = (projectDirs, pluginDirs) => {
         (event, file) => {
           console.log("'%s' changed \n re-starting now", file);
           closeWatchers();
-          spawnSync("npm", ["run", "builddev"], {
+          const { status } = spawnSync("npm", ["run", "builddev"], {
             stdio: "inherit",
             cwd: buildDir,
           });
-          process.exit();
+          process.exit(status);
         }
       )
     );
@@ -156,10 +158,10 @@ const listenForChanges = (projectDirs, pluginDirs) => {
         (event, file) => {
           console.log("'%s' changed \n re-starting now", file);
           closeWatchers();
-          spawnSync("npm", ["run", "tsc"], {
+          const { status } = spawnSync("npm", ["run", "tsc"], {
             stdio: "inherit",
           });
-          process.exit();
+          process.exit(status);
         }
       )
     );
@@ -188,4 +190,5 @@ module.exports = {
   getRelevantPackages,
   getPluginDirectories,
   closeWatchers,
+  reactPackages,
 };
