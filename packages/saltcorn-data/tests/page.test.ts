@@ -14,7 +14,7 @@ beforeAll(async () => {
   await require("../db/fixtures")();
 });
 
-describe("Page", () => {
+describe("Page model tests", () => {
   it("returns html-file without additional layout", async () => {
     const page = Page.findOne({ name: "page_with_html_file" });
     assertIsSet(page);
