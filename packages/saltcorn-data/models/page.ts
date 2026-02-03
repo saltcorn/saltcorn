@@ -35,7 +35,7 @@ const { remove_from_menu } = config;
 const {
   action_link,
   fill_presets,
-} = require("../base-plugin/viewtemplates/viewable_fields");
+} = require("../viewable_fields");
 import utils from "../utils";
 const { run_action_column, stateToQueryString } = require("../plugin-helper");
 
