@@ -29,6 +29,8 @@ const defaultDataPath = pathsWithApp.data;
  */
 const stringToJSON = (x: any) => (typeof x === "string" ? JSON.parse(x) : x);
 
+let defaultSessionSecretWarningIssued = false;
+
 const stringToBool = (x: any) =>
   typeof x === "string" ? x === "true" || x === "True" : x;
 
@@ -177,7 +179,12 @@ const getConnectObject = (connSpec: any = {}) => {
         .update(`${connObj.session_secret}${git_commit || sc_version}`)
         .digest("hex")
         .slice(0, 16);
-        console.warn("Using default session secret. This is not secure. Set the SALTCORN_SESSION_SECRET environment variable or the session_secret configuration file value")
+      if (!defaultSessionSecretWarningIssued) {
+        console.warn(
+          "Using default session secret. This is not secure in production. Set the SALTCORN_SESSION_SECRET environment variable or the session_secret configuration file value"
+        );
+        defaultSessionSecretWarningIssued = true;
+      }
     }
     connObj.sqlite_path = join(pathsWithApp.data, "saltcorndb.sqlite");
     return connObj;
