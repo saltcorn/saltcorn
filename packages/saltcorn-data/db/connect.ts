@@ -29,6 +29,8 @@ const defaultDataPath = pathsWithApp.data;
  */
 const stringToJSON = (x: any) => (typeof x === "string" ? JSON.parse(x) : x);
 
+let defaultSessionSecretWarningIssued = false;
+
 const stringToBool = (x: any) =>
   typeof x === "string" ? x === "true" || x === "True" : x;
 
@@ -140,7 +142,11 @@ const getConnectObject = (connSpec: any = {}) => {
     delete connObj.sslkey;
     delete connObj.sslrootcert;
   }
-  if (!connObj.session_secret) connObj.session_secret = is.str.generate();
+  let random_session_secret = false;
+  if (!connObj.session_secret) {
+    random_session_secret = true;
+    connObj.session_secret = is.str.generate();
+  }
   if (!connObj.jwt_secret) connObj.jwt_secret = randomBytes(64).toString("hex");
   connObj.version_tag = createHash("sha256")
     .update(`${connObj.session_secret}${git_commit || sc_version}`)
@@ -166,7 +172,22 @@ const getConnectObject = (connSpec: any = {}) => {
   ) {
     return connObj;
   } else {
-    return false;
+    // no details given. use sqlite in default location (possibly with reset schema), default session secret
+    if (random_session_secret) {
+      connObj.session_secret = "deadbeef";
+      connObj.version_tag = createHash("sha256")
+        .update(`${connObj.session_secret}${git_commit || sc_version}`)
+        .digest("hex")
+        .slice(0, 16);
+      if (!defaultSessionSecretWarningIssued) {
+        console.warn(
+          "Using default session secret. This is not secure in production. Set the SALTCORN_SESSION_SECRET environment variable or the session_secret configuration file value"
+        );
+        defaultSessionSecretWarningIssued = true;
+      }
+    }
+    connObj.sqlite_path = join(pathsWithApp.data, "saltcorndb.sqlite");
+    return connObj;
   }
 };
 /**

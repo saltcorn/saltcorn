@@ -105,6 +105,10 @@ const reactPackages = [
     watchDir: "packages/filemanager/src",
     buildDir: "packages/filemanager",
   },
+  {
+    watchDir: "packages/workflow-editor/src",
+    buildDir: "packages/workflow-editor",
+  },
 ];
 
 let activeWatchers = [];
