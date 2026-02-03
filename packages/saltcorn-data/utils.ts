@@ -17,12 +17,16 @@ import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
 import type User from "./models/user"; // only type, shouldn't cause require loop
 import { existsSync } from "fs-extra";
-import _ from "underscore";
+import { VM } from "vm2";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
 const Docker = require("dockerode");
 import path from "path";
 import os from "os";
+import { execSync } from "child_process";
+import { readFileSync } from "fs";
+import { parseStringPromise } from "xml2js";
+import _ from "underscore";
 // import { ResultType, StepResType } from "types";'
 
 declare const saltcorn: any;
@@ -462,11 +466,48 @@ const interpolate = (
 ): string => {
   try {
     if (s && typeof s === "string") {
-      const template = _.template(s, {
-        interpolate: /\{\{!(.+?)\}\}/g,
-        escape: /\{\{([^!].+?)\}\}/g,
+      if (!s.includes("{{")) return s;
+      if (!isNode()) {
+        //mobile without vm2
+        const template = _.template(s, {
+          interpolate: /\{\{!(.+?)\}\}/g,
+          escape: /\{\{([^!].+?)\}\}/g,
+        });
+        return template({ row, user, process: undefined, ...(row || {}) });
+      }
+      const sandbox = {
+        ...require("./db/state").getState().eval_context,
+        global: undefined,
+        globalThis: undefined,
+        process: undefined,
+        require: undefined,
+        module: undefined,
+        Function: undefined,
+        row,
+        user,
+        ...(row || {}),
+      };
+      const vm = new VM({
+        sandbox,
+        eval: false,
+        wasm: false,
+        timeout: 200,
       });
-      return template({ row, user, process: undefined, ...(row || {}) });
+
+      const go_interp = (s: string): string =>
+        s.replace(/\{\{([!=]?)([\s\S]+?)\}\}/g, renderToken);
+
+      const renderToken = (_match: string, bang: string, code: string) => {
+        const val = vm.run(`(${code.trim()})`);
+        const strVal =
+          val === null || typeof val === "undefined" ? "" : String(val);
+        return bang === "="
+          ? go_interp(escapeHtml(strVal))
+          : bang === "!"
+            ? strVal
+            : escapeHtml(strVal);
+      };
+      return go_interp(s);
     } else return s;
   } catch (e: any) {
     e.message = `In evaluating the interpolation ${s}${
@@ -680,6 +721,36 @@ const pluginsFolderRoot = path.join(
   "saltcorn-plugins"
 );
 
+const decodeProvisioningProfile = async (provisioningProfile: string) => {
+  require("./db/state")
+    .getState()
+    .log(5, `Decoding provisioning profile ${provisioningProfile}`);
+  const outFile = join("/tmp", "provisioningProfile.xml");
+  try {
+    execSync(`security cms -D -i "${provisioningProfile}" > ${outFile}`);
+    const content = readFileSync(outFile);
+    const parsed = await parseStringPromise(content);
+    const dict = parsed.plist.dict[0];
+    const guuid = dict.string[dict.string.length - 1];
+    const teamId = dict.array[0].string[0];
+    const specifier = dict.string[1];
+    const identifier = dict.dict[0].string[0];
+    const result = { guuid, teamId, specifier, identifier };
+    console.log(result);
+    return result;
+  } catch (error: any) {
+    require("./db/state")
+      .getState()
+      .log(
+        5,
+        `Unable to decode the provisioning profile '${provisioningProfile}': ${
+          error.message ? error.message : "Unknown error"
+        }`
+      );
+    throw error;
+  }
+};
+
 export = {
   dataModulePath,
   allReturnDirectives,
@@ -742,4 +813,5 @@ export = {
   renderServerSide,
   imageAvailable,
   pluginsFolderRoot,
+  decodeProvisioningProfile,
 };

@@ -1137,7 +1137,7 @@ class Table implements AbstractTable {
     );
     if (this.has_sync_info) {
       const state = require("../db/state").getState();
-      if (state.pushHelper) state.pushHelper.pushSync(this.name);
+      if (state.pushHelper) state.pushHelper.queuePushSync();
     }
   }
 
@@ -1714,7 +1714,7 @@ class Table implements AbstractTable {
           syncTimestamp
         );
       else await this.insertSyncInfo(id as PrimaryKeyValue, v, syncTimestamp);
-      if (state.pushHelper) state.pushHelper.pushSync(this.name);
+      if (state.pushHelper) state.pushHelper.queuePushSync();
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (really_changed_field_names.size > 0) {
@@ -2256,7 +2256,7 @@ class Table implements AbstractTable {
           );
         }
       );
-      if (state.pushHelper) state.pushHelper.pushSync(this.name);
+      if (state.pushHelper) state.pushHelper.queuePushSync();
     }
     const newRow = { [pk_name]: id, ...v };
     await this.auto_update_calc_aggregations(newRow);

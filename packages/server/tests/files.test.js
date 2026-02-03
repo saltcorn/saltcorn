@@ -20,14 +20,21 @@ const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const { existsSync } = require("fs");
 
-const createTestFile = async (folder, name, mimetype, content) => {
-  if (
-    !existsSync(
-      path.join(db.connectObj.file_store, db.getTenantSchema(), folder, name)
-    )
-  ) {
-    await File.from_contents(name, mimetype, content, 1, 100, folder);
-  }
+const createTestFile = async (
+  folder,
+  name,
+  mimetype,
+  content,
+  minRole = 100
+) => {
+  const fullPath = path.join(
+    db.connectObj.file_store,
+    db.getTenantSchema(),
+    folder,
+    name
+  );
+  if (existsSync(fullPath)) await fs.unlink(fullPath);
+  await File.from_contents(name, mimetype, content, 1, minRole, folder);
 };
 
 const checkFiles = (files, expecteds) =>
@@ -91,6 +98,13 @@ beforeAll(async () => {
     "foo_image.png",
     "image/png",
     "imagecontent"
+  );
+  await createTestFile(
+    "_sc_test_subfolder_one",
+    "the-script.js",
+    "application/javascript",
+    "console.log('I am a script');",
+    1
   );
 });
 afterAll(db.close);
@@ -190,6 +204,97 @@ describe("files admin", () => {
       .attach("file", Buffer.from("helloiamasmallfile", "utf-8"))
 
       .expect(toRedirect("/files?dir=."));
+  });
+  describe("file editor", () => {
+    it("opens the file editor", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .get(
+          `/files/edit/${encodeURIComponent("_sc_test_subfolder_one/the-script.js")}`
+        )
+        .set("Cookie", loginCookie)
+        .expect(toInclude("console.log(&#39;I am a script&#39;)"));
+    });
+    it("allows editing and saving a file", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post(
+          `/files/edit/${encodeURIComponent("_sc_test_subfolder_one/the-script.js")}`
+        )
+        .set("Cookie", loginCookie)
+        .send("value=console.log('I have been edited');")
+        .expect(toRedirect("/files?dir=_sc_test_subfolder_one"));
+    });
+
+    it("does not open for non-existing files", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .get(
+          `/files/edit/${encodeURIComponent("_sc_test_subfolder_one/not-existing.js")}`
+        )
+        .set("Cookie", loginCookie)
+        .expect(toInclude("Not found", 404));
+    });
+    it("denies editing non-existing files", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post(
+          `/files/edit/${encodeURIComponent("_sc_test_subfolder_one/not-existing.js")}`
+        )
+        .set("Cookie", loginCookie)
+        .send("value=console.log('I have been edited');")
+        .expect(toRedirect("/files"));
+      await request(app)
+        .get("/files")
+        .set("Cookie", loginCookie)
+        .expect(toInclude("File not found"));
+    });
+
+    it("denies access to the file editor", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getStaffLoginCookie();
+      await request(app)
+        .get(
+          `/files/edit/${encodeURIComponent("_sc_test_subfolder_one/the-script.js")}`
+        )
+        .set("Cookie", loginCookie)
+        .expect(toInclude("Not found", 404));
+    });
+    it("denies editing a file", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getStaffLoginCookie();
+      await request(app)
+        .post(
+          `/files/edit/${encodeURIComponent("_sc_test_subfolder_one/the-script.js")}`
+        )
+        .set("Cookie", loginCookie)
+        .send("value=console.log('I have been edited');")
+        .expect(toRedirect("/files"));
+
+      await request(app)
+        .get("/")
+        .set("Cookie", loginCookie)
+        .expect(toInclude("File not found"));
+    });
+
+    it("does not open for folders or not editable extensions", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .get(`/files/edit/${encodeURIComponent("_sc_test_subfolder_one")}`)
+        .set("Cookie", loginCookie)
+        .expect(toInclude("Directories cannot be edited", 400));
+      await request(app)
+        .get(
+          `/files/edit/${encodeURIComponent("_sc_test_subfolder_one/bar_image.png")}`
+        )
+        .set("Cookie", loginCookie)
+        .expect(toInclude("Files of this type cannot be edited", 400));
+    });
   });
   it("search files by name", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -417,7 +522,9 @@ describe("visible_entries test", () => {
       .set("Cookie", staffCookie);
     expect(resp.statusCode).toBe(200);
     expect(
-      resp.body.directories.find((file) => file.filename === "_sc_test_subfolder_one/subsubfolder")
+      resp.body.directories.find(
+        (file) => file.filename === "_sc_test_subfolder_one/subsubfolder"
+      )
     ).toBeDefined();
   });
 

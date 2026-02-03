@@ -95,11 +95,6 @@ const buildCustomInput = (id, attrs, file_name) => {
         class: "custom-file-label",
       },
       !file_name ? __("No file chosen") : ""
-    ) +
-    script(
-      with_curScript(`curScript.parentNode.querySelector("input").addEventListener('change', (e) => {
-          curScript.parentNode.querySelector("span").textContent = e.target.files[0].name;
-        });`)
     )
   );
 };
@@ -235,6 +230,7 @@ module.exports = {
           attributes: {
             options: btnStyles,
           },
+          required: true,
           default: "default",
         },
         {
@@ -258,7 +254,12 @@ module.exports = {
       const id = `input${text_attr(nm)}`;
       return (
         input({
-          class: ["form-control", cls, field.class, file_name && "file-has-existing"],
+          class: [
+            "form-control",
+            cls,
+            field.class,
+            file_name && "file-has-existing",
+          ],
           "data-fieldname": field.form_name,
           name: text_attr(nm),
           id: id,
@@ -269,6 +270,11 @@ module.exports = {
           "data-on-cloned": "clear_cloned_file_input(this)",
           accept: attrs.files_accept_filter || undefined,
           ...(customInput ? { hidden: true } : {}),
+          ...(customInput
+            ? {
+                onchange: `$(this).parent().find('span').text(event.target.files[0].name);${attrs.onChange || ""}`,
+              }
+            : attrs.onChange),
         }) +
         (customInput ? buildCustomInput(id, attrs, file_name) : "") +
         span({ class: "file-upload-exising" }, text(file_name || ""))
