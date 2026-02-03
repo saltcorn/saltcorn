@@ -943,7 +943,7 @@ class File {
 
   async get_contents(
     encoding?: "utf8" | "base64" | "base64url" | "hex" | "ascii"
-  ): Promise<Buffer> {
+  ): Promise<Buffer|string> {
     if (this.s3_store) {
       const buffer = await downloadBufferFromS3(this.location);
       return encoding

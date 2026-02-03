@@ -73,7 +73,10 @@ const runPage = async (page, req, res, tic) => {
       );
     }
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
-    else
+    else if (contents.html_string) {
+      res.set("Content-Type", "text/html");
+      await res.send(contents.html_string);
+    } else
       res.sendWrap(
         {
           title,
