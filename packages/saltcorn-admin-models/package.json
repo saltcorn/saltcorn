@@ -37,7 +37,7 @@
     "csv-stringify": "^6.5.2",
     "csvtojson": "^2.0.10",
     "dateformat": "^4.6.3",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "node-fetch": "2.6.9",
     "ssh2-sftp-client": "11.0.0",
     "tmp-promise": "^3.0.3"
