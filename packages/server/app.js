@@ -253,6 +253,15 @@ const getApp = async (opts = {}) => {
       }
     )
   );
+  app.use(
+    express.static(
+      path.dirname(require.resolve("@saltcorn/workflow/package.json")) +
+        "/dist",
+      {
+        maxAge: 1000 * 60 * 60 * 24,
+      }
+    )
+  );
 
   if (process.env.SALTCORN_SERVE_ADDITIONAL_DIR)
     app.use(
@@ -281,6 +290,16 @@ const getApp = async (opts = {}) => {
     `/static_assets/${version_tag}`,
     express.static(
       path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
+      {
+        maxAge: "100d",
+      }
+    )
+  );
+  app.use(
+    `/static_assets/${version_tag}`,
+    express.static(
+      path.dirname(require.resolve("@saltcorn/workflow/package.json")) +
+        "/dist",
       {
         maxAge: "100d",
       }

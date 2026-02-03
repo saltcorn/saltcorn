@@ -33,7 +33,8 @@
       "plugins_folder/",
       "git_plugins/",
       "packages/saltcorn-data/app-locales/",
-      "packages/server/locales/"
+      "packages/server/locales/",
+      "packages/workflow-editor/dist/"
     ]
   },
   "eslintConfig": {

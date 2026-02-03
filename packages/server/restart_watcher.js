@@ -27,6 +27,7 @@ const relevantPackages = [
   "server",
   "sqlite",
   "filemanager",
+  "workflow-editor",
 ];
 
 /**
