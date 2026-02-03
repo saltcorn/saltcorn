@@ -1768,5 +1768,7 @@
 	"APN Signing Key ID": "APN Signing Key ID",
 	"The 10-character Key ID obtained from Apple developer account": "The 10-character Key ID obtained from Apple developer account",
 	"Edit file": "Edit file",
-	"Editing %s": "Editing %s"
+	"Editing %s": "Editing %s",
+	"Run immediately in background": "Run immediately in background",
+	"Row expression": "Row expression"
 }

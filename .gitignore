@@ -129,3 +129,5 @@ package-lock.json
 !packages/saltcorn-workflow/package-lock.json
 !/package-lock.json
 plugins_folder/
+
+*.sqlite-journal

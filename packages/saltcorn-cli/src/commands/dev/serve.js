@@ -21,9 +21,18 @@ class DevServeCommand extends Command {
     for (;;) {
       const scResult = spawnSync(
         "saltcorn",
-        ["serve", "--dev", "--addschema", ...(flags.port ? ["-p", flags.port] : [])],
+        [
+          "serve",
+          "--dev",
+          "--addschema",
+          ...(flags.port ? ["-p", flags.port] : []),
+        ],
         {
-          env: { ...process.env, SALTCORN_NWORKERS: flags.workers || 1 },
+          env: {
+            ...process.env,
+            SALTCORN_NWORKERS:
+              flags.workers || process.env.SALTCORN_NWORKERS || 1,
+          },
           stdio: "inherit",
         }
       );
