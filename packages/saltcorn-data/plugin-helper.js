@@ -2570,11 +2570,30 @@ const readStateStrict = (state, fields) => {
  * @param {object[]} fields0
  * @returns {object}
  */
-const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
+const json_list_to_external_table = (
+  get_json_list,
+  fields0,
+  methods = {},
+  tableRow = {}
+) => {
   const fields = fields0.map((f) =>
     f.constructor.name === Object.name ? new Field(f) : f
   );
   const getRows = async (where = {}, selopts = {}) => {
+    const { forUser, forPublic, ...selopts1 } = selopts;
+    const role = forUser ? forUser.role_id : forPublic ? 100 : null;   
+
+    if (
+      role &&
+      tableRow?.updateWhereWithOwnership &&
+      tableRow.updateWhereWithOwnership(
+        where,
+        forUser || { role_id: 100 },
+        true
+      )?.notAuthorized
+    ) {
+      return [];
+    }
     let data_in = await get_json_list(where, selopts);
     if (methods?.disableFiltering) return data_in;
     const restricts = Object.entries(where);
@@ -2657,19 +2676,28 @@ const json_list_to_external_table = (get_json_list, fields0, methods = {}) => {
       return roles[tbl.name] || 100;
     },
     async getJoinedRows(opts = {}) {
-      if (methods?.getJoinedRows) {
+      if (!opts.where) opts.where = {};
+      const { forUser, forPublic } = opts;
+      const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+      if (
+        role &&
+        tableRow?.updateWhereWithOwnership &&
+        tableRow.updateWhereWithOwnership(
+          opts.where,
+          forUser || { role_id: 100 },
+          true
+        )?.notAuthorized
+      ) {
+        return [];
+      }
+      if (methods?.getJoinedRows) {        
         return await methods.getJoinedRows(opts);
       }
       const { where, ...rest } = opts;
       return await getRows(where || {}, rest || {});
     },
     async getJoinedRow(opts = {}) {
-      if (methods?.getJoinedRows) {
-        const rows = await methods.getJoinedRows(opts);
-        return rows.length > 0 ? rows[0] : null;
-      }
-      const { where, ...rest } = opts;
-      const rows = await getRows(where || {}, rest || {});
+      const rows = await this.getJoinedRows(opts);
       return rows.length > 0 ? rows[0] : null;
     },
     delete_url(row, moreQuery) {
