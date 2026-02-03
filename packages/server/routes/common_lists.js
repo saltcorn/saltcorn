@@ -170,15 +170,16 @@ const editViewRoleForm = (view, roles, req, on_done_redirect_str) =>
  * @param {object} req
  * @returns {div}
  */
-const view_dropdown = (view, req, on_done_redirect_str = "") =>
+const view_dropdown = (view, req, on_done_redirect_str = "", includeRun = true) =>
   settingsDropdown(`dropdownMenuButton${view.id}`, [
-    a(
-      {
-        class: "dropdown-item",
-        href: `/view/${encodeURIComponent(view.name)}`,
-      },
-      '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
-    ),
+    includeRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/view/${encodeURIComponent(view.name)}`,
+        },
+        '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
+      ),
     view.id &&
       a(
         {
@@ -502,16 +503,18 @@ const page_dropdown = (
   page,
   req,
   on_done_redirect_str = "",
-  includeTestRun = false
+  includeTestRun = false,
+  includeRun = true
 ) =>
   settingsDropdown(`dropdownMenuButton${page.id}`, [
-    a(
-      {
-        class: "dropdown-item",
-        href: `/page/${encodeURIComponent(page.name)}`,
-      },
-      '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
-    ),
+    includeRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/page/${encodeURIComponent(page.name)}`,
+        },
+        '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
+      ),
     includeTestRun &&
       a(
         {
