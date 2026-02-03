@@ -82,7 +82,7 @@ const {
   view_linker,
   edit_build_in_actions,
   updateViewSelect,
-} = require("./viewable_fields");
+} = require("../../viewable_fields");
 const {
   traverse,
   getStringsForI18n,

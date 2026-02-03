@@ -38,7 +38,7 @@ const {
 const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
 const db = require("../../db");
-const { getForm, fill_presets } = require("./viewable_fields");
+const { getForm, fill_presets } = require("../../viewable_fields");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const WorkflowTrace = require("../../models/workflow_trace");
 const { localeDateTime } = require("@saltcorn/markup/index");

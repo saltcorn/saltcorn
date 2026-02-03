@@ -14,7 +14,7 @@ const {
   get_parent_views,
   readState,
 } = require("../../plugin-helper");
-const { splitUniques } = require("./viewable_fields");
+const { splitUniques } = require("../../viewable_fields");
 const { InvalidConfiguration, extractPagings } = require("../../utils");
 
 /**

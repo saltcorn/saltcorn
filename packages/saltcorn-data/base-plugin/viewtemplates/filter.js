@@ -38,7 +38,7 @@ const {
   stateFieldsToQuery,
   stateToQueryString,
 } = require("../../plugin-helper");
-const { action_link } = require("./viewable_fields");
+const { action_link } = require("../../viewable_fields");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const {
   eachView,

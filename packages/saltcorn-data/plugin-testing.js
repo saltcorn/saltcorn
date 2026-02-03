@@ -13,7 +13,7 @@ const Trigger = require("./models/trigger");
 const { expressionValidator } = require("./models/expression");
 const {
   parse_view_select,
-} = require("./base-plugin/viewtemplates/viewable_fields");
+} = require("./viewable_fields");
 const View = require("./models/view");
 
 const auto_test_wrap = (wrap) => {

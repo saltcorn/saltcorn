@@ -21,7 +21,7 @@ const {
   add_free_variables_to_joinfields,
   calcfldViewConfig,
 } = require("@saltcorn/data/plugin-helper");
-import viewableFields from "./base-plugin/viewtemplates/viewable_fields";
+import viewableFields from "./viewable_fields";
 import { Req } from "@saltcorn/types/base_types";
 import FieldRepeat from "./models/fieldrepeat";
 const { getForm, transformForm } = viewableFields;

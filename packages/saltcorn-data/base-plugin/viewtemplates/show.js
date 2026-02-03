@@ -64,7 +64,7 @@ const {
   splitUniques,
   standardBlockDispatch,
   standardLayoutRowVisitor,
-} = require("./viewable_fields");
+} = require("../../viewable_fields");
 const db = require("../../db");
 const {
   asyncMap,
