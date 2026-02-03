@@ -342,23 +342,18 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  * @returns {function}
  */
 const onMessageFromWorker =
-  (
-    masterState,
-    { port, host, watchReaper, disableScheduler, pid, nodesDispatchMsg }
-  ) =>
+  (masterState, { port, pid, nodesDispatchMsg, scheduleHelper, isLeader }) =>
   (msg) => {
     //console.log("worker msg", typeof msg, msg);
     if (msg === "Start" && !masterState.started) {
       masterState.started = true;
-      runScheduler({
-        port,
-        host,
-        watchReaper,
-        disableScheduler,
-        eachTenant,
-        auto_backup_now,
-        take_snapshot,
-      });
+      if (isLeader) scheduleHelper.start();
+      if (db.connectObj.multi_node) {
+        startLeadershipMonitor({
+          scheduleHelper,
+          wasLeader: isLeader,
+        });
+      }
       require("./systemd")({ port });
       return true;
     } else if (msg === "RestartServer") {
@@ -407,6 +402,43 @@ const initOfflineStoreCfg = async () => {
     );
     await rootState.setConfig("pre_installed_module_infos", []);
   }
+};
+
+const getIsLeaderFn = async () => {
+  const electLeaderConn = await db.getClient();
+  const isSqlite = db.isSQLite;
+  return async () => {
+    if (isSqlite) return true;
+    const lockId = 11565;
+    const result = await electLeaderConn.query(
+      "SELECT pg_try_advisory_lock($1) AS is_leader",
+      [lockId]
+    );
+    if (result.rows[0].is_leader) return true;
+    else return false;
+  };
+};
+
+const startLeadershipMonitor = ({
+  scheduleHelper,
+  wasLeader,
+  intervalMs = 5000,
+}) => {
+  let schedulerStarted = wasLeader;
+  setInterval(async () => {
+    try {
+      const isLeader = await scheduleHelper.isLeaderFn();
+      if (isLeader && !schedulerStarted) {
+        scheduleHelper.start();
+        schedulerStarted = true;
+      } else if (!isLeader && schedulerStarted) {
+        scheduleHelper.stop();
+        schedulerStarted = false;
+      }
+    } catch (e) {
+      console.log(`Error checking leadership: ${e.message}`);
+    }
+  }, intervalMs);
 };
 
 module.exports =
@@ -460,8 +492,14 @@ module.exports =
 
     let nodesDispatchMsg = null;
     let multiNodeClient = null;
+    let isLeaderFn = null;
+    let isLeader = true;
     if (db.connectObj.multi_node) {
       multiNodeClient = await db.getClient();
+      if (cluster.isMaster) {
+        isLeaderFn = await getIsLeaderFn();
+        isLeader = await isLeaderFn();
+      }
       nodesDispatchMsg = async ({ tenant, ...msg }) => {
         if (tenant) {
           db.runWithTenant(tenant, () => nodesDispatchMsg(msg));
@@ -494,16 +532,36 @@ module.exports =
       };
     }
 
+    const scheduleHelper = {
+      stopScheduler: false,
+      start: () => {
+        this.stopScheduler = false;
+        runScheduler({
+          stop_when: () => this.stopScheduler,
+          port,
+          host,
+          watchReaper,
+          disableScheduler,
+          eachTenant,
+          auto_backup_now,
+          take_snapshot,
+        });
+      },
+      stop: () => {
+        this.stopScheduler = true;
+      },
+      isLeaderFn,
+    };
+
     const addWorker = (worker) => {
       worker.on(
         "message",
         onMessageFromWorker(masterState, {
           port,
-          host,
-          watchReaper,
-          disableScheduler,
           pid: worker.process.pid,
           nodesDispatchMsg,
+          scheduleHelper,
+          isLeader,
         })
       );
     };
@@ -608,15 +666,13 @@ module.exports =
             });
         };
         await nonGreenlockWorkerSetup(appargs, port, host);
-        runScheduler({
-          port,
-          host,
-          watchReaper,
-          disableScheduler,
-          eachTenant,
-          auto_backup_now,
-          take_snapshot,
-        });
+        if (isLeader) scheduleHelper.start();
+        if (db.connectObj.multi_node) {
+          startLeadershipMonitor({
+            scheduleHelper,
+            wasLeader: isLeader,
+          });
+        }
         require("./systemd")({ port });
       }
       Trigger.emitEvent("Startup");
