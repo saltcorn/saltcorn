@@ -60,7 +60,7 @@ const {
   parse_view_select,
   get_viewable_fields_from_layout,
   action_url,
-} = require("./viewable_fields");
+} = require("../../viewable_fields");
 const { getState } = require("../../db/state");
 const {
   get_async_expression_function,

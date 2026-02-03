@@ -40,7 +40,7 @@ const {
   action_url,
   action_link,
   edit_build_in_actions,
-} = require("./viewable_fields");
+} = require("../../viewable_fields");
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const { traverse } = require("../../models/layout");
 
