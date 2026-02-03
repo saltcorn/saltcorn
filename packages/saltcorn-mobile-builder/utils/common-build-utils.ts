@@ -57,14 +57,14 @@ export function prepareBuildDir(
 
   console.log("installing capacitor deps and plugins");
   const capDepsAndPlugins = [
-    "@capacitor/cli@7.4.4",
-    "@capacitor/core@7.4.4",
+    "@capacitor/cli@7.4.5",
+    "@capacitor/core@7.4.5",
     "@capacitor/assets@3.0.5",
-    "@capacitor/filesystem@7.1.5",
-    "@capacitor/camera@7.0.2",
-    "@capacitor/network@7.0.2",
-    "@capacitor-community/sqlite@7.0.2",
-    "@capacitor/screen-orientation@7.0.2",
+    "@capacitor/filesystem@7.1.6",
+    "@capacitor/camera@7.0.3",
+    "@capacitor/network@7.0.3",
+    "@capacitor-community/sqlite@7.0.3",
+    "@capacitor/screen-orientation@7.0.3",
     "@capacitor/app@7.1.0",
     "send-intent@7.0.0",
     ...additionalPlugins,
@@ -345,12 +345,9 @@ export async function modifyAndroidManifest(
 }
 
 export function hasAuthMethod(plugins: string[]) {
-  console.log("hasAuthMethod", plugins);
   const state = getState();
   for (const pluginName of plugins) {
     const plugin = state!.plugins[pluginName];
-    console.log("plugin", pluginName, plugin);
-
     if (plugin && plugin.authentication) return true;
   }
   return false;
