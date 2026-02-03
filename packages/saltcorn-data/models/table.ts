@@ -320,7 +320,12 @@ class Table implements AbstractTable {
     const { getRows, ...methods } = provider.get_table(tbl.provider_cfg, tbl);
 
     const { json_list_to_external_table } = require("../plugin-helper");
-    const t = json_list_to_external_table(getRows, tbl.fields, methods || {}, tbl);
+    const t = json_list_to_external_table(
+      getRows,
+      tbl.fields,
+      methods || {},
+      tbl
+    );
     delete t.min_role_read; //it is a getter
     Object.assign(t, tbl);
     t.update = async (upd_rec: Row) => {
@@ -783,7 +788,8 @@ class Table implements AbstractTable {
     // refresh tables cache
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client) await Table.state_refresh(true);
-
+    
+    if (table.provider_name) return table.to_provided_table();
     return table;
   }
 
