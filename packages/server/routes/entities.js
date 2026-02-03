@@ -88,6 +88,10 @@ const getAllEntities = async () => {
 
   // Add views
   views.forEach((v) => {
+    const has_config =
+      v.configuration &&
+      typeof v.configuration === "object" &&
+      Object.keys(v.configuration).length > 0;
     entities.push({
       type: "view",
       name: v.name,
@@ -102,6 +106,7 @@ const getAllEntities = async () => {
         table_name: v.table_id ? tableNameById.get(v.table_id) : null,
         singleton: v.singleton,
         min_role: v.min_role,
+        has_config,
       },
     });
   });
@@ -566,7 +571,13 @@ router.get(
           "data-tags": tagIds.join(" "),
         },
         td(entityTypeBadge(entity.type)),
-        td(a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))),
+        td(
+          entity.type === "view" &&
+          !entity.metadata.table_id &&
+          !entity.metadata.has_config
+            ? span({ class: "fw-bold" }, text(entity.name))
+            : a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))
+        ),
         td(runCell),
         td(detailsContent(entity, req)),
         td(
