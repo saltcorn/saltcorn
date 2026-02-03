@@ -459,21 +459,21 @@ class WorkflowStep {
       case "Output":
         if (cfg.popup_title)
           lines.push(`${t("Title")}: ${cfg.popup_title}`);
-        if (cfg.output_text) lines.push(shorten(cfg.output_text, 180));
+        // if (cfg.output_text) lines.push(shorten(cfg.output_text, 180));
         if (cfg.markdown) lines.push(t("Render as markdown"));
         break;
       case "DataOutput":
         if (cfg.popup_title)
           lines.push(`${t("Title")}: ${cfg.popup_title}`);
-        if (cfg.output_expr)
-          lines.push(`${t("Expression")}: ${shorten(cfg.output_expr)}`);
+        // if (cfg.output_expr)
+        //   lines.push(`${t("Expression")}: ${shorten(cfg.output_expr)}`);
         break;
       case "OutputView":
         if (cfg.popup_title)
           lines.push(`${t("Title")}: ${cfg.popup_title}`);
         if (cfg.view) lines.push(`${t("View")}: ${cfg.view}`);
-        if (cfg.view_state)
-          lines.push(`${t("View state")}: ${shorten(cfg.view_state)}`);
+        // if (cfg.view_state)
+        //   lines.push(`${t("View state")}: ${shorten(cfg.view_state)}`);
         break;
       case "WaitUntil":
         if (cfg.resume_at)
@@ -523,9 +523,9 @@ class WorkflowStep {
       case "EditViewForm":
         if (cfg.popup_title)
           lines.push(`${t("Title")}: ${cfg.popup_title}`);
-        if (cfg.edit_view) lines.push(`${t("Edit view")}: ${cfg.edit_view}`);
-        if (cfg.response_variable)
-          lines.push(`${t("Response variable")}: ${cfg.response_variable}`);
+        // if (cfg.edit_view) lines.push(`${t("Edit view")}: ${cfg.edit_view}`);
+        // if (cfg.response_variable)
+        //   lines.push(`${t("Response variable")}: ${cfg.response_variable}`);
         break;
       case "TerminateWorkflow":
         if (cfg.return_value)

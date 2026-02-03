@@ -40,15 +40,15 @@
 
 .wf-node {
   background: var(--xy-node-background-color-default, #fff);
-  border: 1px solid var(--xy-node-border-default, #dce0e6);
+  /* border: var(--xy-node-border-default); */
+  border: 1px solid #777777;
   border-radius: 10px;
   padding: 10px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
   min-width: 200px;
   cursor: pointer;
-  max-width: 300px;
+  max-width: 240px;
 }
-
 
 .wf-modal .card-body {
   flex: 1 1 auto;
@@ -194,6 +194,33 @@
 .wf-shell .react-flow__handle {
   background: var(--wf-handle-bg);
   border-color: var(--wf-handle-border);
+}
+
+.wf-edge-add-button {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #adb5bd;
+  background: #ffffff;
+  color: #6c757d;
+  font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.wf-edge-add-button:hover {
+  background: #f1f3f5;
+  color: #495057;
+}
+
+.wf-edge-add-button:focus {
+  outline: 2px solid #adb5bd;
+  outline-offset: 2px;
 }
 
 [data-bs-theme="dark"] .wf-shell {

@@ -17,6 +17,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "./workflow.css";
+import WorkflowEdge from "./WorkflowEdge";
 
 const handleStyle = {
   width: "10px",
@@ -167,6 +168,10 @@ const nodeTypes = {
   start: StartNode,
   step: StepNode,
   add: AddNode,
+};
+
+const edgeTypes = {
+  "workflow-main": WorkflowEdge,
 };
 
 const findLoopBackLinks = (steps) => {
@@ -445,7 +450,11 @@ const buildGraph = (
 
   steps.forEach((step) => {
     if (step.next_step) {
+      const rawNext = String(step.next_step || "").trim();
+      const directTargetId = idByName[rawNext];
       const nextNames = extractNextStepNames(step.next_step);
+      const isSimpleNextStep =
+        !!directTargetId && nextNames.length === 1 && nextNames[0] === rawNext;
       nextNames.forEach((name) => {
         const targetId = idByName[name];
         if (!targetId) return;
@@ -453,8 +462,15 @@ const buildGraph = (
           id: `e-${step.id}-${name}`,
           source: String(step.id),
           target: targetId,
-          type: "smoothstep",
+          type: "workflow-main",
           animated: true,
+          data: {
+            startLabel: step.name,
+            sourceStepName: step.name,
+            sourceId: String(step.id),
+            targetId,
+            canInsertBetween: isSimpleNextStep,
+          },
         });
       });
     }
@@ -804,24 +820,40 @@ const WorkflowEditor = ({ data }) => {
     setModal(null);
     setError("");
     try {
-      const fresh = await fetchJson(data.urls.data);
-      setSteps(fresh.steps || []);
+      let fresh = await fetchJson(data.urls.data);
 
-      // If a step was just added via an adder node, link it as next_step
+      // If a step was just added via an adder node, wire up next_step
       if (pendingAddRef.current) {
-        const { afterStepId, prevIds } = pendingAddRef.current;
+        const { afterStepId, prevIds, insertBetween } = pendingAddRef.current;
         const newSteps = (fresh.steps || []).filter(
           (s) => !prevIds.has(String(s.id))
         );
         if (newSteps.length === 1) {
           const newStep = newSteps[0];
-          await updateConnection({
-            step_id: afterStepId,
-            next_step: newStep.name,
-          });
+          if (insertBetween && insertBetween.originalTargetName) {
+            // Insert new step between source and its former target
+            await updateConnection({
+              step_id: newStep.id,
+              next_step: insertBetween.originalTargetName,
+            });
+            await updateConnection({
+              step_id: afterStepId,
+              next_step: newStep.name,
+            });
+          } else {
+            await updateConnection({
+              step_id: afterStepId,
+              next_step: newStep.name,
+            });
+          }
+
+          // Re-fetch so we get the updated connections reflected in steps
+          fresh = await fetchJson(data.urls.data);
         }
         pendingAddRef.current = null;
       }
+
+      setSteps(fresh.steps || []);
 
       setMessage(strings.refresh);
       setTimeout(() => setMessage(""), 1200);
@@ -830,7 +862,7 @@ const WorkflowEditor = ({ data }) => {
     } finally {
       setLoading(false);
     }
-  }, [data.urls.data, fetchJson, strings.refresh]);
+  }, [data.urls.data, fetchJson, strings.refresh, updateConnection]);
 
   const persistPositions = useCallback(
     async (positions = []) => {
@@ -1032,15 +1064,37 @@ const WorkflowEditor = ({ data }) => {
       }
       const stepName = nameById[connection.source];
       if (!stepName) return;
-      const payload = {
-        step_id: connection.source,
-      };
-      if (loop) payload.loop_body_step = targetName || "";
-      else payload.next_step = targetName || "";
-      await updateConnection(payload);
+      if (loop) {
+        await updateConnection({
+          step_id: connection.source,
+          loop_body_step: targetName || "",
+        });
+      } else {
+        // If this source already has a simple next_step, treat this as inserting the target step in between source and its former target.
+        const srcStep = steps.find(
+          (s) => String(s.id) === String(connection.source)
+        );
+        const rawNext = srcStep?.next_step
+          ? String(srcStep.next_step).trim()
+          : "";
+        const simpleNextId = rawNext && idByName[rawNext];
+
+        if (simpleNextId && simpleNextId !== connection.target) {
+          // Rewire: source -> new target, new target -> old target name
+          await updateConnection({
+            step_id: connection.target,
+            next_step: rawNext,
+          });
+        }
+
+        await updateConnection({
+          step_id: connection.source,
+          next_step: targetName || "",
+        });
+      }
       await reload();
     },
-    [idByName, nameById, reload, updateConnection]
+    [idByName, nameById, reload, steps, updateConnection]
   );
 
   const onEdgesChange = useCallback(
@@ -1128,6 +1182,21 @@ const WorkflowEditor = ({ data }) => {
     [openStepForm, steps]
   );
 
+  const onInsertBetween = useCallback(
+    ({ source, target }) => {
+      if (!source || !target || source === "start") return;
+      const originalTargetName = nameById[target];
+      if (!originalTargetName) return;
+      pendingAddRef.current = {
+        afterStepId: source,
+        prevIds: new Set(steps.map((s) => String(s.id))),
+        insertBetween: { originalTargetName },
+      };
+      openStepForm({ after_step: source });
+    },
+    [nameById, openStepForm, steps]
+  );
+
   const onSetStart = useCallback(
     async (id) => {
       await updateConnection({ step_id: id, initial_step: true });
@@ -1200,6 +1269,25 @@ const WorkflowEditor = ({ data }) => {
     steps,
   ]);
 
+  useEffect(() => {
+    setEdges((eds) => {
+      let changed = false;
+      const nextEdges = eds.map((e) => {
+        if (!e.data || !e.data.canInsertBetween) return e;
+        if (e.data.onAddBetween === onInsertBetween) return e;
+        changed = true;
+        return {
+          ...e,
+          data: {
+            ...e.data,
+            onAddBetween: onInsertBetween,
+          },
+        };
+      });
+      return changed ? nextEdges : eds;
+    });
+  }, [onInsertBetween, setEdges, edges]);
+
   const hasSteps = steps.length > 0;
 
   return (
@@ -1249,6 +1337,7 @@ const WorkflowEditor = ({ data }) => {
           onConnect={onConnect}
           onSelectionChange={handleSelectionChange}
           nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
           onInit={onInit}
           fitView
           proOptions={{ hideAttribution: true }}
