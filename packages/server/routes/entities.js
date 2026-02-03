@@ -88,6 +88,10 @@ const getAllEntities = async () => {
 
   // Add views
   views.forEach((v) => {
+    const has_config =
+      v.configuration &&
+      typeof v.configuration === "object" &&
+      Object.keys(v.configuration).length > 0;
     entities.push({
       type: "view",
       name: v.name,
@@ -102,6 +106,7 @@ const getAllEntities = async () => {
         table_name: v.table_id ? tableNameById.get(v.table_id) : null,
         singleton: v.singleton,
         min_role: v.min_role,
+        has_config,
       },
     });
   });
@@ -327,11 +332,11 @@ router.get(
       if (entity.type === "table")
         return tableActionsDropdown(entity, req, user_can_edit_tables);
       if (entity.type === "view")
-        return view_dropdown(entity, req, on_done_redirect_str);
+        return view_dropdown(entity, req, on_done_redirect_str, false);
       if (entity.type === "page")
-        return page_dropdown(entity, req, on_done_redirect_str, true);
+        return page_dropdown(entity, req, on_done_redirect_str, true, false);
       if (entity.type === "trigger")
-        return trigger_dropdown(entity, req, on_done_redirect_str, true);
+        return trigger_dropdown(entity, req, on_done_redirect_str, false);
       return "";
     };
 
@@ -448,6 +453,7 @@ router.get(
     const headerRow = tr(
       th(req.__("Type")),
       th(req.__("Name")),
+      th(req.__("Run")),
       th(req.__("Details")),
       th(req.__("Access | Read/Write")),
       th(req.__("Tags")),
@@ -523,6 +529,39 @@ router.get(
             ? `/viewedit/config/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
             : entity.viewLink;
       const actionsMenu = buildActionMenu(entity);
+      const runCell = (() => {
+        if (entity.type === "view") {
+          return a(
+            {
+              href: entity.viewLink,
+              class: "btn btn-sm btn-outline-primary",
+            },
+            i({ class: "fas fa-play me-1" }),
+            req.__("Run")
+          );
+        }
+        if (entity.type === "page") {
+          return a(
+            {
+              href: entity.viewLink,
+              class: "btn btn-sm btn-outline-primary",
+            },
+            i({ class: "fas fa-play me-1" }),
+            req.__("Run")
+          );
+        }
+        if (entity.type === "trigger") {
+          return a(
+            {
+              href: `/actions/testrun/${entity.id}${on_done_redirect_str}`,
+              class: "btn btn-sm btn-outline-primary",
+            },
+            i({ class: "fas fa-running me-1" }),
+            req.__("Test run")
+          );
+        }
+        return "";
+      })();
       return tr(
         {
           class: "entity-row",
@@ -532,7 +571,14 @@ router.get(
           "data-tags": tagIds.join(" "),
         },
         td(entityTypeBadge(entity.type)),
-        td(a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))),
+        td(
+          entity.type === "view" &&
+          !entity.metadata.table_id &&
+          !entity.metadata.has_config
+            ? span({ class: "fw-bold" }, text(entity.name))
+            : a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))
+        ),
+        td(runCell),
         td(detailsContent(entity, req)),
         td(
           text(
@@ -798,8 +844,8 @@ router.get(
         .entity-filter-btn { transition: all 0.15s ease-in-out; }
         .tag-filter-btn { transition: all 0.15s ease-in-out; }
         /* Show plus badge only on hover over tag cell */
-        td:nth-child(5) .add-tag { visibility: hidden; cursor: pointer; }
-        tr:hover td:nth-child(5) .add-tag { visibility: visible; }
+        td:nth-child(6) .add-tag { visibility: hidden; cursor: pointer; }
+        tr:hover td:nth-child(6) .add-tag { visibility: visible; }
       </style>
     `;
 
