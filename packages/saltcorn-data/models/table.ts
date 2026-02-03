@@ -325,6 +325,7 @@ class Table implements AbstractTable {
     Object.assign(t, tbl);
     t.update = async (upd_rec: Row) => {
       const { fields, constraints, ...updDB } = upd_rec;
+      if (updDB.ownership_field_id === "") delete updDB.ownership_field_id;
       await db.update("_sc_tables", updDB, tbl.id);
       //limited refresh if we do not have a client
       if (!db.getRequestContext()?.client) await Table.state_refresh(true);
