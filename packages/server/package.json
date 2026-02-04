@@ -12,6 +12,7 @@
     "@saltcorn/admin-models": "1.6.0-alpha.3",
     "@saltcorn/base-plugin": "1.6.0-alpha.3",
     "@saltcorn/builder": "1.6.0-alpha.3",
+    "@saltcorn/workflow-editor": "1.6.0-alpha.3",
     "@saltcorn/data": "1.6.0-alpha.3",
     "@saltcorn/filemanager": "1.6.0-alpha.3",
     "@saltcorn/markup": "1.6.0-alpha.3",
