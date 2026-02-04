@@ -10,8 +10,10 @@ import React, {
   useState,
   Fragment,
   useRef,
+  memo,
 } from "react";
 import { Editor, Frame, Element, Selector, useEditor } from "@craftjs/core";
+import { Layers, useLayer } from "@craftjs/layers"
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
@@ -46,7 +48,7 @@ import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Container } from "./elements/Container";
 import { Column } from "./elements/Column";
-import { Layers } from "saltcorn-craft-layers-noeye";
+// import { Layers } from "saltcorn-craft-layers-noeye";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCopy,
@@ -56,6 +58,7 @@ import {
   faSave,
   faExclamationTriangle,
   faPlus,
+  faChevronDown
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faCaretSquareLeft,
@@ -331,6 +334,76 @@ function useWindowDimensions() {
   return windowDimensions;
 }
 
+/**
+ * Custom Layer Component for Craft.js Layers panel
+ * Must be defined outside Builder component and memoized to prevent infinite re-renders
+ * Added defensive checks for layer properties
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const CustomLayerComponent = memo(({ children }) => {
+  const {
+    id,
+    depth,
+    expanded,
+    hovered,
+    actions: { toggleLayer },
+    connectors: { layer, drag },
+  } = useLayer((node) => {
+      return {
+        hovered: node?.events?.hovered,
+        expanded: node?.data?.expanded,
+      };
+  });
+
+  const { displayName, hasNodes } = useEditor((state) => {
+      const node = state.nodes[id];
+      const data = node?.data;
+      
+      let name = data?.displayName || data?.name || id;
+      if (name === "ROOT" || name === "Canvas") {
+          name = data?.name || name;
+      }
+      
+      const nodes = data?.nodes;
+      const linkedNodes = data?.linkedNodes;
+      const hasChildren = (nodes && nodes.length > 0) || (linkedNodes && Object.keys(linkedNodes).length > 0);
+      
+      return {
+          displayName: name,
+          hasNodes: hasChildren
+      };
+  });
+
+  return (
+    <div>
+        <div 
+          ref={(dom) => { layer(dom); drag(dom); }}
+          className={`builder-layer-node ${hovered ? "hovered" : ""}`}
+          style={{
+            paddingLeft: `${depth * 20 + 10}px`,
+            backgroundColor: hovered ? '#f0f0f0' : 'transparent',
+          }}
+        >
+          <span className="layer-name" style={{ flexGrow: 1 }}>{displayName}</span>
+          
+          {hasNodes && (
+             <span 
+               onClick={(e) => {
+                 e.stopPropagation();
+                 toggleLayer();
+               }}
+             >
+               <FontAwesomeIcon icon={faChevronDown} color="white" fontSize={14} className="float-end fa-lg" />
+             </span>
+          )}
+        </div>
+      {children}
+    </div>
+  );
+});
+
 const AddColumnButton = () => {
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
@@ -437,6 +510,8 @@ const NextButton = ({ layout }) => {
  * @subcategory components
  * @namespace
  */
+
+
 const Builder = ({ options, layout, mode }) => {
   const [showLayers, setShowLayers] = useState(true);
   const [previews, setPreviews] = useState({});
@@ -531,7 +606,10 @@ const Builder = ({ options, layout, mode }) => {
                       </div>
                       {showLayers && (
                         <div className="card-body p-0 builder-layers">
-                          <Layers expandRootOnLoad={true} />
+                          <Layers 
+                            expandRootOnLoad={true}
+                            renderLayer={CustomLayerComponent} 
+                          />
                         </div>
                       )}
                     </div>

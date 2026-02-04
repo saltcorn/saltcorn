@@ -7,6 +7,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "builddev": "webpack --mode none",
+    "watch": "webpack --watch --mode development",
     "test": "jest tests --runInBand",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
@@ -22,6 +23,7 @@
     "@babel/preset-react": "7.24.7",
     "@craftjs/core": "0.1.0-beta.20",
     "@craftjs/utils": "0.1.0-beta.20",
+    "@craftjs/layers": "0.1.0-beta.20",
     "@saltcorn/common-code": "1.6.0-alpha.2",
     "saltcorn-craft-layers-noeye": "0.1.0-beta.22",
     "@fonticonpicker/react-fonticonpicker": "1.2.0",
@@ -29,6 +31,7 @@
     "@fortawesome/free-regular-svg-icons": "5.15.2",
     "@fortawesome/free-solid-svg-icons": "5.15.2",
     "@fortawesome/react-fontawesome": "0.1.14",
+    "monaco-editor": "^0.52.2",
     "@monaco-editor/react": "4.7.0",
     "@tippyjs/react": "4.2.6",
     "babel-jest": "^29.7.0",

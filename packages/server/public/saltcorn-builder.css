@@ -548,6 +548,32 @@ div.componets-and-library-accordion {
   color: #f8f9fa !important;
 }
 
+.builder-layers > div > div > div > div {
+  background: #292929 !important;
+}
+
+.craft-layer-manager__header-actions button[aria-label*="visible"],
+.craft-layer-manager__header-actions button[aria-label*="hidden"] {
+  display: none !important;
+}
+
+.craft-layer-node > div > div > a {
+  display: none !important;
+}
+
+.builder-layer-node {
+  font-size: 13px;
+  padding-right: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
 .builder-dark-panel .builder-layers,
 .builder-layers-dark {
   background-color: #212529 !important;
