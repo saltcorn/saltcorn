@@ -13,6 +13,7 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const Tag = require("@saltcorn/data/models/tag");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const User = require("@saltcorn/data/models/user");
+const Role = require("@saltcorn/data/models/role");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const {
@@ -39,6 +40,7 @@ const {
   trigger_dropdown,
 } = require("./common_lists.js");
 const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
+const { version } = require("systeminformation");
 
 /**
  * @type {object}
@@ -53,6 +55,69 @@ module.exports = router;
 // Ensure on_done_redirect values remain relative to the app root
 const stripLeadingSlash = (path = "") =>
   path.startsWith("/") ? path.slice(1) : path;
+
+/**
+ * Get additional entities (modules, users, roles)
+ */
+const getExtendedEntites = async (includeAllModules = false) => {
+  const entities = [];
+  const state = getState();
+
+  // Modules/Plugins - installed modules only only unless indludeAllModules is true
+  const installedModules = Object.values(state.plugins || {}).filter(
+    (p) => p.plugin_name
+  );
+  installedModules.forEach((mod, id) => {
+    entities.push({
+      type: "module",
+      name: mod.plugin_name,
+      id: mod.plugin_name + "@" + id,
+      viewLink: `/plugins/info/${mod.plugin_name}`,
+      editLink: !!mod.configuration_workflow
+        ? `/plugins/configure/${mod.plugin_name}`
+        : null,
+      metadata: {
+        version: mod.sc_plugin_api_version,
+        hasConfig: !!mod.configuration_workflow,
+      },
+    });
+  });
+
+  // Users
+  const users = await User.find({}, { cached: true });
+  users.forEach((u) => {
+    entities.push({
+      type: "user",
+      name: u.email,
+      id: u.id,
+      viewLink: `/useradmin/${u.id}`,
+      editLink: `/useradmin/${u.id}`,
+      metadata: {
+        email: u.email,
+        role_id: u.role_id,
+        disabled: u.disabled,
+      },
+    });
+  });
+
+  // Roles
+  const roles = await User.get_roles();
+  roles.forEach((r) => {
+    entities.push({
+      type: "role",
+      name: r.role,
+      id: r.id,
+      viewLink: `/roleadmin`,
+      editLink: `/roleadmin`,
+      metadata: {
+        role: r.role,
+        id: r.id,
+      },
+    });
+  });
+
+  return entities;
+};
 
 /**
  * Get all entities with their type and metadata
@@ -163,6 +228,9 @@ const entityTypeBadge = (type) => {
     view: { class: "success", icon: "eye", label: "View" },
     page: { class: "info", icon: "file", label: "Page" },
     trigger: { class: "warning", icon: "play", label: "Trigger" },
+    module: { class: "secondary", icon: "cube", label: "Module" },
+    user: { class: "dark", icon: "user", label: "User" },
+    role: { class: "danger", icon: "lock", label: "Role" },
   };
   const badge = badges[type];
   return span(
@@ -316,6 +384,10 @@ router.get(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
+    console.log({
+      roles: await User.get_roles(),
+      again: await Role.find({}, { orderBy: "id" }),
+    });
     const entities = await getAllEntities();
     // fetch roles and tags
     const roles = await User.get_roles();
@@ -397,6 +469,61 @@ router.get(
         },
         i({ class: "fas fa-play me-1" }),
         req.__("Triggers")
+      ),
+      button(
+        {
+          type: "button",
+          class: "btn btn-sm btn-outline-secondary",
+          id: "entity-more-btn",
+          onclick: "toggleEntityExpanded(true)",
+        },
+        i({ class: "fas fa-ellipsis-h" }),
+        req.__("More...")
+      )
+    );
+
+    const extendedFilterToggles = div(
+      {
+        class: "btn-group btn-group-sm d-none",
+        role: "group",
+        id: "entity-extended-filters",
+      },
+      button(
+        {
+          type: "button",
+          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          "data-entity-type": "module",
+        },
+        i({ class: "fas fa-cube me-1" }),
+        req.__("Modules")
+      ),
+      button(
+        {
+          type: "button",
+          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          "data-entity-type": "user",
+        },
+        i({ class: "fas fa-user me-1" }),
+        req.__("Users")
+      ),
+      button(
+        {
+          type: "button",
+          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          "data-entity-type": "role",
+        },
+        i({ class: "fas fa-lock me-1" }),
+        req.__("Roles")
+      ),
+      button(
+        {
+          type: "button",
+          class: "btn btn-sm btn-outline-secondary",
+          id: "entity-less-btn",
+          onclick: "toggleEntityExpanded(false)",
+        },
+        i({ class: "fas fa-ellipsis-h" }),
+        req.__("Less...")
       )
     );
 
@@ -438,13 +565,14 @@ router.get(
           "d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2",
       },
       div(
-        { class: "d-flex align-items-center gap-2" },
+        { class: "d-flex align-items-center gap-2 flex-wrap" },
         span(
           { class: "me-1 text-muted" },
           i({ class: "fas fa-filter me-1" }),
           req.__("Types:")
         ),
-        filterToggles
+        filterToggles,
+        extendedFilterToggles
       ),
       tagFilterBar
     );
@@ -573,8 +701,8 @@ router.get(
         td(entityTypeBadge(entity.type)),
         td(
           entity.type === "view" &&
-          !entity.metadata.table_id &&
-          !entity.metadata.has_config
+            !entity.metadata.table_id &&
+            !entity.metadata.has_config
             ? span({ class: "fw-bold" }, text(entity.name))
             : a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))
         ),
@@ -846,6 +974,9 @@ router.get(
         /* Show plus badge only on hover over tag cell */
         td:nth-child(6) .add-tag { visibility: hidden; cursor: pointer; }
         tr:hover td:nth-child(6) .add-tag { visibility: visible; }
+
+        #entity-extended-filters { margin-left: 0.5rem; }
+        #entity-extended-filters.d-none + .tagFilterBar { margin-left: 0; }
       </style>
     `;
 
@@ -871,7 +1002,111 @@ router.get(
                   noResultsMessage
                 )
               ),
-              clientScript,
+              // clientScript,
+              script(
+                domReady(`
+        // Fetch extended entities via AJAX
+        const loadExtendedEntities = async () => {
+          try {
+            const res = await fetch('/entities/extended');
+            const data = await res.json();
+            return data.entities || [];
+          } catch (e) {
+            console.error('Failed to load extended entities:', e);
+            return [];
+          }
+        };
+
+        // Toggle expanded state
+        window.toggleEntityExpanded = async (expand) => {
+          const extendedFilters = document.getElementById('entity-extended-filters');
+          const moreBtn = document.getElementById('entity-more-btn');
+          const tbody = document.querySelector('#entities-list tbody');
+          
+          if (expand) {
+            extendedFilters.classList.remove('d-none');
+            moreBtn.classList.add('d-none');
+            // Load extended entities
+            const extendedEntities = await loadExtendedEntities();
+            window.extendedEntities = extendedEntities;
+            // Add extended entity rows
+            addExtendedEntityRows(extendedEntities, tbody);
+            // Update filter
+            filterEntities();
+          } else {
+            extendedFilters.classList.add('d-none');
+            moreBtn.classList.remove('d-none');
+            window.extendedEntities = [];
+            // Remove extended entity rows
+            document.querySelectorAll('[data-is-extended]').forEach(row => row.remove());
+            // Update filter
+            filterEntities();
+          }
+        };
+
+        const addExtendedEntityRows = (extendedEntities, tbody) => {
+          extendedEntities.forEach(entity => {
+            const row = createExtendedEntityRow(entity);
+            tbody.appendChild(row);
+          });
+        };
+
+        // Helper to create entity row for extended entities
+        const createExtendedEntityRow = (entity) => {
+          const tr = document.createElement('tr');
+          tr.className = 'entity-row';
+          tr.dataset.entityType = entity.type;
+          tr.dataset.entityName = entity.name.toLowerCase();
+          tr.dataset.searchable = (entity.name.toLowerCase() + ' ' + entity.type).trim();
+          tr.dataset.tags = '';
+          tr.dataset.isExtended = 'true';
+          
+          // Type badge
+          const badges = {
+            module: { class: "secondary", icon: "cube", label: "Module" },
+            user: { class: "dark", icon: "user", label: "User" },
+            role: { class: "danger", icon: "lock", label: "Role" },
+          };
+          const badge = badges[entity.type];
+          const typeBadge = document.createElement('td');
+          typeBadge.innerHTML = '<span class="badge bg-' + badge.class + ' me-2"><i class="fas fa-' + badge.icon + ' me-1"></i>' + badge.label + '</span>';
+          tr.appendChild(typeBadge);
+          
+          // Name
+          const nameTd = document.createElement('td');
+          const nameLink = document.createElement('a');
+          nameLink.href = entity.editLink;
+          nameLink.className = 'fw-bold';
+          nameLink.textContent = entity.name;
+          nameTd.appendChild(nameLink);
+          tr.appendChild(nameTd);
+          
+          // Run cell (empty for extended entities)
+          const runTd = document.createElement('td');
+          tr.appendChild(runTd);
+          
+          // Details cell (empty for extended entities)
+          const detailsTd = document.createElement('td');
+          tr.appendChild(detailsTd);
+          
+          // Access cell (empty for extended entities)
+          const accessTd = document.createElement('td');
+          tr.appendChild(accessTd);
+          
+          // Tags cell
+          const tagsTd = document.createElement('td');
+          tr.appendChild(tagsTd);
+          
+          // Actions cell (empty for extended entities)
+          const actionsTd = document.createElement('td');
+          tr.appendChild(actionsTd);
+          
+          return tr;
+        };
+
+        ${clientScript.substring(clientScript.indexOf("const searchInput"), clientScript.lastIndexOf("}"))}
+        `)
+              ),
             ],
             footer: div(
               {
@@ -923,5 +1158,26 @@ router.get(
         ],
       }
     );
+  })
+);
+
+/**
+ * AJAX endpoint to fetch extended entities (modules, users, roles)
+ */
+router.get(
+  "/extended",
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const extendedEntities = await getExtendedEntites();
+    res.json({
+      entities: extendedEntities.map((entity) => ({
+        type: entity.type,
+        name: entity.name,
+        id: entity.id,
+        viewLink: entity.viewLink,
+        editLink: entity.editLink,
+        metadata: entity.metadata,
+      })),
+    });
   })
 );
