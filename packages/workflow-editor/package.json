@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/workflow-editor",
-  "version": "1.6.0-alpha.4",
+  "version": "1.6.0-alpha.5",
   "description": "React Flow-based workflow editor for Saltcorn",
   "main": "index.js",
   "scripts": {
