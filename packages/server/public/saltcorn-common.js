@@ -439,23 +439,41 @@ function apply_showif() {
     } else {
       cache[qs] = "fetching";
       apply_showif_fetching_urls.add(`/api/${dynwhere.table}?${qs}`);
-      $.ajax(`/api/${dynwhere.table}?${qs}`)
-        .then((resp) => {
-          const cacheNow = global_fetch_options_cache[dynwhere.table] || {};
-          if (resp.success) {
-            if (window._sc_loglevel > 4)
-              console.log("dynwhere fetch", qs, resp.success);
-            activate(resp.success, qs);
-            cacheNow[qs] = resp.success;
-            apply_showif();
-          } else {
-            cacheNow[qs] = undefined;
-          }
-        })
-        .fail(checkNetworkError)
-        .always(() => {
-          apply_showif_fetching_urls.delete(`/api/${dynwhere.table}?${qs}`);
-        });
+      const respHandler = (resp) => {
+        const cacheNow = global_fetch_options_cache[dynwhere.table] || {};
+        if (resp.success) {
+          if (window._sc_loglevel > 4)
+            console.log("dynwhere fetch", qs, resp.success);
+          activate(resp.success, qs);
+          cacheNow[qs] = resp.success;
+          apply_showif();
+        } else {
+          cacheNow[qs] = undefined;
+        }
+      };
+      if (isNode) {
+        $.ajax(`/api/${dynwhere.table}?${qs}`)
+          .then((resp) => {
+            respHandler(resp);
+          })
+          .fail(checkNetworkError)
+          .always(() => {
+            apply_showif_fetching_urls.delete(`/api/${dynwhere.table}?${qs}`);
+          });
+      } else {
+        parent.saltcorn.mobileApp.api
+          .apiCall({
+            path: `/api/${dynwhere.table}?${qs}`,
+            method: "GET",
+          })
+          .then((resp) => {
+            try {
+              respHandler(resp.data);
+            } finally {
+              apply_showif_fetching_urls.delete(`/api/${dynwhere.table}?${qs}`);
+            }
+          });
+      }
     }
   });
   $("[data-filter-table]").each(function (ix, element) {
