@@ -14,6 +14,7 @@ const Tag = require("@saltcorn/data/models/tag");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const User = require("@saltcorn/data/models/user");
 const Role = require("@saltcorn/data/models/role");
+const Plugin = require("@saltcorn/data/models/plugin");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const {
@@ -40,7 +41,9 @@ const {
   trigger_dropdown,
 } = require("./common_lists.js");
 const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
-const { version } = require("systeminformation");
+const {
+  fetch_pack_by_name,
+} = require("@saltcorn/admin-models/models/pack");
 
 /**
  * @type {object}
@@ -59,28 +62,69 @@ const stripLeadingSlash = (path = "") =>
 /**
  * Get additional entities (modules, users, roles)
  */
-const getExtendedEntites = async (includeAllModules = false) => {
+const getExtendedEntites = async () => {
   const entities = [];
-  const state = getState();
 
-  // Modules/Plugins - installed modules only only unless indludeAllModules is true
-  const installedModules = Object.values(state.plugins || {}).filter(
-    (p) => p.plugin_name
+  const twofa_policy_by_role = getState().getConfig("twofa_policy_by_role");
+  const statePlugins = getState().plugins;
+
+  const packs = getState().getConfig("installed_packs", []);
+  const packDetails = await Promise.all(
+    packs.map(async (pname) => await fetch_pack_by_name(pname))
   );
-  installedModules.forEach((mod, id) => {
-    entities.push({
-      type: "module",
-      name: mod.plugin_name,
-      id: mod.plugin_name + "@" + id,
-      viewLink: `/plugins/info/${mod.plugin_name}`,
-      editLink: !!mod.configuration_workflow
-        ? `/plugins/configure/${mod.plugin_name}`
-        : null,
-      metadata: {
-        version: mod.sc_plugin_api_version,
-        hasConfig: !!mod.configuration_workflow,
-      },
+
+  const modules = await Plugin.find();
+  modules
+    .filter((mod) => mod.name !== "base")
+    .forEach((mod) => {
+      const has_theme =
+        typeof mod.has_theme !== "undefined"
+          ? mod.has_theme
+          : !!statePlugins[mod.name]?.layout;
+      const has_auth =
+        typeof mod.has_auth !== "undefined"
+          ? mod.has_auth
+          : !!statePlugins[mod.name]?.authentication;
+      const ready_for_mobile = !!statePlugins[mod.name]?.ready_for_mobile;
+      const source = mod.source;
+      entities.push({
+        type: "module",
+        name: mod.name,
+        id: mod.id,
+        viewLink: `/plugins/info/${mod.name}`,
+        editLink: !!mod.configuration ? `/plugins/configure/${mod.name}` : null,
+        metadata: {
+          version: mod.version,
+          hasConfig: !!mod.configuration,
+          has_theme,
+          has_auth,
+          ready_for_mobile,
+          source,
+          local: source === "local",
+          installed: true,
+          type: "module",
+        },
+      });
     });
+
+  packDetails.forEach((pack) => {
+    if (pack && pack.name) {
+      entities.push({
+        type: "module",
+        name: pack.name,
+        id: pack.id,
+        viewLink: null,
+        editLink: null,
+        metadata: {
+          version: pack.version,
+          hasConfig: false,
+          has_theme: false,
+          local: false,
+          installed: true,
+          type: "pack",
+        },
+      });
+    }
   });
 
   // Users
@@ -112,6 +156,8 @@ const getExtendedEntites = async (includeAllModules = false) => {
       metadata: {
         role: r.role,
         id: r.id,
+        twofa_policy_by_role:
+          twofa_policy_by_role?.[String(r.id)] || "Optional", // Optional, Mandatory, Disabled
       },
     });
   });
@@ -241,7 +287,7 @@ const entityTypeBadge = (type) => {
 };
 
 // Helper: build details column content based on entity type
-const detailsContent = (entity, req) => {
+const detailsContent = (entity, req, roles) => {
   const bits = [];
   if (entity.type === "table") {
     if (entity.metadata.external)
@@ -288,6 +334,33 @@ const detailsContent = (entity, req) => {
         span(
           { class: "text-muted small fst-italic" },
           text(entity.metadata.action)
+        )
+      );
+  } else if (entity.type === "user") {
+    const disabled = entity.metadata.disabled;
+    const roleName = Array.isArray(roles)
+      ? roles.find((r) => r.id === entity.metadata.role_id)?.role
+      : null;
+    if (roleName)
+      bits.push(span({ class: "badge bg-secondary me-1" }, text(roleName)));
+    if (disabled)
+      bits.push(span({ class: "badge bg-danger me-1" }, req.__("Disabled")));
+  } else if (entity.type === "role") {
+    const policy = entity.metadata.twofa_policy_by_role;
+    if (policy) {
+      let cls = "secondary";
+      if (policy === "Mandatory") cls = "success";
+      else if (policy === "Disabled") cls = "danger";
+      bits.push(
+        span({ class: `badge bg-${cls} me-1` }, text(`2FA: ${policy}`))
+      );
+    }
+  } else if (entity.type === "module") {
+    if (entity.metadata.version)
+      bits.push(
+        span(
+          { class: "text-muted small me-2" },
+          text(`v${entity.metadata.version}`)
         )
       );
   }
@@ -384,13 +457,9 @@ router.get(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
-    console.log({
-      roles: await User.get_roles(),
-      again: await Role.find({}, { orderBy: "id" }),
-    });
     const entities = await getAllEntities();
     // fetch roles and tags
-    const roles = await User.get_roles();
+    const roles = await Role.find({}, { orderBy: "id" });
     const tags = await Tag.find();
     const tagEntries = await TagEntry.find();
     const userRoleId = req.user?.role_id ?? Infinity;
@@ -430,7 +499,7 @@ router.get(
 
     const filterToggles = div(
       {
-        class: "btn-group btn-group-sm",
+        class: "btn-group btn-group-sm entity-type-group",
         role: "group",
         "aria-label": "Entity type filters",
       },
@@ -473,25 +542,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-secondary",
-          id: "entity-more-btn",
-          onclick: "toggleEntityExpanded(true)",
-        },
-        i({ class: "fas fa-ellipsis-h" }),
-        req.__("More...")
-      )
-    );
-
-    const extendedFilterToggles = div(
-      {
-        class: "btn-group btn-group-sm d-none",
-        role: "group",
-        id: "entity-extended-filters",
-      },
-      button(
-        {
-          type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
           "data-entity-type": "module",
         },
         i({ class: "fas fa-cube me-1" }),
@@ -500,7 +551,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
           "data-entity-type": "user",
         },
         i({ class: "fas fa-user me-1" }),
@@ -509,7 +560,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
           "data-entity-type": "role",
         },
         i({ class: "fas fa-lock me-1" }),
@@ -519,10 +570,18 @@ router.get(
         {
           type: "button",
           class: "btn btn-sm btn-outline-secondary",
+          id: "entity-more-btn",
+          onclick: "toggleEntityExpanded(true)",
+        },
+        req.__("More...")
+      ),
+      button(
+        {
+          type: "button",
+          class: "btn btn-sm btn-outline-secondary d-none",
           id: "entity-less-btn",
           onclick: "toggleEntityExpanded(false)",
         },
-        i({ class: "fas fa-ellipsis-h" }),
         req.__("Less...")
       )
     );
@@ -571,8 +630,7 @@ router.get(
           i({ class: "fas fa-filter me-1" }),
           req.__("Types:")
         ),
-        filterToggles,
-        extendedFilterToggles
+        filterToggles
       ),
       tagFilterBar
     );
@@ -707,7 +765,7 @@ router.get(
             : a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))
         ),
         td(runCell),
-        td(detailsContent(entity, req)),
+        td(detailsContent(entity, req, roles)),
         td(
           text(
             roleLabel(
@@ -764,7 +822,6 @@ router.get(
         const entitiesList = document.getElementById("entities-list");
         const noResults = document.getElementById("no-results");
         const filterButtons = document.querySelectorAll(".entity-filter-btn");
-        const entityRows = document.querySelectorAll(".entity-row");
         const tagButtons = document.querySelectorAll(".tag-filter-btn");
         const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};
         const legacyButton = document.getElementById("legacy-entity-link");
@@ -873,6 +930,7 @@ router.get(
 
         // Filter function
         function filterEntities() {
+          const entityRows = document.querySelectorAll(".entity-row");
           const searchTerm = searchInput.value.toLowerCase();
           let visibleCount = 0;
 
@@ -975,8 +1033,11 @@ router.get(
         td:nth-child(6) .add-tag { visibility: hidden; cursor: pointer; }
         tr:hover td:nth-child(6) .add-tag { visibility: visible; }
 
-        #entity-extended-filters { margin-left: 0.5rem; }
-        #entity-extended-filters.d-none + .tagFilterBar { margin-left: 0; }
+        /* Round right corners of More button when it's visible (Less is hidden) */
+        #entity-more-btn:not(.d-none) {
+          border-top-right-radius: 0.25rem !important;
+          border-bottom-right-radius: 0.25rem !important;
+        }
       </style>
     `;
 
@@ -1004,7 +1065,17 @@ router.get(
               ),
               // clientScript,
               script(
-                domReady(`
+                domReady(/*js*/`
+        window.ENTITY_ROLES = ${JSON.stringify(roles)};
+        window.TXT_DISABLED = ${JSON.stringify(req.__("Disabled"))};
+        window.TXT_CONFIGURABLE = ${JSON.stringify(req.__("Configurable"))};
+        window.TXT_THEME = ${JSON.stringify(req.__("Theme"))};
+        window.TXT_LOCAL = ${JSON.stringify(req.__("Local"))};
+        window.TXT_INSTALLED = ${JSON.stringify(req.__("Installed"))};
+        window.TXT_MODULE = ${JSON.stringify(req.__("Module"))};
+        window.TXT_PACK = ${JSON.stringify(req.__("Pack"))};
+        window.TXT_AUTH = ${JSON.stringify(req.__("Authentication"))};
+        window.TXT_MOBILE = ${JSON.stringify(req.__("Mobile"))};
         // Fetch extended entities via AJAX
         const loadExtendedEntities = async () => {
           try {
@@ -1019,13 +1090,15 @@ router.get(
 
         // Toggle expanded state
         window.toggleEntityExpanded = async (expand) => {
-          const extendedFilters = document.getElementById('entity-extended-filters');
           const moreBtn = document.getElementById('entity-more-btn');
+          const lessBtn = document.getElementById('entity-less-btn');
+          const extendedButtons = document.querySelectorAll('.entity-extended-btn');
           const tbody = document.querySelector('#entities-list tbody');
           
           if (expand) {
-            extendedFilters.classList.remove('d-none');
+            extendedButtons.forEach(btn => btn.classList.remove('d-none'));
             moreBtn.classList.add('d-none');
+            lessBtn.classList.remove('d-none');
             // Load extended entities
             const extendedEntities = await loadExtendedEntities();
             window.extendedEntities = extendedEntities;
@@ -1034,8 +1107,9 @@ router.get(
             // Update filter
             filterEntities();
           } else {
-            extendedFilters.classList.add('d-none');
+            extendedButtons.forEach(btn => btn.classList.add('d-none'));
             moreBtn.classList.remove('d-none');
+            lessBtn.classList.add('d-none');
             window.extendedEntities = [];
             // Remove extended entity rows
             document.querySelectorAll('[data-is-extended]').forEach(row => row.remove());
@@ -1057,7 +1131,15 @@ router.get(
           tr.className = 'entity-row';
           tr.dataset.entityType = entity.type;
           tr.dataset.entityName = entity.name.toLowerCase();
-          tr.dataset.searchable = (entity.name.toLowerCase() + ' ' + entity.type).trim();
+          let searchable = ((entity.name || '').toLowerCase() + ' ' + entity.type).trim();
+          if (entity.metadata) {
+            Object.keys(entity.metadata).forEach((key) => {
+              const val = entity.metadata[key];
+              if (val && typeof val === 'string') {
+                searchable += ' ' + val.toLowerCase();
+              }
+            });
+          }
           tr.dataset.tags = '';
           tr.dataset.isExtended = 'true';
           
@@ -1071,11 +1153,13 @@ router.get(
           const typeBadge = document.createElement('td');
           typeBadge.innerHTML = '<span class="badge bg-' + badge.class + ' me-2"><i class="fas fa-' + badge.icon + ' me-1"></i>' + badge.label + '</span>';
           tr.appendChild(typeBadge);
+
+          const hasConfig = entity.metadata && entity.metadata.hasConfig;
           
           // Name
           const nameTd = document.createElement('td');
-          const nameLink = document.createElement('a');
-          nameLink.href = entity.editLink;
+          const nameLink = document.createElement(entity.type === 'module' && !hasConfig ? 'span' : 'a');
+          nameLink.href = entity.type === 'module' && !hasConfig ? '#' : entity.editLink;
           nameLink.className = 'fw-bold';
           nameLink.textContent = entity.name;
           nameTd.appendChild(nameLink);
@@ -1085,8 +1169,69 @@ router.get(
           const runTd = document.createElement('td');
           tr.appendChild(runTd);
           
-          // Details cell (empty for extended entities)
+          // Details cell
           const detailsTd = document.createElement('td');
+          let detailsHtml = '';
+          if (entity.type === 'user') {
+            const disabled = entity.metadata && entity.metadata.disabled;
+            const roleId = entity.metadata && entity.metadata.role_id;
+            if (Array.isArray(window.ENTITY_ROLES)) {
+              const role = window.ENTITY_ROLES.find(function (r) {
+                return String(r.id) === String(roleId);
+              });
+              if (role && role.role) {
+                detailsHtml += '<span class="text-muted small me-2">' + role.role + '</span>';
+              }
+            }
+            if (disabled) {
+              detailsHtml += '<span class="badge bg-danger me-1">' + (window.TXT_DISABLED || 'Disabled') + '</span>';
+            }
+          } else if (entity.type === 'role') {
+            const policy = entity.metadata && entity.metadata.twofa_policy_by_role;
+            if (policy) {
+              let cls = 'secondary';
+              if (policy === 'Mandatory') cls = 'success';
+              else if (policy === 'Disabled') cls = 'danger';
+              detailsHtml += '<span class="badge bg-' + cls + ' me-1">2FA: ' + policy + '</span>';
+            }
+          } else if (entity.type === 'module') {
+            const version = entity.metadata && entity.metadata.version;
+            const hasTheme = entity.metadata && entity.metadata.has_theme;
+            const hasAuth = entity.metadata && entity.metadata.has_auth;
+            const isReadyForMobile = entity.metadata && entity.metadata.ready_for_mobile;
+            const isLocal = entity.metadata && entity.metadata.local;
+            const isPack = entity.metadata && entity.metadata.type === 'pack';
+            const isInstalled = entity.metadata && entity.metadata.installed;
+            if (version) {
+              detailsHtml += '<span class="text-muted small me-2">v' + version + '</span>';
+            }
+            if (isPack) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_PACK || 'Pack') + '</span>';
+            } else {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_MODULE || 'Module') + '</span>';
+            }
+            if (hasTheme) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_THEME || 'Theme') + '</span>';
+              searchable += ' theme';
+            }
+            if (isLocal) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_LOCAL || 'Local') + '</span>';
+              searchable += ' local';
+            } 
+            // if (isInstalled) {
+            //   detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_INSTALLED || 'Installed') + '</span>';
+            //   searchable += ' installed';
+            // }
+            if (hasAuth) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_AUTH || 'Authentication') + '</span>';
+              searchable += ' authentication auth';
+            }
+            if (isReadyForMobile) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_MOBILE || 'Mobile') + '</span>';
+              searchable += ' mobile';
+            }
+          }
+          if (detailsHtml) detailsTd.innerHTML = detailsHtml;
           tr.appendChild(detailsTd);
           
           // Access cell (empty for extended entities)
@@ -1100,7 +1245,8 @@ router.get(
           // Actions cell (empty for extended entities)
           const actionsTd = document.createElement('td');
           tr.appendChild(actionsTd);
-          
+
+          tr.dataset.searchable = searchable.trim();
           return tr;
         };
 
