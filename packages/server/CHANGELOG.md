@@ -1,5 +1,20 @@
 # Notable changes
 
+## 1.6.0 - In development
+
+* Pages based on HTML files can now embed views. If the html file contains an `<embed-view>` tag, it will be replaced with the contents of a view. Use the `viewname` attribute to set the view name, and the remaining attributes to set the view state.
+
+* There is now a link to edit text-based files in the file manager.
+
+* Interpolations:
+    - Now based on vm2
+    - Re-interpolation: where interpolations as usable, use `{{= expression }}` to specify that the content of expression should be reprocessed for interpolations.
+    - The standard evaluation context is now available in interpolations
+
+* Mobile: iOS periodic/push-based sync. Improved mobile builder UI.
+
+* Reduce the number of network requests in Edit forms with complex logic
+
 ## 1.5.0 - Released 26 January 2026
 
 * thumbs_up_down fieldview for booleans fields, as an alternative to tristate
