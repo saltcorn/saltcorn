@@ -41,9 +41,7 @@ const {
   trigger_dropdown,
 } = require("./common_lists.js");
 const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
-const {
-  fetch_pack_by_name,
-} = require("@saltcorn/admin-models/models/pack");
+const { fetch_pack_by_name } = require("@saltcorn/admin-models/models/pack");
 
 /**
  * @type {object}
@@ -92,7 +90,7 @@ const getExtendedEntites = async () => {
         name: mod.name,
         id: mod.id,
         viewLink: `/plugins/info/${mod.name}`,
-        editLink: !!mod.configuration ? `/plugins/configure/${mod.name}` : null,
+        editLink: mod.configuration ? `/plugins/configure/${mod.name}` : null,
         metadata: {
           version: mod.version,
           hasConfig: !!mod.configuration,
@@ -127,7 +125,6 @@ const getExtendedEntites = async () => {
     }
   });
 
-  // Users
   const users = await User.find({}, { cached: true });
   users.forEach((u) => {
     entities.push({
@@ -144,7 +141,6 @@ const getExtendedEntites = async () => {
     });
   });
 
-  // Roles
   const roles = await User.get_roles();
   roles.forEach((r) => {
     entities.push({
@@ -157,7 +153,7 @@ const getExtendedEntites = async () => {
         role: r.role,
         id: r.id,
         twofa_policy_by_role:
-          twofa_policy_by_role?.[String(r.id)] || "Optional", // Optional, Mandatory, Disabled
+          twofa_policy_by_role?.[String(r.id)] || "Optional",
       },
     });
   });
@@ -542,7 +538,8 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
+          class:
+            "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
           "data-entity-type": "module",
         },
         i({ class: "fas fa-cube me-1" }),
@@ -551,7 +548,8 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
+          class:
+            "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
           "data-entity-type": "user",
         },
         i({ class: "fas fa-user me-1" }),
@@ -560,7 +558,8 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
+          class:
+            "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
           "data-entity-type": "role",
         },
         i({ class: "fas fa-lock me-1" }),
@@ -817,7 +816,7 @@ router.get(
     );
 
     const clientScript = script(
-      domReady(/*js*/`
+      domReady(/*js*/ `
         const searchInput = document.getElementById("entity-search");
         const entitiesList = document.getElementById("entities-list");
         const noResults = document.getElementById("no-results");
@@ -859,35 +858,44 @@ router.get(
           window.history.replaceState(null, '', newUrl);
         };
 
-        const updateOnDoneRedirectTargets = () => {
+        const getCurrentOnDoneTarget = () => {
           const path = window.location.pathname.startsWith("/")
             ? window.location.pathname.slice(1)
             : window.location.pathname;
-          const currentTarget = path + window.location.search;
-          const toRelativeHref = (raw) => {
-            if (!raw) return null;
-            try {
-              const url = new URL(raw, window.location.origin);
-              url.searchParams.set("on_done_redirect", currentTarget);
-              return url.pathname + url.search + url.hash;
-            } catch (e) {
-              return null;
-            }
-          };
-          const shouldSkip = (raw) =>
-            raw && raw.trim().toLowerCase().startsWith("javascript:");
-          const updateAttr = (el, attr) => {
-            const raw = el.getAttribute(attr) || el[attr];
-            if (!raw || shouldSkip(raw)) return;
-            const updated = toRelativeHref(raw);
-            if (updated) el.setAttribute(attr, updated);
-          };
+          return path + window.location.search;
+        };
+
+        const shouldSkipOnDoneHref = (raw) => {
+          if (!raw) return true;
+          const trimmed = raw.trim();
+          const lowered = trimmed.toLowerCase();
+          return trimmed === "#" || trimmed === "" || lowered.startsWith("javascript:");
+        };
+
+        const toRelativeHrefWithOnDone = (raw) => {
+          if (shouldSkipOnDoneHref(raw)) return null;
+          try {
+            const url = new URL(raw, window.location.origin);
+            url.searchParams.set("on_done_redirect", getCurrentOnDoneTarget());
+            return url.pathname + url.search + url.hash;
+          } catch (e) {
+            return null;
+          }
+        };
+
+        const updateElementOnDoneHref = (el, attr) => {
+          const raw = el.getAttribute(attr) || el[attr];
+          const updated = toRelativeHrefWithOnDone(raw);
+          if (updated) el.setAttribute(attr, updated);
+        };
+
+        const updateOnDoneRedirectTargets = () => {
           document
             .querySelectorAll('a[href*="on_done_redirect="]')
-            .forEach((link) => updateAttr(link, "href"));
+            .forEach((link) => updateElementOnDoneHref(link, "href"));
           document
             .querySelectorAll('form[action*="on_done_redirect="]')
-            .forEach((form) => updateAttr(form, "action"));
+            .forEach((form) => updateElementOnDoneHref(form, "action"));
         };
 
         const updateLegacyButton = () => {
@@ -1082,7 +1090,7 @@ router.get(
               ),
               // clientScript,
               script(
-                domReady(/*js*/`
+                domReady(/*js*/ `
         window.ENTITY_ROLES = ${JSON.stringify(roles)};
         window.TXT_DISABLED = ${JSON.stringify(req.__("Disabled"))};
         window.TXT_CONFIGURABLE = ${JSON.stringify(req.__("Configurable"))};
@@ -1197,8 +1205,13 @@ router.get(
           
           // Name
           const nameTd = document.createElement('td');
-          const nameLink = document.createElement(entity.type === 'module' && !hasConfig ? 'span' : 'a');
-          nameLink.href = entity.type === 'module' && !hasConfig ? '#' : entity.editLink;
+          const isStaticModule = entity.type === 'module' && !hasConfig;
+          const nameLink = document.createElement(isStaticModule ? 'span' : 'a');
+          if (!isStaticModule) {
+            const baseHref = entity.editLink || '#';
+            const updatedHref = toRelativeHrefWithOnDone(baseHref);
+            nameLink.setAttribute('href', updatedHref || baseHref);
+          }
           nameLink.className = 'fw-bold';
           nameLink.textContent = entity.name;
           nameTd.appendChild(nameLink);
@@ -1224,6 +1237,7 @@ router.get(
             }
             if (disabled) {
               detailsHtml += '<span class="badge bg-danger me-1">' + (window.TXT_DISABLED || 'Disabled') + '</span>';
+              searchable += ' disabled';
             }
           } else if (entity.type === 'role') {
             const policy = entity.metadata && entity.metadata.twofa_policy_by_role;

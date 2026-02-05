@@ -21,7 +21,12 @@ const {
   settingsDropdown,
   post_dropdown_item,
 } = require("@saltcorn/markup");
-const { isAdmin, error_catcher } = require("../routes/utils");
+const {
+  isAdmin,
+  error_catcher,
+  addOnDoneRedirect,
+  is_relative_url,
+} = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
 const {
@@ -48,6 +53,16 @@ const { send_verification_email } = require("@saltcorn/data/models/email");
 const { expressionValidator } = require("@saltcorn/data/models/expression");
 const router = new Router();
 module.exports = router;
+
+const getOnDoneRedirect = (req, fallback = "/useradmin") => {
+  if (
+    req.query.on_done_redirect &&
+    is_relative_url("/" + req.query.on_done_redirect)
+  ) {
+    return `/${req.query.on_done_redirect}`;
+  }
+  return fallback;
+};
 
 /**
  *
@@ -129,7 +144,7 @@ const userForm = async (req, user) => {
   );
   const form = new Form({
     fields: userFields,
-    action: "/useradmin/save",
+    action: addOnDoneRedirect("/useradmin/save", req),
     submitLabel: user ? req.__("Save") : req.__("Create"),
   });
   if (!user) {
@@ -1164,7 +1179,7 @@ router.post(
           await send_reset_email(u, req, { creating: true });
       }
     }
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
