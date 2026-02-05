@@ -632,7 +632,7 @@ router.get(
         ),
         filterToggles
       ),
-      tagFilterBar
+      tags.length > 0 ? tagFilterBar : null
     );
 
     // Build table
@@ -817,7 +817,7 @@ router.get(
     );
 
     const clientScript = script(
-      domReady(`
+      domReady(/*js*/`
         const searchInput = document.getElementById("entity-search");
         const entitiesList = document.getElementById("entities-list");
         const noResults = document.getElementById("no-results");
@@ -827,22 +827,31 @@ router.get(
         const legacyButton = document.getElementById("legacy-entity-link");
         const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
 
+        const BASE_TYPES = ["table","view","page","trigger"];
+        const EXTENDED_TYPES = window.ENTITY_EXTENDED_TYPES || ["module","user","role"];
+        const ALL_TYPES = BASE_TYPES.concat(EXTENDED_TYPES);
+
         // Track active filters
         const activeFilters = new Set([]);
         const activeTags = new Set([]);
 
         // URL state helpers
-        const TYPES = ["table","view","page","trigger"];
         const updateUrl = () => {
           const params = new URLSearchParams(window.location.search);
           // search
           if (searchInput.value) params.set('q', searchInput.value);
           else params.delete('q');
           // types
-          TYPES.forEach(t => {
+          ALL_TYPES.forEach(t => {
             if (activeFilters.has(t)) params.set(t+'s', 'on');
             else params.delete(t+'s');
           });
+          // extended flag
+          if (typeof isExtendedExpanded !== 'undefined' && isExtendedExpanded) {
+            params.set('extended', 'on');
+          } else {
+            params.delete('extended');
+          }
           // tags (comma-separated ids)
           if (activeTags.size > 0) params.set('tags', Array.from(activeTags).join(','));
           else params.delete('tags');
@@ -901,8 +910,11 @@ router.get(
           // search
           const q = params.get('q') || '';
           if (q) searchInput.value = q;
+          const shouldExpandExtended =
+            params.get('extended') === 'on' ||
+            EXTENDED_TYPES.some((t) => params.get(t + 's') === 'on');
           // types
-          TYPES.forEach(t => {
+          ALL_TYPES.forEach(t => {
             if (params.get(t+'s') === 'on') activeFilters.add(t);
           });
           // apply button classes for types
@@ -926,6 +938,7 @@ router.get(
               btn.classList.remove('btn-outline-secondary');
             }
           });
+          return { shouldExpandExtended };
         };
 
         // Filter function
@@ -1017,8 +1030,12 @@ router.get(
         });
 
         // Init from URL and run first filter
-        initFromUrl();
-        filterEntities();
+        const { shouldExpandExtended } = initFromUrl();
+        if (shouldExpandExtended) {
+          toggleEntityExpanded(true);
+        } else {
+          filterEntities();
+        }
         // Focus search on load
         searchInput.focus();
       `)
@@ -1076,6 +1093,22 @@ router.get(
         window.TXT_PACK = ${JSON.stringify(req.__("Pack"))};
         window.TXT_AUTH = ${JSON.stringify(req.__("Authentication"))};
         window.TXT_MOBILE = ${JSON.stringify(req.__("Mobile"))};
+        const EXTENDED_ENTITY_TYPES = ["module","user","role"];
+        window.ENTITY_EXTENDED_TYPES = EXTENDED_ENTITY_TYPES;
+        let isExtendedExpanded = false;
+        const clearExtendedTypeFilters = () => {
+          if (typeof activeFilters === 'undefined') return;
+          EXTENDED_ENTITY_TYPES.forEach((type) => {
+            if (activeFilters.has(type)) {
+              activeFilters.delete(type);
+              const btn = document.querySelector('.entity-filter-btn[data-entity-type="' + type + '"]');
+              if (btn) {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-primary');
+              }
+            }
+          });
+        };
         // Fetch extended entities via AJAX
         const loadExtendedEntities = async () => {
           try {
@@ -1096,9 +1129,12 @@ router.get(
           const tbody = document.querySelector('#entities-list tbody');
           
           if (expand) {
+            if (isExtendedExpanded) return;
             extendedButtons.forEach(btn => btn.classList.remove('d-none'));
             moreBtn.classList.add('d-none');
             lessBtn.classList.remove('d-none');
+            isExtendedExpanded = true;
+            filterEntities();
             // Load extended entities
             const extendedEntities = await loadExtendedEntities();
             window.extendedEntities = extendedEntities;
@@ -1107,12 +1143,15 @@ router.get(
             // Update filter
             filterEntities();
           } else {
+            if (!isExtendedExpanded) return;
             extendedButtons.forEach(btn => btn.classList.add('d-none'));
             moreBtn.classList.remove('d-none');
             lessBtn.classList.add('d-none');
+            isExtendedExpanded = false;
             window.extendedEntities = [];
             // Remove extended entity rows
             document.querySelectorAll('[data-is-extended]').forEach(row => row.remove());
+            clearExtendedTypeFilters();
             // Update filter
             filterEntities();
           }
