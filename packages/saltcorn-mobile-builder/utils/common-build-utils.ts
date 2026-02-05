@@ -30,7 +30,9 @@ const resizer = require("resize-with-sharp-or-jimp");
  * and install the capacitor and cordova modules to node_modules (cap sync will be run later)
  * @param buildDir directory where the app will be build
  * @param templateDir directory of the template code that will be copied to 'buildDir'
- * @param pushEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications"
+ * @param pushEnabled are push notifications enabled?
+ * @param backgroundFetchEnabled is background fetch enabled?
+ * @param pushSyncEnabled is push sync enabled?
  */
 export function prepareBuildDir(
   buildDir: string,
@@ -68,7 +70,7 @@ export function prepareBuildDir(
     "@capacitor/app@7.1.0",
     "send-intent@7.0.0",
     ...additionalPlugins,
-    ...(pushEnabled
+    ...(pushEnabled || pushSyncEnabled
       ? ["@capacitor/device@7.0.2", "@capacitor/push-notifications@7.0.3"]
       : []),
     ...(backgroundFetchEnabled
@@ -862,19 +864,19 @@ export function modifyAppDelegate(
     
   // [silent push notification handler]
   // we just add this to deal with an iOS simulator bug, this method is deprecated as of iOS 13
-  func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-      // debug
-      print("Received by: performFetchWithCompletionHandler")
+  // func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+  //     // debug
+  //     print("Received by: performFetchWithCompletionHandler")
       
-      // Perform background operation, need to create a plugin
-      NotificationCenter.default.post(name: Notification.Name(rawValue: "silentNotificationReceived"), object: nil, userInfo: nil)
+  //     // Perform background operation, need to create a plugin
+  //     NotificationCenter.default.post(name: Notification.Name(rawValue: "silentNotificationReceived"), object: nil, userInfo: nil)
 
-      // Give the listener a few seconds to complete, system allows for 30 - we give 25. The system will kill this after 30 seconds.
-      DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
-          // Execute after 25 seconds
-          completionHandler(.newData)
-      }
-  }
+  //     // Give the listener a few seconds to complete, system allows for 30 - we give 25. The system will kill this after 30 seconds.
+  //     DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
+  //         // Execute after 25 seconds
+  //         completionHandler(.newData)
+  //     }
+  // }
 }
 `
     );
@@ -1289,11 +1291,14 @@ export async function prepareSplashPage(
   }
 }
 
-export function writePodfile(buildDir: string) {
+export function writePodfile(
+  buildDir: string,
+  hasPush: boolean,
+  hasBackgroundFetch: boolean,
+  hasSilentPush: boolean
+) {
   const state = getState();
   let hasGeolocation = false;
-  let hasPush = true;
-  let hasSilentPush = true;
   if (state) {
     for (const plugin of state.capacitorPlugins || []) {
       if (plugin.name === "@capacitor/geolocation") {
@@ -1327,12 +1332,13 @@ export function writePodfile(buildDir: string) {
     pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
     pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'
     ${
-      hasPush
+      hasPush || hasSilentPush
         ? `pod 'CapacitorPushNotifications', :path => '../../node_modules/@capacitor/push-notifications'
     pod 'CapacitorDevice', :path => '../../node_modules/@capacitor/device'`
         : ""
     }
     ${hasSilentPush ? `pod 'CapacitorPluginSilentNotifications', :path => '../../node_modules/capacitor-plugin-silent-notifications'` : ""}
+    ${hasBackgroundFetch ? `pod 'TransistorsoftCapacitorBackgroundFetch', :path => '../../node_modules/@transistorsoft/capacitor-background-fetch'` : ""}
   end
   
   target 'App' do
