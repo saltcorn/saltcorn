@@ -404,6 +404,10 @@ const initOfflineStoreCfg = async () => {
   }
 };
 
+/**
+ * returns a function that checks if current node is leader
+ * uses a dedicated pg connection that holds an advisory lock
+ */
 const getIsLeaderFn = async () => {
   const electLeaderConn = await db.getClient();
   const isSqlite = db.isSQLite;
@@ -419,6 +423,13 @@ const getIsLeaderFn = async () => {
   };
 };
 
+/**
+ * check periodically if the current node is leader and start/stop scheduler accordingly
+ * @param options - Options object
+ * @param options.scheduleHelper - Helper with start/stop and checkIsLeader function.
+ * @param options.wasLeader - flag if it was previously the leader.
+ * @param options.intervalMs - Monitor interval, Defaults to `5000`.
+ */
 const startLeadershipMonitor = ({
   scheduleHelper,
   wasLeader,
