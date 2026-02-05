@@ -21,7 +21,7 @@
     "live-plugin-manager": "^1.0.0",
     "resize-with-sharp-or-jimp": "0.1.8",
     "webpack-merge": "^6.0.1",
-    "webpack": "5.97.1",
+    "webpack": "5.104.1",
     "webpack-cli": "6.0.1",
     "xml2js": "0.6.2"
   },
