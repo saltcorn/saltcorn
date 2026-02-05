@@ -1198,7 +1198,7 @@ router.post(
     await send_reset_email(u, req, { from_admin: true });
     req.flash("success", req.__(`Reset password link sent to %s`, u.email));
 
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1227,7 +1227,7 @@ router.post(
         req.__(`Email verification link sent to %s`, u.email)
       );
 
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1246,7 +1246,7 @@ router.post(
     await u.getNewAPIToken();
     req.flash("success", req.__(`New API token generated`));
 
-    res.redirect(`/useradmin/${u.id}`);
+    res.redirect(getOnDoneRedirect(req, `/useradmin/${u.id}`));
   })
 );
 
@@ -1265,7 +1265,7 @@ router.post(
     await u.removeAPIToken();
     req.flash("success", req.__(`API token removed`));
 
-    res.redirect(`/useradmin/${u.id}`);
+    res.redirect(getOnDoneRedirect(req, `/useradmin/${u.id}`));
   })
 );
 
@@ -1283,7 +1283,7 @@ router.post(
     const u = await User.findOne({ id: uid });
     await u.revokeApiToken(+tokenId);
     req.flash("success", req.__(`API token revoked`));
-    res.redirect(`/useradmin/${u.id}`);
+    res.redirect(getOnDoneRedirect(req, `/useradmin/${u.id}`));
   })
 );
 
@@ -1298,7 +1298,7 @@ router.post(
     const u = await User.findOne({ id: uid });
     await u.revokeOriginalApiToken();
     req.flash("success", req.__(`API token revoked`));
-    res.redirect(`/useradmin/${u.id}`);
+    res.redirect(getOnDoneRedirect(req, `/useradmin/${u.id}`));
   })
 );
 
@@ -1322,7 +1322,7 @@ router.post(
       req.__(`Changed password for user %s to %s`, u.email, newpw)
     );
 
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1350,7 +1350,7 @@ router.post(
       res.redirect(`/`);
     } else {
       req.flash("error", req.__(`User not found`));
-      res.redirect(`/useradmin`);
+      res.redirect(getOnDoneRedirect(req));
     }
   })
 );
@@ -1369,7 +1369,7 @@ router.post(
     await u.update({ disabled: true });
     await u.destroy_sessions();
     req.flash("success", req.__(`Disabled user %s`, u.email));
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1386,7 +1386,7 @@ router.post(
     const u = await User.findOne({ id });
     await u.destroy_sessions();
     req.flash("success", req.__(`Logged out user %s`, u.email));
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1403,7 +1403,7 @@ router.post(
     const u = await User.findOne({ id });
     await u.update({ disabled: false });
     req.flash("success", req.__(`Enabled user %s`, u.email));
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1421,6 +1421,6 @@ router.post(
     await u.delete();
     req.flash("success", req.__(`User %s deleted`, u.email));
 
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );

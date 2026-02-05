@@ -1619,7 +1619,7 @@ router.post(
         "error",
         req.__(`Module %s not found`, text(decodeURIComponent(name)))
       );
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req));
       return;
     }
     let forceReInstall =
@@ -1633,7 +1633,7 @@ router.post(
         "error",
         req.__("Cannot install unsafe modules on subdomain tenants")
       );
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req));
       return;
     }
 
@@ -1651,7 +1651,7 @@ router.post(
         "error",
         e.message || req.__("Error installing module %s", plugin.name)
       );
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req));
       return;
     }
     const plugin_module = getState().plugins[name];
@@ -1668,11 +1668,14 @@ router.post(
         )
       );
       if (msgs?.length > 0) req.flash("warning", msgs.join("<br>"));
-      res.redirect(`/plugins/configure/${plugin_db.name}`);
+      const configurePath = `/plugins/configure/${encodeURIComponent(
+        plugin_db.name
+      )}`;
+      res.redirect(addOnDoneRedirect(configurePath, req));
     } else {
       req.flash("success", req.__(`Module %s installed`, plugin.name));
       if (msgs?.length > 0) req.flash("warning", msgs.join("<br>"));
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req));
     }
   })
 );

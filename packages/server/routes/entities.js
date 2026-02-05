@@ -34,14 +34,21 @@ const {
   th,
   td,
 } = require("@saltcorn/markup/tags");
-const { post_dropdown_item, settingsDropdown } = require("@saltcorn/markup");
+const {
+  post_dropdown_item,
+  settingsDropdown,
+  post_btn,
+} = require("@saltcorn/markup");
 const {
   view_dropdown,
   page_dropdown,
   trigger_dropdown,
 } = require("./common_lists.js");
 const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
-const { fetch_pack_by_name } = require("@saltcorn/admin-models/models/pack");
+const {
+  fetch_pack_by_name,
+  fetch_available_packs,
+} = require("@saltcorn/admin-models/models/pack");
 
 /**
  * @type {object}
@@ -58,18 +65,42 @@ const stripLeadingSlash = (path = "") =>
   path.startsWith("/") ? path.slice(1) : path;
 
 /**
- * Get additional entities (modules, users, roles)
+ * Get additional entities (modules, users)
  */
-const getExtendedEntites = async ({ includeAllModules = false } = {}) => {
+const req__ = (req, s) => (req && req.__(s)) || s;
+
+const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
   const entities = [];
 
-  const twofa_policy_by_role = getState().getConfig("twofa_policy_by_role");
   const statePlugins = getState().plugins;
-
+  const csrfToken = req?.csrfToken ? req.csrfToken() : null;
+  const can_reset = getState().getConfig("smtp_host", "") !== "";
   const packs = getState().getConfig("installed_packs", []);
+  const installedPackNames = new Set(packs);
   const packDetails = await Promise.all(
-    packs.map(async (pname) => await fetch_pack_by_name(pname))
+    packs.map(async (pname) => {
+      try {
+        return (await fetch_pack_by_name(pname)) || { name: pname };
+      } catch (e) {
+        getState().log?.(
+          2,
+          `Failed to fetch installed pack ${pname}: ${e.message}`
+        );
+        return { name: pname };
+      }
+    })
   );
+  const availablePackSummaries = new Map();
+  if (includeAllModules) {
+    try {
+      const availablePacks = await fetch_available_packs();
+      availablePacks.forEach((pack) => {
+        if (pack?.name) availablePackSummaries.set(pack.name, pack);
+      });
+    } catch (e) {
+      getState().log?.(2, `Failed to fetch available packs: ${e.message}`);
+    }
+  }
 
   const modules = await Plugin.find();
   const installedModuleNames = new Set();
@@ -104,6 +135,7 @@ const getExtendedEntites = async ({ includeAllModules = false } = {}) => {
           installed: true,
           type: "module",
         },
+        actionsHtml: "",
       });
     });
 
@@ -133,6 +165,18 @@ const getExtendedEntites = async ({ includeAllModules = false } = {}) => {
               installed: false,
               type: "module",
             },
+            actionsHtml: csrfToken
+              ? post_btn(
+                  `/plugins/install/${encodeURIComponent(mod.name)}`,
+                  req.__("Install"),
+                  csrfToken,
+                  {
+                    formClass: "d-inline",
+                    btnClass: "btn btn-sm btn-primary",
+                    klass: "extended-entity-install",
+                  }
+                )
+              : "",
           });
         });
     } catch (e) {
@@ -140,25 +184,83 @@ const getExtendedEntites = async ({ includeAllModules = false } = {}) => {
     }
   }
 
+  const buildPackActions = (packName, installed) => {
+    if (!csrfToken) return "";
+    if (installed) {
+      return post_btn(
+        `/packs/uninstall/${encodeURIComponent(packName)}`,
+        req.__("Uninstall"),
+        csrfToken,
+        {
+          formClass: "d-inline",
+          btnClass: "btn btn-sm btn-danger",
+          klass: "extended-entity-remove",
+        }
+      );
+    }
+    return post_btn(
+      `/packs/install-named/${encodeURIComponent(packName)}`,
+      req.__("Install"),
+      csrfToken,
+      {
+        formClass: "d-inline",
+        btnClass: "btn btn-sm btn-primary",
+        klass: "extended-entity-install",
+      }
+    );
+  };
+
   packDetails.forEach((pack) => {
-    if (pack && pack.name) {
+    if (!pack || !pack.name) return;
+    const summary = availablePackSummaries.get(pack.name);
+    if (summary) availablePackSummaries.delete(pack.name);
+    const version = pack.version ?? pack.pack?.version ?? null;
+    const description =
+      pack.description ||
+      pack.pack?.description ||
+      summary?.description ||
+      "";
+    entities.push({
+      type: "module",
+      name: pack.name,
+      id: pack.id || pack.pack?.id || pack.name,
+      viewLink: null,
+      editLink: null,
+      metadata: {
+        version,
+        description,
+        hasConfig: false,
+        has_theme: false,
+        local: false,
+        installed: true,
+        type: "pack",
+      },
+      actionsHtml: buildPackActions(pack.name, true),
+    });
+  });
+
+  if (availablePackSummaries.size) {
+    for (const [packName, pack] of availablePackSummaries.entries()) {
+      if (installedPackNames.has(packName)) continue;
       entities.push({
         type: "module",
-        name: pack.name,
-        id: pack.id,
+        name: packName,
+        id: pack.id || packName,
         viewLink: null,
         editLink: null,
         metadata: {
-          version: pack.version,
+          version: null,
+          description: pack.description || "",
           hasConfig: false,
           has_theme: false,
           local: false,
-          installed: true,
+          installed: false,
           type: "pack",
         },
+        actionsHtml: buildPackActions(packName, false),
       });
     }
-  });
+  }
 
   const users = await User.find({}, { cached: true });
   users.forEach((u) => {
@@ -173,27 +275,79 @@ const getExtendedEntites = async ({ includeAllModules = false } = {}) => {
         role_id: u.role_id,
         disabled: u.disabled,
       },
-    });
-  });
-
-  const roles = await User.get_roles();
-  roles.forEach((r) => {
-    entities.push({
-      type: "role",
-      name: r.role,
-      id: r.id,
-      viewLink: `/roleadmin`,
-      editLink: `/roleadmin`,
-      metadata: {
-        role: r.role,
-        id: r.id,
-        twofa_policy_by_role:
-          twofa_policy_by_role?.[String(r.id)] || "Optional",
-      },
+      actionsHtml: buildUserActionsDropdown(u, req, can_reset),
     });
   });
 
   return entities;
+};
+
+const buildUserActionsDropdown = (user, req, can_reset) => {
+  if (!req) return "";
+  const dropdownId = `entityUserDropdown${user.id}`;
+  const items = [
+    a(
+      {
+        class: "dropdown-item",
+        href: `/useradmin/${user.id}`,
+      },
+      '<i class="fas fa-edit"></i>&nbsp;' + req__(req, "Edit")
+    ),
+    post_dropdown_item(
+      `/useradmin/become-user/${user.id}`,
+      '<i class="fas fa-ghost"></i>&nbsp;' + req__(req, "Become user"),
+      req
+    ),
+    post_dropdown_item(
+      `/useradmin/set-random-password/${user.id}`,
+      '<i class="fas fa-random"></i>&nbsp;' + req__(req, "Set random password"),
+      req,
+      true
+    ),
+    can_reset &&
+      post_dropdown_item(
+        `/useradmin/reset-password/${user.id}`,
+        '<i class="fas fa-envelope"></i>&nbsp;' +
+          req__(req, "Send password reset email"),
+        req
+      ),
+    can_reset &&
+      !user.verified_on &&
+      getState().getConfig("verification_view", "") &&
+      post_dropdown_item(
+        `/useradmin/send-verification/${user.id}`,
+        '<i class="fas fa-envelope"></i>&nbsp;' +
+          req__(req, "Send verification email"),
+        req
+      ),
+    user.disabled &&
+      post_dropdown_item(
+        `/useradmin/enable/${user.id}`,
+        '<i class="fas fa-play"></i>&nbsp;' + req__(req, "Enable"),
+        req
+      ),
+    !user.disabled &&
+      post_dropdown_item(
+        `/useradmin/disable/${user.id}`,
+        '<i class="fas fa-pause"></i>&nbsp;' + req__(req, "Disable"),
+        req
+      ),
+    !user.disabled &&
+      post_dropdown_item(
+        `/useradmin/force-logout/${user.id}`,
+        '<i class="fas fa-sign-out-alt"></i>&nbsp;' +
+          req__(req, "Force logout"),
+        req
+      ),
+    post_dropdown_item(
+      `/useradmin/delete/${user.id}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req__(req, "Delete"),
+      req,
+      true,
+      user.email
+    ),
+  ].filter(Boolean);
+  return settingsDropdown(dropdownId, items);
 };
 
 /**
@@ -376,16 +530,6 @@ const detailsContent = (entity, req, roles) => {
       bits.push(span({ class: "badge bg-secondary me-1" }, text(roleName)));
     if (disabled)
       bits.push(span({ class: "badge bg-danger me-1" }, req.__("Disabled")));
-  } else if (entity.type === "role") {
-    const policy = entity.metadata.twofa_policy_by_role;
-    if (policy) {
-      let cls = "secondary";
-      if (policy === "Mandatory") cls = "success";
-      else if (policy === "Disabled") cls = "danger";
-      bits.push(
-        span({ class: `badge bg-${cls} me-1` }, text(`2FA: ${policy}`))
-      );
-    }
   } else if (entity.type === "module") {
     if (entity.metadata.version)
       bits.push(
@@ -589,16 +733,6 @@ router.get(
         },
         i({ class: "fas fa-user me-1" }),
         req.__("Users")
-      ),
-      button(
-        {
-          type: "button",
-          class:
-            "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
-          "data-entity-type": "role",
-        },
-        i({ class: "fas fa-lock me-1" }),
-        req.__("Roles")
       ),
       button(
         {
@@ -862,7 +996,7 @@ router.get(
         const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
 
         const BASE_TYPES = ["table","view","page","trigger"];
-        const EXTENDED_TYPES = window.ENTITY_EXTENDED_TYPES || ["module","user","role"];
+        const EXTENDED_TYPES = window.ENTITY_EXTENDED_TYPES || ["module","user"];
         const ALL_TYPES = BASE_TYPES.concat(EXTENDED_TYPES);
 
         // Track active filters
@@ -925,6 +1059,15 @@ router.get(
           const raw = el.getAttribute(attr) || el[attr];
           const updated = toRelativeHrefWithOnDone(raw);
           if (updated) el.setAttribute(attr, updated);
+        };
+
+        const ensureOnDoneHiddenInput = (form) => {
+          if (form.querySelector('input[name="on_done_redirect"]')) return;
+          const hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = 'on_done_redirect';
+          hidden.value = getCurrentOnDoneTarget();
+          form.appendChild(hidden);
         };
 
         const updateOnDoneRedirectTargets = () => {
@@ -1157,9 +1300,10 @@ router.get(
         window.TXT_INSTALLED = ${JSON.stringify(req.__("Installed"))};
         window.TXT_MODULE = ${JSON.stringify(req.__("Module"))};
         window.TXT_PACK = ${JSON.stringify(req.__("Pack"))};
+        window.TXT_INFO = ${JSON.stringify(req.__("Info"))};
         window.TXT_AUTH = ${JSON.stringify(req.__("Authentication"))};
         window.TXT_MOBILE = ${JSON.stringify(req.__("Mobile"))};
-        const EXTENDED_ENTITY_TYPES = ["module","user","role"];
+        const EXTENDED_ENTITY_TYPES = ["module","user"];
         window.ENTITY_EXTENDED_TYPES = EXTENDED_ENTITY_TYPES;
         let isExtendedExpanded = false;
         let hasLoadedAllModules = false;
@@ -1284,7 +1428,6 @@ router.get(
           const badges = {
             module: { class: "secondary", icon: "cube", label: "Module" },
             user: { class: "dark", icon: "user", label: "User" },
-            role: { class: "danger", icon: "lock", label: "Role" },
           };
           const badge = badges[entity.type];
           const typeBadge = document.createElement('td');
@@ -1292,6 +1435,7 @@ router.get(
           tr.appendChild(typeBadge);
 
           const hasConfig = entity.metadata && entity.metadata.hasConfig;
+          const isInstalled = entity.metadata && entity.metadata.installed;
           
           // Name
           const nameTd = document.createElement('td');
@@ -1307,8 +1451,23 @@ router.get(
           nameTd.appendChild(nameLink);
           tr.appendChild(nameTd);
           
-          // Run cell (empty for extended entities)
+          // Run cell (info link for modules)
           const runTd = document.createElement('td');
+          if (
+            entity.type === 'module' &&
+            entity.metadata &&
+            entity.metadata.type !== 'pack' &&
+            entity.viewLink &&
+            isInstalled
+          ) {
+            const infoLink = document.createElement('a');
+            infoLink.className = 'btn btn-sm btn-outline-primary';
+            infoLink.innerHTML = '<i class="fas fa-info-circle me-1"></i>' +
+              (window.TXT_INFO || 'Info');
+            const updatedInfoHref = toRelativeHrefWithOnDone(entity.viewLink);
+            infoLink.setAttribute('href', updatedInfoHref || entity.viewLink);
+            runTd.appendChild(infoLink);
+          }
           tr.appendChild(runTd);
           
           // Details cell
@@ -1329,14 +1488,6 @@ router.get(
               detailsHtml += '<span class="badge bg-danger me-1">' + (window.TXT_DISABLED || 'Disabled') + '</span>';
               searchable += ' disabled';
             }
-          } else if (entity.type === 'role') {
-            const policy = entity.metadata && entity.metadata.twofa_policy_by_role;
-            if (policy) {
-              let cls = 'secondary';
-              if (policy === 'Mandatory') cls = 'success';
-              else if (policy === 'Disabled') cls = 'danger';
-              detailsHtml += '<span class="badge bg-' + cls + ' me-1">2FA: ' + policy + '</span>';
-            }
           } else if (entity.type === 'module') {
             const version = entity.metadata && entity.metadata.version;
             const hasTheme = entity.metadata && entity.metadata.has_theme;
@@ -1344,7 +1495,6 @@ router.get(
             const isReadyForMobile = entity.metadata && entity.metadata.ready_for_mobile;
             const isLocal = entity.metadata && entity.metadata.local;
             const isPack = entity.metadata && entity.metadata.type === 'pack';
-            const isInstalled = entity.metadata && entity.metadata.installed;
             if (version) {
               detailsHtml += '<span class="text-muted small me-2">v' + version + '</span>';
             }
@@ -1361,10 +1511,10 @@ router.get(
               detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_LOCAL || 'Local') + '</span>';
               searchable += ' local';
             } 
-            // if (isInstalled) {
-            //   detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_INSTALLED || 'Installed') + '</span>';
-            //   searchable += ' installed';
-            // }
+            if (isInstalled) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_INSTALLED || 'Installed') + '</span>';
+              searchable += ' installed';
+            }
             if (hasAuth) {
               detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_AUTH || 'Authentication') + '</span>';
               searchable += ' authentication auth';
@@ -1387,6 +1537,28 @@ router.get(
           
           // Actions cell (empty for extended entities)
           const actionsTd = document.createElement('td');
+          if (entity.actionsHtml) {
+            actionsTd.innerHTML = entity.actionsHtml;
+            actionsTd
+              .querySelectorAll('a')
+              .forEach((link) => {
+                const href = link.getAttribute('href');
+                const updated = toRelativeHrefWithOnDone(href);
+                if (updated) link.setAttribute('href', updated);
+              });
+            actionsTd
+              .querySelectorAll('form')
+              .forEach((form) => {
+                const action = form.getAttribute('action');
+                const updated = toRelativeHrefWithOnDone(action);
+                if (updated) form.setAttribute('action', updated);
+                if (entity.type === 'user') ensureOnDoneHiddenInput(form);
+              });
+            const dropdownToggle = actionsTd.querySelector('[data-bs-toggle="dropdown"]');
+            if (dropdownToggle && window.bootstrap && window.bootstrap.Dropdown) {
+              window.bootstrap.Dropdown.getOrCreateInstance(dropdownToggle);
+            }
+          }
           tr.appendChild(actionsTd);
 
           tr.dataset.searchable = searchable.trim();
@@ -1451,7 +1623,7 @@ router.get(
 );
 
 /**
- * AJAX endpoint to fetch extended entities (modules, users, roles)
+ * AJAX endpoint to fetch extended entities (modules, users)
  */
 router.get(
   "/extended",
@@ -1460,7 +1632,7 @@ router.get(
     const includeAllModules =
       req.query.include_all_modules === "1" ||
       req.query.include_all_modules === "true";
-    const extendedEntities = await getExtendedEntites({
+    const extendedEntities = await getExtendedEntites(req, {
       includeAllModules,
     });
     res.json({
@@ -1471,6 +1643,7 @@ router.get(
         viewLink: entity.viewLink,
         editLink: entity.editLink,
         metadata: entity.metadata,
+        actionsHtml: entity.actionsHtml || "",
       })),
     });
   })
