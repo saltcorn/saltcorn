@@ -60,7 +60,7 @@ const stripLeadingSlash = (path = "") =>
 /**
  * Get additional entities (modules, users, roles)
  */
-const getExtendedEntites = async () => {
+const getExtendedEntites = async ({ includeAllModules = false } = {}) => {
   const entities = [];
 
   const twofa_policy_by_role = getState().getConfig("twofa_policy_by_role");
@@ -72,9 +72,11 @@ const getExtendedEntites = async () => {
   );
 
   const modules = await Plugin.find();
+  const installedModuleNames = new Set();
   modules
     .filter((mod) => mod.name !== "base")
     .forEach((mod) => {
+      installedModuleNames.add(mod.name);
       const has_theme =
         typeof mod.has_theme !== "undefined"
           ? mod.has_theme
@@ -104,6 +106,39 @@ const getExtendedEntites = async () => {
         },
       });
     });
+
+  if (includeAllModules) {
+    try {
+      const storeModules = await Plugin.store_plugins_available();
+      storeModules
+        .filter(
+          (mod) => mod.name !== "base" && !installedModuleNames.has(mod.name)
+        )
+        .forEach((mod) => {
+          const source = mod.source;
+          entities.push({
+            type: "module",
+            name: mod.name,
+            id: mod.id,
+            viewLink: `/plugins/info/${mod.name}`,
+            editLink: null,
+            metadata: {
+              version: mod.version,
+              hasConfig: false,
+              has_theme: !!mod.has_theme,
+              has_auth: !!mod.has_auth,
+              ready_for_mobile: !!mod.ready_for_mobile,
+              source,
+              local: source === "local",
+              installed: false,
+              type: "module",
+            },
+          });
+        });
+    } catch (e) {
+      getState().log?.(2, `Failed to fetch available modules: ${e.message}`);
+    }
+  }
 
   packDetails.forEach((pack) => {
     if (pack && pack.name) {
@@ -833,6 +868,9 @@ router.get(
         // Track active filters
         const activeFilters = new Set([]);
         const activeTags = new Set([]);
+        const isModulesFilterExclusive = () =>
+          activeFilters.size === 1 && activeFilters.has("module");
+        window.isModulesFilterExclusive = isModulesFilterExclusive;
 
         // URL state helpers
         const updateUrl = () => {
@@ -954,11 +992,23 @@ router.get(
           const entityRows = document.querySelectorAll(".entity-row");
           const searchTerm = searchInput.value.toLowerCase();
           let visibleCount = 0;
+          const allowAllModules = isModulesFilterExclusive();
+          const canShowAllModules =
+            allowAllModules && typeof isExtendedExpanded !== "undefined" && isExtendedExpanded;
+          if (
+            canShowAllModules &&
+            typeof ensureAllModulesLoaded === "function" &&
+            typeof hasLoadedAllModules !== "undefined" &&
+            !hasLoadedAllModules
+          ) {
+            ensureAllModulesLoaded();
+          }
 
           entityRows.forEach((row) => {
             const entityType = row.dataset.entityType;
             const searchableText = row.dataset.searchable;
             const rowTags = (row.dataset.tags || "").split(" ").filter(Boolean);
+            const rowInstalled = row.dataset.installed !== "false";
 
             // Check if entity type is active
             const typeMatch = activeFilters.has(entityType);
@@ -975,8 +1025,16 @@ router.get(
               tagMatch = rowTags.some((tid) => activeTags.has(tid));
             }
 
+            const moduleVisibilityOk =
+              entityType !== "module" || rowInstalled || canShowAllModules;
+
             // Show/hide row
-            if ((activeFilters.size === 0 || typeMatch) && searchMatch && tagMatch) {
+            if (
+              (activeFilters.size === 0 || typeMatch) &&
+              searchMatch &&
+              tagMatch &&
+              moduleVisibilityOk
+            ) {
               row.style.display = "";
               visibleCount++;
             } else {
@@ -1104,6 +1162,8 @@ router.get(
         const EXTENDED_ENTITY_TYPES = ["module","user","role"];
         window.ENTITY_EXTENDED_TYPES = EXTENDED_ENTITY_TYPES;
         let isExtendedExpanded = false;
+        let hasLoadedAllModules = false;
+        let isLoadingAllModules = false;
         const clearExtendedTypeFilters = () => {
           if (typeof activeFilters === 'undefined') return;
           EXTENDED_ENTITY_TYPES.forEach((type) => {
@@ -1118,14 +1178,45 @@ router.get(
           });
         };
         // Fetch extended entities via AJAX
-        const loadExtendedEntities = async () => {
+        const loadExtendedEntities = async (includeAllModules = false) => {
           try {
-            const res = await fetch('/entities/extended');
+            const query = includeAllModules ? '?include_all_modules=1' : '';
+            const res = await fetch('/entities/extended' + query);
             const data = await res.json();
             return data.entities || [];
           } catch (e) {
             console.error('Failed to load extended entities:', e);
             return [];
+          }
+        };
+
+        const renderExtendedEntityRows = (extendedEntities, tbody) => {
+          document
+            .querySelectorAll('[data-is-extended]')
+            .forEach((row) => row.remove());
+          extendedEntities.forEach((entity) => {
+            const row = createExtendedEntityRow(entity);
+            tbody.appendChild(row);
+          });
+        };
+
+        const ensureAllModulesLoaded = async () => {
+          if (hasLoadedAllModules || isLoadingAllModules) return;
+          if (!isExtendedExpanded) return;
+          isLoadingAllModules = true;
+          let updated = false;
+          try {
+            const extendedEntities = await loadExtendedEntities(true);
+            window.extendedEntities = extendedEntities;
+            const tbody = document.querySelector('#entities-list tbody');
+            renderExtendedEntityRows(extendedEntities, tbody);
+            hasLoadedAllModules = true;
+            updated = true;
+          } catch (e) {
+            console.error('Failed to load all modules:', e);
+          } finally {
+            isLoadingAllModules = false;
+            if (updated && typeof filterEntities === 'function') filterEntities();
           }
         };
 
@@ -1142,13 +1233,14 @@ router.get(
             moreBtn.classList.add('d-none');
             lessBtn.classList.remove('d-none');
             isExtendedExpanded = true;
-            filterEntities();
+            const shouldLoadAll = typeof window.isModulesFilterExclusive === 'function'
+              ? window.isModulesFilterExclusive()
+              : false;
             // Load extended entities
-            const extendedEntities = await loadExtendedEntities();
+            const extendedEntities = await loadExtendedEntities(shouldLoadAll);
             window.extendedEntities = extendedEntities;
-            // Add extended entity rows
-            addExtendedEntityRows(extendedEntities, tbody);
-            // Update filter
+            renderExtendedEntityRows(extendedEntities, tbody);
+            hasLoadedAllModules = shouldLoadAll;
             filterEntities();
           } else {
             if (!isExtendedExpanded) return;
@@ -1156,20 +1248,14 @@ router.get(
             moreBtn.classList.remove('d-none');
             lessBtn.classList.add('d-none');
             isExtendedExpanded = false;
+            hasLoadedAllModules = false;
+            isLoadingAllModules = false;
             window.extendedEntities = [];
-            // Remove extended entity rows
-            document.querySelectorAll('[data-is-extended]').forEach(row => row.remove());
+            renderExtendedEntityRows([], tbody);
             clearExtendedTypeFilters();
             // Update filter
             filterEntities();
           }
-        };
-
-        const addExtendedEntityRows = (extendedEntities, tbody) => {
-          extendedEntities.forEach(entity => {
-            const row = createExtendedEntityRow(entity);
-            tbody.appendChild(row);
-          });
         };
 
         // Helper to create entity row for extended entities
@@ -1189,6 +1275,10 @@ router.get(
           }
           tr.dataset.tags = '';
           tr.dataset.isExtended = 'true';
+          tr.dataset.installed =
+            entity.metadata && entity.metadata.installed === false
+              ? 'false'
+              : 'true';
           
           // Type badge
           const badges = {
@@ -1367,7 +1457,12 @@ router.get(
   "/extended",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
-    const extendedEntities = await getExtendedEntites();
+    const includeAllModules =
+      req.query.include_all_modules === "1" ||
+      req.query.include_all_modules === "true";
+    const extendedEntities = await getExtendedEntites({
+      includeAllModules,
+    });
     res.json({
       entities: extendedEntities.map((entity) => ({
         type: entity.type,
