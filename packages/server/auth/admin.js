@@ -21,7 +21,12 @@ const {
   settingsDropdown,
   post_dropdown_item,
 } = require("@saltcorn/markup");
-const { isAdmin, error_catcher } = require("../routes/utils");
+const {
+  isAdmin,
+  error_catcher,
+  addOnDoneRedirect,
+  is_relative_url,
+} = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
 const {
@@ -48,6 +53,16 @@ const { send_verification_email } = require("@saltcorn/data/models/email");
 const { expressionValidator } = require("@saltcorn/data/models/expression");
 const router = new Router();
 module.exports = router;
+
+const getOnDoneRedirect = (req, fallback = "/useradmin") => {
+  if (
+    req.query.on_done_redirect &&
+    is_relative_url("/" + req.query.on_done_redirect)
+  ) {
+    return `/${req.query.on_done_redirect}`;
+  }
+  return fallback;
+};
 
 /**
  *
@@ -129,7 +144,7 @@ const userForm = async (req, user) => {
   );
   const form = new Form({
     fields: userFields,
-    action: "/useradmin/save",
+    action: addOnDoneRedirect("/useradmin/save", req),
     submitLabel: user ? req.__("Save") : req.__("Create"),
   });
   if (!user) {
@@ -1164,7 +1179,7 @@ router.post(
           await send_reset_email(u, req, { creating: true });
       }
     }
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1183,7 +1198,7 @@ router.post(
     await send_reset_email(u, req, { from_admin: true });
     req.flash("success", req.__(`Reset password link sent to %s`, u.email));
 
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1212,7 +1227,7 @@ router.post(
         req.__(`Email verification link sent to %s`, u.email)
       );
 
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1231,7 +1246,7 @@ router.post(
     await u.getNewAPIToken();
     req.flash("success", req.__(`New API token generated`));
 
-    res.redirect(`/useradmin/${u.id}`);
+    res.redirect(getOnDoneRedirect(req, `/useradmin/${u.id}`));
   })
 );
 
@@ -1250,7 +1265,7 @@ router.post(
     await u.removeAPIToken();
     req.flash("success", req.__(`API token removed`));
 
-    res.redirect(`/useradmin/${u.id}`);
+    res.redirect(getOnDoneRedirect(req, `/useradmin/${u.id}`));
   })
 );
 
@@ -1268,7 +1283,7 @@ router.post(
     const u = await User.findOne({ id: uid });
     await u.revokeApiToken(+tokenId);
     req.flash("success", req.__(`API token revoked`));
-    res.redirect(`/useradmin/${u.id}`);
+    res.redirect(getOnDoneRedirect(req, `/useradmin/${u.id}`));
   })
 );
 
@@ -1283,7 +1298,7 @@ router.post(
     const u = await User.findOne({ id: uid });
     await u.revokeOriginalApiToken();
     req.flash("success", req.__(`API token revoked`));
-    res.redirect(`/useradmin/${u.id}`);
+    res.redirect(getOnDoneRedirect(req, `/useradmin/${u.id}`));
   })
 );
 
@@ -1307,7 +1322,7 @@ router.post(
       req.__(`Changed password for user %s to %s`, u.email, newpw)
     );
 
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1335,7 +1350,7 @@ router.post(
       res.redirect(`/`);
     } else {
       req.flash("error", req.__(`User not found`));
-      res.redirect(`/useradmin`);
+      res.redirect(getOnDoneRedirect(req));
     }
   })
 );
@@ -1354,7 +1369,7 @@ router.post(
     await u.update({ disabled: true });
     await u.destroy_sessions();
     req.flash("success", req.__(`Disabled user %s`, u.email));
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1371,7 +1386,7 @@ router.post(
     const u = await User.findOne({ id });
     await u.destroy_sessions();
     req.flash("success", req.__(`Logged out user %s`, u.email));
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1388,7 +1403,7 @@ router.post(
     const u = await User.findOne({ id });
     await u.update({ disabled: false });
     req.flash("success", req.__(`Enabled user %s`, u.email));
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1406,6 +1421,6 @@ router.post(
     await u.delete();
     req.flash("success", req.__(`User %s deleted`, u.email));
 
-    res.redirect(`/useradmin`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );

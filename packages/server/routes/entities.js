@@ -13,6 +13,8 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const Tag = require("@saltcorn/data/models/tag");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const User = require("@saltcorn/data/models/user");
+const Role = require("@saltcorn/data/models/role");
+const Plugin = require("@saltcorn/data/models/plugin");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const {
@@ -32,13 +34,21 @@ const {
   th,
   td,
 } = require("@saltcorn/markup/tags");
-const { post_dropdown_item, settingsDropdown } = require("@saltcorn/markup");
+const {
+  post_dropdown_item,
+  settingsDropdown,
+  post_btn,
+} = require("@saltcorn/markup");
 const {
   view_dropdown,
   page_dropdown,
   trigger_dropdown,
 } = require("./common_lists.js");
 const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
+const {
+  fetch_pack_by_name,
+  fetch_available_packs,
+} = require("@saltcorn/admin-models/models/pack");
 
 /**
  * @type {object}
@@ -53,6 +63,309 @@ module.exports = router;
 // Ensure on_done_redirect values remain relative to the app root
 const stripLeadingSlash = (path = "") =>
   path.startsWith("/") ? path.slice(1) : path;
+
+/**
+ * Get additional entities (modules, users)
+ */
+const req__ = (req, s) => (req && req.__(s)) || s;
+
+const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
+  const entities = [];
+
+  const statePlugins = getState().plugins;
+  const csrfToken = req?.csrfToken ? req.csrfToken() : null;
+  const can_reset = getState().getConfig("smtp_host", "") !== "";
+  const packs = getState().getConfig("installed_packs", []);
+  const installedPackNames = new Set(packs);
+  const packDetails = await Promise.all(
+    packs.map(async (pname) => {
+      try {
+        return (await fetch_pack_by_name(pname)) || { name: pname };
+      } catch (e) {
+        getState().log?.(
+          2,
+          `Failed to fetch installed pack ${pname}: ${e.message}`
+        );
+        return { name: pname };
+      }
+    })
+  );
+  const availablePackSummaries = new Map();
+  if (includeAllModules) {
+    try {
+      const availablePacks = await fetch_available_packs();
+      availablePacks.forEach((pack) => {
+        if (pack?.name) availablePackSummaries.set(pack.name, pack);
+      });
+    } catch (e) {
+      getState().log?.(2, `Failed to fetch available packs: ${e.message}`);
+    }
+  }
+
+  const buildModuleActions = (moduleName, installed) => {
+    if (!csrfToken) return "";
+    if (installed) {
+      return post_btn(
+        `/plugins/delete/${encodeURIComponent(moduleName)}`,
+        req.__("Uninstall"),
+        csrfToken,
+        {
+          formClass: "d-inline",
+          btnClass: "btn btn-sm btn-danger",
+          klass: "extended-entity-remove",
+          confirm: true,
+          req,
+        }
+      );
+    }
+    return post_btn(
+      `/plugins/install/${encodeURIComponent(moduleName)}`,
+      req.__("Install"),
+      csrfToken,
+      {
+        formClass: "d-inline",
+        btnClass: "btn btn-sm btn-primary",
+        klass: "extended-entity-install",
+      }
+    );
+  };
+
+  const modules = await Plugin.find();
+  const installedModuleNames = new Set();
+  modules
+    .filter((mod) => mod.name !== "base")
+    .forEach((mod) => {
+      installedModuleNames.add(mod.name);
+      const has_theme =
+        typeof mod.has_theme !== "undefined"
+          ? mod.has_theme
+          : !!statePlugins[mod.name]?.layout;
+      const has_auth =
+        typeof mod.has_auth !== "undefined"
+          ? mod.has_auth
+          : !!statePlugins[mod.name]?.authentication;
+      const ready_for_mobile = !!statePlugins[mod.name]?.ready_for_mobile;
+      const source = mod.source;
+      entities.push({
+        type: "module",
+        name: mod.name,
+        id: mod.id,
+        viewLink: `/plugins/info/${mod.name}`,
+        editLink: mod.configuration ? `/plugins/configure/${mod.name}` : null,
+        metadata: {
+          version: mod.version,
+          hasConfig: !!mod.configuration,
+          has_theme,
+          has_auth,
+          ready_for_mobile,
+          source,
+          local: source === "local",
+          installed: true,
+          type: "module",
+        },
+        actionsHtml: buildModuleActions(mod.name, true),
+      });
+    });
+
+  if (includeAllModules) {
+    try {
+      const storeModules = await Plugin.store_plugins_available();
+      storeModules
+        .filter(
+          (mod) => mod.name !== "base" && !installedModuleNames.has(mod.name)
+        )
+        .forEach((mod) => {
+          const source = mod.source;
+          entities.push({
+            type: "module",
+            name: mod.name,
+            id: mod.id,
+            viewLink: `/plugins/info/${mod.name}`,
+            editLink: null,
+            metadata: {
+              version: mod.version,
+              hasConfig: false,
+              has_theme: !!mod.has_theme,
+              has_auth: !!mod.has_auth,
+              ready_for_mobile: !!mod.ready_for_mobile,
+              source,
+              local: source === "local",
+              installed: false,
+              type: "module",
+            },
+            actionsHtml: buildModuleActions(mod.name, false),
+          });
+        });
+    } catch (e) {
+      getState().log?.(2, `Failed to fetch available modules: ${e.message}`);
+    }
+  }
+
+  const buildPackActions = (packName, installed) => {
+    if (!csrfToken) return "";
+    if (installed) {
+      return post_btn(
+        `/packs/uninstall/${encodeURIComponent(packName)}`,
+        req.__("Uninstall"),
+        csrfToken,
+        {
+          formClass: "d-inline",
+          btnClass: "btn btn-sm btn-danger",
+          klass: "extended-entity-remove",
+        }
+      );
+    }
+    return post_btn(
+      `/packs/install-named/${encodeURIComponent(packName)}`,
+      req.__("Install"),
+      csrfToken,
+      {
+        formClass: "d-inline",
+        btnClass: "btn btn-sm btn-primary",
+        klass: "extended-entity-install",
+      }
+    );
+  };
+
+  packDetails.forEach((pack) => {
+    if (!pack || !pack.name) return;
+    const summary = availablePackSummaries.get(pack.name);
+    if (summary) availablePackSummaries.delete(pack.name);
+    const version = pack.version ?? pack.pack?.version ?? null;
+    const description =
+      pack.description ||
+      pack.pack?.description ||
+      summary?.description ||
+      "";
+    entities.push({
+      type: "module",
+      name: pack.name,
+      id: pack.id || pack.pack?.id || pack.name,
+      viewLink: null,
+      editLink: null,
+      metadata: {
+        version,
+        description,
+        hasConfig: false,
+        has_theme: false,
+        local: false,
+        installed: true,
+        type: "pack",
+      },
+      actionsHtml: buildPackActions(pack.name, true),
+    });
+  });
+
+  if (availablePackSummaries.size) {
+    for (const [packName, pack] of availablePackSummaries.entries()) {
+      if (installedPackNames.has(packName)) continue;
+      entities.push({
+        type: "module",
+        name: packName,
+        id: pack.id || packName,
+        viewLink: null,
+        editLink: null,
+        metadata: {
+          version: null,
+          description: pack.description || "",
+          hasConfig: false,
+          has_theme: false,
+          local: false,
+          installed: false,
+          type: "pack",
+        },
+        actionsHtml: buildPackActions(packName, false),
+      });
+    }
+  }
+
+  const users = await User.find({}, { cached: true });
+  users.forEach((u) => {
+    entities.push({
+      type: "user",
+      name: u.email,
+      id: u.id,
+      viewLink: `/useradmin/${u.id}`,
+      editLink: `/useradmin/${u.id}`,
+      metadata: {
+        email: u.email,
+        role_id: u.role_id,
+        disabled: u.disabled,
+      },
+      actionsHtml: buildUserActionsDropdown(u, req, can_reset),
+    });
+  });
+
+  return entities;
+};
+
+const buildUserActionsDropdown = (user, req, can_reset) => {
+  if (!req) return "";
+  const dropdownId = `entityUserDropdown${user.id}`;
+  const items = [
+    a(
+      {
+        class: "dropdown-item",
+        href: `/useradmin/${user.id}`,
+      },
+      '<i class="fas fa-edit"></i>&nbsp;' + req__(req, "Edit")
+    ),
+    post_dropdown_item(
+      `/useradmin/become-user/${user.id}`,
+      '<i class="fas fa-ghost"></i>&nbsp;' + req__(req, "Become user"),
+      req
+    ),
+    post_dropdown_item(
+      `/useradmin/set-random-password/${user.id}`,
+      '<i class="fas fa-random"></i>&nbsp;' + req__(req, "Set random password"),
+      req,
+      true
+    ),
+    can_reset &&
+      post_dropdown_item(
+        `/useradmin/reset-password/${user.id}`,
+        '<i class="fas fa-envelope"></i>&nbsp;' +
+          req__(req, "Send password reset email"),
+        req
+      ),
+    can_reset &&
+      !user.verified_on &&
+      getState().getConfig("verification_view", "") &&
+      post_dropdown_item(
+        `/useradmin/send-verification/${user.id}`,
+        '<i class="fas fa-envelope"></i>&nbsp;' +
+          req__(req, "Send verification email"),
+        req
+      ),
+    user.disabled &&
+      post_dropdown_item(
+        `/useradmin/enable/${user.id}`,
+        '<i class="fas fa-play"></i>&nbsp;' + req__(req, "Enable"),
+        req
+      ),
+    !user.disabled &&
+      post_dropdown_item(
+        `/useradmin/disable/${user.id}`,
+        '<i class="fas fa-pause"></i>&nbsp;' + req__(req, "Disable"),
+        req
+      ),
+    !user.disabled &&
+      post_dropdown_item(
+        `/useradmin/force-logout/${user.id}`,
+        '<i class="fas fa-sign-out-alt"></i>&nbsp;' +
+          req__(req, "Force logout"),
+        req
+      ),
+    post_dropdown_item(
+      `/useradmin/delete/${user.id}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req__(req, "Delete"),
+      req,
+      true,
+      user.email
+    ),
+  ].filter(Boolean);
+  return settingsDropdown(dropdownId, items);
+};
 
 /**
  * Get all entities with their type and metadata
@@ -163,6 +476,9 @@ const entityTypeBadge = (type) => {
     view: { class: "success", icon: "eye", label: "View" },
     page: { class: "info", icon: "file", label: "Page" },
     trigger: { class: "warning", icon: "play", label: "Trigger" },
+    module: { class: "secondary", icon: "cube", label: "Module" },
+    user: { class: "dark", icon: "user", label: "User" },
+    role: { class: "danger", icon: "lock", label: "Role" },
   };
   const badge = badges[type];
   return span(
@@ -173,7 +489,7 @@ const entityTypeBadge = (type) => {
 };
 
 // Helper: build details column content based on entity type
-const detailsContent = (entity, req) => {
+const detailsContent = (entity, req, roles) => {
   const bits = [];
   if (entity.type === "table") {
     if (entity.metadata.external)
@@ -220,6 +536,23 @@ const detailsContent = (entity, req) => {
         span(
           { class: "text-muted small fst-italic" },
           text(entity.metadata.action)
+        )
+      );
+  } else if (entity.type === "user") {
+    const disabled = entity.metadata.disabled;
+    const roleName = Array.isArray(roles)
+      ? roles.find((r) => r.id === entity.metadata.role_id)?.role
+      : null;
+    if (roleName)
+      bits.push(span({ class: "badge bg-secondary me-1" }, text(roleName)));
+    if (disabled)
+      bits.push(span({ class: "badge bg-danger me-1" }, req.__("Disabled")));
+  } else if (entity.type === "module") {
+    if (entity.metadata.version)
+      bits.push(
+        span(
+          { class: "text-muted small me-2" },
+          text(`v${entity.metadata.version}`)
         )
       );
   }
@@ -318,7 +651,7 @@ router.get(
   error_catcher(async (req, res) => {
     const entities = await getAllEntities();
     // fetch roles and tags
-    const roles = await User.get_roles();
+    const roles = await Role.find({}, { orderBy: "id" });
     const tags = await Tag.find();
     const tagEntries = await TagEntry.find();
     const userRoleId = req.user?.role_id ?? Infinity;
@@ -358,7 +691,7 @@ router.get(
 
     const filterToggles = div(
       {
-        class: "btn-group btn-group-sm",
+        class: "btn-group btn-group-sm entity-type-group",
         role: "group",
         "aria-label": "Entity type filters",
       },
@@ -397,6 +730,44 @@ router.get(
         },
         i({ class: "fas fa-play me-1" }),
         req.__("Triggers")
+      ),
+      button(
+        {
+          type: "button",
+          class:
+            "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
+          "data-entity-type": "module",
+        },
+        i({ class: "fas fa-cube me-1" }),
+        req.__("Modules")
+      ),
+      button(
+        {
+          type: "button",
+          class:
+            "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
+          "data-entity-type": "user",
+        },
+        i({ class: "fas fa-user me-1" }),
+        req.__("Users")
+      ),
+      button(
+        {
+          type: "button",
+          class: "btn btn-sm btn-outline-secondary",
+          id: "entity-more-btn",
+          onclick: "toggleEntityExpanded(true)",
+        },
+        req.__("More...")
+      ),
+      button(
+        {
+          type: "button",
+          class: "btn btn-sm btn-outline-secondary d-none",
+          id: "entity-less-btn",
+          onclick: "toggleEntityExpanded(false)",
+        },
+        req.__("Less...")
       )
     );
 
@@ -438,7 +809,7 @@ router.get(
           "d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2",
       },
       div(
-        { class: "d-flex align-items-center gap-2" },
+        { class: "d-flex align-items-center gap-2 flex-wrap" },
         span(
           { class: "me-1 text-muted" },
           i({ class: "fas fa-filter me-1" }),
@@ -446,7 +817,7 @@ router.get(
         ),
         filterToggles
       ),
-      tagFilterBar
+      tags.length > 0 ? tagFilterBar : null
     );
 
     // Build table
@@ -573,13 +944,13 @@ router.get(
         td(entityTypeBadge(entity.type)),
         td(
           entity.type === "view" &&
-          !entity.metadata.table_id &&
-          !entity.metadata.has_config
+            !entity.metadata.table_id &&
+            !entity.metadata.has_config
             ? span({ class: "fw-bold" }, text(entity.name))
             : a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))
         ),
         td(runCell),
-        td(detailsContent(entity, req)),
+        td(detailsContent(entity, req, roles)),
         td(
           text(
             roleLabel(
@@ -631,33 +1002,44 @@ router.get(
     );
 
     const clientScript = script(
-      domReady(`
+      domReady(/*js*/ `
         const searchInput = document.getElementById("entity-search");
         const entitiesList = document.getElementById("entities-list");
         const noResults = document.getElementById("no-results");
         const filterButtons = document.querySelectorAll(".entity-filter-btn");
-        const entityRows = document.querySelectorAll(".entity-row");
         const tagButtons = document.querySelectorAll(".tag-filter-btn");
         const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};
         const legacyButton = document.getElementById("legacy-entity-link");
         const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
 
+        const BASE_TYPES = ["table","view","page","trigger"];
+        const EXTENDED_TYPES = window.ENTITY_EXTENDED_TYPES || ["module","user"];
+        const ALL_TYPES = BASE_TYPES.concat(EXTENDED_TYPES);
+
         // Track active filters
         const activeFilters = new Set([]);
         const activeTags = new Set([]);
+        const isModulesFilterExclusive = () =>
+          activeFilters.size === 1 && activeFilters.has("module");
+        window.isModulesFilterExclusive = isModulesFilterExclusive;
 
         // URL state helpers
-        const TYPES = ["table","view","page","trigger"];
         const updateUrl = () => {
           const params = new URLSearchParams(window.location.search);
           // search
           if (searchInput.value) params.set('q', searchInput.value);
           else params.delete('q');
           // types
-          TYPES.forEach(t => {
+          ALL_TYPES.forEach(t => {
             if (activeFilters.has(t)) params.set(t+'s', 'on');
             else params.delete(t+'s');
           });
+          // extended flag
+          if (typeof isExtendedExpanded !== 'undefined' && isExtendedExpanded) {
+            params.set('extended', 'on');
+          } else {
+            params.delete('extended');
+          }
           // tags (comma-separated ids)
           if (activeTags.size > 0) params.set('tags', Array.from(activeTags).join(','));
           else params.delete('tags');
@@ -665,35 +1047,53 @@ router.get(
           window.history.replaceState(null, '', newUrl);
         };
 
-        const updateOnDoneRedirectTargets = () => {
+        const getCurrentOnDoneTarget = () => {
           const path = window.location.pathname.startsWith("/")
             ? window.location.pathname.slice(1)
             : window.location.pathname;
-          const currentTarget = path + window.location.search;
-          const toRelativeHref = (raw) => {
-            if (!raw) return null;
-            try {
-              const url = new URL(raw, window.location.origin);
-              url.searchParams.set("on_done_redirect", currentTarget);
-              return url.pathname + url.search + url.hash;
-            } catch (e) {
-              return null;
-            }
-          };
-          const shouldSkip = (raw) =>
-            raw && raw.trim().toLowerCase().startsWith("javascript:");
-          const updateAttr = (el, attr) => {
-            const raw = el.getAttribute(attr) || el[attr];
-            if (!raw || shouldSkip(raw)) return;
-            const updated = toRelativeHref(raw);
-            if (updated) el.setAttribute(attr, updated);
-          };
+          return path + window.location.search;
+        };
+
+        const shouldSkipOnDoneHref = (raw) => {
+          if (!raw) return true;
+          const trimmed = raw.trim();
+          const lowered = trimmed.toLowerCase();
+          return trimmed === "#" || trimmed === "" || lowered.startsWith("javascript:");
+        };
+
+        const toRelativeHrefWithOnDone = (raw) => {
+          if (shouldSkipOnDoneHref(raw)) return null;
+          try {
+            const url = new URL(raw, window.location.origin);
+            url.searchParams.set("on_done_redirect", getCurrentOnDoneTarget());
+            return url.pathname + url.search + url.hash;
+          } catch (e) {
+            return null;
+          }
+        };
+
+        const updateElementOnDoneHref = (el, attr) => {
+          const raw = el.getAttribute(attr) || el[attr];
+          const updated = toRelativeHrefWithOnDone(raw);
+          if (updated) el.setAttribute(attr, updated);
+        };
+
+        const ensureOnDoneHiddenInput = (form) => {
+          if (form.querySelector('input[name="on_done_redirect"]')) return;
+          const hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = 'on_done_redirect';
+          hidden.value = getCurrentOnDoneTarget();
+          form.appendChild(hidden);
+        };
+
+        const updateOnDoneRedirectTargets = () => {
           document
             .querySelectorAll('a[href*="on_done_redirect="]')
-            .forEach((link) => updateAttr(link, "href"));
+            .forEach((link) => updateElementOnDoneHref(link, "href"));
           document
             .querySelectorAll('form[action*="on_done_redirect="]')
-            .forEach((form) => updateAttr(form, "action"));
+            .forEach((form) => updateElementOnDoneHref(form, "action"));
         };
 
         const updateLegacyButton = () => {
@@ -716,8 +1116,11 @@ router.get(
           // search
           const q = params.get('q') || '';
           if (q) searchInput.value = q;
+          const shouldExpandExtended =
+            params.get('extended') === 'on' ||
+            EXTENDED_TYPES.some((t) => params.get(t + 's') === 'on');
           // types
-          TYPES.forEach(t => {
+          ALL_TYPES.forEach(t => {
             if (params.get(t+'s') === 'on') activeFilters.add(t);
           });
           // apply button classes for types
@@ -741,17 +1144,31 @@ router.get(
               btn.classList.remove('btn-outline-secondary');
             }
           });
+          return { shouldExpandExtended };
         };
 
         // Filter function
         function filterEntities() {
+          const entityRows = document.querySelectorAll(".entity-row");
           const searchTerm = searchInput.value.toLowerCase();
           let visibleCount = 0;
+          const allowAllModules = isModulesFilterExclusive();
+          const canShowAllModules =
+            allowAllModules && typeof isExtendedExpanded !== "undefined" && isExtendedExpanded;
+          if (
+            canShowAllModules &&
+            typeof ensureAllModulesLoaded === "function" &&
+            typeof hasLoadedAllModules !== "undefined" &&
+            !hasLoadedAllModules
+          ) {
+            ensureAllModulesLoaded();
+          }
 
           entityRows.forEach((row) => {
             const entityType = row.dataset.entityType;
             const searchableText = row.dataset.searchable;
             const rowTags = (row.dataset.tags || "").split(" ").filter(Boolean);
+            const rowInstalled = row.dataset.installed !== "false";
 
             // Check if entity type is active
             const typeMatch = activeFilters.has(entityType);
@@ -768,8 +1185,16 @@ router.get(
               tagMatch = rowTags.some((tid) => activeTags.has(tid));
             }
 
+            const moduleVisibilityOk =
+              entityType !== "module" || rowInstalled || canShowAllModules;
+
             // Show/hide row
-            if ((activeFilters.size === 0 || typeMatch) && searchMatch && tagMatch) {
+            if (
+              (activeFilters.size === 0 || typeMatch) &&
+              searchMatch &&
+              tagMatch &&
+              moduleVisibilityOk
+            ) {
               row.style.display = "";
               visibleCount++;
             } else {
@@ -831,8 +1256,12 @@ router.get(
         });
 
         // Init from URL and run first filter
-        initFromUrl();
-        filterEntities();
+        const { shouldExpandExtended } = initFromUrl();
+        if (shouldExpandExtended) {
+          toggleEntityExpanded(true);
+        } else {
+          filterEntities();
+        }
         // Focus search on load
         searchInput.focus();
       `)
@@ -846,6 +1275,12 @@ router.get(
         /* Show plus badge only on hover over tag cell */
         td:nth-child(6) .add-tag { visibility: hidden; cursor: pointer; }
         tr:hover td:nth-child(6) .add-tag { visibility: visible; }
+
+        /* Round right corners of More button when it's visible (Less is hidden) */
+        #entity-more-btn:not(.d-none) {
+          border-top-right-radius: 0.25rem !important;
+          border-bottom-right-radius: 0.25rem !important;
+        }
       </style>
     `;
 
@@ -871,7 +1306,283 @@ router.get(
                   noResultsMessage
                 )
               ),
-              clientScript,
+              // clientScript,
+              script(
+                domReady(/*js*/ `
+        window.ENTITY_ROLES = ${JSON.stringify(roles)};
+        window.TXT_DISABLED = ${JSON.stringify(req.__("Disabled"))};
+        window.TXT_CONFIGURABLE = ${JSON.stringify(req.__("Configurable"))};
+        window.TXT_THEME = ${JSON.stringify(req.__("Theme"))};
+        window.TXT_LOCAL = ${JSON.stringify(req.__("Local"))};
+        window.TXT_INSTALLED = ${JSON.stringify(req.__("Installed"))};
+        window.TXT_MODULE = ${JSON.stringify(req.__("Module"))};
+        window.TXT_PACK = ${JSON.stringify(req.__("Pack"))};
+        window.TXT_INFO = ${JSON.stringify(req.__("Info"))};
+        window.TXT_AUTH = ${JSON.stringify(req.__("Authentication"))};
+        window.TXT_MOBILE = ${JSON.stringify(req.__("Mobile"))};
+        const EXTENDED_ENTITY_TYPES = ["module","user"];
+        window.ENTITY_EXTENDED_TYPES = EXTENDED_ENTITY_TYPES;
+        let isExtendedExpanded = false;
+        let hasLoadedAllModules = false;
+        let isLoadingAllModules = false;
+        const clearExtendedTypeFilters = () => {
+          if (typeof activeFilters === 'undefined') return;
+          EXTENDED_ENTITY_TYPES.forEach((type) => {
+            if (activeFilters.has(type)) {
+              activeFilters.delete(type);
+              const btn = document.querySelector('.entity-filter-btn[data-entity-type="' + type + '"]');
+              if (btn) {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-primary');
+              }
+            }
+          });
+        };
+        // Fetch extended entities via AJAX
+        const loadExtendedEntities = async (includeAllModules = false) => {
+          try {
+            const query = includeAllModules ? '?include_all_modules=1' : '';
+            const res = await fetch('/entities/extended' + query);
+            const data = await res.json();
+            return data.entities || [];
+          } catch (e) {
+            console.error('Failed to load extended entities:', e);
+            return [];
+          }
+        };
+
+        const renderExtendedEntityRows = (extendedEntities, tbody) => {
+          document
+            .querySelectorAll('[data-is-extended]')
+            .forEach((row) => row.remove());
+          extendedEntities.forEach((entity) => {
+            const row = createExtendedEntityRow(entity);
+            tbody.appendChild(row);
+          });
+        };
+
+        const ensureAllModulesLoaded = async () => {
+          if (hasLoadedAllModules || isLoadingAllModules) return;
+          if (!isExtendedExpanded) return;
+          isLoadingAllModules = true;
+          let updated = false;
+          try {
+            const extendedEntities = await loadExtendedEntities(true);
+            window.extendedEntities = extendedEntities;
+            const tbody = document.querySelector('#entities-list tbody');
+            renderExtendedEntityRows(extendedEntities, tbody);
+            hasLoadedAllModules = true;
+            updated = true;
+          } catch (e) {
+            console.error('Failed to load all modules:', e);
+          } finally {
+            isLoadingAllModules = false;
+            if (updated && typeof filterEntities === 'function') filterEntities();
+          }
+        };
+
+        // Toggle expanded state
+        window.toggleEntityExpanded = async (expand) => {
+          const moreBtn = document.getElementById('entity-more-btn');
+          const lessBtn = document.getElementById('entity-less-btn');
+          const extendedButtons = document.querySelectorAll('.entity-extended-btn');
+          const tbody = document.querySelector('#entities-list tbody');
+          
+          if (expand) {
+            if (isExtendedExpanded) return;
+            extendedButtons.forEach(btn => btn.classList.remove('d-none'));
+            moreBtn.classList.add('d-none');
+            lessBtn.classList.remove('d-none');
+            isExtendedExpanded = true;
+            const shouldLoadAll = typeof window.isModulesFilterExclusive === 'function'
+              ? window.isModulesFilterExclusive()
+              : false;
+            // Load extended entities
+            const extendedEntities = await loadExtendedEntities(shouldLoadAll);
+            window.extendedEntities = extendedEntities;
+            renderExtendedEntityRows(extendedEntities, tbody);
+            hasLoadedAllModules = shouldLoadAll;
+            filterEntities();
+          } else {
+            if (!isExtendedExpanded) return;
+            extendedButtons.forEach(btn => btn.classList.add('d-none'));
+            moreBtn.classList.remove('d-none');
+            lessBtn.classList.add('d-none');
+            isExtendedExpanded = false;
+            hasLoadedAllModules = false;
+            isLoadingAllModules = false;
+            window.extendedEntities = [];
+            renderExtendedEntityRows([], tbody);
+            clearExtendedTypeFilters();
+            // Update filter
+            filterEntities();
+          }
+        };
+
+        // Helper to create entity row for extended entities
+        const createExtendedEntityRow = (entity) => {
+          const tr = document.createElement('tr');
+          tr.className = 'entity-row';
+          tr.dataset.entityType = entity.type;
+          tr.dataset.entityName = entity.name.toLowerCase();
+          let searchable = ((entity.name || '').toLowerCase() + ' ' + entity.type).trim();
+          if (entity.metadata) {
+            Object.keys(entity.metadata).forEach((key) => {
+              const val = entity.metadata[key];
+              if (val && typeof val === 'string') {
+                searchable += ' ' + val.toLowerCase();
+              }
+            });
+          }
+          tr.dataset.tags = '';
+          tr.dataset.isExtended = 'true';
+          tr.dataset.installed =
+            entity.metadata && entity.metadata.installed === false
+              ? 'false'
+              : 'true';
+          
+          // Type badge
+          const badges = {
+            module: { class: "secondary", icon: "cube", label: "Module" },
+            user: { class: "dark", icon: "user", label: "User" },
+          };
+          const badge = badges[entity.type];
+          const typeBadge = document.createElement('td');
+          typeBadge.innerHTML = '<span class="badge bg-' + badge.class + ' me-2"><i class="fas fa-' + badge.icon + ' me-1"></i>' + badge.label + '</span>';
+          tr.appendChild(typeBadge);
+
+          const hasConfig = entity.metadata && entity.metadata.hasConfig;
+          const isInstalled = entity.metadata && entity.metadata.installed;
+          
+          // Name
+          const nameTd = document.createElement('td');
+          const isStaticModule = entity.type === 'module' && !hasConfig;
+          const nameLink = document.createElement(isStaticModule ? 'span' : 'a');
+          if (!isStaticModule) {
+            const baseHref = entity.editLink || '#';
+            const updatedHref = toRelativeHrefWithOnDone(baseHref);
+            nameLink.setAttribute('href', updatedHref || baseHref);
+          }
+          nameLink.className = 'fw-bold';
+          nameLink.textContent = entity.name;
+          nameTd.appendChild(nameLink);
+          tr.appendChild(nameTd);
+          
+          // Run cell (info link for modules)
+          const runTd = document.createElement('td');
+          if (
+            entity.type === 'module' &&
+            entity.metadata &&
+            entity.metadata.type !== 'pack' &&
+            entity.viewLink &&
+            isInstalled
+          ) {
+            const infoLink = document.createElement('a');
+            infoLink.className = 'btn btn-sm btn-outline-primary';
+            infoLink.innerHTML = '<i class="fas fa-info-circle me-1"></i>' +
+              (window.TXT_INFO || 'Info');
+            const updatedInfoHref = toRelativeHrefWithOnDone(entity.viewLink);
+            infoLink.setAttribute('href', updatedInfoHref || entity.viewLink);
+            runTd.appendChild(infoLink);
+          }
+          tr.appendChild(runTd);
+          
+          // Details cell
+          const detailsTd = document.createElement('td');
+          let detailsHtml = '';
+          if (entity.type === 'user') {
+            const disabled = entity.metadata && entity.metadata.disabled;
+            const roleId = entity.metadata && entity.metadata.role_id;
+            if (Array.isArray(window.ENTITY_ROLES)) {
+              const role = window.ENTITY_ROLES.find(function (r) {
+                return String(r.id) === String(roleId);
+              });
+              if (role && role.role) {
+                detailsHtml += '<span class="text-muted small me-2">' + role.role + '</span>';
+              }
+            }
+            if (disabled) {
+              detailsHtml += '<span class="badge bg-danger me-1">' + (window.TXT_DISABLED || 'Disabled') + '</span>';
+              searchable += ' disabled';
+            }
+          } else if (entity.type === 'module') {
+            const version = entity.metadata && entity.metadata.version;
+            const hasTheme = entity.metadata && entity.metadata.has_theme;
+            const hasAuth = entity.metadata && entity.metadata.has_auth;
+            const isReadyForMobile = entity.metadata && entity.metadata.ready_for_mobile;
+            const isLocal = entity.metadata && entity.metadata.local;
+            const isPack = entity.metadata && entity.metadata.type === 'pack';
+            if (version) {
+              detailsHtml += '<span class="text-muted small me-2">v' + version + '</span>';
+            }
+            if (isPack) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_PACK || 'Pack') + '</span>';
+            }
+            if (hasTheme) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_THEME || 'Theme') + '</span>';
+              searchable += ' theme';
+            }
+            if (isLocal) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_LOCAL || 'Local') + '</span>';
+              searchable += ' local';
+            } 
+            if (isInstalled) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_INSTALLED || 'Installed') + '</span>';
+              searchable += ' installed';
+            }
+            if (hasAuth) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_AUTH || 'Authentication') + '</span>';
+              searchable += ' authentication auth';
+            }
+            if (isReadyForMobile) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_MOBILE || 'Mobile') + '</span>';
+              searchable += ' mobile';
+            }
+          }
+          if (detailsHtml) detailsTd.innerHTML = detailsHtml;
+          tr.appendChild(detailsTd);
+          
+          // Access cell (empty for extended entities)
+          const accessTd = document.createElement('td');
+          tr.appendChild(accessTd);
+          
+          // Tags cell
+          const tagsTd = document.createElement('td');
+          tr.appendChild(tagsTd);
+          
+          // Actions cell (empty for extended entities)
+          const actionsTd = document.createElement('td');
+          if (entity.actionsHtml) {
+            actionsTd.innerHTML = entity.actionsHtml;
+            actionsTd
+              .querySelectorAll('a')
+              .forEach((link) => {
+                const href = link.getAttribute('href');
+                const updated = toRelativeHrefWithOnDone(href);
+                if (updated) link.setAttribute('href', updated);
+              });
+            actionsTd
+              .querySelectorAll('form')
+              .forEach((form) => {
+                const action = form.getAttribute('action');
+                const updated = toRelativeHrefWithOnDone(action);
+                if (updated) form.setAttribute('action', updated);
+                if (entity.type === 'user') ensureOnDoneHiddenInput(form);
+              });
+            const dropdownToggle = actionsTd.querySelector('[data-bs-toggle="dropdown"]');
+            if (dropdownToggle && window.bootstrap && window.bootstrap.Dropdown) {
+              window.bootstrap.Dropdown.getOrCreateInstance(dropdownToggle);
+            }
+          }
+          tr.appendChild(actionsTd);
+
+          tr.dataset.searchable = searchable.trim();
+          return tr;
+        };
+
+        ${clientScript.substring(clientScript.indexOf("const searchInput"), clientScript.lastIndexOf("}"))}
+        `)
+              ),
             ],
             footer: div(
               {
@@ -923,5 +1634,32 @@ router.get(
         ],
       }
     );
+  })
+);
+
+/**
+ * AJAX endpoint to fetch extended entities (modules, users)
+ */
+router.get(
+  "/extended",
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const includeAllModules =
+      req.query.include_all_modules === "1" ||
+      req.query.include_all_modules === "true";
+    const extendedEntities = await getExtendedEntites(req, {
+      includeAllModules,
+    });
+    res.json({
+      entities: extendedEntities.map((entity) => ({
+        type: entity.type,
+        name: entity.name,
+        id: entity.id,
+        viewLink: entity.viewLink,
+        editLink: entity.editLink,
+        metadata: entity.metadata,
+        actionsHtml: entity.actionsHtml || "",
+      })),
+    });
   })
 );
