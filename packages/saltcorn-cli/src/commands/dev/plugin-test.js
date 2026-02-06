@@ -17,7 +17,8 @@ const removePluginsDir = () => {
 
 const writeJestConfigIntoPluginDir = (location, plugin) => {
   const state = getState();
-  const module = state.plugins[plugin.name];
+  const modName = state.plugin_module_names[plugin.name];
+  const module = state.plugins[modName];
   fs.writeFileSync(
     path.join(location, "jest.config.js"),
     `const sqliteDir = process.env.JEST_SC_SQLITE_DIR;
