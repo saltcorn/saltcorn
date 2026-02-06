@@ -1517,8 +1517,6 @@ router.get(
             }
             if (isPack) {
               detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_PACK || 'Pack') + '</span>';
-            } else {
-              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_MODULE || 'Module') + '</span>';
             }
             if (hasTheme) {
               detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_THEME || 'Theme') + '</span>';
