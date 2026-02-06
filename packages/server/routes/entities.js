@@ -33,6 +33,7 @@ const {
   tr,
   th,
   td,
+  label,
 } = require("@saltcorn/markup/tags");
 const {
   post_dropdown_item,
@@ -48,6 +49,10 @@ const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
 const {
   fetch_pack_by_name,
   fetch_available_packs,
+  table_pack,
+  view_pack,
+  page_pack,
+  trigger_pack,
 } = require("@saltcorn/admin-models/models/pack");
 
 /**
@@ -233,10 +238,7 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
     if (summary) availablePackSummaries.delete(pack.name);
     const version = pack.version ?? pack.pack?.version ?? null;
     const description =
-      pack.description ||
-      pack.pack?.description ||
-      summary?.description ||
-      "";
+      pack.description || pack.pack?.description || summary?.description || "";
     entities.push({
       type: "module",
       name: pack.name,
@@ -650,6 +652,39 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const entities = await getAllEntities();
+    const deepSearchIndex = {};
+    const addDeepSearch = (key, pack) => {
+      if (!pack) return;
+      try {
+        deepSearchIndex[key] = JSON.stringify(pack).toLowerCase();
+      } catch (e) {
+        console.error(
+          `Failed to stringify pack ${pack.name} for deep search index:`,
+          e
+        );
+      }
+    };
+
+    for (const entity of entities) {
+      const key = `${entity.type}:${entity.id}`;
+      try {
+        if (entity.type === "table") {
+          const table = Table.findOne({ id: entity.id });
+          if (table) addDeepSearch(key, await table_pack(table));
+        } else if (entity.type === "view") {
+          const view = View.findOne({ name: entity.name });
+          if (view) addDeepSearch(key, await view_pack(view));
+        } else if (entity.type === "page") {
+          const page = Page.findOne({ name: entity.name });
+          if (page) addDeepSearch(key, await page_pack(page));
+        } else if (entity.type === "trigger") {
+          const trigger = Trigger.findOne({ id: entity.id });
+          if (trigger) addDeepSearch(key, await trigger_pack(trigger));
+        }
+      } catch (e) {
+        console.error(`Failed to build deep search index for ${key}:`, e);
+      }
+    }
     // fetch roles and tags
     const roles = await Role.find({}, { orderBy: "id" });
     const tags = await Tag.find();
@@ -773,13 +808,28 @@ router.get(
 
     const searchBox = div(
       { class: "mb-3" },
-      input({
-        type: "text",
-        class: "form-control",
-        id: "entity-search",
-        placeholder: req.__("Search entities by name or type..."),
-        autocomplete: "off",
-      })
+      div(
+        { class: "d-flex align-items-center gap-3 flex-wrap" },
+        input({
+          type: "text",
+          class: "form-control",
+          id: "entity-search",
+          placeholder: req.__("Search entities by name or type..."),
+          autocomplete: "off",
+        }),
+        div(
+          { class: "form-check mb-0" },
+          input({
+            class: "form-check-input",
+            type: "checkbox",
+            id: "entity-deep-search",
+          }),
+          label(
+            { class: "form-check-label", for: "entity-deep-search" },
+            req.__("Deep search")
+          )
+        )
+      )
     );
 
     // Tag filter buttons
@@ -846,6 +896,7 @@ router.get(
     const bodyRows = entities.map((entity) => {
       const key = `${entity.type}:${entity.id}`;
       const tagIds = tagsByEntityKey.get(key) || [];
+      const deepSearchable = deepSearchIndex[key];
       const tagBadges = tagIds.map((tid) =>
         a(
           {
@@ -938,7 +989,9 @@ router.get(
           class: "entity-row",
           "data-entity-type": entity.type,
           "data-entity-name": entity.name.toLowerCase(),
+          "data-entity-key": key,
           "data-searchable": searchableValues.join(" "),
+          "data-deep-searchable": deepSearchable || searchableValues.join(" "),
           "data-tags": tagIds.join(" "),
         },
         td(entityTypeBadge(entity.type)),
@@ -1004,6 +1057,7 @@ router.get(
     const clientScript = script(
       domReady(/*js*/ `
         const searchInput = document.getElementById("entity-search");
+        const deepSearchToggle = document.getElementById("entity-deep-search");
         const entitiesList = document.getElementById("entities-list");
         const noResults = document.getElementById("no-results");
         const filterButtons = document.querySelectorAll(".entity-filter-btn");
@@ -1029,6 +1083,9 @@ router.get(
           // search
           if (searchInput.value) params.set('q', searchInput.value);
           else params.delete('q');
+          console.log({ deepSearchToggle });
+          if (deepSearchToggle && deepSearchToggle.checked) params.set('deep', 'on');
+          else params.delete('deep');
           // types
           ALL_TYPES.forEach(t => {
             if (activeFilters.has(t)) params.set(t+'s', 'on');
@@ -1116,6 +1173,8 @@ router.get(
           // search
           const q = params.get('q') || '';
           if (q) searchInput.value = q;
+          const deep = params.get('deep') === 'on';
+          if (deep && deepSearchToggle) deepSearchToggle.checked = true;
           const shouldExpandExtended =
             params.get('extended') === 'on' ||
             EXTENDED_TYPES.some((t) => params.get(t + 's') === 'on');
@@ -1151,6 +1210,7 @@ router.get(
         function filterEntities() {
           const entityRows = document.querySelectorAll(".entity-row");
           const searchTerm = searchInput.value.toLowerCase();
+          const useDeep = deepSearchToggle && deepSearchToggle.checked;
           let visibleCount = 0;
           const allowAllModules = isModulesFilterExclusive();
           const canShowAllModules =
@@ -1164,9 +1224,22 @@ router.get(
             ensureAllModulesLoaded();
           }
 
-          entityRows.forEach((row) => {
+          entityRows.forEach((row, id) => {
             const entityType = row.dataset.entityType;
-            const searchableText = row.dataset.searchable;
+            const key = row.dataset.entityKey;
+            const deepText =
+              useDeep && window.ENTITY_DEEP_SEARCH
+                ? window.ENTITY_DEEP_SEARCH[key]
+                : null;
+            if(id===0) {console.log({
+              useDeep,
+              deepText,
+              searchable: row.dataset.searchable,
+              deepSearchable: row.dataset.deepSearchable,
+            })}
+            const searchableText = useDeep ? deepText || row.dataset.deepSearchable || "" : row.dataset.searchable || "";
+
+            console.log(searchableText);
             const rowTags = (row.dataset.tags || "").split(" ").filter(Boolean);
             const rowInstalled = row.dataset.installed !== "false";
 
@@ -1218,6 +1291,9 @@ router.get(
 
         // Search input handler
         searchInput.addEventListener("input", filterEntities);
+        if (deepSearchToggle) {
+          deepSearchToggle.addEventListener("change", filterEntities);
+        }
 
         // Filter button handlers
         filterButtons.forEach((btn) => {
@@ -1320,6 +1396,9 @@ router.get(
         window.TXT_INFO = ${JSON.stringify(req.__("Info"))};
         window.TXT_AUTH = ${JSON.stringify(req.__("Authentication"))};
         window.TXT_MOBILE = ${JSON.stringify(req.__("Mobile"))};
+        window.ENTITY_DEEP_SEARCH = ${JSON.stringify(deepSearchIndex)};
+
+        console.log({window});
         const EXTENDED_ENTITY_TYPES = ["module","user"];
         window.ENTITY_EXTENDED_TYPES = EXTENDED_ENTITY_TYPES;
         let isExtendedExpanded = false;
@@ -1425,6 +1504,8 @@ router.get(
           tr.className = 'entity-row';
           tr.dataset.entityType = entity.type;
           tr.dataset.entityName = entity.name.toLowerCase();
+          const key = entity.type + ':' + entity.id;
+          tr.dataset.entityKey = key;
           let searchable = ((entity.name || '').toLowerCase() + ' ' + entity.type).trim();
           if (entity.metadata) {
             Object.keys(entity.metadata).forEach((key) => {
@@ -1577,6 +1658,10 @@ router.get(
           tr.appendChild(actionsTd);
 
           tr.dataset.searchable = searchable.trim();
+          tr.dataset.deepSearchable = (entity.deepSearchable || searchable).trim();
+          if (window.ENTITY_DEEP_SEARCH) {
+            window.ENTITY_DEEP_SEARCH[key] = tr.dataset.deepSearchable;
+          }
           return tr;
         };
 
