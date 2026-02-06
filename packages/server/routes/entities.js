@@ -102,6 +102,34 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
     }
   }
 
+  const buildModuleActions = (moduleName, installed) => {
+    if (!csrfToken) return "";
+    if (installed) {
+      return post_btn(
+        `/plugins/delete/${encodeURIComponent(moduleName)}`,
+        req.__("Uninstall"),
+        csrfToken,
+        {
+          formClass: "d-inline",
+          btnClass: "btn btn-sm btn-danger",
+          klass: "extended-entity-remove",
+          confirm: true,
+          req,
+        }
+      );
+    }
+    return post_btn(
+      `/plugins/install/${encodeURIComponent(moduleName)}`,
+      req.__("Install"),
+      csrfToken,
+      {
+        formClass: "d-inline",
+        btnClass: "btn btn-sm btn-primary",
+        klass: "extended-entity-install",
+      }
+    );
+  };
+
   const modules = await Plugin.find();
   const installedModuleNames = new Set();
   modules
@@ -135,7 +163,7 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
           installed: true,
           type: "module",
         },
-        actionsHtml: "",
+        actionsHtml: buildModuleActions(mod.name, true),
       });
     });
 
@@ -165,18 +193,7 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
               installed: false,
               type: "module",
             },
-            actionsHtml: csrfToken
-              ? post_btn(
-                  `/plugins/install/${encodeURIComponent(mod.name)}`,
-                  req.__("Install"),
-                  csrfToken,
-                  {
-                    formClass: "d-inline",
-                    btnClass: "btn btn-sm btn-primary",
-                    klass: "extended-entity-install",
-                  }
-                )
-              : "",
+            actionsHtml: buildModuleActions(mod.name, false),
           });
         });
     } catch (e) {

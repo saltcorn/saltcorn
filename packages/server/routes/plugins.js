@@ -1563,7 +1563,7 @@ router.post(
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     if (!plugin) {
       req.flash("warning", req.__("Module not found"));
-      res.redirect("/plugins");
+      res.redirect(getOnDoneRedirect(req));
       return;
     }
     const depviews = await plugin.dependant_views();
@@ -1580,7 +1580,7 @@ router.post(
         req.__(`Cannot remove module: views %s depend on it`, depviews.join())
       );
     }
-    res.redirect(`/plugins`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
