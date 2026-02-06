@@ -73,8 +73,8 @@
     "parse5": "7.2.1",
     "parse5-htmlparser2-tree-adapter": "7.0.0",
     "typescript": "5.9.2",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "express": "^5.0.1",
     "react-transition-group": "4.4.5"
   },

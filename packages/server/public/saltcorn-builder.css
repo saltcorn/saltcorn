@@ -548,10 +548,6 @@ div.componets-and-library-accordion {
   color: #f8f9fa !important;
 }
 
-.builder-layers > div > div > div > div {
-  background: #292929 !important;
-}
-
 .craft-layer-manager__header-actions button[aria-label*="visible"],
 .craft-layer-manager__header-actions button[aria-label*="hidden"] {
   display: none !important;
@@ -690,4 +686,43 @@ body.builder-dark .builder-select__group-heading,
 body.builder-dark .builder-select__menu-notice,
 [data-bs-theme="dark"] .builder-select__menu-notice {
   color: #adb5bd !important;
+}
+
+/* Layers Panel Styling - Light Theme Defaults */
+.builder-layer-node {
+  background-color: transparent; /* Default for light theme */
+  color: #333; /* Default text color for light theme */
+  border-bottom: 1px solid #ddd; /* Lighter border for light theme */
+}
+
+.builder-layer-node.hovered {
+  background-color: #e0e0e0; /* Hover background for light theme */
+}
+
+.builder-layers .builder-layer-node .fa-chevron-down {
+  color: #333; /* Icon color for light theme */
+}
+
+/* Layers Panel Styling - Dark Theme Overrides */
+.builder-dark-panel .builder-layer-node,
+[data-bs-theme="dark"] .builder-layer-node {
+  background-color: transparent;
+  color: #f8f9fa; /* Text color for dark theme */
+  border-bottom: 1px solid #495057; /* Darker border for dark theme */
+}
+
+.builder-dark-panel .builder-layer-node.hovered,
+[data-bs-theme="dark"] .builder-layer-node.hovered {
+  background-color: #343a40; /* Hover background for dark theme */
+}
+
+.builder-dark-panel .builder-layers .builder-layer-node .fa-chevron-down,
+[data-bs-theme="dark"] .builder-layers .builder-layer-node .fa-chevron-down {
+  color: #f8f9fa; /* Icon color for dark theme */
+}
+
+/* Ensure selected nodes maintain visibility */
+.builder-layer-node.selected-node {
+  outline: 1px dashed #2680eb; /* Example: blue dashed outline */
+  outline-offset: -2px;
 }

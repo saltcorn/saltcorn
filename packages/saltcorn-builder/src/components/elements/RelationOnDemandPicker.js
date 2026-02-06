@@ -1,8 +1,14 @@
 import React from "react";
+import { createRoot } from "react-dom/client";
 import { removeWhitespaces, rand_ident } from "./utils";
-import ReactDOM from "react-dom";
 
 const maxLevelDefault = 10;
+const renderInto = (container, node) => {
+  if (!container) return;
+  const root = container.__scRoot || createRoot(container);
+  container.__scRoot = root;
+  root.render(node);
+};
 
 const keyLabel = (key, type) =>
   type === "fk" ? `${key.name}` : `${key.name} (from ${key.table})`;
@@ -78,15 +84,11 @@ const Relation = ({ cfg }) => {
                 maxLevel,
                 setMaxLevel,
               };
-              ReactDOM.render(
-                <RelationLayer cfg={layerCfg} />,
-                document.getElementById(nextDropId),
-                () => {
-                  toggleLayers(level, maxLevel, [`#${toggleId}`]);
-                  setActiveClasses(level, maxLevel, itemId);
-                  if (level > maxLevel) setMaxLevel(level);
-                }
-              );
+              const container = document.getElementById(nextDropId);
+              renderInto(container, <RelationLayer cfg={layerCfg} />);
+              toggleLayers(level, maxLevel, [`#${toggleId}`]);
+              setActiveClasses(level, maxLevel, itemId);
+              if (level > maxLevel) setMaxLevel(level);
             }}
           >
             {keyLabel(relation, type)}
