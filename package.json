@@ -2,7 +2,10 @@
   "name": "saltcorn-monorepo",
   "private": true,
   "devDependencies": {
+    "eslint": "8.57.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
+    "lint-staged": "^15.2.10",
     "minipass": "3.1.6",
     "supertest": "7.0.0",
     "typedoc": "^0.28.11",
@@ -15,7 +18,10 @@
     "tsc": "tsc --build && node ./packages/saltcorn-data/mobile-mocks/copy_excluded_files.js",
     "clean": "tsc --build --clean",
     "docs": "typedoc --options typedoc_cfg.json",
-    "jsondocs": "typedoc --json packages/server/docs.json --options typedoc_cfg.json"
+    "jsondocs": "typedoc --json packages/server/docs.json --options typedoc_cfg.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "prepare": "husky"
   },
   "jest": {
     "testEnvironment": "node",
@@ -36,6 +42,9 @@
       "packages/server/locales/"
     ]
   },
+  "lint-staged": {
+    "*.{js,ts,mjs,cjs}": "eslint --fix"
+  },
   "eslintConfig": {
     "ignorePatterns": [
       "**/plugin_packages/**",
@@ -45,7 +54,6 @@
       "*.test.js",
       "packages/filemanager/public/build/bundle.js",
       "packages/saltcorn-sbadmin2/public/**",
-      "packages/saltcorn-builder/**",
       "docs/**",
       "deploy/"
     ],
