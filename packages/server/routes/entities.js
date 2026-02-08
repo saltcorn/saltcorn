@@ -76,10 +76,27 @@ const req__ = (req, s) => (req && req.__(s)) || s;
 
 const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
   const entities = [];
+  const can_reset = getState().getConfig("smtp_host", "") !== "";
+
+  const users = await User.find({}, { cached: true });
+  users.forEach((u) => {
+    entities.push({
+      type: "user",
+      name: u.email,
+      id: u.id,
+      viewLink: `/useradmin/${u.id}`,
+      editLink: `/useradmin/${u.id}`,
+      metadata: {
+        email: u.email,
+        role_id: u.role_id,
+        disabled: u.disabled,
+      },
+      actionsHtml: buildUserActionsDropdown(u, req, can_reset),
+    });
+  });
 
   const statePlugins = getState().plugins;
   const csrfToken = req?.csrfToken ? req.csrfToken() : null;
-  const can_reset = getState().getConfig("smtp_host", "") !== "";
   const packs = getState().getConfig("installed_packs", []);
   const installedPackNames = new Set(packs);
   const packDetails = await Promise.all(
@@ -171,7 +188,9 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
         name: mod.name,
         id: mod.id,
         viewLink: `/plugins/info/${mod.name}`,
-        editLink: statePlugins[mod.name]?.configuration_workflow ? `/plugins/configure/${mod.name}` : null,
+        editLink: statePlugins[mod.name]?.configuration_workflow
+          ? `/plugins/configure/${mod.name}`
+          : null,
         metadata: {
           version: mod.version,
           hasConfig: !!statePlugins[mod.name]?.configuration_workflow,
@@ -296,23 +315,6 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
       });
     }
   }
-
-  const users = await User.find({}, { cached: true });
-  users.forEach((u) => {
-    entities.push({
-      type: "user",
-      name: u.email,
-      id: u.id,
-      viewLink: `/useradmin/${u.id}`,
-      editLink: `/useradmin/${u.id}`,
-      metadata: {
-        email: u.email,
-        role_id: u.role_id,
-        disabled: u.disabled,
-      },
-      actionsHtml: buildUserActionsDropdown(u, req, can_reset),
-    });
-  });
 
   return entities;
 };
@@ -977,7 +979,7 @@ router.get(
               href: entity.viewLink,
               class: "link-primary text-decoration-none",
             },
-            i({ class: "fas fa-play me-1" }),
+            // i({ class: "fas fa-play me-1" }),
             req.__("Run")
           );
         }
@@ -987,7 +989,7 @@ router.get(
               href: entity.viewLink,
               class: "link-primary text-decoration-none",
             },
-            i({ class: "fas fa-play me-1" }),
+            // i({ class: "fas fa-play me-1" }),
             req.__("Run")
           );
         }
@@ -997,7 +999,7 @@ router.get(
               href: `/actions/testrun/${entity.id}${on_done_redirect_str}`,
               class: "link-primary text-decoration-none",
             },
-            i({ class: "fas fa-running me-1" }),
+            // i({ class: "fas fa-running me-1" }),
             req.__("Test run")
           );
         }
@@ -1249,14 +1251,6 @@ router.get(
               useDeep && window.ENTITY_DEEP_SEARCH
                 ? window.ENTITY_DEEP_SEARCH[key]
                 : null;
-            if(id===0) {
-              console.log({
-                useDeep,
-                deepText,
-                searchable: row.dataset.searchable,
-                deepSearchable: row.dataset.deepSearchable,
-              })
-            }
             const searchableText = useDeep ? deepText || row.dataset.deepSearchable || "" : row.dataset.searchable || "";
 
             const rowTags = (row.dataset.tags || "").split(" ").filter(Boolean);
@@ -1417,7 +1411,6 @@ router.get(
         window.TXT_MOBILE = ${JSON.stringify(req.__("Mobile"))};
         window.ENTITY_DEEP_SEARCH = ${JSON.stringify(deepSearchIndex)};
 
-        console.log({window});
         const EXTENDED_ENTITY_TYPES = ["module","user"];
         window.ENTITY_EXTENDED_TYPES = EXTENDED_ENTITY_TYPES;
         let isExtendedExpanded = false;
@@ -1523,7 +1516,7 @@ router.get(
           tr.className = 'entity-row';
           tr.dataset.entityType = entity.type;
           tr.dataset.entityName = entity.name.toLowerCase();
-          const key = entity.type + ':' + entity.id;
+          const key = entity.type + ':' + (entity.type === 'module' ? entity.name : entity.id);
           tr.dataset.entityKey = key;
           let searchable = ((entity.name || '').toLowerCase() + ' ' + entity.type).trim();
           if (entity.metadata) {
@@ -1581,7 +1574,8 @@ router.get(
           ) {
             const infoLink = document.createElement('a');
             infoLink.className = 'link-primary text-decoration-none';
-            infoLink.innerHTML = '<i class="fas fa-info-circle me-1"></i>' +
+            infoLink.innerHTML = 
+            // '<i class="fas fa-info-circle me-1"></i>' +
               (window.TXT_INFO || 'Info');
             const updatedInfoHref = toRelativeHrefWithOnDone(entity.viewLink);
             infoLink.setAttribute('href', updatedInfoHref || entity.viewLink);
