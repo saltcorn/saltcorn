@@ -88,6 +88,7 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
       editLink: `/useradmin/${u.id}`,
       metadata: {
         email: u.email,
+        username: u.username,
         role_id: u.role_id,
         disabled: u.disabled,
       },
@@ -1524,7 +1525,9 @@ router.get(
               const val = entity.metadata[key];
               const shouldSkipDescription =
                 entity.type === 'module' && key === 'description';
-              if (!shouldSkipDescription && val && typeof val === 'string') {
+              const shouldSkipForSearchable =
+                entity.type === 'user' && key === 'username';
+              if (!shouldSkipDescription && !shouldSkipForSearchable && val && typeof val === 'string') {
                 searchable += ' ' + val.toLowerCase();
               }
             });
@@ -1681,6 +1684,11 @@ router.get(
                 : '';
             if (description && !deepSearchable.includes(description)) {
               deepSearchable = (deepSearchable + ' ' + description).trim();
+            }
+          } else if (entity.type === 'user' && entity.metadata && typeof entity.metadata.username === 'string') {
+            const usernameLower = entity.metadata.username.toLowerCase();
+            if (!deepSearchable.includes(usernameLower)) {
+              deepSearchable = (deepSearchable + ' ' + usernameLower).trim();
             }
           }
           tr.dataset.deepSearchable = deepSearchable;
