@@ -2598,7 +2598,9 @@ const buildIosConfigBox = ({
                 )
               ),
             ].join("")
-          )
+          ),
+          div(),
+          i(req.__("This is a Share extension profile"))
         )
       )
     );

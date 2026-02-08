@@ -15,6 +15,7 @@ import {
   prepareBuildDir,
   prepareExportOptionsPlist,
   copyShareExtFiles,
+  modifyShareViewController,
   writeCapacitorConfig,
   prepAppIcon,
   modifyInfoPlist,
@@ -40,6 +41,7 @@ import {
 import User from "@saltcorn/data/models/user";
 import { CapacitorHelper } from "./utils/capacitor-helper";
 import { removeNonWordChars } from "@saltcorn/data/utils";
+const { getState } = require("@saltcorn/data/db/state");
 
 type EntryPointType = "view" | "page" | "byrole";
 const appIdDefault = "saltcorn.mobile.app";
@@ -139,6 +141,8 @@ export class MobileBuilder {
   buildType: "debug" | "release";
   allowClearTextTraffic: boolean;
   iosParams?: IosCfg;
+  apnsKeyId?: string;
+  pushNotificationsEnabled: boolean;
 
   private capacitorHelper: CapacitorHelper;
   private pluginsLoaded = false;
@@ -202,6 +206,9 @@ export class MobileBuilder {
       ...this,
       appVersion: this.appVersion,
     });
+    this.apnsKeyId = getState().getConfig("apn_signing_key_id");
+    this.pushNotificationsEnabled =
+      !!this.googleServicesFile || !!this.apnsKeyId;
   }
 
   /**
@@ -225,7 +232,7 @@ export class MobileBuilder {
       prepareBuildDir(
         this.buildDir,
         this.templateDir,
-        !!this.googleServicesFile || this.pushSync,
+        this.pushNotificationsEnabled,
         !!this.syncInterval && this.syncInterval > 0,
         this.pushSync
       );
@@ -282,7 +289,7 @@ export class MobileBuilder {
         this.pluginsLoaded = true;
       }
       copyPluginMobileAppDirs(this.buildDir);
-      if (this.googleServicesFile || this.pushSync)
+      if (this.pushNotificationsEnabled)
         copyOptionalSource(this.buildDir, "notifications.js");
       if (this.syncInterval && this.syncInterval > 0)
         copyOptionalSource(this.buildDir, "background_sync.js");
@@ -331,7 +338,12 @@ export class MobileBuilder {
       });
       modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
     }
-    writePodfile(this.buildDir);
+    writePodfile(
+      this.buildDir,
+      !!this.apnsKeyId,
+      !!this.syncInterval && this.syncInterval > 0,
+      this.pushSync
+    );
     writePrivacyInfo(this.buildDir, this.backgroundSyncEnabled);
     modifyInfoPlist(
       this.buildDir,
@@ -340,10 +352,20 @@ export class MobileBuilder {
       this.pushSync,
       this.allowClearTextTraffic
     );
-    writeEntitlementsPlist(this.buildDir);
-    runAddEntitlementsScript(this.buildDir);
-    if (this.allowShareTo) copyShareExtFiles(this.buildDir);
-    modifyAppDelegate(this.buildDir, this.backgroundSyncEnabled, this.pushSync);
+    if (this.pushSync) {
+      writeEntitlementsPlist(this.buildDir);
+      runAddEntitlementsScript(this.buildDir);
+    }
+    if (this.allowShareTo) {
+      copyShareExtFiles(this.buildDir);
+      modifyShareViewController(this.buildDir, "MY_GROUP_ID");
+    }
+    modifyAppDelegate(
+      this.buildDir,
+      this.backgroundSyncEnabled,
+      this.pushSync,
+      this.allowShareTo
+    );
   }
 
   private async handleAndroidPlatform() {
@@ -370,7 +392,7 @@ export class MobileBuilder {
       this.allowShareTo,
       !!this.googleServicesFile,
       hasAuthMethod(this.includedPlugins),
-      this.allowClearTextTraffic,
+      this.allowClearTextTraffic
     );
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);
