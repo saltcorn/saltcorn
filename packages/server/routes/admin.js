@@ -2598,6 +2598,35 @@ const buildIosConfigBox = ({
                 )
               ),
             ].join("")
+          ),
+          div(),
+          i(req.__("This is a Share extension profile"))
+        )
+      ) +
+      // App-Group-Id
+      div(
+        { class: "row pb-3" },
+        div(
+          { class: "col-sm-10" },
+          label(
+            {
+              for: "appGroupIdInputId",
+              class: "form-label fw-bold",
+            },
+            req.__("App Group ID")
+          ),
+          input({
+            type: "text",
+            class: "form-control",
+            name: "appGroupId",
+            id: "appGroupIdInputId",
+            value: builderSettings.appGroupId || "",
+          }),
+          div(),
+          i(
+            req.__(
+              "The App Group ID is used to share data between the main app and the Share extension."
+            )
           )
         )
       )
@@ -4383,6 +4412,7 @@ router.post(
       noProvisioningProfile,
       provisioningProfile,
       shareProvisioningProfile,
+      appGroupId,
       apnSigningKey,
       apnSigningKeyId,
       buildType,
@@ -4397,15 +4427,26 @@ router.post(
       when_trigger: "ReceiveMobileShareData",
     });
     let allowShareTo = receiveShareTriggers.length > 0;
-    if (allowShareTo && iOSPlatform && !shareProvisioningProfile) {
-      allowShareTo = false;
-      msgs.push({
-        type: "warning",
-        text: req.__(
-          "A ReceiveMobileShareData trigger exists, but no Share Extension Provisioning Profile is provided. " +
-            "Building without share to support."
-        ),
-      });
+    if (allowShareTo && iOSPlatform) {
+      if (!shareProvisioningProfile) {
+        allowShareTo = false;
+        msgs.push({
+          type: "warning",
+          text: req.__(
+            "A ReceiveMobileShareData trigger exists, but no Share Extension Provisioning Profile is provided. " +
+              "Building without share to support."
+          ),
+        });
+      }
+      if (!appGroupId) {
+        msgs.push({
+          type: "warning",
+          text: req.__(
+            "A ReceiveMobileShareData trigger exists, but no App Group ID is provided. " +
+              "Only simple data like links will be supported"
+          ),
+        });
+      }
     }
     if (!includedPlugins) includedPlugins = [];
     if (!synchedTables) synchedTables = [];
@@ -4507,6 +4548,7 @@ router.post(
         "--shareExtensionProvisioningProfile",
         shareProvisioningProfile
       );
+      if (appGroupId) spawnParams.push("--appGroupId", appGroupId);
     }
     if (appName) spawnParams.push("--appName", appName);
     if (appId) spawnParams.push("--appId", appId);
