@@ -109,7 +109,7 @@ const Text = ({
         isFormula.text ? "font-monospace" : ""
       } ${selected ? "selected-node" : ""}`}
       ref={(dom) => connect(drag(dom))}
-      onClick={(e) => selected && setEditable(true)}
+      onDoubleClick={(e) => selected && setEditable(true)}
       style={{
         ...(font ? { fontFamily: font } : {}),
         ...reactifyStyles(style || {}),
@@ -131,7 +131,7 @@ const Text = ({
       ) : editable ? (
         <ErrorBoundary>
           <CKEditor
-            data={text}
+            initData={text || ""}
             style={{ display: "inline" }}
             onChange={(e) =>
               setProp((props) => (props.text = e.editor.getData()))
@@ -156,6 +156,7 @@ export /**
  */
 const TextSettings = () => {
   const node = useNode((node) => ({
+    id: node.id,
     text: node.data.props.text,
     block: node.data.props.block,
     inline: node.data.props.inline,
@@ -208,7 +209,8 @@ const TextSettings = () => {
         <ErrorBoundary>
           <div className="border">
             <CKEditor
-              data={text}
+              key={node.id}
+              initData={text || ""}
               onChange={(e) => {
                 if (e.editor) {
                   const text = e.editor.getData();
