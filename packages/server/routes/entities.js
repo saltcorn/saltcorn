@@ -53,6 +53,7 @@ const {
   view_pack,
   page_pack,
   trigger_pack,
+  uninstall_pack,
 } = require("@saltcorn/admin-models/models/pack");
 
 /**
@@ -702,7 +703,10 @@ router.get(
           if (trigger) addDeepSearch(key(), await trigger_pack(trigger));
         }
       } catch (e) {
-        console.error(`Failed to build deep search index for ${key()}:`, e);
+        getState().log?.(
+          2,
+          `Failed to build deep search index for ${key()}: ${e.message}`
+        );
       }
     }
     // fetch roles and tags
@@ -791,20 +795,20 @@ router.get(
           type: "button",
           class:
             "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
-          "data-entity-type": "module",
+          "data-entity-type": "user",
         },
-        i({ class: "fas fa-cube me-1" }),
-        req.__("Modules")
+        i({ class: "fas fa-user me-1" }),
+        req.__("Users")
       ),
       button(
         {
           type: "button",
           class:
             "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
-          "data-entity-type": "user",
+          "data-entity-type": "module",
         },
-        i({ class: "fas fa-user me-1" }),
-        req.__("Users")
+        i({ class: "fas fa-cube me-1" }),
+        req.__("Modules")
       ),
       button(
         {
@@ -827,29 +831,30 @@ router.get(
     );
 
     const searchBox = div(
-      { class: "mb-3" },
-      div(
-        { class: "d-flex align-items-center gap-3 flex-wrap" },
+      { class: "input-group mb-2" },
+      input({
+        type: "search",
+        class: "form-control",
+        name: "q",
+        placeholder: req.__("Search entities by name or type..."),
+        "aria-label": req.__("Search entities by name or type..."),
+        autocomplete: "off",
+        id: "entity-search",
+      }),
+      span({ class: "input-group-text" }, [
         input({
-          type: "text",
-          class: "form-control flex-grow-1 w-auto",
-          id: "entity-search",
-          placeholder: req.__("Search entities by name or type..."),
-          autocomplete: "off",
+          class: "form-check-input mt-0 me-2",
+          type: "checkbox",
+          id: "entity-deep-search",
         }),
-        div(
-          { class: "form-check mb-0" },
-          input({
-            class: "form-check-input",
-            type: "checkbox",
-            id: "entity-deep-search",
-          }),
-          label(
-            { class: "form-check-label", for: "entity-deep-search" },
-            req.__("Deep search")
-          )
-        )
-      )
+        label(
+          {
+            class: "form-check-label mb-0",
+            for: "entity-deep-search",
+          },
+          req.__("Deep search")
+        ),
+      ])
     );
 
     // Tag filter buttons
@@ -875,8 +880,10 @@ router.get(
     // One row for type filters and tag filters
     const filtersRow = div(
       {
+        id: "entity-filters-row",
         class:
-          "d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2",
+          "d-flex flex-wrap align-items-center justify-content-between mb-2 gap-2 p-2 border rounded",
+        style: "border-color: transparent !important;",
       },
       div(
         { class: "d-flex align-items-center gap-2 flex-wrap" },
@@ -888,6 +895,44 @@ router.get(
         filterToggles
       ),
       tags.length > 0 ? tagFilterBar : null
+    );
+
+    const selectionBar = div(
+      {
+        id: "entity-selection-bar",
+        class:
+          "d-flex flex-wrap align-items-center justify-content-between mb-2 gap-2 d-none p-2 border rounded",
+          style: "background-color: var(--bs-tertiary-bg); border-color: transparent !important;",
+      },
+      div(
+        { class: "d-flex align-items-center gap-2 flex-wrap" },
+        button(
+          {
+            type: "button",
+            class: "btn btn-sm btn-outline-secondary selection-control-btn",
+            id: "entity-clear-selection",
+            "aria-label": req.__("Clear selection"),
+          },
+          i({ class: "fas fa-times" })
+        ),
+        span(
+          { id: "entity-selection-count", class: "fw-semibold" },
+          req.__("%s selected", "0")
+        )
+      ),
+      div(
+        { class: "d-flex align-items-center gap-2 flex-wrap" },
+        button(
+          {
+            type: "button",
+            class: "btn btn-sm btn-danger selection-control-btn",
+            id: "entity-bulk-delete",
+            "aria-label": req.__("Delete selected"),
+            disabled: true,
+          },
+          i({ class: "fas fa-trash" })
+        )
+      )
     );
 
     // Build table
@@ -1011,6 +1056,8 @@ router.get(
           class: "entity-row",
           "data-entity-type": entity.type,
           "data-entity-name": entity.name.toLowerCase(),
+          "data-entity-label": entity.name,
+          "data-entity-id": entity?.id ?? "",
           "data-entity-key": key,
           "data-searchable": searchableValues.join(" "),
           "data-deep-searchable": deepSearchable || searchableValues.join(" "),
@@ -1087,10 +1134,81 @@ router.get(
         const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};
         const legacyButton = document.getElementById("legacy-entity-link");
         const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
+        const filtersRow = document.getElementById("entity-filters-row");
+        const selectionBar = document.getElementById("entity-selection-bar");
+        const selectionCountEl = document.getElementById("entity-selection-count");
+        const clearSelectionBtn = document.getElementById("entity-clear-selection");
+        const bulkDeleteBtn = document.getElementById("entity-bulk-delete");
+        const entitiesTbody = entitiesList ? entitiesList.querySelector("tbody") : null;
+
+        const TXT_SELECTED = ${JSON.stringify(req.__("selected"))};
+        const TXT_DELETE_SELECTED_CONFIRM = ${JSON.stringify(req.__("Delete %s selected items?"))};
+        const TXT_DELETE_SELECTED_FALLBACK = ${JSON.stringify(req.__("Delete selected items?"))};
+        const TXT_DELETE_FAILED = ${JSON.stringify(req.__("Failed to delete selected items"))};
 
         const BASE_TYPES = ["table","view","page","trigger"];
         const EXTENDED_TYPES = window.ENTITY_EXTENDED_TYPES || ["module","user"];
         const ALL_TYPES = BASE_TYPES.concat(EXTENDED_TYPES);
+
+        const selectedKeys = new Set();
+        let lastSelectedIndex = null;
+
+        const findRowByKey = (key) =>
+          Array.from(document.querySelectorAll('.entity-row')).find(
+            (row) => row.dataset.entityKey === key
+          );
+
+        const selectionPayloadFromRow = (row) => {
+          if (!row) return null;
+          return {
+            key: row.dataset.entityKey,
+            type: row.dataset.entityType,
+            id: row.dataset.entityId || null,
+            name: row.dataset.entityLabel || row.dataset.entityName || "",
+          };
+        };
+
+        const getVisibleRows = () =>
+          Array.from(document.querySelectorAll('.entity-row')).filter(
+            (row) => row.style.display !== 'none'
+          );
+
+        const refreshSelectionStyles = () => {
+          document.querySelectorAll('.entity-row').forEach((row) => {
+            const key = row.dataset.entityKey;
+            if (selectedKeys.has(key)) {
+              row.classList.add('table-active', 'entity-row-selected');
+            } else {
+              row.classList.remove('table-active', 'entity-row-selected');
+            }
+          });
+        };
+
+        const updateSelectionUI = () => {
+          refreshSelectionStyles();
+          const count = selectedKeys.size ?? 0;
+          if (selectionCountEl) {
+            const suffix = TXT_SELECTED || 'selected';
+            selectionCountEl.textContent = count + ' ' + suffix;
+          }
+          if (filtersRow && selectionBar) {
+            if (count > 0) {
+              filtersRow.classList.add('d-none');
+              selectionBar.classList.remove('d-none');
+            } else {
+              filtersRow.classList.remove('d-none');
+              selectionBar.classList.add('d-none');
+            }
+          }
+          if (bulkDeleteBtn) bulkDeleteBtn.disabled = count === 0;
+          if (clearSelectionBtn) clearSelectionBtn.disabled = count === 0;
+        };
+
+        const clearSelection = () => {
+          selectedKeys.clear();
+          lastSelectedIndex = null;
+          updateSelectionUI();
+        };
 
         // Track active filters
         const activeFilters = new Set([]);
@@ -1233,6 +1351,7 @@ router.get(
           const searchTerm = searchInput.value.toLowerCase();
           const useDeep = deepSearchToggle && deepSearchToggle.checked;
           let visibleCount = 0;
+          const visibleKeys = new Set();
           const allowAllModules = isModulesFilterExclusive();
           const canShowAllModules =
             allowAllModules && typeof isExtendedExpanded !== "undefined" && isExtendedExpanded;
@@ -1283,10 +1402,15 @@ router.get(
               moduleVisibilityOk
             ) {
               row.style.display = "";
+              visibleKeys.add(row.dataset.entityKey);
               visibleCount++;
             } else {
               row.style.display = "none";
             }
+          });
+
+          selectedKeys.forEach((key) => {
+            if (!visibleKeys.has(key)) selectedKeys.delete(key);
           });
 
           // Show/hide no results message
@@ -1301,6 +1425,7 @@ router.get(
           updateUrl();
           updateOnDoneRedirectTargets();
           updateLegacyButton();
+          updateSelectionUI();
         }
 
         // Search input handler
@@ -1345,6 +1470,142 @@ router.get(
           });
         });
 
+        if (clearSelectionBtn) {
+          clearSelectionBtn.addEventListener('click', () => {
+            clearSelection();
+            filterEntities();
+          });
+        }
+
+        const collectSelectionItems = () =>
+          Array.from(selectedKeys)
+            .map((key) => selectionPayloadFromRow(findRowByKey(key)))
+            .filter(Boolean);
+
+        const formatDeleteError = (err) => {
+          const displayType = err?.isPack
+            ? "Pack"
+            : (() => {
+                const t = (err?.type || "").toString();
+                if (!t) return "Item";
+                return t.charAt(0).toUpperCase() + t.slice(1);
+              })();
+          const label = err?.name || err?.id || err?.key || "(unknown)";
+          const message = err?.message || TXT_DELETE_FAILED || "Failed to delete selected items";
+          return displayType + " (" + label + "): " + message;
+        };
+
+        const showBulkDeleteErrors = (errs) => {
+          if (!errs || !errs.length) return;
+          const body = errs
+            .map((e) => formatDeleteError(e))
+            .join("\\n-----\\n");
+          alert(body);
+        };
+
+        const removeRowsByKeys = (keysToRemove) => {
+          if (!keysToRemove || !keysToRemove.size) return;
+          document.querySelectorAll('.entity-row').forEach((row) => {
+            if (keysToRemove.has(row.dataset.entityKey)) row.remove();
+          });
+        };
+
+        const refreshExtendedEntitiesAfterDelete = async () => {
+          if (typeof isExtendedExpanded !== 'undefined' && !isExtendedExpanded) return;
+          if (typeof loadExtendedEntities !== 'function' || typeof renderExtendedEntityRows !== 'function') return;
+          const tbody = document.querySelector('#entities-list tbody');
+          if (!tbody) return;
+          const shouldLoadAll = typeof window.isModulesFilterExclusive === 'function'
+            ? window.isModulesFilterExclusive()
+            : false;
+          try {
+            const extendedEntities = await loadExtendedEntities(shouldLoadAll);
+            window.extendedEntities = extendedEntities;
+            renderExtendedEntityRows(extendedEntities, tbody);
+          } catch (err) {
+            console.error('Failed to refresh extended entities after delete:', err);
+          }
+        };
+
+        if (bulkDeleteBtn) {
+          bulkDeleteBtn.addEventListener('click', async () => {
+            const items = collectSelectionItems();
+            if (!items.length) return;
+            const template = TXT_DELETE_SELECTED_CONFIRM || TXT_DELETE_SELECTED_FALLBACK;
+            const msg = template.includes('%s')
+              ? template.replace('%s', items.length)
+              : template;
+            if (!window.confirm(msg)) return;
+            bulkDeleteBtn.disabled = true;
+            try {
+              const res = await fetch('/entities/bulk-delete', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'CSRF-Token': window._sc_globalCsrf || '',
+                },
+                body: JSON.stringify({ items }),
+              });
+              if (!res.ok) throw new Error(await res.text());
+              const payload = await res.json();
+              const keysToRemove = new Set(
+                (payload.deletedKeys && payload.deletedKeys.length
+                  ? payload.deletedKeys
+                  : items.map((i) => i.key))
+              );
+              removeRowsByKeys(keysToRemove);
+              if (payload.errors && payload.errors.length) {
+                console.error('Bulk delete errors', payload.errors);
+                showBulkDeleteErrors(payload.errors);
+              }
+              clearSelection();
+              await refreshExtendedEntitiesAfterDelete();
+              filterEntities();
+            } catch (e) {
+              console.error(e);
+              alert(TXT_DELETE_FAILED || 'Failed to delete selected items');
+            }
+            bulkDeleteBtn.disabled = false;
+          });
+        }
+
+        if (entitiesTbody) {
+          entitiesTbody.addEventListener('click', (e) => {
+            const row = e.target.closest('.entity-row');
+            if (!row) return;
+            if (e.target.closest('a, button, input, select, textarea, label'))
+              return;
+            const visibleRows = getVisibleRows();
+            const index = visibleRows.indexOf(row);
+            const key = row.dataset.entityKey;
+            if (!key) return;
+            const isShift = e.shiftKey;
+            const isMeta = e.metaKey || e.ctrlKey;
+
+            if (isShift && lastSelectedIndex !== null && visibleRows[lastSelectedIndex]) {
+              selectedKeys.clear();
+              const start = Math.min(lastSelectedIndex, index);
+              const end = Math.max(lastSelectedIndex, index);
+              for (let i = start; i <= end; i++) {
+                const rangeKey = visibleRows[i].dataset.entityKey;
+                if (rangeKey) selectedKeys.add(rangeKey);
+              }
+            } else if (isMeta) {
+              if (selectedKeys.has(key)) {
+                selectedKeys.delete(key);
+              } else {
+                selectedKeys.add(key);
+              }
+              lastSelectedIndex = index;
+            } else {
+              selectedKeys.clear();
+              selectedKeys.add(key);
+              lastSelectedIndex = index;
+            }
+            updateSelectionUI();
+          });
+        }
+
         // Init from URL and run first filter
         const { shouldExpandExtended } = initFromUrl();
         if (shouldExpandExtended) {
@@ -1354,17 +1615,43 @@ router.get(
         }
         // Focus search on load
         searchInput.focus();
+        updateSelectionUI();
       `)
     );
 
-    const styles = `
+    const styles = /*css*/ `
       <style>
+        /* Define a var: Temporary default background color */
+        :root {
+          --bs-tertiary-bg: #f1f1f1;
+        }
+        [data-bs-theme="dark"] {
+          --bs-tertiary-bg: #4f4f4f;
+        }
+
         .entity-row td { vertical-align: middle; }
+        .entity-row { user-select: none; }
         .entity-filter-btn { transition: all 0.15s ease-in-out; }
         .tag-filter-btn { transition: all 0.15s ease-in-out; }
         /* Show plus badge only on hover over tag cell */
         td:nth-child(6) .add-tag { visibility: hidden; cursor: pointer; }
         tr:hover td:nth-child(6) .add-tag { visibility: visible; }
+
+        /* .entity-row-selected,
+        .entity-row.table-active {
+          background-color: #f2f2f2 !important;
+        } */
+
+        /* #entity-filters-row, */
+        /* #entity-selection-bar {
+          padding-top: 0.5rem;
+          padding-bottom: 0.5rem;
+          margin-bottom: .5rem;
+        } */
+
+        /* #entity-selection-bar .selection-control-btn {
+          min-width: 2.5rem;
+        } */
 
         /* Round right corners of More button when it's visible (Less is hidden) */
         #entity-more-btn:not(.d-none) {
@@ -1387,9 +1674,10 @@ router.get(
             title: req.__("All entities"),
             contents: [
               div(
-                { class: "d-flex flex-column gap-2" },
+                { class: "d-flex flex-column gap-0" },
                 searchBox,
                 filtersRow,
+                selectionBar,
                 div(
                   { class: "flex-grow-1 card-max-full-screen-scroll" },
                   entitiesList,
@@ -1451,6 +1739,7 @@ router.get(
             const row = createExtendedEntityRow(entity);
             tbody.appendChild(row);
           });
+          if (typeof updateSelectionUI === 'function') updateSelectionUI();
         };
 
         const ensureAllModulesLoaded = async () => {
@@ -1517,6 +1806,12 @@ router.get(
           tr.className = 'entity-row';
           tr.dataset.entityType = entity.type;
           tr.dataset.entityName = entity.name.toLowerCase();
+          if (entity.id) {
+            tr.dataset.entityId = entity.id;
+          } else {
+            tr.dataset.entityId = '';
+          }
+          tr.dataset.entityLabel = entity.name;
           const key = entity.type + ':' + (entity.type === 'module' ? entity.name : entity.id);
           tr.dataset.entityKey = key;
           let searchable = ((entity.name || '').toLowerCase() + ' ' + entity.type).trim();
@@ -1778,6 +2073,96 @@ router.get(
         metadata: entity.metadata,
         actionsHtml: entity.actionsHtml || "",
       })),
+    });
+  })
+);
+
+router.post(
+  "/bulk-delete",
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const items = Array.isArray(req.body.items) ? req.body.items : [];
+    if (!items.length)
+      return res.status(400).json({ error: "No items selected" });
+
+    const deletedKeys = [];
+    const errors = [];
+    const installedPackNames = new Set(
+      getState().getConfig("installed_packs", []) || []
+    );
+    const asNumber = (val) => {
+      if (val === null || typeof val === "undefined") return null;
+      if (val === "") return null;
+      const num = Number(val);
+      return Number.isNaN(num) ? null : num;
+    };
+
+    for (const item of items) {
+      const type = item?.type;
+      const id = asNumber(item?.id);
+      const name = item?.name;
+      const key = item?.key;
+      try {
+        if (type === "table" && id) {
+          const table = Table.findOne({ id });
+          if (!table) throw new Error("Table not found");
+          await table.delete(false);
+          if (key) deletedKeys.push(key);
+        } else if (type === "view" && id) {
+          const view = View.findOne({ id });
+          if (!view) throw new Error("View not found");
+          await view.delete();
+          if (key) deletedKeys.push(key);
+        } else if (type === "page" && id) {
+          const page = Page.findOne({ id });
+          if (!page) throw new Error("Page not found");
+          await page.delete();
+          if (key) deletedKeys.push(key);
+        } else if (type === "trigger" && id) {
+          const trigger = await Trigger.findOne({ id });
+          if (!trigger) throw new Error("Trigger not found");
+          await trigger.delete();
+          if (key) deletedKeys.push(key);
+        } else if (type === "module" && name) {
+          const isPack = installedPackNames.has(name);
+          if (isPack) {
+            const pack = await fetch_pack_by_name(name);
+            if (!pack) throw new Error("Pack not found");
+            await db.withTransaction(async () => {
+              await uninstall_pack(pack.pack, name);
+            });
+            await getState().refresh();
+          } else {
+            const plugin = await Plugin.findOne({ name });
+            if (!plugin) throw new Error("Plugin not found");
+            await plugin.delete();
+          }
+          if (key) deletedKeys.push(key);
+        } else if (type === "user" && id) {
+          const user = await User.findOne({ id });
+          if (!user) throw new Error("User not found");
+          await user.delete();
+          if (key) deletedKeys.push(key);
+        } else {
+          throw new Error("Invalid item type or id: " + JSON.stringify(item));
+        }
+      } catch (e) {
+        const isPack = type === "module" && installedPackNames.has(name);
+        errors.push({
+          type: isPack ? "pack" : type,
+          isPack,
+          id,
+          name,
+          key,
+          message: e.message,
+        });
+      }
+    }
+
+    res.status(errors.length ? 207 : 200).json({
+      ok: errors.length === 0,
+      deletedKeys,
+      errors,
     });
   })
 );
