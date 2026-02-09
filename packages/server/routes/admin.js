@@ -191,7 +191,6 @@ const tutorial_step = (
 const intermediate_build_result = (outDirName, buildDir, req, appFilesTbl) => {
   return div(
     h3("Intermediate build result"),
-    appFilesTbl,
     div(
       { class: "mb-3" },
       "The build has paused because the Share To feature is enabled for iOS. " +
@@ -272,6 +271,7 @@ const intermediate_build_result = (outDirName, buildDir, req, appFilesTbl) => {
         "Now close Xcode and click <strong>Finish the build</strong>."
       )
     ),
+    appFilesTbl,
     div(
       button(
         {
@@ -4656,7 +4656,7 @@ router.post(
     if (noProvisioningProfile) spawnParams.push("--noProvisioningProfile");
     if (provisioningProfile)
       spawnParams.push("--provisioningProfile", provisioningProfile);
-    if (allowShareTo) {
+    if (allowShareTo && iOSPlatform) {
       mode = "prepare";
       spawnParams.push(
         "--shareExtensionProvisioningProfile",
