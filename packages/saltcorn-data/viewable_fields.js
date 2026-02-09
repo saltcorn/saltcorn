@@ -92,11 +92,13 @@ const action_url = (
   colIdNm,
   confirm,
   colIndex,
-  runAsync
+  runAsync,
+  req
 ) => {
   const pk_name = table.pk_name;
-  const __ = getReq__();
-  const confirmStr = confirm ? `if(confirm('${__("Are you sure?")}'))` : "";
+  //const __ = getReq__();
+  const confirmMsg = req.__('Are you sure?');
+  const confirmStr = confirm ? `if(confirm('${confirmMsg}'))` : "";
   if (action_name === "Delete") {
     return {
       javascript: `${confirmStr}${isNode() ? "ajax" : "local"}_post_btn('${
