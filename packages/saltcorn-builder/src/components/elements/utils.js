@@ -3,7 +3,7 @@
  * @module components/elements/utils
  * @subcategory components / elements
  */
-/* globals $, _sc_globalCsrf*/
+/* globals $, _sc_globalCsrf, apply_showif*/
 import React, { Fragment, useState, useEffect } from "react";
 import optionsCtx from "../context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -1009,7 +1009,7 @@ const ConfigField = ({
     field.options =
       typeof field.attributes?.options === "string"
         ? field.attributes?.options.split(",").map((s) => s.trim())
-        : [...field.attributes?.options];
+        : [...(field.attributes?.options ?? [])];
     if (!field.required && field.options) field.options.unshift("");
   }
   const field_type = field.input_type || field.type.name || field.type;
@@ -1829,8 +1829,8 @@ export const buildBootstrapOptions = (values) => {
 
 export const arrayChunks = (xs, n) => {
   const arrayOfArrays = [];
-  for (var i = 0; i < bigarray.length; i += n) {
-    arrayOfArrays.push(bigarray.slice(i, i + n));
+  for (var i = 0; i < xs.length; i += n) {
+    arrayOfArrays.push(xs.slice(i, i + n));
   }
   return arrayOfArrays;
 };

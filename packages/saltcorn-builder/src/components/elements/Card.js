@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useContext } from "react";
+import React, { Fragment, useContext, useState, useRef, useEffect } from "react";
 import { Text } from "./Text";
 import {
   OrFormula,
@@ -72,14 +72,63 @@ const Card = ({
 }) => {
   const {
     selected,
+    hovered,
     connectors: { connect, drag },
-  } = useNode((node) => ({ selected: node.events.selected }));
+  } = useNode((node) => ({
+    selected: node.events.selected,
+    hovered: node.events.hovered,
+  }));
+
+  const [isDragOver, setIsDragOver] = useState(false);
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+
+    const handleDragEnter = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(true);
+    };
+
+    const handleDragOver = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDragLeave = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!el.contains(e.relatedTarget)) {
+        setIsDragOver(false);
+      }
+    };
+
+    const handleDrop = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragOver(false);
+    };
+
+    el.addEventListener("dragenter", handleDragEnter);
+    el.addEventListener("dragover", handleDragOver);
+    el.addEventListener("dragleave", handleDragLeave);
+    el.addEventListener("drop", handleDrop);
+
+    return () => {
+      el.removeEventListener("dragenter", handleDragEnter);
+      el.removeEventListener("dragover", handleDragOver);
+      el.removeEventListener("dragleave", handleDragLeave);
+      el.removeEventListener("drop", handleDrop);
+    };
+  }, []);
 
   return (
     <div
       className={`card ${shadow ? "shadow" : ""} text-${hAlign} builder ${
         selected ? "selected-node" : ""
-      }`}
+      } ${isDragOver ? "card-drag-over" : ""}`}
       style={{
         ...reactifyStyles(style),
         ...(bgType === "Image" && bgFileId && imageLocation === "Card"
@@ -132,7 +181,9 @@ const Card = ({
             : {}
         }
       >
-        <div className="canvas">{children}</div>
+        <div ref={canvasRef} className="canvas">
+          {children}
+        </div>
       </div>
       {hasFooter ? (
         <div className={`card-footer ${noPadding ? "p-0" : ""}`}>

@@ -65,7 +65,7 @@ import {
   faCaretSquareRight,
 } from "@fortawesome/free-regular-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
-import { InitNewElement, Library } from "./Library";
+import { InitNewElement, Library, LibraryElem } from "./Library";
 import { RenderNode } from "./RenderNode";
 import { ListColumn } from "./elements/ListColumn";
 import { ListColumns } from "./elements/ListColumns";
@@ -649,6 +649,7 @@ const Builder = ({ options, layout, mode }) => {
           ToggleFilter,
           ListColumn,
           ListColumns,
+          LibraryElem,
         }}
       >
         <Provider value={options}>

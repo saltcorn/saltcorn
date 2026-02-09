@@ -26,6 +26,19 @@ div.card.builder {
   border: 1px solid #111111;
 }
 
+div.card.builder.card-drag-over,
+div.card.builder[data-drag-over="true"] {
+  border: 2px solid #28a745 !important;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+div.card.builder.card-drag-over .card-body,
+div.card.builder[data-drag-over="true"] .card-body {
+  background-color: rgba(40, 167, 69, 0.1) !important;
+  transition: background-color 0.15s ease-in-out;
+}
+
 table.toolbox td {
   border: 1px solid black;
   width: 70px;
