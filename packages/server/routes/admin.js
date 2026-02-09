@@ -40,6 +40,7 @@ const {
   a,
   hr,
   i,
+  img,
   h4,
   table,
   tbody,
@@ -163,9 +164,114 @@ const app_files_table = (files, buildDirName, req) =>
     ],
     files
   );
-const intermediate_build_result = (outDirName, buildDir, req) => {
+
+const tutorial_step = (
+  stepNumber,
+  headline,
+  description,
+  imageName,
+  imageWidth = "100%",
+  footer = ""
+) => {
+  return div(
+    {
+      class: "tutorial-step mb-4 p-3",
+      style: "border:1px solid #ddd; border-radius:8px; background:#fafafa;",
+    },
+    h5({ style: "margin-bottom:10px;" }, `Step ${stepNumber}: ${headline}`),
+    p(description),
+    img({
+      src: `/static_assets/${db.connectObj.version_tag}/ios_share_tutorial/${imageName}`,
+      style: `max-width:${imageWidth}; border:1px solid #ccc; border-radius:6px;`,
+    }),
+    footer ? p({ class: "fst-italic mt-3 mb-1" }, footer) : ""
+  );
+};
+
+const intermediate_build_result = (outDirName, buildDir, req, appFilesTbl) => {
   return div(
     h3("Intermediate build result"),
+    appFilesTbl,
+    div(
+      { class: "mb-3" },
+      "The build has paused because the Share To feature is enabled for iOS. " +
+        "Before continuing, a few additional configurations must be completed in the Xcode IDE. " +
+        "Please follow the steps shown in the screenshots below."
+    ),
+
+    p(
+      { class: "h5 ps-1 mt-3" },
+      button(
+        {
+          class: "btn btn-outline-secondary p-1 me-2",
+          type: "button",
+          "data-bs-toggle": "collapse",
+          "data-bs-target": "#xCodeStepsId",
+          "aria-expanded": "true",
+          "aria-controls": "xCodeStepsId",
+        },
+        i({ class: "fas fa-chevron-down" })
+      ) + "Steps to configure the Xcode project"
+    ),
+
+    div(
+      {
+        class: "form-group border border-2 p-3 rounded collapse show",
+        id: "xCodeStepsId",
+      },
+
+      tutorial_step(
+        1,
+        "Open existing Xcode project",
+        "Open Xcode and click 'Open Existing Project':",
+        "01_xcode_open_exisiting.png",
+        "50%"
+      ),
+      tutorial_step(
+        2,
+        "Locate xcworkspace file",
+        "Open the 'App.xcworkspace' file. It should be located in <code>/YOUR_HOME_DIR/mobile_app_build/ios/App/App</code>:",
+        "02_open_xc_ws_file.png",
+        "50%"
+      ),
+      tutorial_step(
+        3,
+        "Open add share extension target",
+        "In Xcode, click <strong>File → New → Target</strong>. " +
+          "In the dialog that appears, select <strong>Share Extension</strong> and proceed:",
+        "03_share_extension_dialog.png",
+        "50%"
+      ),
+      tutorial_step(
+        4,
+        "Add share extension target",
+        "Enter <strong>share-ext</strong> as the product name, select your your Team Id and proceed:",
+        "04_share_extension_dialog_b.png",
+        "50%"
+      ),
+      tutorial_step(
+        5,
+        "Activate the new target",
+        "Click <strong>Activate</strong>:",
+        "05_activate.png",
+        "50%"
+      ),
+      tutorial_step(
+        6,
+        "Locate target in project navigator",
+        "The <strong>share-ext</strong> target should be visible in the navigator on the left:",
+        "06_show_new_share_ext_target.png",
+        "50%"
+      ),
+      tutorial_step(
+        7,
+        "Convert the extension target to a group",
+        "Right-click on the <strong>share-ext</strong> target and click <strong>Convert to Group</strong>:",
+        "07_convert_to_group.png",
+        "50%",
+        "Now close Xcode and click <strong>Finish the build</strong>."
+      )
+    ),
     div(
       button(
         {
@@ -4264,6 +4370,7 @@ router.get(
         .readdirSync(buildDir)
         .map(async (outFile) => await File.from_file_on_disk(outFile, buildDir))
     );
+
     const stepDesc =
       mode === "prepare"
         ? "_prepare_step"
@@ -4275,16 +4382,23 @@ router.get(
     )
       ? req.__("The build was successfully")
       : req.__("Unable to build the app");
+    const appFilesTbl =
+      files.length > 0 ? app_files_table(files, out_dir_name, req) : "";
     res.sendWrap(req.__(`Admin`), {
       above: [
-        {
-          type: "card",
-          title: req.__("Build Result"),
-          contents: div(resultMsg),
-        },
-        files.length > 0 ? app_files_table(files, out_dir_name, req) : "",
+        mode !== "prepare"
+          ? [
+              {
+                type: "card",
+                title: req.__("Build Result"),
+                contents: div(resultMsg),
+              },
+              appFilesTbl,
+            ]
+          : "",
+
         mode === "prepare"
-          ? intermediate_build_result(out_dir_name, build_dir, req)
+          ? intermediate_build_result(out_dir_name, build_dir, req, appFilesTbl)
           : "",
       ],
     });
@@ -4438,15 +4552,15 @@ router.post(
           ),
         });
       }
-      if (!appGroupId) {
-        msgs.push({
-          type: "warning",
-          text: req.__(
-            "A ReceiveMobileShareData trigger exists, but no App Group ID is provided. " +
-              "Only simple data like links will be supported"
-          ),
-        });
-      }
+      // if (!appGroupId) {
+      //   msgs.push({
+      //     type: "warning",
+      //     text: req.__(
+      //       "A ReceiveMobileShareData trigger exists, but no App Group ID is provided. " +
+      //         "Only simple data like links will be supported"
+      //     ),
+      //   });
+      // }
     }
     if (!includedPlugins) includedPlugins = [];
     if (!synchedTables) synchedTables = [];
