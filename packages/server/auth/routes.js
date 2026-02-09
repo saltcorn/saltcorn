@@ -1346,7 +1346,7 @@ router.post(
       return;
     }
     res?.cookie?.("loggedin", "true", maxAge ? { maxAge } : undefined);
-    req.flash("success", req.__("Welcome, %s!", req.user.email));
+    req.flash("success", req.__("Welcome, %s!", req.user.welcome || req.user.email));
     if (req.smr) {
       const dbUser = await User.findOne({ id: req.user.id });
       if (!dbUser.last_mobile_login)
@@ -1494,7 +1494,7 @@ const loginCallback = (req, res, method) => async () => {
       res.redirect(resultCollector.goto);
       return;
     }
-    req.flash("success", req.__("Welcome, %s!", req.user.email));
+    req.flash("success", req.__("Welcome, %s!", req.user.welcome || req.user.email));
     if (req.cookies["login_dest"]) {
       res.clearCookie("login_dest");
       res.redirect(req.cookies["login_dest"]);

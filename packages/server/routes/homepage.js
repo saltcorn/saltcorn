@@ -524,7 +524,7 @@ const welcome_page = async (req) => {
 const no_views_logged_in = async (req, res) => {
   const role = req.user && req.user.id ? req.user.role_id : 100;
   if (role > 1 || req.user.tenant !== db.getTenantSchema())
-    res.sendWrap(req.__("Hello"), req.__("Welcome to Saltcorn!"));
+    res.sendWrap(req.__("Hello"), req.__(`Welcome to %s`, getState().getConfig("site_name", "Saltcorn")));
   else {
     const airgap = getState().getConfig("airgap", false);
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
