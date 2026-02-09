@@ -331,14 +331,17 @@ export class CapacitorHelper {
   private xCodeBuild() {
     try {
       console.log("xcodebuild -workspace");
-      let buffer = execSync(
+      const command =
         `xcodebuild -workspace ios/App/App.xcworkspace ` +
-          `-scheme App -destination "generic/platform=iOS" ` +
-          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.iosParams?.mainProvisioningProfile?.guuid}" ` +
-          ' CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="iPhone Distribution" ' +
-          ` DEVELOPMENT_TEAM="${this.iosParams?.appleTeamId}" `,
-        { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }
-      );
+        `-scheme App -destination "generic/platform=iOS" ` +
+        `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.iosParams?.mainProvisioningProfile?.guuid}" ` +
+        ' CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="iPhone Distribution" ' +
+        ` DEVELOPMENT_TEAM="${this.iosParams?.appleTeamId}" `;
+      console.log(command);
+      let buffer = execSync(command, {
+        cwd: this.buildDir,
+        maxBuffer: 1024 * 1024 * 10,
+      });
 
       if (!existsSync(join(this.buildDir, "MyArchive.xcarchive"))) {
         console.log(
@@ -347,18 +350,21 @@ export class CapacitorHelper {
         return 1;
       } else {
         console.log("xcodebuild -exportArchive");
-        buffer = execSync(
+        const command =
           "xcodebuild -exportArchive -archivePath MyArchive.xcarchive " +
-            `-exportPath ${this.buildDir} -exportOptionsPlist ExportOptions.plist`,
-          { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }
-        );
+          `-exportPath ${this.buildDir} -exportOptionsPlist ExportOptions.plist`;
+        console.log(command);
+        buffer = execSync(command, {
+          cwd: this.buildDir,
+          maxBuffer: 1024 * 1024 * 10,
+        });
         console.log(buffer.toString());
         // to upload it automatically:
         // xrun altool --upload-app -f [.ipa file] -t ios -u [apple-id] -p [app-specific password]
         return 0;
       }
-    } catch (err) {
-      console.log(err);
+    } catch (err: any) {
+      console.log(err.output?.toString() || err.message || err);
       return 1;
     }
   }
