@@ -620,6 +620,11 @@ const Builder = ({ options, layout, mode }) => {
     <ErrorBoundary>
       <Editor
         onRender={RenderNode}
+        indicator={{
+          success: "#28a745",
+          thickness: 2,
+          className: "builder-drop-indicator",
+        }}
         handlers={(store) => new DefaultEventHandlers({
           store,
           isMultiSelectEnabled: (e) => e?.shiftKey || false

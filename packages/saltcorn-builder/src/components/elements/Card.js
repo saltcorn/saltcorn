@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useContext, useState, useRef, useEffect } from "react";
+import React, { Fragment, useContext } from "react";
 import { Text } from "./Text";
 import {
   OrFormula,
@@ -16,7 +16,6 @@ import {
   buildOptions,
 } from "./utils";
 import { Column } from "./Column";
-
 import { Element, useNode } from "@craftjs/core";
 import { BoxModelEditor } from "./BoxModelEditor";
 import {
@@ -40,7 +39,7 @@ import { bstyleopt } from "./utils";
 
 export /**
  * @param {object} props
- * @param {string} props.children
+ * @param {string} props.contents - Card body contents
  * @param {object} props.isFormula
  * @param {string} [props.title]
  * @param {string} props.shadow
@@ -52,7 +51,7 @@ export /**
  * @namespace
  */
 const Card = ({
-  children,
+  contents,
   isFormula,
   title,
   shadow,
@@ -72,63 +71,14 @@ const Card = ({
 }) => {
   const {
     selected,
-    hovered,
     connectors: { connect, drag },
-  } = useNode((node) => ({
-    selected: node.events.selected,
-    hovered: node.events.hovered,
-  }));
-
-  const [isDragOver, setIsDragOver] = useState(false);
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const el = canvasRef.current;
-    if (!el) return;
-
-    const handleDragEnter = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragOver(true);
-    };
-
-    const handleDragOver = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-    };
-
-    const handleDragLeave = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (!el.contains(e.relatedTarget)) {
-        setIsDragOver(false);
-      }
-    };
-
-    const handleDrop = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragOver(false);
-    };
-
-    el.addEventListener("dragenter", handleDragEnter);
-    el.addEventListener("dragover", handleDragOver);
-    el.addEventListener("dragleave", handleDragLeave);
-    el.addEventListener("drop", handleDrop);
-
-    return () => {
-      el.removeEventListener("dragenter", handleDragEnter);
-      el.removeEventListener("dragover", handleDragOver);
-      el.removeEventListener("dragleave", handleDragLeave);
-      el.removeEventListener("drop", handleDrop);
-    };
-  }, []);
+  } = useNode((node) => ({ selected: node.events.selected }));
 
   return (
     <div
       className={`card ${shadow ? "shadow" : ""} text-${hAlign} builder ${
         selected ? "selected-node" : ""
-      } ${isDragOver ? "card-drag-over" : ""}`}
+      }`}
       style={{
         ...reactifyStyles(style),
         ...(bgType === "Image" && bgFileId && imageLocation === "Card"
@@ -181,9 +131,9 @@ const Card = ({
             : {}
         }
       >
-        <div ref={canvasRef} className="canvas">
-          {children}
-        </div>
+        <Element canvas id="cardbody" is={Column}>
+          {contents}
+        </Element>
       </div>
       {hasFooter ? (
         <div className={`card-footer ${noPadding ? "p-0" : ""}`}>
@@ -523,6 +473,7 @@ const fields = [
   { label: "Card footer", name: "hasFooter", type: "Bool" },
   { label: "Save indicator", name: "titleAjaxIndicator", type: "Bool" },
   { label: "No padding", name: "noPadding", type: "Bool" },
+  { label: "Contents", name: "contents", type: "Nodes", nodeID: "cardbody" },
   { label: "Footer", name: "footer", type: "Nodes", nodeID: "cardfooter" },
   { name: "style", default: {} },
   { label: "Class", name: "class", type: "String", canBeFormula: true },
@@ -549,13 +500,13 @@ Card.craft = {
     shadow: true,
     isFormula: {},
     style: {},
+    contents: [],
     footer: [],
   },
   displayName: "Card",
   related: {
     settings: CardSettings,
     segment_type: "card",
-    hasContents: true,
     fields,
   },
 };

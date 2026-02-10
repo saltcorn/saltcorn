@@ -3,10 +3,12 @@
  * @module components/elements/Container
  * @subcategory components / elements
  */
+/* globals $, validate_expression_elem */
 
 import React, { useContext, Fragment } from "react";
 
 import { Element, useNode } from "@craftjs/core";
+import { Column } from "./Column";
 import optionsCtx from "../context";
 import {
   Accordion,
@@ -122,7 +124,7 @@ const Container = ({
     {
       ref: (dom) => connect(drag(dom)),
       id: customId || "",
-      className: `${customClass || ""} kontainer canvas text-${hAlign} ${
+      className: `${customClass || ""} kontainer text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
@@ -176,7 +178,11 @@ const Container = ({
           : {}),
       },
     },
-    children
+    React.createElement(
+      Element,
+      { canvas: true, id: "container-canvas", is: Column },
+      children
+    )
   );
 };
 
