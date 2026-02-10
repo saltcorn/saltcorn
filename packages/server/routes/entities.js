@@ -1721,7 +1721,7 @@ router.get(
           cursor: not-allowed;
           /* opacity: 0.8; */
         }
-        .entity-filter-btn { transition: all 0.15s ease-in-out; }
+        .entity-filter-btn { transition: all 0.15s ease-in-out; max-width: 105px; }
         .tag-filter-btn { transition: all 0.15s ease-in-out; }
         /* Show plus badge only on hover over tag cell */
         td:nth-child(6) .add-tag { visibility: hidden; cursor: pointer; }
@@ -1730,6 +1730,10 @@ router.get(
         #entity-more-btn:not(.d-none) {
           border-top-right-radius: 0.25rem !important;
           border-bottom-right-radius: 0.25rem !important;
+          max-width: 80px;
+        }
+        #entity-less-btn:not(.d-none) {
+          max-width: 80px;
         }
       </style>
     `;

@@ -990,6 +990,11 @@ input[type="file"].file-has-existing {
   outline: none !important;
 }
 
+.entity-type-group {
+  flex-wrap: wrap;
+  row-gap: 0.25rem;
+}
+
 .blocking-progress-modal .progress-message {
   overflow: auto;
   display: flex;
