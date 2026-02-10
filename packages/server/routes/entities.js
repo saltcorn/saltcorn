@@ -1460,6 +1460,12 @@ router.get(
 
         // Search input handler
         searchInput.addEventListener("input", filterEntities);
+        searchInput.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" || e.key === "Esc") {
+            e.preventDefault();
+            searchInput.blur();
+          }
+        });
         if (deepSearchToggle) {
           deepSearchToggle.addEventListener("change", filterEntities);
         }
@@ -1508,6 +1514,8 @@ router.get(
           KeyV: "view",
           KeyP: "page",
           KeyR: "trigger",
+          KeyM: "module",
+          KeyU: "user",
         };
 
         document.addEventListener("keydown", (e) => {
@@ -1515,6 +1523,10 @@ router.get(
           if(e.altKey && !e.ctrlKey && !e.metaKey) {
             const type = keyboardShortcutTypeMap[e.code];
             if (type) {
+              const isExtendedType = EXTENDED_TYPES.includes(type);
+              if (isExtendedType && typeof isExtendedExpanded !== "undefined" && !isExtendedExpanded) {
+                return;
+              }
               const btn = filterButtonsByType[type];
               if (btn) {
                 e.preventDefault();
