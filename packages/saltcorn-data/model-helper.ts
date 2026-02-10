@@ -1,22 +1,81 @@
-const fs = require("fs");
+/**
+ * Model-helper
+ * @category saltcorn-data
+ * @module model-helper
+ */
+import fs from "fs";
 const { eval_expression } = require("./models/expression");
-const fsp = fs.promises;
-
 const util = require("util");
+
+const fsp = fs.promises;
 const exec = util.promisify(require("child_process").exec);
 
-const get_predictor = (nbfile) => {
-  const ipynb = JSON.parse(fs.readFileSync(nbfile));
+interface NotebookCell {
+  source: string[];
+  [key: string]: any;
+}
+
+interface Notebook {
+  cells: NotebookCell[];
+  [key: string]: any;
+}
+
+interface ColumnWriter {
+  header: string;
+  write: (row: any) => any;
+}
+
+interface Column {
+  type: string;
+  header_label?: string;
+  formula?: string;
+  field_name?: string;
+  [key: string]: any;
+}
+
+interface Field {
+  name: string;
+  type: {
+    name: string;
+    [key: string]: any;
+  };
+  [key: string]: any;
+}
+
+interface RunJupyterModelParams {
+  csvPath: string;
+  configuration: any;
+  hyperparameters: any;
+  ipynbPath: string;
+}
+
+interface ModelResult {
+  error?: string;
+  fit_object?: Buffer;
+  report?: Buffer;
+  metric_values?: any;
+}
+
+const get_predictor = (nbfile: string): string => {
+  const ipynb: Notebook = JSON.parse(fs.readFileSync(nbfile, "utf-8"));
   const cells = ipynb.cells;
   const predCell = cells.find((cell) =>
     cell.source.some((ln) => ln.includes("def predict("))
   );
+  if (!predCell) {
+    throw new Error("No predict function found in notebook");
+  }
   return predCell.source.join("");
 };
 
-const write_csv = async (rows, columns, fields, filename) => {
+const write_csv = async (
+  rows: any[],
+  columns: Column[],
+  fields: Field[],
+  filename: string
+): Promise<void> => {
   return new Promise((resolve, reject) => {
-    const colWriters = [];
+    const colWriters: ColumnWriter[] = [];
     /*let idSupply = 0;
   const getId = () => {
     idSupply++;
@@ -25,54 +84,59 @@ const write_csv = async (rows, columns, fields, filename) => {
     columns.forEach((column) => {
       switch (column.type) {
         case "FormulaValue":
-          colWriters.push({
-            header: column.header_label,
-            write: (row) => eval_expression(column.formula, row),
-          });
+          if (column.formula) {
+            colWriters.push({
+              header: column.header_label || "",
+              write: (row) => eval_expression(column.formula!, row),
+            });
+          }
           break;
         case "Field":
           let f = fields.find((fld) => fld.name === column.field_name);
+          if (!f) break;
           if (f.type.name === "FloatArray") {
-            const dims = rows.map((r) => r[column.field_name].length);
+            const dims = rows.map((r) => r[column.field_name!].length);
             const maxDims = Math.max(...dims);
             for (let i = 0; i < maxDims; i++) {
               colWriters.push({
-                header: column.field_name + i,
-                write: (row) => row[column.field_name][i],
+                header: column.field_name! + i,
+                write: (row) => row[column.field_name!][i],
               });
             }
           } else if (f.type.name === "PGVector") {
             rows.forEach((row) => {
-              const pgvs = row[column.field_name];
+              const pgvs = row[column.field_name!];
               if (!pgvs) return;
-              row[column.field_name] = JSON.parse(pgvs);
+              row[column.field_name!] = JSON.parse(pgvs);
             });
-            const row0 = rows.find((r) => r[column.field_name]);
-            const dims = row0[column.field_name].length;
-            for (let i = 0; i < dims; i++) {
-              colWriters.push({
-                header: column.field_name + i,
-                write: (row) => {
-                  const pgvs = row[column.field_name];
-                  if (!pgvs) return "";
-                  return pgvs[i];
-                },
-              });
+            const row0 = rows.find((r) => r[column.field_name!]);
+            if (row0) {
+              const dims = row0[column.field_name!].length;
+              for (let i = 0; i < dims; i++) {
+                colWriters.push({
+                  header: column.field_name! + i,
+                  write: (row) => {
+                    const pgvs = row[column.field_name!];
+                    if (!pgvs) return "";
+                    return pgvs[i];
+                  },
+                });
+              }
             }
           } else if (f.type.name === "Bool") {
             colWriters.push({
-              header: column.field_name,
+              header: column.field_name!,
               write: (row) =>
-                row[column.field_name] === true
+                row[column.field_name!] === true
                   ? 1.0
-                  : row[column.field_name] === false
+                  : row[column.field_name!] === false
                     ? 0.0
                     : "",
             });
           } else {
             colWriters.push({
-              header: column.field_name,
-              write: (row) => row[column.field_name],
+              header: column.field_name!,
+              write: (row) => row[column.field_name!],
             });
           }
           break;
@@ -95,11 +159,11 @@ const write_csv = async (rows, columns, fields, filename) => {
   });
 };
 
-function shorten_trackback(s) {
+function shorten_trackback(s: string | undefined): string | undefined {
   if (!s) return s;
   //https://stackoverflow.com/a/29497680/19839414
 
-  const noAnsi = (t) =>
+  const noAnsi = (t: string) =>
     t.replace(
       /[\u001b\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]/g,
       ""
@@ -114,7 +178,7 @@ const run_jupyter_model = async ({
   configuration,
   hyperparameters,
   ipynbPath,
-}) => {
+}: RunJupyterModelParams): Promise<ModelResult> => {
   try {
     //run notebook
     await exec(
@@ -131,7 +195,7 @@ const run_jupyter_model = async ({
         },
       }
     );
-  } catch (e) {
+  } catch (e: any) {
     return {
       error: shorten_trackback(e.message),
     };
@@ -140,7 +204,7 @@ const run_jupyter_model = async ({
   const fit_object = await fsp.readFile("/tmp/scanomallymodel");
   const report = await fsp.readFile("/tmp/scmodelreport.html");
   const metric_values = JSON.parse(
-    await fsp.readFile("/tmp/scmodelmetrics.json")
+    await fsp.readFile("/tmp/scmodelmetrics.json", "utf-8")
   );
   return {
     fit_object,
@@ -149,9 +213,4 @@ const run_jupyter_model = async ({
   };
 };
 
-module.exports = {
-  get_predictor,
-  write_csv,
-  shorten_trackback,
-  run_jupyter_model,
-};
+export { get_predictor, write_csv, shorten_trackback, run_jupyter_model };
