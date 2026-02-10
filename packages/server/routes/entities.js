@@ -902,7 +902,8 @@ router.get(
         id: "entity-selection-bar",
         class:
           "d-flex flex-wrap align-items-center justify-content-between mb-2 gap-2 d-none p-2 border rounded",
-          style: "background-color: var(--bs-tertiary-bg); border-color: transparent !important;",
+        style:
+          "background-color: var(--bs-secondary-bg); border-color: transparent !important;",
       },
       div(
         { class: "d-flex align-items-center gap-2 flex-wrap" },
@@ -1642,14 +1643,6 @@ router.get(
 
     const styles = /*css*/ `
       <style>
-        /* Define a var: Temporary default background color */
-        :root {
-          --bs-tertiary-bg: #f1f1f1;
-        }
-        [data-bs-theme="dark"] {
-          --bs-tertiary-bg: #4f4f4f;
-        }
-
         .entity-row td { vertical-align: middle; }
         .entity-row { user-select: none; }
         .entity-row-selection-disabled {
@@ -1678,7 +1671,6 @@ router.get(
           min-width: 2.5rem;
         } */
 
-        /* Round right corners of More button when it's visible (Less is hidden) */
         #entity-more-btn:not(.d-none) {
           border-top-right-radius: 0.25rem !important;
           border-bottom-right-radius: 0.25rem !important;
