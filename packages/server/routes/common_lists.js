@@ -728,16 +728,15 @@ const trigger_dropdown = (
       },
       '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
     ),
-    includeTestRun &&
-      a(
-        {
-          class: "dropdown-item",
-          href: `/registry-editor?etype=trigger&ename=${encodeURIComponent(
-            trigger.name
-          )}`,
-        },
-        '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
-      ),
+    a(
+      {
+        class: "dropdown-item",
+        href: `/registry-editor?etype=trigger&ename=${encodeURIComponent(
+          trigger.name
+        )}`,
+      },
+      '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
+    ),
     post_dropdown_item(
       `/actions/clone/${trigger.id}${on_done_redirect_str}`,
       '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
