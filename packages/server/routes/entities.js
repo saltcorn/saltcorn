@@ -1043,7 +1043,7 @@ router.get(
           return a(
             {
               href: `/actions/testrun/${entity.id}${on_done_redirect_str}`,
-              class: "link-primary text-decoration-none",
+              class: "link-primary text-decoration-none text-nowrap",
             },
             // i({ class: "fas fa-running me-1" }),
             req.__("Test run")
@@ -1153,6 +1153,14 @@ router.get(
         const selectedKeys = new Set();
         let lastSelectedIndex = null;
 
+        const isRowSelectable = (row) => {
+          if (!row) return false;
+          const type = row.dataset.entityType;
+          const installed = row.dataset.installed !== 'false';
+          if (type === 'module' && !installed) return false;
+          return true;
+        };
+
         const findRowByKey = (key) =>
           Array.from(document.querySelectorAll('.entity-row')).find(
             (row) => row.dataset.entityKey === key
@@ -1173,9 +1181,15 @@ router.get(
             (row) => row.style.display !== 'none'
           );
 
+        const getSelectableVisibleRows = () =>
+          getVisibleRows().filter((row) => isRowSelectable(row));
+
         const refreshSelectionStyles = () => {
           document.querySelectorAll('.entity-row').forEach((row) => {
             const key = row.dataset.entityKey;
+            if (!isRowSelectable(row) && selectedKeys.has(key)) {
+              selectedKeys.delete(key);
+            }
             if (selectedKeys.has(key)) {
               row.classList.add('table-active', 'entity-row-selected');
             } else {
@@ -1450,6 +1464,9 @@ router.get(
             }
 
             filterEntities();
+            if (searchInput && typeof searchInput.focus === 'function') {
+              searchInput.focus({ preventScroll: true });
+            }
           });
         });
 
@@ -1575,7 +1592,11 @@ router.get(
             if (!row) return;
             if (e.target.closest('a, button, input, select, textarea, label'))
               return;
-            const visibleRows = getVisibleRows();
+            if (!isRowSelectable(row)) {
+              lastSelectedIndex = null;
+              return;
+            }
+            const visibleRows = getSelectableVisibleRows();
             const index = visibleRows.indexOf(row);
             const key = row.dataset.entityKey;
             if (!key) return;
@@ -1631,6 +1652,10 @@ router.get(
 
         .entity-row td { vertical-align: middle; }
         .entity-row { user-select: none; }
+        .entity-row-selection-disabled {
+          cursor: not-allowed;
+          /* opacity: 0.8; */
+        }
         .entity-filter-btn { transition: all 0.15s ease-in-out; }
         .tag-filter-btn { transition: all 0.15s ease-in-out; }
         /* Show plus badge only on hover over tag cell */
@@ -1833,6 +1858,11 @@ router.get(
             entity.metadata && entity.metadata.installed === false
               ? 'false'
               : 'true';
+
+          if (!isRowSelectable(tr)) {
+            tr.classList.add('entity-row-selection-disabled');
+            tr.setAttribute('aria-disabled', 'true');
+          }
           
           // Type badge
           const badges = {
