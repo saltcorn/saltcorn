@@ -97,6 +97,17 @@ const noCsrfLookup = (state, pluginRoutesHandler) => {
  */
 const getApp = async (opts = {}) => {
   const app = express();
+  // Enable trust proxy for 1 hop (Cloudflare)
+  // app.set("trust proxy", 1);
+  // immediately after const app = express();
+  app.use((req, res, next) => {
+    const client_ip = req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"]?.split(",")[0] || req.socket.remoteAddress;
+    //console.log("Cliente IP:", client_ip);
+    req.ip = client_ip; // opcional: anexar no req
+    next();
+  });
+
+
   let sql_log = await getConfig("log_sql");
 
   // switch on sql logging

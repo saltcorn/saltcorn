@@ -380,7 +380,8 @@ router.get(
   error_catcher(async (req, res, next) => {
     let { tableName } = req.params;
     const {
-      fields,
+      fields: queryFields,
+      columns, // Alias for backward compatibility if needed
       versioncount,
       limit,
       offset,
@@ -443,80 +444,84 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (accessAllowedRead(req, user, table, true)) {
+          // TODO optimize by pushing down fields selection into db query instead of selecting all fields and then limiting in JS
+          const tbl_fields = table.getFields();
+
+          // Process colunas for DB-level limiting
+          let selectFields = tbl_fields.map(f => f.name);
+          if (req.query.colunas && typeof req.query.colunas === 'string') {
+            let requested = req.query.colunas.split(',').map(c => c.trim()).filter(Boolean);
+            if (requested.length > 0 && requested.length <= 20) {
+              const validFields = tbl_fields.map(f => f.name);
+              requested = requested.filter(c => validFields.includes(c));
+              if (requested.length > 0) {
+                selectFields = requested;
+                getState().log(5, `API GET ${table.name} limited to columns: ${selectFields.join(', ')}`);
+              }
+            }
+          }
+
           let rows;
+          const baseOpts = {
+            forUser: req.user || user || { role_id: 100 },
+            forPublic: !(req.user || user),
+            limit: use_limit,
+            offset: use_offset,
+            orderDesc: (sortDesc && sortDesc !== "false") || tabulator_dir == "desc",
+            orderBy: orderByField?.name || "id",
+            fields: selectFields  // DB-level limiting here
+          };
+
           if (versioncount === "on") {
-            const joinOpts = {
-              forUser: req.user || user || { role_id: 100 },
-              forPublic: !(req.user || user),
-              limit: use_limit,
-              offset: use_offset,
-              orderDesc:
-                (sortDesc && sortDesc !== "false") || tabulator_dir == "desc",
-              orderBy: orderByField?.name || "id",
+            rows = await table.getJoinedRows({
+              ...baseOpts,
               aggregations: {
                 _versions: {
                   table: table.name + "__history",
                   ref: table.pk_name,
                   field: table.pk_name,
-                  aggregate: "count",
-                },
-              },
-            };
-            rows = await table.getJoinedRows(joinOpts);
+                  aggregate: "count"
+                }
+              }
+            });
           } else {
-            const tbl_fields = table.getFields();
             readState(req_query, tbl_fields, req);
             const qstate = stateFieldsToWhere({
               fields: tbl_fields,
               approximate: !!approximate,
               state: req_query,
               table,
-              prefix: "a.",
+              prefix: "a."
             });
             const joinFields = {};
             const derefs = Array.isArray(dereference)
               ? dereference
-              : !dereference
-                ? []
-                : [dereference];
+              : !dereference ? [] : [dereference];
             derefs.forEach((f) => {
               const field = table.getField(f);
               if (field?.attributes?.summary_field)
-                joinFields[`${f}_${field?.attributes?.summary_field}`] = {
+                joinFields[`${f}_${field.attributes.summary_field}`] = {
                   ref: f,
-                  target: field?.attributes?.summary_field,
+                  target: field.attributes.summary_field
                 };
             });
-            try {
-              rows = await table.getJoinedRows({
-                where: qstate,
-                joinFields,
-                limit: use_limit,
-                offset: use_offset,
-                orderDesc:
-                  (sortDesc && sortDesc !== "false") || tabulator_dir == "desc",
-                orderBy: orderByField?.name || undefined,
-                forPublic: !(req.user || user),
-                forUser: req.user || user,
-              });
-            } catch (e) {
-              console.error(e);
-              res.json({ error: "API error" });
-              return;
-            }
+            rows = await table.getJoinedRows({
+              ...baseOpts,
+              where: qstate,
+              joinFields
+            });
           }
+
           if (tabulator_pagination_format) {
             const count = await table.countRows();
             if (count === null)
-              res.json({
-                data: rows.map(limitFields(fields)),
-              });
+              res.json({ data: rows.map(limitFields(queryFields || columns)) });
             else
               res.json({
                 last_page: Math.ceil(count / +tabulator_size),
-                data: rows.map(limitFields(fields)),
+                data: rows.map(limitFields(queryFields || columns))
               });
-          } else res.json({ success: rows.map(limitFields(fields)) });
+          } else res.json({ success: rows.map(limitFields(queryFields || columns)) });
         } else {
           getState().log(3, `API get ${table.name} not authorized`);
           res.status(401).json({ error: req.__("Not authorized") });
