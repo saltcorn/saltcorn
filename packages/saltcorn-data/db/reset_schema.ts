@@ -9,13 +9,16 @@
  * Reset db schema
  * - Recreate all sc system tables and users.
  * - Populate sc system tables data.
- * - Do db migrtion
+ * - Do db migration
  *  - Refresh SC State
  * @param {boolean} dontDrop
  * @param {string} schema0
  * @returns {Promise<void>}
  */
-const reset = async (dontDrop = false, schema0) => {
+const reset = async (
+  dontDrop: boolean = false,
+  schema0?: string
+): Promise<void> => {
   const db = require(".");
   const { migrate } = require("../migrate");
   const schema = schema0 || db.connectObj.default_schema;
@@ -31,14 +34,14 @@ const reset = async (dontDrop = false, schema0) => {
 
   await db.query(`
     CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_roles (
-      id ${serial} primary key,      
+      id ${serial} primary key,
       role VARCHAR(50)
     )
   `);
 
   await db.query(`
     CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_config (
-      key text primary key,      
+      key text primary key,
       value JSONB not null
     )
   `);
@@ -83,7 +86,7 @@ const reset = async (dontDrop = false, schema0) => {
   `);
 
   await db.query(`
-    CREATE INDEX ${ifNotExists} _sc_idx_table_name on ${schemaQdot}_sc_tables(name); 
+    CREATE INDEX ${ifNotExists} _sc_idx_table_name on ${schemaQdot}_sc_tables(name);
   `);
 
   await db.query(`
@@ -100,7 +103,7 @@ const reset = async (dontDrop = false, schema0) => {
     )
   `);
   await db.query(`
-    CREATE INDEX ${ifNotExists} _sc_idx_field_table on ${schemaQdot}_sc_fields(table_id); 
+    CREATE INDEX ${ifNotExists} _sc_idx_field_table on ${schemaQdot}_sc_fields(table_id);
   `);
 
   await db.query(`
@@ -117,12 +120,12 @@ const reset = async (dontDrop = false, schema0) => {
     )
   `);
   await db.query(`
-    CREATE INDEX ${ifNotExists} _sc_idx_view_name on ${schemaQdot}_sc_views(name); 
+    CREATE INDEX ${ifNotExists} _sc_idx_view_name on ${schemaQdot}_sc_views(name);
   `);
 
   await db.query(`
     CREATE TABLE ${ifNotExists} ${schemaQdot}users (
-      id ${serial} primary key,      
+      id ${serial} primary key,
       email VARCHAR(128) not null unique,
       password VARCHAR(60),
       role_id integer not null references ${schemaQdot}_sc_roles(id)
@@ -131,7 +134,7 @@ const reset = async (dontDrop = false, schema0) => {
 
   await db.query(`
   CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_plugins (
-    id ${serial} primary key,      
+    id ${serial} primary key,
     name VARCHAR(128),
     source VARCHAR(128),
     location VARCHAR(128)
@@ -163,9 +166,9 @@ const reset = async (dontDrop = false, schema0) => {
       "expire" timestamp(6) NOT NULL
     )
     WITH (OIDS=FALSE);
-    
+
     ALTER TABLE "${db.connectObj.default_schema}"."_sc_session" ADD CONSTRAINT "_sc_session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
-    
+
     CREATE INDEX ${ifNotExists} "_sc_IDX_session_expire" ON "${db.connectObj.default_schema}"."_sc_session" ("expire");
   `);
 
@@ -176,4 +179,4 @@ const reset = async (dontDrop = false, schema0) => {
   if (st) await st.refresh();
 };
 
-module.exports = reset;
+export = reset;
