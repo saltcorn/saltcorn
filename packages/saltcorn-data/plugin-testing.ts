@@ -7,23 +7,100 @@ const { is_plugin_wrap, is_plugin } = require("./contracts");
 const { getState } = require("./db/state");
 const { renderForm } = require("@saltcorn/markup");
 const { mockReqRes } = require("./tests/mocks");
-const Field = require("./models/field");
-const Table = require("./models/table");
-const Trigger = require("./models/trigger");
+import Field from "./models/field";
+import Table from "./models/table";
+import Trigger from "./models/trigger";
 const { expressionValidator } = require("./models/expression");
-const {
-  parse_view_select,
-} = require("./viewable_fields");
-const View = require("./models/view");
+const { parse_view_select } = require("./viewable_fields");
+import View from "./models/view";
 
-const auto_test_wrap = (wrap) => {
+interface TypeAttributes {
+  name: string;
+  type?: any;
+  required?: boolean;
+}
+
+interface PluginType {
+  attributes?: TypeAttributes[];
+  contract?: any;
+  validate?: (attrs: any) => (x: any) => boolean;
+  validate_attributes?: (attrs: any) => boolean;
+  fieldviews?: Record<string, FieldView>;
+  read?: (x: any) => any;
+  readFromFormRecord?: (record: any, key: string) => any;
+}
+
+interface FieldView {
+  isEdit?: boolean;
+  run: (...args: any[]) => string;
+}
+
+interface Workflow {
+  run: (ctx: any) => Promise<any>;
+}
+
+interface ViewTemplate {
+  noAutoTest?: boolean;
+  configuration_workflow: (opts: { __: (s: string) => string }) => Workflow;
+  initial_config?: (opts: { table_id: number }) => Promise<any>;
+  get_state_fields?: (
+    table_id: number,
+    viewname: string,
+    cfg: any
+  ) => Promise<any[]>;
+  run: (
+    table_id: number,
+    viewname: string,
+    cfg: any,
+    state: any,
+    extra: any
+  ) => Promise<string | string[]>;
+}
+
+interface Plugin {
+  layout?: {
+    wrap: any;
+  };
+  types?: PluginType[];
+  viewtemplates?: ViewTemplate[];
+}
+
+interface Column {
+  type: string;
+  field_name?: string;
+  fieldview?: string;
+  action_name?: string;
+  action_label?: string;
+  action_label_formula?: boolean;
+  view?: string;
+  view_label?: string;
+  view_label_formula?: boolean;
+  extra_state_fml?: string;
+  join_field?: string;
+  link_text?: string;
+  link_text_formula?: boolean;
+  link_url?: string;
+  link_url_formula?: boolean;
+  [key: string]: any;
+}
+
+interface CheckResult {
+  errors: string[];
+  warnings: string[];
+}
+
+const auto_test_wrap = (wrap: any): void => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
 };
 
-const generate_attributes = (typeattrs, validate, table_id) => {
-  var res = {};
+const generate_attributes = (
+  typeattrs: TypeAttributes[] | undefined,
+  validate?: (attrs: any) => boolean,
+  table_id?: number
+): any => {
+  var res: Record<string, any> = {};
   const attrs = Field.getTypeAttributes(typeattrs, table_id);
-  (attrs || []).forEach((a) => {
+  (attrs || []).forEach((a: any) => {
     if (a.type && (a.required || is.bool.generate())) {
       const contract = a.type.contract || getState().types[a.type].contract;
       const gen = contract({}).generate;
@@ -35,7 +112,7 @@ const generate_attributes = (typeattrs, validate, table_id) => {
   else return res;
 };
 
-const auto_test_type = (t) => {
+const auto_test_type = (t: PluginType): void => {
   const fvs = t.fieldviews || {};
 
   //run edit field views without a value
@@ -51,7 +128,9 @@ const auto_test_type = (t) => {
   const has_contract = t.contract && t.contract.generate;
   const numex = has_contract ? 20 : 200;
   for (let index = 0; index < numex; index++) {
-    const x = has_contract ? t.contract.generate() : t.read(is.any.generate());
+    const x = has_contract
+      ? t.contract.generate()
+      : t.read?.(is.any.generate());
 
     const attribs = generate_attributes(t.attributes, t.validate_attributes);
     if (has_contract || (typeof x !== "undefined" && x !== null))
@@ -74,8 +153,12 @@ const auto_test_type = (t) => {
   }
   //todo: try creating a table with this type
 };
-const auto_test_workflow = async (wf, initialCtx) => {
-  const step = async (wf, ctx) => {
+
+const auto_test_workflow = async (
+  wf: Workflow,
+  initialCtx: any
+): Promise<any> => {
+  const step = async (wf: Workflow, ctx: any): Promise<any> => {
     is.obj(ctx);
     const res = await wf.run(ctx);
 
@@ -89,13 +172,13 @@ const auto_test_workflow = async (wf, initialCtx) => {
   return await step(wf, initialCtx);
 };
 
-const auto_test_viewtemplate = async (vt) => {
+const auto_test_viewtemplate = async (vt: ViewTemplate): Promise<void> => {
   if (vt.noAutoTest) return;
   const wf = vt.configuration_workflow({ __: (s) => s });
   is.class("Workflow")(wf);
   for (let index = 0; index < 10; index++) {
     var cfg;
-    if (vt.initial_config && Math.round() > 0.5)
+    if (vt.initial_config && Math.random() > 0.5)
       cfg = await vt.initial_config({ table_id: 2 });
     else
       cfg = await auto_test_workflow(wf, {
@@ -107,14 +190,14 @@ const auto_test_viewtemplate = async (vt) => {
       : [];
     const res = await vt.run(2, "newview", cfg, {}, mockReqRes);
     is.or(is.str, is.array(is.str))(res);
-    if (sfs.some((sf) => sf.name === "id")) {
+    if (sfs.some((sf: any) => sf.name === "id")) {
       const resid = await vt.run(2, "newview", cfg, { id: 1 }, mockReqRes);
       is.or(is.str, is.array(is.str))(resid);
     }
   }
 };
 
-const auto_test_plugin = async (plugin) => {
+const auto_test_plugin = async (plugin: Plugin): Promise<void> => {
   is_plugin(plugin);
   getState().registerPlugin("test_plugin", plugin);
   if (plugin.layout) {
@@ -128,19 +211,22 @@ const auto_test_plugin = async (plugin) => {
   //is each header reachable
 };
 
-const check_view_columns = async (view, columns) => {
-  const errs = [];
-  const warnings = [];
+const check_view_columns = async (
+  view: any,
+  columns: Column[]
+): Promise<CheckResult> => {
+  const errs: string[] = [];
+  const warnings: string[] = [];
   const table = Table.findOne(
     view.table_id
       ? { id: view.table_id }
       : view.exttable_name
-      ? { name: view.exttable_name }
-      : { id: -1 }
+        ? { name: view.exttable_name }
+        : { id: -1 }
   );
   let fields;
   if (table) fields = table.getFields();
-  const check_formula = (s, loc) => {
+  const check_formula = (s: string, loc: string): void => {
     const v = expressionValidator(s, loc);
     if (v === true) return;
     if (typeof v === "string")
@@ -150,7 +236,7 @@ const check_view_columns = async (view, columns) => {
     await Trigger.find({
       when_trigger: { or: ["API call", "Never"] },
     })
-  ).map((tr) => tr.name);
+  ).map((tr: any) => tr.name);
   for (const column of columns) {
     switch (column.type) {
       // in general, if formula checked, make sure it is present
@@ -158,10 +244,13 @@ const check_view_columns = async (view, columns) => {
         //field exists
         if (
           table?.name === "users" &&
-          ["remember", "passwordRepeat", "password"].includes(column.field_name)
+          ["remember", "passwordRepeat", "password"].includes(
+            column.field_name!
+          )
         )
           break;
-        const f = fields.find((fld) => fld.name === column.field_name);
+        if (!fields) break;
+        const f = fields.find((fld: any) => fld.name === column.field_name);
         if (!f) {
           warnings.push(
             `In view ${view.name}, field ${column.field_name} does not exist in table ${table?.name}`
@@ -171,22 +260,25 @@ const check_view_columns = async (view, columns) => {
         if (
           column.fieldview &&
           !(f.is_fkey || f.type === "File") &&
+          f.type &&
+          typeof f.type !== "string" &&
+          f.type.fieldviews &&
           !f.type.fieldviews[column.fieldview]
         )
           warnings.push(
-            `In view ${view.name}, field ${column.field_name} of type ${f.type.name} table ${table?.name} does not have fieldview ${column.fieldview}`
+            `In view ${view.name}, field ${column.field_name} of type ${typeof f.type === "string" ? f.type : f.type?.name} table ${table?.name} does not have fieldview ${column.fieldview}`
           );
 
         break;
       case "Action":
         if (column.action_label_formula)
           check_formula(
-            column.action_label,
+            column.action_label!,
             `Label for action ${column.action_name}`
           );
         if (
-          column.action_name.startsWith("Toggle ") ||
-          column.action_name.startsWith("Login with ") ||
+          column.action_name!.startsWith("Toggle ") ||
+          column.action_name!.startsWith("Login with ") ||
           [
             "GoBack",
             "Delete",
@@ -196,7 +288,7 @@ const check_view_columns = async (view, columns) => {
             "Login",
             "Sign up",
             "Cancel",
-          ].includes(column.action_name)
+          ].includes(column.action_name!)
         )
           break;
         if (
@@ -205,8 +297,8 @@ const check_view_columns = async (view, columns) => {
             column.action_name == "UpdateMatchingRows" &&
             view.viewtemplate == "Edit"
           ) &&
-          !getState().actions[column.action_name] &&
-          !trigger_actions.includes(column.action_name)
+          !getState().actions[column.action_name!] &&
+          !trigger_actions.includes(column.action_name!)
         )
           errs.push(
             `In view ${view.name}, action ${column.action_name} does not exist`
@@ -215,7 +307,7 @@ const check_view_columns = async (view, columns) => {
       case "ViewLink":
         {
           if (column.view_label_formula)
-            check_formula(column.view_label, `Label for view link`);
+            check_formula(column.view_label!, `Label for view link`);
           if (column.extra_state_fml)
             check_formula(
               column.extra_state_fml,
@@ -230,16 +322,19 @@ const check_view_columns = async (view, columns) => {
         }
         break;
       case "JoinField":
-        const jf = table.getField(column.join_field);
-        if (!jf)
-          errs.push(
-            `In view ${view.name}, join field ${column.join_field} does not exist`
-          );
+        if (table && column.join_field) {
+          const jf = table.getField(column.join_field);
+          if (!jf)
+            errs.push(
+              `In view ${view.name}, join field ${column.join_field} does not exist`
+            );
+        }
         break;
       case "Link":
         if (column.link_text_formula)
-          check_formula(column.link_text, `Link text`);
-        if (column.link_url_formula) check_formula(column.link_url, `Link URL`);
+          check_formula(column.link_text!, `Link text`);
+        if (column.link_url_formula)
+          check_formula(column.link_url!, `Link URL`);
         break;
       case "Aggregation":
         break;
@@ -250,4 +345,4 @@ const check_view_columns = async (view, columns) => {
   return { errors: errs, warnings };
 };
 
-module.exports = { auto_test_plugin, generate_attributes, check_view_columns };
+export { auto_test_plugin, generate_attributes, check_view_columns };

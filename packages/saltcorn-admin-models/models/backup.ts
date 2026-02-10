@@ -10,7 +10,7 @@ import Role from "@saltcorn/data/models/role";
 import Page from "@saltcorn/data/models/page";
 import PageGroup from "@saltcorn/data/models/page_group";
 import Plugin from "@saltcorn/data/models/plugin";
-import migrate, { getMigrationsInDB } from "@saltcorn/data/migrate";
+import { getMigrationsInDB } from "@saltcorn/data/migrate";
 import Zip from "adm-zip";
 import { dir } from "tmp-promise";
 import {
@@ -305,7 +305,7 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
 };
 
 const backup_migrations = async (root_dirpath: string): Promise<void> => {
-  const migrations = await migrate.getMigrationsInDB();
+  const migrations = await getMigrationsInDB();
   await writeFile(
     join(root_dirpath, "migrations.json"),
     JSON.stringify(migrations)
