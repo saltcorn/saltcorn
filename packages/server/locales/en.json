@@ -1770,5 +1770,16 @@
 	"Edit file": "Edit file",
 	"Editing %s": "Editing %s",
 	"Run immediately in background": "Run immediately in background",
-	"Row expression": "Row expression"
+	"Row expression": "Row expression",
+	"Less...": "Less...",
+	"Deep search": "Deep search",
+	"Clear selection": "Clear selection",
+	"%s selected": "%s selected",
+	"Delete selected": "Delete selected",
+	"selected": "selected",
+	"Delete %s selected items?": "Delete %s selected items?",
+	"Delete selected items?": "Delete selected items?",
+	"Failed to delete selected items": "Failed to delete selected items",
+	"Configurable": "Configurable",
+	"Info": "Info"
 }

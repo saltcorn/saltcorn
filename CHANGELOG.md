@@ -2,6 +2,14 @@
 
 ## 1.6.0 - In development
 
+* Entities list: search modules and users, multiselect with delete, deep search option
+
+* Instances run in multi-node mode will now automatically select a leader to run the schedule
+
+* Rows in provided tables can now be owned, set by a field or a formula
+
+* The workflow editor has been completely rewritten, based on react-flow.
+
 * Pages based on HTML files can now embed views. If the html file contains an `<embed-view>` tag, it will be replaced with the contents of a view. Use the `viewname` attribute to set the view name, and the remaining attributes to set the view state.
 
 * There is now a link to edit text-based files in the file manager.
