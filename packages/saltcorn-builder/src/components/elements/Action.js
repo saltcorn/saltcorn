@@ -149,7 +149,7 @@ const ActionSettings = () => {
       ? (cfgFields || []).filter((f) => f.name !== "code")
       : cfgFields;
 
-  const runJsCodeModalOnly = true;
+  const runJsCodeModalOnly = false;
   const [codeModalOpen, setCodeModalOpen] = useState(false);
   const setAProp = setAPropGen(setProp);
   const use_setting_action_n =

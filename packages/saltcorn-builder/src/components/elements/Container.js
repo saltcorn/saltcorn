@@ -178,11 +178,7 @@ const Container = ({
           : {}),
       },
     },
-    React.createElement(
-      Element,
-      { canvas: true, id: "container-canvas", is: Column },
-      children
-    )
+    React.createElement(Element, { canvas: true, id: "container-canvas", is: Column }, children)
   );
 };
 
