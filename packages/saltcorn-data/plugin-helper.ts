@@ -44,7 +44,10 @@ const {
 import layout from "./models/layout";
 const { traverseSync } = layout;
 import { sqlFun, sqlBinOp } from "@saltcorn/db-common/internal";
-import type { Where } from "@saltcorn/db-common/internal";
+import type { Where, Row } from "@saltcorn/db-common/internal";
+import type { GenObj } from "@saltcorn/types/common_types";
+import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
+import type { FieldLike } from "@saltcorn/types/base_types";
 
 /**
  *
@@ -66,7 +69,7 @@ import type { Where } from "@saltcorn/db-common/internal";
 const link_view = (
   url0: string,
   label: string,
-  popup: any,
+  popup: boolean | GenObj,
   link_style: string = "",
   link_size: string = "",
   link_icon: string = "",
@@ -77,10 +80,10 @@ const link_view = (
   extraClass?: string,
   extraState?: string,
   link_target_blank?: boolean,
-  label_attr?: any, // for sorting
+  label_attr?: boolean, // for sorting
   link_title?: string,
   link_class?: string,
-  req?: any,
+  req?: GenObj,
   in_row_click?: boolean
 ): string => {
   let style =
@@ -174,7 +177,7 @@ const link_view = (
  * @param {object} [state]
  * @returns {string}
  */
-const stateToQueryString = (state: any, include_id?: boolean): string => {
+const stateToQueryString = (state: GenObj, include_id?: boolean): string => {
   if (!state || Object.keys(state).length === 0) return "";
   const prim = (x: any) => {
     if (x?.toISOString) return x.toISOString();
@@ -184,11 +187,15 @@ const stateToQueryString = (state: any, include_id?: boolean): string => {
     const parts = [];
     if (v.gt)
       parts.push(
-        `_gt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${prim(v.gt)}`)}`
+        `_gt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(
+          `${prim(v.gt)}`
+        )}`
       );
     if (v.lt)
       parts.push(
-        `_lt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(`${prim(v.lt)}`)}`
+        `_lt${v.equal ? "e" : ""}_${encodeURIComponent(k)}=${encodeURIComponent(
+          `${prim(v.lt)}`
+        )}`
       );
 
     return parts.join("&");
@@ -200,19 +207,21 @@ const stateToQueryString = (state: any, include_id?: boolean): string => {
         v?.gt || v?.lt
           ? bounded(k, v)
           : Array.isArray(v) && k !== "_relation_path_"
-            ? v
-                .map(
-                  (val) =>
-                    `${encodeURIComponent(k)}=${encodeURIComponent(`${prim(val)}`)}`
-                )
-                .join("&")
-            : (k === "id" && !include_id) || typeof v === "undefined"
-              ? null
-              : `${encodeURIComponent(k)}=${encodeURIComponent(
-                  k === "_relation_path_" && typeof v !== "string"
-                    ? queryToString(v)
-                    : prim(v)
-                )}`
+          ? v
+              .map(
+                (val) =>
+                  `${encodeURIComponent(k)}=${encodeURIComponent(
+                    `${prim(val)}`
+                  )}`
+              )
+              .join("&")
+          : (k === "id" && !include_id) || typeof v === "undefined"
+          ? null
+          : `${encodeURIComponent(k)}=${encodeURIComponent(
+              k === "_relation_path_" && typeof v !== "string"
+                ? queryToString(v)
+                : prim(v)
+            )}`
       )
       .filter((s) => !!s)
       .join("&")
@@ -227,10 +236,14 @@ const stateToQueryString = (state: any, include_id?: boolean): string => {
  * @returns {object}
  */
 const calcfldViewOptions = (
-  fields: any[],
+  fields: Field[],
   mode: string,
   noFollowKeys: boolean = false
-): { field_view_options: any; handlesTextStyle: any; blockDisplay: any } => {
+): {
+  field_view_options: Record<string, string[]>;
+  handlesTextStyle: Record<string, string[]>;
+  blockDisplay: Record<string, string[]>;
+} => {
   const isEdit = mode === "edit";
   const isFilter = mode === "filter";
   let fvs: Record<string, any> = {};
@@ -297,16 +310,16 @@ const calcfldViewOptions = (
           if (v && v.blockDisplay) blockDisplay[f.name].push(k);
         }
       );
-    } else if (f.type && f.type.fieldviews) {
+    } else if (f.type && (f.type as any).fieldviews) {
       const tfvs = (
-        Object.entries(f.type.fieldviews) as [string, any][]
+        Object.entries((f.type as any).fieldviews) as [string, any][]
       ).filter(
         ([k, fv]: [string, any]) =>
           (isFilter && f.calculated && f.stored
             ? fv.isEdit || fv.isFilter
             : f.calculated
-              ? !fv.isEdit
-              : !fv.isEdit || isEdit || isFilter) &&
+            ? !fv.isEdit
+            : !fv.isEdit || isEdit || isFilter) &&
           !(mode !== "list" && fv.expandColumns)
       );
       let tfvs_ordered: [string, any][] = [];
@@ -342,9 +355,9 @@ const calcfldViewOptions = (
  * @returns an object assigning the path (table.foreign_key->field) to viewoptions
  */
 const calcrelViewOptions = async (
-  table: any,
+  table: Table,
   viewtemplate: string
-): Promise<any> => {
+): Promise<Record<string, string[]>> => {
   const rel_field_view_options: Record<string, any> = {};
   for (const {
     relationTable,
@@ -372,12 +385,12 @@ const calcrelViewOptions = async (
  * @returns {Promise<object>}
  */
 const calcfldViewConfig = async (
-  fields: any[],
+  fields: Field[],
   isEdit: boolean,
   nrecurse: number = 2,
   mode?: string,
-  req?: any
-): Promise<any> => {
+  req?: GenObj
+): Promise<Record<string, any>> => {
   const fieldViewConfigForms: Record<string, any> = {};
   for (const f of fields) {
     f.fill_table();
@@ -386,8 +399,8 @@ const calcfldViewConfig = async (
       f.type === "Key"
         ? getState().keyFieldviews
         : f.type === "File"
-          ? getState().fileviews
-          : (f.type && f.type.fieldviews) || {};
+        ? getState().fileviews
+        : (f.type && (f.type as any).fieldviews) || {};
     for (const [nm, fv] of Object.entries(fieldviews) as [string, any][]) {
       if (fv.configFields)
         fieldViewConfigForms[f.name][nm] = await applyAsync(
@@ -427,11 +440,11 @@ const calcfldViewConfig = async (
  * @returns
  */
 const get_inbound_path_suffixes = async (
-  targetTbl: any,
-  srcTable: any,
-  levelPath: any[],
-  tableCache: any,
-  fieldCache: any
+  targetTbl: Table,
+  srcTable: Table,
+  levelPath: { tbl: string; fk: string }[],
+  tableCache: Record<number, Table>,
+  fieldCache: Record<string, Field[]>
 ): Promise<string[]> => {
   const result = [];
   // fks from targetTbl
@@ -439,9 +452,9 @@ const get_inbound_path_suffixes = async (
     const relTblName = fkToRelTbl.reftable_name;
     if (relTblName === srcTable.name) continue;
     // inbounds to the target of fk
-    const inboundFks = fieldCache[relTblName]
-      ? fieldCache[relTblName].filter(
-          (field: any) =>
+    const inboundFks = fieldCache[relTblName!]
+      ? fieldCache[relTblName!].filter(
+          (field) =>
             field.table_id !== targetTbl.id &&
             !levelPath.find(
               (val) => val.tbl === targetTbl.name && val.fk === fkToRelTbl.name
@@ -449,11 +462,11 @@ const get_inbound_path_suffixes = async (
         )
       : [];
     for (const inboundFk of inboundFks) {
-      const inboundTable = tableCache[inboundFk.table_id];
+      const inboundTable = tableCache[inboundFk.table_id!];
       if (inboundTable) {
         const relTblRefs = inboundTable
           .getForeignKeys()
-          .filter((f: any) => f.reftable_name === relTblName);
+          .filter((f) => f.reftable_name === relTblName);
         // the inbound comes from 'srcTable'
         if (inboundTable.id === srcTable.id) {
           const levels = levelPath.map((val) => val.fk).join(".");
@@ -469,7 +482,7 @@ const get_inbound_path_suffixes = async (
           // check if there are refs to 'srcTable'
           const srcRefs = inboundTable
             .getForeignKeys()
-            .filter((f: any) => f.reftable_name === srcTable.name);
+            .filter((f) => f.reftable_name === srcTable.name);
           for (const srcTblRef of srcRefs) {
             for (const relTblRef of relTblRefs) {
               if (levelPath.length > 0) {
@@ -499,17 +512,17 @@ const get_inbound_path_suffixes = async (
 };
 
 const tableFieldCache = async (): Promise<{
-  tableIdCache: Record<number, any>;
-  tableNameCache: Record<string, any>;
-  fieldCache: Record<string, any[]>;
+  tableIdCache: Record<number, Table>;
+  tableNameCache: Record<string, Table>;
+  fieldCache: Record<string, Field[]>;
 }> => {
-  const tableIdCache: Record<number, any> = {};
-  const tableNameCache: Record<string, any> = {};
+  const tableIdCache: Record<number, Table> = {};
+  const tableNameCache: Record<string, Table> = {};
   for (const table of await Table.find({}, { cached: true })) {
     if (table.id != null) tableIdCache[table.id] = table;
     tableNameCache[table.name] = table;
   }
-  const fieldCache: Record<string, any[]> = {};
+  const fieldCache: Record<string, Field[]> = {};
   for (const field of await Field.find({}, { cached: true })) {
     if (field.reftable_name) {
       if (!fieldCache[field.reftable_name])
@@ -527,17 +540,21 @@ const tableFieldCache = async (): Promise<{
  * @returns
  */
 const get_inbound_relation_opts = async (
-  source: any,
+  source: Table,
   viewname: string,
-  cache?: any
-): Promise<any[]> => {
+  cache?: {
+    tableIdCache: Record<number, Table>;
+    tableNameCache: Record<string, Table>;
+    fieldCache: Record<string, Field[]>;
+  }
+): Promise<{ path: string; views: View[] }[]> => {
   const { tableIdCache, fieldCache } = cache ? cache : await tableFieldCache();
   const allTables = await Table.find({}, { cached: true });
-  const result: any[] = [];
+  const result: { path: string; views: View[] }[] = [];
   const search = async (
-    table: any,
-    path: any[],
-    rootTable: any,
+    table: Table,
+    path: { tbl: string; fk: string }[],
+    rootTable: Table,
     visited: Set<string>
   ) => {
     const visitedCopy = new Set(visited);
@@ -550,7 +567,7 @@ const get_inbound_relation_opts = async (
     );
     if (suffixes.length > 0) {
       const views = await View.find_table_views_where(
-        rootTable.id,
+        rootTable.id!,
         ({ state_fields, viewrow }) =>
           viewrow.name !== viewname &&
           !state_fields.some((sf) => sf.name === "id")
@@ -563,7 +580,7 @@ const get_inbound_relation_opts = async (
       visitedCopy.add(table.name);
       for (const inboundFk of fieldCache[table.name] || []) {
         if (inboundFk.table_id === table.id) continue;
-        const inboundTbl = tableIdCache[inboundFk.table_id];
+        const inboundTbl = tableIdCache[inboundFk.table_id!];
         await search(
           inboundTbl,
           [{ tbl: inboundTbl.name, fk: inboundFk.name }, ...path],
@@ -591,9 +608,9 @@ const get_inbound_relation_opts = async (
  * @returns viewnames mapped to arrays of Inbound options
  */
 const get_inbound_self_relation_opts = async (
-  source: any,
+  source: Table,
   viewname: string
-): Promise<any[]> => {
+): Promise<{ path: string; views: View[] }[]> => {
   const fields = await Field.find(
     {
       reftable_name: source.name,
@@ -606,7 +623,7 @@ const get_inbound_self_relation_opts = async (
   for (const field of fields) {
     const refTable = Table.findOne({ id: field.table_id });
     const fromTargetToRef = targetFields.filter(
-      (field: any) => field.reftable_name === refTable?.name
+      (field) => field.reftable_name === refTable?.name
     );
     if (fromTargetToRef.length > 0) {
       const views = await View.find_table_views_where(
@@ -635,25 +652,29 @@ const get_inbound_self_relation_opts = async (
  * @returns an array with the relation paths and the matching views
  */
 const get_many_to_many_relation_opts = async (
-  source: any,
+  source: Table,
   viewname: string,
-  cache: any,
+  cache: {
+    tableIdCache: Record<number, Table>;
+    tableNameCache: Record<string, Table>;
+    fieldCache: Record<string, Field[]>;
+  },
   path: string[]
-): Promise<any[]> => {
+): Promise<{ path: string; views: View[] }[]> => {
   const result = [];
   const { tableIdCache, tableNameCache, fieldCache } = cache
     ? cache
     : await tableFieldCache();
   for (const jTblToSource of fieldCache[source.name] || []) {
     const visitedFks = new Set();
-    const joinTbl = tableIdCache[jTblToSource.table_id];
+    const joinTbl = tableIdCache[jTblToSource.table_id!];
     const jTblFks = joinTbl
       .getForeignKeys()
-      .filter((f: any) => f.id !== jTblToSource.id);
+      .filter((f) => f.id !== jTblToSource.id);
     for (const jTblToTarget of jTblFks) {
       if (visitedFks.has(jTblToTarget.id)) continue;
       visitedFks.add(jTblToTarget.id);
-      const targetTbl = tableNameCache[jTblToTarget.reftable_name];
+      const targetTbl = tableNameCache[jTblToTarget.reftable_name!];
       const views = await View.find_table_views_where(
         targetTbl,
         ({ state_fields, viewrow }) =>
@@ -670,7 +691,7 @@ const get_many_to_many_relation_opts = async (
       for (const layerFk of layerFks) {
         if (visitedFks.has(layerFk.id)) continue;
         visitedFks.add(layerFk.id);
-        const layerTbl = tableIdCache[layerFk.table_id];
+        const layerTbl = tableIdCache[layerFk.table_id!];
         const layerViews = await View.find_table_views_where(
           layerTbl,
           ({ state_fields, viewrow }) =>
@@ -689,7 +710,7 @@ const get_many_to_many_relation_opts = async (
   if (path.length < 2) {
     const sourceFks = source.getForeignKeys();
     for (const sourceFk of sourceFks) {
-      const nextTbl = tableNameCache[sourceFk.reftable_name];
+      const nextTbl = tableNameCache[sourceFk.reftable_name!];
       path.push(sourceFk.name);
       result.push(
         ...(await get_many_to_many_relation_opts(
@@ -711,18 +732,22 @@ const get_many_to_many_relation_opts = async (
  * @returns {Promise<{link_view_opts: object[]}>}
  */
 const get_link_view_opts = async (
-  table: any,
+  table: Table,
   viewname: string,
-  accept: (v: any) => boolean = () => true
-): Promise<any> => {
+  accept: (v: View) => boolean = () => true
+): Promise<{
+  link_view_opts: any[];
+  view_name_opts: any[];
+  view_relation_opts: Record<string, any[]>;
+}> => {
   const own_link_views = await View.find_possible_links_to_table(table);
   const all_views = await View.find({}, { cached: true });
   const all_tables = await Table.find({}, { cached: true });
   const table_id_to_name: Record<number, string> = {};
-  all_tables.forEach((t: any) => {
+  all_tables.forEach((t) => {
     if (t.id != null) table_id_to_name[t.id] = t.name;
   });
-  const view_name_opts = all_views.filter(accept).map((v: any) => ({
+  const view_name_opts = all_views.filter(accept).map((v) => ({
     label: `${v.name} [${v.viewtemplate} ${
       (v.table_id != null && table_id_to_name[v.table_id]) || ""
     }]`,
@@ -880,9 +905,9 @@ const get_link_view_opts = async (
  * @returns {Promise<object[]>}
  */
 const getActionConfigFields = async (
-  action: any,
-  table: any,
-  extra: any = {}
+  action: GenObj,
+  table: Table,
+  extra: GenObj = {}
 ): Promise<any[]> =>
   typeof action.configFields === "function"
     ? await action.configFields({
@@ -911,9 +936,9 @@ const field_picker_fields = async ({
   no_fieldviews,
   has_showif,
 }: {
-  table: any;
+  table: Table;
   viewname: string;
-  req: any;
+  req: GenObj;
   has_click_to_edit?: boolean;
   has_align?: boolean;
   no_fieldviews?: boolean;
@@ -923,22 +948,23 @@ const field_picker_fields = async ({
   const fields = table.getFields();
   for (const field of fields) {
     if (field.type === "Key") {
-      field.reftable = Table.findOne({ name: field.reftable_name });
+      field.reftable =
+        Table.findOne({ name: field.reftable_name }) || undefined;
       if (field.reftable) await field.reftable.getFields();
     }
   }
   const boolfields = fields.filter(
-    (f: any) => f.type && f.type.name === "Bool"
+    (f) => f.type && (f.type as any).name === "Bool"
   );
 
   const stateActions = getState().actions;
-  const stateActionKeys = (Object.entries(stateActions) as [string, any][])
-    .filter(([k, v]: [string, any]) => !v.disableInList)
-    .map(([k, v]: [string, any]) => k);
+  const stateActionKeys = Object.entries(stateActions)
+    .filter(([_k, v]: [string, any]) => !v.disableInList)
+    .map(([k]) => k);
 
   const actions = [
     "Delete",
-    ...boolfields.map((f: any) => `Toggle ${f.name}`),
+    ...boolfields.map((f) => `Toggle ${f.name}`),
     ...stateActionKeys,
   ];
   const triggers = Trigger.find({
@@ -946,18 +972,20 @@ const field_picker_fields = async ({
     table_id: null,
   });
   triggers.forEach((tr) => {
-    actions.push(tr.name);
+    actions.push(tr.name!);
   });
   if (!table.external)
     Trigger.find({
       table_id: table.id,
     }).forEach((tr) => {
-      actions.push(tr.name);
+      actions.push(tr.name!);
     });
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
-    const cfgFields = await getActionConfigFields(action, table, { req });
+    const cfgFields = await getActionConfigFields(action as GenObj, table, {
+      req,
+    } as GenObj);
 
     for (const field of cfgFields) {
       const cfgFld = {
@@ -972,7 +1000,7 @@ const field_picker_fields = async ({
       actionConfigFields.push(cfgFld);
     }
   }
-  const fldOptions = fields.map((f: any) => ({
+  const fldOptions = fields.map((f) => ({
     label: `${f.name} [${f.pretty_type}]`,
     name: f.name,
   }));
@@ -988,7 +1016,7 @@ const field_picker_fields = async ({
     ) as [string, any][]) {
       for (const [fieldview, formFields] of Object.entries(fvOptFields) as [
         string,
-        any,
+        any
       ][]) {
         for (const formField of formFields) {
           if (field_name.includes("."))
@@ -1017,8 +1045,9 @@ const field_picker_fields = async ({
   const { link_view_opts, view_name_opts, view_relation_opts } =
     await get_link_view_opts(table, viewname);
   const { parent_field_list } = await table.get_parent_relations(true, true);
-  const { child_field_list, child_relations } =
-    await table.get_child_relations(true);
+  const { child_field_list, child_relations } = await table.get_child_relations(
+    true
+  );
   const join_field_options = await table.get_join_field_options(true, true);
   const join_field_view_options = {
     ...field_view_options,
@@ -1026,11 +1055,11 @@ const field_picker_fields = async ({
   };
   const relation_options = await table.get_relation_options();
   const aggStatOptions: Record<string, string[]> = {};
-  const agg_fieldviews: any[] = [];
-  (Object.values(getState().types) as any[]).forEach((t: any) => {
-    const fvnames = (Object.entries(t.fieldviews) as [string, any][])
-      .filter(([k, v]: [string, any]) => !v.isEdit && !v.isFilter)
-      .map(([k, v]: [string, any]) => k);
+  const agg_fieldviews: GenObj[] = [];
+  Object.values(getState().types).forEach((t: any) => {
+    const fvnames = Object.entries(t.fieldviews)
+      .filter(([_k, v]: [string, any]) => !v.isEdit && !v.isFilter)
+      .map(([k]) => k);
     agg_fieldviews.push({
       name: `agg_fieldview`,
       label: __("Field view"),
@@ -1058,15 +1087,15 @@ const field_picker_fields = async ({
     },
   ];
 
-  const agg_field_opts = child_relations.map(
+  const agg_field_opts = (child_relations as any[]).map(
     ({
       table,
       key_field,
       through,
     }: {
-      table: any;
-      key_field: any;
-      through: any;
+      table: Table;
+      key_field: Field;
+      through: Table | undefined;
     }) => {
       const aggKey =
         (through ? `${through.name}->` : "") +
@@ -1080,8 +1109,8 @@ const field_picker_fields = async ({
         "Min",
         "Array_Agg",
       ];
-      table.fields.forEach((f: any) => {
-        if (f.type && f.type.name === "Date") {
+      table.fields.forEach((f) => {
+        if (f.type && (f.type as any).name === "Date") {
           aggStatOptions[aggKey].push(`Latest ${f.name}`);
           aggStatOptions[aggKey].push(`Earliest ${f.name}`);
         }
@@ -1093,8 +1122,8 @@ const field_picker_fields = async ({
         required: true,
         attributes: {
           options: table.fields
-            .filter((f: any) => !f.calculated || f.stored)
-            .map((f: any) => ({
+            .filter((f) => !f.calculated || f.stored)
+            .map((f) => ({
               label: f.name,
               name: `${f.name}@${f.type_name}`,
             })),
@@ -1552,7 +1581,7 @@ const field_picker_fields = async ({
  * @returns {Promise<object[]>}
  */
 const get_child_views = async (
-  table: any,
+  table: Table,
   viewname: string | null,
   nrecurse: number = 2
 ): Promise<any[]> => {
@@ -1561,15 +1590,20 @@ const get_child_views = async (
     { cached: true }
   );
   const possibleThroughTables = new Set<string>();
-  let child_views: any[] = [];
+  let child_views: {
+    relation: Field;
+    related_table: Table;
+    views: View[];
+    through?: Field;
+    throughTable?: Table;
+  }[] = [];
   for (const relation of rels) {
     const related_table = Table.findOne({ id: relation.table_id });
     if (!related_table) continue;
     const views = await View.find_table_views_where(
       related_table.id!,
-      ({ state_fields, viewrow }: any) =>
-        viewrow.name !== viewname &&
-        state_fields.every((sf: any) => !sf.required)
+      ({ state_fields, viewrow }) =>
+        viewrow.name !== viewname && state_fields.every((sf) => !sf.required)
     );
     child_views.push({ relation, related_table, views });
     possibleThroughTables.add(`${related_table.name}.${relation.name}`);
@@ -1602,13 +1636,14 @@ const get_child_views = async (
  * @returns {Promise<object[]>}
  */
 const get_parent_views = async (
-  table: any,
+  table: Table,
   viewname: string
 ): Promise<any[]> => {
-  let parent_views: any[] = [];
+  let parent_views: { relation: Field; related_table: Table; views: View[] }[] =
+    [];
   const parentrels = table
     .getFields()
-    .filter((f: any) => f.is_fkey && f.type !== "File");
+    .filter((f) => f.is_fkey && f.type !== "File");
   for (const relation of parentrels) {
     const related_table = Table.findOne({
       name: relation.reftable_name,
@@ -1616,9 +1651,8 @@ const get_parent_views = async (
     if (!related_table) continue;
     const views = await View.find_table_views_where(
       related_table,
-      ({ state_fields, viewrow }: any) =>
-        viewrow.name !== viewname &&
-        state_fields.some((sf: any) => sf.name === "id")
+      ({ state_fields, viewrow }) =>
+        viewrow.name !== viewname && state_fields.some((sf) => sf.name === "id")
     );
 
     parent_views.push({ relation, related_table, views });
@@ -1634,7 +1668,7 @@ const get_parent_views = async (
  * @returns {Promise<object[]>}
  */
 const get_onetoone_views = async (
-  table: any,
+  table: Table,
   viewname: string
 ): Promise<any[]> => {
   const rels = await Field.find(
@@ -1644,15 +1678,15 @@ const get_onetoone_views = async (
     },
     { cached: true }
   );
-  let child_views: any[] = [];
+  let child_views: { relation: Field; related_table: Table; views: View[] }[] =
+    [];
   for (const relation of rels) {
     const related_table = Table.findOne({ id: relation.table_id });
     if (!related_table) continue;
     const views = await View.find_table_views_where(
       related_table.id!,
-      ({ state_fields, viewrow }: any) =>
-        viewrow.name !== viewname &&
-        state_fields.some((sf: any) => sf.name === "id")
+      ({ state_fields, viewrow }) =>
+        viewrow.name !== viewname && state_fields.some((sf) => sf.name === "id")
     );
     child_views.push({ relation, related_table, views });
   }
@@ -1676,23 +1710,23 @@ const generate_joined_query = ({
   joinFields,
   aggregations,
 }: {
-  table: any;
+  table: Table;
   columns?: any[];
   layout?: any;
-  req?: any;
-  state?: any;
+  req?: GenObj;
+  state?: GenObj;
   stateHash?: string;
-  formulas?: any;
+  formulas?: string | string[];
   include_fml?: string;
-  user?: any;
+  user?: AbstractUser;
   forPublic?: boolean;
   limit?: number;
   orderBy?: string;
   orderDesc?: boolean;
-  joinFields?: any;
-  aggregations?: any;
-}): any => {
-  const q: any = {};
+  joinFields?: GenObj;
+  aggregations?: GenObj;
+}): GenObj => {
+  const q: GenObj = {};
   if (joinFields) q.joinFields = joinFields;
   if (aggregations) q.aggregations = aggregations;
   const prefix = "a.";
@@ -1700,7 +1734,7 @@ const generate_joined_query = ({
   if (columns)
     Object.assign(
       q,
-      picked_fields_to_query(columns, table.fields, layout, req, table)
+      picked_fields_to_query(columns, table.fields, layout, req || {}, table)
     );
 
   const use_state = structuredClone(state) || {};
@@ -1765,11 +1799,11 @@ const generate_joined_query = ({
  */
 const picked_fields_to_query = (
   columns: any[],
-  fields: any[],
+  fields: Field[],
   layout: any,
-  req: any,
-  table: any
-): { joinFields: any; aggregations: any } => {
+  req: GenObj,
+  table: Table
+): { joinFields: Record<string, any>; aggregations: Record<string, any> } => {
   let joinFields: Record<string, any> = {};
   let aggregations: Record<string, any> = {};
   let freeVars: Set<string> = new Set(); // for join fields
@@ -1950,14 +1984,14 @@ const picked_fields_to_query = (
           freeVars = new Set([...freeVars, ...freeVariables(v.url)]);
       },
       tabs(v: any) {
-        (v.titles || []).forEach((t: any) => {
+        (v.titles || []).forEach((t: unknown) => {
           if (typeof t === "string")
             freeVars = new Set([
               ...freeVars,
               ...freeVariablesInInterpolation(t),
             ]);
         });
-        (v.showif || []).forEach((t: any) => {
+        (v.showif || []).forEach((t: string) => {
           freeVars = new Set([...freeVars, ...freeVariablesInInterpolation(t)]);
         });
       },
@@ -1985,7 +2019,7 @@ const picked_fields_to_query = (
     });
   }
   if (layout?.besides && layout?.list_columns) {
-    layout?.besides.forEach((s: any) => {
+    layout?.besides.forEach((s: GenObj) => {
       if (s.showif)
         freeVars = new Set([...freeVars, ...freeVariables(s.showif)]);
     });
@@ -2008,13 +2042,13 @@ const stateFieldsToQuery = ({
   prefix = "",
   noSortAndPaging,
 }: {
-  state: any;
+  state: GenObj;
   stateHash?: string;
-  fields: any[];
+  fields: Field[];
   prefix?: string;
   noSortAndPaging?: boolean;
-}): any => {
-  let q: any = {};
+}): GenObj => {
+  let q: GenObj = {};
   if (!noSortAndPaging) {
     const sortbyName = `_${stateHash}_sortby`;
     const sortDescName = `_${stateHash}_sortdesc`;
@@ -2030,10 +2064,10 @@ const stateFieldsToQuery = ({
         const { operator, field, target } = state._orderBy;
         const fld = fields.find((f) => f.name == field);
 
-        if (!fld) return;
-        const oper = fld.type?.distance_operators?.[operator];
+        if (!fld) return q;
+        const oper = (fld.type as any)?.distance_operators?.[operator];
 
-        if (!oper) return;
+        if (!oper) return q;
         q.orderBy = { operator: oper, field, target };
       }
     }
@@ -2043,7 +2077,7 @@ const stateFieldsToQuery = ({
       const field = fields.find((f) => f.name == fieldName);
 
       if (!field) return;
-      const operator = field.type?.distance_operators?.[opName];
+      const operator = (field.type as any)?.distance_operators?.[opName];
 
       if (!operator) return;
       q.orderBy = { operator, field: fieldName, target: state[k] };
@@ -2086,14 +2120,14 @@ const stateFieldsToQuery = ({
  * @returns {void}
  */
 // todo potentially move to utils
-const addOrCreateList = (container: any, key: string, x: any): void => {
+const addOrCreateList = (container: GenObj, key: string, x: any): void => {
   if (container[key]) {
     if (container[key].length) container[key].push(x);
     else container[key] = [container[key], x];
   } else container[key] = [x];
 };
 
-const stringToQuery = (s: string): any => {
+const stringToQuery = (s: string): GenObj => {
   const json = JSON.parse(s);
   const { path, sourcetable } = parseRelationPath(json.relation);
   return {
@@ -2103,7 +2137,7 @@ const stringToQuery = (s: string): any => {
   };
 };
 
-const queryToString = (query: any): string => {
+const queryToString = (query: GenObj): string => {
   const relObj = {
     srcId: query.srcId,
     relation: buildRelationPath(query.sourcetable, query.path),
@@ -2111,7 +2145,11 @@ const queryToString = (query: any): string => {
   return JSON.stringify(relObj);
 };
 
-const handleRelationPath = (queryObj: any, qstate: any, table: any): void => {
+const handleRelationPath = (
+  queryObj: GenObj,
+  qstate: GenObj,
+  table: Table
+): void => {
   if (queryObj.path.length > 0) {
     const levels = [];
     let lastTableName = queryObj.sourcetable;
@@ -2177,291 +2215,302 @@ const stateFieldsToWhere = ({
   table,
   prefix = "",
 }: {
-  fields: any[];
-  state: any;
+  fields: Field[];
+  state: GenObj;
   approximate?: boolean;
-  table?: any;
+  table?: Table;
   prefix?: string;
 }): Where => {
-  let qstate: any = {};
-  const orFields: any[] = [];
-  (Object.entries(state || {}) as [string, any][]).forEach(
-    ([k, v]: [string, any]) => {
-      if (typeof v === "undefined") return;
+  let qstate: GenObj = {};
+  const orFields: string[] = [];
+  Object.entries(state || {}).forEach(([k, v]) => {
+    if (typeof v === "undefined") return;
+    if (k === "_fts" || (table?.name && k === `_fts_${table.santized_name}`)) {
+      const scState = getState();
+      const language = scState.pg_ts_config;
+      const use_websearch = scState.getConfig("search_use_websearch", false);
+      const disable_fts = scState.getConfig("search_disable_fts", false);
+      qstate["_fts"] = {
+        searchTerm: v.replace(/\0/g, ""),
+        fields,
+        language,
+        use_websearch,
+        disable_fts,
+        table: prefix
+          ? prefix.replaceAll(".", "")
+          : table
+          ? table.name
+          : undefined,
+        schema: db.isSQLite ? undefined : db.getTenantSchema(),
+      };
+      return;
+    }
+    if (k === "_or_field") {
+      if (Array.isArray(v)) orFields.push(...v);
+      else orFields.push(v);
+      return;
+    }
+
+    const field = fields.find((fld) => fld.name === k);
+    if (k === "_relation_path_" || k === "_inbound_relation_path_")
+      handleRelationPath(
+        typeof v === "string" ? stringToQuery(v) : v,
+        qstate,
+        table!
+      );
+    else if (k.startsWith(".")) {
+      const queryObj = parseRelationPath(k);
+      queryObj.srcId = v;
+      handleRelationPath(queryObj, qstate, table!);
+    } else if (k.startsWith("_fromdate_")) {
+      const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield)
+        addOrCreateList(qstate, datefield, {
+          gt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
+          equal: true,
+          day_only: dfield.attributes?.day_only,
+        });
+    } else if (k.startsWith("_todate_")) {
+      const datefield = db.sqlsanitize(k.replace("_todate_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      //https://stackoverflow.com/a/22061879/19839414
       if (
-        k === "_fts" ||
-        (table?.name && k === `_fts_${table.santized_name}`)
+        dfield &&
+        !dfield?.attributes?.day_only &&
+        v?.match?.(/^\d{4}-\d{2}-\d{2}$/)
       ) {
-        const scState = getState();
-        const language = scState.pg_ts_config;
-        const use_websearch = scState.getConfig("search_use_websearch", false);
-        const disable_fts = scState.getConfig("search_disable_fts", false);
-        qstate["_fts"] = {
-          searchTerm: v.replace(/\0/g, ""),
-          fields,
-          language,
-          use_websearch,
-          disable_fts,
-          table: prefix
-            ? prefix.replaceAll(".", "")
-            : table
-              ? table.name
-              : undefined,
-          schema: db.isSQLite ? undefined : db.getTenantSchema(),
-        };
-        return;
+        const date = new Date(v);
+        date.setDate(date.getDate() + 1);
+        addOrCreateList(qstate, datefield, {
+          lt: date,
+          equal: true,
+          day_only: dfield.attributes?.day_only,
+        });
+      } else if (dfield)
+        addOrCreateList(qstate, datefield, {
+          lt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
+          equal: true,
+          day_only: dfield.attributes?.day_only,
+        });
+    } else if (k.startsWith("_fromneqdate_")) {
+      const datefield = db.sqlsanitize(k.replace("_fromneqdate_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield)
+        addOrCreateList(qstate, datefield, {
+          gt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
+          day_only: dfield.attributes?.day_only,
+        });
+    } else if (k.startsWith("_toneqdate_")) {
+      const datefield = db.sqlsanitize(k.replace("_toneqdate_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield)
+        addOrCreateList(qstate, datefield, {
+          lt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
+          day_only: dfield.attributes?.day_only,
+        });
+    } else if (k.startsWith("_gte_")) {
+      const datefield = db.sqlsanitize(k.replace("_gte_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield) addOrCreateList(qstate, datefield, { gt: v, equal: true });
+    } else if (k.startsWith("_lte_")) {
+      const datefield = db.sqlsanitize(k.replace("_lte_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield) addOrCreateList(qstate, datefield, { lt: v, equal: true });
+    } else if (k.startsWith("_gt_")) {
+      const datefield = db.sqlsanitize(k.replace("_gt_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield) addOrCreateList(qstate, datefield, { gt: v });
+    } else if (k.startsWith("_lt_")) {
+      const datefield = db.sqlsanitize(k.replace("_lt_", ""));
+      const dfield = fields.find((fld) => fld.name === datefield);
+      if (dfield) addOrCreateList(qstate, datefield, { lt: v });
+    } else if (k.startsWith("_not_")) {
+      const notfield = db.sqlsanitize(k.replace("_not_", ""));
+      const nfield = fields.find((fld) => fld.name === notfield);
+      if (nfield) {
+        if (!qstate.not) qstate.not = {};
+        qstate.not[notfield] = v;
       }
-      if (k === "_or_field") {
-        if (Array.isArray(v)) orFields.push(...v);
-        else orFields.push(v);
-        return;
-      }
+    } else if (
+      field &&
+      (field.type as any)?.name === "String" &&
+      v &&
+      v.slugify
+    ) {
+      qstate[k] = v;
+    } else if (
+      Array.isArray(v) &&
+      field &&
+      field.type &&
+      (field.type as any).read
+    ) {
+      qstate[k] = {
+        or: v.map((val) => (field.type as any).read(val, field.attributes)),
+      };
+    } else if (
+      Array.isArray(v) &&
+      field?.is_fkey &&
+      field?.reftype === "Integer"
+    ) {
+      qstate[k] = { or: v.map((v) => (v && !isNaN(+v) ? +v : v)) };
+    } else if (
+      field &&
+      (field.type as any)?.name === "String" &&
+      !(field.attributes && field.attributes.options) &&
+      approximate &&
+      !field.attributes?.exact_search_only
+    ) {
+      qstate[k] = { ilike: v };
+    } else if (
+      field &&
+      (field.type as any)?.name === "Bool" &&
+      state[k] === "?"
+    ) {
+      // omit
+    } else if (
+      typeof v === "object" &&
+      v &&
+      (field?.type as any)?.name === "JSON"
+    ) {
+      let json: Record<string, any> = {};
+      if (Object.values(v).length === 1 && Object.values(v)[0] === "") return;
+      Object.entries(v).forEach(([kj, vj]: [string, any]) => {
+        if (vj === "") return;
+        if (kj.endsWith("__lte")) {
+          json[kj.replace("__lte", "")] = {
+            lte: +vj,
+            ...(json[kj.replace("__lte", "")] || {}),
+          };
+        } else if (kj.endsWith("__gte")) {
+          json[kj.replace("__gte", "")] = {
+            gte: +vj,
+            ...(json[kj.replace("__gte", "")] || {}),
+          };
+        } else {
+          json[kj] = vj;
 
-      const field = fields.find((fld) => fld.name === k);
-      if (k === "_relation_path_" || k === "_inbound_relation_path_")
-        handleRelationPath(
-          typeof v === "string" ? stringToQuery(v) : v,
-          qstate,
-          table
-        );
-      else if (k.startsWith(".")) {
-        const queryObj = parseRelationPath(k);
-        queryObj.srcId = v;
-        handleRelationPath(queryObj, qstate, table);
-      } else if (k.startsWith("_fromdate_")) {
-        const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
-        const dfield = fields.find((fld) => fld.name === datefield);
-        if (dfield)
-          addOrCreateList(qstate, datefield, {
-            gt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
-            equal: true,
-            day_only: dfield.attributes?.day_only,
-          });
-      } else if (k.startsWith("_todate_")) {
-        const datefield = db.sqlsanitize(k.replace("_todate_", ""));
-        const dfield = fields.find((fld) => fld.name === datefield);
-        //https://stackoverflow.com/a/22061879/19839414
-        if (
-          dfield &&
-          !dfield?.attributes?.day_only &&
-          v?.match?.(/^\d{4}-\d{2}-\d{2}$/)
-        ) {
-          const date = new Date(v);
-          date.setDate(date.getDate() + 1);
-          addOrCreateList(qstate, datefield, {
-            lt: date,
-            equal: true,
-            day_only: dfield.attributes?.day_only,
-          });
-        } else if (dfield)
-          addOrCreateList(qstate, datefield, {
-            lt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
-            equal: true,
-            day_only: dfield.attributes?.day_only,
-          });
-      } else if (k.startsWith("_fromneqdate_")) {
-        const datefield = db.sqlsanitize(k.replace("_fromneqdate_", ""));
-        const dfield = fields.find((fld) => fld.name === datefield);
-        if (dfield)
-          addOrCreateList(qstate, datefield, {
-            gt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
-            day_only: dfield.attributes?.day_only,
-          });
-      } else if (k.startsWith("_toneqdate_")) {
-        const datefield = db.sqlsanitize(k.replace("_toneqdate_", ""));
-        const dfield = fields.find((fld) => fld.name === datefield);
-        if (dfield)
-          addOrCreateList(qstate, datefield, {
-            lt: dfield.attributes?.day_only ? new PlainDate(v) : new Date(v),
-            day_only: dfield.attributes?.day_only,
-          });
-      } else if (k.startsWith("_gte_")) {
-        const datefield = db.sqlsanitize(k.replace("_gte_", ""));
-        const dfield = fields.find((fld) => fld.name === datefield);
-        if (dfield) addOrCreateList(qstate, datefield, { gt: v, equal: true });
-      } else if (k.startsWith("_lte_")) {
-        const datefield = db.sqlsanitize(k.replace("_lte_", ""));
-        const dfield = fields.find((fld) => fld.name === datefield);
-        if (dfield) addOrCreateList(qstate, datefield, { lt: v, equal: true });
-      } else if (k.startsWith("_gt_")) {
-        const datefield = db.sqlsanitize(k.replace("_gt_", ""));
-        const dfield = fields.find((fld) => fld.name === datefield);
-        if (dfield) addOrCreateList(qstate, datefield, { gt: v });
-      } else if (k.startsWith("_lt_")) {
-        const datefield = db.sqlsanitize(k.replace("_lt_", ""));
-        const dfield = fields.find((fld) => fld.name === datefield);
-        if (dfield) addOrCreateList(qstate, datefield, { lt: v });
-      } else if (k.startsWith("_not_")) {
-        const notfield = db.sqlsanitize(k.replace("_not_", ""));
-        const nfield = fields.find((fld) => fld.name === notfield);
-        if (nfield) {
-          if (!qstate.not) qstate.not = {};
-          qstate.not[notfield] = v;
-        }
-      } else if (field && field.type.name === "String" && v && v.slugify) {
-        qstate[k] = v;
-      } else if (Array.isArray(v) && field && field.type && field.type.read) {
-        qstate[k] = {
-          or: v.map((val) => field.type.read(val, field.attributes)),
-        };
-      } else if (
-        Array.isArray(v) &&
-        field?.is_fkey &&
-        field?.reftype === "Integer"
-      ) {
-        qstate[k] = { or: v.map((v) => (v && !isNaN(+v) ? +v : v)) };
-      } else if (
-        field &&
-        field.type.name === "String" &&
-        !(field.attributes && field.attributes.options) &&
-        approximate &&
-        !field.attributes?.exact_search_only
-      ) {
-        qstate[k] = { ilike: v };
-      } else if (field && field.type.name === "Bool" && state[k] === "?") {
-        // omit
-      } else if (typeof v === "object" && v && field?.type?.name === "JSON") {
-        let json: Record<string, any> = {};
-        if (Object.values(v).length === 1 && Object.values(v)[0] === "") return;
-        Object.entries(v).forEach(([kj, vj]: [string, any]) => {
-          if (vj === "") return;
-          if (kj.endsWith("__lte")) {
-            json[kj.replace("__lte", "")] = {
-              lte: +vj,
-              ...(json[kj.replace("__lte", "")] || {}),
-            };
-          } else if (kj.endsWith("__gte")) {
-            json[kj.replace("__gte", "")] = {
-              gte: +vj,
-              ...(json[kj.replace("__gte", "")] || {}),
-            };
-          } else {
-            json[kj] = vj;
-
-            if (field.attributes?.hasSchema) {
-              const s = field.attributes.schema.find(
-                (f: any) => f.key === Object.keys(v)[0]
-              );
-              if (s?.type === "String") {
-                json[kj] = { ilike: vj };
-              }
+          if (field!.attributes?.hasSchema) {
+            const s = field!.attributes.schema.find(
+              (f: { key: string }) => f.key === Object.keys(v)[0]
+            );
+            if (s?.type === "String") {
+              json[kj] = { ilike: vj };
             }
           }
-        });
+        }
+      });
 
-        qstate[k] = [
-          ...(qstate[k] ? [qstate[k]] : []),
-          {
-            json,
+      qstate[k] = [
+        ...(qstate[k] ? [qstate[k]] : []),
+        {
+          json,
+        },
+      ];
+    } else if (typeof v === "object" && field) {
+      qstate[k] = v;
+    } else if (field && field.type && (field.type as any).read)
+      qstate[k] = Array.isArray(v)
+        ? {
+            or: v.map((val) => (field.type as any).read(val, field.attributes)),
+          }
+        : (field.type as any).read(v, field.attributes);
+    else if (field) qstate[k] = v;
+    else if (k.split("->").length === 3) {
+      const [jFieldNm, throughPart, finalPart] = k.split(".");
+      const [thoughTblNm, throughField] = throughPart.split("->");
+      const [jtNm, lblField] = finalPart.split("->");
+      const jtTbl = Table.findOne(jtNm);
+      let where = { [db.sqlsanitize(lblField)]: v };
+      qstate[jFieldNm] = [
+        ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
+        {
+          // where jFieldNm in (select id from jtnm where lblField=v)
+          inSelect: {
+            table: db.sqlsanitize(thoughTblNm),
+            tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+            field: db.sqlsanitize(throughField),
+            valField: jtTbl?.pk_name || "id",
+            through: db.sqlsanitize(jtNm),
+            where,
           },
-        ];
-      } else if (typeof v === "object" && field) {
-        qstate[k] = v;
-      } else if (field && field.type && field.type.read)
-        qstate[k] = Array.isArray(v)
-          ? { or: v.map((val) => field.type.read(val, field.attributes)) }
-          : field.type.read(v, field.attributes);
-      else if (field) qstate[k] = v;
-      else if (k.split("->").length === 3) {
-        const [jFieldNm, throughPart, finalPart] = k.split(".");
-        const [thoughTblNm, throughField] = throughPart.split("->");
-        const [jtNm, lblField] = finalPart.split("->");
-        const jtTbl = Table.findOne(jtNm);
-        let where = { [db.sqlsanitize(lblField)]: v };
-        qstate[jFieldNm] = [
-          ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
-          {
-            // where jFieldNm in (select id from jtnm where lblField=v)
-            inSelect: {
-              table: db.sqlsanitize(thoughTblNm),
-              tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-              field: db.sqlsanitize(throughField),
-              valField: jtTbl?.pk_name || "id",
-              through: db.sqlsanitize(jtNm),
-              where,
-            },
-          },
-        ];
-      } else if (k.includes("->")) {
-        // jFieldNm.jtnm->lblField
-        // where jFieldNm in (select id from jtnm where lblField=v)
-        const [jFieldNm, krest] = k.split(".");
-        const [jtNm, lblField] = krest.split("->");
-        let where = { [db.sqlsanitize(lblField)]: v };
-        const jTable = Table.findOne({ name: jtNm }) as any;
-        const lblFld = ((jTable?.fields || []) as any[]).find(
-          (f: any) => f.name === lblField
-        );
-        if (
-          lblFld &&
-          (lblFld.type as any)?.name === "String" &&
-          !lblFld.attributes?.options
-        )
-          where = { [db.sqlsanitize(lblField)]: { ilike: v } };
+        },
+      ];
+    } else if (k.includes("->")) {
+      // jFieldNm.jtnm->lblField
+      // where jFieldNm in (select id from jtnm where lblField=v)
+      const [jFieldNm, krest] = k.split(".");
+      const [jtNm, lblField] = krest.split("->");
+      let where = { [db.sqlsanitize(lblField)]: v };
+      const jTable = Table.findOne({ name: jtNm });
+      const lblFld = (jTable?.fields || []).find((f) => f.name === lblField);
+      if (
+        lblFld &&
+        (lblFld.type as any)?.name === "String" &&
+        !lblFld.attributes?.options
+      )
+        where = { [db.sqlsanitize(lblField)]: { ilike: v } };
 
-        qstate[jFieldNm] = [
-          ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
+      qstate[jFieldNm] = [
+        ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
+        {
+          // where jFieldNm in (select id from jtnm where lblField=v)
+          inSelect: {
+            table: db.sqlsanitize(jtNm),
+            tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+            field: jTable?.pk_name,
+            where,
+          },
+        },
+      ];
+    } else if (k.includes(".")) {
+      const kpath = k.split(".");
+      if (kpath.length === 3) {
+        const [jtNm, jFieldNm, lblField] = kpath;
+        let isString = false;
+        const labelField = Table.findOne({ name: jtNm })?.getField?.(lblField);
+        if (labelField)
+          isString =
+            (labelField.type as any)?.name === "String" &&
+            !labelField.attributes?.exact_search_only;
+
+        const pk = table ? table.pk_name : "id";
+        qstate[pk] = [
+          ...(qstate[pk] ? [qstate[pk]] : []),
           {
-            // where jFieldNm in (select id from jtnm where lblField=v)
+            // where id in (select jFieldNm from jtnm where lblField=v)
             inSelect: {
               table: db.sqlsanitize(jtNm),
               tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-              field: jTable?.pk_name,
-              where,
+              field: db.sqlsanitize(jFieldNm),
+              where: {
+                [db.sqlsanitize(lblField)]:
+                  isString && approximate ? { ilike: v } : v,
+              },
             },
           },
         ];
-      } else if (k.includes(".")) {
-        const kpath = k.split(".");
-        if (kpath.length === 3) {
-          const [jtNm, jFieldNm, lblField] = kpath;
-          let isString = false;
-          const labelField = Table.findOne({ name: jtNm })?.getField?.(
-            lblField
-          );
-          if (labelField)
-            isString =
-              (labelField.type as any)?.name === "String" &&
-              !labelField.attributes?.exact_search_only;
-
-          const pk = table ? table.pk_name : "id";
-          qstate[pk] = [
-            ...(qstate[pk] ? [qstate[pk]] : []),
-            {
-              // where id in (select jFieldNm from jtnm where lblField=v)
-              inSelect: {
-                table: db.sqlsanitize(jtNm),
-                tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-                field: db.sqlsanitize(jFieldNm),
-                where: {
-                  [db.sqlsanitize(lblField)]:
-                    isString && approximate ? { ilike: v } : v,
-                },
-              },
+      } else if (kpath.length === 4) {
+        const [jtNm, jFieldNm, tblName, lblField] = kpath;
+        const pk = table ? table.pk_name : "id";
+        qstate[pk] = [
+          ...(qstate[pk] ? [qstate[pk]] : []),
+          {
+            // where id in (select ss1.id from jtNm ss1 join tblName ss2 on ss2.id = ss1.jFieldNm where ss2.lblField=v)
+            inSelect: {
+              table: db.sqlsanitize(jtNm),
+              tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+              field: db.sqlsanitize(jFieldNm),
+              valField: Table.findOne(jtNm)?.pk_name || "id",
+              through: db.sqlsanitize(tblName),
+              through_pk: Table.findOne(tblName)?.pk_name || "id",
+              where: { [db.sqlsanitize(lblField)]: v },
             },
-          ];
-        } else if (kpath.length === 4) {
-          const [jtNm, jFieldNm, tblName, lblField] = kpath;
-          const pk = table ? table.pk_name : "id";
-          qstate[pk] = [
-            ...(qstate[pk] ? [qstate[pk]] : []),
-            {
-              // where id in (select ss1.id from jtNm ss1 join tblName ss2 on ss2.id = ss1.jFieldNm where ss2.lblField=v)
-              inSelect: {
-                table: db.sqlsanitize(jtNm),
-                tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-                field: db.sqlsanitize(jFieldNm),
-                valField: Table.findOne(jtNm)?.pk_name || "id",
-                through: db.sqlsanitize(tblName),
-                through_pk: Table.findOne(tblName)?.pk_name || "id",
-                where: { [db.sqlsanitize(lblField)]: v },
-              },
-            },
-          ];
-        }
+          },
+        ];
       }
     }
-  );
+  });
   if (orFields.length === 1) {
     const orKey = orFields[0];
     const orVal = qstate[orKey];
@@ -2501,12 +2550,12 @@ const initial_config_all_fields =
     const fields = table
       .getFields()
       .filter(
-        (f: any) =>
+        (f) =>
           (!f.primary_key || f?.attributes?.NonSerial) &&
           (!isEdit || !f.calculated)
       );
-    let cfg: any = { columns: [] };
-    let aboves: any[] = [null];
+    let cfg: GenObj = { columns: [] };
+    let aboves: (GenObj | null)[] = [null];
     const style = {
       "margin-bottom": "1.5rem",
     };
@@ -2564,12 +2613,12 @@ const initial_config_all_fields =
               Object.entries((f.type as any).fieldviews) as [string, any][]
             ).find(([nm, fv]: [string, any]) => fv.isEdit === isEdit)?.[0]
           : f.type === "File" && !isEdit
-            ? Object.keys(getState().fileviews)[0]
-            : f.type === "File" && isEdit
-              ? "upload"
-              : f.type === "Key"
-                ? "select"
-                : undefined;
+          ? Object.keys(getState().fileviews)[0]
+          : f.type === "File" && isEdit
+          ? "upload"
+          : f.type === "Key"
+          ? "select"
+          : undefined;
         cfg.columns.push({
           field_name: f.name,
           type: "Field",
@@ -2622,7 +2671,7 @@ const initial_config_all_fields =
  * @returns {number|undefined}
  */
 // todo potentially move to utils
-const strictParseInt = (x: any): number | undefined => {
+const strictParseInt = (x: string | number): number | undefined => {
   const y = +x;
   return !isNaN(y) && (y || y === 0) ? y : undefined;
 };
@@ -2634,11 +2683,11 @@ const strictParseInt = (x: any): number | undefined => {
  * @param req
  * @returns {object}
  */
-const readState = (state: any, fields: any[], req?: any): any => {
-  const read_key = (f: any, current: any) =>
+const readState = (state: GenObj, fields: Field[], req?: GenObj): GenObj => {
+  const read_key = (f: Field, current: unknown) =>
     current === "null" || current === "" || current === null
       ? null
-      : getState().types[f.reftype].read(current, f.attributes);
+      : getState().types[f.reftype as string].read(current, f.attributes);
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
@@ -2649,8 +2698,10 @@ const readState = (state: any, fields: any[], req?: any): any => {
         typeof current[0] === "object"
       ) {
         //ignore (this is or statement)
-      } else if (Array.isArray(current) && f.type.read) {
-        state[f.name] = current.map((val) => f.type.read(val, f.attributes));
+      } else if (Array.isArray(current) && (f.type as any)?.read) {
+        state[f.name] = current.map((val) =>
+          (f.type as any).read(val, f.attributes)
+        );
       } else if (
         Array.isArray(current) &&
         f.is_fkey &&
@@ -2658,17 +2709,17 @@ const readState = (state: any, fields: any[], req?: any): any => {
       ) {
         state[f.name] = current.map((v) => read_key(f, v));
       } else if (current && current.slugify)
-        state[f.name] = f.type.read
-          ? { slugify: f.type.read(current.slugify, f.attributes) }
+        state[f.name] = (f.type as any)?.read
+          ? { slugify: (f.type as any).read(current.slugify, f.attributes) }
           : current;
       else if (typeof current === "object") {
         //ignore
-      } else if (f.type?.read)
-        state[f.name] = f.type.read(current, f.attributes);
+      } else if ((f.type as any)?.read)
+        state[f.name] = (f.type as any).read(current, f.attributes);
       else if (typeof current === "string" && current.startsWith("Preset:")) {
         const pname = current.replace("Preset:", "");
         if (Object.prototype.hasOwnProperty.call(f.presets, pname)) {
-          const preset = f.presets[pname];
+          const preset = (f.presets as any)[pname];
           state[f.name] = preset(req);
         }
       } else if (f.type === "File") state[f.name] = current;
@@ -2685,21 +2736,21 @@ const readState = (state: any, fields: any[], req?: any): any => {
  * @param {object[]} fields
  * @returns {boolean|*}
  */
-const readStateStrict = (state: any, fields: any[]): any => {
+const readStateStrict = (state: GenObj, fields: Field[]): false | GenObj => {
   let hasErrors = false;
   fields.forEach((f) => {
     const current = state[f.name];
     //console.log(f.name, current, typeof current);
 
     if (typeof current !== "undefined") {
-      if (f.type.read) {
-        const readval = f.type.read(current, f.attributes);
+      if ((f.type as any)?.read) {
+        const readval = (f.type as any).read(current, f.attributes);
         if (typeof readval === "undefined") {
           if (current === "" && !f.required) delete state[f.name];
           else hasErrors = true;
         }
-        if (f.type && f.type.validate) {
-          const vres = f.type.validate(f.attributes || {})(readval);
+        if (f.type && (f.type as any).validate) {
+          const vres = (f.type as any).validate(f.attributes || {})(readval);
           if (vres.error) hasErrors = true;
         }
         state[f.name] = readval;
@@ -2726,14 +2777,14 @@ const readStateStrict = (state: any, fields: any[]): any => {
  */
 const json_list_to_external_table = (
   get_json_list: Function,
-  fields0: any[],
-  methods: any = {},
-  tableRow: any = {}
-): any => {
-  const fields = fields0.map((f) =>
-    f.constructor.name === Object.name ? new Field(f) : f
+  fields0: (Field | FieldLike)[],
+  methods: GenObj = {},
+  tableRow: GenObj = {}
+): GenObj => {
+  const fields: Field[] = fields0.map((f) =>
+    f.constructor.name === Object.name ? new Field(f) : (f as Field)
   );
-  const getRows = async (where: any = {}, selopts: any = {}) => {
+  const getRows = async (where: Where = {}, selopts: GenObj = {}) => {
     const { forUser, forPublic, ...selopts1 } = selopts;
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
 
@@ -2806,22 +2857,22 @@ const json_list_to_external_table = (
     getForeignKeys() {
       return fields.filter((f) => f.is_fkey && f.type !== "File");
     },
-    getField(fnm: any) {
+    getField(fnm: string) {
       if (typeof fnm !== "string") {
         // Prevent type confusion if not a string
         return undefined;
       }
       if (fnm.includes(".")) {
         const [myfld, ...rest] = fnm.split(".");
-        const f = fields.find((f: any) => f.name === myfld);
-        const refTbl = Table.findOne(f.reftable_name);
+        const f = fields.find((f) => f.name === myfld);
+        const refTbl = Table.findOne(f!.reftable_name!);
         return refTbl?.getField(rest.join("."));
       }
-      return fields.find((f: any) => f.name === fnm);
+      return fields.find((f) => f.name === fnm);
     },
     fields,
     getRows,
-    async getRow(where: any, opts: any) {
+    async getRow(where: Where, opts: GenObj) {
       const rows = await getRows(where, opts);
       return rows.length ? rows[0] : null;
     },
@@ -2829,7 +2880,7 @@ const json_list_to_external_table = (
       const roles = getState().getConfig("exttables_min_role_read", {});
       return roles[tbl.name] || 100;
     },
-    async getJoinedRows(opts: any = {}) {
+    async getJoinedRows(opts: GenObj = {}) {
       if (!opts.where) opts.where = {};
       const { forUser, forPublic } = opts;
       const role = forUser ? forUser.role_id : forPublic ? 100 : null;
@@ -2850,18 +2901,25 @@ const json_list_to_external_table = (
       const { where, ...rest } = opts;
       return await getRows(where || {}, rest || {});
     },
-    async getJoinedRow(opts: any = {}) {
+    async getJoinedRow(opts: GenObj = {}) {
       const rows = await this.getJoinedRows(opts);
       return rows.length > 0 ? rows[0] : null;
     },
-    delete_url(row: any, moreQuery: any) {
+    delete_url(row: Row, moreQuery: string) {
       const comppk = tbl.composite_pk_names;
       if (!comppk)
-        return `/delete/${tbl.name}/${encodeURIComponent(row[tbl.pk_name])}${moreQuery ? `?${moreQuery}` : ""}`;
+        return `/delete/${tbl.name}/${encodeURIComponent(row[tbl.pk_name])}${
+          moreQuery ? `?${moreQuery}` : ""
+        }`;
       else
-        return `/delete/${tbl.name}?${comppk.map((pknm: any) => `${encodeURIComponent(pknm)}=${encodeURIComponent(row[pknm])}`).join("&")}${moreQuery ? `&${moreQuery}` : ""}`;
+        return `/delete/${tbl.name}?${comppk
+          .map(
+            (pknm: string) =>
+              `${encodeURIComponent(pknm)}=${encodeURIComponent(row[pknm])}`
+          )
+          .join("&")}${moreQuery ? `&${moreQuery}` : ""}`;
     },
-    async countRows(where: any, opts: any) {
+    async countRows(where: Where, opts: GenObj) {
       if (methods?.countRows) {
         return await methods.countRows(where, opts);
       }
@@ -2869,7 +2927,7 @@ const json_list_to_external_table = (
       return data_in.length;
     },
     //copied from table
-    async get_child_relations(allow_join_aggregations: any) {
+    async get_child_relations(allow_join_aggregations: boolean) {
       const cfields = await Field.find(
         { reftable_name: tbl.name },
         { cached: true }
@@ -2907,8 +2965,13 @@ const json_list_to_external_table = (
       return { child_relations, child_field_list };
     },
     //copied from table
-    async get_parent_relations(allow_double: any, allow_triple: any) {
-      let parent_relations: any[] = [];
+    async get_parent_relations(allow_double: boolean, allow_triple: boolean) {
+      let parent_relations: {
+        key_field: Field;
+        table?: Table;
+        ontable?: Table;
+        through?: Field;
+      }[] = [];
       let parent_field_list = [];
       for (const f of fields) {
         if (f.is_fkey && f.type !== "File") {
@@ -2992,19 +3055,21 @@ const json_list_to_external_table = (
     //copied from table
     async get_relation_options() {
       return await Promise.all(
-        (await tbl.get_relation_data()).map(
+        (
+          await tbl.get_relation_data()
+        ).map(
           async ({
             relationTable,
             relationField,
           }: {
-            relationTable: any;
-            relationField: any;
+            relationTable: Table;
+            relationField: Field;
           }) => {
             const path = `${relationTable.name}.${relationField.name}`;
             const relFields = await relationTable.getFields();
             const names = relFields
-              .filter((f: any) => f.type !== "Key")
-              .map((f: any) => f.name);
+              .filter((f) => f.type !== "Key")
+              .map((f) => f.name);
             return { relationPath: path, relationFields: names };
           }
         )
@@ -3028,7 +3093,7 @@ const json_list_to_external_table = (
       return result;
     },
     //copied from table
-    async get_join_field_options(allow_double: any, allow_triple: any) {
+    async get_join_field_options(allow_double: boolean, allow_triple: boolean) {
       const result: any[] = [];
       for (const f of fields) {
         if (f.is_fkey && f.type !== "File") {
@@ -3045,7 +3110,7 @@ const json_list_to_external_table = (
             fieldPath: f.name,
           };
           for (const pf of table.fields.filter(
-            (f: any) => !f.calculated || f.stored
+            (f) => !f.calculated || f.stored
           )) {
             const subTwo: any = {
               name: pf.name,
@@ -3064,7 +3129,7 @@ const json_list_to_external_table = (
                 );
               if (table1.fields)
                 for (const gpf of table1.fields.filter(
-                  (f: any) => !f.calculated || f.stored
+                  (f) => !f.calculated || f.stored
                 )) {
                   const subThree: any = {
                     name: gpf.name,
@@ -3109,11 +3174,11 @@ const json_list_to_external_table = (
     owner_fieldname() {
       return null;
     },
-    async distinctValues(fldNm: any, opts: any) {
+    async distinctValues(fldNm: string, opts: GenObj) {
       if (methods?.distinctValues)
         return await methods.distinctValues(fldNm, opts);
       let data_in = await get_json_list(opts || {});
-      const s = new Set(data_in.map((x: any) => x[fldNm]));
+      const s = new Set(data_in.map((x: Row) => x[fldNm]));
       return [...s];
     },
     async getTags() {
@@ -3122,8 +3187,8 @@ const json_list_to_external_table = (
     async getForeignTables() {
       const tableNames = new Set(
         tbl.fields
-          .filter((f: any) => f.is_fkey && f.reftable_name)
-          .map((f: any) => f.reftable_name)
+          .filter((f: Field) => f.is_fkey && f.reftable_name)
+          .map((f: Field) => f.reftable_name)
       );
       return Array.from(tableNames).map((tname) =>
         Table.findOne({ name: tname })
@@ -3140,8 +3205,8 @@ const json_list_to_external_table = (
         const maybe_err = await methods.updateRow(...args);
         if (typeof maybe_err === "string") return { error: maybe_err };
         else return { success: true };
-      } catch (error: any) {
-        return { error: error?.message || error };
+      } catch (error: unknown) {
+        return { error: (error as Error)?.message || error };
       }
     };
   }
@@ -3151,8 +3216,8 @@ const json_list_to_external_table = (
       try {
         const id = await methods.insertRow(...args);
         return { success: id };
-      } catch (error: any) {
-        return { error: error?.message || error };
+      } catch (error: unknown) {
+        return { error: (error as Error)?.message || error };
       }
     };
   }
@@ -3165,7 +3230,7 @@ const json_list_to_external_table = (
  * @param {any} col Action Column from the configuration
  * @returns true or false
  */
-const shoudlRunAsync = (col: any): boolean => {
+const shoudlRunAsync = (col: GenObj): boolean => {
   const action_name = col.action_name;
   const state_action = getState().actions[action_name];
   if (state_action) return !!col.run_async;
@@ -3190,8 +3255,8 @@ const run_action_column = async ({
   req,
   ...rest
 }: {
-  col: any;
-  req: any;
+  col: GenObj;
+  req: GenObj;
   [key: string]: any;
 }): Promise<any> => {
   let run_async = shoudlRunAsync(col);
@@ -3211,7 +3276,7 @@ const run_action_column = async ({
     };
     state.emitDynamicUpdate(db.getTenantSchema(), reset_msg);
   };
-  const successAsyncHandler = (data: any) => {
+  const successAsyncHandler = (data: GenObj) => {
     const state = getState();
     state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
     const emitData = { ...data };
@@ -3224,7 +3289,7 @@ const run_action_column = async ({
     )
       reset_spinner(state);
   };
-  const failureAsyncHandler = (err: any) => {
+  const failureAsyncHandler = (err: Error & { message: string }) => {
     const state = getState();
     state.log(2, `Asynchronous action error`, err);
     if (req.headers["page-load-tag"]) {
@@ -3235,9 +3300,9 @@ const run_action_column = async ({
     }
     reset_spinner(state);
   };
-  const run_action_step = async (action_name: string, colcfg: any) => {
+  const run_action_step = async (action_name: string, colcfg: GenObj) => {
     let state_action = getState().actions[action_name];
-    let configuration: any;
+    let configuration: GenObj;
     let goRun: (() => Promise<any>) | undefined;
     if (state_action) {
       configuration = colcfg;
@@ -3274,7 +3339,7 @@ const run_action_column = async ({
     return await goRun();
   };
   if (col.action_name === "Multi-step action") {
-    let result: any = {};
+    let result: GenObj = {};
     let step_count = 0;
     let MAX_STEPS = 200;
     for (
@@ -3326,25 +3391,27 @@ const run_action_column = async ({
   }
 };
 
-const displayType = (stateFields: any[]) =>
+const displayType = (stateFields: { name: string; required?: boolean }[]) =>
   stateFields.every((sf) => !sf.required)
     ? ViewDisplayType.NO_ROW_LIMIT
     : stateFields.some((sf) => sf.name === "id")
-      ? ViewDisplayType.ROW_REQUIRED
-      : ViewDisplayType.INVALID;
+    ? ViewDisplayType.ROW_REQUIRED
+    : ViewDisplayType.INVALID;
 
 const build_schema_data = async (): Promise<any> => {
   const allViews = await View.find({}, { cached: true });
   const allTables = await Table.find({}, { cached: true });
   const tableIdToName: Record<number, string> = {};
-  allTables.forEach((t: any) => {
+  allTables.forEach((t) => {
     if (t.id != null) tableIdToName[t.id] = t.name;
   });
   const views = await Promise.all(
-    allViews.map(async (v: any) => ({
+    allViews.map(async (v) => ({
       name: v.name,
       table_id: v.table_id,
-      label: `${v.name} [${v.viewtemplate}] ${(v.table_id != null && tableIdToName[v.table_id]) || ""}`,
+      label: `${v.name} [${v.viewtemplate}] ${
+        (v.table_id != null && tableIdToName[v.table_id]) || ""
+      }`,
       viewtemplate: v.viewtemplate,
       display_type: displayType(await v.get_state_fields()),
     }))
@@ -3356,8 +3423,10 @@ const build_schema_data = async (): Promise<any> => {
       //for edit-in-edit
       int_fields: t.fields
         .filter(
-          (f: any) =>
-            f.type?.name === "Integer" && !f.calculated && !f.primary_key
+          (f) =>
+            (f.type as any)?.name === "Integer" &&
+            !f.calculated &&
+            !f.primary_key
         )
         .map((f) => f.name),
       foreign_keys: t.getForeignKeys().map((f) => ({
@@ -3377,7 +3446,10 @@ const build_schema_data = async (): Promise<any> => {
  * @param {Relation} relation
  * @param {function} getRowVal
  */
-const pathToState = (relation: any, getRowVal: (key: string) => any): any => {
+const pathToState = (
+  relation: GenObj,
+  getRowVal: (key: string) => any
+): GenObj => {
   const sourceTbl = Table.findOne({ name: relation.sourceTblName });
   const pkName = sourceTbl?.pk_name || "id";
   const path = relation.path;
@@ -3408,6 +3480,7 @@ const pathToState = (relation: any, getRowVal: (key: string) => any): any => {
               getRowVal(path[0].fkey ? path[0].fkey : pkName) || "NULL",
           };
   }
+  return {};
 };
 
 /**
@@ -3418,9 +3491,9 @@ const pathToState = (relation: any, getRowVal: (key: string) => any): any => {
  * @returns an array of action results
  */
 const runCollabEvents = async (
-  events: any[],
-  user: any,
-  actionData: any
+  events: { event: string }[],
+  user: AbstractUser | undefined,
+  actionData: GenObj
 ): Promise<any[]> => {
   const actionResults = [];
   const role = user?.role_id || 100;

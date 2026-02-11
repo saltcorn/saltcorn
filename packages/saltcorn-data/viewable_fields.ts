@@ -292,7 +292,7 @@ const make_link = (
         ? eval_expression(link_url, r, undefined, "Link URL formula")
         : link_url;
 
-      const attrs: any = { href };
+      const attrs: Record<string, any> = { href };
       if (link_target_blank) attrs.target = "_blank";
       if (in_dropdown) attrs.class = ["dropdown-item"];
       if (link_style)
@@ -808,7 +808,7 @@ const get_viewable_fields_from_layout = (
           col.formula = col.contents;
         }
         if (contents.isHTML)
-          col.interpolator = (row: any) =>
+          col.interpolator = (row: Row) =>
             interpolate(contents.contents, row, req?.user, "HTML element");
         break;
       case "action":
@@ -889,7 +889,7 @@ const get_viewable_fields = (
     checkShowIf((column: any, index: number) => {
       const role = req.user ? req.user.role_id : 100;
       const user_id = req.user ? req.user.id : null;
-      const setWidth: any = column.col_width
+      const setWidth: Record<string, any> = column.col_width
         ? { width: `${column.col_width}${column.col_width_units}` }
         : {};
       setWidth.align =
@@ -1187,7 +1187,7 @@ const get_viewable_fields = (
         }
         let gofv =
           fieldview && type && type.fieldviews && type.fieldviews[fieldview]
-            ? (row: any) =>
+            ? (row: Row) =>
                 type.fieldviews[fieldview].run(row[key], req, {
                   row,
                   ...(field?.attributes || {}),
@@ -1196,7 +1196,7 @@ const get_viewable_fields = (
                 })
             : null;
         if (!gofv && column.field_type === "File") {
-          gofv = (row: any) =>
+          gofv = (row: Row) =>
             row[key]
               ? getState().fileviews[fieldview].run(row[key], "", {
                   row,
@@ -1219,7 +1219,7 @@ const get_viewable_fields = (
           row_label: field?.label,
           statekey,
           header_filter,
-          key: gofv ? gofv : (row: any) => text(row[key]),
+          key: gofv ? gofv : (row: Row) => text(row[key]),
           sortlink: sortlinkForName(key, req, viewname, statehash),
         };
         if (column.click_to_edit) {
@@ -1228,8 +1228,8 @@ const get_viewable_fields = (
           const oldkey =
             typeof fvrun.key === "function"
               ? fvrun.key
-              : (r: Row) => r[fvrun.key];
-          const newkey = (row: any) =>
+              : (r: Row) => r[fvrun.key as unknown as string];
+          const newkey = (row: Row) =>
             div(
               {
                 "data-inline-edit-fielddata": encodeURIComponent(
@@ -1377,7 +1377,7 @@ const get_viewable_fields = (
             row_label: f.label,
             key:
               column.fieldview && f.type === "File"
-                ? (row: any) =>
+                ? (row: Row) =>
                     row[f!.name] &&
                     getState().fileviews[column.fieldview].run(
                       row[f!.name],
@@ -1387,7 +1387,7 @@ const get_viewable_fields = (
                 : column.fieldview &&
                   ftype.fieldviews &&
                   ftype.fieldviews[column.fieldview]
-                ? (row: any) =>
+                ? (row: Row) =>
                     ftype.fieldviews[column.fieldview].run(
                       row[f_with_val!.name],
                       req,
@@ -1395,8 +1395,8 @@ const get_viewable_fields = (
                     )
                 : isShow
                 ? ftype.showAs
-                  ? (row: any) => ftype.showAs(row[f_with_val!.name])
-                  : (row: any) => text(row[f_with_val!.name])
+                  ? (row: Row) => ftype.showAs(row[f_with_val!.name])
+                  : (row: Row) => text(row[f_with_val!.name])
                 : f.listKey,
             header_filter,
             sortlink:
@@ -1418,7 +1418,7 @@ const get_viewable_fields = (
                     (s: any) => s.key === column_key
                   )
                 : undefined;
-            const newkey = (row: any) => {
+            const newkey = (row: Row) => {
               if (role <= table.min_role_write || table.is_owner(req.user, row))
                 return div(
                   {
@@ -1452,7 +1452,7 @@ const get_viewable_fields = (
         return fvrun;
       }
     })
-  ).filter((v: any) => !!v);
+  ).filter((v) => !!v);
   if (dropdown_actions.length > 0) {
     //legacy
     tfields.push({
@@ -1550,7 +1550,7 @@ const headerFilterForField =
     /*if (f.is_fkey) {
     fieldviewObjs = [getState().keyFieldviews.select];
   } else */
-    let extraAttrs: any = {};
+    let extraAttrs: Record<string, any> = {};
     if (ftype?.name === "Bool") {
       fieldviewObjs = [ftype.fieldviews.tristate];
       extraAttrs.outline_buttons = true;
@@ -1600,7 +1600,7 @@ const headerFilterForField =
  */
 const sortlinkForName = (
   fname: string,
-  req: any,
+  req: GenObj,
   viewname: string,
   statehash: string
 ): string => {
@@ -1675,13 +1675,13 @@ const standardLayoutRowVisitor = (
 
       // TODO mutation here - potential issue with renderRows
       segment.titles = segment.titles.filter(
-        (v: any, ix: number) => !to_delete.has(ix)
+        (_v: unknown, ix: number) => !to_delete.has(ix)
       );
       segment.contents = segment.contents.filter(
-        (v: any, ix: number) => !to_delete.has(ix)
+        (_v: unknown, ix: number) => !to_delete.has(ix)
       );
 
-      (segment.titles || []).forEach((t: any, ix: number) => {
+      (segment.titles || []).forEach((t: unknown, ix: number) => {
         if (typeof t === "string" && t.includes("{{")) {
           segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
         }
@@ -1933,10 +1933,10 @@ const standardBlockDispatch = (
           col: { ...segment },
           referrer: req?.get?.("Referrer"),
           req: req,
-        }).catch((e: any) => Crash.create(e, req));
+        }).catch((e: unknown) => Crash.create(e as Error, req));
         return "";
       }
-      let url: any = action_url(
+      let url: string | { javascript: string } = action_url(
         viewname,
         table,
         segment.action_name,
@@ -2154,7 +2154,7 @@ const getForm = async (
         }
       }
     })
-    .filter((tf: any) => !!tf);
+    .filter((tf): tf is Field => !!tf);
   const path = isWeb(req) ? req.baseUrl + req.path : "";
   const qs = objectToQueryString(req.query);
   let action = `/view/${viewname}${qs ? "?" + qs : ""}`;
@@ -2193,7 +2193,7 @@ const getForm = async (
     if (loginForm && viewname === loginForm) isMobileLogin = true;
   }
   let submitActionJS = undefined;
-  const submitActionCol = columns.find((c: any) => c.is_submit_action);
+  const submitActionCol = columns.find((c) => c.is_submit_action);
 
   if (submitActionCol) {
     submitActionJS = `event.preventDefault();view_post(this, 'run_action', {rndid:'${submitActionCol.rndid}', ...get_form_record(this) })`;
@@ -2248,7 +2248,7 @@ const transformForm = async ({
   state: GenObj;
 }): Promise<void> => {
   let originalState = state;
-  let pseudo_row: any = {};
+  let pseudo_row: GenObj = {};
   if (!row) {
     table.fields.forEach((f) => {
       pseudo_row[f.name] = undefined;
@@ -2358,9 +2358,7 @@ const transformForm = async ({
 
           // If this is a Multi-step action or the form/table contains File fields,
           // post multipart FormData so req.files is populated server-side.
-          const hasFileFields = table.fields?.some(
-            (f: any) => f.type === "File"
-          );
+          const hasFileFields = table.fields?.some((f) => f.type === "File");
           if (segment.action_name === "Multi-step action" || hasFileFields) {
             url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
           } else {
@@ -2389,13 +2387,13 @@ const transformForm = async ({
       });
 
       segment.titles = segment.titles.filter(
-        (v: any, ix: number) => !to_delete.has(ix)
+        (_v: unknown, ix: number) => !to_delete.has(ix)
       );
       segment.contents = segment.contents.filter(
-        (v: any, ix: number) => !to_delete.has(ix)
+        (_v: unknown, ix: number) => !to_delete.has(ix)
       );
 
-      (segment.titles || []).forEach((t: any, ix: number) => {
+      (segment.titles || []).forEach((t: unknown, ix: number) => {
         if (typeof t === "string" && t.includes("{{")) {
           segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
         }
@@ -2513,12 +2511,12 @@ const transformForm = async ({
         segment.field_repeat = fr;
         return;
       } // end edit in edit
-      const outerState: any = {};
+      const outerState: GenObj = {};
       Object.entries(originalState || {}).forEach(([k, v]) => {
         if (k.startsWith("_")) outerState[k] = v;
       });
-      let state: any = {};
-      let urlFormula: any;
+      let state: GenObj = {};
+      let urlFormula: string | undefined;
       let needFields = new Set<string>();
       if (view_select.type === "RelationPath" && view.table_id) {
         const pathToUrlFormula = (relation: any) => {
@@ -2637,7 +2635,7 @@ const transformForm = async ({
             class: "d-inline",
             "data-sc-embed-viewname": view.name,
             "data-view-source-need-fields": [...needFields].join(","),
-            "data-view-source": encodeURIComponent(urlFormula),
+            "data-view-source": encodeURIComponent(urlFormula!),
           });
           return;
         }
@@ -2666,7 +2664,7 @@ const transformForm = async ({
           "data-sc-view-source": `/view/${view.name}${qs}`,
           "data-view-source-current": `/view/${view.name}${qs}`,
           "data-view-source-need-fields": [...needFields].join(","),
-          "data-view-source": encodeURIComponent(urlFormula),
+          "data-view-source": encodeURIComponent(urlFormula!),
         },
         view.renderLocally()
           ? await view.run(
