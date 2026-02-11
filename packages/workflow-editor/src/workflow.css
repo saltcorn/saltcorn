@@ -10,6 +10,7 @@
   --wf-edge-label: #495057;
   --wf-handle-border: #3f3f3f;
   --wf-handle-bg: #fff;
+  --wf-handle-source-bg: #5a5a5a;
 }
 
 .wf-toolbar {
@@ -185,6 +186,11 @@
 .wf-shell .react-flow__edge-path {
   stroke: var(--wf-edge);
   fill: none;
+  stroke-width: 1.5px;
+}
+
+.wf-shell .react-flow__connection-path {
+  stroke-width: 1.5px;
 }
 
 .wf-shell .react-flow__edge-text {
@@ -194,6 +200,20 @@
 .wf-shell .react-flow__handle {
   background: var(--wf-handle-bg);
   border-color: var(--wf-handle-border);
+}
+
+.wf-shell .react-flow__handle.wf-handle-source {
+  background: var(--wf-handle-source-bg) !important;
+  border-color: var(--wf-handle-source-bg) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.wf-shell .react-flow__handle.wf-handle-source-loop {
+  background: var(--wf-edge-loop) !important;
+  border-color: var(--wf-edge-loop) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.wf-shell .react-flow__handle.wf-handle-target-loop {
+  border-color: var(--wf-edge-loop) !important;
 }
 
 .wf-edge-add-button {
@@ -230,4 +250,5 @@
   --wf-edge-label: #c0c4cf;
   --wf-handle-border: #c0c4cf;
   --wf-handle-bg: #2f3139;
+  --wf-handle-source-bg: #8a8a8a;
 }

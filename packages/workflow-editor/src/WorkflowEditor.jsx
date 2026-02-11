@@ -10,6 +10,7 @@ import {
   Controls,
   Handle,
   MiniMap,
+  MarkerType,
   Position,
   useEdgesState,
   useNodesState,
@@ -33,6 +34,13 @@ const H_GAP = 80;
 const V_GAP = 60;
 const ADD_NODE_SIZE = 32;
 const ADD_GAP = 32;
+const DEFAULT_ARROW_COLOR = "var(--wf-edge-label, #6c757d)";
+const makeMarker = (color = DEFAULT_ARROW_COLOR) => ({
+  type: MarkerType.ArrowClosed,
+  width: 18,
+  height: 18,
+  color,
+});
 
 const normalizeSize = (size) => {
   if (!size) return null;
@@ -52,7 +60,8 @@ const StartNode = ({ data }) => (
       style={handleStyle}
       id="start"
       type="source"
-      position={Position.Right}
+      className="wf-handle-source"
+      position={Position.Bottom}
     />
   </div>
 );
@@ -78,7 +87,7 @@ const AddNode = ({ data }) => {
       onKeyDown={handleKeyDown}
     >
       <span aria-hidden>+</span>
-      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Top} />
     </div>
   );
 };
@@ -108,11 +117,11 @@ const StepNode = ({ data }) => {
     }
   };
 
-  const isLoopBody = data.inLoopBody;
-  const useVerticalHandles =
-    isLoopBody && String(data.action_name) !== "ForLoop";
-  const targetPosition = useVerticalHandles ? Position.Top : Position.Left;
-  const sourcePosition = useVerticalHandles ? Position.Bottom : Position.Right;
+  const targetPosition = Position.Top;
+  const sourcePosition = Position.Bottom;
+  const backInStyle = { ...handleStyle, top: "32%" };
+  const backOutStyle = { ...handleStyle, top: "68%" };
+  const isLoop = data.action_name === "ForLoop";
 
   return (
     <div
@@ -158,8 +167,41 @@ const StepNode = ({ data }) => {
         style={handleStyle}
         id="main"
         type="source"
+        className="wf-handle-source"
         position={sourcePosition}
       />
+      {/* Back edges use left handles to untangle cross-links */}
+      <Handle
+        style={backInStyle}
+        id="back-in"
+        type="target"
+        position={Position.Left}
+      />
+      <Handle
+        style={backOutStyle}
+        id="back-out"
+        type="source"
+        className="wf-handle-source"
+        position={Position.Left}
+      />
+      {isLoop ? (
+        <>
+          <Handle
+            style={handleStyle}
+            id="loop-in"
+            type="target"
+            className="wf-handle-target-loop"
+            position={Position.Left}
+          />
+          <Handle
+            style={handleStyle}
+            id="loop-out"
+            type="source"
+            className="wf-handle-source-loop"
+            position={Position.Right}
+          />
+        </>
+      ) : null}
     </div>
   );
 };
@@ -234,6 +276,7 @@ const buildGraph = (
   });
 
   const allStepNames = steps.map((s) => s.name).filter(Boolean);
+  const orderIndex = new Map(steps.map((s, idx) => [String(s.id), idx]));
 
   const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -275,62 +318,16 @@ const buildGraph = (
     adjacency.set(String(s.id), [...new Set(targets)]);
   });
 
-  const depths = {};
-  const queue = [];
-  if (initial) {
-    depths[String(initial.id)] = 1;
-    queue.push(String(initial.id));
-  }
-
-  while (queue.length) {
-    const current = queue.shift();
-    const d = depths[current];
-    (adjacency.get(current) || []).forEach((n) => {
-      if (depths[n] === undefined) {
-        depths[n] = d + 1;
-        queue.push(n);
-      }
-    });
-  }
-
-  let maxDepth = Object.values(depths).reduce((m, v) => Math.max(m, v), 0);
-  const sortedRemaining = steps
-    .map((s) => String(s.id))
-    .filter((id) => depths[id] === undefined)
-    .sort();
-  if (sortedRemaining.length) {
-    const orphanDepth = maxDepth + 1;
-    sortedRemaining.forEach((id) => {
-      depths[id] = orphanDepth;
-    });
-    maxDepth = orphanDepth;
-  }
-
-  const groupByDepth = new Map();
-  steps.forEach((s) => {
-    const d = depths[String(s.id)] || 1;
-    if (!groupByDepth.has(d)) groupByDepth.set(d, []);
-    groupByDepth.get(d).push(String(s.id));
-  });
-  [...groupByDepth.values()].forEach((arr) => arr.sort());
-
   const positions = {};
-  const depthEntries = [...groupByDepth.entries()].sort(([a], [b]) => a - b);
-  const depthX = {};
-  let xCursor = 0;
-  depthEntries.forEach(([d, ids]) => {
-    const colWidth = Math.max(
-      ...ids.map((id) => sizeById[id]?.width || DEFAULT_NODE_WIDTH)
-    );
-    depthX[d] = xCursor;
-    xCursor += colWidth + H_GAP;
-  });
-  depthEntries.forEach(([d, ids]) => {
-    let yCursor = 0;
-    ids.forEach((id) => {
-      positions[id] = { x: depthX[d], y: yCursor };
-      yCursor += (sizeById[id]?.height || DEFAULT_NODE_HEIGHT) + V_GAP;
-    });
+  let yCursor = 0;
+  steps.forEach((s) => {
+    const id = String(s.id);
+    const size = sizeById[id] || {
+      width: DEFAULT_NODE_WIDTH,
+      height: DEFAULT_NODE_HEIGHT,
+    };
+    positions[id] = { x: 0, y: yCursor };
+    yCursor += size.height + V_GAP;
   });
 
   // Nudge ForLoop bodies to be vertical under their loop parent for readability
@@ -378,10 +375,10 @@ const buildGraph = (
     startPosition ||
     (initial
       ? {
-          x: positions[String(initial.id)]?.x - 180 || -180,
-          y: positions[String(initial.id)]?.y || 40,
+          x: positions[String(initial.id)]?.x ?? 0,
+          y: (positions[String(initial.id)]?.y ?? 0) - 160,
         }
-      : { x: -180, y: 40 });
+      : { x: 0, y: -160 });
 
   const nodes = [
     {
@@ -431,6 +428,7 @@ const buildGraph = (
       target: String(initial.id),
       type: "smoothstep",
       animated: true,
+      markerEnd: makeMarker(),
     });
   else {
     const addId = "add-start";
@@ -445,6 +443,7 @@ const buildGraph = (
         strokeDasharray: "4 2",
         stroke: "var(--wf-edge-adder, #0d6efd)",
       },
+      markerEnd: makeMarker("var(--wf-edge-adder, #0d6efd)"),
     });
   }
 
@@ -458,12 +457,21 @@ const buildGraph = (
       nextNames.forEach((name) => {
         const targetId = idByName[name];
         if (!targetId) return;
+        const srcOrder = orderIndex.get(String(step.id));
+        const tgtOrder = orderIndex.get(targetId);
+        const isBackEdge =
+          srcOrder !== undefined &&
+          tgtOrder !== undefined &&
+          tgtOrder < srcOrder;
         edges.push({
           id: `e-${step.id}-${name}`,
           source: String(step.id),
           target: targetId,
           type: "workflow-main",
           animated: true,
+          sourceHandle: isBackEdge ? "back-out" : undefined,
+          targetHandle: isBackEdge ? "back-in" : undefined,
+          markerEnd: makeMarker(),
           data: {
             startLabel: step.name,
             sourceStepName: step.name,
@@ -483,12 +491,14 @@ const buildGraph = (
           source: String(step.id),
           target: loopId || String(step.id),
           type: "smoothstep",
+          sourceHandle: "loop-out",
+          targetHandle: loopId ? undefined : "loop-in",
           style: {
             stroke: "var(--wf-edge-loop, #f59f00)",
             strokeDasharray: "6 4",
           },
           label: strings.loopBody,
-          markerEnd: "arrowclosed",
+          markerEnd: makeMarker("var(--wf-edge-loop, #f59f00)"),
           data: { loop: true, missing: !loopId },
         });
       }
@@ -503,12 +513,14 @@ const buildGraph = (
           source: String(step.id),
           target: loopId,
           type: "smoothstep",
+          sourceHandle: "back-out",
+          targetHandle: "loop-in",
           style: {
             stroke: "var(--wf-edge-loop, #f59f00)",
             strokeDasharray: "6 4",
           },
           data: { loop: true, loopBack: true },
-          markerEnd: "arrowclosed",
+          markerEnd: makeMarker("var(--wf-edge-loop, #f59f00)"),
           deletable: false,
         });
       }
@@ -522,8 +534,8 @@ const buildGraph = (
       id: addId,
       type: "add",
       position: addPositions?.[addId] || {
-        x: startNodePosition.x + 160,
-        y: startNodePosition.y,
+        x: startNodePosition.x,
+        y: startNodePosition.y + 160,
       },
       data: { strings, afterStepId: "start" },
       draggable: true,
@@ -544,8 +556,8 @@ const buildGraph = (
       id: addId,
       type: "add",
       position: addPositions?.[addId] || {
-        x: basePos.x + baseSize.width + ADD_GAP,
-        y: basePos.y + baseSize.height / 2 - ADD_NODE_SIZE / 2,
+        x: basePos.x + baseSize.width / 2 - ADD_NODE_SIZE / 2,
+        y: basePos.y + baseSize.height + ADD_GAP,
       },
       data: { strings, afterStepId: String(step.id) },
       draggable: true,
@@ -563,6 +575,7 @@ const buildGraph = (
         strokeDasharray: "4 2",
         stroke: "var(--wf-edge-adder, #0d6efd)",
       },
+      markerEnd: makeMarker("var(--wf-edge-adder, #0d6efd)"),
     });
   });
 
@@ -744,10 +757,12 @@ const WorkflowEditor = ({ data }) => {
       const stepNode = stepById.get(node.id.replace("add-", ""));
       if (!stepNode) return;
 
-      const nextX = stepNode.position.x + stepNode.width + ADD_GAP;
+      const nextX =
+        stepNode.position.x +
+        stepNode.width / 2 -
+        (node.width || ADD_NODE_SIZE) / 2;
 
-      const nextY =
-        stepNode.position.y + stepNode.height / 2 - (node.height || 24) / 2;
+      const nextY = stepNode.position.y + stepNode.height + ADD_GAP;
 
       const nextPosition = { x: nextX, y: nextY };
 
