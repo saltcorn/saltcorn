@@ -34597,29 +34597,40 @@ var buildGraph = function buildGraph(steps, strings, actionExplainers) {
     nameById: nameById
   };
 };
-var StepModal = function StepModal(_ref5) {
+var StepDrawer = function StepDrawer(_ref5) {
+  var _data$strings;
   var modal = _ref5.modal,
     innerRef = _ref5.innerRef,
     onClose = _ref5.onClose,
     submitting = _ref5.submitting,
     error = _ref5.error,
     data = _ref5.data,
-    onDelete = _ref5.onDelete;
-  if (!modal) return null;
+    onDelete = _ref5.onDelete,
+    drawerWidth = _ref5.drawerWidth,
+    onResizeStart = _ref5.onResizeStart;
+  var isOpen = !!modal;
   return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
-    className: "wf-modal-backdrop"
-  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
-    className: "wf-modal card shadow"
-  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
-    className: "card-header d-flex justify-content-between align-items-center"
-  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h5", {
+    className: "wf-drawer".concat(isOpen ? " wf-drawer--open" : ""),
+    role: "dialog",
+    "aria-modal": "false",
+    "aria-hidden": !isOpen,
+    "aria-label": (modal === null || modal === void 0 ? void 0 : modal.title) || (data === null || data === void 0 || (_data$strings = data.strings) === null || _data$strings === void 0 ? void 0 : _data$strings.configure),
+    style: {
+      "--wf-drawer-width": "".concat(drawerWidth, "px")
+    }
+  }, modal ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
+    className: "wf-drawer__resize",
+    onPointerDown: onResizeStart
+  }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
+    className: "wf-drawer__header d-flex justify-content-between align-items-center"
+  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("h5", {
     className: "mb-0"
-  }, modal.title), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
+  }, modal.title)), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
     className: "btn-close",
     onClick: onClose,
     "aria-label": "Close"
   })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
-    className: "card-body"
+    className: "wf-drawer__body"
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
     ref: innerRef,
     dangerouslySetInnerHTML: {
@@ -34628,7 +34639,7 @@ var StepModal = function StepModal(_ref5) {
   }), error ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
     className: "alert alert-danger mt-3"
   }, error) : null), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
-    className: "card-footer d-flex justify-content-end gap-2"
+    className: "wf-drawer__footer d-flex justify-content-end gap-2"
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
     className: "btn btn-sm btn-outline-danger",
     onClick: function onClick(e) {
@@ -34648,7 +34659,7 @@ var StepModal = function StepModal(_ref5) {
       }));
     },
     disabled: submitting
-  }, submitting ? "Saving..." : "Save"))));
+  }, submitting ? "Saving..." : "Save"))) : null);
 };
 var WorkflowEditor = function WorkflowEditor(_ref6) {
   var _data$config;
@@ -34714,15 +34725,20 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     _useState22 = _slicedToArray(_useState21, 2),
     sizeSyncing = _useState22[0],
     setSizeSyncing = _useState22[1];
+  var _useState23 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(420),
+    _useState24 = _slicedToArray(_useState23, 2),
+    drawerWidth = _useState24[0],
+    setDrawerWidth = _useState24[1];
   var modalRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
+  var resizingRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
   var rfInstanceRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
   var onInit = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (instance) {
     rfInstanceRef.current = instance;
   }, []);
-  var _useState23 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)([]),
-    _useState24 = _slicedToArray(_useState23, 2),
-    selectedNodes = _useState24[0],
-    setSelectedNodes = _useState24[1];
+  var _useState25 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)([]),
+    _useState26 = _slicedToArray(_useState25, 2),
+    selectedNodes = _useState26[0],
+    setSelectedNodes = _useState26[1];
   var handleSelectionChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_ref7) {
     var _ref7$nodes = _ref7.nodes,
       nodes = _ref7$nodes === void 0 ? [] : _ref7$nodes;
@@ -35583,8 +35599,40 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     });
   }, [onInsertBetween, setEdges, edges]);
   var hasSteps = steps.length > 0;
+  var shellClass = modal ? "wf-shell wf-shell--drawer-open" : "wf-shell";
+  var shellStyle = {
+    "--wf-drawer-width": "".concat(drawerWidth, "px")
+  };
+  var showMiniMap = !modal;
+  var handleResize = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (e) {
+    if (!resizingRef.current) return;
+    var maxWidth = Math.min(900, Math.max(360, window.innerWidth - 40));
+    var nextWidth = Math.min(Math.max(320, window.innerWidth - e.clientX), maxWidth);
+    setDrawerWidth(nextWidth);
+  }, []);
+  var stopResize = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function () {
+    if (!resizingRef.current) return;
+    resizingRef.current = false;
+    document.body.style.userSelect = "";
+    window.removeEventListener("pointermove", handleResize);
+    window.removeEventListener("pointerup", stopResize);
+  }, [handleResize]);
+  var startResize = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (e) {
+    if (!modal) return;
+    resizingRef.current = true;
+    document.body.style.userSelect = "none";
+    window.addEventListener("pointermove", handleResize);
+    window.addEventListener("pointerup", stopResize);
+    e.preventDefault();
+  }, [handleResize, modal, stopResize]);
+  (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
+    return function () {
+      return stopResize();
+    };
+  }, [stopResize]);
   return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
-    className: "wf-shell"
+    className: shellClass,
+    style: shellStyle
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
     className: "wf-toolbar"
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
@@ -35639,7 +35687,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     zoomable: true
   }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Controls, null), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Background, {
     gap: 16
-  }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(StepModal, {
+  }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(StepDrawer, {
     modal: modal,
     innerRef: modalRef,
     onClose: function onClose() {
@@ -35649,7 +35697,9 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     submitting: savingModal,
     error: error && modal ? error : "",
     data: data,
-    onDelete: onDelete
+    onDelete: onDelete,
+    drawerWidth: drawerWidth,
+    onResizeStart: startResize
   }));
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (WorkflowEditor);
@@ -52664,6 +52714,8 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  position: relative;
+  transition: padding-right 0.25s ease;
   --wf-edge: #6c757d;
   --wf-edge-adder: #0d6efd;
   --wf-edge-loop: #f59f00;
@@ -52671,6 +52723,11 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   --wf-handle-border: #3f3f3f;
   --wf-handle-bg: #fff;
   --wf-handle-source-bg: #5a5a5a;
+  --wf-drawer-width: 420px;
+}
+
+.wf-shell--drawer-open {
+  padding-right: calc(var(--wf-drawer-width) - 44px);
 }
 
 .wf-toolbar {
@@ -52817,6 +52874,61 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   outline-offset: 2px;
 }
 
+.wf-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(var(--wf-drawer-width), 95vw);
+  background: var(--bs-card-bg, #fff);
+  color: var(--bs-body-color, #212529);
+  border-left: 1px solid var(--bs-card-border-color, #e2e6ea);
+  display: flex;
+  flex-direction: column;
+  z-index: 1050;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  overflow: visible;
+}
+
+.wf-drawer--open {
+  transform: translateX(0);
+}
+
+.wf-drawer__resize {
+  position: absolute;
+  left: -6px;
+  top: 0;
+  width: 10px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 1;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.wf-drawer__header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);
+}
+
+.wf-drawer__body {
+  padding: 16px 18px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.wf-drawer__footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--bs-card-border-color, #e2e6ea);
+}
+
 .wf-modal-backdrop {
   position: fixed;
   top: 0;
@@ -52843,6 +52955,16 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */
 }
 
+@media (max-width: 768px) {
+  .wf-shell--drawer-open {
+    padding-right: 0;
+  }
+
+  .wf-drawer {
+    width: min(480px, 100vw);
+  }
+}
+
 .wf-shell .react-flow__edge-path {
   stroke: var(--wf-edge);
   fill: none;
@@ -52863,8 +52985,8 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
 }
 
 .wf-shell .react-flow__handle.wf-handle-source {
-  background: var(--wf-handle-source-bg, #5a5a5a) !important;
-  border-color: var(--wf-handle-source-bg, #5a5a5a) !important;
+  background: var(--wf-handle-source-bg) !important;
+  border-color: var(--wf-handle-source-bg) !important;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
 }
 .wf-shell .react-flow__handle.wf-handle-source-loop {
@@ -52912,7 +53034,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   --wf-handle-bg: #2f3139;
   --wf-handle-source-bg: #8a8a8a;
 }
-`, "",{"version":3,"sources":["webpack://./src/workflow.css"],"names":[],"mappings":"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","sourcesContent":[".wf-shell {\n  padding: 0;\n  height: 100%;\n  min-height: 0;\n  display: flex;\n  flex-direction: column;\n  --wf-edge: #6c757d;\n  --wf-edge-adder: #0d6efd;\n  --wf-edge-loop: #f59f00;\n  --wf-edge-label: #495057;\n  --wf-handle-border: #3f3f3f;\n  --wf-handle-bg: #fff;\n  --wf-handle-source-bg: #5a5a5a;\n}\n\n.wf-toolbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 10px 12px;\n  border-bottom: 1px solid #e2e6ea;\n  background: transparent;\n}\n\n.wf-toolbar__actions button,\n.wf-toolbar__actions a {\n  margin-left: 8px;\n}\n\n.wf-canvas {\n  height: 100%;\n  flex: 1;\n  min-height: 0;\n  background: #fafbfc;\n}\n\n.wf-empty {\n  padding: 12px;\n  color: #6c757d;\n}\n\n.wf-node {\n  background: var(--xy-node-background-color-default, #fff);\n  /* border: var(--xy-node-border-default); */\n  border: 1px solid #777777;\n  border-radius: 10px;\n  padding: 10px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);\n  min-width: 200px;\n  cursor: pointer;\n  max-width: 240px;\n}\n\n.wf-modal .card-body {\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: auto;\n}\n.wf-node__header {\n  display: flex;\n  justify-content: space-between;\n  align-items: flex-start;\n  margin-bottom: 4px;\n}\n\n.wf-node__title-row {\n  display: flex;\n  gap: 8px;\n  align-items: baseline;\n  flex-wrap: wrap;\n}\n\n.wf-node__title {\n  font-weight: 700;\n  font-size: 14px;\n}\n\n.wf-node__action {\n  font-weight: 600;\n  color: #0d6efd;\n  font-size: 12px;\n}\n\n.wf-node__desc {\n  font-size: 12px;\n  color: #495057;\n  margin-bottom: 4px;\n}\n\n.wf-node__summary {\n  font-size: 12px;\n  color: var(--xy-node-color-default, #495057);\n  margin: 4px 0 6px;\n  padding-left: 16px;\n}\n\n.wf-node__summary li {\n  margin-bottom: 2px;\n}\n\n.wf-node__meta {\n  font-size: 12px;\n  color: #6c757d;\n}\n\n.wf-label {\n  font-weight: 600;\n}\n\n.wf-node__footer {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin-top: 8px;\n}\n\n.wf-start-node {\n  padding: 10px;\n  border-radius: 10px;\n  background: linear-gradient(135deg, #0d6efd, #5ab2ff);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);\n  min-width: 100px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n}\n\n.wf-start-title {\n  font-weight: 700;\n}\n\n.wf-start-actions button {\n  color: #0d6efd;\n  background: #fff;\n  border-color: #fff;\n}\n\n.wf-add-node {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--xy-node-background-color-default, #fff);\n  border: 1px dashed var(--xy-node-border-default, #adb5bd);\n  color: #0d6efd;\n  font-weight: 700;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);\n  cursor: pointer;\n}\n\n.wf-add-node:focus {\n  outline: 2px solid #0d6efd;\n  outline-offset: 2px;\n}\n\n.wf-modal-backdrop {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  background: rgba(0, 0, 0, 0.45);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 1050;\n}\n\n.wf-modal {\n  /* background: var(--bs-card-bg, #fff); */\n  /* color: var(--bs-body-color, #212529); */\n  border-radius: 10px;\n  /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */\n  width: min(900px, 90vw);\n  max-height: 90vh;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */\n}\n\n.wf-shell .react-flow__edge-path {\n  stroke: var(--wf-edge);\n  fill: none;\n  stroke-width: 1.5px;\n}\n\n.wf-shell .react-flow__connection-path {\n  stroke-width: 1.5px;\n}\n\n.wf-shell .react-flow__edge-text {\n  fill: var(--wf-edge-label);\n}\n\n.wf-shell .react-flow__handle {\n  background: var(--wf-handle-bg);\n  border-color: var(--wf-handle-border);\n}\n\n.wf-shell .react-flow__handle.wf-handle-source {\n  background: var(--wf-handle-source-bg, #5a5a5a) !important;\n  border-color: var(--wf-handle-source-bg, #5a5a5a) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-source-loop {\n  background: var(--wf-edge-loop) !important;\n  border-color: var(--wf-edge-loop) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-target-loop {\n  border-color: var(--wf-edge-loop) !important;\n}\n\n.wf-edge-add-button {\n  width: 18px;\n  height: 18px;\n  border-radius: 50%;\n  border: 1px solid #adb5bd;\n  background: #ffffff;\n  color: #6c757d;\n  font-size: 12px;\n  line-height: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  padding: 0;\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);\n}\n\n.wf-edge-add-button:hover {\n  background: #f1f3f5;\n  color: #495057;\n}\n\n.wf-edge-add-button:focus {\n  outline: 2px solid #adb5bd;\n  outline-offset: 2px;\n}\n\n[data-bs-theme=\"dark\"] .wf-shell {\n  --wf-edge: #aeb3bd;\n  --wf-edge-adder: #6ea8fe;\n  --wf-edge-loop: #f0ad4e;\n  --wf-edge-label: #c0c4cf;\n  --wf-handle-border: #c0c4cf;\n  --wf-handle-bg: #2f3139;\n  --wf-handle-source-bg: #8a8a8a;\n}\n"],"sourceRoot":""}]);
+`, "",{"version":3,"sources":["webpack://./src/workflow.css"],"names":[],"mappings":"AAAA;EACE,UAAU;EACV,YAAY;EACZ,aAAa;EACb,aAAa;EACb,sBAAsB;EACtB,kBAAkB;EAClB,oCAAoC;EACpC,kBAAkB;EAClB,wBAAwB;EACxB,uBAAuB;EACvB,wBAAwB;EACxB,2BAA2B;EAC3B,oBAAoB;EACpB,8BAA8B;EAC9B,wBAAwB;AAC1B;;AAEA;EACE,kDAAkD;AACpD;;AAEA;EACE,aAAa;EACb,8BAA8B;EAC9B,mBAAmB;EACnB,kBAAkB;EAClB,gCAAgC;EAChC,uBAAuB;AACzB;;AAEA;;EAEE,gBAAgB;AAClB;;AAEA;EACE,YAAY;EACZ,OAAO;EACP,aAAa;EACb,mBAAmB;AACrB;;AAEA;EACE,aAAa;EACb,cAAc;AAChB;;AAEA;EACE,yDAAyD;EACzD,2CAA2C;EAC3C,yBAAyB;EACzB,mBAAmB;EACnB,aAAa;EACb,0CAA0C;EAC1C,gBAAgB;EAChB,eAAe;EACf,gBAAgB;AAClB;;AAEA;EACE,cAAc;EACd,aAAa;EACb,cAAc;AAChB;AACA;EACE,aAAa;EACb,8BAA8B;EAC9B,uBAAuB;EACvB,kBAAkB;AACpB;;AAEA;EACE,aAAa;EACb,QAAQ;EACR,qBAAqB;EACrB,eAAe;AACjB;;AAEA;EACE,gBAAgB;EAChB,eAAe;AACjB;;AAEA;EACE,gBAAgB;EAChB,cAAc;EACd,eAAe;AACjB;;AAEA;EACE,eAAe;EACf,cAAc;EACd,kBAAkB;AACpB;;AAEA;EACE,eAAe;EACf,4CAA4C;EAC5C,iBAAiB;EACjB,kBAAkB;AACpB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;EACE,eAAe;EACf,cAAc;AAChB;;AAEA;EACE,gBAAgB;AAClB;;AAEA;EACE,aAAa;EACb,eAAe;EACf,QAAQ;EACR,eAAe;AACjB;;AAEA;EACE,aAAa;EACb,mBAAmB;EACnB,qDAAqD;EACrD,WAAW;EACX,8CAA8C;EAC9C,gBAAgB;EAChB,aAAa;EACb,sBAAsB;EACtB,mBAAmB;EACnB,kBAAkB;AACpB;;AAEA;EACE,gBAAgB;AAClB;;AAEA;EACE,cAAc;EACd,gBAAgB;EAChB,kBAAkB;AACpB;;AAEA;EACE,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,yDAAyD;EACzD,yDAAyD;EACzD,cAAc;EACd,gBAAgB;EAChB,aAAa;EACb,mBAAmB;EACnB,uBAAuB;EACvB,yCAAyC;EACzC,eAAe;AACjB;;AAEA;EACE,0BAA0B;EAC1B,mBAAmB;AACrB;;AAEA;EACE,eAAe;EACf,MAAM;EACN,QAAQ;EACR,YAAY;EACZ,wCAAwC;EACxC,mCAAmC;EACnC,oCAAoC;EACpC,2DAA2D;EAC3D,aAAa;EACb,sBAAsB;EACtB,aAAa;EACb,4CAA4C;EAC5C,2BAA2B;EAC3B,gCAAgC;EAChC,iBAAiB;AACnB;;AAEA;EACE,wBAAwB;AAC1B;;AAEA;EACE,kBAAkB;EAClB,UAAU;EACV,MAAM;EACN,WAAW;EACX,YAAY;EACZ,iBAAiB;EACjB,UAAU;EACV;;;;;GAKC;AACH;;AAEA;EACE,uBAAuB;EACvB,6DAA6D;AAC/D;;AAEA;EACE,kBAAkB;EAClB,cAAc;EACd,aAAa;EACb,gBAAgB;AAClB;;AAEA;EACE,kBAAkB;EAClB,0DAA0D;AAC5D;;AAEA;EACE,eAAe;EACf,MAAM;EACN,OAAO;EACP,QAAQ;EACR,SAAS;EACT,+BAA+B;EAC/B,aAAa;EACb,mBAAmB;EACnB,uBAAuB;EACvB,aAAa;AACf;;AAEA;EACE,yCAAyC;EACzC,0CAA0C;EAC1C,mBAAmB;EACnB,4DAA4D;EAC5D,uBAAuB;EACvB,gBAAgB;EAChB,aAAa;EACb,sBAAsB;EACtB,gBAAgB;EAChB,iDAAiD;AACnD;;AAEA;EACE;IACE,gBAAgB;EAClB;;EAEA;IACE,wBAAwB;EAC1B;AACF;;AAEA;EACE,sBAAsB;EACtB,UAAU;EACV,mBAAmB;AACrB;;AAEA;EACE,mBAAmB;AACrB;;AAEA;EACE,0BAA0B;AAC5B;;AAEA;EACE,+BAA+B;EAC/B,qCAAqC;AACvC;;AAEA;EACE,iDAAiD;EACjD,mDAAmD;EACnD,yCAAyC;AAC3C;AACA;EACE,0CAA0C;EAC1C,4CAA4C;EAC5C,yCAAyC;AAC3C;AACA;EACE,4CAA4C;AAC9C;;AAEA;EACE,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,yBAAyB;EACzB,mBAAmB;EACnB,cAAc;EACd,eAAe;EACf,cAAc;EACd,aAAa;EACb,mBAAmB;EACnB,uBAAuB;EACvB,eAAe;EACf,UAAU;EACV,yCAAyC;AAC3C;;AAEA;EACE,mBAAmB;EACnB,cAAc;AAChB;;AAEA;EACE,0BAA0B;EAC1B,mBAAmB;AACrB;;AAEA;EACE,kBAAkB;EAClB,wBAAwB;EACxB,uBAAuB;EACvB,wBAAwB;EACxB,2BAA2B;EAC3B,uBAAuB;EACvB,8BAA8B;AAChC","sourcesContent":[".wf-shell {\n  padding: 0;\n  height: 100%;\n  min-height: 0;\n  display: flex;\n  flex-direction: column;\n  position: relative;\n  transition: padding-right 0.25s ease;\n  --wf-edge: #6c757d;\n  --wf-edge-adder: #0d6efd;\n  --wf-edge-loop: #f59f00;\n  --wf-edge-label: #495057;\n  --wf-handle-border: #3f3f3f;\n  --wf-handle-bg: #fff;\n  --wf-handle-source-bg: #5a5a5a;\n  --wf-drawer-width: 420px;\n}\n\n.wf-shell--drawer-open {\n  padding-right: calc(var(--wf-drawer-width) - 44px);\n}\n\n.wf-toolbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 10px 12px;\n  border-bottom: 1px solid #e2e6ea;\n  background: transparent;\n}\n\n.wf-toolbar__actions button,\n.wf-toolbar__actions a {\n  margin-left: 8px;\n}\n\n.wf-canvas {\n  height: 100%;\n  flex: 1;\n  min-height: 0;\n  background: #fafbfc;\n}\n\n.wf-empty {\n  padding: 12px;\n  color: #6c757d;\n}\n\n.wf-node {\n  background: var(--xy-node-background-color-default, #fff);\n  /* border: var(--xy-node-border-default); */\n  border: 1px solid #777777;\n  border-radius: 10px;\n  padding: 10px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);\n  min-width: 200px;\n  cursor: pointer;\n  max-width: 240px;\n}\n\n.wf-modal .card-body {\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: auto;\n}\n.wf-node__header {\n  display: flex;\n  justify-content: space-between;\n  align-items: flex-start;\n  margin-bottom: 4px;\n}\n\n.wf-node__title-row {\n  display: flex;\n  gap: 8px;\n  align-items: baseline;\n  flex-wrap: wrap;\n}\n\n.wf-node__title {\n  font-weight: 700;\n  font-size: 14px;\n}\n\n.wf-node__action {\n  font-weight: 600;\n  color: #0d6efd;\n  font-size: 12px;\n}\n\n.wf-node__desc {\n  font-size: 12px;\n  color: #495057;\n  margin-bottom: 4px;\n}\n\n.wf-node__summary {\n  font-size: 12px;\n  color: var(--xy-node-color-default, #495057);\n  margin: 4px 0 6px;\n  padding-left: 16px;\n}\n\n.wf-node__summary li {\n  margin-bottom: 2px;\n}\n\n.wf-node__meta {\n  font-size: 12px;\n  color: #6c757d;\n}\n\n.wf-label {\n  font-weight: 600;\n}\n\n.wf-node__footer {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin-top: 8px;\n}\n\n.wf-start-node {\n  padding: 10px;\n  border-radius: 10px;\n  background: linear-gradient(135deg, #0d6efd, #5ab2ff);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);\n  min-width: 100px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n}\n\n.wf-start-title {\n  font-weight: 700;\n}\n\n.wf-start-actions button {\n  color: #0d6efd;\n  background: #fff;\n  border-color: #fff;\n}\n\n.wf-add-node {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--xy-node-background-color-default, #fff);\n  border: 1px dashed var(--xy-node-border-default, #adb5bd);\n  color: #0d6efd;\n  font-weight: 700;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);\n  cursor: pointer;\n}\n\n.wf-add-node:focus {\n  outline: 2px solid #0d6efd;\n  outline-offset: 2px;\n}\n\n.wf-drawer {\n  position: fixed;\n  top: 0;\n  right: 0;\n  height: 100%;\n  width: min(var(--wf-drawer-width), 95vw);\n  background: var(--bs-card-bg, #fff);\n  color: var(--bs-body-color, #212529);\n  border-left: 1px solid var(--bs-card-border-color, #e2e6ea);\n  display: flex;\n  flex-direction: column;\n  z-index: 1050;\n  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);\n  transform: translateX(100%);\n  transition: transform 0.25s ease;\n  overflow: visible;\n}\n\n.wf-drawer--open {\n  transform: translateX(0);\n}\n\n.wf-drawer__resize {\n  position: absolute;\n  left: -6px;\n  top: 0;\n  width: 10px;\n  height: 100%;\n  cursor: ew-resize;\n  z-index: 1;\n  background: linear-gradient(\n    90deg,\n    rgba(0, 0, 0, 0) 0%,\n    rgba(0, 0, 0, 0.08) 50%,\n    rgba(0, 0, 0, 0) 100%\n  );\n}\n\n.wf-drawer__header {\n  padding: 16px 18px 12px;\n  border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-drawer__body {\n  padding: 16px 18px;\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow-y: auto;\n}\n\n.wf-drawer__footer {\n  padding: 12px 18px;\n  border-top: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-modal-backdrop {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  background: rgba(0, 0, 0, 0.45);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 1050;\n}\n\n.wf-modal {\n  /* background: var(--bs-card-bg, #fff); */\n  /* color: var(--bs-body-color, #212529); */\n  border-radius: 10px;\n  /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */\n  width: min(900px, 90vw);\n  max-height: 90vh;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */\n}\n\n@media (max-width: 768px) {\n  .wf-shell--drawer-open {\n    padding-right: 0;\n  }\n\n  .wf-drawer {\n    width: min(480px, 100vw);\n  }\n}\n\n.wf-shell .react-flow__edge-path {\n  stroke: var(--wf-edge);\n  fill: none;\n  stroke-width: 1.5px;\n}\n\n.wf-shell .react-flow__connection-path {\n  stroke-width: 1.5px;\n}\n\n.wf-shell .react-flow__edge-text {\n  fill: var(--wf-edge-label);\n}\n\n.wf-shell .react-flow__handle {\n  background: var(--wf-handle-bg);\n  border-color: var(--wf-handle-border);\n}\n\n.wf-shell .react-flow__handle.wf-handle-source {\n  background: var(--wf-handle-source-bg) !important;\n  border-color: var(--wf-handle-source-bg) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-source-loop {\n  background: var(--wf-edge-loop) !important;\n  border-color: var(--wf-edge-loop) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-target-loop {\n  border-color: var(--wf-edge-loop) !important;\n}\n\n.wf-edge-add-button {\n  width: 18px;\n  height: 18px;\n  border-radius: 50%;\n  border: 1px solid #adb5bd;\n  background: #ffffff;\n  color: #6c757d;\n  font-size: 12px;\n  line-height: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  padding: 0;\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);\n}\n\n.wf-edge-add-button:hover {\n  background: #f1f3f5;\n  color: #495057;\n}\n\n.wf-edge-add-button:focus {\n  outline: 2px solid #adb5bd;\n  outline-offset: 2px;\n}\n\n[data-bs-theme=\"dark\"] .wf-shell {\n  --wf-edge: #aeb3bd;\n  --wf-edge-adder: #6ea8fe;\n  --wf-edge-loop: #f0ad4e;\n  --wf-edge-label: #c0c4cf;\n  --wf-handle-border: #c0c4cf;\n  --wf-handle-bg: #2f3139;\n  --wf-handle-source-bg: #8a8a8a;\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

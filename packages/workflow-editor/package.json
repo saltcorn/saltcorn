@@ -3,6 +3,7 @@
   "version": "1.6.0-alpha.6",
   "description": "React Flow-based workflow editor for Saltcorn",
   "main": "index.js",
+  "homepage": "https://saltcorn.com",
   "scripts": {
     "build": "webpack --mode production",
     "builddev": "webpack --mode none",
@@ -10,7 +11,7 @@
     "test": "echo \"NO TESTS\""
   },
   "repository": "github:saltcorn/saltcorn",
-  "author": "Saltcorn",
+  "author": "RUTAYISIRE MANZI Gerard Valentin",
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "7.25.2",

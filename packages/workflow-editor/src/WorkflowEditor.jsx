@@ -584,7 +584,7 @@ const buildGraph = (
   return { nodes: allNodes, edges, idByName, nameById };
 };
 
-const StepModal = ({
+const StepDrawer = ({
   modal,
   innerRef,
   onClose,
@@ -592,52 +592,70 @@ const StepModal = ({
   error,
   data,
   onDelete,
+  drawerWidth,
+  onResizeStart,
 }) => {
-  if (!modal) return null;
+  const isOpen = !!modal;
   return (
-    <div className="wf-modal-backdrop">
-      <div className="wf-modal card shadow">
-        <div className="card-header d-flex justify-content-between align-items-center">
-          <h5 className="mb-0">{modal.title}</h5>
-          <button className="btn-close" onClick={onClose} aria-label="Close" />
-        </div>
-        <div className="card-body">
-          <div
-            ref={innerRef}
-            dangerouslySetInnerHTML={{ __html: modal.body }}
-          />
-          {error ? (
-            <div className="alert alert-danger mt-3">{error}</div>
-          ) : null}
-        </div>
-        <div className="card-footer d-flex justify-content-end gap-2">
-          <button
-            className="btn btn-sm btn-outline-danger"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(modal.stepId);
-            }}
-          >
-            {data.strings.deleteStep}
-          </button>
-          <button className="btn btn-secondary" onClick={onClose}>
-            Close
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={() =>
-              innerRef.current
-                ?.querySelector("form")
-                ?.dispatchEvent(
-                  new Event("submit", { cancelable: true, bubbles: true })
-                )
-            }
-            disabled={submitting}
-          >
-            {submitting ? "Saving..." : "Save"}
-          </button>
-        </div>
-      </div>
+    <div
+      className={`wf-drawer${isOpen ? " wf-drawer--open" : ""}`}
+      role="dialog"
+      aria-modal="false"
+      aria-hidden={!isOpen}
+      aria-label={modal?.title || data?.strings?.configure}
+      style={{ "--wf-drawer-width": `${drawerWidth}px` }}
+    >
+      {modal ? (
+        <>
+          <div className="wf-drawer__resize" onPointerDown={onResizeStart} />
+          <div className="wf-drawer__header d-flex justify-content-between align-items-center">
+            <div>
+              <h5 className="mb-0">{modal.title}</h5>
+            </div>
+            <button
+              className="btn-close"
+              onClick={onClose}
+              aria-label="Close"
+            />
+          </div>
+          <div className="wf-drawer__body">
+            <div
+              ref={innerRef}
+              dangerouslySetInnerHTML={{ __html: modal.body }}
+            />
+            {error ? (
+              <div className="alert alert-danger mt-3">{error}</div>
+            ) : null}
+          </div>
+          <div className="wf-drawer__footer d-flex justify-content-end gap-2">
+            <button
+              className="btn btn-sm btn-outline-danger"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(modal.stepId);
+              }}
+            >
+              {data.strings.deleteStep}
+            </button>
+            <button className="btn btn-secondary" onClick={onClose}>
+              Close
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() =>
+                innerRef.current
+                  ?.querySelector("form")
+                  ?.dispatchEvent(
+                    new Event("submit", { cancelable: true, bubbles: true })
+                  )
+              }
+              disabled={submitting}
+            >
+              {submitting ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 };
@@ -662,7 +680,9 @@ const WorkflowEditor = ({ data }) => {
   const [savingModal, setSavingModal] = useState(false);
   const [savingPositions, setSavingPositions] = useState(false);
   const [sizeSyncing, setSizeSyncing] = useState(false);
+  const [drawerWidth, setDrawerWidth] = useState(420);
   const modalRef = useRef(null);
+  const resizingRef = useRef(false);
 
   const rfInstanceRef = useRef(null);
 
@@ -1304,9 +1324,44 @@ const WorkflowEditor = ({ data }) => {
   }, [onInsertBetween, setEdges, edges]);
 
   const hasSteps = steps.length > 0;
+  const shellClass = modal ? "wf-shell wf-shell--drawer-open" : "wf-shell";
+  const shellStyle = { "--wf-drawer-width": `${drawerWidth}px` };
+  const showMiniMap = !modal;
+
+  const handleResize = useCallback((e) => {
+    if (!resizingRef.current) return;
+    const maxWidth = Math.min(900, Math.max(360, window.innerWidth - 40));
+    const nextWidth = Math.min(
+      Math.max(320, window.innerWidth - e.clientX),
+      maxWidth
+    );
+    setDrawerWidth(nextWidth);
+  }, []);
+
+  const stopResize = useCallback(() => {
+    if (!resizingRef.current) return;
+    resizingRef.current = false;
+    document.body.style.userSelect = "";
+    window.removeEventListener("pointermove", handleResize);
+    window.removeEventListener("pointerup", stopResize);
+  }, [handleResize]);
+
+  const startResize = useCallback(
+    (e) => {
+      if (!modal) return;
+      resizingRef.current = true;
+      document.body.style.userSelect = "none";
+      window.addEventListener("pointermove", handleResize);
+      window.addEventListener("pointerup", stopResize);
+      e.preventDefault();
+    },
+    [handleResize, modal, stopResize]
+  );
+
+  useEffect(() => () => stopResize(), [stopResize]);
 
   return (
-    <div className="wf-shell">
+    <div className={shellClass} style={shellStyle}>
       <div className="wf-toolbar">
         <div className="wf-toolbar__left">
           <strong>{strings.configure}</strong>
@@ -1364,7 +1419,7 @@ const WorkflowEditor = ({ data }) => {
           <Background gap={16} />
         </ReactFlow>
       </div>
-      <StepModal
+      <StepDrawer
         modal={modal}
         innerRef={modalRef}
         onClose={() => {
@@ -1375,6 +1430,8 @@ const WorkflowEditor = ({ data }) => {
         error={error && modal ? error : ""}
         data={data}
         onDelete={onDelete}
+        drawerWidth={drawerWidth}
+        onResizeStart={startResize}
       />
     </div>
   );
