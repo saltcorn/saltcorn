@@ -24,13 +24,13 @@ const {
   input,
 } = require("@saltcorn/markup/tags");
 const { getState, getReq__ } = require("./db/state");
-const {
+import {
   link_view,
   displayType,
   run_action_column,
   stateToQueryString,
   pathToState,
-} = require("./plugin-helper");
+} from "./plugin-helper";
 const {
   eval_expression,
   freeVariables,

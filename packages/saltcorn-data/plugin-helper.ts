@@ -69,7 +69,7 @@ import type { FieldLike } from "@saltcorn/types/base_types";
 const link_view = (
   url0: string,
   label: string,
-  popup: boolean | GenObj,
+  popup: boolean | string | GenObj | undefined,
   link_style: string = "",
   link_size: string = "",
   link_icon: string = "",
@@ -77,7 +77,7 @@ const link_view = (
   link_bgcol?: string,
   link_bordercol?: string,
   link_textcol?: string,
-  extraClass?: string,
+  extraClass?: string | false,
   extraState?: string,
   link_target_blank?: boolean,
   label_attr?: boolean, // for sorting
