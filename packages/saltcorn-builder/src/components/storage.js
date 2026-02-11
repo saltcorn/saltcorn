@@ -26,7 +26,6 @@ import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Page } from "./elements/Page";
 import { SearchBar } from "./elements/SearchBar";
-import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import { DropMenu } from "./elements/DropMenu";
@@ -71,7 +70,6 @@ const allElements = [
   Link,
   View,
   SearchBar,
-  Container,
   DropDownFilter,
   Tabs,
   ToggleFilter,
@@ -100,7 +98,6 @@ const layoutToNodes = (
   options,
   index = false
 ) => {
-  //console.log("layoutToNodes", JSON.stringify(layout));
   /**
    * @param {object} segment
    * @param {string} ix
@@ -108,6 +105,16 @@ const layoutToNodes = (
    */
   function toTag(segment, ix) {
     if (!segment) return <Empty key={ix} />;
+
+    if (
+      (segment.type === "card" || segment.type === "container") &&
+      typeof segment.contents === "string"
+    ) {
+      segment.contents = {
+        type: "blank",
+        contents: segment.contents,
+      };
+    }
 
     const MatchElement = allElements.find(
       (e) =>
@@ -273,7 +280,7 @@ const layoutToNodes = (
           minScreenWidth={segment.minScreenWidth || ""}
           maxScreenWidth={segment.maxScreenWidth || ""}
           show_for_owner={!!segment.show_for_owner}
-          is={Container}
+          is="Container"
         >
           {toTag(segment.contents)}
         </Element>
@@ -412,18 +419,14 @@ const layoutToNodes = (
       if (Array.isArray(tag)) {
         tag.forEach((t) => {
           const node = query.parseReactElement(t).toNodeTree();
-          //console.log("other", node);
           actions.addNodeTree(node, parent, ix);
         });
       } else if (tag) {
         const node = query.parseReactElement(tag).toNodeTree();
-        //console.log("other", node);
         actions.addNodeTree(node, parent, ix);
       }
     }
   }
-  //const node1 = query.createNode(toTag(layout));
-  //actions.add(node1, );
   go(layout, parent, index);
 };
 
@@ -440,7 +443,6 @@ export /**
  * @namespace
  */
 const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
-  //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
   /**
    * @param {object} node
@@ -480,7 +482,6 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       if (related.hasContents) s.contents = get_nodes(node);
       related.fields.forEach((f) => {
         if (f.type === "Nodes" && f.nodeID) {
-          //console.log("nodetype", node);
           s[f.segment_name || f.name || f] = go(
             nodes[node.linkedNodes[f.nodeID]]
           );
@@ -525,7 +526,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       return lc;
     }
     if (node.isCanvas) {
-      if (node.displayName === Container.craft.displayName)
+      if (node.displayName === "Container")
         return {
           contents: get_nodes(node),
           type: "container",
