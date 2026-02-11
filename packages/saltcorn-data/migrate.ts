@@ -6,26 +6,34 @@
 
 /*global window*/
 
-/** @type {module:fs} */
-const fs = require("fs");
-const path = require("path");
-const db = require("./db");
-
+import fs from "fs";
+import path from "path";
+import db from "./db";
 const dateFormat = require("dateformat");
 
 const is_sqlite = db.isSQLite;
 
+interface MigrationContents {
+  sql?: string | string[];
+  sql_pg?: string | string[];
+  sql_sqlite?: string | string[];
+  js?: () => Promise<void> | void;
+}
+
 const fudge = is_sqlite
-  ? (s) =>
+  ? (s: string | string[]): string | string[] =>
       Array.isArray(s)
-        ? s.map(fudge)
+        ? s.map(fudge as (s: string) => string)
         : s
             .replace("id serial primary", "id integer primary")
             .replace("jsonb", "json")
-  : (s) => s;
+  : (s: string | string[]) => s;
 
-const doMigrationStep = async (name, contents) => {
-  const execMany = async (sqls) => {
+const doMigrationStep = async (
+  name: string,
+  contents: MigrationContents
+): Promise<void> => {
+  const execMany = async (sqls: string | string[]): Promise<any> => {
     if (Array.isArray(sqls)) {
       for (const sql of sqls) {
         await db.query(sql);
@@ -53,9 +61,9 @@ const doMigrationStep = async (name, contents) => {
   await db.insert("_sc_migrations", { migration: name }, { noid: true });
 };
 
-const getMigrationsInDB = async () => {
+const getMigrationsInDB = async (): Promise<string[]> => {
   const dbmigrationRows = await db.select("_sc_migrations");
-  return dbmigrationRows.map((r) => r.migration);
+  return dbmigrationRows.map((r: any) => r.migration);
 };
 
 // todo create functionality to rollback migrations
@@ -66,7 +74,7 @@ const getMigrationsInDB = async () => {
  * @returns {Promise<void>}
  */
 // todo resolve database specific
-const migrate = async (schema0, verbose) => {
+const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
   const schema = schema0 || db.connectObj.default_schema;
   //console.log("migrating database schema %s", schema);
 
@@ -86,7 +94,9 @@ const migrate = async (schema0, verbose) => {
         if (!dbmigrations.has(name)) {
           if (verbose)
             console.log("Tenant %s running migration %s", schema0, name);
-          const contents = require(path.join(__dirname, "migrations", name));
+          const contents: MigrationContents = require(
+            path.join(__dirname, "migrations", name)
+          );
           await db.withTransaction(async () => {
             if (!is_sqlite) await db.query(`SET search_path TO "${schema}";`);
             await doMigrationStep(name, contents);
@@ -95,8 +105,10 @@ const migrate = async (schema0, verbose) => {
       }
     }
   } else {
-    for (let [k, v] of Object.entries(window.saltcorn.data.migrations)) {
-      await doMigrationStep(k, v, db);
+    for (let [k, v] of Object.entries(
+      (window as any).saltcorn.data.migrations
+    )) {
+      await doMigrationStep(k, v as MigrationContents);
     }
   }
 };
@@ -105,7 +117,7 @@ const migrate = async (schema0, verbose) => {
  * @returns {Promise<void>}
  */
 // todo add rollbacksql statement
-const create_blank_migration = async () => {
+const create_blank_migration = async (): Promise<void> => {
   var time = dateFormat(new Date(), "yyyymmddHHMM");
   const fnm = path.join(__dirname, "..", "migrations", `${time}.js`);
   fs.writeFileSync(
@@ -119,4 +131,4 @@ module.exports = { sql };
   console.log(fnm);
 };
 
-module.exports = { migrate, create_blank_migration, getMigrationsInDB };
+export { migrate, create_blank_migration, getMigrationsInDB };

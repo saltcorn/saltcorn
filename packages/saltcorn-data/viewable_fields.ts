@@ -3,6 +3,14 @@
  * @module base-plugin/viewtemplates/viewable_fields
  * @subcategory base-plugin
  */
+import Table from "./models/table";
+import Field from "./models/field";
+import View from "./models/view";
+import type { Row } from "@saltcorn/db-common/internal";
+import type { GenObj, Type } from "@saltcorn/types/common_types";
+import { instanceOfType } from "@saltcorn/types/common_types";
+import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
+
 const { post_btn } = require("@saltcorn/markup");
 const {
   text,
@@ -16,26 +24,21 @@ const {
   input,
 } = require("@saltcorn/markup/tags");
 const { getState, getReq__ } = require("./db/state");
-const {
+import {
   link_view,
   displayType,
   run_action_column,
   stateToQueryString,
   pathToState,
-} = require("./plugin-helper");
+} from "./plugin-helper";
 const {
   eval_expression,
   freeVariables,
   get_expression_function,
 } = require("./models/expression");
-const Field = require("./models/field");
 const FieldRepeat = require("./models/fieldrepeat");
 const Form = require("./models/form");
-const {
-  traverseSync,
-  traverse,
-  translateLayout,
-} = require("./models/layout");
+const { traverseSync, traverse, translateLayout } = require("./models/layout");
 const {
   structuredClone,
   isWeb,
@@ -48,8 +51,6 @@ const {
   renderServerSide,
 } = require("./utils");
 const db = require("./db");
-const View = require("./models/view");
-const Table = require("./models/table");
 const { isNode, dollarizeObject, getSafeBaseUrl } = require("./utils");
 const { bool, date } = require("./base-plugin/types");
 const _ = require("underscore");
@@ -69,7 +70,7 @@ const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
  * @param {number|undefined} colIndex
  * @returns json formatted attribute for run_action
  */
-const columnIndex = (colIndex) =>
+const columnIndex = (colIndex?: number): string =>
   colIndex ? `, column_index: ${colIndex}` : "";
 
 /**
@@ -84,16 +85,16 @@ const columnIndex = (colIndex) =>
  * @returns {any}
  */
 const action_url = (
-  viewname,
-  table,
-  action_name,
-  r,
-  colId,
-  colIdNm,
-  confirm,
-  colIndex,
-  runAsync
-) => {
+  viewname: string,
+  table: Table,
+  action_name: string,
+  r: Row,
+  colId: string,
+  colIdNm: string,
+  confirm: boolean,
+  colIndex?: number,
+  runAsync?: boolean
+): string | { javascript: string } => {
   const pk_name = table.pk_name;
   const __ = getReq__();
   const confirmStr = confirm ? `if(confirm('${__("Are you sure?")}'))` : "";
@@ -138,8 +139,8 @@ const action_url = (
  * @returns {object}
  */
 const action_link = (
-  url,
-  req,
+  url: string | { javascript: string },
+  req: GenObj,
   {
     action_name,
     action_label,
@@ -155,17 +156,33 @@ const action_link = (
     action_textcol,
     spinner,
     block,
+  }: {
+    action_name: string;
+    action_label?: string;
+    confirm?: boolean;
+    rndid?: string;
+    action_style?: string;
+    action_size?: string;
+    action_icon?: string;
+    action_bgcol?: string;
+    action_title?: string;
+    action_class?: string;
+    action_bordercol?: string;
+    action_textcol?: string;
+    spinner?: boolean;
+    block?: boolean;
   },
-  __ = (s) => s
-) => {
-  const label = action_label === " " ? "" : __(action_label) || action_name;
+  __ = (s: string) => s
+): string => {
+  const label =
+    action_label === " " ? "" : __(action_label || "") || action_name;
   let style =
     action_style === "btn-custom-color"
       ? `background-color: ${action_bgcol || "#000000"};border-color: ${
           action_bordercol || "#000000"
         }; color: ${action_textcol || "#000000"}`
       : null;
-  if (url.javascript)
+  if (typeof url !== "string" && url.javascript)
     return a(
       {
         href: "javascript:void(0)",
@@ -196,23 +213,28 @@ const action_link = (
     });
 };
 
-const slug_transform = (row) => (step) =>
-  step.transform === "slugify"
-    ? `/${db.slugify(row[step.field])}`
-    : `/${row[step.field]}`;
+const slug_transform =
+  (row: Row) =>
+  (step: { transform?: string; field: string }): string =>
+    step.transform === "slugify"
+      ? `/${db.slugify(row[step.field])}`
+      : `/${row[step.field]}`;
 /**
  * @function
  * @param {Field[]} fields
  * @returns {function}
  */
-const get_view_link_query = (fields, view) => {
+const get_view_link_query = (
+  fields: Field[],
+  view?: any
+): ((r: Row) => string) => {
   if (view && view.slug && view.slug.steps && view.slug.steps.length > 0) {
-    return (r) => view.slug.steps.map(slug_transform(r)).join("");
+    return (r: Row) => view.slug.steps.map(slug_transform(r)).join("");
   }
 
-  const pk_name = fields.find((f) => f.primary_key).name;
+  const pk_name = fields.find((f) => f.primary_key)!.name;
 
-  return (r) => `?${pk_name}=${r[pk_name]}`;
+  return (r: Row) => `?${pk_name}=${r[pk_name]}`;
 };
 
 /**
@@ -239,14 +261,26 @@ const make_link = (
     icon,
     link_style,
     link_size,
+  }: {
+    link_text: string;
+    link_text_formula?: boolean;
+    link_url?: string;
+    link_url_formula?: boolean;
+    link_target_blank?: boolean;
+    in_dropdown?: boolean;
+    in_modal?: boolean;
+    link_icon?: string;
+    icon?: string;
+    link_style?: string;
+    link_size?: string;
   },
-  fields,
-  __ = (s) => s,
-  in_row_click
+  fields: Field[],
+  __ = (s: string) => s,
+  in_row_click?: boolean
 ) => {
   return {
     label: "",
-    key: (r) => {
+    key: (r: Row) => {
       let txt, href;
       const theIcon = link_icon || icon;
 
@@ -258,7 +292,7 @@ const make_link = (
         ? eval_expression(link_url, r, undefined, "Link URL formula")
         : link_url;
 
-      const attrs = { href };
+      const attrs: Record<string, any> = { href };
       if (link_target_blank) attrs.target = "_blank";
       if (in_dropdown) attrs.class = ["dropdown-item"];
       if (link_style)
@@ -295,7 +329,7 @@ const make_link = (
  * @param {string} relation new relation path syntax
  * @returns {object}
  */
-const parse_view_select = (view, relation) => {
+const parse_view_select = (view: string, relation?: string): any => {
   if (relation) {
     const { sourcetable, path } =
       relation === Relation.fixedUserRelation
@@ -335,19 +369,28 @@ const parse_view_select = (view, relation) => {
   }
 };
 
-const pathToQuery = (relation, srcTable, subTable, row) => {
+const pathToQuery = (
+  relation: any,
+  srcTable: Table,
+  subTable: Table | null,
+  row: Row
+): string | null => {
   const path = relation.path;
   switch (relation.type) {
     case RelationType.CHILD_LIST:
       return path.length === 1
         ? `?${path[0].inboundKey}=${row[srcTable.pk_name]}` // works for OneToOneShow as well
-        : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${path[0].inboundKey}=${row[srcTable.pk_name]}`;
+        : `?${path[1].table}.${path[1].inboundKey}.${path[0].table}.${
+            path[0].inboundKey
+          }=${row[srcTable.pk_name]}`;
     case RelationType.PARENT_SHOW:
       const fkey = path[0].fkey;
       const reffield = srcTable.fields.find((f) => f.name === fkey);
       const value = row[fkey];
       return value
-        ? `?${reffield.refname}=${typeof value === "object" ? value.id : value}`
+        ? `?${reffield!.refname}=${
+            typeof value === "object" ? value.id : value
+          }`
         : null;
     case RelationType.OWN:
       const getQuery = get_view_link_query(
@@ -362,7 +405,7 @@ const pathToQuery = (relation, srcTable, subTable, row) => {
         path.length > 0
           ? path[0].fkey
             ? path[0].fkey
-            : subTable.pk_name
+            : subTable!.pk_name
           : undefined;
       const srcId =
         row[idName] === null || row[idName]?.id === null
@@ -370,6 +413,7 @@ const pathToQuery = (relation, srcTable, subTable, row) => {
           : row[idName]?.id || row[idName];
       return `?${relation.relationString}=${srcId}`;
   }
+  return null;
 };
 
 //todo: use above to simplify code
@@ -411,27 +455,46 @@ const view_linker = (
     link_target_blank,
     link_title,
     link_class,
+  }: {
+    view: string;
+    relation?: string;
+    view_label?: string;
+    in_modal?: boolean;
+    view_label_formula?: boolean;
+    link_style?: string;
+    link_size?: string;
+    link_icon?: string;
+    icon?: string;
+    textStyle?: string;
+    link_bgcol?: string;
+    link_bordercol?: string;
+    link_textcol?: string;
+    in_dropdown?: boolean;
+    extra_state_fml?: string;
+    link_target_blank?: boolean;
+    link_title?: string;
+    link_class?: string;
   },
-  fields,
-  __ = (s) => s,
-  isWeb = true,
-  user,
-  targetPrefix = "",
-  state = {},
-  req,
-  srcViewName,
-  label_attr, //for sorting
-  in_row_click
+  fields: Field[],
+  __ = (s: string) => s,
+  isWeb: boolean = true,
+  user?: AbstractUser,
+  targetPrefix: string = "",
+  state: GenObj = {},
+  req?: GenObj,
+  srcViewName?: string,
+  label_attr?: any, //for sorting
+  in_row_click?: boolean
 ) => {
   const safePrefix = (targetPrefix || "").endsWith("/")
     ? targetPrefix.substring(0, targetPrefix.length - 1)
     : targetPrefix || "";
-  const get_label = (def, row) => {
+  const get_label = (def: string, row: Row): string => {
     if (!view_label || view_label.length === 0) return def;
     if (!view_label_formula) return __(view_label);
     return eval_expression(view_label, row, user, "View Link label formula");
   };
-  const get_extra_state = (row) => {
+  const get_extra_state = (row: Row): string => {
     if (!extra_state_fml) return "";
     const ctx = {
       ...dollarizeObject(state),
@@ -445,14 +508,17 @@ const view_linker = (
       "View link extra state formula"
     );
     return Object.entries(o)
-      .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+      .map(
+        ([k, v]: [string, any]) =>
+          `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+      )
       .join("&");
   };
 
   if (relation) {
-    const topview = View.findOne({ name: srcViewName });
-    const srcTable = Table.findOne({ id: topview.table_id });
-    const subview = View.findOne({ name: view });
+    const topview = View.findOne({ name: srcViewName })!;
+    const srcTable = Table.findOne({ id: topview.table_id })!;
+    const subview = View.findOne({ name: view })!;
     const subTable = Table.findOne({ id: subview.table_id });
     const relObj = new Relation(
       relation,
@@ -463,21 +529,23 @@ const view_linker = (
     const type = relObj.type;
     return {
       label: view,
-      key: (r) => {
+      key: (r: Row) => {
         const query = pathToQuery(relObj, srcTable, subTable, r);
         if (query === null) return "";
         else {
           let label = "";
           if (type === "ParentShow") {
             const summary_field =
-              r[`summary_field_${subTable.name.toLowerCase()}`];
+              r[`summary_field_${subTable!.name.toLowerCase()}`];
             label = get_label(
               typeof summary_field === "undefined" ? view : summary_field,
               r
             );
           } else label = get_label(view, r);
 
-          const target = `${safePrefix}/view/${encodeURIComponent(view)}${query}`;
+          const target = `${safePrefix}/view/${encodeURIComponent(
+            view
+          )}${query}`;
           return link_view(
             isWeb || in_modal ? target : `javascript:execLink('${target}')`,
             label,
@@ -511,7 +579,7 @@ const view_linker = (
         const get_query = get_view_link_query(fields, viewrow || {});
         return {
           label: vnm,
-          key: (r) => {
+          key: (r: Row) => {
             const target = `${safePrefix}/view/${encodeURIComponent(
               vnm
             )}${get_query(r)}`;
@@ -541,7 +609,7 @@ const view_linker = (
         const ivnm = vrest;
         return {
           label: ivnm,
-          key: (r) => {
+          key: (r: Row) => {
             const target = `${safePrefix}/view/${encodeURIComponent(ivnm)}`;
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
@@ -571,10 +639,10 @@ const view_linker = (
         const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
         return {
           label: viewnm,
-          key: (r) => {
-            const target = `${safePrefix}/view/${encodeURIComponent(viewnm)}?${varPath}=${
-              r.id
-            }`;
+          key: (r: Row) => {
+            const target = `${safePrefix}/view/${encodeURIComponent(
+              viewnm
+            )}?${varPath}=${r.id}`;
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
               get_label(viewnm, r),
@@ -602,13 +670,15 @@ const view_linker = (
         //console.log([pviewnm, ptbl, pfld])
         return {
           label: pviewnm,
-          key: (r) => {
+          key: (r: Row) => {
             const reffield = fields.find((f) => f.name === pfld);
             const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
             if (r[pfld]) {
-              const target = `${safePrefix}/view/${encodeURIComponent(pviewnm)}?${
-                reffield.refname
-              }=${typeof r[pfld] === "object" ? r[pfld].id : r[pfld]}`;
+              const target = `${safePrefix}/view/${encodeURIComponent(
+                pviewnm
+              )}?${reffield!.refname}=${
+                typeof r[pfld] === "object" ? r[pfld].id : r[pfld]
+              }`;
               return link_view(
                 isWeb || in_modal ? target : `javascript:execLink('${target}')`,
                 get_label(
@@ -647,15 +717,15 @@ const view_linker = (
  * @param {string} nm
  * @returns {boolean}
  */
-const action_requires_write = (nm) => {
+const action_requires_write = (nm: string): boolean | undefined => {
   if (!nm) return false;
   if (nm === "Delete") return true;
   if (nm.startsWith("Toggle")) return true;
 };
 
 // flapMap if f returns array
-const flapMapish = (xs, f) => {
-  const res = [];
+const flapMapish = (xs: any[], f: (x: any, index: number) => any): any[] => {
+  const res: any[] = [];
   let index = 0;
   for (const x of xs) {
     const y = f(x, index++);
@@ -666,21 +736,21 @@ const flapMapish = (xs, f) => {
 };
 
 const get_viewable_fields_from_layout = (
-  viewname,
-  statehash,
-  table,
-  fields,
-  columns,
-  isShow,
-  req,
-  __,
-  state = {},
-  srcViewName,
-  layoutCols,
-  viewResults,
-  in_row_click
-) => {
-  const typeMap = {
+  viewname: string,
+  statehash: string,
+  table: Table,
+  fields: Field[],
+  columns: any[],
+  isShow: boolean,
+  req: GenObj,
+  __: (s: string) => string,
+  state: GenObj = {},
+  srcViewName?: string,
+  layoutCols?: any[],
+  viewResults?: GenObj,
+  in_row_click?: boolean
+): any[] => {
+  const typeMap: Record<string, string> = {
     field: "Field",
     join_field: "JoinField",
     view_link: "ViewLink",
@@ -692,16 +762,16 @@ const get_viewable_fields_from_layout = (
     dropdown_menu: "DropdownMenu",
     container: "Container",
   };
-  const toArray = (x) =>
+  const toArray = (x: any) =>
     !x ? [] : Array.isArray(x) ? x : x.above ? x.above : [x];
   //console.log("layout cols", layoutCols);
-  const newCols = layoutCols.map(({ contents, ...rest }) => {
+  const newCols = (layoutCols || []).map(({ contents, ...rest }: any) => {
     if (!contents) contents = rest;
     if (contents.above) {
       const newContents = { type: "container", contents: contents };
       contents = newContents;
     }
-    const col = {
+    const col: any = {
       ...contents,
       ...rest,
       type: typeMap[contents.type] || contents.type,
@@ -738,7 +808,7 @@ const get_viewable_fields_from_layout = (
           col.formula = col.contents;
         }
         if (contents.isHTML)
-          col.interpolator = (row) =>
+          col.interpolator = (row: Row) =>
             interpolate(contents.contents, row, req?.user, "HTML element");
         break;
       case "action":
@@ -777,42 +847,49 @@ const get_viewable_fields_from_layout = (
  * @returns {object[]}
  */
 const get_viewable_fields = (
-  viewname,
-  statehash,
-  table,
-  fields,
-  columns,
-  isShow,
-  req,
-  __,
-  state = {},
-  srcViewName,
-  viewResults,
-  in_row_click
-) => {
-  const dropdown_actions = [];
-  const checkShowIf = (tFieldGenF) => (column, index) => {
-    const tfield = tFieldGenF(column, index);
-    if (column.showif) {
-      const oldKeyF = tfield.key;
-      if (typeof oldKeyF !== "function") return tfield;
-      const newKeyF = (r) => {
-        if (
-          eval_expression(column.showif, r, req.user, "Column show if formula")
-        )
-          return oldKeyF(r);
-        else return "";
-      };
-      tfield.key = newKeyF;
-    }
-    return tfield;
-  };
+  viewname: string,
+  statehash: string,
+  table: Table,
+  fields: Field[],
+  columns: any[],
+  isShow: boolean,
+  req: GenObj,
+  __: (s: string) => string,
+  state: GenObj = {},
+  srcViewName?: string,
+  viewResults?: GenObj,
+  in_row_click?: boolean
+): any[] => {
+  const dropdown_actions: any[] = [];
+  const checkShowIf =
+    (tFieldGenF: (column: any, index: number) => any) =>
+    (column: any, index: number) => {
+      const tfield = tFieldGenF(column, index);
+      if (column.showif) {
+        const oldKeyF = tfield.key;
+        if (typeof oldKeyF !== "function") return tfield;
+        const newKeyF = (r: Row) => {
+          if (
+            eval_expression(
+              column.showif,
+              r,
+              req.user,
+              "Column show if formula"
+            )
+          )
+            return oldKeyF(r);
+          else return "";
+        };
+        tfield.key = newKeyF;
+      }
+      return tfield;
+    };
   const tfields = flapMapish(
     columns,
-    checkShowIf((column, index) => {
+    checkShowIf((column: any, index: number) => {
       const role = req.user ? req.user.role_id : 100;
       const user_id = req.user ? req.user.id : null;
-      const setWidth = column.col_width
+      const setWidth: Record<string, any> = column.col_width
         ? { width: `${column.col_width}${column.col_width_units}` }
         : {};
       setWidth.align =
@@ -823,7 +900,7 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? __(column.header_label) : "",
-          key: (r) =>
+          key: (r: Row) =>
             text(
               eval_expression(
                 column.formula,
@@ -837,7 +914,7 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? __(column.header_label) : "",
-          key: (r) =>
+          key: (r: Row) =>
             column.interpolator
               ? column.interpolator(r)
               : text(column.contents),
@@ -846,7 +923,7 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? __(column.header_label) : "",
-          key: (r) => {
+          key: (r: Row) => {
             const layout = structuredClone({ ...column, type: "container" });
             traverseSync(
               layout,
@@ -855,8 +932,8 @@ const get_viewable_fields = (
             return renderLayout({
               blockDispatch: {
                 ...standardBlockDispatch(viewname, state, table, { req }, r),
-                view(column) {
-                  return viewResults[column.view + column.relation]?.(r);
+                view(column: any) {
+                  return viewResults?.[column.view + column.relation]?.(r);
                 },
               },
               layout,
@@ -876,7 +953,7 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? __(column.header_label) : "",
-          key: (r) =>
+          key: (r: Row) =>
             div(
               { class: "dropdown" },
               button(
@@ -914,7 +991,7 @@ const get_viewable_fields = (
                   ],
                   "aria-labelledby": `actiondd${r.id}_${index}`,
                 },
-                column.dropdown_columns.map((acol) =>
+                column.dropdown_columns.map((acol: any) =>
                   div({ class: "dropdown-item" }, acol.key(r))
                 )
               )
@@ -929,7 +1006,7 @@ const get_viewable_fields = (
         const action_col = {
           ...setWidth,
           label: column.header_label ? __(column.header_label) : "",
-          key: (r) => {
+          key: (r: Row) => {
             if (action_requires_write(column.action_name)) {
               if (table.min_role_write < role && !table.is_owner(req.user, r))
                 return "";
@@ -954,7 +1031,7 @@ const get_viewable_fields = (
                 )
               : __(column.action_label) || __(column.action_name);
             const icon = column.action_icon || column.icon || undefined;
-            if (url.javascript)
+            if (typeof url !== "string" && url.javascript)
               return a(
                 {
                   href: "javascript:void(0)",
@@ -1001,11 +1078,11 @@ const get_viewable_fields = (
       } else if (column.type === "View") {
         return {
           label: column.header_label ? __(column.header_label) : "",
-          key: (r) => viewResults[column.view + column.relation]?.(r),
+          key: (r: Row) => viewResults?.[column.view + column.relation]?.(r),
         };
       } else if (column.type === "ViewLink") {
         if (!column.view) return;
-        const r = view_linker(
+        const r: any = view_linker(
           column,
           fields,
           __,
@@ -1026,7 +1103,9 @@ const get_viewable_fields = (
               const path = column.view_label.split(".");
               if (path.length === 2) {
                 const [refNm, targetNm] = path;
-                r.statekey = `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`;
+                r.statekey = `${refNm}.${
+                  table.getField(refNm)!.reftable_name
+                }->${targetNm}`;
                 r.header_filter = headerFilterForField(
                   fml_field,
                   state,
@@ -1079,8 +1158,11 @@ const get_viewable_fields = (
         if (column.field_type) type = getState().types[column.field_type];
         else {
           if (field && field.type === "File") column.field_type = "File";
-          else if (field?.type.name && field?.type?.fieldviews[fieldview]) {
-            column.field_type = field.type.name;
+          else if (
+            (field?.type as any)?.name &&
+            (field?.type as any)?.fieldviews?.[fieldview]
+          ) {
+            column.field_type = (field!.type as any).name;
             type = getState().types[column.field_type];
           }
         }
@@ -1088,7 +1170,7 @@ const get_viewable_fields = (
           return type.fieldviews[fieldview].expandColumns(
             field,
             {
-              ...field.attributes,
+              ...field!.attributes,
               ...column,
             },
             column
@@ -1098,12 +1180,14 @@ const get_viewable_fields = (
         let statekey;
 
         if (!column.join_field.includes("->") && keypath.length == 2) {
-          statekey = `${refNm}.${table.getField(refNm).reftable_name}->${targetNm}`;
-          header_filter = headerFilterForField(field, state, statekey);
+          statekey = `${refNm}.${
+            table.getField(refNm)!.reftable_name
+          }->${targetNm}`;
+          header_filter = headerFilterForField(field || null, state, statekey);
         }
         let gofv =
           fieldview && type && type.fieldviews && type.fieldviews[fieldview]
-            ? (row) =>
+            ? (row: Row) =>
                 type.fieldviews[fieldview].run(row[key], req, {
                   row,
                   ...(field?.attributes || {}),
@@ -1112,7 +1196,7 @@ const get_viewable_fields = (
                 })
             : null;
         if (!gofv && column.field_type === "File") {
-          gofv = (row) =>
+          gofv = (row: Row) =>
             row[key]
               ? getState().fileviews[fieldview].run(row[key], "", {
                   row,
@@ -1135,15 +1219,17 @@ const get_viewable_fields = (
           row_label: field?.label,
           statekey,
           header_filter,
-          key: gofv ? gofv : (row) => text(row[key]),
+          key: gofv ? gofv : (row: Row) => text(row[key]),
           sortlink: sortlinkForName(key, req, viewname, statehash),
         };
         if (column.click_to_edit) {
           const reffield = fields.find((f) => f.name === refNm);
 
           const oldkey =
-            typeof fvrun.key === "function" ? fvrun.key : (r) => r[fvrun.key];
-          const newkey = (row) =>
+            typeof fvrun.key === "function"
+              ? fvrun.key
+              : (r: Row) => r[fvrun.key as unknown as string];
+          const newkey = (row: Row) =>
             div(
               {
                 "data-inline-edit-fielddata": encodeURIComponent(
@@ -1194,10 +1280,10 @@ const get_viewable_fields = (
         if (targetNm.length > 58) {
           targetNm = targetNm
             .split("")
-            .filter((c, i) => i % 2 == 0)
+            .filter((c: string, i: number) => i % 2 == 0)
             .join("");
         }
-        let showValue = (value) => {
+        let showValue = (value: any) => {
           if (value === true || value === false)
             return bool.fieldviews.show.run(value);
           if (value instanceof Date) return date.fieldviews.show.run(value);
@@ -1207,7 +1293,7 @@ const get_viewable_fields = (
           const tname = column.agg_field.split("@")[1];
           const type = getState().types[tname];
           if (type?.fieldviews[column.agg_fieldview])
-            showValue = (x) =>
+            showValue = (x: any) =>
               type.fieldviews[column.agg_fieldview].run(x, req, column);
         } else if (column.agg_fieldview) {
           const aggField = Table.findOne(table)?.getField?.(column.agg_field);
@@ -1215,25 +1301,25 @@ const get_viewable_fields = (
             column.stat === "Percent true" || column.stat === "Percent false"
               ? "Float"
               : column.stat === "Count" || column.stat === "CountUnique"
-                ? "Integer"
-                : aggField?.type?.name;
+              ? "Integer"
+              : (aggField?.type as any)?.name;
           const type = getState().types[outcomeType];
           if (type?.fieldviews[column.agg_fieldview])
-            showValue = (x) =>
+            showValue = (x: any) =>
               type.fieldviews[column.agg_fieldview].run(type.read(x), req, {
                 ...column,
                 ...(column?.configuration || {}),
               });
         }
 
-        let key = (r) => {
+        let key = (r: Row) => {
           const value = r[targetNm];
           return showValue(value);
         };
         if (column.stat.toLowerCase() === "array_agg")
-          key = (r) =>
+          key = (r: Row) =>
             Array.isArray(r[targetNm])
-              ? r[targetNm].map((v) => showValue(v)).join(", ")
+              ? r[targetNm].map((v: any) => showValue(v)).join(", ")
               : "";
         return {
           ...setWidth,
@@ -1259,19 +1345,20 @@ const get_viewable_fields = (
           const localized_fld_nm = f.attributes.localized_by[locale];
           f_with_val = fields.find((fld) => fld.name === localized_fld_nm) || f;
         }
-        const isNum = f && f.type && f.type.name === "Integer";
+        const ftype = f?.type as any;
+        const isNum = f && ftype && ftype.name === "Integer";
         if (isNum && !setWidth.align) setWidth.align = "right";
-        let fvrun;
-        let header_filter = headerFilterForField(f, state);
+        let fvrun: any;
+        let header_filter = headerFilterForField(f || null, state);
 
         if (
           column.fieldview &&
-          f?.type?.fieldviews?.[column.fieldview]?.expandColumns
+          ftype?.fieldviews?.[column.fieldview]?.expandColumns
         ) {
-          fvrun = f.type.fieldviews[column.fieldview].expandColumns(
+          fvrun = ftype.fieldviews[column.fieldview].expandColumns(
             f,
             {
-              ...f.attributes,
+              ...f!.attributes,
               ...column.configuration,
             },
             column
@@ -1286,31 +1373,31 @@ const get_viewable_fields = (
               __,
               statehash
             ),
-            row_key: f_with_val.name,
+            row_key: f_with_val!.name,
             row_label: f.label,
             key:
               column.fieldview && f.type === "File"
-                ? (row) =>
-                    row[f.name] &&
+                ? (row: Row) =>
+                    row[f!.name] &&
                     getState().fileviews[column.fieldview].run(
-                      row[f.name],
-                      row[`${f.name}__filename`],
+                      row[f!.name],
+                      row[`${f!.name}__filename`],
                       { row, ...column, ...(column?.configuration || {}) }
                     )
                 : column.fieldview &&
-                    f.type.fieldviews &&
-                    f.type.fieldviews[column.fieldview]
-                  ? (row) =>
-                      f.type.fieldviews[column.fieldview].run(
-                        row[f_with_val.name],
-                        req,
-                        { row, ...f.attributes, ...column.configuration }
-                      )
-                  : isShow
-                    ? f.type.showAs
-                      ? (row) => f.type.showAs(row[f_with_val.name])
-                      : (row) => text(row[f_with_val.name])
-                    : f.listKey,
+                  ftype.fieldviews &&
+                  ftype.fieldviews[column.fieldview]
+                ? (row: Row) =>
+                    ftype.fieldviews[column.fieldview].run(
+                      row[f_with_val!.name],
+                      req,
+                      { row, ...f!.attributes, ...column.configuration }
+                    )
+                : isShow
+                ? ftype.showAs
+                  ? (row: Row) => ftype.showAs(row[f_with_val!.name])
+                  : (row: Row) => text(row[f_with_val!.name])
+                : f.listKey,
             header_filter,
             sortlink:
               !f.calculated || f.stored
@@ -1318,24 +1405,26 @@ const get_viewable_fields = (
                 : undefined,
           };
         if (column.click_to_edit) {
-          const updateKey = (fvr, column_key) => {
+          const updateKey = (fvr: any, column_key?: any) => {
             const oldkey =
-              typeof fvr.key === "function" ? fvr.key : (r) => r[fvr.key];
+              typeof fvr.key === "function" ? fvr.key : (r: Row) => r[fvr.key];
             const doSetKey =
               (column.fieldview === "subfield" ||
                 column.fieldview === "keys_expand_columns") &&
               column_key;
             const schema =
-              doSetKey && f.attributes?.hasSchema
-                ? (f.attributes.schema || []).find((s) => s.key === column_key)
+              doSetKey && f!.attributes?.hasSchema
+                ? (f!.attributes.schema || []).find(
+                    (s: any) => s.key === column_key
+                  )
                 : undefined;
-            const newkey = (row) => {
+            const newkey = (row: Row) => {
               if (role <= table.min_role_write || table.is_owner(req.user, row))
                 return div(
                   {
                     "data-inline-edit-fielddata": encodeURIComponent(
                       JSON.stringify({
-                        field_name: f.name,
+                        field_name: f!.name,
                         table_name: table.name,
                         pk: row[table.pk_name],
                         fieldview: column.fieldview,
@@ -1355,7 +1444,7 @@ const get_viewable_fields = (
             fvr.key = newkey;
           };
           if (Array.isArray(fvrun)) {
-            fvrun.forEach((fvr) => {
+            fvrun.forEach((fvr: any) => {
               updateKey(fvr, fvr.row_key[1]);
             });
           } else updateKey(fvrun, column.configuration?.key || column.key);
@@ -1368,7 +1457,7 @@ const get_viewable_fields = (
     //legacy
     tfields.push({
       label: req.__("Action"),
-      key: (r) =>
+      key: (r: Row) =>
         div(
           { class: "dropdown" },
           button(
@@ -1388,7 +1477,7 @@ const get_viewable_fields = (
               class: "dropdown-menu dropdown-menu-end",
               "aria-labelledby": `actiondd${r.id}`,
             },
-            dropdown_actions.map((acol) => acol.key(r))
+            dropdown_actions.map((acol: any) => acol.key(r))
           )
         ),
     });
@@ -1396,121 +1485,148 @@ const get_viewable_fields = (
   return tfields;
 };
 
-const headerFilterForField = (f, state, path) => (id) => {
-  if (f?.type?.name === "Date") {
-    const set_initial =
-      state[`_fromdate_${f.name}`] && state[`_todate_${f.name}`]
-        ? `defaultDate: ["${state[`_fromdate_${f.name}`]}", "${
-            state[`_todate_${f.name}`]
-          }"],`
-        : "";
-    return (
-      div(
-        { class: "input-group hdrfilterdate" },
-        input({
-          type: "text",
-          class: "form-control",
-          id: `daterangefilter${f.name}`,
-          //placeholder: ,
-        }),
-        button(
-          {
-            class: "btn btn-outline-secondary btn-border-color-input",
-            style: { paddingLeft: "3px", paddingRight: "3px" },
-            onclick: `set_state_fields({_fromdate_${f.name}: {unset: true}, _todate_${f.name}: {unset: true} })`,
-          },
-          i({ class: "fas fa-times" })
-        )
-      ) +
-      script(
-        domReady(
-          `ensure_script_loaded("/static_assets/${db.connectObj.version_tag}/flatpickr.min.js");
-      ensure_css_loaded("/static_assets/${db.connectObj.version_tag}/flatpickr.min.css");
+const headerFilterForField =
+  (f: Field | null, state: GenObj, path?: string) =>
+  (id?: string): string => {
+    const ftype = f?.type as any;
+    if (!f) return "";
+    if (ftype?.name === "Date") {
+      const set_initial =
+        state[`_fromdate_${f.name}`] && state[`_todate_${f.name}`]
+          ? `defaultDate: ["${state[`_fromdate_${f.name}`]}", "${
+              state[`_todate_${f.name}`]
+            }"],`
+          : "";
+      return (
+        div(
+          { class: "input-group hdrfilterdate" },
+          input({
+            type: "text",
+            class: "form-control",
+            id: `daterangefilter${f.name}`,
+            //placeholder: ,
+          }),
+          button(
+            {
+              class: "btn btn-outline-secondary btn-border-color-input",
+              style: { paddingLeft: "3px", paddingRight: "3px" },
+              onclick: `set_state_fields({_fromdate_${f.name}: {unset: true}, _todate_${f.name}: {unset: true} })`,
+            },
+            i({ class: "fas fa-times" })
+          )
+        ) +
+        script(
+          domReady(
+            `ensure_script_loaded("/static_assets/${
+              db.connectObj.version_tag
+            }/flatpickr.min.js");
+      ensure_css_loaded("/static_assets/${
+        db.connectObj.version_tag
+      }/flatpickr.min.css");
       $('#daterangefilter${f.name}').flatpickr({mode:'range',
-        dateFormat: "Y-m-d",${set_initial}    
+        dateFormat: "Y-m-d",${set_initial}
         onChange: function(selectedDates, dateStr, instance) {
             set_header_filter($(instance.element));
             if(selectedDates.length==2) {
-          
-               set_state_fields({_fromdate_${f.name}: selectedDates[0].toLocaleDateString('en-CA'), _todate_${f.name}: selectedDates[1].toLocaleDateString('en-CA') }, false, ${id ? `document.getElementById('${id}')` : "this"})
-              
-                
-            }            
+
+               set_state_fields({_fromdate_${
+                 f.name
+               }: selectedDates[0].toLocaleDateString('en-CA'), _todate_${
+              f.name
+            }: selectedDates[1].toLocaleDateString('en-CA') }, false, ${
+              id ? `document.getElementById('${id}')` : "this"
+            })
+
+
+            }
         },
     });`
+          )
         )
-      )
-    );
-  }
+      );
+    }
 
-  let fieldviewObjs;
-  /*if (f.is_fkey) {
+    let fieldviewObjs;
+    /*if (f.is_fkey) {
     fieldviewObjs = [getState().keyFieldviews.select];
   } else */
-  let extraAttrs = {};
-  if (f?.type?.name === "Bool") {
-    fieldviewObjs = [f.type.fieldviews.tristate];
-    extraAttrs.outline_buttons = true;
-  } else if (f?.type?.name === "String")
-    fieldviewObjs = [f.type.fieldviews.edit];
-  else if (f?.type?.name === "Integer" || f?.type?.name === "Float")
-    fieldviewObjs = [
-      f.type.fieldviews.above_input,
-      f.type.fieldviews.below_input,
-    ];
+    let extraAttrs: Record<string, any> = {};
+    if (ftype?.name === "Bool") {
+      fieldviewObjs = [ftype.fieldviews.tristate];
+      extraAttrs.outline_buttons = true;
+    } else if (ftype?.name === "String")
+      fieldviewObjs = [ftype.fieldviews.edit];
+    else if (ftype?.name === "Integer" || ftype?.name === "Float")
+      fieldviewObjs = [
+        ftype.fieldviews.above_input,
+        ftype.fieldviews.below_input,
+      ];
 
-  if (!fieldviewObjs) return "";
+    if (!fieldviewObjs) return "";
 
-  return div(
-    { class: "d-flex" },
-    fieldviewObjs
-      .map(
-        (fvObj) =>
-          fvObj?.run(
-            f.name,
-            state[path || f.name],
-            {
-              preOnChange: `set_header_filter(this);`,
-              onChange: `set_header_filter(this);set_state_field('${encodeURIComponent(
-                path || f.name
-              )}', this.value, ${id ? `document.getElementById('${id}')` : "this"})`,
-              isFilter: true,
-              ...f.attributes,
-              ...extraAttrs,
-            },
-            "",
-            false,
-            f,
-            state
-          ) || ""
-      )
-      .join("")
-  );
-};
+    return div(
+      { class: "d-flex" },
+      fieldviewObjs
+        .map(
+          (fvObj: any) =>
+            fvObj?.run(
+              f.name,
+              state[path || f.name],
+              {
+                preOnChange: `set_header_filter(this);`,
+                onChange: `set_header_filter(this);set_state_field('${encodeURIComponent(
+                  path || f.name
+                )}', this.value, ${
+                  id ? `document.getElementById('${id}')` : "this"
+                })`,
+                isFilter: true,
+                ...f.attributes,
+                ...extraAttrs,
+              },
+              "",
+              false,
+              f,
+              state
+            ) || ""
+        )
+        .join("")
+    );
+  };
 
 /**
  * @param {string} fname
  * @param {object} req
  * @returns {string}
  */
-const sortlinkForName = (fname, req, viewname, statehash) => {
+const sortlinkForName = (
+  fname: string,
+  req: GenObj,
+  viewname: string,
+  statehash: string
+): string => {
   const _sortby = req.query ? req.query[`_${statehash}_sortby`] : undefined;
   const _sortdesc = req.query ? req.query[`_${statehash}_sortdesc`] : undefined;
   const desc =
     typeof _sortdesc == "undefined"
       ? _sortby === fname
       : _sortdesc
-        ? "false"
-        : "true";
+      ? "false"
+      : "true";
   return `sortby('${text(fname)}', ${desc}, '${statehash}', this)`;
 };
 
-const standardLayoutRowVisitor = (viewname, state, table, row, req) => {
+const standardLayoutRowVisitor = (
+  viewname: string,
+  state: GenObj,
+  table: Table,
+  row: Row,
+  req: GenObj
+) => {
   const session_id = getSessionId(req);
   const locale = req.getLocale();
   const fields = table.fields;
 
-  const evalMaybeExpr = (segment, key, fmlkey) => {
+  const evalMaybeExpr = (segment: any, key: string, fmlkey?: string) => {
     if (segment.isFormula && segment.isFormula[fmlkey || key] && segment[key]) {
       segment[key] = eval_expression(
         segment[key],
@@ -1521,7 +1637,7 @@ const standardLayoutRowVisitor = (viewname, state, table, row, req) => {
     }
   };
   return {
-    link(segment) {
+    link(segment: any) {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "text");
       if (
@@ -1536,16 +1652,16 @@ const standardLayoutRowVisitor = (viewname, state, table, row, req) => {
         segment.url = safePrefix + segment.url;
       }
     },
-    view_link(segment) {
+    view_link(segment: any) {
       evalMaybeExpr(segment, "view_label", "label");
     },
-    blank(segment) {
+    blank(segment: any) {
       evalMaybeExpr(segment, "contents", "text");
     },
-    tabs(segment) {
-      const to_delete = new Set();
+    tabs(segment: any) {
+      const to_delete = new Set<number>();
 
-      (segment.showif || []).forEach((sif, ix) => {
+      (segment.showif || []).forEach((sif: any, ix: number) => {
         if (sif) {
           const showit = eval_expression(
             sif,
@@ -1558,37 +1674,42 @@ const standardLayoutRowVisitor = (viewname, state, table, row, req) => {
       });
 
       // TODO mutation here - potential issue with renderRows
-      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
-      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
+      segment.titles = segment.titles.filter(
+        (_v: unknown, ix: number) => !to_delete.has(ix)
+      );
+      segment.contents = segment.contents.filter(
+        (_v: unknown, ix: number) => !to_delete.has(ix)
+      );
 
-      (segment.titles || []).forEach((t, ix) => {
+      (segment.titles || []).forEach((t: unknown, ix: number) => {
         if (typeof t === "string" && t.includes("{{")) {
           segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
         }
       });
     },
-    action(segment) {
+    action(segment: any) {
       evalMaybeExpr(segment, "action_label");
     },
-    card(segment) {
+    card(segment: any) {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "title");
       evalMaybeExpr(segment, "class");
     },
-    image(segment) {
+    image(segment: any) {
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "alt");
       if (segment.srctype === "Field") {
         const field = fields.find((f) => f.name === segment.field);
         if (!field) return;
-        if (field.type.name === "String") segment.url = row[segment.field];
-        if (field.type === "File") {
+        const ftype = field.type as any;
+        if (ftype?.name === "String") segment.url = row[segment.field];
+        if (ftype === "File") {
           segment.url = `/files/serve/${row[segment.field]}`;
           segment.fileid = row[segment.field];
         }
       }
     },
-    container(segment) {
+    container(segment: any) {
       evalMaybeExpr(segment, "bgColor");
       evalMaybeExpr(segment, "customClass");
       evalMaybeExpr(segment, "customId");
@@ -1613,15 +1734,22 @@ const standardLayoutRowVisitor = (viewname, state, table, row, req) => {
   };
 };
 
-const standardBlockDispatch = (viewname, state, table, extra, row) => {
+const standardBlockDispatch = (
+  viewname: string,
+  state: GenObj,
+  table: Table,
+  extra: { req: GenObj; [key: string]: any },
+  row: Row
+) => {
   const req = extra.req;
   const fields = table.fields;
   const locale = req.getLocale();
   const role = req.user?.role_id || 100;
   return {
-    field({ field_name, fieldview, configuration, click_to_edit }) {
+    field({ field_name, fieldview, configuration, click_to_edit }: any) {
       let field = fields.find((fld) => fld.name === field_name);
       if (!field) return "";
+      const ftype = field.type as any;
 
       let val = row[field_name];
       let fvrun;
@@ -1639,7 +1767,7 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
         ...field.attributes,
         ...configuration,
       };
-      if (fieldview && field.type === "File") {
+      if (fieldview && ftype === "File") {
         if (req.generate_email) cfg.targetPrefix = getSafeBaseUrl();
         fvrun = val
           ? getState().fileviews[fieldview].run(
@@ -1650,11 +1778,11 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
           : "";
       } else if (
         fieldview &&
-        field.type &&
-        field.type.fieldviews &&
-        field.type.fieldviews[fieldview]
+        ftype &&
+        ftype.fieldviews &&
+        ftype.fieldviews[fieldview]
       )
-        fvrun = field.type.fieldviews[fieldview].run(val, req, cfg);
+        fvrun = ftype.fieldviews[fieldview].run(val, req, cfg);
       else fvrun = text(val);
       if (
         click_to_edit &&
@@ -1681,7 +1809,7 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
         );
       else return fvrun;
     },
-    join_field(jf) {
+    join_field(jf: any) {
       const {
         join_field,
         field_type,
@@ -1744,7 +1872,7 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
         );
       else return fvRes;
     },
-    aggregation(column) {
+    aggregation(column: any) {
       const { agg_relation, stat, aggwhere, agg_field } = column;
       let table, fld, through;
       if (agg_relation.includes("->")) {
@@ -1772,20 +1900,20 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
       if (targetNm.length > 58) {
         targetNm = targetNm
           .split("")
-          .filter((c, i) => i % 2 == 0)
+          .filter((c: string, i: number) => i % 2 == 0)
           .join("");
       }
       const val = row[targetNm];
       if (stat.toLowerCase() === "array_agg" && Array.isArray(val))
-        return val.map((v) => text(v?.toString?.())).join(", ");
+        return val.map((v: any) => text(v?.toString?.())).join(", ");
       else if (column.agg_fieldview) {
         const aggField = Table.findOne(table)?.getField?.(column.agg_field);
         const outcomeType =
           stat === "Percent true" || stat === "Percent false"
             ? "Float"
             : stat === "Count" || stat === "CountUnique"
-              ? "Integer"
-              : aggField.type?.name;
+            ? "Integer"
+            : (aggField?.type as any)?.name;
         const type = getState().types[outcomeType];
         if (type?.fieldviews[column.agg_fieldview]) {
           const readval = type.read(val);
@@ -1798,17 +1926,17 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
       }
       return text(val);
     },
-    action(segment) {
+    action(segment: any) {
       if (segment.action_style === "on_page_load") {
         if (extra?.isPreview) return "";
         run_action_column({
           col: { ...segment },
           referrer: req?.get?.("Referrer"),
           req: req,
-        }).catch((e) => Crash.create(e, req));
+        }).catch((e: unknown) => Crash.create(e as Error, req));
         return "";
       }
-      let url = action_url(
+      let url: string | { javascript: string } = action_url(
         viewname,
         table,
         segment.action_name,
@@ -1824,7 +1952,9 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
         segment.configuration?.after_delete_action == "Reload page"
       ) {
         url = {
-          javascript: `ajax_post('${table.delete_url(row)}', {success:()=>{close_saltcorn_modal();location.reload();}})`,
+          javascript: `ajax_post('${table.delete_url(
+            row
+          )}', {success:()=>{close_saltcorn_modal();location.reload();}})`,
         };
         return action_link(url, req, segment);
       } else if (segment.action_name === "Delete")
@@ -1841,13 +1971,13 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
         )}`;
       return action_link(url, req, segment);
     },
-    view_link(view) {
+    view_link(view: any) {
       const prefix =
         req.generate_email && req.get_base_url ? req.get_base_url() : "";
       const { key } = view_linker(
         view,
         fields,
-        (s) => s,
+        (s: string) => s,
         isWeb(req),
         req.user,
         prefix,
@@ -1857,11 +1987,11 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
       );
       return key(row);
     },
-    tabs(segment, go) {
+    tabs(segment: any, go: (contents: any) => string) {
       if (segment.tabsStyle !== "Value switch") return false;
       const rval = row[segment.field];
       const value = rval?.id || rval; // TODO pkname of join table
-      const ix = segment.titles.findIndex((t) =>
+      const ix = segment.titles.findIndex((t: any) =>
         typeof t.value === "undefined"
           ? `${t}` === `${value}`
           : value === t.value
@@ -1869,7 +1999,7 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
       if (ix === -1) return "";
       return go(segment.contents[ix]);
     },
-    blank(segment) {
+    blank(segment: any) {
       if (segment.isHTML) {
         return interpolate(
           segment.contents,
@@ -1889,7 +2019,13 @@ const standardBlockDispatch = (viewname, state, table, extra, row) => {
  * @param {*} __
  * @returns {string}
  */
-const headerLabelForName = (label, fname, req, __, statehash) => {
+const headerLabelForName = (
+  label: string,
+  fname: string,
+  req: GenObj,
+  __: (s: string) => string,
+  statehash: string
+): string => {
   //const { _sortby, _sortdesc } = req.query || {};
   const _sortby = req?.query ? req.query[`_${statehash}_sortby`] : undefined;
   const _sortdesc = req?.query
@@ -1900,8 +2036,8 @@ const headerLabelForName = (label, fname, req, __, statehash) => {
     _sortby !== fname
       ? ""
       : _sortdesc
-        ? i({ class: "fas fa-caret-down sortdir" })
-        : i({ class: "fas fa-caret-up sortdir" });
+      ? i({ class: "fas fa-caret-down sortdir" })
+      : i({ class: "fas fa-caret-up sortdir" });
   return arrow ? span({ class: "text-nowrap" }, label + arrow) : label;
 };
 
@@ -1912,9 +2048,13 @@ const headerLabelForName = (label, fname, req, __, statehash) => {
  * @param {boolean} [fuzzyStrings]
  * @returns {object}
  */
-const splitUniques = (fields, state, fuzzyStrings) => {
-  let uniques = {};
-  let nonUniques = {};
+const splitUniques = (
+  fields: Field[],
+  state: GenObj,
+  fuzzyStrings?: boolean
+): { uniques: GenObj; nonUniques: GenObj } => {
+  let uniques: GenObj = {};
+  let nonUniques: GenObj = {};
   Object.entries(state).forEach(([k, v]) => {
     const field = fields.find((f) => f.name === k);
     if (
@@ -1922,11 +2062,13 @@ const splitUniques = (fields, state, fuzzyStrings) => {
       (field.is_unique || field.primary_key) &&
       fuzzyStrings &&
       field.type &&
-      field.type.name === "String"
+      (field.type as any).name === "String"
     )
       uniques[k] = { ilike: v };
     else if (field && (field.is_unique || field.primary_key))
-      uniques[k] = field.type.read ? field.type.read(v, field.attributes) : v;
+      uniques[k] = (field.type as any).read
+        ? (field.type as any).read(v, field.attributes)
+        : v;
     else nonUniques[k] = v;
   });
   return { uniques, nonUniques };
@@ -1943,18 +2085,18 @@ const splitUniques = (fields, state, fuzzyStrings) => {
  * @returns {Promise<Form>}
  */
 const getForm = async (
-  table,
-  viewname,
-  columns,
-  layout0,
-  id,
-  req,
-  isRemote
-) => {
+  table: Table,
+  viewname: string,
+  columns: any[],
+  layout0: any,
+  id: any,
+  req: any,
+  isRemote?: boolean
+): Promise<any> => {
   const fields = table.getFields();
   const state = getState();
   const tfields = (columns || [])
-    .map((column) => {
+    .map((column: any) => {
       if (column.type === "Field") {
         const f0 = fields.find((fld) => fld.name === column.field_name);
 
@@ -2012,23 +2154,23 @@ const getForm = async (
         }
       }
     })
-    .filter((tf) => !!tf);
+    .filter((tf): tf is Field => !!tf);
   const path = isWeb(req) ? req.baseUrl + req.path : "";
   const qs = objectToQueryString(req.query);
   let action = `/view/${viewname}${qs ? "?" + qs : ""}`;
   if (path && path.startsWith("/auth/")) action = path;
   const layout = structuredClone(layout0);
   traverseSync(layout, {
-    container(segment) {
+    container(segment: any) {
       if (segment.showIfFormula) {
         segment.showIfFormulaInputs = segment.showIfFormula;
         const fvs = [...freeVariables(segment.showIfFormula)];
         const jfFvs = fvs.filter(
-          (fv) => fv.includes(".") && !fv.startsWith("user.")
+          (fv: string) => fv.includes(".") && !fv.startsWith("user.")
         );
         if (jfFvs.length)
           segment.showIfFormulaJoinFields = jfFvs
-            .map((jf) => {
+            .map((jf: string) => {
               const [ref, target] = jf.split(".");
               const refField = table.getField(ref);
               if (!refField || !refField?.reftable_name) return null;
@@ -2036,7 +2178,7 @@ const getForm = async (
                 ref: ref.replace("?", ""),
                 target,
                 refTable: refField.reftable_name,
-                refTablePK: Table.findOne(refField.reftable_name).pk_name,
+                refTablePK: Table.findOne(refField.reftable_name)!.pk_name,
               };
             })
             .filter(Boolean);
@@ -2089,9 +2231,24 @@ const transformForm = async ({
   viewname,
   optionsQuery,
   state,
-}) => {
+}: {
+  form: any;
+  table: Table;
+  req: any;
+  row: Row | null;
+  res: any;
+  getRowQuery?: (
+    tableId: number,
+    viewSelect: GenObj,
+    rowId: any,
+    orderField?: string
+  ) => Promise<Row[]>;
+  viewname: string;
+  optionsQuery?: GenObj;
+  state: GenObj;
+}): Promise<void> => {
   let originalState = state;
-  let pseudo_row = {};
+  let pseudo_row: GenObj = {};
   if (!row) {
     table.fields.forEach((f) => {
       pseudo_row[f.name] = undefined;
@@ -2100,17 +2257,18 @@ const transformForm = async ({
   const appState = getState();
   const __ =
     db.is_node && appState
-      ? (s) => appState.i18n.__({ phrase: s, locale: req.getLocale() }) || s
-      : (s) => {
+      ? (s: string) =>
+          appState.i18n.__({ phrase: s, locale: req.getLocale() }) || s
+      : (s: string) => {
           return s;
         };
   await traverse(form.layout, {
-    container(segment) {
+    container(segment: any) {
       if (segment.click_action) {
         segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
       }
     },
-    async action(segment) {
+    async action(segment: any) {
       if (segment.action_style === "on_page_load") {
         segment.type = "blank";
         segment.style = {};
@@ -2138,13 +2296,14 @@ const transformForm = async ({
                 `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
               )
             );
-        } catch (e) {
+        } catch (e: unknown) {
+          const err = e as Error;
           appState.log(
             5,
-            `Error in Edit ${viewname} on page load action: ${e.message}`
+            `Error in Edit ${viewname} on page load action: ${err.message}`
           );
-          e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
-          throw e;
+          err.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${err.message}`;
+          throw err;
         }
       }
       if (segment.action_name === "Delete") {
@@ -2163,12 +2322,12 @@ const transformForm = async ({
           viewname,
           table,
           segment.action_name,
-          row,
+          row || pseudo_row,
           segment.rndid,
           "rndid",
           segment.confirm
         );
-        if (url.javascript) {
+        if (typeof url !== "string" && url.javascript) {
           //redo to include dynamic row
           const confirmStr = segment.confirm
             ? `if(confirm('Are you sure?'))`
@@ -2184,14 +2343,14 @@ const transformForm = async ({
           viewname,
           table,
           segment.action_name,
-          row,
+          row || pseudo_row,
           segment.rndid,
           "rndid",
           segment.confirm,
           undefined,
           segment.run_async
         );
-        if (url.javascript) {
+        if (typeof url !== "string" && url.javascript) {
           //redo to include dynamic row
           const confirmStr = segment.confirm
             ? `if(confirm('Are you sure?'))`
@@ -2209,13 +2368,13 @@ const transformForm = async ({
         segment.action_link = action_link(url, req, segment, __);
       }
     },
-    join_field(segment) {
+    join_field(segment: any) {
       const qs = objToQueryString(segment.configuration);
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },
-    tabs(segment) {
-      const to_delete = new Set();
-      (segment.showif || []).forEach((sif, ix) => {
+    tabs(segment: any) {
+      const to_delete = new Set<number>();
+      (segment.showif || []).forEach((sif: any, ix: number) => {
         if (sif) {
           const showit = eval_expression(
             sif,
@@ -2227,16 +2386,20 @@ const transformForm = async ({
         }
       });
 
-      segment.titles = segment.titles.filter((v, ix) => !to_delete.has(ix));
-      segment.contents = segment.contents.filter((v, ix) => !to_delete.has(ix));
+      segment.titles = segment.titles.filter(
+        (_v: unknown, ix: number) => !to_delete.has(ix)
+      );
+      segment.contents = segment.contents.filter(
+        (_v: unknown, ix: number) => !to_delete.has(ix)
+      );
 
-      (segment.titles || []).forEach((t, ix) => {
+      (segment.titles || []).forEach((t: unknown, ix: number) => {
         if (typeof t === "string" && t.includes("{{")) {
           segment.titles[ix] = interpolate(t, row, req.user, "Tab titles");
         }
       });
     },
-    view_link(segment) {
+    view_link(segment: any) {
       segment.type = "blank";
       const view_select = parse_view_select(segment.view);
       if (!row && view_select.type !== "Independent") {
@@ -2247,7 +2410,7 @@ const transformForm = async ({
         const { key } = view_linker(
           segment,
           table.fields,
-          (s) => s,
+          (s: string) => s,
           isWeb(req),
           req.user,
           prefix,
@@ -2258,7 +2421,7 @@ const transformForm = async ({
         segment.contents = key(row || {});
       }
     },
-    async view(segment) {
+    async view(segment: any) {
       //console.log(segment);
       const view_select = parse_view_select(segment.view, segment.relation);
       //console.log({ view_select });
@@ -2271,7 +2434,7 @@ const transformForm = async ({
       // check if the relation path matches a ChildList relations
       let childListRelPath = false;
       if (segment.relation && view.table_id) {
-        const targetTbl = Table.findOne({ id: view.table_id });
+        const targetTbl = Table.findOne({ id: view.table_id })!;
         const relation = new Relation(
           segment.relation,
           targetTbl.name,
@@ -2285,7 +2448,7 @@ const transformForm = async ({
         (view_select.type === "ChildList" || childListRelPath)
       ) {
         if (childListRelPath) updateViewSelect(view_select);
-        const childTable = Table.findOne({ id: view.table_id });
+        const childTable = Table.findOne({ id: view.table_id })!;
         const childForm = await getForm(
           childTable,
           view.name,
@@ -2296,7 +2459,7 @@ const transformForm = async ({
           !isWeb(req)
         );
         traverseSync(childForm.layout, {
-          field(segment) {
+          field(segment: any) {
             segment.field_name = `${view_select.field_name}.${segment.field_name}`;
           },
         });
@@ -2325,7 +2488,7 @@ const transformForm = async ({
         if (row?.id) {
           const childRows = getRowQuery
             ? await getRowQuery(
-                view.table_id,
+                view.table_id!,
                 view_select,
                 row.id,
                 segment.order_field
@@ -2337,7 +2500,7 @@ const transformForm = async ({
                 segment.order_field ? { orderBy: segment.order_field } : {}
               );
           fr.metadata.rows = childRows;
-          if (!fr.fields.map((f) => f.name).includes(childTable.pk_name))
+          if (!fr.fields.map((f: any) => f.name).includes(childTable.pk_name))
             fr.fields.push({
               name: childTable.pk_name,
               input_type: "hidden",
@@ -2348,18 +2511,18 @@ const transformForm = async ({
         segment.field_repeat = fr;
         return;
       } // end edit in edit
-      const outerState = {};
+      const outerState: GenObj = {};
       Object.entries(originalState || {}).forEach(([k, v]) => {
         if (k.startsWith("_")) outerState[k] = v;
       });
-      let state = {};
-      let urlFormula;
-      let needFields = new Set();
+      let state: GenObj = {};
+      let urlFormula: string | undefined;
+      let needFields = new Set<string>();
       if (view_select.type === "RelationPath" && view.table_id) {
-        const pathToUrlFormula = (relation) => {
-          const st = pathToState(relation, (k) => `row.` + k);
+        const pathToUrlFormula = (relation: any) => {
+          const st = pathToState(relation, (k: string) => `row.` + k);
           return Object.entries(st)
-            .map(([k, v]) => {
+            .map(([k, v]: [string, any]) => {
               needFields.add(v.split(".")[1]);
               return `${k}='+${v}+'`;
             })
@@ -2377,7 +2540,11 @@ const transformForm = async ({
           const type = relation.type;
           if (!row && type == RelationType.OWN) {
             segment.type = "blank";
-            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            urlFormula = `add_extra_state('/view/${
+              view.name
+            }/?${relFmlQS}', ${JSON.stringify(
+              segment.extra_state_fml
+            )}, row, ${JSON.stringify(outerState)})`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -2390,7 +2557,11 @@ const transformForm = async ({
             type !== RelationType.INDEPENDENT &&
             !relation.isFixedRelation()
           ) {
-            urlFormula = `add_extra_state('/view/${view.name}/?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            urlFormula = `add_extra_state('/view/${
+              view.name
+            }/?${relFmlQS}', ${JSON.stringify(
+              segment.extra_state_fml
+            )}, row, ${JSON.stringify(outerState)})`;
             segment.contents = segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
@@ -2402,10 +2573,14 @@ const transformForm = async ({
           const userId = req?.user?.id;
           state = pathToState(
             relation,
-            relation.isFixedRelation() ? () => userId : (k) => row[k]
+            relation.isFixedRelation() ? () => userId : (k: string) => row![k]
           );
 
-          urlFormula = `add_extra_state('/view/${view.name}?${relFmlQS}', ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+          urlFormula = `add_extra_state('/view/${
+            view.name
+          }?${relFmlQS}', ${JSON.stringify(
+            segment.extra_state_fml
+          )}, row, ${JSON.stringify(outerState)})`;
         }
       } else {
         const isIndependent = view_select.type === "Independent";
@@ -2418,23 +2593,39 @@ const transformForm = async ({
         switch (view_select.type) {
           case "Own":
             state = { id: row?.id };
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            urlFormula = `add_extra_state('/view/${
+              view.name
+            }/?id='+row.id, ${JSON.stringify(
+              segment.extra_state_fml
+            )}, row, ${JSON.stringify(outerState)})`;
             needFields.add("id");
             break;
           case "Independent":
             state = {};
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            urlFormula = `add_extra_state('/view/${
+              view.name
+            }/?id='+row.id, ${JSON.stringify(
+              segment.extra_state_fml
+            )}, row, ${JSON.stringify(outerState)})`;
             needFields.add("id");
             break;
           case "ChildList":
           case "OneToOneShow":
             state = { [view_select.field_name]: row?.id };
-            urlFormula = `add_extra_state('/view/${view.name}/?${view_select.field_name}='+row.id, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            urlFormula = `add_extra_state('/view/${view.name}/?${
+              view_select.field_name
+            }='+row.id, ${JSON.stringify(
+              segment.extra_state_fml
+            )}, row, ${JSON.stringify(outerState)})`;
             needFields.add("id");
             break;
           case "ParentShow":
             state = { id: row?.[view_select.field_name] };
-            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${view_select.field_name}, ${JSON.stringify(segment.extra_state_fml)}, row, ${JSON.stringify(outerState)})`;
+            urlFormula = `add_extra_state('/view/${view.name}/?id='+row.${
+              view_select.field_name
+            }, ${JSON.stringify(
+              segment.extra_state_fml
+            )}, row, ${JSON.stringify(outerState)})`;
             needFields.add(view_select.field_name);
             break;
         }
@@ -2444,7 +2635,7 @@ const transformForm = async ({
             class: "d-inline",
             "data-sc-embed-viewname": view.name,
             "data-view-source-need-fields": [...needFields].join(","),
-            "data-view-source": encodeURIComponent(urlFormula),
+            "data-view-source": encodeURIComponent(urlFormula!),
           });
           return;
         }
@@ -2473,7 +2664,7 @@ const transformForm = async ({
           "data-sc-view-source": `/view/${view.name}${qs}`,
           "data-view-source-current": `/view/${view.name}${qs}`,
           "data-view-source-need-fields": [...needFields].join(","),
-          "data-view-source": encodeURIComponent(urlFormula),
+          "data-view-source": encodeURIComponent(urlFormula!),
         },
         view.renderLocally()
           ? await view.run(
@@ -2495,9 +2686,10 @@ const transformForm = async ({
   setDateLocales(form, req.getLocale());
 };
 
-const setDateLocales = (form, locale) => {
+const setDateLocales = (form: { fields: Field[] }, locale: string): void => {
   form.fields.forEach((f) => {
-    if (f.type && f.type.name === "Date") {
+    const ftype = f.type as any;
+    if (ftype && ftype.name === "Date") {
       f.attributes.locale = locale;
     }
   });
@@ -2506,7 +2698,7 @@ const setDateLocales = (form, locale) => {
 /**
  * update viewSelect so that it looks like a normal ChildList
  */
-const updateViewSelect = (viewSelect) => {
+const updateViewSelect = (viewSelect: GenObj): void => {
   if (viewSelect.path.length === 1) {
     viewSelect.field_name = viewSelect.path[0].inboundKey;
     viewSelect.table_name = viewSelect.path[0].table;
@@ -2523,10 +2715,14 @@ const updateViewSelect = (viewSelect) => {
  * @param {object} fixed
  * @returns {Promise<object>}
  */
-const fill_presets = async (table, req, fixed) => {
+const fill_presets = async (
+  table: Table | null,
+  req: GenObj,
+  fixed: GenObj
+): Promise<GenObj> => {
   if (!table) return fixed;
   const fields = table.getFields();
-  Object.keys(fixed || {}).forEach((k) => {
+  Object.keys(fixed || {}).forEach((k: string) => {
     if (k.startsWith("preset_")) {
       if (fixed[k]) {
         const fldnm = k.replace("preset_", "");
@@ -2535,7 +2731,7 @@ const fill_presets = async (table, req, fixed) => {
           if (table.name === "users" && fld.primary_key)
             fixed[fldnm] = req.user ? req.user.id : null;
           else
-            fixed[fldnm] = fld.presets[fixed[k]]({
+            fixed[fldnm] = (fld.presets as any)[fixed[k]]({
               user: req.user,
               req,
               field: fld,
@@ -2551,13 +2747,16 @@ const fill_presets = async (table, req, fixed) => {
   });
   return fixed;
 };
-const objToQueryString = (o) =>
+const objToQueryString = (o: GenObj | undefined): string =>
   Object.entries(o || {})
-    .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+    .map(
+      ([k, v]: [string, any]) =>
+        `${encodeURIComponent(k)}=${encodeURIComponent(v)}`
+    )
     .join("&");
 
 // edit template build in actions
-const edit_build_in_actions = [
+const edit_build_in_actions: string[] = [
   "Save",
   "SaveAndContinue",
   "UpdateMatchingRows",
@@ -2568,7 +2767,7 @@ const edit_build_in_actions = [
   "Cancel",
 ];
 
-module.exports = {
+export {
   get_viewable_fields,
   get_viewable_fields_from_layout,
   action_url,
