@@ -84,7 +84,7 @@ interface Column {
   [key: string]: any;
 }
 
-interface CheckResult {
+export interface CheckResult {
   errors: string[];
   warnings: string[];
 }
@@ -221,8 +221,8 @@ const check_view_columns = async (
     view.table_id
       ? { id: view.table_id }
       : view.exttable_name
-        ? { name: view.exttable_name }
-        : { id: -1 }
+      ? { name: view.exttable_name }
+      : { id: -1 }
   );
   let fields;
   if (table) fields = table.getFields();
@@ -266,7 +266,9 @@ const check_view_columns = async (
           !f.type.fieldviews[column.fieldview]
         )
           warnings.push(
-            `In view ${view.name}, field ${column.field_name} of type ${typeof f.type === "string" ? f.type : f.type?.name} table ${table?.name} does not have fieldview ${column.fieldview}`
+            `In view ${view.name}, field ${column.field_name} of type ${
+              typeof f.type === "string" ? f.type : f.type?.name
+            } table ${table?.name} does not have fieldview ${column.fieldview}`
           );
 
         break;

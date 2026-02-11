@@ -7,6 +7,9 @@ import Table from "./models/table";
 import Field from "./models/field";
 import View from "./models/view";
 import type { Row } from "@saltcorn/db-common/internal";
+import type { GenObj, Type } from "@saltcorn/types/common_types";
+import { instanceOfType } from "@saltcorn/types/common_types";
+import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 
 const { post_btn } = require("@saltcorn/markup");
 const {
@@ -88,10 +91,10 @@ const action_url = (
   r: Row,
   colId: string,
   colIdNm: string,
-  confirm: any,
+  confirm: boolean,
   colIndex?: number,
   runAsync?: boolean
-): any => {
+): string | { javascript: string } => {
   const pk_name = table.pk_name;
   const __ = getReq__();
   const confirmStr = confirm ? `if(confirm('${__("Are you sure?")}'))` : "";
@@ -136,8 +139,8 @@ const action_url = (
  * @returns {object}
  */
 const action_link = (
-  url: any,
-  req: any,
+  url: string | { javascript: string },
+  req: GenObj,
   {
     action_name,
     action_label,
@@ -153,17 +156,33 @@ const action_link = (
     action_textcol,
     spinner,
     block,
-  }: any,
+  }: {
+    action_name: string;
+    action_label?: string;
+    confirm?: boolean;
+    rndid?: string;
+    action_style?: string;
+    action_size?: string;
+    action_icon?: string;
+    action_bgcol?: string;
+    action_title?: string;
+    action_class?: string;
+    action_bordercol?: string;
+    action_textcol?: string;
+    spinner?: boolean;
+    block?: boolean;
+  },
   __ = (s: string) => s
-): any => {
-  const label = action_label === " " ? "" : __(action_label) || action_name;
+): string => {
+  const label =
+    action_label === " " ? "" : __(action_label || "") || action_name;
   let style =
     action_style === "btn-custom-color"
       ? `background-color: ${action_bgcol || "#000000"};border-color: ${
           action_bordercol || "#000000"
         }; color: ${action_textcol || "#000000"}`
       : null;
-  if (url.javascript)
+  if (typeof url !== "string" && url.javascript)
     return a(
       {
         href: "javascript:void(0)",
@@ -194,10 +213,12 @@ const action_link = (
     });
 };
 
-const slug_transform = (row: any) => (step: any) =>
-  step.transform === "slugify"
-    ? `/${db.slugify(row[step.field])}`
-    : `/${row[step.field]}`;
+const slug_transform =
+  (row: Row) =>
+  (step: { transform?: string; field: string }): string =>
+    step.transform === "slugify"
+      ? `/${db.slugify(row[step.field])}`
+      : `/${row[step.field]}`;
 /**
  * @function
  * @param {Field[]} fields
@@ -240,11 +261,23 @@ const make_link = (
     icon,
     link_style,
     link_size,
-  }: any,
+  }: {
+    link_text: string;
+    link_text_formula?: boolean;
+    link_url?: string;
+    link_url_formula?: boolean;
+    link_target_blank?: boolean;
+    in_dropdown?: boolean;
+    in_modal?: boolean;
+    link_icon?: string;
+    icon?: string;
+    link_style?: string;
+    link_size?: string;
+  },
   fields: Field[],
   __ = (s: string) => s,
   in_row_click?: boolean
-): any => {
+) => {
   return {
     label: "",
     key: (r: Row) => {
@@ -422,27 +455,46 @@ const view_linker = (
     link_target_blank,
     link_title,
     link_class,
-  }: any,
+  }: {
+    view: string;
+    relation?: string;
+    view_label?: string;
+    in_modal?: boolean;
+    view_label_formula?: boolean;
+    link_style?: string;
+    link_size?: string;
+    link_icon?: string;
+    icon?: string;
+    textStyle?: string;
+    link_bgcol?: string;
+    link_bordercol?: string;
+    link_textcol?: string;
+    in_dropdown?: boolean;
+    extra_state_fml?: string;
+    link_target_blank?: boolean;
+    link_title?: string;
+    link_class?: string;
+  },
   fields: Field[],
   __ = (s: string) => s,
-  isWeb: any = true,
-  user?: any,
+  isWeb: boolean = true,
+  user?: AbstractUser,
   targetPrefix: string = "",
-  state: any = {},
-  req?: any,
+  state: GenObj = {},
+  req?: GenObj,
   srcViewName?: string,
   label_attr?: any, //for sorting
   in_row_click?: boolean
-): any => {
+) => {
   const safePrefix = (targetPrefix || "").endsWith("/")
     ? targetPrefix.substring(0, targetPrefix.length - 1)
     : targetPrefix || "";
-  const get_label = (def: any, row: any) => {
+  const get_label = (def: string, row: Row): string => {
     if (!view_label || view_label.length === 0) return def;
     if (!view_label_formula) return __(view_label);
     return eval_expression(view_label, row, user, "View Link label formula");
   };
-  const get_extra_state = (row: any) => {
+  const get_extra_state = (row: Row): string => {
     if (!extra_state_fml) return "";
     const ctx = {
       ...dollarizeObject(state),
@@ -477,7 +529,7 @@ const view_linker = (
     const type = relObj.type;
     return {
       label: view,
-      key: (r: any) => {
+      key: (r: Row) => {
         const query = pathToQuery(relObj, srcTable, subTable, r);
         if (query === null) return "";
         else {
@@ -527,7 +579,7 @@ const view_linker = (
         const get_query = get_view_link_query(fields, viewrow || {});
         return {
           label: vnm,
-          key: (r: any) => {
+          key: (r: Row) => {
             const target = `${safePrefix}/view/${encodeURIComponent(
               vnm
             )}${get_query(r)}`;
@@ -557,7 +609,7 @@ const view_linker = (
         const ivnm = vrest;
         return {
           label: ivnm,
-          key: (r: any) => {
+          key: (r: Row) => {
             const target = `${safePrefix}/view/${encodeURIComponent(ivnm)}`;
             return link_view(
               isWeb || in_modal ? target : `javascript:execLink('${target}')`,
@@ -587,7 +639,7 @@ const view_linker = (
         const varPath = through ? `${throughTable}.${through}.${fld}` : fld;
         return {
           label: viewnm,
-          key: (r: any) => {
+          key: (r: Row) => {
             const target = `${safePrefix}/view/${encodeURIComponent(
               viewnm
             )}?${varPath}=${r.id}`;
@@ -618,7 +670,7 @@ const view_linker = (
         //console.log([pviewnm, ptbl, pfld])
         return {
           label: pviewnm,
-          key: (r: any) => {
+          key: (r: Row) => {
             const reffield = fields.find((f) => f.name === pfld);
             const summary_field = r[`summary_field_${ptbl.toLowerCase()}`];
             if (r[pfld]) {
@@ -690,12 +742,12 @@ const get_viewable_fields_from_layout = (
   fields: Field[],
   columns: any[],
   isShow: boolean,
-  req: any,
-  __: any,
-  state: any = {},
+  req: GenObj,
+  __: (s: string) => string,
+  state: GenObj = {},
   srcViewName?: string,
   layoutCols?: any[],
-  viewResults?: any,
+  viewResults?: GenObj,
   in_row_click?: boolean
 ): any[] => {
   const typeMap: Record<string, string> = {
@@ -801,11 +853,11 @@ const get_viewable_fields = (
   fields: Field[],
   columns: any[],
   isShow: boolean,
-  req: any,
-  __: any,
-  state: any = {},
+  req: GenObj,
+  __: (s: string) => string,
+  state: GenObj = {},
   srcViewName?: string,
-  viewResults?: any,
+  viewResults?: GenObj,
   in_row_click?: boolean
 ): any[] => {
   const dropdown_actions: any[] = [];
@@ -816,7 +868,7 @@ const get_viewable_fields = (
       if (column.showif) {
         const oldKeyF = tfield.key;
         if (typeof oldKeyF !== "function") return tfield;
-        const newKeyF = (r: any) => {
+        const newKeyF = (r: Row) => {
           if (
             eval_expression(
               column.showif,
@@ -848,7 +900,7 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? __(column.header_label) : "",
-          key: (r: any) =>
+          key: (r: Row) =>
             text(
               eval_expression(
                 column.formula,
@@ -862,7 +914,7 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? __(column.header_label) : "",
-          key: (r: any) =>
+          key: (r: Row) =>
             column.interpolator
               ? column.interpolator(r)
               : text(column.contents),
@@ -871,7 +923,7 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? __(column.header_label) : "",
-          key: (r: any) => {
+          key: (r: Row) => {
             const layout = structuredClone({ ...column, type: "container" });
             traverseSync(
               layout,
@@ -881,7 +933,7 @@ const get_viewable_fields = (
               blockDispatch: {
                 ...standardBlockDispatch(viewname, state, table, { req }, r),
                 view(column: any) {
-                  return viewResults[column.view + column.relation]?.(r);
+                  return viewResults?.[column.view + column.relation]?.(r);
                 },
               },
               layout,
@@ -901,7 +953,7 @@ const get_viewable_fields = (
         return {
           ...setWidth,
           label: column.header_label ? __(column.header_label) : "",
-          key: (r: any) =>
+          key: (r: Row) =>
             div(
               { class: "dropdown" },
               button(
@@ -954,7 +1006,7 @@ const get_viewable_fields = (
         const action_col = {
           ...setWidth,
           label: column.header_label ? __(column.header_label) : "",
-          key: (r: any) => {
+          key: (r: Row) => {
             if (action_requires_write(column.action_name)) {
               if (table.min_role_write < role && !table.is_owner(req.user, r))
                 return "";
@@ -979,7 +1031,7 @@ const get_viewable_fields = (
                 )
               : __(column.action_label) || __(column.action_name);
             const icon = column.action_icon || column.icon || undefined;
-            if (url.javascript)
+            if (typeof url !== "string" && url.javascript)
               return a(
                 {
                   href: "javascript:void(0)",
@@ -1026,11 +1078,11 @@ const get_viewable_fields = (
       } else if (column.type === "View") {
         return {
           label: column.header_label ? __(column.header_label) : "",
-          key: (r: any) => viewResults[column.view + column.relation]?.(r),
+          key: (r: Row) => viewResults?.[column.view + column.relation]?.(r),
         };
       } else if (column.type === "ViewLink") {
         if (!column.view) return;
-        const r = view_linker(
+        const r: any = view_linker(
           column,
           fields,
           __,
@@ -1171,12 +1223,12 @@ const get_viewable_fields = (
           sortlink: sortlinkForName(key, req, viewname, statehash),
         };
         if (column.click_to_edit) {
-          const reffield = fields.find((f: any) => f.name === refNm);
+          const reffield = fields.find((f) => f.name === refNm);
 
           const oldkey =
             typeof fvrun.key === "function"
               ? fvrun.key
-              : (r: any) => r[fvrun.key];
+              : (r: Row) => r[fvrun.key];
           const newkey = (row: any) =>
             div(
               {
@@ -1260,12 +1312,12 @@ const get_viewable_fields = (
               });
         }
 
-        let key = (r: any) => {
+        let key = (r: Row) => {
           const value = r[targetNm];
           return showValue(value);
         };
         if (column.stat.toLowerCase() === "array_agg")
-          key = (r: any) =>
+          key = (r: Row) =>
             Array.isArray(r[targetNm])
               ? r[targetNm].map((v: any) => showValue(v)).join(", ")
               : "";
@@ -1355,7 +1407,7 @@ const get_viewable_fields = (
         if (column.click_to_edit) {
           const updateKey = (fvr: any, column_key?: any) => {
             const oldkey =
-              typeof fvr.key === "function" ? fvr.key : (r: any) => r[fvr.key];
+              typeof fvr.key === "function" ? fvr.key : (r: Row) => r[fvr.key];
             const doSetKey =
               (column.fieldview === "subfield" ||
                 column.fieldview === "keys_expand_columns") &&
@@ -1405,7 +1457,7 @@ const get_viewable_fields = (
     //legacy
     tfields.push({
       label: req.__("Action"),
-      key: (r: any) =>
+      key: (r: Row) =>
         div(
           { class: "dropdown" },
           button(
@@ -1434,7 +1486,7 @@ const get_viewable_fields = (
 };
 
 const headerFilterForField =
-  (f: Field | null, state: any, path?: string) =>
+  (f: Field | null, state: GenObj, path?: string) =>
   (id?: string): string => {
     const ftype = f?.type as any;
     if (!f) return "";
@@ -1565,11 +1617,11 @@ const sortlinkForName = (
 
 const standardLayoutRowVisitor = (
   viewname: string,
-  state: any,
+  state: GenObj,
   table: Table,
   row: Row,
-  req: any
-): any => {
+  req: GenObj
+) => {
   const session_id = getSessionId(req);
   const locale = req.getLocale();
   const fields = table.fields;
@@ -1647,10 +1699,11 @@ const standardLayoutRowVisitor = (
       evalMaybeExpr(segment, "url");
       evalMaybeExpr(segment, "alt");
       if (segment.srctype === "Field") {
-        const field = fields.find((f: any) => f.name === segment.field);
+        const field = fields.find((f) => f.name === segment.field);
         if (!field) return;
-        if (field.type.name === "String") segment.url = row[segment.field];
-        if (field.type === "File") {
+        const ftype = field.type as any;
+        if (ftype?.name === "String") segment.url = row[segment.field];
+        if (ftype === "File") {
           segment.url = `/files/serve/${row[segment.field]}`;
           segment.fileid = row[segment.field];
         }
@@ -1683,19 +1736,20 @@ const standardLayoutRowVisitor = (
 
 const standardBlockDispatch = (
   viewname: string,
-  state: any,
+  state: GenObj,
   table: Table,
-  extra: any,
+  extra: { req: GenObj; [key: string]: any },
   row: Row
-): any => {
+) => {
   const req = extra.req;
   const fields = table.fields;
   const locale = req.getLocale();
   const role = req.user?.role_id || 100;
   return {
     field({ field_name, fieldview, configuration, click_to_edit }: any) {
-      let field = fields.find((fld: any) => fld.name === field_name);
+      let field = fields.find((fld) => fld.name === field_name);
       if (!field) return "";
+      const ftype = field.type as any;
 
       let val = row[field_name];
       let fvrun;
@@ -1713,7 +1767,7 @@ const standardBlockDispatch = (
         ...field.attributes,
         ...configuration,
       };
-      if (fieldview && field.type === "File") {
+      if (fieldview && ftype === "File") {
         if (req.generate_email) cfg.targetPrefix = getSafeBaseUrl();
         fvrun = val
           ? getState().fileviews[fieldview].run(
@@ -1724,11 +1778,11 @@ const standardBlockDispatch = (
           : "";
       } else if (
         fieldview &&
-        field.type &&
-        field.type.fieldviews &&
-        field.type.fieldviews[fieldview]
+        ftype &&
+        ftype.fieldviews &&
+        ftype.fieldviews[fieldview]
       )
-        fvrun = field.type.fieldviews[fieldview].run(val, req, cfg);
+        fvrun = ftype.fieldviews[fieldview].run(val, req, cfg);
       else fvrun = text(val);
       if (
         click_to_edit &&
@@ -1859,7 +1913,7 @@ const standardBlockDispatch = (
             ? "Float"
             : stat === "Count" || stat === "CountUnique"
             ? "Integer"
-            : aggField.type?.name;
+            : (aggField?.type as any)?.name;
         const type = getState().types[outcomeType];
         if (type?.fieldviews[column.agg_fieldview]) {
           const readval = type.read(val);
@@ -1968,8 +2022,8 @@ const standardBlockDispatch = (
 const headerLabelForName = (
   label: string,
   fname: string,
-  req: any,
-  __: any,
+  req: GenObj,
+  __: (s: string) => string,
   statehash: string
 ): string => {
   //const { _sortby, _sortdesc } = req.query || {};
@@ -1996,11 +2050,11 @@ const headerLabelForName = (
  */
 const splitUniques = (
   fields: Field[],
-  state: any,
+  state: GenObj,
   fuzzyStrings?: boolean
-): any => {
-  let uniques: any = {};
-  let nonUniques: any = {};
+): { uniques: GenObj; nonUniques: GenObj } => {
+  let uniques: GenObj = {};
+  let nonUniques: GenObj = {};
   Object.entries(state).forEach(([k, v]) => {
     const field = fields.find((f) => f.name === k);
     if (
@@ -2044,7 +2098,7 @@ const getForm = async (
   const tfields = (columns || [])
     .map((column: any) => {
       if (column.type === "Field") {
-        const f0 = fields.find((fld: any) => fld.name === column.field_name);
+        const f0 = fields.find((fld) => fld.name === column.field_name);
 
         if (f0) {
           const f = new Field(f0);
@@ -2124,7 +2178,7 @@ const getForm = async (
                 ref: ref.replace("?", ""),
                 target,
                 refTable: refField.reftable_name,
-                refTablePK: Table.findOne(refField.reftable_name).pk_name,
+                refTablePK: Table.findOne(refField.reftable_name)!.pk_name,
               };
             })
             .filter(Boolean);
@@ -2183,15 +2237,20 @@ const transformForm = async ({
   req: any;
   row: Row | null;
   res: any;
-  getRowQuery: any;
+  getRowQuery?: (
+    tableId: number,
+    viewSelect: GenObj,
+    rowId: any,
+    orderField?: string
+  ) => Promise<Row[]>;
   viewname: string;
-  optionsQuery: any;
-  state: any;
+  optionsQuery?: GenObj;
+  state: GenObj;
 }): Promise<void> => {
   let originalState = state;
   let pseudo_row: any = {};
   if (!row) {
-    table.fields.forEach((f: any) => {
+    table.fields.forEach((f) => {
       pseudo_row[f.name] = undefined;
     });
   }
@@ -2237,13 +2296,14 @@ const transformForm = async ({
                 `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
               )
             );
-        } catch (e: any) {
+        } catch (e: unknown) {
+          const err = e as Error;
           appState.log(
             5,
-            `Error in Edit ${viewname} on page load action: ${e.message}`
+            `Error in Edit ${viewname} on page load action: ${err.message}`
           );
-          e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
-          throw e;
+          err.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${err.message}`;
+          throw err;
         }
       }
       if (segment.action_name === "Delete") {
@@ -2256,18 +2316,18 @@ const transformForm = async ({
       } else if (
         segment.action_name === "form_action" &&
         segment.configuration?.form_action === "Save" &&
-        table.fields.some((f: any) => f.type === "File")
+        table.fields.some((f) => f.type === "File")
       ) {
         let url = action_url(
           viewname,
           table,
           segment.action_name,
-          row,
+          row || pseudo_row,
           segment.rndid,
           "rndid",
           segment.confirm
         );
-        if (url.javascript) {
+        if (typeof url !== "string" && url.javascript) {
           //redo to include dynamic row
           const confirmStr = segment.confirm
             ? `if(confirm('Are you sure?'))`
@@ -2283,14 +2343,14 @@ const transformForm = async ({
           viewname,
           table,
           segment.action_name,
-          row,
+          row || pseudo_row,
           segment.rndid,
           "rndid",
           segment.confirm,
           undefined,
           segment.run_async
         );
-        if (url.javascript) {
+        if (typeof url !== "string" && url.javascript) {
           //redo to include dynamic row
           const confirmStr = segment.confirm
             ? `if(confirm('Are you sure?'))`
@@ -2376,7 +2436,7 @@ const transformForm = async ({
       // check if the relation path matches a ChildList relations
       let childListRelPath = false;
       if (segment.relation && view.table_id) {
-        const targetTbl = Table.findOne({ id: view.table_id });
+        const targetTbl = Table.findOne({ id: view.table_id })!;
         const relation = new Relation(
           segment.relation,
           targetTbl.name,
@@ -2390,7 +2450,7 @@ const transformForm = async ({
         (view_select.type === "ChildList" || childListRelPath)
       ) {
         if (childListRelPath) updateViewSelect(view_select);
-        const childTable = Table.findOne({ id: view.table_id });
+        const childTable = Table.findOne({ id: view.table_id })!;
         const childForm = await getForm(
           childTable,
           view.name,
@@ -2430,7 +2490,7 @@ const transformForm = async ({
         if (row?.id) {
           const childRows = getRowQuery
             ? await getRowQuery(
-                view.table_id,
+                view.table_id!,
                 view_select,
                 row.id,
                 segment.order_field
@@ -2515,7 +2575,7 @@ const transformForm = async ({
           const userId = req?.user?.id;
           state = pathToState(
             relation,
-            relation.isFixedRelation() ? () => userId : (k: string) => row[k]
+            relation.isFixedRelation() ? () => userId : (k: string) => row![k]
           );
 
           urlFormula = `add_extra_state('/view/${
@@ -2628,9 +2688,10 @@ const transformForm = async ({
   setDateLocales(form, req.getLocale());
 };
 
-const setDateLocales = (form: any, locale: string): void => {
-  form.fields.forEach((f: any) => {
-    if (f.type && f.type.name === "Date") {
+const setDateLocales = (form: { fields: Field[] }, locale: string): void => {
+  form.fields.forEach((f) => {
+    const ftype = f.type as any;
+    if (ftype && ftype.name === "Date") {
       f.attributes.locale = locale;
     }
   });
@@ -2639,7 +2700,7 @@ const setDateLocales = (form: any, locale: string): void => {
 /**
  * update viewSelect so that it looks like a normal ChildList
  */
-const updateViewSelect = (viewSelect: any): void => {
+const updateViewSelect = (viewSelect: GenObj): void => {
   if (viewSelect.path.length === 1) {
     viewSelect.field_name = viewSelect.path[0].inboundKey;
     viewSelect.table_name = viewSelect.path[0].table;
@@ -2658,21 +2719,21 @@ const updateViewSelect = (viewSelect: any): void => {
  */
 const fill_presets = async (
   table: Table | null,
-  req: any,
-  fixed: any
-): Promise<any> => {
+  req: GenObj,
+  fixed: GenObj
+): Promise<GenObj> => {
   if (!table) return fixed;
   const fields = table.getFields();
   Object.keys(fixed || {}).forEach((k: string) => {
     if (k.startsWith("preset_")) {
       if (fixed[k]) {
         const fldnm = k.replace("preset_", "");
-        const fld = fields.find((f: any) => f.name === fldnm);
+        const fld = fields.find((f) => f.name === fldnm);
         if (fld) {
           if (table.name === "users" && fld.primary_key)
             fixed[fldnm] = req.user ? req.user.id : null;
           else
-            fixed[fldnm] = fld.presets[fixed[k]]({
+            fixed[fldnm] = (fld.presets as any)[fixed[k]]({
               user: req.user,
               req,
               field: fld,
@@ -2681,14 +2742,14 @@ const fill_presets = async (
       }
       delete fixed[k];
     } else {
-      const fld = fields.find((f: any) => f.name === k);
+      const fld = fields.find((f) => f.name === k);
       if (!fld) delete fixed[k];
       if (fixed[k] === null || fixed[k] === "") delete fixed[k];
     }
   });
   return fixed;
 };
-const objToQueryString = (o: any): string =>
+const objToQueryString = (o: GenObj | undefined): string =>
   Object.entries(o || {})
     .map(
       ([k, v]: [string, any]) =>
