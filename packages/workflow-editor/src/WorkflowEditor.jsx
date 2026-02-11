@@ -680,9 +680,16 @@ const WorkflowEditor = ({ data }) => {
   const [savingModal, setSavingModal] = useState(false);
   const [savingPositions, setSavingPositions] = useState(false);
   const [sizeSyncing, setSizeSyncing] = useState(false);
-  const [drawerWidth, setDrawerWidth] = useState(420);
+  const [drawerWidth, setDrawerWidth] = useState(() => {
+    if (typeof window !== "undefined") {
+      return Math.max(600, Math.round(window.innerWidth * 0.5));
+    }
+    return 600;
+  });
   const modalRef = useRef(null);
   const resizingRef = useRef(false);
+  const connectSourceRef = useRef(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState(null);
 
   const rfInstanceRef = useRef(null);
 
@@ -692,9 +699,10 @@ const WorkflowEditor = ({ data }) => {
 
   const [selectedNodes, setSelectedNodes] = useState([]);
 
-  const handleSelectionChange = useCallback(({ nodes = [] }) => {
-    console.log("selection change", nodes);
+  const handleSelectionChange = useCallback(({ nodes = [], edges = [] }) => {
     setSelectedNodes(nodes);
+    if (edges.length) setSelectedEdgeId(edges[0].id);
+    else setSelectedEdgeId(null);
   }, []);
   const handleKeyDelete = useCallback(
     (e) => {
@@ -1089,6 +1097,9 @@ const WorkflowEditor = ({ data }) => {
 
   const onConnect = useCallback(
     async (connection) => {
+      // Valid connection landed; clear pending source so we don't treat it as a cancel
+      connectSourceRef.current = null;
+      setSelectedEdgeId(connection.id || null);
       const loop = connection.sourceHandle === "loop";
       const targetName = nameById[connection.target];
       if (connection.source === "start") {
@@ -1130,6 +1141,28 @@ const WorkflowEditor = ({ data }) => {
       await reload();
     },
     [idByName, nameById, reload, steps, updateConnection]
+  );
+
+  const onConnectStart = useCallback((_, params) => {
+    if (params?.nodeId && params?.handleType === "source") {
+      connectSourceRef.current = params;
+    }
+  }, []);
+
+  const onConnectEnd = useCallback(
+    (event) => {
+      const pending = connectSourceRef.current;
+      connectSourceRef.current = null;
+      if (!pending) return;
+      const targetEl = event?.target;
+      if (targetEl?.classList?.contains("react-flow__pane")) {
+        // Dropped on empty space: clear next_step mark as final/unconnected
+        if (pending.nodeId && pending.handleId !== "loop-out") {
+          onClearNext(pending.nodeId);
+        }
+      }
+    },
+    [onClearNext]
   );
 
   const onEdgesChange = useCallback(
@@ -1328,11 +1361,30 @@ const WorkflowEditor = ({ data }) => {
   const shellStyle = { "--wf-drawer-width": `${drawerWidth}px` };
   const showMiniMap = !modal;
 
+  const onEdgeClick = useCallback((_, edge) => {
+    setSelectedEdgeId(edge.id);
+  }, []);
+
+  useEffect(() => {
+    setEdges((edgs) =>
+      edgs.map((e) => {
+        const selected = e.id === selectedEdgeId;
+        const nextClass = selected
+          ? `${e.className || ""} wf-edge-selected`.trim()
+          : (e.className || "").replace(/\s*wf-edge-selected\b/, "");
+        const nextData =
+          e.type === "workflow-main" ? { ...(e.data || {}), selected } : e.data;
+        if (nextClass === (e.className || "") && nextData === e.data) return e;
+        return { ...e, className: nextClass, data: nextData };
+      })
+    );
+  }, [selectedEdgeId, setEdges]);
+
   const handleResize = useCallback((e) => {
     if (!resizingRef.current) return;
     const maxWidth = Math.min(900, Math.max(360, window.innerWidth - 40));
     const nextWidth = Math.min(
-      Math.max(320, window.innerWidth - e.clientX),
+      Math.max(600, window.innerWidth - e.clientX),
       maxWidth
     );
     setDrawerWidth(nextWidth);
@@ -1405,6 +1457,9 @@ const WorkflowEditor = ({ data }) => {
           onNodesChange={onNodesChangeWrapped}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onConnectStart={onConnectStart}
+          onConnectEnd={onConnectEnd}
+          onEdgeClick={onEdgeClick}
           onSelectionChange={handleSelectionChange}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}

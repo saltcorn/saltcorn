@@ -13,7 +13,7 @@
   --wf-handle-border: #3f3f3f;
   --wf-handle-bg: #fff;
   --wf-handle-source-bg: #5a5a5a;
-  --wf-drawer-width: 420px;
+  --wf-drawer-width: 50vw;
 }
 
 .wf-shell--drawer-open {
@@ -169,7 +169,7 @@
   top: 0;
   right: 0;
   height: 100%;
-  width: min(var(--wf-drawer-width), 95vw);
+  width: min(95vw, max(var(--wf-drawer-width), 600px));
   background: var(--bs-card-bg, #fff);
   color: var(--bs-body-color, #212529);
   border-left: 1px solid var(--bs-card-border-color, #e2e6ea);
@@ -259,6 +259,12 @@
   stroke: var(--wf-edge);
   fill: none;
   stroke-width: 1.5px;
+}
+
+.wf-shell .wf-edge-selected .react-flow__edge-path {
+  stroke: var(--wf-edge-selected, #0d6efd) !important;
+  stroke-width: 2.4px;
+  filter: drop-shadow(0 0 4px rgba(13, 110, 253, 0.35));
 }
 
 .wf-shell .react-flow__connection-path {
