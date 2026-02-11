@@ -89,15 +89,15 @@ export interface CheckResult {
   warnings: string[];
 }
 
-const auto_test_wrap = (wrap: any): void => {
+const auto_test_wrap = (wrap: Function): void => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
 };
 
 const generate_attributes = (
   typeattrs: TypeAttributes[] | undefined,
-  validate?: (attrs: any) => boolean,
+  validate?: (attrs: Record<string, any>) => boolean,
   table_id?: number
-): any => {
+): Record<string, any> => {
   var res: Record<string, any> = {};
   const attrs = Field.getTypeAttributes(typeattrs, table_id);
   (attrs || []).forEach((a: any) => {
@@ -156,9 +156,9 @@ const auto_test_type = (t: PluginType): void => {
 
 const auto_test_workflow = async (
   wf: Workflow,
-  initialCtx: any
-): Promise<any> => {
-  const step = async (wf: Workflow, ctx: any): Promise<any> => {
+  initialCtx: Record<string, any>
+): Promise<Record<string, any>> => {
+  const step = async (wf: Workflow, ctx: Record<string, any>): Promise<Record<string, any>> => {
     is.obj(ctx);
     const res = await wf.run(ctx);
 
@@ -212,7 +212,7 @@ const auto_test_plugin = async (plugin: Plugin): Promise<void> => {
 };
 
 const check_view_columns = async (
-  view: any,
+  view: View,
   columns: Column[]
 ): Promise<CheckResult> => {
   const errs: string[] = [];
@@ -236,7 +236,7 @@ const check_view_columns = async (
     await Trigger.find({
       when_trigger: { or: ["API call", "Never"] },
     })
-  ).map((tr: any) => tr.name);
+  ).map((tr) => tr.name);
   for (const column of columns) {
     switch (column.type) {
       // in general, if formula checked, make sure it is present
@@ -250,7 +250,7 @@ const check_view_columns = async (
         )
           break;
         if (!fields) break;
-        const f = fields.find((fld: any) => fld.name === column.field_name);
+        const f = fields.find((fld) => fld.name === column.field_name);
         if (!f) {
           warnings.push(
             `In view ${view.name}, field ${column.field_name} does not exist in table ${table?.name}`
