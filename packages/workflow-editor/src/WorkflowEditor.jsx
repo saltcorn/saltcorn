@@ -119,9 +119,22 @@ const StepNode = ({ data }) => {
 
   const targetPosition = Position.Top;
   const sourcePosition = Position.Bottom;
-  const backInStyle = { ...handleStyle, top: "32%" };
-  const backOutStyle = { ...handleStyle, top: "68%" };
   const isLoop = data.action_name === "ForLoop";
+  const { showBackIn, showBackOut, showLoopIn, showLoopOut, hideMainSource } =
+    data || {};
+
+  const hasLeftSource = !!showBackOut;
+  const hasLeftTarget = !!showBackIn || !!showLoopIn;
+
+  let backInStyle = handleStyle;
+  let loopInStyle = handleStyle;
+  let backOutStyle = handleStyle;
+
+  if (hasLeftSource && hasLeftTarget) {
+    backInStyle = { ...handleStyle, top: "68%" };
+    loopInStyle = { ...handleStyle, top: "32%" };
+    backOutStyle = { ...handleStyle, top: "32%" };
+  }
 
   return (
     <div
@@ -163,43 +176,53 @@ const StepNode = ({ data }) => {
         </div>
       ) : null} */}
       <Handle style={handleStyle} type="target" position={targetPosition} />
-      <Handle
-        style={handleStyle}
-        id="main"
-        type="source"
-        className="wf-handle-source"
-        position={sourcePosition}
-      />
+      {!hideMainSource ? (
+        <Handle
+          style={handleStyle}
+          id="main"
+          type="source"
+          className="wf-handle-source"
+          position={sourcePosition}
+        />
+      ) : null}
       {/* Back edges use left handles to untangle cross-links */}
-      <Handle
-        style={backInStyle}
-        id="back-in"
-        type="target"
-        position={Position.Left}
-      />
-      <Handle
-        style={backOutStyle}
-        id="back-out"
-        type="source"
-        className="wf-handle-source"
-        position={Position.Left}
-      />
+      {showBackIn ? (
+        <Handle
+          style={backInStyle}
+          id="back-in"
+          type="target"
+          position={Position.Left}
+        />
+      ) : null}
+      {showBackOut ? (
+        <Handle
+          style={backOutStyle}
+          id="back-out"
+          type="source"
+          className="wf-handle-source"
+          position={Position.Left}
+        />
+      ) : null}
       {isLoop ? (
         <>
-          <Handle
-            style={handleStyle}
-            id="loop-in"
-            type="target"
-            className="wf-handle-target-loop"
-            position={Position.Left}
-          />
-          <Handle
-            style={handleStyle}
-            id="loop-out"
-            type="source"
-            className="wf-handle-source-loop"
-            position={Position.Right}
-          />
+          {showLoopIn ? (
+            <Handle
+              style={loopInStyle}
+              id="loop-in"
+              type="target"
+              className="wf-handle-target-loop"
+              position={Position.Left}
+            />
+          ) : null}
+          {showLoopOut ? (
+            <Handle
+              style={handleStyle}
+              id="loop-out"
+              type="source"
+              className="wf-handle-source-loop"
+              position={Position.Right}
+            />
+          ) : null}
         </>
       ) : null}
     </div>
@@ -306,6 +329,26 @@ const buildGraph = (
   const initial = steps.find((s) => s.initial_step);
   const loopBackLinks = findLoopBackLinks(steps);
   const loopBodyIds = findLoopBodyStepIds(steps);
+
+  // Track which handles are actualy used by edges per node
+  const handleUsage = {};
+  const markHandleUsage = (nodeId, handleId) => {
+    if (!nodeId || !handleId) return;
+    const key = String(nodeId);
+    if (!handleUsage[key]) handleUsage[key] = {};
+    handleUsage[key][handleId] = true;
+  };
+
+  // Track whether a node has forward/back edges to decide when to hide main bottom handle
+  const edgeStats = {};
+  const markEdgeKind = (nodeId, { back = false, forward = false } = {}) => {
+    if (!nodeId) return;
+    const key = String(nodeId);
+    if (!edgeStats[key])
+      edgeStats[key] = { hasBackEdge: false, hasForwardEdge: false };
+    if (back) edgeStats[key].hasBackEdge = true;
+    if (forward) edgeStats[key].hasForwardEdge = true;
+  };
 
   const adjacency = new Map();
   steps.forEach((s) => {
@@ -463,6 +506,17 @@ const buildGraph = (
           srcOrder !== undefined &&
           tgtOrder !== undefined &&
           tgtOrder < srcOrder;
+        // record handle usage and edge direction for this source node
+        const sourceId = String(step.id);
+        if (isBackEdge) {
+          markHandleUsage(sourceId, "back-out");
+          markHandleUsage(targetId, "back-in");
+          markEdgeKind(sourceId, { back: true });
+        } else {
+          // uses the main bottom source handle
+          markHandleUsage(sourceId, "main");
+          markEdgeKind(sourceId, { forward: true });
+        }
         edges.push({
           id: `e-${step.id}-${name}`,
           source: String(step.id),
@@ -486,6 +540,12 @@ const buildGraph = (
       const loopTarget = step.configuration?.loop_body_initial_step;
       if (loopTarget) {
         const loopId = idByName[loopTarget];
+        const sourceId = String(step.id);
+        markHandleUsage(sourceId, "loop-out");
+        markEdgeKind(sourceId, { forward: true });
+        if (!loopId) {
+          markHandleUsage(sourceId, "loop-in");
+        }
         edges.push({
           id: `loop-${step.id}-${loopTarget}`,
           source: String(step.id),
@@ -508,6 +568,10 @@ const buildGraph = (
       const forLoopName = loopBackLinks[step.name];
       const loopId = idByName[forLoopName];
       if (loopId) {
+        const sourceId = String(step.id);
+        markHandleUsage(sourceId, "back-out");
+        markHandleUsage(loopId, "loop-in");
+        markEdgeKind(sourceId, { back: true });
         edges.push({
           id: `loopback-${step.id}-${forLoopName}`,
           source: String(step.id),
@@ -579,7 +643,28 @@ const buildGraph = (
     });
   });
 
-  const allNodes = [...nodes, ...addNodes];
+  const allNodes = [...nodes, ...addNodes].map((node) => {
+    if (node.type !== "step") return node;
+    const id = String(node.id);
+    const usage = handleUsage[id] || {};
+    const stats = edgeStats[id] || {
+      hasBackEdge: false,
+      hasForwardEdge: false,
+    };
+    const hideMainSource = stats.hasBackEdge && !stats.hasForwardEdge;
+
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        showBackIn: !!usage["back-in"],
+        showBackOut: !!usage["back-out"],
+        showLoopIn: !!usage["loop-in"],
+        showLoopOut: !!usage["loop-out"],
+        hideMainSource,
+      },
+    };
+  });
 
   return { nodes: allNodes, edges, idByName, nameById };
 };

@@ -34150,13 +34150,29 @@ var StepNode = function StepNode(_ref3) {
   };
   var targetPosition = _xyflow_react__WEBPACK_IMPORTED_MODULE_4__.Position.Top;
   var sourcePosition = _xyflow_react__WEBPACK_IMPORTED_MODULE_4__.Position.Bottom;
-  var backInStyle = _objectSpread(_objectSpread({}, handleStyle), {}, {
-    top: "32%"
-  });
-  var backOutStyle = _objectSpread(_objectSpread({}, handleStyle), {}, {
-    top: "68%"
-  });
   var isLoop = data.action_name === "ForLoop";
+  var _ref4 = data || {},
+    showBackIn = _ref4.showBackIn,
+    showBackOut = _ref4.showBackOut,
+    showLoopIn = _ref4.showLoopIn,
+    showLoopOut = _ref4.showLoopOut,
+    hideMainSource = _ref4.hideMainSource;
+  var hasLeftSource = !!showBackOut;
+  var hasLeftTarget = !!showBackIn || !!showLoopIn;
+  var backInStyle = handleStyle;
+  var loopInStyle = handleStyle;
+  var backOutStyle = handleStyle;
+  if (hasLeftSource && hasLeftTarget) {
+    backInStyle = _objectSpread(_objectSpread({}, handleStyle), {}, {
+      top: "68%"
+    });
+    loopInStyle = _objectSpread(_objectSpread({}, handleStyle), {}, {
+      top: "32%"
+    });
+    backOutStyle = _objectSpread(_objectSpread({}, handleStyle), {}, {
+      top: "32%"
+    });
+  }
   return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
     className: "wf-node",
     onClick: handleClick,
@@ -34185,36 +34201,36 @@ var StepNode = function StepNode(_ref3) {
     style: handleStyle,
     type: "target",
     position: targetPosition
-  }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Handle, {
+  }), !hideMainSource ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Handle, {
     style: handleStyle,
     id: "main",
     type: "source",
     className: "wf-handle-source",
     position: sourcePosition
-  }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Handle, {
+  }) : null, showBackIn ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Handle, {
     style: backInStyle,
     id: "back-in",
     type: "target",
     position: _xyflow_react__WEBPACK_IMPORTED_MODULE_4__.Position.Left
-  }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Handle, {
+  }) : null, showBackOut ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Handle, {
     style: backOutStyle,
     id: "back-out",
     type: "source",
     className: "wf-handle-source",
     position: _xyflow_react__WEBPACK_IMPORTED_MODULE_4__.Position.Left
-  }), isLoop ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Handle, {
-    style: handleStyle,
+  }) : null, isLoop ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement((react__WEBPACK_IMPORTED_MODULE_0___default().Fragment), null, showLoopIn ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Handle, {
+    style: loopInStyle,
     id: "loop-in",
     type: "target",
     className: "wf-handle-target-loop",
     position: _xyflow_react__WEBPACK_IMPORTED_MODULE_4__.Position.Left
-  }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Handle, {
+  }) : null, showLoopOut ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Handle, {
     style: handleStyle,
     id: "loop-out",
     type: "source",
     className: "wf-handle-source-loop",
     position: _xyflow_react__WEBPACK_IMPORTED_MODULE_4__.Position.Right
-  })) : null);
+  }) : null) : null);
 };
 var nodeTypes = {
   start: StartNode,
@@ -34270,9 +34286,9 @@ var findLoopBodyStepIds = function findLoopBodyStepIds(steps) {
 };
 var buildGraph = function buildGraph(steps, strings, actionExplainers) {
   var _positions$String$x, _positions$String, _positions$String$y, _positions$String2;
-  var _ref4 = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {},
-    startPosition = _ref4.startPosition,
-    addPositions = _ref4.addPositions;
+  var _ref5 = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {},
+    startPosition = _ref5.startPosition,
+    addPositions = _ref5.addPositions;
   var idByName = {};
   var nameById = {};
   var sizeById = {};
@@ -34321,6 +34337,33 @@ var buildGraph = function buildGraph(steps, strings, actionExplainers) {
   });
   var loopBackLinks = findLoopBackLinks(steps);
   var loopBodyIds = findLoopBodyStepIds(steps);
+
+  // Track which handles are actualy used by edges per node
+  var handleUsage = {};
+  var markHandleUsage = function markHandleUsage(nodeId, handleId) {
+    if (!nodeId || !handleId) return;
+    var key = String(nodeId);
+    if (!handleUsage[key]) handleUsage[key] = {};
+    handleUsage[key][handleId] = true;
+  };
+
+  // Track whether a node has forward/back edges to decide when to hide main bottom handle
+  var edgeStats = {};
+  var markEdgeKind = function markEdgeKind(nodeId) {
+    var _ref6 = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
+      _ref6$back = _ref6.back,
+      back = _ref6$back === void 0 ? false : _ref6$back,
+      _ref6$forward = _ref6.forward,
+      forward = _ref6$forward === void 0 ? false : _ref6$forward;
+    if (!nodeId) return;
+    var key = String(nodeId);
+    if (!edgeStats[key]) edgeStats[key] = {
+      hasBackEdge: false,
+      hasForwardEdge: false
+    };
+    if (back) edgeStats[key].hasBackEdge = true;
+    if (forward) edgeStats[key].hasForwardEdge = true;
+  };
   var adjacency = new Map();
   steps.forEach(function (s) {
     var targets = [];
@@ -34460,6 +34503,21 @@ var buildGraph = function buildGraph(steps, strings, actionExplainers) {
         var srcOrder = orderIndex.get(String(step.id));
         var tgtOrder = orderIndex.get(targetId);
         var isBackEdge = srcOrder !== undefined && tgtOrder !== undefined && tgtOrder < srcOrder;
+        // record handle usage and edge direction for this source node
+        var sourceId = String(step.id);
+        if (isBackEdge) {
+          markHandleUsage(sourceId, "back-out");
+          markHandleUsage(targetId, "back-in");
+          markEdgeKind(sourceId, {
+            back: true
+          });
+        } else {
+          // uses the main bottom source handle
+          markHandleUsage(sourceId, "main");
+          markEdgeKind(sourceId, {
+            forward: true
+          });
+        }
         edges.push({
           id: "e-".concat(step.id, "-").concat(name),
           source: String(step.id),
@@ -34484,6 +34542,14 @@ var buildGraph = function buildGraph(steps, strings, actionExplainers) {
       var loopTarget = (_step$configuration4 = step.configuration) === null || _step$configuration4 === void 0 ? void 0 : _step$configuration4.loop_body_initial_step;
       if (loopTarget) {
         var loopId = idByName[loopTarget];
+        var sourceId = String(step.id);
+        markHandleUsage(sourceId, "loop-out");
+        markEdgeKind(sourceId, {
+          forward: true
+        });
+        if (!loopId) {
+          markHandleUsage(sourceId, "loop-in");
+        }
         edges.push({
           id: "loop-".concat(step.id, "-").concat(loopTarget),
           source: String(step.id),
@@ -34508,6 +34574,12 @@ var buildGraph = function buildGraph(steps, strings, actionExplainers) {
       var forLoopName = loopBackLinks[step.name];
       var _loopId = idByName[forLoopName];
       if (_loopId) {
+        var _sourceId = String(step.id);
+        markHandleUsage(_sourceId, "back-out");
+        markHandleUsage(_loopId, "loop-in");
+        markEdgeKind(_sourceId, {
+          back: true
+        });
         edges.push({
           id: "loopback-".concat(step.id, "-").concat(forLoopName),
           source: String(step.id),
@@ -34589,7 +34661,25 @@ var buildGraph = function buildGraph(steps, strings, actionExplainers) {
       markerEnd: makeMarker("var(--wf-edge-adder, #0d6efd)")
     });
   });
-  var allNodes = [].concat(_toConsumableArray(nodes), addNodes);
+  var allNodes = [].concat(_toConsumableArray(nodes), addNodes).map(function (node) {
+    if (node.type !== "step") return node;
+    var id = String(node.id);
+    var usage = handleUsage[id] || {};
+    var stats = edgeStats[id] || {
+      hasBackEdge: false,
+      hasForwardEdge: false
+    };
+    var hideMainSource = stats.hasBackEdge && !stats.hasForwardEdge;
+    return _objectSpread(_objectSpread({}, node), {}, {
+      data: _objectSpread(_objectSpread({}, node.data), {}, {
+        showBackIn: !!usage["back-in"],
+        showBackOut: !!usage["back-out"],
+        showLoopIn: !!usage["loop-in"],
+        showLoopOut: !!usage["loop-out"],
+        hideMainSource: hideMainSource
+      })
+    });
+  });
   return {
     nodes: allNodes,
     edges: edges,
@@ -34597,17 +34687,17 @@ var buildGraph = function buildGraph(steps, strings, actionExplainers) {
     nameById: nameById
   };
 };
-var StepDrawer = function StepDrawer(_ref5) {
+var StepDrawer = function StepDrawer(_ref7) {
   var _data$strings;
-  var modal = _ref5.modal,
-    innerRef = _ref5.innerRef,
-    onClose = _ref5.onClose,
-    submitting = _ref5.submitting,
-    error = _ref5.error,
-    data = _ref5.data,
-    onDelete = _ref5.onDelete,
-    drawerWidth = _ref5.drawerWidth,
-    onResizeStart = _ref5.onResizeStart;
+  var modal = _ref7.modal,
+    innerRef = _ref7.innerRef,
+    onClose = _ref7.onClose,
+    submitting = _ref7.submitting,
+    error = _ref7.error,
+    data = _ref7.data,
+    onDelete = _ref7.onDelete,
+    drawerWidth = _ref7.drawerWidth,
+    onResizeStart = _ref7.onResizeStart;
   var isOpen = !!modal;
   return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
     className: "wf-drawer".concat(isOpen ? " wf-drawer--open" : ""),
@@ -34661,9 +34751,9 @@ var StepDrawer = function StepDrawer(_ref5) {
     disabled: submitting
   }, submitting ? "Saving..." : "Save"))) : null);
 };
-var WorkflowEditor = function WorkflowEditor(_ref6) {
+var WorkflowEditor = function WorkflowEditor(_ref8) {
   var _data$config;
-  var data = _ref6.data;
+  var data = _ref8.data;
   var _useState = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(data.steps || []),
     _useState2 = _slicedToArray(_useState, 2),
     steps = _useState2[0],
@@ -34749,11 +34839,11 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     _useState28 = _slicedToArray(_useState27, 2),
     selectedNodes = _useState28[0],
     setSelectedNodes = _useState28[1];
-  var handleSelectionChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_ref7) {
-    var _ref7$nodes = _ref7.nodes,
-      nodes = _ref7$nodes === void 0 ? [] : _ref7$nodes,
-      _ref7$edges = _ref7.edges,
-      edges = _ref7$edges === void 0 ? [] : _ref7$edges;
+  var handleSelectionChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_ref9) {
+    var _ref9$nodes = _ref9.nodes,
+      nodes = _ref9$nodes === void 0 ? [] : _ref9$nodes,
+      _ref9$edges = _ref9.edges,
+      edges = _ref9$edges === void 0 ? [] : _ref9$edges;
     setSelectedNodes(nodes);
     if (edges.length) setSelectedEdgeId(edges[0].id);else setSelectedEdgeId(null);
   }, []);
@@ -34870,7 +34960,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     if (updates.length) persistSizes(updates);
   }, [nodes, persistSizes, sizeSyncing, steps]);
   var fetchJson = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref8 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(url) {
+    var _ref0 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee(url) {
       var options,
         baseHeaders,
         res,
@@ -34905,7 +34995,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
       }, _callee);
     }));
     return function (_x) {
-      return _ref8.apply(this, arguments);
+      return _ref0.apply(this, arguments);
     };
   }(), []);
   var reload = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
@@ -35121,7 +35211,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     }, _callee4, null, [[1, 3, 4, 5]]);
   })), [data.csrfToken, data.urls.sizes, fetchJson, setSteps]);
   var openStepForm = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5() {
-    var _ref11,
+    var _ref13,
       stepId,
       initial_step,
       after_step,
@@ -35133,7 +35223,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     return _regenerator().w(function (_context5) {
       while (1) switch (_context5.p = _context5.n) {
         case 0:
-          _ref11 = _args5.length > 0 && _args5[0] !== undefined ? _args5[0] : {}, stepId = _ref11.stepId, initial_step = _ref11.initial_step, after_step = _ref11.after_step;
+          _ref13 = _args5.length > 0 && _args5[0] !== undefined ? _args5[0] : {}, stepId = _ref13.stepId, initial_step = _ref13.initial_step, after_step = _ref13.after_step;
           _context5.p = 1;
           setError("");
           base = "".concat(data.urls.stepForm).concat(stepId ? "/".concat(stepId) : "");
@@ -35162,7 +35252,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     }, _callee5, null, [[1, 3]]);
   })), [data.urls.stepForm, fetchJson]);
   var handleModalSubmit = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref12 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6(formEl) {
+    var _ref14 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6(formEl) {
       var formData, action, method, res, json;
       return _regenerator().w(function (_context6) {
         while (1) switch (_context6.n) {
@@ -35208,7 +35298,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
       }, _callee6);
     }));
     return function (_x2) {
-      return _ref12.apply(this, arguments);
+      return _ref14.apply(this, arguments);
     };
   }(), [data.csrfToken, data.urls.stepForm, reload]);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
@@ -35226,7 +35316,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     };
     if (actionSelect) actionSelect.addEventListener("change", handleActionChange);
     var submitHandler = /*#__PURE__*/function () {
-      var _ref13 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7(e) {
+      var _ref15 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7(e) {
         var _t5;
         return _regenerator().w(function (_context7) {
           while (1) switch (_context7.p = _context7.n) {
@@ -35252,7 +35342,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
         }, _callee7, null, [[1, 3, 4, 5]]);
       }));
       return function submitHandler(_x3) {
-        return _ref13.apply(this, arguments);
+        return _ref15.apply(this, arguments);
       };
     }();
     formEl.addEventListener("submit", submitHandler);
@@ -35262,7 +35352,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     };
   }, [handleModalSubmit, modal]);
   var updateConnection = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref14 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8(payload) {
+    var _ref16 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8(payload) {
       var body;
       return _regenerator().w(function (_context8) {
         while (1) switch (_context8.n) {
@@ -35270,10 +35360,10 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
             body = new URLSearchParams();
             Object.entries(_objectSpread(_objectSpread({}, payload), {}, {
               _csrf: data.csrfToken
-            })).forEach(function (_ref15) {
-              var _ref16 = _slicedToArray(_ref15, 2),
-                k = _ref16[0],
-                v = _ref16[1];
+            })).forEach(function (_ref17) {
+              var _ref18 = _slicedToArray(_ref17, 2),
+                k = _ref18[0],
+                v = _ref18[1];
               if (typeof v !== "undefined" && v !== null) body.append(k, v);
             });
             _context8.n = 1;
@@ -35290,11 +35380,11 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
       }, _callee8);
     }));
     return function (_x4) {
-      return _ref14.apply(this, arguments);
+      return _ref16.apply(this, arguments);
     };
   }(), [data.csrfToken, data.urls.connect, fetchJson]);
   var onConnect = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref17 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9(connection) {
+    var _ref19 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9(connection) {
       var loop, targetName, targetId, stepName, srcStep, rawNext, simpleNextId;
       return _regenerator().w(function (_context9) {
         while (1) switch (_context9.n) {
@@ -35370,7 +35460,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
       }, _callee9);
     }));
     return function (_x5) {
-      return _ref17.apply(this, arguments);
+      return _ref19.apply(this, arguments);
     };
   }(), [idByName, nameById, reload, steps, updateConnection]);
   var onConnectStart = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_, params) {
@@ -35488,9 +35578,9 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
       after_step: id
     });
   }, [openStepForm, steps]);
-  var onInsertBetween = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_ref18) {
-    var source = _ref18.source,
-      target = _ref18.target;
+  var onInsertBetween = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_ref20) {
+    var source = _ref20.source,
+      target = _ref20.target;
     if (!source || !target || source === "start") return;
     var originalTargetName = nameById[target];
     if (!originalTargetName) return;
@@ -35508,7 +35598,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
     });
   }, [nameById, openStepForm, steps]);
   var onSetStart = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref19 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0(id) {
+    var _ref21 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0(id) {
       return _regenerator().w(function (_context0) {
         while (1) switch (_context0.n) {
           case 0:
@@ -35526,11 +35616,11 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
       }, _callee0);
     }));
     return function (_x6) {
-      return _ref19.apply(this, arguments);
+      return _ref21.apply(this, arguments);
     };
   }(), [reload, updateConnection]);
   var onClearNext = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref20 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1(id) {
+    var _ref22 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1(id) {
       return _regenerator().w(function (_context1) {
         while (1) switch (_context1.n) {
           case 0:
@@ -35548,11 +35638,11 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
       }, _callee1);
     }));
     return function (_x7) {
-      return _ref20.apply(this, arguments);
+      return _ref22.apply(this, arguments);
     };
   }(), [reload, updateConnection]);
   var onDelete = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref21 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee10(id) {
+    var _ref23 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee10(id) {
       var formData;
       return _regenerator().w(function (_context10) {
         while (1) switch (_context10.n) {
@@ -35579,7 +35669,7 @@ var WorkflowEditor = function WorkflowEditor(_ref6) {
       }, _callee10);
     }));
     return function (_x8) {
-      return _ref21.apply(this, arguments);
+      return _ref23.apply(this, arguments);
     };
   }(), [data.csrfToken, fetchJson, reload, strings.confirmDelete]);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
@@ -52935,7 +53025,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   right: 0;
   height: 100%;
   width: min(95vw, max(var(--wf-drawer-width), 600px));
-  background: var(--bs-card-bg, #fff);
+  background: var(--bs-body-bg, #fff);
   color: var(--bs-body-color, #212529);
   border-left: 1px solid var(--bs-card-border-color, #e2e6ea);
   display: flex;
@@ -52998,7 +53088,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
 }
 
 .wf-modal {
-  /* background: var(--bs-card-bg, #fff); */
+  /* background: var(--bs-body-bg, #fff); */
   /* color: var(--bs-body-color, #212529); */
   border-radius: 10px;
   /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */
@@ -53095,7 +53185,19 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   --wf-handle-bg: #2f3139;
   --wf-handle-source-bg: #8a8a8a;
 }
-`, "",{"version":3,"sources":["webpack://./src/workflow.css"],"names":[],"mappings":"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","sourcesContent":[".wf-shell {\n  padding: 0;\n  height: 100%;\n  min-height: 0;\n  display: flex;\n  flex-direction: column;\n  position: relative;\n  transition: padding-right 0.25s ease;\n  --wf-edge: #6c757d;\n  --wf-edge-adder: #0d6efd;\n  --wf-edge-loop: #f59f00;\n  --wf-edge-label: #495057;\n  --wf-handle-border: #3f3f3f;\n  --wf-handle-bg: #fff;\n  --wf-handle-source-bg: #5a5a5a;\n  --wf-drawer-width: 50vw;\n}\n\n.wf-shell--drawer-open {\n  padding-right: calc(var(--wf-drawer-width) - 44px);\n}\n\n.wf-toolbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 10px 12px;\n  border-bottom: 1px solid #e2e6ea;\n  background: transparent;\n}\n\n.wf-toolbar__actions button,\n.wf-toolbar__actions a {\n  margin-left: 8px;\n}\n\n.wf-canvas {\n  height: 100%;\n  flex: 1;\n  min-height: 0;\n  background: #fafbfc;\n}\n\n.wf-empty {\n  padding: 12px;\n  color: #6c757d;\n}\n\n.wf-node {\n  background: var(--xy-node-background-color-default, #fff);\n  /* border: var(--xy-node-border-default); */\n  border: 1px solid #777777;\n  border-radius: 10px;\n  padding: 10px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);\n  min-width: 200px;\n  cursor: pointer;\n  max-width: 240px;\n}\n\n.wf-modal .card-body {\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: auto;\n}\n.wf-node__header {\n  display: flex;\n  justify-content: space-between;\n  align-items: flex-start;\n  margin-bottom: 4px;\n}\n\n.wf-node__title-row {\n  display: flex;\n  gap: 8px;\n  align-items: baseline;\n  flex-wrap: wrap;\n}\n\n.wf-node__title {\n  font-weight: 700;\n  font-size: 14px;\n}\n\n.wf-node__action {\n  font-weight: 600;\n  color: #0d6efd;\n  font-size: 12px;\n}\n\n.wf-node__desc {\n  font-size: 12px;\n  color: #495057;\n  margin-bottom: 4px;\n}\n\n.wf-node__summary {\n  font-size: 12px;\n  color: var(--xy-node-color-default, #495057);\n  margin: 4px 0 6px;\n  padding-left: 16px;\n}\n\n.wf-node__summary li {\n  margin-bottom: 2px;\n}\n\n.wf-node__meta {\n  font-size: 12px;\n  color: #6c757d;\n}\n\n.wf-label {\n  font-weight: 600;\n}\n\n.wf-node__footer {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin-top: 8px;\n}\n\n.wf-start-node {\n  padding: 10px;\n  border-radius: 10px;\n  background: linear-gradient(135deg, #0d6efd, #5ab2ff);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);\n  min-width: 100px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n}\n\n.wf-start-title {\n  font-weight: 700;\n}\n\n.wf-start-actions button {\n  color: #0d6efd;\n  background: #fff;\n  border-color: #fff;\n}\n\n.wf-add-node {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--xy-node-background-color-default, #fff);\n  border: 1px dashed var(--xy-node-border-default, #adb5bd);\n  color: #0d6efd;\n  font-weight: 700;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);\n  cursor: pointer;\n}\n\n.wf-add-node:focus {\n  outline: 2px solid #0d6efd;\n  outline-offset: 2px;\n}\n\n.wf-drawer {\n  position: fixed;\n  top: 0;\n  right: 0;\n  height: 100%;\n  width: min(95vw, max(var(--wf-drawer-width), 600px));\n  background: var(--bs-card-bg, #fff);\n  color: var(--bs-body-color, #212529);\n  border-left: 1px solid var(--bs-card-border-color, #e2e6ea);\n  display: flex;\n  flex-direction: column;\n  z-index: 1050;\n  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);\n  transform: translateX(100%);\n  transition: transform 0.25s ease;\n  overflow: visible;\n}\n\n.wf-drawer--open {\n  transform: translateX(0);\n}\n\n.wf-drawer__resize {\n  position: absolute;\n  left: -6px;\n  top: 0;\n  width: 10px;\n  height: 100%;\n  cursor: ew-resize;\n  z-index: 1;\n  background: linear-gradient(\n    90deg,\n    rgba(0, 0, 0, 0) 0%,\n    rgba(0, 0, 0, 0.08) 50%,\n    rgba(0, 0, 0, 0) 100%\n  );\n}\n\n.wf-drawer__header {\n  padding: 16px 18px 12px;\n  border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-drawer__body {\n  padding: 16px 18px;\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow-y: auto;\n}\n\n.wf-drawer__footer {\n  padding: 12px 18px;\n  border-top: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-modal-backdrop {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  background: rgba(0, 0, 0, 0.45);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 1050;\n}\n\n.wf-modal {\n  /* background: var(--bs-card-bg, #fff); */\n  /* color: var(--bs-body-color, #212529); */\n  border-radius: 10px;\n  /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */\n  width: min(900px, 90vw);\n  max-height: 90vh;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */\n}\n\n@media (max-width: 768px) {\n  .wf-shell--drawer-open {\n    padding-right: 0;\n  }\n\n  .wf-drawer {\n    width: min(480px, 100vw);\n  }\n}\n\n.wf-shell .react-flow__edge-path {\n  stroke: var(--wf-edge);\n  fill: none;\n  stroke-width: 1.5px;\n}\n\n.wf-shell .wf-edge-selected .react-flow__edge-path {\n  stroke: var(--wf-edge-selected, #0d6efd) !important;\n  stroke-width: 2.4px;\n  filter: drop-shadow(0 0 4px rgba(13, 110, 253, 0.35));\n}\n\n.wf-shell .react-flow__connection-path {\n  stroke-width: 1.5px;\n}\n\n.wf-shell .react-flow__edge-text {\n  fill: var(--wf-edge-label);\n}\n\n.wf-shell .react-flow__handle {\n  background: var(--wf-handle-bg);\n  border-color: var(--wf-handle-border);\n}\n\n.wf-shell .react-flow__handle.wf-handle-source {\n  background: var(--wf-handle-source-bg) !important;\n  border-color: var(--wf-handle-source-bg) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-source-loop {\n  background: var(--wf-edge-loop) !important;\n  border-color: var(--wf-edge-loop) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-target-loop {\n  border-color: var(--wf-edge-loop) !important;\n}\n\n.wf-edge-add-button {\n  width: 18px;\n  height: 18px;\n  border-radius: 50%;\n  border: 1px solid #adb5bd;\n  background: #ffffff;\n  color: #6c757d;\n  font-size: 12px;\n  line-height: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  padding: 0;\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);\n}\n\n.wf-edge-add-button:hover {\n  background: #f1f3f5;\n  color: #495057;\n}\n\n.wf-edge-add-button:focus {\n  outline: 2px solid #adb5bd;\n  outline-offset: 2px;\n}\n\n[data-bs-theme=\"dark\"] .wf-shell {\n  --wf-edge: #aeb3bd;\n  --wf-edge-adder: #6ea8fe;\n  --wf-edge-loop: #f0ad4e;\n  --wf-edge-label: #c0c4cf;\n  --wf-handle-border: #c0c4cf;\n  --wf-handle-bg: #2f3139;\n  --wf-handle-source-bg: #8a8a8a;\n}\n"],"sourceRoot":""}]);
+
+/* Temporary vars fallbacks */
+.wf-drawer {
+  --bs-body-bg: #fff;
+  --bs-body-color: #212529;
+  --bs-card-border-color: #e2e6ea;
+}
+[data-bs-theme="dark"] .wf-drawer {
+  --bs-body-bg: #303030;
+  --bs-body-color: #fff;
+  --bs-card-border-color: #44484e;
+}
+`, "",{"version":3,"sources":["webpack://./src/workflow.css"],"names":[],"mappings":"AAAA;EACE,UAAU;EACV,YAAY;EACZ,aAAa;EACb,aAAa;EACb,sBAAsB;EACtB,kBAAkB;EAClB,oCAAoC;EACpC,kBAAkB;EAClB,wBAAwB;EACxB,uBAAuB;EACvB,wBAAwB;EACxB,2BAA2B;EAC3B,oBAAoB;EACpB,8BAA8B;EAC9B,uBAAuB;AACzB;;AAEA;EACE,kDAAkD;AACpD;;AAEA;EACE,aAAa;EACb,8BAA8B;EAC9B,mBAAmB;EACnB,kBAAkB;EAClB,gCAAgC;EAChC,uBAAuB;AACzB;;AAEA;;EAEE,gBAAgB;AAClB;;AAEA;EACE,YAAY;EACZ,OAAO;EACP,aAAa;EACb,mBAAmB;AACrB;;AAEA;EACE,aAAa;EACb,cAAc;AAChB;;AAEA;EACE,yDAAyD;EACzD,2CAA2C;EAC3C,yBAAyB;EACzB,mBAAmB;EACnB,aAAa;EACb,0CAA0C;EAC1C,gBAAgB;EAChB,eAAe;EACf,gBAAgB;AAClB;;AAEA;EACE,cAAc;EACd,aAAa;EACb,cAAc;AAChB;AACA;EACE,aAAa;EACb,8BAA8B;EAC9B,uBAAuB;EACvB,kBAAkB;AACpB;;AAEA;EACE,aAAa;EACb,QAAQ;EACR,qBAAqB;EACrB,eAAe;AACjB;;AAEA;EACE,gBAAgB;EAChB,eAAe;AACjB;;AAEA;EACE,gBAAgB;EAChB,cAAc;EACd,eAAe;AACjB;;AAEA;EACE,eAAe;EACf,cAAc;EACd,kBAAkB;AACpB;;AAEA;EACE,eAAe;EACf,4CAA4C;EAC5C,iBAAiB;EACjB,kBAAkB;AACpB;;AAEA;EACE,kBAAkB;AACpB;;AAEA;EACE,eAAe;EACf,cAAc;AAChB;;AAEA;EACE,gBAAgB;AAClB;;AAEA;EACE,aAAa;EACb,eAAe;EACf,QAAQ;EACR,eAAe;AACjB;;AAEA;EACE,aAAa;EACb,mBAAmB;EACnB,qDAAqD;EACrD,WAAW;EACX,8CAA8C;EAC9C,gBAAgB;EAChB,aAAa;EACb,sBAAsB;EACtB,mBAAmB;EACnB,kBAAkB;AACpB;;AAEA;EACE,gBAAgB;AAClB;;AAEA;EACE,cAAc;EACd,gBAAgB;EAChB,kBAAkB;AACpB;;AAEA;EACE,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,yDAAyD;EACzD,yDAAyD;EACzD,cAAc;EACd,gBAAgB;EAChB,aAAa;EACb,mBAAmB;EACnB,uBAAuB;EACvB,yCAAyC;EACzC,eAAe;AACjB;;AAEA;EACE,0BAA0B;EAC1B,mBAAmB;AACrB;;AAEA;EACE,eAAe;EACf,MAAM;EACN,QAAQ;EACR,YAAY;EACZ,oDAAoD;EACpD,mCAAmC;EACnC,oCAAoC;EACpC,2DAA2D;EAC3D,aAAa;EACb,sBAAsB;EACtB,aAAa;EACb,4CAA4C;EAC5C,2BAA2B;EAC3B,gCAAgC;EAChC,iBAAiB;AACnB;;AAEA;EACE,wBAAwB;AAC1B;;AAEA;EACE,kBAAkB;EAClB,UAAU;EACV,MAAM;EACN,WAAW;EACX,YAAY;EACZ,iBAAiB;EACjB,UAAU;EACV;;;;;GAKC;AACH;;AAEA;EACE,uBAAuB;EACvB,6DAA6D;AAC/D;;AAEA;EACE,kBAAkB;EAClB,cAAc;EACd,aAAa;EACb,gBAAgB;AAClB;;AAEA;EACE,kBAAkB;EAClB,0DAA0D;AAC5D;;AAEA;EACE,eAAe;EACf,MAAM;EACN,OAAO;EACP,QAAQ;EACR,SAAS;EACT,+BAA+B;EAC/B,aAAa;EACb,mBAAmB;EACnB,uBAAuB;EACvB,aAAa;AACf;;AAEA;EACE,yCAAyC;EACzC,0CAA0C;EAC1C,mBAAmB;EACnB,4DAA4D;EAC5D,uBAAuB;EACvB,gBAAgB;EAChB,aAAa;EACb,sBAAsB;EACtB,gBAAgB;EAChB,iDAAiD;AACnD;;AAEA;EACE;IACE,gBAAgB;EAClB;;EAEA;IACE,wBAAwB;EAC1B;AACF;;AAEA;EACE,sBAAsB;EACtB,UAAU;EACV,mBAAmB;AACrB;;AAEA;EACE,mDAAmD;EACnD,mBAAmB;EACnB,qDAAqD;AACvD;;AAEA;EACE,mBAAmB;AACrB;;AAEA;EACE,0BAA0B;AAC5B;;AAEA;EACE,+BAA+B;EAC/B,qCAAqC;AACvC;;AAEA;EACE,iDAAiD;EACjD,mDAAmD;EACnD,yCAAyC;AAC3C;AACA;EACE,0CAA0C;EAC1C,4CAA4C;EAC5C,yCAAyC;AAC3C;AACA;EACE,4CAA4C;AAC9C;;AAEA;EACE,WAAW;EACX,YAAY;EACZ,kBAAkB;EAClB,yBAAyB;EACzB,mBAAmB;EACnB,cAAc;EACd,eAAe;EACf,cAAc;EACd,aAAa;EACb,mBAAmB;EACnB,uBAAuB;EACvB,eAAe;EACf,UAAU;EACV,yCAAyC;AAC3C;;AAEA;EACE,mBAAmB;EACnB,cAAc;AAChB;;AAEA;EACE,0BAA0B;EAC1B,mBAAmB;AACrB;;AAEA;EACE,kBAAkB;EAClB,wBAAwB;EACxB,uBAAuB;EACvB,wBAAwB;EACxB,2BAA2B;EAC3B,uBAAuB;EACvB,8BAA8B;AAChC;;AAEA,6BAA6B;AAC7B;EACE,kBAAkB;EAClB,wBAAwB;EACxB,+BAA+B;AACjC;AACA;EACE,qBAAqB;EACrB,qBAAqB;EACrB,+BAA+B;AACjC","sourcesContent":[".wf-shell {\n  padding: 0;\n  height: 100%;\n  min-height: 0;\n  display: flex;\n  flex-direction: column;\n  position: relative;\n  transition: padding-right 0.25s ease;\n  --wf-edge: #6c757d;\n  --wf-edge-adder: #0d6efd;\n  --wf-edge-loop: #f59f00;\n  --wf-edge-label: #495057;\n  --wf-handle-border: #3f3f3f;\n  --wf-handle-bg: #fff;\n  --wf-handle-source-bg: #5a5a5a;\n  --wf-drawer-width: 50vw;\n}\n\n.wf-shell--drawer-open {\n  padding-right: calc(var(--wf-drawer-width) - 44px);\n}\n\n.wf-toolbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 10px 12px;\n  border-bottom: 1px solid #e2e6ea;\n  background: transparent;\n}\n\n.wf-toolbar__actions button,\n.wf-toolbar__actions a {\n  margin-left: 8px;\n}\n\n.wf-canvas {\n  height: 100%;\n  flex: 1;\n  min-height: 0;\n  background: #fafbfc;\n}\n\n.wf-empty {\n  padding: 12px;\n  color: #6c757d;\n}\n\n.wf-node {\n  background: var(--xy-node-background-color-default, #fff);\n  /* border: var(--xy-node-border-default); */\n  border: 1px solid #777777;\n  border-radius: 10px;\n  padding: 10px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);\n  min-width: 200px;\n  cursor: pointer;\n  max-width: 240px;\n}\n\n.wf-modal .card-body {\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: auto;\n}\n.wf-node__header {\n  display: flex;\n  justify-content: space-between;\n  align-items: flex-start;\n  margin-bottom: 4px;\n}\n\n.wf-node__title-row {\n  display: flex;\n  gap: 8px;\n  align-items: baseline;\n  flex-wrap: wrap;\n}\n\n.wf-node__title {\n  font-weight: 700;\n  font-size: 14px;\n}\n\n.wf-node__action {\n  font-weight: 600;\n  color: #0d6efd;\n  font-size: 12px;\n}\n\n.wf-node__desc {\n  font-size: 12px;\n  color: #495057;\n  margin-bottom: 4px;\n}\n\n.wf-node__summary {\n  font-size: 12px;\n  color: var(--xy-node-color-default, #495057);\n  margin: 4px 0 6px;\n  padding-left: 16px;\n}\n\n.wf-node__summary li {\n  margin-bottom: 2px;\n}\n\n.wf-node__meta {\n  font-size: 12px;\n  color: #6c757d;\n}\n\n.wf-label {\n  font-weight: 600;\n}\n\n.wf-node__footer {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin-top: 8px;\n}\n\n.wf-start-node {\n  padding: 10px;\n  border-radius: 10px;\n  background: linear-gradient(135deg, #0d6efd, #5ab2ff);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);\n  min-width: 100px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n}\n\n.wf-start-title {\n  font-weight: 700;\n}\n\n.wf-start-actions button {\n  color: #0d6efd;\n  background: #fff;\n  border-color: #fff;\n}\n\n.wf-add-node {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--xy-node-background-color-default, #fff);\n  border: 1px dashed var(--xy-node-border-default, #adb5bd);\n  color: #0d6efd;\n  font-weight: 700;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);\n  cursor: pointer;\n}\n\n.wf-add-node:focus {\n  outline: 2px solid #0d6efd;\n  outline-offset: 2px;\n}\n\n.wf-drawer {\n  position: fixed;\n  top: 0;\n  right: 0;\n  height: 100%;\n  width: min(95vw, max(var(--wf-drawer-width), 600px));\n  background: var(--bs-body-bg, #fff);\n  color: var(--bs-body-color, #212529);\n  border-left: 1px solid var(--bs-card-border-color, #e2e6ea);\n  display: flex;\n  flex-direction: column;\n  z-index: 1050;\n  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);\n  transform: translateX(100%);\n  transition: transform 0.25s ease;\n  overflow: visible;\n}\n\n.wf-drawer--open {\n  transform: translateX(0);\n}\n\n.wf-drawer__resize {\n  position: absolute;\n  left: -6px;\n  top: 0;\n  width: 10px;\n  height: 100%;\n  cursor: ew-resize;\n  z-index: 1;\n  background: linear-gradient(\n    90deg,\n    rgba(0, 0, 0, 0) 0%,\n    rgba(0, 0, 0, 0.08) 50%,\n    rgba(0, 0, 0, 0) 100%\n  );\n}\n\n.wf-drawer__header {\n  padding: 16px 18px 12px;\n  border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-drawer__body {\n  padding: 16px 18px;\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow-y: auto;\n}\n\n.wf-drawer__footer {\n  padding: 12px 18px;\n  border-top: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-modal-backdrop {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  background: rgba(0, 0, 0, 0.45);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 1050;\n}\n\n.wf-modal {\n  /* background: var(--bs-body-bg, #fff); */\n  /* color: var(--bs-body-color, #212529); */\n  border-radius: 10px;\n  /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */\n  width: min(900px, 90vw);\n  max-height: 90vh;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */\n}\n\n@media (max-width: 768px) {\n  .wf-shell--drawer-open {\n    padding-right: 0;\n  }\n\n  .wf-drawer {\n    width: min(480px, 100vw);\n  }\n}\n\n.wf-shell .react-flow__edge-path {\n  stroke: var(--wf-edge);\n  fill: none;\n  stroke-width: 1.5px;\n}\n\n.wf-shell .wf-edge-selected .react-flow__edge-path {\n  stroke: var(--wf-edge-selected, #0d6efd) !important;\n  stroke-width: 2.4px;\n  filter: drop-shadow(0 0 4px rgba(13, 110, 253, 0.35));\n}\n\n.wf-shell .react-flow__connection-path {\n  stroke-width: 1.5px;\n}\n\n.wf-shell .react-flow__edge-text {\n  fill: var(--wf-edge-label);\n}\n\n.wf-shell .react-flow__handle {\n  background: var(--wf-handle-bg);\n  border-color: var(--wf-handle-border);\n}\n\n.wf-shell .react-flow__handle.wf-handle-source {\n  background: var(--wf-handle-source-bg) !important;\n  border-color: var(--wf-handle-source-bg) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-source-loop {\n  background: var(--wf-edge-loop) !important;\n  border-color: var(--wf-edge-loop) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-target-loop {\n  border-color: var(--wf-edge-loop) !important;\n}\n\n.wf-edge-add-button {\n  width: 18px;\n  height: 18px;\n  border-radius: 50%;\n  border: 1px solid #adb5bd;\n  background: #ffffff;\n  color: #6c757d;\n  font-size: 12px;\n  line-height: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  padding: 0;\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);\n}\n\n.wf-edge-add-button:hover {\n  background: #f1f3f5;\n  color: #495057;\n}\n\n.wf-edge-add-button:focus {\n  outline: 2px solid #adb5bd;\n  outline-offset: 2px;\n}\n\n[data-bs-theme=\"dark\"] .wf-shell {\n  --wf-edge: #aeb3bd;\n  --wf-edge-adder: #6ea8fe;\n  --wf-edge-loop: #f0ad4e;\n  --wf-edge-label: #c0c4cf;\n  --wf-handle-border: #c0c4cf;\n  --wf-handle-bg: #2f3139;\n  --wf-handle-source-bg: #8a8a8a;\n}\n\n/* Temporary vars fallbacks */\n.wf-drawer {\n  --bs-body-bg: #fff;\n  --bs-body-color: #212529;\n  --bs-card-border-color: #e2e6ea;\n}\n[data-bs-theme=\"dark\"] .wf-drawer {\n  --bs-body-bg: #303030;\n  --bs-body-color: #fff;\n  --bs-card-border-color: #44484e;\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
