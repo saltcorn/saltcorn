@@ -1781,5 +1781,12 @@
 	"Delete selected items?": "Delete selected items?",
 	"Failed to delete selected items": "Failed to delete selected items",
 	"Configurable": "Configurable",
-	"Info": "Info"
+	"Info": "Info",
+	"Show tables (Alt+T)": "Show tables (Alt+T)",
+	"Show views (Alt+V)": "Show views (Alt+V)",
+	"Show pages (Alt+P)": "Show pages (Alt+P)",
+	"Show triggers (Alt+R)": "Show triggers (Alt+R)",
+	"Show users (Alt+U)": "Show users (Alt+U)",
+	"Show modules (Alt+M)": "Show modules (Alt+M)",
+	"Finished translating %s strings.": "Finished translating %s strings."
 }
