@@ -21,7 +21,6 @@ import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
 import { isEqual, throttle, chunk } from "lodash";
 
-// Helper to get selected nodes as an array
 const getSelectedNodes = (selected) => {
   if (!selected) return [];
   if (typeof selected.has === "function") {
@@ -231,7 +230,6 @@ const Library = ({ expanded }) => {
    */
   const addSelected = () => {
     if (!selected && selectedNodes.length === 0) return;
-    // Use first selected for now, or could handle multiple
     const nodeToSave = selected || selectedNodes[0];
     const layout = craftToSaltcorn(
       JSON.parse(query.serialize()),

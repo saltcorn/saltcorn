@@ -118,7 +118,6 @@ const layoutToNodes = (
       };
     }
 
-    // Normalize legacy container 'block' property to 'display'
     if (segment.type === "container" && typeof segment.display === "undefined") {
       segment.display = segment.block === true
         ? "block"

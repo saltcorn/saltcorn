@@ -31,11 +31,9 @@ import Select from "react-select";
 import { MultiLineCodeEditor, SingleLineEditor } from "./MonacoEditor";
 
 const isDarkMode = () => {
-  // Check if explicit light/dark mode is set in the app
   if (typeof window !== "undefined" && window._sc_lightmode) {
     return window._sc_lightmode === "dark";
   }
-  // Fall back to system preference if not explicitly set
   if (
     typeof window !== "undefined" &&
     window.matchMedia &&
@@ -45,13 +43,9 @@ const isDarkMode = () => {
   return false;
 };
 
-/** ClassName for builder Select when dark (for CSS targeting). */
 export const builderSelectClassName = (base = "") =>
   [base, isDarkMode() ? "builder-select-dark" : ""].filter(Boolean).join(" ");
 
-/**
- * Shared react-select styles that respect dark mode.
- */
 export const reactSelectStyles = (overrides = {}) => {
   const dark = isDarkMode();
   const base = {
