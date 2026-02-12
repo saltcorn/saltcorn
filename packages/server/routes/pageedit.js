@@ -192,10 +192,6 @@ const pageBuilderData = async (req, context) => {
   const triggerActions = Trigger.trigger_actions({
     apiNeverTriggers: true,
   });
-  const workflowActions = Trigger.trigger_actions({
-    apiNeverTriggers: true,
-    onlyWorkflows: true,
-  });
   const actionConfigForms = {};
   for (const name of actions) {
     const action = stateActions[name];
@@ -206,6 +202,10 @@ const pageBuilderData = async (req, context) => {
       });
     }
   }
+  const workflowActions = Trigger.trigger_actions({
+    apiNeverTriggers: true,
+    onlyWorkflows: true,
+  });
   for (const name of workflowActions) {
     actionConfigForms[name] = [
       {
@@ -272,7 +272,6 @@ const pageBuilderData = async (req, context) => {
     actions: actionsNotRequiringRow,
     builtInActions: ["GoBack"],
     triggerActions,
-    workflowActions,
     library,
     min_role: context.min_role,
     actionConfigForms,
