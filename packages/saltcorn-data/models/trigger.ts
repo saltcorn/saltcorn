@@ -738,10 +738,12 @@ class Trigger implements AbstractTrigger {
     tableTriggers,
     apiNeverTriggers,
     noWorkflows,
+    onlyWorkflows,
   }: {
     tableTriggers?: number;
     apiNeverTriggers?: boolean;
     noWorkflows?: boolean;
+    onlyWorkflows?: boolean;
   }): string[] {
     let triggerActions: Array<string> = [];
     if (tableTriggers) {
@@ -750,6 +752,7 @@ class Trigger implements AbstractTrigger {
       });
       triggerActions = trs
         .filter((t) => !noWorkflows || t.action !== "Workflow")
+        .filter((t) => !onlyWorkflows || t.action === "Workflow")
         .map((tr) => tr.name as string);
     }
     if (apiNeverTriggers) {
@@ -768,6 +771,7 @@ class Trigger implements AbstractTrigger {
         ...triggerActions,
         ...[...trs, ...triggersNotRequiringRow]
           .filter((t) => !noWorkflows || t.action !== "Workflow")
+          .filter((t) => !onlyWorkflows || t.action === "Workflow")
           .map((tr) => tr.name as string),
       ];
     }
