@@ -35831,7 +35831,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       animated: true
     },
     colorMode: window._sc_lightmode || "light"
-  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.MiniMap, {
+  }, showMiniMap && /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.MiniMap, {
     pannable: true,
     zoomable: true
   }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Controls, null), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.Background, {

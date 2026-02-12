@@ -1557,7 +1557,7 @@ const WorkflowEditor = ({ data }) => {
           defaultEdgeOptions={{ animated: true }}
           colorMode={window._sc_lightmode || "light"}
         >
-          <MiniMap pannable zoomable />
+          {showMiniMap && <MiniMap pannable zoomable />}
           <Controls />
           <Background gap={16} />
         </ReactFlow>
