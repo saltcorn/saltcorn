@@ -179,7 +179,7 @@ router.post(
           role <= view.min_role ||
           (await view.authorise_get({ req, ...view })) // TODO set query to state
         ) {
-          const queries = view.queries(false, req);
+          const queries = view.queries(false, req, res);
           if (Object.prototype.hasOwnProperty.call(queries, queryName)) {
             const { args } = req.body || {};
             const resp = await queries[queryName](...args, true);
