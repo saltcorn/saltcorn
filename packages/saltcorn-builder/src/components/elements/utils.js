@@ -31,8 +31,11 @@ import Select from "react-select";
 import { MultiLineCodeEditor, SingleLineEditor } from "./MonacoEditor";
 
 const isDarkMode = () => {
-  if (typeof window !== "undefined" && window._sc_lightmode === "dark")
-    return true;
+  // Check if explicit light/dark mode is set in the app
+  if (typeof window !== "undefined" && window._sc_lightmode) {
+    return window._sc_lightmode === "dark";
+  }
+  // Fall back to system preference if not explicitly set
   if (
     typeof window !== "undefined" &&
     window.matchMedia &&
@@ -54,7 +57,76 @@ export const reactSelectStyles = (overrides = {}) => {
   const base = {
     menuPortal: (baseStyles) => ({ ...baseStyles, zIndex: 19999 }),
   };
-  if (!dark) return { ...base, ...overrides };
+
+  if (!dark) {
+    // Light mode styles
+    return {
+      ...base,
+      control: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#ffffff",
+        borderColor: "#dee2e6",
+        color: "#212529",
+      }),
+      valueContainer: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "transparent",
+      }),
+      singleValue: (baseStyles) => ({
+        ...baseStyles,
+        color: "#212529",
+      }),
+      input: (baseStyles) => ({
+        ...baseStyles,
+        color: "#212529",
+      }),
+      placeholder: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      menu: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#ffffff",
+        border: "1px solid #dee2e6",
+      }),
+      menuList: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#ffffff",
+      }),
+      option: (baseStyles, state) => ({
+        ...baseStyles,
+        backgroundColor: state.isFocused
+          ? "#e9ecef"
+          : state.isSelected
+            ? "#0d6efd"
+            : "transparent",
+        color: state.isSelected ? "#fff" : "#212529",
+      }),
+      dropdownIndicator: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      clearIndicator: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      indicatorSeparator: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#dee2e6",
+      }),
+      groupHeading: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      menuNotice: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      ...overrides,
+    };
+  }
+
+  // Dark mode styles
   return {
     ...base,
     control: (baseStyles) => ({

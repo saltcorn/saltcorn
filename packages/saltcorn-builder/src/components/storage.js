@@ -29,6 +29,7 @@ import { SearchBar } from "./elements/SearchBar";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import { DropMenu } from "./elements/DropMenu";
+import { Container } from "./elements/Container";
 import { rand_ident } from "./elements/utils";
 
 /**
@@ -66,6 +67,7 @@ const allElements = [
   LineBreak,
   Aggregation,
   Card,
+  Container,
   Image,
   Link,
   View,
@@ -114,6 +116,15 @@ const layoutToNodes = (
         type: "blank",
         contents: segment.contents,
       };
+    }
+
+    // Normalize legacy container 'block' property to 'display'
+    if (segment.type === "container" && typeof segment.display === "undefined") {
+      segment.display = segment.block === true
+        ? "block"
+        : segment.block === false
+          ? "inline-block"
+          : "block";
     }
 
     const MatchElement = allElements.find(
@@ -218,72 +229,6 @@ const layoutToNodes = (
           minRole={segment.minRole || 10}
           isFormula={segment.isFormula || {}}
         />
-      );
-    } else if (segment.type === "container") {
-      return (
-        <Element
-          key={ix}
-          custom={segment._custom || {}}
-          canvas
-          gradStartColor={segment.gradStartColor}
-          gradEndColor={segment.gradEndColor}
-          gradDirection={segment.gradDirection}
-          rotate={segment.rotate || 0}
-          animateName={segment.animateName}
-          animateDuration={segment.animateDuration}
-          animateDelay={segment.animateDelay}
-          animateInitialHide={segment.animateInitialHide}
-          customClass={segment.customClass}
-          customId={segment.customId}
-          customCSS={segment.customCSS}
-          overflow={segment.overflow}
-          margin={segment.margin || [0, 0, 0, 0]}
-          padding={segment.padding || [0, 0, 0, 0]}
-          minHeight={segment.minHeight}
-          height={segment.height}
-          width={segment.width}
-          click_action={segment.click_action}
-          url={segment.url}
-          hoverColor={segment.hoverColor}
-          minHeightUnit={segment.minHeightUnit || "px"}
-          heightUnit={segment.heightUnit || "px"}
-          widthUnit={segment.widthUnit || "px"}
-          vAlign={segment.vAlign}
-          hAlign={segment.hAlign}
-          htmlElement={segment.htmlElement || "div"}
-          display={
-            segment.display ||
-            (segment.block === true
-              ? "block"
-              : segment.block === false
-                ? "inline-block"
-                : "block")
-          }
-          fullPageWidth={
-            typeof segment.fullPageWidth === "undefined"
-              ? false
-              : segment.fullPageWidth
-          }
-          bgFileId={segment.bgFileId}
-          bgField={segment.bgField}
-          imageSize={segment.imageSize || "contain"}
-          imgResponsiveWidths={segment.imgResponsiveWidths}
-          bgType={segment.bgType || "None"}
-          style={segment.style || {}}
-          transform={segment.transform || {}}
-          bgColor={segment.bgColor || "#ffffff"}
-          setTextColor={!!segment.setTextColor}
-          textColor={segment.textColor || "#000000"}
-          isFormula={segment.isFormula || {}}
-          showIfFormula={segment.showIfFormula || ""}
-          showForRole={segment.showForRole || []}
-          minScreenWidth={segment.minScreenWidth || ""}
-          maxScreenWidth={segment.maxScreenWidth || ""}
-          show_for_owner={!!segment.show_for_owner}
-          is="Container"
-        >
-          {toTag(segment.contents)}
-        </Element>
       );
     } else if (segment.type === "tabs") {
       let contentsArray = segment.contents.map(toTag);
@@ -448,6 +393,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
    * @param {object} node
    * @returns {void|object}
    */
+
   const removeEmpty = ({ above }) => {
     const valids = above.filter(Boolean);
     if (valids.length === 1) return valids[0];
@@ -526,57 +472,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       return lc;
     }
     if (node.isCanvas) {
-      if (node.displayName === "Container")
-        return {
-          contents: get_nodes(node),
-          type: "container",
-          customCSS: node.props.customCSS,
-          customClass: node.props.customClass,
-          customId: node.props.customId,
-          animateName: node.props.animateName,
-          animateDelay: node.props.animateDelay,
-          animateDuration: node.props.animateDuration,
-          animateInitialHide: node.props.animateInitialHide,
-          minHeight: node.props.minHeight,
-          height: node.props.height,
-          width: node.props.width,
-          url: node.props.url,
-          hoverColor: node.props.hoverColor,
-          minHeightUnit: node.props.minHeightUnit,
-          heightUnit: node.props.heightUnit,
-          widthUnit: node.props.widthUnit,
-          vAlign: node.props.vAlign,
-          hAlign: node.props.hAlign,
-          htmlElement: node.props.htmlElement,
-          margin: node.props.margin,
-          padding: node.props.padding,
-          overflow: node.props.overflow,
-          display: node.props.display,
-          fullPageWidth: node.props.fullPageWidth || false,
-          bgFileId: node.props.bgFileId,
-          bgField: node.props.bgField,
-          bgType: node.props.bgType,
-          imageSize: node.props.imageSize,
-          imgResponsiveWidths: node.props.imgResponsiveWidths,
-          bgColor: node.props.bgColor,
-          setTextColor: node.props.setTextColor,
-          textColor: node.props.textColor,
-          isFormula: node.props.isFormula,
-          showIfFormula: node.props.showIfFormula,
-          showForRole: node.props.showForRole,
-          minScreenWidth: node.props.minScreenWidth,
-          maxScreenWidth: node.props.maxScreenWidth,
-          show_for_owner: node.props.show_for_owner,
-          gradStartColor: node.props.gradStartColor,
-          gradEndColor: node.props.gradEndColor,
-          gradDirection: node.props.gradDirection,
-          click_action: node.props.click_action,
-          rotate: node.props.rotate,
-          style: node.props.style,
-          transform: node.props.transform,
-          ...customProps,
-        };
-      else return get_nodes(node);
+      return get_nodes(node);
     }
 
     if (node.displayName === Text.craft.displayName) {
