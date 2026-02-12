@@ -136,16 +136,12 @@ const Container = ({
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
 
-  // Handle both 'contents' (from storage.js) and 'children' (from Craft.js)
-  // contents is used when loading from saved JSON, children is used when dragging
   const actualChildren = contents || children;
 
-  // Handle children prop - it might be wrapped in an object by Craft.js
   const renderChildren = () => {
     if (!actualChildren) return null;
     if (React.isValidElement(actualChildren)) return actualChildren;
     if (Array.isArray(actualChildren)) return actualChildren;
-    // If it's an object with children property, extract it
     if (typeof actualChildren === 'object' && actualChildren !== null && 'children' in actualChildren) {
       return actualChildren.children;
     }

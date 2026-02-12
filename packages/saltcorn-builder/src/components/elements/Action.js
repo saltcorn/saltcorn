@@ -402,7 +402,7 @@ const ActionSettings = () => {
             ]}
           ></ArrayManager>
 
-          <label>Actionaa</label>
+          <label>Action</label>
           {options.inJestTestingMode ? null : (
             <Select
               options={multiStepActionOptions}
