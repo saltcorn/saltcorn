@@ -1133,8 +1133,11 @@ const WorkflowEditor = ({ data }) => {
     if (!formEl) return undefined;
     // Re-run show-if logic so action-specific fields render correctly
     setTimeout(() => {
-      if (typeof window !== "undefined" && window.apply_showif)
-        window.apply_showif();
+      if (typeof window !== "undefined") {
+        if (window.apply_showif) window.apply_showif();
+        // Initialize Monaco and any other dynamic widgets inside the drawer
+        if (window.initialize_page) window.initialize_page();
+      }
     }, 0);
 
     const actionSelect = formEl.querySelector('[name="wf_action_name"]');

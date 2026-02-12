@@ -35308,7 +35308,11 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     if (!formEl) return undefined;
     // Re-run show-if logic so action-specific fields render correctly
     setTimeout(function () {
-      if (typeof window !== "undefined" && window.apply_showif) window.apply_showif();
+      if (typeof window !== "undefined") {
+        if (window.apply_showif) window.apply_showif();
+        // Initialize Monaco and any other dynamic widgets inside the drawer
+        if (window.initialize_page) window.initialize_page();
+      }
     }, 0);
     var actionSelect = formEl.querySelector('[name="wf_action_name"]');
     var handleActionChange = function handleActionChange() {

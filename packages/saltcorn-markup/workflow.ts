@@ -17,9 +17,15 @@ const encode = (x: any): string => encodeURIComponent(JSON.stringify(x));
 const renderWorkflow = (workflowData: any, version_tag?: string): string =>
   div(
     { class: "workflow-editor-wrapper" },
-    style(`
-      .workflow-editor-wrapper { min-height: 640px; }
-      #saltcorn-workflow-editor { height: 720px; }
+    style(/*css*/`
+      .workflow-editor-wrapper {
+        min-height: 640px;
+      }
+      #saltcorn-workflow-editor {
+        min-height: 640px;
+        height: calc(100vh - 312px);
+        max-height: calc(100vh - 312px);
+      }
     `),
     script({
       src: version_tag
