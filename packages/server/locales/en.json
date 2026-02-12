@@ -1788,5 +1788,8 @@
 	"Show triggers (Alt+R)": "Show triggers (Alt+R)",
 	"Show users (Alt+U)": "Show users (Alt+U)",
 	"Show modules (Alt+M)": "Show modules (Alt+M)",
-	"Finished translating %s strings.": "Finished translating %s strings."
+	"Finished translating %s strings.": "Finished translating %s strings.",
+	"This is a Share extension profile": "This is a Share extension profile",
+	"App Group ID": "App Group ID",
+	"The App Group ID is used to share data between the main app and the Share extension.": "The App Group ID is used to share data between the main app and the Share extension."
 }
