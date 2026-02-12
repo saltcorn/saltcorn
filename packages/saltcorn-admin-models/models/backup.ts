@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-var-requires */
 const { getState } = require("@saltcorn/data/db/state");
 import db from "@saltcorn/data/db/index";
 import Table from "@saltcorn/data/models/table";
