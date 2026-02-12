@@ -1,0 +1,233 @@
+.wf-shell {
+  padding: 0;
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  --wf-edge: #6c757d;
+  --wf-edge-adder: #0d6efd;
+  --wf-edge-loop: #f59f00;
+  --wf-edge-label: #495057;
+  --wf-handle-border: #3f3f3f;
+  --wf-handle-bg: #fff;
+}
+
+.wf-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  border-bottom: 1px solid #e2e6ea;
+  background: transparent;
+}
+
+.wf-toolbar__actions button,
+.wf-toolbar__actions a {
+  margin-left: 8px;
+}
+
+.wf-canvas {
+  height: 100%;
+  flex: 1;
+  min-height: 0;
+  background: #fafbfc;
+}
+
+.wf-empty {
+  padding: 12px;
+  color: #6c757d;
+}
+
+.wf-node {
+  background: var(--xy-node-background-color-default, #fff);
+  /* border: var(--xy-node-border-default); */
+  border: 1px solid #777777;
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  min-width: 200px;
+  cursor: pointer;
+  max-width: 240px;
+}
+
+.wf-modal .card-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+.wf-node__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 4px;
+}
+
+.wf-node__title-row {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.wf-node__title {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.wf-node__action {
+  font-weight: 600;
+  color: #0d6efd;
+  font-size: 12px;
+}
+
+.wf-node__desc {
+  font-size: 12px;
+  color: #495057;
+  margin-bottom: 4px;
+}
+
+.wf-node__summary {
+  font-size: 12px;
+  color: var(--xy-node-color-default, #495057);
+  margin: 4px 0 6px;
+  padding-left: 16px;
+}
+
+.wf-node__summary li {
+  margin-bottom: 2px;
+}
+
+.wf-node__meta {
+  font-size: 12px;
+  color: #6c757d;
+}
+
+.wf-label {
+  font-weight: 600;
+}
+
+.wf-node__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.wf-start-node {
+  padding: 10px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #0d6efd, #5ab2ff);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+  min-width: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.wf-start-title {
+  font-weight: 700;
+}
+
+.wf-start-actions button {
+  color: #0d6efd;
+  background: #fff;
+  border-color: #fff;
+}
+
+.wf-add-node {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--xy-node-background-color-default, #fff);
+  border: 1px dashed var(--xy-node-border-default, #adb5bd);
+  color: #0d6efd;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+.wf-add-node:focus {
+  outline: 2px solid #0d6efd;
+  outline-offset: 2px;
+}
+
+.wf-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+}
+
+.wf-modal {
+  /* background: var(--bs-card-bg, #fff); */
+  /* color: var(--bs-body-color, #212529); */
+  border-radius: 10px;
+  /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */
+  width: min(900px, 90vw);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */
+}
+
+.wf-shell .react-flow__edge-path {
+  stroke: var(--wf-edge);
+  fill: none;
+}
+
+.wf-shell .react-flow__edge-text {
+  fill: var(--wf-edge-label);
+}
+
+.wf-shell .react-flow__handle {
+  background: var(--wf-handle-bg);
+  border-color: var(--wf-handle-border);
+}
+
+.wf-edge-add-button {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #adb5bd;
+  background: #ffffff;
+  color: #6c757d;
+  font-size: 12px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.wf-edge-add-button:hover {
+  background: #f1f3f5;
+  color: #495057;
+}
+
+.wf-edge-add-button:focus {
+  outline: 2px solid #adb5bd;
+  outline-offset: 2px;
+}
+
+[data-bs-theme="dark"] .wf-shell {
+  --wf-edge: #aeb3bd;
+  --wf-edge-adder: #6ea8fe;
+  --wf-edge-loop: #f0ad4e;
+  --wf-edge-label: #c0c4cf;
+  --wf-handle-border: #c0c4cf;
+  --wf-handle-bg: #2f3139;
+}

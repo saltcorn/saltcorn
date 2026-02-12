@@ -71,6 +71,7 @@ class ReleaseCommand extends Command {
       "@saltcorn/postgres": { dir: "postgres", publish: true },
       "@saltcorn/types": { dir: "saltcorn-types", publish: true },
       "@saltcorn/builder": { dir: "saltcorn-builder", publish: true },
+      "@saltcorn/workflow-editor": { dir: "workflow-editor", publish: true },
       "@saltcorn/filemanager": { dir: "filemanager", publish: true },
       "@saltcorn/data": { dir: "saltcorn-data", publish: true },
       "@saltcorn/admin-models": {

@@ -9,7 +9,7 @@ import layout from "../models/layout";
 const { traverseSync } = layout;
 const {
   parse_view_select,
-} = require("../base-plugin/viewtemplates/viewable_fields");
+} = require("../viewable_fields");
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 import Trigger from "../models/trigger";
 import { TableNode } from "./nodes/table_node";

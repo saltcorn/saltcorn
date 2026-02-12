@@ -82,7 +82,7 @@ const {
   view_linker,
   edit_build_in_actions,
   updateViewSelect,
-} = require("./viewable_fields");
+} = require("../../viewable_fields");
 const {
   traverse,
   getStringsForI18n,
@@ -178,7 +178,21 @@ const configuration_workflow = (req) =>
               );
             }
           }
-
+          const workflowActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+            onlyWorkflows: true,
+          });
+          for (const name of workflowActions) {
+            actionConfigForms[name] = [
+              {
+                name: "initial_context",
+                label: "Additional context",
+                type: "String",
+                class: "validate-expression",
+              },
+            ];
+          }
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");

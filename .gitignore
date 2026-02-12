@@ -125,5 +125,9 @@ package-lock.json
 .vagrant/
 !packages/saltcorn-builder/dist/builder_bundle.js
 !packages/saltcorn-builder/package-lock.json
+!packages/saltcorn-workflow/dist/workflow_bundle.js
+!packages/saltcorn-workflow/package-lock.json
 !/package-lock.json
 plugins_folder/
+
+*.sqlite-journal

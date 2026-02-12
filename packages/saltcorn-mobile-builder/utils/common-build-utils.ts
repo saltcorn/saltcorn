@@ -30,7 +30,9 @@ const resizer = require("resize-with-sharp-or-jimp");
  * and install the capacitor and cordova modules to node_modules (cap sync will be run later)
  * @param buildDir directory where the app will be build
  * @param templateDir directory of the template code that will be copied to 'buildDir'
- * @param pushEnabled is Firebase Cloud Messaging enabled, then add "@capacitor/push-notifications"
+ * @param pushEnabled are push notifications enabled?
+ * @param backgroundFetchEnabled is background fetch enabled?
+ * @param pushSyncEnabled is push sync enabled?
  */
 export function prepareBuildDir(
   buildDir: string,
@@ -57,18 +59,18 @@ export function prepareBuildDir(
 
   console.log("installing capacitor deps and plugins");
   const capDepsAndPlugins = [
-    "@capacitor/cli@7.4.4",
-    "@capacitor/core@7.4.4",
+    "@capacitor/cli@7.4.5",
+    "@capacitor/core@7.4.5",
     "@capacitor/assets@3.0.5",
-    "@capacitor/filesystem@7.1.5",
-    "@capacitor/camera@7.0.2",
-    "@capacitor/network@7.0.2",
-    "@capacitor-community/sqlite@7.0.2",
-    "@capacitor/screen-orientation@7.0.2",
+    "@capacitor/filesystem@7.1.6",
+    "@capacitor/camera@7.0.3",
+    "@capacitor/network@7.0.3",
+    "@capacitor-community/sqlite@7.0.3",
+    "@capacitor/screen-orientation@7.0.3",
     "@capacitor/app@7.1.0",
     "send-intent@7.0.0",
     ...additionalPlugins,
-    ...(pushEnabled
+    ...(pushEnabled || pushSyncEnabled
       ? ["@capacitor/device@7.0.2", "@capacitor/push-notifications@7.0.3"]
       : []),
     ...(backgroundFetchEnabled
@@ -345,12 +347,9 @@ export async function modifyAndroidManifest(
 }
 
 export function hasAuthMethod(plugins: string[]) {
-  console.log("hasAuthMethod", plugins);
   const state = getState();
   for (const pluginName of plugins) {
     const plugin = state!.plugins[pluginName];
-    console.log("plugin", pluginName, plugin);
-
     if (plugin && plugin.authentication) return true;
   }
   return false;
@@ -768,17 +767,27 @@ export function copyShareExtFiles(buildDir: string) {
     join(iosAppDir, "share-ext", "Info.plist"),
     { overwrite: true }
   );
-  copySync(
-    join(sefDir, "AppDelegate.swift"),
-    join(iosAppDir, "App", "AppDelegate.swift"),
-    { overwrite: true }
+}
+
+export function modifyShareViewController(buildDir: string, groupId: string) {
+  const shareVCFile = join(
+    buildDir,
+    "ios",
+    "App",
+    "share-ext",
+    "ShareViewController.swift"
   );
+  let content = readFileSync(shareVCFile, "utf8");
+  // replace all YOUR_APP_GROUP_ID placeholders with groupId
+  content = content.replace(/YOUR_APP_GROUP_ID/g, groupId);
+  writeFileSync(shareVCFile, content, "utf8");
 }
 
 export function modifyAppDelegate(
   buildDir: string,
   backgroundSyncEnabled: boolean,
-  pushSyncEnabled: boolean
+  pushSyncEnabled: boolean,
+  allowShareTo: boolean
 ) {
   const appDelegateFile = join(
     buildDir,
@@ -865,22 +874,75 @@ export function modifyAppDelegate(
     
   // [silent push notification handler]
   // we just add this to deal with an iOS simulator bug, this method is deprecated as of iOS 13
-  func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
-      // debug
-      print("Received by: performFetchWithCompletionHandler")
+  // func application(_ application: UIApplication, performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void) {
+  //     // debug
+  //     print("Received by: performFetchWithCompletionHandler")
       
-      // Perform background operation, need to create a plugin
-      NotificationCenter.default.post(name: Notification.Name(rawValue: "silentNotificationReceived"), object: nil, userInfo: nil)
+  //     // Perform background operation, need to create a plugin
+  //     NotificationCenter.default.post(name: Notification.Name(rawValue: "silentNotificationReceived"), object: nil, userInfo: nil)
 
-      // Give the listener a few seconds to complete, system allows for 30 - we give 25. The system will kill this after 30 seconds.
-      DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
-          // Execute after 25 seconds
-          completionHandler(.newData)
-      }
-  }
+  //     // Give the listener a few seconds to complete, system allows for 30 - we give 25. The system will kill this after 30 seconds.
+  //     DispatchQueue.main.asyncAfter(deadline: .now() + 25) {
+  //         // Execute after 25 seconds
+  //         completionHandler(.newData)
+  //     }
+  // }
 }
 `
     );
+  }
+
+  if (allowShareTo) {
+    // add "import TSBackgroundFetch" before "@UIApplicationMain"
+    content = content.replace(
+      /@UIApplicationMain/,
+      `import SendIntent
+
+@UIApplicationMain`
+    );
+
+    const replacement = `
+    let store = ShareStore.store
+    
+    func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        
+        var success = true
+        if CAPBridge.handleOpenUrl(url, options) {
+            success = ApplicationDelegateProxy.shared.application(app, open: url, options: options)
+        }
+        
+        guard let components = NSURLComponents(url: url, resolvingAgainstBaseURL: true),
+              let params = components.queryItems else {
+                  return false
+              }
+        let titles = params.filter { $0.name == "title" }
+        let descriptions = params.filter { $0.name == "description" }
+        let types = params.filter { $0.name == "type" }
+        let urls = params.filter { $0.name == "url" }
+        
+        store.shareItems.removeAll()
+    
+        if (titles.count > 0) {
+            for index in 0...titles.count-1 {
+                var shareItem: JSObject = JSObject()
+                shareItem["title"] = titles[index].value!
+                shareItem["description"] = descriptions[index].value!
+                shareItem["type"] = types[index].value!
+                shareItem["url"] = urls[index].value!
+                store.shareItems.append(shareItem)
+            }
+        }
+        
+        store.processed = false
+        let nc = NotificationCenter.default
+        nc.post(name: Notification.Name("triggerSendIntent"), object: nil )
+        
+        return success
+    }
+  }`;
+    const regex =
+      /func application\(_ app: UIApplication,\s*open url: URL,\s*options:\s*\[UIApplication\.OpenURLOptionsKey\s*:\s*Any\]\s*=\s*\[:\]\)\s*->\s*Bool\s*\{[\s\S]*?\n\}/;
+    content = content.replace(regex, replacement);
   }
 
   writeFileSync(appDelegateFile, content, "utf8");
@@ -1292,11 +1354,14 @@ export async function prepareSplashPage(
   }
 }
 
-export function writePodfile(buildDir: string) {
+export function writePodfile(
+  buildDir: string,
+  hasPush: boolean,
+  hasBackgroundFetch: boolean,
+  hasSilentPush: boolean
+) {
   const state = getState();
   let hasGeolocation = false;
-  let hasPush = true;
-  let hasSilentPush = true;
   if (state) {
     for (const plugin of state.capacitorPlugins || []) {
       if (plugin.name === "@capacitor/geolocation") {
@@ -1330,12 +1395,13 @@ export function writePodfile(buildDir: string) {
     pod 'CordovaPlugins', :path => '../capacitor-cordova-ios-plugins'
     pod 'CordovaPluginsResources', :path => '../capacitor-cordova-ios-plugins'
     ${
-      hasPush
+      hasPush || hasSilentPush
         ? `pod 'CapacitorPushNotifications', :path => '../../node_modules/@capacitor/push-notifications'
     pod 'CapacitorDevice', :path => '../../node_modules/@capacitor/device'`
         : ""
     }
     ${hasSilentPush ? `pod 'CapacitorPluginSilentNotifications', :path => '../../node_modules/capacitor-plugin-silent-notifications'` : ""}
+    ${hasBackgroundFetch ? `pod 'TransistorsoftCapacitorBackgroundFetch', :path => '../../node_modules/@transistorsoft/capacitor-background-fetch'` : ""}
   end
   
   target 'App' do

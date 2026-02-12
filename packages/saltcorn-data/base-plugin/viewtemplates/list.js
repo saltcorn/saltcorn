@@ -60,7 +60,7 @@ const {
   parse_view_select,
   get_viewable_fields_from_layout,
   action_url,
-} = require("./viewable_fields");
+} = require("../../viewable_fields");
 const { getState } = require("../../db/state");
 const {
   get_async_expression_function,
@@ -190,7 +190,21 @@ const configuration_workflow = (req) =>
               );
             }
           }
-
+          const workflowActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+            onlyWorkflows: true,
+          });
+          for (const name of workflowActions) {
+            actionConfigForms[name] = [
+              {
+                name: "initial_context",
+                label: "Additional context",
+                type: "String",
+                class: "validate-expression",
+              },
+            ];
+          }
           //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,

@@ -202,6 +202,20 @@ const pageBuilderData = async (req, context) => {
       });
     }
   }
+  const workflowActions = Trigger.trigger_actions({
+    apiNeverTriggers: true,
+    onlyWorkflows: true,
+  });
+  for (const name of workflowActions) {
+    actionConfigForms[name] = [
+      {
+        name: "initial_context",
+        label: "Initial context",
+        type: "String",
+        class: "validate-expression",
+      },
+    ];
+  }
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     apiNeverTriggers: true,

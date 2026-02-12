@@ -64,7 +64,7 @@ const {
   splitUniques,
   standardBlockDispatch,
   standardLayoutRowVisitor,
-} = require("./viewable_fields");
+} = require("../../viewable_fields");
 const db = require("../../db");
 const {
   asyncMap,
@@ -167,7 +167,21 @@ const configuration_workflow = (req) =>
               );
             }
           }
-
+          const workflowActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+            onlyWorkflows: true,
+          });
+          for (const name of workflowActions) {
+            actionConfigForms[name] = [
+              {
+                name: "initial_context",
+                label: "Additional context",
+                type: "String",
+                class: "validate-expression",
+              },
+            ];
+          }
           //const fieldViewConfigForms = await calcfldViewConfig(fields, false);
           const { field_view_options, handlesTextStyle } = calcfldViewOptions(
             fields,

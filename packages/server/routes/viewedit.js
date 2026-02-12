@@ -560,11 +560,14 @@ router.post(
           }
 
         const v = result.success;
+        const vt = getState().viewtemplates[v.viewtemplate];
         if (v.table_name) {
           const table = Table.findOne({ name: v.table_name });
           if (table && table.id) {
             v.table_id = table.id;
           } else if (table && table.external) v.exttable_name = v.table_name;
+        } else if (vt?.table_optional) {
+          v.table_id = null;
         }
         if (v.table_id) {
           const table = Table.findOne({ id: v.table_id });
@@ -577,7 +580,6 @@ router.post(
         if ((req.body || {}).id) {
           await View.update(v, +(req.body || {}).id);
         } else {
-          const vt = getState().viewtemplates[v.viewtemplate];
           if (vt.initial_config) v.configuration = await vt.initial_config(v);
           else v.configuration = {};
           //console.log(v);

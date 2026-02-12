@@ -38,7 +38,7 @@ const {
   stateFieldsToQuery,
   stateToQueryString,
 } = require("../../plugin-helper");
-const { action_link } = require("./viewable_fields");
+const { action_link } = require("../../viewable_fields");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const {
   eachView,
@@ -157,6 +157,22 @@ const configuration_workflow = (req) =>
               );
             }
           }
+          const workflowActions = Trigger.trigger_actions({
+            tableTriggers: table.id,
+            apiNeverTriggers: true,
+            onlyWorkflows: true,
+          });
+          for (const name of workflowActions) {
+            actionConfigForms[name] = [
+              {
+                name: "initial_context",
+                label: "Additional context",
+                type: "String",
+                class: "validate-expression",
+              },
+            ];
+          }
+
           const own_link_views = await View.find_table_views_where(
             context.table_id || context.exttable_name,
             ({ viewrow }) => viewrow.name !== context.viewname

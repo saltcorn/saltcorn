@@ -1,7 +1,7 @@
 {
   "name": "@saltcorn/mobile-app",
   "displayName": "Saltcorn mobile app",
-  "version": "1.6.0-alpha.2",
+  "version": "1.6.0-alpha.6",
   "description": "Saltcorn mobile app for Android and iOS",
   "main": "index.js",
   "scripts": {
@@ -35,6 +35,9 @@
     "babel-loader": "^9.2.1",
     "webpack": "5.97.1",
     "webpack-cli": "6.0.1",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "kleur": "4.1.5",
+    "@ionic/cli-framework-output": "2.2.8",
+    "@ionic/utils-terminal": "2.3.5"
   }
 }

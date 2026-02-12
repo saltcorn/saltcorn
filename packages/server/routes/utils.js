@@ -383,7 +383,8 @@ const getSessionStore = (pruneInterval) => {
 const addOnDoneRedirect = (oldPath, req) => {
   const separator = oldPath.indexOf("?") > -1 ? "&" : "?";
   if (req.query.on_done_redirect) {
-    return `${oldPath}${separator}on_done_redirect=${req.query.on_done_redirect}`;
+    const encoded = encodeURIComponent(req.query.on_done_redirect);
+    return `${oldPath}${separator}on_done_redirect=${encoded}`;
   }
   return oldPath;
 };

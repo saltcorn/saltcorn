@@ -101,6 +101,13 @@ type LayoutWithTypeProp = {
 
 type LayoutWithHtmlFile = {
   html_file: string;
+  html_string?: never;
+  above?: never;
+};
+
+type LayoutWithHtmlString = {
+  html_string: string;
+  html_file?: never;
   above?: never;
 };
 
@@ -117,7 +124,8 @@ export type Layout =
   | LayoutWithAbove
   | LayoutWithBesides
   | LayoutWithTypeProp
-  | LayoutWithHtmlFile;
+  | LayoutWithHtmlFile
+  | LayoutWithHtmlString;
 
 export function instanceOWithHtmlFile(
   object: any

@@ -1,0 +1,37 @@
+{
+  "name": "@saltcorn/workflow-editor",
+  "version": "1.6.0-alpha.6",
+  "description": "React Flow-based workflow editor for Saltcorn",
+  "main": "index.js",
+  "scripts": {
+    "build": "webpack --mode production",
+    "builddev": "webpack --mode none",
+    "watch": "webpack --mode none --watch",
+    "test": "echo \"NO TESTS\""
+  },
+  "repository": "github:saltcorn/saltcorn",
+  "author": "Saltcorn",
+  "license": "MIT",
+  "devDependencies": {
+    "@babel/core": "7.25.2",
+    "@babel/preset-env": "7.25.2",
+    "@babel/preset-react": "7.24.7",
+    "babel-loader": "8.1.0",
+    "classnames": "2.2.6",
+    "css-loader": "6.11.0",
+    "process": "0.11.10",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "@xyflow/react": "^12.10.0",
+    "style-loader": "3.3.4",
+    "webpack": "5.97.1",
+    "webpack-cli": "6.0.1"
+  },
+  "overrides": {
+    "immer": "9.0.6",
+    "glob-parent": "^5.1.2",
+    "undici": "7.12.0",
+    "parse5": "7.2.1",
+    "parse5-htmlparser2-tree-adapter": "7.0.0"
+  }
+}

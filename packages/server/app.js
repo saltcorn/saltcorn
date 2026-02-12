@@ -245,14 +245,6 @@ const getApp = async (opts = {}) => {
       maxAge: 1000 * 60 * 60 * 24,
     })
   );
-  app.use(
-    express.static(
-      path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
-      {
-        maxAge: 1000 * 60 * 60 * 24,
-      }
-    )
-  );
 
   if (process.env.SALTCORN_SERVE_ADDITIONAL_DIR)
     app.use(
@@ -281,6 +273,16 @@ const getApp = async (opts = {}) => {
     `/static_assets/${version_tag}`,
     express.static(
       path.dirname(require.resolve("@saltcorn/builder/package.json")) + "/dist",
+      {
+        maxAge: "100d",
+      }
+    )
+  );
+  app.use(
+    `/static_assets/${version_tag}`,
+    express.static(
+      path.dirname(require.resolve("@saltcorn/workflow-editor/package.json")) +
+        "/dist",
       {
         maxAge: "100d",
       }
@@ -333,7 +335,9 @@ const getApp = async (opts = {}) => {
     new BearerStrategy(function (token, done) {
       loginAttempt();
       async function loginAttempt() {
-        const mu = (await User.findByApiToken(token)) || (await User.findOne({ api_token: token }));
+        const mu =
+          (await User.findByApiToken(token)) ||
+          (await User.findOne({ api_token: token }));
         if (mu && token && token.length > 5)
           return done(
             null,

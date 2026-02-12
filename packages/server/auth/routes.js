@@ -61,7 +61,7 @@ const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
 const {
   getForm,
-} = require("@saltcorn/data/base-plugin/viewtemplates/viewable_fields");
+} = require("@saltcorn/data/viewable_fields");
 const { InvalidConfiguration, getSessionId } = require("@saltcorn/data/utils");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { restore_backup } = require("../markup/admin.js");

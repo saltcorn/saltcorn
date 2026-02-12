@@ -6,7 +6,13 @@
  */
 
 const Router = require("express-promise-router");
-const { isAdmin, loggedIn, error_catcher } = require("./utils.js");
+const {
+  isAdmin,
+  loggedIn,
+  error_catcher,
+  addOnDoneRedirect,
+  is_relative_url,
+} = require("./utils.js");
 const { renderForm, link, post_btn } = require("@saltcorn/markup");
 const {
   getState,
@@ -69,6 +75,16 @@ const {
   supportedVersion,
   isVersionSupported,
 } = require("@saltcorn/plugins-loader/stable_versioning");
+
+const getOnDoneRedirect = (req, fallback = "/plugins") => {
+  if (
+    req.query.on_done_redirect &&
+    is_relative_url("/" + req.query.on_done_redirect)
+  ) {
+    return `/${req.query.on_done_redirect}`;
+  }
+  return fallback;
+};
 
 /**
  * @type {object}
@@ -791,7 +807,7 @@ router.get(
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     if (!plugin) {
       req.flash("warning", req.__("Module not found"));
-      res.redirect("/plugins");
+      res.redirect(getOnDoneRedirect(req));
       return;
     }
     let module = getState().plugins[plugin.name];
@@ -800,9 +816,15 @@ router.get(
     }
     const flow = module.configuration_workflow();
     flow.modifyForm = remove_fixed_fields(name);
-    flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
+    const configurePath = `/plugins/configure/${encodeURIComponent(
+      plugin.name
+    )}`;
+    flow.action = addOnDoneRedirect(configurePath, req);
     flow.autoSave = true;
-    flow.saveURL = `/plugins/saveconfig/${encodeURIComponent(plugin.name)}`;
+    flow.saveURL = addOnDoneRedirect(
+      `/plugins/saveconfig/${encodeURIComponent(plugin.name)}`,
+      req
+    );
     const wfres = await flow.run(plugin.configuration || {});
 
     if (module.layout) {
@@ -872,9 +894,15 @@ router.post(
     const flow = module.configuration_workflow();
     flow.modifyForm = remove_fixed_fields(name);
 
-    flow.action = `/plugins/configure/${encodeURIComponent(plugin.name)}`;
+    const configurePath = `/plugins/configure/${encodeURIComponent(
+      plugin.name
+    )}`;
+    flow.action = addOnDoneRedirect(configurePath, req);
     flow.autoSave = true;
-    flow.saveURL = `/plugins/saveconfig/${encodeURIComponent(plugin.name)}`;
+    flow.saveURL = addOnDoneRedirect(
+      `/plugins/saveconfig/${encodeURIComponent(plugin.name)}`,
+      req
+    );
     const wfres = await flow.run(req.body || {});
     if (wfres.renderForm) {
       if (module.layout) {
@@ -913,7 +941,7 @@ router.post(
       });
       if (module.layout) await sleep(500); // Allow other workers to reload this plugin
       if (wfres.cleanup) await wfres.cleanup();
-      res.redirect("/plugins");
+      res.redirect(getOnDoneRedirect(req));
     }
   })
 );
@@ -1535,7 +1563,7 @@ router.post(
     const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
     if (!plugin) {
       req.flash("warning", req.__("Module not found"));
-      res.redirect("/plugins");
+      res.redirect(getOnDoneRedirect(req));
       return;
     }
     const depviews = await plugin.dependant_views();
@@ -1552,7 +1580,7 @@ router.post(
         req.__(`Cannot remove module: views %s depend on it`, depviews.join())
       );
     }
-    res.redirect(`/plugins`);
+    res.redirect(getOnDoneRedirect(req));
   })
 );
 
@@ -1591,7 +1619,7 @@ router.post(
         "error",
         req.__(`Module %s not found`, text(decodeURIComponent(name)))
       );
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req));
       return;
     }
     let forceReInstall =
@@ -1605,7 +1633,7 @@ router.post(
         "error",
         req.__("Cannot install unsafe modules on subdomain tenants")
       );
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req));
       return;
     }
 
@@ -1623,7 +1651,7 @@ router.post(
         "error",
         e.message || req.__("Error installing module %s", plugin.name)
       );
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req));
       return;
     }
     const plugin_module = getState().plugins[name];
@@ -1640,11 +1668,14 @@ router.post(
         )
       );
       if (msgs?.length > 0) req.flash("warning", msgs.join("<br>"));
-      res.redirect(`/plugins/configure/${plugin_db.name}`);
+      const configurePath = `/plugins/configure/${encodeURIComponent(
+        plugin_db.name
+      )}`;
+      res.redirect(addOnDoneRedirect(configurePath, req));
     } else {
       req.flash("success", req.__(`Module %s installed`, plugin.name));
       if (msgs?.length > 0) req.flash("warning", msgs.join("<br>"));
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req));
     }
   })
 );

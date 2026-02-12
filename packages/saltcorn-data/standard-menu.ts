@@ -1,4 +1,32 @@
-const create_standard_menu = async () => {
+/**
+ * Standard menu creation
+ * @category saltcorn-data
+ * @module standard-menu
+ */
+
+interface MenuItem {
+  href: string;
+  icon: string;
+  text: string;
+  type: string;
+  label: string;
+  style: string;
+  title: string;
+  target: string;
+  tooltip: string;
+  in_modal?: boolean;
+  location: string;
+  max_role: string;
+  min_role: number | string;
+  admin_page?: string;
+  user_page?: string;
+  target_blank?: boolean;
+  disable_on_mobile: boolean;
+  subitems?: MenuItem[];
+  user_menu_header?: boolean;
+}
+
+const create_standard_menu = async (): Promise<void> => {
   const { getState } = require("./db/state");
 
   const state = getState();
@@ -21,7 +49,7 @@ const create_standard_menu = async () => {
     canEditFiles,
     canEditSearch
   );
-  const new_items = [
+  const new_items: MenuItem[] = [
     {
       href: "",
       icon: "fas fa-table",
@@ -352,4 +380,4 @@ const create_standard_menu = async () => {
   ]);
 };
 
-module.exports = create_standard_menu;
+export = create_standard_menu;

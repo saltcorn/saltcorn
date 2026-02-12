@@ -93,6 +93,7 @@ class BuildAppCommand extends Command {
             guuid: shareExtProfileVals.guuid,
             specifier: shareExtProfileVals.specifier,
             identifier: shareExtProfileVals.identifier,
+            ...(flags.appGroupId ? { appGroupId: flags.appGroupId } : {}),
           };
         }
       }
@@ -364,6 +365,12 @@ BuildAppCommand.flags = {
     string: "shareExtensionProvisioningProfile",
     description:
       "This profile will be used to sign your share extension on iOS",
+  }),
+  appGroupId: Flags.string({
+    name: "app group id",
+    string: "appGroupId",
+    description:
+      "An app group identifier to share data between the main app and the share extension on iOS, e.g. group.com.saltcorn.myapp",
   }),
   buildType: Flags.string({
     name: "build type",

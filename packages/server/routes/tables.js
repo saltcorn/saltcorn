@@ -102,6 +102,7 @@ const tableForm = async (table, req) => {
     label: r.role,
   }));
   const ownership_opts = await table.ownership_options();
+  const writableTable = table.updateRow || table.insertRow || table.deleteRow;
   const form = new Form({
     action: "/table",
     noSubmitButton: true,
@@ -119,23 +120,27 @@ const tableForm = async (table, req) => {
         name: "min_role_read",
         input_type: "select",
         options: roleOptions,
-        attributes: { asideNext: !table.external && !table.provider_name },
+        attributes: { asideNext: !table.external && writableTable },
       },
-      ...(!table.external && !table.provider_name
+      ...(!table.external
         ? [
-            {
-              label: req.__("Minimum role to write"),
-              name: "min_role_write",
-              input_type: "select",
-              help: {
-                topic: "Table roles",
-                context: {},
-              },
-              sublabel: req.__(
-                "User must have this role or higher to edit or create new rows in the table, unless they are the owner"
-              ),
-              options: roleOptions,
-            },
+            ...(writableTable
+              ? [
+                  {
+                    label: req.__("Minimum role to write"),
+                    name: "min_role_write",
+                    input_type: "select",
+                    help: {
+                      topic: "Table roles",
+                      context: {},
+                    },
+                    sublabel: req.__(
+                      "User must have this role or higher to edit or create new rows in the table, unless they are the owner"
+                    ),
+                    options: roleOptions,
+                  },
+                ]
+              : []),
             {
               label: req.__("Ownership field"),
               name: "ownership_field_id",

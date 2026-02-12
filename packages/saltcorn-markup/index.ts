@@ -6,6 +6,7 @@ import renderFormModule = require("./form");
 const { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout } =
   renderFormModule;
 import renderBuilder = require("./builder");
+import renderWorkflow = require("./workflow");
 import mkTable = require("./table");
 import tabs = require("./tabs");
 import tags = require("./tags");
@@ -352,6 +353,7 @@ export = {
   mkFormContentNoLayout,
   mkForm,
   renderFormLayout,
+  renderWorkflow,
   settingsDropdown,
   renderBuilder,
   link,

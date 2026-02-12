@@ -13,6 +13,8 @@ const Trigger = require("@saltcorn/data/models/trigger");
 const Tag = require("@saltcorn/data/models/tag");
 const TagEntry = require("@saltcorn/data/models/tag_entry");
 const User = require("@saltcorn/data/models/user");
+const Role = require("@saltcorn/data/models/role");
+const Plugin = require("@saltcorn/data/models/plugin");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
 const {
@@ -31,14 +33,28 @@ const {
   tr,
   th,
   td,
+  label,
 } = require("@saltcorn/markup/tags");
-const { post_dropdown_item, settingsDropdown } = require("@saltcorn/markup");
+const {
+  post_dropdown_item,
+  settingsDropdown,
+  post_btn,
+} = require("@saltcorn/markup");
 const {
   view_dropdown,
   page_dropdown,
   trigger_dropdown,
 } = require("./common_lists.js");
 const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
+const {
+  fetch_pack_by_name,
+  fetch_available_packs,
+  table_pack,
+  view_pack,
+  page_pack,
+  trigger_pack,
+  uninstall_pack,
+} = require("@saltcorn/admin-models/models/pack");
 
 /**
  * @type {object}
@@ -53,6 +69,325 @@ module.exports = router;
 // Ensure on_done_redirect values remain relative to the app root
 const stripLeadingSlash = (path = "") =>
   path.startsWith("/") ? path.slice(1) : path;
+
+/**
+ * Get additional entities (modules, users)
+ */
+const req__ = (req, s) => (req && req.__(s)) || s;
+
+const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
+  const entities = [];
+  const can_reset = getState().getConfig("smtp_host", "") !== "";
+
+  const users = await User.find({}, { cached: true });
+  users.forEach((u) => {
+    entities.push({
+      type: "user",
+      name: u.email,
+      id: u.id,
+      viewLink: `/useradmin/${u.id}`,
+      editLink: `/useradmin/${u.id}`,
+      metadata: {
+        email: u.email,
+        username: u.username,
+        role_id: u.role_id,
+        disabled: u.disabled,
+      },
+      actionsHtml: buildUserActionsDropdown(u, req, can_reset),
+    });
+  });
+
+  const statePlugins = getState().plugins;
+  const csrfToken = req?.csrfToken ? req.csrfToken() : null;
+  const packs = getState().getConfig("installed_packs", []);
+  const installedPackNames = new Set(packs);
+  const packDetails = await Promise.all(
+    packs.map(async (pname) => {
+      try {
+        return (await fetch_pack_by_name(pname)) || { name: pname };
+      } catch (e) {
+        getState().log?.(
+          2,
+          `Failed to fetch installed pack ${pname}: ${e.message}`
+        );
+        return { name: pname };
+      }
+    })
+  );
+  const availablePackSummaries = new Map();
+  let storeModules = [];
+  const storeModuleSummaries = new Map();
+  try {
+    storeModules = await Plugin.store_plugins_available();
+    storeModules.forEach((mod) => {
+      if (mod?.name) storeModuleSummaries.set(mod.name, mod);
+    });
+  } catch (e) {
+    getState().log?.(2, `Failed to fetch available modules: ${e.message}`);
+  }
+  if (includeAllModules) {
+    try {
+      const availablePacks = await fetch_available_packs();
+      availablePacks.forEach((pack) => {
+        if (pack?.name) availablePackSummaries.set(pack.name, pack);
+      });
+    } catch (e) {
+      getState().log?.(2, `Failed to fetch available packs: ${e.message}`);
+    }
+  }
+
+  const buildModuleActions = (moduleName, installed) => {
+    if (!csrfToken) return "";
+    if (installed) {
+      return post_btn(
+        `/plugins/delete/${encodeURIComponent(moduleName)}`,
+        req.__("Uninstall"),
+        csrfToken,
+        {
+          formClass: "d-inline",
+          btnClass: "btn btn-sm btn-danger",
+          klass: "extended-entity-remove",
+          confirm: true,
+          req,
+        }
+      );
+    }
+    return post_btn(
+      `/plugins/install/${encodeURIComponent(moduleName)}`,
+      req.__("Install"),
+      csrfToken,
+      {
+        formClass: "d-inline",
+        btnClass: "btn btn-sm btn-primary",
+        klass: "extended-entity-install",
+      }
+    );
+  };
+
+  const modules = await Plugin.find();
+  const installedModuleNames = new Set();
+  modules
+    .filter((mod) => mod.name !== "base")
+    .forEach((mod) => {
+      installedModuleNames.add(mod.name);
+      const has_theme =
+        typeof mod.has_theme !== "undefined"
+          ? mod.has_theme
+          : !!statePlugins[mod.name]?.layout;
+      const has_auth =
+        typeof mod.has_auth !== "undefined"
+          ? mod.has_auth
+          : !!statePlugins[mod.name]?.authentication;
+      const ready_for_mobile = !!statePlugins[mod.name]?.ready_for_mobile;
+      const source = mod.source;
+      const description =
+        storeModuleSummaries.get(mod.name)?.description ||
+        mod.description ||
+        statePlugins[mod.name]?.description ||
+        "";
+      entities.push({
+        type: "module",
+        name: mod.name,
+        id: mod.id,
+        viewLink: `/plugins/info/${mod.name}`,
+        editLink: statePlugins[mod.name]?.configuration_workflow
+          ? `/plugins/configure/${mod.name}`
+          : null,
+        metadata: {
+          version: mod.version,
+          hasConfig: !!statePlugins[mod.name]?.configuration_workflow,
+          has_theme,
+          has_auth,
+          ready_for_mobile,
+          source,
+          description,
+          local: source === "local",
+          installed: true,
+          type: "module",
+        },
+        actionsHtml: buildModuleActions(mod.name, true),
+      });
+    });
+
+  if (includeAllModules) {
+    try {
+      storeModules
+        .filter(
+          (mod) => mod.name !== "base" && !installedModuleNames.has(mod.name)
+        )
+        .forEach((mod) => {
+          const source = mod.source;
+          entities.push({
+            type: "module",
+            name: mod.name,
+            id: mod.id,
+            viewLink: `/plugins/info/${mod.name}`,
+            editLink: null,
+            metadata: {
+              version: mod.version,
+              hasConfig: false,
+              has_theme: !!mod.has_theme,
+              has_auth: !!mod.has_auth,
+              ready_for_mobile: !!mod.ready_for_mobile,
+              source,
+              description: mod.description || "",
+              local: source === "local",
+              installed: false,
+              type: "module",
+            },
+            actionsHtml: buildModuleActions(mod.name, false),
+          });
+        });
+    } catch (e) {
+      getState().log?.(2, `Failed to fetch available modules: ${e.message}`);
+    }
+  }
+
+  const buildPackActions = (packName, installed) => {
+    if (!csrfToken) return "";
+    if (installed) {
+      return post_btn(
+        `/packs/uninstall/${encodeURIComponent(packName)}`,
+        req.__("Uninstall"),
+        csrfToken,
+        {
+          formClass: "d-inline",
+          btnClass: "btn btn-sm btn-danger",
+          klass: "extended-entity-remove",
+        }
+      );
+    }
+    return post_btn(
+      `/packs/install-named/${encodeURIComponent(packName)}`,
+      req.__("Install"),
+      csrfToken,
+      {
+        formClass: "d-inline",
+        btnClass: "btn btn-sm btn-primary",
+        klass: "extended-entity-install",
+      }
+    );
+  };
+
+  packDetails.forEach((pack) => {
+    if (!pack || !pack.name) return;
+    const summary = availablePackSummaries.get(pack.name);
+    if (summary) availablePackSummaries.delete(pack.name);
+    const version = pack.version ?? pack.pack?.version ?? null;
+    const description =
+      pack.description || pack.pack?.description || summary?.description || "";
+    entities.push({
+      type: "module",
+      name: pack.name,
+      id: pack.id || pack.pack?.id || pack.name,
+      viewLink: null,
+      editLink: null,
+      metadata: {
+        version,
+        description,
+        hasConfig: false,
+        has_theme: false,
+        local: false,
+        installed: true,
+        type: "pack",
+      },
+      actionsHtml: buildPackActions(pack.name, true),
+    });
+  });
+
+  if (availablePackSummaries.size) {
+    for (const [packName, pack] of availablePackSummaries.entries()) {
+      if (installedPackNames.has(packName)) continue;
+      entities.push({
+        type: "module",
+        name: packName,
+        id: pack.id || packName,
+        viewLink: null,
+        editLink: null,
+        metadata: {
+          version: null,
+          description: pack.description || "",
+          hasConfig: false,
+          has_theme: false,
+          local: false,
+          installed: false,
+          type: "pack",
+        },
+        actionsHtml: buildPackActions(packName, false),
+      });
+    }
+  }
+
+  return entities;
+};
+
+const buildUserActionsDropdown = (user, req, can_reset) => {
+  if (!req) return "";
+  const dropdownId = `entityUserDropdown${user.id}`;
+  const items = [
+    a(
+      {
+        class: "dropdown-item",
+        href: `/useradmin/${user.id}`,
+      },
+      '<i class="fas fa-edit"></i>&nbsp;' + req__(req, "Edit")
+    ),
+    post_dropdown_item(
+      `/useradmin/become-user/${user.id}`,
+      '<i class="fas fa-ghost"></i>&nbsp;' + req__(req, "Become user"),
+      req
+    ),
+    post_dropdown_item(
+      `/useradmin/set-random-password/${user.id}`,
+      '<i class="fas fa-random"></i>&nbsp;' + req__(req, "Set random password"),
+      req,
+      true
+    ),
+    can_reset &&
+      post_dropdown_item(
+        `/useradmin/reset-password/${user.id}`,
+        '<i class="fas fa-envelope"></i>&nbsp;' +
+          req__(req, "Send password reset email"),
+        req
+      ),
+    can_reset &&
+      !user.verified_on &&
+      getState().getConfig("verification_view", "") &&
+      post_dropdown_item(
+        `/useradmin/send-verification/${user.id}`,
+        '<i class="fas fa-envelope"></i>&nbsp;' +
+          req__(req, "Send verification email"),
+        req
+      ),
+    user.disabled &&
+      post_dropdown_item(
+        `/useradmin/enable/${user.id}`,
+        '<i class="fas fa-play"></i>&nbsp;' + req__(req, "Enable"),
+        req
+      ),
+    !user.disabled &&
+      post_dropdown_item(
+        `/useradmin/disable/${user.id}`,
+        '<i class="fas fa-pause"></i>&nbsp;' + req__(req, "Disable"),
+        req
+      ),
+    !user.disabled &&
+      post_dropdown_item(
+        `/useradmin/force-logout/${user.id}`,
+        '<i class="fas fa-sign-out-alt"></i>&nbsp;' +
+          req__(req, "Force logout"),
+        req
+      ),
+    post_dropdown_item(
+      `/useradmin/delete/${user.id}`,
+      '<i class="far fa-trash-alt"></i>&nbsp;' + req__(req, "Delete"),
+      req,
+      true,
+      user.email
+    ),
+  ].filter(Boolean);
+  return settingsDropdown(dropdownId, items);
+};
 
 /**
  * Get all entities with their type and metadata
@@ -88,6 +423,10 @@ const getAllEntities = async () => {
 
   // Add views
   views.forEach((v) => {
+    const has_config =
+      v.configuration &&
+      typeof v.configuration === "object" &&
+      Object.keys(v.configuration).length > 0;
     entities.push({
       type: "view",
       name: v.name,
@@ -102,6 +441,7 @@ const getAllEntities = async () => {
         table_name: v.table_id ? tableNameById.get(v.table_id) : null,
         singleton: v.singleton,
         min_role: v.min_role,
+        has_config,
       },
     });
   });
@@ -158,6 +498,9 @@ const entityTypeBadge = (type) => {
     view: { class: "success", icon: "eye", label: "View" },
     page: { class: "info", icon: "file", label: "Page" },
     trigger: { class: "warning", icon: "play", label: "Trigger" },
+    module: { class: "secondary", icon: "cube", label: "Module" },
+    user: { class: "dark", icon: "user", label: "User" },
+    role: { class: "danger", icon: "lock", label: "Role" },
   };
   const badge = badges[type];
   return span(
@@ -168,7 +511,7 @@ const entityTypeBadge = (type) => {
 };
 
 // Helper: build details column content based on entity type
-const detailsContent = (entity, req) => {
+const detailsContent = (entity, req, roles) => {
   const bits = [];
   if (entity.type === "table") {
     if (entity.metadata.external)
@@ -215,6 +558,23 @@ const detailsContent = (entity, req) => {
         span(
           { class: "text-muted small fst-italic" },
           text(entity.metadata.action)
+        )
+      );
+  } else if (entity.type === "user") {
+    const disabled = entity.metadata.disabled;
+    const roleName = Array.isArray(roles)
+      ? roles.find((r) => r.id === entity.metadata.role_id)?.role
+      : null;
+    if (roleName)
+      bits.push(span({ class: "badge bg-secondary me-1" }, text(roleName)));
+    if (disabled)
+      bits.push(span({ class: "badge bg-danger me-1" }, req.__("Disabled")));
+  } else if (entity.type === "module") {
+    if (entity.metadata.version)
+      bits.push(
+        span(
+          { class: "text-muted small me-2" },
+          text(`v${entity.metadata.version}`)
         )
       );
   }
@@ -312,8 +672,45 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
     const entities = await getAllEntities();
+    const deepSearchIndex = {};
+    const addDeepSearch = (key, pack) => {
+      if (!pack) return;
+      try {
+        deepSearchIndex[key] = JSON.stringify(pack).toLowerCase();
+      } catch (e) {
+        console.error(
+          `Failed to stringify pack ${pack.name} for deep search index:`,
+          e
+        );
+      }
+    };
+
+    for (const entity of entities) {
+      const key = (useId = true) =>
+        `${entity.type}:${useId ? entity.id : entity.name}`; // Using name for views as some table_less views have undefined ids
+      try {
+        if (entity.type === "table") {
+          const table = Table.findOne({ id: entity.id });
+          if (table) addDeepSearch(key(), await table_pack(table));
+        } else if (entity.type === "view") {
+          const view = View.findOne({ name: entity.name });
+          if (view) addDeepSearch(key(false), await view_pack(view));
+        } else if (entity.type === "page") {
+          const page = Page.findOne({ name: entity.name });
+          if (page) addDeepSearch(key(), await page_pack(page));
+        } else if (entity.type === "trigger") {
+          const trigger = Trigger.findOne({ id: entity.id });
+          if (trigger) addDeepSearch(key(), await trigger_pack(trigger));
+        }
+      } catch (e) {
+        getState().log?.(
+          2,
+          `Failed to build deep search index for ${key()}: ${e.message}`
+        );
+      }
+    }
     // fetch roles and tags
-    const roles = await User.get_roles();
+    const roles = await Role.find({}, { orderBy: "id" });
     const tags = await Tag.find();
     const tagEntries = await TagEntry.find();
     const userRoleId = req.user?.role_id ?? Infinity;
@@ -327,11 +724,11 @@ router.get(
       if (entity.type === "table")
         return tableActionsDropdown(entity, req, user_can_edit_tables);
       if (entity.type === "view")
-        return view_dropdown(entity, req, on_done_redirect_str);
+        return view_dropdown(entity, req, on_done_redirect_str, false);
       if (entity.type === "page")
-        return page_dropdown(entity, req, on_done_redirect_str, true);
+        return page_dropdown(entity, req, on_done_redirect_str, true, false);
       if (entity.type === "trigger")
-        return trigger_dropdown(entity, req, on_done_redirect_str, true);
+        return trigger_dropdown(entity, req, on_done_redirect_str, false);
       return "";
     };
 
@@ -353,7 +750,7 @@ router.get(
 
     const filterToggles = div(
       {
-        class: "btn-group btn-group-sm",
+        class: "btn-group btn-group-sm entity-type-group",
         role: "group",
         "aria-label": "Entity type filters",
       },
@@ -392,18 +789,72 @@ router.get(
         },
         i({ class: "fas fa-play me-1" }),
         req.__("Triggers")
+      ),
+      button(
+        {
+          type: "button",
+          class:
+            "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
+          "data-entity-type": "user",
+        },
+        i({ class: "fas fa-user me-1" }),
+        req.__("Users")
+      ),
+      button(
+        {
+          type: "button",
+          class:
+            "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
+          "data-entity-type": "module",
+        },
+        i({ class: "fas fa-cube me-1" }),
+        req.__("Modules")
+      ),
+      button(
+        {
+          type: "button",
+          class: "btn btn-sm btn-outline-secondary",
+          id: "entity-more-btn",
+          onclick: "toggleEntityExpanded(true)",
+        },
+        req.__("More...")
+      ),
+      button(
+        {
+          type: "button",
+          class: "btn btn-sm btn-outline-secondary d-none",
+          id: "entity-less-btn",
+          onclick: "toggleEntityExpanded(false)",
+        },
+        req.__("Less...")
       )
     );
 
     const searchBox = div(
-      { class: "mb-3" },
+      { class: "input-group mb-2" },
       input({
-        type: "text",
+        type: "search",
         class: "form-control",
-        id: "entity-search",
+        name: "q",
         placeholder: req.__("Search entities by name or type..."),
+        "aria-label": req.__("Search entities by name or type..."),
         autocomplete: "off",
-      })
+        id: "entity-search",
+      }),
+      span({ class: "input-group-text" }, [
+        input({
+          class: "form-check-input mt-0 me-2",
+          type: "checkbox",
+          id: "entity-deep-search",
+        }),
+        label(
+          {
+            class: "form-check-label mb-0",
+            for: "entity-deep-search",
+          },
+          req.__("Deep search")
+        ),
+      ])
     );
 
     // Tag filter buttons
@@ -429,11 +880,13 @@ router.get(
     // One row for type filters and tag filters
     const filtersRow = div(
       {
+        id: "entity-filters-row",
         class:
-          "d-flex flex-wrap align-items-center justify-content-between mb-3 gap-2",
+          "d-flex flex-wrap align-items-center justify-content-between mb-2 gap-2 p-2 border rounded",
+        style: "border-color: transparent !important;",
       },
       div(
-        { class: "d-flex align-items-center gap-2" },
+        { class: "d-flex align-items-center gap-2 flex-wrap" },
         span(
           { class: "me-1 text-muted" },
           i({ class: "fas fa-filter me-1" }),
@@ -441,13 +894,53 @@ router.get(
         ),
         filterToggles
       ),
-      tagFilterBar
+      tags.length > 0 ? tagFilterBar : null
+    );
+
+    const selectionBar = div(
+      {
+        id: "entity-selection-bar",
+        class:
+          "d-flex flex-wrap align-items-center justify-content-between mb-2 gap-2 d-none p-2 border rounded",
+        style:
+          "background-color: var(--bs-secondary-bg); border-color: transparent !important;",
+      },
+      div(
+        { class: "d-flex align-items-center gap-2 flex-wrap" },
+        button(
+          {
+            type: "button",
+            class: "btn btn-sm btn-outline-secondary selection-control-btn",
+            id: "entity-clear-selection",
+            "aria-label": req.__("Clear selection"),
+          },
+          i({ class: "fas fa-times" })
+        ),
+        span(
+          { id: "entity-selection-count", class: "fw-semibold" },
+          req.__("%s selected", "0")
+        )
+      ),
+      div(
+        { class: "d-flex align-items-center gap-2 flex-wrap" },
+        button(
+          {
+            type: "button",
+            class: "btn btn-sm btn-danger selection-control-btn",
+            id: "entity-bulk-delete",
+            "aria-label": req.__("Delete selected"),
+            disabled: true,
+          },
+          i({ class: "fas fa-trash" })
+        )
+      )
     );
 
     // Build table
     const headerRow = tr(
       th(req.__("Type")),
       th(req.__("Name")),
+      th(req.__("Run")),
       th(req.__("Details")),
       th(req.__("Access | Read/Write")),
       th(req.__("Tags")),
@@ -467,8 +960,11 @@ router.get(
     };
 
     const bodyRows = entities.map((entity) => {
-      const key = `${entity.type}:${entity.id}`;
+      const key = `${entity.type}:${
+        entity.type === "view" ? entity.name : entity.id
+      }`;
       const tagIds = tagsByEntityKey.get(key) || [];
+      const deepSearchable = deepSearchIndex[key];
       const tagBadges = tagIds.map((tid) =>
         a(
           {
@@ -523,17 +1019,61 @@ router.get(
             ? `/viewedit/config/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
             : entity.viewLink;
       const actionsMenu = buildActionMenu(entity);
+      const runCell = (() => {
+        if (entity.type === "view") {
+          return a(
+            {
+              href: entity.viewLink,
+              class: "link-primary text-decoration-none",
+            },
+            // i({ class: "fas fa-play me-1" }),
+            req.__("Run")
+          );
+        }
+        if (entity.type === "page") {
+          return a(
+            {
+              href: entity.viewLink,
+              class: "link-primary text-decoration-none",
+            },
+            // i({ class: "fas fa-play me-1" }),
+            req.__("Run")
+          );
+        }
+        if (entity.type === "trigger") {
+          return a(
+            {
+              href: `/actions/testrun/${entity.id}${on_done_redirect_str}`,
+              class: "link-primary text-decoration-none text-nowrap",
+            },
+            // i({ class: "fas fa-running me-1" }),
+            req.__("Test run")
+          );
+        }
+        return "";
+      })();
       return tr(
         {
           class: "entity-row",
           "data-entity-type": entity.type,
           "data-entity-name": entity.name.toLowerCase(),
+          "data-entity-label": entity.name,
+          "data-entity-id": entity?.id ?? "",
+          "data-entity-key": key,
           "data-searchable": searchableValues.join(" "),
+          "data-deep-searchable": deepSearchable || searchableValues.join(" "),
           "data-tags": tagIds.join(" "),
         },
         td(entityTypeBadge(entity.type)),
-        td(a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))),
-        td(detailsContent(entity, req)),
+        td(
+          entity.type === "view" &&
+            !entity.metadata.table_id &&
+            !entity.metadata.has_config
+            ? span({ class: "fw-bold" }, text(entity.name))
+            : a({ href: mainLinkHref, class: "fw-bold" }, text(entity.name))
+        ),
+        td(runCell),
+        td(detailsContent(entity, req, roles)),
         td(
           text(
             roleLabel(
@@ -585,33 +1125,132 @@ router.get(
     );
 
     const clientScript = script(
-      domReady(`
+      domReady(/*js*/ `
         const searchInput = document.getElementById("entity-search");
+        const deepSearchToggle = document.getElementById("entity-deep-search");
         const entitiesList = document.getElementById("entities-list");
         const noResults = document.getElementById("no-results");
         const filterButtons = document.querySelectorAll(".entity-filter-btn");
-        const entityRows = document.querySelectorAll(".entity-row");
         const tagButtons = document.querySelectorAll(".tag-filter-btn");
         const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};
         const legacyButton = document.getElementById("legacy-entity-link");
         const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
+        const filtersRow = document.getElementById("entity-filters-row");
+        const selectionBar = document.getElementById("entity-selection-bar");
+        const selectionCountEl = document.getElementById("entity-selection-count");
+        const clearSelectionBtn = document.getElementById("entity-clear-selection");
+        const bulkDeleteBtn = document.getElementById("entity-bulk-delete");
+        const entitiesTbody = entitiesList ? entitiesList.querySelector("tbody") : null;
+
+        const TXT_SELECTED = ${JSON.stringify(req.__("selected"))};
+        const TXT_DELETE_SELECTED_CONFIRM = ${JSON.stringify(req.__("Delete %s selected items?"))};
+        const TXT_DELETE_SELECTED_FALLBACK = ${JSON.stringify(req.__("Delete selected items?"))};
+        const TXT_DELETE_FAILED = ${JSON.stringify(req.__("Failed to delete selected items"))};
+
+        const BASE_TYPES = ["table","view","page","trigger"];
+        const EXTENDED_TYPES = window.ENTITY_EXTENDED_TYPES || ["module","user"];
+        const ALL_TYPES = BASE_TYPES.concat(EXTENDED_TYPES);
+
+        const selectedKeys = new Set();
+        let lastSelectedIndex = null;
+
+        const isRowSelectable = (row) => {
+          if (!row) return false;
+          const type = row.dataset.entityType;
+          const installed = row.dataset.installed !== 'false';
+          if (type === 'module' && !installed) return false;
+          return true;
+        };
+
+        const findRowByKey = (key) =>
+          Array.from(document.querySelectorAll('.entity-row')).find(
+            (row) => row.dataset.entityKey === key
+          );
+
+        const selectionPayloadFromRow = (row) => {
+          if (!row) return null;
+          return {
+            key: row.dataset.entityKey,
+            type: row.dataset.entityType,
+            id: row.dataset.entityId || null,
+            name: row.dataset.entityLabel || row.dataset.entityName || "",
+          };
+        };
+
+        const getVisibleRows = () =>
+          Array.from(document.querySelectorAll('.entity-row')).filter(
+            (row) => row.style.display !== 'none'
+          );
+
+        const getSelectableVisibleRows = () =>
+          getVisibleRows().filter((row) => isRowSelectable(row));
+
+        const refreshSelectionStyles = () => {
+          document.querySelectorAll('.entity-row').forEach((row) => {
+            const key = row.dataset.entityKey;
+            if (!isRowSelectable(row) && selectedKeys.has(key)) {
+              selectedKeys.delete(key);
+            }
+            if (selectedKeys.has(key)) {
+              row.classList.add('table-active', 'entity-row-selected');
+            } else {
+              row.classList.remove('table-active', 'entity-row-selected');
+            }
+          });
+        };
+
+        const updateSelectionUI = () => {
+          refreshSelectionStyles();
+          const count = selectedKeys.size ?? 0;
+          if (selectionCountEl) {
+            const suffix = TXT_SELECTED || 'selected';
+            selectionCountEl.textContent = count + ' ' + suffix;
+          }
+          if (filtersRow && selectionBar) {
+            if (count > 0) {
+              filtersRow.classList.add('d-none');
+              selectionBar.classList.remove('d-none');
+            } else {
+              filtersRow.classList.remove('d-none');
+              selectionBar.classList.add('d-none');
+            }
+          }
+          if (bulkDeleteBtn) bulkDeleteBtn.disabled = count === 0;
+          if (clearSelectionBtn) clearSelectionBtn.disabled = count === 0;
+        };
+
+        const clearSelection = () => {
+          selectedKeys.clear();
+          lastSelectedIndex = null;
+          updateSelectionUI();
+        };
 
         // Track active filters
         const activeFilters = new Set([]);
         const activeTags = new Set([]);
+        const isModulesFilterExclusive = () =>
+          activeFilters.size === 1 && activeFilters.has("module");
+        window.isModulesFilterExclusive = isModulesFilterExclusive;
 
         // URL state helpers
-        const TYPES = ["table","view","page","trigger"];
         const updateUrl = () => {
           const params = new URLSearchParams(window.location.search);
           // search
           if (searchInput.value) params.set('q', searchInput.value);
           else params.delete('q');
+          if (deepSearchToggle && deepSearchToggle.checked) params.set('deep', 'on');
+          else params.delete('deep');
           // types
-          TYPES.forEach(t => {
+          ALL_TYPES.forEach(t => {
             if (activeFilters.has(t)) params.set(t+'s', 'on');
             else params.delete(t+'s');
           });
+          // extended flag
+          if (typeof isExtendedExpanded !== 'undefined' && isExtendedExpanded) {
+            params.set('extended', 'on');
+          } else {
+            params.delete('extended');
+          }
           // tags (comma-separated ids)
           if (activeTags.size > 0) params.set('tags', Array.from(activeTags).join(','));
           else params.delete('tags');
@@ -619,35 +1258,53 @@ router.get(
           window.history.replaceState(null, '', newUrl);
         };
 
-        const updateOnDoneRedirectTargets = () => {
+        const getCurrentOnDoneTarget = () => {
           const path = window.location.pathname.startsWith("/")
             ? window.location.pathname.slice(1)
             : window.location.pathname;
-          const currentTarget = path + window.location.search;
-          const toRelativeHref = (raw) => {
-            if (!raw) return null;
-            try {
-              const url = new URL(raw, window.location.origin);
-              url.searchParams.set("on_done_redirect", currentTarget);
-              return url.pathname + url.search + url.hash;
-            } catch (e) {
-              return null;
-            }
-          };
-          const shouldSkip = (raw) =>
-            raw && raw.trim().toLowerCase().startsWith("javascript:");
-          const updateAttr = (el, attr) => {
-            const raw = el.getAttribute(attr) || el[attr];
-            if (!raw || shouldSkip(raw)) return;
-            const updated = toRelativeHref(raw);
-            if (updated) el.setAttribute(attr, updated);
-          };
+          return path + window.location.search;
+        };
+
+        const shouldSkipOnDoneHref = (raw) => {
+          if (!raw) return true;
+          const trimmed = raw.trim();
+          const lowered = trimmed.toLowerCase();
+          return trimmed === "#" || trimmed === "" || lowered.startsWith("javascript:");
+        };
+
+        const toRelativeHrefWithOnDone = (raw) => {
+          if (shouldSkipOnDoneHref(raw)) return null;
+          try {
+            const url = new URL(raw, window.location.origin);
+            url.searchParams.set("on_done_redirect", getCurrentOnDoneTarget());
+            return url.pathname + url.search + url.hash;
+          } catch (e) {
+            return null;
+          }
+        };
+
+        const updateElementOnDoneHref = (el, attr) => {
+          const raw = el.getAttribute(attr) || el[attr];
+          const updated = toRelativeHrefWithOnDone(raw);
+          if (updated) el.setAttribute(attr, updated);
+        };
+
+        const ensureOnDoneHiddenInput = (form) => {
+          if (form.querySelector('input[name="on_done_redirect"]')) return;
+          const hidden = document.createElement('input');
+          hidden.type = 'hidden';
+          hidden.name = 'on_done_redirect';
+          hidden.value = getCurrentOnDoneTarget();
+          form.appendChild(hidden);
+        };
+
+        const updateOnDoneRedirectTargets = () => {
           document
             .querySelectorAll('a[href*="on_done_redirect="]')
-            .forEach((link) => updateAttr(link, "href"));
+            .forEach((link) => updateElementOnDoneHref(link, "href"));
           document
             .querySelectorAll('form[action*="on_done_redirect="]')
-            .forEach((form) => updateAttr(form, "action"));
+            .forEach((form) => updateElementOnDoneHref(form, "action"));
         };
 
         const updateLegacyButton = () => {
@@ -670,8 +1327,13 @@ router.get(
           // search
           const q = params.get('q') || '';
           if (q) searchInput.value = q;
+          const deep = params.get('deep') === 'on';
+          if (deep && deepSearchToggle) deepSearchToggle.checked = true;
+          const shouldExpandExtended =
+            params.get('extended') === 'on' ||
+            EXTENDED_TYPES.some((t) => params.get(t + 's') === 'on');
           // types
-          TYPES.forEach(t => {
+          ALL_TYPES.forEach(t => {
             if (params.get(t+'s') === 'on') activeFilters.add(t);
           });
           // apply button classes for types
@@ -695,17 +1357,39 @@ router.get(
               btn.classList.remove('btn-outline-secondary');
             }
           });
+          return { shouldExpandExtended };
         };
 
         // Filter function
         function filterEntities() {
+          const entityRows = document.querySelectorAll(".entity-row");
           const searchTerm = searchInput.value.toLowerCase();
+          const useDeep = deepSearchToggle && deepSearchToggle.checked;
           let visibleCount = 0;
+          const visibleKeys = new Set();
+          const allowAllModules = isModulesFilterExclusive();
+          const canShowAllModules =
+            allowAllModules && typeof isExtendedExpanded !== "undefined" && isExtendedExpanded;
+          if (
+            canShowAllModules &&
+            typeof ensureAllModulesLoaded === "function" &&
+            typeof hasLoadedAllModules !== "undefined" &&
+            !hasLoadedAllModules
+          ) {
+            ensureAllModulesLoaded();
+          }
 
-          entityRows.forEach((row) => {
+          entityRows.forEach((row, id) => {
             const entityType = row.dataset.entityType;
-            const searchableText = row.dataset.searchable;
+            const key = row.dataset.entityKey;
+            const deepText =
+              useDeep && window.ENTITY_DEEP_SEARCH
+                ? window.ENTITY_DEEP_SEARCH[key]
+                : null;
+            const searchableText = useDeep ? deepText || row.dataset.deepSearchable || "" : row.dataset.searchable || "";
+
             const rowTags = (row.dataset.tags || "").split(" ").filter(Boolean);
+            const rowInstalled = row.dataset.installed !== "false";
 
             // Check if entity type is active
             const typeMatch = activeFilters.has(entityType);
@@ -722,13 +1406,26 @@ router.get(
               tagMatch = rowTags.some((tid) => activeTags.has(tid));
             }
 
+            const moduleVisibilityOk =
+              entityType !== "module" || rowInstalled || canShowAllModules;
+
             // Show/hide row
-            if ((activeFilters.size === 0 || typeMatch) && searchMatch && tagMatch) {
+            if (
+              (activeFilters.size === 0 || typeMatch) &&
+              searchMatch &&
+              tagMatch &&
+              moduleVisibilityOk
+            ) {
               row.style.display = "";
+              visibleKeys.add(row.dataset.entityKey);
               visibleCount++;
             } else {
               row.style.display = "none";
             }
+          });
+
+          selectedKeys.forEach((key) => {
+            if (!visibleKeys.has(key)) selectedKeys.delete(key);
           });
 
           // Show/hide no results message
@@ -743,10 +1440,14 @@ router.get(
           updateUrl();
           updateOnDoneRedirectTargets();
           updateLegacyButton();
+          updateSelectionUI();
         }
 
         // Search input handler
         searchInput.addEventListener("input", filterEntities);
+        if (deepSearchToggle) {
+          deepSearchToggle.addEventListener("change", filterEntities);
+        }
 
         // Filter button handlers
         filterButtons.forEach((btn) => {
@@ -764,6 +1465,9 @@ router.get(
             }
 
             filterEntities();
+            if (searchInput && typeof searchInput.focus === 'function') {
+              searchInput.focus({ preventScroll: true });
+            }
           });
         });
 
@@ -784,22 +1488,193 @@ router.get(
           });
         });
 
+        if (clearSelectionBtn) {
+          clearSelectionBtn.addEventListener('click', () => {
+            clearSelection();
+            filterEntities();
+          });
+        }
+
+        const collectSelectionItems = () =>
+          Array.from(selectedKeys)
+            .map((key) => selectionPayloadFromRow(findRowByKey(key)))
+            .filter(Boolean);
+
+        const formatDeleteError = (err) => {
+          const displayType = err?.isPack
+            ? "Pack"
+            : (() => {
+                const t = (err?.type || "").toString();
+                if (!t) return "Item";
+                return t.charAt(0).toUpperCase() + t.slice(1);
+              })();
+          const label = err?.name || err?.id || err?.key || "(unknown)";
+          const message = err?.message || TXT_DELETE_FAILED || "Failed to delete selected items";
+          return displayType + " (" + label + "): " + message;
+        };
+
+        const showBulkDeleteErrors = (errs) => {
+          if (!errs || !errs.length) return;
+          const body = errs
+            .map((e) => formatDeleteError(e))
+            .join("\\n-----\\n");
+          alert(body);
+        };
+
+        const removeRowsByKeys = (keysToRemove) => {
+          if (!keysToRemove || !keysToRemove.size) return;
+          document.querySelectorAll('.entity-row').forEach((row) => {
+            if (keysToRemove.has(row.dataset.entityKey)) row.remove();
+          });
+        };
+
+        const refreshExtendedEntitiesAfterDelete = async () => {
+          if (typeof isExtendedExpanded !== 'undefined' && !isExtendedExpanded) return;
+          if (typeof loadExtendedEntities !== 'function' || typeof renderExtendedEntityRows !== 'function') return;
+          const tbody = document.querySelector('#entities-list tbody');
+          if (!tbody) return;
+          const shouldLoadAll = typeof window.isModulesFilterExclusive === 'function'
+            ? window.isModulesFilterExclusive()
+            : false;
+          try {
+            const extendedEntities = await loadExtendedEntities(shouldLoadAll);
+            window.extendedEntities = extendedEntities;
+            renderExtendedEntityRows(extendedEntities, tbody);
+          } catch (err) {
+            console.error('Failed to refresh extended entities after delete:', err);
+          }
+        };
+
+        if (bulkDeleteBtn) {
+          bulkDeleteBtn.addEventListener('click', async () => {
+            const items = collectSelectionItems();
+            if (!items.length) return;
+            const template = TXT_DELETE_SELECTED_CONFIRM || TXT_DELETE_SELECTED_FALLBACK;
+            const msg = template.includes('%s')
+              ? template.replace('%s', items.length)
+              : template;
+            if (!window.confirm(msg)) return;
+            bulkDeleteBtn.disabled = true;
+            try {
+              const res = await fetch('/entities/bulk-delete', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'CSRF-Token': window._sc_globalCsrf || '',
+                },
+                body: JSON.stringify({ items }),
+              });
+              if (!res.ok) throw new Error(await res.text());
+              const payload = await res.json();
+              const keysToRemove = new Set(
+                (payload.deletedKeys && payload.deletedKeys.length
+                  ? payload.deletedKeys
+                  : items.map((i) => i.key))
+              );
+              removeRowsByKeys(keysToRemove);
+              if (payload.errors && payload.errors.length) {
+                console.error('Bulk delete errors', payload.errors);
+                showBulkDeleteErrors(payload.errors);
+              }
+              clearSelection();
+              await refreshExtendedEntitiesAfterDelete();
+              filterEntities();
+            } catch (e) {
+              console.error(e);
+              alert(TXT_DELETE_FAILED || 'Failed to delete selected items');
+            }
+            bulkDeleteBtn.disabled = false;
+          });
+        }
+
+        if (entitiesTbody) {
+          entitiesTbody.addEventListener('click', (e) => {
+            const row = e.target.closest('.entity-row');
+            if (!row) return;
+            if (e.target.closest('a, button, input, select, textarea, label'))
+              return;
+            if (!isRowSelectable(row)) {
+              lastSelectedIndex = null;
+              return;
+            }
+            const visibleRows = getSelectableVisibleRows();
+            const index = visibleRows.indexOf(row);
+            const key = row.dataset.entityKey;
+            if (!key) return;
+            const isShift = e.shiftKey;
+            const isMeta = e.metaKey || e.ctrlKey;
+
+            if (isShift && lastSelectedIndex !== null && visibleRows[lastSelectedIndex]) {
+              selectedKeys.clear();
+              const start = Math.min(lastSelectedIndex, index);
+              const end = Math.max(lastSelectedIndex, index);
+              for (let i = start; i <= end; i++) {
+                const rangeKey = visibleRows[i].dataset.entityKey;
+                if (rangeKey) selectedKeys.add(rangeKey);
+              }
+            } else if (isMeta) {
+              if (selectedKeys.has(key)) {
+                selectedKeys.delete(key);
+              } else {
+                selectedKeys.add(key);
+              }
+              lastSelectedIndex = index;
+            } else {
+              selectedKeys.clear();
+              selectedKeys.add(key);
+              lastSelectedIndex = index;
+            }
+            updateSelectionUI();
+          });
+        }
+
         // Init from URL and run first filter
-        initFromUrl();
-        filterEntities();
+        const { shouldExpandExtended } = initFromUrl();
+        if (shouldExpandExtended) {
+          toggleEntityExpanded(true);
+        } else {
+          filterEntities();
+        }
         // Focus search on load
         searchInput.focus();
+        updateSelectionUI();
       `)
     );
 
-    const styles = `
+    const styles = /*css*/ `
       <style>
         .entity-row td { vertical-align: middle; }
+        .entity-row { user-select: none; }
+        .entity-row-selection-disabled {
+          cursor: not-allowed;
+          /* opacity: 0.8; */
+        }
         .entity-filter-btn { transition: all 0.15s ease-in-out; }
         .tag-filter-btn { transition: all 0.15s ease-in-out; }
         /* Show plus badge only on hover over tag cell */
-        td:nth-child(5) .add-tag { visibility: hidden; cursor: pointer; }
-        tr:hover td:nth-child(5) .add-tag { visibility: visible; }
+        td:nth-child(6) .add-tag { visibility: hidden; cursor: pointer; }
+        tr:hover td:nth-child(6) .add-tag { visibility: visible; }
+
+        /* .entity-row-selected,
+        .entity-row.table-active {
+          background-color: #f2f2f2 !important;
+        } */
+
+        /* #entity-filters-row, */
+        /* #entity-selection-bar {
+          padding-top: 0.5rem;
+          padding-bottom: 0.5rem;
+          margin-bottom: .5rem;
+        } */
+
+        /* #entity-selection-bar .selection-control-btn {
+          min-width: 2.5rem;
+        } */
+
+        #entity-more-btn:not(.d-none) {
+          border-top-right-radius: 0.25rem !important;
+          border-bottom-right-radius: 0.25rem !important;
+        }
       </style>
     `;
 
@@ -816,16 +1691,333 @@ router.get(
             title: req.__("All entities"),
             contents: [
               div(
-                { class: "d-flex flex-column gap-2" },
+                { class: "d-flex flex-column gap-0" },
                 searchBox,
                 filtersRow,
+                selectionBar,
                 div(
                   { class: "flex-grow-1 card-max-full-screen-scroll" },
                   entitiesList,
                   noResultsMessage
                 )
               ),
-              clientScript,
+              // clientScript,
+              script(
+                domReady(/*js*/ `
+        window.ENTITY_ROLES = ${JSON.stringify(roles)};
+        window.TXT_DISABLED = ${JSON.stringify(req.__("Disabled"))};
+        window.TXT_CONFIGURABLE = ${JSON.stringify(req.__("Configurable"))};
+        window.TXT_THEME = ${JSON.stringify(req.__("Theme"))};
+        window.TXT_LOCAL = ${JSON.stringify(req.__("Local"))};
+        window.TXT_INSTALLED = ${JSON.stringify(req.__("Installed"))};
+        window.TXT_MODULE = ${JSON.stringify(req.__("Module"))};
+        window.TXT_PACK = ${JSON.stringify(req.__("Pack"))};
+        window.TXT_INFO = ${JSON.stringify(req.__("Info"))};
+        window.TXT_AUTH = ${JSON.stringify(req.__("Authentication"))};
+        window.TXT_MOBILE = ${JSON.stringify(req.__("Mobile"))};
+        window.ENTITY_DEEP_SEARCH = ${JSON.stringify(deepSearchIndex)};
+
+        const EXTENDED_ENTITY_TYPES = ["module","user"];
+        window.ENTITY_EXTENDED_TYPES = EXTENDED_ENTITY_TYPES;
+        let isExtendedExpanded = false;
+        let hasLoadedAllModules = false;
+        let isLoadingAllModules = false;
+        const clearExtendedTypeFilters = () => {
+          if (typeof activeFilters === 'undefined') return;
+          EXTENDED_ENTITY_TYPES.forEach((type) => {
+            if (activeFilters.has(type)) {
+              activeFilters.delete(type);
+              const btn = document.querySelector('.entity-filter-btn[data-entity-type="' + type + '"]');
+              if (btn) {
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-outline-primary');
+              }
+            }
+          });
+        };
+        // Fetch extended entities via AJAX
+        const loadExtendedEntities = async (includeAllModules = false) => {
+          try {
+            const query = includeAllModules ? '?include_all_modules=1' : '';
+            const res = await fetch('/entities/extended' + query);
+            const data = await res.json();
+            return data.entities || [];
+          } catch (e) {
+            console.error('Failed to load extended entities:', e);
+            return [];
+          }
+        };
+
+        const renderExtendedEntityRows = (extendedEntities, tbody) => {
+          document
+            .querySelectorAll('[data-is-extended]')
+            .forEach((row) => row.remove());
+          extendedEntities.forEach((entity) => {
+            const row = createExtendedEntityRow(entity);
+            tbody.appendChild(row);
+          });
+          if (typeof updateSelectionUI === 'function') updateSelectionUI();
+        };
+
+        const ensureAllModulesLoaded = async () => {
+          if (hasLoadedAllModules || isLoadingAllModules) return;
+          if (!isExtendedExpanded) return;
+          isLoadingAllModules = true;
+          let updated = false;
+          try {
+            const extendedEntities = await loadExtendedEntities(true);
+            window.extendedEntities = extendedEntities;
+            const tbody = document.querySelector('#entities-list tbody');
+            renderExtendedEntityRows(extendedEntities, tbody);
+            hasLoadedAllModules = true;
+            updated = true;
+          } catch (e) {
+            console.error('Failed to load all modules:', e);
+          } finally {
+            isLoadingAllModules = false;
+            if (updated && typeof filterEntities === 'function') filterEntities();
+          }
+        };
+
+        // Toggle expanded state
+        window.toggleEntityExpanded = async (expand) => {
+          const moreBtn = document.getElementById('entity-more-btn');
+          const lessBtn = document.getElementById('entity-less-btn');
+          const extendedButtons = document.querySelectorAll('.entity-extended-btn');
+          const tbody = document.querySelector('#entities-list tbody');
+          
+          if (expand) {
+            if (isExtendedExpanded) return;
+            extendedButtons.forEach(btn => btn.classList.remove('d-none'));
+            moreBtn.classList.add('d-none');
+            lessBtn.classList.remove('d-none');
+            isExtendedExpanded = true;
+            const shouldLoadAll = typeof window.isModulesFilterExclusive === 'function'
+              ? window.isModulesFilterExclusive()
+              : false;
+            // Load extended entities
+            const extendedEntities = await loadExtendedEntities(shouldLoadAll);
+            window.extendedEntities = extendedEntities;
+            renderExtendedEntityRows(extendedEntities, tbody);
+            hasLoadedAllModules = shouldLoadAll;
+            filterEntities();
+          } else {
+            if (!isExtendedExpanded) return;
+            extendedButtons.forEach(btn => btn.classList.add('d-none'));
+            moreBtn.classList.remove('d-none');
+            lessBtn.classList.add('d-none');
+            isExtendedExpanded = false;
+            hasLoadedAllModules = false;
+            isLoadingAllModules = false;
+            window.extendedEntities = [];
+            renderExtendedEntityRows([], tbody);
+            clearExtendedTypeFilters();
+            // Update filter
+            filterEntities();
+          }
+        };
+
+        // Helper to create entity row for extended entities
+        const createExtendedEntityRow = (entity) => {
+          const tr = document.createElement('tr');
+          tr.className = 'entity-row';
+          tr.dataset.entityType = entity.type;
+          tr.dataset.entityName = entity.name.toLowerCase();
+          if (entity.id) {
+            tr.dataset.entityId = entity.id;
+          } else {
+            tr.dataset.entityId = '';
+          }
+          tr.dataset.entityLabel = entity.name;
+          const key = entity.type + ':' + (entity.type === 'module' ? entity.name : entity.id);
+          tr.dataset.entityKey = key;
+          let searchable = ((entity.name || '').toLowerCase() + ' ' + entity.type).trim();
+          if (entity.metadata) {
+            Object.keys(entity.metadata).forEach((key) => {
+              const val = entity.metadata[key];
+              const shouldSkipDescription =
+                entity.type === 'module' && key === 'description';
+              const shouldSkipForSearchable =
+                entity.type === 'user' && key === 'username';
+              if (!shouldSkipDescription && !shouldSkipForSearchable && val && typeof val === 'string') {
+                searchable += ' ' + val.toLowerCase();
+              }
+            });
+          }
+          tr.dataset.tags = '';
+          tr.dataset.isExtended = 'true';
+          tr.dataset.installed =
+            entity.metadata && entity.metadata.installed === false
+              ? 'false'
+              : 'true';
+
+          if (!isRowSelectable(tr)) {
+            tr.classList.add('entity-row-selection-disabled');
+            tr.setAttribute('aria-disabled', 'true');
+          }
+          
+          // Type badge
+          const badges = {
+            module: { class: "secondary", icon: "cube", label: "Module" },
+            user: { class: "dark", icon: "user", label: "User" },
+          };
+          const badge = badges[entity.type];
+          const typeBadge = document.createElement('td');
+          typeBadge.innerHTML = '<span class="badge bg-' + badge.class + ' me-2"><i class="fas fa-' + badge.icon + ' me-1"></i>' + badge.label + '</span>';
+          tr.appendChild(typeBadge);
+
+          const hasConfig = entity.metadata && entity.metadata.hasConfig;
+          const isInstalled = entity.metadata && entity.metadata.installed;
+          
+          // Name
+          const nameTd = document.createElement('td');
+          const isStaticModule = entity.type === 'module' && !hasConfig;
+          const nameLink = document.createElement(isStaticModule ? 'span' : 'a');
+          if (!isStaticModule) {
+            const baseHref = entity.editLink || '#';
+            const updatedHref = toRelativeHrefWithOnDone(baseHref);
+            nameLink.setAttribute('href', updatedHref || baseHref);
+          }
+          nameLink.className = 'fw-bold';
+          nameLink.textContent = entity.name;
+          nameTd.appendChild(nameLink);
+          tr.appendChild(nameTd);
+          
+          // Run cell (info link for modules)
+          const runTd = document.createElement('td');
+          if (
+            entity.type === 'module' &&
+            entity.metadata &&
+            entity.metadata.type !== 'pack' &&
+            entity.viewLink &&
+            isInstalled
+          ) {
+            const infoLink = document.createElement('a');
+            infoLink.className = 'link-primary text-decoration-none';
+            infoLink.innerHTML = 
+            // '<i class="fas fa-info-circle me-1"></i>' +
+              (window.TXT_INFO || 'Info');
+            const updatedInfoHref = toRelativeHrefWithOnDone(entity.viewLink);
+            infoLink.setAttribute('href', updatedInfoHref || entity.viewLink);
+            runTd.appendChild(infoLink);
+          }
+          tr.appendChild(runTd);
+          
+          // Details cell
+          const detailsTd = document.createElement('td');
+          let detailsHtml = '';
+          if (entity.type === 'user') {
+            const disabled = entity.metadata && entity.metadata.disabled;
+            const roleId = entity.metadata && entity.metadata.role_id;
+            if (Array.isArray(window.ENTITY_ROLES)) {
+              const role = window.ENTITY_ROLES.find(function (r) {
+                return String(r.id) === String(roleId);
+              });
+              if (role && role.role) {
+                detailsHtml += '<span class="text-muted small me-2">' + role.role + '</span>';
+              }
+            }
+            if (disabled) {
+              detailsHtml += '<span class="badge bg-danger me-1">' + (window.TXT_DISABLED || 'Disabled') + '</span>';
+              searchable += ' disabled';
+            }
+          } else if (entity.type === 'module') {
+            const version = entity.metadata && entity.metadata.version;
+            const hasTheme = entity.metadata && entity.metadata.has_theme;
+            const hasAuth = entity.metadata && entity.metadata.has_auth;
+            const isReadyForMobile = entity.metadata && entity.metadata.ready_for_mobile;
+            const isLocal = entity.metadata && entity.metadata.local;
+            const isPack = entity.metadata && entity.metadata.type === 'pack';
+            if (version) {
+              detailsHtml += '<span class="text-muted small me-2">v' + version + '</span>';
+            }
+            if (isPack) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_PACK || 'Pack') + '</span>';
+            }
+            if (hasTheme) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_THEME || 'Theme') + '</span>';
+              searchable += ' theme';
+            }
+            if (isLocal) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_LOCAL || 'Local') + '</span>';
+              searchable += ' local';
+            } 
+            if (isInstalled) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_INSTALLED || 'Installed') + '</span>';
+              searchable += ' installed';
+            }
+            if (hasAuth) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_AUTH || 'Authentication') + '</span>';
+              searchable += ' authentication auth';
+            }
+            if (isReadyForMobile) {
+              detailsHtml += '<span class="badge bg-secondary me-1">' + (window.TXT_MOBILE || 'Mobile') + '</span>';
+              searchable += ' mobile';
+            }
+          }
+          if (detailsHtml) detailsTd.innerHTML = detailsHtml;
+          tr.appendChild(detailsTd);
+          
+          // Access cell (empty for extended entities)
+          const accessTd = document.createElement('td');
+          tr.appendChild(accessTd);
+          
+          // Tags cell
+          const tagsTd = document.createElement('td');
+          tr.appendChild(tagsTd);
+          
+          // Actions cell (empty for extended entities)
+          const actionsTd = document.createElement('td');
+          if (entity.actionsHtml) {
+            actionsTd.innerHTML = entity.actionsHtml;
+            actionsTd
+              .querySelectorAll('a')
+              .forEach((link) => {
+                const href = link.getAttribute('href');
+                const updated = toRelativeHrefWithOnDone(href);
+                if (updated) link.setAttribute('href', updated);
+              });
+            actionsTd
+              .querySelectorAll('form')
+              .forEach((form) => {
+                const action = form.getAttribute('action');
+                const updated = toRelativeHrefWithOnDone(action);
+                if (updated) form.setAttribute('action', updated);
+                if (entity.type === 'user') ensureOnDoneHiddenInput(form);
+              });
+            const dropdownToggle = actionsTd.querySelector('[data-bs-toggle="dropdown"]');
+            if (dropdownToggle && window.bootstrap && window.bootstrap.Dropdown) {
+              window.bootstrap.Dropdown.getOrCreateInstance(dropdownToggle);
+            }
+          }
+          tr.appendChild(actionsTd);
+
+          tr.dataset.searchable = searchable.trim();
+          let deepSearchable = (entity.deepSearchable || searchable).trim();
+          if (entity.type === 'module') {
+            const description =
+              entity.metadata && typeof entity.metadata.description === 'string'
+                ? entity.metadata.description.toLowerCase()
+                : '';
+            if (description && !deepSearchable.includes(description)) {
+              deepSearchable = (deepSearchable + ' ' + description).trim();
+            }
+          } else if (entity.type === 'user' && entity.metadata && typeof entity.metadata.username === 'string') {
+            const usernameLower = entity.metadata.username.toLowerCase();
+            if (!deepSearchable.includes(usernameLower)) {
+              deepSearchable = (deepSearchable + ' ' + usernameLower).trim();
+            }
+          }
+          tr.dataset.deepSearchable = deepSearchable;
+          if (window.ENTITY_DEEP_SEARCH) {
+            window.ENTITY_DEEP_SEARCH[key] = tr.dataset.deepSearchable;
+          }
+          return tr;
+        };
+
+        ${clientScript.substring(clientScript.indexOf("const searchInput"), clientScript.lastIndexOf("}"))}
+        `)
+              ),
             ],
             footer: div(
               {
@@ -877,5 +2069,122 @@ router.get(
         ],
       }
     );
+  })
+);
+
+/**
+ * AJAX endpoint to fetch extended entities (modules, users)
+ */
+router.get(
+  "/extended",
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const includeAllModules =
+      req.query.include_all_modules === "1" ||
+      req.query.include_all_modules === "true";
+    const extendedEntities = await getExtendedEntites(req, {
+      includeAllModules,
+    });
+    res.json({
+      entities: extendedEntities.map((entity) => ({
+        type: entity.type,
+        name: entity.name,
+        id: entity.id,
+        viewLink: entity.viewLink,
+        editLink: entity.editLink,
+        metadata: entity.metadata,
+        actionsHtml: entity.actionsHtml || "",
+      })),
+    });
+  })
+);
+
+router.post(
+  "/bulk-delete",
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const items = Array.isArray(req.body.items) ? req.body.items : [];
+    if (!items.length)
+      return res.status(400).json({ error: "No items selected" });
+
+    const deletedKeys = [];
+    const errors = [];
+    const installedPackNames = new Set(
+      getState().getConfig("installed_packs", []) || []
+    );
+    const asNumber = (val) => {
+      if (val === null || typeof val === "undefined") return null;
+      if (val === "") return null;
+      const num = Number(val);
+      return Number.isNaN(num) ? null : num;
+    };
+
+    for (const item of items) {
+      const type = item?.type;
+      const id = asNumber(item?.id);
+      const name = item?.name;
+      const key = item?.key;
+      try {
+        if (type === "table" && id) {
+          const table = Table.findOne({ id });
+          if (!table) throw new Error("Table not found");
+          await table.delete(false);
+          if (key) deletedKeys.push(key);
+        } else if (type === "view" && id) {
+          const view = View.findOne({ id });
+          if (!view) throw new Error("View not found");
+          await view.delete();
+          if (key) deletedKeys.push(key);
+        } else if (type === "page" && id) {
+          const page = Page.findOne({ id });
+          if (!page) throw new Error("Page not found");
+          await page.delete();
+          if (key) deletedKeys.push(key);
+        } else if (type === "trigger" && id) {
+          const trigger = await Trigger.findOne({ id });
+          if (!trigger) throw new Error("Trigger not found");
+          await trigger.delete();
+          if (key) deletedKeys.push(key);
+        } else if (type === "module" && name) {
+          const isPack = installedPackNames.has(name);
+          if (isPack) {
+            const pack = await fetch_pack_by_name(name);
+            if (!pack) throw new Error("Pack not found");
+            await db.withTransaction(async () => {
+              await uninstall_pack(pack.pack, name);
+            });
+            await getState().refresh();
+          } else {
+            const plugin = await Plugin.findOne({ name });
+            if (!plugin) throw new Error("Plugin not found");
+            await plugin.delete();
+          }
+          if (key) deletedKeys.push(key);
+        } else if (type === "user" && id) {
+          const user = await User.findOne({ id });
+          if (!user) throw new Error("User not found");
+          await user.delete();
+          if (key) deletedKeys.push(key);
+        } else {
+          throw new Error("Invalid item type or id: " + JSON.stringify(item));
+        }
+      } catch (e) {
+        const isPack = type === "module" && installedPackNames.has(name);
+        errors.push({
+          type: isPack ? "pack" : type,
+          isPack,
+          id,
+          name,
+          key,
+          message: e.message,
+        });
+      }
+    }
+
+    res.status(errors.length ? 207 : 200).json({
+      ok: errors.length === 0,
+      deletedKeys,
+      errors,
+    });
   })
 );
