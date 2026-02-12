@@ -3320,6 +3320,20 @@ const run_action_column = async ({
         trigger?.action === "Multi-step action" ||
         trigger?.action === "Workflow"
       ) {
+        if (
+          col.configuration?.initial_context &&
+          trigger.action === "Workflow"
+        ) {
+          const inirow = eval_expression(
+            col.configuration.initial_context,
+            rest?.row || {},
+            req?.user,
+            "Workflow initial context"
+          );
+          if (rest.row) {
+            rest.row = { ...rest.row, ...inirow };
+          } else rest.row = inirow;
+        }
         goRun = () =>
           trigger.runWithoutRow({ req, interactive: true, ...rest });
       } else if (trigger) {
