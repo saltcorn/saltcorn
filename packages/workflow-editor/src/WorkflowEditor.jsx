@@ -361,6 +361,23 @@ const buildGraph = (
     adjacency.set(String(s.id), [...new Set(targets)]);
   });
 
+  // Revising logical ordering based on workflow graph traversal from initial step
+  if (initial) {
+    const visited = new Set();
+    const queue = [String(initial.id)];
+    let index = 0;
+    while (queue.length) {
+      const nodeId = queue.shift();
+      if (visited.has(nodeId)) continue;
+      visited.add(nodeId);
+      orderIndex.set(nodeId, index++);
+      const neighbors = adjacency.get(nodeId) || [];
+      neighbors.forEach((n) => {
+        if (!visited.has(n)) queue.push(n);
+      });
+    }
+  }
+
   const positions = {};
   let yCursor = 0;
   steps.forEach((s) => {
@@ -502,10 +519,20 @@ const buildGraph = (
         if (!targetId) return;
         const srcOrder = orderIndex.get(String(step.id));
         const tgtOrder = orderIndex.get(targetId);
-        const isBackEdge =
+        const srcPos = nodePositions[String(step.id)];
+        const tgtPos = nodePositions[targetId];
+        const isBackByOrder =
           srcOrder !== undefined &&
           tgtOrder !== undefined &&
           tgtOrder < srcOrder;
+        const isBackVisually =
+          srcPos &&
+          tgtPos &&
+          typeof srcPos.y === "number" &&
+          typeof tgtPos.y === "number"
+            ? tgtPos.y < srcPos.y
+            : false;
+        const isBackEdge = isBackByOrder && isBackVisually;
         // record handle usage and edge direction for this source node
         const sourceId = String(step.id);
         if (isBackEdge) {
@@ -1208,12 +1235,22 @@ const WorkflowEditor = ({ data }) => {
         const srcStep = steps.find(
           (s) => String(s.id) === String(connection.source)
         );
+        const tgtStep = steps.find(
+          (s) => String(s.id) === String(connection.target)
+        );
         const rawNext = srcStep?.next_step
           ? String(srcStep.next_step).trim()
           : "";
         const simpleNextId = rawNext && idByName[rawNext];
+        const targetHasNext = !!(
+          tgtStep && tgtStep.next_step && String(tgtStep.next_step).trim()
+        );
 
-        if (simpleNextId && simpleNextId !== connection.target) {
+        if (
+          simpleNextId &&
+          simpleNextId !== connection.target &&
+          !targetHasNext
+        ) {
           // Rewire: source -> new target, new target -> old target name
           await updateConnection({
             step_id: connection.target,

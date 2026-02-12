@@ -41,6 +41,15 @@
   background: #fafbfc;
 }
 
+/* Ensure nodes visually sit above edge labels/buttons */
+.wf-shell .react-flow__node {
+  z-index: 5;
+}
+
+.wf-shell .react-flow__edge-labels {
+  z-index: 2;
+}
+
 .wf-empty {
   padding: 12px;
   color: #6c757d;
