@@ -210,7 +210,7 @@ const pageBuilderData = async (req, context) => {
     actionConfigForms[name] = [
       {
         name: "initial_context",
-        label: "Workflow initial context",
+        label: "Initial context",
         type: "String",
         class: "validate-expression",
       },
