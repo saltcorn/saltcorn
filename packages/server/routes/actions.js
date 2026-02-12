@@ -1667,6 +1667,8 @@ router.post(
       ...configuration
     } = form.values;
     const DEFAULT_NODE_WIDTH = 220;
+    const DEFAULT_NODE_HEIGHT = 120;
+    const V_GAP = 60;
     const H_GAP = 60;
     const existingStep =
       wf_step_id && wf_step_id !== "undefined"
@@ -1679,7 +1681,7 @@ router.post(
     Object.entries(configuration).forEach(([k, v]) => {
       if (v === null) delete configuration[k];
     });
-    // set position if not set and after_step is given
+    // set position if not set and after_step is given (new steps from adder)
     if (
       (!wf_step_id || wf_step_id === "undefined") &&
       _after_step &&
@@ -1693,15 +1695,62 @@ router.post(
       const afterPos = afterStep?.configuration?.workflow_position;
       if (afterPos) {
         const size = afterStep?.configuration?.workflow_size || {};
-        const width = Number(size.width);
-        const useWidth = Number.isFinite(width) ? width : DEFAULT_NODE_WIDTH;
+        const height = Number(size.height);
+        const useHeight = Number.isFinite(height)
+          ? height
+          : DEFAULT_NODE_HEIGHT;
         const x = Number(afterPos.x);
         const y = Number(afterPos.y);
         if (Number.isFinite(x) && Number.isFinite(y))
           configuration.workflow_position = {
-            x: x + useWidth + H_GAP,
-            y,
+            x,
+            y: y + useHeight + V_GAP,
           };
+      }
+    }
+
+    if (
+      existingStep &&
+      !configuration.workflow_position &&
+      existingStep.configuration?.workflow_position
+    ) {
+      configuration.workflow_position =
+        existingStep.configuration.workflow_position;
+    }
+
+    if (
+      (!wf_step_id || wf_step_id === "undefined") &&
+      (!_after_step || _after_step === "undefined") &&
+      !configuration.workflow_position &&
+      Array.isArray(stepsForTrigger) &&
+      stepsForTrigger.length
+    ) {
+      let maxPos = null;
+      let maxStep = null;
+      for (const s of stepsForTrigger) {
+        const pos = s.configuration?.workflow_position;
+        if (!pos) continue;
+        const y = Number(pos.y);
+        if (!Number.isFinite(y)) continue;
+        if (!maxPos || y > maxPos.y) {
+          maxPos = pos;
+          maxStep = s;
+        }
+      }
+      if (maxPos && maxStep) {
+        const size = maxStep.configuration?.workflow_size || {};
+        const height = Number(size.height);
+        const useHeight = Number.isFinite(height)
+          ? height
+          : DEFAULT_NODE_HEIGHT;
+        const x = Number(maxPos.x);
+        const y = Number(maxPos.y);
+        if (Number.isFinite(x) && Number.isFinite(y)) {
+          configuration.workflow_position = {
+            x,
+            y: y + useHeight + V_GAP,
+          };
+        }
       }
     }
     const step = {

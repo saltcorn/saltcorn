@@ -4,12 +4,20 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
+  position: relative;
+  transition: padding-right 0.25s ease;
   --wf-edge: #6c757d;
   --wf-edge-adder: #0d6efd;
   --wf-edge-loop: #f59f00;
   --wf-edge-label: #495057;
   --wf-handle-border: #3f3f3f;
   --wf-handle-bg: #fff;
+  --wf-handle-source-bg: #5a5a5a;
+  --wf-drawer-width: 50vw;
+}
+
+.wf-shell--drawer-open {
+  padding-right: calc(var(--wf-drawer-width) - 44px);
 }
 
 .wf-toolbar {
@@ -31,6 +39,15 @@
   flex: 1;
   min-height: 0;
   background: #fafbfc;
+}
+
+/* Ensure nodes visually sit above edge labels/buttons */
+.wf-shell .react-flow__node {
+  z-index: 5;
+}
+
+.wf-shell .react-flow__edge-labels {
+  z-index: 2;
 }
 
 .wf-empty {
@@ -156,6 +173,61 @@
   outline-offset: 2px;
 }
 
+.wf-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: min(95vw, max(var(--wf-drawer-width), 600px));
+  background: var(--bs-body-bg, #fff);
+  color: var(--bs-body-color, #212529);
+  border-left: 1px solid var(--bs-card-border-color, #e2e6ea);
+  display: flex;
+  flex-direction: column;
+  z-index: 1050;
+  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  overflow: visible;
+}
+
+.wf-drawer--open {
+  transform: translateX(0);
+}
+
+.wf-drawer__resize {
+  position: absolute;
+  left: -6px;
+  top: 0;
+  width: 10px;
+  height: 100%;
+  cursor: ew-resize;
+  z-index: 1;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0.08) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+}
+
+.wf-drawer__header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);
+}
+
+.wf-drawer__body {
+  padding: 16px 18px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.wf-drawer__footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--bs-card-border-color, #e2e6ea);
+}
+
 .wf-modal-backdrop {
   position: fixed;
   top: 0;
@@ -170,7 +242,7 @@
 }
 
 .wf-modal {
-  /* background: var(--bs-card-bg, #fff); */
+  /* background: var(--bs-body-bg, #fff); */
   /* color: var(--bs-body-color, #212529); */
   border-radius: 10px;
   /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */
@@ -182,9 +254,30 @@
   /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */
 }
 
+@media (max-width: 768px) {
+  .wf-shell--drawer-open {
+    padding-right: 0;
+  }
+
+  .wf-drawer {
+    width: min(480px, 100vw);
+  }
+}
+
 .wf-shell .react-flow__edge-path {
   stroke: var(--wf-edge);
   fill: none;
+  stroke-width: 1.5px;
+}
+
+.wf-shell .wf-edge-selected .react-flow__edge-path {
+  stroke: var(--wf-edge-selected, #0d6efd) !important;
+  stroke-width: 2.4px;
+  filter: drop-shadow(0 0 4px rgba(13, 110, 253, 0.35));
+}
+
+.wf-shell .react-flow__connection-path {
+  stroke-width: 1.5px;
 }
 
 .wf-shell .react-flow__edge-text {
@@ -194,6 +287,20 @@
 .wf-shell .react-flow__handle {
   background: var(--wf-handle-bg);
   border-color: var(--wf-handle-border);
+}
+
+.wf-shell .react-flow__handle.wf-handle-source {
+  background: var(--wf-handle-source-bg) !important;
+  border-color: var(--wf-handle-source-bg) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.wf-shell .react-flow__handle.wf-handle-source-loop {
+  background: var(--wf-edge-loop) !important;
+  border-color: var(--wf-edge-loop) !important;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
+}
+.wf-shell .react-flow__handle.wf-handle-target-loop {
+  border-color: var(--wf-edge-loop) !important;
 }
 
 .wf-edge-add-button {
@@ -230,4 +337,17 @@
   --wf-edge-label: #c0c4cf;
   --wf-handle-border: #c0c4cf;
   --wf-handle-bg: #2f3139;
+  --wf-handle-source-bg: #8a8a8a;
+}
+
+/* Temporary vars fallbacks */
+.wf-drawer {
+  --bs-body-bg: #fff;
+  --bs-body-color: #212529;
+  --bs-card-border-color: #e2e6ea;
+}
+[data-bs-theme="dark"] .wf-drawer {
+  --bs-body-bg: #303030;
+  --bs-body-color: #fff;
+  --bs-card-border-color: #44484e;
 }

@@ -10,6 +10,7 @@ import {
   Controls,
   Handle,
   MiniMap,
+  MarkerType,
   Position,
   useEdgesState,
   useNodesState,
@@ -33,6 +34,13 @@ const H_GAP = 80;
 const V_GAP = 60;
 const ADD_NODE_SIZE = 32;
 const ADD_GAP = 32;
+const DEFAULT_ARROW_COLOR = "var(--wf-edge-label, #6c757d)";
+const makeMarker = (color = DEFAULT_ARROW_COLOR) => ({
+  type: MarkerType.ArrowClosed,
+  width: 18,
+  height: 18,
+  color,
+});
 
 const normalizeSize = (size) => {
   if (!size) return null;
@@ -52,7 +60,8 @@ const StartNode = ({ data }) => (
       style={handleStyle}
       id="start"
       type="source"
-      position={Position.Right}
+      className="wf-handle-source"
+      position={Position.Bottom}
     />
   </div>
 );
@@ -78,7 +87,7 @@ const AddNode = ({ data }) => {
       onKeyDown={handleKeyDown}
     >
       <span aria-hidden>+</span>
-      <Handle type="target" position={Position.Left} />
+      <Handle type="target" position={Position.Top} />
     </div>
   );
 };
@@ -108,11 +117,24 @@ const StepNode = ({ data }) => {
     }
   };
 
-  const isLoopBody = data.inLoopBody;
-  const useVerticalHandles =
-    isLoopBody && String(data.action_name) !== "ForLoop";
-  const targetPosition = useVerticalHandles ? Position.Top : Position.Left;
-  const sourcePosition = useVerticalHandles ? Position.Bottom : Position.Right;
+  const targetPosition = Position.Top;
+  const sourcePosition = Position.Bottom;
+  const isLoop = data.action_name === "ForLoop";
+  const { showBackIn, showBackOut, showLoopIn, showLoopOut, hideMainSource } =
+    data || {};
+
+  const hasLeftSource = !!showBackOut;
+  const hasLeftTarget = !!showBackIn || !!showLoopIn;
+
+  let backInStyle = handleStyle;
+  let loopInStyle = handleStyle;
+  let backOutStyle = handleStyle;
+
+  if (hasLeftSource && hasLeftTarget) {
+    backInStyle = { ...handleStyle, top: "68%" };
+    loopInStyle = { ...handleStyle, top: "32%" };
+    backOutStyle = { ...handleStyle, top: "32%" };
+  }
 
   return (
     <div
@@ -154,12 +176,55 @@ const StepNode = ({ data }) => {
         </div>
       ) : null} */}
       <Handle style={handleStyle} type="target" position={targetPosition} />
-      <Handle
-        style={handleStyle}
-        id="main"
-        type="source"
-        position={sourcePosition}
-      />
+      {!hideMainSource ? (
+        <Handle
+          style={handleStyle}
+          id="main"
+          type="source"
+          className="wf-handle-source"
+          position={sourcePosition}
+        />
+      ) : null}
+      {/* Back edges use left handles to untangle cross-links */}
+      {showBackIn ? (
+        <Handle
+          style={backInStyle}
+          id="back-in"
+          type="target"
+          position={Position.Left}
+        />
+      ) : null}
+      {showBackOut ? (
+        <Handle
+          style={backOutStyle}
+          id="back-out"
+          type="source"
+          className="wf-handle-source"
+          position={Position.Left}
+        />
+      ) : null}
+      {isLoop ? (
+        <>
+          {showLoopIn ? (
+            <Handle
+              style={loopInStyle}
+              id="loop-in"
+              type="target"
+              className="wf-handle-target-loop"
+              position={Position.Left}
+            />
+          ) : null}
+          {showLoopOut ? (
+            <Handle
+              style={handleStyle}
+              id="loop-out"
+              type="source"
+              className="wf-handle-source-loop"
+              position={Position.Right}
+            />
+          ) : null}
+        </>
+      ) : null}
     </div>
   );
 };
@@ -234,6 +299,7 @@ const buildGraph = (
   });
 
   const allStepNames = steps.map((s) => s.name).filter(Boolean);
+  const orderIndex = new Map(steps.map((s, idx) => [String(s.id), idx]));
 
   const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -264,6 +330,26 @@ const buildGraph = (
   const loopBackLinks = findLoopBackLinks(steps);
   const loopBodyIds = findLoopBodyStepIds(steps);
 
+  // Track which handles are actualy used by edges per node
+  const handleUsage = {};
+  const markHandleUsage = (nodeId, handleId) => {
+    if (!nodeId || !handleId) return;
+    const key = String(nodeId);
+    if (!handleUsage[key]) handleUsage[key] = {};
+    handleUsage[key][handleId] = true;
+  };
+
+  // Track whether a node has forward/back edges to decide when to hide main bottom handle
+  const edgeStats = {};
+  const markEdgeKind = (nodeId, { back = false, forward = false } = {}) => {
+    if (!nodeId) return;
+    const key = String(nodeId);
+    if (!edgeStats[key])
+      edgeStats[key] = { hasBackEdge: false, hasForwardEdge: false };
+    if (back) edgeStats[key].hasBackEdge = true;
+    if (forward) edgeStats[key].hasForwardEdge = true;
+  };
+
   const adjacency = new Map();
   steps.forEach((s) => {
     const targets = [];
@@ -275,62 +361,33 @@ const buildGraph = (
     adjacency.set(String(s.id), [...new Set(targets)]);
   });
 
-  const depths = {};
-  const queue = [];
+  // Revising logical ordering based on workflow graph traversal from initial step
   if (initial) {
-    depths[String(initial.id)] = 1;
-    queue.push(String(initial.id));
+    const visited = new Set();
+    const queue = [String(initial.id)];
+    let index = 0;
+    while (queue.length) {
+      const nodeId = queue.shift();
+      if (visited.has(nodeId)) continue;
+      visited.add(nodeId);
+      orderIndex.set(nodeId, index++);
+      const neighbors = adjacency.get(nodeId) || [];
+      neighbors.forEach((n) => {
+        if (!visited.has(n)) queue.push(n);
+      });
+    }
   }
-
-  while (queue.length) {
-    const current = queue.shift();
-    const d = depths[current];
-    (adjacency.get(current) || []).forEach((n) => {
-      if (depths[n] === undefined) {
-        depths[n] = d + 1;
-        queue.push(n);
-      }
-    });
-  }
-
-  let maxDepth = Object.values(depths).reduce((m, v) => Math.max(m, v), 0);
-  const sortedRemaining = steps
-    .map((s) => String(s.id))
-    .filter((id) => depths[id] === undefined)
-    .sort();
-  if (sortedRemaining.length) {
-    const orphanDepth = maxDepth + 1;
-    sortedRemaining.forEach((id) => {
-      depths[id] = orphanDepth;
-    });
-    maxDepth = orphanDepth;
-  }
-
-  const groupByDepth = new Map();
-  steps.forEach((s) => {
-    const d = depths[String(s.id)] || 1;
-    if (!groupByDepth.has(d)) groupByDepth.set(d, []);
-    groupByDepth.get(d).push(String(s.id));
-  });
-  [...groupByDepth.values()].forEach((arr) => arr.sort());
 
   const positions = {};
-  const depthEntries = [...groupByDepth.entries()].sort(([a], [b]) => a - b);
-  const depthX = {};
-  let xCursor = 0;
-  depthEntries.forEach(([d, ids]) => {
-    const colWidth = Math.max(
-      ...ids.map((id) => sizeById[id]?.width || DEFAULT_NODE_WIDTH)
-    );
-    depthX[d] = xCursor;
-    xCursor += colWidth + H_GAP;
-  });
-  depthEntries.forEach(([d, ids]) => {
-    let yCursor = 0;
-    ids.forEach((id) => {
-      positions[id] = { x: depthX[d], y: yCursor };
-      yCursor += (sizeById[id]?.height || DEFAULT_NODE_HEIGHT) + V_GAP;
-    });
+  let yCursor = 0;
+  steps.forEach((s) => {
+    const id = String(s.id);
+    const size = sizeById[id] || {
+      width: DEFAULT_NODE_WIDTH,
+      height: DEFAULT_NODE_HEIGHT,
+    };
+    positions[id] = { x: 0, y: yCursor };
+    yCursor += size.height + V_GAP;
   });
 
   // Nudge ForLoop bodies to be vertical under their loop parent for readability
@@ -378,10 +435,10 @@ const buildGraph = (
     startPosition ||
     (initial
       ? {
-          x: positions[String(initial.id)]?.x - 180 || -180,
-          y: positions[String(initial.id)]?.y || 40,
+          x: positions[String(initial.id)]?.x ?? 0,
+          y: (positions[String(initial.id)]?.y ?? 0) - 160,
         }
-      : { x: -180, y: 40 });
+      : { x: 0, y: -160 });
 
   const nodes = [
     {
@@ -431,6 +488,7 @@ const buildGraph = (
       target: String(initial.id),
       type: "smoothstep",
       animated: true,
+      markerEnd: makeMarker(),
     });
   else {
     const addId = "add-start";
@@ -445,6 +503,7 @@ const buildGraph = (
         strokeDasharray: "4 2",
         stroke: "var(--wf-edge-adder, #0d6efd)",
       },
+      markerEnd: makeMarker("var(--wf-edge-adder, #0d6efd)"),
     });
   }
 
@@ -458,12 +517,42 @@ const buildGraph = (
       nextNames.forEach((name) => {
         const targetId = idByName[name];
         if (!targetId) return;
+        const srcOrder = orderIndex.get(String(step.id));
+        const tgtOrder = orderIndex.get(targetId);
+        const srcPos = nodePositions[String(step.id)];
+        const tgtPos = nodePositions[targetId];
+        const isBackByOrder =
+          srcOrder !== undefined &&
+          tgtOrder !== undefined &&
+          tgtOrder < srcOrder;
+        const isBackVisually =
+          srcPos &&
+          tgtPos &&
+          typeof srcPos.y === "number" &&
+          typeof tgtPos.y === "number"
+            ? tgtPos.y < srcPos.y
+            : false;
+        const isBackEdge = isBackByOrder && isBackVisually;
+        // record handle usage and edge direction for this source node
+        const sourceId = String(step.id);
+        if (isBackEdge) {
+          markHandleUsage(sourceId, "back-out");
+          markHandleUsage(targetId, "back-in");
+          markEdgeKind(sourceId, { back: true });
+        } else {
+          // uses the main bottom source handle
+          markHandleUsage(sourceId, "main");
+          markEdgeKind(sourceId, { forward: true });
+        }
         edges.push({
           id: `e-${step.id}-${name}`,
           source: String(step.id),
           target: targetId,
           type: "workflow-main",
           animated: true,
+          sourceHandle: isBackEdge ? "back-out" : undefined,
+          targetHandle: isBackEdge ? "back-in" : undefined,
+          markerEnd: makeMarker(),
           data: {
             startLabel: step.name,
             sourceStepName: step.name,
@@ -478,17 +567,25 @@ const buildGraph = (
       const loopTarget = step.configuration?.loop_body_initial_step;
       if (loopTarget) {
         const loopId = idByName[loopTarget];
+        const sourceId = String(step.id);
+        markHandleUsage(sourceId, "loop-out");
+        markEdgeKind(sourceId, { forward: true });
+        if (!loopId) {
+          markHandleUsage(sourceId, "loop-in");
+        }
         edges.push({
           id: `loop-${step.id}-${loopTarget}`,
           source: String(step.id),
           target: loopId || String(step.id),
           type: "smoothstep",
+          sourceHandle: "loop-out",
+          targetHandle: loopId ? undefined : "loop-in",
           style: {
             stroke: "var(--wf-edge-loop, #f59f00)",
             strokeDasharray: "6 4",
           },
           label: strings.loopBody,
-          markerEnd: "arrowclosed",
+          markerEnd: makeMarker("var(--wf-edge-loop, #f59f00)"),
           data: { loop: true, missing: !loopId },
         });
       }
@@ -498,17 +595,23 @@ const buildGraph = (
       const forLoopName = loopBackLinks[step.name];
       const loopId = idByName[forLoopName];
       if (loopId) {
+        const sourceId = String(step.id);
+        markHandleUsage(sourceId, "back-out");
+        markHandleUsage(loopId, "loop-in");
+        markEdgeKind(sourceId, { back: true });
         edges.push({
           id: `loopback-${step.id}-${forLoopName}`,
           source: String(step.id),
           target: loopId,
           type: "smoothstep",
+          sourceHandle: "back-out",
+          targetHandle: "loop-in",
           style: {
             stroke: "var(--wf-edge-loop, #f59f00)",
             strokeDasharray: "6 4",
           },
           data: { loop: true, loopBack: true },
-          markerEnd: "arrowclosed",
+          markerEnd: makeMarker("var(--wf-edge-loop, #f59f00)"),
           deletable: false,
         });
       }
@@ -522,8 +625,8 @@ const buildGraph = (
       id: addId,
       type: "add",
       position: addPositions?.[addId] || {
-        x: startNodePosition.x + 160,
-        y: startNodePosition.y,
+        x: startNodePosition.x,
+        y: startNodePosition.y + 160,
       },
       data: { strings, afterStepId: "start" },
       draggable: true,
@@ -544,8 +647,8 @@ const buildGraph = (
       id: addId,
       type: "add",
       position: addPositions?.[addId] || {
-        x: basePos.x + baseSize.width + ADD_GAP,
-        y: basePos.y + baseSize.height / 2 - ADD_NODE_SIZE / 2,
+        x: basePos.x + baseSize.width / 2 - ADD_NODE_SIZE / 2,
+        y: basePos.y + baseSize.height + ADD_GAP,
       },
       data: { strings, afterStepId: String(step.id) },
       draggable: true,
@@ -563,15 +666,37 @@ const buildGraph = (
         strokeDasharray: "4 2",
         stroke: "var(--wf-edge-adder, #0d6efd)",
       },
+      markerEnd: makeMarker("var(--wf-edge-adder, #0d6efd)"),
     });
   });
 
-  const allNodes = [...nodes, ...addNodes];
+  const allNodes = [...nodes, ...addNodes].map((node) => {
+    if (node.type !== "step") return node;
+    const id = String(node.id);
+    const usage = handleUsage[id] || {};
+    const stats = edgeStats[id] || {
+      hasBackEdge: false,
+      hasForwardEdge: false,
+    };
+    const hideMainSource = stats.hasBackEdge && !stats.hasForwardEdge;
+
+    return {
+      ...node,
+      data: {
+        ...node.data,
+        showBackIn: !!usage["back-in"],
+        showBackOut: !!usage["back-out"],
+        showLoopIn: !!usage["loop-in"],
+        showLoopOut: !!usage["loop-out"],
+        hideMainSource,
+      },
+    };
+  });
 
   return { nodes: allNodes, edges, idByName, nameById };
 };
 
-const StepModal = ({
+const StepDrawer = ({
   modal,
   innerRef,
   onClose,
@@ -579,52 +704,70 @@ const StepModal = ({
   error,
   data,
   onDelete,
+  drawerWidth,
+  onResizeStart,
 }) => {
-  if (!modal) return null;
+  const isOpen = !!modal;
   return (
-    <div className="wf-modal-backdrop">
-      <div className="wf-modal card shadow">
-        <div className="card-header d-flex justify-content-between align-items-center">
-          <h5 className="mb-0">{modal.title}</h5>
-          <button className="btn-close" onClick={onClose} aria-label="Close" />
-        </div>
-        <div className="card-body">
-          <div
-            ref={innerRef}
-            dangerouslySetInnerHTML={{ __html: modal.body }}
-          />
-          {error ? (
-            <div className="alert alert-danger mt-3">{error}</div>
-          ) : null}
-        </div>
-        <div className="card-footer d-flex justify-content-end gap-2">
-          <button
-            className="btn btn-sm btn-outline-danger"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete(modal.stepId);
-            }}
-          >
-            {data.strings.deleteStep}
-          </button>
-          <button className="btn btn-secondary" onClick={onClose}>
-            Close
-          </button>
-          <button
-            className="btn btn-primary"
-            onClick={() =>
-              innerRef.current
-                ?.querySelector("form")
-                ?.dispatchEvent(
-                  new Event("submit", { cancelable: true, bubbles: true })
-                )
-            }
-            disabled={submitting}
-          >
-            {submitting ? "Saving..." : "Save"}
-          </button>
-        </div>
-      </div>
+    <div
+      className={`wf-drawer${isOpen ? " wf-drawer--open" : ""}`}
+      role="dialog"
+      aria-modal="false"
+      aria-hidden={!isOpen}
+      aria-label={modal?.title || data?.strings?.configure}
+      style={{ "--wf-drawer-width": `${drawerWidth}px` }}
+    >
+      {modal ? (
+        <>
+          <div className="wf-drawer__resize" onPointerDown={onResizeStart} />
+          <div className="wf-drawer__header d-flex justify-content-between align-items-center">
+            <div>
+              <h5 className="mb-0">{modal.title}</h5>
+            </div>
+            <button
+              className="btn-close"
+              onClick={onClose}
+              aria-label="Close"
+            />
+          </div>
+          <div className="wf-drawer__body">
+            <div
+              ref={innerRef}
+              dangerouslySetInnerHTML={{ __html: modal.body }}
+            />
+            {error ? (
+              <div className="alert alert-danger mt-3">{error}</div>
+            ) : null}
+          </div>
+          <div className="wf-drawer__footer d-flex justify-content-end gap-2">
+            <button
+              className="btn btn-sm btn-outline-danger"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(modal.stepId);
+              }}
+            >
+              {data.strings.deleteStep}
+            </button>
+            <button className="btn btn-secondary" onClick={onClose}>
+              Close
+            </button>
+            <button
+              className="btn btn-primary"
+              onClick={() =>
+                innerRef.current
+                  ?.querySelector("form")
+                  ?.dispatchEvent(
+                    new Event("submit", { cancelable: true, bubbles: true })
+                  )
+              }
+              disabled={submitting}
+            >
+              {submitting ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </>
+      ) : null}
     </div>
   );
 };
@@ -649,7 +792,16 @@ const WorkflowEditor = ({ data }) => {
   const [savingModal, setSavingModal] = useState(false);
   const [savingPositions, setSavingPositions] = useState(false);
   const [sizeSyncing, setSizeSyncing] = useState(false);
+  const [drawerWidth, setDrawerWidth] = useState(() => {
+    if (typeof window !== "undefined") {
+      return Math.max(600, Math.round(window.innerWidth * 0.5));
+    }
+    return 600;
+  });
   const modalRef = useRef(null);
+  const resizingRef = useRef(false);
+  const connectSourceRef = useRef(null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState(null);
 
   const rfInstanceRef = useRef(null);
 
@@ -659,9 +811,10 @@ const WorkflowEditor = ({ data }) => {
 
   const [selectedNodes, setSelectedNodes] = useState([]);
 
-  const handleSelectionChange = useCallback(({ nodes = [] }) => {
-    console.log("selection change", nodes);
+  const handleSelectionChange = useCallback(({ nodes = [], edges = [] }) => {
     setSelectedNodes(nodes);
+    if (edges.length) setSelectedEdgeId(edges[0].id);
+    else setSelectedEdgeId(null);
   }, []);
   const handleKeyDelete = useCallback(
     (e) => {
@@ -744,10 +897,12 @@ const WorkflowEditor = ({ data }) => {
       const stepNode = stepById.get(node.id.replace("add-", ""));
       if (!stepNode) return;
 
-      const nextX = stepNode.position.x + stepNode.width + ADD_GAP;
+      const nextX =
+        stepNode.position.x +
+        stepNode.width / 2 -
+        (node.width || ADD_NODE_SIZE) / 2;
 
-      const nextY =
-        stepNode.position.y + stepNode.height / 2 - (node.height || 24) / 2;
+      const nextY = stepNode.position.y + stepNode.height + ADD_GAP;
 
       const nextPosition = { x: nextX, y: nextY };
 
@@ -1005,8 +1160,11 @@ const WorkflowEditor = ({ data }) => {
     if (!formEl) return undefined;
     // Re-run show-if logic so action-specific fields render correctly
     setTimeout(() => {
-      if (typeof window !== "undefined" && window.apply_showif)
-        window.apply_showif();
+      if (typeof window !== "undefined") {
+        if (window.apply_showif) window.apply_showif();
+        // Initialize Monaco and any other dynamic widgets inside the drawer
+        if (window.initialize_page) window.initialize_page();
+      }
     }, 0);
 
     const actionSelect = formEl.querySelector('[name="wf_action_name"]');
@@ -1054,6 +1212,9 @@ const WorkflowEditor = ({ data }) => {
 
   const onConnect = useCallback(
     async (connection) => {
+      // Valid connection landed; clear pending source so we don't treat it as a cancel
+      connectSourceRef.current = null;
+      setSelectedEdgeId(connection.id || null);
       const loop = connection.sourceHandle === "loop";
       const targetName = nameById[connection.target];
       if (connection.source === "start") {
@@ -1074,12 +1235,22 @@ const WorkflowEditor = ({ data }) => {
         const srcStep = steps.find(
           (s) => String(s.id) === String(connection.source)
         );
+        const tgtStep = steps.find(
+          (s) => String(s.id) === String(connection.target)
+        );
         const rawNext = srcStep?.next_step
           ? String(srcStep.next_step).trim()
           : "";
         const simpleNextId = rawNext && idByName[rawNext];
+        const targetHasNext = !!(
+          tgtStep && tgtStep.next_step && String(tgtStep.next_step).trim()
+        );
 
-        if (simpleNextId && simpleNextId !== connection.target) {
+        if (
+          simpleNextId &&
+          simpleNextId !== connection.target &&
+          !targetHasNext
+        ) {
           // Rewire: source -> new target, new target -> old target name
           await updateConnection({
             step_id: connection.target,
@@ -1095,6 +1266,28 @@ const WorkflowEditor = ({ data }) => {
       await reload();
     },
     [idByName, nameById, reload, steps, updateConnection]
+  );
+
+  const onConnectStart = useCallback((_, params) => {
+    if (params?.nodeId && params?.handleType === "source") {
+      connectSourceRef.current = params;
+    }
+  }, []);
+
+  const onConnectEnd = useCallback(
+    (event) => {
+      const pending = connectSourceRef.current;
+      connectSourceRef.current = null;
+      if (!pending) return;
+      const targetEl = event?.target;
+      if (targetEl?.classList?.contains("react-flow__pane")) {
+        // Dropped on empty space: clear next_step mark as final/unconnected
+        if (pending.nodeId && pending.handleId !== "loop-out") {
+          onClearNext(pending.nodeId);
+        }
+      }
+    },
+    [onClearNext]
   );
 
   const onEdgesChange = useCallback(
@@ -1289,9 +1482,63 @@ const WorkflowEditor = ({ data }) => {
   }, [onInsertBetween, setEdges, edges]);
 
   const hasSteps = steps.length > 0;
+  const shellClass = modal ? "wf-shell wf-shell--drawer-open" : "wf-shell";
+  const shellStyle = { "--wf-drawer-width": `${drawerWidth}px` };
+  const showMiniMap = !modal;
+
+  const onEdgeClick = useCallback((_, edge) => {
+    setSelectedEdgeId(edge.id);
+  }, []);
+
+  useEffect(() => {
+    setEdges((edgs) =>
+      edgs.map((e) => {
+        const selected = e.id === selectedEdgeId;
+        const nextClass = selected
+          ? `${e.className || ""} wf-edge-selected`.trim()
+          : (e.className || "").replace(/\s*wf-edge-selected\b/, "");
+        const nextData =
+          e.type === "workflow-main" ? { ...(e.data || {}), selected } : e.data;
+        if (nextClass === (e.className || "") && nextData === e.data) return e;
+        return { ...e, className: nextClass, data: nextData };
+      })
+    );
+  }, [selectedEdgeId, setEdges]);
+
+  const handleResize = useCallback((e) => {
+    if (!resizingRef.current) return;
+    const maxWidth = Math.min(900, Math.max(360, window.innerWidth - 40));
+    const nextWidth = Math.min(
+      Math.max(600, window.innerWidth - e.clientX),
+      maxWidth
+    );
+    setDrawerWidth(nextWidth);
+  }, []);
+
+  const stopResize = useCallback(() => {
+    if (!resizingRef.current) return;
+    resizingRef.current = false;
+    document.body.style.userSelect = "";
+    window.removeEventListener("pointermove", handleResize);
+    window.removeEventListener("pointerup", stopResize);
+  }, [handleResize]);
+
+  const startResize = useCallback(
+    (e) => {
+      if (!modal) return;
+      resizingRef.current = true;
+      document.body.style.userSelect = "none";
+      window.addEventListener("pointermove", handleResize);
+      window.addEventListener("pointerup", stopResize);
+      e.preventDefault();
+    },
+    [handleResize, modal, stopResize]
+  );
+
+  useEffect(() => () => stopResize(), [stopResize]);
 
   return (
-    <div className="wf-shell">
+    <div className={shellClass} style={shellStyle}>
       <div className="wf-toolbar">
         <div className="wf-toolbar__left">
           <strong>{strings.configure}</strong>
@@ -1335,6 +1582,9 @@ const WorkflowEditor = ({ data }) => {
           onNodesChange={onNodesChangeWrapped}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onConnectStart={onConnectStart}
+          onConnectEnd={onConnectEnd}
+          onEdgeClick={onEdgeClick}
           onSelectionChange={handleSelectionChange}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
@@ -1344,12 +1594,12 @@ const WorkflowEditor = ({ data }) => {
           defaultEdgeOptions={{ animated: true }}
           colorMode={window._sc_lightmode || "light"}
         >
-          <MiniMap pannable zoomable />
+          {showMiniMap && <MiniMap pannable zoomable />}
           <Controls />
           <Background gap={16} />
         </ReactFlow>
       </div>
-      <StepModal
+      <StepDrawer
         modal={modal}
         innerRef={modalRef}
         onClose={() => {
@@ -1360,6 +1610,8 @@ const WorkflowEditor = ({ data }) => {
         error={error && modal ? error : ""}
         data={data}
         onDelete={onDelete}
+        drawerWidth={drawerWidth}
+        onResizeStart={startResize}
       />
     </div>
   );

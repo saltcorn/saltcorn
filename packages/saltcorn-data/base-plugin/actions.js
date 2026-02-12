@@ -2006,6 +2006,10 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Run arbitrary JavaScript code",
+    configuration_summary: (cfg = {}) => {
+      const where = cfg.run_where || "Server";
+      return `Run arbitrary JavaScript code on ${where}`;
+    },
     configFormOptions: {
       formStyle: "vert",
     },
@@ -2121,6 +2125,10 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Run arbitrary JavaScript code from a String field",
+    configuration_summary: (cfg = {}) => {
+      const where = cfg.run_where || "Server";
+      return `Run JavaScript from context field on ${where}`;
+    },
     configFields: async ({ table, mode }) => {
       if (mode === "workflow")
         return [
