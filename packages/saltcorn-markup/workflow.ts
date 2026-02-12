@@ -23,8 +23,8 @@ const renderWorkflow = (workflowData: any, version_tag?: string): string =>
       }
       #saltcorn-workflow-editor {
         min-height: 640px;
-        height: calc(100vh - 312px);
-        max-height: calc(100vh - 312px);
+        height: calc(100vh - 460px);
+        max-height: calc(100vh - 460px);
       }
     `),
     script({
