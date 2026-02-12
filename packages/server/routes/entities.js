@@ -759,6 +759,7 @@ router.get(
           type: "button",
           class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "table",
+          title: req.__("Show tables (Alt+T)"),
         },
         i({ class: "fas fa-table me-1" }),
         req.__("Tables")
@@ -768,6 +769,7 @@ router.get(
           type: "button",
           class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "view",
+          title: req.__("Show views (Alt+V)"),
         },
         i({ class: "fas fa-eye me-1" }),
         req.__("Views")
@@ -777,6 +779,7 @@ router.get(
           type: "button",
           class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "page",
+          title: req.__("Show pages (Alt+P)"),
         },
         i({ class: "fas fa-file me-1" }),
         req.__("Pages")
@@ -786,6 +789,7 @@ router.get(
           type: "button",
           class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "trigger",
+          title: req.__("Show triggers (Alt+R)"),
         },
         i({ class: "fas fa-play me-1" }),
         req.__("Triggers")
@@ -796,6 +800,7 @@ router.get(
           class:
             "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
           "data-entity-type": "user",
+          title: req.__("Show users (Alt+U)"),
         },
         i({ class: "fas fa-user me-1" }),
         req.__("Users")
@@ -806,6 +811,7 @@ router.get(
           class:
             "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
           "data-entity-type": "module",
+          title: req.__("Show modules (Alt+M)"),
         },
         i({ class: "fas fa-cube me-1" }),
         req.__("Modules")
@@ -1519,8 +1525,10 @@ router.get(
         };
 
         document.addEventListener("keydown", (e) => {
-          if (isTypingTarget(e.target)) return;
-          if(e.altKey && !e.ctrlKey && !e.metaKey) {
+          const isFromSearchInput = e.target === searchInput;
+          const typingTarget = isTypingTarget(e.target);
+
+          if (e.altKey && !e.ctrlKey && !e.metaKey) {
             const type = keyboardShortcutTypeMap[e.code];
             if (type) {
               const isExtendedType = EXTENDED_TYPES.includes(type);
@@ -1537,7 +1545,9 @@ router.get(
               }
               return;
             }
+            return;
           }
+          if (typingTarget && !isFromSearchInput) return;
 
           const isSelectAllKey = e.key === "a" || e.key === "A";
           if ((e.metaKey || e.ctrlKey) && !e.altKey && isSelectAllKey) {
