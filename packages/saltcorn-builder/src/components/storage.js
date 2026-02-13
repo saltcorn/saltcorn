@@ -140,8 +140,10 @@ const layoutToNodes = (
       const props = {};
       related.fields.forEach((f) => {
         if (f.type === "Nodes" && f.nodeID) {
-          props[f.name || f] = toTag(segment[f.segment_name || f.name || f]);
-          //).map(toTag);
+          const v = segment[f.segment_name || f.name || f];
+          if (typeof v !== "undefined") {
+            props[f.name || f] = toTag(v);
+          }
         } else {
           const v = segment[f.segment_name || f.name || f];
           props[f.name || f] = typeof v === "undefined" ? f.default : v;
