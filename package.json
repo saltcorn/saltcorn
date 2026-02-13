@@ -2,7 +2,11 @@
   "name": "saltcorn-monorepo",
   "private": true,
   "devDependencies": {
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "eslint": "8.57.0",
     "jest": "^29.7.0",
+    "lint-staged": "^15.2.10",
     "minipass": "3.1.6",
     "supertest": "7.0.0",
     "typedoc": "^0.28.11",
@@ -15,7 +19,9 @@
     "tsc": "tsc --build && node ./packages/saltcorn-data/mobile-mocks/copy_excluded_files.js",
     "clean": "tsc --build --clean",
     "docs": "typedoc --options typedoc_cfg.json",
-    "jsondocs": "typedoc --json packages/server/docs.json --options typedoc_cfg.json"
+    "jsondocs": "typedoc --json packages/server/docs.json --options typedoc_cfg.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "jest": {
     "testEnvironment": "node",
@@ -37,6 +43,9 @@
       "packages/workflow-editor/dist/"
     ]
   },
+  "lint-staged": {
+    "*.{js,ts,mjs,cjs}": "eslint --fix"
+  },
   "eslintConfig": {
     "ignorePatterns": [
       "**/plugin_packages/**",
@@ -46,7 +55,6 @@
       "*.test.js",
       "packages/filemanager/public/build/bundle.js",
       "packages/saltcorn-sbadmin2/public/**",
-      "packages/saltcorn-builder/**",
       "docs/**",
       "deploy/"
     ],
@@ -67,13 +75,19 @@
     }
   },
   "overrides": {
-    "immer": "9.0.6",
+    "immer": "9.0.21",
     "undici": "7.12.0",
     "node-gyp": ">=10.2.0",
     "glob": ">=9.3.5",
     "parse5": "7.2.1",
     "parse5-htmlparser2-tree-adapter": "7.0.0",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "express": "^5.0.1",
+    "react-transition-group": "4.4.5",
+    "tough-cookie": "4.1.4",
+    "@types/tough-cookie": "4.0.5"
   },
   "workspaces": [
     "./packages/*"

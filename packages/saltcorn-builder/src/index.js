@@ -49,8 +49,8 @@
  */
 
 import React from "react";
+import { createRoot } from "react-dom/client";
 import Builder from "./components/Builder";
-import ReactDOM from "react-dom";
 
 /**
  * 
@@ -60,13 +60,16 @@ import ReactDOM from "react-dom";
  * @param {string} mode 
  */
 function renderBuilder(id, options, layout, mode) {
-  ReactDOM.render(
+  const container = document.getElementById(id);
+  if (!container) return;
+  const root = container.__scRoot || createRoot(container);
+  container.__scRoot = root;
+  root.render(
     <Builder
       options={JSON.parse(decodeURIComponent(options))}
       layout={JSON.parse(decodeURIComponent(layout))}
       mode={mode}
     />,
-    document.getElementById(id)
   );
 }
 

@@ -19,6 +19,8 @@ import {
   HelpTopicLink,
   initialRelation,
   buildLayers,
+  reactSelectStyles,
+  builderSelectClassName,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
@@ -262,11 +264,12 @@ const ViewSettings = () => {
               <Select
                 options={viewOptions}
                 value={selectedView}
-                className="react-select view-selector"
+                className={builderSelectClassName("react-select view-selector")}
+                classNamePrefix="builder-select"
                 onChange={set_view_name}
                 onBlur={set_view_name}
                 menuPortalTarget={document.body}
-                styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+                styles={reactSelectStyles()}
               ></Select>
             )}
           </div>
@@ -304,7 +307,8 @@ const ViewSettings = () => {
             <Select
               options={viewOptions}
               value={selectedView}
-              className="react-select view-selector"
+              className={builderSelectClassName("react-select view-selector")}
+              classNamePrefix="builder-select"
               onChange={(e) => {
                 const target_value = e?.target?.value || e?.value;
                 setProp((prop) => {
@@ -312,7 +316,7 @@ const ViewSettings = () => {
                 });
               }}
               menuPortalTarget={document.body}
-              styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+              styles={reactSelectStyles()}
             ></Select>
           )}
         </div>

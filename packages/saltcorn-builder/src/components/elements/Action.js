@@ -3,9 +3,9 @@
  * @module components/elements/Action
  * @subcategory components / elements
  */
-/*global notifyAlert*/
+/*global notifyAlert, apply_showif*/
 
-import React, { Fragment, useContext, useEffect } from "react";
+import React, { Fragment, useContext, useEffect, useState } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
@@ -19,9 +19,12 @@ import {
   setAPropGen,
   buildOptions,
   ConfigField,
+  reactSelectStyles,
+  builderSelectClassName,
 } from "./utils";
 import { ntimes } from "./Columns";
 import { ArrayManager } from "./ArrayManager";
+import { MultiLineCodeEditor } from "./MonacoEditor";
 import Select from "react-select";
 
 export /**
@@ -141,6 +144,13 @@ const ActionSettings = () => {
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
   const cfgFields = getCfgFields(name);
+  const cfgFieldsForForm =
+    name === "run_js_code"
+      ? (cfgFields || []).filter((f) => f.name !== "code")
+      : cfgFields;
+
+  const runJsCodeModalOnly = false;
+  const [codeModalOpen, setCodeModalOpen] = useState(false);
   const setAProp = setAPropGen(setProp);
   const use_setting_action_n =
     setting_action_n || setting_action_n === 0 ? setting_action_n : 0;
@@ -229,6 +239,7 @@ const ActionSettings = () => {
     step_action_names?.[use_setting_action_n] || "",
     JSON.stringify(configuration?.steps?.[use_setting_action_n]),
   ]);
+  
 
   return (
     <div>
@@ -242,14 +253,13 @@ const ActionSettings = () => {
               {options.inJestTestingMode ? null : (
                 <Select
                   options={actionOptions}
-                  className="react-select action-selector"
+                  className={builderSelectClassName("react-select action-selector")}
+                  classNamePrefix="builder-select"
                   value={selectedAction}
                   defaultValue={selectedAction}
                   onChange={setAction}
                   menuPortalTarget={document.body}
-                  styles={{
-                    menuPortal: (base) => ({ ...base, zIndex: 19999 }),
-                  }}
+                  styles={reactSelectStyles()}
                 ></Select>
               )}
             </td>
@@ -396,14 +406,13 @@ const ActionSettings = () => {
           {options.inJestTestingMode ? null : (
             <Select
               options={multiStepActionOptions}
-              className="react-select multistep-action-selector"
+              className={builderSelectClassName("react-select multistep-action-selector")}
+              classNamePrefix="builder-select"
               value={selectedMultiStepAction}
               defaultValue={selectedMultiStepAction}
               onChange={setMultistepAction}
               menuPortalTarget={document.body}
-              styles={{
-                menuPortal: (base) => ({ ...base, zIndex: 19999 }),
-              }}
+              styles={reactSelectStyles()}
             ></Select>
           )}
           {options.mode !== "page" ? (
@@ -446,12 +455,114 @@ const ActionSettings = () => {
           ) : null}
         </Fragment>
       ) : cfgFields ? (
-        <ConfigForm
-          fields={cfgFields}
-          configuration={configuration}
-          setProp={setProp}
-          node={node}
-        />
+        <Fragment>
+          {name === "run_js_code" && runJsCodeModalOnly ? (
+            <div className="builder-config-field" data-field-name="code">
+              <label>Code</label>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setCodeModalOpen(true)}
+              >
+                Open Code Popup
+              </button>
+            </div>
+          ) : null}
+          {name === "run_js_code" && !runJsCodeModalOnly ? (
+            <Fragment>
+              <ConfigForm
+                fields={(cfgFields || []).filter((f) => f.name === "code")}
+                configuration={configuration}
+                setProp={setProp}
+                node={node}
+              />
+              <div className="builder-config-field mt-2" data-field-name="code-modal-trigger">
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setCodeModalOpen(true)}
+                >
+                  Open Code Popup
+                </button>
+              </div>
+              <ConfigForm
+                fields={cfgFieldsForForm}
+                configuration={configuration}
+                setProp={setProp}
+                node={node}
+              />
+            </Fragment>
+          ) : (
+            <ConfigForm
+              fields={runJsCodeModalOnly ? cfgFieldsForForm : cfgFields}
+              configuration={configuration}
+              setProp={setProp}
+              node={node}
+            />
+          )}
+          {name === "run_js_code" && codeModalOpen ? (
+                <div
+                  className={`modal fade ${codeModalOpen ? "show" : ""}`}
+                  style={{
+                    display: codeModalOpen ? "block" : "none",
+                    zIndex: 1055,
+                  }}
+                  tabIndex={-1}
+                  role="dialog"
+                  aria-labelledby="codeModalLabel"
+                  aria-hidden={!codeModalOpen}
+                >
+                  <div
+                    className="modal-backdrop fade show"
+                    style={{ zIndex: 1050 }}
+                    onClick={() => setCodeModalOpen(false)}
+                    aria-hidden="true"
+                  />
+                  <div
+                    className="modal-dialog modal-dialog-centered modal-lg"
+                    role="document"
+                    style={{ zIndex: 1060 }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="modal-content">
+                      <div className="modal-header">
+                        <h5 className="modal-title" id="codeModalLabel">
+                          Code
+                        </h5>
+                        <button
+                          type="button"
+                          className="btn-close"
+                          aria-label="Close"
+                          onClick={() => setCodeModalOpen(false)}
+                        />
+                      </div>
+                      <div className="modal-body">
+                        <MultiLineCodeEditor
+                          setProp={setProp}
+                          value={configuration?.code ?? ""}
+                          onChange={(code) =>
+                            setProp((prop) => {
+                              if (!prop.configuration)
+                                prop.configuration = {};
+                              prop.configuration.code = code;
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="modal-footer">
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          onClick={() => setCodeModalOpen(false)}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+        </Fragment>
       ) : null}
       {cfg_link ? (
         <a className="d-block mt-2" target="_blank" href={cfg_link}>
