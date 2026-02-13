@@ -7,18 +7,20 @@
 
 const fetch = require("node-fetch");
 const vm = require("vm");
-const Table = require("../models/table");
-const EventLog = require("../models/eventlog");
-const View = require("../models/view");
-const Model = require("../models/model");
-const Page = require("../models/page");
-const Field = require("../models/field");
-const File = require("../models/file");
+
+import Table from "../models/table";
+import EventLog from "../models/eventlog";
+import View from "../models/view";
+import Model from "../models/model";
+import Page from "../models/page";
+import Field from "../models/field";
+import User from "../models/user";
+import Trigger from "../models/trigger";
+import WorkflowRun from "../models/workflow_run";
+import Notification from "../models/notification";
+import File from "../models/file";
+
 const { getState } = require("../db/state");
-const User = require("../models/user");
-const Trigger = require("../models/trigger");
-const WorkflowRun = require("../models/workflow_run");
-const Notification = require("../models/notification");
 const {
   getMailTransport,
   viewToEmailHtml,
@@ -50,11 +52,14 @@ const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
 const { available_languages } = require("../models/config");
 const MetaData = require("../models/metadata");
 
+import type { GenObj } from "@saltcorn/types/common_types";
+import type { Req, Res } from "@saltcorn/types/base_types";
+
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
 
-const consoleInterceptor = (state) => {
-  const handle = (printer, level, message, optionalParams) => {
+const consoleInterceptor = (state: any) => {
+  const handle = (printer: any, level: number, message: any, optionalParams: any[]) => {
     printer(message, ...optionalParams);
     if (state.hasJoinedLogSockets && state.logLevel >= level) {
       const s = ppVal(message);
@@ -68,20 +73,20 @@ const consoleInterceptor = (state) => {
     }
   };
   return {
-    log: (message, ...optionalParams) =>
+    log: (message: any, ...optionalParams: any[]) =>
       handle(console.log, 5, message, optionalParams),
-    info: (message, ...optionalParams) =>
+    info: (message: any, ...optionalParams: any[]) =>
       handle(console.info, 5, message, optionalParams),
-    debug: (message, ...optionalParams) =>
+    debug: (message: any, ...optionalParams: any[]) =>
       handle(console.debug, 5, message, optionalParams),
-    warn: (message, ...optionalParams) =>
+    warn: (message: any, ...optionalParams: any[]) =>
       handle(console.warn, 2, message, optionalParams),
-    error: (message, ...optionalParams) =>
+    error: (message: any, ...optionalParams: any[]) =>
       handle(console.error, 1, message, optionalParams),
   };
 };
 
-const emit_to_client = (user) => (data, userIds) => {
+const emit_to_client = (user: any) => (data: any, userIds?: any) => {
   const state = getState();
   const enabled = getState().getConfig("enable_dynamic_updates", true);
   if (!enabled) {
@@ -92,7 +97,7 @@ const emit_to_client = (user) => (data, userIds) => {
     ? userIds
     : userIds
       ? [userIds]
-      : [user?.id] || [];
+      : (user?.id ? [user.id] : []);
   state.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
 };
 
@@ -113,12 +118,19 @@ const run_code = async ({
   configuration: { code, run_where },
   user,
   ...rest
-}) => {
+}: {
+  row?: any;
+  table?: any;
+  channel?: string;
+  configuration: { code: string; run_where: string };
+  user?: any;
+  [key: string]: any;
+}): Promise<any> => {
   if (run_where === "Client page")
     return {
       eval_js: code,
       row,
-      field_names: table ? table.fields.map((f) => f.name) : undefined,
+      field_names: table ? table.fields.map((f: any) => f.name) : undefined,
     };
   if (!isNode()) {
     const { isOfflineMode } = getState().mobileConfig;
@@ -127,8 +139,8 @@ const run_code = async ({
       return { server_eval: true };
     }
   }
-  const Actions = {};
-  Object.entries(getState().actions).forEach(([k, v]) => {
+  const Actions: any = {};
+  Object.entries(getState().actions).forEach(([k, v]: [string, any]) => {
     Actions[k] = (args = {}) => {
       return v.run({ row, table, user, configuration: args, ...rest, ...args });
     };
@@ -137,7 +149,7 @@ const run_code = async ({
     when_trigger: { or: ["API call", "Never"] },
   });
   for (const trigger of trigger_actions) {
-    Actions[trigger.name] = (args = {}) => {
+    Actions[trigger.name!] = (args = {}) => {
       if (trigger.action === "Workflow") {
         return trigger.runWithoutRow({
           row,
@@ -161,7 +173,7 @@ const run_code = async ({
     };
   }
 
-  const run_js_code = async ({ code, ...restArgs }) => {
+  const run_js_code = async ({ code, ...restArgs }: any) => {
     return await run_code({
       row,
       table,
@@ -172,12 +184,12 @@ const run_code = async ({
       ...restArgs,
     });
   };
-  const emitEvent = (eventType, channel, payload) =>
+  const emitEvent = (eventType: any, channel: any, payload: any) =>
     Trigger.emitEvent(eventType, channel, user, payload);
-  const fetchJSON = async (...args) => await (await fetch(...args)).json();
+  const fetchJSON = async (...args: any[]) => await (await fetch(...args)).json();
   const sysState = getState();
-  const require = (nm) => sysState.codeNPMmodules[nm];
-  const refreshSystemCache = async (which) => {
+  const require = (nm: any) => sysState.codeNPMmodules[nm];
+  const refreshSystemCache = async (which: any) => {
     //this worker
     if (which) await sysState[`refresh_${which}`](true);
     else await sysState.refresh(true);
@@ -209,7 +221,7 @@ const run_code = async ({
       await sysState.refresh();
     },
     URL,
-    File,
+    File: File,
     User,
     View,
     Page,
@@ -223,9 +235,9 @@ const run_code = async ({
     interpolate,
     require,
     refreshSystemCache,
-    setConfig: (k, v) =>
+    setConfig: (k: any, v: any) =>
       sysState.isFixedConfig(k) ? undefined : sysState.setConfig(k, v),
-    getConfig: (k) =>
+    getConfig: (k: any) =>
       sysState.isFixedConfig(k) ? undefined : sysState.getConfig(k),
     channel: table ? table.name : channel,
     session_id: rest.req && getSessionId(rest.req),
@@ -239,7 +251,7 @@ const run_code = async ({
   return await f();
 };
 
-module.exports = {
+export = {
   /**
    * @namespace
    * @category saltcorn-data
@@ -311,7 +323,7 @@ module.exports = {
       row,
       configuration: { eventType, channel, payload },
       user,
-    }) => {
+    }: any) => {
       return await Trigger.emitEvent(
         eventType,
         channel,
@@ -333,9 +345,9 @@ module.exports = {
       const trigger_actions = trigger_actions0.sort(
         comparingCaseInsensitive("name")
       );
-      const order_options = {};
+      const order_options: any = {};
       for (const table of tables) {
-        order_options[table.name] = table.fields.map((f) => f.name);
+        order_options[table.name] = table.fields.map((f: any) => f.name);
         order_options[table.name].push("RANDOM()");
       }
 
@@ -421,12 +433,12 @@ module.exports = {
       },
       user,
       ...rest
-    }) => {
+    }: any) => {
       const table = Table.findOne({ name: table_name });
       const wh = where ? eval_expression(where, row, user) : {};
-      const selOpts = { orderDesc, orderBy };
+      const selOpts: any = { orderDesc, orderBy };
       if (limit) selOpts.limit = limit;
-      const rows = await table.getRows(wh, selOpts);
+      const rows = await table!.getRows(wh, selOpts);
       const trigger = Trigger.findOne({ id: trigger_id });
       let result = {};
       let first = true;
@@ -457,14 +469,14 @@ module.exports = {
    */
   webhook: {
     description: "Make an outbound HTTP/HTTPS request",
-    configFields: async ({ table, mode }) => {
+    configFields: async ({ table, mode }: any) => {
       let field_opts = [];
       if (table) {
         field_opts = table.fields
           .filter(
-            (f) => f.type && ["String", "HTML", "JSON"].includes(f.type.name)
+            (f: any) => f.type && ["String", "HTML", "JSON"].includes(f.type.name)
           )
-          .map((f) => f.name);
+          .map((f: any) => f.name);
       }
       return [
         {
@@ -534,7 +546,7 @@ module.exports = {
         response_var,
         method,
       },
-    }) => {
+    }: any) => {
       let url1 = interpolate(url, row, user, "Webhook URL");
 
       const fetchOpts = {
@@ -629,7 +641,7 @@ module.exports = {
      * @param {object} opts.user
      * @returns {Promise<object>}
      */
-    run: async ({ row, table, configuration: { viewname }, user }) => {
+    run: async ({ row, table, configuration: { viewname }, user }: any) => {
       const view = await View.findOne({ name: viewname });
       if (!view)
         throw new Error(
@@ -647,9 +659,9 @@ module.exports = {
       const { rows } = await db.query(
         `with my_rooms as (select "${part_key_to_room}" from "${db.getTenantSchema()}"."${db.sqlsanitize(
           part_table_name
-        )}" where "${part_user_field}" = $1)          
+        )}" where "${part_user_field}" = $1)
         select * from "${db.getTenantSchema()}"."${db.sqlsanitize(
-          roomtable.name
+          roomtable!.name
         )}" r where r.id in (select "${part_key_to_room}" from my_rooms) 
         and $2 in (select "${part_user_field}" from "${db.getTenantSchema()}"."${db.sqlsanitize(
           part_table_name
@@ -660,12 +672,12 @@ module.exports = {
         return { goto: `/view/${viewname}?id=${rows[0].id}` };
       } else {
         //create room
-        const room_id = await roomtable.insertRow({});
-        await parttable.insertRow({
+        const room_id = await roomtable!.insertRow({});
+        await parttable!.insertRow({
           [part_user_field]: user.id,
           [part_key_to_room]: room_id,
         });
-        await parttable.insertRow({
+        await parttable!.insertRow({
           [part_user_field]: row.id,
           [part_key_to_room]: room_id,
         });
@@ -687,7 +699,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Send an email, based on a chosen view for this table",
-    configFields: async ({ table, mode }) => {
+    configFields: async ({ table, mode }: any) => {
       if (mode === "workflow") {
         return [
           {
@@ -752,27 +764,27 @@ module.exports = {
       if (!table) return [];
       const views = await View.find_table_views_where(
         table,
-        ({ viewtemplate }) => viewtemplate?.runMany || viewtemplate?.renderRows
+        ({ viewtemplate }: any) => viewtemplate?.runMany || viewtemplate?.renderRows
       );
 
       const view_opts = views.map((v) => v.name);
       const fields = table.getFields();
       const field_opts = fields
         .filter(
-          (f) =>
+          (f: any) =>
             (f.type && f.type.name === "String") || f.reftable_name === "users"
         )
-        .map((f) => f.name);
+        .map((f: any) => f.name);
       const body_field_opts = fields
         .filter(
-          (f) => f.type && (f.type.name === "HTML" || f.type.name === "String")
+          (f: any) => f.type && (f.type.name === "HTML" || f.type.name === "String")
         )
-        .map((f) => f.name);
+        .map((f: any) => f.name);
       const confirm_field_opts = fields
         .filter(
-          (f) => f.type && (f.type.name === "Bool" || f.type.name === "Date")
+          (f: any) => f.type && (f.type.name === "Bool" || f.type.name === "Date")
         )
-        .map((f) => f.name);
+        .map((f: any) => f.name);
       const attachment_opts = [""];
       for (const field of fields) {
         if (field.type === "File") attachment_opts.push(field.name);
@@ -938,7 +950,7 @@ module.exports = {
       },
       user,
       mode,
-    }) => {
+    }: any) => {
       const from = getState().getConfig("email_from");
 
       if (mode === "workflow") {
@@ -1002,12 +1014,12 @@ module.exports = {
           break;
         case "Field":
           const fields = table.getFields();
-          const field = fields.find((f) => f.name === to_email_field);
+          const field = fields.find((f: any) => f.name === to_email_field);
           if (field && field.type.name === "String")
             to_addr = row[to_email_field];
           else if (field && field.reftable_name === "users") {
             const refuser = await User.findOne({ id: row[to_email_field] });
-            to_addr = refuser.email;
+            to_addr = refuser!.email;
           }
           break;
       }
@@ -1018,7 +1030,7 @@ module.exports = {
         );
         return;
       }
-      const setBody = {};
+      const setBody: any = {};
       if (body_type === "Text field") {
         setBody.text = row[body_field];
       } else if (body_type === "HTML field") {
@@ -1028,16 +1040,16 @@ module.exports = {
         const html = mjml2html(mjml, { minify: true });
         setBody.html = html.html;
       } else {
-        const opts = {};
+        const opts: any = {};
         if (locale) {
           opts.locale = interpolate(locale, useRow, user, "send_email locale");
           const cfgLangs = getState().getConfig("localizer_languages");
           if (
             Object.values(cfgLangs || {})
-              .map((r) => r.name)
+              .map((r: any) => r.name)
               .includes(opts.locale)
           ) {
-            opts.locale = Object.values(cfgLangs).find((r) => r.name).locale;
+            opts.locale = (Object.values(cfgLangs).find((r: any) => r.name) as any).locale;
           }
         }
         const view = await View.findOne({ name: viewname });
@@ -1130,7 +1142,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Insert a row in a related table",
-    configFields: async ({ table }) => {
+    configFields: async ({ table }: any) => {
       if (!table) return [];
       const { child_field_list } = await table.get_child_relations();
       return [
@@ -1153,7 +1165,7 @@ module.exports = {
      * @param {object} opts.user
      * @returns {Promise<object>}
      */
-    run: async ({ row, table, configuration: { joined_table }, user }) => {
+    run: async ({ row, table, configuration: { joined_table }, user }: any) => {
       if (!joined_table)
         throw new Error(`Relation not specified in insert_joined_row action`);
 
@@ -1164,7 +1176,7 @@ module.exports = {
           `Table ${join_table_name} not found in insert_joined_row action`
         );
       const fields = joinTable.getFields();
-      const newRow = { [join_field]: row.id };
+      const newRow: any = { [join_field]: row.id };
       for (const field of fields) {
         if (
           field.type === "Key" &&
@@ -1199,7 +1211,7 @@ module.exports = {
      * @param {*} opts.user
      * @returns {Promise<object>}
      */
-    run: async ({ row, table, user }) => {
+    run: async ({ row, table, user }: any) => {
       const newRow = { ...row };
       table.getFields();
       delete newRow[table.pk_name];
@@ -1229,7 +1241,7 @@ module.exports = {
      */
     description:
       "Re-calculate the stored calculated fields for a table, optionally only for the triggering row",
-    configFields: async ({ table }) => {
+    configFields: async ({ table }: any) => {
       const tables = await Table.find({}, { cached: true });
       return [
         {
@@ -1263,7 +1275,7 @@ module.exports = {
      * @param {object} opts.configuration
      * @returns {Promise<void>}
      */
-    run: async ({ table, row, configuration, user }) => {
+    run: async ({ table, row, configuration, user }: any) => {
       const table_for_recalc = Table.findOne({
         name: configuration.table,
       });
@@ -1303,7 +1315,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "insert a row into any table, using a formula expression",
-    configFields: async ({ mode }) => {
+    configFields: async ({ mode }: any) => {
       const tables = await Table.find({}, { cached: true });
       return [
         {
@@ -1347,7 +1359,7 @@ module.exports = {
      * @param {...*} [opts.rest]
      * @returns {Promise<object|boolean>}
      */
-    run: async ({ row, table, configuration, user, referrer, ...rest }) => {
+    run: async ({ row, table, configuration, user, referrer, ...rest }: any) => {
       const state = urlStringToObject(referrer);
       const f = get_async_expression_function(
         configuration.row_expr,
@@ -1361,25 +1373,25 @@ module.exports = {
       );
       const calcrow = await f(row || {}, user);
       const table_for_insert = Table.findOne({ name: configuration.table });
-      const all_results = {};
-      const ids = [];
+      const all_results: any = {};
+      const ids: any[] = [];
 
-      const upsertOne = async (row) => {
-        const results = {};
-        if (row[table_for_insert.pk_name]) {
-          const existing = await table_for_insert.getRow({
-            [table_for_insert.pk_name]: row[table_for_insert.pk_name],
+      const upsertOne = async (row: any) => {
+        const results: any = {};
+        if (row[table_for_insert!.pk_name]) {
+          const existing = await table_for_insert!.getRow({
+            [table_for_insert!.pk_name]: row[table_for_insert!.pk_name],
           });
           if (existing) {
-            await table_for_insert.updateRow(
+            await table_for_insert!.updateRow(
               row,
-              row[table_for_insert.pk_name],
+              row[table_for_insert!.pk_name],
               user,
               { resultCollector: results }
             );
-            ids.push(row[table_for_insert.pk_name]);
-          } else ids.push(await table_for_insert.insertRow(row, user, results));
-        } else ids.push(await table_for_insert.insertRow(row, user, results));
+            ids.push(row[table_for_insert!.pk_name]);
+          } else ids.push(await table_for_insert!.insertRow(row, user, results));
+        } else ids.push(await table_for_insert!.insertRow(row, user, results));
 
         mergeActionResults(all_results, results);
       };
@@ -1406,7 +1418,7 @@ module.exports = {
    */
   modify_row: {
     description: "Modify the triggering row",
-    configFields: async ({ mode, when_trigger }) => {
+    configFields: async ({ mode, when_trigger }: any) => {
       return [
         {
           name: "row_expr",
@@ -1478,7 +1490,7 @@ module.exports = {
       configuration: { row_expr, where, select_table, query },
       user,
       ...rest
-    }) => {
+    }: any) => {
       const f = get_async_expression_function(
         row_expr,
         table?.fields || Object.keys(row).map((k) => ({ name: k })),
@@ -1505,9 +1517,9 @@ module.exports = {
           user,
           "Query expression in modify_row step"
         );
-        const rows = await table.getRows(q);
+        const rows = await table!.getRows(q);
         for (const row of rows) {
-          await table.updateRow(calcrow, row[table.pk_name]);
+          await table!.updateRow(calcrow, row[table!.pk_name]);
         }
         return;
       }
@@ -1525,7 +1537,7 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Modify the triggering row",
-    configFields: async ({ mode, when_trigger }) => {
+    configFields: async ({ mode, when_trigger }: any) => {
       const tables = await Table.find({}, { cached: true });
 
       return [
@@ -1565,7 +1577,7 @@ module.exports = {
       configuration: { delete_triggering_row, delete_where, table_name },
       user,
       ...rest
-    }) => {
+    }: any) => {
       const resultCollector = {};
       if (delete_triggering_row) {
         if (!table || !row?.[table.pk_name])
@@ -1585,7 +1597,7 @@ module.exports = {
         "recalculate_stored_fields where"
       );
       const tbl = Table.findOne({ name: table_name });
-      await tbl.deleteRows(where, user, false, resultCollector);
+      await tbl!.deleteRows(where, user, false, resultCollector);
       return resultCollector;
     },
     namespace: "Database",
@@ -1680,7 +1692,7 @@ module.exports = {
         in_popup,
       },
       req,
-    }) => {
+    }: any) => {
       let qs = "";
       if (["Go to Page", "Go to View"].includes(nav_action) && state_formula) {
         const new_state = eval_expression(
@@ -1757,7 +1769,7 @@ module.exports = {
         showIf: { control_action: ["Goto step"] },
       },
     ],
-    run: async ({ row, user, configuration: { control_action, step } }) => {
+    run: async ({ row, user, configuration: { control_action, step } }: any) => {
       switch (control_action) {
         case "Halt steps":
           return { halt_steps: true };
@@ -1807,7 +1819,7 @@ module.exports = {
       req,
       configuration: { form_action },
       ...rest
-    }) => {
+    }: any) => {
       const jqGet = `$('form[data-viewname="'+viewname+'"]')`;
       switch (form_action) {
         case "Submit":
@@ -1824,7 +1836,7 @@ module.exports = {
                 let folder = field?.attributes?.folder;
                 if (Array.isArray(viewColumns)) {
                   const col = viewColumns.find(
-                    (c) => c?.type === "Field" && c.field_name === field.name
+                    (c: any) => c?.type === "Field" && c.field_name === field.name
                   );
                   let cfgFolder = col?.configuration?.folder;
                   if (typeof cfgFolder === "string" && cfgFolder.length) {
@@ -1926,7 +1938,7 @@ module.exports = {
       req,
       configuration: { text_template },
       ...rest
-    }) => {
+    }: any) => {
       return {
         eval_js: `navigator.clipboard.writeText(${JSON.stringify(interpolate(text_template || "", row || {}, user))})`,
       };
@@ -1973,10 +1985,10 @@ module.exports = {
       row,
       user,
       configuration: { type, notify_type, text, title, remove_delay },
-    }) => {
+    }: any) => {
       //type is legacy. this name gave react problems
       let text1 = interpolate(text, row, user, "Toast text");
-      let toast_title = title
+      let toast_title: any = title
         ? { toast_title: interpolate(title, row, user, "Toast title") }
         : {};
       if (remove_delay) toast_title.remove_delay = remove_delay;
@@ -2006,15 +2018,15 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Run arbitrary JavaScript code",
-    configuration_summary: (cfg = {}) => {
+    configuration_summary: (cfg: any = {}) => {
       const where = cfg.run_where || "Server";
       return `Run arbitrary JavaScript code on ${where}`;
     },
     configFormOptions: {
       formStyle: "vert",
     },
-    configFields: async ({ table, when_trigger, mode }) => {
-      const fields = table ? table.getFields().map((f) => f.name) : [];
+    configFields: async ({ table, when_trigger, mode }: any) => {
+      const fields = table ? table.getFields().map((f: any) => f.name) : [];
       const vars = [
         ...(table ? ["row"] : []),
         "user",
@@ -2071,14 +2083,14 @@ module.exports = {
             "validate-statements",
             mode !== "workflow" && "enlarge-in-card",
           ],
-          validator(s) {
+          validator(s: any) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
                 async function () {}
               ).constructor;
               AsyncFunction(s);
               return true;
-            } catch (e) {
+            } catch (e: any) {
               return e.message;
             }
           },
@@ -2125,11 +2137,11 @@ module.exports = {
      * @returns {Promise<object[]>}
      */
     description: "Run arbitrary JavaScript code from a String field",
-    configuration_summary: (cfg = {}) => {
+    configuration_summary: (cfg: any = {}) => {
       const where = cfg.run_where || "Server";
       return `Run JavaScript from context field on ${where}`;
     },
-    configFields: async ({ table, mode }) => {
+    configFields: async ({ table, mode }: any) => {
       if (mode === "workflow")
         return [
           {
@@ -2148,17 +2160,17 @@ module.exports = {
           },
         ];
       const field_opts = table.fields
-        .filter((f) => f.type?.name === "String")
-        .map((f) => f.name);
-      table.fields.forEach((f) => {
+        .filter((f: any) => f.type?.name === "String")
+        .map((f: any) => f.name);
+      table.fields.forEach((f: any) => {
         if (f.is_fkey && f.type !== "File") {
           const refTable = Table.findOne({ name: f.reftable_name });
           if (!refTable)
             throw new Error(`Unable to find table '${f.reftable_name}`);
           field_opts.push(
             ...refTable.fields
-              .filter((jf) => jf.type?.name === "String")
-              .map((jf) => `${f.name}.${jf.name}`)
+              .filter((jf: any) => jf.type?.name === "String")
+              .map((jf: any) => `${f.name}.${jf.name}`)
           );
         }
       });
@@ -2193,7 +2205,7 @@ module.exports = {
       row,
       mode,
       ...rest
-    }) => {
+    }: any) => {
       let code;
       if (code_field.includes(".")) {
         const [ref, target] = code_field.split(".");
@@ -2202,8 +2214,8 @@ module.exports = {
         else {
           const keyfield = table.getField(ref);
           const refTable = Table.findOne({ name: keyfield.reftable_name });
-          const refRow = await refTable.getRow({ [table.pk_name]: row[ref] });
-          code = refRow[target];
+          const refRow = await refTable!.getRow({ [table.pk_name]: row[ref] });
+          code = refRow![target];
         }
       } else code = row[code_field];
       code = code || "";
@@ -2218,14 +2230,14 @@ module.exports = {
   },
 
   duplicate_row_prefill_edit: {
-    configFields: async ({ table }) => {
+    configFields: async ({ table }: any) => {
       const fields = table ? table.getFields() : [];
       const views = await View.find_table_views_where(
         table,
-        ({ viewrow }) => viewrow.viewtemplate === "Edit"
+        ({ viewrow }: any) => viewrow.viewtemplate === "Edit"
       );
 
-      const fldOpts = fields.map((f) => ({
+      const fldOpts = fields.map((f: any) => ({
         label: f.name,
         name: f.name,
         default: f.name !== "id",
@@ -2243,7 +2255,7 @@ module.exports = {
     },
     disableInWorkflow: true,
     requireRow: true,
-    run: async ({ row, table, configuration: { viewname, ...flds }, user }) => {
+    run: async ({ row, table, configuration: { viewname, ...flds }, user }: any) => {
       const qs = Object.entries(flds)
         .map(([k, v]) =>
           v && typeof row[k] !== "undefined"
@@ -2263,7 +2275,7 @@ module.exports = {
    */
   set_user_language: {
     description: "Set the logged-in user's chosen language",
-    configFields: async ({ table }) => [
+    configFields: async ({ table }: any) => [
       {
         name: "language",
         type: "String",
@@ -2278,11 +2290,11 @@ module.exports = {
         },
       },
     ],
-    run: async ({ configuration: { language }, user, req, res }) => {
+    run: async ({ configuration: { language }, user, req, res }: any) => {
       if (user?.id) {
-        const u = await User.findForSession({ id: user.id });
+        const u: any = await User.findForSession({ id: user.id });
         await u.set_language(language);
-        req.login(u.session_object, function (err) {
+        req.login(u.session_object, function (err: any) {
           if (!err) {
             req.flash("success", req.__("Language changed to %s", language));
             return { reload_page: true };
@@ -2310,12 +2322,12 @@ module.exports = {
      */
     description:
       "Synchronize a database table with an external/provider table by copying rows from the external table",
-    configFields: async ({ table }) => {
+    configFields: async ({ table }: any) => {
       const tables = await Table.find_with_external();
-      const pk_options = {};
+      const pk_options: any = {};
       for (const table of tables) {
         const fields = table.getFields();
-        pk_options[table.name] = fields.map((f) => f.name);
+        pk_options[table.name] = fields.map((f: any) => f.name);
       }
       return [
         {
@@ -2404,11 +2416,11 @@ module.exports = {
       },
       user,
       ...rest
-    }) => {
+    }: any) => {
       // set difference: a - b
       // https://stackoverflow.com/a/36504668/19839414
-      const set_diff = (a, b) => new Set([...a].filter((x) => !b.has(x)));
-      let set_intersect = (a, b) => new Set([...a].filter((x) => b.has(x)));
+      const set_diff = (a: any, b: any) => new Set([...a].filter((x: any) => !b.has(x)));
+      let set_intersect = (a: any, b: any) => new Set([...a].filter((x: any) => b.has(x)));
 
       const source_table = Table.findOne({ name: table_src });
       if (!source_table) return { error: "Source table not found" };
@@ -2419,18 +2431,18 @@ module.exports = {
       const source_rows = await source_table.getRows(q);
       if (!source_rows) return { error: "No data received" };
       const table_for_insert = Table.findOne({ name: table_dest });
-      const dest_rows = await table_for_insert.getRows({});
-      const srcPKfield = source_table.fields.find((f) => f.primary_key).name;
-      const src_pks = new Set(source_rows.map((r) => r[srcPKfield]));
-      const dest_pks = new Set(dest_rows.map((r) => r[pk_field]));
+      const dest_rows = await table_for_insert!.getRows({});
+      const srcPKfield = source_table.fields.find((f: any) => f.primary_key)!.name;
+      const src_pks = new Set(source_rows.map((r: any) => r[srcPKfield]));
+      const dest_pks = new Set(dest_rows.map((r: any) => r[pk_field]));
       let match_expr;
       if (match_field_names) {
-        const matched_fields = [];
-        const dest_fields = table_for_insert.getFields();
+        const matched_fields: any[] = [];
+        const dest_fields = table_for_insert!.getFields();
         const src_fields = source_table.getFields();
-        dest_fields.forEach((df) => {
+        dest_fields.forEach((df: any) => {
           const s = src_fields.find(
-            (sf) =>
+            (sf: any) =>
               sf.name === df.name ||
               sf.label === df.label ||
               sf.name === df.label ||
@@ -2443,43 +2455,43 @@ module.exports = {
           .join(",")}})`;
       }
       // new rows
-      for (const newPK of set_diff(src_pks, dest_pks)) {
-        const srcRow = source_rows.find((r) => r[srcPKfield] === newPK);
+      for (const newPK of Array.from(set_diff(src_pks, dest_pks))) {
+        const srcRow = source_rows.find((r: any) => r[srcPKfield] === newPK);
         const newRow = {
           [pk_field]: newPK,
           ...eval_expression(match_expr || row_expr, srcRow),
         };
-        await table_for_insert.insertRow(newRow, user);
+        await table_for_insert!.insertRow(newRow, user);
       }
       // delete rows
       if (delete_rows)
-        await table_for_insert.deleteRows(
+        await table_for_insert!.deleteRows(
           {
-            [pk_field]: { in: [...set_diff(dest_pks, src_pks)] },
+            [pk_field]: { in: Array.from(set_diff(dest_pks, src_pks)) },
           },
           user
         );
 
       //update existing
-      for (const existPK of set_intersect(src_pks, dest_pks)) {
-        const srcRow = source_rows.find((r) => r[srcPKfield] === existPK);
-        const newRow = {
+      for (const existPK of Array.from(set_intersect(src_pks, dest_pks))) {
+        const srcRow = source_rows.find((r: any) => r[srcPKfield] === existPK);
+        const newRow: any = {
           [pk_field]: existPK,
           ...eval_expression(match_expr || row_expr, srcRow),
         };
 
-        const existingRow = dest_rows.find((r) => r[pk_field] === existPK);
+        const existingRow = dest_rows.find((r: any) => r[pk_field] === existPK);
 
-        const is_different_for_key = (k) => newRow[k] != existingRow[k];
+        const is_different_for_key = (k: any) => newRow[k] != existingRow![k];
 
         if (Object.keys(newRow).some(is_different_for_key)) {
-          const upd = {};
+          const upd: any = {};
           Object.keys(newRow).forEach((k) => {
             if (is_different_for_key(k)) upd[k] = newRow[k];
           });
-          await table_for_insert.updateRow(
+          await table_for_insert!.updateRow(
             upd,
-            existingRow[table_for_insert.pk_name],
+            existingRow![table_for_insert!.pk_name],
             user
           );
         }
@@ -2519,7 +2531,7 @@ module.exports = {
       row,
       user,
       configuration: { view, new_state_fml, interval },
-    }) => {
+    }: any) => {
       let eval_js = `reload_embedded_view('${view}')`;
       if (new_state_fml) {
         const new_state = eval_expression(
@@ -2612,7 +2624,7 @@ module.exports = {
         popupWidth,
       },
       req,
-    }) => {
+    }: any) => {
       const msg = interpolate(message, row, user, "progress_bar message");
       const title1 = interpolate(title, row, user, "progress_bar title");
       const id1 = interpolate(id, row, user, "progress_bar id");
@@ -2650,7 +2662,7 @@ module.exports = {
       },
     ],
 
-    run: async ({ configuration: { seconds, sleep_where } }) => {
+    run: async ({ configuration: { seconds, sleep_where } }: any) => {
       if (sleep_where === "Server") {
         await sleep((seconds || 0) * 1000);
         return;
@@ -2666,7 +2678,7 @@ module.exports = {
   refresh_user_session: {
     description: "Refresh the user session with row from the users table",
 
-    run: async ({ user, req }) => {
+    run: async ({ user, req }: any) => {
       if (!user?.id) return;
       const u = await User.findOne({ id: user.id });
       if (!u) return;
@@ -2710,7 +2722,7 @@ module.exports = {
       row,
       user,
       configuration: { title, body, link, user_spec },
-    }) => {
+    }: any) => {
       const user_where =
         //first two cases are for programmatic use
         typeof user_spec === "number"
@@ -2733,7 +2745,7 @@ module.exports = {
           title: interpolate(title, row, user, "notify_user title"),
           body: interpolate(body, row, user, "notify_user body"),
           link: interpolate(link, row, user, "notify_user link"),
-          user_id: user.id,
+          user_id: user.id!,
         });
       }
     },
@@ -2743,18 +2755,18 @@ module.exports = {
   convert_session_to_user: {
     description:
       "Convert session id fields to user key fields on a table on Login events",
-    configFields: async ({ table }) => {
+    configFields: async ({ table }: any) => {
       const tables = await Table.find_with_external();
-      const sess_options = {};
-      const user_options = {};
+      const sess_options: any = {};
+      const user_options: any = {};
       for (const table of tables) {
         const fields = table.getFields();
         sess_options[table.name] = fields
-          .filter((f) => f.type?.name === "String")
-          .map((f) => f.name);
+          .filter((f: any) => f.type?.name === "String")
+          .map((f: any) => f.name);
         user_options[table.name] = fields
-          .filter((f) => f.reftable_name === "users")
-          .map((f) => f.name);
+          .filter((f: any) => f.reftable_name === "users")
+          .map((f: any) => f.name);
       }
       return [
         {
@@ -2791,16 +2803,16 @@ module.exports = {
       row,
       configuration: { table_name, session_field, user_field },
       user,
-    }) => {
+    }: any) => {
       if (!row?.old_session_id || !user || !session_field || !user_field)
         return;
       const table = Table.findOne({ name: table_name });
-      const rows = await table.getRows({
+      const rows = await table!.getRows({
         [session_field]: row.old_session_id,
         [user_field]: null,
       });
       for (const dbrow of rows) {
-        await table.updateRow({ [user_field]: user.id }, dbrow[table.pk_name]);
+        await table!.updateRow({ [user_field]: user.id }, dbrow[table!.pk_name]);
       }
     },
     namespace: "Database",
@@ -2811,20 +2823,20 @@ module.exports = {
     disableIf: () => !Model.has_templates,
     configFields: async () => {
       const models = await Model.find({});
-      const explainers = {};
+      const explainers: any = {};
       for (const model of models) {
         try {
           const table = Table.findOne({ id: model.table_id });
           if (!model.templateObj) continue;
           const hyperparameter_fields =
             model.templateObj.hyperparameter_fields?.({
-              table,
+              table: table!,
               ...model,
             }) || [];
           if (hyperparameter_fields.length)
-            explainers[model.id] =
+            explainers[model.id!] =
               "Hyperparamter fields: " +
-              hyperparameter_fields.map((f) => f.name).join(",");
+              hyperparameter_fields.map((f: any) => f.name).join(",");
         } catch {
           //ignore
         }
@@ -2836,7 +2848,7 @@ module.exports = {
           input_type: "select",
           required: true,
           options: models.map((model) => ({
-            label: `${model.name} [${model.modelpattern} on ${Table.findOne({ id: model.table_id }).name}]`,
+            label: `${model.name} [${model.modelpattern} on ${Table.findOne({ id: model.table_id })!.name}]`,
             value: model.id,
           })),
           attributes: {
@@ -2877,7 +2889,7 @@ module.exports = {
       row,
       configuration: { model_id, instance_name, where, hyperparameters },
       user,
-    }) => {
+    }: any) => {
       const use_instance_name = interpolate(
         instance_name,
         row || {},
@@ -2904,7 +2916,7 @@ module.exports = {
   },
   download_file_to_browser: {
     description: "Download a file to the user's browser",
-    configFields: async ({ table, mode }) => {
+    configFields: async ({ table, mode }: any) => {
       if (mode === "workflow") {
         return [
           {
@@ -2920,8 +2932,8 @@ module.exports = {
       let field_opts = [];
       if (table) {
         field_opts = table.fields
-          .filter((f) => f.type === "File")
-          .map((f) => f.name);
+          .filter((f: any) => f.type === "File")
+          .map((f: any) => f.name);
       }
       return [
         {
@@ -2938,7 +2950,7 @@ module.exports = {
       configuration: { filepath_expr, file_field },
       user,
       mode,
-    }) => {
+    }: any) => {
       let filepath;
       if (mode === "workflow") {
         filepath = eval_expression(
@@ -2950,6 +2962,7 @@ module.exports = {
       } else filepath = row[file_field];
       if (!filepath) return;
       const file = await File.findOne(filepath);
+      if (!file) throw new Error("File not found");
       return {
         download: {
           filename: file.filename,
@@ -2963,7 +2976,7 @@ module.exports = {
   install_progressive_web_app: {
     description: "Install a Progressive Web Application",
     configFields: () => [],
-    run: async ({ req }) => {
+    run: async ({ req }: any) => {
       const pwaEnabled = await getState().getConfig("pwa_enabled", false);
       return pwaEnabled
         ? { eval_js: "installPWA()" }

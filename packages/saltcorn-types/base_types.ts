@@ -215,6 +215,8 @@ export type TableQuery = {
 
 export type RunExtra = {
   redirect?: string;
+  onRowSelect?: Function;
+  removeIdFromstate?: boolean;
 } & ReqRes &
   SelectOptions;
 
@@ -602,6 +604,7 @@ export type PluginSourceType = "npm" | "github" | "local" | "git";
 
 export type Column = {
   type: "Action" | "ViewLink" | "Link" | "JoinField" | "Aggregation" | "Field";
+  [key: string]: any;
 };
 
 export type Tablely = AbstractTable | { external: true };
