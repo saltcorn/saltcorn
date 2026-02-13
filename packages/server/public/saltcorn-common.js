@@ -1766,6 +1766,7 @@ function card_max_full_screen($card_outer) {
       if (scrollMax > 50) {
         $scrollTarget.css({
           "max-height": scrollMax + "px",
+          "min-height": scrollMax + "px",
           "overflow-y": "auto",
         });
       }

@@ -506,7 +506,7 @@ class View implements AbstractView {
         this.configuration,
         viewState,
         extraArgs,
-        this.queries(remote, extraArgs.req)
+        this.queries(remote, extraArgs.req, extraArgs.res)
       );
     } catch (error: any) {
       state.log(2, error.stack);
@@ -659,7 +659,7 @@ class View implements AbstractView {
           this.configuration,
           query,
           extraArgs,
-          this.queries(remote, extraArgs.req)
+          this.queries(remote, extraArgs.req, extraArgs.res)
         );
       }
       if (this.viewtemplateObj?.renderRows) {
@@ -739,7 +739,7 @@ class View implements AbstractView {
         removeEmptyStrings(query),
         removeEmptyStrings(body),
         extraArgs,
-        this.queries(remote, extraArgs.req),
+        this.queries(remote, extraArgs.req, extraArgs.res),
         remote
       );
     } catch (error: any) {
@@ -782,7 +782,7 @@ class View implements AbstractView {
       this.configuration,
       body,
       extraArgs,
-      this.queries(remote, extraArgs.req)
+      this.queries(remote, extraArgs.req, extraArgs.res)
     );
     if (result?.status && typeof result.stack === "number")
       res.status(result.status);
