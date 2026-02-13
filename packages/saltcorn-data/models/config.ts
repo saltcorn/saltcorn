@@ -1635,6 +1635,7 @@ const available_languages = {
   fil: "Pilipino",
   id: "Indonesia",
   ja: "日本語",
+  ko: "한국어",
   lv: "Latviešu",
   lt: "Lietuvių",
   ne: "नेपाली",
@@ -1644,6 +1645,7 @@ const available_languages = {
   sl: "slovenščina",
   tr: "Türkçe",
   ur: "اردو",
+  vt: "tiếng Việt"
 };
 /**
  * Get Config variable value by key (contract)
