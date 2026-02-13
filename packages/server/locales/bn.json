@@ -810,5 +810,10 @@
   "Table %s forgotten. You can now discover it.": "টেবিল %s ভুলে যাওয়া হয়েছে। আপনি এখন এটি পুনরায় আবিষ্কার করতে পারেন।",
   "No triggers": "কোনো ট্রিগার নেই",
   "List width": "তালিকার প্রস্থ",
-  "Number of columns (1-12) allocated to the list view": "লিস্ট ভিউ-এর জন্য বরাদ্দকৃত কলামের সংখ্যা (১-১২)"
+  "Number of columns (1-12) allocated to the list view": "লিস্ট ভিউ-এর জন্য বরাদ্দকৃত কলামের সংখ্যা (১-১২)",
+  "New tenant template": "নতুন টেন্যান্ট টেমপ্লেট",
+  "Copy site structure for new tenants from this tenant": "এই টেন্যান্ট থেকে নতুন টেন্যান্টগুলোর জন্য সাইট স্ট্রাকচার কপি করুন",
+  "Use this link: <a href=\"%s\">%s</a> to revisit your application at any time.": "এই লিংকটি ব্যবহার করুন: <a href=\"%s\">%s</a> যেকোনো সময় আপনার অ্যাপ্লিকেশনে পুনরায় প্রবেশ করতে।",
+  "Use Amazon S3": "Amazon S3 ব্যবহার করুন",
+  "Use Amazon S3 (or compatible) service to store files. If disabled, Saltcorn uses local disk. WARNING: Changing this may break your uploaded files!": "ফাইল সংরক্ষণের জন্য Amazon S3 (অথবা সামঞ্জস্যপূর্ণ) সার্ভিস ব্যবহার করুন। যদি নিষ্ক্রিয় থাকে, তাহলে Saltcorn স্থানীয় ডিস্ক ব্যবহার করবে। সতর্কতা: এটি পরিবর্তন করলে আপনার আপলোড করা ফাইলগুলো নষ্ট হয়ে যেতে পারে!"
 }
