@@ -21,6 +21,14 @@ import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
 import { isEqual, throttle, chunk } from "lodash";
 
+const getSelectedNodes = (selected) => {
+  if (!selected) return [];
+  if (typeof selected.has === "function") {
+    return [...selected];
+  }
+  return [selected];
+};
+
 export /**
  * @param {object} props
  * @param {*} props.name
@@ -207,11 +215,10 @@ export /**
  * @namespace
  */
 const Library = ({ expanded }) => {
-  const { actions, selected, query, connectors } = useEditor((state, query) => {
-    return {
-      selected: state.events.selected,
-    };
-  });
+  const { actions, selected, selectedNodes, query, connectors } = useEditor((state, query) => ({
+    selected: getSelectedNodes(state.events.selected)[0] || null,
+    selectedNodes: getSelectedNodes(state.events.selected),
+  }));
   const options = useContext(optionsCtx);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
@@ -222,9 +229,11 @@ const Library = ({ expanded }) => {
    * @returns {void}
    */
   const addSelected = () => {
+    if (!selected && selectedNodes.length === 0) return;
+    const nodeToSave = selected || selectedNodes[0];
     const layout = craftToSaltcorn(
       JSON.parse(query.serialize()),
-      selected,
+      nodeToSave,
       options
     );
     const data = { layout, icon, name: newName };
@@ -255,7 +264,7 @@ const Library = ({ expanded }) => {
           id="dropdownMenuButton"
           aria-haspopup="true"
           aria-expanded="false"
-          disabled={!selected}
+          disabled={!selected && selectedNodes.length === 0}
           onClick={() => setAdding(!adding)}
         >
           <FontAwesomeIcon icon={faPlus} className="me-1" />

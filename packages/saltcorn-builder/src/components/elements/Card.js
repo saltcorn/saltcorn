@@ -16,7 +16,6 @@ import {
   buildOptions,
 } from "./utils";
 import { Column } from "./Column";
-
 import { Element, useNode } from "@craftjs/core";
 import { BoxModelEditor } from "./BoxModelEditor";
 import {
@@ -40,7 +39,7 @@ import { bstyleopt } from "./utils";
 
 export /**
  * @param {object} props
- * @param {string} props.children
+ * @param {string} props.contents - Card body contents
  * @param {object} props.isFormula
  * @param {string} [props.title]
  * @param {string} props.shadow
@@ -52,7 +51,7 @@ export /**
  * @namespace
  */
 const Card = ({
-  children,
+  contents,
   isFormula,
   title,
   shadow,
@@ -132,7 +131,9 @@ const Card = ({
             : {}
         }
       >
-        <div className="canvas">{children}</div>
+        <Element canvas id="cardbody" is={Column}>
+          {contents}
+        </Element>
       </div>
       {hasFooter ? (
         <div className={`card-footer ${noPadding ? "p-0" : ""}`}>
@@ -472,6 +473,7 @@ const fields = [
   { label: "Card footer", name: "hasFooter", type: "Bool" },
   { label: "Save indicator", name: "titleAjaxIndicator", type: "Bool" },
   { label: "No padding", name: "noPadding", type: "Bool" },
+  { label: "Contents", name: "contents", type: "Nodes", nodeID: "cardbody" },
   { label: "Footer", name: "footer", type: "Nodes", nodeID: "cardfooter" },
   { name: "style", default: {} },
   { label: "Class", name: "class", type: "String", canBeFormula: true },
@@ -498,13 +500,13 @@ Card.craft = {
     shadow: true,
     isFormula: {},
     style: {},
+    contents: [],
     footer: [],
   },
   displayName: "Card",
   related: {
     settings: CardSettings,
     segment_type: "card",
-    hasContents: true,
     fields,
   },
 };

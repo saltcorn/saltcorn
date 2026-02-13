@@ -3,7 +3,7 @@
  * @module components/elements/utils
  * @subcategory components / elements
  */
-/* globals $, _sc_globalCsrf*/
+/* globals $, _sc_globalCsrf, apply_showif*/
 import React, { Fragment, useState, useEffect } from "react";
 import optionsCtx from "../context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -29,6 +29,163 @@ import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
 import Select from "react-select";
 import { MultiLineCodeEditor, SingleLineEditor } from "./MonacoEditor";
+
+const isDarkMode = () => {
+  if (typeof window !== "undefined" && window._sc_lightmode) {
+    return window._sc_lightmode === "dark";
+  }
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  )
+    return true;
+  return false;
+};
+
+export const builderSelectClassName = (base = "") =>
+  [base, isDarkMode() ? "builder-select-dark" : ""].filter(Boolean).join(" ");
+
+export const reactSelectStyles = (overrides = {}) => {
+  const dark = isDarkMode();
+  const base = {
+    menuPortal: (baseStyles) => ({ ...baseStyles, zIndex: 19999 }),
+  };
+
+  if (!dark) {
+    // Light mode styles
+    return {
+      ...base,
+      control: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#ffffff",
+        borderColor: "#dee2e6",
+        color: "#212529",
+      }),
+      valueContainer: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "transparent",
+      }),
+      singleValue: (baseStyles) => ({
+        ...baseStyles,
+        color: "#212529",
+      }),
+      input: (baseStyles) => ({
+        ...baseStyles,
+        color: "#212529",
+      }),
+      placeholder: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      menu: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#ffffff",
+        border: "1px solid #dee2e6",
+      }),
+      menuList: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#ffffff",
+      }),
+      option: (baseStyles, state) => ({
+        ...baseStyles,
+        backgroundColor: state.isFocused
+          ? "#e9ecef"
+          : state.isSelected
+            ? "#0d6efd"
+            : "transparent",
+        color: state.isSelected ? "#fff" : "#212529",
+      }),
+      dropdownIndicator: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      clearIndicator: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      indicatorSeparator: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#dee2e6",
+      }),
+      groupHeading: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      menuNotice: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      ...overrides,
+    };
+  }
+
+  // Dark mode styles
+  return {
+    ...base,
+    control: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#212529",
+      borderColor: "#495057",
+      color: "#f8f9fa",
+    }),
+    valueContainer: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "transparent",
+    }),
+    singleValue: (baseStyles) => ({
+      ...baseStyles,
+      color: "#f8f9fa",
+    }),
+    input: (baseStyles) => ({
+      ...baseStyles,
+      color: "#f8f9fa",
+    }),
+    placeholder: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    menu: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#212529",
+      border: "1px solid #495057",
+    }),
+    menuList: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#212529",
+    }),
+    option: (baseStyles, state) => ({
+      ...baseStyles,
+      backgroundColor: state.isFocused
+        ? "#343a40"
+        : state.isSelected
+          ? "#0d6efd"
+          : "transparent",
+      color: state.isSelected ? "#fff" : "#f8f9fa",
+    }),
+    dropdownIndicator: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    clearIndicator: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    indicatorSeparator: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#495057",
+    }),
+    groupHeading: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    menuNotice: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    ...overrides,
+  };
+};
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -918,7 +1075,7 @@ const ConfigField = ({
     field.options =
       typeof field.attributes?.options === "string"
         ? field.attributes?.options.split(",").map((s) => s.trim())
-        : [...field.attributes?.options];
+        : [...(field.attributes?.options ?? [])];
     if (!field.required && field.options) field.options.unshift("");
   }
   const field_type = field.input_type || field.type.name || field.type;
@@ -1098,7 +1255,8 @@ const ConfigField = ({
         return (
           <Select
             options={seloptions}
-            className="react-select selectized-field"
+            className={builderSelectClassName("react-select selectized-field")}
+            classNamePrefix="builder-select"
             value={seloptions.find((so) => value === so.value)}
             onChange={(e) =>
               (e.name && myOnChange(e.name)) ||
@@ -1112,7 +1270,7 @@ const ConfigField = ({
               (typeof e === "string" && myOnChange(e))
             }
             menuPortalTarget={document.body}
-            styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+            styles={reactSelectStyles()}
           ></Select>
         );
       } else
@@ -1737,8 +1895,8 @@ export const buildBootstrapOptions = (values) => {
 
 export const arrayChunks = (xs, n) => {
   const arrayOfArrays = [];
-  for (var i = 0; i < bigarray.length; i += n) {
-    arrayOfArrays.push(bigarray.slice(i, i + n));
+  for (var i = 0; i < xs.length; i += n) {
+    arrayOfArrays.push(xs.slice(i, i + n));
   }
   return arrayOfArrays;
 };

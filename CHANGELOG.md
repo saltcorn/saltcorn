@@ -2,7 +2,13 @@
 
 ## 1.6.0 - In development
 
-* Entities list: search modules and users, multiselect with delete, deep search option
+* The builder is now based on craft.js 0.2.12 and the drag-and-drop is much improved
+
+* The `res` is now available in actions, allowing you to, for instance, set cookies
+
+* Set additional workflow context in the builder when a workflow action is selected
+
+* Entities list: search modules and users, multiselect with delete, deep search option, keyboard shortcuts
 
 * Instances run in multi-node mode will now automatically select a leader to run the schedule
 

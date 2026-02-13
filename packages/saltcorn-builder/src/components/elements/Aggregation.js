@@ -3,6 +3,7 @@
  * @module components/elements/Aggregation
  * @subcategory components / elements
  */
+/* globals validate_expression_elem */
 
 import React, {
   useContext,
