@@ -1632,15 +1632,18 @@ const available_languages = {
   bn: "বাংলা",
   cs: "Český",
   et: "eesti",
+  fil: "Pilipino",
   id: "Indonesia",
   ja: "日本語",
   lv: "Latviešu",
   lt: "Lietuvių",
   ne: "नेपाली",
+  ro: "română",
   sr: "Српски",
   sk: "slovenský",
   sl: "slovenščina",
   tr: "Türkçe",
+  ur: "اردو",
 };
 /**
  * Get Config variable value by key (contract)
