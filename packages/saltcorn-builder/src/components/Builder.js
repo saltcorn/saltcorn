@@ -10,8 +10,10 @@ import React, {
   useState,
   Fragment,
   useRef,
+  memo,
 } from "react";
-import { Editor, Frame, Element, Selector, useEditor } from "@craftjs/core";
+import { Editor, Frame, Element, Selector, useEditor, DefaultEventHandlers } from "@craftjs/core";
+import { Layers, useLayer } from "@craftjs/layers"
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
@@ -46,7 +48,7 @@ import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Container } from "./elements/Container";
 import { Column } from "./elements/Column";
-import { Layers } from "saltcorn-craft-layers-noeye";
+// import { Layers } from "saltcorn-craft-layers-noeye";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCopy,
@@ -56,19 +58,42 @@ import {
   faSave,
   faExclamationTriangle,
   faPlus,
+  faChevronDown
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faCaretSquareLeft,
   faCaretSquareRight,
 } from "@fortawesome/free-regular-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
-import { InitNewElement, Library } from "./Library";
+import { InitNewElement, Library, LibraryElem } from "./Library";
 import { RenderNode } from "./RenderNode";
 import { ListColumn } from "./elements/ListColumn";
 import { ListColumns } from "./elements/ListColumns";
 import { recursivelyCloneToElems } from "./elements/Clone";
 
 const { Provider } = optionsCtx;
+
+const getSelectedNodes = (selected) => {
+  if (!selected) return [];
+  if (typeof selected.all === "function") {
+    return selected.all();
+  }
+  if (Array.isArray(selected.all)) {
+    return selected.all;
+  }
+  if (typeof selected.values === "function") {
+    return Array.from(selected.values());
+  }
+  if (typeof selected.has === "function") {
+    return [...selected];
+  }
+  return [selected];
+};
+
+const getFirstSelected = (selected) => {
+  const nodes = getSelectedNodes(selected);
+  return nodes.length > 0 ? nodes[0] : null;
+};
 
 /**
  *
@@ -80,8 +105,9 @@ const { Provider } = optionsCtx;
 const SettingsPanel = () => {
   const options = useContext(optionsCtx);
 
-  const { actions, selected, query } = useEditor((state, query) => {
-    const currentNodeId = state.events.selected;
+  const { actions, selected, selectedCount, query } = useEditor((state, query) => {
+    const selectedNodes = getSelectedNodes(state.events.selected);
+    const currentNodeId = selectedNodes.length === 1 ? selectedNodes[0] : null;
     let selected;
 
     if (currentNodeId) {
@@ -104,6 +130,7 @@ const SettingsPanel = () => {
 
     return {
       selected,
+      selectedCount: selectedNodes.length,
     };
   });
 
@@ -128,74 +155,126 @@ const SettingsPanel = () => {
   const handleUserKeyPress = (event) => {
     const { keyCode, target } = event;
     const tagName = target.tagName.toLowerCase();
-    if ((tagName === "body" || tagName === "button") && selected) {
-      //8 backsp, 46 del
-      if ((keyCode === 8 || keyCode === 46) && selected.id === "ROOT") {
-        deleteChildren();
-      }
-      if (keyCode === 8) {
-        //backspace
-        const prevSib = otherSibling(-1);
-        const parent = selected.parent;
-        deleteThis();
-        if (prevSib) actions.selectNode(prevSib);
-        else actions.selectNode(parent);
-      }
-      if (keyCode === 46) {
-        //del
-        const nextSib = otherSibling(1);
-        deleteThis();
-        if (nextSib) actions.selectNode(nextSib);
-      }
-      if (keyCode === 37 && selected.parent)
-        //left
-        actions.selectNode(selected.parent);
-
-      if (keyCode === 39) {
-        //right
-        if (selected.children && selected.children.length > 0) {
-          actions.selectNode(selected.children[0]);
-        } else if (selected.displayName === "Columns") {
-          const node = query.node(selected.id).get();
-          const child = node?.data?.linkedNodes?.Col0;
-          if (child) actions.selectNode(child);
+    const hasSelection = selectedCount > 0;
+    if ((tagName === "body" || tagName === "button") && hasSelection) {
+      if (selected) {
+        if ((keyCode === 8 || keyCode === 46) && selected.id === "ROOT") {
+          deleteChildren();
+        }
+        if (keyCode === 8) {
+          //backspace
+          const prevSib = otherSibling(-1);
+          const parent = selected.parent;
+          deleteThis();
+          if (prevSib) actions.selectNode(prevSib);
+          else actions.selectNode(parent);
+        }
+        if (keyCode === 46) {
+          //del
+          const nextSib = otherSibling(1);
+          deleteThis();
+          if (nextSib) actions.selectNode(nextSib);
+        }
+        if (keyCode === 37 && selected.parent)
+          //left
+          actions.selectNode(selected.parent);
+  
+        if (keyCode === 39) {
+          //right
+          if (selected.children && selected.children.length > 0) {
+            actions.selectNode(selected.children[0]);
+          } else if (selected.displayName === "Columns") {
+            const node = query.node(selected.id).get();
+            const child = node?.data?.linkedNodes?.Col0;
+            if (child) actions.selectNode(child);
+          }
+        }
+        if (keyCode === 38 && selected.parent) {
+          //up
+          const prevSib = otherSibling(-1);
+          if (prevSib) actions.selectNode(prevSib);
+          event.preventDefault();
+        }
+        if (keyCode === 40 && selected.parent) {
+          //down
+          const nextSib = otherSibling(1);
+          if (nextSib) actions.selectNode(nextSib);
+          event.preventDefault();
         }
       }
-      if (keyCode === 38 && selected.parent) {
-        //up
-        const prevSib = otherSibling(-1);
-        if (prevSib) actions.selectNode(prevSib);
-        event.preventDefault();
+      if ((event.ctrlKey || event.metaKey) && event.keyCode == 67) {
+        const serialized = JSON.parse(query.serialize());
+        const serializedIds = new Set(Object.keys(serialized));
+        const currentSelected = query.getEvent("selected");
+        const rawSelected = getSelectedNodes(currentSelected);
+        if (rawSelected.length === 0 && selected?.id) rawSelected.push(selected.id);
+        const selectedNodes = rawSelected
+          .map((nodeId) => (typeof nodeId === "string" ? nodeId : nodeId?.id))
+          .filter(
+            (nodeId) =>
+              nodeId && nodeId !== "ROOT" && serializedIds.has(nodeId)
+          );
+        if (selectedNodes.length === 0) return;
+
+        if (selectedNodes.length === 1) {
+          const { layout } = craftToSaltcorn(
+            serialized,
+            selectedNodes[0],
+            options
+          );
+          navigator.clipboard.writeText(JSON.stringify(layout, null, 2));
+        } else {
+          const layouts = selectedNodes.map((nodeId) => {
+            const { layout } = craftToSaltcorn(
+              serialized,
+              nodeId,
+              options
+            );
+            return layout;
+          });
+          navigator.clipboard.writeText(
+            JSON.stringify({ above: layouts }, null, 2)
+          );
+        }
       }
-      if (keyCode === 40 && selected.parent) {
-        //down
-        const nextSib = otherSibling(1);
-        if (nextSib) actions.selectNode(nextSib);
-        event.preventDefault();
-      }
-      // Ctrl+C or Cmd+C pressed?
-      if ((event.ctrlKey || event.metaKey) && event.keyCode == 67 && selected) {
-        // copy elem in json format to clipboard
-        const { layout } = craftToSaltcorn(
-          JSON.parse(query.serialize()),
-          selected?.id,
-          options
-        );
-        navigator.clipboard.writeText(JSON.stringify(layout, null, 2));
-      }
-      if ((event.ctrlKey || event.metaKey) && event.keyCode == 88 && selected) {
-        // cut elem in json format to clipboard
-        const { layout } = craftToSaltcorn(
-          JSON.parse(query.serialize()),
-          selected?.id,
-          options
-        );
-        navigator.clipboard.writeText(JSON.stringify(layout, null, 2));
-        deleteThis();
+      if ((event.ctrlKey || event.metaKey) && event.keyCode == 88) {
+        const serialized = JSON.parse(query.serialize());
+        const serializedIds = new Set(Object.keys(serialized));
+        const currentSelected = query.getEvent("selected");
+        const rawSelected = getSelectedNodes(currentSelected);
+        if (rawSelected.length === 0 && selected?.id) rawSelected.push(selected.id);
+        const selectedNodes = rawSelected
+          .map((nodeId) => (typeof nodeId === "string" ? nodeId : nodeId?.id))
+          .filter(
+            (nodeId) =>
+              nodeId && nodeId !== "ROOT" && serializedIds.has(nodeId)
+          );
+        if (selectedNodes.length === 0) return;
+
+        if (selectedNodes.length === 1) {
+          const { layout } = craftToSaltcorn(
+            serialized,
+            selectedNodes[0],
+            options
+          );
+          navigator.clipboard.writeText(JSON.stringify(layout, null, 2));
+          actions.delete(selectedNodes[0]);
+        } else {
+          const layouts = selectedNodes.map((nodeId) => {
+            const { layout } = craftToSaltcorn(
+              serialized,
+              nodeId,
+              options
+            );
+            return layout;
+          });
+          navigator.clipboard.writeText(
+            JSON.stringify({ above: layouts }, null, 2)
+          );
+          selectedNodes.forEach((nodeId) => actions.delete(nodeId));
+        }
       }
       if ((event.ctrlKey || event.metaKey) && event.keyCode == 86) {
-        // paste elem from clipboard into container element
-
         navigator.clipboard.readText().then((clipText) => {
           const layout = JSON.parse(clipText);
           layoutToNodes(
@@ -245,7 +324,6 @@ const SettingsPanel = () => {
     const siblings = query.node(selected.parent).childNodes();
     const sibIx = siblings.findIndex((sib) => sib === selected.id);
     const elem = recursivelyCloneToElems(query)(selected.id);
-    //console.log(elem);
     actions.addNodeTree(
       query.parseReactElement(elem).toNodeTree(),
       parent || "ROOT",
@@ -265,7 +343,12 @@ const SettingsPanel = () => {
         )}
       </div>
       <div className="card-body p-2">
-        {selected ? (
+        {selectedCount > 1 ? (
+          <div>
+            <p><strong>{selectedCount} elements selected</strong></p>
+            <p className="text-muted small">Multi-selection active. Use Shift+Click to add/remove elements.</p>
+          </div>
+        ) : selected ? (
           <Fragment>
             {selected.isDeletable && (
               <button
@@ -330,6 +413,75 @@ function useWindowDimensions() {
 
   return windowDimensions;
 }
+
+/**
+ * Custom Layer Component for Craft.js Layers panel
+ * Must be defined outside Builder component and memoized to prevent infinite re-renders
+ * Added defensive checks for layer properties
+ * @category saltcorn-builder
+ * @subcategory components
+ * @namespace
+ */
+const CustomLayerComponent = memo(({ children }) => {
+  const {
+    id,
+    depth,
+    expanded,
+    hovered,
+    actions: { toggleLayer },
+    connectors: { layer, drag },
+  } = useLayer((node) => {
+      return {
+        hovered: node?.events?.hovered,
+        expanded: node?.data?.expanded,
+      };
+  });
+
+  const { displayName, hasNodes } = useEditor((state) => {
+      const node = state.nodes[id];
+      const data = node?.data;
+      
+      let name = data?.displayName || data?.name || id;
+      if (name === "ROOT" || name === "Canvas") {
+          name = data?.name || name;
+      }
+      
+      const nodes = data?.nodes;
+      const linkedNodes = data?.linkedNodes;
+      const hasChildren = (nodes && nodes.length > 0) || (linkedNodes && Object.keys(linkedNodes).length > 0);
+      
+      return {
+          displayName: name,
+          hasNodes: hasChildren
+      };
+  });
+
+  return (
+    <div>
+        <div 
+          ref={(dom) => { layer(dom); drag(dom); }}
+          className={`builder-layer-node ${hovered ? "hovered" : ""}`}
+          style={{
+            paddingLeft: `${depth * 20 + 10}px`,
+          }}
+        >
+          <span className="layer-name" style={{ flexGrow: 1 }}>{displayName}</span>
+          
+          {hasNodes && (
+             <span 
+               onClick={(e) => {
+                 e.stopPropagation();
+                 toggleLayer();
+               }}
+             >
+               <FontAwesomeIcon icon={faChevronDown} color="white" fontSize={14} className="float-end fa-lg" />
+             </span>
+          )}
+        </div>
+      {children}
+    </div>
+  );
+});
 
 const AddColumnButton = () => {
   const { query, actions } = useEditor(() => {});
@@ -437,6 +589,8 @@ const NextButton = ({ layout }) => {
  * @subcategory components
  * @namespace
  */
+
+
 const Builder = ({ options, layout, mode }) => {
   const [showLayers, setShowLayers] = useState(true);
   const [previews, setPreviews] = useState({});
@@ -453,18 +607,56 @@ const Builder = ({ options, layout, mode }) => {
 
   const ref = useRef(null);
 
-  useEffect(() => {
-    if (!ref.current) return;
-    setBuilderHeight(ref.current.clientHeight);
-    const rect = ref.current.getBoundingClientRect();
-    setBuilderTop(rect.top);
-  });
+   useEffect(() => {
+     if (!ref.current) return;
+     setBuilderHeight(ref.current.clientHeight);
+     const rect = ref.current.getBoundingClientRect();
+     setBuilderTop(rect.top);
+   });
 
   const canvasHeight =
     Math.max(windowHeight - builderTop, builderHeight, 600) - 10;
   return (
     <ErrorBoundary>
-      <Editor onRender={RenderNode}>
+      <Editor
+        onRender={RenderNode}
+        indicator={{
+          success: "#28a745",
+          thickness: 2,
+          className: "builder-drop-indicator",
+        }}
+        handlers={(store) => new DefaultEventHandlers({
+          store,
+          isMultiSelectEnabled: (e) => e?.shiftKey || false
+        })}
+        resolver={{
+          Text,
+          Empty,
+          Columns,
+          JoinField,
+          Field,
+          ViewLink,
+          Action,
+          HTMLCode,
+          LineBreak,
+          Aggregation,
+          Card,
+          Image,
+          Link,
+          View,
+          SearchBar,
+          Container,
+          Column,
+          DropDownFilter,
+          DropMenu,
+          Tabs,
+          Table,
+          ToggleFilter,
+          ListColumn,
+          ListColumns,
+          LibraryElem,
+        }}
+      >
         <Provider value={options}>
           <PreviewCtx.Provider
             value={{ previews, setPreviews, uploadedFiles, setUploadedFiles }}
@@ -531,7 +723,10 @@ const Builder = ({ options, layout, mode }) => {
                       </div>
                       {showLayers && (
                         <div className="card-body p-0 builder-layers">
-                          <Layers expandRootOnLoad={true} />
+                          <Layers 
+                            expandRootOnLoad={true}
+                            renderLayer={CustomLayerComponent} 
+                          />
                         </div>
                       )}
                     </div>
@@ -544,34 +739,7 @@ const Builder = ({ options, layout, mode }) => {
                     }`}
                   >
                     <div>
-                      <Frame
-                        resolver={{
-                          Text,
-                          Empty,
-                          Columns,
-                          JoinField,
-                          Field,
-                          ViewLink,
-                          Action,
-                          HTMLCode,
-                          LineBreak,
-                          Aggregation,
-                          Card,
-                          Image,
-                          Link,
-                          View,
-                          SearchBar,
-                          Container,
-                          Column,
-                          DropDownFilter,
-                          DropMenu,
-                          Tabs,
-                          Table,
-                          ToggleFilter,
-                          ListColumn,
-                          ListColumns,
-                        }}
-                      >
+                      <Frame>
                         {options.mode === "list" ? (
                           <Element canvas is={ListColumns}></Element>
                         ) : (

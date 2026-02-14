@@ -3,10 +3,12 @@
  * @module components/elements/Container
  * @subcategory components / elements
  */
+/* globals $, validate_expression_elem */
 
 import React, { useContext, Fragment } from "react";
 
 import { Element, useNode } from "@craftjs/core";
+import { Column } from "./Column";
 import optionsCtx from "../context";
 import {
   Accordion,
@@ -83,6 +85,7 @@ export /**
  */
 const Container = ({
   children,
+  contents,
   minHeight,
   height,
   width,
@@ -111,18 +114,46 @@ const Container = ({
   style,
   htmlElement,
   transform,
+  showForRole,
+  bgField,
+  maxScreenWidth,
+  imgResponsiveWidths,
+  click_action,
+  animateName,
+  animateDelay,
+  animateDuration,
+  animateInitialHide,
+  url,
+  hoverColor,
+  overflow,
+  show_for_owner,
+  showIfFormula,
+  isFormula,
+  minRole,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
-  //console.log("container style", style);
+
+  const actualChildren = contents || children;
+
+  const renderChildren = () => {
+    if (!actualChildren) return null;
+    if (React.isValidElement(actualChildren)) return actualChildren;
+    if (Array.isArray(actualChildren)) return actualChildren;
+    if (typeof actualChildren === 'object' && actualChildren !== null && 'children' in actualChildren) {
+      return actualChildren.children;
+    }
+    return actualChildren;
+  };
+
   return React.createElement(
     htmlElement,
     {
       ref: (dom) => connect(drag(dom)),
       id: customId || "",
-      className: `${customClass || ""} kontainer canvas text-${hAlign} ${
+      className: `${customClass || ""} kontainer text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
@@ -176,7 +207,7 @@ const Container = ({
           : {}),
       },
     },
-    children
+    React.createElement(Element, { canvas: true, id: "container-canvas", is: Column }, renderChildren())
   );
 };
 
@@ -1161,7 +1192,7 @@ const ContainerSettings = () => {
 Container.craft = {
   displayName: "Container",
   props: {
-    minHeight: 0,
+    minHeight: 20,
     vAlign: "top",
     hAlign: "left",
     bgFileId: 0,
@@ -1181,17 +1212,65 @@ Container.craft = {
     showIfFormula: "",
     showForRole: [],
     margin: [0, 0, 0, 0],
-    padding: [0, 0, 0, 0],
+    padding: [16, 16, 16, 16],
     minScreenWidth: "",
     display: "block",
     show_for_owner: false,
     style: {},
     htmlElement: "div",
+    contents: [],
   },
   rules: {
     canDrag: () => true,
   },
   related: {
     settings: ContainerSettings,
+    segment_type: "container",
+    fields: [
+      { label: "Contents", name: "contents", type: "Nodes", nodeID: "container-canvas" },
+      { name: "gradStartColor", canBeFormula: true },
+      { name: "gradEndColor", canBeFormula: true },
+      { name: "gradDirection", canBeFormula: true },
+      { name: "rotate", default: 0 },
+      { name: "animateName", },
+      { name: "animateDuration" },
+      { name: "animateDelay" },
+      { name: "animateInitialHide" },
+      { name: "customClass" },
+      { name: "customId" },
+      { name: "customCSS" },
+      { name: "overflow" },
+      { name: "margin", default: [0, 0, 0, 0] },
+      { name: "padding", default: [0, 0, 0, 0] },
+      { name: "minHeight", default: 20 },
+      { name: "height" },
+      { name: "width" },
+      { name: "click_action" },
+      { name: "url", canBeFormula: true },
+      { name: "hoverColor" },
+      { name: "minHeightUnit", default: "px" },
+      { name: "heightUnit", default: "px" },
+      { name: "widthUnit", default: "px" },
+      { name: "vAlign" },
+      { name: "hAlign" },
+      { name: "htmlElement", default: "div" },
+      { name: "display", default: "block" },
+      { name: "fullPageWidth", default: false },
+      { name: "bgFileId" },
+      { name: "bgField" },
+      { name: "imageSize", default: "contain" },
+      { name: "imgResponsiveWidths" },
+      { name: "bgType", default: "None" },
+      { name: "style", default: {} },
+      { name: "transform", default: {} },
+      { name: "bgColor", default: "#ffffff", canBeFormula: true },
+      { name: "setTextColor", default: false },
+      { name: "textColor", default: "#000000" },
+      { name: "showIfFormula", default: "" },
+      { name: "showForRole", default: [] },
+      { name: "minScreenWidth", default: "" },
+      { name: "maxScreenWidth", default: "" },
+      { name: "show_for_owner", default: false },
+    ],
   },
 };

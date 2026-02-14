@@ -759,6 +759,7 @@ router.get(
           type: "button",
           class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "table",
+          title: req.__("Show tables (Alt+T)"),
         },
         i({ class: "fas fa-table me-1" }),
         req.__("Tables")
@@ -768,6 +769,7 @@ router.get(
           type: "button",
           class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "view",
+          title: req.__("Show views (Alt+V)"),
         },
         i({ class: "fas fa-eye me-1" }),
         req.__("Views")
@@ -777,6 +779,7 @@ router.get(
           type: "button",
           class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "page",
+          title: req.__("Show pages (Alt+P)"),
         },
         i({ class: "fas fa-file me-1" }),
         req.__("Pages")
@@ -786,6 +789,7 @@ router.get(
           type: "button",
           class: "btn btn-sm btn-outline-primary entity-filter-btn",
           "data-entity-type": "trigger",
+          title: req.__("Show triggers (Alt+R)"),
         },
         i({ class: "fas fa-play me-1" }),
         req.__("Triggers")
@@ -796,6 +800,7 @@ router.get(
           class:
             "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
           "data-entity-type": "user",
+          title: req.__("Show users (Alt+U)"),
         },
         i({ class: "fas fa-user me-1" }),
         req.__("Users")
@@ -806,6 +811,7 @@ router.get(
           class:
             "btn btn-sm btn-outline-primary entity-filter-btn entity-extended-btn d-none",
           "data-entity-type": "module",
+          title: req.__("Show modules (Alt+M)"),
         },
         i({ class: "fas fa-cube me-1" }),
         req.__("Modules")
@@ -903,7 +909,7 @@ router.get(
         class:
           "d-flex flex-wrap align-items-center justify-content-between mb-2 gap-2 d-none p-2 border rounded",
         style:
-          "background-color: var(--bs-secondary-bg); border-color: transparent !important;",
+          "background-color: var(--bs-secondary-bg, var(--bs-secondary-bg-fallback)); border-color: transparent !important;",
       },
       div(
         { class: "d-flex align-items-center gap-2 flex-wrap" },
@@ -1131,6 +1137,11 @@ router.get(
         const entitiesList = document.getElementById("entities-list");
         const noResults = document.getElementById("no-results");
         const filterButtons = document.querySelectorAll(".entity-filter-btn");
+        const filterButtonsByType = {};
+        filterButtons.forEach((btn) => {
+          const type = btn.dataset.entityType;
+          if (type) filterButtonsByType[type] = btn;
+        });
         const tagButtons = document.querySelectorAll(".tag-filter-btn");
         const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};
         const legacyButton = document.getElementById("legacy-entity-link");
@@ -1184,6 +1195,16 @@ router.get(
 
         const getSelectableVisibleRows = () =>
           getVisibleRows().filter((row) => isRowSelectable(row));
+
+        const isTypingTarget = (el) => {
+          if (!el) return false;
+          if (el.isContentEditable) return true;
+          const tag = el.tagName;
+          if (!tag) return false;
+          const tagName = tag.toUpperCase();
+          if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') return true;
+          return !!el.closest('[contenteditable="true"]');
+        };
 
         const refreshSelectionStyles = () => {
           document.querySelectorAll('.entity-row').forEach((row) => {
@@ -1445,6 +1466,12 @@ router.get(
 
         // Search input handler
         searchInput.addEventListener("input", filterEntities);
+        searchInput.addEventListener("keydown", (e) => {
+          if (e.key === "Escape" || e.key === "Esc") {
+            e.preventDefault();
+            searchInput.blur();
+          }
+        });
         if (deepSearchToggle) {
           deepSearchToggle.addEventListener("change", filterEntities);
         }
@@ -1486,6 +1513,54 @@ router.get(
             }
             filterEntities();
           });
+        });
+
+        const keyboardShortcutTypeMap = {
+          KeyT: "table",
+          KeyV: "view",
+          KeyP: "page",
+          KeyR: "trigger",
+          KeyM: "module",
+          KeyU: "user",
+        };
+
+        document.addEventListener("keydown", (e) => {
+          const isFromSearchInput = e.target === searchInput;
+          const typingTarget = isTypingTarget(e.target);
+
+          if (e.altKey && !e.ctrlKey && !e.metaKey) {
+            const type = keyboardShortcutTypeMap[e.code];
+            if (type) {
+              const isExtendedType = EXTENDED_TYPES.includes(type);
+              if (isExtendedType && typeof isExtendedExpanded !== "undefined" && !isExtendedExpanded) {
+                return;
+              }
+              const btn = filterButtonsByType[type];
+              if (btn) {
+                e.preventDefault();
+                btn.click();
+                if (searchInput && typeof searchInput.focus === 'function') {
+                  searchInput.focus({ preventScroll: true });
+                }
+              }
+              return;
+            }
+            return;
+          }
+          if (typingTarget && !isFromSearchInput) return;
+
+          const isSelectAllKey = e.key === "a" || e.key === "A";
+          if ((e.metaKey || e.ctrlKey) && !e.altKey && isSelectAllKey) {
+            const visibleRows = getSelectableVisibleRows();
+            if (!visibleRows.length) return;
+            e.preventDefault();
+            visibleRows.forEach((row) => {
+              const key = row.dataset.entityKey;
+              if (key) selectedKeys.add(key);
+            });
+            lastSelectedIndex = visibleRows.length - 1;
+            updateSelectionUI();
+          }
         });
 
         if (clearSelectionBtn) {
@@ -1643,37 +1718,32 @@ router.get(
 
     const styles = /*css*/ `
       <style>
+        /* Temporary fallback selection bg color */
+        :root {
+          --bs-secondary-bg-fallback: #ececec;
+        }
+        [data-bs-theme="dark"] {
+          --bs-secondary-bg-fallback: #2c2c2c;
+        }
         .entity-row td { vertical-align: middle; }
         .entity-row { user-select: none; }
         .entity-row-selection-disabled {
           cursor: not-allowed;
           /* opacity: 0.8; */
         }
-        .entity-filter-btn { transition: all 0.15s ease-in-out; }
+        .entity-filter-btn { transition: all 0.15s ease-in-out; max-width: 105px; }
         .tag-filter-btn { transition: all 0.15s ease-in-out; }
         /* Show plus badge only on hover over tag cell */
         td:nth-child(6) .add-tag { visibility: hidden; cursor: pointer; }
         tr:hover td:nth-child(6) .add-tag { visibility: visible; }
-
-        /* .entity-row-selected,
-        .entity-row.table-active {
-          background-color: #f2f2f2 !important;
-        } */
-
-        /* #entity-filters-row, */
-        /* #entity-selection-bar {
-          padding-top: 0.5rem;
-          padding-bottom: 0.5rem;
-          margin-bottom: .5rem;
-        } */
-
-        /* #entity-selection-bar .selection-control-btn {
-          min-width: 2.5rem;
-        } */
-
+               
         #entity-more-btn:not(.d-none) {
           border-top-right-radius: 0.25rem !important;
           border-bottom-right-radius: 0.25rem !important;
+          max-width: 80px;
+        }
+        #entity-less-btn:not(.d-none) {
+          max-width: 80px;
         }
       </style>
     `;

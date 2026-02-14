@@ -115,12 +115,12 @@ const RenderNode = ({ render }) => {
       sibIx + 1
     );
   };
-  return (
-    <>
-      {(isActive || isHover) &&
-      id !== "ROOT" &&
-      !(name === "Column" && !isActive)
-        ? ReactDOM.createPortal(
+   return (
+     <>
+       {(isActive || isHover) &&
+       id !== "ROOT" &&
+       !(name === "Column" && !isActive)
+         ? ReactDOM.createPortal(
             <div
               ref={currentRef}
               className={`selected-indicator ${
