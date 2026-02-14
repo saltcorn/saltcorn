@@ -298,17 +298,40 @@ const is_column = is.obj({
  */
 const is_tablely = is.or(is.class("Table"), is.obj({ external: is.eq(true) }));
 
-module.exports = {
-  is_table_query,
-  is_plugin_wrap,
-  is_plugin_wrap_arg,
-  is_plugin_type,
-  is_plugin,
-  fieldlike,
-  is_viewtemplate,
-  is_header,
-  is_pack,
-  is_column,
-  is_plugin_layout,
-  is_tablely,
+const deprecate = (fn, name) => {
+  if (typeof fn !== "function") return fn;
+
+  let warned = false;
+  const original = fn;
+
+  function wrapped(...args) {
+    if (!warned) {
+      console.warn(
+        `[DEPRECATED] ${name} is deprecated and will be removed in a future version.`
+      );
+      warned = true;
+    }
+    return original(...args);
+  }
+
+  Object.setPrototypeOf(wrapped, Object.getPrototypeOf(original));
+  Object.defineProperties(wrapped, Object.getOwnPropertyDescriptors(original));
+
+  return wrapped;
 };
+module.exports = Object.fromEntries(
+  Object.entries({
+    is_table_query,
+    is_plugin_wrap,
+    is_plugin_wrap_arg,
+    is_plugin_type,
+    is_plugin,
+    fieldlike,
+    is_viewtemplate,
+    is_header,
+    is_pack,
+    is_column,
+    is_plugin_layout,
+    is_tablely,
+  }).map(([key, value]) => [key, deprecate(value, key)])
+);
