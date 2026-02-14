@@ -51,7 +51,7 @@
     "apns2": "11.8.0",
     "assert": "^2.1.0",
     "astring": "^1.9.0",
-    "axios": "^0.30.2",
+    "axios": "^1.13.5",
     "bcryptjs": "^2.4.3",
     "constants-browserify": "^1.0.0",
     "contractis": "^0.1.0",
