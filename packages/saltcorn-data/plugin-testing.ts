@@ -60,7 +60,7 @@ interface ViewTemplate {
 interface Plugin {
   layout?: {
     wrap: any;
-  };
+  } | Function;
   types?: PluginType[];
   viewtemplates?: ViewTemplate[];
 }
@@ -201,7 +201,7 @@ const auto_test_plugin = async (plugin: Plugin): Promise<void> => {
   is_plugin(plugin);
   getState().registerPlugin("test_plugin", plugin);
   if (plugin.layout) {
-    auto_test_wrap(plugin.layout.wrap);
+    auto_test_wrap((typeof plugin.layout === "function" ? plugin.layout() : plugin.layout).wrap);
   }
   if (plugin.types) {
     plugin.types.forEach(auto_test_type);
