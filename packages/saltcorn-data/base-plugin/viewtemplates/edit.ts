@@ -91,6 +91,10 @@ import { extractFromLayout } from "../../diagram/node_extract_utils";
 import db from "../../db";
 const { Relation, RelationType } = require("@saltcorn/common-code");
 
+/**
+ * @param req
+ * @returns
+ */
 const configuration_workflow = (req: Req) =>
   new Workflow({
     steps: [
@@ -505,6 +509,12 @@ const configuration_workflow = (req: Req) =>
     ],
   });
 
+/**
+ * @param table_id
+ * @param viewname
+ * @param param2
+ * @returns
+ */
 const get_state_fields = async (
   table_id: number | string,
   viewname: string,
@@ -519,6 +529,15 @@ const get_state_fields = async (
 
 const initial_config = initial_config_all_fields(true);
 
+/**
+ * @param table_id
+ * @param viewname
+ * @param cfg
+ * @param state
+ * @param param4
+ * @param param5
+ * @returns
+ */
 const run = async (
   table_id: number | string,
   viewname: string,
@@ -536,6 +555,15 @@ const run = async (
   return await editQuery(state, mobileReferrer, isPreview, hiddenLoginDest);
 };
 
+/**
+ * @param table_id
+ * @param viewname
+ * @param param2
+ * @param state
+ * @param extra
+ * @param param5
+ * @returns
+ */
 const runMany = async (
   table_id: number | string,
   viewname: string,
@@ -908,6 +936,17 @@ const prepSafeBody = (body: GenObj, columns: any[]) => {
   return safeBody;
 };
 
+/**
+ * @param table_id
+ * @param viewname
+ * @param param2
+ * @param state
+ * @param body
+ * @param param5
+ * @param param6
+ * @param remote
+ * @returns
+ */
 const runPost = async (
   table_id: number | string,
   viewname: string,
@@ -1321,6 +1360,11 @@ const doAuthPost = async ({
   return false;
 };
 
+/**
+ * @param param0
+ * @param param1
+ * @returns
+ */
 const authorise_post = async (
   {
     body,
@@ -1332,6 +1376,17 @@ const authorise_post = async (
   return await authorizePostQuery(body, table_id);
 };
 
+/**
+ * @param tableId
+ * @param viewName
+ * @param id
+ * @param fieldName
+ * @param fieldView
+ * @param user
+ * @param configuration
+ * @param targetOpts
+ * @returns
+ */
 const openDataStream = async (
   tableId: number | string,
   viewName: string,
@@ -1363,6 +1418,14 @@ const openDataStream = async (
   }
 };
 
+/**
+ * @param view
+ * @param id
+ * @param fieldName
+ * @param user
+ * @param targetOpts
+ * @returns
+ */
 const authorizeDataStream = async (
   view: any,
   id: any,
@@ -1875,6 +1938,10 @@ const tryInsertOrUpdateImpl = async (
   }
 };
 
+/**
+ * @param param0
+ * @returns
+ */
 const createBasicView = async ({
   table,
   viewname,
@@ -1981,6 +2048,12 @@ const createBasicView = async ({
   return cfg;
 };
 
+/**
+ * @param table_id
+ * @param viewname
+ * @param param2
+ * @returns
+ */
 const virtual_triggers = (
   table_id: number | string,
   viewname: string,
@@ -2064,6 +2137,11 @@ export = {
   createBasicView,
   authorise_post,
   virtual_triggers,
+  /**
+   * @param param0
+   * @param param1
+   * @returns
+   */
   authorise_get: async (
     {
       query,
@@ -2074,9 +2152,17 @@ export = {
   ) => {
     return await authorizeGetQuery(query, table_id);
   },
+  /**
+   * @param param0
+   * @returns
+   */
   getStringsForI18n({ layout }: GenObj) {
     return getStringsForI18n(layout);
   },
+  /**
+   * @param param0
+   * @returns
+   */
   queries: ({
     table_id,
     name,
@@ -2559,6 +2645,12 @@ export = {
     },
   }),
   routes: { run_action, update_matching_rows },
+  /**
+   * @param table_id
+   * @param title
+   * @param state
+   * @returns
+   */
   async interpolate_title_string(
     table_id: number | string,
     title: string,
@@ -2582,7 +2674,11 @@ export = {
       return interpolate(title, null, null, "Edit view title string");
     }
   },
-  configCheck: async (view: any) => {
+  /**
+   * @param view
+   * @returns
+   */
+  configCheck: async (view: View) => {
     const {
       name,
       configuration: {
@@ -2642,6 +2738,10 @@ export = {
     warnings.push(...colcheck.warnings);
     return { errors: errs, warnings };
   },
+  /**
+   * @param configuration
+   * @returns
+   */
   connectedObjects: async (configuration: GenObj) => {
     return extractFromLayout(configuration.layout);
   },
