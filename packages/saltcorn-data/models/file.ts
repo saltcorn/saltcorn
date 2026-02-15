@@ -911,7 +911,7 @@ class File {
       size: number;
       s3object?: boolean;
     },
-    user_id: number,
+    user_id: number | undefined,
     min_role_read: number = 1,
     folder: string = "/"
   ): Promise<File> {

@@ -21,16 +21,18 @@ const {
   source,
   textarea,
   with_curScript,
-  escape,
+  escape: escapeHtml,
 } = require("@saltcorn/markup/tags");
 const { link } = require("@saltcorn/markup");
 const { isNode } = require("../utils");
 const { select_options } = require("@saltcorn/markup/helpers");
-const File = require("../models/file");
-const path = require("path");
+import File from "../models/file";
+import { GenObj } from "@saltcorn/types/common_types";
+import path from "path";
 const { getReq__ } = require("../db/state");
 
-const buildNodeFileUrl = (filePath, cfg = {}, opts = {}) =>
+
+const buildNodeFileUrl = (filePath: string, cfg: GenObj = {}, opts: GenObj = {}): string =>
   File.pathToServeUrl(filePath, {
     download: opts.download,
     filename: opts.filename,
@@ -38,7 +40,7 @@ const buildNodeFileUrl = (filePath, cfg = {}, opts = {}) =>
     preferDirect: opts.preferDirect,
   });
 
-const buildNodeFileLinkUrl = (filePath, cfg = {}) =>
+const buildNodeFileLinkUrl = (filePath: string, cfg: GenObj = {}): string =>
   buildNodeFileUrl(filePath, cfg);
 
 const btnStyles = [
@@ -77,7 +79,7 @@ const btnStylesForLink = [
   },
 ];
 
-const buildCustomInput = (id, attrs, file_name) => {
+const buildCustomInput = (id: string, attrs: GenObj, file_name?: string): string => {
   const __ = getReq__();
   return (
     button(
@@ -99,7 +101,7 @@ const buildCustomInput = (id, attrs, file_name) => {
   );
 };
 
-module.exports = {
+const fileviews = {
   // download link
   "Download link": {
     configFields: [
@@ -114,7 +116,7 @@ module.exports = {
       },
     ],
     description: "Link to download file",
-    run: (filePath, file_name, cfg = {}) => {
+    run: (filePath: string, file_name: string, cfg: GenObj = {}) => {
       if (!filePath) return "";
       return link(
         isNode()
@@ -145,7 +147,7 @@ module.exports = {
     ],
     description: "Link to open file",
 
-    run: (filePath, file_name, cfg = {}) =>
+    run: (filePath: string, file_name: string, cfg: GenObj = {}) =>
       !filePath
         ? ""
         : link(
@@ -173,7 +175,7 @@ module.exports = {
         },
       },
     ],
-    run: (filePath, file_name, cfg = {}) =>
+    run: (filePath: string, file_name: string, cfg: GenObj = {}) =>
       !filePath
         ? ""
         : link(
@@ -190,7 +192,7 @@ module.exports = {
   "Show Image": {
     description: "Show the file as an image",
 
-    run: (filePath, file_name, cfg = {}) => {
+    run: (filePath: string, file_name: string, cfg: GenObj = {}) => {
       if (!filePath) return "";
       if (isNode())
         return img({
@@ -245,7 +247,7 @@ module.exports = {
         },
       ];
     },
-    run: (nm, file_name, attrs, cls, reqd, field) => {
+    run: (nm: string, file_name: string, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
       //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
       const customInput =
         attrs?.button_style &&
@@ -286,7 +288,7 @@ module.exports = {
     isEdit: true,
     setsFileId: true,
     description: "Select existing file",
-    fill_options: async (field) => {
+    fill_options: async (field: GenObj) => {
       const files = await File.find(
         field.attributes.folder
           ? { folder: field.attributes.folder }
@@ -297,7 +299,7 @@ module.exports = {
         new RegExp(
           `\\.(${field.attributes.file_exts
             .split(",")
-            .map((s) => s.trim())
+            .map((s: string) => s.trim())
             .join("|")})$`,
           "i"
         );
@@ -309,7 +311,7 @@ module.exports = {
           label: f.filename,
           value: f.path_to_serve,
         }));
-      if (!this.required) field.options.unshift({ label: "", value: "" });
+      if (!(this as any)?.required) field.options.unshift({ label: "", value: "" });
     },
     configFields: async () => {
       const dirs = await File.allDirectories();
@@ -350,7 +352,7 @@ module.exports = {
       ];
     },
     // run
-    run: (nm, file_id, attrs, cls, reqd, field) => {
+    run: (nm: string, file_id: string, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
       if (attrs?.use_picker) {
         const folder = attrs?.folder || "";
         const inputId = `input${text_attr(nm)}__${Math.floor(Math.random() * 16777215).toString(16)}`;
@@ -446,7 +448,7 @@ module.exports = {
         },
       ];
     },
-    run: (nm, file_name, attrs, cls, reqd, field) => {
+    run: (nm: string, file_name: string, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
       const customInput =
         attrs?.button_style && attrs.button_style !== "default";
       const id = `input${text_attr(nm)}`;
@@ -468,11 +470,11 @@ module.exports = {
           span({ class: "ms-2", id: `cpt-file-name-${text_attr(nm)}` }, "")
         );
       } else {
-        const mimebase = {
+        const mimebase = ({
           camera: "image",
           camcorder: "video",
           microphone: "audio",
-        }[attrs.device];
+        } as Record<string, string>)[attrs.device];
         return (
           input({
             class: `${cls} ${field.class || ""}`,
@@ -497,7 +499,7 @@ module.exports = {
     ],
     description: "Show the image file as small thumbnail image",
 
-    run: (filePath, file_name, cfg = {}) => {
+    run: (filePath: string, file_name: string, cfg: GenObj = {}) => {
       const { width, height, expand, targetPrefix } = cfg || {};
       if (!filePath) return "";
       if (isNode())
@@ -511,7 +513,7 @@ module.exports = {
         });
       else {
         // TODO resizer on mobile?
-        const style = { width: `${width || 50}px` };
+        const style: Record<string, string> = { width: `${width || 50}px` };
         if (height) style.height = `${height}px`;
         return img({
           "mobile-img-path": filePath,
@@ -523,7 +525,7 @@ module.exports = {
   Audio: {
     description: "Simple audio player",
 
-    run: (filePath, file_name, cfg = {}) => {
+    run: (filePath: string, file_name: string, cfg: GenObj = {}) => {
       if (!filePath) return "";
 
       return audio({
@@ -543,7 +545,7 @@ module.exports = {
       { name: "loop", type: "Bool", label: "Loop" },
       { name: "fullscreen", type: "Bool", label: "Full screen" },
     ],
-    run: (filePath, file_name, cfg = {}) => {
+    run: (filePath: string, file_name: string, cfg: GenObj = {}) => {
       if (!filePath) return "";
 
       return video(
@@ -584,7 +586,7 @@ module.exports = {
         },
       ];
     },
-    run: (nm, file_name, attrs, cls, reqd, field, row) => {
+    run: (nm: string, file_name: string, attrs: GenObj, cls: string, reqd: boolean, field: GenObj, row?: GenObj) => {
       //console.trace({ nm, file_name, attrs, cls, reqd, field, row });
       const contents = row?.[`_content_${nm}`]?.toString?.() || "";
       const edit_file_name =
@@ -612,9 +614,11 @@ module.exports = {
             id: `input${text_attr(nm)}`,
             mode: file_name ? File.nameToMimeType(file_name) : undefined,
           },
-          escape(contents)
+          escapeHtml(contents)
         )
       );
     },
   },
 };
+
+export = fileviews;

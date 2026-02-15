@@ -7,6 +7,8 @@
  * @subcategory base-plugin
  */
 
+import type { GenObj } from "@saltcorn/types/common_types";
+
 const moment = require("moment");
 const {
   input,
@@ -45,14 +47,14 @@ const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
 const { select_by_code } = require("./fieldviews");
 const PlainDate = require("@saltcorn/plain-date");
 
-const isdef = (x) => (typeof x === "undefined" || x === null ? false : true);
+const isdef = (x: any) => (typeof x === "undefined" || x === null ? false : true);
 
-const eqStr = (x, y) => `${x}` === `${y}`;
+const eqStr = (x: any, y: any) => `${x}` === `${y}`;
 
-const or_if_undefined = (x, def) => (typeof x === "undefined" ? def : x);
+const or_if_undefined = (x: any, def: any) => (typeof x === "undefined" ? def : x);
 
-const number_slider = (type) => ({
-  configFields: (field) => [
+const number_slider = (type: any) => ({
+  configFields: (field: any) => [
     ...(!isdef(field.attributes.min)
       ? [{ name: "min", type, required: false }]
       : []),
@@ -63,7 +65,7 @@ const number_slider = (type) => ({
   isEdit: true,
   description: "Input on a slider between defined maximum and minimum values",
   blockDisplay: true,
-  run: (nm, v, attrs = {}, cls, required, field) =>
+  run: (nm: any, v: any, attrs: any = {}, cls: any, required: any, field: any) =>
     input({
       type: "range",
       class: ["form-control", cls],
@@ -84,8 +86,8 @@ const number_slider = (type) => ({
       ...(isdef(v) && { value: text_attr(v) }),
     }),
 });
-const range_interval = (type) => ({
-  configFields: (field) => [
+const range_interval = (type: any) => ({
+  configFields: (field: any) => [
     ...(!isdef(field.attributes.min)
       ? [{ name: "min", type, required: false }]
       : []),
@@ -99,7 +101,7 @@ const range_interval = (type) => ({
   description:
     "User can pick filtered interval by moving low and high controls on a slider.",
   /* https://stackoverflow.com/a/31083391 */
-  run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
+  run: (nm: any, v: any, attrs: any = {}, cls: any, required: any, field: any, state: any = {}) => {
     return section(
       { class: ["range-slider", cls] },
       span({ class: "rangeValues" }),
@@ -137,7 +139,7 @@ const range_interval = (type) => ({
   },
 });
 
-const none_available = (required) =>
+const none_available = (required: any) =>
   required
     ? div(
         { class: "alert alert-danger", role: "alert" },
@@ -146,8 +148,8 @@ const none_available = (required) =>
       )
     : i("None available");
 
-const progress_bar = (type) => ({
-  configFields: (field) => [
+const progress_bar = (type: any) => ({
+  configFields: (field: any) => [
     { name: "max_min_formula", type: "Bool", label: "Max/min Formula" },
     ...(!isdef(field.attributes.min)
       ? [
@@ -200,7 +202,7 @@ const progress_bar = (type) => ({
   isEdit: false,
   description:
     "Show value as a percentage filled on a horizontal or radial progress bar",
-  run: (v, req, attrs = {}) => {
+  run: (v: any, req: any, attrs: any = {}) => {
     let max = attrs.max;
     let min = attrs.min;
     if (attrs.max_min_formula && attrs.min_formula)
@@ -284,8 +286,8 @@ const show_with_html = {
   ],
   isEdit: false,
   description: "Show value with any HTML code",
-  run: (v, req, attrs = {}) => {
-    const ctx = { ...getState().eval_context };
+  run: (v: any, req: any, attrs: any = {}) => {
+    const ctx: any = { ...getState().eval_context };
     ctx.it = v;
     const rendered = interpolate(
       attrs?.code,
@@ -297,8 +299,8 @@ const show_with_html = {
   },
 };
 
-const heat_cell = (type) => ({
-  configFields: (field) => [
+const heat_cell = (type: any) => ({
+  configFields: (field: any) => [
     { name: "max_min_formula", type: "Bool", label: "Max/min Formula" },
     ...(!isdef(field.attributes.min)
       ? [
@@ -349,7 +351,7 @@ const heat_cell = (type) => ({
   ],
   isEdit: false,
   description: "Set background color on according to value on a color scale",
-  run: (v, req, attrs = {}) => {
+  run: (v: any, req: any, attrs: any = {}) => {
     let max = attrs.max;
     let min = attrs.min;
     if (attrs.max_min_formula && attrs.min_formula)
@@ -369,13 +371,14 @@ const heat_cell = (type) => ({
     if (typeof v !== "number") return "";
     const pcnt0 = (v - min) / (max - min);
     const pcnt = attrs.reverse ? 1 - pcnt0 : pcnt0;
-    const backgroundColor = {
+    const colorMap: any = {
       Rainbow: `hsl(${360 * pcnt},100%, 50%)`,
       RedAmberGreen: `hsl(${100 * pcnt},100%, 50%)`,
       WhiteToRed: `hsl(0,100%, ${100 * (1 - pcnt / 2)}%)`,
-    }[attrs.color_scale];
+    };
+    const backgroundColor: any = colorMap[attrs.color_scale];
 
-    function getLuminance(hexColor) {
+    function getLuminance(hexColor: any) {
       const r = parseInt(hexColor.substr(1, 2), 16) / 255;
       const g = parseInt(hexColor.substr(3, 2), 16) / 255;
       const b = parseInt(hexColor.substr(5, 2), 16) / 255;
@@ -387,10 +390,10 @@ const heat_cell = (type) => ({
       return a[0] * 0.2126 + a[1] * 0.7152 + a[2] * 0.0722;
     }
 
-    function hslToHex(h, s, l) {
+    function hslToHex(h: any, s: any, l: any) {
       l /= 100;
       const a = (s * Math.min(l, 1 - l)) / 100;
-      const f = (n) => {
+      const f = (n: any) => {
         const k = (n + h / 30) % 12;
         const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
         return Math.round(255 * color)
@@ -421,14 +424,14 @@ const heat_cell = (type) => ({
   },
 });
 
-const number_limit = (direction) => ({
+const number_limit = (direction: any) => ({
   isEdit: false,
   isFilter: true,
   blockDisplay: true,
   configFields: [
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
-  run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
+  run: (nm: any, v: any, attrs: any = {}, cls: any, required: any, field: any, state: any = {}) => {
     const onChange = `${attrs.preOnChange || ""}set_state_field('_${direction}_${nm}', this.value, this)`;
     return attrs?.stepper_btns
       ? number_stepper(
@@ -460,11 +463,11 @@ const number_limit = (direction) => ({
   },
 });
 
-const float_number_limit = (direction) => ({
+const float_number_limit = (direction: any) => ({
   isEdit: false,
   isFilter: true,
   blockDisplay: true,
-  run: (nm, v, attrs = {}, cls, required, field, state = {}) =>
+  run: (nm: any, v: any, attrs: any = {}, cls: any, required: any, field: any, state: any = {}) =>
     input({
       type: "number",
       class: ["form-control", cls],
@@ -480,7 +483,7 @@ const float_number_limit = (direction) => ({
     }),
 });
 
-const number_stepper = (name, v, attrs, cls, fieldname, id) =>
+const number_stepper = (name: any, v: any, attrs: any, cls: any, fieldname: any, id: any) =>
   div(
     { class: "input-group" },
     button(
@@ -528,32 +531,32 @@ const number_stepper = (name, v, attrs, cls, fieldname, id) =>
  * @param {string} optsStr
  * @returns {string[]}
  */
-const getStrOptions = (v, optsStr, exclude_values_string) => {
+const getStrOptions = (v: any, optsStr: any, exclude_values_string: any) => {
   const exclude_values = exclude_values_string
     ? new Set(
         exclude_values_string
           .split(",")
-          .map((o) => o.trim())
+          .map((o: any) => o.trim())
           .filter(Boolean)
       )
     : new Set([]);
-  const __ = typeof optsStr === "string" ? getApp__() : (s) => s;
+  const __ = typeof optsStr === "string" ? getApp__() : (s: any) => s;
   return typeof optsStr === "string"
     ? optsStr
         .split(",")
-        .map((o) => o.trim())
-        .filter((o) => eqStr(v, o) || !exclude_values.has(o))
-        .map((o) =>
+        .map((o: any) => o.trim())
+        .filter((o: any) => eqStr(v, o) || !exclude_values.has(o))
+        .map((o: any) =>
           option(
             { value: text_attr(o), ...(eqStr(v, o) && { selected: true }) },
             __(text_attr(o))
           )
         )
-    : optsStr.map((o, ix) =>
+    : optsStr.map((o: any, ix: any) =>
         o?.optgroup
           ? optgroup(
               { label: o.label },
-              o.options.map((oi) =>
+              o.options.map((oi: any) =>
                 option(
                   {
                     selected: v == or_if_undefined(oi.value, oi),
@@ -578,14 +581,14 @@ const getStrOptions = (v, optsStr, exclude_values_string) => {
             : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
       );
 };
-const join_fields_in_formula = (fml) => {
+const join_fields_in_formula = (fml: any) => {
   if (!fml) return [];
   return [...freeVariables(fml)];
 };
 
 const to_locale_string = {
   description: "Show as in locale-sensitive representation",
-  configFields: (field) => [
+  configFields: (field: any) => [
     {
       type: "String",
       name: "locale",
@@ -703,7 +706,7 @@ const to_locale_string = {
     },
   ],
   isEdit: false,
-  run: (v, req, attrs = {}) => {
+  run: (v: any, req: any, attrs: any = {}) => {
     const v1 = typeof v === "string" ? +v : v;
     if (typeof v1 === "number") {
       const locale_ = attrs.locale || locale(req);
@@ -744,11 +747,11 @@ const string = {
    * @param {object} param
    * @returns {object}
    */
-  attributes: ({ table }) => {
+  attributes: ({ table }: any) => {
     const strFields =
       table &&
       table.fields.filter(
-        (f) =>
+        (f: any) =>
           (f.type || {}).name === "String" &&
           !(f.attributes && f.attributes.localizes_field)
       );
@@ -788,7 +791,7 @@ const string = {
         label: "Regular expression",
         required: false,
         sublabel: "String value must match regular expression",
-        validator(s) {
+        validator(s: any) {
           if (!is_valid_regexp(s)) return "Not a valid Regular Expression";
         },
         attributes: { asideNext: true },
@@ -816,7 +819,7 @@ const string = {
                 "This is a translation of a different field in a different language",
               type: "String",
               attributes: {
-                options: strFields.map((f) => f.name),
+                options: strFields.map((f: any) => f.name),
               },
             },
             {
@@ -825,7 +828,7 @@ const string = {
               sublabel: "Language locale of translation",
               input_type: "select",
               options: locales,
-              showIf: { localizes_field: strFields.map((f) => f.name) },
+              showIf: { localizes_field: strFields.map((f: any) => f.name) },
             },
           ]
         : []),
@@ -836,12 +839,12 @@ const string = {
    * @param {string|undefined} opts.options
    * @returns {boolean}
    */
-  contract: ({ options }) =>
+  contract: ({ options }: any) =>
     typeof options === "string"
       ? is.one_of(options.split(","))
       : typeof options === "undefined"
         ? is.str
-        : is.one_of(options.map((o) => (typeof o === "string" ? o : o.name))),
+        : is.one_of(options.map((o: any) => (typeof o === "string" ? o : o.name))),
   /**
    * @namespace
    * @category saltcorn-data
@@ -856,18 +859,18 @@ const string = {
     as_text: {
       isEdit: false,
       description: "Show the value with no other formatting",
-      run: (s) => text_attr(s || ""),
+      run: (s: any) => text_attr(s || ""),
     },
     preFormatted: {
       isEdit: false,
       description: "Pre-formatted (in a &lt;pre&gt; tag)",
-      run: (s) =>
+      run: (s: any) =>
         s ? span({ style: "white-space:pre-wrap" }, text_attr(s || "")) : "",
     },
     code: {
       isEdit: false,
       description: "Show as a code block",
-      run: (s) => (s ? pre(code(text_attr(s || ""))) : ""),
+      run: (s: any) => (s ? pre(code(text_attr(s || ""))) : ""),
     },
     monospace_block: {
       isEdit: false,
@@ -881,7 +884,7 @@ const string = {
         { name: "copy_btn", label: "Copy button", type: "Bool" },
       ],
       description: "Show as a monospace block",
-      run: (s, req, attrs = {}) => {
+      run: (s: any, req: any, attrs: any = {}) => {
         if (!s) return "";
         const copy_btn = attrs.copy_btn
           ? button(
@@ -941,7 +944,7 @@ const string = {
       ],
       description:
         "Show First N characters of text followed by ... if truncated",
-      run: (s, req, attrs = {}) => {
+      run: (s: any, req: any, attrs: any = {}) => {
         if (!s || !s.length) return "";
         if (s.length <= (attrs.nchars || 20)) return text_attr(s);
         return text_attr(s.substr(0, (attrs.nchars || 20) - 3)) + "...";
@@ -968,7 +971,7 @@ const string = {
       ],
       description: "Show a link with the field value as the URL.",
       isEdit: false,
-      run: (s, req, attrs = {}) =>
+      run: (s: any, req: any, attrs: any = {}) =>
         s
           ? a(
               {
@@ -987,7 +990,7 @@ const string = {
     img_from_url: {
       isEdit: false,
       description: "Show an image from the URL in the field value",
-      run: (s, req, attrs) => img({ src: text(s || ""), style: "width:100%" }),
+      run: (s: any, req: any, attrs: any) => img({ src: text(s || ""), style: "width:100%" }),
     },
     /**
      * @namespace
@@ -998,7 +1001,7 @@ const string = {
       isEdit: false,
       description: "Show this as a header",
 
-      run: (s) => h3(text_attr(s || "")),
+      run: (s: any) => h3(text_attr(s || "")),
     },
     show_with_html,
     /**
@@ -1011,7 +1014,7 @@ const string = {
       blockDisplay: true,
       description:
         "edit with a standard text input, or dropdown if field has options",
-      configFields: (field) => [
+      configFields: (field: any) => [
         ...(field.attributes.options &&
         field.attributes.options.length > 0 &&
         !field.required
@@ -1071,7 +1074,7 @@ const string = {
           type: "Bool",
         },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         attrs.options && (attrs.options.length > 0 || !required)
           ? attrs.readonly
             ? input({
@@ -1222,7 +1225,7 @@ const string = {
           showIf: { make_unique: true },
         },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         div(
           { class: "input-group" },
           input({
@@ -1304,7 +1307,7 @@ const string = {
           options: ["Digits", "Lowercase Letters", "Uppercase Letters"],
         },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         input({
           type: attrs.input_type || "text",
           disabled: attrs.disabled,
@@ -1364,7 +1367,7 @@ const string = {
           label: "Monospace",
         },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         textarea(
           {
             class: ["form-control", cls, attrs.monospace && "font-monospace"],
@@ -1409,7 +1412,7 @@ const string = {
           label: "Rows",
         },*/
       ],
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         textarea(
           {
             class: ["form-control", "to-code", cls],
@@ -1444,7 +1447,7 @@ const string = {
         },
       ],
       description: "Pick from a radio group. Field must have options",
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         attrs.options
           ? radio_group({
               class: cls,
@@ -1455,7 +1458,7 @@ const string = {
               required: !!required,
               options: Array.isArray(attrs.options)
                 ? attrs.options
-                : attrs.options.split(",").map((o) => o.trim()),
+                : attrs.options.split(",").map((o: any) => o.trim()),
               value: v,
             })
           : none_available(required),
@@ -1472,7 +1475,7 @@ const string = {
           label: "Inline",
         },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         attrs && attrs.options
           ? checkbox_group({
               class: cls,
@@ -1481,7 +1484,7 @@ const string = {
               inline: attrs.inline,
               options: Array.isArray(attrs.options)
                 ? attrs.options
-                : attrs.options.split(",").map((o) => o.trim()),
+                : attrs.options.split(",").map((o: any) => o.trim()),
               value: v,
             })
           : i("None available"),
@@ -1502,7 +1505,7 @@ const string = {
       ],
       blockDisplay: true,
       description: "Password input type, characters are hidden when typed",
-      run: (nm, v, attrs, cls, required, field) => {
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
         const pwinput = input({
           type: "password",
           disabled: attrs.disabled,
@@ -1532,7 +1535,7 @@ const string = {
    * @param {*} v
    * @returns {string|undefined}
    */
-  read: (v) => {
+  read: (v: any) => {
     switch (typeof v) {
       case "string":
         //PG dislikes null bytes
@@ -1552,21 +1555,21 @@ const string = {
      * @param {object} opts.req
      * @returns {object}
      */
-    IP: ({ req }) => req.ip,
+    IP: ({ req }: any) => req.ip,
     /**
      * @param {object} opts
      * @param {object} opts.req
      * @returns {object}
      */
-    SessionID: ({ req }) => req.sessionID || req.cookies["express:sess"],
+    SessionID: ({ req }: any) => req.sessionID || req.cookies["express:sess"],
   },
   /**
    * @param {object} param
    * @returns {object|true}
    */
   validate:
-    ({ min_length, max_length, regexp, re_invalid_error }) =>
-    (x) => {
+    ({ min_length, max_length, regexp, re_invalid_error }: any) =>
+    (x: any) => {
       if (!x || typeof x !== "string") return true; //{ error: "Not a string" };
       if (isdef(min_length) && x.length < min_length)
         return { error: `Must be at least ${min_length} characters` };
@@ -1583,7 +1586,7 @@ const string = {
    * @param {object} param
    * @returns {object}
    */
-  validate_attributes: ({ min_length, max_length, regexp }) =>
+  validate_attributes: ({ min_length, max_length, regexp }: any) =>
     (!isdef(min_length) || !isdef(max_length) || max_length >= min_length) &&
     (!isdef(regexp) || is_valid_regexp(regexp)),
 };
@@ -1592,7 +1595,7 @@ const string = {
  * @param {string} s
  * @returns {boolean}
  */
-const is_valid_regexp = (s) => {
+const is_valid_regexp = (s: any) => {
   try {
     new RegExp(s);
     return true;
@@ -1621,7 +1624,7 @@ const int = {
    * @param {number} opts.max
    * @returns {boolean}
    */
-  contract: ({ min, max }) => is.integer({ lte: max, gte: min }),
+  contract: ({ min, max }: any) => is.integer({ lte: max, gte: min }),
   primaryKey: { sql_type: "serial" },
   /**
    * @namespace
@@ -1639,7 +1642,7 @@ const int = {
     show: {
       isEdit: false,
       description: "Show value with no additional formatting.",
-      run: (s) => text(s),
+      run: (s: any) => text(s),
     },
     /**
      * @namespace
@@ -1664,7 +1667,7 @@ const int = {
           type: "Bool",
         },
       ],
-      run: (nm, v, attrs, cls, required, field) => {
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
         const id = `input${text_attr(nm)}`;
         const name = text_attr(nm);
         return attrs?.stepper_btns
@@ -1699,7 +1702,7 @@ const int = {
     show_with_html,
     show_star_rating: {
       description: "Show value as filled stars out of maximum.",
-      configFields: (field) => [
+      configFields: (field: any) => [
         ...(!isdef(field.attributes.min)
           ? [{ name: "min", type: "Integer", required: true, default: 1 }]
           : []),
@@ -1709,7 +1712,7 @@ const int = {
       ],
       isEdit: false,
       blockDisplay: true,
-      run: (v, req, attrs = {}) => {
+      run: (v: any, req: any, attrs: any = {}) => {
         return div(
           Array.from(
             { length: +attrs.max - +attrs.min + 1 },
@@ -1725,7 +1728,7 @@ const int = {
     },
     edit_star_rating: {
       description: "Input by clicking filled stars out of maximum.",
-      configFields: (field) => [
+      configFields: (field: any) => [
         ...(!isdef(field.attributes.min)
           ? [{ name: "min", type: "Integer", required: true, default: 1 }]
           : []),
@@ -1746,7 +1749,7 @@ const int = {
       ],
       isEdit: true,
       blockDisplay: true,
-      run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
+      run: (nm: any, v: any, attrs: any = {}, cls: any, required: any, field: any, state: any = {}) => {
         //https://codepen.io/pezmotion/pen/RQERdm
         return div(
           { class: "editStarRating" },
@@ -1776,11 +1779,11 @@ const int = {
       isEdit: true,
       blockDisplay: true,
       description: "Select a user role",
-      fill_options: async (field) => {
+      fill_options: async (field: any) => {
         const roles = await User.get_roles();
         field.options = roles;
       },
-      run: (nm, v, attrs, cls, required, field) => {
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
         return select(
           {
             class: [
@@ -1798,7 +1801,7 @@ const int = {
             autocomplete: "off",
             required: true,
           },
-          field.options.map(({ id, role }) =>
+          field.options.map(({ id, role }: any) =>
             option({ value: id, selected: v == id }, role)
           )
         );
@@ -1815,13 +1818,13 @@ const int = {
    * @param {object} param
    * @returns {boolean}
    */
-  validate_attributes: ({ min, max }) =>
+  validate_attributes: ({ min, max }: any) =>
     !isdef(min) || !isdef(max) || max > min,
   /**
    * @param {object} v
    * @returns {object}
    */
-  read: (v) => {
+  read: (v: any) => {
     switch (typeof v) {
       case "number":
         return Math.round(v);
@@ -1838,8 +1841,8 @@ const int = {
    * @returns {boolean}
    */
   validate:
-    ({ min, max }) =>
-    (x) => {
+    ({ min, max }: any) =>
+    (x: any) => {
       if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
       if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
       return true;
@@ -1878,7 +1881,7 @@ const color = {
     show: {
       isEdit: false,
       description: "A box filled with the color",
-      run: (s) =>
+      run: (s: any) =>
         s
           ? div({
               class: "color-type-show",
@@ -1896,7 +1899,7 @@ const color = {
       isEdit: true,
       blockDisplay: true,
       description: "Simple color picker",
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         input({
           type: "color",
           class: ["form-control", cls],
@@ -1916,7 +1919,7 @@ const color = {
    * @param {object} v
    * @returns {object}
    */
-  read: (v) => {
+  read: (v: any) => {
     switch (typeof v) {
       case "string":
         return v;
@@ -1927,7 +1930,7 @@ const color = {
   /**
    * @returns {boolean}
    */
-  validate: () => (x) => {
+  validate: () => (x: any) => {
     return true;
   },
 };
@@ -1952,7 +1955,7 @@ const float = {
    * @param {number} opts.max
    * @returns {function}
    */
-  contract: ({ min, max }) => is.number({ lte: max, gte: min }),
+  contract: ({ min, max }: any) => is.number({ lte: max, gte: min }),
 
   distance_operators: { near: sqlFun("ABS", sqlBinOp("-", "target", "field")) },
 
@@ -1970,7 +1973,7 @@ const float = {
     show: {
       isEdit: false,
       description: "Show number with no additional formatting",
-      run: (s) => text(s),
+      run: (s: any) => text(s),
     },
     /**
      * @namespace
@@ -1988,7 +1991,7 @@ const float = {
           type: "Bool",
         },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         input({
           type: "number",
           class: ["form-control", cls],
@@ -2035,7 +2038,7 @@ const float = {
    * @param {object} v
    * @returns {number|string|undefined}
    */
-  read: (v) => {
+  read: (v: any) => {
     switch (typeof v) {
       case "number":
         return v;
@@ -2053,8 +2056,8 @@ const float = {
    * @returns {object|boolean}
    */
   validate:
-    ({ min, max }) =>
-    (x) => {
+    ({ min, max }: any) =>
+    (x: any) => {
       if (isdef(min) && x < min) return { error: `Must be ${min} or higher` };
       if (isdef(max) && x > max) return { error: `Must be ${max} or less` };
       return true;
@@ -2067,7 +2070,7 @@ const float = {
    * @param opts
    * @returns true or false
    */
-  equals: (a, b, { decimal_places }) => {
+  equals: (a: any, b: any, { decimal_places }: any) => {
     return Math.abs(a - b) < Math.pow(10, -decimal_places) / 2;
   },
 };
@@ -2076,7 +2079,7 @@ const float = {
  * @param {object} req
  * @returns {string|undefined}
  */
-const locale = (req) => {
+const locale = (req: any) => {
   //console.log(req && req.getLocale ? req.getLocale() : undefined);
   return req?.getLocale?.() || getState().getConfig("default_locale", "en");
 };
@@ -2085,7 +2088,7 @@ const locale = (req) => {
  * @param {*} x
  * @returns {*}
  */
-const logit = (x) => {
+const logit = (x: any) => {
   console.log(x);
   return x;
 };
@@ -2101,7 +2104,7 @@ const date = {
   name: "Date",
   description: "Dates, with or without time",
   /** @type {string} */
-  sql_name: (opts) => (opts?.day_only ? "date" : "timestamptz"),
+  sql_name: (opts: any) => (opts?.day_only ? "date" : "timestamptz"),
   js_type: "Date",
 
   /**
@@ -2131,7 +2134,7 @@ const date = {
     show: {
       isEdit: false,
       description: "Show date and time in the users locale",
-      run: (d, req, attrs = {}) => {
+      run: (d: any, req: any, attrs: any = {}) => {
         const shower = attrs?.day_only ? localeDate : localeDateTime;
         const local = locale(req);
         return typeof d === "string" || typeof d === "number"
@@ -2150,7 +2153,7 @@ const date = {
       isEdit: false,
       description: "Show date in the users locale",
 
-      run: (d, req) => {
+      run: (d: any, req: any) => {
         const local = locale(req);
         return typeof d === "string" || typeof d === "number"
           ? localeDate(new Date(d), {}, locale)
@@ -2177,7 +2180,7 @@ const date = {
           },
         },
       ],
-      run: (d, req, options) => {
+      run: (d: any, req: any, options: any) => {
         if (!d) return "";
         const jsdate = options?.day_only && d.toDate ? d.toDate() : d;
         if (req?.noHTML) return moment(jsdate).format(options?.format);
@@ -2203,7 +2206,7 @@ const date = {
     relative: {
       isEdit: false,
       description: "Display relative to current time (e.g. 2 hours ago)",
-      run: (d, req) => {
+      run: (d: any, req: any) => {
         if (!d) return "";
         const loc = locale(req);
         if (d instanceof PlainDate || d?.constructor?.name === "PlainDate") {
@@ -2226,9 +2229,9 @@ const date = {
       isEdit: false,
       description: "Show how many years ago this occurred.",
 
-      run: (d, req) => {
+      run: (d: any, req: any) => {
         if (!d) return "";
-        return text(moment.duration(new Date() - d).years());
+        return text(moment.duration((new Date() as any) - d).years());
       },
     },
     show_with_html,
@@ -2245,7 +2248,7 @@ const date = {
       configFields: [
         { label: "Date picker", name: "date_picker", type: "Bool" },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         input({
           type: !attrs.date_picker
             ? "text"
@@ -2262,7 +2265,7 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              ((v1) =>
+              ((v1: any) =>
                 attrs.date_picker
                   ? v1.toISOString()
                   : attrs.day_only
@@ -2287,7 +2290,7 @@ const date = {
       configFields: [
         { label: "Date picker", name: "date_picker", type: "Bool" },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         input({
           type: attrs.date_picker ? "date" : "text",
           class: ["form-control", cls],
@@ -2300,7 +2303,7 @@ const date = {
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && {
             value: text_attr(
-              ((v1) =>
+              ((v1: any) =>
                 attrs.date_picker
                   ? v1.toISOString()
                   : v1.toLocaleDateString(attrs.locale))(
@@ -2317,7 +2320,7 @@ const date = {
    * @subcategory types / date
    */
   presets: {
-    Now: ({ field }) => {
+    Now: ({ field }: any) => {
       if (field?.attributes?.day_only) return new PlainDate();
       return new Date();
     },
@@ -2327,9 +2330,9 @@ const date = {
    * @param {object} attrs
    * @returns {object}
    */
-  read: (v0, attrs) => {
-    const readDate = (v) => {
-      if (v instanceof Date && !isNaN(v)) return v;
+  read: (v0: any, attrs: any) => {
+    const readDate = (v: any) => {
+      if (v instanceof Date && !isNaN(v as any)) return v;
       if (
         (v instanceof PlainDate || v?.constructor?.name === "PlainDate") &&
         v.isValid()
@@ -2342,16 +2345,16 @@ const date = {
             !v.match(/\d{4}-\d{2}-\d{2}/)
           ) {
             const d = moment(v, "L LT", attrs.locale).toDate();
-            if (d instanceof Date && !isNaN(d)) return d;
+            if (d instanceof Date && !isNaN(d as any)) return d;
           }
         }
         const d = new Date(v);
-        if (d instanceof Date && !isNaN(d)) return d;
+        if (d instanceof Date && !isNaN(d as any)) return d;
         else return null;
       }
     };
-    const readPlainDate = (v) => {
-      if (v instanceof Date && !isNaN(v)) return new PlainDate(v);
+    const readPlainDate = (v: any) => {
+      if (v instanceof Date && !isNaN(v as any)) return new PlainDate(v as any);
       if (
         (v instanceof PlainDate || v?.constructor?.name === "PlainDate") &&
         v.isValid()
@@ -2364,11 +2367,11 @@ const date = {
             !v.match(/\d{4}-\d{2}-\d{2}/)
           ) {
             const d = moment(v, "L LT", attrs.locale).toDate();
-            if (d instanceof Date && !isNaN(d)) return new PlainDate(d);
+            if (d instanceof Date && !isNaN(d as any)) return new PlainDate(d as any);
           }
         }
         try {
-          const d = new PlainDate(v);
+          const d = new PlainDate(v as any);
           if (d.isValid()) return d;
           else return null;
         } catch {
@@ -2383,14 +2386,14 @@ const date = {
    * @param {object} param
    * @returns {boolean}
    */
-  validate: () => (v) => v instanceof Date && !isNaN(v),
+  validate: () => (v: any) => v instanceof Date && !isNaN(v as any),
   /**
    * check if two date values are equal
    * @param a
    * @param b
    * @returns true or false
    */
-  equals: (a, b) => {
+  equals: (a: any, b: any) => {
     if (
       (a instanceof Date || a instanceof PlainDate) &&
       (b instanceof Date || b instanceof PlainDate)
@@ -2432,7 +2435,7 @@ const bool = {
     show: {
       isEdit: false,
       description: "Show as a green tick or red cross circle",
-      run: (v, req) =>
+      run: (v: any, req: any) =>
         typeof v === "undefined" || v === null
           ? ""
           : req.generate_email
@@ -2455,7 +2458,7 @@ const bool = {
     checkboxes: {
       isEdit: false,
       description: "Show with a non-editable checkbox",
-      run: (v) =>
+      run: (v: any) =>
         v === true
           ? input({ disabled: true, type: "checkbox", checked: true })
           : v === false
@@ -2471,7 +2474,7 @@ const bool = {
       isEdit: false,
       description: "Show as True or False",
 
-      run: (v) => (v === true ? "True" : v === false ? "False" : ""),
+      run: (v: any) => (v === true ? "True" : v === false ? "False" : ""),
     },
     /**
      * @namespace
@@ -2496,7 +2499,7 @@ const bool = {
           type: "Bool",
         },
       ],
-      run: (nm, v, attrs, cls, required, field) => {
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
         const onChange =
           attrs.isFilter && v
             ? `unset_state_field('${nm}', this)`
@@ -2517,7 +2520,7 @@ const bool = {
     switch: {
       isEdit: true,
       description: "Edit with a switch",
-      run: (nm, v, attrs, cls, required, field) => {
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
         const onChange =
           attrs.isFilter && v
             ? `unset_state_field('${nm}', this)`
@@ -2571,7 +2574,7 @@ const bool = {
           type: "Bool",
         },
       ],
-      run: (nm, v, attrs, cls, required, field) =>
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
         attrs.disabled
           ? !(!isdef(v) || v === null)
             ? ""
@@ -2626,7 +2629,7 @@ const bool = {
           },
         },
       ],
-      run: (nm, v, attrs, cls, required, field) => {
+      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
         let yes, no;
         switch (attrs.icons) {
           case "Arrow":
@@ -2695,7 +2698,7 @@ const bool = {
    * @param {string} name
    * @returns {boolean|null}
    */
-  readFromFormRecord: (rec, name) => {
+  readFromFormRecord: (rec: any, name: any) => {
     if (rec[name] === "") return null;
     if (!rec[name]) return false;
     if (["undefined", "false", "off", "no"].includes(rec[name])) return false;
@@ -2706,7 +2709,7 @@ const bool = {
    * @param {object} v
    * @returns {boolean|null}
    */
-  read: (v) => {
+  read: (v: any) => {
     switch (typeof v) {
       case "string":
         if (["TRUE", "T", "ON", "YES"].includes(v.toUpperCase())) return true;
@@ -2721,16 +2724,16 @@ const bool = {
    * @param {object} v
    * @returns {object}
    */
-  readFromDB: (v) => (v === null ? null : !!v),
+  readFromDB: (v: any) => (v === null ? null : !!v),
   /**
    * @param {object} v
    * @returns {object}
    */
-  listAs: (v) => JSON.stringify(v),
+  listAs: (v: any) => JSON.stringify(v),
   /**
    * @returns {boolean}
    */
-  validate: () => (x) => true,
+  validate: () => (x: any) => true,
 };
 
-module.exports = { string, int, bool, date, float, color };
+export = { string, int, bool, date, float, color };

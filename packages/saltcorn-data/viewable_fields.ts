@@ -2245,7 +2245,7 @@ const transformForm = async ({
   ) => Promise<Row[]>;
   viewname: string;
   optionsQuery?: GenObj;
-  state: GenObj;
+  state?: GenObj;
 }): Promise<void> => {
   let originalState = state;
   let pseudo_row: GenObj = {};

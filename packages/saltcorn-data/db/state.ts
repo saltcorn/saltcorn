@@ -1755,4 +1755,5 @@ export = {
   getRootState,
   getApp__,
   getReq__,
+  State,
 };

@@ -3,9 +3,10 @@
  * @module
  */
 import type { AbstractForm } from "./model-abstracts/abstract_form";
-import type {
+import {
   AbstractTable,
   TablePack,
+  instanceOfTable,
 } from "./model-abstracts/abstract_table";
 import type { AbstractWorkflow } from "./model-abstracts/abstract_workflow";
 import type {
@@ -17,10 +18,17 @@ import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { Type, ReqRes, GenObj } from "./common_types";
 import type { RolePack } from "./model-abstracts/abstract_role";
 import type { LibraryPack } from "./model-abstracts/abstract_library";
-import type { AbstractView, ViewPack } from "./model-abstracts/abstract_view";
+import {
+  AbstractView,
+  ViewPack,
+  instanceOfView,
+} from "./model-abstracts/abstract_view";
 import type { AbstractPage, PagePack } from "./model-abstracts/abstract_page";
 import type { PageGroupPack } from "./model-abstracts/abstract_page_group";
-import type { PluginPack } from "./model-abstracts/abstract_plugin";
+import {
+  PluginPack,
+  instanceOfPlugin,
+} from "./model-abstracts/abstract_plugin";
 import type { TagPack } from "./model-abstracts/abstract_tag";
 import type { ModelPack } from "./model-abstracts/abstract_model";
 import type { ModelInstancePack } from "./model-abstracts/abstract_model_instance";
@@ -215,6 +223,8 @@ export type TableQuery = {
 
 export type RunExtra = {
   redirect?: string;
+  onRowSelect?: Function;
+  removeIdFromstate?: boolean;
 } & ReqRes &
   SelectOptions;
 
@@ -596,6 +606,21 @@ export type Pack = {
   event_logs?: Array<EventLogPack>;
   code_pages?: Array<CodePagePack>;
   config?: object;
+};
+
+export const instanceOfPack = (object: any): object is Pack => {
+  return (
+    object &&
+    "tables" in object &&
+    Array.isArray(object.tables) &&
+    object.tables.every((t: any) => instanceOfTable(t)) &&
+    "views" in object &&
+    Array.isArray(object.views) &&
+    object.views.every((v: any) => instanceOfView(v)) &&
+    "plugins" in object &&
+    Array.isArray(object.plugins) &&
+    object.plugins.every((p: any) => instanceOfPlugin(p))
+  );
 };
 
 export type PluginSourceType = "npm" | "github" | "local" | "git";

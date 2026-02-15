@@ -3,7 +3,7 @@ import db from "@saltcorn/data/db/index";
 const { getState } = require("@saltcorn/data/db/state");
 
 import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
-const { runConfigurationCheck } = require("../models/config-check");
+import { runConfigurationCheck } from "../models/config-check";
 import mocks from "@saltcorn/data/tests/mocks";
 
 const { mockReqRes } = mocks;

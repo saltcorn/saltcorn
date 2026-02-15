@@ -255,7 +255,7 @@ const countFields = (layout: Layout) => {
 
 const splitLayoutContainerFields = (layout: Layout) => {
   const findAllFieldsContainer = (l: Layout) => {
-    let inner;
+    let inner: any;
     //all-fields container is last container to have >1 field
     traverseSync(l, {
       blank(s) {
