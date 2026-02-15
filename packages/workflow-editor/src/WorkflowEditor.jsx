@@ -1526,15 +1526,22 @@ const WorkflowEditor = ({ data }) => {
   const onDelete = useCallback(
     async (id) => {
       if (!window.confirm(strings.confirmDelete)) return;
-      const formData = new FormData();
-      formData.append("_csrf", data.csrfToken || "");
-      await fetchJson(`${data.urls.deleteStep}/${id}`, {
-        method: "POST",
-        body: formData,
-      });
-      await reload();
+      try {
+        const formData = new FormData();
+        formData.append("_csrf", data.csrfToken || "");
+        await fetchJson(`${data.urls.deleteStep}/${id}`, {
+          method: "POST",
+          body: formData,
+        });
+        setModal(null);
+        setError("");
+        clearDrawerState();
+        await reload();
+      } catch (e) {
+        setError(e.message);
+      }
     },
-    [data.csrfToken, fetchJson, reload, strings.confirmDelete]
+    [clearDrawerState, data.csrfToken, fetchJson, reload, strings.confirmDelete]
   );
 
   useEffect(() => {
