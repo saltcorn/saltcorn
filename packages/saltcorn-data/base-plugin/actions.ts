@@ -20,7 +20,7 @@ import WorkflowRun from "../models/workflow_run";
 import Notification from "../models/notification";
 import File from "../models/file";
 import { Where } from "@saltcorn/db-common/internal";
-
+import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 import stateModule from "../db/state";
 const { getState } = stateModule;
 const {
@@ -100,7 +100,7 @@ const consoleInterceptor = (state: any) => {
 };
 
 const emit_to_client =
-  (user?: User) => (data: any, userIds?: number | number[]) => {
+  (user?: User | AbstractUser) => (data: any, userIds?: number | number[]) => {
     const state = getState()!;
     const enabled = getState()!.getConfig("enable_dynamic_updates", true);
     if (!enabled) {
@@ -139,7 +139,7 @@ const run_code = async ({
   table?: Table;
   channel?: string;
   configuration: { code: string; run_where: string };
-  user?: User;
+  user?: User | AbstractUser;
   [key: string]: any;
 }): Promise<any> => {
   if (run_where === "Client page")
@@ -349,7 +349,7 @@ export = {
         channel?: string;
         payload?: any;
       };
-      user?: User;
+      user?: User | AbstractUser;
     }) => {
       return await Trigger.emitEvent(
         eventType,
@@ -471,7 +471,7 @@ export = {
         trigger_id?: number;
         interval?: number;
       };
-      user?: User;
+      user?: User | AbstractUser;
       [key: string]: unknown;
     }) => {
       const table = Table.findOne({ name: table_name });
@@ -592,7 +592,7 @@ export = {
       },
     }: {
       row?: Row;
-      user?: User;
+      user?: User | AbstractUser;
       table?: Table;
       configuration: {
         url: string;
@@ -1269,7 +1269,7 @@ export = {
       configuration: {
         joined_table: string;
       };
-      user?: User;
+      user?: User | AbstractUser;
     }) => {
       if (!joined_table)
         throw new Error(`Relation not specified in insert_joined_row action`);
@@ -1323,7 +1323,7 @@ export = {
     }: {
       row: Row;
       table: Table;
-      user?: User;
+      user?: User | AbstractUser;
     }) => {
       const newRow = { ...row };
       table.getFields();
@@ -1401,7 +1401,7 @@ export = {
         only_triggering_row?: boolean;
         where?: string;
       };
-      user?: User;
+      user?: User | AbstractUser;
     }) => {
       const table_for_recalc = Table.findOne({
         name: configuration.table,
@@ -1502,7 +1502,7 @@ export = {
         row_expr: string;
         id_variable?: string;
       };
-      user?: User;
+      user?: User | AbstractUser;
       referrer?: string;
       [key: string]: any;
     }) => {
@@ -1652,7 +1652,7 @@ export = {
         select_table?: string;
         query?: string;
       };
-      user?: User;
+      user?: User | AbstractUser;
       [key: string]: any;
     }) => {
       const f = get_async_expression_function(
@@ -1753,7 +1753,7 @@ export = {
         delete_where?: string;
         table_name?: string;
       };
-      user?: User;
+      user?: User | AbstractUser;
       [key: string]: any;
     }) => {
       const resultCollector = {};
@@ -1872,7 +1872,7 @@ export = {
       req,
     }: {
       row?: Row;
-      user?: User;
+      user?: User | AbstractUser;
       configuration: {
         nav_action: string;
         url?: string;
@@ -1966,7 +1966,7 @@ export = {
       configuration: { control_action, step },
     }: {
       row?: Row;
-      user?: User;
+      user?: User | AbstractUser;
       configuration: {
         control_action: string;
         step?: string;
@@ -2024,7 +2024,7 @@ export = {
     }: {
       row?: Row;
       table: Table;
-      user?: User;
+      user?: User | AbstractUser;
       req?: Req;
       configuration: {
         form_action: string;
@@ -2153,7 +2153,7 @@ export = {
     }: {
       row?: Row;
       table?: Table;
-      user?: User;
+      user?: User | AbstractUser;
       req?: Req;
       configuration: {
         text_template?: string;
@@ -2210,7 +2210,7 @@ export = {
       configuration: { type, notify_type, text, title, remove_delay },
     }: {
       row?: Row;
-      user?: User;
+      user?: User | AbstractUser;
       configuration: {
         type?: string;
         notify_type?: string;
@@ -2510,7 +2510,7 @@ export = {
         viewname: string;
         [key: string]: any;
       };
-      user?: User;
+      user?: User | AbstractUser;
     }) => {
       const qs = Object.entries(flds)
         .map(([k, v]) =>
@@ -2555,7 +2555,7 @@ export = {
       configuration: {
         language: string;
       };
-      user?: User;
+      user?: User | AbstractUser;
       req: Req;
       res?: Res;
     }) => {
@@ -2697,7 +2697,7 @@ export = {
         match_field_names?: boolean;
         where?: string;
       };
-      user?: User;
+      user?: User | AbstractUser;
       [key: string]: any;
     }) => {
       // set difference: a - b
@@ -2820,7 +2820,7 @@ export = {
       configuration: { view, new_state_fml, interval },
     }: {
       row?: Row;
-      user?: User;
+      user?: User | AbstractUser;
       configuration: {
         view: string;
         new_state_fml?: string;
@@ -2921,7 +2921,7 @@ export = {
       req,
     }: {
       row?: Row;
-      user?: User;
+      user?: User | AbstractUser;
       configuration: {
         blocking?: boolean;
         id?: string;
@@ -3040,7 +3040,7 @@ export = {
       configuration: { title, body, link, user_spec },
     }: {
       row?: Row;
-      user?: User;
+      user?: User | AbstractUser
       configuration: {
         title: string;
         body?: string;
@@ -3135,7 +3135,7 @@ export = {
         session_field: string;
         user_field: string;
       };
-      user?: User;
+      user?: User | AbstractUser;
     }) => {
       if (!row?.old_session_id || !user || !session_field || !user_field)
         return;
@@ -3235,7 +3235,7 @@ export = {
         where?: string;
         hyperparameters?: string;
       };
-      user?: User;
+      user?: User | AbstractUser;
     }) => {
       const use_instance_name = interpolate(
         instance_name,
@@ -3303,7 +3303,7 @@ export = {
         filepath_expr?: string;
         file_field?: string;
       };
-      user?: User;
+      user?: User | AbstractUser;
       mode?: string;
     }) => {
       let filepath;
