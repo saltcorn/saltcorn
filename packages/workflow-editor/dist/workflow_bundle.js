@@ -34027,11 +34027,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _xyflow_react_dist_style_css__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(137);
 /* harmony import */ var _workflow_css__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(147);
 /* harmony import */ var _WorkflowEdge__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(149);
-function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i["return"]) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
 function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
 function _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, "next", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, "throw", n); } _next(void 0); }); }; }
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
 function _slicedToArray(r, e) { return _arrayWithHoles(r) || _iterableToArrayLimit(r, e) || _unsupportedIterableToArray(r, e) || _nonIterableRest(); }
 function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
 function _iterableToArrayLimit(r, l) { var t = null == r ? null : "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (null != t) { var e, n, i, u, a = [], f = !0, o = !1; try { if (i = (t = t.call(r)).next, 0 === l) { if (Object(t) !== t) return; f = !1; } else for (; !(f = (e = i.call(t)).done) && (a.push(e.value), a.length !== l); f = !0); } catch (r) { o = !0, n = r; } finally { try { if (!f && null != t["return"] && (u = t["return"](), Object(u) !== u)) return; } finally { if (o) throw n; } } return a; } }
@@ -34712,6 +34712,7 @@ var StepDrawer = function StepDrawer(_ref7) {
   var _data$strings;
   var modal = _ref7.modal,
     innerRef = _ref7.innerRef,
+    outerRef = _ref7.outerRef,
     onClose = _ref7.onClose,
     submitting = _ref7.submitting,
     error = _ref7.error,
@@ -34721,6 +34722,7 @@ var StepDrawer = function StepDrawer(_ref7) {
     onResizeStart = _ref7.onResizeStart;
   var isOpen = !!modal;
   return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
+    ref: outerRef,
     className: "wf-drawer".concat(isOpen ? " wf-drawer--open" : ""),
     role: "dialog",
     "aria-modal": "false",
@@ -34773,7 +34775,7 @@ var StepDrawer = function StepDrawer(_ref7) {
   }, submitting ? "Saving..." : "Save"))) : null);
 };
 var WorkflowEditor = function WorkflowEditor(_ref8) {
-  var _data$config;
+  var _data$config, _data$trigger2, _data$trigger4;
   var data = _ref8.data;
   var _useState = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(data.steps || []),
     _useState2 = _slicedToArray(_useState, 2),
@@ -34846,13 +34848,78 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     drawerWidth = _useState24[0],
     setDrawerWidth = _useState24[1];
   var modalRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
+  var drawerRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
+  var shellRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
   var resizingRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
   var connectSourceRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
   var _useState25 = (0,react__WEBPACK_IMPORTED_MODULE_0__.useState)(null),
     _useState26 = _slicedToArray(_useState25, 2),
     selectedEdgeId = _useState26[0],
     setSelectedEdgeId = _useState26[1];
+  var drawerStorageKey = (0,react__WEBPACK_IMPORTED_MODULE_0__.useMemo)(function () {
+    var _data$trigger;
+    return "wf-drawer:".concat((data === null || data === void 0 || (_data$trigger = data.trigger) === null || _data$trigger === void 0 ? void 0 : _data$trigger.id) || "default");
+  }, [data === null || data === void 0 || (_data$trigger2 = data.trigger) === null || _data$trigger2 === void 0 ? void 0 : _data$trigger2.id]);
+  var viewportStorageKey = (0,react__WEBPACK_IMPORTED_MODULE_0__.useMemo)(function () {
+    var _data$trigger3;
+    return "wf-viewport:".concat((data === null || data === void 0 || (_data$trigger3 = data.trigger) === null || _data$trigger3 === void 0 ? void 0 : _data$trigger3.id) || "default");
+  }, [data === null || data === void 0 || (_data$trigger4 = data.trigger) === null || _data$trigger4 === void 0 ? void 0 : _data$trigger4.id]);
   var rfInstanceRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(null);
+  var persistDrawerState = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (payload) {
+    try {
+      if (typeof window === "undefined") return;
+      window.sessionStorage.setItem(drawerStorageKey, JSON.stringify(payload || {}));
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, [drawerStorageKey]);
+  var clearDrawerState = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function () {
+    try {
+      if (typeof window === "undefined") return;
+      window.sessionStorage.removeItem(drawerStorageKey);
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, [drawerStorageKey]);
+  var loadViewport = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function () {
+    if (typeof window === "undefined") return null;
+    try {
+      var raw = window.sessionStorage.getItem(viewportStorageKey);
+      if (!raw) return null;
+      var parsed = JSON.parse(raw);
+      if (!parsed || _typeof(parsed) !== "object") return null;
+      var x = parsed.x,
+        y = parsed.y,
+        zoom = parsed.zoom;
+      if (Number.isFinite(Number(x)) && Number.isFinite(Number(y)) && Number.isFinite(Number(zoom))) {
+        return {
+          x: Number(x),
+          y: Number(y),
+          zoom: Number(zoom)
+        };
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+    return null;
+  }, [viewportStorageKey]);
+  var persistViewport = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (viewport) {
+    if (!viewport) return;
+    var x = viewport.x,
+      y = viewport.y,
+      zoom = viewport.zoom;
+    if (!Number.isFinite(Number(x)) || !Number.isFinite(Number(y)) || !Number.isFinite(Number(zoom))) return;
+    try {
+      if (typeof window === "undefined") return;
+      window.sessionStorage.setItem(viewportStorageKey, JSON.stringify({
+        x: Number(x),
+        y: Number(y),
+        zoom: Number(zoom)
+      }));
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, [viewportStorageKey]);
   var onInit = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (instance) {
     rfInstanceRef.current = instance;
   }, []);
@@ -34860,6 +34927,8 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     _useState28 = _slicedToArray(_useState27, 2),
     selectedNodes = _useState28[0],
     setSelectedNodes = _useState28[1];
+  var pendingViewportRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(loadViewport());
+  var appliedViewportRef = (0,react__WEBPACK_IMPORTED_MODULE_0__.useRef)(false);
   var handleSelectionChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_ref9) {
     var _ref9$nodes = _ref9.nodes,
       nodes = _ref9$nodes === void 0 ? [] : _ref9$nodes,
@@ -34899,6 +34968,15 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
     refreshGraph(steps);
   }, [steps, refreshGraph]);
+  (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
+    if (!rfInstanceRef.current) return;
+    if (!pendingViewportRef.current) return;
+    if (appliedViewportRef.current) return;
+    rfInstanceRef.current.setViewport(pendingViewportRef.current, {
+      duration: 0
+    });
+    appliedViewportRef.current = true;
+  }, [nodes]);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
     window.addEventListener("keydown", handleKeyDelete);
     return function () {
@@ -35025,7 +35103,6 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       while (1) switch (_context2.p = _context2.n) {
         case 0:
           setLoading(true);
-          setModal(null);
           setError("");
           _context2.p = 1;
           _context2.n = 2;
@@ -35236,6 +35313,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       stepId,
       initial_step,
       after_step,
+      descriptor,
       base,
       url,
       res,
@@ -35247,6 +35325,12 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
           _ref13 = _args5.length > 0 && _args5[0] !== undefined ? _args5[0] : {}, stepId = _ref13.stepId, initial_step = _ref13.initial_step, after_step = _ref13.after_step;
           _context5.p = 1;
           setError("");
+          descriptor = {
+            stepId: stepId || null,
+            initial_step: !!initial_step,
+            after_step: after_step || null
+          };
+          persistDrawerState(descriptor);
           base = "".concat(data.urls.stepForm).concat(stepId ? "/".concat(stepId) : "");
           url = new URL(base, window.location.origin);
           url.searchParams.set("render", "dialog");
@@ -35266,12 +35350,13 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
         case 3:
           _context5.p = 3;
           _t4 = _context5.v;
+          clearDrawerState();
           setError(_t4.message);
         case 4:
           return _context5.a(2);
       }
     }, _callee5, null, [[1, 3]]);
-  })), [data.urls.stepForm, fetchJson]);
+  })), [clearDrawerState, data.urls.stepForm, fetchJson, persistDrawerState]);
   var handleModalSubmit = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
     var _ref14 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6(formEl) {
       var formData, action, method, res, json;
@@ -35311,6 +35396,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
             throw new Error(json.error);
           case 4:
             setModal(null);
+            clearDrawerState();
             _context6.n = 5;
             return reload();
           case 5:
@@ -35321,7 +35407,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     return function (_x2) {
       return _ref14.apply(this, arguments);
     };
-  }(), [data.csrfToken, data.urls.stepForm, reload]);
+  }(), [clearDrawerState, data.csrfToken, data.urls.stepForm, reload]);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
     var _modalRef$current;
     if (!modal) return undefined;
@@ -35376,6 +35462,18 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       if (actionSelect) actionSelect.removeEventListener("change", handleActionChange);
     };
   }, [handleModalSubmit, modal]);
+  (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
+    if (typeof window === "undefined") return undefined;
+    var raw = window.sessionStorage.getItem(drawerStorageKey);
+    if (!raw) return undefined;
+    try {
+      var parsed = JSON.parse(raw);
+      if (parsed && _typeof(parsed) === "object") openStepForm(parsed);
+    } catch (e) {
+      clearDrawerState();
+    }
+    return undefined;
+  }, [clearDrawerState, drawerStorageKey, openStepForm]);
   var updateConnection = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
     var _ref16 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8(payload) {
       var body;
@@ -35756,6 +35854,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     "--wf-drawer-width": "".concat(drawerWidth, "px")
   };
   var showMiniMap = !modal;
+  var shouldFitView = !pendingViewportRef.current;
   var onEdgeClick = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_, edge) {
     setSelectedEdgeId(edge.id);
   }, []);
@@ -35801,9 +35900,46 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       return stopResize();
     };
   }, [stopResize]);
+  var closeModal = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function () {
+    setModal(null);
+    setError("");
+    clearDrawerState();
+  }, [clearDrawerState]);
+  (0,react__WEBPACK_IMPORTED_MODULE_0__.useLayoutEffect)(function () {
+    var shellEl = shellRef.current;
+    var drawerEl = drawerRef.current;
+    if (!shellEl) return undefined;
+    var hasResizeObserver = typeof ResizeObserver !== "undefined";
+    var computePadding = function computePadding() {
+      if (!drawerEl || !modal) {
+        shellEl.style.removeProperty("--wf-shell-padding-right");
+        return;
+      }
+      var shellRect = shellEl.getBoundingClientRect();
+      var drawerRect = drawerEl.getBoundingClientRect();
+      // Space already available to the right of the shell (e.g. due to sidebars)
+      var naturalGap = Math.max(0, window.innerWidth - shellRect.right);
+      var needed = Math.max(0, drawerRect.width - naturalGap) + 4;
+      shellEl.style.setProperty("--wf-shell-padding-right", "".concat(needed, "px"));
+    };
+    computePadding();
+    var resizeObserver = hasResizeObserver ? new ResizeObserver(function () {
+      return computePadding();
+    }) : null;
+    if (resizeObserver) {
+      resizeObserver.observe(shellEl);
+      if (drawerEl) resizeObserver.observe(drawerEl);
+    }
+    window.addEventListener("resize", computePadding);
+    return function () {
+      if (resizeObserver) resizeObserver.disconnect();
+      window.removeEventListener("resize", computePadding);
+    };
+  }, [drawerWidth, modal]);
   return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
     className: shellClass,
-    style: shellStyle
+    style: shellStyle,
+    ref: shellRef
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
     className: "wf-toolbar"
   }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("div", {
@@ -35848,14 +35984,18 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     nodeTypes: nodeTypes,
     edgeTypes: edgeTypes,
     onInit: onInit,
-    fitView: true,
+    defaultViewport: pendingViewportRef.current || undefined,
+    fitView: shouldFitView,
     proOptions: {
       hideAttribution: true
     },
     defaultEdgeOptions: {
       animated: true
     },
-    colorMode: window._sc_lightmode || "light"
+    colorMode: window._sc_lightmode || "light",
+    onMoveEnd: function onMoveEnd(_, viewport) {
+      return persistViewport(viewport);
+    }
   }, showMiniMap && /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(_xyflow_react__WEBPACK_IMPORTED_MODULE_5__.MiniMap, {
     pannable: true,
     zoomable: true
@@ -35864,10 +36004,8 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
   }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement(StepDrawer, {
     modal: modal,
     innerRef: modalRef,
-    onClose: function onClose() {
-      setModal(null);
-      setError("");
-    },
+    outerRef: drawerRef,
+    onClose: closeModal,
     submitting: savingModal,
     error: error && modal ? error : "",
     data: data,
@@ -52884,6 +53022,7 @@ var ___CSS_LOADER_EXPORT___ = _node_modules_css_loader_dist_runtime_api_js__WEBP
 // Module
 ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   padding: 0;
+  padding-right: var(--wf-shell-padding-right, 0px);
   height: 100%;
   min-height: 0;
   display: flex;
@@ -52898,10 +53037,11 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   --wf-handle-bg: #fff;
   --wf-handle-source-bg: #5a5a5a;
   --wf-drawer-width: 50vw;
+  --wf-drawer-offset: -4px;
 }
 
 .wf-shell--drawer-open {
-  padding-right: calc(var(--wf-drawer-width) - 44px);
+  /* padding-right is computed in JS and written to --wf-shell-padding-right */
 }
 
 .wf-toolbar {
@@ -52932,6 +53072,10 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
 
 .wf-shell .react-flow__edge-labels {
   z-index: 2;
+}
+.react-flow .react-flow__edges svg {
+  overflow: visible !important;
+  z-index: 1040;
 }
 
 .wf-empty {
@@ -53140,7 +53284,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
 
 @media (max-width: 768px) {
   .wf-shell--drawer-open {
-    padding-right: 0;
+    padding-right: var(--wf-shell-padding-right, 0px);
   }
 
   .wf-drawer {
@@ -53235,7 +53379,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   --bs-body-color: #fff;
   --bs-card-border-color: #44484e;
 }
-`, "",{"version":3,"sources":["webpack://./src/workflow.css"],"names":[],"mappings":"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","sourcesContent":[".wf-shell {\n  padding: 0;\n  height: 100%;\n  min-height: 0;\n  display: flex;\n  flex-direction: column;\n  position: relative;\n  transition: padding-right 0.25s ease;\n  --wf-edge: #6c757d;\n  --wf-edge-adder: #0d6efd;\n  --wf-edge-loop: #f59f00;\n  --wf-edge-label: #495057;\n  --wf-handle-border: #3f3f3f;\n  --wf-handle-bg: #fff;\n  --wf-handle-source-bg: #5a5a5a;\n  --wf-drawer-width: 50vw;\n}\n\n.wf-shell--drawer-open {\n  padding-right: calc(var(--wf-drawer-width) - 44px);\n}\n\n.wf-toolbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 10px 12px;\n  border-bottom: 1px solid #e2e6ea;\n  background: transparent;\n}\n\n.wf-toolbar__actions button,\n.wf-toolbar__actions a {\n  margin-left: 8px;\n}\n\n.wf-canvas {\n  height: 100%;\n  flex: 1;\n  min-height: 0;\n  background: #fafbfc;\n}\n\n/* Ensure nodes visually sit above edge labels/buttons */\n.wf-shell .react-flow__node {\n  z-index: 5;\n}\n\n.wf-shell .react-flow__edge-labels {\n  z-index: 2;\n}\n\n.wf-empty {\n  padding: 12px;\n  color: #6c757d;\n}\n\n.wf-node {\n  background: var(--xy-node-background-color-default, #fff);\n  /* border: var(--xy-node-border-default); */\n  border: 1px solid #777777;\n  border-radius: 10px;\n  padding: 10px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);\n  min-width: 200px;\n  cursor: pointer;\n  max-width: 240px;\n}\n\n.wf-modal .card-body {\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: auto;\n}\n.wf-node__header {\n  display: flex;\n  justify-content: space-between;\n  align-items: flex-start;\n  margin-bottom: 4px;\n}\n\n.wf-node__title-row {\n  display: flex;\n  gap: 8px;\n  align-items: baseline;\n  flex-wrap: wrap;\n}\n\n.wf-node__title {\n  font-weight: 700;\n  font-size: 14px;\n}\n\n.wf-node__action {\n  font-weight: 600;\n  color: #0d6efd;\n  font-size: 12px;\n}\n\n.wf-node__desc {\n  font-size: 12px;\n  color: #495057;\n  margin-bottom: 4px;\n}\n\n.wf-node__summary {\n  font-size: 12px;\n  color: var(--xy-node-color-default, #495057);\n  margin: 4px 0 6px;\n  padding-left: 16px;\n}\n\n.wf-node__summary li {\n  margin-bottom: 2px;\n}\n\n.wf-node__meta {\n  font-size: 12px;\n  color: #6c757d;\n}\n\n.wf-label {\n  font-weight: 600;\n}\n\n.wf-node__footer {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin-top: 8px;\n}\n\n.wf-start-node {\n  padding: 10px;\n  border-radius: 10px;\n  background: linear-gradient(135deg, #0d6efd, #5ab2ff);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);\n  min-width: 100px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n}\n\n.wf-start-title {\n  font-weight: 700;\n}\n\n.wf-start-actions button {\n  color: #0d6efd;\n  background: #fff;\n  border-color: #fff;\n}\n\n.wf-add-node {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--xy-node-background-color-default, #fff);\n  border: 1px dashed var(--xy-node-border-default, #adb5bd);\n  color: #0d6efd;\n  font-weight: 700;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);\n  cursor: pointer;\n}\n\n.wf-add-node:focus {\n  outline: 2px solid #0d6efd;\n  outline-offset: 2px;\n}\n\n.wf-drawer {\n  position: fixed;\n  top: 0;\n  right: 0;\n  height: 100%;\n  width: min(95vw, max(var(--wf-drawer-width), 600px));\n  background: var(--bs-body-bg, #fff);\n  color: var(--bs-body-color, #212529);\n  border-left: 1px solid var(--bs-card-border-color, #e2e6ea);\n  display: flex;\n  flex-direction: column;\n  z-index: 1050;\n  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);\n  transform: translateX(100%);\n  transition: transform 0.25s ease;\n  overflow: visible;\n}\n\n.wf-drawer--open {\n  transform: translateX(0);\n}\n\n.wf-drawer__resize {\n  position: absolute;\n  left: -6px;\n  top: 0;\n  width: 10px;\n  height: 100%;\n  cursor: ew-resize;\n  z-index: 1;\n  background: linear-gradient(\n    90deg,\n    rgba(0, 0, 0, 0) 0%,\n    rgba(0, 0, 0, 0.08) 50%,\n    rgba(0, 0, 0, 0) 100%\n  );\n}\n\n.wf-drawer__header {\n  padding: 16px 18px 12px;\n  border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-drawer__body {\n  padding: 16px 18px;\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow-y: auto;\n}\n\n.wf-drawer__footer {\n  padding: 12px 18px;\n  border-top: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-modal-backdrop {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  background: rgba(0, 0, 0, 0.45);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 1050;\n}\n\n.wf-modal {\n  /* background: var(--bs-body-bg, #fff); */\n  /* color: var(--bs-body-color, #212529); */\n  border-radius: 10px;\n  /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */\n  width: min(900px, 90vw);\n  max-height: 90vh;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */\n}\n\n@media (max-width: 768px) {\n  .wf-shell--drawer-open {\n    padding-right: 0;\n  }\n\n  .wf-drawer {\n    width: min(480px, 100vw);\n  }\n}\n\n.wf-shell .react-flow__edge-path {\n  stroke: var(--wf-edge);\n  fill: none;\n  stroke-width: 1.5px;\n}\n\n.wf-shell .wf-edge-selected .react-flow__edge-path {\n  stroke: var(--wf-edge-selected, #0d6efd) !important;\n  stroke-width: 2.4px;\n  filter: drop-shadow(0 0 4px rgba(13, 110, 253, 0.35));\n}\n\n.wf-shell .react-flow__connection-path {\n  stroke-width: 1.5px;\n}\n\n.wf-shell .react-flow__edge-text {\n  fill: var(--wf-edge-label);\n}\n\n.wf-shell .react-flow__handle {\n  background: var(--wf-handle-bg);\n  border-color: var(--wf-handle-border);\n}\n\n.wf-shell .react-flow__handle.wf-handle-source {\n  background: var(--wf-handle-source-bg) !important;\n  border-color: var(--wf-handle-source-bg) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-source-loop {\n  background: var(--wf-edge-loop) !important;\n  border-color: var(--wf-edge-loop) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-target-loop {\n  border-color: var(--wf-edge-loop) !important;\n}\n\n.wf-edge-add-button {\n  width: 18px;\n  height: 18px;\n  border-radius: 50%;\n  border: 1px solid #adb5bd;\n  background: #ffffff;\n  color: #6c757d;\n  font-size: 12px;\n  line-height: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  padding: 0;\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);\n}\n\n.wf-edge-add-button:hover {\n  background: #f1f3f5;\n  color: #495057;\n}\n\n.wf-edge-add-button:focus {\n  outline: 2px solid #adb5bd;\n  outline-offset: 2px;\n}\n\n[data-bs-theme=\"dark\"] .wf-shell {\n  --wf-edge: #aeb3bd;\n  --wf-edge-adder: #6ea8fe;\n  --wf-edge-loop: #f0ad4e;\n  --wf-edge-label: #c0c4cf;\n  --wf-handle-border: #c0c4cf;\n  --wf-handle-bg: #2f3139;\n  --wf-handle-source-bg: #8a8a8a;\n}\n\n/* Temporary vars fallbacks */\n.wf-drawer {\n  --bs-body-bg: #fff;\n  --bs-body-color: #212529;\n  --bs-card-border-color: #e2e6ea;\n}\n[data-bs-theme=\"dark\"] .wf-drawer {\n  --bs-body-bg: #303030;\n  --bs-body-color: #fff;\n  --bs-card-border-color: #44484e;\n}\n"],"sourceRoot":""}]);
+`, "",{"version":3,"sources":["webpack://./src/workflow.css"],"names":[],"mappings":"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","sourcesContent":[".wf-shell {\n  padding: 0;\n  padding-right: var(--wf-shell-padding-right, 0px);\n  height: 100%;\n  min-height: 0;\n  display: flex;\n  flex-direction: column;\n  position: relative;\n  transition: padding-right 0.25s ease;\n  --wf-edge: #6c757d;\n  --wf-edge-adder: #0d6efd;\n  --wf-edge-loop: #f59f00;\n  --wf-edge-label: #495057;\n  --wf-handle-border: #3f3f3f;\n  --wf-handle-bg: #fff;\n  --wf-handle-source-bg: #5a5a5a;\n  --wf-drawer-width: 50vw;\n  --wf-drawer-offset: -4px;\n}\n\n.wf-shell--drawer-open {\n  /* padding-right is computed in JS and written to --wf-shell-padding-right */\n}\n\n.wf-toolbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 10px 12px;\n  border-bottom: 1px solid #e2e6ea;\n  background: transparent;\n}\n\n.wf-toolbar__actions button,\n.wf-toolbar__actions a {\n  margin-left: 8px;\n}\n\n.wf-canvas {\n  height: 100%;\n  flex: 1;\n  min-height: 0;\n  background: #fafbfc;\n}\n\n/* Ensure nodes visually sit above edge labels/buttons */\n.wf-shell .react-flow__node {\n  z-index: 5;\n}\n\n.wf-shell .react-flow__edge-labels {\n  z-index: 2;\n}\n.react-flow .react-flow__edges svg {\n  overflow: visible !important;\n  z-index: 1040;\n}\n\n.wf-empty {\n  padding: 12px;\n  color: #6c757d;\n}\n\n.wf-node {\n  background: var(--xy-node-background-color-default, #fff);\n  /* border: var(--xy-node-border-default); */\n  border: 1px solid #777777;\n  border-radius: 10px;\n  padding: 10px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);\n  min-width: 200px;\n  cursor: pointer;\n  max-width: 240px;\n}\n\n.wf-modal .card-body {\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: auto;\n}\n.wf-node__header {\n  display: flex;\n  justify-content: space-between;\n  align-items: flex-start;\n  margin-bottom: 4px;\n}\n\n.wf-node__title-row {\n  display: flex;\n  gap: 8px;\n  align-items: baseline;\n  flex-wrap: wrap;\n}\n\n.wf-node__title {\n  font-weight: 700;\n  font-size: 14px;\n}\n\n.wf-node__action {\n  font-weight: 600;\n  color: #0d6efd;\n  font-size: 12px;\n}\n\n.wf-node__desc {\n  font-size: 12px;\n  color: #495057;\n  margin-bottom: 4px;\n}\n\n.wf-node__summary {\n  font-size: 12px;\n  color: var(--xy-node-color-default, #495057);\n  margin: 4px 0 6px;\n  padding-left: 16px;\n}\n\n.wf-node__summary li {\n  margin-bottom: 2px;\n}\n\n.wf-node__meta {\n  font-size: 12px;\n  color: #6c757d;\n}\n\n.wf-label {\n  font-weight: 600;\n}\n\n.wf-node__footer {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin-top: 8px;\n}\n\n.wf-start-node {\n  padding: 10px;\n  border-radius: 10px;\n  background: linear-gradient(135deg, #0d6efd, #5ab2ff);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);\n  min-width: 100px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n}\n\n.wf-start-title {\n  font-weight: 700;\n}\n\n.wf-start-actions button {\n  color: #0d6efd;\n  background: #fff;\n  border-color: #fff;\n}\n\n.wf-add-node {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--xy-node-background-color-default, #fff);\n  border: 1px dashed var(--xy-node-border-default, #adb5bd);\n  color: #0d6efd;\n  font-weight: 700;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);\n  cursor: pointer;\n}\n\n.wf-add-node:focus {\n  outline: 2px solid #0d6efd;\n  outline-offset: 2px;\n}\n\n.wf-drawer {\n  position: fixed;\n  top: 0;\n  right: 0;\n  height: 100%;\n  width: min(95vw, max(var(--wf-drawer-width), 600px));\n  background: var(--bs-body-bg, #fff);\n  color: var(--bs-body-color, #212529);\n  border-left: 1px solid var(--bs-card-border-color, #e2e6ea);\n  display: flex;\n  flex-direction: column;\n  z-index: 1050;\n  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);\n  transform: translateX(100%);\n  transition: transform 0.25s ease;\n  overflow: visible;\n}\n\n.wf-drawer--open {\n  transform: translateX(0);\n}\n\n.wf-drawer__resize {\n  position: absolute;\n  left: -6px;\n  top: 0;\n  width: 10px;\n  height: 100%;\n  cursor: ew-resize;\n  z-index: 1;\n  background: linear-gradient(\n    90deg,\n    rgba(0, 0, 0, 0) 0%,\n    rgba(0, 0, 0, 0.08) 50%,\n    rgba(0, 0, 0, 0) 100%\n  );\n}\n\n.wf-drawer__header {\n  padding: 16px 18px 12px;\n  border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-drawer__body {\n  padding: 16px 18px;\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow-y: auto;\n}\n\n.wf-drawer__footer {\n  padding: 12px 18px;\n  border-top: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-modal-backdrop {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  background: rgba(0, 0, 0, 0.45);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 1050;\n}\n\n.wf-modal {\n  /* background: var(--bs-body-bg, #fff); */\n  /* color: var(--bs-body-color, #212529); */\n  border-radius: 10px;\n  /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */\n  width: min(900px, 90vw);\n  max-height: 90vh;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */\n}\n\n@media (max-width: 768px) {\n  .wf-shell--drawer-open {\n    padding-right: var(--wf-shell-padding-right, 0px);\n  }\n\n  .wf-drawer {\n    width: min(480px, 100vw);\n  }\n}\n\n.wf-shell .react-flow__edge-path {\n  stroke: var(--wf-edge);\n  fill: none;\n  stroke-width: 1.5px;\n}\n\n.wf-shell .wf-edge-selected .react-flow__edge-path {\n  stroke: var(--wf-edge-selected, #0d6efd) !important;\n  stroke-width: 2.4px;\n  filter: drop-shadow(0 0 4px rgba(13, 110, 253, 0.35));\n}\n\n.wf-shell .react-flow__connection-path {\n  stroke-width: 1.5px;\n}\n\n.wf-shell .react-flow__edge-text {\n  fill: var(--wf-edge-label);\n}\n\n.wf-shell .react-flow__handle {\n  background: var(--wf-handle-bg);\n  border-color: var(--wf-handle-border);\n}\n\n.wf-shell .react-flow__handle.wf-handle-source {\n  background: var(--wf-handle-source-bg) !important;\n  border-color: var(--wf-handle-source-bg) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-source-loop {\n  background: var(--wf-edge-loop) !important;\n  border-color: var(--wf-edge-loop) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-target-loop {\n  border-color: var(--wf-edge-loop) !important;\n}\n\n.wf-edge-add-button {\n  width: 18px;\n  height: 18px;\n  border-radius: 50%;\n  border: 1px solid #adb5bd;\n  background: #ffffff;\n  color: #6c757d;\n  font-size: 12px;\n  line-height: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  padding: 0;\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);\n}\n\n.wf-edge-add-button:hover {\n  background: #f1f3f5;\n  color: #495057;\n}\n\n.wf-edge-add-button:focus {\n  outline: 2px solid #adb5bd;\n  outline-offset: 2px;\n}\n\n[data-bs-theme=\"dark\"] .wf-shell {\n  --wf-edge: #aeb3bd;\n  --wf-edge-adder: #6ea8fe;\n  --wf-edge-loop: #f0ad4e;\n  --wf-edge-label: #c0c4cf;\n  --wf-handle-border: #c0c4cf;\n  --wf-handle-bg: #2f3139;\n  --wf-handle-source-bg: #8a8a8a;\n}\n\n/* Temporary vars fallbacks */\n.wf-drawer {\n  --bs-body-bg: #fff;\n  --bs-body-color: #212529;\n  --bs-card-border-color: #e2e6ea;\n}\n[data-bs-theme=\"dark\"] .wf-drawer {\n  --bs-body-bg: #303030;\n  --bs-body-color: #fff;\n  --bs-card-border-color: #44484e;\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 

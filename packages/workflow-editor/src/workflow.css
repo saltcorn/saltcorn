@@ -1,5 +1,6 @@
 .wf-shell {
   padding: 0;
+  padding-right: var(--wf-shell-padding-right, 0px);
   height: 100%;
   min-height: 0;
   display: flex;
@@ -14,10 +15,7 @@
   --wf-handle-bg: #fff;
   --wf-handle-source-bg: #5a5a5a;
   --wf-drawer-width: 50vw;
-}
-
-.wf-shell--drawer-open {
-  padding-right: calc(var(--wf-drawer-width) - 44px);
+  --wf-drawer-offset: -4px;
 }
 
 .wf-toolbar {
@@ -48,6 +46,10 @@
 
 .wf-shell .react-flow__edge-labels {
   z-index: 2;
+}
+.react-flow .react-flow__edges svg {
+  overflow: visible !important;
+  z-index: 1040;
 }
 
 .wf-empty {
@@ -256,7 +258,7 @@
 
 @media (max-width: 768px) {
   .wf-shell--drawer-open {
-    padding-right: 0;
+    padding-right: var(--wf-shell-padding-right, 0px);
   }
 
   .wf-drawer {
