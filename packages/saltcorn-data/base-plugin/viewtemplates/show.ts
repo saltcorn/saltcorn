@@ -26,7 +26,7 @@ const {
   getStringsForI18n,
   translateLayout,
   splitLayoutContainerFields,
-  findLayoutBranchhWith,
+  findLayoutBranchWith,
 } = require("../../models/layout");
 const { check_view_columns } = require("../../plugin-testing");
 
@@ -110,9 +110,9 @@ const configuration_workflow = (req: Req) =>
           const boolfields = fields.filter(
             (f: GenObj) => f.type && f.type.name === "Bool"
           );
-          const stateActions = (Object.entries(getState().actions) as [string, GenObj][]).filter(
-            ([k, v]) => !v.disableInBuilder && !v.disableIf?.()
-          );
+          const stateActions = (
+            Object.entries(getState().actions) as [string, GenObj][]
+          ).filter(([k, v]) => !v.disableInBuilder && !v.disableIf?.());
           const builtInActions = [
             "Delete",
             "GoBack",
@@ -232,7 +232,9 @@ const configuration_workflow = (req: Req) =>
           const agg_fieldview_options: GenObj = {};
 
           Object.values(getState().types).forEach((t: any) => {
-            agg_fieldview_options[t.name] = (Object.entries(t.fieldviews) as [string, GenObj][])
+            agg_fieldview_options[t.name] = (
+              Object.entries(t.fieldviews) as [string, GenObj][]
+            )
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
@@ -294,7 +296,17 @@ const initial_config = initial_config_all_fields(false);
 const run = async (
   table_id: number | string,
   viewname: string,
-  { columns, layout, page_title, page_title_formula }: { columns: Column[]; layout: Layout; page_title?: string; page_title_formula?: boolean },
+  {
+    columns,
+    layout,
+    page_title,
+    page_title_formula,
+  }: {
+    columns: Column[];
+    layout: Layout;
+    page_title?: string;
+    page_title_formula?: boolean;
+  },
   state: GenObj,
   extra: { req: Req; res: Res; isPreview?: boolean; [key: string]: any },
   { showQuery }: GenObj
@@ -597,8 +609,8 @@ const renderRows = async (
               inLazy
                 ? ""
                 : view.renderLocally()
-                  ? await view.run(state2, subviewExtra, view.isRemoteTable())
-                  : await renderServerSide(view.name, state2)
+                ? await view.run(state2, subviewExtra, view.isRemoteTable())
+                : await renderServerSide(view.name, state2)
             );
           } else {
             const state2 = { ...outerState, ...state1, ...extra_state };
@@ -621,8 +633,8 @@ const renderRows = async (
               inLazy
                 ? ""
                 : view.renderLocally()
-                  ? await view.run(state2, subviewExtra, view.isRemoteTable())
-                  : await renderServerSide(view.name, state2)
+                ? await view.run(state2, subviewExtra, view.isRemoteTable())
+                : await renderServerSide(view.name, state2)
             );
           }
         }
@@ -703,7 +715,13 @@ const render = (
     standardLayoutRowVisitor(viewname, state, table, row, req)
   );
   return renderLayout({
-    blockDispatch: standardBlockDispatch(viewname, state, table, extra as any, row),
+    blockDispatch: standardBlockDispatch(
+      viewname,
+      state,
+      table,
+      extra as any,
+      row
+    ),
     layout,
     role,
     is_owner,
@@ -752,7 +770,7 @@ const createBasicView = async ({
     templateFieldLabels[field.name] = field.label;
   }
 
-  const defaultBranch = findLayoutBranchhWith(
+  const defaultBranch = findLayoutBranchWith(
     inner.above || inner.contents.above,
     (s: GenObj) => {
       return s.type === "field";
@@ -763,7 +781,7 @@ const createBasicView = async ({
   for (const field of table.fields) {
     if (field.primary_key) continue;
     const branch =
-      findLayoutBranchhWith(inner.above || inner.contents.above, (s: GenObj) => {
+      findLayoutBranchWith(inner.above || inner.contents.above, (s: GenObj) => {
         return (
           s.type === "field" &&
           templateFieldTypes[s.field_name] === field.type_name
@@ -815,7 +833,11 @@ export = {
   getStringsForI18n({ layout }: { layout: Layout }) {
     return getStringsForI18n(layout);
   },
-  async interpolate_title_string(table_id: number | string, title: string, state: GenObj) {
+  async interpolate_title_string(
+    table_id: number | string,
+    title: string,
+    state: GenObj
+  ) {
     const tbl = Table.findOne(table_id)!;
     if (state?.[tbl.pk_name]) {
       const freeVars = freeVariablesInInterpolation(title);
@@ -928,7 +950,9 @@ export = {
       if (where) mergeIntoWhere(qstate, where);
       const role = req && req.user ? req.user.role_id : 100;
       if (tbl.ownership_field_id && role > tbl.min_role_read && req) {
-        const owner_field = fields.find((f: GenObj) => f.id === tbl.ownership_field_id)!;
+        const owner_field = fields.find(
+          (f: GenObj) => f.id === tbl.ownership_field_id
+        )!;
         if (qstate[owner_field.name])
           qstate[owner_field.name] = [
             qstate[owner_field.name],
@@ -963,7 +987,8 @@ export = {
           const body = req.body || {};
 
           const col = columns.find(
-            (c: GenObj) => c.type === "Action" && c.rndid === body.rndid && body.rndid
+            (c: GenObj) =>
+              c.type === "Action" && c.rndid === body.rndid && body.rndid
           );
           const table = Table.findOne({ id: table_id })!;
           let row;

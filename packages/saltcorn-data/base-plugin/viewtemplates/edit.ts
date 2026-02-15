@@ -85,7 +85,7 @@ const {
   getStringsForI18n,
   traverseSync,
   splitLayoutContainerFields,
-  findLayoutBranchhWith,
+  findLayoutBranchWith,
 } = layout;
 import { extractFromLayout } from "../../diagram/node_extract_utils";
 import db from "../../db";
@@ -1971,7 +1971,7 @@ const createBasicView = async ({
     templateFieldLabels[field.name] = field.label;
   }
   const defaultBranch = inner
-    ? findLayoutBranchhWith(inner.above || inner.contents.above, (s: any) => {
+    ? findLayoutBranchWith(inner.above || inner.contents.above, (s: any) => {
         return s.type === "field";
       })
     : null;
@@ -1980,7 +1980,7 @@ const createBasicView = async ({
   for (const field of table.fields) {
     if (field.primary_key) continue;
     const branch =
-      findLayoutBranchhWith(inner.above || inner.contents.above, (s: any) => {
+      findLayoutBranchWith(inner.above || inner.contents.above, (s: any) => {
         return (
           s.type === "field" &&
           templateFieldTypes[s.field_name] === field.type_name

@@ -288,7 +288,7 @@ const splitLayoutContainerFields = (layout: Layout) => {
   return { outer, inner };
 };
 
-const findLayoutBranchhWith = (
+const findLayoutBranchWith = (
   layouts: Array<Layout>,
   pred: (l1: Layout) => boolean
 ) => {
@@ -311,5 +311,5 @@ export = {
   translateLayout,
   countFields,
   splitLayoutContainerFields,
-  findLayoutBranchhWith,
+  findLayoutBranchWith,
 };
