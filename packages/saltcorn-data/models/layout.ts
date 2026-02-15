@@ -255,7 +255,7 @@ const countFields = (layout: Layout) => {
 
 const splitLayoutContainerFields = (layout: Layout) => {
   const findAllFieldsContainer = (l: Layout) => {
-    let inner;
+    let inner: any;
     //all-fields container is last container to have >1 field
     traverseSync(l, {
       blank(s) {
@@ -288,7 +288,7 @@ const splitLayoutContainerFields = (layout: Layout) => {
   return { outer, inner };
 };
 
-const findLayoutBranchWith = (
+const findLayoutBranchhWith = (
   layouts: Array<Layout>,
   pred: (l1: Layout) => boolean
 ) => {
@@ -311,5 +311,5 @@ export = {
   translateLayout,
   countFields,
   splitLayoutContainerFields,
-  findLayoutBranchWith,
+  findLayoutBranchhWith,
 };

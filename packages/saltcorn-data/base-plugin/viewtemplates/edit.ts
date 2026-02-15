@@ -21,7 +21,7 @@ const FieldRepeat = require("../../models/fieldrepeat");
 const Library = require("../../models/library");
 
 const { getState } = require("../../db/state");
-const {
+import {
   text,
   text_attr,
   script,
@@ -30,8 +30,9 @@ const {
   button,
   i,
   pre,
-} = require("@saltcorn/markup/tags");
+} from "@saltcorn/markup/tags";
 const { renderForm } = require("@saltcorn/markup");
+import expression from "../../models/expression";
 const {
   get_expression_function,
   expressionChecker,
@@ -39,7 +40,8 @@ const {
   freeVariables,
   freeVariablesInInterpolation,
   add_free_variables_to_aggregations,
-} = require("../../models/expression");
+} = expression;
+import utils from "../../utils";
 const {
   InvalidConfiguration,
   isNode,
@@ -50,9 +52,9 @@ const {
   asyncMap,
   removeEmptyStrings,
   structuredClone,
-} = require("../../utils");
-const { check_view_columns } = require("../../plugin-testing");
-const {
+} = utils;
+import { check_view_columns } from "../../plugin-testing";
+import {
   initial_config_all_fields,
   calcfldViewOptions,
   get_parent_views,
@@ -65,8 +67,8 @@ const {
   readState,
   displayType,
   runCollabEvents,
-} = require("../../plugin-helper");
-const {
+} from "../../plugin-helper";
+import {
   splitUniques,
   getForm,
   setDateLocales,
@@ -76,16 +78,17 @@ const {
   get_view_link_query,
   edit_build_in_actions,
   updateViewSelect,
-} = require("../../viewable_fields");
+} from "../../viewable_fields";
+import layout from "../../models/layout";
 const {
   traverse,
   getStringsForI18n,
   traverseSync,
   splitLayoutContainerFields,
-  findLayoutBranchWith,
-} = require("../../models/layout");
-const { extractFromLayout } = require("../../diagram/node_extract_utils");
-const db = require("../../db");
+  findLayoutBranchhWith,
+} = layout;
+import { extractFromLayout } from "../../diagram/node_extract_utils";
+import db from "../../db";
 const { Relation, RelationType } = require("@saltcorn/common-code");
 
 const configuration_workflow = (req: Req) =>
@@ -181,24 +184,32 @@ const configuration_workflow = (req: Req) =>
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
-            Object.entries(getState().auth_methods).forEach(([k, v]: [string, any]) => {
-              actions.push(`Login with ${k}`);
-            });
-            fields.push(new Field({
-              name: "password",
-              label: req.__("Password"),
-              type: "String",
-            }));
-            fields.push(new Field({
-              name: "passwordRepeat",
-              label: req.__("Password Repeat"),
-              type: "String",
-            }));
-            fields.push(new Field({
-              name: "remember",
-              label: req.__("Remember me"),
-              type: "Bool",
-            }));
+            Object.entries(getState().auth_methods).forEach(
+              ([k, v]: [string, any]) => {
+                actions.push(`Login with ${k}`);
+              }
+            );
+            fields.push(
+              new Field({
+                name: "password",
+                label: req.__("Password"),
+                type: "String",
+              })
+            );
+            fields.push(
+              new Field({
+                name: "passwordRepeat",
+                label: req.__("Password Repeat"),
+                type: "String",
+              })
+            );
+            fields.push(
+              new Field({
+                name: "remember",
+                label: req.__("Remember me"),
+                type: "Bool",
+              })
+            );
 
             field_view_options.password = ["password"];
             field_view_options.passwordRepeat = ["password"];
@@ -310,7 +321,7 @@ const configuration_workflow = (req: Req) =>
                 ),
               },
               ...blockFields,
-            ]
+            ],
           });
           await form.fill_fkey_options();
           return form;
@@ -513,7 +524,12 @@ const run = async (
   viewname: string,
   cfg: GenObj,
   state: GenObj,
-  { res, req, isPreview, hiddenLoginDest }: { res: Res; req: Req; isPreview?: boolean; hiddenLoginDest?: any },
+  {
+    res,
+    req,
+    isPreview,
+    hiddenLoginDest,
+  }: { res: Res; req: Req; isPreview?: boolean; hiddenLoginDest?: any },
   { editQuery }: GenObj
 ) => {
   const mobileReferrer = isWeb(req) ? undefined : req?.headers?.referer;
@@ -584,7 +600,9 @@ const realTimeScript = (
   return `
   const collabCfg = {
     events: {
-      '${view.getRealTimeEventName(`UPDATE_EVENT?id=${rowId}`)}': async (data) => {
+      '${view.getRealTimeEventName(
+        `UPDATE_EVENT?id=${rowId}`
+      )}': async (data) => {
         console.log("Update event received for view ${viewname}", data);
         const script = document.getElementById('${scriptId}');
         const closestDiv = script?.closest(
@@ -740,7 +758,9 @@ const render = async ({
         .map((c: any) => c.join_field.split(".")[0])
     );
     const colFields = new Set(
-      columns.filter((c: any) => c.type === "Field").map((c: any) => c.field_name)
+      columns
+        .filter((c: any) => c.type === "Field")
+        .map((c: any) => c.field_name)
     );
     const formFields = new Set(form.fields.map((f: any) => f.name));
     fields.forEach((f: any) => {
@@ -999,7 +1019,9 @@ const runPost = async (
           } else {
             await form.fill_fkey_options(false, optionsQuery, req.user);
             (req as any).flash("error", text_attr(ins_upd_error));
-            for (const file_field of fields.filter((f: any) => f.type === "File")) {
+            for (const file_field of fields.filter(
+              (f: any) => f.type === "File"
+            )) {
               if (!form.values[file_field.name]) continue;
               form.values[`__exisiting_file_${file_field.name}`] =
                 form.values[file_field.name];
@@ -1041,7 +1063,9 @@ const runPost = async (
               (srow: GenObj) => `${srow[childTable.pk_name]}`
             )
           );
-          const childFields = new Set(childTable.fields.map((f: any) => f.name));
+          const childFields = new Set(
+            childTable.fields.map((f: any) => f.name)
+          );
           let repeatIx = 0;
           for (const [childRow, row_ix] of form.values[field.name].map(
             (r: any, ix: number) => [r, ix]
@@ -1181,8 +1205,10 @@ const runPost = async (
           )
         )
       );
-    else if (trigger_return.notify) (req as any).flash("success", trigger_return.notify);
-    if (trigger_return.error) (req as any).flash("danger", trigger_return.error);
+    else if (trigger_return.notify)
+      (req as any).flash("success", trigger_return.notify);
+    if (trigger_return.error)
+      (req as any).flash("danger", trigger_return.error);
     if (trigger_return.goto) {
       res.redirect(trigger_return.goto);
       return;
@@ -1296,7 +1322,11 @@ const doAuthPost = async ({
 };
 
 const authorise_post = async (
-  { body, table_id, req }: { body: GenObj; table_id: number | string; req: Req },
+  {
+    body,
+    table_id,
+    req,
+  }: { body: GenObj; table_id: number | string; req: Req },
   { authorizePostQuery }: GenObj
 ) => {
   return await authorizePostQuery(body, table_id);
@@ -1532,9 +1562,8 @@ const prepare = async (
     form,
     table,
     req,
-    row: body[table.pk_name]
-      ? { [table.pk_name]: body[table.pk_name] }
-      : undefined,
+    res,
+    row: body[table.pk_name] ? { [table.pk_name]: body[table.pk_name] } : null,
     getRowQuery,
     viewname,
     optionsQuery,
@@ -1795,7 +1824,8 @@ const combineResults = (results: any[]) => {
     else if (trigger_return.notify)
       combined.success.push(trigger_return.notify);
     if (trigger_return.error) combined.danger.push(trigger_return.error);
-    if (trigger_return.goto && !combined.goto) combined.goto = trigger_return.goto;
+    if (trigger_return.goto && !combined.goto)
+      combined.goto = trigger_return.goto;
   }
   return combined;
 };
@@ -1813,7 +1843,12 @@ const tryUpdateImpl = async (row: GenObj, id: any, table: any, req: Req) => {
   return upd_res;
 };
 
-const tryInsertOrUpdateImpl = async (row: GenObj, id: any, table: any, req: Req) => {
+const tryInsertOrUpdateImpl = async (
+  row: GenObj,
+  id: any,
+  table: any,
+  req: Req
+) => {
   const result: GenObj = {};
   const exists = await table.getRow(
     typeof id === "object" ? id : { [table.pk_name]: id }
@@ -1868,29 +1903,29 @@ const createBasicView = async ({
     templateFieldTypes[field.name] = field.type_name;
     templateFieldLabels[field.name] = field.label;
   }
-  const defaultBranch = findLayoutBranchWith(
-    inner.above || inner.contents.above,
-    (s: any) => {
-      return s.type === "field";
-    }
-  );
+  const defaultBranch = inner
+    ? findLayoutBranchhWith(inner.above || inner.contents.above, (s: any) => {
+        return s.type === "field";
+      })
+    : null;
   const inners: any[] = [],
     columns: any[] = [];
   for (const field of table.fields) {
     if (field.primary_key) continue;
     const branch =
-      findLayoutBranchWith(inner.above || inner.contents.above, (s: any) => {
+      findLayoutBranchhWith(inner.above || inner.contents.above, (s: any) => {
         return (
           s.type === "field" &&
           templateFieldTypes[s.field_name] === field.type_name
         );
       }) || defaultBranch;
     let oldField: any;
-    traverseSync(branch, {
-      field(s: any) {
-        oldField = template_table.getField(s.field_name);
-      },
-    });
+    if (branch)
+      traverseSync(branch, {
+        field(s: any) {
+          oldField = template_table.getField(s.field_name);
+        },
+      });
     const newBranch = structuredClone(branch);
     let newCol: GenObj = {};
     traverseSync(newBranch, {
@@ -2030,7 +2065,11 @@ export = {
   authorise_post,
   virtual_triggers,
   authorise_get: async (
-    { query, table_id, req }: { query: GenObj; table_id: number | string; req: Req },
+    {
+      query,
+      table_id,
+      req,
+    }: { query: GenObj; table_id: number | string; req: Req },
     { authorizeGetQuery }: GenObj
   ) => {
     return await authorizeGetQuery(query, table_id);
@@ -2058,7 +2097,12 @@ export = {
     req,
     res,
   }: GenObj) => ({
-    async editQuery(state: GenObj, mobileReferrer: string | undefined, isPreview: boolean, hiddenLoginDest: any) {
+    async editQuery(
+      state: GenObj,
+      mobileReferrer: string | undefined,
+      isPreview: boolean,
+      hiddenLoginDest: any
+    ) {
       const table = Table.findOne({ id: table_id })!;
       const fields = table.getFields();
       const { uniques } = splitUniques(fields, state);
@@ -2077,9 +2121,11 @@ export = {
           )
         );
 
-        Object.entries(picked.joinFields).forEach(([nm, jfv]: [string, any]) => {
-          if (!colFields.has(jfv.ref)) joinFields[nm] = jfv;
-        });
+        Object.entries(picked.joinFields).forEach(
+          ([nm, jfv]: [string, any]) => {
+            if (!colFields.has(jfv.ref)) joinFields[nm] = jfv;
+          }
+        );
         return await table.getJoinedRow({
           where,
           joinFields,
@@ -2094,7 +2140,9 @@ export = {
           const fields = tc.configuration.fields;
           if (
             fields &&
-            (fields || []).every((fname: string) => typeof state[fname] !== "undefined")
+            (fields || []).every(
+              (fname: string) => typeof state[fname] !== "undefined"
+            )
           ) {
             const where: GenObj = {};
             fields.forEach((fnm: string) => (where[fnm] = state[fnm]));
@@ -2150,7 +2198,10 @@ export = {
         update_events,
       });
     },
-    async editManyQuery(state: GenObj, { limit, offset, orderBy, orderDesc, where }: GenObj) {
+    async editManyQuery(
+      state: GenObj,
+      { limit, offset, orderBy, orderDesc, where }: GenObj
+    ) {
       const table = Table.findOne({ id: table_id })!;
       const fields = table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
@@ -2202,7 +2253,12 @@ export = {
       const table = Table.findOne(table_id)!;
       return await tryUpdateImpl(row, id, table, req);
     },
-    async saveFileQuery(fieldVal: string, fieldId: number, fieldView: string, row: GenObj) {
+    async saveFileQuery(
+      fieldVal: string,
+      fieldId: number,
+      fieldView: string,
+      row: GenObj
+    ) {
       const field = await Field.findOne({ id: fieldId });
       const column = columns.find(
         (c: any) => c.type === "Field" && c.field_name === field.name
@@ -2306,7 +2362,12 @@ export = {
       }
       return doAuthPost({ body, table_id, req });
     },
-    async getRowQuery(table_id: number | string, view_select: any, row_id: any, order_field?: string) {
+    async getRowQuery(
+      table_id: number | string,
+      view_select: any,
+      row_id: any,
+      order_field?: string
+    ) {
       const childTable = Table.findOne({ id: table_id })!;
       return await childTable.getRows(
         {
@@ -2429,7 +2490,12 @@ export = {
         return { json: { error: e.message || e } };
       }
     },
-    async optionsQuery(reftable_name: string, type: any, attributes: any, where: GenObj) {
+    async optionsQuery(
+      reftable_name: string,
+      type: any,
+      attributes: any,
+      where: GenObj
+    ) {
       const refTable = Table.findOne({ name: reftable_name });
       const rows = await refTable!.getRows(where, {
         forUser: req.user,
@@ -2437,7 +2503,12 @@ export = {
       });
       return rows;
     },
-    async updateMatchingQuery(where: GenObj, updateVals: GenObj, repeatFields: any[], childRows: GenObj) {
+    async updateMatchingQuery(
+      where: GenObj,
+      updateVals: GenObj,
+      repeatFields: any[],
+      childRows: GenObj
+    ) {
       const table = Table.findOne(table_id);
       const rows = await table!.getRows(where, {
         forUser: req.user,
@@ -2488,8 +2559,12 @@ export = {
     },
   }),
   routes: { run_action, update_matching_rows },
-  async interpolate_title_string(table_id: number | string, title: string, state: GenObj) {
-    const tbl = Table.findOne(table_id);
+  async interpolate_title_string(
+    table_id: number | string,
+    title: string,
+    state: GenObj
+  ) {
+    const tbl = Table.findOne(table_id)!;
     if (state?.[tbl!.pk_name]) {
       const freeVars = freeVariablesInInterpolation(title);
       const joinFields: GenObj = {};

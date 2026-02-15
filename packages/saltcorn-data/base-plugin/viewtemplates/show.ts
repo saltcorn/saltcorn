@@ -26,7 +26,7 @@ const {
   getStringsForI18n,
   translateLayout,
   splitLayoutContainerFields,
-  findLayoutBranchWith,
+  findLayoutBranchhWith,
 } = require("../../models/layout");
 const { check_view_columns } = require("../../plugin-testing");
 
@@ -752,7 +752,7 @@ const createBasicView = async ({
     templateFieldLabels[field.name] = field.label;
   }
 
-  const defaultBranch = findLayoutBranchWith(
+  const defaultBranch = findLayoutBranchhWith(
     inner.above || inner.contents.above,
     (s: GenObj) => {
       return s.type === "field";
@@ -763,7 +763,7 @@ const createBasicView = async ({
   for (const field of table.fields) {
     if (field.primary_key) continue;
     const branch =
-      findLayoutBranchWith(inner.above || inner.contents.above, (s: GenObj) => {
+      findLayoutBranchhWith(inner.above || inner.contents.above, (s: GenObj) => {
         return (
           s.type === "field" &&
           templateFieldTypes[s.field_name] === field.type_name
