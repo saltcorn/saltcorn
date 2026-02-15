@@ -686,26 +686,31 @@ router.get(
     };
 
     for (const entity of entities) {
-      const key = (useId = true) =>
-        `${entity.type}:${useId ? entity.id : entity.name}`; // Using name for views as some table_less views have undefined ids
+      const keyById = `${entity.type}:${entity.id}`;
       try {
         if (entity.type === "table") {
           const table = Table.findOne({ id: entity.id });
-          if (table) addDeepSearch(key(), await table_pack(table));
+          if (table) addDeepSearch(keyById, await table_pack(table));
         } else if (entity.type === "view") {
           const view = View.findOne({ name: entity.name });
-          if (view) addDeepSearch(key(false), await view_pack(view));
+          if (view) {
+            const viewKeyById = `view:${view.id ?? entity.id ?? entity.name}`;
+            const viewKeyByName = `view:${entity.name}`;
+            const vpack = await view_pack(view);
+            addDeepSearch(viewKeyById, vpack);
+            if (viewKeyByName !== viewKeyById) addDeepSearch(viewKeyByName, vpack);
+          }
         } else if (entity.type === "page") {
           const page = Page.findOne({ name: entity.name });
-          if (page) addDeepSearch(key(), await page_pack(page));
+          if (page) addDeepSearch(keyById, await page_pack(page));
         } else if (entity.type === "trigger") {
           const trigger = Trigger.findOne({ id: entity.id });
-          if (trigger) addDeepSearch(key(), await trigger_pack(trigger));
+          if (trigger) addDeepSearch(keyById, await trigger_pack(trigger));
         }
       } catch (e) {
         getState().log?.(
           2,
-          `Failed to build deep search index for ${key()}: ${e.message}`
+          `Failed to build deep search index for ${keyById}: ${e.message}`
         );
       }
     }
@@ -863,7 +868,16 @@ router.get(
       ])
     );
 
-    // Tag filter buttons
+    const manageTagsLink = a(
+      {
+        class: "btn btn-sm btn-outline-secondary",
+        href: `/tag${on_done_redirect_str}`,
+      },
+      i({ class: "fas fa-tags me-1" }),
+      req.__("Manage tags")
+    );
+
+    // Tag filter buttons + manage
     const tagFilterBar = div(
       { class: "d-flex flex-wrap align-items-center gap-1" },
       span(
@@ -880,7 +894,8 @@ router.get(
           },
           text(t.name)
         )
-      )
+      ),
+      manageTagsLink
     );
 
     // One row for type filters and tag filters
@@ -900,7 +915,7 @@ router.get(
         ),
         filterToggles
       ),
-      tags.length > 0 ? tagFilterBar : null
+      tagFilterBar
     );
 
     const selectionBar = div(
@@ -967,10 +982,14 @@ router.get(
 
     const bodyRows = entities.map((entity) => {
       const key = `${entity.type}:${
-        entity.type === "view" ? entity.name : entity.id
+        entity.type === "view" ? entity.id ?? entity.name : entity.id
       }`;
       const tagIds = tagsByEntityKey.get(key) || [];
-      const deepSearchable = deepSearchIndex[key];
+      const deepSearchable =
+        deepSearchIndex[key] ||
+        (entity.type === "view"
+          ? deepSearchIndex[`${entity.type}:${entity.name}`]
+          : undefined);
       const tagBadges = tagIds.map((tid) =>
         a(
           {
@@ -1695,9 +1714,14 @@ router.get(
               }
               lastSelectedIndex = index;
             } else {
+              const onlyThisSelected = selectedKeys.size === 1 && selectedKeys.has(key);
               selectedKeys.clear();
-              selectedKeys.add(key);
-              lastSelectedIndex = index;
+              if (!onlyThisSelected) {
+                selectedKeys.add(key);
+                lastSelectedIndex = index;
+              } else {
+                lastSelectedIndex = null;
+              }
             }
             updateSelectionUI();
           });
