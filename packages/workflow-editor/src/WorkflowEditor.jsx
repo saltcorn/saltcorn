@@ -4,6 +4,7 @@ import React, {
   useRef,
   useState,
   useLayoutEffect,
+  useMemo,
 } from "react";
 import {
   Background,
@@ -699,6 +700,7 @@ const buildGraph = (
 const StepDrawer = ({
   modal,
   innerRef,
+  outerRef,
   onClose,
   submitting,
   error,
@@ -710,6 +712,7 @@ const StepDrawer = ({
   const isOpen = !!modal;
   return (
     <div
+      ref={outerRef}
       className={`wf-drawer${isOpen ? " wf-drawer--open" : ""}`}
       role="dialog"
       aria-modal="false"
@@ -799,17 +802,99 @@ const WorkflowEditor = ({ data }) => {
     return 600;
   });
   const modalRef = useRef(null);
+  const drawerRef = useRef(null);
+  const shellRef = useRef(null);
   const resizingRef = useRef(false);
   const connectSourceRef = useRef(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState(null);
 
+  const drawerStorageKey = useMemo(
+    () => `wf-drawer:${data?.trigger?.id || "default"}`,
+    [data?.trigger?.id]
+  );
+
+  const viewportStorageKey = useMemo(
+    () => `wf-viewport:${data?.trigger?.id || "default"}`,
+    [data?.trigger?.id]
+  );
+
   const rfInstanceRef = useRef(null);
+
+  const persistDrawerState = useCallback(
+    (payload) => {
+      try {
+        if (typeof window === "undefined") return;
+        window.sessionStorage.setItem(
+          drawerStorageKey,
+          JSON.stringify(payload || {})
+        );
+      } catch (e) {
+        // ignore storage errors
+      }
+    },
+    [drawerStorageKey]
+  );
+
+  const clearDrawerState = useCallback(() => {
+    try {
+      if (typeof window === "undefined") return;
+      window.sessionStorage.removeItem(drawerStorageKey);
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, [drawerStorageKey]);
+
+  const loadViewport = useCallback(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.sessionStorage.getItem(viewportStorageKey);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return null;
+      const { x, y, zoom } = parsed;
+      if (
+        Number.isFinite(Number(x)) &&
+        Number.isFinite(Number(y)) &&
+        Number.isFinite(Number(zoom))
+      ) {
+        return { x: Number(x), y: Number(y), zoom: Number(zoom) };
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+    return null;
+  }, [viewportStorageKey]);
+
+  const persistViewport = useCallback(
+    (viewport) => {
+      if (!viewport) return;
+      const { x, y, zoom } = viewport;
+      if (
+        !Number.isFinite(Number(x)) ||
+        !Number.isFinite(Number(y)) ||
+        !Number.isFinite(Number(zoom))
+      )
+        return;
+      try {
+        if (typeof window === "undefined") return;
+        window.sessionStorage.setItem(
+          viewportStorageKey,
+          JSON.stringify({ x: Number(x), y: Number(y), zoom: Number(zoom) })
+        );
+      } catch (e) {
+        // ignore storage errors
+      }
+    },
+    [viewportStorageKey]
+  );
 
   const onInit = useCallback((instance) => {
     rfInstanceRef.current = instance;
   }, []);
 
   const [selectedNodes, setSelectedNodes] = useState([]);
+  const pendingViewportRef = useRef(loadViewport());
+  const appliedViewportRef = useRef(false);
 
   const handleSelectionChange = useCallback(({ nodes = [], edges = [] }) => {
     setSelectedNodes(nodes);
@@ -867,6 +952,16 @@ const WorkflowEditor = ({ data }) => {
   useEffect(() => {
     refreshGraph(steps);
   }, [steps, refreshGraph]);
+
+  useEffect(() => {
+    if (!rfInstanceRef.current) return;
+    if (!pendingViewportRef.current) return;
+    if (appliedViewportRef.current) return;
+    rfInstanceRef.current.setViewport(pendingViewportRef.current, {
+      duration: 0,
+    });
+    appliedViewportRef.current = true;
+  }, [nodes]);
 
   useEffect(() => {
     window.addEventListener("keydown", handleKeyDelete);
@@ -972,7 +1067,6 @@ const WorkflowEditor = ({ data }) => {
 
   const reload = useCallback(async () => {
     setLoading(true);
-    setModal(null);
     setError("");
     try {
       let fresh = await fetchJson(data.urls.data);
@@ -1117,6 +1211,12 @@ const WorkflowEditor = ({ data }) => {
     async ({ stepId, initial_step, after_step } = {}) => {
       try {
         setError("");
+        const descriptor = {
+          stepId: stepId || null,
+          initial_step: !!initial_step,
+          after_step: after_step || null,
+        };
+        persistDrawerState(descriptor);
         const base = `${data.urls.stepForm}${stepId ? `/${stepId}` : ""}`;
         const url = new URL(base, window.location.origin);
         url.searchParams.set("render", "dialog");
@@ -1125,10 +1225,11 @@ const WorkflowEditor = ({ data }) => {
         const res = await fetchJson(url.toString());
         setModal({ title: res.title, body: res.form, stepId: stepId || null });
       } catch (e) {
+        clearDrawerState();
         setError(e.message);
       }
     },
-    [data.urls.stepForm, fetchJson]
+    [clearDrawerState, data.urls.stepForm, fetchJson, persistDrawerState]
   );
 
   const handleModalSubmit = useCallback(
@@ -1149,9 +1250,10 @@ const WorkflowEditor = ({ data }) => {
       const json = await res.json();
       if (json.error) throw new Error(json.error);
       setModal(null);
+      clearDrawerState();
       await reload();
     },
-    [data.csrfToken, data.urls.stepForm, reload]
+    [clearDrawerState, data.csrfToken, data.urls.stepForm, reload]
   );
 
   useEffect(() => {
@@ -1192,6 +1294,19 @@ const WorkflowEditor = ({ data }) => {
         actionSelect.removeEventListener("change", handleActionChange);
     };
   }, [handleModalSubmit, modal]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const raw = window.sessionStorage.getItem(drawerStorageKey);
+    if (!raw) return undefined;
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object") openStepForm(parsed);
+    } catch (e) {
+      clearDrawerState();
+    }
+    return undefined;
+  }, [clearDrawerState, drawerStorageKey, openStepForm]);
 
   const updateConnection = useCallback(
     async (payload) => {
@@ -1243,7 +1358,9 @@ const WorkflowEditor = ({ data }) => {
           : "";
         const simpleNextId = rawNext && idByName[rawNext];
         const targetHasNext = !!(
-          tgtStep && tgtStep.next_step && String(tgtStep.next_step).trim()
+          tgtStep &&
+          tgtStep.next_step &&
+          String(tgtStep.next_step).trim()
         );
 
         if (
@@ -1409,15 +1526,22 @@ const WorkflowEditor = ({ data }) => {
   const onDelete = useCallback(
     async (id) => {
       if (!window.confirm(strings.confirmDelete)) return;
-      const formData = new FormData();
-      formData.append("_csrf", data.csrfToken || "");
-      await fetchJson(`${data.urls.deleteStep}/${id}`, {
-        method: "POST",
-        body: formData,
-      });
-      await reload();
+      try {
+        const formData = new FormData();
+        formData.append("_csrf", data.csrfToken || "");
+        await fetchJson(`${data.urls.deleteStep}/${id}`, {
+          method: "POST",
+          body: formData,
+        });
+        setModal(null);
+        setError("");
+        clearDrawerState();
+        await reload();
+      } catch (e) {
+        setError(e.message);
+      }
     },
-    [data.csrfToken, fetchJson, reload, strings.confirmDelete]
+    [clearDrawerState, data.csrfToken, fetchJson, reload, strings.confirmDelete]
   );
 
   useEffect(() => {
@@ -1485,6 +1609,7 @@ const WorkflowEditor = ({ data }) => {
   const shellClass = modal ? "wf-shell wf-shell--drawer-open" : "wf-shell";
   const shellStyle = { "--wf-drawer-width": `${drawerWidth}px` };
   const showMiniMap = !modal;
+  const shouldFitView = !pendingViewportRef.current;
 
   const onEdgeClick = useCallback((_, edge) => {
     setSelectedEdgeId(edge.id);
@@ -1537,8 +1662,50 @@ const WorkflowEditor = ({ data }) => {
 
   useEffect(() => () => stopResize(), [stopResize]);
 
+  const closeModal = useCallback(() => {
+    setModal(null);
+    setError("");
+    clearDrawerState();
+  }, [clearDrawerState]);
+
+  useLayoutEffect(() => {
+    const shellEl = shellRef.current;
+    const drawerEl = drawerRef.current;
+    if (!shellEl) return undefined;
+    const hasResizeObserver = typeof ResizeObserver !== "undefined";
+
+    const computePadding = () => {
+      if (!drawerEl || !modal) {
+        shellEl.style.removeProperty("--wf-shell-padding-right");
+        return;
+      }
+      const shellRect = shellEl.getBoundingClientRect();
+      const drawerRect = drawerEl.getBoundingClientRect();
+      // Space already available to the right of the shell (e.g. due to sidebars)
+      const naturalGap = Math.max(0, window.innerWidth - shellRect.right);
+      const needed = Math.max(0, drawerRect.width - naturalGap) + 4;
+      shellEl.style.setProperty("--wf-shell-padding-right", `${needed}px`);
+    };
+
+    computePadding();
+
+    const resizeObserver = hasResizeObserver
+      ? new ResizeObserver(() => computePadding())
+      : null;
+    if (resizeObserver) {
+      resizeObserver.observe(shellEl);
+      if (drawerEl) resizeObserver.observe(drawerEl);
+    }
+    window.addEventListener("resize", computePadding);
+
+    return () => {
+      if (resizeObserver) resizeObserver.disconnect();
+      window.removeEventListener("resize", computePadding);
+    };
+  }, [drawerWidth, modal]);
+
   return (
-    <div className={shellClass} style={shellStyle}>
+    <div className={shellClass} style={shellStyle} ref={shellRef}>
       <div className="wf-toolbar">
         <div className="wf-toolbar__left">
           <strong>{strings.configure}</strong>
@@ -1589,10 +1756,12 @@ const WorkflowEditor = ({ data }) => {
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           onInit={onInit}
-          fitView
+          defaultViewport={pendingViewportRef.current || undefined}
+          fitView={shouldFitView}
           proOptions={{ hideAttribution: true }}
           defaultEdgeOptions={{ animated: true }}
           colorMode={window._sc_lightmode || "light"}
+          onMoveEnd={(_, viewport) => persistViewport(viewport)}
         >
           {showMiniMap && <MiniMap pannable zoomable />}
           <Controls />
@@ -1602,10 +1771,8 @@ const WorkflowEditor = ({ data }) => {
       <StepDrawer
         modal={modal}
         innerRef={modalRef}
-        onClose={() => {
-          setModal(null);
-          setError("");
-        }}
+        outerRef={drawerRef}
+        onClose={closeModal}
         submitting={savingModal}
         error={error && modal ? error : ""}
         data={data}
