@@ -3,11 +3,11 @@
  * @module base-plugin/viewtemplates/feed
  * @subcategory base-plugin
  */
-const Field = require("../../models/field");
-const Table = require("../../models/table");
-const Form = require("../../models/form");
-const View = require("../../models/view");
-const Workflow = require("../../models/workflow");
+import Table from "../../models/table";
+import View from "../../models/view";
+import Field from "../../models/field";
+import Form from "../../models/form";
+import Workflow from "../../models/workflow";
 const {
   text,
   div,
@@ -25,13 +25,15 @@ const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
 const pluralize = require("pluralize");
-const {
+import {
   link_view,
   stateToQueryString,
   stateFieldsToWhere,
   stateFieldsToQuery,
   readState,
-} = require("../../plugin-helper");
+} from "../../plugin-helper";
+import { GenObj } from "@saltcorn/types/common_types";
+import { Req } from "@saltcorn/types/base_types";
 const {
   InvalidConfiguration,
   isNode,
@@ -55,28 +57,30 @@ const {
  * @param {object} req
  * @returns {Workflow}
  */
-const configuration_workflow = (req) =>
+const configuration_workflow = (req: Req) =>
   new Workflow({
     steps: [
       {
         name: req.__("Views"),
-        form: async (context) => {
+        form: async (context: GenObj) => {
           const table = Table.findOne(context.table_id);
           const show_views = await View.find_table_views_where(
             context.table_id,
-            ({ state_fields, viewtemplate, viewrow }) =>
+            ({ state_fields, viewtemplate, viewrow }: GenObj) =>
               viewtemplate.runMany &&
               viewrow.name !== context.viewname &&
-              state_fields.some((sf) => sf.name === "id")
+              state_fields.some((sf: GenObj) => sf.name === "id")
           );
           const create_views = await View.find_table_views_where(
             context.table_id,
-            ({ state_fields, viewrow }) =>
+            ({ state_fields, viewrow }: GenObj) =>
               viewrow.name !== context.viewname &&
-              state_fields.every((sf) => !sf.required)
+              state_fields.every((sf: GenObj) => !sf.required)
           );
-          const show_view_opts = show_views.map((v) => v.select_option);
-          const create_view_opts = create_views.map((v) => v.select_option);
+          const show_view_opts = show_views.map((v: GenObj) => v.select_option);
+          const create_view_opts = create_views.map(
+            (v: GenObj) => v.select_option
+          );
           return new Form({
             fields: [
               {
@@ -143,7 +147,9 @@ const configuration_workflow = (req) =>
                 attributes: {
                   options: ["Link", "Embedded", "Popup"],
                 },
-                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
+                showIf: {
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
               },
               {
                 name: "create_view_showif",
@@ -152,14 +158,16 @@ const configuration_workflow = (req) =>
                 attributes: {
                   mode: "application/javascript",
                   singleline: true,
-                  table: table.name,
+                  table: table!.name,
                   user: true,
                   expression_type: "boolean",
                 },
                 sublabel: req.__(
                   "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
                 ),
-                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
+                showIf: {
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
               },
               {
                 name: "create_view_label",
@@ -171,7 +179,7 @@ const configuration_workflow = (req) =>
                 attributes: { asideNext: true },
                 showIf: {
                   create_view_display: ["Link", "Popup"],
-                  view_to_create: create_view_opts.map((o) => o.name),
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
                 },
               },
 
@@ -191,7 +199,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 showIf: {
                   create_view_display: ["Link", "Popup"],
-                  view_to_create: create_view_opts.map((o) => o.name),
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
                 },
               },
               {
@@ -205,7 +213,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 showIf: {
                   create_view_display: ["Embedded"],
-                  view_to_create: create_view_opts.map((o) => o.name),
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
                 },
               },
               {
@@ -234,7 +242,7 @@ const configuration_workflow = (req) =>
 
                 showIf: {
                   create_view_display: ["Link", "Popup"],
-                  view_to_create: create_view_opts.map((o) => o.name),
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
                 },
               },
               {
@@ -255,7 +263,7 @@ const configuration_workflow = (req) =>
                 showIf: { create_view_display: ["Link", "Popup"] },
               },
 
-              ...(table.ownership_field_id
+              ...(table!.ownership_field_id
                 ? [
                     {
                       name: "always_create_view",
@@ -265,22 +273,24 @@ const configuration_workflow = (req) =>
                       ),
                       type: "Bool",
                       showIf: {
-                        view_to_create: create_view_opts.map((o) => o.name),
+                        view_to_create: create_view_opts.map(
+                          (o: GenObj) => o.name
+                        ),
                       },
                     },
                   ]
                 : []),
-            ],
+            ] as any,
           });
         },
       },
       {
         name: req.__("Order and layout"),
-        form: async (context) => {
+        form: async (context: GenObj) => {
           const table = Table.findOne({ id: context.table_id });
-          const fields = table.getFields();
+          const fields = table!.getFields();
           const { child_field_list, child_relations } =
-            await table.get_child_relations();
+            await table!.get_child_relations();
           return new Form({
             fields: [
               {
@@ -290,7 +300,7 @@ const configuration_workflow = (req) =>
                 required: true,
                 attributes: {
                   asideNext: true,
-                  options: fields.map((f) => f.name),
+                  options: fields.map((f: GenObj) => f.name),
                 },
               },
               {
@@ -306,7 +316,7 @@ const configuration_workflow = (req) =>
                 attributes: {
                   mode: "application/javascript",
                   singleline: true,
-                  table: table.name,
+                  table: table!.name,
                   user: true,
                   expression_type: "value",
                 },
@@ -351,7 +361,7 @@ const configuration_workflow = (req) =>
                 attributes: {
                   mode: "application/javascript",
                   singleline: true,
-                  table: table.name,
+                  table: table!.name,
                   user: true,
                   expression_type: "value",
                 },
@@ -398,26 +408,26 @@ const configuration_workflow = (req) =>
                   req.__("In scope:") +
                   " " +
                   [
-                    ...fields.map((f) => f.name),
+                    ...fields.map((f: GenObj) => f.name),
                     "user",
                     "year",
                     "month",
                     "day",
                     "today()",
                   ]
-                    .map((s) => code(s))
+                    .map((s: string) => code(s))
                     .join(", "),
                 input_type: "code",
                 attributes: {
                   mode: "application/javascript",
                   singleline: true,
-                  table: table.name,
+                  table: table!.name,
                   user: true,
                   expression_type: "boolean",
                 },
                 help: {
                   topic: "Inclusion Formula",
-                  context: { table_name: table.name },
+                  context: { table_name: table!.name },
                 },
               },
               {
@@ -487,7 +497,7 @@ const configuration_workflow = (req) =>
                 required: true,
                 default: 1,
               },
-            ],
+            ] as any,
           });
         },
       },
@@ -501,12 +511,16 @@ const configuration_workflow = (req) =>
  * @param {*} opts.show_view
  * @returns {Promise<Field>}
  */
-const get_state_fields = async (table_id, viewname, { show_view }) => {
+const get_state_fields = async (
+  table_id: number,
+  viewname: string,
+  { show_view }: GenObj
+) => {
   const table = Table.findOne(table_id);
-  const table_fields = table.fields;
+  const table_fields = table!.fields;
   return table_fields
-    .filter((f) => !f.primary_key)
-    .map((f) => {
+    .filter((f: GenObj) => !f.primary_key)
+    .map((f: GenObj) => {
       const sf = new Field(f);
       sf.required = false;
       return sf;
@@ -535,8 +549,8 @@ const get_state_fields = async (table_id, viewname, { show_view }) => {
  * @returns {Promise<div>}
  */
 const run = async (
-  table_id,
-  viewname,
+  table_id: number,
+  viewname: string,
   {
     show_view,
     order_field,
@@ -564,20 +578,23 @@ const run = async (
     lazy_accordions,
     local_state,
     ...cols
-  },
-  state,
-  extraArgs,
-  { countRowsQuery, runManyQuery }
+  }: GenObj,
+  state: GenObj,
+  extraArgs: GenObj,
+  { countRowsQuery, runManyQuery }: {
+    countRowsQuery: (state: GenObj) => Promise<number>;
+    runManyQuery: (state: GenObj, qextra: GenObj, selectOpts: GenObj) => Promise<GenObj[]>;
+  }
 ) => {
-  const table = Table.findOne({ id: table_id });
+  const table = Table.findOne({ id: table_id })!;
   const fields = table.getFields();
   readState(state, fields);
   const stateHash = hashState(state, show_view);
   const appState = getState();
   const locale = extraArgs.req.getLocale();
   const __ = isNode()
-    ? (s) => appState.i18n.__({ phrase: s, locale }) || s
-    : (s) => s;
+    ? (s: string) => appState.i18n.__({ phrase: s, locale }) || s
+    : (s: string) => s;
   if (!show_view)
     throw new InvalidConfiguration(
       `View ${viewname} incorrectly configured: Single item view not specified`
@@ -588,7 +605,7 @@ const run = async (
       `View ${viewname} incorrectly configured: cannot find view ${show_view}`
     );
   const q = stateFieldsToQuery({ state, fields });
-  let qextra = {};
+  let qextra: GenObj = {};
   if (!q.orderBy) {
     qextra.orderBy = order_field;
     if (descending) qextra.orderDesc = true;
@@ -609,7 +626,7 @@ const run = async (
     );
   if (exclusion_relation) {
     const [reltable, relfld] = exclusion_relation.split(".");
-    const relTable = Table.findOne({ name: reltable });
+    const relTable = Table.findOne({ name: reltable })!;
     const relWhere = exclusion_where
       ? jsexprToWhere(
           exclusion_where,
@@ -623,7 +640,7 @@ const run = async (
     const relRows = await relTable.getRows(relWhere);
     if (!qextra.where) qextra.where = {};
     // TODO sqlite not in
-    qextra.where.id = { not: { in: relRows.map((r) => r[relfld]) } };
+    qextra.where.id = { not: { in: relRows.map((r: GenObj) => r[relfld]) } };
   }
   qextra.joinFields = {};
   add_free_variables_to_joinfields(
@@ -651,7 +668,7 @@ const run = async (
         class: "d-inline",
         "data-sc-embed-viewname": emptyView.name,
       },
-      await emptyView.run(state, extraArgs)
+      await emptyView.run(state, extraArgs as any)
     );
   }
 
@@ -661,7 +678,7 @@ const run = async (
       paginate = pagination({
         current_page,
         pages: Math.ceil(nrows / qextra.limit),
-        get_page_link: (n) =>
+        get_page_link: (n: number) =>
           `gopage(${n}, ${qextra.limit}, '${stateHash}', {}, this)`,
       });
     }
@@ -676,7 +693,7 @@ const run = async (
   var create_link = "";
 
   const about_user = fields.some(
-    (f) =>
+    (f: GenObj) =>
       f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
   );
   const create_link_showif_pass = create_view_showif
@@ -689,9 +706,9 @@ const run = async (
     : undefined;
   if (view_to_create) {
     const create_view = await View.findOne({ name: view_to_create });
-    const ownership_field =
+    const ownership_field: any =
       table.ownership_field_id &&
-      table.fields.find((f) => f.id === table.ownership_field_id);
+      table.fields.find((f: GenObj) => f.id === table.ownership_field_id);
     if (
       create_link_showif_pass !== false &&
       create_view &&
@@ -710,7 +727,7 @@ const run = async (
           throw new InvalidConfiguration(
             `View ${viewname} incorrectly configured: cannot find embedded view to create ${view_to_create}`
           );
-        create_link = await create_view.run(state, extraArgs);
+        create_link = await create_view.run(state, extraArgs as any);
       } else {
         const target = `/view/${encodeURIComponent(
           view_to_create
@@ -732,9 +749,10 @@ const run = async (
     ? div({ class: "float-end" }, create_link)
     : create_link;
 
-  const setCols = (sz) => `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
+  const setCols = (sz: string) =>
+    `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
 
-  const wrapScEmbed = (r, neverLazy) =>
+  const wrapScEmbed = (r: GenObj, neverLazy?: boolean) =>
     div(
       {
         class: "d-inline",
@@ -751,7 +769,7 @@ const run = async (
         : r.html
     );
 
-  const showRowInner = (r, ix) =>
+  const showRowInner = (r: GenObj, ix: number) =>
     (!view_decoration && in_card) || view_decoration === "Card"
       ? div(
           { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4 h-100"}` },
@@ -838,20 +856,20 @@ const run = async (
             )
           : wrapScEmbed(r);
 
-  const showRow = (r) =>
+  const showRow = (r: GenObj) =>
     div(
       {
         class: [setCols("sm"), setCols("md"), setCols("lg"), setCols("xl")],
       },
-      showRowInner(r)
+      showRowInner(r, 0)
     );
   const is_in_card =
     (!view_decoration && in_card) || view_decoration === "Card";
 
-  const correct_order = ([main, pagin, create]) =>
+  const correct_order = ([main, pagin, create]: [string, string, string]) =>
     istop ? [create, main, pagin] : [main, pagin, create];
   if (groupby) {
-    const groups = {};
+    const groups: GenObj = {};
     for (const r of sresp) {
       const group = eval_expression(
         groupby,
@@ -864,8 +882,8 @@ const run = async (
     }
     return div(
       correct_order([
-        Object.entries(groups).map(
-          ([group, sr]) =>
+        Object.entries(groups as Record<string, any[]>).map(
+          ([group, sr]: [string, any]) =>
             h3({ class: "feed-group-header" }, group) +
             (is_in_card && masonry_columns
               ? div({ class: "card-columns" }, sr.map(showRowInner))
@@ -894,10 +912,10 @@ const run = async (
         ),
         paginate,
         create_link_div,
-      ])
+      ] as any)
     );
   }
-  const tabHeader = ({ row }, ix) => {
+  const tabHeader = ({ row }: GenObj, ix: number) => {
     const title =
       (title_formula
         ? eval_expression(
@@ -956,11 +974,11 @@ const run = async (
               ),
       paginate,
       create_link_div,
-    ])
+    ] as [string, string, string])
   );
 };
 
-module.exports = {
+export = {
   /** @type {string} */
   name: "Feed",
   /** @type {string} */
@@ -975,7 +993,7 @@ module.exports = {
    * @param {*} opts.create_view_label
    * @returns {string[]|Object[]}
    */
-  getStringsForI18n({ create_view_label }) {
+  getStringsForI18n({ create_view_label }: GenObj) {
     if (create_view_label) return [create_view_label];
     else return [];
   },
@@ -985,9 +1003,9 @@ module.exports = {
     configuration: { show_view },
     req,
     res,
-  }) => ({
-    async countRowsQuery(state) {
-      const table = Table.findOne({ id: table_id });
+  }: GenObj) => ({
+    async countRowsQuery(state: GenObj) {
+      const table = Table.findOne({ id: table_id })!;
       const fields = table.getFields();
       const where = stateFieldsToWhere({ fields, state, table });
       return await table.countRows(where, {
@@ -995,18 +1013,18 @@ module.exports = {
         forPublic: !req?.user,
       });
     },
-    async runManyQuery(state, qextra, selectOpts0) {
+    async runManyQuery(state: GenObj, qextra: GenObj, selectOpts0: GenObj) {
       // remove where
       const { where, ...selectOpts } = selectOpts0;
       const sview = View.findOne({ name: show_view });
       const extraArgs = { req, res, ...selectOpts };
-      return await sview.runMany(state, {
+      return await sview!.runMany(state, {
         ...extraArgs,
         ...qextra,
       });
     },
   }),
-  connectedObjects: async (configuration) => {
+  connectedObjects: async (configuration: GenObj) => {
     const fromLayout = extractFromLayout(configuration.layout);
     const toCreate = extractViewToCreate(configuration);
     return toCreate ? mergeConnectedObjects(fromLayout, toCreate) : fromLayout;

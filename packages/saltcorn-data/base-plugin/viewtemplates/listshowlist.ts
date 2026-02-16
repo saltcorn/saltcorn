@@ -3,43 +3,45 @@
  * @module base-plugin/viewtemplates/listshowlist
  * @subcategory base-plugin
  */
-const Table = require("../../models/table");
-const Form = require("../../models/form");
-const View = require("../../models/view");
-const Workflow = require("../../models/workflow");
+import Table from "../../models/table";
+import Form from "../../models/form";
+import View from "../../models/view";
+import Workflow from "../../models/workflow";
 const { text, div, h4, h6, a } = require("@saltcorn/markup/tags");
 const { renderForm, tabs } = require("@saltcorn/markup");
-const {
+import {
   get_child_views,
   get_parent_views,
   readState,
-} = require("../../plugin-helper");
-const { splitUniques } = require("../../viewable_fields");
-const { InvalidConfiguration, extractPagings } = require("../../utils");
+} from "../../plugin-helper";
+import { splitUniques } from "../../viewable_fields";
+import { GenObj } from "@saltcorn/types/common_types";
+import { Req } from "@saltcorn/types/base_types";
+import type { Where, Row } from "@saltcorn/db-common/internal";
 
-/**
- * @param {object} req
- * @returns {Workflow}
- */
-const configuration_workflow = (req) =>
+import utils from "../../utils";
+const { InvalidConfiguration, extractPagings } = utils;
+
+
+const configuration_workflow = (req: Req) => 
   new Workflow({
     steps: [
       {
         name: req.__("Views"),
-        form: async (context) => {
+        form: async (context: GenObj) => {
           const list_views = await View.find_table_views_where(
             context.table_id,
-            ({ state_fields, viewrow, viewtemplate }) =>
+            ({ state_fields, viewrow, viewtemplate }: GenObj) =>
               viewtemplate.view_quantity === "Many" &&
               viewrow.name !== context.viewname &&
-              state_fields.every((sf) => !sf.required)
+              state_fields.every((sf: GenObj) => !sf.required)
           );
           const list_view_opts = list_views.map((v) => v.name);
           const show_views = await View.find_table_views_where(
             context.table_id,
-            ({ state_fields, viewrow }) =>
+            ({ state_fields, viewrow }: GenObj) =>
               viewrow.name !== context.viewname &&
-              state_fields.some((sf) => sf.name === "id")
+              state_fields.some((sf: GenObj) => sf.name === "id")
           );
           const show_view_opts = show_views.map((v) => v.name);
 
@@ -90,7 +92,7 @@ const configuration_workflow = (req) =>
                   "Number of columns (1-12) allocated to the list view"
                 ),
                 type: "Integer",
-                default: 6,
+                default: 6 as any,
                 attributes: {
                   min: 1,
                   max: 12,
@@ -103,10 +105,10 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Subtables"),
         contextField: "subtables",
-        form: async (context) => {
+        form: async (context: GenObj) => {
           const tbl = Table.findOne({ id: context.table_id });
-          var fields = [];
-          const child_views = await get_child_views(tbl, context.viewname);
+          var fields: GenObj[] = [];
+          const child_views = await get_child_views(tbl!, context.viewname);
           for (const { relation, related_table, views } of child_views) {
             for (const view of views) {
               fields.push({
@@ -116,7 +118,7 @@ const configuration_workflow = (req) =>
               });
             }
           }
-          const parent_views = await get_parent_views(tbl, context.viewname);
+          const parent_views = await get_parent_views(tbl!, context.viewname);
           for (const { relation, related_table, views } of parent_views) {
             for (const view of views) {
               fields.push({
@@ -127,7 +129,7 @@ const configuration_workflow = (req) =>
             }
           }
           return new Form({
-            fields,
+            fields: fields as any,
             blurb: req.__(
               "Which related tables would you like to show in sub-lists below the selected item?"
             ),
@@ -137,18 +139,10 @@ const configuration_workflow = (req) =>
     ],
   });
 
-/**
- * @param {*} table_id
- * @param {*} viewname
- * @param {object} opts
- * @param {string} opts.list_view
- * @param {*} opts.show_view
- * @returns {Promise<object[]>}
- */
 const get_state_fields = async (
-  table_id,
-  viewname,
-  { list_view, show_view }
+  table_id: number,
+  viewname: string,
+  { list_view, show_view }: GenObj
 ) => {
   const id = {
     name: "id",
@@ -164,30 +158,19 @@ const get_state_fields = async (
   } else return [id];
 };
 
-/**
- * @param {string} table_id
- * @param {string} viewname
- * @param {object} opts
- * @param {string} opts.list_view
- * @param {string} opts.show_view
- * @param {object} opts.subtables
- * @param {*} state
- * @param {*} extraArgs
- * @returns {Promise<div>}
- */
 const run = async (
-  table_id,
-  viewname,
-  { list_view, show_view, list_width, subtables },
-  state,
-  extraArgs,
-  { getRowQuery }
+  table_id: number,
+  viewname: string,
+  { list_view, show_view, list_width, subtables }: GenObj,
+  state: GenObj,
+  extraArgs: GenObj,
+  { getRowQuery }: { getRowQuery: (where: Where) => Promise<Row | null> }
 ) => {
-  const table = Table.findOne({ id: table_id });
+  const table = Table.findOne({ id: table_id })!;
   const fields = table.getFields();
   readState(state, fields);
 
-  var lresp;
+  var lresp: string | undefined;
   if (list_view) {
     const lview = await View.findOne({ name: list_view });
     if (!lview)
@@ -197,8 +180,9 @@ const run = async (
     const state1 = lview.combine_state_and_default_state(state);
     lresp = await lview.run(state1, {
       ...extraArgs,
-      onRowSelect: (v) => `select_id('${v.id}', this)`,
+      onRowSelect: (v: Row) => `select_id('${v.id}', this)`,
       removeIdFromstate: true,
+      req: extraArgs.req,
     });
   }
 
@@ -209,14 +193,14 @@ const run = async (
       throw new InvalidConfiguration(
         `View ${viewname} incorrectly configured: cannot find view ${show_view}`
       );
-    sresp = await sview.run(state, extraArgs);
+    sresp = await sview.run(state, extraArgs as any);
   }
-  var reltbls = {};
-  var myrow;
+  var reltbls: GenObj = {};
+  var myrow: Row | null | undefined;
   const { uniques } = splitUniques(fields, state, true);
 
   if (Object.keys(uniques).length > 0) {
-    var id;
+    var id: any;
     if (state.id) id = state.id;
     else {
       myrow = getRowQuery(uniques);
@@ -240,7 +224,7 @@ const run = async (
               const allPagings = extractPagings(state);
               const subresp = await subview.run(
                 { [relfld]: id, ...allPagings },
-                extraArgs
+                extraArgs as any
               );
               reltbls[tab_name] = subresp;
             }
@@ -258,7 +242,7 @@ const run = async (
             else {
               const psubresp = await psubview.run(
                 { id: myrow[prelfld] },
-                extraArgs
+                extraArgs as any
               );
 
               reltbls[ptab_name] = psubresp;
@@ -305,7 +289,7 @@ const run = async (
   }
 };
 
-module.exports = {
+export = {
   /** @type {string} */
   name: "ListShowList",
   /** @type {string} */
@@ -314,21 +298,14 @@ module.exports = {
   configuration_workflow,
   run,
   get_state_fields,
-  /**
-
-   * @param {object} opts
-   * @param {string} opts.list_view
-   * @param {boolean} opts._omit_state_form
-   * @returns {boolean}
-   */
   queries: ({
     table_id,
     viewname,
     configuration: { columns, default_state },
     req,
-  }) => ({
-    async getRowQuery(uniques) {
-      const table = Table.findOne({ id: table_id });
+  }: GenObj) => ({
+    async getRowQuery(uniques: Where) {
+      const table = Table.findOne({ id: table_id })!;
       return await table.getJoinedRow({
         where: uniques,
         forUser: req.user,
@@ -336,8 +313,8 @@ module.exports = {
       });
     },
   }),
-  connectedObjects: async ({ list_view, subtables }) => {
-    const subViews = [];
+  connectedObjects: async ({ list_view, subtables }: GenObj) => {
+    const subViews: View[] = [];
     for (const relspec of Object.keys(subtables || {})) {
       if (subtables[relspec]) {
         const [reltype, rel] = relspec.split(":");

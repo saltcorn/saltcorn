@@ -17,13 +17,15 @@ const {
 } = mocks;
 import { assertIsRow, assertIsSet } from "../tests/assertions";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
-import baseactions, { emit_event, notify_user } from "../base-plugin/actions";
+import baseactions from "../base-plugin/actions";
 const {
   duplicate_row,
   insert_any_row,
   insert_joined_row,
   modify_row,
   delete_rows,
+  emit_event,
+  notify_user,
 } = baseactions;
 import utils from "../utils";
 import Notification from "../models/notification";

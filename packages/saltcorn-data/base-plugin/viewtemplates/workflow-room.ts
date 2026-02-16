@@ -3,12 +3,12 @@
  * @module base-plugin/viewtemplates/room
  * @subcategory base-plugin
  */
-const Field = require("../../models/field");
-const Table = require("../../models/table");
-const Form = require("../../models/form");
-const View = require("../../models/view");
-const Trigger = require("../../models/trigger");
-const Workflow = require("../../models/workflow");
+import Field from "../../models/field";
+import Table from "../../models/table";
+import Form from "../../models/form";
+import View from "../../models/view";
+import Trigger from "../../models/trigger";
+import Workflow from "../../models/workflow";
 const WorkflowRun = require("../../models/workflow_run");
 const WorkflowStep = require("../../models/workflow_step");
 const {
@@ -28,34 +28,30 @@ const {
 const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
-const {
+import {
   link_view,
   stateToQueryString,
   stateFieldsToWhere,
   stateFieldsToQuery,
   readState,
-} = require("../../plugin-helper");
-const { InvalidConfiguration } = require("../../utils");
+} from "../../plugin-helper";
+import { GenObj } from "@saltcorn/types/common_types";
+import { Req, Res } from "@saltcorn/types/base_types";
 const { getState } = require("../../db/state");
 const db = require("../../db");
-const { getForm, fill_presets } = require("../../viewable_fields");
+import { getForm, fill_presets } from "../../viewable_fields";
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
 const WorkflowTrace = require("../../models/workflow_trace");
 const { localeDateTime } = require("@saltcorn/markup/index");
 const MarkdownIt = require("markdown-it"),
   md = new MarkdownIt();
 
-/**
- *
- * @param {object} req
- * @returns {Workflow}
- */
-const configuration_workflow = (req) =>
+const configuration_workflow = (req: Req) =>
   new Workflow({
     steps: [
       {
         name: req.__("Workflow"),
-        form: async (context) => {
+        form: async (context: GenObj) => {
           const wfs = await Trigger.find({ action: "Workflow" });
           return new Form({
             fields: [
@@ -90,8 +86,8 @@ const configuration_workflow = (req) =>
 
 const get_state_fields = () => [];
 
-const getHtmlFromTraces = async ({ run, req, viewname, traces }) => {
-  let items = [];
+const getHtmlFromTraces = async ({ run, req, viewname, traces }: { run: any; req: Req; viewname: string; traces: any[] }) => {
+  let items: string[] = [];
   for (let ix = 0; ix < traces.length - 1; ix++) {
     const trace = traces[ix];
     const fakeRun = new WorkflowRun(run);
@@ -114,10 +110,10 @@ const getHtmlFromTraces = async ({ run, req, viewname, traces }) => {
   }
   return items;
 };
-const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
-  let items = [];
+const getHtmlFromRun = async ({ run, req, viewname, noInteract }: { run: any; req: Req; viewname: string; noInteract?: boolean }) => {
+  let items: string[] = [];
   let submit_ajax = false;
-  const checkContext = async (key, alertType) => {
+  const checkContext = async (key: string, alertType: string) => {
     if (run.context[key]) {
       items.push(
         div(
@@ -155,7 +151,7 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
     const form = await getWorkflowStepUserForm({ step, run, viewname, req });
     if (noInteract) {
       form.noSubmitButton = true;
-      form.fields = form.fields.map((f) => {
+      form.fields = form.fields.map((f: GenObj) => {
         const nf = new Field(f);
         nf.disabled = true;
         form.values[f.name] = run.context[f.name];
@@ -175,10 +171,10 @@ const getHtmlFromRun = async ({ run, req, viewname, noInteract }) => {
   return items;
 };
 
-const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
+const getWorkflowStepUserForm = async ({ step, run, viewname, req }: { step: any; run: any; viewname: string; req: Req }) => {
   if (step.action_name === "EditViewForm") {
-    const view = View.findOne({ name: step.configuration.edit_view });
-    const table = Table.findOne({ id: view.table_id });
+    const view = View.findOne({ name: step.configuration.edit_view })!;
+    const table = Table.findOne({ id: view.table_id })!;
     const form = await getForm(
       table,
       view.name,
@@ -217,49 +213,49 @@ const getWorkflowStepUserForm = async ({ step, run, viewname, req }) => {
 };
 
 const run = async (
-  table_id,
-  viewname,
-  { workflow, prev_runs },
-  state,
-  { req, res, isPreview },
-  { getRowQuery, updateQuery, optionsQuery }
+  table_id: number | null,
+  viewname: string,
+  { workflow, prev_runs }: GenObj,
+  state: GenObj,
+  { req, res, isPreview }: { req: Req; res: Res; isPreview?: boolean },
+  { getRowQuery, updateQuery, optionsQuery }: GenObj
 ) => {
   const trigger = await Trigger.findOne({ name: workflow });
-  let run;
-  let prevItems = [];
+  let wfRun: any;
+  let prevItems: string[] = [];
   if (state.id || isPreview) {
-    run = isPreview
+    wfRun = isPreview
       ? await WorkflowRun.findOne(
           { trigger_id: trigger.id },
           { limit: 1, orderBy: "id", orderDesc: true }
         )
       : await WorkflowRun.findOne({ id: state.id });
-    if (run) {
-      if (run.started_by != req.user?.id && req.user?.role_id != 1)
+    if (wfRun) {
+      if (wfRun.started_by != req.user?.id && req.user?.role_id != 1)
         return "Not authorized";
       if (trigger.configuration.save_traces) {
         const traces = await WorkflowTrace.find(
-          { run_id: run.id },
+          { run_id: wfRun.id },
           { orderBy: "step_started_at" }
         );
-        prevItems = await getHtmlFromTraces({ run, req, viewname, traces });
+        prevItems = await getHtmlFromTraces({ run: wfRun, req, viewname, traces });
       }
     } else {
       if (!isPreview) return "Run not found";
       else return "No runs yet";
     }
   } else
-    run = await WorkflowRun.create({
+    wfRun = await WorkflowRun.create({
       trigger_id: trigger.id,
       context: {},
       started_by: req.user?.id,
     });
-  await run.run({
+  await wfRun.run({
     user: req.user,
     noNotifications: true,
     trace: trigger.configuration?.save_traces,
   });
-  const items = await getHtmlFromRun({ run, req, viewname });
+  const items = await getHtmlFromRun({ run: wfRun, req, viewname });
   //look for error status
   if (prev_runs) {
     const locale = req.getLocale();
@@ -272,14 +268,14 @@ const run = async (
       div(
         { class: "col-2 col-md-3 col-sm-4" },
         req.__("Previous runs"),
-        runs.map((run1) =>
+        runs.map((run1: GenObj) =>
           div(
             { class: "d-flex prevwfroomrun" },
             a(
               {
                 href: `javascript:void(0)`,
                 onclick: `reload_embedded_view('${viewname}', 'id=${run1.id}')`,
-                class: ["text-nowrap", run1.id == run.id && "fw-bold"],
+                class: ["text-nowrap", run1.id == wfRun.id && "fw-bold"],
               },
               localeDateTime(run1.started_at, {}, locale)
             ),
@@ -292,73 +288,60 @@ const run = async (
       ),
       div(
         { class: "col-10 col-md-9 col-sm-8" },
-        div({ id: `wfroom-${run.id}` }, prevItems, items),
+        div({ id: `wfroom-${wfRun.id}` }, prevItems, items),
         div(
-          { id: `wfroom-spin-${run.id}`, style: { display: "none" } },
+          { id: `wfroom-spin-${wfRun.id}`, style: { display: "none" } },
           i({ class: "fas fa-spinner fa-spin" })
         )
       )
     );
-  } else return div(div({ id: `wfroom-${run.id}` }, prevItems, items));
+  } else return div(div({ id: `wfroom-${wfRun.id}` }, prevItems, items));
 };
 
-const submit_form = async (table_id, viewname, { workflow }, body, { req }) => {
-  const run = await WorkflowRun.findOne({ id: body.run_id });
-  const trigger = await Trigger.findOne({ id: run.trigger_id });
+const submit_form = async (table_id: number | null, viewname: string, { workflow }: GenObj, body: GenObj, { req }: { req: Req }) => {
+  const wfRun = await WorkflowRun.findOne({ id: body.run_id });
+  const trigger = await Trigger.findOne({ id: wfRun.trigger_id });
   const step = await WorkflowStep.findOne({
     trigger_id: trigger.id,
-    name: run.current_step_name,
+    name: wfRun.current_step_name,
   });
-  const form = await getWorkflowStepUserForm({ step, run, viewname, req });
+  const form = await getWorkflowStepUserForm({ step, run: wfRun, viewname, req });
 
   form.validate(req.body || {});
-  await run.provide_form_input(
+  await wfRun.provide_form_input(
     form.values,
     step.configuration.response_variable
   );
-  await run.run({
+  await wfRun.run({
     user: req.user,
     noNotifications: true,
     trace: trigger.configuration?.save_traces,
   });
-  const items = await getHtmlFromRun({ run, req, viewname });
+  const items = await getHtmlFromRun({ run: wfRun, req, viewname });
   return {
     json: {
       success: "ok",
-      eval_js: `$('#wfroom-${run.id}').append(${JSON.stringify(
+      eval_js: `$('#wfroom-${wfRun.id}').append(${JSON.stringify(
         items.join("")
-      )});$('#wfroom-spin-${run.id}')[0]?.scrollIntoView();$('#wfroom-spin-${
-        run.id
+      )});$('#wfroom-spin-${wfRun.id}')[0]?.scrollIntoView();$('#wfroom-spin-${
+        wfRun.id
       }').hide()`,
     },
   };
 };
 
-const delprevrun = async (table_id, viewname, config, body, { req, res }) => {
+const delprevrun = async (table_id: number | null, viewname: string, config: GenObj, body: GenObj, { req, res }: { req: Req; res: Res }) => {
   const { run_id } = body;
-  let run = await WorkflowRun.findOne({
+  let wfRun = await WorkflowRun.findOne({
     id: +run_id,
   });
-  if (run && (req.user?.role_id === 1 || run.started_by === req.user?.id))
-    await run.delete();
+  if (wfRun && (req.user?.role_id === 1 || wfRun.started_by === req.user?.id))
+    await wfRun.delete();
 
   return;
 };
 
-/**
- * @param {*} table_id
- * @param {string} viewname
- * @param {object} opts
- * @param {*} opts.participant_field
- * @param {string} opts.msg_relation,
- * @param {string} opts.msgsender_field,
- * @param {string} opts.msgview,
- * @param {*} opts.msgform,
- * @param {*} opts.participant_maxread_field,
- * @returns {object[]}
- */
-
-module.exports = {
+export = {
   /** @type {string} */
   name: "WorkflowRoom",
   /** @type {string} */
@@ -370,13 +353,6 @@ module.exports = {
   routes: { submit_form, delprevrun },
   /** @type {boolean} */
   noAutoTest: true,
-  /**
-   * @param {object} opts
-   * @param {object} opts.participant_field
-   * @param {string} room_id
-   * @param {object} user
-   * @returns {Promise<object>}
-   */
 
   /** @returns {object[]} */
   getStringsForI18n() {
@@ -387,8 +363,8 @@ module.exports = {
     viewname,
     configuration: { columns, default_state },
     req,
-  }) => ({}),
-  connectedObjects: async (configuration) => {
+  }: GenObj) => ({}),
+  connectedObjects: async (configuration: GenObj) => {
     return extractFromLayout(configuration.layout);
   },
 };

@@ -72,7 +72,7 @@
     "env-paths": "^2.2.1",
     "@saltcorn/db-common": "1.6.0-alpha.2",
     "web-push": "^3.6.7",
-    "@saltcorn/types": "1.6.0-alpha.2",
+    "@saltcorn/types": "1.6.0-alpha.7",
     "dayjs": "^1.11.13"
   },
   "optionalDependencies": {

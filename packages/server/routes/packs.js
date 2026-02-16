@@ -5,7 +5,12 @@
  */
 
 const Router = require("express-promise-router");
-const { isAdmin, error_catcher, setTenant, is_relative_url } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  setTenant,
+  is_relative_url,
+} = require("./utils.js");
 const { renderForm } = require("@saltcorn/markup");
 const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
@@ -20,8 +25,8 @@ const ModelInstance = require("@saltcorn/data/models/model_instance");
 const load_plugins = require("../load_plugins");
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db/index");
+const { instanceOfPack } = require("@saltcorn/types/base_types");
 
-const { is_pack } = require("@saltcorn/data/contracts");
 const {
   table_pack,
   view_pack,
@@ -423,7 +428,7 @@ router.post(
     } catch (e) {
       error = e.message;
     }
-    if (!error && !is_pack.check(pack)) {
+    if (!error && !instanceOfPack(pack)) {
       error = req.__("Not a valid pack");
     }
 

@@ -12,6 +12,7 @@ import { ViewTemplate, PluginSourceType } from "@saltcorn/types/base_types";
 import type {
   PluginCfg,
   PluginPack,
+  AbstractPlugin,
 } from "@saltcorn/types/model-abstracts/abstract_plugin";
 import fs from "fs/promises";
 import { existsSync } from "fs";
@@ -24,7 +25,7 @@ const { stringToJSON, isStale, getFetchProxyOptions, pluginsFolderRoot } =
  * Plugin Class
  * @category saltcorn-data
  */
-class Plugin {
+class Plugin implements AbstractPlugin {
   id?: number;
   location: string;
   name: string;

@@ -38,7 +38,7 @@ export type DbExportsType = {
   selectMaybeOne: (table: string, where: Where, opts?: any) => Promise<any>;
   query: (sql: string, params?: any) => Promise<any>;
   withTransaction: (
-    fn: () => Promise<any>,
+    fn: (rollback: any) => Promise<any>,
     onError?: (e: Error) => Promise<void>
   ) => Promise<any>;
   count: (

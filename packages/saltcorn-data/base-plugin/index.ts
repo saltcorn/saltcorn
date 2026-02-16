@@ -25,20 +25,31 @@
  * @category saltcorn-data
  * @subcategory base-plugin
  */
-const listshowlist = require("./viewtemplates/listshowlist");
-const list = require("./viewtemplates/list");
-const show = require("./viewtemplates/show");
-const feed = require("./viewtemplates/feed");
-const room = require("./viewtemplates/room");
-const wfroom = require("./viewtemplates/workflow-room");
-const edit = require("./viewtemplates/edit");
-const filter = require("./viewtemplates/filter");
-const fileviews = require("./fileviews");
-const fieldviews = require("./fieldviews");
-const actions = require("./actions");
-const { string, int, bool, date, float, color } = require("./types");
+// import listshowlist = require("./viewtemplates/listshowlist");
+// import list = require("./viewtemplates/list");
+// import show = require("./viewtemplates/show");
+// import feed = require("./viewtemplates/feed");
+// import room = require("./viewtemplates/room");
+// import wfroom = require("./viewtemplates/workflow-room");
+// import edit = require("./viewtemplates/edit");
+// import filter = require("./viewtemplates/filter");
+// import fileviews = require("./fileviews");
+// import fieldviews = require("./fieldviews");
+// import actions = require("./actions");
+import listshowlist from "./viewtemplates/listshowlist";
+import list from "./viewtemplates/list";
+import show from "./viewtemplates/show";
+import feed from "./viewtemplates/feed";
+import room from "./viewtemplates/room";
+import wfroom from "./viewtemplates/workflow-room";
+import edit from "./viewtemplates/edit";
+import filter from "./viewtemplates/filter";
+import fileviews from "./fileviews";
+import fieldviews from "./fieldviews";
+import actions from "./actions";
+import types from "./types";
+const { string, int, bool, date, float, color } = types;
 
-const types = [string, int, bool, date, float, color];
 const viewtemplates = [
   list,
   edit,
@@ -50,11 +61,11 @@ const viewtemplates = [
   wfroom,
 ];
 
-module.exports = {
+export = {
   /** @type {number} */
   sc_plugin_api_version: 1,
   /** @type {object[]} */
-  types,
+  types: [ string, int, bool, date, float, color ],
   /** @type {object[]} */
   viewtemplates,
   /** @type {base-plugin/fileviews} */
