@@ -195,15 +195,23 @@ type Attribute = {
   required: boolean;
 };
 
+type ReadFromFormRecord = {
+  ([arg0, arg1]: [any, string]): any;
+  (arg0: any, arg1: any): any;
+};
+
 export type PluginType = {
   name: string;
   sqlName: string;
   fieldviews: Record<string, FieldView>;
   attributes?: (arg0: any) => Array<Attribute> | Array<Attribute>;
-  readFromFormRecord?: ([arg0, arg1]: [arg0: any, arg1: string]) => any;
+  validate_attributes: any;
+  readFromFormRecord?: ReadFromFormRecord;
   readFromDB?: (arg0: any) => any;
   validate?: (arg0: any) => (arg0: any) => boolean;
   presets?: ([]) => any;
+  read: any;
+  contract?: any;
 };
 
 export type TableQuery = {
@@ -374,6 +382,7 @@ export type ViewTemplate = {
   ) => Promise<Array<AbstractTrigger>>;
   queries?: (configuration?: any, req?: any) => Record<string, any>;
   connectedObjects?: (configuration?: any) => Promise<ConnectedObjects>;
+  noAutoTest?: boolean;
 };
 
 export type RouteAction = (
@@ -627,6 +636,27 @@ export type PluginSourceType = "npm" | "github" | "local" | "git";
 
 export type Column = {
   type: "Action" | "ViewLink" | "Link" | "JoinField" | "Aggregation" | "Field";
+  // Field type properties
+  field_name?: string;
+  fieldview?: string;
+  // Action type properties
+  action_label_formula?: boolean;
+  action_label?: string;
+  action_name?: string;
+  // ViewLink type properties
+  view_label_formula?: boolean;
+  view_label?: string;
+  extra_state_fml?: string;
+  view?: string;
+  // JoinField type properties
+  join_field?: string;
+  // Link type properties
+  link_text_formula?: boolean;
+  link_text?: string;
+  link_url_formula?: boolean;
+  link_url?: string;
+  // Common properties
+  [key: string]: any;
 };
 
 export type Tablely = AbstractTable | { external: true };

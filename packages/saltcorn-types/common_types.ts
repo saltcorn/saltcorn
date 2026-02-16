@@ -63,3 +63,25 @@ export function instanceOfType(object: any): object is Type {
 }
 
 export type GenObj = { [key: string]: any };
+
+export type MenuItem = {
+  href: string;
+  icon: string;
+  text: string;
+  type: string;
+  label: string;
+  style: string;
+  title: string;
+  target: string;
+  tooltip: string;
+  in_modal?: boolean;
+  location: string;
+  max_role: string;
+  min_role: number | string;
+  admin_page?: string;
+  user_page?: string;
+  target_blank?: boolean;
+  disable_on_mobile: boolean;
+  subitems?: MenuItem[];
+  user_menu_header?: boolean;
+}
