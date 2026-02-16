@@ -643,7 +643,14 @@ export const instanceOfPack = (object: any): object is Pack => {
 export type PluginSourceType = "npm" | "github" | "local" | "git";
 
 export type Column = {
-  type: "Action" | "ViewLink" | "Link" | "JoinField" | "Aggregation" | "Field";
+  type:
+    | "Action"
+    | "ViewLink"
+    | "Link"
+    | "JoinField"
+    | "Aggregation"
+    | "Field"
+    | "FormulaValue";
   // Field type properties
   field_name?: string;
   fieldview?: string;
