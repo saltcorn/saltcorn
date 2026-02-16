@@ -459,6 +459,14 @@ export type FieldView = {
   }) => Promise<Array<FieldLike>> | Array<FieldLike>;
 } & (FieldViewShow | FieldViewEdit | FieldViewFilter);
 
+export function instanceOfFieldViewEdit(object: any): object is FieldViewEdit {
+  return object && typeof object !== "string" && object.isEdit === true;
+}
+
+export function instanceOfFieldViewShow(object: any): object is FieldViewShow {
+  return object && typeof object !== "string" && object.isEdit === false;
+}
+
 type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
 export type Req = {

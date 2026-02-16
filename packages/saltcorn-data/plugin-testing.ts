@@ -14,13 +14,14 @@ import Workflow from "./models/workflow";
 const { expressionValidator } = require("./models/expression");
 const { parse_view_select } = require("./viewable_fields");
 import View from "./models/view";
-import type {
+import {
   Plugin,
   PluginType,
   Column,
   ViewTemplate,
+  instanceOfFieldViewEdit,
+  instanceOfFieldViewShow,
 } from "@saltcorn/types/base_types";
-import type { ErrorMessage, SuccessMessage } from "@saltcorn/types/common_types";
 import { RunResult } from "@saltcorn/types/model-abstracts/abstract_workflow";
 
 const auto_test_wrap = (wrap: Function): void => {
@@ -51,10 +52,20 @@ const auto_test_type = (t: PluginType): void => {
 
   //run edit field views without a value
   Object.values(fvs).forEach((fv) => {
-    if (fv.isEdit) {
+    if (instanceOfFieldViewEdit(fv)) {
       const attr = generate_attributes(t.attributes, t.validate_attributes);
-      is.str((fv as any).run("foo", undefined, attr, "myclass", true, { name: "foo" }));
-      is.str((fv as any).run("foo", undefined, attr, "myclass", false, { name: "foo" }));
+      is.str(
+        fv.run("foo", undefined, attr, "myclass", true, {
+          type: "foo",
+          name: "foo",
+        })
+      );
+      is.str(
+        fv.run("foo", undefined, attr, "myclass", false, {
+          type: "foo",
+          name: "foo",
+        })
+      );
     }
   });
   //find examples, run all fieldview on each example
@@ -70,19 +81,21 @@ const auto_test_type = (t: PluginType): void => {
     if (has_contract || (typeof x !== "undefined" && x !== null))
       if ((t.validate && t.validate(attribs)(x)) || !t.validate) {
         Object.values(fvs).forEach((fv) => {
-          if (fv.isEdit) {
+          if (instanceOfFieldViewEdit(fv)) {
             is.str(
-              (fv as any).run("foo", x, attribs, "myclass", true, {
+              fv.run("foo", x, attribs, "myclass", true, {
+                type: "foo",
                 name: "foo",
               })
             );
             is.str(
-              (fv as any).run("foo", x, attribs, "myclass", false, {
+              fv.run("foo", x, attribs, "myclass", false, {
+                type: "foo",
                 name: "foo",
               })
             );
-          } else {
-            is.str((fv as any).run(x, {}, {}));
+          } else if (instanceOfFieldViewShow(fv)) {
+            is.str(fv.run(x, mockReqRes.req, {}));
           }
         });
         if (t.readFromFormRecord) t.readFromFormRecord({ akey: x }, "akey");
