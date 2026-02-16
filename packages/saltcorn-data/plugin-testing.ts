@@ -146,7 +146,7 @@ const auto_test_viewtemplate = async (vt: ViewTemplate): Promise<void> => {
     const sfs = vt.get_state_fields
       ? await vt.get_state_fields(1, "newview", cfg)
       : [];
-    const res = await (vt as any).run(2, "newview", cfg, {}, mockReqRes);
+    const res = await vt.run(2, "newview", cfg, {}, mockReqRes, {});
     is.or(is.str, is.array(is.str))(res);
     if (sfs.some((sf: any) => sf.name === "id")) {
       const resid = await (vt as any).run(
