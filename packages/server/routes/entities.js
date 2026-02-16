@@ -34,6 +34,8 @@ const {
   th,
   td,
   label,
+  select,
+  option,
 } = require("@saltcorn/markup/tags");
 const {
   post_dropdown_item,
@@ -54,6 +56,7 @@ const {
   page_pack,
   trigger_pack,
   uninstall_pack,
+  plugin_pack,
 } = require("@saltcorn/admin-models/models/pack");
 
 /**
@@ -698,7 +701,8 @@ router.get(
             const viewKeyByName = `view:${entity.name}`;
             const vpack = await view_pack(view);
             addDeepSearch(viewKeyById, vpack);
-            if (viewKeyByName !== viewKeyById) addDeepSearch(viewKeyByName, vpack);
+            if (viewKeyByName !== viewKeyById)
+              addDeepSearch(viewKeyByName, vpack);
           }
         } else if (entity.type === "page") {
           const page = Page.findOne({ name: entity.name });
@@ -857,11 +861,13 @@ router.get(
           class: "form-check-input mt-0 me-2",
           type: "checkbox",
           id: "entity-deep-search",
+          title: req.__("Toggle deep search (Alt+S)"),
         }),
         label(
           {
             class: "form-check-label mb-0",
             for: "entity-deep-search",
+            title: req.__("Toggle deep search (Alt+S)"),
           },
           req.__("Deep search")
         ),
@@ -922,12 +928,12 @@ router.get(
       {
         id: "entity-selection-bar",
         class:
-          "d-flex flex-wrap align-items-center justify-content-between mb-2 gap-2 d-none p-2 border rounded",
+          "d-flex align-items-center justify-content-between mb-2 gap-2 d-none p-2 border rounded",
         style:
-          "background-color: var(--bs-secondary-bg, var(--bs-secondary-bg-fallback)); border-color: transparent !important;",
+          "background-color: var(--bs-secondary-bg, var(--bs-secondary-bg-fallback)); border-color: transparent !important; flex-wrap: nowrap;",
       },
       div(
-        { class: "d-flex align-items-center gap-2 flex-wrap" },
+        { class: "d-flex align-items-center gap-2" },
         button(
           {
             type: "button",
@@ -943,7 +949,10 @@ router.get(
         )
       ),
       div(
-        { class: "d-flex align-items-center gap-2 flex-wrap" },
+        {
+          class: "d-flex align-items-center gap-2",
+          style: "flex: 1; flex-direction: row-reverse;",
+        },
         button(
           {
             type: "button",
@@ -953,6 +962,40 @@ router.get(
             disabled: true,
           },
           i({ class: "fas fa-trash" })
+        ),
+        button(
+          {
+            type: "button",
+            class: "btn btn-sm btn-outline-secondary selection-control-btn",
+            id: "entity-bulk-download-pack",
+            title: req.__("Download pack for selected modules/packs"),
+            disabled: true,
+          },
+          i({ class: "fas fa-download me-1" }),
+          req.__("Download pack")
+        ),
+        div(
+          { class: "input-group input-group-sm", style: "max-width: 260px;" },
+          span({ class: "input-group-text" }, i({ class: "fas fa-tag" })),
+          select(
+            {
+              class: "form-select border border-secondary",
+              id: "entity-bulk-tag-select",
+              "aria-label": req.__("Select tag to apply"),
+            },
+            option({ value: "" }, req.__("Select tag")),
+            ...tags.map((t) => option({ value: t.id }, t.name))
+          ),
+          button(
+            {
+              type: "button",
+              class: "btn btn-outline-secondary",
+              id: "entity-bulk-apply-tag",
+              title: req.__("Apply tag to selected"),
+              disabled: true,
+            },
+            req.__("Apply tag")
+          )
         )
       )
     );
@@ -982,7 +1025,7 @@ router.get(
 
     const bodyRows = entities.map((entity) => {
       const key = `${entity.type}:${
-        entity.type === "view" ? entity.id ?? entity.name : entity.id
+        entity.type === "view" ? (entity.id ?? entity.name) : entity.id
       }`;
       const tagIds = tagsByEntityKey.get(key) || [];
       const deepSearchable =
@@ -1085,6 +1128,11 @@ router.get(
           "data-entity-label": entity.name,
           "data-entity-id": entity?.id ?? "",
           "data-entity-key": key,
+          "data-installed":
+            typeof entity.metadata?.installed === "boolean"
+              ? String(entity.metadata.installed)
+              : "",
+          "data-module-kind": entity.metadata?.type || "",
           "data-searchable": searchableValues.join(" "),
           "data-deep-searchable": deepSearchable || searchableValues.join(" "),
           "data-tags": tagIds.join(" "),
@@ -1170,7 +1218,11 @@ router.get(
         const selectionCountEl = document.getElementById("entity-selection-count");
         const clearSelectionBtn = document.getElementById("entity-clear-selection");
         const bulkDeleteBtn = document.getElementById("entity-bulk-delete");
+        const bulkTagSelect = document.getElementById("entity-bulk-tag-select");
+        const bulkApplyTagBtn = document.getElementById("entity-bulk-apply-tag");
+        const bulkDownloadPackBtn = document.getElementById("entity-bulk-download-pack");
         const entitiesTbody = entitiesList ? entitiesList.querySelector("tbody") : null;
+        const TAGS_BY_ID = ${JSON.stringify(Object.fromEntries(tags.map((t) => [t.id, t.name])))};
 
         const TXT_SELECTED = ${JSON.stringify(req.__("selected"))};
         const TXT_DELETE_SELECTED_CONFIRM = ${JSON.stringify(req.__("Delete %s selected items?"))};
@@ -1188,6 +1240,7 @@ router.get(
           if (!row) return false;
           const type = row.dataset.entityType;
           const installed = row.dataset.installed !== 'false';
+          const moduleKind = (row.dataset.moduleKind || '').toLowerCase();
           if (type === 'module' && !installed) return false;
           return true;
         };
@@ -1204,6 +1257,8 @@ router.get(
             type: row.dataset.entityType,
             id: row.dataset.entityId || null,
             name: row.dataset.entityLabel || row.dataset.entityName || "",
+            installed: row.dataset.installed,
+            moduleKind: row.dataset.moduleKind,
           };
         };
 
@@ -1257,6 +1312,22 @@ router.get(
           }
           if (bulkDeleteBtn) bulkDeleteBtn.disabled = count === 0;
           if (clearSelectionBtn) clearSelectionBtn.disabled = count === 0;
+          const items = Array.from(selectedKeys)
+            .map((key) => selectionPayloadFromRow(findRowByKey(key)))
+            .filter(Boolean);
+          const hasTaggable = items.some((item) => isTaggableType(item.type));
+          const hasDownloadable = items.some((item) => isDownloadableEntity(item));
+          if (bulkTagSelect) {
+            bulkTagSelect.disabled = !(count > 0 && hasTaggable);
+          }
+          if (bulkApplyTagBtn) {
+            const tagSelected = bulkTagSelect && bulkTagSelect.value;
+            bulkApplyTagBtn.disabled = !(count > 0 && hasTaggable && tagSelected);
+          }
+          if (bulkDownloadPackBtn) {
+            // bulkDownloadPackBtn.disabled = !(count > 0 && hasDownloadable);
+            bulkDownloadPackBtn.disabled = !(count > 0);
+          }
         };
 
         const clearSelection = () => {
@@ -1271,6 +1342,34 @@ router.get(
         const isModulesFilterExclusive = () =>
           activeFilters.size === 1 && activeFilters.has("module");
         window.isModulesFilterExclusive = isModulesFilterExclusive;
+
+        const isTaggableType = (type) => ["table","view","page","trigger"].includes(type);
+        const isDownloadableEntity = (item) => {
+          if (!item) return false;
+          return ["table","view","page","trigger"].includes(item.type);
+        };
+
+        const updateRowTags = (row, tagId, tagName, entityType) => {
+          if (!row || !tagId) return;
+          const tagsCell = row.querySelector('td:nth-child(6)');
+          if (!tagsCell) return;
+          const dropdown = tagsCell.querySelector('.dropdown');
+          const currentTags = (row.dataset.tags || '').split(' ').filter(Boolean);
+          if (!currentTags.includes(String(tagId))) currentTags.push(String(tagId));
+          row.dataset.tags = currentTags.join(' ');
+          tagsCell.innerHTML = '';
+          const pluralMap = { table: 'tables', view: 'views', page: 'pages', trigger: 'triggers' };
+          currentTags.forEach((tid) => {
+            const name = TAGS_BY_ID[tid] || tagName || tid;
+            const plural = pluralMap[entityType] || 'tables';
+            const badge = document.createElement('a');
+            badge.className = 'badge bg-secondary me-1';
+            badge.setAttribute('href', '/tag/' + encodeURIComponent(tid) + '?show_list=' + plural);
+            badge.textContent = name;
+            tagsCell.appendChild(badge);
+          });
+          if (dropdown) tagsCell.appendChild(dropdown);
+        };
 
         // URL state helpers
         const updateUrl = () => {
@@ -1543,26 +1642,39 @@ router.get(
           KeyU: "user",
         };
 
-        document.addEventListener("keydown", (e) => {
+        document.addEventListener("keydown", async (e) => {
           const isFromSearchInput = e.target === searchInput;
           const typingTarget = isTypingTarget(e.target);
 
           if (e.altKey && !e.ctrlKey && !e.metaKey) {
             const type = keyboardShortcutTypeMap[e.code];
             if (type) {
+              e.preventDefault();
               const isExtendedType = EXTENDED_TYPES.includes(type);
-              if (isExtendedType && typeof isExtendedExpanded !== "undefined" && !isExtendedExpanded) {
-                return;
+              if (
+                isExtendedType &&
+                typeof isExtendedExpanded !== "undefined" &&
+                !isExtendedExpanded &&
+                typeof toggleEntityExpanded === "function"
+              ) {
+                await toggleEntityExpanded(true);
               }
               const btn = filterButtonsByType[type];
               if (btn) {
-                e.preventDefault();
                 btn.click();
                 if (searchInput && typeof searchInput.focus === 'function') {
                   searchInput.focus({ preventScroll: true });
                 }
               }
               return;
+            }
+            if (deepSearchToggle && e.code === "KeyS") {
+              e.preventDefault();
+              deepSearchToggle.checked = !deepSearchToggle.checked;
+              filterEntities();
+              if (searchInput && typeof searchInput.focus === 'function') {
+                searchInput.focus({ preventScroll: true });
+              }
             }
             return;
           }
@@ -1587,6 +1699,96 @@ router.get(
             clearSelection();
             filterEntities();
           });
+        }
+
+        if(bulkTagSelect) {
+          bulkTagSelect.addEventListener('change', () => updateSelectionUI());
+        }
+
+        const doBulkApplyTag = async () => {
+          if(!bulkApplyTagBtn || !bulkTagSelect) return;
+          const tagId = bulkTagSelect.value;
+          if (!tagId) return;
+          const items = collectSelectionItems().filter((item) => isTaggableType(item.type));
+          if (!items.length) return;
+          bulkApplyTagBtn.disabled = true;
+          try {
+            const res = await fetch('/entities/bulk-apply-tag', {
+              method: 'POST',
+              headers: {
+                "Content-Type": "application/json",
+                'CSRF-Token': window._sc_globalCsrf || '',
+              },           
+              body: JSON.stringify({ tag_id: tagId, items }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            await res.json();
+            const tagName = TAGS_BY_ID[tagId] || '';
+            items.forEach((item) => {
+              const row = findRowByKey(item.key);
+              if (row) updateRowTags(row, tagId, tagName, item.type);
+            });
+            filterEntities();
+          } catch (e) {
+            console.error('Failed to apply tag to selected items', e);
+            alert("Failed to apply tag to selected items");
+          }
+          bulkApplyTagBtn.disabled = false;
+        };
+
+        if(bulkApplyTagBtn) {
+          bulkApplyTagBtn.addEventListener('click', doBulkApplyTag);
+        }
+
+        const triggerDownload = (filename, content) => {
+          const blob = new Blob([content], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        };
+
+        const doBulkDownloadPack = async () => {
+          if (!bulkDownloadPackBtn) return;
+          const items = collectSelectionItems()
+          // .filter((item) => isDownloadableEntity(item));
+          if (!items.length) return;
+          bulkDownloadPackBtn.disabled = true;
+          try {
+            const res = await fetch('/entities/download-pack', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': window._sc_globalCsrf || '',
+              },
+              body: JSON.stringify({ items }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            const payload = await res.json();
+            if (Array.isArray(payload?.packs)) {
+              payload.packs.forEach((pack) => {
+                if (pack && pack.name && pack.content) {
+                  const content =
+                    typeof pack.content === 'string'
+                      ? pack.content
+                      : JSON.stringify(pack.content, null, 2);
+                  triggerDownload(pack.name + '.json', content);
+                }
+              });
+            }
+          } catch (e) {
+            console.error('Failed to download pack(s)', e);
+            alert("Failed to download pack for selected items");
+          }
+          bulkDownloadPackBtn.disabled = false;
+        };
+
+        if (bulkDownloadPackBtn) {
+          bulkDownloadPackBtn.addEventListener('click', doBulkDownloadPack);
         }
 
         const collectSelectionItems = () =>
@@ -1740,7 +1942,7 @@ router.get(
       `)
     );
 
-    const styles = /*css*/ `
+    const styles = `
       <style>
         /* Temporary fallback selection bg color */
         :root {
@@ -1944,6 +2146,7 @@ router.get(
             entity.metadata && entity.metadata.installed === false
               ? 'false'
               : 'true';
+          tr.dataset.moduleKind = entity.metadata && entity.metadata.type ? entity.metadata.type : '';
 
           if (!isRowSelectable(tr)) {
             tr.classList.add('entity-row-selection-disabled');
@@ -2279,6 +2482,202 @@ router.post(
       ok: errors.length === 0,
       deletedKeys,
       errors,
+    });
+  })
+);
+
+const idField = (entryType) => {
+  switch (entryType) {
+    case "table":
+    case "tables":
+      return "table_id";
+    case "view":
+    case "views":
+      return "view_id";
+    case "page":
+    case "pages":
+      return "page_id";
+    case "trigger":
+    case "triggers":
+      return "trigger_id";
+    default:
+      return null;
+  }
+};
+
+router.post(
+  "/bulk-apply-tag",
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_edit_views",
+    "min_role_edit_pages",
+    "min_role_edit_triggers",
+  ]),
+  error_catcher(async (req, res) => {
+    const { items, tag_id } = req.body || {};
+    const tagIdNum = Number(tag_id);
+    if (!Array.isArray(items) || !items.length || Number.isNaN(tagIdNum)) {
+      return res.status(400).json({ error: "Invalid request" });
+    }
+    const tag = await Tag.findOne({ id: tagIdNum });
+    if (!tag) return res.status(404).json({ error: "Tag not found" });
+    for (const item of items) {
+      const field = idField(item?.type);
+      const id = Number(item?.id);
+      if (!field || Number.isNaN(id)) continue;
+      await db.withTransaction(async () => {
+        await tag.addEntry({ [field]: id });
+      });
+    }
+    res.json({ ok: true });
+  })
+);
+
+router.post(
+  "/download-pack",
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const items = Array.isArray(req.body.items) ? req.body.items : [];
+    if (!items.length) return res.status(400).json({ error: "No items" });
+
+    const pack = {
+      tables: [],
+      views: [],
+      plugins: [],
+      pages: [],
+      page_groups: [],
+      roles: [],
+      library: [],
+      triggers: [],
+      tags: [],
+      models: [],
+      model_instances: [],
+      event_logs: [],
+      code_pages: [],
+    };
+
+    const added = {
+      table: new Set(),
+      view: new Set(),
+      page: new Set(),
+      trigger: new Set(),
+      module: new Set(),
+    };
+
+    for (const item of items) {
+      const type = item?.type;
+      const id = Number(item?.id);
+      const name = item?.name;
+      console.log({ name, type, id });
+      if (
+        !type ||
+        !["table", "view", "page", "trigger", "module"].includes(type)
+      )
+        continue;
+
+      console.log({ added });
+
+      if (!Number.isNaN(id) && added[type].has(id)) continue;
+
+      switch (type) {
+        case "table": {
+          const table = !Number.isNaN(id)
+            ? Table.findOne({ id })
+            : name
+              ? Table.findOne({ name })
+              : null;
+          if (table) {
+            pack.tables.push(await table_pack(table));
+            if (!Number.isNaN(id)) added.table.add(id);
+          }
+          break;
+        }
+        case "view": {
+          const view = !Number.isNaN(id)
+            ? View.findOne({ id })
+            : name
+              ? View.findOne({ name })
+              : null;
+          if (view) {
+            pack.views.push(await view_pack(view));
+            if (!Number.isNaN(id)) added.view.add(id);
+          }
+          break;
+        }
+        case "page": {
+          const page = !Number.isNaN(id)
+            ? Page.findOne({ id })
+            : name
+              ? Page.findOne({ name })
+              : null;
+          if (page) {
+            pack.pages.push(await page_pack(page));
+            if (!Number.isNaN(id)) added.page.add(id);
+          }
+          break;
+        }
+        case "trigger": {
+          const trigger = !Number.isNaN(id)
+            ? await Trigger.findOne({ id })
+            : name
+              ? await Trigger.findOne({ name })
+              : null;
+          if (trigger) {
+            pack.triggers.push(await trigger_pack(trigger));
+            if (!Number.isNaN(id)) added.trigger.add(id);
+          }
+          break;
+        }
+        case "module": {
+          const plugin = !Number.isNaN(id)
+            ? await Plugin.findOne({ id })
+            : name
+              ? await Plugin.findOne({ name })
+              : null;
+          const packModule = await fetch_pack_by_name(name);
+          if (plugin) {
+            pack.plugins.push(await plugin_pack(plugin.name));
+            if (!Number.isNaN(id)) added.module.add(id);
+            break;
+          }
+          if (packModule) {
+            pack.plugins.push(packModule);
+            if (!Number.isNaN(id)) added.module.add(id);
+            break;
+          }
+        }
+        default:
+          break;
+      }
+    }
+
+    const hasContent =
+      pack.tables.length ||
+      pack.views.length ||
+      pack.pages.length ||
+      pack.triggers.length ||
+      pack.plugins.length;
+
+    if (!hasContent) {
+      return res.status(404).json({ error: "No packs available" });
+    }
+
+    const filenameBase = (() => {
+      if (items.length === 1) {
+        const label = items[0].name || items[0].type || "pack";
+        return label.toString().replace(/[^a-zA-Z0-9_-]+/g, "_");
+      }
+      return "selected-entities-pack";
+    })();
+
+    res.json({
+      ok: true,
+      packs: [
+        {
+          name: filenameBase || "entities-pack",
+          content: pack,
+        },
+      ],
     });
   })
 );
