@@ -602,6 +602,17 @@ const menuEditorScript = (menu_items) => `
   setInterval(ajax_save_menu, 500)
 
   // Keyboard shortcut validation
+  var modifierKeys = ["Alt", "Ctrl", "Shift", "Meta"];
+  var validKeys = [
+    "a","b","c","d","e","f","g","h","i","j","k","l","m",
+    "n","o","p","q","r","s","t","u","v","w","x","y","z",
+    "0","1","2","3","4","5","6","7","8","9",
+    "F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12",
+    "Enter","Tab","Escape","Backspace","Delete","Insert",
+    "Home","End","PageUp","PageDown",
+    "ArrowUp","ArrowDown","ArrowLeft","ArrowRight",
+    " ","-","=","[","]","\\\\",";","'",",",".","/","\`"
+  ];
   var reservedShortcuts = [
     "Ctrl+c", "Ctrl+v", "Ctrl+x", "Ctrl+z", "Ctrl+y", "Ctrl+a",
     "Ctrl+s", "Ctrl+p", "Ctrl+t", "Ctrl+w", "Ctrl+n", "Ctrl+f",
@@ -612,21 +623,55 @@ const menuEditorScript = (menu_items) => `
     "F1", "F3", "F5", "F7", "F11", "F12"
   ];
   var normalizeShortcut = function(s) {
-    return s.split("+").map(function(p) { return p.trim().toLowerCase(); }).sort().join("+");
+    return s.split("+").map(function(p) { return p.trim().toLowerCase(); }).join("+");
   };
   var reservedSet = reservedShortcuts.map(normalizeShortcut);
 
+  function validateShortcut(val) {
+    if (!val) return null;
+    var parts = val.split("+").map(function(p) { return p.trim(); });
+    if (parts.length === 0 || parts.some(function(p) { return p === ""; })) {
+      return "Invalid format. Use Modifier+Key, e.g. Alt+k";
+    }
+    var mods = [];
+    var key = null;
+    for (var i = 0; i < parts.length; i++) {
+      var p = parts[i];
+      if (modifierKeys.indexOf(p) >= 0) {
+        if (mods.indexOf(p) >= 0) return "Duplicate modifier: " + p;
+        mods.push(p);
+      } else if (key !== null) {
+        return "Only one non-modifier key allowed, got: " + key + " and " + p;
+      } else {
+        key = p;
+      }
+    }
+    if (key === null) return "A non-modifier key is required";
+    if (mods.length === 0) {
+      if (validKeys.indexOf(key) >= 0 && key.length === 1)
+        return "Single character keys require at least one modifier (Alt, Ctrl, Shift, or Meta)";
+    }
+    if (validKeys.indexOf(key) < 0)
+      return "Unknown key: " + key + ". Use a letter (a-z), digit (0-9), F1-F12, or a named key like Enter, Escape, etc.";
+    return null;
+  }
+
   var $shortcutInput = $('input[name="shortcut"]');
-  var $shortcutWarn = $('<div class="text-warning small mt-1" style="display:none"></div>');
-  $shortcutInput.after($shortcutWarn);
+  var $shortcutMsg = $('<div class="small mt-1" style="display:none"></div>');
+  $shortcutInput.after($shortcutMsg);
   $shortcutInput.on('input', function() {
     var val = $(this).val().trim();
-    if (!val) { $shortcutWarn.hide(); return; }
+    if (!val) { $shortcutMsg.hide(); return; }
+    var error = validateShortcut(val);
+    if (error) {
+      $shortcutMsg.removeClass('text-warning').addClass('text-danger').text(error).show();
+      return;
+    }
     var norm = normalizeShortcut(val);
     if (reservedSet.indexOf(norm) >= 0) {
-      $shortcutWarn.text('Warning: this shortcut conflicts with a common browser shortcut and may not work.').show();
+      $shortcutMsg.removeClass('text-danger').addClass('text-warning').text('Warning: this shortcut conflicts with a common browser shortcut and may not work.').show();
     } else {
-      $shortcutWarn.hide();
+      $shortcutMsg.hide();
     }
   });
   `;
