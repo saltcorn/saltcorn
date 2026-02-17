@@ -391,7 +391,9 @@ const menuForm = async (req) => {
         label: req.__("Show if"),
         class: "item-menu validate-expression",
         type: "String",
-        sublabel: req.__("Optional expression. Show only if true. In scope: <code>user</code>, <code>url</code>, <code>query</code>")
+        sublabel: req.__(
+          "Optional expression. Show only if true. In scope: <code>user</code>, <code>url</code>, <code>query</code>"
+        ),
       },
       {
         name: "disable_on_mobile",
@@ -481,6 +483,28 @@ const menuForm = async (req) => {
               name: "btn btn-outline-secondary",
               label: req.__("Secondary outline button"),
             },
+          ],
+        },
+      },
+      {
+        name: "shortcut",
+        label: req.__("Keyboard shortcut"),
+        sublabel: req.__(
+          "e.g. Alt+k or Ctrl+Alt+k. Modifier keys: Alt, Ctrl, Shift, Meta"
+        ),
+        class: "item-menu",
+        input_type: "text",
+        required: false,
+        showIf: {
+          type: [
+            "View",
+            "Page",
+            "Page Group",
+            "Link",
+            "Action",
+            "Admin Page",
+            "User Page",
+            "Search",
           ],
         },
       },
@@ -576,6 +600,35 @@ const menuEditorScript = (menu_items) => `
   });
   lastState=editor.getString()
   setInterval(ajax_save_menu, 500)
+
+  // Keyboard shortcut validation
+  var reservedShortcuts = [
+    "Ctrl+c", "Ctrl+v", "Ctrl+x", "Ctrl+z", "Ctrl+y", "Ctrl+a",
+    "Ctrl+s", "Ctrl+p", "Ctrl+t", "Ctrl+w", "Ctrl+n", "Ctrl+f",
+    "Ctrl+h", "Ctrl+l", "Ctrl+d", "Ctrl+r", "Ctrl+o", "Ctrl+g",
+    "Ctrl+j", "Ctrl+k", "Ctrl+u", "Ctrl+e", "Ctrl+Shift+p",
+    "Ctrl+Shift+i", "Ctrl+Shift+j", "Ctrl+Shift+c", "Ctrl+Shift+t",
+    "Ctrl+Shift+n", "Ctrl+Shift+Delete",
+    "F1", "F3", "F5", "F7", "F11", "F12"
+  ];
+  var normalizeShortcut = function(s) {
+    return s.split("+").map(function(p) { return p.trim().toLowerCase(); }).sort().join("+");
+  };
+  var reservedSet = reservedShortcuts.map(normalizeShortcut);
+
+  var $shortcutInput = $('input[name="shortcut"]');
+  var $shortcutWarn = $('<div class="text-warning small mt-1" style="display:none"></div>');
+  $shortcutInput.after($shortcutWarn);
+  $shortcutInput.on('input', function() {
+    var val = $(this).val().trim();
+    if (!val) { $shortcutWarn.hide(); return; }
+    var norm = normalizeShortcut(val);
+    if (reservedSet.indexOf(norm) >= 0) {
+      $shortcutWarn.text('Warning: this shortcut conflicts with a common browser shortcut and may not work.').show();
+    } else {
+      $shortcutWarn.hide();
+    }
+  });
   `;
 
 /**

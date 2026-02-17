@@ -24,6 +24,54 @@ if (localStorage.getItem("reload_on_init")) {
   location.reload();
 }
 
+// Menu item keyboard shortcuts
+document.addEventListener("keydown", function (e) {
+  if (typeof _sc_menu_shortcuts === "undefined" || !_sc_menu_shortcuts.length)
+    return;
+  // Skip when typing in inputs/textareas/contenteditable
+  var tag = e.target.tagName;
+  if (
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    e.target.isContentEditable
+  )
+    return;
+  for (var i = 0; i < _sc_menu_shortcuts.length; i++) {
+    var sc = _sc_menu_shortcuts[i];
+    var parts = sc.shortcut.split("+");
+    var needAlt = false,
+      needCtrl = false,
+      needShift = false,
+      needMeta = false;
+    var key = "";
+    for (var j = 0; j < parts.length; j++) {
+      var p = parts[j].trim();
+      if (p === "Alt") needAlt = true;
+      else if (p === "Ctrl") needCtrl = true;
+      else if (p === "Shift") needShift = true;
+      else if (p === "Meta") needMeta = true;
+      else key = p;
+    }
+    if (
+      e.altKey === needAlt &&
+      e.ctrlKey === needCtrl &&
+      e.shiftKey === needShift &&
+      e.metaKey === needMeta &&
+      e.key === key
+    ) {
+      e.preventDefault();
+      var link = sc.link;
+      if (link.startsWith("javascript:")) {
+        new Function(link.substring(11))();
+      } else {
+        window.location.href = link;
+      }
+      return;
+    }
+  }
+});
+
 //https://stackoverflow.com/a/6021027
 function updateQueryStringParameter(uri1, key, value) {
   let hash = "";
