@@ -6,7 +6,7 @@
  */
 
 import { join } from "path";
-import { readFileSync } from "fs";
+import { readFileSync, mkdirSync } from "fs";
 import envPaths from "env-paths";
 const is = require("contractis/is");
 import { randomBytes, createHash } from "crypto";
@@ -186,6 +186,7 @@ const getConnectObject = (connSpec: any = {}) => {
         defaultSessionSecretWarningIssued = true;
       }
     }
+    mkdirSync(pathsWithApp.data, { recursive: true });
     connObj.sqlite_path = join(pathsWithApp.data, "saltcorndb.sqlite");
     return connObj;
   }
