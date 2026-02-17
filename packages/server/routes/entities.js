@@ -930,7 +930,7 @@ router.get(
         class:
           "d-flex align-items-center justify-content-between mb-2 gap-2 d-none p-2 border rounded",
         style:
-          "background-color: var(--bs-secondary-bg, var(--bs-secondary-bg-fallback)); border-color: transparent !important; flex-wrap: nowrap;",
+          "background-color: var(--bs-secondary-bg, var(--bs-secondary-bg-fallback)); border-color: transparent !important; flex-wrap: wrap;",
       },
       div(
         { class: "d-flex align-items-center gap-2" },
@@ -967,6 +967,7 @@ router.get(
           {
             type: "button",
             class: "btn btn-sm btn-outline-secondary selection-control-btn",
+            style: "min-width: 147px;",
             id: "entity-bulk-download-pack",
             title: req.__("Download pack for selected modules/packs"),
             disabled: true,
@@ -975,11 +976,75 @@ router.get(
           req.__("Download pack")
         ),
         div(
-          { class: "input-group input-group-sm", style: "max-width: 260px;" },
-          span({ class: "input-group-text" }, i({ class: "fas fa-tag" })),
+          {
+            id: "entity-bulk-role-write-group",
+            class: "input-group input-group-sm",
+            style: "max-width: 180px; min-width: 150px",
+          },
           select(
             {
-              class: "form-select border border-secondary",
+              class:
+                "form-select border border-secondary btn-outline-secondary",
+              id: "entity-bulk-role-write-select",
+              "aria-label": req.__("Select write role"),
+              style:
+                "--entity-bulk-role-border: var(--bs-secondary); border: 2px solid var(--entity-bulk-role-border) !important;",
+            },
+            option({ value: "" }, req.__("Set write role")),
+            ...roles.map((r) => option({ value: r.id }, r.role))
+          ),
+          button(
+            {
+              type: "button",
+              class: "btn btn-sm btn-outline-secondary",
+              id: "entity-bulk-apply-role-write",
+              title: req.__("Apply write role to selected tables"),
+              disabled: true,
+            },
+            req.__("Set write")
+          )
+        ),
+        div(
+          {
+            id: "entity-bulk-role-read-group",
+            class: "input-group input-group-sm",
+            style: "max-width: 180px; min-width: 150px",
+          },
+          select(
+            {
+              class:
+                "form-select border border-secondary btn-outline-secondary",
+              id: "entity-bulk-role-read-select",
+              "aria-label": req.__("Select access role"),
+              style:
+                "--entity-bulk-role-border: var(--bs-secondary); border: 2px solid var(--entity-bulk-role-border) !important;",
+            },
+            option({ value: "" }, req.__("Set access role")),
+            ...roles.map((r) => option({ value: r.id }, r.role))
+          ),
+          button(
+            {
+              type: "button",
+              class: "btn btn-sm btn-outline-secondary",
+              id: "entity-bulk-apply-role-read",
+              title: req.__("Apply access role to selected"),
+              disabled: true,
+            },
+            req.__("Set access")
+          )
+        ),
+        div(
+          {
+            class: "input-group input-group-sm",
+            style: "max-width: 200px; min-width: 150px;",
+          },
+          // span({ class: "input-group-text" }, i({ class: "fas fa-tag" })),
+          select(
+            {
+              class:
+                "form-select border border-secondary btn-outline-secondary",
+              style:
+                "--entity-bulk-tag-border: var(--bs-secondary); border: 2px solid var(--entity-bulk-tag-border) !important;",
               id: "entity-bulk-tag-select",
               "aria-label": req.__("Select tag to apply"),
             },
@@ -989,7 +1054,7 @@ router.get(
           button(
             {
               type: "button",
-              class: "btn btn-outline-secondary",
+              class: "btn btn-sm btn-outline-secondary",
               id: "entity-bulk-apply-tag",
               title: req.__("Apply tag to selected"),
               disabled: true,
@@ -1086,6 +1151,25 @@ router.get(
           : entity.type === "view"
             ? `/viewedit/config/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
             : entity.viewLink;
+      const tableMeta =
+        entity.type === "table" ? Table.findOne(entity.name) : null;
+      const minRoleRead =
+        entity.type === "table" ? tableMeta?.min_role_read : undefined;
+      const minRoleWrite =
+        entity.type === "table" ? tableMeta?.min_role_write : undefined;
+      const external =
+        entity.type === "table" ? tableMeta?.external : undefined;
+      const minRole =
+        entity.type !== "table" ? entity.metadata?.min_role : undefined;
+      const roleMetadata =
+        entity.type === "table"
+          ? {
+              ...entity.metadata,
+              min_role_read: minRoleRead,
+              min_role_write: minRoleWrite,
+              external,
+            }
+          : { ...entity.metadata, min_role: minRole };
       const actionsMenu = buildActionMenu(entity);
       const runCell = (() => {
         if (entity.type === "view") {
@@ -1136,6 +1220,14 @@ router.get(
           "data-searchable": searchableValues.join(" "),
           "data-deep-searchable": deepSearchable || searchableValues.join(" "),
           "data-tags": tagIds.join(" "),
+          "data-min-role-read":
+            typeof minRoleRead !== "undefined" ? String(minRoleRead) : "",
+          "data-min-role-write":
+            typeof minRoleWrite !== "undefined" ? String(minRoleWrite) : "",
+          "data-min-role":
+            typeof minRole !== "undefined" ? String(minRole) : "",
+          "data-external":
+            typeof external !== "undefined" ? String(external) : "",
         },
         td(entityTypeBadge(entity.type)),
         td(
@@ -1152,20 +1244,7 @@ router.get(
             roleLabel(
               {
                 ...entity,
-                metadata:
-                  entity.type === "table"
-                    ? {
-                        ...entity.metadata,
-                        min_role_read: Table.findOne(entity.name)
-                          ?.min_role_read,
-                        min_role_write: Table.findOne(entity.name)
-                          ?.min_role_write,
-                      }
-                    : {
-                        ...entity.metadata,
-                        min_role:
-                          entity.metadata.min_role ?? entity.metadata.min_role,
-                      },
+                metadata: roleMetadata,
               },
               roles
             )
@@ -1221,8 +1300,15 @@ router.get(
         const bulkTagSelect = document.getElementById("entity-bulk-tag-select");
         const bulkApplyTagBtn = document.getElementById("entity-bulk-apply-tag");
         const bulkDownloadPackBtn = document.getElementById("entity-bulk-download-pack");
+        const bulkRoleReadSelect = document.getElementById("entity-bulk-role-read-select");
+        const bulkApplyRoleReadBtn = document.getElementById("entity-bulk-apply-role-read");
+        const bulkRoleWriteSelect = document.getElementById("entity-bulk-role-write-select");
+        const bulkApplyRoleWriteBtn = document.getElementById("entity-bulk-apply-role-write");
+        const bulkRoleReadGroup = document.getElementById("entity-bulk-role-read-group");
+        const bulkRoleWriteGroup = document.getElementById("entity-bulk-role-write-group");
         const entitiesTbody = entitiesList ? entitiesList.querySelector("tbody") : null;
         const TAGS_BY_ID = ${JSON.stringify(Object.fromEntries(tags.map((t) => [t.id, t.name])))};
+        const ROLES_BY_ID = ${JSON.stringify(Object.fromEntries(roles.map((r) => [r.id, r.role])))};
 
         const TXT_SELECTED = ${JSON.stringify(req.__("selected"))};
         const TXT_DELETE_SELECTED_CONFIRM = ${JSON.stringify(req.__("Delete %s selected items?"))};
@@ -1294,6 +1380,23 @@ router.get(
           });
         };
 
+        const syncSelectBorder = (el, varName) => {
+          if (!el) return;
+          const disabledBorder =
+            'color-mix(in srgb, var(--bs-btn-disabled-color, var(--bs-secondary)) 70%, transparent)';
+          const enabledBorder = 'var(--bs-secondary)';
+          const borderColor = el.disabled ? disabledBorder : enabledBorder;
+          el.style.setProperty(varName, borderColor);
+        };
+
+        const markSelectChangedByUser = (sel) => {
+          if (sel) sel.dataset.userSelected = 'true';
+        };
+
+        const resetSelectUserFlag = (sel) => {
+          if (sel) sel.dataset.userSelected = '';
+        };
+
         const updateSelectionUI = () => {
           refreshSelectionStyles();
           const count = selectedKeys.size ?? 0;
@@ -1317,12 +1420,61 @@ router.get(
             .filter(Boolean);
           const hasTaggable = items.some((item) => isTaggableType(item.type));
           const hasDownloadable = items.some((item) => isDownloadableEntity(item));
+          const hasAccessRoleEntities = items.some((item) =>
+            ["table","view","page"].includes(item.type)
+          );
+          const hasWriteRoleEntities = items.some((item) => item.type === "table");
+          if (items.length === 1) {
+            const only = items[0];
+            const row = findRowByKey(only.key);
+            if (row && bulkRoleReadSelect && bulkRoleReadSelect.dataset.userSelected !== 'true') {
+              const initRead =
+                only.type === 'table'
+                  ? row.dataset.minRoleRead || ''
+                  : row.dataset.minRole || '';
+              bulkRoleReadSelect.value = initRead || '';
+            }
+            if (row && bulkRoleWriteSelect && only.type === 'table' && bulkRoleWriteSelect.dataset.userSelected !== 'true') {
+              const initWrite = row.dataset.minRoleWrite || '';
+              bulkRoleWriteSelect.value = initWrite || '';
+            }
+          } else if (items.length === 0) {
+            if (bulkRoleReadSelect) {
+              bulkRoleReadSelect.value = '';
+              resetSelectUserFlag(bulkRoleReadSelect);
+            }
+            if (bulkRoleWriteSelect) {
+              bulkRoleWriteSelect.value = '';
+              resetSelectUserFlag(bulkRoleWriteSelect);
+            }
+          }
           if (bulkTagSelect) {
             bulkTagSelect.disabled = !(count > 0 && hasTaggable);
+            syncSelectBorder(bulkTagSelect, '--entity-bulk-tag-border');
           }
           if (bulkApplyTagBtn) {
             const tagSelected = bulkTagSelect && bulkTagSelect.value;
             bulkApplyTagBtn.disabled = !(count > 0 && hasTaggable && tagSelected);
+          }
+          if (bulkRoleReadSelect) {
+            bulkRoleReadSelect.disabled = !(count > 0 && hasAccessRoleEntities);
+            syncSelectBorder(bulkRoleReadSelect, '--entity-bulk-role-border');
+          }
+          if (bulkApplyRoleReadBtn) {
+            const roleSelected = bulkRoleReadSelect && bulkRoleReadSelect.value;
+            bulkApplyRoleReadBtn.disabled = !(count > 0 && hasAccessRoleEntities && roleSelected);
+          }
+          if (bulkRoleWriteSelect) {
+            bulkRoleWriteSelect.disabled = !(count > 0 && hasWriteRoleEntities);
+            syncSelectBorder(bulkRoleWriteSelect, '--entity-bulk-role-border');
+          }
+          if (bulkApplyRoleWriteBtn) {
+            const roleSelected = bulkRoleWriteSelect && bulkRoleWriteSelect.value;
+            bulkApplyRoleWriteBtn.disabled = !(count > 0 && hasWriteRoleEntities && roleSelected);
+          }
+          if (bulkRoleWriteGroup) {
+            if (hasWriteRoleEntities) bulkRoleWriteGroup.classList.remove('d-none');
+            else bulkRoleWriteGroup.classList.add('d-none');
           }
           if (bulkDownloadPackBtn) {
             // bulkDownloadPackBtn.disabled = !(count > 0 && hasDownloadable);
@@ -1705,6 +1857,20 @@ router.get(
           bulkTagSelect.addEventListener('change', () => updateSelectionUI());
         }
 
+        if (bulkRoleReadSelect) {
+          bulkRoleReadSelect.addEventListener('change', () => {
+            markSelectChangedByUser(bulkRoleReadSelect);
+            updateSelectionUI();
+          });
+        }
+
+        if (bulkRoleWriteSelect) {
+          bulkRoleWriteSelect.addEventListener('change', () => {
+            markSelectChangedByUser(bulkRoleWriteSelect);
+            updateSelectionUI();
+          });
+        }
+
         const doBulkApplyTag = async () => {
           if(!bulkApplyTagBtn || !bulkTagSelect) return;
           const tagId = bulkTagSelect.value;
@@ -1791,10 +1957,108 @@ router.get(
           bulkDownloadPackBtn.addEventListener('click', doBulkDownloadPack);
         }
 
+        if (bulkApplyRoleReadBtn) {
+          bulkApplyRoleReadBtn.addEventListener('click', () => doBulkApplyRole('read'));
+        }
+
+        if (bulkApplyRoleWriteBtn) {
+          bulkApplyRoleWriteBtn.addEventListener('click', () => doBulkApplyRole('write'));
+        }
+
         const collectSelectionItems = () =>
           Array.from(selectedKeys)
             .map((key) => selectionPayloadFromRow(findRowByKey(key)))
             .filter(Boolean);
+
+        const getRoleName = (rid) => {
+          if (typeof rid === 'undefined') return '';
+          const key = String(rid);
+          if (!ROLES_BY_ID) return '';
+          return Object.prototype.hasOwnProperty.call(ROLES_BY_ID, key) ? ROLES_BY_ID[key] : '?';
+        };
+
+        const toNumberOrUndefined = (val) => {
+          if (val === '' || typeof val === 'undefined' || val === null) return undefined;
+          const num = Number(val);
+          return Number.isNaN(num) ? undefined : num;
+        };
+
+        const updateRowAccess = (row, payload) => {
+          if (!row) return;
+          if (typeof payload.min_role_read !== 'undefined') row.dataset.minRoleRead = String(payload.min_role_read ?? '');
+          if (typeof payload.min_role_write !== 'undefined') row.dataset.minRoleWrite = String(payload.min_role_write ?? '');
+          if (typeof payload.min_role !== 'undefined') row.dataset.minRole = String(payload.min_role ?? '');
+          const cell = row.querySelector('td:nth-child(5)');
+          if (cell) {
+            const label = (() => {
+              if (payload.type === 'table') {
+                const ext = row.dataset.external === 'true';
+                const rr = toNumberOrUndefined(payload.min_role_read);
+                const rw = toNumberOrUndefined(payload.min_role_write);
+                if (ext) return getRoleName(rr) + " (read only)";
+                if (typeof rr !== 'undefined' && typeof rw !== 'undefined') return getRoleName(rr) + "/" + getRoleName(rw);
+                return '';
+              }
+              const mr = toNumberOrUndefined(payload.min_role);
+              return typeof mr !== 'undefined' ? getRoleName(mr) : '';
+            })();
+            cell.textContent = label;
+          }
+        };
+
+        const doBulkApplyRole = async (mode) => {
+          const isWriteMode = mode === 'write';
+          const selectEl = isWriteMode ? bulkRoleWriteSelect : bulkRoleReadSelect;
+          const buttonEl = isWriteMode ? bulkApplyRoleWriteBtn : bulkApplyRoleReadBtn;
+          if (!selectEl || !buttonEl) return;
+          const roleId = selectEl.value;
+          if (!roleId) return;
+          const items = collectSelectionItems().filter((item) => {
+            if (isWriteMode) return item.type === 'table';
+            return ['table', 'view', 'page'].includes(item.type);
+          });
+          if (!items.length) return;
+          buttonEl.disabled = true;
+          try {
+            const res = await fetch('/entities/bulk-set-role', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'CSRF-Token': window._sc_globalCsrf || '',
+              },
+              body: JSON.stringify({ items, role_id: roleId, mode }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            const payload = await res.json();
+            const updatedKeys = new Set(payload?.updatedKeys || []);
+            const errors = payload?.errors || [];
+            if (errors.length) {
+              console.error('Failed to set role for some items', errors);
+              alert('Failed to set role for some selected items');
+            }
+            items.forEach((item) => {
+              if (updatedKeys.size && !updatedKeys.has(item.key)) return;
+              const row = findRowByKey(item.key);
+              if (!row) return;
+              if (isWriteMode && item.type === 'table') {
+                updateRowAccess(row, { type: 'table', min_role_write: Number(roleId), min_role_read: toNumberOrUndefined(row.dataset.minRoleRead) });
+              } else if (!isWriteMode) {
+                if (item.type === 'table') {
+                  updateRowAccess(row, { type: 'table', min_role_read: Number(roleId), min_role_write: toNumberOrUndefined(row.dataset.minRoleWrite) });
+                } else if (item.type === 'view') {
+                  updateRowAccess(row, { type: 'view', min_role: Number(roleId) });
+                } else if (item.type === 'page') {
+                  updateRowAccess(row, { type: 'page', min_role: Number(roleId) });
+                }
+              }
+            });
+          } catch (e) {
+            console.error('Failed to set role for selected items', e);
+            alert('Failed to set role for selected items');
+          }
+          buttonEl.disabled = false;
+          updateSelectionUI();
+        };
 
         const formatDeleteError = (err) => {
           const displayType = err?.isPack
@@ -2534,6 +2798,82 @@ router.post(
 );
 
 router.post(
+  "/bulk-set-role",
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_tables",
+    "min_role_edit_views",
+    "min_role_edit_pages",
+  ]),
+  error_catcher(async (req, res) => {
+    const { items, role_id, mode } = req.body || {};
+    const roleIdNum = Number(role_id);
+    const validMode = mode === "read" || mode === "write";
+    if (
+      !Array.isArray(items) ||
+      !items.length ||
+      Number.isNaN(roleIdNum) ||
+      !validMode
+    ) {
+      return res.status(400).json({ error: "Invalid request" });
+    }
+    const role = await Role.findOne({ id: roleIdNum });
+    if (!role) return res.status(404).json({ error: "Role not found" });
+
+    const errors = [];
+    const updatedKeys = [];
+
+    for (const item of items) {
+      const type = item?.type;
+      const idNum = Number(item?.id);
+      const id = Number.isNaN(idNum) ? null : idNum;
+      const key = item?.key;
+      try {
+        if (type === "table") {
+          const table =
+            (id !== null ? Table.findOne({ id }) : null) ||
+            Table.findOne({ name: item?.name });
+          if (!table) throw new Error("Table not found");
+          const update = {};
+          if (mode === "read") update.min_role_read = roleIdNum;
+          if (mode === "write") update.min_role_write = roleIdNum;
+          if (!Object.keys(update).length)
+            throw new Error("No fields to update");
+          await table.update(update);
+          if (key) updatedKeys.push(key);
+        } else if (mode === "read" && type === "view") {
+          const view =
+            (id !== null ? View.findOne({ id }) : null) ||
+            View.findOne({ name: item?.name });
+          console.log({ view });
+          if (!view) throw new Error("View not found");
+          if (view.id && typeof view.id !== "undefined") {
+            await View.update({ min_role: roleIdNum }, id);
+          } // Might need to add an option to update tableless views like SQL which have no id but only name
+          if (key) updatedKeys.push(key);
+        } else if (mode === "read" && type === "page") {
+          const page =
+            (id !== null ? Page.findOne({ id }) : null) ||
+            Page.findOne({ name: item?.name });
+          if (!page) throw new Error("Page not found");
+          await Page.update(id, { min_role: roleIdNum });
+          if (key) updatedKeys.push(key);
+        } else {
+          throw new Error("Unsupported item type for role change");
+        }
+      } catch (e) {
+        errors.push({ type, id, key, message: e.message });
+      }
+    }
+
+    res.status(errors.length ? 207 : 200).json({
+      ok: errors.length === 0,
+      updatedKeys,
+      errors,
+    });
+  })
+);
+
+router.post(
   "/download-pack",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req, res) => {
@@ -2568,14 +2908,11 @@ router.post(
       const type = item?.type;
       const id = Number(item?.id);
       const name = item?.name;
-      console.log({ name, type, id });
       if (
         !type ||
         !["table", "view", "page", "trigger", "module"].includes(type)
       )
         continue;
-
-      console.log({ added });
 
       if (!Number.isNaN(id) && added[type].has(id)) continue;
 
