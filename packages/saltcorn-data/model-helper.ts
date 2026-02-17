@@ -4,6 +4,9 @@
  * @module model-helper
  */
 import fs from "fs";
+import { Column } from "@saltcorn/types/base_types";
+import type { Row } from "@saltcorn/db-common/internal";
+import type Field from "./models/field";
 const { eval_expression } = require("./models/expression");
 const util = require("util");
 
@@ -23,23 +26,6 @@ interface Notebook {
 interface ColumnWriter {
   header: string;
   write: (row: any) => any;
-}
-
-interface Column {
-  type: string;
-  header_label?: string;
-  formula?: string;
-  field_name?: string;
-  [key: string]: any;
-}
-
-interface Field {
-  name: string;
-  type: {
-    name: string;
-    [key: string]: any;
-  };
-  [key: string]: any;
 }
 
 interface RunJupyterModelParams {
@@ -69,7 +55,7 @@ const get_predictor = (nbfile: string): string => {
 };
 
 const write_csv = async (
-  rows: any[],
+  rows: Row[],
   columns: Column[],
   fields: Field[],
   filename: string
@@ -94,7 +80,7 @@ const write_csv = async (
         case "Field":
           let f = fields.find((fld) => fld.name === column.field_name);
           if (!f) break;
-          if (f.type.name === "FloatArray") {
+          if (f.type_name === "FloatArray") {
             const dims = rows.map((r) => r[column.field_name!].length);
             const maxDims = Math.max(...dims);
             for (let i = 0; i < maxDims; i++) {
@@ -103,7 +89,7 @@ const write_csv = async (
                 write: (row) => row[column.field_name!][i],
               });
             }
-          } else if (f.type.name === "PGVector") {
+          } else if (f.type_name === "PGVector") {
             rows.forEach((row) => {
               const pgvs = row[column.field_name!];
               if (!pgvs) return;
@@ -123,15 +109,15 @@ const write_csv = async (
                 });
               }
             }
-          } else if (f.type.name === "Bool") {
+          } else if (f.type_name === "Bool") {
             colWriters.push({
               header: column.field_name!,
               write: (row) =>
                 row[column.field_name!] === true
                   ? 1.0
                   : row[column.field_name!] === false
-                    ? 0.0
-                    : "",
+                  ? 0.0
+                  : "",
             });
           } else {
             colWriters.push({

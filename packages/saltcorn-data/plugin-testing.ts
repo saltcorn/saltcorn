@@ -10,91 +10,26 @@ const { mockReqRes } = require("./tests/mocks");
 import Field from "./models/field";
 import Table from "./models/table";
 import Trigger from "./models/trigger";
+import Workflow from "./models/workflow";
 const { expressionValidator } = require("./models/expression");
 const { parse_view_select } = require("./viewable_fields");
 import View from "./models/view";
-
-interface TypeAttributes {
-  name: string;
-  type?: any;
-  required?: boolean;
-}
-
-interface PluginType {
-  attributes?: TypeAttributes[];
-  contract?: any;
-  validate?: (attrs: any) => (x: any) => boolean;
-  validate_attributes?: (attrs: any) => boolean;
-  fieldviews?: Record<string, FieldView>;
-  read?: (x: any) => any;
-  readFromFormRecord?: (record: any, key: string) => any;
-}
-
-interface FieldView {
-  isEdit?: boolean;
-  run: (...args: any[]) => string;
-}
-
-interface Workflow {
-  run: (ctx: any) => Promise<any>;
-}
-
-interface ViewTemplate {
-  noAutoTest?: boolean;
-  configuration_workflow: (opts: { __: (s: string) => string }) => Workflow;
-  initial_config?: (opts: { table_id: number }) => Promise<any>;
-  get_state_fields?: (
-    table_id: number,
-    viewname: string,
-    cfg: any
-  ) => Promise<any[]>;
-  run: (
-    table_id: number,
-    viewname: string,
-    cfg: any,
-    state: any,
-    extra: any
-  ) => Promise<string | string[]>;
-}
-
-interface Plugin {
-  layout?: {
-    wrap: any;
-  } | Function;
-  types?: PluginType[];
-  viewtemplates?: ViewTemplate[];
-}
-
-interface Column {
-  type: string;
-  field_name?: string;
-  fieldview?: string;
-  action_name?: string;
-  action_label?: string;
-  action_label_formula?: boolean;
-  view?: string;
-  view_label?: string;
-  view_label_formula?: boolean;
-  extra_state_fml?: string;
-  join_field?: string;
-  link_text?: string;
-  link_text_formula?: boolean;
-  link_url?: string;
-  link_url_formula?: boolean;
-  [key: string]: any;
-}
-
-export interface CheckResult {
-  errors: string[];
-  warnings: string[];
-}
+import {
+  Plugin,
+  PluginType,
+  Column,
+  ViewTemplate,
+  instanceOfFieldViewEdit,
+  instanceOfFieldViewShow,
+} from "@saltcorn/types/base_types";
+import { RunResult } from "@saltcorn/types/model-abstracts/abstract_workflow";
 
 const auto_test_wrap = (wrap: Function): void => {
   auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
 };
 
 const generate_attributes = (
-  typeattrs: TypeAttributes[] | undefined,
+  typeattrs: any,
   validate?: (attrs: Record<string, any>) => boolean,
   table_id?: number
 ): Record<string, any> => {
@@ -117,10 +52,20 @@ const auto_test_type = (t: PluginType): void => {
 
   //run edit field views without a value
   Object.values(fvs).forEach((fv) => {
-    if (fv.isEdit) {
+    if (instanceOfFieldViewEdit(fv)) {
       const attr = generate_attributes(t.attributes, t.validate_attributes);
-      is.str(fv.run("foo", undefined, attr, "myclass", true, { name: "foo" }));
-      is.str(fv.run("foo", undefined, attr, "myclass", false, { name: "foo" }));
+      is.str(
+        fv.run("foo", undefined, attr, "myclass", true, {
+          type: "foo",
+          name: "foo",
+        })
+      );
+      is.str(
+        fv.run("foo", undefined, attr, "myclass", false, {
+          type: "foo",
+          name: "foo",
+        })
+      );
     }
   });
   //find examples, run all fieldview on each example
@@ -136,13 +81,21 @@ const auto_test_type = (t: PluginType): void => {
     if (has_contract || (typeof x !== "undefined" && x !== null))
       if ((t.validate && t.validate(attribs)(x)) || !t.validate) {
         Object.values(fvs).forEach((fv) => {
-          if (fv.isEdit) {
-            is.str(fv.run("foo", x, attribs, "myclass", true, { name: "foo" }));
+          if (instanceOfFieldViewEdit(fv)) {
             is.str(
-              fv.run("foo", x, attribs, "myclass", false, { name: "foo" })
+              fv.run("foo", x, attribs, "myclass", true, {
+                type: "foo",
+                name: "foo",
+              })
             );
-          } else {
-            is.str(fv.run(x));
+            is.str(
+              fv.run("foo", x, attribs, "myclass", false, {
+                type: "foo",
+                name: "foo",
+              })
+            );
+          } else if (instanceOfFieldViewShow(fv)) {
+            is.str(fv.run(x, mockReqRes.req, {}));
           }
         });
         if (t.readFromFormRecord) t.readFromFormRecord({ akey: x }, "akey");
@@ -157,12 +110,15 @@ const auto_test_type = (t: PluginType): void => {
 const auto_test_workflow = async (
   wf: Workflow,
   initialCtx: Record<string, any>
-): Promise<Record<string, any>> => {
-  const step = async (wf: Workflow, ctx: Record<string, any>): Promise<Record<string, any>> => {
+): Promise<Record<string, RunResult> | RunResult | undefined> => {
+  const step = async (
+    wf: Workflow,
+    ctx: Record<string, any>
+  ): Promise<Record<string, any> | RunResult | undefined> => {
     is.obj(ctx);
     const res = await wf.run(ctx);
 
-    if (res.renderForm) {
+    if (res?.renderForm) {
       is.str(renderForm(res.renderForm, ""));
 
       const vs = await res.renderForm.generate();
@@ -174,13 +130,15 @@ const auto_test_workflow = async (
 
 const auto_test_viewtemplate = async (vt: ViewTemplate): Promise<void> => {
   if (vt.noAutoTest) return;
-  const wf = vt.configuration_workflow({ __: (s) => s });
+  const wf = vt.configuration_workflow
+    ? vt.configuration_workflow(mockReqRes.req)
+    : undefined;
   is.class("Workflow")(wf);
   for (let index = 0; index < 10; index++) {
     var cfg;
     if (vt.initial_config && Math.random() > 0.5)
       cfg = await vt.initial_config({ table_id: 2 });
-    else
+    else if (wf)
       cfg = await auto_test_workflow(wf, {
         table_id: 2,
         viewname: "newview",
@@ -188,10 +146,16 @@ const auto_test_viewtemplate = async (vt: ViewTemplate): Promise<void> => {
     const sfs = vt.get_state_fields
       ? await vt.get_state_fields(1, "newview", cfg)
       : [];
-    const res = await vt.run(2, "newview", cfg, {}, mockReqRes);
+    const res = await vt.run(2, "newview", cfg, {}, mockReqRes, {});
     is.or(is.str, is.array(is.str))(res);
     if (sfs.some((sf: any) => sf.name === "id")) {
-      const resid = await vt.run(2, "newview", cfg, { id: 1 }, mockReqRes);
+      const resid = await (vt as any).run(
+        2,
+        "newview",
+        cfg,
+        { id: 1 },
+        mockReqRes
+      );
       is.or(is.str, is.array(is.str))(resid);
     }
   }
@@ -201,12 +165,19 @@ const auto_test_plugin = async (plugin: Plugin): Promise<void> => {
   is_plugin(plugin);
   getState().registerPlugin("test_plugin", plugin);
   if (plugin.layout) {
-    auto_test_wrap((typeof plugin.layout === "function" ? plugin.layout() : plugin.layout).wrap);
+    auto_test_wrap(
+      (typeof plugin.layout === "function" ? plugin.layout({}) : plugin.layout)!
+        .wrap
+    );
   }
-  if (plugin.types) {
+  if (plugin.types && Array.isArray(plugin.types)) {
     plugin.types.forEach(auto_test_type);
   }
-  for (const vt of plugin.viewtemplates || []) await auto_test_viewtemplate(vt);
+  const vts =
+    typeof plugin.viewtemplates === "function"
+      ? plugin.viewtemplates({}) || []
+      : plugin.viewtemplates || [];
+  for (const vt of vts || []) await auto_test_viewtemplate(vt);
 
   //is each header reachable
 };
@@ -214,7 +185,7 @@ const auto_test_plugin = async (plugin: Plugin): Promise<void> => {
 const check_view_columns = async (
   view: View,
   columns: Column[]
-): Promise<CheckResult> => {
+): Promise<any> => {
   const errs: string[] = [];
   const warnings: string[] = [];
   const table = Table.findOne(
