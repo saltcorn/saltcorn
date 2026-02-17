@@ -4,8 +4,9 @@
  * @subcategory components / elements
  */
 
-import React, { useContext, Fragment } from "react";
+import React, { Fragment, useState, useContext, useEffect } from "react";
 import { useNode } from "@craftjs/core";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow, setAPropGen } from "./utils";
 import { SingleLineEditor } from "./MonacoEditor";
@@ -49,6 +50,7 @@ export /**
  * @subcategory components
  */
 const DropDownFilterSettings = () => {
+  const { t } = useTranslation();
   const {
     actions: { setProp },
     name,
@@ -80,7 +82,7 @@ const DropDownFilterSettings = () => {
       <tbody>
         <tr>
           <td>
-            <label>Field</label>
+            <label>{t("Field")}</label>
           </td>
           <td>
             <select
@@ -103,7 +105,7 @@ const DropDownFilterSettings = () => {
         </tr>
         <tr>
           <td>
-            <label>Neutral label</label>
+            <label>{t("Neutral label")}</label>
           </td>
           <td>
             <input
@@ -115,7 +117,7 @@ const DropDownFilterSettings = () => {
         </tr>
         <tr>
           <td>
-            <label>Where</label>
+            <label>{t("Where")}</label>
           </td>
           <td>
             <SingleLineEditor
@@ -127,7 +129,7 @@ const DropDownFilterSettings = () => {
         </tr>
         <tr>
           <td>
-            <label>Label formula</label>
+            <label>{t("Label formula")}</label>
           </td>
           <td>
             <input
@@ -157,7 +159,7 @@ const DropDownFilterSettings = () => {
                 checked={full_width}
                 onChange={setAProp("full_width", { checked: true })}
               />
-              <label className="form-check-label">Full width</label>
+              <label className="form-check-label">{t("Full width")}</label>
             </div>
           </td>
         </tr>
@@ -173,7 +175,7 @@ const DropDownFilterSettings = () => {
                   checked={all_options}
                   onChange={setAProp("all_options", { checked: true })}
                 />
-                <label className="form-check-label">All options</label>
+                <label className="form-check-label">{t("All options")}</label>
               </div>
             </td>
           </tr>
@@ -190,7 +192,7 @@ const DropDownFilterSettings = () => {
                   checked={apply_select2}
                   onChange={setAProp("apply_select2", { checked: true })}
                 />
-                <label className="form-check-label">Apply select2</label>
+                <label className="form-check-label">{t("Apply select2")}</label>
               </div>
             </td>
           </tr>

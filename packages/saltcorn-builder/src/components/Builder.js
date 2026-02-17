@@ -12,6 +12,7 @@ import React, {
   useRef,
   memo,
 } from "react";
+import useTranslation from "../hooks/useTranslation";
 import { Editor, Frame, Element, Selector, useEditor, DefaultEventHandlers } from "@craftjs/core";
 import { Layers, useLayer } from "@craftjs/layers"
 import { Text } from "./elements/Text";
@@ -103,6 +104,7 @@ const getFirstSelected = (selected) => {
  * @namespace
  */
 const SettingsPanel = () => {
+  const { t } = useTranslation();
   const options = useContext(optionsCtx);
 
   const { actions, selected, selectedCount, query } = useEditor((state, query) => {
@@ -339,14 +341,14 @@ const SettingsPanel = () => {
             <b>{selected.displayName}</b> settings
           </Fragment>
         ) : (
-          "Settings"
+          t("Settings")
         )}
       </div>
       <div className="card-body p-2">
         {selectedCount > 1 ? (
           <div>
-            <p><strong>{selectedCount} elements selected</strong></p>
-            <p className="text-muted small">Multi-selection active. Use Shift+Click to add/remove elements.</p>
+            <p><strong>{selectedCount} {t("elements selected")}</strong></p>
+            <p className="text-muted small">{t("Multi-selection active. Use Shift+Click to add/remove elements.")}</p>
           </div>
         ) : selected ? (
           <Fragment>
@@ -356,7 +358,7 @@ const SettingsPanel = () => {
                 onClick={deleteThis}
               >
                 <FontAwesomeIcon icon={faTrashAlt} className="me-1" />
-                Delete
+                {t("Delete")}
               </button>
             )}
             {hasChildren && !selected.isDeletable ? (
@@ -365,23 +367,23 @@ const SettingsPanel = () => {
                 onClick={deleteChildren}
               >
                 <FontAwesomeIcon icon={faTrashAlt} className="me-1" />
-                Delete contents
+                {t("Delete contents")}
               </button>
             ) : (
               <button
-                title="Duplicate element with its children"
+                title={t("Duplicate element with its children")}
                 className="btn btn-sm btn-secondary ms-2 duplicate-element-builder"
                 onClick={duplicate}
               >
                 <FontAwesomeIcon icon={faCopy} className="me-1" />
-                Clone
+                {t("Clone")}
               </button>
             )}
             <hr className="my-2" />
             {selected.settings && React.createElement(selected.settings)}
           </Fragment>
         ) : (
-          "No element selected"
+          t("No element selected")
         )}
       </div>
     </div>
@@ -484,6 +486,7 @@ const CustomLayerComponent = memo(({ children }) => {
 });
 
 const AddColumnButton = () => {
+  const { t } = useTranslation();
   const { query, actions } = useEditor(() => {});
   const options = useContext(optionsCtx);
   const addColumn = () => {
@@ -498,7 +501,7 @@ const AddColumnButton = () => {
       onClick={addColumn}
     >
       <FontAwesomeIcon icon={faPlus} className="me-2" />
-      Add column
+      {t("Add column")}
     </button>
   );
 };
@@ -510,6 +513,7 @@ const AddColumnButton = () => {
  * @namespace
  */
 const HistoryPanel = () => {
+  const { t } = useTranslation();
   const { canUndo, canRedo, actions } = useEditor((state, query) => ({
     canUndo: query.history.canUndo(),
     canRedo: query.history.canRedo(),
@@ -520,7 +524,7 @@ const HistoryPanel = () => {
       {canUndo && (
         <button
           className="btn btn-sm btn-secondary ms-2 me-2 undo-builder"
-          title="Undo"
+          title={t("Undo")}
           onClick={() => actions.history.undo()}
         >
           <FontAwesomeIcon icon={faUndo} />
@@ -529,7 +533,7 @@ const HistoryPanel = () => {
       {canRedo && (
         <button
           className="btn btn-sm btn-secondary redo-builder"
-          title="Redo"
+          title={t("Redo")}
           onClick={() => actions.history.redo()}
         >
           <FontAwesomeIcon icon={faRedo} />
@@ -592,6 +596,7 @@ const NextButton = ({ layout }) => {
 
 
 const Builder = ({ options, layout, mode }) => {
+  const { t } = useTranslation();
   const [showLayers, setShowLayers] = useState(true);
   const [previews, setPreviews] = useState({});
   const [uploadedFiles, setUploadedFiles] = useState([]);
@@ -688,16 +693,16 @@ const Builder = ({ options, layout, mode }) => {
                         savingState={savingState}
                       />
                       <Accordion>
-                        <div className="card mt-1" accordiontitle="Components">
+                        <div className="card mt-1" accordiontitle={t("Components")}>
                           {{
                             show: <ToolboxShow expanded={isLeftEnlarged} />,
                             list: <ToolboxList expanded={isLeftEnlarged} />,
                             edit: <ToolboxEdit expanded={isLeftEnlarged} />,
                             page: <ToolboxPage expanded={isLeftEnlarged} />,
                             filter: <ToolboxFilter expanded={isLeftEnlarged} />,
-                          }[mode] || <div>Missing mode</div>}
+                          }[mode] || <div>{t("Missing mode")}</div>}
                         </div>
-                        <div accordiontitle="Library">
+                        <div accordiontitle={t("Library")}>
                           <Library expanded={isLeftEnlarged} />
                         </div>
                       </Accordion>
@@ -707,7 +712,7 @@ const Builder = ({ options, layout, mode }) => {
                       style={isLeftEnlarged ? { width: "13.4rem" } : {}}
                     >
                       <div className="card-header p-2 d-flex justify-content-between">
-                        <div>Layers</div>
+                        <div>{t("Layers")}</div>
                         <FontAwesomeIcon
                           icon={
                             isLeftEnlarged
@@ -718,7 +723,7 @@ const Builder = ({ options, layout, mode }) => {
                             "float-end fa-lg builder-expand-toggle-left"
                           }
                           onClick={() => setIsLeftEnlarged(!isLeftEnlarged)}
-                          title={isLeftEnlarged ? "Shrink" : "Enlarge"}
+                          title={isLeftEnlarged ? t("Shrink") : t("Enlarge")}
                         />
                       </div>
                       {showLayers && (
@@ -770,14 +775,14 @@ const Builder = ({ options, layout, mode }) => {
                           "float-end me-2 mt-1 fa-lg builder-expand-toggle-right"
                         }
                         onClick={() => setIsEnlarged(!isEnlarged)}
-                        title={isEnlarged ? "Shrink" : "Enlarge"}
+                        title={isEnlarged ? t("Shrink") : t("Enlarge")}
                       />
                       <div
                         className={` ${
                           savingState.error ? "d-block" : "d-none"
                         } my-2 fw-bold`}
                       >
-                        your work is not being saved
+                        {t("your work is not being saved")}
                       </div>
                       <SettingsPanel />
                     </div>

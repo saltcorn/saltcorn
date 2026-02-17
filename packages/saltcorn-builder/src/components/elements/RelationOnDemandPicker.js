@@ -3,6 +3,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { removeWhitespaces, rand_ident } from "./utils";
+import { useTranslation } from "../../hooks/useTranslation";
 
 const maxLevelDefault = 10;
 const renderInto = (container, node) => {
@@ -182,6 +183,7 @@ const RelationLayer = ({ cfg }) => {
  * @returns
  */
 export const RelationOnDemandPicker = ({ relations, update }) => {
+  const { t } = useTranslation();
   const [maxLevel, setMaxLevel] = React.useState(maxLevelDefault);
   const toggleId = "_relation_picker_toggle_";
   const layerCfg = {
@@ -193,7 +195,7 @@ export const RelationOnDemandPicker = ({ relations, update }) => {
   };
   return (
     <div>
-      <label>Relation</label>
+      <label>{t("Relation")}</label>
       <div style={{ zIndex: 10000 }} className="dropstart">
         <button
           id={toggleId}
@@ -205,7 +207,7 @@ export const RelationOnDemandPicker = ({ relations, update }) => {
             setMaxLevel(maxLevelDefault);
           }}
         >
-          Select
+          {t("Select")}
         </button>
         <div className="dropdown-menu">
           <RelationLayer cfg={layerCfg} />

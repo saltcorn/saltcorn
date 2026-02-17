@@ -5,8 +5,8 @@
  */
 /* eslint-env jquery */
 
-import React, { useContext, useEffect, useState, Fragment } from "react";
-import { useNode } from "@craftjs/core";
+import React, { Fragment, useState, useContext, useEffect } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import {
   blockProps,
@@ -66,7 +66,7 @@ const JoinField = ({ name, block, fieldview, textStyle }) => {
   );
 };
 
-const buildFieldsMenu = (options, setProp, refetchPreview) => {
+const buildFieldsMenu = (options, setProp, refetchPreview, t) => {
   const { join_field_options } = options.join_field_picker_data;
   return (
     <div className="dropdown">
@@ -81,7 +81,7 @@ const buildFieldsMenu = (options, setProp, refetchPreview) => {
         className="btn btn-outline-primary dropdown-toggle"
         aria-expanded="false"
       >
-        Fields
+        {t("Fields")}
       </button>
       <div className="dropdown-menu">
         <ul className="ps-0 mb-0">
@@ -249,7 +249,8 @@ const buildRelationsMenu = (
   options,
   setProp,
   refetchPreview,
-  hasFieldsPicker
+  hasFieldsPicker,
+  t
 ) => {
   const { relation_options } = options.join_field_picker_data;
   return (
@@ -265,7 +266,7 @@ const buildRelationsMenu = (
         className="btn btn-outline-primary dropdown-toggle"
         aria-expanded="false"
       >
-        Relations
+        {t("Relations")}
       </button>
       <div className="dropdown-menu">
         <ul className="ps-0 mb-0">
@@ -369,6 +370,7 @@ export /**
  * @subcategory components
  */
 const JoinFieldSettings = () => {
+  const { t } = useTranslation();
   const {
     actions: { setProp },
     name,
@@ -432,14 +434,14 @@ const JoinFieldSettings = () => {
     <Fragment>
       <i>
         <small>
-          Previews shown in canvas are indicative based on random rows
+          {t("Previews shown in canvas are indicative based on random rows")}
         </small>
       </i>
       <table className="w-100">
         <tbody>
           <tr>
             <td>
-              <label>Join field</label>
+              <label>{t("Join field")}</label>
             </td>
             <td>
               <input
@@ -459,13 +461,14 @@ const JoinFieldSettings = () => {
             <td colSpan="2">
               <div className="d-flex">
                 {showFieldsPicker &&
-                  buildFieldsMenu(options, setProp, refetchPreview)}
+                  buildFieldsMenu(options, setProp, refetchPreview, t)}
                 {showRelationsPicker &&
                   buildRelationsMenu(
                     options,
                     setProp,
                     refetchPreview,
-                    showFieldsPicker
+                    showFieldsPicker,
+                    t
                   )}
               </div>
             </td>
@@ -473,7 +476,7 @@ const JoinFieldSettings = () => {
           {fvs && (
             <tr>
               <td>
-                <label>Field view</label>
+                <label>{t("Field view")}</label>
               </td>
 
               <td>
@@ -513,7 +516,7 @@ const JoinFieldSettings = () => {
                       }
                     }}
                   />
-                  <label className="form-check-label">Click to edit?</label>
+                  <label className="form-check-label">{t("Click to edit?")}</label>
                 </div>
               </td>
             </tr>

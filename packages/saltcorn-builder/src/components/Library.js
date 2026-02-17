@@ -12,6 +12,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
+import useTranslation from "../hooks/useTranslation";
 import { useEditor, useNode } from "@craftjs/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
@@ -96,6 +97,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
   const { actions, query, connectors } = useEditor((state, query) => {
     return {};
   });
+  const { t } = useTranslation();
   const options = useContext(optionsCtx);
   const doSave = (query, keepalive) => {
     if (!query.serialize) return;
@@ -138,8 +140,8 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
       .catch((e) => {
         const text =
           e.message === "Failed to fetch"
-            ? "Network connection lost"
-            : e || "Unable to save";
+            ? t("Network connection lost")
+            : e || t("Unable to save");
         // don't log duplicates
         if (savingState.error) setSavingState({ isSaving: false, error: text });
         else {
@@ -219,6 +221,7 @@ const Library = ({ expanded }) => {
     selected: getSelectedNodes(state.events.selected)[0] || null,
     selectedNodes: getSelectedNodes(state.events.selected),
   }));
+  const { t } = useTranslation();
   const options = useContext(optionsCtx);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
@@ -268,13 +271,13 @@ const Library = ({ expanded }) => {
           onClick={() => setAdding(!adding)}
         >
           <FontAwesomeIcon icon={faPlus} className="me-1" />
-          Add
+          {t("Add")}
         </button>
         <div
           className={`dropdown-menu py-3 px-4 ${adding ? "show" : ""}`}
           aria-labelledby="dropdownMenuButton"
         >
-          <label>Name</label>
+          <label>{t("Name")}</label>
           <input
             type="text"
             className="form-control"
@@ -282,7 +285,7 @@ const Library = ({ expanded }) => {
             onChange={(e) => e?.target && setNewName(e.target.value)}
           />
           <br />
-          <label>Icon</label>
+          <label>{t("Icon")}</label>
           <FontIconPicker
             className="w-100"
             value={icon}
@@ -292,7 +295,7 @@ const Library = ({ expanded }) => {
           />
           <button className={`btn btn-primary mt-3`} onClick={addSelected}>
             <FontAwesomeIcon icon={faPlus} className="me-1" />
-            Add
+            {t("Add")}
           </button>
           <button
             className={`btn btn-outline-secondary ms-2 mt-3`}

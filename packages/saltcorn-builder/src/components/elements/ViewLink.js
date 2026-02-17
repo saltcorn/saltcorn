@@ -6,6 +6,7 @@
 
 import React, { useMemo } from "react";
 import { useNode } from "@craftjs/core";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import relationsCtx from "../relations_context";
 
@@ -104,6 +105,7 @@ export /**
  * @namespace
  */
 const ViewLinkSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     name: node.data.props.name,
     relation: node.data.props.relation,
@@ -235,7 +237,7 @@ const ViewLinkSettings = () => {
         } else
           window.notifyAlert({
             type: "warning",
-            text: `${target_value} has no relations`,
+            text: `${target_value} ${t("has no relations")}`,
           });
       }
     }
@@ -254,7 +256,7 @@ const ViewLinkSettings = () => {
         <tbody>
           <tr>
             <td colSpan="2">
-              <label>View to link to</label>
+              <label>{t("View to link to")}</label>
               {options.inJestTestingMode ? null : (
                 <Select
                   options={viewOptions}
@@ -297,7 +299,7 @@ const ViewLinkSettings = () => {
           </tr>
           <tr>
             <td colSpan="2">
-              <label>Label (leave blank for default)</label>
+              <label>{t("Label (leave blank for default)")}</label>
               <OrFormula nodekey="label" {...{ setProp, isFormula, node }}>
                 <input
                   type="text"
@@ -311,7 +313,7 @@ const ViewLinkSettings = () => {
           <tr>
             <td colSpan="2">
               <label>
-                Extra state Formula
+                {t("Extra state Formula")}
                 <HelpTopicLink topic="Extra state formula" {...helpContext} />
               </label>
               <SingleLineEditor
@@ -348,7 +350,7 @@ const ViewLinkSettings = () => {
           checked={link_target_blank}
           onChange={setAProp("link_target_blank", { checked: true })}
         />
-        <label className="form-check-label">Open in new tab</label>
+        <label className="form-check-label">{t("Open in new tab")}</label>
       </div>
       <div className="form-check">
         <input
@@ -358,7 +360,7 @@ const ViewLinkSettings = () => {
           checked={inModal}
           onChange={setAProp("inModal", { checked: true })}
         />
-        <label className="form-check-label">Open in popup modal?</label>
+        <label className="form-check-label">{t("Open in popup modal?")}</label>
       </div>
       <BlockSetting block={block} setProp={setProp} />
       <TextStyleSetting textStyle={textStyle} setProp={setProp} />
@@ -372,7 +374,7 @@ const ViewLinkSettings = () => {
                   target="_blank"
                   href={`/viewedit/config/${use_view_name}`}
                 >
-                  Configure this view
+                  {t("Configure this view")}
                 </a>
               </td>
             </tr>

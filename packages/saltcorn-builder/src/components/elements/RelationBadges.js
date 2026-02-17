@@ -1,4 +1,6 @@
-import React from "react";
+import React, { Fragment, useState, useContext } from "react";
+import useTranslation from "../../hooks/useTranslation";
+import optionsCtx from "../context";
 import { removeWhitespaces } from "./utils";
 import {
   parseLegacyRelation,
@@ -6,14 +8,14 @@ import {
   Relation,
 } from "@saltcorn/common-code";
 
-const buildBadgeCfgs = (sourceTblName, type, path, caches, relString) => {
+const buildBadgeCfgs = (sourceTblName, type, path, caches, relString, t) => {
   if (type === RelationType.OWN)
-    return [{ table: `${sourceTblName} (same table)` }];
+    return [{ table: `${sourceTblName} ${t("(same table)")}` }];
   else if (type === RelationType.INDEPENDENT)
-    return [{ table: "None (no relation)" }];
-  else if (path.length === 0) return [{ table: "invalid relation" }];
+    return [{ table: t("None (no relation)") }];
+  else if (path.length === 0) return [{ table: t("invalid relation") }];
   else if (relString === Relation.fixedUserRelation)
-    return [{ table: "logged in user" }];
+    return [{ table: t("logged in user") }];
   else {
     const result = [];
     let currentCfg = null;
@@ -82,6 +84,7 @@ const buildBadge = ({ up, table, down }, index) => {
 };
 
 export const RelationBadges = ({ view, relation, parentTbl, caches }) => {
+  const { t } = useTranslation();
   if (relation) {
     return (
       <div className="overflow-scroll">
@@ -90,16 +93,17 @@ export const RelationBadges = ({ view, relation, parentTbl, caches }) => {
           relation.type,
           relation.path,
           caches,
-          relation.relationString
+          relation.relationString,
+          t
         ).map(buildBadge)}
       </div>
     );
   } else {
-    if (!view) return buildBadge({ table: "invalid relation" }, 0);
+    if (!view) return buildBadge({ table: t("invalid relation") }, 0);
     const [prefix, rest] = view.split(":");
-    if (!rest) return buildBadge({ table: "invalid relation" }, 0);
+    if (!rest) return buildBadge({ table: t("invalid relation") }, 0);
     const { type, path } = parseLegacyRelation(prefix, rest, parentTbl);
-    if (path.length === 0) return buildBadge({ table: "invalid relation" }, 0);
+    if (path.length === 0) return buildBadge({ table: t("invalid relation") }, 0);
     else if (path.length === 1 && (type === "Independent" || type === "Own"))
       return (
         <div className="overflow-scroll">
@@ -114,7 +118,8 @@ export const RelationBadges = ({ view, relation, parentTbl, caches }) => {
             type,
             path,
             caches,
-            relation.relationString
+            relation.relationString,
+            t
           ).map(buildBadge)}
         </div>
       );

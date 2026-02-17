@@ -5,6 +5,7 @@
  */
 
 import React, { useContext, Fragment, useState } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import { SettingsRow, SettingsSectionHeaderRow, bstyleopt } from "./utils";
 /* 
 Contains code from https://github.com/tpaksu/boxmodel
@@ -22,6 +23,7 @@ export /**
  * @namespace
  */
 const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
+  const { t } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState(false);
   const [selectedDirection, setSelectedDirection] = useState(false);
   const selectedProperty = !selectedCategory
@@ -45,7 +47,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                 className="boxmodel-text boxmodel-header"
                 onClick={() => setCatAndDir("margin", null)}
               >
-                Margin
+                {t("Margin")}
               </span>
               <span
                 className="boxmodel-input-container boxmodel-input-direction-left"
@@ -74,7 +76,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                     className="boxmodel-text boxmodel-header"
                     onClick={() => setCatAndDir("border", null)}
                   >
-                    Border
+                    {t("Border")}
                   </span>
                   <span
                     className="boxmodel-input-container boxmodel-input-direction-left"
@@ -109,7 +111,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                         className="boxmodel-text boxmodel-header"
                         onClick={() => setCatAndDir("padding", null)}
                       >
-                        Padding
+                        {t("Padding")}
                       </span>
                       <span
                         className="boxmodel-input-container boxmodel-input-direction-left"
@@ -274,7 +276,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
               <SettingsRow
                 field={{
                   name: "width",
-                  label: "width",
+                  label: t("width"),
                   type: "DimUnits",
                   horiz: true,
                 }}
@@ -285,7 +287,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
               <SettingsRow
                 field={{
                   name: "min-width",
-                  label: "min width",
+                  label: t("min width"),
                   type: "DimUnits",
                   horiz: true,
                 }}
@@ -296,7 +298,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
               <SettingsRow
                 field={{
                   name: "max-width",
-                  label: "max width",
+                  label: t("max width"),
                   type: "DimUnits",
                   horiz: true,
                 }}
@@ -305,7 +307,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                 isStyle={true}
               />
               <SettingsRow
-                field={{ name: "height", label: "height", type: "DimUnits" }}
+                field={{ name: "height", label: t("height"), type: "DimUnits" }}
                 node={node}
                 setProp={setProp}
                 isStyle={!!sizeWithStyle}
@@ -313,7 +315,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
               <SettingsRow
                 field={{
                   name: sizeWithStyle ? "min-height" : "minHeight",
-                  label: "min height",
+                  label: t("min height"),
                   type: "DimUnits",
                 }}
                 node={node}
@@ -323,7 +325,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
               <SettingsRow
                 field={{
                   name: "max-height",
-                  label: "max height",
+                  label: t("max height"),
                   type: "DimUnits",
                 }}
                 node={node}
@@ -338,7 +340,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
               <SettingsRow
                 field={{
                   name: selectedProperty + "-width",
-                  label: "width",
+                  label: t("width"),
                   type: "DimUnits",
                 }}
                 node={node}
@@ -348,7 +350,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
               <SettingsRow
                 field={{
                   name: selectedProperty + "-style",
-                  label: "style",
+                  label: t("style"),
                   type: "btn_select",
                   btnClass: "btnstylesel",
                   options: [
@@ -369,7 +371,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
               <SettingsRow
                 field={{
                   name: selectedProperty + "-color",
-                  label: "color",
+                  label: t("color"),
                   type: "Color",
                 }}
                 node={node}
@@ -380,7 +382,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                 <SettingsRow
                   field={{
                     name: selectedProperty + "-radius",
-                    label: "radius",
+                    label: t("radius"),
                     type: "DimUnits",
                   }}
                   node={node}
@@ -407,17 +409,17 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
           {!selectedProperty && (
             <tr>
               <td colSpan={2}>
-                <div>Click above to select a property to adjust.</div>
+                <div>{t("Click above to select a property to adjust.")}</div>
                 <div>
                   <small>
-                    Click a label (margin, border, padding) to adjust all edges.
+                    {t("Click a label (margin, border, padding) to adjust all edges.")}
                   </small>
                 </div>
                 <div>
-                  <small>Click an edge to adjust that edge.</small>
+                  <small>{t("Click an edge to adjust that edge.")}</small>
                 </div>
                 <div>
-                  <small>Click center to adjust height and width</small>
+                  <small>{t("Click center to adjust height and width")}</small>
                 </div>
               </td>
             </tr>

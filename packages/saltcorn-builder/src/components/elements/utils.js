@@ -5,6 +5,7 @@
  */
 /* globals $, _sc_globalCsrf, apply_showif*/
 import React, { Fragment, useState, useEffect } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -216,26 +217,30 @@ export /**
  * @subcategory components / elements / utils
  * @namespace
  */
-const BlockSetting = ({ block, setProp }) => (
-  <div className="form-check">
-    <input
-      className="form-check-input"
-      name="block"
-      type="checkbox"
-      checked={block}
-      onChange={(e) => {
-        if (e.target) {
-          const target_value = e.target.checked;
-          setProp((prop) => (prop.block = target_value));
-        }
-      }}
-    />
-    <label className="form-check-label">Block display</label>
-  </div>
-);
+const BlockSetting = ({ block, setProp }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="form-check">
+      <input
+        className="form-check-input"
+        name="block"
+        type="checkbox"
+        checked={block}
+        onChange={(e) => {
+          if (e.target) {
+            const target_value = e.target.checked;
+            setProp((prop) => (prop.block = target_value));
+          }
+        }}
+      />
+      <label className="form-check-label">{t("Block display")}</label>
+    </div>
+  );
+};
 
-export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
-  !textStyle ||
+export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) => {
+  const { t } = useTranslation();
+  return !textStyle ||
   !textStyleToArray(textStyle).some((ts) => ts && ts.startsWith("h")) ? (
     <BlockSetting block={block} setProp={setProp} />
   ) : (
@@ -252,9 +257,10 @@ export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
           }
         }}
       />
-      <label className="form-check-label">Inline display</label>
+      <label className="form-check-label">{t("Inline display")}</label>
     </div>
   );
+};
 
 export const HelpTopicLink = ({ topic, ...context }) => {
   const { mode } = React.useContext(optionsCtx);
@@ -445,11 +451,12 @@ export /**
  * @subcategory components / elements / utils
  */
 const MinRoleSettingRow = ({ minRole, setProp }) => {
+  const { t } = useTranslation();
   const options = React.useContext(optionsCtx);
   return (
     <tr>
       <td>
-        <label>Minimum Role</label>
+        <label>{t("Minimum role")}</label>
       </td>
       <td>
         <select
@@ -1488,6 +1495,7 @@ const SettingsRow = ({
   subProp,
   valuePostfix,
 }) => {
+  const { t } = useTranslation();
   const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
   const needLabel = field.type !== "Bool";
   const inner = field.canBeFormula ? (
@@ -1628,12 +1636,13 @@ const ButtonOrLinkSettingsRows = ({
   allowRunOnLoad = false,
   faIcons = [],
 }) => {
+  const { t } = useTranslation();
   const setAProp = setAPropGen(setProp);
   const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
   return [
     <tr key="btnstyle">
       <td>
-        <label>Style</label>
+        <label>{t("Style")}</label>
       </td>
       <td>
         <select
@@ -1643,41 +1652,41 @@ const ButtonOrLinkSettingsRows = ({
         >
           {linkFirst ? (
             <option value={linkIsBlank ? "" : addBtnClass("btn-link")}>
-              Link
+              {t("Link")}
             </option>
           ) : null}
-          <option value={addBtnClass("btn-primary")}>Primary button</option>
-          <option value={addBtnClass("btn-secondary")}>Secondary button</option>
-          <option value={addBtnClass("btn-success")}>Success button</option>
-          <option value={addBtnClass("btn-danger")}>Danger button</option>
-          <option value={addBtnClass("btn-warning")}>Warning button</option>
-          <option value={addBtnClass("btn-info")}>Info button</option>
+          <option value={addBtnClass("btn-primary")}>{t("Primary button")}</option>
+          <option value={addBtnClass("btn-secondary")}>{t("Secondary button")}</option>
+          <option value={addBtnClass("btn-success")}>{t("Success button")}</option>
+          <option value={addBtnClass("btn-danger")}>{t("Danger button")}</option>
+          <option value={addBtnClass("btn-warning")}>{t("Warning button")}</option>
+          <option value={addBtnClass("btn-info")}>{t("Info button")}</option>
           <option value={addBtnClass("btn-outline-primary")}>
-            Primary outline button
+            {t("Primary outline button")}
           </option>
           <option value={addBtnClass("btn-outline-secondary")}>
-            Secondary outline button
+            {t("Secondary outline button")}
           </option>
           <option value={addBtnClass("btn-outline-success")}>
-            Success outline button
+            {t("Success outline button")}
           </option>
           <option value={addBtnClass("btn-outline-danger")}>
-            Danger outline button
+            {t("Danger outline button")}
           </option>
           <option value={addBtnClass("btn-outline-warning")}>
-            Warning outline button
+            {t("Warning outline button")}
           </option>
           <option value={addBtnClass("btn-outline-info")}>
-            Info outline button
+            {t("Info outline button")}
           </option>
           <option value={addBtnClass("btn-custom-color")}>
-            Button custom color
+            {t("Button custom color")}
           </option>
           {!linkFirst ? (
-            <option value={addBtnClass("btn-link")}>Link</option>
+            <option value={addBtnClass("btn-link")}>{t("Link")}</option>
           ) : null}
           {!linkFirst && allowRunOnLoad ? (
-            <option value="on_page_load">Run on Page Load</option>
+            <option value="on_page_load">{t("Run on Page Load")}</option>
           ) : null}
         </select>
       </td>
@@ -1685,7 +1694,7 @@ const ButtonOrLinkSettingsRows = ({
     values[keyPrefix + "style"] !== "on_page_load" ? (
       <tr key="btnsz">
         <td>
-          <label>Size</label>
+          <label>{t("Size")}</label>
         </td>
         <td>
           <select
@@ -1693,12 +1702,12 @@ const ButtonOrLinkSettingsRows = ({
             value={values[keyPrefix + "size"]}
             onChange={setAProp(keyPrefix + "size")}
           >
-            <option value="">Standard</option>
-            <option value="btn-lg">Large</option>
-            <option value="btn-sm">Small</option>
-            <option value="btn-sm btn-xs">Extra Small</option>
-            <option value="btn-block">Block</option>
-            <option value="btn-block btn-lg">Large block</option>
+            <option value="">{t("Standard")}</option>
+            <option value="btn-lg">{t("Large")}</option>
+            <option value="btn-sm">{t("Small")}</option>
+            <option value="btn-sm btn-xs">{t("Extra Small")}</option>
+            <option value="btn-block">{t("Block")}</option>
+            <option value="btn-block btn-lg">{t("Large block")}</option>
           </select>
         </td>
       </tr>
@@ -1706,7 +1715,7 @@ const ButtonOrLinkSettingsRows = ({
     values[keyPrefix + "style"] !== "on_page_load" ? (
       <tr key="btnicon">
         <td>
-          <label>Icon</label>
+          <label>{t("Icon")}</label>
         </td>
         <td>
           <FontIconPicker
@@ -1724,7 +1733,7 @@ const ButtonOrLinkSettingsRows = ({
       ? [
           <tr key="btnbgcol">
             <td>
-              <label>Background</label>
+              <label>{t("Background")}</label>
             </td>
             <td>
               <input
@@ -1737,7 +1746,7 @@ const ButtonOrLinkSettingsRows = ({
           </tr>,
           <tr key="btnbdcol">
             <td>
-              <label>Border</label>
+              <label>{t("Border")}</label>
             </td>
             <td>
               <input
@@ -1750,7 +1759,7 @@ const ButtonOrLinkSettingsRows = ({
           </tr>,
           <tr key="btntxtcol">
             <td>
-              <label>Text</label>
+              <label>{t("Text")}</label>
             </td>
             <td>
               <input

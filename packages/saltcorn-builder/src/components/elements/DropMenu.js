@@ -4,7 +4,8 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useState, useContext } from "react";
+import React, { Fragment, useState, useEffect } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
@@ -43,6 +44,7 @@ const DropMenu = ({
   label,
   menu_direction,
 }) => {
+  const { t } = useTranslation();
   const {
     selected,
     connectors: { connect, drag },
@@ -93,6 +95,7 @@ export /**
  * @subcategory components
  */
 const DropMenuSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     label: node.data.props.label,
     block: node.data.props.block,
@@ -117,7 +120,7 @@ const DropMenuSettings = () => {
       <tbody>
         <SettingsRow
           field={{
-            label: "Label",
+            label: t("Label"),
             name: "label",
             type: "String",
           }}
@@ -138,18 +141,18 @@ const DropMenuSettings = () => {
         </tr>
         <SettingsRow
           field={{
-            label: "Drop direction",
+            label: t("Drop direction"),
             name: "menu_direction",
             type: "btn_select",
             options: [
               {
                 value: "end",
-                title: "End",
+                title: t("End"),
                 label: <FontAwesomeIcon icon={faCaretSquareLeft} />,
               },
               {
                 value: "start",
-                title: "Start",
+                title: t("Start"),
                 label: <FontAwesomeIcon icon={faCaretSquareRight} />,
               },
             ],

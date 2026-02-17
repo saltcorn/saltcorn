@@ -6,6 +6,7 @@
 
 import React, { Fragment } from "react";
 import { Column } from "./Column";
+import useTranslation from "../../hooks/useTranslation";
 
 import { Element, useNode } from "@craftjs/core";
 import {
@@ -124,6 +125,7 @@ export /**
  * @subcategory components
  */
 const ColumnsSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     widths: node.data.props.widths,
     ncols: node.data.props.ncols,
@@ -164,11 +166,11 @@ const ColumnsSettings = () => {
       value={currentSettingsTab}
       onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
     >
-      <table accordiontitle="Column properties">
+      <table accordiontitle={t("Column properties")}>
         <tbody>
           <tr>
             <td colSpan="3">
-              <label>Number of columns</label>
+              <label>{t("Number of columns")}</label>
             </td>
             <td>
               <input
@@ -190,7 +192,7 @@ const ColumnsSettings = () => {
             </td>
           </tr>
           <tr>
-            <th colSpan="4">Widths &amp; Breakpoint</th>
+            <th colSpan="4">{t("Widths & Breakpoint")}</th>
           </tr>
           {ntimes(ncols, (ix) => (
             <Fragment key={ix}>
@@ -199,7 +201,7 @@ const ColumnsSettings = () => {
               </tr>
               <tr>
                 <td>
-                  <label>Width</label>
+                  <label>{t("Width")}</label>
                 </td>
                 <td align="right">
                   {ix < ncols - 1 ? (
@@ -231,8 +233,8 @@ const ColumnsSettings = () => {
                       setProp((prop) => (prop.breakpoints[ix] = value));
                     }}
                   >
-                    <option disabled>Breakpoint</option>
-                    <option value="">none</option>
+                    <option disabled>{t("Breakpoint")}</option>
+                    <option value="">{t("none")}</option>
                     {buildBootstrapOptions(["sm", "md", "lg"])}
                   </select>
                 </td>
@@ -241,12 +243,12 @@ const ColumnsSettings = () => {
           ))}
         </tbody>
       </table>
-      <div accordiontitle="Column settings">
-        Settings for column #
+      <div accordiontitle={t("Column settings")}>
+        {t("Settings for column #")}
         <ConfigField
           field={{
             name: "setting_col_n",
-            label: "Column number",
+            label: t("Column number"),
             type: "btn_select",
             options: ntimes(ncols, (i) => ({
               value: i + 1,
@@ -260,16 +262,16 @@ const ColumnsSettings = () => {
         ></ConfigField>
         <table className="w-100">
           <tbody>
-            <SettingsSectionHeaderRow title="Align" />
+            <SettingsSectionHeaderRow title={t("Align")} />
             <SettingsRow
               field={{
                 name: "vAlign",
-                label: "Vertical",
+                label: t("Vertical"),
                 type: "btn_select",
                 options: [
-                  { value: "start", title: "Start", label: <AlignTop /> },
-                  { value: "center", title: "Center", label: <AlignMiddle /> },
-                  { value: "end", title: "End", label: <AlignBottom /> },
+                  { value: "start", title: t("Start"), label: <AlignTop /> },
+                  { value: "center", title: t("Center"), label: <AlignMiddle /> },
+                  { value: "end", title: t("End"), label: <AlignBottom /> },
                 ],
               }}
               node={colSetsNode}
@@ -284,12 +286,12 @@ const ColumnsSettings = () => {
             <SettingsRow
               field={{
                 name: "hAlign",
-                label: "Horizontal",
+                label: t("Horizontal"),
                 type: "btn_select",
                 options: [
-                  { value: "start", title: "Left", label: <AlignStart /> },
-                  { value: "center", title: "Center", label: <AlignCenter /> },
-                  { value: "end", title: "Right", label: <AlignEnd /> },
+                  { value: "start", title: t("Left"), label: <AlignStart /> },
+                  { value: "center", title: t("Center"), label: <AlignCenter /> },
+                  { value: "end", title: t("Right"), label: <AlignEnd /> },
                 ],
               }}
               node={colSetsNode}
@@ -304,7 +306,7 @@ const ColumnsSettings = () => {
             <SettingsRow
               field={{
                 name: "colClass",
-                label: "Class",
+                label: t("Class"),
                 type: "String",
               }}
               node={colSetsNode}
@@ -319,7 +321,7 @@ const ColumnsSettings = () => {
             <SettingsRow
               field={{
                 name: "colStyle",
-                label: "CSS",
+                label: t("CSS"),
                 type: "textarea",
               }}
               node={colSetsNode}
@@ -334,12 +336,12 @@ const ColumnsSettings = () => {
           </tbody>
         </table>
       </div>
-      <table className="w-100" accordiontitle="Gutters and class">
+      <table className="w-100" accordiontitle={t("Gutters and class")}>
         <tbody>
           <SettingsRow
             field={{
               name: "gx",
-              label: "Horizontal 0-5",
+              label: t("Horizontal 0-5"),
               type: "Integer",
             }}
             node={node}
@@ -348,7 +350,7 @@ const ColumnsSettings = () => {
           <SettingsRow
             field={{
               name: "gy",
-              label: "Vertical 0-5",
+              label: t("Vertical 0-5"),
               type: "Integer",
             }}
             node={node}
@@ -357,7 +359,7 @@ const ColumnsSettings = () => {
           <SettingsRow
             field={{
               name: "customClass",
-              label: "Custom class",
+              label: t("Custom class"),
               type: "String",
             }}
             node={node}
@@ -365,7 +367,7 @@ const ColumnsSettings = () => {
           />
         </tbody>
       </table>
-      <div accordiontitle="Box" className="w-100">
+      <div accordiontitle={t("Box")} className="w-100">
         <BoxModelEditor setProp={setProp} node={node} sizeWithStyle={true} />
       </div>
     </Accordion>

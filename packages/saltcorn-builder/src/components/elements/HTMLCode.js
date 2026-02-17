@@ -5,6 +5,7 @@
  */
 
 import React, { Fragment, useContext } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import { useNode } from "@craftjs/core";
 import {
   blockProps,
@@ -27,12 +28,13 @@ const HTMLCode = ({ text }) => {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const { t } = useTranslation();
   return (
     <span
       className={`is-html-block ${selected ? "selected-node" : ""}`}
       ref={(dom) => connect(drag(dom))}
     >
-      <div style={{ fontSize: "8px" }}>HTML</div>
+      <div style={{ fontSize: "8px" }}>{t("HTML")}</div>
       <div dangerouslySetInnerHTML={{ __html: text }}></div>
     </span>
   );

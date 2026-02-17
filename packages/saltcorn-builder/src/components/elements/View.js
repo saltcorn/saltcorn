@@ -8,6 +8,7 @@ import React, { Fragment, useEffect, useMemo } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
+import useTranslation from "../../hooks/useTranslation";
 import relationsCtx from "../relations_context";
 import Select from "react-select";
 
@@ -49,6 +50,7 @@ const View = ({ name, view, configuration, state }) => {
     node_id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected, node_id: node.id }));
+  const { t } = useTranslation();
   const options = React.useContext(optionsCtx);
 
   let viewname = view;
@@ -83,7 +85,7 @@ const View = ({ name, view, configuration, state }) => {
           dangerouslySetInnerHTML={{ __html: myPreview }}
         ></div>
       ) : (
-        `View: ${label}`
+        `${t("View")}: ${label}`
       )}
     </div>
   );
@@ -96,6 +98,7 @@ export /**
  * @namespace
  */
 const ViewSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     name: node.data.props.name,
     view: node.data.props.view,
@@ -237,7 +240,7 @@ const ViewSettings = () => {
           } else
             window.notifyAlert({
               type: "warning",
-              text: `${target_value} has no relations`,
+              text: `${target_value} ${t("has no relations")}`,
             });
         }
       }
@@ -326,7 +329,7 @@ const ViewSettings = () => {
       theview?.viewtemplate === "Edit" &&
       targetTable ? (
         <div>
-          <label>Order field</label>
+          <label>{t("Order field")}</label>
           <select
             value={order_field}
             className="form-control form-select"
@@ -345,7 +348,7 @@ const ViewSettings = () => {
       {options.mode !== "edit" && (
         <Fragment>
           <div>
-            <label>State</label>
+            <label>{t("State")}</label>
             <select
               value={state}
               className="form-control form-select"
@@ -369,7 +372,7 @@ const ViewSettings = () => {
             fixed_state_fields &&
             fixed_state_fields.length > 0 && (
               <Fragment>
-                <h6>View state fields</h6>
+                <h6>{t("View state fields")}</h6>
                 <ConfigForm
                   fields={fixed_state_fields}
                   configuration={configuration || {}}
@@ -383,7 +386,7 @@ const ViewSettings = () => {
       {
         <Fragment>
           <label>
-            Extra state Formula
+            {t("Extra state Formula")}
             <HelpTopicLink topic="Extra state formula" {...helpContext} />
           </label>
           <SingleLineEditor
@@ -405,7 +408,7 @@ const ViewSettings = () => {
           target="_blank"
           href={`/viewedit/config/${viewname}`}
         >
-          Configure this view
+          {t("Configure this view")}
         </a>
       ) : null}
     </div>
