@@ -38,13 +38,13 @@ document.addEventListener("keydown", function (e) {
   )
     return;
   for (var i = 0; i < _sc_menu_shortcuts.length; i++) {
-    var sc = _sc_menu_shortcuts[i];
-    var parts = sc.shortcut.split("+");
-    var needAlt = false,
+    const sc = _sc_menu_shortcuts[i];
+    const parts = sc.shortcut.split("+");
+    let needAlt = false,
       needCtrl = false,
       needShift = false,
       needMeta = false;
-    var key = "";
+    let key = "";
     for (var j = 0; j < parts.length; j++) {
       var p = parts[j].trim();
       if (p === "Alt") needAlt = true;
@@ -61,7 +61,7 @@ document.addEventListener("keydown", function (e) {
       e.key === key
     ) {
       e.preventDefault();
-      var link = sc.link;
+      const link = sc.link;
       if (link.startsWith("javascript:")) {
         new Function(link.substring(11))();
       } else {
