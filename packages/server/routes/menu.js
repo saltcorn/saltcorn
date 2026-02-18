@@ -490,7 +490,7 @@ const menuForm = async (req) => {
         name: "shortcut",
         label: req.__("Keyboard shortcut"),
         sublabel: req.__(
-          "e.g. Alt+k or Ctrl+Alt+k. Modifier keys: Alt, Ctrl, Shift, Meta"
+          "e.g. <code>Alt+k</code> or <code>Ctrl+Alt+k</code> or <code>Ctrl+Space</code>. Modifier keys: <code>Alt</code>, <code>Ctrl</code>, <code>Shift</code>, <code>Meta</code>"
         ),
         class: "item-menu",
         input_type: "text",
@@ -602,8 +602,8 @@ const menuEditorScript = (menu_items) => `
   setInterval(ajax_save_menu, 500)
 
   // Keyboard shortcut validation
-  var modifierKeys = ["Alt", "Ctrl", "Shift", "Meta"];
-  var validKeys = [
+  const modifierKeys = ["Alt", "Ctrl", "Shift", "Meta"];
+  const validKeys = new Set([
     "a","b","c","d","e","f","g","h","i","j","k","l","m",
     "n","o","p","q","r","s","t","u","v","w","x","y","z",
     "0","1","2","3","4","5","6","7","8","9",
@@ -611,21 +611,22 @@ const menuEditorScript = (menu_items) => `
     "Enter","Tab","Escape","Backspace","Delete","Insert",
     "Home","End","PageUp","PageDown",
     "ArrowUp","ArrowDown","ArrowLeft","ArrowRight",
-    " ","-","=","[","]","\\\\",";","'",",",".","/","\`"
-  ];
-  var reservedShortcuts = [
+    "Space","-","=","[","]","\\\\",";","'",",",".","/","\`"
+  ]);
+  const reservedShortcuts = [
     "Ctrl+c", "Ctrl+v", "Ctrl+x", "Ctrl+z", "Ctrl+y", "Ctrl+a",
     "Ctrl+s", "Ctrl+p", "Ctrl+t", "Ctrl+w", "Ctrl+n", "Ctrl+f",
     "Ctrl+h", "Ctrl+l", "Ctrl+d", "Ctrl+r", "Ctrl+o", "Ctrl+g",
     "Ctrl+j", "Ctrl+k", "Ctrl+u", "Ctrl+e", "Ctrl+Shift+p",
+    "Ctrl+Tab",
     "Ctrl+Shift+i", "Ctrl+Shift+j", "Ctrl+Shift+c", "Ctrl+Shift+t",
     "Ctrl+Shift+n", "Ctrl+Shift+Delete",
     "F1", "F3", "F5", "F7", "F11", "F12"
   ];
-  var normalizeShortcut = function(s) {
+  const normalizeShortcut = function(s) {
     return s.split("+").map(function(p) { return p.trim().toLowerCase(); }).join("+");
   };
-  var reservedSet = reservedShortcuts.map(normalizeShortcut);
+  const reservedSet = new Set(reservedShortcuts.map(normalizeShortcut));
 
   function validateShortcut(val) {
     if (!val) return null;
@@ -648,10 +649,10 @@ const menuEditorScript = (menu_items) => `
     }
     if (key === null) return "A non-modifier key is required";
     if (mods.length === 0) {
-      if (validKeys.indexOf(key) >= 0 && key.length === 1)
+      if (validKeys.has(key) && key.length === 1)
         return "Single character keys require at least one modifier (Alt, Ctrl, Shift, or Meta)";
     }
-    if (validKeys.indexOf(key) < 0)
+    if (!validKeys.has(key))
       return "Unknown key: " + key + ". Use a letter (a-z), digit (0-9), F1-F12, or a named key like Enter, Escape, etc.";
     return null;
   }
@@ -668,7 +669,7 @@ const menuEditorScript = (menu_items) => `
       return;
     }
     var norm = normalizeShortcut(val);
-    if (reservedSet.indexOf(norm) >= 0) {
+    if (reservedSet.has(norm)) {
       $shortcutMsg.removeClass('text-danger').addClass('text-warning').text('Warning: this shortcut conflicts with a common browser shortcut and may not work.').show();
     } else {
       $shortcutMsg.hide();

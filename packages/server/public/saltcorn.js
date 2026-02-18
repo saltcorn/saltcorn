@@ -58,7 +58,7 @@ document.addEventListener("keydown", function (e) {
       e.ctrlKey === needCtrl &&
       e.shiftKey === needShift &&
       e.metaKey === needMeta &&
-      e.key === key
+      (e.key === " " ? "Space" : e.key) === key
     ) {
       e.preventDefault();
       const link = sc.link;
@@ -1668,14 +1668,14 @@ function ensure_css_loaded(src) {
         l = function (a, b) {
           d = setTimeout(function () {
             d = !1;
-            if (h || c) (e.apply(a, b), c && (j = +new Date()));
+            if (h || c) e.apply(a, b), c && (j = +new Date());
             i && g.apply(a, b);
           }, f);
         },
         k = function () {
           if (!d || a) {
             if (!d && !h && (!c || +new Date() - j > f))
-              (e.apply(this, arguments), c && (j = +new Date()));
+              e.apply(this, arguments), c && (j = +new Date());
             (a || !c) && clearTimeout(d);
             l(this, arguments);
           }
