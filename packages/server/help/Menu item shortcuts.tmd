@@ -1,0 +1,37 @@
+Keyboard shortcuts allow users to navigate to menu items by pressing a key combination.
+A shortcut consists of one or more modifier keys followed by a single key, joined with `+`.
+
+**Format:** `Modifier+Key` or `Modifier+Modifier+Key`
+
+**Modifier keys:** `Alt`, `Ctrl`, `Shift`, `Meta`
+
+Modifiers are case-insensitive: `alt+k`, `Alt+K`, and `ALT+k` are all equivalent.
+At least one modifier is required when using single character keys.
+
+**Examples:**
+
+| Shortcut | Description |
+| --- | --- |
+| `Alt+k` | Alt and the K key |
+| `Ctrl+Shift+p` | Ctrl, Shift and the P key |
+| `Ctrl+Alt+t` | Ctrl, Alt and the T key |
+| `Alt+F2` | Alt and function key F2 |
+| `Ctrl+Space` | Ctrl and the Space bar |
+| `Alt+ArrowUp` | Alt and the up arrow key |
+
+**Valid keys:**
+
+| Category | Keys |
+| --- | --- |
+| Letters | `a` - `z` |
+| Digits | `0` - `9` |
+| Function keys | `F1`, `F2`, `F3`, `F4`, `F5`, `F6`, `F7`, `F8`, `F9`, `F10`, `F11`, `F12` |
+| Navigation | `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`, `Home`, `End`, `PageUp`, `PageDown` |
+| Editing | `Enter`, `Tab`, `Backspace`, `Delete`, `Insert`, `Space`, `Escape` |
+| Punctuation | `-`, `[`, `]`, `.` |
+
+Key names are case-insensitive: `enter`, `Enter`, and `ENTER` are all valid.
+
+**Note:** Some shortcuts are reserved by the browser (e.g. `Ctrl+t` for new tab, `Ctrl+w` for close tab)
+and cannot be overridden. The editor will warn you if you enter a commonly reserved shortcut.
+Shortcuts using `Alt` as the sole modifier are generally the safest choice to avoid conflicts.

@@ -495,6 +495,7 @@ const menuForm = async (req) => {
         class: "item-menu",
         input_type: "text",
         required: false,
+        help: { topic: "Menu item shortcuts"},
         showIf: {
           type: [
             "View",
@@ -611,14 +612,14 @@ const menuEditorScript = (menu_items) => `
     "enter","tab","escape","backspace","delete","insert",
     "home","end","pageup","pagedown",
     "arrowup","arrowdown","arrowleft","arrowright",
-    "space","-","=","[","]","\\\\",";","'",",",".","/","\`"
+    "space","-",",","."
   ]);
   const reservedShortcuts = [
     "Ctrl+c", "Ctrl+v", "Ctrl+x", "Ctrl+z", "Ctrl+y", "Ctrl+a",
     "Ctrl+s", "Ctrl+p", "Ctrl+t", "Ctrl+w", "Ctrl+n", "Ctrl+f",
     "Ctrl+h", "Ctrl+l", "Ctrl+d", "Ctrl+r", "Ctrl+o", "Ctrl+g",
     "Ctrl+j", "Ctrl+k", "Ctrl+u", "Ctrl+e", "Ctrl+Shift+p",
-    "Ctrl+Tab", "Shift+Escape",
+    "Ctrl+Tab", "Shift+Escape", "Alt+Space",
     "Ctrl+Shift+i", "Ctrl+Shift+j", "Ctrl+Shift+c", "Ctrl+Shift+t",
     "Ctrl+Shift+n", "Ctrl+Shift+Delete",
     "F1", "F3", "F5", "F7", "F11", "F12"
