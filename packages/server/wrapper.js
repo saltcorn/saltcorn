@@ -202,6 +202,33 @@ const get_brand = (state, req) => {
     logo: logo_id && logo_id !== "0" ? `/files/serve/${logo_id}` : undefined,
   };
 };
+/**
+ * Collect keyboard shortcuts from menu items
+ * @param {object[]} menu_sections
+ * @returns {object[]} array of {shortcut, link, type}
+ */
+const collect_menu_shortcuts = (menu_sections) => {
+  const shortcuts = [];
+  const extract = (items) => {
+    for (const item of items || []) {
+      if (item.shortcut && item.link) {
+        shortcuts.push({
+          shortcut: item.shortcut,
+          link: item.link,
+          type: item.type,
+        });
+      }
+      if (item.subitems) extract(item.subitems);
+    }
+  };
+  if (menu_sections) {
+    for (const section of menu_sections) {
+      extract(section.items || []);
+    }
+  }
+  return shortcuts;
+};
+
 module.exports = (version_tag) =>
   /**
    *
@@ -303,19 +330,34 @@ module.exports = (version_tag) =>
       const currentUrl = req.originalUrl.split("?")[0];
 
       const pageHeaders = typeof opts === "string" ? [] : opts.headers;
+      const menu = no_menu ? undefined : get_menu(req);
+      const shortcuts = collect_menu_shortcuts(menu);
+      const shortcutHeaders =
+        shortcuts.length > 0
+          ? [
+              {
+                scriptBody: `var _sc_menu_shortcuts = ${JSON.stringify(shortcuts)};`,
+              },
+            ]
+          : [];
 
       res.send(
         layout.wrap({
           title,
           brand: no_menu ? undefined : get_brand(state, req),
-          menu: no_menu ? undefined : get_menu(req),
+          menu,
           currentUrl,
           originalUrl: req.originalUrl,
           requestFluidLayout:
             typeof opts === "string" ? false : opts.requestFluidLayout,
           alerts,
           body: html.length === 1 ? html[0] : html.join(""),
-          headers: get_headers(req, version_tag, opts.description, pageHeaders),
+          headers: get_headers(
+            req,
+            version_tag,
+            opts.description,
+            [...(pageHeaders || []), ...shortcutHeaders]
+          ),
           role,
           req,
           bodyClass,
