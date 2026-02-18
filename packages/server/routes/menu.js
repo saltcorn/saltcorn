@@ -602,45 +602,46 @@ const menuEditorScript = (menu_items) => `
   setInterval(ajax_save_menu, 500)
 
   // Keyboard shortcut validation
-  const modifierKeys = ["Alt", "Ctrl", "Shift", "Meta"];
+  const modifierKeys = new Set(["alt", "ctrl", "shift", "meta"]);
   const validKeys = new Set([
     "a","b","c","d","e","f","g","h","i","j","k","l","m",
     "n","o","p","q","r","s","t","u","v","w","x","y","z",
     "0","1","2","3","4","5","6","7","8","9",
-    "F1","F2","F3","F4","F5","F6","F7","F8","F9","F10","F11","F12",
-    "Enter","Tab","Escape","Backspace","Delete","Insert",
-    "Home","End","PageUp","PageDown",
-    "ArrowUp","ArrowDown","ArrowLeft","ArrowRight",
-    "Space","-","=","[","]","\\\\",";","'",",",".","/","\`"
+    "f1","f2","f3","f4","f5","f6","f7","f8","f9","f10","f11","f12",
+    "enter","tab","escape","backspace","delete","insert",
+    "home","end","pageup","pagedown",
+    "arrowup","arrowdown","arrowleft","arrowright",
+    "space","-","=","[","]","\\\\",";","'",",",".","/","\`"
   ]);
   const reservedShortcuts = [
     "Ctrl+c", "Ctrl+v", "Ctrl+x", "Ctrl+z", "Ctrl+y", "Ctrl+a",
     "Ctrl+s", "Ctrl+p", "Ctrl+t", "Ctrl+w", "Ctrl+n", "Ctrl+f",
     "Ctrl+h", "Ctrl+l", "Ctrl+d", "Ctrl+r", "Ctrl+o", "Ctrl+g",
     "Ctrl+j", "Ctrl+k", "Ctrl+u", "Ctrl+e", "Ctrl+Shift+p",
-    "Ctrl+Tab",
+    "Ctrl+Tab", "Shift+Escape",
     "Ctrl+Shift+i", "Ctrl+Shift+j", "Ctrl+Shift+c", "Ctrl+Shift+t",
     "Ctrl+Shift+n", "Ctrl+Shift+Delete",
     "F1", "F3", "F5", "F7", "F11", "F12"
   ];
-  const normalizeShortcut = function(s) {
+  const normalizeShortcut = (s) => {
     return s.split("+").map(function(p) { return p.trim().toLowerCase(); }).join("+");
   };
   const reservedSet = new Set(reservedShortcuts.map(normalizeShortcut));
 
   function validateShortcut(val) {
     if (!val) return null;
-    var parts = val.split("+").map(function(p) { return p.trim(); });
+    const parts = val.split("+").map((p) => { return p.trim(); });
     if (parts.length === 0 || parts.some(function(p) { return p === ""; })) {
       return "Invalid format. Use Modifier+Key, e.g. Alt+k";
     }
-    var mods = [];
-    var key = null;
+    const mods = [];
+    let key = null;
     for (var i = 0; i < parts.length; i++) {
-      var p = parts[i];
-      if (modifierKeys.indexOf(p) >= 0) {
-        if (mods.indexOf(p) >= 0) return "Duplicate modifier: " + p;
-        mods.push(p);
+      const p = parts[i];
+      const pLower = p.toLowerCase();
+      if (modifierKeys.has(pLower)) {
+        if (mods.indexOf(pLower) >= 0) return "Duplicate modifier: " + p;
+        mods.push(pLower);
       } else if (key !== null) {
         return "Only one non-modifier key allowed, got: " + key + " and " + p;
       } else {
@@ -649,10 +650,10 @@ const menuEditorScript = (menu_items) => `
     }
     if (key === null) return "A non-modifier key is required";
     if (mods.length === 0) {
-      if (validKeys.has(key) && key.length === 1)
+      if (validKeys.has(key.toLowerCase()) && key.length === 1)
         return "Single character keys require at least one modifier (Alt, Ctrl, Shift, or Meta)";
     }
-    if (!validKeys.has(key))
+    if (!validKeys.has(key.toLowerCase()))
       return "Unknown key: " + key + ". Use a letter (a-z), digit (0-9), F1-F12, or a named key like Enter, Escape, etc.";
     return null;
   }

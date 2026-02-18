@@ -46,11 +46,11 @@ document.addEventListener("keydown", function (e) {
       needMeta = false;
     let key = "";
     for (var j = 0; j < parts.length; j++) {
-      var p = parts[j].trim();
-      if (p === "Alt") needAlt = true;
-      else if (p === "Ctrl") needCtrl = true;
-      else if (p === "Shift") needShift = true;
-      else if (p === "Meta") needMeta = true;
+      var p = parts[j].trim().toLowerCase();
+      if (p === "alt") needAlt = true;
+      else if (p === "ctrl") needCtrl = true;
+      else if (p === "shift") needShift = true;
+      else if (p === "meta") needMeta = true;
       else key = p;
     }
     if (
@@ -58,7 +58,7 @@ document.addEventListener("keydown", function (e) {
       e.ctrlKey === needCtrl &&
       e.shiftKey === needShift &&
       e.metaKey === needMeta &&
-      (e.key === " " ? "Space" : e.key) === key
+      (e.key === " " ? "space" : e.key.toLowerCase()) === key
     ) {
       e.preventDefault();
       const link = sc.link;
