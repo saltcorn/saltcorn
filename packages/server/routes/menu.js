@@ -610,7 +610,6 @@ const menuEditorScript = (menu_items) => `
     "0","1","2","3","4","5","6","7","8","9",
     "f1","f2","f3","f4","f5","f6","f7","f8","f9","f10","f11","f12",
     "enter","tab","escape","backspace","delete","insert",
-    "home","end","pageup","pagedown",
     "arrowup","arrowdown","arrowleft","arrowright",
     "space","-",",","."
   ]);

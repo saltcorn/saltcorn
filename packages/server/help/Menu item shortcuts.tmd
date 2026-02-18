@@ -26,7 +26,7 @@ At least one modifier is required when using single character keys.
 | Letters | `a` - `z` |
 | Digits | `0` - `9` |
 | Function keys | `F1`, `F2`, `F3`, `F4`, `F5`, `F6`, `F7`, `F8`, `F9`, `F10`, `F11`, `F12` |
-| Navigation | `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight`, `Home`, `End`, `PageUp`, `PageDown` |
+| Navigation | `ArrowUp`, `ArrowDown`, `ArrowLeft`, `ArrowRight` |
 | Editing | `Enter`, `Tab`, `Backspace`, `Delete`, `Insert`, `Space`, `Escape` |
 | Punctuation | `-`, `[`, `]`, `.` |
 
