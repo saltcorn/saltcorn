@@ -688,7 +688,8 @@ const respondWorkflow = (view, wf, wfres, req, res, table) => {
     );
   else if (wfres.renderBuilder) {
     const locale = req.getLocale();
-    wfres.renderBuilder.options.translations = req.getCatalog() || {};
+    wfres.renderBuilder.options.translations =
+      locale === "en" ? {} : req.getCatalog(locale) || {};
     wfres.renderBuilder.options.view_id = view.id;
     res.sendWrap(
       {

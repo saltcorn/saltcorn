@@ -424,6 +424,9 @@ function useWindowDimensions() {
  * @subcategory components
  * @namespace
  */
+
+const hiddenColumnParents = new Set(["Card", "Container", "Tabs", "Table"]);
+
 const CustomLayerComponent = memo(({ children }) => {
   const {
     id,
@@ -439,28 +442,53 @@ const CustomLayerComponent = memo(({ children }) => {
       };
   });
 
-  const { displayName, hasNodes } = useEditor((state) => {
+  const { displayName, hasNodes, isHiddenColumn } = useEditor((state) => {
       const node = state.nodes[id];
       const data = node?.data;
-      
+
       let name = data?.displayName || data?.name || id;
       if (name === "ROOT" || name === "Canvas") {
           name = data?.name || name;
       }
-      
+
       const nodes = data?.nodes;
       const linkedNodes = data?.linkedNodes;
       const hasChildren = (nodes && nodes.length > 0) || (linkedNodes && Object.keys(linkedNodes).length > 0);
-      
+
+      // Check if this Column is a linked node of a Card/Container/Tabs/Table
+      let shouldHide = false;
+      if (name === "Column" && data?.parent) {
+          const parentNode = state.nodes[data.parent];
+          const parentName = parentNode?.data?.displayName || parentNode?.data?.name;
+          if (hiddenColumnParents.has(parentName)) {
+              const parentLinked = parentNode?.data?.linkedNodes;
+              if (parentLinked && Object.values(parentLinked).includes(id)) {
+                  shouldHide = true;
+              }
+          }
+      }
+
       return {
           displayName: name,
-          hasNodes: hasChildren
+          hasNodes: hasChildren,
+          isHiddenColumn: shouldHide
       };
   });
 
+  if (isHiddenColumn) {
+    return (
+      <div
+        ref={(dom) => { layer(dom); drag(dom); }}
+        style={{ marginLeft: "-20px" }}
+      >
+        {children}
+      </div>
+    );
+  }
+
   return (
     <div>
-        <div 
+        <div
           ref={(dom) => { layer(dom); drag(dom); }}
           className={`builder-layer-node ${hovered ? "hovered" : ""}`}
           style={{
@@ -468,9 +496,9 @@ const CustomLayerComponent = memo(({ children }) => {
           }}
         >
           <span className="layer-name" style={{ flexGrow: 1 }}>{displayName}</span>
-          
+
           {hasNodes && (
-             <span 
+             <span
                onClick={(e) => {
                  e.stopPropagation();
                  toggleLayer();
