@@ -75,13 +75,28 @@ export type Header = {
   only_if?: (req: Req) => boolean | undefined;
 };
 
-type MenuItem = {
+export type MenuItem = {
+  href: string;
+  icon: string;
+  text: string;
+  type: string;
   label: string;
   link?: string;
-  subitems?: Array<{
-    label: string;
-    link?: string;
-  }>;
+  style: string;
+  title: string;
+  target: string;
+  tooltip: string;
+  in_modal?: boolean;
+  location: string;
+  shortcut?: string;
+  max_role: string;
+  min_role: number | string;
+  admin_page?: string;
+  user_page?: string;
+  target_blank?: boolean;
+  disable_on_mobile: boolean;
+  subitems?: MenuItem[];
+  user_menu_header?: boolean;
 };
 
 type LayoutWithTypeProp = {
