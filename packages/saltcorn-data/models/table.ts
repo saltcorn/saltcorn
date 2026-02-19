@@ -788,8 +788,14 @@ class Table implements AbstractTable {
     // refresh tables cache
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client) await Table.state_refresh(true);
-    
-    if (table.provider_name) return table.to_provided_table();
+
+    if (table.provider_name) {
+      const { getState } = require("../db/state");
+
+      const provider = getState().table_providers[table.provider_name];
+      if (provider?.on_create) await provider?.on_create(table);
+      return table.to_provided_table();
+    }
     return table;
   }
 
