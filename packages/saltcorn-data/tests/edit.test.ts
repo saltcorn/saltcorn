@@ -222,6 +222,22 @@ describe("Edit view with constraints and validations", () => {
     assertIsSet(row);
     expect(row.age).toBe(19);
   });
+  it("should allow clear fields", async () => {
+    const v = await View.findOne({ name: "ValidatedWithSave" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    await v.runPost({}, { id: 1, name: "", age: 19 }, mockReqRes);
+    const res = mockReqRes.getStored();
+
+    expect(!!res.flash).toBe(false);
+    expect(res.url).toBe("/");
+    const row = await Table.findOne("ValidatedTable1")!.getRow({
+      id: 1,
+    });
+    assertIsSet(row);
+    expect(row.age).toBe(19);
+    expect(row.name).toBe("");
+  });
   it("should not update to violate constraint", async () => {
     const v = await View.findOne({ name: "ValidatedWithSave" });
     assertIsSet(v);
@@ -1256,8 +1272,8 @@ describe("Edit view components", () => {
     const vres0 = await view.run({}, mockReqRes);
     expect(vres0).toContain('data-sc-embed-viewname="patientlist"');
     expect(vres0).toContain('data-view-source="add_extra_state');
-    expect(vres0).toContain('data-view-source-need-fields');
-    expect(vres0).not.toContain('data-view-source-current');
+    expect(vres0).toContain("data-view-source-need-fields");
+    expect(vres0).not.toContain("data-view-source-current");
     expect(vres0).toContain("<form");
   });
 });
