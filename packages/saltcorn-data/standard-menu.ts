@@ -225,7 +225,7 @@ const create_standard_menu = async (): Promise<void> => {
           title: "",
           target: "_self",
           tooltip: "",
-          shortcut: "",
+          shortcut: "Alt+n",
           in_modal: false,
           location: "Standard",
           max_role: "1",

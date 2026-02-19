@@ -2,6 +2,10 @@
 
 ## 1.6.0 - In development
 
+* Added Filipino, Romanian, Urdu and Korean languages
+
+* Keyboard shortcuts can be defined for menu items
+
 * The builder is now based on craft.js 0.2.12 and the drag-and-drop is much improved
 
 * The `res` is now available in actions, allowing you to, for instance, set cookies
