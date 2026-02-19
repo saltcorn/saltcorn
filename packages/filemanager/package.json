@@ -18,7 +18,7 @@
     "rollup-plugin-livereload": "^2.0.0",
     "rollup-plugin-svelte": "^7.0.0",
     "@rollup/plugin-terser": "0.4.4",
-    "svelte": "^4.2.19",
+    "svelte": "^5.51.5",
     "svelte-fa": "^3.0.3"
   },
   "dependencies": {
