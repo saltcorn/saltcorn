@@ -133,6 +133,7 @@ describe("Edit view with constraints and validations", () => {
     });
     await Trigger.create({
       action: "run_js_code",
+      name: "setpersonnameifnone",
       table_id: persons.id,
       when_trigger: "Validate",
       configuration: {
@@ -221,22 +222,6 @@ describe("Edit view with constraints and validations", () => {
     });
     assertIsSet(row);
     expect(row.age).toBe(19);
-  });
-  it("should allow clear fields", async () => {
-    const v = await View.findOne({ name: "ValidatedWithSave" });
-    assertIsSet(v);
-    mockReqRes.reset();
-    await v.runPost({}, { id: 1, name: "", age: 19 }, mockReqRes);
-    const res = mockReqRes.getStored();
-
-    expect(!!res.flash).toBe(false);
-    expect(res.url).toBe("/");
-    const row = await Table.findOne("ValidatedTable1")!.getRow({
-      id: 1,
-    });
-    assertIsSet(row);
-    expect(row.age).toBe(19);
-    expect(row.name).toBe("");
   });
   it("should not update to violate constraint", async () => {
     const v = await View.findOne({ name: "ValidatedWithSave" });
@@ -369,6 +354,31 @@ describe("Edit view with constraints and validations", () => {
     expect(row.age).toBe(41);
     expect(row.name).toBe("Fred");
     mockReqRes.reset();
+  });
+  it("should allow clear fields", async () => {
+    const tr = await Trigger.findDB({ name: "setpersonnameifnone" });
+    assertIsSet(tr[0]);
+    await tr[0].delete();
+    await getState().refresh_triggers(false);
+    const table = Table.findOne("ValidatedTable1");
+    assertIsSet(table);
+    const id = await table.insertRow({ name: "Harry", age: 21 });
+    const v = await View.findOne({ name: "ValidatedWithSave" });
+    assertIsSet(v);
+    mockReqRes.reset();
+    mockReqRes.req.body = { id, name: "", age: 19 } as any;
+    await v.runPost({}, { id, name: "", age: 19 }, mockReqRes);
+    const res = mockReqRes.getStored();
+    mockReqRes.req.body = "";
+
+    expect(!!res.flash).toBe(false);
+    expect(res.url).toBe("/");
+    const row = await table.getRow({
+      id,
+    });
+    assertIsSet(row);
+    expect(row.age).toBe(19);
+    expect(row.name).toBe(null);
   });
 });
 describe("Edit-in-edit", () => {
