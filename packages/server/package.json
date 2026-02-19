@@ -62,7 +62,7 @@
     "resize-with-sharp-or-jimp": "0.1.8",
     "semver": "^7.6.3",
     "socket.io": "4.8.1",
-    "systeminformation": "^5.25.11",
+    "systeminformation": "^5.30.8",
     "thirty-two": "1.0.2",
     "tmp-promise": "^3.0.3",
     "ua-parser-js": "^2.0.0",

@@ -26,7 +26,7 @@
     "node-watch": "^0.7.4",
     "source-map-support": "^0.5.21",
     "sudo": "^1.0.3",
-    "systeminformation": "^5.25.11",
+    "systeminformation": "^5.30.8",
     "tcp-port-used": "^1.0.2",
     "wrk": "^1.2.1"
   },
