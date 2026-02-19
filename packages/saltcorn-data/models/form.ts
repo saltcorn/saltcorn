@@ -238,7 +238,7 @@ class Form implements AbstractForm {
       };
       if (f.showIf && Object.entries(f.showIf).some(showIfFailed)) return;
 
-      const valres = f.validate(v);
+      const valres = f.validate(v, this.req?.body);
 
       if (instanceOfErrorMsg(valres)) {
         this.errors[f.name] = valres.error;

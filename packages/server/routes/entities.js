@@ -878,9 +878,9 @@ router.get(
       {
         class: "btn btn-sm btn-outline-secondary",
         href: `/tag${on_done_redirect_str}`,
+        title: req.__("Manage tags"),
       },
-      i({ class: "fas fa-tags me-1" }),
-      req.__("Manage tags")
+      i({ class: "fas fa-cog" })
     );
 
     // Tag filter buttons + manage

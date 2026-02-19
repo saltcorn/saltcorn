@@ -1791,5 +1791,20 @@
 	"Finished translating %s strings.": "Finished translating %s strings.",
 	"This is a Share extension profile": "This is a Share extension profile",
 	"App Group ID": "App Group ID",
-	"The App Group ID is used to share data between the main app and the Share extension.": "The App Group ID is used to share data between the main app and the Share extension."
+	"The App Group ID is used to share data between the main app and the Share extension.": "The App Group ID is used to share data between the main app and the Share extension.",
+	"Toggle deep search (Alt+S)": "Toggle deep search (Alt+S)",
+	"Manage tags": "Manage tags",
+	"Download pack for selected modules/packs": "Download pack for selected modules/packs",
+	"Download pack": "Download pack",
+	"Select write role": "Select write role",
+	"Set write role": "Set write role",
+	"Apply write role to selected tables": "Apply write role to selected tables",
+	"Set write": "Set write",
+	"Select access role": "Select access role",
+	"Set access role": "Set access role",
+	"Apply access role to selected": "Apply access role to selected",
+	"Set access": "Set access",
+	"Select tag to apply": "Select tag to apply",
+	"Apply tag to selected": "Apply tag to selected",
+	"Apply tag": "Apply tag"
 }
