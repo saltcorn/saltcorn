@@ -43,16 +43,16 @@ const buildPluginEntries = async (plugins) => {
         return pluginName;
       }
     }
-    throw new Error(`Unable to find a plugin name for package: '${pckName}'`);
+    return null;
   };
 
   for (const plugin of plugins) {
     const { requireResult } = nameToModule.get(plugin.name);
-    const additionalDependencies = requireResult.plugin_module?.dependencies
-      ? requireResult.plugin_module.dependencies.map((dep) =>
-          nameByPackageName(dep)
-        )
-      : [];
+    const additionalDependencies = [];
+    for (const dependency of requireResult.plugin_module?.dependencies || []) {
+      const name = nameByPackageName(dependency);
+      if (name) additionalDependencies.push(name);
+    }
     const genericEntry = {
       [plugin.name]: {
         import: requireResult.location,
