@@ -68,7 +68,7 @@ export const SingleLineEditor = React.forwardRef(
   }
 );
 
-export const MultiLineCodeEditor = ({ setProp, value, onChange }) => {
+export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = false }) => {
   const options = React.useContext(optionsCtx);
 
   const handleEditorWillMount = (monaco) => {
@@ -77,7 +77,7 @@ export const MultiLineCodeEditor = ({ setProp, value, onChange }) => {
   return (
     <div className="form-control p-0 pt-2">
       <Editor
-        height="150px"
+        height={isModalEditor ? "100%" : "150px"}
         value={value}
         onChange={onChange}
         defaultLanguage="typescript"
@@ -86,6 +86,7 @@ export const MultiLineCodeEditor = ({ setProp, value, onChange }) => {
         options={multiLineEditorOptions}
         //theme="myCoolTheme"
         beforeMount={handleEditorWillMount}
+        className={isModalEditor ? 'code-modal-form' : ''}
       />
     </div>
   );
@@ -93,6 +94,7 @@ export const MultiLineCodeEditor = ({ setProp, value, onChange }) => {
 
 const multiLineEditorOptions = {
   fontSize: "14px",
+  minHeight:"80vh",
   fontWeight: "normal",
   wordWrap: "off",
   lineNumbers: "off",

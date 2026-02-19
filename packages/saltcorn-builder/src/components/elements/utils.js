@@ -953,6 +953,7 @@ const ConfigForm = ({
   onChange,
   tableName,
   fieldName,
+  openPopup
 }) => (
   <div className="form-namespace">
     {fields.map((f, ix) => {
@@ -977,6 +978,7 @@ const ConfigForm = ({
                   table_name={tableName}
                 />
               ) : null}
+              {" "}{openPopup && <i class="fas fa-external-link-alt " onClick={openPopup}></i>}
             </label>
           ) : null}
           <ConfigField

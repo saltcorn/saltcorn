@@ -433,7 +433,7 @@ const CustomLayerComponent = memo(({ children }) => {
     depth,
     expanded,
     hovered,
-    actions: { toggleLayer },
+    actions: { toggleLayer, setExpandedState },
     connectors: { layer, drag },
   } = useLayer((node) => {
       return {
@@ -474,6 +474,16 @@ const CustomLayerComponent = memo(({ children }) => {
           isHiddenColumn: shouldHide
       };
   });
+
+  // Auto-expand hidden linked-node Columns so their children are always
+  // visible through the transparent wrapper. Uses setExpandedState(true)
+  // instead of toggleLayer() — it's idempotent (no-op when already true),
+  // so it won't conflict with craft.js internals or cause toggle loops.
+  useEffect(() => {
+    if (isHiddenColumn && !expanded) {
+      setExpandedState(true);
+    }
+  }, [isHiddenColumn, expanded, setExpandedState]);
 
   if (isHiddenColumn) {
     return (

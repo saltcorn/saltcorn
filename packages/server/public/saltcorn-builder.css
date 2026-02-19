@@ -739,3 +739,11 @@ body.builder-dark .builder-select__menu-notice,
   outline: 1px dashed #2680eb; /* Example: blue dashed outline */
   outline-offset: -2px;
 }
+
+.code-modal {
+  min-height: 80vh;
+}
+
+.code-modal-form {
+  min-height: 70vh;
+}

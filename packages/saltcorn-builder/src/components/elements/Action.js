@@ -274,7 +274,7 @@ const ActionSettings = () => {
               <td>
                 <select
                   value={action_row_variable}
-                  className="form-control form-select"
+                  className="form-control form-select code-modal-form"
                   onChange={(e) => {
                     if (!e.target) return;
                     const value = e.target.value;
@@ -477,8 +477,9 @@ const ActionSettings = () => {
                 configuration={configuration}
                 setProp={setProp}
                 node={node}
+                openPopup={() => setCodeModalOpen(true)}
               />
-              <div className="builder-config-field mt-2" data-field-name="code-modal-trigger">
+              {/* <div className="builder-config-field mt-2" data-field-name="code-modal-trigger">
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
@@ -486,7 +487,7 @@ const ActionSettings = () => {
                 >
                   {t("Open Code Popup")}
                 </button>
-              </div>
+              </div> */}
               <ConfigForm
                 fields={cfgFieldsForForm}
                 configuration={configuration}
@@ -526,7 +527,7 @@ const ActionSettings = () => {
                     style={{ zIndex: 1060 }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="modal-content">
+                    <div className="modal-content code-modal">
                       <div className="modal-header">
                         <h5 className="modal-title" id="codeModalLabel">
                           {t("Code")}
@@ -549,6 +550,7 @@ const ActionSettings = () => {
                               prop.configuration.code = code;
                             })
                           }
+                          isModalEditor
                         />
                       </div>
                       <div className="modal-footer">

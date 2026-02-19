@@ -645,7 +645,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       };
     }
   };
-  const layout = go(nodes[startFrom]) || { type: "blank", contents: "" };
+  const layout = go(nodes[startFrom]) || {};
   /*console.log("nodes", JSON.stringify(nodes));
     console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/
