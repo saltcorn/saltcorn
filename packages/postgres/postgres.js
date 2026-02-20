@@ -107,12 +107,12 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
   const { where, values } = mkWhere(whereObj);
   const schema = selectopts.schema || getTenantSchema();
   let sql;
-  if (selectopts.tree_field) {
+  if (selectopts.tree_field)
     sql = `WITH RECURSIVE _tree AS (
       SELECT ${
         selectopts.fields ? selectopts.fields.join(", ") : `*`
       }, 0 as _level, 
-      ${selectopts.orderBy ? `ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy)}"${selectopts.orderDesc ? " DESC":""})] as _sort_path` : ""} 
+      ${selectopts.orderBy ? `ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy)}"${selectopts.orderDesc ? " DESC" : ""})] as _sort_path` : ""} 
       FROM "${schema}"."${sqlsanitize(tbl)}" 
       WHERE "${selectopts.tree_field}" IS NULL
 
@@ -123,7 +123,7 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
         ? selectopts.fields.map((f) => `p."${f}"`).join(", ")
         : `p.*`
     }, pt._level+1, 
-    ${selectopts.orderBy ? `pt._sort_path || row_number() OVER (PARTITION BY p."${selectopts.tree_field}" ORDER BY p."${selectopts.orderBy}"${selectopts.orderDesc ? " DESC":""})` : ""} 
+    ${selectopts.orderBy ? `pt._sort_path || row_number() OVER (PARTITION BY p."${selectopts.tree_field}" ORDER BY p."${selectopts.orderBy}"${selectopts.orderDesc ? " DESC" : ""})` : ""} 
     FROM "${schema}"."${sqlsanitize(tbl)}" p
     JOIN _tree pt ON p."${selectopts.tree_field}" = pt.id      
     )
@@ -134,7 +134,7 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
       values,
       false
     )}`;
-  } else
+  else
     sql = `SELECT ${
       selectopts.fields ? selectopts.fields.join(", ") : `*`
     } FROM "${schema}"."${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
