@@ -3038,8 +3038,11 @@ describe("Table recursive query", () => {
     expect(rows.length).toEqual(7);
     //console.log(rows.map((r) => r.name));
     expect(rows[2].name).toBe("Learn about the bees");
+    expect(rows[2]._level).toBe(2);
+    expect(rows[1]._level).toBe(1);
+    expect(rows[0]._level).toBe(0);
   });
-    it("getRows tree sort by name desc", async () => {
+  it("getRows tree sort by name desc", async () => {
     const table = Table.findOne("recur_projects");
     assertIsSet(table);
     //db.set_sql_logging(true);
@@ -3050,5 +3053,8 @@ describe("Table recursive query", () => {
     expect(rows.length).toEqual(7);
     //console.log(rows.map((r) => r.name));
     expect(rows[2].name).toBe("Verb conjugations");
+    expect(rows[2]._level).toBe(2);
+    expect(rows[1]._level).toBe(1);
+    expect(rows[0]._level).toBe(0);
   });
 });
