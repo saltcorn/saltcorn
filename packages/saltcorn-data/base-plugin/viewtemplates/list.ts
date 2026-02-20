@@ -1240,7 +1240,7 @@ const run = async (
         layout.besides,
         viewResults,
         is_row_click,
-        !!default_state._tree_field
+        !!default_state?._tree_field
       )
     : get_viewable_fields(
         viewname,
@@ -1254,7 +1254,7 @@ const run = async (
         state,
         viewname,
         is_row_click,
-        !!default_state._tree_field
+        !!default_state?._tree_field
       );
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   const current_page = parseInt(state[`_${statehash}_page`]) || 1;
