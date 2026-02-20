@@ -1239,7 +1239,8 @@ const run = async (
         viewname,
         layout.besides,
         viewResults,
-        is_row_click
+        is_row_click,
+        !!default_state._tree_field
       )
     : get_viewable_fields(
         viewname,
@@ -1252,7 +1253,8 @@ const run = async (
         __,
         state,
         viewname,
-        is_row_click
+        is_row_click,
+        !!default_state._tree_field
       );
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   const current_page = parseInt(state[`_${statehash}_page`]) || 1;
@@ -1937,8 +1939,8 @@ export = {
           forPublic: !req.user || req.user.role_id === 100,
           forUser: req.user,
         });
-        //console.log("rows", rows);
-        
+      //console.log("rows", rows);
+
       const rowCount = default_state?._hide_pagination
         ? undefined
         : q.limit && rows.length < q.limit
