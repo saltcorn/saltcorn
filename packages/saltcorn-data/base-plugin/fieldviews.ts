@@ -4,9 +4,9 @@
  * @subcategory base-plugin
  */
 
-const View = require("../models/view");
-const Table = require("../models/table");
-const Field = require("../models/field");
+import View from "../models/view";
+import Table from "../models/table";
+import Field from "../models/field";
 const {
   eval_expression,
   jsexprToWhere,
@@ -27,7 +27,8 @@ const tags = require("@saltcorn/markup/tags");
 const { select_options, radio_group } = require("@saltcorn/markup/helpers");
 const { isNode, nubBy, objectToQueryString } = require("../utils");
 const { mockReqRes } = require("../tests/mocks");
-const db = require("../db");
+import db from "../db";
+import { GenObj } from "@saltcorn/types/common_types";
 
 /**
  * select namespace
@@ -94,19 +95,10 @@ const select = {
     },
   ],
 
-  /**
-   * @param {*} nm
-   * @param {*} v
-   * @param {*} attrs
-   * @param {*} cls
-   * @param {*} reqd
-   * @param {*} field
-   * @returns {object}
-   */
-  run: (nm, v, attrs, cls, reqd, field) => {
+  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
     if (attrs.disabled) {
       const value =
-        (field.options || []).find((lv) => lv?.value === v)?.label ||
+        (field.options || []).find((lv: GenObj) => lv?.value === v)?.label ||
         v ||
         attrs.neutral_label;
       return (
@@ -122,7 +114,7 @@ const select = {
     }
     if (attrs.readonly) {
       const placeholder =
-        (field.options || []).find((lv) => lv?.value == v)?.label ||
+        (field.options || []).find((lv: GenObj) => lv?.value == v)?.label ||
         v ||
         attrs.neutral_label;
       return (
@@ -165,7 +157,7 @@ const select = {
           },
           select_options(
             v,
-            { ...field, options: field.options.filter((o) => o.value == v) },
+            { ...field, options: field.options.filter((o: GenObj) => o.value == v) },
             (attrs || {}).force_required,
             (attrs || {}).neutral_label
           )
@@ -229,14 +221,14 @@ const select_from_table = {
   /**
    * @type {object[]}
    */
-  configFields: async (fld) => {
+  configFields: async (fld: GenObj) => {
     //find tables with required key
     const fields = await Field.find(
       { reftable_name: fld.reftable_name },
       { cached: true }
     );
     const fldOption = fields.map(
-      (f) => `${Table.findOne(f.table_id).name}.${f.name}`
+      (f: Field) => `${Table.findOne(f.table_id!)!.name}.${f.name}`
     );
     return [
       {
@@ -279,18 +271,18 @@ const select_from_table = {
   },
 
   async fill_options(
-    field,
-    force_allow_none,
-    where0,
-    extraCtx,
-    optionsQuery,
-    formFieldNames
+    field: GenObj,
+    force_allow_none: boolean,
+    where0: GenObj,
+    extraCtx: GenObj,
+    optionsQuery: any,
+    formFieldNames: string[]
   ) {
     const [tableNm, fieldNm] = field.attributes.source_field.split(".");
-    const srcTable = Table.findOne(tableNm);
-    const srcField = srcTable.getField(fieldNm);
-    const where = { ...where0 };
-    const srcFields = new Set(srcTable.fields.map((f) => f.name));
+    const srcTable = Table.findOne(tableNm)!;
+    const srcField = srcTable.getField(fieldNm)!;
+    const where: GenObj = { ...where0 };
+    const srcFields = new Set(srcTable.fields.map((f: Field) => f.name));
     Object.keys(where).forEach((k) => {
       if (!srcFields.has(k)) delete where[k];
     });
@@ -312,7 +304,7 @@ const select_from_table = {
         : extraCtx?.user || null
     );
     const get_label = field.attributes?.label_formula
-      ? (r) =>
+      ? (r: GenObj) =>
           eval_expression(
             field.attributes?.label_formula,
             r,
@@ -320,10 +312,10 @@ const select_from_table = {
             "Select label formula"
           )
       : srcField.attributes.summary_field
-        ? (r) => r.summary_field
-        : (r) => r[fieldNm];
+        ? (r: GenObj) => r.summary_field
+        : (r: GenObj) => r[fieldNm];
 
-    const isDynamic = (formFieldNames || []).some((nm) =>
+    const isDynamic = (formFieldNames || []).some((nm: string) =>
       (field.attributes.where || "").includes("$" + nm)
     );
 
@@ -336,8 +328,8 @@ const select_from_table = {
       fieldattrs: field.attributes,
     });*/
     if (isDynamic) {
-      const fakeEnv = {};
-      formFieldNames.forEach((nm) => {
+      const fakeEnv: GenObj = {};
+      formFieldNames.forEach((nm: string) => {
         fakeEnv[nm] = "$" + nm;
       });
       field.attributes.dynamic_where = {
@@ -352,7 +344,7 @@ const select_from_table = {
         required: field.required,
       };
     }
-    field.options = nubBy(fieldNm, rows).map((r) => ({
+    field.options = nubBy(fieldNm, rows).map((r: GenObj) => ({
       label: get_label(r),
       value: r[fieldNm],
     }));
@@ -360,19 +352,10 @@ const select_from_table = {
       field.options.unshift({ label: "", value: "" });
   },
 
-  /**
-   * @param {*} nm
-   * @param {*} v
-   * @param {*} attrs
-   * @param {*} cls
-   * @param {*} reqd
-   * @param {*} field
-   * @returns {object}
-   */
-  run: (nm, v, attrs, cls, reqd, field) => {
+  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
     if (attrs.disabled) {
       const value =
-        (field.options || []).find((lv) => lv?.value === v)?.label || v;
+        (field.options || []).find((lv: GenObj) => lv?.value === v)?.label || v;
       return (
         input({
           class: `${cls} ${field.class || ""}`,
@@ -442,7 +425,7 @@ const select_by_code = {
   /**
    * @type {object[]}
    */
-  configFields: (field) => [
+  configFields: (field: GenObj) => [
     {
       name: "code",
       label: "Code",
@@ -450,14 +433,14 @@ const select_by_code = {
       attributes: { mode: "application/javascript" },
       class: "validate-statements",
       sublabel: `Return array of: strings or <code>{ label: string, value: ${field.is_fkey ? "key-value" : field.type?.js_type || "any"} }</code>`,
-      validator(s) {
+      validator(s: string) {
         try {
           let AsyncFunction = Object.getPrototypeOf(
             async function () {}
           ).constructor;
           AsyncFunction(s);
           return true;
-        } catch (e) {
+        } catch (e: any) {
           return e.message;
         }
       },
@@ -465,13 +448,13 @@ const select_by_code = {
   ],
 
   async fill_options(
-    field,
-    force_allow_none,
-    where0,
-    extraCtx,
-    optionsQuery,
-    formFieldNames,
-    user
+    field: GenObj,
+    force_allow_none: boolean,
+    where0: GenObj,
+    extraCtx: GenObj,
+    optionsQuery: any,
+    formFieldNames: string[],
+    user: any
   ) {
     field.options = await eval_statements(field.attributes.code, {
       ...extraCtx,
@@ -480,16 +463,7 @@ const select_by_code = {
     });
   },
 
-  /**
-   * @param {*} nm
-   * @param {*} v
-   * @param {*} attrs
-   * @param {*} cls
-   * @param {*} reqd
-   * @param {*} field
-   * @returns {object}
-   */
-  run: (nm, v, attrs, cls, reqd, field) => {
+  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
     const selOptions = select_options(
       v,
       field,
@@ -525,11 +499,11 @@ const two_level_select = {
   /**
    * @type {object[]}
    */
-  configFields: async ({ table, name }) => {
+  configFields: async ({ table, name }: { table: any; name: string }) => {
     if (!table) return [];
     const fields = table.getFields();
-    const relOpts = [""];
-    const field = fields.find((f) => f.name === name);
+    const relOpts: string[] = [""];
+    const field = fields.find((f: Field) => f.name === name);
     if (!field) return [];
 
     if (field.is_fkey && field.reftable_name) {
@@ -537,7 +511,7 @@ const two_level_select = {
       if (!relTable) return [];
 
       const relFields = relTable.getFields();
-      relFields.forEach((relField) => {
+      relFields.forEach((relField: Field) => {
         if (relField.is_fkey) {
           relOpts.push(relField.name);
         }
@@ -566,10 +540,10 @@ const two_level_select = {
     ];
   },
 
-  run: (nm, v, attrs, cls, reqd, field) => {
-    const options2 = {};
+  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
+    const options2: GenObj = {};
 
-    Object.entries(field.options || {}).forEach(([label, { id, options }]) => {
+    Object.entries(field.options || {}).forEach(([label, { id, options }]: [string, any]) => {
       options2[id] = options;
       if (attrs.isFilter) options2[id].unshift({ label: "", value: "" });
     });
@@ -585,7 +559,7 @@ const two_level_select = {
           onChange: attrs.isFilter ? "apply_showif()" : undefined,
           autocomplete: "off",
         },
-        select_options_first_level(v, field, attrs || {}, attrs || {})
+        select_options_first_level(v, field, attrs || {})
       ) +
       tags.select(
         {
@@ -606,15 +580,15 @@ const two_level_select = {
   },
 };
 const select_options_first_level = (
-  v,
-  hdr,
-  { force_required, neutral_label, isFilter }
+  v: any,
+  hdr: GenObj,
+  { force_required, neutral_label, isFilter }: GenObj
 ) => {
-  const os = Object.entries(hdr.options || {}).map(([label, { id, options }]) =>
+  const os = Object.entries(hdr.options || {}).map(([label, { id, options }]: [string, any]) =>
     option(
       {
         value: id,
-        selected: (options || []).find((o) => o.value == v) !== undefined,
+        selected: (options || []).find((o: GenObj) => o.value == v) !== undefined,
       },
       label
     )
@@ -634,16 +608,7 @@ const radio_select = {
   /** @type {boolean} */
   isEdit: true,
   description: "Select from a radio group",
-  /**
-   * @param {*} nm
-   * @param {*} v
-   * @param {*} attrs
-   * @param {*} cls
-   * @param {*} reqd
-   * @param {*} field
-   * @returns {object}
-   */
-  run: (nm, v, attrs, cls, reqd, field) =>
+  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) =>
     radio_group({
       class: `${cls} ${field.class || ""}`,
       name: text_attr(nm),
@@ -666,11 +631,7 @@ const search_or_create = {
   description:
     "Select from dropdown, or give user the option of creating a new relation in a popup",
 
-  /**
-   * @param {object} field
-   * @returns {Promise<object[]>}
-   */
-  configFields: async (field) => {
+  configFields: async (field: GenObj) => {
     const reftable = Table.findOne({ name: field.reftable_name });
     if (!reftable) return [];
     const views = await View.find({ table_id: reftable.id }, { cached: true });
@@ -710,19 +671,10 @@ const search_or_create = {
     ];
   },
 
-  /**
-   * @param {*} nm
-   * @param {*} v
-   * @param {*} attrs
-   * @param {*} cls
-   * @param {*} reqd
-   * @param {*} field
-   * @returns {object}
-   */
-  run: (nm, v, attrs, cls, reqd, field, row) => {
-    const user = db.getRequestContext()?.req?.user;
-    const use_row = { ...(row || {}) };
-    let table;
+  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj, row?: GenObj) => {
+    const user = (db.getRequestContext()?.req as any)?.user;
+    const use_row: GenObj = { ...(row || {}) };
+    let table: Table | null | undefined;
     if (field?.table_id) {
       table = Table.findOne({ id: field.table_id });
       if (
@@ -730,7 +682,7 @@ const search_or_create = {
         (!Object.keys(use_row).length ||
           Object.keys(use_row).every((k) => k.startsWith("_") || k === "user"))
       )
-        table.fields.forEach((f) => (use_row[f.name] = undefined));
+        table.fields.forEach((f: Field) => (use_row[f.name] = undefined));
     }
     const qs = attrs.values_formula
       ? `?${objectToQueryString(eval_expression(attrs.values_formula, use_row, user, "search_or_create values formula"))}`
@@ -779,7 +731,7 @@ const search_or_create = {
             const sel = $(elem).prev().html(opts);
             sel.html(opts).prop('selectedIndex', res.success.length${
               reqd ? "-1" : ""
-            }); 
+            });
             // https://stackoverflow.com/a/26232541
             var selected = sel.val(); // cache selected value, before reordering
             var opts_list = sel.find('option');
@@ -801,7 +753,7 @@ const search_join_field = {
 
   isEdit: false,
   isFilter: true,
-  configFields: async (field) => {
+  configFields: async (field: GenObj) => {
     const reftable = Table.findOne({ name: field.reftable_name });
     if (!reftable) return [];
     const fields = reftable.getFields();
@@ -812,7 +764,7 @@ const search_join_field = {
         type: "String",
         required: true,
         attributes: {
-          options: fields.map((v) => ({
+          options: fields.map((v: Field) => ({
             label: v.name,
             value: `${reftable.name}->${v.name}`,
           })),
@@ -820,7 +772,7 @@ const search_join_field = {
       },
     ];
   },
-  run: (nm, v, attrs = {}, cls, required, field, state = {}) => {
+  run: (nm: string, v: any, attrs: GenObj = {}, cls: string, required: boolean, field: GenObj, state: GenObj = {}) => {
     return input({
       type: "text",
       class: ["form-control", "blur-on-enter-keypress", cls],
@@ -846,9 +798,9 @@ const select_by_view = {
   /**
    * @type {object[]}
    */
-  configFields: async (field, modeetc) => {
+  configFields: async (field: GenObj, modeetc?: GenObj) => {
     const refTable = Table.findOne({ name: field.reftable_name });
-    const views = await View.find_possible_links_to_table(refTable);
+    const views = await View.find_possible_links_to_table(refTable!);
     const mode = modeetc?.mode;
 
     return [
@@ -857,7 +809,7 @@ const select_by_view = {
         label: "View",
         type: "String",
         required: true,
-        attributes: { options: views.map((v) => v.name) },
+        attributes: { options: views.map((v: View) => v.name) },
       },
       {
         name: "where",
@@ -896,15 +848,15 @@ const select_by_view = {
   },
 
   async fill_options(
-    field,
-    force_allow_none,
-    where0,
-    extraCtx,
-    optionsQuery,
-    formFieldNames,
-    user
+    field: GenObj,
+    force_allow_none: boolean,
+    where0: GenObj,
+    extraCtx: GenObj,
+    optionsQuery: any,
+    formFieldNames: string[],
+    user: any
   ) {
-    const view = View.findOne({ name: field.attributes.view });
+    const view = View.findOne({ name: field.attributes.view })!;
     const { req, res } = mockReqRes;
     field.options = await view.runMany(where0 || {}, {
       req: { ...req, user },
@@ -912,7 +864,7 @@ const select_by_view = {
     });
   },
 
-  run: (nm, v, attrs, cls, reqd, field) => {
+  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
     return div(
       {
         class: [
@@ -929,7 +881,7 @@ const select_by_view = {
           onChange: attrs.onChange,
           value: v || "",
         }),
-      (field.options || []).map(({ row, html }) =>
+      (field.options || []).map(({ row, html }: { row: GenObj; html: string }) =>
         div(
           {
             class: [
@@ -962,7 +914,7 @@ const select_by_view = {
   },
 };
 
-module.exports = {
+export = {
   select,
   select_from_table,
   search_or_create,

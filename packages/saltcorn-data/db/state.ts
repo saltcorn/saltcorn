@@ -828,7 +828,7 @@ class State {
           isAsync: true,
           run: predictor_function,
           arguments: [
-            { name: "arg1", type: "JSON", tstype: "string | Row"  },
+            { name: "arg1", type: "JSON", tstype: "string | Row" },
             { name: "arg2", type: "JSON", tstype: "Row" },
           ],
         };
@@ -1711,7 +1711,7 @@ const get_process_init_time = () => process_init_time;
  * State Features - Help modules figure out what features are available in core saltcorn.
  * This is necessary because modules need to work on different versions of core saltcorn
  */
-const features = {
+const features = Object.freeze({
   serve_static_dependencies: true,
   deep_public_plugin_serve: true,
   fieldrepeats_in_field_attributes: true,
@@ -1738,7 +1738,9 @@ const features = {
   nested_fieldrepeats: true,
   api_view_route: true,
   file_fieldviews_cfg_workflows: true,
-};
+  table_create_callback: true,
+  getrows_tree_field: true,
+});
 
 export = {
   getState,
@@ -1755,4 +1757,5 @@ export = {
   getRootState,
   getApp__,
   getReq__,
+  State,
 };

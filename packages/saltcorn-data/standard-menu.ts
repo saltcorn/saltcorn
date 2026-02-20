@@ -4,27 +4,7 @@
  * @module standard-menu
  */
 
-interface MenuItem {
-  href: string;
-  icon: string;
-  text: string;
-  type: string;
-  label: string;
-  style: string;
-  title: string;
-  target: string;
-  tooltip: string;
-  in_modal?: boolean;
-  location: string;
-  max_role: string;
-  min_role: number | string;
-  admin_page?: string;
-  user_page?: string;
-  target_blank?: boolean;
-  disable_on_mobile: boolean;
-  subitems?: MenuItem[];
-  user_menu_header?: boolean;
-}
+import type { MenuItem } from "@saltcorn/types/base_types";
 
 const create_standard_menu = async (): Promise<void> => {
   const { getState } = require("./db/state");
@@ -60,6 +40,7 @@ const create_standard_menu = async (): Promise<void> => {
       title: "",
       target: "_self",
       tooltip: "",
+      shortcut: "",
       in_modal: false,
       location: "Standard",
       max_role: "1",
@@ -78,6 +59,7 @@ const create_standard_menu = async (): Promise<void> => {
       title: "",
       target: "_self",
       tooltip: "",
+      shortcut: "",
       in_modal: false,
       location: "Standard",
       max_role: "1",
@@ -96,6 +78,7 @@ const create_standard_menu = async (): Promise<void> => {
       title: "",
       target: "_self",
       tooltip: "",
+      shortcut: "",
       in_modal: false,
       location: "Standard",
       max_role: "1",
@@ -128,6 +111,7 @@ const create_standard_menu = async (): Promise<void> => {
           title: "",
           target: "_self",
           tooltip: "",
+          shortcut: "",
           in_modal: false,
           location: "Standard",
           max_role: "1",
@@ -146,6 +130,7 @@ const create_standard_menu = async (): Promise<void> => {
           title: "",
           target: "_self",
           tooltip: "",
+          shortcut: "",
           in_modal: false,
           location: "Standard",
           max_role: "1",
@@ -164,6 +149,7 @@ const create_standard_menu = async (): Promise<void> => {
           title: "",
           target: "_self",
           tooltip: "",
+          shortcut: "",
           in_modal: false,
           location: "Standard",
           max_role: "1",
@@ -182,6 +168,7 @@ const create_standard_menu = async (): Promise<void> => {
           title: "",
           target: "_self",
           tooltip: "",
+          shortcut: "",
           in_modal: false,
           location: "Standard",
           max_role: "1",
@@ -200,6 +187,7 @@ const create_standard_menu = async (): Promise<void> => {
           title: "",
           target: "_self",
           tooltip: "",
+          shortcut: "",
           in_modal: false,
           location: "Standard",
           max_role: "1",
@@ -218,6 +206,7 @@ const create_standard_menu = async (): Promise<void> => {
           title: "",
           target: "_self",
           tooltip: "",
+          shortcut: "",
           in_modal: false,
           location: "Standard",
           max_role: "1",
@@ -236,6 +225,7 @@ const create_standard_menu = async (): Promise<void> => {
           title: "",
           target: "_self",
           tooltip: "",
+          shortcut: "Alt+n",
           in_modal: false,
           location: "Standard",
           max_role: "1",
@@ -260,6 +250,7 @@ const create_standard_menu = async (): Promise<void> => {
             title: "",
             target: "_self",
             tooltip: "",
+            shortcut: "",
             in_modal: false,
             location: "Standard",
             max_role: "100",
@@ -282,6 +273,7 @@ const create_standard_menu = async (): Promise<void> => {
             title: "",
             target: "_self",
             tooltip: "",
+            shortcut: "",
             in_modal: false,
             location: "Standard",
             max_role: "100",
@@ -319,6 +311,7 @@ const create_standard_menu = async (): Promise<void> => {
                 title: "",
                 target: "_self",
                 tooltip: "",
+                shortcut: "",
                 in_modal: false,
                 location: "Standard",
                 max_role: "1",
@@ -339,6 +332,7 @@ const create_standard_menu = async (): Promise<void> => {
           title: "",
           target: "_self",
           tooltip: "",
+          shortcut: "",
           in_modal: false,
           location: "Standard",
           max_role: "1",
@@ -357,6 +351,7 @@ const create_standard_menu = async (): Promise<void> => {
           title: "",
           target: "_self",
           tooltip: "",
+          shortcut: "",
           in_modal: false,
           location: "Standard",
           max_role: "1",

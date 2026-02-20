@@ -3,19 +3,21 @@
  * @module base-plugin/viewtemplates/list
  * @subcategory base-plugin
  */
-const Field = require("../../models/field");
+import Field from "../../models/field";
+import Table from "../../models/table";
+import Form from "../../models/form";
+import View from "../../models/view";
+import Workflow from "../../models/workflow";
+import Crash from "../../models/crash";
+import Trigger from "../../models/trigger";
+import Page from "../../models/page";
+import User from "../../models/user";
+import { GenObj } from "@saltcorn/types/common_types";
+import File from "../../models/file";
+import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 const FieldRepeat = require("../../models/fieldrepeat");
-const Table = require("../../models/table");
-const Form = require("../../models/form");
-const File = require("../../models/file");
-const View = require("../../models/view");
-const Workflow = require("../../models/workflow");
-const Crash = require("../../models/crash");
-const Trigger = require("../../models/trigger");
-const Page = require("../../models/page");
 const PageGroup = require("../../models/page_group");
 const Library = require("../../models/library");
-const User = require("../../models/user");
 
 const { Relation, RelationType } = require("@saltcorn/common-code");
 
@@ -38,7 +40,7 @@ const {
   dollarizeObject,
   getSessionId,
 } = require("../../utils");
-const {
+import {
   field_picker_fields,
   picked_fields_to_query,
   stateFieldsToWhere,
@@ -54,7 +56,8 @@ const {
   add_free_variables_to_joinfields,
   pathToState,
   displayType,
-} = require("../../plugin-helper");
+} from "../../plugin-helper";
+import { PrimaryKeyValue } from "@saltcorn/db-common/dbtypes";
 const {
   get_viewable_fields,
   parse_view_select,
@@ -79,12 +82,8 @@ const {
 } = require("../../diagram/node_extract_utils");
 const { validID } = require("@saltcorn/markup/layout_utils");
 
-/**
- * @param {object} context
- * @returns {Promise<void>}
- */
-const create_db_view = async (context, req) => {
-  const table = Table.findOne({ id: context.table_id });
+const create_db_view = async (context: GenObj, req: Req) => {
+  const table = Table.findOne({ id: context.table_id })!;
   const fields = table.getFields();
   const { joinFields, aggregations } = picked_fields_to_query(
     context.columns,
@@ -109,16 +108,15 @@ const create_db_view = async (context, req) => {
   await db.query(`create or replace view ${sql_view_name} as ${sql};`);
 };
 
-/**
- * @param {*} table_id
- * @param {string} viewname
- * @param {object} opts
- * @param {*} opts.default_state
- * @returns {Promise<void>}
- */
-const on_delete = async (table_id, viewname, { default_state }) => {
+const on_delete = async (
+  table_id: number | string,
+  viewname: string,
+  { default_state }: GenObj
+) => {
   if (!db.isSQLite) {
-    const sqlviews = (await get_existing_views()).map((v) => v.table_name);
+    const sqlviews = (await get_existing_views()).map(
+      (v: GenObj) => v.table_name
+    );
     const vnm = db.sqlsanitize(viewname);
     const schema = db.getTenantSchemaPrefix();
     if (sqlviews.includes(vnm))
@@ -128,13 +126,9 @@ const on_delete = async (table_id, viewname, { default_state }) => {
   }
 };
 
-/**
- * @param {object} req
- * @returns {Workflow}
- */
-const configuration_workflow = (req) =>
+const configuration_workflow = (req: Req) =>
   new Workflow({
-    onDone: async (ctx) => {
+    onDone: async (ctx: GenObj) => {
       if (ctx.default_state._create_db_view) {
         await create_db_view(ctx, req);
       }
@@ -144,22 +138,22 @@ const configuration_workflow = (req) =>
     steps: [
       {
         name: req.__("Columns"),
-        builder: async (context) => {
+        builder: async (context: GenObj) => {
           const table = Table.findOne(
             context.table_id || context.exttable_name
-          );
+          )!;
           const fields = table.getFields();
 
           const boolfields = fields.filter(
-            (f) => f.type && f.type.name === "Bool"
+            (f: GenObj) => f.type && f.type.name === "Bool"
           );
-          const stateActions = Object.entries(getState().actions).filter(
-            ([k, v]) => !v.disableInBuilder && !v.disableIf?.()
-          );
+          const stateActions = (
+            Object.entries(getState().actions) as [string, GenObj][]
+          ).filter(([k, v]) => !v.disableInBuilder && !v.disableIf?.());
           const builtInActions = [
             "Delete",
             "GoBack",
-            ...boolfields.map((f) => `Toggle ${f.name}`),
+            ...boolfields.map((f: GenObj) => `Toggle ${f.name}`),
           ];
           const triggerActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -176,11 +170,11 @@ const configuration_workflow = (req) =>
             if (field.type === "Key") {
               field.reftable = Table.findOne({
                 name: field.reftable_name,
-              });
+              }) as any;
               if (field.reftable) await field.reftable.getFields();
             }
           }
-          const actionConfigForms = {};
+          const actionConfigForms: GenObj = {};
           for (const [name, action] of stateActions) {
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
@@ -232,14 +226,14 @@ const configuration_workflow = (req) =>
 
           const { child_field_list, child_relations } =
             await table.get_child_relations(true);
-          var agg_field_opts = {};
-          child_relations.forEach(({ table, key_field, through }) => {
+          var agg_field_opts: GenObj = {};
+          child_relations.forEach(({ table, key_field, through }: GenObj) => {
             const aggKey =
               (through ? `${through.name}->` : "") +
               `${table.name}.${key_field.name}`;
             agg_field_opts[aggKey] = table.fields
-              .filter((f) => !f.calculated || f.stored)
-              .map((f) => ({
+              .filter((f: GenObj) => !f.calculated || f.stored)
+              .map((f: GenObj) => ({
                 name: f.name,
                 label: f.label,
                 ftype: f.type.name || f.type,
@@ -247,27 +241,29 @@ const configuration_workflow = (req) =>
                 table_id: table.id,
               }));
           });
-          const agg_fieldview_options = {};
+          const agg_fieldview_options: GenObj = {};
 
-          Object.values(getState().types).forEach((t) => {
-            agg_fieldview_options[t.name] = Object.entries(t.fieldviews)
+          Object.values(getState().types).forEach((t: any) => {
+            agg_fieldview_options[t.name] = (
+              Object.entries(t.fieldviews) as [string, GenObj][]
+            )
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
           const pages = await Page.find();
-          const groups = (await PageGroup.find()).map((g) => ({
+          const groups = (await PageGroup.find()).map((g: GenObj) => ({
             name: g.name,
           }));
           const images = await File.find({ mime_super: "image" });
-          const library = (await Library.find({})).filter((l) =>
+          const library = (await Library.find({})).filter((l: GenObj) =>
             l.suitableFor("list")
           );
           const myviewrow = View.findOne({ name: context.viewname });
           // generate layout for legacy views
           if (!context.layout?.list_columns) {
-            const newCols = [];
-            const actionDropdown = [];
-            const typeMap = {
+            const newCols: GenObj[] = [];
+            const actionDropdown: GenObj[] = [];
+            const typeMap: GenObj = {
               Field: "field",
               JoinField: "join_field",
               ViewLink: "view_link",
@@ -277,8 +273,8 @@ const configuration_workflow = (req) =>
               DropdownMenu: "dropdown_menu",
               Aggregation: "aggregation",
             };
-            (context.columns || []).forEach((col) => {
-              const newCol = {
+            (context.columns || []).forEach((col: GenObj) => {
+              const newCol: GenObj = {
                 alignment: col.alignment || "Default",
                 col_width: col.col_width || "",
                 showif: col.showif || "",
@@ -337,7 +333,7 @@ const configuration_workflow = (req) =>
           }
           return {
             tableName: table.name,
-            fields: fields.map((f) => f.toBuilder),
+            fields: fields.map((f: GenObj) => f.toBuilder),
             images,
             actions,
             triggerActions,
@@ -370,28 +366,30 @@ const configuration_workflow = (req) =>
       },
       {
         name: req.__("Create new row"),
-        onlyWhen: async (context) => {
+        onlyWhen: async (context: GenObj) => {
           const create_views = await View.find_table_views_where(
             context.table_id || context.exttable_name,
-            ({ state_fields, viewrow }) =>
+            ({ state_fields, viewrow }: GenObj) =>
               viewrow.name !== context.viewname &&
-              state_fields.every((sf) => !sf.required)
+              state_fields.every((sf: GenObj) => !sf.required)
           );
           return create_views.length > 0;
         },
-        form: async (context) => {
+        form: async (context: GenObj) => {
           const table = Table.findOne(
             context.table_id
               ? { id: context.table_id }
               : { name: context.exttable_name }
-          );
+          )!;
           const create_views = await View.find_table_views_where(
             context.table_id || context.exttable_name,
-            ({ state_fields, viewrow }) =>
+            ({ state_fields, viewrow }: GenObj) =>
               viewrow.name !== context.viewname &&
-              state_fields.every((sf) => !sf.required)
+              state_fields.every((sf: GenObj) => !sf.required)
           );
-          const create_view_opts = create_views.map((v) => v.select_option);
+          const create_view_opts = create_views.map(
+            (v: GenObj) => v.select_option
+          );
           return new Form({
             blurb: req.__("Specify how to create a new row"),
             fields: [
@@ -425,7 +423,9 @@ const configuration_workflow = (req) =>
                 attributes: {
                   options: "Link,Embedded,Popup",
                 },
-                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
+                showIf: {
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
               },
               {
                 name: "create_view_showif",
@@ -441,7 +441,9 @@ const configuration_workflow = (req) =>
                 sublabel: req.__(
                   "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
                 ),
-                showIf: { view_to_create: create_view_opts.map((o) => o.name) },
+                showIf: {
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
               },
               {
                 name: "create_view_label",
@@ -453,7 +455,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 showIf: {
                   create_view_display: ["Link", "Popup"],
-                  view_to_create: create_view_opts.map((o) => o.name),
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
                 },
               },
               {
@@ -472,7 +474,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 showIf: {
                   create_view_display: ["Link", "Popup"],
-                  view_to_create: create_view_opts.map((o) => o.name),
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
                 },
               },
               {
@@ -486,7 +488,7 @@ const configuration_workflow = (req) =>
                 type: "String",
                 showIf: {
                   create_view_display: ["Embedded"],
-                  view_to_create: create_view_opts.map((o) => o.name),
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
                 },
               },
               {
@@ -515,7 +517,7 @@ const configuration_workflow = (req) =>
 
                 showIf: {
                   create_view_display: ["Link", "Popup"],
-                  view_to_create: create_view_opts.map((o) => o.name),
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
                 },
               },
               {
@@ -535,7 +537,7 @@ const configuration_workflow = (req) =>
                 },
                 showIf: {
                   create_view_display: ["Link", "Popup"],
-                  view_to_create: create_view_opts.map((o) => o.name),
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
                 },
               },
             ],
@@ -545,14 +547,14 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Default state"),
         contextField: "default_state",
-        form: async (context) => {
+        form: async (context: GenObj) => {
           const table = Table.findOne(
             context.table_id || context.exttable_name
-          );
+          )!;
           const table_fields = table
             .getFields()
-            .filter((f) => !f.calculated || f.stored);
-          const formfields = table_fields.map((f) => {
+            .filter((f: GenObj) => !f.calculated || f.stored);
+          const formfields = table_fields.map((f: GenObj) => {
             return {
               name: f.name,
               label: f.label,
@@ -569,10 +571,9 @@ const configuration_workflow = (req) =>
             blurb: req.__("Default search form values when first loaded"),
           });
           await form.fill_fkey_options(true);
-          form.fields.forEach((ff) => {
+          form.fields.forEach((ff: GenObj) => {
             if (ff.reftable_name === "users" && ff.options) {
               // key to user
-              //console.log(ff);
               ff.options.push({
                 label: "LoggedIn",
                 value: "Preset:LoggedIn",
@@ -585,10 +586,10 @@ const configuration_workflow = (req) =>
       {
         name: req.__("Options"),
         contextField: "default_state", //legacy...
-        form: async (context) => {
+        form: async (context: GenObj) => {
           const table = Table.findOne(
             context.table_id || context.exttable_name
-          );
+          )!;
           const triggerActions = Trigger.trigger_actions({
             tableTriggers: table.id,
             apiNeverTriggers: true,
@@ -604,13 +605,16 @@ const configuration_workflow = (req) =>
 
           const table_fields = table
             .getFields()
-            .filter((f) => !f.calculated || f.stored);
-          const formfields = [];
+            .filter((f: GenObj) => !f.calculated || f.stored);
+          const formfields: GenObj[] = [];
           const { child_field_list, child_relations } =
             await table.get_child_relations();
           const joinFields = context.columns?.filter(
-            (jf) => jf.type === "JoinField"
+            (jf: GenObj) => jf.type === "JoinField"
           );
+          const tree_options = table_fields
+            .filter((f) => f.reftable_name === table.name)
+            .map((f: GenObj) => f.name);
           formfields.push({
             name: "_order_field",
             label: req.__("Default order by"),
@@ -619,8 +623,10 @@ const configuration_workflow = (req) =>
             attributes: {
               asideNext: true,
               options: [
-                ...table_fields.map((f) => f.name),
-                ...(joinFields ? joinFields.map((jf) => jf.join_field) : []),
+                ...table_fields.map((f: GenObj) => f.name),
+                ...(joinFields
+                  ? joinFields.map((jf: GenObj) => jf.join_field)
+                  : []),
               ],
             },
           });
@@ -644,6 +650,16 @@ const configuration_workflow = (req) =>
             sublabel: "Formula for the group headings",
             class: "validate-expression",
           });
+          if (!db.isSQLite)
+            formfields.push({
+              name: "_tree_field",
+              label: req.__("Tree field"),
+              sublabel: req.__("A field that is Key to own table"),
+              type: "String",
+              attributes: {
+                options: tree_options,
+              },
+            });
           formfields.push({
             name: "include_fml",
             label: req.__("Row inclusion formula"),
@@ -653,14 +669,14 @@ const configuration_workflow = (req) =>
               req.__("In scope:") +
               " " +
               [
-                ...table.fields.map((f) => f.name),
+                ...table.fields.map((f: GenObj) => f.name),
                 "user",
                 "year",
                 "month",
                 "day",
                 "today()",
               ]
-                .map((s) => code(s))
+                .map((s: string) => code(s))
                 .join(", "),
             input_type: "code",
             attributes: {
@@ -903,7 +919,7 @@ const configuration_workflow = (req) =>
             });
 
           const form = new Form({
-            fields: formfields,
+            fields: formfields as any,
             tabs: { tabsStyle: "Accordion" },
           });
           await form.fill_fkey_options(true);
@@ -913,23 +929,21 @@ const configuration_workflow = (req) =>
     ],
   });
 
-/**
- * @param {string} table_id
- * @param {*} viewname
- * @param {object} opts
- * @param {object[]} opts.columns
- * @returns {function}
- */
-const get_state_fields = async (table_id, viewname, { columns }) => {
+const get_state_fields = async (
+  table_id: number | string,
+  viewname: string,
+  { columns }: GenObj
+) => {
   const table = Table.findOne(table_id);
   if (!table) return [];
   const table_fields = table.fields;
-  //console.log(table_fields);
-  let state_fields = [];
+  let state_fields: GenObj[] = [];
   state_fields.push({ name: "_fts", label: "Anywhere", input_type: "text" });
-  (columns || []).forEach((column) => {
+  (columns || []).forEach((column: GenObj) => {
     if (column.type === "Field") {
-      const tbl_fld = table_fields.find((f) => f.name == column.field_name);
+      const tbl_fld = table_fields.find(
+        (f: GenObj) => f.name == column.field_name
+      );
       if (tbl_fld && !tbl_fld.primary_key) {
         const f = new Field(tbl_fld);
         f.required = false;
@@ -941,13 +955,7 @@ const get_state_fields = async (table_id, viewname, { columns }) => {
   return state_fields;
 };
 
-/**
- * @param {object} opts
- * @param {object} opts.layout
- * @param {object[]} opts.fields
- * @returns {Promise<void>}
- */
-const set_join_fieldviews = async ({ table, columns, fields }) => {
+const set_join_fieldviews = async ({ table, columns, fields }: GenObj) => {
   //legacy
   for (const segment of columns) {
     const { join_field, join_fieldview } = segment;
@@ -959,18 +967,18 @@ const set_join_fieldviews = async ({ table, columns, fields }) => {
       segment.field_type = field.type.name;
   }
 };
-/** @type {function} */
-const initial_config = async ({ table_id, exttable_name }) => {
+
+const initial_config = async ({ table_id, exttable_name }: GenObj) => {
   const table = Table.findOne(
     table_id ? { id: table_id } : { name: exttable_name }
-  );
+  )!;
 
   const fields = table
     .getFields()
-    .filter((f) => !f.primary_key || f?.attributes?.NonSerial);
-  const columns = [];
-  const layoutCols = [];
-  fields.forEach((f) => {
+    .filter((f: GenObj) => !f.primary_key || f?.attributes?.NonSerial);
+  const columns: GenObj[] = [];
+  const layoutCols: GenObj[] = [];
+  fields.forEach((f: GenObj) => {
     if (!f.type) return;
     if (f.type === "File") {
       const col = {
@@ -1007,23 +1015,9 @@ const initial_config = async ({ table_id, exttable_name }) => {
   return { columns, layout: { list_columns: true, besides: layoutCols } };
 };
 
-/**
- * @param {string|number} table_id
- * @param {string} viewname
- * @param {object} opts
- * @param {object[]} opts.columns
- * @param {string} [opts.view_to_create]
- * @param {string} opts.create_view_display
- * @param {string} [opts.create_view_label]
- * @param {object} [opts.default_state]
- * @param {string} [opts.create_view_location]
- * @param {object} [stateWithId]
- * @param {object} extraOpts
- * @returns {Promise<*>}
- */
 const run = async (
-  table_id,
-  viewname,
+  table_id: number | string,
+  viewname: string,
   {
     columns,
     layout,
@@ -1035,29 +1029,29 @@ const run = async (
     create_link_style,
     create_link_size,
     create_view_showif,
-  },
-  stateWithId,
-  extraOpts,
-  { listQuery }
+  }: GenObj,
+  stateWithId: GenObj,
+  extraOpts: { req: Req; res: Res; [key: string]: any },
+  { listQuery }: GenObj
 ) => {
   const table = Table.findOne(
     typeof table_id === "string" ? { name: table_id } : { id: table_id }
-  );
+  )!;
   const pk_name = table.pk_name;
   const fields = table.getFields();
   const appState = getState();
   const locale = extraOpts.req.getLocale();
-  const __ = (s) =>
+  const __ = (s: string) =>
     isWeb(extraOpts.req) ? appState.i18n.__({ phrase: s, locale }) || s : s;
   //move fieldview cfg into configuration subfield in each column
   for (const col of columns) {
     if (col.type === "Field") {
-      const field = fields.find((f) => f.name === col.field_name);
+      const field = fields.find((f: GenObj) => f.name === col.field_name);
       if (!field) continue;
       const fieldviews =
         field.type === "Key"
           ? appState.keyFieldviews
-          : field.type.fieldviews || {};
+          : (field.type as any)?.fieldviews || {};
       if (!fieldviews) continue;
       const fv = fieldviews[col.fieldview];
       if (fv && fv.configFields) {
@@ -1084,29 +1078,30 @@ const run = async (
 
   const { rows, rowCount } = await listQuery(state, statehash);
 
-  const viewResults = {};
-  var views = {};
+  const viewResults: GenObj = {};
+  var views: GenObj = {};
 
-  const getView = async (name, relation) => {
+  const getView = async (name: string, relation: string) => {
     if (views[name]) return views[name];
     const view_select = parse_view_select(name, relation);
     const view = View.findOne({ name: view_select.viewname });
     if (!view) return false;
-    if (view.table_id === table.id) view.table = table;
-    else view.table = Table.findOne({ id: view.table_id });
-    view.view_select = view_select;
+    if (view.table_id === table.id) (view as any).table = table;
+    else (view as any).table = Table.findOne({ id: view.table_id });
+    (view as any).view_select = view_select;
     views[name] = view;
     return view;
   };
-  await eachView(layout, async (segment) => {
+  await eachView(layout, async (segment: GenObj) => {
     const view = await getView(segment.view, segment.relation);
     if (!view)
       throw new InvalidConfiguration(
         `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
       );
     view.check_viewtemplate();
-    let stateMany, getRowState;
-    const get_extra_state = (row) =>
+    let stateMany: GenObj | undefined,
+      getRowState: ((row: GenObj) => GenObj) | undefined;
+    const get_extra_state = (row: GenObj) =>
       segment.extra_state_fml
         ? eval_expression(
             segment.extra_state_fml,
@@ -1122,43 +1117,43 @@ const run = async (
     if (view.view_select.type === "RelationPath") {
       const relation = new Relation(
         segment.relation,
-        view.table_id ? Table.findOne({ id: view.table_id }).name : undefined,
+        view.table_id ? Table.findOne({ id: view.table_id })!.name : undefined,
         displayType(await view.get_state_fields())
       );
       switch (relation.type) {
         case RelationType.OWN:
           stateMany = {
-            or: rows.map((row) => ({
+            or: rows.map((row: GenObj) => ({
               [pk_name]: row[pk_name],
               ...get_extra_state(row),
             })),
           };
-          getRowState = (row) => ({
+          getRowState = (row: GenObj) => ({
             [pk_name]: row[pk_name],
             ...get_extra_state(row),
           });
           break;
         case RelationType.CHILD_LIST:
           stateMany = {
-            or: rows.map((row) => ({
+            or: rows.map((row: GenObj) => ({
               [relation.path[0].inboundKey]: row[table.pk_name],
               ...get_extra_state(row),
             })),
           };
-          getRowState = (row) => ({
+          getRowState = (row: GenObj) => ({
             [relation.path[0].inboundKey]: row[table.pk_name],
             ...get_extra_state(row),
           });
           break;
         case RelationType.PARENT_SHOW:
-          const refTable = Table.findOne({ id: view.table_id });
+          const refTable = Table.findOne({ id: view.table_id })!;
           stateMany = {
-            or: rows.map((row) => ({
+            or: rows.map((row: GenObj) => ({
               [refTable.pk_name]: row[relation.targetTblName],
               ...get_extra_state(row),
             })),
           };
-          getRowState = (row) => ({
+          getRowState = (row: GenObj) => ({
             [refTable.pk_name]: row[relation.targetTblName],
             ...get_extra_state(row),
           });
@@ -1167,10 +1162,10 @@ const run = async (
         case RelationType.NONE:
           stateMany = segment.extra_state_fml
             ? {
-                or: rows.map((row) => get_extra_state(row)),
+                or: rows.map((row: GenObj) => get_extra_state(row)),
               }
             : {};
-          getRowState = (row) => get_extra_state(row);
+          getRowState = (row: GenObj) => get_extra_state(row);
 
           break;
         default:
@@ -1182,11 +1177,11 @@ const run = async (
 
     //todo:
     // other rel types
-    if (this.viewtemplateObj?.runMany) {
+    if (view.viewtemplateObj?.runMany) {
       const runs = await view.runMany(stateMany, extraOpts);
-      viewResults[segment.view + segment.relation] = (row) =>
-        runs.find((rh) => rh.row[pk_name] == row[pk_name])?.html;
-    } else if (this.viewtemplateObj?.renderRows) {
+      viewResults[segment.view + segment.relation] = (row: GenObj) =>
+        runs.find((rh: GenObj) => rh.row[pk_name] == row[pk_name])?.html;
+    } else if (view.viewtemplateObj?.renderRows) {
       const rendered = await view.viewtemplateObj.renderRows(
         view.table,
         view.name,
@@ -1196,18 +1191,18 @@ const run = async (
         state
       );
 
-      viewResults[segment.view + segment.relation] = (row) =>
+      viewResults[segment.view + segment.relation] = (row: GenObj) =>
         rendered
-          .map((html, ix) => ({
+          .map((html: string, ix: number) => ({
             html,
             row: rows[ix],
           }))
-          .find((rh) => rh.row[pk_name] == row[pk_name])?.html;
+          .find((rh: GenObj) => rh.row[pk_name] == row[pk_name])?.html;
     } else {
-      const results = [];
+      const results: GenObj[] = [];
 
       for (const row of rows) {
-        const rowState = getRowState(row);
+        const rowState = getRowState!(row);
         const qs = stateToQueryString(rowState, true);
 
         const rendered = div(
@@ -1223,7 +1218,7 @@ const run = async (
           row,
         });
       }
-      viewResults[segment.view + segment.relation] = (row) =>
+      viewResults[segment.view + segment.relation] = (row: GenObj) =>
         results.find((rh) => rh.row[pk_name] == row[pk_name])?.html;
     }
   });
@@ -1245,7 +1240,8 @@ const run = async (
         viewname,
         layout.besides,
         viewResults,
-        is_row_click
+        is_row_click,
+        !!default_state?._tree_field
       )
     : get_viewable_fields(
         viewname,
@@ -1258,11 +1254,12 @@ const run = async (
         __,
         state,
         viewname,
-        is_row_click
+        is_row_click,
+        !!default_state?._tree_field
       );
   const rows_per_page = (default_state && default_state._rows_per_page) || 20;
   const current_page = parseInt(state[`_${statehash}_page`]) || 1;
-  var page_opts =
+  var page_opts: GenObj =
     extraOpts && extraOpts.onRowSelect
       ? { onRowSelect: extraOpts.onRowSelect, selectedId: id }
       : { selectedId: id };
@@ -1277,19 +1274,19 @@ const run = async (
       fields
     );
     if (default_state?._row_click_type === "Link new tab")
-      page_opts.onRowSelect = (row) =>
+      page_opts.onRowSelect = (row: GenObj) =>
         `window.open('${fUrl(row, extraOpts.req.user)}', '_blank').focus();`;
     else if (default_state?._row_click_type === "Popup")
-      page_opts.onRowSelect = (row) =>
+      page_opts.onRowSelect = (row: GenObj) =>
         `ajax_modal('${fUrl(row, extraOpts.req.user)}')`;
     else if (default_state?._row_click_type === "Anchor link") {
-      page_opts.onRowSelect = (row) => fUrl(row, extraOpts.req.user);
+      page_opts.onRowSelect = (row: GenObj) => fUrl(row, extraOpts.req.user);
       page_opts.rowAnchorLink = true;
     } else
-      page_opts.onRowSelect = (row) =>
+      page_opts.onRowSelect = (row: GenObj) =>
         `location.href='${fUrl(row, extraOpts.req.user)}'`;
   } else if (default_state?._row_click_type === "Action") {
-    page_opts.onRowSelect = (row) => {
+    page_opts.onRowSelect = (row: GenObj) => {
       const actionUrl = action_url(
         viewname,
         table,
@@ -1315,7 +1312,7 @@ const run = async (
         current_page,
         pages: Math.ceil(nrows / rows_per_page),
         noMaxPage: default_state?._full_page_count === false,
-        get_page_link: (n) =>
+        get_page_link: (n: number) =>
           `gopage(${n}, ${rows_per_page}, '${statehash}', {}, this)`,
       };
     }
@@ -1342,6 +1339,10 @@ const run = async (
 
   if (default_state?._sticky_header) {
     page_opts.sticky_header = default_state?._sticky_header;
+  }
+
+  if (default_state?._tree_field) {
+    page_opts.level_indicator = true;
   }
 
   if (default_state?._responsive_collapse) {
@@ -1400,11 +1401,11 @@ const run = async (
       table.ownership_field_id)
   ) {
     const create_view = View.findOne({ name: view_to_create });
-    const ownership_field =
+    const ownership_field: any =
       table.ownership_field_id &&
-      table.fields.find((f) => f.id === table.ownership_field_id);
+      table.fields.find((f: GenObj) => f.id === table.ownership_field_id);
     const about_user = fields.some(
-      (f) =>
+      (f: GenObj) =>
         f.reftable_name === "users" &&
         state[f.name] &&
         state[f.name] === user_id
@@ -1451,7 +1452,7 @@ const run = async (
   let tableHtml;
 
   if (default_state?._group_by) {
-    const groups = {};
+    const groups: GenObj = {};
     for (const row of rows) {
       const group = eval_expression(
         default_state?._group_by,
@@ -1482,54 +1483,43 @@ const run = async (
 
   return istop ? create_link_div + tableHtml : tableHtml + create_link_div;
 };
-const remove_null_cols = (tfields, rows) =>
+
+const remove_null_cols = (tfields: GenObj[], rows: GenObj[]) =>
   tfields.filter((tfield) => {
     const key = tfield.row_key || tfield.key;
     if (!(typeof key === "string" || Array.isArray(key))) return true; //unable to tell if should be removed
-    const is_not_null_simple = (row) =>
-      row[key] !== null && typeof row[key] !== "undefined";
-    const is_not_null_array = (row) =>
-      row[key[0]] !== null &&
-      typeof row[key[0]] !== "undefined" &&
-      typeof row[key[0]][key[1]] !== "undefined";
+    const is_not_null_simple = (row: GenObj) =>
+      row[key as string] !== null && typeof row[key as string] !== "undefined";
+    const is_not_null_array = (row: GenObj) =>
+      row[(key as any[])[0]] !== null &&
+      typeof row[(key as any[])[0]] !== "undefined" &&
+      typeof row[(key as any[])[0]][(key as any[])[1]] !== "undefined";
     if (Array.isArray(key)) return rows.some(is_not_null_array);
     else return rows.some(is_not_null_simple);
   });
 
-/**
- * @param {number} table_id
- * @param {*} viewname
- * @param {object} optsOne
- * @param {object[]} optsOne.columns
- * @param {*} optsOne.layout
- * @param {object} body
- * @param {object} optsTwo
- * @param {object} optsTwo.req
- * @param {*} optsTwo.res
- * @returns {Promise<object>}
- */
 const run_action = async (
-  table_id,
-  viewname,
-  { columns, layout, default_state },
-  body,
-  { req, res },
-  { getRowQuery }
+  table_id: number | string,
+  viewname: string,
+  { columns, layout, default_state }: GenObj,
+  body: GenObj,
+  { req, res }: { req: Req; res: Res },
+  { getRowQuery }: GenObj
 ) => {
   return await db.withTransaction(
     async () => {
       const col = columns.find(
-        (c, index) =>
+        (c: GenObj, index: number) =>
           c.type === "Action" &&
           (c.rndid == body.rndid ||
             (c.action_name === body.action_name &&
               body.action_name &&
               (body.column_index ? body.column_index === index : true)))
       );
-      const table = Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id })!;
       const row = await getRowQuery(body[table.pk_name]);
       if (!col && body.action_name === default_state?._row_click_action) {
-        const trigger = Trigger.findOne({ name: body.action_name });
+        const trigger = Trigger.findOne({ name: body.action_name })!;
         const result = await trigger.runWithoutRow({
           row,
           table,
@@ -1547,7 +1537,7 @@ const run_action = async (
           mode: "list",
           req,
         });
-        cfgFields.forEach(({ name }) => {
+        cfgFields.forEach(({ name }: GenObj) => {
           if (typeof col.configuration[name] === "undefined")
             col.configuration[name] = col[name];
         });
@@ -1563,53 +1553,47 @@ const run_action = async (
       });
       return { json: { success: "ok", ...(result || {}) } };
     },
-    (e) => {
+    (e: any) => {
       Crash.create(e, req);
       return { json: { error: e.message || e } };
     }
   );
 };
+
 const createBasicView = async ({
   table,
   viewname,
   template_view,
   template_table,
   all_views_created,
-}) => {
-  /* 
-  FROM TEMPLATE TABLE
-
-  - has show link? label, style, hdr label
-  - has edit link? label, style, hdr label
-  */
-
+}: GenObj) => {
   const configuration = await initial_config_all_fields(false)({
     table_id: table.id,
   });
   delete configuration.layout;
-  let template_table_views = {};
+  let template_table_views: GenObj = {};
   if (template_view) {
     (
       await View.find({
         table_id: template_table.id,
       })
-    ).forEach((v) => {
+    ).forEach((v: GenObj) => {
       template_table_views[v.name] = v.viewtemplate;
     });
 
-    template_view.configuration.columns.forEach((c) => {
+    template_view.configuration.columns.forEach((c: GenObj) => {
       if (c.type === "Field") {
         const field = template_table.getField(c.field_name);
         c.field_type = field.type.name || field.type;
       }
     });
-    configuration.columns.forEach((mycol) => {
+    configuration.columns.forEach((mycol: GenObj) => {
       if (mycol.type === "Field") {
         const field_name = mycol.field_name;
         const field = table.getField(field_name);
         const field_type = field.type.name || field.type;
         const matched = template_view.configuration.columns.find(
-          (c) => c.field_type === field_type
+          (c: GenObj) => c.field_type === field_type
         );
         if (matched) {
           if (matched.configuration)
@@ -1628,7 +1612,7 @@ const createBasicView = async ({
     if (template_view) {
       //find link to show view
       const col = template_view.configuration.columns.find(
-        (c) =>
+        (c: GenObj) =>
           c.type === "ViewLink" &&
           template_table_views[c.view?.split?.(":")[1]] === "Show"
       );
@@ -1647,7 +1631,7 @@ const createBasicView = async ({
           "`/view/" +
           all_views_created.Show +
           "?" +
-          comppk.map((pkNm) => pkNm + "=${" + pkNm + "}").join("&") +
+          comppk.map((pkNm: string) => pkNm + "=${" + pkNm + "}").join("&") +
           "`", //"Street=${Street}&Number=${Number}"
         link_text: "Show",
         type: "Link",
@@ -1674,7 +1658,7 @@ const createBasicView = async ({
     if (template_view) {
       //find link to show view
       const col = template_view.configuration.columns.find(
-        (c) =>
+        (c: GenObj) =>
           c.type === "ViewLink" &&
           template_table_views[c.view?.split?.(":")[1]] === "Edit"
       );
@@ -1693,7 +1677,7 @@ const createBasicView = async ({
           "`/view/" +
           all_views_created.Edit +
           "?" +
-          comppk.map((pkNm) => pkNm + "=${" + pkNm + "}").join("&") +
+          comppk.map((pkNm: string) => pkNm + "=${" + pkNm + "}").join("&") +
           "`", //"Street=${Street}&Number=${Number}"
         link_text: "Edit",
         type: "Link",
@@ -1715,7 +1699,7 @@ const createBasicView = async ({
   }
   if (template_view) {
     const matched = template_view.configuration.columns.filter(
-      (c) => c.type === "Action"
+      (c: GenObj) => c.type === "Action"
     );
     if (matched.length) configuration.columns.push(...matched);
   } else
@@ -1725,7 +1709,7 @@ const createBasicView = async ({
       action_style: "btn-primary",
     });
 
-  const copy_cfg = (keys, parent_field) => {
+  const copy_cfg = (keys: string | string[], parent_field?: string) => {
     if (parent_field && !configuration[parent_field])
       configuration[parent_field] = {};
     for (const key of Array.isArray(keys)
@@ -1756,25 +1740,18 @@ const createBasicView = async ({
   return configuration;
 };
 
-module.exports = {
-  /** @type {string} */
+export = {
   name: "List",
-  /** @type {string} */
   description:
     "Display multiple rows from a table in a grid with columns you specify",
   configuration_workflow,
   run,
-  /** @type {string} */
   view_quantity: "Many",
   get_state_fields,
   initial_config,
   on_delete,
   routes: { run_action },
-  /**
-   * @param {object} opts
-   * @returns {boolean}
-   */
-  default_state_form: ({ default_state }) => {
+  default_state_form: ({ default_state }: GenObj) => {
     if (!default_state) return default_state;
     const {
       _omit_state_form,
@@ -1787,6 +1764,7 @@ module.exports = {
       _rows_per_page,
       _full_page_count,
       _group_by,
+      _tree_field,
       _hide_pagination,
       _row_click_url_formula,
       _row_click_url_type,
@@ -1814,15 +1792,9 @@ module.exports = {
     } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));
   },
-  /**
-   * @param {object} opts
-   * @param {*} opts.columns
-   * @param {*} opts.create_view_label
-   * @returns {string[]}
-   */
-  getStringsForI18n({ columns, layout, create_view_label }) {
-    const strings = [];
-    const maybeAdd = (s) => {
+  getStringsForI18n({ columns, layout, create_view_label }: GenObj) {
+    const strings: string[] = [];
+    const maybeAdd = (s: string) => {
       if (s) strings.push(s);
     };
 
@@ -1846,13 +1818,14 @@ module.exports = {
     name, // viewname
     configuration: { columns, layout, default_state },
     req,
-  }) => ({
-    async listQuery(state, stateHash) {
+  }: GenObj) => ({
+    async listQuery(state: GenObj, stateHash: string) {
       const table = Table.findOne(
         typeof exttable_name === "string"
           ? { name: exttable_name }
           : { id: table_id }
-      );
+      )!;
+      const pk_name = table.pk_name;
       const fields = table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
@@ -1895,7 +1868,6 @@ module.exports = {
         );
       const role = req && req.user ? req.user.role_id : 100;
 
-      //console.log({ i: default_state.include_fml });
       if (default_state?.include_fml) {
         const ctx = { ...state, user_id: req.user?.id || null, user: req.user };
         let where1 = jsexprToWhere(default_state.include_fml, ctx, fields);
@@ -1904,7 +1876,7 @@ module.exports = {
       }
       if (default_state?.exclusion_relation) {
         const [reltable, relfld] = default_state.exclusion_relation.split(".");
-        const relTable = Table.findOne({ name: reltable });
+        const relTable = Table.findOne({ name: reltable })!;
         const relWhere = default_state.exclusion_where
           ? jsexprToWhere(
               default_state.exclusion_where,
@@ -1919,24 +1891,57 @@ module.exports = {
         if (relRows.length > 0) {
           const mergeObj = !db.isSQLite
             ? {
-                [table.pk_name]: { not: { in: relRows.map((r) => r[relfld]) } },
+                [table.pk_name]: {
+                  not: { in: relRows.map((r: GenObj) => r[relfld]) },
+                },
               }
             : {
-                not: { or: relRows.map((r) => ({ id: r[relfld] })) },
+                not: { or: relRows.map((r: GenObj) => ({ id: r[relfld] })) },
               };
           mergeIntoWhere(where, mergeObj);
           mergeIntoWhere(whereForCount, mergeObj);
         }
       }
 
-      let rows = await table.getJoinedRows({
-        where,
-        joinFields,
-        aggregations,
-        ...q,
-        forPublic: !req.user || req.user.role_id === 100, // TODO in mobile set user null for public
-        forUser: req.user,
-      });
+      let rows: GenObj[];
+      if (default_state?._tree_field) {
+        const tree_rows = await table.getRows(where, {
+          ...q,
+          forPublic: !req.user || req.user.role_id === 100,
+          forUser: req.user,
+          tree_field: default_state?._tree_field,
+          pk_name
+        });
+        //console.log("tree rows", tree_rows);
+
+        const joined_rows = await table.getJoinedRows({
+          where: {
+            [pk_name]: { in: tree_rows.map((r) => r[pk_name]) },
+          },
+          joinFields,
+          aggregations,
+          ...q,
+          forPublic: !req.user || req.user.role_id === 100,
+          forUser: req.user,
+        });
+
+        const joined_map: Record<PrimaryKeyValue, GenObj> = {};
+        joined_rows.forEach((r) => (joined_map[r[pk_name]] = r));
+        rows = tree_rows.map((r) => {
+          const r2 = joined_map[r[pk_name]];
+          r2._level = r._level;
+          return r2;
+        });
+      } else
+        rows = await table.getJoinedRows({
+          where,
+          joinFields,
+          aggregations,
+          ...q,
+          forPublic: !req.user || req.user.role_id === 100,
+          forUser: req.user,
+        });
+      //console.log("rows", rows);
 
       const rowCount = default_state?._hide_pagination
         ? undefined
@@ -1951,11 +1956,11 @@ module.exports = {
             });
       return { rows, rowCount };
     },
-    async getRowQuery(id) {
-      const table = Table.findOne({ id: table_id });
+    async getRowQuery(id: any) {
+      const table = Table.findOne({ id: table_id })!;
       if (table.ownership_formula) {
         const freeVars = freeVariables(table.ownership_formula);
-        const joinFields = {};
+        const joinFields: GenObj = {};
         add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
         return await table.getJoinedRow({
           where: { [table.pk_name]: id },
@@ -1970,10 +1975,10 @@ module.exports = {
         );
     },
   }),
-  configCheck: async (view) => {
+  configCheck: async (view: GenObj) => {
     return await check_view_columns(view, view.configuration.columns);
   },
-  connectedObjects: async (configuration) => {
+  connectedObjects: async (configuration: GenObj) => {
     const fromColumns = extractFromColumns(configuration.columns);
     const toCreate = extractViewToCreate(configuration);
     return toCreate

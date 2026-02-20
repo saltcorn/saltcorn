@@ -70,7 +70,11 @@ class Field implements AbstractField {
   label: string;
   name: string;
   fieldview?: string;
-  validator: (value: any, whole_rec?: Row, field?: {required: boolean}) => boolean | string | undefined;
+  validator: (
+    value: any,
+    whole_rec?: Row,
+    field?: { required: boolean }
+  ) => boolean | string | undefined;
   showIf?: { [field_name: string]: string | boolean | string[] };
   parent_field?: string;
   postText?: string;
@@ -732,7 +736,7 @@ class Field implements AbstractField {
     return !!fileview?.multipartFormData;
   }
 
-  validate(whole_rec: any): ResultMessage | {} {
+  validate(whole_rec: GenObj, originalBody?: GenObj): ResultMessage | {} {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     let readval = null;
     let typeObj = this.type as Type;
@@ -744,7 +748,8 @@ class Field implements AbstractField {
       !typeObj?.readFromFormRecord &&
       (fvObj?.read || typeObj?.read) &&
       !this.required &&
-      typeof whole_rec[this.form_name] === "undefined"
+      typeof whole_rec[this.form_name] === "undefined" &&
+      originalBody?.[this.form_name] !== ""
     )
       return {};
     if (this.is_fkey) {

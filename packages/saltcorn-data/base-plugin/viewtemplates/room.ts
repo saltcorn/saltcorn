@@ -3,11 +3,11 @@
  * @module base-plugin/viewtemplates/room
  * @subcategory base-plugin
  */
-const Field = require("../../models/field");
-const Table = require("../../models/table");
-const Form = require("../../models/form");
-const View = require("../../models/view");
-const Workflow = require("../../models/workflow");
+import Table from "../../models/table";
+import View from "../../models/view";
+import Form from "../../models/form";
+import Field from "../../models/field";
+import Workflow from "../../models/workflow";
 const {
   text,
   div,
@@ -23,38 +23,43 @@ const {
 const { pagination } = require("@saltcorn/markup/helpers");
 const { renderForm, tabs, link } = require("@saltcorn/markup");
 const { mkTable } = require("@saltcorn/markup");
-const {
+import {
   link_view,
   stateToQueryString,
   stateFieldsToWhere,
   stateFieldsToQuery,
   readState,
   run_action_column,
-} = require("../../plugin-helper");
+} from "../../plugin-helper";
 const { InvalidConfiguration } = require("../../utils");
 const { getState } = require("../../db/state");
 const db = require("../../db");
-const {
+import {
   getForm,
   fill_presets,
   action_url,
   action_link,
   edit_build_in_actions,
-} = require("../../viewable_fields");
+} from "../../viewable_fields";
 const { extractFromLayout } = require("../../diagram/node_extract_utils");
-const { traverse } = require("../../models/layout");
+import { GenObj } from "@saltcorn/types/common_types";
+import { Req, Res } from "@saltcorn/types/base_types";
+import layout from "../../models/layout";
+const { traverse } = layout;
+
+
 
 /**
  *
  * @param {object} req
  * @returns {Workflow}
  */
-const configuration_workflow = (req) =>
+const configuration_workflow = (req: Req) =>
   new Workflow({
     steps: [
       {
         name: req.__("Views"),
-        form: async (context) => {
+        form: async (context: GenObj) => {
           /*
             we need:
                 - message string
@@ -63,16 +68,16 @@ const configuration_workflow = (req) =>
                 - participant field: key to user in table with fkey to this
             */
 
-          const roomtable = Table.findOne(context.table_id);
+          const roomtable = Table.findOne(context.table_id)!;
           const { child_relations } = await roomtable.get_child_relations();
           //const msg_table_options = child_relations.map(cr=>cr.table.name)
-          const participant_field_options = [];
-          const msg_relation_options = [];
-          const msgsender_field_options = {};
-          const msgview_options = {};
-          const msgform_options = {};
-          const participant_max_read_options = [];
-          const msg_own_options = [];
+          const participant_field_options: string[] = [];
+          const msg_relation_options: string[] = [];
+          const msgsender_field_options: GenObj = {};
+          const msgview_options: GenObj = {};
+          const msgform_options: GenObj = {};
+          const participant_max_read_options: string[] = [];
+          const msg_own_options: string[] = [];
 
           for (const { table, key_field } of child_relations) {
             const fields = table.getFields();
@@ -93,10 +98,10 @@ const configuration_workflow = (req) =>
 
                 const views = await View.find_possible_links_to_table(table);
                 msgview_options[`${table.name}.${key_field.name}`] = views.map(
-                  (v) => v.name
+                  (v: GenObj) => v.name
                 );
                 msgform_options[`${table.name}.${key_field.name}`] = views.map(
-                  (v) => v.name
+                  (v: GenObj) => v.name
                 );
               } else if (f.reftable_name) {
                 participant_max_read_options.push(
@@ -172,7 +177,7 @@ const configuration_workflow = (req) =>
                   options: participant_max_read_options,
                 },
               },
-            ],
+            ] as any,
           });
         },
       },
@@ -210,8 +215,8 @@ const limit = 10;
  * @throws {InvalidConfiguration}
  */
 const run = async (
-  table_id,
-  viewname,
+  table_id: number,
+  viewname: string,
   {
     participant_field,
     msg_relation,
@@ -219,26 +224,26 @@ const run = async (
     msgview,
     msgform,
     participant_maxread_field,
-  },
-  state,
-  { req, res },
-  { getRowQuery, updateQuery, optionsQuery }
+  }: GenObj,
+  state: GenObj,
+  { req, res }: { req: Req; res: Res },
+  { getRowQuery, updateQuery, optionsQuery }: GenObj
 ) => {
-  const table = Table.findOne({ id: table_id });
+  const table = Table.findOne({ id: table_id })!;
   const fields = table.getFields();
   readState(state, fields);
   if (!state.id) return "Need room id";
   const appState = getState();
   const locale = req.getLocale();
   const role = req && req.user ? req.user.role_id : 100;
-  const __ = (s) => appState.i18n.__({ phrase: s, locale }) || s;
+  const __ = (s: string) => appState.i18n.__({ phrase: s, locale }) || s;
   if (!msgview || !msgform || !msgsender_field || !msg_relation)
     throw new InvalidConfiguration(
       `View ${viewname} incorrectly configured: must supply Message views, Message sender and Participant fields`
     );
 
   const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-  let partRow, part_table_name, canWrite;
+  let partRow: GenObj | undefined, part_table_name: string | undefined, canWrite: boolean;
   if (participant_field) {
     const [part_table_name1, part_key_to_room, part_user_field] =
       participant_field.split(".");
@@ -260,29 +265,29 @@ const run = async (
     canWrite = role <= table.min_role_write;
   }
   const v = await View.findOne({ name: msgview });
-  const vresps = await v.runMany(
+  const vresps: any[] = await v!.runMany(
     { [msgkey_to_room]: state.id },
     { req, res, orderBy: "id", orderDesc: true, limit }
   );
   vresps.reverse();
   const n_retrieved = vresps.length;
 
-  const msglist = vresps.map((r) => r.html).join("");
+  const msglist = vresps.map((r: GenObj) => r.html).join("");
   const formview = await View.findOne({ name: msgform });
   if (!formview)
     throw new InvalidConfiguration("Message form view does not exist");
   const { columns, layout } = formview.configuration;
-  const msgtable = Table.findOne({ name: msgtable_name });
+  const msgtable = Table.findOne({ name: msgtable_name })!;
   const min_read_id = Math.min.apply(
     Math,
-    vresps.map((r) => r.row.id)
+    vresps.map((r: GenObj) => r.row.id)
   );
   if (participant_maxread_field) {
     const [part_table_name1, part_key_to_room1, part_maxread_field] =
       participant_maxread_field.split(".");
     const max_read_id = Math.max.apply(
       Math,
-      vresps.map((r) => r.row.id)
+      vresps.map((r: GenObj) => r.row.id)
     );
     if (vresps.length > 0 && partRow && part_table_name)
       await updateQuery(
@@ -292,18 +297,18 @@ const run = async (
         part_maxread_field
       );
   }
-  const form = await getForm(msgtable, viewname, columns, layout, null, req);
+  const formObj = await getForm(msgtable, viewname, columns, layout, null, req);
 
-  form.class = `room-${state.id}`;
-  form.hidden("room_id");
-  form.values = { room_id: state.id };
-  await form.fill_fkey_options(
+  formObj.class = `room-${state.id}`;
+  formObj.hidden("room_id");
+  formObj.values = { room_id: state.id };
+  await formObj.fill_fkey_options(
     false,
     optionsQuery,
     req.user || { role_id: 100 }
   );
   await transformForm({
-    form,
+    form: formObj,
     table: msgtable,
     req,
     res,
@@ -319,18 +324,18 @@ const run = async (
         },
         req.__("Show older messages")
       ),
-    div({ class: `msglist-${state.id}`, "data-user-id": req.user.id }, msglist),
-    canWrite && renderForm(form, req.csrfToken()),
+    div({ class: `msglist-${state.id}`, "data-user-id": req.user?.id }, msglist),
+    canWrite && renderForm(formObj, req.csrfToken()),
     script({
       src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
     }) + script(domReady(`init_room("${viewname}", ${state.id})`))
   );
 };
 
-const transformForm = async ({ form, table, req, res, viewname }) => {
-  const row = {};
+const transformForm = async ({ form, table, req, res, viewname }: { form: GenObj; table: any; req: Req; res: Res; viewname: string }) => {
+  const row: GenObj = {};
   await traverse(form.layout, {
-    async action(segment) {
+    async action(segment: GenObj) {
       if (segment.action_style === "on_page_load") {
         segment.type = "blank";
         segment.style = {};
@@ -358,7 +363,7 @@ const transformForm = async ({ form, table, req, res, viewname }) => {
                 `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
               )
             );
-        } catch (e) {
+        } catch (e: any) {
           getState().log(
             5,
             `Error in Edit ${viewname} on page load action: ${e.message}`
@@ -379,15 +384,15 @@ const transformForm = async ({ form, table, req, res, viewname }) => {
           "rndid",
           segment.confirm
         );
-        if (url.javascript) {
+        if ((url as any).javascript) {
           //redo to include dynamic row
           const confirmStr = segment.confirm
             ? `if(confirm('Are you sure?'))`
             : "";
 
-          url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
+          (url as any).javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
         }
-        segment.action_link = action_link(url, req, segment);
+        segment.action_link = action_link(url, req, segment as any);
       }
     },
   });
@@ -406,12 +411,12 @@ const transformForm = async ({ form, table, req, res, viewname }) => {
  * @returns {Promise<void>}
  */
 const ack_read = async (
-  table_id,
-  viewname,
-  { participant_field, participant_maxread_field },
-  body,
-  { req, res },
-  { ackReadQuery }
+  table_id: number,
+  viewname: string,
+  { participant_field, participant_maxread_field }: GenObj,
+  body: GenObj,
+  { req, res }: { req: Req; res: Res },
+  { ackReadQuery }: GenObj
 ) => {
   if (!participant_maxread_field || !participant_field)
     return {
@@ -440,8 +445,8 @@ const ack_read = async (
  * @returns {Promise<object>}
  */
 const fetch_older_msg = async (
-  table_id,
-  viewname,
+  table_id: number,
+  viewname: string,
   {
     participant_field,
     msg_relation,
@@ -449,10 +454,10 @@ const fetch_older_msg = async (
     msgview,
     msgform,
     participant_maxread_field,
-  },
-  body,
-  { req, res },
-  { fetchOlderMsgQuery }
+  }: GenObj,
+  body: GenObj,
+  { req, res }: { req: Req; res: Res },
+  { fetchOlderMsgQuery }: GenObj
 ) => {
   const partRow = await fetchOlderMsgQuery(participant_field, body);
   if (!partRow)
@@ -464,7 +469,7 @@ const fetch_older_msg = async (
 
   const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
   const v = await View.findOne({ name: msgview });
-  const vresps = await v.runMany(
+  const vresps: any[] = await v!.runMany(
     { [msgkey_to_room]: +body.room_id },
     {
       req,
@@ -473,15 +478,15 @@ const fetch_older_msg = async (
       orderDesc: true,
       limit,
       where: { id: { lt: +body.lt_msg_id } },
-    }
+    } as any
   );
   vresps.reverse();
   const n_retrieved = vresps.length;
   const min_read_id = Math.min.apply(
     Math,
-    vresps.map((r) => r.row.id)
+    vresps.map((r: GenObj) => r.row.id)
   );
-  const msglist = vresps.map((r) => r.html).join("");
+  const msglist = vresps.map((r: GenObj) => r.html).join("");
   return {
     json: {
       success: "ok",
@@ -509,8 +514,8 @@ const fetch_older_msg = async (
  * @returns {Promise<object>}
  */
 const submit_msg_ajax = async (
-  table_id,
-  viewname,
+  table_id: number,
+  viewname: string,
   {
     participant_field,
     msg_relation,
@@ -518,10 +523,10 @@ const submit_msg_ajax = async (
     msgview,
     msgform,
     participant_maxread_field,
-  },
-  body,
-  { req, res },
-  { submitAjaxQuery }
+  }: GenObj,
+  body: GenObj,
+  { req, res }: { req: Req; res: Res },
+  { submitAjaxQuery }: GenObj
 ) => {
   const queryResult = await submitAjaxQuery(
     msg_relation,
@@ -534,13 +539,13 @@ const submit_msg_ajax = async (
   if (!queryResult.json.error) {
     const msgid = queryResult.json.msgid;
     const v = await View.findOne({ name: msgview });
-    const myhtml = await v.run({ id: msgid.success }, { req, res });
+    const myhtml = await v!.run({ id: msgid.success }, { req, res } as any);
     const newreq = { ...req, user: { ...req.user, id: 0 } };
-    const theirhtml = await v.run({ id: msgid.success }, { req: newreq, res });
+    const theirhtml = await v!.run({ id: msgid.success }, { req: newreq, res } as any);
     const tenant = db.getTenantSchema();
     getState().emitRoom(tenant, viewname, +body.room_id, {
       append: theirhtml,
-      not_for_user_id: req.user.id,
+      not_for_user_id: req.user?.id,
       pls_ack_msg_id: msgid.success,
     });
     return {
@@ -567,8 +572,8 @@ const submit_msg_ajax = async (
  * @returns {object[]}
  */
 const virtual_triggers = (
-  table_id,
-  viewname,
+  table_id: number,
+  viewname: string,
   {
     participant_field,
     msg_relation,
@@ -576,32 +581,32 @@ const virtual_triggers = (
     msgview,
     msgform,
     participant_maxread_field,
-  }
+  }: GenObj
 ) => {
   if (!msg_relation) return [];
   const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
-  const msgtable = Table.findOne({ name: msgtable_name });
+  const msgtable = Table.findOne({ name: msgtable_name })!;
   if (!msgsender_field) return [];
 
   return [
     {
       when_trigger: "Insert",
       table_id: msgtable.id,
-      run: async (row) => {
+      run: async (row: GenObj) => {
         const state = getState();
         if (row[msgsender_field]) return; // TODO how else to avoid double emit
         const v = await View.findOne({ name: msgview });
 
-        const html = await v.run(
+        const html = await v!.run(
           { id: row.id },
           {
             req: {
               getLocale: () => state.getConfig("default_locale", "en"),
               user: { id: 0 },
-              __: (s) => s,
+              __: (s: string) => s,
             },
             res: {},
-          }
+          } as any
         );
         const tenant = db.getTenantSchema();
         state.emitRoom(tenant, viewname, row[msgkey_to_room], {
@@ -614,18 +619,18 @@ const virtual_triggers = (
 };
 
 const run_action = async (
-  table_id,
-  viewname,
-  { msgform },
-  body,
-  { req, res }
+  table_id: number,
+  viewname: string,
+  { msgform }: GenObj,
+  body: GenObj,
+  { req, res }: { req: Req; res: Res }
 ) => {
-  const view = View.findOne({ name: msgform });
+  const view = View.findOne({ name: msgform })!;
   const result = await view.runRoute("run_action", req.body, res, { req, res });
   return result;
 };
 
-module.exports = {
+export = {
   /** @type {string} */
   name: "Room",
   /** @type {string} */
@@ -645,20 +650,20 @@ module.exports = {
    * @returns {Promise<object>}
    */
   authorize_join: async (
-    { table_id, min_role, configuration: { participant_field } },
-    room_id,
-    user
+    { table_id, min_role, configuration: { participant_field } }: GenObj,
+    room_id: string,
+    user: GenObj
   ) => {
     if (!user || user.role_id > min_role) return false;
     if (!participant_field) {
-      const table = Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id })!;
       return user.role_id <= table.min_role_read;
     } else {
       const [part_table_name, part_key_to_room, part_user_field] =
         participant_field.split(".");
 
       // TODO check we participate
-      const parttable = Table.findOne({ name: part_table_name });
+      const parttable = Table.findOne({ name: part_table_name })!;
       const partRow = await parttable.getRow({
         [part_user_field]: user.id,
         [part_key_to_room]: room_id,
@@ -676,49 +681,49 @@ module.exports = {
     viewname,
     configuration: { columns, default_state },
     req,
-  }) => ({
+  }: GenObj) => ({
     async getRowQuery(
-      state_id,
-      part_table_name,
-      part_user_field,
-      part_key_to_room
+      state_id: string,
+      part_table_name: string,
+      part_user_field: string,
+      part_key_to_room: string
     ) {
-      const parttable = Table.findOne({ name: part_table_name });
+      const parttable = Table.findOne({ name: part_table_name })!;
       return await parttable.getRow({
         [part_user_field]: req.user ? req.user.id : 0,
         [part_key_to_room]: +state_id,
       });
     },
     async updateQuery(
-      partRow,
-      part_table_name,
-      max_read_id,
-      part_maxread_field
+      partRow: GenObj,
+      part_table_name: string,
+      max_read_id: number,
+      part_maxread_field: string
     ) {
-      const parttable = Table.findOne({ name: part_table_name });
+      const parttable = Table.findOne({ name: part_table_name })!;
       await parttable.updateRow(
         { [part_maxread_field]: max_read_id },
         partRow.id
       );
     },
     async submitAjaxQuery(
-      msg_relation,
-      participant_field,
-      body,
-      msgform,
-      msgsender_field,
-      participant_maxread_field
+      msg_relation: string,
+      participant_field: string,
+      body: GenObj,
+      msgform: string,
+      msgsender_field: string,
+      participant_maxread_field: string
     ) {
-      const table = Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id })!;
 
       const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
       const role = req && req.user ? req.user.role_id : 100;
 
-      let partRow, parttable;
+      let partRow: GenObj | undefined, parttable: any;
       if (participant_field) {
         const [part_table_name, part_key_to_room, part_user_field] =
           participant_field.split(".");
-        parttable = Table.findOne({ name: part_table_name });
+        parttable = Table.findOne({ name: part_table_name })!;
         // check we participate
 
         partRow = await parttable.getRow({
@@ -746,9 +751,9 @@ module.exports = {
       if (!formview)
         throw new InvalidConfiguration("Message form view does not exist");
       const { columns, layout, fixed } = formview.configuration;
-      const msgtable = Table.findOne({ name: msgtable_name });
+      const msgtable = Table.findOne({ name: msgtable_name })!;
 
-      const form = await getForm(
+      const formObj = await getForm(
         msgtable,
         viewname,
         columns,
@@ -756,11 +761,11 @@ module.exports = {
         null,
         req
       );
-      form.validate(req.body || {});
-      if (!form.hasErrors) {
+      formObj.validate(req.body || {});
+      if (!formObj.hasErrors) {
         const use_fixed = await fill_presets(msgtable, req, fixed);
         const row = {
-          ...form.values,
+          ...formObj.values,
           ...use_fixed,
           [msgkey_to_room]: body.room_id,
           [msgsender_field]: req.user.id,
@@ -770,7 +775,7 @@ module.exports = {
           const [part_table_name1, part_key_to_room1, part_maxread_field] =
             participant_maxread_field.split(".");
           await parttable.updateRow(
-            { [part_maxread_field]: msgid.success },
+            { [part_maxread_field]: (msgid as any).success },
             partRow.id
           );
         }
@@ -780,18 +785,18 @@ module.exports = {
       } else {
         return {
           json: {
-            error: form.errors,
+            error: formObj.errors,
           },
         };
       }
     },
-    async ackReadQuery(participant_field, participant_maxread_field, body) {
+    async ackReadQuery(participant_field: string, participant_maxread_field: string, body: GenObj) {
       const [part_table_name, part_key_to_room, part_user_field] =
         participant_field.split(".");
       const [part_table_name1, part_key_to_room1, part_maxread_field] =
         participant_maxread_field.split(".");
 
-      const parttable = Table.findOne({ name: part_table_name });
+      const parttable = Table.findOne({ name: part_table_name })!;
       // check we participate
 
       const partRow = await parttable.getRow({
@@ -813,17 +818,17 @@ module.exports = {
         },
       };
     },
-    async fetchOlderMsgQuery(participant_field, body) {
+    async fetchOlderMsgQuery(participant_field: string, body: GenObj) {
       const [part_table_name, part_key_to_room, part_user_field] =
         participant_field.split(".");
-      const parttable = Table.findOne({ name: part_table_name });
+      const parttable = Table.findOne({ name: part_table_name })!;
       // check we participate
       return await parttable.getRow({
         [part_user_field]: req.user ? req.user.id : 0,
         [part_key_to_room]: +body.room_id,
       });
     },
-    async optionsQuery(reftable_name, type, attributes, where) {
+    async optionsQuery(reftable_name: string, type: string, attributes: GenObj, where: GenObj) {
       const rows = await db.select(
         reftable_name,
         type === "File" ? attributes.select_file_where : where
@@ -831,12 +836,12 @@ module.exports = {
       return rows;
     },
   }),
-  connectedObjects: async (configuration) => {
+  connectedObjects: async (configuration: GenObj) => {
     return extractFromLayout(configuration.layout);
   },
 };
 /*todo:
 
-find_or_create_dm_room -dms only 
+find_or_create_dm_room -dms only
 
 */

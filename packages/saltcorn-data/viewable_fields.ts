@@ -261,6 +261,7 @@ const make_link = (
     icon,
     link_style,
     link_size,
+    link_title,
   }: {
     link_text: string;
     link_text_formula?: boolean;
@@ -273,6 +274,7 @@ const make_link = (
     icon?: string;
     link_style?: string;
     link_size?: string;
+    link_title?: string;
   },
   fields: Field[],
   __ = (s: string) => s,
@@ -303,6 +305,7 @@ const make_link = (
         ];
       if (link_size) attrs.class = [...(attrs.class || []), link_size];
       if (in_row_click) attrs.onclick = "event.stopPropagation()";
+      if (link_title) attrs.title = link_title;
       if (in_modal)
         return a(
           {
@@ -748,7 +751,8 @@ const get_viewable_fields_from_layout = (
   srcViewName?: string,
   layoutCols?: any[],
   viewResults?: GenObj,
-  in_row_click?: boolean
+  in_row_click?: boolean,
+  disable_join_agg_sort?: boolean
 ): any[] => {
   const typeMap: Record<string, string> = {
     field: "Field",
@@ -831,7 +835,8 @@ const get_viewable_fields_from_layout = (
     state,
     srcViewName,
     viewResults,
-    in_row_click
+    in_row_click,
+    disable_join_agg_sort
   );
 };
 
@@ -858,7 +863,8 @@ const get_viewable_fields = (
   state: GenObj = {},
   srcViewName?: string,
   viewResults?: GenObj,
-  in_row_click?: boolean
+  in_row_click?: boolean,
+  disable_join_agg_sort?: boolean
 ): any[] => {
   const dropdown_actions: any[] = [];
   const checkShowIf =
@@ -1220,7 +1226,9 @@ const get_viewable_fields = (
           statekey,
           header_filter,
           key: gofv ? gofv : (row: Row) => text(row[key]),
-          sortlink: sortlinkForName(key, req, viewname, statehash),
+          sortlink: disable_join_agg_sort
+            ? undefined
+            : sortlinkForName(key, req, viewname, statehash),
         };
         if (column.click_to_edit) {
           const reffield = fields.find((f) => f.name === refNm);
@@ -1301,8 +1309,8 @@ const get_viewable_fields = (
             column.stat === "Percent true" || column.stat === "Percent false"
               ? "Float"
               : column.stat === "Count" || column.stat === "CountUnique"
-              ? "Integer"
-              : (aggField?.type as any)?.name;
+                ? "Integer"
+                : (aggField?.type as any)?.name;
           const type = getState().types[outcomeType];
           if (type?.fieldviews[column.agg_fieldview])
             showValue = (x: any) =>
@@ -1334,7 +1342,9 @@ const get_viewable_fields = (
             statehash
           ),
           key,
-          sortlink: sortlinkForName(targetNm, req, viewname, statehash),
+          sortlink: disable_join_agg_sort
+            ? undefined
+            : sortlinkForName(targetNm, req, viewname, statehash),
         };
       } else if (column.type === "Field") {
         //console.log(column);
@@ -1385,19 +1395,19 @@ const get_viewable_fields = (
                       { row, ...column, ...(column?.configuration || {}) }
                     )
                 : column.fieldview &&
-                  ftype.fieldviews &&
-                  ftype.fieldviews[column.fieldview]
-                ? (row: Row) =>
-                    ftype.fieldviews[column.fieldview].run(
-                      row[f_with_val!.name],
-                      req,
-                      { row, ...f!.attributes, ...column.configuration }
-                    )
-                : isShow
-                ? ftype.showAs
-                  ? (row: Row) => ftype.showAs(row[f_with_val!.name])
-                  : (row: Row) => text(row[f_with_val!.name])
-                : f.listKey,
+                    ftype.fieldviews &&
+                    ftype.fieldviews[column.fieldview]
+                  ? (row: Row) =>
+                      ftype.fieldviews[column.fieldview].run(
+                        row[f_with_val!.name],
+                        req,
+                        { row, ...f!.attributes, ...column.configuration }
+                      )
+                  : isShow
+                    ? ftype.showAs
+                      ? (row: Row) => ftype.showAs(row[f_with_val!.name])
+                      : (row: Row) => text(row[f_with_val!.name])
+                    : f.listKey,
             header_filter,
             sortlink:
               !f.calculated || f.stored
@@ -1532,10 +1542,10 @@ const headerFilterForField =
                set_state_fields({_fromdate_${
                  f.name
                }: selectedDates[0].toLocaleDateString('en-CA'), _todate_${
-              f.name
-            }: selectedDates[1].toLocaleDateString('en-CA') }, false, ${
-              id ? `document.getElementById('${id}')` : "this"
-            })
+                 f.name
+               }: selectedDates[1].toLocaleDateString('en-CA') }, false, ${
+                 id ? `document.getElementById('${id}')` : "this"
+               })
 
 
             }
@@ -1610,8 +1620,8 @@ const sortlinkForName = (
     typeof _sortdesc == "undefined"
       ? _sortby === fname
       : _sortdesc
-      ? "false"
-      : "true";
+        ? "false"
+        : "true";
   return `sortby('${text(fname)}', ${desc}, '${statehash}', this)`;
 };
 
@@ -1912,8 +1922,8 @@ const standardBlockDispatch = (
           stat === "Percent true" || stat === "Percent false"
             ? "Float"
             : stat === "Count" || stat === "CountUnique"
-            ? "Integer"
-            : (aggField?.type as any)?.name;
+              ? "Integer"
+              : (aggField?.type as any)?.name;
         const type = getState().types[outcomeType];
         if (type?.fieldviews[column.agg_fieldview]) {
           const readval = type.read(val);
@@ -2036,8 +2046,8 @@ const headerLabelForName = (
     _sortby !== fname
       ? ""
       : _sortdesc
-      ? i({ class: "fas fa-caret-down sortdir" })
-      : i({ class: "fas fa-caret-up sortdir" });
+        ? i({ class: "fas fa-caret-down sortdir" })
+        : i({ class: "fas fa-caret-up sortdir" });
   return arrow ? span({ class: "text-nowrap" }, label + arrow) : label;
 };
 
@@ -2245,7 +2255,7 @@ const transformForm = async ({
   ) => Promise<Row[]>;
   viewname: string;
   optionsQuery?: GenObj;
-  state: GenObj;
+  state?: GenObj;
 }): Promise<void> => {
   let originalState = state;
   let pseudo_row: GenObj = {};

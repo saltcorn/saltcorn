@@ -169,6 +169,7 @@ const get_extra_menu = (
           tooltip: item.tooltip,
           altlinks: get_altlinks(item),
           link,
+          ...(item.shortcut ? { shortcut: item.shortcut } : {}),
           ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
         };
       });
