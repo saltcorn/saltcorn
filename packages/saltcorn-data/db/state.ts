@@ -1739,6 +1739,7 @@ const features = Object.freeze({
   api_view_route: true,
   file_fieldviews_cfg_workflows: true,
   table_create_callback: true,
+  getrows_tree_field: true,
 });
 
 export = {
