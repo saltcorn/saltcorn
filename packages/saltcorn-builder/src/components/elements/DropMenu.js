@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useState, useEffect } from "react";
+import React, { Fragment, useState, useContext, useEffect } from "react";
 import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import { Element, useNode } from "@craftjs/core";

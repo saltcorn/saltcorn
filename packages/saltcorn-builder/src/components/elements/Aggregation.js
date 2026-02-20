@@ -5,7 +5,7 @@
  */
 /* globals validate_expression_elem */
 
-import React, { Fragment, useState, useContext, useEffect } from "react";
+import React, { Fragment, useState, useContext, useEffect, useRef } from "react";
 import useTranslation from "../../hooks/useTranslation";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
