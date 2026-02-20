@@ -515,7 +515,7 @@ const CustomLayerComponent = memo(({ children }) => {
                  toggleLayer();
                }}
              >
-               <FontAwesomeIcon icon={expanded ? faChevronUp : faChevronDown} color="white" fontSize={14} className="float-end fa-lg" />
+               <FontAwesomeIcon icon={expanded ? faChevronUp : faChevronDown} fontSize={14} className="float-end fa-lg" />
              </span>
           )}
         </div>
