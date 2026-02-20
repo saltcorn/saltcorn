@@ -65,6 +65,7 @@ export type SelectOptions = {
   tree_field?: string;
   client?: DatabaseClient;
   schema?: string;
+  pk_name?: string;
 };
 export type JoinField = {
   ref: string;

@@ -125,7 +125,7 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
     }, pt._level+1
     ${selectopts.orderBy ? `, pt._sort_path || row_number() OVER (PARTITION BY p."${selectopts.tree_field}" ORDER BY p."${selectopts.orderBy}"${selectopts.orderDesc ? " DESC" : ""})` : ""} 
     FROM "${schema}"."${sqlsanitize(tbl)}" p
-    JOIN _tree pt ON p."${selectopts.tree_field}" = pt.id      
+    JOIN _tree pt ON p."${selectopts.tree_field}" = pt."${selectopts.pk_name || "id"}"
     )
     SELECT ${
       selectopts.fields ? selectopts.fields.join(", ") : `*`

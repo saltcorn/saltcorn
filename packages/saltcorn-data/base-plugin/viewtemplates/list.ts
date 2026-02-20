@@ -1910,6 +1910,7 @@ export = {
           forPublic: !req.user || req.user.role_id === 100,
           forUser: req.user,
           tree_field: default_state?._tree_field,
+          pk_name
         });
         //console.log("tree rows", tree_rows);
 
