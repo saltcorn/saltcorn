@@ -193,6 +193,8 @@ export const select = async (
 ): Promise<Row[]> => {
   const { where, values } = mkWhere(whereObj, true);
   let sql;
+
+  // NOT WORKING!! TODO Fix
   if (selectopts.tree_field)
     sql = `WITH RECURSIVE _tree AS (
         SELECT ${

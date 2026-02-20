@@ -650,15 +650,16 @@ const configuration_workflow = (req: Req) =>
             sublabel: "Formula for the group headings",
             class: "validate-expression",
           });
-          formfields.push({
-            name: "_tree_field",
-            label: req.__("Tree field"),
-            sublabel: req.__("A field that is Key to own table"),
-            type: "String",
-            attributes: {
-              options: tree_options,
-            },
-          });
+          if (!db.isSQLite)
+            formfields.push({
+              name: "_tree_field",
+              label: req.__("Tree field"),
+              sublabel: req.__("A field that is Key to own table"),
+              type: "String",
+              attributes: {
+                options: tree_options,
+              },
+            });
           formfields.push({
             name: "include_fml",
             label: req.__("Row inclusion formula"),
