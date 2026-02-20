@@ -2,7 +2,21 @@
 
 ## 1.6.0 - In development
 
-* Entities list: search modules and users, multiselect with delete, deep search option
+* Elements can now be added to the top right (left in RTL languages) of cards, if a title is given.
+
+* List views now have a "Tree Field" option, for self-join keys, to show the rows as a tree as an indented indicator in the first column. If a tree field is chosen, sorting by joinfields and aggregations is disabled. 
+
+* Added Filipino, Romanian, Urdu and Korean languages
+
+* Keyboard shortcuts can be defined for menu items
+
+* The builder is now based on craft.js 0.2.12 and the drag-and-drop is much improved
+
+* The `res` is now available in actions, allowing you to, for instance, set cookies
+
+* Set additional workflow context in the builder when a workflow action is selected
+
+* Entities list: search modules and users, multiselect with delete, deep search option, keyboard shortcuts
 
 * Instances run in multi-node mode will now automatically select a leader to run the schedule
 

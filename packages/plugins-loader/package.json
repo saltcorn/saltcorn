@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/plugins-loader",
-  "version": "1.6.0-alpha.7",
+  "version": "1.6.0-alpha.8",
   "description": "Saltcorn plugin loader",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -9,7 +9,7 @@
     "clean": "echo 'No TypeScript build'"
   },
   "dependencies": {
-    "@saltcorn/data": "1.6.0-alpha.7",
+    "@saltcorn/data": "1.6.0-alpha.8",
     "env-paths": "^2.2.1",
     "npm-registry-fetch": "17.1.0",
     "https-proxy-agent": "^7.0.6"

@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/types",
-  "version": "1.6.0-alpha.7",
+  "version": "1.6.0-alpha.8",
   "description": "Data types for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -29,7 +29,7 @@
   ],
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "@saltcorn/db-common": "1.6.0-alpha.7",
+    "@saltcorn/db-common": "1.6.0-alpha.8",
     "@types/adm-zip": "^0.5.7",
     "@types/node": "^20.14.7",
     "chaos-guinea-pig": "0.2.1",

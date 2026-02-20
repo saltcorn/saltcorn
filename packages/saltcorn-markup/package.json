@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/markup",
-  "version": "1.6.0-alpha.7",
+  "version": "1.6.0-alpha.8",
   "description": "Markup for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "main": "./dist/index.js",
@@ -35,7 +35,7 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "@saltcorn/types": "1.6.0-alpha.7",
+    "@saltcorn/types": "1.6.0-alpha.8",
     "@types/escape-html": "^1.0.4",
     "@types/estree": "^1.0.8",
     "@types/jest": "29.5.14",

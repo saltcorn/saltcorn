@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/postgres",
-  "version": "1.6.0-alpha.7",
+  "version": "1.6.0-alpha.8",
   "description": "Postgres structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -12,7 +12,7 @@
   "license": "MIT",
   "main": "index.js",
   "dependencies": {
-    "@saltcorn/db-common": "1.6.0-alpha.7",
+    "@saltcorn/db-common": "1.6.0-alpha.8",
     "@saltcorn/plain-date": "0.2.5",
     "pg": "^8.13.1",
     "pg-copy-streams": "^6.0.6",

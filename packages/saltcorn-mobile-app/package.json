@@ -1,7 +1,7 @@
 {
   "name": "@saltcorn/mobile-app",
   "displayName": "Saltcorn mobile app",
-  "version": "1.6.0-alpha.7",
+  "version": "1.6.0-alpha.8",
   "description": "Saltcorn mobile app for Android and iOS",
   "main": "index.js",
   "scripts": {
