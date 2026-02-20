@@ -751,7 +751,8 @@ const get_viewable_fields_from_layout = (
   srcViewName?: string,
   layoutCols?: any[],
   viewResults?: GenObj,
-  in_row_click?: boolean
+  in_row_click?: boolean,
+  disable_join_agg_sort?: boolean
 ): any[] => {
   const typeMap: Record<string, string> = {
     field: "Field",
@@ -834,7 +835,8 @@ const get_viewable_fields_from_layout = (
     state,
     srcViewName,
     viewResults,
-    in_row_click
+    in_row_click,
+    disable_join_agg_sort
   );
 };
 
@@ -861,7 +863,8 @@ const get_viewable_fields = (
   state: GenObj = {},
   srcViewName?: string,
   viewResults?: GenObj,
-  in_row_click?: boolean
+  in_row_click?: boolean,
+  disable_join_agg_sort?: boolean
 ): any[] => {
   const dropdown_actions: any[] = [];
   const checkShowIf =
@@ -1223,7 +1226,9 @@ const get_viewable_fields = (
           statekey,
           header_filter,
           key: gofv ? gofv : (row: Row) => text(row[key]),
-          sortlink: sortlinkForName(key, req, viewname, statehash),
+          sortlink: disable_join_agg_sort
+            ? undefined
+            : sortlinkForName(key, req, viewname, statehash),
         };
         if (column.click_to_edit) {
           const reffield = fields.find((f) => f.name === refNm);
@@ -1337,7 +1342,9 @@ const get_viewable_fields = (
             statehash
           ),
           key,
-          sortlink: sortlinkForName(targetNm, req, viewname, statehash),
+          sortlink: disable_join_agg_sort
+            ? undefined
+            : sortlinkForName(targetNm, req, viewname, statehash),
         };
       } else if (column.type === "Field") {
         //console.log(column);

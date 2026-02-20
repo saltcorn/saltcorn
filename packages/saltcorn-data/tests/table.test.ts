@@ -2969,3 +2969,109 @@ describe("Table slug options", () => {
     ]);
   });
 });
+
+describe("Table recursive query", () => {
+  beforeAll(async () => {
+    const table = await Table.create("recur_projects");
+    await Field.create({
+      table,
+      name: "name",
+      label: "Name",
+      type: "String",
+    });
+    await Field.create({
+      table,
+      name: "parent",
+      label: "Parent",
+      type: "Key to recur_projects",
+    });
+    await Field.create({
+      table,
+      name: "assignee",
+      label: "Assignee",
+      type: "Key to users",
+    });
+    const homework = await table.insertRow({ name: "Homework" });
+    const french = await table.insertRow({ name: "French", parent: homework });
+    const biology = await table.insertRow({
+      name: "Biology",
+      parent: homework,
+    });
+    await table.insertRow({
+      name: "Learn about the birds",
+      parent: biology,
+    });
+    await table.insertRow({
+      name: "Verb conjugations",
+      parent: french,
+      assignee: 2,
+    });
+    await table.insertRow({
+      name: "Literature",
+      parent: french,
+    });
+    await table.insertRow({
+      name: "Learn about the bees",
+      parent: biology,
+      assignee: 1,
+    });
+  });
+  if (!db.isSQLite) {
+    it("getRows tree sort by id", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      const rows = await table.getRows(
+        {},
+        { tree_field: "parent", orderBy: "id" }
+      );
+      expect(rows.length).toEqual(7);
+      //console.log(rows.map((r) => r.name));
+      expect(rows[2].name).toBe("Verb conjugations");
+    });
+    it("getRows tree sort by name", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows(
+        {},
+        { tree_field: "parent", orderBy: "name" }
+      );
+      expect(rows.length).toEqual(7);
+      //console.log(rows.map((r) => r.name));
+      expect(rows[2].name).toBe("Learn about the bees");
+      expect(rows[2]._level).toBe(2);
+      expect(rows[1]._level).toBe(1);
+      expect(rows[0]._level).toBe(0);
+    });
+    it("getRows tree sort by name desc", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows(
+        {},
+        { tree_field: "parent", orderBy: "name", orderDesc: true }
+      );
+      expect(rows.length).toEqual(7);
+      //console.log(rows.map((r) => r.name));
+      expect(rows[2].name).toBe("Verb conjugations");
+      expect(rows[2]._level).toBe(2);
+      expect(rows[1]._level).toBe(1);
+      expect(rows[0]._level).toBe(0);
+    });
+    it("getRows tree no sort", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows({}, { tree_field: "parent" });
+      expect(rows.length).toEqual(7);
+      //console.log(rows.map((r) => r.name));
+      expect(rows[0].name).toBe("Homework");
+      expect(["French", "Biology"].includes(rows[1].name)).toBe(true);
+      expect(rows[1]._level).toBe(1);
+      expect(rows[0]._level).toBe(0);
+    });
+  } else
+    it("doesnt work", async () => {
+      expect(2 + 2).toBe(4);
+    });
+});
