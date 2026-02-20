@@ -31,6 +31,9 @@ const traverseSync = (layout: Layout, visitors: Visitors | Function): void => {
     if (segment.footer) {
       if (typeof segment.footer !== "string") go(segment.footer);
     }
+    if (segment.titleRight) {
+      if (typeof segment.titleRight !== "string") go(segment.titleRight);
+    }
     if (segment.contents) {
       if (typeof segment.contents !== "string") go(segment.contents);
       return;
@@ -70,6 +73,9 @@ const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
     if (segment.footer) {
       if (typeof segment.footer !== "string") await go(segment.footer);
     }
+    if (segment.titleRight) {
+      if (typeof segment.titleRight !== "string") await go(segment.titleRight);
+    }
     if (segment.contents) {
       if (typeof segment.contents !== "string") await go(segment.contents);
       return;
@@ -105,6 +111,10 @@ const eachView = async (layout: Layout, f: any, state?: any): Promise<void> => {
     }
     if (segment.footer) {
       if (typeof segment.footer !== "string") await go(segment.footer, inLazy);
+    }
+    if (segment.titleRight) {
+      if (typeof segment.titleRight !== "string")
+        await go(segment.titleRight, inLazy);
     }
     if (segment.contents) {
       if (

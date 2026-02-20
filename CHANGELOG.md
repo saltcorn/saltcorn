@@ -2,6 +2,8 @@
 
 ## 1.6.0 - In development
 
+* Elements can now be added to the top right (left in RTL languages) of cards, if a title is given.
+
 * List views now have a "Tree Field" option, for self-join keys, to show the rows as a tree as an indented indicator in the first column. If a tree field is chosen, sorting by joinfields and aggregations is disabled. 
 
 * Added Filipino, Romanian, Urdu and Korean languages
