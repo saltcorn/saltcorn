@@ -2969,3 +2969,59 @@ describe("Table slug options", () => {
     ]);
   });
 });
+
+describe("Table recursive query", () => {
+  beforeAll(async () => {
+    const table = await Table.create("recur_projects");
+    await Field.create({
+      table,
+      name: "name",
+      label: "Name",
+      type: "String",
+    });
+    await Field.create({
+      table,
+      name: "parent",
+      label: "Parent",
+      type: "Key to recur_projects",
+    });
+    await Field.create({
+      table,
+      name: "assignee",
+      label: "Assignee",
+      type: "Key to users",
+    });
+    const homework = await table.insertRow({ name: "Homework" });
+    const french = await table.insertRow({ name: "French", parent: homework });
+    const biology = await table.insertRow({
+      name: "Biology",
+      parent: homework,
+    });
+    await table.insertRow({
+      name: "Learn about the birds",
+      parent: biology,
+    });
+    await table.insertRow({
+      name: "Verb conjugations",
+      parent: french,
+    });
+    await table.insertRow({
+      name: "Literature",
+      parent: french,
+    });
+    await table.insertRow({
+      name: "Learn about the bees",
+      parent: biology,
+    });
+  });
+  it("getRows tree", async () => {
+    const table = Table.findOne("recur_projects");
+    assertIsSet(table);
+    const rows = await table.getRows(
+      {},
+      { tree_field: "parent", orderBy: "id" }
+    );
+    expect(rows.length).toEqual(7);
+    expect(rows[2].name).toBe("Learn about the bees")
+  });
+});
