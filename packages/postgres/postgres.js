@@ -111,8 +111,8 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
     sql = `WITH RECURSIVE _tree AS (
       SELECT ${
         selectopts.fields ? selectopts.fields.join(", ") : `*`
-      }, 0 as _level, 
-      ${selectopts.orderBy ? `ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy)}"${selectopts.orderDesc ? " DESC" : ""})] as _sort_path` : ""} 
+      }, 0 as _level
+      ${selectopts.orderBy ? `, ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy)}"${selectopts.orderDesc ? " DESC" : ""})] as _sort_path` : ""} 
       FROM "${schema}"."${sqlsanitize(tbl)}" 
       WHERE "${selectopts.tree_field}" IS NULL
 
@@ -122,15 +122,17 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
       selectopts.fields
         ? selectopts.fields.map((f) => `p."${f}"`).join(", ")
         : `p.*`
-    }, pt._level+1, 
-    ${selectopts.orderBy ? `pt._sort_path || row_number() OVER (PARTITION BY p."${selectopts.tree_field}" ORDER BY p."${selectopts.orderBy}"${selectopts.orderDesc ? " DESC" : ""})` : ""} 
+    }, pt._level+1
+    ${selectopts.orderBy ? `, pt._sort_path || row_number() OVER (PARTITION BY p."${selectopts.tree_field}" ORDER BY p."${selectopts.orderBy}"${selectopts.orderDesc ? " DESC" : ""})` : ""} 
     FROM "${schema}"."${sqlsanitize(tbl)}" p
     JOIN _tree pt ON p."${selectopts.tree_field}" = pt.id      
     )
     SELECT ${
       selectopts.fields ? selectopts.fields.join(", ") : `*`
     }, _level FROM _tree ${where} ${mkSelectOptions(
-      { ...selectopts, orderBy: "_sort_path", orderDesc: false },
+      selectopts.orderBy
+        ? { ...selectopts, orderBy: "_sort_path", orderDesc: false }
+        : selectopts,
       values,
       false
     )}`;
