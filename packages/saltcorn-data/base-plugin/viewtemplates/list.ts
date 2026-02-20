@@ -107,9 +107,15 @@ const create_db_view = async (context: GenObj, req: Req) => {
   await db.query(`create or replace view ${sql_view_name} as ${sql};`);
 };
 
-const on_delete = async (table_id: number | string, viewname: string, { default_state }: GenObj) => {
+const on_delete = async (
+  table_id: number | string,
+  viewname: string,
+  { default_state }: GenObj
+) => {
   if (!db.isSQLite) {
-    const sqlviews = (await get_existing_views()).map((v: GenObj) => v.table_name);
+    const sqlviews = (await get_existing_views()).map(
+      (v: GenObj) => v.table_name
+    );
     const vnm = db.sqlsanitize(viewname);
     const schema = db.getTenantSchemaPrefix();
     if (sqlviews.includes(vnm))
@@ -140,9 +146,9 @@ const configuration_workflow = (req: Req) =>
           const boolfields = fields.filter(
             (f: GenObj) => f.type && f.type.name === "Bool"
           );
-          const stateActions = (Object.entries(getState().actions) as [string, GenObj][]).filter(
-            ([k, v]) => !v.disableInBuilder && !v.disableIf?.()
-          );
+          const stateActions = (
+            Object.entries(getState().actions) as [string, GenObj][]
+          ).filter(([k, v]) => !v.disableInBuilder && !v.disableIf?.());
           const builtInActions = [
             "Delete",
             "GoBack",
@@ -237,7 +243,9 @@ const configuration_workflow = (req: Req) =>
           const agg_fieldview_options: GenObj = {};
 
           Object.values(getState().types).forEach((t: any) => {
-            agg_fieldview_options[t.name] = (Object.entries(t.fieldviews) as [string, GenObj][])
+            agg_fieldview_options[t.name] = (
+              Object.entries(t.fieldviews) as [string, GenObj][]
+            )
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
@@ -378,7 +386,9 @@ const configuration_workflow = (req: Req) =>
               viewrow.name !== context.viewname &&
               state_fields.every((sf: GenObj) => !sf.required)
           );
-          const create_view_opts = create_views.map((v: GenObj) => v.select_option);
+          const create_view_opts = create_views.map(
+            (v: GenObj) => v.select_option
+          );
           return new Form({
             blurb: req.__("Specify how to create a new row"),
             fields: [
@@ -412,7 +422,9 @@ const configuration_workflow = (req: Req) =>
                 attributes: {
                   options: "Link,Embedded,Popup",
                 },
-                showIf: { view_to_create: create_view_opts.map((o: GenObj) => o.name) },
+                showIf: {
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
               },
               {
                 name: "create_view_showif",
@@ -428,7 +440,9 @@ const configuration_workflow = (req: Req) =>
                 sublabel: req.__(
                   "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
                 ),
-                showIf: { view_to_create: create_view_opts.map((o: GenObj) => o.name) },
+                showIf: {
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
               },
               {
                 name: "create_view_label",
@@ -597,6 +611,9 @@ const configuration_workflow = (req: Req) =>
           const joinFields = context.columns?.filter(
             (jf: GenObj) => jf.type === "JoinField"
           );
+          const tree_options = table_fields
+            .filter((f) => f.reftable_name === table.name)
+            .map((f: GenObj) => f.name);
           formfields.push({
             name: "_order_field",
             label: req.__("Default order by"),
@@ -606,7 +623,9 @@ const configuration_workflow = (req: Req) =>
               asideNext: true,
               options: [
                 ...table_fields.map((f: GenObj) => f.name),
-                ...(joinFields ? joinFields.map((jf: GenObj) => jf.join_field) : []),
+                ...(joinFields
+                  ? joinFields.map((jf: GenObj) => jf.join_field)
+                  : []),
               ],
             },
           });
@@ -629,6 +648,15 @@ const configuration_workflow = (req: Req) =>
             },
             sublabel: "Formula for the group headings",
             class: "validate-expression",
+          });
+          formfields.push({
+            name: "_tree_field",
+            label: req.__("Tree field"),
+            sublabel: req.__("A field that is Key to own table"),
+            type: "String",
+            attributes: {
+              options: tree_options,
+            },
           });
           formfields.push({
             name: "include_fml",
@@ -899,7 +927,11 @@ const configuration_workflow = (req: Req) =>
     ],
   });
 
-const get_state_fields = async (table_id: number | string, viewname: string, { columns }: GenObj) => {
+const get_state_fields = async (
+  table_id: number | string,
+  viewname: string,
+  { columns }: GenObj
+) => {
   const table = Table.findOne(table_id);
   if (!table) return [];
   const table_fields = table.fields;
@@ -907,7 +939,9 @@ const get_state_fields = async (table_id: number | string, viewname: string, { c
   state_fields.push({ name: "_fts", label: "Anywhere", input_type: "text" });
   (columns || []).forEach((column: GenObj) => {
     if (column.type === "Field") {
-      const tbl_fld = table_fields.find((f: GenObj) => f.name == column.field_name);
+      const tbl_fld = table_fields.find(
+        (f: GenObj) => f.name == column.field_name
+      );
       if (tbl_fld && !tbl_fld.primary_key) {
         const f = new Field(tbl_fld);
         f.required = false;
@@ -1063,7 +1097,8 @@ const run = async (
         `View ${viewname} incorrectly configured: cannot find view ${segment.view}`
       );
     view.check_viewtemplate();
-    let stateMany: GenObj | undefined, getRowState: ((row: GenObj) => GenObj) | undefined;
+    let stateMany: GenObj | undefined,
+      getRowState: ((row: GenObj) => GenObj) | undefined;
     const get_extra_state = (row: GenObj) =>
       segment.extra_state_fml
         ? eval_expression(
@@ -1721,6 +1756,7 @@ export = {
       _rows_per_page,
       _full_page_count,
       _group_by,
+      _tree_field,
       _hide_pagination,
       _row_click_url_formula,
       _row_click_url_type,
@@ -1846,7 +1882,9 @@ export = {
         if (relRows.length > 0) {
           const mergeObj = !db.isSQLite
             ? {
-                [table.pk_name]: { not: { in: relRows.map((r: GenObj) => r[relfld]) } },
+                [table.pk_name]: {
+                  not: { in: relRows.map((r: GenObj) => r[relfld]) },
+                },
               }
             : {
                 not: { or: relRows.map((r: GenObj) => ({ id: r[relfld] })) },

@@ -1808,5 +1808,7 @@
 	"Apply tag to selected": "Apply tag to selected",
 	"Apply tag": "Apply tag",
 	"Keyboard shortcut": "Keyboard shortcut",
-	"e.g. <code>Alt+k</code> or <code>Ctrl+Alt+k</code> or <code>Ctrl+Space</code>. Modifier keys: <code>Alt</code>, <code>Ctrl</code>, <code>Shift</code>, <code>Meta</code>": "e.g. <code>Alt+k</code> or <code>Ctrl+Alt+k</code> or <code>Ctrl+Space</code>. Modifier keys: <code>Alt</code>, <code>Ctrl</code>, <code>Shift</code>, <code>Meta</code>"
+	"e.g. <code>Alt+k</code> or <code>Ctrl+Alt+k</code> or <code>Ctrl+Space</code>. Modifier keys: <code>Alt</code>, <code>Ctrl</code>, <code>Shift</code>, <code>Meta</code>": "e.g. <code>Alt+k</code> or <code>Ctrl+Alt+k</code> or <code>Ctrl+Space</code>. Modifier keys: <code>Alt</code>, <code>Ctrl</code>, <code>Shift</code>, <code>Meta</code>",
+	"Tree field": "Tree field",
+	"A field that is Key to own table": "A field that is Key to own table"
 }

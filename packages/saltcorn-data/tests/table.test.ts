@@ -3004,6 +3004,7 @@ describe("Table recursive query", () => {
     await table.insertRow({
       name: "Verb conjugations",
       parent: french,
+      assignee: 2,
     });
     await table.insertRow({
       name: "Literature",
@@ -3012,6 +3013,7 @@ describe("Table recursive query", () => {
     await table.insertRow({
       name: "Learn about the bees",
       parent: biology,
+      assignee: 1,
     });
   });
   it("getRows tree sort by id", async () => {
