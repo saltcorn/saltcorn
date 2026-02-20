@@ -62,6 +62,7 @@ export type SelectOptions = {
   has_sync_info?: boolean;
   description?: string;
   recursive?: boolean; // for File.find()
+  tree_field?: string;
   client?: DatabaseClient;
   schema?: string;
 };
