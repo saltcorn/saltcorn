@@ -3022,18 +3022,19 @@ describe("Table recursive query", () => {
       { tree_field: "parent", orderBy: "id" }
     );
     expect(rows.length).toEqual(7);
+    //console.log(rows.map((r) => r.name));
     expect(rows[2].name).toBe("Verb conjugations");
   });
   it("getRows tree sort by name", async () => {
     const table = Table.findOne("recur_projects");
     assertIsSet(table);
-    db.set_sql_logging(true);
+    //db.set_sql_logging(true);
     const rows = await table.getRows(
       {},
       { tree_field: "parent", orderBy: "name" }
     );
     expect(rows.length).toEqual(7);
-    console.log(rows.map((r) => r.name));
+    //console.log(rows.map((r) => r.name));
     expect(rows[2].name).toBe("Learn about the bees");
   });
 });
