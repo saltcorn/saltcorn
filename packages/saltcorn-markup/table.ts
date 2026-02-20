@@ -176,6 +176,7 @@ namespace TableExports {
     responsiveCollapse?: boolean;
     collapse_breakpoint_px?: number;
     row_color_formula?: string;
+    level_indicator?: boolean;
   };
 }
 type HeadersParams = TableExports.HeadersParams;
@@ -255,7 +256,7 @@ const mkTable = (
         ...mkClickHandler(opts, v),
         ...(rowColor ? { style: { backgroundColor: rowColor } } : {}),
       },
-      hdrs.map((hdr: HeadersParams) =>
+      hdrs.map((hdr: HeadersParams, hdr_ix) =>
         td(
           {
             style: {
@@ -264,6 +265,9 @@ const mkTable = (
             },
             ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
           },
+          hdr_ix == 0 && opts.level_indicator && v._level
+            ? "&nbsp;&nbsp;".repeat(v._level)+"└&nbsp;&nbsp;"
+            : null,
           cellWrapper(
             typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
           )

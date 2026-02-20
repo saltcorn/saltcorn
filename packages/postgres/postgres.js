@@ -111,7 +111,7 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
     sql = `WITH RECURSIVE _tree AS (
       SELECT ${
         selectopts.fields ? selectopts.fields.join(", ") : `*`
-      }, 1 as _level, 
+      }, 0 as _level, 
       ${selectopts.orderBy ? `ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy)}"${selectopts.orderDesc ? " DESC":""})] as _sort_path` : ""} 
       FROM "${schema}"."${sqlsanitize(tbl)}" 
       WHERE "${selectopts.tree_field}" IS NULL

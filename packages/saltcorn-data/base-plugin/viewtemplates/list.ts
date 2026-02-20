@@ -1338,6 +1338,10 @@ const run = async (
     page_opts.sticky_header = default_state?._sticky_header;
   }
 
+  if (default_state?._tree_field) {
+    page_opts.level_indicator = true;
+  }
+
   if (default_state?._responsive_collapse) {
     page_opts.responsiveCollapse = true;
     page_opts.collapse_breakpoint_px = default_state._collapse_breakpoint_px;
