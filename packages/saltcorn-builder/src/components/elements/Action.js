@@ -7,6 +7,7 @@
 
 import React, { Fragment, useContext, useEffect, useState } from "react";
 import { useNode } from "@craftjs/core";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import {
   BlockSetting,
@@ -94,6 +95,7 @@ export /**
  * @returns {div}
  */
 const ActionSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     name: node.data.props.name,
     action_row_variable: node.data.props.action_row_variable,
@@ -247,7 +249,7 @@ const ActionSettings = () => {
         <tbody>
           <tr>
             <td>
-              <label>Action</label>
+              <label>{t("Action")}</label>
             </td>
             <td>
               {options.inJestTestingMode ? null : (
@@ -267,12 +269,12 @@ const ActionSettings = () => {
           {name !== "Clear" && options.mode === "filter" ? (
             <tr>
               <td>
-                <label>Row variable</label>
+                <label>{t("Row variable")}</label>
               </td>
               <td>
                 <select
                   value={action_row_variable}
-                  className="form-control form-select"
+                  className="form-control form-select code-modal-form"
                   onChange={(e) => {
                     if (!e.target) return;
                     const value = e.target.value;
@@ -300,7 +302,7 @@ const ActionSettings = () => {
           {action_row_variable === "each_matching_row" ? (
             <tr>
               <td>
-                <label>Rows limit</label>
+                <label>{t("Rows limit")}</label>
               </td>
               <td>
                 <input
@@ -316,7 +318,7 @@ const ActionSettings = () => {
           {action_style !== "on_page_load" ? (
             <tr>
               <td colSpan="2">
-                <label>Label (leave blank for default)</label>
+                <label>{t("Label (leave blank for default)")}</label>
                 <OrFormula
                   nodekey="action_label"
                   {...{ setProp, isFormula, node }}
@@ -349,7 +351,7 @@ const ActionSettings = () => {
           checked={confirm}
           onChange={setAProp("confirm", { checked: true })}
         />
-        <label className="form-check-label">User confirmation?</label>
+        <label className="form-check-label">{t("User confirmation?")}</label>
       </div>
       <div className="form-check">
         <input
@@ -359,7 +361,7 @@ const ActionSettings = () => {
           checked={spinner}
           onChange={setAProp("spinner", { checked: true })}
         />
-        <label className="form-check-label">Spinner on click</label>
+        <label className="form-check-label">{t("Spinner on click")}</label>
       </div>
       <div className="form-check">
         <input
@@ -369,7 +371,7 @@ const ActionSettings = () => {
           checked={run_async}
           onChange={setAProp("run_async", { checked: true })}
         />
-        <label className="form-check-label">Run async</label>
+        <label className="form-check-label">{t("Run async")}</label>
       </div>
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />
@@ -383,12 +385,12 @@ const ActionSettings = () => {
             checked={is_submit_action}
             onChange={setAProp("is_submit_action", { checked: true })}
           />
-          <label className="form-check-label">This is the submit action</label>
+          <label className="form-check-label">{t("This is the submit action")}</label>
         </div>
       ) : null}
       {name === "Multi-step action" ? (
         <Fragment>
-          <label>Steps</label>
+          <label>{t("Steps")}</label>
 
           <ArrayManager
             node={node}
@@ -402,7 +404,7 @@ const ActionSettings = () => {
             ]}
           ></ArrayManager>
 
-          <label>Action</label>
+          <label>{t("Action")}</label>
           {options.inJestTestingMode ? null : (
             <Select
               options={multiStepActionOptions}
@@ -417,7 +419,7 @@ const ActionSettings = () => {
           )}
           {options.mode !== "page" ? (
             <Fragment>
-              <label>Only if... (formula)</label>
+              <label>{t("Only if... (formula)")}</label>
               <input
                 type="text"
                 className="form-control text-to-display"
@@ -436,7 +438,7 @@ const ActionSettings = () => {
           ) : null}
           {stepCfgFields ? (
             <Fragment>
-              Step configuration:
+              {t("Step configuration:")}
               <ConfigForm
                 fields={stepCfgFields}
                 configuration={
@@ -458,13 +460,13 @@ const ActionSettings = () => {
         <Fragment>
           {name === "run_js_code" && runJsCodeModalOnly ? (
             <div className="builder-config-field" data-field-name="code">
-              <label>Code</label>
+              <label>{t("Code")}</label>
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
                 onClick={() => setCodeModalOpen(true)}
               >
-                Open Code Popup
+                {t("Open Code Popup")}
               </button>
             </div>
           ) : null}
@@ -475,16 +477,17 @@ const ActionSettings = () => {
                 configuration={configuration}
                 setProp={setProp}
                 node={node}
+                openPopup={() => setCodeModalOpen(true)}
               />
-              <div className="builder-config-field mt-2" data-field-name="code-modal-trigger">
+              {/* <div className="builder-config-field mt-2" data-field-name="code-modal-trigger">
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm"
                   onClick={() => setCodeModalOpen(true)}
                 >
-                  Open Code Popup
+                  {t("Open Code Popup")}
                 </button>
-              </div>
+              </div> */}
               <ConfigForm
                 fields={cfgFieldsForForm}
                 configuration={configuration}
@@ -524,10 +527,10 @@ const ActionSettings = () => {
                     style={{ zIndex: 1060 }}
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="modal-content">
+                    <div className="modal-content code-modal">
                       <div className="modal-header">
                         <h5 className="modal-title" id="codeModalLabel">
-                          Code
+                          {t("Code")}
                         </h5>
                         <button
                           type="button"
@@ -547,6 +550,7 @@ const ActionSettings = () => {
                               prop.configuration.code = code;
                             })
                           }
+                          isModalEditor
                         />
                       </div>
                       <div className="modal-footer">
@@ -555,7 +559,7 @@ const ActionSettings = () => {
                           className="btn btn-secondary"
                           onClick={() => setCodeModalOpen(false)}
                         >
-                          Close
+                          {t("Close")}
                         </button>
                       </div>
                     </div>
@@ -566,7 +570,7 @@ const ActionSettings = () => {
       ) : null}
       {cfg_link ? (
         <a className="d-block mt-2" target="_blank" href={cfg_link}>
-          Configure this action
+          {t("Configure this action")}
         </a>
       ) : null}
     </div>

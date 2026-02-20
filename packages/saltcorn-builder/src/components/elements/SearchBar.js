@@ -4,8 +4,10 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useState } from "react";
-import { Element, useNode } from "@craftjs/core";
+import React, { Fragment, useState, useEffect, useContext } from "react";
+import useTranslation from "../../hooks/useTranslation";
+import optionsCtx from "../context";
+import { useNode } from "@craftjs/core";
 import { Column } from "./Column";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
@@ -22,6 +24,7 @@ export /**
  * @subcategory components
  */
 const SearchBar = ({ has_dropdown, children, show_badges }) => {
+  const { t } = useTranslation();
   const {
     selected,
     connectors: { connect, drag },
@@ -47,7 +50,7 @@ const SearchBar = ({ has_dropdown, children, show_badges }) => {
       <input
         type="text"
         className="form-control bg-light"
-        placeholder="Search..."
+        placeholder={t("Search...")}
         readOnly={true}
       />
 
@@ -85,6 +88,7 @@ export /**
  * @subcategory components
  */
 const SearchBarSettings = () => {
+  const { t } = useTranslation();
   const {
     actions: { setProp },
     has_dropdown,
@@ -107,7 +111,7 @@ const SearchBarSettings = () => {
           checked={has_dropdown}
           onChange={setAProp("has_dropdown", { checked: true })}
         />
-        <label className="form-check-label">Has Dropdown</label>
+        <label className="form-check-label">{t("Has Dropdown")}</label>
       </div>
       <div className="form-check">
         <input
@@ -117,7 +121,7 @@ const SearchBarSettings = () => {
           checked={show_badges}
           onChange={setAProp("show_badges", { checked: true })}
         />
-        <label className="form-check-label">Show current state badges</label>
+        <label className="form-check-label">{t("Show current state badges")}</label>
       </div>
       <div className="form-check">
         <input
@@ -127,7 +131,7 @@ const SearchBarSettings = () => {
           checked={autofocus}
           onChange={setAProp("autofocus", { checked: true })}
         />
-        <label className="form-check-label">Autofocus</label>
+        <label className="form-check-label">{t("Autofocus")}</label>
       </div>
     </div>
   );

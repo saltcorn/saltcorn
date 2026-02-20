@@ -4,8 +4,9 @@
  * @subcategory components / elements
  */
 
-import React, { useContext, Fragment } from "react";
+import React, { Fragment, useState, useContext, useEffect } from "react";
 import { useNode } from "@craftjs/core";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, setAPropGen, buildOptions } from "./utils";
 
@@ -32,6 +33,7 @@ const ToggleFilter = ({
   size,
   style,
 }) => {
+  const { t } = useTranslation();
   const {
     selected,
     connectors: { connect, drag },
@@ -43,7 +45,7 @@ const ToggleFilter = ({
       ref={(dom) => connect(drag(dom))}
     >
       <button className={`btn btn-outline-${style || "primary"} ${size}`}>
-        {label || value || preset_value || "Set label"}
+        {label || value || preset_value || t("Set label")}
       </button>
     </span>
   );
@@ -56,6 +58,7 @@ export /**
  * @subcategory components
  */
 const ToggleFilterSettings = () => {
+  const { t } = useTranslation();
   const {
     actions: { setProp },
     name,
@@ -85,7 +88,7 @@ const ToggleFilterSettings = () => {
       <tbody>
         <tr>
           <td>
-            <label>Field</label>
+            <label>{t("Field")}</label>
           </td>
           <td>
             <select
@@ -115,7 +118,7 @@ const ToggleFilterSettings = () => {
         </tr>
         <tr>
           <td>
-            <label>Value</label>
+            <label>{t("Value")}</label>
           </td>
           <td>
             {isBool ? (
@@ -124,9 +127,9 @@ const ToggleFilterSettings = () => {
                 className="w-100 form-select"
                 onChange={setAProp("value")}
               >
-                <option value="on">True</option>
-                <option value="off">False</option>
-                <option value="?">Both</option>
+                <option value="on">{t("True")}</option>
+                <option value="off">{t("False")}</option>
+                <option value="?">{t("Both")}</option>
               </select>
             ) : (
               <input
@@ -140,7 +143,7 @@ const ToggleFilterSettings = () => {
         {preset_options && preset_options.length > 0 ? (
           <tr>
             <td>
-              <label>Preset</label>
+              <label>{t("Preset")}</label>
             </td>
             <td>
               <select
@@ -160,7 +163,7 @@ const ToggleFilterSettings = () => {
         ) : null}
         <tr>
           <td>
-            <label>Label</label>
+            <label>{t("Label")}</label>
           </td>
           <td>
             <input
@@ -172,7 +175,7 @@ const ToggleFilterSettings = () => {
         </tr>
         <tr>
           <td>
-            <label>Button size</label>
+            <label>{t("Button size")}</label>
           </td>
           <td>
             <select
@@ -180,18 +183,18 @@ const ToggleFilterSettings = () => {
               value={size}
               onChange={setAProp("size")}
             >
-              <option value="">Standard</option>
-              <option value="btn-lg">Large</option>
-              <option value="btn-sm">Small</option>
-              <option value="btn-block">Block</option>
-              <option value="btn-block btn-lg">Large block</option>
-              <option value="btn-block btn-sm">Small block</option>
+              <option value="">{t("Standard")}</option>
+              <option value="btn-lg">{t("Large")}</option>
+              <option value="btn-sm">{t("Small")}</option>
+              <option value="btn-block">{t("Block")}</option>
+              <option value="btn-block btn-lg">{t("Large block")}</option>
+              <option value="btn-block btn-sm">{t("Small block")}</option>
             </select>
           </td>
         </tr>
         <tr>
           <td>
-            <label>Button style</label>
+            <label>{t("Button style")}</label>
           </td>
           <td>
             <select
@@ -201,14 +204,14 @@ const ToggleFilterSettings = () => {
             >
               {buildOptions(
                 [
-                  "primary",
-                  "secondary",
-                  "success",
-                  "danger",
-                  "warning",
-                  "info",
-                  "light",
-                  "dark",
+                  t("primary"),
+                  t("secondary"),
+                  t("success"),
+                  t("danger"),
+                  t("warning"),
+                  t("info"),
+                  t("light"),
+                  t("dark"),
                 ],
                 { valAttr: true, capitalize: true }
               )}

@@ -7,6 +7,7 @@
 import React, { Fragment, useState, useContext, useEffect } from "react";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import { setAPropGen, SettingsFromFields } from "./utils";
 
@@ -67,60 +68,76 @@ const Table = ({
   );
 };
 
-const fields = [
-  {
-    label: "Rows",
-    name: "rows",
-    type: "Integer",
-    attributes: { min: 0 },
-  },
-  {
-    label: "Columns",
-    name: "columns",
-    type: "Integer",
-    attributes: { min: 0 },
-  },
-  {
-    name: "customClass",
-    label: "Custom class",
-    type: "String",
-  },
-  {
-    label: "Bootstrap style",
-    name: "bs_style",
-    type: "Bool",
-  },
-  {
-    label: "Small",
-    name: "bs_small",
-    type: "Bool",
-    showIf: { bs_style: true },
-  },
-  {
-    label: "Striped",
-    name: "bs_striped",
-    type: "Bool",
-    showIf: { bs_style: true },
-  },
-  {
-    label: "Bordered",
-    name: "bs_bordered",
-    type: "Bool",
-    showIf: { bs_style: true },
-  },
-  {
-    label: "Borderless",
-    name: "bs_borderless",
-    type: "Bool",
-    showIf: { bs_style: true },
-  },
-  {
-    label: "Auto width",
-    name: "bs_wauto",
-    type: "Bool",
-    showIf: { bs_style: true },
-  },
-];
+const TableSettings = () => {
+  const { t } = useTranslation();
+  const fields = [
+    {
+      label: t("Rows"),
+      name: "rows",
+      type: "Integer",
+      attributes: { min: 0 },
+    },
+    {
+      label: t("Columns"),
+      name: "columns",
+      type: "Integer",
+      attributes: { min: 0 },
+    },
+    {
+      name: "customClass",
+      label: t("Custom class"),
+      type: "String",
+    },
+    {
+      label: t("Bootstrap style"),
+      name: "bs_style",
+      type: "Bool",
+    },
+    {
+      label: t("Small"),
+      name: "bs_small",
+      type: "Bool",
+      showIf: { bs_style: true },
+    },
+    {
+      label: t("Striped"),
+      name: "bs_striped",
+      type: "Bool",
+      showIf: { bs_style: true },
+    },
+    {
+      label: t("Bordered"),
+      name: "bs_bordered",
+      type: "Bool",
+      showIf: { bs_style: true },
+    },
+    {
+      label: t("Borderless"),
+      name: "bs_borderless",
+      type: "Bool",
+      showIf: { bs_style: true },
+    },
+    {
+      label: t("Auto width"),
+      name: "bs_wauto",
+      type: "Bool",
+      showIf: { bs_style: true },
+    },
+  ];
+  return (
+    <SettingsFromFields
+      fields={fields}
+      onChange={(fnm, v, setProp) => {
+        if (fnm === "rows")
+          setProp((prop) => {
+            ntimes(v, (i) => {
+              if (!prop.contents[i]) prop.contents[i] = [];
+            });
+          });
+      }}
+    />
+  );
+};
 
 /**
  * @type {object}
@@ -128,16 +145,6 @@ const fields = [
 Table.craft = {
   displayName: "Table",
   related: {
-    settings: SettingsFromFields(fields, {
-      onChange(fnm, v, setProp) {
-        if (fnm === "rows")
-          setProp((prop) => {
-            ntimes(v, (i) => {
-              if (!prop.contents[i]) prop.contents[i] = [];
-            });
-          });
-      },
-    }),
-    fields,
+    settings: TableSettings,
   },
 };

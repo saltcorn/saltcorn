@@ -555,6 +555,16 @@ div.componets-and-library-accordion {
   color: #f8f9fa !important;
 }
 
+.card .right-section {
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-right {
+  min-width: 100px;
+}
+
 .builder-dark-panel .toolbox-card .card-body,
 .builder-dark-panel .componets-and-library-accordion .card-body {
   background-color: #212529 !important;
@@ -738,4 +748,12 @@ body.builder-dark .builder-select__menu-notice,
 .builder-layer-node.selected-node {
   outline: 1px dashed #2680eb; /* Example: blue dashed outline */
   outline-offset: -2px;
+}
+
+.code-modal {
+  min-height: 80vh;
+}
+
+.code-modal-form {
+  min-height: 70vh;
 }

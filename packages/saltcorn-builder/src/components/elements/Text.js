@@ -27,6 +27,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import fas from "@fortawesome/free-solid-svg-icons";
 import far from "@fortawesome/free-regular-svg-icons";
 import { SingleLineEditor } from "./MonacoEditor";
+import useTranslation from "../../hooks/useTranslation";
+
 const ckConfig = {
   toolbarGroups: [
     { name: "document", groups: ["mode", "document", "doctools"] },
@@ -155,6 +157,7 @@ export /**
  * @subcategory components
  */
 const TextSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     id: node.id,
     text: node.data.props.text,
@@ -199,10 +202,10 @@ const TextSettings = () => {
               setProp((prop) => (prop.isFormula.text = checked));
             }}
           />
-          <label className="form-check-label">Formula?</label>
+          <label className="form-check-label">{t("Formula?")}</label>
         </div>
       )}
-      <label>Text to display</label>
+     <label>{t("Text to display")}</label>
       {allowFormula && isFormula.text ? (
         <SingleLineEditor setProp={setProp} value={text} propKey="text" />
       ) : (
@@ -225,7 +228,7 @@ const TextSettings = () => {
       )}
       {mode === "edit" && (
         <Fragment>
-          <label>Label for Field</label>
+          <label>{t("Label for Field")}</label>
           <select
             value={labelFor}
             onChange={setAProp("labelFor")}
@@ -245,7 +248,7 @@ const TextSettings = () => {
           <TextStyleRow textStyle={textStyle} setProp={setProp} />
           <tr>
             <td>
-              <label>Icon</label>
+              <label>{t("Icon")}</label>
             </td>
             <td>
               <FontIconPicker
@@ -260,7 +263,7 @@ const TextSettings = () => {
           <SettingsRow
             field={{
               name: "font",
-              label: "Font family",
+              label: t("Font family"),
               type: "Font",
             }}
             node={node}
@@ -269,7 +272,7 @@ const TextSettings = () => {
           <SettingsRow
             field={{
               name: "font-size",
-              label: "Font size",
+              label: t("Font size"),
               type: "DimUnits",
             }}
             node={node}
@@ -279,7 +282,7 @@ const TextSettings = () => {
           <SettingsRow
             field={{
               name: "font-weight",
-              label: "Weight",
+              label: t("Weight"),
               type: "Integer",
               min: 100,
               max: 900,
@@ -292,7 +295,7 @@ const TextSettings = () => {
           <SettingsRow
             field={{
               name: "line-height",
-              label: "Line height",
+              label: t("Line height"),
               type: "DimUnits",
             }}
             node={node}
@@ -300,7 +303,7 @@ const TextSettings = () => {
             isStyle={true}
           />
           <tr>
-            <td>Class</td>
+            <td>{t("Class")}</td>
             <td>
               <input
                 type="text"
@@ -314,7 +317,7 @@ const TextSettings = () => {
           <SettingsRow
             field={{
               name: "color",
-              label: "Color",
+              label: t("Color"),
               type: "Color",
             }}
             node={node}

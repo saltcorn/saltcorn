@@ -5,13 +5,8 @@
  */
 /* globals validate_expression_elem */
 
-import React, {
-  useContext,
-  useState,
-  useRef,
-  useEffect,
-  Fragment,
-} from "react";
+import React, { Fragment, useState, useContext, useEffect, useRef } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import {
@@ -60,6 +55,7 @@ export /**
  * @namespace
  */
 const AggregationSettings = () => {
+  const { t } = useTranslation();
   const {
     actions: { setProp },
     agg_relation,
@@ -133,7 +129,7 @@ const AggregationSettings = () => {
           {options.mode === "filter" ? null : (
             <tr>
               <td>
-                <label>Relation</label>
+                <label>{t("Relation")}</label>
               </td>
               <td>
                 <select
@@ -161,7 +157,7 @@ const AggregationSettings = () => {
           <tr>
             <td>
               <label>
-                {options.mode === "filter" ? "Field" : "Child table field"}
+                {options.mode === "filter" ? t("Field") : t("Child table field")}
               </label>
             </td>
             <td>
@@ -180,7 +176,7 @@ const AggregationSettings = () => {
           </tr>
           <tr>
             <td>
-              <label>Statistic</label>
+              <label>{t("Statistic")}</label>
             </td>
             <td>
               <select
@@ -191,34 +187,34 @@ const AggregationSettings = () => {
               >
                 {buildOptions(
                   [
-                    "Count",
-                    "CountUnique",
-                    "Avg",
-                    "Sum",
-                    "Max",
-                    "Min",
-                    "Array_Agg",
+                    t("Count"),
+                    t("CountUnique"),
+                    t("Avg"),
+                    t("Sum"),
+                    t("Max"),
+                    t("Min"),
+                    t("Array_Agg"),
                   ],
                   { valAttr: true }
                 )}
                 {targetFieldType === "Bool" ? (
-                  <option value={`Percent true`}>Percent true</option>
+                  <option value={`Percent true`}>{t("Percent true")}</option>
                 ) : null}
                 {targetFieldType === "Bool" ? (
-                  <option value={`Percent false`}>Percent false</option>
+                  <option value={`Percent false`}>{t("Percent false")}</option>
                 ) : null}
                 {(options.agg_field_opts[agg_relation] || [])
                   .filter((f) => f.ftype === "Date")
                   .map((f, ix) => (
                     <option key={ix} value={`Latest ${f.name}`}>
-                      Latest {f.name}
+                      {t("Latest")} {f.name}
                     </option>
                   ))}
                 {(options.agg_field_opts[agg_relation] || [])
                   .filter((f) => f.ftype === "Date")
                   .map((f, ix) => (
                     <option key={ix} value={`Earliest ${f.name}`}>
-                      Earliest {f.name}
+                      {t("Earliest")} {f.name}
                     </option>
                   ))}
               </select>
@@ -227,7 +223,7 @@ const AggregationSettings = () => {
           <tr>
             <td>
               <label>
-                Where
+                {t("Where")}
                 <HelpTopicLink
                   topic="Aggregation where formula"
                   table_name={options.tableName}
@@ -252,7 +248,7 @@ const AggregationSettings = () => {
           {fvs && (
             <tr>
               <td>
-                <label>Field view</label>
+                <label>{t("Field view")}</label>
               </td>
 
               <td>

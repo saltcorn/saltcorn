@@ -8,6 +8,7 @@ import React, { useContext, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
+import useTranslation from "../../hooks/useTranslation";
 import { BoxModelEditor } from "./BoxModelEditor";
 
 import {
@@ -38,6 +39,7 @@ const Image = ({ fileid, block, srctype, url, alt, style, customClass }) => {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const { t } = useTranslation();
   const theurl =
     srctype === "File"
       ? /^(?:[a-z]+:)?\/\//i.test(fileid)
@@ -53,7 +55,7 @@ const Image = ({ fileid, block, srctype, url, alt, style, customClass }) => {
       ref={(dom) => connect(drag(dom))}
       style={reactifyStyles(style || {})}
     >
-      No images Available
+      {t("No images Available")}
     </span>
   ) : (
     <img
@@ -76,6 +78,7 @@ export /**
  * @subcategory components
  */
 const ImageSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     fileid: node.data.props.fileid,
     field: node.data.props.field,
@@ -147,23 +150,23 @@ const ImageSettings = () => {
       value={currentSettingsTab}
       onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
     >
-      <table accordiontitle="Select image">
+      <table accordiontitle={t("Select image")}>
         <tbody>
           <tr>
             <td colSpan="2">
               <i>
-                <small>Preview shown in canvas is indicative</small>
+                <small>{t("Preview shown in canvas is indicative")}</small>
               </i>
             </td>
           </tr>
           <tr>
             <td>
-              <label>Source</label>
+              <label>{t("Source")}</label>
             </td>
             <td>
               <select
                 value={srctype}
-                className="form-control form-select"
+                 className="form-control form-select"
                 onChange={setAProp("srctype")}
               >
                 {buildOptions(sourceOpts)}
@@ -173,7 +176,7 @@ const ImageSettings = () => {
           {srctype === "File" && (
             <tr>
               <td>
-                <label>File</label>
+                <label>{t("File")}</label>
               </td>
               <td>
                 <select
@@ -199,7 +202,7 @@ const ImageSettings = () => {
           {srctype === "URL" && (
             <tr>
               <td>
-                <label>URL</label>
+                <label>{t("URL")}</label>
               </td>
               <td>
                 <OrFormula nodekey="url" {...{ setProp, isFormula, node }}>
@@ -217,7 +220,7 @@ const ImageSettings = () => {
           {srctype === "Upload" && (
             <tr>
               <td>
-                <label>File</label>
+                <label>{t("File")}</label>
               </td>
               <td>
                 <input
@@ -232,7 +235,7 @@ const ImageSettings = () => {
           {srctype === "Field" && (
             <tr>
               <td>
-                <label>Field</label>
+                <label>{t("Field")}</label>
               </td>
               <td>
                 <select
@@ -260,7 +263,7 @@ const ImageSettings = () => {
           {srctype !== "Upload" && (
             <tr>
               <td>
-                <label>Alt text</label>
+                <label>{t("Alt text")}</label>
               </td>
               <td>
                 <OrFormula nodekey="alt" {...{ setProp, isFormula, node }}>
@@ -277,7 +280,7 @@ const ImageSettings = () => {
           {srctype !== "Upload" && (
             <tr>
               <td style={{ verticalAlign: "top" }}>
-                <label>Responsive widths</label>
+                <label>{t("Responsive widths")}</label>
               </td>
 
               <td>
@@ -290,7 +293,9 @@ const ImageSettings = () => {
                 />
                 <small>
                   <i>
-                    List of widths to serve resized images, e.g. 300, 400, 600
+                    {t(
+                      "List of widths to serve resized images, e.g. 300, 400, 600"
+                    )}
                   </i>
                 </small>
               </td>
@@ -299,7 +304,7 @@ const ImageSettings = () => {
           <SettingsRow
             field={{
               name: "object-fit",
-              label: "Object fit",
+              label: t("Object fit"),
               type: "select",
               options: ["none", "fill", "contain", "cover", "scale-down"],
             }}
@@ -308,7 +313,7 @@ const ImageSettings = () => {
             isStyle={true}
           />
           <tr>
-            <td>Class</td>
+            <td>{t("Class")}</td>
             <td>
               <input
                 type="text"
@@ -328,7 +333,7 @@ const ImageSettings = () => {
           )}
         </tbody>
       </table>
-      <div accordiontitle="Box" className="w-100">
+      <div accordiontitle={t("Box")} className="w-100">
         <BoxModelEditor setProp={setProp} node={node} sizeWithStyle={true} />
       </div>
     </Accordion>

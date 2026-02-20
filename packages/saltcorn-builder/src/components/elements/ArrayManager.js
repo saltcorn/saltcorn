@@ -5,6 +5,7 @@
  */
 /* globals $, _sc_globalCsrf*/
 import React, { Fragment, useState, useEffect } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -56,6 +57,7 @@ export const ArrayManager = ({
   manageContents,
   initialAddProps,
 }) => {
+  const { t } = useTranslation();
   const { actions, query, connectors } = useEditor((state, query) => {
     return {};
   });
@@ -187,7 +189,7 @@ export const ArrayManager = ({
       <ConfigField
         field={{
           name: currentProp,
-          label: "Number of things",
+          label: t("Number of things"),
           type: "btn_select",
           options: ntimes(node[countProp], (i) => ({
             value: i,
@@ -201,7 +203,7 @@ export const ArrayManager = ({
       ></ConfigField>
       <div className="btn-group w-100" role="group">
         <button
-          title="Move left"
+          title={t("Move left")}
           type="button"
           style={{ width: "25%" }}
           className="btn btn-outline-secondary btn-sm"
@@ -211,7 +213,7 @@ export const ArrayManager = ({
           <FontAwesomeIcon icon={faAngleDoubleLeft} />
         </button>
         <button
-          title="Add"
+          title={t("Add")}
           type="button"
           style={{ width: "25%" }}
           className="btn btn-outline-secondary btn-sm"
@@ -220,7 +222,7 @@ export const ArrayManager = ({
           <FontAwesomeIcon icon={faPlus} />
         </button>
         <button
-          title="Delete"
+          title={t("Delete")}
           type="button"
           style={{ width: "25%" }}
           className="btn btn-outline-secondary btn-sm"
@@ -229,7 +231,7 @@ export const ArrayManager = ({
           <FontAwesomeIcon icon={faTrashAlt} />
         </button>
         <button
-          title="Move right"
+          title={t("Move right")}
           type="button"
           disabled={node[currentProp] === node[countProp] - 1}
           style={{ width: "25%" }}

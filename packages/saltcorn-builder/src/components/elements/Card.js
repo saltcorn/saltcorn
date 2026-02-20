@@ -18,6 +18,8 @@ import {
 import { Column } from "./Column";
 import { Element, useNode } from "@craftjs/core";
 import { BoxModelEditor } from "./BoxModelEditor";
+import useTranslation from "../../hooks/useTranslation";
+
 import {
   AlignTop,
   AlignMiddle,
@@ -68,6 +70,7 @@ const Card = ({
   gradStartColor,
   gradEndColor,
   gradDirection,
+  titleRight,
 }) => {
   const {
     selected,
@@ -109,12 +112,17 @@ const Card = ({
         <img src={`/files/serve/${bgFileId}`} className="card-img-top" />
       ) : null}
       {title && title.length > 0 && (
-        <div className="card-header">
+        <div className="card-header right-section">
           {isFormula?.title ? (
             <span className="font-monospace">={title}</span>
           ) : (
             title
           )}
+           <div className='title-right'>
+          <Element canvas id="titleRight" is={Column}>
+            {titleRight}
+          </Element>
+        </div>
         </div>
       )}
       <div
@@ -153,6 +161,7 @@ export /**
  * @namespace
  */
 const CardSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => {
     const ps = {
       currentSettingsTab: node.data.props.currentSettingsTab,
@@ -187,11 +196,11 @@ const CardSettings = () => {
       value={currentSettingsTab}
       onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
     >
-      <table className="w-100" accordiontitle="Card properties">
+      <table className="w-100" accordiontitle={t("Card properties")}>
         <tbody>
           <SettingsRow
             field={{
-              label: "Card title",
+              label: t("Card title"),
               name: "title",
               type: "String",
               canBeFormula: true,
@@ -201,7 +210,7 @@ const CardSettings = () => {
           />
           <SettingsRow
             field={{
-              label: "Click URL",
+              label: t("Click URL"),
               name: "url",
               type: "String",
               canBeFormula: true,
@@ -211,7 +220,7 @@ const CardSettings = () => {
           />
           <SettingsRow
             field={{
-              label: "Class",
+              label: t("Class"),
               name: "class",
               type: "String",
               canBeFormula: true,
@@ -220,18 +229,18 @@ const CardSettings = () => {
             setProp={setProp}
           />
           <SettingsRow
-            field={{ label: "Card footer", name: "hasFooter", type: "Bool" }}
+            field={{ label: t("Card footer"), name: "hasFooter", type: "Bool" }}
             node={node}
             setProp={setProp}
           />
           <SettingsRow
-            field={{ label: "Shadow", name: "shadow", type: "Bool" }}
+            field={{ label: t("Shadow"), name: "shadow", type: "Bool" }}
             node={node}
             setProp={setProp}
           />
           <SettingsRow
             field={{
-              label: "Save indicator",
+              label: t("Save indicator"),
               name: "titleAjaxIndicator",
               type: "Bool",
             }}
@@ -239,37 +248,37 @@ const CardSettings = () => {
             setProp={setProp}
           />
           <SettingsRow
-            field={{ label: "No padding", name: "noPadding", type: "Bool" }}
+            field={{ label: t("No padding"), name: "noPadding", type: "Bool" }}
             node={node}
             setProp={setProp}
           />
         </tbody>
       </table>
-      <div accordiontitle="Box" className="w-100">
+      <div accordiontitle={t("Box")} className="w-100">
         <BoxModelEditor setProp={setProp} node={node} sizeWithStyle={true} />
       </div>
-      <table className="w-100" accordiontitle="Contents">
+      <table className="w-100" accordiontitle={t("Contents")}>
         <tbody>
-          <SettingsSectionHeaderRow title="Align" />
+          <SettingsSectionHeaderRow title={t("Align")} />
           <SettingsRow
             field={{
               name: "hAlign",
-              label: "Horizontal",
+              label: t("Horizontal"),
               type: "btn_select",
               options: [
-                { value: "start", title: "Left", label: <AlignStart /> },
-                { value: "center", title: "Center", label: <AlignCenter /> },
-                { value: "end", title: "Right", label: <AlignEnd /> },
+                { value: "start", title: t("Left"), label: <AlignStart /> },
+                { value: "center", title: t("Center"), label: <AlignCenter /> },
+                { value: "end", title: t("Right"), label: <AlignEnd /> },
               ],
             }}
             node={node}
             setProp={setProp}
           />
-          <SettingsSectionHeaderRow title="Background" />
+          <SettingsSectionHeaderRow title={t("Background")} />
           <SettingsRow
             field={{
               name: "bgType",
-              label: "Type",
+              label: t("Type"),
               type: "btn_select",
               options: [
                 { value: "None", label: <SlashCircle /> },
@@ -295,7 +304,7 @@ const CardSettings = () => {
           {bgType === "Gradient" && (
             <Fragment>
               <tr>
-                <td>Start</td>
+                <td>{t("Start")}</td>
                 <td>
                   <OrFormula
                     nodekey="gradStartColor"
@@ -311,7 +320,7 @@ const CardSettings = () => {
                 </td>
               </tr>
               <tr>
-                <td>End</td>
+                <td>{t("End")}</td>
                 <td>
                   <OrFormula
                     nodekey="gradEndColor"
@@ -327,7 +336,7 @@ const CardSettings = () => {
                 </td>
               </tr>
               <tr>
-                <td>Direction (&deg;)</td>
+                <td>{t("Direction (&deg;)")}</td>
                 <td>
                   <OrFormula
                     nodekey="gradDirection"
@@ -349,7 +358,7 @@ const CardSettings = () => {
           {bgType === "Image" && (
             <tr>
               <td>
-                <label>File</label>
+                <label>{t("File")}</label>
               </td>
               <td>
                 <select
@@ -374,7 +383,7 @@ const CardSettings = () => {
           {bgType === "Image Field" && (
             <tr>
               <td>
-                <label>File field</label>
+                <label>{t("File field")}</label>
               </td>
               <td>
                 <select
@@ -402,7 +411,7 @@ const CardSettings = () => {
             <Fragment>
               <tr>
                 <td>
-                  <label>Location</label>
+                  <label>{t("Location")}</label>
                 </td>
 
                 <td>
@@ -411,9 +420,9 @@ const CardSettings = () => {
                     className="form-control-sm  form-select"
                     onChange={setAProp("imageLocation")}
                   >
-                    <option>Card</option>
-                    <option>Body</option>
-                    <option>Top</option>
+                    <option>{t("Card")}</option>
+                    <option>{t("Body")}</option>
+                    <option>{t("Top")}</option>
                   </select>
                 </td>
               </tr>
@@ -424,7 +433,7 @@ const CardSettings = () => {
               <Fragment>
                 <tr>
                   <td>
-                    <label>Size</label>
+                    <label>{t("Size")}</label>
                   </td>
 
                   <td>
@@ -441,7 +450,7 @@ const CardSettings = () => {
             )}
           {bgType === "Color" && (
             <tr>
-              <td>Color</td>
+              <td>{t("Color")}</td>
               <td>
                 <OrFormula nodekey="bgColor" {...{ setProp, isFormula, node }}>
                   <input
@@ -474,6 +483,7 @@ const fields = [
   { label: "Save indicator", name: "titleAjaxIndicator", type: "Bool" },
   { label: "No padding", name: "noPadding", type: "Bool" },
   { label: "Contents", name: "contents", type: "Nodes", nodeID: "cardbody" },
+  { label: "Title Right", name: "titleRight", type: "Nodes", nodeID: "titleRight" },
   { label: "Footer", name: "footer", type: "Nodes", nodeID: "cardfooter" },
   { name: "style", default: {} },
   { label: "Class", name: "class", type: "String", canBeFormula: true },
@@ -502,6 +512,7 @@ Card.craft = {
     style: {},
     contents: [],
     footer: [],
+    titleRight: [],
   },
   displayName: "Card",
   related: {

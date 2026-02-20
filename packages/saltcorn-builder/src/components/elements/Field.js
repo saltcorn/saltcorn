@@ -8,6 +8,7 @@ import React, { useContext, useEffect, useState, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
+import useTranslation from "../../hooks/useTranslation";
 import {
   blockProps,
   BlockOrInlineSetting,
@@ -87,6 +88,7 @@ export /**
  * @subcategory components
  */
 const FieldSettings = () => {
+  const { t } = useTranslation();
   const {
     actions: { setProp },
     name,
@@ -153,14 +155,14 @@ const FieldSettings = () => {
     <Fragment>
       <i>
         <small>
-          Previews shown in canvas are indicative based on random rows
+          {t("Previews shown in canvas are indicative based on random rows")}
         </small>
       </i>
       <table className="w-100">
         <tbody>
           <tr>
             <td>
-              <label>Field</label>
+              <label>{t("Field")}</label>
             </td>
             <td>
               <select
@@ -192,7 +194,7 @@ const FieldSettings = () => {
             <tr>
               <td>
                 <label>
-                  Field view
+                  {t("Field view")}
                   <HelpTopicLink
                     topic="Field views"
                     field_name={name}
@@ -241,7 +243,7 @@ const FieldSettings = () => {
                       }
                     }}
                   />
-                  <label className="form-check-label">Click to edit?</label>
+                  <label className="form-check-label">{t("Click to edit?")}</label>
                 </div>
               </td>
             </tr>
@@ -277,7 +279,7 @@ const FieldSettings = () => {
       ) : null}
       {options.mode === "edit" && options.triggerActions ? (
         <Fragment>
-          <label>On change action</label>
+          <label>{t("On change action")}</label>
           <select
             value={onchange_action}
             className="on-change-action form-control form-select"
@@ -289,7 +291,7 @@ const FieldSettings = () => {
               });
             }}
           >
-            <option value="">None</option>
+            <option value="">{t("None")}</option>
             {options.triggerActions.map((f, ix) => (
               <option key={ix} value={f}>
                 {f}
@@ -302,7 +304,7 @@ const FieldSettings = () => {
               target="_blank"
               href={`/actions/configure/${onchange_action}`}
             >
-              Configure this action
+              {t("Configure this action")}
             </a>
           ) : null}
         </Fragment>
