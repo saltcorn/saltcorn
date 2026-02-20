@@ -2882,7 +2882,9 @@ router.get(
     ];
     const withSyncInfo = await Table.find({ has_sync_info: true });
     const plugins = (await Plugin.find()).filter(
-      (plugin) => ["base", "sbadmin2"].indexOf(plugin.name) < 0
+      (plugin) =>
+        ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
+        !plugin.exclude_from_mobile()
     );
     const pluginsReadyForMobile = plugins
       .filter((plugin) => plugin.ready_for_mobile())
