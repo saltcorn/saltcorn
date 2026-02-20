@@ -1085,4 +1085,92 @@ describe("one-to-one joinfields", () => {
   });
 });
 
+describe("tree lists", () => {
+  it("should setup", async () => {
+    await mkViewWithCfg({
+      name: "patienttreelist",
+      table_id: Table.findOne("patients")?.id,
+      configuration: {
+        layout: {
+          besides: [
+            {
+              showif: "",
+              contents: {
+                type: "field",
+                field_name: "name",
+                configuration: {
+                  field_name: "name",
+                },
+              },
+              alignment: "Default",
+              col_width: "",
+              header_label: "",
+              col_width_units: "px",
+            },
+            {
+              showif: "",
+              contents: {
+                type: "join_field",
+                join_field: "favbook.author",
+                configuration: {
+                  join_field: "favbook.author",
+                },
+              },
+              alignment: "Default",
+              col_width: "",
+              header_label: "",
+              col_width_units: "px",
+            },
+            {
+              showif: "",
+              contents: {
+                type: "join_field",
+                join_field: "favbook.pages",
+                configuration: {
+                  join_field: "favbook.pages",
+                },
+              },
+              alignment: "Default",
+              col_width: "",
+              header_label: "",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            field_name: "name",
+            configuration: {
+              field_name: "name",
+            },
+          },
+          {
+            type: "JoinField",
+            join_field: "favbook.author",
+            configuration: {
+              join_field: "favbook.author",
+            },
+          },
+        ],
+        default_state: {
+          _group_by: "",
+          _tree_field: "parent",
+          _cell_valign: "Middle",
+          _order_field: "id",
+          _table_layout: "Auto",
+          _rows_per_page: 20,
+          _row_click_type: "Nothing",
+          _full_page_count: true,
+        },
+      },
+    });
+    const view = View.findOne({ name: "patienttreelist" });
+    assertIsSet(view);
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).toContain("└&nbsp;&nbsp;");
+  });
+});
+
 //sorting
