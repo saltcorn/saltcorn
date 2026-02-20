@@ -162,6 +162,14 @@ class Plugin implements AbstractPlugin {
     return module?.ready_for_mobile === true;
   }
 
+  exclude_from_mobile(): boolean {
+    const state = require("../db/state").getState();
+    let module = state.plugins[this.name];
+    if (!module && state.plugin_module_names[this.name])
+      module = state.plugins[state.plugin_module_names[this.name]];
+    return module?.ready_for_mobile === false;
+  }
+
   static get_cached_plugins(): Array<Plugin> {
     const { getState } = require("../db/state");
 
