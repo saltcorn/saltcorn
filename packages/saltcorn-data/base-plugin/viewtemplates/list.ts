@@ -57,6 +57,7 @@ import {
   pathToState,
   displayType,
 } from "../../plugin-helper";
+import { PrimaryKeyValue } from "@saltcorn/db-common/dbtypes";
 const {
   get_viewable_fields,
   parse_view_select,
@@ -1817,6 +1818,7 @@ export = {
           ? { name: exttable_name }
           : { id: table_id }
       )!;
+      const pk_name = table.pk_name;
       const fields = table.getFields();
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
@@ -1894,15 +1896,45 @@ export = {
         }
       }
 
-      let rows = await table.getJoinedRows({
-        where,
-        joinFields,
-        aggregations,
-        ...q,
-        forPublic: !req.user || req.user.role_id === 100,
-        forUser: req.user,
-      });
+      let rows: GenObj[];
+      if (default_state?._tree_field) {
+        const tree_rows = await table.getRows(where, {
+          ...q,
+          forPublic: !req.user || req.user.role_id === 100,
+          forUser: req.user,
+          tree_field: default_state?._tree_field,
+        });
+        //console.log("tree rows", tree_rows);
 
+        const joined_rows = await table.getJoinedRows({
+          where: {
+            [pk_name]: { in: tree_rows.map((r) => r[pk_name]) },
+          },
+          joinFields,
+          aggregations,
+          ...q,
+          forPublic: !req.user || req.user.role_id === 100,
+          forUser: req.user,
+        });
+
+        const joined_map: Record<PrimaryKeyValue, GenObj> = {};
+        joined_rows.forEach((r) => (joined_map[r[pk_name]] = r));
+        rows = tree_rows.map((r) => {
+          const r2 = joined_map[r[pk_name]];
+          r2._level = r._level;
+          return r2;
+        });
+      } else
+        rows = await table.getJoinedRows({
+          where,
+          joinFields,
+          aggregations,
+          ...q,
+          forPublic: !req.user || req.user.role_id === 100,
+          forUser: req.user,
+        });
+        //console.log("rows", rows);
+        
       const rowCount = default_state?._hide_pagination
         ? undefined
         : q.limit && rows.length < q.limit
