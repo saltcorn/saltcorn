@@ -106,13 +106,38 @@ const getMyClient = (selopts) => {
 const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
   const { where, values } = mkWhere(whereObj);
   const schema = selectopts.schema || getTenantSchema();
-  const sql = `SELECT ${
-    selectopts.fields ? selectopts.fields.join(", ") : `*`
-  } FROM "${schema}"."${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
-    selectopts,
-    values,
-    false
-  )}`;
+  let sql;
+  if (selectopts.tree_field) {
+    sql = `WITH RECURSIVE _tree AS (
+      SELECT ${
+        selectopts.fields ? selectopts.fields.join(", ") : `*`
+      }, 1 as _level, ${selectopts.orderBy ? `ARRAY["${sqlsanitize(selectopts.orderBy)}"] as _sort_path` : ""} FROM "${schema}"."${sqlsanitize(tbl)}" WHERE "${selectopts.tree_field}" IS NULL
+
+    UNION ALL
+
+    SELECT ${
+      selectopts.fields
+        ? selectopts.fields.map((f) => `p."${f}"`).join(", ")
+        : `p.*`
+    }, pt._level+1, ${selectopts.orderBy ? `pt._sort_path || p."${selectopts.orderBy}"` : ""} 
+    FROM "${schema}"."${sqlsanitize(tbl)}" p
+    JOIN _tree pt ON p."${selectopts.tree_field}" = pt.id      
+    )
+    SELECT ${
+      selectopts.fields ? selectopts.fields.join(", ") : `*`
+    }, _level FROM _tree ${where} ${mkSelectOptions(
+      { ...selectopts, orderBy: "_sort_path" },
+      values,
+      false
+    )}`;
+  } else
+    sql = `SELECT ${
+      selectopts.fields ? selectopts.fields.join(", ") : `*`
+    } FROM "${schema}"."${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
+      selectopts,
+      values,
+      false
+    )}`;
   sql_log(sql, values);
   const tq = await getMyClient(selectopts).query(sql, values);
 
