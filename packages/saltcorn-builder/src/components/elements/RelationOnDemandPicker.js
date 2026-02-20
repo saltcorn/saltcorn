@@ -3,7 +3,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { removeWhitespaces, rand_ident } from "./utils";
-import { useTranslation } from "../../hooks/useTranslation";
+import useTranslation from "../../hooks/useTranslation";
 
 const maxLevelDefault = 10;
 const renderInto = (container, node) => {
