@@ -192,11 +192,61 @@ export const select = async (
   selectopts: SelectOptions = {}
 ): Promise<Row[]> => {
   const { where, values } = mkWhere(whereObj, true);
-  const sql = `SELECT * FROM "${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
-    selectopts,
-    values,
-    true
-  )}`;
+  let sql;
+  if (selectopts.tree_field)
+    sql = `WITH RECURSIVE _tree AS (
+        SELECT ${
+          selectopts.fields ? selectopts.fields.map((f) => `p."${f}"`).join(", ") : `p.*`
+        }, 0 as _level
+        ${
+          selectopts.orderBy
+            ? `, printf('%08d',
+            (
+                SELECT COUNT(*)
+                FROM "${sqlsanitize(tbl)}" r
+                WHERE r."${selectopts.tree_field}" IS NULL
+                  AND r."${selectopts.orderBy}" > p."${selectopts.orderBy}"
+            )
+        ) AS sort_path`
+            : ""
+        } 
+        FROM "${sqlsanitize(tbl)}" p
+        WHERE p."${selectopts.tree_field}" IS NULL
+  
+      UNION ALL
+  
+      SELECT ${
+        selectopts.fields
+          ? selectopts.fields.map((f) => `c."${f}"`).join(", ")
+          : `c.*`
+      }, pt._level+1
+      ${selectopts.orderBy ? `, pt.sort_path || '.' ||
+        printf('%08d',
+            (
+                SELECT COUNT(*)
+                FROM "${sqlsanitize(tbl)}" s
+                WHERE s."${selectopts.tree_field}" = c."${selectopts.tree_field}"
+                  AND s."${selectopts.orderBy}" > c."${selectopts.orderBy}"
+            )
+        )` : ""} 
+      FROM "${sqlsanitize(tbl)}" c
+      JOIN _tree pt ON c."${selectopts.tree_field}" = pt.id      
+      )
+      SELECT ${
+        selectopts.fields ? selectopts.fields.join(", ") : `*`
+      }, _level FROM _tree ${where} ${mkSelectOptions(
+        selectopts.orderBy
+          ? { ...selectopts, orderBy: "_sort_path", orderDesc: false }
+          : selectopts,
+        values,
+        false
+      )}`;
+  else
+    sql = `SELECT * FROM "${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
+      selectopts,
+      values,
+      true
+    )}`;
   const tq = await query(sql, values);
 
   return tq.rows;
