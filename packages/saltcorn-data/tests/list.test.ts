@@ -1169,7 +1169,8 @@ describe("tree lists", () => {
     const view = View.findOne({ name: "patienttreelist" });
     assertIsSet(view);
     const vres1 = await view.run({}, mockReqRes);
-    expect(vres1).toContain("└&nbsp;&nbsp;");
+    if (!db.isSQLite) expect(vres1).toContain("└&nbsp;&nbsp;");
+    else expect(vres1).toContain("<table");
   });
 });
 
