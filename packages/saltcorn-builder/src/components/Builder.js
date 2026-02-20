@@ -59,7 +59,8 @@ import {
   faSave,
   faExclamationTriangle,
   faPlus,
-  faChevronDown
+  faChevronDown,
+  faChevronUp
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faCaretSquareLeft,
@@ -435,10 +436,10 @@ const CustomLayerComponent = memo(({ children }) => {
     hovered,
     actions: { toggleLayer, setExpandedState },
     connectors: { layer, drag },
-  } = useLayer((node) => {
+  } = useLayer((layer) => {
       return {
-        hovered: node?.events?.hovered,
-        expanded: node?.data?.expanded,
+        hovered: layer?.event?.hovered,
+        expanded: layer?.expanded,
       };
   });
 
@@ -514,7 +515,7 @@ const CustomLayerComponent = memo(({ children }) => {
                  toggleLayer();
                }}
              >
-               <FontAwesomeIcon icon={faChevronDown} color="white" fontSize={14} className="float-end fa-lg" />
+               <FontAwesomeIcon icon={expanded ? faChevronUp : faChevronDown} color="white" fontSize={14} className="float-end fa-lg" />
              </span>
           )}
         </div>

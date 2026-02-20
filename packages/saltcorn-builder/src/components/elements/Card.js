@@ -70,6 +70,7 @@ const Card = ({
   gradStartColor,
   gradEndColor,
   gradDirection,
+  titleRight,
 }) => {
   const {
     selected,
@@ -111,12 +112,17 @@ const Card = ({
         <img src={`/files/serve/${bgFileId}`} className="card-img-top" />
       ) : null}
       {title && title.length > 0 && (
-        <div className="card-header">
+        <div className="card-header right-section">
           {isFormula?.title ? (
             <span className="font-monospace">={title}</span>
           ) : (
             title
           )}
+           <div className='title-right'>
+          <Element canvas id="titleRight" is={Column}>
+            {titleRight}
+          </Element>
+        </div>
         </div>
       )}
       <div
@@ -477,6 +483,7 @@ const fields = [
   { label: "Save indicator", name: "titleAjaxIndicator", type: "Bool" },
   { label: "No padding", name: "noPadding", type: "Bool" },
   { label: "Contents", name: "contents", type: "Nodes", nodeID: "cardbody" },
+  { label: "Title Right", name: "titleRight", type: "Nodes", nodeID: "titleRight" },
   { label: "Footer", name: "footer", type: "Nodes", nodeID: "cardfooter" },
   { name: "style", default: {} },
   { label: "Class", name: "class", type: "String", canBeFormula: true },
@@ -505,6 +512,7 @@ Card.craft = {
     style: {},
     contents: [],
     footer: [],
+    titleRight: [],
   },
   displayName: "Card",
   related: {

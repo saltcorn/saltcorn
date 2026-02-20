@@ -467,6 +467,12 @@ table.table-inner-grid td {
   content: "\f105";
 }
 
+.card .right-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
 .d-inline-maybe {
   display: inline;
 }

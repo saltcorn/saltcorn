@@ -555,6 +555,16 @@ div.componets-and-library-accordion {
   color: #f8f9fa !important;
 }
 
+.card .right-section {
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-right {
+  min-width: 100px;
+}
+
 .builder-dark-panel .toolbox-card .card-body,
 .builder-dark-panel .componets-and-library-accordion .card-body {
   background-color: #212529 !important;
