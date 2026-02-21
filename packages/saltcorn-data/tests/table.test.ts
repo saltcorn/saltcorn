@@ -2991,15 +2991,27 @@ describe("Table recursive query", () => {
       label: "Assignee",
       type: "Key to users",
     });
-    const homework = await table.insertRow({ name: "Homework" });
-    const french = await table.insertRow({ name: "French", parent: homework });
+    await Field.create({
+      table,
+      name: "difficulty",
+      label: "Difficulty",
+      type: "Integer",
+    });
+    const homework = await table.insertRow({ name: "Homework", difficulty: 2 });
+    const french = await table.insertRow({
+      name: "French",
+      parent: homework,
+      difficulty: 1,
+    });
     const biology = await table.insertRow({
       name: "Biology",
       parent: homework,
+      difficulty: 2,
     });
     await table.insertRow({
       name: "Learn about the birds",
       parent: biology,
+      difficulty: 1,
     });
     await table.insertRow({
       name: "Verb conjugations",
@@ -3014,6 +3026,7 @@ describe("Table recursive query", () => {
       name: "Learn about the bees",
       parent: biology,
       assignee: 1,
+      difficulty: 2,
     });
   });
   if (!db.isSQLite) {
@@ -3067,6 +3080,21 @@ describe("Table recursive query", () => {
       //console.log(rows.map((r) => r.name));
       expect(rows[0].name).toBe("Homework");
       expect(["French", "Biology"].includes(rows[1].name)).toBe(true);
+      expect(rows[1]._level).toBe(1);
+      expect(rows[0]._level).toBe(0);
+    });
+    it("getRows tree with where", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows(
+        { difficulty: 2 },
+        { tree_field: "parent", orderBy: "name" }
+      );
+      //console.log(rows.map((r) => r.name));
+      expect(rows.length).toEqual(3);
+      expect(rows[2].name).toBe("Learn about the bees");
+      expect(rows[2]._level).toBe(2);
       expect(rows[1]._level).toBe(1);
       expect(rows[0]._level).toBe(0);
     });
