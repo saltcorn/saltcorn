@@ -58,6 +58,7 @@ const {
   uninstall_pack,
   plugin_pack,
 } = require("@saltcorn/admin-models/models/pack");
+const { escapeHtml } = require("@saltcorn/data/utils");
 
 /**
  * @type {object}
@@ -679,7 +680,7 @@ router.get(
     const addDeepSearch = (key, pack) => {
       if (!pack) return;
       try {
-        deepSearchIndex[key] = JSON.stringify(pack).toLowerCase();
+        deepSearchIndex[key] = escapeHtml(JSON.stringify(pack).toLowerCase());
       } catch (e) {
         console.error(
           `Failed to stringify pack ${pack.name} for deep search index:`,
