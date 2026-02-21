@@ -207,21 +207,21 @@ const stateToQueryString = (state: GenObj, include_id?: boolean): string => {
         v?.gt || v?.lt
           ? bounded(k, v)
           : Array.isArray(v) && k !== "_relation_path_"
-          ? v
-              .map(
-                (val) =>
-                  `${encodeURIComponent(k)}=${encodeURIComponent(
-                    `${prim(val)}`
-                  )}`
-              )
-              .join("&")
-          : (k === "id" && !include_id) || typeof v === "undefined"
-          ? null
-          : `${encodeURIComponent(k)}=${encodeURIComponent(
-              k === "_relation_path_" && typeof v !== "string"
-                ? queryToString(v)
-                : prim(v)
-            )}`
+            ? v
+                .map(
+                  (val) =>
+                    `${encodeURIComponent(k)}=${encodeURIComponent(
+                      `${prim(val)}`
+                    )}`
+                )
+                .join("&")
+            : (k === "id" && !include_id) || typeof v === "undefined"
+              ? null
+              : `${encodeURIComponent(k)}=${encodeURIComponent(
+                  k === "_relation_path_" && typeof v !== "string"
+                    ? queryToString(v)
+                    : prim(v)
+                )}`
       )
       .filter((s) => !!s)
       .join("&")
@@ -318,8 +318,8 @@ const calcfldViewOptions = (
           (isFilter && f.calculated && f.stored
             ? fv.isEdit || fv.isFilter
             : f.calculated
-            ? !fv.isEdit
-            : !fv.isEdit || isEdit || isFilter) &&
+              ? !fv.isEdit
+              : !fv.isEdit || isEdit || isFilter) &&
           !(mode !== "list" && fv.expandColumns)
       );
       let tfvs_ordered: [string, any][] = [];
@@ -399,8 +399,8 @@ const calcfldViewConfig = async (
       f.type === "Key"
         ? getState().keyFieldviews
         : f.type === "File"
-        ? getState().fileviews
-        : (f.type && (f.type as any).fieldviews) || {};
+          ? getState().fileviews
+          : (f.type && (f.type as any).fieldviews) || {};
     for (const [nm, fv] of Object.entries(fieldviews) as [string, any][]) {
       if (fv.configFields)
         fieldViewConfigForms[f.name][nm] = await applyAsync(
@@ -1016,7 +1016,7 @@ const field_picker_fields = async ({
     ) as [string, any][]) {
       for (const [fieldview, formFields] of Object.entries(fvOptFields) as [
         string,
-        any
+        any,
       ][]) {
         for (const formField of formFields) {
           if (field_name.includes("."))
@@ -1045,9 +1045,8 @@ const field_picker_fields = async ({
   const { link_view_opts, view_name_opts, view_relation_opts } =
     await get_link_view_opts(table, viewname);
   const { parent_field_list } = await table.get_parent_relations(true, true);
-  const { child_field_list, child_relations } = await table.get_child_relations(
-    true
-  );
+  const { child_field_list, child_relations } =
+    await table.get_child_relations(true);
   const join_field_options = await table.get_join_field_options(true, true);
   const join_field_view_options = {
     ...field_view_options,
@@ -2224,6 +2223,8 @@ const stateFieldsToWhere = ({
   let qstate: GenObj = {};
   const orFields: string[] = [];
   Object.entries(state || {}).forEach(([k, v]) => {
+    console.log({ k, v });
+
     if (typeof v === "undefined") return;
     if (k === "_fts" || (table?.name && k === `_fts_${table.santized_name}`)) {
       const scState = getState();
@@ -2239,10 +2240,14 @@ const stateFieldsToWhere = ({
         table: prefix
           ? prefix.replaceAll(".", "")
           : table
-          ? table.name
-          : undefined,
+            ? table.name
+            : undefined,
         schema: db.isSQLite ? undefined : db.getTenantSchema(),
       };
+      return;
+    }
+    if (k === "or" && typeof v === "object") {
+      qstate.or = v;
       return;
     }
     if (k === "_or_field") {
@@ -2613,12 +2618,12 @@ const initial_config_all_fields =
               Object.entries((f.type as any).fieldviews) as [string, any][]
             ).find(([nm, fv]: [string, any]) => fv.isEdit === isEdit)?.[0]
           : f.type === "File" && !isEdit
-          ? Object.keys(getState().fileviews)[0]
-          : f.type === "File" && isEdit
-          ? "upload"
-          : f.type === "Key"
-          ? "select"
-          : undefined;
+            ? Object.keys(getState().fileviews)[0]
+            : f.type === "File" && isEdit
+              ? "upload"
+              : f.type === "Key"
+                ? "select"
+                : undefined;
         cfg.columns.push({
           field_name: f.name,
           type: "Field",
@@ -3055,9 +3060,7 @@ const json_list_to_external_table = (
     //copied from table
     async get_relation_options() {
       return await Promise.all(
-        (
-          await tbl.get_relation_data()
-        ).map(
+        (await tbl.get_relation_data()).map(
           async ({
             relationTable,
             relationField,
@@ -3409,8 +3412,8 @@ const displayType = (stateFields: { name: string; required?: boolean }[]) =>
   stateFields.every((sf) => !sf.required)
     ? ViewDisplayType.NO_ROW_LIMIT
     : stateFields.some((sf) => sf.name === "id")
-    ? ViewDisplayType.ROW_REQUIRED
-    : ViewDisplayType.INVALID;
+      ? ViewDisplayType.ROW_REQUIRED
+      : ViewDisplayType.INVALID;
 
 const build_schema_data = async (): Promise<any> => {
   const allViews = await View.find({}, { cached: true });
