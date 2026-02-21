@@ -640,6 +640,22 @@ describe("stateFieldsToWhere", () => {
     readState(state, fields, mockReqRes.req);
     expect(state).toStrictEqual({ favbook: [1, 2] });
   });
+  it("or array age", async () => {
+    expect(
+      stateFieldsToWhere({
+        fields,
+        state: { or: [{ age: 1 }] },
+      })
+    ).toStrictEqual({ or: [{ age: 1 }] });
+  });
+  it("age in", async () => {
+    expect(
+      stateFieldsToWhere({
+        fields,
+        state: { age: { in: [1, 2] } },
+      })
+    ).toStrictEqual({ age: { in: [1, 2] } });
+  });
   it("readState fkey", async () => {
     const state = { favbook: "1" };
     readState(state, fields, mockReqRes.req);
