@@ -2223,8 +2223,6 @@ const stateFieldsToWhere = ({
   let qstate: GenObj = {};
   const orFields: string[] = [];
   Object.entries(state || {}).forEach(([k, v]) => {
-    console.log({ k, v });
-
     if (typeof v === "undefined") return;
     if (k === "_fts" || (table?.name && k === `_fts_${table.santized_name}`)) {
       const scState = getState();
