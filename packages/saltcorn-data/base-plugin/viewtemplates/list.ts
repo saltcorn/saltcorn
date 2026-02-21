@@ -1122,12 +1122,17 @@ const run = async (
       );
       switch (relation.type) {
         case RelationType.OWN:
-          stateMany = {
-            or: rows.map((row: GenObj) => ({
-              [pk_name]: row[pk_name],
-              ...get_extra_state(row),
-            })),
-          };
+          if (segment.extra_state_fml)
+            stateMany = {
+              or: rows.map((row: GenObj) => ({
+                [pk_name]: row[pk_name],
+                ...get_extra_state(row),
+              })),
+            };
+          else
+            stateMany = {
+              [pk_name]: { in: rows.map((row: GenObj) => row[pk_name]) },
+            };
           getRowState = (row: GenObj) => ({
             [pk_name]: row[pk_name],
             ...get_extra_state(row),
@@ -1910,7 +1915,7 @@ export = {
           forPublic: !req.user || req.user.role_id === 100,
           forUser: req.user,
           tree_field: default_state?._tree_field,
-          pk_name
+          pk_name,
         });
         //console.log("tree rows", tree_rows);
 
