@@ -162,6 +162,7 @@ const ViewSettings = () => {
   }
   if (viewname && viewname.includes(".")) viewname = viewname.split(".")[0];
 
+  let cacheWasPopulated = false;
   if (
     finder &&
     !(relationsCache[tableName] && relationsCache[tableName][viewname])
@@ -178,8 +179,13 @@ const ViewSettings = () => {
     );
     relationsCache[tableName] = relationsCache[tableName] || {};
     relationsCache[tableName][viewname] = { relations, layers };
-    setRelationsCache({ ...relationsCache });
+    cacheWasPopulated = true;
   }
+  useEffect(() => {
+    if (cacheWasPopulated) {
+      setRelationsCache({ ...relationsCache });
+    }
+  });
   const [relationsData, setRelationsData] = finder
     ? React.useState(relationsCache[tableName][viewname])
     : [undefined, undefined];
@@ -193,18 +199,23 @@ const ViewSettings = () => {
       subView.display_type
     );
   }
-  if (
+  const needsInitialRelation =
     options.mode !== "filter" &&
     subView?.table_id &&
     !safeRelation &&
     !hasLegacyRelation &&
-    relationsData?.relations.length > 0
-  ) {
+    relationsData?.relations.length > 0;
+  if (needsInitialRelation) {
     safeRelation = initialRelation(relationsData.relations);
-    setProp((prop) => {
-      prop.relation = safeRelation.relationString;
-    });
   }
+  useEffect(() => {
+    if (needsInitialRelation) {
+      const rel = initialRelation(relationsData.relations);
+      setProp((prop) => {
+        prop.relation = rel.relationString;
+      });
+    }
+  }, [needsInitialRelation]);
   const helpContext = { view_name: viewname };
   if (options.tableName) helpContext.srcTable = options.tableName;
   const set_view_name = (e) => {
