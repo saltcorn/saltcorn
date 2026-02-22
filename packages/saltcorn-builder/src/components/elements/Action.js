@@ -274,7 +274,7 @@ const ActionSettings = () => {
               <td>
                 <select
                   value={action_row_variable}
-                  className="form-control form-select code-modal-form"
+                  className="form-control form-select"
                   onChange={(e) => {
                     if (!e.target) return;
                     const value = e.target.value;
