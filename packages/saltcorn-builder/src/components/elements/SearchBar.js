@@ -7,7 +7,7 @@
 import React, { Fragment, useState, useEffect, useContext } from "react";
 import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
-import { useNode } from "@craftjs/core";
+import { useNode, Element } from "@craftjs/core";
 import { Column } from "./Column";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
@@ -23,7 +23,7 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const SearchBar = ({ has_dropdown, children, show_badges }) => {
+const SearchBar = ({ has_dropdown, children, contents, show_badges }) => {
   const { t } = useTranslation();
   const {
     selected,
@@ -31,6 +31,15 @@ const SearchBar = ({ has_dropdown, children, show_badges }) => {
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showDropdown, setDropdown] = useState(false);
   const [dropWidth, setDropWidth] = useState(200);
+
+  const renderContents = () => {
+    const actualChildren = contents || children;
+    if (!actualChildren) return null;
+    if (React.isValidElement(actualChildren)) return actualChildren;
+    if (Array.isArray(actualChildren)) return actualChildren;
+    return actualChildren;
+  };
+
   return (
     <div
       className={`input-group  ${selected ? "selected-node" : ""}`}
@@ -73,9 +82,18 @@ const SearchBar = ({ has_dropdown, children, show_badges }) => {
             }`}
             style={{ width: dropWidth, left: 0 }}
           >
-            <div className="canvas">{children}</div>
+            <Element canvas id="searchbar-contents" is={Column}>
+              {renderContents()}
+            </Element>
           </div>
         </Fragment>
+      )}
+      {!has_dropdown && (
+        <div style={{ display: "none" }}>
+          <Element canvas id="searchbar-contents" is={Column}>
+            {renderContents()}
+          </Element>
+        </div>
       )}
     </div>
   );
@@ -146,11 +164,16 @@ SearchBar.craft = {
     has_dropdown: false,
     show_badges: false,
     autofocus: false,
+    contents: [],
   },
   related: {
     settings: SearchBarSettings,
     segment_type: "search_bar",
-    hasContents: true,
-    fields: ["has_dropdown", "show_badges", "autofocus"],
+    fields: [
+      { name: "has_dropdown" },
+      { name: "show_badges" },
+      { name: "autofocus" },
+      { label: "Contents", name: "contents", type: "Nodes", nodeID: "searchbar-contents" },
+    ],
   },
 };

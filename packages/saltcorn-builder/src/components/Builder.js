@@ -435,7 +435,7 @@ const CustomLayerComponent = memo(({ children }) => {
     expanded,
     hovered,
     actions: { toggleLayer, setExpandedState },
-    connectors: { layer, drag },
+    connectors: { layer, drag, layerHeader },
   } = useLayer((layer) => {
       return {
         hovered: layer?.event?.hovered,
@@ -443,7 +443,7 @@ const CustomLayerComponent = memo(({ children }) => {
       };
   });
 
-  const { displayName, hasNodes, isHiddenColumn } = useEditor((state) => {
+  const { displayName, hasNodes, isHiddenColumn, connectors: editorConnectors } = useEditor((state) => {
       const node = state.nodes[id];
       const data = node?.data;
 
@@ -489,7 +489,7 @@ const CustomLayerComponent = memo(({ children }) => {
   if (isHiddenColumn) {
     return (
       <div
-        ref={(dom) => { layer(dom); drag(dom); }}
+        ref={(dom) => { layer(dom); if (dom) editorConnectors.drop(dom, id); }}
         style={{ marginLeft: "-20px" }}
       >
         {children}
@@ -498,9 +498,9 @@ const CustomLayerComponent = memo(({ children }) => {
   }
 
   return (
-    <div>
+    <div ref={(dom) => { layer(dom); if (dom) editorConnectors.drop(dom, id); }}>
         <div
-          ref={(dom) => { layer(dom); drag(dom); }}
+          ref={(dom) => { drag(dom); layerHeader(dom); }}
           className={`builder-layer-node ${hovered ? "hovered" : ""}`}
           style={{
             paddingLeft: `${depth * 20 + 10}px`,
