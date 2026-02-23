@@ -80,9 +80,20 @@ const RenderNode = ({ render }) => {
     currentDOM.style.left = left;
   }, [dom, getPos]);
 
+  const hiddenColumnParents = new Set(["Card", "Container", "Tabs", "Table", "DropMenu"]);
   useEffect(() => {
-    if (name === "Column" && parent && parent !== "ROOT")
-      actions.selectNode(parent);
+    if (name === "Column" && parent && parent !== "ROOT") {
+      const parentNode = query.node(parent).get();
+      const parentName = parentNode?.data?.displayName;
+      const parentLinked = parentNode?.data?.linkedNodes;
+      if (
+        hiddenColumnParents.has(parentName) &&
+        parentLinked &&
+        Object.values(parentLinked).includes(id)
+      ) {
+        actions.selectNode(parent);
+      }
+    }
   }, [isActive]);
 
   useEffect(() => {

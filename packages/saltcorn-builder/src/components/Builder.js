@@ -426,7 +426,7 @@ function useWindowDimensions() {
  * @namespace
  */
 
-const hiddenColumnParents = new Set(["Card", "Container", "Tabs", "Table"]);
+const hiddenColumnParents = new Set(["Card", "Container", "Tabs", "Table", "DropMenu"]);
 
 const CustomLayerComponent = memo(({ children }) => {
   const {

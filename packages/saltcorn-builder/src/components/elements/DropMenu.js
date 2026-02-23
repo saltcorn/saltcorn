@@ -33,7 +33,7 @@ export /**
  * @subcategory components
  */
 const DropMenu = ({
-  children,
+  contents,
   action_style,
   action_size,
   action_icon,
@@ -50,7 +50,6 @@ const DropMenu = ({
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showDropdown, setDropdown] = useState(false);
-  //const [dropWidth, setDropWidth] = useState(200);
   return (
     <div
       className={`${selected ? "selected-node" : ""} ${block ? "d-block" : "d-inline"}`}
@@ -82,7 +81,9 @@ const DropMenu = ({
           showDropdown ? "show" : ""
         } ${menu_direction === "end" ? "dropdown-menu-end" : ""}`}
       >
-        <div className="canvas d-flex flex-column">{children}</div>
+        <Element canvas id="dropmenu-contents" is={Column}>
+          {contents}
+        </Element>
       </div>
     </div>
   );
@@ -177,8 +178,13 @@ DropMenu.craft = {
   related: {
     settings: DropMenuSettings,
     segment_type: "dropdown_menu",
-    hasContents: true,
     fields: [
+      {
+        label: "Contents",
+        name: "contents",
+        type: "Nodes",
+        nodeID: "dropmenu-contents",
+      },
       "label",
       "block",
       "action_style",
