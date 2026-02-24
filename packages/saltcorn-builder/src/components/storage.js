@@ -106,7 +106,7 @@ const layoutToNodes = (
    * @returns {Element|Text|View|Action|Tabs|Columns}
    */
   function toTag(segment, ix) {
-    if (!segment) return <Empty key={ix} />;
+    if (!segment) return null;
 
     if (
       (segment.type === "card" || segment.type === "container") &&
@@ -318,7 +318,7 @@ const layoutToNodes = (
           colClasses={segment.colClasses}
           colStyles={segment.colStyles}
           aligns={segment.aligns}
-          setting_col_n={1}
+          setting_col_n={segment.setting_col_n !== undefined ? segment.setting_col_n : 0}
           contents={segment.besides.map(toTag)}
         />
       );
@@ -354,7 +354,7 @@ const layoutToNodes = (
             colClasses={segment.colClasses}
             colStyles={segment.colStyles}
             aligns={segment.aligns}
-            setting_col_n={1}
+            setting_col_n={segment.setting_col_n !== undefined ? segment.setting_col_n : 0}
             contents={segment.besides.map(toTag)}
           />
         )
@@ -530,6 +530,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         colStyles: node.props.colStyles,
         style: node.props.style,
         widths,
+        setting_col_n: node.props.setting_col_n,
         ...customProps,
       };
     }

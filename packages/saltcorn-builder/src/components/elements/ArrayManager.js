@@ -56,6 +56,8 @@ export const ArrayManager = ({
   managedArrays,
   manageContents,
   initialAddProps,
+   contentsKey = "contents",
+  onLayoutChange,
 }) => {
   const { t } = useTranslation();
   const { actions, query, connectors } = useEditor((state, query) => {
@@ -77,13 +79,14 @@ export const ArrayManager = ({
         node.id,
         options
       );
-      layout.contents.splice(rmIx, 1);
+      layout[contentsKey].splice(rmIx, 1);
 
       managedArrays.forEach((arrNm) => {
-        layout[arrNm].splice(rmIx, 1);
+         if (layout[arrNm]) layout[arrNm].splice(rmIx, 1);
       });
       layout[countProp] = node[countProp] - 1;
-      layout[currentProp] = node[currentProp] - 1;
+      layout[currentProp] = Math.max(0, node[currentProp] - 1);
+      if (onLayoutChange) onLayoutChange(layout, "delete");
       actions.delete(node.id);
       layoutToNodes(layout, query, actions, parentId, options, sibIx);
     } else {
@@ -119,7 +122,7 @@ export const ArrayManager = ({
         options
       );
 
-      swapElements(layout.contents, curIx, curIx + delta);
+      swapElements(layout[contentsKey], curIx, curIx + delta);
 
       managedArrays.forEach((arrNm) => {
         if (arrNm.includes(".")) {
@@ -130,6 +133,7 @@ export const ArrayManager = ({
           swapElements(layout[arrNm], curIx, curIx + delta);
       });
       layout[currentProp] = node[currentProp] + delta;
+      if (onLayoutChange) onLayoutChange(layout, "move");
       actions.delete(node.id);
       layoutToNodes(layout, query, actions, parentId, options, sibIx);
     } else
@@ -156,7 +160,7 @@ export const ArrayManager = ({
         options
       );
 
-      layout.contents.push(null);
+      layout[contentsKey].push(null);
       managedArrays.forEach((arrNm) => {
         if (initialAddProps?.[arrNm])
           layout[arrNm][node[countProp]] = initialAddProps?.[arrNm];
@@ -164,6 +168,7 @@ export const ArrayManager = ({
       layout[currentProp] = +node[countProp];
       layout[countProp] = +node[countProp] + 1;
 
+      if (onLayoutChange) onLayoutChange(layout, "add");
       actions.delete(node.id);
       layoutToNodes(layout, query, actions, parentId, options, sibIx);
     } else
