@@ -67,6 +67,7 @@ import {
   faCaretSquareRight,
 } from "@fortawesome/free-regular-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
+import { Display, Tablet, Phone } from "react-bootstrap-icons";
 import { InitNewElement, Library, LibraryElem } from "./Library";
 import { RenderNode } from "./RenderNode";
 import { ListColumn } from "./elements/ListColumn";
@@ -545,6 +546,38 @@ const AddColumnButton = () => {
   );
 };
 
+const DEVICE_WIDTHS = {
+  desktop: null,
+  tablet: 768,
+  mobile: 375,
+};
+
+const DevicePreviewToolbar = ({ previewDevice, setPreviewDevice }) => {
+  const { t } = useTranslation();
+  const devices = [
+    { key: "desktop", icon: Display, label: t("Desktop") },
+    { key: "tablet", icon: Tablet, label: t("Tablet") },
+    { key: "mobile", icon: Phone, label: t("Mobile") },
+  ];
+
+  return (
+    <div className="device-preview-toolbar">
+      {devices.map(({ key, icon: Icon, label }) => (
+        <button
+          key={key}
+          className={`btn btn-sm ${
+            previewDevice === key ? "btn-primary" : "btn-outline-secondary"
+          } device-preview-btn`}
+          onClick={() => setPreviewDevice(key)}
+          title={label}
+        >
+          <Icon size={16} />
+        </button>
+      ))}
+    </div>
+  );
+};
+
 /**
  * @returns {Fragment}
  * @category saltcorn-builder
@@ -644,6 +677,7 @@ const Builder = ({ options, layout, mode }) => {
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [isLeftEnlarged, setIsLeftEnlarged] = useState(false);
   const [relationsCache, setRelationsCache] = useState({});
+  const [previewDevice, setPreviewDevice] = useState("desktop");
   const { windowWidth, windowHeight } = useWindowDimensions();
 
   const [builderHeight, setBuilderHeight] = useState(0);
@@ -703,7 +737,7 @@ const Builder = ({ options, layout, mode }) => {
       >
         <Provider value={options}>
           <PreviewCtx.Provider
-            value={{ previews, setPreviews, uploadedFiles, setUploadedFiles }}
+            value={{ previews, setPreviews, uploadedFiles, setUploadedFiles, previewDevice }}
           >
             <RelationsCtx.Provider
               value={{
@@ -782,15 +816,30 @@ const Builder = ({ options, layout, mode }) => {
                       options.mode !== "list" ? "emptymsg" : ""
                     }`}
                   >
-                    <div>
-                      <Frame>
-                        {options.mode === "list" ? (
-                          <Element canvas is={ListColumns}></Element>
-                        ) : (
-                          <Element canvas is={Column}></Element>
-                        )}
-                      </Frame>
-                      {options.mode === "list" ? <AddColumnButton /> : null}
+                    <DevicePreviewToolbar
+                      previewDevice={previewDevice}
+                      setPreviewDevice={setPreviewDevice}
+                    />
+                    <div className="device-preview-scroll-area">
+                      <div
+                        className={`device-preview-canvas-wrapper ${
+                          previewDevice !== "desktop" ? "device-preview-constrained" : ""
+                        }`}
+                        style={{
+                          maxWidth: DEVICE_WIDTHS[previewDevice]
+                            ? `${DEVICE_WIDTHS[previewDevice]}px`
+                            : "none",
+                        }}
+                      >
+                        <Frame>
+                          {options.mode === "list" ? (
+                            <Element canvas is={ListColumns}></Element>
+                          ) : (
+                            <Element canvas is={Column}></Element>
+                          )}
+                        </Frame>
+                        {options.mode === "list" ? <AddColumnButton /> : null}
+                      </div>
                     </div>
                   </div>
                   <div className="col-sm-auto builder-sidebar">

@@ -123,7 +123,9 @@ div.wrap-builder-elem label {
 
 #builder-main-canvas {
   height: calc(100vh - 70px);
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 #builder-main-canvas .is-text a {
@@ -757,3 +759,39 @@ body.builder-dark .builder-select__menu-notice,
 .code-modal-form {
   min-height: 70vh;
 }
+
+.device-preview-toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  padding: 5px 0;
+  border-bottom: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  flex-shrink: 0;
+}
+
+.device-preview-btn {
+  padding: 3px 10px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.device-preview-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.device-preview-canvas-wrapper {
+  transition: max-width 0.3s ease;
+  margin: 0 auto;
+}
+
+.device-preview-constrained {
+  border-left: 1px dashed #adb5bd;
+  border-right: 1px dashed #adb5bd;
+  min-height: 100%;
+}
+

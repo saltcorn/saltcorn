@@ -4,9 +4,10 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment } from "react";
+import React, { Fragment, useContext } from "react";
 import { Column } from "./Column";
 import useTranslation from "../../hooks/useTranslation";
+import PreviewCtx from "../preview_context";
 
 import { Element, useNode } from "@craftjs/core";
 import {
@@ -66,6 +67,35 @@ const resetWidths = (ncols) => ntimes(ncols - 1, () => Math.floor(12 / ncols));
 const getWidth = (widths, colix) =>
   colix < widths.length ? widths[colix] : 12 - sum(widths);
 
+/**
+ * Bootstrap breakpoint minimum widths (px)
+ */
+const BREAKPOINT_MIN_WIDTH = {
+  "": 0,
+  sm: 576,
+  md: 768,
+  lg: 992,
+  xl: 1200,
+};
+
+const PREVIEW_DEVICE_WIDTH = {
+  desktop: Infinity,
+  tablet: 768,
+  mobile: 375,
+};
+
+const getColClass = (width, breakpoint, previewDevice) => {
+  if (!previewDevice || previewDevice === "desktop") {
+    const bp = breakpoint || "sm";
+    return bp ? `col-${bp}-${width}` : `col-${width}`;
+  }
+  const deviceWidth = PREVIEW_DEVICE_WIDTH[previewDevice] || Infinity;
+  const bpMin = BREAKPOINT_MIN_WIDTH[breakpoint || "sm"] || 0;
+  if (deviceWidth < bpMin) return "col-12";
+  const bp = breakpoint || "sm";
+  return bp ? `col-${bp}-${width}` : `col-${width}`;
+};
+
 export /**
  * @param {object} opts
  * @param {number[]} opts.widths
@@ -88,11 +118,13 @@ const Columns = ({
   colClasses,
   colStyles,
   customClass,
+  breakpoints,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const { previewDevice } = useContext(PreviewCtx);
   return (
     <div
       className={`row builder-columns ${customClass || ""} ${selected ? "selected-node" : ""} ${
@@ -104,7 +136,11 @@ const Columns = ({
       {ntimes(ncols, (ix) => (
         <div
           key={ix}
-          className={`split-col col-sm-${getWidth(widths, ix)} text-${
+          className={`split-col ${getColClass(
+            getWidth(widths, ix),
+            breakpoints?.[ix],
+            previewDevice
+          )} text-${
             aligns?.[ix]
           } align-items-${vAligns?.[ix]} ${colClasses?.[ix] || ""}`}
           style={parseStyles(colStyles?.[ix] || "")}
