@@ -198,6 +198,23 @@ describe("Table get data", () => {
     assertIsSet(michaels);
     expect(michaels.length).toStrictEqual(1);
   });
+  it("should not crash on empty in", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const ps = await patients.getRows({ id: { in: [] } });
+    assertIsSet(ps);
+    expect(ps.length).toStrictEqual(0);
+  });
+  it("should not crash on empty in with name", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const ps = await patients.getRows({
+      id: { in: [] },
+      name: "Michael Douglas",
+    });
+    assertIsSet(ps);
+    expect(ps.length).toStrictEqual(0);
+  });
   it("should get limited rows", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
