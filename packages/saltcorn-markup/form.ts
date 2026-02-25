@@ -1008,6 +1008,7 @@ const mkFormRowForRepeat = (
       hdr.showIf
         ? {
             "data-show-if": mkShowIf(hdr.showIf),
+            style: "display: none;",
           }
         : {},
       div(
@@ -1281,6 +1282,7 @@ const renderFormLayout = (form: Form): string => {
         hdr.showIf
           ? {
               "data-show-if": mkShowIf(hdr.showIf),
+              style: "display: none;",
             }
           : {},
         div(
