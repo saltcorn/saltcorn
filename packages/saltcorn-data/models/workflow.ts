@@ -82,7 +82,7 @@ class Workflow implements AbstractWorkflow {
             stepIx === this.steps.length - 1
               ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
-
+        if (!form.onSubmit) form.onSubmit = "press_store_button(this)";
         await addApplyButtonToForm(form, this, context);
       } else if (this.onStepSave) {
         const saveRes = await this.onStepSave(step, context, valres.success);
@@ -157,6 +157,7 @@ class Workflow implements AbstractWorkflow {
             stepIx === this.steps.length - 1
               ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
+        if (!form.onSubmit) form.onSubmit = "press_store_button(this)";
 
         await addApplyButtonToForm(form, this, context);
 
@@ -255,6 +256,7 @@ class Workflow implements AbstractWorkflow {
           stepIx === this.steps.length - 1
             ? this.__("Finish") + " &raquo;"
             : this.__("Next") + " &raquo;";
+      if (!form.onSubmit) form.onSubmit = "press_store_button(this)";
 
       await addApplyButtonToForm(form, this, context);
       return {
