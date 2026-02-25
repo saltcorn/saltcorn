@@ -18,6 +18,8 @@ export interface AbstractField {
   reftable_name?: string;
   pretty_type?: string;
   id?: PrimaryKeyValue;
+  options?: string[];
+  showIf?: Record<string, any>
 }
 
 export type FieldCfg = {
