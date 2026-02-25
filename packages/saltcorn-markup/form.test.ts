@@ -4,12 +4,7 @@ import * as tags from "./tags";
 const { a, input, div, ul, text, text_attr } = tags;
 // import index = require("./index");
 import index from "./index";
-const {
-  renderForm,
-  mkFormContentNoLayout,
-  mkForm,
-  renderFormLayout,
-} = index;
+const { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout } = index;
 
 import { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";
 
@@ -118,6 +113,52 @@ describe("form render", () => {
 <input type="hidden" name="_csrf" value=""><div class="form-group">
 <div><label for="inputname">Name</label></div>
 <div><input type="text" class="form-control is-invalid  " data-fieldname="name" name="name" id="inputname" value="Bar"><div>Not a foo</div>
+</div></div><div class="form-group row">
+  <div class="col-sm-2"></div>
+  <div class="col-sm-10">
+        <button onClick="sc_form_submit_in_progress()" type="submit" class="btn btn-primary">Save</button>
+  </div>
+</div>
+</form>`;
+    expect(nolines(renderForm(form, ""))).toBe(nolines(want));
+  });
+  it("renders a form with showif", () => {
+    const form: Form = {
+      action: "/",
+      fields: [
+        {
+          name: "category",
+          label: "Category",
+          input_type: "select",
+          options: ["Cat", "Dog"],
+          attributes: {},
+          is_fkey: false,
+        },
+        {
+          name: "name",
+          label: "Name",
+          input_type: "text",
+          form_name: "name",
+          required: false,
+          attributes: {},
+          is_fkey: false,
+          showIf: { category: "Dog" },
+        },
+      ],
+      errors: {},
+      values: {},
+      viewname: "testform",
+      formStyle: "",
+      methodGET: false,
+      xhrSubmit: false,
+      req: {},
+    };
+    const want = `<form data-viewname="testform" action="/" class="form-namespace " method="post">
+<input type="hidden" name="_csrf" value=""><div class="form-group">
+<div><label for="inputundefined">Category</label></div>
+<div><select class="form-control form-select  " data-fieldname="undefined" name="undefined" id="inputundefined"><option value="Cat">Cat</option><option value="Dog">Dog</option></select></div></div><div class="form-group" style="display: none;" data-show-if="e.data(%22data-closest-form-ns%22).find('%5Bdata-fieldname%3Dcategory%5D%3Anot(%3Adisabled)').val()%3D%3D%3D'Dog'">
+<div><label for="inputname">Name</label></div>
+<div><input type="text" class="form-control  " data-fieldname="name" name="name" id="inputname">
 </div></div><div class="form-group row">
   <div class="col-sm-2"></div>
   <div class="col-sm-10">
