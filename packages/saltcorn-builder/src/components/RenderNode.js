@@ -82,6 +82,7 @@ const RenderNode = ({ render }) => {
 
   const hiddenColumnParents = new Set(["Card", "Container", "Tabs", "Table", "DropMenu"]);
   useEffect(() => {
+    if (!isActive) return;
     if (name === "Column" && parent && parent !== "ROOT") {
       const parentNode = query.node(parent).get();
       const parentName = parentNode?.data?.displayName;
@@ -91,7 +92,13 @@ const RenderNode = ({ render }) => {
         parentLinked &&
         Object.values(parentLinked).includes(id)
       ) {
-        actions.selectNode(parent);
+        const currentlySelected = query.getEvent("selected").all();
+        const otherSelected = currentlySelected.filter((nid) => nid !== id);
+        if (otherSelected.length > 0) {
+          actions.selectNode([...otherSelected, parent]);
+        } else {
+          actions.selectNode(parent);
+        }
       }
     }
   }, [isActive]);

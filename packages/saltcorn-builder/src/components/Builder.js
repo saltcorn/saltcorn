@@ -12,6 +12,7 @@ import React, {
   useRef,
   memo,
 } from "react";
+import { createPortal } from "react-dom";
 import useTranslation from "../hooks/useTranslation";
 import { Editor, Frame, Element, Selector, useEditor, DefaultEventHandlers } from "@craftjs/core";
 import { Layers, useLayer } from "@craftjs/layers"
@@ -444,7 +445,7 @@ const CustomLayerComponent = memo(({ children }) => {
       };
   });
 
-  const { displayName, hasNodes, isHiddenColumn, connectors: editorConnectors } = useEditor((state) => {
+  const { displayName, hasNodes, isHiddenColumn, selected, connectors: editorConnectors } = useEditor((state) => {
       const node = state.nodes[id];
       const data = node?.data;
 
@@ -470,10 +471,13 @@ const CustomLayerComponent = memo(({ children }) => {
           }
       }
 
+      const isSelected = state.events?.selected?.has?.(id) || (state.events?.selected === id);
+
       return {
           displayName: name,
           hasNodes: hasChildren,
-          isHiddenColumn: shouldHide
+          isHiddenColumn: shouldHide,
+          selected: isSelected
       };
   });
 
@@ -502,7 +506,7 @@ const CustomLayerComponent = memo(({ children }) => {
     <div ref={(dom) => { layer(dom); if (dom) editorConnectors.drop(dom, id); }}>
         <div
           ref={(dom) => { drag(dom); layerHeader(dom); }}
-          className={`builder-layer-node ${hovered ? "hovered" : ""}`}
+          className={`builder-layer-node ${hovered ? "hovered" : ""} ${selected ? "selected" : ""}`}
           style={{
             paddingLeft: `${depth * 20 + 10}px`,
           }}
@@ -816,10 +820,6 @@ const Builder = ({ options, layout, mode }) => {
                       options.mode !== "list" ? "emptymsg" : ""
                     }`}
                   >
-                    <DevicePreviewToolbar
-                      previewDevice={previewDevice}
-                      setPreviewDevice={setPreviewDevice}
-                    />
                     <div className="device-preview-scroll-area">
                       <div
                         className={`device-preview-canvas-wrapper ${
@@ -844,17 +844,27 @@ const Builder = ({ options, layout, mode }) => {
                   </div>
                   <div className="col-sm-auto builder-sidebar">
                     <div style={{ width: isEnlarged ? "28rem" : "16rem" }}>
-                      <NextButton layout={layout} />
-                      <HistoryPanel />
-                      <FontAwesomeIcon
-                        icon={faSave}
-                        className={savingState.isSaving ? "d-inline" : "d-none"}
+                      <DevicePreviewToolbar
+                        previewDevice={previewDevice}
+                        setPreviewDevice={setPreviewDevice}
                       />
-                      <FontAwesomeIcon
-                        icon={faExclamationTriangle}
-                        color="#ff0033"
-                        className={savingState.error ? "d-inline" : "d-none"}
-                      />
+                      {document.getElementById("builder-header-actions") &&
+                        createPortal(
+                          <Fragment>
+                            <FontAwesomeIcon
+                              icon={faSave}
+                              className={savingState.isSaving ? "d-inline" : "d-none"}
+                            />
+                            <FontAwesomeIcon
+                              icon={faExclamationTriangle}
+                              color="#ff0033"
+                              className={savingState.error ? "d-inline" : "d-none"}
+                            />
+                            <HistoryPanel />
+                            <NextButton layout={layout} />
+                          </Fragment>,
+                          document.getElementById("builder-header-actions")
+                        )}
                       <FontAwesomeIcon
                         icon={
                           isEnlarged ? faCaretSquareRight : faCaretSquareLeft

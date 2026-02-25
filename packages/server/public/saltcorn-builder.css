@@ -747,9 +747,15 @@ body.builder-dark .builder-select__menu-notice,
 }
 
 /* Ensure selected nodes maintain visibility */
-.builder-layer-node.selected-node {
-  outline: 1px dashed #2680eb; /* Example: blue dashed outline */
-  outline-offset: -2px;
+.builder-layer-node.selected {
+  background-color: #cce5ff;
+  border-left: 3px solid #2680eb;
+}
+
+.builder-dark-panel .builder-layer-node.selected,
+[data-bs-theme="dark"] .builder-layer-node.selected {
+  background-color: #1a3a5c;
+  border-left: 3px solid #4da3ff;
 }
 
 .code-modal {
@@ -762,11 +768,9 @@ body.builder-dark .builder-select__menu-notice,
 
 .device-preview-toolbar {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 4px;
   padding: 5px 0;
-  border-bottom: 1px solid #dee2e6;
-  background-color: #f8f9fa;
   flex-shrink: 0;
 }
 
@@ -792,6 +796,5 @@ body.builder-dark .builder-select__menu-notice,
 .device-preview-constrained {
   border-left: 1px dashed #adb5bd;
   border-right: 1px dashed #adb5bd;
-  min-height: 100%;
 }
 
