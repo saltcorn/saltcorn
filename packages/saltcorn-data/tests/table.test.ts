@@ -3115,6 +3115,18 @@ describe("Table recursive query", () => {
       expect(rows[1]._level).toBe(1);
       expect(rows[0]._level).toBe(0);
     });
+    it("getRows tree with tree field in where", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows(
+        { parent: 1 },
+        { tree_field: "parent", orderBy: "name" }
+      );
+      //console.log(rows.map((r) => r.name));
+      expect(rows.length).toEqual(2);
+      expect(rows[0].name).toBe("Biology");
+    });
   } else
     it("doesnt work", async () => {
       expect(2 + 2).toBe(4);
