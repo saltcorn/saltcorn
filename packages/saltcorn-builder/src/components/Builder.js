@@ -106,7 +106,7 @@ const getFirstSelected = (selected) => {
  * @subcategory components
  * @namespace
  */
-const SettingsPanel = () => {
+const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
   const { t } = useTranslation();
   const options = useContext(optionsCtx);
 
@@ -162,6 +162,15 @@ const SettingsPanel = () => {
     const tagName = target.tagName.toLowerCase();
     const hasSelection = selectedCount > 0;
     if ((tagName === "body" || tagName === "button") && hasSelection) {
+      if (!selected && selectedCount > 1 && (keyCode === 8 || keyCode === 46)) {
+        const currentSelected = query.getEvent("selected");
+        const nodeIds = getSelectedNodes(currentSelected)
+          .map((nodeId) => (typeof nodeId === "string" ? nodeId : nodeId?.id))
+          .filter((nodeId) => nodeId && nodeId !== "ROOT");
+        nodeIds.forEach((nodeId) => {
+          try { actions.delete(nodeId); } catch (e) { /* node may already be deleted */ }
+        });
+      }
       if (selected) {
         if ((keyCode === 8 || keyCode === 46) && selected.id === "ROOT") {
           deleteChildren();
@@ -300,6 +309,14 @@ const SettingsPanel = () => {
         actions.history.redo();
       }
     }
+    if ((tagName === "body" || tagName === "button") &&
+        (event.ctrlKey || event.metaKey) && event.keyCode == 65) {
+      event.preventDefault();
+      const rootChildren = query.node("ROOT").childNodes();
+      if (rootChildren.length > 0) {
+        actions.selectNode(rootChildren);
+      }
+    }
   };
   useEffect(() => {
     window.addEventListener("keydown", handleUserKeyPress);
@@ -338,13 +355,23 @@ const SettingsPanel = () => {
 
   return (
     <div className="settings-panel card mt-1">
-      <div className="card-header px-2 py-1">
-        {selected && selected.displayName ? (
-          <Fragment>
-            <b>{selected.displayName}</b> settings
-          </Fragment>
-        ) : (
-          t("Settings")
+      <div className="card-header px-2 py-1 d-flex justify-content-between align-items-center">
+        <div>
+          {selected && selected.displayName ? (
+            <Fragment>
+              <b>{selected.displayName}</b> settings
+            </Fragment>
+          ) : (
+            t("Settings")
+          )}
+        </div>
+        {setIsEnlarged && (
+          <FontAwesomeIcon
+            icon={isEnlarged ? faCaretSquareRight : faCaretSquareLeft}
+            className="fa-lg builder-expand-toggle-right"
+            onClick={() => setIsEnlarged(!isEnlarged)}
+            title={isEnlarged ? t("Shrink") : t("Enlarge")}
+          />
         )}
       </div>
       <div className="card-body p-2">
@@ -481,21 +508,23 @@ const CustomLayerComponent = memo(({ children }) => {
       };
   });
 
+  const isRoot = id === "ROOT";
+
   // Auto-expand hidden linked-node Columns so their children are always
   // visible through the transparent wrapper. Uses setExpandedState(true)
   // instead of toggleLayer() — it's idempotent (no-op when already true),
   // so it won't conflict with craft.js internals or cause toggle loops.
   useEffect(() => {
-    if (isHiddenColumn && !expanded) {
+    if ((isHiddenColumn || isRoot) && !expanded) {
       setExpandedState(true);
     }
-  }, [isHiddenColumn, expanded, setExpandedState]);
+  }, [isHiddenColumn, isRoot, expanded, setExpandedState]);
 
-  if (isHiddenColumn) {
+  if (isHiddenColumn || isRoot) {
     return (
       <div
         ref={(dom) => { layer(dom); if (dom) editorConnectors.drop(dom, id); }}
-        style={{ marginLeft: "-20px" }}
+        style={isHiddenColumn ? { marginLeft: "-20px" } : undefined}
       >
         {children}
       </div>
@@ -865,16 +894,6 @@ const Builder = ({ options, layout, mode }) => {
                           </Fragment>,
                           document.getElementById("builder-header-actions")
                         )}
-                      <FontAwesomeIcon
-                        icon={
-                          isEnlarged ? faCaretSquareRight : faCaretSquareLeft
-                        }
-                        className={
-                          "float-end me-2 mt-1 fa-lg builder-expand-toggle-right"
-                        }
-                        onClick={() => setIsEnlarged(!isEnlarged)}
-                        title={isEnlarged ? t("Shrink") : t("Enlarge")}
-                      />
                       <div
                         className={` ${
                           savingState.error ? "d-block" : "d-none"
@@ -882,7 +901,7 @@ const Builder = ({ options, layout, mode }) => {
                       >
                         {t("your work is not being saved")}
                       </div>
-                      <SettingsPanel />
+                      <SettingsPanel isEnlarged={isEnlarged} setIsEnlarged={setIsEnlarged} />
                     </div>
                   </div>
                 </div>

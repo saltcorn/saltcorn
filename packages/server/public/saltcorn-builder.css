@@ -157,6 +157,14 @@ div.wrap-builder-elem label {
   outline: 1px dashed #808080;
 }
 
+#builder-main-canvas .builder-columns {
+  padding: 4px;
+  outline: 1px dashed transparent;
+}
+#builder-main-canvas .builder-columns:hover {
+  outline-color: #b0b0b0;
+}
+
 #builder-main-canvas div.root-canvas {
   margin-top: 1px;
   padding: 2px;

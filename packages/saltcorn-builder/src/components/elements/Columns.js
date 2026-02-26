@@ -202,79 +202,70 @@ const ColumnsSettings = () => {
       value={currentSettingsTab}
       onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
     >
-      <table accordiontitle={t("Column properties")}>
-        <tbody>
-          <tr>
-            <td colSpan="4">
-              <ArrayManager
-                node={node}
-                setProp={setProp}
-                countProp={"ncols"}
-                currentProp={"setting_col_n"}
-                managedArrays={["widths", "breakpoints", "aligns", "vAligns", "colClasses", "colStyles"]}
-                manageContents={true}
-                contentsKey={"besides"}
-                initialAddProps={{
-                  breakpoints: "sm",
-                }}
-                onLayoutChange={(layout, action) => {
-                  if (action === "add" || action === "delete") {
-                    const n = layout.besides.length;
-                    layout.widths = ntimes(n, () => Math.floor(12 / n));
-                  }
-                }}
-              />
-            </td>
-          </tr>
-          <tr>
-            <th colSpan="4">{t("Width & Breakpoint")}</th>
-          </tr>
-          <tr>
-            <td>
-              <label>{t("Width")}</label>
-            </td>
-            <td align="right">
-              {setting_col_n < ncols - 1 ? (
-                <input
-                  type="number"
-                  value={widths[setting_col_n]}
-                  className="form-control"
-                  step="1"
-                  min="1"
-                  max={12 - (sum(widths) - widths[setting_col_n]) - 1}
+      <div accordiontitle={t("Column properties")}>
+        <ArrayManager
+          node={node}
+          setProp={setProp}
+          countProp={"ncols"}
+          currentProp={"setting_col_n"}
+          managedArrays={["widths", "breakpoints", "aligns", "vAligns", "colClasses", "colStyles"]}
+          manageContents={true}
+          contentsKey={"besides"}
+          initialAddProps={{
+            breakpoints: "sm",
+          }}
+          onLayoutChange={(layout, action) => {
+            if (action === "add" || action === "delete") {
+              const n = layout.besides.length;
+              layout.widths = ntimes(n, () => Math.floor(12 / n));
+            }
+          }}
+        />
+        <table className="w-100 mt-2">
+          <tbody>
+            <tr>
+              <th colSpan="4">{t("Width & Breakpoint")}</th>
+            </tr>
+            <tr>
+              <td>
+                <label>{t("Width")}</label>
+              </td>
+              <td align="right">
+                {setting_col_n < ncols - 1 ? (
+                  <input
+                    type="number"
+                    value={widths[setting_col_n]}
+                    className="form-control"
+                    step="1"
+                    min="1"
+                    max={12 - (sum(widths) - widths[setting_col_n]) - 1}
+                    onChange={(e) => {
+                      if (!e.target) return;
+                      const value = e.target.value;
+                      setProp((prop) => (prop.widths[setting_col_n] = +value));
+                    }}
+                  />
+                ) : (
+                  `${12 - sum(widths)}`
+                )}
+              </td>
+              <td>/12</td>
+              <td>
+                <select
+                  className="form-control form-select"
+                  value={breakpoints[setting_col_n]}
                   onChange={(e) => {
                     if (!e.target) return;
                     const value = e.target.value;
-                    setProp((prop) => (prop.widths[setting_col_n] = +value));
+                    setProp((prop) => (prop.breakpoints[setting_col_n] = value));
                   }}
-                />
-              ) : (
-                `${12 - sum(widths)}`
-              )}
-            </td>
-            <td>/12</td>
-            <td>
-              <select
-                className="form-control form-select"
-                value={breakpoints[setting_col_n]}
-                onChange={(e) => {
-                  if (!e.target) return;
-                  const value = e.target.value;
-                  setProp((prop) => (prop.breakpoints[setting_col_n] = value));
-                }}
-              >
-                <option disabled>{t("Breakpoint")}</option>
-                <option value="">{t("none")}</option>
-                {buildBootstrapOptions(["sm", "md", "lg"])}
-              </select>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      <div accordiontitle={t("Column settings")}>
-        {t("Settings for column #")}{setting_col_n + 1}
-        <table className="w-100">
-          <tbody>
+                >
+                  <option disabled>{t("Breakpoint")}</option>
+                  <option value="">{t("none")}</option>
+                  {buildBootstrapOptions(["sm", "md", "lg"])}
+                </select>
+              </td>
+            </tr>
             <SettingsSectionHeaderRow title={t("Align")} />
             <SettingsRow
               field={{
@@ -335,7 +326,7 @@ const ColumnsSettings = () => {
               field={{
                 name: "colStyle",
                 label: t("CSS"),
-                type: "textarea",
+                type: "String",
               }}
               node={colSetsNode}
               setProp={setProp}
