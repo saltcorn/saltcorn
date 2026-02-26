@@ -635,6 +635,7 @@ const respondWorkflow = (view, wf, wfres, req, res, table) => {
           },
           { workflow: wf, step: wfres },
         ],
+        right: '<div id="builder-header-actions" class="d-flex align-items-center gap-2"></div>',
       },
       {
         type: noCard ? "container" : "card",
