@@ -1664,6 +1664,13 @@ ${value}`;
         });
       }
     });
+    if (window.mermaid) {
+      $(e.target)
+        .find(".mermaid[mm-src]")
+        .each(function(){$(this).html($(this).attr("mm-src"))})
+        .removeAttr("data-processed");
+      mermaid.init(undefined, $(e.target).find(".mermaid"));
+    }
   };
   $(".lazy-accoordion").on("show.bs.collapse", lazyAccHandler);
   $(".lazy-tabs").on("show.bs.tab", function (e) {
