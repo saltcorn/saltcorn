@@ -17,12 +17,12 @@
     "@babel/core": "7.25.2",
     "@babel/preset-env": "7.25.2",
     "@babel/preset-react": "7.24.7",
-    "babel-loader": "8.1.0",
+    "babel-loader": "9.1.3",
     "classnames": "2.2.6",
     "css-loader": "6.11.0",
     "process": "0.11.10",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "@xyflow/react": "^12.10.0",
     "style-loader": "3.3.4",
     "webpack": "5.97.1",
@@ -33,6 +33,8 @@
     "glob-parent": "^5.1.2",
     "undici": "7.12.0",
     "parse5": "7.2.1",
-    "parse5-htmlparser2-tree-adapter": "7.0.0"
+    "parse5-htmlparser2-tree-adapter": "7.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
   }
 }
