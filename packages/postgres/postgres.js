@@ -107,15 +107,14 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
   const { where, values } = mkWhere(whereObj);
   const schema = selectopts.schema || getTenantSchema();
   let sql;
-  if (selectopts.tree_field) {
-    const tree_in_where = !!whereObj[selectopts.tree_field];
+  if (selectopts.tree_field && !whereObj[selectopts.tree_field])
     sql = `WITH RECURSIVE _tree AS (
       SELECT ${
         selectopts.fields ? selectopts.fields.join(", ") : `*`
       }, 0 as _level
       ${selectopts.orderBy ? `, ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy)}"${selectopts.orderDesc ? " DESC" : ""})] as _sort_path` : ""} 
       FROM "${schema}"."${sqlsanitize(tbl)}" 
-      WHERE ${tree_in_where ? "" : `"${selectopts.tree_field}" IS NULL`} ${where ? `${tree_in_where ? "" : "AND"} ${where.replace("where ", "")}` : ""}
+      WHERE "${selectopts.tree_field}" IS NULL ${where ? `AND ${where.replace("where ", "")}` : ""}
 
     UNION ALL
 
@@ -137,7 +136,7 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
       values,
       false
     )}`;
-  } else
+  else
     sql = `SELECT ${
       selectopts.fields ? selectopts.fields.join(", ") : `*`
     } FROM "${schema}"."${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
