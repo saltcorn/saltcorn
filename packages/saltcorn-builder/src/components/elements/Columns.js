@@ -230,7 +230,7 @@ const ColumnsSettings = () => {
               <td>
                 <label>{t("Width")}</label>
               </td>
-              <td align="right">
+              <td colSpan="3" align="right">
                 {setting_col_n < ncols - 1 ? (
                   <input
                     type="number"
@@ -249,8 +249,12 @@ const ColumnsSettings = () => {
                   `${12 - sum(widths)}`
                 )}
               </td>
-              <td>/12</td>
+            </tr>
+            <tr>
               <td>
+                <label>{t("Breakpoint")}</label>
+              </td>
+              <td colSpan="3">
                 <select
                   className="form-control form-select"
                   value={breakpoints[setting_col_n]}
@@ -260,7 +264,6 @@ const ColumnsSettings = () => {
                     setProp((prop) => (prop.breakpoints[setting_col_n] = value));
                   }}
                 >
-                  <option disabled>{t("Breakpoint")}</option>
                   <option value="">{t("none")}</option>
                   {buildBootstrapOptions(["sm", "md", "lg"])}
                 </select>

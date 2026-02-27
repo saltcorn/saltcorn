@@ -455,7 +455,7 @@ function useWindowDimensions() {
  * @namespace
  */
 
-const hiddenColumnParents = new Set(["Card", "Container", "Tabs", "Table", "DropMenu"]);
+const hiddenColumnParents = new Set(["Card", "Container", "Tabs", "Table", "DropMenu", "ListColumn"]);
 
 const CustomLayerComponent = memo(({ children }) => {
   const {
@@ -524,7 +524,7 @@ const CustomLayerComponent = memo(({ children }) => {
     return (
       <div
         ref={(dom) => { layer(dom); if (dom) editorConnectors.drop(dom, id); }}
-        style={isHiddenColumn ? { marginLeft: "-20px" } : undefined}
+        style={{ marginLeft: "-14px" }}
       >
         {children}
       </div>
@@ -537,7 +537,7 @@ const CustomLayerComponent = memo(({ children }) => {
           ref={(dom) => { drag(dom); layerHeader(dom); }}
           className={`builder-layer-node ${hovered ? "hovered" : ""} ${selected ? "selected" : ""}`}
           style={{
-            paddingLeft: `${depth * 20 + 10}px`,
+            paddingLeft: `${depth * 14 + 10}px`,
           }}
         >
           <span className="layer-name" style={{ flexGrow: 1 }}>{displayName}</span>
