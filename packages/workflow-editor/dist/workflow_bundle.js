@@ -33973,6 +33973,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _xyflow_react_dist_style_css__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(137);
 /* harmony import */ var _workflow_css__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(147);
 /* harmony import */ var _WorkflowEdge__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(149);
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
 function _regenerator() { /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/babel/babel/blob/main/packages/babel-helpers/LICENSE */ var e, t, r = "function" == typeof Symbol ? Symbol : {}, n = r.iterator || "@@iterator", o = r.toStringTag || "@@toStringTag"; function i(r, n, o, i) { var c = n && n.prototype instanceof Generator ? n : Generator, u = Object.create(c.prototype); return _regeneratorDefine2(u, "_invoke", function (r, n, o) { var i, c, u, f = 0, p = o || [], y = !1, G = { p: 0, n: 0, v: e, a: d, f: d.bind(e, 4), d: function d(t, r) { return i = t, c = 0, u = e, G.n = r, a; } }; function d(r, n) { for (c = r, u = n, t = 0; !y && f && !o && t < p.length; t++) { var o, i = p[t], d = G.p, l = i[2]; r > 3 ? (o = l === n) && (u = i[(c = i[4]) ? 5 : (c = 3, 3)], i[4] = i[5] = e) : i[0] <= d && ((o = r < 2 && d < i[1]) ? (c = 0, G.v = n, G.n = i[1]) : d < l && (o = r < 3 || i[0] > n || n > l) && (i[4] = r, i[5] = n, G.n = l, c = 0)); } if (o || r > 1) return a; throw y = !0, n; } return function (o, p, l) { if (f > 1) throw TypeError("Generator is already running"); for (y && 1 === p && d(p, l), c = p, u = l; (t = c < 2 ? e : u) || !y;) { i || (c ? c < 3 ? (c > 1 && (G.n = -1), d(c, u)) : G.n = u : G.v = u); try { if (f = 2, i) { if (c || (o = "next"), t = i[o]) { if (!(t = t.call(i, u))) throw TypeError("iterator result is not an object"); if (!t.done) return t; u = t.value, c < 2 && (c = 0); } else 1 === c && (t = i["return"]) && t.call(i), c < 2 && (u = TypeError("The iterator does not provide a '" + o + "' method"), c = 1); i = e; } else if ((t = (y = G.n < 0) ? u : r.call(n, G)) !== a) break; } catch (t) { i = e, c = 1, u = t; } finally { f = 1; } } return { value: t, done: y }; }; }(r, o, i), !0), u; } var a = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} t = Object.getPrototypeOf; var c = [][n] ? t(t([][n]())) : (_regeneratorDefine2(t = {}, n, function () { return this; }), t), u = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(c); function f(e) { return Object.setPrototypeOf ? Object.setPrototypeOf(e, GeneratorFunctionPrototype) : (e.__proto__ = GeneratorFunctionPrototype, _regeneratorDefine2(e, o, "GeneratorFunction")), e.prototype = Object.create(u), e; } return GeneratorFunction.prototype = GeneratorFunctionPrototype, _regeneratorDefine2(u, "constructor", GeneratorFunctionPrototype), _regeneratorDefine2(GeneratorFunctionPrototype, "constructor", GeneratorFunction), GeneratorFunction.displayName = "GeneratorFunction", _regeneratorDefine2(GeneratorFunctionPrototype, o, "GeneratorFunction"), _regeneratorDefine2(u), _regeneratorDefine2(u, o, "Generator"), _regeneratorDefine2(u, n, function () { return this; }), _regeneratorDefine2(u, "toString", function () { return "[object Generator]"; }), (_regenerator = function _regenerator() { return { w: i, m: f }; })(); }
 function _regeneratorDefine2(e, r, n, t) { var i = Object.defineProperty; try { i({}, "", {}); } catch (e) { i = 0; } _regeneratorDefine2 = function _regeneratorDefine(e, r, n, t) { function o(r, n) { _regeneratorDefine2(e, r, function (e) { return this._invoke(r, n, e); }); } r ? i ? i(e, r, { value: n, enumerable: !t, configurable: !t, writable: !t }) : e[r] = n : (o("next", 0), o("throw", 1), o("return", 2)); }, _regeneratorDefine2(e, r, n, t); }
 function asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }
@@ -34435,9 +34436,16 @@ var buildGraph = function buildGraph(steps, strings, actionExplainers) {
     id: "e-start-".concat(initial.id),
     source: "start",
     target: String(initial.id),
-    type: "smoothstep",
+    type: "workflow-main",
     animated: true,
-    markerEnd: makeMarker()
+    markerEnd: makeMarker(),
+    data: {
+      startLabel: strings.start,
+      sourceStepName: "start",
+      sourceId: "start",
+      targetId: String(initial.id),
+      canInsertBetween: true
+    }
   });else {
     var addId = "add-start";
     edges.push({
@@ -34569,7 +34577,7 @@ var buildGraph = function buildGraph(steps, strings, actionExplainers) {
     }
   });
   var addNodes = [];
-  if (!steps.length) {
+  if (!initial) {
     var _addId = "add-start";
     addNodes.push({
       id: _addId,
@@ -34713,13 +34721,13 @@ var StepDrawer = function StepDrawer(_ref7) {
       e.stopPropagation();
       onDelete(modal.stepId);
     }
-  }, data.strings.deleteStep), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
+  }, data.strings.deleteStep), modal.stepId ? /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
     className: "btn btn-sm btn-outline-secondary",
     onClick: function onClick(e) {
       e.stopPropagation();
       onCopy(modal.stepId);
     }
-  }, data.strings.copyStep || "Copy"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
+  }, data.strings.copyStep || "Copy") : null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
     className: "btn btn-secondary",
     onClick: onClose
   }, "Close"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
@@ -34906,12 +34914,14 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     var tag = (_e$target2 = e.target) === null || _e$target2 === void 0 || (_e$target2 = _e$target2.tagName) === null || _e$target2 === void 0 ? void 0 : _e$target2.toLowerCase();
     if (tag === "input" || tag === "textarea" || tag === "select" || tag === "button" || (_e$target3 = e.target) !== null && _e$target3 !== void 0 && _e$target3.isContentEditable) return;
     if (e.key !== "Delete" && e.key !== "Backspace") return;
-    var stepNode = selectedNodes.find(function (n) {
+    var stepIds = selectedNodes.filter(function (n) {
       return n.type === "step";
+    }).map(function (n) {
+      return n.id;
     });
-    if (!stepNode) return;
+    if (!stepIds.length) return;
     e.preventDefault();
-    onDelete(stepNode.id);
+    onDelete(stepIds);
   }, [modal, onDelete, selectedNodes]);
   var strings = data.strings || {};
   var refreshGraph = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (nextSteps) {
@@ -35064,7 +35074,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     };
   }(), []);
   var reload = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
-    var fresh, updatedSteps, _pendingAddRef$curren, afterStepId, prevIds, insertBetween, newSteps, newStep, nextSteps, _t;
+    var fresh, updatedSteps, _pendingAddRef$curren, afterStepId, prevIds, insertBetween, fromStart, newSteps, newStep, nextSteps, _t;
     return _regenerator().w(function (_context2) {
       while (1) switch (_context2.p = _context2.n) {
         case 0:
@@ -35077,36 +35087,40 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
           fresh = _context2.v;
           updatedSteps = null; // If a step was just added via an adder node, wire up next_step
           if (!pendingAddRef.current) {
-            _context2.n = 10;
+            _context2.n = 12;
             break;
           }
-          _pendingAddRef$curren = pendingAddRef.current, afterStepId = _pendingAddRef$curren.afterStepId, prevIds = _pendingAddRef$curren.prevIds, insertBetween = _pendingAddRef$curren.insertBetween;
+          _pendingAddRef$curren = pendingAddRef.current, afterStepId = _pendingAddRef$curren.afterStepId, prevIds = _pendingAddRef$curren.prevIds, insertBetween = _pendingAddRef$curren.insertBetween, fromStart = _pendingAddRef$curren.fromStart;
           newSteps = (fresh.steps || []).filter(function (s) {
             return !prevIds.has(String(s.id));
           });
           if (!(newSteps.length === 1)) {
-            _context2.n = 9;
+            _context2.n = 11;
             break;
           }
           newStep = newSteps[0];
           if (!(insertBetween && insertBetween.originalTargetName)) {
-            _context2.n = 5;
+            _context2.n = 7;
+            break;
+          }
+          if (!fromStart) {
+            _context2.n = 4;
             break;
           }
           _context2.n = 3;
           return updateConnection({
             step_id: newStep.id,
-            next_step: insertBetween.originalTargetName
+            initial_step: true
           });
         case 3:
-          _context2.n = 4;
-          return updateConnection({
-            step_id: afterStepId,
-            next_step: newStep.name
-          });
-        case 4:
           _context2.n = 6;
           break;
+        case 4:
+          _context2.n = 5;
+          return updateConnection({
+            step_id: newStep.id,
+            next_step: insertBetween.originalTargetName
+          });
         case 5:
           _context2.n = 6;
           return updateConnection({
@@ -35114,15 +35128,24 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
             next_step: newStep.name
           });
         case 6:
-          _context2.n = 7;
-          return fetchJson(data.urls.data);
+          _context2.n = 8;
+          break;
         case 7:
+          _context2.n = 8;
+          return updateConnection({
+            step_id: afterStepId,
+            next_step: newStep.name
+          });
+        case 8:
+          _context2.n = 9;
+          return fetchJson(data.urls.data);
+        case 9:
           fresh = _context2.v;
           if (!(insertBetween && insertBetween.originalTargetName)) {
-            _context2.n = 9;
+            _context2.n = 11;
             break;
           }
-          _context2.n = 8;
+          _context2.n = 10;
           return applyInsertBetweenLayout(fresh.steps || [], {
             newStep: newStep,
             afterStepId: afterStepId,
@@ -35130,11 +35153,11 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
             targetId: insertBetween.targetId,
             snapshot: insertBetween.positionsSnapshot
           });
-        case 8:
-          updatedSteps = _context2.v;
-        case 9:
-          pendingAddRef.current = null;
         case 10:
+          updatedSteps = _context2.v;
+        case 11:
+          pendingAddRef.current = null;
+        case 12:
           nextSteps = updatedSteps || fresh.steps || [];
           setSteps(nextSteps);
           setMessage(strings.refresh);
@@ -35142,18 +35165,18 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
             return setMessage("");
           }, 1200);
           return _context2.a(2, nextSteps);
-        case 11:
-          _context2.p = 11;
+        case 13:
+          _context2.p = 13;
           _t = _context2.v;
           setError(_t.message);
-        case 12:
-          _context2.p = 12;
+        case 14:
+          _context2.p = 14;
           setLoading(false);
-          return _context2.f(12);
-        case 13:
+          return _context2.f(14);
+        case 15:
           return _context2.a(2);
       }
-    }, _callee2, null, [[1, 11, 12, 13]]);
+    }, _callee2, null, [[1, 13, 14, 15]]);
   })), [applyInsertBetweenLayout, data.urls.data, fetchJson, strings.refresh, updateConnection]);
   var persistPositions = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
     var positions,
@@ -35755,10 +35778,26 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     if (targetEl !== null && targetEl !== void 0 && (_targetEl$classList = targetEl.classList) !== null && _targetEl$classList !== void 0 && _targetEl$classList.contains("react-flow__pane")) {
       // Dropped on empty space: clear next_step mark as final/unconnected
       if (pending.nodeId && pending.handleId !== "loop-out") {
-        onClearNext(pending.nodeId);
+        if (pending.nodeId === "start") {
+          var currentInitial = steps.find(function (s) {
+            return s.initial_step;
+          });
+          if (currentInitial) {
+            updateConnection({
+              step_id: currentInitial.id,
+              initial_step: false
+            }).then(function () {
+              return reload();
+            })["catch"](function (e) {
+              return setError(e.message);
+            });
+          }
+        } else {
+          onClearNext(pending.nodeId);
+        }
       }
     }
-  }, [onClearNext]);
+  }, [onClearNext, reload, steps, updateConnection]);
   var onEdgesChange = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (changes) {
     var removed = changes.filter(function (c) {
       return c.type === "remove";
@@ -35859,9 +35898,10 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
   var onInsertBetween = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_ref26) {
     var source = _ref26.source,
       target = _ref26.target;
-    if (!source || !target || source === "start") return;
+    if (!source || !target) return;
     var originalTargetName = nameById[target];
     if (!originalTargetName) return;
+    var fromStart = source === "start";
     var sizeById = new Map(steps.map(function (s) {
       return [String(s.id), getWorkflowSize(s) || {
         width: DEFAULT_NODE_WIDTH,
@@ -35885,17 +35925,20 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       };
     });
     pendingAddRef.current = {
-      afterStepId: source,
+      afterStepId: fromStart ? "start" : source,
       prevIds: new Set(steps.map(function (s) {
         return String(s.id);
       })),
+      fromStart: fromStart,
       insertBetween: {
         originalTargetName: originalTargetName,
         targetId: target,
         positionsSnapshot: positionsSnapshot
       }
     };
-    openStepForm({
+    openStepForm(fromStart ? {
+      initial_step: true
+    } : {
       after_step: source
     });
   }, [nameById, openStepForm, steps]);
@@ -36085,47 +36128,82 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     };
   }(), [reload, updateConnection]);
   var onDelete = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref30 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee13(id) {
-      var formData, _t9;
+    var _ref30 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee13(ids) {
+      var normalizedIds, uniqueIds, singleConfirm, confirmMessage, _iterator, _step, id, formData, _t9, _t0;
       return _regenerator().w(function (_context13) {
         while (1) switch (_context13.p = _context13.n) {
           case 0:
-            if (window.confirm(strings.confirmDelete)) {
+            normalizedIds = Array.isArray(ids) ? ids : [ids];
+            uniqueIds = _toConsumableArray(new Set(normalizedIds.map(function (id) {
+              return String(id);
+            })));
+            if (uniqueIds.length) {
               _context13.n = 1;
               break;
             }
             return _context13.a(2);
           case 1:
-            _context13.p = 1;
+            singleConfirm = strings.confirmDelete || "Delete step?";
+            confirmMessage = uniqueIds.length > 1 ? strings.confirmDeleteMany || "".concat(singleConfirm, " (").concat(uniqueIds.length, " steps)") : singleConfirm;
+            if (window.confirm(confirmMessage)) {
+              _context13.n = 2;
+              break;
+            }
+            return _context13.a(2);
+          case 2:
+            _context13.p = 2;
+            _iterator = _createForOfIteratorHelper(uniqueIds);
+            _context13.p = 3;
+            _iterator.s();
+          case 4:
+            if ((_step = _iterator.n()).done) {
+              _context13.n = 6;
+              break;
+            }
+            id = _step.value;
             formData = new FormData();
             formData.append("_csrf", data.csrfToken || "");
-            _context13.n = 2;
+            _context13.n = 5;
             return fetchJson("".concat(data.urls.deleteStep, "/").concat(id), {
               method: "POST",
               body: formData
             });
-          case 2:
+          case 5:
+            _context13.n = 4;
+            break;
+          case 6:
+            _context13.n = 8;
+            break;
+          case 7:
+            _context13.p = 7;
+            _t9 = _context13.v;
+            _iterator.e(_t9);
+          case 8:
+            _context13.p = 8;
+            _iterator.f();
+            return _context13.f(8);
+          case 9:
             setModal(null);
             setError("");
             clearDrawerState();
-            _context13.n = 3;
+            _context13.n = 10;
             return reload();
-          case 3:
-            _context13.n = 5;
+          case 10:
+            _context13.n = 12;
             break;
-          case 4:
-            _context13.p = 4;
-            _t9 = _context13.v;
-            setError(_t9.message);
-          case 5:
+          case 11:
+            _context13.p = 11;
+            _t0 = _context13.v;
+            setError(_t0.message);
+          case 12:
             return _context13.a(2);
         }
-      }, _callee13, null, [[1, 4]]);
+      }, _callee13, null, [[3, 7, 8, 9], [2, 11]]);
     }));
     return function (_x1) {
       return _ref30.apply(this, arguments);
     };
-  }(), [clearDrawerState, data.csrfToken, fetchJson, reload, strings.confirmDelete]);
+  }(), [clearDrawerState, data.csrfToken, fetchJson, reload, strings.confirmDelete, strings.confirmDeleteMany]);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
     setNodes(function (nds) {
       return nds.map(function (n) {

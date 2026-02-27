@@ -487,9 +487,16 @@ const buildGraph = (
       id: `e-start-${initial.id}`,
       source: "start",
       target: String(initial.id),
-      type: "smoothstep",
+      type: "workflow-main",
       animated: true,
       markerEnd: makeMarker(),
+      data: {
+        startLabel: strings.start,
+        sourceStepName: "start",
+        sourceId: "start",
+        targetId: String(initial.id),
+        canInsertBetween: true,
+      },
     });
   else {
     const addId = "add-start";
@@ -620,7 +627,7 @@ const buildGraph = (
   });
 
   const addNodes = [];
-  if (!steps.length) {
+  if (!initial) {
     const addId = "add-start";
     addNodes.push({
       id: addId,
@@ -760,15 +767,17 @@ const StepDrawer = ({
             >
               {data.strings.deleteStep}
             </button>
-            <button
-              className="btn btn-sm btn-outline-secondary"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCopy(modal.stepId);
-              }}
-            >
-              {data.strings.copyStep || "Copy"}
-            </button>
+            {modal.stepId ? (
+              <button
+                className="btn btn-sm btn-outline-secondary"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onCopy(modal.stepId);
+                }}
+              >
+                {data.strings.copyStep || "Copy"}
+              </button>
+            ) : null}
             <button className="btn btn-secondary" onClick={onClose}>
               Close
             </button>
@@ -934,10 +943,12 @@ const WorkflowEditor = ({ data }) => {
       )
         return;
       if (e.key !== "Delete" && e.key !== "Backspace") return;
-      const stepNode = selectedNodes.find((n) => n.type === "step");
-      if (!stepNode) return;
+      const stepIds = selectedNodes
+        .filter((n) => n.type === "step")
+        .map((n) => n.id);
+      if (!stepIds.length) return;
       e.preventDefault();
-      onDelete(stepNode.id);
+      onDelete(stepIds);
     },
     [modal, onDelete, selectedNodes]
   );
@@ -1098,22 +1109,29 @@ const WorkflowEditor = ({ data }) => {
 
       // If a step was just added via an adder node, wire up next_step
       if (pendingAddRef.current) {
-        const { afterStepId, prevIds, insertBetween } = pendingAddRef.current;
+        const { afterStepId, prevIds, insertBetween, fromStart } =
+          pendingAddRef.current;
         const newSteps = (fresh.steps || []).filter(
           (s) => !prevIds.has(String(s.id))
         );
         if (newSteps.length === 1) {
           const newStep = newSteps[0];
           if (insertBetween && insertBetween.originalTargetName) {
-            // Insert new step between source and its former target
-            await updateConnection({
-              step_id: newStep.id,
-              next_step: insertBetween.originalTargetName,
-            });
-            await updateConnection({
-              step_id: afterStepId,
-              next_step: newStep.name,
-            });
+            if (fromStart) {
+              await updateConnection({
+                step_id: newStep.id,
+                initial_step: true,
+              });
+            } else {
+              await updateConnection({
+                step_id: newStep.id,
+                next_step: insertBetween.originalTargetName,
+              });
+              await updateConnection({
+                step_id: afterStepId,
+                next_step: newStep.name,
+              });
+            }
           } else {
             await updateConnection({
               step_id: afterStepId,
@@ -1562,11 +1580,23 @@ const WorkflowEditor = ({ data }) => {
       if (targetEl?.classList?.contains("react-flow__pane")) {
         // Dropped on empty space: clear next_step mark as final/unconnected
         if (pending.nodeId && pending.handleId !== "loop-out") {
-          onClearNext(pending.nodeId);
+          if (pending.nodeId === "start") {
+            const currentInitial = steps.find((s) => s.initial_step);
+            if (currentInitial) {
+              updateConnection({
+                step_id: currentInitial.id,
+                initial_step: false,
+              })
+                .then(() => reload())
+                .catch((e) => setError(e.message));
+            }
+          } else {
+            onClearNext(pending.nodeId);
+          }
         }
       }
     },
-    [onClearNext]
+    [onClearNext, reload, steps, updateConnection]
   );
 
   const onEdgesChange = useCallback(
@@ -1656,9 +1686,10 @@ const WorkflowEditor = ({ data }) => {
 
   const onInsertBetween = useCallback(
     ({ source, target }) => {
-      if (!source || !target || source === "start") return;
+      if (!source || !target) return;
       const originalTargetName = nameById[target];
       if (!originalTargetName) return;
+      const fromStart = source === "start";
       const sizeById = new Map(
         steps.map((s) => [
           String(s.id),
@@ -1683,15 +1714,18 @@ const WorkflowEditor = ({ data }) => {
           };
         });
       pendingAddRef.current = {
-        afterStepId: source,
+        afterStepId: fromStart ? "start" : source,
         prevIds: new Set(steps.map((s) => String(s.id))),
+        fromStart,
         insertBetween: {
           originalTargetName,
           targetId: target,
           positionsSnapshot,
         },
       };
-      openStepForm({ after_step: source });
+      openStepForm(
+        fromStart ? { initial_step: true } : { after_step: source }
+      );
     },
     [nameById, openStepForm, steps]
   );
@@ -1825,15 +1859,29 @@ const WorkflowEditor = ({ data }) => {
   );
 
   const onDelete = useCallback(
-    async (id) => {
-      if (!window.confirm(strings.confirmDelete)) return;
+    async (ids) => {
+      const normalizedIds = Array.isArray(ids) ? ids : [ids];
+      const uniqueIds = [...new Set(normalizedIds.map((id) => String(id)))];
+      if (!uniqueIds.length) return;
+
+      const singleConfirm = strings.confirmDelete || "Delete step?";
+      const confirmMessage =
+        uniqueIds.length > 1
+          ? strings.confirmDeleteMany ||
+            `${singleConfirm} (${uniqueIds.length} steps)`
+          : singleConfirm;
+
+      if (!window.confirm(confirmMessage)) return;
+
       try {
-        const formData = new FormData();
-        formData.append("_csrf", data.csrfToken || "");
-        await fetchJson(`${data.urls.deleteStep}/${id}`, {
-          method: "POST",
-          body: formData,
-        });
+        for (const id of uniqueIds) {
+          const formData = new FormData();
+          formData.append("_csrf", data.csrfToken || "");
+          await fetchJson(`${data.urls.deleteStep}/${id}`, {
+            method: "POST",
+            body: formData,
+          });
+        }
         setModal(null);
         setError("");
         clearDrawerState();
@@ -1842,7 +1890,14 @@ const WorkflowEditor = ({ data }) => {
         setError(e.message);
       }
     },
-    [clearDrawerState, data.csrfToken, fetchJson, reload, strings.confirmDelete]
+    [
+      clearDrawerState,
+      data.csrfToken,
+      fetchJson,
+      reload,
+      strings.confirmDelete,
+      strings.confirmDeleteMany,
+    ]
   );
 
   useEffect(() => {
