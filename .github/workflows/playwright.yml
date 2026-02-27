@@ -6,7 +6,7 @@ on:
     branches: [master]
 jobs:
   build:
-    timeout-minutes: 60
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     services:
       # Label used to access the service container
