@@ -140,6 +140,7 @@ const workflowStrings = (req, trigger) => ({
   loopBody: req.__("Loop body"),
   openRuns: req.__("Show runs &raquo;"),
   configure: req.__(`%s configuration`, trigger.name),
+  copyStep: req.__("Copy"),
 });
 
 const getWorkflowEditorData = async (req, trigger, stepsIn) => {
@@ -166,6 +167,7 @@ const getWorkflowEditorData = async (req, trigger, stepsIn) => {
       connect: `/actions/workflow/connect/${trigger.id}`,
       positions: `/actions/workflow/positions/${trigger.id}`,
       sizes: `/actions/workflow/sizes/${trigger.id}`,
+      copy: `/actions/workflow/copy/${trigger.id}`,
       deleteStep: `/actions/delete-step`,
       configure: `/actions/configure/${trigger.id}`,
       runs: `/actions/runs/?trigger=${trigger.id}`,
@@ -797,6 +799,55 @@ router.post(
         : undefined
     );
     res.json({ success: "ok" });
+  })
+);
+
+router.post(
+  "/workflow/copy/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req, res) => {
+    const trigger_id = +req.params.trigger_id;
+    const { step_id } = req.body || {};
+    const source = await WorkflowStep.findOne({ id: +step_id, trigger_id });
+    if (!source) return res.status(404).json({ error: "Step not found" });
+
+    const steps = await WorkflowStep.find({ trigger_id });
+    const existingNames = new Set(steps.map((s) => s.name));
+    const safeName = String(source.name || "").replace(/\s+/g, "_");
+    const baseName = `${safeName}_copy`;
+    let candidate = baseName;
+    let suffix = 2;
+    while (existingNames.has(candidate)) {
+      candidate = `${baseName}${suffix++}`;
+    }
+
+    const newStepId = await WorkflowStep.create({
+      trigger_id,
+      name: candidate,
+      next_step: null,
+      only_if: source.only_if,
+      action_name: source.action_name,
+      initial_step: false,
+      configuration: source.configuration,
+    });
+
+    const trigger = await Trigger.findOne({ id: trigger_id });
+    Trigger.emitEvent(
+      "AppChange",
+      `Trigger ${trigger?.name || trigger_id}`,
+      req.user,
+      {
+        entity_type: "Trigger",
+        entity_name: trigger?.name || trigger_id,
+      }
+    );
+
+    const newStep = await WorkflowStep.findOne({ id: newStepId });
+
+    res.json({
+      success: "ok",
+      step: serializeWorkflowStep(newStep, { req, trigger }),
+    });
   })
 );
 

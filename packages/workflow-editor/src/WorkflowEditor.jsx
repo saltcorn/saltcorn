@@ -706,6 +706,7 @@ const StepDrawer = ({
   error,
   data,
   onDelete,
+  onCopy,
   drawerWidth,
   onResizeStart,
 }) => {
@@ -758,6 +759,15 @@ const StepDrawer = ({
               }}
             >
               {data.strings.deleteStep}
+            </button>
+            <button
+              className="btn btn-sm btn-outline-secondary"
+              onClick={(e) => {
+                e.stopPropagation();
+                onCopy(modal.stepId);
+              }}
+            >
+              {data.strings.copyStep || "Copy"}
             </button>
             <button className="btn btn-secondary" onClick={onClose}>
               Close
@@ -1084,6 +1094,7 @@ const WorkflowEditor = ({ data }) => {
     setError("");
     try {
       let fresh = await fetchJson(data.urls.data);
+      let updatedSteps = null;
 
       // If a step was just added via an adder node, wire up next_step
       if (pendingAddRef.current) {
@@ -1114,7 +1125,7 @@ const WorkflowEditor = ({ data }) => {
           fresh = await fetchJson(data.urls.data);
 
           if (insertBetween && insertBetween.originalTargetName) {
-            await applyInsertBetweenLayout(fresh.steps || [], {
+            updatedSteps = await applyInsertBetweenLayout(fresh.steps || [], {
               newStep,
               afterStepId,
               targetName: insertBetween.originalTargetName,
@@ -1126,10 +1137,12 @@ const WorkflowEditor = ({ data }) => {
         pendingAddRef.current = null;
       }
 
-      setSteps(fresh.steps || []);
+      const nextSteps = updatedSteps || fresh.steps || [];
+      setSteps(nextSteps);
 
       setMessage(strings.refresh);
       setTimeout(() => setMessage(""), 1200);
+      return nextSteps;
     } catch (e) {
       setError(e.message);
     } finally {
@@ -1189,9 +1202,24 @@ const WorkflowEditor = ({ data }) => {
     [persistPositions]
   );
 
+  const applyLocalPositionUpdates = useCallback(
+    (updates = []) => {
+      if (!updates.length) return;
+      setNodes((nds) =>
+        nds.map((n) => {
+          const hit = updates.find((u) => String(u.id) === String(n.id));
+          return hit
+            ? { ...n, position: { ...(n.position || {}), x: hit.x, y: hit.y } }
+            : n;
+        })
+      );
+    },
+    [setNodes]
+  );
+
   const applyInsertBetweenLayout = useCallback(
     async (freshSteps, { newStep, afterStepId, targetName, targetId, snapshot }) => {
-      if (!newStep || !snapshot) return;
+      if (!newStep || !snapshot) return null;
       const snap = snapshot || {};
       const newStepSize =
         getWorkflowSize(newStep) || {
@@ -1205,26 +1233,65 @@ const WorkflowEditor = ({ data }) => {
       const shiftAmount = newStepSize.height + V_GAP;
       const fallbackY = sourceSnap?.y ?? 0;
       const fallbackX = sourceSnap?.x ?? targetSnap?.x ?? 0;
-      const targetY = targetSnap?.y ?? fallbackY;
+      const newY = targetSnap?.y ?? fallbackY;
+      const newX =
+        sourceSnap && targetSnap
+          ? (sourceSnap.x + targetSnap.x) / 2
+          : targetSnap?.x ?? sourceSnap?.x ?? fallbackX;
+
+      const newHalfWidth = (newStepSize.width || DEFAULT_NODE_WIDTH) / 2;
+      const bandPadding = H_GAP / 2;
+      const bandMinX = newX - newHalfWidth - bandPadding;
+      const bandMaxX = newX + newHalfWidth + bandPadding;
 
       const updates = [];
       freshSteps.forEach((step) => {
         const idStr = String(step.id);
+        const nodeSnap = snap[idStr];
+
         if (idStr === String(newStep.id)) {
-          updates.push({ id: idStr, x: fallbackX, y: targetY });
+          updates.push({ id: idStr, x: newX, y: newY });
           return;
         }
-        const nodeSnap = snap[idStr];
+
         if (!nodeSnap) return;
-        if (targetSnap && nodeSnap.y >= targetY && idStr !== String(afterStepId)) {
+
+        const nodeWidth = nodeSnap.width || DEFAULT_NODE_WIDTH;
+        const nodeHalfWidth = nodeWidth / 2;
+        const nodeMinX = nodeSnap.x - nodeHalfWidth;
+        const nodeMaxX = nodeSnap.x + nodeHalfWidth;
+        const overlapsBand = !(nodeMaxX < bandMinX || nodeMinX > bandMaxX);
+        const shouldShift =
+          nodeSnap.y >= newY &&
+          idStr !== String(afterStepId) &&
+          overlapsBand;
+
+        if (shouldShift) {
           updates.push({ id: idStr, x: nodeSnap.x, y: nodeSnap.y + shiftAmount });
         } else {
           updates.push({ id: idStr, x: nodeSnap.x, y: nodeSnap.y });
         }
       });
-      if (updates.length) await persistPositions(updates);
+      if (!updates.length) return freshSteps;
+
+      applyLocalPositionUpdates(updates);
+
+      const stepsWithPositions = freshSteps.map((s) => {
+        const hit = updates.find((u) => String(u.id) === String(s.id));
+        if (!hit) return s;
+        return {
+          ...s,
+          configuration: {
+            ...(s.configuration || {}),
+            workflow_position: { x: hit.x, y: hit.y },
+          },
+        };
+      });
+
+      await persistPositions(updates);
+      return stepsWithPositions;
     },
-    [persistPositions]
+    [applyLocalPositionUpdates, persistPositions]
   );
 
   useEffect(() => {
@@ -1593,16 +1660,25 @@ const WorkflowEditor = ({ data }) => {
       const originalTargetName = nameById[target];
       if (!originalTargetName) return;
       const sizeById = new Map(
-        steps.map((s) => [String(s.id), getWorkflowSize(s) || { height: DEFAULT_NODE_HEIGHT }])
+        steps.map((s) => [
+          String(s.id),
+          getWorkflowSize(s) || {
+            width: DEFAULT_NODE_WIDTH,
+            height: DEFAULT_NODE_HEIGHT,
+          },
+        ])
       );
       const positionsSnapshot = {};
       nodesRef.current
         .filter((n) => n.type === "step")
         .forEach((n) => {
-          const size = sizeById.get(String(n.id)) || { height: DEFAULT_NODE_HEIGHT };
+          const size =
+            sizeById.get(String(n.id)) ||
+            { width: DEFAULT_NODE_WIDTH, height: DEFAULT_NODE_HEIGHT };
           positionsSnapshot[String(n.id)] = {
             x: n.position?.x ?? 0,
             y: n.position?.y ?? 0,
+            width: size.width || DEFAULT_NODE_WIDTH,
             height: size.height || DEFAULT_NODE_HEIGHT,
           };
         });
@@ -1626,6 +1702,118 @@ const WorkflowEditor = ({ data }) => {
       await reload();
     },
     [reload, updateConnection]
+  );
+
+  const onCopy = useCallback(
+    async (id) => {
+      try {
+        setError("");
+        const res = await fetchJson(data.urls.copy, {
+          method: "POST",
+          body: JSON.stringify({ step_id: id }),
+          headers: {
+            "X-CSRF-Token": data.csrfToken || "",
+          },
+        });
+
+        if (!res || res.success !== "ok" || !res.step) {
+          await reload();
+          return;
+        }
+        
+        const copiedStep = res.step;
+        const copiedName = copiedStep.name;
+
+        // Reload full workflow data so the new step has
+        // the same serialized shape as all other steps
+        const freshSteps = (await reload()) || [];
+        if (!freshSteps.length) return;
+
+        const sourceStep = freshSteps.find(
+          (s) => String(s.id) === String(id)
+        );
+        const newStep = freshSteps.find((s) => s.name === copiedName);
+
+        if (!sourceStep || !newStep || !newStep.id) return;
+
+        const sourceSize =
+          getWorkflowSize(sourceStep) || {
+            width: DEFAULT_NODE_WIDTH,
+            height: DEFAULT_NODE_HEIGHT,
+          };
+        const newSize =
+          getWorkflowSize(newStep) || {
+            width: DEFAULT_NODE_WIDTH,
+            height: DEFAULT_NODE_HEIGHT,
+          };
+
+        const sourcePos = sourceStep.configuration?.workflow_position || {
+          x: 0,
+          y: 0,
+        };
+
+        // Desired location: directly to the right of the source step
+        const targetX = sourcePos.x + sourceSize.width + ADD_GAP;
+        const targetY = sourcePos.y;
+
+        const updates = [];
+
+        // Push steps that are to the right of the insertion band
+        const bandMinX = targetX - newSize.width * 0.25;
+        const shiftX = newSize.width + ADD_GAP;
+
+        freshSteps.forEach((s) => {
+          const cfgPos = s.configuration?.workflow_position;
+          if (!cfgPos) return;
+          if (String(s.id) === String(newStep.id)) return;
+          if (cfgPos.x >= bandMinX) {
+            updates.push({
+              id: String(s.id),
+              x: cfgPos.x + shiftX,
+              y: cfgPos.y,
+            });
+          }
+        });
+
+        // Position for the new copied step
+        updates.push({
+          id: String(newStep.id),
+          x: targetX,
+          y: targetY,
+        });
+
+        if (!updates.length) return;
+
+        // Move nodes immediately in the UI
+        applyLocalPositionUpdates(updates);
+
+        // Update local steps state with new positions
+        const stepsWithPositions = freshSteps.map((s) => {
+          const hit = updates.find((u) => u.id === String(s.id));
+          if (!hit) return s;
+          return {
+            ...s,
+            configuration: {
+              ...(s.configuration || {}),
+              workflow_position: { x: hit.x, y: hit.y },
+            },
+          };
+        });
+
+        setSteps(stepsWithPositions);
+        await persistPositions(updates);
+      } catch (e) {
+        setError(e.message);
+      }
+    },
+    [
+      data.csrfToken,
+      data.urls.copy,
+      fetchJson,
+      applyLocalPositionUpdates,
+      persistPositions,
+      reload,
+    ]
   );
 
   const onClearNext = useCallback(
@@ -1890,6 +2078,7 @@ const WorkflowEditor = ({ data }) => {
         error={error && modal ? error : ""}
         data={data}
         onDelete={onDelete}
+        onCopy={onCopy}
         drawerWidth={drawerWidth}
         onResizeStart={startResize}
       />

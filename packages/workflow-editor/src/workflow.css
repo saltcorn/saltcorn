@@ -91,6 +91,8 @@
 .wf-node__title {
   font-weight: 700;
   font-size: 14px;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .wf-node__action {

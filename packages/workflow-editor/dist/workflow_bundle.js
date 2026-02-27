@@ -34664,6 +34664,7 @@ var StepDrawer = function StepDrawer(_ref7) {
     error = _ref7.error,
     data = _ref7.data,
     onDelete = _ref7.onDelete,
+    onCopy = _ref7.onCopy,
     drawerWidth = _ref7.drawerWidth,
     onResizeStart = _ref7.onResizeStart;
   var isOpen = !!modal;
@@ -34713,6 +34714,12 @@ var StepDrawer = function StepDrawer(_ref7) {
       onDelete(modal.stepId);
     }
   }, data.strings.deleteStep), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
+    className: "btn btn-sm btn-outline-secondary",
+    onClick: function onClick(e) {
+      e.stopPropagation();
+      onCopy(modal.stepId);
+    }
+  }, data.strings.copyStep || "Copy"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
     className: "btn btn-secondary",
     onClick: onClose
   }, "Close"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default().createElement("button", {
@@ -35057,7 +35064,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     };
   }(), []);
   var reload = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2() {
-    var fresh, _pendingAddRef$curren, afterStepId, prevIds, insertBetween, newSteps, newStep, _t;
+    var fresh, updatedSteps, _pendingAddRef$curren, afterStepId, prevIds, insertBetween, newSteps, newStep, nextSteps, _t;
     return _regenerator().w(function (_context2) {
       while (1) switch (_context2.p = _context2.n) {
         case 0:
@@ -35068,8 +35075,9 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
           return fetchJson(data.urls.data);
         case 2:
           fresh = _context2.v;
+          updatedSteps = null; // If a step was just added via an adder node, wire up next_step
           if (!pendingAddRef.current) {
-            _context2.n = 9;
+            _context2.n = 10;
             break;
           }
           _pendingAddRef$curren = pendingAddRef.current, afterStepId = _pendingAddRef$curren.afterStepId, prevIds = _pendingAddRef$curren.prevIds, insertBetween = _pendingAddRef$curren.insertBetween;
@@ -35077,7 +35085,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
             return !prevIds.has(String(s.id));
           });
           if (!(newSteps.length === 1)) {
-            _context2.n = 8;
+            _context2.n = 9;
             break;
           }
           newStep = newSteps[0];
@@ -35111,7 +35119,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
         case 7:
           fresh = _context2.v;
           if (!(insertBetween && insertBetween.originalTargetName)) {
-            _context2.n = 8;
+            _context2.n = 9;
             break;
           }
           _context2.n = 8;
@@ -35123,27 +35131,29 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
             snapshot: insertBetween.positionsSnapshot
           });
         case 8:
-          pendingAddRef.current = null;
+          updatedSteps = _context2.v;
         case 9:
-          setSteps(fresh.steps || []);
+          pendingAddRef.current = null;
+        case 10:
+          nextSteps = updatedSteps || fresh.steps || [];
+          setSteps(nextSteps);
           setMessage(strings.refresh);
           setTimeout(function () {
             return setMessage("");
           }, 1200);
-          _context2.n = 11;
-          break;
-        case 10:
-          _context2.p = 10;
-          _t = _context2.v;
-          setError(_t.message);
+          return _context2.a(2, nextSteps);
         case 11:
           _context2.p = 11;
-          setLoading(false);
-          return _context2.f(11);
+          _t = _context2.v;
+          setError(_t.message);
         case 12:
+          _context2.p = 12;
+          setLoading(false);
+          return _context2.f(12);
+        case 13:
           return _context2.a(2);
       }
-    }, _callee2, null, [[1, 10, 11, 12]]);
+    }, _callee2, null, [[1, 11, 12, 13]]);
   })), [applyInsertBetweenLayout, data.urls.data, fetchJson, strings.refresh, updateConnection]);
   var persistPositions = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3() {
     var positions,
@@ -35217,10 +35227,27 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       persistPositions(toSave);
     }, 300);
   }, [persistPositions]);
+  var applyLocalPositionUpdates = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function () {
+    var updates = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+    if (!updates.length) return;
+    setNodes(function (nds) {
+      return nds.map(function (n) {
+        var hit = updates.find(function (u) {
+          return String(u.id) === String(n.id);
+        });
+        return hit ? _objectSpread(_objectSpread({}, n), {}, {
+          position: _objectSpread(_objectSpread({}, n.position || {}), {}, {
+            x: hit.x,
+            y: hit.y
+          })
+        }) : n;
+      });
+    });
+  }, [setNodes]);
   var applyInsertBetweenLayout = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
     var _ref12 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(freshSteps, _ref11) {
-      var _freshSteps$find, _sourceSnap$y, _ref13, _sourceSnap$x, _targetSnap$y;
-      var newStep, afterStepId, targetName, targetId, snapshot, snap, newStepSize, sourceSnap, resolvedTargetId, targetSnap, shiftAmount, fallbackY, fallbackX, targetY, updates;
+      var _freshSteps$find, _sourceSnap$y, _ref13, _sourceSnap$x, _targetSnap$y, _ref14, _targetSnap$x;
+      var newStep, afterStepId, targetName, targetId, snapshot, snap, newStepSize, sourceSnap, resolvedTargetId, targetSnap, shiftAmount, fallbackY, fallbackX, newY, newX, newHalfWidth, bandPadding, bandMinX, bandMaxX, updates, stepsWithPositions;
       return _regenerator().w(function (_context4) {
         while (1) switch (_context4.n) {
           case 0:
@@ -35229,7 +35256,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
               _context4.n = 1;
               break;
             }
-            return _context4.a(2);
+            return _context4.a(2, null);
           case 1:
             snap = snapshot || {};
             newStepSize = getWorkflowSize(newStep) || {
@@ -35244,21 +35271,32 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
             shiftAmount = newStepSize.height + V_GAP;
             fallbackY = (_sourceSnap$y = sourceSnap === null || sourceSnap === void 0 ? void 0 : sourceSnap.y) !== null && _sourceSnap$y !== void 0 ? _sourceSnap$y : 0;
             fallbackX = (_ref13 = (_sourceSnap$x = sourceSnap === null || sourceSnap === void 0 ? void 0 : sourceSnap.x) !== null && _sourceSnap$x !== void 0 ? _sourceSnap$x : targetSnap === null || targetSnap === void 0 ? void 0 : targetSnap.x) !== null && _ref13 !== void 0 ? _ref13 : 0;
-            targetY = (_targetSnap$y = targetSnap === null || targetSnap === void 0 ? void 0 : targetSnap.y) !== null && _targetSnap$y !== void 0 ? _targetSnap$y : fallbackY;
+            newY = (_targetSnap$y = targetSnap === null || targetSnap === void 0 ? void 0 : targetSnap.y) !== null && _targetSnap$y !== void 0 ? _targetSnap$y : fallbackY;
+            newX = sourceSnap && targetSnap ? (sourceSnap.x + targetSnap.x) / 2 : (_ref14 = (_targetSnap$x = targetSnap === null || targetSnap === void 0 ? void 0 : targetSnap.x) !== null && _targetSnap$x !== void 0 ? _targetSnap$x : sourceSnap === null || sourceSnap === void 0 ? void 0 : sourceSnap.x) !== null && _ref14 !== void 0 ? _ref14 : fallbackX;
+            newHalfWidth = (newStepSize.width || DEFAULT_NODE_WIDTH) / 2;
+            bandPadding = H_GAP / 2;
+            bandMinX = newX - newHalfWidth - bandPadding;
+            bandMaxX = newX + newHalfWidth + bandPadding;
             updates = [];
             freshSteps.forEach(function (step) {
               var idStr = String(step.id);
+              var nodeSnap = snap[idStr];
               if (idStr === String(newStep.id)) {
                 updates.push({
                   id: idStr,
-                  x: fallbackX,
-                  y: targetY
+                  x: newX,
+                  y: newY
                 });
                 return;
               }
-              var nodeSnap = snap[idStr];
               if (!nodeSnap) return;
-              if (targetSnap && nodeSnap.y >= targetY && idStr !== String(afterStepId)) {
+              var nodeWidth = nodeSnap.width || DEFAULT_NODE_WIDTH;
+              var nodeHalfWidth = nodeWidth / 2;
+              var nodeMinX = nodeSnap.x - nodeHalfWidth;
+              var nodeMaxX = nodeSnap.x + nodeHalfWidth;
+              var overlapsBand = !(nodeMaxX < bandMinX || nodeMinX > bandMaxX);
+              var shouldShift = nodeSnap.y >= newY && idStr !== String(afterStepId) && overlapsBand;
+              if (shouldShift) {
                 updates.push({
                   id: idStr,
                   x: nodeSnap.x,
@@ -35272,21 +35310,38 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
                 });
               }
             });
-            if (!updates.length) {
+            if (updates.length) {
               _context4.n = 2;
               break;
             }
-            _context4.n = 2;
-            return persistPositions(updates);
+            return _context4.a(2, freshSteps);
           case 2:
-            return _context4.a(2);
+            applyLocalPositionUpdates(updates);
+            stepsWithPositions = freshSteps.map(function (s) {
+              var hit = updates.find(function (u) {
+                return String(u.id) === String(s.id);
+              });
+              if (!hit) return s;
+              return _objectSpread(_objectSpread({}, s), {}, {
+                configuration: _objectSpread(_objectSpread({}, s.configuration || {}), {}, {
+                  workflow_position: {
+                    x: hit.x,
+                    y: hit.y
+                  }
+                })
+              });
+            });
+            _context4.n = 3;
+            return persistPositions(updates);
+          case 3:
+            return _context4.a(2, stepsWithPositions);
         }
       }, _callee4);
     }));
     return function (_x2, _x3) {
       return _ref12.apply(this, arguments);
     };
-  }(), [persistPositions]);
+  }(), [applyLocalPositionUpdates, persistPositions]);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
     return function () {
       if (positionDebounceRef.current) clearTimeout(positionDebounceRef.current);
@@ -35350,7 +35405,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     }, _callee5, null, [[1, 3, 4, 5]]);
   })), [data.csrfToken, data.urls.sizes, fetchJson, setSteps]);
   var openStepForm = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
-    var _ref16,
+    var _ref17,
       stepId,
       initial_step,
       after_step,
@@ -35363,7 +35418,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     return _regenerator().w(function (_context6) {
       while (1) switch (_context6.p = _context6.n) {
         case 0:
-          _ref16 = _args6.length > 0 && _args6[0] !== undefined ? _args6[0] : {}, stepId = _ref16.stepId, initial_step = _ref16.initial_step, after_step = _ref16.after_step;
+          _ref17 = _args6.length > 0 && _args6[0] !== undefined ? _args6[0] : {}, stepId = _ref17.stepId, initial_step = _ref17.initial_step, after_step = _ref17.after_step;
           _context6.p = 1;
           setError("");
           descriptor = {
@@ -35381,9 +35436,6 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
           return fetchJson(url.toString());
         case 2:
           res = _context6.v;
-          console.log({
-            url: url
-          });
           setModal({
             title: res.title,
             body: res.form,
@@ -35402,9 +35454,9 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     }, _callee6, null, [[1, 3]]);
   })), [clearDrawerState, data.urls.stepForm, fetchJson, persistDrawerState]);
   var submitStepForm = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref17 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7(formEl) {
-      var _ref18,
-        _ref18$closeOnSuccess,
+    var _ref18 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7(formEl) {
+      var _ref19,
+        _ref19$closeOnSuccess,
         closeOnSuccess,
         formData,
         action,
@@ -35415,7 +35467,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       return _regenerator().w(function (_context7) {
         while (1) switch (_context7.n) {
           case 0:
-            _ref18 = _args7.length > 1 && _args7[1] !== undefined ? _args7[1] : {}, _ref18$closeOnSuccess = _ref18.closeOnSuccess, closeOnSuccess = _ref18$closeOnSuccess === void 0 ? true : _ref18$closeOnSuccess;
+            _ref19 = _args7.length > 1 && _args7[1] !== undefined ? _args7[1] : {}, _ref19$closeOnSuccess = _ref19.closeOnSuccess, closeOnSuccess = _ref19$closeOnSuccess === void 0 ? true : _ref19$closeOnSuccess;
             if (formEl) {
               _context7.n = 1;
               break;
@@ -35462,7 +35514,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       }, _callee7);
     }));
     return function (_x4) {
-      return _ref17.apply(this, arguments);
+      return _ref18.apply(this, arguments);
     };
   }(), [clearDrawerState, data.csrfToken, data.urls.stepForm, reload]);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
@@ -35517,7 +35569,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       })), 800);
     } : null;
     var submitHandler = /*#__PURE__*/function () {
-      var _ref20 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9(e) {
+      var _ref21 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9(e) {
         var _t6;
         return _regenerator().w(function (_context9) {
           while (1) switch (_context9.p = _context9.n) {
@@ -35543,7 +35595,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
         }, _callee9, null, [[1, 3, 4, 5]]);
       }));
       return function submitHandler(_x5) {
-        return _ref20.apply(this, arguments);
+        return _ref21.apply(this, arguments);
       };
     }();
     formEl.addEventListener("submit", submitHandler);
@@ -35574,7 +35626,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     return undefined;
   }, [clearDrawerState, drawerStorageKey, openStepForm]);
   var updateConnection = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref21 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0(payload) {
+    var _ref22 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0(payload) {
       var body;
       return _regenerator().w(function (_context0) {
         while (1) switch (_context0.n) {
@@ -35582,10 +35634,10 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
             body = new URLSearchParams();
             Object.entries(_objectSpread(_objectSpread({}, payload), {}, {
               _csrf: data.csrfToken
-            })).forEach(function (_ref22) {
-              var _ref23 = _slicedToArray(_ref22, 2),
-                k = _ref23[0],
-                v = _ref23[1];
+            })).forEach(function (_ref23) {
+              var _ref24 = _slicedToArray(_ref23, 2),
+                k = _ref24[0],
+                v = _ref24[1];
               if (typeof v !== "undefined" && v !== null) body.append(k, v);
             });
             _context0.n = 1;
@@ -35602,11 +35654,11 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       }, _callee0);
     }));
     return function (_x6) {
-      return _ref21.apply(this, arguments);
+      return _ref22.apply(this, arguments);
     };
   }(), [data.csrfToken, data.urls.connect, fetchJson]);
   var onConnect = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref24 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1(connection) {
+    var _ref25 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1(connection) {
       var loop, targetName, targetId, stepName, srcStep, tgtStep, rawNext, simpleNextId, targetHasNext;
       return _regenerator().w(function (_context1) {
         while (1) switch (_context1.n) {
@@ -35686,7 +35738,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       }, _callee1);
     }));
     return function (_x7) {
-      return _ref24.apply(this, arguments);
+      return _ref25.apply(this, arguments);
     };
   }(), [idByName, nameById, reload, steps, updateConnection]);
   var onConnectStart = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_, params) {
@@ -35804,14 +35856,15 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       after_step: id
     });
   }, [openStepForm, steps]);
-  var onInsertBetween = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_ref25) {
-    var source = _ref25.source,
-      target = _ref25.target;
+  var onInsertBetween = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(function (_ref26) {
+    var source = _ref26.source,
+      target = _ref26.target;
     if (!source || !target || source === "start") return;
     var originalTargetName = nameById[target];
     if (!originalTargetName) return;
     var sizeById = new Map(steps.map(function (s) {
       return [String(s.id), getWorkflowSize(s) || {
+        width: DEFAULT_NODE_WIDTH,
         height: DEFAULT_NODE_HEIGHT
       }];
     }));
@@ -35821,11 +35874,13 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     }).forEach(function (n) {
       var _n$position$x, _n$position, _n$position$y, _n$position2;
       var size = sizeById.get(String(n.id)) || {
+        width: DEFAULT_NODE_WIDTH,
         height: DEFAULT_NODE_HEIGHT
       };
       positionsSnapshot[String(n.id)] = {
         x: (_n$position$x = (_n$position = n.position) === null || _n$position === void 0 ? void 0 : _n$position.x) !== null && _n$position$x !== void 0 ? _n$position$x : 0,
         y: (_n$position$y = (_n$position2 = n.position) === null || _n$position2 === void 0 ? void 0 : _n$position2.y) !== null && _n$position$y !== void 0 ? _n$position$y : 0,
+        width: size.width || DEFAULT_NODE_WIDTH,
         height: size.height || DEFAULT_NODE_HEIGHT
       };
     });
@@ -35845,7 +35900,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     });
   }, [nameById, openStepForm, steps]);
   var onSetStart = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref26 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee10(id) {
+    var _ref27 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee10(id) {
       return _regenerator().w(function (_context10) {
         while (1) switch (_context10.n) {
           case 0:
@@ -35863,47 +35918,188 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
       }, _callee10);
     }));
     return function (_x8) {
-      return _ref26.apply(this, arguments);
+      return _ref27.apply(this, arguments);
     };
   }(), [reload, updateConnection]);
-  var onClearNext = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref27 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee11(id) {
+  var onCopy = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
+    var _ref28 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee11(id) {
+      var _sourceStep$configura, res, copiedStep, copiedName, freshSteps, sourceStep, newStep, sourceSize, newSize, sourcePos, targetX, targetY, updates, bandMinX, shiftX, stepsWithPositions, _t7, _t8;
       return _regenerator().w(function (_context11) {
-        while (1) switch (_context11.n) {
+        while (1) switch (_context11.p = _context11.n) {
           case 0:
+            _context11.p = 0;
+            setError("");
             _context11.n = 1;
+            return fetchJson(data.urls.copy, {
+              method: "POST",
+              body: JSON.stringify({
+                step_id: id
+              }),
+              headers: {
+                "X-CSRF-Token": data.csrfToken || ""
+              }
+            });
+          case 1:
+            res = _context11.v;
+            if (!(!res || res.success !== "ok" || !res.step)) {
+              _context11.n = 3;
+              break;
+            }
+            _context11.n = 2;
+            return reload();
+          case 2:
+            return _context11.a(2);
+          case 3:
+            copiedStep = res.step;
+            copiedName = copiedStep.name; // Reload full workflow data so the new step has
+            // the same serialized shape as all other steps
+            _context11.n = 4;
+            return reload();
+          case 4:
+            _t7 = _context11.v;
+            if (_t7) {
+              _context11.n = 5;
+              break;
+            }
+            _t7 = [];
+          case 5:
+            freshSteps = _t7;
+            if (freshSteps.length) {
+              _context11.n = 6;
+              break;
+            }
+            return _context11.a(2);
+          case 6:
+            sourceStep = freshSteps.find(function (s) {
+              return String(s.id) === String(id);
+            });
+            newStep = freshSteps.find(function (s) {
+              return s.name === copiedName;
+            });
+            if (!(!sourceStep || !newStep || !newStep.id)) {
+              _context11.n = 7;
+              break;
+            }
+            return _context11.a(2);
+          case 7:
+            sourceSize = getWorkflowSize(sourceStep) || {
+              width: DEFAULT_NODE_WIDTH,
+              height: DEFAULT_NODE_HEIGHT
+            };
+            newSize = getWorkflowSize(newStep) || {
+              width: DEFAULT_NODE_WIDTH,
+              height: DEFAULT_NODE_HEIGHT
+            };
+            sourcePos = ((_sourceStep$configura = sourceStep.configuration) === null || _sourceStep$configura === void 0 ? void 0 : _sourceStep$configura.workflow_position) || {
+              x: 0,
+              y: 0
+            }; // Desired location: directly to the right of the source step
+            targetX = sourcePos.x + sourceSize.width + ADD_GAP;
+            targetY = sourcePos.y;
+            updates = []; // Push steps that are to the right of the insertion band
+            bandMinX = targetX - newSize.width * 0.25;
+            shiftX = newSize.width + ADD_GAP;
+            freshSteps.forEach(function (s) {
+              var _s$configuration2;
+              var cfgPos = (_s$configuration2 = s.configuration) === null || _s$configuration2 === void 0 ? void 0 : _s$configuration2.workflow_position;
+              if (!cfgPos) return;
+              if (String(s.id) === String(newStep.id)) return;
+              if (cfgPos.x >= bandMinX) {
+                updates.push({
+                  id: String(s.id),
+                  x: cfgPos.x + shiftX,
+                  y: cfgPos.y
+                });
+              }
+            });
+
+            // Position for the new copied step
+            updates.push({
+              id: String(newStep.id),
+              x: targetX,
+              y: targetY
+            });
+            if (updates.length) {
+              _context11.n = 8;
+              break;
+            }
+            return _context11.a(2);
+          case 8:
+            // Move nodes immediately in the UI
+            applyLocalPositionUpdates(updates);
+
+            // Update local steps state with new positions
+            stepsWithPositions = freshSteps.map(function (s) {
+              var hit = updates.find(function (u) {
+                return u.id === String(s.id);
+              });
+              if (!hit) return s;
+              return _objectSpread(_objectSpread({}, s), {}, {
+                configuration: _objectSpread(_objectSpread({}, s.configuration || {}), {}, {
+                  workflow_position: {
+                    x: hit.x,
+                    y: hit.y
+                  }
+                })
+              });
+            });
+            setSteps(stepsWithPositions);
+            _context11.n = 9;
+            return persistPositions(updates);
+          case 9:
+            _context11.n = 11;
+            break;
+          case 10:
+            _context11.p = 10;
+            _t8 = _context11.v;
+            setError(_t8.message);
+          case 11:
+            return _context11.a(2);
+        }
+      }, _callee11, null, [[0, 10]]);
+    }));
+    return function (_x9) {
+      return _ref28.apply(this, arguments);
+    };
+  }(), [data.csrfToken, data.urls.copy, fetchJson, applyLocalPositionUpdates, persistPositions, reload]);
+  var onClearNext = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
+    var _ref29 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee12(id) {
+      return _regenerator().w(function (_context12) {
+        while (1) switch (_context12.n) {
+          case 0:
+            _context12.n = 1;
             return updateConnection({
               step_id: id,
               next_step: ""
             });
           case 1:
-            _context11.n = 2;
+            _context12.n = 2;
             return reload();
           case 2:
-            return _context11.a(2);
+            return _context12.a(2);
         }
-      }, _callee11);
+      }, _callee12);
     }));
-    return function (_x9) {
-      return _ref27.apply(this, arguments);
+    return function (_x0) {
+      return _ref29.apply(this, arguments);
     };
   }(), [reload, updateConnection]);
   var onDelete = (0,react__WEBPACK_IMPORTED_MODULE_0__.useCallback)(/*#__PURE__*/function () {
-    var _ref28 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee12(id) {
-      var formData, _t7;
-      return _regenerator().w(function (_context12) {
-        while (1) switch (_context12.p = _context12.n) {
+    var _ref30 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee13(id) {
+      var formData, _t9;
+      return _regenerator().w(function (_context13) {
+        while (1) switch (_context13.p = _context13.n) {
           case 0:
             if (window.confirm(strings.confirmDelete)) {
-              _context12.n = 1;
+              _context13.n = 1;
               break;
             }
-            return _context12.a(2);
+            return _context13.a(2);
           case 1:
-            _context12.p = 1;
+            _context13.p = 1;
             formData = new FormData();
             formData.append("_csrf", data.csrfToken || "");
-            _context12.n = 2;
+            _context13.n = 2;
             return fetchJson("".concat(data.urls.deleteStep, "/").concat(id), {
               method: "POST",
               body: formData
@@ -35912,22 +36108,22 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
             setModal(null);
             setError("");
             clearDrawerState();
-            _context12.n = 3;
+            _context13.n = 3;
             return reload();
           case 3:
-            _context12.n = 5;
+            _context13.n = 5;
             break;
           case 4:
-            _context12.p = 4;
-            _t7 = _context12.v;
-            setError(_t7.message);
+            _context13.p = 4;
+            _t9 = _context13.v;
+            setError(_t9.message);
           case 5:
-            return _context12.a(2);
+            return _context13.a(2);
         }
-      }, _callee12, null, [[1, 4]]);
+      }, _callee13, null, [[1, 4]]);
     }));
-    return function (_x0) {
-      return _ref28.apply(this, arguments);
+    return function (_x1) {
+      return _ref30.apply(this, arguments);
     };
   }(), [clearDrawerState, data.csrfToken, fetchJson, reload, strings.confirmDelete]);
   (0,react__WEBPACK_IMPORTED_MODULE_0__.useEffect)(function () {
@@ -36141,6 +36337,7 @@ var WorkflowEditor = function WorkflowEditor(_ref8) {
     error: error && modal ? error : "",
     data: data,
     onDelete: onDelete,
+    onCopy: onCopy,
     drawerWidth: drawerWidth,
     onResizeStart: startResize
   }));
@@ -53238,6 +53435,8 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
 .wf-node__title {
   font-weight: 700;
   font-size: 14px;
+  word-wrap: break-word;
+  word-break: break-word;
 }
 
 .wf-node__action {
@@ -53500,7 +53699,7 @@ ___CSS_LOADER_EXPORT___.push([module.id, `.wf-shell {
   --bs-body-color: #fff;
   --bs-card-border-color: #44484e;
 }
-`, "",{"version":3,"sources":["webpack://./src/workflow.css"],"names":[],"mappings":"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","sourcesContent":[".wf-shell {\n  padding: 0;\n  padding-right: var(--wf-shell-padding-right, 0px);\n  height: 100%;\n  min-height: 0;\n  display: flex;\n  flex-direction: column;\n  position: relative;\n  transition: padding-right 0.25s ease;\n  --wf-edge: #6c757d;\n  --wf-edge-adder: #0d6efd;\n  --wf-edge-loop: #f59f00;\n  --wf-edge-label: #495057;\n  --wf-handle-border: #3f3f3f;\n  --wf-handle-bg: #fff;\n  --wf-handle-source-bg: #5a5a5a;\n  --wf-drawer-width: 50vw;\n  --wf-drawer-offset: -4px;\n}\n\n.wf-toolbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 10px 12px;\n  border-bottom: 1px solid #e2e6ea;\n  background: transparent;\n}\n\n.wf-toolbar__actions button,\n.wf-toolbar__actions a {\n  margin-left: 8px;\n}\n\n.wf-canvas {\n  height: 100%;\n  flex: 1;\n  min-height: 0;\n  background: #fafbfc;\n}\n\n/* Ensure nodes visually sit above edge labels/buttons */\n.wf-shell .react-flow__node {\n  z-index: 5;\n}\n\n.wf-shell .react-flow__edge-labels {\n  z-index: 2;\n}\n.react-flow .react-flow__edges svg {\n  overflow: visible !important;\n  z-index: 1040;\n}\n\n.wf-empty {\n  padding: 12px;\n  color: #6c757d;\n}\n\n.wf-node {\n  background: var(--xy-node-background-color-default, #fff);\n  /* border: var(--xy-node-border-default); */\n  border: 1px solid #777777;\n  border-radius: 10px;\n  padding: 10px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);\n  min-width: 200px;\n  cursor: pointer;\n  max-width: 240px;\n}\n\n.wf-modal .card-body {\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: auto;\n}\n.wf-node__header {\n  display: flex;\n  justify-content: space-between;\n  align-items: flex-start;\n  margin-bottom: 4px;\n}\n\n.wf-node__title-row {\n  display: flex;\n  gap: 8px;\n  align-items: baseline;\n  flex-wrap: wrap;\n}\n\n.wf-node__title {\n  font-weight: 700;\n  font-size: 14px;\n}\n\n.wf-node__action {\n  font-weight: 600;\n  color: #0d6efd;\n  font-size: 12px;\n}\n\n.wf-node__desc {\n  font-size: 12px;\n  color: #495057;\n  margin-bottom: 4px;\n}\n\n.wf-node__summary {\n  font-size: 12px;\n  color: var(--xy-node-color-default, #495057);\n  margin: 4px 0 6px;\n  padding-left: 16px;\n}\n\n.wf-node__summary li {\n  margin-bottom: 2px;\n}\n\n.wf-node__meta {\n  font-size: 12px;\n  color: #6c757d;\n}\n\n.wf-label {\n  font-weight: 600;\n}\n\n.wf-node__footer {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin-top: 8px;\n}\n\n.wf-start-node {\n  padding: 10px;\n  border-radius: 10px;\n  background: linear-gradient(135deg, #0d6efd, #5ab2ff);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);\n  min-width: 100px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n}\n\n.wf-start-title {\n  font-weight: 700;\n}\n\n.wf-start-actions button {\n  color: #0d6efd;\n  background: #fff;\n  border-color: #fff;\n}\n\n.wf-add-node {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--xy-node-background-color-default, #fff);\n  border: 1px dashed var(--xy-node-border-default, #adb5bd);\n  color: #0d6efd;\n  font-weight: 700;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);\n  cursor: pointer;\n}\n\n.wf-add-node:focus {\n  outline: 2px solid #0d6efd;\n  outline-offset: 2px;\n}\n\n.wf-drawer {\n  position: fixed;\n  top: 0;\n  right: 0;\n  height: 100%;\n  width: min(95vw, max(var(--wf-drawer-width), 600px));\n  background: var(--bs-body-bg, #fff);\n  color: var(--bs-body-color, #212529);\n  border-left: 1px solid var(--bs-card-border-color, #e2e6ea);\n  display: flex;\n  flex-direction: column;\n  z-index: 1050;\n  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);\n  transform: translateX(100%);\n  transition: transform 0.25s ease;\n  overflow: visible;\n}\n\n.wf-drawer--open {\n  transform: translateX(0);\n}\n\n.wf-drawer__resize {\n  position: absolute;\n  left: -6px;\n  top: 0;\n  width: 10px;\n  height: 100%;\n  cursor: ew-resize;\n  z-index: 1;\n  background: linear-gradient(\n    90deg,\n    rgba(0, 0, 0, 0) 0%,\n    rgba(0, 0, 0, 0.08) 50%,\n    rgba(0, 0, 0, 0) 100%\n  );\n}\n\n.wf-drawer__header {\n  padding: 16px 18px 12px;\n  border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-drawer__body {\n  padding: 16px 18px;\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow-y: auto;\n}\n\n.wf-drawer__footer {\n  padding: 12px 18px;\n  border-top: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-modal-backdrop {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  background: rgba(0, 0, 0, 0.45);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 1050;\n}\n\n.wf-modal {\n  /* background: var(--bs-body-bg, #fff); */\n  /* color: var(--bs-body-color, #212529); */\n  border-radius: 10px;\n  /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */\n  width: min(900px, 90vw);\n  max-height: 90vh;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */\n}\n\n@media (max-width: 768px) {\n  .wf-shell--drawer-open {\n    padding-right: var(--wf-shell-padding-right, 0px);\n  }\n\n  .wf-drawer {\n    width: min(480px, 100vw);\n  }\n}\n\n.wf-shell .react-flow__edge-path {\n  stroke: var(--wf-edge);\n  fill: none;\n  stroke-width: 1.5px;\n}\n\n.wf-shell .wf-edge-selected .react-flow__edge-path {\n  stroke: var(--wf-edge-selected, #0d6efd) !important;\n  stroke-width: 2.4px;\n  filter: drop-shadow(0 0 4px rgba(13, 110, 253, 0.35));\n}\n\n.wf-shell .react-flow__connection-path {\n  stroke-width: 1.5px;\n}\n\n.wf-shell .react-flow__edge-text {\n  fill: var(--wf-edge-label);\n}\n\n.wf-shell .react-flow__handle {\n  background: var(--wf-handle-bg);\n  border-color: var(--wf-handle-border);\n}\n\n.wf-shell .react-flow__handle.wf-handle-source {\n  background: var(--wf-handle-source-bg) !important;\n  border-color: var(--wf-handle-source-bg) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-source-loop {\n  background: var(--wf-edge-loop) !important;\n  border-color: var(--wf-edge-loop) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-target-loop {\n  border-color: var(--wf-edge-loop) !important;\n}\n\n.wf-edge-add-button {\n  width: 18px;\n  height: 18px;\n  border-radius: 50%;\n  border: 1px solid #adb5bd;\n  background: #ffffff;\n  color: #6c757d;\n  font-size: 12px;\n  line-height: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  padding: 0;\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);\n}\n\n.wf-edge-add-button:hover {\n  background: #f1f3f5;\n  color: #495057;\n}\n\n.wf-edge-add-button:focus {\n  outline: 2px solid #adb5bd;\n  outline-offset: 2px;\n}\n\n[data-bs-theme=\"dark\"] .wf-shell {\n  --wf-edge: #aeb3bd;\n  --wf-edge-adder: #6ea8fe;\n  --wf-edge-loop: #f0ad4e;\n  --wf-edge-label: #c0c4cf;\n  --wf-handle-border: #c0c4cf;\n  --wf-handle-bg: #2f3139;\n  --wf-handle-source-bg: #8a8a8a;\n}\n\n/* Temporary vars fallbacks */\n.wf-drawer {\n  --bs-body-bg: #fff;\n  --bs-body-color: #212529;\n  --bs-card-border-color: #e2e6ea;\n}\n[data-bs-theme=\"dark\"] .wf-drawer {\n  --bs-body-bg: #303030;\n  --bs-body-color: #fff;\n  --bs-card-border-color: #44484e;\n}\n"],"sourceRoot":""}]);
+`, "",{"version":3,"sources":["webpack://./src/workflow.css"],"names":[],"mappings":"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","sourcesContent":[".wf-shell {\n  padding: 0;\n  padding-right: var(--wf-shell-padding-right, 0px);\n  height: 100%;\n  min-height: 0;\n  display: flex;\n  flex-direction: column;\n  position: relative;\n  transition: padding-right 0.25s ease;\n  --wf-edge: #6c757d;\n  --wf-edge-adder: #0d6efd;\n  --wf-edge-loop: #f59f00;\n  --wf-edge-label: #495057;\n  --wf-handle-border: #3f3f3f;\n  --wf-handle-bg: #fff;\n  --wf-handle-source-bg: #5a5a5a;\n  --wf-drawer-width: 50vw;\n  --wf-drawer-offset: -4px;\n}\n\n.wf-toolbar {\n  display: flex;\n  justify-content: space-between;\n  align-items: center;\n  padding: 10px 12px;\n  border-bottom: 1px solid #e2e6ea;\n  background: transparent;\n}\n\n.wf-toolbar__actions button,\n.wf-toolbar__actions a {\n  margin-left: 8px;\n}\n\n.wf-canvas {\n  height: 100%;\n  flex: 1;\n  min-height: 0;\n  background: #fafbfc;\n}\n\n/* Ensure nodes visually sit above edge labels/buttons */\n.wf-shell .react-flow__node {\n  z-index: 5;\n}\n\n.wf-shell .react-flow__edge-labels {\n  z-index: 2;\n}\n.react-flow .react-flow__edges svg {\n  overflow: visible !important;\n  z-index: 1040;\n}\n\n.wf-empty {\n  padding: 12px;\n  color: #6c757d;\n}\n\n.wf-node {\n  background: var(--xy-node-background-color-default, #fff);\n  /* border: var(--xy-node-border-default); */\n  border: 1px solid #777777;\n  border-radius: 10px;\n  padding: 10px;\n  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);\n  min-width: 200px;\n  cursor: pointer;\n  max-width: 240px;\n}\n\n.wf-modal .card-body {\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow: auto;\n}\n.wf-node__header {\n  display: flex;\n  justify-content: space-between;\n  align-items: flex-start;\n  margin-bottom: 4px;\n}\n\n.wf-node__title-row {\n  display: flex;\n  gap: 8px;\n  align-items: baseline;\n  flex-wrap: wrap;\n}\n\n.wf-node__title {\n  font-weight: 700;\n  font-size: 14px;\n  word-wrap: break-word;\n  word-break: break-word;\n}\n\n.wf-node__action {\n  font-weight: 600;\n  color: #0d6efd;\n  font-size: 12px;\n}\n\n.wf-node__desc {\n  font-size: 12px;\n  color: #495057;\n  margin-bottom: 4px;\n}\n\n.wf-node__summary {\n  font-size: 12px;\n  color: var(--xy-node-color-default, #495057);\n  margin: 4px 0 6px;\n  padding-left: 16px;\n}\n\n.wf-node__summary li {\n  margin-bottom: 2px;\n}\n\n.wf-node__meta {\n  font-size: 12px;\n  color: #6c757d;\n}\n\n.wf-label {\n  font-weight: 600;\n}\n\n.wf-node__footer {\n  display: flex;\n  flex-wrap: wrap;\n  gap: 6px;\n  margin-top: 8px;\n}\n\n.wf-start-node {\n  padding: 10px;\n  border-radius: 10px;\n  background: linear-gradient(135deg, #0d6efd, #5ab2ff);\n  color: #fff;\n  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);\n  min-width: 100px;\n  display: flex;\n  flex-direction: column;\n  align-items: center;\n  text-align: center;\n}\n\n.wf-start-title {\n  font-weight: 700;\n}\n\n.wf-start-actions button {\n  color: #0d6efd;\n  background: #fff;\n  border-color: #fff;\n}\n\n.wf-add-node {\n  width: 32px;\n  height: 32px;\n  border-radius: 50%;\n  background: var(--xy-node-background-color-default, #fff);\n  border: 1px dashed var(--xy-node-border-default, #adb5bd);\n  color: #0d6efd;\n  font-weight: 700;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);\n  cursor: pointer;\n}\n\n.wf-add-node:focus {\n  outline: 2px solid #0d6efd;\n  outline-offset: 2px;\n}\n\n.wf-drawer {\n  position: fixed;\n  top: 0;\n  right: 0;\n  height: 100%;\n  width: min(95vw, max(var(--wf-drawer-width), 600px));\n  background: var(--bs-body-bg, #fff);\n  color: var(--bs-body-color, #212529);\n  border-left: 1px solid var(--bs-card-border-color, #e2e6ea);\n  display: flex;\n  flex-direction: column;\n  z-index: 1050;\n  box-shadow: -10px 0 30px rgba(0, 0, 0, 0.12);\n  transform: translateX(100%);\n  transition: transform 0.25s ease;\n  overflow: visible;\n}\n\n.wf-drawer--open {\n  transform: translateX(0);\n}\n\n.wf-drawer__resize {\n  position: absolute;\n  left: -6px;\n  top: 0;\n  width: 10px;\n  height: 100%;\n  cursor: ew-resize;\n  z-index: 1;\n  background: linear-gradient(\n    90deg,\n    rgba(0, 0, 0, 0) 0%,\n    rgba(0, 0, 0, 0.08) 50%,\n    rgba(0, 0, 0, 0) 100%\n  );\n}\n\n.wf-drawer__header {\n  padding: 16px 18px 12px;\n  border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-drawer__body {\n  padding: 16px 18px;\n  flex: 1 1 auto;\n  min-height: 0;\n  overflow-y: auto;\n}\n\n.wf-drawer__footer {\n  padding: 12px 18px;\n  border-top: 1px solid var(--bs-card-border-color, #e2e6ea);\n}\n\n.wf-modal-backdrop {\n  position: fixed;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  background: rgba(0, 0, 0, 0.45);\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  z-index: 1050;\n}\n\n.wf-modal {\n  /* background: var(--bs-body-bg, #fff); */\n  /* color: var(--bs-body-color, #212529); */\n  border-radius: 10px;\n  /* border: 1px solid var(--bs-card-border-color, #e2e6ea); */\n  width: min(900px, 90vw);\n  max-height: 90vh;\n  display: flex;\n  flex-direction: column;\n  overflow: hidden;\n  /* box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25); */\n}\n\n@media (max-width: 768px) {\n  .wf-shell--drawer-open {\n    padding-right: var(--wf-shell-padding-right, 0px);\n  }\n\n  .wf-drawer {\n    width: min(480px, 100vw);\n  }\n}\n\n.wf-shell .react-flow__edge-path {\n  stroke: var(--wf-edge);\n  fill: none;\n  stroke-width: 1.5px;\n}\n\n.wf-shell .wf-edge-selected .react-flow__edge-path {\n  stroke: var(--wf-edge-selected, #0d6efd) !important;\n  stroke-width: 2.4px;\n  filter: drop-shadow(0 0 4px rgba(13, 110, 253, 0.35));\n}\n\n.wf-shell .react-flow__connection-path {\n  stroke-width: 1.5px;\n}\n\n.wf-shell .react-flow__edge-text {\n  fill: var(--wf-edge-label);\n}\n\n.wf-shell .react-flow__handle {\n  background: var(--wf-handle-bg);\n  border-color: var(--wf-handle-border);\n}\n\n.wf-shell .react-flow__handle.wf-handle-source {\n  background: var(--wf-handle-source-bg) !important;\n  border-color: var(--wf-handle-source-bg) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-source-loop {\n  background: var(--wf-edge-loop) !important;\n  border-color: var(--wf-edge-loop) !important;\n  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);\n}\n.wf-shell .react-flow__handle.wf-handle-target-loop {\n  border-color: var(--wf-edge-loop) !important;\n}\n\n.wf-edge-add-button {\n  width: 18px;\n  height: 18px;\n  border-radius: 50%;\n  border: 1px solid #adb5bd;\n  background: #ffffff;\n  color: #6c757d;\n  font-size: 12px;\n  line-height: 1;\n  display: flex;\n  align-items: center;\n  justify-content: center;\n  cursor: pointer;\n  padding: 0;\n  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);\n}\n\n.wf-edge-add-button:hover {\n  background: #f1f3f5;\n  color: #495057;\n}\n\n.wf-edge-add-button:focus {\n  outline: 2px solid #adb5bd;\n  outline-offset: 2px;\n}\n\n[data-bs-theme=\"dark\"] .wf-shell {\n  --wf-edge: #aeb3bd;\n  --wf-edge-adder: #6ea8fe;\n  --wf-edge-loop: #f0ad4e;\n  --wf-edge-label: #c0c4cf;\n  --wf-handle-border: #c0c4cf;\n  --wf-handle-bg: #2f3139;\n  --wf-handle-source-bg: #8a8a8a;\n}\n\n/* Temporary vars fallbacks */\n.wf-drawer {\n  --bs-body-bg: #fff;\n  --bs-body-color: #212529;\n  --bs-card-border-color: #e2e6ea;\n}\n[data-bs-theme=\"dark\"] .wf-drawer {\n  --bs-body-bg: #303030;\n  --bs-body-color: #fff;\n  --bs-card-border-color: #44484e;\n}\n"],"sourceRoot":""}]);
 // Exports
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (___CSS_LOADER_EXPORT___);
 
