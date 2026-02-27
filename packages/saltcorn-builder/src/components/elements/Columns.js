@@ -4,14 +4,14 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment } from "react";
+import React, { Fragment, useContext } from "react";
 import { Column } from "./Column";
 import useTranslation from "../../hooks/useTranslation";
+import PreviewCtx from "../preview_context";
 
 import { Element, useNode } from "@craftjs/core";
 import {
   Accordion,
-  ConfigField,
   SettingsRow,
   reactifyStyles,
   SettingsSectionHeaderRow,
@@ -19,6 +19,7 @@ import {
   parseStyles,
 } from "./utils";
 import { BoxModelEditor } from "./BoxModelEditor";
+import { ArrayManager } from "./ArrayManager";
 import {
   AlignTop,
   AlignMiddle,
@@ -66,6 +67,35 @@ const resetWidths = (ncols) => ntimes(ncols - 1, () => Math.floor(12 / ncols));
 const getWidth = (widths, colix) =>
   colix < widths.length ? widths[colix] : 12 - sum(widths);
 
+/**
+ * Bootstrap breakpoint minimum widths (px)
+ */
+const BREAKPOINT_MIN_WIDTH = {
+  "": 0,
+  sm: 576,
+  md: 768,
+  lg: 992,
+  xl: 1200,
+};
+
+const PREVIEW_DEVICE_WIDTH = {
+  desktop: Infinity,
+  tablet: 768,
+  mobile: 375,
+};
+
+const getColClass = (width, breakpoint, previewDevice) => {
+  if (!previewDevice || previewDevice === "desktop") {
+    const bp = breakpoint || "sm";
+    return bp ? `col-${bp}-${width}` : `col-${width}`;
+  }
+  const deviceWidth = PREVIEW_DEVICE_WIDTH[previewDevice] || Infinity;
+  const bpMin = BREAKPOINT_MIN_WIDTH[breakpoint || "sm"] || 0;
+  if (deviceWidth < bpMin) return "col-12";
+  const bp = breakpoint || "sm";
+  return bp ? `col-${bp}-${width}` : `col-${width}`;
+};
+
 export /**
  * @param {object} opts
  * @param {number[]} opts.widths
@@ -88,11 +118,13 @@ const Columns = ({
   colClasses,
   colStyles,
   customClass,
+  breakpoints,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const { previewDevice } = useContext(PreviewCtx);
   return (
     <div
       className={`row builder-columns ${customClass || ""} ${selected ? "selected-node" : ""} ${
@@ -104,7 +136,11 @@ const Columns = ({
       {ntimes(ncols, (ix) => (
         <div
           key={ix}
-          className={`split-col col-sm-${getWidth(widths, ix)} text-${
+          className={`split-col ${getColClass(
+            getWidth(widths, ix),
+            breakpoints?.[ix],
+            previewDevice
+          )} text-${
             aligns?.[ix]
           } align-items-${vAligns?.[ix]} ${colClasses?.[ix] || ""}`}
           style={parseStyles(colStyles?.[ix] || "")}
@@ -156,112 +192,83 @@ const ColumnsSettings = () => {
     currentSettingsTab,
   } = node;
   const colSetsNode = {
-    vAlign: vAligns?.[setting_col_n - 1],
-    hAlign: aligns?.[setting_col_n - 1],
-    colClass: colClasses?.[setting_col_n - 1] || "",
-    colStyle: colStyles?.[setting_col_n - 1] || "",
+    vAlign: vAligns?.[setting_col_n],
+    hAlign: aligns?.[setting_col_n],
+    colClass: colClasses?.[setting_col_n] || "",
+    colStyle: colStyles?.[setting_col_n] || "",
   };
   return (
     <Accordion
       value={currentSettingsTab}
       onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
     >
-      <table accordiontitle={t("Column properties")}>
-        <tbody>
-          <tr>
-            <td colSpan="3">
-              <label>{t("Number of columns")}</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={ncols}
-                className="form-control"
-                step="1"
-                min="1"
-                max="6"
-                onChange={(e) => {
-                  if (!e.target) return;
-                  const value = e.target.value;
-                  setProp((prop) => {
-                    prop.ncols = value;
-                    prop.widths = resetWidths(value);
-                  });
-                }}
-              />
-            </td>
-          </tr>
-          <tr>
-            <th colSpan="4">{t("Widths & Breakpoint")}</th>
-          </tr>
-          {ntimes(ncols, (ix) => (
-            <Fragment key={ix}>
-              <tr>
-                <th colSpan="4">Column {ix + 1}</th>
-              </tr>
-              <tr>
-                <td>
-                  <label>{t("Width")}</label>
-                </td>
-                <td align="right">
-                  {ix < ncols - 1 ? (
-                    <input
-                      type="number"
-                      value={widths[ix]}
-                      className="form-control"
-                      step="1"
-                      min="1"
-                      max={12 - (sum(widths) - widths[ix]) - 1}
-                      onChange={(e) => {
-                        if (!e.target) return;
-                        const value = e.target.value;
-                        setProp((prop) => (prop.widths[ix] = +value));
-                      }}
-                    />
-                  ) : (
-                    `${12 - sum(widths)}`
-                  )}
-                </td>
-                <td>/12</td>
-                <td>
-                  <select
-                    className="form-control form-select"
-                    value={breakpoints[ix]}
+      <div accordiontitle={t("Column properties")}>
+        <ArrayManager
+          node={node}
+          setProp={setProp}
+          countProp={"ncols"}
+          currentProp={"setting_col_n"}
+          managedArrays={["widths", "breakpoints", "aligns", "vAligns", "colClasses", "colStyles"]}
+          manageContents={true}
+          contentsKey={"besides"}
+          initialAddProps={{
+            breakpoints: "sm",
+          }}
+          onLayoutChange={(layout, action) => {
+            if (action === "add" || action === "delete") {
+              const n = layout.besides.length;
+              layout.widths = ntimes(n, () => Math.floor(12 / n));
+            }
+          }}
+        />
+        <table className="w-100 mt-2">
+          <tbody>
+            <tr>
+              <th colSpan="4">{t("Width & Breakpoint")}</th>
+            </tr>
+            <tr>
+              <td>
+                <label>{t("Width")}</label>
+              </td>
+              <td colSpan="3" align="right">
+                {setting_col_n < ncols - 1 ? (
+                  <input
+                    type="number"
+                    value={widths[setting_col_n]}
+                    className="form-control"
+                    step="1"
+                    min="1"
+                    max={12 - (sum(widths) - widths[setting_col_n]) - 1}
                     onChange={(e) => {
                       if (!e.target) return;
                       const value = e.target.value;
-                      setProp((prop) => (prop.breakpoints[ix] = value));
+                      setProp((prop) => (prop.widths[setting_col_n] = +value));
                     }}
-                  >
-                    <option disabled>{t("Breakpoint")}</option>
-                    <option value="">{t("none")}</option>
-                    {buildBootstrapOptions(["sm", "md", "lg"])}
-                  </select>
-                </td>
-              </tr>
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
-      <div accordiontitle={t("Column settings")}>
-        {t("Settings for column #")}
-        <ConfigField
-          field={{
-            name: "setting_col_n",
-            label: t("Column number"),
-            type: "btn_select",
-            options: ntimes(ncols, (i) => ({
-              value: i + 1,
-              title: `${i + 1}`,
-              label: `${i + 1}`,
-            })),
-          }}
-          node={node}
-          setProp={setProp}
-          props={node}
-        ></ConfigField>
-        <table className="w-100">
-          <tbody>
+                  />
+                ) : (
+                  `${12 - sum(widths)}`
+                )}
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <label>{t("Breakpoint")}</label>
+              </td>
+              <td colSpan="3">
+                <select
+                  className="form-control form-select"
+                  value={breakpoints[setting_col_n]}
+                  onChange={(e) => {
+                    if (!e.target) return;
+                    const value = e.target.value;
+                    setProp((prop) => (prop.breakpoints[setting_col_n] = value));
+                  }}
+                >
+                  <option value="">{t("none")}</option>
+                  {buildBootstrapOptions(["sm", "md", "lg"])}
+                </select>
+              </td>
+            </tr>
             <SettingsSectionHeaderRow title={t("Align")} />
             <SettingsRow
               field={{
@@ -279,7 +286,7 @@ const ColumnsSettings = () => {
               onChange={(k, v) =>
                 setProp((prop) => {
                   if (!prop.vAligns) prop.vAligns = [];
-                  prop.vAligns[setting_col_n - 1] = v;
+                   prop.vAligns[setting_col_n] = v;
                 })
               }
             />
@@ -299,7 +306,7 @@ const ColumnsSettings = () => {
               onChange={(k, v) =>
                 setProp((prop) => {
                   if (!prop.aligns) prop.aligns = [];
-                  prop.aligns[setting_col_n - 1] = v;
+                   prop.aligns[setting_col_n] = v;
                 })
               }
             />
@@ -314,7 +321,7 @@ const ColumnsSettings = () => {
               onChange={(k, v) =>
                 setProp((prop) => {
                   if (!prop.colClasses) prop.colClasses = [];
-                  prop.colClasses[setting_col_n - 1] = v;
+                   prop.colClasses[setting_col_n] = v;
                 })
               }
             />
@@ -322,14 +329,14 @@ const ColumnsSettings = () => {
               field={{
                 name: "colStyle",
                 label: t("CSS"),
-                type: "textarea",
+                type: "String",
               }}
               node={colSetsNode}
               setProp={setProp}
               onChange={(k, v) =>
                 setProp((prop) => {
                   if (!prop.colStyles) prop.colStyles = [];
-                  prop.colStyles[setting_col_n - 1] = v;
+                  prop.colStyles[setting_col_n] = v;
                 })
               }
             />
@@ -384,7 +391,7 @@ Columns.craft = {
     ncols: 2,
     style: {},
     breakpoints: ["sm", "sm"],
-    setting_col_n: 1,
+    setting_col_n: 0,
     customClass: "",
   },
   related: {

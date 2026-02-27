@@ -12,6 +12,7 @@ import React, {
   useRef,
   memo,
 } from "react";
+import { createPortal } from "react-dom";
 import useTranslation from "../hooks/useTranslation";
 import { Editor, Frame, Element, Selector, useEditor, DefaultEventHandlers } from "@craftjs/core";
 import { Layers, useLayer } from "@craftjs/layers"
@@ -67,6 +68,7 @@ import {
   faCaretSquareRight,
 } from "@fortawesome/free-regular-svg-icons";
 import { Accordion, ErrorBoundary } from "./elements/utils";
+import { Display, Tablet, Phone } from "react-bootstrap-icons";
 import { InitNewElement, Library, LibraryElem } from "./Library";
 import { RenderNode } from "./RenderNode";
 import { ListColumn } from "./elements/ListColumn";
@@ -104,7 +106,7 @@ const getFirstSelected = (selected) => {
  * @subcategory components
  * @namespace
  */
-const SettingsPanel = () => {
+const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
   const { t } = useTranslation();
   const options = useContext(optionsCtx);
 
@@ -160,6 +162,15 @@ const SettingsPanel = () => {
     const tagName = target.tagName.toLowerCase();
     const hasSelection = selectedCount > 0;
     if ((tagName === "body" || tagName === "button") && hasSelection) {
+      if (!selected && selectedCount > 1 && (keyCode === 8 || keyCode === 46)) {
+        const currentSelected = query.getEvent("selected");
+        const nodeIds = getSelectedNodes(currentSelected)
+          .map((nodeId) => (typeof nodeId === "string" ? nodeId : nodeId?.id))
+          .filter((nodeId) => nodeId && nodeId !== "ROOT");
+        nodeIds.forEach((nodeId) => {
+          try { actions.delete(nodeId); } catch (e) { /* node may already be deleted */ }
+        });
+      }
       if (selected) {
         if ((keyCode === 8 || keyCode === 46) && selected.id === "ROOT") {
           deleteChildren();
@@ -298,6 +309,14 @@ const SettingsPanel = () => {
         actions.history.redo();
       }
     }
+    if ((tagName === "body" || tagName === "button") &&
+        (event.ctrlKey || event.metaKey) && event.keyCode == 65) {
+      event.preventDefault();
+      const rootChildren = query.node("ROOT").childNodes();
+      if (rootChildren.length > 0) {
+        actions.selectNode(rootChildren);
+      }
+    }
   };
   useEffect(() => {
     window.addEventListener("keydown", handleUserKeyPress);
@@ -336,13 +355,23 @@ const SettingsPanel = () => {
 
   return (
     <div className="settings-panel card mt-1">
-      <div className="card-header px-2 py-1">
-        {selected && selected.displayName ? (
-          <Fragment>
-            <b>{selected.displayName}</b> settings
-          </Fragment>
-        ) : (
-          t("Settings")
+      <div className="card-header px-2 py-1 d-flex justify-content-between align-items-center">
+        <div>
+          {selected && selected.displayName ? (
+            <Fragment>
+              <b>{selected.displayName}</b> settings
+            </Fragment>
+          ) : (
+            t("Settings")
+          )}
+        </div>
+        {setIsEnlarged && (
+          <FontAwesomeIcon
+            icon={isEnlarged ? faCaretSquareRight : faCaretSquareLeft}
+            className="fa-lg builder-expand-toggle-right"
+            onClick={() => setIsEnlarged(!isEnlarged)}
+            title={isEnlarged ? t("Shrink") : t("Enlarge")}
+          />
         )}
       </div>
       <div className="card-body p-2">
@@ -426,7 +455,7 @@ function useWindowDimensions() {
  * @namespace
  */
 
-const hiddenColumnParents = new Set(["Card", "Container", "Tabs", "Table", "DropMenu"]);
+const hiddenColumnParents = new Set(["Card", "Container", "Tabs", "Table", "DropMenu", "ListColumn"]);
 
 const CustomLayerComponent = memo(({ children }) => {
   const {
@@ -443,7 +472,7 @@ const CustomLayerComponent = memo(({ children }) => {
       };
   });
 
-  const { displayName, hasNodes, isHiddenColumn, connectors: editorConnectors } = useEditor((state) => {
+  const { displayName, hasNodes, isHiddenColumn, selected, connectors: editorConnectors } = useEditor((state) => {
       const node = state.nodes[id];
       const data = node?.data;
 
@@ -469,28 +498,33 @@ const CustomLayerComponent = memo(({ children }) => {
           }
       }
 
+      const isSelected = state.events?.selected?.has?.(id) || (state.events?.selected === id);
+
       return {
           displayName: name,
           hasNodes: hasChildren,
-          isHiddenColumn: shouldHide
+          isHiddenColumn: shouldHide,
+          selected: isSelected
       };
   });
+
+  const isRoot = id === "ROOT";
 
   // Auto-expand hidden linked-node Columns so their children are always
   // visible through the transparent wrapper. Uses setExpandedState(true)
   // instead of toggleLayer() — it's idempotent (no-op when already true),
   // so it won't conflict with craft.js internals or cause toggle loops.
   useEffect(() => {
-    if (isHiddenColumn && !expanded) {
+    if ((isHiddenColumn || isRoot) && !expanded) {
       setExpandedState(true);
     }
-  }, [isHiddenColumn, expanded, setExpandedState]);
+  }, [isHiddenColumn, isRoot, expanded, setExpandedState]);
 
-  if (isHiddenColumn) {
+  if (isHiddenColumn || isRoot) {
     return (
       <div
         ref={(dom) => { layer(dom); if (dom) editorConnectors.drop(dom, id); }}
-        style={{ marginLeft: "-20px" }}
+        style={{ marginLeft: "-14px" }}
       >
         {children}
       </div>
@@ -501,9 +535,9 @@ const CustomLayerComponent = memo(({ children }) => {
     <div ref={(dom) => { layer(dom); if (dom) editorConnectors.drop(dom, id); }}>
         <div
           ref={(dom) => { drag(dom); layerHeader(dom); }}
-          className={`builder-layer-node ${hovered ? "hovered" : ""}`}
+          className={`builder-layer-node ${hovered ? "hovered" : ""} ${selected ? "selected" : ""}`}
           style={{
-            paddingLeft: `${depth * 20 + 10}px`,
+            paddingLeft: `${depth * 14 + 10}px`,
           }}
         >
           <span className="layer-name" style={{ flexGrow: 1 }}>{displayName}</span>
@@ -542,6 +576,38 @@ const AddColumnButton = () => {
       <FontAwesomeIcon icon={faPlus} className="me-2" />
       {t("Add column")}
     </button>
+  );
+};
+
+const DEVICE_WIDTHS = {
+  desktop: null,
+  tablet: 768,
+  mobile: 375,
+};
+
+const DevicePreviewToolbar = ({ previewDevice, setPreviewDevice }) => {
+  const { t } = useTranslation();
+  const devices = [
+    { key: "desktop", icon: Display, label: t("Desktop") },
+    { key: "tablet", icon: Tablet, label: t("Tablet") },
+    { key: "mobile", icon: Phone, label: t("Mobile") },
+  ];
+
+  return (
+    <div className="device-preview-toolbar">
+      {devices.map(({ key, icon: Icon, label }) => (
+        <button
+          key={key}
+          className={`btn btn-sm ${
+            previewDevice === key ? "btn-primary" : "btn-outline-secondary"
+          } device-preview-btn`}
+          onClick={() => setPreviewDevice(key)}
+          title={label}
+        >
+          <Icon size={16} />
+        </button>
+      ))}
+    </div>
   );
 };
 
@@ -644,6 +710,7 @@ const Builder = ({ options, layout, mode }) => {
   const [isEnlarged, setIsEnlarged] = useState(false);
   const [isLeftEnlarged, setIsLeftEnlarged] = useState(false);
   const [relationsCache, setRelationsCache] = useState({});
+  const [previewDevice, setPreviewDevice] = useState("desktop");
   const { windowWidth, windowHeight } = useWindowDimensions();
 
   const [builderHeight, setBuilderHeight] = useState(0);
@@ -703,7 +770,7 @@ const Builder = ({ options, layout, mode }) => {
       >
         <Provider value={options}>
           <PreviewCtx.Provider
-            value={{ previews, setPreviews, uploadedFiles, setUploadedFiles }}
+            value={{ previews, setPreviews, uploadedFiles, setUploadedFiles, previewDevice }}
           >
             <RelationsCtx.Provider
               value={{
@@ -782,40 +849,51 @@ const Builder = ({ options, layout, mode }) => {
                       options.mode !== "list" ? "emptymsg" : ""
                     }`}
                   >
-                    <div>
-                      <Frame>
-                        {options.mode === "list" ? (
-                          <Element canvas is={ListColumns}></Element>
-                        ) : (
-                          <Element canvas is={Column}></Element>
-                        )}
-                      </Frame>
-                      {options.mode === "list" ? <AddColumnButton /> : null}
+                    <div className="device-preview-scroll-area">
+                      <div
+                        className={`device-preview-canvas-wrapper ${
+                          previewDevice !== "desktop" ? "device-preview-constrained" : ""
+                        }`}
+                        style={{
+                          maxWidth: DEVICE_WIDTHS[previewDevice]
+                            ? `${DEVICE_WIDTHS[previewDevice]}px`
+                            : "none",
+                        }}
+                      >
+                        <Frame>
+                          {options.mode === "list" ? (
+                            <Element canvas is={ListColumns}></Element>
+                          ) : (
+                            <Element canvas is={Column}></Element>
+                          )}
+                        </Frame>
+                        {options.mode === "list" ? <AddColumnButton /> : null}
+                      </div>
                     </div>
                   </div>
                   <div className="col-sm-auto builder-sidebar">
                     <div style={{ width: isEnlarged ? "28rem" : "16rem" }}>
-                      <NextButton layout={layout} />
-                      <HistoryPanel />
-                      <FontAwesomeIcon
-                        icon={faSave}
-                        className={savingState.isSaving ? "d-inline" : "d-none"}
+                      <DevicePreviewToolbar
+                        previewDevice={previewDevice}
+                        setPreviewDevice={setPreviewDevice}
                       />
-                      <FontAwesomeIcon
-                        icon={faExclamationTriangle}
-                        color="#ff0033"
-                        className={savingState.error ? "d-inline" : "d-none"}
-                      />
-                      <FontAwesomeIcon
-                        icon={
-                          isEnlarged ? faCaretSquareRight : faCaretSquareLeft
-                        }
-                        className={
-                          "float-end me-2 mt-1 fa-lg builder-expand-toggle-right"
-                        }
-                        onClick={() => setIsEnlarged(!isEnlarged)}
-                        title={isEnlarged ? t("Shrink") : t("Enlarge")}
-                      />
+                      {document.getElementById("builder-header-actions") &&
+                        createPortal(
+                          <Fragment>
+                            <FontAwesomeIcon
+                              icon={faSave}
+                              className={savingState.isSaving ? "d-inline" : "d-none"}
+                            />
+                            <FontAwesomeIcon
+                              icon={faExclamationTriangle}
+                              color="#ff0033"
+                              className={savingState.error ? "d-inline" : "d-none"}
+                            />
+                            <HistoryPanel />
+                            <NextButton layout={layout} />
+                          </Fragment>,
+                          document.getElementById("builder-header-actions")
+                        )}
                       <div
                         className={` ${
                           savingState.error ? "d-block" : "d-none"
@@ -823,7 +901,7 @@ const Builder = ({ options, layout, mode }) => {
                       >
                         {t("your work is not being saved")}
                       </div>
-                      <SettingsPanel />
+                      <SettingsPanel isEnlarged={isEnlarged} setIsEnlarged={setIsEnlarged} />
                     </div>
                   </div>
                 </div>

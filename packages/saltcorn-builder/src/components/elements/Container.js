@@ -136,6 +136,19 @@ const Container = ({
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
+  const { previewDevice } = useContext(previewCtx);
+
+  const BP_MIN = { "": 0, sm: 576, md: 768, lg: 992, xl: 1200 };
+  const DEVICE_W = { desktop: Infinity, tablet: 768, mobile: 375 };
+  {
+    const dw = DEVICE_W[previewDevice] || Infinity;
+    if (minScreenWidth && dw < (BP_MIN[minScreenWidth] || 0)) {
+      return <div ref={(dom) => connect(drag(dom))} style={{ display: "none" }} />;
+    }
+    if (maxScreenWidth && dw >= (BP_MIN[maxScreenWidth] || Infinity)) {
+      return <div ref={(dom) => connect(drag(dom))} style={{ display: "none" }} />;
+    }
+  }
 
   const actualChildren = contents || children;
 
@@ -163,8 +176,6 @@ const Container = ({
         ...parseStyles(customCSS || ""),
         ...reactifyStyles(style, transform, rotate),
         display,
-        //padding: padding.map((p) => p + "px").join(" "),
-        //margin: margin.map((p) => p + "px").join(" "),
         minHeight: minHeight ? `${minHeight}${minHeightUnit || "px"}` : null,
         ...(bgType === "Image" && bgFileId
           ? {
@@ -208,7 +219,9 @@ const Container = ({
           : {}),
       },
     },
-    React.createElement(Element, { canvas: true, id: "container-canvas", is: Column }, renderChildren())
+    <Element canvas id="container-canvas" is={Column}>
+      {renderChildren()}
+    </Element>
   );
 };
 
