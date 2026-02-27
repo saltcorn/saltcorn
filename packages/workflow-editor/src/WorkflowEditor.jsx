@@ -710,6 +710,11 @@ const StepDrawer = ({
   onResizeStart,
 }) => {
   const isOpen = !!modal;
+  const stopDrawerKeyPropagation = useCallback((e) => {
+    e.stopPropagation();
+    if (e?.nativeEvent?.stopImmediatePropagation)
+      e.nativeEvent.stopImmediatePropagation();
+  }, []);
   return (
     <div
       ref={outerRef}
@@ -719,6 +724,8 @@ const StepDrawer = ({
       aria-hidden={!isOpen}
       aria-label={modal?.title || data?.strings?.configure}
       style={{ "--wf-drawer-width": `${drawerWidth}px` }}
+      onKeyDown={stopDrawerKeyPropagation}
+      onKeyUp={stopDrawerKeyPropagation}
     >
       {modal ? (
         <>
@@ -807,6 +814,9 @@ const WorkflowEditor = ({ data }) => {
   const resizingRef = useRef(false);
   const connectSourceRef = useRef(null);
   const [selectedEdgeId, setSelectedEdgeId] = useState(null);
+  const autoSaveTimerRef = useRef(null);
+  const autoSavingRef = useRef(false);
+  const nodesRef = useRef([]);
 
   const drawerStorageKey = useMemo(
     () => `wf-drawer:${data?.trigger?.id || "default"}`,
@@ -954,6 +964,10 @@ const WorkflowEditor = ({ data }) => {
   }, [steps, refreshGraph]);
 
   useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
+
+  useEffect(() => {
     if (!rfInstanceRef.current) return;
     if (!pendingViewportRef.current) return;
     if (appliedViewportRef.current) return;
@@ -1098,6 +1112,16 @@ const WorkflowEditor = ({ data }) => {
 
           // Re-fetch so we get the updated connections reflected in steps
           fresh = await fetchJson(data.urls.data);
+
+          if (insertBetween && insertBetween.originalTargetName) {
+            await applyInsertBetweenLayout(fresh.steps || [], {
+              newStep,
+              afterStepId,
+              targetName: insertBetween.originalTargetName,
+              targetId: insertBetween.targetId,
+              snapshot: insertBetween.positionsSnapshot,
+            });
+          }
         }
         pendingAddRef.current = null;
       }
@@ -1111,7 +1135,7 @@ const WorkflowEditor = ({ data }) => {
     } finally {
       setLoading(false);
     }
-  }, [data.urls.data, fetchJson, strings.refresh, updateConnection]);
+  }, [applyInsertBetweenLayout, data.urls.data, fetchJson, strings.refresh, updateConnection]);
 
   const persistPositions = useCallback(
     async (positions = []) => {
@@ -1161,6 +1185,44 @@ const WorkflowEditor = ({ data }) => {
         positionDebounceRef.current = null;
         persistPositions(toSave);
       }, 300);
+    },
+    [persistPositions]
+  );
+
+  const applyInsertBetweenLayout = useCallback(
+    async (freshSteps, { newStep, afterStepId, targetName, targetId, snapshot }) => {
+      if (!newStep || !snapshot) return;
+      const snap = snapshot || {};
+      const newStepSize =
+        getWorkflowSize(newStep) || {
+          width: DEFAULT_NODE_WIDTH,
+          height: DEFAULT_NODE_HEIGHT,
+        };
+      const sourceSnap = snap[String(afterStepId)];
+      const resolvedTargetId =
+        targetId || freshSteps.find((s) => s.name === targetName)?.id;
+      const targetSnap = resolvedTargetId ? snap[String(resolvedTargetId)] : null;
+      const shiftAmount = newStepSize.height + V_GAP;
+      const fallbackY = sourceSnap?.y ?? 0;
+      const fallbackX = sourceSnap?.x ?? targetSnap?.x ?? 0;
+      const targetY = targetSnap?.y ?? fallbackY;
+
+      const updates = [];
+      freshSteps.forEach((step) => {
+        const idStr = String(step.id);
+        if (idStr === String(newStep.id)) {
+          updates.push({ id: idStr, x: fallbackX, y: targetY });
+          return;
+        }
+        const nodeSnap = snap[idStr];
+        if (!nodeSnap) return;
+        if (targetSnap && nodeSnap.y >= targetY && idStr !== String(afterStepId)) {
+          updates.push({ id: idStr, x: nodeSnap.x, y: nodeSnap.y + shiftAmount });
+        } else {
+          updates.push({ id: idStr, x: nodeSnap.x, y: nodeSnap.y });
+        }
+      });
+      if (updates.length) await persistPositions(updates);
     },
     [persistPositions]
   );
@@ -1232,8 +1294,8 @@ const WorkflowEditor = ({ data }) => {
     [clearDrawerState, data.urls.stepForm, fetchJson, persistDrawerState]
   );
 
-  const handleModalSubmit = useCallback(
-    async (formEl) => {
+  const submitStepForm = useCallback(
+    async (formEl, { closeOnSuccess = true } = {}) => {
       if (!formEl) return;
       setSavingModal(true);
       setError("");
@@ -1249,9 +1311,12 @@ const WorkflowEditor = ({ data }) => {
       });
       const json = await res.json();
       if (json.error) throw new Error(json.error);
-      setModal(null);
-      clearDrawerState();
+      if (closeOnSuccess) {
+        setModal(null);
+        clearDrawerState();
+      }
       await reload();
+      setSavingModal(false);
     },
     [clearDrawerState, data.csrfToken, data.urls.stepForm, reload]
   );
@@ -1270,6 +1335,7 @@ const WorkflowEditor = ({ data }) => {
     }, 0);
 
     const actionSelect = formEl.querySelector('[name="wf_action_name"]');
+    const allowAutoSave = !!modal?.stepId; // avoid auto-save for brand new steps to prevent insert errors
     const handleActionChange = () => {
       if (typeof window !== "undefined" && window.apply_showif)
         window.apply_showif();
@@ -1277,10 +1343,29 @@ const WorkflowEditor = ({ data }) => {
     if (actionSelect)
       actionSelect.addEventListener("change", handleActionChange);
 
+    const scheduleAutoSave = allowAutoSave
+      ? () => {
+          if (autoSavingRef.current) return;
+          if (autoSaveTimerRef.current)
+            clearTimeout(autoSaveTimerRef.current);
+          autoSaveTimerRef.current = setTimeout(async () => {
+            autoSavingRef.current = true;
+            try {
+              await submitStepForm(formEl, { closeOnSuccess: false });
+            } catch (err) {
+              setError(err.message);
+            } finally {
+              autoSavingRef.current = false;
+              setSavingModal(false);
+            }
+          }, 800);
+        }
+      : null;
+
     const submitHandler = async (e) => {
       e.preventDefault();
       try {
-        await handleModalSubmit(formEl);
+        await submitStepForm(formEl);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -1288,12 +1373,22 @@ const WorkflowEditor = ({ data }) => {
       }
     };
     formEl.addEventListener("submit", submitHandler);
+    if (scheduleAutoSave) {
+      formEl.addEventListener("input", scheduleAutoSave);
+      formEl.addEventListener("change", scheduleAutoSave);
+    }
     return () => {
+      if (autoSaveTimerRef.current)
+        clearTimeout(autoSaveTimerRef.current);
       formEl.removeEventListener("submit", submitHandler);
+      if (scheduleAutoSave) {
+        formEl.removeEventListener("input", scheduleAutoSave);
+        formEl.removeEventListener("change", scheduleAutoSave);
+      }
       if (actionSelect)
         actionSelect.removeEventListener("change", handleActionChange);
     };
-  }, [handleModalSubmit, modal]);
+  }, [modal, submitStepForm]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
@@ -1497,10 +1592,28 @@ const WorkflowEditor = ({ data }) => {
       if (!source || !target || source === "start") return;
       const originalTargetName = nameById[target];
       if (!originalTargetName) return;
+      const sizeById = new Map(
+        steps.map((s) => [String(s.id), getWorkflowSize(s) || { height: DEFAULT_NODE_HEIGHT }])
+      );
+      const positionsSnapshot = {};
+      nodesRef.current
+        .filter((n) => n.type === "step")
+        .forEach((n) => {
+          const size = sizeById.get(String(n.id)) || { height: DEFAULT_NODE_HEIGHT };
+          positionsSnapshot[String(n.id)] = {
+            x: n.position?.x ?? 0,
+            y: n.position?.y ?? 0,
+            height: size.height || DEFAULT_NODE_HEIGHT,
+          };
+        });
       pendingAddRef.current = {
         afterStepId: source,
         prevIds: new Set(steps.map((s) => String(s.id))),
-        insertBetween: { originalTargetName },
+        insertBetween: {
+          originalTargetName,
+          targetId: target,
+          positionsSnapshot,
+        },
       };
       openStepForm({ after_step: source });
     },
