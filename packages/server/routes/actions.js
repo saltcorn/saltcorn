@@ -139,7 +139,7 @@ const workflowStrings = (req, trigger) => ({
   onlyIf: req.__("Only if"),
   loopBody: req.__("Loop body"),
   openRuns: req.__("Show runs &raquo;"),
-  configure: req.__(`%s configuration`, trigger.name),
+  configure: req.__(`Configure trigger %s`, trigger.name),
   copyStep: req.__("Copy"),
 });
 

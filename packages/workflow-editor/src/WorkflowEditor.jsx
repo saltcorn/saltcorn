@@ -6,6 +6,7 @@ import React, {
   useLayoutEffect,
   useMemo,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   Background,
   Controls,
@@ -758,15 +759,17 @@ const StepDrawer = ({
             ) : null}
           </div>
           <div className="wf-drawer__footer d-flex justify-content-end gap-2">
-            <button
-              className="btn btn-sm btn-outline-danger"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(modal.stepId);
-              }}
-            >
-              {data.strings.deleteStep}
-            </button>
+            {modal.stepId && (
+              <button
+                className="btn btn-sm btn-outline-danger"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(modal.stepId);
+                }}
+              >
+                {data.strings.deleteStep}
+              </button>
+            )}
             {modal.stepId ? (
               <button
                 className="btn btn-sm btn-outline-secondary"
@@ -836,6 +839,7 @@ const WorkflowEditor = ({ data }) => {
   const autoSaveTimerRef = useRef(null);
   const autoSavingRef = useRef(false);
   const nodesRef = useRef([]);
+  const [headerHost, setHeaderHost] = useState(null);
 
   const drawerStorageKey = useMemo(
     () => `wf-drawer:${data?.trigger?.id || "default"}`,
@@ -848,6 +852,7 @@ const WorkflowEditor = ({ data }) => {
   );
 
   const rfInstanceRef = useRef(null);
+  const headerHtmlRef = useRef("");
 
   const persistDrawerState = useCallback(
     (payload) => {
@@ -1166,7 +1171,13 @@ const WorkflowEditor = ({ data }) => {
     } finally {
       setLoading(false);
     }
-  }, [applyInsertBetweenLayout, data.urls.data, fetchJson, strings.refresh, updateConnection]);
+  }, [
+    applyInsertBetweenLayout,
+    data.urls.data,
+    fetchJson,
+    strings.refresh,
+    updateConnection,
+  ]);
 
   const persistPositions = useCallback(
     async (positions = []) => {
@@ -1236,18 +1247,22 @@ const WorkflowEditor = ({ data }) => {
   );
 
   const applyInsertBetweenLayout = useCallback(
-    async (freshSteps, { newStep, afterStepId, targetName, targetId, snapshot }) => {
+    async (
+      freshSteps,
+      { newStep, afterStepId, targetName, targetId, snapshot }
+    ) => {
       if (!newStep || !snapshot) return null;
       const snap = snapshot || {};
-      const newStepSize =
-        getWorkflowSize(newStep) || {
-          width: DEFAULT_NODE_WIDTH,
-          height: DEFAULT_NODE_HEIGHT,
-        };
+      const newStepSize = getWorkflowSize(newStep) || {
+        width: DEFAULT_NODE_WIDTH,
+        height: DEFAULT_NODE_HEIGHT,
+      };
       const sourceSnap = snap[String(afterStepId)];
       const resolvedTargetId =
         targetId || freshSteps.find((s) => s.name === targetName)?.id;
-      const targetSnap = resolvedTargetId ? snap[String(resolvedTargetId)] : null;
+      const targetSnap = resolvedTargetId
+        ? snap[String(resolvedTargetId)]
+        : null;
       const shiftAmount = newStepSize.height + V_GAP;
       const fallbackY = sourceSnap?.y ?? 0;
       const fallbackX = sourceSnap?.x ?? targetSnap?.x ?? 0;
@@ -1255,7 +1270,7 @@ const WorkflowEditor = ({ data }) => {
       const newX =
         sourceSnap && targetSnap
           ? (sourceSnap.x + targetSnap.x) / 2
-          : targetSnap?.x ?? sourceSnap?.x ?? fallbackX;
+          : (targetSnap?.x ?? sourceSnap?.x ?? fallbackX);
 
       const newHalfWidth = (newStepSize.width || DEFAULT_NODE_WIDTH) / 2;
       const bandPadding = H_GAP / 2;
@@ -1280,12 +1295,14 @@ const WorkflowEditor = ({ data }) => {
         const nodeMaxX = nodeSnap.x + nodeHalfWidth;
         const overlapsBand = !(nodeMaxX < bandMinX || nodeMinX > bandMaxX);
         const shouldShift =
-          nodeSnap.y >= newY &&
-          idStr !== String(afterStepId) &&
-          overlapsBand;
+          nodeSnap.y >= newY && idStr !== String(afterStepId) && overlapsBand;
 
         if (shouldShift) {
-          updates.push({ id: idStr, x: nodeSnap.x, y: nodeSnap.y + shiftAmount });
+          updates.push({
+            id: idStr,
+            x: nodeSnap.x,
+            y: nodeSnap.y + shiftAmount,
+          });
         } else {
           updates.push({ id: idStr, x: nodeSnap.x, y: nodeSnap.y });
         }
@@ -1431,8 +1448,7 @@ const WorkflowEditor = ({ data }) => {
     const scheduleAutoSave = allowAutoSave
       ? () => {
           if (autoSavingRef.current) return;
-          if (autoSaveTimerRef.current)
-            clearTimeout(autoSaveTimerRef.current);
+          if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
           autoSaveTimerRef.current = setTimeout(async () => {
             autoSavingRef.current = true;
             try {
@@ -1463,8 +1479,7 @@ const WorkflowEditor = ({ data }) => {
       formEl.addEventListener("change", scheduleAutoSave);
     }
     return () => {
-      if (autoSaveTimerRef.current)
-        clearTimeout(autoSaveTimerRef.current);
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
       formEl.removeEventListener("submit", submitHandler);
       if (scheduleAutoSave) {
         formEl.removeEventListener("input", scheduleAutoSave);
@@ -1601,7 +1616,11 @@ const WorkflowEditor = ({ data }) => {
 
   const onEdgesChange = useCallback(
     (changes) => {
-      const removed = changes.filter((c) => c.type === "remove");
+      // Block edge deletions while a modal is open so ReactFlow cannot remove links under dialogs
+      const safeChanges = modal
+        ? changes.filter((c) => c.type !== "remove")
+        : changes;
+      const removed = safeChanges.filter((c) => c.type === "remove");
       if (removed.length) {
         const updates = [];
         removed.forEach((chg) => {
@@ -1630,13 +1649,18 @@ const WorkflowEditor = ({ data }) => {
           .then(() => reload())
           .catch((e) => setError(e.message));
       }
-      rfOnEdgesChange(changes);
+      rfOnEdgesChange(safeChanges);
     },
-    [edges, reload, rfOnEdgesChange, updateConnection]
+    [edges, modal, reload, rfOnEdgesChange, updateConnection]
   );
 
   const onNodesChangeWrapped = useCallback(
     (changes) => {
+      // Prevent node deletion by reactflow while drawer is open
+      const safeChanges = modal
+        ? changes.filter((c) => c.type !== "remove")
+        : changes;
+
       const finishedPositions = changes
         .filter((c) => c.type === "position" && c.position && c.dragging)
         .map((c) => ({ id: c.id, x: c.position.x, y: c.position.y }));
@@ -1664,9 +1688,9 @@ const WorkflowEditor = ({ data }) => {
         );
         if (stepPositions.length) schedulePersistPositions(stepPositions);
       }
-      onNodesChange(changes);
+      onNodesChange(safeChanges);
     },
-    [onNodesChange, schedulePersistPositions, setAddPositions, setStartPosition]
+    [modal, onNodesChange, schedulePersistPositions, setAddPositions, setStartPosition]
   );
 
   const onAddAfter = useCallback(
@@ -1703,9 +1727,10 @@ const WorkflowEditor = ({ data }) => {
       nodesRef.current
         .filter((n) => n.type === "step")
         .forEach((n) => {
-          const size =
-            sizeById.get(String(n.id)) ||
-            { width: DEFAULT_NODE_WIDTH, height: DEFAULT_NODE_HEIGHT };
+          const size = sizeById.get(String(n.id)) || {
+            width: DEFAULT_NODE_WIDTH,
+            height: DEFAULT_NODE_HEIGHT,
+          };
           positionsSnapshot[String(n.id)] = {
             x: n.position?.x ?? 0,
             y: n.position?.y ?? 0,
@@ -1723,9 +1748,7 @@ const WorkflowEditor = ({ data }) => {
           positionsSnapshot,
         },
       };
-      openStepForm(
-        fromStart ? { initial_step: true } : { after_step: source }
-      );
+      openStepForm(fromStart ? { initial_step: true } : { after_step: source });
     },
     [nameById, openStepForm, steps]
   );
@@ -1754,7 +1777,7 @@ const WorkflowEditor = ({ data }) => {
           await reload();
           return;
         }
-        
+
         const copiedStep = res.step;
         const copiedName = copiedStep.name;
 
@@ -1763,23 +1786,19 @@ const WorkflowEditor = ({ data }) => {
         const freshSteps = (await reload()) || [];
         if (!freshSteps.length) return;
 
-        const sourceStep = freshSteps.find(
-          (s) => String(s.id) === String(id)
-        );
+        const sourceStep = freshSteps.find((s) => String(s.id) === String(id));
         const newStep = freshSteps.find((s) => s.name === copiedName);
 
         if (!sourceStep || !newStep || !newStep.id) return;
 
-        const sourceSize =
-          getWorkflowSize(sourceStep) || {
-            width: DEFAULT_NODE_WIDTH,
-            height: DEFAULT_NODE_HEIGHT,
-          };
-        const newSize =
-          getWorkflowSize(newStep) || {
-            width: DEFAULT_NODE_WIDTH,
-            height: DEFAULT_NODE_HEIGHT,
-          };
+        const sourceSize = getWorkflowSize(sourceStep) || {
+          width: DEFAULT_NODE_WIDTH,
+          height: DEFAULT_NODE_HEIGHT,
+        };
+        const newSize = getWorkflowSize(newStep) || {
+          width: DEFAULT_NODE_WIDTH,
+          height: DEFAULT_NODE_HEIGHT,
+        };
 
         const sourcePos = sourceStep.configuration?.workflow_position || {
           x: 0,
@@ -1795,12 +1814,25 @@ const WorkflowEditor = ({ data }) => {
         // Push steps that are to the right of the insertion band
         const bandMinX = targetX - newSize.width * 0.25;
         const shiftX = newSize.width + ADD_GAP;
+        const newHalfHeight = (newSize.height || DEFAULT_NODE_HEIGHT) / 2;
+        const bandPaddingY = V_GAP / 2;
+        const bandMinY = targetY - newHalfHeight - bandPaddingY;
+        const bandMaxY = targetY + newHalfHeight + bandPaddingY;
 
         freshSteps.forEach((s) => {
           const cfgPos = s.configuration?.workflow_position;
           if (!cfgPos) return;
           if (String(s.id) === String(newStep.id)) return;
-          if (cfgPos.x >= bandMinX) {
+          const stepSize = getWorkflowSize(s) || {
+            width: DEFAULT_NODE_WIDTH,
+            height: DEFAULT_NODE_HEIGHT,
+          };
+          const halfHeight = (stepSize.height || DEFAULT_NODE_HEIGHT) / 2;
+          const nodeMinY = cfgPos.y - halfHeight;
+          const nodeMaxY = cfgPos.y + halfHeight;
+          const overlapsBandY = !(nodeMaxY < bandMinY || nodeMinY > bandMaxY);
+
+          if (cfgPos.x >= bandMinX && overlapsBandY) {
             updates.push({
               id: String(s.id),
               x: cfgPos.x + shiftX,
@@ -2060,84 +2092,107 @@ const WorkflowEditor = ({ data }) => {
     };
   }, [drawerWidth, modal]);
 
-  return (
-    <div className={shellClass} style={shellStyle} ref={shellRef}>
-      <div className="wf-toolbar">
-        <div className="wf-toolbar__left">
-          <strong>{strings.configure}</strong>
-          {message ? (
-            <span className="text-success ms-2">{message}</span>
-          ) : null}
-          {error ? <span className="text-danger ms-2">{error}</span> : null}
-          {/* {savingPositions ? (
-            <span className="text-muted ms-2">
-              {strings.loading || "Saving positions..."}
-            </span>
-          ) : null} */}
-        </div>
-        <div className="wf-toolbar__actions">
-          <button
-            className="btn btn-sm btn-outline-primary"
-            onClick={() => openStepForm({ initial_step: !hasSteps })}
-          >
-            {strings.addStep}
-          </button>
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            onClick={reload}
-            disabled={loading}
-          >
-            {loading ? strings.loading : strings.refresh}
-          </button>
-          <a className="btn btn-sm btn-outline-info" href={data.urls.runs}>
-            {strings.runs}
-          </a>
-        </div>
+  useEffect(() => {
+    const shellEl = shellRef.current;
+    if (!shellEl) return;
+    const cardEl = shellEl.closest(".card");
+    const headerEl = cardEl?.querySelector?.(".card-header");
+    if (headerEl && headerEl !== headerHost) {
+      headerHtmlRef.current = headerEl.innerHTML || "";
+      headerEl.dataset.wfHeaderInjected = "true";
+      headerEl.classList.add("d-flex", "align-items-center");
+      headerEl.innerHTML = "";
+      setHeaderHost(headerEl);
+    }
+  }, [headerHost]);
+
+  const headerContent = (
+    <div className="d-flex align-items-center justify-content-between w-100">
+      <div className="d-flex align-items-center flex-wrap">
+        {headerHtmlRef.current ? (
+          <span
+            className="ms-3 d-flex align-items-center flex-wrap text-muted"
+            dangerouslySetInnerHTML={{ __html: headerHtmlRef.current }}
+          />
+        ) : (
+          <h5 className="m-0 fw-bold text-primary d-inline">
+            {strings.configure}
+          </h5>
+        )}
+        {message ? <span className="text-success ms-2">{message}</span> : null}
+        {error ? <span className="text-danger ms-2">{error}</span> : null}
       </div>
-      {!hasSteps ? <div className="wf-empty">{strings.empty}</div> : null}
-      <div className="wf-canvas">
-        <ReactFlow
-          nodesFocusable={true}
-          edgesFocusable={true}
-          disableKeyboardA11y={false}
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChangeWrapped}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onConnectStart={onConnectStart}
-          onConnectEnd={onConnectEnd}
-          onEdgeClick={onEdgeClick}
-          onSelectionChange={handleSelectionChange}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onInit={onInit}
-          defaultViewport={pendingViewportRef.current || undefined}
-          fitView={shouldFitView}
-          proOptions={{ hideAttribution: true }}
-          defaultEdgeOptions={{ animated: true }}
-          colorMode={window._sc_lightmode || "light"}
-          onMoveEnd={(_, viewport) => persistViewport(viewport)}
+      <div className="wf-toolbar__actions">
+        <button
+          className="btn btn-sm btn-outline-primary"
+          onClick={() => openStepForm({ initial_step: !hasSteps })}
         >
-          {showMiniMap && <MiniMap pannable zoomable />}
-          <Controls />
-          <Background gap={16} />
-        </ReactFlow>
+          {strings.addStep}
+        </button>
+        <button
+          className="btn btn-sm btn-outline-secondary ms-2"
+          onClick={reload}
+          disabled={loading}
+        >
+          {loading ? strings.loading : strings.refresh}
+        </button>
       </div>
-      <StepDrawer
-        modal={modal}
-        innerRef={modalRef}
-        outerRef={drawerRef}
-        onClose={closeModal}
-        submitting={savingModal}
-        error={error && modal ? error : ""}
-        data={data}
-        onDelete={onDelete}
-        onCopy={onCopy}
-        drawerWidth={drawerWidth}
-        onResizeStart={startResize}
-      />
     </div>
+  );
+
+  return (
+    <>
+      {headerHost ? (
+        createPortal(headerContent, headerHost)
+      ) : (
+        <div className="wf-toolbar">{headerContent}</div>
+      )}
+      <div className={shellClass} style={shellStyle} ref={shellRef}>
+        {!hasSteps ? <div className="wf-empty">{strings.empty}</div> : null}
+        <div className="wf-canvas">
+          <ReactFlow
+            nodesFocusable={true}
+            edgesFocusable={true}
+            disableKeyboardA11y={false}
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChangeWrapped}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onConnectStart={onConnectStart}
+            onConnectEnd={onConnectEnd}
+            onEdgeClick={onEdgeClick}
+            onSelectionChange={handleSelectionChange}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            onInit={onInit}
+            defaultViewport={pendingViewportRef.current || undefined}
+            fitView={shouldFitView}
+            proOptions={{ hideAttribution: true }}
+            defaultEdgeOptions={{ animated: true }}
+            colorMode={window._sc_lightmode || "light"}
+            onMoveEnd={(_, viewport) => persistViewport(viewport)}
+          >
+            {showMiniMap && <MiniMap pannable zoomable />}
+            <Controls />
+            <Background gap={16} />
+          </ReactFlow>
+        </div>
+        <StepDrawer
+          modal={modal}
+          innerRef={modalRef}
+          outerRef={drawerRef}
+          onClose={closeModal}
+          submitting={savingModal}
+          error={error && modal ? error : ""}
+          data={data}
+          onDelete={onDelete}
+          onCopy={onCopy}
+          drawerWidth={drawerWidth}
+          onResizeStart={startResize}
+        />
+      </div>
+    </>
   );
 };
 
