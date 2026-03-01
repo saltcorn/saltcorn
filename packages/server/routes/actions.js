@@ -443,6 +443,16 @@ const triggerForm = async (req, trigger) => {
           when_trigger: [...table_triggers, ...additional_triggers_with_onlyif],
         },
       },
+      {
+        name: "request_fluid_layout",
+        label: req.__("Fluid layout"),
+        sublabel: req.__(
+          "Request fluid layout from theme for a wider display for this workflow editor"
+        ),
+        type: "Bool",
+        parent_field: "configuration",
+        showIf: { action: "Workflow" },
+      }
     ],
   });
   // if (trigger) {
@@ -508,6 +518,9 @@ router.get(
 
     const form = await triggerForm(req, trigger);
     form.values = trigger;
+    if (trigger.configuration?.request_fluid_layout !== undefined) {
+      form.values.request_fluid_layout = trigger.configuration.request_fluid_layout;
+    }
     form.onChange = `saveAndContinue(this)`;
     send_events_page({
       res,
@@ -1211,6 +1224,7 @@ router.get(
         active_sub: "Triggers",
         sub2_page: "Configure",
         page_title: req.__(`%s configuration`, trigger.name),
+        requestFluidLayout: trigger.configuration?.request_fluid_layout || false,
         contents: {
           type: "card",
           titleAjaxIndicator: true,
