@@ -3163,16 +3163,15 @@ describe("Table recursive query", () => {
       table.min_role_read = 1;
       table.min_role_write = 1;
       await table.update(table);
-      db.set_sql_logging(true);
       const rows = await table.getRows(
         {},
         {
           tree_field: "parent",
           orderBy: "name",
           forUser: { role_id: 80, id: 3 },
+          disable_ownership_postqfilter: true,
         }
       );
-      db.set_sql_logging(false);
 
       //console.log(rows.map((r) => r.name));
       expect(rows.length).toEqual(1);
