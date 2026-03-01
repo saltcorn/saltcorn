@@ -19,12 +19,12 @@ const renderWorkflow = (workflowData: any, version_tag?: string): string =>
     { class: "workflow-editor-wrapper" },
     style(/*css*/`
       .workflow-editor-wrapper {
-        min-height: 640px;
+        display: flex;
+        flex-direction: column;
       }
       #saltcorn-workflow-editor {
-        min-height: 640px;
-        height: calc(100vh - 460px);
-        max-height: calc(100vh - 460px);
+        flex: 1;
+        min-height: 0px;
       }
     `),
     script({
