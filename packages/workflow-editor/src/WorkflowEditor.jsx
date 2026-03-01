@@ -784,19 +784,21 @@ const StepDrawer = ({
             <button className="btn btn-secondary" onClick={onClose}>
               Close
             </button>
-            <button
-              className="btn btn-primary"
-              onClick={() =>
-                innerRef.current
-                  ?.querySelector("form")
-                  ?.dispatchEvent(
-                    new Event("submit", { cancelable: true, bubbles: true })
-                  )
-              }
-              disabled={submitting}
-            >
-              {submitting ? "Saving..." : "Save"}
-            </button>
+            {!modal.stepId && (
+              <button
+                className="btn btn-primary"
+                onClick={() =>
+                  innerRef.current
+                    ?.querySelector("form")
+                    ?.dispatchEvent(
+                      new Event("submit", { cancelable: true, bubbles: true })
+                    )
+                }
+                disabled={submitting}
+              >
+                {submitting ? "Saving..." : "Save"}
+              </button>
+            )}
           </div>
         </>
       ) : null}
@@ -840,6 +842,9 @@ const WorkflowEditor = ({ data }) => {
   const autoSavingRef = useRef(false);
   const nodesRef = useRef([]);
   const [headerHost, setHeaderHost] = useState(null);
+  const [shellHeight, setShellHeight] = useState(null);
+  const lastHeightRef = useRef(null);
+  const heightDebounceRef = useRef(null);
 
   const drawerStorageKey = useMemo(
     () => `wf-drawer:${data?.trigger?.id || "default"}`,
@@ -853,6 +858,56 @@ const WorkflowEditor = ({ data }) => {
 
   const rfInstanceRef = useRef(null);
   const headerHtmlRef = useRef("");
+
+  const recomputeShellHeight = useCallback(() => {
+    if (typeof window === "undefined") return;
+    const shellEl = shellRef.current;
+    if (!shellEl) return;
+
+    const wrapperEl = shellEl.closest(".workflow-editor-wrapper");
+    if (!wrapperEl) return;
+
+    const afterEl = wrapperEl.nextElementSibling;
+    const cardBodyEl = shellEl.closest(".card-body");
+    if (!cardBodyEl) return;
+
+    const minHeight = 320;
+    const bottomMargin = 28;
+
+    const cardBodyRect = cardBodyEl.getBoundingClientRect();
+    const styles = window.getComputedStyle(cardBodyEl);
+    const cardBodyPaddingTop = parseFloat(styles.paddingTop) || 0;
+    const cardBodyPaddingBottom = parseFloat(styles.paddingBottom) || 0;
+
+    const effectiveTop = Math.max(0, cardBodyRect.top);
+
+    let footerHeight = 0;
+    if (afterEl && typeof afterEl.getBoundingClientRect === "function") {
+      const afterRect = afterEl.getBoundingClientRect();
+      const afterStyles = window.getComputedStyle(afterEl);
+      const mt = parseFloat(afterStyles.marginTop) || 0;
+      const mb = parseFloat(afterStyles.marginBottom) || 0;
+      footerHeight = afterRect.height + mt + mb;
+    }
+
+    const availableHeight =
+      window.innerHeight -
+      effectiveTop -
+      bottomMargin -
+      cardBodyPaddingTop -
+      cardBodyPaddingBottom -
+      footerHeight;
+
+    const wrapperHeight = Math.max(minHeight, availableHeight);
+
+    if (lastHeightRef.current !== wrapperHeight) {
+      lastHeightRef.current = wrapperHeight;
+      if (wrapperEl) {
+        wrapperEl.style.height = `${wrapperHeight}px`;
+      }
+      if (Number.isFinite(wrapperHeight)) setShellHeight(wrapperHeight);
+    }
+  }, []);
 
   const persistDrawerState = useCallback(
     (payload) => {
@@ -1387,6 +1442,7 @@ const WorkflowEditor = ({ data }) => {
         if (initial_step) url.searchParams.set("initial_step", "true");
         if (after_step) url.searchParams.set("after_step", after_step);
         const res = await fetchJson(url.toString());
+        console.log({url})
         setModal({ title: res.title, body: res.form, stepId: stepId || null });
       } catch (e) {
         clearDrawerState();
@@ -1690,7 +1746,13 @@ const WorkflowEditor = ({ data }) => {
       }
       onNodesChange(safeChanges);
     },
-    [modal, onNodesChange, schedulePersistPositions, setAddPositions, setStartPosition]
+    [
+      modal,
+      onNodesChange,
+      schedulePersistPositions,
+      setAddPositions,
+      setStartPosition,
+    ]
   );
 
   const onAddAfter = useCallback(
@@ -1995,7 +2057,11 @@ const WorkflowEditor = ({ data }) => {
 
   const hasSteps = steps.length > 0;
   const shellClass = modal ? "wf-shell wf-shell--drawer-open" : "wf-shell";
-  const shellStyle = { "--wf-drawer-width": `${drawerWidth}px` };
+  const shellStyle = {
+    "--wf-drawer-width": `${drawerWidth}px`,
+    height: shellHeight ? `${shellHeight}px` : undefined,
+    maxHeight: shellHeight ? `${shellHeight}px` : undefined,
+  };
   const showMiniMap = !modal;
   const shouldFitView = !pendingViewportRef.current;
 
@@ -2104,14 +2170,38 @@ const WorkflowEditor = ({ data }) => {
       headerEl.innerHTML = "";
       setHeaderHost(headerEl);
     }
-  }, [headerHost]);
+    // recalc height once we know our real position
+    requestAnimationFrame(() => recomputeShellHeight());
+  }, [headerHost, recomputeShellHeight]);
+
+  useLayoutEffect(() => {
+    recomputeShellHeight();
+
+    // Debounce resize events to avoid jumpiness
+    const handleResize = () => {
+      if (heightDebounceRef.current) clearTimeout(heightDebounceRef.current);
+      heightDebounceRef.current = setTimeout(() => {
+        recomputeShellHeight();
+      }, 100);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (heightDebounceRef.current) clearTimeout(heightDebounceRef.current);
+    };
+  }, [recomputeShellHeight]);
+
+  useLayoutEffect(() => {
+    requestAnimationFrame(() => recomputeShellHeight());
+  }, [steps.length, recomputeShellHeight]);
 
   const headerContent = (
-    <div className="d-flex align-items-center justify-content-between w-100">
+    <div className="d-flex align-items-center w-100">
       <div className="d-flex align-items-center flex-wrap">
         {headerHtmlRef.current ? (
           <span
-            className="ms-3 d-flex align-items-center flex-wrap text-muted"
+            className="d-flex align-items-center flex-wrap text-muted"
             dangerouslySetInnerHTML={{ __html: headerHtmlRef.current }}
           />
         ) : (
@@ -2122,7 +2212,7 @@ const WorkflowEditor = ({ data }) => {
         {message ? <span className="text-success ms-2">{message}</span> : null}
         {error ? <span className="text-danger ms-2">{error}</span> : null}
       </div>
-      <div className="wf-toolbar__actions">
+      <div className="wf-toolbar__actions ms-auto d-flex flex-wrap">
         <button
           className="btn btn-sm btn-outline-primary"
           onClick={() => openStepForm({ initial_step: !hasSteps })}

@@ -74,6 +74,7 @@ const {
   h2,
   h4,
   p,
+  style,
 } = require("@saltcorn/markup/tags");
 const Table = require("@saltcorn/data/models/table");
 const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
@@ -635,6 +636,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
     onChange: "saveAndContinue(this)",
     noSubmitButton: true,
     formStyle: "vert",
+    class: "compact-form-group",
     fields: [
       {
         name: "save_traces",
@@ -678,7 +680,12 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
         },
         req.__("Show runs &raquo;")
       ),
-      renderForm(trigCfgForm, req.csrfToken())
+      renderForm(trigCfgForm, req.csrfToken()),
+      style(/*css*/ `
+        .compact-form-group > .form-group {
+          margin-bottom: 0.5rem;
+        }  
+      `)
     )
   );
 };
@@ -997,19 +1004,6 @@ const getWorkflowStepForm = async (
 
   const form = new Form({
     action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
-    // submitLabel: step_id ? req.__("Done") : undefined,
-    // submitLabel: null,
-    // onSubmit: "press_store_button(this)",
-    // additionalButtons: step_id
-    //   ? [
-    //       {
-    //         label: req.__("Delete"),
-    //         class: "btn btn-outline-danger",
-    //         onclick: `ajax_post('/actions/delete-step/${+step_id}')`,
-    //         afterSave: true,
-    //       },
-    //     ]
-    //   : undefined,
     noSubmitButton: true,
     fields: [
       {
