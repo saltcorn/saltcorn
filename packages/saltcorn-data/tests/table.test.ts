@@ -3115,6 +3115,31 @@ describe("Table recursive query", () => {
       expect(rows[1]._level).toBe(1);
       expect(rows[0]._level).toBe(0);
     });
+    it("getRows tree with ownership", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      table.ownership_formula = "difficulty===2";
+      table.min_role_read = 1;
+      table.min_role_write = 1;
+      await table.update(table);
+      db.set_sql_logging(true);
+      const rows = await table.getRows(
+        {},
+        {
+          tree_field: "parent",
+          orderBy: "name",
+          forUser: { role_id: 80, id: 4 },
+        }
+      );
+      db.set_sql_logging(false);
+
+      //console.log(rows.map((r) => r.name));
+      expect(rows.length).toEqual(3);
+      expect(rows[2].name).toBe("Learn about the bees");
+      expect(rows[2]._level).toBe(2);
+      expect(rows[1]._level).toBe(1);
+      expect(rows[0]._level).toBe(0);
+    });
     it("getRows tree with tree field in where", async () => {
       const table = Table.findOne("recur_projects");
       assertIsSet(table);
