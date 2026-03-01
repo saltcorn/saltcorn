@@ -1633,6 +1633,8 @@ router.get(
       before_step,
       after_step_for
     );
+    if (+req.query.vw < 1000 && req.query.render === "dialog")
+      form.formStyle = "vert";
 
     if (initial_step) form.values.wf_initial_step = true;
     if (!step_id) {

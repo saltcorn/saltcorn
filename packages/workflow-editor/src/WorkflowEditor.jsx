@@ -1439,10 +1439,10 @@ const WorkflowEditor = ({ data }) => {
         const base = `${data.urls.stepForm}${stepId ? `/${stepId}` : ""}`;
         const url = new URL(base, window.location.origin);
         url.searchParams.set("render", "dialog");
+        url.searchParams.set("vw", window.innerWidth);
         if (initial_step) url.searchParams.set("initial_step", "true");
         if (after_step) url.searchParams.set("after_step", after_step);
         const res = await fetchJson(url.toString());
-        console.log({url})
         setModal({ title: res.title, body: res.form, stepId: stepId || null });
       } catch (e) {
         clearDrawerState();
