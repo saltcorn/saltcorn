@@ -1916,6 +1916,7 @@ export = {
           forUser: req.user,
           tree_field: default_state?._tree_field,
           pk_name,
+          disable_ownership_postqfilter: true,
         });
         //console.log("tree rows", tree_rows);
 

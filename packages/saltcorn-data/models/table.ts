@@ -1287,7 +1287,8 @@ class Table implements AbstractTable {
       else if (this.ownership_field_id) {
         //already dealt with by changing where
       } else if (this.ownership_formula || this.name === "users") {
-        rows = rows.filter((row: Row) => this.is_owner(forUser, row));
+        if (!selopts?.disable_ownership_postqfilter)
+          rows = rows.filter((row: Row) => this.is_owner(forUser, row));
       } else return []; //no ownership
     }
 

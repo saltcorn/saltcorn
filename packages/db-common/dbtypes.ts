@@ -66,6 +66,7 @@ export type SelectOptions = {
   client?: DatabaseClient;
   schema?: string;
   pk_name?: string;
+  disable_ownership_postqfilter?: boolean;
 };
 export type JoinField = {
   ref: string;
