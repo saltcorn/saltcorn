@@ -1832,7 +1832,7 @@
 	"Top": "Top",
 	"Bottom": "Bottom",
 	"Expand to full page width": "Expand to full page width",
-	"Rotate \u00b0": "Rotate \u00b0",
+	"Rotate °": "Rotate °",
 	"Vertical": "Vertical",
 	"Responsive widths": "Responsive widths",
 	"List of widths to serve resized images, e.g. 300, 400, 600": "List of widths to serve resized images, e.g. 300, 400, 600",
@@ -1840,9 +1840,9 @@
 	"Set text color": "Set text color",
 	"Text": "Text",
 	"Transform": "Transform",
-	"Rotate\u00b0": "Rotate\u00b0",
-	"SkewX\u00b0": "SkewX\u00b0",
-	"SkewY\u00b0": "SkewY\u00b0",
+	"Rotate°": "Rotate°",
+	"SkewX°": "SkewX°",
+	"SkewY°": "SkewY°",
 	"ScaleX": "ScaleX",
 	"ScaleY": "ScaleY",
 	"TranslateX": "TranslateX",
@@ -2056,5 +2056,6 @@
 	"Keyboard shortcut": "Keyboard shortcut",
 	"e.g. <code>Alt+k</code> or <code>Ctrl+Alt+k</code> or <code>Ctrl+Space</code>. Modifier keys: <code>Alt</code>, <code>Ctrl</code>, <code>Shift</code>, <code>Meta</code>": "e.g. <code>Alt+k</code> or <code>Ctrl+Alt+k</code> or <code>Ctrl+Space</code>. Modifier keys: <code>Alt</code>, <code>Ctrl</code>, <code>Shift</code>, <code>Meta</code>",
 	"Tree field": "Tree field",
-	"A field that is Key to own table": "A field that is Key to own table"
+	"A field that is Key to own table": "A field that is Key to own table",
+	"Field names are limited to 63 characters": "Field names are limited to 63 characters"
 }

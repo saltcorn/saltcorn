@@ -99,6 +99,10 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
             return req.__("Column %s already exists", s);
           if (Field.labelToName(s) === "row")
             return req.__("Not a valid field name");
+          if (s.length > 63)
+            return req.__(
+              "Field names are limited to 63 characters"
+            );
           try {
             new Function(Field.labelToName(s), "return;");
           } catch {

@@ -620,6 +620,7 @@ function saveAndContinue(e, k, event) {
     },
     data: form_data,
     success: function (res) {
+      $(`[toast-title="Save error"]`).removeClass("show");
       ajax_indicator(false);
       form.removeAttr("data-unsaved-changes");
       form.parent().find(".full-form-error").text("");
@@ -637,7 +638,11 @@ function saveAndContinue(e, k, event) {
       var ct = request.getResponseHeader("content-type") || "";
       if (checkNetworkError(request)) {
       } else if (ct.startsWith && ct.startsWith("application/json")) {
-        notifyAlert({ type: "danger", text: request.responseJSON.error });
+        notifyAlert({
+          type: "danger",
+          text: request.responseJSON.error,
+          toast_title: "Save error",
+        });
       } else {
         $("#page-inner-content").html(request.responseText);
         initialize_page();
@@ -1679,14 +1684,14 @@ function ensure_css_loaded(src) {
         l = function (a, b) {
           d = setTimeout(function () {
             d = !1;
-            if (h || c) e.apply(a, b), c && (j = +new Date());
+            if (h || c) (e.apply(a, b), c && (j = +new Date()));
             i && g.apply(a, b);
           }, f);
         },
         k = function () {
           if (!d || a) {
             if (!d && !h && (!c || +new Date() - j > f))
-              e.apply(this, arguments), c && (j = +new Date());
+              (e.apply(this, arguments), c && (j = +new Date()));
             (a || !c) && clearTimeout(d);
             l(this, arguments);
           }
