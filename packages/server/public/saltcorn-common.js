@@ -2101,6 +2101,7 @@ function buildToast(txt, type, spin, title, set_id) {
     <div 
       class="toast show"
       id="${rndid}"
+      toast-title="${escapeHtml(title||"")}"
       rendered="client-side",
       role="alert"
       aria-live="assertive"
