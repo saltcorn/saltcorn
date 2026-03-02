@@ -110,10 +110,10 @@ const emit_to_client =
     const safeIds = Array.isArray(userIds)
       ? userIds
       : userIds
-      ? [userIds]
-      : user?.id
-      ? [user.id]
-      : [];
+        ? [userIds]
+        : user?.id
+          ? [user.id]
+          : [];
     state.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
   };
 
@@ -1600,10 +1600,10 @@ export = {
                     when_trigger === "Validate"
                       ? ["Row"]
                       : mode === "filter"
-                      ? ["Filter state"]
-                      : mode === "workflow"
-                      ? ["Database", "Active edit view"]
-                      : ["Form", "Database"],
+                        ? ["Filter state"]
+                        : mode === "workflow"
+                          ? ["Database", "Active edit view"]
+                          : ["Form", "Database"],
                 },
               },
             ]
@@ -2312,10 +2312,7 @@ export = {
             user: has_user,
             workflow: mode === "workflow",
           },
-          class: [
-            "validate-statements",
-            mode !== "workflow" && "enlarge-in-card",
-          ],
+          class: `validate-statements ${mode !== "workflow" ? "enlarge-in-card" : ""}`,
           validator(s: any) {
             try {
               let AsyncFunction = Object.getPrototypeOf(
@@ -3040,7 +3037,7 @@ export = {
       configuration: { title, body, link, user_spec },
     }: {
       row?: Row;
-      user?: User | AbstractUser
+      user?: User | AbstractUser;
       configuration: {
         title: string;
         body?: string;
@@ -3053,17 +3050,17 @@ export = {
         typeof user_spec === "number"
           ? { id: user_spec }
           : typeof user_spec === "object"
-          ? user_spec
-          : User.valid_email(user_spec)
-          ? { email: user_spec }
-          : user_spec === "*"
-          ? {}
-          : eval_expression(
-              user_spec,
-              row || {},
-              user,
-              "Notify user user where"
-            );
+            ? user_spec
+            : User.valid_email(user_spec)
+              ? { email: user_spec }
+              : user_spec === "*"
+                ? {}
+                : eval_expression(
+                    user_spec,
+                    row || {},
+                    user,
+                    "Notify user user where"
+                  );
       const users = await User.find(user_where);
       for (const user of users) {
         await Notification.create({
