@@ -198,6 +198,10 @@ const library_pack = async (name: string): Promise<LibraryPack> => {
 const orderWorkflowSteps = (steps: any[]): any[] => {
   if (!Array.isArray(steps)) return steps || [];
   const allNames = steps.map((s) => s?.name).filter(Boolean) as string[];
+  const stepByName = new Map<string, any>();
+  steps.forEach((s) => {
+    if (s?.name) stepByName.set(s.name, s);
+  });
   const escapeRegExp = (str: string) =>
     str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -218,17 +222,39 @@ const orderWorkflowSteps = (steps: any[]): any[] => {
   steps.forEach((s) => {
     if (!s?.name) return;
     const targets: string[] = [];
-    extractNextStepNames(s.next_step).forEach((nm) => targets.push(nm));
     if (s.action_name === "ForLoop") {
       const loopStart = s.configuration?.loop_body_initial_step;
       if (loopStart && allNames.includes(loopStart)) targets.push(loopStart);
     }
+    extractNextStepNames(s.next_step).forEach((nm) => targets.push(nm));
     adjacency.set(s.name, [...new Set(targets)]);
   });
 
   const initial = steps.find((s) => s?.initial_step);
   const visited = new Set<string>();
   const order: string[] = [];
+
+  const computeLoopBodyOrder = (
+    loopStart?: string,
+    loopStepName?: string
+  ): string[] => {
+    if (!loopStart || !loopStepName) return [];
+    const seq: string[] = [];
+    const seen = new Set<string>();
+    let cur = loopStart;
+    while (cur && !seen.has(cur) && cur !== loopStepName) {
+      const step = stepByName.get(cur);
+      if (!step) break;
+      seq.push(cur);
+      seen.add(cur);
+      const nexts = extractNextStepNames(step.next_step);
+      if (nexts.includes(loopStepName)) break;
+      const next = nexts[0];
+      if (!next) break;
+      cur = next;
+    }
+    return seq;
+  };
 
   const traverse = (start?: string) => {
     if (!start || visited.has(start)) return;
@@ -238,8 +264,18 @@ const orderWorkflowSteps = (steps: any[]): any[] => {
       if (visited.has(cur)) continue;
       visited.add(cur);
       order.push(cur);
+      const step = stepByName.get(cur);
+      const isForLoop = step?.action_name === "ForLoop";
+      const loopStart = step?.configuration?.loop_body_initial_step;
+      const loopBodySeq = isForLoop
+        ? computeLoopBodyOrder(loopStart, cur)
+        : [];
+      if (isForLoop)
+        loopBodySeq.forEach((n) => {
+          if (!visited.has(n)) queue.push(n);
+        });
       (adjacency.get(cur) || []).forEach((n) => {
-        if (!visited.has(n)) queue.push(n);
+        if (!visited.has(n) && !loopBodySeq.includes(n)) queue.push(n);
       });
     }
   };
