@@ -452,7 +452,7 @@ const triggerForm = async (req, trigger) => {
         type: "Bool",
         parent_field: "configuration",
         showIf: { action: "Workflow" },
-      }
+      },
     ],
   });
   // if (trigger) {
@@ -519,7 +519,8 @@ router.get(
     const form = await triggerForm(req, trigger);
     form.values = trigger;
     if (trigger.configuration?.request_fluid_layout !== undefined) {
-      form.values.request_fluid_layout = trigger.configuration.request_fluid_layout;
+      form.values.request_fluid_layout =
+        trigger.configuration.request_fluid_layout;
     }
     form.onChange = `saveAndContinue(this)`;
     send_events_page({
@@ -687,15 +688,18 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
     div(
       { class: "mt-3" },
       div(
-        { class: "d-flex justify-content-between align-items-center flex-wrap gap-2" },
+        {
+          class:
+            "d-flex justify-content-between align-items-center flex-wrap gap-2",
+        },
+        renderForm(trigCfgForm, req.csrfToken()),
         a(
           {
             href: `/actions/runs/?trigger=${trigger.id}`,
             class: "d-inline-block",
           },
           req.__("Show runs &raquo;")
-        ),
-        renderForm(trigCfgForm, req.csrfToken())
+        )
       ),
       style(/*css*/ `
         .compact-form-group > .form-group {
@@ -1230,7 +1234,8 @@ router.get(
         active_sub: "Triggers",
         sub2_page: "Configure",
         page_title: req.__(`%s configuration`, trigger.name),
-        requestFluidLayout: trigger.configuration?.request_fluid_layout || false,
+        requestFluidLayout:
+          trigger.configuration?.request_fluid_layout || false,
         contents: {
           type: "card",
           titleAjaxIndicator: true,
