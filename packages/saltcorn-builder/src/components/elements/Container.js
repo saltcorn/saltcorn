@@ -139,7 +139,7 @@ const Container = ({
   const { previewDevice } = useContext(previewCtx);
 
   const BP_MIN = { "": 0, sm: 576, md: 768, lg: 992, xl: 1200 };
-  const DEVICE_W = { desktop: Infinity, tablet: 768, mobile: 375 };
+  const DEVICE_W = { desktop: Infinity, tablet: 768, mobile: 576 };
   {
     const dw = DEVICE_W[previewDevice] || Infinity;
     if (minScreenWidth && dw < (BP_MIN[minScreenWidth] || 0)) {

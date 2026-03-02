@@ -582,7 +582,7 @@ const AddColumnButton = () => {
 const DEVICE_WIDTHS = {
   desktop: null,
   tablet: 768,
-  mobile: 375,
+  mobile: 576,
 };
 
 const DevicePreviewToolbar = ({ previewDevice, setPreviewDevice }) => {
@@ -852,10 +852,10 @@ const Builder = ({ options, layout, mode }) => {
                     <div className="device-preview-scroll-area">
                       <div
                         className={`device-preview-canvas-wrapper ${
-                          previewDevice !== "desktop" ? "device-preview-constrained" : ""
+                          previewDevice !== "desktop" && options.mode !== "list" ? "device-preview-constrained" : ""
                         }`}
                         style={{
-                          maxWidth: DEVICE_WIDTHS[previewDevice]
+                          maxWidth: options.mode !== "list" && DEVICE_WIDTHS[previewDevice]
                             ? `${DEVICE_WIDTHS[previewDevice]}px`
                             : "none",
                         }}
@@ -873,10 +873,14 @@ const Builder = ({ options, layout, mode }) => {
                   </div>
                   <div className="col-sm-auto builder-sidebar">
                     <div style={{ width: isEnlarged ? "28rem" : "16rem" }}>
-                      <DevicePreviewToolbar
-                        previewDevice={previewDevice}
-                        setPreviewDevice={setPreviewDevice}
-                      />
+                      {options.mode !== "list" && document.getElementById("builder-header-center") &&
+                        createPortal(
+                          <DevicePreviewToolbar
+                            previewDevice={previewDevice}
+                            setPreviewDevice={setPreviewDevice}
+                          />,
+                          document.getElementById("builder-header-center")
+                        )}
                       {document.getElementById("builder-header-actions") &&
                         createPortal(
                           <Fragment>

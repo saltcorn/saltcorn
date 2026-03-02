@@ -82,7 +82,7 @@ const BREAKPOINT_MIN_WIDTH = {
 const PREVIEW_DEVICE_WIDTH = {
   desktop: Infinity,
   tablet: 768,
-  mobile: 375,
+  mobile: 576,
 };
 
 const getColClass = (width, breakpoint, previewDevice) => {

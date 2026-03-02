@@ -266,7 +266,7 @@ const render = ({
         segment,
         isTop,
         ix,
-        breadcrumbs(segment.crumbs || [], segment.right, segment.after)
+        breadcrumbs(segment.crumbs || [], segment.right, segment.after, segment.center)
       );
     }
     if (segment.type === "view") {

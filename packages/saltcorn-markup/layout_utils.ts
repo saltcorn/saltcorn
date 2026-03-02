@@ -615,7 +615,8 @@ const workflowBreadcrumbItem = ({
 const breadcrumbs = (
   crumbs: Workflow.BreadcrumbItemOpts[],
   right: any,
-  after: any
+  after: any,
+  center?: any
 ): string =>
   nav(
     { "aria-label": "breadcrumb" },
@@ -627,7 +628,8 @@ const breadcrumbs = (
           : standardBreadcrumbItem(crumbs.length)(c, ix)
       ),
       after ? li({ class: "ms-3" }, after) : "",
-      right ? li({ class: "ms-auto" }, right) : ""
+      center ? li({ class: "ms-auto me-auto" }, center) : "",
+      right ? li({ class: center ? "" : "ms-auto" }, right) : ""
     )
   );
 
