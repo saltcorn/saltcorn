@@ -879,7 +879,7 @@ const WorkflowEditor = ({ data }) => {
     const cardBodyEl = shellEl.closest(".card-body");
     if (!cardBodyEl) return;
 
-    const minHeight = 480;
+    const minHeight = 400;
     const bottomMargin = 28;
 
     const cardBodyRect = cardBodyEl.getBoundingClientRect();

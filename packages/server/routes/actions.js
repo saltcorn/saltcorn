@@ -686,18 +686,24 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
     renderWorkflow(workflowData, db.connectObj.version_tag) +
     div(
       { class: "mt-3" },
-      a(
-        {
-          href: `/actions/runs/?trigger=${trigger.id}`,
-          class: "d-block mb-2",
-        },
-        req.__("Show runs &raquo;")
+      div(
+        { class: "d-flex justify-content-between align-items-center flex-wrap gap-2" },
+        a(
+          {
+            href: `/actions/runs/?trigger=${trigger.id}`,
+            class: "d-inline-block",
+          },
+          req.__("Show runs &raquo;")
+        ),
+        renderForm(trigCfgForm, req.csrfToken())
       ),
-      renderForm(trigCfgForm, req.csrfToken()),
       style(/*css*/ `
         .compact-form-group > .form-group {
-          margin-bottom: 0.5rem;
-        }  
+          margin-bottom: 0;
+        }
+        .compact-form-group form {
+          margin-bottom: 0;
+        }
       `)
     )
   );
