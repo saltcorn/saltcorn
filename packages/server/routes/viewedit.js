@@ -635,7 +635,8 @@ const respondWorkflow = (view, wf, wfres, req, res, table) => {
           },
           { workflow: wf, step: wfres },
         ],
-        right: '<div id="builder-header-actions" class="d-flex align-items-center gap-2"></div>',
+        right:
+          '<div id="builder-header-actions" class="d-flex align-items-center gap-2"></div>',
       },
       {
         type: noCard ? "container" : "card",
@@ -1010,5 +1011,22 @@ router.post(
     const view = await View.create(req.body || {});
     await getState().refresh_views();
     res.json({ view });
+  })
+);
+
+router.post(
+  "/copilot-generate-layout",
+  isAdminOrHasConfigMinRole(["min_role_edit_views", "min_role_edit_pages"]),
+  error_catcher(async (req, res) => {
+    const { mode, table, prompt } = req.body;
+    const f = getState().functions.copilot_generate_layout;
+    if (!f) {
+      res.json({
+        error: `Copilot layout generator not found. Copilot module 0.7.2 or later required`,
+      });
+      return;
+    }
+    const layout = await f.run(prompt, mode, table);
+    res.json({ success: "ok", layout });
   })
 );
