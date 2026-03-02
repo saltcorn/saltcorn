@@ -436,7 +436,6 @@ const wrap = (contents, noCard, req, page) => ({
           ? { href: `/page/${encodeURIComponent(page.name)}`, text: page.name }
           : { text: req.__("New") },
       ],
-      center: '<div id="builder-header-center" class="d-flex align-items-center gap-2"></div>',
       right: '<div id="builder-header-actions" class="d-flex align-items-center gap-2"></div>',
     },
     {

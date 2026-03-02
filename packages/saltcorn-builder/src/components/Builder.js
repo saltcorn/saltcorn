@@ -598,7 +598,7 @@ const DevicePreviewToolbar = ({ previewDevice, setPreviewDevice }) => {
       {devices.map(({ key, icon: Icon, label }) => (
         <button
           key={key}
-          className={`btn btn-sm ${
+          className={`btn ${
             previewDevice === key ? "btn-primary" : "btn-outline-secondary"
           } device-preview-btn`}
           onClick={() => setPreviewDevice(key)}
@@ -873,17 +873,15 @@ const Builder = ({ options, layout, mode }) => {
                   </div>
                   <div className="col-sm-auto builder-sidebar">
                     <div style={{ width: isEnlarged ? "28rem" : "16rem" }}>
-                      {options.mode !== "list" && document.getElementById("builder-header-center") &&
-                        createPortal(
-                          <DevicePreviewToolbar
-                            previewDevice={previewDevice}
-                            setPreviewDevice={setPreviewDevice}
-                          />,
-                          document.getElementById("builder-header-center")
-                        )}
                       {document.getElementById("builder-header-actions") &&
                         createPortal(
                           <Fragment>
+                            {options.mode !== "list" && (
+                              <DevicePreviewToolbar
+                                previewDevice={previewDevice}
+                                setPreviewDevice={setPreviewDevice}
+                              />
+                            )}
                             <FontAwesomeIcon
                               icon={faSave}
                               className={savingState.isSaving ? "d-inline" : "d-none"}
