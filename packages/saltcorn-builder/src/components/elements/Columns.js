@@ -20,6 +20,7 @@ import {
 } from "./utils";
 import { BoxModelEditor } from "./BoxModelEditor";
 import { ArrayManager } from "./ArrayManager";
+import { getAlignClass } from "../../utils/responsive_utils";
 import {
   AlignTop,
   AlignMiddle,
@@ -114,6 +115,8 @@ const Columns = ({
   gx,
   gy,
   aligns,
+  mobileAligns,
+  tabletAligns,
   vAligns,
   colClasses,
   colStyles,
@@ -140,8 +143,8 @@ const Columns = ({
             getWidth(widths, ix),
             breakpoints?.[ix],
             previewDevice
-          )} text-${
-            aligns?.[ix]
+          )} ${
+            getAlignClass(aligns, mobileAligns, tabletAligns, ix, previewDevice)
           } align-items-${vAligns?.[ix]} ${colClasses?.[ix] || ""}`}
           style={parseStyles(colStyles?.[ix] || "")}
         >
@@ -162,6 +165,7 @@ export /**
  */
 const ColumnsSettings = () => {
   const { t } = useTranslation();
+  const { previewDevice } = useContext(PreviewCtx);
   const node = useNode((node) => ({
     widths: node.data.props.widths,
     ncols: node.data.props.ncols,
@@ -172,6 +176,8 @@ const ColumnsSettings = () => {
     gy: node.data.props.gy,
     vAligns: node.data.props.vAligns,
     aligns: node.data.props.aligns,
+    mobileAligns: node.data.props.mobileAligns,
+    tabletAligns: node.data.props.tabletAligns,
     colClasses: node.data.props.colClasses,
     colStyles: node.data.props.colStyles,
     customClass: node.data.props.customClass,
@@ -186,14 +192,24 @@ const ColumnsSettings = () => {
     setting_col_n,
     vAligns,
     aligns,
+    mobileAligns,
+    tabletAligns,
     colClasses,
     colStyles,
     customClass,
     currentSettingsTab,
   } = node;
+
+  const activeAlignProp =
+    previewDevice === "mobile" ? "mobileAligns" :
+    previewDevice === "tablet" ? "tabletAligns" : "aligns";
+  const activeAligns =
+    previewDevice === "mobile" ? mobileAligns :
+    previewDevice === "tablet" ? tabletAligns : aligns;
+
   const colSetsNode = {
     vAlign: vAligns?.[setting_col_n],
-    hAlign: aligns?.[setting_col_n],
+    hAlign: activeAligns?.[setting_col_n],
     colClass: colClasses?.[setting_col_n] || "",
     colStyle: colStyles?.[setting_col_n] || "",
   };
@@ -208,7 +224,7 @@ const ColumnsSettings = () => {
           setProp={setProp}
           countProp={"ncols"}
           currentProp={"setting_col_n"}
-          managedArrays={["widths", "breakpoints", "aligns", "vAligns", "colClasses", "colStyles"]}
+          managedArrays={["widths", "breakpoints", "aligns", "mobileAligns", "tabletAligns", "vAligns", "colClasses", "colStyles"]}
           manageContents={true}
           contentsKey={"besides"}
           initialAddProps={{
@@ -293,7 +309,9 @@ const ColumnsSettings = () => {
             <SettingsRow
               field={{
                 name: "hAlign",
-                label: t("Horizontal"),
+                label: previewDevice !== "desktop"
+                  ? `${t("Horizontal")} (${previewDevice})`
+                  : t("Horizontal"),
                 type: "btn_select",
                 options: [
                   { value: "start", title: t("Left"), label: <AlignStart /> },
@@ -305,8 +323,8 @@ const ColumnsSettings = () => {
               setProp={setProp}
               onChange={(k, v) =>
                 setProp((prop) => {
-                  if (!prop.aligns) prop.aligns = [];
-                   prop.aligns[setting_col_n] = v;
+                  if (!prop[activeAlignProp]) prop[activeAlignProp] = [];
+                  prop[activeAlignProp][setting_col_n] = v;
                 })
               }
             />
