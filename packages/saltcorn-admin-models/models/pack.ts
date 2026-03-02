@@ -195,6 +195,67 @@ const library_pack = async (name: string): Promise<LibraryPack> => {
   return lib.toJson;
 };
 
+const orderWorkflowSteps = (steps: any[]): any[] => {
+  if (!Array.isArray(steps)) return steps || [];
+  const allNames = steps.map((s) => s?.name).filter(Boolean) as string[];
+  const escapeRegExp = (str: string) =>
+    str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const extractNextStepNames = (rawNext: any) => {
+    if (!rawNext) return [] as string[];
+    const trimmed = String(rawNext).trim();
+    if (!trimmed) return [] as string[];
+    if (allNames.includes(trimmed)) return [trimmed];
+    const hits = new Set<string>();
+    allNames.forEach((nm) => {
+      const re = new RegExp(`\\b${escapeRegExp(nm)}\\b`);
+      if (re.test(trimmed)) hits.add(nm);
+    });
+    return [...hits];
+  };
+
+  const adjacency = new Map<string, string[]>();
+  steps.forEach((s) => {
+    if (!s?.name) return;
+    const targets: string[] = [];
+    extractNextStepNames(s.next_step).forEach((nm) => targets.push(nm));
+    if (s.action_name === "ForLoop") {
+      const loopStart = s.configuration?.loop_body_initial_step;
+      if (loopStart && allNames.includes(loopStart)) targets.push(loopStart);
+    }
+    adjacency.set(s.name, [...new Set(targets)]);
+  });
+
+  const initial = steps.find((s) => s?.initial_step);
+  const visited = new Set<string>();
+  const order: string[] = [];
+
+  const traverse = (start?: string) => {
+    if (!start || visited.has(start)) return;
+    const queue = [start];
+    while (queue.length) {
+      const cur = queue.shift()!;
+      if (visited.has(cur)) continue;
+      visited.add(cur);
+      order.push(cur);
+      (adjacency.get(cur) || []).forEach((n) => {
+        if (!visited.has(n)) queue.push(n);
+      });
+    }
+  };
+
+  if (initial?.name) traverse(initial.name);
+  steps.forEach((s) => traverse(s?.name));
+
+  const orderIndex = new Map(order.map((nm, idx) => [nm, idx]));
+  return [...steps].sort((a, b) => {
+    const ao = orderIndex.has(a?.name) ? orderIndex.get(a.name)! : Infinity;
+    const bo = orderIndex.has(b?.name) ? orderIndex.get(b.name)! : Infinity;
+    if (ao !== bo) return ao - bo;
+    return 0;
+  });
+};
+
 /**
  * Trigger pack
  * @param name
@@ -205,7 +266,8 @@ const trigger_pack = async (name: string | Trigger): Promise<TriggerPack> => {
   const pack = trig.toJson;
   if (trig.action === "Workflow") {
     const steps = await WorkflowStep.find({ trigger_id: trig.id });
-    pack.steps = steps.map((step) => step.toJson);
+    const ordered = orderWorkflowSteps(steps.map((s) => s.toJson));
+    pack.steps = ordered;
   }
   return pack;
 };
