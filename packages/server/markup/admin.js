@@ -182,6 +182,7 @@ const add_results_to_contents = (content, resultCollector) => {
  * @param {*} opts.headers,
  * @param {*} opts.no_nav_pills,
  * @param {*} opts.sub2_page,
+ * @param {*} opts.requestFluidLayout,
  */
 const send_settings_page = ({
   req,
@@ -195,6 +196,7 @@ const send_settings_page = ({
   no_nav_pills,
   sub2_page,
   page_title,
+  requestFluidLayout,
 }) => {
   const pillCard = no_nav_pills
     ? []
@@ -228,9 +230,13 @@ const send_settings_page = ({
     ? {
         title: pg_title,
         headers,
+        ...(requestFluidLayout && { requestFluidLayout }),
       }
     : pg_title;
-  res.sendWrap(title, {
+  const sendWrapArg = requestFluidLayout && !headers
+    ? { title: pg_title, requestFluidLayout }
+    : title;
+  res.sendWrap(sendWrapArg, {
     above: [
       {
         type: "breadcrumbs",
@@ -240,7 +246,8 @@ const send_settings_page = ({
           {
             text: req.__(active_sub),
             href: sub2_page
-              ? sub_sections.find((subsec) => subsec.text === active_sub).href
+              ? sub_sections.find((subsec) => subsec.text === active_sub)
+                  .href
               : null,
           },
           ...(sub2_page

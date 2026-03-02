@@ -303,6 +303,11 @@ const buildGraph = (
   const allStepNames = steps.map((s) => s.name).filter(Boolean);
   const orderIndex = new Map(steps.map((s, idx) => [String(s.id), idx]));
 
+  const hasAnyWorkflowPosition = steps.some(
+    (s) => s?.configuration?.workflow_position
+  );
+  const shouldIndentLoopBodies = steps.length > 0 && !hasAnyWorkflowPosition;
+
   const escapeRegExp = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   const extractNextStepNames = (rawNextStep) => {
@@ -416,6 +421,9 @@ const buildGraph = (
         width: DEFAULT_NODE_WIDTH,
         height: DEFAULT_NODE_HEIGHT,
       };
+      const bodyX = shouldIndentLoopBodies
+        ? (loopPos.x || 0) + (loopSize.width || DEFAULT_NODE_WIDTH) + H_GAP
+        : loopPos.x;
       let yCursor = loopPos.y + loopSize.height + V_GAP;
 
       body.forEach((s) => {
@@ -425,7 +433,7 @@ const buildGraph = (
           height: DEFAULT_NODE_HEIGHT,
         };
         positionOverrides[String(s.id)] = {
-          x: loopPos.x,
+          x: bodyX,
           y: yCursor,
         };
         yCursor += bodySize.height + V_GAP;
@@ -871,7 +879,7 @@ const WorkflowEditor = ({ data }) => {
     const cardBodyEl = shellEl.closest(".card-body");
     if (!cardBodyEl) return;
 
-    const minHeight = 320;
+    const minHeight = 400;
     const bottomMargin = 28;
 
     const cardBodyRect = cardBodyEl.getBoundingClientRect();
