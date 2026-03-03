@@ -55,6 +55,10 @@ const npmInstallNeeded = (oldPckJSON, newPckJSON) => {
 
 const defaultRootFolder = envPaths("saltcorn", { suffix: "plugins" }).data;
 
+// tracks local plugins already copied in this process
+// is only checked in the master process
+const installedLocalPlugins = new Set();
+
 /**
  * PluginInstaller class
  */
@@ -73,7 +77,9 @@ class PluginInstaller {
       this.rootFolder,
       plugin.source === "git" ? "git_plugins" : "plugins_folder",
       ...tokens,
-      plugin.version || "unknownversion"
+      plugin.source === "local"
+        ? "localversion"
+        : plugin.version || "unknownversion"
     );
     this.pckJsonPath = join(this.pluginDir, "package.json");
     this.tempDir = join(this.tempRootFolder, "temp_install", ...tokens);
@@ -236,12 +242,13 @@ class PluginInstaller {
         }
         break;
       case "local":
-        if (force || !folderExists) {
+        if (force && !installedLocalPlugins.has(this.pluginDir)) {
           getState().log(6, "copying from local");
           await copy(this.plugin.location, this.tempDir);
           // if tempdir has a node_modules folder, remove it
           if (await pathExists(join(this.tempDir, "node_modules")))
             await rm(join(this.tempDir, "node_modules"), { recursive: true });
+          installedLocalPlugins.add(this.pluginDir);
           wasLoaded = true;
         }
         break;
