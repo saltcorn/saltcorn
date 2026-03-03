@@ -1333,21 +1333,26 @@ router.post(
       req.user,
       { req }
     );
+    let own_welcome = false;
     if (resultCollector.notify) {
       req.flash("warning", resultCollector.notify);
+      own_welcome = true;
     }
     if (resultCollector.error) {
       req.flash("error", resultCollector.error);
+      own_welcome = true;
     }
     if (resultCollector.notify_success) {
       req.flash("success", resultCollector.notify_success);
+      own_welcome = true;
     }
     if (resultCollector.goto) {
       res.redirect(resultCollector.goto);
       return;
     }
     res?.cookie?.("loggedin", "true", maxAge ? { maxAge } : undefined);
-    req.flash("success", req.__("Welcome, %s!", req.user.email));
+    if (!own_welcome)
+      req.flash("success", req.__("Welcome, %s!", req.user.email));
     if (req.smr) {
       const dbUser = await User.findOne({ id: req.user.id });
       if (!dbUser.last_mobile_login)
