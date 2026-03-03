@@ -1219,7 +1219,6 @@ router.get(
               : "",
           "data-module-kind": entity.metadata?.type || "",
           "data-searchable": searchableValues.join(" "),
-          "data-deep-searchable": deepSearchable || searchableValues.join(" "),
           "data-tags": tagIds.join(" "),
           "data-min-role-read":
             typeof minRoleRead !== "undefined" ? String(minRoleRead) : "",

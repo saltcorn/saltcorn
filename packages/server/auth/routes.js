@@ -59,9 +59,7 @@ const rateLimit = require("express-rate-limit");
 const moment = require("moment");
 const View = require("@saltcorn/data/models/view");
 const Table = require("@saltcorn/data/models/table");
-const {
-  getForm,
-} = require("@saltcorn/data/viewable_fields");
+const { getForm } = require("@saltcorn/data/viewable_fields");
 const { InvalidConfiguration, getSessionId } = require("@saltcorn/data/utils");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { restore_backup } = require("../markup/admin.js");
@@ -707,6 +705,7 @@ router.post(
 
       fs.unlink(newPath, () => {});
       await getState().refresh_plugins();
+      Trigger.emitEvent("Startup");
       return res.redirect("/auth/login");
     } catch (error) {
       if (error.requiresPassword) {
@@ -822,6 +821,8 @@ router.post(
       else req.flash("success", req.__("Successfully restored backup"));
 
       await getState().refresh_plugins();
+      Trigger.emitEvent("Startup");
+
       return res.redirect("/auth/login");
     } catch (error) {
       req.flash(
@@ -1332,21 +1333,26 @@ router.post(
       req.user,
       { req }
     );
+    let own_welcome = false;
     if (resultCollector.notify) {
       req.flash("warning", resultCollector.notify);
+      own_welcome = true;
     }
     if (resultCollector.error) {
       req.flash("error", resultCollector.error);
+      own_welcome = true;
     }
     if (resultCollector.notify_success) {
       req.flash("success", resultCollector.notify_success);
+      own_welcome = true;
     }
     if (resultCollector.goto) {
       res.redirect(resultCollector.goto);
       return;
     }
     res?.cookie?.("loggedin", "true", maxAge ? { maxAge } : undefined);
-    req.flash("success", req.__("Welcome, %s!", req.user.email));
+    if (!own_welcome)
+      req.flash("success", req.__("Welcome, %s!", req.user.email));
     if (req.smr) {
       const dbUser = await User.findOne({ id: req.user.id });
       if (!dbUser.last_mobile_login)
