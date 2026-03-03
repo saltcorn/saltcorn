@@ -7,7 +7,7 @@
 import db from "../db";
 import View from "./view";
 import fetch from "node-fetch";
-import { Where } from "@saltcorn/db-common/internal";
+import { SelectOptions, Where } from "@saltcorn/db-common/internal";
 import { ViewTemplate, PluginSourceType } from "@saltcorn/types/base_types";
 import type {
   PluginCfg,
@@ -73,8 +73,11 @@ class Plugin implements AbstractPlugin {
    * @param where - where object
    * @returns {Promise<*>} returns plugins list
    */
-  static async find(where?: Where): Promise<Array<Plugin>> {
-    return (await db.select("_sc_plugins", where)).map(
+  static async find(
+    where?: Where,
+    selectopts?: SelectOptions
+  ): Promise<Array<Plugin>> {
+    return (await db.select("_sc_plugins", where, selectopts)).map(
       (p: PluginCfg) => new Plugin(p)
     );
   }
