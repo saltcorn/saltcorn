@@ -66,6 +66,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import MetaData from "@saltcorn/data/models/metadata";
+import { orderBy } from "lodash";
 
 /**
  * @param [withEventLog] - include event log
@@ -88,7 +89,7 @@ const create_pack_json = async (
   );
   // plugins
   const plugins = await asyncMap(
-    await Plugin.find({}),
+    await Plugin.find({}, { orderBy: "id" }),
     async (v: Plugin) => await plugin_pack(v.name)
   );
   // pages
