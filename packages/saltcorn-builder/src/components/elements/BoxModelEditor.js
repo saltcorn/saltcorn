@@ -7,6 +7,12 @@
 import React, { useContext, Fragment, useState } from "react";
 import useTranslation from "../../hooks/useTranslation";
 import { SettingsRow, SettingsSectionHeaderRow, bstyleopt } from "./utils";
+import PreviewCtx from "../preview_context";
+import {
+  getDeviceSizeNode,
+  getDeviceSizeSetProp,
+  getDisplaySize,
+} from "../../utils/responsive_utils";
 /* 
 Contains code from https://github.com/tpaksu/boxmodel
 Copyright (c) 2017 Taha Paksu
@@ -24,6 +30,7 @@ export /**
  */
 const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
   const { t } = useTranslation();
+  const { previewDevice } = useContext(PreviewCtx);
   const [selectedCategory, setSelectedCategory] = useState(false);
   const [selectedDirection, setSelectedDirection] = useState(false);
   const selectedProperty = !selectedCategory
@@ -35,7 +42,13 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
     setSelectedCategory(c);
     setSelectedDirection(d);
   };
-  //console.log(node.style);
+  const isDesktop = !previewDevice || previewDevice === "desktop";
+  const deviceLabel = previewDevice === "mobile"
+    ? ` (${t("mobile")})`
+    : previewDevice === "tablet"
+      ? ` (${t("tablet")})`
+      : "";
+
   const style = node.style;
   return (
     <Fragment>
@@ -147,13 +160,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                             autoComplete="off"
                             name="boxmodel-ex-1_width"
                             size="3"
-                            value={
-                              sizeWithStyle
-                                ? style["width"]
-                                : node.width
-                                  ? `${node.width}${node.widthUnit || "px"}`
-                                  : ""
-                            }
+                            value={getDisplaySize(node, "width", previewDevice, sizeWithStyle)}
                           />
                           x
                           <input
@@ -162,13 +169,7 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                             autoComplete="off"
                             name="boxmodel-ex-1_height"
                             size="3"
-                            value={
-                              sizeWithStyle
-                                ? style["height"]
-                                : node.height
-                                  ? `${node.height}${node.heightUnit || "px"}`
-                                  : ""
-                            }
+                            value={getDisplaySize(node, "height", previewDevice, sizeWithStyle)}
                           />
                         </div>
                         <span
@@ -276,13 +277,13 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
               <SettingsRow
                 field={{
                   name: "width",
-                  label: t("width"),
+                  label: t("width") + deviceLabel,
                   type: "DimUnits",
                   horiz: true,
                 }}
-                node={node}
-                setProp={setProp}
-                isStyle={!!sizeWithStyle}
+                node={isDesktop ? node : getDeviceSizeNode(node, "width", previewDevice)}
+                setProp={isDesktop ? setProp : getDeviceSizeSetProp(setProp, "width", previewDevice)}
+                isStyle={isDesktop ? !!sizeWithStyle : true}
               />
               <SettingsRow
                 field={{
@@ -307,10 +308,10 @@ const BoxModelEditor = ({ setProp, node, sizeWithStyle }) => {
                 isStyle={true}
               />
               <SettingsRow
-                field={{ name: "height", label: t("height"), type: "DimUnits" }}
-                node={node}
-                setProp={setProp}
-                isStyle={!!sizeWithStyle}
+                field={{ name: "height", label: t("height") + deviceLabel, type: "DimUnits" }}
+                node={isDesktop ? node : getDeviceSizeNode(node, "height", previewDevice)}
+                setProp={isDesktop ? setProp : getDeviceSizeSetProp(setProp, "height", previewDevice)}
+                isStyle={isDesktop ? !!sizeWithStyle : true}
               />
               <SettingsRow
                 field={{

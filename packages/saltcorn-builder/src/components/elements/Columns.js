@@ -126,15 +126,34 @@ const Columns = ({
   const {
     selected,
     connectors: { connect, drag },
-  } = useNode((node) => ({ selected: node.events.selected }));
+    mobileWidth,
+    tabletWidth,
+    mobileHeight,
+    tabletHeight,
+  } = useNode((node) => ({
+    selected: node.events.selected,
+    _style: node.data.props.style,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
+  }));
   const { previewDevice } = useContext(PreviewCtx);
+  const canvasStyle = { ...reactifyStyles(style || {}) };
+  if (previewDevice === "mobile") {
+    if (mobileWidth) canvasStyle.width = mobileWidth;
+    if (mobileHeight) canvasStyle.height = mobileHeight;
+  } else if (previewDevice === "tablet") {
+    if (tabletWidth) canvasStyle.width = tabletWidth;
+    if (tabletHeight) canvasStyle.height = tabletHeight;
+  }
   return (
     <div
       className={`row builder-columns ${customClass || ""} ${selected ? "selected-node" : ""} ${
         typeof gx !== "undefined" && gx !== null ? `gx-${gx}` : ""
       } ${typeof gy !== "undefined" && gy !== null ? `gy-${gy}` : ""}`}
       ref={(dom) => connect(drag(dom))}
-      style={reactifyStyles(style || {})}
+      style={canvasStyle}
     >
       {ntimes(ncols, (ix) => (
         <div
@@ -171,6 +190,10 @@ const ColumnsSettings = () => {
     ncols: node.data.props.ncols,
     breakpoints: node.data.props.breakpoints,
     style: node.data.props.style,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
     setting_col_n: node.data.props.setting_col_n,
     gx: node.data.props.gx,
     gy: node.data.props.gy,

@@ -184,6 +184,31 @@ const applyTextStyle = (segment: any, inner: string): string => {
   return responsiveFontStyle + result;
 };
 
+const responsiveSizeStyle = (segment: any, desktopStyle?: any) => {
+  const { mobileWidth, tabletWidth, mobileHeight, tabletHeight } = segment;
+  if (!mobileWidth && !tabletWidth && !mobileHeight && !tabletHeight)
+    return { className: "", styleTag: "" };
+
+  const rndCls = `rs-${Math.floor(Math.random() * 16777215).toString(16)}`;
+  let css = "";
+
+  // mobile only (< 768px)
+  const mobileRules: string[] = [];
+  if (mobileWidth) mobileRules.push(`width:${mobileWidth} !important`);
+  if (mobileHeight) mobileRules.push(`height:${mobileHeight} !important`);
+  if (mobileRules.length)
+    css += `@media(max-width:767.98px){.${rndCls}{${mobileRules.join(";")}}}`;
+
+  // tablet only (768px - 991.98px)
+  const tabletRules: string[] = [];
+  if (tabletWidth) tabletRules.push(`width:${tabletWidth} !important`);
+  if (tabletHeight) tabletRules.push(`height:${tabletHeight} !important`);
+  if (tabletRules.length)
+    css += `@media(min-width:768px) and (max-width:991.98px){.${rndCls}{${tabletRules.join(";")}}}`;
+
+  return { className: rndCls, styleTag: css ? `<style>${css}</style>` : "" };
+};
+
 // declaration merging
 namespace LayoutExports {
   export type RenderOpts = {
@@ -485,10 +510,12 @@ const render = ({
         imageSize,
         imageLocation,
       } = segment;
+      const cardSize = responsiveSizeStyle(segment);
       return wrap(
         segment,
         isTop,
         ix,
+        cardSize.styleTag +
         div(
           {
             class: [
@@ -499,6 +526,7 @@ const render = ({
               segment.url && "with-link",
               hints.cardClass,
               hAlign && `text-${hAlign}`,
+              cardSize.className,
             ],
             ...(segment.id ? { id: segment.id } : {}),
             onclick: segment.url
@@ -827,10 +855,15 @@ const render = ({
             .join(" ")
         : "";
 
+      const containerSize = responsiveSizeStyle(segment, {
+        width: segment.width ? `${segment.width}${segment.widthUnit || "px"}` : undefined,
+        height: segment.height ? `${segment.height}${segment.heightUnit || "px"}` : undefined,
+      });
       return wrap(
         segment,
         isTop,
         ix,
+        containerSize.styleTag +
         genericElement(
           htmlElement || "div",
           {
@@ -846,6 +879,7 @@ const render = ({
               url && "with-link",
               hoverColor && `hover-${hoverColor}`,
               fullPageWidth && "full-page-width",
+              containerSize.className,
             ],
             id: customId || undefined,
             onclick: segment.url
@@ -951,6 +985,7 @@ const render = ({
         .map((s: any, segmentIx: number) => go(s, isTop, segmentIx + ix))
         .join("");
     } else if (segment.besides) {
+      const colsSize = responsiveSizeStyle(segment);
       const defwidth = Math.round(12 / segment.besides.length);
       //legacy, for empty (null) in the columns
       const isOneCard = (segs: any) =>
@@ -967,7 +1002,7 @@ const render = ({
         const sameWidths =
           !(segment.widths as number[]) ||
           (segment.widths as number[]).every((w) => w === defwidth);
-        markup = div(
+        markup = colsSize.styleTag + div(
           {
             class: [
               "row",
@@ -981,6 +1016,7 @@ const render = ({
                 segment.gy !== null &&
                 `gy-${segment.gy}`,
               !segment.style?.["margin-bottom"] && `mb-3`,
+              colsSize.className,
             ],
             style: segment.style,
           },
@@ -1019,7 +1055,7 @@ const render = ({
           )
         );
       } else
-        markup = div(
+        markup = colsSize.styleTag + div(
           {
             class: [
               "row",
@@ -1031,6 +1067,7 @@ const render = ({
               typeof segment.gy !== "undefined" &&
                 segment.gy !== null &&
                 `gy-${segment.gy}`,
+              colsSize.className,
             ],
             style: segment.style,
           },

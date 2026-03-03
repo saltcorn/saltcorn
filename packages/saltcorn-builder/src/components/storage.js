@@ -322,6 +322,10 @@ const layoutToNodes = (
           aligns={segment.aligns}
           mobileAligns={segment.mobileAligns}
           tabletAligns={segment.tabletAligns}
+          mobileWidth={segment.mobileWidth}
+          tabletWidth={segment.tabletWidth}
+          mobileHeight={segment.mobileHeight}
+          tabletHeight={segment.tabletHeight}
           setting_col_n={segment.setting_col_n !== undefined ? segment.setting_col_n : 0}
           contents={segment.besides.map(toTag)}
         />
@@ -360,6 +364,10 @@ const layoutToNodes = (
             aligns={segment.aligns}
             mobileAligns={segment.mobileAligns}
             tabletAligns={segment.tabletAligns}
+            mobileWidth={segment.mobileWidth}
+            tabletWidth={segment.tabletWidth}
+            mobileHeight={segment.mobileHeight}
+            tabletHeight={segment.tabletHeight}
             setting_col_n={segment.setting_col_n !== undefined ? segment.setting_col_n : 0}
             contents={segment.besides.map(toTag)}
           />
@@ -539,6 +547,10 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         colClasses: node.props.colClasses,
         colStyles: node.props.colStyles,
         style: node.props.style,
+        mobileWidth: node.props.mobileWidth,
+        tabletWidth: node.props.tabletWidth,
+        mobileHeight: node.props.mobileHeight,
+        tabletHeight: node.props.tabletHeight,
         widths,
         setting_col_n: node.props.setting_col_n,
         ...customProps,
