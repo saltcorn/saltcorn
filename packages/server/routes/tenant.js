@@ -138,8 +138,12 @@ const get_cfg_tenant_base_url = (req) =>
  */
 router.get(
   "/create",
+  isAdmin,
   error_catcher(async (req, res) => {
-    if (!db.is_it_multi_tenant()) {
+    if (
+      !db.is_it_multi_tenant() ||
+      db.getTenantSchema() !== db.connectObj.default_schema
+    ) {
       res.sendWrap(
         req.__("Create application"),
         req.__("Multi-tenancy not enabled")
@@ -247,6 +251,7 @@ const getNewURL = (req, subdomain, base_url) => {
  */
 router.post(
   "/create",
+  isAdmin,
   error_catcher(async (req, res) => {
     // check that multi-tenancy is enabled
     if (!db.is_it_multi_tenant()) {
