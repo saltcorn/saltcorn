@@ -73,6 +73,7 @@ import { InitNewElement, Library, LibraryElem } from "./Library";
 import { RenderNode } from "./RenderNode";
 import { ListColumn } from "./elements/ListColumn";
 import { ListColumns } from "./elements/ListColumns";
+import { Prompt } from "./elements/Prompt";
 import { recursivelyCloneToElems } from "./elements/Clone";
 
 const { Provider } = optionsCtx;
@@ -353,6 +354,113 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
     );
   };
 
+  const [generating, setGenerating] = useState(false);
+  const [generateError, setGenerateError] = useState(null);
+
+  // Find prompt nodes: check children of selected, or siblings if selected is a Prompt
+  const findPromptContext = () => {
+    if (!selected) return { promptNodes: [], targetParent: null };
+    const isSelectedPrompt = selected.displayName === "Prompt";
+
+    if (isSelectedPrompt && selected.parent) {
+      // Selected node is a Prompt — find all Prompt siblings in same parent
+      try {
+        const siblingIds = query.node(selected.parent).childNodes();
+        const promptIds = siblingIds.filter((id) => {
+          const n = query.node(id).get();
+          return n?.data?.displayName === "Prompt";
+        });
+        return { promptNodes: promptIds, targetParent: selected.parent };
+      } catch {
+        return { promptNodes: [], targetParent: null };
+      }
+    }
+
+    // Selected node is a container — check its direct children
+    if (selected.children && selected.children.length > 0) {
+      const promptIds = selected.children.filter((id) => {
+        try {
+          const n = query.node(id).get();
+          return n?.data?.displayName === "Prompt";
+        } catch {
+          return false;
+        }
+      });
+      if (promptIds.length > 0) {
+        return { promptNodes: promptIds, targetParent: selected.id };
+      }
+    }
+
+    // Check linked nodes (e.g. Card's inner Column)
+    try {
+      const nodeData = query.node(selected.id).get();
+      const linkedNodes = nodeData?.data?.linkedNodes;
+      if (linkedNodes) {
+        for (const linkedId of Object.values(linkedNodes)) {
+          const linkedChildIds = query.node(linkedId).childNodes();
+          const promptIds = linkedChildIds.filter((id) => {
+            try {
+              const n = query.node(id).get();
+              return n?.data?.displayName === "Prompt";
+            } catch {
+              return false;
+            }
+          });
+          if (promptIds.length > 0) {
+            return { promptNodes: promptIds, targetParent: linkedId };
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    return { promptNodes: [], targetParent: null };
+  };
+
+  const { promptNodes, targetParent } = selected
+    ? findPromptContext()
+    : { promptNodes: [], targetParent: null };
+  const hasPromptNodes = promptNodes.length > 0;
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setGenerateError(null);
+    try {
+      const prompts = promptNodes.map((childId) => {
+        const n = query.node(childId).get();
+        const { promptType, promptText } = n.data.props;
+        return `[${promptType}]: ${promptText}`;
+      });
+      const combinedPrompt = prompts.join("\n");
+
+      const res = await fetch("/viewedit/copilot-generate-layout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": options.csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify({
+          prompt: combinedPrompt,
+          mode: options.mode,
+          table: options.tableName,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setGenerateError(data.error);
+      } else if (data.layout) {
+        promptNodes.forEach((id) => actions.delete(id));
+        layoutToNodes(data.layout, query, actions, targetParent, options);
+      }
+    } catch (err) {
+      setGenerateError(err.message || "Generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   return (
     <div className="settings-panel card mt-1">
       <div className="card-header px-2 py-1 d-flex justify-content-between align-items-center">
@@ -408,6 +516,31 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
                 <FontAwesomeIcon icon={faCopy} className="me-1" />
                 {t("Clone")}
               </button>
+            )}
+            {hasPromptNodes && (
+              <button
+                className="btn btn-sm btn-success ms-2 generate-layout-builder"
+                onClick={handleGenerate}
+                disabled={generating}
+              >
+                {generating ? (
+                  <Fragment>
+                    <span
+                      className="spinner-border spinner-border-sm me-1"
+                      role="status"
+                    ></span>
+                    {t("Generating...")}
+                  </Fragment>
+                ) : (
+                  <Fragment>
+                    <i className="fas fa-robot me-1"></i>
+                    {t("Generate")}
+                  </Fragment>
+                )}
+              </button>
+            )}
+            {generateError && (
+              <div className="text-danger small mt-1">{generateError}</div>
             )}
             <hr className="my-2" />
             {selected.settings && React.createElement(selected.settings)}
@@ -766,6 +899,7 @@ const Builder = ({ options, layout, mode }) => {
           ListColumn,
           ListColumns,
           LibraryElem,
+          Prompt,
         }}
       >
         <Provider value={options}>
