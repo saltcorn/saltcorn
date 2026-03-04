@@ -876,12 +876,6 @@ const Builder = ({ options, layout, mode }) => {
                       {document.getElementById("builder-header-actions") &&
                         createPortal(
                           <Fragment>
-                            {options.mode !== "list" && (
-                              <DevicePreviewToolbar
-                                previewDevice={previewDevice}
-                                setPreviewDevice={setPreviewDevice}
-                              />
-                            )}
                             <FontAwesomeIcon
                               icon={faSave}
                               className={savingState.isSaving ? "d-inline" : "d-none"}
@@ -892,6 +886,12 @@ const Builder = ({ options, layout, mode }) => {
                               className={savingState.error ? "d-inline" : "d-none"}
                             />
                             <HistoryPanel />
+                            {options.mode !== "list" && (
+                              <DevicePreviewToolbar
+                                previewDevice={previewDevice}
+                                setPreviewDevice={setPreviewDevice}
+                              />
+                            )}
                             <NextButton layout={layout} />
                           </Fragment>,
                           document.getElementById("builder-header-actions")
