@@ -246,7 +246,7 @@ const initMaster = async (
   if (db.is_it_multi_tenant()) {
     const tenants = await getAllTenants();
     await init_multi_tenant(
-      loadAllPlugins,
+      () => loadAllPlugins(true),
       disableMigrate,
       tenants,
       db.connectObj.multi_node ? getMultiNodeListener : null
