@@ -316,12 +316,20 @@ const getRootPageForm = (pages, pageGroups, roles, req) => {
           label: r.role,
           input_type: "select",
           options: [
-            "",
+            r.id === 1 ? { label: req.__("Admin dashboard"), value: "" } : "",
             ...pages.filter((p) => p.min_role >= r.id).map((p) => p.name),
             ...pageGroups.map((g) => ({
               label: `${g.name} (group)`,
               value: g.name,
             })),
+            ...(r.id === 1
+              ? [
+                  {
+                    label: req.__("All entities list"),
+                    value: "_sc_entities_list",
+                  },
+                ]
+              : []),
           ],
         })
     ),
