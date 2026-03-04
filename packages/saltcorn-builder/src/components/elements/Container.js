@@ -135,11 +135,21 @@ const Container = ({
   const {
     selected,
     connectors: { connect, drag },
-  } = useNode((node) => ({ selected: node.events.selected }));
+    mobileWidth,
+    tabletWidth,
+    mobileHeight,
+    tabletHeight,
+  } = useNode((node) => ({
+    selected: node.events.selected,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
+  }));
   const { previewDevice } = useContext(previewCtx);
 
   const BP_MIN = { "": 0, sm: 576, md: 768, lg: 992, xl: 1200 };
-  const DEVICE_W = { desktop: Infinity, tablet: 768, mobile: 375 };
+  const DEVICE_W = { desktop: Infinity, tablet: 768, mobile: 576 };
   {
     const dw = DEVICE_W[previewDevice] || Infinity;
     if (minScreenWidth && dw < (BP_MIN[minScreenWidth] || 0)) {
@@ -207,16 +217,20 @@ const Container = ({
               color: textColor,
             }
           : {}),
-        ...(typeof height !== "undefined"
+        ...(height
           ? {
               height: `${height}${heightUnit || "px"}`,
             }
           : {}),
-        ...(typeof width !== "undefined"
+        ...(width
           ? {
               width: `${width}${widthUnit || "px"}`,
             }
           : {}),
+        ...(previewDevice === "mobile" && mobileWidth ? { width: mobileWidth } : {}),
+        ...(previewDevice === "mobile" && mobileHeight ? { height: mobileHeight } : {}),
+        ...(previewDevice === "tablet" && tabletWidth ? { width: tabletWidth } : {}),
+        ...(previewDevice === "tablet" && tabletHeight ? { height: tabletHeight } : {}),
       },
     },
     <Element canvas id="container-canvas" is={Column}>
@@ -238,6 +252,10 @@ const ContainerSettings = () => {
     minHeight: node.data.props.minHeight,
     height: node.data.props.height,
     width: node.data.props.width,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
     minHeightUnit: node.data.props.minHeightUnit,
     heightUnit: node.data.props.heightUnit,
     widthUnit: node.data.props.widthUnit,
@@ -1259,6 +1277,10 @@ Container.craft = {
       { name: "minHeight", default: 20 },
       { name: "height" },
       { name: "width" },
+      { name: "mobileWidth" },
+      { name: "tabletWidth" },
+      { name: "mobileHeight" },
+      { name: "tabletHeight" },
       { name: "click_action" },
       { name: "url", canBeFormula: true },
       { name: "hoverColor" },

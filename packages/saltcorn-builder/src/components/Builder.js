@@ -582,7 +582,7 @@ const AddColumnButton = () => {
 const DEVICE_WIDTHS = {
   desktop: null,
   tablet: 768,
-  mobile: 375,
+  mobile: 576,
 };
 
 const DevicePreviewToolbar = ({ previewDevice, setPreviewDevice }) => {
@@ -598,7 +598,7 @@ const DevicePreviewToolbar = ({ previewDevice, setPreviewDevice }) => {
       {devices.map(({ key, icon: Icon, label }) => (
         <button
           key={key}
-          className={`btn btn-sm ${
+          className={`btn ${
             previewDevice === key ? "btn-primary" : "btn-outline-secondary"
           } device-preview-btn`}
           onClick={() => setPreviewDevice(key)}
@@ -852,10 +852,10 @@ const Builder = ({ options, layout, mode }) => {
                     <div className="device-preview-scroll-area">
                       <div
                         className={`device-preview-canvas-wrapper ${
-                          previewDevice !== "desktop" ? "device-preview-constrained" : ""
+                          previewDevice !== "desktop" && options.mode !== "list" ? "device-preview-constrained" : ""
                         }`}
                         style={{
-                          maxWidth: DEVICE_WIDTHS[previewDevice]
+                          maxWidth: options.mode !== "list" && DEVICE_WIDTHS[previewDevice]
                             ? `${DEVICE_WIDTHS[previewDevice]}px`
                             : "none",
                         }}
@@ -873,10 +873,6 @@ const Builder = ({ options, layout, mode }) => {
                   </div>
                   <div className="col-sm-auto builder-sidebar">
                     <div style={{ width: isEnlarged ? "28rem" : "16rem" }}>
-                      <DevicePreviewToolbar
-                        previewDevice={previewDevice}
-                        setPreviewDevice={setPreviewDevice}
-                      />
                       {document.getElementById("builder-header-actions") &&
                         createPortal(
                           <Fragment>
@@ -890,6 +886,12 @@ const Builder = ({ options, layout, mode }) => {
                               className={savingState.error ? "d-inline" : "d-none"}
                             />
                             <HistoryPanel />
+                            {options.mode !== "list" && (
+                              <DevicePreviewToolbar
+                                previewDevice={previewDevice}
+                                setPreviewDevice={setPreviewDevice}
+                              />
+                            )}
                             <NextButton layout={layout} />
                           </Fragment>,
                           document.getElementById("builder-header-actions")

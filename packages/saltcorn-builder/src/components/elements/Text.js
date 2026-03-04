@@ -19,8 +19,10 @@ import {
   SettingsRow,
   setAPropGen,
 } from "./utils";
+import { getDeviceValue } from "../../utils/responsive_utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
+import PreviewCtx from "../preview_context";
 import { CKEditor } from "ckeditor4-react";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -89,6 +91,8 @@ const Text = ({
   font,
   style,
   customClass,
+  mobileFontSize,
+  tabletFontSize,
 }) => {
   const {
     connectors: { connect, drag },
@@ -99,6 +103,19 @@ const Text = ({
     dragged: state.events.dragged,
   }));
   const [editable, setEditable] = useState(false);
+  const { previewDevice } = useContext(PreviewCtx);
+
+  const baseStyle = {
+    ...(font ? { fontFamily: font } : {}),
+    ...reactifyStyles(style || {}),
+  };
+  const activeFontSize = getDeviceValue(
+    baseStyle.fontSize,
+    tabletFontSize,
+    mobileFontSize,
+    previewDevice
+  );
+  if (activeFontSize) baseStyle.fontSize = activeFontSize;
 
   useEffect(() => {
     !selected && setEditable(false);
@@ -112,10 +129,7 @@ const Text = ({
       } ${selected ? "selected-node" : ""}`}
       ref={(dom) => connect(drag(dom))}
       onDoubleClick={(e) => selected && setEditable(true)}
-      style={{
-        ...(font ? { fontFamily: font } : {}),
-        ...reactifyStyles(style || {}),
-      }}
+      style={baseStyle}
     >
       <DynamicFontAwesomeIcon icon={icon} className="me-1" />
       {isFormula.text ? (
@@ -158,6 +172,7 @@ export /**
  */
 const TextSettings = () => {
   const { t } = useTranslation();
+  const { previewDevice } = useContext(PreviewCtx);
   const node = useNode((node) => ({
     id: node.id,
     text: node.data.props.text,
@@ -170,6 +185,8 @@ const TextSettings = () => {
     icon: node.data.props.icon,
     font: node.data.props.font,
     style: node.data.props.style,
+    mobileFontSize: node.data.props.mobileFontSize,
+    tabletFontSize: node.data.props.tabletFontSize,
   }));
   const {
     actions: { setProp },
@@ -183,6 +200,8 @@ const TextSettings = () => {
     font,
     style,
     customClass,
+    mobileFontSize,
+    tabletFontSize,
   } = node;
   const { mode, fields, icons } = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
@@ -269,16 +288,41 @@ const TextSettings = () => {
             node={node}
             setProp={setProp}
           />
-          <SettingsRow
-            field={{
-              name: "font-size",
-              label: t("Font size"),
-              type: "DimUnits",
-            }}
-            node={node}
-            setProp={setProp}
-            isStyle={true}
-          />
+          {previewDevice === "desktop" ? (
+            <SettingsRow
+              field={{
+                name: "font-size",
+                label: t("Font size"),
+                type: "DimUnits",
+              }}
+              node={node}
+              setProp={setProp}
+              isStyle={true}
+            />
+          ) : (
+            <SettingsRow
+              field={{
+                name: "font-size",
+                label: `${t("Font size")} (${previewDevice})`,
+                type: "DimUnits",
+              }}
+              node={{
+                ...node,
+                style: {
+                  "font-size": previewDevice === "mobile" ? mobileFontSize : tabletFontSize,
+                },
+              }}
+              setProp={(fn) => {
+                // Write to mobileFontSize/tabletFontSize instead of style
+                const proxy = { style: {} };
+                fn(proxy);
+                const val = proxy.style["font-size"];
+                const propName = previewDevice === "mobile" ? "mobileFontSize" : "tabletFontSize";
+                setProp((prop) => { prop[propName] = val; });
+              }}
+              isStyle={true}
+            />
+          )}
           <SettingsRow
             field={{
               name: "font-weight",

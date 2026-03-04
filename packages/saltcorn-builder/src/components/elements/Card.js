@@ -75,7 +75,27 @@ const Card = ({
   const {
     selected,
     connectors: { connect, drag },
-  } = useNode((node) => ({ selected: node.events.selected }));
+    mobileWidth,
+    tabletWidth,
+    mobileHeight,
+    tabletHeight,
+  } = useNode((node) => ({
+    selected: node.events.selected,
+    _style: node.data.props.style,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
+  }));
+  const { previewDevice } = useContext(previewCtx);
+  const deviceSizeOverrides = {};
+  if (previewDevice === "mobile") {
+    if (mobileWidth) deviceSizeOverrides.width = mobileWidth;
+    if (mobileHeight) deviceSizeOverrides.height = mobileHeight;
+  } else if (previewDevice === "tablet") {
+    if (tabletWidth) deviceSizeOverrides.width = tabletWidth;
+    if (tabletHeight) deviceSizeOverrides.height = tabletHeight;
+  }
 
   return (
     <div
@@ -105,6 +125,7 @@ const Card = ({
               }deg, ${gradStartColor}, ${gradEndColor})`,
             }
           : {}),
+        ...deviceSizeOverrides,
       }}
       ref={(dom) => connect(drag(dom))}
     >
@@ -486,6 +507,10 @@ const fields = [
   { label: "Title Right", name: "titleRight", type: "Nodes", nodeID: "titleRight" },
   { label: "Footer", name: "footer", type: "Nodes", nodeID: "cardfooter" },
   { name: "style", default: {} },
+  { name: "mobileWidth" },
+  { name: "tabletWidth" },
+  { name: "mobileHeight" },
+  { name: "tabletHeight" },
   { label: "Class", name: "class", type: "String", canBeFormula: true },
   { name: "hAlign" },
   { name: "bgType" },
