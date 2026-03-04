@@ -1,7 +1,5 @@
 import os
 import json
-import shutil
-import tempfile
 import platform
 import logging
 from scsession import SaltcornSession
@@ -65,8 +63,6 @@ class TestLocalPluginInstaller:
     def teardown_class(cls):
         cls.sess.close()
         SaltcornSession.cli("rm-tenant", "-f", "-t", TENANT)
-        if hasattr(cls, "plugin_dir") and os.path.exists(cls.plugin_dir):
-            shutil.rmtree(cls.plugin_dir)
 
     def _login_as_tenant_admin(self):
         self.sess.base_url = TENANT_BASE_URL
