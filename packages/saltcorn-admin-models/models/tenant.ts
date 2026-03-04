@@ -21,6 +21,7 @@ import type { Row } from "@saltcorn/db-common/internal";
 import backup from "./backup";
 const { create_backup, restore } = backup;
 const { process_send } = require("@saltcorn/data/db/state");
+const { isTest } = require("@saltcorn/data/utils");
 
 /**
  * List all Tenants
@@ -83,7 +84,10 @@ const insertTenant = async (
     { noid: true, schema: db.connectObj.default_schema }
   );
   // create tenant schema
-  if (!db.isSQLite) await db.query(`CREATE SCHEMA "${saneDomain}";`);
+  if (!db.isSQLite)
+    await db.query(
+      `CREATE SCHEMA ${isTest() ? "IF NOT EXISTS " : ""}"${saneDomain}";`
+    );
   // ensure file store
   await File.ensure_file_store(saneDomain);
   return saneDomain;

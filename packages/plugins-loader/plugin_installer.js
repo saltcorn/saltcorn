@@ -242,7 +242,10 @@ class PluginInstaller {
         }
         break;
       case "local":
-        if (force && !installedLocalPlugins.has(this.pluginDir)) {
+        if (
+          (force || !folderExists) &&
+          !installedLocalPlugins.has(this.pluginDir)
+        ) {
           getState().log(6, "copying from local");
           await copy(this.plugin.location, this.tempDir);
           // if tempdir has a node_modules folder, remove it

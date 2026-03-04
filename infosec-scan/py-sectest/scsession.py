@@ -45,7 +45,7 @@ class SaltcornSession(Session):
       stderr_setting = subprocess.STDOUT if pipe_output else None
 
       self.salcorn_process = subprocess.Popen(
-          ["packages/saltcorn-cli/bin/saltcorn", "serve", "-p", str(port)],
+          ["packages/saltcorn-cli/bin/saltcorn", "serve", "-p", str(port), "--subdomain_offset", "1"],
           env=env,
           stdout=stdout_setting,
           stderr=stderr_setting,
