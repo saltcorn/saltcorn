@@ -3,7 +3,10 @@
  * @module commands/install-plugin
  */
 const { Command, Flags } = require("@oclif/core");
-const { maybe_as_tenant_in_transaction, init_some_tenants } = require("../common");
+const {
+  maybe_as_tenant_in_transaction,
+  init_some_tenants,
+} = require("../common");
 const fs = require("fs");
 const path = require("path");
 
@@ -64,7 +67,7 @@ class InstallPluginCommand extends Command {
             source: "local",
             location: path.resolve(flags.directory),
           });
-          await load_plugins.loadAndSaveNewPlugin(plugin);
+          await load_plugins.loadAndSaveNewPlugin(plugin, true);
         } catch (e) {
           console.error(e);
           this.exit(1);
