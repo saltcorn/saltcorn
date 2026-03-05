@@ -587,9 +587,9 @@ const PromptContainerElem = ({ connectors }) => {
   return (
     <WrapElem
       connectors={connectors}
-      icon="fas fa-box"
+      icon="fas fa-robot"
       title={t("Prompt Container")}
-      label={t("Prompt Container")}
+      label={t("Prompt")}
     >
       <Prompt promptType="container" promptText="" />
     </WrapElem>
