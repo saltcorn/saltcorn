@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 LOCAL_TEST_PLUGIN = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "local-test-plugin")
 
-TENANT = "_py_test_tenant_"
+TENANT = "py_test_tenant"
 ADMIN_EMAIL = "admine@foo.com"
 ADMIN_PASSWORD = "AhGGr6rhu45"
 TENANT_BASE_URL = f"http://{TENANT}.localhost:3001/"
@@ -60,7 +60,7 @@ class TestLocalPluginInstaller:
             "package.json",
         )
 
-        cls.sess = SaltcornSession(3001)
+        cls.sess = SaltcornSession(3001, env_vars={"SALTCORN_NWORKERS": "2"})
 
     @classmethod
     def teardown_class(cls):
@@ -127,7 +127,7 @@ class TestLocalPluginInstaller:
         os.kill(pid, signal.SIGHUP)
 
         # give the master time to call refresh_plugins() for all tenants
-        time.sleep(3)
+        time.sleep(5)
 
         # the original process must still be alive — SIGHUP reloads, not restarts
         assert self.sess.salcorn_process.poll() is None, (
@@ -142,3 +142,54 @@ class TestLocalPluginInstaller:
         self.sess.get("/plugins")
         assert self.sess.status == 200
         assert "local-test-plugin" in self.sess.content
+
+    def test_sighup_picks_up_plugin_js_changes(self):
+        """SIGHUP must re-import plugin JS from disk so in-code changes are live
+        without a server restart.  We add 'ready_for_mobile: true' to the
+        plugin source index.js; SIGHUP re-copies it into localversion and
+        re-imports with cache-busting, so the Mobile badge must appear."""
+        # modify the SOURCE — on SIGHUP the master re-copies source → localversion
+        index_js_path = os.path.join(LOCAL_TEST_PLUGIN, "index.js")
+
+        with open(index_js_path) as f:
+            original_index = f.read()
+
+        modified_index = (
+            "module.exports = {\n"
+            "  sc_plugin_api_version: 1,\n"
+            '  plugin_name: "local-test-plugin",\n'
+            "  ready_for_mobile: true\n"
+            "};\n"
+        )
+        try:
+            with open(index_js_path, "w") as f:
+                f.write(modified_index)
+
+            pid = self.sess.salcorn_process.pid
+            os.kill(pid, signal.SIGHUP)
+
+            # wait for the reload
+            time.sleep(5)
+
+            assert self.sess.salcorn_process.poll() is None, (
+                "Server must still be running after SIGHUP"
+            )
+            wait_for_port_open(TENANT_BASE_URL)
+
+            self._login_as_tenant_admin()
+            self.sess.get("/plugins")
+            assert self.sess.status == 200
+
+            # The Mobile badge must appear inside the local-test-plugin card
+            content = self.sess.content
+            plugin_card_start = content.find("@saltcorn/local-test-plugin")
+            assert plugin_card_start != -1, (
+                "@saltcorn/local-test-plugin card not found on /plugins page"
+            )
+            card_snippet = content[plugin_card_start : plugin_card_start + 2000]
+            assert 'plugin-store">Mobile</span>' in card_snippet, (
+                "Mobile badge not found after SIGHUP reload of ready_for_mobile:true"
+            )
+        finally:
+            with open(index_js_path, "w") as f:
+                f.write(original_index)
