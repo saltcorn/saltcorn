@@ -13,7 +13,19 @@ import Page from "../../models/page";
 import Crash from "../../models/crash";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
-import { div, text, span, i, option, select, button, text_attr, domReady, script, a } from "@saltcorn/markup/tags";
+import {
+  div,
+  text,
+  span,
+  i,
+  option,
+  select,
+  button,
+  text_attr,
+  domReady,
+  script,
+  a,
+} from "@saltcorn/markup/tags";
 const renderLayout = require("@saltcorn/markup/layout");
 
 import {
@@ -53,7 +65,6 @@ const {
   eval_expression,
 } = require("../../models/expression");
 const db = require("../../db/index");
-
 
 /**
  * @returns {Workflow}
@@ -108,9 +119,9 @@ const configuration_workflow = (req: Req) =>
                 );
             });
           }
-          const stateActions = (Object.entries(getState().actions) as [string, GenObj][]).filter(
-            ([k, v]) => !v.disableInBuilder && !v.disableIf?.()
-          );
+          const stateActions = (
+            Object.entries(getState().actions) as [string, GenObj][]
+          ).filter(([k, v]) => !v.disableInBuilder && !v.disableIf?.());
           const actions1 = ["Clear", ...stateActions.map(([k, v]) => k)];
           const actions = Trigger.action_options({
             tableTriggers: table.id,
@@ -216,7 +227,9 @@ const configuration_workflow = (req: Req) =>
           const agg_fieldview_options: GenObj = {};
 
           Object.values(getState().types).forEach((t: any) => {
-            agg_fieldview_options[t.name] = (Object.entries(t.fieldviews) as [string, GenObj][])
+            agg_fieldview_options[t.name] = (
+              Object.entries(t.fieldviews) as [string, GenObj][]
+            )
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
@@ -247,6 +260,8 @@ const configuration_workflow = (req: Req) =>
             //fieldViewConfigForms,
             mode: "filter",
             has_select2,
+            has_copilot_generate:
+              !!getState().functions.copilot_generate_layout,
           };
         },
       },
@@ -437,8 +452,12 @@ const run = async (
         }
       });
 
-      segment.titles = segment.titles.filter((v: any, ix: number) => !to_delete.has(ix));
-      segment.contents = segment.contents.filter((v: any, ix: number) => !to_delete.has(ix));
+      segment.titles = segment.titles.filter(
+        (v: any, ix: number) => !to_delete.has(ix)
+      );
+      segment.contents = segment.contents.filter(
+        (v: any, ix: number) => !to_delete.has(ix)
+      );
     },
     async action(segment: GenObj) {
       if (segment.action_style === "on_page_load") {
@@ -590,7 +609,10 @@ const run = async (
       }
       return "";
     },
-    search_bar({ has_dropdown, contents, show_badges, autofocus }: GenObj, go: Function) {
+    search_bar(
+      { has_dropdown, contents, show_badges, autofocus }: GenObj,
+      go: Function
+    ) {
       const rendered_contents = go(contents);
       const stVar = `_fts_${table.santized_name}`;
       return search_bar(stVar, state[stVar], {
@@ -723,7 +745,14 @@ const run = async (
         return action_link(url, extra.req, segment as any);
       }
     },
-    toggle_filter({ field_name, value, preset_value, label, size, style }: GenObj) {
+    toggle_filter({
+      field_name,
+      value,
+      preset_value,
+      label,
+      size,
+      style,
+    }: GenObj) {
       const field: any = fields.find((f: GenObj) => f.name === field_name);
       const isBool = field && (field.type as any).name === "Bool";
 
@@ -737,11 +766,13 @@ const run = async (
           : value;
 
       const active = isBool
-        ? ({
-            on: state[field_name],
-            off: state[field_name] === false,
-            "?": state[field_name] === null,
-          } as any)[use_value]
+        ? (
+            {
+              on: state[field_name],
+              off: state[field_name] === false,
+              "?": state[field_name] === null,
+            } as any
+          )[use_value]
         : eq_string(state[field_name], use_value);
       return button(
         {

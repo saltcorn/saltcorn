@@ -2479,7 +2479,7 @@ export = {
 
       const fldOpts = fields.map((f) => ({
         label: f.name,
-        name: f.name,
+        name: `_prefill_${f.name}`,
         default: f.name !== "id",
         type: "Bool",
       }));
@@ -2510,11 +2510,12 @@ export = {
       user?: User | AbstractUser;
     }) => {
       const qs = Object.entries(flds)
-        .map(([k, v]) =>
-          v && typeof row[k] !== "undefined"
+        .map(([prefill_k, v]) => {
+          const k = prefill_k.replace("_prefill_", "");
+          return v && typeof row[k] !== "undefined"
             ? `${encodeURIComponent(k)}=${encodeURIComponent(row[k])}`
-            : false
-        )
+            : false;
+        })
         .filter((s) => s)
         .join("&");
       return { goto: `/view/${viewname}?${qs}` };

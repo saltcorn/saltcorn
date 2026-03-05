@@ -357,6 +357,8 @@ const configuration_workflow = (req: Req) =>
             allowMultiStepAction: true,
             handlesTextStyle,
             mode: "list",
+            has_copilot_generate:
+              !!getState().functions.copilot_generate_layout,
             ownership:
               !!table.ownership_field_id ||
               !!table.ownership_formula ||
