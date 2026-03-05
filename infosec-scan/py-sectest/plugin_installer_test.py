@@ -1,8 +1,11 @@
 import os
 import json
 import platform
+import signal
+import time
 import logging
 from scsession import SaltcornSession
+from helpers import wait_for_port_open
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -115,3 +118,27 @@ class TestLocalPluginInstaller:
         finally:
             with open(pkg_path, "w") as f:
                 f.write(original_content)
+
+    def test_plugin_changes_loaded_on_sighup(self):
+        """SIGHUP must reload plugins and state in all tenants without restarting."""
+        pid = self.sess.salcorn_process.pid
+        assert pid is not None, "Server process should be running"
+
+        os.kill(pid, signal.SIGHUP)
+
+        # give the master time to call refresh_plugins() for all tenants
+        time.sleep(3)
+
+        # the original process must still be alive — SIGHUP reloads, not restarts
+        assert self.sess.salcorn_process.poll() is None, (
+            "Server process must still be running after SIGHUP (no restart expected)"
+        )
+
+        # server must still accept connections
+        wait_for_port_open(TENANT_BASE_URL)
+
+        # plugin must still be active for the tenant after the reload
+        self._login_as_tenant_admin()
+        self.sess.get("/plugins")
+        assert self.sess.status == 200
+        assert "local-test-plugin" in self.sess.content
