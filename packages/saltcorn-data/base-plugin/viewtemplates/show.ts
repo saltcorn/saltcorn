@@ -272,6 +272,8 @@ const configuration_workflow = (req: Req) =>
             allowMultiStepAction: true,
             handlesTextStyle,
             mode: "show",
+            has_copilot_generate:
+              !!getState().functions.copilot_generate_layout,
             ownership:
               !!table.ownership_field_id ||
               !!table.ownership_formula ||
@@ -609,8 +611,8 @@ const renderRows = async (
               inLazy
                 ? ""
                 : view.renderLocally()
-                ? await view.run(state2, subviewExtra, view.isRemoteTable())
-                : await renderServerSide(view.name, state2)
+                  ? await view.run(state2, subviewExtra, view.isRemoteTable())
+                  : await renderServerSide(view.name, state2)
             );
           } else {
             const state2 = { ...outerState, ...state1, ...extra_state };
@@ -633,8 +635,8 @@ const renderRows = async (
               inLazy
                 ? ""
                 : view.renderLocally()
-                ? await view.run(state2, subviewExtra, view.isRemoteTable())
-                : await renderServerSide(view.name, state2)
+                  ? await view.run(state2, subviewExtra, view.isRemoteTable())
+                  : await renderServerSide(view.name, state2)
             );
           }
         }
