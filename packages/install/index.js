@@ -673,6 +673,7 @@ ${hasSDnotify ? "WatchdogSec=30" : ""}
 User=${user}
 WorkingDirectory=/home/${user}
 ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 Environment="NODE_ENV=production" ${getDockerEnvVars(user, dockerMode)}
 

@@ -475,10 +475,30 @@ module.exports =
     dev,
     ...appargs
   } = {}) => {
-    if (cluster.isMaster) {
+    if (cluster.isPrimary) {
       ensureJwtSecret();
       await ensurePluginsFolder();
       await ensureNotificationSubscriptions();
+
+      // reload completely on SIGHUP
+      process.on("SIGHUP", async () => {
+        getState().log(
+          4,
+          "SIGHUP received: reloading plugins and state for all tenants"
+        );
+        // master tenant
+        getState().sendMessageToWorkers({ refresh: "plugins" });
+        if (db.is_it_multi_tenant()) {
+          for (const tenant of await getAllTenants()) {
+            const msg = tenant
+              ? { tenant, refresh: "plugins" }
+              : { refresh: "plugins" };
+            if (getState().sendMessageToWorkers)
+              getState().sendMessageToWorkers({ tenant, refresh: "plugins" });
+            else workerDispatchMsg(msg);
+          }
+        }
+      });
     }
     process.on("unhandledRejection", (reason, p) => {
       console.error(reason, "Unhandled Rejection at Promise");

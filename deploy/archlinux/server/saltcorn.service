@@ -9,6 +9,7 @@ WatchdogSec=30
 User=saltcorn
 WorkingDirectory=/var/saltcorn
 ExecStart=/usr/bin/saltcorn serve -p 80
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 Environment="NODE_ENV=production"
 Environment="SALTCORN_DISABLE_UPGRADE=true"
