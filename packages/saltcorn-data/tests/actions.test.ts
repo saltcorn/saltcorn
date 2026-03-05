@@ -221,6 +221,16 @@ describe("Action and Trigger model", () => {
     const row = await table.getRow({ id });
     expect(['{"success":true}', "Error in workflow"]).toContain(row?.author);
   });
+  it("should run triggerwith table.run_trigger", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    resetActionCounter();
+    expect(getActionCounter()).toBe(0);
+
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    await table.run_trigger("incCount", { name: "Mary Boas" });
+    expect(getActionCounter()).toBe(1);
+  });
 });
 describe("base plugin actions", () => {
   it("should insert_any_row", async () => {
@@ -316,7 +326,7 @@ describe("base plugin actions", () => {
       },
       user: { id: 1, role_id: 1 },
     });
-    assertIsRow(result)
+    assertIsRow(result);
     expect(result.myids.length).toBe(2);
     expect(typeof result.myids[0]).toBe("number");
     expect(result.myids[0]).toBeGreaterThan(2);
