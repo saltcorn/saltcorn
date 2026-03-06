@@ -30,6 +30,7 @@ import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import { DropMenu } from "./elements/DropMenu";
 import { Container } from "./elements/Container";
+import { Prompt } from "./elements/Prompt";
 import { rand_ident } from "./elements/utils";
 
 /**
@@ -80,6 +81,7 @@ const allElements = [
   Table,
   ListColumn,
   ListColumns,
+  Prompt,
 ];
 
 export /**
