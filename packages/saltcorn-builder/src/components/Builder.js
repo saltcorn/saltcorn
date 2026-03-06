@@ -519,33 +519,9 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
             )}
             {hasPromptNodes && (
               <div className="mt-2">
-                <button
-                  className="btn btn-sm btn-success w-100 generate-layout-builder"
-                  onClick={handleGenerate}
-                  disabled={generating}
-                >
-                  {generating ? (
-                    <Fragment>
-                      <span
-                        className="spinner-border spinner-border-sm me-1"
-                        role="status"
-                      ></span>
-                      {t("Generating...")}
-                    </Fragment>
-                  ) : (
-                    <Fragment>
-                      <i className="fas fa-robot me-1"></i>
-                      {t("Generate")}
-                    </Fragment>
-                  )}
-                </button>
-                {generateError && (
-                  <div className="text-danger small mt-1">{generateError}</div>
-                )}
+                {selected.settings && React.createElement(selected.settings)}
               </div>
             )}
-            <hr className="my-2" />
-            {selected.settings && React.createElement(selected.settings)}
           </Fragment>
         ) : (
           t("No element selected")

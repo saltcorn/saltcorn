@@ -4,9 +4,11 @@
  * @subcategory components / elements
  */
 
-import React from "react";
-import { useNode } from "@craftjs/core";
+import React, { useState, useContext, Fragment } from "react";
+import { useNode, useEditor } from "@craftjs/core";
 import useTranslation from "../../hooks/useTranslation";
+import optionsCtx from "../context";
+import StorageCtx from "../storage_context";
 
 const PROMPT_ICONS = {
   container: "fas fa-box",
@@ -27,13 +29,65 @@ export const Prompt = ({ promptType, promptText }) => {
     connectors: { connect, drag },
     selected,
     actions: { setProp },
+    id,
+    parent,
   } = useNode((state) => ({
     selected: state.events.selected,
+    parent: state.data.parent,
   }));
 
+  const { query, actions: editorActions } = useEditor();
+  const options = useContext(optionsCtx);
+  const { layoutToNodes } = useContext(StorageCtx);
   const { t } = useTranslation();
+
+  const [generating, setGenerating] = useState(false);
+
   const icon = PROMPT_ICONS[promptType] || "fas fa-robot";
-  const label = PROMPT_LABELS[promptType] || "Prompt";
+
+  const handleGenerate = async (e) => {
+    e.stopPropagation();
+    if (!promptText.trim()) return;
+
+    setGenerating(true);
+    setProp((props) => {
+      props.generateError = null;
+    });
+
+    try {
+      const combinedPrompt = `[${promptType}]: ${promptText}`;
+
+      const res = await fetch("/viewedit/copilot-generate-layout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": options.csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify({
+          prompt: combinedPrompt,
+          mode: options.mode,
+          table: options.tableName,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        setProp((props) => {
+          props.generateError = data.error;
+        });
+      } else if (data.layout) {
+        editorActions.delete(id);
+        layoutToNodes(data.layout, query, editorActions, parent, options);
+      }
+    } catch (err) {
+      setProp((props) => {
+        props.generateError = err.message || "Generation failed";
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
     <div
@@ -60,9 +114,7 @@ export const Prompt = ({ promptType, promptText }) => {
         }}
       >
         <i className={icon}></i>
-        <span>
-          {t("Prompt")} ({t(label)})
-        </span>
+        <span>{t("Prompt")}</span>
       </div>
       <textarea
         rows="3"
@@ -72,6 +124,7 @@ export const Prompt = ({ promptType, promptText }) => {
           backgroundColor: "transparent",
           border: "1px solid #b0c4de",
           resize: "vertical",
+          marginBottom: "8px",
         }}
         value={promptText}
         placeholder={t("Describe what you want to generate...")}
@@ -82,6 +135,27 @@ export const Prompt = ({ promptType, promptText }) => {
         }
         onClick={(e) => e.stopPropagation()}
       />
+      <button
+        className="btn btn-sm btn-success w-100"
+        onClick={handleGenerate}
+        disabled={generating || !promptText.trim()}
+        style={{ fontSize: "12px" }}
+      >
+        {generating ? (
+          <Fragment>
+            <span
+              className="spinner-border spinner-border-sm me-1"
+              role="status"
+            ></span>
+            {t("Generating...")}
+          </Fragment>
+        ) : (
+          <Fragment>
+            <i className="fas fa-robot me-1"></i>
+            {t("Generate")}
+          </Fragment>
+        )}
+      </button>
     </div>
   );
 };
@@ -92,18 +166,68 @@ const PromptSettings = () => {
     actions: { setProp },
     promptType,
     promptText,
+    generateError,
+    id,
+    parent,
   } = useNode((node) => ({
     promptType: node.data.props.promptType,
     promptText: node.data.props.promptText,
+    generateError: node.data.props.generateError,
+    id: node.id,
+    parent: node.data.parent,
   }));
+
+  const { query, actions: editorActions } = useEditor();
+  const options = useContext(optionsCtx);
+  const { layoutToNodes } = useContext(StorageCtx);
+
+  const [generating, setGenerating] = useState(false);
+
+  const handleGenerate = async () => {
+    if (!promptText.trim()) return;
+
+    setGenerating(true);
+    setProp((props) => {
+      props.generateError = null;
+    });
+
+    try {
+      const combinedPrompt = `[${promptType}]: ${promptText}`;
+
+      const res = await fetch("/viewedit/copilot-generate-layout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": options.csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify({
+          prompt: combinedPrompt,
+          mode: options.mode,
+          table: options.tableName,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        setProp((props) => {
+          props.generateError = data.error;
+        });
+      } else if (data.layout) {
+        editorActions.delete(id);
+        layoutToNodes(data.layout, query, editorActions, parent, options);
+      }
+    } catch (err) {
+      setProp((props) => {
+        props.generateError = err.message || "Generation failed";
+      });
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   return (
     <div>
-      <div className="mb-2">
-        <label className="form-label fw-bold">
-          {t("Type")}: {t(PROMPT_LABELS[promptType] || "Prompt")}
-        </label>
-      </div>
       <div className="mb-2">
         <label className="form-label">{t("Prompt")}</label>
         <textarea
@@ -117,6 +241,31 @@ const PromptSettings = () => {
             })
           }
         />
+        {generateError && (
+          <div className="text-danger small mt-1">{generateError}</div>
+        )}
+      </div>
+      <div className="mb-2">
+        <button
+          className="btn btn-sm btn-success w-100"
+          onClick={handleGenerate}
+          disabled={generating || !promptText.trim()}
+        >
+          {generating ? (
+            <Fragment>
+              <span
+                className="spinner-border spinner-border-sm me-1"
+                role="status"
+              ></span>
+              {t("Generating...")}
+            </Fragment>
+          ) : (
+            <Fragment>
+              <i className="fas fa-robot me-1"></i>
+              {t("Generate")}
+            </Fragment>
+          )}
+        </button>
       </div>
     </div>
   );
