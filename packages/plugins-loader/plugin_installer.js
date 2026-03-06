@@ -1,5 +1,6 @@
 const { join, normalize, dirname } = require("path");
 const { writeFile, mkdir, pathExists, copy, symlink } = require("fs-extra");
+const { readdirSync } = require("fs");
 const { spawn } = require("child_process");
 const {
   downloadFromNpm,
@@ -60,12 +61,34 @@ const defaultRootFolder = envPaths("saltcorn", { suffix: "plugins" }).data;
 const installedLocalPlugins = new Set();
 
 /**
+ * Find the most recently created localversion_<timestamp> directory for a local plugin.
+ * Falls back to "localversion" if none exist yet.
+ */
+const findLatestLocalversionDir = (parentDir) => {
+  try {
+    const dirs = readdirSync(parentDir).filter((e) =>
+      /^localversion_\d+$/.test(e)
+    );
+    if (dirs.length === 0) return "localversion";
+    return dirs.reduce((latest, d) => {
+      return parseInt(d.split("_")[1]) > parseInt(latest.split("_")[1])
+        ? d
+        : latest;
+    });
+  } catch {
+    return "localversion";
+  }
+};
+
+/**
  * PluginInstaller class
  */
 class PluginInstaller {
   constructor(plugin, opts = Object.create(null)) {
     this.plugin = plugin;
     this.rootFolder = opts.rootFolder || defaultRootFolder;
+    this.reloadModule = !!opts.reloadModule;
+    this.force = !!opts.force;
     this.tempRootFolder =
       opts.tempRootFolder || envPaths("saltcorn", { suffix: "tmp" }).temp;
     const tokens =
@@ -73,12 +96,23 @@ class PluginInstaller {
         ? plugin.location.split("/")
         : plugin.name.split("/");
     this.name = tokens[tokens.length - 1];
+    const localPluginParentDir = join(
+      opts.rootFolder || defaultRootFolder,
+      "plugins_folder",
+      ...tokens
+    );
+    const localversionDir =
+      opts.reloadModule && plugin.source === "local"
+        ? opts.force
+          ? `localversion_${Date.now()}`
+          : findLatestLocalversionDir(localPluginParentDir)
+        : "localversion";
     this.pluginDir = join(
       this.rootFolder,
       plugin.source === "git" ? "git_plugins" : "plugins_folder",
       ...tokens,
       plugin.source === "local"
-        ? "localversion"
+        ? localversionDir
         : plugin.version || "unknownversion"
     );
     this.pckJsonPath = join(this.pluginDir, "package.json");
@@ -95,11 +129,10 @@ class PluginInstaller {
 
   /**
    *
-   * @param {boolean} force
    * @param {boolean} preInstall Only npm install without loading the module
    * @returns
    */
-  async install(force = false, preInstall = false) {
+  async install(preInstall = false) {
     getState().log(5, `loading plugin ${this.plugin.name}`);
     await this._ensurePluginsRootFolders();
     if (Plugin.is_fixed_plugin(this.plugin.location))
@@ -110,13 +143,13 @@ class PluginInstaller {
     const msgs = [];
     let module = null;
     let loadedWithReload = false;
-    let pckJSON = await this._installHelper(force, msgs);
+    let pckJSON = await this._installHelper(msgs);
     if (!preInstall) {
       try {
         module = await this._loadMainFile(pckJSON);
       } catch (e) {
         if (e.code === "MODULE_NOT_FOUND") await this._dumpNodeMoules();
-        if (force) {
+        if (this.force) {
           // remove and try again
           // could happen when there is a directory with a package.json
           // but without a valid node modules folder
@@ -125,7 +158,7 @@ class PluginInstaller {
             `Error loading plugin ${this.plugin.name}. Removing and trying again.`
           );
           await this.remove();
-          pckJSON = await this._installHelper(force, msgs);
+          pckJSON = await this._installHelper(msgs);
         } else {
           getState().log(
             2,
@@ -160,15 +193,13 @@ class PluginInstaller {
 
   /**
    * prepare the plugin folder and npm install if needed
-   * @param {*} force
-   * @param {*} pckJSON
    * @param {*} msgs
    */
-  async _installHelper(force, msgs) {
+  async _installHelper(msgs) {
     const airgap = getState().getConfig("airgap", false);
     let pckJSON = await readPackageJson(this.pckJsonPath);
     if (airgap) return pckJSON;
-    else if (await this._prepPluginsFolder(force, pckJSON)) {
+    else if (await this._prepPluginsFolder(pckJSON)) {
       const tmpPckJSON = await this._removeDependencies(
         await readPackageJson(this.tempPckJsonPath),
         true
@@ -212,17 +243,16 @@ class PluginInstaller {
 
   /**
    * helper to prepare the plugin folder
-   * @param {*} force
    * @param {*} pckJSON
    * @returns
    */
-  async _prepPluginsFolder(force, pckJSON) {
+  async _prepPluginsFolder(pckJSON) {
     let wasLoaded = false;
     const folderExists = await pathExists(this.pluginDir);
     switch (this.plugin.source) {
       case "npm":
         if (
-          (force && !(await this._versionIsInstalled(pckJSON))) ||
+          (this.force && !(await this._versionIsInstalled(pckJSON))) ||
           !folderExists
         ) {
           getState().log(6, "downloading from npm");
@@ -235,7 +265,7 @@ class PluginInstaller {
         }
         break;
       case "github":
-        if (force || !folderExists) {
+        if (this.force || !folderExists) {
           getState().log(6, "downloading from github");
           await downloadFromGithub(this.plugin, this.rootFolder, this.tempDir);
           wasLoaded = true;
@@ -243,8 +273,8 @@ class PluginInstaller {
         break;
       case "local":
         if (
-          (force || !folderExists) &&
-          !installedLocalPlugins.has(this.pluginDir)
+          (this.force || !folderExists) &&
+          (!installedLocalPlugins.has(this.pluginDir) || this.reloadModule)
         ) {
           getState().log(6, "copying from local");
           await copy(this.plugin.location, this.tempDir);
@@ -256,7 +286,7 @@ class PluginInstaller {
         }
         break;
       case "git":
-        if (force || !folderExists) {
+        if (this.force || !folderExists) {
           getState().log(6, "downloading from git");
           await gitPullOrClone(this.plugin, this.tempDir);
           this.pckJsonPath = join(this.pluginDir, "package.json");
@@ -304,8 +334,8 @@ class PluginInstaller {
       return require(normalize(join(this.pluginDir, pckJSON.main)));
     } else {
       const url = `${isWindows ? `file://` : ""}${normalize(
-        join(this.pluginDir, pckJSON.main + (reload ? "?reload=true" : ""))
-      )}`;
+        join(this.pluginDir, pckJSON.main)
+      )}${reload ? `?reload=${Date.now()}` : ""}`;
       const res = await import(url);
       return res.default;
     }

@@ -52,7 +52,7 @@ const {
 } = require("@saltcorn/admin-models/models/tenant");
 const { auto_backup_now } = require("@saltcorn/admin-models/models/backup");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
-const { writeFileSync, rmdirSync, readFileSync } = require("fs");
+const { writeFileSync, rmSync, readFileSync, readdirSync } = require("fs");
 const { pathExistsSync } = require("fs-extra");
 const envPaths = require("env-paths");
 
@@ -94,6 +94,7 @@ const ensurePluginsFolder = async () => {
     "jest",
   ];
   const allPluginFolders = new Set();
+  const localPluginParentDirs = new Set();
   await eachTenant(async () => {
     try {
       const allPlugins = (await Plugin.find()).filter(
@@ -111,11 +112,29 @@ const ensurePluginsFolder = async () => {
           plugin.version || "unknownversion"
         );
         allPluginFolders.add(pluginDir);
+        if (plugin.source === "local") {
+          localPluginParentDirs.add(
+            path.join(rootFolder, "plugins_folder", ...tokens)
+          );
+        }
       }
     } catch {
       //ignore
     }
   });
+  // Remove leftover cache-busted localversion_<timestamp> directories
+  for (const parentDir of localPluginParentDirs) {
+    try {
+      if (!pathExistsSync(parentDir)) continue;
+      for (const entry of readdirSync(parentDir)) {
+        if (/^localversion_\d+$/.test(entry)) {
+          rmSync(path.join(parentDir, entry), { recursive: true });
+        }
+      }
+    } catch (e) {
+      console.log(`Error cleaning localversion cache dirs: ${e.message || e}`);
+    }
+  }
   for (const folder of allPluginFolders) {
     try {
       if (pathExistsSync(folder)) {
@@ -131,7 +150,7 @@ const ensurePluginsFolder = async () => {
             )) &&
           !pathExistsSync(path.join(folder, "node_modules"))
         )
-          rmdirSync(folder, { recursive: true });
+          rmSync(folder, { recursive: true });
       }
     } catch (e) {
       console.log(`Error checking plugin folder: ${e.message || e}`);
@@ -305,6 +324,9 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
     );
   }
 
+  if (msg.reload_plugins) {
+    loadAllPlugins(cluster.isPrimary, true);
+  }
   if (msg.refresh) {
     if (msg.refresh === "ephemeral_config")
       getState().refresh_ephemeral_config(msg.key, msg.value);
@@ -475,10 +497,34 @@ module.exports =
     dev,
     ...appargs
   } = {}) => {
-    if (cluster.isMaster) {
+    if (cluster.isPrimary) {
       ensureJwtSecret();
       await ensurePluginsFolder();
       await ensureNotificationSubscriptions();
+
+      // reload plugins on SIGHUP
+      process.on("SIGHUP", async () => {
+        getState().log(
+          4,
+          "SIGHUP received: reloading plugins and state for all tenants"
+        );
+        await loadAllPlugins(true, true);
+        await getState().refresh_plugins(true);
+        Object.entries(cluster.workers || {}).forEach(([wpid, w]) => {
+          w.send({ reload_plugins: true });
+        });
+        if (db.is_it_multi_tenant()) {
+          for (const tenant of await getAllTenants()) {
+            await db.runWithTenant(tenant, async () => {
+              await loadAllPlugins(true, true);
+              await getState().refresh_plugins(true);
+              Object.entries(cluster.workers || {}).forEach(([wpid, w]) => {
+                w.send({ tenant, reload_plugins: true });
+              });
+            });
+          }
+        }
+      });
     }
     process.on("unhandledRejection", (reason, p) => {
       console.error(reason, "Unhandled Rejection at Promise");

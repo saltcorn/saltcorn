@@ -94,7 +94,7 @@ const ensurePluginSupport = async (plugin, forceFetch) => {
  * @param plugin - plugin to load
  * @param force - force flag
  */
-const loadPlugin = async (plugin, force, forceFetch) => {
+const loadPlugin = async (plugin, force, forceFetch, reloadModule = false) => {
   if (plugin.source === "npm" && !isFixedPlugin(plugin)) {
     try {
       await ensurePluginSupport(plugin, forceFetch);
@@ -116,8 +116,10 @@ const loadPlugin = async (plugin, force, forceFetch) => {
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
     envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
+    reloadModule,
+    force,
   });
-  const res = await loader.install(force);
+  const res = await loader.install();
   const configuration =
     typeof plugin.configuration === "string"
       ? JSON.parse(plugin.configuration)
@@ -139,7 +141,7 @@ const loadPlugin = async (plugin, force, forceFetch) => {
     if (force) {
       // remove the install dir and try again
       await loader.remove();
-      await loader.install(force);
+      await loader.install();
       getState().registerPlugin(
         res.plugin_module.plugin_name || plugin.name,
         res.plugin_module,
@@ -192,8 +194,9 @@ const requirePlugin = async (plugin, force) => {
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
     envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
+    force: force,
   });
-  return await loader.install(force);
+  return await loader.install();
 };
 
 /**
@@ -223,12 +226,12 @@ const ensureAirgapedVersion = (plugin, airgapedStore) => {
  * Load all plugins
  * @returns {Promise<void>}
  */
-const loadAllPlugins = async (force) => {
+const loadAllPlugins = async (force, reloadModule = false) => {
   await getState().refresh(true);
   const plugins = await db.select("_sc_plugins");
   for (const plugin of plugins) {
     try {
-      await loadPlugin(plugin, force);
+      await loadPlugin(plugin, force, undefined, reloadModule);
     } catch (e) {
       console.error(e);
     }
@@ -295,9 +298,10 @@ const loadAndSaveNewPlugin = async (
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
     envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
+    force: force,
   });
   const { version, plugin_module, location, loadedWithReload, msgs } =
-    await loader.install(force);
+    await loader.install();
   if (msgs) loadMsgs.push(...msgs);
   // install dependecies
   for (const loc of plugin_module.dependencies || []) {
@@ -344,7 +348,7 @@ const loadAndSaveNewPlugin = async (
         `Error registering plugin ${plugin.name}. Removing and trying again.`
       );
       await loader.remove();
-      await loader.install(force);
+      await loader.install();
       getState().registerPlugin(
         plugin_module.plugin_name || plugin.name,
         plugin_module,

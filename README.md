@@ -193,6 +193,7 @@ WatchdogSec=30
 User=saltcorn
 WorkingDirectory=/home/saltcorn
 ExecStart=/home/saltcorn/.local/bin/saltcorn serve -p 80
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 Environment="NODE_ENV=production"
 
