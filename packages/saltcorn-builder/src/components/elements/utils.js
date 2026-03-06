@@ -1350,7 +1350,9 @@ const ConfigField = ({
                 e?.target &&
                 myOnChange(
                   isStyle || subProp
-                    ? `${e.target.value}${styleDim || "px"}`
+                    ? e.target.value === ""
+                      ? ""
+                      : `${e.target.value}${styleDim || "px"}`
                     : e.target.value
                 )
               }

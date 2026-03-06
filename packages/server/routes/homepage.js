@@ -641,6 +641,10 @@ const get_config_response = async (role_id, res, req) => {
   let homeCfg = modernCfg && modernCfg[role_id];
   if (typeof homeCfg !== "string")
     homeCfg = getState().getConfig(legacy_role + "_home");
+  if (homeCfg === "_sc_entities_list") {
+    res.redirect("/entities");
+    return true;
+  }
   if (homeCfg) {
     const db_page = Page.findOne({ name: homeCfg });
     if (db_page) {

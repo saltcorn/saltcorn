@@ -256,6 +256,8 @@ const configuration_workflow = (req: Req) =>
             excluded_subview_templates: ["Room"],
             pages,
             page_groups: groups,
+            has_copilot_generate:
+              !!getState().functions.copilot_generate_layout,
           };
         },
       },

@@ -185,6 +185,8 @@ const layoutToNodes = (
           style={segment.style || {}}
           icon={segment.icon}
           font={segment.font || ""}
+          mobileFontSize={segment.mobileFontSize}
+          tabletFontSize={segment.tabletFontSize}
         />
       );
     } else if (segment.type === "view") {
@@ -320,6 +322,12 @@ const layoutToNodes = (
           colClasses={segment.colClasses}
           colStyles={segment.colStyles}
           aligns={segment.aligns}
+          mobileAligns={segment.mobileAligns}
+          tabletAligns={segment.tabletAligns}
+          mobileWidth={segment.mobileWidth}
+          tabletWidth={segment.tabletWidth}
+          mobileHeight={segment.mobileHeight}
+          tabletHeight={segment.tabletHeight}
           setting_col_n={segment.setting_col_n !== undefined ? segment.setting_col_n : 0}
           contents={segment.besides.map(toTag)}
         />
@@ -356,6 +364,12 @@ const layoutToNodes = (
             colClasses={segment.colClasses}
             colStyles={segment.colStyles}
             aligns={segment.aligns}
+            mobileAligns={segment.mobileAligns}
+            tabletAligns={segment.tabletAligns}
+            mobileWidth={segment.mobileWidth}
+            tabletWidth={segment.tabletWidth}
+            mobileHeight={segment.mobileHeight}
+            tabletHeight={segment.tabletHeight}
             setting_col_n={segment.setting_col_n !== undefined ? segment.setting_col_n : 0}
             contents={segment.besides.map(toTag)}
           />
@@ -491,6 +505,8 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         style: node.props.style,
         icon: node.props.icon,
         font: node.props.font,
+        mobileFontSize: node.props.mobileFontSize,
+        tabletFontSize: node.props.tabletFontSize,
         ...customProps,
       };
     }
@@ -527,10 +543,16 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         gx: node.props.gx != null ? +node.props.gx : undefined,
         gy: node.props.gy != null ? +node.props.gy : undefined,
         aligns: node.props.aligns,
+        mobileAligns: node.props.mobileAligns,
+        tabletAligns: node.props.tabletAligns,
         vAligns: node.props.vAligns,
         colClasses: node.props.colClasses,
         colStyles: node.props.colStyles,
         style: node.props.style,
+        mobileWidth: node.props.mobileWidth,
+        tabletWidth: node.props.tabletWidth,
+        mobileHeight: node.props.mobileHeight,
+        tabletHeight: node.props.tabletHeight,
         widths,
         setting_col_n: node.props.setting_col_n,
         ...customProps,

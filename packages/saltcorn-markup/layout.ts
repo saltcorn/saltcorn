@@ -135,28 +135,78 @@ const applyTextStyle = (segment: any, inner: string): string => {
   if (inline_h) style.display = "inline-block";
   if (segment.customClass && segment.type !== "container")
     klasses.push(segment.customClass);
+
+  // Per-device font size: generate scoped responsive CSS
+  let responsiveFontStyle = "";
+  if (segment.mobileFontSize || segment.tabletFontSize) {
+    const rndCls = `fs-${Math.floor(Math.random() * 16777215).toString(16)}`;
+    klasses.push(rndCls);
+    const desktopFs = style["font-size"];
+    let css = "";
+    if (segment.mobileFontSize)
+      css += `.${rndCls}{font-size:${segment.mobileFontSize} !important}`;
+    if (segment.tabletFontSize)
+      css += `@media(min-width:768px){.${rndCls}{font-size:${segment.tabletFontSize} !important}}`;
+    if (desktopFs)
+      css += `@media(min-width:992px){.${rndCls}{font-size:${desktopFs} !important}}`;
+    responsiveFontStyle = `<style>${css}</style>`;
+  }
+
   const klass = klasses.join(" ");
 
+  let result: string;
   switch (hs) {
     case "h1":
-      return h1({ style, class: klass }, inner);
+      result = h1({ style, class: klass }, inner);
+      break;
     case "h2":
-      return h2({ style, class: klass }, inner);
+      result = h2({ style, class: klass }, inner);
+      break;
     case "h3":
-      return h3({ style, class: klass }, inner);
+      result = h3({ style, class: klass }, inner);
+      break;
     case "h4":
-      return h4({ style, class: klass }, inner);
+      result = h4({ style, class: klass }, inner);
+      break;
     case "h5":
-      return h5({ style, class: klass }, inner);
+      result = h5({ style, class: klass }, inner);
+      break;
     case "h6":
-      return h6({ style, class: klass }, inner);
+      result = h6({ style, class: klass }, inner);
+      break;
     default:
-      return segment.block || (segment.display === "block" && hasStyle)
+      result = segment.block || (segment.display === "block" && hasStyle)
         ? div({ class: klass, style }, inner)
         : segment.textStyle || hasStyle || klass
           ? span({ class: klass, style }, inner)
           : inner;
   }
+  return responsiveFontStyle + result;
+};
+
+const responsiveSizeStyle = (segment: any, desktopStyle?: any) => {
+  const { mobileWidth, tabletWidth, mobileHeight, tabletHeight } = segment;
+  if (!mobileWidth && !tabletWidth && !mobileHeight && !tabletHeight)
+    return { className: "", styleTag: "" };
+
+  const rndCls = `rs-${Math.floor(Math.random() * 16777215).toString(16)}`;
+  let css = "";
+
+  // mobile only (< 768px)
+  const mobileRules: string[] = [];
+  if (mobileWidth) mobileRules.push(`width:${mobileWidth} !important`);
+  if (mobileHeight) mobileRules.push(`height:${mobileHeight} !important`);
+  if (mobileRules.length)
+    css += `@media(max-width:767.98px){.${rndCls}{${mobileRules.join(";")}}}`;
+
+  // tablet only (768px - 991.98px)
+  const tabletRules: string[] = [];
+  if (tabletWidth) tabletRules.push(`width:${tabletWidth} !important`);
+  if (tabletHeight) tabletRules.push(`height:${tabletHeight} !important`);
+  if (tabletRules.length)
+    css += `@media(min-width:768px) and (max-width:991.98px){.${rndCls}{${tabletRules.join(";")}}}`;
+
+  return { className: rndCls, styleTag: css ? `<style>${css}</style>` : "" };
 };
 
 // declaration merging
@@ -241,7 +291,7 @@ const render = ({
         segment,
         isTop,
         ix,
-        breadcrumbs(segment.crumbs || [], segment.right, segment.after)
+        breadcrumbs(segment.crumbs || [], segment.right, segment.after, segment.center)
       );
     }
     if (segment.type === "view") {
@@ -460,20 +510,25 @@ const render = ({
         imageSize,
         imageLocation,
       } = segment;
+      const cardSize = responsiveSizeStyle(segment);
       return wrap(
         segment,
         isTop,
         ix,
+        cardSize.styleTag +
         div(
           {
             class: [
               "card",
-              !(segment.class || "").includes("mt-") && "mt-4",
+              !(segment.class || "").includes("mt-") &&
+                !segment.style?.["margin-top"] &&
+                "mt-4",
               segment.shadow === false ? false : "shadow",
               segment.class,
               segment.url && "with-link",
               hints.cardClass,
               hAlign && `text-${hAlign}`,
+              cardSize.className,
             ],
             ...(segment.id ? { id: segment.id } : {}),
             onclick: segment.url
@@ -802,10 +857,15 @@ const render = ({
             .join(" ")
         : "";
 
+      const containerSize = responsiveSizeStyle(segment, {
+        width: segment.width ? `${segment.width}${segment.widthUnit || "px"}` : undefined,
+        height: segment.height ? `${segment.height}${segment.heightUnit || "px"}` : undefined,
+      });
       return wrap(
         segment,
         isTop,
         ix,
+        containerSize.styleTag +
         genericElement(
           htmlElement || "div",
           {
@@ -821,6 +881,7 @@ const render = ({
               url && "with-link",
               hoverColor && `hover-${hoverColor}`,
               fullPageWidth && "full-page-width",
+              containerSize.className,
             ],
             id: customId || undefined,
             onclick: segment.url
@@ -926,6 +987,7 @@ const render = ({
         .map((s: any, segmentIx: number) => go(s, isTop, segmentIx + ix))
         .join("");
     } else if (segment.besides) {
+      const colsSize = responsiveSizeStyle(segment);
       const defwidth = Math.round(12 / segment.besides.length);
       //legacy, for empty (null) in the columns
       const isOneCard = (segs: any) =>
@@ -942,7 +1004,7 @@ const render = ({
         const sameWidths =
           !(segment.widths as number[]) ||
           (segment.widths as number[]).every((w) => w === defwidth);
-        markup = div(
+        markup = colsSize.styleTag + div(
           {
             class: [
               "row",
@@ -956,6 +1018,7 @@ const render = ({
                 segment.gy !== null &&
                 `gy-${segment.gy}`,
               !segment.style?.["margin-bottom"] && `mb-3`,
+              colsSize.className,
             ],
             style: segment.style,
           },
@@ -994,7 +1057,7 @@ const render = ({
           )
         );
       } else
-        markup = div(
+        markup = colsSize.styleTag + div(
           {
             class: [
               "row",
@@ -1006,6 +1069,7 @@ const render = ({
               typeof segment.gy !== "undefined" &&
                 segment.gy !== null &&
                 `gy-${segment.gy}`,
+              colsSize.className,
             ],
             style: segment.style,
           },
@@ -1022,7 +1086,18 @@ const render = ({
                             ? segment.breakpoints[ixb] + "-"
                             : ""
                       }${segment.widths ? segment.widths[ixb] : defwidth}${
-                        segment.aligns ? " text-" + segment.aligns[ixb] : ""
+                        (() => {
+                          const desktop = segment.aligns?.[ixb];
+                          const tablet = segment.tabletAligns?.[ixb];
+                          const mobile = segment.mobileAligns?.[ixb];
+                          if (!mobile && !tablet) return desktop ? " text-" + desktop : "";
+                          let cls = "";
+                          const base = mobile || desktop;
+                          if (base) cls += " text-" + base;
+                          if (tablet && tablet !== base) cls += " text-md-" + tablet;
+                          if (desktop && desktop !== (tablet || base)) cls += " text-lg-" + desktop;
+                          return cls;
+                        })()
                       }${
                         segment.vAligns
                           ? " align-items-" + segment.vAligns[ixb]

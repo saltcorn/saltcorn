@@ -154,7 +154,7 @@ const formRowWrap = (
                       hdr.type?.name === "Bool" &&
                         isHoriz(fStyle) &&
                         labelCols &&
-                        `col-${labelCols} text-end`,
+                        `col-sm-${labelCols} text-md-end`,
                       hdr.type?.name !== "Bool" &&
                         isHoriz(fStyle) &&
                         labelCols &&

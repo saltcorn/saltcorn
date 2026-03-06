@@ -20,6 +20,7 @@ import {
 } from "./utils";
 import { BoxModelEditor } from "./BoxModelEditor";
 import { ArrayManager } from "./ArrayManager";
+import { getAlignClass } from "../../utils/responsive_utils";
 import {
   AlignTop,
   AlignMiddle,
@@ -81,7 +82,7 @@ const BREAKPOINT_MIN_WIDTH = {
 const PREVIEW_DEVICE_WIDTH = {
   desktop: Infinity,
   tablet: 768,
-  mobile: 375,
+  mobile: 576,
 };
 
 const getColClass = (width, breakpoint, previewDevice) => {
@@ -114,6 +115,8 @@ const Columns = ({
   gx,
   gy,
   aligns,
+  mobileAligns,
+  tabletAligns,
   vAligns,
   colClasses,
   colStyles,
@@ -123,15 +126,34 @@ const Columns = ({
   const {
     selected,
     connectors: { connect, drag },
-  } = useNode((node) => ({ selected: node.events.selected }));
+    mobileWidth,
+    tabletWidth,
+    mobileHeight,
+    tabletHeight,
+  } = useNode((node) => ({
+    selected: node.events.selected,
+    _style: node.data.props.style,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
+  }));
   const { previewDevice } = useContext(PreviewCtx);
+  const canvasStyle = { ...reactifyStyles(style || {}) };
+  if (previewDevice === "mobile") {
+    if (mobileWidth) canvasStyle.width = mobileWidth;
+    if (mobileHeight) canvasStyle.height = mobileHeight;
+  } else if (previewDevice === "tablet") {
+    if (tabletWidth) canvasStyle.width = tabletWidth;
+    if (tabletHeight) canvasStyle.height = tabletHeight;
+  }
   return (
     <div
       className={`row builder-columns ${customClass || ""} ${selected ? "selected-node" : ""} ${
         typeof gx !== "undefined" && gx !== null ? `gx-${gx}` : ""
       } ${typeof gy !== "undefined" && gy !== null ? `gy-${gy}` : ""}`}
       ref={(dom) => connect(drag(dom))}
-      style={reactifyStyles(style || {})}
+      style={canvasStyle}
     >
       {ntimes(ncols, (ix) => (
         <div
@@ -140,8 +162,8 @@ const Columns = ({
             getWidth(widths, ix),
             breakpoints?.[ix],
             previewDevice
-          )} text-${
-            aligns?.[ix]
+          )} ${
+            getAlignClass(aligns, mobileAligns, tabletAligns, ix, previewDevice)
           } align-items-${vAligns?.[ix]} ${colClasses?.[ix] || ""}`}
           style={parseStyles(colStyles?.[ix] || "")}
         >
@@ -162,16 +184,23 @@ export /**
  */
 const ColumnsSettings = () => {
   const { t } = useTranslation();
+  const { previewDevice } = useContext(PreviewCtx);
   const node = useNode((node) => ({
     widths: node.data.props.widths,
     ncols: node.data.props.ncols,
     breakpoints: node.data.props.breakpoints,
     style: node.data.props.style,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
     setting_col_n: node.data.props.setting_col_n,
     gx: node.data.props.gx,
     gy: node.data.props.gy,
     vAligns: node.data.props.vAligns,
     aligns: node.data.props.aligns,
+    mobileAligns: node.data.props.mobileAligns,
+    tabletAligns: node.data.props.tabletAligns,
     colClasses: node.data.props.colClasses,
     colStyles: node.data.props.colStyles,
     customClass: node.data.props.customClass,
@@ -186,14 +215,24 @@ const ColumnsSettings = () => {
     setting_col_n,
     vAligns,
     aligns,
+    mobileAligns,
+    tabletAligns,
     colClasses,
     colStyles,
     customClass,
     currentSettingsTab,
   } = node;
+
+  const activeAlignProp =
+    previewDevice === "mobile" ? "mobileAligns" :
+    previewDevice === "tablet" ? "tabletAligns" : "aligns";
+  const activeAligns =
+    previewDevice === "mobile" ? mobileAligns :
+    previewDevice === "tablet" ? tabletAligns : aligns;
+
   const colSetsNode = {
     vAlign: vAligns?.[setting_col_n],
-    hAlign: aligns?.[setting_col_n],
+    hAlign: activeAligns?.[setting_col_n],
     colClass: colClasses?.[setting_col_n] || "",
     colStyle: colStyles?.[setting_col_n] || "",
   };
@@ -208,7 +247,7 @@ const ColumnsSettings = () => {
           setProp={setProp}
           countProp={"ncols"}
           currentProp={"setting_col_n"}
-          managedArrays={["widths", "breakpoints", "aligns", "vAligns", "colClasses", "colStyles"]}
+          managedArrays={["widths", "breakpoints", "aligns", "mobileAligns", "tabletAligns", "vAligns", "colClasses", "colStyles"]}
           manageContents={true}
           contentsKey={"besides"}
           initialAddProps={{
@@ -293,7 +332,9 @@ const ColumnsSettings = () => {
             <SettingsRow
               field={{
                 name: "hAlign",
-                label: t("Horizontal"),
+                label: previewDevice !== "desktop"
+                  ? `${t("Horizontal")} (${previewDevice})`
+                  : t("Horizontal"),
                 type: "btn_select",
                 options: [
                   { value: "start", title: t("Left"), label: <AlignStart /> },
@@ -305,8 +346,8 @@ const ColumnsSettings = () => {
               setProp={setProp}
               onChange={(k, v) =>
                 setProp((prop) => {
-                  if (!prop.aligns) prop.aligns = [];
-                   prop.aligns[setting_col_n] = v;
+                  if (!prop[activeAlignProp]) prop[activeAlignProp] = [];
+                  prop[activeAlignProp][setting_col_n] = v;
                 })
               }
             />

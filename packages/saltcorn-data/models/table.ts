@@ -2066,6 +2066,16 @@ class Table implements AbstractTable {
       }
   }
 
+  async run_trigger(
+    trigger_name: string,
+    row: Row,
+    user?: AbstractUser,
+    extraArgs?: GenObj
+  ): Promise<any> {
+    const trigger = Trigger.findOne({ name: trigger_name });
+    return await trigger.runWithoutRow({ row, user, ...(extraArgs || {}) });
+  }
+
   /**
    * Insert row into the table. By passing in the user as
    * the second argument, it will check write rights. If a user object is not
