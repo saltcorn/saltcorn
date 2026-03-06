@@ -89,6 +89,7 @@ export const Prompt = ({ promptType, promptText }) => {
 const PromptSettings = () => {
   const { t } = useTranslation();
   const {
+    actions: { setProp },
     promptType,
     promptText,
   } = useNode((node) => ({
@@ -104,11 +105,18 @@ const PromptSettings = () => {
         </label>
       </div>
       <div className="mb-2">
-        <label className="form-label text-muted small">
-          {promptText
-            ? t("Edit the prompt directly in the canvas")
-            : t("Click the prompt in the canvas to type")}
-        </label>
+        <label className="form-label">{t("Prompt")}</label>
+        <textarea
+          rows="4"
+          className="form-control"
+          value={promptText}
+          placeholder={t("Describe what you want to generate...")}
+          onChange={(e) =>
+            setProp((props) => {
+              props.promptText = e.target.value;
+            })
+          }
+        />
       </div>
     </div>
   );

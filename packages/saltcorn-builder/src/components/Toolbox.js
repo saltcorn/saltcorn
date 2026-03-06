@@ -588,8 +588,8 @@ const PromptContainerElem = ({ connectors }) => {
     <WrapElem
       connectors={connectors}
       icon="fas fa-robot"
-      title={t("Prompt Container")}
-      label={t("Prompt")}
+      title={t("Generate with AI")}
+      label={t("Generate")}
     >
       <Prompt promptType="container" promptText="" />
     </WrapElem>
@@ -639,7 +639,7 @@ const PromptActionElem = ({ connectors }) => {
 };
 
 const chunkToolBox = (elems, expanded) => {
-  const chunks = chunk(elems, expanded ? 3 : 2);
+  const chunks = chunk(elems.filter(Boolean), expanded ? 3 : 2);
   return chunks.map((es, ix) => (
     <div className="toolbar-row" key={ix}>
       {es.map((e, j) => (
@@ -695,7 +695,7 @@ const ToolboxShow = ({ expanded }) => {
       <DropMenuElem connectors={connectors} />,
       <TableElem connectors={connectors} />,
       <PageElem connectors={connectors} pages={pages} />,
-      <PromptContainerElem connectors={connectors} />,
+      options.has_copilot_generate && <PromptContainerElem connectors={connectors} />,
       // <PromptViewElem connectors={connectors} />,
       // <PromptFieldElem connectors={connectors} />,
       // <PromptActionElem connectors={connectors} />,
@@ -757,7 +757,7 @@ const ToolboxList = ({ expanded }) => {
         <DropMenuElem connectors={connectors} />
       ),
       //  <TableElem connectors={connectors} />,
-      <PromptContainerElem connectors={connectors} />,
+      options.has_copilot_generate && <PromptContainerElem connectors={connectors} />,
       // <PromptViewElem connectors={connectors} />,
       // <PromptFieldElem connectors={connectors} />,
       // <PromptActionElem connectors={connectors} />,
@@ -815,7 +815,7 @@ const ToolboxFilter = ({ expanded }) => {
       <TableElem connectors={connectors} />,
       <DropMenuElem connectors={connectors} />,
       <PageElem connectors={connectors} pages={pages} />,
-      <PromptContainerElem connectors={connectors} />,
+      options.has_copilot_generate && <PromptContainerElem connectors={connectors} />,
       // <PromptViewElem connectors={connectors} />,
       // <PromptFieldElem connectors={connectors} />,
       // <PromptActionElem connectors={connectors} />,
@@ -856,7 +856,7 @@ const ToolboxEdit = ({ expanded }) => {
       <DropMenuElem connectors={connectors} />,
       <TableElem connectors={connectors} />,
       <ViewLinkElem connectors={connectors} options={options} />,
-      <PromptContainerElem connectors={connectors} />,
+      options.has_copilot_generate && <PromptContainerElem connectors={connectors} />,
       // <PromptViewElem connectors={connectors} />,
       // <PromptFieldElem connectors={connectors} />,
       // <PromptActionElem connectors={connectors} />,
@@ -892,7 +892,7 @@ const ToolboxPage = ({ expanded }) => {
       <DropMenuElem connectors={connectors} />,
       <PageElem connectors={connectors} pages={pages} />,
       <TableElem connectors={connectors} />,
-      <PromptContainerElem connectors={connectors} />,
+      options.has_copilot_generate && <PromptContainerElem connectors={connectors} />,
       // <PromptViewElem connectors={connectors} />,
       // <PromptFieldElem connectors={connectors} />,
       // <PromptActionElem connectors={connectors} />,
