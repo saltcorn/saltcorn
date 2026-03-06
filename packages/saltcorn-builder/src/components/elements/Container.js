@@ -185,7 +185,7 @@ const Container = ({
       style: {
         ...parseStyles(customCSS || ""),
         ...reactifyStyles(style, transform, rotate),
-        display,
+        ...(display && display !== "block" ? { display } : {}),
         minHeight: minHeight ? `${minHeight}${minHeightUnit || "px"}` : null,
         ...(bgType === "Image" && bgFileId
           ? {

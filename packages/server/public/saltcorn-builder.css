@@ -157,6 +157,24 @@ div.wrap-builder-elem label {
   outline: 1px dashed #808080;
 }
 
+.kontainer > div {
+  display: inherit;
+  flex-wrap: inherit;
+  flex-direction: inherit;
+  gap: inherit;
+  justify-content: inherit;
+  align-items: inherit;
+  width: 100%;
+}
+.kontainer > div > .canvas {
+  display: inherit;
+  flex-wrap: inherit;
+  flex-direction: inherit;
+  gap: inherit;
+  justify-content: inherit;
+  align-items: inherit;
+}
+
 #builder-main-canvas .builder-columns {
   padding: 4px;
   outline: 1px dashed transparent;

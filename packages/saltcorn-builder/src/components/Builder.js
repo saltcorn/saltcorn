@@ -598,7 +598,7 @@ const DevicePreviewToolbar = ({ previewDevice, setPreviewDevice }) => {
       {devices.map(({ key, icon: Icon, label }) => (
         <button
           key={key}
-          className={`btn ${
+          className={`btn btn-sm ${
             previewDevice === key ? "btn-primary" : "btn-outline-secondary"
           } device-preview-btn`}
           onClick={() => setPreviewDevice(key)}
