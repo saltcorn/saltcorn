@@ -1243,7 +1243,10 @@ router.get(
         contents: {
           type: "card",
           titleAjaxIndicator: true,
-          title: req.__("Configure trigger %s", trigger.name),
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
           subtitle,
           contents: wfCfg,
         },
@@ -1260,7 +1263,10 @@ router.get(
         contents: {
           type: "card",
           titleAjaxIndicator: true,
-          title: req.__("Configure trigger %s", trigger.name),
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
           subtitle,
           contents: renderForm(form, req.csrfToken()),
         },
@@ -1294,7 +1300,10 @@ router.get(
         contents: {
           type: "card",
           titleAjaxIndicator: true,
-          title: req.__("Configure trigger %s", trigger.name),
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
           subtitle,
           contents: {
             widths: [8, 4],
@@ -1368,7 +1377,10 @@ router.get(
         contents: {
           type: "card",
           titleAjaxIndicator: true,
-          title: req.__("Configure trigger %s", trigger.name),
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
           subtitle,
           contents: renderForm(form, req.csrfToken()),
         },

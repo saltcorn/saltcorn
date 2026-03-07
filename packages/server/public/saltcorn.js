@@ -1577,6 +1577,18 @@ function cfu_translate(that) {
   }
 }
 
+$(document).on("click", "span.copy-to-clipboard", function () {
+  var $el = $(this);
+  var text = $el.text().trim();
+
+  navigator.clipboard.writeText(text).then(function () {
+    $el.addClass("copied");
+    setTimeout(function () {
+      $el.removeClass("copied");
+    }, 1000);
+  });
+});
+
 function ensure_script_loaded(src, callback) {
   //https://stackoverflow.com/questions/26331600/load-js-script-only-when-it-has-not-been-loaded-already-and-then-only-once
   let scripts = Array.from(document.querySelectorAll("script")).map(
