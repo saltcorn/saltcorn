@@ -894,7 +894,10 @@ router.get(
             label: req.__("Attributes"),
             key: (r) => attribBadges(r),
           },
-          { label: req.__("Variable name"), key: (t) => code(t.name) },
+          {
+            label: req.__("Variable name"),
+            key: (t) => span({ class: "copy-to-clipboard" }, code(t.name)),
+          },
           ...(table.external || !user_can_edit_tables || table.provider_name
             ? []
             : [
@@ -1206,7 +1209,7 @@ router.get(
             {
               text: span(
                 { class: "fw-bold text-body" },
-                table.name,
+                span({ class: "copy-to-clipboard" }, table.name),
                 table.provider_name && ` (${table.provider_name} provider)`
               ),
             },
