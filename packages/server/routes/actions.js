@@ -360,6 +360,7 @@ const triggerForm = async (req, trigger) => {
         help: { topic: "Actions" },
         attributes: {
           calcOptions: ["when_trigger", action_options],
+          onChange: "$('select[name=action]').val(event.target.value)",
         },
         showIf: {
           when_trigger: Trigger.when_options.filter((t) => t !== "Never"),
@@ -374,6 +375,7 @@ const triggerForm = async (req, trigger) => {
         help: { topic: "Actions" },
         attributes: {
           options: actionsNotRequiringRow,
+          onChange: "$('select[name=action]').val(event.target.value)",
         },
         showIf: {
           when_trigger: "Never",
@@ -389,6 +391,7 @@ const triggerForm = async (req, trigger) => {
         help: { topic: "Actions" },
         attributes: {
           options: allActions,
+          onChange: "$('select[name=action]').val(event.target.value)",
         },
         showIf: {
           when_trigger: "Never",
