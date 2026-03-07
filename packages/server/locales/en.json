@@ -2060,5 +2060,6 @@
 	"Field names are limited to 63 characters": "Field names are limited to 63 characters",
 	"Welcome to %s!": "Welcome to %s!",
 	"Admin dashboard": "Admin dashboard",
-	"All entities list": "All entities list"
+	"All entities list": "All entities list",
+	"Request fluid layout from theme for a wider display for this workflow editor": "Request fluid layout from theme for a wider display for this workflow editor"
 }
