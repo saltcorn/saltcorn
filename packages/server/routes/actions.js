@@ -404,6 +404,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Description"),
         type: "String",
         fieldview: "textarea",
+        attributes: { rows: 2 },
         sublabel: req.__(
           "Description allows you to give more information about the action"
         ),
