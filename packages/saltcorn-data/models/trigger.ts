@@ -828,7 +828,7 @@ class Trigger implements AbstractTrigger {
 
     action_namespaces.push("Other");
 
-    return action_namespaces.map((ns) => {
+    const acts: any[] = action_namespaces.map((ns) => {
       if (ns === "Triggers")
         return { optgroup: true, label: ns, options: triggerActions };
       if (ns === builtInLabel)
@@ -843,12 +843,22 @@ class Trigger implements AbstractTrigger {
         .map((t) => t.name)
         .sort();
       if (ns === "Other" && !noMultiStep) options.push("Multi-step action");
-      if (ns === "Other" && workflow) options.push("Workflow");
+      //if (ns === "Other" && workflow) options.push("Workflow");
       if (ns === "Workflows") {
         options.push(...wfs);
       }
       return { optgroup: true, label: ns, options };
     });
+    if (workflow) {
+      acts.unshift({
+        name: "",
+        disabled: true,
+        label: "Single action:",
+      });
+      acts.unshift("Workflow");
+    }
+
+    return acts;
   }
 }
 
