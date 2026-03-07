@@ -360,6 +360,7 @@ const triggerForm = async (req, trigger) => {
         help: { topic: "Actions" },
         attributes: {
           calcOptions: ["when_trigger", action_options],
+          onChange: "$('select[name=action]').val(event.target.value)",
         },
         showIf: {
           when_trigger: Trigger.when_options.filter((t) => t !== "Never"),
@@ -374,6 +375,7 @@ const triggerForm = async (req, trigger) => {
         help: { topic: "Actions" },
         attributes: {
           options: actionsNotRequiringRow,
+          onChange: "$('select[name=action]').val(event.target.value)",
         },
         showIf: {
           when_trigger: "Never",
@@ -389,6 +391,7 @@ const triggerForm = async (req, trigger) => {
         help: { topic: "Actions" },
         attributes: {
           options: allActions,
+          onChange: "$('select[name=action]').val(event.target.value)",
         },
         showIf: {
           when_trigger: "Never",
@@ -401,6 +404,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("Description"),
         type: "String",
         fieldview: "textarea",
+        attributes: { rows: 2 },
         sublabel: req.__(
           "Description allows you to give more information about the action"
         ),
@@ -442,16 +446,6 @@ const triggerForm = async (req, trigger) => {
         showIf: {
           when_trigger: [...table_triggers, ...additional_triggers_with_onlyif],
         },
-      },
-      {
-        name: "request_fluid_layout",
-        label: req.__("Fluid layout"),
-        sublabel: req.__(
-          "Request fluid layout from theme for a wider display for this workflow editor"
-        ),
-        type: "Bool",
-        parent_field: "configuration",
-        showIf: { action: "Workflow" },
       },
     ],
   });
@@ -518,10 +512,6 @@ router.get(
 
     const form = await triggerForm(req, trigger);
     form.values = trigger;
-    if (trigger.configuration?.request_fluid_layout !== undefined) {
-      form.values.request_fluid_layout =
-        trigger.configuration.request_fluid_layout;
-    }
     form.onChange = `saveAndContinue(this)`;
     send_events_page({
       res,
@@ -1234,12 +1224,14 @@ router.get(
         active_sub: "Triggers",
         sub2_page: "Configure",
         page_title: req.__(`%s configuration`, trigger.name),
-        requestFluidLayout:
-          trigger.configuration?.request_fluid_layout || false,
+        requestFluidLayout: true,
         contents: {
           type: "card",
           titleAjaxIndicator: true,
-          title: req.__("Configure trigger %s", trigger.name),
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
           subtitle,
           contents: wfCfg,
         },
@@ -1256,7 +1248,10 @@ router.get(
         contents: {
           type: "card",
           titleAjaxIndicator: true,
-          title: req.__("Configure trigger %s", trigger.name),
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
           subtitle,
           contents: renderForm(form, req.csrfToken()),
         },
@@ -1290,7 +1285,10 @@ router.get(
         contents: {
           type: "card",
           titleAjaxIndicator: true,
-          title: req.__("Configure trigger %s", trigger.name),
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
           subtitle,
           contents: {
             widths: [8, 4],
@@ -1364,7 +1362,10 @@ router.get(
         contents: {
           type: "card",
           titleAjaxIndicator: true,
-          title: req.__("Configure trigger %s", trigger.name),
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
           subtitle,
           contents: renderForm(form, req.csrfToken()),
         },

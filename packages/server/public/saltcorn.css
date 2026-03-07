@@ -1006,3 +1006,53 @@ input[type="file"].file-has-existing {
   display: flex;
   flex-direction: column-reverse;
 }
+
+span.copy-to-clipboard {
+  position: relative;
+  cursor: pointer;
+}
+
+span.copy-to-clipboard::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 0;
+  height: 100%;
+  width: 2em;
+  background: linear-gradient(to right, transparent, #fff);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+span.copy-to-clipboard:hover::before {
+  opacity: 1;
+}
+
+span.copy-to-clipboard::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9em;
+  line-height: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+span.copy-to-clipboard:hover::after {
+  content: "📋";
+  opacity: 1;
+}
+
+span.copy-to-clipboard.copied::before {
+  opacity: 1;
+}
+
+span.copy-to-clipboard.copied::after {
+  content: "✔";
+  color: #2a9d5c;
+  opacity: 1;
+}
