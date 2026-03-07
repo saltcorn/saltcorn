@@ -6,7 +6,7 @@
  */
 
 const fetch = require("node-fetch");
-const vm = require("vm");
+const { VM } = require("vm2");
 
 import Table from "../models/table";
 import EventLog from "../models/eventlog";
@@ -218,7 +218,7 @@ const run_code = async ({
       } else await getState()!.refresh(false);
     });
   };
-  const f = vm.runInNewContext(`async () => {${code}\n}`, {
+  const sandbox = {
     Table,
     table,
     row,
@@ -266,7 +266,9 @@ const run_code = async ({
     ...(row || {}),
     ...getState()!.eval_context,
     ...rest,
-  });
+  };
+  const vm2 = new VM({ sandbox, eval: false, wasm: false });
+  const f = vm2.run(`async () => {${code}\n}`);
   return await f();
 };
 
