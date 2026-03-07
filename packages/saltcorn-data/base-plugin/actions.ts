@@ -7,6 +7,7 @@
 
 const fetch = require("node-fetch");
 const { VM } = require("vm2");
+const oldVm = require("vm");
 
 import Table from "../models/table";
 import EventLog from "../models/eventlog";
@@ -267,8 +268,14 @@ const run_code = async ({
     ...getState()!.eval_context,
     ...rest,
   };
-  const vm2 = new VM({ sandbox, eval: false, wasm: false });
-  const f = vm2.run(`async () => {${code}\n}`);
+  let f;
+  if (isNode()) {
+    const vm2 = new VM({ sandbox, eval: false, wasm: false });
+    f = vm2.run(`async () => {${code}\n}`);
+  } else {
+    // on mobile, vm2 is not available
+    f = oldVm.runInNewContext(`async () => {${code}\n}`, sandbox);
+  }
   return await f();
 };
 
