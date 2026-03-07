@@ -641,6 +641,7 @@ class Trigger implements AbstractTrigger {
     const { getState } = require("../db/state");
 
     return [
+      "Never",
       "Insert",
       "Update",
       "Validate",
@@ -650,7 +651,6 @@ class Trigger implements AbstractTrigger {
       "Hourly",
       "Often",
       "API call",
-      "Never",
       "PageLoad",
       "Login",
       "LoginFailed",
