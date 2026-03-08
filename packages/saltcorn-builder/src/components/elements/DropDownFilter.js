@@ -124,6 +124,7 @@ const DropDownFilterSettings = () => {
               value={where}
               setProp={setProp}
               propKey="where"
+              validateWhere
             />
           </td>
         </tr>
