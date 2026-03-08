@@ -792,21 +792,20 @@ const StepDrawer = ({
             <button className="btn btn-secondary" onClick={onClose}>
               Close
             </button>
-            {!modal.stepId && (
-              <button
-                className="btn btn-primary"
-                onClick={() =>
-                  innerRef.current
-                    ?.querySelector("form")
-                    ?.dispatchEvent(
-                      new Event("submit", { cancelable: true, bubbles: true })
-                    )
-                }
-                disabled={submitting}
-              >
-                {submitting ? "Saving..." : "Save"}
-              </button>
-            )}
+
+            <button
+              className="btn btn-primary"
+              onClick={() =>
+                innerRef.current
+                  ?.querySelector("form")
+                  ?.dispatchEvent(
+                    new Event("submit", { cancelable: true, bubbles: true })
+                  )
+              }
+              disabled={submitting}
+            >
+              {submitting ? "Saving..." : "Save"}
+            </button>
           </div>
         </>
       ) : null}
@@ -1517,7 +1516,7 @@ const WorkflowEditor = ({ data }) => {
             autoSavingRef.current = true;
             try {
               await submitStepForm(formEl, { closeOnSuccess: false });
-            } catch (err) {
+            } catch (err) {             
               setError(err.message);
             } finally {
               autoSavingRef.current = false;
