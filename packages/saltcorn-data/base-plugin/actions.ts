@@ -235,7 +235,7 @@ const run_code = async ({
     fetch,
     emit_to_client: emit_to_client(user),
     run_js_code,
-    assert,
+    ...(isNode() ? { assert } : {}),
     tryCatchInTransaction: db.tryCatchInTransaction,
     commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
     commitBeginNewTransactionAndRefreshCache: async () => {
