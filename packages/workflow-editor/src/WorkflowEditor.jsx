@@ -732,6 +732,15 @@ const StepDrawer = ({
     if (e?.nativeEvent?.stopImmediatePropagation)
       e.nativeEvent.stopImmediatePropagation();
   }, []);
+  const handleSaveClick = useCallback(() => {
+    const form = innerRef?.current?.querySelector("form");
+    if (!form) return;
+    if (typeof form.requestSubmit === "function") form.requestSubmit();
+    else
+      form.dispatchEvent(
+        new Event("submit", { cancelable: true, bubbles: true })
+      );
+  }, [innerRef]);
   return (
     <div
       ref={outerRef}
@@ -792,21 +801,13 @@ const StepDrawer = ({
             <button className="btn btn-secondary" onClick={onClose}>
               Close
             </button>
-            {!modal.stepId && (
-              <button
-                className="btn btn-primary"
-                onClick={() =>
-                  innerRef.current
-                    ?.querySelector("form")
-                    ?.dispatchEvent(
-                      new Event("submit", { cancelable: true, bubbles: true })
-                    )
-                }
-                disabled={submitting}
-              >
-                {submitting ? "Saving..." : "Save"}
-              </button>
-            )}
+            <button
+              className="btn btn-primary"
+              onClick={handleSaveClick}
+              disabled={submitting}
+            >
+              {submitting ? "Saving..." : "Save"}
+            </button>
           </div>
         </>
       ) : null}
@@ -1524,15 +1525,28 @@ const WorkflowEditor = ({ data }) => {
 
     const actionSelect = formEl.querySelector('[name="wf_action_name"]');
     const allowAutoSave = !!modal?.stepId; // avoid auto-save for brand new steps to prevent insert errors
+
+    const shouldAutoSaveForAction = () => !!allowAutoSave;
+
+    const cancelPendingAutoSave = () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+        autoSaveTimerRef.current = null;
+      }
+      pendingAutosaveSnapshotRef.current = "";
+    };
+
     const handleActionChange = () => {
       if (typeof window !== "undefined" && window.apply_showif)
         window.apply_showif();
+      if (!shouldAutoSaveForAction()) cancelPendingAutoSave();
     };
     if (actionSelect)
       actionSelect.addEventListener("change", handleActionChange);
 
     const scheduleAutoSave = allowAutoSave
       ? () => {
+          if (!shouldAutoSaveForAction()) return;
           if (autoSavingRef.current) return;
           const snapshot = serializeForm(formEl);
           if (!snapshot) return;
@@ -1561,8 +1575,23 @@ const WorkflowEditor = ({ data }) => {
 
     const submitHandler = async (e) => {
       e.preventDefault();
+      const currentSnapshot = serializeForm(formEl);
+      const alreadySaved =
+        shouldAutoSaveForAction() &&
+        !!lastAutosaveSnapshotRef.current &&
+        currentSnapshot === lastAutosaveSnapshotRef.current;
+
+      if (alreadySaved) {
+        setModal(null);
+        clearDrawerState();
+        setSavingModal(false);
+        return;
+      }
+
       try {
+        cancelPendingAutoSave();
         await submitStepForm(formEl);
+        lastAutosaveSnapshotRef.current = currentSnapshot;
       } catch (err) {
         setError(err.message);
       } finally {
@@ -1575,7 +1604,7 @@ const WorkflowEditor = ({ data }) => {
       formEl.addEventListener("change", scheduleAutoSave);
     }
     return () => {
-      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+      cancelPendingAutoSave();
       formEl.removeEventListener("submit", submitHandler);
       if (scheduleAutoSave) {
         formEl.removeEventListener("input", scheduleAutoSave);
@@ -1584,9 +1613,8 @@ const WorkflowEditor = ({ data }) => {
       if (actionSelect)
         actionSelect.removeEventListener("change", handleActionChange);
       lastAutosaveSnapshotRef.current = "";
-      pendingAutosaveSnapshotRef.current = "";
     };
-  }, [modal, serializeForm, submitStepForm]);
+  }, [modal, serializeForm, submitStepForm, clearDrawerState, setModal]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
