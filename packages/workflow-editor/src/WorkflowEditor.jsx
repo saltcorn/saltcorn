@@ -792,20 +792,21 @@ const StepDrawer = ({
             <button className="btn btn-secondary" onClick={onClose}>
               Close
             </button>
-
-            <button
-              className="btn btn-primary"
-              onClick={() =>
-                innerRef.current
-                  ?.querySelector("form")
-                  ?.dispatchEvent(
-                    new Event("submit", { cancelable: true, bubbles: true })
-                  )
-              }
-              disabled={submitting}
-            >
-              {submitting ? "Saving..." : "Save"}
-            </button>
+            {!modal.stepId && (
+              <button
+                className="btn btn-primary"
+                onClick={() =>
+                  innerRef.current
+                    ?.querySelector("form")
+                    ?.dispatchEvent(
+                      new Event("submit", { cancelable: true, bubbles: true })
+                    )
+                }
+                disabled={submitting}
+              >
+                {submitting ? "Saving..." : "Save"}
+              </button>
+            )}
           </div>
         </>
       ) : null}
@@ -847,6 +848,8 @@ const WorkflowEditor = ({ data }) => {
   const [selectedEdgeId, setSelectedEdgeId] = useState(null);
   const autoSaveTimerRef = useRef(null);
   const autoSavingRef = useRef(false);
+  const lastAutosaveSnapshotRef = useRef("");
+  const pendingAutosaveSnapshotRef = useRef("");
   const nodesRef = useRef([]);
   const [headerHost, setHeaderHost] = useState(null);
   const [shellHeight, setShellHeight] = useState(null);
@@ -983,6 +986,24 @@ const WorkflowEditor = ({ data }) => {
     },
     [viewportStorageKey]
   );
+
+  const serializeForm = useCallback((formEl) => {
+    if (!formEl) return "";
+    const fd = new FormData(formEl);
+    const entries = [];
+    for (const [key, value] of fd.entries()) {
+      if (value instanceof File) {
+        entries.push([key, `file:${value.name}:${value.size}`]);
+      } else {
+        entries.push([key, `${value}`]);
+      }
+    }
+    entries.sort((a, b) => {
+      if (a[0] === b[0]) return a[1].localeCompare(b[1]);
+      return a[0].localeCompare(b[0]);
+    });
+    return JSON.stringify(entries);
+  }, []);
 
   const onInit = useCallback((instance) => {
     rfInstanceRef.current = instance;
@@ -1490,6 +1511,8 @@ const WorkflowEditor = ({ data }) => {
     if (!modal) return undefined;
     const formEl = modalRef.current?.querySelector("form");
     if (!formEl) return undefined;
+    lastAutosaveSnapshotRef.current = serializeForm(formEl);
+    pendingAutosaveSnapshotRef.current = "";
     // Re-run show-if logic so action-specific fields render correctly
     setTimeout(() => {
       if (typeof window !== "undefined") {
@@ -1511,12 +1534,22 @@ const WorkflowEditor = ({ data }) => {
     const scheduleAutoSave = allowAutoSave
       ? () => {
           if (autoSavingRef.current) return;
+          const snapshot = serializeForm(formEl);
+          if (!snapshot) return;
+          if (snapshot === lastAutosaveSnapshotRef.current) return;
+          if (snapshot === pendingAutosaveSnapshotRef.current) return;
           if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+          pendingAutosaveSnapshotRef.current = snapshot;
           autoSaveTimerRef.current = setTimeout(async () => {
+            pendingAutosaveSnapshotRef.current = "";
+            const currentSnapshot = serializeForm(formEl);
+            if (!currentSnapshot) return;
+            if (currentSnapshot === lastAutosaveSnapshotRef.current) return;
             autoSavingRef.current = true;
             try {
               await submitStepForm(formEl, { closeOnSuccess: false });
-            } catch (err) {             
+              lastAutosaveSnapshotRef.current = currentSnapshot;
+            } catch (err) {
               setError(err.message);
             } finally {
               autoSavingRef.current = false;
@@ -1550,8 +1583,10 @@ const WorkflowEditor = ({ data }) => {
       }
       if (actionSelect)
         actionSelect.removeEventListener("change", handleActionChange);
+      lastAutosaveSnapshotRef.current = "";
+      pendingAutosaveSnapshotRef.current = "";
     };
-  }, [modal, submitStepForm]);
+  }, [modal, serializeForm, submitStepForm]);
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
