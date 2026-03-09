@@ -8,6 +8,7 @@ const { plugin_with_routes, sleep } = mocks;
 import expression from "../models/expression";
 const {
   eval_expression,
+  eval_statements,
   identifiersInCodepage,
   get_expression_function,
   transform_for_async,
@@ -69,6 +70,23 @@ describe("eval_expression", () => {
     expect(eval_expression("5+2", undefined)).toBe(7);
     expect(eval_expression("5+2", null)).toBe(7);
     expect(eval_expression("5+2")).toBe(7);
+  });
+});
+describe("eval_statements", () => {
+  it("evaluates with null row", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
+    expect(await eval_statements("return x+2", { x: 5 })).toBe(7);
+    expect(await eval_statements("return add3(x)+2", { x: 5 })).toBe(10);
+    expect(
+      await eval_statements(
+        `
+      const row = await Table.findOne("books").getRow({id});
+      return add3(row.pages)+2
+      `,
+        { id: 1 }
+      )
+    ).toBe(972);
   });
 });
 
