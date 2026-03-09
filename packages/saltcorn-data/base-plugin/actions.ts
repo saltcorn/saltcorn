@@ -63,7 +63,7 @@ import type {
   ViewTemplate,
 } from "@saltcorn/types/base_types";
 import type { Row } from "@saltcorn/db-common/internal";
-import { strict as assert } from "node:assert";
+import { strict as assert } from "assert";
 
 //action use cases: field modify, like/rate (insert join), notify, send row to webhook
 // todo add translation
