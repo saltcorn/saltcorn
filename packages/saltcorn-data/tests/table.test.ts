@@ -1495,7 +1495,7 @@ Herman Melville, Whaley`;
       details: "",
     });
     const row = await table.getRow({ name: "Biology" });
-    expect(row?.parent).toBe(1);
+    expect(row?.parent).toBe(2);
   });
 
   it("should create by importing", async () => {
