@@ -932,6 +932,95 @@ const ColorInput = ({ value, onChange }) =>
     </button>
   );
 
+const CodeFieldWithModal = ({ value, onChange, setProp, mode, label, hideLabel }) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const { t } = useTranslation();
+  return (
+    <Fragment>
+      {!hideLabel && (
+        <label>
+          {t(label)}{" "}
+          <i
+            className="fas fa-external-link-alt ms-1"
+            style={{ cursor: "pointer" }}
+            onClick={() => setModalOpen(true)}
+            title={t("Open code popup")}
+          ></i>
+        </label>
+      )}
+      {hideLabel && (
+        <i
+          className="fas fa-external-link-alt ms-1"
+          style={{ cursor: "pointer" }}
+          onClick={() => setModalOpen(true)}
+          title={t("Open code popup")}
+        ></i>
+      )}
+      <MultiLineCodeEditor
+        setProp={setProp}
+        value={value}
+        onChange={onChange}
+        mode={mode}
+      />
+      {modalOpen ? (
+        <div
+          className={`modal fade show`}
+          style={{ display: "block", zIndex: 1055 }}
+          tabIndex={-1}
+          role="dialog"
+          aria-labelledby="codeModalLabel"
+          aria-hidden={false}
+        >
+          <div
+            className="modal-backdrop fade show"
+            style={{ zIndex: 1050 }}
+            onClick={() => setModalOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            className="modal-dialog modal-dialog-centered modal-lg"
+            role="document"
+            style={{ zIndex: 1060 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content code-modal">
+              <div className="modal-header">
+                <h5 className="modal-title" id="codeModalLabel">
+                  {t(label)}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Close"
+                  onClick={() => setModalOpen(false)}
+                />
+              </div>
+              <div className="modal-body">
+                <MultiLineCodeEditor
+                  setProp={setProp}
+                  value={value}
+                  onChange={onChange}
+                  isModalEditor
+                  mode={mode}
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setModalOpen(false)}
+                >
+                  {t("Close")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </Fragment>
+  );
+};
+
 export /**
  * @param {object} props
  * @param {object[]} props.fields
@@ -953,7 +1042,6 @@ const ConfigForm = ({
   onChange,
   tableName,
   fieldName,
-  openPopup
 }) => (
   <div className="form-namespace">
     {fields.map((f, ix) => {
@@ -968,7 +1056,7 @@ const ConfigForm = ({
       }
       return (
         <div key={ix} className="builder-config-field" data-field-name={f.name}>
-          {!isCheckbox(f) ? (
+          {!isCheckbox(f) && f.input_type !== "code" ? (
             <label>
               {f.label || f.name}
               {f.help ? (
@@ -978,7 +1066,7 @@ const ConfigForm = ({
                   table_name={tableName}
                 />
               ) : null}
-              {" "}{openPopup && <i class="fas fa-external-link-alt " onClick={openPopup}></i>}
+              {" "}
             </label>
           ) : null}
           <ConfigField
@@ -1233,25 +1321,33 @@ const ConfigField = ({
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
-    code: () =>
-      field?.attributes?.expression_type === "row" ||
-      field?.attributes?.expression_type === "query" ? (
-        <textarea
-          rows="6"
-          type="text"
-          className={`field-${field?.name} form-control`}
-          value={value}
-          name={field?.name}
-          onChange={(e) => e.target && myOnChange(e.target.value)}
-          spellCheck={false}
-        />
-      ) : (
-        <MultiLineCodeEditor
-          setProp={setProp}
+    code: () => {
+      if (
+        field?.attributes?.expression_type === "row" ||
+        field?.attributes?.expression_type === "query"
+      ) {
+        return (
+          <textarea
+            rows="6"
+            type="text"
+            className={`field-${field?.name} form-control`}
+            value={value}
+            name={field?.name}
+            onChange={(e) => e.target && myOnChange(e.target.value)}
+            spellCheck={false}
+          />
+        );
+      }
+      return (
+        <CodeFieldWithModal
           value={value}
           onChange={myOnChange}
+          setProp={setProp}
+          mode={field?.attributes?.mode}
+          label={field?.label || field?.name || "Code"}
         />
-      ),
+      );
+    },
     select: () => {
       if (field.class?.includes?.("selectizable")) {
         const seloptions = field.options.map((o, ix) =>
@@ -1500,7 +1596,7 @@ const SettingsRow = ({
   valuePostfix,
 }) => {
   const { t } = useTranslation();
-  const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
+  const fullWidth = ["String", "Bool", "textarea"].includes(field.type) || field.input_type === "code";
   const needLabel = field.type !== "Bool";
   const inner = field.canBeFormula ? (
     <OrFormula
@@ -1530,7 +1626,7 @@ const SettingsRow = ({
     <tr>
       {fullWidth ? (
         <td colSpan="2">
-          {needLabel && <label>{field.label}</label>}
+          {needLabel && field.input_type !== "code" && <label>{field.label}</label>}
           {inner}
           {field.sublabel ? (
             <i
