@@ -3182,7 +3182,6 @@ describe("Table recursive query", () => {
       );
       //db.set_sql_logging(false);
 
-      console.log(rows.map((r) => r));
       expect(rows.length).toEqual(3);
       expect(rows[2].name).toBe("Learn about the bees");
       expect(rows[2]._level).toBe(2);
