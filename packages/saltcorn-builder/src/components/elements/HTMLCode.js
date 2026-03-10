@@ -45,7 +45,9 @@ const fields = (mode) => {
     {
       label: "HTML Code",
       name: "text",
-      type: "textarea",
+      input_type: "code",
+      type: "code",
+      attributes: { mode: "text/html" },
       segment_name: "contents",
       onSave: (segment, node_props) => {
         const div = document.createElement("div");
