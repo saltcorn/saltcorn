@@ -89,7 +89,7 @@ describe("Field", () => {
     expect(f.options).toContainEqual({ label: "Leo Tolstoy", value: 2 });
     if (db.isSQLite)
       expect(f.sql_type).toBe(
-        'int constraint "patients_favbook_fkey" references "books" ("id")'
+        'int constraint "patients_favbook_fkey" references "books" ("id") DEFERRABLE'
       );
     else
       expect(f.sql_type).toBe(
