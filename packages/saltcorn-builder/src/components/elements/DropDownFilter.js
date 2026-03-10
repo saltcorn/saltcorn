@@ -4,7 +4,9 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useState, useContext, useEffect } from "react";
+/* globals validate_bool_expression_elem */
+
+import React, { Fragment, useState, useContext, useEffect, useRef } from "react";
 import { useNode } from "@craftjs/core";
 import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
@@ -73,6 +75,7 @@ const DropDownFilterSettings = () => {
   }));
   const options = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
+  const editorRef = useRef(null);
   let select_all_options;
   const field = options.fields.find((f) => f.name === name);
   if (field?.type === "String" && field.attributes?.options)
@@ -121,9 +124,13 @@ const DropDownFilterSettings = () => {
           </td>
           <td>
             <SingleLineEditor
+              ref={editorRef}
               value={where}
               setProp={setProp}
               propKey="where"
+              onInput={(value) =>
+                validate_bool_expression_elem(value, editorRef.current)
+              }
             />
           </td>
         </tr>

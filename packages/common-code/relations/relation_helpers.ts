@@ -12,7 +12,7 @@ export const buildTableCaches = (allTables: any[]) => {
   for (const table of allTables) {
     tableIdCache[table.id] = table;
     tableNameCache[table.name] = table;
-    for (const field of table.foreign_keys) {
+    for (const field of table.foreign_keys || []) {
       if (!fieldCache[field.reftable_name])
         fieldCache[field.reftable_name] = [];
       fieldCache[field.reftable_name].push(field);

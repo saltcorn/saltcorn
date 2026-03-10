@@ -1105,6 +1105,92 @@ function validate_expression_elem(targetOrVal, ref = null) {
   }
 }
 
+/**
+ * Like validate_expression_elem but also checks the expression returns a boolean.
+ * @param {any|string} targetOrVal either the target or the string to validate
+ * @param {any} ref the target when targetOrVal is a string (see builder/MonacoEditor)
+ */
+function validate_bool_expression_elem(targetOrVal, ref = null) {
+  let val = null;
+  let target = null;
+  if (typeof targetOrVal === "string") {
+    val = targetOrVal;
+    target = $(ref);
+  } else {
+    target = targetOrVal;
+    val = target.val();
+  }
+
+  const next = target.next();
+  if (next.hasClass("expr-error")) next.remove();
+  if (!val) return;
+  try {
+    const AsyncFunction = Object.getPrototypeOf(
+      async function () {}
+    ).constructor;
+    AsyncFunction("return " + val);
+  } catch (error) {
+    target.after(`<small class="text-danger font-monospace d-block expr-error">
+    ${error.message}
+  </small>`);
+    return;
+  }
+  // For constant expressions (no runtime variables), check the result is boolean
+  try {
+    const result = Function("return " + val)();
+    if (typeof result !== "boolean") {
+      target.after(`<small class="text-danger font-monospace d-block expr-error">
+    Expression must return a boolean
+  </small>`);
+    }
+  } catch (e) {
+    // Expression uses runtime variables — skip bool type check
+  }
+}
+
+/**
+ * Like validate_expression_elem but also checks the expression returns a plain object.
+ * @param {any|string} targetOrVal either the target or the string to validate
+ * @param {any} ref the target when targetOrVal is a string (see builder/MonacoEditor)
+ */
+function validate_object_expression_elem(targetOrVal, ref = null) {
+  let val = null;
+  let target = null;
+  if (typeof targetOrVal === "string") {
+    val = targetOrVal;
+    target = $(ref);
+  } else {
+    target = targetOrVal;
+    val = target.val();
+  }
+
+  const next = target.next();
+  if (next.hasClass("expr-error")) next.remove();
+  if (!val) return;
+  try {
+    const AsyncFunction = Object.getPrototypeOf(
+      async function () {}
+    ).constructor;
+    AsyncFunction("return " + val);
+  } catch (error) {
+    target.after(`<small class="text-danger font-monospace d-block expr-error">
+    ${error.message}
+  </small>`);
+    return;
+  }
+  // For constant expressions (no runtime variables), check the result is a plain object
+  try {
+    const result = Function("return " + val)();
+    if (typeof result !== "object" || result === null || Array.isArray(result)) {
+      target.after(`<small class="text-danger font-monospace d-block expr-error">
+    Expression must return an object
+  </small>`);
+    }
+  } catch (e) {
+    // Expression uses runtime variables — skip object type check
+  }
+}
+
 function initialize_page() {
   if (window._sc_locale && window.dayjs) dayjs.locale(window._sc_locale);
   const isNode = getIsNode();
