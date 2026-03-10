@@ -6,6 +6,7 @@ const webpack = require("webpack");
 const nodeMocks = {
   "latest-version": join(mocksDir, "node", "latest-version"),
   fs: join(mocksDir, "node", "fs"),
+  assert: join(mocksDir, "node", "assert"),
   "fs-extra": join(mocksDir, "node", "fs-extra"),
   "fs/promises": join(mocksDir, "node", "fs", "promises"),
   v8: join(mocksDir, "node", "v8"),

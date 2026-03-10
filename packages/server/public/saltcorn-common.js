@@ -1651,6 +1651,23 @@ ${value}`;
           $.debounce(
             function (e) {
               const txtval = editor.getValue();
+              const dispatchNativeEvents = () => {
+                if (!el || typeof el.dispatchEvent !== "function") return;
+                ["input", "change"].forEach((eventName) => {
+                  try {
+                    el.dispatchEvent(
+                      new Event(eventName, {
+                        bubbles: true,
+                        cancelable: true,
+                      })
+                    );
+                  } catch (err) {
+                    const fallbackEvt = document.createEvent("Event");
+                    fallbackEvt.initEvent(eventName, true, true);
+                    el.dispatchEvent(fallbackEvt);
+                  }
+                });
+              };
               if ($(el).hasClass("validate-statements")) {
                 try {
                   let AsyncFunction = Object.getPrototypeOf(
@@ -1659,6 +1676,7 @@ ${value}`;
                   AsyncFunction(txtval);
                   $(el).val(txtval);
                   $(el).trigger("change");
+                  dispatchNativeEvents();
                 } catch (e) {
                   const form = $(el).closest("form");
                   const errorArea = form.parent().find(".full-form-error");
@@ -1674,6 +1692,7 @@ ${value}`;
               } else {
                 $(el).val(txtval);
                 $(el).trigger("change");
+                dispatchNativeEvents();
               }
             },
             500,

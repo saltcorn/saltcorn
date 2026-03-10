@@ -26,6 +26,7 @@ const {
   delete_rows,
   emit_event,
   notify_user,
+  run_js_code,
 } = baseactions;
 import utils from "../utils";
 import Notification from "../models/notification";
@@ -465,6 +466,7 @@ describe("base plugin actions", () => {
     expect(notif.user_id).toBe(1);
     expect(notif.body).toBe("World");
   });
+
   it("should have valid configFields", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
@@ -481,6 +483,49 @@ describe("base plugin actions", () => {
 
   //TODO recalculate_stored_fields, set_user_language
 });
+describe("run_js_code", () => {
+  it("should return value", async () => {
+    const rres = await run_js_code.run({
+      configuration: {
+        code: "return 5",
+        run_where: "Server",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(rres).toBe(5);
+  });
+  it("should assert in run_js_code", async () => {
+    const rres = await run_js_code.run({
+      configuration: {
+        code: `assert(1);return 5`,
+        run_where: "Server",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(rres).toBe(5);
+    const rres1 = await run_js_code.run({
+      configuration: {
+        code: `assert.ok(1);return 5`,
+        run_where: "Server",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(rres1).toBe(5);
+  });
+  it("should fail assert in run_js_code", async () => {
+    await expect(
+      (async () =>
+        await run_js_code.run({
+          configuration: {
+            code: `assert(0);return 5`,
+            run_where: "Server",
+          },
+          user: { id: 1, role_id: 1 },
+        }))()
+    ).rejects.toThrow();
+  });
+});
+
 describe("Events and eventlog", () => {
   it("should add custom event", async () => {
     await getState().setConfig("custom_events", [

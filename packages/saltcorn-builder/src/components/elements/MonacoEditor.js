@@ -3,6 +3,24 @@ import optionsCtx from "../context";
 
 import Editor, { useMonaco } from "@monaco-editor/react";
 
+export const mimeToMonacoLanguage = (mode) => {
+  if (!mode) return "typescript";
+  const map = {
+    "text/javascript": "typescript",
+    "application/javascript": "typescript",
+    "text/html": "html",
+    "text/css": "css",
+    "application/json": "json",
+    "text/x-sql": "sql",
+    "text/x-python": "python",
+    "text/x-yaml": "yaml",
+    "text/xml": "xml",
+    "text/x-markdown": "markdown",
+    "text/typescript": "typescript",
+  };
+  return map[mode] || mode;
+};
+
 const setMonacoLanguage = async (monaco, options, isStatements) => {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     noLib: true,
@@ -143,24 +161,36 @@ export const SingleLineEditor = React.forwardRef(
   }
 );
 
-export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = false }) => {
+export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = false, mode }) => {
   const options = React.useContext(optionsCtx);
+  const resolvedLanguage = mimeToMonacoLanguage(mode);
+  const useTypeScriptSetup = resolvedLanguage === "typescript" || resolvedLanguage === "javascript";
 
   const handleEditorWillMount = (monaco) => {
-    setMonacoLanguage(monaco, options, true);
+    if (useTypeScriptSetup) {
+      setMonacoLanguage(monaco, options, true);
+    }
   };
+
+  const handleEditorDidMount = (editor, monaco) => {
+    if (!useTypeScriptSetup) {
+      const model = editor.getModel();
+      if (model) {
+        monaco.editor.setModelLanguage(model, resolvedLanguage);
+      }
+    }
+  };
+
   return (
     <div className="form-control p-0 pt-2">
       <Editor
         height={isModalEditor ? "100%" : "150px"}
         value={value}
         onChange={onChange}
-        defaultLanguage="typescript"
-        //onMount={handleEditorDidMount}
-        //beforeMount={handleEditorWillMount}
+        defaultLanguage={resolvedLanguage}
         options={multiLineEditorOptions}
-        //theme="myCoolTheme"
         beforeMount={handleEditorWillMount}
+        onMount={handleEditorDidMount}
         className={isModalEditor ? "code-modal-form" : ""}
       />
     </div>

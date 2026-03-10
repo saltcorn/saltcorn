@@ -5321,6 +5321,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       path.join(__dirname, "tsdecls/es2017.object.d.ts"),
       path.join(__dirname, "tsdecls/es2017.string.d.ts"),
       path.join(__dirname, "tsdecls/es2019.object.d.ts"),
+      path.join(__dirname, "tsdecls/assert.d.ts"),
       path.join(dbCommonModulePath, "/dbtypes.d.ts"),
       path.join(dataModulePath, "/models/table.d.ts"),
       path.join(dataModulePath, "/models/user.d.ts"),

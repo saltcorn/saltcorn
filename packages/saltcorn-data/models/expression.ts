@@ -758,8 +758,10 @@ async function eval_statements(
   try {
     const { getState } = require("../db/state");
     const evalStr = `async ()=>{${expression}}`;
+    const Table = require("./table");
     const f = runInNewContext(evalStr, {
       console,
+      Table,
       ...getState().eval_context,
       ...context,
     });
