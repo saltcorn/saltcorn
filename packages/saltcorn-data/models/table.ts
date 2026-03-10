@@ -3287,7 +3287,7 @@ class Table implements AbstractTable {
 
     // start sql transaction
     if (!options?.no_transaction) await client.query("BEGIN");
-
+    await client.query("SET CONSTRAINTS ALL DEFERRED");
     const readStream = createReadStream(filePath);
     const returnedRows: any = [];
 

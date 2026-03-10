@@ -641,7 +641,7 @@ class Field implements AbstractField {
         this.name
       )}_fkey" references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
-      }")${on_delete}`;
+      }")${on_delete} DEFERRABLE`;
     } else if (this.type === "File") {
       return "text";
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
@@ -936,7 +936,7 @@ class Field implements AbstractField {
           new_field.name
         )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"("${new_field.refname || "id"}")${
           new_field.on_delete_sql
-        }`
+        } DEFERRABLE`
       );
     } else if (!new_field.is_fkey && this.is_fkey) {
       await db.query(
@@ -966,7 +966,7 @@ class Field implements AbstractField {
           new_field.name
         )}") references ${schema}"${sqlsanitize(
           new_field!.reftable_name
-        )}"("${new_field!.refname}")${new_field.on_delete_sql}`
+        )}"("${new_field!.refname}")${new_field.on_delete_sql} DEFERRABLE`
       );
     } else
       await db.query(
@@ -1232,7 +1232,7 @@ class Field implements AbstractField {
         this.name
       )}") references ${schema}"${sqlsanitize(this.reftable_name)}" ("${this.refname}")${
         this.on_delete_sql
-      }`;
+      } DEFERRABLE`;
       await db.query(q);
     }
   }
