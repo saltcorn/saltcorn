@@ -50,7 +50,17 @@
 
 import React from "react";
 import { createRoot } from "react-dom/client";
+import { polyfill } from "mobile-drag-drop";
+import { scrollBehaviourDragImageTranslateOverride } from "mobile-drag-drop/scroll-behaviour";
 import Builder from "./components/Builder";
+
+
+polyfill({
+  forceApply: true,
+  dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
+});
+
+window.addEventListener("touchmove", function () {}, { passive: false });
 
 /**
  * 
