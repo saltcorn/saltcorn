@@ -45,22 +45,92 @@ const setMonacoLanguage = async (monaco, options, isStatements) => {
     });
 };
 
+// add hidden-prefix
+// line 1 holds the typed prefix, the user edits from line 2 onwards
+const setupVirtualPrefix = (editor, monaco) => {
+  const model = editor.getModel();
+  editor.setHiddenAreas([{ startLineNumber: 1, endLineNumber: 1 }]);
+  editor.onDidChangeCursorPosition((e) => {
+    if (e.position.lineNumber < 2)
+      editor.setPosition({ lineNumber: 2, column: 1 });
+  });
+  editor.onKeyDown((e) => {
+    const pos = editor.getPosition();
+    if (
+      pos.lineNumber === 2 &&
+      pos.column === 1 &&
+      e.keyCode === monaco.KeyCode.Backspace
+    ) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+  // copy without the prefix line
+  editor.addAction({
+    id: "copy-editable-only",
+    label: "Copy Only User Content",
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
+    run: (ed) => {
+      const selection = ed.getSelection();
+      if (selection.isEmpty()) return;
+      const safeSelection = selection.intersectRanges(
+        new monaco.Range(
+          2,
+          1,
+          model.getLineCount(),
+          model.getLineMaxColumn(model.getLineCount())
+        )
+      );
+      if (safeSelection)
+        navigator.clipboard.writeText(model.getValueInRange(safeSelection));
+    },
+  });
+  // select all without the prefix line
+  editor.addAction({
+    id: "select-editable-only",
+    label: "Select Only User Content",
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyA],
+    run: (ed) => {
+      ed.setSelection(
+        new monaco.Range(
+          2,
+          1,
+          model.getLineCount(),
+          model.getLineMaxColumn(model.getLineCount())
+        )
+      );
+    },
+  });
+};
+
 export const SingleLineEditor = React.forwardRef(
-  ({ setProp, value, propKey, onChange, onInput, className }, ref) => {
+  (
+    { setProp, value, propKey, onChange, onInput, className, stateExpr },
+    ref
+  ) => {
     const options = React.useContext(optionsCtx);
+    const activePrefix = stateExpr ? "const _: Row =" : null;
 
     const handleEditorWillMount = (monaco) => {
       setMonacoLanguage(monaco, options, false);
     };
 
     const handleEditorDidMount = (editor, monaco) => {
+      if (activePrefix) {
+        setupVirtualPrefix(editor, monaco);
+        return;
+      }
       if (!onInput) return;
 
       editor.onDidChangeModelContent(() => {
-        const value = editor.getValue();
-        onInput(value);
+        onInput(editor.getValue());
       });
     };
+
+    const isEmpty = !value || value.trim() === "";
+    const editorValue = activePrefix
+      ? `${isEmpty ? "//" : ""} ${activePrefix}\n${value || ""}`
+      : value;
 
     return (
       <div ref={ref} className="form-control p-0 pt-1">
@@ -68,10 +138,15 @@ export const SingleLineEditor = React.forwardRef(
           placeholder={"sdfffsd"}
           className={className || ""}
           height="22px"
-          value={value}
-          onChange={(value) => {
-            onChange && onChange(value);
-            setProp && propKey && setProp((prop) => (prop[propKey] = value));
+          value={editorValue}
+          onChange={(fullValue) => {
+            const userValue = activePrefix
+              ? (fullValue || "").substring((fullValue || "").indexOf("\n") + 1)
+              : fullValue;
+            onChange && onChange(userValue);
+            setProp &&
+              propKey &&
+              setProp((prop) => (prop[propKey] = userValue));
           }}
           defaultLanguage="typescript"
           //onMount={handleEditorDidMount}
@@ -116,7 +191,7 @@ export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = 
         options={multiLineEditorOptions}
         beforeMount={handleEditorWillMount}
         onMount={handleEditorDidMount}
-        className={isModalEditor ? 'code-modal-form' : ''}
+        className={isModalEditor ? "code-modal-form" : ""}
       />
     </div>
   );
@@ -124,7 +199,7 @@ export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = 
 
 const multiLineEditorOptions = {
   fontSize: "14px",
-  minHeight:"80vh",
+  minHeight: "80vh",
   fontWeight: "normal",
   wordWrap: "off",
   lineNumbers: "off",

@@ -15,7 +15,10 @@ const is_sqlite = db.isSQLite;
 
 interface MigrationContents {
   sql?: string | string[];
-  sql_pg?: string | string[];
+  sql_pg?:
+    | string
+    | string[]
+    | (({ schema }: { schema: string }) => string | string[]);
   sql_sqlite?: string | string[];
   js?: () => Promise<void> | void;
 }
@@ -31,7 +34,8 @@ const fudge = is_sqlite
 
 const doMigrationStep = async (
   name: string,
-  contents: MigrationContents
+  contents: MigrationContents,
+  schema: string
 ): Promise<void> => {
   const execMany = async (sqls: string | string[]): Promise<any> => {
     if (Array.isArray(sqls)) {
@@ -49,7 +53,9 @@ const doMigrationStep = async (
     }
   }
   if (contents.sql_pg && !is_sqlite) {
-    await execMany(contents.sql_pg);
+    if (typeof contents.sql_pg === "function")
+      await execMany(contents.sql_pg({ schema }));
+    else await execMany(contents.sql_pg);
   }
   if (contents.sql_sqlite && is_sqlite) {
     await execMany(contents.sql_sqlite);
@@ -99,7 +105,7 @@ const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
           );
           await db.withTransaction(async () => {
             if (!is_sqlite) await db.query(`SET search_path TO "${schema}";`);
-            await doMigrationStep(name, contents);
+            await doMigrationStep(name, contents, schema);
           });
         }
       }
@@ -108,7 +114,7 @@ const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
     for (let [k, v] of Object.entries(
       (window as any).saltcorn.data.migrations
     )) {
-      await doMigrationStep(k, v as MigrationContents);
+      await doMigrationStep(k, v as MigrationContents, schema);
     }
   }
 };

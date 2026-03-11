@@ -1464,6 +1464,39 @@ Herman Melville, Whaley`;
         'Reject row 2 because in field author value "China Mieville" not matched by a value in table books field author.\n',
     });
   });
+  it("CSV import self-join keys", async () => {
+    const table = await Table.create("project", {
+      min_role_read: 100,
+    });
+    await Field.create({
+      table,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      name: "parent",
+      label: "Parent",
+      type: "Key to project",
+      attributes: { summary_field: "name" },
+    });
+    const csv = `id,name,parent
+1,Biology, 2
+2,Homework,`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table project",
+      details: "",
+    });
+    const row = await table.getRow({ name: "Biology" });
+    expect(row?.parent).toBe(2);
+  });
 
   it("should create by importing", async () => {
     //db.set_sql_logging();
@@ -3149,7 +3182,6 @@ describe("Table recursive query", () => {
       );
       //db.set_sql_logging(false);
 
-      console.log(rows.map((r) => r));
       expect(rows.length).toEqual(3);
       expect(rows[2].name).toBe("Learn about the bees");
       expect(rows[2]._level).toBe(2);

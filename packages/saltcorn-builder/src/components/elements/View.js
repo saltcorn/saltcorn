@@ -405,6 +405,7 @@ const ViewSettings = () => {
             value={extra_state_fml}
             propKey="extra_state_fml"
             onChange={setAProp("extra_state_fml")}
+            stateExpr
           />
           {errorString ? (
             <small className="text-danger font-monospace d-block">
