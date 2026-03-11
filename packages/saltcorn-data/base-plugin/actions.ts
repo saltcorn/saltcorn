@@ -270,15 +270,21 @@ const run_code = async ({
     ...getState()!.eval_context,
     ...rest,
   };
-  let f;
   if (isNode()) {
     const vm2 = new VM({ sandbox, eval: false, wasm: false });
-    f = vm2.run(`async () => {${code}\n}`);
+    const result = await vm2.run(`(async () => {${code}\n})()`);
+    if (result === null || result === undefined || typeof result !== "object")
+      return result;
+    try {
+      return JSON.parse(JSON.stringify(result));
+    } catch {
+      return result;
+    }
   } else {
     // on mobile, vm2 is not available
-    f = oldVm.runInNewContext(`async () => {${code}\n}`, sandbox);
+    const f = oldVm.runInNewContext(`async () => {${code}\n}`, sandbox);
+    return await f();
   }
-  return await f();
 };
 
 export = {
