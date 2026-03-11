@@ -702,6 +702,10 @@ class Table implements AbstractTable {
       const { getState } = require("../db/state");
 
       const type = getState().types[pk_type];
+      if (!type)
+        throw new Error(
+          `Cannot find primary key type ${pk_type} in fields ${JSON.stringify(fields)}`
+        );
       pk_sql_type = type.sql_name;
       if (type.primaryKey?.default_sql)
         pk_sql_type = `${type.sql_name} default ${type.primaryKey?.default_sql}`;
@@ -721,7 +725,9 @@ class Table implements AbstractTable {
     options: SelectOptions | TablePack = {}, //TODO not selectoptions
     id?: number
   ): Promise<Table> {
-    const { pk_type, pk_sql_type } = Table.pkSqlType(options.fields);
+    const { pk_type, pk_sql_type } = options.provider_name
+      ? {}
+      : Table.pkSqlType(options.fields);
 
     const schema = db.getTenantSchemaPrefix();
     // create table in database
