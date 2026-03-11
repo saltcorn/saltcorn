@@ -37,7 +37,10 @@ function deproxy(value: any): any {
 
 function vmRun(code: string, sandbox: any): any {
   if (isNode()) {
-    return deproxy(new VM({ sandbox, eval: false, wasm: false }).run(code));
+    const result = new VM({ sandbox, eval: false, wasm: false }).run(code);
+    if (typeof result === "function")
+      return (...args: any[]) => deproxy(result(...args));
+    return deproxy(result);
   } else {
     return runInNewContext(code, sandbox);
   }
@@ -723,7 +726,7 @@ function get_expression_function(
     : `row, {${field_names.join()}}, user`;
   const { getState } = require("../db/state");
   const f = vmRun(`(${args})=>(${expression})`, getState().eval_context);
-  return (row: any, user: any) => deproxy(f(row, row, user));
+  return (row: any, user: any) => f(row, row, user);
 }
 
 /**
@@ -809,7 +812,7 @@ function get_async_expression_function(
   const { expr_string } = transform_for_async(expression, getState().functions);
   const evalStr = `async (${args})=>(${expr_string})`;
   const f = vmRun(evalStr, { ...getState().eval_context, ...extraContext });
-  return async (row: any, user: any) => deproxy(await f(row, row, user));
+  return async (row: any, user: any) => await f(row, row, user);
 }
 
 /**
