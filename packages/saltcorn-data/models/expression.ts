@@ -26,8 +26,7 @@ const { mergeIntoWhere, isNode } = utils;
 const { VM } = require("vm2");
 
 function deproxy(value: any): any {
-  if (value === null || value === undefined) return value;
-  if (typeof value !== "object") return value;
+  if (!value || typeof value !== "object") return value;
   if (typeof value.then === "function") return value.then(deproxy);
   try {
     return JSON.parse(JSON.stringify(value));
@@ -723,12 +722,8 @@ function get_expression_function(
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
   const { getState } = require("../db/state");
-  return (row: any, user: any) =>
-    vmRun(`((${args})=>(${expression}))(row, row, user)`, {
-      ...getState().eval_context,
-      row,
-      user,
-    });
+  const f = vmRun(`(${args})=>(${expression})`, getState().eval_context);
+  return (row: any, user: any) => deproxy(f(row, row, user));
 }
 
 /**
@@ -813,13 +808,8 @@ function get_async_expression_function(
   const { getState } = require("../db/state");
   const { expr_string } = transform_for_async(expression, getState().functions);
   const evalStr = `async (${args})=>(${expr_string})`;
-  return async (row: any, user: any) =>
-    await vmRun(`(${evalStr})(row, row, user)`, {
-      ...getState().eval_context,
-      ...extraContext,
-      row,
-      user,
-    });
+  const f = vmRun(evalStr, { ...getState().eval_context, ...extraContext });
+  return async (row: any, user: any) => deproxy(await f(row, row, user));
 }
 
 /**
