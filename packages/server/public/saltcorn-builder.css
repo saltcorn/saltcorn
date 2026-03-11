@@ -110,6 +110,24 @@ div.toolbar-row:nth-child(1) {
   border-top: none;
 }
 
+div.wrap-builder-elem {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.dnd-poly-drag-image {
+  opacity: 0.5 !important;
+}
+
+.dnd-poly-drag-image.dnd-poly-snapback {
+  transition-property: transform, -webkit-transform !important;
+  transition-duration: 250ms !important;
+  transition-timing-function: ease-out !important;
+}
+
 div.wrap-builder-elem label {
   position: absolute;
   bottom: -1px;

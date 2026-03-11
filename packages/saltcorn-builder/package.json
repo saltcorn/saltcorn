@@ -58,6 +58,7 @@
     "access": "public"
   },
   "dependencies": {
+    "mobile-drag-drop": "^2.3.0-rc.2",
     "styled-components": "^6.3.8"
   },
   "overrides": {

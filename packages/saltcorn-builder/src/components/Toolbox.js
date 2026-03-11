@@ -85,6 +85,7 @@ const WrapElem = ({
     }  d-inline-flex wrap-builder-elem align-items-center justify-content-center`}
     title={title}
     ref={disable ? undefined : (ref) => connectors.create(ref, children)}
+    onContextMenu={(e) => e.preventDefault()}
   >
     <div
       className={`inner ${innerClass || ""}`}
