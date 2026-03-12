@@ -226,6 +226,8 @@ const isDate = function (date: Date): boolean {
  * @category saltcorn-data
  */
 class Table implements AbstractTable {
+  static fixedUser: AbstractUser | null = null;
+
   /** The table name */
   name: string;
 
@@ -292,6 +294,12 @@ class Table implements AbstractTable {
     this.provider_name = o.provider_name;
 
     this.fields = o.fields.map((f) => new Field(f));
+  }
+
+  static subClassWithFixedUser(user: AbstractUser): typeof Table {
+    return class extends this {
+      static fixedUser = user;
+    };
   }
 
   get to_json() {
