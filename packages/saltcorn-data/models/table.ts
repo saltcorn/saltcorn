@@ -226,8 +226,8 @@ const isDate = function (date: Date): boolean {
  * @category saltcorn-data
  */
 class Table implements AbstractTable {
-  static fixedUser: AbstractUser | undefined = undefined;
-
+  static fixed_user: AbstractUser | undefined = undefined;
+  static read_only: boolean = false;
   /** The table name */
   name: string;
 
@@ -296,9 +296,13 @@ class Table implements AbstractTable {
     this.fields = o.fields.map((f) => new Field(f));
   }
 
-  static subClassWithFixedUser(user: AbstractUser): typeof Table {
+  static subClass({
+    user,
+    read_only,
+  }: { user?: AbstractUser; read_only?: boolean } = {}): typeof Table {
     return class extends this {
-      static fixedUser = user;
+      static fixed_user = user || undefined;
+      static read_only = !!read_only;
     };
   }
 
@@ -528,7 +532,7 @@ class Table implements AbstractTable {
    * @returns {boolean}
    */
   is_owner(user: AbstractUser | undefined, row: Row): boolean {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     if (!use_user) return false;
 
     if (this.ownership_formula && this.fields) {
@@ -924,7 +928,7 @@ class Table implements AbstractTable {
     user?: AbstractUser,
     forRead?: boolean
   ): { notAuthorized?: boolean } | undefined {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
 
     const role = use_user?.role_id;
     const min_role = forRead ? this.min_role_read : this.min_role_write;
@@ -1027,7 +1031,7 @@ class Table implements AbstractTable {
     noTrigger?: boolean,
     resultCollector?: any
   ) {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
 
     //Fast truncate if user is admin and where is blank
     const cfields = await Field.find(
@@ -1464,7 +1468,7 @@ class Table implements AbstractTable {
     autoRecalcIterations?: number,
     extraArgs?: any
   ): Promise<string | void> {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     // migrating to options arg
     if (typeof noTrigger === "object") {
       const extraOptions = noTrigger;
@@ -1965,7 +1969,7 @@ class Table implements AbstractTable {
     resultCollector?: object,
     extraArgs?: any
   ): Promise<ResultMessage> {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     try {
       const maybe_err = await this.updateRow(v, id, use_user, {
         noTrigger: false,
@@ -1990,7 +1994,7 @@ class Table implements AbstractTable {
     field_name: string,
     user?: AbstractUser
   ): Promise<void> {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
 
     const row = await this.getRow({ [this.pk_name]: id });
     if (row)
@@ -2068,7 +2072,7 @@ class Table implements AbstractTable {
     row: Row,
     user: AbstractUser
   ): string | undefined {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     for (const field of this.fields) {
       if (
         typeof row[field.name] !== "undefined" &&
@@ -2099,7 +2103,7 @@ class Table implements AbstractTable {
     user?: AbstractUser,
     extraArgs?: GenObj
   ): Promise<any> {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     const trigger = Trigger.findOne({ name: trigger_name });
     return await trigger.runWithoutRow({
       row,
@@ -2138,7 +2142,7 @@ class Table implements AbstractTable {
     noTrigger?: boolean,
     syncTimestamp?: Date
   ): Promise<any> {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     const v_in = { ...v_in0 };
     const fields = this.fields;
     const pk_name = this.pk_name;
@@ -2541,7 +2545,7 @@ class Table implements AbstractTable {
     user?: AbstractUser,
     resultCollector?: object
   ): Promise<{ error: string } | { success: PrimaryKeyValue }> {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
 
     try {
       const id = await this.insertRow(v, use_user, resultCollector);
@@ -2781,7 +2785,7 @@ class Table implements AbstractTable {
     version: number,
     user?: AbstractUser
   ): Promise<void> {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
 
     const row = await db.selectOne(`${db.sqlsanitize(this.name)}__history`, {
       [this.pk_name]: id,
@@ -2805,7 +2809,7 @@ class Table implements AbstractTable {
     id: PrimaryKeyValue,
     user?: AbstractUser
   ): Promise<void> {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { [this.pk_name]: id },
@@ -2838,7 +2842,7 @@ class Table implements AbstractTable {
     id: PrimaryKeyValue,
     user?: AbstractUser
   ): Promise<void> {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
 
     const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
@@ -4005,7 +4009,7 @@ ${rejectDetails}`,
   }
 
   ownership_formula_where(user: AbstractUser) {
-    let use_user = (this.constructor as typeof Table).fixedUser || user;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     if (!this.ownership_formula) return {};
     const wh = jsexprToWhere(
       this.ownership_formula,
