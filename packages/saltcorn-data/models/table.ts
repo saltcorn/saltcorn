@@ -738,6 +738,8 @@ class Table implements AbstractTable {
     options: SelectOptions | TablePack = {}, //TODO not selectoptions
     id?: number
   ): Promise<Table> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
     const { pk_type, pk_sql_type } = options.provider_name
       ? {}
       : Table.pkSqlType(options.fields);
@@ -825,6 +827,9 @@ class Table implements AbstractTable {
    * @param table
    */
   static async createInDb(table: Table): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const is_sqlite = db.isSQLite;
     const schema = db.getTenantSchemaPrefix();
     const { pk_sql_type } = Table.pkSqlType(table.fields);
@@ -864,6 +869,9 @@ class Table implements AbstractTable {
    */
   // tbd check all other tables related to table description
   async delete(only_forget: boolean = false): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
     await this.update({ ownership_field_id: null });
@@ -902,6 +910,9 @@ class Table implements AbstractTable {
    * Reset Sequence
    */
   async resetSequence() {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const fields = this.fields;
     const pk = fields.find((f) => f.primary_key);
     if (!pk) {
@@ -970,6 +981,9 @@ class Table implements AbstractTable {
   }
 
   private async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     await db.tryCatchInTransaction(
       async () => {
         if (ids.length > 0) {
@@ -1032,6 +1046,8 @@ class Table implements AbstractTable {
     resultCollector?: any
   ) {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
 
     //Fast truncate if user is admin and where is blank
     const cfields = await Field.find(
@@ -1469,6 +1485,8 @@ class Table implements AbstractTable {
     extraArgs?: any
   ): Promise<string | void> {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
     // migrating to options arg
     if (typeof noTrigger === "object") {
       const extraOptions = noTrigger;
@@ -1788,6 +1806,9 @@ class Table implements AbstractTable {
   }
 
   static async analyze_all_indexed_tables() {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const tables = await Table.find({}, { cached: true });
     const schemaPrefix = db.getTenantSchemaPrefix();
 
@@ -1797,6 +1818,9 @@ class Table implements AbstractTable {
   }
 
   async insert_history_row(v0: Row, retry = 0) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     // sometimes there is a race condition in history inserts
     // https://dba.stackexchange.com/questions/212580/concurrent-transactions-result-in-race-condition-with-unique-constraint-on-inser
     // solution: retry 3 times, if fails run with on conflict do nothing
@@ -1862,6 +1886,9 @@ class Table implements AbstractTable {
     updates: Row,
     syncTimestamp?: Date
   ) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     await db.tryCatchInTransaction(
       async () => {
         const schema = db.getTenantSchemaPrefix();
@@ -1907,6 +1934,9 @@ class Table implements AbstractTable {
     oldLastModified: Date,
     syncTimestamp?: Date | number
   ) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     await db.tryCatchInTransaction(
       async () => {
         const schema = db.getTenantSchemaPrefix();
@@ -1969,6 +1999,9 @@ class Table implements AbstractTable {
     resultCollector?: object,
     extraArgs?: any
   ): Promise<ResultMessage> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     let use_user = (this.constructor as typeof Table).fixed_user || user;
     try {
       const maybe_err = await this.updateRow(v, id, use_user, {
@@ -1995,6 +2028,8 @@ class Table implements AbstractTable {
     user?: AbstractUser
   ): Promise<void> {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
 
     const row = await this.getRow({ [this.pk_name]: id });
     if (row)
@@ -2143,6 +2178,8 @@ class Table implements AbstractTable {
     syncTimestamp?: Date
   ): Promise<any> {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
     const v_in = { ...v_in0 };
     const fields = this.fields;
     const pk_name = this.pk_name;
@@ -2345,6 +2382,9 @@ class Table implements AbstractTable {
     changedFields?: Set<string>,
     keyChanged: boolean = false
   ) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const state = require("../db/state").getState();
     const pk_name = this.pk_name;
     state.log(
@@ -2546,6 +2586,8 @@ class Table implements AbstractTable {
     resultCollector?: object
   ): Promise<{ error: string } | { success: PrimaryKeyValue }> {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
 
     try {
       const id = await this.insertRow(v, use_user, resultCollector);
@@ -2708,6 +2750,9 @@ class Table implements AbstractTable {
   }
 
   private async create_sync_info_table(): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     await db.tryCatchInTransaction(
       async () => {
         const schemaPrefix = db.getTenantSchemaPrefix();
@@ -2757,6 +2802,9 @@ class Table implements AbstractTable {
   }
 
   private async drop_sync_table(): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     await db.tryCatchInTransaction(
       async () => {
         const schemaPrefix = db.getTenantSchemaPrefix();
@@ -2786,6 +2834,8 @@ class Table implements AbstractTable {
     user?: AbstractUser
   ): Promise<void> {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
 
     const row = await db.selectOne(`${db.sqlsanitize(this.name)}__history`, {
       [this.pk_name]: id,
@@ -2810,6 +2860,9 @@ class Table implements AbstractTable {
     user?: AbstractUser
   ): Promise<void> {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { [this.pk_name]: id },
@@ -2843,6 +2896,8 @@ class Table implements AbstractTable {
     user?: AbstractUser
   ): Promise<void> {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
 
     const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
@@ -2875,6 +2930,9 @@ class Table implements AbstractTable {
   async compress_history(
     options: { interval_secs?: number; delete_unchanged?: boolean } | number
   ) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const interval_secs =
       typeof options === "number" ? options : options?.interval_secs;
     const schemaPrefix = db.getTenantSchemaPrefix();
@@ -2925,6 +2983,8 @@ class Table implements AbstractTable {
    */
   private async drop_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
 
     await db.query(`
       drop table ${schemaPrefix}"${sqlsanitize(this.name)}__history";`);
@@ -2936,6 +2996,9 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   async rename(new_name: string): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     //in transaction
     if (db.isSQLite)
       throw new InvalidAdminAction("Cannot rename table on SQLite");
@@ -2972,6 +3035,9 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   async update(new_table_rec: Partial<Table>): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     if (new_table_rec.ownership_field_id === ("" as any))
       delete new_table_rec.ownership_field_id;
     const existing = Table.findOne({ id: this.id });
@@ -3026,6 +3092,9 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   async enable_fkey_constraints(): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const fields = this.fields;
     for (const f of fields) await f.enable_fkey_constraint(this);
   }
@@ -3040,6 +3109,9 @@ class Table implements AbstractTable {
     name: string,
     filePath: string
   ): Promise<ResultMessage> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     let rows;
     const state = await require("../db/state").getState();
     try {
@@ -3238,6 +3310,10 @@ class Table implements AbstractTable {
       delimiter?: string;
     }
   ): Promise<ResultMessage> {
+    //todo user check
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     if (typeof options === "boolean") {
       options = { recalc_stored: options };
     }
@@ -3621,6 +3697,9 @@ ${rejectDetails}`,
   }
 
   async import_json_history_file(filePath: string) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     return await async_json_stream(filePath, async (row: Row) => {
       await this.insert_history_row(row);
     });
@@ -3636,6 +3715,9 @@ ${rejectDetails}`,
     filePath: string,
     skip_first_data_row?: boolean
   ): Promise<ResultMessage> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
@@ -4440,6 +4522,9 @@ ${rejectDetails}`,
     );
   }
   async repairCompositePrimary() {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const primaryKeys = this.fields.filter((f) => f.primary_key);
     const nonSerialPKS = primaryKeys.some((f) => f.attributes?.NonSerial);
     const schemaPrefix = db.getTenantSchemaPrefix();
@@ -4497,6 +4582,8 @@ where table_schema = '${db.getTenantSchema() || "public"}'
   }
 
   async move_include_fts_to_search_context() {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
     const include_fts_fields = this.fields.filter(
       (f: Field) => f.attributes?.include_fts
     );
