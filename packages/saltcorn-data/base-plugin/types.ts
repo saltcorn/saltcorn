@@ -47,11 +47,13 @@ const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
 const { select_by_code } = require("./fieldviews");
 const PlainDate = require("@saltcorn/plain-date");
 
-const isdef = (x: any) => (typeof x === "undefined" || x === null ? false : true);
+const isdef = (x: any) =>
+  typeof x === "undefined" || x === null ? false : true;
 
 const eqStr = (x: any, y: any) => `${x}` === `${y}`;
 
-const or_if_undefined = (x: any, def: any) => (typeof x === "undefined" ? def : x);
+const or_if_undefined = (x: any, def: any) =>
+  typeof x === "undefined" ? def : x;
 
 const number_slider = (type: any) => ({
   configFields: (field: any) => [
@@ -65,7 +67,14 @@ const number_slider = (type: any) => ({
   isEdit: true,
   description: "Input on a slider between defined maximum and minimum values",
   blockDisplay: true,
-  run: (nm: any, v: any, attrs: any = {}, cls: any, required: any, field: any) =>
+  run: (
+    nm: any,
+    v: any,
+    attrs: any = {},
+    cls: any,
+    required: any,
+    field: any
+  ) =>
     input({
       type: "range",
       class: ["form-control", cls],
@@ -101,7 +110,15 @@ const range_interval = (type: any) => ({
   description:
     "User can pick filtered interval by moving low and high controls on a slider.",
   /* https://stackoverflow.com/a/31083391 */
-  run: (nm: any, v: any, attrs: any = {}, cls: any, required: any, field: any, state: any = {}) => {
+  run: (
+    nm: any,
+    v: any,
+    attrs: any = {},
+    cls: any,
+    required: any,
+    field: any,
+    state: any = {}
+  ) => {
     return section(
       { class: ["range-slider", cls] },
       span({ class: "rangeValues" }),
@@ -431,7 +448,15 @@ const number_limit = (direction: any) => ({
   configFields: [
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
-  run: (nm: any, v: any, attrs: any = {}, cls: any, required: any, field: any, state: any = {}) => {
+  run: (
+    nm: any,
+    v: any,
+    attrs: any = {},
+    cls: any,
+    required: any,
+    field: any,
+    state: any = {}
+  ) => {
     const onChange = `${attrs.preOnChange || ""}set_state_field('_${direction}_${nm}', this.value, this)`;
     return attrs?.stepper_btns
       ? number_stepper(
@@ -467,7 +492,15 @@ const float_number_limit = (direction: any) => ({
   isEdit: false,
   isFilter: true,
   blockDisplay: true,
-  run: (nm: any, v: any, attrs: any = {}, cls: any, required: any, field: any, state: any = {}) =>
+  run: (
+    nm: any,
+    v: any,
+    attrs: any = {},
+    cls: any,
+    required: any,
+    field: any,
+    state: any = {}
+  ) =>
     input({
       type: "number",
       class: ["form-control", cls],
@@ -483,7 +516,14 @@ const float_number_limit = (direction: any) => ({
     }),
 });
 
-const number_stepper = (name: any, v: any, attrs: any, cls: any, fieldname: any, id: any) =>
+const number_stepper = (
+  name: any,
+  v: any,
+  attrs: any,
+  cls: any,
+  fieldname: any,
+  id: any
+) =>
   div(
     { class: "input-group" },
     button(
@@ -844,7 +884,9 @@ const string = {
       ? is.one_of(options.split(","))
       : typeof options === "undefined"
         ? is.str
-        : is.one_of(options.map((o: any) => (typeof o === "string" ? o : o.name))),
+        : is.one_of(
+            options.map((o: any) => (typeof o === "string" ? o : o.name))
+          ),
   /**
    * @namespace
    * @category saltcorn-data
@@ -859,7 +901,13 @@ const string = {
     as_text: {
       isEdit: false,
       description: "Show the value with no other formatting",
-      run: (s: any) => text_attr(s || ""),
+      configFields: [
+        { name: "copy_to_clipbaord", label: "Copy to clipboard", type: "Bool" },
+      ],
+      run: (s: any, _req: any, attrs: any = {}) =>
+        attrs?.copy_to_clipbaord
+          ? span({ class: "copy-to-clipboard" }, text_attr(s || ""))
+          : text_attr(s || ""),
     },
     preFormatted: {
       isEdit: false,
@@ -884,7 +932,7 @@ const string = {
         { name: "copy_btn", label: "Copy button", type: "Bool" },
       ],
       description: "Show as a monospace block",
-      run: (s: any, req: any, attrs: any = {}) => {
+      run: (s: any, _req: any, attrs: any = {}) => {
         if (!s) return "";
         const copy_btn = attrs.copy_btn
           ? button(
@@ -990,7 +1038,8 @@ const string = {
     img_from_url: {
       isEdit: false,
       description: "Show an image from the URL in the field value",
-      run: (s: any, req: any, attrs: any) => img({ src: text(s || ""), style: "width:100%" }),
+      run: (s: any, req: any, attrs: any) =>
+        img({ src: text(s || ""), style: "width:100%" }),
     },
     /**
      * @namespace
@@ -1074,7 +1123,14 @@ const string = {
           type: "Bool",
         },
       ],
-      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
+      run: (
+        nm: any,
+        v: any,
+        attrs: any,
+        cls: any,
+        required: any,
+        field: any
+      ) =>
         attrs.options && (attrs.options.length > 0 || !required)
           ? attrs.readonly
             ? input({
@@ -1447,7 +1503,14 @@ const string = {
         },
       ],
       description: "Pick from a radio group. Field must have options",
-      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
+      run: (
+        nm: any,
+        v: any,
+        attrs: any,
+        cls: any,
+        required: any,
+        field: any
+      ) =>
         attrs.options
           ? radio_group({
               class: cls,
@@ -1475,7 +1538,14 @@ const string = {
           label: "Inline",
         },
       ],
-      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
+      run: (
+        nm: any,
+        v: any,
+        attrs: any,
+        cls: any,
+        required: any,
+        field: any
+      ) =>
         attrs && attrs.options
           ? checkbox_group({
               class: cls,
@@ -1505,7 +1575,14 @@ const string = {
       ],
       blockDisplay: true,
       description: "Password input type, characters are hidden when typed",
-      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
+      run: (
+        nm: any,
+        v: any,
+        attrs: any,
+        cls: any,
+        required: any,
+        field: any
+      ) => {
         const pwinput = input({
           type: "password",
           disabled: attrs.disabled,
@@ -1667,7 +1744,14 @@ const int = {
           type: "Bool",
         },
       ],
-      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
+      run: (
+        nm: any,
+        v: any,
+        attrs: any,
+        cls: any,
+        required: any,
+        field: any
+      ) => {
         const id = `input${text_attr(nm)}`;
         const name = text_attr(nm);
         return attrs?.stepper_btns
@@ -1749,7 +1833,15 @@ const int = {
       ],
       isEdit: true,
       blockDisplay: true,
-      run: (nm: any, v: any, attrs: any = {}, cls: any, required: any, field: any, state: any = {}) => {
+      run: (
+        nm: any,
+        v: any,
+        attrs: any = {},
+        cls: any,
+        required: any,
+        field: any,
+        state: any = {}
+      ) => {
         //https://codepen.io/pezmotion/pen/RQERdm
         return div(
           { class: "editStarRating" },
@@ -1783,7 +1875,14 @@ const int = {
         const roles = await User.get_roles();
         field.options = roles;
       },
-      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
+      run: (
+        nm: any,
+        v: any,
+        attrs: any,
+        cls: any,
+        required: any,
+        field: any
+      ) => {
         return select(
           {
             class: [
@@ -2367,7 +2466,8 @@ const date = {
             !v.match(/\d{4}-\d{2}-\d{2}/)
           ) {
             const d = moment(v, "L LT", attrs.locale).toDate();
-            if (d instanceof Date && !isNaN(d as any)) return new PlainDate(d as any);
+            if (d instanceof Date && !isNaN(d as any))
+              return new PlainDate(d as any);
           }
         }
         try {
@@ -2499,7 +2599,14 @@ const bool = {
           type: "Bool",
         },
       ],
-      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
+      run: (
+        nm: any,
+        v: any,
+        attrs: any,
+        cls: any,
+        required: any,
+        field: any
+      ) => {
         const onChange =
           attrs.isFilter && v
             ? `unset_state_field('${nm}', this)`
@@ -2520,7 +2627,14 @@ const bool = {
     switch: {
       isEdit: true,
       description: "Edit with a switch",
-      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
+      run: (
+        nm: any,
+        v: any,
+        attrs: any,
+        cls: any,
+        required: any,
+        field: any
+      ) => {
         const onChange =
           attrs.isFilter && v
             ? `unset_state_field('${nm}', this)`
@@ -2574,7 +2688,14 @@ const bool = {
           type: "Bool",
         },
       ],
-      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) =>
+      run: (
+        nm: any,
+        v: any,
+        attrs: any,
+        cls: any,
+        required: any,
+        field: any
+      ) =>
         attrs.disabled
           ? !(!isdef(v) || v === null)
             ? ""
@@ -2629,7 +2750,14 @@ const bool = {
           },
         },
       ],
-      run: (nm: any, v: any, attrs: any, cls: any, required: any, field: any) => {
+      run: (
+        nm: any,
+        v: any,
+        attrs: any,
+        cls: any,
+        required: any,
+        field: any
+      ) => {
         let yes, no;
         switch (attrs.icons) {
           case "Arrow":
