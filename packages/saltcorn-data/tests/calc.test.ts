@@ -570,7 +570,7 @@ describe("single half-h joinfields in stored calculated fields", () => {
   it("updates", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
-    const bookRows = await patients.getRows({});
+    const bookRows = await patients.getJoinedRows({});
     for (const row of bookRows) {
       await patients.updateRow({}, row.id);
     }
@@ -578,9 +578,12 @@ describe("single half-h joinfields in stored calculated fields", () => {
   it("check", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
-    const bookrow = await patients.getRow({ id: 1 });
+    const bookrow = await patients.getJoinedRow({ where: { id: 1 } });
 
     expect(bookrow?.favpagesh).toBe(967);
+    const bookrow1 = await patients.getRow({ id: 1 });
+
+    expect(bookrow1?.favpagesh).toBe(967);
   });
 });
 describe("bool arrays in stored calculated JSON fields", () => {
