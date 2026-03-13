@@ -1014,6 +1014,21 @@ class Field implements AbstractField {
     );
     const calc_joinfields: Array<CalcJoinfield> = [];
     Object.values(joinFields).forEach((jf: any) => {
+      if (!jf.rename_object) {
+        //half-h
+        const myField = table.getField(jf.ref);
+        if (!myField) return;
+        const targetTable = Table.findOne({ name: myField.reftable_name });
+        if (!targetTable) return;
+
+        calc_joinfields.push({
+          targetTable: targetTable.name,
+          field: myField.name,
+          targetField: jf.target,
+        });
+
+        return;
+      }
       const path = [...jf.rename_object];
       if (path.length === 2) {
         const myField = table.getField(path[0]);
