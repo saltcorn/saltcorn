@@ -1181,7 +1181,11 @@ function validate_object_expression_elem(targetOrVal, ref = null) {
   // For constant expressions (no runtime variables), check the result is a plain object
   try {
     const result = Function("return " + val)();
-    if (typeof result !== "object" || result === null || Array.isArray(result)) {
+    if (
+      typeof result !== "object" ||
+      result === null ||
+      Array.isArray(result)
+    ) {
       target.after(`<small class="text-danger font-monospace d-block expr-error">
     Expression must return an object
   </small>`);
@@ -1772,7 +1776,9 @@ ${value}`;
     if (window.mermaid) {
       $(e.target)
         .find(".mermaid[mm-src]")
-        .each(function(){$(this).html($(this).attr("mm-src"))})
+        .each(function () {
+          $(this).html($(this).attr("mm-src"));
+        })
         .removeAttr("data-processed");
       mermaid.init(undefined, $(e.target).find(".mermaid"));
     }
@@ -1789,6 +1795,26 @@ ${value}`;
     $elem.removeClass("file-has-existing");
     $elem.parent().find("span.file-upload-exising").remove();
   });
+  if (window._sc_is_admin) {
+    $("[data-sc-embed-viewname]").each(function () {
+      const viewname = $(this).attr("data-sc-embed-viewname");
+      if (
+        $(this).prev().hasClass("admin-edit-bar") ||
+        $(this).parents("#saltcorn-builder").length
+      )
+        return;
+      const url = `/viewedit/config/${viewname}`;
+
+      $(this).popover({
+        html: true,
+        content: `<a href="${url}" target="_blank">Configure ${viewname}</a>`,
+        trigger: "hover focus",
+        placement: "auto",
+        delay: { show: 0, hide: 250 },
+        container: this,
+      });
+    });
+  }
 } //initialize_page
 
 $(initialize_page);
@@ -2206,7 +2232,7 @@ function buildToast(txt, type, spin, title, set_id) {
     <div 
       class="toast show"
       id="${rndid}"
-      toast-title="${escapeHtml(title||"")}"
+      toast-title="${escapeHtml(title || "")}"
       rendered="client-side",
       role="alert"
       aria-live="assertive"

@@ -103,7 +103,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
         locale ? `, _sc_locale = "${locale}"` : ""
       }, _sc_lightmode = ${JSON.stringify(
         state.getLightDarkMode?.(req.user) || "light"
-      )}, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16);</script>`,
+      )}, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16)${req?.user?.role_id===1 ? `, _sc_is_admin = true`:""};</script>`,
     },
     { css: `/static_assets/${version_tag}/saltcorn.css` },
     { script: `/static_assets/${version_tag}/saltcorn-common.js` },
