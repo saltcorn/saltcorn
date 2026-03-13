@@ -461,11 +461,17 @@ describe("calculated field dependencies", () => {
     });
 
     const id = await table.insertRow({ x: 0 });
-    const row = await table.getRow({id});
+    const row = await table.getRow({ id });
     expect(row!.xp1ns).toBe(1);
     expect(row!.xp1s).toBe(1);
     expect(row!.xp2ns).toBe(2);
     //expect(row!.xp2s).toBe(2); => null
+    await table.updateRow({ x: 10 }, id);
+    const row1 = await table.getRow({ id });
+    expect(row1!.xp1ns).toBe(11);
+    expect(row1!.xp1s).toBe(11);
+    expect(row1!.xp2ns).toBe(12);
+    
   });
 });
 describe("single joinfields in stored calculated fields", () => {
