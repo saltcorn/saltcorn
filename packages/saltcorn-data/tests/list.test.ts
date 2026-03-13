@@ -1240,8 +1240,7 @@ describe("dual joinfielss with fieldviews", () => {
       table_id: Table.findOne("books")!.id,
       attributes: {},
     });
-    const vres1 = await view.run({}, mockReqRes);
-    console.log(vres1);
+    const vres1 = await view.run({}, mockReqRes);    
     expect(vres1).toContain("FOO1BAR1");
   });
 });
