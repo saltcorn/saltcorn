@@ -1820,7 +1820,7 @@ const standardBlockDispatch = (
       else return fvrun;
     },
     join_field(jf: any) {
-      const {
+      let {
         join_field,
         field_type,
         fieldview,
@@ -1846,6 +1846,10 @@ const standardBlockDispatch = (
           : "";
       }
       let fvRes;
+      if (!field_type) {
+        const field = table.getField(join_field);
+        if (field) field_type = (field?.type as any)?.name;
+      }
       if (field_type && fieldview) {
         const type = getState().types[field_type];
         if (type && getState().types[field_type]) {
