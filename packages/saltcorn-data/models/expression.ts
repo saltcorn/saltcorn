@@ -801,10 +801,10 @@ async function eval_statements(
  */
 function get_async_expression_function(
   expression: string,
-  fields: Array<Field>,
+  fields: Array<Field | string>,
   extraContext = {}
 ): Function {
-  const field_names = fields.map((f) => f.name);
+  const field_names = fields.map((f) => (typeof f === "string" ? f : f.name));
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
@@ -943,7 +943,12 @@ const apply_calculated_fields_stored = async (
       let f: Function;
       try {
         if (!field.expression) throw new Error(`The fields has no expression`);
-        f = get_async_expression_function(field.expression, fields);
+        f = get_async_expression_function(field.expression, [
+          ...fields,
+          ...Object.keys(row)
+            .filter((k) => k.includes("Ⱶ"))
+            .map((k) => k),
+        ]);
       } catch (e: any) {
         e.message = `Error in calculating "${field.name}": ${e.message}`;
         throw e;
