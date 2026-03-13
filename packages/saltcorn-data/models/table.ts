@@ -372,8 +372,8 @@ class Table implements AbstractTable {
     )
       return <Table>where;
     // todo add string & number as possible types for where
-    if (typeof where === "string") return Table.findOne({ name: where });
-    if (typeof where === "number") return Table.findOne({ id: where });
+    if (typeof where === "string") return this.findOne({ name: where });
+    if (typeof where === "number") return this.findOne({ id: where });
     if (typeof where === "undefined") return null;
     if (where === null) return null;
 
@@ -393,8 +393,8 @@ class Table implements AbstractTable {
           : satisfies(where)
     );
     if (tbl?.provider_name) {
-      return new Table(structuredClone(tbl)).to_provided_table();
-    } else return tbl ? new Table(structuredClone(tbl)) : null;
+      return new this(structuredClone(tbl)).to_provided_table();
+    } else return tbl ? new this(structuredClone(tbl)) : null;
   }
 
   /**
@@ -527,7 +527,7 @@ class Table implements AbstractTable {
 
   /**
    * Check if user is owner of row
-   * @param use_user - user
+   * @param user - user
    * @param row - table row
    * @returns {boolean}
    */
@@ -931,7 +931,7 @@ class Table implements AbstractTable {
    * update Where with Ownership
    * @param where
    * @param fields
-   * @param use_user
+   * @param user
    * @param forRead
    */
   updateWhereWithOwnership(
@@ -1036,7 +1036,7 @@ class Table implements AbstractTable {
    * ```
    *
    * @param where - condition
-   * @param use_user - optional user, if null then no authorization will be checked
+   * @param user - optional user, if null then no authorization will be checked
    * @returns
    */
   async deleteRows(
@@ -1248,7 +1248,10 @@ class Table implements AbstractTable {
   ): Promise<Row | null> {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = selopts;
-    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || forUser;
+   
+    const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     this.normalise_fkey_values(where);
     const row = await db.selectMaybeOne(
       this.name,
@@ -1265,9 +1268,10 @@ class Table implements AbstractTable {
         );
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
-        if (row[owner_field.name] !== (forUser as AbstractUser).id) return null;
+        if (row[owner_field.name] !== (use_forUser as AbstractUser).id)
+          return null;
       } else if (this.ownership_formula || this.name === "users") {
-        if (!this.is_owner(forUser, row)) return null;
+        if (!this.is_owner(use_forUser, row)) return null;
       } else return null; //no ownership
     }
     return apply_calculated_fields(
@@ -1452,7 +1456,7 @@ class Table implements AbstractTable {
    * ```
    * @param v_in - columns with values to update
    * @param id - id value
-   * @param use_user - user
+   * @param user - user
    * @param noTrigger
    * @param resultCollector
    * @param restore_of_version
@@ -2101,7 +2105,7 @@ class Table implements AbstractTable {
   /**
    *
    * @param row
-   * @param use_user
+   * @param user
    */
   private check_field_write_role(
     row: Row,
@@ -2164,7 +2168,7 @@ class Table implements AbstractTable {
    * ```
    *
    * @param v_in
-   * @param use_user
+   * @param user
    * @param resultCollector
    * @param noTrigger
    * @param syncTimestamp
