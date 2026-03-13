@@ -1173,5 +1173,76 @@ describe("tree lists", () => {
     else expect(vres1).toContain("<table");
   });
 });
-
+describe("dual joinfielss with fieldviews", () => {
+  it("should show", async () => {
+    const view = new View({
+      name: "booklistdualfieldviews",
+      description: "",
+      viewtemplate: "List",
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                above: [
+                  {
+                    type: "join_field",
+                    block: false,
+                    fieldview: "show_with_html",
+                    textStyle: "",
+                    join_field: "publisher.id",
+                    configuration: {
+                      code: "FOO",
+                    },
+                  },
+                  {
+                    type: "join_field",
+                    block: false,
+                    fieldview: "show_with_html",
+                    textStyle: "",
+                    join_field: "publisher.id",
+                    configuration: {
+                      code: "BAR",
+                    },
+                  },
+                ],
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "JoinField",
+            block: false,
+            fieldview: "show_with_html",
+            textStyle: "",
+            join_field: "publisher.id",
+            configuration: {
+              code: "FOO",
+            },
+          },
+          {
+            type: "JoinField",
+            block: false,
+            fieldview: "show_with_html",
+            textStyle: "",
+            join_field: "publisher.id",
+            configuration: {
+              code: "BAR",
+            },
+          },
+        ],
+      },
+      min_role: 1,
+      table_id: Table.findOne("books")!.id,
+      attributes: {},
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    console.log(vres1);
+    expect(vres1).toContain("FOOBAR");
+  });
+});
 //sorting
