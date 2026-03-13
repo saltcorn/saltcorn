@@ -418,6 +418,56 @@ describe("calculated", () => {
     if (!db.isSQLite) expect(rows[0].td instanceof Date).toBe(true);
   });
 });
+
+describe("calculated field dependencies", () => {
+  it("build table", async () => {
+    const table = await Table.create("withcalcs");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "xp1ns",
+      type: "Integer",
+      calculated: true,
+      expression: "x+1",
+    });
+    await Field.create({
+      table,
+      label: "xp1s",
+      type: "Integer",
+      calculated: true,
+      expression: "x+1",
+      stored: true,
+    });
+
+    await Field.create({
+      table,
+      label: "xp2s",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "xp1ns+1",
+    });
+
+    await Field.create({
+      table,
+      label: "xp2ns",
+      type: "Integer",
+      calculated: true,
+      expression: "xp1s+1",
+    });
+
+    const id = await table.insertRow({ x: 0 });
+    const row = await table.getRow({id});
+    expect(row!.xp1ns).toBe(1);
+    expect(row!.xp1s).toBe(1);
+    expect(row!.xp2ns).toBe(2);
+    //expect(row!.xp2s).toBe(2); => null
+  });
+});
 describe("single joinfields in stored calculated fields", () => {
   it("creates", async () => {
     const patients = Table.findOne({ name: "patients" });
