@@ -1250,7 +1250,7 @@ class Table implements AbstractTable {
     const { forUser, forPublic, ...selopts1 } = selopts;
     const use_forUser =
       (this.constructor as typeof Table).fixed_user || forUser;
-   
+
     const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     this.normalise_fkey_values(where);
     const row = await db.selectMaybeOne(
@@ -1312,11 +1312,16 @@ class Table implements AbstractTable {
     const fields = this.fields;
     if (!this.fields) return [];
     const { forUser, forPublic, ...selopts1 } = selopts;
-    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || forUser;
+    const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     if (
       role &&
-      this.updateWhereWithOwnership(where, forUser || { role_id: 100 }, true)
-        ?.notAuthorized
+      this.updateWhereWithOwnership(
+        where,
+        use_forUser || { role_id: 100 },
+        true
+      )?.notAuthorized
     ) {
       return [];
     }
@@ -1333,7 +1338,7 @@ class Table implements AbstractTable {
         //already dealt with by changing where
       } else if (this.ownership_formula || this.name === "users") {
         if (!selopts?.disable_ownership_postqfilter)
-          rows = rows.filter((row: Row) => this.is_owner(forUser, row));
+          rows = rows.filter((row: Row) => this.is_owner(use_forUser, row));
       } else return []; //no ownership
     }
 
@@ -4065,11 +4070,16 @@ ${rejectDetails}`,
   ): Promise<Row> {
     const { forUser, forPublic } = options || {};
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || forUser;
     const where = { ...(options?.where || {}) };
     if (
       role &&
-      this.updateWhereWithOwnership(where, forUser || { role_id: 100 }, true)
-        ?.notAuthorized
+      this.updateWhereWithOwnership(
+        where,
+        use_forUser || { role_id: 100 },
+        true
+      )?.notAuthorized
     ) {
       const emptyRet: Row = {};
       Object.entries(aggregations).forEach(([nm, aggObj]) => {
@@ -4146,7 +4156,9 @@ ${rejectDetails}`,
       ? `"${opts.schema}".`
       : db.getTenantSchemaPrefix();
     const { forUser, forPublic } = opts;
-    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || forUser;
+    const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     if (role && role > this.min_role_read && this.ownership_formula) {
       const freeVars = freeVariables(this.ownership_formula);
       add_free_variables_to_joinfields(freeVars, joinFields, fields);
@@ -4159,17 +4171,17 @@ ${rejectDetails}`,
         throw new Error(`Owner field in table ${this.name} not found`);
 
       mergeIntoWhere(opts.where, {
-        [owner_field.name]: (forUser as AbstractUser).id,
+        [owner_field.name]: (use_forUser as AbstractUser).id,
       });
     } else if (
-      forUser &&
+      use_forUser &&
       role &&
       role > this.min_role_read &&
       this.ownership_formula
     ) {
       if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
       try {
-        mergeIntoWhere(opts.where, this.ownership_formula_where(forUser));
+        mergeIntoWhere(opts.where, this.ownership_formula_where(use_forUser));
       } catch (e) {
         //ignore, ownership formula is too difficult to merge with where
         // TODO user groups
@@ -4392,7 +4404,9 @@ ${rejectDetails}`,
   ): Promise<Array<Row>> {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = opts;
-    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || forUser;
+    const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     const { sql, values, notAuthorized, joinFields, aggregations } =
       await this.getJoinedQuery(opts);
 
@@ -4441,7 +4455,7 @@ ${rejectDetails}`,
       else if (this.ownership_field_id) {
         //already dealt with by changing where
       } else if (this.ownership_formula || this.name === "users") {
-        calcRow = calcRow.filter((row: Row) => this.is_owner(forUser, row));
+        calcRow = calcRow.filter((row: Row) => this.is_owner(use_forUser, row));
       } else return []; //no ownership
     }
     return calcRow;
