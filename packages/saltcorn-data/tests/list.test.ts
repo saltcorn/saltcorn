@@ -1192,7 +1192,7 @@ describe("dual joinfielss with fieldviews", () => {
                     textStyle: "",
                     join_field: "publisher.id",
                     configuration: {
-                      code: "FOO",
+                      code: "FOO{{it}}",
                     },
                   },
                   {
@@ -1202,7 +1202,7 @@ describe("dual joinfielss with fieldviews", () => {
                     textStyle: "",
                     join_field: "publisher.id",
                     configuration: {
-                      code: "BAR",
+                      code: "BAR{{it}}",
                     },
                   },
                 ],
@@ -1221,7 +1221,7 @@ describe("dual joinfielss with fieldviews", () => {
             textStyle: "",
             join_field: "publisher.id",
             configuration: {
-              code: "FOO",
+              code: "FOO{{it}}",
             },
           },
           {
@@ -1231,7 +1231,7 @@ describe("dual joinfielss with fieldviews", () => {
             textStyle: "",
             join_field: "publisher.id",
             configuration: {
-              code: "BAR",
+              code: "BAR{{it}}",
             },
           },
         ],
@@ -1242,7 +1242,7 @@ describe("dual joinfielss with fieldviews", () => {
     });
     const vres1 = await view.run({}, mockReqRes);
     console.log(vres1);
-    expect(vres1).toContain("FOOBAR");
+    expect(vres1).toContain("FOO1BAR1");
   });
 });
 //sorting
