@@ -410,7 +410,7 @@ class Table implements AbstractTable {
     if (selectopts.cached) {
       const { getState } = require("../db/state");
       return getState()
-        .tables.map((t: TableCfg) => new Table(structuredClone(t)))
+        .tables.map((t: TableCfg) => new this(structuredClone(t)))
         .filter(satisfies(where || {}));
     }
 
@@ -448,7 +448,7 @@ class Table implements AbstractTable {
       t.constraints = constraints
         .filter((f: any) => f.table_id === t.id)
         .map((f: any) => new _TableConstraint(f));
-      const tbl = new Table(t);
+      const tbl = new this(t);
       return tbl.to_provided_table();
     });
   }
@@ -486,7 +486,7 @@ class Table implements AbstractTable {
           .filter((f: FieldCfg) => f.table_id === t.id)
           .map((f: FieldCfg) => new Field(f));
 
-        return new Table(t);
+        return new this(t);
       });
     }
     return [...dbs, ...externals];
