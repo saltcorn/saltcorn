@@ -679,7 +679,14 @@ describe("double joinfields in stored calculated fields", () => {
       expression: "patient_id?.favbook?.pages",
       stored: true,
     });
-    //console.log(f.attributes.calc_joinfields)
+    //console.log(f.attributes.calc_joinfields);
+    expect(f.attributes.calc_joinfields.length).toBe(2);
+    expect(f.attributes.calc_joinfields[0].targetTable).toBe("books");
+    expect(f.attributes.calc_joinfields[0].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[0].targetField).toBe("pages");
+    expect(f.attributes.calc_joinfields[1].targetTable).toBe("patients");
+    expect(f.attributes.calc_joinfields[1].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[1].targetField).toBe("favbook");
   });
   it("recalculates if final value changes", async () => {
     const readings = Table.findOne({ name: "readings" });
@@ -742,6 +749,48 @@ describe("double joinfields in stored calculated fields", () => {
 
     const reading1 = await readings.getRow({ id: readid });
     expect(reading1?.favpages).toBe(967);
+  });
+});
+
+describe("double half-h joinfields in stored calculated fields", () => {
+  it("creates", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const f = await Field.create({
+      table: readings,
+      label: "favpagesh",
+      type: "Integer",
+      calculated: true,
+      expression: "patient_idⱵfavbookⱵpages",
+      stored: true,
+    });
+    //console.log(f.attributes.calc_joinfields)
+    expect(f.attributes.calc_joinfields.length).toBe(2);
+    expect(f.attributes.calc_joinfields[0].targetTable).toBe("books");
+    expect(f.attributes.calc_joinfields[0].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[0].targetField).toBe("pages");
+    expect(f.attributes.calc_joinfields[1].targetTable).toBe("patients");
+    expect(f.attributes.calc_joinfields[1].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[1].targetField).toBe("favbook");
+  });
+  it("recalculates if final value changes", async () => {
+    const readings = Table.findOne({ name: "readings" });
+
+    assertIsSet(readings);
+
+    const patients = Table.findOne({ name: "patients" });
+
+    assertIsSet(patients);
+
+    const patid = await patients.insertRow({ name: "Stephen Few", favbook: 2 });
+
+    const readid = await readings.insertRow({
+      patient_id: patid,
+      temperature: 37,
+    });
+
+    const reading = await readings.getRow({ id: readid });
+    expect(reading?.favpagesh).toBe(728);
   });
 });
 

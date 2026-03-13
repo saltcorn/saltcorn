@@ -1016,17 +1016,42 @@ class Field implements AbstractField {
     Object.values(joinFields).forEach((jf: any) => {
       if (!jf.rename_object) {
         //half-h
-        const myField = table.getField(jf.ref);
-        if (!myField) return;
-        const targetTable = Table.findOne({ name: myField.reftable_name });
-        if (!targetTable) return;
+        if (jf.through) {
+          const myField = table.getField(jf.ref);
+          if (!myField) return;
+          const throughTable = Table.findOne({ name: myField.reftable_name });
+          if (!throughTable) return;
+          const throughField = throughTable.getField(jf.through);
+          if (!throughField) return;
+          const targetTable = Table.findOne({
+            name: throughField.reftable_name,
+          });
+          if (!targetTable) return;
 
-        calc_joinfields.push({
-          targetTable: targetTable.name,
-          field: myField.name,
-          targetField: jf.target,
-        });
+          calc_joinfields.push({
+            targetTable: targetTable.name,
+            field: myField.name,
+            through: [throughField.name],
+            throughTable: [throughTable.name],
+            targetField: jf.target,
+          });
+          calc_joinfields.push({
+            targetTable: throughTable.name,
+            field: myField.name,
+            targetField: jf.through,
+          });
+        } else {
+          const myField = table.getField(jf.ref);
+          if (!myField) return;
+          const targetTable = Table.findOne({ name: myField.reftable_name });
+          if (!targetTable) return;
 
+          calc_joinfields.push({
+            targetTable: targetTable.name,
+            field: myField.name,
+            targetField: jf.target,
+          });
+        }
         return;
       }
       const path = [...jf.rename_object];
