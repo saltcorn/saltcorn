@@ -1797,22 +1797,25 @@ ${value}`;
   });
   if (window._sc_is_admin) {
     $("[data-sc-embed-viewname]").each(function () {
-      const viewname = $(this).attr("data-sc-embed-viewname");
+      const $this = $(this);
+      const viewname = $this.attr("data-sc-embed-viewname");
       if (
-        $(this).prev().hasClass("admin-edit-bar") ||
-        $(this).parents("#saltcorn-builder").length
+        $this.prev().hasClass("admin-edit-bar") ||
+        $this.parents("#saltcorn-builder").length
       )
         return;
       const url = `/viewedit/config/${viewname}`;
 
       $(this).popover({
         html: true,
-        content: `<a href="${url}" target="_blank">Configure ${viewname}</a>`,
+        content: `<a href="${url}" target="_blank">Configure ${viewname}<i class="ms-2 fas fa-external-link-alt"></i></a>`,
         trigger: "hover focus",
         placement: "auto",
         delay: { show: 0, hide: 250 },
         container: this,
+        offset: '0, 0'
       });
+      $this.addClass("admin-cfglink-popover");
     });
   }
 } //initialize_page
