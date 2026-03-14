@@ -700,14 +700,17 @@ router.post(
         true
       );
 
-      if (err) req.flash("error", err);
-      else req.flash("success", req.__("Successfully restored backup"));
+      if (err) {
+        console.error(err);
+        req.flash("error", err);
+      } else req.flash("success", req.__("Successfully restored backup"));
 
       fs.unlink(newPath, () => {});
       await getState().refresh_plugins();
       Trigger.emitEvent("Startup");
       return res.redirect("/auth/login");
     } catch (error) {
+      console.error(error);
       if (error.requiresPassword) {
         // Storing the file path in session
         req.session.restoreBackupPath = newPath;
@@ -817,14 +820,17 @@ router.post(
       fs.unlink(backupPath, () => {});
       delete req.session.restoreBackupPath;
 
-      if (err) req.flash("error", err);
-      else req.flash("success", req.__("Successfully restored backup"));
+      if (err) {
+        console.error(err);
+        req.flash("error", err);
+      } else req.flash("success", req.__("Successfully restored backup"));
 
       await getState().refresh_plugins();
       Trigger.emitEvent("Startup");
 
       return res.redirect("/auth/login");
     } catch (error) {
+      console.error(error);
       req.flash(
         "danger",
         error.message || req.__("Incorrect backup password, try again")

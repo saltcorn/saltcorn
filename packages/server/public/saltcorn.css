@@ -1,3 +1,27 @@
+
+.admin-cfglink-popover .popover {
+  background-color: #5f9eec;
+  border: none;
+  border-radius: 1px;
+  padding: 4px 10px;
+  min-width: auto;
+  margin: 0;
+}
+
+.admin-cfglink-popover .popover .popover-body {
+  padding: 0;
+}
+
+.admin-cfglink-popover .popover .popover-body a {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.admin-cfglink-popover .popover .arrow,
+.admin-cfglink-popover .popover .popover-arrow {
+  display: none !important;
+}
+
 .table-valign-middle > tbody > tr > td,
 .table-valign-middle > thead > tr > th {
   vertical-align: middle;

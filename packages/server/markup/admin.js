@@ -132,7 +132,7 @@ const add_edit_bar = ({
       { class: "card-body p-1" },
       i({ class: "fas fa-user-cog me-1" }),
       what && span({ class: "ms-1 me-2 badge bg-secondary" }, what),
-      title,
+      span({ class: "copy-to-clipboard" }, title),
       !singleton &&
         a(
           { class: "ms-2", href: url },
@@ -233,9 +233,10 @@ const send_settings_page = ({
         ...(requestFluidLayout && { requestFluidLayout }),
       }
     : pg_title;
-  const sendWrapArg = requestFluidLayout && !headers
-    ? { title: pg_title, requestFluidLayout }
-    : title;
+  const sendWrapArg =
+    requestFluidLayout && !headers
+      ? { title: pg_title, requestFluidLayout }
+      : title;
   res.sendWrap(sendWrapArg, {
     above: [
       {
@@ -246,8 +247,7 @@ const send_settings_page = ({
           {
             text: req.__(active_sub),
             href: sub2_page
-              ? sub_sections.find((subsec) => subsec.text === active_sub)
-                  .href
+              ? sub_sections.find((subsec) => subsec.text === active_sub).href
               : null,
           },
           ...(sub2_page

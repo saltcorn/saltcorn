@@ -1014,6 +1014,46 @@ class Field implements AbstractField {
     );
     const calc_joinfields: Array<CalcJoinfield> = [];
     Object.values(joinFields).forEach((jf: any) => {
+      if (!jf.rename_object) {
+        //half-h
+        if (jf.through) {
+          const myField = table.getField(jf.ref);
+          if (!myField) return;
+          const throughTable = Table.findOne({ name: myField.reftable_name });
+          if (!throughTable) return;
+          const throughField = throughTable.getField(jf.through);
+          if (!throughField) return;
+          const targetTable = Table.findOne({
+            name: throughField.reftable_name,
+          });
+          if (!targetTable) return;
+
+          calc_joinfields.push({
+            targetTable: targetTable.name,
+            field: myField.name,
+            through: [throughField.name],
+            throughTable: [throughTable.name],
+            targetField: jf.target,
+          });
+          calc_joinfields.push({
+            targetTable: throughTable.name,
+            field: myField.name,
+            targetField: jf.through,
+          });
+        } else {
+          const myField = table.getField(jf.ref);
+          if (!myField) return;
+          const targetTable = Table.findOne({ name: myField.reftable_name });
+          if (!targetTable) return;
+
+          calc_joinfields.push({
+            targetTable: targetTable.name,
+            field: myField.name,
+            targetField: jf.target,
+          });
+        }
+        return;
+      }
       const path = [...jf.rename_object];
       if (path.length === 2) {
         const myField = table.getField(path[0]);
@@ -1334,23 +1374,33 @@ class Field implements AbstractField {
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
     await f.set_calc_joinfields();
-
+    let refreshed = false;
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
+    if (!db.getRequestContext()?.client) {
+      refreshed = true;
       await require("../db/state").getState().refresh_tables(true);
-
-    if (f.calculated && f.stored) {
-      const nrows = await table.countRows({});
-      if (nrows > 0) {
-        const table1 = Table.findOne({ id: f.table_id });
-
-        //intentionally omit await
-        recalculate_for_stored(table1); //not waiting as there could be a lot of data
-      }
     }
     if (fld.table && fld.table.fields) {
       fld.table.fields.push(f);
     }
+    if (f.calculated && f.stored) {
+      const nrows = await table.countRows({});
+      if (nrows > 0 && nrows <= 20) {
+        if (!refreshed)
+          await require("../db/state").getState().refresh_tables(true);
+        const table1 = Table.findOne({ id: f.table_id });
+        await recalculate_for_stored(table1);
+      } else if (nrows > 0) {
+        //intentionally omit await
+        //not waiting as there could be a lot of data
+        db.whenTransactionisFree(async () => {
+          const table1 = Table.findOne({ id: f.table_id });
+
+          await recalculate_for_stored(table1);
+        });
+      }
+    }
+
     return f;
   }
 

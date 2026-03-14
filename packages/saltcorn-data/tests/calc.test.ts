@@ -418,6 +418,97 @@ describe("calculated", () => {
     if (!db.isSQLite) expect(rows[0].td instanceof Date).toBe(true);
   });
 });
+
+describe("calculated field dependencies", () => {
+  it("build table", async () => {
+    const table = await Table.create("withcalcs11");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "xp1ns",
+      type: "Integer",
+      calculated: true,
+      expression: "x+1",
+    });
+    await Field.create({
+      table,
+      label: "xp1s",
+      type: "Integer",
+      calculated: true,
+      expression: "x+1",
+      stored: true,
+    });
+
+    await Field.create({
+      table,
+      label: "xp2s",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "xp1ns+1",
+    });
+
+    await Field.create({
+      table,
+      label: "xp2ns",
+      type: "Integer",
+      calculated: true,
+      expression: "xp1s+1",
+    });
+
+    const id = await table.insertRow({ x: 0 });
+    const row = await table.getRow({ id });
+    expect(row!.xp1ns).toBe(1);
+    expect(row!.xp1s).toBe(1);
+    expect(row!.xp2ns).toBe(2);
+    //expect(row!.xp2s).toBe(2); => null
+    await table.updateRow({ x: 10 }, id);
+    const row1 = await table.getRow({ id });
+    expect(row1!.xp1ns).toBe(11);
+    expect(row1!.xp1s).toBe(11);
+    expect(row1!.xp2ns).toBe(12);
+  });
+});
+
+describe("single half-h joinfields in stored calculated fields", () => {
+  it("creates", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const f = await Field.create({
+      table: patients,
+      label: "favpagesh",
+      type: "Integer",
+      calculated: true,
+      expression: "favbookⱵpages",
+      stored: true,
+    });
+    expect(f.attributes.calc_joinfields.length).toBe(1);
+    expect(f.attributes.calc_joinfields[0].targetTable).toBe("books");
+    expect(f.attributes.calc_joinfields[0].field).toBe("favbook");
+  });
+  it("updates", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const bookRows = await patients.getJoinedRows({});
+    for (const row of bookRows) {
+      await patients.updateRow({}, row.id);
+    }
+  });
+  it("check", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const bookrow = await patients.getJoinedRow({ where: { id: 1 } });
+
+    expect(bookrow?.favpagesh).toBe(967);
+    const bookrow1 = await patients.getRow({ id: 1 });
+
+    expect(bookrow1?.favpagesh).toBe(967);
+  });
+});
 describe("single joinfields in stored calculated fields", () => {
   it("creates", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -645,7 +736,14 @@ describe("double joinfields in stored calculated fields", () => {
       expression: "patient_id?.favbook?.pages",
       stored: true,
     });
-    //console.log(f.attributes.calc_joinfields)
+    //console.log(f.attributes.calc_joinfields);
+    expect(f.attributes.calc_joinfields.length).toBe(2);
+    expect(f.attributes.calc_joinfields[0].targetTable).toBe("books");
+    expect(f.attributes.calc_joinfields[0].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[0].targetField).toBe("pages");
+    expect(f.attributes.calc_joinfields[1].targetTable).toBe("patients");
+    expect(f.attributes.calc_joinfields[1].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[1].targetField).toBe("favbook");
   });
   it("recalculates if final value changes", async () => {
     const readings = Table.findOne({ name: "readings" });
@@ -708,6 +806,48 @@ describe("double joinfields in stored calculated fields", () => {
 
     const reading1 = await readings.getRow({ id: readid });
     expect(reading1?.favpages).toBe(967);
+  });
+});
+
+describe("double half-h joinfields in stored calculated fields", () => {
+  it("creates", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const f = await Field.create({
+      table: readings,
+      label: "favpagesh",
+      type: "Integer",
+      calculated: true,
+      expression: "patient_idⱵfavbookⱵpages",
+      stored: true,
+    });
+    //console.log(f.attributes.calc_joinfields)
+    expect(f.attributes.calc_joinfields.length).toBe(2);
+    expect(f.attributes.calc_joinfields[0].targetTable).toBe("books");
+    expect(f.attributes.calc_joinfields[0].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[0].targetField).toBe("pages");
+    expect(f.attributes.calc_joinfields[1].targetTable).toBe("patients");
+    expect(f.attributes.calc_joinfields[1].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[1].targetField).toBe("favbook");
+  });
+  it("recalculates if final value changes", async () => {
+    const readings = Table.findOne({ name: "readings" });
+
+    assertIsSet(readings);
+
+    const patients = Table.findOne({ name: "patients" });
+
+    assertIsSet(patients);
+
+    const patid = await patients.insertRow({ name: "Stephen Few", favbook: 2 });
+
+    const readid = await readings.insertRow({
+      patient_id: patid,
+      temperature: 37,
+    });
+
+    const reading = await readings.getRow({ id: readid });
+    expect(reading?.favpagesh).toBe(728);
   });
 });
 

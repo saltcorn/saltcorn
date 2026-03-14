@@ -41,6 +41,14 @@ const test_person_table = async (persons: Table) => {
   });
   expect(not_owned_row).toBe(null);
 
+  const TableWithUser = Table.subClass({ user: non_owner_user });
+  const personsWithUser = TableWithUser.findOne({ name: persons.name });
+  assertIsSet(personsWithUser);
+  const not_owned_row1 = await personsWithUser.getRow({
+    id: row.id,
+  });
+  expect(not_owned_row1).toBe(null);
+
   const row1 = await persons.getJoinedRow({
     where: { age: 13 },
     forUser: owner_user,
