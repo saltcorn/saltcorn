@@ -1049,7 +1049,10 @@ router.get(
               id: "entity-bulk-tag-select",
               "aria-label": req.__("Select tag to apply"),
             },
-            option({ value: "", disabled: true, selected: true }, req.__("Select tag")),
+            option(
+              { value: "", disabled: true, selected: true },
+              req.__("Select tag")
+            ),
             ...tags.map((t) => option({ value: t.id }, t.name))
           ),
           button(
@@ -1280,8 +1283,7 @@ router.get(
       div(req.__("Try adjusting your search or filter options"))
     );
 
-    const clientScript = script(
-      domReady(/*js*/ `
+    const clientScript = /*js*/ `
         const searchInput = document.getElementById("entity-search");
         const deepSearchToggle = document.getElementById("entity-deep-search");
         const entitiesList = document.getElementById("entities-list");
@@ -2207,8 +2209,7 @@ router.get(
         // Focus search on load
         searchInput.focus();
         updateSelectionUI();
-      `)
-    );
+      `;
 
     const styles = `
       <style>
@@ -2581,7 +2582,7 @@ router.get(
           return tr;
         };
 
-        ${clientScript.substring(clientScript.indexOf("const searchInput"), clientScript.lastIndexOf("}"))}
+        ${clientScript}
         `),
             ],
             footer: div(
