@@ -1267,10 +1267,7 @@ router.get(
           class: "table table-sm table-hover align-middle",
         },
         thead(headerRow),
-        tbody(
-          initially_hidden ? { style: { opacity: "0" } } : {},
-          ...bodyRows
-        )
+        tbody(initially_hidden ? { style: { opacity: "0" } } : {}, ...bodyRows)
       )
     );
 
@@ -2269,8 +2266,7 @@ router.get(
                 )
               ),
               // clientScript,
-              script(
-                domReady(/*js*/ `
+              script(/*js*/ `
         window.ENTITY_ROLES = ${JSON.stringify(roles)};
         window.TXT_DISABLED = ${JSON.stringify(req.__("Disabled"))};
         window.TXT_CONFIGURABLE = ${JSON.stringify(req.__("Configurable"))};
@@ -2586,8 +2582,7 @@ router.get(
         };
 
         ${clientScript.substring(clientScript.indexOf("const searchInput"), clientScript.lastIndexOf("}"))}
-        `)
-              ),
+        `),
             ],
             footer: div(
               {
