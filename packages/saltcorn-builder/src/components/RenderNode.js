@@ -47,7 +47,7 @@ const RenderNode = ({ render }) => {
   } = useNode((node) => ({
     isHover: node.events.hovered,
     dom: node.dom,
-    name: node.data.custom.displayName || node.data.displayName,
+    name: node.data.custom.displayName || node.data.props?.custom?.displayName || node.data.displayName,
     moveable: query.node(node.id).isDraggable(),
     deletable: query.node(node.id).isDeletable(),
     parent: node.data.parent,
@@ -80,7 +80,7 @@ const RenderNode = ({ render }) => {
     currentDOM.style.left = left;
   }, [dom, getPos]);
 
-  const hiddenColumnParents = new Set(["Card", "Container", "Tabs", "Table", "DropMenu"]);
+  const hiddenColumnParents = new Set(["Card", "Container", "DropMenu"]);
   useEffect(() => {
     if (!isActive) return;
     if (name === "Column" && parent && parent !== "ROOT") {

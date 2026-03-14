@@ -124,19 +124,17 @@ const TableSettings = () => {
       showIf: { bs_style: true },
     },
   ];
-  return (
-    <SettingsFromFields
-      fields={fields}
-      onChange={(fnm, v, setProp) => {
-        if (fnm === "rows")
-          setProp((prop) => {
-            ntimes(v, (i) => {
-              if (!prop.contents[i]) prop.contents[i] = [];
-            });
+  const Settings = SettingsFromFields(fields, {
+    onChange: (fnm, v, setProp) => {
+      if (fnm === "rows")
+        setProp((prop) => {
+          ntimes(v, (i) => {
+            if (!prop.contents[i]) prop.contents[i] = [];
           });
-      }}
-    />
-  );
+        });
+    },
+  });
+  return <Settings />;
 };
 
 /**
