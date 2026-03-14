@@ -1374,23 +1374,33 @@ class Field implements AbstractField {
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
     await f.set_calc_joinfields();
-
+    let refreshed = false;
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
+    if (!db.getRequestContext()?.client) {
+      refreshed = true;
       await require("../db/state").getState().refresh_tables(true);
-
-    if (f.calculated && f.stored) {
-      const nrows = await table.countRows({});
-      if (nrows > 0) {
-        const table1 = Table.findOne({ id: f.table_id });
-
-        //intentionally omit await
-        recalculate_for_stored(table1); //not waiting as there could be a lot of data
-      }
     }
     if (fld.table && fld.table.fields) {
       fld.table.fields.push(f);
     }
+    if (f.calculated && f.stored) {
+      const nrows = await table.countRows({});
+      if (nrows > 0 && nrows <= 20) {
+        if (!refreshed)
+          await require("../db/state").getState().refresh_tables(true);
+        const table1 = Table.findOne({ id: f.table_id });
+        await recalculate_for_stored(table1);
+      } else if (nrows > 0) {
+        //intentionally omit await
+        //not waiting as there could be a lot of data
+        db.whenTransactionisFree(async () => {
+          const table1 = Table.findOne({ id: f.table_id });
+
+          await recalculate_for_stored(table1);
+        });
+      }
+    }
+
     return f;
   }
 
