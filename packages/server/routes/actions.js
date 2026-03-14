@@ -1581,7 +1581,14 @@ router.get(
                 )
               : "",
             a(
-              { href: `/actions`, class: "mt-4 btn btn-primary me-1" },
+              {
+                href:
+                  req.query.on_done_redirect &&
+                  is_relative_url("/" + req.query.on_done_redirect)
+                    ? `/${req.query.on_done_redirect}`
+                    : `/actions`,
+                class: "mt-4 btn btn-primary me-1",
+              },
               "&laquo;&nbsp;" + req.__("back to actions")
             ),
             a(

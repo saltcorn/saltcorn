@@ -767,7 +767,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: `btn btn-sm btn-${req.query?.tables ? "" : "outline-"}primary entity-filter-btn`,
           "data-entity-type": "table",
           title: req.__("Show tables (Alt+T)"),
         },
@@ -777,7 +777,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: `btn btn-sm btn-${req.query?.views ? "" : "outline-"}primary entity-filter-btn`,
           "data-entity-type": "view",
           title: req.__("Show views (Alt+V)"),
         },
@@ -787,7 +787,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: `btn btn-sm btn-${req.query?.pages ? "" : "outline-"}primary entity-filter-btn`,
           "data-entity-type": "page",
           title: req.__("Show pages (Alt+P)"),
         },
@@ -797,7 +797,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: `btn btn-sm btn-${req.query?.triggers ? "" : "outline-"}primary entity-filter-btn`,
           "data-entity-type": "trigger",
           title: req.__("Show triggers (Alt+R)"),
         },
@@ -1020,7 +1020,7 @@ router.get(
               style:
                 "--entity-bulk-role-border: var(--bs-secondary); border: 2px solid var(--entity-bulk-role-border) !important;",
             },
-            option({ value: "" }, req.__("Set access role")),
+            option({ value: "", disabled: true }, req.__("Set access role")),
             ...roles.map((r) => option({ value: r.id }, r.role))
           ),
           button(
@@ -1049,7 +1049,10 @@ router.get(
               id: "entity-bulk-tag-select",
               "aria-label": req.__("Select tag to apply"),
             },
-            option({ value: "" }, req.__("Select tag")),
+            option(
+              { value: "", disabled: true, selected: true },
+              req.__("Select tag")
+            ),
             ...tags.map((t) => option({ value: t.id }, t.name))
           ),
           button(
@@ -1088,6 +1091,8 @@ router.get(
       page: { href: "/pageedit", label: req.__("Go to pages list") },
       trigger: { href: "/actions", label: req.__("Go to triggers list") },
     };
+
+    const initially_hidden = Object.keys(req.query || {}).length;
 
     const bodyRows = entities.map((entity) => {
       const key = `${entity.type}:${
@@ -1151,7 +1156,9 @@ router.get(
           ? `/pageedit/edit/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
           : entity.type === "view"
             ? `/viewedit/config/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
-            : entity.viewLink;
+            : entity.type === "trigger"
+              ? `/actions/configure/${encodeURIComponent(entity.id)}${on_done_redirect_str}`
+              : entity.viewLink;
       const tableMeta =
         entity.type === "table" ? Table.findOne(entity.name) : null;
       const minRoleRead =
@@ -1263,7 +1270,7 @@ router.get(
           class: "table table-sm table-hover align-middle",
         },
         thead(headerRow),
-        tbody(...bodyRows)
+        tbody(initially_hidden ? { style: { opacity: "0" } } : {}, ...bodyRows)
       )
     );
 
@@ -1276,8 +1283,7 @@ router.get(
       div(req.__("Try adjusting your search or filter options"))
     );
 
-    const clientScript = script(
-      domReady(/*js*/ `
+    const clientScript = /*js*/ `
         const searchInput = document.getElementById("entity-search");
         const deepSearchToggle = document.getElementById("entity-deep-search");
         const entitiesList = document.getElementById("entities-list");
@@ -1289,9 +1295,7 @@ router.get(
           if (type) filterButtonsByType[type] = btn;
         });
         const tagButtons = document.querySelectorAll(".tag-filter-btn");
-        const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};
-        const legacyButton = document.getElementById("legacy-entity-link");
-        const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
+        const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};       
         const filtersRow = document.getElementById("entity-filters-row");
         const selectionBar = document.getElementById("entity-selection-bar");
         const selectionCountEl = document.getElementById("entity-selection-count");
@@ -1599,6 +1603,8 @@ router.get(
         };
 
         const updateLegacyButton = () => {
+          const legacyButton = document.getElementById("legacy-entity-link");
+          const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
           if (!legacyButton) return;
           const activeTypes = Array.from(activeFilters);
           if (activeTypes.length === 1) {
@@ -2203,8 +2209,8 @@ router.get(
         // Focus search on load
         searchInput.focus();
         updateSelectionUI();
-      `)
-    );
+        setTimeout(updateLegacyButton,200);
+      `;
 
     const styles = `
       <style>
@@ -2262,8 +2268,7 @@ router.get(
                 )
               ),
               // clientScript,
-              script(
-                domReady(/*js*/ `
+              script(/*js*/ `
         window.ENTITY_ROLES = ${JSON.stringify(roles)};
         window.TXT_DISABLED = ${JSON.stringify(req.__("Disabled"))};
         window.TXT_CONFIGURABLE = ${JSON.stringify(req.__("Configurable"))};
@@ -2276,6 +2281,8 @@ router.get(
         window.TXT_AUTH = ${JSON.stringify(req.__("Authentication"))};
         window.TXT_MOBILE = ${JSON.stringify(req.__("Mobile"))};
         window.ENTITY_DEEP_SEARCH = ${JSON.stringify(deepSearchIndex)};
+
+        document.querySelector("#entities-list tbody").style.opacity = "1";
 
         const EXTENDED_ENTITY_TYPES = ["module","user"];
         window.ENTITY_EXTENDED_TYPES = EXTENDED_ENTITY_TYPES;
@@ -2576,9 +2583,8 @@ router.get(
           return tr;
         };
 
-        ${clientScript.substring(clientScript.indexOf("const searchInput"), clientScript.lastIndexOf("}"))}
-        `)
-              ),
+        ${clientScript}
+        `),
             ],
             footer: div(
               {
