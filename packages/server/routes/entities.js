@@ -1151,7 +1151,9 @@ router.get(
           ? `/pageedit/edit/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
           : entity.type === "view"
             ? `/viewedit/config/${encodeURIComponent(entity.name)}${on_done_redirect_str}`
-            : entity.viewLink;
+            : entity.type === "trigger"
+              ? `/actions/configure/${encodeURIComponent(entity.id)}${on_done_redirect_str}`
+              : entity.viewLink;
       const tableMeta =
         entity.type === "table" ? Table.findOne(entity.name) : null;
       const minRoleRead =
