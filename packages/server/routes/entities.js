@@ -767,7 +767,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: `btn btn-sm btn-${req.query?.tables ? "" : "outline-"}primary entity-filter-btn`,
           "data-entity-type": "table",
           title: req.__("Show tables (Alt+T)"),
         },
@@ -777,7 +777,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: `btn btn-sm btn-${req.query?.views ? "" : "outline-"}primary entity-filter-btn`,
           "data-entity-type": "view",
           title: req.__("Show views (Alt+V)"),
         },
@@ -787,7 +787,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: `btn btn-sm btn-${req.query?.pages ? "" : "outline-"}primary entity-filter-btn`,
           "data-entity-type": "page",
           title: req.__("Show pages (Alt+P)"),
         },
@@ -797,7 +797,7 @@ router.get(
       button(
         {
           type: "button",
-          class: "btn btn-sm btn-outline-primary entity-filter-btn",
+          class: `btn btn-sm btn-${req.query?.triggers ? "" : "outline-"}primary entity-filter-btn`,
           "data-entity-type": "trigger",
           title: req.__("Show triggers (Alt+R)"),
         },
