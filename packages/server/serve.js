@@ -883,7 +883,9 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
               });
           } else socket.join(`${ten}_${viewname}_${room_id}`);
         } catch (err) {
-          getState().log(1, `Socket join_room error: ${err.stack}`);
+          const state = getState();
+          if (state) state.log(1, `Socket join_room error: ${err.stack}`);
+          else console.error("Socket join_room error:", err);
         }
       };
       if (ten && ten !== "public") db.runWithTenant(ten, f);
