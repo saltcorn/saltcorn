@@ -1293,9 +1293,7 @@ router.get(
           if (type) filterButtonsByType[type] = btn;
         });
         const tagButtons = document.querySelectorAll(".tag-filter-btn");
-        const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};
-        const legacyButton = document.getElementById("legacy-entity-link");
-        const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
+        const LEGACY_LINK_META = ${JSON.stringify(legacyLinkMeta)};       
         const filtersRow = document.getElementById("entity-filters-row");
         const selectionBar = document.getElementById("entity-selection-bar");
         const selectionCountEl = document.getElementById("entity-selection-count");
@@ -1603,6 +1601,8 @@ router.get(
         };
 
         const updateLegacyButton = () => {
+          const legacyButton = document.getElementById("legacy-entity-link");
+          const legacyLabel = legacyButton ? legacyButton.querySelector(".legacy-label") : null;
           if (!legacyButton) return;
           const activeTypes = Array.from(activeFilters);
           if (activeTypes.length === 1) {
