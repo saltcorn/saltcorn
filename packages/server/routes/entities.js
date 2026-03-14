@@ -1089,6 +1089,8 @@ router.get(
       trigger: { href: "/actions", label: req.__("Go to triggers list") },
     };
 
+    const initially_hidden = Object.keys(req.query || {}).length;
+
     const bodyRows = entities.map((entity) => {
       const key = `${entity.type}:${
         entity.type === "view" ? (entity.id ?? entity.name) : entity.id
@@ -1265,7 +1267,10 @@ router.get(
           class: "table table-sm table-hover align-middle",
         },
         thead(headerRow),
-        tbody(...bodyRows)
+        tbody(
+          initially_hidden ? { style: { opacity: "0" } } : {},
+          ...bodyRows
+        )
       )
     );
 
@@ -2278,6 +2283,8 @@ router.get(
         window.TXT_AUTH = ${JSON.stringify(req.__("Authentication"))};
         window.TXT_MOBILE = ${JSON.stringify(req.__("Mobile"))};
         window.ENTITY_DEEP_SEARCH = ${JSON.stringify(deepSearchIndex)};
+
+        document.querySelector("#entities-list tbody").style.opacity = "1";
 
         const EXTENDED_ENTITY_TYPES = ["module","user"];
         window.ENTITY_EXTENDED_TYPES = EXTENDED_ENTITY_TYPES;
