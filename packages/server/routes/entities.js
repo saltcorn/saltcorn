@@ -1020,7 +1020,7 @@ router.get(
               style:
                 "--entity-bulk-role-border: var(--bs-secondary); border: 2px solid var(--entity-bulk-role-border) !important;",
             },
-            option({ value: "" }, req.__("Set access role")),
+            option({ value: "", disabled: true }, req.__("Set access role")),
             ...roles.map((r) => option({ value: r.id }, r.role))
           ),
           button(
@@ -1049,7 +1049,7 @@ router.get(
               id: "entity-bulk-tag-select",
               "aria-label": req.__("Select tag to apply"),
             },
-            option({ value: "" }, req.__("Select tag")),
+            option({ value: "", disabled: true, selected: true }, req.__("Select tag")),
             ...tags.map((t) => option({ value: t.id }, t.name))
           ),
           button(
