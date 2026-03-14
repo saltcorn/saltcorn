@@ -2209,6 +2209,7 @@ router.get(
         // Focus search on load
         searchInput.focus();
         updateSelectionUI();
+        setTimeout(updateLegacyButton,200);
       `;
 
     const styles = `
