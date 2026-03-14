@@ -100,9 +100,7 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
           if (Field.labelToName(s) === "row")
             return req.__("Not a valid field name");
           if (s.length > 63)
-            return req.__(
-              "Field names are limited to 63 characters"
-            );
+            return req.__("Field names are limited to 63 characters");
           try {
             new Function(Field.labelToName(s), "return;");
           } catch {
@@ -1506,6 +1504,8 @@ router.post(
       fv = getState().keyFieldviews.select;
     } else if (fieldview === "subfield" && field.type?.name === "JSON") {
       fv = field.type.fieldviews.edit_subfield;
+    } else if (field.type.name === "Date" && field.type.fieldviews.flatpickr) {
+      fv = field.type.fieldviews.flatpickr;
     } else {
       //TODO: json subfield is special
       const fieldviews = field.type.fieldviews;
