@@ -1244,7 +1244,7 @@ Container.craft = {
     showIfFormula: "",
     showForRole: [],
     margin: [0, 0, 0, 0],
-    padding: [16, 16, 16, 16],
+    padding: [0, 0, 0, 0],
     minScreenWidth: "",
     display: "block",
     show_for_owner: false,

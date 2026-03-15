@@ -430,8 +430,9 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
   const go = (node) => {
     if (!node) return;
     let customProps = {};
-    if (Object.keys(node?.custom || {}).length)
-      customProps = { _custom: { ...node?.custom } };
+    const mergedCustom = { ...(node?.props?.custom || {}), ...(node?.custom || {}) };
+    if (Object.keys(mergedCustom).length)
+      customProps = { _custom: { ...mergedCustom } };
     const matchElement = allElements.find(
       (e) =>
         e.craft.related &&
