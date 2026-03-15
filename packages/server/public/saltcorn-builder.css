@@ -819,11 +819,6 @@ body.builder-dark .builder-select__menu-notice,
 }
 
 .device-preview-btn {
-  padding: 3px 10px;
-  line-height: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .device-preview-scroll-area {
