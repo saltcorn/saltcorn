@@ -589,22 +589,29 @@ const CustomLayerComponent = memo(({ children }) => {
       const node = state.nodes[id];
       const data = node?.data;
 
-      let name = data?.custom?.displayName || data?.displayName || data?.name || id;
+      let name = data?.custom?.displayName || data?.props?.custom?.displayName || data?.displayName || data?.name || id;
       if (name === "ROOT" || name === "Canvas") {
           name = data?.name || name;
       }
 
+      // Rename linked Columns for Tabs and Table
       if (name === "Column" && data?.parent) {
           const parentNode = state.nodes[data.parent];
           const parentName = parentNode?.data?.displayName || parentNode?.data?.name;
-          if (parentName === "Tabs") {
-              const parentLinked = parentNode?.data?.linkedNodes;
-              if (parentLinked) {
-                  const key = Object.keys(parentLinked).find(k => parentLinked[k] === id);
-                  if (key) {
+          const parentLinked = parentNode?.data?.linkedNodes;
+          if (parentLinked) {
+              const key = Object.keys(parentLinked).find(k => parentLinked[k] === id);
+              if (key) {
+                  if (parentName === "Tabs") {
                       const index = parseInt(key.replace("Tab", ""), 10);
                       if (!isNaN(index)) {
-                          name = `Tab${index + 1}`;
+                          name = `Tab ${index + 1}`;
+                      }
+                  } else if (parentName === "Table") {
+                      // key is "cell_0_0", "cell_1_2", etc.
+                      const match = key.match(/^cell_(\d+)_(\d+)$/);
+                      if (match) {
+                          name = `R${parseInt(match[1], 10) + 1}C${parseInt(match[2], 10) + 1}`;
                       }
                   }
               }
@@ -874,24 +881,24 @@ const HistoryPanel = () => {
 
   return (
     <Fragment>
-      {canUndo && (
-        <button
-          className="btn btn-sm btn-secondary ms-2 me-2 undo-builder"
-          title={t("Undo")}
-          onClick={() => actions.history.undo()}
-        >
-          <FontAwesomeIcon icon={faUndo} />
-        </button>
-      )}
-      {canRedo && (
-        <button
-          className="btn btn-sm btn-secondary redo-builder"
-          title={t("Redo")}
-          onClick={() => actions.history.redo()}
-        >
-          <FontAwesomeIcon icon={faRedo} />
-        </button>
-      )}
+      <button
+        className="btn btn-sm btn-secondary redo-builder"
+        title={t("Redo")}
+        onClick={() => actions.history.redo()}
+        disabled={!canRedo}
+        style={!canRedo ? { opacity: 0.4, pointerEvents: "none" } : {}}
+      >
+        <FontAwesomeIcon icon={faRedo} />
+      </button>
+       <button
+        className="btn btn-sm btn-secondary undo-builder"
+        title={t("Undo")}
+        onClick={() => actions.history.undo()}
+        disabled={!canUndo}
+        style={!canUndo ? { opacity: 0.4, pointerEvents: "none" } : {}}
+      >
+        <FontAwesomeIcon icon={faUndo} />
+      </button>
     </Fragment>
   );
 };

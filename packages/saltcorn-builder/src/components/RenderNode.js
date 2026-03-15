@@ -80,7 +80,7 @@ const RenderNode = ({ render }) => {
     currentDOM.style.left = left;
   }, [dom, getPos]);
 
-  const hiddenColumnParents = new Set(["Card", "Container", "DropMenu"]);
+  const hiddenColumnParents = new Set(["Card", "Container", "Table", "DropMenu"]);
   useEffect(() => {
     if (!isActive) return;
     if (name === "Column" && parent && parent !== "ROOT") {
