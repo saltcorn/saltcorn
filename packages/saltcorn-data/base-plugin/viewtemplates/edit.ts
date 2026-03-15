@@ -231,6 +231,7 @@ const configuration_workflow = (req: Req) =>
           const groups = (await PageGroup.find()).map((g: any) => ({
             name: g.name,
           }));
+          const { on_done_redirect, ...current_filter_state } = req.query;
 
           return {
             tableName: table.name,
@@ -239,6 +240,7 @@ const configuration_workflow = (req: Req) =>
             parent_field_list,
             handlesTextStyle,
             blockDisplay,
+            current_filter_state,
             roles,
             actions,
             triggerActions,

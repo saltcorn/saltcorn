@@ -236,6 +236,7 @@ const configuration_workflow = (req: Req) =>
           const has_select2 = Object.keys(getState().keyFieldviews).includes(
             "select2"
           );
+          const { on_done_redirect, ...current_filter_state } = req.query;
 
           return {
             fields: fields
@@ -246,6 +247,7 @@ const configuration_workflow = (req: Req) =>
             child_field_list: [table.name],
             agg_field_opts,
             agg_fieldview_options,
+            current_filter_state,
             roles,
             builtInActions: ["Clear"],
             actions,

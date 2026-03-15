@@ -247,6 +247,7 @@ const configuration_workflow = (req: Req) =>
             l.suitableFor("show")
           );
           const myviewrow = View.findOne({ name: context.viewname });
+          const { on_done_redirect, ...current_filter_state } = req.query;
           return {
             tableName: table.name,
             fields: fields.map((f: GenObj) => f.toBuilder),
@@ -255,6 +256,7 @@ const configuration_workflow = (req: Req) =>
             triggerActions,
             builtInActions,
             actionConfigForms,
+            current_filter_state,
             //fieldViewConfigForms,
             field_view_options: {
               ...field_view_options,
