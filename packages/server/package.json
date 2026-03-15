@@ -31,7 +31,7 @@
     "cors": "2.8.5",
     "csv-stringify": "^6.5.2",
     "csvtojson": "^2.0.10",
-    "dompurify": "3.2.6",
+    "dompurify": "3.3.2",
     "express": "^5.0.1",
     "express-fileupload": "^1.5.1",
     "express-promise-router": "^3.0.3",
