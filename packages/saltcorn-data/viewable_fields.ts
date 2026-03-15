@@ -208,7 +208,7 @@ const action_link = (
       icon: action_icon,
       style,
       spinner,
-      btnClass: `${action_style || "btn-primary"} ${action_size || ""}`,
+      btnClass: `${action_style || "btn-primary"} ${action_size || ""}${action_class ? " " + action_class : ""}`,
       formClass: !block && "d-inline",
     });
 };
