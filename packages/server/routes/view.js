@@ -20,7 +20,7 @@ const {
   isAdminOrHasConfigMinRole,
 } = require("../routes/utils.js");
 const { add_edit_bar, add_results_to_contents } = require("../markup/admin.js");
-const { InvalidConfiguration, isTest } = require("@saltcorn/data/utils");
+const { InvalidConfiguration, isTest, objectToQueryString } = require("@saltcorn/data/utils");
 const { getState } = require("@saltcorn/data/db/state");
 
 /**
@@ -191,7 +191,7 @@ router.get(
                 title: view.name,
                 what: req.__("View"),
                 url: `/viewedit/edit/${encodeURIComponent(view.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
-                cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
+                cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}&${objectToQueryString(req.query)}`,
                 contents,
                 req,
                 view,

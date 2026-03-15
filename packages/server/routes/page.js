@@ -18,7 +18,7 @@ const {
   getEligiblePage,
   getRandomPage,
 } = require("../routes/utils.js");
-const { isTest } = require("@saltcorn/data/utils");
+const { isTest, objectToQueryString } = require("@saltcorn/data/utils");
 const { add_edit_bar, add_results_to_contents } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
@@ -92,7 +92,7 @@ const runPage = async (page, req, res, tic) => {
                 role,
                 title: page.name,
                 what: req.__("Page"),
-                url: `/pageedit/edit/${encodeURIComponent(page.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
+                url: `/pageedit/edit/${encodeURIComponent(page.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}&${objectToQueryString(req.query)}`,
                 contents,
               }),
           resultCollector
