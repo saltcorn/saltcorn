@@ -880,7 +880,7 @@ const HistoryPanel = () => {
   }));
 
   return (
-    <Fragment>
+    <div className="d-flex gap-1">
       <button
         className="btn btn-sm btn-secondary redo-builder"
         title={t("Redo")}
@@ -899,7 +899,7 @@ const HistoryPanel = () => {
       >
         <FontAwesomeIcon icon={faUndo} />
       </button>
-    </Fragment>
+    </div>
   );
 };
 
