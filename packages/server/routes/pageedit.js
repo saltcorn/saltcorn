@@ -261,7 +261,7 @@ const pageBuilderData = async (req, context) => {
       }
     }
   }
-
+  const { on_done_redirect, ...current_filter_state } = req.query;
   //console.log(fixed_state_fields.ListTasks);
   const icons = getState().icons;
   return {
@@ -271,6 +271,7 @@ const pageBuilderData = async (req, context) => {
     images,
     pages,
     page_groups,
+    current_filter_state,
     actions: actionsNotRequiringRow,
     has_copilot_generate: !!getState().functions.copilot_generate_layout,
     builtInActions: ["GoBack"],
