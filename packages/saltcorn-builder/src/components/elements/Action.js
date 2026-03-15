@@ -55,6 +55,7 @@ const Action = ({
   action_bgcol,
   action_bordercol,
   action_textcol,
+  action_class
 }) => {
   const {
     selected,
@@ -65,7 +66,7 @@ const Action = ({
    */
   return (
     <button
-      className={`btn ${action_style || "btn-primary"} ${action_size || ""} ${
+      className={`btn ${action_style || "btn-primary"} ${action_size || ""} ${action_class || ""} ${
         selected ? "selected-node" : ""
       } ${block ? "d-block" : ""}`}
       ref={(dom) => connect(drag(dom))}
