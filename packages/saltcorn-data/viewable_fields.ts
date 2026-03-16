@@ -172,7 +172,8 @@ const action_link = (
     spinner?: boolean;
     block?: boolean;
   },
-  __ = (s: string) => s
+  __ = (s: string) => s,
+  in_row_click?: boolean
 ): string => {
   const label =
     action_label === " " ? "" : __(action_label || "") || action_name;
@@ -186,7 +187,7 @@ const action_link = (
     return a(
       {
         href: "javascript:void(0)",
-        onclick: `${spinner ? "spin_action_link(this);" : ""}${url.javascript}`,
+        onclick: `${spinner ? "spin_action_link(this);" : ""}${url.javascript}${in_row_click ? ";event.stopPropagation()" : ""}`,
         class: [
           action_style === "btn-link"
             ? ""
@@ -937,7 +938,14 @@ const get_viewable_fields = (
             );
             return renderLayout({
               blockDispatch: {
-                ...standardBlockDispatch(viewname, state, table, { req }, r),
+                ...standardBlockDispatch(
+                  viewname,
+                  state,
+                  table,
+                  { req },
+                  r,
+                  in_row_click
+                ),
                 view(column: any) {
                   return viewResults?.[column.view + column.relation]?.(r);
                 },
@@ -1749,7 +1757,8 @@ const standardBlockDispatch = (
   state: GenObj,
   table: Table,
   extra: { req: GenObj; [key: string]: any },
-  row: Row
+  row: Row,
+  in_row_click?: boolean
 ) => {
   const req = extra.req;
   const fields = table.fields;
@@ -1983,7 +1992,7 @@ const standardBlockDispatch = (
             )
           )}`
         )}`;
-      return action_link(url, req, segment);
+      return action_link(url, req, segment, undefined, in_row_click);
     },
     view_link(view: any) {
       const prefix =
@@ -1997,7 +2006,9 @@ const standardBlockDispatch = (
         prefix,
         state,
         req,
-        viewname
+        viewname,
+        undefined,
+        in_row_click
       );
       return key(row);
     },
