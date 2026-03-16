@@ -1799,21 +1799,20 @@ ${value}`;
     $("[data-sc-embed-viewname]").each(function () {
       const $this = $(this);
       const viewname = $this.attr("data-sc-embed-viewname");
-      if (
-        $this.prev().hasClass("admin-edit-bar") ||
-        $this.parents("#saltcorn-builder").length
-      )
+      const outermost = !$this.parents("[data-sc-embed-viewname]").length;
+      const in_modal = $this.parents("#scmodal").length;
+      if ((outermost && !in_modal) || $this.parents("#saltcorn-builder").length)
         return;
       const url = `/viewedit/config/${viewname}`;
 
       $(this).popover({
         html: true,
         content: `<a href="${url}" target="_blank">Configure ${viewname}<i class="ms-2 fas fa-external-link-alt"></i></a>`,
-        trigger: "hover focus",
+        trigger: "hover",
         placement: "auto",
         delay: { show: 0, hide: 250 },
         container: this,
-        offset: '0, 0'
+        offset: "0, 0",
       });
       $this.addClass("admin-cfglink-popover");
     });
