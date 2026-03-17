@@ -16,6 +16,10 @@ test.describe('E2E Test Suite', () => {
     let MONTH;
     let DAY;
 
+    test.beforeEach(async () => {
+        await page.waitForTimeout(500); // wait for 500 ms before each test
+    });
+
     test.beforeAll(async ({ browser }) => {
         // Initialize the log file
         Logger.initialize();

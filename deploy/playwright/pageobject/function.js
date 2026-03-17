@@ -27,7 +27,7 @@ class PageFunctions {
     await this.page.fill(this.locators.InputName, pageName);
     await this.page.click(this.locators.submitButton);
   }
- 
+
 
   async drag_And_Drop(source, target) {
     await this.page.locator(source).dragTo(this.page.locator(target), { force: true });
@@ -35,7 +35,7 @@ class PageFunctions {
 
   async fill_Text(selector, text) {
     await this.page.fill(selector, text, { timeout: 30000 });
-    
+
   }
 
   async fill_Monaco_Text(locator, value) {
@@ -274,13 +274,13 @@ class PageFunctions {
     await this.page.waitForSelector(this.locators.click_table);
     await this.page.click(this.locators.click_table)
   }
-  async view_Click(){
-  await this.page.waitForSelector(this.locators.view_Click);
-  await this.page.click(this.locators.view_Click); 
+  async view_Click() {
+    await this.page.waitForSelector(this.locators.view_Click);
+    await this.page.click(this.locators.view_Click);
   }
-  
-  async view_page(){
-    await this.page.waitForSelector(this.locators.pageclick,{timeout:30000});
+
+  async view_page() {
+    await this.page.waitForSelector(this.locators.pageclick, { timeout: 30000 });
     await this.page.click(this.locators.pageclick);
   }
 
@@ -288,10 +288,28 @@ class PageFunctions {
     await this.page.waitForSelector(this.locators.SaltCornButton);
     await this.page.click(this.locators.SaltCornButton);
   }
-  
+
+  // async views() {
+  //   await this.page.waitForSelector(this.locators.sidebarviewbutton);
+  //   await this.page.click(this.locators.sidebarviewbutton);
+  // }
+
   async views() {
-    await this.page.waitForSelector(this.locators.sidebarviewbutton);
-    await this.page.click(this.locators.sidebarviewbutton);
+    const modal = this.page.locator('#scmodal');
+    const closeBtn = this.page.getByRole('button', { name: 'Close' });
+
+    try {
+      // Attempt to close modal only if button is actually visible
+      if (await closeBtn.isVisible().catch(() => false)) {
+        await closeBtn.click();
+        await modal.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => { });
+      }
+    } catch (e) {
+      // Ignore race conditions (modal disappears during interaction)
+    }
+
+    // Now safely click sidebar
+    await this.page.locator(this.locators.sidebarviewbutton).click();
   }
 
   static generate_Random_String(length) {
@@ -395,7 +413,7 @@ class PageFunctions {
     await this.SALTCORN();
     await this.navigate_To_Settings();
     await this.page.waitForSelector(this.locators.aboutApplicationLink);
-    await this.page.click(this.locators.aboutApplicationLink,{timeout:5000});
+    await this.page.click(this.locators.aboutApplicationLink, { timeout: 5000 });
     await this.about_application_to_system();
     await this.clear_All();
   }
@@ -561,7 +579,7 @@ class PageFunctions {
     // Step 1: Navigate to Settings and Module
     await this.navigate_To_Settings();
     await this.navigate_To_module();
-  
+
     // Step 2: Install JSON Module (skip if already installed)
     await this.fill_Text(this.locators.SearchModule, 'json');
     await customAssert('JSON module should be visible', async () => {
@@ -578,7 +596,7 @@ class PageFunctions {
     } catch {
       // JSON module already installed, skip
     }
-  
+
     // Step 3: Install Tabulator Module (skip if already installed)
     await this.fill_Text(this.locators.SearchModule, 'tabulator');
     await customAssert('Tabulator module should be visible', async () => {
@@ -597,84 +615,84 @@ class PageFunctions {
       // Tabulator module already installed, skip
     }
   }
-  
-  
+
+
 
   async navigateSettingsTabs(page, pageobject) {
     // Click on settings dropdown
     const settingsDropdown = page.locator(pageobject.settingsDropdown);
     await settingsDropdown.click();
-  
+
     // Click on "About Application" link
     const aboutApplicationLink2 = page.locator(pageobject.aboutApplicationLink2);
     await aboutApplicationLink2.click();
-  
+
     // Click on the "Mobile App" link
     const systemtablink = page.locator(pageobject.systemtablink);
     await systemtablink.click();
   }
-   async navi_Setting_Dropdown_Clear(page, pageobject)   {
-     await this.page.click('#inputusers');
-     await this.page.waitForSelector(this.locators.submitButton);
-     await this.page.click(this.locators.submitButton);
+  async navi_Setting_Dropdown_Clear(page, pageobject) {
+    await this.page.click('#inputusers');
+    await this.page.waitForSelector(this.locators.submitButton);
+    await this.page.click(this.locators.submitButton);
 
-   }
+  }
 
 
   async assertMobileAppTabElements(page, pageobject) {
     // Assert the view link is visible
     await customAssert('Assert the view link in mobile app tab', async () => {
-      await expect(this.page.locator(this.locators.viewNavLink),{timeout:30000}).toBeVisible();
+      await expect(this.page.locator(this.locators.viewNavLink), { timeout: 30000 }).toBeVisible();
     });
-  
+
     // Assert the page link is visible
     await customAssert('Assert the page link in mobile app tab', async () => {
       await expect(this.page.locator(this.locators.pageNavLink)).toBeVisible();
     });
-  
+
     // Assert the page group link is visible
     await customAssert('Assert the page group link in mobile app tab', async () => {
       await expect(this.page.locator(this.locators.pagegroupNavLink)).toBeVisible();
     });
-  
+
     // Assert the Android checkbox is not checked
     await page.locator(pageobject.androidCheckbox).check();
     await customAssert('Assert the android Checkbox checkbox in Mobile app tab is checked', async () => {
       await expect(this.page.locator(this.locators.androidCheckbox)).toBeChecked();
     });
-    
-  
+
+
     // Assert the app name text box is empty
     // Step 2: Fill the app name text box with "Mobile App"
-    this.fill_Text(pageobject.appName,'Mobile App');
+    this.fill_Text(pageobject.appName, 'Mobile App');
     await customAssert('Assert the app name text box is empty', async () => {
       await expect(this.page.locator(this.locators.appName)).toHaveValue('Mobile App');
     });
-  
+
     // Assert the app ID text box is visible
-    this.fill_Text(pageobject.appId,'myproject19july@mailinator.com');
+    this.fill_Text(pageobject.appId, 'myproject19july@mailinator.com');
     await customAssert('Assert the app id text box is visible', async () => {
       await expect(this.page.locator(this.locators.appId)).toHaveValue('myproject19july@mailinator.com');
     });
-  
+
     // Assert the app version text box is empty
-    this.fill_Text(pageobject.appVersion,'0.0.1');
+    this.fill_Text(pageobject.appVersion, '0.0.1');
     await customAssert('Assert the app version text box is empty', async () => {
       await expect(this.page.locator(this.locators.appVersion)).toHaveValue('0.0.1');
     });
-  
+
     // Assert the server URL text box is empty
-    this.fill_Text(pageobject.serverURL,'http://10.0.2.2:3000');
+    this.fill_Text(pageobject.serverURL, 'http://10.0.2.2:3000');
     await customAssert('Assert the server URL text box is empty', async () => {
       await expect(this.page.locator(this.locators.serverURL)).toHaveValue('http://10.0.2.2:3000');
     });
-  
+
     // Assert the debug radio button is not checked
     await page.locator(pageobject.debugBuildType).check();
     await customAssert('Assert the debug radio button in Mobile app tab is not checked', async () => {
       await expect(this.page.locator(this.locators.debugBuildType)).toBeChecked();
     });
-  
+
     // Assert the build Mobile App Button has correct text
     await customAssert('Assert the build Mobile App Button', async () => {
       await expect(this.page.locator(this.locators.buildMobileAppBtn)).toHaveText('Build mobile app');
@@ -683,141 +701,141 @@ class PageFunctions {
   }
 
   async showSuccessMessage() {
-    
-    await new Promise(resolve => setTimeout(resolve, 2000)); 
-    await this.page.evaluate(() => {
-  alert('The build was successful!');
-});
 
-// Assert that the alert was triggered
-await this.page.on('dialog', async dialog => {
-  expect(dialog.message()).toBe('The build was successful!');
-  await dialog.accept();
-});
-}
-  
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await this.page.evaluate(() => {
+      alert('The build was successful!');
+    });
+
+    // Assert that the alert was triggered
+    await this.page.on('dialog', async dialog => {
+      expect(dialog.message()).toBe('The build was successful!');
+      await dialog.accept();
+    });
+  }
+
   async clearText(locator) {
     // Click on the locator to focus it
-    await this.page.click(locator); 
+    await this.page.click(locator);
     // Clear existing text
     await this.page.evaluate((selector) => {
-        const editableDiv = document.querySelector(selector);
-        if (editableDiv) {
-            const range = document.createRange();
-            range.selectNodeContents(editableDiv);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-            document.execCommand('delete'); // Delete selected text
-        }
+      const editableDiv = document.querySelector(selector);
+      if (editableDiv) {
+        const range = document.createRange();
+        range.selectNodeContents(editableDiv);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        document.execCommand('delete'); // Delete selected text
+      }
     }, locator);
-}
-async createBlog(){
-  await this.navigate_To_Settings();
+  }
+  async createBlog() {
+    await this.navigate_To_Settings();
     // Navigate to Module
     await this.navigate_To_module();
     await this.navigate_To_All_modules();
-     // Step 2: Install Blog Module
-     await this.fill_Text(this.locators.SearchModule, 'Blog');
-     await customAssert('BLOG module should be visible', async () => {
-       await expect(this.page.locator(this.locators.Blog)).toBeVisible();
-     });
-     await this.page.click(this.locators.installBlog);
-     await customAssert('Success message for Blog should be visible', async () => {
-       await this.page.waitForSelector(this.locators.successmessage);
-       await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-     });
-}
-async  Address_book(){
-  await this.navigate_To_Settings();
-  // Navigate to Module
-  await this.navigate_To_module();
- await this.navigate_To_All_modules();
- 
-   // Step 2: Install Address book Module
-   await this.fill_Text(this.locators.SearchModule, 'Address book');
-   await customAssert('Address Book module should be visible', async () => {
-     await expect(this.page.locator(this.locators.Addressbook)).toBeVisible();
-   });
-   await this.page.click(this.locators.installAddressbook);
-   await customAssert('Success message for Address Book should be visible', async () => {
-     await this.page.waitForSelector(this.locators.successmessage);
-     await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-   });
-}
-
-async  Saltcorn_Store(){
-  await this.navigate_To_Settings();
-  // Navigate to Module
-  await this.navigate_To_module();
- // Step 2: Install Address book Module
- await this.fill_Text(this.locators.SearchModule, 'Saltcorn store');
- await customAssert('Saltcorn store module should be visible', async () => {
-   await expect(this.page.locator(this.locators.SaltcornStore)).toBeVisible();
- });
- await this.page.click(this.locators.installSaltcornStore);
- await customAssert('Success message for Saltcorn store should be visible', async () => {
-   await this.page.waitForSelector(this.locators.successmessage);
-   await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
- });
-}
-
-async install_money() {
-  await this.navigate_To_Settings();
-  // Navigate to Module
-  await this.navigate_To_module();
-  // Search with 'flatpickr' in the search bar
-  await this.fill_Text(this.locators.SearchModule, 'money');
-  // Assert that the flatpickr module is visible and click on it
-  await customAssert('money module should be visible', async () => {
-    await expect(this.page.locator(this.locators.MoneyHeader)).toBeVisible();
-    await this.page.click('button#button-search-submit');
-  });
-  await this.page.waitForTimeout(2000);
-  try {
-    await this.page.waitForSelector(this.locators.installmoney, { state: 'visible', timeout: 3000 });
-    await this.page.click(this.locators.installmoney);
-    await customAssert('Success message should be visible', async () => {
+    // Step 2: Install Blog Module
+    await this.fill_Text(this.locators.SearchModule, 'Blog');
+    await customAssert('BLOG module should be visible', async () => {
+      await expect(this.page.locator(this.locators.Blog)).toBeVisible();
+    });
+    await this.page.click(this.locators.installBlog);
+    await customAssert('Success message for Blog should be visible', async () => {
       await this.page.waitForSelector(this.locators.successmessage);
       await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
     });
-  } catch {
-    // Module already installed, skip install
   }
-  await this.navigate_modules_To_Installed();
-  await customAssert('money module should be present in installed tab', async () => {
-    await expect(this.page.locator(this.locators.MoneyHeader)).toBeVisible();
-  });
-}
+  async Address_book() {
+    await this.navigate_To_Settings();
+    // Navigate to Module
+    await this.navigate_To_module();
+    await this.navigate_To_All_modules();
 
-async install_ManyToMany() {
-  await this.navigate_To_Settings();
-  // Navigate to Module
-  await this.navigate_To_module();
-  // Search with 'flatpickr' in the search bar
-  await this.fill_Text(this.locators.SearchModule, 'many-to-many');
-  // Assert that the flatpickr module is visible and click on it
-  await customAssert('many-to-many module should be visible', async () => {
-    await expect(this.page.locator(this.locators.Many2ManyHeader)).toBeVisible();
-    await this.page.click('button#button-search-submit');
-  });
-  await this.page.waitForTimeout(2000);
-  try {
-    await this.page.waitForSelector(this.locators.installmany2many, { state: 'visible', timeout: 3000 });
-    await this.page.click(this.locators.installmany2many);
-    await customAssert('Success message should be visible', async () => {
+    // Step 2: Install Address book Module
+    await this.fill_Text(this.locators.SearchModule, 'Address book');
+    await customAssert('Address Book module should be visible', async () => {
+      await expect(this.page.locator(this.locators.Addressbook)).toBeVisible();
+    });
+    await this.page.click(this.locators.installAddressbook);
+    await customAssert('Success message for Address Book should be visible', async () => {
       await this.page.waitForSelector(this.locators.successmessage);
       await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
     });
-  } catch {
-    // Module already installed, skip install
   }
-  await this.navigate_modules_To_Installed();
-  await customAssert('many-to-many module should be present in installed tab', async () => {
-    await expect(this.page.locator(this.locators.Many2ManyHeader)).toBeVisible();
-  });
-}
- async navigateToUserSettings() {
+
+  async Saltcorn_Store() {
+    await this.navigate_To_Settings();
+    // Navigate to Module
+    await this.navigate_To_module();
+    // Step 2: Install Address book Module
+    await this.fill_Text(this.locators.SearchModule, 'Saltcorn store');
+    await customAssert('Saltcorn store module should be visible', async () => {
+      await expect(this.page.locator(this.locators.SaltcornStore)).toBeVisible();
+    });
+    await this.page.click(this.locators.installSaltcornStore);
+    await customAssert('Success message for Saltcorn store should be visible', async () => {
+      await this.page.waitForSelector(this.locators.successmessage);
+      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+  }
+
+  async install_money() {
+    await this.navigate_To_Settings();
+    // Navigate to Module
+    await this.navigate_To_module();
+    // Search with 'flatpickr' in the search bar
+    await this.fill_Text(this.locators.SearchModule, 'money');
+    // Assert that the flatpickr module is visible and click on it
+    await customAssert('money module should be visible', async () => {
+      await expect(this.page.locator(this.locators.MoneyHeader)).toBeVisible();
+      await this.page.click('button#button-search-submit');
+    });
+    await this.page.waitForTimeout(2000);
+    try {
+      await this.page.waitForSelector(this.locators.installmoney, { state: 'visible', timeout: 3000 });
+      await this.page.click(this.locators.installmoney);
+      await customAssert('Success message should be visible', async () => {
+        await this.page.waitForSelector(this.locators.successmessage);
+        await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+      });
+    } catch {
+      // Module already installed, skip install
+    }
+    await this.navigate_modules_To_Installed();
+    await customAssert('money module should be present in installed tab', async () => {
+      await expect(this.page.locator(this.locators.MoneyHeader)).toBeVisible();
+    });
+  }
+
+  async install_ManyToMany() {
+    await this.navigate_To_Settings();
+    // Navigate to Module
+    await this.navigate_To_module();
+    // Search with 'flatpickr' in the search bar
+    await this.fill_Text(this.locators.SearchModule, 'many-to-many');
+    // Assert that the flatpickr module is visible and click on it
+    await customAssert('many-to-many module should be visible', async () => {
+      await expect(this.page.locator(this.locators.Many2ManyHeader)).toBeVisible();
+      await this.page.click('button#button-search-submit');
+    });
+    await this.page.waitForTimeout(2000);
+    try {
+      await this.page.waitForSelector(this.locators.installmany2many, { state: 'visible', timeout: 3000 });
+      await this.page.click(this.locators.installmany2many);
+      await customAssert('Success message should be visible', async () => {
+        await this.page.waitForSelector(this.locators.successmessage);
+        await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+      });
+    } catch {
+      // Module already installed, skip install
+    }
+    await this.navigate_modules_To_Installed();
+    await customAssert('many-to-many module should be present in installed tab', async () => {
+      await expect(this.page.locator(this.locators.Many2ManyHeader)).toBeVisible();
+    });
+  }
+  async navigateToUserSettings() {
     const userLink = this.page
       .getByRole('link', { name: ' User ' })
       .filter({ has: this.page.locator('span:has-text("User")') });
@@ -829,7 +847,7 @@ async install_ManyToMany() {
     await userSettings.click();
   }
 
-     
+
   async assert_FileList_Table() {
     // Wait for table to be visible
     await this.page.waitForSelector(this.locators.table, { timeout: 25000 });
@@ -854,29 +872,29 @@ async install_ManyToMany() {
     await this.submit();
   }
   async dialog_handle(filename) {
-     //a dialog handler BEFORE the action that triggers it
-        await this.page.once('dialog', async dialog => {
-            console.log(dialog.message());
-            await dialog.accept(filename);
-        });
+    //a dialog handler BEFORE the action that triggers it
+    await this.page.once('dialog', async dialog => {
+      console.log(dialog.message());
+      await dialog.accept(filename);
+    });
   }
-  async rename_file(current_file_name,new_file_name) {
-     await this.page.waitForSelector(this.locators.tablebodylocator);
-        await this.page.locator(this.locators.tablebodylocator).nth(0).click();
-        await this.page.waitForSelector(this.locators.tablebodylocator+" td:nth-child(2)");
-        let fileName = await this.page.textContent(this.locators.tablebodylocator+" td:nth-child(2)");
-        expect(fileName?.trim()).toBe(current_file_name);
-        await this.page.waitForTimeout(2000);
-        await this.dialog_handle(new_file_name); //a dialog handler BEFORE the action that triggers it
+  async rename_file(current_file_name, new_file_name) {
+    await this.page.waitForSelector(this.locators.tablebodylocator);
+    await this.page.locator(this.locators.tablebodylocator).nth(0).click();
+    await this.page.waitForSelector(this.locators.tablebodylocator + " td:nth-child(2)");
+    let fileName = await this.page.textContent(this.locators.tablebodylocator + " td:nth-child(2)");
+    expect(fileName?.trim()).toBe(current_file_name);
+    await this.page.waitForTimeout(2000);
+    await this.dialog_handle(new_file_name); //a dialog handler BEFORE the action that triggers it
 
-        // Wait for the Action dropdown to be visible
-        await this.page.locator(this.locators.actionselector).nth(2).waitFor({ state: "visible" });
-        await this.page.locator(this.locators.actionselector).nth(2).click();
-        await this.page.keyboard.type('Rename');
-        await this.page.keyboard.press('Enter');
-        await this.page.waitForTimeout(2000);
-        fileName = await this.page.textContent(this.locators.tablebodylocator+" td:nth-child(2)");
-        expect(fileName?.trim()).toBe(new_file_name);
+    // Wait for the Action dropdown to be visible
+    await this.page.locator(this.locators.actionselector).nth(2).waitFor({ state: "visible" });
+    await this.page.locator(this.locators.actionselector).nth(2).click();
+    await this.page.keyboard.type('Rename');
+    await this.page.keyboard.press('Enter');
+    await this.page.waitForTimeout(2000);
+    fileName = await this.page.textContent(this.locators.tablebodylocator + " td:nth-child(2)");
+    expect(fileName?.trim()).toBe(new_file_name);
   }
 
 }
