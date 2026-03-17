@@ -138,6 +138,10 @@ test.describe('E2E Test Suite', () => {
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
+        await page.selectOption(pageobject.destinationtype, { label: 'View' });
+        await page.waitForTimeout(500);
+
+
         await page.selectOption(pageobject.destinationview, { label: 'File_list [List on File]' }); // If using a select dropdown
         // click on next button
         await functions.submit();

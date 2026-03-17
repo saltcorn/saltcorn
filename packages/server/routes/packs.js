@@ -5,7 +5,12 @@
  */
 
 const Router = require("express-promise-router");
-const { isAdmin, error_catcher, setTenant } = require("./utils.js");
+const {
+  isAdmin,
+  error_catcher,
+  setTenant,
+  is_relative_url,
+} = require("./utils.js");
 const { renderForm } = require("@saltcorn/markup");
 const Table = require("@saltcorn/data/models/table");
 const Form = require("@saltcorn/data/models/form");
@@ -20,8 +25,8 @@ const ModelInstance = require("@saltcorn/data/models/model_instance");
 const load_plugins = require("../load_plugins");
 const { getState } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db/index");
+const { instanceOfPack } = require("@saltcorn/types/base_types");
 
-const { is_pack } = require("@saltcorn/data/contracts");
 const {
   table_pack,
   view_pack,
@@ -55,6 +60,16 @@ const fs = require("fs");
  */
 const router = new Router();
 module.exports = router;
+
+const getOnDoneRedirect = (req, fallback = "/plugins") => {
+  if (
+    req.query.on_done_redirect &&
+    is_relative_url("/" + req.query.on_done_redirect)
+  ) {
+    return `/${req.query.on_done_redirect}`;
+  }
+  return fallback;
+};
 
 /**
  * @name get
@@ -413,7 +428,7 @@ router.post(
     } catch (e) {
       error = e.message;
     }
-    if (!error && !is_pack.check(pack)) {
+    if (!error && !instanceOfPack(pack)) {
       error = req.__("Not a valid pack");
     }
 
@@ -473,14 +488,14 @@ router.post(
     const pack = await fetch_pack_by_name(name);
     if (!pack) {
       req.flash("error", req.__(`Pack %s not found`, text(name)));
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req, "/plugins"));
       return;
     }
     const can_install = await can_install_pack(pack.pack);
 
     if (can_install.error) {
       req.flash("error", can_install.error);
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req, "/plugins"));
       return;
     } else if (can_install.warning) {
       req.flash("warning", can_install.warning);
@@ -492,7 +507,7 @@ router.post(
     });
     await getState().refresh();
     req.flash("success", req.__(`Pack %s installed`, text(name)));
-    res.redirect(`/`);
+    res.redirect(getOnDoneRedirect(req, "/"));
   })
 );
 
@@ -511,7 +526,7 @@ router.post(
     const pack = await fetch_pack_by_name(name);
     if (!pack) {
       req.flash("error", req.__(`Pack %s not found`, text(name)));
-      res.redirect(`/plugins`);
+      res.redirect(getOnDoneRedirect(req, "/plugins"));
       return;
     }
     await db.withTransaction(async () => {
@@ -521,6 +536,6 @@ router.post(
 
     req.flash("success", req.__(`Pack %s uninstalled`, text(name)));
 
-    res.redirect(`/`);
+    res.redirect(getOnDoneRedirect(req, "/"));
   })
 );

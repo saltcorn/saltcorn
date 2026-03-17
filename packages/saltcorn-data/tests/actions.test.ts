@@ -7,7 +7,7 @@ import scheduler from "../models/scheduler";
 const { runScheduler } = scheduler;
 import db from "../db";
 const { getState } = require("../db/state");
-import mocks from "../tests/mocks";
+import mocks from "./mocks";
 const {
   plugin_with_routes,
   getActionCounter,
@@ -15,15 +15,18 @@ const {
   mockReqRes,
   sleep,
 } = mocks;
-import { assertIsSet } from "../tests/assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
-import baseactions, { emit_event, notify_user } from "../base-plugin/actions";
+import { assertIsRow, assertIsSet } from "../tests/assertions";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import baseactions from "../base-plugin/actions";
 const {
   duplicate_row,
   insert_any_row,
   insert_joined_row,
   modify_row,
   delete_rows,
+  emit_event,
+  notify_user,
+  run_js_code,
 } = baseactions;
 import utils from "../utils";
 import Notification from "../models/notification";
@@ -219,6 +222,16 @@ describe("Action and Trigger model", () => {
     const row = await table.getRow({ id });
     expect(['{"success":true}', "Error in workflow"]).toContain(row?.author);
   });
+  it("should run triggerwith table.run_trigger", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    resetActionCounter();
+    expect(getActionCounter()).toBe(0);
+
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+    await table.run_trigger("incCount", { name: "Mary Boas" });
+    expect(getActionCounter()).toBe(1);
+  });
 });
 describe("base plugin actions", () => {
   it("should insert_any_row", async () => {
@@ -236,6 +249,95 @@ describe("base plugin actions", () => {
     const rows = await patients.getRows({ name: "Simon1" });
 
     expect(rows.length).toBe(1);
+  });
+  it("should insert_any_row and return id", async () => {
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { x: 3, y: 7 },
+      configuration: {
+        table: "patients",
+        row_expr: '{name:"Simon9"}',
+        id_variable: "myid",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    assertIsRow(result);
+    expect(typeof result.myid).toBe("number");
+
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
+    const rows = await patients.getRows({ name: "Simon9" });
+
+    expect(rows.length).toBe(1);
+  });
+  it("insert_any_row should upsert", async () => {
+    const exrow = await Table.findOne("patients")?.getRow({ name: "Simon9" });
+    const id = exrow?.id;
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { x: 3, y: 7 },
+      configuration: {
+        table: "patients",
+        row_expr: `{name:"Simon99", id:${id}}`,
+        id_variable: "myid",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toStrictEqual({ myid: id });
+
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
+    const rows = await patients.getRows({ name: "Simon99" });
+
+    expect(rows.length).toBe(1);
+    expect(rows[0].id).toBe(id);
+    const rows1 = await patients.getRows({ name: "Simon9" });
+
+    expect(rows1.length).toBe(0);
+  });
+  it("should insert_any_row on arrays", async () => {
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { x: 3, y: 7 },
+      configuration: {
+        table: "patients",
+        row_expr: '[{name:"Simon2"}, {name:"Simon2"}]',
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(result).toStrictEqual({});
+
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
+    const rows = await patients.getRows({ name: "Simon2" });
+
+    expect(rows.length).toBe(2);
+  });
+  it("should insert_any_row on arrays and return ids", async () => {
+    const action = insert_any_row;
+    const result = await action.run({
+      row: { x: 3, y: 7 },
+      configuration: {
+        table: "patients",
+        row_expr: '[{name:"Simon10"}, {name:"Simon11"}]',
+        id_variable: "myids",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    assertIsRow(result);
+    expect(result.myids.length).toBe(2);
+    expect(typeof result.myids[0]).toBe("number");
+    expect(result.myids[0]).toBeGreaterThan(2);
+
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+
+    const rows = await patients.getRows({ name: "Simon2" });
+
+    expect(rows.length).toBe(2);
   });
   it("should insert_any_row with field", async () => {
     const patients = Table.findOne({ name: "patients" });
@@ -293,7 +395,7 @@ describe("base plugin actions", () => {
       configuration: { delete_triggering_row: true },
       user: { id: 1, role_id: 1 },
     } as any);
-    expect(result).toStrictEqual(undefined);
+    expect(result).toStrictEqual({});
 
     const row1 = await patients.getRow({ name: "Del1" });
     expect(row1).toBe(null);
@@ -308,7 +410,7 @@ describe("base plugin actions", () => {
       },
       user: { id: 1, role_id: 1 },
     } as any);
-    expect(result1).toStrictEqual(undefined);
+    expect(result1).toStrictEqual({});
     const row2 = await patients.getRow({ name: "Del2" });
     expect(row2).toBe(null);
   });
@@ -364,11 +466,14 @@ describe("base plugin actions", () => {
     expect(notif.user_id).toBe(1);
     expect(notif.body).toBe("World");
   });
+
   it("should have valid configFields", async () => {
     const books = Table.findOne({ name: "books" });
     assertIsSet(books);
     for (const [name, action] of Object.entries(baseactions)) {
+      // @ts-ignore
       if (!action.configFields) continue;
+      // @ts-ignore
       const configFields = await applyAsync(action.configFields, {
         table: books,
       });
@@ -378,6 +483,49 @@ describe("base plugin actions", () => {
 
   //TODO recalculate_stored_fields, set_user_language
 });
+describe("run_js_code", () => {
+  it("should return value", async () => {
+    const rres = await run_js_code.run({
+      configuration: {
+        code: "return 5",
+        run_where: "Server",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(rres).toBe(5);
+  });
+  it("should assert in run_js_code", async () => {
+    const rres = await run_js_code.run({
+      configuration: {
+        code: `assert(1);return 5`,
+        run_where: "Server",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(rres).toBe(5);
+    const rres1 = await run_js_code.run({
+      configuration: {
+        code: `assert.ok(1);return 5`,
+        run_where: "Server",
+      },
+      user: { id: 1, role_id: 1 },
+    });
+    expect(rres1).toBe(5);
+  });
+  it("should fail assert in run_js_code", async () => {
+    await expect(
+      (async () =>
+        await run_js_code.run({
+          configuration: {
+            code: `assert(0);return 5`,
+            run_where: "Server",
+          },
+          user: { id: 1, role_id: 1 },
+        }))()
+    ).rejects.toThrow();
+  });
+});
+
 describe("Events and eventlog", () => {
   it("should add custom event", async () => {
     await getState().setConfig("custom_events", [

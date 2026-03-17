@@ -70,7 +70,11 @@ class Field implements AbstractField {
   label: string;
   name: string;
   fieldview?: string;
-  validator: (value: any, whole_rec?: Row) => boolean | string | undefined;
+  validator: (
+    value: any,
+    whole_rec?: Row,
+    field?: { required: boolean }
+  ) => boolean | string | undefined;
   showIf?: { [field_name: string]: string | boolean | string[] };
   parent_field?: string;
   postText?: string;
@@ -193,6 +197,10 @@ class Field implements AbstractField {
     this.exclude_from_mobile = o.exclude_from_mobile;
   }
 
+  get isRepeat() {
+    return false;
+  }
+
   /**
    * To Json
    * @type {object}
@@ -276,7 +284,7 @@ class Field implements AbstractField {
 
   static async select_options_query(
     table_name: string,
-    where: string,
+    where: Where,
     attributes: any,
     extra_joinfields: any = {},
     user?: any
@@ -488,7 +496,7 @@ class Field implements AbstractField {
         .filter((f) => !f.isDirectory)
         .map((f) => ({
           label: f.filename,
-          value: f.path_to_serve,
+          value: f.field_value,
         }));
       if (!this.required) this.options.unshift({ label: "", value: "" });
     }
@@ -578,7 +586,7 @@ class Field implements AbstractField {
     const { rows } = await db.query(
       `select distinct "${db.sqlsanitize(this.name)}" from ${
         this.table?.sql_name
-      } ${whereS} order by "${db.sqlsanitize(this.name)}"`,
+      } ${whereS} order by "${db.sqlsanitize(this.name)}" limit 1000`,
       values
     );
     const dbOpts = rows.map((r: Row) => ({
@@ -614,7 +622,16 @@ class Field implements AbstractField {
       const schema = db.getTenantSchemaPrefix();
       const { getState } = require("../db/state");
       const on_delete = this.on_delete_sql;
-
+      const Table = require("./table");
+      const reftable = Table.findOne(this.reftable_name);
+      if (reftable?.external || reftable?.provider_name) {
+        const ref_pk = reftable.fields.find((f: Field) => f.primary_key);
+        if (!ref_pk)
+          throw new Error(
+            `Table ${this.reftable_name} does not have a primary key`
+          );
+        return ref_pk.sql_type;
+      }
       return `${apply(
         getState().types[
           typeof this.reftype === "string" ? this.reftype : this.reftype.name
@@ -624,7 +641,7 @@ class Field implements AbstractField {
         this.name
       )}_fkey" references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
-      }")${on_delete}`;
+      }")${on_delete} DEFERRABLE`;
     } else if (this.type === "File") {
       return "text";
     } else if (this.type && instanceOfType(this.type) && this.type.sql_name) {
@@ -719,13 +736,22 @@ class Field implements AbstractField {
     return !!fileview?.multipartFormData;
   }
 
-  validate(whole_rec: any): ResultMessage {
+  validate(whole_rec: GenObj, originalBody?: GenObj): ResultMessage | {} {
     const type = this.is_fkey ? { name: "Key" } : this.type;
     let readval = null;
     let typeObj = this.type as Type;
     let fvObj = this.fieldview
       ? typeObj?.fieldviews?.[this.fieldview]
       : undefined;
+    if (
+      !fvObj?.readFromFormRecord &&
+      !typeObj?.readFromFormRecord &&
+      (fvObj?.read || typeObj?.read) &&
+      !this.required &&
+      typeof whole_rec[this.form_name] === "undefined" &&
+      originalBody?.[this.form_name] !== ""
+    )
+      return {};
     if (this.is_fkey) {
       readval = readKey(whole_rec[this.form_name], this);
     } else {
@@ -756,7 +782,7 @@ class Field implements AbstractField {
         ? type.validate(this.attributes || {})(readval)
         : readval;
     if (tyvalres.error) return tyvalres;
-    const fvalres = this.validator(readval, whole_rec);
+    const fvalres = this.validator(readval, whole_rec, this);
     if (typeof fvalres === "string") return { error: fvalres };
     if (typeof fvalres === "undefined" || fvalres) return { success: readval };
     else return { error: "Not accepted" };
@@ -910,7 +936,7 @@ class Field implements AbstractField {
           new_field.name
         )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"("${new_field.refname || "id"}")${
           new_field.on_delete_sql
-        }`
+        } DEFERRABLE`
       );
     } else if (!new_field.is_fkey && this.is_fkey) {
       await db.query(
@@ -940,7 +966,7 @@ class Field implements AbstractField {
           new_field.name
         )}") references ${schema}"${sqlsanitize(
           new_field!.reftable_name
-        )}"("${new_field!.refname}")${new_field.on_delete_sql}`
+        )}"("${new_field!.refname}")${new_field.on_delete_sql} DEFERRABLE`
       );
     } else
       await db.query(
@@ -988,6 +1014,46 @@ class Field implements AbstractField {
     );
     const calc_joinfields: Array<CalcJoinfield> = [];
     Object.values(joinFields).forEach((jf: any) => {
+      if (!jf.rename_object) {
+        //half-h
+        if (jf.through) {
+          const myField = table.getField(jf.ref);
+          if (!myField) return;
+          const throughTable = Table.findOne({ name: myField.reftable_name });
+          if (!throughTable) return;
+          const throughField = throughTable.getField(jf.through);
+          if (!throughField) return;
+          const targetTable = Table.findOne({
+            name: throughField.reftable_name,
+          });
+          if (!targetTable) return;
+
+          calc_joinfields.push({
+            targetTable: targetTable.name,
+            field: myField.name,
+            through: [throughField.name],
+            throughTable: [throughTable.name],
+            targetField: jf.target,
+          });
+          calc_joinfields.push({
+            targetTable: throughTable.name,
+            field: myField.name,
+            targetField: jf.through,
+          });
+        } else {
+          const myField = table.getField(jf.ref);
+          if (!myField) return;
+          const targetTable = Table.findOne({ name: myField.reftable_name });
+          if (!targetTable) return;
+
+          calc_joinfields.push({
+            targetTable: targetTable.name,
+            field: myField.name,
+            targetField: jf.target,
+          });
+        }
+        return;
+      }
       const path = [...jf.rename_object];
       if (path.length === 2) {
         const myField = table.getField(path[0]);
@@ -1206,7 +1272,7 @@ class Field implements AbstractField {
         this.name
       )}") references ${schema}"${sqlsanitize(this.reftable_name)}" ("${this.refname}")${
         this.on_delete_sql
-      }`;
+      } DEFERRABLE`;
       await db.query(q);
     }
   }
@@ -1308,23 +1374,33 @@ class Field implements AbstractField {
 
     if (f.is_unique && !f.calculated) await f.add_unique_constraint();
     await f.set_calc_joinfields();
-
+    let refreshed = false;
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
+    if (!db.getRequestContext()?.client) {
+      refreshed = true;
       await require("../db/state").getState().refresh_tables(true);
-
-    if (f.calculated && f.stored) {
-      const nrows = await table.countRows({});
-      if (nrows > 0) {
-        const table1 = Table.findOne({ id: f.table_id });
-
-        //intentionally omit await
-        recalculate_for_stored(table1); //not waiting as there could be a lot of data
-      }
     }
     if (fld.table && fld.table.fields) {
       fld.table.fields.push(f);
     }
+    if (f.calculated && f.stored) {
+      const nrows = await table.countRows({});
+      if (nrows > 0 && nrows <= 20) {
+        if (!refreshed)
+          await require("../db/state").getState().refresh_tables(true);
+        const table1 = Table.findOne({ id: f.table_id });
+        await recalculate_for_stored(table1);
+      } else if (nrows > 0) {
+        //intentionally omit await
+        //not waiting as there could be a lot of data
+        db.whenTransactionisFree(async () => {
+          const table1 = Table.findOne({ id: f.table_id });
+
+          await recalculate_for_stored(table1);
+        });
+      }
+    }
+
     return f;
   }
 

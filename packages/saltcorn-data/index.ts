@@ -10,7 +10,7 @@ export { state };
 
 export * as models from "./models/index";
 
-const pluginHelper = require("./plugin-helper");
+import * as pluginHelper from "./plugin-helper";
 export namespace plugin_helper {
   export const { run_action_column } = pluginHelper;
 }

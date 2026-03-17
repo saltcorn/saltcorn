@@ -47,6 +47,7 @@ class Form implements AbstractForm {
   submitLabel?: string;
   submitButtonClass?: string;
   noSubmitButton?: boolean;
+  noLabelCols?: boolean;
   additionalButtons?: Array<_AdditionalButton>;
   // only for workflow and userConfig Forms
   additionalHeaders?: Array<Header>;
@@ -62,6 +63,7 @@ class Form implements AbstractForm {
   __?: any;
   isWorkflow?: boolean;
   pk_name?: string;
+  popup_width?: string;
 
   /**
    * Constructor
@@ -86,6 +88,7 @@ class Form implements AbstractForm {
     this.submitLabel = o.submitLabel;
     this.submitButtonClass = o.submitButtonClass;
     this.noSubmitButton = o.noSubmitButton;
+    this.noLabelCols = o.noLabelCols;
     this.additionalButtons = o.additionalButtons;
     this.additionalHeaders = o.additionalHeaders;
     this.onChange = o.onChange;
@@ -131,7 +134,7 @@ class Form implements AbstractForm {
       // @ts-ignore
       .filter((f) => f?.input_type !== "hidden")
       .map((f) => f.name);
-    const extraCtx = { ...this.values };
+    const extraCtx: GenObj = { ...this.values, row: this.values };
     if (user && !extraCtx.user_id) extraCtx.user_id = user.id;
     if (user && !extraCtx.user) extraCtx.user = user;
     for (const f of this.fields) {
@@ -235,7 +238,8 @@ class Form implements AbstractForm {
       };
       if (f.showIf && Object.entries(f.showIf).some(showIfFailed)) return;
 
-      const valres = f.validate(v);
+      const valres = f.validate(v, this.req?.body);
+
       if (instanceOfErrorMsg(valres)) {
         this.errors[f.name] = valres.error;
         this.values[f.name] = v[f.name];
@@ -298,6 +302,7 @@ namespace Form {
     submitLabel?: string;
     submitButtonClass?: string;
     noSubmitButton?: boolean;
+    noLabelCols?: boolean;
     additionalButtons?: Array<_AdditionalButton>;
     additionalHeaders?: Array<Header>;
     onChange?: string;

@@ -12,6 +12,10 @@ describe("PlainDate", () => {
   it("constructs from ISO string", () => {
     const pd = new PlainDate("2025-08-14");
     expect(pd.toISOString()).toBe("2025-08-14");
+    const pd1 = new PlainDate("2003-03-15");
+    expect(pd1.toISOString()).toBe("2003-03-15");
+    expect(pd1.month).toBe(3)
+    expect(pd1.day).toBe(15)
   });
 
   it("constructs from Date object", () => {
@@ -40,22 +44,25 @@ describe("PlainDate", () => {
   it("returns UTC string with dynamic locale", () => {
     const pd = new PlainDate("2025-07-29");
     const locale = Intl.DateTimeFormat().resolvedOptions().locale || "en-GB";
-    const expectedDate = new Date(Date.UTC(2025, 6, 29)).toLocaleDateString(locale, {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      timeZone: "UTC",
-    });
+    const expectedDate = new Date(Date.UTC(2025, 6, 29)).toLocaleDateString(
+      locale,
+      {
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        timeZone: "UTC",
+      }
+    );
     expect(pd.toUTCString()).toBe(expectedDate);
   });
 
-  it('return UTC date string in YYYY-MM-DD format', ()=> {
+  it("return UTC date string in YYYY-MM-DD format", () => {
     const pd = new PlainDate("2025-07-29");
     const utcDate = pd.toUTCDate();
     expect(typeof utcDate).toBe("string");
     expect(utcDate).toBe("2025-07-29");
-  })
+  });
 
   it("converts to JSON correctly", () => {
     const pd = new PlainDate("2025-08-14");

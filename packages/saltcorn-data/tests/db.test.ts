@@ -1,6 +1,7 @@
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 import db from "../db";
 import { assertIsSet } from "./assertions";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 const Table = require("../models/table");
 
 afterAll(db.close);

@@ -9,6 +9,7 @@ export const getHeaders = () => {
   const versionTag = config.version_tag;
   const stdHeaders = [
     { css: `static_assets/${versionTag}/saltcorn.css` },
+    { css: `static_assets/${versionTag}/saltcorn-mobile.css` },
     { script: `static_assets/${versionTag}/saltcorn-common.js` },
     { script: `static_assets/${versionTag}/dayjs.min.js` },
     { script: `static_assets/${versionTag}/socket.io.min.js` },
@@ -50,7 +51,9 @@ const getMenu = (req) => {
   const role = mobileCfg.user.role_id || 100;
   const extraMenu = saltcorn.data.web_mobile_commons.get_extra_menu(
     role,
-    req.__
+    req.__,
+    undefined,
+    req
   );
   if (mobileCfg.inErrorState) {
     const entryLink = mobileCfg.entry_point?.startsWith("get")

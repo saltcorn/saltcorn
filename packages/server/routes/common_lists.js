@@ -170,15 +170,16 @@ const editViewRoleForm = (view, roles, req, on_done_redirect_str) =>
  * @param {object} req
  * @returns {div}
  */
-const view_dropdown = (view, req, on_done_redirect_str = "") =>
+const view_dropdown = (view, req, on_done_redirect_str = "", includeRun = true) =>
   settingsDropdown(`dropdownMenuButton${view.id}`, [
-    a(
-      {
-        class: "dropdown-item",
-        href: `/view/${encodeURIComponent(view.name)}`,
-      },
-      '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
-    ),
+    includeRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/view/${encodeURIComponent(view.name)}`,
+        },
+        '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
+      ),
     view.id &&
       a(
         {
@@ -210,6 +211,13 @@ const view_dropdown = (view, req, on_done_redirect_str = "") =>
         },
         '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
       ),
+    a(
+      {
+        class: "dropdown-item",
+        href: `/registry-editor?etype=view&ename=${encodeURIComponent(view.name)}`,
+      },
+      '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
+    ),
     view.id && div({ class: "dropdown-divider" }),
     view.id &&
       post_dropdown_item(
@@ -491,22 +499,37 @@ const page_group_dropdown = (page_group, req) =>
  * @param {object} req
  * @returns {string}
  */
-const page_dropdown = (page, req) =>
+const page_dropdown = (
+  page,
+  req,
+  on_done_redirect_str = "",
+  includeTestRun = false,
+  includeRun = true
+) =>
   settingsDropdown(`dropdownMenuButton${page.id}`, [
-    a(
-      {
-        class: "dropdown-item",
-        href: `/page/${encodeURIComponent(page.name)}`,
-      },
-      '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
-    ),
+    includeRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/page/${encodeURIComponent(page.name)}`,
+        },
+        '<i class="fas fa-running"></i>&nbsp;' + req.__("Run")
+      ),
+    includeTestRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/pageedit/edit-properties/${encodeURIComponent(page.name)}${on_done_redirect_str}`,
+        },
+        '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
+      ),
     post_dropdown_item(
-      `/pageedit/add-to-menu/${page.id}`,
+      `/pageedit/add-to-menu/${page.id}${on_done_redirect_str}`,
       '<i class="fas fa-bars"></i>&nbsp;' + req.__("Add to menu"),
       req
     ),
     post_dropdown_item(
-      `/pageedit/clone/${page.id}`,
+      `/pageedit/clone/${page.id}${on_done_redirect_str}`,
       '<i class="far fa-copy"></i>&nbsp;' + req.__("Duplicate"),
       req
     ),
@@ -517,9 +540,19 @@ const page_dropdown = (page, req) =>
       },
       '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
     ),
+    includeTestRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/registry-editor?etype=page&ename=${encodeURIComponent(
+            page.name
+          )}`,
+        },
+        '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
+      ),
     div({ class: "dropdown-divider" }),
     post_dropdown_item(
-      `/pageedit/delete/${page.id}`,
+      `/pageedit/delete/${page.id}${on_done_redirect_str}`,
       '<i class="far fa-trash-alt"></i>&nbsp;' + req.__("Delete"),
       req,
       true,
@@ -665,7 +698,12 @@ const getPageGroupList = (rows, roles, req) => {
   );
 };
 
-const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
+const trigger_dropdown = (
+  trigger,
+  req,
+  on_done_redirect_str = "",
+  includeTestRun = false
+) =>
   settingsDropdown(`dropdownMenuButton${trigger.id}`, [
     a(
       {
@@ -674,6 +712,14 @@ const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
       },
       '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
     ),
+    includeTestRun &&
+      a(
+        {
+          class: "dropdown-item",
+          href: `/actions/testrun/${trigger.id}${on_done_redirect_str}`,
+        },
+        '<i class="fas fa-running"></i>&nbsp;' + req.__("Test run")
+      ),
 
     a(
       {
@@ -681,6 +727,15 @@ const trigger_dropdown = (trigger, req, on_done_redirect_str = "") =>
         href: `javascript:ajax_modal('/admin/snapshot-restore/trigger/${trigger.name}${on_done_redirect_str}')`,
       },
       '<i class="fas fa-undo-alt"></i>&nbsp;' + req.__("Restore")
+    ),
+    a(
+      {
+        class: "dropdown-item",
+        href: `/registry-editor?etype=trigger&ename=${encodeURIComponent(
+          trigger.name
+        )}`,
+      },
+      '<i class="fas fa-cog"></i>&nbsp;' + req.__("Registry editor")
     ),
     post_dropdown_item(
       `/actions/clone/${trigger.id}${on_done_redirect_str}`,
@@ -825,4 +880,7 @@ module.exports = {
   getPageList,
   getPageGroupList,
   getTriggerList,
+  view_dropdown,
+  page_dropdown,
+  trigger_dropdown,
 };

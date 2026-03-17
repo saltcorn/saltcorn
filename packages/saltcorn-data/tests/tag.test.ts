@@ -1,7 +1,8 @@
 import db from "../db";
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+
 import Tag from "../models/tag";
 import Table from "../models/table";
 import View from "../models/view";

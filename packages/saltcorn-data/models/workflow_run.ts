@@ -18,20 +18,14 @@ import { mkTable } from "@saltcorn/markup/index";
 import mocks from "../tests/mocks";
 import { FieldLike } from "@saltcorn/types/base_types";
 const { mockReqRes } = mocks;
-const { ensure_final_slash, interpolate } = utils;
+const {
+  ensure_final_slash,
+  interpolate,
+  allReturnDirectives,
+  secondaryReturnDirectives,
+} = utils;
 const { eval_expression } = Expression;
 const { getState } = require("../db/state");
-
-const allReturnDirectives = [
-  "popup",
-  "goto",
-  "eval_js",
-  "download",
-  "set_fields",
-  "notify",
-  "notify_success",
-  "error",
-];
 
 const data_output_to_html = (val: any) => {
   if (Array.isArray(val) && typeof val[0] === "object") {
@@ -176,9 +170,13 @@ class WorkflowRun {
     Object.assign(this, useRow);
   }
 
-  async provide_form_input(form_values: any) {
+  async provide_form_input(form_values: any, response_variable?: string) {
     //write values
-    Object.assign(this.context, form_values);
+    if (response_variable) {
+      if (!this.context[response_variable])
+        this.context[response_variable] = {};
+      Object.assign(this.context[response_variable], form_values);
+    } else Object.assign(this.context, form_values);
 
     this.wait_info.form = false;
     this.wait_info.output = false;
@@ -289,6 +287,14 @@ class WorkflowRun {
           return {
             type: "String",
             attributes: { autofocus: ix === 0 || undefined },
+          };
+        case "Date":
+          return {
+            type: "Date",
+            attributes: { day_only: q.day_only },
+            fieldview: getState().types.Date?.fieldviews?.flatpickr
+              ? "flatpickr"
+              : "edit",
           };
         case "Multiple choice":
           let options = q.options;
@@ -750,7 +756,17 @@ class WorkflowRun {
               if (trace) this.createTrace(step.name, user);
               setTimeout(
                 () => {
-                  runNow().catch((e) => console.error("Workflow bg error", e));
+                  //remove client from request context
+                  db.runWithTenant(
+                    { tenant: db.getTenantSchema(), req, client: null },
+                    () => {
+                      db.withTransaction(() =>
+                        runNow().catch((e) =>
+                          console.error("Workflow bg error", e)
+                        )
+                      );
+                    }
+                  );
                 },
                 (step.configuration.wait_delay || 0) * 1000
               );
@@ -795,12 +811,15 @@ class WorkflowRun {
             if (array.length) {
               this.current_step.push(0);
               this.current_step.push(step.configuration.loop_body_initial_step);
+              const new_context = {
+                ...this.context,
+                [step.configuration.item_variable]: array[0],
+              };
+              if (step.configuration.index_variable)
+                new_context[step.configuration.index_variable] = 0;
               await this.update({
                 current_step: this.current_step,
-                context: {
-                  ...this.context,
-                  [step.configuration.item_variable]: array[0],
-                },
+                context: new_context,
               });
 
               step = steps.find(
@@ -845,13 +864,17 @@ class WorkflowRun {
                 this.set_current_step(
                   forStep.configuration.loop_body_initial_step
                 );
-                const nextVar =
-                  array_data1[this.current_step[this.current_step.length - 2]];
+                const next_index =
+                  this.current_step[this.current_step.length - 2];
+                const nextVar = array_data1[next_index];
 
                 nextUpdate.context = {
                   ...this.context,
                   [forStep.configuration.item_variable]: nextVar,
                 };
+                if (forStep.configuration.index_variable)
+                  nextUpdate.context[forStep.configuration.index_variable] =
+                    next_index;
                 nextUpdate.current_step = this.current_step;
               } else {
                 //no more items
@@ -859,14 +882,19 @@ class WorkflowRun {
                 this.current_step.pop();
                 const afterForStep = this.get_next_step(forStep, user);
 
-                if (afterForStep) this.set_current_step(afterForStep.name);
-                else {
+                if (afterForStep) {
+                  this.set_current_step(afterForStep.name);
+                  nextUpdate.current_step = this.current_step;
+                } else {
                   //TODO what if there is another level of forloops
                   step = null;
                   nextUpdate.status = "Finished";
                 }
                 //remove variable from context
                 delete this.context[forStep.configuration.item_variable];
+                if (forStep.configuration.index_variable)
+                  delete this.context[forStep.configuration.index_variable];
+
                 nextUpdate.context = this.context;
                 //nextUpdate.current_step = this.current_step;
               }
@@ -882,17 +910,16 @@ class WorkflowRun {
             nextUpdate.current_step[Math.max(0, this.current_step.length - 1)] =
               step.name;
           }
-          await this.update(nextUpdate);
           if (
             interactive &&
             result &&
             typeof result === "object" &&
             allReturnDirectives.some((k) => typeof result[k] !== "undefined")
           ) {
-            const ret = await this.popReturnDirectives();
+            const ret = await this.popReturnDirectives(nextUpdate);
             ret.resume_workflow = this.id;
             return ret;
-          }
+          } else await this.update(nextUpdate);
         },
         async (e) => {
           if (this.context.__errorHandler) {
@@ -937,16 +964,31 @@ class WorkflowRun {
       run_page: `/actions/run/${this.id}`,
     });
   }
-  async popReturnDirectives() {
+  async popReturnDirectives(nextUpdate?: Row) {
     const retVals: any = {};
     allReturnDirectives.forEach((k) => {
       if (typeof this.context[k] !== "undefined") {
         retVals[k] = this.context[k];
         delete this.context[k];
       }
+      if (typeof nextUpdate?.[k] !== "undefined") delete nextUpdate[k];
     });
-    if (Object.keys(retVals).length)
-      await this.update({ context: this.context });
+
+    Object.keys(secondaryReturnDirectives).forEach((k) => {
+      if (typeof retVals[k] !== "undefined")
+        secondaryReturnDirectives[k].forEach((secondary_k) => {
+          if (typeof this.context[secondary_k] !== "undefined") {
+            retVals[secondary_k] = this.context[secondary_k];
+            delete this.context[secondary_k];
+          }
+          if (typeof nextUpdate?.[secondary_k] !== "undefined")
+            delete nextUpdate[secondary_k];
+        });
+    });
+    //if (Object.keys(retVals).length)
+    if (nextUpdate) {
+      await this.update(nextUpdate);
+    } else this.update({ context: this.context });
 
     return retVals;
   }

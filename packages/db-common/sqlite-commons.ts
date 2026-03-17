@@ -154,10 +154,18 @@ export const buildInsertBulkSql = (
  * @param queryFunc
  * @returns
  */
-export const doCount = async (tbl: string, whereObj: Where, queryFunc: any) => {
+export const doCount = async (
+  tbl: string,
+  whereObj: Where,
+  queryFunc: any,
+  limit?: number
+) => {
   const { where, values } = mkWhere(whereObj, true);
-  const sql = `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
-  const tq = await queryFunc(sql, values);
+  const sql = limit
+    ? `SELECT COUNT(*) FROM (
+  SELECT 1 FROM "${sqlsanitize(tbl)}" ${where} limit ${+limit}) limited_count`
+    : `SELECT COUNT(*) FROM "${sqlsanitize(tbl)}" ${where}`;
+  const tq = await queryFunc(sql, values);  
   return parseInt(tq.rows[0]["COUNT(*)"]);
 };
 
@@ -263,8 +271,28 @@ export const tryCatchInTransaction = async (f: Function, onError: Function) => {
   try {
     return await f();
   } catch (error) {
-    await onError(error);
+    return await onError(error);
   }
+};
+
+/**
+ * just a wrapper for withTransaction for pg compatibility
+ * @param f logic to run
+ * @param onError error callback
+ * @returns
+ */
+export const openOrUseTransaction = async (f: Function, onError: Function) => {
+  return await withTransaction(f, onError);
+};
+
+/**
+ * just a wrapper for withTransaction for pg compatibility
+ * @param f logic to run
+ * @param onError error callback
+ * @returns
+ */
+export const whenTransactionisFree = async (f: Function, onError: Function) => {
+  return await withTransaction(f, onError);
 };
 
 export const commitAndBeginNewTransaction = async () => {};

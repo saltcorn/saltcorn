@@ -4,7 +4,8 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useState, useContext } from "react";
+import React, { Fragment, useState, useContext, useEffect } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import { Element, useNode } from "@craftjs/core";
 import { Column } from "./Column";
@@ -32,7 +33,7 @@ export /**
  * @subcategory components
  */
 const DropMenu = ({
-  children,
+  contents,
   action_style,
   action_size,
   action_icon,
@@ -43,12 +44,12 @@ const DropMenu = ({
   label,
   menu_direction,
 }) => {
+  const { t } = useTranslation();
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showDropdown, setDropdown] = useState(false);
-  //const [dropWidth, setDropWidth] = useState(200);
   return (
     <div
       className={`${selected ? "selected-node" : ""} ${block ? "d-block" : "d-inline"}`}
@@ -80,7 +81,9 @@ const DropMenu = ({
           showDropdown ? "show" : ""
         } ${menu_direction === "end" ? "dropdown-menu-end" : ""}`}
       >
-        <div className="canvas d-flex flex-column">{children}</div>
+        <Element canvas id="dropmenu-contents" is={Column}>
+          {contents}
+        </Element>
       </div>
     </div>
   );
@@ -93,6 +96,7 @@ export /**
  * @subcategory components
  */
 const DropMenuSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     label: node.data.props.label,
     block: node.data.props.block,
@@ -117,7 +121,7 @@ const DropMenuSettings = () => {
       <tbody>
         <SettingsRow
           field={{
-            label: "Label",
+            label: t("Label"),
             name: "label",
             type: "String",
           }}
@@ -138,18 +142,18 @@ const DropMenuSettings = () => {
         </tr>
         <SettingsRow
           field={{
-            label: "Drop direction",
+            label: t("Drop direction"),
             name: "menu_direction",
             type: "btn_select",
             options: [
               {
                 value: "end",
-                title: "End",
+                title: t("End"),
                 label: <FontAwesomeIcon icon={faCaretSquareLeft} />,
               },
               {
                 value: "start",
-                title: "Start",
+                title: t("Start"),
                 label: <FontAwesomeIcon icon={faCaretSquareRight} />,
               },
             ],
@@ -174,8 +178,13 @@ DropMenu.craft = {
   related: {
     settings: DropMenuSettings,
     segment_type: "dropdown_menu",
-    hasContents: true,
     fields: [
+      {
+        label: "Contents",
+        name: "contents",
+        type: "Nodes",
+        nodeID: "dropmenu-contents",
+      },
       "label",
       "block",
       "action_style",

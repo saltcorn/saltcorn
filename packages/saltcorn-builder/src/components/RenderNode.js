@@ -47,7 +47,7 @@ const RenderNode = ({ render }) => {
   } = useNode((node) => ({
     isHover: node.events.hovered,
     dom: node.dom,
-    name: node.data.custom.displayName || node.data.displayName,
+    name: node.data.custom.displayName || node.data.props?.custom?.displayName || node.data.displayName,
     moveable: query.node(node.id).isDraggable(),
     deletable: query.node(node.id).isDeletable(),
     parent: node.data.parent,
@@ -80,9 +80,27 @@ const RenderNode = ({ render }) => {
     currentDOM.style.left = left;
   }, [dom, getPos]);
 
+  const hiddenColumnParents = new Set(["Card", "Container", "Table", "DropMenu"]);
   useEffect(() => {
-    if (name === "Column" && parent && parent !== "ROOT")
-      actions.selectNode(parent);
+    if (!isActive) return;
+    if (name === "Column" && parent && parent !== "ROOT") {
+      const parentNode = query.node(parent).get();
+      const parentName = parentNode?.data?.displayName;
+      const parentLinked = parentNode?.data?.linkedNodes;
+      if (
+        hiddenColumnParents.has(parentName) &&
+        parentLinked &&
+        Object.values(parentLinked).includes(id)
+      ) {
+        const currentlySelected = query.getEvent("selected").all();
+        const otherSelected = currentlySelected.filter((nid) => nid !== id);
+        if (otherSelected.length > 0) {
+          actions.selectNode([...otherSelected, parent]);
+        } else {
+          actions.selectNode(parent);
+        }
+      }
+    }
   }, [isActive]);
 
   useEffect(() => {
@@ -115,12 +133,12 @@ const RenderNode = ({ render }) => {
       sibIx + 1
     );
   };
-  return (
-    <>
-      {(isActive || isHover) &&
-      id !== "ROOT" &&
-      !(name === "Column" && !isActive)
-        ? ReactDOM.createPortal(
+   return (
+     <>
+       {(isActive || isHover) &&
+       id !== "ROOT" &&
+       !(name === "Column" && !isActive)
+         ? ReactDOM.createPortal(
             <div
               ref={currentRef}
               className={`selected-indicator ${

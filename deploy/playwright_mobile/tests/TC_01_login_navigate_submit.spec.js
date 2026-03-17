@@ -135,6 +135,8 @@ test.describe("Login Navigate Upload", () => {
       // select a date and check the input
       const yearInput = iframe.locator(".numInput.cur-year");
       await yearInput.fill("2025");
+      await yearInput.press("Enter");
+
       const monthSelect = iframe.locator(
         "select.flatpickr-monthDropdown-months"
       );
@@ -179,12 +181,12 @@ test.describe("Login Navigate Upload", () => {
         'div[data-sc-embed-viewname="list_processed"]'
       );
       const dateElement = processedItem.locator("time");
-      await expect(dateElement).toHaveCount(3);
+      await expect(dateElement).toHaveCount(5);
 
       const timeElement = newIframe.locator(
         'time[datetime="2025-08-25T00:00:00.000Z"]'
       );
-      await expect(timeElement).toBeVisible();
+      await expect(timeElement).toHaveCount(3);
     } catch (error) {
       await dumpHTML(page);
       throw error;

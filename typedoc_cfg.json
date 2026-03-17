@@ -1,5 +1,5 @@
 {
-  "entryPointStrategy": "legacy-packages",
+  "entryPointStrategy": "packages",
   "excludePrivate": true,
   "customCss": "./deploy/typedoc/custom.css",
   "entryPoints": [
@@ -14,5 +14,6 @@
     "packages/common-code"
   ],
   "out": "docs",
+  "plugin": ["typedoc-plugin-rename-defaults"],
   "readme": "deploy/typedoc/documentation_main.md"
 }

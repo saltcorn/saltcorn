@@ -71,7 +71,6 @@ describe("edit Page groups", () => {
     expect(resp.statusCode).toEqual(200);
     expect(resp._body.row).toEqual({
       name: nameAfterUpdate,
-      description: null,
       min_role: 100,
       random_allocation: false,
     });

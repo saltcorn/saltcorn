@@ -119,6 +119,10 @@ const pagePropertiesForm = async (req, isNew) => {
         sublabel: req.__("User role required to access page"),
         input_type: "select",
         options: roles.map((r) => ({ value: r.id, label: r.role })),
+        help: {
+          topic: "Role to access",
+          context: {},
+        },
       },
       ...(htmlOptions.length > 0
         ? [
@@ -168,7 +172,7 @@ const pageBuilderData = async (req, context) => {
   const pages = await Page.find();
   const page_groups = (await PageGroup.find()).map((g) => ({ name: g.name }));
   const images = await File.find({ mime_super: "image" });
-  images.forEach((im) => (im.location = im.path_to_serve));
+  images.forEach((im) => (im.location = im.field_value));
   const roles = await User.get_roles();
   const stateActions = getState().actions;
   const actions = [
@@ -197,6 +201,20 @@ const pageBuilderData = async (req, context) => {
         req,
       });
     }
+  }
+  const workflowActions = Trigger.trigger_actions({
+    apiNeverTriggers: true,
+    onlyWorkflows: true,
+  });
+  for (const name of workflowActions) {
+    actionConfigForms[name] = [
+      {
+        name: "initial_context",
+        label: "Initial context",
+        type: "String",
+        class: "validate-expression",
+      },
+    ];
   }
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
@@ -243,15 +261,19 @@ const pageBuilderData = async (req, context) => {
       }
     }
   }
-
+  const { on_done_redirect, ...current_filter_state } = req.query;
   //console.log(fixed_state_fields.ListTasks);
   const icons = getState().icons;
   return {
+    translations:
+      req.getLocale() === "en" ? {} : req.getCatalog(req.getLocale()) || {},
     views: views.map((v) => v.select_option),
     images,
     pages,
     page_groups,
+    current_filter_state,
     actions: actionsNotRequiringRow,
+    has_copilot_generate: !!getState().functions.copilot_generate_layout,
     builtInActions: ["GoBack"],
     triggerActions,
     library,
@@ -296,12 +318,20 @@ const getRootPageForm = (pages, pageGroups, roles, req) => {
           label: r.role,
           input_type: "select",
           options: [
-            "",
+            r.id === 1 ? { label: req.__("Admin dashboard"), value: "" } : "",
             ...pages.filter((p) => p.min_role >= r.id).map((p) => p.name),
             ...pageGroups.map((g) => ({
               label: `${g.name} (group)`,
               value: g.name,
             })),
+            ...(r.id === 1
+              ? [
+                  {
+                    label: req.__("All entities list"),
+                    value: "_sc_entities_list",
+                  },
+                ]
+              : []),
           ],
         })
     ),
@@ -416,6 +446,8 @@ const wrap = (contents, noCard, req, page) => ({
           ? { href: `/page/${encodeURIComponent(page.name)}`, text: page.name }
           : { text: req.__("New") },
       ],
+      right:
+        '<div id="builder-header-actions" class="d-flex align-items-center gap-2"></div>',
     },
     {
       type: noCard ? "container" : "card",
@@ -521,10 +553,18 @@ router.post(
           entity_name: dbPage.name,
         });
         if (req.xhr) res.json({ success: "ok" });
-        else res.redirect(`/pageedit/`);
+        else {
+          let redirectTarget =
+            req.query.on_done_redirect &&
+            is_relative_url("/" + req.query.on_done_redirect)
+              ? `/${req.query.on_done_redirect}`
+              : "/pageedit/";
+          res.redirect(redirectTarget);
+        }
       } else {
         if (!pageRow.layout) pageRow.layout = {};
         if (!pageRow.fixed_states) pageRow.fixed_states = {};
+        pageRow.name = pageRow.name.trim();
         await Page.create(pageRow);
         await getState().refresh_pages();
         Trigger.emitEvent("AppChange", `Page ${pageRow.name}`, req.user, {

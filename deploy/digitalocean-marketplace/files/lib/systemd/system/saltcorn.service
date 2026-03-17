@@ -9,6 +9,7 @@ WatchdogSec=30
 User=saltcorn
 WorkingDirectory=/home/saltcorn
 ExecStart=/home/saltcorn/.local/bin/saltcorn serve -p 80
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 Environment="NODE_ENV=production"
 Environment="PATH=/home/saltcorn/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"

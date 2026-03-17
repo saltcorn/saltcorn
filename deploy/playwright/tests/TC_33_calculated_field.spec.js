@@ -119,8 +119,11 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
 
         // JavaScript / TypeScript
-        const textarea = page.locator('#inputexpression');
-        await textarea.fill('2025-year_of_birth');
+        const editor = page.locator('div.monaco-editor');
+        await editor.click();
+        await page.waitForTimeout(500);
+        await page.keyboard.type("2025-year_of_birth");
+        await page.waitForTimeout(500);
         // click on finish button
         await functions.submit();
     });
@@ -165,6 +168,10 @@ test.describe('E2E Test Suite', () => {
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
         // click on finish button
+        await page.selectOption(pageobject.destinationtype, { label: 'View' });
+        
+        await page.waitForTimeout(500);
+
         await functions.submit();
     });
 

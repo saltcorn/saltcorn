@@ -169,7 +169,7 @@ class Model {
     // (string) -- model instance name. Return parameters
     // (obj) -- row. Return prediction from default instance
     // () -- Return parameters from default instance
-    return async (arg1: any, arg2: any) => {
+    return async (arg1?: string | Row, arg2?: Row) => {
       let instance, row;
       if (typeof arg1 === "string") {
         instance = await ModelInstance.findOne({

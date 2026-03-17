@@ -615,7 +615,8 @@ const workflowBreadcrumbItem = ({
 const breadcrumbs = (
   crumbs: Workflow.BreadcrumbItemOpts[],
   right: any,
-  after: any
+  after: any,
+  center?: any
 ): string =>
   nav(
     { "aria-label": "breadcrumb" },
@@ -627,7 +628,8 @@ const breadcrumbs = (
           : standardBreadcrumbItem(crumbs.length)(c, ix)
       ),
       after ? li({ class: "ms-3" }, after) : "",
-      right ? li({ class: "ms-auto" }, right) : ""
+      center ? li({ class: "ms-auto me-auto" }, center) : "",
+      right ? li({ class: center ? "" : "ms-auto" }, right) : ""
     )
   );
 
@@ -761,6 +763,7 @@ namespace LayoutExports {
     ntabs?: any;
     deeplink?: boolean;
     serverRendered?: boolean;
+    lazyLoadViews?: boolean;
     tabId?: string;
     bodyClass?: string;
     outerClass?: string;
@@ -808,6 +811,7 @@ const renderTabs = (
     startClosed,
     acc_init_opens,
     serverRendered,
+    lazyLoadViews,
     tabId,
     tabClass,
     contentWrapperClass,
@@ -824,7 +828,7 @@ const renderTabs = (
   if (tabsStyle === "Accordion")
     return (
       div(
-        { class: ["accordion", outerClass], id: `${rndid}top` },
+        { class: ["accordion", lazyLoadViews && "lazy-accoordion", outerClass], id: `${rndid}top` },
         contents.map((t, ix) =>
           div(
             { class: "accordion-item" },
@@ -900,6 +904,7 @@ const renderTabs = (
             id: `${rndid}`,
             class: [
               "nav",
+              lazyLoadViews && "lazy-tabs",
               tabsStyle === "Tabs" ? "nav-tabs" : "nav-pills",
               tabClass,
               hints?.tabClass && tabsStyle === "Tabs" && hints?.tabClass,

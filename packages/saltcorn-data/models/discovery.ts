@@ -80,6 +80,7 @@ const findType = (sql_name: string): string | undefined => {
     character: "String", // char - if length is not defined is 1 else length needs to be defined
     "character varying": "String", // varchar  - this type can have length
     varchar: "String",
+    citext: "String",
     date: "Date",
     timestamp: "Date",
     "timestamp without time zone": "Date",
@@ -100,7 +101,10 @@ const findType = (sql_name: string): string | undefined => {
 };
 
 const make_field = async (c: Row): Promise<FieldCfg | undefined> => {
-  const type = findType(c.data_type);
+  const type =
+    c.udt_name === "citext" || (c.data_type === "USER-DEFINED" && c.udt_name)
+      ? findType(c.udt_name)
+      : findType(c.data_type);
   const basicField = {
     name: c.column_name,
     label: c.column_name,

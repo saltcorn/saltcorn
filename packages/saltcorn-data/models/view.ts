@@ -506,7 +506,7 @@ class View implements AbstractView {
         this.configuration,
         viewState,
         extraArgs,
-        this.queries(remote, extraArgs.req)
+        this.queries(remote, extraArgs.req, extraArgs.res)
       );
     } catch (error: any) {
       state.log(2, error.stack);
@@ -659,7 +659,7 @@ class View implements AbstractView {
           this.configuration,
           query,
           extraArgs,
-          this.queries(remote, extraArgs.req)
+          this.queries(remote, extraArgs.req, extraArgs.res)
         );
       }
       if (this.viewtemplateObj?.renderRows) {
@@ -739,11 +739,11 @@ class View implements AbstractView {
         removeEmptyStrings(query),
         removeEmptyStrings(body),
         extraArgs,
-        this.queries(remote, extraArgs.req),
+        this.queries(remote, extraArgs.req, extraArgs.res),
         remote
       );
     } catch (error: any) {
-      state.log(2, error.stack);
+      state.log(1, error);
       error.message = `In POST ${this.name} view (${this.viewtemplate} viewtemplate):\n${error.message}`;
       throw error;
     }
@@ -782,7 +782,7 @@ class View implements AbstractView {
       this.configuration,
       body,
       extraArgs,
-      this.queries(remote, extraArgs.req)
+      this.queries(remote, extraArgs.req, extraArgs.res)
     );
     if (result?.status && typeof result.stack === "number")
       res.status(result.status);
@@ -888,6 +888,7 @@ class View implements AbstractView {
 
   rewrite_query_from_slug(query: any, params: any): void {
     let pix = 0;
+    if (!params) return;
     if (this.slug && this.slug.steps && this.slug.steps.length > 0) {
       for (const step of this.slug.steps) {
         if (step.unique && params[pix]) {

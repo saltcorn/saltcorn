@@ -1,10 +1,12 @@
-import React, { Fragment, useContext, useEffect } from "react";
+import React, { Fragment, useState, useContext, useEffect } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
 import { fetchPagePreview, setAPropGen } from "./utils";
 
 export const Page = ({ page }) => {
+  const { t } = useTranslation();
   const {
     selected,
     node_id,
@@ -35,13 +37,14 @@ export const Page = ({ page }) => {
           dangerouslySetInnerHTML={{ __html: myPreview }}
         ></div>
       ) : (
-        `Page: ${page}`
+        `${t("Page")}: ${page}`
       )}
     </div>
   );
 };
 
 export const PageSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     page: node.data.props.page,
     node_id: node.id,
@@ -58,7 +61,7 @@ export const PageSettings = () => {
     <div>
       <Fragment>
         <div>
-          <label>Page to embed</label>
+          <label>{t("Page to embed")}</label>
           <select
             value={page}
             className="form-control form-select"
@@ -83,7 +86,7 @@ export const PageSettings = () => {
           target="_blank"
           href={`/pageedit/edit/${page}`}
         >
-          Edit this page
+          {t("Edit this page")}
         </a>
       ) : null}
     </div>

@@ -422,7 +422,7 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
       false,
       dryRun
     );
-    await asyncSudo(["sysctl", "--system"], false, dryRun);
+    await asyncSudo(["sysctl", "--system"], true, dryRun);
   }
   if (db === "pg-local" && installer === "dnf") {
     await asyncSudo(["postgresql-setup", "--initdb"], false, dryRun);
@@ -623,6 +623,7 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
       session_secret,
       jwt_secret,
       multi_tenant: false,
+      multi_node: false,
     },
     user,
     dryRun
@@ -672,6 +673,7 @@ ${hasSDnotify ? "WatchdogSec=30" : ""}
 User=${user}
 WorkingDirectory=/home/${user}
 ExecStart=/home/${user}/.local/bin/saltcorn serve -p ${port}
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 Environment="NODE_ENV=production" ${getDockerEnvVars(user, dockerMode)}
 

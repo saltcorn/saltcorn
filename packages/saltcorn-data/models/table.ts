@@ -70,6 +70,7 @@ import utils from "../utils";
 const {
   prefixFieldsInWhere,
   InvalidConfiguration,
+  mergeActionResults,
   InvalidAdminAction,
   satisfies,
   structuredClone,
@@ -81,7 +82,7 @@ const {
   applyAsync,
   asyncMap,
 } = utils;
-import tags from "@saltcorn/markup/tags";
+import tags, { em } from "@saltcorn/markup/tags";
 const { text } = tags;
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
@@ -99,6 +100,7 @@ import { get_formula_examples } from "./internal/table_helper";
 import {
   aggregation_query_fields,
   getAggAndField,
+  joinfield_renamer,
   process_aggregations,
 } from "./internal/query";
 import async_json_stream from "./internal/async_json_stream";
@@ -224,6 +226,8 @@ const isDate = function (date: Date): boolean {
  * @category saltcorn-data
  */
 class Table implements AbstractTable {
+  static fixed_user: AbstractUser | undefined = undefined;
+  static read_only: boolean = false;
   /** The table name */
   name: string;
 
@@ -292,6 +296,16 @@ class Table implements AbstractTable {
     this.fields = o.fields.map((f) => new Field(f));
   }
 
+  static subClass({
+    user,
+    read_only,
+  }: { user?: AbstractUser; read_only?: boolean } = {}): typeof Table {
+    return class extends this {
+      static fixed_user = user || undefined;
+      static read_only = !!read_only;
+    };
+  }
+
   get to_json() {
     return {
       name: this.name,
@@ -318,23 +332,27 @@ class Table implements AbstractTable {
     const { getRows, ...methods } = provider.get_table(tbl.provider_cfg, tbl);
 
     const { json_list_to_external_table } = require("../plugin-helper");
-    const t = json_list_to_external_table(getRows, tbl.fields, methods || {});
+    const t = json_list_to_external_table(
+      getRows,
+      tbl.fields,
+      methods || {},
+      tbl
+    );
     delete t.min_role_read; //it is a getter
     Object.assign(t, tbl);
     t.update = async (upd_rec: Row) => {
       const { fields, constraints, ...updDB } = upd_rec;
+      if (updDB.ownership_field_id === "") delete updDB.ownership_field_id;
       await db.update("_sc_tables", updDB, tbl.id);
       //limited refresh if we do not have a client
-      if (!db.getRequestContext()?.client)
-        await require("../db/state").getState().refresh_tables(true);
+      if (!db.getRequestContext()?.client) await Table.state_refresh(true);
     };
     t.delete = async (upd_rec: Row) => {
       const schema = db.getTenantSchemaPrefix();
       await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
       await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [tbl.id]);
       //limited refresh if we do not have a client
-      if (!db.getRequestContext()?.client)
-        await require("../db/state").getState().refresh_tables(true);
+      if (!db.getRequestContext()?.client) await Table.state_refresh(true);
     };
     return t;
   }
@@ -354,8 +372,8 @@ class Table implements AbstractTable {
     )
       return <Table>where;
     // todo add string & number as possible types for where
-    if (typeof where === "string") return Table.findOne({ name: where });
-    if (typeof where === "number") return Table.findOne({ id: where });
+    if (typeof where === "string") return this.findOne({ name: where });
+    if (typeof where === "number") return this.findOne({ id: where });
     if (typeof where === "undefined") return null;
     if (where === null) return null;
 
@@ -375,8 +393,8 @@ class Table implements AbstractTable {
           : satisfies(where)
     );
     if (tbl?.provider_name) {
-      return new Table(structuredClone(tbl)).to_provided_table();
-    } else return tbl ? new Table(structuredClone(tbl)) : null;
+      return new this(structuredClone(tbl)).to_provided_table();
+    } else return tbl ? new this(structuredClone(tbl)) : null;
   }
 
   /**
@@ -392,7 +410,7 @@ class Table implements AbstractTable {
     if (selectopts.cached) {
       const { getState } = require("../db/state");
       return getState()
-        .tables.map((t: TableCfg) => new Table(structuredClone(t)))
+        .tables.map((t: TableCfg) => new this(structuredClone(t)))
         .filter(satisfies(where || {}));
     }
 
@@ -430,7 +448,7 @@ class Table implements AbstractTable {
       t.constraints = constraints
         .filter((f: any) => f.table_id === t.id)
         .map((f: any) => new _TableConstraint(f));
-      const tbl = new Table(t);
+      const tbl = new this(t);
       return tbl.to_provided_table();
     });
   }
@@ -468,7 +486,7 @@ class Table implements AbstractTable {
           .filter((f: FieldCfg) => f.table_id === t.id)
           .map((f: FieldCfg) => new Field(f));
 
-        return new Table(t);
+        return new this(t);
       });
     }
     return [...dbs, ...externals];
@@ -514,21 +532,22 @@ class Table implements AbstractTable {
    * @returns {boolean}
    */
   is_owner(user: AbstractUser | undefined, row: Row): boolean {
-    if (!user) return false;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if (!use_user) return false;
 
     if (this.ownership_formula && this.fields) {
       const f = get_expression_function(this.ownership_formula, this.fields);
-      return !!f(row, user);
+      return !!f(row, use_user);
     }
     const field_name = this.owner_fieldname();
 
     // users are owners of their own row in users table
     if (this.name === "users" && !field_name)
-      return !!user.id && `${row?.id}` === `${user.id}`;
+      return !!use_user.id && `${row?.id}` === `${use_user.id}`;
 
     return (
       typeof field_name === "string" &&
-      (row[field_name] === user.id || row[field_name]?.id === user.id)
+      (row[field_name] === use_user.id || row[field_name]?.id === use_user.id)
     );
   }
 
@@ -590,7 +609,7 @@ class Table implements AbstractTable {
             const path = refTable.ownership_formula
               .replace("===user.id", "")
               .replace("==user.id", "")
-              .split(".");
+              .split(/\??\./);
             const fldNms = new Set((refTable?.fields || []).map((f) => f.name));
             if (fldNms.has(path[0])) {
               opts.push({
@@ -696,6 +715,10 @@ class Table implements AbstractTable {
       const { getState } = require("../db/state");
 
       const type = getState().types[pk_type];
+      if (!type)
+        throw new Error(
+          `Cannot find primary key type ${pk_type} in fields ${JSON.stringify(fields)}`
+        );
       pk_sql_type = type.sql_name;
       if (type.primaryKey?.default_sql)
         pk_sql_type = `${type.sql_name} default ${type.primaryKey?.default_sql}`;
@@ -715,7 +738,11 @@ class Table implements AbstractTable {
     options: SelectOptions | TablePack = {}, //TODO not selectoptions
     id?: number
   ): Promise<Table> {
-    const { pk_type, pk_sql_type } = Table.pkSqlType(options.fields);
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+    const { pk_type, pk_sql_type } = options.provider_name
+      ? {}
+      : Table.pkSqlType(options.fields);
 
     const schema = db.getTenantSchemaPrefix();
     // create table in database
@@ -781,9 +808,15 @@ class Table implements AbstractTable {
     if (table.has_sync_info) await table.create_sync_info_table();
     // refresh tables cache
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
 
+    if (table.provider_name) {
+      const { getState } = require("../db/state");
+
+      const provider = getState().table_providers[table.provider_name];
+      if (provider?.on_create) await provider?.on_create(table);
+      return table.to_provided_table();
+    }
     return table;
   }
 
@@ -794,6 +827,9 @@ class Table implements AbstractTable {
    * @param table
    */
   static async createInDb(table: Table): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const is_sqlite = db.isSQLite;
     const schema = db.getTenantSchemaPrefix();
     const { pk_sql_type } = Table.pkSqlType(table.fields);
@@ -833,6 +869,9 @@ class Table implements AbstractTable {
    */
   // tbd check all other tables related to table description
   async delete(only_forget: boolean = false): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const schema = db.getTenantSchemaPrefix();
     const is_sqlite = db.isSQLite;
     await this.update({ ownership_field_id: null });
@@ -856,8 +895,7 @@ class Table implements AbstractTable {
         `drop table if exists ${schema}"${sqlsanitize(this.name)}__history"`
       );
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
   }
 
   /***
@@ -872,6 +910,9 @@ class Table implements AbstractTable {
    * Reset Sequence
    */
   async resetSequence() {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const fields = this.fields;
     const pk = fields.find((f) => f.primary_key);
     if (!pk) {
@@ -893,13 +934,14 @@ class Table implements AbstractTable {
    * @param user
    * @param forRead
    */
-  private updateWhereWithOwnership(
+  updateWhereWithOwnership(
     where: Where,
-    fields: Field[],
     user?: AbstractUser,
     forRead?: boolean
   ): { notAuthorized?: boolean } | undefined {
-    const role = user?.role_id;
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+
+    const role = use_user?.role_id;
     const min_role = forRead ? this.min_role_read : this.min_role_write;
     if (
       role &&
@@ -908,27 +950,29 @@ class Table implements AbstractTable {
     )
       return { notAuthorized: true };
     if (
-      user &&
+      use_user &&
       role &&
       role < 100 &&
       role > min_role &&
       this.ownership_field_id
     ) {
-      const owner_field = fields.find((f) => f.id === this.ownership_field_id);
+      const owner_field = this.fields.find(
+        (f) => f.id === this.ownership_field_id
+      );
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
       mergeIntoWhere(where, {
-        [owner_field.name]: user.id,
+        [owner_field.name]: use_user.id,
       });
     } else if (
-      user &&
+      use_user &&
       role &&
       role < 100 &&
       role > min_role &&
       this.ownership_formula
     ) {
       try {
-        mergeIntoWhere(where, this.ownership_formula_where(user));
+        mergeIntoWhere(where, this.ownership_formula_where(use_user));
       } catch (e) {
         //ignore, ownership formula is too difficult to merge with where
         // TODO user groups
@@ -937,36 +981,49 @@ class Table implements AbstractTable {
   }
 
   private async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
-    if (ids.length > 0) {
-      const schema = db.getTenantSchemaPrefix();
-      const pkName = this.pk_name || "id";
-      if (isNode()) {
-        await db.query(
-          `delete from ${schema}"${db.sqlsanitize(
-            this.name
-          )}_sync_info" where ref in (
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
+    await db.tryCatchInTransaction(
+      async () => {
+        if (ids.length > 0) {
+          const schema = db.getTenantSchemaPrefix();
+          const pkName = this.pk_name || "id";
+          if (isNode()) {
+            await db.query(
+              `delete from ${schema}"${db.sqlsanitize(
+                this.name
+              )}_sync_info" where ref in (
             ${ids.map((row) => row[pkName]).join(",")})`
-        );
-        await db.query(
-          `insert into ${schema}"${db.sqlsanitize(
-            this.name
-          )}_sync_info" values ${ids
-            .map(
-              (row) =>
-                `(${row[pkName]}, date_trunc('milliseconds', to_timestamp( ${
-                  timestamp.valueOf() / 1000.0
-                } ) ), true)`
-            )
-            .join(",")}`
-        );
-      } else {
-        await db.query(
-          `update "${db.sqlsanitize(this.name)}_sync_info"
+            );
+            await db.query(
+              `insert into ${schema}"${db.sqlsanitize(
+                this.name
+              )}_sync_info" (ref, last_modified, deleted)
+              values ${ids
+                .map(
+                  (row) =>
+                    `(${row[pkName]}, date_trunc('milliseconds', to_timestamp( ${
+                      timestamp.valueOf() / 1000.0
+                    } ) ), true)`
+                )
+                .join(",")}`
+            );
+          } else {
+            await db.query(
+              `update "${db.sqlsanitize(this.name)}_sync_info"
            set deleted = true, modified_local = true
            where ref in (${ids.map((row) => row[pkName]).join(",")})`
-        );
+            );
+          }
+        }
+      },
+      (e: Error) => {
+        require("../db/state")
+          .getState()
+          .log(2, `Error in addDeleteSyncInfo: ${e.message}`);
       }
-    }
+    );
   }
 
   /**
@@ -982,14 +1039,23 @@ class Table implements AbstractTable {
    * @param user - optional user, if null then no authorization will be checked
    * @returns
    */
-  async deleteRows(where: Where, user?: AbstractUser, noTrigger?: boolean) {
+  async deleteRows(
+    where: Where,
+    user?: AbstractUser,
+    noTrigger?: boolean,
+    resultCollector?: any
+  ) {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     //Fast truncate if user is admin and where is blank
     const cfields = await Field.find(
       { reftable_name: this.name },
       { cached: true }
     );
     if (
-      (!user || user?.role_id === 1) &&
+      (!use_user || use_user?.role_id === 1) &&
       Object.keys(where).length == 0 &&
       db.truncate &&
       noTrigger &&
@@ -1007,11 +1073,12 @@ class Table implements AbstractTable {
     const triggers = await Trigger.getTableTriggers("Delete", this);
     const fields = this.fields;
 
-    if (this.updateWhereWithOwnership(where, fields, user)?.notAuthorized) {
+    if (this.updateWhereWithOwnership(where, use_user)?.notAuthorized) {
       const state = require("../db/state").getState();
       state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
       return;
     }
+    this.normalise_fkey_values(where);
     const calc_agg_fields = await Field.find(
       {
         calculated: true,
@@ -1024,12 +1091,14 @@ class Table implements AbstractTable {
     let rows: any;
     if (
       calc_agg_fields.length ||
-      (user && user.role_id > this.min_role_write && this.ownership_formula)
+      (use_user &&
+        use_user.role_id > this.min_role_write &&
+        this.ownership_formula)
     ) {
       rows = await this.getJoinedRows({
         where,
-        forUser: user,
-        forPublic: !user,
+        forUser: use_user,
+        forPublic: use_user?.role_id === 100,
       });
     }
 
@@ -1043,12 +1112,17 @@ class Table implements AbstractTable {
       if (!rows)
         rows = await this.getJoinedRows({
           where,
+          forUser: use_user,
+          forPublic: use_user?.role_id === 100,
         });
       for (const trigger of triggers) {
         for (const row of rows) {
           // run triggers on delete
-          if (trigger.haltOnOnlyIf?.(row, user)) continue;
-          await trigger.run!(row, { user });
+          if (trigger.haltOnOnlyIf?.(row, use_user)) continue;
+          const runres = await trigger.run!(row, { user: use_user });
+
+          if (runres && resultCollector)
+            mergeActionResults(resultCollector, runres);
         }
       }
       if (isNode()) {
@@ -1115,6 +1189,10 @@ class Table implements AbstractTable {
         } else throw e;
       }
     );
+    if (this.has_sync_info) {
+      const state = require("../db/state").getState();
+      if (state.pushHelper) state.pushHelper.queuePushSync();
+    }
   }
 
   /**
@@ -1170,7 +1248,11 @@ class Table implements AbstractTable {
   ): Promise<Row | null> {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = selopts;
-    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || forUser;
+
+    const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
+    this.normalise_fkey_values(where);
     const row = await db.selectMaybeOne(
       this.name,
       where,
@@ -1186,9 +1268,10 @@ class Table implements AbstractTable {
         );
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
-        if (row[owner_field.name] !== (forUser as AbstractUser).id) return null;
+        if (row[owner_field.name] !== (use_forUser as AbstractUser).id)
+          return null;
       } else if (this.ownership_formula || this.name === "users") {
-        if (!this.is_owner(forUser, row)) return null;
+        if (!this.is_owner(use_forUser, row)) return null;
       } else return null; //no ownership
     }
     return apply_calculated_fields(
@@ -1229,19 +1312,20 @@ class Table implements AbstractTable {
     const fields = this.fields;
     if (!this.fields) return [];
     const { forUser, forPublic, ...selopts1 } = selopts;
-    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || forUser;
+    const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     if (
       role &&
       this.updateWhereWithOwnership(
         where,
-        fields,
-        forUser || { role_id: 100 },
+        use_forUser || { role_id: 100 },
         true
       )?.notAuthorized
     ) {
       return [];
     }
-
+    this.normalise_fkey_values(where);
     let rows = await db.select(
       this.name,
       where,
@@ -1253,7 +1337,8 @@ class Table implements AbstractTable {
       else if (this.ownership_field_id) {
         //already dealt with by changing where
       } else if (this.ownership_formula || this.name === "users") {
-        rows = rows.filter((row: Row) => this.is_owner(forUser, row));
+        if (!selopts?.disable_ownership_postqfilter)
+          rows = rows.filter((row: Row) => this.is_owner(use_forUser, row));
       } else return []; //no ownership
     }
 
@@ -1301,8 +1386,12 @@ class Table implements AbstractTable {
    * @param where
    * @returns {Promise<number>}
    */
-  async countRows(where?: Where, opts?: ForUserRequest): Promise<number> {
-    return await db.count(this.name, where);
+  async countRows(
+    where?: Where,
+    opts?: SelectOptions & ForUserRequest
+  ): Promise<number> {
+    if (where) this.normalise_fkey_values(where);
+    return await db.count(this.name, where, opts);
   }
 
   /**
@@ -1317,7 +1406,7 @@ class Table implements AbstractTable {
       const res = await db.query(
         `select distinct "${db.sqlsanitize(fieldnm)}" from ${
           this.sql_name
-        } ${where} order by "${db.sqlsanitize(fieldnm)}"`,
+        } ${where} order by "${db.sqlsanitize(fieldnm)}" limit 1000`,
         values
       );
       return res.rows.map((r: Row) => r[fieldnm]);
@@ -1325,7 +1414,7 @@ class Table implements AbstractTable {
       const res = await db.query(
         `select distinct "${db.sqlsanitize(fieldnm)}" from ${
           this.sql_name
-        } order by "${db.sqlsanitize(fieldnm)}"`
+        } order by "${db.sqlsanitize(fieldnm)}" limit 1000`
       );
       return res.rows.map((r: Row) => r[fieldnm]);
     }
@@ -1372,14 +1461,19 @@ class Table implements AbstractTable {
    * ```
    * @param v_in - columns with values to update
    * @param id - id value
-   * @param _userid - user id
+   * @param user - user
    * @param noTrigger
    * @param resultCollector
+   * @param restore_of_version
+   * @param syncTimestamp
+   * @param additionalTriggerValues
+   * @param autoRecalcIterations
+   * @param extraArgs
    * @returns
    */
   async updateRow(
     v_in: Row,
-    id: PrimaryKeyValue,
+    id_in: PrimaryKeyValue | Row,
     user?: AbstractUser,
     noTrigger?:
       | boolean
@@ -1390,13 +1484,18 @@ class Table implements AbstractTable {
           syncTimestamp?: Date;
           additionalTriggerValues?: Row;
           autoRecalcIterations?: number;
+          extraArgs?: any;
         },
     resultCollector?: object,
     restore_of_version?: number,
     syncTimestamp?: Date,
     additionalTriggerValues?: Row,
-    autoRecalcIterations?: number
+    autoRecalcIterations?: number,
+    extraArgs?: any
   ): Promise<string | void> {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
     // migrating to options arg
     if (typeof noTrigger === "object") {
       const extraOptions = noTrigger;
@@ -1406,6 +1505,7 @@ class Table implements AbstractTable {
       additionalTriggerValues = extraOptions.additionalTriggerValues;
       autoRecalcIterations = extraOptions.autoRecalcIterations;
       noTrigger = extraOptions.noTrigger;
+      extraArgs = extraOptions.extraArgs;
     }
 
     if (typeof autoRecalcIterations === "number" && autoRecalcIterations > 5)
@@ -1413,6 +1513,21 @@ class Table implements AbstractTable {
     let existing: Row | undefined | null;
     let changedFromCalc = new Set([]);
     let v = { ...v_in };
+    if (typeof id_in === "undefined")
+      throw new Error(
+        this.name + " updateRow called without primary key value"
+      );
+    if (id_in === null)
+      throw new Error(
+        this.name + " updateRow called with null as primary key value"
+      );
+
+    const composite_pk_names = this.composite_pk_names;
+    const id: PrimaryKeyValue | Row = composite_pk_names
+      ? id_in
+      : typeof id_in === "object"
+        ? id_in[this.pk_name]
+        : id_in;
     //these may have changed
     let changedFieldNames = new Set([
       ...Object.keys(v_in),
@@ -1420,7 +1535,7 @@ class Table implements AbstractTable {
     ]);
     const fields = this.fields;
     const pk_name = this.pk_name;
-    const role = user?.role_id;
+    const role = use_user?.role_id;
     const state = require("../db/state").getState();
     let stringified = false;
     const sqliteJsonCols = !isNode()
@@ -1432,17 +1547,8 @@ class Table implements AbstractTable {
             .map((f) => f.name),
         }
       : {};
-    if (typeof id === "undefined")
-      throw new Error(
-        this.name + " updateRow called without primary key value"
-      );
-    if (id === null)
-      throw new Error(
-        this.name + " updateRow called with null as primary key value"
-      );
 
     // normalise id passed from expanded join field
-    if (typeof id === "object") id = id[this.pk_name];
 
     this.normalise_fkey_values(v);
 
@@ -1457,7 +1563,7 @@ class Table implements AbstractTable {
         fields
       );
     if (
-      user &&
+      use_user &&
       role &&
       (role > this.min_role_write || role > this.min_role_read)
     ) {
@@ -1468,10 +1574,10 @@ class Table implements AbstractTable {
         );
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
-        if (v[owner_field.name] && v[owner_field.name] != user.id) {
+        if (v[owner_field.name] && v[owner_field.name] != use_user.id) {
           state.log(
             4,
-            `Not authorized to updateRow in table ${this.name}. ${user.id} does not match owner field in updates`
+            `Not authorized to updateRow in table ${this.name}. ${use_user.id} does not match owner field in updates`
           );
           return "Not authorized";
         }
@@ -1480,13 +1586,13 @@ class Table implements AbstractTable {
         if (!existing)
           existing = await this.getJoinedRow({
             where: { [pk_name]: id },
-            forUser: user,
+            forUser: use_user,
             joinFields,
           });
-        if (!existing || existing?.[owner_field.name] !== user.id) {
+        if (!existing || existing?.[owner_field.name] !== use_user.id) {
           state.log(
             4,
-            `Not authorized to updateRow in table ${this.name}. ${user.id} does not match owner field in exisiting`
+            `Not authorized to updateRow in table ${this.name}. ${use_user.id} does not match owner field in exisiting`
           );
           return "Not authorized";
         }
@@ -1495,16 +1601,16 @@ class Table implements AbstractTable {
         if (!existing)
           existing = await this.getJoinedRow({
             where: { [pk_name]: id },
-            forUser: user,
+            forUser: use_user,
             joinFields,
           });
 
-        if (!existing || !this.is_owner(user, existing)) {
+        if (!existing || !this.is_owner(use_user, existing)) {
           state.log(
             4,
             `Not authorized to updateRow in table ${
               this.name
-            }. User does not match formula: ${JSON.stringify(user)}`
+            }. User does not match formula: ${JSON.stringify(use_user)}`
           );
           return "Not authorized";
         }
@@ -1521,15 +1627,15 @@ class Table implements AbstractTable {
       if (!existing)
         existing = await this.getJoinedRow({
           where: { [pk_name]: id },
-          forUser: user,
+          forUser: use_user,
           joinFields,
         });
       const newRow = { ...existing, ...v };
       let constraint_check = this.check_table_constraints(newRow);
       if (constraint_check) return constraint_check;
     }
-    if (user) {
-      let field_write_check = this.check_field_write_role(v, user);
+    if (use_user) {
+      let field_write_check = this.check_field_write_role(v, use_user);
       if (field_write_check) return field_write_check;
     }
 
@@ -1538,7 +1644,7 @@ class Table implements AbstractTable {
       if (!existing)
         existing = await this.getJoinedRow({
           where: { [pk_name]: id },
-          forUser: user,
+          forUser: use_user,
           joinFields,
         });
       const valResCollector = resultCollector || {};
@@ -1547,8 +1653,8 @@ class Table implements AbstractTable {
         this,
         { ...(additionalTriggerValues || {}), ...existing, ...v },
         valResCollector,
-        user,
-        { old_row: existing, updated_fields: v_in }
+        use_user,
+        { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
       );
       if ("error" in valResCollector) return valResCollector.error as string;
       if ("set_fields" in valResCollector)
@@ -1565,7 +1671,7 @@ class Table implements AbstractTable {
       );
       existing = await this.getJoinedRow({
         where: { [pk_name]: id },
-        forUser: user,
+        forUser: use_user,
         joinFields,
       });
       let updated;
@@ -1576,7 +1682,7 @@ class Table implements AbstractTable {
             v
           )}, id=${id}`
         );
-        this.stringify_json_fields(v);
+        this.prepare_row_for_writing(v);
         stringified = true;
         await db.update(this.name, v, id, {
           pk_name,
@@ -1584,7 +1690,7 @@ class Table implements AbstractTable {
         });
         updated = await this.getJoinedRow({
           where: { [pk_name]: id },
-          forUser: user,
+          forUser: use_user,
           joinFields,
         });
       }
@@ -1628,7 +1734,7 @@ class Table implements AbstractTable {
             pk_name,
           },
           _time: new Date(),
-          _userid: user?.id,
+          _userid: use_user?.id,
           _restore_of_version: restore_of_version || null,
         });
     }
@@ -1637,12 +1743,12 @@ class Table implements AbstractTable {
       if (triggers.length > 0)
         existing = await this.getJoinedRow({
           where: { [pk_name]: id },
-          forUser: user,
+          forUser: use_user,
           joinFields,
         });
     }
     state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
-    if (!stringified) this.stringify_json_fields(v);
+    if (!stringified) this.prepare_row_for_writing(v);
     const really_changed_field_names: Set<string> = existing
       ? new Set(Object.keys(v).filter((k) => v[k] !== (existing as Row)[k]))
       : changedFieldNames;
@@ -1657,7 +1763,7 @@ class Table implements AbstractTable {
     if (!existing && really_changed_field_names.size && keyChanged)
       existing = await this.getJoinedRow({
         where: { [pk_name]: id },
-        forUser: user,
+        forUser: use_user,
         joinFields,
       });
     await db.update(this.name, v, id, {
@@ -1666,10 +1772,16 @@ class Table implements AbstractTable {
     });
 
     if (this.has_sync_info) {
-      const oldInfo = await this.latestSyncInfo(id);
+      const oldInfo = await this.latestSyncInfo(id as PrimaryKeyValue);
       if (oldInfo && !oldInfo.deleted)
-        await this.updateSyncInfo(id, oldInfo.last_modified, syncTimestamp);
-      else await this.insertSyncInfo(id, syncTimestamp);
+        await this.updateSyncInfo(
+          id as PrimaryKeyValue,
+          v,
+          oldInfo.last_modified,
+          syncTimestamp
+        );
+      else await this.insertSyncInfo(id as PrimaryKeyValue, v, syncTimestamp);
+      if (state.pushHelper) state.pushHelper.queuePushSync();
     }
     const newRow = { ...existing, ...v, [pk_name]: id };
     if (really_changed_field_names.size > 0) {
@@ -1691,19 +1803,33 @@ class Table implements AbstractTable {
     }
 
     if (!noTrigger) {
-      const trigPromise = Trigger.runTableTriggers(
+      await Trigger.runTableTriggers(
         "Update",
         this,
         { ...(additionalTriggerValues || {}), ...newRow },
         resultCollector,
-        role === 100 ? undefined : user,
-        { old_row: existing, updated_fields: v_in }
+        role === 100 ? undefined : use_user,
+        { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
       );
-      if (resultCollector) await trigPromise;
     }
   }
 
+  static async analyze_all_indexed_tables() {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
+    const tables = await Table.find({}, { cached: true });
+    const schemaPrefix = db.getTenantSchemaPrefix();
+
+    for (const table of tables)
+      if (table.constraints.some((c) => c.type === "Index"))
+        await db.query(`analyze ${schemaPrefix}"${sqlsanitize(table.name)}";`);
+  }
+
   async insert_history_row(v0: Row, retry = 0) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     // sometimes there is a race condition in history inserts
     // https://dba.stackexchange.com/questions/212580/concurrent-transactions-result-in-race-condition-with-unique-constraint-on-inser
     // solution: retry 3 times, if fails run with on conflict do nothing
@@ -1716,7 +1842,7 @@ class Table implements AbstractTable {
     });
     if (this.name === "users") delete v1.last_mobile_login;
 
-    this.stringify_json_fields(v1);
+    this.prepare_row_for_writing(v1);
 
     const id = await db.insert(this.name + "__history", v1, {
       onConflictDoNothing: true,
@@ -1725,71 +1851,146 @@ class Table implements AbstractTable {
     if (!id && retry <= 3) await this.insert_history_row(v1, retry + 1);
   }
 
-  async latestSyncInfo(id: PrimaryKeyValue) {
+  async latestSyncInfo(id: PrimaryKeyValue): Promise<Row | null> {
     const rows = await this.latestSyncInfos([id]);
     return rows?.length === 1 ? rows[0] : null;
   }
 
-  async latestSyncInfos(ids: PrimaryKeyValue[]) {
-    const schema = db.getTenantSchemaPrefix();
-    const dbResult = await db.query(
-      `select max(last_modified) "last_modified", ref
-       from ${schema}"${db.sqlsanitize(this.name)}_sync_info"
-       group by ref having ref = ${db.isSQLite ? "" : "ANY"} ($1)`,
-      db.isSQLite ? ids : [ids]
+  async latestSyncInfos(ids: PrimaryKeyValue[]): Promise<Row[] | null> {
+    return await db.tryCatchInTransaction(
+      async () => {
+        const schema = db.getTenantSchemaPrefix();
+        const sql = !db.isSQLite
+          ? `
+  SELECT s.last_modified, s.ref, s.updated_fields
+  FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info" s
+  JOIN (
+    SELECT
+      ref,
+      MAX(last_modified) AS last_modified
+    FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info"
+    WHERE ref = ${db.isSQLite ? "" : "ANY"} ($1)
+    GROUP BY ref
+  ) m
+    ON s.ref = m.ref
+   AND s.last_modified = m.last_modified`
+          : `
+  SELECT MAX(last_modified) "last_modified", ref
+  FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info"
+  GROUP BY ref HAVING ref = ($1)`;
+        const result = await db.query(sql, db.isSQLite ? ids : [ids]);
+        return result.rows;
+      },
+      (e: Error) => {
+        require("../db/state")
+          .getState()
+          .log(2, `Error in latestSyncInfos: ${e.message}`);
+        return null;
+      }
     );
-    return dbResult.rows;
   }
 
-  private async insertSyncInfo(id: PrimaryKeyValue, syncTimestamp?: Date) {
-    const schema = db.getTenantSchemaPrefix();
-    if (isNode()) {
-      await db.query(
-        `insert into ${schema}"${db.sqlsanitize(
-          this.name
-        )}_sync_info" values($1,
-        date_trunc('milliseconds', to_timestamp($2)))`,
-        [
-          id,
-          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0,
-        ]
-      );
-    } else {
-      await db.query(
-        `insert into "${db.sqlsanitize(this.name)}_sync_info"
+  private async insertSyncInfo(
+    id: PrimaryKeyValue,
+    updates: Row,
+    syncTimestamp?: Date
+  ) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
+    await db.tryCatchInTransaction(
+      async () => {
+        const schema = db.getTenantSchemaPrefix();
+        if (isNode()) {
+          const timestamp = syncTimestamp ? syncTimestamp : await db.time();
+          const fieldTimestamps: any = {};
+          for (const k of Object.keys(updates).filter(
+            (key) => key !== this.pk_name
+          )) {
+            fieldTimestamps[k] = timestamp;
+          }
+
+          await db.query(
+            `insert into ${schema}"${db.sqlsanitize(
+              this.name
+            )}_sync_info" (ref, last_modified, updated_fields)
+            values(
+              $1,
+              date_trunc('milliseconds', to_timestamp($2)),
+              $3::jsonb
+            )`,
+            [id, timestamp.valueOf() / 1000.0, JSON.stringify(fieldTimestamps)]
+          );
+        } else {
+          await db.query(
+            `insert into "${db.sqlsanitize(this.name)}_sync_info"
          (ref, modified_local, deleted) 
          values('${id}', true, false)`
-      );
-    }
+          );
+        }
+      },
+      (e: Error) => {
+        require("../db/state")
+          .getState()
+          .log(2, `Error in insertSyncInfo: ${e.message}`);
+      }
+    );
   }
 
   private async updateSyncInfo(
     id: PrimaryKeyValue,
+    v: Row,
     oldLastModified: Date,
-    syncTimestamp?: Date
+    syncTimestamp?: Date | number
   ) {
-    const schema = db.getTenantSchemaPrefix();
-    if (!db.isSQLite) {
-      await db.query(
-        `update ${schema}"${db.sqlsanitize(
-          this.name
-        )}_sync_info" set last_modified=date_trunc('milliseconds', to_timestamp($1)) where ref=$2 and last_modified = to_timestamp($3)`,
-        [
-          (syncTimestamp ? syncTimestamp : await db.time()).valueOf() / 1000.0,
-          id,
-          oldLastModified.valueOf() / 1000.0,
-        ]
-      );
-    } else {
-      await db.query(
-        `update "${db.sqlsanitize(
-          this.name
-        )}_sync_info" set modified_local = true 
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
+    await db.tryCatchInTransaction(
+      async () => {
+        const schema = db.getTenantSchemaPrefix();
+        if (!db.isSQLite) {
+          const timestamp = syncTimestamp
+            ? new Date(syncTimestamp)
+            : await db.time();
+          const fieldTimestamps: any = {};
+          for (const k of Object.keys(v).filter(
+            (key) => key !== this.pk_name
+          )) {
+            fieldTimestamps[k] = timestamp;
+          }
+          await db.query(
+            `update ${schema}"${db.sqlsanitize(this.name)}_sync_info" 
+            set 
+              last_modified=date_trunc('milliseconds', to_timestamp($1)),
+              updated_fields =
+                coalesce(updated_fields, '{}'::jsonb) || $4::jsonb
+            where 
+              ref=$2 and last_modified = to_timestamp($3)`,
+            [
+              timestamp.valueOf() / 1000.0,
+              id,
+              oldLastModified.valueOf() / 1000.0,
+              JSON.stringify(fieldTimestamps),
+            ]
+          );
+        } else {
+          await db.query(
+            `update "${db.sqlsanitize(
+              this.name
+            )}_sync_info" set modified_local = true 
          where ref = ${id} and last_modified = ${
            oldLastModified ? oldLastModified.valueOf() : "null"
          }`
-      );
-    }
+          );
+        }
+      },
+      (e: Error) => {
+        require("../db/state")
+          .getState()
+          .log(2, `Error in updateSyncInfo: ${e.message}`);
+      }
+    );
   }
 
   /**
@@ -1804,16 +2005,19 @@ class Table implements AbstractTable {
     v: Row,
     id: PrimaryKeyValue,
     user?: AbstractUser,
-    resultCollector?: object
+    resultCollector?: object,
+    extraArgs?: any
   ): Promise<ResultMessage> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     try {
-      const maybe_err = await this.updateRow(
-        v,
-        id,
-        user,
-        false,
-        resultCollector
-      );
+      const maybe_err = await this.updateRow(v, id, use_user, {
+        noTrigger: false,
+        resultCollector,
+        extraArgs,
+      });
       if (typeof maybe_err === "string") return { error: maybe_err };
       else return { success: true };
     } catch (e) {
@@ -1832,8 +2036,27 @@ class Table implements AbstractTable {
     field_name: string,
     user?: AbstractUser
   ): Promise<void> {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const row = await this.getRow({ [this.pk_name]: id });
-    if (row) await this.updateRow({ [field_name]: !row[field_name] }, id, user);
+    if (row)
+      await this.updateRow({ [field_name]: !row[field_name] }, id, use_user);
+  }
+
+  delete_url(row: Row, moreQuery?: string) {
+    const comppk = this.composite_pk_names;
+    if (!comppk)
+      return `/delete/${this.name}/${encodeURIComponent(row[this.pk_name])}${moreQuery ? `?${moreQuery}` : ""}`;
+    else
+      return `/delete/${this.name}?${comppk.map((pknm) => `${encodeURIComponent(pknm)}=${encodeURIComponent(row[pknm])}`).join("&")}${moreQuery ? `&${moreQuery}` : ""}`;
+  }
+
+  get composite_pk_names(): string[] | null {
+    const pkFields = this.fields?.filter((f: Field) => f.primary_key);
+    if (pkFields.length < 2) return null;
+    return pkFields.map((f) => f.name);
   }
 
   /**
@@ -1893,18 +2116,19 @@ class Table implements AbstractTable {
     row: Row,
     user: AbstractUser
   ): string | undefined {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     for (const field of this.fields) {
       if (
         typeof row[field.name] !== "undefined" &&
         field.attributes?.min_role_write &&
-        user.role_id > +field.attributes?.min_role_write
+        use_user.role_id > +field.attributes?.min_role_write
       )
         return "Not authorized";
     }
     return undefined;
   }
 
-  normalise_fkey_values(v_in: Row) {
+  private normalise_fkey_values(v_in: Row | Where) {
     for (const field of this.fields)
       if (
         field.is_fkey &&
@@ -1913,8 +2137,23 @@ class Table implements AbstractTable {
       ) {
         //get pkey
         const pk = Table.findOne({ name: field.reftable_name })?.pk_name;
-        if (pk) v_in[field.name] = v_in[field.name][pk];
+        if (pk && v_in[field.name][pk]) v_in[field.name] = v_in[field.name][pk];
       }
+  }
+
+  async run_trigger(
+    trigger_name: string,
+    row: Row,
+    user?: AbstractUser,
+    extraArgs?: GenObj
+  ): Promise<any> {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+    const trigger = Trigger.findOne({ name: trigger_name });
+    return await trigger.runWithoutRow({
+      row,
+      user: use_user,
+      ...(extraArgs || {}),
+    });
   }
 
   /**
@@ -1936,7 +2175,9 @@ class Table implements AbstractTable {
    * @param v_in
    * @param user
    * @param resultCollector
-   * @returns {Promise<*>}
+   * @param noTrigger
+   * @param syncTimestamp
+   * @returns
    */
   async insertRow(
     v_in0: Row,
@@ -1945,6 +2186,9 @@ class Table implements AbstractTable {
     noTrigger?: boolean,
     syncTimestamp?: Date
   ): Promise<any> {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
     const v_in = { ...v_in0 };
     const fields = this.fields;
     const pk_name = this.pk_name;
@@ -1969,17 +2213,17 @@ class Table implements AbstractTable {
 
     this.normalise_fkey_values(v_in);
 
-    if (user && user.role_id > this.min_role_write) {
+    if (use_user && use_user.role_id > this.min_role_write) {
       if (this.ownership_field_id) {
         const owner_field = fields.find(
           (f) => f.id === this.ownership_field_id
         );
         if (!owner_field)
           throw new Error(`Owner field in table ${this.name} not found`);
-        if (v_in[owner_field.name] != user.id) {
+        if (v_in[owner_field.name] != use_user.id) {
           state.log(
             4,
-            `Not authorized to insertRow in table ${this.name}. ${user.id} does not match owner field`
+            `Not authorized to insertRow in table ${this.name}. ${use_user.id} does not match owner field`
           );
 
           return;
@@ -1995,8 +2239,8 @@ class Table implements AbstractTable {
     }
     let constraint_check = this.check_table_constraints(v_in);
     if (constraint_check) throw new Error(constraint_check);
-    if (user) {
-      let field_write_check = this.check_field_write_role(v_in, user);
+    if (use_user) {
+      let field_write_check = this.check_field_write_role(v_in, use_user);
       if (field_write_check) return field_write_check;
     }
     //check validate here based on v_in
@@ -2006,7 +2250,7 @@ class Table implements AbstractTable {
       this,
       { ...v_in },
       valResCollector,
-      user
+      use_user
     );
     if ("error" in valResCollector) return valResCollector; //???
     if ("set_fields" in valResCollector)
@@ -2020,12 +2264,12 @@ class Table implements AbstractTable {
         6,
         `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
       );
-      this.stringify_json_fields(v_in);
+      this.prepare_row_for_writing(v_in);
       id = await db.insert(this.name, v_in, { pk_name, ...sqliteJsonCols });
       let existing = await this.getJoinedRows({
         where: { [pk_name]: id },
         joinFields,
-        forUser: user,
+        forUser: use_user,
       });
       if (!existing?.[0]) {
         //failed ownership test
@@ -2053,27 +2297,31 @@ class Table implements AbstractTable {
       await db.update(this.name, v, id, { pk_name, ...sqliteJsonCols });
     } else {
       v = await apply_calculated_fields_stored(v_in, fields, this);
-      this.stringify_json_fields(v);
+      this.prepare_row_for_writing(v);
       state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
       id = await db.insert(this.name, v, {
         pk_name,
         ...sqliteJsonCols,
       });
     }
-    if (user && user.role_id > this.min_role_write && this.ownership_formula) {
+    if (
+      use_user &&
+      use_user.role_id > this.min_role_write &&
+      this.ownership_formula
+    ) {
       let existing = await this.getJoinedRow({
         where: { [pk_name]: id },
         joinFields,
-        forUser: user,
+        forUser: use_user,
       });
 
-      if (!existing || !this.is_owner(user, existing)) {
+      if (!existing || !this.is_owner(use_user, existing)) {
         await this.deleteRows({ [pk_name]: id });
         state.log(
           4,
           `Not authorized to insertRow in table ${
             this.name
-          }. User does not match formula: ${JSON.stringify(user)}`
+          }. User does not match formula: ${JSON.stringify(use_user)}`
         );
         return;
       }
@@ -2086,40 +2334,52 @@ class Table implements AbstractTable {
           next_version_by_id: id,
           pk_name,
         },
-        _userid: user?.id,
+        _userid: use_user?.id,
         _time: new Date(),
       });
 
     if (this.has_sync_info) {
-      if (isNode()) {
-        const schemaPrefix = db.getTenantSchemaPrefix();
-        await db.query(
-          `insert into ${schemaPrefix}"${db.sqlsanitize(this.name)}_sync_info"
-           values(${id}, date_trunc('milliseconds', to_timestamp(${
-             (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
-             1000.0
-           })))`
-        );
-      } else {
-        await db.query(
-          `insert into "${db.sqlsanitize(this.name)}_sync_info"
+      await db.tryCatchInTransaction(
+        async () => {
+          if (isNode()) {
+            // sync_info for insert
+            const schemaPrefix = db.getTenantSchemaPrefix();
+            await db.query(
+              `insert into ${schemaPrefix}"${db.sqlsanitize(this.name)}_sync_info"
+              (ref, last_modified) values(
+              ${id}, date_trunc('milliseconds', to_timestamp(${
+                (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
+                1000.0
+              })))`
+            );
+          } else {
+            await db.query(
+              `insert into "${db.sqlsanitize(this.name)}_sync_info"
            (last_modified, ref, modified_local, deleted)
            values(NULL, ${id}, true, false)`
-        );
-      }
+            );
+          }
+        },
+        (e: Error) => {
+          state.log(
+            2,
+            `Error inserting sync info for table ${this.name}: ${e.message}`
+          );
+        }
+      );
+      if (state.pushHelper) state.pushHelper.queuePushSync();
     }
     const newRow = { [pk_name]: id, ...v };
     await this.auto_update_calc_aggregations(newRow);
     if (!noTrigger) {
       apply_calculated_fields([newRow], this.fields);
-      const trigPromise = Trigger.runTableTriggers(
+      await Trigger.runTableTriggers(
         "Insert",
         this,
         newRow,
         resultCollector,
-        user
+        use_user
       );
-      if (resultCollector) await trigPromise;
     }
     return id;
   }
@@ -2131,6 +2391,9 @@ class Table implements AbstractTable {
     changedFields?: Set<string>,
     keyChanged: boolean = false
   ) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const state = require("../db/state").getState();
     const pk_name = this.pk_name;
     state.log(
@@ -2331,8 +2594,12 @@ class Table implements AbstractTable {
     user?: AbstractUser,
     resultCollector?: object
   ): Promise<{ error: string } | { success: PrimaryKeyValue }> {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     try {
-      const id = await this.insertRow(v, user, resultCollector);
+      const id = await this.insertRow(v, use_user, resultCollector);
       if (!id) return { error: "Not authorized" };
       if (id?.includes?.("Not authorized")) return { error: id };
       if (id?.error) return id;
@@ -2413,6 +2680,12 @@ class Table implements AbstractTable {
    */
   getField(path: string): Field | undefined {
     const fields = this.fields;
+    if (typeof path !== "string") {
+      // Prevent type confusion if not a string
+      return undefined;
+    }
+    const hasDot = path.includes(".");
+    const hasHalfH = path.includes("Ⱶ");
     if (path.includes("->")) {
       const joinPath = path.split(".");
       const tableName = joinPath[0];
@@ -2422,8 +2695,9 @@ class Table implements AbstractTable {
       const joinedField = joinPath[1].split("->")[1];
       const fields = joinTable.getFields();
       return fields.find((f) => f.name === joinedField);
-    } else if (path.includes(".")) {
-      const keypath = path.split(".");
+    } else if (hasDot || hasHalfH) {
+      //TODO the recusive implementation in json_list_to_external_table is better
+      const keypath = path.split(hasDot ? "." : "Ⱶ");
       let field,
         theFields = fields;
       for (let i = 0; i < keypath.length; i++) {
@@ -2485,44 +2759,76 @@ class Table implements AbstractTable {
   }
 
   private async create_sync_info_table(): Promise<void> {
-    const schemaPrefix = db.getTenantSchemaPrefix();
-    const fields = this.fields;
-    const pk = fields.find((f) => f.primary_key)?.name;
-    if (!pk) {
-      throw new Error("Unable to find a field with a primary key.");
-    }
-    await db.query(
-      `create table ${schemaPrefix}"${sqlsanitize(
-        this.name
-      )}_sync_info" (ref integer, last_modified timestamp, deleted boolean default false)`
-    );
-    await db.query(
-      `create index "${sqlsanitize(
-        this.name
-      )}_sync_info_ref_index" on ${schemaPrefix}"${sqlsanitize(
-        this.name
-      )}_sync_info"(ref)`
-    );
-    await db.query(
-      `create index "${sqlsanitize(
-        this.name
-      )}_sync_info_lm_index" on ${schemaPrefix}"${sqlsanitize(
-        this.name
-      )}_sync_info"(last_modified)`
-    );
-    await db.query(
-      `create index "${sqlsanitize(
-        this.name
-      )}_sync_info_deleted_index" on ${schemaPrefix}"${sqlsanitize(
-        this.name
-      )}_sync_info"(deleted)`
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
+    await db.tryCatchInTransaction(
+      async () => {
+        const schemaPrefix = db.getTenantSchemaPrefix();
+        const fields = this.fields;
+        const pk = fields.find((f) => f.primary_key)?.name;
+        if (!pk) {
+          throw new Error("Unable to find a field with a primary key.");
+        }
+        await db.query(
+          `create table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info" (
+            ref integer,
+            last_modified timestamp,
+            deleted boolean default false,
+            updated_fields jsonb)`
+        );
+        await db.query(
+          `create index "${sqlsanitize(
+            this.name
+          )}_sync_info_ref_index" on ${schemaPrefix}"${sqlsanitize(
+            this.name
+          )}_sync_info"(ref)`
+        );
+        await db.query(
+          `create index "${sqlsanitize(
+            this.name
+          )}_sync_info_lm_index" on ${schemaPrefix}"${sqlsanitize(
+            this.name
+          )}_sync_info"(last_modified)`
+        );
+        await db.query(
+          `create index "${sqlsanitize(
+            this.name
+          )}_sync_info_deleted_index" on ${schemaPrefix}"${sqlsanitize(
+            this.name
+          )}_sync_info"(deleted)`
+        );
+      },
+      (e: Error) => {
+        require("../db/state")
+          .getState()
+          .log(
+            2,
+            `Error creating sync_info table for ${this.name}: ${e.message}`
+          );
+      }
     );
   }
 
   private async drop_sync_table(): Promise<void> {
-    const schemaPrefix = db.getTenantSchemaPrefix();
-    await db.query(`
-      drop table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info";`);
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
+    await db.tryCatchInTransaction(
+      async () => {
+        const schemaPrefix = db.getTenantSchemaPrefix();
+        await db.query(`
+        drop table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info";`);
+      },
+      (e: any) => {
+        require("../db/state")
+          .getState()
+          .log(
+            2,
+            `Error dropping sync_info table for ${this.name}: ${e.message}`
+          );
+      }
+    );
   }
 
   /**
@@ -2536,6 +2842,10 @@ class Table implements AbstractTable {
     version: number,
     user?: AbstractUser
   ): Promise<void> {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const row = await db.selectOne(`${db.sqlsanitize(this.name)}__history`, {
       [this.pk_name]: id,
       _version: version,
@@ -2546,7 +2856,7 @@ class Table implements AbstractTable {
     });
     //console.log("restore_row_version", r);
 
-    await this.updateRow(r, id, user, false, undefined, version);
+    await this.updateRow(r, id, use_user, false, undefined, version);
   }
 
   /**
@@ -2558,6 +2868,10 @@ class Table implements AbstractTable {
     id: PrimaryKeyValue,
     user?: AbstractUser
   ): Promise<void> {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { [this.pk_name]: id },
@@ -2577,7 +2891,7 @@ class Table implements AbstractTable {
       { orderBy: "_version", orderDesc: true, limit: 1 }
     );
     if (last_non_restore) {
-      await this.restore_row_version(id, last_non_restore._version, user);
+      await this.restore_row_version(id, last_non_restore._version, use_user);
     }
   }
 
@@ -2590,6 +2904,10 @@ class Table implements AbstractTable {
     id: PrimaryKeyValue,
     user?: AbstractUser
   ): Promise<void> {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const current_version_row = await db.selectMaybeOne(
       `${sqlsanitize(this.name)}__history`,
       { [this.pk_name]: id },
@@ -2609,7 +2927,7 @@ class Table implements AbstractTable {
       );
 
       if (next_version) {
-        await this.restore_row_version(id, next_version._version, user);
+        await this.restore_row_version(id, next_version._version, use_user);
       }
     }
   }
@@ -2621,6 +2939,9 @@ class Table implements AbstractTable {
   async compress_history(
     options: { interval_secs?: number; delete_unchanged?: boolean } | number
   ) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const interval_secs =
       typeof options === "number" ? options : options?.interval_secs;
     const schemaPrefix = db.getTenantSchemaPrefix();
@@ -2671,6 +2992,8 @@ class Table implements AbstractTable {
    */
   private async drop_history_table(): Promise<void> {
     const schemaPrefix = db.getTenantSchemaPrefix();
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
 
     await db.query(`
       drop table ${schemaPrefix}"${sqlsanitize(this.name)}__history";`);
@@ -2682,6 +3005,9 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   async rename(new_name: string): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     //in transaction
     if (db.isSQLite)
       throw new InvalidAdminAction("Cannot rename table on SQLite");
@@ -2708,8 +3034,7 @@ class Table implements AbstractTable {
     //1. change record
     await this.update({ name: new_name });
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
   }
 
   /**
@@ -2719,6 +3044,9 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   async update(new_table_rec: Partial<Table>): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     if (new_table_rec.ownership_field_id === ("" as any))
       delete new_table_rec.ownership_field_id;
     const existing = Table.findOne({ id: this.id });
@@ -2728,8 +3056,7 @@ class Table implements AbstractTable {
     const { external, fields, constraints, ...upd_rec } = new_table_rec;
     await db.update("_sc_tables", upd_rec, this.id);
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
     const new_table = new Table({ ...this, ...upd_rec });
     if (!new_table) {
       throw new Error(`Unable to find table with id: ${this.id}`);
@@ -2748,8 +3075,12 @@ class Table implements AbstractTable {
     }
   }
 
-  static async state_refresh() {
-    await require("../db/state").getState().refresh_tables();
+  static async state_refresh(noSignal?: boolean) {
+    try {
+      await require("../db/state").getState().refresh_tables(noSignal);
+    } catch {
+      //ignore
+    }
   }
 
   /**
@@ -2770,6 +3101,9 @@ class Table implements AbstractTable {
    * @returns {Promise<void>}
    */
   async enable_fkey_constraints(): Promise<void> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const fields = this.fields;
     for (const f of fields) await f.enable_fkey_constraint(this);
   }
@@ -2784,6 +3118,9 @@ class Table implements AbstractTable {
     name: string,
     filePath: string
   ): Promise<ResultMessage> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     let rows;
     const state = await require("../db/state").getState();
     try {
@@ -2898,8 +3235,7 @@ class Table implements AbstractTable {
 
     parse_res.table = table;
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
 
     return parse_res;
   }
@@ -2977,9 +3313,16 @@ class Table implements AbstractTable {
       skip_first_data_row?: boolean;
       no_table_write?: boolean;
       no_transaction?: boolean;
+      extra_row_values?: Row;
+      overwrite_csv_fields?: boolean;
       method?: "Auto" | "copy" | "row-by-row";
+      delimiter?: string;
     }
   ): Promise<ResultMessage> {
+    //todo user check
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     if (typeof options === "boolean") {
       options = { recalc_stored: options };
     }
@@ -2989,10 +3332,12 @@ class Table implements AbstractTable {
       headerStr = await getLines(filePath, 1);
       [headers] = await csvtojson({
         output: "csv",
+        delimiter: options?.delimiter || "auto",
         noheader: true,
       }).fromString(headerStr); // todo argument type unknown
-    } catch (e) {
-      return { error: `Error processing CSV file header: ${headerStr}` };
+    } catch (e: any) {
+      console.error(e);
+      return { error: `Error processing CSV file header: ${e.message || e}` };
     }
     const fields = this.fields.filter((f) => !f.calculated);
     const okHeaders: any = {};
@@ -3075,6 +3420,8 @@ class Table implements AbstractTable {
 
     // start sql transaction
     if (!options?.no_transaction) await client.query("BEGIN");
+    if (db.isSQLite) await client.query("PRAGMA defer_foreign_keys = ON");
+    else await client.query("SET CONSTRAINTS ALL DEFERRED");
 
     const readStream = createReadStream(filePath);
     const returnedRows: any = [];
@@ -3085,7 +3432,8 @@ class Table implements AbstractTable {
         options?.method === "copy" ||
         (options?.method !== "row-by-row" &&
           db.copyFrom &&
-          fileSizeInMegabytes > 1)
+          fileSizeInMegabytes > 1 &&
+          !options?.extra_row_values)
       ) {
         let theError;
 
@@ -3110,6 +3458,7 @@ class Table implements AbstractTable {
           const summary_field_cache: any = {};
           csvtojson({
             includeColumns: colRe,
+            delimiter: options?.delimiter || "auto",
           })
             .fromStream(readStream)
             .subscribe(
@@ -3121,6 +3470,26 @@ class Table implements AbstractTable {
                     rec[to] = rec[from];
                     delete rec[from];
                   });
+
+                  if (
+                    options?.extra_row_values &&
+                    options.extra_row_values !== null
+                  ) {
+                    const extras = options.extra_row_values;
+                    const overwrite = options.overwrite_csv_fields !== false; // default true
+                    if (overwrite) {
+                      Object.assign(rec, extras);
+                    } else {
+                      for (const [k, v] of Object.entries(extras)) {
+                        if (
+                          typeof rec[k] === "undefined" ||
+                          rec[k] === "" ||
+                          rec[k] === null
+                        )
+                          rec[k] = v;
+                      }
+                    }
+                  }
 
                   for (const jfield of json_schema_fields) {
                     const sf = jfield.attributes.subfield;
@@ -3191,7 +3560,7 @@ class Table implements AbstractTable {
                       const existing = await db.selectMaybeOne(this.name, {
                         [this.pk_name]: rec[this.pk_name],
                       });
-                      this.stringify_json_fields(rec);
+                      this.prepare_row_for_writing(rec);
                       if (options?.no_table_write) {
                         if (existing) {
                           Object.entries(existing).forEach(([k, v]) => {
@@ -3304,7 +3673,17 @@ ${rejectDetails}`,
     };
   }
 
-  stringify_json_fields(v1: Row) {
+  private prepare_row_for_writing(v1: Row) {
+    this.fields.forEach((f) => {
+      if (
+        typeof f.type !== "string" &&
+        f?.type?.name === "Integer" &&
+        !f.required &&
+        typeof v1[f.name] === "number" &&
+        isNaN(v1[f.name])
+      )
+        v1[f.name] = null;
+    });
     if (db.isSQLite) return;
     this.fields
       .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
@@ -3313,7 +3692,7 @@ ${rejectDetails}`,
           v1[f.name] = JSON.stringify(v1[f.name]);
       });
   }
-  parse_json_fields(v1: Row): Row {
+  private parse_json_fields(v1: Row): Row {
     if (db.isSQLite)
       this.fields
         .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
@@ -3327,6 +3706,9 @@ ${rejectDetails}`,
   }
 
   async import_json_history_file(filePath: string) {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     return await async_json_stream(filePath, async (row: Row) => {
       await this.insert_history_row(row);
     });
@@ -3342,6 +3724,9 @@ ${rejectDetails}`,
     filePath: string,
     skip_first_data_row?: boolean
   ): Promise<ResultMessage> {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const fields = this.fields;
     const pk_name = this.pk_name;
     const { readState } = require("../plugin-helper");
@@ -3681,12 +4066,37 @@ ${rejectDetails}`,
     options?: {
       where?: Where;
       groupBy?: string[] | string;
-    }
+    } & ForUserRequest
   ): Promise<Row> {
+    const { forUser, forPublic } = options || {};
+    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || forUser;
+    const where = { ...(options?.where || {}) };
+    if (
+      role &&
+      this.updateWhereWithOwnership(
+        where,
+        use_forUser || { role_id: 100 },
+        true
+      )?.notAuthorized
+    ) {
+      const emptyRet: Row = {};
+      Object.entries(aggregations).forEach(([nm, aggObj]) => {
+        const agg = aggObj?.aggregate?.toLowerCase?.() || "count";
+        if (agg === "array_agg") emptyRet[nm] = [];
+        if (agg.startsWith("Percent")) emptyRet[nm] = null;
+        if (agg.startsWith("Latest ")) emptyRet[nm] = null;
+        if (agg.startsWith("Earliest ")) emptyRet[nm] = null;
+        else emptyRet[nm] = 0;
+      });
+      return emptyRet;
+    }
+
     const { sql, values, groupBy } = aggregation_query_fields(
       this.name,
       aggregations,
-      options
+      { ...options, where }
     );
 
     const res = await db.query(sql, values);
@@ -3695,8 +4105,13 @@ ${rejectDetails}`,
   }
 
   ownership_formula_where(user: AbstractUser) {
+    let use_user = (this.constructor as typeof Table).fixed_user || user;
     if (!this.ownership_formula) return {};
-    const wh = jsexprToWhere(this.ownership_formula, { user }, this.fields);
+    const wh = jsexprToWhere(
+      this.ownership_formula,
+      { user: use_user },
+      this.fields
+    );
     if (wh.eq && Array.isArray(wh.eq)) {
       let arr = wh.eq as any[];
       for (let index = 0; index < arr.length; index++) {
@@ -3723,7 +4138,7 @@ ${rejectDetails}`,
    * @returns {Promise<{values, sql: string}>}
    */
   async getJoinedQuery(
-    opts: (JoinOptions & ForUserRequest) | any = {}
+    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {}
   ): Promise<
     Partial<JoinOptions> & {
       sql?: string;
@@ -3737,32 +4152,42 @@ ${rejectDetails}`,
     let joinTables: string[] = [];
     let joinFields: JoinFields = opts.joinFields || {};
     let aggregations = opts.aggregations || {};
-    const schema = db.getTenantSchemaPrefix();
+    const schema = opts.schema
+      ? `"${opts.schema}".`
+      : db.getTenantSchemaPrefix();
     const { forUser, forPublic } = opts;
-    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || forUser;
+    const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     if (role && role > this.min_role_read && this.ownership_formula) {
       const freeVars = freeVariables(this.ownership_formula);
       add_free_variables_to_joinfields(freeVars, joinFields, fields);
     }
+    if (!opts.where) opts.where = {};
     if (role && role > this.min_role_read && this.ownership_field_id) {
       if (forPublic) return { notAuthorized: true };
       const owner_field = fields.find((f) => f.id === this.ownership_field_id);
       if (!owner_field)
         throw new Error(`Owner field in table ${this.name} not found`);
-      if (!opts.where) opts.where = {};
+
       mergeIntoWhere(opts.where, {
-        [owner_field.name]: (forUser as AbstractUser).id,
+        [owner_field.name]: (use_forUser as AbstractUser).id,
       });
-    } else if (role && role > this.min_role_read && this.ownership_formula) {
-      if (!opts.where) opts.where = {};
+    } else if (
+      use_forUser &&
+      role &&
+      role > this.min_role_read &&
+      this.ownership_formula
+    ) {
       if (forPublic || role === 100) return { notAuthorized: true }; //TODO may not be true
       try {
-        mergeIntoWhere(opts.where, this.ownership_formula_where(forUser));
+        mergeIntoWhere(opts.where, this.ownership_formula_where(use_forUser));
       } catch (e) {
         //ignore, ownership formula is too difficult to merge with where
         // TODO user groups
       }
     }
+    this.normalise_fkey_values(opts.where);
 
     for (const [fldnm, { ref, target, through, ontable }] of Object.entries(
       joinFields
@@ -3785,6 +4210,40 @@ ${rejectDetails}`,
       const reftable = ontable || reffield.reftable_name;
       if (!reftable)
         throw new InvalidConfiguration(`Field ${ref} is not a key field`);
+      const reftable_table = reffield.reftable || Table.findOne(reftable);
+      if (
+        !opts.ignoreExternal &&
+        (reftable_table?.external || reftable_table?.provider_name)
+      ) {
+        joinFields[fldnm].lookupFunction = async (row: GenObj) => {
+          const rpk = reftable_table.pk_name;
+          const rpkval = row[ref];
+          const refrow = await reftable_table.getRow({ [rpk]: rpkval });
+          let val = refrow?.[target];
+          if (through) {
+            const throughs = Array.isArray(through) ? through : [through];
+            let prevTable = reftable_table;
+            let prevRow = refrow;
+            for (const thr of throughs) {
+              if (!prevRow) {
+                val = null;
+                break;
+              }
+              const kfield = prevTable.getField(thr);
+              const nextTable = Table.findOne({ name: kfield!.reftable_name });
+              const nextRow = await nextTable!.getRow({
+                [nextTable!.pk_name]: prevRow[thr],
+              });
+              val = nextRow?.[target];
+              prevRow = nextRow;
+              prevTable = nextTable!;
+            }
+          }
+          return val;
+        };
+        continue;
+      }
+
       const jtNm = `${sqlsanitize(reftable)}_jt_${sqlsanitize(ref)}`;
       if (!joinTables.includes(jtNm)) {
         joinTables.push(jtNm);
@@ -3869,11 +4328,13 @@ ${rejectDetails}`,
         opts.orderBy &&
         (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
-          : joinFields[opts.orderBy] || aggregations[opts.orderBy]
+          : typeof opts.orderBy === "string" &&
+              (joinFields[opts.orderBy] || aggregations[opts.orderBy])
             ? opts.orderBy
             : joinFields[odbUnderscore]
               ? odbUnderscore
-              : opts.orderBy.toLowerCase?.() === "random()"
+              : typeof opts.orderBy === "string" &&
+                  opts.orderBy.toLowerCase?.() === "random()"
                 ? opts.orderBy
                 : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
@@ -3885,7 +4346,7 @@ ${rejectDetails}`,
     )}" a ${joinq} ${where}  ${mkSelectOptions(
       selectopts,
       values,
-      db.is_sqlite
+      db.isSQLite
     )}`;
 
     return { sql, values, joinFields, aggregations };
@@ -3939,11 +4400,13 @@ ${rejectDetails}`,
    * @returns {Promise<object[]>}
    */
   async getJoinedRows(
-    opts: (JoinOptions & ForUserRequest) | any = {}
+    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {}
   ): Promise<Array<Row>> {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = opts;
-    const role = forUser ? forUser.role_id : forPublic ? 100 : null;
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || forUser;
+    const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     const { sql, values, notAuthorized, joinFields, aggregations } =
       await this.getJoinedQuery(opts);
 
@@ -3975,72 +4438,15 @@ ${rejectDetails}`,
       Object.values(joinFields || {}).some((jf: any) => jf.rename_object) ||
       Object.values(aggregations || {}).some((jf: any) => jf.rename_to)
     ) {
-      let f = (x: any) => x;
-      Object.entries(aggregations || {}).forEach(([k, v]: any) => {
-        if (v.rename_to) {
-          const oldf = f;
-          f = (x: any) => {
-            if (typeof x[k] !== "undefined") {
-              x[v.rename_to] = x[k];
-              delete x[k];
-            }
-            return oldf(x);
-          };
-        }
-      });
-      Object.entries(joinFields || {}).forEach(([k, v]: any) => {
-        if (v.rename_object) {
-          if (v.rename_object.length === 2) {
-            const oldf = f;
-            f = (x: any) => {
-              const origId = x[v.rename_object[0]];
-              x[v.rename_object[0]] = {
-                ...x[v.rename_object[0]],
-                [v.rename_object[1]]: x[k],
-                ...(typeof origId === "number" ? { id: origId } : {}),
-              };
-              return oldf(x);
-            };
-          } else if (v.rename_object.length === 3) {
-            const oldf = f;
-            f = (x: any) => {
-              const origId = x[v.rename_object[0]];
-              x[v.rename_object[0]] = {
-                ...x[v.rename_object[0]],
-                [v.rename_object[1]]: {
-                  ...x[v.rename_object[0]]?.[v.rename_object[1]],
-                  [v.rename_object[2]]: x[k],
-                },
-                ...(typeof origId === "number" ? { id: origId } : {}),
-              };
-              return oldf(x);
-            };
-          } else if (v.rename_object.length === 4) {
-            const oldf = f;
-            f = (x: any) => {
-              const origId = x[v.rename_object[0]];
-
-              x[v.rename_object[0]] = {
-                ...x[v.rename_object[0]],
-                [v.rename_object[1]]: {
-                  ...x[v.rename_object[0]]?.[v.rename_object[1]],
-                  [v.rename_object[2]]: {
-                    ...x[v.rename_object[0]]?.[v.rename_object[1]]?.[
-                      v.rename_object[2]
-                    ],
-                    [v.rename_object[3]]: x[k],
-                  },
-                },
-                ...(typeof origId === "number" ? { id: origId } : {}),
-              };
-
-              return oldf(x);
-            };
-          }
-        }
-      });
-
+      const f = joinfield_renamer(joinFields, aggregations);
       calcRow = calcRow.map(f);
+    }
+
+    for (const k of Object.keys(joinFields || {})) {
+      if (!joinFields?.[k].lookupFunction) continue;
+      for (const row of calcRow) {
+        row[k] = await joinFields[k].lookupFunction(row);
+      }
     }
 
     if (role && role > this.min_role_read) {
@@ -4049,7 +4455,7 @@ ${rejectDetails}`,
       else if (this.ownership_field_id) {
         //already dealt with by changing where
       } else if (this.ownership_formula || this.name === "users") {
-        calcRow = calcRow.filter((row: Row) => this.is_owner(forUser, row));
+        calcRow = calcRow.filter((row: Row) => this.is_owner(use_forUser, row));
       } else return []; //no ownership
     }
     return calcRow;
@@ -4134,6 +4540,9 @@ ${rejectDetails}`,
     );
   }
   async repairCompositePrimary() {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
+
     const primaryKeys = this.fields.filter((f) => f.primary_key);
     const nonSerialPKS = primaryKeys.some((f) => f.attributes?.NonSerial);
     const schemaPrefix = db.getTenantSchemaPrefix();
@@ -4187,11 +4596,12 @@ where table_schema = '${db.getTenantSchema() || "public"}'
       await pk.update({ attributes: attrs });
     }
     //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
   }
 
   async move_include_fts_to_search_context() {
+    if ((this.constructor as typeof Table).read_only)
+      throw new Error("Read-only access");
     const include_fts_fields = this.fields.filter(
       (f: Field) => f.attributes?.include_fts
     );

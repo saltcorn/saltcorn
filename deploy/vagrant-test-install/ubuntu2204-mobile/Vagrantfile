@@ -30,7 +30,7 @@ Vagrant.configure("2") do |config|
     sudo apt-get -y install libpulse0 pulseaudio libxcursor-dev libxdamage-dev
     sudo apt-get -y install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
 
-    wget -qO - https://deb.nodesource.com/setup_18.x | bash -
+    wget -qO - https://deb.nodesource.com/setup_20.x | bash -
     apt-get install -qqy nodejs
     sudo -iu vagrant npx -y saltcorn-install -s -y -sd
 

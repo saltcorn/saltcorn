@@ -45,7 +45,7 @@ export const setConnectionObject = (connobjPara: any): void => {
 export const init = async () => {
   try {
     const sqlite = new SQLiteConnection(CapacitorSQLite);
-    if (window.Capacitor.platform === "web") await sqlite.initWebStore();
+    if (window.Capacitor.getPlatform() === "web") await sqlite.initWebStore();
     const dbExists = await sqlite.isDatabase("prepopulated");
     if (!dbExists.result) await sqlite.copyFromAssets(true);
     try {

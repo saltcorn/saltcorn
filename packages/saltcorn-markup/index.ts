@@ -6,6 +6,7 @@ import renderFormModule = require("./form");
 const { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout } =
   renderFormModule;
 import renderBuilder = require("./builder");
+import renderWorkflow = require("./workflow");
 import mkTable = require("./table");
 import tabs = require("./tabs");
 import tags = require("./tags");
@@ -90,6 +91,7 @@ const post_btn = (
     confirm,
     icon,
     title,
+    body,
   }: PostBtnOpts | any = {}
 ): string =>
   form(
@@ -100,6 +102,11 @@ const post_btn = (
     },
     [
       ajax ? "" : input({ type: "hidden", name: "_csrf", value: csrfToken }),
+      ...(!body
+        ? []
+        : Object.entries(body).map(([k, v]: any) =>
+            input({ type: "hidden", name: k, value: v })
+          )),
       button(
         {
           ...(ajax ? { type: "button" } : { type: "submit" }),
@@ -346,6 +353,7 @@ export = {
   mkFormContentNoLayout,
   mkForm,
   renderFormLayout,
+  renderWorkflow,
   settingsDropdown,
   renderBuilder,
   link,

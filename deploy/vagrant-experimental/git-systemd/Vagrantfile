@@ -60,6 +60,7 @@ WatchdogSec=30
 User=vagrant
 WorkingDirectory=/home/vagrant
 ExecStart=/home/vagrant/saltcorn/packages/saltcorn-cli/bin/saltcorn serve -p 80
+ExecReload=/bin/kill -HUP $MAINPID
 Restart=always
 Environment="NODE_ENV=production"
 Environment="PATH=//home/vagrant/saltcorn/packages/saltcorn-cli/bin/:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"

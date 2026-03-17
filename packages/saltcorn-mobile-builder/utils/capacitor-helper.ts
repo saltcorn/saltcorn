@@ -4,14 +4,9 @@ import { existsSync } from "fs";
 import { copySync } from "fs-extra";
 import type User from "@saltcorn/data/models/user";
 import utils = require("@saltcorn/data/utils");
-const { safeEnding } = utils;
+const { safeEnding, imageAvailable } = utils;
 import File from "@saltcorn/data/models/file";
-import {
-  copyPrepopulatedDb,
-  extractDomain,
-  androidPermissions,
-  androidFeatures,
-} from "./common-build-utils";
+import { copyPrepopulatedDb, extractDomain } from "./common-build-utils";
 import { writeFileSync } from "fs";
 const { getState } = require("@saltcorn/data/db/state");
 
@@ -82,10 +77,17 @@ export class CapacitorHelper {
         }
       }
     } else {
-      this.writeDockerCfg();
-      this.buildWithDocker();
+      const { installed, version } = await imageAvailable(
+        "saltcorn/capacitor-builder",
+        getState().scVersion
+      );
+      if (installed) {
+        this.writeDockerCfg();
+        this.buildWithDocker(version);
+      }
     }
-    if (this.isIOS) this.xCodeBuild();
+    if (this.isIOS && this.iosParams?.noProvisioningProfile !== true)
+      this.xCodeBuild();
   }
 
   public tryCopyAppFiles(copyDir: string, user: User, appName?: string) {
@@ -149,7 +151,7 @@ export class CapacitorHelper {
     const addFn = (platform: string) => {
       let result = spawnSync(
         "npm",
-        ["install", `@capacitor/${platform}@6.1.2`],
+        ["install", `@capacitor/${platform}@7.4.4`],
         {
           cwd: this.buildDir,
           maxBuffer: 1024 * 1024 * 10,
@@ -180,7 +182,8 @@ export class CapacitorHelper {
             `\n\n${result.error.toString()}`
         );
     };
-    for (const platform of this.platforms) if (platform !== "web") addFn(platform);
+    for (const platform of this.platforms)
+      if (platform !== "web") addFn(platform);
   }
 
   public generateAssets() {
@@ -265,11 +268,9 @@ export class CapacitorHelper {
       buildType: this.buildType,
       appVersion: this.appVersion,
       serverDomain: extractDomain(this.serverURL),
-      keyStoreFile: this.keyStoreFile,
-      keyStoreAlias: this.keyStoreAlias,
-      keyStorePassword: this.keyStorePassword,
-      permissions: androidPermissions(),
-      features: androidFeatures(),
+      keystoreFile: this.keyStoreFile,
+      keystoreAlias: this.keyStoreAlias,
+      keystorePassword: this.keyStorePassword,
     };
     const cfgFile = join(this.buildDir, "saltcorn-mobile-cfg.json");
     writeFileSync(cfgFile, JSON.stringify(cfg, null, 2));
@@ -290,10 +291,12 @@ export class CapacitorHelper {
     }
   }
 
-  private buildWithDocker() {
+  private buildWithDocker(imageVersion: string) {
     console.log("building with docker");
-    const state = getState();
     const dockerMode = this.getDockerMode();
+    console.log(`docker mode: ${dockerMode}`);
+    console.log(`image version: ${imageVersion}`);
+
     const userParams = [];
     if (dockerMode === "Rootful") {
       if (process.getuid && process.getgid)
@@ -301,14 +304,17 @@ export class CapacitorHelper {
       else
         console.log("Warning: process.getuid and process.getgid not available");
     }
+
     const spawnParams = [
       "run",
+      "--pull",
+      "never",
       ...userParams,
       "--network",
       "host",
       "-v",
       `${this.buildDir}:/saltcorn-mobile-app`,
-      `saltcorn/capacitor-builder:${state.scVersion}`,
+      `saltcorn/capacitor-builder:${imageVersion}`,
     ];
     const result = spawnSync("docker", spawnParams, {
       cwd: ".",
@@ -325,14 +331,17 @@ export class CapacitorHelper {
   private xCodeBuild() {
     try {
       console.log("xcodebuild -workspace");
-      let buffer = execSync(
+      const command =
         `xcodebuild -workspace ios/App/App.xcworkspace ` +
-          `-scheme App -destination "generic/platform=iOS" ` +
-          `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.iosParams?.mainProvisioningProfile.guuid}" ` +
-          ' CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="iPhone Distribution" ' +
-          ` DEVELOPMENT_TEAM="${this.iosParams?.appleTeamId}" `,
-        { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }
-      );
+        `-scheme App -destination "generic/platform=iOS" ` +
+        `-archivePath MyArchive.xcarchive archive PROVISIONING_PROFILE="${this.iosParams?.mainProvisioningProfile?.guuid}" ` +
+        ' CODE_SIGN_STYLE="Manual" CODE_SIGN_IDENTITY="iPhone Distribution" ' +
+        ` DEVELOPMENT_TEAM="${this.iosParams?.appleTeamId}" `;
+      console.log(command);
+      let buffer = execSync(command, {
+        cwd: this.buildDir,
+        maxBuffer: 1024 * 1024 * 10,
+      });
 
       if (!existsSync(join(this.buildDir, "MyArchive.xcarchive"))) {
         console.log(
@@ -341,18 +350,21 @@ export class CapacitorHelper {
         return 1;
       } else {
         console.log("xcodebuild -exportArchive");
-        buffer = execSync(
+        const command =
           "xcodebuild -exportArchive -archivePath MyArchive.xcarchive " +
-            `-exportPath ${this.buildDir} -exportOptionsPlist ExportOptions.plist`,
-          { cwd: this.buildDir, maxBuffer: 1024 * 1024 * 10 }
-        );
+          `-exportPath ${this.buildDir} -exportOptionsPlist ExportOptions.plist`;
+        console.log(command);
+        buffer = execSync(command, {
+          cwd: this.buildDir,
+          maxBuffer: 1024 * 1024 * 10,
+        });
         console.log(buffer.toString());
         // to upload it automatically:
         // xrun altool --upload-app -f [.ipa file] -t ios -u [apple-id] -p [app-specific password]
         return 0;
       }
-    } catch (err) {
-      console.log(err);
+    } catch (err: any) {
+      console.log(err.output?.toString() || err.message || err);
       return 1;
     }
   }

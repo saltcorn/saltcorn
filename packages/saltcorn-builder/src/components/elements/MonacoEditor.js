@@ -1,0 +1,297 @@
+import React, { Fragment, useState, useEffect, useRef } from "react";
+import optionsCtx from "../context";
+
+import Editor, { useMonaco } from "@monaco-editor/react";
+
+export const mimeToMonacoLanguage = (mode) => {
+  if (!mode) return "typescript";
+  const map = {
+    "text/javascript": "typescript",
+    "application/javascript": "typescript",
+    "text/html": "html",
+    "text/css": "css",
+    "application/json": "json",
+    "text/x-sql": "sql",
+    "text/x-python": "python",
+    "text/x-yaml": "yaml",
+    "text/xml": "xml",
+    "text/x-markdown": "markdown",
+    "text/typescript": "typescript",
+  };
+  return map[mode] || mode;
+};
+
+const setMonacoLanguage = async (monaco, options, isStatements) => {
+  monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
+    noLib: true,
+    allowNonTsExtensions: true,
+  });
+  if (options.setMonaco) return;
+
+  options.setMonaco = true;
+  const tsres = await fetch(
+    `/admin/ts-declares?${options.tableName ? `table=${options.tableName}` : ""}&user=yes`
+  );
+  const tsds = await tsres.text();
+
+  monaco.languages.typescript.typescriptDefaults.addExtraLib(tsds);
+  // for code ending in return: https://github.com/microsoft/monaco-editor/issues/1661
+  // codes for await ignore are shown by hover card
+  if (isStatements)
+    monaco.languages.typescript.typescriptDefaults.setDiagnosticsOptions({
+      //noSemanticValidation: false,
+      //noSyntaxValidation: false,
+      diagnosticCodesToIgnore: [1108, 1378, 1375, 7044, 2580, 80005],
+    });
+};
+
+// add hidden-prefix
+// line 1 holds the typed prefix, the user edits from line 2 onwards
+const setupVirtualPrefix = (editor, monaco) => {
+  const model = editor.getModel();
+  editor.setHiddenAreas([{ startLineNumber: 1, endLineNumber: 1 }]);
+  editor.onDidChangeCursorPosition((e) => {
+    if (e.position.lineNumber < 2)
+      editor.setPosition({ lineNumber: 2, column: 1 });
+  });
+  editor.onKeyDown((e) => {
+    const pos = editor.getPosition();
+    if (
+      pos.lineNumber === 2 &&
+      pos.column === 1 &&
+      e.keyCode === monaco.KeyCode.Backspace
+    ) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+  // copy without the prefix line
+  editor.addAction({
+    id: "copy-editable-only",
+    label: "Copy Only User Content",
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyC],
+    run: (ed) => {
+      const selection = ed.getSelection();
+      if (selection.isEmpty()) return;
+      const safeSelection = selection.intersectRanges(
+        new monaco.Range(
+          2,
+          1,
+          model.getLineCount(),
+          model.getLineMaxColumn(model.getLineCount())
+        )
+      );
+      if (safeSelection)
+        navigator.clipboard.writeText(model.getValueInRange(safeSelection));
+    },
+  });
+  // select all without the prefix line
+  editor.addAction({
+    id: "select-editable-only",
+    label: "Select Only User Content",
+    keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyA],
+    run: (ed) => {
+      ed.setSelection(
+        new monaco.Range(
+          2,
+          1,
+          model.getLineCount(),
+          model.getLineMaxColumn(model.getLineCount())
+        )
+      );
+    },
+  });
+};
+
+export const SingleLineEditor = React.forwardRef(
+  (
+    { setProp, value, propKey, onChange, onInput, className, stateExpr },
+    ref
+  ) => {
+    const options = React.useContext(optionsCtx);
+    const activePrefix = stateExpr ? "const _: Row =" : null;
+
+    const handleEditorWillMount = (monaco) => {
+      setMonacoLanguage(monaco, options, false);
+    };
+
+    const handleEditorDidMount = (editor, monaco) => {
+      if (activePrefix) {
+        setupVirtualPrefix(editor, monaco);
+        return;
+      }
+      if (!onInput) return;
+
+      editor.onDidChangeModelContent(() => {
+        onInput(editor.getValue());
+      });
+    };
+
+    const isEmpty = !value || value.trim() === "";
+    const editorValue = activePrefix
+      ? `${isEmpty ? "//" : ""} ${activePrefix}\n${value || ""}`
+      : value;
+
+    return (
+      <div ref={ref} className="form-control p-0 pt-1">
+        <Editor
+          placeholder={"sdfffsd"}
+          className={className || ""}
+          height="22px"
+          value={editorValue}
+          onChange={(fullValue) => {
+            const userValue = activePrefix
+              ? (fullValue || "").substring((fullValue || "").indexOf("\n") + 1)
+              : fullValue;
+            onChange && onChange(userValue);
+            setProp &&
+              propKey &&
+              setProp((prop) => (prop[propKey] = userValue));
+          }}
+          defaultLanguage="typescript"
+          //onMount={handleEditorDidMount}
+          //beforeMount={handleEditorWillMount}
+          options={singleLineEditorOptions}
+          //theme="myCoolTheme"
+          beforeMount={handleEditorWillMount}
+          onMount={handleEditorDidMount}
+        />
+      </div>
+    );
+  }
+);
+
+export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = false, mode }) => {
+  const options = React.useContext(optionsCtx);
+  const resolvedLanguage = mimeToMonacoLanguage(mode);
+  const useTypeScriptSetup = resolvedLanguage === "typescript" || resolvedLanguage === "javascript";
+
+  const handleEditorWillMount = (monaco) => {
+    if (useTypeScriptSetup) {
+      setMonacoLanguage(monaco, options, true);
+    }
+  };
+
+  const handleEditorDidMount = (editor, monaco) => {
+    if (!useTypeScriptSetup) {
+      const model = editor.getModel();
+      if (model) {
+        monaco.editor.setModelLanguage(model, resolvedLanguage);
+      }
+    }
+  };
+
+  return (
+    <div className="form-control p-0 pt-2">
+      <Editor
+        height={isModalEditor ? "100%" : "150px"}
+        value={value}
+        onChange={onChange}
+        defaultLanguage={resolvedLanguage}
+        options={multiLineEditorOptions}
+        beforeMount={handleEditorWillMount}
+        onMount={handleEditorDidMount}
+        className={isModalEditor ? "code-modal-form" : ""}
+      />
+    </div>
+  );
+};
+
+const multiLineEditorOptions = {
+  fontSize: "14px",
+  minHeight: "80vh",
+  fontWeight: "normal",
+  wordWrap: "off",
+  lineNumbers: "off",
+  lineNumbersMinChars: 0,
+  overviewRulerLanes: 0,
+  overviewRulerBorder: false,
+  hideCursorInOverviewRuler: true,
+  lineDecorationsWidth: 10,
+  glyphMargin: false,
+  folding: false,
+  // disable `Find`
+  find: {
+    addExtraSpaceOnTop: false,
+    autoFindInSelection: "never",
+    seedSearchStringFromSelection: false,
+  },
+  minimap: { enabled: false },
+  // see: https://github.com/microsoft/monaco-editor/issues/1746
+  wordBasedSuggestions: false,
+  // avoid links underline
+  links: false,
+  // avoid highlight hover word
+  occurrencesHighlight: false,
+  cursorStyle: "line-thin",
+  // hide current row highlight grey border
+  // see: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html#renderlinehighlight
+  renderLineHighlight: "none",
+  contextmenu: false,
+  // default selection is rounded
+  roundedSelection: false,
+  hover: {
+    // unit: ms
+    // default: 300
+    delay: 100,
+  },
+  acceptSuggestionOnEnter: "on",
+  // auto adjust width and height to parent
+  // see: https://github.com/Microsoft/monaco-editor/issues/543#issuecomment-321767059
+  automaticLayout: true,
+  // if monaco is inside a table, hover tips or completion may casue table body scroll
+  fixedOverflowWidgets: true,
+};
+
+//https://codesandbox.io/p/sandbox/react-monaco-single-line-forked-nsmhp6?file=%2Fsrc%2FApp.js%3A28%2C31
+const singleLineEditorOptions = {
+  fontSize: "14px",
+  fontWeight: "normal",
+  wordWrap: "off",
+  lineNumbers: "off",
+  lineNumbersMinChars: 0,
+  overviewRulerLanes: 0,
+  overviewRulerBorder: false,
+  hideCursorInOverviewRuler: true,
+  lineDecorationsWidth: 10,
+  glyphMargin: false,
+  folding: false,
+  scrollBeyondLastColumn: 0,
+  scrollbar: {
+    horizontal: "hidden",
+    vertical: "hidden",
+    // avoid can not scroll page when hover monaco
+    alwaysConsumeMouseWheel: false,
+  },
+  // disable `Find`
+  find: {
+    addExtraSpaceOnTop: false,
+    autoFindInSelection: "never",
+    seedSearchStringFromSelection: false,
+  },
+  minimap: { enabled: false },
+  // see: https://github.com/microsoft/monaco-editor/issues/1746
+  wordBasedSuggestions: false,
+  // avoid links underline
+  links: false,
+  // avoid highlight hover word
+  occurrencesHighlight: false,
+  cursorStyle: "line-thin",
+  // hide current row highlight grey border
+  // see: https://microsoft.github.io/monaco-editor/api/interfaces/monaco.editor.ieditoroptions.html#renderlinehighlight
+  renderLineHighlight: "none",
+  contextmenu: false,
+  // default selection is rounded
+  roundedSelection: false,
+  hover: {
+    // unit: ms
+    // default: 300
+    delay: 100,
+  },
+  acceptSuggestionOnEnter: "on",
+  // auto adjust width and height to parent
+  // see: https://github.com/Microsoft/monaco-editor/issues/543#issuecomment-321767059
+  automaticLayout: true,
+  // if monaco is inside a table, hover tips or completion may casue table body scroll
+  fixedOverflowWidgets: true,
+};

@@ -22,7 +22,29 @@ import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db";
 import utils from "../utils";
 import { GenObj } from "@saltcorn/db-common/types";
-const { mergeIntoWhere } = utils;
+const { mergeIntoWhere, isNode } = utils;
+const { VM } = require("vm2");
+
+function deproxy(value: any): any {
+  if (!value || typeof value !== "object") return value;
+  if (typeof value.then === "function") return value.then(deproxy);
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return value;
+  }
+}
+
+function vmRun(code: string, sandbox: any): any {
+  if (isNode()) {
+    const result = new VM({ sandbox, eval: false, wasm: false }).run(code);
+    if (typeof result === "function")
+      return (...args: any[]) => deproxy(result(...args));
+    return deproxy(result);
+  } else {
+    return runInNewContext(code, sandbox);
+  }
+}
 
 /**
  * @param {string} s
@@ -36,6 +58,19 @@ function expressionValidator(s: string): true | string {
   } catch (e: any) {
     return e.message;
   }
+}
+
+function identifiersInCodepage(s: string): Set<string> {
+  const top = parse(s, {
+    ecmaVersion: 2020,
+    locations: false,
+  });
+  const fs = top.body
+    .filter((n) => n.type === "FunctionDeclaration")
+    .map((n) => n.id.name)
+    .filter(Boolean);
+
+  return new Set(fs);
 }
 
 function expressionChecker(s: string, prefix: string, errors: string[]) {
@@ -88,7 +123,11 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
             if (cright === val && node.operator == "!=")
               return `${cleft} is not ${val}`;
           }
-          return `(${cleft})${node.operator}(${cright})`;
+          const dblEqToEq = (s: string) => {
+            if (s == "==") return "=";
+            return s;
+          };
+          return `(${cleft})${dblEqToEq(node.operator)}(${cright})`;
         },
         UnaryExpression() {
           return (<StringToFunction>{
@@ -111,6 +150,7 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
           return name;
         },
         Literal({ value }: { value: ExtendedNode }) {
+          if (typeof value == "string") return `'${value}'`;
           return `${value}`;
         },
       })[node.type](node);
@@ -123,32 +163,35 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
     );
   }
 }
+
+const today = (
+  offset?:
+    | number
+    | { startOf: moment.unitOfTime.StartOf }
+    | { endOf: moment.unitOfTime.StartOf }
+) => {
+  let default_locale: string | undefined;
+  const get_locale = (): string => {
+    if (!default_locale) {
+      const { getState } = require("../db/state");
+      default_locale = getState().getConfig("default_locale", "en");
+    }
+    return default_locale as string;
+  };
+  let d = new Date();
+  if (typeof offset === "number") d.setDate(d.getDate() + offset);
+  else if (offset && "startOf" in offset) {
+    d = moment().locale(get_locale()).startOf(offset.startOf).toDate();
+  } else if (offset && "endOf" in offset) {
+    d = moment().locale(get_locale()).endOf(offset.endOf).toDate();
+  }
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+};
+
 function partiallyEvaluate(ast: any, extraCtx: any = {}, fields: Field[] = []) {
   const keys = new Set(Object.keys(extraCtx));
   const field_names = new Set(fields.map((f) => f.name));
-  let default_locale: string | undefined;
-  const today = (
-    offset?:
-      | number
-      | { startOf: moment.unitOfTime.StartOf }
-      | { endOf: moment.unitOfTime.StartOf }
-  ) => {
-    const get_locale = (): string => {
-      if (!default_locale) {
-        const { getState } = require("../db/state");
-        default_locale = getState().getConfig("default_locale", "en");
-      }
-      return default_locale as string;
-    };
-    let d = new Date();
-    if (typeof offset === "number") d.setDate(d.getDate() + offset);
-    else if (offset && "startOf" in offset) {
-      d = moment().locale(get_locale()).startOf(offset.startOf).toDate();
-    } else if (offset && "endOf" in offset) {
-      d = moment().locale(get_locale()).endOf(offset.endOf).toDate();
-    }
-    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-  };
+
   replace(ast, {
     // @ts-ignore
     leave: function (node) {
@@ -329,6 +372,41 @@ function jsexprToWhere(
           return compile(node.expression!);
         },
         MemberExpression() {
+          if (node?.object?.type === "MemberExpression") {
+            //double join
+            const cleft = compile(node.object!.object!);
+            const cleftName =
+              typeof cleft === "symbol" ? cleft.description : cleft;
+            const c2 = compile(node.object!.property!);
+            const c3 = compile(node.property!);
+            const field = fields.find((f) => f.name === cleftName);
+            if (!field) {
+              //console.log({ cleftName, cleft, cright, crightName });
+              throw new Error(
+                `Field not found: ${cleftName}  in fields ${fields.map((f) => f.name)}`
+              );
+            }
+            const throughTable = Table.findOne({ name: field.reftable_name });
+            const throughField = throughTable.fields.find(
+              (f: Field) => f.name === c2.description
+            );
+            const finalTable = Table.findOne({
+              name: throughField.reftable_name,
+            });
+            return (val: any) => ({
+              [cleftName]: {
+                inSelect: {
+                  table: db.sqlsanitize(throughTable.name),
+                  tenant: db.getTenantSchema(),
+                  through: finalTable.name,
+                  through_pk: finalTable.pk_name,
+                  valField: throughTable.pk_name,
+                  field: c2.description,
+                  where: { [c3.description]: val },
+                },
+              },
+            });
+          }
           const cleft = compile(node.object!);
           const cleftName =
             typeof cleft === "symbol" ? cleft.description : cleft;
@@ -568,6 +646,33 @@ const add_free_variables_to_joinfields = (
           };
         }
     });
+  [...freeVars]
+    .filter((v) => v.includes("Ⱶ"))
+    .forEach((v) => {
+      const kpath = v.split("Ⱶ");
+      if (joinFieldNames.has(kpath[0]))
+        if (kpath.length === 2) {
+          const [refNm, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+          };
+        } else if (kpath.length === 3) {
+          const [refNm, through, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+            through,
+          };
+        } else if (kpath.length === 4) {
+          const [refNm, through1, through2, targetNm] = kpath;
+          joinFields[v] = {
+            ref: refNm,
+            target: targetNm,
+            through: [through1, through2],
+          };
+        }
+    });
 };
 
 function isIdentifierWithName(node: any): node is Identifier {
@@ -620,10 +725,7 @@ function get_expression_function(
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
   const { getState } = require("../db/state");
-  const f = runInNewContext(
-    `(${args})=>(${expression})`,
-    getState().eval_context
-  );
+  const f = vmRun(`(${args})=>(${expression})`, getState().eval_context);
   return (row: any, user: any) => f(row, row, user);
 }
 
@@ -634,12 +736,13 @@ function get_expression_function(
  */
 function eval_expression(
   expression: string,
-  row: any,
+  row?: any,
   user?: any,
   errorLocation?: string
 ): any {
   try {
-    const field_names = Object.keys(row).filter(
+    const use_row = row || {};
+    const field_names = Object.keys(use_row).filter(
       (nm) =>
         nm.indexOf(".") === -1 &&
         nm.indexOf(">") === -1 &&
@@ -649,10 +752,11 @@ function eval_expression(
       ? `row, {${field_names.join()}}`
       : `row, {${field_names.join()}}, user`;
     const { getState } = require("../db/state");
-    return runInNewContext(
-      `(${args})=>(${expression})`,
-      getState().eval_context
-    )(row, row, user);
+    return vmRun(`((${args})=>(${expression}))(row, row, user)`, {
+      ...getState().eval_context,
+      row: use_row,
+      user,
+    });
   } catch (e: any) {
     e.message = `In evaluating the expression ${expression}${
       errorLocation ? ` in ${errorLocation}` : ""
@@ -673,12 +777,14 @@ async function eval_statements(
 ): Promise<any> {
   try {
     const { getState } = require("../db/state");
-    const evalStr = `async ()=>{${expression}}`;
-    const f = runInNewContext(evalStr, {
+    const evalStr = `(async ()=>{${expression}})()`;
+    const Table = require("./table");
+    return await vmRun(evalStr, {
+      console,
+      Table,
       ...getState().eval_context,
       ...context,
     });
-    return await f();
   } catch (e: any) {
     e.message = `In evaluating the statements ${expression.split("\n")}... ${
       errorLocation ? ` in ${errorLocation}` : ""
@@ -695,21 +801,18 @@ async function eval_statements(
  */
 function get_async_expression_function(
   expression: string,
-  fields: Array<Field>,
+  fields: Array<Field | string>,
   extraContext = {}
 ): Function {
-  const field_names = fields.map((f) => f.name);
+  const field_names = fields.map((f) => (typeof f === "string" ? f : f.name));
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
   const { getState } = require("../db/state");
   const { expr_string } = transform_for_async(expression, getState().functions);
   const evalStr = `async (${args})=>(${expr_string})`;
-  const f = runInNewContext(evalStr, {
-    ...getState().eval_context,
-    ...extraContext,
-  });
-  return (row: any, user: any) => f(row, row, user);
+  const f = vmRun(evalStr, { ...getState().eval_context, ...extraContext });
+  return async (row: any, user: any) => await f(row, row, user);
 }
 
 /**
@@ -732,8 +835,10 @@ function apply_calculated_fields(
         if (!field.expression) throw new Error(`The field has no expression`);
         f = get_expression_function(field.expression, fields);
       } catch (e: any) {
-        if (!ignore_errors)
-          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+        if (!ignore_errors) {
+          e.message = `Error in calculating "${field.name}": ${e.message}`;
+          throw e;
+        }
       }
       const oldf = transform;
       transform = (row) => {
@@ -741,10 +846,10 @@ function apply_calculated_fields(
           const x = f(row);
           row[field.name] = x;
         } catch (e: any) {
-          if (!ignore_errors)
-            throw new Error(
-              `Error in calculating "${field.name}": ${e.message}`
-            );
+          if (!ignore_errors) {
+            e.message = `Error in calculating "${field.name}": ${e.message}`;
+            throw e;
+          }
         }
         return oldf(row);
       };
@@ -838,9 +943,15 @@ const apply_calculated_fields_stored = async (
       let f: Function;
       try {
         if (!field.expression) throw new Error(`The fields has no expression`);
-        f = get_async_expression_function(field.expression, fields);
+        f = get_async_expression_function(field.expression, [
+          ...fields,
+          ...Object.keys(row)
+            .filter((k) => k.includes("Ⱶ"))
+            .map((k) => k),
+        ]);
       } catch (e: any) {
-        throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+        e.message = `Error in calculating "${field.name}": ${e.message}`;
+        throw e;
       }
       const oldf = transform;
       transform = async (row) => {
@@ -848,7 +959,8 @@ const apply_calculated_fields_stored = async (
           const x = await f(row);
           row[field.name] = x;
         } catch (e: any) {
-          throw new Error(`Error in calculating "${field.name}": ${e.message}`);
+          e.message = `Error in calculating "${field.name}": ${e.message}`;
+          throw e;
         }
         return await oldf(row);
       };
@@ -924,4 +1036,6 @@ export = {
   add_free_variables_to_joinfields,
   add_free_variables_to_aggregations,
   removeComments,
+  today,
+  identifiersInCodepage,
 };

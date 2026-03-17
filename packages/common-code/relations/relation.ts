@@ -10,6 +10,7 @@ export class Relation {
   sourceTblName: string;
   targetTblName: string;
   viewDisplayType: any;
+  subView?: any;
   path: any[];
 
   static fixedUserRelation = ".users._logged_in_ref_without_rel_";
@@ -50,8 +51,8 @@ export class Relation {
       return this.viewDisplayType === ViewDisplayType.NO_ROW_LIMIT
         ? RelationType.CHILD_LIST
         : ViewDisplayType.ROW_REQUIRED
-        ? RelationType.ONE_TO_ONE_SHOW
-        : null;
+          ? RelationType.ONE_TO_ONE_SHOW
+          : null;
     // or throw ??
     else if (this.path.length === 2 && this.path.every((p) => p.inboundKey))
       return RelationType.CHILD_LIST;

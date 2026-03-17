@@ -31,6 +31,9 @@ const traverseSync = (layout: Layout, visitors: Visitors | Function): void => {
     if (segment.footer) {
       if (typeof segment.footer !== "string") go(segment.footer);
     }
+    if (segment.titleRight) {
+      if (typeof segment.titleRight !== "string") go(segment.titleRight);
+    }
     if (segment.contents) {
       if (typeof segment.contents !== "string") go(segment.contents);
       return;
@@ -70,6 +73,9 @@ const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
     if (segment.footer) {
       if (typeof segment.footer !== "string") await go(segment.footer);
     }
+    if (segment.titleRight) {
+      if (typeof segment.titleRight !== "string") await go(segment.titleRight);
+    }
     if (segment.contents) {
       if (typeof segment.contents !== "string") await go(segment.contents);
       return;
@@ -92,8 +98,68 @@ const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
  * @param f
  * @returns
  */
-const eachView = (layout: Layout, f: any): Promise<void> =>
-  traverse(layout, { view: f });
+const eachView = async (layout: Layout, f: any, state?: any): Promise<void> => {
+  const go = async (segment: any, inLazy?: boolean) => {
+    if (!segment) return;
+    if (segment.type === "view") {
+      const vres = f(segment, inLazy);
+      if (vres && vres instanceof Promise) await vres;
+    }
+    if (Array.isArray(segment)) {
+      for (const seg of segment) await go(seg, inLazy);
+      return;
+    }
+    if (segment.footer) {
+      if (typeof segment.footer !== "string") await go(segment.footer, inLazy);
+    }
+    if (segment.titleRight) {
+      if (typeof segment.titleRight !== "string")
+        await go(segment.titleRight, inLazy);
+    }
+    if (segment.contents) {
+      if (
+        segment.tabsStyle === "Tabs" &&
+        segment.serverRendered &&
+        Array.isArray(segment.contents)
+      ) {
+        const tabid = segment.tabId || "_tab";
+        const curIx = +state[tabid] || 0;
+        for (let index = 0; index < segment.contents.length; index++) {
+          const seg = segment.contents[index];
+          const makingLazy = index !== curIx;
+
+          await go(seg, inLazy || makingLazy);
+        }
+        return;
+      }
+      if (segment.lazyLoadViews && Array.isArray(segment.contents)) {
+        const curIx = 0;
+        for (let index = 0; index < segment.contents.length; index++) {
+          const seg = segment.contents[index];
+          const makingLazy =
+            !segment.acc_init_opens?.[index] &&
+            (index !== curIx || segment.startClosed);
+
+          await go(seg, inLazy || makingLazy);
+        }
+        return;
+      }
+
+      if (typeof segment.contents !== "string")
+        await go(segment.contents, inLazy);
+      return;
+    }
+    if (segment.above) {
+      for (const seg of segment.above) await go(seg, inLazy);
+      return;
+    }
+    if (segment.besides) {
+      for (const seg of segment.besides) await go(seg, inLazy);
+      return;
+    }
+  };
+  await go(layout);
+};
 
 /**
  * execute a function on each page in the layout
@@ -199,7 +265,7 @@ const countFields = (layout: Layout) => {
 
 const splitLayoutContainerFields = (layout: Layout) => {
   const findAllFieldsContainer = (l: Layout) => {
-    let inner;
+    let inner: any;
     //all-fields container is last container to have >1 field
     traverseSync(l, {
       blank(s) {

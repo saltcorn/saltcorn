@@ -19,13 +19,18 @@ import {
   SettingsRow,
   setAPropGen,
 } from "./utils";
+import { getDeviceValue } from "../../utils/responsive_utils";
 import ContentEditable from "react-contenteditable";
 import optionsCtx from "../context";
-import CKEditor from "ckeditor4-react";
+import PreviewCtx from "../preview_context";
+import { CKEditor } from "ckeditor4-react";
 import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import fas from "@fortawesome/free-solid-svg-icons";
 import far from "@fortawesome/free-regular-svg-icons";
+import { SingleLineEditor } from "./MonacoEditor";
+import useTranslation from "../../hooks/useTranslation";
+
 const ckConfig = {
   toolbarGroups: [
     { name: "document", groups: ["mode", "document", "doctools"] },
@@ -86,6 +91,8 @@ const Text = ({
   font,
   style,
   customClass,
+  mobileFontSize,
+  tabletFontSize,
 }) => {
   const {
     connectors: { connect, drag },
@@ -96,6 +103,19 @@ const Text = ({
     dragged: state.events.dragged,
   }));
   const [editable, setEditable] = useState(false);
+  const { previewDevice } = useContext(PreviewCtx);
+
+  const baseStyle = {
+    ...(font ? { fontFamily: font } : {}),
+    ...reactifyStyles(style || {}),
+  };
+  const activeFontSize = getDeviceValue(
+    baseStyle.fontSize,
+    tabletFontSize,
+    mobileFontSize,
+    previewDevice
+  );
+  if (activeFontSize) baseStyle.fontSize = activeFontSize;
 
   useEffect(() => {
     !selected && setEditable(false);
@@ -108,11 +128,8 @@ const Text = ({
         isFormula.text ? "font-monospace" : ""
       } ${selected ? "selected-node" : ""}`}
       ref={(dom) => connect(drag(dom))}
-      onClick={(e) => selected && setEditable(true)}
-      style={{
-        ...(font ? { fontFamily: font } : {}),
-        ...reactifyStyles(style || {}),
-      }}
+      onDoubleClick={(e) => selected && setEditable(true)}
+      style={baseStyle}
     >
       <DynamicFontAwesomeIcon icon={icon} className="me-1" />
       {isFormula.text ? (
@@ -130,7 +147,7 @@ const Text = ({
       ) : editable ? (
         <ErrorBoundary>
           <CKEditor
-            data={text}
+            initData={text || ""}
             style={{ display: "inline" }}
             onChange={(e) =>
               setProp((props) => (props.text = e.editor.getData()))
@@ -154,7 +171,10 @@ export /**
  * @subcategory components
  */
 const TextSettings = () => {
+  const { t } = useTranslation();
+  const { previewDevice } = useContext(PreviewCtx);
   const node = useNode((node) => ({
+    id: node.id,
     text: node.data.props.text,
     block: node.data.props.block,
     inline: node.data.props.inline,
@@ -165,6 +185,8 @@ const TextSettings = () => {
     icon: node.data.props.icon,
     font: node.data.props.font,
     style: node.data.props.style,
+    mobileFontSize: node.data.props.mobileFontSize,
+    tabletFontSize: node.data.props.tabletFontSize,
   }));
   const {
     actions: { setProp },
@@ -178,6 +200,8 @@ const TextSettings = () => {
     font,
     style,
     customClass,
+    mobileFontSize,
+    tabletFontSize,
   } = node;
   const { mode, fields, icons } = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
@@ -197,23 +221,18 @@ const TextSettings = () => {
               setProp((prop) => (prop.isFormula.text = checked));
             }}
           />
-          <label className="form-check-label">Formula?</label>
+          <label className="form-check-label">{t("Formula?")}</label>
         </div>
       )}
-      <label>Text to display</label>
+     <label>{t("Text to display")}</label>
       {allowFormula && isFormula.text ? (
-        <input
-          type="text"
-          className="text-to-display form-control"
-          value={text}
-          onChange={setAProp("text")}
-          spellCheck={false}
-        />
+        <SingleLineEditor setProp={setProp} value={text} propKey="text" />
       ) : (
         <ErrorBoundary>
           <div className="border">
             <CKEditor
-              data={text}
+              key={node.id}
+              initData={text || ""}
               onChange={(e) => {
                 if (e.editor) {
                   const text = e.editor.getData();
@@ -228,7 +247,7 @@ const TextSettings = () => {
       )}
       {mode === "edit" && (
         <Fragment>
-          <label>Label for Field</label>
+          <label>{t("Label for Field")}</label>
           <select
             value={labelFor}
             onChange={setAProp("labelFor")}
@@ -248,7 +267,7 @@ const TextSettings = () => {
           <TextStyleRow textStyle={textStyle} setProp={setProp} />
           <tr>
             <td>
-              <label>Icon</label>
+              <label>{t("Icon")}</label>
             </td>
             <td>
               <FontIconPicker
@@ -263,26 +282,51 @@ const TextSettings = () => {
           <SettingsRow
             field={{
               name: "font",
-              label: "Font family",
+              label: t("Font family"),
               type: "Font",
             }}
             node={node}
             setProp={setProp}
           />
-          <SettingsRow
-            field={{
-              name: "font-size",
-              label: "Font size",
-              type: "DimUnits",
-            }}
-            node={node}
-            setProp={setProp}
-            isStyle={true}
-          />
+          {previewDevice === "desktop" ? (
+            <SettingsRow
+              field={{
+                name: "font-size",
+                label: t("Font size"),
+                type: "DimUnits",
+              }}
+              node={node}
+              setProp={setProp}
+              isStyle={true}
+            />
+          ) : (
+            <SettingsRow
+              field={{
+                name: "font-size",
+                label: `${t("Font size")} (${previewDevice})`,
+                type: "DimUnits",
+              }}
+              node={{
+                ...node,
+                style: {
+                  "font-size": previewDevice === "mobile" ? mobileFontSize : tabletFontSize,
+                },
+              }}
+              setProp={(fn) => {
+                // Write to mobileFontSize/tabletFontSize instead of style
+                const proxy = { style: {} };
+                fn(proxy);
+                const val = proxy.style["font-size"];
+                const propName = previewDevice === "mobile" ? "mobileFontSize" : "tabletFontSize";
+                setProp((prop) => { prop[propName] = val; });
+              }}
+              isStyle={true}
+            />
+          )}
           <SettingsRow
             field={{
               name: "font-weight",
-              label: "Weight",
+              label: t("Weight"),
               type: "Integer",
               min: 100,
               max: 900,
@@ -295,7 +339,7 @@ const TextSettings = () => {
           <SettingsRow
             field={{
               name: "line-height",
-              label: "Line height",
+              label: t("Line height"),
               type: "DimUnits",
             }}
             node={node}
@@ -303,7 +347,7 @@ const TextSettings = () => {
             isStyle={true}
           />
           <tr>
-            <td>Class</td>
+            <td>{t("Class")}</td>
             <td>
               <input
                 type="text"
@@ -317,7 +361,7 @@ const TextSettings = () => {
           <SettingsRow
             field={{
               name: "color",
-              label: "Color",
+              label: t("Color"),
               type: "Color",
             }}
             node={node}

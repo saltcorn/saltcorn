@@ -6,6 +6,7 @@ const {
   toRedirect,
   itShouldRedirectUnauthToLogin,
   itShouldIncludeTextForAdmin,
+  itShouldNotIncludeTextForAdmin,
   toInclude,
   toSucceed,
   //toNotInclude,
@@ -94,7 +95,7 @@ describe("admin page", () => {
     ["/search/config", "Search configuration"],
     ["/library/list", "component assemblies"],
   ]);
-  adminPageContains([["/actions", "Actions available"]]);
+  //adminPageContains([["/actions", "Actions available"]]);
   adminPageContains([["/eventlog", "Event log"]]);
   adminPageContains([["/eventlog/settings", "Which events should be logged?"]]);
   adminPageContains([["/eventlog/custom", "Custom Events"]]);
@@ -365,8 +366,7 @@ describe("actions", () => {
     await request(app)
       .get("/actions")
       .set("Cookie", loginCookie)
-      .expect(toInclude("Actions available"))
-      .expect(toInclude("webhook"));
+      .expect(toInclude("Create trigger"));
   });
   it("show new action", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -625,6 +625,11 @@ describe("tags", () => {
 describe("server logs viewer", () => {
   itShouldRedirectUnauthToLogin("/admin/dev/logs_viewer");
   itShouldIncludeTextForAdmin("/admin/dev/logs_viewer", "Server logs");
+});
+
+
+describe("admin reflective xss", () => {
+  itShouldNotIncludeTextForAdmin("/admin/edit-codepage/%3Cimg%20src%3Dx%20onerror%3Dalert%281%29%3E%0A", "<img src=x onerror=alert(1)>");
 });
 
 /**

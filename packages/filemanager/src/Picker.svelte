@@ -19,6 +19,7 @@
 
   export let currentFolder = "/";
   export let noSubdirs = false;
+  export let file_exts = null; 
   export let inputId = "";
 
   let files = [];
@@ -34,10 +35,13 @@
   });
 
   const fetchAndReset = async function () {
-    const response = await fetch(
-      `/files/visible_entries?dir=${encodeURIComponent(currentFolder)}${
+    const url = `/files/visible_entries?dir=${encodeURIComponent(currentFolder)}${
         noSubdirs ? "&no_subdirs=true" : ""
-      }`,
+      }${
+        file_exts ? "&file_exts="+file_exts : ""
+      }`
+    const response = await fetch(
+      url,
       {
         headers: { "X-Requested-With": "XMLHttpRequest" },
       }
@@ -141,15 +145,26 @@
         <div>
           <nav aria-label="breadcrumb">
             <ol class="breadcrumb">
-              {#each pathSegments as segment}
-                <li
-                  class="breadcrumb-item"
-                  on:click={gotoFolder(segment.location)}
-                >
-                  {#if segment.icon}
-                    <Fa icon={segment.icon} />
+              {#each pathSegments as segment, i}
+                <li class="breadcrumb-item">
+                  {#if i === pathSegments.length - 1}
+                    {#if segment.icon}
+                      <Fa icon={segment.icon} />
+                    {:else}
+                      {segment.name}
+                    {/if}
                   {:else}
-                    {segment.name}
+                    <button
+                      type="button"
+                      class="breadcrumb-link"
+                      on:click={() => gotoFolder(segment.location)}
+                    >
+                      {#if segment.icon}
+                        <Fa icon={segment.icon} />
+                      {:else}
+                        {segment.name}
+                      {/if}
+                    </button>
                   {/if}
                 </li>
               {/each}
@@ -242,5 +257,12 @@
   div.filelist {
     max-height: 90vh;
     overflow-y: scroll;
+  }
+  .breadcrumb-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
   }
 </style>

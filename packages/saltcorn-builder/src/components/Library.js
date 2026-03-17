@@ -12,6 +12,7 @@ import React, {
   useRef,
   useMemo,
 } from "react";
+import useTranslation from "../hooks/useTranslation";
 import { useEditor, useNode } from "@craftjs/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
@@ -20,6 +21,14 @@ import { craftToSaltcorn, layoutToNodes } from "./storage";
 import optionsCtx from "./context";
 import { WrapElem } from "./Toolbox";
 import { isEqual, throttle, chunk } from "lodash";
+
+const getSelectedNodes = (selected) => {
+  if (!selected) return [];
+  if (typeof selected.has === "function") {
+    return [...selected];
+  }
+  return [selected];
+};
 
 export /**
  * @param {object} props
@@ -88,6 +97,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
   const { actions, query, connectors } = useEditor((state, query) => {
     return {};
   });
+  const { t } = useTranslation();
   const options = useContext(optionsCtx);
   const doSave = (query, keepalive) => {
     if (!query.serialize) return;
@@ -130,8 +140,8 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
       .catch((e) => {
         const text =
           e.message === "Failed to fetch"
-            ? "Network connection lost"
-            : e || "Unable to save";
+            ? t("Network connection lost")
+            : e || t("Unable to save");
         // don't log duplicates
         if (savingState.error) setSavingState({ isSaving: false, error: text });
         else {
@@ -207,11 +217,11 @@ export /**
  * @namespace
  */
 const Library = ({ expanded }) => {
-  const { actions, selected, query, connectors } = useEditor((state, query) => {
-    return {
-      selected: state.events.selected,
-    };
-  });
+  const { actions, selected, selectedNodes, query, connectors } = useEditor((state, query) => ({
+    selected: getSelectedNodes(state.events.selected)[0] || null,
+    selectedNodes: getSelectedNodes(state.events.selected),
+  }));
+  const { t } = useTranslation();
   const options = useContext(optionsCtx);
   const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
@@ -222,9 +232,11 @@ const Library = ({ expanded }) => {
    * @returns {void}
    */
   const addSelected = () => {
+    if (!selected && selectedNodes.length === 0) return;
+    const nodeToSave = selected || selectedNodes[0];
     const layout = craftToSaltcorn(
       JSON.parse(query.serialize()),
-      selected,
+      nodeToSave,
       options
     );
     const data = { layout, icon, name: newName };
@@ -255,17 +267,17 @@ const Library = ({ expanded }) => {
           id="dropdownMenuButton"
           aria-haspopup="true"
           aria-expanded="false"
-          disabled={!selected}
+          disabled={!selected && selectedNodes.length === 0}
           onClick={() => setAdding(!adding)}
         >
           <FontAwesomeIcon icon={faPlus} className="me-1" />
-          Add
+          {t("Add")}
         </button>
         <div
           className={`dropdown-menu py-3 px-4 ${adding ? "show" : ""}`}
           aria-labelledby="dropdownMenuButton"
         >
-          <label>Name</label>
+          <label>{t("Name")}</label>
           <input
             type="text"
             className="form-control"
@@ -273,7 +285,7 @@ const Library = ({ expanded }) => {
             onChange={(e) => e?.target && setNewName(e.target.value)}
           />
           <br />
-          <label>Icon</label>
+          <label>{t("Icon")}</label>
           <FontIconPicker
             className="w-100"
             value={icon}
@@ -283,7 +295,7 @@ const Library = ({ expanded }) => {
           />
           <button className={`btn btn-primary mt-3`} onClick={addSelected}>
             <FontAwesomeIcon icon={faPlus} className="me-1" />
-            Add
+            {t("Add")}
           </button>
           <button
             className={`btn btn-outline-secondary ms-2 mt-3`}

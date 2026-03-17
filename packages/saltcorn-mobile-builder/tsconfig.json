@@ -23,7 +23,10 @@
   "exclude": [
     "node_modules",
     "dist",
-    "*.test.*",
+    "**/*.test.*",
+    "**/*.spec.*",
+    "**/tests/**",
+    "**/__tests__/**",
     "webpack.config.js",
     "bundle",
     "plugin_packages",

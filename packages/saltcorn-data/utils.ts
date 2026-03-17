@@ -17,10 +17,19 @@ import { join, dirname } from "path";
 import type Field from "./models/field"; // only type, shouldn't cause require loop
 import type User from "./models/user"; // only type, shouldn't cause require loop
 import { existsSync } from "fs-extra";
-import _ from "underscore";
+import { VM } from "vm2";
 const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
+const Docker = require("dockerode");
+import path from "path";
+import os from "os";
+import { execSync } from "child_process";
+import { readFileSync } from "fs";
+import { parseStringPromise } from "xml2js";
+import _ from "underscore";
 // import { ResultType, StepResType } from "types";'
+
+declare const saltcorn: any;
 
 const getFetchProxyOptions = () => {
   if (process.env["HTTPS_PROXY"]) {
@@ -154,7 +163,7 @@ const satisfies = (where: Where) => (obj: any) =>
 
 // https://gist.github.com/jadaradix/fd1ef195af87f6890448
 const getLines = (filename: string, lineCount: number): Promise<string> =>
-  new Promise((resolve) => {
+  new Promise((resolve, reject) => {
     let stream = createReadStream(filename, {
       flags: "r",
       encoding: "utf-8",
@@ -177,9 +186,9 @@ const getLines = (filename: string, lineCount: number): Promise<string> =>
       }
     });
 
-    /*stream.on("error", function () {
-    callback("Error");
-  });*/
+    stream.on("error", function (err) {
+      reject(err);
+    });
 
     stream.on("end", function () {
       resolve(lines.join("\n"));
@@ -454,14 +463,51 @@ const interpolate = (
   row: any,
   user?: any,
   errorLocation?: string
-) => {
+): string => {
   try {
     if (s && typeof s === "string") {
-      const template = _.template(s, {
-        interpolate: /\{\{!(.+?)\}\}/g,
-        escape: /\{\{([^!].+?)\}\}/g,
+      if (!s.includes("{{")) return s;
+      if (!isNode()) {
+        //mobile without vm2
+        const template = _.template(s, {
+          interpolate: /\{\{!(.+?)\}\}/g,
+          escape: /\{\{([^!].+?)\}\}/g,
+        });
+        return template({ row, user, process: undefined, ...(row || {}) });
+      }
+      const sandbox = {
+        ...require("./db/state").getState().eval_context,
+        global: undefined,
+        globalThis: undefined,
+        process: undefined,
+        require: undefined,
+        module: undefined,
+        Function: undefined,
+        row,
+        user,
+        ...(row || {}),
+      };
+      const vm = new VM({
+        sandbox,
+        eval: false,
+        wasm: false,
+        timeout: 200,
       });
-      return template({ row, user, ...(row || {}) });
+
+      const go_interp = (s: string): string =>
+        s.replace(/\{\{([!=]?)([\s\S]+?)\}\}/g, renderToken);
+
+      const renderToken = (_match: string, bang: string, code: string) => {
+        const val = vm.run(`(${code.trim()})`);
+        const strVal =
+          val === null || typeof val === "undefined" ? "" : String(val);
+        return bang === "="
+          ? go_interp(escapeHtml(strVal))
+          : bang === "!"
+            ? strVal
+            : escapeHtml(strVal);
+      };
+      return go_interp(s);
     } else return s;
   } catch (e: any) {
     e.message = `In evaluating the interpolation ${s}${
@@ -556,8 +602,12 @@ const flatEqual = (a: any, b: any) => {
   return true;
 };
 
-const jsIdentifierValidator = (s: string) => {
-  if (!s) return "An identifier is required";
+const jsIdentifierValidator = (
+  s: string,
+  _: any,
+  field?: { required: boolean }
+) => {
+  if (!s && field?.required) return "An identifier is required";
   if (s.includes(" ")) return "Spaces not allowd";
   let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
     .split("")
@@ -578,7 +628,134 @@ const isPushEnabled = (user?: User): user is User => {
   return userAttr?.notify_push;
 };
 
+/**
+ * Mobile helper to render views with the 'mobile_render_server_side' flag server-side
+ * @param viewname
+ * @param state
+ * @returns html string
+ */
+const renderServerSide = async (viewname: string, state: any) => {
+  const response = await saltcorn.mobileApp.api.apiCall({
+    method: "GET",
+    path: `/view/${encodeURIComponent(viewname)}`,
+    params: state,
+  });
+  const data = response.data;
+  return data;
+};
+
+const allReturnDirectives = [
+  "popup",
+  "goto",
+  "eval_js",
+  "download",
+  "set_fields",
+  "notify",
+  "notify_success",
+  "error",
+  "reload_embedded_view",
+  "progress_bar_update",
+  "suppressed",
+  "reload_page",
+  "resume_workflow",
+];
+
+const secondaryReturnDirectives: Record<string, string[]> = {
+  reload_embedded_view: ["new_state"],
+  notify: ["remove_delay", "toast_title", "notify_type"],
+  notify_success: ["remove_delay", "toast_title"],
+  error: ["remove_delay", "toast_title"],
+  goto: ["target"],
+  eval_js: ["row", "field_names"],
+  set_fields: ["no_onchange"],
+};
+
+const returnDirectivesOnly = (
+  o: GenObj | undefined | null
+): GenObj | undefined | null => {
+  if (!o) return o;
+  const r: GenObj = {};
+  allReturnDirectives.forEach((k) => {
+    if (typeof o[k] !== "undefined") {
+      r[k] = o[k];
+      if (secondaryReturnDirectives[k])
+        secondaryReturnDirectives[k].forEach((secondary_k) => {
+          if (typeof o[secondary_k] !== "undefined") {
+            r[secondary_k] = o[secondary_k];
+          }
+        });
+    }
+  });
+  return r;
+};
+
+const dataModulePath = __dirname;
+
+const imageAvailable = async (imageName: string, preferedVersion: string) => {
+  const docker = new Docker();
+  try {
+    const image = docker.getImage(`${imageName}:${preferedVersion}`);
+    await image.inspect();
+    return { installed: true, version: preferedVersion };
+  } catch (e) {
+    try {
+      const images = await docker.listImages({
+        filters: { reference: [`${imageName}:*`] },
+      });
+      const tags = images.flatMap((img: any) => img.RepoTags || []);
+      if (tags.length > 0)
+        return { installed: true, version: tags[0].split(":")[1] };
+    } catch (err: any) {
+      require("./db/state")
+        .getState()
+        .log(5, `Error checking for ${imageName} image: ${err.message || err}`);
+    }
+    return { installed: false };
+  }
+};
+
+const pluginsFolderRoot = path.join(
+  os.homedir(),
+  ".local",
+  "share",
+  "saltcorn-plugins"
+);
+
+const decodeProvisioningProfile = async (provisioningProfile: string) => {
+  require("./db/state")
+    .getState()
+    .log(5, `Decoding provisioning profile ${provisioningProfile}`);
+  const outFile = join("/tmp", "provisioningProfile.xml");
+  try {
+    execSync(`security cms -D -i "${provisioningProfile}" > ${outFile}`);
+    const content = readFileSync(outFile);
+    const parsed = await parseStringPromise(content);
+    const dict = parsed.plist.dict[0];
+    const guuid = dict.string[dict.string.length - 1];
+    const teamId = dict.array[0].string[0];
+    const specifier = dict.string[1];
+    const identifier = dict.dict[0].string[0];
+    const result = { guuid, teamId, specifier, identifier };
+    console.log(result);
+    return result;
+  } catch (error: any) {
+    require("./db/state")
+      .getState()
+      .log(
+        5,
+        `Unable to decode the provisioning profile '${provisioningProfile}': ${
+          error.message ? error.message : "Unknown error"
+        }`
+      );
+    throw error;
+  }
+};
+
 export = {
+  dataModulePath,
+  allReturnDirectives,
+  secondaryReturnDirectives,
+  returnDirectivesOnly,
   cloneName,
   dollarizeObject,
   objectToQueryString,
@@ -633,4 +810,8 @@ export = {
   jsIdentifierValidator,
   escapeHtml,
   isPushEnabled,
+  renderServerSide,
+  imageAvailable,
+  pluginsFolderRoot,
+  decodeProvisioningProfile,
 };

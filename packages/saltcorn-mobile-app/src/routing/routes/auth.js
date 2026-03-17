@@ -1,11 +1,12 @@
 /*global saltcorn */
 import { MobileRequest } from "../mocks/request";
 import { MobileResponse } from "../mocks/response";
-import { apiCall } from "../../helpers/api";
-import { removeJwt } from "../../helpers/auth";
 import { sbAdmin2Layout, getHeaders } from "../utils";
-import { clearHistory } from "../../helpers/navigation";
 
+/**
+ * internal helper to prepare the login or signup form
+ * @returns
+ */
 const prepareAuthForm = () => {
   return new saltcorn.data.models.Form({
     class: "login",
@@ -29,18 +30,41 @@ const prepareAuthForm = () => {
   });
 };
 
-// TODO delete this and integrate getAuthLinks() from '/server/auth/routes.js'
+/**
+ * internal helper to get auth links
+ * TODO delete this and integrate getAuthLinks() from '/server/auth/routes.js'
+ * @param {*} current
+ * @param {*} entryPoint
+ * @returns
+ */
 const getAuthLinks = (current, entryPoint) => {
   const links = { methods: [] };
   const state = saltcorn.data.state.getState();
+  const mobileConfig = state.mobileConfig;
   if (current !== "login") links.login = "javascript:execLink('/auth/login')";
   if (current !== "signup" && state.getConfig("allow_signup"))
     links.signup = "javascript:execLink('/auth/signup')";
-  if (state.getConfig("public_user_link"))
+  if (mobileConfig.showContinueAsPublicUser)
     links.publicUser = `javascript:publicLogin('${entryPoint}')`;
+  for (const [name, auth] of Object.entries(state.auth_methods)) {
+    links.methods.push({
+      icon: auth.icon,
+      label: auth.label,
+      name,
+      url: `javascript:loginWith('${name}')`,
+    });
+  }
+
   return links;
 };
 
+/**
+ * internal helper to render login view
+ * @param {*} entryPoint
+ * @param {*} versionTag
+ * @param {*} alerts
+ * @returns
+ */
 const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
   const state = saltcorn.data.state.getState();
   const form = prepareAuthForm(entryPoint);
@@ -74,6 +98,8 @@ const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
     }
   }
 
+  const assets_by_role = state.assets_by_role || {};
+  const roleHeaders = assets_by_role[100];
   return layout.authWrap({
     title: "login",
     form: form,
@@ -82,11 +108,19 @@ const renderLoginView = async (entryPoint, versionTag, alerts = []) => {
     headers: [
       { css: `static_assets/${versionTag}/saltcorn.css` },
       { script: "js/iframe_view_utils.js" },
+      ...(roleHeaders ? roleHeaders : []),
     ],
     csrfToken: false,
+    req: new MobileRequest(),
   });
 };
 
+/**
+ * internal helper to render signup view
+ * @param {*} entryPoint
+ * @param {*} versionTag
+ * @returns
+ */
 const renderSignupView = (entryPoint, versionTag) => {
   const form = prepareAuthForm(entryPoint);
   form.onSubmit = `javascript:signupFormSubmit(this, '${entryPoint}')`;
@@ -104,6 +138,11 @@ const renderSignupView = (entryPoint, versionTag) => {
   });
 };
 
+/**
+ *
+ * @param {*} context
+ * @returns
+ */
 export const getLoginView = async (context) => {
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   return {
@@ -116,26 +155,14 @@ export const getLoginView = async (context) => {
   };
 };
 
+/**
+ *
+ * @returns
+ */
 export const getSignupView = async () => {
   const config = saltcorn.data.state.getState().mobileConfig;
   return {
     content: renderSignupView(config.entry_point, config.version_tag),
     replaceIframe: true,
   };
-};
-
-export const logoutAction = async () => {
-  const config = saltcorn.data.state.getState().mobileConfig;
-  const response = await apiCall({ method: "GET", path: "/auth/logout" });
-  if (response.data.success) {
-    await removeJwt();
-    clearHistory();
-    config.jwt = undefined;
-    return {
-      content: await renderLoginView(config.entry_point, config.version_tag),
-    };
-  } else {
-    console.log("unable to logout");
-    return {};
-  }
 };

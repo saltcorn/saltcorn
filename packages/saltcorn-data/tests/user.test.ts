@@ -20,7 +20,7 @@ beforeAll(async () => {
 
 afterAll(db.close);
 
-describe("User", () => {
+describe("User model", () => {
   it("should create", async () => {
     await User.create({ email: "foo@bar.com", password: "YEgege46gew" });
     const u = await User.findOne({ email: "foo@bar.com" });
@@ -60,6 +60,29 @@ describe("User", () => {
       password: "YEgege46gew",
     });
     expect(u00).toBe(false);
+    const uci = await User.authenticate({
+      email: "FOO@bar.com",
+      password: "YEgege46gew",
+    });
+    assertIsSet(uci);
+
+    expect(uci.email).toBe("foo@bar.com");
+    const uci0 = await User.authenticate({
+      email: "OO@bar.co",
+      password: "YEgege46gew",
+    });
+    expect(uci0).toBe(false);
+    const uci1 = await User.authenticate({
+      email: "oo@bar.co",
+      password: "YEgege46gew",
+    });
+    expect(uci1).toBe(false);
+    //password is case sensitive
+    const uci2 = await User.authenticate({
+      email: "FOO@bar.com",
+      password: "yEgege46gew",
+    });
+    expect(uci2).toBe(false);
   });
   it("should survive nonexistant fields", async () => {
     const u = await User.authenticate({
@@ -126,11 +149,14 @@ describe("User", () => {
     expect(token.length > 5).toBe(true);
     const u1 = await User.findOne({ email: "foo@bar.com" });
     assertIsSet(u1);
-    expect(u1.api_token).toEqual(token);
-    await u1.getNewAPIToken();
+    const tokens1 = await u1.listApiTokens();
+    expect(tokens1.find((t) => t.token === token)).toBeDefined();
+    const token2 = await u1.getNewAPIToken();
     const u2 = await User.findOne({ email: "foo@bar.com" });
     assertIsSet(u2);
-    expect(u2.api_token).not.toEqual(token);
+    const tokens2 = await u2.listApiTokens();
+    expect(tokens2.find((t) => t.token === token2)).toBeDefined();
+    expect(u2.api_token).toBeNull();
   });
   it("should set language ", async () => {
     const u = await User.findOne({ email: "foo@bar.com" });
@@ -218,7 +244,7 @@ describe("User fields", () => {
   it("should add fields", async () => {
     const table = Table.findOne({ name: "users" });
     assertIsSet(table);
-    const fc = await Field.create({
+    await Field.create({
       table,
       label: "Height",
       type: "Integer",
@@ -241,6 +267,57 @@ describe("User fields", () => {
     assertIsSet(ut);
     expect(ut.email).toBe("foo1@bar.com");
     expect(ut.height).toBe(183);
+  });
+  it("should add calculated fields", async () => {
+    const table = User.table;
+    assertIsSet(table);
+    await Field.create({
+      table,
+      label: "upper1",
+      type: "String",
+      calculated: true,
+      expression: "email.toUpperCase()",
+    });
+    await User.create({
+      email: "foo2@bar.com",
+      password: "YEge56FGew",
+      height: 183,
+    });
+    const u = await User.authenticate({
+      email: "foo2@bar.com",
+      password: "YEge56FGew",
+    });
+    assertsObjectIsUser(u);
+    expect(u.email).toBe("foo2@bar.com");
+    expect(u.role_id).toBe(80);
+    expect(u.height).toBe(183);
+    expect(u.upper1).toBe("FOO2@BAR.COM");
+  });
+  it("should add stored calculated fields", async () => {
+    const table = User.table;
+    assertIsSet(table);
+    await Field.create({
+      table,
+      label: "upper2",
+      type: "String",
+      calculated: true,
+      expression: "email.toUpperCase()",
+      stored: true,
+    });
+    await User.create({
+      email: "foo3@bar.com",
+      password: "YEge56FGew",
+      height: 183,
+    });
+    const u = await User.authenticate({
+      email: "foo3@bar.com",
+      password: "YEge56FGew",
+    });
+    assertsObjectIsUser(u);
+    expect(u.email).toBe("foo3@bar.com");
+    expect(u.role_id).toBe(80);
+    expect(u.height).toBe(183);
+    expect(u.upper2).toBe("FOO3@BAR.COM");
   });
 });
 describe("User join fields and aggregations in ownership", () => {

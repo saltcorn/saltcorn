@@ -4,8 +4,10 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment, useState } from "react";
-import { Element, useNode } from "@craftjs/core";
+import React, { Fragment, useState, useEffect, useContext } from "react";
+import useTranslation from "../../hooks/useTranslation";
+import optionsCtx from "../context";
+import { useNode, Element } from "@craftjs/core";
 import { Column } from "./Column";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretDown } from "@fortawesome/free-solid-svg-icons";
@@ -21,13 +23,23 @@ export /**
  * @category saltcorn-builder
  * @subcategory components
  */
-const SearchBar = ({ has_dropdown, children, show_badges }) => {
+const SearchBar = ({ has_dropdown, children, contents, show_badges }) => {
+  const { t } = useTranslation();
   const {
     selected,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected }));
   const [showDropdown, setDropdown] = useState(false);
   const [dropWidth, setDropWidth] = useState(200);
+
+  const renderContents = () => {
+    const actualChildren = contents || children;
+    if (!actualChildren) return null;
+    if (React.isValidElement(actualChildren)) return actualChildren;
+    if (Array.isArray(actualChildren)) return actualChildren;
+    return actualChildren;
+  };
+
   return (
     <div
       className={`input-group  ${selected ? "selected-node" : ""}`}
@@ -47,7 +59,7 @@ const SearchBar = ({ has_dropdown, children, show_badges }) => {
       <input
         type="text"
         className="form-control bg-light"
-        placeholder="Search..."
+        placeholder={t("Search...")}
         readOnly={true}
       />
 
@@ -70,9 +82,18 @@ const SearchBar = ({ has_dropdown, children, show_badges }) => {
             }`}
             style={{ width: dropWidth, left: 0 }}
           >
-            <div className="canvas">{children}</div>
+            <Element canvas id="searchbar-contents" is={Column}>
+              {renderContents()}
+            </Element>
           </div>
         </Fragment>
+      )}
+      {!has_dropdown && (
+        <div style={{ display: "none" }}>
+          <Element canvas id="searchbar-contents" is={Column}>
+            {renderContents()}
+          </Element>
+        </div>
       )}
     </div>
   );
@@ -85,6 +106,7 @@ export /**
  * @subcategory components
  */
 const SearchBarSettings = () => {
+  const { t } = useTranslation();
   const {
     actions: { setProp },
     has_dropdown,
@@ -107,7 +129,7 @@ const SearchBarSettings = () => {
           checked={has_dropdown}
           onChange={setAProp("has_dropdown", { checked: true })}
         />
-        <label className="form-check-label">Has Dropdown</label>
+        <label className="form-check-label">{t("Has Dropdown")}</label>
       </div>
       <div className="form-check">
         <input
@@ -117,7 +139,7 @@ const SearchBarSettings = () => {
           checked={show_badges}
           onChange={setAProp("show_badges", { checked: true })}
         />
-        <label className="form-check-label">Show current state badges</label>
+        <label className="form-check-label">{t("Show current state badges")}</label>
       </div>
       <div className="form-check">
         <input
@@ -127,7 +149,7 @@ const SearchBarSettings = () => {
           checked={autofocus}
           onChange={setAProp("autofocus", { checked: true })}
         />
-        <label className="form-check-label">Autofocus</label>
+        <label className="form-check-label">{t("Autofocus")}</label>
       </div>
     </div>
   );
@@ -142,11 +164,16 @@ SearchBar.craft = {
     has_dropdown: false,
     show_badges: false,
     autofocus: false,
+    contents: [],
   },
   related: {
     settings: SearchBarSettings,
     segment_type: "search_bar",
-    hasContents: true,
-    fields: ["has_dropdown", "show_badges", "autofocus"],
+    fields: [
+      { name: "has_dropdown" },
+      { name: "show_badges" },
+      { name: "autofocus" },
+      { label: "Contents", name: "contents", type: "Nodes", nodeID: "searchbar-contents" },
+    ],
   },
 };

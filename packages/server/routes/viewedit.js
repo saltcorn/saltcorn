@@ -91,20 +91,22 @@ router.get(
         },
         {
           type: "card",
-          class: "mt-0",
+          class: "mt-0 card-max-full-screen",
           title: req.__("Your views"),
+          footer:
+            tables.length > 0 &&
+            a(
+              { href: `/viewedit/new`, class: "btn btn-primary" },
+              req.__("Create view")
+            ),
           contents: [
             viewMarkup,
-            tables.length > 0
-              ? a(
-                  { href: `/viewedit/new`, class: "btn btn-primary" },
-                  req.__("Create view")
+            tables.length === 0 &&
+              p(
+                req.__(
+                  "You must create at least one table before you can create views."
                 )
-              : p(
-                  req.__(
-                    "You must create at least one table before you can create views."
-                  )
-                ),
+              ),
           ],
         },
       ],
@@ -183,6 +185,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         sublabel: req.__("Display data from this table"),
         options: tableOptions,
         disabled: isEdit,
+        help: {
+          topic: "View table",
+          context: {},
+        },
         showIf: isEdit
           ? hasTable.includes(values.viewtemplate)
             ? undefined
@@ -213,6 +219,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         input_type: "select",
         required: true,
         options: roles.map((r) => ({ value: r.id, label: r.role })),
+        help: {
+          topic: "Role to access",
+          context: {},
+        },
       }),
       new Field({
         label: req.__("Description"),
@@ -550,11 +560,14 @@ router.post(
           }
 
         const v = result.success;
+        const vt = getState().viewtemplates[v.viewtemplate];
         if (v.table_name) {
           const table = Table.findOne({ name: v.table_name });
           if (table && table.id) {
             v.table_id = table.id;
           } else if (table && table.external) v.exttable_name = v.table_name;
+        } else if (vt?.table_optional) {
+          v.table_id = null;
         }
         if (v.table_id) {
           const table = Table.findOne({ id: v.table_id });
@@ -567,10 +580,10 @@ router.post(
         if ((req.body || {}).id) {
           await View.update(v, +(req.body || {}).id);
         } else {
-          const vt = getState().viewtemplates[v.viewtemplate];
           if (vt.initial_config) v.configuration = await vt.initial_config(v);
           else v.configuration = {};
           //console.log(v);
+          v.name = v.name.trim();
           await View.create(v);
         }
         await getState().refresh_views();
@@ -622,6 +635,8 @@ const respondWorkflow = (view, wf, wfres, req, res, table) => {
           },
           { workflow: wf, step: wfres },
         ],
+        right:
+          '<div id="builder-header-actions" class="d-flex align-items-center gap-2"></div>',
       },
       {
         type: noCard ? "container" : "card",
@@ -674,6 +689,9 @@ const respondWorkflow = (view, wf, wfres, req, res, table) => {
       )
     );
   else if (wfres.renderBuilder) {
+    const locale = req.getLocale();
+    wfres.renderBuilder.options.translations =
+      locale === "en" ? {} : req.getCatalog(locale) || {};
     wfres.renderBuilder.options.view_id = view.id;
     res.sendWrap(
       {
@@ -993,5 +1011,22 @@ router.post(
     const view = await View.create(req.body || {});
     await getState().refresh_views();
     res.json({ view });
+  })
+);
+
+router.post(
+  "/copilot-generate-layout",
+  isAdminOrHasConfigMinRole(["min_role_edit_views", "min_role_edit_pages"]),
+  error_catcher(async (req, res) => {
+    const { mode, table, prompt } = req.body;
+    const f = getState().functions.copilot_generate_layout;
+    if (!f) {
+      res.json({
+        error: `Copilot layout generator not found. Copilot module 0.7.2 or later required`,
+      });
+      return;
+    }
+    const layout = await f.run(prompt, mode, table);
+    res.json({ success: "ok", layout });
   })
 );

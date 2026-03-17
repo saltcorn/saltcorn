@@ -42,10 +42,17 @@ class PostReleaseCommand extends Command {
   get baseRepoDir() {
     return path.join(__dirname, "..", "..", "..", "..", "..");
   }
-  async docker() {
+  async docker(tag) {
+    if (!tag) {
+      console.error("Need tag for docker post-release");
+      this.exit(1);
+    }
+    const env = { ...process.env, TAG: tag };
+
     spawnSync("bash", ["deploy/docker_build_push.sh"], {
       stdio: "inherit",
       cwd: this.baseRepoDir,
+      env,
     });
   }
   async vagrant() {
@@ -123,18 +130,14 @@ class PostReleaseCommand extends Command {
    */
   async run() {
     const {
-      args: { task },
+      args: { task, tag },
     } = await this.parse(PostReleaseCommand);
-    this.version = require(path.join(
-      __dirname,
-      "..",
-      "..",
-      "..",
-      "package.json"
-    )).version;
+    this.version = require(
+      path.join(__dirname, "..", "..", "..", "package.json")
+    ).version;
     console.log("Version", this.version);
     if (!this.version) this.exit(1);
-    if (!task || task === "docker" || task === "all") await this.docker();
+    if (!task || task === "docker" || task === "all") await this.docker(tag);
 
     if (!task || task === "vagrant" || task === "all") await this.vagrant();
     this.exit(0);
@@ -153,6 +156,9 @@ PostReleaseCommand.args = {
   task: Args.string({
     options: ["docker", "vagrant", "all", "none"],
     description: "What to do",
+  }),
+  tag: Args.string({
+    description: "Docker tag to give this release",
   }),
 };
 

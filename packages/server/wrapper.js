@@ -32,7 +32,13 @@ const get_menu = (req) => {
 
   const locale = req.getLocale();
   const __ = (s) => state.i18n.__({ phrase: s, locale }) || s;
-  const extra_menu_all = get_extra_menu(role, __, req.user || {}, locale);
+  const extra_menu_all = get_extra_menu(
+    role,
+    __,
+    req.user || { role_id: 100 },
+    locale,
+    req
+  );
   const extra_menu = extra_menu_all.filter((item) => !item.isUser);
   const user_menu = extra_menu_all.filter((item) => item.isUser);
   // return menu
@@ -97,7 +103,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
         locale ? `, _sc_locale = "${locale}"` : ""
       }, _sc_lightmode = ${JSON.stringify(
         state.getLightDarkMode?.(req.user) || "light"
-      )}, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16);</script>`,
+      )}, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16)${req?.user?.role_id===1 ? `, _sc_is_admin = true`:""};</script>`,
     },
     { css: `/static_assets/${version_tag}/saltcorn.css` },
     { script: `/static_assets/${version_tag}/saltcorn-common.js` },
@@ -122,9 +128,20 @@ const get_headers = (req, version_tag, description, extras = []) => {
   if (state.getConfig("log_client_errors", false))
     from_cfg.push({ scriptBody: `enable_error_catcher()` });
   const state_headers = [];
-  for (const hs of Object.values(state.headers)) {
-    state_headers.push(...hs);
+  const assets_by_role = state.assets_by_role || {};
+  const roleHeaders = assets_by_role[req.user?.role_id || 100];
+  if (roleHeaders && roleHeaders.length) {
+    for (const h of roleHeaders) {
+      if (!h.only_if || h.only_if(req) === true) state_headers.push(h);
+    }
+  } else {
+    for (const hs of Object.values(state.headers)) {
+      for (const h of hs) {
+        if (!h.only_if || h.only_if(req) === true) state_headers.push(h);
+      }
+    }
   }
+
   if (notification_in_menu)
     from_cfg.push({ scriptBody: domReady(`check_saltcorn_notifications()`) });
   if (pwa_enabled) {
@@ -185,6 +202,33 @@ const get_brand = (state, req) => {
     logo: logo_id && logo_id !== "0" ? `/files/serve/${logo_id}` : undefined,
   };
 };
+/**
+ * Collect keyboard shortcuts from menu items
+ * @param {object[]} menu_sections
+ * @returns {object[]} array of {shortcut, link, type}
+ */
+const collect_menu_shortcuts = (menu_sections) => {
+  const shortcuts = [];
+  const extract = (items) => {
+    for (const item of items || []) {
+      if (item.shortcut && item.link) {
+        shortcuts.push({
+          shortcut: item.shortcut,
+          link: item.link,
+          type: item.type,
+        });
+      }
+      if (item.subitems) extract(item.subitems);
+    }
+  };
+  if (menu_sections) {
+    for (const section of menu_sections) {
+      extract(section.items || []);
+    }
+  }
+  return shortcuts;
+};
+
 module.exports = (version_tag) =>
   /**
    *
@@ -286,19 +330,34 @@ module.exports = (version_tag) =>
       const currentUrl = req.originalUrl.split("?")[0];
 
       const pageHeaders = typeof opts === "string" ? [] : opts.headers;
+      const menu = no_menu ? undefined : get_menu(req);
+      const shortcuts = collect_menu_shortcuts(menu);
+      const shortcutHeaders =
+        shortcuts.length > 0
+          ? [
+              {
+                scriptBody: `var _sc_menu_shortcuts = ${JSON.stringify(shortcuts)};`,
+              },
+            ]
+          : [];
 
       res.send(
         layout.wrap({
           title,
           brand: no_menu ? undefined : get_brand(state, req),
-          menu: no_menu ? undefined : get_menu(req),
+          menu,
           currentUrl,
           originalUrl: req.originalUrl,
           requestFluidLayout:
             typeof opts === "string" ? false : opts.requestFluidLayout,
           alerts,
           body: html.length === 1 ? html[0] : html.join(""),
-          headers: get_headers(req, version_tag, opts.description, pageHeaders),
+          headers: get_headers(
+            req,
+            version_tag,
+            opts.description,
+            [...(pageHeaders || []), ...shortcutHeaders]
+          ),
           role,
           req,
           bodyClass,

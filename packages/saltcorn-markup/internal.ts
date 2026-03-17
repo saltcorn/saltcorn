@@ -472,7 +472,7 @@ const render = ({
           },
           segment.title &&
             span(
-              { class: "card-header" },
+              { class: ["card-header", segment.titleRight && "right-section"] },
               typeof segment.title === "string"
                 ? hints.cardTitleWrapDiv
                   ? div(
@@ -492,6 +492,9 @@ const render = ({
                       segment.title
                     )
                 : segment.title,
+              segment.titleRight
+                ? div({ class: "title-right" }, go(segment.titleRight))
+                : "",
               segment.subtitle ? span(segment.subtitle) : "",
               segment.titleAjaxIndicator &&
                 span(
@@ -979,6 +982,9 @@ const render = ({
       return isTop
         ? wrap({ ...segment, customClass: null }, isTop, ix, markup)
         : markup;
+    } else if (segment.type === "prompt") {
+      // Prompt segments are builder-only placeholders, skip rendering
+      return "";
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
   if (instanceOWithHtmlFile(layout)) {

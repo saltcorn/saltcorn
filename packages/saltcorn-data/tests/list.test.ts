@@ -492,7 +492,7 @@ describe("Misc List views", () => {
     expect(vres1).toContain("<td>Herman Melville</td>");
     expect(vres1).not.toContain("<td>Leo Tolstoy</td>");
     expect(vres1).toContain(
-      `<tr onclick="location.href='/view/authorshow?id=1'">`
+      `<tr data-row-id="1" onclick="location.href='/view/authorshow?id=1'">`
     );
   });
   it("field with fieldview config", async () => {
@@ -822,25 +822,50 @@ describe("List sort options", () => {
       },
       name: "BookSortDesc",
     });
-    const tBodyAuthors = (authors: string[]) =>
+    const tBodyAuthors = (authors: Array<{ nm: string; ix: number }>) =>
       `<tbody>${authors
-        .map((nm) => `<tr><td>${nm}</td></tr>`)
+        .map(({ nm, ix }) => `<tr data-row-id="${ix}"><td>${nm}</td></tr>`)
         .join("")}</tbody>`;
 
     const vres1 = await viewAsc.run({}, mockReqRes);
-    expect(vres1).toContain(tBodyAuthors(["Herman Melville", "Leo Tolstoy"]));
+    expect(vres1).toContain(
+      tBodyAuthors([
+        { nm: "Herman Melville", ix: 1 },
+        { nm: "Leo Tolstoy", ix: 2 },
+      ])
+    );
 
     const vres2 = await viewDesc.run({}, mockReqRes);
-    expect(vres2).toContain(tBodyAuthors(["Leo Tolstoy", "Herman Melville"]));
+    expect(vres2).toContain(
+      tBodyAuthors([
+        { nm: "Leo Tolstoy", ix: 2 },
+        { nm: "Herman Melville", ix: 1 },
+      ])
+    );
     const vres3 = await viewDesc.run({ _28084_sortby: "pages" }, mockReqRes);
-    expect(vres3).toContain(tBodyAuthors(["Leo Tolstoy", "Herman Melville"]));
+    expect(vres3).toContain(
+      tBodyAuthors([
+        { nm: "Leo Tolstoy", ix: 2 },
+        { nm: "Herman Melville", ix: 1 },
+      ])
+    );
     const vres3a = await viewAsc.run({ _8a82a_sortby: "pages" }, mockReqRes);
-    expect(vres3a).toContain(tBodyAuthors(["Leo Tolstoy", "Herman Melville"]));
+    expect(vres3a).toContain(
+      tBodyAuthors([
+        { nm: "Leo Tolstoy", ix: 2 },
+        { nm: "Herman Melville", ix: 1 },
+      ])
+    );
     const vres4 = await viewDesc.run(
       { _28084_sortby: "pages", _28084_sortdesc: true },
       mockReqRes
     );
-    expect(vres4).toContain(tBodyAuthors(["Herman Melville", "Leo Tolstoy"]));
+    expect(vres4).toContain(
+      tBodyAuthors([
+        { nm: "Herman Melville", ix: 1 },
+        { nm: "Leo Tolstoy", ix: 2 },
+      ])
+    );
   });
 });
 
@@ -1060,4 +1085,163 @@ describe("one-to-one joinfields", () => {
   });
 });
 
+describe("tree lists", () => {
+  it("should setup", async () => {
+    await mkViewWithCfg({
+      name: "patienttreelist",
+      table_id: Table.findOne("patients")?.id,
+      configuration: {
+        layout: {
+          besides: [
+            {
+              showif: "",
+              contents: {
+                type: "field",
+                field_name: "name",
+                configuration: {
+                  field_name: "name",
+                },
+              },
+              alignment: "Default",
+              col_width: "",
+              header_label: "",
+              col_width_units: "px",
+            },
+            {
+              showif: "",
+              contents: {
+                type: "join_field",
+                join_field: "favbook.author",
+                configuration: {
+                  join_field: "favbook.author",
+                },
+              },
+              alignment: "Default",
+              col_width: "",
+              header_label: "",
+              col_width_units: "px",
+            },
+            {
+              showif: "",
+              contents: {
+                type: "join_field",
+                join_field: "favbook.pages",
+                configuration: {
+                  join_field: "favbook.pages",
+                },
+              },
+              alignment: "Default",
+              col_width: "",
+              header_label: "",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            field_name: "name",
+            configuration: {
+              field_name: "name",
+            },
+          },
+          {
+            type: "JoinField",
+            join_field: "favbook.author",
+            configuration: {
+              join_field: "favbook.author",
+            },
+          },
+        ],
+        default_state: {
+          _group_by: "",
+          _tree_field: "parent",
+          _cell_valign: "Middle",
+          _order_field: "id",
+          _table_layout: "Auto",
+          _rows_per_page: 20,
+          _row_click_type: "Nothing",
+          _full_page_count: true,
+        },
+      },
+    });
+    const view = View.findOne({ name: "patienttreelist" });
+    assertIsSet(view);
+    const vres1 = await view.run({}, mockReqRes);
+    if (!db.isSQLite) expect(vres1).toContain("└&nbsp;&nbsp;");
+    else expect(vres1).toContain("<table");
+  });
+});
+describe("dual joinfielss with fieldviews", () => {
+  it("should show", async () => {
+    const view = new View({
+      name: "booklistdualfieldviews",
+      description: "",
+      viewtemplate: "List",
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                above: [
+                  {
+                    type: "join_field",
+                    block: false,
+                    fieldview: "show_with_html",
+                    textStyle: "",
+                    join_field: "publisher.id",
+                    configuration: {
+                      code: "FOO{{it}}",
+                    },
+                  },
+                  {
+                    type: "join_field",
+                    block: false,
+                    fieldview: "show_with_html",
+                    textStyle: "",
+                    join_field: "publisher.id",
+                    configuration: {
+                      code: "BAR{{it}}",
+                    },
+                  },
+                ],
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "JoinField",
+            block: false,
+            fieldview: "show_with_html",
+            textStyle: "",
+            join_field: "publisher.id",
+            configuration: {
+              code: "FOO{{it}}",
+            },
+          },
+          {
+            type: "JoinField",
+            block: false,
+            fieldview: "show_with_html",
+            textStyle: "",
+            join_field: "publisher.id",
+            configuration: {
+              code: "BAR{{it}}",
+            },
+          },
+        ],
+      },
+      min_role: 1,
+      table_id: Table.findOne("books")!.id,
+      attributes: {},
+    });
+    const vres1 = await view.run({}, mockReqRes);    
+    expect(vres1).toContain("FOO1BAR1");
+  });
+});
 //sorting

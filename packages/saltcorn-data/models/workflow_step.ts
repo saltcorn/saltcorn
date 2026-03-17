@@ -13,6 +13,8 @@ import View from "./view";
 import Table from "./table";
 import Expression from "./expression";
 import FieldRepeat from "./fieldrepeat";
+import tags from "@saltcorn/markup/tags";
+const { a } = tags;
 const { jsIdentifierValidator } = require("../utils");
 
 const { eval_expression, get_async_expression_function } = Expression;
@@ -331,7 +333,7 @@ class WorkflowStep {
         linkLines.push(
           `  _Start-- <i class="fas fa-plus add-btw-nodes btw-nodes-${0}-${
             step.name
-          }"></i> ---${step.mmname}`
+          }"></i> --- ${step.mmname}`
         );
       if (stepNames.includes(step.next_step as string)) {
         linkLines.push(
@@ -396,6 +398,154 @@ class WorkflowStep {
     return fc;
   }
 
+  static actionSummary(
+    step: WorkflowStep,
+    opts: { req?: any; trigger?: Trigger } = {}
+  ): string[] | undefined {
+    const cfg = step.configuration || {};
+    const t = opts.req?.__ ? opts.req.__.bind(opts.req) : (s: string) => s;
+
+    const clean = (val: any) => {
+      if (val === null || typeof val === "undefined") return "";
+      return typeof val === "string" ? val : String(val);
+    };
+
+    const shorten = (val: any, max = 120) => {
+      const str = clean(val).trim();
+      if (!str) return "";
+      return str.length > max ? `${str.slice(0, max - 3)}...` : str;
+    };
+
+    const normalize = (val: any): string[] => {
+      if (!val) return [];
+      if (Array.isArray(val))
+        return val.map((v) => clean(v).trim()).filter(Boolean);
+      if (typeof val === "string")
+        return val
+          .split("\n")
+          .map((v) => v.trim())
+          .filter(Boolean);
+      return [];
+    };
+
+    const stateAction = getState().actions?.[step.action_name];
+    if (stateAction?.configuration_summary) {
+      const summary = stateAction.configuration_summary(cfg, {
+        req: opts.req,
+        trigger: opts.trigger,
+        step,
+      });
+      const normalized = normalize(summary);
+      if (normalized.length) return normalized;
+    }
+
+    const lines: string[] = [];
+    switch (step.action_name) {
+      case "TableQuery":
+        if (cfg.query_table) lines.push(`${t("Table")}: ${cfg.query_table}`);
+        if (cfg.query_variable)
+          lines.push(`${t("Into variable")}: ${cfg.query_variable}`);
+        if (cfg.query_object)
+          lines.push(`${t("Where")}: ${shorten(cfg.query_object)}`);
+        break;
+      case "SetContext":
+        if (cfg.ctx_values)
+          lines.push(`${t("Set context")}: ${shorten(cfg.ctx_values)}`);
+        break;
+      case "SetErrorHandler":
+        if (cfg.error_handling_step)
+          lines.push(`${t("Error handler")}: ${cfg.error_handling_step}`);
+        break;
+      case "Output":
+        if (cfg.popup_title)
+          lines.push(`${t("Title")}: ${cfg.popup_title}`);
+        // if (cfg.output_text) lines.push(shorten(cfg.output_text, 180));
+        if (cfg.markdown) lines.push(t("Render as markdown"));
+        break;
+      case "DataOutput":
+        if (cfg.popup_title)
+          lines.push(`${t("Title")}: ${cfg.popup_title}`);
+        // if (cfg.output_expr)
+        //   lines.push(`${t("Expression")}: ${shorten(cfg.output_expr)}`);
+        break;
+      case "OutputView":
+        if (cfg.popup_title)
+          lines.push(`${t("Title")}: ${cfg.popup_title}`);
+        if (cfg.view) lines.push(`${t("View")}: ${cfg.view}`);
+        // if (cfg.view_state)
+        //   lines.push(`${t("View state")}: ${shorten(cfg.view_state)}`);
+        break;
+      case "WaitUntil":
+        if (cfg.resume_at)
+          lines.push(`${t("Resume at")}: ${shorten(cfg.resume_at)}`);
+        break;
+      case "WaitNextTick":
+        lines.push(
+          cfg.immediately_bg
+            ? t("Run immediately in background")
+            : t("Resume next scheduler tick")
+        );
+        if (cfg.wait_delay)
+          lines.push(`${t("Delay")}: ${cfg.wait_delay} s`);
+        break;
+      case "UserForm": {
+        if (cfg.popup_title)
+          lines.push(`${t("Title")}: ${cfg.popup_title}`);
+        const questions = Array.isArray(cfg.user_form_questions)
+          ? cfg.user_form_questions
+          : [];
+        questions.slice(0, 3).forEach((q: any) => {
+          if (!q) return;
+          const label = clean(q.label || q.var_name).trim();
+          if (label)
+            lines.push(
+              q.var_name && q.label && q.label !== q.var_name
+                ? `${q.label} -> ${q.var_name}`
+                : label
+            );
+        });
+        if (questions.length > 3)
+          lines.push(`${questions.length - 3} ${t("more questions")}`);
+        break;
+      }
+      case "ForLoop":
+        if (cfg.array_expression)
+          lines.push(`${t("Array")}: ${shorten(cfg.array_expression)}`);
+        // if (cfg.item_variable)
+        //   lines.push(`${t("Item variable")}: ${cfg.item_variable}`);
+        // if (cfg.index_variable)
+        //   lines.push(`${t("Index variable")}: ${cfg.index_variable}`);
+        // if (cfg.loop_body_initial_step)
+        //   lines.push(
+        //     `${t("Loop body start")}: ${cfg.loop_body_initial_step}`
+        //   );
+        break;
+      case "EditViewForm":
+        if (cfg.popup_title)
+          lines.push(`${t("Title")}: ${cfg.popup_title}`);
+        // if (cfg.edit_view) lines.push(`${t("Edit view")}: ${cfg.edit_view}`);
+        // if (cfg.response_variable)
+        //   lines.push(`${t("Response variable")}: ${cfg.response_variable}`);
+        break;
+      case "TerminateWorkflow":
+        if (cfg.return_value)
+          lines.push(`${t("Return")}: ${shorten(cfg.return_value)}`);
+        break;
+      case "APIResponse":
+        if (cfg.response_expression)
+          lines.push(`${t("Response")}: ${shorten(cfg.response_expression)}`);
+        break;
+      default: {
+        if (cfg?.row_expr)
+          lines.push(`${t("Row expression")}: ${shorten(cfg.row_expr)}`);
+        break;
+      }
+    }
+
+    const normalized = lines.filter(Boolean);
+    return normalized.length ? normalized : undefined;
+  }
+
   static builtInActionExplainers(opts: any = {}) {
     const actionExplainers: any = {};
     actionExplainers.SetContext = "Set variables in the context";
@@ -452,6 +602,15 @@ class WorkflowStep {
       showIf: { wf_action_name: "ForLoop" },
     });
     actionConfigFields.push({
+      label: "Loop index variable",
+      sublabel:
+        "Optional. Javascript identifier; the name of the variable the loop counter index (starting from 0) will be set to in each loop iteration",
+      name: "index_variable",
+      class: "validate-identifier",
+      type: "String",
+      showIf: { wf_action_name: "ForLoop" },
+    });
+    actionConfigFields.push({
       label: "Loop body step",
       sublabel:
         "The name of the first step in the loop body. The workflow execution inside the loop will start at this step, and continue from that step's next_step, until a step with blank next_step is encountered, which is the end of the loop body",
@@ -479,7 +638,14 @@ class WorkflowStep {
       type: "String",
       required: true,
       sublabel:
-        "Edit view should have a Save button. Other actions and edit view settings will be ignored.",
+        "Edit view should have a Save button. Other actions and edit view settings will be ignored. " +
+        a(
+          {
+            "data-dyn-href": `\`/viewedit/config/\${edit_view}\``,
+            target: "_blank",
+          },
+          "Configure"
+        ),
       attributes: {
         options: (await View.find({ viewtemplate: "Edit" })).map((t) => t.name),
       },
@@ -516,7 +682,7 @@ class WorkflowStep {
     actionConfigFields.push({
       label: "Response variable",
       name: "response_variable",
-      sublabel: "Context variable to write the form response to",
+      sublabel: "Context variable to read and write the form response",
       class: "validate-identifier",
       type: "String",
       validator: jsIdentifierValidator,
@@ -693,6 +859,7 @@ class WorkflowStep {
                 "Multiple checks",
                 "Integer",
                 "Float",
+                "Date",
                 //"File upload",
               ],
             },
@@ -703,6 +870,13 @@ class WorkflowStep {
             type: "String",
             sublabel: "Comma separated list of multiple choice options",
             showIf: { qtype: ["Multiple choice", "Multiple checks"] },
+          },
+          {
+            label: "Day only",
+            name: "day_only",
+            type: "Bool",
+            sublabel: "Do not ask for time",
+            showIf: { qtype: ["Date"] },
           },
         ],
       })

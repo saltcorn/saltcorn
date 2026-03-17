@@ -4,7 +4,7 @@
  * @subcategory markup
  */
 
-const { p, code, li, ul, pre } = require("@saltcorn/markup/tags");
+const { p, code, li, ul, pre, span } = require("@saltcorn/markup/tags");
 const { contract, is } = require("contractis");
 const { getState } = require("@saltcorn/data/db/state");
 
@@ -33,7 +33,7 @@ const expressionBlurb = (type, stored, table, req) => {
   const allFields = table.fields;
   const fields = stored
     ? allFields.filter((f) => !f.stored || f.expression === "__aggregation")
-    : allFields.filter((f) => !f.calculated);
+    : allFields.filter((f) => !f.calculated || f.stored);
   const funs = getState().functions;
   const funNames = Object.entries(funs)
     .filter(([k, v]) => !(!stored && v.isAsync))
@@ -48,14 +48,18 @@ const expressionBlurb = (type, stored, table, req) => {
     ),
     p(
       req.__(`Fields you can use as variables: `),
-      fields.map((f) => code(f.name)).join(", ")
+      fields
+        .map((f) => span({ class: "copy-to-clipboard" }, code(f.name)))
+        .join(", ")
     ),
     funNames.length > 0
       ? p(
           req.__(
             `Functions you can use (in addition to standard JavaScript functions): `
           ),
-          funNames.map((f) => code(f)).join(", ")
+          funNames
+            .map((f) => span({ class: "copy-to-clipboard" }, code(f)))
+            .join(", ")
         )
       : "",
     examples && examples.length > 0 ? p(req.__("Examples:")) : "",

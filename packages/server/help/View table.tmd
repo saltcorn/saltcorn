@@ -1,0 +1,3 @@
+Most views are associated with a table and will display data from that table or related tables.
+
+For instance, if you have a library database including a table of books, and you want to make a list of or edit books, you should choose the books table here.

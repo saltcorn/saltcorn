@@ -42,3 +42,12 @@ export type TablePack = {
   constraints?: Array<any>;
   ownership_field_name?: string | null;
 } & TableCfg;
+
+export const instanceOfTable = (object: any): object is AbstractTable => {
+  return (
+    object &&
+    "name" in object &&
+    "fields" in object &&
+    Array.isArray(object.fields)
+  );
+};

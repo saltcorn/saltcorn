@@ -1,0 +1,847 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/room
+ * @subcategory base-plugin
+ */
+import Table from "../../models/table";
+import View from "../../models/view";
+import Form from "../../models/form";
+import Field from "../../models/field";
+import Workflow from "../../models/workflow";
+const {
+  text,
+  div,
+  h4,
+  hr,
+  button,
+  form,
+  input,
+  i,
+  script,
+  domReady,
+} = require("@saltcorn/markup/tags");
+const { pagination } = require("@saltcorn/markup/helpers");
+const { renderForm, tabs, link } = require("@saltcorn/markup");
+const { mkTable } = require("@saltcorn/markup");
+import {
+  link_view,
+  stateToQueryString,
+  stateFieldsToWhere,
+  stateFieldsToQuery,
+  readState,
+  run_action_column,
+} from "../../plugin-helper";
+const { InvalidConfiguration } = require("../../utils");
+const { getState } = require("../../db/state");
+const db = require("../../db");
+import {
+  getForm,
+  fill_presets,
+  action_url,
+  action_link,
+  edit_build_in_actions,
+} from "../../viewable_fields";
+const { extractFromLayout } = require("../../diagram/node_extract_utils");
+import { GenObj } from "@saltcorn/types/common_types";
+import { Req, Res } from "@saltcorn/types/base_types";
+import layout from "../../models/layout";
+const { traverse } = layout;
+
+
+
+/**
+ *
+ * @param {object} req
+ * @returns {Workflow}
+ */
+const configuration_workflow = (req: Req) =>
+  new Workflow({
+    steps: [
+      {
+        name: req.__("Views"),
+        form: async (context: GenObj) => {
+          /*
+            we need:
+                - message string
+                - message show view?
+                - message sender field
+                - participant field: key to user in table with fkey to this
+            */
+
+          const roomtable = Table.findOne(context.table_id)!;
+          const { child_relations } = await roomtable.get_child_relations();
+          //const msg_table_options = child_relations.map(cr=>cr.table.name)
+          const participant_field_options: string[] = [];
+          const msg_relation_options: string[] = [];
+          const msgsender_field_options: GenObj = {};
+          const msgview_options: GenObj = {};
+          const msgform_options: GenObj = {};
+          const participant_max_read_options: string[] = [];
+          const msg_own_options: string[] = [];
+
+          for (const { table, key_field } of child_relations) {
+            const fields = table.getFields();
+            for (const f of fields) {
+              if (f.reftable_name === "users") {
+                participant_field_options.push(
+                  `${table.name}.${key_field.name}.${f.name}`
+                );
+
+                msg_relation_options.push(`${table.name}.${key_field.name}`);
+
+                msgsender_field_options[`${table.name}.${key_field.name}`] = [
+                  ...(msgsender_field_options[
+                    `${table.name}.${key_field.name}`
+                  ] || []),
+                  f.name,
+                ];
+
+                const views = await View.find_possible_links_to_table(table);
+                msgview_options[`${table.name}.${key_field.name}`] = views.map(
+                  (v: GenObj) => v.name
+                );
+                msgform_options[`${table.name}.${key_field.name}`] = views.map(
+                  (v: GenObj) => v.name
+                );
+              } else if (f.reftable_name) {
+                participant_max_read_options.push(
+                  `${table.name}.${key_field.name}.${f.name}`
+                );
+              }
+            }
+          }
+          return new Form({
+            fields: [
+              {
+                name: "msg_relation",
+                label: req.__("Message relation"),
+                type: "String",
+                sublabel: req.__(
+                  "The relationship to the table of individual messages"
+                ),
+                required: true,
+                attributes: {
+                  options: msg_relation_options,
+                },
+              },
+              {
+                name: "msgsender_field",
+                label: req.__("Message sender field"),
+                type: "String",
+                sublabel: req.__(
+                  "The field for the sender user id on the table for messages"
+                ),
+                required: true,
+                attributes: {
+                  calcOptions: ["msg_relation", msgsender_field_options],
+                },
+              },
+              {
+                name: "msgview",
+                label: req.__("Message show view"),
+                type: "String",
+                sublabel: req.__("The view to show an individual message"),
+                required: true,
+                attributes: {
+                  calcOptions: ["msg_relation", msgview_options],
+                },
+              },
+              {
+                name: "msgform",
+                label: req.__("New message form view"),
+                type: "String",
+                sublabel: req.__("The view to enter a new message"),
+                required: true,
+                attributes: {
+                  calcOptions: ["msg_relation", msgform_options],
+                },
+              },
+              {
+                name: "participant_field",
+                label: req.__("Participant field"),
+                type: "String",
+                sublabel: req.__("The field for the participant user id"),
+                required: false,
+                attributes: {
+                  options: participant_field_options,
+                },
+              },
+              {
+                name: "participant_maxread_field",
+                label: req.__("Participant max read id field"),
+                type: "String",
+                sublabel: req.__(
+                  "The field for the participant's last read message, of type Key to message table"
+                ),
+                attributes: {
+                  options: participant_max_read_options,
+                },
+              },
+            ] as any,
+          });
+        },
+      },
+    ],
+  });
+
+/**
+ * @returns {object[]}
+ */
+const get_state_fields = () => [
+  {
+    name: "id",
+    type: "Integer",
+    required: true,
+    primary_key: true,
+  },
+];
+const limit = 10;
+
+/**
+ * @param {string} table_id
+ * @param {string} viewname
+ * @param {object} optsOne
+ * @param {string} optsOne.participant_field,
+ * @param {string} optsOne.msg_relation
+ * @param {*} optsOne.msgsender_field
+ * @param {string} optsOne.msgview
+ * @param {string} optsOne.msgform
+ * @param {string} optsOne.participant_maxread_field
+ * @param {object} state
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {object} optsTwo.res
+ * @returns {Promise<div>}
+ * @throws {InvalidConfiguration}
+ */
+const run = async (
+  table_id: number,
+  viewname: string,
+  {
+    participant_field,
+    msg_relation,
+    msgsender_field,
+    msgview,
+    msgform,
+    participant_maxread_field,
+  }: GenObj,
+  state: GenObj,
+  { req, res }: { req: Req; res: Res },
+  { getRowQuery, updateQuery, optionsQuery }: GenObj
+) => {
+  const table = Table.findOne({ id: table_id })!;
+  const fields = table.getFields();
+  readState(state, fields);
+  if (!state.id) return "Need room id";
+  const appState = getState();
+  const locale = req.getLocale();
+  const role = req && req.user ? req.user.role_id : 100;
+  const __ = (s: string) => appState.i18n.__({ phrase: s, locale }) || s;
+  if (!msgview || !msgform || !msgsender_field || !msg_relation)
+    throw new InvalidConfiguration(
+      `View ${viewname} incorrectly configured: must supply Message views, Message sender and Participant fields`
+    );
+
+  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
+  let partRow: GenObj | undefined, part_table_name: string | undefined, canWrite: boolean;
+  if (participant_field) {
+    const [part_table_name1, part_key_to_room, part_user_field] =
+      participant_field.split(".");
+    part_table_name = part_table_name1;
+    // check we participate
+    partRow = await getRowQuery(
+      state.id,
+      part_table_name,
+      part_user_field,
+      part_key_to_room
+    );
+    if (!partRow) return "You are not a participant in this room";
+    canWrite = true;
+  } else {
+    // check we have and write access
+    const canRead = role <= table.min_role_read;
+    if (!canRead) return "You do not have access to this room";
+
+    canWrite = role <= table.min_role_write;
+  }
+  const v = await View.findOne({ name: msgview });
+  const vresps: any[] = await v!.runMany(
+    { [msgkey_to_room]: state.id },
+    { req, res, orderBy: "id", orderDesc: true, limit }
+  );
+  vresps.reverse();
+  const n_retrieved = vresps.length;
+
+  const msglist = vresps.map((r: GenObj) => r.html).join("");
+  const formview = await View.findOne({ name: msgform });
+  if (!formview)
+    throw new InvalidConfiguration("Message form view does not exist");
+  const { columns, layout } = formview.configuration;
+  const msgtable = Table.findOne({ name: msgtable_name })!;
+  const min_read_id = Math.min.apply(
+    Math,
+    vresps.map((r: GenObj) => r.row.id)
+  );
+  if (participant_maxread_field) {
+    const [part_table_name1, part_key_to_room1, part_maxread_field] =
+      participant_maxread_field.split(".");
+    const max_read_id = Math.max.apply(
+      Math,
+      vresps.map((r: GenObj) => r.row.id)
+    );
+    if (vresps.length > 0 && partRow && part_table_name)
+      await updateQuery(
+        partRow,
+        part_table_name,
+        max_read_id,
+        part_maxread_field
+      );
+  }
+  const formObj = await getForm(msgtable, viewname, columns, layout, null, req);
+
+  formObj.class = `room-${state.id}`;
+  formObj.hidden("room_id");
+  formObj.values = { room_id: state.id };
+  await formObj.fill_fkey_options(
+    false,
+    optionsQuery,
+    req.user || { role_id: 100 }
+  );
+  await transformForm({
+    form: formObj,
+    table: msgtable,
+    req,
+    res,
+    viewname: msgform,
+  });
+  return div(
+    n_retrieved === limit &&
+      button(
+        {
+          class: "btn btn-outline-secondary mb-1 fetch_older",
+          onclick: `room_older('${viewname}',${state.id},this)`,
+          "data-lt-msg-id": min_read_id,
+        },
+        req.__("Show older messages")
+      ),
+    div({ class: `msglist-${state.id}`, "data-user-id": req.user?.id }, msglist),
+    canWrite && renderForm(formObj, req.csrfToken()),
+    script({
+      src: `/static_assets/${db.connectObj.version_tag}/socket.io.min.js`,
+    }) + script(domReady(`init_room("${viewname}", ${state.id})`))
+  );
+};
+
+const transformForm = async ({ form, table, req, res, viewname }: { form: GenObj; table: any; req: Req; res: Res; viewname: string }) => {
+  const row: GenObj = {};
+  await traverse(form.layout, {
+    async action(segment: GenObj) {
+      if (segment.action_style === "on_page_load") {
+        segment.type = "blank";
+        segment.style = {};
+        if (segment.minRole && segment.minRole != 100) {
+          const minRole = +segment.minRole;
+          const userRole = req?.user?.role_id || 100;
+          if (minRole < userRole) return;
+        }
+        if (req.method === "POST") return;
+
+        //run action
+        try {
+          const actionResult = await run_action_column({
+            col: { ...segment },
+            referrer: req?.get?.("Referrer"),
+            req,
+            res,
+            table,
+            row,
+          });
+
+          if (actionResult)
+            segment.contents = script(
+              domReady(
+                `common_done(${JSON.stringify(actionResult)}, "${viewname}")`
+              )
+            );
+        } catch (e: any) {
+          getState().log(
+            5,
+            `Error in Edit ${viewname} on page load action: ${e.message}`
+          );
+          e.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${e.message}`;
+          throw e;
+        }
+      } else if (
+        !["Sign up", ...edit_build_in_actions].includes(segment.action_name) &&
+        !segment.action_name.startsWith("Login")
+      ) {
+        let url = action_url(
+          viewname,
+          table,
+          segment.action_name,
+          row,
+          segment.rndid,
+          "rndid",
+          segment.confirm
+        );
+        if ((url as any).javascript) {
+          //redo to include dynamic row
+          const confirmStr = segment.confirm
+            ? `if(confirm('Are you sure?'))`
+            : "";
+
+          (url as any).javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
+        }
+        segment.action_link = action_link(url, req, segment as any);
+      }
+    },
+  });
+};
+
+/**
+ * @param {*} table_id
+ * @param {*} viewname
+ * @param {object} optsOne
+ * @param {string} optsOne.participant_field
+ * @param {string} optsOne.participant_maxread_field
+ * @param {body} body
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {object} optsTwo.res
+ * @returns {Promise<void>}
+ */
+const ack_read = async (
+  table_id: number,
+  viewname: string,
+  { participant_field, participant_maxread_field }: GenObj,
+  body: GenObj,
+  { req, res }: { req: Req; res: Res },
+  { ackReadQuery }: GenObj
+) => {
+  if (!participant_maxread_field || !participant_field)
+    return {
+      json: {
+        success: "ok",
+      },
+    };
+
+  return await ackReadQuery(participant_field, participant_maxread_field, body);
+};
+
+/**
+ * @param {*} table_id
+ * @param {*} viewname
+ * @param {object} optsOne.
+ * @param {string} optsOne.participant_field
+ * @param {string} optsOne.msg_relation
+ * @param {*} optsOne.msgsender_field
+ * @param {string} optsOne.msgview
+ * @param {*} optsOne.msgform
+ * @param {*} optsOne.participant_maxread_field
+ * @param {object} body
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {object} optsTwo.res
+ * @returns {Promise<object>}
+ */
+const fetch_older_msg = async (
+  table_id: number,
+  viewname: string,
+  {
+    participant_field,
+    msg_relation,
+    msgsender_field,
+    msgview,
+    msgform,
+    participant_maxread_field,
+  }: GenObj,
+  body: GenObj,
+  { req, res }: { req: Req; res: Res },
+  { fetchOlderMsgQuery }: GenObj
+) => {
+  const partRow = await fetchOlderMsgQuery(participant_field, body);
+  if (!partRow)
+    return {
+      json: {
+        error: "Not participating",
+      },
+    };
+
+  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
+  const v = await View.findOne({ name: msgview });
+  const vresps: any[] = await v!.runMany(
+    { [msgkey_to_room]: +body.room_id },
+    {
+      req,
+      res,
+      orderBy: "id",
+      orderDesc: true,
+      limit,
+      where: { id: { lt: +body.lt_msg_id } },
+    } as any
+  );
+  vresps.reverse();
+  const n_retrieved = vresps.length;
+  const min_read_id = Math.min.apply(
+    Math,
+    vresps.map((r: GenObj) => r.row.id)
+  );
+  const msglist = vresps.map((r: GenObj) => r.html).join("");
+  return {
+    json: {
+      success: "ok",
+      prepend: msglist,
+      remove_fetch_older: n_retrieved < limit,
+      new_fetch_older_lt: min_read_id,
+    },
+  };
+};
+
+/**
+ * @param {*} table_id
+ * @param {string} viewname
+ * @param {object} optsOne
+ * @param {string} optsOne.participant_field
+ * @param {string} optsOne.msg_relation
+ * @param {*} optsOne.msgsender_field
+ * @param {string} optsOne.msgview
+ * @param {string} optsOne.msgform
+ * @param {string} optsOne.participant_maxread_field
+ * @param {*} body
+ * @param {object} optsTwo
+ * @param {object} optsTwo.req
+ * @param {object} optsTwo.res
+ * @returns {Promise<object>}
+ */
+const submit_msg_ajax = async (
+  table_id: number,
+  viewname: string,
+  {
+    participant_field,
+    msg_relation,
+    msgsender_field,
+    msgview,
+    msgform,
+    participant_maxread_field,
+  }: GenObj,
+  body: GenObj,
+  { req, res }: { req: Req; res: Res },
+  { submitAjaxQuery }: GenObj
+) => {
+  const queryResult = await submitAjaxQuery(
+    msg_relation,
+    participant_field,
+    body,
+    msgform,
+    msgsender_field,
+    participant_maxread_field
+  );
+  if (!queryResult.json.error) {
+    const msgid = queryResult.json.msgid;
+    const v = await View.findOne({ name: msgview });
+    const myhtml = await v!.run({ id: msgid.success }, { req, res } as any);
+    const newreq = { ...req, user: { ...req.user, id: 0 } };
+    const theirhtml = await v!.run({ id: msgid.success }, { req: newreq, res } as any);
+    const tenant = db.getTenantSchema();
+    getState().emitRoom(tenant, viewname, +body.room_id, {
+      append: theirhtml,
+      not_for_user_id: req.user?.id,
+      pls_ack_msg_id: msgid.success,
+    });
+    return {
+      json: {
+        success: "ok",
+        append: myhtml,
+      },
+    };
+  } else {
+    return queryResult;
+  }
+};
+
+/**
+ * @param {*} table_id
+ * @param {string} viewname
+ * @param {object} opts
+ * @param {*} opts.participant_field
+ * @param {string} opts.msg_relation,
+ * @param {string} opts.msgsender_field,
+ * @param {string} opts.msgview,
+ * @param {*} opts.msgform,
+ * @param {*} opts.participant_maxread_field,
+ * @returns {object[]}
+ */
+const virtual_triggers = (
+  table_id: number,
+  viewname: string,
+  {
+    participant_field,
+    msg_relation,
+    msgsender_field,
+    msgview,
+    msgform,
+    participant_maxread_field,
+  }: GenObj
+) => {
+  if (!msg_relation) return [];
+  const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
+  const msgtable = Table.findOne({ name: msgtable_name })!;
+  if (!msgsender_field) return [];
+
+  return [
+    {
+      when_trigger: "Insert",
+      table_id: msgtable.id,
+      run: async (row: GenObj) => {
+        const state = getState();
+        if (row[msgsender_field]) return; // TODO how else to avoid double emit
+        const v = await View.findOne({ name: msgview });
+
+        const html = await v!.run(
+          { id: row.id },
+          {
+            req: {
+              getLocale: () => state.getConfig("default_locale", "en"),
+              user: { id: 0 },
+              __: (s: string) => s,
+            },
+            res: {},
+          } as any
+        );
+        const tenant = db.getTenantSchema();
+        state.emitRoom(tenant, viewname, row[msgkey_to_room], {
+          append: html,
+          pls_ack_msg_id: row.id,
+        });
+      },
+    },
+  ];
+};
+
+const run_action = async (
+  table_id: number,
+  viewname: string,
+  { msgform }: GenObj,
+  body: GenObj,
+  { req, res }: { req: Req; res: Res }
+) => {
+  const view = View.findOne({ name: msgform })!;
+  const result = await view.runRoute("run_action", req.body, res, { req, res });
+  return result;
+};
+
+export = {
+  /** @type {string} */
+  name: "Room",
+  /** @type {string} */
+  description: "Real-time space for chat",
+  configuration_workflow,
+  run,
+  get_state_fields,
+  /** @type {boolean} */
+  routes: { submit_msg_ajax, ack_read, fetch_older_msg, run_action },
+  /** @type {boolean} */
+  noAutoTest: true,
+  /**
+   * @param {object} opts
+   * @param {object} opts.participant_field
+   * @param {string} room_id
+   * @param {object} user
+   * @returns {Promise<object>}
+   */
+  authorize_join: async (
+    { table_id, min_role, configuration: { participant_field } }: GenObj,
+    room_id: string,
+    user: GenObj
+  ) => {
+    if (!user || user.role_id > min_role) return false;
+    if (!participant_field) {
+      const table = Table.findOne({ id: table_id })!;
+      return user.role_id <= table.min_role_read;
+    } else {
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
+
+      // TODO check we participate
+      const parttable = Table.findOne({ name: part_table_name })!;
+      const partRow = await parttable.getRow({
+        [part_user_field]: user.id,
+        [part_key_to_room]: room_id,
+      });
+      return !!partRow;
+    }
+  },
+  virtual_triggers,
+  /** @returns {object[]} */
+  getStringsForI18n() {
+    return [];
+  },
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { columns, default_state },
+    req,
+  }: GenObj) => ({
+    async getRowQuery(
+      state_id: string,
+      part_table_name: string,
+      part_user_field: string,
+      part_key_to_room: string
+    ) {
+      const parttable = Table.findOne({ name: part_table_name })!;
+      return await parttable.getRow({
+        [part_user_field]: req.user ? req.user.id : 0,
+        [part_key_to_room]: +state_id,
+      });
+    },
+    async updateQuery(
+      partRow: GenObj,
+      part_table_name: string,
+      max_read_id: number,
+      part_maxread_field: string
+    ) {
+      const parttable = Table.findOne({ name: part_table_name })!;
+      await parttable.updateRow(
+        { [part_maxread_field]: max_read_id },
+        partRow.id
+      );
+    },
+    async submitAjaxQuery(
+      msg_relation: string,
+      participant_field: string,
+      body: GenObj,
+      msgform: string,
+      msgsender_field: string,
+      participant_maxread_field: string
+    ) {
+      const table = Table.findOne({ id: table_id })!;
+
+      const [msgtable_name, msgkey_to_room] = msg_relation.split(".");
+      const role = req && req.user ? req.user.role_id : 100;
+
+      let partRow: GenObj | undefined, parttable: any;
+      if (participant_field) {
+        const [part_table_name, part_key_to_room, part_user_field] =
+          participant_field.split(".");
+        parttable = Table.findOne({ name: part_table_name })!;
+        // check we participate
+
+        partRow = await parttable.getRow({
+          [part_user_field]: req.user ? req.user.id : 0,
+          [part_key_to_room]: +body.room_id,
+        });
+
+        if (!partRow)
+          return {
+            json: {
+              error: "Not participating",
+            },
+          };
+      } else {
+        // check we have and write access
+        const canRead = role <= table.min_role_read;
+        if (!canRead)
+          return {
+            json: {
+              error: "Not participating",
+            },
+          };
+      }
+      const formview = await View.findOne({ name: msgform });
+      if (!formview)
+        throw new InvalidConfiguration("Message form view does not exist");
+      const { columns, layout, fixed } = formview.configuration;
+      const msgtable = Table.findOne({ name: msgtable_name })!;
+
+      const formObj = await getForm(
+        msgtable,
+        viewname,
+        columns,
+        layout,
+        null,
+        req
+      );
+      formObj.validate(req.body || {});
+      if (!formObj.hasErrors) {
+        const use_fixed = await fill_presets(msgtable, req, fixed);
+        const row = {
+          ...formObj.values,
+          ...use_fixed,
+          [msgkey_to_room]: body.room_id,
+          [msgsender_field]: req.user.id,
+        };
+        const msgid = await msgtable.tryInsertRow(row, req.user);
+        if (participant_maxread_field && partRow) {
+          const [part_table_name1, part_key_to_room1, part_maxread_field] =
+            participant_maxread_field.split(".");
+          await parttable.updateRow(
+            { [part_maxread_field]: (msgid as any).success },
+            partRow.id
+          );
+        }
+        return {
+          json: { msgid },
+        };
+      } else {
+        return {
+          json: {
+            error: formObj.errors,
+          },
+        };
+      }
+    },
+    async ackReadQuery(participant_field: string, participant_maxread_field: string, body: GenObj) {
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
+      const [part_table_name1, part_key_to_room1, part_maxread_field] =
+        participant_maxread_field.split(".");
+
+      const parttable = Table.findOne({ name: part_table_name })!;
+      // check we participate
+
+      const partRow = await parttable.getRow({
+        [part_user_field]: req.user ? req.user.id : 0,
+        [part_key_to_room]: +body.room_id,
+      });
+
+      if (!partRow)
+        return {
+          json: {
+            error: "Not participating",
+          },
+        };
+
+      await parttable.updateRow({ [part_maxread_field]: body.id }, partRow.id);
+      return {
+        json: {
+          success: "ok",
+        },
+      };
+    },
+    async fetchOlderMsgQuery(participant_field: string, body: GenObj) {
+      const [part_table_name, part_key_to_room, part_user_field] =
+        participant_field.split(".");
+      const parttable = Table.findOne({ name: part_table_name })!;
+      // check we participate
+      return await parttable.getRow({
+        [part_user_field]: req.user ? req.user.id : 0,
+        [part_key_to_room]: +body.room_id,
+      });
+    },
+    async optionsQuery(reftable_name: string, type: string, attributes: GenObj, where: GenObj) {
+      const rows = await db.select(
+        reftable_name,
+        type === "File" ? attributes.select_file_where : where
+      );
+      return rows;
+    },
+  }),
+  connectedObjects: async (configuration: GenObj) => {
+    return extractFromLayout(configuration.layout);
+  },
+};
+/*todo:
+
+find_or_create_dm_room -dms only
+
+*/

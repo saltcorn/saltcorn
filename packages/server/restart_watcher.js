@@ -27,6 +27,7 @@ const relevantPackages = [
   "server",
   "sqlite",
   "filemanager",
+  "workflow-editor",
 ];
 
 /**
@@ -91,9 +92,24 @@ const watchCfg = {
     for (const excludePattern of excludePatterns) {
       if (excludePattern.test(file)) return skip;
     }
-    return /(\.js|\.ts)$/.test(file);
+    return /(\.js|\.jsx|\.ts|\.svelte)$/.test(file);
   },
 };
+
+const reactPackages = [
+  {
+    watchDir: "packages/saltcorn-builder/src",
+    buildDir: "packages/saltcorn-builder/",
+  },
+  {
+    watchDir: "packages/filemanager/src",
+    buildDir: "packages/filemanager",
+  },
+  {
+    watchDir: "packages/workflow-editor/src",
+    buildDir: "packages/workflow-editor",
+  },
+];
 
 let activeWatchers = [];
 
@@ -116,6 +132,27 @@ const closeWatchers = () => {
  * @param {string[]} pluginDirs plugin paths that should trigger re-starts.
  */
 const listenForChanges = (projectDirs, pluginDirs) => {
+  // watch react packages
+
+  for (const { watchDir, buildDir } of reactPackages) {
+    activeWatchers.push(
+      watch(
+        watchDir,
+        watchCfg,
+        // event is either 'update' or 'remove'
+        (event, file) => {
+          console.log("'%s' changed \n re-starting now", file);
+          closeWatchers();
+          const { status } = spawnSync("npm", ["run", "builddev"], {
+            stdio: "inherit",
+            cwd: buildDir,
+          });
+          process.exit(status ? 2 : 0);
+        }
+      )
+    );
+  }
+
   // watch project dirs
   for (const projectDir of projectDirs) {
     activeWatchers.push(
@@ -126,10 +163,10 @@ const listenForChanges = (projectDirs, pluginDirs) => {
         (event, file) => {
           console.log("'%s' changed \n re-starting now", file);
           closeWatchers();
-          spawnSync("npm", ["run", "tsc"], {
+          const { status } = spawnSync("npm", ["run", "tsc"], {
             stdio: "inherit",
           });
-          process.exit();
+          process.exit(status ? 3 : 0);
         }
       )
     );
@@ -158,4 +195,5 @@ module.exports = {
   getRelevantPackages,
   getPluginDirectories,
   closeWatchers,
+  reactPackages,
 };

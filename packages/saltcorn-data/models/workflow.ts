@@ -17,9 +17,10 @@ import type Field from "./field";
 import Form from "./form";
 
 import { build_schema_data } from "../plugin-helper";
+import FieldRepeat from "./fieldrepeat";
 
 const { getState } = require("../db/state");
-const { applyAsync, apply } = require("../utils");
+const { applyAsync, apply, asyncMap } = require("../utils");
 
 /**
  * Workflow class
@@ -81,7 +82,7 @@ class Workflow implements AbstractWorkflow {
             stepIx === this.steps.length - 1
               ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
-
+        if (!form.onSubmit) form.onSubmit = "press_store_button(this)";
         await addApplyButtonToForm(form, this, context);
       } else if (this.onStepSave) {
         const saveRes = await this.onStepSave(step, context, valres.success);
@@ -100,6 +101,19 @@ class Workflow implements AbstractWorkflow {
       };
     }
   }
+
+  async prepareForm(form: Form) {
+    const iter = async (f: Field | FieldRepeat) => {
+      if (f instanceof FieldRepeat) await asyncMap(f.fields, iter);
+      else if (f.type === "File") {
+        if (f.fieldview && !f.fieldviewObj)
+          f.fieldviewObj = getState().fileviews[f.fieldview];
+        await f.fill_fkey_options();
+      }
+    };
+    await asyncMap(form.fields, iter);
+  }
+
   /**
    * @param {object} body
    * @param {object} req
@@ -130,6 +144,7 @@ class Workflow implements AbstractWorkflow {
       const form = await applyAsync(step.form, context);
       if (this.modifyForm) this.modifyForm(form);
 
+      await this.prepareForm(form);
       const valres = form.validate(stepBody);
       if (valres.errors) {
         form.hidden("stepName", "contextEnc");
@@ -142,6 +157,7 @@ class Workflow implements AbstractWorkflow {
             stepIx === this.steps.length - 1
               ? this.__("Finish") + " &raquo;"
               : this.__("Next") + " &raquo;";
+        if (!form.onSubmit) form.onSubmit = "press_store_button(this)";
 
         await addApplyButtonToForm(form, this, context);
 
@@ -206,6 +222,7 @@ class Workflow implements AbstractWorkflow {
     if (step.form) {
       const form = await applyAsync(step.form, context);
       if (this.modifyForm) this.modifyForm(form);
+      await this.prepareForm(form);
 
       form.hidden("stepName", "contextEnc");
       form.values.stepName = step.name;
@@ -239,6 +256,7 @@ class Workflow implements AbstractWorkflow {
           stepIx === this.steps.length - 1
             ? this.__("Finish") + " &raquo;"
             : this.__("Next") + " &raquo;";
+      if (!form.onSubmit) form.onSubmit = "press_store_button(this)";
 
       await addApplyButtonToForm(form, this, context);
       return {

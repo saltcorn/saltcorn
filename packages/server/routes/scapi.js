@@ -32,6 +32,7 @@ const {
 } = require("@saltcorn/data/db/state");
 const db = require("@saltcorn/data/db");
 const { loadAllPlugins } = require("../load_plugins");
+const { text } = require("@saltcorn/markup/tags");
 
 /**
  * @type {object}
@@ -357,6 +358,41 @@ router.post(
           res.json({ success: true });
         } else {
           res.status(401).json({ error: req.__("Not authorized") });
+        }
+      }
+    )(req, res, next);
+  })
+);
+
+router.post(
+  "/run-view-route/:viewname/:route",
+  error_catcher(async (req, res, next) => {
+    await passport.authenticate(
+      "api-bearer",
+      { session: false },
+      async function (err, user, info) {
+        const { viewname, route } = req.params;
+        const role = user?.id ? user.role_id : 100;
+        const state = getState();
+        state.log(
+          3,
+          `Route /view/${viewname} viewroute ${route} user=${req.user?.id}${
+            state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
+          }`
+        );
+
+        const view = View.findOne({ name: viewname });
+        if (!view) {
+          res
+            .status(404)
+            .json({ error: req.__(`No such view: %s`, text(viewname)) });
+          state.log(2, `View ${viewname} not found`);
+        } else if (role > view.min_role) {
+          res.status(401).json({ error: req.__("Not authorized") });
+          state.log(2, `View ${viewname} viewroute ${route} not authorized`);
+        } else {
+          req.user = user;
+          await view.runRoute(route, req.body || {}, res, { res, req });
         }
       }
     )(req, res, next);

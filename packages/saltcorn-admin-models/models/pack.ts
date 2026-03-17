@@ -195,6 +195,103 @@ const library_pack = async (name: string): Promise<LibraryPack> => {
   return lib.toJson;
 };
 
+const orderWorkflowSteps = (steps: any[]): any[] => {
+  if (!Array.isArray(steps)) return steps || [];
+  const allNames = steps.map((s) => s?.name).filter(Boolean) as string[];
+  const stepByName = new Map<string, any>();
+  steps.forEach((s) => {
+    if (s?.name) stepByName.set(s.name, s);
+  });
+  const escapeRegExp = (str: string) =>
+    str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const extractNextStepNames = (rawNext: any) => {
+    if (!rawNext) return [] as string[];
+    const trimmed = String(rawNext).trim();
+    if (!trimmed) return [] as string[];
+    if (allNames.includes(trimmed)) return [trimmed];
+    const hits = new Set<string>();
+    allNames.forEach((nm) => {
+      const re = new RegExp(`\\b${escapeRegExp(nm)}\\b`);
+      if (re.test(trimmed)) hits.add(nm);
+    });
+    return [...hits];
+  };
+
+  const adjacency = new Map<string, string[]>();
+  steps.forEach((s) => {
+    if (!s?.name) return;
+    const targets: string[] = [];
+    if (s.action_name === "ForLoop") {
+      const loopStart = s.configuration?.loop_body_initial_step;
+      if (loopStart && allNames.includes(loopStart)) targets.push(loopStart);
+    }
+    extractNextStepNames(s.next_step).forEach((nm) => targets.push(nm));
+    adjacency.set(s.name, [...new Set(targets)]);
+  });
+
+  const initial = steps.find((s) => s?.initial_step);
+  const visited = new Set<string>();
+  const order: string[] = [];
+
+  const computeLoopBodyOrder = (
+    loopStart?: string,
+    loopStepName?: string
+  ): string[] => {
+    if (!loopStart || !loopStepName) return [];
+    const seq: string[] = [];
+    const seen = new Set<string>();
+    let cur = loopStart;
+    while (cur && !seen.has(cur) && cur !== loopStepName) {
+      const step = stepByName.get(cur);
+      if (!step) break;
+      seq.push(cur);
+      seen.add(cur);
+      const nexts = extractNextStepNames(step.next_step);
+      if (nexts.includes(loopStepName)) break;
+      const next = nexts[0];
+      if (!next) break;
+      cur = next;
+    }
+    return seq;
+  };
+
+  const traverse = (start?: string) => {
+    if (!start || visited.has(start)) return;
+    const queue = [start];
+    while (queue.length) {
+      const cur = queue.shift()!;
+      if (visited.has(cur)) continue;
+      visited.add(cur);
+      order.push(cur);
+      const step = stepByName.get(cur);
+      const isForLoop = step?.action_name === "ForLoop";
+      const loopStart = step?.configuration?.loop_body_initial_step;
+      const loopBodySeq = isForLoop
+        ? computeLoopBodyOrder(loopStart, cur)
+        : [];
+      if (isForLoop)
+        loopBodySeq.forEach((n) => {
+          if (!visited.has(n)) queue.push(n);
+        });
+      (adjacency.get(cur) || []).forEach((n) => {
+        if (!visited.has(n) && !loopBodySeq.includes(n)) queue.push(n);
+      });
+    }
+  };
+
+  if (initial?.name) traverse(initial.name);
+  steps.forEach((s) => traverse(s?.name));
+
+  const orderIndex = new Map(order.map((nm, idx) => [nm, idx]));
+  return [...steps].sort((a, b) => {
+    const ao = orderIndex.has(a?.name) ? orderIndex.get(a.name)! : Infinity;
+    const bo = orderIndex.has(b?.name) ? orderIndex.get(b.name)! : Infinity;
+    if (ao !== bo) return ao - bo;
+    return 0;
+  });
+};
+
 /**
  * Trigger pack
  * @param name
@@ -205,7 +302,8 @@ const trigger_pack = async (name: string | Trigger): Promise<TriggerPack> => {
   const pack = trig.toJson;
   if (trig.action === "Workflow") {
     const steps = await WorkflowStep.find({ trigger_id: trig.id });
-    pack.steps = steps.map((step) => step.toJson);
+    const ordered = orderWorkflowSteps(steps.map((s) => s.toJson));
+    pack.steps = ordered;
   }
   return pack;
 };
@@ -498,6 +596,16 @@ const install_pack = async (
     left.provider_name ? 1 : right.provider_name ? -1 : 0
   );
   for (const tableSpec of packTables) {
+    const {
+      id,
+      ownership_field_id,
+      ownership_field_name,
+      triggers,
+      constraints,
+      fields,
+      ...updrow
+    } = tableSpec;
+
     if (tableSpec.name !== "users") {
       let tbl_pk;
       const existing = Table.findOne({ name: tableSpec.name });
@@ -509,15 +617,6 @@ const install_pack = async (
       );
       if (existing) {
         tbl_pk = await existing.getField(existing.pk_name);
-        const {
-          id,
-          ownership_field_id,
-          ownership_field_name,
-          triggers,
-          constraints,
-          fields,
-          ...updrow
-        } = tableSpec;
 
         await existing.update(updrow);
       } else {
@@ -530,6 +629,8 @@ const install_pack = async (
       if (pack_pk && tbl_pk) {
         await tbl_pk.update(pack_pk);
       }
+    } else {
+      await User.table.update(updrow);
     }
   }
   await getState().refresh_tables(true);
@@ -664,12 +765,12 @@ const install_pack = async (
   for (const pageGroupSpec of pack.page_groups || []) {
     pageGroupSpec.min_role = old_to_new_role(pageGroupSpec.min_role);
     const { members, ...pageGroupNoMembers } = pageGroupSpec;
-    const existing = PageGroup.findOne({ name: pageGroupSpec.name });
+    let existing = PageGroup.findOne({ name: pageGroupSpec.name });
     if (existing?.id) {
       await existing.clearMembers(); // or merge ?
       await PageGroup.update(existing.id, pageGroupNoMembers);
-    } else await PageGroup.create(pageGroupNoMembers);
-    const group = PageGroup.findOne({ name: pageGroupSpec.name });
+    } else existing = await PageGroup.create(pageGroupNoMembers);
+    const group = existing;
     if (!group)
       throw new Error(`Unable to create page group '${pageGroupSpec.name}'`);
     for (const member of members || []) {
@@ -828,8 +929,10 @@ const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
     "available_packs_fetched_at",
     false
   );
+  const airgap = getState().getConfig("airgap", false);
+
   //console.log("in fetch", stored_at, stored)
-  if (!stored || !stored_at || isStale(stored_at)) {
+  if (!airgap && (!stored || !stored_at || isStale(stored_at))) {
     try {
       const from_api = await fetch_available_packs_from_store();
       await getState().setConfig("available_packs", from_api);
@@ -839,7 +942,7 @@ const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
       console.error("fetch store error", e);
       return [];
     }
-  } else return stored;
+  } else return stored || [];
 };
 
 /**

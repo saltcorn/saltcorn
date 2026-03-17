@@ -46,7 +46,7 @@ export const postShare = async (context) => {
       saltcorn.markup.tags.script(`
       setTimeout(() => {
         ${
-          Capacitor.platform === "android"
+          Capacitor.getPlatform() === "android"
             ? "parent.saltcorn.mobileApp.common.finishShareIntent();"
             : "parent.saltcorn.mobileApp.navigation.gotoEntryView();"
         } 

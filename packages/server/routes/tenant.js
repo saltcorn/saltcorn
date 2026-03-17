@@ -501,6 +501,7 @@ const tenant_settings_form = (req) =>
       "tenants_install_git",
       "tenants_set_npm_modules",
       "tenants_unsafe_plugins",
+      "tenants_crash_log",
     ],
     action: "/tenant/settings",
     submitLabel: req.__("Save"),

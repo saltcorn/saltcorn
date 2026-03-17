@@ -1,0 +1,29 @@
+{
+  "name": "@saltcorn/local-test-plugin",
+  "version": "0.1.0",
+  "description": "Local test plugin for pytests",
+  "main": "index.js",
+  "dependencies": {
+    "@saltcorn/markup": "^0.4.1",
+    "@saltcorn/data": "^0.4.1"
+  },
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "test": "jest tests --runInBand"
+  },
+  "eslintConfig": {
+    "extends": "eslint:recommended",
+    "parserOptions": {
+      "ecmaVersion": 2020
+    },
+    "env": {
+      "node": true,
+      "es6": true
+    },
+    "rules": {
+      "no-unused-vars": "off",
+      "no-empty": "warn"
+    }
+  }
+}

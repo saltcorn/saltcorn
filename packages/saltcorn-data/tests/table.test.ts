@@ -14,7 +14,7 @@ import {
   assertIsErrorMsg,
   assertIsType,
 } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import {
   add_free_variables_to_joinfields,
   stateFieldsToQuery,
@@ -25,6 +25,7 @@ import { Row, sqlBinOp, sqlFun, Where } from "@saltcorn/db-common/internal";
 import { ResultMessage } from "@saltcorn/types/common_types";
 const { freeVariables, jsexprToWhere, add_free_variables_to_aggregations } =
   expressionModule;
+import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -155,6 +156,25 @@ describe("Table create basic tests", () => {
     rows = await table.getRows();
     expect(rows.length).toBe(0);
   });
+  it("should count limited rows", async () => {
+    const table = Table.findOne({ name: "mytable1" });
+    assertIsSet(table);
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 1 });
+    await table.insertRow({ height1: 2 });
+    await table.insertRow({ height1: 3 });
+    await table.insertRow({ height1: 4 });
+    await table.insertRow({ height1: 5 });
+    await table.insertRow({ height1: 6 });
+    expect(await table.countRows({})).toBe(9);
+    expect(await table.countRows({ height1: 1 })).toBe(4);
+    expect(await table.countRows({}, { limit: 5 })).toBe(5);
+    expect(await table.countRows({}, { limit: 500 })).toBe(9);
+    expect(await table.countRows({ height1: 1 }, { limit: 3 })).toBe(3);
+    expect(await table.countRows({ height1: 1 }, { limit: 100 })).toBe(4);
+  });
   it("should delete", async () => {
     const table = Table.findOne({ name: "mytable1" });
     assertIsSet(table);
@@ -178,6 +198,23 @@ describe("Table get data", () => {
     assertIsSet(michaels);
     expect(michaels.length).toStrictEqual(1);
   });
+  it("should not crash on empty in", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const ps = await patients.getRows({ id: { in: [] } });
+    assertIsSet(ps);
+    expect(ps.length).toStrictEqual(0);
+  });
+  it("should not crash on empty in with name", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const ps = await patients.getRows({
+      id: { in: [] },
+      name: "Michael Douglas",
+    });
+    assertIsSet(ps);
+    expect(ps.length).toStrictEqual(0);
+  });
   it("should get limited rows", async () => {
     const patients = Table.findOne({ name: "patients" });
     assertIsSet(patients);
@@ -187,6 +224,16 @@ describe("Table get data", () => {
     );
     expect(michaels.length).toStrictEqual(1);
     expect(michaels[0].name).toStrictEqual("Michael Douglas");
+  });
+  it("should get rows by expanded key", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const michaels = await patients.getRows({ favbook: 1 });
+    expect(michaels.length).toStrictEqual(1);
+    //expect(michaels[0].name).toStrictEqual("Michael Douglas");
+    const michaels1 = await patients.getRows({ favbook: { id: 1 } });
+    expect(michaels1.length).toStrictEqual(1);
+    expect(michaels1[0].name).toStrictEqual(michaels[0].name);
   });
   it("should get by regex", async () => {
     if (!db.isSQLite) {
@@ -1417,6 +1464,39 @@ Herman Melville, Whaley`;
         'Reject row 2 because in field author value "China Mieville" not matched by a value in table books field author.\n',
     });
   });
+  it("CSV import self-join keys", async () => {
+    const table = await Table.create("project", {
+      min_role_read: 100,
+    });
+    await Field.create({
+      table,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      name: "parent",
+      label: "Parent",
+      type: "Key to project",
+      attributes: { summary_field: "name" },
+    });
+    const csv = `id,name,parent
+1,Biology, 2
+2,Homework,`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table project",
+      details: "",
+    });
+    const row = await table.getRow({ name: "Biology" });
+    expect(row?.parent).toBe(2);
+  });
 
   it("should create by importing", async () => {
     //db.set_sql_logging();
@@ -2082,6 +2162,66 @@ describe("Table constraints", () => {
     });
     await con.delete();
   });
+  it("should create constraint in transaction", async () => {
+    await runWithTenant("public", async () => {
+      const table = Table.findOne({ name: "readings" });
+      assertIsSet(table);
+      assertIsSet(table.id);
+      const con = await db.withTransaction(async () => {
+        return await TableConstraint.create({
+          table_id: table.id,
+          type: "Formula",
+          configuration: {
+            formula: "Math.round(temperature)<100",
+            errormsg: "Read error",
+          },
+        });
+      });
+
+      await getState().refresh_tables();
+      const readings = Table.findOne({ name: "readings" });
+      assertIsSet(readings);
+
+      const result = await readings.tryInsertRow({
+        patient_id: 1,
+        temperature: 137,
+        date: new Date(),
+      });
+
+      expect((result as any).error).toBe("Read error");
+
+      await con.delete();
+    });
+  });
+  it("should create constraint that is not translatable to SQL in transaction", async () => {
+    await runWithTenant("public", async () => {
+      const table = Table.findOne({ name: "readings" });
+      assertIsSet(table);
+      assertIsSet(table.id);
+      expect(table.constraints.length).toBe(0);
+
+      const con = await db.withTransaction(async () => {
+        return await TableConstraint.create({
+          table_id: table.id,
+          type: "Formula",
+          configuration: {
+            formula: "temperature==='bar'",
+            errormsg: "Read error",
+          },
+        });
+      });
+
+      await getState().refresh_tables();
+      const readings = Table.findOne({ name: "readings" });
+      assertIsSet(readings);
+      expect(readings.constraints.length).toBe(1);
+      expect(readings.constraints[0].configuration.formula).toBe(
+        "temperature==='bar'"
+      );
+
+      await con.delete();
+    });
+  });
   it("should create full text search index", async () => {
     const table = await Table.create("TableWithFTS");
     await Field.create({
@@ -2464,6 +2604,24 @@ describe("table providers", () => {
     assertIsSet(table);
     expect(table.min_role_read).toBe(40);
   });
+  it("should make keys to provider table", async () => {
+    const tc = await Table.create("key_to_provider");
+    await Field.create({
+      table: tc,
+      label: "Person",
+      name: "person",
+      type: "Key to JoeTable",
+    });
+    await tc.insertRow({ person: "Robinette" });
+    //db.set_sql_logging(true);
+    const rows = await tc.getJoinedRows({
+      joinFields: {
+        person_age: { ref: "person", target: "age" },
+      },
+    });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].person_age).toBe(36);
+  });
 });
 
 describe("distance ordering", () => {
@@ -2528,8 +2686,10 @@ describe("getField", () => {
     assertIsSet(table);
     const field = table.getField("favbook.pages");
     expect(field?.name).toBe("pages");
-
     expect(field?.id).toBe(6);
+    const field1 = table.getField("favbookⱵpages");
+    expect(field1?.name).toBe("pages");
+    expect(field1?.id).toBe(6);
   });
   it("should find double join field", async () => {
     const table = Table.findOne({ name: "patients" });
@@ -2537,6 +2697,9 @@ describe("getField", () => {
     const field = table.getField("favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(20);
+    const field1 = table.getField("favbookⱵpublisherⱵname");
+    expect(field1?.name).toBe("name");
+    expect(field1?.id).toBe(20);
   });
   it("should find triple join field", async () => {
     const table = Table.findOne({ name: "readings" });
@@ -2544,6 +2707,9 @@ describe("getField", () => {
     const field = table.getField("patient_id.favbook.publisher.name");
     expect(field?.name).toBe("name");
     expect(field?.id).toBe(20);
+    const field1 = table.getField("patient_idⱵfavbookⱵpublisherⱵname");
+    expect(field1?.name).toBe("name");
+    expect(field1?.id).toBe(20);
   });
   it("should find own key field", async () => {
     const table = Table.findOne({ name: "patients" });
@@ -2852,4 +3018,198 @@ describe("Table slug options", () => {
       },
     ]);
   });
+});
+
+describe("Table recursive query", () => {
+  beforeAll(async () => {
+    const table = await Table.create("recur_projects");
+    await Field.create({
+      table,
+      name: "name",
+      label: "Name",
+      type: "String",
+    });
+    await Field.create({
+      table,
+      name: "parent",
+      label: "Parent",
+      type: "Key to recur_projects",
+    });
+    await Field.create({
+      table,
+      name: "assignee",
+      label: "Assignee",
+      type: "Key to users",
+    });
+    await Field.create({
+      table,
+      name: "difficulty",
+      label: "Difficulty",
+      type: "Integer",
+    });
+    const homework = await table.insertRow({
+      name: "Homework",
+      difficulty: 2,
+      assignee: 3,
+    });
+    const french = await table.insertRow({
+      name: "French",
+      parent: homework,
+      difficulty: 1,
+    });
+    const biology = await table.insertRow({
+      name: "Biology",
+      parent: homework,
+      difficulty: 2,
+    });
+    await table.insertRow({
+      name: "Learn about the birds",
+      parent: biology,
+      difficulty: 1,
+    });
+    await table.insertRow({
+      name: "Verb conjugations",
+      parent: french,
+      assignee: 2,
+    });
+    await table.insertRow({
+      name: "Literature",
+      parent: french,
+    });
+    await table.insertRow({
+      name: "Learn about the bees",
+      parent: biology,
+      assignee: 1,
+      difficulty: 2,
+    });
+  });
+  if (!db.isSQLite) {
+    it("getRows tree sort by id", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      const rows = await table.getRows(
+        {},
+        { tree_field: "parent", orderBy: "id" }
+      );
+      expect(rows.length).toEqual(7);
+      //console.log(rows.map((r) => r.name));
+      expect(rows[2].name).toBe("Verb conjugations");
+    });
+    it("getRows tree sort by name", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows(
+        {},
+        { tree_field: "parent", orderBy: "name" }
+      );
+      expect(rows.length).toEqual(7);
+      //console.log(rows.map((r) => r.name));
+      expect(rows[2].name).toBe("Learn about the bees");
+      expect(rows[2]._level).toBe(2);
+      expect(rows[1]._level).toBe(1);
+      expect(rows[0]._level).toBe(0);
+    });
+    it("getRows tree sort by name desc", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows(
+        {},
+        { tree_field: "parent", orderBy: "name", orderDesc: true }
+      );
+      expect(rows.length).toEqual(7);
+      //console.log(rows.map((r) => r.name));
+      expect(rows[2].name).toBe("Verb conjugations");
+      expect(rows[2]._level).toBe(2);
+      expect(rows[1]._level).toBe(1);
+      expect(rows[0]._level).toBe(0);
+    });
+    it("getRows tree no sort", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows({}, { tree_field: "parent" });
+      expect(rows.length).toEqual(7);
+      //console.log(rows.map((r) => r.name));
+      expect(rows[0].name).toBe("Homework");
+      expect(["French", "Biology"].includes(rows[1].name)).toBe(true);
+      expect(rows[1]._level).toBe(1);
+      expect(rows[0]._level).toBe(0);
+    });
+    it("getRows tree with where", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows(
+        { difficulty: 2 },
+        { tree_field: "parent", orderBy: "name" }
+      );
+      //console.log(rows.map((r) => r.name));
+      expect(rows.length).toEqual(3);
+      expect(rows[2].name).toBe("Learn about the bees");
+      expect(rows[2]._level).toBe(2);
+      expect(rows[1]._level).toBe(1);
+      expect(rows[0]._level).toBe(0);
+    });
+    it("getRows tree with tree field in where", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows(
+        { parent: 1 },
+        { tree_field: "parent", orderBy: "name" }
+      );
+      //console.log(rows.map((r) => r.name));
+      expect(rows.length).toEqual(2);
+      expect(rows[0].name).toBe("Biology");
+    });
+    it("getRows tree with ownership", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      table.ownership_formula = "difficulty===2";
+      table.min_role_read = 1;
+      table.min_role_write = 1;
+      await table.update(table);
+      //db.set_sql_logging(true);
+      const rows = await table.getRows(
+        {},
+        {
+          tree_field: "parent",
+          orderBy: "name",
+          forUser: { role_id: 80, id: 4 },
+        }
+      );
+      //db.set_sql_logging(false);
+
+      expect(rows.length).toEqual(3);
+      expect(rows[2].name).toBe("Learn about the bees");
+      expect(rows[2]._level).toBe(2);
+      expect(rows[1]._level).toBe(1);
+      expect(rows[0]._level).toBe(0);
+    });
+    it("getRows tree with joined ownership", async () => {
+      const table = Table.findOne("recur_projects");
+      assertIsSet(table);
+      table.ownership_formula = "assignee.id === user.id";
+      table.min_role_read = 1;
+      table.min_role_write = 1;
+      await table.update(table);
+      const rows = await table.getRows(
+        {},
+        {
+          tree_field: "parent",
+          orderBy: "name",
+          forUser: { role_id: 80, id: 3 },
+          disable_ownership_postqfilter: true,
+        }
+      );
+
+      //console.log(rows.map((r) => r.name));
+      expect(rows.length).toEqual(1);
+    });
+  } else
+    it("doesnt work", async () => {
+      expect(2 + 2).toBe(4);
+    });
 });

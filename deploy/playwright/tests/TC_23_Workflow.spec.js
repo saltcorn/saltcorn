@@ -83,14 +83,6 @@ test.describe('E2E Test Suite', () => {
             await expect(page.locator(pageobject.TriggerTitle)).toHaveText('Triggers');
         });
 
-        await customAssert('Actions Available cell should be visible', async () => {
-            await expect(page.locator(pageobject.actionsAvailable)).toHaveText('Actions available');
-        });
-
-        await customAssert('Event Types cell should be visible', async () => {
-            await expect(page.locator(pageobject.eventTypesCell)).toHaveText('Event types');
-        });
-
         await customAssert('Create Trigger Button should be visible and clickable', async () => {
             await expect(page.locator(pageobject.CreateTriggerBtn)).toHaveText('Create trigger');
             await page.click(pageobject.CreateTriggerBtn);
@@ -153,6 +145,11 @@ test.describe('E2E Test Suite', () => {
 
     test('Verify Adding new Workflow', async () => {
 
+        await customAssert('workflow edit url', async () => {
+            const currentURL = page.url();
+            //failing
+            expect(currentURL).toMatch(new RegExp(`${baseURL}${derivedURL}actions/configure/\\d+`));
+        });
         //Configure workflow Click the "Add step" button
         await customAssert('click add new step', async () => {
             await page.click(pageobject.addstep);

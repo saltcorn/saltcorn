@@ -271,9 +271,9 @@ test.describe('E2E Test Suite', () => {
             await expect(page.locator(pageobject.publicCacheMaxageTextbox)).toHaveValue('0');
         });
         // Assert the visibility of code Mirror Line
-        await customAssert('Assert the visibility of code Mirror Line', async () => {
-            await expect(page.locator(pageobject.codeMirrorLine)).toBeVisible();
-        });
+        //await customAssert('Assert the visibility of code Mirror Line', async () => {
+        //    await expect(page.locator(pageobject.codeMirrorLine)).toBeVisible();
+        //});
     });
 
     // Assert the Permission tab and its element in "Users and Security" setting

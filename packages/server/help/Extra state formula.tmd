@@ -34,7 +34,7 @@ must be enclosed in quotes (single, double or
 You can also as the value use a more complex JavaScript expression.
 
 For examples of how you can use these values for greater than/less than, 
-or-conditions or case insensitivity, see [here](/admin/jsdoc/classes/_saltcorn_data.models.Table-1.html#md:querying-table-rows).
+or-conditions or case insensitivity, see [here](/admin/jsdoc/classes/_saltcorn_data.models_table.Table.html#querying-table-rows).
 
 You can refer to the logged in user using the variable name user. 
 This is an object and you must use the dot to access user fields,
@@ -52,6 +52,10 @@ For your login session the user object is:
 {{# const userkey = oneOf(Object.keys(user)) }}
 
 For example to use the `{{userkey}}` field on the user object, write `user.{{userkey}}`
+It should be taken into account that if the users table row has changed,
+you should call `refresh_user_session` action to update the session variables
+(or the user should re-login).
+
 {{# if(srcTable) { }}
 You can also use variables from the currently displayed row in the value expressions, 
 in this case the table {{srcTable.name}}:

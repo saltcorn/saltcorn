@@ -53,7 +53,10 @@ ListColumns.craft = {
     canDrag: () => false,
     canDrop: () => false,
     canMoveIn: (incoming) => {
-      return incoming?.data?.displayName === "ListColumn";
+      const incomingNodes = Array.isArray(incoming) ? incoming : [incoming];
+      return incomingNodes.every(
+        (node) => node?.data?.displayName === "ListColumn"
+      );
     },
   },
   related: {

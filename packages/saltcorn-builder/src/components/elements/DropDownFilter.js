@@ -4,10 +4,14 @@
  * @subcategory components / elements
  */
 
-import React, { useContext, Fragment } from "react";
+/* globals validate_bool_expression_elem */
+
+import React, { Fragment, useState, useContext, useEffect, useRef } from "react";
 import { useNode } from "@craftjs/core";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import { blockProps, BlockSetting, TextStyleRow, setAPropGen } from "./utils";
+import { SingleLineEditor } from "./MonacoEditor";
 
 export /**
  * @param {object} props
@@ -48,6 +52,7 @@ export /**
  * @subcategory components
  */
 const DropDownFilterSettings = () => {
+  const { t } = useTranslation();
   const {
     actions: { setProp },
     name,
@@ -57,6 +62,7 @@ const DropDownFilterSettings = () => {
     full_width,
     where,
     all_options,
+    apply_select2,
   } = useNode((node) => ({
     name: node.data.props.name,
     block: node.data.props.block,
@@ -65,9 +71,11 @@ const DropDownFilterSettings = () => {
     label_formula: node.data.props.label_formula,
     where: node.data.props.where,
     all_options: node.data.props.all_options,
+    apply_select2: node.data.props.apply_select2,
   }));
   const options = useContext(optionsCtx);
   const setAProp = setAPropGen(setProp);
+  const editorRef = useRef(null);
   let select_all_options;
   const field = options.fields.find((f) => f.name === name);
   if (field?.type === "String" && field.attributes?.options)
@@ -77,7 +85,7 @@ const DropDownFilterSettings = () => {
       <tbody>
         <tr>
           <td>
-            <label>Field</label>
+            <label>{t("Field")}</label>
           </td>
           <td>
             <select
@@ -100,7 +108,7 @@ const DropDownFilterSettings = () => {
         </tr>
         <tr>
           <td>
-            <label>Neutral label</label>
+            <label>{t("Neutral label")}</label>
           </td>
           <td>
             <input
@@ -112,19 +120,23 @@ const DropDownFilterSettings = () => {
         </tr>
         <tr>
           <td>
-            <label>Where</label>
+            <label>{t("Where")}</label>
           </td>
           <td>
-            <input
+            <SingleLineEditor
+              ref={editorRef}
               value={where}
-              className="form-control"
-              onChange={setAProp("where")}
+              setProp={setProp}
+              propKey="where"
+              onInput={(value) =>
+                validate_bool_expression_elem(value, editorRef.current)
+              }
             />
           </td>
         </tr>
         <tr>
           <td>
-            <label>Label formula</label>
+            <label>{t("Label formula")}</label>
           </td>
           <td>
             <input
@@ -154,7 +166,7 @@ const DropDownFilterSettings = () => {
                 checked={full_width}
                 onChange={setAProp("full_width", { checked: true })}
               />
-              <label className="form-check-label">Full width</label>
+              <label className="form-check-label">{t("Full width")}</label>
             </div>
           </td>
         </tr>
@@ -170,7 +182,24 @@ const DropDownFilterSettings = () => {
                   checked={all_options}
                   onChange={setAProp("all_options", { checked: true })}
                 />
-                <label className="form-check-label">All options</label>
+                <label className="form-check-label">{t("All options")}</label>
+              </div>
+            </td>
+          </tr>
+        ) : null}
+        {options.has_select2 ? (
+          <tr>
+            <td></td>
+            <td>
+              <div className="form-check">
+                <input
+                  className="form-check-input"
+                  name="block"
+                  type="checkbox"
+                  checked={apply_select2}
+                  onChange={setAProp("apply_select2", { checked: true })}
+                />
+                <label className="form-check-label">{t("Apply select2")}</label>
               </div>
             </td>
           </tr>
@@ -197,6 +226,7 @@ DropDownFilter.craft = {
       "where",
       "all_options",
       "block",
+      "apply_select2",
     ],
   },
 };

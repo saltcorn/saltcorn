@@ -26,10 +26,11 @@ import { Link } from "./elements/Link";
 import { View } from "./elements/View";
 import { Page } from "./elements/Page";
 import { SearchBar } from "./elements/SearchBar";
-import { Container } from "./elements/Container";
 import { DropDownFilter } from "./elements/DropDownFilter";
 import { ToggleFilter } from "./elements/ToggleFilter";
 import { DropMenu } from "./elements/DropMenu";
+import { Container } from "./elements/Container";
+import { Prompt } from "./elements/Prompt";
 import { rand_ident } from "./elements/utils";
 
 /**
@@ -67,11 +68,11 @@ const allElements = [
   LineBreak,
   Aggregation,
   Card,
+  Container,
   Image,
   Link,
   View,
   SearchBar,
-  Container,
   DropDownFilter,
   Tabs,
   ToggleFilter,
@@ -80,6 +81,7 @@ const allElements = [
   Table,
   ListColumn,
   ListColumns,
+  Prompt,
 ];
 
 export /**
@@ -100,14 +102,31 @@ const layoutToNodes = (
   options,
   index = false
 ) => {
-  //console.log("layoutToNodes", JSON.stringify(layout));
   /**
    * @param {object} segment
    * @param {string} ix
    * @returns {Element|Text|View|Action|Tabs|Columns}
    */
   function toTag(segment, ix) {
-    if (!segment) return <Empty key={ix} />;
+    if (!segment) return null;
+
+    if (
+      (segment.type === "card" || segment.type === "container") &&
+      typeof segment.contents === "string"
+    ) {
+      segment.contents = {
+        type: "blank",
+        contents: segment.contents,
+      };
+    }
+
+    if (segment.type === "container" && typeof segment.display === "undefined") {
+      segment.display = segment.block === true
+        ? "block"
+        : segment.block === false
+          ? "inline-block"
+          : "block";
+    }
 
     const MatchElement = allElements.find(
       (e) =>
@@ -123,8 +142,10 @@ const layoutToNodes = (
       const props = {};
       related.fields.forEach((f) => {
         if (f.type === "Nodes" && f.nodeID) {
-          props[f.name || f] = toTag(segment[f.segment_name || f.name || f]);
-          //).map(toTag);
+          const v = segment[f.segment_name || f.name || f];
+          if (typeof v !== "undefined") {
+            props[f.name || f] = toTag(v);
+          }
         } else {
           const v = segment[f.segment_name || f.name || f];
           props[f.name || f] = typeof v === "undefined" ? f.default : v;
@@ -164,6 +185,8 @@ const layoutToNodes = (
           style={segment.style || {}}
           icon={segment.icon}
           font={segment.font || ""}
+          mobileFontSize={segment.mobileFontSize}
+          tabletFontSize={segment.tabletFontSize}
         />
       );
     } else if (segment.type === "view") {
@@ -204,78 +227,13 @@ const layoutToNodes = (
           step_action_names={segment.step_action_names || ""}
           confirm={segment.confirm}
           spinner={segment.spinner}
+          run_async={segment.run_async || false}
           is_submit_action={segment.is_submit_action}
           configuration={segment.configuration || {}}
           block={segment.block || false}
           minRole={segment.minRole || 10}
           isFormula={segment.isFormula || {}}
         />
-      );
-    } else if (segment.type === "container") {
-      return (
-        <Element
-          key={ix}
-          custom={segment._custom || {}}
-          canvas
-          gradStartColor={segment.gradStartColor}
-          gradEndColor={segment.gradEndColor}
-          gradDirection={segment.gradDirection}
-          rotate={segment.rotate || 0}
-          animateName={segment.animateName}
-          animateDuration={segment.animateDuration}
-          animateDelay={segment.animateDelay}
-          animateInitialHide={segment.animateInitialHide}
-          customClass={segment.customClass}
-          customId={segment.customId}
-          customCSS={segment.customCSS}
-          overflow={segment.overflow}
-          margin={segment.margin || [0, 0, 0, 0]}
-          padding={segment.padding || [0, 0, 0, 0]}
-          minHeight={segment.minHeight}
-          height={segment.height}
-          width={segment.width}
-          click_action={segment.click_action}
-          url={segment.url}
-          hoverColor={segment.hoverColor}
-          minHeightUnit={segment.minHeightUnit || "px"}
-          heightUnit={segment.heightUnit || "px"}
-          widthUnit={segment.widthUnit || "px"}
-          vAlign={segment.vAlign}
-          hAlign={segment.hAlign}
-          htmlElement={segment.htmlElement || "div"}
-          display={
-            segment.display ||
-            (segment.block === true
-              ? "block"
-              : segment.block === false
-                ? "inline-block"
-                : "block")
-          }
-          fullPageWidth={
-            typeof segment.fullPageWidth === "undefined"
-              ? false
-              : segment.fullPageWidth
-          }
-          bgFileId={segment.bgFileId}
-          bgField={segment.bgField}
-          imageSize={segment.imageSize || "contain"}
-          imgResponsiveWidths={segment.imgResponsiveWidths}
-          bgType={segment.bgType || "None"}
-          style={segment.style || {}}
-          transform={segment.transform || {}}
-          bgColor={segment.bgColor || "#ffffff"}
-          setTextColor={!!segment.setTextColor}
-          textColor={segment.textColor || "#000000"}
-          isFormula={segment.isFormula || {}}
-          showIfFormula={segment.showIfFormula || ""}
-          showForRole={segment.showForRole || []}
-          minScreenWidth={segment.minScreenWidth || ""}
-          maxScreenWidth={segment.maxScreenWidth || ""}
-          show_for_owner={!!segment.show_for_owner}
-          is={Container}
-        >
-          {toTag(segment.contents)}
-        </Element>
       );
     } else if (segment.type === "tabs") {
       let contentsArray = segment.contents.map(toTag);
@@ -300,6 +258,7 @@ const layoutToNodes = (
           acc_init_opens={segment.acc_init_opens}
           disable_inactive={segment.disable_inactive}
           serverRendered={segment.serverRendered}
+          lazyLoadViews={segment.lazyLoadViews}
           tabId={segment.tabId}
           field={segment.field}
           tabsStyle={segment.tabsStyle}
@@ -363,7 +322,13 @@ const layoutToNodes = (
           colClasses={segment.colClasses}
           colStyles={segment.colStyles}
           aligns={segment.aligns}
-          setting_col_n={1}
+          mobileAligns={segment.mobileAligns}
+          tabletAligns={segment.tabletAligns}
+          mobileWidth={segment.mobileWidth}
+          tabletWidth={segment.tabletWidth}
+          mobileHeight={segment.mobileHeight}
+          tabletHeight={segment.tabletHeight}
+          setting_col_n={segment.setting_col_n !== undefined ? segment.setting_col_n : 0}
           contents={segment.besides.map(toTag)}
         />
       );
@@ -399,7 +364,13 @@ const layoutToNodes = (
             colClasses={segment.colClasses}
             colStyles={segment.colStyles}
             aligns={segment.aligns}
-            setting_col_n={1}
+            mobileAligns={segment.mobileAligns}
+            tabletAligns={segment.tabletAligns}
+            mobileWidth={segment.mobileWidth}
+            tabletWidth={segment.tabletWidth}
+            mobileHeight={segment.mobileHeight}
+            tabletHeight={segment.tabletHeight}
+            setting_col_n={segment.setting_col_n !== undefined ? segment.setting_col_n : 0}
             contents={segment.besides.map(toTag)}
           />
         )
@@ -410,18 +381,14 @@ const layoutToNodes = (
       if (Array.isArray(tag)) {
         tag.forEach((t) => {
           const node = query.parseReactElement(t).toNodeTree();
-          //console.log("other", node);
           actions.addNodeTree(node, parent, ix);
         });
       } else if (tag) {
         const node = query.parseReactElement(tag).toNodeTree();
-        //console.log("other", node);
         actions.addNodeTree(node, parent, ix);
       }
     }
   }
-  //const node1 = query.createNode(toTag(layout));
-  //actions.add(node1, );
   go(layout, parent, index);
 };
 
@@ -438,12 +405,12 @@ export /**
  * @namespace
  */
 const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
-  //console.log(JSON.stringify(nodes, null, 2));
   var columns = [];
   /**
    * @param {object} node
    * @returns {void|object}
    */
+
   const removeEmpty = ({ above }) => {
     const valids = above.filter(Boolean);
     if (valids.length === 1) return valids[0];
@@ -463,8 +430,9 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
   const go = (node) => {
     if (!node) return;
     let customProps = {};
-    if (Object.keys(node?.custom || {}).length)
-      customProps = { _custom: { ...node?.custom } };
+    const mergedCustom = { ...(node?.props?.custom || {}), ...(node?.custom || {}) };
+    if (Object.keys(mergedCustom).length)
+      customProps = { _custom: { ...mergedCustom } };
     const matchElement = allElements.find(
       (e) =>
         e.craft.related &&
@@ -478,7 +446,6 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       if (related.hasContents) s.contents = get_nodes(node);
       related.fields.forEach((f) => {
         if (f.type === "Nodes" && f.nodeID) {
-          //console.log("nodetype", node);
           s[f.segment_name || f.name || f] = go(
             nodes[node.linkedNodes[f.nodeID]]
           );
@@ -523,57 +490,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       return lc;
     }
     if (node.isCanvas) {
-      if (node.displayName === Container.craft.displayName)
-        return {
-          contents: get_nodes(node),
-          type: "container",
-          customCSS: node.props.customCSS,
-          customClass: node.props.customClass,
-          customId: node.props.customId,
-          animateName: node.props.animateName,
-          animateDelay: node.props.animateDelay,
-          animateDuration: node.props.animateDuration,
-          animateInitialHide: node.props.animateInitialHide,
-          minHeight: node.props.minHeight,
-          height: node.props.height,
-          width: node.props.width,
-          url: node.props.url,
-          hoverColor: node.props.hoverColor,
-          minHeightUnit: node.props.minHeightUnit,
-          heightUnit: node.props.heightUnit,
-          widthUnit: node.props.widthUnit,
-          vAlign: node.props.vAlign,
-          hAlign: node.props.hAlign,
-          htmlElement: node.props.htmlElement,
-          margin: node.props.margin,
-          padding: node.props.padding,
-          overflow: node.props.overflow,
-          display: node.props.display,
-          fullPageWidth: node.props.fullPageWidth || false,
-          bgFileId: node.props.bgFileId,
-          bgField: node.props.bgField,
-          bgType: node.props.bgType,
-          imageSize: node.props.imageSize,
-          imgResponsiveWidths: node.props.imgResponsiveWidths,
-          bgColor: node.props.bgColor,
-          setTextColor: node.props.setTextColor,
-          textColor: node.props.textColor,
-          isFormula: node.props.isFormula,
-          showIfFormula: node.props.showIfFormula,
-          showForRole: node.props.showForRole,
-          minScreenWidth: node.props.minScreenWidth,
-          maxScreenWidth: node.props.maxScreenWidth,
-          show_for_owner: node.props.show_for_owner,
-          gradStartColor: node.props.gradStartColor,
-          gradEndColor: node.props.gradEndColor,
-          gradDirection: node.props.gradDirection,
-          click_action: node.props.click_action,
-          rotate: node.props.rotate,
-          style: node.props.style,
-          transform: node.props.transform,
-          ...customProps,
-        };
-      else return get_nodes(node);
+      return get_nodes(node);
     }
 
     if (node.displayName === Text.craft.displayName) {
@@ -589,6 +506,8 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         style: node.props.style,
         icon: node.props.icon,
         font: node.props.font,
+        mobileFontSize: node.props.mobileFontSize,
+        tabletFontSize: node.props.tabletFontSize,
         ...customProps,
       };
     }
@@ -622,14 +541,21 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         besides: widths.map((w, ix) => go(nodes[node.linkedNodes["Col" + ix]])),
         breakpoints: node.props.breakpoints,
         customClass: node.props.customClass,
-        gx: +node.props.gx,
-        gy: +node.props.gy,
+        gx: node.props.gx != null ? +node.props.gx : undefined,
+        gy: node.props.gy != null ? +node.props.gy : undefined,
         aligns: node.props.aligns,
+        mobileAligns: node.props.mobileAligns,
+        tabletAligns: node.props.tabletAligns,
         vAligns: node.props.vAligns,
         colClasses: node.props.colClasses,
         colStyles: node.props.colStyles,
         style: node.props.style,
+        mobileWidth: node.props.mobileWidth,
+        tabletWidth: node.props.tabletWidth,
+        mobileHeight: node.props.mobileHeight,
+        tabletHeight: node.props.tabletHeight,
         widths,
+        setting_col_n: node.props.setting_col_n,
         ...customProps,
       };
     }
@@ -657,6 +583,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         deeplink: node.props.deeplink,
         disable_inactive: node.props.disable_inactive,
         serverRendered: node.props.serverRendered,
+        lazyLoadViews: node.props.lazyLoadViews,
         tabId: node.props.tabId,
         ntabs: node.props.ntabs,
         setting_tab_n: node.props.setting_tab_n,
@@ -702,6 +629,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         confirm: node.props.confirm,
         spinner: node.props.spinner,
         is_submit_action: node.props.is_submit_action,
+        run_async: node.props.run_async,
         nsteps: node.props.nsteps,
         step_only_ifs: node.props.step_only_ifs,
         step_action_names: node.props.step_action_names,
@@ -715,6 +643,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
         configuration: node.props.configuration,
         confirm: node.props.confirm,
         is_submit_action: node.props.is_submit_action,
+        run_async: node.props.run_async,
         action_name: node.props.name,
         ...(node.props.name !== "Clear" && node.props.action_row_variable
           ? {
@@ -742,7 +671,7 @@ const craftToSaltcorn = (nodes, startFrom = "ROOT", options) => {
       };
     }
   };
-  const layout = go(nodes[startFrom]) || { type: "blank", contents: "" };
+  const layout = go(nodes[startFrom]) || {};
   /*console.log("nodes", JSON.stringify(nodes));
     console.log("cols", JSON.stringify(columns));
   console.log("layout", JSON.stringify(layout));*/

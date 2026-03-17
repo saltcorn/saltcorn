@@ -42,7 +42,9 @@ module.exports = {
       "crypto": require.resolve("crypto-browserify"),
       vm: require.resolve("vm-browserify"),
       stream: require.resolve("stream-browserify"),
-
+      string_decoder: require.resolve("string_decoder/"),
+      buffer: require.resolve("buffer/"),
+      events: require.resolve("events/"),
     }
   },
   target: "web", // Use web target for browser compatibility

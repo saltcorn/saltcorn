@@ -6,6 +6,7 @@ const webpack = require("webpack");
 const nodeMocks = {
   "latest-version": join(mocksDir, "node", "latest-version"),
   fs: join(mocksDir, "node", "fs"),
+  assert: join(mocksDir, "node", "assert"),
   "fs-extra": join(mocksDir, "node", "fs-extra"),
   "fs/promises": join(mocksDir, "node", "fs", "promises"),
   v8: join(mocksDir, "node", "v8"),
@@ -21,6 +22,10 @@ const npmMocks = {
   tar: join(mocksDir, "npm", "tar"),
   "live-plugin-manager": join(mocksDir, "npm", "live-plugin-manager"),
   "firebase-admin": join(mocksDir, "npm", "firebase-admin"),
+  "dockerode": join(mocksDir, "npm", "dockerode"),
+  "xml2js": join(mocksDir, "npm", "xml2js"),
+  "apns2": join(mocksDir, "npm", "apns2"),
+  "vm2": join(mocksDir, "npm", "vm2"),
 };
 
 const saltcornMocks = {
@@ -34,6 +39,7 @@ const saltcornMocks = {
   "../models/pack": join(mocksDir, "models", "pack"),
   "./email": join(mocksDir, "models", "email"),
   "../models/email": join(mocksDir, "models", "email"),
+  "./internal/mail_queue": join(mocksDir, "models", "internal", "mail_queue"),
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "@saltcorn/html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
@@ -50,6 +56,7 @@ module.exports = {
   externals: {
     "@saltcorn/sqlite": "@saltcorn/sqlite",
     "@saltcorn/postgres": "@saltcorn/postgres",
+    "cpu-features": "commonjs cpu-features",
   },
   optimization: {
     minimize: false, // debug
@@ -76,6 +83,7 @@ module.exports = {
       tls: false,
       dns: false,
       net: false,
+      http2: false,
       punycode: require.resolve("punycode/"),
       console: require.resolve("console-browserify"),
       assert: require.resolve("assert/"),

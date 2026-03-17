@@ -18,7 +18,7 @@ const {
   supportedVersion,
   resolveLatest,
 } = require("@saltcorn/plugins-loader/stable_versioning");
-
+const path = require("path");
 const isFixedPlugin = (plugin) =>
   plugin.location === "@saltcorn/sbadmin2" ||
   plugin.location === "@saltcorn/base-plugin";
@@ -28,10 +28,11 @@ const isFixedPlugin = (plugin) =>
  * @param plugin plugin to load
  */
 const getEngineInfos = async (plugin, forceFetch) => {
-  const rootState = getRootState();
-  const cached = rootState.getConfig("engines_cache", {}) || {};
-  if (cached[plugin.location] && !forceFetch) {
-    return cached[plugin.location];
+  const cached = getRootState().getConfig("engines_cache", {}) || {};
+  const airgap = getState().getConfig("airgap", false);
+
+  if (airgap || (cached[plugin.location] && !forceFetch)) {
+    return cached[plugin.location] || {};
   } else {
     getState().log(5, `Fetching versions for '${plugin.location}'`);
     const pkgInfo = await npmFetch.json(
@@ -46,7 +47,7 @@ const getEngineInfos = async (plugin, forceFetch) => {
         : {};
     }
     cached[plugin.location] = newCached;
-    await rootState.setConfig("engines_cache", { ...cached });
+    await getRootState().setConfig("engines_cache", { ...cached });
     return newCached;
   }
 };
@@ -70,11 +71,17 @@ const ensurePluginSupport = async (plugin, forceFetch) => {
     versions,
     packagejson.version
   );
-  if (!supported)
-    throw new Error(
-      `Unable to find a supported version for '${plugin.location}'`
-    );
-  else if (
+  if (!supported) {
+    if (getState().getConfig("airgap", false))
+      getState().log(
+        5,
+        `Warning: No supported version for '${plugin.location}' in airgap mode"}`
+      );
+    else
+      throw new Error(
+        `Unable to find a supported version for '${plugin.location}'`
+      );
+  } else if (
     supported !== plugin.version ||
     (plugin.version === "latest" && supported !== resolveLatest(versions))
   )
@@ -87,7 +94,7 @@ const ensurePluginSupport = async (plugin, forceFetch) => {
  * @param plugin - plugin to load
  * @param force - force flag
  */
-const loadPlugin = async (plugin, force, forceFetch) => {
+const loadPlugin = async (plugin, force, forceFetch, reloadModule = false) => {
   if (plugin.source === "npm" && !isFixedPlugin(plugin)) {
     try {
       await ensurePluginSupport(plugin, forceFetch);
@@ -97,12 +104,22 @@ const loadPlugin = async (plugin, force, forceFetch) => {
       );
     }
   }
+
+  const airgap = getState().getConfig("airgap", false);
+  if (airgap && !Plugin.is_fixed_plugin(plugin.location))
+    ensureAirgapedVersion(
+      plugin,
+      getRootState().getConfig("pre_installed_module_infos", [])
+    );
+
   // load plugin
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
     envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
+    reloadModule,
+    force,
   });
-  const res = await loader.install(force);
+  const res = await loader.install();
   const configuration =
     typeof plugin.configuration === "string"
       ? JSON.parse(plugin.configuration)
@@ -124,7 +141,7 @@ const loadPlugin = async (plugin, force, forceFetch) => {
     if (force) {
       // remove the install dir and try again
       await loader.remove();
-      await loader.install(force);
+      await loader.install();
       getState().registerPlugin(
         res.plugin_module.plugin_name || plugin.name,
         res.plugin_module,
@@ -134,7 +151,8 @@ const loadPlugin = async (plugin, force, forceFetch) => {
       );
     }
   }
-  if (res.plugin_module.user_config_form) await getState().refreshUserLayouts();
+  if (res.plugin_module.user_config_form)
+    await getState().refresh_userlayouts();
   if (res.plugin_module.onLoad) {
     try {
       await res.plugin_module.onLoad(plugin.configuration);
@@ -166,28 +184,59 @@ const reloadAuthFromRoot = () => {
  * @returns {Promise<{plugin_module: *}|{plugin_module: any}>}
  */
 const requirePlugin = async (plugin, force) => {
+  const airgap = getState().getConfig("airgap", false);
+  if (airgap && !Plugin.is_fixed_plugin(plugin.location))
+    ensureAirgapedVersion(
+      plugin,
+      getRootState().getConfig("pre_installed_module_infos", [])
+    );
+
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
     envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
+    force: force,
   });
-  return await loader.install(force);
+  return await loader.install();
+};
+
+/**
+ * When the databse has another plugin version then don't override the pr-installed module
+ * @param {Plugin} plugin plugin from database
+ * @param {any} airgapedStore json content from store_entries.json
+ */
+const ensureAirgapedVersion = (plugin, airgapedStore) => {
+  const airgapedPlugin = airgapedStore.find(
+    (p) => p.location === plugin.location
+  );
+  if (!airgapedPlugin) {
+    throw new Error(
+      `Plugin ${plugin.name} from location ${plugin.location} not found in local airgapped store`
+    );
+  }
+  if (airgapedPlugin.version !== plugin.version) {
+    getState().log(
+      5,
+      `Overriding plugin ${plugin.name} version ${plugin.version} with airgapped store version ${airgapedPlugin.version}`
+    );
+    plugin.version = airgapedPlugin.version;
+  }
 };
 
 /**
  * Load all plugins
  * @returns {Promise<void>}
  */
-const loadAllPlugins = async (force) => {
+const loadAllPlugins = async (force, reloadModule = false) => {
   await getState().refresh(true);
   const plugins = await db.select("_sc_plugins");
   for (const plugin of plugins) {
     try {
-      await loadPlugin(plugin, force);
+      await loadPlugin(plugin, force, undefined, reloadModule);
     } catch (e) {
       console.error(e);
     }
   }
-  await getState().refreshUserLayouts();
+  await getState().refresh_userlayouts();
   await getState().refresh(true, true);
   if (!isRoot()) reloadAuthFromRoot();
 };
@@ -198,6 +247,8 @@ const loadAllPlugins = async (force) => {
  * @param force
  * @param noSignalOrDB
  * @param __ translation function
+ * @param allowUnsafeOnTenantsWithoutConfigSetting
+ * @param overwriteDependencies plugin dependencies to overwrite with local paths. Please only use this in testing (the force flag could cause trouble in multi process environments)
  * @returns {Promise<void>}
  */
 const loadAndSaveNewPlugin = async (
@@ -205,7 +256,8 @@ const loadAndSaveNewPlugin = async (
   force,
   noSignalOrDB,
   __ = (str) => str,
-  allowUnsafeOnTenantsWithoutConfigSetting
+  allowUnsafeOnTenantsWithoutConfigSetting,
+  overwriteDependencies
 ) => {
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
@@ -234,28 +286,50 @@ const loadAndSaveNewPlugin = async (
       return;
     }
   }
-  if (plugin.source === "npm") await ensurePluginSupport(plugin);
+  const airgap = getState().getConfig("airgap", false);
+  if (plugin.source === "npm" && !airgap) await ensurePluginSupport(plugin);
+  if (airgap && !Plugin.is_fixed_plugin(plugin.location))
+    ensureAirgapedVersion(
+      plugin,
+      getRootState().getConfig("pre_installed_module_infos", [])
+    );
+
   const loadMsgs = [];
   const loader = new PluginInstaller(plugin, {
     scVersion: packagejson.version,
     envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
+    force: force,
   });
   const { version, plugin_module, location, loadedWithReload, msgs } =
-    await loader.install(force);
+    await loader.install();
   if (msgs) loadMsgs.push(...msgs);
   // install dependecies
   for (const loc of plugin_module.dependencies || []) {
-    const existing = await Plugin.findOne({ location: loc });
-    if (!existing && loc !== plugin.location) {
+    const overwrite = (overwriteDependencies || {})[loc];
+    if (overwrite) {
+      const pckJson = require(path.join(overwrite, "package.json"));
       await loadAndSaveNewPlugin(
         new Plugin({
-          name: loc.replace("@saltcorn/", ""),
-          location: loc,
-          source: "npm",
+          name: pckJson.name,
+          location: overwrite,
+          source: "local",
         }),
-        force,
+        true,
         noSignalOrDB
       );
+    } else {
+      const existing = await Plugin.findOne({ location: loc });
+      if (!existing && loc !== plugin.location) {
+        await loadAndSaveNewPlugin(
+          new Plugin({
+            name: loc.replace("@saltcorn/", ""),
+            location: loc,
+            source: "npm",
+          }),
+          force,
+          noSignalOrDB
+        );
+      }
     }
   }
   let registeredWithReload = false;
@@ -274,7 +348,7 @@ const loadAndSaveNewPlugin = async (
         `Error registering plugin ${plugin.name}. Removing and trying again.`
       );
       await loader.remove();
-      await loader.install(force);
+      await loader.install();
       getState().registerPlugin(
         plugin_module.plugin_name || plugin.name,
         plugin_module,

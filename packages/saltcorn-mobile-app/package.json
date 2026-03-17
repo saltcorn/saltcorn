@@ -1,14 +1,12 @@
 {
   "name": "@saltcorn/mobile-app",
   "displayName": "Saltcorn mobile app",
-  "version": "1.3.1-beta.12",
+  "version": "1.6.0-alpha.16",
   "description": "Saltcorn mobile app for Android and iOS",
   "main": "index.js",
   "scripts": {
     "build": "webpack",
     "add-platform": "npx cap add",
-    "modify-gradle-cfg": "node build_scripts/modify_gradle_cfg.js",
-    "modify-android-manifest": "node build_scripts/modify_android_manifest.js",
     "test": "echo NO TESTS"
   },
   "author": "Christian Hugo",
@@ -18,13 +16,17 @@
   },
   "dependencies": {
     "universal-router": "9.2.1",
-    "axios": "^0.29.0",
+    "axios": "^0.30.2",
     "jwt-decode": "4.0.0",
     "i18next": "24.2.2",
     "i18next-sprintf-postprocessor": "0.2.2",
     "crypto-browserify": "3.12.1",
     "vm-browserify": "1.1.2",
-    "stream-browserify": "3.0.0"
+    "string_decoder": "1.3.0",
+    "buffer": "6.0.3",
+    "events": "3.3.0",
+    "stream-browserify": "3.0.0",
+    "jeep-sqlite": "^2.8.0"
   },
   "devDependencies": {
     "xml2js": "0.6.2",
@@ -32,6 +34,10 @@
     "@babel/preset-env": "^7.26.7",
     "babel-loader": "^9.2.1",
     "webpack": "5.97.1",
-    "webpack-cli": "6.0.1"
+    "webpack-cli": "6.0.1",
+    "typescript": "5.9.2",
+    "kleur": "4.1.5",
+    "@ionic/cli-framework-output": "2.2.8",
+    "@ionic/utils-terminal": "2.3.5"
   }
 }

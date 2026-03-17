@@ -320,7 +320,7 @@ describe("Filter view components", () => {
     });
     const vres1 = await view.run({ foo: 1 }, mockReqRes);
     expect(vres1).toBe(
-      '<div class="form-namespace"><button onClick="clear_state(\'\', this)" class="btn btn-primary ">Clear</button></div>'
+      '<div class="form-namespace"><button onClick="clear_state(\'\', this)" class="btn btn-primary">Clear</button></div>'
     );
   });
   it("state code action", async () => {

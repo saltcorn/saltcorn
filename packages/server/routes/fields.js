@@ -99,6 +99,8 @@ const fieldForm = async (req, fkey_opts, existing_names, id, hasData) => {
             return req.__("Column %s already exists", s);
           if (Field.labelToName(s) === "row")
             return req.__("Not a valid field name");
+          if (s.length > 63)
+            return req.__("Field names are limited to 63 characters");
           try {
             new Function(Field.labelToName(s), "return;");
           } catch {
@@ -360,12 +362,7 @@ const fieldFlow = (req) =>
           const nrows = await table.countRows({});
           const existing_fields = table.getFields();
           const existingNames = existing_fields.map((f) => f.name);
-          const fkey_opts = [
-            "File",
-            ...tables
-              .filter((t) => !t.provider_name && !t.external)
-              .map((t) => `Key to ${t.name}`),
-          ];
+          const fkey_opts = ["File", ...tables.map((t) => `Key to ${t.name}`)];
           const form = await fieldForm(
             req,
             fkey_opts,
@@ -626,10 +623,17 @@ const fieldFlow = (req) =>
                 name: "expression",
                 label: req.__("Formula"),
                 // todo sublabel
-                type: "String",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  table: table.name,
+                  user: true,
+                  expression_type: "value",
+                  unsafe: true,
+                  compact: true,
+                },
                 class: "validate-expression",
                 fieldview: "textarea",
-                attributes: { rows: 2, unsafe: true },
                 validator: expressionValidator,
                 showIf: { expression_type: "JavaScript expression" },
               }),
@@ -1500,6 +1504,8 @@ router.post(
       fv = getState().keyFieldviews.select;
     } else if (fieldview === "subfield" && field.type?.name === "JSON") {
       fv = field.type.fieldviews.edit_subfield;
+    } else if (field.type.name === "Date" && field.type.fieldviews.flatpickr) {
+      fv = field.type.fieldviews.flatpickr;
     } else {
       //TODO: json subfield is special
       const fieldviews = field.type.fieldviews;

@@ -11,6 +11,7 @@ import React, {
   useEffect,
   useState,
 } from "react";
+import useTranslation from "../../hooks/useTranslation";
 
 import { Element, useNode, useEditor } from "@craftjs/core";
 import { setAPropGen, SettingsFromFields } from "./utils";
@@ -38,6 +39,7 @@ const ListColumn = ({
   col_width,
   col_width_units,
 }) => {
+  const { t } = useTranslation();
   const {
     selected,
     id,
@@ -75,16 +77,18 @@ const ListColumn = ({
       <div className={`list-column flex-50 p-2`}>
         <div className="d-flex justify-content-between h-100">
           <div className="">
-            Column {childIx}
+            {t("Column")} {childIx}
             {header_label ? `: ${header_label}` : ""}
             <br />
             {showif ? (
-              <span className="badge bg-secondary me-2">showif</span>
+              <span className="badge bg-secondary me-2">{t("showif")}</span>
             ) : (
               ""
             )}
             {alignment && alignment !== "Default" ? (
-              <span className="badge bg-secondary me-2">Align {alignment}</span>
+              <span className="badge bg-secondary me-2">
+                {t("Align")} {alignment}
+              </span>
             ) : (
               ""
             )}

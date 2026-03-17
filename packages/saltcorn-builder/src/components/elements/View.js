@@ -8,6 +8,7 @@ import React, { Fragment, useEffect, useMemo } from "react";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
 import previewCtx from "../preview_context";
+import useTranslation from "../../hooks/useTranslation";
 import relationsCtx from "../relations_context";
 import Select from "react-select";
 
@@ -19,6 +20,8 @@ import {
   HelpTopicLink,
   initialRelation,
   buildLayers,
+  reactSelectStyles,
+  builderSelectClassName,
 } from "./utils";
 
 import { RelationBadges } from "./RelationBadges";
@@ -29,6 +32,7 @@ import {
   Relation,
   buildTableCaches,
 } from "@saltcorn/common-code";
+import { SingleLineEditor } from "./MonacoEditor";
 
 export /**
  * @param {object} props
@@ -46,6 +50,7 @@ const View = ({ name, view, configuration, state }) => {
     node_id,
     connectors: { connect, drag },
   } = useNode((node) => ({ selected: node.events.selected, node_id: node.id }));
+  const { t } = useTranslation();
   const options = React.useContext(optionsCtx);
 
   let viewname = view;
@@ -80,7 +85,7 @@ const View = ({ name, view, configuration, state }) => {
           dangerouslySetInnerHTML={{ __html: myPreview }}
         ></div>
       ) : (
-        `View: ${label}`
+        `${t("View")}: ${label}`
       )}
     </div>
   );
@@ -93,6 +98,7 @@ export /**
  * @namespace
  */
 const ViewSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     name: node.data.props.name,
     view: node.data.props.view,
@@ -156,6 +162,7 @@ const ViewSettings = () => {
   }
   if (viewname && viewname.includes(".")) viewname = viewname.split(".")[0];
 
+  let cacheWasPopulated = false;
   if (
     finder &&
     !(relationsCache[tableName] && relationsCache[tableName][viewname])
@@ -172,8 +179,13 @@ const ViewSettings = () => {
     );
     relationsCache[tableName] = relationsCache[tableName] || {};
     relationsCache[tableName][viewname] = { relations, layers };
-    setRelationsCache({ ...relationsCache });
+    cacheWasPopulated = true;
   }
+  useEffect(() => {
+    if (cacheWasPopulated) {
+      setRelationsCache({ ...relationsCache });
+    }
+  });
   const [relationsData, setRelationsData] = finder
     ? React.useState(relationsCache[tableName][viewname])
     : [undefined, undefined];
@@ -187,18 +199,23 @@ const ViewSettings = () => {
       subView.display_type
     );
   }
-  if (
+  const needsInitialRelation =
     options.mode !== "filter" &&
     subView?.table_id &&
     !safeRelation &&
     !hasLegacyRelation &&
-    relationsData?.relations.length > 0
-  ) {
+    relationsData?.relations.length > 0;
+  if (needsInitialRelation) {
     safeRelation = initialRelation(relationsData.relations);
-    setProp((prop) => {
-      prop.relation = safeRelation.relationString;
-    });
   }
+  useEffect(() => {
+    if (needsInitialRelation) {
+      const rel = initialRelation(relationsData.relations);
+      setProp((prop) => {
+        prop.relation = rel.relationString;
+      });
+    }
+  }, [needsInitialRelation]);
   const helpContext = { view_name: viewname };
   if (options.tableName) helpContext.srcTable = options.tableName;
   const set_view_name = (e) => {
@@ -234,7 +251,7 @@ const ViewSettings = () => {
           } else
             window.notifyAlert({
               type: "warning",
-              text: `${target_value} has no relations`,
+              text: `${target_value} ${t("has no relations")}`,
             });
         }
       }
@@ -261,11 +278,12 @@ const ViewSettings = () => {
               <Select
                 options={viewOptions}
                 value={selectedView}
-                className="react-select view-selector"
+                className={builderSelectClassName("react-select view-selector")}
+                classNamePrefix="builder-select"
                 onChange={set_view_name}
                 onBlur={set_view_name}
                 menuPortalTarget={document.body}
-                styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+                styles={reactSelectStyles()}
               ></Select>
             )}
           </div>
@@ -303,7 +321,8 @@ const ViewSettings = () => {
             <Select
               options={viewOptions}
               value={selectedView}
-              className="react-select view-selector"
+              className={builderSelectClassName("react-select view-selector")}
+              classNamePrefix="builder-select"
               onChange={(e) => {
                 const target_value = e?.target?.value || e?.value;
                 setProp((prop) => {
@@ -311,7 +330,7 @@ const ViewSettings = () => {
                 });
               }}
               menuPortalTarget={document.body}
-              styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+              styles={reactSelectStyles()}
             ></Select>
           )}
         </div>
@@ -321,7 +340,7 @@ const ViewSettings = () => {
       theview?.viewtemplate === "Edit" &&
       targetTable ? (
         <div>
-          <label>Order field</label>
+          <label>{t("Order field")}</label>
           <select
             value={order_field}
             className="form-control form-select"
@@ -340,7 +359,7 @@ const ViewSettings = () => {
       {options.mode !== "edit" && (
         <Fragment>
           <div>
-            <label>State</label>
+            <label>{t("State")}</label>
             <select
               value={state}
               className="form-control form-select"
@@ -364,7 +383,7 @@ const ViewSettings = () => {
             fixed_state_fields &&
             fixed_state_fields.length > 0 && (
               <Fragment>
-                <h6>View state fields</h6>
+                <h6>{t("View state fields")}</h6>
                 <ConfigForm
                   fields={fixed_state_fields}
                   configuration={configuration || {}}
@@ -378,15 +397,15 @@ const ViewSettings = () => {
       {
         <Fragment>
           <label>
-            Extra state Formula
+            {t("Extra state Formula")}
             <HelpTopicLink topic="Extra state formula" {...helpContext} />
           </label>
-          <input
-            type="text"
-            className="viewlink-label form-control"
+          <SingleLineEditor
+            setProp={setProp}
             value={extra_state_fml}
+            propKey="extra_state_fml"
             onChange={setAProp("extra_state_fml")}
-            spellCheck={false}
+            stateExpr
           />
           {errorString ? (
             <small className="text-danger font-monospace d-block">
@@ -401,7 +420,7 @@ const ViewSettings = () => {
           target="_blank"
           href={`/viewedit/config/${viewname}`}
         >
-          Configure this view
+          {t("Configure this view")}
         </a>
       ) : null}
     </div>

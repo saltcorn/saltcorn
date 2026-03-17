@@ -106,13 +106,44 @@ const getMyClient = (selopts) => {
 const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
   const { where, values } = mkWhere(whereObj);
   const schema = selectopts.schema || getTenantSchema();
-  const sql = `SELECT ${
-    selectopts.fields ? selectopts.fields.join(", ") : `*`
-  } FROM "${schema}"."${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
-    selectopts,
-    values,
-    false
-  )}`;
+  let sql;
+  if (selectopts.tree_field && !whereObj[selectopts.tree_field])
+    sql = `WITH RECURSIVE _tree AS (
+      SELECT ${
+        selectopts.fields ? selectopts.fields.join(", ") : `*`
+      }, 0 as _level
+      ${selectopts.orderBy ? `, ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy)}"${selectopts.orderDesc ? " DESC" : ""})] as _sort_path` : ""} 
+      FROM "${schema}"."${sqlsanitize(tbl)}" 
+      WHERE "${selectopts.tree_field}" IS NULL ${where ? `AND ${where.replace("where ", "")}` : ""}
+
+    UNION ALL
+
+    SELECT ${
+      selectopts.fields
+        ? selectopts.fields.map((f) => `p."${f}"`).join(", ")
+        : `p.*`
+    }, pt._level+1
+    ${selectopts.orderBy ? `, pt._sort_path || row_number() OVER (PARTITION BY p."${selectopts.tree_field}" ORDER BY p."${selectopts.orderBy}"${selectopts.orderDesc ? " DESC" : ""})` : ""} 
+    FROM "${schema}"."${sqlsanitize(tbl)}" p
+    JOIN _tree pt ON p."${selectopts.tree_field}" = pt."${selectopts.pk_name || "id"}"
+    )
+    SELECT ${
+      selectopts.fields ? selectopts.fields.join(", ") : `*`
+    }, _level FROM _tree ${where} ${mkSelectOptions(
+      selectopts.orderBy
+        ? { ...selectopts, orderBy: "_sort_path", orderDesc: false }
+        : selectopts,
+      values,
+      false
+    )}`;
+  else
+    sql = `SELECT ${
+      selectopts.fields ? selectopts.fields.join(", ") : `*`
+    } FROM "${schema}"."${sqlsanitize(tbl)}" ${where} ${mkSelectOptions(
+      selectopts,
+      values,
+      false
+    )}`;
   sql_log(sql, values);
   const tq = await getMyClient(selectopts).query(sql, values);
 
@@ -166,9 +197,14 @@ WHERE  c.oid = '"${opts?.schema || getTenantSchema()}"."${sqlsanitize(tbl)}"'::r
     }
   }
 
-  const sql = `SELECT COUNT(*) FROM "${opts?.schema || getTenantSchema()}"."${sqlsanitize(
+  const core_sql = `FROM "${opts?.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
   )}" ${where}`;
+  //https://pganalyze.com/blog/5mins-postgres-limited-count
+  const sql = opts?.limit
+    ? `SELECT count(*) AS count FROM (
+  SELECT 1 ${core_sql} limit ${+opts?.limit}) limited_count`
+    : `SELECT COUNT(*) ${core_sql}`;
   sql_log(sql, values);
   const tq = await getMyClient(opts).query(sql, values);
 
@@ -281,10 +317,23 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
   let valList = kvs.map(([k, v]) => v);
   // TBD check that is correct - because in insert function opts.noid ? "*" : opts.pk_name || "id"
   //valList.push(id === "undefined"? obj[opts.pk_name]: id);
-  valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
+  let whereS;
+  if (id && typeof id == "object") {
+    let n = kvs.length + 1;
+    const whereStrs = [];
+    Object.keys(id).forEach((k) => {
+      valList.push(id[k]);
+      whereStrs.push(`"${k}"=$${n}`);
+      n += 1;
+    });
+    whereS = whereStrs.join(" and ");
+  } else {
+    valList.push(id === "undefined" ? obj[opts.pk_name || "id"] : id);
+    whereS = `${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
+  }
   const q = `update "${opts.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
-  )}" set ${assigns} where ${ppPK(opts.pk_name)}=$${kvs.length + 1}`;
+  )}" set ${assigns} where ${whereS}`;
   sql_log(q, valList);
   await getMyClient(opts).query(q, valList);
 };
@@ -394,7 +443,7 @@ const drop_unique_constraint = async (table_name, field_names) => {
   // TBD check that there are no problems with lenght of constraint name
   const sql = `alter table "${getTenantSchema()}"."${sqlsanitize(
     table_name
-  )}" drop CONSTRAINT "${sqlsanitize(table_name)}_${field_names
+  )}" drop CONSTRAINT IF EXISTS "${sqlsanitize(table_name)}_${field_names
     .map((f) => sqlsanitize(f))
     .join("_")}_unique";`;
   sql_log(sql);
@@ -598,7 +647,7 @@ const withTransaction = async (f, onError) => {
 };
 
 const commitAndBeginNewTransaction = async () => {
-  const client = await getClient();
+  const client = await getMyClient();
   sql_log("COMMIT;");
   await client.query("COMMIT;");
   sql_log("BEGIN;");
@@ -613,10 +662,52 @@ const tryCatchInTransaction = async (f, onError) => {
     return await f();
   } catch (error) {
     if (reqCon?.client) await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
-    await onError(error);
+    if (onError) return await onError(error);
   } finally {
     if (reqCon?.client) await query(`RELEASE SAVEPOINT sp${rndid}`);
   }
+};
+
+/**
+ * Should be used for code that is sometimes called from within a withTransaction block
+ * and sometimes not.
+ * @param {Function} f logic to execute
+ * @param {Function} onError error handler
+ * @returns
+ */
+const openOrUseTransaction = async (f, onError) => {
+  const reqCon = getRequestContext();
+  if (reqCon?.client) return await f();
+  else return await withTransaction(f, onError);
+};
+
+/**
+ * Wait some time until current transaction COMMITs,
+ * then open another transaction.
+ * @param {Function} f logic to execute
+ * @param {Function} onError error handler
+ * @returns
+ */
+const whenTransactionisFree = (f, onError) => {
+  return new Promise((resolve, reject) => {
+    // wait until transaction is free
+    let counter = 0;
+    const interval = setInterval(async () => {
+      const reqCon = getRequestContext();
+      if (!reqCon?.client) {
+        clearInterval(interval);
+        try {
+          resolve(await withTransaction(f, onError));
+        } catch (e) {
+          reject(e);
+        }
+      }
+      if (++counter > 100) {
+        clearInterval(interval);
+        reject(new Error("Timeout waiting for transaction to be free"));
+      }
+    }, 200);
+  });
 };
 
 const query = (text, params) => {
@@ -669,6 +760,8 @@ const postgresExports = {
   truncate,
   withTransaction,
   tryCatchInTransaction,
+  openOrUseTransaction,
+  whenTransactionisFree,
   commitAndBeginNewTransaction,
 };
 

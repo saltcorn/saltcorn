@@ -5,7 +5,7 @@
 const { Command, Flags, Args } = require("@oclif/core");
 const { spawnSync } = require("child_process");
 const path = require("path");
-const { maybe_as_tenant } = require("../common");
+const { maybe_as_tenant, init_some_tenants } = require("../common");
 const fs = require("fs");
 
 /**
@@ -45,6 +45,8 @@ class RestoreCommand extends Command {
     const { restore } = require("@saltcorn/admin-models/models/backup");
     const User = require("@saltcorn/data/models/user");
     const load_plugins = require("@saltcorn/server/load_plugins");
+    await init_some_tenants(tenant);
+
     await maybe_as_tenant(tenant, async () => {
       await load_plugins.loadAllPlugins();
       const hasUsers = await User.nonEmpty();

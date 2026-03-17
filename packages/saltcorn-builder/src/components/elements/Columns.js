@@ -4,13 +4,14 @@
  * @subcategory components / elements
  */
 
-import React, { Fragment } from "react";
+import React, { Fragment, useContext } from "react";
 import { Column } from "./Column";
+import useTranslation from "../../hooks/useTranslation";
+import PreviewCtx from "../preview_context";
 
 import { Element, useNode } from "@craftjs/core";
 import {
   Accordion,
-  ConfigField,
   SettingsRow,
   reactifyStyles,
   SettingsSectionHeaderRow,
@@ -18,6 +19,8 @@ import {
   parseStyles,
 } from "./utils";
 import { BoxModelEditor } from "./BoxModelEditor";
+import { ArrayManager } from "./ArrayManager";
+import { getAlignClass } from "../../utils/responsive_utils";
 import {
   AlignTop,
   AlignMiddle,
@@ -65,6 +68,35 @@ const resetWidths = (ncols) => ntimes(ncols - 1, () => Math.floor(12 / ncols));
 const getWidth = (widths, colix) =>
   colix < widths.length ? widths[colix] : 12 - sum(widths);
 
+/**
+ * Bootstrap breakpoint minimum widths (px)
+ */
+const BREAKPOINT_MIN_WIDTH = {
+  "": 0,
+  sm: 576,
+  md: 768,
+  lg: 992,
+  xl: 1200,
+};
+
+const PREVIEW_DEVICE_WIDTH = {
+  desktop: Infinity,
+  tablet: 768,
+  mobile: 576,
+};
+
+const getColClass = (width, breakpoint, previewDevice) => {
+  if (!previewDevice || previewDevice === "desktop") {
+    const bp = breakpoint || "sm";
+    return bp ? `col-${bp}-${width}` : `col-${width}`;
+  }
+  const deviceWidth = PREVIEW_DEVICE_WIDTH[previewDevice] || Infinity;
+  const bpMin = BREAKPOINT_MIN_WIDTH[breakpoint || "sm"] || 0;
+  if (deviceWidth < bpMin) return "col-12";
+  const bp = breakpoint || "sm";
+  return bp ? `col-${bp}-${width}` : `col-${width}`;
+};
+
 export /**
  * @param {object} opts
  * @param {number[]} opts.widths
@@ -83,28 +115,55 @@ const Columns = ({
   gx,
   gy,
   aligns,
+  mobileAligns,
+  tabletAligns,
   vAligns,
   colClasses,
   colStyles,
   customClass,
+  breakpoints,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
-  } = useNode((node) => ({ selected: node.events.selected }));
+    mobileWidth,
+    tabletWidth,
+    mobileHeight,
+    tabletHeight,
+  } = useNode((node) => ({
+    selected: node.events.selected,
+    _style: node.data.props.style,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
+  }));
+  const { previewDevice } = useContext(PreviewCtx);
+  const canvasStyle = { ...reactifyStyles(style || {}) };
+  if (previewDevice === "mobile") {
+    if (mobileWidth) canvasStyle.width = mobileWidth;
+    if (mobileHeight) canvasStyle.height = mobileHeight;
+  } else if (previewDevice === "tablet") {
+    if (tabletWidth) canvasStyle.width = tabletWidth;
+    if (tabletHeight) canvasStyle.height = tabletHeight;
+  }
   return (
     <div
       className={`row builder-columns ${customClass || ""} ${selected ? "selected-node" : ""} ${
         typeof gx !== "undefined" && gx !== null ? `gx-${gx}` : ""
       } ${typeof gy !== "undefined" && gy !== null ? `gy-${gy}` : ""}`}
       ref={(dom) => connect(drag(dom))}
-      style={reactifyStyles(style || {})}
+      style={canvasStyle}
     >
       {ntimes(ncols, (ix) => (
         <div
           key={ix}
-          className={`split-col col-sm-${getWidth(widths, ix)} text-${
-            aligns?.[ix]
+          className={`split-col ${getColClass(
+            getWidth(widths, ix),
+            breakpoints?.[ix],
+            previewDevice
+          )} ${
+            getAlignClass(aligns, mobileAligns, tabletAligns, ix, previewDevice)
           } align-items-${vAligns?.[ix]} ${colClasses?.[ix] || ""}`}
           style={parseStyles(colStyles?.[ix] || "")}
         >
@@ -124,19 +183,28 @@ export /**
  * @subcategory components
  */
 const ColumnsSettings = () => {
+  const { t } = useTranslation();
+  const { previewDevice } = useContext(PreviewCtx);
   const node = useNode((node) => ({
     widths: node.data.props.widths,
     ncols: node.data.props.ncols,
     breakpoints: node.data.props.breakpoints,
     style: node.data.props.style,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
     setting_col_n: node.data.props.setting_col_n,
     gx: node.data.props.gx,
     gy: node.data.props.gy,
     vAligns: node.data.props.vAligns,
     aligns: node.data.props.aligns,
+    mobileAligns: node.data.props.mobileAligns,
+    tabletAligns: node.data.props.tabletAligns,
     colClasses: node.data.props.colClasses,
     colStyles: node.data.props.colStyles,
     customClass: node.data.props.customClass,
+    currentSettingsTab: node.data.props.currentSettingsTab,
   }));
   const {
     actions: { setProp },
@@ -147,124 +215,109 @@ const ColumnsSettings = () => {
     setting_col_n,
     vAligns,
     aligns,
+    mobileAligns,
+    tabletAligns,
     colClasses,
     colStyles,
     customClass,
+    currentSettingsTab,
   } = node;
+
+  const activeAlignProp =
+    previewDevice === "mobile" ? "mobileAligns" :
+    previewDevice === "tablet" ? "tabletAligns" : "aligns";
+  const activeAligns =
+    previewDevice === "mobile" ? mobileAligns :
+    previewDevice === "tablet" ? tabletAligns : aligns;
+
   const colSetsNode = {
-    vAlign: vAligns?.[setting_col_n - 1],
-    hAlign: aligns?.[setting_col_n - 1],
-    colClass: colClasses?.[setting_col_n - 1] || "",
-    colStyle: colStyles?.[setting_col_n - 1] || "",
+    vAlign: vAligns?.[setting_col_n],
+    hAlign: activeAligns?.[setting_col_n],
+    colClass: colClasses?.[setting_col_n] || "",
+    colStyle: colStyles?.[setting_col_n] || "",
   };
   return (
-    <Accordion>
-      <table accordiontitle="Column properties">
-        <tbody>
-          <tr>
-            <td colSpan="3">
-              <label>Number of columns</label>
-            </td>
-            <td>
-              <input
-                type="number"
-                value={ncols}
-                className="form-control"
-                step="1"
-                min="1"
-                max="6"
-                onChange={(e) => {
-                  if (!e.target) return;
-                  const value = e.target.value;
-                  setProp((prop) => {
-                    prop.ncols = value;
-                    prop.widths = resetWidths(value);
-                  });
-                }}
-              />
-            </td>
-          </tr>
-          <tr>
-            <th colSpan="4">Widths &amp; Breakpoint</th>
-          </tr>
-          {ntimes(ncols, (ix) => (
-            <Fragment key={ix}>
-              <tr>
-                <th colSpan="4">Column {ix + 1}</th>
-              </tr>
-              <tr>
-                <td>
-                  <label>Width</label>
-                </td>
-                <td align="right">
-                  {ix < ncols - 1 ? (
-                    <input
-                      type="number"
-                      value={widths[ix]}
-                      className="form-control"
-                      step="1"
-                      min="1"
-                      max={12 - (sum(widths) - widths[ix]) - 1}
-                      onChange={(e) => {
-                        if (!e.target) return;
-                        const value = e.target.value;
-                        setProp((prop) => (prop.widths[ix] = +value));
-                      }}
-                    />
-                  ) : (
-                    `${12 - sum(widths)}`
-                  )}
-                </td>
-                <td>/12</td>
-                <td>
-                  <select
-                    className="form-control form-select"
-                    value={breakpoints[ix]}
+    <Accordion
+      value={currentSettingsTab}
+      onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
+    >
+      <div accordiontitle={t("Column properties")}>
+        <ArrayManager
+          node={node}
+          setProp={setProp}
+          countProp={"ncols"}
+          currentProp={"setting_col_n"}
+          managedArrays={["widths", "breakpoints", "aligns", "mobileAligns", "tabletAligns", "vAligns", "colClasses", "colStyles"]}
+          manageContents={true}
+          contentsKey={"besides"}
+          initialAddProps={{
+            breakpoints: "sm",
+          }}
+          onLayoutChange={(layout, action) => {
+            if (action === "add" || action === "delete") {
+              const n = layout.besides.length;
+              layout.widths = ntimes(n, () => Math.floor(12 / n));
+            }
+          }}
+        />
+        <table className="w-100 mt-2">
+          <tbody>
+            <tr>
+              <th colSpan="4">{t("Width & Breakpoint")}</th>
+            </tr>
+            <tr>
+              <td>
+                <label>{t("Width")}</label>
+              </td>
+              <td colSpan="3" align="right">
+                {setting_col_n < ncols - 1 ? (
+                  <input
+                    type="number"
+                    value={widths[setting_col_n]}
+                    className="form-control"
+                    step="1"
+                    min="1"
+                    max={12 - (sum(widths) - widths[setting_col_n]) - 1}
                     onChange={(e) => {
                       if (!e.target) return;
                       const value = e.target.value;
-                      setProp((prop) => (prop.breakpoints[ix] = value));
+                      setProp((prop) => (prop.widths[setting_col_n] = +value));
                     }}
-                  >
-                    <option disabled>Breakpoint</option>
-                    <option value="">none</option>
-                    {buildBootstrapOptions(["sm", "md", "lg"])}
-                  </select>
-                </td>
-              </tr>
-            </Fragment>
-          ))}
-        </tbody>
-      </table>
-      <div accordiontitle="Column settings">
-        Settings for column #
-        <ConfigField
-          field={{
-            name: "setting_col_n",
-            label: "Column number",
-            type: "btn_select",
-            options: ntimes(ncols, (i) => ({
-              value: i + 1,
-              title: `${i + 1}`,
-              label: `${i + 1}`,
-            })),
-          }}
-          node={node}
-          setProp={setProp}
-          props={node}
-        ></ConfigField>
-        <table className="w-100">
-          <tbody>
-            <SettingsSectionHeaderRow title="Align" />
+                  />
+                ) : (
+                  `${12 - sum(widths)}`
+                )}
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <label>{t("Breakpoint")}</label>
+              </td>
+              <td colSpan="3">
+                <select
+                  className="form-control form-select"
+                  value={breakpoints[setting_col_n]}
+                  onChange={(e) => {
+                    if (!e.target) return;
+                    const value = e.target.value;
+                    setProp((prop) => (prop.breakpoints[setting_col_n] = value));
+                  }}
+                >
+                  <option value="">{t("none")}</option>
+                  {buildBootstrapOptions(["sm", "md", "lg"])}
+                </select>
+              </td>
+            </tr>
+            <SettingsSectionHeaderRow title={t("Align")} />
             <SettingsRow
               field={{
                 name: "vAlign",
-                label: "Vertical",
+                label: t("Vertical"),
                 type: "btn_select",
                 options: [
-                  { value: "start", title: "Start", label: <AlignTop /> },
-                  { value: "center", title: "Center", label: <AlignMiddle /> },
-                  { value: "end", title: "End", label: <AlignBottom /> },
+                  { value: "start", title: t("Start"), label: <AlignTop /> },
+                  { value: "center", title: t("Center"), label: <AlignMiddle /> },
+                  { value: "end", title: t("End"), label: <AlignBottom /> },
                 ],
               }}
               node={colSetsNode}
@@ -272,34 +325,36 @@ const ColumnsSettings = () => {
               onChange={(k, v) =>
                 setProp((prop) => {
                   if (!prop.vAligns) prop.vAligns = [];
-                  prop.vAligns[setting_col_n - 1] = v;
+                   prop.vAligns[setting_col_n] = v;
                 })
               }
             />
             <SettingsRow
               field={{
                 name: "hAlign",
-                label: "Horizontal",
+                label: previewDevice !== "desktop"
+                  ? `${t("Horizontal")} (${previewDevice})`
+                  : t("Horizontal"),
                 type: "btn_select",
                 options: [
-                  { value: "start", title: "Left", label: <AlignStart /> },
-                  { value: "center", title: "Center", label: <AlignCenter /> },
-                  { value: "end", title: "Right", label: <AlignEnd /> },
+                  { value: "start", title: t("Left"), label: <AlignStart /> },
+                  { value: "center", title: t("Center"), label: <AlignCenter /> },
+                  { value: "end", title: t("Right"), label: <AlignEnd /> },
                 ],
               }}
               node={colSetsNode}
               setProp={setProp}
               onChange={(k, v) =>
                 setProp((prop) => {
-                  if (!prop.aligns) prop.aligns = [];
-                  prop.aligns[setting_col_n - 1] = v;
+                  if (!prop[activeAlignProp]) prop[activeAlignProp] = [];
+                  prop[activeAlignProp][setting_col_n] = v;
                 })
               }
             />
             <SettingsRow
               field={{
                 name: "colClass",
-                label: "Class",
+                label: t("Class"),
                 type: "String",
               }}
               node={colSetsNode}
@@ -307,34 +362,34 @@ const ColumnsSettings = () => {
               onChange={(k, v) =>
                 setProp((prop) => {
                   if (!prop.colClasses) prop.colClasses = [];
-                  prop.colClasses[setting_col_n - 1] = v;
+                   prop.colClasses[setting_col_n] = v;
                 })
               }
             />
             <SettingsRow
               field={{
                 name: "colStyle",
-                label: "CSS",
-                type: "textarea",
+                label: t("CSS"),
+                type: "String",
               }}
               node={colSetsNode}
               setProp={setProp}
               onChange={(k, v) =>
                 setProp((prop) => {
                   if (!prop.colStyles) prop.colStyles = [];
-                  prop.colStyles[setting_col_n - 1] = v;
+                  prop.colStyles[setting_col_n] = v;
                 })
               }
             />
           </tbody>
         </table>
       </div>
-      <table className="w-100" accordiontitle="Gutters and class">
+      <table className="w-100" accordiontitle={t("Gutters and class")}>
         <tbody>
           <SettingsRow
             field={{
               name: "gx",
-              label: "Horizontal 0-5",
+              label: t("Horizontal 0-5"),
               type: "Integer",
             }}
             node={node}
@@ -343,7 +398,7 @@ const ColumnsSettings = () => {
           <SettingsRow
             field={{
               name: "gy",
-              label: "Vertical 0-5",
+              label: t("Vertical 0-5"),
               type: "Integer",
             }}
             node={node}
@@ -352,7 +407,7 @@ const ColumnsSettings = () => {
           <SettingsRow
             field={{
               name: "customClass",
-              label: "Custom class",
+              label: t("Custom class"),
               type: "String",
             }}
             node={node}
@@ -360,7 +415,7 @@ const ColumnsSettings = () => {
           />
         </tbody>
       </table>
-      <div accordiontitle="Box" className="w-100">
+      <div accordiontitle={t("Box")} className="w-100">
         <BoxModelEditor setProp={setProp} node={node} sizeWithStyle={true} />
       </div>
     </Accordion>
@@ -377,7 +432,7 @@ Columns.craft = {
     ncols: 2,
     style: {},
     breakpoints: ["sm", "sm"],
-    setting_col_n: 1,
+    setting_col_n: 0,
     customClass: "",
   },
   related: {

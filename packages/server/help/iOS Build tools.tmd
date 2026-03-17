@@ -1,0 +1,42 @@
+To build iOS apps, your server must run on **macOS** with the **xcodebuild** command-line tool, the **CocoaPods** dependency manager, and at least one **iOS runtime** installed.
+The **Build tools** section shows whether they are installed and which version is available.
+
+### xcodebuild
+The **xcodebuild** command-line tool is required to compile your app and export `.ipa` files. It is automatically installed when you install the **Xcode** IDE from the App Store.
+
+### CocoaPods
+The **CocoaPods** dependency manager is needed to manage and install Capacitor plugins on iOS. To set it up you need the Ruby ffi package and at least Ruby version >= 3.0 installed. If you don't have this, run:
+
+`
+brew install ruby
+`
+
+and follow the steps shown at the end. Then run:
+
+`
+source ~/.zshrc;
+sudo gem install ffi -v 1.17.3
+`
+
+to install the ffi package.
+
+After that install cocoapods like this:
+
+`
+brew install cocoapods
+`
+
+### iOS runtime
+At least one iOS simulator runtime must be downloaded so that xcodebuild can target an iOS version. To list installed runtimes:
+
+`
+xcrun simctl list runtimes
+`
+
+and to download the latest iOS platform, use:
+
+`
+xcodebuild -downloadPlatform iOS
+`
+
+If you need a specific version, open Xcode and select it in **Xcode → Settings → Platforms**.

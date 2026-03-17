@@ -4,25 +4,32 @@ import { apiCall } from "./api";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
 import { SendIntent } from "send-intent";
+import { addPushSyncHandler } from "./offline_mode";
 
 const orientationChangeListeners = new Set();
 
-export function clearAlerts() {
+/**
+ * Make the toast area shown at the bottom empty
+ */
+export function clearToasts() {
   const iframe = document.getElementById("content-iframe");
   const alertsArea =
     iframe.contentWindow.document.getElementById("toasts-area");
   alertsArea.innerHTML = "";
 }
 
-export function showAlerts(alerts, toast = true) {
+/**
+ * Show toasts in the toast area at the bottom
+ * @param toasts
+ * @returns
+ */
+export function showToasts(toasts) {
   if (typeof saltcorn === "undefined") {
     console.log("Not yet initalized.");
-    console.log(alerts);
+    console.log(toasts);
   } else {
     const iframe = document.getElementById("content-iframe");
-    let area = iframe.contentWindow.document.getElementById(
-      toast ? "toasts-area" : "top-alert"
-    );
+    let area = iframe.contentWindow.document.getElementById("toasts-area");
     if (!area) {
       const areaHtml = `<div class="container">
   <div 
@@ -36,18 +43,14 @@ export function showAlerts(alerts, toast = true) {
       iframe.contentWindow.document
         .getElementById("page-inner-content")
         .insertAdjacentHTML("beforeend", areaHtml);
-      area = iframe.contentWindow.document.getElementById(
-        toast ? "toasts-area" : "top-alert"
-      );
+      area = iframe.contentWindow.document.getElementById("toasts-area");
     }
     const successIds = [];
     area.innerHTML = "";
-    for (const { type, msg, title } of alerts) {
-      if (toast) {
-        const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
-        area.innerHTML += saltcorn.markup.toast(type, msg, rndid, title);
-        if (type === "success") successIds.push(rndid);
-      } else area.innerHTML += saltcorn.markup.alert(type, msg);
+    for (const { type, msg, title } of toasts) {
+      const rndid = `tab${Math.floor(Math.random() * 16777215).toString(16)}`;
+      area.innerHTML += saltcorn.markup.toast(type, msg, rndid, title);
+      if (type === "success") successIds.push(rndid);
     }
     if (successIds.length > 0) {
       setTimeout(() => {
@@ -61,6 +64,34 @@ export function showAlerts(alerts, toast = true) {
   return true;
 }
 
+/**
+ * Make the alert area at the top empty
+ */
+export function clearAlerts() {
+  const iframe = document.getElementById("content-iframe");
+  const area = iframe.contentWindow.document.getElementById("alerts-area");
+  if (area) area.innerHTML = "";
+  const topAlert = iframe.contentWindow.document.getElementById("top-alert");
+  if (topAlert) topAlert.innerHTML = "";
+}
+
+/**
+ * Show alerts in the alert area at the top
+ * @param alerts
+ */
+export function showAlerts(alerts) {
+  if (typeof saltcorn === "undefined") {
+    console.log("Not yet initalized.");
+    console.log(alerts);
+  } else {
+    for (const { type, msg, title } of alerts) {
+      const iframe = document.getElementById("content-iframe");
+      const area = iframe.contentWindow.document.getElementById("top-alert");
+      area.innerHTML += saltcorn.markup.alert(type, msg);
+    }
+  }
+}
+
 export function showLoadSpinner() {
   const iframe = document.getElementById("content-iframe");
   if (iframe) iframe.contentWindow.showLoadSpinner();
@@ -71,17 +102,9 @@ export function removeLoadSpinner() {
   if (iframe) iframe.contentWindow.removeLoadSpinner();
 }
 
-export function clearTopAlerts() {
-  const iframe = document.getElementById("content-iframe");
-  const area = iframe.contentWindow.document.getElementById("alerts-area");
-  if (area) area.innerHTML = "";
-  const topAlert = iframe.contentWindow.document.getElementById("top-alert");
-  if (topAlert) topAlert.innerHTML = "";
-}
-
 export function errorAlert(error) {
   console.error(error);
-  showAlerts([
+  showToasts([
     {
       type: "error",
       msg: error.message ? error.message : "An error occured.",
@@ -109,7 +132,7 @@ export async function loadFileAsText(fileId) {
     });
   } catch (error) {
     if (
-      !showAlerts([
+      !showToasts([
         {
           type: "error",
           msg: error.message ? error.message : "An error occured.",
@@ -138,7 +161,7 @@ export async function loadEncodedFile(fileId) {
       reader.readAsDataURL(response.data);
     });
   } catch (error) {
-    showAlerts([
+    showToasts([
       {
         type: "error",
         msg: error.message ? error.message : "An error occured.",
@@ -156,7 +179,7 @@ export async function takePhoto() {
     });
     return image.path;
   } catch (error) {
-    showAlerts([
+    showToasts([
       {
         type: "error",
         msg: error.message ? error.message : "An error occured.",
@@ -187,5 +210,80 @@ export async function checkSendIntentReceived() {
   } catch (error) {
     console.log("Error in checkSendIntentReceived: ", error);
     return null;
+  }
+}
+
+/**
+ * init the push system, if available
+ */
+export async function tryInitPush(config) {
+  try {
+    const { initPushNotifications, addPusNotifyHandler } = await import(
+      "../helpers/notifications.js"
+    );
+    try {
+      await initPushNotifications();
+      if (saltcorn.data.utils.isPushEnabled(config.user)) addPusNotifyHandler();
+      if (config.pushSync) addPushSyncHandler();
+    } catch (error) {
+      console.error("Error initializing push notifications:", error);
+    }
+  } catch (error) {
+    console.log("Push notifications module not available:", error);
+  }
+}
+
+/**
+ * init background sync, if available
+ */
+export async function tryInitBackgroundSync(config) {
+  try {
+    const { startPeriodicBackgroundSync } = await import(
+      "../helpers/background_sync.js"
+    );
+    try {
+      if (config.syncInterval && config.syncInterval > 0)
+        await startPeriodicBackgroundSync(config.syncInterval);
+    } catch (error) {
+      console.error("Error initializing background sync:", error);
+    }
+  } catch (error) {
+    console.log("Background sync module not available:", error);
+  }
+}
+
+/**
+ * end the push system, if available
+ */
+export async function tryUnregisterPush() {
+  try {
+    const { unregisterPushNotifications } = await import(
+      "../helpers/notifications.js"
+    );
+    try {
+      await unregisterPushNotifications();
+    } catch (error) {
+      console.error("Error unregistering push notifications:", error);
+    }
+  } catch (error) {
+    console.log("Push notifications module not available:", error);
+  }
+}
+
+/**
+ * stop background sync, if available
+ */
+export async function tryStopBackgroundSync() {
+  try {
+    const { stopPeriodicBackgroundSync } = await import(
+      "../helpers/background_sync.js"
+    );
+    try {
+      await stopPeriodicBackgroundSync();
+    } catch (error) {
+      console.error("Error stopping periodic background sync:", error);
+    }
+  } catch (error) {
+    console.error("Push notifications module not available:", error);
   }
 }

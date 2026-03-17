@@ -3,10 +3,11 @@
  * @module components/elements/Action
  * @subcategory components / elements
  */
-/*global notifyAlert*/
+/*global notifyAlert, apply_showif*/
 
 import React, { Fragment, useContext, useEffect } from "react";
 import { useNode } from "@craftjs/core";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import {
   BlockSetting,
@@ -19,9 +20,12 @@ import {
   setAPropGen,
   buildOptions,
   ConfigField,
+  reactSelectStyles,
+  builderSelectClassName,
 } from "./utils";
 import { ntimes } from "./Columns";
 import { ArrayManager } from "./ArrayManager";
+
 import Select from "react-select";
 
 export /**
@@ -51,6 +55,7 @@ const Action = ({
   action_bgcol,
   action_bordercol,
   action_textcol,
+  action_class
 }) => {
   const {
     selected,
@@ -61,7 +66,7 @@ const Action = ({
    */
   return (
     <button
-      className={`btn ${action_style || "btn-primary"} ${action_size || ""} ${
+      className={`btn ${action_style || "btn-primary"} ${action_size || ""} ${action_class || ""} ${
         selected ? "selected-node" : ""
       } ${block ? "d-block" : ""}`}
       ref={(dom) => connect(drag(dom))}
@@ -91,6 +96,7 @@ export /**
  * @returns {div}
  */
 const ActionSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     name: node.data.props.name,
     action_row_variable: node.data.props.action_row_variable,
@@ -114,6 +120,7 @@ const ActionSettings = () => {
     step_action_names: node.data.props.step_action_names,
     setting_action_n: node.data.props.setting_action_n,
     spinner: node.data.props.spinner,
+    run_async: node.data.props.run_async,
     is_submit_action: node.data.props.is_submit_action,
   }));
   const {
@@ -134,6 +141,7 @@ const ActionSettings = () => {
     step_only_ifs,
     step_action_names,
     spinner,
+    run_async,
     is_submit_action,
   } = node;
   const options = useContext(optionsCtx);
@@ -227,6 +235,7 @@ const ActionSettings = () => {
     step_action_names?.[use_setting_action_n] || "",
     JSON.stringify(configuration?.steps?.[use_setting_action_n]),
   ]);
+  
 
   return (
     <div>
@@ -234,20 +243,19 @@ const ActionSettings = () => {
         <tbody>
           <tr>
             <td>
-              <label>Action</label>
+              <label>{t("Action")}</label>
             </td>
             <td>
               {options.inJestTestingMode ? null : (
                 <Select
                   options={actionOptions}
-                  className="react-select action-selector"
+                  className={builderSelectClassName("react-select action-selector")}
+                  classNamePrefix="builder-select"
                   value={selectedAction}
                   defaultValue={selectedAction}
                   onChange={setAction}
                   menuPortalTarget={document.body}
-                  styles={{
-                    menuPortal: (base) => ({ ...base, zIndex: 19999 }),
-                  }}
+                  styles={reactSelectStyles()}
                 ></Select>
               )}
             </td>
@@ -255,7 +263,7 @@ const ActionSettings = () => {
           {name !== "Clear" && options.mode === "filter" ? (
             <tr>
               <td>
-                <label>Row variable</label>
+                <label>{t("Row variable")}</label>
               </td>
               <td>
                 <select
@@ -288,7 +296,7 @@ const ActionSettings = () => {
           {action_row_variable === "each_matching_row" ? (
             <tr>
               <td>
-                <label>Rows limit</label>
+                <label>{t("Rows limit")}</label>
               </td>
               <td>
                 <input
@@ -304,7 +312,7 @@ const ActionSettings = () => {
           {action_style !== "on_page_load" ? (
             <tr>
               <td colSpan="2">
-                <label>Label (leave blank for default)</label>
+                <label>{t("Label (leave blank for default)")}</label>
                 <OrFormula
                   nodekey="action_label"
                   {...{ setProp, isFormula, node }}
@@ -337,7 +345,7 @@ const ActionSettings = () => {
           checked={confirm}
           onChange={setAProp("confirm", { checked: true })}
         />
-        <label className="form-check-label">User confirmation?</label>
+        <label className="form-check-label">{t("User confirmation?")}</label>
       </div>
       <div className="form-check">
         <input
@@ -347,7 +355,17 @@ const ActionSettings = () => {
           checked={spinner}
           onChange={setAProp("spinner", { checked: true })}
         />
-        <label className="form-check-label">Spinner on click</label>
+        <label className="form-check-label">{t("Spinner on click")}</label>
+      </div>
+      <div className="form-check">
+        <input
+          className="form-check-input"
+          name="block"
+          type="checkbox"
+          checked={run_async}
+          onChange={setAProp("run_async", { checked: true })}
+        />
+        <label className="form-check-label">{t("Run async")}</label>
       </div>
       {action_style !== "on_page_load" ? (
         <BlockSetting block={block} setProp={setProp} />
@@ -361,12 +379,12 @@ const ActionSettings = () => {
             checked={is_submit_action}
             onChange={setAProp("is_submit_action", { checked: true })}
           />
-          <label className="form-check-label">This is the submit action</label>
+          <label className="form-check-label">{t("This is the submit action")}</label>
         </div>
       ) : null}
       {name === "Multi-step action" ? (
         <Fragment>
-          <label>Steps</label>
+          <label>{t("Steps")}</label>
 
           <ArrayManager
             node={node}
@@ -380,23 +398,22 @@ const ActionSettings = () => {
             ]}
           ></ArrayManager>
 
-          <label>Action</label>
+          <label>{t("Action")}</label>
           {options.inJestTestingMode ? null : (
             <Select
               options={multiStepActionOptions}
-              className="react-select multistep-action-selector"
+              className={builderSelectClassName("react-select multistep-action-selector")}
+              classNamePrefix="builder-select"
               value={selectedMultiStepAction}
               defaultValue={selectedMultiStepAction}
               onChange={setMultistepAction}
               menuPortalTarget={document.body}
-              styles={{
-                menuPortal: (base) => ({ ...base, zIndex: 19999 }),
-              }}
+              styles={reactSelectStyles()}
             ></Select>
           )}
           {options.mode !== "page" ? (
             <Fragment>
-              <label>Only if... (formula)</label>
+              <label>{t("Only if... (formula)")}</label>
               <input
                 type="text"
                 className="form-control text-to-display"
@@ -415,7 +432,7 @@ const ActionSettings = () => {
           ) : null}
           {stepCfgFields ? (
             <Fragment>
-              Step configuration:
+              {t("Step configuration:")}
               <ConfigForm
                 fields={stepCfgFields}
                 configuration={
@@ -443,7 +460,7 @@ const ActionSettings = () => {
       ) : null}
       {cfg_link ? (
         <a className="d-block mt-2" target="_blank" href={cfg_link}>
-          Configure this action
+          {t("Configure this action")}
         </a>
       ) : null}
     </div>

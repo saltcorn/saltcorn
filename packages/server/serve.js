@@ -11,6 +11,7 @@ const db = require("@saltcorn/data/db");
 const { getConfigFile, configFilePath } = require("@saltcorn/data/db/connect");
 const {
   getState,
+  getRootState,
   init_multi_tenant,
   restart_tenant,
   add_tenant,
@@ -51,7 +52,7 @@ const {
 } = require("@saltcorn/admin-models/models/tenant");
 const { auto_backup_now } = require("@saltcorn/admin-models/models/backup");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
-const { writeFileSync, rmdirSync, readFileSync } = require("fs");
+const { writeFileSync, rmSync, readFileSync, readdirSync } = require("fs");
 const { pathExistsSync } = require("fs-extra");
 const envPaths = require("env-paths");
 
@@ -93,6 +94,7 @@ const ensurePluginsFolder = async () => {
     "jest",
   ];
   const allPluginFolders = new Set();
+  const localPluginParentDirs = new Set();
   await eachTenant(async () => {
     try {
       const allPlugins = (await Plugin.find()).filter(
@@ -110,11 +112,29 @@ const ensurePluginsFolder = async () => {
           plugin.version || "unknownversion"
         );
         allPluginFolders.add(pluginDir);
+        if (plugin.source === "local") {
+          localPluginParentDirs.add(
+            path.join(rootFolder, "plugins_folder", ...tokens)
+          );
+        }
       }
     } catch {
       //ignore
     }
   });
+  // Remove leftover cache-busted localversion_<timestamp> directories
+  for (const parentDir of localPluginParentDirs) {
+    try {
+      if (!pathExistsSync(parentDir)) continue;
+      for (const entry of readdirSync(parentDir)) {
+        if (/^localversion_\d+$/.test(entry)) {
+          rmSync(path.join(parentDir, entry), { recursive: true });
+        }
+      }
+    } catch (e) {
+      console.log(`Error cleaning localversion cache dirs: ${e.message || e}`);
+    }
+  }
   for (const folder of allPluginFolders) {
     try {
       if (pathExistsSync(folder)) {
@@ -130,7 +150,7 @@ const ensurePluginsFolder = async () => {
             )) &&
           !pathExistsSync(path.join(folder, "node_modules"))
         )
-          rmdirSync(folder, { recursive: true });
+          rmSync(folder, { recursive: true });
       }
     } catch (e) {
       console.log(`Error checking plugin folder: ${e.message || e}`);
@@ -161,13 +181,55 @@ const ensureNotificationSubscriptions = async () => {
   }
 };
 
+const getMultiNodeListener = (client) => {
+  return async () => {
+    await client.query(`LISTEN ${db.getTenantSchema()}_events`);
+    client.on("notification", (msg) => {
+      if (msg.processId === client.processID)
+        return; // check self echo via connection pid
+      else {
+        try {
+          const payload = JSON.parse(msg.payload);
+          if (
+            payload.dynamic_update ||
+            payload.real_time_collab_event ||
+            payload.real_time_chat_event ||
+            payload.log_event
+          ) {
+            const workers = Object.values(cluster.workers || {});
+            if (workers.length > 0) {
+              // use only one worker, master has no serversocket
+              workers[0].send(payload);
+            } else workerDispatchMsg(payload); // only master
+          } else {
+            Object.entries(cluster.workers).forEach(([wpid, w]) => {
+              w.send(payload);
+            });
+            workerDispatchMsg(payload); //also master
+          }
+        } catch (e) {
+          getState().log(
+            2,
+            `Error while handling a multinode msg: ${e.message}`
+          );
+        }
+      }
+    });
+  };
+};
+
 // helpful https://gist.github.com/jpoehls/2232358
 /**
  * @param {object} opts
  * @param {boolean} opts.disableMigrate
  * @param {boolean} [useClusterAdaptor = true]
+ * @param {any} multiNodeClient pg client for multi-node LISTEN/NOTIFY
  */
-const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
+const initMaster = async (
+  { disableMigrate },
+  useClusterAdaptor = true,
+  multiNodeClient
+) => {
   let sql_log;
   try {
     sql_log = await getConfig("log_sql");
@@ -196,9 +258,18 @@ const initMaster = async ({ disableMigrate }, useClusterAdaptor = true) => {
   await loadAllPlugins(true);
   // switch on sql logging - but it was initiated before???
   if (getState().getConfig("log_sql", false)) db.set_sql_logging();
+
+  // listen on node updates channel for this tenant
+  if (db.connectObj.multi_node) await getMultiNodeListener(multiNodeClient)();
+
   if (db.is_it_multi_tenant()) {
     const tenants = await getAllTenants();
-    await init_multi_tenant(loadAllPlugins, disableMigrate, tenants);
+    await init_multi_tenant(
+      () => loadAllPlugins(true),
+      disableMigrate,
+      tenants,
+      db.connectObj.multi_node ? getMultiNodeListener : null
+    );
   }
   if (useClusterAdaptor) setupPrimary();
 };
@@ -222,6 +293,39 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
   if (!getState()) {
     console.error("no State for tenant", tenant);
     return;
+  }
+  if (msg.dynamic_update) {
+    getState().emitDynamicUpdate(
+      tenant || "public",
+      msg.dynamic_update,
+      msg.userIds,
+      true
+    );
+  }
+  if (msg.real_time_collab_event) {
+    getState().emitCollabMessage(
+      tenant || "public",
+      msg.real_time_collab_event.type,
+      msg.real_time_collab_event.data,
+      true
+    );
+  }
+  if (msg.real_time_chat_event) {
+    getState().emitRoom(...Object.values(msg.real_time_chat_event), {
+      noMultiNodePropagate: true,
+    });
+  }
+  if (msg.log_event) {
+    getState().emitLog(
+      tenant || "public",
+      msg.log_event.min_level,
+      msg.log_event.msg,
+      true
+    );
+  }
+
+  if (msg.reload_plugins) {
+    loadAllPlugins(cluster.isPrimary, true);
   }
   if (msg.refresh) {
     if (msg.refresh === "ephemeral_config")
@@ -260,25 +364,31 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
  * @returns {function}
  */
 const onMessageFromWorker =
-  (masterState, { port, host, watchReaper, disableScheduler, pid }) =>
+  (masterState, { port, pid, nodesDispatchMsg, scheduleHelper, isLeader }) =>
   (msg) => {
     //console.log("worker msg", typeof msg, msg);
     if (msg === "Start" && !masterState.started) {
       masterState.started = true;
-      runScheduler({
-        port,
-        host,
-        watchReaper,
-        disableScheduler,
-        eachTenant,
-        auto_backup_now,
-        take_snapshot,
-      });
+      if (isLeader) scheduleHelper.start();
+      if (db.connectObj.multi_node) {
+        startLeadershipMonitor({
+          scheduleHelper,
+          wasLeader: isLeader,
+        });
+      }
       require("./systemd")({ port });
       return true;
     } else if (msg === "RestartServer") {
       process.exit(0);
       return true;
+    } else if (
+      (msg.dynamic_update ||
+        msg.real_time_collab_event ||
+        msg.real_time_chat_event ||
+        msg.log_event) &&
+      nodesDispatchMsg
+    ) {
+      nodesDispatchMsg(msg);
     } else if (msg.tenant || msg.createTenant) {
       ///ie from saltcorn
       //broadcast
@@ -287,9 +397,82 @@ const onMessageFromWorker =
         if (wpid !== pid || msg?.refresh_plugin_cfg) w.send(msg);
       });
       workerDispatchMsg(msg); //also master
+      if (nodesDispatchMsg) nodesDispatchMsg(msg);
       return true;
     }
   };
+
+const escapeSingleQuotes = (value) => value.replace(/'/g, "''");
+
+// read 'store_entries.json' into a config
+// on pre-install time no db connection exists, that's why we nee a file
+// but for the server it's better to have a config instead of reading a file each time
+const initOfflineStoreCfg = async () => {
+  const rootState = getState();
+  try {
+    if (!Plugin.local_store_entries_exists) {
+      await rootState.setConfig("pre_installed_module_infos", []);
+      return;
+    }
+    const entries = await Plugin.read_local_store_entries();
+    await rootState.setConfig("pre_installed_module_infos", entries);
+  } catch (e) {
+    console.log(
+      `Unable to read pre_installed_module_infos: ${
+        e.message ? e.message : "Unknown error"
+      }`
+    );
+    await rootState.setConfig("pre_installed_module_infos", []);
+  }
+};
+
+/**
+ * returns a function that checks if current node is leader
+ * uses a dedicated pg connection that holds an advisory lock
+ */
+const getIsLeaderFn = async () => {
+  const electLeaderConn = await db.getClient();
+  const isSqlite = db.isSQLite;
+  return async () => {
+    if (isSqlite) return true;
+    const lockId = 11565;
+    const result = await electLeaderConn.query(
+      "SELECT pg_try_advisory_lock($1) AS is_leader",
+      [lockId]
+    );
+    if (result.rows[0].is_leader) return true;
+    else return false;
+  };
+};
+
+/**
+ * check periodically if the current node is leader and start/stop scheduler accordingly
+ * @param options - Options object
+ * @param options.scheduleHelper - Helper with start/stop and checkIsLeader function.
+ * @param options.wasLeader - flag if it was previously the leader.
+ * @param options.intervalMs - Monitor interval, Defaults to `5000`.
+ */
+const startLeadershipMonitor = ({
+  scheduleHelper,
+  wasLeader,
+  intervalMs = 5000,
+}) => {
+  let schedulerStarted = wasLeader;
+  setInterval(async () => {
+    try {
+      const isLeader = await scheduleHelper.isLeaderFn();
+      if (isLeader && !schedulerStarted) {
+        scheduleHelper.start();
+        schedulerStarted = true;
+      } else if (!isLeader && schedulerStarted) {
+        scheduleHelper.stop();
+        schedulerStarted = false;
+      }
+    } catch (e) {
+      console.log(`Error checking leadership: ${e.message}`);
+    }
+  }, intervalMs);
+};
 
 module.exports =
   /**
@@ -314,10 +497,34 @@ module.exports =
     dev,
     ...appargs
   } = {}) => {
-    if (cluster.isMaster) {
+    if (cluster.isPrimary) {
       ensureJwtSecret();
       await ensurePluginsFolder();
       await ensureNotificationSubscriptions();
+
+      // reload plugins on SIGHUP
+      process.on("SIGHUP", async () => {
+        getState().log(
+          4,
+          "SIGHUP received: reloading plugins and state for all tenants"
+        );
+        await loadAllPlugins(true, true);
+        await getState().refresh_plugins(true);
+        Object.entries(cluster.workers || {}).forEach(([wpid, w]) => {
+          w.send({ reload_plugins: true });
+        });
+        if (db.is_it_multi_tenant()) {
+          for (const tenant of await getAllTenants()) {
+            await db.runWithTenant(tenant, async () => {
+              await loadAllPlugins(true, true);
+              await getState().refresh_plugins(true);
+              Object.entries(cluster.workers || {}).forEach(([wpid, w]) => {
+                w.send({ tenant, reload_plugins: true });
+              });
+            });
+          }
+        }
+      });
     }
     process.on("unhandledRejection", (reason, p) => {
       console.error(reason, "Unhandled Rejection at Promise");
@@ -340,18 +547,82 @@ module.exports =
       listeningTo: new Set([]),
     };
 
+    let nodesDispatchMsg = null;
+    let multiNodeClient = null;
+    let isLeaderFn = null;
+    let isLeader = true;
+    if (db.connectObj.multi_node) {
+      multiNodeClient = await db.getClient();
+      if (cluster.isMaster) {
+        isLeaderFn = await getIsLeaderFn();
+        isLeader = await isLeaderFn();
+      }
+      nodesDispatchMsg = async ({ tenant, ...msg }) => {
+        if (tenant) {
+          db.runWithTenant(tenant, () => nodesDispatchMsg(msg));
+          return;
+        }
+        if (
+          msg.restart_tenant ||
+          msg.installPlugin ||
+          msg.removePlugin ||
+          msg.refresh_plugin_cfg ||
+          msg.dynamic_update ||
+          msg.real_time_collab_event ||
+          msg.real_time_chat_event ||
+          msg.log_event ||
+          (msg.refresh && msg.refresh !== "ephemeral_config")
+        ) {
+          const payload = escapeSingleQuotes(JSON.stringify(msg));
+          const payloadBytes = Buffer.byteLength(payload, "utf8");
+          if (payloadBytes < 8000) {
+            await multiNodeClient.query(
+              `NOTIFY ${db.getTenantSchema()}_events, '${payload}'`
+            );
+          } else {
+            getState().log(
+              2,
+              `Not sending multinode message, too large (${payloadBytes} bytes)`
+            );
+          }
+        }
+      };
+    }
+
+    const scheduleHelper = {
+      stopScheduler: false,
+      start: () => {
+        this.stopScheduler = false;
+        runScheduler({
+          stop_when: () => this.stopScheduler,
+          port,
+          host,
+          watchReaper,
+          disableScheduler,
+          eachTenant,
+          auto_backup_now,
+          take_snapshot,
+        });
+      },
+      stop: () => {
+        this.stopScheduler = true;
+      },
+      isLeaderFn,
+    };
+
     const addWorker = (worker) => {
       worker.on(
         "message",
         onMessageFromWorker(masterState, {
           port,
-          host,
-          watchReaper,
-          disableScheduler,
           pid: worker.process.pid,
+          nodesDispatchMsg,
+          scheduleHelper,
+          isLeader,
         })
       );
     };
+    await initOfflineStoreCfg();
 
     if (port === 80 && letsEncrypt) {
       const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
@@ -380,6 +651,10 @@ module.exports =
               w.send(msg);
             });
             workerDispatchMsg(msg); //also master
+            if (nodesDispatchMsg && useNCpus === 1)
+              nodesDispatchMsg(msg).catch((e) => {
+                console.log("Error sending multinode message", e.message);
+              });
           };
 
           if (masterState.listeningTo.size < useNCpus)
@@ -406,7 +681,9 @@ module.exports =
             getState().processSend("Start");
           })
           .master(() => {
-            initMaster(appargs).then(initMasterListeners);
+            initMaster(appargs, true, multiNodeClient).then(
+              initMasterListeners
+            );
           });
 
         return; // none of stuff below will execute
@@ -416,7 +693,7 @@ module.exports =
 
     if (cluster.isMaster) {
       const forkAnyWorkers = useNCpus > 1 && process.platform !== "win32";
-      await initMaster(appargs, forkAnyWorkers);
+      await initMaster(appargs, forkAnyWorkers, multiNodeClient);
 
       if (forkAnyWorkers) {
         for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
@@ -433,18 +710,26 @@ module.exports =
         });
       } else {
         getState().sendMessageToWorkers = (msg) => {
-          workerDispatchMsg(msg); //also master
+          if (
+            !msg.dynamic_update &&
+            !msg.real_time_collab_event &&
+            !msg.real_time_chat_event &&
+            !msg.log_event
+          )
+            workerDispatchMsg(msg); //also master
+          if (nodesDispatchMsg)
+            nodesDispatchMsg(msg).catch((e) => {
+              console.log("Error sending multinode message", e.message);
+            });
         };
         await nonGreenlockWorkerSetup(appargs, port, host);
-        runScheduler({
-          port,
-          host,
-          watchReaper,
-          disableScheduler,
-          eachTenant,
-          auto_backup_now,
-          take_snapshot,
-        });
+        if (isLeader) scheduleHelper.start();
+        if (db.connectObj.multi_node) {
+          startLeadershipMonitor({
+            scheduleHelper,
+            wasLeader: isLeader,
+          });
+        }
         require("./systemd")({ port });
       }
       Trigger.emitEvent("Startup");
@@ -518,6 +803,7 @@ const nonGreenlockWorkerSetup = async (appargs, port, host) => {
 };
 
 const tenantFromSocket = (socket, hostPartOffset) => {
+  if (!db.is_it_multi_tenant()) return db.connectObj.default_schema;
   const header = socket.request.headers.host;
   const hostOnly = header?.split(":")[0];
   if (hostOnly) {
@@ -597,7 +883,9 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
               });
           } else socket.join(`${ten}_${viewname}_${room_id}`);
         } catch (err) {
-          getState().log(1, `Socket join_room error: ${err.stack}`);
+          const state = getState();
+          if (state) state.log(1, `Socket join_room error: ${err.stack}`);
+          else console.error("Socket join_room error:", err);
         }
       };
       if (ten && ten !== "public") db.runWithTenant(ten, f);
@@ -659,7 +947,9 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           } else if (typeof callback === "function")
             callback({ status: "already_joined" });
         } catch (err) {
-          getState().log(1, `Socket join_collab_room: ${err.stack}`);
+          const state = getState();
+          if (state) state.log(1, `Socket join_collab_room: ${err.stack}`);
+          else console.error("Socket join_collab_room:", err);
           if (typeof callback === "function")
             callback({ status: "error", msg: err.message || "unknown error" });
         }
@@ -689,7 +979,11 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
           ]);
           if (typeof callback === "function") callback({ status: "ok" });
         } catch (err) {
-          getState().log(1, `Socket join_dynamic_update_room: ${err.stack}`);
+          const state = getState();
+          if (state)
+            state.log(1, `Socket join_dynamic_update_room: ${err.stack}`);
+          else console.error("Socket join_dynamic_update_room: ", err);
+
           if (typeof callback === "function")
             callback({ status: "error", msg: err.message || "unknown error" });
         }

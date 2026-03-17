@@ -548,6 +548,9 @@ const render = ({
           })
         )
       );
+    } else if (segment.type === "prompt") {
+      // Prompt segments are builder-only placeholders, skip rendering
+      return "";
     } else throw new Error("unknown layout segment" + JSON.stringify(segment));
   }
   if (req?.isSubView) {

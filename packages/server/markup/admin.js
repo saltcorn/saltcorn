@@ -15,10 +15,12 @@ const {
   span,
   ul,
   li,
+  script,
+  domReady,
 } = require("@saltcorn/markup/tags");
 const db = require("@saltcorn/data/db");
 const { configTypes } = require("@saltcorn/data/models/config");
-const { getState } = require("@saltcorn/data/db/state");
+const { getState, getRootState } = require("@saltcorn/data/db/state");
 const Form = require("@saltcorn/data/models/form");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
@@ -130,7 +132,7 @@ const add_edit_bar = ({
       { class: "card-body p-1" },
       i({ class: "fas fa-user-cog me-1" }),
       what && span({ class: "ms-1 me-2 badge bg-secondary" }, what),
-      title,
+      span({ class: "copy-to-clipboard" }, title),
       !singleton &&
         a(
           { class: "ms-2", href: url },
@@ -148,10 +150,23 @@ const add_edit_bar = ({
     )
   );
 
+  return append_to_contents(contents, bar);
+};
+
+const append_to_contents = (contents, toAppend) => {
   if (contents.above) {
-    contents.above.unshift(bar);
+    contents.above.unshift(toAppend);
     return contents;
-  } else return { above: [bar, contents] };
+  } else return { above: [toAppend, contents] };
+};
+
+const add_results_to_contents = (content, resultCollector) => {
+  if (Object.keys(resultCollector).length) {
+    return append_to_contents(
+      content,
+      script(domReady(`common_done(${JSON.stringify(resultCollector)})`))
+    );
+  } else return content;
 };
 
 /**
@@ -167,6 +182,7 @@ const add_edit_bar = ({
  * @param {*} opts.headers,
  * @param {*} opts.no_nav_pills,
  * @param {*} opts.sub2_page,
+ * @param {*} opts.requestFluidLayout,
  */
 const send_settings_page = ({
   req,
@@ -180,6 +196,7 @@ const send_settings_page = ({
   no_nav_pills,
   sub2_page,
   page_title,
+  requestFluidLayout,
 }) => {
   const pillCard = no_nav_pills
     ? []
@@ -213,9 +230,14 @@ const send_settings_page = ({
     ? {
         title: pg_title,
         headers,
+        ...(requestFluidLayout && { requestFluidLayout }),
       }
     : pg_title;
-  res.sendWrap(title, {
+  const sendWrapArg =
+    requestFluidLayout && !headers
+      ? { title: pg_title, requestFluidLayout }
+      : title;
+  res.sendWrap(sendWrapArg, {
     above: [
       {
         type: "breadcrumbs",
@@ -354,6 +376,7 @@ const send_tags_page = (args) => {
 const send_events_page = (args) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const isUserAdmin = args.req?.user.role_id === 1;
+  const tenants_crash_log = getRootState().getConfig("tenants_crash_log");
   return send_settings_page({
     main_section: "Events",
     main_section_href: "/events",
@@ -367,7 +390,9 @@ const send_events_page = (args) => {
           ]
         : []),
       { text: "Workflow runs", href: "/actions/runs" },
-      ...(isRoot ? [{ text: "Crash log", href: "/crashlog" }] : []),
+      ...(isRoot || tenants_crash_log
+        ? [{ text: "Crash log", href: "/crashlog" }]
+        : []),
     ],
     ...args,
   });
@@ -685,4 +710,6 @@ module.exports = {
   flash_restart,
   send_tags_page,
   upload_language_pack,
+  append_to_contents,
+  add_results_to_contents,
 };

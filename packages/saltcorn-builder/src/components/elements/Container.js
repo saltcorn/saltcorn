@@ -3,10 +3,13 @@
  * @module components/elements/Container
  * @subcategory components / elements
  */
+/* globals $, validate_expression_elem */
 
 import React, { useContext, Fragment } from "react";
 
 import { Element, useNode } from "@craftjs/core";
+import { Column } from "./Column";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import {
   Accordion,
@@ -83,6 +86,7 @@ export /**
  */
 const Container = ({
   children,
+  contents,
   minHeight,
   height,
   width,
@@ -111,18 +115,69 @@ const Container = ({
   style,
   htmlElement,
   transform,
+  showForRole,
+  bgField,
+  maxScreenWidth,
+  imgResponsiveWidths,
+  click_action,
+  animateName,
+  animateDelay,
+  animateDuration,
+  animateInitialHide,
+  url,
+  hoverColor,
+  overflow,
+  show_for_owner,
+  showIfFormula,
+  isFormula,
+  minRole,
 }) => {
   const {
     selected,
     connectors: { connect, drag },
-  } = useNode((node) => ({ selected: node.events.selected }));
-  //console.log("container style", style);
+    mobileWidth,
+    tabletWidth,
+    mobileHeight,
+    tabletHeight,
+  } = useNode((node) => ({
+    selected: node.events.selected,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
+  }));
+  const { previewDevice } = useContext(previewCtx);
+
+  const BP_MIN = { "": 0, sm: 576, md: 768, lg: 992, xl: 1200 };
+  const DEVICE_W = { desktop: Infinity, tablet: 768, mobile: 576 };
+  {
+    const dw = DEVICE_W[previewDevice] || Infinity;
+    if (minScreenWidth && dw < (BP_MIN[minScreenWidth] || 0)) {
+      return <div ref={(dom) => connect(drag(dom))} style={{ display: "none" }} />;
+    }
+    if (maxScreenWidth && dw >= (BP_MIN[maxScreenWidth] || Infinity)) {
+      return <div ref={(dom) => connect(drag(dom))} style={{ display: "none" }} />;
+    }
+  }
+
+  const actualChildren = contents || children;
+
+  const renderChildren = () => {
+    if (!actualChildren) return null;
+    if (React.isValidElement(actualChildren)) return actualChildren;
+    if (Array.isArray(actualChildren)) return actualChildren;
+    if (typeof actualChildren === 'object' && actualChildren !== null && 'children' in actualChildren) {
+      return actualChildren.children;
+    }
+    return actualChildren;
+  };
+
   return React.createElement(
     htmlElement,
     {
       ref: (dom) => connect(drag(dom)),
       id: customId || "",
-      className: `${customClass || ""} kontainer canvas text-${hAlign} ${
+      className: `${customClass || ""} kontainer text-${hAlign} ${
         vAlign === "middle" ? "d-flex align-items-center" : ""
       } ${
         vAlign === "middle" && hAlign === "center" && "justify-content-center"
@@ -130,13 +185,15 @@ const Container = ({
       style: {
         ...parseStyles(customCSS || ""),
         ...reactifyStyles(style, transform, rotate),
-        display,
-        //padding: padding.map((p) => p + "px").join(" "),
-        //margin: margin.map((p) => p + "px").join(" "),
+        ...(display && display !== "block" ? { display } : {}),
         minHeight: minHeight ? `${minHeight}${minHeightUnit || "px"}` : null,
         ...(bgType === "Image" && bgFileId
           ? {
-              backgroundImage: `url('/files/serve/${bgFileId}')`,
+              backgroundImage: `url('${
+                /^(?:[a-z]+:)?\/\//i.test(bgFileId)
+                  ? bgFileId
+                  : `/files/serve/${bgFileId}`
+              }')`,
               backgroundSize:
                 imageSize === "repeat" ? undefined : imageSize || "contain",
               backgroundRepeat:
@@ -160,19 +217,25 @@ const Container = ({
               color: textColor,
             }
           : {}),
-        ...(typeof height !== "undefined"
+        ...(height
           ? {
               height: `${height}${heightUnit || "px"}`,
             }
           : {}),
-        ...(typeof width !== "undefined"
+        ...(width
           ? {
               width: `${width}${widthUnit || "px"}`,
             }
           : {}),
+        ...(previewDevice === "mobile" && mobileWidth ? { width: mobileWidth } : {}),
+        ...(previewDevice === "mobile" && mobileHeight ? { height: mobileHeight } : {}),
+        ...(previewDevice === "tablet" && tabletWidth ? { width: tabletWidth } : {}),
+        ...(previewDevice === "tablet" && tabletHeight ? { height: tabletHeight } : {}),
       },
     },
-    children
+    <Element canvas id="container-canvas" is={Column}>
+      {renderChildren()}
+    </Element>
   );
 };
 
@@ -184,10 +247,15 @@ export /**
  * @subcategory components
  */
 const ContainerSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     minHeight: node.data.props.minHeight,
     height: node.data.props.height,
     width: node.data.props.width,
+    mobileWidth: node.data.props.mobileWidth,
+    tabletWidth: node.data.props.tabletWidth,
+    mobileHeight: node.data.props.mobileHeight,
+    tabletHeight: node.data.props.tabletHeight,
     minHeightUnit: node.data.props.minHeightUnit,
     heightUnit: node.data.props.heightUnit,
     widthUnit: node.data.props.widthUnit,
@@ -229,6 +297,7 @@ const ContainerSettings = () => {
     animateDelay: node.data.props.animateDelay,
     animateDuration: node.data.props.animateDuration,
     animateInitialHide: node.data.props.animateInitialHide,
+    currentSettingsTab: node.data.props.currentSettingsTab,
   }));
   const {
     actions: { setProp },
@@ -263,6 +332,7 @@ const ContainerSettings = () => {
     style,
     transform,
     bgField,
+    currentSettingsTab,
   } = node;
   const options = useContext(optionsCtx);
   const { uploadedFiles } = useContext(previewCtx);
@@ -277,16 +347,19 @@ const ContainerSettings = () => {
   //console.log("transform", transform);
 
   return (
-    <Accordion>
-      <div accordiontitle="Box" className="w-100">
+    <Accordion
+      value={currentSettingsTab}
+      onChange={(ix) => setProp((prop) => (prop.currentSettingsTab = ix))}
+    >
+      <div accordiontitle={t("Box")} className="w-100">
         <BoxModelEditor setProp={setProp} node={node} />
       </div>
-      <table className="w-100" accordiontitle="Display">
+      <table className="w-100" accordiontitle={t("Display")}>
         <tbody>
           <SettingsRow
             field={{
               name: "display",
-              label: "Display",
+              label: t("Display"),
               type: "select",
               options: [
                 "block",
@@ -303,7 +376,7 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "htmlElement",
-              label: "HTML element",
+              label: t("HTML element"),
               type: "select",
               options: [
                 "div",
@@ -315,6 +388,20 @@ const ContainerSettings = () => {
                 "main",
                 "aside",
                 "footer",
+                "p",
+                "strong",
+                "ul",
+                "li",
+                "ol",
+                "label",
+                "details",
+                "summary",
+                "blockquote",
+                "pre",
+                "code",
+                "abbr",
+                "kbd",
+                "small",
               ],
             }}
             node={node}
@@ -323,19 +410,19 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "overflow",
-              label: "Overflow",
+              label: t("Overflow"),
               type: "btn_select",
               options: [
-                { value: "visible", title: "Visible", label: <EyeFill /> },
-                { value: "hidden", title: "Hidden", label: <EyeSlashFill /> },
+                { value: "visible", title: t("Visible"), label: <EyeFill /> },
+                { value: "hidden", title: t("Hidden"), label: <EyeSlashFill /> },
                 {
                   value: "scroll",
-                  title: "Scroll",
+                  title: t("Scroll"),
                   label: <FontAwesomeIcon icon={faScroll} />,
                 },
                 {
                   value: "auto",
-                  title: "Auto",
+                  title: t("Auto"),
                   label: <FontAwesomeIcon icon={faRobot} />,
                 },
               ],
@@ -346,7 +433,7 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "opacity",
-              label: "Opacity",
+              label: t("Opacity"),
               type: "Float",
               attributes: { min: 0, max: 1 },
             }}
@@ -357,7 +444,7 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "position",
-              label: "Position",
+              label: t("Position"),
               type: "select",
               options: ["static", "relative", "fixed", "absolute", "sticky"],
             }}
@@ -370,7 +457,7 @@ const ContainerSettings = () => {
               <SettingsRow
                 field={{
                   name: "top",
-                  label: "Top",
+                  label: t("Top"),
                   type: "DimUnits",
                 }}
                 node={node}
@@ -380,7 +467,7 @@ const ContainerSettings = () => {
               <SettingsRow
                 field={{
                   name: "right",
-                  label: "Right",
+                  label: t("Right"),
                   type: "DimUnits",
                 }}
                 node={node}
@@ -390,7 +477,7 @@ const ContainerSettings = () => {
               <SettingsRow
                 field={{
                   name: "bottom",
-                  label: "Bottom",
+                  label: t("Bottom"),
                   type: "DimUnits",
                 }}
                 node={node}
@@ -400,7 +487,7 @@ const ContainerSettings = () => {
               <SettingsRow
                 field={{
                   name: "left",
-                  label: "Left",
+                  label: t("Left"),
                   type: "DimUnits",
                 }}
                 node={node}
@@ -420,34 +507,34 @@ const ContainerSettings = () => {
                   onChange={setAProp("fullPageWidth", { checked: true })}
                 />
                 <label className="form-check-label">
-                  Expand to full page width
+                  {t("Expand to full page width")}
                 </label>
               </div>
             </td>
           </tr>
         </tbody>
       </table>
-      <table className="w-100" accordiontitle="Contents">
+      <table className="w-100" accordiontitle={t("Contents")}>
         <tbody>
           <SettingsRow
             field={{
               name: "rotate",
-              label: "Rotate °",
+              label: t("Rotate °"),
               type: "Integer",
             }}
             node={node}
             setProp={setProp}
           />
-          <SettingsSectionHeaderRow title="Align" />
+          <SettingsSectionHeaderRow title={t("Align")} />
           <SettingsRow
             field={{
               name: "vAlign",
-              label: "Vertical",
+              label: t("Vertical"),
               type: "btn_select",
               options: [
-                { value: "top", title: "All", label: <AlignTop /> },
-                { value: "middle", title: "All", label: <AlignMiddle /> },
-                { value: "bottom", title: "All", label: <AlignBottom /> },
+                { value: "top", title: t("All"), label: <AlignTop /> },
+                { value: "middle", title: t("All"), label: <AlignMiddle /> },
+                { value: "bottom", title: t("All"), label: <AlignBottom /> },
               ],
             }}
             node={node}
@@ -456,22 +543,22 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "hAlign",
-              label: "Horizontal",
+              label: t("Horizontal"),
               type: "btn_select",
               options: [
-                { value: "start", title: "Left", label: <AlignStart /> },
-                { value: "center", title: "Center", label: <AlignCenter /> },
-                { value: "end", title: "Right", label: <AlignEnd /> },
+                { value: "start", title: t("Left"), label: <AlignStart /> },
+                { value: "center", title: t("Center"), label: <AlignCenter /> },
+                { value: "end", title: t("Right"), label: <AlignEnd /> },
               ],
             }}
             node={node}
             setProp={setProp}
           />
-          <SettingsSectionHeaderRow title="Background" />
+          <SettingsSectionHeaderRow title={t("Background")} />
           <SettingsRow
             field={{
               name: "bgType",
-              label: "Type",
+              label: t("Type"),
               type: "btn_select",
               options: [
                 { value: "None", label: <SlashCircle /> },
@@ -497,7 +584,7 @@ const ContainerSettings = () => {
           {bgType === "Gradient" && (
             <Fragment>
               <tr>
-                <td>Start</td>
+                <td>{t("Start")}</td>
                 <td>
                   <OrFormula
                     nodekey="gradStartColor"
@@ -513,7 +600,7 @@ const ContainerSettings = () => {
                 </td>
               </tr>
               <tr>
-                <td>End</td>
+                <td>{t("End")}</td>
                 <td>
                   <OrFormula
                     nodekey="gradEndColor"
@@ -529,7 +616,7 @@ const ContainerSettings = () => {
                 </td>
               </tr>
               <tr>
-                <td>Direction (&deg;)</td>
+                <td>{t("Direction (&deg;)")}</td>
                 <td>
                   <OrFormula
                     nodekey="gradDirection"
@@ -551,7 +638,7 @@ const ContainerSettings = () => {
           {bgType === "Image" && (
             <tr>
               <td>
-                <label>File</label>
+                <label>{t("File")}</label>
               </td>
               <td>
                 <select
@@ -576,7 +663,7 @@ const ContainerSettings = () => {
           {bgType === "Image Field" && (
             <tr>
               <td>
-                <label>File field</label>
+                <label>{t("File field")}</label>
               </td>
               <td>
                 <select
@@ -604,7 +691,7 @@ const ContainerSettings = () => {
             <Fragment>
               <tr>
                 <td>
-                  <label>Size</label>
+                  <label>{t("Size")}</label>
                 </td>
 
                 <td>
@@ -620,7 +707,7 @@ const ContainerSettings = () => {
               {imageSize !== "repeat" && (
                 <tr>
                   <td>
-                    <label>Responsive widths</label>
+                    <label>{t("Responsive widths")}</label>
                   </td>
 
                   <td>
@@ -633,8 +720,7 @@ const ContainerSettings = () => {
                     />
                     <small>
                       <i>
-                        List of widths to serve resized images, e.g. 300, 400,
-                        600
+                        {t("List of widths to serve resized images, e.g. 300, 400, 600")}
                       </i>
                     </small>
                   </td>
@@ -644,7 +730,7 @@ const ContainerSettings = () => {
           )}
           {bgType === "Color" && (
             <tr>
-              <td>Color</td>
+              <td>{t("Color")}</td>
               <td>
                 <OrFormula nodekey="bgColor" {...{ setProp, isFormula, node }}>
                   <input
@@ -657,11 +743,11 @@ const ContainerSettings = () => {
               </td>
             </tr>
           )}
-          <SettingsSectionHeaderRow title="Typography" />
+          <SettingsSectionHeaderRow title={t("Typography")} />
           <SettingsRow
             field={{
               name: "font-family",
-              label: "Font family",
+              label: t("Font family"),
               type: "Font",
             }}
             node={node}
@@ -671,7 +757,7 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "font-size",
-              label: "Font size",
+              label: t("Font size"),
               type: "DimUnits",
             }}
             node={node}
@@ -681,7 +767,7 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "font-weight",
-              label: "Weight",
+              label: t("Weight"),
               type: "Integer",
               min: 100,
               max: 900,
@@ -694,7 +780,7 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "line-height",
-              label: "Line height",
+              label: t("Line height"),
               type: "DimUnits",
             }}
             node={node}
@@ -704,7 +790,7 @@ const ContainerSettings = () => {
           <tr>
             <td colSpan="2">
               <label>
-                Set text color
+                {t("Set text color")}
                 <input
                   name="setTextColor"
                   type="checkbox"
@@ -717,7 +803,7 @@ const ContainerSettings = () => {
           {setTextColor && (
             <tr>
               <td>
-                <label>Text</label>
+                <label>{t("Text")}</label>
               </td>
               <td>
                 <input
@@ -731,39 +817,39 @@ const ContainerSettings = () => {
           )}
         </tbody>
       </table>
-      <table className="w-100" accordiontitle="Transform">
+      <table className="w-100" accordiontitle={t("Transform")}>
         <tbody>
           <SettingsRow
             field={{
               name: "rotate",
-              label: "Rotate°",
+              label: t("Rotate°"),
               type: "Integer",
             }}
             node={node}
             setProp={setProp}
           />
           <SettingsRow
-            field={{ name: "skewX", label: "SkewX°", type: "Integer" }}
+            field={{ name: "skewX", label: t("SkewX°"), type: "Integer" }}
             node={node}
             setProp={setProp}
             subProp="transform"
             valuePostfix="deg"
           />
           <SettingsRow
-            field={{ name: "skewY", label: "SkewY°", type: "Integer" }}
+            field={{ name: "skewY", label: t("SkewY°"), type: "Integer" }}
             node={node}
             setProp={setProp}
             subProp="transform"
             valuePostfix="deg"
           />
           <SettingsRow
-            field={{ name: "scaleX", label: "ScaleX", type: "Float" }}
+            field={{ name: "scaleX", label: t("ScaleX"), type: "Float" }}
             node={node}
             setProp={setProp}
             subProp="transform"
           />
           <SettingsRow
-            field={{ name: "scaleY", label: "ScaleY", type: "Float" }}
+            field={{ name: "scaleY", label: t("ScaleY"), type: "Float" }}
             node={node}
             setProp={setProp}
             subProp="transform"
@@ -771,7 +857,7 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "translateX",
-              label: "TranslateX",
+              label: t("TranslateX"),
               type: "DimUnits",
             }}
             node={node}
@@ -781,7 +867,7 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "translateY",
-              label: "TranslateY",
+              label: t("TranslateY"),
               type: "DimUnits",
             }}
             node={node}
@@ -790,28 +876,28 @@ const ContainerSettings = () => {
           />
         </tbody>
       </table>
-      <table className="w-100" accordiontitle="Flex properties">
+      <table className="w-100" accordiontitle={t("Flex properties")}>
         <tbody>
-          <SettingsSectionHeaderRow title="Flex item" />
+          <SettingsSectionHeaderRow title={t("Flex item")} />
           <SettingsRow
-            field={{ name: "flex-grow", label: "Grow", type: "Float" }}
+            field={{ name: "flex-grow", label: t("Grow"), type: "Float" }}
             node={node}
             setProp={setProp}
             isStyle={true}
           />
           <SettingsRow
-            field={{ name: "flex-shrink", label: "Shrink", type: "Float" }}
+            field={{ name: "flex-shrink", label: t("Shrink"), type: "Float" }}
             node={node}
             setProp={setProp}
             isStyle={true}
           />
           {display && display.includes("flex") && (
             <Fragment>
-              <SettingsSectionHeaderRow title="Flex container" />
+              <SettingsSectionHeaderRow title={t("Flex container")} />
               <SettingsRow
                 field={{
                   name: "flex-direction",
-                  label: "Direction",
+                  label: t("Direction"),
                   type: "select",
                   options: ["row", "row-reverse", "column", "column-reverse"],
                 }}
@@ -822,7 +908,7 @@ const ContainerSettings = () => {
               <SettingsRow
                 field={{
                   name: "flex-wrap",
-                  label: "Wrap",
+                  label: t("Wrap"),
                   type: "select",
                   options: ["nowrap", "wrap", "wrap-reverse"],
                 }}
@@ -833,7 +919,7 @@ const ContainerSettings = () => {
               <SettingsRow
                 field={{
                   name: "justify-content",
-                  label: "Justify content",
+                  label: t("Justify content"),
                   type: "select",
                   options: [
                     "flex-start",
@@ -855,7 +941,7 @@ const ContainerSettings = () => {
               <SettingsRow
                 field={{
                   name: "align-items",
-                  label: "Align items",
+                  label: t("Align items"),
                   type: "select",
                   options: [
                     "stretch",
@@ -878,7 +964,7 @@ const ContainerSettings = () => {
               <SettingsRow
                 field={{
                   name: "align-content",
-                  label: "Align content",
+                  label: t("Align content"),
                   type: "select",
                   options: [
                     "flex-start",
@@ -903,12 +989,12 @@ const ContainerSettings = () => {
           )}
         </tbody>
       </table>
-      <table className="w-100" accordiontitle="Animate">
+      <table className="w-100" accordiontitle={t("Animate")}>
         <tbody>
           <SettingsRow
             field={{
               name: "animateName",
-              label: "Animation",
+              label: t("Animation"),
               type: "select",
               options: ["None", ...(options.keyframes || [])],
             }}
@@ -918,21 +1004,21 @@ const ContainerSettings = () => {
           <SettingsRow
             field={{
               name: "animateDuration",
-              label: "Duration (s)",
+              label: t("Duration (s)"),
               type: "Float",
             }}
             node={node}
             setProp={setProp}
           />
           <SettingsRow
-            field={{ name: "animateDelay", label: "Delay (s)", type: "Float" }}
+            field={{ name: "animateDelay", label: t("Delay (s)"), type: "Float" }}
             node={node}
             setProp={setProp}
           />
           <SettingsRow
             field={{
               name: "animateInitialHide",
-              label: "Initially hidden",
+              label: t("Initially hidden"),
               type: "Bool",
             }}
             node={node}
@@ -940,31 +1026,30 @@ const ContainerSettings = () => {
           />
         </tbody>
       </table>
-      <table className="w-100" accordiontitle="Show if...">
+      <table className="w-100" accordiontitle={t("Show if...")}>
         <tbody>
           {["show", "edit", "filter", "list"].includes(options.mode) && (
-            <SettingsSectionHeaderRow title="Formula - show if true" />
+            <SettingsSectionHeaderRow title={t("Formula - show if true")} />
           )}
-          {["show", "edit", "filter", "list"].includes(options.mode) && (
-            <tr>
-              <td colSpan={2}>
-                <input
-                  type="text"
-                  className="form-control text-to-display"
-                  value={showIfFormula}
-                  spellCheck={false}
-                  onChange={setAProp("showIfFormula")}
-                  onInput={(e) => validate_expression_elem($(e.target))}
-                />
-                <div style={{ marginTop: "-5px" }}>
-                  <small className="text-muted font-monospace">
-                    FORMULA <FormulaTooltip />
-                  </small>
-                </div>
-              </td>
-            </tr>
-          )}
-          <SettingsSectionHeaderRow title="Role" />
+          <tr>
+            <td colSpan={2}>
+              <input
+                type="text"
+                placeholder={t("Example: x === y")}
+                className="form-control text-to-display"
+                value={showIfFormula}
+                spellCheck={false}
+                onChange={setAProp("showIfFormula")}
+                onInput={(e) => validate_expression_elem($(e.target))}
+              />
+              <div style={{ marginTop: "-5px" }}>
+                <small className="text-muted font-monospace">
+                  {t("FORMULA")} <FormulaTooltip />
+                </small>
+              </div>
+            </td>
+          </tr>
+          <SettingsSectionHeaderRow title={t("Role")} />
           {options.roles.map(({ role, id }) => (
             <tr key={id}>
               <td colSpan="2">
@@ -1006,14 +1091,14 @@ const ContainerSettings = () => {
                     checked={show_for_owner}
                     onChange={setAProp("show_for_owner", { checked: true })}
                   />
-                  <label className="form-check-label">Owner</label>
+                  <label className="form-check-label">{t("Owner")}</label>
                 </div>
               </td>
             </tr>
           ) : null}
           <tr>
             <td>
-              <label>Min screen width</label>
+              <label>{t("Min screen width")}</label>
             </td>
             <td>
               <select
@@ -1028,7 +1113,7 @@ const ContainerSettings = () => {
           </tr>
           <tr>
             <td>
-              <label>Max screen width</label>
+              <label>{t("Max screen width")}</label>
             </td>
             <td>
               <select
@@ -1045,8 +1130,8 @@ const ContainerSettings = () => {
           </tr>
         </tbody>
       </table>
-      <div accordiontitle="Container link">
-        <label>URL</label>
+      <div accordiontitle={t("Container link")}>
+        <label>{t("URL")}</label>
         <OrFormula nodekey="url" {...{ setProp, isFormula, node }}>
           <input
             type="text"
@@ -1058,7 +1143,7 @@ const ContainerSettings = () => {
         </OrFormula>
         {options.triggerActions ? (
           <Fragment>
-            <label>Click action</label>
+            <label>{t("Click action")}</label>
             <select
               value={click_action}
               className="form-control form-select"
@@ -1079,7 +1164,7 @@ const ContainerSettings = () => {
             </select>
           </Fragment>
         ) : null}
-        <label>Hover color</label>
+        <label>{t("Hover color")}</label>
         <select
           value={hoverColor}
           className="form-control form-select"
@@ -1092,9 +1177,9 @@ const ContainerSettings = () => {
         </select>
       </div>
 
-      <div accordiontitle="Class, ID and CSS">
+      <div accordiontitle={t("Class, ID and CSS")}>
         <div>
-          <label>ID</label>
+          <label>{t("ID")}</label>
         </div>
         <OrFormula nodekey="customId" {...{ setProp, isFormula, node }}>
           <input
@@ -1106,7 +1191,7 @@ const ContainerSettings = () => {
           />
         </OrFormula>
         <div>
-          <label>Custom class</label>
+          <label>{t("Custom class")}</label>
         </div>
         <OrFormula nodekey="customClass" {...{ setProp, isFormula, node }}>
           <input
@@ -1118,7 +1203,7 @@ const ContainerSettings = () => {
           />
         </OrFormula>
         <div>
-          <label>Custom CSS</label>
+          <label>{t("Custom CSS")}</label>
         </div>
         <textarea
           rows="4"
@@ -1139,7 +1224,7 @@ const ContainerSettings = () => {
 Container.craft = {
   displayName: "Container",
   props: {
-    minHeight: 0,
+    minHeight: 20,
     vAlign: "top",
     hAlign: "left",
     bgFileId: 0,
@@ -1165,11 +1250,63 @@ Container.craft = {
     show_for_owner: false,
     style: {},
     htmlElement: "div",
+    contents: [],
   },
   rules: {
     canDrag: () => true,
   },
   related: {
     settings: ContainerSettings,
+    segment_type: "container",
+    fields: [
+      { label: "Contents", name: "contents", type: "Nodes", nodeID: "container-canvas" },
+      { name: "gradStartColor", canBeFormula: true },
+      { name: "gradEndColor", canBeFormula: true },
+      { name: "gradDirection", canBeFormula: true },
+      { name: "rotate", default: 0 },
+      { name: "animateName", },
+      { name: "animateDuration" },
+      { name: "animateDelay" },
+      { name: "animateInitialHide" },
+      { name: "customClass" },
+      { name: "customId" },
+      { name: "customCSS" },
+      { name: "overflow" },
+      { name: "margin", default: [0, 0, 0, 0] },
+      { name: "padding", default: [0, 0, 0, 0] },
+      { name: "minHeight", default: 20 },
+      { name: "height" },
+      { name: "width" },
+      { name: "mobileWidth" },
+      { name: "tabletWidth" },
+      { name: "mobileHeight" },
+      { name: "tabletHeight" },
+      { name: "click_action" },
+      { name: "url", canBeFormula: true },
+      { name: "hoverColor" },
+      { name: "minHeightUnit", default: "px" },
+      { name: "heightUnit", default: "px" },
+      { name: "widthUnit", default: "px" },
+      { name: "vAlign" },
+      { name: "hAlign" },
+      { name: "htmlElement", default: "div" },
+      { name: "display", default: "block" },
+      { name: "fullPageWidth", default: false },
+      { name: "bgFileId" },
+      { name: "bgField" },
+      { name: "imageSize", default: "contain" },
+      { name: "imgResponsiveWidths" },
+      { name: "bgType", default: "None" },
+      { name: "style", default: {} },
+      { name: "transform", default: {} },
+      { name: "bgColor", default: "#ffffff", canBeFormula: true },
+      { name: "setTextColor", default: false },
+      { name: "textColor", default: "#000000" },
+      { name: "showIfFormula", default: "" },
+      { name: "showForRole", default: [] },
+      { name: "minScreenWidth", default: "" },
+      { name: "maxScreenWidth", default: "" },
+      { name: "show_for_owner", default: false },
+    ],
   },
 };

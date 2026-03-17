@@ -151,6 +151,7 @@ test.describe("Login Navigate Upload", () => {
     // select a date and check the input
     const yearInput = iframe.locator(".numInput.cur-year");
     await yearInput.fill("2025");
+    await yearInput.press("Enter");
     const monthSelect = iframe.locator("select.flatpickr-monthDropdown-months");
     await monthSelect.selectOption("7");
     const dayToSelect = iframe.locator(
@@ -192,7 +193,7 @@ test.describe("Login Navigate Upload", () => {
         'div[data-sc-embed-viewname="list_processed"]'
       );
       const dateElement = processedItem.locator("time");
-      await expect(dateElement).toHaveCount(4);
+      await expect(dateElement).toHaveCount(6);
     } catch (error) {
       await dumpHTML(page);
       throw error;
@@ -251,7 +252,7 @@ test.describe("Login Navigate Upload", () => {
       'div[data-sc-embed-viewname="list_processed"]'
     );
     const dateElement = processedItem.locator("time");
-    await expect(dateElement).toHaveCount(3);
+    await expect(dateElement).toHaveCount(5);
   });
 
   test("sync offline data", async () => {
@@ -297,6 +298,6 @@ test.describe("Login Navigate Upload", () => {
       'div[data-sc-embed-viewname="list_processed"]'
     );
     const dateElement = processedItem.locator("time");
-    await expect(dateElement).toHaveCount(4);
+    await expect(dateElement).toHaveCount(6);
   });
 });

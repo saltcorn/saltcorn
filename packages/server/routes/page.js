@@ -18,11 +18,12 @@ const {
   getEligiblePage,
   getRandomPage,
 } = require("../routes/utils.js");
-const { isTest } = require("@saltcorn/data/utils");
-const { add_edit_bar } = require("../markup/admin.js");
+const { isTest, objectToQueryString } = require("@saltcorn/data/utils");
+const { add_edit_bar, add_results_to_contents } = require("../markup/admin.js");
 const { traverseSync } = require("@saltcorn/data/models/layout");
 const { run_action_column } = require("@saltcorn/data/plugin-helper");
 const db = require("@saltcorn/data/db");
+const Crash = require("@saltcorn/data/models/crash");
 
 /**
  * @type {object}
@@ -49,20 +50,33 @@ const runPage = async (page, req, res, tic) => {
   // let resultCollector = {};
   if (role <= page.min_role) {
     const contents = await page.run(req.query, { res, req });
+    if (!contents) return;
     const title = scan_for_page_title(contents, page.title);
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
 
-    if (!isTest()) {
-      Trigger.emitEvent("PageLoad", null, req.user, {
-        text: req.__("Page '%s' was loaded", page.name),
-        type: "page",
-        name: page.name,
-        render_time: ms,
-      });
+    const resultCollector = {};
+    if (!isTest() && !req.xhr) {
+      await Trigger.runTableTriggers(
+        "PageLoad",
+        null,
+        {
+          text: req.__("Page '%s' was loaded", page.name),
+          type: "page",
+          name: page.name,
+          render_time: ms,
+          query: req.query,
+        },
+        resultCollector,
+        req.user,
+        { req }
+      );
     }
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
-    else
+    else if (contents.html_string) {
+      res.set("Content-Type", "text/html");
+      await res.send(contents.html_string);
+    } else
       res.sendWrap(
         {
           title,
@@ -71,15 +85,18 @@ const runPage = async (page, req, res, tic) => {
           no_menu: page.attributes?.no_menu,
           requestFluidLayout: page.attributes?.request_fluid_layout,
         } || `${page.name} page`,
-        req.smr
-          ? contents
-          : add_edit_bar({
-              role,
-              title: page.name,
-              what: req.__("Page"),
-              url: `/pageedit/edit/${encodeURIComponent(page.name)}`,
-              contents,
-            })
+        add_results_to_contents(
+          req.smr
+            ? contents
+            : add_edit_bar({
+                role,
+                title: page.name,
+                what: req.__("Page"),
+                url: `/pageedit/edit/${encodeURIComponent(page.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}&${objectToQueryString(req.query)}`,
+                contents,
+              }),
+          resultCollector
+        )
       );
   } else {
     getState().log(2, `Page ${page.name} not authorized`);
@@ -149,7 +166,10 @@ router.get(
   "/:pagename",
   error_catcher(async (req, res) => {
     const state = getState();
-    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
     const maintenanceModePage = state.getConfig("maintenance_mode_page", "");
 
     if (
@@ -196,7 +216,10 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const state = getState();
-    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
     if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
@@ -217,7 +240,10 @@ router.post(
   "/:pagename/action/:rndid",
   error_catcher(async (req, res) => {
     const state = getState();
-    const maintenanceModeEnabled = state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
     if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
@@ -246,6 +272,7 @@ router.post(
           res.json({ success: "ok", ...(result || {}) });
         } catch (e) {
           getState().log(2, e?.stack);
+          await Crash.create(e, req);
           res.status(400).json({ error: e.message || e });
         }
       } else res.status(404).json({ error: "Action not found" });

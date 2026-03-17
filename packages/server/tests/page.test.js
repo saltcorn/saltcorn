@@ -304,6 +304,51 @@ describe("pageedit", () => {
 
       .expect(toInclude("Root pages updated"));
   });
+  it("shows Admin dashboard and All entities list options for admin role", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/pageedit")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Admin dashboard"))
+      .expect(toInclude("All entities list"));
+  });
+  it("does not show All entities list option for non-admin roles", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    const res = await request(app)
+      .get("/pageedit")
+      .set("Cookie", loginCookie)
+      .expect(200);
+    // The value _sc_entities_list should appear exactly once (only for admin field)
+    const matches = (res.text.match(/_sc_entities_list/g) || []).length;
+    expect(matches).toBe(1);
+  });
+  it("redirects to /entities when admin home is set to entities list", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/pageedit/set_root_page")
+      .send("admin=_sc_entities_list")
+      .send("public=")
+      .send("user=")
+      .send("staff=")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/pageedit"));
+    await request(app)
+      .get("/")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/entities"));
+    // Reset admin home
+    await request(app)
+      .post("/pageedit/set_root_page")
+      .send("admin=")
+      .send("public=")
+      .send("user=")
+      .send("staff=")
+      .set("Cookie", loginCookie)
+      .expect(toRedirect("/pageedit"));
+  });
   it("should delete page", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();

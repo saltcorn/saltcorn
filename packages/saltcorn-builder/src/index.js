@@ -49,8 +49,18 @@
  */
 
 import React from "react";
+import { createRoot } from "react-dom/client";
+import { polyfill } from "mobile-drag-drop";
+import { scrollBehaviourDragImageTranslateOverride } from "mobile-drag-drop/scroll-behaviour";
 import Builder from "./components/Builder";
-import ReactDOM from "react-dom";
+
+
+polyfill({
+  forceApply: true,
+  dragImageTranslateOverride: scrollBehaviourDragImageTranslateOverride,
+});
+
+window.addEventListener("touchmove", function () {}, { passive: false });
 
 /**
  * 
@@ -60,13 +70,16 @@ import ReactDOM from "react-dom";
  * @param {string} mode 
  */
 function renderBuilder(id, options, layout, mode) {
-  ReactDOM.render(
+  const container = document.getElementById(id);
+  if (!container) return;
+  const root = container.__scRoot || createRoot(container);
+  container.__scRoot = root;
+  root.render(
     <Builder
       options={JSON.parse(decodeURIComponent(options))}
       layout={JSON.parse(decodeURIComponent(layout))}
       mode={mode}
     />,
-    document.getElementById(id)
   );
 }
 

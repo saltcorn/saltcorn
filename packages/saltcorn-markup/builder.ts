@@ -112,6 +112,10 @@ export = /**
       domReady(`enable_error_catcher();
       window.set_state_fields = ()=>{};
       window.set_state_field = ()=>{};
-      window.pjax_to = ()=>{};`)
+      window.pjax_to = ()=>{};
+      if (typeof _sc_lightmode !== "undefined" && _sc_lightmode === "dark") {
+        document.body.setAttribute("data-bs-theme", "dark");
+        document.body.classList.add("builder-dark");
+      }`)
     )
   );

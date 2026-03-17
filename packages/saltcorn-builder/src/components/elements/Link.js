@@ -6,6 +6,7 @@
 
 import React, { Fragment, useContext } from "react";
 import { useNode } from "@craftjs/core";
+import useTranslation from "../../hooks/useTranslation";
 import {
   blockProps,
   BlockSetting,
@@ -94,6 +95,7 @@ export /**
  * @subcategory components
  */
 const LinkSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     text: node.data.props.text,
     url: node.data.props.url,
@@ -137,7 +139,7 @@ const LinkSettings = () => {
         <tbody>
           <tr>
             <td>
-              <label>Text to display</label>
+              <label>{t("Text to display")}</label>
             </td>
             <td>
               <OrFormula nodekey="text" {...{ setProp, isFormula, node }}>
@@ -152,7 +154,7 @@ const LinkSettings = () => {
           </tr>
           <tr>
             <td>
-              <label>Link source</label>
+              <label>{t("Link source")}</label>
             </td>
             <td>
               <select
@@ -169,14 +171,14 @@ const LinkSettings = () => {
                   });
                 }}
               >
-                <option>URL</option>
-                {(options.pages || []).length > 0 && <option>Page</option>}
+                <option>{t("URL")}</option>
+                {(options.pages || []).length > 0 && <option>{t("Page")}</option>}
                 {(options.views || []).length > 0 &&
                   ["page", "filter"].includes(options.mode) && (
-                    <option>View</option>
+                    <option>{t("View")}</option>
                   )}
                 {(options.page_groups || []).length > 0 && (
-                  <option>Page Group</option>
+                  <option>{t("Page Group")}</option>
                 )}
               </select>
             </td>
@@ -184,7 +186,7 @@ const LinkSettings = () => {
           {link_src === "URL" && (
             <tr>
               <td>
-                <label>URL</label>
+                <label>{t("URL")}</label>
               </td>
               <td>
                 <OrFormula nodekey="url" {...{ setProp, isFormula, node }}>
@@ -202,7 +204,7 @@ const LinkSettings = () => {
           {link_src === "Page" && (
             <tr>
               <td>
-                <label>Page</label>
+                <label>{t("Page")}</label>
               </td>
               <td>
                 <select
@@ -223,7 +225,7 @@ const LinkSettings = () => {
           {link_src === "Page Group" && (
             <tr>
               <td>
-                <label>Page Group</label>
+                <label>{t("Page Group")}</label>
               </td>
               <td>
                 <select
@@ -244,7 +246,7 @@ const LinkSettings = () => {
           {link_src === "View" && (
             <tr>
               <td>
-                <label>View</label>
+                <label>{t("View")}</label>
               </td>
               <td>
                 <select
@@ -265,7 +267,7 @@ const LinkSettings = () => {
           {link_src === "View" && (
             <tr>
               <td>
-                <label>State Formula</label>
+                <label>{t("State Formula")}</label>
               </td>
               <td>
                 <input
@@ -299,7 +301,7 @@ const LinkSettings = () => {
           checked={nofollow}
           onChange={setAProp("nofollow", { checked: true })}
         />
-        <label className="form-check-label">Nofollow</label>
+        <label className="form-check-label">{t("Nofollow")}</label>
       </div>
       <div className="form-check">
         <input
@@ -309,7 +311,7 @@ const LinkSettings = () => {
           checked={target_blank}
           onChange={setAProp("target_blank", { checked: true })}
         />
-        <label className="form-check-label">Open in new tab</label>
+        <label className="form-check-label">{t("Open in new tab")}</label>
       </div>
       <div className="form-check">
         <input
@@ -319,7 +321,7 @@ const LinkSettings = () => {
           checked={in_modal}
           onChange={setAProp("in_modal", { checked: true })}
         />
-        <label className="form-check-label">Open in popup modal?</label>
+        <label className="form-check-label">{t("Open in popup modal?")}</label>
       </div>
 
       {["filter", "page"].includes(options.mode) && (
@@ -331,7 +333,7 @@ const LinkSettings = () => {
             checked={transfer_state}
             onChange={setAProp("transfer_state", { checked: true })}
           />
-          <label className="form-check-label">Transfer state</label>
+          <label className="form-check-label">{t("Transfer state")}</label>
         </div>
       )}
 
@@ -354,7 +356,7 @@ const LinkSettings = () => {
                         : ""
                   }
                 >
-                  Configure this {link_src}
+                  {t("Configure this")} {link_src}
                 </a>
               </td>
             </tr>

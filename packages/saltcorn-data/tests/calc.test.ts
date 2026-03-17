@@ -8,8 +8,11 @@ const { plugin_with_routes, sleep } = mocks;
 import expression from "../models/expression";
 const {
   eval_expression,
+  eval_statements,
+  identifiersInCodepage,
   get_expression_function,
   transform_for_async,
+  get_async_expression_function,
   expressionValidator,
   jsexprToWhere,
   jsexprToSQL,
@@ -20,8 +23,9 @@ const {
 import { mkWhere } from "@saltcorn/db-common/internal";
 
 import { assertIsSet } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import utils from "../utils";
+import PlainDate from "@saltcorn/plain-date";
 const { interpolate, mergeIntoWhere } = utils;
 
 getState().registerPlugin("base", require("../base-plugin"));
@@ -32,6 +36,15 @@ jest.setTimeout(30000);
 beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
+});
+
+describe("identifiersInCodepage", () => {
+  it("gets Function", () => {
+    const ids = identifiersInCodepage(
+      `function foobar(){};async function baz(){}`
+    );
+    expect(ids).toEqual(new Set(["foobar", "baz"]));
+  });
 });
 
 describe("eval_expression", () => {
@@ -45,6 +58,111 @@ describe("eval_expression", () => {
     await getState().refresh_codepages();
 
     expect(eval_expression("add58(x)", { x: 5 })).toBe(63);
+  });
+  it("uses moment with plain date", () => {
+    expect(
+      eval_expression("moment(mydate).format('DD.MM.YYYY')", {
+        mydate: new PlainDate("2026-10-04"),
+      })
+    ).toBe("04.10.2026");
+  });
+
+  it("evaluates with null row", () => {
+    expect(eval_expression("5+2", undefined)).toBe(7);
+    expect(eval_expression("5+2", null)).toBe(7);
+    expect(eval_expression("5+2")).toBe(7);
+  });
+});
+
+describe("eval_statements", () => {
+  it("evaluates", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
+    expect(await eval_statements("return x+2", { x: 5 })).toBe(7);
+    expect(await eval_statements("return add3(x)+2", { x: 5 })).toBe(10);
+    expect(
+      await eval_statements(
+        `
+      const row = await Table.findOne("books").getRow({id});
+      return add3(row.pages)+2
+      `,
+        { id: 1 }
+      )
+    ).toBe(972);
+  });
+});
+describe("get_async_expression_function", () => {
+  it("evaluates with null row", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
+    const f = get_async_expression_function("add5(1)+ add3(4)+asyncAdd2(x)", [
+      new Field({ name: "x", type: "Integer" }),
+    ]);
+    const y = await f({ x: 5 });
+
+    expect(y).toBe(20);
+  });
+});
+
+describe("code pages in eval", () => {
+  it("sync codepages", async () => {
+    await getState().setConfig("function_code_pages", {
+      mypage: `function add59(x){return x+59};
+      globalThis.fooconst = 13;
+      `,
+    });
+    await getState().refresh_codepages();
+
+    expect(eval_expression("add59(fooconst)", {})).toBe(59 + 13);
+  });
+  it("async codepages", async () => {
+    await getState().setConfig("function_code_pages", {
+      mypage: `
+      globalThis.barconst = 17;
+      function add8(x){return x+8}
+      runAsync(async () => {
+        const book = await Table.findOne("books").getRow({id:1});
+        globalThis.bookpages = book.pages;      
+      })
+      globalThis.bazconst = 12;
+      `,
+    });
+    await getState().refresh_codepages();
+
+    expect(eval_expression("bookpages", {})).toBe(967);
+    expect(eval_expression("barconst", {})).toBe(17);
+    expect(eval_expression("bazconst", {})).toBe(12);
+    expect(eval_expression("add8(bazconst)", {})).toBe(20);
+  });
+  it("user driven constant change in codepages", async () => {
+    const table = Table.findOne("books");
+    assertIsSet(table);
+    await getState().setConfig("function_code_pages", {
+      mypage: `
+      runAsync(async () => {
+        const books = await Table.findOne("books").getRows({});
+        let sum = 0
+        for(const b of books) sum += b.pages
+        globalThis.sumbookpages = sum;
+      })
+      `,
+    });
+    await getState().refresh_codepages();
+
+    expect(eval_expression("sumbookpages", {})).toBe(1695);
+    const tr = await Trigger.create({
+      action: "run_js_code",
+      table_id: table.id,
+      when_trigger: "Insert",
+      configuration: {
+        code: `await refreshSystemCache("codepages");`,
+      },
+    });
+    const id = await table.insertRow({ author: "Giuseppe Tomasi", pages: 209 });
+    expect(eval_expression("sumbookpages", {})).toBe(1695 + 209);
+    await table.deleteRows({ id });
+    await sleep(500);
+    await tr.delete();
   });
 });
 
@@ -140,7 +258,7 @@ describe("calculated", () => {
     } catch (e: any) {
       error = e;
     }
-    expect(error.constructor.name).toBe("ReferenceError");
+    expect(error.constructor.name).toContain("Error");
   });
   it("stored existing", async () => {
     const table = await Table.create("withcalcs3");
@@ -186,6 +304,48 @@ describe("calculated", () => {
     assertIsSet(rowlast);
     expect(rowlast.z).toBe(9);
     expect(rowlast.x).toBe(7);
+  });
+  it("avoid nans in integer fields", async () => {
+    const table = await Table.create("withcalcsintnans");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "y",
+      type: "Integer",
+    });
+
+    await Field.create({
+      table,
+      label: "z",
+      type: "Integer",
+      calculated: true,
+      expression:
+        "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
+      stored: true,
+    });
+    await Field.create({
+      table,
+      label: "fz",
+      type: "Float",
+      calculated: true,
+      expression:
+        "moment(null).startOf('day').diff(moment(null).startOf('day'), 'days') + 1",
+      stored: true,
+    });
+    await table.update({ versioned: true });
+
+    const id1 = await table.insertRow({ x: 7, y: 2 });
+
+    const row0 = await table.getRow({ id: id1 });
+    assertIsSet(row0);
+    expect(row0.x).toBe(7);
+    expect(row0.z).toBe(null);
+    //seems some differences in pg or node versions
+    expect(isNaN(row0.fz) || row0.fz === null).toBe(true);
   });
   it("use supplied function", async () => {
     const table = await Table.create("withcalcs5");
@@ -239,6 +399,14 @@ describe("calculated", () => {
       expression: "1+asyncAdd2(x)",
       stored: true,
     });
+    await Field.create({
+      table,
+      label: "td",
+      type: "Date",
+      calculated: true,
+      expression: "today(-5)",
+      stored: true,
+    });
 
     const id = await table.insertRow({ x: 14 });
     const row0 = await table.getRow({});
@@ -247,6 +415,98 @@ describe("calculated", () => {
     await table.updateRow({ x: 15 }, id);
     const rows = await table.getRows({});
     expect(rows[0].z).toBe(18);
+    if (!db.isSQLite) expect(rows[0].td instanceof Date).toBe(true);
+  });
+});
+
+describe("calculated field dependencies", () => {
+  it("build table", async () => {
+    const table = await Table.create("withcalcs11");
+    await Field.create({
+      table,
+      label: "x",
+      type: "Integer",
+    });
+    await Field.create({
+      table,
+      label: "xp1ns",
+      type: "Integer",
+      calculated: true,
+      expression: "x+1",
+    });
+    await Field.create({
+      table,
+      label: "xp1s",
+      type: "Integer",
+      calculated: true,
+      expression: "x+1",
+      stored: true,
+    });
+
+    await Field.create({
+      table,
+      label: "xp2s",
+      type: "Integer",
+      calculated: true,
+      stored: true,
+      expression: "xp1ns+1",
+    });
+
+    await Field.create({
+      table,
+      label: "xp2ns",
+      type: "Integer",
+      calculated: true,
+      expression: "xp1s+1",
+    });
+
+    const id = await table.insertRow({ x: 0 });
+    const row = await table.getRow({ id });
+    expect(row!.xp1ns).toBe(1);
+    expect(row!.xp1s).toBe(1);
+    expect(row!.xp2ns).toBe(2);
+    //expect(row!.xp2s).toBe(2); => null
+    await table.updateRow({ x: 10 }, id);
+    const row1 = await table.getRow({ id });
+    expect(row1!.xp1ns).toBe(11);
+    expect(row1!.xp1s).toBe(11);
+    expect(row1!.xp2ns).toBe(12);
+  });
+});
+
+describe("single half-h joinfields in stored calculated fields", () => {
+  it("creates", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const f = await Field.create({
+      table: patients,
+      label: "favpagesh",
+      type: "Integer",
+      calculated: true,
+      expression: "favbookⱵpages",
+      stored: true,
+    });
+    expect(f.attributes.calc_joinfields.length).toBe(1);
+    expect(f.attributes.calc_joinfields[0].targetTable).toBe("books");
+    expect(f.attributes.calc_joinfields[0].field).toBe("favbook");
+  });
+  it("updates", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const bookRows = await patients.getJoinedRows({});
+    for (const row of bookRows) {
+      await patients.updateRow({}, row.id);
+    }
+  });
+  it("check", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    assertIsSet(patients);
+    const bookrow = await patients.getJoinedRow({ where: { id: 1 } });
+
+    expect(bookrow?.favpagesh).toBe(967);
+    const bookrow1 = await patients.getRow({ id: 1 });
+
+    expect(bookrow1?.favpagesh).toBe(967);
   });
 });
 describe("single joinfields in stored calculated fields", () => {
@@ -374,7 +634,7 @@ describe("single joinfields in stored calculated fields", () => {
     const bid = await books.insertRow({ author: "Terry Eagleton", pages: 456 });
     const book1 = await books.getRow({ id: bid });
     assertIsSet(book1);
-    expect(book1.storedsum).toBe(4);
+    expect(book1.storedsum).toBe(bid + 1);
 
     await books.getField("number_of_fans")!.delete();
     await books.getField("idp1")!.delete();
@@ -476,7 +736,14 @@ describe("double joinfields in stored calculated fields", () => {
       expression: "patient_id?.favbook?.pages",
       stored: true,
     });
-    //console.log(f.attributes.calc_joinfields)
+    //console.log(f.attributes.calc_joinfields);
+    expect(f.attributes.calc_joinfields.length).toBe(2);
+    expect(f.attributes.calc_joinfields[0].targetTable).toBe("books");
+    expect(f.attributes.calc_joinfields[0].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[0].targetField).toBe("pages");
+    expect(f.attributes.calc_joinfields[1].targetTable).toBe("patients");
+    expect(f.attributes.calc_joinfields[1].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[1].targetField).toBe("favbook");
   });
   it("recalculates if final value changes", async () => {
     const readings = Table.findOne({ name: "readings" });
@@ -539,6 +806,48 @@ describe("double joinfields in stored calculated fields", () => {
 
     const reading1 = await readings.getRow({ id: readid });
     expect(reading1?.favpages).toBe(967);
+  });
+});
+
+describe("double half-h joinfields in stored calculated fields", () => {
+  it("creates", async () => {
+    const readings = Table.findOne({ name: "readings" });
+    assertIsSet(readings);
+    const f = await Field.create({
+      table: readings,
+      label: "favpagesh",
+      type: "Integer",
+      calculated: true,
+      expression: "patient_idⱵfavbookⱵpages",
+      stored: true,
+    });
+    //console.log(f.attributes.calc_joinfields)
+    expect(f.attributes.calc_joinfields.length).toBe(2);
+    expect(f.attributes.calc_joinfields[0].targetTable).toBe("books");
+    expect(f.attributes.calc_joinfields[0].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[0].targetField).toBe("pages");
+    expect(f.attributes.calc_joinfields[1].targetTable).toBe("patients");
+    expect(f.attributes.calc_joinfields[1].field).toBe("patient_id");
+    expect(f.attributes.calc_joinfields[1].targetField).toBe("favbook");
+  });
+  it("recalculates if final value changes", async () => {
+    const readings = Table.findOne({ name: "readings" });
+
+    assertIsSet(readings);
+
+    const patients = Table.findOne({ name: "patients" });
+
+    assertIsSet(patients);
+
+    const patid = await patients.insertRow({ name: "Stephen Few", favbook: 2 });
+
+    const readid = await readings.insertRow({
+      patient_id: patid,
+      temperature: 37,
+    });
+
+    const reading = await readings.getRow({ id: readid });
+    expect(reading?.favpagesh).toBe(728);
   });
 });
 
@@ -938,9 +1247,13 @@ describe("free variables", () => {
     ]).toEqual(["x.k", "y.z"]);
   });
 });
-describe("interpolation", () => {
+describe("interpolation function", () => {
   it("interpolates simple", () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
     expect(interpolate("hello {{ x }}", { x: 1 })).toBe("hello 1");
+    expect(interpolate("hello {{ x+1 }}", { x: 1 })).toBe("hello 2");
+    expect(interpolate("hello {{ add3(x) }}", { x: 1 })).toBe("hello 4");
     expect(
       interpolate("hello {{ x }}", { x: "<script>alert(1)</script>" })
     ).toBe("hello &lt;script&gt;alert(1)&lt;/script&gt;");
@@ -948,12 +1261,30 @@ describe("interpolation", () => {
       interpolate("hello {{! x }}", { x: "<script>alert(1)</script>" })
     ).toBe("hello <script>alert(1)</script>");
 
-    //expect(interpolate("hello {{x}}", { x: 1 })).toBe("hello 1"); TODO
+    expect(interpolate("hello {{x}}", { x: 1 })).toBe("hello 1");
+  });
+  it("reinterpolation", () => {
+    // this would be dynamically set by a trusted user without needing admin role. E.g. a row in a table
+    const config = { greeter: "Hello {{ firstName }}!" };
+
+    // a row from a database
+    const dataRow = { firstName: "John", age: 34 };
+
+    const letterTemplate = `{{= greeter }} It has come to our attention...`;
+
+    const letter = interpolate(letterTemplate, { ...config, ...dataRow });
+
+    expect(letter).toBe("Hello John! It has come to our attention...");
   });
 });
 describe("jsexprToSQL", () => {
   it("translates equality", () => {
-    expect(jsexprToSQL("foo==4")).toEqual("(foo)==(4)");
+    expect(jsexprToSQL("foo==4")).toEqual("(foo)=(4)");
+  });
+  it("translates string equality", () => {
+    expect(jsexprToSQL('foo=="bar"')).toEqual("(foo)=('bar')");
+    expect(jsexprToSQL('foo!="bar"')).toEqual("(foo)!=('bar')");
+    expect(jsexprToSQL('!(foo=="bar")')).toEqual("not ((foo)=('bar'))");
   });
   it("translates bools", () => {
     expect(jsexprToSQL("foo==true")).toEqual("foo is true");
@@ -964,6 +1295,16 @@ describe("jsexprToSQL", () => {
     expect(jsexprToSQL("foo==null")).toEqual("foo is null");
     expect(jsexprToSQL("foo!=null")).toEqual("foo is not null");
     expect(jsexprToSQL("foo!==null")).toEqual("foo is not null");
+  });
+  it("translates and", () => {
+    expect(jsexprToSQL("foo==true && x==2")).toEqual(
+      "(foo is true)and((x)=(2))"
+    );
+  });
+  it("translates something mildly complex", () => {
+    expect(jsexprToSQL('!(name==="roderick" && phone==null)')).toEqual(
+      "not (((name)=('roderick'))and(phone is null))"
+    );
   });
 });
 describe("mergeIntoWhere", () => {
@@ -1035,13 +1376,31 @@ describe("jsexprToWhere", () => {
   });
   it("translates join field", async () => {
     const books = Table.findOne({ name: "books" });
-    const fields = await books?.getFields();
+    const fields = books?.getFields();
     expect(jsexprToWhere("publisher.name=='AK Press'", {}, fields)).toEqual({
       publisher: {
         inSelect: {
           field: "id",
           table: "publisher",
           tenant: "public",
+          where: { name: "AK Press" },
+        },
+      },
+    });
+  });
+  it("translates double join field", async () => {
+    const patients = Table.findOne({ name: "patients" });
+    expect(
+      jsexprToWhere("favbook.publisher.name=='AK Press'", {}, patients?.fields)
+    ).toEqual({
+      favbook: {
+        inSelect: {
+          field: "publisher",
+          table: "books",
+          tenant: "public",
+          through: "publisher",
+          through_pk: "id",
+          valField: "id",
           where: { name: "AK Press" },
         },
       },

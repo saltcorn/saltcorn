@@ -26,6 +26,19 @@ div.card.builder {
   border: 1px solid #111111;
 }
 
+div.card.builder.card-drag-over,
+div.card.builder[data-drag-over="true"] {
+  border: 2px solid #28a745 !important;
+  box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25) !important;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+div.card.builder.card-drag-over .card-body,
+div.card.builder[data-drag-over="true"] .card-body {
+  background-color: rgba(40, 167, 69, 0.1) !important;
+  transition: background-color 0.15s ease-in-out;
+}
+
 table.toolbox td {
   border: 1px solid black;
   width: 70px;
@@ -97,6 +110,24 @@ div.toolbar-row:nth-child(1) {
   border-top: none;
 }
 
+div.wrap-builder-elem {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.dnd-poly-drag-image {
+  opacity: 0.5 !important;
+}
+
+.dnd-poly-drag-image.dnd-poly-snapback {
+  transition-property: transform, -webkit-transform !important;
+  transition-duration: 250ms !important;
+  transition-timing-function: ease-out !important;
+}
+
 div.wrap-builder-elem label {
   position: absolute;
   bottom: -1px;
@@ -110,7 +141,9 @@ div.wrap-builder-elem label {
 
 #builder-main-canvas {
   height: calc(100vh - 70px);
-  overflow-y: auto;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 #builder-main-canvas .is-text a {
@@ -140,6 +173,32 @@ div.wrap-builder-elem label {
 
 .canvas {
   outline: 1px dashed #808080;
+}
+
+.kontainer > div {
+  display: inherit;
+  flex-wrap: inherit;
+  flex-direction: inherit;
+  gap: inherit;
+  justify-content: inherit;
+  align-items: inherit;
+  width: 100%;
+}
+.kontainer > div > .canvas {
+  display: inherit;
+  flex-wrap: inherit;
+  flex-direction: inherit;
+  gap: inherit;
+  justify-content: inherit;
+  align-items: inherit;
+}
+
+#builder-main-canvas .builder-columns {
+  padding: 4px;
+  outline: 1px dashed transparent;
+}
+#builder-main-canvas .builder-columns:hover {
+  outline-color: #b0b0b0;
 }
 
 #builder-main-canvas div.root-canvas {
@@ -525,3 +584,256 @@ div.componets-and-library-accordion {
 .toolbox-card:nth-child(2) {
   margin-bottom: 0px;
 }
+
+/* Builder left column & Layers panel dark theme */
+.builder-dark-panel .toolbox-card,
+.builder-dark-panel .componets-and-library-accordion .card {
+  background-color: #212529 !important;
+  border-color: #495057 !important;
+  color: #f8f9fa !important;
+}
+
+.builder-dark-panel .toolbox-card .card-header,
+.builder-dark-panel .componets-and-library-accordion .card-header,
+.builder-dark-panel .accordion .card-header {
+  background-color: #343a40 !important;
+  border-color: #495057 !important;
+  color: #f8f9fa !important;
+}
+
+.card .right-section {
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title-right {
+  min-width: 100px;
+}
+
+.builder-dark-panel .toolbox-card .card-body,
+.builder-dark-panel .componets-and-library-accordion .card-body {
+  background-color: #212529 !important;
+  color: #f8f9fa !important;
+}
+
+.craft-layer-manager__header-actions button[aria-label*="visible"],
+.craft-layer-manager__header-actions button[aria-label*="hidden"] {
+  display: none !important;
+}
+
+.craft-layer-node > div > div > a {
+  display: none !important;
+}
+
+.builder-layer-node {
+  font-size: 13px;
+  padding-right: 10px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.builder-dark-panel .builder-layers,
+.builder-layers-dark {
+  background-color: #212529 !important;
+  color: #f8f9fa !important;
+}
+
+.builder-dark-panel .builder-layers *,
+.builder-layers-dark * {
+  color: inherit;
+}
+
+.builder-dark-panel .builder-layers a,
+.builder-layers-dark a {
+  color: #6ea8fe !important;
+}
+
+.builder-dark-panel .builder-layers .collapse-item,
+.builder-dark-panel .accordion-button,
+.builder-dark-panel .accordion-button:not(.collapsed) {
+  background-color: #212529 !important;
+  color: #f8f9fa !important;
+  border-color: #495057 !important;
+}
+
+.builder-dark-panel .accordion-button::after {
+  filter: invert(1);
+}
+
+.builder-dark-panel .accordion-body {
+  background-color: #212529 !important;
+  color: #f8f9fa !important;
+  border-color: #495057 !important;
+}
+
+.builder-dark-panel .builder-expand-toggle-left,
+.builder-dark-panel .builder-expand-toggle-right {
+  color: #adb5bd !important;
+}
+
+/* react-select dark mode: control scoped by .builder-select-dark on Select wrapper,
+   menu scoped by body.builder-dark (menu is portaled to body). All !important to override Emotion. */
+.builder-select-dark .builder-select__control,
+.builder-select-dark .builder-select__control:hover {
+  background-color: #212529 !important;
+  border-color: #495057 !important;
+  color: #1e416423 !important;
+}
+
+.builder-select-dark .builder-select__value-container {
+  background-color: transparent !important;
+}
+
+.builder-select-dark .builder-select__single-value,
+.builder-select-dark .builder-select__input-container {
+  color: #f8f9fa !important;
+}
+
+.builder-select-dark .builder-select__input-container input {
+  color: #f8f9fa !important;
+}
+
+.builder-select-dark .builder-select__placeholder {
+  color: #adb5bd !important;
+}
+
+.builder-select-dark .builder-select__dropdown-indicator,
+.builder-select-dark .builder-select__clear-indicator {
+  color: #adb5bd !important;
+}
+
+.builder-select-dark .builder-select__indicator-separator {
+  background-color: #495057 !important;
+}
+
+/* Dropdown menu (portaled to body) – needs body.builder-dark */
+body.builder-dark .builder-select__menu,
+[data-bs-theme="dark"] .builder-select__menu {
+  background-color: #212529 !important;
+  border: 1px solid #495057 !important;
+}
+
+body.builder-dark .builder-select__menu-list,
+[data-bs-theme="dark"] .builder-select__menu-list {
+  background-color: #212529 !important;
+}
+
+body.builder-dark .builder-select__option,
+[data-bs-theme="dark"] .builder-select__option {
+  background-color: transparent !important;
+  color: #f8f9fa !important;
+}
+
+body.builder-dark .builder-select__option--is-focused,
+[data-bs-theme="dark"] .builder-select__option--is-focused {
+  background-color: #343a40 !important;
+}
+
+body.builder-dark .builder-select__option--is-selected,
+[data-bs-theme="dark"] .builder-select__option--is-selected {
+  background-color: #c78e14 !important;
+  color: #fff !important;
+}
+
+body.builder-dark .builder-select__option--is-selected.builder-select__option--is-focused,
+[data-bs-theme="dark"] .builder-select__option--is-selected.builder-select__option--is-focused {
+  background-color: #0b5ed7 !important;
+}
+
+body.builder-dark .builder-select__group-heading,
+[data-bs-theme="dark"] .builder-select__group-heading {
+  color: #adb5bd !important;
+}
+
+body.builder-dark .builder-select__menu-notice,
+[data-bs-theme="dark"] .builder-select__menu-notice {
+  color: #adb5bd !important;
+}
+
+/* Layers Panel Styling - Light Theme Defaults */
+.builder-layer-node {
+  background-color: transparent; /* Default for light theme */
+  color: #333; /* Default text color for light theme */
+  border-bottom: 1px solid #ddd; /* Lighter border for light theme */
+}
+
+.builder-layer-node.hovered {
+  background-color: #e0e0e0; /* Hover background for light theme */
+}
+
+.builder-layers .builder-layer-node .fa-chevron-down {
+  color: #333; /* Icon color for light theme */
+}
+
+/* Layers Panel Styling - Dark Theme Overrides */
+.builder-dark-panel .builder-layer-node,
+[data-bs-theme="dark"] .builder-layer-node {
+  background-color: transparent;
+  color: #f8f9fa; /* Text color for dark theme */
+  border-bottom: 1px solid #495057; /* Darker border for dark theme */
+}
+
+.builder-dark-panel .builder-layer-node.hovered,
+[data-bs-theme="dark"] .builder-layer-node.hovered {
+  background-color: #343a40; /* Hover background for dark theme */
+}
+
+.builder-dark-panel .builder-layers .builder-layer-node .fa-chevron-down,
+[data-bs-theme="dark"] .builder-layers .builder-layer-node .fa-chevron-down {
+  color: #f8f9fa; /* Icon color for dark theme */
+}
+
+/* Ensure selected nodes maintain visibility */
+.builder-layer-node.selected {
+  background-color: #cce5ff;
+  border-left: 3px solid #2680eb;
+}
+
+.builder-dark-panel .builder-layer-node.selected,
+[data-bs-theme="dark"] .builder-layer-node.selected {
+  background-color: #1a3a5c;
+  border-left: 3px solid #4da3ff;
+}
+
+.code-modal {
+  min-height: 80vh;
+}
+
+.code-modal-form {
+  min-height: 70vh;
+}
+
+.device-preview-toolbar {
+  display: flex;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 5px 0;
+  flex-shrink: 0;
+}
+
+.device-preview-btn {
+}
+
+.device-preview-scroll-area {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.device-preview-canvas-wrapper {
+  transition: max-width 0.3s ease;
+  margin: 0 auto;
+}
+
+.device-preview-constrained {
+  border-left: 1px dashed #adb5bd;
+  border-right: 1px dashed #adb5bd;
+}
+

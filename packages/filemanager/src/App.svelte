@@ -323,6 +323,17 @@
     e.preventDefault();
     if (e.dataTransfer?.files?.length > 0) uploadFiles(e.dataTransfer.files);
   }
+
+  const editableExtensions = [
+    'html', 'css', 'js', 'jsx',
+    'ts', 'tsx', 'sql', 'py',
+    'bash', 'sh', 'txt', 'json',
+    'md', 'yml'
+  ];
+
+  $: extension = lastSelected?.location?.split('.').pop()?.toLowerCase();
+  $: isEditable = editableExtensions.includes(extension);
+
 </script>
 
 <main>
@@ -337,15 +348,26 @@
       <div>
         <nav aria-label="breadcrumb">
           <ol class="breadcrumb">
-            {#each pathSegments as segment}
-              <li
-                class="breadcrumb-item"
-                on:click={gotoFolder(segment.location)}
-              >
-                {#if segment.icon}
-                  <Fa icon={segment.icon} />
+            {#each pathSegments as segment, i}
+              <li class="breadcrumb-item">
+                {#if i === pathSegments.length - 1}
+                  {#if segment.icon}
+                    <Fa icon={segment.icon} />
+                  {:else}
+                    {segment.name}
+                  {/if}
                 {:else}
-                  {segment.name}
+                  <button
+                    type="button"
+                    class="breadcrumb-link"
+                    on:click={() => gotoFolder(segment.location)}
+                  >
+                    {#if segment.icon}
+                      <Fa icon={segment.icon} />
+                    {:else}
+                      {segment.name}
+                    {/if}
+                  </button>
                 {/if}
               </li>
             {/each}
@@ -514,6 +536,10 @@
           <a href={`/files/serve/${lastSelected.location}`}>Link</a>
           &nbsp;|&nbsp;
           <a href={`/files/download/${lastSelected.location}`}>Download</a>
+          {#if isEditable}
+          &nbsp;|&nbsp;
+          <a href={`/files/edit/${lastSelected.location}`}>Edit</a>
+        {/if}
         </div>
         {#if selectedList.length > 1}
           <strong
@@ -580,5 +606,12 @@
   div.filelist {
     max-height: 90vh;
     overflow-y: scroll;
+  }
+  .breadcrumb-link {
+    background: none;
+    border: none;
+    padding: 0;
+    color: inherit;
+    cursor: pointer;
   }
 </style>

@@ -339,7 +339,7 @@ describe("Misc Show views", () => {
     });
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toContain(
-      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-local-state="/view/patientlist?favbook=1"><div class="table-responsive"><table '
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-local-state="/view/patientlist?favbook=1" data-sc-view-source="/view/patientlist?favbook=1"><div class="table-responsive"><table '
     );
     expect(vres1).toContain("Kirk Douglas");
     expect(vres1).not.toContain("Michael Douglas");

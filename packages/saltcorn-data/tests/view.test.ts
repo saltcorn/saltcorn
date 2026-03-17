@@ -217,7 +217,7 @@ describe("Misc view tests", () => {
     });
     const res = await v.run({}, mockReqRes);
     expect(res).toBe(
-      '<div class="table-responsive"><table class="table table-sm table-valign-middle "><thead><tr><th><span onclick="sortby(\'author\', false, \'249ab\', this)" class="link-style">Author</span></th><th><span onclick="sortby(\'count_books_publisher_id_\', false, \'249ab\', this)" class="link-style">Count books</span></th></tr></thead><tbody><tr><td>Herman Melville</td><td>0</td></tr><tr><td>Leo Tolstoy</td><td>1</td></tr><tr><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
+      '<div class="table-responsive"><table class="table table-sm table-valign-middle "><thead><tr><th><span onclick="sortby(\'author\', false, \'249ab\', this)" class="link-style">Author</span></th><th><span onclick="sortby(\'count_books_publisher_id_\', false, \'249ab\', this)" class="link-style">Count books</span></th></tr></thead><tbody><tr data-row-id="1"><td>Herman Melville</td><td>0</td></tr><tr data-row-id="2"><td>Leo Tolstoy</td><td>1</td></tr><tr data-row-id="3"><td>James Joyce</td><td>0</td></tr></tbody></table></div>'
     );
   });
   it("should interpolate titles string in Show", async () => {
@@ -755,6 +755,10 @@ describe("view slug", () => {
     const query: any = {};
     v.rewrite_query_from_slug(query, ["1"]);
     expect(query.id).toBe("1");
+    const query1: any = { id: 1 };
+    v.rewrite_query_from_slug(query1, undefined);
+    expect(query1.id).toBe(1);
+
     //const res = await v.run({}, mockReqRes);
   });
   it("set link", async () => {

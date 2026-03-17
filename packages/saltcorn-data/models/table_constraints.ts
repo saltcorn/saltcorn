@@ -122,21 +122,23 @@ class TableConstraint {
         table.fields
       );
       if (Object.keys(jfs).length === 0)
-        try {
-          const sql = jsexprToSQL(con.configuration.formula);
-          const schema = db.getTenantSchemaPrefix();
-          await db.query(
-            `alter table ${schema}"${db.sqlsanitize(
-              table.name
-            )}" add constraint "${db.sqlsanitize(
-              table.name
-            )}_fml_${fid}" CHECK (${sql});`
-          );
-        } catch (e) {
-          //cannot implement as SQL
-          //console.error(e);
-          //ignore
-        }
+        await db.tryCatchInTransaction(
+          async () => {
+            const sql = jsexprToSQL(con.configuration.formula);
+            const schema = db.getTenantSchemaPrefix();
+            await db.query(
+              `alter table ${schema}"${db.sqlsanitize(
+                table.name
+              )}" add constraint "${db.sqlsanitize(
+                table.name
+              )}_fml_${fid}" CHECK (${sql});`
+            );
+          },
+          (e: Error) => {
+            // ignore
+            //console.error(e);
+          }
+        );
     }
     if (!db.getRequestContext()?.client)
       await require("../db/state").getState().refresh_tables(true);

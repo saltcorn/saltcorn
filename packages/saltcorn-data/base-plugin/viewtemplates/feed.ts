@@ -1,0 +1,1032 @@
+/**
+ * @category saltcorn-data
+ * @module base-plugin/viewtemplates/feed
+ * @subcategory base-plugin
+ */
+import Table from "../../models/table";
+import View from "../../models/view";
+import Field from "../../models/field";
+import Form from "../../models/form";
+import Workflow from "../../models/workflow";
+const {
+  text,
+  div,
+  h4,
+  hr,
+  a,
+  h3,
+  button,
+  code,
+  h2,
+  ul,
+  li,
+} = require("@saltcorn/markup/tags");
+const { pagination } = require("@saltcorn/markup/helpers");
+const { renderForm, tabs, link } = require("@saltcorn/markup");
+const { mkTable } = require("@saltcorn/markup");
+const pluralize = require("pluralize");
+import {
+  link_view,
+  stateToQueryString,
+  stateFieldsToWhere,
+  stateFieldsToQuery,
+  readState,
+} from "../../plugin-helper";
+import { GenObj } from "@saltcorn/types/common_types";
+import { Req } from "@saltcorn/types/base_types";
+const {
+  InvalidConfiguration,
+  isNode,
+  isWeb,
+  mergeConnectedObjects,
+  hashState,
+} = require("../../utils");
+const { getState } = require("../../db/state");
+const {
+  jsexprToWhere,
+  eval_expression,
+  add_free_variables_to_joinfields,
+  freeVariables,
+} = require("../../models/expression");
+const {
+  extractFromLayout,
+  extractViewToCreate,
+} = require("../../diagram/node_extract_utils");
+
+/**
+ * @param {object} req
+ * @returns {Workflow}
+ */
+const configuration_workflow = (req: Req) =>
+  new Workflow({
+    steps: [
+      {
+        name: req.__("Views"),
+        form: async (context: GenObj) => {
+          const table = Table.findOne(context.table_id);
+          const show_views = await View.find_table_views_where(
+            context.table_id,
+            ({ state_fields, viewtemplate, viewrow }: GenObj) =>
+              viewtemplate.runMany &&
+              viewrow.name !== context.viewname &&
+              state_fields.some((sf: GenObj) => sf.name === "id")
+          );
+          const create_views = await View.find_table_views_where(
+            context.table_id,
+            ({ state_fields, viewrow }: GenObj) =>
+              viewrow.name !== context.viewname &&
+              state_fields.every((sf: GenObj) => !sf.required)
+          );
+          const show_view_opts = show_views.map((v: GenObj) => v.select_option);
+          const create_view_opts = create_views.map(
+            (v: GenObj) => v.select_option
+          );
+          return new Form({
+            fields: [
+              {
+                name: "show_view",
+                label: req.__("Single item view"),
+                type: "String",
+                sublabel:
+                  req.__("The underlying individual view of each table row") +
+                  ". " +
+                  a(
+                    {
+                      "data-dyn-href": `\`/viewedit/config/\${show_view}\``,
+                      target: "_blank",
+                    },
+                    req.__("Configure")
+                  ),
+                required: true,
+                attributes: {
+                  options: show_view_opts,
+                },
+              },
+              {
+                name: "empty_view",
+                label: req.__("Empty view"),
+                type: "String",
+                sublabel: req.__(
+                  "A view that will be shown only if there are no tables rows to show"
+                ),
+                attributes: {
+                  options: create_view_opts,
+                },
+              },
+              {
+                input_type: "section_header",
+                label: "Creating a new view",
+              },
+              {
+                name: "view_to_create",
+                label: req.__("Use view to create"),
+                sublabel:
+                  req.__(
+                    "If user has write permission.  Leave blank to have no link to create a new item"
+                  ) +
+                  ". " +
+                  a(
+                    {
+                      "data-dyn-href": `\`/viewedit/config/\${view_to_create}\``,
+                      "data-show-if":
+                        "showIfFormulaInputs($('select[name=view_to_create]'), 'view_to_create')",
+                      target: "_blank",
+                    },
+                    req.__("Configure")
+                  ),
+                type: "String",
+                attributes: {
+                  options: create_view_opts,
+                },
+              },
+              {
+                name: "create_view_display",
+                label: req.__("Display create view as"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: ["Link", "Embedded", "Popup"],
+                },
+                showIf: {
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
+              },
+              {
+                name: "create_view_showif",
+                label: req.__("Show if formula"),
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table!.name,
+                  user: true,
+                  expression_type: "boolean",
+                },
+                sublabel: req.__(
+                  "Show link or embed if true, don't show if false. Based on state variables from URL query string and <code>user</code>. For the full state use <code>row</code>. Example: <code>!!row.createlink</code> to show link if and only if state has <code>createlink</code>."
+                ),
+                showIf: {
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
+              },
+              {
+                name: "create_view_label",
+                label: req.__("Label for create"),
+                sublabel: req.__(
+                  "Label in link or button to create. Leave blank for a default label"
+                ),
+                type: "String",
+                attributes: { asideNext: true },
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
+              },
+
+              {
+                name: "create_view_location",
+                label: req.__("Location"),
+                sublabel: req.__("Location of link to create new row"),
+                required: true,
+                attributes: {
+                  options: [
+                    "Bottom left",
+                    "Bottom right",
+                    "Top left",
+                    "Top right",
+                  ],
+                },
+                type: "String",
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
+              },
+              {
+                name: "create_view_location",
+                label: req.__("Location"),
+                sublabel: req.__("Location of view to create new row"),
+                required: true,
+                attributes: {
+                  options: ["Bottom", "Top"],
+                },
+                type: "String",
+                showIf: {
+                  create_view_display: ["Embedded"],
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
+              },
+              {
+                name: "create_link_style",
+                label: req.__("Link Style"),
+                type: "String",
+                required: true,
+                attributes: {
+                  asideNext: true,
+                  options: [
+                    { name: "", label: "Link" },
+                    { name: "btn btn-primary", label: "Primary button" },
+                    { name: "btn btn-secondary", label: "Secondary button" },
+                    { name: "btn btn-success", label: "Success button" },
+                    { name: "btn btn-danger", label: "Danger button" },
+                    {
+                      name: "btn btn-outline-primary",
+                      label: "Primary outline button",
+                    },
+                    {
+                      name: "btn btn-outline-secondary",
+                      label: "Secondary outline button",
+                    },
+                  ],
+                },
+
+                showIf: {
+                  create_view_display: ["Link", "Popup"],
+                  view_to_create: create_view_opts.map((o: GenObj) => o.name),
+                },
+              },
+              {
+                name: "create_link_size",
+                label: req.__("Link size"),
+                type: "String",
+                required: true,
+                attributes: {
+                  options: [
+                    { name: "", label: "Standard" },
+                    { name: "btn-lg", label: "Large" },
+                    { name: "btn-sm", label: "Small" },
+                    { name: "btn-sm btn-xs", label: "X-Small" },
+                    { name: "btn-block", label: "Block" },
+                    { name: "btn-block btn-lg", label: "Large block" },
+                  ],
+                },
+                showIf: { create_view_display: ["Link", "Popup"] },
+              },
+
+              ...(table!.ownership_field_id
+                ? [
+                    {
+                      name: "always_create_view",
+                      label: req.__("Always show create view"),
+                      sublabel: req.__(
+                        "If off, only show create view if the query state is about the current user"
+                      ),
+                      type: "Bool",
+                      showIf: {
+                        view_to_create: create_view_opts.map(
+                          (o: GenObj) => o.name
+                        ),
+                      },
+                    },
+                  ]
+                : []),
+            ] as any,
+          });
+        },
+      },
+      {
+        name: req.__("Order and layout"),
+        form: async (context: GenObj) => {
+          const table = Table.findOne({ id: context.table_id });
+          const fields = table!.getFields();
+          const { child_field_list, child_relations } =
+            await table!.get_child_relations();
+          return new Form({
+            fields: [
+              {
+                name: "order_field",
+                label: req.__("Order by"),
+                type: "String",
+                required: true,
+                attributes: {
+                  asideNext: true,
+                  options: fields.map((f: GenObj) => f.name),
+                },
+              },
+              {
+                name: "descending",
+                label: req.__("Descending"),
+                type: "Bool",
+                required: true,
+              },
+              {
+                name: "groupby",
+                label: req.__("Group by"),
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table!.name,
+                  user: true,
+                  expression_type: "value",
+                },
+                sublabel: "Formula for the group headings",
+                class: "validate-expression",
+              },
+              {
+                name: "rows_per_page",
+                label: req.__("Items per page"),
+                type: "Integer",
+                attributes: {
+                  min: 1,
+                },
+                required: true,
+                default: 20,
+              },
+              {
+                name: "view_decoration",
+                label: req.__("View decoration"),
+                type: "String",
+                attributes: { options: ["None", "Card", "Accordion", "Tabs"] },
+                required: true,
+              },
+              /*{
+                name: "in_card",
+                label: req.__("Each in card?"),
+                type: "Bool",
+                required: true,
+              },*/
+              {
+                name: "masonry_columns",
+                label: req.__("Masonry columns"),
+                type: "Bool",
+                showIf: { view_decoration: "Card" },
+                required: true,
+              },
+              {
+                name: "title_formula",
+                label: req.__("Title formula"),
+                class: "validate-expression",
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table!.name,
+                  user: true,
+                  expression_type: "value",
+                },
+                showIf: { view_decoration: ["Card", "Accordion", "Tabs"] },
+              },
+              {
+                name: "initial_open_accordions",
+                label: req.__("Initially open"),
+                type: "String",
+                fieldview: "radio_group",
+                attributes: { options: ["None", "All", "First"], inline: true },
+                required: true,
+                showIf: { view_decoration: "Accordion" },
+              },
+              {
+                name: "lazy_accordions",
+                label: req.__("Lazy load views"),
+                type: "Bool",
+                showIf: { view_decoration: "Accordion" },
+              },
+              {
+                name: "hide_pagination",
+                label: req.__("Hide pagination"),
+                type: "Bool",
+                required: true,
+              },
+              {
+                name: "local_state",
+                label: req.__("Local state"),
+                type: "Bool",
+                sublabel: req.__("Isolate state of each repeated view"),
+                required: true,
+              },
+              {
+                input_type: "section_header",
+                label: "Row restrictions",
+              },
+              {
+                name: "include_fml",
+                label: req.__("Row inclusion formula"),
+                class: "validate-expression",
+                sublabel:
+                  req.__("Only include rows where this formula is true. ") +
+                  req.__("In scope:") +
+                  " " +
+                  [
+                    ...fields.map((f: GenObj) => f.name),
+                    "user",
+                    "year",
+                    "month",
+                    "day",
+                    "today()",
+                  ]
+                    .map((s: string) => code(s))
+                    .join(", "),
+                input_type: "code",
+                attributes: {
+                  mode: "application/javascript",
+                  singleline: true,
+                  table: table!.name,
+                  user: true,
+                  expression_type: "boolean",
+                },
+                help: {
+                  topic: "Inclusion Formula",
+                  context: { table_name: table!.name },
+                },
+              },
+              {
+                name: "exclusion_relation",
+                label: req.__("Exclusion relations"),
+                sublabel: req.__(
+                  "Do not include row if this relation has a match"
+                ),
+                type: "String",
+                required: false,
+                attributes: { options: child_field_list },
+              },
+              {
+                name: "exclusion_where",
+                label: req.__("Exclusion where"),
+                class: "validate-expression",
+                type: "String",
+                showIf: { exclusion_relation: child_field_list },
+              },
+              {
+                input_type: "section_header",
+                label: "Number of columns (1-4) by screen width",
+              },
+              {
+                name: "cols_sm",
+                label: req.__("Small"),
+                type: "Integer",
+                attributes: {
+                  asideNext: true,
+                  min: 1,
+                  max: 4,
+                },
+                required: true,
+                default: 1,
+              },
+              {
+                name: "cols_md",
+                label: req.__("Medium"),
+                type: "Integer",
+                attributes: {
+                  min: 1,
+                  max: 4,
+                },
+                required: true,
+                default: 1,
+              },
+              {
+                name: "cols_lg",
+                label: req.__("Large"),
+                type: "Integer",
+                attributes: {
+                  asideNext: true,
+                  min: 1,
+                  max: 4,
+                },
+                required: true,
+                default: 1,
+              },
+              {
+                name: "cols_xl",
+                label: req.__("Extra-large"),
+                type: "Integer",
+                attributes: {
+                  min: 1,
+                  max: 4,
+                },
+                required: true,
+                default: 1,
+              },
+            ] as any,
+          });
+        },
+      },
+    ],
+  });
+
+/**
+ * @param {number} table_id
+ * @param {*} viewname
+ * @param {object} opts
+ * @param {*} opts.show_view
+ * @returns {Promise<Field>}
+ */
+const get_state_fields = async (
+  table_id: number,
+  viewname: string,
+  { show_view }: GenObj
+) => {
+  const table = Table.findOne(table_id);
+  const table_fields = table!.fields;
+  return table_fields
+    .filter((f: GenObj) => !f.primary_key)
+    .map((f: GenObj) => {
+      const sf = new Field(f);
+      sf.required = false;
+      return sf;
+    });
+};
+
+/**
+ * @param {number} table_id
+ * @param {string} viewname
+ * @param {object} opts
+ * @param {string} opts.show_view
+ * @param {name} opts.order_field
+ * @param {boolean} opts.descending
+ * @param {string} [opts.view_to_create]
+ * @param {string} opts.create_view_display
+ * @param {boolean} opts.in_card
+ * @param {string} opts.masonry_columns
+ * @param {number} [opts.rows_per_page = 20]
+ * @param {boolean} opts.hide_pagination
+ * @param {string} [opts.create_view_label]
+ * @param {string} [opts.create_view_location]
+ * @param {boolean} opts.always_create_view
+ * @param {*} opts.cols
+ * @param {object} state
+ * @param {*} extraArgs
+ * @returns {Promise<div>}
+ */
+const run = async (
+  table_id: number,
+  viewname: string,
+  {
+    show_view,
+    order_field,
+    descending,
+    view_to_create,
+    create_view_display,
+    in_card, //legacy
+    view_decoration,
+    initial_open_accordions = "None",
+    title_formula,
+    masonry_columns,
+    rows_per_page = 20,
+    hide_pagination,
+    create_view_label,
+    create_view_location,
+    create_link_style,
+    create_link_size,
+    create_view_showif,
+    always_create_view,
+    include_fml,
+    exclusion_relation,
+    exclusion_where,
+    empty_view,
+    groupby,
+    lazy_accordions,
+    local_state,
+    ...cols
+  }: GenObj,
+  state: GenObj,
+  extraArgs: GenObj,
+  { countRowsQuery, runManyQuery }: {
+    countRowsQuery: (state: GenObj) => Promise<number>;
+    runManyQuery: (state: GenObj, qextra: GenObj, selectOpts: GenObj) => Promise<GenObj[]>;
+  }
+) => {
+  const table = Table.findOne({ id: table_id })!;
+  const fields = table.getFields();
+  readState(state, fields);
+  const stateHash = hashState(state, show_view);
+  const appState = getState();
+  const locale = extraArgs.req.getLocale();
+  const __ = isNode()
+    ? (s: string) => appState.i18n.__({ phrase: s, locale }) || s
+    : (s: string) => s;
+  if (!show_view)
+    throw new InvalidConfiguration(
+      `View ${viewname} incorrectly configured: Single item view not specified`
+    );
+  const sview = View.findOne({ name: show_view });
+  if (!sview)
+    throw new InvalidConfiguration(
+      `View ${viewname} incorrectly configured: cannot find view ${show_view}`
+    );
+  const q = stateFieldsToQuery({ state, fields });
+  let qextra: GenObj = {};
+  if (!q.orderBy) {
+    qextra.orderBy = order_field;
+    if (descending) qextra.orderDesc = true;
+  }
+  qextra.limit = q.limit || rows_per_page;
+  const current_page = parseInt(state[`_${stateHash}_page`]) || 1;
+  const user_id =
+    extraArgs && extraArgs.req.user ? extraArgs.req.user.id : null;
+  if (include_fml)
+    qextra.where = jsexprToWhere(
+      include_fml,
+      {
+        ...state,
+        user_id,
+        user: extraArgs?.req?.user,
+      },
+      table.fields
+    );
+  if (exclusion_relation) {
+    const [reltable, relfld] = exclusion_relation.split(".");
+    const relTable = Table.findOne({ name: reltable })!;
+    const relWhere = exclusion_where
+      ? jsexprToWhere(
+          exclusion_where,
+          {
+            user_id,
+            user: extraArgs?.req?.user,
+          },
+          relTable.fields
+        )
+      : {};
+    const relRows = await relTable.getRows(relWhere);
+    if (!qextra.where) qextra.where = {};
+    // TODO sqlite not in
+    qextra.where.id = { not: { in: relRows.map((r: GenObj) => r[relfld]) } };
+  }
+  qextra.joinFields = {};
+  add_free_variables_to_joinfields(
+    freeVariables(title_formula),
+    qextra.joinFields,
+    fields
+  );
+  add_free_variables_to_joinfields(
+    freeVariables(groupby || ""),
+    qextra.joinFields,
+    fields
+  );
+  const { req, res, ...selectOpts } = extraArgs;
+  const sresp = await runManyQuery(state, qextra, selectOpts);
+  let paginate = "";
+
+  if (sresp.length === 0 && empty_view) {
+    const emptyView = View.findOne({ name: empty_view });
+    if (!emptyView)
+      throw new InvalidConfiguration(
+        `View ${viewname} incorrectly configured: cannot find empty view ${empty_view}`
+      );
+    return div(
+      {
+        class: "d-inline",
+        "data-sc-embed-viewname": emptyView.name,
+      },
+      await emptyView.run(state, extraArgs as any)
+    );
+  }
+
+  if (!hide_pagination && (sresp.length === qextra.limit || current_page > 1)) {
+    const nrows = await countRowsQuery(state);
+    if (nrows > qextra.limit || current_page > 1) {
+      paginate = pagination({
+        current_page,
+        pages: Math.ceil(nrows / qextra.limit),
+        get_page_link: (n: number) =>
+          `gopage(${n}, ${qextra.limit}, '${stateHash}', {}, this)`,
+      });
+    }
+  }
+  const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
+  const istop = vpos === "Top";
+  const isright = hpos === "right";
+  const role =
+    extraArgs && extraArgs.req && extraArgs.req.user
+      ? extraArgs.req.user.role_id
+      : 100;
+  var create_link = "";
+
+  const about_user = fields.some(
+    (f: GenObj) =>
+      f.reftable_name === "users" && state[f.name] && state[f.name] === user_id
+  );
+  const create_link_showif_pass = create_view_showif
+    ? eval_expression(
+        create_view_showif,
+        state,
+        extraArgs.req.user,
+        "Create view show if formula"
+      )
+    : undefined;
+  if (view_to_create) {
+    const create_view = await View.findOne({ name: view_to_create });
+    const ownership_field: any =
+      table.ownership_field_id &&
+      table.fields.find((f: GenObj) => f.id === table.ownership_field_id);
+    if (
+      create_link_showif_pass !== false &&
+      create_view &&
+      (create_link_showif_pass ||
+        role <= table.min_role_write ||
+        (role < 100 &&
+          table.ownership_field_id &&
+          (about_user ||
+            always_create_view ||
+            create_view?.configuration?.fixed?.[
+              `preset_${ownership_field?.name}`
+            ] === "LoggedIn")))
+    ) {
+      if (create_view_display === "Embedded") {
+        if (!create_view)
+          throw new InvalidConfiguration(
+            `View ${viewname} incorrectly configured: cannot find embedded view to create ${view_to_create}`
+          );
+        create_link = await create_view.run(state, extraArgs as any);
+      } else {
+        const target = `/view/${encodeURIComponent(
+          view_to_create
+        )}${stateToQueryString(state)}`;
+        const hrefVal = isWeb(extraArgs.req)
+          ? target
+          : `javascript:execLink('${target}');`;
+        create_link = link_view(
+          hrefVal,
+          __(create_view_label) || `Add ${pluralize(table.name, 1)}`,
+          create_view_display === "Popup" ? { reload_view: viewname } : false,
+          create_link_style,
+          create_link_size
+        );
+      }
+    }
+  }
+  const create_link_div = isright
+    ? div({ class: "float-end" }, create_link)
+    : create_link;
+
+  const setCols = (sz: string) =>
+    `col-${sz}-${Math.round(12 / cols[`cols_${sz}`])}`;
+
+  const wrapScEmbed = (r: GenObj, neverLazy?: boolean) =>
+    div(
+      {
+        class: "d-inline",
+        "data-sc-embed-viewname": show_view,
+        "data-sc-view-source": local_state
+          ? false
+          : `/view/${show_view}?${table.pk_name}=${r.row[table.pk_name]}`,
+        "data-sc-local-state": local_state
+          ? `/view/${show_view}?${table.pk_name}=${r.row[table.pk_name]}`
+          : false,
+      },
+      view_decoration === "Accordion" && lazy_accordions && !neverLazy
+        ? ""
+        : r.html
+    );
+
+  const showRowInner = (r: GenObj, ix: number) =>
+    (!view_decoration && in_card) || view_decoration === "Card"
+      ? div(
+          { class: `card shadow ${masonry_columns ? "mt-2" : "mt-4 h-100"}` },
+          title_formula
+            ? div(
+                { class: "card-header" },
+                eval_expression(
+                  title_formula,
+                  r.row,
+                  extraArgs.req.user,
+                  "Card title formula"
+                )
+              )
+            : undefined,
+          div({ class: "card-body" }, wrapScEmbed(r))
+        )
+      : view_decoration === "Tabs"
+        ? div(
+            {
+              class: ["tab-pane fade", ix == 0 && "show active"],
+              id: `feedtab${viewname.replaceAll(" ", "_")}_${ix}`,
+              role: "tabpanel",
+              "aria-labelledby": `feedtab${viewname.replaceAll(
+                " ",
+                "_"
+              )}_${ix}-tab`,
+            },
+            wrapScEmbed(r)
+          )
+        : view_decoration === "Accordion"
+          ? div(
+              { class: "accordion-item" },
+              h2(
+                { class: "accordion-header", id: `a${stateHash}head${ix}` },
+                button(
+                  {
+                    class: [
+                      "accordion-button",
+                      (initial_open_accordions === "None" ||
+                        (initial_open_accordions === "First" && ix > 0)) &&
+                        "collapsed",
+                    ],
+                    type: "button",
+                    "data-bs-toggle": "collapse",
+                    "data-bs-target": `#a${stateHash}tab${ix}`,
+                    "aria-expanded": "false",
+                    "aria-controls": `a${stateHash}tab${ix}`,
+                  },
+                  (title_formula
+                    ? eval_expression(
+                        title_formula,
+                        r.row,
+                        extraArgs.req.user,
+                        `Accordion title formula`
+                      )
+                    : "") || "Missing title"
+                )
+              ),
+              div(
+                {
+                  class: [
+                    "accordion-collapse",
+                    "collapse",
+                    !(
+                      initial_open_accordions === "None" ||
+                      (initial_open_accordions === "First" && ix > 0)
+                    ) && "show",
+                  ],
+                  id: `a${stateHash}tab${ix}`,
+                  "aria-labelledby": `a${stateHash}head${ix}`,
+                  "data-bs-parent": `#top${stateHash}`,
+                },
+                div(
+                  { class: ["accordion-body"] },
+                  wrapScEmbed(
+                    r,
+                    !(
+                      initial_open_accordions === "None" ||
+                      (initial_open_accordions === "First" && ix > 0)
+                    )
+                  )
+                )
+              )
+            )
+          : wrapScEmbed(r);
+
+  const showRow = (r: GenObj) =>
+    div(
+      {
+        class: [setCols("sm"), setCols("md"), setCols("lg"), setCols("xl")],
+      },
+      showRowInner(r, 0)
+    );
+  const is_in_card =
+    (!view_decoration && in_card) || view_decoration === "Card";
+
+  const correct_order = ([main, pagin, create]: [string, string, string]) =>
+    istop ? [create, main, pagin] : [main, pagin, create];
+  if (groupby) {
+    const groups: GenObj = {};
+    for (const r of sresp) {
+      const group = eval_expression(
+        groupby,
+        r.row,
+        extraArgs.req.user,
+        "Group by expression"
+      );
+      if (!groups[group]) groups[group] = [];
+      groups[group].push(r);
+    }
+    return div(
+      correct_order([
+        Object.entries(groups as Record<string, any[]>).map(
+          ([group, sr]: [string, any]) =>
+            h3({ class: "feed-group-header" }, group) +
+            (is_in_card && masonry_columns
+              ? div({ class: "card-columns" }, sr.map(showRowInner))
+              : view_decoration === "Accordion"
+                ? div(
+                    {
+                      class: [
+                        "accordion",
+                        lazy_accordions && "lazy-accoordion",
+                      ],
+                      id: `top${stateHash}`,
+                    },
+                    sr.map(showRowInner)
+                  )
+                : div(
+                    {
+                      class: [
+                        "row",
+                        !masonry_columns &&
+                          is_in_card &&
+                          `row-cols-md-${cols[`cols_md`]} g-4 mb-3`,
+                      ],
+                    },
+                    sr.map(showRow)
+                  ))
+        ),
+        paginate,
+        create_link_div,
+      ] as any)
+    );
+  }
+  const tabHeader = ({ row }: GenObj, ix: number) => {
+    const title =
+      (title_formula
+        ? eval_expression(
+            title_formula,
+            row,
+            extraArgs.req.user,
+            `Tab title formula`
+          )
+        : "") || "Missing title";
+    return li(
+      { class: "nav-item" },
+      a(
+        {
+          class: ["nav-link", ix == 0 && "active"],
+          "data-bs-toggle": "tab",
+          href: `#feedtab${viewname.replaceAll(" ", "_")}_${ix}`,
+          id: `feedtab${viewname.replaceAll(" ", "_")}_${ix}-tab`,
+          role: "tab",
+          "aria-controls": "home",
+          "aria-selected": "true",
+        },
+        text(title)
+      )
+    );
+  };
+  return div(
+    correct_order([
+      is_in_card && masonry_columns
+        ? div({ class: "card-columns" }, sresp.map(showRowInner))
+        : view_decoration === "Tabs"
+          ? div(
+              ul(
+                { class: "nav nav-tabs", role: "tablist" },
+                sresp.map(tabHeader)
+              ),
+              div({ class: "tab-content" }, sresp.map(showRowInner))
+            )
+          : view_decoration === "Accordion"
+            ? div(
+                {
+                  class: ["accordion", lazy_accordions && "lazy-accoordion"],
+                  id: `top${stateHash}`,
+                },
+                sresp.map(showRowInner)
+              )
+            : div(
+                {
+                  class: [
+                    "row",
+                    !masonry_columns &&
+                      is_in_card &&
+                      `row-cols-md-${cols.cols_md} row-cols-sm-${cols.cols_sm} row-cols-sm-${cols.cols_lg}  row-cols-cl-${cols.cols_xl} g-4 mb-3`,
+                  ],
+                },
+                sresp.map(showRow)
+              ),
+      paginate,
+      create_link_div,
+    ] as [string, string, string])
+  );
+};
+
+export = {
+  /** @type {string} */
+  name: "Feed",
+  /** @type {string} */
+  description:
+    "Show multiple rows by displaying a chosen view for each row, stacked or in columns",
+  configuration_workflow,
+  run,
+  get_state_fields,
+  /** @type {boolean} */
+  /**
+   * @param {object} opts
+   * @param {*} opts.create_view_label
+   * @returns {string[]|Object[]}
+   */
+  getStringsForI18n({ create_view_label }: GenObj) {
+    if (create_view_label) return [create_view_label];
+    else return [];
+  },
+  queries: ({
+    table_id,
+    viewname,
+    configuration: { show_view },
+    req,
+    res,
+  }: GenObj) => ({
+    async countRowsQuery(state: GenObj) {
+      const table = Table.findOne({ id: table_id })!;
+      const fields = table.getFields();
+      const where = stateFieldsToWhere({ fields, state, table });
+      return await table.countRows(where, {
+        forUser: req?.user,
+        forPublic: !req?.user,
+      });
+    },
+    async runManyQuery(state: GenObj, qextra: GenObj, selectOpts0: GenObj) {
+      // remove where
+      const { where, ...selectOpts } = selectOpts0;
+      const sview = View.findOne({ name: show_view });
+      const extraArgs = { req, res, ...selectOpts };
+      return await sview!.runMany(state, {
+        ...extraArgs,
+        ...qextra,
+      });
+    },
+  }),
+  connectedObjects: async (configuration: GenObj) => {
+    const fromLayout = extractFromLayout(configuration.layout);
+    const toCreate = extractViewToCreate(configuration);
+    return toCreate ? mergeConnectedObjects(fromLayout, toCreate) : fromLayout;
+  },
+};

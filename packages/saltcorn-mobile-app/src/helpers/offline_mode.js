@@ -2,8 +2,10 @@
 
 import { apiCall } from "./api";
 import {
-  showAlerts,
+  showToasts,
+  clearToasts,
   clearAlerts,
+  showAlerts,
   errorAlert,
   showLoadSpinner,
   removeLoadSpinner,
@@ -318,6 +320,43 @@ const handleUniqueConflicts = async (uniqueConflicts, translatedIds) => {
   }
 };
 
+/**
+ * If there was a field level data conflict, the server version is applied
+ * When it also was translated, change the untranslated row and translate it later the normal way
+ * @param {*} dataConflicts
+ * @param {*} translatedIds
+ * @param {*} alerts
+ */
+const handleUpdateConflicts = async (dataConflicts, translatedIds, alerts) => {
+  let hasConflicts = false;
+  for (const [tblName, updates] of Object.entries(dataConflicts)) {
+    const table = saltcorn.data.models.Table.findOne({ name: tblName });
+    const pkName = table.pk_name || "id";
+    const translations = translatedIds[tblName] || {};
+    for (const update of updates) {
+      // search a translation where the current row is the target
+      // and if found, make sure the untranslated row is updated
+      for (const [from, to] of Object.entries(translations)) {
+        if (to === update[pkName]) {
+          update[pkName] = from;
+        }
+      }
+
+      const { [pkName]: _sc_pkValue, ...rest } = update;
+      await table.updateRow(rest, _sc_pkValue);
+      hasConflicts = true;
+    }
+  }
+  if (hasConflicts) {
+    alerts.push({
+      type: "info",
+      msg:
+        "Some of your changes could not be applied because the data has changed on the server. " +
+        "Your local data has been updated accordingly.",
+    });
+  }
+};
+
 const updateSyncInfos = async (
   offlineChanges,
   allTranslations,
@@ -357,7 +396,7 @@ const updateSyncInfos = async (
   }
 };
 
-const syncOfflineData = async (synchedTables, syncTimestamp) => {
+const syncOfflineData = async (synchedTables, syncTimestamp, alerts) => {
   const offlineChanges = await loadOfflineChanges(synchedTables);
   if (Object.keys(offlineChanges).length === 0) return null;
   const uploadResp = await apiCall({
@@ -365,7 +404,8 @@ const syncOfflineData = async (synchedTables, syncTimestamp) => {
     path: "/sync/offline_changes",
     body: {
       changes: offlineChanges,
-      syncTimestamp,
+      oldSyncTimestamp: await getLocalSyncTimestamp(),
+      newSyncTimestamp: syncTimestamp,
     },
   });
   const { syncDir } = uploadResp.data;
@@ -377,10 +417,12 @@ const syncOfflineData = async (synchedTables, syncTimestamp) => {
       path: `/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`,
     });
     pollCount++;
-    const { finished, translatedIds, uniqueConflicts, error } = pollResp.data;
+    const { finished, translatedIds, uniqueConflicts, dataConflicts, error } =
+      pollResp.data;
     if (finished) {
       if (error) throw new Error(error.message);
       else {
+        await handleUpdateConflicts(dataConflicts, translatedIds, alerts);
         await handleUniqueConflicts(uniqueConflicts, translatedIds);
         await handleTranslatedIds(uniqueConflicts, translatedIds);
         await updateSyncInfos(offlineChanges, translatedIds, syncTimestamp);
@@ -425,12 +467,22 @@ const checkCleanSync = async (uploadStarted, uploadStartTime, userName) => {
   return false;
 };
 
-const getSyncTimestamp = async () => {
+const getServerTime = async () => {
   const resp = await apiCall({
     method: "GET",
     path: `/sync/sync_timestamp`,
   });
   return resp.data.syncTimestamp;
+};
+
+const setLocalSyncTimestamp = async (syncTimestamp) => {
+  const state = saltcorn.data.state.getState();
+  await state.setConfig("mobile_sync_timestamp", syncTimestamp);
+};
+
+const getLocalSyncTimestamp = async () => {
+  const state = saltcorn.data.state.getState();
+  return await state.getConfig("mobile_sync_timestamp");
 };
 
 const setSpinnerText = () => {
@@ -445,57 +497,83 @@ const setSpinnerText = () => {
   }
 };
 
-export async function sync() {
-  setSpinnerText();
-  const state = saltcorn.data.state.getState();
-  const { user } = state.mobileConfig;
-  const { offlineUser, hasOfflineData, uploadStarted, uploadStartTime } =
-    (await getLastOfflineSession()) || {};
-  if (offlineUser && hasOfflineData && offlineUser !== user.email) {
-    throw new Error(
-      `The sync is not available, '${offlineUser}' has not yet uploaded offline data.`
-    );
-  } else {
-    let syncDir = null;
-    let cleanSync = await checkCleanSync(
-      uploadStarted,
-      uploadStartTime,
-      user.email
-    );
-    const syncTimestamp = await getSyncTimestamp();
-    await setUploadStarted(true, syncTimestamp);
-    let lock = null;
-    try {
-      if (window.navigator?.wakeLock?.request)
-        lock = await window.navigator.wakeLock.request();
-    } catch (error) {
-      console.log("wakeLock not available");
-      console.log(error);
+let syncInProgress = false;
+
+export function isSyncInProgress() {
+  return syncInProgress;
+}
+
+/**
+ *
+ * @param {boolean} withWakelock try request a wakelock and show a spinner during sync (propably not in background mode)
+ * @param {boolean} switchOnline end the offline mode and go online again after sync
+ * @param {string[]} alerts output alerts collected during sync
+ */
+export async function sync(
+  withWakelock = true,
+  switchOnline = true,
+  alerts = []
+) {
+  if (syncInProgress)
+    throw new Error("A synchronization is already in progress.");
+  syncInProgress = true;
+  try {
+    if (withWakelock) setSpinnerText();
+    const state = saltcorn.data.state.getState();
+    const { user } = state.mobileConfig;
+    const { offlineUser, hasOfflineData, uploadStarted, uploadStartTime } =
+      (await getLastOfflineSession()) || {};
+    if (offlineUser && hasOfflineData && offlineUser !== user.email) {
+      throw new Error(
+        `The sync is not available, '${offlineUser}' has not yet uploaded offline data.`
+      );
+    } else {
+      let syncDir = null;
+      let cleanSync = await checkCleanSync(
+        uploadStarted,
+        uploadStartTime,
+        user.email
+      );
+      const syncTimestamp = await getServerTime();
+      await setUploadStarted(true, syncTimestamp);
+      let lock = null;
+      if (withWakelock) {
+        try {
+          if (window.navigator?.wakeLock?.request)
+            lock = await window.navigator.wakeLock.request();
+        } catch (error) {
+          console.log("wakeLock not available");
+          console.log(error);
+        }
+      }
+      let transactionOpen = false;
+      try {
+        await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
+        await saltcorn.data.db.query("BEGIN");
+        transactionOpen = true;
+        if (cleanSync) await clearLocalData(true);
+        const { synchedTables, syncInfos } = await prepare();
+        await syncRemoteDeletes(syncInfos, syncTimestamp);
+        syncDir = await syncOfflineData(synchedTables, syncTimestamp, alerts);
+        await syncRemoteData(syncInfos, syncTimestamp);
+        await setLocalSyncTimestamp(syncTimestamp);
+        if (switchOnline) await endOfflineMode(true);
+        await setUploadStarted(false);
+        await saltcorn.data.db.query("COMMIT");
+        transactionOpen = false;
+        await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
+      } catch (error) {
+        if (transactionOpen) await saltcorn.data.db.query("ROLLBACK");
+        await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
+        console.log(error);
+        throw error;
+      } finally {
+        if (syncDir) await cleanSyncDir(syncDir);
+        if (lock) await lock.release();
+      }
     }
-    let transactionOpen = false;
-    try {
-      await saltcorn.data.db.query("PRAGMA foreign_keys = OFF;");
-      await saltcorn.data.db.query("BEGIN");
-      transactionOpen = true;
-      if (cleanSync) await clearLocalData(true);
-      const { synchedTables, syncInfos } = await prepare();
-      await syncRemoteDeletes(syncInfos, syncTimestamp);
-      syncDir = await syncOfflineData(synchedTables, syncTimestamp);
-      await syncRemoteData(syncInfos, syncTimestamp);
-      await endOfflineMode(true);
-      await setUploadStarted(false);
-      await saltcorn.data.db.query("COMMIT");
-      transactionOpen = false;
-      await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
-    } catch (error) {
-      if (transactionOpen) await saltcorn.data.db.query("ROLLBACK");
-      await saltcorn.data.db.query("PRAGMA foreign_keys = ON;");
-      console.log(error);
-      throw error;
-    } finally {
-      if (syncDir) await cleanSyncDir(syncDir);
-      if (lock) await lock.release();
-    }
+  } finally {
+    syncInProgress = false;
   }
 }
 
@@ -576,21 +654,50 @@ export async function clearLocalData(inTransaction) {
   }
 }
 
-export function networkChangeCallback(status) {
+export async function networkChangeCallback(status) {
   console.log("Network status changed", status);
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
   if (status.connectionType !== "none" && mobileConfig.isOfflineMode) {
     const iframeWindow = $("#content-iframe")[0].contentWindow;
-    if (iframeWindow) {
-      clearAlerts();
-      iframeWindow.notifyAlert(
-        `An internet connection is available, to end the offline mode click ${saltcorn.markup.a(
-          {
-            href: "javascript:execLink('/sync/sync_settings')",
-          },
-          "here"
-        )}`
-      );
+    if (mobileConfig.syncOnReconnect) {
+      if (isSyncInProgress()) {
+        console.log("Sync already in progress, skipping automatic sync");
+        return;
+      }
+      console.log("Network restored, starting automatic sync");
+      const toasts = [];
+      try {
+        await sync(false, true, toasts);
+        if (iframeWindow) {
+          clearAlerts();
+          showAlerts([
+            {
+              type: "info",
+              msg: "You are online again.",
+            },
+          ]);
+        }
+        toasts.push({
+          type: "info",
+          msg: "Synchronized your offline data.",
+        });
+      } catch (error) {
+        console.log("Error during push sync:", error);
+      }
+      if (toasts.length > 0) showToasts(toasts);
+    } else {
+      const iframeWindow = $("#content-iframe")[0].contentWindow;
+      if (iframeWindow) {
+        clearToasts();
+        iframeWindow.notifyAlert(
+          `An internet connection is available, to end the offline mode click ${saltcorn.markup.a(
+            {
+              href: "javascript:execLink('/sync/sync_settings')",
+            },
+            "here"
+          )}`
+        );
+      }
     }
   }
   mobileConfig.networkState = status.connectionType;
@@ -602,7 +709,7 @@ export async function hasOfflineRows() {
     const table = saltcorn.data.models.Table.findOne({ name: tblName });
     const pkName = table.pk_name;
     const { rows } = await saltcorn.data.db.query(
-      `select count(info_tbl.ref) 
+      `select count(info_tbl.ref) as total
            from "${saltcorn.data.db.sqlsanitize(
              tblName
            )}_sync_info" as info_tbl 
@@ -610,7 +717,7 @@ export async function hasOfflineRows() {
            on info_tbl.ref = data_tbl."${saltcorn.data.db.sqlsanitize(pkName)}"
            where info_tbl.modified_local = true`
     );
-    if (rows?.length > 0 && parseInt(rows[0].count) > 0) return true;
+    if (rows?.length > 0 && parseInt(rows[0].total) > 0) return true;
   }
   return false;
 }
@@ -630,7 +737,7 @@ export async function deleteOfflineData(noFeedback) {
     await clearLocalData(false);
     await setHasOfflineData(false);
     if (!noFeedback)
-      showAlerts([
+      showToasts([
         {
           type: "info",
           msg: "Deleted your offline data.",
@@ -642,4 +749,18 @@ export async function deleteOfflineData(noFeedback) {
     mobileConfig.inLoadState = false;
     if (!noFeedback) removeLoadSpinner();
   }
+}
+
+export function addPushSyncHandler() {
+  const state = saltcorn.data.state.getState();
+  state.mobile_push_handler["push_sync"] = async (notification) => {
+    console.log("Push sync received:", notification);
+    const alerts = [];
+    try {
+      await sync(false, false, alerts);
+      if (alerts.length > 0) showToasts(alerts);
+    } catch (error) {
+      console.log("Error during push sync:", error);
+    }
+  };
 }

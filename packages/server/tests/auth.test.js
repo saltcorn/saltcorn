@@ -110,6 +110,34 @@ describe("AuthTest user settings", () => {
       .send("new_password=ghrarhr54hg")
       .expect(toRedirect("/auth/settings"));
   });
+  it("should needs correct old password", async () => {
+    const app = await getApp({ disableCsrf: true });
+    //const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .post("/auth/settings")
+      .set("Cookie", loginCookie)
+      .send("password=ghrarhr55hg") //wrong
+      .send("new_password=foHRrr46obar")
+      .expect(toInclude("Password does not match"))
+      .expect(200);
+    const user = await User.findOne({ email: "staff@foo.com" });
+    expect(user.checkPassword("foHRrr46obar")).toBe(false);
+    expect(user.checkPassword("ghrarhr54hg")).toBe(true);
+  });
+   it("should needs old password value", async () => {
+    const app = await getApp({ disableCsrf: true });
+    //const loginCookie = await getStaffLoginCookie();
+    await request(app)
+      .post("/auth/settings")
+      .set("Cookie", loginCookie)
+      .send("new_password=foHRrr46obar")
+      .expect(toInclude("Unable to read"))
+      .expect(200);
+    const user = await User.findOne({ email: "staff@foo.com" });
+    expect(user.checkPassword("foHRrr46obar")).toBe(false);
+    expect(user.checkPassword("ghrarhr54hg")).toBe(true);
+  });
+
   it("should change language", async () => {
     const app = await getApp({ disableCsrf: true });
     const adminLoginCookie = await getAdminLoginCookie();

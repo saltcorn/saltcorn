@@ -415,6 +415,7 @@ router.post(
         await getState().refresh_page_groups();
         res.json({ success: "ok", row });
       } else {
+        row.name = row.name.trim();
         const pageGroup = await PageGroup.create(row);
         await getState().refresh_page_groups();
         res.redirect(`/page_groupedit/${pageGroup.name}`);

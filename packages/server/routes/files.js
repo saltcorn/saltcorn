@@ -8,6 +8,7 @@
 const Router = require("express-promise-router");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
+const Form = require("@saltcorn/data/models/form");
 const { getState } = require("@saltcorn/data/db/state");
 const s3storage = require("../s3storage");
 const resizer = require("resize-with-sharp-or-jimp");
@@ -29,6 +30,8 @@ const {
   style,
   link,
   domReady,
+  img,
+  a,
 } = require("@saltcorn/markup/tags");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
@@ -42,6 +45,8 @@ const path = require("path");
 const Zip = require("adm-zip");
 const stream = require("stream");
 const { extract } = require("@saltcorn/admin-models/models/backup");
+const createDOMPurify = require("dompurify");
+const { JSDOM } = require("jsdom");
 /**
  * @type {object}
  * @const
@@ -55,16 +60,26 @@ module.exports = router;
 router.use(
   error_catcher(async (req, res, next) => {
     const state = getState();
-    const maintenanceModeEnabled =  state.getConfig("maintenance_mode_enabled", false);
+    const maintenanceModeEnabled = state.getConfig(
+      "maintenance_mode_enabled",
+      false
+    );
     if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
       res.status(503).send("Page Unavailable: in maintenance mode");
       return;
     }
     next();
   })
-)
+);
 
-const send_files_picker = async (folder, noSubdirs, inputId, req, res) => {
+const send_files_picker = async (
+  folder,
+  noSubdirs,
+  inputId,
+  req,
+  res,
+  file_exts
+) => {
   res.set("SaltcornModalWidth", "1200px");
   res.sendWrap(req.__("Please select a file"), {
     above: [
@@ -86,6 +101,7 @@ const send_files_picker = async (folder, noSubdirs, inputId, req, res) => {
         folder: folder,
         input_id: inputId,
         ...(noSubdirs ? { no_subdirs: "true" } : {}),
+        ...(file_exts ? { file_exts } : {}),
       }),
     ],
   });
@@ -94,8 +110,8 @@ const send_files_picker = async (folder, noSubdirs, inputId, req, res) => {
 router.get(
   "/picker",
   error_catcher(async (req, res) => {
-    const { folder, input_id, no_subdirs } = req.query;
-    send_files_picker(folder, no_subdirs, input_id, req, res);
+    const { folder, input_id, no_subdirs, file_exts } = req.query;
+    send_files_picker(folder, no_subdirs, input_id, req, res, file_exts);
   })
 );
 
@@ -104,7 +120,7 @@ router.get(
   error_catcher(async (req, res) => {
     const role = req.user?.role_id ? req.user.role_id : 100;
     const userId = req.user?.id;
-    const { dir, no_subdirs } = req.query;
+    const { dir, no_subdirs, file_exts } = req.query;
     const noSubdirs = no_subdirs === "true";
     const safeDir = File.normalise(dir || "/");
     const absFolder = File.normalise_in_base(
@@ -125,7 +141,7 @@ router.get(
       res.json({ files: [], roles: [], directories: [] });
       return;
     }
-    const rows = (
+    let rows = (
       await File.find({ folder: dir }, { orderBy: "filename" })
     ).filter((f) => {
       if (noSubdirs && f.isDirectory) return false;
@@ -147,7 +163,17 @@ router.get(
     }
 
     for (const file of rows) {
-      file.location = file.path_to_serve;
+      file.location = file.isDirectory ? file.path_to_serve : file.field_value;
+    }
+    if (file_exts) {
+      const re = new RegExp(
+        `\\.(${file_exts
+          .split(",")
+          .map((s) => s.trim())
+          .join("|")})$`,
+        "i"
+      );
+      rows = rows.filter((f) => re.test(f.location));
     }
     const directories = !noSubdirs
       ? (await File.allDirectories(true)).filter(
@@ -194,7 +220,9 @@ router.get(
     }
     if (req.xhr) {
       for (const file of rows) {
-        file.location = file.path_to_serve;
+        file.location = file.isDirectory
+          ? file.path_to_serve
+          : file.field_value;
       }
       const directories = await File.allDirectories(true);
       for (const file of directories) {
@@ -245,9 +273,12 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, true);
+        return;
+      }
       res.type(file.mimetype);
-      if (file.s3_store) s3storage.serveObject(file, res, true);
-      else res.download(file.location, file.filename, { dotfiles: "allow" });
+      res.download(file.location, file.filename, { dotfiles: "allow" });
     } else {
       res
         .status(404)
@@ -285,6 +316,62 @@ router.post(
   })
 );
 
+router.get(
+  "/view/*serve_path",
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const user_id = req.user && req.user.id;
+    const serve_path = path.join(...req.params.serve_path);
+    const file = await File.findOne(serve_path);
+    const authorized =
+      file &&
+      (role <= file.min_role_read || (user_id && user_id === file.user_id));
+    if (!file || !authorized) {
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
+      return;
+    }
+    if (file.mime_super !== "image") {
+      res.redirect(`/files/serve/${file.path_to_serve}`);
+      return;
+    }
+    let imgSrc;
+    if (file.s3_store) {
+      try {
+        imgSrc = await s3storage.getObjectUrl(file, false);
+      } catch (e) {
+        getState().log(3, e?.message || e);
+        res.redirect(`/files/serve/${file.path_to_serve}`);
+        return;
+      }
+    } else {
+      imgSrc = `/files/serve/${file.path_to_serve}`;
+    }
+    const downloadUrl = `/files/download/${file.path_to_serve}`;
+    res.sendWrap(req.__("Image preview"), {
+      type: "card",
+      contents: [
+        div(
+          { class: "mb-3" },
+          a(
+            { href: downloadUrl, class: "btn btn-secondary" },
+            req.__("Download")
+          )
+        ),
+        div(
+          { class: "text-center" },
+          img({
+            src: imgSrc,
+            alt: file.filename,
+            style: "max-width: 100%; height: auto;",
+          })
+        ),
+      ],
+    });
+  })
+);
+
 /**
  * @name get/serve/:id
  * @function
@@ -305,12 +392,33 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
-      res.type(file.mimetype);
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, false);
+        return;
+      }
+      if (
+        (file.mimetype === "text/html" ||
+          file.mimetype === "application/xhtml+xml") &&
+        !getState().getConfig("file_serve_html") &&
+        user_id !== file.user_id
+      )
+        res.type("text/plain");
+      else res.type(file.mimetype);
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       const maxAge = getState().getConfig("files_cache_maxage", 86400);
       res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
-      if (file.s3_store) s3storage.serveObject(file, res, false);
-      else res.sendFile(file.location, { dotfiles: "allow" });
+      if (
+        file.mimetype === "image/svg+xml" ||
+        file.mimetype === "application/mathml+xml"
+      ) {
+        const window = new JSDOM("").window;
+        const DOMPurify = createDOMPurify(window);
+        const contents = await fs.promises.readFile(file.location);
+        const clean = DOMPurify.sanitize(contents);
+        res.send(clean);
+        return;
+      }
+      res.sendFile(file.location, { dotfiles: "allow" });
     } else {
       getState().log(
         5,
@@ -345,34 +453,41 @@ router.get(
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
     ) {
-      res.type(file.mimetype);
+      if (file.s3_store) {
+        await s3storage.redirectToObject(file, res, false);
+        return;
+      }
+      if (
+        (file.mimetype === "text/html" ||
+          file.mimetype === "application/xhtml+xml") &&
+        !getState().getConfig("file_serve_html")
+      )
+        res.type("text/plain");
+      else res.type(file.mimetype);
+
       const cacheability = file.min_role_read === 100 ? "public" : "private";
       res.set("Cache-Control", `${cacheability}, max-age=86400`);
-      //TODO s3
-      if (file.s3_store) s3storage.serveObject(file, res, false);
-      else {
-        const width = strictParseInt(width_str);
-        const height =
-          height_str && height_str !== "0" ? strictParseInt(height_str) : null;
-        if (!width) {
-          res.sendFile(file.location, { dotfiles: "allow" });
-          return;
-        }
-        const basenm = path.join(
-          path.dirname(file.location),
-          "_resized_" + path.basename(file.location)
-        );
-        const fnm = `${basenm}_w${width}${height ? `_h${height}` : ""}`;
-        if (!fs.existsSync(fnm)) {
-          await resizer({
-            fromFileName: file.location,
-            width,
-            height,
-            toFileName: fnm,
-          });
-        }
-        res.sendFile(fnm, { dotfiles: "allow" });
+      const width = strictParseInt(width_str);
+      const height =
+        height_str && height_str !== "0" ? strictParseInt(height_str) : null;
+      if (!width) {
+        res.sendFile(file.location, { dotfiles: "allow" });
+        return;
       }
+      const basenm = path.join(
+        path.dirname(file.location),
+        "_resized_" + path.basename(file.location)
+      );
+      const fnm = `${basenm}_w${width}${height ? `_h${height}` : ""}`;
+      if (!fs.existsSync(fnm)) {
+        await resizer({
+          fromFileName: file.location,
+          width,
+          height,
+          toFileName: fnm,
+        });
+      }
+      res.sendFile(fnm, { dotfiles: "allow" });
     } else {
       res
         .status(404)
@@ -515,15 +630,16 @@ router.post(
         `File %s uploaded`,
         many ? f.map((fl) => text(fl.filename)).join(", ") : text(f.filename)
       );
+      const asLocation = (fl) => File.fieldValueFromRelative(fl.path_to_serve);
+      const asUrl = (fl) =>
+        File.pathToServeUrl(asLocation(fl), { filename: fl.filename });
       if (!req.xhr) req.flash("success", successMsg);
       else
         jsonResp = {
           success: {
             filename: many ? f.map((fl) => fl.filename) : f.filename,
-            location: many ? f.map((fl) => fl.path_to_serve) : f.path_to_serve,
-            url: many
-              ? f.map((fl) => `/files/serve/${fl.path_to_serve}`)
-              : `/files/serve/${f.path_to_serve}`,
+            location: many ? f.map(asLocation) : asLocation(f),
+            url: many ? f.map(asUrl) : asUrl(f),
             msg: successMsg,
           },
         };
@@ -590,12 +706,12 @@ const storage_form = async (req) => {
     field_names: [
       "storage_s3_enabled",
       "storage_s3_bucket",
-      "storage_s3_path_prefix",
       "storage_s3_endpoint",
       "storage_s3_region",
       "storage_s3_access_key",
       "storage_s3_access_secret",
       "storage_s3_secure",
+      "files_direct_s3_links",
     ],
     action: "/files/storage",
   });
@@ -612,7 +728,7 @@ router.get(
   error_catcher(async (req, res) => {
     const form = await storage_form(req);
     form.blurb = [
-      `<div class="alert alert-warning">S3 storage options may not work for this release. Enabling S3 storage is not recommended</div>`,
+      `<div class="alert alert-warning">S3 storage is experimental</div>`,
     ];
     send_files_page({
       res,
@@ -673,9 +789,11 @@ const files_settings_form = async (req) => {
       "min_role_upload",
       "file_accept_filter_default",
       "files_cache_maxage",
+      // "files_direct_s3_links",
       "file_upload_debug",
       "file_upload_limit",
       "file_upload_timeout",
+      "file_serve_html",
     ],
     action: "/files/settings",
   });
@@ -734,6 +852,196 @@ router.post(
         req.flash("success", req.__("Files settings updated"));
         res.redirect("/files/settings");
       } else res.json({ success: "ok" });
+    }
+  })
+);
+
+const editableExtensions = [
+  "html",
+  "css",
+  "js",
+  "jsx",
+  "ts",
+  "tsx",
+  "sql",
+  "py",
+  "bash",
+  "sh",
+  "txt",
+  "json",
+  "md",
+  "yml",
+];
+
+/**
+ * GET load the file editor
+ */
+router.get(
+  "/edit/*serve_path",
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const user_id = req.user && req.user.id;
+    const serve_path = path.join(...req.params.serve_path);
+    const file = await File.findOne(serve_path);
+    if (
+      file &&
+      (role <= file.min_role_read || (user_id && user_id === file.user_id))
+    ) {
+      try {
+        if (file.isDirectory) {
+          res
+            .status(400)
+            .sendWrap(
+              req.__("Error"),
+              h1(req.__("File not editable")) +
+                div(req.__("Directories cannot be edited"))
+            );
+          return;
+        }
+        const ext = path.extname(file.filename).toLowerCase().slice(1);
+        if (!editableExtensions.includes(ext)) {
+          res
+            .status(400)
+            .sendWrap(
+              req.__("Error"),
+              h1(req.__("File not editable")) +
+                div(req.__("Files of this type cannot be edited"))
+            );
+          return;
+        }
+        const fileContent = await fs.promises.readFile(file.location, "utf8");
+        const form = new Form({
+          action: `/files/edit/${encodeURIComponent(serve_path)}`,
+          onChange: "saveAndContinue(this)",
+          submitLabel: req.__("Done"),
+          noSubmitButton: true,
+          noLabelCols: true,
+          fields: [
+            {
+              name: "value",
+              label: " ",
+              input_type: "code",
+              class: ["validate-statements", "enlarge-in-card"],
+              attributes: {
+                mode: `${file.mime_super}/${file.mime_sub}`,
+              },
+            },
+          ],
+          additionalButtons: [
+            {
+              label: req.__("Save"),
+              id: "btnSaveId",
+              class: "btn btn-primary",
+              type: "submit",
+            },
+            {
+              label: req.__("Close"),
+              class: "btn btn-secondary ms-2",
+              onclick: `location.href='/files?dir=${encodeURIComponent(
+                file.current_folder
+              )}'`,
+            },
+          ],
+        });
+
+        form.values = { value: fileContent };
+        res.sendWrap(req.__("Edit file"), {
+          above: [
+            {
+              type: "breadcrumbs",
+              crumbs: [
+                { text: req.__("Settings"), href: "/settings" },
+                { text: req.__("Files"), href: "/files" },
+                { text: req.__("Edit"), href: null },
+              ],
+            },
+            {
+              title: req.__("Editing %s", file.filename),
+              type: "card",
+              contents: renderForm(form, req.csrfToken()),
+            },
+          ],
+        });
+      } catch (err) {
+        getState().log(3, `Error reading file ${serve_path}: ${err.message}`);
+        res
+          .status(500)
+          .sendWrap(
+            req.__("Error"),
+            h1(req.__("Error reading file")) + div(err.message)
+          );
+      }
+    } else {
+      res
+        .status(404)
+        .sendWrap(req.__("Not found"), h1(req.__("File not found")));
+    }
+  })
+);
+
+/**
+ * POST edit a file from the editor
+ */
+router.post(
+  "/edit/*serve_path",
+  error_catcher(async (req, res) => {
+    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const user_id = req.user && req.user.id;
+    const serve_path = path.join(...req.params.serve_path);
+    const file = await File.findOne(serve_path);
+    if (
+      file &&
+      (role <= file.min_role_read || (user_id && user_id === file.user_id))
+    ) {
+      try {
+        if (file.isDirectory) {
+          if (req.xhr) res.json({ error: "Directories cannot be edited" });
+          else
+            res
+              .status(400)
+              .sendWrap(
+                req.__("Error"),
+                h1(req.__("File not editable")) +
+                  div(req.__("Directories cannot be edited"))
+              );
+
+          return;
+        }
+        const ext = path.extname(file.filename).toLowerCase().slice(1);
+        if (!editableExtensions.includes(ext)) {
+          if (req.xhr)
+            res.json({ error: "Files of this type cannot be edited" });
+          else
+            res
+              .status(400)
+              .sendWrap(
+                req.__("Error"),
+                h1(req.__("File not editable")) +
+                  div(req.__("Files of this type cannot be edited"))
+              );
+          return;
+        }
+        const newContent = req.body.value;
+        await fs.promises.writeFile(file.location, newContent, "utf8");
+        if (req.xhr) res.json({ success: true });
+        else {
+          const currentFolder = file.current_folder;
+          res.redirect(`/files${currentFolder ? `?dir=${currentFolder}` : ""}`);
+        }
+      } catch (err) {
+        getState().log(3, `Error writing file ${serve_path}: ${err.message}`);
+        if (req.xhr) res.json({ error: err.message });
+        else {
+          req.flash("error", err.message);
+          res.redirect(`/files/edit/${encodeURIComponent(serve_path)}`);
+        }
+      }
+    } else {
+      if (req.xhr) res.status(404).json({ error: "File not found" });
+      else {
+        req.flash("error", req.__("File not found"));
+        res.redirect("/files");
+      }
     }
   })
 );

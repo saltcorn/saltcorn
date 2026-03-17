@@ -1,8 +1,9 @@
-const { PluginManager } = require("live-plugin-manager");
 const { loadAllPlugins } = require("@saltcorn/server/load_plugins");
+const { PluginManager } = require("live-plugin-manager");
 import { join, basename } from "path";
 import { copySync } from "fs-extra";
 import Plugin from "@saltcorn/data/models/plugin";
+import File from "@saltcorn/data/models/file";
 import {
   buildTablesFile,
   copySiteLogo,
@@ -14,9 +15,12 @@ import {
   prepareBuildDir,
   prepareExportOptionsPlist,
   copyShareExtFiles,
+  modifyShareViewController,
   writeCapacitorConfig,
   prepAppIcon,
   modifyInfoPlist,
+  writeEntitlementsPlist,
+  runAddEntitlementsScript,
   writePodfile,
   modifyXcodeProjectFile,
   writePrivacyInfo,
@@ -24,30 +28,36 @@ import {
   writeDataExtractionRules,
   writeNetworkSecurityConfig,
   modifyGradleConfig,
+  hasAuthMethod,
+  modifyAppDelegate,
 } from "./utils/common-build-utils";
 import {
   bundlePackagesAndPlugins,
   copyPublicDirs,
-  copyMobileAppDirs,
+  copyPluginMobileAppDirs,
   bundleMobileAppCode,
+  copyOptionalSource,
 } from "./utils/package-bundle-utils";
 import User from "@saltcorn/data/models/user";
 import { CapacitorHelper } from "./utils/capacitor-helper";
 import { removeNonWordChars } from "@saltcorn/data/utils";
+const { getState } = require("@saltcorn/data/db/state");
 
 type EntryPointType = "view" | "page" | "byrole";
 const appIdDefault = "saltcorn.mobile.app";
 const appNameDefault = "SaltcornMobileApp";
 
 export type IosCfg = {
-  appleTeamId: string;
-  mainProvisioningProfile: {
+  noProvisioningProfile?: boolean;
+  appleTeamId?: string;
+  mainProvisioningProfile?: {
     guuid: string;
   };
   shareExtensionProvisioningProfile?: {
     guuid: string;
     specifier: string;
     identifier: string;
+    appGroupId?: string;
   };
 };
 
@@ -69,7 +79,12 @@ type MobileBuilderConfig = {
   serverURL: string;
   splashPage?: string;
   autoPublicLogin: string;
+  showContinueAsPublicUser?: boolean;
   allowOfflineMode: string;
+  syncOnReconnect: boolean;
+  syncOnAppResume: boolean;
+  pushSync: boolean;
+  syncInterval?: number;
   plugins: Plugin[];
   copyTargetDir?: string;
   user?: User;
@@ -81,6 +96,7 @@ type MobileBuilderConfig = {
   keyStorePassword?: string;
   googleServicesFile?: string;
   buildType: "debug" | "release";
+  allowClearTextTraffic?: boolean;
 };
 
 /**
@@ -104,7 +120,13 @@ export class MobileBuilder {
   serverURL: string;
   splashPage?: string;
   autoPublicLogin: string;
+  showContinueAsPublicUser: boolean;
   allowOfflineMode: string;
+  syncOnReconnect: boolean;
+  syncOnAppResume: boolean;
+  pushSync: boolean;
+  syncInterval?: number;
+  backgroundSyncEnabled: boolean;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
@@ -118,7 +140,10 @@ export class MobileBuilder {
   isUnsecureKeyStore: boolean;
   googleServicesFile?: string;
   buildType: "debug" | "release";
+  allowClearTextTraffic: boolean;
   iosParams?: IosCfg;
+  apnsKeyId?: string;
+  pushNotificationsEnabled: boolean;
 
   private capacitorHelper: CapacitorHelper;
   private pluginsLoaded = false;
@@ -148,7 +173,13 @@ export class MobileBuilder {
     this.serverURL = cfg.serverURL;
     this.splashPage = cfg.splashPage;
     this.autoPublicLogin = cfg.autoPublicLogin;
+    this.showContinueAsPublicUser = !!cfg.showContinueAsPublicUser;
     this.allowOfflineMode = cfg.allowOfflineMode;
+    this.pushSync = cfg.pushSync;
+    this.syncOnReconnect = cfg.syncOnReconnect;
+    this.syncOnAppResume = cfg.syncOnAppResume;
+    this.syncInterval = cfg.syncInterval ? +cfg.syncInterval : undefined;
+    this.backgroundSyncEnabled = !!this.syncInterval && this.syncInterval > 0;
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
     });
@@ -170,11 +201,15 @@ export class MobileBuilder {
     }
     this.googleServicesFile = cfg.googleServicesFile;
     this.buildType = cfg.buildType;
+    this.allowClearTextTraffic = !!cfg.allowClearTextTraffic;
     this.iosParams = cfg.iosParams;
     this.capacitorHelper = new CapacitorHelper({
       ...this,
       appVersion: this.appVersion,
     });
+    this.apnsKeyId = getState().getConfig("apn_signing_key_id");
+    this.pushNotificationsEnabled =
+      !!this.googleServicesFile || !!this.apnsKeyId;
   }
 
   /**
@@ -198,7 +233,9 @@ export class MobileBuilder {
       prepareBuildDir(
         this.buildDir,
         this.templateDir,
-        !!this.googleServicesFile
+        this.pushNotificationsEnabled,
+        !!this.syncInterval && this.syncInterval > 0,
+        this.pushSync
       );
       writeCapacitorConfig(this.buildDir, {
         appName: this.appName,
@@ -235,7 +272,12 @@ export class MobileBuilder {
         synchedTables: this.synchedTables,
         tenantAppName: this.tenantAppName,
         autoPublicLogin: this.autoPublicLogin,
+        showContinueAsPublicUser: this.showContinueAsPublicUser,
         allowOfflineMode: this.allowOfflineMode,
+        syncOnReconnect: this.syncOnReconnect,
+        syncOnAppResume: this.syncOnAppResume,
+        pushSync: this.pushSync,
+        syncInterval: this.syncInterval ? this.syncInterval : 0,
         allowShareTo: this.allowShareTo,
       });
       let resultCode = await bundlePackagesAndPlugins(
@@ -247,7 +289,11 @@ export class MobileBuilder {
         await loadAllPlugins();
         this.pluginsLoaded = true;
       }
-      copyMobileAppDirs(this.buildDir);
+      copyPluginMobileAppDirs(this.buildDir);
+      if (this.pushNotificationsEnabled || this.pushSync)
+        copyOptionalSource(this.buildDir, "notifications.js");
+      if (this.syncInterval && this.syncInterval > 0)
+        copyOptionalSource(this.buildDir, "background_sync.js");
       resultCode = bundleMobileAppCode(this.buildDir);
       if (resultCode !== 0) return resultCode;
       await copyPublicDirs(this.buildDir);
@@ -285,16 +331,46 @@ export class MobileBuilder {
   }
 
   private async handleIosPlatform() {
-    prepareExportOptionsPlist({
-      buildDir: this.buildDir,
-      appId: this.appId,
-      iosParams: this.iosParams,
-    });
-    modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
-    writePodfile(this.buildDir);
-    writePrivacyInfo(this.buildDir);
-    modifyInfoPlist(this.buildDir, this.allowShareTo);
-    if (this.allowShareTo) copyShareExtFiles(this.buildDir);
+    if (this.iosParams?.noProvisioningProfile !== true) {
+      prepareExportOptionsPlist({
+        buildDir: this.buildDir,
+        appId: this.appId,
+        iosParams: this.iosParams,
+      });
+      modifyXcodeProjectFile(this.buildDir, this.appVersion, this.iosParams!);
+    }
+    writePodfile(
+      this.buildDir,
+      !!this.apnsKeyId,
+      !!this.syncInterval && this.syncInterval > 0,
+      this.pushSync
+    );
+    writePrivacyInfo(this.buildDir, this.backgroundSyncEnabled);
+    modifyInfoPlist(
+      this.buildDir,
+      this.allowShareTo,
+      this.backgroundSyncEnabled,
+      this.pushSync,
+      this.allowClearTextTraffic
+    );
+    if (this.pushSync) {
+      writeEntitlementsPlist(this.buildDir);
+      runAddEntitlementsScript(this.buildDir);
+    }
+    if (this.allowShareTo) {
+      copyShareExtFiles(this.buildDir);
+      if (this.iosParams?.shareExtensionProvisioningProfile?.appGroupId)
+        modifyShareViewController(
+          this.buildDir,
+          this.iosParams?.shareExtensionProvisioningProfile?.appGroupId
+        );
+    }
+    modifyAppDelegate(
+      this.buildDir,
+      this.backgroundSyncEnabled,
+      this.pushSync,
+      this.allowShareTo
+    );
   }
 
   private async handleAndroidPlatform() {
@@ -312,16 +388,34 @@ export class MobileBuilder {
         "app",
         "google-services.json"
       );
-      copySync(this.googleServicesFile, dest);
+      const servicesFile = await File.findOne(this.googleServicesFile);
+      if (servicesFile) copySync(servicesFile.location, dest);
     }
 
     await modifyAndroidManifest(
       this.buildDir,
       this.allowShareTo,
-      !!this.googleServicesFile
+      !!this.googleServicesFile,
+      hasAuthMethod(this.includedPlugins),
+      this.allowClearTextTraffic
     );
     writeDataExtractionRules(this.buildDir);
     writeNetworkSecurityConfig(this.buildDir, this.serverURL);
-    modifyGradleConfig(this.buildDir, this.appVersion);
+    modifyGradleConfig(
+      this.buildDir,
+      this.appVersion,
+      this.buildType === "debug"
+        ? {
+            keystorePath: this.useDocker
+              ? this.isUnsecureKeyStore
+                ? "/saltcorn-mobile-app/unsecure-default-key.jks"
+                : join("/", "saltcorn-mobile-app", basename(this.keyStorePath))
+              : this.keyStorePath,
+            keystorePassword: this.keyStorePassword,
+            keyAlias: this.keyStoreAlias,
+            keyPassword: this.keyStorePassword,
+          }
+        : undefined
+    );
   }
 }

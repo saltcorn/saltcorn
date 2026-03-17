@@ -5,6 +5,7 @@
  */
 
 import React, { Fragment, useState, useContext, useEffect } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import { ntimes } from "./Columns";
 import { Column } from "./Column";
 import optionsCtx from "../context";
@@ -34,6 +35,7 @@ const Tabs = ({
   field,
   setting_tab_n,
 }) => {
+  const { t } = useTranslation();
   const {
     selected,
     connectors: { connect, drag },
@@ -121,7 +123,7 @@ const Tabs = ({
                     (typeof titles[ix].label === "undefined"
                       ? titles[ix]
                       : titles[ix].label === ""
-                        ? "(empty)"
+                        ? t("(empty)")
                         : titles[ix].label)}
                 </a>
               </li>
@@ -173,6 +175,7 @@ export /**
  * @subcategory components
  */
 const TabsSettings = () => {
+  const { t } = useTranslation();
   const node = useNode((node) => ({
     tabsStyle: node.data.props.tabsStyle,
     ntabs: node.data.props.ntabs,
@@ -181,6 +184,7 @@ const TabsSettings = () => {
     deeplink: node.data.props.deeplink,
     disable_inactive: node.data.props.disable_inactive,
     serverRendered: node.data.props.serverRendered,
+    lazyLoadViews: node.data.props.lazyLoadViews,
     setting_tab_n: node.data.props.setting_tab_n,
     tabId: node.data.props.tabId,
     titles: node.data.props.titles,
@@ -200,6 +204,7 @@ const TabsSettings = () => {
     ntabs,
     field,
     serverRendered,
+    lazyLoadViews,
     tabId,
     showif,
     setting_tab_n,
@@ -235,11 +240,11 @@ const TabsSettings = () => {
     styleOptions.push("Value switch");
 
   return (
-    <table className="w-100" accordiontitle="Placement">
+    <table className="w-100" accordiontitle={t("Placement")}>
       <tbody>
         <tr>
           <th>
-            <label>Style</label>
+            <label>{t("Style")}</label>
           </th>
           <td>
             <select
@@ -255,7 +260,7 @@ const TabsSettings = () => {
           <Fragment>
             <tr>
               <td>
-                <label>Field</label>
+                <label>{t("Field")}</label>
               </td>
               <td>
                 <select
@@ -275,22 +280,40 @@ const TabsSettings = () => {
         ) : (
           <Fragment>
             {tabsStyle === "Accordion" ? (
-              <tr>
-                <td colSpan="2">
-                  <div className="form-check">
-                    <input
-                      className="form-check-input"
-                      name="block"
-                      type="checkbox"
-                      checked={independent}
-                      onChange={setAProp("independent", { checked: true })}
-                    />
-                    <label className="form-check-label">
-                      Open independently
-                    </label>
-                  </div>
-                </td>
-              </tr>
+              <Fragment>
+                <tr>
+                  <td colSpan="2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        name="block"
+                        type="checkbox"
+                        checked={independent}
+                        onChange={setAProp("independent", { checked: true })}
+                      />
+                      <label className="form-check-label">
+                        {t("Open independently")}
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td colSpan="2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        name="block"
+                        type="checkbox"
+                        checked={lazyLoadViews}
+                        onChange={setAProp("lazyLoadViews", { checked: true })}
+                      />
+                      <label className="form-check-label">
+                        {t("Lazy load views")}
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+              </Fragment>
             ) : (
               <Fragment>
                 <tr>
@@ -303,7 +326,7 @@ const TabsSettings = () => {
                         checked={deeplink}
                         onChange={setAProp("deeplink", { checked: true })}
                       />
-                      <label className="form-check-label">Deep link</label>
+                      <label className="form-check-label">{t("Deep link")}</label>
                     </div>
                   </td>
                 </tr>
@@ -318,7 +341,7 @@ const TabsSettings = () => {
                         onChange={setAProp("serverRendered", { checked: true })}
                       />
                       <label className="form-check-label">
-                        Server rendering
+                        {t("Server rendering")}
                       </label>
                     </div>
                   </td>
@@ -326,7 +349,7 @@ const TabsSettings = () => {
                 {serverRendered ? (
                   <tr>
                     <th>
-                      <label>Identifier</label>
+                      <label>{t("Identifier")}</label>
                     </th>
                     <td>
                       <input
@@ -339,6 +362,22 @@ const TabsSettings = () => {
                     </td>
                   </tr>
                 ) : null}
+                <tr>
+                  <td colSpan="2">
+                    <div className="form-check">
+                      <input
+                        className="form-check-input"
+                        name="block"
+                        type="checkbox"
+                        checked={lazyLoadViews}
+                        onChange={setAProp("lazyLoadViews", { checked: true })}
+                      />
+                      <label className="form-check-label">
+                        {t("Lazy load views")}
+                      </label>
+                    </div>
+                  </td>
+                </tr>
               </Fragment>
             )}
             {tabsStyle === "Accordion" ? (
@@ -353,7 +392,7 @@ const TabsSettings = () => {
                       onChange={setAProp("startClosed", { checked: true })}
                     />
                     <label className="form-check-label">
-                      Inititally closed
+                      {t("Initially closed")}
                     </label>
                   </div>
                 </td>
@@ -371,7 +410,7 @@ const TabsSettings = () => {
                       onChange={setAProp("disable_inactive", { checked: true })}
                     />
                     <label className="form-check-label">
-                      Disable inactive inputs
+                      {t("Disable inactive inputs")}
                     </label>
                   </div>
                 </td>
@@ -391,7 +430,7 @@ const TabsSettings = () => {
               </td>
             </tr>
             <tr>
-              <th colSpan="2">Title</th>
+              <th colSpan="2">{t("Title")}</th>
             </tr>
             <tr>
               <td colSpan={2}>
@@ -413,7 +452,7 @@ const TabsSettings = () => {
             options.mode === "filter" ? (
               <Fragment>
                 <tr>
-                  <th colSpan="2">Show if formula</th>
+                  <th colSpan="2">{t("Show if formula")}</th>
                 </tr>
                 <tr>
                   <td colSpan={2}>
@@ -453,7 +492,7 @@ const TabsSettings = () => {
                         });
                       }}
                     />
-                    <label className="form-check-label">Initially open</label>
+                    <label className="form-check-label">{t("Initially open")}</label>
                   </div>
                 </td>
               </tr>

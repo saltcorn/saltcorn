@@ -1,6 +1,6 @@
 import { writeFileSync } from "fs";
 import email from "../models/email";
-import { describe, it, expect, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import View from "../models/view";
 import Table from "../models/table";
 import User from "../models/user";

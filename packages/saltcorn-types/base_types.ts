@@ -3,9 +3,10 @@
  * @module
  */
 import type { AbstractForm } from "./model-abstracts/abstract_form";
-import type {
+import {
   AbstractTable,
   TablePack,
+  instanceOfTable,
 } from "./model-abstracts/abstract_table";
 import type { AbstractWorkflow } from "./model-abstracts/abstract_workflow";
 import type {
@@ -17,10 +18,17 @@ import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { Type, ReqRes, GenObj } from "./common_types";
 import type { RolePack } from "./model-abstracts/abstract_role";
 import type { LibraryPack } from "./model-abstracts/abstract_library";
-import type { AbstractView, ViewPack } from "./model-abstracts/abstract_view";
+import {
+  AbstractView,
+  ViewPack,
+  instanceOfView,
+} from "./model-abstracts/abstract_view";
 import type { AbstractPage, PagePack } from "./model-abstracts/abstract_page";
 import type { PageGroupPack } from "./model-abstracts/abstract_page_group";
-import type { PluginPack } from "./model-abstracts/abstract_plugin";
+import {
+  PluginPack,
+  instanceOfPlugin,
+} from "./model-abstracts/abstract_plugin";
 import type { TagPack } from "./model-abstracts/abstract_tag";
 import type { ModelPack } from "./model-abstracts/abstract_model";
 import type { ModelInstancePack } from "./model-abstracts/abstract_model_instance";
@@ -40,6 +48,8 @@ type FieldLikeBasics = {
   validator?: (arg0: any) => boolean | string | undefined;
   attributes?: GenObj;
   showIf?: { [field_name: string]: string | boolean | string[] };
+  isRepeat?: boolean;
+  tstype?: string;
 };
 type FieldLikeWithSelectInputType = {
   input_type: "select";
@@ -60,15 +70,33 @@ export type Header = {
   script?: string;
   css?: string;
   headerTag?: string;
+  onlyViews?: string[];
+  onlyFieldviews?: string[];
+  only_if?: (req: Req) => boolean | undefined;
 };
 
-type MenuItem = {
+export type MenuItem = {
+  href: string;
+  icon: string;
+  text: string;
+  type: string;
   label: string;
   link?: string;
-  subitems?: Array<{
-    label: string;
-    link?: string;
-  }>;
+  style: string;
+  title: string;
+  target: string;
+  tooltip: string;
+  in_modal?: boolean;
+  location: string;
+  shortcut?: string;
+  max_role: string;
+  min_role: number | string;
+  admin_page?: string;
+  user_page?: string;
+  target_blank?: boolean;
+  disable_on_mobile: boolean;
+  subitems?: MenuItem[];
+  user_menu_header?: boolean;
 };
 
 type LayoutWithTypeProp = {
@@ -96,6 +124,13 @@ type LayoutWithTypeProp = {
 
 type LayoutWithHtmlFile = {
   html_file: string;
+  html_string?: never;
+  above?: never;
+};
+
+type LayoutWithHtmlString = {
+  html_string: string;
+  html_file?: never;
   above?: never;
 };
 
@@ -112,7 +147,8 @@ export type Layout =
   | LayoutWithAbove
   | LayoutWithBesides
   | LayoutWithTypeProp
-  | LayoutWithHtmlFile;
+  | LayoutWithHtmlFile
+  | LayoutWithHtmlString;
 
 export function instanceOWithHtmlFile(
   object: any
@@ -164,6 +200,8 @@ export type PluginWrap = (arg0: PluginWrapArg) => string;
 export type PluginLayout = {
   wrap: PluginWrap;
   authWrap?: (arg0: PluginAuthwrapArg) => string;
+  renderBody?: (arg: any) => string;
+  pluginName?: string;
 };
 
 type Attribute = {
@@ -172,15 +210,23 @@ type Attribute = {
   required: boolean;
 };
 
+type ReadFromFormRecord = {
+  ([arg0, arg1]: [any, string]): any;
+  (arg0: any, arg1: any): any;
+};
+
 export type PluginType = {
   name: string;
   sqlName: string;
   fieldviews: Record<string, FieldView>;
   attributes?: (arg0: any) => Array<Attribute> | Array<Attribute>;
-  readFromFormRecord?: ([arg0, arg1]: [arg0: any, arg1: string]) => any;
+  validate_attributes: any;
+  readFromFormRecord?: ReadFromFormRecord;
   readFromDB?: (arg0: any) => any;
   validate?: (arg0: any) => (arg0: any) => boolean;
   presets?: ([]) => any;
+  read: any;
+  contract?: any;
 };
 
 export type TableQuery = {
@@ -200,6 +246,8 @@ export type TableQuery = {
 
 export type RunExtra = {
   redirect?: string;
+  onRowSelect?: Function;
+  removeIdFromstate?: boolean;
 } & ReqRes &
   SelectOptions;
 
@@ -239,6 +287,7 @@ export type Action = {
   disableInBuilder?: boolean;
   disableInList?: boolean;
   disableInWorkflow?: boolean;
+  requireRow?: boolean;
   disableIf?: () => boolean;
 };
 
@@ -348,6 +397,7 @@ export type ViewTemplate = {
   ) => Promise<Array<AbstractTrigger>>;
   queries?: (configuration?: any, req?: any) => Record<string, any>;
   connectedObjects?: (configuration?: any) => Promise<ConnectedObjects>;
+  noAutoTest?: boolean;
 };
 
 export type RouteAction = (
@@ -362,7 +412,7 @@ export type RouteAction = (
 export type PluginFunction = {
   run: (...arg0: any[]) => any;
   returns?: string;
-  arguments?: string[];
+  arguments?: string[] | FieldLike[];
   isAsync?: boolean;
 };
 
@@ -401,6 +451,7 @@ type FieldViewFilter = {
 export type FieldView = {
   readFromFormRecord?: Function;
   read?: Function;
+  type?: string;
   blockDisplay?: boolean;
   handlesTextStyle?: boolean;
   description?: string;
@@ -422,6 +473,14 @@ export type FieldView = {
     mode: ActionMode;
   }) => Promise<Array<FieldLike>> | Array<FieldLike>;
 } & (FieldViewShow | FieldViewEdit | FieldViewFilter);
+
+export function instanceOfFieldViewEdit(object: any): object is FieldViewEdit {
+  return object && typeof object !== "string" && object.isEdit === true;
+}
+
+export function instanceOfFieldViewShow(object: any): object is FieldViewShow {
+  return object && typeof object !== "string" && object.isEdit === false;
+}
 
 type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
@@ -498,7 +557,7 @@ export type AuthenticationMethod = {
   strategy: any;
 };
 export type TableProvider = {
-  configuration_workflow: (req: Req) => AbstractWorkflow;
+  configuration_workflow: (req?: Req) => AbstractWorkflow;
   fields: (cfg: GenObj) => Promise<Array<FieldLike>>;
   get_table: (cfg: GenObj) => Partial<AbstractTable>;
 };
@@ -581,10 +640,53 @@ export type Pack = {
   config?: object;
 };
 
+export const instanceOfPack = (object: any): object is Pack => {
+  return (
+    object &&
+    "tables" in object &&
+    Array.isArray(object.tables) &&
+    object.tables.every((t: any) => instanceOfTable(t)) &&
+    "views" in object &&
+    Array.isArray(object.views) &&
+    object.views.every((v: any) => instanceOfView(v)) &&
+    "plugins" in object &&
+    Array.isArray(object.plugins) &&
+    object.plugins.every((p: any) => instanceOfPlugin(p))
+  );
+};
+
 export type PluginSourceType = "npm" | "github" | "local" | "git";
 
 export type Column = {
-  type: "Action" | "ViewLink" | "Link" | "JoinField" | "Aggregation" | "Field";
+  type:
+    | "Action"
+    | "ViewLink"
+    | "Link"
+    | "JoinField"
+    | "Aggregation"
+    | "Field"
+    | "FormulaValue";
+  // Field type properties
+  field_name?: string;
+  fieldview?: string;
+  // Action type properties
+  action_label_formula?: boolean;
+  action_label?: string;
+  action_name?: string;
+  // ViewLink type properties
+  view_label_formula?: boolean;
+  view_label?: string;
+  extra_state_fml?: string;
+  view?: string;
+  // JoinField type properties
+  join_field?: string;
+  // Link type properties
+  link_text_formula?: boolean;
+  link_text?: string;
+  link_url_formula?: boolean;
+  link_url?: string;
+  // Common properties
+  [key: string]: any;
 };
 
 export type Tablely = AbstractTable | { external: true };
@@ -597,7 +699,12 @@ export type MobileConfig = {
   localTableIds: number[];
   synchedTables: string[];
   autoPublicLogin: boolean;
+  showContinueAsPublicUser?: boolean;
   allowOfflineMode?: boolean;
+  syncOnReconnect?: boolean;
+  syncOnAppResume?: boolean;
+  pushSync?: boolean;
+  syncInterval?: number;
   allowShareTo?: boolean;
   isOfflineMode?: boolean;
   networkState?:
@@ -617,6 +724,11 @@ export type MobileConfig = {
   inErrorState?: boolean;
   inLoadState?: boolean;
   encodedSiteLogo?: string;
+
+  pushConfiguration?: {
+    token: string;
+    devideId: string;
+  };
 };
 
 export type JoinFieldOption = {

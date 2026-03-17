@@ -54,6 +54,9 @@ describe("tags", () => {
     expect(genericElement("div", { class: "foo" }, "Hello")).toBe(
       '<div class="foo">Hello</div>'
     );
+    expect(
+      genericElement("div", { onclick: `$("#bar").hide()` }, "Hello")
+    ).toBe('<div onclick="$(&quot;#bar&quot;).hide()">Hello</div>');
   });
 
   it("class", () => {
@@ -97,6 +100,16 @@ describe("tags", () => {
     expect(
       div({ style: { marginRight: "1px", borderTopLeftRadius: "3px" } }, 5)
     ).toBe('<div style="margin-right:1px;border-top-left-radius:3px">5</div>');
+    expect(hr({ style: { color: "red", display: null } }, 5)).toBe(
+      '<hr style="color:red">'
+    );
+    expect(hr({ style: { color: "red", display: "" } }, 5)).toBe(
+      '<hr style="color:red">'
+    );
+    expect(hr({ style: { color: "red", display: "none" } }, 5)).toBe(
+      '<hr style="color:red;display:none">'
+    );
+    expect(hr({ style: { color: "", display: null } }, 5)).toBe("<hr>");
     expect(hr({ style: { color: "red" } }, 5)).toBe('<hr style="color:red">');
     expect(hr({ style: {} })).toBe("<hr>");
     expect(hr({ style: null })).toBe("<hr>");
@@ -263,12 +276,12 @@ describe("table", () => {
       { label: "Age", key: "age" },
     ];
     const rows = [
-      { name: "UserName1", age: 25 },
-      { name: "UserName2", age: 30 },
+      { name: "UserName1", age: 25, id: 1 },
+      { name: "UserName2", age: 30, id: 2 },
     ];
     const result = mkTable(headers, rows);
     expect(result).toBe(
-      `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr><td>UserName1</td><td>25</td></tr><tr><td>UserName2</td><td>30</td></tr></tbody></table></div>`
+      `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr data-row-id="1"><td>UserName1</td><td>25</td></tr><tr data-row-id="2"><td>UserName2</td><td>30</td></tr></tbody></table></div>`
     );
   });
 
@@ -289,7 +302,7 @@ describe("table", () => {
     ];
     const result = mkTable(headers, rows, { transpose: true });
     expect(result).toBe(
-      `<div class="table-responsive"><table class="table table-sm"><tbody><tr><th>Name</th><td>UserName1</td><td>UserName2</td></tr><tr><th>Age</th><td>25</td><td>30</td></tr></tbody></table></div>`
+      `<div class="table-responsive"><table class="table table-sm"><tbody><tr row-key="name"><th>Name</th><td>UserName1</td><td>UserName2</td></tr><tr row-key="age"><th>Age</th><td>25</td><td>30</td></tr></tbody></table></div>`
     );
   });
 
@@ -311,7 +324,7 @@ describe("table", () => {
 
     const result = mkTable(headers, rows, { transpose: true });
     expect(result).toBe(
-      `<div class="table-responsive"><table class="table table-sm"><tbody><tr><th>Name</th><td>UserName1</td><td>UserName2</td></tr><tr><th>Age</th><td>25</td><td>30</td></tr></tbody></table></div>`
+      `<div class="table-responsive"><table class="table table-sm"><tbody><tr row-key="name"><th>Name</th><td>UserName1</td><td>UserName2</td></tr><tr row-key="age"><th>Age</th><td>25</td><td>30</td></tr></tbody></table></div>`
     );
   });
 
@@ -321,8 +334,8 @@ describe("table", () => {
       { label: "Age", key: "age" },
     ];
     const rows = [
-      { name: "UserName1", age: 25 },
-      { name: "UserName2", age: 30 },
+      { name: "UserName1", age: 25, id: 1 },
+      { name: "UserName2", age: 30, id: 2 },
     ];
     const paginationOpts = {
       current_page: 1,
@@ -331,7 +344,7 @@ describe("table", () => {
     };
     const result = mkTable(headers, rows, { pagination: paginationOpts });
     expect(result).toBe(
-      `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr><td>UserName1</td><td>25</td></tr><tr><td>UserName2</td><td>30</td></tr></tbody></table><ul class="pagination"><li class="page-item active"><span class="page-link link-style" onclick="?page=1" role="link">1</span></li><li class="page-item"><span class="page-link link-style" onclick="?page=2" role="link">2</span></li><li class="page-item"><span class="page-link link-style" onclick="?page=3" role="link">3</span></li></ul></div>`
+      `<div class="table-responsive"><table class="table table-sm"><thead><tr><th>Name</th><th>Age</th></tr></thead><tbody><tr data-row-id="1"><td>UserName1</td><td>25</td></tr><tr data-row-id="2"><td>UserName2</td><td>30</td></tr></tbody></table><ul class="pagination"><li class="page-item active"><span class="page-link link-style" onclick="?page=1" role="link">1</span></li><li class="page-item"><span class="page-link link-style" onclick="?page=2" role="link">2</span></li><li class="page-item"><span class="page-link link-style" onclick="?page=3" role="link">3</span></li></ul></div>`
     );
   });
 });

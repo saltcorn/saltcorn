@@ -3,8 +3,9 @@
  * @module components/elements/utils
  * @subcategory components / elements
  */
-/* globals $, _sc_globalCsrf*/
+/* globals $, _sc_globalCsrf, apply_showif*/
 import React, { Fragment, useState, useEffect } from "react";
+import useTranslation from "../../hooks/useTranslation";
 import optionsCtx from "../context";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -28,6 +29,164 @@ import FontIconPicker from "@fonticonpicker/react-fonticonpicker";
 import Tippy from "@tippyjs/react";
 import { RelationType } from "@saltcorn/common-code";
 import Select from "react-select";
+import { MultiLineCodeEditor, SingleLineEditor } from "./MonacoEditor";
+
+const isDarkMode = () => {
+  if (typeof window !== "undefined" && window._sc_lightmode) {
+    return window._sc_lightmode === "dark";
+  }
+  if (
+    typeof window !== "undefined" &&
+    window.matchMedia &&
+    window.matchMedia("(prefers-color-scheme: dark)").matches
+  )
+    return true;
+  return false;
+};
+
+export const builderSelectClassName = (base = "") =>
+  [base, isDarkMode() ? "builder-select-dark" : ""].filter(Boolean).join(" ");
+
+export const reactSelectStyles = (overrides = {}) => {
+  const dark = isDarkMode();
+  const base = {
+    menuPortal: (baseStyles) => ({ ...baseStyles, zIndex: 19999 }),
+  };
+
+  if (!dark) {
+    // Light mode styles
+    return {
+      ...base,
+      control: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#ffffff",
+        borderColor: "#dee2e6",
+        color: "#212529",
+      }),
+      valueContainer: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "transparent",
+      }),
+      singleValue: (baseStyles) => ({
+        ...baseStyles,
+        color: "#212529",
+      }),
+      input: (baseStyles) => ({
+        ...baseStyles,
+        color: "#212529",
+      }),
+      placeholder: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      menu: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#ffffff",
+        border: "1px solid #dee2e6",
+      }),
+      menuList: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#ffffff",
+      }),
+      option: (baseStyles, state) => ({
+        ...baseStyles,
+        backgroundColor: state.isFocused
+          ? "#e9ecef"
+          : state.isSelected
+            ? "#0d6efd"
+            : "transparent",
+        color: state.isSelected ? "#fff" : "#212529",
+      }),
+      dropdownIndicator: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      clearIndicator: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      indicatorSeparator: (baseStyles) => ({
+        ...baseStyles,
+        backgroundColor: "#dee2e6",
+      }),
+      groupHeading: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      menuNotice: (baseStyles) => ({
+        ...baseStyles,
+        color: "#6c757d",
+      }),
+      ...overrides,
+    };
+  }
+
+  // Dark mode styles
+  return {
+    ...base,
+    control: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#212529",
+      borderColor: "#495057",
+      color: "#f8f9fa",
+    }),
+    valueContainer: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "transparent",
+    }),
+    singleValue: (baseStyles) => ({
+      ...baseStyles,
+      color: "#f8f9fa",
+    }),
+    input: (baseStyles) => ({
+      ...baseStyles,
+      color: "#f8f9fa",
+    }),
+    placeholder: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    menu: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#212529",
+      border: "1px solid #495057",
+    }),
+    menuList: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#212529",
+    }),
+    option: (baseStyles, state) => ({
+      ...baseStyles,
+      backgroundColor: state.isFocused
+        ? "#343a40"
+        : state.isSelected
+          ? "#0d6efd"
+          : "transparent",
+      color: state.isSelected ? "#fff" : "#f8f9fa",
+    }),
+    dropdownIndicator: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    clearIndicator: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    indicatorSeparator: (baseStyles) => ({
+      ...baseStyles,
+      backgroundColor: "#495057",
+    }),
+    groupHeading: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    menuNotice: (baseStyles) => ({
+      ...baseStyles,
+      color: "#adb5bd",
+    }),
+    ...overrides,
+  };
+};
 
 export const DynamicFontAwesomeIcon = ({ icon, className }) => {
   if (!icon) return null;
@@ -58,26 +217,30 @@ export /**
  * @subcategory components / elements / utils
  * @namespace
  */
-const BlockSetting = ({ block, setProp }) => (
-  <div className="form-check">
-    <input
-      className="form-check-input"
-      name="block"
-      type="checkbox"
-      checked={block}
-      onChange={(e) => {
-        if (e.target) {
-          const target_value = e.target.checked;
-          setProp((prop) => (prop.block = target_value));
-        }
-      }}
-    />
-    <label className="form-check-label">Block display</label>
-  </div>
-);
+const BlockSetting = ({ block, setProp }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="form-check">
+      <input
+        className="form-check-input"
+        name="block"
+        type="checkbox"
+        checked={block}
+        onChange={(e) => {
+          if (e.target) {
+            const target_value = e.target.checked;
+            setProp((prop) => (prop.block = target_value));
+          }
+        }}
+      />
+      <label className="form-check-label">{t("Block display")}</label>
+    </div>
+  );
+};
 
-export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
-  !textStyle ||
+export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) => {
+  const { t } = useTranslation();
+  return !textStyle ||
   !textStyleToArray(textStyle).some((ts) => ts && ts.startsWith("h")) ? (
     <BlockSetting block={block} setProp={setProp} />
   ) : (
@@ -94,9 +257,10 @@ export const BlockOrInlineSetting = ({ block, inline, textStyle, setProp }) =>
           }
         }}
       />
-      <label className="form-check-label">Inline display</label>
+      <label className="form-check-label">{t("Inline display")}</label>
     </div>
   );
+};
 
 export const HelpTopicLink = ({ topic, ...context }) => {
   const { mode } = React.useContext(optionsCtx);
@@ -204,17 +368,12 @@ const OrFormula = ({ setProp, isFormula, node, nodekey, children }) => {
     <Fragment>
       <div className="input-group  input-group-sm w-100">
         {isFormula[nodekey] ? (
-          <input
-            type="text"
-            className="form-control text-to-display"
+          <SingleLineEditor
             value={node[nodekey] || ""}
-            spellCheck={false}
-            onChange={(e) => {
-              if (e.target) {
-                const target_value = e.target.value;
-                setProp((prop) => (prop[nodekey] = target_value));
-              }
+            onChange={(target_value) => {
+              setProp((prop) => (prop[nodekey] = target_value));
             }}
+            className="text-to-display"
           />
         ) : (
           children
@@ -292,11 +451,12 @@ export /**
  * @subcategory components / elements / utils
  */
 const MinRoleSettingRow = ({ minRole, setProp }) => {
+  const { t } = useTranslation();
   const options = React.useContext(optionsCtx);
   return (
     <tr>
       <td>
-        <label>Minimum Role</label>
+        <label>{t("Minimum role")}</label>
       </td>
       <td>
         <select
@@ -487,8 +647,12 @@ export /**
  * @subcategory components / elements / utils
  * @namespace
  */
-const Accordion = ({ titles, children }) => {
-  const [currentTab, setCurrentTab] = useState(0);
+const Accordion = ({ titles, children, value, onChange }) => {
+  const [currentTab, setCurrentTab] = useState(value || 0);
+  const setTab = (ix) => {
+    setCurrentTab(ix);
+    onChange && onChange(ix);
+  };
   return (
     <Fragment>
       {children.map((child, ix) => {
@@ -499,7 +663,7 @@ const Accordion = ({ titles, children }) => {
               className={`bg-${
                 isCurrent ? "primary" : "secondary"
               } ps-1 text-white w-100 mt-1`}
-              onClick={() => setCurrentTab(ix)}
+              onClick={() => setTab(ix)}
             >
               <span className="w-1em">
                 {isCurrent ? (
@@ -768,6 +932,95 @@ const ColorInput = ({ value, onChange }) =>
     </button>
   );
 
+const CodeFieldWithModal = ({ value, onChange, setProp, mode, label, hideLabel }) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const { t } = useTranslation();
+  return (
+    <Fragment>
+      {!hideLabel && (
+        <label>
+          {t(label)}{" "}
+          <i
+            className="fas fa-external-link-alt ms-1"
+            style={{ cursor: "pointer" }}
+            onClick={() => setModalOpen(true)}
+            title={t("Open code popup")}
+          ></i>
+        </label>
+      )}
+      {hideLabel && (
+        <i
+          className="fas fa-external-link-alt ms-1"
+          style={{ cursor: "pointer" }}
+          onClick={() => setModalOpen(true)}
+          title={t("Open code popup")}
+        ></i>
+      )}
+      <MultiLineCodeEditor
+        setProp={setProp}
+        value={value}
+        onChange={onChange}
+        mode={mode}
+      />
+      {modalOpen ? (
+        <div
+          className={`modal fade show`}
+          style={{ display: "block", zIndex: 1055 }}
+          tabIndex={-1}
+          role="dialog"
+          aria-labelledby="codeModalLabel"
+          aria-hidden={false}
+        >
+          <div
+            className="modal-backdrop fade show"
+            style={{ zIndex: 1050 }}
+            onClick={() => setModalOpen(false)}
+            aria-hidden="true"
+          />
+          <div
+            className="modal-dialog modal-dialog-centered modal-lg"
+            role="document"
+            style={{ zIndex: 1060 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="modal-content code-modal">
+              <div className="modal-header">
+                <h5 className="modal-title" id="codeModalLabel">
+                  {t(label)}
+                </h5>
+                <button
+                  type="button"
+                  className="btn-close"
+                  aria-label="Close"
+                  onClick={() => setModalOpen(false)}
+                />
+              </div>
+              <div className="modal-body">
+                <MultiLineCodeEditor
+                  setProp={setProp}
+                  value={value}
+                  onChange={onChange}
+                  isModalEditor
+                  mode={mode}
+                />
+              </div>
+              <div className="modal-footer">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => setModalOpen(false)}
+                >
+                  {t("Close")}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </Fragment>
+  );
+};
+
 export /**
  * @param {object} props
  * @param {object[]} props.fields
@@ -803,7 +1056,7 @@ const ConfigForm = ({
       }
       return (
         <div key={ix} className="builder-config-field" data-field-name={f.name}>
-          {!isCheckbox(f) ? (
+          {!isCheckbox(f) && f.input_type !== "code" ? (
             <label>
               {f.label || f.name}
               {f.help ? (
@@ -813,6 +1066,7 @@ const ConfigForm = ({
                   table_name={tableName}
                 />
               ) : null}
+              {" "}
             </label>
           ) : null}
           <ConfigField
@@ -895,6 +1149,7 @@ const ConfigField = ({
       } else prop[field.name] = v;
     });
     onChange && onChange(field.name, v, setProp);
+    apply_showif();
   };
   let stored_value = configuration
     ? configuration[field.name]
@@ -917,7 +1172,7 @@ const ConfigField = ({
     field.options =
       typeof field.attributes?.options === "string"
         ? field.attributes?.options.split(",").map((s) => s.trim())
-        : [...field.attributes?.options];
+        : [...(field.attributes?.options ?? [])];
     if (!field.required && field.options) field.options.unshift("");
   }
   const field_type = field.input_type || field.type.name || field.type;
@@ -945,6 +1200,19 @@ const ConfigField = ({
       }, []);
   }
 
+  const intDispFn = () => (
+    <input
+      type="number"
+      className={`field-${field?.name} form-control`}
+      step={field.step || 1}
+      min={field.min}
+      max={field.max}
+      name={field?.name}
+      value={value || ""}
+      onChange={(e) => e.target && myOnChange(e.target.value)}
+    />
+  );
+
   const dispatch = {
     String() {
       if (field.attributes?.options) {
@@ -967,11 +1235,29 @@ const ConfigField = ({
             ))}
           </select>
         );
+      } else if (field.attributes?.calcOptions) {
+        return (
+          <select
+            className={`field-${field?.name} form-control form-select`}
+            name={field?.name}
+            value={value || ""}
+            onChange={(e) => e.target && myOnChange(e.target.value)}
+            onBlur={(e) => e.target && myOnChange(e.target.value)}
+            data-calc-options={encodeURIComponent(
+              JSON.stringify(field.attributes.calcOptions)
+            )}
+            autocomplete={"off"}
+            data-fieldname={field?.name}
+          >
+            <option value=""></option>
+          </select>
+        );
       } else
         return (
           <input
             type="text"
             name={field?.name}
+            placeholder={field.attributes?.placeholder || ""}
             className={`field-${field?.name} form-control`}
             value={value || ""}
             spellCheck={false}
@@ -997,18 +1283,8 @@ const ConfigField = ({
           ))}
       </select>
     ),
-    Integer: () => (
-      <input
-        type="number"
-        className={`field-${field?.name} form-control`}
-        step={field.step || 1}
-        min={field.min}
-        max={field.max}
-        name={field?.name}
-        value={value || ""}
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-      />
-    ),
+    Integer: intDispFn,
+    number: intDispFn,
     Float: () => (
       <input
         type="number"
@@ -1045,17 +1321,33 @@ const ConfigField = ({
         onChange={(e) => e.target && myOnChange(e.target.value)}
       />
     ),
-    code: () => (
-      <textarea
-        rows="6"
-        type="text"
-        className={`field-${field?.name} form-control`}
-        value={value}
-        name={field?.name}
-        onChange={(e) => e.target && myOnChange(e.target.value)}
-        spellCheck={false}
-      />
-    ),
+    code: () => {
+      if (
+        field?.attributes?.expression_type === "row" ||
+        field?.attributes?.expression_type === "query"
+      ) {
+        return (
+          <textarea
+            rows="6"
+            type="text"
+            className={`field-${field?.name} form-control`}
+            value={value}
+            name={field?.name}
+            onChange={(e) => e.target && myOnChange(e.target.value)}
+            spellCheck={false}
+          />
+        );
+      }
+      return (
+        <CodeFieldWithModal
+          value={value}
+          onChange={myOnChange}
+          setProp={setProp}
+          mode={field?.attributes?.mode}
+          label={field?.label || field?.name || "Code"}
+        />
+      );
+    },
     select: () => {
       if (field.class?.includes?.("selectizable")) {
         const seloptions = field.options.map((o, ix) =>
@@ -1068,7 +1360,8 @@ const ConfigField = ({
         return (
           <Select
             options={seloptions}
-            className="react-select selectized-field"
+            className={builderSelectClassName("react-select selectized-field")}
+            classNamePrefix="builder-select"
             value={seloptions.find((so) => value === so.value)}
             onChange={(e) =>
               (e.name && myOnChange(e.name)) ||
@@ -1082,7 +1375,7 @@ const ConfigField = ({
               (typeof e === "string" && myOnChange(e))
             }
             menuPortalTarget={document.body}
-            styles={{ menuPortal: (base) => ({ ...base, zIndex: 19999 }) }}
+            styles={reactSelectStyles()}
           ></Select>
         );
       } else
@@ -1093,6 +1386,7 @@ const ConfigField = ({
             name={field?.name}
             onChange={(e) => e.target && myOnChange(e.target.value)}
             onBlur={(e) => e.target && myOnChange(e.target.value)}
+            data-fieldname={field?.name}
           >
             {(field.options || []).map((o, ix) =>
               o.name && o.label ? (
@@ -1152,7 +1446,9 @@ const ConfigField = ({
                 e?.target &&
                 myOnChange(
                   isStyle || subProp
-                    ? `${e.target.value}${styleDim || "px"}`
+                    ? e.target.value === ""
+                      ? ""
+                      : `${e.target.value}${styleDim || "px"}`
                     : e.target.value
                 )
               }
@@ -1299,7 +1595,8 @@ const SettingsRow = ({
   subProp,
   valuePostfix,
 }) => {
-  const fullWidth = ["String", "Bool", "textarea"].includes(field.type);
+  const { t } = useTranslation();
+  const fullWidth = ["String", "Bool", "textarea"].includes(field.type) || field.input_type === "code";
   const needLabel = field.type !== "Bool";
   const inner = field.canBeFormula ? (
     <OrFormula
@@ -1329,7 +1626,7 @@ const SettingsRow = ({
     <tr>
       {fullWidth ? (
         <td colSpan="2">
-          {needLabel && <label>{field.label}</label>}
+          {needLabel && field.input_type !== "code" && <label>{field.label}</label>}
           {inner}
           {field.sublabel ? (
             <i
@@ -1439,12 +1736,13 @@ const ButtonOrLinkSettingsRows = ({
   allowRunOnLoad = false,
   faIcons = [],
 }) => {
+  const { t } = useTranslation();
   const setAProp = setAPropGen(setProp);
   const addBtnClass = (s) => (btnClass ? `${btnClass} ${s}` : s);
   return [
     <tr key="btnstyle">
       <td>
-        <label>Style</label>
+        <label>{t("Style")}</label>
       </td>
       <td>
         <select
@@ -1454,41 +1752,41 @@ const ButtonOrLinkSettingsRows = ({
         >
           {linkFirst ? (
             <option value={linkIsBlank ? "" : addBtnClass("btn-link")}>
-              Link
+              {t("Link")}
             </option>
           ) : null}
-          <option value={addBtnClass("btn-primary")}>Primary button</option>
-          <option value={addBtnClass("btn-secondary")}>Secondary button</option>
-          <option value={addBtnClass("btn-success")}>Success button</option>
-          <option value={addBtnClass("btn-danger")}>Danger button</option>
-          <option value={addBtnClass("btn-warning")}>Warning button</option>
-          <option value={addBtnClass("btn-info")}>Info button</option>
+          <option value={addBtnClass("btn-primary")}>{t("Primary button")}</option>
+          <option value={addBtnClass("btn-secondary")}>{t("Secondary button")}</option>
+          <option value={addBtnClass("btn-success")}>{t("Success button")}</option>
+          <option value={addBtnClass("btn-danger")}>{t("Danger button")}</option>
+          <option value={addBtnClass("btn-warning")}>{t("Warning button")}</option>
+          <option value={addBtnClass("btn-info")}>{t("Info button")}</option>
           <option value={addBtnClass("btn-outline-primary")}>
-            Primary outline button
+            {t("Primary outline button")}
           </option>
           <option value={addBtnClass("btn-outline-secondary")}>
-            Secondary outline button
+            {t("Secondary outline button")}
           </option>
           <option value={addBtnClass("btn-outline-success")}>
-            Success outline button
+            {t("Success outline button")}
           </option>
           <option value={addBtnClass("btn-outline-danger")}>
-            Danger outline button
+            {t("Danger outline button")}
           </option>
           <option value={addBtnClass("btn-outline-warning")}>
-            Warning outline button
+            {t("Warning outline button")}
           </option>
           <option value={addBtnClass("btn-outline-info")}>
-            Info outline button
+            {t("Info outline button")}
           </option>
           <option value={addBtnClass("btn-custom-color")}>
-            Button custom color
+            {t("Button custom color")}
           </option>
           {!linkFirst ? (
-            <option value={addBtnClass("btn-link")}>Link</option>
+            <option value={addBtnClass("btn-link")}>{t("Link")}</option>
           ) : null}
           {!linkFirst && allowRunOnLoad ? (
-            <option value="on_page_load">Run on Page Load</option>
+            <option value="on_page_load">{t("Run on Page Load")}</option>
           ) : null}
         </select>
       </td>
@@ -1496,7 +1794,7 @@ const ButtonOrLinkSettingsRows = ({
     values[keyPrefix + "style"] !== "on_page_load" ? (
       <tr key="btnsz">
         <td>
-          <label>Size</label>
+          <label>{t("Size")}</label>
         </td>
         <td>
           <select
@@ -1504,12 +1802,12 @@ const ButtonOrLinkSettingsRows = ({
             value={values[keyPrefix + "size"]}
             onChange={setAProp(keyPrefix + "size")}
           >
-            <option value="">Standard</option>
-            <option value="btn-lg">Large</option>
-            <option value="btn-sm">Small</option>
-            <option value="btn-sm btn-xs">Extra Small</option>
-            <option value="btn-block">Block</option>
-            <option value="btn-block btn-lg">Large block</option>
+            <option value="">{t("Standard")}</option>
+            <option value="btn-lg">{t("Large")}</option>
+            <option value="btn-sm">{t("Small")}</option>
+            <option value="btn-sm btn-xs">{t("Extra Small")}</option>
+            <option value="btn-block">{t("Block")}</option>
+            <option value="btn-block btn-lg">{t("Large block")}</option>
           </select>
         </td>
       </tr>
@@ -1517,7 +1815,7 @@ const ButtonOrLinkSettingsRows = ({
     values[keyPrefix + "style"] !== "on_page_load" ? (
       <tr key="btnicon">
         <td>
-          <label>Icon</label>
+          <label>{t("Icon")}</label>
         </td>
         <td>
           <FontIconPicker
@@ -1535,7 +1833,7 @@ const ButtonOrLinkSettingsRows = ({
       ? [
           <tr key="btnbgcol">
             <td>
-              <label>Background</label>
+              <label>{t("Background")}</label>
             </td>
             <td>
               <input
@@ -1548,7 +1846,7 @@ const ButtonOrLinkSettingsRows = ({
           </tr>,
           <tr key="btnbdcol">
             <td>
-              <label>Border</label>
+              <label>{t("Border")}</label>
             </td>
             <td>
               <input
@@ -1561,7 +1859,7 @@ const ButtonOrLinkSettingsRows = ({
           </tr>,
           <tr key="btntxtcol">
             <td>
-              <label>Text</label>
+              <label>{t("Text")}</label>
             </td>
             <td>
               <input
@@ -1706,8 +2004,8 @@ export const buildBootstrapOptions = (values) => {
 
 export const arrayChunks = (xs, n) => {
   const arrayOfArrays = [];
-  for (var i = 0; i < bigarray.length; i += n) {
-    arrayOfArrays.push(bigarray.slice(i, i + n));
+  for (var i = 0; i < xs.length; i += n) {
+    arrayOfArrays.push(xs.slice(i, i + n));
   }
   return arrayOfArrays;
 };
