@@ -5,13 +5,19 @@ const PageObject = require('../pageobject/locators.js');
 const customAssert = require('../pageobject/utils.js');
 const Logger = require('../pageobject/logger.js');
 
-test.describe('E2E Test Suite', () => {
+test.describe.serial('E2E Test Suite', () => {
     let functions;
     let pageobject;
     let context;
     let page;
+    let randomString;
+    let showViewName;
+    let kanbanViewName;
 
     test.beforeAll(async ({ browser }) => {
+        randomString = PageFunctions.generate_Random_String(10);
+        showViewName = 'ShowTask_' + randomString;
+        kanbanViewName = 'Kanban_Board_' + randomString;
         // Initialize the log file
         Logger.initialize();
         // Create a new context and page for all tests
@@ -145,12 +151,13 @@ test.describe('E2E Test Suite', () => {
 
     // Create show view for Task table
     test('Create show view for Task table', async () => {
+        test.setTimeout(60000);
         await functions.views();
         // click on create new view
         await page.waitForSelector(pageobject.createnewview);
         await page.click(pageobject.createnewview);
-        // input view name and discription
-        await page.fill(pageobject.InputName, 'ShowTask');
+        // input view name and discription (with random suffix)
+        await page.fill(pageobject.InputName, showViewName);
         await page.fill(pageobject.discriptiontext, 'Show view for task table');
         // validate the view pattern in table dropdown
         await customAssert('View Pattern should be Show', async () => {
@@ -165,23 +172,48 @@ test.describe('E2E Test Suite', () => {
         });
         // submit the page
         await functions.submit();
-        await customAssert('Delete all content from view ', async () => {
-            // select target
-            await page.click(pageobject.target);
-            // delete containts
-            await page.click(pageobject.deletebutton); //deletecontentButton
-        });
-        await customAssert('Drag and drop field source on target ', async () => {
-            // drag field source on column
-            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
-            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
-            await page.click(pageobject.firstfield);
-            await page.selectOption(pageobject.fielddropdown, { label: 'Name' });
-            // select text style as heading 4 for task name
-            await page.click("button.style-h4");
-        });
+        await page.waitForLoadState('networkidle');
         await page.waitForTimeout(2000);
-        // click on next button
+
+        // Delete all existing rows/columns until canvas is clear
+        await customAssert('Delete all content until canvas is clear', async () => {
+            const deleteBtn = page.locator(pageobject.deletebutton);
+            for (let i = 0; i < 20; i++) {
+                const canvasHasContent = await page.locator(pageobject.target).locator('> div').count() > 0;
+                if (!canvasHasContent) break;
+                await page.click(pageobject.target);
+                await page.waitForTimeout(400);
+                if (!await deleteBtn.first().isVisible().catch(() => false)) break;
+                await deleteBtn.first().click();
+                await page.waitForTimeout(600);
+            }
+        });
+
+        // Drag first field to canvas
+        await customAssert('Drag first field to canvas', async () => {
+            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
+            await page.waitForTimeout(1500);
+        });
+
+        // Click field, select Name, apply H4
+        await customAssert('Select Name and set H4 style', async () => {
+            const fieldInCanvas = page.locator(pageobject.target).locator('div.d-inline-block').first();
+            await fieldInCanvas.waitFor({ state: 'visible', timeout: 10000 });
+            await fieldInCanvas.click();
+            await page.waitForTimeout(1500);
+            await page.locator('select.field').first().waitFor({ state: 'visible', timeout: 10000 });
+            await page.locator('select.field').first().selectOption({ label: 'Name' });
+            await page.click('button.style-h4');
+            await page.waitForTimeout(1000);
+        });
+
+        // Drag second field below first column
+        await customAssert('Drag second field below first column', async () => {
+            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
+            await page.waitForTimeout(1500);
+        });
+
+        // Save
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
     });
@@ -193,8 +225,8 @@ test.describe('E2E Test Suite', () => {
         // click on create new view
         await page.waitForSelector(pageobject.createnewview);
         await page.click(pageobject.createnewview);
-        // input view name and discription
-        await page.fill(pageobject.InputName, 'Kanban_Board');
+        // input view name and discription (with random suffix)
+        await page.fill(pageobject.InputName, kanbanViewName);
         await page.fill(pageobject.discriptiontext, 'Kanban board for task table');
         // validate the view pattern in table dropdown
         await customAssert('View Pattern should be Kanban', async () => {
@@ -210,7 +242,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         await customAssert('Select Showtask for card view', async () => {
-            await page.selectOption(pageobject.Cardviewdropdown, { label: 'ShowTask' });
+            await page.selectOption(pageobject.Cardviewdropdown, { label: showViewName });
         });
         await customAssert('Select Status for Columns by dropdown', async () => {
             await page.selectOption(pageobject.columnsbydropdown, { label: 'status' });
@@ -222,7 +254,7 @@ test.describe('E2E Test Suite', () => {
     test('Perform action in kanban board ', async () => {
         await functions.views();
         // Go to kanban board
-        await page.click(pageobject.kanbanboardlink);
+        await page.locator(`a[href="/view/${kanbanViewName}"]`).first().click();
         // drag and drop taskcard on review status
         await functions.drag_And_Drop(pageobject.TaskCard2, pageobject.reviewstatus);
         // drag and drop taskcard on iteration status and reload
@@ -255,7 +287,7 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
 
         await functions.views();
-        await page.click(pageobject.configurekanban);
+        await page.locator(`a[href="/viewedit/config/${kanbanViewName}"]`).first().click();
         // add position in kanban board
         await customAssert('Select Position for Positions Field dropdown', async () => {
             await page.selectOption(pageobject.PositionFieldDropdown, 'position');
@@ -263,7 +295,7 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
 
         // Go to kanban board
-        await page.click(pageobject.kanbanboardlink);
+        await page.locator(`a[href="/view/${kanbanViewName}"]`).first().click();
         // drag and drop a task card on different container status and reload the page
         await functions.drag_And_Drop(pageobject.TaskCard2, pageobject.iterationstatus);
         await page.reload();

@@ -120,9 +120,13 @@ test.describe('E2E Test Suite', () => {
 
         await page.waitForSelector(pageobject.htmlCodeSource);
         await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
-        await functions.fill_Text(pageobject.htmltextlocator, '<h3>Hello World</h3>');
+        // Open the HTML code popup and fill via Monaco editor (more reliable than direct fill)
+        await page.waitForSelector(pageobject.codePopupIcon, { state: 'visible', timeout: 10000 });
+        await page.locator(pageobject.codePopupIcon).click();
+        await functions.fill_Monaco_Text(pageobject.htmltextlocator, '<h3>Hello World</h3>');
         // validate that html code source is visible
         await customAssert('HTML box should be visible', async () => await expect(page.locator(pageobject.htmltextlocator)).toBeVisible());
+        await page.locator('button:has-text("Close")').click();
 
         // drag and drop the link source
         await functions.drag_And_Drop(pageobject.linkSource, pageobject.target);
@@ -131,18 +135,18 @@ test.describe('E2E Test Suite', () => {
             const Linktext = page.locator(pageobject.linklocator);
             await expect(Linktext).toHaveValue('youtube link');
         });
-        const column = page.locator('h2', { hasText: 'Column' });
-        await column.click();
+        // Click on the canvas to ensure builder is in a stable state for the next test
+        await page.locator(pageobject.target).click({ position: { x: 10, y: 10 } });
     });
 
     test('Add Library for testpage3', async () => {
         // library
-        await page.locator(pageobject.Library)
-        await page.click(pageobject.Library);
+        await page.waitForSelector(pageobject.Library, { state: 'visible', timeout: 15000 });
+        await page.locator(pageobject.Library).click();
 
         // add button
-        await page.locator(pageobject.plusAddButton)
-        await page.click(pageobject.plusAddButton); // Locate by ID
+        await page.waitForSelector(pageobject.plusAddButton, { state: 'visible', timeout: 15000 });
+        await page.locator(pageobject.plusAddButton).click(); // Locate by ID
         console.log('Add button clicked successfully!');
         await customAssert('Name Field', async () => {
             await page.click(pageobject.nameField);
@@ -170,11 +174,13 @@ test.describe('E2E Test Suite', () => {
 
     test('Create Fourth page', async () => {
         await functions.create_New_Page('testpage4');
+        await page.waitForSelector(pageobject.Library, { state: 'visible', timeout: 15000 });
         await page.locator(pageobject.Library).click();
+        await page.waitForSelector(pageobject.dragElement1, { state: 'visible', timeout: 15000 });
         await functions.drag_And_Drop(pageobject.dragElement1, pageobject.target);
         await page.waitForTimeout(2500);
         await page.click(pageobject.testPage4);
-        await customAssert('Page URL should be /testpage2', async () => {
+        await customAssert('Page URL should be /testpage4', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'page/testpage4');
         });
     });

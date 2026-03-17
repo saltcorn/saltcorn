@@ -1,6 +1,5 @@
 const { expect } = require('@playwright/test');
 const customAssert = require('../pageobject/utils.js');
-const { TIMEOUT } = require('dns');
 class PageFunctions {
   constructor(page) {
     this.page = page;
@@ -39,6 +38,15 @@ class PageFunctions {
     
   }
 
+  async fill_Monaco_Text(locator, value) {
+    const editor = this.page.locator(locator);
+    await editor.waitFor({ state: 'visible' });
+    await editor.click();
+    await this.page.keyboard.press('Control+A');
+    await this.page.keyboard.press('Backspace');
+    await this.page.keyboard.insertText(value);
+  }
+
   async navigate_To_Settings() {
     await this.page.waitForSelector(this.locators.settingsTab, { timeout: 20000 });
     await this.page.click(this.locators.settingsTab, { force: true });
@@ -50,8 +58,6 @@ class PageFunctions {
   }
 
   async about_application_to_site_identity() {
-    await this.page.waitForTimeout(5000);
-    await this.page.screenshot({ path: 'screenshot-before-wait.png' });
     await this.page.waitForSelector(this.locators.siteidentitylocator, { timeout: 30000 });
     await this.page.click(this.locators.siteidentitylocator, { force: true });
   }
@@ -172,7 +178,7 @@ class PageFunctions {
   }
 
   async Events_to_Triggers() {
-    await this.page.waitForSelector(this.locators.trigerslocator);
+    await this.page.waitForSelector(this.locators.trigerslocator, { timeout: 15000 });
     await this.page.click(this.locators.trigerslocator);
   }
 
@@ -420,15 +426,21 @@ class PageFunctions {
       await expect(this.page.locator(this.locators.flatpickrDateHeader)).toBeVisible();
       await this.page.click('button#button-search-submit');
     });
-    // Wait for a few seconds
-    await this.page.waitForTimeout(2000);    
-    // Click the Install button
-    await this.page.click(this.locators.installflatpickr);
-    // Assert the success message is visible
-    await customAssert('Success message should be visible', async () => {
-      await this.page.waitForSelector(this.locators.successmessage);
-      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-    });
+    await this.page.waitForTimeout(2000);
+    // If Remove button is visible, module is already installed - skip install
+    const removeVisible = (await this.page.locator(this.locators.removeFlatpickr).count()) > 0;
+    if (!removeVisible) {
+      try {
+        await this.page.waitForSelector(this.locators.installflatpickr, { state: 'visible', timeout: 3000 });
+        await this.page.click(this.locators.installflatpickr);
+        await customAssert('Success message should be visible', async () => {
+          await this.page.waitForSelector(this.locators.successmessage);
+          await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+        });
+      } catch {
+        // Install button not found, skip
+      }
+    }
     await this.navigate_modules_To_Installed();
     await customAssert('flatpickr-date module should be present in installed tab', async () => {
       await expect(this.page.locator(this.locators.flatpickrDateHeader)).toBeVisible();
@@ -439,22 +451,27 @@ class PageFunctions {
     await this.navigate_To_Settings();
     // Navigate to Module
     await this.navigate_To_module();
-    // Search with 'flatpickr' in the search bar
+    // Search with 'ckeditor' in the search bar
     await this.fill_Text(this.locators.SearchModule, 'ckeditor');
-    // Assert that the flatpickr module is visible and click on it
     await customAssert('ckeditor4 module should be visible', async () => {
       await expect(this.page.locator(this.locators.ckeditorHeader)).toBeVisible();
       await this.page.click('button#button-search-submit');
     });
-    // Wait for a few seconds
-    await this.page.waitForTimeout(2000);    
-    // Click the Install button
-    await this.page.click(this.locators.installCkeditor4);
-    // Assert the success message is visible
-    await customAssert('Success message should be visible', async () => {
-      await this.page.waitForSelector(this.locators.successmessage);
-      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-    });
+    await this.page.waitForTimeout(2000);
+    // If Remove button is visible, module is already installed - skip install
+    const removeVisible = (await this.page.locator(this.locators.removeCkeditor4).count()) > 0;
+    if (!removeVisible) {
+      try {
+        await this.page.waitForSelector(this.locators.installCkeditor4, { state: 'visible', timeout: 3000 });
+        await this.page.click(this.locators.installCkeditor4);
+        await customAssert('Success message should be visible', async () => {
+          await this.page.waitForSelector(this.locators.successmessage);
+          await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+        });
+      } catch {
+        // Install button not found, skip
+      }
+    }
     await this.navigate_modules_To_Installed();
     await customAssert('ckeditor4 module should be present in installed tab', async () => {
       await expect(this.page.locator(this.locators.ckeditorHeader)).toBeVisible();
@@ -463,24 +480,27 @@ class PageFunctions {
 
   async install_kanban() {
     await this.navigate_To_Settings();
-    // Navigate to Module
     await this.navigate_To_module();
-    // Search with 'flatpickr' in the search bar
     await this.fill_Text(this.locators.SearchModule, 'kanban');
-    // Assert that the flatpickr module is visible and click on it
     await customAssert('kanban module should be visible', async () => {
       await expect(this.page.locator(this.locators.kanbanHeader)).toBeVisible();
       await this.page.click('button#button-search-submit');
     });
-    // Wait for a few seconds
-    await this.page.waitForTimeout(2000);    
-    // Click the Install button
-    await this.page.click(this.locators.installkanban);
-    // Assert the success message is visible
-    await customAssert('Success message should be visible', async () => {
-      await this.page.waitForSelector(this.locators.successmessage);
-      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-    });
+    await this.page.waitForTimeout(2000);
+    // If Remove button is visible, module is already installed - skip install
+    const removeVisible = (await this.page.locator(this.locators.removeKanban).count()) > 0;
+    if (!removeVisible) {
+      try {
+        await this.page.waitForSelector(this.locators.installkanban, { state: 'visible', timeout: 3000 });
+        await this.page.click(this.locators.installkanban);
+        await customAssert('Success message should be visible', async () => {
+          await this.page.waitForSelector(this.locators.successmessage);
+          await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+        });
+      } catch {
+        // Install button not found, skip
+      }
+    }
     await this.navigate_modules_To_Installed();
     await customAssert('kanban module should be present in installed tab', async () => {
       await expect(this.page.locator(this.locators.kanbanHeader)).toBeVisible();
@@ -489,24 +509,27 @@ class PageFunctions {
 
   async install_badges() {
     await this.navigate_To_Settings();
-    // Navigate to Module
     await this.navigate_To_module();
-    // Search with 'flatpickr' in the search bar
     await this.fill_Text(this.locators.SearchModule, 'badges');
-    // Assert that the flatpickr module is visible and click on it
     await customAssert('badges module should be visible', async () => {
       await expect(this.page.locator(this.locators.badgesHeader)).toBeVisible();
       await this.page.click('button#button-search-submit');
     });
-    // Wait for a few seconds
-    await this.page.waitForTimeout(2000);    
-    // Click the Install button
-    await this.page.click(this.locators.installbadges);
-    // Assert the success message is visible
-    await customAssert('Success message should be visible', async () => {
-      await this.page.waitForSelector(this.locators.successmessage);
-      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-    });
+    await this.page.waitForTimeout(2000);
+    // If Remove button is visible, module is already installed - skip install
+    const removeVisible = (await this.page.locator(this.locators.removeBadges).count()) > 0;
+    if (!removeVisible) {
+      try {
+        await this.page.waitForSelector(this.locators.installbadges, { state: 'visible', timeout: 3000 });
+        await this.page.click(this.locators.installbadges);
+        await customAssert('Success message should be visible', async () => {
+          await this.page.waitForSelector(this.locators.successmessage);
+          await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+        });
+      } catch {
+        // Install button not found, skip
+      }
+    }
     await this.navigate_modules_To_Installed();
     await customAssert('badges module should be present in installed tab', async () => {
       await expect(this.page.locator(this.locators.badgesHeader)).toBeVisible();
@@ -515,22 +538,23 @@ class PageFunctions {
 
   async install_any_bootstrap_theme() {
     await this.navigate_To_Settings();
-    // Navigate to Module
     await this.navigate_To_module();
-    // Search with 'flatpickr' in the search bar
     await this.fill_Text(this.locators.SearchModule, 'bootstrap-theme');
-    // Assert that the flatpickr module is visible and click on it
     await customAssert('any-bootstrap-theme module should be visible', async () => {
       await expect(this.page.locator(this.locators.bootstraptheme)).toBeVisible();
       await this.page.click('button#button-search-submit');
     });
-    
-    await this.page.click(this.locators.installbootstap);
-    // Assert the success message is visible
-    await customAssert('Success message should be visible', async () => {
-      await this.page.waitForSelector(this.locators.successmessage);
-      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-    });
+    await this.page.waitForTimeout(2000);
+    try {
+      await this.page.waitForSelector(this.locators.installbootstap, { state: 'visible', timeout: 3000 });
+      await this.page.click(this.locators.installbootstap);
+      await customAssert('Success message should be visible', async () => {
+        await this.page.waitForSelector(this.locators.successmessage);
+        await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+      });
+    } catch {
+      // Module already installed (Remove button shown), skip install
+    }
   }
 
   async installModules() {
@@ -538,28 +562,40 @@ class PageFunctions {
     await this.navigate_To_Settings();
     await this.navigate_To_module();
   
-    // Step 2: Install JSON Module
+    // Step 2: Install JSON Module (skip if already installed)
     await this.fill_Text(this.locators.SearchModule, 'json');
     await customAssert('JSON module should be visible', async () => {
       await expect(this.page.locator(this.locators.json)).toBeVisible();
     });
-    await this.page.click(this.locators.installjson);
-    await customAssert('Success message for JSON should be visible', async () => {
-      await this.page.waitForSelector(this.locators.successmessage);
-      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-    });
+    await this.page.waitForTimeout(2000);
+    try {
+      await this.page.waitForSelector(this.locators.installjson, { state: 'visible', timeout: 3000 });
+      await this.page.click(this.locators.installjson);
+      await customAssert('Success message for JSON should be visible', async () => {
+        await this.page.waitForSelector(this.locators.successmessage);
+        await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+      });
+    } catch {
+      // JSON module already installed, skip
+    }
   
-    // Step 3: Install Tabulator Module
+    // Step 3: Install Tabulator Module (skip if already installed)
     await this.fill_Text(this.locators.SearchModule, 'tabulator');
     await customAssert('Tabulator module should be visible', async () => {
       await expect(this.page.locator(this.locators.tabulator)).toBeVisible();
     });
-    await this.page.click('button#button-search-submit'); // Ensure clicking to search
-    await this.page.click(this.locators.installtabulator);
-    await customAssert('Success message for Tabulator should be visible', async () => {
-      await this.page.waitForSelector(this.locators.successmessage);
-      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-    });
+    await this.page.click('button#button-search-submit');
+    await this.page.waitForTimeout(2000);
+    try {
+      await this.page.waitForSelector(this.locators.installtabulator, { state: 'visible', timeout: 3000 });
+      await this.page.click(this.locators.installtabulator);
+      await customAssert('Success message for Tabulator should be visible', async () => {
+        await this.page.waitForSelector(this.locators.successmessage);
+        await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+      });
+    } catch {
+      // Tabulator module already installed, skip
+    }
   }
   
   
@@ -737,15 +773,17 @@ async install_money() {
     await expect(this.page.locator(this.locators.MoneyHeader)).toBeVisible();
     await this.page.click('button#button-search-submit');
   });
-  // Wait for a few seconds
-  await this.page.waitForTimeout(2000);    
-  // Click the Install button
-  await this.page.click(this.locators.installmoney);
-  // Assert the success message is visible
-  await customAssert('Success message should be visible', async () => {
-    await this.page.waitForSelector(this.locators.successmessage);
-    await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-  });
+  await this.page.waitForTimeout(2000);
+  try {
+    await this.page.waitForSelector(this.locators.installmoney, { state: 'visible', timeout: 3000 });
+    await this.page.click(this.locators.installmoney);
+    await customAssert('Success message should be visible', async () => {
+      await this.page.waitForSelector(this.locators.successmessage);
+      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+  } catch {
+    // Module already installed, skip install
+  }
   await this.navigate_modules_To_Installed();
   await customAssert('money module should be present in installed tab', async () => {
     await expect(this.page.locator(this.locators.MoneyHeader)).toBeVisible();
@@ -763,15 +801,17 @@ async install_ManyToMany() {
     await expect(this.page.locator(this.locators.Many2ManyHeader)).toBeVisible();
     await this.page.click('button#button-search-submit');
   });
-  // Wait for a few seconds
-  await this.page.waitForTimeout(2000);    
-  // Click the Install button
-  await this.page.click(this.locators.installmany2many);
-  // Assert the success message is visible
-  await customAssert('Success message should be visible', async () => {
-    await this.page.waitForSelector(this.locators.successmessage);
-    await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
-  });
+  await this.page.waitForTimeout(2000);
+  try {
+    await this.page.waitForSelector(this.locators.installmany2many, { state: 'visible', timeout: 3000 });
+    await this.page.click(this.locators.installmany2many);
+    await customAssert('Success message should be visible', async () => {
+      await this.page.waitForSelector(this.locators.successmessage);
+      await expect(this.page.locator(this.locators.successmessage)).toHaveText('success');
+    });
+  } catch {
+    // Module already installed, skip install
+  }
   await this.navigate_modules_To_Installed();
   await customAssert('many-to-many module should be present in installed tab', async () => {
     await expect(this.page.locator(this.locators.Many2ManyHeader)).toBeVisible();

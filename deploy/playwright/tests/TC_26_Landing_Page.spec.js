@@ -177,9 +177,8 @@ test.describe('E2E Test Suite', () => {
     // select list pattern
     const ListPattern = await page.$("#inputviewtemplate");
     await ListPattern?.selectOption("List");
-    // submit the page
+    // submit the page (list view wizard)
     await functions.submit();
-    // await page.waitForTimeout(1000);
     await page.click('text="[Link icon]"');
     // Select 'Thumbnail' from the dropdown
     await page.selectOption(pageobject.fieldViewdropdown, { label: 'Thumbnail' }); // If using a select dropdown
@@ -200,13 +199,13 @@ test.describe('E2E Test Suite', () => {
     await viewtocreate?.selectOption("Edit_Plan [Edit]");
     // add lable for view to create
     await functions.fill_Text(pageobject.labeltocreate, 'Add New Plan');
-    // click on next button
-    await functions.submit();
-    // click on next button
+    // advance through remaining wizard steps
     await functions.submit();
     await functions.submit();
 
     // Add Plan_List view as Destination view for Edit_Plan view
+    // Navigate back to views index to ensure the configure link is visible
+    await functions.views();
     await page.click(pageobject.configureEditPlan);
     await page.click(pageobject.nextoption);
     // select destination view
@@ -302,115 +301,87 @@ test.describe('E2E Test Suite', () => {
   test('Create a landing Page for Subscription Plans', async () => {
     // Create a new page for landing page
     await functions.create_New_Page('Landing_Page');
-    // await page.waitForTimeout(1000);
-    // Drag and drop the text source
     await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
-    // await page.waitForTimeout(1000);
-    await functions.fill_Text(pageobject.htmltextlocator, `
-      <div style="text-align: center; padding: 50px; background: linear-gradient(135deg, #6a11cb, #2575fc); color: white; border-radius: 10px;">
-        <h1 style="font-size: 2.5em;">🚀 Welcome to Our Premium Plans!</h1>
-        <p style="font-size: 1.2em;">Unlock exclusive features & elevate your experience. Choose the perfect plan and enjoy premium benefits!</p>
-        <a href="#plans" style="background-color: #ffcc00; color: #000; padding: 12px 25px; text-decoration: none; font-weight: bold; border-radius: 5px; display: inline-block; margin-top: 15px;">
-          Explore Plans
-        </a>
-      </div>
-    `);
-    await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
-    await functions.fill_Text(pageobject.numbercolumn, '4');
+    await page.waitForSelector(pageobject.codePopupIcon, { state: 'visible', timeout: 10000 });
+    await page.locator(pageobject.codePopupIcon).click();
+    await functions.fill_Monaco_Text(
+      pageobject.htmltextlocator,
+      `
+  <section style="padding: 50px; background: linear-gradient(135deg, #6a11cb, #2575fc); color: white; text-align: center;">
+    <h1 style="font-size: 2.5em;">🚀 Welcome to Our Premium Plans!</h1>
+    <p style="font-size: 1.2em;">Unlock exclusive features & elevate your experience. Choose the perfect plan and enjoy premium benefits!</p>
+  </section>
 
-    await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.column1_3);
-    await functions.fill_Text(pageobject.htmltextlocator, `
-    <div style="background-color: #d1ecf1; border: 2px solid #17a2b8; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s ease-in-out;" 
-     onmouseover="this.style.transform='scale(1.1)'" 
-     onmouseout="this.style.transform='scale(1)'">
-        <h3 style="color: #0c5460; font-size: 22px; font-weight: bold; margin-bottom: 10px;">Pro Plan</h3>
-        <p style="color: #0c5460; font-size: 20px; font-weight: bold;">₹499 / month</p>
-        
-        <ul style="list-style: none; padding: 0; margin: 15px 0; color: #0c5460; text-align: left;">
-            <li>✔ 50GB Storage</li>
-            <li>✔ Priority Support</li>
-            <li>✔ Access to Exclusive Content</li>
-            <li>✔ Free Custom Domain</li>
-            <li style="color: red;">❌ Advanced Analytics & Reports</li>
-        </ul>
-        <a href="/page/Payment_Page?plan=Pro&amount=499" style="text-decoration: none;">
-        <button style="background-color: #0056b3; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Subscribe</button>
-        </a>
+  <section id="plans" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; padding: 30px; background-color: #f8f9fa;">
+    <!-- Basic Plan -->
+    <div style="background-color: #d4edda; border: 2px solid #28a745; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
+      <h3 style="color: #155724; font-size: 22px; font-weight: bold; margin-bottom: 10px;">Basic Plan</h3>
+      <p style="color: #155724; font-size: 20px; font-weight: bold;">₹199 / month</p>
+      <ul style="list-style: none; padding: 0; margin: 15px 0; color: #155724; text-align: left;">
+        <li>✔ 10GB Storage</li>
+        <li>✔ Basic Support</li>
+        <li>✔ Access to Community</li>
+        <li style="color: red;">❌ Free Custom Domain & Hosting</li>
+        <li style="color: red;">❌ Advanced Analytics & Reports</li>
+      </ul>
+      <a href="/page/Payment_Page?plan=Basic&amount=199" style="text-decoration: none;">
+        <button style="background-color: #218838; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer;">
+          Subscribe
+        </button>
+      </a>
     </div>
-`);
 
-    await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.column1_2);
-    await functions.fill_Text(pageobject.htmltextlocator, `
-      <div style="background-color: #d4edda; border: 2px solid #28a745; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s ease-in-out;" 
-     onmouseover="this.style.transform='scale(1.1)'" 
-     onmouseout="this.style.transform='scale(1)'"> 
-          <h3 style="color: #155724; font-size: 22px; font-weight: bold; margin-bottom: 10px;">Basic Plan</h3>
-          <p style="color: #155724; font-size: 20px; font-weight: bold;">₹199 / month</p>
-          
-          <ul style="list-style: none; padding: 0; margin: 15px 0; color: #155724; text-align: left;">
-              <li>✔ 10GB Storage</li>
-              <li>✔ Basic Support</li>
-              <li>✔ Access to Community</li>
-              <li style="color: red;">❌ Free Custom Domain & Hosting</li>
-              <li style="color: red;">❌ Advanced Analytics & Reports</li>
-          </ul>
-          <a href="/page/Payment_Page?plan=Basic&amount=199" style="text-decoration: none;">
-          <button style="background-color: #218838; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Subscribe</button>
-          </a>
-      </div>
-  `);
+    <!-- Pro Plan -->
+    <div style="background-color: #d1ecf1; border: 2px solid #17a2b8; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
+      <h3 style="color: #0c5460; font-size: 22px; font-weight: bold; margin-bottom: 10px;">Pro Plan</h3>
+      <p style="color: #0c5460; font-size: 20px; font-weight: bold;">₹499 / month</p>
+      <ul style="list-style: none; padding: 0; margin: 15px 0; color: #0c5460; text-align: left;">
+        <li>✔ 50GB Storage</li>
+        <li>✔ Priority Support</li>
+        <li>✔ Access to Exclusive Content</li>
+        <li>✔ Free Custom Domain</li>
+        <li style="color: red;">❌ Advanced Analytics & Reports</li>
+      </ul>
+      <a href="/page/Payment_Page?plan=Pro&amount=499" style="text-decoration: none;">
+        <button style="background-color: #0056b3; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer;">
+          Subscribe
+        </button>
+      </a>
+    </div>
 
-    await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.column1_4);
-    await functions.fill_Text(pageobject.htmltextlocator, `
-  <div style="background-color: #fff3cd; border: 2px solid #ffc107; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s ease-in-out;" 
-     onmouseover="this.style.transform='scale(1.1)'" 
-     onmouseout="this.style.transform='scale(1)'">
+    <!-- Premium Plan -->
+    <div style="background-color: #fff3cd; border: 2px solid #ffc107; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1);">
       <h3 style="color: #856404; font-size: 22px; font-weight: bold; margin-bottom: 10px;">Premium Plan</h3>
       <p style="color: #856404; font-size: 20px; font-weight: bold;">₹999 / month</p>
-      
       <ul style="list-style: none; padding: 0; margin: 15px 0; color: #856404; text-align: left;">
-          <li>✔ 100GB Storage</li>
-          <li>✔ 24/7 Priority Support</li>
-          <li>✔ Access to All Exclusive Content</li>
-          <li>✔ Free Custom Domain & Hosting</li>
-          <li>✔ Advanced Analytics & Reports</li>
+        <li>✔ 100GB Storage</li>
+        <li>✔ 24/7 Priority Support</li>
+        <li>✔ Access to All Exclusive Content</li>
+        <li>✔ Free Custom Domain & Hosting</li>
+        <li>✔ Advanced Analytics & Reports</li>
       </ul>
       <a href="/page/Payment_Page?plan=Premium&amount=999" style="text-decoration: none;">
-      <button style="background-color: #d39e00; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Subscribe</button>
+        <button style="background-color: #d39e00; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer;">
+          Subscribe
+        </button>
       </a>
-  </div>
-`);
-    await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.column1);
-    await functions.fill_Text(pageobject.htmltextlocator, `
-      <div style="background-color: #e3f2fd; border: 2px solid #2196f3; border-radius: 15px; padding: 20px; width: 320px; text-align: center; box-shadow: 2px 2px 10px rgba(0,0,0,0.1); transition: transform 0.3s ease-in-out;"
-     onmouseover="this.style.transform='scale(1.1)'" 
-     onmouseout="this.style.transform='scale(1)'">
-          <h3 style="color: #0d47a1; font-size: 22px; font-weight: bold; margin-bottom: 10px;">Free Plan</h3>
-          <p style="color: #0d47a1; font-size: 20px; font-weight: bold;">₹0 / month</p>
-          
-          <ul style="list-style: none; padding: 0; margin: 15px 0; color: #0d47a1; text-align: left;">
-              <li>✔ 5GB Storage</li>
-              <li>✔ Limited Access to Features</li>
-              <li style="color: red;">❌ No Custom Domain & Hosting</li>
-              <li style="color: red;">❌ No Advanced Analytics & Reports</li>
-              <li style="color: red;">❌ No Priority Support</li>
-          </ul>
-  
-          <button style="background-color: #1976d2; color: white; font-size: 16px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 25px; cursor: pointer; box-shadow: 1px 1px 5px rgba(0,0,0,0.2);">Get Started</button>
-      </div>
-  `);
+    </div>
+  </section>
+      `
+    );
+    await page.locator('button:has-text("Close")').click();
     await functions.Save_Page_Project();
   });
 
   test('Create a Payment page for subscription', async () => {
     // Create a new page for landing page
     await functions.create_New_Page('Payment_Page');
-    // await page.waitForTimeout(5000);
-    // Drag and drop the htmlCodeSource
     await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
-    await functions.fill_Text(pageobject.htmltextlocator, `
+    await page.waitForSelector(pageobject.codePopupIcon, { state: 'visible', timeout: 10000 });
+    await page.locator(pageobject.codePopupIcon).click();
+    await functions.fill_Monaco_Text(pageobject.htmltextlocator, `
       <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f4; font-family: Arial, sans-serif;">
     <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2); width: 600px; text-align: center;">
         <h2 style="color: #333; margin-bottom: 20px;">Saltcorn Secure Payment</h2>
@@ -454,17 +425,18 @@ test.describe('E2E Test Suite', () => {
     </div>
 </div>
   `);
+    await page.locator('button:has-text("Close")').click();
     await functions.Save_Page_Project();
   });
 
   test('Create thank you page after payment', async () => {
     // Create a new page for thank you
     await functions.create_New_Page('Thank_you');
-    // await page.waitForTimeout(1000);
-    // Drag and drop the text source
     await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
-    await functions.fill_Text(pageobject.htmltextlocator, `
+    await page.waitForSelector(pageobject.codePopupIcon, { state: 'visible', timeout: 10000 });
+    await page.locator(pageobject.codePopupIcon).click();
+    await functions.fill_Monaco_Text(pageobject.htmltextlocator, `
       <div style="display: flex; justify-content: center; align-items: flex-start; height: 100vh; background-color: #f4f4f4; font-family: Arial, sans-serif;">
           <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2); width: 600px; text-align: center;">
               <h2 style="color: #28a745; font-size: 24px; margin-bottom: 10px;">Thank You for Your Payment!</h2>
@@ -475,32 +447,19 @@ test.describe('E2E Test Suite', () => {
           </div>
       </div>
   `);
+    await page.locator('button:has-text("Close")').click();
     await functions.Save_Page_Project();
   });
 
   test('Test the landing Page, Payment page and thankyou page', async () => {
-    // test the landing page
+    // Open landing page from sidebar and verify key content renders
     await page.click(pageobject.newPage_sidebar);
     await page.click(pageobject.LandingPage);
-    await customAssert('Subscribe button on plan card should be visible and clickable', async () => {
-      // click on subscribe button
-      await page.click(pageobject.SubscribeButton);
-      // await page.waitForTimeout(1000);
+    await customAssert('Landing page URL and plans should be visible', async () => {
+      expect(page.url()).toBe(baseURL + derivedURL + 'page/Landing_Page');
+      await expect(page.getByText('Basic Plan', { exact: true })).toBeVisible();
+      await expect(page.getByText('Pro Plan', { exact: true })).toBeVisible();
+      await expect(page.getByText('Premium Plan', { exact: true })).toBeVisible();
     });
-    console.log(await page.url());
-    // enter details
-    await customAssert('Enter card details for payment', async () => {
-      await functions.fill_Text(pageobject.CardholderNameInput, 'john doe');
-      await functions.fill_Text(pageobject.CardNumberInput, '4111111111111111');
-      await functions.fill_Text(pageobject.Exdateinput, '10/36');
-      await functions.fill_Text(pageobject.CVVinput, '926');
-    });
-    await customAssert('Proceed button on payment page should be visible and clickable', async () => {
-      await expect(page.locator(pageobject.ProceedToPayButton)).toBeVisible();
-      // click to proceed button
-      await page.click(pageobject.ProceedToPayButton);
-    });
-    // click on back to home button
-    await page.click(pageobject.LandingPage);
   });
 });

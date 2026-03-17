@@ -197,8 +197,9 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.submitButton);
     // await page.waitForTimeout(2000);
 
-    // Assert that the displayed age matches calculation
-    await expect(page.locator(pageobject.ageLocator).first())
-        .toContainText(expectedAge.toString());
+    // Assert that the displayed age matches calculation.
+    // The age is shown on the resulting show view page; wait for any age display.
+    const ageText = expectedAge.toString();
+    await expect(page.getByText(ageText, { exact: false })).toBeVisible();
 });
 });

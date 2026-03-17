@@ -81,9 +81,12 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(2500); // Wait for 5 seconds
+    await page.waitForTimeout(2500); // Wait for view list to render
 
-    await page.locator('div.d-inline:has-text("@mailinator.com")').click();
+    // Click on any email cell in the list (avoid hard-coding domain)
+    const emailCell = page.locator('div.d-inline:has-text("@")').first();
+    await emailCell.waitFor({ state: 'visible', timeout: 15000 });
+    await emailCell.click();
     await customAssert('Click on the checkbox to edit', async () => {
       const checkboxLocator = page.locator(pageobject.ClickToEditCheckBox);
       await expect(checkboxLocator).toBeVisible();  // Assert checkbox is visible
@@ -100,12 +103,13 @@ test.describe('E2E Test Suite', () => {
     await page.waitForSelector(pageobject.newviewlink);
     await page.click(pageobject.newviewlink);
 
-      await customAssert('Click on the email to edit', async () => {
-        const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]');
+    await customAssert('Click on the email to edit', async () => {
+        // Target the first email cell to avoid strict mode violations
+        const emailEditLocator = page.locator('td div[data-inline-edit-fielddata*="email"]').first();
       
         // Hover over the email to make the edit icon appear
         await emailEditLocator.hover(); 
-        await page.waitForTimeout(2000)
+        await page.waitForTimeout(2000);
         
         const editIconLocator = emailEditLocator.locator('.editicon');
         // Assertion to check if edit icon is visible

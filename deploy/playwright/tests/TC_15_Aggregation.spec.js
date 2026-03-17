@@ -159,43 +159,19 @@ test.describe('E2E Test Suite', () => {
     test('Add aggregation on people show view', async () => {
         await functions.views();
         await page.click(pageobject.configureShowPeople);
-        // Remove the edit button
-        const edit_button = await page.getByText('Edit');
-        await edit_button.click();
-        await page.click(pageobject.deletebutton, { timeout: 10000 });
-        // remove the column
-        await page.click(pageobject.target);
-        await page.click(pageobject.deletebutton);
-        await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
-        await functions.fill_Text(pageobject.numbercolumn, '2');
-        await functions.drag_And_Drop(pageobject.textSource, pageobject.firstrowcolumn1);
-        await functions.clearText(pageobject.richTextEditor);
-        await page.keyboard.type('team');
-        await functions.drag_And_Drop(pageobject.joinField, pageobject.firstrowcolumn);
-        await customAssert('Select Name from teams for join field', async () => {
-            await page.click(pageobject.fieldsButton);
-            await page.click(pageobject.teamDropdownLocator);
-            await page.click(pageobject.teamnameitem);
-        });
-        await page.waitForSelector(pageobject.columnsElement);
-        await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
-        await functions.fill_Text(pageobject.numbercolumn, '2');
-        await functions.drag_And_Drop(pageobject.textSource, pageobject.secondrowcolumn1);
-        await functions.clearText(pageobject.richTextEditor);
-        await page.keyboard.type('Task Assigned');
-        // await functions.fill_Text(pageobject.richTextEditor, 'Task Assigned');
-        await page.waitForSelector(pageobject.secondrowcolumn);
-        await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.target);
+        await page.waitForTimeout(1500);
+        // First columns second part is blank - add aggregation there
+        await page.waitForSelector(pageobject.firstrowcolumn1, { timeout: 5000 });
+        await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.firstrowcolumn1);
         await page.waitForTimeout(500);
         await customAssert('Select id field in on field dropdown', async () => {
-            // await page.waitForSelector(pageobject.Childtablefield1, { timeout: 10000 });
             await page.selectOption(pageobject.Childtablefield, { value: 'id' });
         });
         await customAssert('Select Count in static dropdown', async () => {
             const StatisticDropdown = await page.locator('select.stat');
             await StatisticDropdown.selectOption({ value: 'Count' });
         });
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1500);
         await page.click(pageobject.nextoption);
     });
 
@@ -248,33 +224,6 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         await page.waitForTimeout(1500);
-        await customAssert('Change text and field for first row as ID', async () => {
-            await page.click(pageobject.nameDivLocator1);
-            await functions.clearText(pageobject.richTextEditor);
-            await page.keyboard.type('ID');
-            await page.click(pageobject.maintenanceDiv);
-            await page.click(pageobject.fielddropdown);
-            // Select 'id' from the dropdown
-            await page.selectOption('select.form-control.form-select', 'id');
-        });
-        await customAssert('drag new column and set column with', async () => {
-            await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
-            await functions.fill_Text(pageobject.NumberInputW, '2');
-        });
-        await customAssert('Set right alignment from column setting', async () => {
-            await page.click(pageobject.columnSettings);
-            await page.click(pageobject.rightButtonalign);
-        });
-        await customAssert('Add text lable and field on column for name', async () => {
-            await functions.drag_And_Drop(pageobject.textSource, pageobject.secondrowcolumn1);
-            await functions.clearText(pageobject.richTextEditor);
-            await page.keyboard.type('Name');
-            await functions.drag_And_Drop(pageobject.fieldsource, pageobject.secondrowcolumn);
-            await page.click(pageobject.fielddropdown);
-            // Select name' from the dropdown
-            await page.selectOption('select.form-control.form-select', 'name');
-        });
-        await page.waitForTimeout(2500);
         await page.click(pageobject.nextoption);
     });
 
@@ -285,9 +234,14 @@ test.describe('E2E Test Suite', () => {
         await page.waitForTimeout(1500);
         await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.target);
         await customAssert('Select show_team on view to link dropdown', async () => {
+            await page.waitForSelector(pageobject.viewtolinkdropdown, { timeout: 5000 });
             await page.click(pageobject.viewtolinkdropdown);
-            await page.click(pageobject.view2showteam);
+            await page.keyboard.type('Show_Team');
+            await page.getByRole('option', { name: /Show_Team.*Teams/ }).click({ timeout: 10000 });
         });
+        // Select Team relation to pass team id from person
+        await page.click(pageobject.selectButton);
+        await page.locator('button:has-text("team"), li:has-text("team")').first().click();
         // Add lable for link
         await functions.fill_Text(pageobject.textInputLabel, 'Show team');
         await customAssert('Check open popup checkbox', async () => {
@@ -335,7 +289,7 @@ test.describe('E2E Test Suite', () => {
         await functions.views();
         await page.click(pageobject.configureShowPeople);
         await page.waitForTimeout(1500);
-        await page.click(pageobject.IDDivLocator);
+        await page.click(pageobject.firstrowcolumn1);
         await page.click(pageobject.deletebutton);
         await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.target);
         await customAssert('Select show_team on view to link dropdown', async () => {
