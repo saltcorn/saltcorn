@@ -1244,7 +1244,15 @@ class State {
         };
         const funCtxKeys = new Set(Object.keys(myContext));
         const sandbox = createContext(myContext);
-        const codeStr = Object.values(code_pages).join(";\n");
+        let stripTypes = (s: string) => s;
+        try {
+          const { stripTypeScriptTypes } = require("module");
+          if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
+        } catch (e) {
+          //ignore
+        }
+        const codeStr = stripTypes(Object.values(code_pages).join(";\n"));
+
         runInContext(codeStr, sandbox);
         for (const f of asyncFs) {
           await f();
