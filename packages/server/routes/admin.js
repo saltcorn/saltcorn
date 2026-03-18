@@ -5617,6 +5617,27 @@ router.post(
     else res.json({ success: true });
   })
 );
+
+router.post(
+  "/strip-types",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const code = (req.body || {}).code;
+    let stripTypes = (s) => s;
+    try {
+      const { stripTypeScriptTypes } = require("module");
+      if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
+    } catch (e) {
+      //ignore
+    }
+    try {
+      res.json({ success: true, code: stripTypes(code) });
+    } catch (error) {
+      res.json({ success: false, error: error.message });
+    }
+  })
+);
+
 router.post(
   "/delete-codepage/:name",
   isAdmin,
