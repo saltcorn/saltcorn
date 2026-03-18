@@ -720,7 +720,7 @@ router.get(
       }
     }
     // fetch roles and tags
-    const roles = await Role.find({}, { orderBy: "id" });
+    const roles = await User.get_roles();
     const tags = await Tag.find();
     const tagEntries = await TagEntry.find();
     const userRoleId = req.user?.role_id ?? Infinity;
