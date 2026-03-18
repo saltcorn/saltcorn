@@ -97,6 +97,12 @@ class MetaData {
     ]);
   }
 
+  async update(changes?: Row): Promise<void> {
+    Object.assign(this, changes);
+    const { id, ...rest } = this;
+    await db.update("_sc_metadata", rest, id);
+  }
+
   /**
    * @param {*} row
    * @returns {Promise<void>}
