@@ -290,8 +290,8 @@ class State {
   async computeAssetsByRole() {
     this.assets_by_role = {};
     let roleIds: number[] = [];
-    const Role = (await import("../models/role")).default;
-    const roles = await Role.find({}, { orderBy: "id" });
+    await this.ensure_has_roles();
+    const roles = this.roles;
     roleIds = roles.map((r) => +r.id).filter((n: number) => !Number.isNaN(n));
 
     if (!roleIds.includes(100)) roleIds.push(100);
@@ -561,6 +561,7 @@ class State {
     await this.refresh_page_groups(noSignal);
     await this.refresh_config(noSignal);
     await this.refresh_npmpkgs(noSignal);
+    await this.refresh_roles(noSignal);
     await this.refresh_codepages(noSignal, keepUnchanged);
   }
 
@@ -582,6 +583,19 @@ class State {
     }
     if (!noSignal && db.is_node)
       this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
+  }
+
+  async ensure_has_roles() {
+    if (this.roles.length == 0) await this.refresh_roles(true);
+  }
+
+  async refresh_roles(noSignal: boolean) {
+    const Role = (await import("../models/role")).default;
+    this.roles = await Role.find({}, { orderBy: "id" });
+
+    if (!noSignal) this.log(5, "Refresh roles");
+    if (!noSignal && db.is_node)
+      this.processSend({ refresh: "roles", tenant: db.getTenantSchema() });
   }
 
   /**
