@@ -554,6 +554,7 @@ class State {
    * @param keepUnchanged - Some members don't need rebuilding if they did not change
    */
   async refresh(noSignal: boolean, keepUnchanged?: boolean) {
+    await this.refresh_roles(noSignal);
     await this.refresh_tables(noSignal);
     await this.refresh_views(noSignal);
     await this.refresh_triggers(noSignal);
@@ -561,7 +562,6 @@ class State {
     await this.refresh_page_groups(noSignal);
     await this.refresh_config(noSignal);
     await this.refresh_npmpkgs(noSignal);
-    await this.refresh_roles(noSignal);
     await this.refresh_codepages(noSignal, keepUnchanged);
   }
 
