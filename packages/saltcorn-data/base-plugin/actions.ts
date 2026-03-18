@@ -146,13 +146,18 @@ const run_code = async ({
   [key: string]: any;
 }): Promise<any> => {
   let stripTypes = (s: string) => s;
+  let code;
   try {
     const { stripTypeScriptTypes } = require("module");
     if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
+    code = stripTypes(`async () =>{${configuration.code}}`)
+      .replace("async () =>{", "")
+      .slice(0, -1);
   } catch (e) {
-    //ignore
+    //console.error("strip error", e);
+    code = configuration.code;
   }
-  const code = stripTypes(configuration.code);
+
   const run_where = configuration.run_where;
   if (run_where === "Client page")
     return {
@@ -2352,7 +2357,7 @@ export = {
               let AsyncFunction = Object.getPrototypeOf(
                 async function () {}
               ).constructor;
-              AsyncFunction(stripTypes(s));
+              AsyncFunction(stripTypes(`async () =>{${s}}`));
               return true;
             } catch (e: any) {
               return e.message;

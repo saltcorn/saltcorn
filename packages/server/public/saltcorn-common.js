@@ -1691,7 +1691,7 @@ ${value}`;
                       async function () {}
                     ).constructor;
                     AsyncFunction(txtval1);
-                    $(el).val(txtval1);
+                    $(el).val(txtval);
                     $(el).trigger("change");
                     dispatchNativeEvents();
                   } catch (e) {
