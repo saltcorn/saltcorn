@@ -177,6 +177,7 @@ class State {
   userLayouts: Record<string, PluginLayout & { config: GenObj }>;
   headers: Record<string, Array<Header>>;
   assets_by_role: Record<string, Array<Header>>;
+  roles: Array<AbstractRole>;
   function_context: Record<string, Function>;
   codepage_context: Record<string, unknown>;
   plugins_cfg_context: any;
@@ -242,6 +243,7 @@ class State {
     this.layouts = { emergency: emergency_layout };
     this.userLayouts = {};
     this.headers = {};
+    this.roles = [];
     this.assets_by_role = {};
     this.function_context = { moment: myMoment, today, slugify: db.slugify };
     this.functions = { moment: myMoment, today, slugify: db.slugify };
