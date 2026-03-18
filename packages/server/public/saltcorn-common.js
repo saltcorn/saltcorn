@@ -1674,6 +1674,17 @@ ${value}`;
               };
               if ($(el).hasClass("validate-statements")) {
                 const doStrip = $(el).hasClass("strip-types");
+                const mkError = (errMsg) => {
+                  const form = $(el).closest("form");
+                  const errorArea = form.parent().find(".full-form-error");
+                  if (errorArea.length) errorArea.text(errMsg);
+                  else
+                    form
+                      .parent()
+                      .append(
+                        `<p class="text-danger full-form-error">${errMsg}</p>`
+                      );
+                };
                 const clientValidator = (txtval1) => {
                   try {
                     let AsyncFunction = Object.getPrototypeOf(
@@ -1684,15 +1695,7 @@ ${value}`;
                     $(el).trigger("change");
                     dispatchNativeEvents();
                   } catch (e) {
-                    const form = $(el).closest("form");
-                    const errorArea = form.parent().find(".full-form-error");
-                    if (errorArea.length) errorArea.text(e.message);
-                    else
-                      form
-                        .parent()
-                        .append(
-                          `<p class="text-danger full-form-error">${e.message}</p>`
-                        );
+                    mkError(e.message);
                     return;
                   }
                 };
@@ -1705,7 +1708,9 @@ ${value}`;
                       "CSRF-Token": _sc_globalCsrf,
                     },
                   });
-                  clientValidator(await res.json()).code;
+                  const jres = await res.json();
+                  if (jres.error) mkError(jres.error);
+                  else clientValidator(jres.code);
                 } else clientValidator(txtval);
               } else {
                 $(el).val(txtval);
