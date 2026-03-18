@@ -167,7 +167,8 @@ router.get(
     );
     const layout_by_role = getState().getConfig("layout_by_role");
     const twofa_policy_by_role = getState().getConfig("twofa_policy_by_role");
-    const push_policy_by_role = getState()?.getConfig("push_policy_by_role") || {};
+    const push_policy_by_role =
+      getState()?.getConfig("push_policy_by_role") || {};
     const pushEnabled = getState().getConfig("enable_push_notify");
     const auth_methods = Object.keys(getState().auth_methods);
 
@@ -318,6 +319,7 @@ router.post(
       } else {
         await Role.create(r);
       }
+      await getState().refresh_roles();
       req.flash("success", req.__(`Role updated`));
       res.redirect(`/roleadmin`);
     }
@@ -369,7 +371,8 @@ router.post(
   isAdmin,
   error_catcher(async (req, res) => {
     const { id } = req.params;
-    const push_policy_by_role = getState()?.getConfigCopy("push_policy_by_role") || {};
+    const push_policy_by_role =
+      getState()?.getConfigCopy("push_policy_by_role") || {};
     push_policy_by_role[+id] = (req.body || {}).policy;
     await getState().setConfig("push_policy_by_role", push_policy_by_role);
     req.flash("success", req.__(`Saved push policy for role`));
@@ -414,6 +417,8 @@ router.post(
     } else {
       try {
         await u.delete();
+        await getState().refresh_roles();
+
         req.flash("success", req.__(`Role %s deleted`, u.role));
       } catch (e) {
         console.error(e);
