@@ -387,7 +387,7 @@ export = {
         eventType,
         channel,
         user,
-        payload ? JSON.parse(payload) : row
+        payload ? eval_expression(payload, row || {}, user) : row
       );
     },
     namespace: "Control",
