@@ -2339,13 +2339,20 @@ export = {
             user: has_user,
             workflow: mode === "workflow",
           },
-          class: `validate-statements ${mode !== "workflow" ? "enlarge-in-card" : ""}`,
+          class: `${mode !== "workflow" ? "enlarge-in-card" : ""}`,
           validator(s: any) {
+            let stripTypes = (s: string) => s;
+            try {
+              const { stripTypeScriptTypes } = require("module");
+              if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
+            } catch (e) {
+              //ignore
+            }
             try {
               let AsyncFunction = Object.getPrototypeOf(
                 async function () {}
               ).constructor;
-              AsyncFunction(s);
+              AsyncFunction(stripTypes(s));
               return true;
             } catch (e: any) {
               return e.message;
