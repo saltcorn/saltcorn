@@ -1653,7 +1653,7 @@ ${value}`;
           });
         editor.onDidChangeModelContent(
           $.debounce(
-            function (e) {
+            async function (e) {
               const txtval = editor.getValue();
               const dispatchNativeEvents = () => {
                 if (!el || typeof el.dispatchEvent !== "function") return;
@@ -1673,26 +1673,40 @@ ${value}`;
                 });
               };
               if ($(el).hasClass("validate-statements")) {
-                try {
-                  let AsyncFunction = Object.getPrototypeOf(
-                    async function () {}
-                  ).constructor;
-                  AsyncFunction(txtval);
-                  $(el).val(txtval);
-                  $(el).trigger("change");
-                  dispatchNativeEvents();
-                } catch (e) {
-                  const form = $(el).closest("form");
-                  const errorArea = form.parent().find(".full-form-error");
-                  if (errorArea.length) errorArea.text(e.message);
-                  else
-                    form
-                      .parent()
-                      .append(
-                        `<p class="text-danger full-form-error">${e.message}</p>`
-                      );
-                  return;
-                }
+                const doStrip = $(el).hasClass("strip-types");
+                const clientValidator = (txtval1) => {
+                  try {
+                    let AsyncFunction = Object.getPrototypeOf(
+                      async function () {}
+                    ).constructor;
+                    AsyncFunction(txtval1);
+                    $(el).val(txtval1);
+                    $(el).trigger("change");
+                    dispatchNativeEvents();
+                  } catch (e) {
+                    const form = $(el).closest("form");
+                    const errorArea = form.parent().find(".full-form-error");
+                    if (errorArea.length) errorArea.text(e.message);
+                    else
+                      form
+                        .parent()
+                        .append(
+                          `<p class="text-danger full-form-error">${e.message}</p>`
+                        );
+                    return;
+                  }
+                };
+                if (doStrip) {
+                  const res = await fetch("/admin/strip-types", {
+                    method: "POST",
+                    body: JSON.stringify({ code: txtval }),
+                    headers: {
+                      "Content-Type": "application/json",
+                      "CSRF-Token": _sc_globalCsrf,
+                    },
+                  });
+                  clientValidator(await res.json()).code;
+                } else clientValidator(txtval);
               } else {
                 $(el).val(txtval);
                 $(el).trigger("change");

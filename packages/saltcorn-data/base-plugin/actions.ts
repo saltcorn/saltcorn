@@ -2339,7 +2339,7 @@ export = {
             user: has_user,
             workflow: mode === "workflow",
           },
-          class: `${mode !== "workflow" ? "enlarge-in-card" : ""}`,
+          class: `validate-statements strip-types ${mode !== "workflow" ? "enlarge-in-card" : ""}`,
           validator(s: any) {
             let stripTypes = (s: string) => s;
             try {
