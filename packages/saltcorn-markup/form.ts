@@ -499,7 +499,14 @@ const innerField =
           type: "hidden",
           class: `form-control ${validClass} ${hdr.class || ""}`,
           name: text_attr(name),
-          ...(v ? { value: text_attr(v[hdr.form_name]) } : {}),
+          ...(v
+            ? {
+                value:
+                  v[hdr.form_name]?.constructor?.name === "PlainDate"
+                    ? v[hdr.form_name].toISOString()
+                    : text_attr(v[hdr.form_name]),
+              }
+            : {}),
         });
       case "select":
         const opts = select_options(v, hdr, false, "", false);
