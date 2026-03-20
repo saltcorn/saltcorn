@@ -5047,6 +5047,7 @@ router.post(
     if (form.values.config) {
       //config+crashes
       await db.deleteWhere("_sc_errors");
+      await db.deleteWhere("_sc_metadata");
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
       await getState().refresh();
       await require("@saltcorn/data/standard-menu")();
