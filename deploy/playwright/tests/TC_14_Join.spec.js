@@ -182,21 +182,32 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.EditlinkLocator);
     // Click on add row button
     await page.waitForTimeout(1500);
+    // Add row inserts at TOP in Tabulator, so new row's name cell is .first() not .last()
+    const clickNameCell = async () => {
+      try {
+        await page.locator(pageobject.Nametab).first().click({ timeout: 5000 });
+      } catch {
+        await page.click(pageobject.addrowlocator);
+        await page.locator(pageobject.Nametab).first().click();
+      }
+    };
     await page.click(pageobject.addrowlocator);
-    // enter value in First row
-    await page.click(pageobject.Nametab);
+    await clickNameCell();
     await page.keyboard.type('Maintenance');
-    await page.waitForTimeout(500);
+    await page.keyboard.press('Enter'); // commit cell so next value goes to new row
+    await page.waitForTimeout(300);
 
     await page.click(pageobject.addrowlocator);
-    await page.click(pageobject.Nametab);
+    await clickNameCell();
     await page.keyboard.type('Engineering');
-    await page.waitForTimeout(500);
+    await page.keyboard.press('Enter'); // commit cell
+    await page.waitForTimeout(300);
 
     await page.click(pageobject.addrowlocator);
-    await page.click(pageobject.Nametab);
+    await clickNameCell();
     await page.keyboard.type('Management');
-    await page.waitForTimeout(500);
+    await page.keyboard.press('Enter'); // commit cell
+    await page.waitForTimeout(300);
   });
 
   // Add teams field in people table and link to teams table

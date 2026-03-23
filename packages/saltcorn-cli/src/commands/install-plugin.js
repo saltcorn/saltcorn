@@ -27,9 +27,9 @@ class InstallPluginCommand extends Command {
     } = require("@saltcorn/admin-models/models/pack");
     const load_plugins = require("@saltcorn/server/load_plugins");
 
-    if (!flags.name && !flags.directory) {
+    if (!flags.name && !flags.directory && !flags.npm) {
       console.error(
-        "You must provide either a plugin name (-n) or a directory with the plugin (-d)"
+        "You must provide either a plugin name (-n), a directory (-d), or an npm package (-p)"
       );
       this.exit(1);
     }
@@ -47,6 +47,19 @@ class InstallPluginCommand extends Command {
         }
         delete plugin.id;
 
+        await load_plugins.loadAndSaveNewPlugin(
+          plugin,
+          undefined,
+          undefined,
+          (s) => s,
+          !!flags.unsafe
+        );
+      } else if (flags.npm) {
+        const plugin = new Plugin({
+          name: flags.npm,
+          source: "npm",
+          location: flags.npm,
+        });
         await load_plugins.loadAndSaveNewPlugin(
           plugin,
           undefined,
@@ -98,6 +111,10 @@ InstallPluginCommand.flags = {
   directory: Flags.string({
     char: "d",
     description: "Directory with local plugin",
+  }),
+  npm: Flags.string({
+    char: "p",
+    description: "Install plugin directly from npm by package name",
   }),
   unsafe: Flags.boolean({
     char: "u",

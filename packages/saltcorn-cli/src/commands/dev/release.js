@@ -159,7 +159,7 @@ class ReleaseCommand extends Command {
     for (const p of Object.values(pkgs)) {
       updatePkgJson(p.dir);
       if (p.publish) {
-        await publish(p.dir);
+        await publish(p.dir, tag);
         await sleep(5000);
       }
     }

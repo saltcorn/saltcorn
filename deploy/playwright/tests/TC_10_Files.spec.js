@@ -61,7 +61,8 @@ test.describe('E2E Test Suite', () => {
 
     // Test to validate the "Files" tab and its elements
     test('Validate "Files" tab and its elements', async () => {
-        // Navigate to the Files tab and validate its elements
+        test.setTimeout(60000);
+        await page.goto(baseURL + derivedURL + 'files?sortBy=filename');
         await functions.Files_to_Files();
 
         // Assertions for various elements in the "Files" tab
@@ -100,7 +101,8 @@ test.describe('E2E Test Suite', () => {
 
     // Test to validate the "Storage" tab and its elements
     test('Validate "Storage" tab and its elements', async () => {
-        // Navigate to the Storage tab and validate its elements
+        test.setTimeout(60000);
+        await page.goto(baseURL + derivedURL + 'files?sortBy=filename');
         await functions.Files_to_Storage();
 
         // Assertions for various elements in the "Storage" tab
@@ -125,7 +127,8 @@ test.describe('E2E Test Suite', () => {
 
     // Test to validate the "Settings" tab and its elements
     test('Validate "Settings" tab and its elements', async () => {
-        // Navigate to the Settings tab and validate its elements
+        test.setTimeout(60000);
+        await page.goto(baseURL + derivedURL + 'files?sortBy=filename');
         await functions.Files_to_Settings();
 
         // Assertions for various elements in the "Settings" tab

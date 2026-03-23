@@ -177,6 +177,7 @@ class State {
   userLayouts: Record<string, PluginLayout & { config: GenObj }>;
   headers: Record<string, Array<Header>>;
   assets_by_role: Record<string, Array<Header>>;
+  roles: Array<AbstractRole>;
   function_context: Record<string, Function>;
   codepage_context: Record<string, unknown>;
   plugins_cfg_context: any;
@@ -242,6 +243,7 @@ class State {
     this.layouts = { emergency: emergency_layout };
     this.userLayouts = {};
     this.headers = {};
+    this.roles = [];
     this.assets_by_role = {};
     this.function_context = { moment: myMoment, today, slugify: db.slugify };
     this.functions = { moment: myMoment, today, slugify: db.slugify };
@@ -288,8 +290,8 @@ class State {
   async computeAssetsByRole() {
     this.assets_by_role = {};
     let roleIds: number[] = [];
-    const Role = (await import("../models/role")).default;
-    const roles = await Role.find({}, { orderBy: "id" });
+    await this.ensure_has_roles();
+    const roles = this.roles;
     roleIds = roles.map((r) => +r.id).filter((n: number) => !Number.isNaN(n));
 
     if (!roleIds.includes(100)) roleIds.push(100);
@@ -552,6 +554,7 @@ class State {
    * @param keepUnchanged - Some members don't need rebuilding if they did not change
    */
   async refresh(noSignal: boolean, keepUnchanged?: boolean) {
+    await this.refresh_roles(noSignal);
     await this.refresh_tables(noSignal);
     await this.refresh_views(noSignal);
     await this.refresh_triggers(noSignal);
@@ -580,6 +583,19 @@ class State {
     }
     if (!noSignal && db.is_node)
       this.processSend({ refresh: "config", tenant: db.getTenantSchema() });
+  }
+
+  async ensure_has_roles() {
+    if (this.roles.length == 0) await this.refresh_roles(true);
+  }
+
+  async refresh_roles(noSignal: boolean) {
+    const Role = (await import("../models/role")).default;
+    this.roles = await Role.find({}, { orderBy: "id" });
+
+    if (!noSignal) this.log(5, "Refresh roles");
+    if (!noSignal && db.is_node)
+      this.processSend({ refresh: "roles", tenant: db.getTenantSchema() });
   }
 
   /**
@@ -1228,7 +1244,15 @@ class State {
         };
         const funCtxKeys = new Set(Object.keys(myContext));
         const sandbox = createContext(myContext);
-        const codeStr = Object.values(code_pages).join(";\n");
+        let stripTypes = (s: string) => s;
+        try {
+          const { stripTypeScriptTypes } = require("module");
+          if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
+        } catch (e) {
+          //ignore
+        }
+        const codeStr = stripTypes(Object.values(code_pages).join(";\n"));
+
         runInContext(codeStr, sandbox);
         for (const f of asyncFs) {
           await f();

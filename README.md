@@ -61,12 +61,12 @@ This has been [tested on Debian 11 and 12, Ubuntu 18.04, 20.04, 22.04, 24.04, Op
 three lines on the command line shell, as root or as a user with sudo access:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_22.x | sudo bash -
+wget -qO - https://deb.nodesource.com/setup_24.x | sudo bash -
 sudo apt-get install -qqy nodejs
 npx saltcorn-install -y
 ```
 
-The first two lines will install Node.js 22 (you can also use 18, 20, or 24). The last line will call the Saltcorn install script
+The first two lines will install Node.js 24 (you can also use 20, or 22). The last line will call the Saltcorn install script
 accepting all the defaults, which installs PostgreSQL and sets up Saltcorn as a service
 listening on port 80.
 
@@ -74,7 +74,7 @@ If you want a different port, a different database backend, or to not install as
 can omit the final `-y` to get an interactive installation:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_22.x | sudo bash -
+wget -qO - https://deb.nodesource.com/setup_24.x | sudo bash -
 sudo apt-get install -qqy nodejs
 npx saltcorn-install
 ```
@@ -87,14 +87,14 @@ TL;DR: `npm install -g @saltcorn/cli && saltcorn setup`
 
 ### Installing node and npm
 
-For a recent version (v22) of Node.js:
+For a recent version (v24) of Node.js:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_22.x | sudo -E bash -
+wget -qO - https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev build-essential python-is-python3
 ```
 
-You can also use any Node version between 18-24.
+You can also use any Node version between 20-24.
 
 ### Install Saltcorn
 
@@ -228,10 +228,10 @@ Use [Let's Encrypt](https://letsencrypt.org/) or [Cloudflare](https://www.cloudf
 
 `sudo apt install nodejs npm libpq-dev`
 
-will give you a usable version. For a more recent version (v22) of Node.js:
+will give you a usable version. For a more recent version (v24) of Node.js:
 
 ```
-wget -qO - https://deb.nodesource.com/setup_22.x | sudo -E bash -
+wget -qO - https://deb.nodesource.com/setup_24.x | sudo -E bash -
 sudo apt-get install -y nodejs libpq-dev
 ```
 

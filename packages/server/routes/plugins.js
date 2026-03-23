@@ -702,7 +702,7 @@ router.get(
                       label: version,
                       selected: version === selected,
                     })
-                  )
+                  ).reverse()
               ),
               // tag
               label(

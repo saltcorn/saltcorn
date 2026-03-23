@@ -23,6 +23,7 @@ import File from "../models/file";
 import { Where } from "@saltcorn/db-common/internal";
 import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 import stateModule from "../db/state";
+
 const { getState } = stateModule;
 const {
   getMailTransport,
@@ -133,7 +134,7 @@ const run_code = async ({
   row,
   table,
   channel,
-  configuration: { code, run_where },
+  configuration,
   user,
   ...rest
 }: {
@@ -144,6 +145,20 @@ const run_code = async ({
   user?: User | AbstractUser;
   [key: string]: any;
 }): Promise<any> => {
+  let stripTypes = (s: string) => s;
+  let code;
+  try {
+    const { stripTypeScriptTypes } = require("module");
+    if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
+    code = stripTypes(`async () =>{${configuration.code}}`)
+      .replace("async () =>{", "")
+      .slice(0, -1);
+  } catch (e) {
+    //console.error("strip error", e);
+    code = configuration.code;
+  }
+
+  const run_where = configuration.run_where;
   if (run_where === "Client page")
     return {
       eval_js: code,
@@ -207,7 +222,7 @@ const run_code = async ({
   const fetchJSON = async (...args: any[]) =>
     await (await fetch(...args)).json();
   const sysState: any = getState()!;
-  const require = (nm: string) => sysState.codeNPMmodules[nm];
+
   const refreshSystemCache = async (which?: string) => {
     //this worker
     if (which) await sysState[`refresh_${which}`](true);
@@ -255,7 +270,7 @@ const run_code = async ({
     WorkflowRun,
     setTimeout,
     interpolate,
-    require,
+    require: (nm: string) => sysState.codeNPMmodules[nm],
     refreshSystemCache,
     setConfig: (k: string, v: any) =>
       sysState.isFixedConfig(k) ? undefined : sysState.setConfig(k, v),
@@ -372,7 +387,7 @@ export = {
         eventType,
         channel,
         user,
-        payload ? JSON.parse(payload) : row
+        payload ? eval_expression(payload, row || {}, user) : row
       );
     },
     namespace: "Control",
@@ -2329,13 +2344,20 @@ export = {
             user: has_user,
             workflow: mode === "workflow",
           },
-          class: `validate-statements ${mode !== "workflow" ? "enlarge-in-card" : ""}`,
+          class: `validate-statements strip-types ${mode !== "workflow" ? "enlarge-in-card" : ""}`,
           validator(s: any) {
+            let stripTypes = (s: string) => s;
+            try {
+              const { stripTypeScriptTypes } = require("module");
+              if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
+            } catch (e) {
+              //ignore
+            }
             try {
               let AsyncFunction = Object.getPrototypeOf(
                 async function () {}
               ).constructor;
-              AsyncFunction(s);
+              AsyncFunction(stripTypes(`async () =>{${s}}`));
               return true;
             } catch (e: any) {
               return e.message;

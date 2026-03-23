@@ -74,10 +74,11 @@ class SaltcornSession(Session):
 
   @staticmethod
   def cli(*args):
-    result = subprocess.run(["packages/saltcorn-cli/bin/saltcorn"]+list(args),                              
+    result = subprocess.run(["packages/saltcorn-cli/bin/saltcorn"]+list(args),
                              capture_output = True,
                              check= True,
                              text = True)
+    return result.stdout.strip()
                              
   @staticmethod
   def asset_path(name):

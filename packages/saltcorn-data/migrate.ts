@@ -103,10 +103,18 @@ const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
           const contents: MigrationContents = require(
             path.join(__dirname, "migrations", name)
           );
-          await db.withTransaction(async () => {
-            if (!is_sqlite) await db.query(`SET search_path TO "${schema}";`);
-            await doMigrationStep(name, contents, schema);
-          });
+          await db.withTransaction(
+            async () => {
+              if (!is_sqlite) await db.query(`SET search_path TO "${schema}";`);
+              await doMigrationStep(name, contents, schema);
+            },
+            async (e: Error) => {
+              console.error(
+                `Tenant ${schema0} migration ${name} error:`,
+                e.message
+              );
+            }
+          );
         }
       }
     }

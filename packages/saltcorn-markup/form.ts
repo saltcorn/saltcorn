@@ -499,7 +499,14 @@ const innerField =
           type: "hidden",
           class: `form-control ${validClass} ${hdr.class || ""}`,
           name: text_attr(name),
-          ...(v ? { value: text_attr(v[hdr.form_name]) } : {}),
+          ...(v
+            ? {
+                value:
+                  v[hdr.form_name]?.constructor?.name === "PlainDate"
+                    ? v[hdr.form_name].toISOString()
+                    : text_attr(v[hdr.form_name]),
+              }
+            : {}),
         });
       case "select":
         const opts = select_options(v, hdr, false, "", false);
@@ -1380,6 +1387,7 @@ const renderFormLayout = (form: Form): string => {
       action_style,
       action_size,
       action_icon,
+      action_class,
       configuration,
       action_bgcol,
       action_bordercol,
@@ -1422,7 +1430,7 @@ const renderFormLayout = (form: Form): string => {
           action_style === "btn-link"
             ? ""
             : `btn ${action_style || "btn-primary"} ${action_size || ""}`
-        }"${style ? ` style="${style}"` : ""}${
+        }${action_class ? " " + action_class : ""}"${style ? ` style="${style}"` : ""}${
           spinner && !onclick_or_type?.startsWith?.("on")
             ? ` onclick="spin_action_link(this)"`
             : ""

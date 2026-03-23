@@ -5047,6 +5047,7 @@ router.post(
     if (form.values.config) {
       //config+crashes
       await db.deleteWhere("_sc_errors");
+      await db.deleteWhere("_sc_metadata");
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
       await getState().refresh();
       await require("@saltcorn/data/standard-menu")();
@@ -5396,12 +5397,17 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
         ds.push(`function slugify(s: string): string`);
       } else if (f.run) {
         if (f["arguments"]) {
+          const returns = f["tsreturns"]
+            ? `: ${f.tsreturns}`
+            : f["returns"]
+              ? `: ${scTypeToTsType(f.returns)}`
+              : "";
           const args = (f["arguments"] || []).map(
             ({ name, type, tstype, required }) =>
               `${name}${required ? "" : "?"}: ${tstype || scTypeToTsType(type)}`
           );
           ds.push(
-            `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})`
+            `${f.isAsync ? "async " : ""}function ${nm}(${args.join(", ")})${returns}`
           );
         } else
           ds.push(
@@ -5612,6 +5618,27 @@ router.post(
     else res.json({ success: true });
   })
 );
+
+router.post(
+  "/strip-types",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const code = (req.body || {}).code;
+    let stripTypes = (s) => s;
+    try {
+      const { stripTypeScriptTypes } = require("module");
+      if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
+    } catch (e) {
+      //ignore
+    }
+    try {
+      res.json({ success: true, code: stripTypes(`async () =>{${code}}`) });
+    } catch (error) {
+      res.json({ success: false, error: error.message });
+    }
+  })
+);
+
 router.post(
   "/delete-codepage/:name",
   isAdmin,

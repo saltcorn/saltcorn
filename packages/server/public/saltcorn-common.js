@@ -1653,7 +1653,7 @@ ${value}`;
           });
         editor.onDidChangeModelContent(
           $.debounce(
-            function (e) {
+            async function (e) {
               const txtval = editor.getValue();
               const dispatchNativeEvents = () => {
                 if (!el || typeof el.dispatchEvent !== "function") return;
@@ -1673,26 +1673,45 @@ ${value}`;
                 });
               };
               if ($(el).hasClass("validate-statements")) {
-                try {
-                  let AsyncFunction = Object.getPrototypeOf(
-                    async function () {}
-                  ).constructor;
-                  AsyncFunction(txtval);
-                  $(el).val(txtval);
-                  $(el).trigger("change");
-                  dispatchNativeEvents();
-                } catch (e) {
+                const doStrip = $(el).hasClass("strip-types");
+                const mkError = (errMsg) => {
                   const form = $(el).closest("form");
                   const errorArea = form.parent().find(".full-form-error");
-                  if (errorArea.length) errorArea.text(e.message);
+                  if (errorArea.length) errorArea.text(errMsg);
                   else
                     form
                       .parent()
                       .append(
-                        `<p class="text-danger full-form-error">${e.message}</p>`
+                        `<p class="text-danger full-form-error">${errMsg}</p>`
                       );
-                  return;
-                }
+                };
+                const clientValidator = (txtval1) => {
+                  try {
+                    let AsyncFunction = Object.getPrototypeOf(
+                      async function () {}
+                    ).constructor;
+                    AsyncFunction(txtval1);
+                    $(el).val(txtval);
+                    $(el).trigger("change");
+                    dispatchNativeEvents();
+                  } catch (e) {
+                    mkError(e.message);
+                    return;
+                  }
+                };
+                if (doStrip) {
+                  const res = await fetch("/admin/strip-types", {
+                    method: "POST",
+                    body: JSON.stringify({ code: txtval }),
+                    headers: {
+                      "Content-Type": "application/json",
+                      "CSRF-Token": _sc_globalCsrf,
+                    },
+                  });
+                  const jres = await res.json();
+                  if (jres.error) mkError(jres.error);
+                  else clientValidator(jres.code);
+                } else clientValidator(txtval);
               } else {
                 $(el).val(txtval);
                 $(el).trigger("change");
@@ -1799,21 +1818,20 @@ ${value}`;
     $("[data-sc-embed-viewname]").each(function () {
       const $this = $(this);
       const viewname = $this.attr("data-sc-embed-viewname");
-      if (
-        $this.prev().hasClass("admin-edit-bar") ||
-        $this.parents("#saltcorn-builder").length
-      )
+      const outermost = !$this.parents("[data-sc-embed-viewname]").length;
+      const in_modal = $this.parents("#scmodal").length;
+      if ((outermost && !in_modal) || $this.parents("#saltcorn-builder").length)
         return;
       const url = `/viewedit/config/${viewname}`;
 
       $(this).popover({
         html: true,
         content: `<a href="${url}" target="_blank">Configure ${viewname}<i class="ms-2 fas fa-external-link-alt"></i></a>`,
-        trigger: "hover focus",
+        trigger: "hover",
         placement: "auto",
         delay: { show: 0, hide: 250 },
         container: this,
-        offset: '0, 0'
+        offset: "0, 0",
       });
       $this.addClass("admin-cfglink-popover");
     });

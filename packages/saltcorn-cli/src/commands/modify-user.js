@@ -113,6 +113,12 @@ class ModifyUserCommand extends Command {
 
       if (password) await u.changePasswordTo(password, false);
 
+      if (flags["generate-api-token"]) {
+        const token = await u.getNewAPIToken();
+        console.log(token);
+        return;
+      }
+
       console.log(
         `Success: User ${
           email ? email : args.user_email
@@ -181,6 +187,10 @@ ModifyUserCommand.flags = {
     description: "new password",
   }),
   imode: Flags.boolean({ char: "i", description: "interactive mode" }),
+  "generate-api-token": Flags.boolean({
+    char: "g",
+    description: "generate a new API token for the user and print it to stdout",
+  }),
 };
 
 module.exports = ModifyUserCommand;

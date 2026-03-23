@@ -51,6 +51,7 @@ test.describe('E2E Test Suite', () => {
     // Drag and drop the text source
     await page.waitForSelector(pageobject.textSource);
     await functions.drag_And_Drop(pageobject.textSource, pageobject.target);
+    await page.waitForSelector(pageobject.textlocator, { state: 'visible', timeout: 15000 });
     await functions.fill_Text(pageobject.textlocator, '');
     await page.waitForTimeout(1000);
     await functions.fill_Text(pageobject.textlocator, 'Testing the placeholder');
@@ -89,10 +90,13 @@ test.describe('E2E Test Suite', () => {
     // drag and drop the html code source
     await page.waitForSelector(pageobject.htmlCodeSource);
     await functions.drag_And_Drop(pageobject.htmlCodeSource, pageobject.target);
-    await functions.fill_Text(pageobject.htmltextlocator, '<h3>Hello Sumit</h3>');
+    await page.waitForSelector(pageobject.codePopupIcon, { state: 'visible', timeout: 10000 });
+    await page.locator(pageobject.codePopupIcon).click();
+    await functions.fill_Monaco_Text(pageobject.htmltextlocator, '<h3>Hello Sumit</h3>');
 
     // validate that html code source is visible
     await customAssert('HTML box should be visible', async () => await expect(page.locator(pageobject.htmltextlocator)).toBeVisible());
+    await page.locator('button:has-text("Close")').click();
   });
 
   //Check image setting

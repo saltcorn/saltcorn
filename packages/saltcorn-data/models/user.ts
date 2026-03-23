@@ -766,6 +766,9 @@ class User {
    * @returns {Promise<*>}
    */
   static async get_roles(): Promise<Row[]> {
+    const { getState } = require("../db/state");
+    const stateRoles = getState();
+    if (stateRoles?.length) return stateRoles;
     return await db.select("_sc_roles", {}, { orderBy: "id" });
   }
 
