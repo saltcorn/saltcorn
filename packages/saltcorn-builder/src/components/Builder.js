@@ -360,6 +360,55 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState(null);
 
+  // Regenerate modal state
+  const [showRegenerateModal, setShowRegenerateModal] = useState(false);
+  const [regeneratePrompt, setRegeneratePrompt] = useState("");
+  const [regenerating, setRegenerating] = useState(false);
+  const [regenerateError, setRegenerateError] = useState(null);
+
+  const handleRegenerate = async () => {
+    if (!regeneratePrompt.trim() || !selected) return;
+    setRegenerating(true);
+    setRegenerateError(null);
+    try {
+      const selectedNode = query.node(selected.id).get();
+      const existingJson = craftToSaltcorn(
+        JSON.parse(query.serialize()),
+        selected.id
+      );
+      const res = await fetch("/viewedit/copilot-generate-layout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "CSRF-Token": options.csrfToken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+        body: JSON.stringify({
+          prompt: regeneratePrompt,
+          mode: options.mode,
+          table: options.tableName,
+          existing: existingJson,
+        }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setRegenerateError(data.error);
+      } else if (data.layout) {
+        const parentId = selectedNode.data.parent || "ROOT";
+        const siblings = query.node(parentId).childNodes();
+        const sibIx = siblings.findIndex((sib) => sib === selected.id);
+        actions.delete(selected.id);
+        layoutToNodes(data.layout, query, actions, parentId, options, sibIx);
+        setShowRegenerateModal(false);
+        setRegeneratePrompt("");
+      }
+    } catch (err) {
+      setRegenerateError(err.message || "Regeneration failed");
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
   // Find prompt nodes: check children of selected, or siblings if selected is a Prompt
   const findPromptContext = () => {
     if (!selected) return { promptNodes: [], targetParent: null };
@@ -520,9 +569,69 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
                 {t("Clone")}
               </button>
             )}
+            {options.has_copilot_generate && selected.isDeletable && (
+              <button
+                className="btn btn-sm btn-secondary ms-2"
+                onClick={() => setShowRegenerateModal(true)}
+              >
+                {t("Generate")}
+              </button>
+            )}
             <div className="mt-2">
               {selected.settings && React.createElement(selected.settings)}
-            </div>            
+            </div>
+            {showRegenerateModal && (
+              <div className="modal d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+                <div className="modal-dialog">
+                  <div className="modal-content">
+                    <div className="modal-header">
+                      <h5 className="modal-title">{t("Generate Element")}</h5>
+                      <button
+                        type="button"
+                        className="btn-close"
+                        onClick={() => {
+                          setShowRegenerateModal(false);
+                          setRegenerateError(null);
+                        }}
+                      ></button>
+                    </div>
+                    <div className="modal-body">
+                      <p className="text-muted small">
+                        {t("Describe how you want to regenerate the selected element.")}
+                      </p>
+                      <textarea
+                        className="form-control"
+                        rows={3}
+                        value={regeneratePrompt}
+                        onChange={(e) => setRegeneratePrompt(e.target.value)}
+                        placeholder={t("Enter your prompt...")}
+                      />
+                      {regenerateError && (
+                        <div className="alert alert-danger mt-2 mb-0">{regenerateError}</div>
+                      )}
+                    </div>
+                    <div className="modal-footer">
+                      <button
+                        className="btn btn-secondary"
+                        onClick={() => {
+                          setShowRegenerateModal(false);
+                          setRegenerateError(null);
+                        }}
+                      >
+                        {t("Cancel")}
+                      </button>
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleRegenerate}
+                        disabled={regenerating || !regeneratePrompt.trim()}
+                      >
+                        {regenerating ? t("Generating...") : t("Generate")}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </Fragment>
         ) : (
           t("No element selected")
@@ -917,6 +1026,7 @@ const NextButton = ({ layout }) => {
 
   useEffect(() => {
     layoutToNodes(layout, query, actions, "ROOT", options);
+    actions.history.clear();
   }, []);
 
   /**
@@ -1090,9 +1200,9 @@ const Builder = ({ options, layout, mode }) => {
                       </div>
                       {showLayers && (
                         <div className="card-body p-0 builder-layers">
-                          <Layers 
+                          <Layers
                             expandRootOnLoad={true}
-                            renderLayer={CustomLayerComponent} 
+                            renderLayer={CustomLayerComponent}
                           />
                         </div>
                       )}

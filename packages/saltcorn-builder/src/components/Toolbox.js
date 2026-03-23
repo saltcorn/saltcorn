@@ -117,7 +117,7 @@ const TextElem = ({ connectors }) => {
       fontSize="22px"
       title={t("Text")}
       bold
-      label={t("Text")}
+      label="Text"
     >
       <Text text="Hello world" block={false} textStyle={""} />
     </WrapElem>
@@ -139,7 +139,7 @@ const ColumnsElem = ({ connectors }) => {
       innerClass="mt-m1px"
       icon="fas fa-columns"
       title={t("Split into columns")}
-      label={t("Columns")}
+      label="Columns"
     >
       <Columns contents={[]} setting_col_n={1} />
     </WrapElem>
@@ -160,7 +160,7 @@ const TabsElem = ({ connectors }) => {
       connectors={connectors}
       icon={<SegmentedNav className="mb-2 h4" />}
       title={t("Tabbed content")}
-      label={t("Tabs")}
+      label="Tabs"
     >
       <Tabs contents={[]} />
     </WrapElem>
@@ -182,7 +182,7 @@ const LineBreakElem = ({ connectors }) => {
       text="↵"
       fontSize="26px"
       title={t("Line break")}
-      label={t("Break")}
+      label="Break"
     >
       <LineBreak />
     </WrapElem>
@@ -203,7 +203,7 @@ const HTMLElem = ({ connectors }) => {
       connectors={connectors}
       icon="fas fa-code"
       title={t("HTML code")}
-      label={t("Code")}
+      label="Code"
     >
       <HTMLCode text={""} />
     </WrapElem>
@@ -224,7 +224,7 @@ const CardElem = ({ connectors }) => {
       connectors={connectors}
       title={t("Card")}
       icon="far fa-square"
-      label={t("Card")}
+      label="Card"
     >
       <Element canvas is={Card} isFormula={{}} url=""></Element>
     </WrapElem>
@@ -245,7 +245,7 @@ const ImageElem = ({ connectors, images }) => {
       connectors={connectors}
       icon="fas fa-image"
       title={t("Image")}
-      label={t("Image")}
+      label="Image"
     >
       <Image fileid={images.length > 0 ? images[0].id : 0} />
     </WrapElem>
@@ -266,7 +266,7 @@ const LinkElem = ({ connectors }) => {
       connectors={connectors}
       icon="fas fa-link"
       title={t("Link")}
-      label={t("Link")}
+      label="Link"
     >
       <Link />
     </WrapElem>
@@ -287,7 +287,7 @@ const ViewElem = ({ connectors, views, isPageEdit }) => {
       connectors={connectors}
       icon="fas fa-eye"
       title={t("Embed a view")}
-      label={t("View")}
+      label="View"
       disable={!views || views.length < (!isPageEdit ? 2 : 1)}
     >
       <View
@@ -313,7 +313,7 @@ const SearchElem = ({ connectors }) => {
       connectors={connectors}
       icon="fas fa-search"
       title={t("Search bar")}
-      label={t("Search")}
+      label="Search"
     >
       <Element canvas is={SearchBar}></Element>
     </WrapElem>
@@ -334,7 +334,7 @@ const ContainerElem = ({ connectors }) => {
       connectors={connectors}
       icon={<BoundingBox className="mb-2 h5" />}
       title={t("Container")}
-      label={t("Contain")}
+      label="Contain"
     >
       <Element canvas is={Container}></Element>
     </WrapElem>
@@ -355,7 +355,7 @@ const FieldElem = ({ connectors, fields, field_view_options }) => {
       connectors={connectors}
       icon="fas fa-asterisk"
       title={t("Field")}
-      label={t("Field")}
+      label="Field"
     >
       <Field
         name={fields[0].name}
@@ -382,7 +382,7 @@ const DropDownFilterElem = ({ connectors, fields }) => {
       connectors={connectors}
       icon="far fa-caret-square-down"
       title={t("Dropdown filter")}
-      label={t("Select")}
+      label="Select"
     >
       <DropDownFilter
         name={fields[0].name}
@@ -401,7 +401,7 @@ const DropMenuElem = ({ connectors }) => {
       connectors={connectors}
       icon="far fa-caret-square-down"
       title={t("Dropdown menu")}
-      label={t("DropMenu")}
+      label="DropMenu"
     >
       <Element canvas is={DropMenu}></Element>
     </WrapElem>
@@ -415,7 +415,7 @@ const PageElem = ({ connectors, pages }) => {
       connectors={connectors}
       icon="fa-fw far fa-file"
       title={t("Embed a page")}
-      label={t("Page")}
+      label="Page"
       disable={pages.length <= 1}
     >
       <Page page={pages.length > 0 ? pages[0].name : "page"} />
@@ -438,7 +438,7 @@ const ToggleFilterElem = ({ connectors, fields }) => {
       connectors={connectors}
       icon="fas fa-toggle-on"
       title={t("Toggle filter")}
-      label={t("Toggle")}
+      label="Toggle"
     >
       <ToggleFilter name={fields[0].name} value={""} label={""} block={false} />
     </WrapElem>
@@ -459,7 +459,7 @@ const JoinFieldElem = ({ connectors, options }) => {
       connectors={connectors}
       icon={<Diagram3Fill className="mb-2 h5" />}
       title={t("Join field")}
-      label={t("Join")}
+      label="Join"
       disable={options.parent_field_list.length === 0}
     >
       <JoinField
@@ -486,7 +486,7 @@ const ViewLinkElem = ({ connectors, options }) => {
       connectors={connectors}
       icons={["fas fa-eye", "fas fa-link"]}
       title={t("Link to a view")}
-      label={t("ViewLink")}
+      label="ViewLink"
       disable={!options.views || options.views.length < 2}
     >
       <ViewLink
@@ -512,7 +512,7 @@ const ActionElem = ({ connectors, options }) => {
   return (
     <WrapElem
       connectors={connectors}
-      label={t("Action")}
+      label="Action"
       icon="fas fa-running"
       title={t("Action button")}
     >
@@ -551,7 +551,7 @@ const AggregationElem = ({ connectors, child_field_list, agg_field_opts }) => {
       connectors={connectors}
       text="∑"
       title={t("Aggregation")}
-      label={t("Aggreg8")}
+      label="Aggreg8"
       bold
       fontSize="16px"
       disable={child_field_list.length === 0}
@@ -576,7 +576,7 @@ const TableElem = ({ connectors }) => {
       innerClass="mt-m1px"
       icon="fas fa-table"
       title={t("Table")}
-      label={t("Table")}
+      label="Table"
     >
       <Table contents={[[], []]} rows={2} columns={2} />
     </WrapElem>
@@ -590,7 +590,7 @@ const PromptContainerElem = ({ connectors }) => {
       connectors={connectors}
       icon="fas fa-robot"
       title={t("Generate with AI")}
-      label={t("Generate")}
+      label="Generate"
     >
       <Prompt promptType="container" promptText="" />
     </WrapElem>
@@ -604,7 +604,7 @@ const PromptViewElem = ({ connectors }) => {
       connectors={connectors}
       icon="fas fa-eye"
       title={t("Prompt View")}
-      label={t("Prompt View")}
+      label="Prompt View"
     >
       <Prompt promptType="view" promptText="" />
     </WrapElem>
@@ -618,7 +618,7 @@ const PromptFieldElem = ({ connectors }) => {
       connectors={connectors}
       icon="fas fa-i-cursor"
       title={t("Prompt Field")}
-      label={t("Prompt Field")}
+      label="Prompt Field"
     >
       <Prompt promptType="field" promptText="" />
     </WrapElem>
@@ -632,7 +632,7 @@ const PromptActionElem = ({ connectors }) => {
       connectors={connectors}
       icon="fas fa-bolt"
       title={t("Prompt Action")}
-      label={t("Prompt Action")}
+      label="Prompt Action"
     >
       <Prompt promptType="action" promptText="" />
     </WrapElem>

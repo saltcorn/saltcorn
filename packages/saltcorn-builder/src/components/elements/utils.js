@@ -748,12 +748,16 @@ export const fetchFieldPreview =
       ...(args.configuration || {}),
       ...(changes.configuration || {}),
     };
+    const body = { configuration };
+    if (options.mode === "show" && options.current_filter_state?.id) {
+      body.row_id = options.current_filter_state.id;
+    }
     fetchPreview({
       options,
       node_id,
       setPreviews,
       url: `/field/preview/${options.tableName}/${name}/${fieldview}`,
-      body: { configuration },
+      body,
     });
   };
 

@@ -273,6 +273,9 @@ div.componets-and-library-accordion {
   max-height: calc(45vh - 50px);
   overflow-y: scroll;
 }
+.layer-name h2 {
+  margin-bottom: 0px;
+}
 
 .builder-library .dropdown {
   overflow: visible;
@@ -800,6 +803,49 @@ body.builder-dark .builder-select__menu-notice,
 [data-bs-theme="dark"] .builder-layer-node.selected {
   background-color: #1a3a5c;
   border-left: 3px solid #4da3ff;
+}
+
+.builder-layers .craft-layer-node > div {
+  font-size: 13px;
+  background: transparent !important;
+}
+
+.builder-layers .craft-layer-node > div > div:first-child:hover {
+  background-color: #e0e0e0;
+}
+.builder-dark-panel .builder-layers .craft-layer-node > div > div:first-child:hover,
+[data-bs-theme="dark"] .builder-layers .craft-layer-node > div > div:first-child:hover {
+  background-color: #343a40;
+}
+
+.builder-layers .craft-layer-node > div > div > div:first-child {
+  /* display: none; */
+  /* padding-left:2px; */
+}
+
+.craft-layer-node > div > div {
+  padding-left:2px;
+}
+
+.builder-layers .craft-layer-node > div > div .inner {
+  flex: 1;
+}
+
+.builder-layers .craft-layer-node > div > div .layer-name {
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.builder-dark-panel .builder-layers .craft-layer-node > div,
+[data-bs-theme="dark"] .builder-layers .craft-layer-node > div {
+  color: #f8f9fa;
+}
+
+.builder-dark-panel .builder-layers .craft-layer-node > div > div svg,
+[data-bs-theme="dark"] .builder-layers .craft-layer-node > div > div svg {
+  fill: #f8f9fa;
 }
 
 .code-modal {

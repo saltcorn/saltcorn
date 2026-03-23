@@ -1279,6 +1279,8 @@ router.post(
     );
 
     let field, row, value;
+    const row_id = (req.body || {}).row_id;
+    const whereClause = row_id ? { id: row_id } : {};
     if (fieldName.includes(".")) {
       const [refNm, targetNm] = fieldName.split(".");
       const ref = fields.find((f) => f.name === refNm);
@@ -1293,11 +1295,19 @@ router.post(
       }
       const reffields = await reftable.getFields();
       field = reffields.find((f) => f.name === targetNm);
-      row = await reftable.getRow({}, { forUser: req.user });
+      if (row_id) {
+        const mainRow = await table.getRow(whereClause, { forUser: req.user });
+        const refId = mainRow && mainRow[refNm];
+        row = refId
+          ? await reftable.getRow({ id: refId }, { forUser: req.user })
+          : await reftable.getRow({}, { forUser: req.user });
+      } else {
+        row = await reftable.getRow({}, { forUser: req.user });
+      }
       value = row && row[targetNm];
     } else {
       field = fields.find((f) => f.name === fieldName);
-      row = await table.getRow({}, { forUser: req.user });
+      row = await table.getRow(whereClause, { forUser: req.user });
       value = row && row[fieldName];
     }
 
