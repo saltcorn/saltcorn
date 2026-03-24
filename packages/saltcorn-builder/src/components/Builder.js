@@ -760,8 +760,7 @@ const NextButton = ({ layout }) => {
   const options = useContext(optionsCtx);
 
   useEffect(() => {
-    layoutToNodes(layout, query, actions, "ROOT", options);
-    actions.history.clear();
+    layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
   }, []);
 
   /**
@@ -836,10 +835,20 @@ const Builder = ({ options, layout, mode }) => {
           thickness: 2,
           className: "builder-drop-indicator",
         }}
-        handlers={(store) => new DefaultEventHandlers({
-          store,
-          isMultiSelectEnabled: (e) => e?.shiftKey || false
-        })}
+        handlers={(store) => {
+          const origAddNodeTree = store.actions.addNodeTree.bind(store.actions);
+          const handler = new DefaultEventHandlers({
+            store,
+            isMultiSelectEnabled: (e) => e?.shiftKey || false
+          });
+          store.actions.addNodeTree = (...args) => {
+            if (handler.dragTarget?.type === "new") {
+              return store.actions.history.merge().addNodeTree(...args);
+            }
+            return origAddNodeTree(...args);
+          };
+          return handler;
+        }}
         resolver={{
           Text,
           Empty,
