@@ -10,19 +10,18 @@ import React, {
   useState,
   Fragment,
   useRef,
-  memo,
 } from "react";
 import { createPortal } from "react-dom";
 import useTranslation from "../hooks/useTranslation";
 import { Editor, Frame, Element, Selector, useEditor, DefaultEventHandlers } from "@craftjs/core";
-import { Layers, useLayer } from "@craftjs/layers"
+import { Layers } from "@craftjs/layers"
 import { Text } from "./elements/Text";
 import { Field } from "./elements/Field";
 import { JoinField } from "./elements/JoinField";
 import { Aggregation } from "./elements/Aggregation";
 import { LineBreak } from "./elements/LineBreak";
 import { ViewLink } from "./elements/ViewLink";
-import { Columns, ntimes } from "./elements/Columns";
+import { Columns } from "./elements/Columns";
 import { SearchBar } from "./elements/SearchBar";
 import { HTMLCode } from "./elements/HTMLCode";
 import { Action } from "./elements/Action";
@@ -59,12 +58,7 @@ import {
   faTrashAlt,
   faSave,
   faExclamationTriangle,
-  faPlus,
-  faChevronDown,
-  faChevronUp,
-  faArrowUp,
-  faArrowDown,
-  faLevelUpAlt,
+  faPlus
 } from "@fortawesome/free-solid-svg-icons";
 import {
   faCaretSquareLeft,
@@ -79,7 +73,7 @@ import { ListColumns } from "./elements/ListColumns";
 import { Prompt } from "./elements/Prompt";
 import { recursivelyCloneToElems } from "./elements/Clone";
 import { Page } from "./elements/Page";
-import CustomLayerNew from "./elements/CustomLayerNew";
+import CustomLayer from "./elements/CustomLayer";
 
 const { Provider } = optionsCtx;
 
@@ -840,7 +834,7 @@ const Builder = ({ options, layout, mode }) => {
                         <div className="card-body p-0 builder-layers">
                           <Layers 
                             expandRootOnLoad={true}
-                            renderLayer={CustomLayerNew} 
+                            renderLayer={CustomLayer} 
                           />
                         </div>
                       )}
