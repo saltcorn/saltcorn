@@ -213,7 +213,7 @@ const ViewSettings = () => {
       const rel = initialRelation(relationsData.relations);
       setProp((prop) => {
         prop.relation = rel.relationString;
-      });
+      }, 500);
     }
   }, [needsInitialRelation]);
   const helpContext = { view_name: viewname };

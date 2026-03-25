@@ -1137,7 +1137,7 @@ const ConfigField = ({
    */
   const options = React.useContext(optionsCtx);
 
-  const myOnChange = (v0) => {
+  const myOnChange = (v0, throttleRate) => {
     const v = valuePostfix && (v0 || v0 === 0) ? v0 + valuePostfix : v0;
     setProp((prop) => {
       if (setter) setter(prop, field.name, v);
@@ -1151,7 +1151,7 @@ const ConfigField = ({
         if (!prop[subProp]) prop[subProp] = {};
         prop[subProp][field.name] = v;
       } else prop[field.name] = v;
-    });
+    }, throttleRate);
     onChange && onChange(field.name, v, setProp);
     apply_showif();
   };
@@ -1192,7 +1192,7 @@ const ConfigField = ({
     typeof stored_value === "undefined"
   ) {
     useEffect(() => {
-      myOnChange(field.default);
+      myOnChange(field.default, 500);
     }, []);
   } else if (hasSelect && typeof value === "undefined") {
     //pick first value to mimic html form behaviour
@@ -1200,7 +1200,7 @@ const ConfigField = ({
     let o;
     if (options && (o = options[0]))
       useEffect(() => {
-        myOnChange(typeof o === "string" ? o : o.value || o.name || o);
+        myOnChange(typeof o === "string" ? o : o.value || o.name || o, 500);
       }, []);
   }
 
@@ -1824,9 +1824,10 @@ const ButtonOrLinkSettingsRows = ({
         <td>
           <FontIconPicker
             value={values[keyPrefix + "icon"]}
-            onChange={(value) =>
-              setProp((prop) => (prop[keyPrefix + "icon"] = value))
-            }
+            onChange={(value) => {
+              if ((value || "") !== (values[keyPrefix + "icon"] || ""))
+                setProp((prop) => (prop[keyPrefix + "icon"] = value), 500);
+            }}
             isMulti={false}
             icons={faIcons || []}
           />

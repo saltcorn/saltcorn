@@ -274,7 +274,7 @@ const TextSettings = () => {
                 className="w-100"
                 value={icon}
                 icons={icons}
-                onChange={(value) => setProp((prop) => (prop.icon = value))}
+                onChange={(value) => { if ((value || "") !== (icon || "")) setProp((prop) => (prop.icon = value), 500); }}
                 isMulti={false}
               />
             </td>
