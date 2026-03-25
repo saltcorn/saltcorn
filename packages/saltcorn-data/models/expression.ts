@@ -128,7 +128,8 @@ function jsexprToSQL(expression: string, extraCtx: any = {}): String {
           return name;
         },
         Literal({ value }: { value: ExtendedNode }) {
-          if (typeof value == "string") return `'${value}'`;
+          if (typeof value == "string")
+            return `'${(value as string).replace(/'/g, "''")}'`;
           return `${value}`;
         },
       })[node.type](node);
