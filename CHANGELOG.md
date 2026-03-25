@@ -2,7 +2,7 @@
 
 ## 1.5.1 - Released 25 March 2026
 
-* Protection against SQL injection in the jsexprToSQL function. To out knowledge this can only be accessed by users with administrative privileges.
+* Protection against SQL injection in the jsexprToSQL function. To our knowledge this can only be accessed by users with administrative privileges.
 
 * Tenants can only be created on subtenants if the role to create tenants is public. This avoids a confusing situation where the role check was not against root roles but against the subtenant roles when the tenant was created from a subtenants.
 
