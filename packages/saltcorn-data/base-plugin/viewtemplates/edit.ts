@@ -2037,10 +2037,7 @@ const createBasicView = async ({
     layout: outer({ above: inners }),
     columns,
   };
-  if (all_views_created.List) {
-    cfg.view_when_done = all_views_created.List;
-    cfg.destination_type = "View";
-  }
+  cfg.destination_type = "Back to referer";
 
   cfg.auto_save = template_view.configuration.auto_save;
   cfg.confirm_leave = template_view.configuration.confirm_leave;
