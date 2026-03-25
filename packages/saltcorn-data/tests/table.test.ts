@@ -1395,6 +1395,52 @@ David MacKay, ITILA`;
     expect(rows.length).toBe(0);
   });
 
+  it("localized dates in csv import", async () => {
+    const table = await Table.create("name_dobs", {
+      min_role_read: 100,
+    });
+    await Field.create({
+      table,
+      name: "name",
+      label: "Name",
+      type: "String",
+      required: true,
+    });
+    await Field.create({
+      table,
+      name: "dob",
+      label: "DOB",
+      type: "Date",
+      attributes: { day_only: true },
+    });
+    await getState().setConfig("default_locale", "de");
+    const csv = `Name,DOB
+Julius Caesaer, 15.03.2011
+David MacKay, 2012-08-13`;
+    const fnm = "/tmp/test1.csv";
+    await writeFile(fnm, csv);
+
+    expect(!!table).toBe(true);
+    const impres = await table.import_csv_file(fnm);
+    //const rows = await table.getRows({ author: "David MacKay" });
+    const rows = await table.getRows({}, { orderBy: "id" });
+
+    expect(rows.length).toBe(2);
+    expect(rows[0].dob.constructor?.name).toBe("PlainDate");
+    expect(rows[1].dob.constructor?.name).toBe("PlainDate");
+    expect(rows[0].dob.getDate()).toBe(15);
+    expect(rows[0].dob.getMonth()).toBe(2); // zero-based
+    expect(rows[0].dob.getFullYear()).toBe(2011);
+    expect(rows[1].dob.getDate()).toBe(13);
+    expect(rows[1].dob.getMonth()).toBe(7); // zero-based
+    expect(rows[1].dob.getFullYear()).toBe(2012);
+
+    expect(impres).toEqual({
+      success: "Imported 2 rows into table name_dobs",
+      details: "",
+    });
+  });
+
   it("CSV import fkeys as ints", async () => {
     const table = await Table.create("book_reviews", {
       min_role_read: 100,
