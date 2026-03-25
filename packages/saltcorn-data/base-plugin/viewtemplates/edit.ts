@@ -1957,10 +1957,8 @@ const createBasicView = async ({
     const configuration = await initial_config_all_fields(true)({
       table_id: table.id,
     });
-    if (all_views_created.List) {
-      configuration.view_when_done = all_views_created.List;
-      configuration.destination_type = "View";
-    }
+
+    configuration.destination_type = "Back to referer";
 
     return configuration;
   }
