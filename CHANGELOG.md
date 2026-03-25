@@ -1,5 +1,11 @@
 # Notable changes
 
+## 1.5.1 - Released 25 March 2026
+
+* Protection against SQL injection in the jsexprToSQL function. To out knowledge this can only be accessed by users with administrative privileges.
+
+* Tenants can only be created on subtenants if the role to create tenants is public. This avoids a confusing situation where the role check was not against root roles but against the subtenant roles when the tenant was created from a subtenants.
+
 ## 1.5.0 - Released 26 January 2026
 
 * thumbs_up_down fieldview for booleans fields, as an alternative to tristate
