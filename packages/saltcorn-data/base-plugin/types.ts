@@ -2430,6 +2430,8 @@ const date = {
    * @returns {object}
    */
   read: (v0: any, attrs: any) => {
+    const locale =
+      attrs?.locale || getState().getConfig("default_locale", "en");
     const readDate = (v: any) => {
       if (v instanceof Date && !isNaN(v as any)) return v;
       if (
@@ -2438,12 +2440,12 @@ const date = {
       )
         return v.toDate();
       if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
-        if (attrs && attrs.locale && typeof v === "string") {
+        if (locale && typeof v === "string") {
           if (
             !v.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/) &&
             !v.match(/\d{4}-\d{2}-\d{2}/)
           ) {
-            const d = moment(v, "L LT", attrs.locale).toDate();
+            const d = moment(v, "L LT", locale).toDate();
             if (d instanceof Date && !isNaN(d as any)) return d;
           }
         }
@@ -2460,12 +2462,12 @@ const date = {
       )
         return v;
       if (typeof v === "string" || (typeof v === "number" && !isNaN(v))) {
-        if (attrs && attrs.locale && typeof v === "string") {
+        if (locale && typeof v === "string") {
           if (
             !v.match(/(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/) &&
             !v.match(/\d{4}-\d{2}-\d{2}/)
           ) {
-            const d = moment(v, "L LT", attrs.locale).toDate();
+            const d = moment(v, "L LT", locale).toDate();
             if (d instanceof Date && !isNaN(d as any))
               return new PlainDate(d as any);
           }
