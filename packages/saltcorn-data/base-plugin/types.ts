@@ -7,6 +7,7 @@
  * @subcategory base-plugin
  */
 
+import { FieldLike } from "@saltcorn/types/base_types";
 import type { GenObj } from "@saltcorn/types/common_types";
 
 const moment = require("moment");
@@ -46,6 +47,7 @@ const { interpolate } = require("../utils");
 const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
 const { select_by_code } = require("./fieldviews");
 const PlainDate = require("@saltcorn/plain-date");
+const db = require("../db");
 
 const isdef = (x: any) =>
   typeof x === "undefined" || x === null ? false : true;
@@ -2489,6 +2491,17 @@ const date = {
    * @returns {boolean}
    */
   validate: () => (v: any) => v instanceof Date && !isNaN(v as any),
+  ...(db.isSQLite
+    ? {
+        readFromDB: (v: any, fld: FieldLike) =>
+          !v
+            ? null
+            : fld?.attributes?.day_only
+              ? new PlainDate(new Date(v))
+              : new Date(v),
+      }
+    : {}),
+
   /**
    * check if two date values are equal
    * @param a

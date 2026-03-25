@@ -1204,7 +1204,7 @@ class Table implements AbstractTable {
     if (this.fields) {
       for (const f of this.fields) {
         if (f.type && instanceOfType(f.type) && f.type.readFromDB)
-          row[f.name] = f.type.readFromDB(row[f.name]);
+          row[f.name] = f.type.readFromDB(row[f.name], f); 
       }
     }
     return row;

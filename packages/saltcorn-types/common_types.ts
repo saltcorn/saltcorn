@@ -37,7 +37,7 @@ export type Type = {
   name: string;
   sql_name?: string | ((attrs: any) => string);
   js_type?: string;
-  readFromDB?: (arg0: any) => any;
+  readFromDB?: (arg0: any, f?: FieldLike) => any;
   read?: (arg0: any, arg1?: any) => any;
   readFromFormRecord?: Function;
   postProcess?: Function;

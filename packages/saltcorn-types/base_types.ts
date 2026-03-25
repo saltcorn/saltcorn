@@ -222,7 +222,7 @@ export type PluginType = {
   attributes?: (arg0: any) => Array<Attribute> | Array<Attribute>;
   validate_attributes: any;
   readFromFormRecord?: ReadFromFormRecord;
-  readFromDB?: (arg0: any) => any;
+  readFromDB?: (arg0: any, f?: FieldLike) => any;
   validate?: (arg0: any) => (arg0: any) => boolean;
   presets?: ([]) => any;
   read: any;
