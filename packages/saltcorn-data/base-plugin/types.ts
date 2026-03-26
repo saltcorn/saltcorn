@@ -1603,7 +1603,10 @@ const string = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && { value: text_attr(v) }),
-          autocomplete: attrs?.autocomplete || undefined,
+          autocomplete:
+            attrs?.autocomplete === false
+              ? "off"
+              : attrs?.autocomplete || undefined,
         });
         if (attrs?.visibility_toggle)
           return div(
