@@ -1228,6 +1228,7 @@ const string = {
                   minlength: isdef(attrs.min_length) && attrs.min_length,
                   pattern: !!attrs.regexp && attrs.regexp,
                   autofocus: !!attrs.autofocus,
+                  autocomplete: attrs.autocomplete || undefined,
                   title:
                     !!attrs.re_invalid_error &&
                     !!attrs.regexp &&

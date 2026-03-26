@@ -107,6 +107,7 @@ const loginForm = (req, isCreating) => {
         type: "String",
         attributes: {
           input_type: "email",
+          autocomplete: "username"
         },
         sublabel: user_sublabel || undefined,
         // fixed correct size of email is 254 https://stackoverflow.com/questions/386294/what-is-the-maximum-length-of-a-valid-email-address
@@ -117,7 +118,7 @@ const loginForm = (req, isCreating) => {
         name: "password",
         input_type: "password",
         attributes: {
-          autocomplete: "current-password",
+          autocomplete: isCreating ? "new-password" : "current-password",
         },
         validator: isCreating
           ? (pw) => User.unacceptable_password_reason(pw)
