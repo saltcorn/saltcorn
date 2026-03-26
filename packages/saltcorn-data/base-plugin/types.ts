@@ -1574,6 +1574,14 @@ const string = {
           label: "Visibility toggle",
           type: "Bool",
         },
+        {
+          name: "autocomplete",
+          label: "Autocomplete",
+          type: "String",
+          attributes: {
+            options: ["on", "off", "current-password", "new-password"],
+          },
+        },
       ],
       blockDisplay: true,
       description: "Password input type, characters are hidden when typed",
@@ -1595,6 +1603,7 @@ const string = {
           name: text_attr(nm),
           id: `input${text_attr(nm)}`,
           ...(isdef(v) && { value: text_attr(v) }),
+          autocomplete: attrs?.autocomplete || undefined,
         });
         if (attrs?.visibility_toggle)
           return div(
