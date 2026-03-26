@@ -347,7 +347,6 @@ const create_standard_menu = async (): Promise<void> => {
           type: "User Page",
           label: "Notifications",
           style: "",
-          showif: "",
           tooltip: "",
           in_modal: false,
           location: "Standard",
@@ -357,6 +356,9 @@ const create_standard_menu = async (): Promise<void> => {
           user_page: "Notifications",
           target_blank: false,
           disable_on_mobile: false,
+          href: "",
+          title: "",
+          target: "_self",
         },
         {
           href: "",
