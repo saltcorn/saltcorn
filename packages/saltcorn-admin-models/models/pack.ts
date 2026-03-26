@@ -267,9 +267,7 @@ const orderWorkflowSteps = (steps: any[]): any[] => {
       const step = stepByName.get(cur);
       const isForLoop = step?.action_name === "ForLoop";
       const loopStart = step?.configuration?.loop_body_initial_step;
-      const loopBodySeq = isForLoop
-        ? computeLoopBodyOrder(loopStart, cur)
-        : [];
+      const loopBodySeq = isForLoop ? computeLoopBodyOrder(loopStart, cur) : [];
       if (isForLoop)
         loopBodySeq.forEach((n) => {
           if (!visited.has(n)) queue.push(n);
@@ -543,10 +541,12 @@ const add_to_menu = async (item: {
   item.min_role = old_to_new_role(item.min_role);
   const current_menu = getState().getConfigCopy("menu_items", []);
   const existing = current_menu.findIndex((m: any) => m.label === item.label);
-  if (existing >= 0) {
-    //current_menu[existing] = item;
-    //do not change exisiting menu item
-  } else current_menu.push(item);
+  if (existing >= 0) return;
+  const tableIndex = current_menu.findIndex(
+    (m: any) => m.type === "Admin Page"
+  );
+  if (tableIndex >= 0) current_menu.splice(tableIndex, 0, item);
+  else current_menu.push(item);
   await save_menu_items(current_menu);
 };
 
