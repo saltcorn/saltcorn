@@ -148,7 +148,7 @@ class PageLocators {
     this.localDateOption = 'time[locale-date-options]';
     this.LocalDateFormat = 'time[locale-date-format]';
     this.DateYearsAgo = 'tr:has-text("years ago")';
-    this.divYearAgo = "//div[contains(text(),'years ago')]";
+    this.divYearAgo = "//span[contains(text(),'years ago')]";
     this.inputFormat = 'input[type="text"].form-control';
     this.csvnamestringtype = '(//td[text()="String"])[2]';
     this.csvaddressstringtype = '(//td[text()="String"])[1]';
