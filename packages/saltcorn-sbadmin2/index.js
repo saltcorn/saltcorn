@@ -40,10 +40,10 @@ const verstring = "@" + require("./package.json").version;
  * @param {string} currentUrl
  * @returns {function}
  */
-const subItem = (currentUrl) => (item) =>
+const subItem = (currentUrl, isRTL) => (item) =>
   item.subitems
     ? div(
-        { class: "dropdown-item btn-group dropend" },
+        { class: `dropdown-item btn-group ${isRTL ? "dropstart" : "dropend"}` },
         a(
           {
             type: "button",
@@ -55,7 +55,7 @@ const subItem = (currentUrl) => (item) =>
         ),
         ul(
           { class: "dropdown-menu" },
-          item.subitems.map((si1) => li(subItem(currentUrl)(si1)))
+          item.subitems.map((si1) => li(subItem(currentUrl, isRTL)(si1)))
         )
       )
     : item.link
@@ -71,7 +71,7 @@ const subItem = (currentUrl) => (item) =>
             ...(item.tooltip
               ? {
                   "data-bs-toggle": "tooltip",
-                  "data-bs-placement": "right",
+                  "data-bs-placement": isRTL ? "left" : "right",
                   title: item.tooltip,
                 }
               : {}),
@@ -119,7 +119,7 @@ const active = (currentUrl, item) =>
  * @param {string} currentUrl
  * @returns {function}
  */
-const sideBarItem = (currentUrl) => (item) => {
+const sideBarItem = (currentUrl, isRTL) => (item) => {
   const is_active = active(currentUrl, item);
   if (item.type === "Separator") return hr({ class: "sidebar-divider my-0" });
   return li(
@@ -140,7 +140,7 @@ const sideBarItem = (currentUrl) => (item) => {
               "aria-controls": `collapse${labelToId(item)}`,
               ...(item.tooltip
                 ? {
-                    "data-bs-placement": "right",
+                    "data-bs-placement": isRTL ? "left" : "right",
                     title: item.tooltip,
                   }
                 : {}),
@@ -156,7 +156,7 @@ const sideBarItem = (currentUrl) => (item) => {
             },
             div(
               { class: "bg-white py-2 collapse-inner rounded" },
-              item.subitems.map(subItem(currentUrl))
+              item.subitems.map(subItem(currentUrl, isRTL))
             )
           ),
         ]
@@ -169,7 +169,7 @@ const sideBarItem = (currentUrl) => (item) => {
               ...(item.tooltip
                 ? {
                     "data-bs-toggle": "tooltip",
-                    "data-bs-placement": "right",
+                    "data-bs-placement": isRTL ? "left" : "right",
                     title: item.tooltip,
                   }
                 : {}),
@@ -214,11 +214,11 @@ const sideBarItem = (currentUrl) => (item) => {
  * @param {string} currentUrl
  * @returns {function}
  */
-const sideBarSection = (currentUrl) => (section) => [
+const sideBarSection = (currentUrl, isRTL) => (section) => [
   section.section &&
     hr({ class: "sidebar-divider" }) +
       div({ class: "sidebar-heading" }, section.section),
-  section.items.map(sideBarItem(currentUrl)).join(""),
+  section.items.map(sideBarItem(currentUrl, isRTL)).join(""),
 ];
 
 /**
@@ -227,7 +227,7 @@ const sideBarSection = (currentUrl) => (section) => [
  * @param {string} currentUrl
  * @returns {ul}
  */
-const sidebar = (brand, sections, currentUrl) =>
+const sidebar = (brand, sections, currentUrl, isRTL) =>
   ul(
     {
       class: "navbar-nav sidebar sidebar-dark accordion d-print-none",
@@ -245,7 +245,7 @@ const sidebar = (brand, sections, currentUrl) =>
         ),
       div({ class: "sidebar-brand-text mx-3" }, brand.name)
     ),
-    sections.map(sideBarSection(currentUrl)),
+    sections.map(sideBarSection(currentUrl, isRTL)),
     hr({ class: "sidebar-divider d-none d-md-block" }),
     div(
       { class: "text-center d-none d-md-inline" },
@@ -518,7 +518,7 @@ const wrap = ({
     title,
     `id="page-top" class="${bodyClass || ""}"`,
     `<div id="wrapper">
-      ${menu && menu.length > 0 ? sidebar(brand, menu, currentUrl) : ""}
+      ${menu && menu.length > 0 ? sidebar(brand, menu, currentUrl, req?.isRTL) : ""}
 
       <div id="content-wrapper" class="d-flex flex-column">
         <div id="content">

@@ -25,6 +25,7 @@ export /**
  */
 const SearchBar = ({ has_dropdown, children, contents, show_badges }) => {
   const { t } = useTranslation();
+  const options = useContext(optionsCtx);
   const {
     selected,
     connectors: { connect, drag },
@@ -80,7 +81,7 @@ const SearchBar = ({ has_dropdown, children, contents, show_badges }) => {
             className={`dropdown-menu searchbar-dropdown ${
               showDropdown ? "show" : ""
             }`}
-            style={{ width: dropWidth, left: 0 }}
+            style={{ width: dropWidth, ...(options?.isRTL ? { right: 0 } : { left: 0 }) }}
           >
             <Element canvas id="searchbar-contents" is={Column}>
               {renderContents()}

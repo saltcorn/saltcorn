@@ -826,6 +826,9 @@ const Builder = ({ options, layout, mode }) => {
 
   const canvasHeight =
     Math.max(windowHeight - builderTop, builderHeight, 600) - 10;
+
+  const smallSidebarWidth = options.isRTL ? '17.5rem' : '16.5rem'
+
   return (
     <ErrorBoundary>
       <Editor
@@ -885,7 +888,7 @@ const Builder = ({ options, layout, mode }) => {
                   layoutToNodes,
                 }}
               >
-                <div className="row" ref={ref} style={{ marginTop: "-5px" }}>
+                <div className="row" ref={ref} style={{ marginTop: "-5px" }} dir={options.isRTL ? "rtl" : "ltr"}>
                   <div
                     className={`col-sm-auto left-builder-col ${
                       isLeftEnlarged
@@ -973,7 +976,7 @@ const Builder = ({ options, layout, mode }) => {
                     </div>
                   </div>
                   <div className="col-sm-auto builder-sidebar">
-                    <div style={{ width: isEnlarged ? "28rem" : "16.5rem" }}>
+                    <div style={{ width: isEnlarged ? "28rem" : smallSidebarWidth }}>
                       {document.getElementById("builder-header-actions") &&
                         createPortal(
                           <Fragment>

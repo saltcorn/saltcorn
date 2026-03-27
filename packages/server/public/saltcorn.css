@@ -243,8 +243,61 @@ form.menusearch button {
   padding-right: 0.3rem;
 }
 
+[dir="rtl"] form.menusearch button {
+  border-left: 1px solid #95a5a6;
+  border-right: none;
+  padding-right: unset;
+  padding-left: 0.3rem;
+}
+
 .pl-2p5 {
   padding-left: 0.75rem !important;
+}
+
+[dir="rtl"] .pl-2p5 {
+  padding-left: unset !important;
+  padding-right: 0.75rem !important;
+}
+
+/* Fix sb-admin-2 conflicting with Bootstrap RTL on margin utilities */
+[dir="rtl"] .ms-auto {
+  margin-left: unset !important;
+}
+
+/* RTL sidebar overrides */
+[dir="rtl"] .sidebar .nav-item .nav-link {
+  text-align: right;
+}
+
+[dir="rtl"] .sidebar .sidebar-heading {
+  text-align: right;
+}
+
+[dir="rtl"] .sidebar .nav-item .nav-link[data-bs-toggle=collapse]::after {
+  float: left;
+}
+
+[dir="rtl"] .sidebar .nav-item .nav-link[data-bs-toggle=collapse].collapsed::after {
+  content: "\f104";
+}
+
+/* RTL sidebar toggle button — flip chevron icons */
+[dir="rtl"] .sidebar #sidebarToggle::after {
+  content: "\f105";
+  margin-right: unset;
+  margin-left: .1rem;
+}
+
+[dir="rtl"] .sidebar.toggled #sidebarToggle::after {
+  content: "\f104";
+  margin-left: unset;
+  margin-right: .25rem;
+}
+
+/* RTL toggled sidebar — collapse submenu opens to the left */
+[dir="rtl"] .sidebar.toggled .nav-item .collapse {
+  left: unset;
+  right: calc(6.5rem + 1.5rem / 2);
 }
 
 .br-none {
@@ -321,6 +374,22 @@ input.dimunit {
   border-bottom-right-radius: 0px;
   border-width: 1px;
   border-right: none;
+}
+
+[dir="rtl"] select.dimunit {
+  border-top-left-radius: 0.25rem;
+  border-bottom-left-radius: 0.25rem;
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+}
+
+[dir="rtl"] input.dimunit {
+  border-top-right-radius: 0.25rem;
+  border-bottom-right-radius: 0.25rem;
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+  border-right: 1px solid;
+  border-left: none;
 }
 
 .ml-m1 {
@@ -1079,4 +1148,60 @@ span.copy-to-clipboard.copied::after {
   content: "✔";
   color: #2a9d5c;
   opacity: 1;
+}
+
+/* RTL overrides - misc elements */
+[dir="rtl"] i.sortdir {
+  margin-left: unset;
+  margin-right: 2px;
+}
+
+[dir="rtl"] div.hdrfilterdate button.btn {
+  border-left: 1px solid;
+  border-right: none;
+}
+
+[dir="rtl"] div.hdrfilterdate input {
+  border-right: 1px solid;
+  border-left: none;
+}
+
+[dir="rtl"] thead.header-filter-dropdown span.dropdown {
+  right: unset;
+  left: 0px;
+}
+
+[dir="rtl"] .text-align-right {
+  text-align: left;
+}
+
+[dir="rtl"] .text-align-left {
+  text-align: right;
+}
+
+[dir="rtl"] div.unread-notify {
+  border-left: none;
+  border-right: 4px solid green;
+}
+
+[dir="rtl"] .preview-text {
+  transform: rotate(30deg);
+  margin-left: unset;
+  margin-right: 30px;
+}
+
+[dir="rtl"] section.range-slider input {
+  left: unset;
+  right: 0;
+}
+
+[dir="rtl"] span.copy-to-clipboard::before {
+  right: unset;
+  left: 0;
+  background: linear-gradient(to left, transparent, #fff);
+}
+
+[dir="rtl"] span.copy-to-clipboard::after {
+  right: unset;
+  left: 0;
 }

@@ -1,11 +1,14 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useEditor } from "@craftjs/core";
 import { useLayer } from "@craftjs/layers";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronUp, faArrowUp, faArrowDown, faLevelUpAlt } from "@fortawesome/free-solid-svg-icons";
+import optionsCtx from "../context";
 
 const CustomLayer = ({ children }) => {
+  const options = useContext(optionsCtx);
+  const isRTL = options?.isRTL;
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState("");
   const [isMouseOver, setIsMouseOver] = useState(false);
@@ -136,7 +139,7 @@ const CustomLayer = ({ children }) => {
   return (
     <div
       ref={(dom) => { layer(dom); if (dom) editorConnectors.drop(dom, id); }}
-      style={isHiddenColumn ? { marginLeft: "-10px" } : undefined}
+      style={isHiddenColumn ? (isRTL ? { marginRight: "-10px" } : { marginLeft: "-10px" }) : undefined}
     >
       <div
         ref={(dom) => { drag(dom); layerHeader(dom); }}
@@ -145,7 +148,7 @@ const CustomLayer = ({ children }) => {
           cursor: isHiddenColumn ? "default" : "pointer",
           display: isHiddenColumn ? "none" : "flex",
           alignItems: "center",
-          padding: `4px 4px 4px ${depth * 10 + 6}px`,
+          padding: isRTL ? `4px ${depth * 10 + 6}px 4px 4px` : `4px 4px 4px ${depth * 10 + 6}px`,
           overflow: "hidden",
         }}
         onClick={() => editorActions.selectNode(id)}
@@ -208,7 +211,7 @@ const CustomLayer = ({ children }) => {
         )}
 
         {isMouseOver && !isEditing && parentId && childIndex >= 0 && (
-          <span className="layer-move-buttons" style={{ display: "inline-flex", gap: 2, marginLeft: 4, flexShrink: 0 }}>
+          <span className="layer-move-buttons" style={{ display: "inline-flex", gap: 2, marginInlineStart: 4, flexShrink: 0 }}>
             {childIndex > 0 && (
               <span
                 title="Move up"

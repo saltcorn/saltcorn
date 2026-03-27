@@ -265,6 +265,7 @@ const pageBuilderData = async (req, context) => {
   //console.log(fixed_state_fields.ListTasks);
   const icons = getState().icons;
   return {
+    isRTL: req.isRTL,
     translations:
       req.getLocale() === "en" ? {} : req.getCatalog(req.getLocale()) || {},
     views: views.map((v) => v.select_option),

@@ -6,9 +6,10 @@
 
 import { useNode, useEditor } from "@craftjs/core";
 //import { ROOT_NODE } from "@craftjs/utils";
-import React, { useEffect, useRef, useCallback, Fragment } from "react";
+import React, { useEffect, useRef, useCallback, Fragment, useContext } from "react";
 import ReactDOM from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import optionsCtx from "./context";
 import {
   faCopy,
   faUndo,
@@ -32,6 +33,7 @@ export /**
  */
 const RenderNode = ({ render }) => {
   const { id } = useNode();
+  const options = useContext(optionsCtx);
   const { actions, query, isActive } = useEditor((state) => ({
     isActive: state.nodes[id].events.selected,
   }));
@@ -60,14 +62,16 @@ const RenderNode = ({ render }) => {
     const { top, left, bottom, height, width, right } = dom
       ? dom.getBoundingClientRect()
       : { top: 0, left: 0, bottom: 0, right: 0, height: 0, width: 0 };
+    const rightPos = window.innerWidth - right;
     return {
       top: `${top > 0 ? top : bottom}px`,
       left: `${left}px`,
+      right: `${rightPos}px`,
       topn: top,
       leftn: left,
+      rightn: rightPos,
       height,
       width,
-      right,
       bottom,
     };
   }, []);
@@ -75,10 +79,16 @@ const RenderNode = ({ render }) => {
   const scroll = useCallback(() => {
     const { current: currentDOM } = currentRef;
     if (!currentDOM) return;
-    const { top, left } = getPos(dom);
-    currentDOM.style.top = top;
-    currentDOM.style.left = left;
-  }, [dom, getPos]);
+    const pos = getPos(dom);
+    currentDOM.style.top = pos.top;
+    if (options.isRTL) {
+      currentDOM.style.right = pos.right;
+      currentDOM.style.left = 'auto';
+    } else {
+      currentDOM.style.left = pos.left;
+      currentDOM.style.right = 'auto';
+    }
+  }, [dom, getPos, options.isRTL]);
 
   const hiddenColumnParents = new Set(["Card", "Container", "Table", "DropMenu"]);
   useEffect(() => {
@@ -145,7 +155,7 @@ const RenderNode = ({ render }) => {
                 isActive ? "activeind" : "hoverind"
               } px-1 text-white`}
               style={{
-                left: getPos(dom).left,
+                ...(options.isRTL ? { right: getPos(dom).right, left: 'auto' } : { left: getPos(dom).left, right: 'auto' }),
                 top: getPos(dom).top,
                 zIndex: 1029,
               }}

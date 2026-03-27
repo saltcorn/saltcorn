@@ -304,6 +304,9 @@ Copyright (c) 2017 Taha Paksu
   padding: 0px;
   margin-top: 2px;
 }
+[dir="rtl"] .boxmodel-container .boxmodel-info {
+  text-align: right;
+}
 .boxmodel-container div:not(.flex-row) {
   box-sizing: border-box;
   display: flex;
@@ -324,6 +327,10 @@ Copyright (c) 2017 Taha Paksu
   top: 2px;
   left: 2px;
   color: #777;
+}
+[dir="rtl"] .boxmodel-container span.boxmodel-text.boxmodel-header {
+  left: unset;
+  right: 2px;
 }
 .boxmodel-container .boxmodel-margin {
   background: #ffffff;
@@ -881,5 +888,80 @@ body.builder-dark .builder-select__menu-notice,
 .device-preview-constrained {
   border-left: 1px dashed #adb5bd;
   border-right: 1px dashed #adb5bd;
+}
+
+/* Ensure breadcrumb nav stretches full width for toolbar alignment */
+nav[aria-label="breadcrumb"] {
+  flex-grow: 1;
+  width: 100%;
+}
+nav[aria-label="breadcrumb"] .breadcrumb {
+  width: 100%;
+}
+
+/* RTL overrides for builder */
+[dir="rtl"] .left-builder-col {
+  padding-right: unset;
+  padding-left: 0px;
+}
+
+[dir="rtl"] div.toolbox-card {
+  padding-right: unset;
+  padding-left: 1rem;
+}
+
+[dir="rtl"] .builder-left-enlarged div.toolbox-card.componets-and-library-accordion {
+  padding-right: unset;
+  padding-left: 1rem;
+}
+
+[dir="rtl"] div.toolbox-card div.wrap-builder-elem:nth-child(1) {
+  border-right: none;
+  border-left: 1px solid #bcbcbc;
+}
+
+[dir="rtl"] .builder-left-enlarged div.toolbox-card div.wrap-builder-elem:nth-child(2) {
+  border-right: none;
+  border-left: 1px solid #bcbcbc;
+}
+
+[dir="rtl"] #builder-main-canvas.emptymsg div.root-canvas:empty:before {
+  margin-left: unset;
+  margin-right: 10px;
+}
+
+[dir="rtl"] #builder-main-canvas div.list-empty-msg:empty:before {
+  margin-left: unset;
+  margin-right: 10px;
+}
+
+[dir="rtl"] div.settings-panel .form-select {
+  padding: 0.375rem 0.75rem 0.375rem 2.25rem;
+}
+
+[dir="rtl"] .builder-layer-node.selected {
+  border-left: none;
+  border-right: 3px solid #2680eb;
+}
+
+[dir="rtl"] .builder-dark-panel .builder-layer-node.selected,
+[dir="rtl"] [data-bs-theme="dark"] .builder-layer-node.selected {
+  border-left: none;
+  border-right: 3px solid #4da3ff;
+}
+
+[dir="rtl"] .craft-layer-node > div > div {
+  padding-left: unset;
+  padding-right: 2px;
+}
+
+[dir="rtl"] .builder-layer-node {
+  padding-right: unset;
+  padding-left: 10px;
+}
+
+[dir="rtl"] button.btnstylesel {
+  padding-left: 2px;
+  padding-right: 5px;
 }
 
