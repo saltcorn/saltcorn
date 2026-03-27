@@ -1813,6 +1813,7 @@ const int = {
       blockDisplay: true,
       run: (v: any, req: any, attrs: any = {}) => {
         return div(
+          { style: "white-space: nowrap" },
           Array.from(
             { length: +attrs.max - +attrs.min + 1 },
             (_, i) => i + +attrs.min

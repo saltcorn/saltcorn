@@ -1,4 +1,3 @@
-
 .admin-cfglink-popover .popover {
   background-color: #5f9eec;
   border: none;
@@ -452,6 +451,7 @@ table.table-inner-grid td {
   direction: rtl;
   unicode-bidi: bidi-override;
   color: #ddd;
+  white-space: nowrap;
 }
 .editStarRating input {
   opacity: 0;
