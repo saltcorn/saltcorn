@@ -111,7 +111,12 @@ const getIntervalTriggersDueNow = async (
   due = new Date(due);
   if (due > now) return [];
   //console.log("after check", {due, name, now});
-  let triggers = await Trigger.find({ when_trigger: name });
+  let triggers = [
+    ...(await Trigger.find({ when_trigger: name })),
+    ...getState().virtual_triggers.filter(
+      (tr: Trigger) => tr.when_trigger === name
+    ),
+  ];
 
   // legacy: daily events without a specified time
   if (name === "Daily") {
@@ -236,6 +241,9 @@ const runScheduler = async ({
         const isThisTenantHourly = await intervalIsNow("Hourly");
 
         const triggers = await Trigger.find({ when_trigger: "Often" });
+        const vtriggers = getState().virtual_triggers.filter(
+          (tr: Trigger) => "Often" === tr.when_trigger
+        );
         const trsHourly = await getIntervalTriggersDueNow("Hourly", 1);
         const trsDaily = await getIntervalTriggersDueNow("Daily", 24);
         const trsDailyNowTime = getDailyTriggersDueNow(tickSeconds);
@@ -243,6 +251,7 @@ const runScheduler = async ({
         const trsWeekly = await getIntervalTriggersDueNow("Weekly", 24 * 7);
         const allTriggers = [
           ...triggers,
+          ...vtriggers,
           ...trsHourly,
           ...trsDaily,
           ...trsWeekly,
@@ -252,10 +261,15 @@ const runScheduler = async ({
         for (const trigger of allTriggers) {
           try {
             await db.withTransaction(async () => {
-              await trigger.runWithoutRow({
-                ...mockReqRes,
-                user: { role_id: 1 },
-              });
+              if (trigger.runWithoutRow)
+                await trigger.runWithoutRow({
+                  ...mockReqRes,
+                  user: { role_id: 1 },
+                });
+              else {
+                //virtual trigger
+                await trigger.run({});
+              }
             });
           } catch (e) {
             if (isRoot || tenants_crash_log)
