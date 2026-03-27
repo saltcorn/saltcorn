@@ -4,7 +4,7 @@
  * @subcategory components / elements
  */
 
-import React, { useState, useContext, useEffect, Fragment } from "react";
+import React, { useState, useContext, useEffect, useRef, Fragment } from "react";
 import { useNode } from "@craftjs/core";
 import {
   blockProps,
@@ -82,7 +82,7 @@ export /**
  * @subcategory components
  */
 const Text = ({
-  text,
+  text: propText,
   block,
   inline,
   isFormula,
@@ -97,13 +97,20 @@ const Text = ({
   const {
     connectors: { connect, drag },
     selected,
+    nodeText,
     actions: { setProp },
   } = useNode((state) => ({
     selected: state.events.selected,
     dragged: state.events.dragged,
+    nodeText: state.data.props.text,
   }));
+  // Use nodeText from store (reacts to undo) with fallback to prop
+  const text = nodeText !== undefined ? nodeText : propText;
   const [editable, setEditable] = useState(false);
   const { previewDevice } = useContext(PreviewCtx);
+  const ckInitRef = useRef(true);
+  const lastSavedTextRef = useRef(text);
+  const skipDestroyRef = useRef(false);
 
   const baseStyle = {
     ...(font ? { fontFamily: font } : {}),
@@ -117,6 +124,19 @@ const Text = ({
   );
   if (activeFontSize) baseStyle.fontSize = activeFontSize;
 
+  useEffect(() => {
+    if (editable) {
+      ckInitRef.current = true;
+      lastSavedTextRef.current = text;
+    }
+  }, [editable]);
+  // Close CKEditor when text changes externally (e.g. undo/redo)
+  useEffect(() => {
+    if (editable && text !== lastSavedTextRef.current) {
+      skipDestroyRef.current = true;
+      setEditable(false);
+    }
+  }, [text]);
   useEffect(() => {
     !selected && setEditable(false);
   }, [selected]);
@@ -149,9 +169,29 @@ const Text = ({
           <CKEditor
             initData={text || ""}
             style={{ display: "inline" }}
-            onChange={(e) =>
-              setProp((props) => (props.text = e.editor.getData()))
-            }
+            onChange={(e) => {
+              if (ckInitRef.current) {
+                ckInitRef.current = false;
+                return;
+              }
+              if (e?.editor) {
+                const newText = e.editor.getData();
+                setProp((props) => (props.text = newText), 500);
+                lastSavedTextRef.current = newText;
+              }
+            }}
+            onBeforeDestroy={(e) => {
+              if (skipDestroyRef.current) {
+                skipDestroyRef.current = false;
+                return;
+              }
+              if (e?.editor) {
+                const newText = e.editor.getData();
+                if (newText !== lastSavedTextRef.current) {
+                  setProp((props) => (props.text = newText));
+                }
+              }
+            }}
             config={ckConfig}
             type="inline"
           />
