@@ -5,7 +5,13 @@
  */
 /* globals validate_expression_elem */
 
-import React, { Fragment, useState, useContext, useEffect, useRef } from "react";
+import React, {
+  Fragment,
+  useState,
+  useContext,
+  useEffect,
+  useRef,
+} from "react";
 import useTranslation from "../../hooks/useTranslation";
 import { useNode } from "@craftjs/core";
 import optionsCtx from "../context";
@@ -157,7 +163,9 @@ const AggregationSettings = () => {
           <tr>
             <td>
               <label>
-                {options.mode === "filter" ? t("Field") : t("Child table field")}
+                {options.mode === "filter"
+                  ? t("Field")
+                  : t("Child table field")}
               </label>
             </td>
             <td>
@@ -187,13 +195,13 @@ const AggregationSettings = () => {
               >
                 {buildOptions(
                   [
-                    t("Count"),
-                    t("CountUnique"),
-                    t("Avg"),
-                    t("Sum"),
-                    t("Max"),
-                    t("Min"),
-                    t("Array_Agg"),
+                    "Count",
+                    "CountUnique",
+                    "Avg",
+                    "Sum",
+                    "Max",
+                    "Min",
+                    "Array_Agg",
                   ],
                   { valAttr: true }
                 )}
