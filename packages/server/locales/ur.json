@@ -1690,7 +1690,7 @@
   "Row color formula": "قطار کے رنگ کا فارمولا",
   "Formula for row background color. Ex.: <code>age>65 ?'#aaffaa': null</code>": "قطار کے پس منظر کے رنگ کے لیے فارمولا۔ مثال: `<code>age>65 ?'#aaffaa': null</code>`",
   "Table layout": "ٹیبل لے آؤٹ",
-  "CSV BOM": "سی ایس وی بی او ایم",
+  "CSV BOM": "CSV BOM",
   "Include the Byte-Order Mark in downloaded CSV files": "ڈاؤن لوڈ کی گئی CSV فائلوں میں بائٹ آرڈر مارک (Byte-Order Mark) شامل کریں",
   "Localize CSV downloads": "CSV ڈاؤن لوڈز کو مقامی بنائیں",
   "Sticky headers": "اسٹکی ہیڈرز",
