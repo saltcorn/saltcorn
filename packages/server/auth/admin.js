@@ -204,11 +204,15 @@ const user_dropdown = (user, req, can_reset) =>
       },
       '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
     ),
-    post_dropdown_item(
-      `/useradmin/become-user/${user.id}`,
-      '<i class="fas fa-ghost"></i>&nbsp;' + req.__("Become user"),
-      req
-    ),
+    ...(req.user.role_id === 1
+      ? [
+          post_dropdown_item(
+            `/useradmin/become-user/${user.id}`,
+            '<i class="fas fa-ghost"></i>&nbsp;' + req.__("Become user"),
+            req
+          ),
+        ]
+      : []),
     post_dropdown_item(
       `/useradmin/set-random-password/${user.id}`,
       '<i class="fas fa-random"></i>&nbsp;' + req.__("Set random password"),
