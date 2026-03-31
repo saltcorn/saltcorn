@@ -137,7 +137,9 @@ const userForm = async (req, user) => {
     type: "Key",
     reftable_name: "roles",
   });
-  const roles = (await User.get_roles()).filter((r) => r.role !== "public");
+  const roles = (await User.get_roles()).filter(
+    (r) => r.role !== "public" && role_id >= req.user.role_id
+  );
   roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
   const can_reset = getState().getConfig("smtp_host", "") !== "";
   const userFields = (await getUserFields(req)).filter(
@@ -283,7 +285,10 @@ router.get(
             span({ class: "badge bg-secondary me-1" }, v.label || k)
           )
       );
-    const users = await User.find({}, { orderBy: "id" });
+    const users = await User.find(
+      { role_id: { gt: req.user.role_id, equal: true } },
+      { orderBy: "id" }
+    );
     const roles = await User.get_roles();
     let roleMap = {};
     roles.forEach((r) => {
@@ -975,6 +980,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const user = await User.findOne({ id });
+    if (user.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     const form = await userForm(req, user);
 
     send_users_page({
@@ -1158,6 +1168,11 @@ router.post(
       _csrf,
       ...rest
     } = form.values;
+    if (role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     if (id) {
       try {
         const u = await User.findOne({ id });
@@ -1211,6 +1226,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     await send_reset_email(u, req, { from_admin: true });
     req.flash("success", req.__(`Reset password link sent to %s`, u.email));
 
@@ -1232,6 +1252,11 @@ router.post(
     const { id } = req.params;
     const u = await User.findOne({ id });
     // todo add test case
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     const result = await send_verification_email(u, req);
     if (result.error)
       req.flash(
@@ -1261,6 +1286,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     await u.getNewAPIToken();
     req.flash("success", req.__(`New API token generated`));
 
@@ -1281,6 +1311,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     await u.removeAPIToken();
     req.flash("success", req.__(`API token removed`));
 
@@ -1301,6 +1336,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { uid, tokenId } = req.params;
     const u = await User.findOne({ id: uid });
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     await u.revokeApiToken(+tokenId);
     req.flash("success", req.__(`API token revoked`));
     res.redirect(getOnDoneRedirect(req, `/useradmin/${u.id}`));
@@ -1317,6 +1357,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { uid } = req.params;
     const u = await User.findOne({ id: uid });
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     await u.revokeOriginalApiToken();
     req.flash("success", req.__(`API token revoked`));
     res.redirect(getOnDoneRedirect(req, `/useradmin/${u.id}`));
@@ -1336,6 +1381,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     const newpw = User.generate_password();
     await u.changePasswordTo(newpw);
     await u.destroy_sessions();
@@ -1388,6 +1438,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     await u.update({ disabled: true });
     await u.destroy_sessions();
     req.flash("success", req.__(`Disabled user %s`, u.email));
@@ -1406,6 +1461,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     await u.destroy_sessions();
     req.flash("success", req.__(`Logged out user %s`, u.email));
     res.redirect(getOnDoneRedirect(req));
@@ -1423,6 +1483,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     await u.update({ disabled: false });
     req.flash("success", req.__(`Enabled user %s`, u.email));
     res.redirect(getOnDoneRedirect(req));
@@ -1440,6 +1505,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
+    if (u.role_id < req.user.role_id) {
+      req.flash("error", req.__(`Not authorized`));
+      res.redirect("/useradmin");
+      return;
+    }
     await u.delete();
     req.flash("success", req.__(`User %s deleted`, u.email));
 
