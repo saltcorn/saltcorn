@@ -26,6 +26,7 @@ const {
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
+  isAdminOrHasConfigMinRole,
 } = require("../routes/utils");
 const { send_reset_email } = require("./resetpw");
 const { getState } = require("@saltcorn/data/db/state");
@@ -264,7 +265,7 @@ const user_dropdown = (user, req, can_reset) =>
  */
 router.get(
   "/",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
   error_catcher(async (req, res) => {
     const auth_methods = getState().auth_methods;
     const userBadges = (user) =>
@@ -344,7 +345,8 @@ router.get(
  */
 router.get(
   "/new",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
+
   error_catcher(async (req, res) => {
     const form = await userForm(req);
     send_users_page({
@@ -968,7 +970,8 @@ router.get(
  */
 router.get(
   "/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
+
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const user = await User.findOne({ id });
@@ -1118,7 +1121,8 @@ router.get(
  */
 router.post(
   "/save",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
+
   error_catcher(async (req, res) => {
     let form, sub2;
     if ((req.body || {}).id) {
@@ -1202,7 +1206,8 @@ router.post(
  */
 router.post(
   "/reset-password/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
+
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
@@ -1221,7 +1226,8 @@ router.post(
  */
 router.post(
   "/send-verification/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
+
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
@@ -1250,7 +1256,8 @@ router.post(
  */
 router.post(
   "/gen-api-token/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
+
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
@@ -1269,7 +1276,8 @@ router.post(
  */
 router.post(
   "/remove-api-token/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
+
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
@@ -1288,7 +1296,8 @@ router.post(
  */
 router.post(
   "/revoke-api-token/:uid/:tokenId",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
+
   error_catcher(async (req, res) => {
     const { uid, tokenId } = req.params;
     const u = await User.findOne({ id: uid });
@@ -1303,7 +1312,8 @@ router.post(
  */
 router.post(
   "/revoke-original-api-token/:uid",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
+
   error_catcher(async (req, res) => {
     const { uid } = req.params;
     const u = await User.findOne({ id: uid });
@@ -1321,7 +1331,8 @@ router.post(
  */
 router.post(
   "/set-random-password/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
+
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
@@ -1373,7 +1384,7 @@ router.post(
  */
 router.post(
   "/disable/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
@@ -1391,7 +1402,7 @@ router.post(
  */
 router.post(
   "/force-logout/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
@@ -1408,7 +1419,7 @@ router.post(
  */
 router.post(
   "/enable/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
@@ -1425,7 +1436,7 @@ router.post(
  */
 router.post(
   "/delete/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_users"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
     const u = await User.findOne({ id });
