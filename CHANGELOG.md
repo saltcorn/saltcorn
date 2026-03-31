@@ -2,6 +2,8 @@
 
 ## 1.6.0 - In development
 
+* User roles below admin can now be given permission to edit users with the same user interface as that used by admin (at /useradmin URLs).
+
 * In the `relative` fieldview for date fields, the full time is shown when on hover (using the title attribute)
 
 * Typescript types are now stripped from run_js_code actions and code pages (if on Node.js 22.13.0 or later)
