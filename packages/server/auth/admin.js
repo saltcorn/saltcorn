@@ -459,6 +459,7 @@ const permissions_settings_form = async (req) =>
       "min_role_edit_files",
       "min_role_edit_search",
       "min_role_create_snapshots",
+      "min_role_edit_users",
       //hidden            "exttables_min_role_read",
     ],
     action: "/useradmin/permissions",

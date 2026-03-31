@@ -489,6 +489,7 @@ router.get(
     "min_role_edit_search",
     "min_role_edit_menu",
     "min_role_edit_files",
+    "min_role_edit_users",
   ]),
   error_catcher(async (req, res) => {
     const { topic } = req.params;

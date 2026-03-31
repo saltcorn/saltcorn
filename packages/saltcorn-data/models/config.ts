@@ -1312,6 +1312,14 @@ const configTypes: ConfigTypes = {
     blurb: "Minimum role to create snapshot",
     excludeFromMobile: true,
   },
+  min_role_edit_users: {
+    type: "Role",
+    label: "Edit users",
+    default: 1,
+    required: true,
+    blurb: "Minimum role to access the user editing interface",
+    excludeFromMobile: true,
+  },
   min_role_search: {
     type: "Role",
     label: "Role for search",
@@ -1645,7 +1653,7 @@ const available_languages = {
   sl: "slovenščina",
   tr: "Türkçe",
   ur: "اردو",
-  vt: "tiếng Việt"
+  vt: "tiếng Việt",
 };
 /**
  * Get Config variable value by key (contract)
