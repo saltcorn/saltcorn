@@ -138,7 +138,7 @@ const userForm = async (req, user) => {
     reftable_name: "roles",
   });
   const roles = (await User.get_roles()).filter(
-    (r) => r.role !== "public" && role_id >= req.user.role_id
+    (r) => r.role !== "public" && r.id >= req.user.role_id
   );
   roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
   const can_reset = getState().getConfig("smtp_host", "") !== "";
