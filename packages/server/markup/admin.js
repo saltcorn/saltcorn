@@ -319,18 +319,23 @@ const send_infoarch_page = (args) => {
  */
 const send_users_page = (args) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+  const role = args.req?.user.role_id || 100;
+  const isUserAdmin = role === 1;
+
   return send_settings_page({
     main_section: "Users and security",
     main_section_href: "/useradmin",
-    sub_sections: [
-      { text: "Users", href: "/useradmin" },
-      { text: "Roles", href: "/roleadmin" },
-      { text: "Login and Signup", href: "/useradmin/settings" },
-      { text: "Table access", href: "/useradmin/table-access" },
-      ...(isRoot ? [{ text: "SSL", href: "/useradmin/ssl" }] : []),
-      { text: "HTTP", href: "/useradmin/http" },
-      { text: "Permissions", href: "/useradmin/permissions" },
-    ],
+    sub_sections: isUserAdmin
+      ? [
+          { text: "Users", href: "/useradmin" },
+          { text: "Roles", href: "/roleadmin" },
+          { text: "Login and Signup", href: "/useradmin/settings" },
+          { text: "Table access", href: "/useradmin/table-access" },
+          ...(isRoot ? [{ text: "SSL", href: "/useradmin/ssl" }] : []),
+          { text: "HTTP", href: "/useradmin/http" },
+          { text: "Permissions", href: "/useradmin/permissions" },
+        ]
+      : [{ text: "Users", href: "/useradmin" }],
     ...args,
   });
 };
