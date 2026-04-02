@@ -607,7 +607,7 @@ class WorkflowRun {
                 user,
                 `User id expression in step ${step.name}`
               );
-            } else user_id = user?.id;
+            } else user_id = user?.id || req?.user?.id;
             if (user_id && !interactive && !noNotifications) {
               //TODO send notification
               const base_url = state.getConfig("base_url", "");
