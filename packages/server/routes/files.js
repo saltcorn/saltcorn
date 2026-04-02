@@ -878,6 +878,7 @@ const editableExtensions = [
  */
 router.get(
   "/edit/*serve_path",
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
@@ -984,6 +985,7 @@ router.get(
  */
 router.post(
   "/edit/*serve_path",
+  isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req, res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
