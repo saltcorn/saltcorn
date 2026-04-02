@@ -287,6 +287,26 @@ describe("Table with simple row ownership field", () => {
     );
     expect(+aggs_non_owned.npers).toBe(0);
 
+    const lastnameField = persons.getField("lastname");
+    assertIsSet(lastnameField);
+
+    const dvs1 = await lastnameField.distinct_values({ user: non_owner_user });
+    expect(dvs1.length).toBe(1);
+    expect(dvs1[0].value).toBe("");
+    const dvs2 = await lastnameField.distinct_values({ user: owner_user });
+
+    expect(dvs2.length).toBe(3);
+
+    const ownerField = persons.getField("owner");
+    assertIsSet(ownerField);
+    const dvs3 = await ownerField.distinct_values({ user: non_owner_user });
+    expect(dvs3.length).toBe(1);
+    expect(dvs3[0].value).toBe("");
+    const dvs4 = await ownerField.distinct_values({ user: owner_user });
+    expect(dvs4.length).toBe(3);
+
+    //expect(1).toBe(2);
+
     //not deleting as nonowner
     await persons.deleteRows({ id: timid }, non_owner_user);
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
