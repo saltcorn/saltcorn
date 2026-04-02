@@ -207,6 +207,7 @@ describe("Table with simple row ownership field", () => {
       table: persons,
       name: "owner",
       type: "Key to users",
+      attributes: { summary_field: "email" },
     });
     await persons.update({ ownership_field_id: owner.id });
 
@@ -300,10 +301,23 @@ describe("Table with simple row ownership field", () => {
     const ownerField = persons.getField("owner");
     assertIsSet(ownerField);
     const dvs3 = await ownerField.distinct_values({ user: non_owner_user });
-    expect(dvs3.length).toBe(1);
+
+    expect(dvs3.length).toBe(2);
     expect(dvs3[0].value).toBe("");
+    expect(dvs3[1].value).toBe(non_owner_user.id);
     const dvs4 = await ownerField.distinct_values({ user: owner_user });
-    expect(dvs4.length).toBe(3);
+
+    expect(dvs4.length).toBe(2);
+    expect(dvs4[0].value).toBe("");
+    expect(dvs4[1].value).toBe(owner_user.id);
+
+    const dvs5 = await persons.distinctValues("lastname", {}, non_owner_user);
+    expect(dvs5.length).toBe(0);
+
+    expect(dvs5.length).toBe(0);
+    const dvs6 = await persons.distinctValues("lastname", {}, owner_user);
+
+    expect(dvs6.length).toBe(2);
 
     //expect(1).toBe(2);
 

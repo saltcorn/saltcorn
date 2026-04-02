@@ -1400,9 +1400,28 @@ class Table implements AbstractTable {
    * @param fieldnm
    * @returns {Promise<Object[]>}
    */
-  async distinctValues(fieldnm: string, whereObj?: Where): Promise<any[]> {
-    if (whereObj) {
-      const { where, values } = mkWhere(whereObj, db.isSQLite);
+  async distinctValues(
+    fieldnm: string,
+    whereObj?: Where,
+    user?: AbstractUser
+  ): Promise<any[]> {
+    const useWhere = { ...(whereObj || {}) };
+    if (
+      user &&
+      user.role_id > this.min_role_read &&
+      !(this.ownership_field_id || this.ownership_formula)
+    ) {
+      return [];
+    }
+    if (
+      user &&
+      user.role_id > this.min_role_read &&
+      (this.ownership_field_id || this.ownership_formula)
+    ) {
+      this.updateWhereWithOwnership(useWhere, user, true);
+    }
+    if (Object.keys(useWhere).length) {
+      const { where, values } = mkWhere(useWhere, db.isSQLite);
       const res = await db.query(
         `select distinct "${db.sqlsanitize(fieldnm)}" from ${
           this.sql_name

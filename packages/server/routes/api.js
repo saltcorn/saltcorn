@@ -327,6 +327,7 @@ router.get(
       { session: false },
       async function (err, user, info) {
         if (potentiallyAccessAllowedRead(req, user, table)) {
+          const myReq = { user: user || req.user, __: req.__ };
           const field = table.getFields().find((f) => f.name === fieldName);
           if (!field) {
             res.status(404).json({ error: req.__("Not found") });
@@ -337,9 +338,9 @@ router.get(
             field.is_fkey ||
             (field.type.name === "String" && field.attributes?.options)
           ) {
-            dvs = await field.distinct_values();
+            dvs = await field.distinct_values(myReq);
           } else {
-            dvs = await table.distinctValues(fieldName);
+            dvs = await table.distinctValues(fieldName, {}, user || req.user);
           }
           res.json({ success: dvs });
         } else {
