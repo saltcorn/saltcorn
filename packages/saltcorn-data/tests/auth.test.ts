@@ -319,8 +319,10 @@ describe("Table with simple row ownership field", () => {
 
     expect(dvs6.length).toBe(2);
 
-    //expect(1).toBe(2);
-
+    //prevent setting owner to someone else
+    const upres = await persons.updateRow({ owner: non_owner_user }, alexid, owner_user);
+    expect(upres).toBe("Not authorized")
+    
     //not deleting as nonowner
     await persons.deleteRows({ id: timid }, non_owner_user);
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
