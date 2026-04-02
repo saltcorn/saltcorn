@@ -190,7 +190,7 @@ const test_person_table = async (persons: Table) => {
   expect((await persons.getRow({ id: row1.id }))?.age).toBe(undefined);
 };
 
-describe("Table with row ownership field", () => {
+describe("Table with simple row ownership field", () => {
   it("should create and delete table", async () => {
     const persons = await Table.create("TableOwned");
     await Field.create({
@@ -222,11 +222,15 @@ describe("Table with row ownership field", () => {
       { role_id: 100 }
     );
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
-    await persons.insertRow(
+    const nauthins = await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
       non_owner_user
     );
-    expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(undefined);
+    expect(nauthins).toBe(undefined);
+
+    const timRow0 = await persons.getRow({ lastname: "Tim" });
+
+    expect(timRow0).toBe(null);
     const timid = await persons.insertRow(
       { age: 99, lastname: "Tim", owner: owner_user.id },
       owner_user
