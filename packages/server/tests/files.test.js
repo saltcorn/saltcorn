@@ -19,6 +19,7 @@ const Field = require("@saltcorn/data/models/field");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const { existsSync } = require("fs");
+const { getState } = require("@saltcorn/data/db/state");
 
 const createTestFile = async (
   folder,
@@ -469,6 +470,7 @@ describe("visible_entries test", () => {
   };
 
   it("shows allowed files", async () => {
+    await getState().setConfig("min_role_edit_files", 40)
     await setRole(100, path.join("_sc_test_subfolder_one", "foo_image.png"));
     await setDirRole(100, "_sc_test_subfolder_one");
 
