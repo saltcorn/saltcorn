@@ -8,6 +8,7 @@
 const Router = require("express-promise-router");
 const File = require("@saltcorn/data/models/file");
 const User = require("@saltcorn/data/models/user");
+const View = require("@saltcorn/data/models/view");
 const Form = require("@saltcorn/data/models/form");
 const { getState } = require("@saltcorn/data/db/state");
 const s3storage = require("../s3storage");
@@ -120,6 +121,21 @@ router.get(
   error_catcher(async (req, res) => {
     const role = req.user?.role_id ? req.user.role_id : 100;
     const userId = req.user?.id;
+    const min_role_edit_files = getState().getConfig("min_role_edit_files", 1);
+    if (role > min_role_edit_files) {
+      // check if there is a use_picker set
+      let role_needed = min_role_edit_files;
+
+      const all_views = await View.find({}, { cached: true });
+      for (const view of all_views)
+        if (JSON.stringify(view.configuration).includes("use_picker:true"))
+          role_needed = Math.max(role_needed, view.min_role);
+
+      if (role > role_needed) {
+        res.json({ error: "Not authorized" });
+        return;
+      }
+    }
     const { dir, no_subdirs, file_exts } = req.query;
     const noSubdirs = no_subdirs === "true";
     const safeDir = File.normalise(dir || "/");
