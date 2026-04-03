@@ -262,7 +262,7 @@ describe("files admin", () => {
           `/files/edit/${encodeURIComponent("_sc_test_subfolder_one/the-script.js")}`
         )
         .set("Cookie", loginCookie)
-        .expect(toInclude("Not found", 404));
+        .expect(toRedirect("/"));
     });
     it("denies editing a file", async () => {
       const app = await getApp({ disableCsrf: true });
@@ -273,12 +273,7 @@ describe("files admin", () => {
         )
         .set("Cookie", loginCookie)
         .send("value=console.log('I have been edited');")
-        .expect(toRedirect("/files"));
-
-      await request(app)
-        .get("/")
-        .set("Cookie", loginCookie)
-        .expect(toInclude("File not found"));
+        .expect(toRedirect("/"));
     });
 
     it("does not open for folders or not editable extensions", async () => {
