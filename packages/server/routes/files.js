@@ -128,7 +128,7 @@ router.get(
 
       const all_views = await View.find({}, { cached: true });
       for (const view of all_views)
-        if (JSON.stringify(view.configuration).includes("use_picker:true"))
+        if (JSON.stringify(view.configuration).includes('"use_picker":true'))
           role_needed = Math.max(role_needed, view.min_role);
 
       if (role > role_needed) {
