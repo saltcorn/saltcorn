@@ -225,17 +225,19 @@ router.post(
 */
 router.post(
   "/offline_changes",
+  loggedIn,
   error_catcher(async (req, res) => {
     const { changes, newSyncTimestamp, oldSyncTimestamp } = req.body || {};
     const rootFolder = await File.rootFolder();
     try {
       const syncDirName = `${newSyncTimestamp}_${req.user?.email || "public"}`;
-      const syncDir = path.join(
-        rootFolder.location,
-        "mobile_app",
-        "sync",
+      const syncDir = File.normalise_in_base(
+        path.join(rootFolder.location, "mobile_app", "sync"),
         syncDirName
       );
+      if (!syncDir) {
+        return res.status(400).json({ error: "Invalid sync directory name" });
+      }
       await fs.mkdir(syncDir, { recursive: true });
       await fs.writeFile(
         path.join(syncDir, "changes.json"),
@@ -287,16 +289,18 @@ const readOutFile = async (entries, syncDir, fileName) => {
 
 router.get(
   "/upload_finished",
+  loggedIn,
   error_catcher(async (req, res) => {
     const { dir_name } = req.query;
     try {
       const rootFolder = await File.rootFolder();
-      const syncDir = path.join(
-        rootFolder.location,
-        "mobile_app",
-        "sync",
+      const syncDir = File.normalise_in_base(
+        path.join(rootFolder.location, "mobile_app", "sync"),
         dir_name
       );
+      if (!syncDir) {
+        return res.json({ finished: false });
+      }
       let entries = null;
       try {
         entries = await fs.readdir(syncDir);
