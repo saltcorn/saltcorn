@@ -1,4 +1,4 @@
-const { error_catcher } = require("./utils.js");
+const { error_catcher, loggedIn } = require("./utils.js");
 const Router = require("express-promise-router");
 const db = require("@saltcorn/data/db");
 const { getState } = require("@saltcorn/data/db/state");
