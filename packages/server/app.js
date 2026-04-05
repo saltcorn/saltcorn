@@ -355,6 +355,9 @@ const getApp = async (opts = {}) => {
   passport.use(
     new JwtStrategy(jwtOpts, async (jwt_payload, done) => {
       const userCheck = async () => {
+        if (jwt_payload.sub === "public") {
+          return done(null, { role_id: 100 });
+        }
         const u = await User.findOne({ email: jwt_payload.sub });
         if (
           u &&
@@ -365,7 +368,7 @@ const getApp = async (opts = {}) => {
         ) {
           return done(null, u.session_object);
         } else {
-          return done(null, { role_id: 100 });
+          return done(null, false);
         }
       };
       if (

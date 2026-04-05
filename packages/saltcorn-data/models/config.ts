@@ -1563,6 +1563,24 @@ const configTypes: ConfigTypes = {
     default: {},
     excludeFromMobile: true,
   },
+  mobile_emit_allowed_events: {
+    type: "String[]",
+    label: "Mobile app: allowed emit events",
+    default: [],
+    blurb:
+      "Additional event types that authenticated mobile app users may emit via POST /api/emit-event. " +
+      "ReceiveMobileShareData is always allowed.",
+    excludeFromMobile: true,
+  },
+  mobile_emit_public_events: {
+    type: "String[]",
+    label: "Mobile app: public emit events",
+    default: [],
+    blurb:
+      "Unauthenticated (public) mobile app users may emit these event types to the server " +
+      "via POST /api/emit-event. Empty by default — no events can be emitted without login.",
+    excludeFromMobile: true,
+  },
   mail_throttle_per_user: {
     type: "Integer",
     label: "Throttle time per user",

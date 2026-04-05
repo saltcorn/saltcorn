@@ -151,6 +151,30 @@ const logSettingsForm = async (req) => {
         showIf: { [w]: true },
       });
   }
+  fields.push(
+    {
+      input_type: "section_header",
+      label: req.__("Mobile app event permissions"),
+    },
+    {
+      name: "mobile_emit_allowed_events",
+      label: req.__("Authenticated user allowed events"),
+      type: "String",
+      sublabel: req.__(
+        "Comma-separated additional event names that authenticated mobile app users may emit. " +
+          "ReceiveMobileShareData is always allowed."
+      ),
+    },
+    {
+      name: "mobile_emit_public_events",
+      label: req.__("Public user allowed events"),
+      type: "String",
+      sublabel: req.__(
+        "Comma-separated event names that unauthenticated (public) mobile app users may emit. " +
+          "Empty means public users cannot emit any events."
+      ),
+    }
+  );
   return new Form({
     action: "/eventlog/settings",
     noSubmitButton: true,
@@ -188,6 +212,13 @@ router.get(
       let cfgk = `delete_${k}_workflows_days`;
       form.values[cfgk] = getState().getConfig(cfgk);
     });
+    for (const k of [
+      "mobile_emit_allowed_events",
+      "mobile_emit_public_events",
+    ]) {
+      const arr = getState().getConfig(k, []);
+      form.values[k] = Array.isArray(arr) ? arr.join(", ") : arr;
+    }
 
     send_events_page({
       res,
@@ -407,6 +438,22 @@ router.post(
         }
       }
 
+      for (const k of [
+        "mobile_emit_allowed_events",
+        "mobile_emit_public_events",
+      ]) {
+        const raw = form.values[k];
+        await getState().setConfig(
+          k,
+          raw
+            ? raw
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean)
+            : []
+        );
+        delete form.values[k];
+      }
       await getState().setConfig("event_log_settings", form.values);
 
       if (!req.xhr) res.redirect(`/eventlog/settings`);

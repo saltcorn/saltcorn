@@ -568,8 +568,10 @@ router.get("/:tableName/count", async (req, res, next) => {
  * Emit Event using POST
  * This is used from the mobile app to send an event to the server.
  *
- * The user comes the JWT token and actions,
- * listening for the event, have to check on their own if the user is allowed to run it.
+ * Authenticated users may only emit events listed in the
+ * `mobile_emit_allowed_events` config.
+ * Public users (role_id=100, no id) may only emit events listed in the
+ * `mobile_emit_public_events` config (default: empty — disabled).
  */
 router.post(
   "/emit-event/:eventname",
@@ -578,15 +580,44 @@ router.post(
       "jwt",
       { session: false },
       async function (err, user, info) {
-        if (user) {
-          const { eventname } = req.params;
-          const { channel, payload } = req.body;
-          Trigger.emitEvent(eventname, channel, user, payload);
-          res.json({ success: true });
-        } else {
+        if (!user) {
           getState().log(3, `API POST emit-event not authorized`);
-          res.status(401).json({ error: req.__("Not authorized") });
+          return res.status(401).json({ error: req.__("Not authorized") });
         }
+        const { eventname } = req.params;
+        const { channel, payload } = req.body;
+        const state = getState();
+        if (!user.id) {
+          // public user — only allowed if explicitly configured
+          const publicAllowed = state.getConfig(
+            "mobile_emit_public_events",
+            []
+          );
+          if (!publicAllowed.includes(eventname)) {
+            state.log(3, `API POST emit-event not authorized for public user`);
+            return res.status(401).json({ error: req.__("Not authorized") });
+          }
+        } else {
+          // authenticated user — ReceiveMobileShareData always allowed, rest requires config
+          const configAllowed = state.getConfig(
+            "mobile_emit_allowed_events",
+            []
+          );
+          if (
+            eventname !== "ReceiveMobileShareData" &&
+            !configAllowed.includes(eventname)
+          ) {
+            state.log(
+              3,
+              `API POST emit-event: event type '${eventname}' not allowed`
+            );
+            return res
+              .status(403)
+              .json({ error: req.__("Event type not allowed") });
+          }
+        }
+        Trigger.emitEvent(eventname, channel, user, payload);
+        res.json({ success: true });
       }
     )(req, res, next);
   })

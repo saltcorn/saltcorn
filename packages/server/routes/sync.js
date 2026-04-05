@@ -14,6 +14,7 @@ module.exports = router;
 
 router.get(
   "/sync_timestamp",
+  loggedIn,
   error_catcher(async (req, res) => {
     try {
       res.json({ syncTimestamp: (await db.time()).valueOf() });
@@ -116,6 +117,7 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
 */
 router.post(
   "/load_changes",
+  loggedIn,
   error_catcher(async (req, res) => {
     const { syncInfos, loadUntil } = req.body || {};
     if (!loadUntil) {
@@ -193,6 +195,7 @@ const getDelRows = async (tblName, syncFrom, syncUntil) => {
 */
 router.post(
   "/deletes",
+  loggedIn,
   error_catcher(async (req, res) => {
     const { syncInfos, syncTimestamp } = req.body || {};
     try {
@@ -293,6 +296,10 @@ router.get(
   error_catcher(async (req, res) => {
     const { dir_name } = req.query;
     try {
+      const expectedSuffix = `_${req.user?.email || "public"}`;
+      if (!dir_name || !dir_name.endsWith(expectedSuffix)) {
+        return res.status(403).json({ error: "Access denied" });
+      }
       const rootFolder = await File.rootFolder();
       const syncDir = File.normalise_in_base(
         path.join(rootFolder.location, "mobile_app", "sync"),
@@ -344,9 +351,14 @@ router.get(
 
 router.post(
   "/clean_sync_dir",
+  loggedIn,
   error_catcher(async (req, res) => {
     const { dir_name } = req.body || {};
     try {
+      const expectedSuffix = `_${req.user?.email || "public"}`;
+      if (!dir_name || !dir_name.endsWith(expectedSuffix)) {
+        return res.status(403).json({ error: "Access denied" });
+      }
       const rootFolder = await File.rootFolder();
       const syncDir = File.normalise_in_base(
         path.join(rootFolder.location, "mobile_app", "sync"),

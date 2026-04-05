@@ -760,7 +760,7 @@ describe("API emit", () => {
     const app = await getApp({ disableCsrf: true });
     const token = await getAdminJwt();
     await request(app)
-      .post("/api/emit-event/event1")
+      .post("/api/emit-event/ReceiveMobileShareData")
       .set("Authorization", `jwt ${token}`)
       .send({ payload: { latitude: 20, longitude: 30 } })
       .expect(succeedJsonWith((success) => success === true));
@@ -770,8 +770,130 @@ describe("API emit", () => {
   it("denies an event without JWT", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
-      .post("/api/emit-event/event1")
+      .post("/api/emit-event/ReceiveMobileShareData")
       .send({ payload: { latitude: 20, longitude: 30 } })
+      .expect(notAuthorized);
+  });
+});
+
+describe("API emit-event access control", () => {
+  const getPublicJwt = async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .post("/auth/login-with/jwt")
+      .set("X-Requested-With", "XMLHttpRequest")
+      .set("X-Saltcorn-Client", "mobile-app")
+      .send({});
+    return res.body;
+  };
+
+  let adminJwt;
+  beforeAll(async () => {
+    adminJwt = await getAdminJwt();
+  });
+
+  afterEach(async () => {
+    await getState().setConfig("mobile_emit_allowed_events", []);
+    await getState().setConfig("mobile_emit_public_events", []);
+  });
+
+  // --- authenticated user ---
+
+  it("allows authenticated user to emit ReceiveMobileShareData by default", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/emit-event/ReceiveMobileShareData")
+      .set("Authorization", `jwt ${adminJwt}`)
+      .send({ payload: {} })
+      .expect(succeedJsonWith((success) => success === true));
+  });
+
+  it("blocks authenticated user from emitting other events by default", async () => {
+    const app = await getApp({ disableCsrf: true });
+    for (const eventName of [
+      "AppChange",
+      "Login",
+      "Error",
+      "Startup",
+      "UserVerified",
+    ]) {
+      await request(app)
+        .post(`/api/emit-event/${eventName}`)
+        .set("Authorization", `jwt ${adminJwt}`)
+        .send({ payload: {} })
+        .expect(
+          respondJsonWith(403, (resp) => resp.error === "Event type not allowed")
+        );
+    }
+  });
+
+  it("allows authenticated user to emit event listed in mobile_emit_allowed_events config", async () => {
+    await getState().setConfig("mobile_emit_allowed_events", ["AppChange"]);
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/emit-event/AppChange")
+      .set("Authorization", `jwt ${adminJwt}`)
+      .send({ payload: {} })
+      .expect(succeedJsonWith((success) => success === true));
+  });
+
+  it("blocks authenticated user from emitting event not listed in mobile_emit_allowed_events config", async () => {
+    await getState().setConfig("mobile_emit_allowed_events", ["AppChange"]);
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/emit-event/Login")
+      .set("Authorization", `jwt ${adminJwt}`)
+      .send({ payload: {} })
+      .expect(
+        respondJsonWith(403, (resp) => resp.error === "Event type not allowed")
+      );
+  });
+
+  // --- public user ---
+
+  it("blocks public JWT user from emitting any event by default", async () => {
+    const publicJwt = await getPublicJwt();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/emit-event/ReceiveMobileShareData")
+      .set("Authorization", `jwt ${publicJwt}`)
+      .send({ payload: {} })
+      .expect(notAuthorized);
+  });
+
+  it("allows public JWT user to emit event listed in mobile_emit_public_events config", async () => {
+    await getState().setConfig("mobile_emit_public_events", [
+      "CustomerEnquiry",
+    ]);
+    const publicJwt = await getPublicJwt();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/emit-event/CustomerEnquiry")
+      .set("Authorization", `jwt ${publicJwt}`)
+      .send({ payload: {} })
+      .expect(succeedJsonWith((success) => success === true));
+  });
+
+  it("blocks public JWT user from emitting event not listed in mobile_emit_public_events config", async () => {
+    await getState().setConfig("mobile_emit_public_events", [
+      "CustomerEnquiry",
+    ]);
+    const publicJwt = await getPublicJwt();
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/emit-event/OtherEvent")
+      .set("Authorization", `jwt ${publicJwt}`)
+      .send({ payload: {} })
+      .expect(notAuthorized);
+  });
+
+  // --- no token ---
+
+  it("blocks request with no JWT at all", async () => {
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/api/emit-event/ReceiveMobileShareData")
+      .send({ payload: {} })
       .expect(notAuthorized);
   });
 });

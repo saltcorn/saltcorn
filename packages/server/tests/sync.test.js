@@ -849,6 +849,64 @@ describe("Upload changes", () => {
     });
 });
 
+describe("sync dir access control", () => {
+  if (!db.isSQLite) {
+    beforeAll(async () => {
+      await initSyncInfo(["books"]);
+    });
+
+    it("upload_finished rejects access to another user's sync dir", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const adminCookie = await getAdminLoginCookie();
+      const userCookie = await getUserLoginCookie();
+
+      const resp = await doUpload(
+        app,
+        adminCookie,
+        new Date().valueOf(),
+        new Date().valueOf(),
+        { books: { inserts: [] } }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+
+      const pollResp = await request(app)
+        .get(`/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`)
+        .set("Cookie", userCookie);
+      expect(pollResp.status).toBe(403);
+
+      await cleanSyncDir(app, adminCookie, syncDir);
+    });
+
+    it("clean_sync_dir rejects deletion of another user's sync dir", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const adminCookie = await getAdminLoginCookie();
+      const userCookie = await getUserLoginCookie();
+
+      const resp = await doUpload(
+        app,
+        adminCookie,
+        new Date().valueOf(),
+        new Date().valueOf(),
+        { books: { inserts: [] } }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+
+      const deleteResp = await request(app)
+        .post("/sync/clean_sync_dir")
+        .send({ dir_name: syncDir })
+        .set("Cookie", userCookie);
+      expect(deleteResp.status).toBe(403);
+
+      await cleanSyncDir(app, adminCookie, syncDir);
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
+
 describe("field level conflicts", () => {
   if (!db.isSQLite) {
     beforeAll(async () => {
