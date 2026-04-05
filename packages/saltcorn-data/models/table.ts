@@ -4567,7 +4567,7 @@ ${rejectDetails}`,
     const schemaPrefix = db.getTenantSchemaPrefix();
     if (primaryKeys.length == 0) {
       await db.query(
-        `alter table ${schemaPrefix}"${this.name}" add column id serial primary key;`
+        `alter table ${schemaPrefix}"${sqlsanitize(this.name)}" add column id serial primary key;`
       );
       await db.query(
         `insert into ${schemaPrefix}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
@@ -4582,7 +4582,7 @@ where table_schema = '${db.getTenantSchema() || "public"}'
       and constraint_type = 'PRIMARY KEY';`);
       const cname = rows[0]?.constraint_name;
       await db.query(
-        `alter table ${schemaPrefix}"${this.name}" drop constraint "${cname}"`
+        `alter table ${schemaPrefix}"${sqlsanitize(this.name)}" drop constraint "${cname}"`
       );
       for (const field of this.fields) {
         if (field.primary_key) await field.update({ primary_key: false });
@@ -4590,7 +4590,7 @@ where table_schema = '${db.getTenantSchema() || "public"}'
       const { pk_type, pk_sql_type } = Table.pkSqlType(this.fields);
 
       await db.query(
-        `alter table ${schemaPrefix}"${this.name}" add column id ${pk_sql_type} primary key;`
+        `alter table ${schemaPrefix}"${sqlsanitize(this.name)}" add column id ${pk_sql_type} primary key;`
       );
       await db.query(
         `insert into ${schemaPrefix}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
@@ -4601,13 +4601,13 @@ where table_schema = '${db.getTenantSchema() || "public"}'
       //https://stackoverflow.com/questions/23578427/changing-primary-key-int-type-to-serial
       await db.query(`CREATE SEQUENCE ${schemaPrefix}"${this.name}_id_seq";`);
       await db.query(
-        `ALTER SEQUENCE ${schemaPrefix}"${this.name}_id_seq" OWNED BY ${schemaPrefix}"${this.name}"."${this.pk_name}"`
+        `ALTER SEQUENCE ${schemaPrefix}"${this.name}_id_seq" OWNED BY ${schemaPrefix}"${sqlsanitize(this.name)}"."${this.pk_name}"`
       );
       await db.query(
-        `SELECT setval('${schemaPrefix}"${this.name}_id_seq"', MAX(a."${this.pk_name}")) from ${schemaPrefix}"${this.name}" a`
+        `SELECT setval('${schemaPrefix}"${this.name}_id_seq"', MAX(a."${this.pk_name}")) from ${schemaPrefix}"${sqlsanitize(this.name)}" a`
       );
       await db.query(
-        `ALTER TABLE ${schemaPrefix}"${this.name}" ALTER COLUMN "${this.pk_name}" SET DEFAULT nextval('${schemaPrefix}"${this.name}_id_seq"')`
+        `ALTER TABLE ${schemaPrefix}"${sqlsanitize(this.name)}" ALTER COLUMN "${this.pk_name}" SET DEFAULT nextval('${schemaPrefix}"${this.name}_id_seq"')`
       );
       const pk = this.getField(this.pk_name)!;
       const attrs = { ...pk.attributes };
