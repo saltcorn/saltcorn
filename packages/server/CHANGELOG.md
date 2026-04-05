@@ -1,5 +1,9 @@
 # Notable changes
 
+## 1.5.3 - Released 5 April 2026
+
+* Security: Prevent malicious payloads from traversing paths in sync endpoints
+
 ## 1.5.1 - Released 25 March 2026
 
 * Protection against SQL injection in the jsexprToSQL function. To our knowledge this can only be accessed by users with administrative privileges.
