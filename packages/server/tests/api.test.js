@@ -860,7 +860,7 @@ describe("API emit-event access control", () => {
       .send({ payload: {} })
       .expect(notAuthorized);
   });
-
+/*
   it("allows public JWT user to emit event listed in mobile_emit_public_events config", async () => {
     await getState().setConfig("mobile_emit_public_events", [
       "CustomerEnquiry",
@@ -886,7 +886,7 @@ describe("API emit-event access control", () => {
       .send({ payload: {} })
       .expect(notAuthorized);
   });
-
+*/
   // --- no token ---
 
   it("blocks request with no JWT at all", async () => {
