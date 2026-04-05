@@ -292,6 +292,25 @@ describe("mkWhere", () => {
       values: [7],
       where: 'where "id" in (select "bar" from "foo" where "baz"=$1)',
     });
+    //sanitizes table name
+    expect(
+      mkWhere({
+        id: [
+          { inSelect: { table: "foo-bar", field: "bar", where: { baz: 7 } } },
+        ],
+      })
+    ).toStrictEqual({
+      values: [7],
+      where: 'where "id" in (select "bar" from "foobar" where "baz"=$1)',
+    });
+    expect(
+      mkWhere({
+        id: [{ inSelect: { table: "foo", field: "bar", where: { baz: 7 } } }],
+      })
+    ).toStrictEqual({
+      values: [7],
+      where: 'where "id" in (select "bar" from "foo" where "baz"=$1)',
+    });
     expect(
       mkWhere({
         id: [
