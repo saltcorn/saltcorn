@@ -230,7 +230,7 @@ router.post(
     const { changes, syncTimestamp } = req.body || {};
     const rootFolder = await File.rootFolder();
     try {
-      const syncDirName = `${newSyncTimestamp}_${req.user?.email || "public"}`;
+      const syncDirName = `${syncTimestamp}_${req.user?.email || "public"}`;
       const syncDir = File.normalise_in_base(
         path.join(rootFolder.location, "mobile_app", "sync"),
         syncDirName
