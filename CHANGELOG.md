@@ -1,5 +1,9 @@
 # Notable changes
 
+## 1.4.5 - Released 5 April 2026
+
+* Security: Prevent malicious payloads from traversing paths in sync endpoints
+
 ## 1.4.1 - Released 19 November 2025
 
 * Dropdown option for List header filters - mutually exclusive with togglable header filters. Filters are activated with a hidden (revealed on hover) dropdown menu.
