@@ -1176,7 +1176,7 @@ const run = async (
     (default_state?._row_click_url_formula ||
       default_state?._row_click_action) &&
     default_state?._row_click_type !== "Nothing";
-  const use_layout = (layout?.besides || []).filter((col: any) => {
+  const use_layout = (layout?.besides || []).filter((col) => {
     if (col?.showif) {
       const fvs = freeVariables(col.showif);
       const used_fields = [...fvs].map((fv) => fv.split(/(\?\.|\.|Ⱶ)/)[0]);
