@@ -1235,6 +1235,25 @@ const run = async (
     (default_state?._row_click_url_formula ||
       default_state?._row_click_action) &&
     default_state?._row_click_type !== "Nothing";
+  const use_layout = (layout?.besides || []).filter((col: any) => {
+    if (col?.showif) {
+      const fvs = freeVariables(col.showif);
+      const used_fields = [...fvs].map((fv) => fv.split(/(\?\.|\.|Ⱶ)/)[0]);
+      if (
+        used_fields.some(
+          (fnm) => fnm === "row" || fields.map((f) => f.name).includes(fnm)
+        )
+      )
+        return true;
+      //save to eval
+      return eval_expression(
+        col.showif,
+        {},
+        extraOpts.req?.user,
+        "List column showif expression"
+      );
+    } else return true;
+  });
   const tfields = layout?.list_columns
     ? get_viewable_fields_from_layout(
         viewname,
@@ -1247,7 +1266,7 @@ const run = async (
         __,
         state,
         viewname,
-        layout.besides,
+        use_layout,
         viewResults,
         is_row_click,
         !!default_state?._tree_field
