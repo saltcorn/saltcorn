@@ -1107,7 +1107,7 @@ class Field implements AbstractField {
     const f = new Field({ ...this, ...v });
     const state = require("../db/state").getState();
     const rename: boolean = f.name !== this.name;
-    if (rename) this.fill_table();
+    this.fill_table();
     if (rename && !this.table?.name) {
       throw new Error("No table to rename in");
     }
@@ -1123,16 +1123,13 @@ class Field implements AbstractField {
     const schema = db.getTenantSchemaPrefix();
 
     if (f.attributes.default !== this.attributes.default) {
-      const Table = require("./table");
-      const table = Table.findOne({ id: this.table_id });
-
       if (
         typeof f.attributes.default === "undefined" ||
         f.attributes.default === null
       )
         await db.query(
           `alter table ${schema}"${sqlsanitize(
-            table!.name // ensured above
+            this.table!.name // ensured above
           )}" alter column "${sqlsanitize(this.name)}" drop default;`
         );
       else {
@@ -1142,7 +1139,7 @@ class Field implements AbstractField {
         }) RETURNS void AS $$
         BEGIN
         EXECUTE format('alter table ${schema}"${sqlsanitize(
-          table.name
+          this.table!.name
         )}"alter column "${sqlsanitize(f.name)}" set default %L', thedef);
         END;
         $$ LANGUAGE plpgsql;`;
@@ -1184,6 +1181,10 @@ class Field implements AbstractField {
       }
     }
     await this.set_calc_joinfields();
+
+    // set updated_at
+    await this.table!.update({});
+
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client) await state.refresh_tables(true);
   }
@@ -1400,6 +1401,8 @@ class Field implements AbstractField {
         });
       }
     }
+    //set updated_at
+    await table.update({});
 
     return f;
   }
