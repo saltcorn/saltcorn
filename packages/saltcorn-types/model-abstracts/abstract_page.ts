@@ -21,6 +21,7 @@ export type PageCfg = {
   layout: string | Layout | GenObj;
   fixed_states?: string | any;
   attributes?: any;
+  updated_at?: Date;
 };
 
 export type PagePack = {

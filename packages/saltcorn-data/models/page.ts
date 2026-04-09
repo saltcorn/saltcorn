@@ -67,6 +67,7 @@ class Page implements AbstractPage {
   layout: Layout;
   fixed_states: any;
   attributes?: any;
+  updated_at?: Date;
 
   /**
    * @param {object} o
@@ -85,6 +86,9 @@ class Page implements AbstractPage {
       typeof o.fixed_states === "string"
         ? JSON.parse(o.fixed_states)
         : o.fixed_states || {};
+    this.updated_at = ["string", "number"].includes(typeof o.updated_at)
+      ? new Date(o.updated_at as any)
+      : o.updated_at;
   }
 
   /**
@@ -137,7 +141,7 @@ class Page implements AbstractPage {
    * @returns {Promise<void>}
    */
   static async update(id: number, row: Row): Promise<void> {
-    await db.update("_sc_pages", row, id);
+    await db.update("_sc_pages", { ...row, updated_at: new Date() }, id);
     if (!db.getRequestContext()?.client)
       await require("../db/state").getState().refresh_pages(true);
   }
@@ -157,6 +161,7 @@ class Page implements AbstractPage {
   static async create(f: PageCfg | PagePack): Promise<Page> {
     const page = new Page(f);
     const { id, ...rest } = page;
+    rest.updated_at = new Date();
     const fid = await db.insert("_sc_pages", rest);
     page.id = fid;
     if (!db.getRequestContext()?.client)
