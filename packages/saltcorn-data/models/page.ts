@@ -160,8 +160,8 @@ class Page implements AbstractPage {
    */
   static async create(f: PageCfg | PagePack): Promise<Page> {
     const page = new Page(f);
+    page.updated_at = new Date();
     const { id, ...rest } = page;
-    rest.updated_at = new Date();
     const fid = await db.insert("_sc_pages", rest);
     page.id = fid;
     if (!db.getRequestContext()?.client)

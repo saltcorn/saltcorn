@@ -173,13 +173,13 @@ class Trigger implements AbstractTrigger {
    */
   static async create(f: TriggerCfg): Promise<Trigger> {
     const trigger = new Trigger(f);
+    trigger.updated_at = new Date();
     const { id, table_name, ...rest } = trigger;
     if (table_name && !rest.table_id) {
       const Table = require("./table");
       const table = Table.findOne(table_name);
       rest.table_id = table.id;
     }
-    rest.updated_at = new Date();
     trigger.id = await db.insert("_sc_triggers", rest);
     if (!db.getRequestContext()?.client)
       await require("../db/state").getState().refresh_triggers(true);
