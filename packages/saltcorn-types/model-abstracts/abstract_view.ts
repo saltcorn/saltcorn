@@ -29,6 +29,7 @@ export type ViewCfg = {
   default_render_page?: string;
   slug?: any;
   attributes?: any;
+  updated_at?: Date;
 };
 
 export type ViewPack = {

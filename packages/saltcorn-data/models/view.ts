@@ -75,6 +75,7 @@ class View implements AbstractView {
   table?: AbstractTable;
   singleton?: boolean;
   slug?: any;
+  updated_at?: Date;
 
   /**
    * View constructor
@@ -110,6 +111,9 @@ class View implements AbstractView {
     this.table = o.table;
     this.slug = stringToJSON(o.slug);
     this.attributes = stringToJSON(o.attributes);
+    this.updated_at = ["string", "number"].includes(typeof o.updated_at)
+      ? new Date(o.updated_at as any)
+      : o.updated_at;
   }
 
   /**
@@ -317,6 +321,7 @@ class View implements AbstractView {
     }
     const { table, ...row } = v;
     // insert view definition into _sc_views
+    row.updated_at = new Date();
     const id = await db.insert("_sc_views", row);
     // refresh views list cache
     if (!db.getRequestContext()?.client)
@@ -392,7 +397,7 @@ class View implements AbstractView {
    */
   static async update(v: any, id: number): Promise<void> {
     // update view description
-    await db.update("_sc_views", v, id);
+    await db.update("_sc_views", { ...v, updated_at: new Date() }, id);
     // fresh view list cache
     if (!db.getRequestContext()?.client)
       await require("../db/state").getState().refresh_views(true);
@@ -543,13 +548,17 @@ class View implements AbstractView {
             const goToLogin = async () => {
               state.mobileConfig.jwt = undefined;
               await db.deleteWhere("jwt_table", {});
-              const mobileNav = (globalThis as any).saltcorn?.mobileApp?.navigation;
+              const mobileNav = (globalThis as any).saltcorn?.mobileApp
+                ?.navigation;
               if (mobileNav) {
                 mobileNav.clearHistory();
                 const page = await mobileNav.router.resolve({
                   pathname: "get/auth/login",
                   alerts: [
-                    { type: "warning", msg: "Your session has expired, please log in again." },
+                    {
+                      type: "warning",
+                      msg: "Your session has expired, please log in again.",
+                    },
                   ],
                 });
                 await mobileNav.replaceIframe(page.content);
@@ -577,7 +586,9 @@ class View implements AbstractView {
                       await db.deleteWhere("jwt_table", {});
                       await db.insert("jwt_table", { jwt: token });
                     } catch {
-                      console.error("Renewed token is not a valid JWT, redirecting to login.");
+                      console.error(
+                        "Renewed token is not a valid JWT, redirecting to login."
+                      );
                       await goToLogin();
                       return;
                     }
