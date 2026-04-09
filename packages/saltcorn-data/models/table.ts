@@ -273,6 +273,10 @@ class Table implements AbstractTable {
 
   /** Configuration for the table provider for this table */
   provider_cfg?: Row;
+
+  /** Time of the last update of the table definition (not rows) */
+  updated_at?: Date;
+
   /**
    * Table constructor
    * @param {object} o
@@ -294,6 +298,9 @@ class Table implements AbstractTable {
     this.provider_name = o.provider_name;
 
     this.fields = o.fields.map((f) => new Field(f));
+    this.updated_at = ["string", "number"].includes(typeof o.updated_at)
+      ? new Date(o.updated_at as any)
+      : o.updated_at;
   }
 
   static subClass({
@@ -343,6 +350,7 @@ class Table implements AbstractTable {
     t.update = async (upd_rec: Row) => {
       const { fields, constraints, ...updDB } = upd_rec;
       if (updDB.ownership_field_id === "") delete updDB.ownership_field_id;
+      updDB.updated_at = new Date();
       await db.update("_sc_tables", updDB, tbl.id);
       //limited refresh if we do not have a client
       if (!db.getRequestContext()?.client) await Table.state_refresh(true);
@@ -764,6 +772,7 @@ class Table implements AbstractTable {
       description: options.description || "",
       provider_name: options.provider_name,
       provider_cfg: options.provider_cfg,
+      updated_at: new Date(),
     };
     let pk_fld_id;
     if (!id) {
@@ -1204,7 +1213,7 @@ class Table implements AbstractTable {
     if (this.fields) {
       for (const f of this.fields) {
         if (f.type && instanceOfType(f.type) && f.type.readFromDB)
-          row[f.name] = f.type.readFromDB(row[f.name], f); 
+          row[f.name] = f.type.readFromDB(row[f.name], f);
       }
     }
     return row;
@@ -3073,6 +3082,7 @@ class Table implements AbstractTable {
       throw new Error(`Unable to find table with id: ${this.id}`);
     }
     const { external, fields, constraints, ...upd_rec } = new_table_rec;
+    upd_rec.updated_at = new Date();
     await db.update("_sc_tables", upd_rec, this.id);
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client) await Table.state_refresh(true);

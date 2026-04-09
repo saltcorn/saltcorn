@@ -35,6 +35,7 @@ export type TableCfg = {
   constraints?: any[];
   provider_name?: string;
   provider_cfg?: any;
+  updated_at?: Date;
 };
 
 export type TablePack = {
