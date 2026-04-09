@@ -268,6 +268,9 @@ describe("View with routes", () => {
       configuration: {},
       min_role: 100,
     });
+    expect(v.updated_at?.getTime()).toBeGreaterThanOrEqual(
+      new Date().getTime() - 5000
+    );
     await v.runRoute("the_json_route", {}, spy, mockReqRes);
     await v.runRoute("the_html_route", {}, spy, mockReqRes);
     await v.runRoute("the_null_route", {}, spy, mockReqRes);

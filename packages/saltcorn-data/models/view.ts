@@ -326,7 +326,7 @@ class View implements AbstractView {
     // refresh views list cache
     if (!db.getRequestContext()?.client)
       await require("../db/state").getState().refresh_views(true);
-    return new View({ id, ...v });
+    return new View({ id, ...v, updated_at: row.updated_at });
   }
 
   /**
