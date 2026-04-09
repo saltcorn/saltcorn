@@ -333,6 +333,8 @@ const fieldFlow = (req) =>
               }
             );
           }
+          //set updated_at
+          await table.update({});
         });
         await getState().refresh_tables();
 
@@ -905,6 +907,7 @@ router.post(
     await db.withTransaction(async () => {
       await f.delete();
     });
+    await Table.findOne(table_id).update({});
     await getState().refresh_tables();
 
     req.flash("success", req.__(`Field %s deleted`, f.label));
