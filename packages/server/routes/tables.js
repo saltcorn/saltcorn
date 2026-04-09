@@ -1946,6 +1946,8 @@ router.post(
           configuration,
         });
       });
+      // set updated_at
+      await table.update({});
       await getState().refresh_tables();
 
       Trigger.emitEvent(
@@ -2072,6 +2074,8 @@ router.post(
     await db.withTransaction(async () => {
       await cons.delete();
     });
+    //set updated_at
+    await Table.findOne(cons.table_id).update({});
     await getState().refresh_tables();
     res.redirect(`/table/constraints/${cons.table_id}`);
   })
