@@ -37,6 +37,7 @@ export type TriggerCfg = {
   configuration?: any;
   min_role?: number;
   steps?: Array<WorkflowStepCfg>;
+  updated_at?: Date;
 };
 
 export type TriggerPack = {} & TriggerCfg;

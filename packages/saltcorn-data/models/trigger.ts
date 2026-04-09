@@ -45,6 +45,7 @@ class Trigger implements AbstractTrigger {
   id?: number | null;
   configuration: any;
   min_role?: number;
+  updated_at?: Date;
   run?: (row: Row, extraArgs?: any) => Promise<any>;
 
   /**
@@ -69,6 +70,9 @@ class Trigger implements AbstractTrigger {
         ? JSON.parse(o.configuration)
         : o.configuration || {};
     this.min_role = !o.min_role ? 100 : +o.min_role;
+    this.updated_at = ["string", "number"].includes(typeof o.updated_at)
+      ? new Date(o.updated_at as any)
+      : o.updated_at;
   }
 
   /**
@@ -157,7 +161,7 @@ class Trigger implements AbstractTrigger {
     const { getState } = require("../db/state");
     getState().log(6, `Update trigger ID=${id} Row=${JSON.stringify(row)}`);
     if (row.table_id === "") row.table_id = null;
-    await db.update("_sc_triggers", row, id);
+    await db.update("_sc_triggers", { ...row, updated_at: new Date() }, id);
     if (!db.getRequestContext()?.client)
       await require("../db/state").getState().refresh_triggers(true);
   }
@@ -175,6 +179,7 @@ class Trigger implements AbstractTrigger {
       const table = Table.findOne(table_name);
       rest.table_id = table.id;
     }
+    rest.updated_at = new Date();
     trigger.id = await db.insert("_sc_triggers", rest);
     if (!db.getRequestContext()?.client)
       await require("../db/state").getState().refresh_triggers(true);
