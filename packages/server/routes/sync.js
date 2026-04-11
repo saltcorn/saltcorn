@@ -227,6 +227,7 @@ router.post(
   loggedIn,
   error_catcher(async (req, res) => {
     const { syncInfos, syncTimestamp } = req.body || {};
+    const role = req.user ? req.user.role_id : 100;
     try {
       const result = await db.withTransaction(async () => {
         const syncUntil = new Date(syncTimestamp);
@@ -238,6 +239,7 @@ router.post(
           if (!table) throw new Error(`The table '${tblName}' does not exists`);
           if (!table.has_sync_info)
             throw new Error(`The table '${tblName}' has no sync info`);
+          if (role > table.min_role_read) continue;
           if (syncInfo.syncFrom) {
             result.deletes[tblName] = await getDelRows(
               tblName,
