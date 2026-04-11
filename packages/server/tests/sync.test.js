@@ -1158,6 +1158,54 @@ describe("SQL injection protection", () => {
     });
 });
 
+describe("deletes authorization", () => {
+  if (!db.isSQLite) {
+    beforeAll(async () => {
+      await initSyncInfo(["patients"]);
+    });
+
+    it("should not return deletes for tables the user cannot read", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const patients = Table.findOne({ name: "patients" });
+      // patients has min_role_read=40 (staff), user role is 80
+      expect(patients.min_role_read).toBe(40);
+
+      const syncFrom = new Date(Date.now() - 10000);
+
+      // Insert and delete a row so there is a delete event in sync_info
+      const newId = await patients.insertRow({ name: "Secret Patient" });
+      await patients.deleteRows({ id: newId });
+      await sleep(200);
+
+      const syncUntil = new Date(Date.now() + 10000);
+
+      // As a regular user (role 80), try to see the deletion
+      const userCookie = await getUserLoginCookie();
+      const resp = await request(app)
+        .post("/sync/deletes")
+        .set("Cookie", userCookie)
+        .send({
+          syncTimestamp: syncUntil.valueOf(),
+          syncInfos: {
+            patients: {
+              syncFrom: syncFrom.valueOf(),
+            },
+          },
+        });
+      expect(resp.status).toBe(200);
+      const data = resp._body;
+      // The user should NOT be able to see deletes from the patients table
+      // because they lack the required min_role_read (40 < 80).
+      // If deletes.patients exists and has rows, that is the vulnerability.
+      const patientDeletes = data.deletes?.patients || [];
+      expect(patientDeletes.length).toBe(0);
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
+
 describe("field level conflicts", () => {
   if (!db.isSQLite) {
     beforeAll(async () => {
