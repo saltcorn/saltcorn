@@ -856,3 +856,61 @@ describe("JWT login disabled user bypass", () => {
     expect(isToken).toBe(false);
   });
 });
+
+describe("API token disabled user bypass", () => {
+  let testUserEmail = "disabled-apitoken-test@foo.com";
+  let testUserPassword = "TestPassword456!";
+  let apiToken;
+
+  beforeAll(async () => {
+    // Clean up any leftover user from a previous run
+    const existingUser = await User.findOne({ email: testUserEmail });
+    if (existingUser) {
+      await existingUser.update({ disabled: false });
+      await existingUser.delete();
+    }
+    // Create a user, generate an API token, then disable them
+    const u = await User.create({
+      email: testUserEmail,
+      password: testUserPassword,
+      role_id: 80,
+    });
+    apiToken = await u.getNewAPIToken();
+  });
+
+  afterAll(async () => {
+    const u = await User.findOne({ email: testUserEmail });
+    if (u) {
+      await u.update({ disabled: false });
+      await u.delete();
+    }
+  });
+
+  it("should allow API token access to rooms for enabled user", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // rooms table has min_role_read=80 (user role) - our user (role 80) can read it
+    const res = await request(app)
+      .get("/api/rooms/")
+      .set("Authorization", "Bearer " + apiToken);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBeTruthy();
+  });
+
+  it("should reject API token access for disabled user", async () => {
+    // Disable the user
+    const u = await User.findOne({ email: testUserEmail });
+    await u.update({ disabled: true });
+
+    const app = await getApp({ disableCsrf: true });
+    // rooms table has min_role_read=80 (user). Our disabled user has role 80,
+    // so their token would grant access if the disabled check is missing.
+    // Public users (role 100) cannot read rooms.
+    // A disabled user's API token should NOT grant authenticated access.
+    const res = await request(app)
+      .get("/api/rooms/")
+      .set("Authorization", "Bearer " + apiToken);
+    const body = res.body;
+    // Should NOT succeed - a disabled user should not have user-level access
+    expect(body.success).toBeFalsy();
+  });
+});
