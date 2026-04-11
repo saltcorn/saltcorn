@@ -133,6 +133,14 @@ const userLimiter = rateLimit({
   handler,
 });
 
+const pendingUserLimiter = rateLimit({
+  // TBD create config parameter
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 5, // limit each IP to 100 requests per windowMs
+  keyGenerator: (req) => req.user?.pending_user?.id,
+  handler,
+});
+
 /**
  * Login Form
  * @param {object} req
@@ -2494,6 +2502,8 @@ router.get(
  */
 router.post(
   "/twofa/login/totp",
+  ipLimiter,
+  pendingUserLimiter,
   passport.authenticate("totp", {
     failureRedirect: "/auth/twofa/login/totp",
     failureFlash: true,

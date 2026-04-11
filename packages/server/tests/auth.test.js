@@ -914,3 +914,73 @@ describe("API token disabled user bypass", () => {
     expect(body.success).toBeFalsy();
   });
 });
+
+describe("TOTP brute force protection", () => {
+  let testUserEmail = "totp-bruteforce-test@foo.com";
+  let testUserPassword = "TotpBrute789!";
+  let totpKey = "abcdefghij";
+
+  beforeAll(async () => {
+    // Create a user with TOTP enabled
+    const existingUser = await User.findOne({ email: testUserEmail });
+    if (existingUser) {
+      await existingUser.update({ disabled: false });
+      await existingUser.delete();
+    }
+    const u = await User.create({
+      email: testUserEmail,
+      password: testUserPassword,
+      role_id: 80,
+    });
+    // Enable TOTP with a known key
+    u._attributes.totp_enabled = true;
+    u._attributes.totp_key = totpKey;
+    await u.update({ _attributes: u._attributes });
+  });
+
+  afterAll(async () => {
+    const u = await User.findOne({ email: testUserEmail });
+    if (u) {
+      u._attributes.totp_enabled = false;
+      delete u._attributes.totp_key;
+      await u.update({ _attributes: u._attributes, disabled: false });
+      await u.delete();
+    }
+  });
+
+  it("should rate-limit TOTP login attempts after repeated failures", async () => {
+    const app = await getApp({ disableCsrf: true });
+
+    // Step 1: Login with correct password to get session with pending_user
+    const loginRes = await request(app)
+      .post("/auth/login/")
+      .send(`email=${testUserEmail}`)
+      .send(`password=${testUserPassword}`);
+    expect(loginRes.headers["location"]).toBe("/auth/twofa/login/totp");
+
+    const sessionCookie = resToLoginCookie(loginRes);
+
+    // Step 2: Send many wrong TOTP codes.
+    // The POST /auth/login endpoint is rate-limited (ipLimiter + userLimiter),
+    // but POST /auth/twofa/login/totp has NO rate limiting at all.
+    // This allows an attacker who knows the password to brute-force the 6-digit
+    // TOTP code (1,000,000 possibilities) without any throttling.
+    // The TOTP endpoint should have rate limiting just like the login endpoint.
+    let rateLimited = false;
+    for (let i = 0; i < 10; i++) {
+      const res = await request(app)
+        .post("/auth/twofa/login/totp")
+        .set("Cookie", sessionCookie)
+        .send(`code=${100000 + i}`);
+
+      if (res.statusCode === 429 || res.headers["x-ratelimit-redirect"]) {
+        rateLimited = true;
+        break;
+      }
+    }
+
+    // This SHOULD be rate-limited to prevent TOTP brute-force attacks.
+    // Currently fails because the endpoint has no rate limiting.
+    expect(rateLimited).toBe(true);
+  });
+});
