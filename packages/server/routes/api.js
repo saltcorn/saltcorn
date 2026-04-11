@@ -472,7 +472,7 @@ router.get(
               state: req_query,
               table,
               prefix: "a.",
-              user,
+              user: req.user || user,
             });
             const joinFields = {};
             const derefs = Array.isArray(dereference)
@@ -554,6 +554,7 @@ router.get("/:tableName/count", async (req, res, next) => {
           state: req_query,
           table,
           prefix: "a.",
+          user: req.user || user
         });
         const count = await table.countRows(qstate);
         res.json({ success: count });
