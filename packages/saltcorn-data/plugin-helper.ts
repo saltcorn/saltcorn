@@ -48,6 +48,7 @@ import type { Where, Row } from "@saltcorn/db-common/internal";
 import type { GenObj } from "@saltcorn/types/common_types";
 import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 import type { FieldLike } from "@saltcorn/types/base_types";
+import User from "models/user";
 
 /**
  *
@@ -2213,12 +2214,14 @@ const stateFieldsToWhere = ({
   approximate = true,
   table,
   prefix = "",
+  user,
 }: {
   fields: Field[];
   state: GenObj;
   approximate?: boolean;
   table?: Table;
   prefix?: string;
+  user?: User;
 }): Where => {
   let qstate: GenObj = {};
   const orFields: string[] = [];
@@ -2454,18 +2457,22 @@ const stateFieldsToWhere = ({
       )
         where = { [db.sqlsanitize(lblField)]: { ilike: v } };
 
-      qstate[jFieldNm] = [
-        ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
-        {
-          // where jFieldNm in (select id from jtnm where lblField=v)
-          inSelect: {
-            table: db.sqlsanitize(jtNm),
-            tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-            field: jTable?.pk_name,
-            where,
+      if (
+        typeof user === "undefined" ||
+        (user?.role_id || 100) <= jTable!.min_role_read
+      )
+        qstate[jFieldNm] = [
+          ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
+          {
+            // where jFieldNm in (select id from jtnm where lblField=v)
+            inSelect: {
+              table: db.sqlsanitize(jtNm),
+              tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+              field: jTable?.pk_name,
+              where,
+            },
           },
-        },
-      ];
+        ];
     } else if (k.includes(".")) {
       const kpath = k.split(".");
       if (kpath.length === 3) {
