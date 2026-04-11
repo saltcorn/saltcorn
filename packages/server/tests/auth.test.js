@@ -798,3 +798,61 @@ describe("JWT login rate limiting", () => {
     expect(rateLimited).toBe(true);
   });
 });
+
+describe("JWT login disabled user bypass", () => {
+  let testUserEmail = "disabled-jwt-test@foo.com";
+  let testUserPassword = "TestPassword123!";
+
+  beforeAll(async () => {
+    // Create a test user and then disable them
+    const existingUser = await User.findOne({ email: testUserEmail });
+    if (existingUser) {
+      await existingUser.update({ disabled: false });
+      await existingUser.delete();
+    }
+    const u = await User.create({
+      email: testUserEmail,
+      password: testUserPassword,
+      role_id: 80,
+    });
+    // Disable the user
+    await u.update({ disabled: true });
+  });
+
+  afterAll(async () => {
+    // Clean up
+    const u = await User.findOne({ email: testUserEmail });
+    if (u) {
+      await u.update({ disabled: false });
+      await u.delete();
+    }
+  });
+
+  it("should reject disabled user on normal login", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // Normal login should fail for disabled user - redirects back to login
+    await request(app)
+      .post("/auth/login/")
+      .send(`email=${testUserEmail}`)
+      .send(`password=${testUserPassword}`)
+      .expect(toRedirect("/auth/login"));
+  });
+
+  it("should reject disabled user on JWT login", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const headers = {
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Saltcorn-Client": "mobile-app",
+    };
+    const res = await request(app)
+      .post("/auth/login-with/jwt")
+      .set(headers)
+      .send({ email: testUserEmail, password: testUserPassword });
+
+    // A disabled user should NOT receive a valid JWT token.
+    // The response should contain an error, not a token string.
+    const body = res.body;
+    const isToken = typeof body === "string" && body.includes(".");
+    expect(isToken).toBe(false);
+  });
+});
