@@ -1469,7 +1469,7 @@ router.post(
     }
     const renewFn = async () => {
       const user = await User.findOne({ email: req.user.email });
-      if (!user)
+      if (!user || user.disabled)
         return res.status(401).json({ error: req.__("User not found") });
       const now = new Date();
       const pushEnabled = !!user._attributes?.notify_push;
