@@ -323,7 +323,13 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
     if (email !== undefined && password !== undefined) {
       // with credentials
       const user = await User.findOne({ email });
-      if (user && user.checkPassword(password)) {
+      if (
+        user &&
+        !user.disabled &&
+        user.auth_method_allowed("Password") &&
+        user.checkPassword(password) &&
+        !user._attributes.totp_enabled
+      ) {
         const now = new Date();
         const pushEnabled = !!user._attributes?.notify_push;
         const tokenUser = { ...user.session_object };
