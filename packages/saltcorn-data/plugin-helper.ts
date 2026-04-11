@@ -2427,21 +2427,27 @@ const stateFieldsToWhere = ({
       const [thoughTblNm, throughField] = throughPart.split("->");
       const [jtNm, lblField] = finalPart.split("->");
       const jtTbl = Table.findOne(jtNm);
+      const throughTable = Table.findOne(thoughTblNm);
       let where = { [db.sqlsanitize(lblField)]: v };
-      qstate[jFieldNm] = [
-        ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
-        {
-          // where jFieldNm in (select id from jtnm where lblField=v)
-          inSelect: {
-            table: db.sqlsanitize(thoughTblNm),
-            tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-            field: db.sqlsanitize(throughField),
-            valField: jtTbl?.pk_name || "id",
-            through: db.sqlsanitize(jtNm),
-            where,
+      if (
+        typeof user === "undefined" ||
+        ((user?.role_id || 100) <= jtTbl!.min_role_read &&
+          (user?.role_id || 100) <= throughTable!.min_role_read)
+      )
+        qstate[jFieldNm] = [
+          ...(qstate[jFieldNm] ? [qstate[jFieldNm]] : []),
+          {
+            // where jFieldNm in (select id from jtnm where lblField=v)
+            inSelect: {
+              table: db.sqlsanitize(thoughTblNm),
+              tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+              field: db.sqlsanitize(throughField),
+              valField: jtTbl?.pk_name || "id",
+              through: db.sqlsanitize(jtNm),
+              where,
+            },
           },
-        },
-      ];
+        ];
     } else if (k.includes("->")) {
       // jFieldNm.jtnm->lblField
       // where jFieldNm in (select id from jtnm where lblField=v)
@@ -2477,6 +2483,7 @@ const stateFieldsToWhere = ({
       const kpath = k.split(".");
       if (kpath.length === 3) {
         const [jtNm, jFieldNm, lblField] = kpath;
+        const jTbl = Table.findOne(jtNm);
         let isString = false;
         const labelField = Table.findOne({ name: jtNm })?.getField?.(lblField);
         if (labelField)
@@ -2485,39 +2492,51 @@ const stateFieldsToWhere = ({
             !labelField.attributes?.exact_search_only;
 
         const pk = table ? table.pk_name : "id";
-        qstate[pk] = [
-          ...(qstate[pk] ? [qstate[pk]] : []),
-          {
-            // where id in (select jFieldNm from jtnm where lblField=v)
-            inSelect: {
-              table: db.sqlsanitize(jtNm),
-              tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-              field: db.sqlsanitize(jFieldNm),
-              where: {
-                [db.sqlsanitize(lblField)]:
-                  isString && approximate ? { ilike: v } : v,
+        if (
+          typeof user === "undefined" ||
+          (user?.role_id || 100) <= jTbl!.min_role_read
+        )
+          qstate[pk] = [
+            ...(qstate[pk] ? [qstate[pk]] : []),
+            {
+              // where id in (select jFieldNm from jtnm where lblField=v)
+              inSelect: {
+                table: db.sqlsanitize(jtNm),
+                tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+                field: db.sqlsanitize(jFieldNm),
+                where: {
+                  [db.sqlsanitize(lblField)]:
+                    isString && approximate ? { ilike: v } : v,
+                },
               },
             },
-          },
-        ];
+          ];
       } else if (kpath.length === 4) {
         const [jtNm, jFieldNm, tblName, lblField] = kpath;
+        const jTbl = Table.findOne(jtNm);
+        const thTbl = Table.findOne(tblName);
+
         const pk = table ? table.pk_name : "id";
-        qstate[pk] = [
-          ...(qstate[pk] ? [qstate[pk]] : []),
-          {
-            // where id in (select ss1.id from jtNm ss1 join tblName ss2 on ss2.id = ss1.jFieldNm where ss2.lblField=v)
-            inSelect: {
-              table: db.sqlsanitize(jtNm),
-              tenant: db.isSQLite ? undefined : db.getTenantSchema(),
-              field: db.sqlsanitize(jFieldNm),
-              valField: Table.findOne(jtNm)?.pk_name || "id",
-              through: db.sqlsanitize(tblName),
-              through_pk: Table.findOne(tblName)?.pk_name || "id",
-              where: { [db.sqlsanitize(lblField)]: v },
+        if (
+          typeof user === "undefined" ||
+          ((user?.role_id || 100) <= jTbl!.min_role_read &&
+            (user?.role_id || 100) <= thTbl!.min_role_read)
+        )
+          qstate[pk] = [
+            ...(qstate[pk] ? [qstate[pk]] : []),
+            {
+              // where id in (select ss1.id from jtNm ss1 join tblName ss2 on ss2.id = ss1.jFieldNm where ss2.lblField=v)
+              inSelect: {
+                table: db.sqlsanitize(jtNm),
+                tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+                field: db.sqlsanitize(jFieldNm),
+                valField: Table.findOne(jtNm)?.pk_name || "id",
+                through: db.sqlsanitize(tblName),
+                through_pk: Table.findOne(tblName)?.pk_name || "id",
+                where: { [db.sqlsanitize(lblField)]: v },
+              },
             },
-          },
-        ];
+          ];
       }
     }
   });
