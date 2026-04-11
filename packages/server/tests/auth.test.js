@@ -124,7 +124,7 @@ describe("AuthTest user settings", () => {
     expect(user.checkPassword("foHRrr46obar")).toBe(false);
     expect(user.checkPassword("ghrarhr54hg")).toBe(true);
   });
-   it("should needs old password value", async () => {
+  it("should needs old password value", async () => {
     const app = await getApp({ disableCsrf: true });
     //const loginCookie = await getStaffLoginCookie();
     await request(app)
@@ -753,5 +753,48 @@ describe("AuthTest Allowed login methods", () => {
       .send("email=staff@foo.com")
       .send("password=ghrarhr54hg")
       .expect(toRedirect("/auth/login"));
+  });
+});
+
+describe("JWT login rate limiting", () => {
+  it("should rate-limit GET /auth/login-with/jwt after repeated failed attempts", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // Send many failed login attempts via the JWT endpoint
+    // The normal POST /auth/login is rate-limited to 3 attempts per 5 minutes per user,
+    // but GET /auth/login-with/jwt bypasses this rate limiting entirely.
+    // This test asserts that the JWT endpoint is also rate-limited.
+    let rateLimited = false;
+    for (let i = 0; i < 10; i++) {
+      const res = await request(app)
+        .get("/auth/login-with/jwt")
+        .query({ email: "user@foo.com", password: `wrongpassword${i}` });
+
+      if (res.statusCode === 429 || res.headers["x-ratelimit-redirect"]) {
+        rateLimited = true;
+        break;
+      }
+    }
+    expect(rateLimited).toBe(true);
+  });
+
+  it("should rate-limit POST /auth/login-with/jwt after repeated failed attempts", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const headers = {
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Saltcorn-Client": "mobile-app",
+    };
+    let rateLimited = false;
+    for (let i = 0; i < 10; i++) {
+      const res = await request(app)
+        .post("/auth/login-with/jwt")
+        .set(headers)
+        .send({ email: "user@foo.com", password: `wrongpassword${i}` });
+        
+      if (res.statusCode === 429 || res.headers["x-ratelimit-redirect"]) {
+        rateLimited = true;
+        break;
+      }
+    }
+    expect(rateLimited).toBe(true);
   });
 });
