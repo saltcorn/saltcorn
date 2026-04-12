@@ -8,6 +8,7 @@ const {
   toRedirect,
   toInclude,
   toSucceed,
+  resToLoginCookie,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
 const { sleep } = require("@saltcorn/data/tests/mocks");
@@ -1504,6 +1505,75 @@ describe("field level conflicts", () => {
       const row = await books.getRow({ id: id });
       expect(row.author).toBe("Author changed on web");
       expect(row.pages).toBe(200);
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
+
+describe("sync dir email suffix attack", () => {
+  if (!db.isSQLite) {
+    beforeAll(async () => {
+      await initSyncInfo(["books"]);
+    });
+
+    it("rejects access when attacker email is a suffix of victim email", async () => {
+      // Create a victim user whose email contains "_user@foo.com" as a suffix
+      // The existing user@foo.com has suffix "_user@foo.com"
+      // "timestamp_x_user@foo.com".endsWith("_user@foo.com") === true
+      // so user@foo.com could access x_user@foo.com's sync dir
+      const victimEmail = "x_user@foo.com";
+      const victimPassword = "TestPass123!";
+      await User.create({
+        email: victimEmail,
+        password: victimPassword,
+        role_id: 80,
+      });
+
+      const app = await getApp({ disableCsrf: true });
+
+      // Login as victim
+      const victimRes = await request(app)
+        .post("/auth/login/")
+        .send(`email=${victimEmail}`)
+        .send(`password=${victimPassword}`);
+      const victimCookie = resToLoginCookie(victimRes);
+
+      // Victim creates a sync directory
+      const resp = await doUpload(
+        app,
+        victimCookie,
+        new Date().valueOf(),
+        new Date().valueOf(),
+        { books: { inserts: [] } }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      // syncDir looks like "1234567890123_x_user@foo.com"
+      // endsWith("_user@foo.com") is true!
+      expect(syncDir.endsWith("_user@foo.com")).toBe(true);
+
+      // Login as the attacker (user@foo.com)
+      const attackerCookie = await getUserLoginCookie();
+
+      // Attacker tries to read victim's sync results
+      const pollResp = await request(app)
+        .get(`/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`)
+        .set("Cookie", attackerCookie);
+      // Should be 403 - attacker must not access victim's sync dir
+      expect(pollResp.status).toBe(403);
+
+      // Attacker tries to delete victim's sync dir
+      const deleteResp = await request(app)
+        .post("/sync/clean_sync_dir")
+        .send({ dir_name: syncDir })
+        .set("Cookie", attackerCookie);
+      // Should be 403
+      expect(deleteResp.status).toBe(403);
+
+      // Cleanup
+      await cleanSyncDir(app, victimCookie, syncDir);
     });
   } else
     it("only pq support", () => {

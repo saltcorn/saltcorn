@@ -214,7 +214,11 @@ const getApp = async (opts = {}) => {
   // init multitenant mode
   if (db.is_it_multi_tenant()) {
     const tenants = await getAllTenants();
-    await init_multi_tenant(Plugin.loadAllPlugins, opts.disableMigrate, tenants);
+    await init_multi_tenant(
+      Plugin.loadAllPlugins,
+      opts.disableMigrate,
+      tenants
+    );
   }
   const pruneSessionInterval = +getState().getConfig(
     "prune_session_interval",
@@ -338,7 +342,7 @@ const getApp = async (opts = {}) => {
         const mu =
           (await User.findByApiToken(token)) ||
           (await User.findOne({ api_token: token }));
-        if (mu && token && token.length > 5)
+        if (mu && !mu.disabled && token && token.length > 5)
           return done(
             null,
             {
@@ -365,6 +369,7 @@ const getApp = async (opts = {}) => {
         const u = await User.findOne({ email: jwt_payload.sub });
         if (
           u &&
+          !u.disabled &&
           u.last_mobile_login &&
           (typeof u.last_mobile_login === "string"
             ? new Date(u.last_mobile_login).valueOf()

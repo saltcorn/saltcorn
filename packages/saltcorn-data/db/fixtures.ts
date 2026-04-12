@@ -23,6 +23,8 @@ const fsp = fs.promises;
 
 export = async (): Promise<void> => {
   getState().registerPlugin("base", require("../base-plugin"));
+  getState().setConfig("min_role_apikeygen", 80);
+
   const table = await Table.create("books", {
     min_role_read: 100,
     min_role_write: 1,

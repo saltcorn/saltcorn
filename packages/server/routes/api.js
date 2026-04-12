@@ -278,7 +278,8 @@ router.post(
             folder ? File.normalise(folder) : undefined
           );
           const many = Array.isArray(f);
-          const formatLocation = (fl) => File.fieldValueFromRelative(fl.path_to_serve);
+          const formatLocation = (fl) =>
+            File.fieldValueFromRelative(fl.path_to_serve);
           const formatUrl = (loc, filename) =>
             File.pathToServeUrl(loc, { filename });
           jsonResp = {
@@ -288,9 +289,7 @@ router.post(
                 ? f.map((fl) => formatLocation(fl))
                 : formatLocation(f),
               url: many
-                ? f.map((fl) =>
-                    formatUrl(formatLocation(fl), fl.filename)
-                  )
+                ? f.map((fl) => formatUrl(formatLocation(fl), fl.filename))
                 : formatUrl(formatLocation(f), f.filename),
             },
           };
@@ -473,6 +472,7 @@ router.get(
               state: req_query,
               table,
               prefix: "a.",
+              user: req.user || user,
             });
             const joinFields = {};
             const derefs = Array.isArray(dereference)
@@ -554,6 +554,7 @@ router.get("/:tableName/count", async (req, res, next) => {
           state: req_query,
           table,
           prefix: "a.",
+          user: req.user || user
         });
         const count = await table.countRows(qstate);
         res.json({ success: count });
