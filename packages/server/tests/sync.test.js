@@ -1206,6 +1206,207 @@ describe("deletes authorization", () => {
     });
 });
 
+describe("deletes authorization with ownership_formula", () => {
+  if (!db.isSQLite) {
+    let userA, userB;
+    let ownedTable, childTable;
+    let userACookie, userBCookie;
+
+    const loginAs = async (email, password) => {
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .post("/auth/login/")
+        .send(`email=${email}`)
+        .send(`password=${password}`);
+      return res.headers["set-cookie"];
+    };
+
+    beforeAll(async () => {
+      await resetToFixtures();
+
+      // Two regular users — userA owns the rows, userB does not
+      userA = await User.create({
+        email: "userA_sync@test.com",
+        password: "TestPassA1!",
+        role_id: 80,
+      });
+      userB = await User.create({
+        email: "userB_sync@test.com",
+        password: "TestPassB1!",
+        role_id: 80,
+      });
+      userACookie = await loginAs("userA_sync@test.com", "TestPassA1!");
+      userBCookie = await loginAs("userB_sync@test.com", "TestPassB1!");
+
+      const usersTable = Table.findOne({ name: "users" });
+
+      // Parent table: min_role_read=40 so regular users (role 80) access via
+      // ownership only. ownership_formula is a direct field reference.
+      ownedTable = await Table.create("sync_owned", { min_role_read: 40 });
+      await Field.create({
+        table: ownedTable,
+        name: "item_name",
+        label: "Item name",
+        type: "String",
+      });
+      await Field.create({
+        table: ownedTable,
+        name: "owner",
+        label: "Owner",
+        type: "Key",
+        reftable: usersTable,
+        attributes: { summary_field: "email" },
+      });
+      ownedTable = Table.findOne({ name: "sync_owned" });
+      ownedTable.ownership_formula = "owner === user.id";
+      await ownedTable.update(ownedTable);
+      ownedTable = Table.findOne({ name: "sync_owned" });
+
+      // Child table: ownership resolved through a join field.
+      // formula: "sync_owned_ref?.owner === user.id"
+      // After getJoinedRows, row.sync_owned_ref is { id, owner } so the
+      // formula evaluates correctly.
+      childTable = await Table.create("sync_child", { min_role_read: 40 });
+      await Field.create({
+        table: childTable,
+        name: "child_name",
+        label: "Child name",
+        type: "String",
+      });
+      await Field.create({
+        table: childTable,
+        name: "sync_owned_ref",
+        label: "Sync owned ref",
+        type: "Key",
+        reftable: ownedTable,
+        attributes: { summary_field: "item_name" },
+      });
+      childTable = Table.findOne({ name: "sync_child" });
+      childTable.ownership_formula = "sync_owned_ref?.owner === user.id";
+      await childTable.update(childTable);
+      childTable = Table.findOne({ name: "sync_child" });
+
+      // Enable sync tracking on both tables
+      await initSyncInfo(["sync_owned", "sync_child"]);
+      // Re-fetch so has_sync_info = true is reflected in the local references
+      ownedTable = Table.findOne({ name: "sync_owned" });
+      childTable = Table.findOne({ name: "sync_child" });
+    });
+
+    afterAll(async () => {
+      if (childTable) await childTable.delete();
+      if (ownedTable) await ownedTable.delete();
+      if (userA) await userA.delete();
+      if (userB) await userB.delete();
+    });
+
+    it("direct formula: owner sees their own deleted rows", async () => {
+      const syncFrom = new Date(Date.now() - 10000);
+      const itemId = await ownedTable.insertRow({
+        item_name: "userA item",
+        owner: userA.id,
+      });
+      await ownedTable.deleteRows({ id: itemId });
+      await sleep(200);
+      const syncUntil = new Date(Date.now() + 10000);
+
+      const app = await getApp({ disableCsrf: true });
+      const resp = await request(app)
+        .post("/sync/deletes")
+        .set("Cookie", userACookie)
+        .send({
+          syncTimestamp: syncUntil.valueOf(),
+          syncInfos: { sync_owned: { syncFrom: syncFrom.valueOf() } },
+        });
+      expect(resp.status).toBe(200);
+      const deletes = resp._body.deletes?.sync_owned || [];
+      expect(deletes.length).toBe(1);
+      expect(deletes[0].ref).toBe(itemId);
+    });
+
+    it("direct formula: non-owner does not see deleted rows", async () => {
+      const syncFrom = new Date(Date.now() - 10000);
+      const itemId = await ownedTable.insertRow({
+        item_name: "another userA item",
+        owner: userA.id,
+      });
+      await ownedTable.deleteRows({ id: itemId });
+      await sleep(200);
+      const syncUntil = new Date(Date.now() + 10000);
+
+      const app = await getApp({ disableCsrf: true });
+      const resp = await request(app)
+        .post("/sync/deletes")
+        .set("Cookie", userBCookie)
+        .send({
+          syncTimestamp: syncUntil.valueOf(),
+          syncInfos: { sync_owned: { syncFrom: syncFrom.valueOf() } },
+        });
+      expect(resp.status).toBe(200);
+      const deletes = resp._body.deletes?.sync_owned || [];
+      expect(deletes.length).toBe(0);
+    });
+
+    it("join formula: owner sees deleted child rows", async () => {
+      const syncFrom = new Date(Date.now() - 10000);
+      const parentId = await ownedTable.insertRow({
+        item_name: "parent for join test",
+        owner: userA.id,
+      });
+      const childId = await childTable.insertRow({
+        child_name: "child of userA",
+        sync_owned_ref: parentId,
+      });
+      await childTable.deleteRows({ id: childId });
+      await sleep(200);
+      const syncUntil = new Date(Date.now() + 10000);
+
+      const app = await getApp({ disableCsrf: true });
+      const resp = await request(app)
+        .post("/sync/deletes")
+        .set("Cookie", userACookie)
+        .send({
+          syncTimestamp: syncUntil.valueOf(),
+          syncInfos: { sync_child: { syncFrom: syncFrom.valueOf() } },
+        });
+      expect(resp.status).toBe(200);
+      const deletes = resp._body.deletes?.sync_child || [];
+      expect(deletes.length).toBe(1);
+      expect(deletes[0].ref).toBe(childId);
+    });
+
+    it("join formula: non-owner does not see deleted child rows", async () => {
+      const syncFrom = new Date(Date.now() - 10000);
+      const parentId = await ownedTable.insertRow({
+        item_name: "parent for join test 2",
+        owner: userA.id,
+      });
+      const childId = await childTable.insertRow({
+        child_name: "child of userA 2",
+        sync_owned_ref: parentId,
+      });
+      await childTable.deleteRows({ id: childId });
+      await sleep(200);
+      const syncUntil = new Date(Date.now() + 10000);
+
+      const app = await getApp({ disableCsrf: true });
+      const resp = await request(app)
+        .post("/sync/deletes")
+        .set("Cookie", userBCookie)
+        .send({
+          syncTimestamp: syncUntil.valueOf(),
+          syncInfos: { sync_child: { syncFrom: syncFrom.valueOf() } },
+        });
+      expect(resp.status).toBe(200);
+      const deletes = resp._body.deletes?.sync_child || [];
+      expect(deletes.length).toBe(0);
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
+
 describe("field level conflicts", () => {
   if (!db.isSQLite) {
     beforeAll(async () => {

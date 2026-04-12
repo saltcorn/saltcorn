@@ -989,9 +989,26 @@ class Table implements AbstractTable {
     }
   }
 
-  private async addDeleteSyncInfo(ids: Row[], timestamp: Date): Promise<void> {
+  private async addDeleteSyncInfo(
+    ids: Row[],
+    timestamp: Date,
+    ownerFieldName?: string | null,
+    ownershipFormula?: string | null
+  ): Promise<void> {
     if ((this.constructor as typeof Table).read_only)
       throw new Error("Read-only access");
+
+    // Top-level keys referenced by the formula (strip join path suffixes,
+    // drop "user"). Stored in owner_fields so is_owner() can re-evaluate later.
+    const formulaTopKeys: string[] | null = ownershipFormula
+      ? [
+          ...new Set(
+            [...freeVariables(ownershipFormula)]
+              .map((v) => v.split(/[.Ⱶ]/)[0])
+              .filter((v) => v !== "user")
+          ),
+        ]
+      : null;
 
     await db.tryCatchInTransaction(
       async () => {
@@ -1009,19 +1026,38 @@ class Table implements AbstractTable {
             const tsParam = timestamp.valueOf() / 1000.0;
             const insertParams: any[] = [tsParam];
             const valueClauses = pkVals.map((pkVal, i) => {
+              const ownerVal = ownerFieldName
+                ? ids[i][ownerFieldName] ?? null
+                : null;
+              const ownerFieldsVal =
+                formulaTopKeys && formulaTopKeys.length > 0
+                  ? JSON.stringify(
+                      Object.fromEntries(
+                        formulaTopKeys.map((k) => [k, ids[i][k] ?? null])
+                      )
+                    )
+                  : null;
               insertParams.push(pkVal);
-              return `($${i + 2}, date_trunc('milliseconds', to_timestamp($1)), true)`;
+              insertParams.push(ownerVal);
+              insertParams.push(ownerFieldsVal);
+              return `($${
+                insertParams.length - 2
+              }, date_trunc('milliseconds', to_timestamp($1)), true, $${
+                insertParams.length - 1
+              }, $${insertParams.length})`;
             });
             await db.query(
               `insert into ${schema}"${db.sqlsanitize(
                 this.name
-              )}_sync_info" (ref, last_modified, deleted)
+              )}_sync_info" (ref, last_modified, deleted, owner_id, owner_fields)
               values ${valueClauses.join(",")}`,
               insertParams
             );
           } else {
             const pkVals = ids.map((row) => row[pkName]);
-            const placeholders = pkVals.map((_: any, i: number) => `$${i + 1}`).join(",");
+            const placeholders = pkVals
+              .map((_: any, i: number) => `$${i + 1}`)
+              .join(",");
             await db.query(
               `update "${db.sqlsanitize(this.name)}_sync_info"
            set deleted = true, modified_local = true
@@ -1086,6 +1122,12 @@ class Table implements AbstractTable {
     const triggers = await Trigger.getTableTriggers("Delete", this);
     const fields = this.fields;
 
+    const ownerFieldName: string | null = (() => {
+      if (!this.has_sync_info || !this.ownership_field_id) return null;
+      const f = fields?.find((f) => f.id === this.ownership_field_id);
+      return f?.name ?? null;
+    })();
+
     if (this.updateWhereWithOwnership(where, use_user)?.notAuthorized) {
       const state = require("../db/state").getState();
       state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
@@ -1101,6 +1143,18 @@ class Table implements AbstractTable {
       },
       { cached: true }
     );
+    // Join fields needed to snapshot ownership_formula values into sync_info.
+    // Computed once here; used either via the existing rows fetch (if it runs)
+    // or via a separate minimal fetch in the else branch below.
+    const ownershipJoinFields: JoinFields = {};
+    if (this.has_sync_info && this.ownership_formula) {
+      add_free_variables_to_joinfields(
+        freeVariables(this.ownership_formula),
+        ownershipJoinFields,
+        fields
+      );
+    }
+
     let rows: any;
     if (
       calc_agg_fields.length ||
@@ -1112,6 +1166,7 @@ class Table implements AbstractTable {
         where,
         forUser: use_user,
         forPublic: use_user?.role_id === 100,
+        joinFields: ownershipJoinFields,
       });
     }
 
@@ -1154,34 +1209,60 @@ class Table implements AbstractTable {
     await db.tryCatchInTransaction(
       async () => {
         if (rows) {
-          const delIds = rows.map((r: GenObj) => r[this.pk_name]);
+          const pkIds = rows.map((r: GenObj) => r[this.pk_name]);
           if (!db.isSQLite) {
             await db.deleteWhere(this.name, {
-              [this.pk_name]: { in: delIds },
+              [this.pk_name]: { in: pkIds },
             });
           } else {
             await db.query(
-              `delete from "${db.sqlsanitize(this.name)}" where "${db.sqlsanitize(
-                this.pk_name
-              )}" in (${delIds.join(",")})`
+              `delete from "${db.sqlsanitize(
+                this.name
+              )}" where "${db.sqlsanitize(this.pk_name)}" in (${pkIds.join(
+                ","
+              )})`
             );
           }
           for (const row of rows) await this.auto_update_calc_aggregations(row);
           if (this.has_sync_info) {
             const dbTime = await db.time();
-            await this.addDeleteSyncInfo(rows, dbTime);
+            await this.addDeleteSyncInfo(
+              rows,
+              dbTime,
+              ownerFieldName,
+              this.ownership_formula
+            );
           }
         } else {
-          const delIds = this.has_sync_info
-            ? await db.select(this.name, where, {
-                fields: [this.pk_name],
-              })
-            : null;
+          let preDeleteRows: any[] | null = null;
+          if (this.has_sync_info) {
+            if (this.ownership_formula) {
+              // ownership_formula: fetch all fields (including join fields) so
+              // addDeleteSyncInfo can snapshot them into owner_fields.
+              preDeleteRows = await this.getJoinedRows({
+                where,
+                joinFields: ownershipJoinFields,
+              });
+            } else {
+              // Simple case: fetch only the pk (and owner field if present).
+              const selectFields = ownerFieldName
+                ? [this.pk_name, ownerFieldName]
+                : [this.pk_name];
+              preDeleteRows = await db.select(this.name, where, {
+                fields: selectFields,
+              });
+            }
+          }
 
           await db.deleteWhere(this.name, where);
-          if (this.has_sync_info) {
+          if (this.has_sync_info && preDeleteRows) {
             const dbTime = await db.time();
-            await this.addDeleteSyncInfo(delIds, dbTime);
+            await this.addDeleteSyncInfo(
+              preDeleteRows,
+              dbTime,
+              ownerFieldName,
+              this.ownership_formula
+            );
           }
         }
         //if (fields.find((f) => f.primary_key)) await this.resetSequence();
@@ -2808,7 +2889,9 @@ class Table implements AbstractTable {
             ref integer,
             last_modified timestamp,
             deleted boolean default false,
-            updated_fields jsonb)`
+            updated_fields jsonb,
+            owner_id integer,
+            owner_fields jsonb)`
         );
         await db.query(
           `create index "${sqlsanitize(

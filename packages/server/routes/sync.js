@@ -194,21 +194,24 @@ router.post(
   })
 );
 
-const getDelRows = async (tblName, syncFrom, syncUntil) => {
+const getDelRows = async (tblName, syncFrom, syncUntil, userId = null) => {
   const syncFromMs = syncFrom.valueOf();
   const syncUntilMs = syncUntil.valueOf();
   if (!Number.isFinite(syncFromMs)) throw new Error("Invalid syncFrom");
   if (!Number.isFinite(syncUntilMs)) throw new Error("Invalid syncUntil");
   const schema = db.getTenantSchemaPrefix();
+  const ownerFilter =
+    userId !== null ? `and alias.owner_id = ${parseInt(userId)}` : "";
   const dbRes = await db.query(
     `select *
      from (
-      select ref, max(last_modified) from ${schema}"${db.sqlsanitize(
+      select ref, max(last_modified), owner_id, owner_fields from ${schema}"${db.sqlsanitize(
       tblName
     )}_sync_info"
-      group by ref, deleted having deleted = true) as alias
+      group by ref, deleted, owner_id, owner_fields having deleted = true) as alias
       where alias.max < to_timestamp($1)
-        and alias.max > to_timestamp($2)`,
+        and alias.max > to_timestamp($2)
+        ${ownerFilter}`,
     [syncUntilMs / 1000.0, syncFromMs / 1000.0]
   );
   for (const row of dbRes.rows) {
@@ -239,7 +242,31 @@ router.post(
           if (!table) throw new Error(`The table '${tblName}' does not exists`);
           if (!table.has_sync_info)
             throw new Error(`The table '${tblName}' has no sync info`);
-          if (role > table.min_role_read) continue;
+          if (role > table.min_role_read) {
+            if (!table.ownership_field_id && !table.ownership_formula) continue;
+            if (!syncInfo.syncFrom) continue;
+            if (table.ownership_field_id) {
+              // Filter by owner_id in SQL
+              result.deletes[tblName] = await getDelRows(
+                tblName,
+                new Date(syncInfo.syncFrom),
+                syncUntil,
+                req.user.id
+              );
+            } else {
+              // ownership_formula: fetch all deletes and evaluate formula in JS
+              // against the field values stored in owner_fields at delete time
+              const rows = await getDelRows(
+                tblName,
+                new Date(syncInfo.syncFrom),
+                syncUntil
+              );
+              result.deletes[tblName] = rows.filter((row) =>
+                table.is_owner(req.user, row.owner_fields || {})
+              );
+            }
+            continue;
+          }
           if (syncInfo.syncFrom) {
             result.deletes[tblName] = await getDelRows(
               tblName,
