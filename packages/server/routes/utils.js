@@ -419,6 +419,13 @@ const normalize_relative_url = (url) => {
   return normalised;
 };
 
+const safe_redirect = (res, url, default_url) => {
+  if (!url) res.redirect(default_url);
+  const dest = normalize_relative_url(url);
+  if (dest !== null) res.redirect(dest);
+  else res.redirect(default_url);
+};
+
 /**
  * Check that String is IPv4 address
  * @param {string} hostname
@@ -673,6 +680,7 @@ module.exports = {
   addOnDoneRedirect,
   is_relative_url,
   normalize_relative_url,
+  safe_redirect,
   is_ip_address,
   get_sys_info,
   admin_config_route,
