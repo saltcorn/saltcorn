@@ -8,6 +8,9 @@ export const getHeaders = () => {
   const config = state.mobileConfig;
   const versionTag = config.version_tag;
   const stdHeaders = [
+    {
+      headerTag: `<script>var _sc_version_tag = "${versionTag}";</script>`,
+    },
     { css: `static_assets/${versionTag}/saltcorn.css` },
     { script: `static_assets/${versionTag}/saltcorn-common.js` },
     { script: `static_assets/${versionTag}/dayjs.min.js` },

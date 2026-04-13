@@ -49,63 +49,85 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
     }
     ownerFieldName = ownerField.name;
   }
+
+  const maxLoadedId = Number(syncInfo.maxLoadedId);
+  if (!Number.isInteger(maxLoadedId)) throw new Error("Invalid maxLoadedId");
+
+  const syncUntilMs = new Date(syncUntil).valueOf();
+  if (!Number.isFinite(syncUntilMs)) throw new Error("Invalid syncUntil");
+
+  const userId = user?.id !== undefined ? parseInt(user.id, 10) : null;
+  if (ownerFieldName && !Number.isFinite(userId))
+    throw new Error("Invalid user id");
+
   const schema = db.getTenantSchemaPrefix();
   if (!syncInfo.syncFrom) {
+    const params = [maxLoadedId];
+    const ownerClause = ownerFieldName
+      ? `and data_tbl."${db.sqlsanitize(ownerFieldName)}" = $2`
+      : "";
+    if (ownerFieldName) params.push(userId);
     const { rows } = await db.query(
-      `select 
-         info_tbl.ref "_sync_info_tbl_ref_", 
-         info_tbl.last_modified "_sync_info_tbl_last_modified_", 
+      `select
+         info_tbl.ref "_sync_info_tbl_ref_",
+         info_tbl.last_modified "_sync_info_tbl_last_modified_",
          info_tbl.deleted "_sync_info_tbl_deleted_",
          data_tbl.*
        from ${schema}"${db.sqlsanitize(
-         tblName
-       )}_sync_info" "info_tbl" right join "${db.sqlsanitize(
-         tblName
-       )}" "data_tbl"
+        tblName
+      )}_sync_info" "info_tbl" right join "${db.sqlsanitize(
+        tblName
+      )}" "data_tbl"
       on info_tbl.ref = data_tbl."${db.sqlsanitize(
         pkName
       )}" and info_tbl.deleted = false
-      where data_tbl."${db.sqlsanitize(pkName)}" > ${syncInfo.maxLoadedId}
-      ${ownerFieldName ? `and data_tbl."${ownerFieldName}" = ${user.id}` : ""}
-      order by data_tbl."${db.sqlsanitize(pkName)}"`
+      where data_tbl."${db.sqlsanitize(pkName)}" > $1
+      ${ownerClause}
+      order by data_tbl."${db.sqlsanitize(pkName)}"`,
+      params
     );
     for (const row of rows) {
       if (row._sync_info_tbl_last_modified_)
         row._sync_info_tbl_last_modified_ =
           row._sync_info_tbl_last_modified_.valueOf();
-      else row._sync_info_tbl_last_modified_ = new Date(syncUntil).valueOf();
+      else row._sync_info_tbl_last_modified_ = syncUntilMs;
       row._sync_info_tbl_ref_ = row[pkName];
     }
     return rows;
   } else {
+    const syncFromMs = new Date(syncInfo.syncFrom).valueOf();
+    if (!Number.isFinite(syncFromMs)) throw new Error("Invalid syncFrom");
+
+    const params = [syncFromMs / 1000.0, syncUntilMs / 1000.0, maxLoadedId];
+    const ownerClause = ownerFieldName
+      ? `and data_tbl."${db.sqlsanitize(ownerFieldName)}" = $4`
+      : "";
+    if (ownerFieldName) params.push(userId);
     const { rows } = await db.query(
-      `select 
-         info_tbl.ref "_sync_info_tbl_ref_", 
-         info_tbl.last_modified "_sync_info_tbl_last_modified_", 
+      `select
+         info_tbl.ref "_sync_info_tbl_ref_",
+         info_tbl.last_modified "_sync_info_tbl_last_modified_",
          info_tbl.deleted "_sync_info_tbl_deleted_",
          data_tbl.*
        from ${schema}"${db.sqlsanitize(
-         tblName
-       )}_sync_info" "info_tbl" join ${schema}"${db.sqlsanitize(
-         tblName
-       )}" "data_tbl"
+        tblName
+      )}_sync_info" "info_tbl" join ${schema}"${db.sqlsanitize(
+        tblName
+      )}" "data_tbl"
       on info_tbl.ref = data_tbl."${db.sqlsanitize(pkName)}"
-      where date_trunc('milliseconds', info_tbl.last_modified) > to_timestamp(${
-        new Date(syncInfo.syncFrom).valueOf() / 1000.0
-      }) 
-      and date_trunc('milliseconds', info_tbl.last_modified) < to_timestamp(${
-        new Date(syncUntil).valueOf() / 1000.0
-      }) 
+      where date_trunc('milliseconds', info_tbl.last_modified) > to_timestamp($1)
+      and date_trunc('milliseconds', info_tbl.last_modified) < to_timestamp($2)
       and info_tbl.deleted = false
-      and info_tbl.ref > ${syncInfo.maxLoadedId}
-      ${ownerFieldName ? `and data_tbl."${ownerFieldName}" = ${user.id}` : ""}
-      order by info_tbl.ref`
+      and info_tbl.ref > $3
+      ${ownerClause}
+      order by info_tbl.ref`,
+      params
     );
     for (const row of rows) {
       if (row._sync_info_tbl_last_modified_)
         row._sync_info_tbl_last_modified_ =
           row._sync_info_tbl_last_modified_.valueOf();
-      else row._sync_info_tbl_last_modified_ = syncUntil.valueOf();
+      else row._sync_info_tbl_last_modified_ = syncUntilMs;
     }
     return rows;
   }
@@ -137,6 +159,8 @@ router.post(
         for (const [tblName, syncInfo] of Object.entries(syncInfos)) {
           const table = Table.findOne({ name: tblName });
           if (!table) throw new Error(`The table '${tblName}' does not exists`);
+          if (!table.has_sync_info)
+            throw new Error(`The table '${tblName}' has no sync info`);
           const pkName = table.pk_name;
           let rows = await getSyncRows(syncInfo, table, loadUntil, req.user);
           if (!rows) continue;
@@ -171,16 +195,21 @@ router.post(
 );
 
 const getDelRows = async (tblName, syncFrom, syncUntil) => {
+  const syncFromMs = syncFrom.valueOf();
+  const syncUntilMs = syncUntil.valueOf();
+  if (!Number.isFinite(syncFromMs)) throw new Error("Invalid syncFrom");
+  if (!Number.isFinite(syncUntilMs)) throw new Error("Invalid syncUntil");
   const schema = db.getTenantSchemaPrefix();
   const dbRes = await db.query(
-    `select * 
+    `select *
      from (
       select ref, max(last_modified) from ${schema}"${db.sqlsanitize(
-        tblName
-      )}_sync_info" 
-      group by ref, deleted having deleted = true) as alias 
-      where alias.max < to_timestamp(${syncUntil.valueOf() / 1000.0}) 
-        and alias.max > to_timestamp(${syncFrom.valueOf() / 1000.0})`
+      tblName
+    )}_sync_info"
+      group by ref, deleted having deleted = true) as alias
+      where alias.max < to_timestamp($1)
+        and alias.max > to_timestamp($2)`,
+    [syncUntilMs / 1000.0, syncFromMs / 1000.0]
   );
   for (const row of dbRes.rows) {
     if (row.last_modified) row.last_modified = row.last_modified.valueOf();
@@ -205,6 +234,10 @@ router.post(
           deletes: {},
         };
         for (const [tblName, syncInfo] of Object.entries(syncInfos)) {
+          const table = Table.findOne({ name: tblName });
+          if (!table) throw new Error(`The table '${tblName}' does not exists`);
+          if (!table.has_sync_info)
+            throw new Error(`The table '${tblName}' has no sync info`);
           if (syncInfo.syncFrom) {
             result.deletes[tblName] = await getDelRows(
               tblName,

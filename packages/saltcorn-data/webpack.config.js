@@ -25,6 +25,16 @@ const npmMocks = {
 };
 
 const saltcornMocks = {
+  "@saltcorn/plugins-loader/plugin_installer": join(
+    mocksDir,
+    "saltcorn",
+    "plugins-loader-plugin-installer"
+  ),
+  "@saltcorn/admin-models/models/tenant": join(
+    mocksDir,
+    "saltcorn",
+    "admin-models-tenant"
+  ),
   "./internal/async_json_stream": join(
     mocksDir,
     "models",

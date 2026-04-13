@@ -907,6 +907,258 @@ describe("sync dir access control", () => {
     });
 });
 
+describe("SQL injection protection", () => {
+  if (!db.isSQLite) {
+    beforeAll(async () => {
+      await initSyncInfo(["books"]);
+    });
+
+    // --- /sync/load_changes : maxLoadedId ---
+
+    it("rejects SQL injection in maxLoadedId (OR 1=1)", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: new Date().valueOf(),
+          syncInfos: { books: { maxLoadedId: "0 OR 1=1--" } },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid maxLoadedId")
+        );
+    });
+
+    it("rejects SQL injection in maxLoadedId (UNION SELECT)", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: new Date().valueOf(),
+          syncInfos: {
+            books: { maxLoadedId: "0 UNION SELECT * FROM users--" },
+          },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid maxLoadedId")
+        );
+    });
+
+    it("rejects SQL injection in maxLoadedId (stacked query)", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: new Date().valueOf(),
+          syncInfos: {
+            books: { maxLoadedId: "0; DROP TABLE books; --" },
+          },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid maxLoadedId")
+        );
+    });
+
+    it("rejects non-numeric string for maxLoadedId", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: new Date().valueOf(),
+          syncInfos: { books: { maxLoadedId: "abc" } },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid maxLoadedId")
+        );
+    });
+
+    it("rejects float maxLoadedId", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: new Date().valueOf(),
+          syncInfos: { books: { maxLoadedId: 1.5 } },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid maxLoadedId")
+        );
+    });
+
+    // --- /sync/load_changes : syncFrom ---
+
+    it("rejects invalid syncFrom date", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: new Date().valueOf(),
+          syncInfos: { books: { maxLoadedId: 0, syncFrom: "not-a-date" } },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid syncFrom")
+        );
+    });
+
+    it("rejects SQL injection payload as syncFrom", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: new Date().valueOf(),
+          syncInfos: {
+            books: { maxLoadedId: 0, syncFrom: "0); SELECT pg_sleep(5)--" },
+          },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid syncFrom")
+        );
+    });
+
+    // --- /sync/load_changes : loadUntil (syncUntil) ---
+
+    it("rejects invalid loadUntil date", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: "not-a-date",
+          syncInfos: { books: { maxLoadedId: 0 } },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid syncUntil")
+        );
+    });
+
+    // --- /sync/deletes : syncTimestamp ---
+
+    it("rejects invalid syncTimestamp in /sync/deletes", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/deletes")
+        .set("Cookie", loginCookie)
+        .send({
+          syncTimestamp: "not-a-date",
+          syncInfos: { books: { syncFrom: new Date(1000).valueOf() } },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid syncUntil")
+        );
+    });
+
+    it("rejects SQL injection payload as syncTimestamp in /sync/deletes", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/deletes")
+        .set("Cookie", loginCookie)
+        .send({
+          syncTimestamp: "0); SELECT * FROM users--",
+          syncInfos: { books: { syncFrom: new Date(1000).valueOf() } },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid syncUntil")
+        );
+    });
+
+    // --- /sync/deletes : syncFrom ---
+
+    it("rejects invalid syncFrom in /sync/deletes", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/deletes")
+        .set("Cookie", loginCookie)
+        .send({
+          syncTimestamp: new Date().valueOf(),
+          syncInfos: { books: { syncFrom: "not-a-date" } },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid syncFrom")
+        );
+    });
+
+    it("rejects SQL injection payload as syncFrom in /sync/deletes", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      await request(app)
+        .post("/sync/deletes")
+        .set("Cookie", loginCookie)
+        .send({
+          syncTimestamp: new Date().valueOf(),
+          syncInfos: {
+            books: { syncFrom: "0); SELECT pg_sleep(5)--" },
+          },
+        })
+        .expect(
+          respondJsonWith(400, (resp) => resp.error === "Invalid syncFrom")
+        );
+    });
+
+    // --- regression: valid requests still succeed ---
+
+    it("valid maxLoadedId integer still works", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      const resp = await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: new Date().valueOf(),
+          syncInfos: { books: { maxLoadedId: 0 } },
+        });
+      expect(resp.status).toBe(200);
+      expect(resp._body.books).toBeDefined();
+    });
+
+    it("valid syncFrom timestamp still works", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      const resp = await request(app)
+        .post("/sync/load_changes")
+        .set("Cookie", loginCookie)
+        .send({
+          loadUntil: new Date().valueOf(),
+          syncInfos: { books: { maxLoadedId: 0, syncFrom: 1000 } },
+        });
+      expect(resp.status).toBe(200);
+    });
+
+    it("valid /sync/deletes request still works", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+      const resp = await request(app)
+        .post("/sync/deletes")
+        .set("Cookie", loginCookie)
+        .send({
+          syncTimestamp: new Date().valueOf(),
+          syncInfos: { books: { syncFrom: 1000 } },
+        });
+      expect(resp.status).toBe(200);
+      expect(resp._body.deletes).toBeDefined();
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
+
 describe("field level conflicts", () => {
   if (!db.isSQLite) {
     beforeAll(async () => {
