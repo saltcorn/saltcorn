@@ -353,18 +353,19 @@ describe("load remote insert/updates", () => {
 });
 
 // describe("load remote deletes", () => {});
+const doUpload = async (app, loginCookie, syncTimestamp, changes) => {
+  const resp = await request(app)
+    .post("/sync/offline_changes")
+    .set("Cookie", loginCookie)
+    .send({
+      syncTimestamp,
+      changes,
+    });
+  return resp;
+};
 
 describe("Upload changes", () => {
-  const doUpload = async (app, loginCookie, syncTimestamp, changes) => {
-    const resp = await request(app)
-      .post("/sync/offline_changes")
-      .set("Cookie", loginCookie)
-      .send({
-        syncTimestamp,
-        changes,
-      });
-    return resp;
-  };
+
 
   const getResult = async (app, loginCookie, syncDir) => {
     let pollCount = 0;
