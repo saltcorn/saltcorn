@@ -63,7 +63,11 @@ const Table = require("@saltcorn/data/models/table");
 const {
   getForm,
 } = require("@saltcorn/data/base-plugin/viewtemplates/viewable_fields");
-const { InvalidConfiguration, getSessionId } = require("@saltcorn/data/utils");
+const {
+  InvalidConfiguration,
+  getSessionId,
+  isTest,
+} = require("@saltcorn/data/utils");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { restore_backup } = require("../markup/admin.js");
 const { restore } = require("@saltcorn/admin-models/models/backup");
@@ -84,6 +88,53 @@ const jwt = require("jsonwebtoken");
 
 const router = new Router();
 module.exports = router;
+
+/**
+ * @param {object} req
+ * @param {object} res
+ * @returns {void}
+ */
+function handler(req, res) {
+  console.log(
+    `Failed login attempt for: ${(req.body || {}).email} from ${
+      req.ip
+    } UA ${req.get("User-Agent")}`
+  );
+  req.flash(
+    "error",
+    "You've made too many failed attempts in a short period of time, please try again " +
+      moment(req.rateLimit.resetTime).fromNow()
+  );
+  if (isTest()) res.set("x-ratelimit-redirect", "TooManyRequests");
+  res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
+}
+
+/**
+ * try to find a unique user id in login submit
+ * @param {object} body
+ * @returns {string}
+ */
+const userIdKey = (body) => {
+  if (body.email) return body.email;
+  const { remember, password, _csrf, passwordRepeat, ...rest } = body;
+  const kvs = Object.entries(rest);
+  if (kvs.length > 0) return kvs[0][1];
+  else return "nokey";
+};
+const ipLimiter = rateLimit({
+  // TBD create config parameter
+  windowMs: 60 * 60 * 1000, // 60 minutes
+  max: 100, // limit each IP to 100 requests per windowMs
+  handler,
+});
+
+const userLimiter = rateLimit({
+  // TBD create config parameter
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 5, // limit each IP to 100 requests per windowMs
+  keyGenerator: (req) => userIdKey(req.body || {}),
+  handler,
+});
 
 /**
  * Login Form
@@ -110,6 +161,7 @@ const loginForm = (req, isCreating) => {
         type: "String",
         attributes: {
           input_type: "email",
+          autocomplete: "username",
         },
         sublabel: user_sublabel || undefined,
         // fixed correct size of email is 254 https://stackoverflow.com/questions/386294/what-is-the-maximum-length-of-a-valid-email-address
@@ -474,6 +526,8 @@ router.get(
  */
 router.post(
   "/reset",
+  ipLimiter,
+  userLimiter,
   error_catcher(async (req, res) => {
     const result = await User.resetPasswordWithToken({
       email: (req.body || {}).email,
@@ -512,6 +566,8 @@ router.post(
  */
 router.post(
   "/forgot",
+  ipLimiter,
+  userLimiter,
   error_catcher(async (req, res) => {
     if (getState().getConfig("allow_forgot")) {
       const { email } = req.body || {};
@@ -1081,6 +1137,8 @@ router.post(
  */
 router.post(
   "/signup",
+  ipLimiter,
+  userLimiter,
   setTenant,
   error_catcher(async (req, res) => {
     if (!getState().getConfig("allow_signup")) {
@@ -1233,52 +1291,6 @@ router.post(
   })
 );
 
-/**
- * @param {object} req
- * @param {object} res
- * @returns {void}
- */
-function handler(req, res) {
-  console.log(
-    `Failed login attempt for: ${(req.body || {}).email} from ${
-      req.ip
-    } UA ${req.get("User-Agent")}`
-  );
-  req.flash(
-    "error",
-    "You've made too many failed attempts in a short period of time, please try again " +
-      moment(req.rateLimit.resetTime).fromNow()
-  );
-  res.redirect("/auth/login"); // brute force protection triggered, send them back to the login page
-}
-
-/**
- * try to find a unique user id in login submit
- * @param {object} body
- * @returns {string}
- */
-const userIdKey = (body) => {
-  if (body.email) return body.email;
-  const { remember, password, _csrf, passwordRepeat, ...rest } = body;
-  const kvs = Object.entries(rest);
-  if (kvs.length > 0) return kvs[0][1];
-  else return "nokey";
-};
-const ipLimiter = rateLimit({
-  // TBD create config parameter
-  windowMs: 60 * 60 * 1000, // 60 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
-  handler,
-});
-
-const userLimiter = rateLimit({
-  // TBD create config parameter
-  windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 3, // limit each IP to 100 requests per windowMs
-  keyGenerator: (req) => userIdKey(req.body || {}),
-  handler,
-});
-
 function setOldSessionID(req, res, next) {
   req.old_session_id = getSessionId(req);
   next();
@@ -1370,6 +1382,8 @@ router.post(
  */
 router.get(
   "/login-with/:method",
+  ipLimiter,
+  userLimiter,
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
     if (method === "jwt") {
@@ -1419,6 +1433,8 @@ router.get(
  */
 router.post(
   "/login-with/:method",
+  ipLimiter,
+  userLimiter,
   error_catcher(async (req, res, next) => {
     const { method } = req.params;
     const auth = getState().auth_methods[method];
@@ -1529,9 +1545,19 @@ const callbackFn = async (req, res, next) => {
   }
 };
 
-router.get("/callback/:method", error_catcher(callbackFn));
+router.get(
+  "/callback/:method",
+  ipLimiter,
+  userLimiter,
+  error_catcher(callbackFn)
+);
 
-router.post("/callback/:method", error_catcher(callbackFn));
+router.post(
+  "/callback/:method",
+  ipLimiter,
+  userLimiter,
+  error_catcher(callbackFn)
+);
 
 /**
  * @param {object} req
