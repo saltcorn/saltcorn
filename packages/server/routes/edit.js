@@ -6,7 +6,7 @@
 
 const Router = require("express-promise-router");
 
-const { error_catcher, is_relative_url } = require("./utils.js");
+const { error_catcher, is_relative_url, safe_redirect } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 
 /**
@@ -46,9 +46,6 @@ router.post(
 
     if (req.xhr) res.send("OK");
     else if (req.get("referer")) res.redirect(req.get("referer"));
-    else
-      res.redirect(
-        (is_relative_url(redirect) && redirect) || `/list/${table.name}`
-      );
+    else safe_redirect(res, redirect, `/list/${table.name}`);
   })
 );

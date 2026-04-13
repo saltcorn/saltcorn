@@ -22,6 +22,7 @@ const {
   setTenant,
   is_relative_url,
   isAdminOrHasConfigMinRole,
+  safe_redirect,
 } = require("./utils.js");
 const {
   h1,
@@ -703,9 +704,10 @@ router.post(
       req.flash("error", result.error);
     }
     if (!req.xhr)
-      res.redirect(
-        (is_relative_url(redirect) && redirect) ||
-          `/files?dir=${encodeURIComponent(f.current_folder)}`
+      safe_redirect(
+        res,
+        redirect,
+        `/files?dir=${encodeURIComponent(f.current_folder)}`
       );
     else res.json({ success: true });
   })
