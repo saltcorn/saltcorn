@@ -1479,6 +1479,10 @@ router.post(
       const user = await User.findOne({ email: req.user.email });
       if (!user || user.disabled)
         return res.status(401).json({ error: req.__("User not found") });
+      if (user._attributes?.totp_enabled)
+        return res
+          .status(401)
+          .json({ error: req.__("Two-factor authentication is enabled") });
       const now = new Date();
       const pushEnabled = !!user._attributes?.notify_push;
       const tokenUser = { ...user.session_object };
@@ -2335,6 +2339,7 @@ router.post(
     console.log("TOTP return ", rv);
     user._attributes.totp_enabled = true;
     await user.update({ _attributes: user._attributes });
+    await user.updateLastMobileLogin(null);
     req.flash(
       "success",
       req.__(
