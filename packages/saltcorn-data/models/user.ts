@@ -146,6 +146,7 @@ class User {
     if (getState().getConfig("plain_password_triggers", false))
       await this.update(upd, newpw);
     else await this.update(upd);
+    await this.updateLastMobileLogin(null);
   }
 
   /**

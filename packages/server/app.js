@@ -361,6 +361,8 @@ const getApp = async (opts = {}) => {
         const u = await User.findOne({ email: jwt_payload.sub });
         if (
           u &&
+          !u.disabled &&
+          !u._attributes?.totp_enabled &&
           u.last_mobile_login &&
           (typeof u.last_mobile_login === "string"
             ? new Date(u.last_mobile_login).valueOf()

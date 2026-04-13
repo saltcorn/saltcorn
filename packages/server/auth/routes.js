@@ -2254,6 +2254,7 @@ router.post(
     console.log("TOTP return ", rv);
     user._attributes.totp_enabled = true;
     await user.update({ _attributes: user._attributes });
+    await user.updateLastMobileLogin(null);
     req.flash(
       "success",
       req.__(
