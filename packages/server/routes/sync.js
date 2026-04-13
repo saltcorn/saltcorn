@@ -5,6 +5,10 @@ const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
 const File = require("@saltcorn/data/models/file");
 const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
+const {
+  freeVariables,
+  add_free_variables_to_joinfields,
+} = require("@saltcorn/data/models/expression");
 const { spawn, spawnSync } = require("child_process");
 const path = require("path");
 const fs = require("fs").promises;
@@ -24,6 +28,34 @@ router.get(
     }
   })
 );
+
+// Apply ownership_formula filter to rows fetched by getSyncRows.
+// For formulas that reference join fields, resolves them via a second
+// getJoinedRows pass bounded to the PKs already in the result set.
+const applyOwnershipFormula = async (rows, table, user) => {
+  if (!rows.length) return rows;
+  const pkName = table.pk_name;
+  const joinFields = {};
+  add_free_variables_to_joinfields(
+    freeVariables(table.ownership_formula),
+    joinFields,
+    table.getFields()
+  );
+  let rowMap = null;
+  if (Object.keys(joinFields).length > 0) {
+    const pks = rows.map((r) => r[pkName]);
+    const joinedRows = await table.getJoinedRows({
+      where: { [pkName]: { in: pks } },
+      joinFields,
+    });
+    rowMap = Object.fromEntries(joinedRows.map((r) => [r[pkName], r]));
+  }
+  // table.ownership_formula
+  return rows.filter((row) => {
+    const evalRow = rowMap ? rowMap[row[pkName]] ?? row : row;
+    return table.is_owner(user, evalRow);
+  });
+};
 
 const getSyncRows = async (syncInfo, table, syncUntil, user) => {
   const tblName = table.name;
@@ -93,6 +125,8 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
       else row._sync_info_tbl_last_modified_ = syncUntilMs;
       row._sync_info_tbl_ref_ = row[pkName];
     }
+    if (table.ownership_formula && role > minRole)
+      return applyOwnershipFormula(rows, table, user);
     return rows;
   } else {
     const syncFromMs = new Date(syncInfo.syncFrom).valueOf();
@@ -129,6 +163,8 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
           row._sync_info_tbl_last_modified_.valueOf();
       else row._sync_info_tbl_last_modified_ = syncUntilMs;
     }
+    if (table.ownership_formula && role > minRole)
+      return applyOwnershipFormula(rows, table, user);
     return rows;
   }
 };
@@ -172,7 +208,7 @@ router.post(
               continue;
             else if (table.ownership_field_id) {
             } else if (table.ownership_formula) {
-              rows = rows.filter((row) => table.is_owner(req.user, row));
+              // already filtered by applyOwnershipFormula inside getSyncRows
             }
           }
           if (rows.length > rowLimit) {
