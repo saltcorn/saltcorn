@@ -941,29 +941,34 @@ class Table implements AbstractTable {
           const schema = db.getTenantSchemaPrefix();
           const pkName = this.pk_name || "id";
           if (isNode()) {
+            const pkVals = ids.map((row) => row[pkName]);
             await db.query(
               `delete from ${schema}"${db.sqlsanitize(
                 this.name
-              )}_sync_info" where ref in (
-            ${ids.map((row) => row[pkName]).join(",")})`
+              )}_sync_info" where ref = ANY($1)`,
+              [pkVals]
             );
+            const tsParam = timestamp.valueOf() / 1000.0;
+            const insertParams: any[] = [tsParam];
+            const valueClauses = pkVals.map((pkVal, i) => {
+              insertParams.push(pkVal);
+              return `($${i + 2}, date_trunc('milliseconds', to_timestamp($1)), true)`;
+            });
             await db.query(
               `insert into ${schema}"${db.sqlsanitize(
                 this.name
-              )}_sync_info" values ${ids
-                .map(
-                  (row) =>
-                    `(${row[pkName]}, date_trunc('milliseconds', to_timestamp( ${
-                      timestamp.valueOf() / 1000.0
-                    } ) ), true)`
-                )
-                .join(",")}`
+              )}_sync_info" (ref, last_modified, deleted)
+              values ${valueClauses.join(",")}`,
+              insertParams
             );
           } else {
+            const pkVals = ids.map((row) => row[pkName]);
+            const placeholders = pkVals.map((_: any, i: number) => `$${i + 1}`).join(",");
             await db.query(
               `update "${db.sqlsanitize(this.name)}_sync_info"
            set deleted = true, modified_local = true
-           where ref in (${ids.map((row) => row[pkName]).join(",")})`
+           where ref in (${placeholders})`,
+              pkVals
             );
           }
         }
@@ -1805,8 +1810,9 @@ class Table implements AbstractTable {
         } else {
           await db.query(
             `insert into "${db.sqlsanitize(this.name)}_sync_info"
-         (ref, modified_local, deleted) 
-         values('${id}', true, false)`
+         (ref, modified_local, deleted)
+         values($1, true, false)`,
+            [id]
           );
         }
       },
@@ -1842,10 +1848,9 @@ class Table implements AbstractTable {
           await db.query(
             `update "${db.sqlsanitize(
               this.name
-            )}_sync_info" set modified_local = true 
-         where ref = ${id} and last_modified = ${
-           oldLastModified ? oldLastModified.valueOf() : "null"
-         }`
+            )}_sync_info" set modified_local = true
+         where ref = $1 and last_modified = $2`,
+            [id, oldLastModified ? oldLastModified.valueOf() : null]
           );
         }
       },
@@ -2175,18 +2180,20 @@ class Table implements AbstractTable {
         async () => {
           if (isNode()) {
             const schemaPrefix = db.getTenantSchemaPrefix();
+            const tsParam =
+              (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
+              1000.0;
             await db.query(
               `insert into ${schemaPrefix}"${db.sqlsanitize(this.name)}_sync_info"
-           values(${id}, date_trunc('milliseconds', to_timestamp(${
-             (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
-             1000.0
-           })))`
+              (ref, last_modified) values($1, date_trunc('milliseconds', to_timestamp($2)))`,
+              [id, tsParam]
             );
           } else {
             await db.query(
               `insert into "${db.sqlsanitize(this.name)}_sync_info"
            (last_modified, ref, modified_local, deleted)
-           values(NULL, ${id}, true, false)`
+           values(NULL, $1, true, false)`,
+              [id]
             );
           }
         },
