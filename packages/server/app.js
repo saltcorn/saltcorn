@@ -333,8 +333,10 @@ const getApp = async (opts = {}) => {
     new BearerStrategy(function (token, done) {
       loginAttempt();
       async function loginAttempt() {
-        const mu = (await User.findByApiToken(token)) || (await User.findOne({ api_token: token }));
-        if (mu && token && token.length > 5)
+        const mu =
+          (await User.findByApiToken(token)) ||
+          (await User.findOne({ api_token: token }));
+        if (mu && !mu.disabled && token && token.length > 5)
           return done(
             null,
             {
