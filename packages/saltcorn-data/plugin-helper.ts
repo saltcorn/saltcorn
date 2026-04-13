@@ -2208,6 +2208,21 @@ const handleRelationPath = (
  * @param {Table} opts.table
  * @returns {object}
  */
+/**
+ * Recursively strip inSelect/inSelectWithLevels from user-provided objects
+ * to prevent subquery injection through passthrough code paths.
+ */
+function stripDangerousOperators(obj: any): any {
+  if (typeof obj !== "object" || obj === null) return obj;
+  if (Array.isArray(obj)) return obj.map(stripDangerousOperators);
+  const result: any = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (k === "inSelect" || k === "inSelectWithLevels") continue;
+    result[k] = stripDangerousOperators(v);
+  }
+  return result;
+}
+
 const stateFieldsToWhere = ({
   fields,
   state,
@@ -2248,7 +2263,7 @@ const stateFieldsToWhere = ({
       return;
     }
     if (k === "or" && typeof v === "object") {
-      qstate.or = v;
+      qstate.or = stripDangerousOperators(v);
       return;
     }
     if (k === "_or_field") {
@@ -2336,7 +2351,7 @@ const stateFieldsToWhere = ({
       const nfield = fields.find((fld) => fld.name === notfield);
       if (nfield) {
         if (!qstate.not) qstate.not = {};
-        qstate.not[notfield] = v;
+        qstate.not[notfield] = stripDangerousOperators(v);
       }
     } else if (
       field &&
@@ -2414,7 +2429,7 @@ const stateFieldsToWhere = ({
         },
       ];
     } else if (typeof v === "object" && field) {
-      qstate[k] = v;
+      qstate[k] = stripDangerousOperators(v);
     } else if (field && field.type && (field.type as any).read)
       qstate[k] = Array.isArray(v)
         ? {

@@ -1043,4 +1043,111 @@ describe("API cross-table sub-select access control", () => {
     const rows2 = resp2.body.success || [];
     expect(rows1.length).toBe(rows2.length);
   });
+
+  it("should not allow probing restricted tables via or parameter with inSelect", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // The patients table has min_role_read=40 (staff).
+    // The books table is public (min_role_read=100).
+    //
+    // The 'or' query parameter is passed directly through stateFieldsToWhere
+    // into the db where-clause without access control checks. An attacker
+    // can embed an inSelect subquery in 'or' to probe restricted tables:
+    //   ?or[0][id][inSelect][table]=patients&or[0][id][inSelect][field]=favbook
+    //    &or[0][id][inSelect][where][name]=Kirk Douglas
+    // This generates: WHERE (id IN (SELECT favbook FROM patients WHERE name='Kirk Douglas'))
+    // By observing which books are returned, the attacker can determine
+    // whether a patient with a given name exists — leaking data from the
+    // restricted patients table.
+    const patients = Table.findOne({ name: "patients" });
+    expect(patients.min_role_read).toBe(40);
+
+    // Kirk Douglas exists in patients with favbook=1 (Herman Melville)
+    const resp1 = await request(app)
+      .get("/api/books/")
+      .query({
+        "or[0][id][inSelect][table]": "patients",
+        "or[0][id][inSelect][field]": "favbook",
+        "or[0][id][inSelect][where][name]": "Kirk Douglas",
+      })
+      .expect(200);
+
+    // Non-existent patient
+    const resp2 = await request(app)
+      .get("/api/books/")
+      .query({
+        "or[0][id][inSelect][table]": "patients",
+        "or[0][id][inSelect][field]": "favbook",
+        "or[0][id][inSelect][where][name]": "ZZZNONEXISTENT",
+      })
+      .expect(200);
+
+    // If the or+inSelect bypass works, resp1 returns only book id=1
+    // (Kirk Douglas's favbook) while resp2 returns nothing.
+    // Secure behavior: both return the same results (all books or error).
+    const rows1 = resp1.body.success || [];
+    const rows2 = resp2.body.success || [];
+    expect(rows1.length).toBe(rows2.length);
+  });
+
+  it("should not allow probing restricted tables via field object with inSelect", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // When a field value is an object, stateFieldsToWhere passes it through
+    // directly. An attacker can embed inSelect in a known field name:
+    //   ?id[inSelect][table]=patients&id[inSelect][field]=favbook&...
+    const patients = Table.findOne({ name: "patients" });
+    expect(patients.min_role_read).toBe(40);
+
+    const resp1 = await request(app)
+      .get("/api/books/")
+      .query({
+        "id[inSelect][table]": "patients",
+        "id[inSelect][field]": "favbook",
+        "id[inSelect][where][name]": "Kirk Douglas",
+      })
+      .expect(200);
+
+    const resp2 = await request(app)
+      .get("/api/books/")
+      .query({
+        "id[inSelect][table]": "patients",
+        "id[inSelect][field]": "favbook",
+        "id[inSelect][where][name]": "ZZZNONEXISTENT",
+      })
+      .expect(200);
+
+    const rows1 = resp1.body.success || [];
+    const rows2 = resp2.body.success || [];
+    expect(rows1.length).toBe(rows2.length);
+  });
+
+  it("should not allow probing restricted tables via _not_ prefix with inSelect", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // The _not_ prefix passes user values into qstate.not[field].
+    // An attacker can embed inSelect to leak data:
+    //   ?_not_id[inSelect][table]=patients&_not_id[inSelect][field]=favbook&...
+    const patients = Table.findOne({ name: "patients" });
+    expect(patients.min_role_read).toBe(40);
+
+    const resp1 = await request(app)
+      .get("/api/books/")
+      .query({
+        "_not_id[inSelect][table]": "patients",
+        "_not_id[inSelect][field]": "favbook",
+        "_not_id[inSelect][where][name]": "Kirk Douglas",
+      })
+      .expect(200);
+
+    const resp2 = await request(app)
+      .get("/api/books/")
+      .query({
+        "_not_id[inSelect][table]": "patients",
+        "_not_id[inSelect][field]": "favbook",
+        "_not_id[inSelect][where][name]": "ZZZNONEXISTENT",
+      })
+      .expect(200);
+
+    const rows1 = resp1.body.success || [];
+    const rows2 = resp2.body.success || [];
+    expect(rows1.length).toBe(rows2.length);
+  });
 });
