@@ -142,6 +142,7 @@ class User {
     this.password = password;
     const upd: Partial<User> = { password };
     if (expireToken) upd.reset_password_token = null;
+    upd.last_mobile_login = null;
     const { getState } = require("../db/state");
     if (getState().getConfig("plain_password_triggers", false))
       await this.update(upd, newpw);
