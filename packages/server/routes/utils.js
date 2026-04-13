@@ -385,9 +385,41 @@ const addOnDoneRedirect = (oldPath, req) => {
   return oldPath;
 };
 
-//https://stackoverflow.com/a/38979205/19839414
 const is_relative_url = (url) => {
-  return typeof url === "string" && !url.includes(":/") && !url.includes("//");
+  if (typeof url !== "string") return false;
+
+  // Normalise backslashes to forward slashes (WHATWG treats \ as / in special schemes)
+  const normalised = url.replace(/\\/g, "/");
+
+  // Reject protocol-relative URLs (//example.com)
+  if (normalised.trimStart().startsWith("//")) return false;
+
+  // Reject any scheme: URIs (e.g. http:, javascript:, data:, vbscript:)
+  // A scheme is a letter followed by letters/digits/+/-/. then a colon (RFC 3986 §3.1)
+  if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:/u.test(normalised.trimStart())) return false;
+
+  return true;
+};
+
+const normalize_relative_url = (url) => {
+  if (typeof url !== "string") return null;
+
+  const normalised = url.replace(/\\/g, "/").trimStart();
+
+  // Reject protocol-relative URLs
+  if (normalised.startsWith("//")) return null;
+
+  // Reject any scheme (RFC 3986 §3.1)
+  if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(normalised)) return null;
+
+  return normalised;
+};
+
+const safe_redirect = (res, url, default_url) => {
+  if (!url) res.redirect(default_url);
+  const dest = normalize_relative_url(url);
+  if (dest !== null) res.redirect(dest);
+  else res.redirect(default_url);
 };
 
 /**
@@ -643,6 +675,8 @@ module.exports = {
   get_tenant_from_req,
   addOnDoneRedirect,
   is_relative_url,
+  normalize_relative_url,
+  safe_redirect,
   is_ip_address,
   get_sys_info,
   admin_config_route,
