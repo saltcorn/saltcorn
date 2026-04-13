@@ -23,6 +23,7 @@ const {
   setTenant,
   is_relative_url,
   isAdmin,
+  normalize_relative_url,
 } = require("../routes/utils.js");
 const { getState } = require("@saltcorn/data/db/state");
 const { send_reset_email } = require("./resetpw");
@@ -1393,11 +1394,10 @@ router.post(
     }
     if (getState().get2FApolicy(req.user) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
-    } else if (
-      (req.body || {}).dest &&
-      is_relative_url(decodeURIComponent((req.body || {}).dest))
-    ) {
-      res.redirect(decodeURIComponent((req.body || {}).dest));
+    } else if (req.body?.dest) {
+      const dest = normalize_relative_url(decodeURIComponent(req.body.dest));
+      if (dest !== null) res.redirect(dest);
+      else res.redirect("/");
     } else res.redirect("/");
   })
 );
