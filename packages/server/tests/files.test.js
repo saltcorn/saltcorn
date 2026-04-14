@@ -107,6 +107,13 @@ beforeAll(async () => {
     "console.log('I am a script');",
     1
   );
+  await createTestFile(
+    "/",
+    "malicious.svg",
+    "image/svg+xml",
+    `<svg xmlns="http://www.w3.org/2000/svg"><script>alert('XSS')</script><circle cx="50" cy="50" r="40"/></svg>`,
+    100
+  );
 });
 afterAll(db.close);
 
@@ -162,6 +169,22 @@ describe("files admin", () => {
       .expect(
         toSucceedWithImage({ lengthIs: (bs) => bs < 100000 && bs > 2000 })
       );
+  });
+  it("sanitize SVG served via /files/serve", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .get("/files/serve/malicious.svg")
+      .expect(200);
+    expect(res.text).not.toContain("<script>");
+  });
+  it("sanitize SVG served via /files/resize (XSS bypass)", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app)
+      .get("/files/resize/0/0/malicious.svg")
+      .expect(200);
+    // The resize endpoint must also sanitize SVG files, just like /files/serve does.
+    // Without this, an attacker can bypass DOMPurify by using the resize URL.
+    expect(res.text).not.toContain("<script>");
   });
   it("serve resized file without height", async () => {
     const app = await getApp({ disableCsrf: true });
