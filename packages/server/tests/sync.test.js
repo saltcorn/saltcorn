@@ -364,31 +364,33 @@ const doUpload = async (app, loginCookie, syncTimestamp, changes) => {
   return resp;
 };
 
+
+const getResult = async (app, loginCookie, syncDir) => {
+  let pollCount = 0;
+  while (pollCount < 10) {
+    const resp = await request(app)
+      .get(`/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`)
+      .set("Cookie", loginCookie);
+    expect(resp.status).toBe(200);
+    const { finished, translatedIds, uniqueConflicts, error } = resp._body;
+    if (finished)
+      return translatedIds ? { translatedIds, uniqueConflicts } : error;
+    await sleep(1000);
+  }
+  return null;
+};
+
+const cleanSyncDir = async (app, loginCookie, syncDir) => {
+  const resp = await request(app)
+    .post("/sync/clean_sync_dir")
+    .send({ dir_name: syncDir })
+    .set("Cookie", loginCookie);
+  expect(resp.status).toBe(200);
+};
+
 describe("Upload changes", () => {
 
 
-  const getResult = async (app, loginCookie, syncDir) => {
-    let pollCount = 0;
-    while (pollCount < 10) {
-      const resp = await request(app)
-        .get(`/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`)
-        .set("Cookie", loginCookie);
-      expect(resp.status).toBe(200);
-      const { finished, translatedIds, uniqueConflicts, error } = resp._body;
-      if (finished)
-        return translatedIds ? { translatedIds, uniqueConflicts } : error;
-      await sleep(1000);
-    }
-    return null;
-  };
-
-  const cleanSyncDir = async (app, loginCookie, syncDir) => {
-    const resp = await request(app)
-      .post("/sync/clean_sync_dir")
-      .send({ dir_name: syncDir })
-      .set("Cookie", loginCookie);
-    expect(resp.status).toBe(200);
-  };
 
   const maxId = async (tblName) => {
     const table = Table.findOne({ name: tblName });
