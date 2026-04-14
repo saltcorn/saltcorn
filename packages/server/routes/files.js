@@ -487,6 +487,17 @@ router.get(
       const width = strictParseInt(width_str);
       const height =
         height_str && height_str !== "0" ? strictParseInt(height_str) : null;
+      if (
+        file.mimetype === "image/svg+xml" ||
+        file.mimetype === "application/mathml+xml"
+      ) {
+        const window = new JSDOM("").window;
+        const DOMPurify = createDOMPurify(window);
+        const contents = await fs.promises.readFile(file.location);
+        const clean = DOMPurify.sanitize(contents);
+        res.send(clean);
+        return;
+      }
       if (!width) {
         res.sendFile(file.location, { dotfiles: "allow" });
         return;
