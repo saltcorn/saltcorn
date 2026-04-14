@@ -555,4 +555,26 @@ describe("visible_entries test", () => {
     expect(body.files.length).toBe(0);
     expect(body.directories.length).toBe(0);
   });
+
+  it("should not crash on regex special characters in file_exts (CVE: regex injection)", async () => {
+    // The file_exts parameter is passed directly to new RegExp() without escaping.
+    // Regex metacharacters like ( [ cause SyntaxError → 500 Internal Server Error.
+    // This also enables ReDoS: patterns like (a+)+b cause exponential CPU usage.
+    // Confirmed: a file with 30 repeated chars + backtracking regex → 3.6s,
+    //            35 chars → 112s. The endpoint should escape regex metacharacters
+    //            or use literal string matching, not raw user input in new RegExp().
+    const app = await getApp({ disableCsrf: true });
+    const adminCookie = await getAdminLoginCookie();
+    await getState().setConfig("min_role_edit_files", 1);
+    const resp = await request(app)
+      .get(
+        "/files/visible_entries?dir=_sc_test_subfolder_one&file_exts=" +
+          encodeURIComponent("([")
+      )
+      .set("Cookie", adminCookie);
+    // Should return 200 with valid JSON, not crash with 500
+    expect(resp.statusCode).toBe(200);
+    expect(resp.body).toBeDefined();
+    expect(resp.body.files).toBeDefined();
+  });
 });

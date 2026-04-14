@@ -183,10 +183,11 @@ router.get(
       file.location = file.isDirectory ? file.path_to_serve : file.field_value;
     }
     if (file_exts) {
+      const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const re = new RegExp(
         `\\.(${file_exts
           .split(",")
-          .map((s) => s.trim())
+          .map((s) => escapeRegex(s.trim()))
           .join("|")})$`,
         "i"
       );
