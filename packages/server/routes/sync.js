@@ -319,6 +319,11 @@ router.get(
   error_catcher(async (req, res) => {
     const { dir_name } = req.query;
     try {
+      const expectedEmail = req.user?.email || "public";
+      const dirMatch = dir_name ? dir_name.match(/^\d+_(.+)$/) : null;
+      if (!dirMatch || dirMatch[1] !== expectedEmail) {
+        return res.status(403).json({ error: "Access denied" });
+      }
       const rootFolder = await File.rootFolder();
       const syncDir = File.normalise_in_base(
         path.join(rootFolder.location, "mobile_app", "sync"),
@@ -361,6 +366,11 @@ router.post(
   error_catcher(async (req, res) => {
     const { dir_name } = req.body || {};
     try {
+      const expectedEmail = req.user?.email || "public";
+      const dirMatch = dir_name ? dir_name.match(/^\d+_(.+)$/) : null;
+      if (!dirMatch || dirMatch[1] !== expectedEmail) {
+        return res.status(403).json({ error: "Access denied" });
+      }
       const rootFolder = await File.rootFolder();
       const syncDir = File.normalise_in_base(
         path.join(rootFolder.location, "mobile_app", "sync"),

@@ -333,8 +333,10 @@ const getApp = async (opts = {}) => {
     new BearerStrategy(function (token, done) {
       loginAttempt();
       async function loginAttempt() {
-        const mu = await User.findOne({ api_token: token });
-        if (mu && token && token.length > 5)
+        const mu =
+          (await User.findByApiToken(token)) ||
+          (await User.findOne({ api_token: token }));
+        if (mu && !mu.disabled && token && token.length > 5)
           return done(
             null,
             {
@@ -358,6 +360,8 @@ const getApp = async (opts = {}) => {
         const u = await User.findOne({ email: jwt_payload.sub });
         if (
           u &&
+          !u.disabled &&
+          !u._attributes?.totp_enabled &&
           u.last_mobile_login &&
           (typeof u.last_mobile_login === "string"
             ? new Date(u.last_mobile_login).valueOf()

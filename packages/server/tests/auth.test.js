@@ -124,7 +124,7 @@ describe("AuthTest user settings", () => {
     expect(user.checkPassword("foHRrr46obar")).toBe(false);
     expect(user.checkPassword("ghrarhr54hg")).toBe(true);
   });
-   it("should needs old password value", async () => {
+  it("should needs old password value", async () => {
     const app = await getApp({ disableCsrf: true });
     //const loginCookie = await getStaffLoginCookie();
     await request(app)
@@ -753,5 +753,234 @@ describe("AuthTest Allowed login methods", () => {
       .send("email=staff@foo.com")
       .send("password=ghrarhr54hg")
       .expect(toRedirect("/auth/login"));
+  });
+});
+
+describe("JWT login rate limiting", () => {
+  it("should rate-limit GET /auth/login-with/jwt after repeated failed attempts", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // Send many failed login attempts via the JWT endpoint
+    // The normal POST /auth/login is rate-limited to 3 attempts per 5 minutes per user,
+    // but GET /auth/login-with/jwt bypasses this rate limiting entirely.
+    // This test asserts that the JWT endpoint is also rate-limited.
+    let rateLimited = false;
+    for (let i = 0; i < 10; i++) {
+      const res = await request(app)
+        .get("/auth/login-with/jwt")
+        .query({ email: "user@foo.com", password: `wrongpassword${i}` });
+
+      if (res.statusCode === 429 || res.headers["x-ratelimit-redirect"]) {
+        rateLimited = true;
+        break;
+      }
+    }
+    expect(rateLimited).toBe(true);
+  });
+
+  it("should rate-limit POST /auth/login-with/jwt after repeated failed attempts", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const headers = {
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Saltcorn-Client": "mobile-app",
+    };
+    let rateLimited = false;
+    for (let i = 0; i < 10; i++) {
+      const res = await request(app)
+        .post("/auth/login-with/jwt")
+        .set(headers)
+        .send({ email: "user@foo.com", password: `wrongpassword${i}` });
+        
+      if (res.statusCode === 429 || res.headers["x-ratelimit-redirect"]) {
+        rateLimited = true;
+        break;
+      }
+    }
+    expect(rateLimited).toBe(true);
+  });
+});
+
+describe("JWT login disabled user bypass", () => {
+  let testUserEmail = "disabled-jwt-test@foo.com";
+  let testUserPassword = "TestPassword123!";
+
+  beforeAll(async () => {
+    // Create a test user and then disable them
+    const existingUser = await User.findOne({ email: testUserEmail });
+    if (existingUser) {
+      await existingUser.update({ disabled: false });
+      await existingUser.delete();
+    }
+    const u = await User.create({
+      email: testUserEmail,
+      password: testUserPassword,
+      role_id: 80,
+    });
+    // Disable the user
+    await u.update({ disabled: true });
+  });
+
+  afterAll(async () => {
+    // Clean up
+    const u = await User.findOne({ email: testUserEmail });
+    if (u) {
+      await u.update({ disabled: false });
+      await u.delete();
+    }
+  });
+
+  it("should reject disabled user on normal login", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // Normal login should fail for disabled user - redirects back to login
+    await request(app)
+      .post("/auth/login/")
+      .send(`email=${testUserEmail}`)
+      .send(`password=${testUserPassword}`)
+      .expect(toRedirect("/auth/login"));
+  });
+
+  it("should reject disabled user on JWT login", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const headers = {
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Saltcorn-Client": "mobile-app",
+    };
+    const res = await request(app)
+      .post("/auth/login-with/jwt")
+      .set(headers)
+      .send({ email: testUserEmail, password: testUserPassword });
+
+    // A disabled user should NOT receive a valid JWT token.
+    // The response should contain an error, not a token string.
+    const body = res.body;
+    const isToken = typeof body === "string" && body.includes(".");
+    expect(isToken).toBe(false);
+  });
+});
+
+describe("API token disabled user bypass", () => {
+  let testUserEmail = "disabled-apitoken-test@foo.com";
+  let testUserPassword = "TestPassword456!";
+  let apiToken;
+
+  beforeAll(async () => {
+    // Clean up any leftover user from a previous run
+    const existingUser = await User.findOne({ email: testUserEmail });
+    if (existingUser) {
+      await existingUser.update({ disabled: false });
+      await existingUser.delete();
+    }
+    // Create a user, generate an API token, then disable them
+    const u = await User.create({
+      email: testUserEmail,
+      password: testUserPassword,
+      role_id: 80,
+    });
+    apiToken = await u.getNewAPIToken();
+  });
+
+  afterAll(async () => {
+    const u = await User.findOne({ email: testUserEmail });
+    if (u) {
+      await u.update({ disabled: false });
+      await u.delete();
+    }
+  });
+
+  it("should allow API token access to rooms for enabled user", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // rooms table has min_role_read=80 (user role) - our user (role 80) can read it
+    const res = await request(app)
+      .get("/api/rooms/")
+      .set("Authorization", "Bearer " + apiToken);
+    expect(res.status).toBe(200);
+    expect(res.body.success).toBeTruthy();
+  });
+
+  it("should reject API token access for disabled user", async () => {
+    // Disable the user
+    const u = await User.findOne({ email: testUserEmail });
+    await u.update({ disabled: true });
+
+    const app = await getApp({ disableCsrf: true });
+    // rooms table has min_role_read=80 (user). Our disabled user has role 80,
+    // so their token would grant access if the disabled check is missing.
+    // Public users (role 100) cannot read rooms.
+    // A disabled user's API token should NOT grant authenticated access.
+    const res = await request(app)
+      .get("/api/rooms/")
+      .set("Authorization", "Bearer " + apiToken);
+    const body = res.body;
+    // Should NOT succeed - a disabled user should not have user-level access
+    expect(body.success).toBeFalsy();
+  });
+});
+
+describe("TOTP brute force protection", () => {
+  let testUserEmail = "totp-bruteforce-test@foo.com";
+  let testUserPassword = "TotpBrute789!";
+  let totpKey = "abcdefghij";
+
+  beforeAll(async () => {
+    // Create a user with TOTP enabled
+    const existingUser = await User.findOne({ email: testUserEmail });
+    if (existingUser) {
+      await existingUser.update({ disabled: false });
+      await existingUser.delete();
+    }
+    const u = await User.create({
+      email: testUserEmail,
+      password: testUserPassword,
+      role_id: 80,
+    });
+    // Enable TOTP with a known key
+    u._attributes.totp_enabled = true;
+    u._attributes.totp_key = totpKey;
+    await u.update({ _attributes: u._attributes });
+  });
+
+  afterAll(async () => {
+    const u = await User.findOne({ email: testUserEmail });
+    if (u) {
+      u._attributes.totp_enabled = false;
+      delete u._attributes.totp_key;
+      await u.update({ _attributes: u._attributes, disabled: false });
+      await u.delete();
+    }
+  });
+
+  it("should rate-limit TOTP login attempts after repeated failures", async () => {
+    const app = await getApp({ disableCsrf: true });
+
+    // Step 1: Login with correct password to get session with pending_user
+    const loginRes = await request(app)
+      .post("/auth/login/")
+      .send(`email=${testUserEmail}`)
+      .send(`password=${testUserPassword}`);
+    expect(loginRes.headers["location"]).toBe("/auth/twofa/login/totp");
+
+    const sessionCookie = resToLoginCookie(loginRes);
+
+    // Step 2: Send many wrong TOTP codes.
+    // The POST /auth/login endpoint is rate-limited (ipLimiter + userLimiter),
+    // but POST /auth/twofa/login/totp has NO rate limiting at all.
+    // This allows an attacker who knows the password to brute-force the 6-digit
+    // TOTP code (1,000,000 possibilities) without any throttling.
+    // The TOTP endpoint should have rate limiting just like the login endpoint.
+    let rateLimited = false;
+    for (let i = 0; i < 10; i++) {
+      const res = await request(app)
+        .post("/auth/twofa/login/totp")
+        .set("Cookie", sessionCookie)
+        .send(`code=${100000 + i}`);
+
+      if (res.statusCode === 429 || res.headers["x-ratelimit-redirect"]) {
+        rateLimited = true;
+        break;
+      }
+    }
+
+    // This SHOULD be rate-limited to prevent TOTP brute-force attacks.
+    // Currently fails because the endpoint has no rate limiting.
+    expect(rateLimited).toBe(true);
   });
 });
