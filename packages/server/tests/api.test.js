@@ -1150,4 +1150,78 @@ describe("API cross-table sub-select access control", () => {
     const rows2 = resp2.body.success || [];
     expect(rows1.length).toBe(rows2.length);
   });
+
+  it("should not allow probing restricted tables via _relation_path_ parameter", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // The _relation_path_ query parameter accepts JSON that specifies a
+    // relation path through arbitrary tables. handleRelationPath() constructs
+    // an inSelectWithLevels subquery with NO authorization checks.
+    //
+    // Attack: query the public books table with a _relation_path_ that
+    // traverses the restricted patients table (min_role_read=40):
+    //   ?_relation_path_={"relation":".books.patients$name","srcId":"Kirk Douglas"}
+    // This generates:
+    //   WHERE id IN (SELECT id FROM patients WHERE name = 'Kirk Douglas')
+    // A public user can determine whether a patient with a given name exists
+    // by observing which books are returned.
+    const patients = Table.findOne({ name: "patients" });
+    expect(patients.min_role_read).toBe(40);
+
+    // srcId matching an existing patient name
+    const resp1 = await request(app)
+      .get("/api/books/")
+      .query({
+        _relation_path_: JSON.stringify({
+          relation: ".books.patients$name",
+          srcId: "Kirk Douglas",
+        }),
+      })
+      .expect(200);
+
+    // srcId with a non-existent patient name
+    const resp2 = await request(app)
+      .get("/api/books/")
+      .query({
+        _relation_path_: JSON.stringify({
+          relation: ".books.patients$name",
+          srcId: "ZZZNONEXISTENT",
+        }),
+      })
+      .expect(200);
+
+    // If the relation_path is allowed without authorization, resp1 returns
+    // book id=1 (because patient "Kirk Douglas" has id=1) while resp2
+    // returns nothing. The difference reveals that "Kirk Douglas" exists
+    // in the restricted patients table.
+    //
+    // Secure behavior: both queries return the same results (the subquery
+    // against the restricted table is blocked or ignored), OR the query
+    // is rejected.
+    const rows1 = resp1.body.success || [];
+    const rows2 = resp2.body.success || [];
+    expect(rows1.length).toBe(rows2.length);
+  });
+
+  it("should not allow probing restricted tables via dot-prefix relation path", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // The dot-prefix syntax (e.g. ?.books.patients$name=value) is another
+    // way to invoke handleRelationPath, which has no authorization checks.
+    // This constructs the same inSelectWithLevels subquery.
+    const patients = Table.findOne({ name: "patients" });
+    expect(patients.min_role_read).toBe(40);
+
+    const resp1 = await request(app)
+      .get("/api/books/")
+      .query({ ".books.patients$name": "Kirk Douglas" })
+      .expect(200);
+
+    const resp2 = await request(app)
+      .get("/api/books/")
+      .query({ ".books.patients$name": "ZZZNONEXISTENT" })
+      .expect(200);
+
+    const rows1 = resp1.body.success || [];
+    const rows2 = resp2.body.success || [];
+    expect(rows1.length).toBe(rows2.length);
+  });
 });
