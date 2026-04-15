@@ -34,7 +34,6 @@ const {
   domReady,
   img,
   a,
-  text_attr,
 } = require("@saltcorn/markup/tags");
 const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
 const { strictParseInt } = require("@saltcorn/data/plugin-helper");
@@ -101,10 +100,10 @@ const send_files_picker = async (
       div({
         id: "saltcorn-file-manager",
         full_manager: "false",
-        folder: text_attr(folder),
-        input_id: text_attr(inputId),
+        folder: folder,
+        input_id: inputId,
         ...(noSubdirs ? { no_subdirs: "true" } : {}),
-        ...(file_exts ? { file_exts: text_attr(file_exts) } : {}),
+        ...(file_exts ? { file_exts } : {}),
       }),
     ],
   });
