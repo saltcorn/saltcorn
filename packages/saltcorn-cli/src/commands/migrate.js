@@ -17,20 +17,32 @@ class MigrateCommand extends Command {
    * @returns {Promise<void>}
    */
   async run() {
+    const { flags } = await this.parse(MigrateCommand);
+
     const { migrate } = require("@saltcorn/data/migrate");
     const Plugin = require("@saltcorn/data/models/plugin");
     const { init_multi_tenant } = require("@saltcorn/data/db/state");
-    await Plugin.loadAllPlugins();
-    await eachTenant(async () => {
-      const domain = db.getTenantSchema();
-      await init_multi_tenant(Plugin.loadAllPlugins, undefined, [domain]);
-      console.log("Tenant %s check for migrations...", domain);
-      try {
+
+    if (flags.tenant) {
+      await init_some_tenants(flags.tenant);
+      await maybe_as_tenant(flags.tenant, async () => {
+        const domain = db.getTenantSchema();
         await migrate(domain, true);
-      } catch (e) {
-        console.error(e);
-      }
-    });
+      });
+    } else {
+      await Plugin.loadAllPlugins();
+
+      await eachTenant(async () => {
+        const domain = db.getTenantSchema();
+        await init_multi_tenant(Plugin.loadAllPlugins, undefined, [domain]);
+        console.log("Tenant %s check for migrations...", domain);
+        try {
+          await migrate(domain, true);
+        } catch (e) {
+          console.error(e);
+        }
+      });
+    }
     console.log("Done migrations");
     this.exit(0);
   }
@@ -67,5 +79,14 @@ NOTE!
  * @type {string}
  */
 MigrateCommand.usage = "saltcorn migrate";
+
+MigrateCommand.flags = {
+  tenant: Flags.string({
+    name: "tenant",
+    char: "t",
+    description: "tenant",
+    required: false,
+  }),
+};
 
 module.exports = MigrateCommand;

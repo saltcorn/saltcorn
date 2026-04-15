@@ -99,7 +99,9 @@ const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
         const name = file.replace(".js", "");
         if (!dbmigrations.has(name)) {
           if (verbose)
-            console.log("Tenant %s running migration %s", schema0, name);
+            process.stdout.write(
+              "Tenant " + schema0 + " running migration " + name
+            );
           const contents: MigrationContents = require(
             path.join(__dirname, "migrations", name)
           );
@@ -107,6 +109,7 @@ const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
             async () => {
               if (!is_sqlite) await db.query(`SET search_path TO "${schema}";`);
               await doMigrationStep(name, contents, schema);
+              if (verbose) console.log(".");
             },
             async (e: Error) => {
               console.error(
