@@ -2148,7 +2148,8 @@ const queryToString = (query: GenObj): string => {
 const handleRelationPath = (
   queryObj: GenObj,
   qstate: GenObj,
-  table: Table
+  table: Table,
+  user?: User
 ): void => {
   if (queryObj.path.length > 0) {
     const levels = [];
@@ -2157,6 +2158,11 @@ const handleRelationPath = (
     for (const level of queryObj.path) {
       if (level.inboundKey) {
         const tbl = Table.findOne(level.table);
+        if (
+          typeof user !== "undefined" &&
+          (user?.role_id || 100) > tbl!.min_role_read
+        )
+          return;
         levels.push({
           ...level,
           pk_name: tbl?.pk_name,
@@ -2170,6 +2176,11 @@ const handleRelationPath = (
           };
       } else {
         const lastTable = Table.findOne({ name: lastTableName }) as any;
+        if (
+          typeof user !== "undefined" &&
+          (user?.role_id || 100) > lastTable!.min_role_read
+        )
+          return;
         const refField = lastTable?.fields?.find(
           (field: any) => field.name === level.fkey
         );
@@ -2180,6 +2191,11 @@ const handleRelationPath = (
         });
         lastTableName = refField?.reftable_name;
         const finalTable = Table.findOne({ name: lastTableName });
+        if (
+          typeof user !== "undefined" &&
+          (user?.role_id || 100) > lastTable!.min_role_read
+        )
+          return;
         if (!where)
           where = {
             [finalTable?.pk_name || "id"]:
@@ -2277,12 +2293,13 @@ const stateFieldsToWhere = ({
       handleRelationPath(
         typeof v === "string" ? stringToQuery(v) : v,
         qstate,
-        table!
+        table!,
+        user
       );
     else if (k.startsWith(".")) {
       const queryObj = parseRelationPath(k);
       queryObj.srcId = v;
-      handleRelationPath(queryObj, qstate, table!);
+      handleRelationPath(queryObj, qstate, table!, user);
     } else if (k.startsWith("_fromdate_")) {
       const datefield = db.sqlsanitize(k.replace("_fromdate_", ""));
       const dfield = fields.find((fld) => fld.name === datefield);

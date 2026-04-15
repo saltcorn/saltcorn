@@ -107,6 +107,13 @@ beforeAll(async () => {
     "console.log('I am a script');",
     1
   );
+  await createTestFile(
+    "/",
+    "malicious.svg",
+    "image/svg+xml",
+    `<svg xmlns="http://www.w3.org/2000/svg"><script>alert('XSS')</script><circle cx="50" cy="50" r="40"/></svg>`,
+    100
+  );
 });
 afterAll(db.close);
 
@@ -162,6 +169,16 @@ describe("files admin", () => {
       .expect(
         toSucceedWithImage({ lengthIs: (bs) => bs < 100000 && bs > 2000 })
       );
+  });
+  it("sanitize SVG served via /files/resize (XSS bypass)", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const res = await request(app).get("/files/resize/0/0/malicious.svg");
+    expect(res.status).toBe(200);
+    const body = res.text || Buffer.from(res.body).toString();
+    // The resize endpoint must also sanitize SVG files, just like /files/serve does.
+    // Without this, an attacker can bypass DOMPurify by requesting an SVG via
+    // /files/resize/0/0/path.svg (width=0 makes it serve the original file).
+    expect(body).not.toContain("<script>");
   });
   it("serve resized file without height", async () => {
     const app = await getApp({ disableCsrf: true });
@@ -537,5 +554,27 @@ describe("visible_entries test", () => {
     const body = resp.body;
     expect(body.files.length).toBe(0);
     expect(body.directories.length).toBe(0);
+  });
+
+  it("should not crash on regex special characters in file_exts (CVE: regex injection)", async () => {
+    // The file_exts parameter is passed directly to new RegExp() without escaping.
+    // Regex metacharacters like ( [ cause SyntaxError → 500 Internal Server Error.
+    // This also enables ReDoS: patterns like (a+)+b cause exponential CPU usage.
+    // Confirmed: a file with 30 repeated chars + backtracking regex → 3.6s,
+    //            35 chars → 112s. The endpoint should escape regex metacharacters
+    //            or use literal string matching, not raw user input in new RegExp().
+    const app = await getApp({ disableCsrf: true });
+    const adminCookie = await getAdminLoginCookie();
+    await getState().setConfig("min_role_edit_files", 1);
+    const resp = await request(app)
+      .get(
+        "/files/visible_entries?dir=_sc_test_subfolder_one&file_exts=" +
+          encodeURIComponent("([")
+      )
+      .set("Cookie", adminCookie);
+    // Should return 200 with valid JSON, not crash with 500
+    expect(resp.statusCode).toBe(200);
+    expect(resp.body).toBeDefined();
+    expect(resp.body.files).toBeDefined();
   });
 });
