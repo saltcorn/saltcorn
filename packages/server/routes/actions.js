@@ -2393,9 +2393,9 @@ router.get(
   error_catcher(async (req, res) => {
     const { id } = req.params;
 
-    const run = await WorkflowRun.findOne({ id });
+    const run = await WorkflowRun.findOne({ id: +id });
 
-    if (!run.user_allowed_to_fill_form(req.user)) {
+    if (!run || !run.user_allowed_to_fill_form(req.user)) {
       if (req.xhr) res.json({ error: "Not authorized" });
       else {
         req.flash("danger", req.__("Not authorized"));
@@ -2460,7 +2460,7 @@ router.post(
     const { id } = req.params;
 
     const run = await WorkflowRun.findOne({ id });
-    if (!run.user_allowed_to_fill_form(req.user)) {
+    if (!run || !run.user_allowed_to_fill_form(req.user)) {
       if (req.xhr) res.json({ error: "Not authorized" });
       else {
         req.flash("danger", req.__("Not authorized"));
