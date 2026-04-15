@@ -420,7 +420,10 @@ const normalize_relative_url = (url) => {
 };
 
 const safe_redirect = (res, url, default_url) => {
-  if (!url) res.redirect(default_url);
+  if (!url) {
+    res.redirect(default_url);
+    return;
+  }
   const dest = normalize_relative_url(url);
   if (dest !== null) res.redirect(dest);
   else res.redirect(default_url);
