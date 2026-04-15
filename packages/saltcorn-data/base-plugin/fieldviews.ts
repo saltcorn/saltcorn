@@ -95,7 +95,14 @@ const select = {
     },
   ],
 
-  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
+  run: (
+    nm: string,
+    v: any,
+    attrs: GenObj,
+    cls: string,
+    reqd: boolean,
+    field: GenObj
+  ) => {
     if (attrs.disabled) {
       const value =
         (field.options || []).find((lv: GenObj) => lv?.value === v)?.label ||
@@ -157,7 +164,10 @@ const select = {
           },
           select_options(
             v,
-            { ...field, options: field.options.filter((o: GenObj) => o.value == v) },
+            {
+              ...field,
+              options: field.options.filter((o: GenObj) => o.value == v),
+            },
             (attrs || {}).force_required,
             (attrs || {}).neutral_label
           )
@@ -352,7 +362,14 @@ const select_from_table = {
       field.options.unshift({ label: "", value: "" });
   },
 
-  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
+  run: (
+    nm: string,
+    v: any,
+    attrs: GenObj,
+    cls: string,
+    reqd: boolean,
+    field: GenObj
+  ) => {
     if (attrs.disabled) {
       const value =
         (field.options || []).find((lv: GenObj) => lv?.value === v)?.label || v;
@@ -430,7 +447,7 @@ const select_by_code = {
       name: "code",
       label: "Code",
       input_type: "code",
-      attributes: { mode: "application/javascript" },
+      attributes: { mode: "application/javascript", nojoins: true },
       class: "validate-statements",
       sublabel: `Return array of: strings or <code>{ label: string, value: ${field.is_fkey ? "key-value" : field.type?.js_type || "any"} }</code>`,
       validator(s: string) {
@@ -463,7 +480,14 @@ const select_by_code = {
     });
   },
 
-  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
+  run: (
+    nm: string,
+    v: any,
+    attrs: GenObj,
+    cls: string,
+    reqd: boolean,
+    field: GenObj
+  ) => {
     const selOptions = select_options(
       v,
       field,
@@ -540,13 +564,22 @@ const two_level_select = {
     ];
   },
 
-  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
+  run: (
+    nm: string,
+    v: any,
+    attrs: GenObj,
+    cls: string,
+    reqd: boolean,
+    field: GenObj
+  ) => {
     const options2: GenObj = {};
 
-    Object.entries(field.options || {}).forEach(([label, { id, options }]: [string, any]) => {
-      options2[id] = options;
-      if (attrs.isFilter) options2[id].unshift({ label: "", value: "" });
-    });
+    Object.entries(field.options || {}).forEach(
+      ([label, { id, options }]: [string, any]) => {
+        options2[id] = options;
+        if (attrs.isFilter) options2[id].unshift({ label: "", value: "" });
+      }
+    );
     const calcOptions = [`_${field.name}_toplevel`, options2];
     return (
       tags.select(
@@ -584,14 +617,16 @@ const select_options_first_level = (
   hdr: GenObj,
   { force_required, neutral_label, isFilter }: GenObj
 ) => {
-  const os = Object.entries(hdr.options || {}).map(([label, { id, options }]: [string, any]) =>
-    option(
-      {
-        value: id,
-        selected: (options || []).find((o: GenObj) => o.value == v) !== undefined,
-      },
-      label
-    )
+  const os = Object.entries(hdr.options || {}).map(
+    ([label, { id, options }]: [string, any]) =>
+      option(
+        {
+          value: id,
+          selected:
+            (options || []).find((o: GenObj) => o.value == v) !== undefined,
+        },
+        label
+      )
   );
   if (isFilter) os.unshift(option({ value: "" }, ""));
   return os;
@@ -608,7 +643,14 @@ const radio_select = {
   /** @type {boolean} */
   isEdit: true,
   description: "Select from a radio group",
-  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) =>
+  run: (
+    nm: string,
+    v: any,
+    attrs: GenObj,
+    cls: string,
+    reqd: boolean,
+    field: GenObj
+  ) =>
     radio_group({
       class: `${cls} ${field.class || ""}`,
       name: text_attr(nm),
@@ -671,7 +713,15 @@ const search_or_create = {
     ];
   },
 
-  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj, row?: GenObj) => {
+  run: (
+    nm: string,
+    v: any,
+    attrs: GenObj,
+    cls: string,
+    reqd: boolean,
+    field: GenObj,
+    row?: GenObj
+  ) => {
     const user = (db.getRequestContext()?.req as any)?.user;
     const use_row: GenObj = { ...(row || {}) };
     let table: Table | null | undefined;
@@ -772,7 +822,15 @@ const search_join_field = {
       },
     ];
   },
-  run: (nm: string, v: any, attrs: GenObj = {}, cls: string, required: boolean, field: GenObj, state: GenObj = {}) => {
+  run: (
+    nm: string,
+    v: any,
+    attrs: GenObj = {},
+    cls: string,
+    required: boolean,
+    field: GenObj,
+    state: GenObj = {}
+  ) => {
     return input({
       type: "text",
       class: ["form-control", "blur-on-enter-keypress", cls],
@@ -864,7 +922,14 @@ const select_by_view = {
     });
   },
 
-  run: (nm: string, v: any, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
+  run: (
+    nm: string,
+    v: any,
+    attrs: GenObj,
+    cls: string,
+    reqd: boolean,
+    field: GenObj
+  ) => {
     return div(
       {
         class: [
@@ -881,34 +946,35 @@ const select_by_view = {
           onChange: attrs.onChange,
           value: v || "",
         }),
-      (field.options || []).map(({ row, html }: { row: GenObj; html: string }) =>
-        div(
-          {
-            class: [
-              "select-by-view-option",
-              (Array.isArray(v) ? v.includes(row.id) : row.id == v) &&
-                "selected",
-              attrs.in_card ? "card" : "no-card",
-            ],
-            onclick: attrs?.multiple
-              ? `$('input.selbyviewmulti-${row.id}').prop('checked', !$('input.selbyviewmulti-${row.id}').prop('checked')).trigger('change')`
-              : `select_by_view_click(this, event, ${JSON.stringify(
-                  !!reqd
-                )}, ${JSON.stringify(!!attrs?.multiple)})`,
+      (field.options || []).map(
+        ({ row, html }: { row: GenObj; html: string }) =>
+          div(
+            {
+              class: [
+                "select-by-view-option",
+                (Array.isArray(v) ? v.includes(row.id) : row.id == v) &&
+                  "selected",
+                attrs.in_card ? "card" : "no-card",
+              ],
+              onclick: attrs?.multiple
+                ? `$('input.selbyviewmulti-${row.id}').prop('checked', !$('input.selbyviewmulti-${row.id}').prop('checked')).trigger('change')`
+                : `select_by_view_click(this, event, ${JSON.stringify(
+                    !!reqd
+                  )}, ${JSON.stringify(!!attrs?.multiple)})`,
 
-            "data-id": row.id,
-          },
-          attrs?.multiple &&
-            input({
-              class: `d-none selbyviewmulti-${row.id}`,
-              type: "checkbox",
-              name: text_attr(nm),
-              onChange: `check_state_field(this, event)`,
-              value: row.id,
-              checked: Array.isArray(v) ? v.includes(row.id) : row.id == v,
-            }),
-          attrs.in_card ? div({ class: "card-body" }, html) : html
-        )
+              "data-id": row.id,
+            },
+            attrs?.multiple &&
+              input({
+                class: `d-none selbyviewmulti-${row.id}`,
+                type: "checkbox",
+                name: text_attr(nm),
+                onChange: `check_state_field(this, event)`,
+                value: row.id,
+                checked: Array.isArray(v) ? v.includes(row.id) : row.id == v,
+              }),
+            attrs.in_card ? div({ class: "card-body" }, html) : html
+          )
       )
     );
   },
