@@ -2343,6 +2343,7 @@ export = {
             table: table?.name || undefined,
             user: has_user,
             workflow: mode === "workflow",
+            nojoins: true,
           },
           class: `validate-statements strip-types ${mode !== "workflow" ? "enlarge-in-card" : ""}`,
           validator(s: any) {

@@ -2027,9 +2027,7 @@ router.post(
   error_catcher(async (req, res) => {
     const newPath = File.get_new_path();
     await req.files.file.mv(newPath);
-    const err = await restore(newPath, (p) =>
-      Plugin.loadAndSaveNewPlugin(p)
-    );
+    const err = await restore(newPath, (p) => Plugin.loadAndSaveNewPlugin(p));
     if (err) req.flash("error", err);
     else req.flash("success", req.__("Successfully restored backup"));
     await getState().refresh_plugins();
@@ -5363,7 +5361,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
             }
           });
         };
-        addTsFields(table, "", 2);
+        addTsFields(table, "", req.query.nojoins ? -1 : 2);
         ds.push(`declare const table: Table`);
         ds.push(`declare const row: {
          ${tsFields.join("\n")}

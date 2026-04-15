@@ -561,6 +561,7 @@ const innerField =
             compact: (hdr.attributes || {}).compact ? "yes" : false,
             user: (hdr.attributes || {}).user ? "yes" : false,
             workflow: (hdr.attributes || {}).workflow ? "yes" : false,
+            nojoins: (hdr.attributes || {}).nojoins ? "yes" : false,
             class: `to-code form-control ${validClass} ${hdr.class || ""}`,
             ...(maybe_disabled
               ? { disabled: true, "data-disabled": "true" }

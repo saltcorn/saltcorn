@@ -2114,13 +2114,16 @@ function enable_monaco(codes, f) {
   const hasUser = codes
     .find((c) => c.getAttribute("user"))
     ?.getAttribute?.("user");
+  const nojoins = codes
+    .find((c) => c.getAttribute("nojoins"))
+    ?.getAttribute?.("nojoins");
   const isWorkflow = codes
     .find((c) => c.getAttribute("workflow"))
     ?.getAttribute?.("workflow");
   const codepage = $(textarea).attr("codepage");
 
   $.ajax({
-    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}&${isWorkflow ? `workflow=${isWorkflow}` : ""}`,
+    url: `/admin/ts-declares?${tableName ? `table=${tableName}` : ""}&${hasUser ? `user=${hasUser}` : ""}&${codepage ? `codepage=${codepage}` : ""}&${isWorkflow ? `workflow=${isWorkflow}` : ""}&${nojoins ? `nojoins=${nojoins}` : ""}`,
     success: (ds) => {
       $.ajax({
         url: `/static_assets/${_sc_version_tag}/monaco/loader.js`,
