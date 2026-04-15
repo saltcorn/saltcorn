@@ -153,7 +153,7 @@ const run_code = async ({
     code = stripTypes(`async () =>{${configuration.code}
 }`)
       .replace("async () =>{", "")
-      .slice(0, -1);
+      .slice(0, -2);
   } catch (e) {
     //console.error("strip error", e);
     code = configuration.code;
