@@ -5630,7 +5630,8 @@ router.post(
       //ignore
     }
     try {
-      res.json({ success: true, code: stripTypes(`async () =>{${code}}`) });
+      res.json({ success: true, code: stripTypes(`async () =>{${code}
+}`) });
     } catch (error) {
       res.json({ success: false, error: error.message });
     }

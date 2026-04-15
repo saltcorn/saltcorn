@@ -150,7 +150,8 @@ const run_code = async ({
   try {
     const { stripTypeScriptTypes } = require("module");
     if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
-    code = stripTypes(`async () =>{${configuration.code}}`)
+    code = stripTypes(`async () =>{${configuration.code}
+}`)
       .replace("async () =>{", "")
       .slice(0, -1);
   } catch (e) {
@@ -2358,7 +2359,8 @@ export = {
               let AsyncFunction = Object.getPrototypeOf(
                 async function () {}
               ).constructor;
-              AsyncFunction(stripTypes(`async () =>{${s}}`));
+              AsyncFunction(stripTypes(`async () =>{${s}
+}`));
               return true;
             } catch (e: any) {
               return e.message;
