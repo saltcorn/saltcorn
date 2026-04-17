@@ -2,12 +2,20 @@ import Table from "../models/table";
 import TableConstraint from "../models/table_constraints";
 import Field from "../models/field";
 import View from "../models/view";
+import Trigger from "../models/trigger";
 import db from "../db";
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
 import { writeFile } from "fs/promises";
 import mocks from "./mocks";
-const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
+const {
+  rick_file,
+  plugin_with_routes,
+  mockReqRes,
+  createDefaultView,
+  getActionCounter,
+  resetActionCounter,
+} = mocks;
 import {
   assertIsSet,
   assertsIsSuccessMessage,
@@ -3258,4 +3266,182 @@ describe("Table recursive query", () => {
     it("doesnt work", async () => {
       expect(2 + 2).toBe(4);
     });
+});
+
+describe("insertRow ownership_formula authorization", () => {
+  // Vulnerability: insertRow() checks ownership_field_id but does NOT evaluate
+  // ownership_formula for new inserts. When a table has only ownership_formula
+  // (no ownership_field_id), a user with role > min_role_write falls through the
+  // permission check and can insert rows — including rows "owned by" other users.
+  //
+  // updateRow() and deleteRows() DO evaluate the formula, so only insertRow is
+  // affected. This test will FAIL until the bug is fixed.
+  if (!db.isSQLite) {
+    let ownedTable: Table;
+    let regularUser: any;
+    let otherUser: any;
+
+    beforeAll(async () => {
+      const usersTable = Table.findOne({ name: "users" });
+      assertIsSet(usersTable);
+
+      // min_role_write=40 (staff): role-80 users lack direct write access, but
+      // the ownership_formula should allow them to insert rows they own.
+      ownedTable = await Table.create("formula_insert_test", {
+        min_role_read: 100,
+        min_role_write: 40,
+      });
+      await Field.create({
+        table: ownedTable,
+        name: "item_name",
+        label: "Item name",
+        type: "String",
+      });
+      await Field.create({
+        table: ownedTable,
+        name: "owner",
+        label: "Owner",
+        type: "Key",
+        reftable: usersTable as Table,
+        attributes: { summary_field: "email" },
+      });
+
+      // Set ownership_formula WITHOUT setting ownership_field_id.
+      // insertRow() only checks ownership_field_id; it never evaluates the formula.
+      ownedTable = Table.findOne({ name: "formula_insert_test" }) as Table;
+      ownedTable.ownership_formula = "owner === user.id";
+      await ownedTable.update(ownedTable);
+      ownedTable = Table.findOne({ name: "formula_insert_test" }) as Table;
+
+      regularUser = await require("../models/user").findOne({
+        email: "user@foo.com",
+      });
+      otherUser = (await require("../models/user").create({
+        email: "formula_other@test.com",
+        password: "TestPassOther1!",
+        role_id: 40,
+      })) as any;
+    });
+
+    afterAll(async () => {
+      await ownedTable.delete();
+      await otherUser.delete();
+    });
+
+    it("blocks a user inserting a row owned by another user", async () => {
+      // The attacker (role 80) submits a row with owner = otherUser.id.
+      // The ownership formula "owner === user.id" would deny this (otherUser.id ≠
+      // regularUser.id), but insertRow() never evaluates the formula.
+      // Currently the insert SUCCEEDS — this test will FAIL until the bug is fixed.
+      const result = await ownedTable.insertRow(
+        { item_name: "injected row", owner: otherUser.id },
+        regularUser
+      );
+
+      // After the fix, insertRow should return undefined (blocked) and no row
+      // should be present in the table.
+      const rows = await ownedTable.getRows();
+      expect(rows.length).toBe(0);
+    });
+
+    it("allows a user inserting a row they themselves own", async () => {
+      // Inserting with owner = regularUser.id should satisfy the formula and succeed.
+      const newId = await ownedTable.insertRow(
+        { item_name: "my own row", owner: regularUser.id },
+        regularUser
+      );
+      expect(newId).toBeTruthy();
+      const rows = await ownedTable.getRows({ owner: regularUser.id });
+      expect(rows.length).toBe(1);
+    });
+  } else
+    it("only pg support", async () => {
+      expect(2 + 2).toBe(4);
+    });
+});
+
+describe("insertRow ownership_formula fires Validate trigger before auth check", () => {
+  // Vulnerability: for tables with ownership_formula (no ownership_field_id),
+  // the pre-insert permission check falls through and the Validate trigger runs
+  // even for inserts that will later be rejected by the formula.
+  //
+  // For ownership_field_id tables, unauthorized inserts return early (line 2343
+  // in table.ts) BEFORE the Validate trigger fires (line 2362). For
+  // ownership_formula tables there is no equivalent early return, so Validate
+  // triggers execute on behalf of an unauthorized user.
+  //
+  // This test FAILS until the pre-insert path is fixed to evaluate the formula
+  // before running triggers.
+  if (!db.isSQLite) {
+    let triggerTable: Table;
+    let regularUser: any;
+    let otherUser: any;
+
+    beforeAll(async () => {
+      getState().registerPlugin("mock_plugin", plugin_with_routes());
+
+      const usersTable = Table.findOne({ name: "users" });
+      assertIsSet(usersTable);
+
+      triggerTable = await Table.create("formula_trigger_test", {
+        min_role_read: 100,
+        min_role_write: 40,
+      });
+      await Field.create({
+        table: triggerTable,
+        name: "owner",
+        label: "Owner",
+        type: "Key",
+        reftable: usersTable as Table,
+        attributes: { summary_field: "email" },
+      });
+      triggerTable = Table.findOne({ name: "formula_trigger_test" }) as Table;
+      triggerTable.ownership_formula = "owner === user.id";
+      await triggerTable.update(triggerTable);
+      triggerTable = Table.findOne({ name: "formula_trigger_test" }) as Table;
+
+      regularUser = await require("../models/user").findOne({
+        email: "user@foo.com",
+      });
+      otherUser = await require("../models/user").create({
+        email: "trigger_other@test.com",
+        password: "TestPassOther1!",
+        role_id: 40,
+      });
+
+      await Trigger.create({
+        action: "incrementCounter",
+        table_id: triggerTable.id,
+        when_trigger: "Validate",
+        name: "countUnauthorizedValidate",
+      });
+    });
+
+    afterAll(async () => {
+      const tr = Trigger.findOne({ name: "countUnauthorizedValidate" });
+      if (tr) await tr.delete();
+      await triggerTable.delete();
+      await otherUser.delete();
+    });
+
+    it("does not fire Validate trigger for unauthorized ownership_formula insert", async () => {
+      resetActionCounter();
+
+      // User (role 80, min_role_write 40) tries to insert a row owned by
+      // another user. The ownership formula "owner === user.id" should deny it.
+      await triggerTable.insertRow({ owner: otherUser.id }, regularUser);
+
+      // The row must not persist.
+      const rows = await triggerTable.getRows();
+      expect(rows.length).toBe(0);
+
+      // The Validate trigger must NOT have fired for this unauthorized insert.
+      // For ownership_field_id tables the early return at table.ts:2343 prevents
+      // triggers from running; ownership_formula tables should behave the same.
+      // Currently FAILS because the formula is only checked post-insert.
+      expect(getActionCounter()).toBe(0);
+    });
+  } else {
+    it("only pg support", () => expect(2 + 2).toBe(4));
+  }
 });

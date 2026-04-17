@@ -1834,3 +1834,109 @@ describe("sync dir email suffix attack", () => {
       expect(true).toBe(true);
     });
 });
+
+describe("insertRow ownership_formula bypass via offline_changes", () => {
+  // Vulnerability: insertRow() checks ownership_field_id but does NOT evaluate
+  // ownership_formula for new inserts. When a table has ownership_formula but no
+  // ownership_field_id, a user with role > min_role_write can insert any row
+  // (including rows "owned by" other users) via /sync/offline_changes.
+  //
+  // updateRow() and deleteRows() DO evaluate the formula, so only insertRow() is
+  // affected. The fix is to evaluate the formula in insertRow() just as updateRow()
+  // does.
+  if (!db.isSQLite) {
+    let formulaTable, otherUser;
+
+    beforeAll(async () => {
+      await resetToFixtures();
+
+      // Table: staff (role 40) can write directly; regular users (role 80) can
+      // only write if the ownership formula passes.
+      formulaTable = await Table.create("formula_owned_sync", {
+        min_role_read: 100,
+        min_role_write: 40,
+      });
+      const usersTable = Table.findOne({ name: "users" });
+      await Field.create({
+        table: formulaTable,
+        name: "item_name",
+        label: "Item name",
+        type: "String",
+      });
+      await Field.create({
+        table: formulaTable,
+        name: "owner",
+        label: "Owner",
+        type: "Key",
+        reftable: usersTable,
+        attributes: { summary_field: "email" },
+      });
+
+      // Set ownership_formula WITHOUT setting ownership_field_id.
+      // The formula restricts writes to row owners, but insertRow() ignores it.
+      formulaTable = Table.findOne({ name: "formula_owned_sync" });
+      formulaTable.ownership_formula = "owner === user.id";
+      await formulaTable.update(formulaTable);
+
+      // Enable sync info so offline_changes can target the table.
+      formulaTable = Table.findOne({ name: "formula_owned_sync" });
+      formulaTable.has_sync_info = true;
+      await formulaTable.update(formulaTable);
+      formulaTable = Table.findOne({ name: "formula_owned_sync" });
+
+      // A second user whose identity the attacker will impersonate.
+      otherUser = await User.create({
+        email: "other_formula_sync@test.com",
+        password: "TestPassOther1!",
+        role_id: 40,
+      });
+    });
+
+    afterAll(async () => {
+      if (formulaTable) await formulaTable.delete();
+      if (otherUser) await otherUser.delete();
+    });
+
+    it("regular user cannot insert a row owned by another user via sync", async () => {
+      // user@foo.com has role 80 > min_role_write (40), so direct inserts are
+      // only permitted when the ownership formula allows it. Since they are
+      // claiming owner = otherUser.id (not their own id), the formula would deny
+      // the insert — but insertRow() never evaluates the formula, so the insert
+      // currently succeeds (this test will FAIL until the bug is fixed).
+      const app = await getApp({ disableCsrf: true });
+      const userCookie = await getUserLoginCookie(); // user@foo.com, role 80
+
+      const oldTimestamp = new Date().valueOf();
+      const resp = await doUpload(
+        app,
+        userCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          formula_owned_sync: {
+            inserts: [
+              {
+                id: 999,
+                item_name: "injected by attacker",
+                owner: otherUser.id, // attacker claims this row belongs to otherUser
+              },
+            ],
+          },
+        }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const result = await getResult(app, userCookie, syncDir);
+      await cleanSyncDir(app, userCookie, syncDir);
+
+      // The insert should be rejected because the attacker's ownership formula
+      // check should fail (owner !== user.id). If the insert succeeded, the
+      // vulnerability is present.
+      const rows = await formulaTable.getRows();
+      expect(rows.length).toBe(0);
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
