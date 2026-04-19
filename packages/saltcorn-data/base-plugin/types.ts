@@ -906,10 +906,13 @@ const string = {
       configFields: [
         { name: "copy_to_clipbaord", label: "Copy to clipboard", type: "Bool" },
       ],
-      run: (s: any, _req: any, attrs: any = {}) =>
-        attrs?.copy_to_clipbaord
+      run: (s: any, _req: any, attrs: any = {}) => {
+        const __ =
+          typeof attrs?.options === "string" ? getApp__() : (s: any) => s;
+        return attrs?.copy_to_clipbaord
           ? span({ class: "copy-to-clipboard" }, text_attr(s || ""))
-          : text_attr(s || ""),
+          : text_attr(s ? __(s) : "");
+      },
     },
     preFormatted: {
       isEdit: false,
