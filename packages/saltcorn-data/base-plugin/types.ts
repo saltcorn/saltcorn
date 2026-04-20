@@ -910,7 +910,7 @@ const string = {
         const __ =
           typeof attrs?.options === "string" ? getApp__() : (s: any) => s;
         return attrs?.copy_to_clipbaord
-          ? span({ class: "copy-to-clipboard" }, text_attr(s || ""))
+          ? span({ class: "copy-to-clipboard" }, text_attr(s ? __(s) : ""))
           : text_attr(s ? __(s) : "");
       },
     },
