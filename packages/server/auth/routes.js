@@ -65,6 +65,7 @@ const {
   InvalidConfiguration,
   getSessionId,
   isTest,
+  toSafeRelativeUrl,
 } = require("@saltcorn/data/utils");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { restore_backup } = require("../markup/admin.js");
@@ -1609,7 +1610,7 @@ const loginCallback = (req, res, method) => async () => {
     req.flash("success", req.__("Welcome, %s!", req.user.email));
     if (req.cookies["login_dest"]) {
       res.clearCookie("login_dest");
-      res.redirect(req.cookies["login_dest"]);
+      res.redirect(toSafeRelativeUrl(req.cookies["login_dest"]));
       return;
     }
     const source = req.query.state;
