@@ -13,7 +13,11 @@ const {
   features,
 } = require("@saltcorn/data/db/state");
 const { get_base_url } = require("@saltcorn/data/models/config");
-const { hash } = require("@saltcorn/data/utils");
+const {
+  hash,
+  is_relative_url,
+  normalize_relative_url,
+} = require("@saltcorn/data/utils");
 const { input, script, domReady, a, text } = require("@saltcorn/markup/tags");
 const session = require("express-session");
 const cookieSession = require("cookie-session");
@@ -387,36 +391,6 @@ const addOnDoneRedirect = (oldPath, req) => {
     return `${oldPath}${separator}on_done_redirect=${encoded}`;
   }
   return oldPath;
-};
-
-const is_relative_url = (url) => {
-  if (typeof url !== "string") return false;
-
-  // Normalise backslashes to forward slashes (WHATWG treats \ as / in special schemes)
-  const normalised = url.replace(/\\/g, "/");
-
-  // Reject protocol-relative URLs (//example.com)
-  if (normalised.trimStart().startsWith("//")) return false;
-
-  // Reject any scheme: URIs (e.g. http:, javascript:, data:, vbscript:)
-  // A scheme is a letter followed by letters/digits/+/-/. then a colon (RFC 3986 §3.1)
-  if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:/u.test(normalised.trimStart())) return false;
-
-  return true;
-};
-
-const normalize_relative_url = (url) => {
-  if (typeof url !== "string") return null;
-
-  const normalised = url.replace(/\\/g, "/").trimStart();
-
-  // Reject protocol-relative URLs
-  if (normalised.startsWith("//")) return null;
-
-  // Reject any scheme (RFC 3986 §3.1)
-  if (/^[a-zA-Z][a-zA-Z0-9+\-.]*:/.test(normalised)) return null;
-
-  return normalised;
 };
 
 const safe_redirect = (res, url, default_url) => {

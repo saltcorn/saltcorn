@@ -1172,3 +1172,35 @@ describe("identical fields", () => {
     });
   });
 });
+
+describe("check redirect via _referer in Edit view", () => {
+  it("should not redirect to an external URL via the _referer POST parameter", async () => {
+    const table = Table.findOne({ name: "books" });
+    await View.create({
+      table_id: table.id,
+      name: "authoredit_open_redirect_sec_test",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [{ type: "Field", field_name: "author" }],
+        layout: {
+          above: [{ type: "field", fieldview: "edit", field_name: "author" }],
+        },
+        fixed: { pages: 678 },
+        destination_type: "Back to referer",
+      },
+      min_role: 100,
+    });
+
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+
+    const res = await request(app)
+      .post("/view/authoredit_open_redirect_sec_test")
+      .set("Cookie", loginCookie)
+      .send("author=SecurityTestAuthor&_referer=https://evil.com/phishing");
+    
+    expect(res.statusCode).toBe(302);
+    expect(res.headers["location"]).not.toBe("https://evil.com/phishing");
+    expect(res.headers["location"]).not.toMatch(/^https?:\/\//);
+  });
+});

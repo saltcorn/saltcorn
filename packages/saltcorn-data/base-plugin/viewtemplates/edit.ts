@@ -52,6 +52,7 @@ const {
   asyncMap,
   removeEmptyStrings,
   structuredClone,
+  is_relative_url,
 } = utils;
 import { check_view_columns } from "../../plugin-testing";
 import {
@@ -1802,7 +1803,11 @@ const whenDone = async (
     const db_row = await table.getRow({ [table.pk_name]: originalID });
     row = { ...db_row, ...row0 };
   } else row = row0;
-  if (destination_type === "Back to referer" && body._referer) {
+  if (
+    destination_type === "Back to referer" &&
+    body._referer &&
+    is_relative_url(body._referer)
+  ) {
     res_redirect(body._referer);
     return;
   } else if (destination_type === "Page" && page_when_done) {
