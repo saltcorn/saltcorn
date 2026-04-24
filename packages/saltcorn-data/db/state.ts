@@ -1775,6 +1775,7 @@ const features = Object.freeze({
   file_fieldviews_cfg_workflows: true,
   table_create_callback: true,
   getrows_tree_field: true,
+  view_route_modal: true,
 });
 
 export = {
