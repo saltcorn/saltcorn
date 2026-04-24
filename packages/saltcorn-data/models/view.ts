@@ -848,8 +848,11 @@ class View implements AbstractView {
       res.status(result.status);
 
     if (result && result.json) res.json(result.json);
-    else if (result && result.html) res.send(result.html);
-    else if (!res.headersSent && (isNode() || (!isNode() && !res.getJson())))
+    else if (result && result.html) {
+      if (result?.title)
+        res.set("Page-Title", encodeURIComponent(result.title));
+      res.send(result.html);
+    } else if (!res.headersSent && (isNode() || (!isNode() && !res.getJson())))
       res.json({ success: "ok" });
   }
 
@@ -940,7 +943,9 @@ class View implements AbstractView {
     configFlow.autoSave = true;
     configFlow.startAtStepURL = (stepNm) =>
       `/viewedit/config/${this.name}?step=${stepNm}${
-        onDoneRedirect ? `&on_done_redirect=${encodeURIComponent(onDoneRedirect)}` : ""
+        onDoneRedirect
+          ? `&on_done_redirect=${encodeURIComponent(onDoneRedirect)}`
+          : ""
       }`;
     configFlow.previewURL = `/view/${this.name}/preview`;
     return configFlow;
