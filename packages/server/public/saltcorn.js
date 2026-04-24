@@ -439,6 +439,7 @@ function expand_thumbnail(img_id, filename) {
 
 function ajax_modal(url, opts = {}) {
   $.ajax(url, {
+    ...(opts.method ? { method: opts.method } : {}),
     headers: {
       SaltcornModalRequest: "true",
     },
