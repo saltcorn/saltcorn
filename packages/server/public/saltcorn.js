@@ -442,6 +442,8 @@ function ajax_modal(url, opts = {}) {
     ...(opts.method ? { method: opts.method } : {}),
     headers: {
       SaltcornModalRequest: "true",
+      "Page-Load-Tag": _sc_pageloadtag,
+      ...(opts.method === "POST" ? { "CSRF-Token": _sc_globalCsrf } : {}),
     },
     success: function (res, textStatus, request) {
       ensure_modal_exists_and_closed();
