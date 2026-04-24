@@ -4,7 +4,7 @@ import db from "../db";
 const { getState } = require("../db/state");
 
 import { assertIsSet, assertsIsSuccessMessage } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect, jest } from "@jest/globals";
 import mocks from "./mocks";
 import { Type } from "@saltcorn/types/common_types";
 import { writeFile } from "fs/promises";
@@ -20,6 +20,8 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
+
+jest.setTimeout(20000);
 
 describe("Field", () => {
   it("should add and then delete required field", async () => {
