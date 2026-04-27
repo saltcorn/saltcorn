@@ -2339,6 +2339,44 @@ const transformForm = async ({
           segment.contents = "";
         }
       } else if (
+        segment.action_name === "run_js_code" &&
+        segment.configuration?.run_where === "Client page"
+      ) {
+        console.log(segment);
+        segment.type = "blank";
+        const label =
+          segment.action_label === " "
+            ? ""
+            : __(segment.action_label || "") || segment.action_name;
+        function escapeJSForHTMLAttribute(jsCode: string): string {
+          return jsCode
+            .replace(/&/g, "&amp;") // Must be first to avoid double-escaping
+            .replace(/"/g, "&quot;") // Escape double quotes (critical for attributes)
+            .replace(/'/g, "&#39;") // Escape single quotes
+            .replace(/</g, "&lt;") // Prevent tag breakout
+            .replace(/>/g, "&gt;") // Prevent tag breakout
+            .replace(/`/g, "&#96;"); // Escape backticks (template literals)
+        }
+        const code = escapeJSForHTMLAttribute(segment.configuration.code);
+        const onclick = `common_done({eval_js: this.getAttribute("data-js-code"), row: get_form_record($(this)), field_names: ${JSON.stringify(table.fields.map((f) => f.name))}}, this)`;
+        segment.contents = button(
+          {
+            type: "button",
+            class: [
+              "btn",
+              segment.action_style || "btn-primary",
+              segment.action_class,
+              segment.action_size,
+            ],
+            onclick,
+            "data-js-code": code,
+          },
+          segment.action_icon && segment.action_icon !== "empty"
+            ? i({ class: segment.action_icon }) + (label ? "&nbsp;" : "")
+            : false,
+          label
+        );
+      } else if (
         segment.action_name === "form_action" &&
         segment.configuration?.form_action === "Save" &&
         table.fields.some((f) => f.type === "File")
