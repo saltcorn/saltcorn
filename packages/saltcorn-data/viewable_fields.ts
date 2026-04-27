@@ -2342,7 +2342,6 @@ const transformForm = async ({
         segment.action_name === "run_js_code" &&
         segment.configuration?.run_where === "Client page"
       ) {
-        console.log(segment);
         segment.type = "blank";
         const label =
           segment.action_label === " "
@@ -2359,6 +2358,12 @@ const transformForm = async ({
         }
         const code = escapeJSForHTMLAttribute(segment.configuration.code);
         const onclick = `common_done({eval_js: this.getAttribute("data-js-code"), row: get_form_record($(this)), field_names: ${JSON.stringify(table.fields.map((f) => f.name))}}, this)`;
+        let style =
+          segment.action_style === "btn-custom-color"
+            ? `background-color: ${segment.action_bgcol || "#000000"};border-color: ${
+                segment.action_bordercol || "#000000"
+              }; color: ${segment.action_textcol || "#000000"}`
+            : null;
         segment.contents = button(
           {
             type: "button",
@@ -2368,7 +2373,9 @@ const transformForm = async ({
               segment.action_class,
               segment.action_size,
             ],
+            title: segment.action_title || undefined,
             onclick,
+            style,
             "data-js-code": code,
           },
           segment.action_icon && segment.action_icon !== "empty"
