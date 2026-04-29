@@ -590,8 +590,6 @@ const store_actions_dropdown = (req) => {
  * @returns {object}
  */
 const plugin_store_html = (items, req) => {
-  //console.log(items);
-
   return {
     above: [
       {
