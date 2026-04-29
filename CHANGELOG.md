@@ -2,6 +2,16 @@
 
 ## 1.6.0 - In development
 
+* Detailed contents shown in module store where available
+
+* run_js_code action run on the client page now execute directly without a server detour.
+
+* Button to create standard fields (name, description, created at/by, updated at/by) in tables
+
+* Default field values can now be given by an expression. This makes it easier to make created at/by fields
+
+* String fields with options are now translated.
+
 * Entities list shows most recently edited entities
 
 * `old_row` can now be accessed in Update trigger only if.. formula
@@ -85,6 +95,10 @@
 * Protection against SQL injection in the jsexprToSQL function. To our knowledge this can only be accessed by users with administrative privileges.
 
 * Tenants can only be created on subtenants if the role to create tenants is public. This avoids a confusing situation where the role check was not against root roles but against the subtenant roles when the tenant was created from a subtenants.
+
+* Prevent tenants from installing git/github plugins from backups and packs
+
+* Ownership checks in table sync with mobile apps
 
 ## 1.5.0 - Released 26 January 2026
 
