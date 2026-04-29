@@ -1,5 +1,6 @@
 from scsession import SaltcornSession
 import socketio
+import threading
 import logging
 logging.basicConfig(
     level=logging.INFO,
@@ -41,6 +42,21 @@ class RealTimeCollabClient:
 
   def join_collab_room(self, viewName):
     self.sio.emit("join_collab_room", viewName)
+
+  def join_collab_room_with_ack(self, viewName, timeout=5):
+    result = {}
+    done = threading.Event()
+    def ack(data):
+      result.update(data)
+      done.set()
+    self.sio.emit("join_collab_room", viewName, callback=ack)
+    done.wait(timeout=timeout)
+    return result
+
+  def submit_view_form(self, viewname, row_id, data):
+    self.session.get(f'/view/{viewname}?id={row_id}')
+    csrf = self.session.csrf()
+    self.session.postForm(f'/view/{viewname}', {'id': row_id, '_csrf': csrf, **data})
 
   def send_update(self, tablename, id, data):
     self.session.apiPost(f'/api/{tablename}/{id}', data)

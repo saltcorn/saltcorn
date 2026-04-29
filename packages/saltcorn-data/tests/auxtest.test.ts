@@ -224,6 +224,7 @@ describe("plugin helper", () => {
     const patients = Table.findOne({ name: "patients" });
     const x = await get_parent_views(patients, "foobar");
     expect(x[0].views.map((v: View) => v.name).sort()).toStrictEqual([
+      "admin_authoredit",
       "author_multi_edit",
       "authoredit",
       "authoredit_identicals",

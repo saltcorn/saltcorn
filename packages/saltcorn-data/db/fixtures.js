@@ -159,6 +159,24 @@ module.exports =
 
     await View.create({
       table_id: table.id,
+      name: "admin_authoredit",
+      viewtemplate: "Edit",
+      configuration: {
+        columns: [{ type: "Field", field_name: "author" }],
+        layout: {
+          above: [{ type: "field", fieldview: "edit", field_name: "author" }],
+        },
+        fixed: {
+          pages: 678,
+        },
+        view_when_done: "authorlist",
+        enable_realtime: true,
+      },
+      min_role: 1,
+    });
+
+    await View.create({
+      table_id: table.id,
       name: "authoredit_identicals",
       viewtemplate: "Edit",
       configuration: {

@@ -1424,21 +1424,25 @@ class State {
    * @param ten
    * @param type
    * @param data
+   * @param viewname - the source view name, used to scope the collab room
    * @param noMultiNodePropagate - if true, do not propagate to other nodes in multi-node setup
    */
   emitCollabMessage(
     ten: string,
     type: string,
     data: any,
+    viewname: string,
     noMultiNodePropagate?: boolean
   ) {
-    if (this.hasJoinedCollabSockets) globalCollabEmitter(ten, type, data);
+    if (this.hasJoinedCollabSockets)
+      globalCollabEmitter(ten, type, data, viewname);
     else this.log(5, "emitCollabMessage called, but no clients are joined yet");
     if (!noMultiNodePropagate && db.connectObj.multi_node) {
       this.processSend({
         real_time_collab_event: {
           data,
           type,
+          viewname,
         },
         tenant: ten,
       });
