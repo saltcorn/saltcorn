@@ -34,6 +34,8 @@ const {
   plugin_viewtemplates_info_card,
   showRepository,
 } = require("../markup/plugin-store");
+const MarkdownIt = require("markdown-it"),
+  md = new MarkdownIt();
 const {
   h5,
   a,
@@ -56,6 +58,8 @@ const {
   text,
   script,
   domReady,
+  details,
+  summary,
 } = require("@saltcorn/markup/tags");
 const { search_bar } = require("@saltcorn/markup/helpers");
 const fs = require("fs");
@@ -208,6 +212,7 @@ const get_store_items = async (req) => {
       plugin: true,
       description: plugin.description,
       documentation_link: plugin.documentation_link,
+      contents: plugin.contents,
       has_theme: plugin.has_theme,
       has_auth: plugin.has_auth,
       unsafe: plugin.unsafe,
@@ -323,6 +328,9 @@ const store_item_html = (req) => (item) => ({
       item.ready_for_mobile && badge(req.__("Mobile"))
     ),
     div(item.description || ""),
+    item.contents
+      ? details(summary(req.__("Detailed contents")), md.render(item.contents))
+      : "",
     item.documentation_link
       ? div(
           a(
@@ -582,6 +590,8 @@ const store_actions_dropdown = (req) => {
  * @returns {object}
  */
 const plugin_store_html = (items, req) => {
+  //console.log(items);
+
   return {
     above: [
       {
@@ -715,7 +725,8 @@ router.get(
                       label: version,
                       selected: version === selected,
                     })
-                  ).reverse()
+                  )
+                  .reverse()
               ),
               // tag
               label(
