@@ -2059,5 +2059,7 @@
 	"Edit with AI": "Edit with AI",
 	"Describe what the code should do. The existing code will be used as context.": "Describe what the code should do. The existing code will be used as context.",
 	"Enter your prompt...": "Enter your prompt...",
-	"Generating...": "Generating..."
+	"Generating...": "Generating...",
+	"Create standard fields": "Create standard fields",
+	"Detailed contents": "Detailed contents"
 }
