@@ -24,6 +24,7 @@ export type PluginCfg = {
   configuration?: string | any;
   source: PluginSourceType;
   description?: string;
+  contents?: string;
   has_theme?: boolean;
   has_auth?: boolean;
   unsafe?: boolean;

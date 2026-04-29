@@ -47,6 +47,7 @@ class Plugin implements AbstractPlugin {
   configuration?: any;
   source: PluginSourceType;
   description?: string;
+  contents?: string;
   has_theme?: boolean;
   has_auth?: boolean;
   unsafe?: boolean;
@@ -63,6 +64,7 @@ class Plugin implements AbstractPlugin {
     this.location = o.location;
     this.version = o.version;
     this.description = o.description;
+    this.contents = o.contents;
     this.documentation_link = o.documentation_link;
     this.has_theme = o.has_theme;
     this.has_auth = o.has_auth;
