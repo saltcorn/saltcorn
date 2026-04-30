@@ -3054,27 +3054,31 @@ export = {
   },
   notify_user: {
     description: "Send a notification to a specific user",
-    configFields: () => [
+    configFields: ({ table }: { table: Table }) => [
       {
         name: "user_spec",
         label: "User where or email",
         type: "String",
+        sublabel: `Valid input: <code>*</code> for all, a valid email address, or a where object, e.g. <code>{department: "Finance"}</code>${table ? ". Row values are in scope for where object." : ""}`,
       },
       {
         name: "title",
         label: "Title",
         required: true,
         type: "String",
+        sublabel: "<code>{{ }}</code> interpolations usable",
       },
       {
         name: "body",
         label: "Body",
         type: "String",
+        sublabel: "<code>{{ }}</code> interpolations usable",
       },
       {
         name: "link",
         label: "Link",
         type: "String",
+        sublabel: "<code>{{ }}</code> interpolations usable",
       },
     ],
     /**
