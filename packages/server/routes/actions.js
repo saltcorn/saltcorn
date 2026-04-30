@@ -1203,6 +1203,12 @@ router.get(
       ? Table.findOne({ id: trigger.table_id })
       : null;
 
+    const edit_redirect =
+      req.query.on_done_redirect &&
+      is_relative_url("/" + req.query.on_done_redirect)
+        ? `?on_done_redirect=${req.query.on_done_redirect}`
+        : "";
+
     const subtitle =
       span(
         { class: "ms-2" },
@@ -1212,7 +1218,7 @@ router.get(
         table ? ` on ` + a({ href: `/table/${table.name}` }, table.name) : ""
       ) +
       a(
-        { href: `/actions/edit/${id}`, class: "ms-2" },
+        { href: `/actions/edit/${id}${edit_redirect}`, class: "ms-2" },
         req.__("Edit"),
         '&nbsp;<i class="fas fa-edit"></i>'
       ) +
