@@ -2062,5 +2062,6 @@
 	"Generating...": "Generating...",
 	"Create standard fields": "Create standard fields",
 	"Detailed contents": "Detailed contents",
-	"On updates, use <code>row.old_row</code> to access values before the update.": "On updates, use <code>row.old_row</code> to access values before the update."
+	"On updates, use <code>row.old_row</code> to access values before the update.": "On updates, use <code>row.old_row</code> to access values before the update.",
+	"Copy": "Copy"
 }
