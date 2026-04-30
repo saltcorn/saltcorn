@@ -267,7 +267,10 @@ const triggerForm = async (req, trigger) => {
   const hasChannel = Object.entries(getState().eventTypes)
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
-
+  const actionExplainers = {};
+  Object.entries(getState().actions).map(([k, v]) => {
+    if (v.description) actionExplainers[k] = v.description;
+  });
   const allActions = Trigger.action_options({
     notRequireRow: false,
     workflow: true,
@@ -378,6 +381,7 @@ const triggerForm = async (req, trigger) => {
         attributes: {
           options: actionsNotRequiringRow,
           onChange: "$('select[name=action]').val(event.target.value)",
+          explainers: actionExplainers,
         },
         showIf: {
           when_trigger: "Never",
@@ -394,6 +398,7 @@ const triggerForm = async (req, trigger) => {
         attributes: {
           options: allActions,
           onChange: "$('select[name=action]').val(event.target.value)",
+          explainers: actionExplainers,
         },
         showIf: {
           when_trigger: "Never",
