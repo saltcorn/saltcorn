@@ -2974,7 +2974,7 @@ export = {
         class: "validate-identifier",
         required: true,
         sublabel:
-          "A valid JavaScript identifier for updating existing progress toasts",
+          "A valid JavaScript identifier for updating existing progress toasts. Interpolations <code>{{ }}</code> can be used",
         showIf: { blocking: false },
       },
       {
@@ -2997,12 +2997,16 @@ export = {
         label: "Title",
         type: "String",
         showIf: { close: false },
+        sublabel:
+          "Use interpolations <code>{{ }}</code> to access row variables",
       },
       {
         name: "message",
         label: "Message",
         type: "String",
         showIf: { close: false },
+        sublabel:
+          "Use interpolations <code>{{ }}</code> to access row variables",
       },
       {
         name: "percent",
