@@ -43,6 +43,10 @@
   ) !important;
 }
 
+div.form-group.row div[class*="col"] i code {
+  font-style: normal;
+}
+
 div.h-350 {
   height: 350px;
 }
