@@ -597,7 +597,8 @@ export = {
           name: "url",
           label: "URL",
           type: "String",
-          sublabel: "Trigger will call specified URL",
+          sublabel:
+            "Trigger will call specified URL. Interpolations <code>{{ }}</code> can be used",
         },
         {
           name: "method",
@@ -609,16 +610,24 @@ export = {
         {
           name: "body",
           label: "JSON body",
-          sublabel: "Leave blank to use row from table",
-          type: "String",
-          fieldview: "textarea",
           showIf: { method: ["POST", "PUT", "DELETE", "PATCH"] },
+          sublabel: `Leave blank to use row from table.${table ? ` <code>user</code> and field variables in scope` : ""}`,
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            compact: true,
+            expression_type: "row",
+            table: table?.name,
+            nojoins: true,
+            user: true,
+          },
         },
         {
           name: "authorization",
           label: "Authorization header",
           type: "String",
-          sublabel: "For example <code>Bearer xxxx</code>",
+          sublabel:
+            "For example <code>Bearer xxxx</code>. Interpolations <code>{{ }}</code> can be used",
         },
         ...(field_opts.length
           ? [
@@ -673,7 +682,7 @@ export = {
         method?: string;
       };
     }) => {
-      let url1 = interpolate(url, row, user, "Webhook URL");
+      let url1 = interpolate(url, row || {}, user, "Webhook URL");
 
       const fetchOpts = {
         method: (method || "post").toLowerCase(),
@@ -2290,12 +2299,13 @@ export = {
         label: "Text",
         type: "String",
         required: true,
+        sublabel: "Interpolations <code>{{ }}</code> can be used",
       },
       {
         name: "title",
         label: "Title",
-        sublabel: "Optional",
         type: "String",
+        sublabel: "Optional. Interpolations <code>{{ }}</code> can be used",
       },
       {
         name: "remove_delay",
