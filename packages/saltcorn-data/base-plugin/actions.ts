@@ -2074,18 +2074,29 @@ export = {
       {
         name: "form_action",
         label: "Form Action",
-        type: "String",
+        input_type: "select",
         required: true,
         attributes: {
-          options: [
-            "RequestSubmit",
-            "Submit",
-            "Save",
-            "Reset",
-            "Submit with Ajax",
-            "Ajax Save Form Data",
-          ],
+          explainers: {
+            RequestSubmit:
+              "Validate the form, and submit if no errors, or display errors",
+            Submit: "Submit the form, skipping validation",
+            Save: "Save the form contents on the server, stay on the form page",
+            Reset: "Reset the form to the state it was in at page load time",
+            "Submit with Ajax":
+              "Submit the form with Ajax and follow the set destination if there are no errors",
+            "Ajax Save Form Data":
+              "Submit the form with Ajax and close the open popup ",
+          },
         },
+        options: [
+          "RequestSubmit",
+          "Submit",
+          "Save",
+          "Reset",
+          "Submit with Ajax",
+          "Ajax Save Form Data",
+        ],
       },
     ],
 
