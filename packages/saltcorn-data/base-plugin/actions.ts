@@ -1522,7 +1522,7 @@ export = {
      * @returns {Promise<object[]>}
      */
     description: "insert a row into any table, using a formula expression",
-    configFields: async ({ mode }: any) => {
+    configFields: async ({ mode, table }: any) => {
       const tables = await Table.find({}, { cached: true });
       return [
         {
@@ -1537,11 +1537,14 @@ export = {
           label: "Row expression",
           sublabel:
             "Expression for JavaScript object or array of objects. Example: <code>{first_name: name.split(' ')[0]}</code>",
-          type: "String",
-          fieldview: "textarea",
-          class: "validate-expression",
+          input_type: "code",
           attributes: {
-            spellcheck: false,
+            mode: "application/javascript",
+            compact: true,
+            expression_type: "row",
+            table: table?.name,
+            nojoins: true,
+            user: true,
           },
         },
         ...(mode === "workflow"
@@ -1789,7 +1792,7 @@ export = {
      * @returns {Promise<object[]>}
      */
     description: "Modify the triggering row",
-    configFields: async ({ mode, when_trigger }: any) => {
+    configFields: async ({ mode, table, when_trigger }: any) => {
       const tables = await Table.find({}, { cached: true });
 
       return [
@@ -1814,10 +1817,16 @@ export = {
         {
           name: "delete_where",
           label: "Delete where",
-          type: "String",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+            ...(table ? { table: table.name } : {}),
+          },
           sublabel: "Where expression, ex. <code>{manager: id}</code>",
           required: true,
-          class: "validate-expression",
+
           showIf:
             mode === "workflow" ? undefined : { delete_triggering_row: false },
         },
@@ -2924,7 +2933,7 @@ export = {
           attributes: {
             mode: "application/javascript",
             singleline: true,
-            expression_type: "query",
+            expression_type: "row",
             ...(table ? { table: table.name } : {}),
           },
           sublabel: `Optional. Updated view state. Example: <code>{id: 5}</code>. Leave blank to keep existing state`,
