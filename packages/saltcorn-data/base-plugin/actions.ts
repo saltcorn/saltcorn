@@ -459,7 +459,7 @@ export = {
         {
           name: "where",
           label: "Where",
-          sublabel: "Where-expression for subset of rows to loop over",
+          sublabel: `Where-expression for subset of rows to loop over. For example: <code>{status: "Active"}</code>`,
           input_type: "code",
           attributes: {
             mode: "application/javascript",
