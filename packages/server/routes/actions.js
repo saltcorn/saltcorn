@@ -267,10 +267,7 @@ const triggerForm = async (req, trigger) => {
   const hasChannel = Object.entries(getState().eventTypes)
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
-  const actionExplainers = {};
-  Object.entries(getState().actions).map(([k, v]) => {
-    if (v.description) actionExplainers[k] = v.description;
-  });
+  const actionExplainers = Trigger.action_explainers();
   const allActions = Trigger.action_options({
     notRequireRow: false,
     workflow: true,

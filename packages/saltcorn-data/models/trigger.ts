@@ -794,6 +794,15 @@ class Trigger implements AbstractTrigger {
     return triggerActions.sort(comparingCaseInsensitiveValue);
   }
 
+  static action_explainers(): Record<string, string> {
+    const { getState } = require("../db/state");
+    const actionExplainers: Record<string, string> = {};
+    Object.entries(getState().actions).map(([k, v]: [string, any]) => {
+      if (v.description) actionExplainers[k] = v.description;
+    });
+    return actionExplainers;
+  }
+
   static action_options({
     notRequireRow,
     tableTriggers,
