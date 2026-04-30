@@ -1604,9 +1604,11 @@ export = {
     configFields: async ({
       mode,
       when_trigger,
+      table,
     }: {
       mode: string;
       when_trigger: string;
+      table: Table;
     }) => {
       return [
         {
@@ -1619,6 +1621,9 @@ export = {
             mode: "application/javascript",
             compact: true,
             expression_type: "row",
+            table: table?.name,
+            nojoins: true,
+            user: true,
           },
         },
         ...(mode === "edit" ||
@@ -2362,8 +2367,10 @@ export = {
               let AsyncFunction = Object.getPrototypeOf(
                 async function () {}
               ).constructor;
-              AsyncFunction(stripTypes(`async () =>{${s}
-}`));
+              AsyncFunction(
+                stripTypes(`async () =>{${s}
+}`)
+              );
               return true;
             } catch (e: any) {
               return e.message;
