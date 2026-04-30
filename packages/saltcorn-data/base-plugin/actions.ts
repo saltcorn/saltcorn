@@ -1868,7 +1868,7 @@ export = {
      * @returns {Promise<object[]>}
      */
     description: "Navigation action",
-    configFields: async () => {
+    configFields: async ({ table }: { table: Table }) => {
       const pages = await Page.find({}, { cached: true });
       const views = await View.find({}, { cached: true });
       return [
@@ -1896,6 +1896,8 @@ export = {
           type: "String",
           required: true,
           showIf: { nav_action: ["Go to URL", "Popup modal"] },
+          sublabel:
+            "Use interpolations <code>{{ }}</code> to access row variables",
         },
         {
           name: "page",
@@ -1914,9 +1916,20 @@ export = {
         {
           name: "state_formula",
           label: "State",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+            ...(table ? { table: table.name } : {}),
+          },
           showIf: { nav_action: ["Go to Page", "Go to View"] },
+          sublabel: `Additional state passed to the page. Example: <code>{id: 5}</code>`,
+          help: {
+            topic: "Extra state formula",
+            context: table ? { srcTable: table.name } : {},
+            dynContext: ["view"],
+          },
         },
         {
           name: "new_tab",

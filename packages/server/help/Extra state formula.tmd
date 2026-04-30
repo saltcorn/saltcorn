@@ -1,5 +1,5 @@
 {{# const srcTable = Table.findOne({ name: query.srcTable }) }}
-{{# const view = View.findOne({ name: query.view_name }) }}
+{{# const view = View.findOne({ name: query.view_name || query.view }) }}
 {{# const destTable = Table.findOne({ id: view.table_id }) }}
 
 The extra state formula when embedding or linking to a view is used
