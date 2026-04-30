@@ -1,0 +1,5 @@
+When events are emitted, they are associated with payload and depending on the event type they may also be associated with a channel or a table.
+
+The payload is a value, typically a JSON object, that contains details about the event. For table (Insert, Update, Delete, Validate) events, it is the row triggering the event. For other event types, it can still be a row if there is a triggering row, for instance in a button press on views, or it can be another value associated with the event. 
+
+The channel is a short string that categorises the event. For table events, channel is the table name. Some events types do not have a channel. When You create a custom event type, you decide if it should have a channel or not.

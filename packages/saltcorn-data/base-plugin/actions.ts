@@ -345,28 +345,62 @@ export = {
      * @returns {object[]}
      */
     description: "Emit an event",
-    configFields: () => [
-      {
-        name: "eventType",
-        label: "Event type",
-        required: true,
-        input_type: "select",
-        options: Trigger.when_options,
-      },
-      {
-        name: "channel",
-        label: "Channel",
-        type: "String",
-        fieldview: "textarea",
-      },
-      {
-        name: "payload",
-        label: "Payload JSON",
-        sublabel: "Leave blank to use row from table",
-        type: "String",
-        fieldview: "textarea",
-      },
-    ],
+    configFields: async ({ table }: { table: Table }) => {
+      const evTypes = Trigger.when_options;
+      const hasChannel: string[] = [];
+      const hasTable: string[] = [];
+      evTypes.forEach((ty) => {
+        if (EventLog.hasChannel(ty)) hasChannel.push(ty);
+        if (EventLog.hasTable(ty)) hasTable.push(ty);
+      });
+      const allTables = await Table.find({}, { cached: true });
+      return [
+        {
+          name: "eventType",
+          label: "Event type",
+          required: true,
+          input_type: "select",
+          options: evTypes,
+        },
+        {
+          name: "channel",
+          label: "Channel",
+          type: "String",
+          showIf: { eventType: hasChannel },
+          help: {
+            topic: "Event channel and payload",
+          },
+        },
+        {
+          name: "channel",
+          label: "Table",
+          type: "String",
+          showIf: { eventType: hasTable },
+          required: true,
+          attributes: { options: allTables.map((t) => t.name) },
+          help: {
+            topic: "Event channel and payload",
+          },
+        },
+        {
+          name: "payload",
+          label: "Payload JSON",
+          sublabel: `Leave blank to use row from table. <code>user</code> ${table ? `and field variables ` : ""}in scope`,
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            compact: true,
+            expression_type: "row",
+            table: table?.name,
+            nojoins: true,
+            user: true,
+          },
+          help: {
+            topic: "Event channel and payload",
+          },
+        },
+      ];
+    },
     /**
      * @param {object} opts
      * @param {object} opts.row
