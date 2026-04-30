@@ -2896,7 +2896,7 @@ export = {
   },
   reload_embedded_view: {
     description: "Reload an embedded view without full page reload",
-    configFields: async () => {
+    configFields: async ({ table }: { table: Table }) => {
       const views = await View.find({});
       return [
         {
@@ -2910,8 +2910,19 @@ export = {
         {
           name: "new_state_fml",
           label: "New state formula",
-          type: "String",
-          class: "validate-expression",
+          input_type: "code",
+          attributes: {
+            mode: "application/javascript",
+            singleline: true,
+            expression_type: "query",
+            ...(table ? { table: table.name } : {}),
+          },
+          sublabel: `Optional. Updated view state. Example: <code>{id: 5}</code>. Leave blank to keep existing state`,
+          help: {
+            topic: "Extra state formula",
+            context: table ? { srcTable: table.name } : {},
+            dynContext: ["view"],
+          },
         },
         {
           name: "interval",
