@@ -1452,12 +1452,13 @@ export = {
         {
           name: "where",
           label: "Recalculate where",
-          sublabel: "Where-expression for subset of rows to recalculate",
+          sublabel: "Where-expression for subset of rows to recalculate. Example: <code>{manager: id}</code>",
           input_type: "code",
           attributes: {
             mode: "application/javascript",
             singleline: true,
             expression_type: "query",
+            ...(table ? { table: table.name } : {}),
           },
         },
       ];
@@ -1865,7 +1866,7 @@ export = {
         delete_where,
         row || {},
         user,
-        "recalculate_stored_fields where"
+        "delete_rows where"
       );
       const tbl = Table.findOne({ name: table_name });
       await tbl!.deleteRows(where, user, false, resultCollector);
