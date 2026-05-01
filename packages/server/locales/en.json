@@ -2063,5 +2063,6 @@
 	"Create standard fields": "Create standard fields",
 	"Detailed contents": "Detailed contents",
 	"On updates, use <code>row.old_row</code> to access values before the update.": "On updates, use <code>row.old_row</code> to access values before the update.",
-	"Copy": "Copy"
+	"Copy": "Copy",
+	"Formula evaluating to boolean. Example: <code>status === \"Active\"</code>": "Formula evaluating to boolean. Example: <code>status === \"Active\"</code>"
 }

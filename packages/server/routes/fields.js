@@ -586,11 +586,12 @@ const fieldFlow = (req) =>
               {
                 name: "aggwhere",
                 label: req.__("Where"),
-                sublabel: req.__("Formula"),
-                class: "validate-expression",
-                type: "String",
                 required: false,
                 showIf: { expression_type: "Aggregation" },
+                sublabel: req.__(`Formula evaluating to boolean. Example: <code>status === "Active"</code>`),
+                class: "validate-expression",
+                type: "String",
+                help: { topic: "Aggregation where formula" },
               },
               ...agg_order_opts,
               {
@@ -864,8 +865,7 @@ function setDefaultExpressionValue(val) {
                 sublabel:
                   req.__(
                     "JavaScript expression. Available: <code>user</code> (current user). Can be async."
-                  ) +
-                  `<div class="mt-1">${presetButtons}</div>${setterScript}`,
+                  ) + `<div class="mt-1">${presetButtons}</div>${setterScript}`,
                 input_type: "code",
                 attributes: {
                   mode: "application/javascript",
@@ -873,7 +873,6 @@ function setDefaultExpressionValue(val) {
                 },
                 showIf: expressionShowIf,
               },
-
             ],
           });
           const hasExprDefault = !!context.default_expression;
