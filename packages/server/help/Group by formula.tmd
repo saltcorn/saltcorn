@@ -1,0 +1,15 @@
+The Group by formula allows you specify group headings. The formula should evaluate to a value, which will be used as the group header.
+
+For example, if you have a String field `Category` with options "Home", "Work", "Sports", you can use this as the group by formula:
+
+`category`
+
+Or, if you want to have Even and Odd headings based on the ID:
+
+`id % 2 ? "Odd" : "Even"`
+
+You can also use join fields to group based on a related table, for instance:
+
+`departmentⱵname`
+
+If a user is logged in, the `user` variable can be used to access user fields, such as `user?.department`.

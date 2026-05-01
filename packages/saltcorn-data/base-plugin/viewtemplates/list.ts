@@ -651,6 +651,7 @@ const configuration_workflow = (req: Req) =>
               user: true,
               expression_type: "value",
             },
+            help: { topic: "Group by formula" },
             sublabel: "Formula for the group headings",
             class: "validate-expression",
           });
