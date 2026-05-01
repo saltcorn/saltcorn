@@ -1824,8 +1824,13 @@ const constraintForm = (req, table, fields, type) => {
             name: "formula",
             label: req.__("Constraint formula"),
             validator: expressionValidator,
-            type: "String",
-            class: "validate-expression",
+            input_type: "code",
+            attributes: {
+              mode: "application/javascript",
+              singleline: true,
+              table: table.name,
+              expression_type: "boolean",
+            },
             help: {
               topic: "Table formula constraint",
               context: { table: table.name },
