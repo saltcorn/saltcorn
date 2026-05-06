@@ -206,7 +206,7 @@ class WorkflowStep {
     await db.update("_sc_workflow_steps", row, this.id);
   }
 
-  async run(context: any, user: User) {
+  async run(context: any, user: User, req?: any) {
     if (this.only_if) {
       const proceed = eval_expression(
         this.only_if,
@@ -250,6 +250,7 @@ class WorkflowStep {
         user,
         row: context,
         mode: "workflow",
+        req,
       });
     } else {
       const trigger = await Trigger.findOne({ name: this.action_name });

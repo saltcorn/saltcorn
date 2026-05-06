@@ -539,6 +539,7 @@ class WorkflowRun {
                 interactive,
                 noNotifications,
                 api_call,
+                req,
               });
 
               if (subwfrun.status === "Finished") {
@@ -830,7 +831,8 @@ class WorkflowRun {
             }
           } else if (waiting_fulfilled) {
             waiting_fulfilled = false;
-          } else if (step && user) result = await step.run(this.context, user);
+          } else if (step && user)
+            result = await step.run(this.context, user, req);
 
           const nextUpdate: any = {};
           if (typeof result === "object" && result !== null) {
