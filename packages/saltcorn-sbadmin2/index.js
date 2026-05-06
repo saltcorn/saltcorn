@@ -520,7 +520,7 @@ const wrap = ({
     `<div id="wrapper">
       ${menu && menu.length > 0 ? sidebar(brand, menu, currentUrl, req?.isRTL) : ""}
 
-      <div id="content-wrapper" class="d-flex flex-column">
+      <div id="content-wrapper" class="d-flex flex-column" style="min-width:0;overflow-x:hidden;">
         <div id="content">
           <div id="page-inner-content" class="container-fluid px-2 sbadmin2-theme">
             <div id="alerts-area">${/* deprecated */ ""}</div>

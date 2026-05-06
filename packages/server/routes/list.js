@@ -433,30 +433,67 @@ router.get(
                 })
               })
               window.tabulator_table_primary_key = "${table.pk_name}";
+              function tabulator_fill_height() {
+                const el = document.getElementById('jsGrid');
+                if (!el) return 400;
+                return Math.max(200, Math.floor(window.innerHeight - el.getBoundingClientRect().top - 10));
+              }
+              function tabulator_calc_page_size() {
+                const holder = document.querySelector('#jsGrid .tabulator-tableholder');
+                if (!holder) return 20;
+                const rowH = window._tab_row_height || 35;
+                return Math.max(5, Math.floor(holder.clientHeight / rowH));
+              }
+              const _tab_h = tabulator_fill_height();
               window.tabulator_table = new Tabulator("#jsGrid", {
                   ajaxURL:"/api/${encodeURIComponent(
                     table.name
                   )}?tabulator_pagination_format=true${
                     table.versioned ? "&versioncount=on" : ""
-                  }",                   
-                  layout:"fitData", 
+                  }",
+                  layout:"fitDataFill",
                   columns,
-                  height:"100%",
+                  height: _tab_h,
                   pagination:true,
                   paginationMode:"remote",
-                  paginationSize:20,
-                  clipboard:true,                 
+                  paginationSize: tabulator_calc_page_size(),
+                  clipboard:true,
                   movableColumns: true,
                   ajaxContentType:"json",
                   sortMode:"remote",
-                  resizableColumnGuide:true,                  
+                  resizableColumnGuide:true,
                   columnDefaults:{
                       resizable:true,
                       maxWidth:500
                   },
                   initialSort:[
                     {column:"${table.pk_name}", dir:"asc"},
-                  ],                 
+                  ],
+              });
+              window.tabulator_table.on("tableBuilt", function() {
+                const ps = tabulator_calc_page_size();
+                if (ps !== window.tabulator_table.getPageSize())
+                  window.tabulator_table.setPageSize(ps);
+              });
+              window.tabulator_table.on("dataLoaded", function() {
+                if (window._tab_row_height) return;
+                const rows = window.tabulator_table.getRows();
+                if (!rows.length) return;
+                window._tab_row_height = rows[0].getElement().offsetHeight;
+                const ps = tabulator_calc_page_size();
+                if (ps !== window.tabulator_table.getPageSize())
+                  window.tabulator_table.setPageSize(ps);
+              });
+              let _tab_resize_timer;
+              window.addEventListener('resize', function() {
+                clearTimeout(_tab_resize_timer);
+                _tab_resize_timer = setTimeout(function() {
+                  const h = tabulator_fill_height();
+                  window.tabulator_table.setHeight(h);
+                  const ps = tabulator_calc_page_size();
+                  if (ps !== window.tabulator_table.getPageSize())
+                    window.tabulator_table.setPageSize(ps);
+                }, 150);
               });
               window.allnonecols= (do_show, e) =>{
                 columns.forEach(col=>{
