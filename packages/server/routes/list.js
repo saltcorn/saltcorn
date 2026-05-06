@@ -433,30 +433,54 @@ router.get(
                 })
               })
               window.tabulator_table_primary_key = "${table.pk_name}";
+              function tabulator_fill_height() {
+                const el = document.getElementById('jsGrid');
+                if (!el) return 400;
+                const top = el.getBoundingClientRect().top;
+                return Math.max(200, Math.floor(window.innerHeight - top - 16));
+              }
+              function tabulator_page_size(height) {
+                const rowHeight = 35;
+                const overheadHeight = 93; // header + pagination bar
+                return Math.max(5, Math.floor((height - overheadHeight) / rowHeight));
+              }
+              const _tab_h = tabulator_fill_height();
               window.tabulator_table = new Tabulator("#jsGrid", {
                   ajaxURL:"/api/${encodeURIComponent(
                     table.name
                   )}?tabulator_pagination_format=true${
                     table.versioned ? "&versioncount=on" : ""
-                  }",                   
-                  layout:"fitData", 
+                  }",
+                  layout:"fitData",
                   columns,
-                  height:"100%",
+                  height: _tab_h,
                   pagination:true,
                   paginationMode:"remote",
-                  paginationSize:20,
-                  clipboard:true,                 
+                  paginationSize: tabulator_page_size(_tab_h),
+                  clipboard:true,
                   movableColumns: true,
                   ajaxContentType:"json",
                   sortMode:"remote",
-                  resizableColumnGuide:true,                  
+                  resizableColumnGuide:true,
                   columnDefaults:{
                       resizable:true,
                       maxWidth:500
                   },
                   initialSort:[
                     {column:"${table.pk_name}", dir:"asc"},
-                  ],                 
+                  ],
+              });
+              let _tab_resize_timer;
+              window.addEventListener('resize', function() {
+                clearTimeout(_tab_resize_timer);
+                _tab_resize_timer = setTimeout(function() {
+                  const h = tabulator_fill_height();
+                  window.tabulator_table.setHeight(h);
+                  const ps = tabulator_page_size(h);
+                  if (ps !== window.tabulator_table.getPageSize()) {
+                    window.tabulator_table.setPageSize(ps);
+                  }
+                }, 150);
               });
               window.allnonecols= (do_show, e) =>{
                 columns.forEach(col=>{
