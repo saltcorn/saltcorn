@@ -451,7 +451,7 @@ router.get(
                   )}?tabulator_pagination_format=true${
                     table.versioned ? "&versioncount=on" : ""
                   }",
-                  layout:"fitData",
+                  layout:"fitDataFill",
                   columns,
                   height: _tab_h,
                   pagination:true,
