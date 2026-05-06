@@ -436,13 +436,13 @@ router.get(
               function tabulator_fill_height() {
                 const el = document.getElementById('jsGrid');
                 if (!el) return 400;
-                const top = el.getBoundingClientRect().top;
-                return Math.max(200, Math.floor(window.innerHeight - top - 16));
+                return Math.max(200, Math.floor(window.innerHeight - el.getBoundingClientRect().top - 10));
               }
-              function tabulator_page_size(height) {
-                const rowHeight = 35;
-                const overheadHeight = 93; // header + pagination bar
-                return Math.max(5, Math.floor((height - overheadHeight) / rowHeight));
+              function tabulator_calc_page_size() {
+                const holder = document.querySelector('#jsGrid .tabulator-tableholder');
+                if (!holder) return 20;
+                const rowH = window._tab_row_height || 35;
+                return Math.max(5, Math.floor(holder.clientHeight / rowH));
               }
               const _tab_h = tabulator_fill_height();
               window.tabulator_table = new Tabulator("#jsGrid", {
@@ -456,7 +456,7 @@ router.get(
                   height: _tab_h,
                   pagination:true,
                   paginationMode:"remote",
-                  paginationSize: tabulator_page_size(_tab_h),
+                  paginationSize: tabulator_calc_page_size(),
                   clipboard:true,
                   movableColumns: true,
                   ajaxContentType:"json",
@@ -470,16 +470,29 @@ router.get(
                     {column:"${table.pk_name}", dir:"asc"},
                   ],
               });
+              window.tabulator_table.on("tableBuilt", function() {
+                const ps = tabulator_calc_page_size();
+                if (ps !== window.tabulator_table.getPageSize())
+                  window.tabulator_table.setPageSize(ps);
+              });
+              window.tabulator_table.on("dataLoaded", function() {
+                if (window._tab_row_height) return;
+                const rows = window.tabulator_table.getRows();
+                if (!rows.length) return;
+                window._tab_row_height = rows[0].getElement().offsetHeight;
+                const ps = tabulator_calc_page_size();
+                if (ps !== window.tabulator_table.getPageSize())
+                  window.tabulator_table.setPageSize(ps);
+              });
               let _tab_resize_timer;
               window.addEventListener('resize', function() {
                 clearTimeout(_tab_resize_timer);
                 _tab_resize_timer = setTimeout(function() {
                   const h = tabulator_fill_height();
                   window.tabulator_table.setHeight(h);
-                  const ps = tabulator_page_size(h);
-                  if (ps !== window.tabulator_table.getPageSize()) {
+                  const ps = tabulator_calc_page_size();
+                  if (ps !== window.tabulator_table.getPageSize())
                     window.tabulator_table.setPageSize(ps);
-                  }
                 }, 150);
               });
               window.allnonecols= (do_show, e) =>{
