@@ -133,4 +133,4 @@ plugins_folder/
 *.sqlite-journal
 
 run_project.sh
-run_saltcorn.sh*.pdf
+run_saltcorn.sh
