@@ -707,10 +707,6 @@ const fetchPreview = ({ url, body, options, setPreviews, node_id, isView }) => {
       else return "";
     })
     .then(function (html) {
-      // Use innerHTML instead of jQuery .html() to avoid executing <script>
-      // tags in the response. Scripts with global selectors (e.g. select2 init)
-      // would otherwise run against all matching elements on the page, causing
-      // visual duplication in cloned elements' previews.
       const scratchpad = document.querySelector(".preview-scratchpad");
       if (scratchpad) scratchpad.innerHTML = html;
       $(".preview-scratchpad").find("iframe").css("pointer-events", "none");

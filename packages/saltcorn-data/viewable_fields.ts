@@ -1744,7 +1744,6 @@ const standardLayoutRowVisitor = (
             segment.hide = true;
           else segment.hide = false;
         } catch (e) {
-          // Formula error — show the element rather than crashing the page
           segment.hide = false;
         }
       }

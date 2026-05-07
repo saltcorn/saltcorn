@@ -431,7 +431,6 @@ class Page implements AbstractPage {
             );
             if (!do_show) segment.hide = true;
           } catch (e) {
-            // Formula error — show the element rather than crashing the page
           }
         }
       },
