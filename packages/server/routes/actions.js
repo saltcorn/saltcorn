@@ -2174,8 +2174,7 @@ router.get(
   error_catcher(async (req, res) => {
     const trNames = {};
     const { _page, trigger } = req.query;
-    for (const trig of await Trigger.find({ action: "Workflow" }))
-      trNames[trig.id] = trig.name;
+    for (const trig of await Trigger.find({})) trNames[trig.id] = trig.name;
     const q = {};
     const selOpts = { orderBy: "started_at", orderDesc: true, limit: 20 };
     if (_page) selOpts.offset = 20 * (parseInt(_page) - 1);
