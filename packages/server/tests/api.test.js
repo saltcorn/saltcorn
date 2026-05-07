@@ -1297,10 +1297,13 @@ describe("API CSRF protection", () => {
 
   it("should not bypass CSRF by appending a fake ?jwt= query parameter", async () => {
     const app = await getApp({ disableCsrf: false });
+    const loginCookie = await getAdminLoginCookie();
+
     await request(app)
       .post("/api/books/?jwt=fakejwt")
       .send({ author: "CSRF Bypass Attempt", pages: 4 })
+      .set("Cookie", loginCookie)
       .set("Content-Type", "application/json")
-      .expect(401);
+      .expect(302);
   });
 });
