@@ -363,6 +363,8 @@ class Table implements AbstractTable {
       //limited refresh if we do not have a client
       if (!db.getRequestContext()?.client) await Table.state_refresh(true);
     };
+    //console.log({tbl});
+
     return t;
   }
 
@@ -447,7 +449,10 @@ class Table implements AbstractTable {
         const { getState } = require("../db/state");
         const provider = getState().table_providers[t.provider_name];
         if (provider)
-          t.fields = await applyAsync(provider.fields, t.provider_cfg);
+          t.fields = await applyAsync(
+            provider.fields,
+            stringToJSON(t.provider_cfg)
+          );
         else t.fields = [];
       } else
         t.fields = flds
