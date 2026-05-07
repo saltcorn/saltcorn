@@ -102,6 +102,20 @@ describe("get_async_expression_function", () => {
 
     expect(y).toBe(20);
   });
+  it("does not use non-valid identifier as argument", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
+    const f = get_async_expression_function(
+      `add5(1)+ add3(row["foo->bar"])+asyncAdd2(x)`,
+      [
+        new Field({ name: "x", type: "Integer" }),
+        new Field({ name: "foo->bar", type: "Integer" }),
+      ]
+    );
+    const y = await f({ x: 5, "foo->bar": 4 });
+
+    expect(y).toBe(20);
+  });
 });
 
 describe("code pages in eval", () => {

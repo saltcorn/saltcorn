@@ -22,7 +22,7 @@ import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db";
 import utils from "../utils";
 import { GenObj } from "@saltcorn/db-common/types";
-const { mergeIntoWhere, isNode } = utils;
+const { mergeIntoWhere, isNode, isValidJsIdentifier } = utils;
 const { VM } = require("vm2");
 
 function deproxy(value: any): any {
@@ -727,7 +727,7 @@ function get_expression_function(
   expression: string,
   fields: Array<Field>
 ): Function {
-  const field_names = fields.map((f) => f.name);
+  const field_names = fields.map((f) => f.name).filter(isValidJsIdentifier);
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
@@ -752,12 +752,7 @@ function eval_expression(
 ): any {
   try {
     const use_row = row || {};
-    const field_names = Object.keys(use_row).filter(
-      (nm) =>
-        nm.indexOf(".") === -1 &&
-        nm.indexOf(">") === -1 &&
-        nm.indexOf("-") === -1
-    );
+    const field_names = Object.keys(use_row).filter(isValidJsIdentifier);
     const args = field_names.includes("user")
       ? `row, {${field_names.join()}}`
       : `row, {${field_names.join()}}, user`;
@@ -814,7 +809,9 @@ function get_async_expression_function(
   fields: Array<Field | string>,
   extraContext = {}
 ): Function {
-  const field_names = fields.map((f) => (typeof f === "string" ? f : f.name));
+  const field_names = fields
+    .map((f) => (typeof f === "string" ? f : f.name))
+    .filter(isValidJsIdentifier);
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
