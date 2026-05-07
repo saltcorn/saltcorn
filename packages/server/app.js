@@ -459,7 +459,8 @@ const getApp = async (opts = {}) => {
         req.headers.authorization?.toLowerCase().startsWith("bearer ") ||
         req.url === "/auth/callback/saml" ||
         req.url.startsWith("/notifications/share-handler") ||
-        req.url.startsWith("/notifications/manifest")
+        req.url.startsWith("/notifications/manifest") ||
+        (req.url.startsWith("/api/") && !req.cookies?.["connect.sid"])
       )
         return disabledCsurf(req, res, next);
       csurf(req, res, next);

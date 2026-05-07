@@ -1301,6 +1301,6 @@ describe("API CSRF protection", () => {
       .post("/api/books/?jwt=fakejwt")
       .send({ author: "CSRF Bypass Attempt", pages: 4 })
       .set("Content-Type", "application/json")
-      .expect(302);
+      .expect(401);
   });
 });
