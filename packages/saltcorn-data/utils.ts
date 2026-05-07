@@ -616,6 +616,16 @@ const jsIdentifierValidator = (
   if (badc) return `Character ${badc} not allowed`;
 };
 
+function isValidJsIdentifier(str: string): boolean {
+  if (typeof str !== "string" || str.length === 0) return false;
+  try {
+    new Function(`"use strict"; let ${str}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const isPushEnabled = (user?: User): user is User => {
   if (!user?.id) return false;
   const push_policy_by_role =
@@ -914,4 +924,5 @@ export = {
   imageAvailable,
   pluginsFolderRoot,
   decodeProvisioningProfile,
+  isValidJsIdentifier
 };
