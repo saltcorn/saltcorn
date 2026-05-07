@@ -436,8 +436,13 @@ class Field implements AbstractField {
       const Table = require("./table");
       const refTable = Table.findOne(this.reftable_name);
       const pk_name = refTable.pk_name;
-      if (fieldviewObj?.fill_options_restrict && !where)
-        where = fieldviewObj?.fill_options_restrict(this, existingValue);
+      if (fieldviewObj?.fill_options_restrict) {
+        const newWhere = fieldviewObj?.fill_options_restrict(
+          this,
+          existingValue
+        );
+        if (newWhere) where = newWhere;
+      }
 
       const whereWithExisting =
         existingValue && where
