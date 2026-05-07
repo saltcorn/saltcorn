@@ -282,18 +282,6 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
           selectedNodes.forEach((nodeId) => actions.delete(nodeId));
         }
       }
-      if ((event.ctrlKey || event.metaKey) && event.keyCode == 86) {
-        navigator.clipboard.readText().then((clipText) => {
-          const layout = JSON.parse(clipText);
-          layoutToNodes(
-            layout,
-            query,
-            actions,
-            selected?.id || "ROOT",
-            options
-          );
-        });
-      }
       if ((event.ctrlKey || event.metaKey) && event.keyCode == 90) {
         // undo
         actions.history.undo();
@@ -301,6 +289,45 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
       if ((event.ctrlKey || event.metaKey) && event.keyCode == 89) {
         // redo
         actions.history.redo();
+      }
+    }
+    if ((event.ctrlKey || event.metaKey) && event.keyCode == 86) {
+      const inputTags = ["input", "textarea", "select"];
+      if (!inputTags.includes(tagName) && !target.isContentEditable) {
+        navigator.clipboard.readText().then((clipText) => {
+          try {
+            const layout = JSON.parse(clipText);
+            // Explicit index is required for linked canvas nodes (Container/Card/Tabs
+            // inner Columns) to appear on canvas — mirrors what duplicate does.
+            let pasteTarget = "ROOT";
+            let pasteIndex = false; // false → append (undefined in addNodeTree)
+            try {
+              if (selected?.id && selected.id !== "ROOT") {
+                const selNode = query.node(selected.id).get();
+                const linkedNodes = selNode?.data?.linkedNodes;
+                if (linkedNodes && Object.keys(linkedNodes).length > 0) {
+                  // Selected node owns linked canvases (Container, Card, Tabs, Columns…)
+                  // Paste into its first linked canvas, appending after existing children.
+                  const firstLinkedId = Object.values(linkedNodes)[0];
+                  pasteTarget = firstLinkedId;
+                  pasteIndex = query.node(firstLinkedId).childNodes().length;
+                } else {
+                  // Selected is a leaf — paste into its parent right after it.
+                  const parentId = selNode?.data?.parent;
+                  if (parentId) {
+                    pasteTarget = parentId;
+                    const siblings = query.node(parentId).childNodes();
+                    const sibIx = siblings.findIndex((sib) => sib === selected.id);
+                    if (sibIx !== -1) pasteIndex = sibIx + 1;
+                  }
+                }
+              }
+            } catch (_) {}
+            layoutToNodes(layout, query, actions, pasteTarget, options, pasteIndex);
+          } catch (e) {
+            // clipboard may contain non-JSON text (e.g. from another app)
+          }
+        });
       }
     }
     if ((tagName === "body" || tagName === "button") &&

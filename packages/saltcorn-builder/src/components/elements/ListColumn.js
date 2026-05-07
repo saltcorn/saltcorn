@@ -48,10 +48,8 @@ const ListColumn = ({
   const { actions, query, isActve } = useEditor((state) => ({}));
   const options = useContext(optionsCtx);
 
-  const {
-    data: { parent },
-  } = query.node(id).get();
-  const siblings = query.node(parent).childNodes();
+  const parent = query.node(id).get()?.data?.parent;
+  const siblings = parent ? query.node(parent).childNodes() : [];
   const nChildren = siblings.length;
   const childIx = siblings.findIndex((sib) => sib === id);
 

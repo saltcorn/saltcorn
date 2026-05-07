@@ -423,12 +423,16 @@ class Page implements AbstractPage {
       },
       container: (segment) => {
         if (segment.showIfFormula) {
-          const do_show = eval_expression(
-            segment.showIfFormula,
-            dollarizeObject(querystate),
-            extraArgs.req?.user
-          );
-          if (!do_show) segment.hide = true;
+          try {
+            const do_show = eval_expression(
+              segment.showIfFormula,
+              dollarizeObject(querystate),
+              extraArgs.req?.user
+            );
+            if (!do_show) segment.hide = true;
+          } catch (e) {
+            // Formula error — show the element rather than crashing the page
+          }
         }
       },
       image: async (segment) => {

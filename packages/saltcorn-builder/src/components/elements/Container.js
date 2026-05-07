@@ -1026,7 +1026,7 @@ const ContainerSettings = () => {
           />
         </tbody>
       </table>
-      <table className="w-100" accordiontitle={t("Show if...")}>
+      <table className="w-100" accordiontitle={showIfFormula ? t("Show if...") + " *" : t("Show if...")}>
         <tbody>
           {["show", "edit", "filter", "list"].includes(options.mode) && (
             <SettingsSectionHeaderRow title={t("Formula - show if true")} />

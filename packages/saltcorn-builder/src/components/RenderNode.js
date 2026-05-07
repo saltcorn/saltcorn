@@ -58,23 +58,33 @@ const RenderNode = ({ render }) => {
 
   const currentRef = useRef();
 
+  const getZoomFactor = useCallback(() => {
+    const bw = document.body.offsetWidth;
+    if (!bw) return 1;
+    const factor = document.body.getBoundingClientRect().width / bw;
+    return factor || 1;
+  }, []);
+
   const getPos = useCallback((dom) => {
+    const zoom = getZoomFactor();
     const { top, left, bottom, height, width, right } = dom
       ? dom.getBoundingClientRect()
       : { top: 0, left: 0, bottom: 0, right: 0, height: 0, width: 0 };
-    const rightPos = window.innerWidth - right;
+    const topAdj = (top > 0 ? top : bottom) / zoom;
+    const leftAdj = left / zoom;
+    const rightPos = window.innerWidth / zoom - right / zoom;
     return {
-      top: `${top > 0 ? top : bottom}px`,
-      left: `${left}px`,
+      top: `${topAdj}px`,
+      left: `${leftAdj}px`,
       right: `${rightPos}px`,
-      topn: top,
-      leftn: left,
+      topn: topAdj,
+      leftn: leftAdj,
       rightn: rightPos,
-      height,
-      width,
-      bottom,
+      height: height / zoom,
+      width: width / zoom,
+      bottom: bottom / zoom,
     };
-  }, []);
+  }, [getZoomFactor]);
 
   const scroll = useCallback(() => {
     const { current: currentDOM } = currentRef;

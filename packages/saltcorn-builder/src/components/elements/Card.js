@@ -132,20 +132,20 @@ const Card = ({
       {bgType === "Image" && bgFileId && imageLocation === "Top" ? (
         <img src={`/files/serve/${bgFileId}`} className="card-img-top" />
       ) : null}
-      {title && title.length > 0 && (
-        <div className="card-header right-section">
-          {isFormula?.title ? (
+      <div className="card-header right-section">
+        {title && title.length > 0 ? (
+          isFormula?.title ? (
             <span className="font-monospace">={title}</span>
           ) : (
             title
-          )}
-           <div className='title-right'>
+          )
+        ) : null}
+        <div className="title-right">
           <Element canvas id="titleRight" is={Column}>
             {titleRight}
           </Element>
         </div>
-        </div>
-      )}
+      </div>
       <div
         className={`card-body ${noPadding ? "p-0" : ""}`}
         style={
