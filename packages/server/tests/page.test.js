@@ -12,6 +12,7 @@ const {
   resetToFixtures,
 } = require("../auth/testhelp");
 const db = require("@saltcorn/data/db");
+const { getState } = require("@saltcorn/data/db/state");
 const Page = require("@saltcorn/data/models/page");
 const File = require("@saltcorn/data/models/file");
 const { existsSync } = require("fs");
@@ -172,6 +173,35 @@ describe("page create", () => {
     await request(app)
       .get("/page/new_page_with_html_file")
       .expect(toInclude("not found", 404));
+  });
+});
+
+describe("homepage with html-file page", () => {
+  beforeAll(async () => {
+    await Page.create({
+      name: "html_home_test_page",
+      title: "HTML Home",
+      description: "",
+      min_role: 1,
+      layout: { html_file: htmlFile.location },
+    });
+  });
+  afterAll(async () => {
+    const p = Page.findOne({ name: "html_home_test_page" });
+    if (p) await p.delete();
+    await getState().setConfig("home_page_by_role", {});
+  });
+
+  it("serves html content when role home page uses an html file", async () => {
+    await getState().setConfig("home_page_by_role", {
+      "1": "html_home_test_page",
+    });
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .get("/")
+      .set("Cookie", loginCookie)
+      .expect(toInclude("Land here"));
   });
 });
 
