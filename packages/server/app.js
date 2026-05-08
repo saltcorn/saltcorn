@@ -235,10 +235,14 @@ const getApp = async (opts = {}) => {
   app.use((req, res, next) => {
     // no jwt and session id at the same time
     if (
-      !(jwt_extractor(req) && req.cookies && req.cookies["connect.sid"]) ||
+      !(req.jwtAuthenticated && req.cookies && req.cookies["connect.sid"]) ||
       isPlaywright
     )
       next();
+    else
+      res.status(400).json({
+        error: "Cannot authenticate with both JWT and session cookie",
+      });
   });
   app.use(flash());
 
