@@ -69,6 +69,8 @@ export namespace discovery {
     implement_discovery,
     get_existing_views,
     findType,
+    make_field,
+    reconcile_table,
   } = discoveryImport;
 }
 

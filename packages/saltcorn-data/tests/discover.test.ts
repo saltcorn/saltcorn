@@ -2,10 +2,16 @@
  * Tests for discovery.ts
  */
 import discovery from "../models/discovery";
-const { discoverable_tables, discover_tables, implement_discovery } = discovery;
+const {
+  discoverable_tables,
+  discover_tables,
+  implement_discovery,
+  reconcile_table,
+} = discovery;
 const { getState } = require("../db/state");
 import db from "../db";
 import Table from "../models/table";
+import Field from "../models/field";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 import { Row } from "@saltcorn/db-common/internal";
 import { assertIsSet } from "./assertions";
@@ -241,6 +247,107 @@ describe("Repair primary key", () => {
       assertIsSet(table);
       expect(table.fields.length).toBe(3);
       expect(table.pk_name).toBe("id");
+    });
+  } else {
+    it("doesnt run on sqlite", async () => {
+      expect(2 + 2).toBe(4);
+    });
+  }
+});
+
+describe("reconcile_table", () => {
+  if (!db.isSQLite) {
+    it("should report all matches for a healthy table", async () => {
+      const users = Table.findOne("users");
+      assertIsSet(users);
+      const result = await reconcile_table(users);
+      expect(result.ghost_count).toBe(0);
+      expect(result.orphan_count).toBe(0);
+      expect(result.match_count).toBeGreaterThan(0);
+      // All fields should be match
+      for (const f of result.fields) {
+        expect(f.status).toBe("match");
+      }
+    });
+
+    it("should detect ghost fields", async () => {
+      // Create a table with Saltcorn
+      const table = await Table.create("reconcile_test");
+      await Field.create({
+        table,
+        name: "mycol",
+        label: "My Column",
+        type: "String",
+      });
+      await Field.create({
+        table,
+        name: "mycol2",
+        label: "My Column 2",
+        type: "Integer",
+      });
+
+      // Drop the column directly from DB
+      await db.query(
+        `ALTER TABLE "reconcile_test" DROP COLUMN "mycol"`
+      );
+
+      // Refresh table in-memory fields
+      const freshTable = Table.findOne("reconcile_test");
+      assertIsSet(freshTable);
+      const result = await reconcile_table(freshTable);
+
+      expect(result.ghost_count).toBe(1);
+      const ghost = result.fields.find((f) => f.status === "ghost");
+      expect(ghost).toBeDefined();
+      expect(ghost!.name).toBe("mycol");
+
+      // mycol2 should still match
+      const match = result.fields.find((f) => f.name === "mycol2");
+      expect(match).toBeDefined();
+      expect(match!.status).toBe("match");
+    });
+
+    it("should detect orphan columns", async () => {
+      // Add a column directly to DB
+      await db.query(
+        `ALTER TABLE "reconcile_test" ADD COLUMN "orphan_col" text`
+      );
+
+      const freshTable = Table.findOne("reconcile_test");
+      assertIsSet(freshTable);
+      const result = await reconcile_table(freshTable);
+
+      expect(result.orphan_count).toBeGreaterThanOrEqual(1);
+      const orphan = result.fields.find((f) => f.status === "orphan");
+      expect(orphan).toBeDefined();
+      expect(orphan!.name).toBe("orphan_col");
+    });
+
+    it("should not report transient calculated fields as ghosts", async () => {
+      const table = Table.findOne("reconcile_test");
+      assertIsSet(table);
+      // Add a transient calculated field (calculated=true, stored=false)
+      await Field.create({
+        table,
+        name: "calc_transient",
+        label: "Calc Transient",
+        type: "String",
+        calculated: true,
+        stored: false,
+        expression: "'hello'",
+      });
+
+      // Refresh and reconcile
+      const freshTable = Table.findOne("reconcile_test");
+      assertIsSet(freshTable);
+      const result = await reconcile_table(freshTable);
+
+      // The transient field should be a match, not a ghost
+      const transient = result.fields.find(
+        (f) => f.name === "calc_transient"
+      );
+      expect(transient).toBeDefined();
+      expect(transient!.status).toBe("match");
     });
   } else {
     it("doesnt run on sqlite", async () => {

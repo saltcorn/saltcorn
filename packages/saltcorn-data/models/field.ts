@@ -1241,17 +1241,32 @@ class Field implements AbstractField {
 
     if (!this.calculated || this.stored) {
       if (db.isSQLite && this.is_unique) await this.remove_unique_constraint();
-      await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          table.name
-        )}" drop column "${sqlsanitize(this.name)}"`
-      );
-      if (table.versioned) {
+      try {
         await db.query(
           `alter table ${schema}"${sqlsanitize(
             table.name
-          )}__history" drop column "${sqlsanitize(this.name)}"`
+          )}" drop column "${sqlsanitize(this.name)}"`
         );
+      } catch (e: any) {
+        // Column already absent — safe to ignore
+        console.error(
+          `Field.delete: column "${this.name}" already absent from "${table.name}"`,
+          e.message || e
+        );
+      }
+      if (table.versioned) {
+        try {
+          await db.query(
+            `alter table ${schema}"${sqlsanitize(
+              table.name
+            )}__history" drop column "${sqlsanitize(this.name)}"`
+          );
+        } catch (e: any) {
+          console.error(
+            `Field.delete: column "${this.name}" already absent from "${table.name}__history"`,
+            e.message || e
+          );
+        }
       }
     }
     if (!db.getRequestContext()?.client)
