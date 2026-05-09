@@ -344,10 +344,11 @@ const reconcile_table = async (
   // Saltcorn fields → match or ghost
   for (const f of scFields) {
     const isTransient = f.calculated && !f.stored;
+    const fieldType = typeof f.type === "string" ? f.type : f.type?.name;
     if (physicalNames.has(f.name) || isTransient) {
-      fields.push({ name: f.name, type: f.type?.name || f.type, status: "match" });
+      fields.push({ name: f.name, type: fieldType, status: "match" });
     } else {
-      fields.push({ name: f.name, type: f.type?.name || f.type, status: "ghost" });
+      fields.push({ name: f.name, type: fieldType, status: "ghost" });
     }
   }
 
