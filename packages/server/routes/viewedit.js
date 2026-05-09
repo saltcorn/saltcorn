@@ -131,8 +131,8 @@ const mapObjectValues = (o, f) =>
  * @returns {Form}
  */
 const viewForm = async (req, tableOptions, roles, pages, values) => {
-  const isEdit =
-    values && values.id && !getState().getConfig("development_mode", false);
+  const devmode = getState().getConfig("development_mode", false);
+  const isEdit = values && values.id && !devmode;
   const hasTable = Object.entries(getState().viewtemplates)
     .filter(([k, v]) => !v.tableless && !v.table_optional)
     .map(([k, v]) => k);
@@ -141,7 +141,7 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
     .map(([k, v]) => k);
   const slugOptions = await Table.allSlugOptions();
   const viewpatternOptions = Object.values(getState().viewtemplates)
-    .filter((vt) => !vt.singleton)
+    .filter((vt) => !vt.singleton && !(!values && vt.deprecated && !devmode))
     .map((vt) => vt.name);
   return new Form({
     action: addOnDoneRedirect("/viewedit/save", req),
@@ -173,7 +173,10 @@ const viewForm = async (req, tableOptions, roles, pages, values) => {
         attributes: {
           explainers: mapObjectValues(
             getState().viewtemplates,
-            ({ description }) => description
+            ({ description, deprecated }) =>
+              deprecated && description
+                ? `${description}. <i>${req.__("Deprecated")}</i>`
+                : description || (deprecated ? req.__("Deprecated") : undefined)
           ),
         },
         disabled: isEdit,

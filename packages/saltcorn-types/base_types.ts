@@ -297,6 +297,7 @@ export type ViewTemplate = {
   tableless?: boolean;
   table_optional?: boolean;
   singleton?: boolean;
+  deprecated?: boolean;
   mobile_render_server_side?: boolean;
   get_state_fields?: (
     table_id: number | string | undefined,

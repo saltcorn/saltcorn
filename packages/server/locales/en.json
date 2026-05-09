@@ -2064,5 +2064,19 @@
 	"Detailed contents": "Detailed contents",
 	"On updates, use <code>row.old_row</code> to access values before the update.": "On updates, use <code>row.old_row</code> to access values before the update.",
 	"Copy": "Copy",
-	"Formula evaluating to boolean. Example: <code>status === \"Active\"</code>": "Formula evaluating to boolean. Example: <code>status === \"Active\"</code>"
+	"Formula evaluating to boolean. Example: <code>status === \"Active\"</code>": "Formula evaluating to boolean. Example: <code>status === \"Active\"</code>",
+	"Created at": "Created at",
+	"Updated at": "Updated at",
+	"Created by": "Created by",
+	"Updated by": "Updated by",
+	"Create fields": "Create fields",
+	"Default value": "Default value",
+	"Fixed value": "Fixed value",
+	"Current user ID": "Current user ID",
+	"Current user email": "Current user email",
+	"Current timestamp": "Current timestamp",
+	"Current date (ISO)": "Current date (ISO)",
+	"Default type": "Default type",
+	"JavaScript expression. Available: <code>user</code> (current user). Can be async.": "JavaScript expression. Available: <code>user</code> (current user). Can be async.",
+	"Deprecated": "Deprecated"
 }
