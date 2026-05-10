@@ -294,6 +294,7 @@ router.get(
       hozAlign: "center",
       headerSort: false,
       clipboard: false,
+      frozen: true,
       cellClick: "__delete_tabulator_row",
     });
     const isDark = getState().getLightDarkMode(req.user) === "dark";
@@ -458,10 +459,30 @@ router.get(
                   paginationMode:"remote",
                   paginationSize: tabulator_calc_page_size(),
                   clipboard:true,
+                  clipboardCopyRowRange:"range",
+                  clipboardPasteParser:"range",
+                  clipboardPasteAction:"range",
+                  clipboardCopyConfig:{
+                      rowHeaders:false, //do not include row headers in clipboard output
+                      columnHeaders:false, //do not include column headers in clipboard output
+                  },
+                  clipboardCopyStyled:false,
                   movableColumns: true,
                   ajaxContentType:"json",
                   sortMode:"remote",
                   resizableColumnGuide:true,
+                  editTriggerEvent:"dblclick",
+                  selectableRange:1,
+                  selectableRangeColumns:true,
+                  selectableRangeRows:true,
+                  selectableRangeClearCells:true,
+                   persistence:{
+                      columns: [],
+                      sort: true,
+                  }, 
+                  persistenceID:"scadmintable${encodeURIComponent(
+                    table.id || table.name
+                  )}",
                   columnDefaults:{
                       resizable:true,
                       maxWidth:500
