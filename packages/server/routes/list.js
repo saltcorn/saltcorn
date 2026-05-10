@@ -473,7 +473,6 @@ router.get(
                   resizableColumnGuide:true,
                   editTriggerEvent:"dblclick",
                   selectableRange:1,
-                  selectableRangeColumns:true,
                   selectableRangeRows:true,
                   selectableRangeClearCells:true,
                    persistence:{
