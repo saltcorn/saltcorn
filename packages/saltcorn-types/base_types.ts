@@ -288,6 +288,7 @@ export type Action = {
   disableInList?: boolean;
   disableInWorkflow?: boolean;
   requireRow?: boolean;
+  deprecated?: boolean;
   disableIf?: () => boolean;
 };
 
@@ -415,6 +416,7 @@ export type PluginFunction = {
   returns?: string;
   arguments?: string[] | FieldLike[];
   isAsync?: boolean;
+  hidden?: boolean;
 };
 
 type FieldViewShow = {
@@ -453,6 +455,7 @@ export type FieldView = {
   readFromFormRecord?: Function;
   read?: Function;
   type?: string;
+  deprecated?: boolean;
   blockDisplay?: boolean;
   handlesTextStyle?: boolean;
   description?: string;
