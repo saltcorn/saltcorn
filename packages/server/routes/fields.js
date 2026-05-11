@@ -588,7 +588,9 @@ const fieldFlow = (req) =>
                 label: req.__("Where"),
                 required: false,
                 showIf: { expression_type: "Aggregation" },
-                sublabel: req.__(`Formula evaluating to boolean. Example: <code>status === "Active"</code>`),
+                sublabel: req.__(
+                  `Formula evaluating to boolean. Example: <code>status === "Active"</code>`
+                ),
                 class: "validate-expression",
                 type: "String",
                 help: { topic: "Aggregation where formula" },
@@ -1104,7 +1106,10 @@ router.post(
     let result;
     try {
       if (stored) {
-        const f = get_async_expression_function(formula, fields);
+        const f = get_async_expression_function(formula, [
+          ...fields,
+          ...Object.keys(joinFields).map((k) => ({ name: k })),
+        ]);
         result = await f(rows[0], req.user);
       } else {
         const f = get_expression_function(formula, fields);
