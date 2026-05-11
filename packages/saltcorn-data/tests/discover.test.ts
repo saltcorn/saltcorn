@@ -258,9 +258,9 @@ describe("Repair primary key", () => {
 describe("reconcile_table", () => {
   if (!db.isSQLite) {
     it("should report all matches for a healthy table", async () => {
-      const users = Table.findOne("users");
-      assertIsSet(users);
-      const result = await reconcile_table(users);
+      const books = Table.findOne("books");
+      assertIsSet(books);
+      const result = await reconcile_table(books);
       expect(result.ghost_count).toBe(0);
       expect(result.orphan_count).toBe(0);
       expect(result.match_count).toBeGreaterThan(0);
