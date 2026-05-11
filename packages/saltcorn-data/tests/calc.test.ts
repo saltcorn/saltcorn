@@ -1452,6 +1452,11 @@ describe("jsexprToWhere", () => {
     expect(jsexprToWhere("foo==4+3")).toEqual({ foo: 7 });
     expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });
   });
+  it("translates and-neq", () => {
+    expect(jsexprToWhere("id !==5 && id !== 8")).toEqual({
+      not: [{ id: 5 }, { id: 8 }],
+    });
+  });
   it("translates bools", () => {
     expect(jsexprToWhere("foo==true")).toEqual({ foo: true });
     expect(jsexprToWhere("foo==false")).toEqual({ foo: false });
