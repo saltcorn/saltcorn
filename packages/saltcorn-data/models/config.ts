@@ -781,6 +781,16 @@ const configTypes: ConfigTypes = {
     options: ["Unset", "None", "Lax", "Strict"],
     excludeFromMobile: true,
   },
+  force_secure_cookies: {
+    type: "Bool",
+    label: "Force secure cookies",
+    restart_required: true,
+    root_only: true,
+    sublabel:
+      "Set the Secure flag on session cookies. Enable when Saltcorn runs behind an HTTPS reverse proxy (nginx, Cloudflare, etc.). Automatically enabled when Let's Encrypt or a custom SSL certificate is configured.",
+    default: false,
+    excludeFromMobile: true,
+  },
   content_security_policy: {
     input_type: "select",
     label: "Content Security Policy",

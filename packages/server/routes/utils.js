@@ -352,6 +352,19 @@ const getSessionStore = (pruneInterval) => {
     );
   let sameSite = getState().getConfig("cookie_samesite", "None").toLowerCase();
   if (sameSite === "unset") sameSite = undefined;
+  const letsencrypt = getState().getConfig("letsencrypt", false);
+  console.log(`Session cookies sameSite=${sameSite} secure=${letsencrypt}`);
+  const hasCustomSsl =
+    !!getState().getConfig("custom_ssl_certificate", "") &&
+    !!getState().getConfig("custom_ssl_private_key", "");
+  const forceSecure = getState().getConfig("force_secure_cookies", false);
+  const secure = letsencrypt || hasCustomSsl || forceSecure || undefined;
+  console.log({
+    letsencrypt,
+    hasCustomSsl,
+    forceSecure,
+    secure,
+  });
   if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
     return session({
@@ -359,7 +372,7 @@ const getSessionStore = (pruneInterval) => {
       secret: db.connectObj.session_secret || is.str.generate(),
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite }, // 30 days
+      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite, secure }, // 30 days
     });
   } else {
     const pgSession = require("connect-pg-simple")(session);
@@ -373,7 +386,7 @@ const getSessionStore = (pruneInterval) => {
       secret: db.connectObj.session_secret || is.str.generate(),
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite }, // 30 days
+      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite, secure }, // 30 days
     });
   }
 };
