@@ -1347,17 +1347,6 @@ describe("mergeIntoWhere", () => {
     expect(values[0]).toBe(5);
     expect(values[1]).toBe(15);
   });
-  it("merges and", () => {
-    let w = mergeIntoWhere({ a: { gt: 5 } }, { a: { lt: 15 } });
-    expect(w).toEqual({
-      a: [{ gt: 5 }, { lt: 15 }],
-    });
-    const { where, values } = mkWhere(w);
-
-    expect(where).toEqual('where "a">$1 and "a"<$2');
-    expect(values[0]).toBe(5);
-    expect(values[1]).toBe(15);
-  });
 });
 let x = {
   and: [{ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] }],
