@@ -353,18 +353,11 @@ const getSessionStore = (pruneInterval) => {
   let sameSite = getState().getConfig("cookie_samesite", "None").toLowerCase();
   if (sameSite === "unset") sameSite = undefined;
   const letsencrypt = getState().getConfig("letsencrypt", false);
-  console.log(`Session cookies sameSite=${sameSite} secure=${letsencrypt}`);
   const hasCustomSsl =
     !!getState().getConfig("custom_ssl_certificate", "") &&
     !!getState().getConfig("custom_ssl_private_key", "");
   const forceSecure = getState().getConfig("force_secure_cookies", false);
   const secure = letsencrypt || hasCustomSsl || forceSecure || undefined;
-  console.log({
-    letsencrypt,
-    hasCustomSsl,
-    forceSecure,
-    secure,
-  });
   if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
     return session({
