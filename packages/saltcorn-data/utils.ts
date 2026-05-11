@@ -316,9 +316,11 @@ const objectToQueryString = (o: Object): string => {
           ? v.and.map((val: any) => f([k, val])).join("&")
           : Array.isArray(v)
             ? v.map((val) => f([k, val])).join("&")
-            : v && typeof v === "object"
-              ? objectToQueryString(v)
-              : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
+            : v.in
+              ? v.in.map((val: any) => f([k, val])).join("&")
+              : v && typeof v === "object"
+                ? objectToQueryString(v)
+                : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
 
   return Object.entries(o || {})
     .map(f)
