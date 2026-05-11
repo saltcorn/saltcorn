@@ -1335,6 +1335,8 @@ describe("mergeIntoWhere", () => {
     ).toEqual({
       and: [{ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] }],
     });
+    // TODO
+    //expect(mergeIntoWhere({ not: { a: 1 } }, { not: { b: 4 } })).toEqual(1);
   });
   it("merges bounds", () => {
     let w = mergeIntoWhere({ a: { gt: 5 } }, { a: { lt: 15 } });
