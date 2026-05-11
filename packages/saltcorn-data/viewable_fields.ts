@@ -2294,6 +2294,10 @@ const transformForm = async ({
       }
     },
     async action(segment: any) {
+      if (segment.action_name.startsWith("Login with ")) {
+        const method_label = segment.action_name.replace("Login with ", "");
+        segment.auth_method = getState().auth_methods[method_label];
+      }
       if (segment.action_style === "on_page_load") {
         segment.type = "blank";
         segment.style = {};
