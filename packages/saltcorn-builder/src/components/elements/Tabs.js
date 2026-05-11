@@ -423,7 +423,7 @@ const TabsSettings = () => {
                   setProp={setProp}
                   countProp={"ntabs"}
                   currentProp={"setting_tab_n"}
-                  managedArrays={["titles", "acc_init_opens", "showif"]}
+                  managedArrays={["titles", "acc_init_opens"]}
                   manageContents={true}
                   initialAddProps={{ titles: "New Tab" }}
                 ></ArrayManager>
@@ -447,29 +447,33 @@ const TabsSettings = () => {
                 />
               </td>
             </tr>
-            <Fragment>
-              <tr>
-                <th colSpan="2">{t("Show if formula")}</th>
-              </tr>
-              <tr>
-                <td colSpan={2}>
-                  <input
-                    type="text"
-                    spellCheck={false}
-                    className="form-control text-to-display"
-                    value={showif?.[use_setting_tab_n] || ""}
-                    onChange={(e) => {
-                      if (!e.target) return;
-                      const value = e.target.value;
-                      setProp((prop) => {
-                        if (!prop.showif) prop.showif = [];
-                        prop.showif[use_setting_tab_n] = value;
-                      });
-                    }}
-                  />
-                </td>
-              </tr>
-            </Fragment>
+            {options.mode === "show" ||
+            options.mode === "edit" ||
+            options.mode === "filter" ? (
+              <Fragment>
+                <tr>
+                  <th colSpan="2">{t("Show if formula")}</th>
+                </tr>
+                <tr>
+                  <td colSpan={2}>
+                    <input
+                      type="text"
+                      spellCheck={false}
+                      className="form-control text-to-display"
+                      value={showif?.[use_setting_tab_n] || ""}
+                      onChange={(e) => {
+                        if (!e.target) return;
+                        const value = e.target.value;
+                        setProp((prop) => {
+                          if (!prop.showif) prop.showif = [];
+                          prop.showif[use_setting_tab_n] = value;
+                        });
+                      }}
+                    />
+                  </td>
+                </tr>
+              </Fragment>
+            ) : null}
             {tabsStyle === "Accordion" ? (
               <tr>
                 <td colSpan="2">

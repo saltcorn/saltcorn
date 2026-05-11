@@ -308,6 +308,9 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
                   const firstLinkedId = Object.values(linkedNodes)[0];
                   pasteTarget = firstLinkedId;
                   pasteIndex = query.node(firstLinkedId).childNodes().length;
+                } else if (selNode?.data?.isCanvas) {
+                  pasteTarget = selected.id;
+                  pasteIndex = query.node(selected.id).childNodes().length;
                 } else {
                   const parentId = selNode?.data?.parent;
                   if (parentId) {
@@ -845,6 +848,66 @@ const Builder = ({ options, layout, mode }) => {
      const rect = ref.current.getBoundingClientRect();
      setBuilderTop(rect.top);
    });
+
+  // Correct the CraftJS drop indicator position when body CSS zoom is applied.
+  // getBoundingClientRect() returns zoomed viewport coords, but position:fixed
+  // top/left values inside a zoomed body also get scaled, so we divide by zoom.
+  useEffect(() => {
+    const getBodyZoom = () => {
+      const bw = document.body.offsetWidth;
+      if (!bw) return 1;
+      return document.body.getBoundingClientRect().width / bw || 1;
+    };
+
+    let isCorrecting = false;
+
+    const correctIndicator = (el) => {
+      if (isCorrecting) return;
+      const zoom = getBodyZoom();
+      if (Math.abs(zoom - 1) < 0.01) return;
+
+      isCorrecting = true;
+      const top = parseFloat(el.style.top);
+      const left = parseFloat(el.style.left);
+      const width = parseFloat(el.style.width);
+      const height = parseFloat(el.style.height);
+      console.log("[indicator-zoom] zoom=" + zoom.toFixed(4) +
+        " | before: top=" + top + " left=" + left + " width=" + width + " height=" + height);
+      // Chrome applies body zoom to vertical fixed positioning but not horizontal,
+      // so only top/height need correction — left/width are already correct.
+      if (!isNaN(top)) el.style.top = `${top / zoom}px`;
+      if (!isNaN(height)) el.style.height = `${height / zoom}px`;
+      console.log("[indicator-zoom] after: top=" + (top/zoom).toFixed(1) +
+        " left=" + left + " width=" + width + " height=" + (height/zoom).toFixed(1));
+      setTimeout(() => { isCorrecting = false; }, 0);
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === "attributes" && mutation.attributeName === "style") {
+          const el = mutation.target;
+          if (el.classList && el.classList.contains("builder-drop-indicator")) {
+            correctIndicator(el);
+          }
+        } else if (mutation.type === "childList") {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1 && node.classList && node.classList.contains("builder-drop-indicator")) {
+              correctIndicator(node);
+            }
+          });
+        }
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const canvasHeight =
     Math.max(windowHeight - builderTop, builderHeight, 600) - 10;
