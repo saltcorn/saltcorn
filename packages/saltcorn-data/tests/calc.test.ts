@@ -1335,6 +1335,19 @@ describe("mergeIntoWhere", () => {
     ).toEqual({
       and: [{ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] }],
     });
+    // TODO
+    //expect(mergeIntoWhere({ not: { a: 1 } }, { not: { b: 4 } })).toEqual(1);
+  });
+  it("merges bounds", () => {
+    let w = mergeIntoWhere({ a: { gt: 5 } }, { a: { lt: 15 } });
+    expect(w).toEqual({
+      a: [{ gt: 5 }, { lt: 15 }],
+    });
+    const { where, values } = mkWhere(w);
+
+    expect(where).toEqual('where "a">$1 and "a"<$2');
+    expect(values[0]).toBe(5);
+    expect(values[1]).toBe(15);
   });
 });
 let x = {
@@ -1451,6 +1464,21 @@ describe("jsexprToWhere", () => {
   it("translates sums", () => {
     expect(jsexprToWhere("foo==4+3")).toEqual({ foo: 7 });
     expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });
+  });
+  it("translates and-neq", () => {
+    const w = jsexprToWhere("id !==5 && id !== 8");
+    expect(w).toEqual({
+      and: [{ not: { id: 5 } }, { not: { id: 8 } }],
+    });
+    const { where } = mkWhere(w);
+    expect(where).toEqual('where (not ("id"=$1) and not ("id"=$2))');
+  });
+  it("translates simple and", () => {
+    const w = jsexprToWhere("id ==5 && y== 8");
+    expect(w).toEqual({
+      id: 5,
+      y: 8,
+    });
   });
   it("translates bools", () => {
     expect(jsexprToWhere("foo==true")).toEqual({ foo: true });

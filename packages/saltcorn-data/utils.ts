@@ -308,11 +308,19 @@ const mergeConnectedObjects = (
 
 const objectToQueryString = (o: Object): string => {
   const f = ([k, v]: any): string =>
-    v?.or
-      ? v.or.map((val: any) => f([k, val])).join("&")
-      : Array.isArray(v)
-        ? v.map((val) => f([k, val])).join("&")
-        : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
+    k == "eq" && Array.isArray(v)
+      ? `${encodeURIComponent(v[0])}=${encodeURIComponent(v[1])}`
+      : v?.or
+        ? v.or.map((val: any) => f([k, val])).join("&")
+        : v?.and
+          ? v.and.map((val: any) => f([k, val])).join("&")
+          : Array.isArray(v)
+            ? v.map((val) => f([k, val])).join("&")
+            : v.in
+              ? v.in.map((val: any) => f([k, val])).join("&")
+              : v && typeof v === "object"
+                ? objectToQueryString(v)
+                : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
 
   return Object.entries(o || {})
     .map(f)
@@ -924,5 +932,5 @@ export = {
   imageAvailable,
   pluginsFolderRoot,
   decodeProvisioningProfile,
-  isValidJsIdentifier
+  isValidJsIdentifier,
 };

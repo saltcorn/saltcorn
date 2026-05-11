@@ -366,6 +366,22 @@ describe("Field Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude(" is: <pre>"));
   });
+   it("should show on stored expression with half-hjoinfield", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const table = Table.findOne({ name: "books" });
+
+    const ctx = encodeURIComponent(JSON.stringify({ table_id: table.id }));
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .post("/field/test-formula")
+      .send({
+        formula: "publisherⱵname",
+        tablename: "books",
+        stored: true,
+      })
+      .set("Cookie", loginCookie)
+      .expect(toInclude(" is: <pre>"));
+  });
   it("should fail on non-stored expression with joinfield", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = Table.findOne({ name: "books" });

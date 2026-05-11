@@ -451,9 +451,26 @@ function jsexprToWhere(
             "&&"({ left, right }: { left: ExtendedNode; right: ExtendedNode }) {
               const l = compile(left);
               const r = compile(right);
-              //Object.assign(l, r);
-              mergeIntoWhere(l, r);
-              return l;
+
+              const simpleCmp = (o: any) =>
+                o &&
+                typeof o === "object" &&
+                !Array.isArray(o) &&
+                !o.and &&
+                !o.eq;
+
+              if (
+                simpleCmp(l) &&
+                simpleCmp(r) &&
+                !(l.not && r.not) &&
+                !(l.or && r.or)
+              ) {
+                mergeIntoWhere(l, r);
+                return l;
+              }
+              //console.log("merged", l);
+
+              return { and: [l, r] };
             },
             "||"({ left, right }: { left: any; right: any }) {
               return { or: [compile(left), compile(right)] };
