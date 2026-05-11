@@ -1394,6 +1394,7 @@ const renderFormLayout = (form: Form): string => {
       action_bordercol,
       action_textcol,
       spinner,
+      auth_method,
     }: any) {
       const isMobile = !isNode || form.req?.smr;
       let style =
@@ -1411,9 +1412,12 @@ const renderFormLayout = (form: Form): string => {
         const dest = form.req?.query?.dest
           ? `?dest=${encodeURIComponent(form.req.query.dest)}`
           : "";
+        const url = auth_method?.postUsernamePassword
+          ? `javascript:$('form[action=\"/auth/login\"]').attr('action','/auth/login-with/${method_label}${dest}').submit();`
+          : `/auth/login-with/${method_label}${dest}`;
         return a(
           {
-            href: `/auth/login-with/${method_label}${dest}`,
+            href: url,
             //TODO get url through form.req to reduce coupling
             class: [
               action_style !== "btn-link" &&

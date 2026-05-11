@@ -459,22 +459,22 @@ router.get(
                   paginationMode:"remote",
                   paginationSize: tabulator_calc_page_size(),
                   clipboard:true,
-                  clipboardCopyRowRange:"range",
+                  /*clipboardCopyRowRange:"range",
                   clipboardPasteParser:"range",
                   clipboardPasteAction:"range",
                   clipboardCopyConfig:{
                       rowHeaders:false, //do not include row headers in clipboard output
                       columnHeaders:false, //do not include column headers in clipboard output
-                  },
+                  },*/
                   clipboardCopyStyled:false,
                   movableColumns: true,
                   ajaxContentType:"json",
                   sortMode:"remote",
                   resizableColumnGuide:true,
-                  editTriggerEvent:"dblclick",
+                  /*editTriggerEvent:"dblclick",
                   selectableRange:1,
                   selectableRangeRows:true,
-                  selectableRangeClearCells:true,
+                  selectableRangeClearCells:true,*/
                    persistence:{
                       columns: [],
                       sort: true,
