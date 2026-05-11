@@ -119,21 +119,8 @@ const getApp = async (opts = {}) => {
     false
   );
   app.set("query parser", "extended");
-  if (getState().getConfig("force_secure_cookies", false)) {
-    console.log({
-      msg: "####",
-      force_secure_cookies: getState().getConfig("force_secure_cookies", false),
-    });
+  if (getState().getConfig("force_secure_cookies", false))
     app.set("trust proxy", 1);
-  }
-
-  app.get("/debug", (req, res) => {
-    res.json({
-      protocol: req.protocol,
-      secure: req.secure,
-      forwardedProto: req.headers["x-forwarded-proto"],
-    });
-  });
 
   const helmetOptions = {
     contentSecurityPolicy: {
