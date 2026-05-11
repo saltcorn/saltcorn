@@ -9,6 +9,7 @@ import View from "./view";
 import Table from "./table";
 import File from "./file";
 import { readFile } from "fs/promises";
+import { parseDocument, DomUtils } from "htmlparser2";
 import layout from "./layout";
 const { eachView, eachPage, traverse, getStringsForI18n, translateLayout } =
   layout;
@@ -462,32 +463,45 @@ class Page implements AbstractPage {
       const html_string = (await file?.get_contents("utf8")) as string;
 
       if (html_string?.includes("<embed-view")) {
-        const viewContents: Record<string, string> = {};
-
-        const embeds = html_string.toString().matchAll(/<embed-view(\s*.*?)>/g);
-        for (const match of embeds) {
-          const attrs: Record<string, string> = {};
-          for (const attrStr of match[1]
-            .split(" ")
-            .map((s) => s.trim())
-            .filter(Boolean)) {
-            const [anm, aval] = attrStr.split("=");
-            if (!aval) continue;
-            attrs[anm] = aval.replaceAll('"', "");
-          }
-          const { viewname, ...embedstate } = attrs;
+        const doc = parseDocument(html_string, {
+          withStartIndices: true,
+          withEndIndices: true,
+          xmlMode: true,
+        });
+        const embedNodes: any[] = DomUtils.findAll(
+          (el: any) => el.type === "tag" && el.name === "embed-view",
+          doc.children
+        );
+        type Replacement = { start: number; end: number; content: string };
+        const replacements: Replacement[] = [];
+        for (const node of embedNodes) {
+          const { viewname, ...embedstate } = node.attribs ?? {};
           const view = View.findOne({ name: viewname });
           if (!view) continue;
-          viewContents[match[0]] = await view.run(
-            { ...querystate, ...embedstate },
-            extraArgs
-          );
+          try {
+            const content = await view.run(
+              { ...querystate, ...embedstate },
+              extraArgs
+            );
+            replacements.push({
+              start: node.startIndex,
+              end: node.endIndex + 1,
+              content: content ?? "",
+            });
+          } catch (e) {
+            replacements.push({
+              start: node.startIndex,
+              end: node.endIndex + 1,
+              content: "",
+            });
+          }
         }
-        const replacer = (match: string) => viewContents[match] || match;
-
-        return {
-          html_string: html_string.replace(/<embed-view(\s*.*?)>/, replacer),
-        };
+        replacements.sort((a, b) => b.start - a.start);
+        let result = html_string;
+        for (const { start, end, content } of replacements) {
+          result = result.slice(0, start) + content + result.slice(end);
+        }
+        return { html_string: result };
       }
     }
     return this.layout;
