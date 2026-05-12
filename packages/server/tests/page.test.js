@@ -203,6 +203,29 @@ describe("homepage with html-file page", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude("Land here"));
   });
+
+  it("injects csrf and pageloadtag globals into html_string page", async () => {
+    await Page.create({
+      name: "html_string_csrf_test",
+      title: "",
+      description: "",
+      min_role: 1,
+      layout: {
+        html_string:
+          "<html><head><title>Test</title></head><body>hello</body></html>",
+      },
+    });
+    const app = await getApp({ disableCsrf: false });
+    const loginCookie = await getAdminLoginCookie();
+    const resp = await request(app)
+      .get("/page/html_string_csrf_test")
+      .set("Cookie", loginCookie);
+    expect(resp.text).toContain("_sc_globalCsrf");
+    expect(resp.text).toContain("_sc_pageloadtag");
+    expect(resp.text.indexOf("_sc_globalCsrf")).toBeLessThan(
+      resp.text.indexOf("</head>")
+    );
+  });
 });
 
 describe("page action", () => {
