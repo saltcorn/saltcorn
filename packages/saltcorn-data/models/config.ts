@@ -700,6 +700,12 @@ const configTypes: ConfigTypes = {
     hide_value: true,
     attributes: { mode: "text/html" },
   },
+  suppress_toasts: {
+    type: "Bool",
+    label: "Suppress toasts",
+    default: false,
+    blurb: "Do not show any toast notifications to users",
+  },
   custom_http_headers: {
     input_type: "code",
     label: "Custom HTTP headers",
