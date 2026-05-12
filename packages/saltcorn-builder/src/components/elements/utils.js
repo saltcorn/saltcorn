@@ -937,7 +937,7 @@ const ColorInput = ({ value, onChange }) =>
     </button>
   );
 
-const CodeFieldWithModal = ({ value, onChange, setProp, mode, label, hideLabel }) => {
+const CodeFieldWithModal = ({ value, onChange, setProp, mode, label, hideLabel, placeholder, nojoins }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const { t } = useTranslation();
   return (
@@ -966,6 +966,8 @@ const CodeFieldWithModal = ({ value, onChange, setProp, mode, label, hideLabel }
         value={value}
         onChange={onChange}
         mode={mode}
+        placeholder={placeholder}
+        nojoins={nojoins}
       />
       {modalOpen ? (
         <div
@@ -1053,15 +1055,17 @@ const ConfigForm = ({
       if (f.showIf && configuration) {
         let noshow = false;
         Object.entries(f.showIf).forEach(([nm, value]) => {
+          const cfgVal = configuration[nm];
+          const effectiveVal = cfgVal === undefined ? false : cfgVal;
           if (Array.isArray(value))
-            noshow = noshow || !value.includes(configuration[nm]);
-          else noshow = noshow || value !== configuration[nm];
+            noshow = noshow || !value.includes(effectiveVal);
+          else noshow = noshow || value !== effectiveVal;
         });
         if (noshow) return null;
       }
       return (
         <div key={ix} className="builder-config-field" data-field-name={f.name}>
-          {!isCheckbox(f) && f.input_type !== "code" ? (
+          {!isCheckbox(f) && (f.input_type !== "code" || f.attributes?.singleline) ? (
             <label>
               {f.label || f.name}
               {f.help ? (
@@ -1327,19 +1331,11 @@ const ConfigField = ({
       />
     ),
     code: () => {
-      if (
-        field?.attributes?.expression_type === "row" ||
-        field?.attributes?.expression_type === "query"
-      ) {
+      if (field?.attributes?.singleline) {
         return (
-          <textarea
-            rows="6"
-            type="text"
-            className={`field-${field?.name} form-control`}
-            value={value}
-            name={field?.name}
-            onChange={(e) => e.target && myOnChange(e.target.value)}
-            spellCheck={false}
+          <SingleLineEditor
+            value={value || ""}
+            onChange={myOnChange}
           />
         );
       }
@@ -1350,6 +1346,8 @@ const ConfigField = ({
           setProp={setProp}
           mode={field?.attributes?.mode}
           label={field?.label || field?.name || "Code"}
+          placeholder={field?.attributes?.placeholder}
+          nojoins={field?.attributes?.nojoins}
         />
       );
     },
@@ -1544,9 +1542,11 @@ const SettingsFromFields =
             if (f.showIf) {
               let noshow = false;
               Object.entries(f.showIf).forEach(([nm, value]) => {
+                const cfgVal = node[nm];
+                const effectiveVal = cfgVal === undefined ? false : cfgVal;
                 if (Array.isArray(value))
-                  noshow = noshow || !value.includes(node[nm]);
-                else noshow = noshow || value !== node[nm];
+                  noshow = noshow || !value.includes(effectiveVal);
+                else noshow = noshow || value !== effectiveVal;
               });
               if (noshow) return null;
             }
@@ -1631,7 +1631,7 @@ const SettingsRow = ({
     <tr>
       {fullWidth ? (
         <td colSpan="2">
-          {needLabel && field.input_type !== "code" && <label>{field.label}</label>}
+          {needLabel && (field.input_type !== "code" || field.attributes?.singleline) && <label>{field.label}</label>}
           {inner}
           {field.sublabel ? (
             <i

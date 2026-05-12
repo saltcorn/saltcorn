@@ -751,15 +751,6 @@ const HistoryPanel = () => {
   return (
     <div className="d-flex gap-1">
       <button
-        className="btn btn-sm btn-secondary redo-builder"
-        title={t("Redo")}
-        onClick={() => actions.history.redo()}
-        disabled={!canRedo}
-        style={!canRedo ? { opacity: 0.4, pointerEvents: "none" } : {}}
-      >
-        <FontAwesomeIcon icon={faRedo} />
-      </button>
-       <button
         className="btn btn-sm btn-secondary undo-builder"
         title={t("Undo")}
         onClick={() => actions.history.undo()}
@@ -767,6 +758,15 @@ const HistoryPanel = () => {
         style={!canUndo ? { opacity: 0.4, pointerEvents: "none" } : {}}
       >
         <FontAwesomeIcon icon={faUndo} />
+      </button>
+      <button
+        className="btn btn-sm btn-secondary redo-builder"
+        title={t("Redo")}
+        onClick={() => actions.history.redo()}
+        disabled={!canRedo}
+        style={!canRedo ? { opacity: 0.4, pointerEvents: "none" } : {}}
+      >
+        <FontAwesomeIcon icon={faRedo} />
       </button>
     </div>
   );
@@ -850,8 +850,9 @@ const Builder = ({ options, layout, mode }) => {
    });
 
   // Correct the CraftJS drop indicator position when body CSS zoom is applied.
-  // getBoundingClientRect() returns zoomed viewport coords, but position:fixed
-  // top/left values inside a zoomed body also get scaled, so we divide by zoom.
+  // getBoundingClientRect() returns visual (zoomed) coords, but position:fixed
+  // top values inside a zoomed body are in layout (pre-zoom) coords, so we
+  // divide top/height by zoom. Left/width are already in viewport coords.
   useEffect(() => {
     const getBodyZoom = () => {
       const bw = document.body.offsetWidth;
@@ -868,17 +869,11 @@ const Builder = ({ options, layout, mode }) => {
 
       isCorrecting = true;
       const top = parseFloat(el.style.top);
-      const left = parseFloat(el.style.left);
-      const width = parseFloat(el.style.width);
       const height = parseFloat(el.style.height);
-      console.log("[indicator-zoom] zoom=" + zoom.toFixed(4) +
-        " | before: top=" + top + " left=" + left + " width=" + width + " height=" + height);
-      // Chrome applies body zoom to vertical fixed positioning but not horizontal,
-      // so only top/height need correction — left/width are already correct.
+
       if (!isNaN(top)) el.style.top = `${top / zoom}px`;
       if (!isNaN(height)) el.style.height = `${height / zoom}px`;
-      console.log("[indicator-zoom] after: top=" + (top/zoom).toFixed(1) +
-        " left=" + left + " width=" + width + " height=" + (height/zoom).toFixed(1));
+
       setTimeout(() => { isCorrecting = false; }, 0);
     };
 

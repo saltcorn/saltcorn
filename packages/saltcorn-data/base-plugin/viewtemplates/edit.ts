@@ -163,6 +163,7 @@ const configuration_workflow = (req: Req) =>
               },
             ],
           };
+          const actionDescriptions: GenObj = {};
           for (const [name, action] of stateActions) {
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
@@ -171,6 +172,7 @@ const configuration_workflow = (req: Req) =>
                 { mode: "edit", req }
               );
             }
+            if (action.description) actionDescriptions[name] = action.description;
           }
           const workflowActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -248,6 +250,7 @@ const configuration_workflow = (req: Req) =>
             triggerActions,
             builtInActions: edit_build_in_actions,
             actionConfigForms,
+            actionDescriptions,
             images,
             allowMultiStepAction: true,
             min_role: (myviewrow || {}).min_role,

@@ -165,7 +165,7 @@ const AggregationSettings = () => {
               <label>
                 {options.mode === "filter"
                   ? t("Field")
-                  : t("Child table field")}
+                  : t("On field")}
               </label>
             </td>
             <td>
