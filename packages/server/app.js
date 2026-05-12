@@ -119,6 +119,8 @@ const getApp = async (opts = {}) => {
     false
   );
   app.set("query parser", "extended");
+  if (getState().getConfig("force_secure_cookies", false))
+    app.set("trust proxy", 1);
 
   const helmetOptions = {
     contentSecurityPolicy: {

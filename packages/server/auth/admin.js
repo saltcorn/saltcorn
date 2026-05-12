@@ -426,6 +426,7 @@ const http_settings_form = async (req) =>
       "cookie_duration",
       "cookie_duration_remember",
       "cookie_samesite",
+      "force_secure_cookies",
       "content_security_policy",
       "cors_enabled",
       "public_cache_maxage",
