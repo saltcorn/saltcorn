@@ -75,7 +75,24 @@ const runPage = async (page, req, res, tic) => {
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
     else if (contents.html_string) {
       res.set("Content-Type", "text/html");
-      await res.send(contents.html_string);
+      const state = getState();
+      const version_tag = db.connectObj.version_tag;
+      const locale = req.getLocale?.();
+      const scGlobals =
+        `<script>var _sc_globalCsrf = ${JSON.stringify(req.csrfToken())}` +
+        `, _sc_version_tag = ${JSON.stringify(version_tag)}` +
+        (locale ? `, _sc_locale = ${JSON.stringify(locale)}` : "") +
+        `, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16)` +
+        (req?.user?.role_id === 1 ? `, _sc_is_admin = true` : "") +
+        `;</script>`;
+      const normalized = contents.html_string.replace(
+        /\/static_assets\/[a-f0-9]+\//g,
+        `/static_assets/${version_tag}/`
+      );
+      const html = normalized.includes("</head>")
+        ? normalized.replace("</head>", `${scGlobals}</head>`)
+        : scGlobals + normalized;
+      await res.send(html);
     } else
       res.sendWrap(
         {
