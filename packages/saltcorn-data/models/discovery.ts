@@ -81,9 +81,13 @@ const findType = (sql_name: string): string | undefined => {
     "character varying": "String", // varchar  - this type can have length
     varchar: "String",
     citext: "String",
+    text: "String",
     date: "Date",
     timestamp: "Date",
     "timestamp without time zone": "Date",
+    "timestamp with time zone": "Date",
+    timestamptz: "Date",
+    boolean: "Bool",
     // todo discovery "time interval" : "Date"?
   }[sql_name.toLowerCase()];
   if (fixed) return fixed;
@@ -287,10 +291,98 @@ const implement_discovery = async (pack: {
   if (!db.getRequestContext()?.client)
     await require("../db/state").getState().refresh_tables(true);
 };
+/**
+ * Reconcile Saltcorn field metadata against physical DB columns.
+ * Returns a report of matches, ghosts (in Saltcorn but not in DB),
+ * and orphans (in DB but not in Saltcorn).
+ * This is a read-only operation — nothing is modified.
+ * @param table - Saltcorn Table instance
+ * @returns {Promise<ReconcileResult>} reconciliation report
+ */
+const reconcile_table = async (
+  table: Table
+): Promise<{
+  table_name: string;
+  fields: Array<{
+    name: string;
+    type?: string;
+    status: "match" | "ghost" | "orphan";
+  }>;
+  ghost_count: number;
+  orphan_count: number;
+  match_count: number;
+}> => {
+  const schema = db.getTenantSchema();
+  const schemaPrefix = db.getTenantSchemaPrefix();
+  const scFields = table.getFields();
+
+  // Get physical column names from the DB
+  let physicalRows: Row[];
+  if (db.isSQLite) {
+    const { rows } = await db.query(
+      `PRAGMA table_info("${sqlsanitize(table.name)}")`
+    );
+    physicalRows = rows.map((r: Row) => ({ column_name: r.name }));
+  } else {
+    const { rows } = await db.query(
+      "SELECT column_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2",
+      [schema, table.name]
+    );
+    physicalRows = rows;
+  }
+  const physicalNames = new Set(
+    physicalRows.map((r: Row) => r.column_name)
+  );
+  const scNames = new Set(scFields.map((f: Field) => f.name));
+
+  const fields: Array<{
+    name: string;
+    type?: string;
+    status: "match" | "ghost" | "orphan";
+  }> = [];
+
+  // Saltcorn fields → match or ghost
+  for (const f of scFields) {
+    const isTransient = f.calculated && !f.stored;
+    const fieldType = typeof f.type === "string" ? f.type : f.type?.name;
+    if (physicalNames.has(f.name) || isTransient) {
+      fields.push({ name: f.name, type: fieldType, status: "match" });
+    } else {
+      fields.push({ name: f.name, type: fieldType, status: "ghost" });
+    }
+  }
+
+  // DB columns not in Saltcorn → orphan
+  for (const colName of physicalNames) {
+    if (!scNames.has(colName)) {
+      // Try to determine the SQL type for display
+      let sqlType: string | undefined;
+      if (!db.isSQLite) {
+        const { rows } = await db.query(
+          "SELECT data_type FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3",
+          [schema, table.name, colName]
+        );
+        if (rows.length) sqlType = rows[0].data_type;
+      }
+      fields.push({ name: colName, type: sqlType, status: "orphan" });
+    }
+  }
+
+  return {
+    table_name: table.name,
+    fields,
+    ghost_count: fields.filter((f) => f.status === "ghost").length,
+    orphan_count: fields.filter((f) => f.status === "orphan").length,
+    match_count: fields.filter((f) => f.status === "match").length,
+  };
+};
+
 export = {
   discoverable_tables,
   discover_tables,
   implement_discovery,
   get_existing_views,
   findType,
+  make_field,
+  reconcile_table,
 };
