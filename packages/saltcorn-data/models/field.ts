@@ -50,7 +50,7 @@ import { FieldView, CalcJoinfield } from "@saltcorn/types/base_types";
 import { ForUserRequest } from "@saltcorn/types/model-abstracts/abstract_user";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
-  if (v === "") return null;
+  if (v === "" || v === "null" || v === "undefined") return null;
   if (typeof v === "string" && v.startsWith("Preset:")) return v;
   const { getState } = require("../db/state");
   if (!field.reftype)

@@ -1623,7 +1623,9 @@ const prepare = async (
     const form_field = form.fields.find((f: any) => f.name === k);
     const tbl_field = fields.find((f: any) => f.name === k);
     if (tbl_field && !form_field && !fixed?.[`_block_${k}`]) {
-      form.fields.push(new Field({ name: k, input_type: "hidden" }));
+      form.fields.push(
+        new Field({ name: k, input_type: "hidden", type: tbl_field.type })
+      );
     }
   });
   setDateLocales(form, req.getLocale());
