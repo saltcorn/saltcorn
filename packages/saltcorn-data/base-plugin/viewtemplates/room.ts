@@ -382,7 +382,8 @@ const transformForm = async ({ form, table, req, res, viewname }: { form: GenObj
           row,
           segment.rndid,
           "rndid",
-          segment.confirm
+          segment.confirm,
+          segment.spinner
         );
         if ((url as any).javascript) {
           //redo to include dynamic row
