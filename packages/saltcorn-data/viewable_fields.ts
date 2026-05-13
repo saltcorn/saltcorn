@@ -2402,8 +2402,7 @@ const transformForm = async ({
           segment.rndid,
           "rndid",
           segment.confirm,
-          segment.spinner,
-
+          segment.spinner
         );
         if (typeof url !== "string" && url.javascript) {
           //redo to include dynamic row
