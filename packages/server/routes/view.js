@@ -74,10 +74,6 @@ router.get(
     );
     if (!view) {
       state.log(2, `View ${viewname} not found`);
-      if (/\.[a-z0-9]+$/i.test(viewname)) {
-        res.status(404).end();
-        return;
-      }
       const errMsg = req.__(`No such view: %s`, text(viewname));
       if (!req.rvr) {
         req.flash("danger", errMsg);
