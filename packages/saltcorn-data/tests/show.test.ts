@@ -332,6 +332,17 @@ describe("Misc Show views", () => {
     expect(vres1).toBe(
       `<a href="javascript:void(0)" onclick="if(confirm('Are you sure?')){spin_action_link(this);view_post('${view.name}', 'run_action', {rndid:'b6fd72', id:'1'});}" class="btn btn btn-primary ">toast</a>`
     );
+    view.configuration.layout.spinner = false;
+    const vres2 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres2).toBe(
+      `<a href="javascript:void(0)" onclick="if(confirm('Are you sure?')){view_post('${view.name}', 'run_action', {rndid:'b6fd72', id:'1'});}" class="btn btn btn-primary ">toast</a>`
+    );
+    view.configuration.layout.spinner = true;
+    view.configuration.layout.confirm = false;
+    const vres3 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres3).toBe(
+      `<a href="javascript:void(0)" onclick="{spin_action_link(this);view_post('${view.name}', 'run_action', {rndid:'b6fd72', id:'1'});}" class="btn btn btn-primary ">toast</a>`
+    );
   });
   it("runs view embed ", async () => {
     const view = await mkViewWithCfg({
