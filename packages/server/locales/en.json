@@ -2078,5 +2078,7 @@
 	"Current date (ISO)": "Current date (ISO)",
 	"Default type": "Default type",
 	"JavaScript expression. Available: <code>user</code> (current user). Can be async.": "JavaScript expression. Available: <code>user</code> (current user). Can be async.",
-	"Deprecated": "Deprecated"
+	"Deprecated": "Deprecated",
+	"Suppress toasts": "Suppress toasts",
+	"Do not show any toast notifications to users": "Do not show any toast notifications to users"
 }
