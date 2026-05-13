@@ -1624,7 +1624,14 @@ const prepare = async (
     const tbl_field = fields.find((f: any) => f.name === k);
     if (tbl_field && !form_field && !fixed?.[`_block_${k}`]) {
       form.fields.push(
-        new Field({ name: k, input_type: "hidden", type: tbl_field.type })
+        new Field({
+          name: k,
+          input_type: "hidden",
+          type: tbl_field.type,
+          table,
+          table_id: table?.id,
+          reftable_name: tbl_field.reftable_name
+        })
       );
     }
   });
