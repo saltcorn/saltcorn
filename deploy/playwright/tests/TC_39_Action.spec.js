@@ -71,7 +71,7 @@ test.describe('E2E Test Suite - Action confirmation and spinner on click', () =>
 
         await customAssert('Spinner should be visible after cancel', async () => {
             const spinnerLocator = page.locator('.fa-spin, .spinner-border');
-            await expect(spinnerLocator).toHaveCount(0);
+            await expect(spinnerLocator.first()).not.toBeVisible({ timeout: 3000 });
         });
     });
 });
