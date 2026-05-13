@@ -744,8 +744,8 @@ const run = async (
           action_row_variable === "state";
         const url = {
           javascript:
-            `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'}, ` +
-            `null, ${withState});`,
+            `${confirmStr}{${segment.spinner ? "spin_action_link(this);" : ""}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'}, ` +
+            `null, ${withState});}`,
         };
 
         return action_link(url, extra.req, segment as any);
