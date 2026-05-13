@@ -2406,6 +2406,7 @@ function notifyAlert(note, spin) {
     type = "info";
     txt = JSON.stringify(note, null, 2);
   }
+  if (window._sc_suppress_toasts) return;
 
   const { id, html } = buildToast(txt, type, spin, note.toast_title);
   let $modal = $("#scmodal");

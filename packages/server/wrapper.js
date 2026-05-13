@@ -127,6 +127,8 @@ const get_headers = (req, version_tag, description, extras = []) => {
     from_cfg.push({ headerTag: state.getConfig("page_custom_html", "") });
   if (state.getConfig("log_client_errors", false))
     from_cfg.push({ scriptBody: `enable_error_catcher()` });
+  if (state.getConfig("suppress_toasts", false))
+    from_cfg.push({ scriptBody: `_sc_suppress_toasts = true;` });
   const state_headers = [];
   const assets_by_role = state.assets_by_role || {};
   const roleHeaders = assets_by_role[req.user?.role_id || 100];

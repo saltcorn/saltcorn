@@ -303,6 +303,7 @@ admin_config_route({
     { section_header: "Custom code" },
     "page_custom_css",
     "page_custom_html",
+    "suppress_toasts",
     { section_header: "Updates and module store" },
     "airgap",
     "plugins_store_endpoint",
