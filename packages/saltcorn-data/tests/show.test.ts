@@ -270,7 +270,7 @@ describe("Misc Show views", () => {
     });
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toBe(
-      `<a href="javascript:void(0)" onclick="view_post('${view.name}', 'run_action', {rndid:'b6fd72', id:'1'});" class="btn btn btn-primary ">toast</a>`
+      `<a href="javascript:void(0)" onclick="{view_post('${view.name}', 'run_action', {rndid:'b6fd72', id:'1'});}" class="btn btn btn-primary ">toast</a>`
     );
     mockReqRes.reset();
     const body = { rndid: "b6fd72", id: "1" };
@@ -285,6 +285,53 @@ describe("Misc Show views", () => {
       notify: "Hello!",
       success: "ok",
     });
+  });
+  it("runs button action with spinner and confirm", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          type: "action",
+          block: false,
+          rndid: "b6fd72",
+          nsteps: 1,
+          confirm: true,
+          spinner: true,
+          minRole: 100,
+          isFormula: {},
+          action_icon: "",
+          action_name: "toast",
+          action_label: "",
+          action_style: "btn btn-primary",
+          configuration: {
+            text: "Hello!",
+            notify_type: "Notify",
+          },
+        },
+        columns: [
+          {
+            type: "Action",
+            rndid: "b6fd72",
+            nsteps: 1,
+            confirm: true,
+            spinner: true,
+            minRole: 100,
+            isFormula: {},
+            action_icon: "",
+            action_name: "toast",
+            action_label: "",
+            action_style: "btn btn-primary",
+            configuration: {
+              text: "Hello!",
+              notify_type: "Notify",
+            },
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({ id: 1 }, mockReqRes);
+    expect(vres1).toBe(
+      `<a href="javascript:void(0)" onclick="if(confirm('Are you sure?')){spin_action_link(this);view_post('${view.name}', 'run_action', {rndid:'b6fd72', id:'1'});}" class="btn btn btn-primary ">toast</a>`
+    );
   });
   it("runs view embed ", async () => {
     const view = await mkViewWithCfg({
