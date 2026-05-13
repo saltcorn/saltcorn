@@ -93,7 +93,8 @@ const action_url = (
   colIdNm: string,
   confirm: boolean,
   colIndex?: number,
-  runAsync?: boolean
+  runAsync?: boolean,
+  spinner?: boolean
 ): string | { javascript: string } => {
   const pk_name = table.pk_name;
   const __ = getReq__();
@@ -115,9 +116,9 @@ const action_url = (
     return `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
   }
   return {
-    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
+    javascript: `${confirmStr}{${spinner ? "spin_action_link(this);" : ""}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
       r ? `, ${pk_name}:'${r?.[pk_name]}'` : ""
-    }${columnIndex(colIndex)}}${runAsync ? `,{runAsync:true}` : ""});`,
+    }${columnIndex(colIndex)}}${runAsync ? `,{runAsync:true}` : ""});}`,
   };
 };
 
@@ -187,7 +188,7 @@ const action_link = (
     return a(
       {
         href: "javascript:void(0)",
-        onclick: `${spinner ? "spin_action_link(this);" : ""}${url.javascript}${in_row_click ? ";event.stopPropagation()" : ""}`,
+        onclick: `${url.javascript}${in_row_click ? ";event.stopPropagation()" : ""}`,
         class: [
           action_style === "btn-link"
             ? ""
@@ -1034,7 +1035,8 @@ const get_viewable_fields = (
               column.rndid ? "rndid" : "action_name",
               column.confirm,
               index,
-              column.run_async
+              column.run_async,
+              column.spinner
             );
             const label = column.action_label_formula
               ? eval_expression(
@@ -1058,7 +1060,6 @@ const get_viewable_fields = (
                   ],
                   onclick:
                     url.javascript +
-                    (column.spinner ? ";spin_action_link(this)" : "") +
                     (in_row_click ? ";event.stopPropagation()" : ""),
                   ...(!label || label === " "
                     ? { "aria-label": column.action_name }
@@ -1968,7 +1969,8 @@ const standardBlockDispatch = (
         "rndid",
         segment.confirm,
         undefined,
-        !!segment.run_async
+        !!segment.run_async,
+        !!segment.spinner
       );
       if (
         segment.action_name === "Delete" &&
@@ -2399,7 +2401,8 @@ const transformForm = async ({
           row || pseudo_row,
           segment.rndid,
           "rndid",
-          segment.confirm
+          segment.confirm,
+          segment.spinner
         );
         if (typeof url !== "string" && url.javascript) {
           //redo to include dynamic row
@@ -2422,7 +2425,8 @@ const transformForm = async ({
           "rndid",
           segment.confirm,
           undefined,
-          segment.run_async
+          segment.run_async,
+          segment.spinner
         );
         if (typeof url !== "string" && url.javascript) {
           //redo to include dynamic row
@@ -2436,7 +2440,7 @@ const transformForm = async ({
           if (segment.action_name === "Multi-step action" || hasFileFields) {
             url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
           } else {
-            url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
+            url.javascript = `${confirmStr}{${segment.spinner ? "spin_action_link(this);" : ""}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});}`;
           }
         }
         segment.action_link = action_link(url, req, segment, __);

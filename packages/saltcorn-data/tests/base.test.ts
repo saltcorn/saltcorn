@@ -2,10 +2,6 @@ import db from "../db";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
 
 afterAll(db.close);
-beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
-});
 
 /*describe("base plugin", () => {
   const plugin = require("../base-plugin");

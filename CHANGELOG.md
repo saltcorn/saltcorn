@@ -2,6 +2,10 @@
 
 ## 1.6.0 - In development
 
+* Admin tabulator now automatically stretches to bottom of the screen
+
+* Rescan fields in table settings to resync Saltcorn representation with on-disk format.
+
 * Detailed contents shown in module store where available
 
 * run_js_code action run on the client page now execute directly without a server detour.
@@ -99,6 +103,8 @@
 * Prevent tenants from installing git/github plugins from backups and packs
 
 * Ownership checks in table sync with mobile apps
+
+* Cookie "secure" property set if using https or if the "force secure" option is chosen
 
 ## 1.5.0 - Released 26 January 2026
 
