@@ -60,3 +60,4 @@ jobs:
           PGUSER: postgres
           PGDATABASE: saltcorn_test
           PGPASSWORD: postgres
+      - run: deploy/check_sourcemaps.sh
