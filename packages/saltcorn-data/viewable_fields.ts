@@ -1035,7 +1035,8 @@ const get_viewable_fields = (
               column.rndid ? "rndid" : "action_name",
               column.confirm,
               index,
-              column.run_async
+              column.run_async,
+              column.spinner
             );
             const label = column.action_label_formula
               ? eval_expression(
@@ -2426,7 +2427,7 @@ const transformForm = async ({
           segment.confirm,
           undefined,
           segment.run_async,
-          segment.spinner,
+          segment.spinner
         );
         if (typeof url !== "string" && url.javascript) {
           //redo to include dynamic row
@@ -2440,7 +2441,7 @@ const transformForm = async ({
           if (segment.action_name === "Multi-step action" || hasFileFields) {
             url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
           } else {
-            url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
+            url.javascript = `${confirmStr}{${segment.spinner ? "spin_action_link(this);" : ""}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});}`;
           }
         }
         segment.action_link = action_link(url, req, segment, __);
