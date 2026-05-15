@@ -198,10 +198,11 @@ export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = 
   };
 
   const isEmpty = !value || value.trim() === "";
+  const resolvedPlaceholder = placeholder || "// enter code here";
 
   return (
     <div className="form-control p-0 pt-2" style={{ position: "relative" }}>
-      {isEmpty && placeholder && !isModalEditor && (
+      {isEmpty && !isModalEditor && (
         <div style={{
           position: "absolute",
           top: "10px",
@@ -211,7 +212,7 @@ export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = 
           zIndex: 1,
           fontSize: "14px",
         }}>
-          {placeholder}
+          {resolvedPlaceholder}
         </div>
       )}
       <Editor

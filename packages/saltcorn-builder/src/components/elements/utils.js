@@ -1381,31 +1381,40 @@ const ConfigField = ({
             styles={reactSelectStyles()}
           ></Select>
         );
-      } else
+      } else {
+        const explainerText = field.attributes?.explainers?.[value || ""];
         return (
-          <select
-            className={`field-${field?.name} form-control form-select`}
-            value={value || ""}
-            name={field?.name}
-            onChange={(e) => e.target && myOnChange(e.target.value)}
-            onBlur={(e) => e.target && myOnChange(e.target.value)}
-            data-fieldname={field?.name}
-          >
-            {(field.options || []).map((o, ix) =>
-              o.name && o.label ? (
-                <option key={ix} value={o.name}>
-                  {o.label}
-                </option>
-              ) : o.value && o.label ? (
-                <option key={ix} value={o.value}>
-                  {o.label}
-                </option>
-              ) : (
-                <option key={ix}>{o}</option>
-              )
+          <Fragment>
+            <select
+              className={`field-${field?.name} form-control form-select`}
+              value={value || ""}
+              name={field?.name}
+              onChange={(e) => e.target && myOnChange(e.target.value)}
+              onBlur={(e) => e.target && myOnChange(e.target.value)}
+              data-fieldname={field?.name}
+            >
+              {(field.options || []).map((o, ix) =>
+                o.name && o.label ? (
+                  <option key={ix} value={o.name}>
+                    {o.label}
+                  </option>
+                ) : o.value && o.label ? (
+                  <option key={ix} value={o.value}>
+                    {o.label}
+                  </option>
+                ) : (
+                  <option key={ix}>{o}</option>
+                )
+              )}
+            </select>
+            {explainerText && (
+              <div className="alert alert-info py-1 px-2 my-1 small">
+                <strong>{value}</strong>: {explainerText}
+              </div>
             )}
-          </select>
+          </Fragment>
         );
+      }
     },
     btn_select: () => (
       <div className="btn-group w-100" role="group">

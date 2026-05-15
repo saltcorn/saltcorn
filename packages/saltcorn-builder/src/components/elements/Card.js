@@ -441,9 +441,9 @@ const CardSettings = () => {
                     className="form-control-sm  form-select"
                     onChange={setAProp("imageLocation")}
                   >
-                    <option>{t("Card")}</option>
-                    <option>{t("Body")}</option>
-                    <option>{t("Top")}</option>
+                    <option value="Card">{t("Card")}</option>
+                    <option value="Body">{t("Body")}</option>
+                    <option value="Top">{t("Top")}</option>
                   </select>
                 </td>
               </tr>
