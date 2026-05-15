@@ -767,6 +767,7 @@ function ajaxSubmitForm(e, force_no_reload, event) {
     headers: {
       "CSRF-Token": _sc_globalCsrf,
       "Page-Load-Tag": _sc_pageloadtag,
+      SaltcornModalRequest: "true",
     },
     data: new FormData(form[0]),
     processData: false,
