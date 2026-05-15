@@ -1,5 +1,5 @@
 @media print {
-  .admin-cfglink-popover .popover {
+  .admin-cfglink-popover .popover, i.editicon {
     display: none !important;
   }
 }
