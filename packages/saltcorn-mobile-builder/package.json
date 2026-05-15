@@ -19,7 +19,7 @@
     "@saltcorn/mobile-app": "1.6.0-beta.9",
     "fs-extra": "^11.3.3",
     "live-plugin-manager": "^1.0.0",
-    "resize-with-sharp-or-jimp": "0.1.8",
+    "resize-with-sharp-or-jimp": "0.1.9",
     "webpack-merge": "^6.0.1",
     "webpack": "5.97.1",
     "webpack-cli": "6.0.1",

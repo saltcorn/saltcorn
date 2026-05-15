@@ -59,7 +59,7 @@
     "pg": "^8.13.1",
     "pluralize": "^8.0.0",
     "qrcode": "1.5.1",
-    "resize-with-sharp-or-jimp": "0.1.8",
+    "resize-with-sharp-or-jimp": "0.1.9",
     "semver": "^7.6.3",
     "socket.io": "4.8.1",
     "systeminformation": "^5.25.11",

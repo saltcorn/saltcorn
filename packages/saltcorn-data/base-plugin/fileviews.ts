@@ -31,8 +31,11 @@ import { GenObj } from "@saltcorn/types/common_types";
 import path from "path";
 const { getReq__ } = require("../db/state");
 
-
-const buildNodeFileUrl = (filePath: string, cfg: GenObj = {}, opts: GenObj = {}): string =>
+const buildNodeFileUrl = (
+  filePath: string,
+  cfg: GenObj = {},
+  opts: GenObj = {}
+): string =>
   File.pathToServeUrl(filePath, {
     download: opts.download,
     filename: opts.filename,
@@ -79,7 +82,11 @@ const btnStylesForLink = [
   },
 ];
 
-const buildCustomInput = (id: string, attrs: GenObj, file_name?: string): string => {
+const buildCustomInput = (
+  id: string,
+  attrs: GenObj,
+  file_name?: string
+): string => {
   const __ = getReq__();
   return (
     button(
@@ -191,7 +198,14 @@ const fileviews = {
   // Show Image
   "Show Image": {
     description: "Show the file as an image",
-
+    configFields: [
+      {
+        name: "imgResponsiveWidths",
+        label: "Responsive widths",
+        type: "String",
+        sublabel: "List of widths to serve resized images, e.g. 300, 400, 600",
+      },
+    ],
     run: (filePath: string, file_name: string, cfg: GenObj = {}) => {
       if (!filePath) return "";
       if (isNode())
@@ -199,6 +213,18 @@ const fileviews = {
           // Prefer proxied /files/serve URLs so CSP does not block inline images
           src: buildNodeFileUrl(filePath, cfg, { preferDirect: false }),
           style: "width: 100%",
+          srcset:
+            cfg?.imgResponsiveWidths &&
+            filePath &&
+            cfg.imgResponsiveWidths
+              .split(",")
+              .map(
+                (w: string) =>
+                  `/files/resize/${w.trim()}/0/${encodeURIComponent(
+                    filePath
+                  )} ${w.trim()}w`
+              )
+              .join(","),
         });
       else {
         return img({
@@ -247,7 +273,14 @@ const fileviews = {
         },
       ];
     },
-    run: (nm: string, file_name: string, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
+    run: (
+      nm: string,
+      file_name: string,
+      attrs: GenObj,
+      cls: string,
+      reqd: boolean,
+      field: GenObj
+    ) => {
       //console.log("in run attrs.files_accept_filter", attrs.files_accept_filter);
       const customInput =
         attrs?.button_style &&
@@ -311,7 +344,8 @@ const fileviews = {
           label: f.filename,
           value: f.path_to_serve,
         }));
-      if (!(this as any)?.required) field.options.unshift({ label: "", value: "" });
+      if (!(this as any)?.required)
+        field.options.unshift({ label: "", value: "" });
     },
     configFields: async () => {
       const dirs = await File.allDirectories();
@@ -352,7 +386,14 @@ const fileviews = {
       ];
     },
     // run
-    run: (nm: string, file_id: string, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
+    run: (
+      nm: string,
+      file_id: string,
+      attrs: GenObj,
+      cls: string,
+      reqd: boolean,
+      field: GenObj
+    ) => {
       if (attrs?.use_picker) {
         const folder = attrs?.folder || "";
         const inputId = `input${text_attr(nm)}__${Math.floor(Math.random() * 16777215).toString(16)}`;
@@ -448,7 +489,14 @@ const fileviews = {
         },
       ];
     },
-    run: (nm: string, file_name: string, attrs: GenObj, cls: string, reqd: boolean, field: GenObj) => {
+    run: (
+      nm: string,
+      file_name: string,
+      attrs: GenObj,
+      cls: string,
+      reqd: boolean,
+      field: GenObj
+    ) => {
       const customInput =
         attrs?.button_style && attrs.button_style !== "default";
       const id = `input${text_attr(nm)}`;
@@ -470,11 +518,13 @@ const fileviews = {
           span({ class: "ms-2", id: `cpt-file-name-${text_attr(nm)}` }, "")
         );
       } else {
-        const mimebase = ({
-          camera: "image",
-          camcorder: "video",
-          microphone: "audio",
-        } as Record<string, string>)[attrs.device];
+        const mimebase = (
+          {
+            camera: "image",
+            camcorder: "video",
+            microphone: "audio",
+          } as Record<string, string>
+        )[attrs.device];
         return (
           input({
             class: `${cls} ${field.class || ""}`,
@@ -586,7 +636,15 @@ const fileviews = {
         },
       ];
     },
-    run: (nm: string, file_name: string, attrs: GenObj, cls: string, reqd: boolean, field: GenObj, row?: GenObj) => {
+    run: (
+      nm: string,
+      file_name: string,
+      attrs: GenObj,
+      cls: string,
+      reqd: boolean,
+      field: GenObj,
+      row?: GenObj
+    ) => {
       //console.trace({ nm, file_name, attrs, cls, reqd, field, row });
       const contents = row?.[`_content_${nm}`]?.toString?.() || "";
       const edit_file_name =
