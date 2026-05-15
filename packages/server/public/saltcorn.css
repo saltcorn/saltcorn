@@ -1,3 +1,9 @@
+@media print {
+  .admin-cfglink-popover .popover {
+    display: none !important;
+  }
+}
+
 .admin-cfglink-popover .popover {
   background-color: #5f9eec;
   border: none;
@@ -276,11 +282,14 @@ form.menusearch button {
   text-align: right;
 }
 
-[dir="rtl"] .sidebar .nav-item .nav-link[data-bs-toggle=collapse]::after {
+[dir="rtl"] .sidebar .nav-item .nav-link[data-bs-toggle="collapse"]::after {
   float: left;
 }
 
-[dir="rtl"] .sidebar .nav-item .nav-link[data-bs-toggle=collapse].collapsed::after {
+[dir="rtl"]
+  .sidebar
+  .nav-item
+  .nav-link[data-bs-toggle="collapse"].collapsed::after {
   content: "\f104";
 }
 
@@ -288,13 +297,13 @@ form.menusearch button {
 [dir="rtl"] .sidebar #sidebarToggle::after {
   content: "\f105";
   margin-right: unset;
-  margin-left: .1rem;
+  margin-left: 0.1rem;
 }
 
 [dir="rtl"] .sidebar.toggled #sidebarToggle::after {
   content: "\f104";
   margin-left: unset;
-  margin-right: .25rem;
+  margin-right: 0.25rem;
 }
 
 /* RTL toggled sidebar — collapse submenu opens to the left */
