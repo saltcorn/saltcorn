@@ -984,40 +984,64 @@ router.post(
 
 router.get(
   "/snapshot-restore-full",
-  setTenant, // TODO why is this needed?????
   isAdmin,
   error_catcher(async (req, res) => {
-    const markup = form(
-      {
-        method: "post",
-        action: "/admin/snapshot-restore-full",
-        encType: "multipart/form-data",
-      },
-      input({
-        type: "hidden",
-        name: "_csrf",
-        value: req.csrfToken(),
-      }),
-      label(
+    const snapForm = new Form({
+      action: "/admin/snapshot-restore-full",
+      formStyle: "vert",
+      fields: [
         {
-          class: "btn-link",
-          for: "upload_to_snapshot",
-          style: { cursor: "pointer" },
+          name: "file",
+          label: req.__("Snapshot file"),
+          class: "form-control",
+          type: "File",
         },
-        i({ class: "fas fa-upload me-2 mt-2" }),
-        req.__("Restore a snapshot")
-      ),
-      input({
-        id: "upload_to_snapshot",
-        class: "d-none",
-        name: "file",
-        type: "file",
-        accept: ".json,application/json",
-        onchange:
-          "notifyAlert('Restoring snapshot...', true);this.form.submit();",
-      })
-    );
-    res.sendWrap(`Restore snapshot`, { above: [markup] });
+        {
+          name: "configuration",
+          label: req.__("Configuration"),
+          type: "Bool",
+        },
+        {
+          name: "site_name",
+          label: req.__("Site name"),
+          type: "Bool",
+          showIf: { configuration: true },
+        },
+        {
+          name: "base_url",
+          label: req.__("Base URL"),
+          type: "Bool",
+          showIf: { configuration: true },
+        },
+        {
+          name: "email_settings",
+          label: req.__("Email settings"),
+          type: "Bool",
+          showIf: { configuration: true },
+        },
+        {
+          name: "ssl_settings",
+          label: req.__("SSL settings"),
+          type: "Bool",
+          showIf: { configuration: true },
+        },
+        {
+          name: "modules",
+          label: req.__("Modules"),
+          type: "Bool",
+        },
+        {
+          name: "module_configurations",
+          label: req.__("Module configurations"),
+          type: "Bool",
+          showIf: { modules: true },
+
+        },
+      ],
+    });
+    res.sendWrap(`Restore snapshot`, {
+      above: [renderForm(snapForm, req.csrfToken())],
+    });
   })
 );
 
