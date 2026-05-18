@@ -268,9 +268,22 @@ const triggerForm = async (req, trigger) => {
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
   const actionExplainers = Trigger.action_explainers();
+  Trigger.find({}).forEach((tr, i) => {
+    if (tr.description && tr.name) {
+      if (i < 5) {
+        console.log("Adding trigger description for", {
+          name: tr.name,
+          actex: actionExplainers[tr.name],
+        });
+      }
+      actionExplainers[tr.name] = tr.description;
+    }
+    // if (tr.description && tr.name) actionExplainers[tr.name] = tr.description;
+  });
   const allActions = Trigger.action_options({
     notRequireRow: false,
     workflow: true,
+    allTriggers: true,
   });
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const additional_triggers_with_onlyif = ["Login", "PageLoad"];
@@ -278,6 +291,7 @@ const triggerForm = async (req, trigger) => {
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     workflow: true,
+    allTriggers: true,
   });
 
   Trigger.when_options.forEach((t) => {
@@ -1231,6 +1245,53 @@ router.get(
 
         req.__("Test run") + "&nbsp;&raquo;"
       );
+    // Check if trigger.action is a reference to another trigger by name
+    const refTrigger =
+      !action &&
+      trigger.action !== "Workflow" &&
+      trigger.action !== "Multi-step action"
+        ? Trigger.findOne({ name: trigger.action })
+        : null;
+
+    if (refTrigger) {
+      console.log("Trigger action is a reference to another trigger:", refTrigger);
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
+        contents: {
+          type: "card",
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
+          subtitle,
+          contents:
+            p(
+              req.__(
+                "This trigger delegates to %s.",
+                a(
+                  { href: `/actions/configure/${refTrigger.id}` },
+                  refTrigger.name
+                )
+              )
+            ) +
+            p(
+              a(
+                {
+                  href: `/actions/configure/${refTrigger.id}`,
+                  class: "btn btn-primary",
+                },
+                req.__("Configure %s &raquo;", refTrigger.name)
+              )
+            ),
+        },
+      });
+      return;
+    }
+
     if (trigger.action === "Workflow") {
       const wfCfg = await getWorkflowConfig(req, id, table, trigger);
       send_events_page({
