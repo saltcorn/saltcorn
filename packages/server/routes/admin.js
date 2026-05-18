@@ -700,35 +700,14 @@ router.get(
                 { href: "/admin/snapshot-list" },
                 req.__("List/download snapshots &raquo;")
               ),
-              form(
+              a(
                 {
-                  method: "post",
-                  action: "/admin/snapshot-restore-full",
-                  encType: "multipart/form-data",
+                  onclick: "ajax_modal('/admin/snapshot-restore-full')",
+                  class: "d-block",
+                  href: `javascript:void(0)`,
                 },
-                input({
-                  type: "hidden",
-                  name: "_csrf",
-                  value: req.csrfToken(),
-                }),
-                label(
-                  {
-                    class: "btn-link",
-                    for: "upload_to_snapshot",
-                    style: { cursor: "pointer" },
-                  },
-                  i({ class: "fas fa-upload me-2 mt-2" }),
-                  req.__("Restore a snapshot")
-                ),
-                input({
-                  id: "upload_to_snapshot",
-                  class: "d-none",
-                  name: "file",
-                  type: "file",
-                  accept: ".json,application/json",
-                  onchange:
-                    "notifyAlert('Restoring snapshot...', true);this.form.submit();",
-                })
+                i({ class: "fas fa-upload me-2 mt-2" }),
+                req.__("Restore a snapshot")
               )
             ),
           },
@@ -1000,6 +979,45 @@ router.post(
               ? `/${type}edit`
               : "/"
     );
+  })
+);
+
+router.get(
+  "/snapshot-restore-full",
+  setTenant, // TODO why is this needed?????
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const markup = form(
+      {
+        method: "post",
+        action: "/admin/snapshot-restore-full",
+        encType: "multipart/form-data",
+      },
+      input({
+        type: "hidden",
+        name: "_csrf",
+        value: req.csrfToken(),
+      }),
+      label(
+        {
+          class: "btn-link",
+          for: "upload_to_snapshot",
+          style: { cursor: "pointer" },
+        },
+        i({ class: "fas fa-upload me-2 mt-2" }),
+        req.__("Restore a snapshot")
+      ),
+      input({
+        id: "upload_to_snapshot",
+        class: "d-none",
+        name: "file",
+        type: "file",
+        accept: ".json,application/json",
+        onchange:
+          "notifyAlert('Restoring snapshot...', true);this.form.submit();",
+      })
+    );
+    res.sendWrap(`Restore snapshot`, { above: [markup] });
   })
 );
 
@@ -5311,7 +5329,7 @@ declare var console: Console;
 function setTimeout(f:Function, timeout?:number)
 declare const page_load_tag: string
 function emit_to_client(message: object, to_user_ids?: number | number[] | null)
-function emitEvent(eventType: ${Trigger.when_options.map(o=>`"${o}"`).join(" | ")}, channel?: string, payload?: any)
+function emitEvent(eventType: ${Trigger.when_options.map((o) => `"${o}"`).join(" | ")}, channel?: string, payload?: any)
 async function sleep(milliseconds: number)
 function interpolate(s: string,
   row: Row,
@@ -5690,8 +5708,11 @@ router.post(
       //ignore
     }
     try {
-      res.json({ success: true, code: stripTypes(`async () =>{${code}
-}`) });
+      res.json({
+        success: true,
+        code: stripTypes(`async () =>{${code}
+}`),
+      });
     } catch (error) {
       res.json({ success: false, error: error.message });
     }
