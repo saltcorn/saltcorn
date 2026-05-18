@@ -525,16 +525,23 @@ class Trigger implements AbstractTrigger {
       return result;
     }
     const action = state.actions[this.action];
-    return (
-      action &&
-      action.run &&
-      action.run({
-        table,
-        ...runargs,
-        configuration: this.configuration,
-        trigger_id: this.id,
-      })
-    );
+    if (action) {
+      return (
+        action.run &&
+        action.run({
+          table,
+          ...runargs,
+          configuration: this.configuration,
+          trigger_id: this.id,
+        })
+      );
+    }
+    // trigger.action may reference another trigger by name
+    const refTrigger = Trigger.findOne({ name: this.action });
+    if (refTrigger) {
+      return await refTrigger.runWithoutRow(runargs);
+    }
+    state.log(2, `Action not found: ${this.action}`);
   }
 
   /**
@@ -578,18 +585,30 @@ class Trigger implements AbstractTrigger {
           });
       } else {
         const action = getState().actions[trigger.action];
-        trigger.run = (row: Row, extraArgs?: any) =>
-          action &&
-          action.run &&
-          action.run({
-            table,
-            user,
-            configuration: trigger.configuration,
-            trigger_id: trigger.id,
-            row,
-            ...row,
-            ...(extraArgs || {}),
-          });
+        if (action) {
+          trigger.run = (row: Row, extraArgs?: any) =>
+            action.run &&
+            action.run({
+              table,
+              user,
+              configuration: trigger.configuration,
+              trigger_id: trigger.id,
+              row,
+              ...row,
+              ...(extraArgs || {}),
+            });
+        } else {
+          // trigger.action references another trigger by name
+          trigger.run = (row: Row, extraArgs?: any) =>
+            trigger.runWithoutRow({
+              user,
+              table,
+              row,
+              trigger_id: trigger.id,
+              ...row,
+              ...(extraArgs || {}),
+            });
+        }
       }
     }
   }
@@ -752,11 +771,13 @@ class Trigger implements AbstractTrigger {
   static trigger_actions({
     tableTriggers,
     apiNeverTriggers,
+    allTriggers,
     noWorkflows,
     onlyWorkflows,
   }: {
     tableTriggers?: number;
     apiNeverTriggers?: boolean;
+    allTriggers?: boolean;
     noWorkflows?: boolean;
     onlyWorkflows?: boolean;
   }): string[] {
@@ -790,6 +811,15 @@ class Trigger implements AbstractTrigger {
           .map((tr) => tr.name as string),
       ];
     }
+    if (allTriggers) {
+      const existing = new Set(triggerActions);
+      const others = Trigger.find({})
+        .filter((t) => !noWorkflows || t.action !== "Workflow")
+        .filter((t) => !onlyWorkflows || t.action === "Workflow")
+        .map((tr) => tr.name as string)
+        .filter((name) => Boolean(name) && !existing.has(name));
+      triggerActions = [...triggerActions, ...others];
+    }
 
     return triggerActions.sort(comparingCaseInsensitiveValue);
   }
@@ -807,6 +837,7 @@ class Trigger implements AbstractTrigger {
     notRequireRow,
     tableTriggers,
     apiNeverTriggers,
+    allTriggers,
     builtIns,
     builtInLabel,
     workflow,
@@ -817,6 +848,7 @@ class Trigger implements AbstractTrigger {
     notRequireRow?: boolean;
     tableTriggers?: number;
     apiNeverTriggers?: boolean;
+    allTriggers?: boolean;
     builtIns?: string[];
     builtInLabel?: string;
     workflow?: boolean;
@@ -827,6 +859,7 @@ class Trigger implements AbstractTrigger {
     const triggerActions = Trigger.trigger_actions({
       tableTriggers,
       apiNeverTriggers,
+      allTriggers,
       noWorkflows: !!forWorkflow,
     });
     const actions = forWorkflow
