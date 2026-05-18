@@ -219,7 +219,7 @@ class PageLocators {
     this.restorebackup = 'label:has-text("Restore a backup")';
     this.snapshotbutton = '#btnSnapNow';
     this.downloadsnapshot = 'a[href="/admin/snapshot-list"]';
-    this.restoresnapshot = 'label:has-text("Restore a snapshot")';
+    this.restoresnapshot = 'a:has-text("Restore a snapshot")';
     this.backupfileprefix = '#inputbackup_file_prefix';
     this.backuphistorycheckbox = '#inputbackup_history';
     this.smtp_host = '#inputsmtp_host';
