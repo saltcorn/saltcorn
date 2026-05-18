@@ -81,7 +81,10 @@ const {
   restore,
   auto_backup_now,
 } = require("@saltcorn/admin-models/models/backup");
-const { install_pack } = require("@saltcorn/admin-models/models/pack");
+const {
+  install_pack,
+  filter_pack,
+} = require("@saltcorn/admin-models/models/pack");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const {
   runConfigurationCheck,
@@ -1030,13 +1033,6 @@ router.get(
           label: req.__("Modules"),
           type: "Bool",
         },
-        {
-          name: "module_configurations",
-          label: req.__("Module configurations"),
-          type: "Bool",
-          showIf: { modules: true },
-
-        },
       ],
     });
     res.sendWrap(`Restore snapshot`, {
@@ -1058,6 +1054,7 @@ router.post(
     if (req.files?.file?.tempFilePath) {
       try {
         const pack = JSON.parse(fs.readFileSync(req.files?.file?.tempFilePath));
+        filter_pack(pack, req.body);
         await db.withTransaction(async () => {
           await install_pack(pack, undefined, (p) =>
             Plugin.loadAndSaveNewPlugin(p)

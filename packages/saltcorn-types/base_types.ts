@@ -641,7 +641,7 @@ export type Pack = {
   model_instances: Array<ModelInstancePack>;
   event_logs?: Array<EventLogPack>;
   code_pages?: Array<CodePagePack>;
-  config?: object;
+  config?: Record<string, any>;
 };
 
 export const instanceOfPack = (object: any): object is Pack => {

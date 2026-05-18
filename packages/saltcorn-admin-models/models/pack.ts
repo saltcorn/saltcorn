@@ -549,6 +549,49 @@ const add_to_menu = async (item: {
   await save_menu_items(current_menu);
 };
 
+const filter_pack = (
+  pack: Pack,
+  options: {
+    configuration: boolean;
+    site_name: boolean;
+    base_url: boolean;
+    email_settings: boolean;
+    ssl_settings: boolean;
+    modules: boolean;
+  }
+): void => {
+  if (!options.configuration) pack.config = {};
+  else if (pack.config) {
+    if (!options.site_name) delete pack.config["site_name"];
+    if (!options.site_name) delete pack.config["base_url"];
+    if (!options.email_settings) {
+      delete pack.config["smtp_host"];
+      delete pack.config["smtp_auth_method"];
+      delete pack.config["smtp_api_option"];
+      delete pack.config["smtp_authorize_url"];
+      delete pack.config["smtp_token_url"];
+      delete pack.config["smtp_redirect_uri"];
+      delete pack.config["smtp_client_id"];
+      delete pack.config["smtp_client_secret"];
+      delete pack.config["smtp_outh_scopes"];
+      delete pack.config["smtp_oauth_token_data"];
+      delete pack.config["smtp_username"];
+      delete pack.config["smtp_password"];
+      delete pack.config["smtp_port"];
+      delete pack.config["smtp_secure"];
+      delete pack.config["smtp_allow_self_signed"];
+      delete pack.config["email_from"];
+      delete pack.config["email_wait_timestamp"];
+    }
+    if (!options.ssl_settings) {
+      delete pack.config["custom_ssl_certificate"];
+      delete pack.config["custom_ssl_private_key"];
+      delete pack.config["letsencrypt"];
+    }
+  }
+  if (!options.modules) pack.plugins = [];
+};
+
 /**
  * @param pack
  * @param name
@@ -1069,4 +1112,5 @@ export = {
   uninstall_pack,
   add_to_menu,
   create_pack_from_tag,
+  filter_pack,
 };
