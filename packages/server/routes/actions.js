@@ -268,17 +268,8 @@ const triggerForm = async (req, trigger) => {
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
   const actionExplainers = Trigger.action_explainers();
-  Trigger.find({}).forEach((tr, i) => {
-    if (tr.description && tr.name) {
-      if (i < 5) {
-        console.log("Adding trigger description for", {
-          name: tr.name,
-          actex: actionExplainers[tr.name],
-        });
-      }
-      actionExplainers[tr.name] = tr.description;
-    }
-    // if (tr.description && tr.name) actionExplainers[tr.name] = tr.description;
+  Trigger.find({}).forEach((tr) => {
+    if (tr.description && tr.name) actionExplainers[tr.name] = tr.description;
   });
   const allActions = Trigger.action_options({
     notRequireRow: false,
@@ -1254,7 +1245,6 @@ router.get(
         : null;
 
     if (refTrigger) {
-      console.log("Trigger action is a reference to another trigger:", refTrigger);
       send_events_page({
         res,
         req,

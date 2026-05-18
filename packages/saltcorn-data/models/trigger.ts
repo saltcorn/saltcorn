@@ -538,7 +538,6 @@ class Trigger implements AbstractTrigger {
     }
     // trigger.action may reference another trigger by name
     const refTrigger = Trigger.findOne({ name: this.action });
-    console.log("Ref trigger for", this.action, refTrigger);
     if (refTrigger) {
       return await refTrigger.runWithoutRow(runargs);
     }
@@ -819,7 +818,6 @@ class Trigger implements AbstractTrigger {
         .filter((t) => !onlyWorkflows || t.action === "Workflow")
         .map((tr) => tr.name as string)
         .filter((name) => Boolean(name) && !existing.has(name));
-      console.log("######", { others });
       triggerActions = [...triggerActions, ...others];
     }
 
