@@ -81,7 +81,10 @@ const {
   restore,
   auto_backup_now,
 } = require("@saltcorn/admin-models/models/backup");
-const { install_pack } = require("@saltcorn/admin-models/models/pack");
+const {
+  install_pack,
+  filter_pack,
+} = require("@saltcorn/admin-models/models/pack");
 const Snapshot = require("@saltcorn/admin-models/models/snapshot");
 const {
   runConfigurationCheck,
@@ -700,35 +703,14 @@ router.get(
                 { href: "/admin/snapshot-list" },
                 req.__("List/download snapshots &raquo;")
               ),
-              form(
+              a(
                 {
-                  method: "post",
-                  action: "/admin/snapshot-restore-full",
-                  encType: "multipart/form-data",
+                  onclick: "ajax_modal('/admin/snapshot-restore-full')",
+                  class: "d-block",
+                  href: `javascript:void(0)`,
                 },
-                input({
-                  type: "hidden",
-                  name: "_csrf",
-                  value: req.csrfToken(),
-                }),
-                label(
-                  {
-                    class: "btn-link",
-                    for: "upload_to_snapshot",
-                    style: { cursor: "pointer" },
-                  },
-                  i({ class: "fas fa-upload me-2 mt-2" }),
-                  req.__("Restore a snapshot")
-                ),
-                input({
-                  id: "upload_to_snapshot",
-                  class: "d-none",
-                  name: "file",
-                  type: "file",
-                  accept: ".json,application/json",
-                  onchange:
-                    "notifyAlert('Restoring snapshot...', true);this.form.submit();",
-                })
+                i({ class: "fas fa-upload me-2 mt-2" }),
+                req.__("Restore a snapshot")
               )
             ),
           },
@@ -1003,6 +985,69 @@ router.post(
   })
 );
 
+router.get(
+  "/snapshot-restore-full",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const snapForm = new Form({
+      action: "/admin/snapshot-restore-full",
+      formStyle: "vert",
+      fields: [
+        {
+          name: "file",
+          label: req.__("Snapshot file"),
+          class: "form-control",
+          default: true,
+          type: "File",
+        },
+        {
+          name: "configuration",
+          label: req.__("Configuration"),
+          default: true,
+          type: "Bool",
+        },
+        {
+          name: "site_name",
+          label: req.__("Site name"),
+          type: "Bool",
+          default: true,
+          showIf: { configuration: true },
+        },
+        {
+          name: "base_url",
+          label: req.__("Base URL"),
+          type: "Bool",
+          default: true,
+          showIf: { configuration: true },
+        },
+        {
+          name: "email_settings",
+          label: req.__("Email settings"),
+          type: "Bool",
+          default: true,
+          showIf: { configuration: true },
+        },
+        {
+          name: "ssl_settings",
+          label: req.__("SSL settings"),
+          type: "Bool",
+          default: true,
+          showIf: { configuration: true },
+        },
+        {
+          name: "modules",
+          label: req.__("Modules"),
+          default: true,
+          type: "Bool",
+        },
+      ],
+    });
+    res.sendWrap(`Restore snapshot`, {
+      above: [renderForm(snapForm, req.csrfToken())],
+    });
+  })
+);
+
 /**
  * @name post/restore
  * @function
@@ -1016,6 +1061,7 @@ router.post(
     if (req.files?.file?.tempFilePath) {
       try {
         const pack = JSON.parse(fs.readFileSync(req.files?.file?.tempFilePath));
+        filter_pack(pack, req.body);
         await db.withTransaction(async () => {
           await install_pack(pack, undefined, (p) =>
             Plugin.loadAndSaveNewPlugin(p)
@@ -5311,7 +5357,7 @@ declare var console: Console;
 function setTimeout(f:Function, timeout?:number)
 declare const page_load_tag: string
 function emit_to_client(message: object, to_user_ids?: number | number[] | null)
-function emitEvent(eventType: ${Trigger.when_options.map(o=>`"${o}"`).join(" | ")}, channel?: string, payload?: any)
+function emitEvent(eventType: ${Trigger.when_options.map((o) => `"${o}"`).join(" | ")}, channel?: string, payload?: any)
 async function sleep(milliseconds: number)
 function interpolate(s: string,
   row: Row,
@@ -5690,8 +5736,11 @@ router.post(
       //ignore
     }
     try {
-      res.json({ success: true, code: stripTypes(`async () =>{${code}
-}`) });
+      res.json({
+        success: true,
+        code: stripTypes(`async () =>{${code}
+}`),
+      });
     } catch (error) {
       res.json({ success: false, error: error.message });
     }

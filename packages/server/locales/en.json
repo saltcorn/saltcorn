@@ -2080,5 +2080,14 @@
 	"JavaScript expression. Available: <code>user</code> (current user). Can be async.": "JavaScript expression. Available: <code>user</code> (current user). Can be async.",
 	"Deprecated": "Deprecated",
 	"Suppress toasts": "Suppress toasts",
-	"Do not show any toast notifications to users": "Do not show any toast notifications to users"
+	"Do not show any toast notifications to users": "Do not show any toast notifications to users",
+	"Snapshot file": "Snapshot file",
+	"SSL settings": "SSL settings",
+	"Module configurations": "Module configurations",
+	"Mobile app event permissions": "Mobile app event permissions",
+	"Authenticated user allowed events": "Authenticated user allowed events",
+	"Comma-separated additional event names that authenticated mobile app users may emit. ReceiveMobileShareData is always allowed.": "Comma-separated additional event names that authenticated mobile app users may emit. ReceiveMobileShareData is always allowed.",
+	"Public user allowed events": "Public user allowed events",
+	"Comma-separated event names that unauthenticated (public) mobile app users may emit. Empty means public users cannot emit any events.": "Comma-separated event names that unauthenticated (public) mobile app users may emit. Empty means public users cannot emit any events.",
+	"Rescan fields": "Rescan fields"
 }
