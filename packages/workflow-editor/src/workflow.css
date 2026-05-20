@@ -220,6 +220,16 @@
   border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);
 }
 
+.wf-drawer__nav {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--bs-card-border-color, #e2e6ea);
+  background: var(--bs-body-bg, #fff);
+}
+
 .wf-drawer__body {
   padding: 16px 18px;
   flex: 1 1 auto;
