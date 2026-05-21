@@ -501,6 +501,7 @@ const admin_config_route = ({
  */
 const sendHtmlStringWithGlobals = (req, res, html_string) => {
   res.set("Content-Type", "text/html");
+  const state = getState();
   const version_tag = db.connectObj.version_tag;
   const locale = req.getLocale?.();
   const scGlobals =
@@ -514,9 +515,45 @@ const sendHtmlStringWithGlobals = (req, res, html_string) => {
     /\/static_assets\/[a-f0-9]+\//g,
     `/static_assets/${version_tag}/`
   );
-  const html = normalized.includes("</head>")
-    ? normalized.replace("</head>", `${scGlobals}</head>`)
-    : scGlobals + normalized;
+  const assetBase = `/static_assets/${version_tag}`;
+
+  // CSS and scGlobals go into <head>; scripts go before </body> (after jQuery).
+  // Core scripts (dayjs, socket.io) come before plugin scripts from state.headers.
+  let headInject = scGlobals;
+  if (!normalized.includes("saltcorn.css"))
+    headInject += `<link rel="stylesheet" href="${assetBase}/saltcorn.css">`;
+  if (!normalized.includes("saltcorn.js"))
+    headInject += `<script src="${assetBase}/saltcorn.js"></script>`;
+
+  let bodyInject = "";
+  for (const fname of ["dayjs.min.js", "socket.io.min.js"]) {
+    if (!normalized.includes(fname))
+      bodyInject += `<script src="${assetBase}/${fname}"></script>`;
+  }
+  if (locale && !normalized.includes(`dayjslocales/${locale}.js`))
+    bodyInject += `<script src="${assetBase}/dayjslocales/${locale}.js"></script>`;
+  if (!normalized.includes("dynamic_updates_cfg")) {
+    const dynamic_updates_enabled = state.getConfig("enable_dynamic_updates", false);
+    bodyInject += `<script>var dynamic_updates_cfg = ${JSON.stringify({ enabled: dynamic_updates_enabled })};</script>`;
+  }
+
+  const stateHeaders = Array.isArray(state.headers)
+    ? state.headers
+    : Object.values(state.headers || {}).flat();
+  for (const h of stateHeaders) {
+    if (h.css && !normalized.includes(h.css))
+      headInject += `<link rel="stylesheet" href="${h.css}">`;
+    else if (h.script && !normalized.includes(h.script))
+      bodyInject += `<script src="${h.script}"></script>`;
+  }
+
+  let html = normalized.includes("</head>")
+    ? normalized.replace("</head>", `${headInject}</head>`)
+    : headInject + normalized;
+  if (bodyInject)
+    html = html.includes("</body>")
+      ? html.replace("</body>", `${bodyInject}</body>`)
+      : html + bodyInject;
   return res.send(html);
 };
 
