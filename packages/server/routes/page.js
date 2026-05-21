@@ -15,6 +15,7 @@ const {
   scan_for_page_title,
   isAdmin,
   sendHtmlFile,
+  sendHtmlStringWithGlobals,
   getEligiblePage,
   getRandomPage,
 } = require("../routes/utils.js");
@@ -74,25 +75,7 @@ const runPage = async (page, req, res, tic) => {
     }
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
     else if (contents.html_string) {
-      res.set("Content-Type", "text/html");
-      const state = getState();
-      const version_tag = db.connectObj.version_tag;
-      const locale = req.getLocale?.();
-      const scGlobals =
-        `<script>var _sc_globalCsrf = ${JSON.stringify(req.csrfToken())}` +
-        `, _sc_version_tag = ${JSON.stringify(version_tag)}` +
-        (locale ? `, _sc_locale = ${JSON.stringify(locale)}` : "") +
-        `, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16)` +
-        (req?.user?.role_id === 1 ? `, _sc_is_admin = true` : "") +
-        `;</script>`;
-      const normalized = contents.html_string.replace(
-        /\/static_assets\/[a-f0-9]+\//g,
-        `/static_assets/${version_tag}/`
-      );
-      const html = normalized.includes("</head>")
-        ? normalized.replace("</head>", `${scGlobals}</head>`)
-        : scGlobals + normalized;
-      await res.send(html);
+      await sendHtmlStringWithGlobals(req, res, contents.html_string);
     } else
       res.sendWrap(
         {
@@ -109,7 +92,11 @@ const runPage = async (page, req, res, tic) => {
                 role,
                 title: page.name,
                 what: req.__("Page"),
-                url: `/pageedit/edit/${encodeURIComponent(page.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}&${objectToQueryString(req.query)}`,
+                url: `/pageedit/edit/${encodeURIComponent(
+                  page.name
+                )}?on_done_redirect=${encodeURIComponent(
+                  req.originalUrl.replace("/", "")
+                )}&${objectToQueryString(req.query)}`,
                 contents,
               }),
           resultCollector

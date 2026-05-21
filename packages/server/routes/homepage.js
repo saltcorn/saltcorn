@@ -26,7 +26,12 @@ const {
 const packagejson = require("../package.json");
 const Trigger = require("@saltcorn/data/models/trigger");
 const { fileUploadForm } = require("../markup/forms");
-const { get_base_url, sendHtmlFile, getEligiblePage } = require("./utils.js");
+const {
+  get_base_url,
+  sendHtmlFile,
+  sendHtmlStringWithGlobals,
+  getEligiblePage,
+} = require("./utils.js");
 const semver = require("semver");
 const { add_results_to_contents } = require("../markup/admin.js");
 
@@ -622,8 +627,7 @@ const get_config_response = async (role_id, res, req) => {
 
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
     else if (contents.html_string) {
-      res.set("Content-Type", "text/html");
-      await res.send(contents.html_string);
+      await sendHtmlStringWithGlobals(req, res, contents.html_string);
     } else
       res.sendWrap(
         {
