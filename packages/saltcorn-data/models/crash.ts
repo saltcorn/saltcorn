@@ -109,7 +109,7 @@ class Crash {
       tenant: schema,
       user_id: req.user ? req.user.id : null,
       body: req.body || {} ? { body: req.body || {} } : null,
-      url: req.url,
+      url: req.url ?? "",
       headers: req.headers,
     };
     const { getState, getRootState } = require("../db/state");

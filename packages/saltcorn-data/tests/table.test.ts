@@ -1830,16 +1830,16 @@ describe("Table unique constraint", () => {
     await table.insertRow({ name: "Bill" });
     const ted_id = await table.insertRow({ name: "Ted" });
     const ins_res = await table.tryInsertRow({ name: "Bill" });
-    expect(ins_res).toEqual({
+    expect(ins_res).toEqual(expect.objectContaining({
       error: "Duplicate value for unique field: name",
-    });
+    }));
     const ins_res1 = await table.tryInsertRow({ name: "Billy" });
     assertsIsSuccessMessage(ins_res1);
     expect(typeof ins_res1.success).toEqual("number");
     const upd_res = await table.tryUpdateRow({ name: "Bill" }, ted_id);
-    expect(upd_res).toEqual({
+    expect(upd_res).toEqual(expect.objectContaining({
       error: "Duplicate value for unique field: name",
-    });
+    }));
     const upd_res1 = await table.tryUpdateRow({ name: "teddy" }, ted_id);
     assertsIsSuccessMessage(upd_res1);
     expect(upd_res1.success).toEqual(true);
@@ -1866,9 +1866,9 @@ describe("Table unique constraint", () => {
     await table.insertRow({ name: "Bill" });
     const ted_id = await table.insertRow({ name: "Ted" });
     const ins_res = await table.tryInsertRow({ name: "Bill" });
-    expect(ins_res).toEqual({
+    expect(ins_res).toEqual(expect.objectContaining({
       error: "No same name twice",
-    });
+    }));
   });
 });
 

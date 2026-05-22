@@ -1062,9 +1062,10 @@ const runPost = async (
             6,
             `Insert or update failure ${JSON.stringify(ins_upd_error)}`
           );
-          Crash.create(
-            { message: ins_upd_error, stack: ins_upd_error_obj?.stack ?? "" },
-            req
+          if (ins_upd_error_obj)
+            Crash.create(
+              { message: ins_upd_error, stack: ins_upd_error_obj.stack ?? "" },
+              req
           );
           res.status(422);
           if (req.xhr) {
