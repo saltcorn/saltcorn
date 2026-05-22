@@ -11,6 +11,7 @@ import type {
   SelectOptions,
   Where,
 } from "@saltcorn/db-common/internal";
+import type { Req } from "@saltcorn/types/base_types";
 
 /**
  * Crash Class
@@ -98,7 +99,7 @@ class Crash {
    * @param {object} [req = {}]
    * @returns {Promise<void>}
    */
-  static async create(err: any, req: any = {}): Promise<void> {
+  static async create(err: any, req: Partial<Req> = {}): Promise<void> {
     const schema = db.getTenantSchema();
 
     const payload = {
