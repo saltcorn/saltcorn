@@ -1570,4 +1570,19 @@ describe("jsexprToWhere", () => {
     expect(today instanceof Date).toBe(true);
     expect(today.toISOString()).toMatch(/^202/);
   });
+  it("translates known stand-alone bools", async () => {
+    const readings = Table.findOne("readings");
+    assertIsSet(readings);
+    const wnormalised = jsexprToWhere("normalised", {}, readings.fields);
+    const w_not_normalised = jsexprToWhere("!normalised", {}, readings.fields);
+    expect(wnormalised).toStrictEqual({ normalised: true });
+    expect(w_not_normalised).toBe(1);
+    const w1 = {};
+    mergeIntoWhere(w1, wnormalised);
+    const { where, values } = mkWhere(wnormalised);
+    console.log(w1, where, values);
+
+    const rows1 = await readings.getRows(wnormalised);
+    expect(rows1).toBe(1);
+  });
 });

@@ -489,7 +489,14 @@ function jsexprToWhere(
         },
       })[node.type](node);
     // @ts-ignore
-    return compile(ast);
+    const result = compile(ast);
+    if (typeof result === "symbol" && typeof result.description === "string") {
+      const field = fields.find((f) => f.name === result.description);
+      if (!field) return { not: { [result.description]: null } };
+      if ((field.type as any)?.name === "Bool") return { [field.name]: true };
+
+      return { not: { [result.description]: null } };
+    } else return result;
   } catch (e: any) {
     //console.error(e);
     throw new Error(
