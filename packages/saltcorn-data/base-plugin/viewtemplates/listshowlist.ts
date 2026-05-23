@@ -313,7 +313,7 @@ export = {
       });
     },
   }),
-  connectedObjects: async ({ list_view, subtables }: GenObj) => {
+  connectedObjects: async ({ list_view, show_view, subtables }: GenObj) => {
     const subViews: View[] = [];
     for (const relspec of Object.keys(subtables || {})) {
       if (subtables[relspec]) {
@@ -337,6 +337,8 @@ export = {
     }
     const listView = View.findOne({ name: list_view });
     if (listView) subViews.push(listView);
+    const showView = View.findOne({ name: show_view });
+    if (showView) subViews.push(showView);
     return {
       embeddedViews: subViews,
     };

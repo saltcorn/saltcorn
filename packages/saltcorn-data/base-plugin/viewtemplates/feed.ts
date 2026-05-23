@@ -1028,6 +1028,15 @@ export = {
   connectedObjects: async (configuration: GenObj) => {
     const fromLayout = extractFromLayout(configuration.layout);
     const toCreate = extractViewToCreate(configuration);
-    return toCreate ? mergeConnectedObjects(fromLayout, toCreate) : fromLayout;
+    const result = toCreate ? mergeConnectedObjects(fromLayout, toCreate) : fromLayout;
+    if (configuration.show_view) {
+      const view = View.findOne({ name: configuration.show_view });
+      if (view) (result.embeddedViews = result.embeddedViews || []).push(view);
+    }
+    if (configuration.empty_view) {
+      const view = View.findOne({ name: configuration.empty_view });
+      if (view) (result.embeddedViews = result.embeddedViews || []).push(view);
+    }
+    return result;
   },
 };

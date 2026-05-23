@@ -838,7 +838,16 @@ export = {
     },
   }),
   connectedObjects: async (configuration: GenObj) => {
-    return extractFromLayout(configuration.layout);
+    const result = extractFromLayout(configuration.layout);
+    if (configuration.msgview) {
+      const view = View.findOne({ name: configuration.msgview });
+      if (view) (result.embeddedViews = result.embeddedViews || []).push(view);
+    }
+    if (configuration.msgform) {
+      const view = View.findOne({ name: configuration.msgform });
+      if (view) (result.embeddedViews = result.embeddedViews || []).push(view);
+    }
+    return result;
   },
 };
 /*todo:

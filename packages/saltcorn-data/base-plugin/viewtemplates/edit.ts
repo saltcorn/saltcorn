@@ -2753,6 +2753,21 @@ export = {
    * @returns
    */
   connectedObjects: async (configuration: GenObj) => {
-    return extractFromLayout(configuration.layout);
+    const result = extractFromLayout(configuration.layout);
+    if (configuration.view_when_done) {
+      const view = View.findOne({ name: configuration.view_when_done });
+      if (view) (result.linkedViews = result.linkedViews || []).push(view);
+    }
+    if (configuration.page_when_done) {
+      const page = Page.findOne({ name: configuration.page_when_done });
+      if (page) (result.linkedPages = result.linkedPages || []).push(page);
+    }
+    for (const dest of configuration.formula_destinations || []) {
+      if (dest.view) {
+        const view = View.findOne({ name: dest.view });
+        if (view) (result.linkedViews = result.linkedViews || []).push(view);
+      }
+    }
+    return result;
   },
 };

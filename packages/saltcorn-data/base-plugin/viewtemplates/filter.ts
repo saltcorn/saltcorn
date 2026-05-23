@@ -59,6 +59,7 @@ const {
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
+import { extractFromLayout } from "../../diagram/node_extract_utils";
 const { getState } = require("../../db/state");
 const {
   get_expression_function,
@@ -924,6 +925,9 @@ export = {
    */
   getStringsForI18n({ layout }: GenObj) {
     return getStringsForI18n(layout);
+  },
+  connectedObjects: async (configuration: GenObj) => {
+    return extractFromLayout(configuration.layout);
   },
   routes: { run_action },
   queries: ({
