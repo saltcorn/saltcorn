@@ -911,11 +911,11 @@ const getActionConfigFields = async (
   extra: GenObj = {}
 ): Promise<any[]> =>
   typeof action.configFields === "function"
-    ? await action.configFields({
+    ? (await action.configFields({
         table,
         ...extra,
         ...(extra?.req ? { __: extra.req.__ } : {}),
-      })
+      })) || []
     : action.configFields || [];
 
 /**

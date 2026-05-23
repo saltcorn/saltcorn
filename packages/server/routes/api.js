@@ -671,9 +671,7 @@ router.all(
               });
               delete resp.__wf_run_id;
             } else {
-              const action = getState().actions[trigger.action];
-              resp = await action.run({
-                configuration: trigger.configuration,
+              resp = await trigger.runWithoutRow({
                 body: req.body || {},
                 row,
                 req,
