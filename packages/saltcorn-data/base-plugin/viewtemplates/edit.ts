@@ -1017,6 +1017,7 @@ const runPost = async (
     const originalID = id;
     let trigger_return: any;
     let ins_upd_error: any;
+    let ins_upd_error_obj: Error | undefined;
     if (!cancel) {
       getState().log(
         6,
@@ -1033,6 +1034,7 @@ const runPost = async (
             trigger_return = ins_res.trigger_return;
           } else {
             ins_upd_error = ins_res.error;
+            ins_upd_error_obj = (ins_res as any).errorObj;
           }
         } else {
           if (
@@ -1042,12 +1044,14 @@ const runPost = async (
             const upd_res = await tryInsertOrUpdateImpl(row, id, table, req);
             if ((upd_res as any).error) {
               ins_upd_error = (upd_res as any).error;
+              ins_upd_error_obj = (upd_res as any).errorObj;
             }
             trigger_return = upd_res.trigger_return;
           } else {
             const upd_res = await tryUpdateQuery(row, id);
             if ((upd_res as any).error) {
               ins_upd_error = (upd_res as any).error;
+              ins_upd_error_obj = (upd_res as any).errorObj;
             }
             trigger_return = upd_res.trigger_return;
           }
@@ -1057,6 +1061,11 @@ const runPost = async (
           getState().log(
             6,
             `Insert or update failure ${JSON.stringify(ins_upd_error)}`
+          );
+          if (ins_upd_error_obj)
+            Crash.create(
+              { message: ins_upd_error, stack: ins_upd_error_obj.stack ?? "" },
+              req
           );
           res.status(422);
           if (req.xhr) {
@@ -1475,7 +1484,7 @@ const run_action = async (
 ) => {
   const result = await actionQuery();
   if (result.json.error) {
-    Crash.create({ message: result.json.error, stack: "" }, req as any);
+    Crash.create({ message: result.json.error, stack: "" }, req);
   }
   return result;
 };

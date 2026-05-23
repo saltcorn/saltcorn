@@ -2142,7 +2142,10 @@ class Table implements AbstractTable {
       if (typeof maybe_err === "string") return { error: maybe_err };
       else return { success: true };
     } catch (e) {
-      return { error: this.normalise_error_message((e as ErrorObj).message) };
+      return {
+        error: this.normalise_error_message((e as ErrorObj).message),
+        errorObj: e as Error,
+      };
     }
   }
 
@@ -2753,7 +2756,9 @@ class Table implements AbstractTable {
     v: Row,
     user?: AbstractUser,
     resultCollector?: object
-  ): Promise<{ error: string } | { success: PrimaryKeyValue }> {
+  ): Promise<
+    { error: string; errorObj?: Error } | { success: PrimaryKeyValue }
+  > {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
     if ((this.constructor as typeof Table).read_only)
       throw new Error("Read-only access");
@@ -2766,7 +2771,10 @@ class Table implements AbstractTable {
       return { success: id };
     } catch (e) {
       await require("../db/state").getState().log(5, e);
-      return { error: this.normalise_error_message((e as ErrorObj).message) };
+      return {
+        error: this.normalise_error_message((e as ErrorObj).message),
+        errorObj: e as Error,
+      };
     }
   }
 

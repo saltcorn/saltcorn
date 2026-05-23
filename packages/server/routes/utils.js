@@ -492,6 +492,72 @@ const admin_config_route = ({
 };
 
 /**
+ * Send an HTML string response with injected Saltcorn globals (CSRF token,
+ * version tag, locale, page-load tag, admin flag) and normalised static-asset paths.
+ * @param {any} req
+ * @param {any} res
+ * @param {string} html_string
+ * @returns
+ */
+const sendHtmlStringWithGlobals = (req, res, html_string) => {
+  res.set("Content-Type", "text/html");
+  const state = getState();
+  const version_tag = db.connectObj.version_tag;
+  const locale = req.getLocale?.();
+  const scGlobals =
+    `<script>var _sc_globalCsrf = ${JSON.stringify(req.csrfToken())}` +
+    `, _sc_version_tag = ${JSON.stringify(version_tag)}` +
+    (locale ? `, _sc_locale = ${JSON.stringify(locale)}` : "") +
+    `, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16)` +
+    (req?.user?.role_id === 1 ? `, _sc_is_admin = true` : "") +
+    `;</script>`;
+  const normalized = html_string.replace(
+    /\/static_assets\/[a-f0-9]+\//g,
+    `/static_assets/${version_tag}/`
+  );
+  const assetBase = `/static_assets/${version_tag}`;
+
+  // CSS and scGlobals go into <head>; scripts go before </body> (after jQuery).
+  // Core scripts (dayjs, socket.io) come before plugin scripts from state.headers.
+  let headInject = scGlobals;
+  if (!normalized.includes("saltcorn.css"))
+    headInject += `<link rel="stylesheet" href="${assetBase}/saltcorn.css">`;
+  if (!normalized.includes("saltcorn.js"))
+    headInject += `<script src="${assetBase}/saltcorn.js"></script>`;
+
+  let bodyInject = "";
+  for (const fname of ["dayjs.min.js", "socket.io.min.js"]) {
+    if (!normalized.includes(fname))
+      bodyInject += `<script src="${assetBase}/${fname}"></script>`;
+  }
+  if (locale && !normalized.includes(`dayjslocales/${locale}.js`))
+    bodyInject += `<script src="${assetBase}/dayjslocales/${locale}.js"></script>`;
+  if (!normalized.includes("dynamic_updates_cfg")) {
+    const dynamic_updates_enabled = state.getConfig("enable_dynamic_updates", false);
+    bodyInject += `<script>var dynamic_updates_cfg = ${JSON.stringify({ enabled: dynamic_updates_enabled })};</script>`;
+  }
+
+  const stateHeaders = Array.isArray(state.headers)
+    ? state.headers
+    : Object.values(state.headers || {}).flat();
+  for (const h of stateHeaders) {
+    if (h.css && !normalized.includes(h.css))
+      headInject += `<link rel="stylesheet" href="${h.css}">`;
+    else if (h.script && !normalized.includes(h.script))
+      bodyInject += `<script src="${h.script}"></script>`;
+  }
+
+  let html = normalized.includes("</head>")
+    ? normalized.replace("</head>", `${headInject}</head>`)
+    : headInject + normalized;
+  if (bodyInject)
+    html = html.includes("</body>")
+      ? html.replace("</body>", `${bodyInject}</body>`)
+      : html + bodyInject;
+  return res.send(html);
+};
+
+/**
  * Send HTML file to client without any menu
  * @param {any} req
  * @param {any} res
@@ -662,6 +728,7 @@ module.exports = {
   get_sys_info,
   admin_config_route,
   sendHtmlFile,
+  sendHtmlStringWithGlobals,
   setRole,
   getEligiblePage,
   getRandomPage,

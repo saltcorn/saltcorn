@@ -11,6 +11,7 @@ import type {
   SelectOptions,
   Where,
 } from "@saltcorn/db-common/internal";
+import type { Req } from "@saltcorn/types/base_types";
 
 /**
  * Crash Class
@@ -98,7 +99,7 @@ class Crash {
    * @param {object} [req = {}]
    * @returns {Promise<void>}
    */
-  static async create(err: any, req: any = {}): Promise<void> {
+  static async create(err: any, req: Partial<Req> = {}): Promise<void> {
     const schema = db.getTenantSchema();
 
     const payload = {
@@ -108,7 +109,7 @@ class Crash {
       tenant: schema,
       user_id: req.user ? req.user.id : null,
       body: req.body || {} ? { body: req.body || {} } : null,
-      url: req.url,
+      url: req.url ?? "",
       headers: req.headers,
     };
     const { getState, getRootState } = require("../db/state");

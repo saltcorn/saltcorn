@@ -9,6 +9,7 @@ export type ErrorMessage = {
   error: string;
   details?: string;
   errors?: string[];
+  errorObj?: Error;
 };
 
 export type SuccessMessage = {
