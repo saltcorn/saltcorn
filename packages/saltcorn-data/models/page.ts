@@ -464,7 +464,10 @@ class Page implements AbstractPage {
         ) {
           segment.contents = interpolate(
             segment.contents,
-            querystate,
+            {
+              ...(querystate || {}),
+              ...dollarizeObject(querystate || {}),
+            },
             extraArgs?.req?.user,
             "Page HTML element interpolation"
           );
