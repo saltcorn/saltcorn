@@ -1576,13 +1576,17 @@ describe("jsexprToWhere", () => {
     const wnormalised = jsexprToWhere("normalised", {}, readings.fields);
     const w_not_normalised = jsexprToWhere("!normalised", {}, readings.fields);
     expect(wnormalised).toStrictEqual({ normalised: true });
-    expect(w_not_normalised).toBe(1);
+    expect(w_not_normalised).toStrictEqual({ not: { normalised: true } });
     const w1 = {};
     mergeIntoWhere(w1, wnormalised);
-    const { where, values } = mkWhere(wnormalised);
-    console.log(w1, where, values);
 
-    const rows1 = await readings.getRows(wnormalised);
-    expect(rows1).toBe(1);
+    const rows1 = await readings.getRows(w1);
+    expect(rows1.length).toBe(1);
+    expect(rows1[0].normalised).toBe(true);
+    const rows2 = await readings.getRows(w_not_normalised);
+
+    expect(rows2.length).toBe(2);
+    expect(rows2[0].normalised).toBe(false);
+    expect(rows2[1].normalised).toBe(false);
   });
 });
