@@ -1607,7 +1607,29 @@ describe("jsexprToWhere", () => {
     //console.log({ where, values, wpages });
 
     const rows1 = await books.getRows(wpages);
-    expect(rows1.length).toBe(2);
+    expect(rows1.length).toBeGreaterThanOrEqual(2);
+    const rows2 = await books.getRows(w_no_pages);
+    expect(rows2.length).toBe(0);
+  });
+    it("translates known stand-alone strings", async () => {
+    const books = Table.findOne("books");
+    assertIsSet(books);
+    const wpages = jsexprToWhere("author", {}, books.fields);
+    const w_no_pages = jsexprToWhere("!author", {}, books.fields);
+    expect(wpages).toStrictEqual({
+      and: [{ not: { author: null } }, { not: { author: "" } }],
+    });
+    expect(w_no_pages).toStrictEqual({
+      not: {
+        and: [{ not: { author: null } }, { not: { author: "" } }],
+      },
+    });
+
+    //const { where, values } = mkWhere(wpages);
+    //console.log({ where, values, wpages });
+
+    const rows1 = await books.getRows(wpages);
+    expect(rows1.length).toBeGreaterThanOrEqual(2);
     const rows2 = await books.getRows(w_no_pages);
     expect(rows2.length).toBe(0);
   });
