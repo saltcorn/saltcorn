@@ -1335,9 +1335,16 @@ describe("mergeIntoWhere", () => {
     ).toEqual({
       and: [{ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] }],
     });
-    // TODO
-    //expect(mergeIntoWhere({ not: { a: 1 } }, { not: { b: 4 } })).toEqual(1);
   });
+  it("merges logic", () => {
+    expect(mergeIntoWhere({ and: [{ a: 1 }] }, { and: [{ b: 1 }] })).toEqual({
+      and: [{ a: 1 }, { b: 1 }],
+    });
+    expect(mergeIntoWhere({ not: { a: 1 } }, { not: { b: 4 } })).toEqual({
+      and: [{ not: { b: 4 } }, { not: { a: 1 } }],
+    });
+  });
+
   it("merges bounds", () => {
     let w = mergeIntoWhere({ a: { gt: 5 } }, { a: { lt: 15 } });
     expect(w).toEqual({
@@ -1611,7 +1618,7 @@ describe("jsexprToWhere", () => {
     const rows2 = await books.getRows(w_no_pages);
     expect(rows2.length).toBe(0);
   });
-    it("translates known stand-alone strings", async () => {
+  it("translates known stand-alone strings", async () => {
     const books = Table.findOne("books");
     assertIsSet(books);
     const wpages = jsexprToWhere("author", {}, books.fields);
