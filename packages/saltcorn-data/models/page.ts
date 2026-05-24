@@ -50,6 +50,7 @@ const {
   cloneName,
   isNode,
   isOfflineMode,
+  interpolate,
 } = utils;
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
@@ -453,6 +454,23 @@ class Page implements AbstractPage {
               }`
             );
           }
+        }
+      },
+      blank: (segment) => {
+        if (
+          segment.isHTML &&
+          typeof segment.contents === "string" &&
+          segment.contents.includes("{{")
+        ) {
+          segment.contents = interpolate(
+            segment.contents,
+            {
+              ...(querystate || {}),
+              ...dollarizeObject(querystate || {}),
+            },
+            extraArgs?.req?.user,
+            "Page HTML element interpolation"
+          );
         }
       },
     });

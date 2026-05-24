@@ -1570,4 +1570,67 @@ describe("jsexprToWhere", () => {
     expect(today instanceof Date).toBe(true);
     expect(today.toISOString()).toMatch(/^202/);
   });
+  it("translates known stand-alone bools", async () => {
+    const readings = Table.findOne("readings");
+    assertIsSet(readings);
+    const wnormalised = jsexprToWhere("normalised", {}, readings.fields);
+    const w_not_normalised = jsexprToWhere("!normalised", {}, readings.fields);
+    expect(wnormalised).toStrictEqual({ normalised: true });
+    expect(w_not_normalised).toStrictEqual({ not: { normalised: true } });
+    const w1 = {};
+    mergeIntoWhere(w1, wnormalised);
+
+    const rows1 = await readings.getRows(w1);
+    expect(rows1.length).toBe(1);
+    expect(rows1[0].normalised).toBe(true);
+
+    const rows2 = await readings.getRows(w_not_normalised);
+    expect(rows2.length).toBeGreaterThanOrEqual(2);
+    expect(rows2[0].normalised).toBe(false);
+    expect(rows2[1].normalised).toBe(false);
+  });
+  it("translates known stand-alone integers", async () => {
+    const books = Table.findOne("books");
+    assertIsSet(books);
+    const wpages = jsexprToWhere("pages", {}, books.fields);
+    const w_no_pages = jsexprToWhere("!pages", {}, books.fields);
+    expect(wpages).toStrictEqual({
+      and: [{ not: { pages: null } }, { not: { pages: 0 } }],
+    });
+    expect(w_no_pages).toStrictEqual({
+      not: {
+        and: [{ not: { pages: null } }, { not: { pages: 0 } }],
+      },
+    });
+
+    //const { where, values } = mkWhere(wpages);
+    //console.log({ where, values, wpages });
+
+    const rows1 = await books.getRows(wpages);
+    expect(rows1.length).toBeGreaterThanOrEqual(2);
+    const rows2 = await books.getRows(w_no_pages);
+    expect(rows2.length).toBe(0);
+  });
+    it("translates known stand-alone strings", async () => {
+    const books = Table.findOne("books");
+    assertIsSet(books);
+    const wpages = jsexprToWhere("author", {}, books.fields);
+    const w_no_pages = jsexprToWhere("!author", {}, books.fields);
+    expect(wpages).toStrictEqual({
+      and: [{ not: { author: null } }, { not: { author: "" } }],
+    });
+    expect(w_no_pages).toStrictEqual({
+      not: {
+        and: [{ not: { author: null } }, { not: { author: "" } }],
+      },
+    });
+
+    //const { where, values } = mkWhere(wpages);
+    //console.log({ where, values, wpages });
+
+    const rows1 = await books.getRows(wpages);
+    expect(rows1.length).toBeGreaterThanOrEqual(2);
+    const rows2 = await books.getRows(w_no_pages);
+    expect(rows2.length).toBe(0);
+  });
 });

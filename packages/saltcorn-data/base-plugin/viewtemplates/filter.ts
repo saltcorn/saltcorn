@@ -56,6 +56,7 @@ const {
   mergeIntoWhere,
   isWeb,
   renderServerSide,
+  interpolate,
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
@@ -498,6 +499,20 @@ const run = async (
           segment.contents = "";
           Crash.create(e, extra.req);
         }
+      }
+    },
+    blank: (segment: GenObj) => {
+      if (
+        segment.isHTML &&
+        typeof segment.contents === "string" &&
+        segment.contents.includes("{{")
+      ) {
+        segment.contents = interpolate(
+          segment.contents,
+          evalCtx,
+          extra.req?.user,
+          "Filter HTML element interpolation"
+        );
       }
     },
   });

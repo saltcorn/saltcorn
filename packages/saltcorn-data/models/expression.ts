@@ -309,7 +309,30 @@ function jsexprToWhere(
     //console.log("before", ast);
     partiallyEvaluate(ast, extraCtx, fields);
     //console.log("after", JSON.stringify(ast, null, 2));
-
+    function symToWhere(whOrSym: Where | symbol): Where {
+      if (typeof whOrSym === "symbol") {
+        if (typeof whOrSym.description !== "string")
+          throw new Error("Symbol with no description");
+        const field = fields.find((f) => f.name === whOrSym.description);
+        if (!field) return { not: { [whOrSym.description]: null } };
+        if ((field.type as any)?.name === "Bool") return { [field.name]: true };
+        if ((field.type as any)?.name === "Integer")
+          return {
+            and: [
+              { not: { [field.name]: null } },
+              { not: { [field.name]: 0 } },
+            ],
+          };
+        if ((field.type as any)?.name === "String")
+         return {
+            and: [
+              { not: { [field.name]: null } },
+              { not: { [field.name]: "" } },
+            ],
+          };
+        return { not: { [whOrSym.description]: null } };
+      } else return whOrSym;
+    }
     const compile: (node: ExtendedNode) => any = (node: ExtendedNode): any =>
       (<StringToFunction>{
         BinaryExpression() {
@@ -442,15 +465,15 @@ function jsexprToWhere(
         UnaryExpression() {
           return (<StringToFunction>{
             "!"({ argument }: { argument: ExtendedNode }) {
-              return { not: compile(argument) };
+              return { not: symToWhere(compile(argument)) };
             },
           })[node.operator](node);
         },
         LogicalExpression() {
           const operators: StringToFunction = {
             "&&"({ left, right }: { left: ExtendedNode; right: ExtendedNode }) {
-              const l = compile(left);
-              const r = compile(right);
+              const l = symToWhere(compile(left));
+              const r = symToWhere(compile(right));
 
               const simpleCmp = (o: any) =>
                 o &&
@@ -489,7 +512,7 @@ function jsexprToWhere(
         },
       })[node.type](node);
     // @ts-ignore
-    return compile(ast);
+    return symToWhere(compile(ast));
   } catch (e: any) {
     //console.error(e);
     throw new Error(
