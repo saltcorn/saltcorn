@@ -212,7 +212,17 @@ const mergeIntoWhere = (where: Where, newWhere: GenObj) => {
       } else where.or = v;
       return;
     }
-    if (typeof where[k] === "undefined") where[k] = v;
+    if (k === "not" && where.not) {
+      if (!where.and) {
+        where.and = [];
+      }
+      where.and.push({ not: v });
+      where.and.push({ not: where.not });
+
+      delete where.not;
+    } else if (k === "and" && Array.isArray(where.and))
+      where.and = [...where.and, ...v];
+    else if (typeof where[k] === "undefined") where[k] = v;
     else where[k] = [where[k], v];
   });
   return where;

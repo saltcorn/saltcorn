@@ -316,7 +316,20 @@ function jsexprToWhere(
         const field = fields.find((f) => f.name === whOrSym.description);
         if (!field) return { not: { [whOrSym.description]: null } };
         if ((field.type as any)?.name === "Bool") return { [field.name]: true };
-
+        if ((field.type as any)?.name === "Integer")
+          return {
+            and: [
+              { not: { [field.name]: null } },
+              { not: { [field.name]: 0 } },
+            ],
+          };
+        if ((field.type as any)?.name === "String")
+         return {
+            and: [
+              { not: { [field.name]: null } },
+              { not: { [field.name]: "" } },
+            ],
+          };
         return { not: { [whOrSym.description]: null } };
       } else return whOrSym;
     }
