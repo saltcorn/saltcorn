@@ -882,6 +882,10 @@ const run = async (
       groups[group].push(r);
     }
     return div(
+      {
+        "data-sc-state-hash": stateHash,
+        "data-sc-rows-per-page": String(qextra.limit),
+      },
       correct_order([
         Object.entries(groups as Record<string, any[]>).map(
           ([group, sr]: [string, any]) =>
@@ -943,6 +947,10 @@ const run = async (
     );
   };
   return div(
+    {
+      "data-sc-state-hash": stateHash,
+      "data-sc-rows-per-page": String(qextra.limit),
+    },
     correct_order([
       is_in_card && masonry_columns
         ? div({ class: "card-columns" }, sresp.map(showRowInner))
