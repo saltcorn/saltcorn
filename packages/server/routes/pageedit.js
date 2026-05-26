@@ -240,7 +240,7 @@ const pageBuilderData = async (req, context) => {
       if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
 
       //await f.fill_fkey_options(true);
-      fixed_state_fields[view.name].push(f);
+      fixed_state_fields[view.name].push(f.toBuilder);
       if (table.name === "users" && f.primary_key)
         fixed_state_fields[view.name].push(
           new Field({
