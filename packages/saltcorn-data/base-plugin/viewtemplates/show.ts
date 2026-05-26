@@ -238,7 +238,9 @@ const configuration_workflow = (req: Req) =>
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
-          const pages = await Page.find({}, { cached: true });
+          const pages = (await Page.find({}, { cached: true })).map((p) => ({
+            name: p.name,
+          }));
           const groups = (await PageGroup.find({}, { cached: true })).map(
             (g: GenObj) => ({
               name: g.name,

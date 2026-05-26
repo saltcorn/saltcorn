@@ -258,10 +258,14 @@ const configuration_workflow = (req: Req) =>
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
-          const pages = await Page.find();
-          const groups = (await PageGroup.find()).map((g: GenObj) => ({
-            name: g.name,
+          const pages = (await Page.find({}, { cached: true })).map((p) => ({
+            name: p.name,
           }));
+          const groups = (await PageGroup.find({}, { cached: true })).map(
+            (g: GenObj) => ({
+              name: g.name,
+            })
+          );
           const images = await File.find({ mime_super: "image" });
           const library = (await Library.find({})).filter((l: GenObj) =>
             l.suitableFor("list")
