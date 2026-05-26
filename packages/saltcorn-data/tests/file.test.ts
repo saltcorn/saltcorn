@@ -103,9 +103,60 @@ describe("File class", () => {
       },
       { recursive: true }
     );
+    console.log({ htmlFiles });
+
     expect(
       htmlFiles.find((file: any) => file.filename === fileName)
     ).toBeDefined();
+    expect(htmlFiles.every((file) => file.location.endsWith(".html"))).toBe(
+      true
+    );
+  });
+
+  it("should find in subfolders by extension", async () => {
+    const subfolder = "subfolder";
+    const fileName = "fileName3.html";
+    if (
+      !existsSync(
+        join(db.connectObj.file_store, db.getTenantSchema(), "subfolder")
+      )
+    )
+      await File.new_folder(subfolder);
+    if (
+      !existsSync(
+        join(
+          db.connectObj.file_store,
+          db.getTenantSchema(),
+          subfolder,
+          fileName
+        )
+      )
+    ) {
+      await File.from_contents(
+        fileName,
+        "text/html",
+        "<html><head><title>Landing page 2</title></head><body><h1>Or land here</h1></body></html>",
+        1,
+        100,
+        subfolder
+      );
+    }
+    const htmlFiles = await File.find(
+      {
+        mime_super: "text",
+        mime_sub: "html",
+        ext: "html",
+      },
+      { recursive: true }
+    );
+    console.log({ htmlFiles });
+
+    expect(
+      htmlFiles.find((file: any) => file.filename === fileName)
+    ).toBeDefined();
+    expect(htmlFiles.every((file) => file.location.endsWith(".html"))).toBe(
+      true
+    );
   });
 
   it("should resolve filename clash in root", async () => {

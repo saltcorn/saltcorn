@@ -71,6 +71,7 @@ const pagePropertiesForm = async (req, isNew) => {
     {
       mime_super: "text",
       mime_sub: "html",
+      ext: "html"
     },
     { recursive: true }
   );

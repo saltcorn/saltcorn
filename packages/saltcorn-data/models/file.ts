@@ -137,7 +137,10 @@ class File {
       const searcher = async (folder: string, recursive?: boolean) => {
         let fileNms;
         try {
-          fileNms = await fsp.readdir(folder);
+          fileNms = await fsp.readdir(
+            folder,
+            recursive ? { recursive: true } : undefined
+          );
         } catch (e) {
           fileNms = [];
         }
@@ -148,9 +151,17 @@ class File {
             name.startsWith("_resized_")
           )
             continue;
-          const f = await File.from_file_on_disk(name, folder);
-          if (recursive && f.isDirectory) await searcher(f.location, recursive);
-          if (where?.search && name.indexOf(where.search) < 0) continue;
+          if (where?.ext) {
+            if (!name.toLowerCase().endsWith(`.${where?.ext}`)) continue;
+          }
+          if (where?.search && path.basename(name).indexOf(where.search) < 0)
+            continue;
+          const f = await File.from_file_on_disk(
+            path.basename(name),
+            path.join(folder, path.dirname(name))
+          );
+          //if (recursive && f.isDirectory) await searcher(f.location, recursive);
+
           files.push(f);
         }
       };
@@ -943,7 +954,7 @@ class File {
 
   async get_contents(
     encoding?: "utf8" | "base64" | "base64url" | "hex" | "ascii"
-  ): Promise<Buffer|string> {
+  ): Promise<Buffer | string> {
     if (this.s3_store) {
       const buffer = await downloadBufferFromS3(this.location);
       return encoding
