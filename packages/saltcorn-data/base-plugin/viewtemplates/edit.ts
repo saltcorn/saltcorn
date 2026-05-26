@@ -911,6 +911,7 @@ const render = async ({
     viewname,
     optionsQuery,
     state,
+    isPreview,
   });
   form.id = formId;
   return (

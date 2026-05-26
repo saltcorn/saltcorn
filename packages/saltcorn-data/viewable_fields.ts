@@ -2258,6 +2258,7 @@ const transformForm = async ({
   viewname,
   optionsQuery,
   state,
+  isPreview,
 }: {
   form: any;
   table: Table;
@@ -2273,6 +2274,7 @@ const transformForm = async ({
   viewname: string;
   optionsQuery?: GenObj;
   state?: GenObj;
+  isPreview?: boolean;
 }): Promise<void> => {
   let originalState = state;
   let pseudo_row: GenObj = {};
@@ -2294,6 +2296,12 @@ const transformForm = async ({
       if (segment.click_action) {
         segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
       }
+      if (isPreview && segment.showIfFormulaInputs) {
+        delete segment.showIfFormulaInputs;
+        delete segment.showIfFormulaJoinFields;
+        segment.display = "none";
+        segment.contents = "";
+      }
     },
     async action(segment: any) {
       if (segment.action_name.startsWith("Login with ")) {
@@ -2309,7 +2317,7 @@ const transformForm = async ({
           if (minRole < userRole) return;
         }
         if (req.method === "POST") return;
-
+        if (isPreview) return;
         //run action
         try {
           const actionResult = await run_action_column({
