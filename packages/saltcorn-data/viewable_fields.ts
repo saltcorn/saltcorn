@@ -2291,15 +2291,7 @@ const transformForm = async ({
       : (s: string) => {
           return s;
         };
-  await traverse(form.layout, {
-    ...(isPreview
-      ? {
-          join_field(segment: any) {
-            segment.type = "blank";
-            segment.contents = "";
-          },
-        }
-      : {}),
+  await traverse(form.layout, {    
     ...(isPreview
       ? {
           container(segment: any) {
@@ -2470,6 +2462,11 @@ const transformForm = async ({
       }
     },
     join_field(segment: any) {
+      if (isPreview) {
+        segment.type = "blank";
+        segment.contents = "";
+        return;
+      }
       const qs = objToQueryString(segment.configuration);
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },
