@@ -2300,17 +2300,24 @@ const transformForm = async ({
           },
         }
       : {}),
-    container(segment: any) {
-      if (segment.click_action) {
-        segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
-      }
-      if (isPreview && segment.showIfFormulaInputs) {
-        delete segment.showIfFormulaInputs;
-        delete segment.showIfFormulaJoinFields;
-        segment.display = "none";
-        segment.contents = "";
-      }
-    },
+    ...(isPreview
+      ? {
+          container(segment: any) {
+            if (segment.showIfFormulaInputs) {
+              delete segment.showIfFormulaInputs;
+              delete segment.showIfFormulaJoinFields;
+              segment.display = "none";
+              segment.contents = "";
+            }
+          },
+        }
+      : {
+          container(segment: any) {
+            if (segment.click_action) {
+              segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
+            }
+          },
+        }),
     async action(segment: any) {
       if (segment.action_name.startsWith("Login with ")) {
         const method_label = segment.action_name.replace("Login with ", "");
