@@ -103,7 +103,6 @@ describe("File class", () => {
       },
       { recursive: true }
     );
-    console.log({ htmlFiles });
 
     expect(
       htmlFiles.find((file: any) => file.filename === fileName)
@@ -149,7 +148,6 @@ describe("File class", () => {
       },
       { recursive: true }
     );
-    console.log({ htmlFiles });
 
     expect(
       htmlFiles.find((file: any) => file.filename === fileName)
