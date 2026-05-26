@@ -2292,6 +2292,14 @@ const transformForm = async ({
           return s;
         };
   await traverse(form.layout, {
+    ...(isPreview
+      ? {
+          join_field(segment: any) {
+            segment.type = "blank";
+            segment.contents = "";
+          },
+        }
+      : {}),
     container(segment: any) {
       if (segment.click_action) {
         segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
