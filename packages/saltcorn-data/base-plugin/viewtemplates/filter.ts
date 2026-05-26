@@ -11,6 +11,7 @@ import Trigger from "../../models/trigger";
 import User from "../../models/user";
 import Page from "../../models/page";
 import Crash from "../../models/crash";
+const PageGroup = require("../../models/page_group");
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 import {
@@ -213,7 +214,14 @@ const configuration_workflow = (req: Req) =>
             fields as any,
             "filter"
           );
-          const pages = await Page.find();
+          const pages = (await Page.find({}, { cached: true })).map((p) => ({
+            name: p.name,
+          }));
+          const groups = (await PageGroup.find({}, { cached: true })).map(
+            (g: any) => ({
+              name: g.name,
+            })
+          );
           var agg_field_opts: GenObj = {};
 
           agg_field_opts[table.name] = table.fields
@@ -257,6 +265,7 @@ const configuration_workflow = (req: Req) =>
             actionConstraints,
             views,
             pages,
+            page_groups: groups,
             images: [], //temp fix till we rebuild builder
             library,
             field_view_options,

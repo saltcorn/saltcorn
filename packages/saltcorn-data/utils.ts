@@ -865,6 +865,24 @@ function toSafeRelativeUrl(input: string): string {
 
   return sanitizeRelative(trimmed);
 }
+/**
+ * Prints elapsed time since start of timer. Inspired by matlab's tic and toc
+ * 
+ * Usage: 
+ * const toc = tic("view config")
+ * ...
+ * toc("get tables done")
+ * ...
+ * toc("returning data")
+ */
+const tic = (...s1s: any[]) => {
+  const t0 = new Date();
+  return (...s2s: []) => {
+    const t1 = new Date();
+    const seconds = (t1.getTime() - t0.getTime()) / 1000;
+    console.log(...s1s, ...s2s, seconds + "s");
+  };
+};
 
 /**
  * Sanitizes a relative URL string.
@@ -943,4 +961,5 @@ export = {
   pluginsFolderRoot,
   decodeProvisioningProfile,
   isValidJsIdentifier,
+  tic
 };

@@ -229,10 +229,14 @@ const configuration_workflow = (req: Req) =>
             true,
             true
           );
-          const pages = await Page.find();
-          const groups = (await PageGroup.find()).map((g: any) => ({
-            name: g.name,
+          const pages = (await Page.find({}, { cached: true })).map((p) => ({
+            name: p.name,
           }));
+          const groups = (await PageGroup.find({}, { cached: true })).map(
+            (g: any) => ({
+              name: g.name,
+            })
+          );
           const { on_done_redirect, ...current_filter_state } = req.query;
 
           return {
@@ -907,6 +911,7 @@ const render = async ({
     viewname,
     optionsQuery,
     state,
+    isPreview,
   });
   form.id = formId;
   return (
@@ -1066,7 +1071,7 @@ const runPost = async (
             Crash.create(
               { message: ins_upd_error, stack: ins_upd_error_obj.stack ?? "" },
               req
-          );
+            );
           res.status(422);
           if (req.xhr) {
             res.json({ error: ins_upd_error });
@@ -1639,7 +1644,7 @@ const prepare = async (
           type: tbl_field.type,
           table,
           table_id: table?.id,
-          reftable_name: tbl_field.reftable_name
+          reftable_name: tbl_field.reftable_name,
         })
       );
     }

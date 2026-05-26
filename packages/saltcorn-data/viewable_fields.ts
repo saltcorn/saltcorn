@@ -2258,6 +2258,7 @@ const transformForm = async ({
   viewname,
   optionsQuery,
   state,
+  isPreview,
 }: {
   form: any;
   table: Table;
@@ -2273,6 +2274,7 @@ const transformForm = async ({
   viewname: string;
   optionsQuery?: GenObj;
   state?: GenObj;
+  isPreview?: boolean;
 }): Promise<void> => {
   let originalState = state;
   let pseudo_row: GenObj = {};
@@ -2289,12 +2291,25 @@ const transformForm = async ({
       : (s: string) => {
           return s;
         };
-  await traverse(form.layout, {
-    container(segment: any) {
-      if (segment.click_action) {
-        segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
-      }
-    },
+  await traverse(form.layout, {    
+    ...(isPreview
+      ? {
+          container(segment: any) {
+            if (segment.showIfFormulaInputs) {
+              delete segment.showIfFormulaInputs;
+              delete segment.showIfFormulaJoinFields;
+              segment.display = "none";
+              segment.contents = "";
+            }
+          },
+        }
+      : {
+          container(segment: any) {
+            if (segment.click_action) {
+              segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
+            }
+          },
+        }),
     async action(segment: any) {
       if (segment.action_name.startsWith("Login with ")) {
         const method_label = segment.action_name.replace("Login with ", "");
@@ -2309,7 +2324,7 @@ const transformForm = async ({
           if (minRole < userRole) return;
         }
         if (req.method === "POST") return;
-
+        if (isPreview) return;
         //run action
         try {
           const actionResult = await run_action_column({
@@ -2447,6 +2462,11 @@ const transformForm = async ({
       }
     },
     join_field(segment: any) {
+      if (isPreview) {
+        segment.type = "blank";
+        segment.contents = "";
+        return;
+      }
       const qs = objToQueryString(segment.configuration);
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },

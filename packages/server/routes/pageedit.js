@@ -71,6 +71,7 @@ const pagePropertiesForm = async (req, isNew) => {
     {
       mime_super: "text",
       mime_sub: "html",
+      ext: "html",
     },
     { recursive: true }
   );
@@ -230,6 +231,7 @@ const pageBuilderData = async (req, context) => {
     const table = Table.findOne(view.table_id || view.exttable_name);
     if (table) view.table_name = table.name;
     const fs = await view.get_state_fields();
+    let added_fields = new Set();
     for (const frec of fs) {
       const f = new Field(frec);
       if (f.input_type === "hidden") continue;
@@ -239,7 +241,9 @@ const pageBuilderData = async (req, context) => {
       if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
 
       //await f.fill_fkey_options(true);
-      fixed_state_fields[view.name].push(f);
+      if (added_fields.has(f.name)) continue;
+      added_fields.add(f.name);
+      fixed_state_fields[view.name].push(f.toBuilder);
       if (table.name === "users" && f.primary_key)
         fixed_state_fields[view.name].push(
           new Field({
@@ -247,7 +251,7 @@ const pageBuilderData = async (req, context) => {
             label: req.__("Preset %s", f.label),
             type: "String",
             attributes: { options: ["LoggedIn"] },
-          })
+          }).toBuilder
         );
       if (f.presets) {
         fixed_state_fields[view.name].push(
@@ -256,7 +260,7 @@ const pageBuilderData = async (req, context) => {
             label: req.__("Preset %s", f.label),
             type: "String",
             attributes: { options: Object.keys(f.presets) },
-          })
+          }).toBuilder
         );
       }
     }
