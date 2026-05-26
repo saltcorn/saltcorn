@@ -2291,7 +2291,7 @@ const transformForm = async ({
       : (s: string) => {
           return s;
         };
-  await traverse(form.layout, {    
+  await traverse(form.layout, {
     ...(isPreview
       ? {
           container(segment: any) {
@@ -2519,7 +2519,7 @@ const transformForm = async ({
         segment.contents = key(row || {});
       }
     },
-    async view(segment: any) {
+    async view(segment: any, inLazy?: boolean) {
       //console.log(segment);
       const view_select = parse_view_select(segment.view, segment.relation);
       //console.log({ view_select });
@@ -2643,7 +2643,7 @@ const transformForm = async ({
             }/?${relFmlQS}', ${JSON.stringify(
               segment.extra_state_fml
             )}, row, ${JSON.stringify(outerState)})`;
-            segment.contents = segment.contents = div({
+            segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
               "data-view-source-need-fields": [...needFields].join(","),
@@ -2660,7 +2660,7 @@ const transformForm = async ({
             }/?${relFmlQS}', ${JSON.stringify(
               segment.extra_state_fml
             )}, row, ${JSON.stringify(outerState)})`;
-            segment.contents = segment.contents = div({
+            segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
               "data-view-source-need-fields": [...needFields].join(","),
@@ -2760,21 +2760,24 @@ const transformForm = async ({
           class: "d-inline",
           "data-sc-embed-viewname": view.name,
           "data-sc-view-source": `/view/${view.name}${qs}`,
+          "data-sc-local-state": `/view/${view.name}${qs}`,
           "data-view-source-current": `/view/${view.name}${qs}`,
           "data-view-source-need-fields": [...needFields].join(","),
           "data-view-source": encodeURIComponent(urlFormula!),
         },
-        view.renderLocally()
-          ? await view.run(
-              { ...state, ...outerState, ...extra_state },
-              { req, res },
-              view.isRemoteTable()
-            )
-          : await renderServerSide(view.name, {
-              ...state,
-              ...outerState,
-              ...extra_state,
-            })
+        inLazy
+          ? ""
+          : view.renderLocally()
+            ? await view.run(
+                { ...state, ...outerState, ...extra_state },
+                { req, res },
+                view.isRemoteTable()
+              )
+            : await renderServerSide(view.name, {
+                ...state,
+                ...outerState,
+                ...extra_state,
+              })
       );
     },
   });
