@@ -20,7 +20,6 @@ beforeAll(async () => {
 
 jest.setTimeout(20000);
 
-
 afterAll(db.close);
 
 describe("User model", () => {
