@@ -824,10 +824,14 @@ router.get(
 
     const statusBadge = (status) => {
       switch (status) {
-        case "match": return badge("success", req.__("Match"));
-        case "ghost": return badge("danger", req.__("Ghost"));
-        case "orphan": return badge("primary", req.__("Orphan"));
-        default: return "";
+        case "match":
+          return badge("success", req.__("Match"));
+        case "ghost":
+          return badge("danger", req.__("Ghost"));
+        case "orphan":
+          return badge("primary", req.__("Orphan"));
+        default:
+          return "";
       }
     };
 
@@ -839,7 +843,10 @@ router.get(
           action: `/table/rescan-delete/${table.id}`,
         },
         input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
-        h4({ class: "text-danger" }, req.__("Ghost fields (in Saltcorn, not in DB)")),
+        h4(
+          { class: "text-danger" },
+          req.__("Ghost fields (in Saltcorn, not in DB)")
+        ),
         mkTable(
           [
             {
@@ -877,7 +884,10 @@ router.get(
           action: `/table/rescan-import/${table.id}`,
         },
         input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
-        h4({ class: "text-primary" }, req.__("Orphan columns (in DB, not in Saltcorn)")),
+        h4(
+          { class: "text-primary" },
+          req.__("Orphan columns (in DB, not in Saltcorn)")
+        ),
         mkTable(
           [
             {
@@ -938,10 +948,31 @@ router.get(
             { text: req.__("Rescan fields") },
           ],
         },
-        allMatch && { type: "card", title: req.__("All fields match"), contents: p(req.__("All Saltcorn fields match the database columns.")) + a({ href: `/table/${table.id}`, class: "btn btn-primary" }, req.__("Back to table")) },
-        ghosts.length > 0 && { type: "card", title: req.__("Ghosts (%d)", ghosts.length), contents: ghostForm },
-        orphans.length > 0 && { type: "card", title: req.__("Orphans (%d)", orphans.length), contents: orphanForm },
-        matches.length > 0 && { type: "card", title: req.__("Matches"), contents: matchCard },
+        allMatch && {
+          type: "card",
+          title: req.__("All fields match"),
+          contents:
+            p(req.__("All Saltcorn fields match the database columns.")) +
+            a(
+              { href: `/table/${table.id}`, class: "btn btn-primary" },
+              req.__("Back to table")
+            ),
+        },
+        ghosts.length > 0 && {
+          type: "card",
+          title: req.__("Ghosts (%d)", ghosts.length),
+          contents: ghostForm,
+        },
+        orphans.length > 0 && {
+          type: "card",
+          title: req.__("Orphans (%d)", orphans.length),
+          contents: orphanForm,
+        },
+        matches.length > 0 && {
+          type: "card",
+          title: req.__("Matches"),
+          contents: matchCard,
+        },
       ].filter(Boolean),
     });
   })
@@ -977,9 +1008,7 @@ router.post(
     let removed = 0;
 
     for (const fname of fieldNames) {
-      const field = fields.find(
-        (f) => f.name === fname
-      );
+      const field = fields.find((f) => f.name === fname);
       if (field) {
         await db.deleteWhere("_sc_fields", { id: field.id });
         removed++;
@@ -1051,9 +1080,7 @@ router.post(
           }
         }
       } else {
-        const { rows } = await db.query(
-          `PRAGMA table_info("${table.name}")`
-        );
+        const { rows } = await db.query(`PRAGMA table_info("${table.name}")`);
         const col = rows.find((r) => r.name === colName);
         if (col) {
           const type = findType(col.type) || "String";
@@ -1070,7 +1097,9 @@ router.post(
         // Insert directly into _sc_fields — the physical column already exists,
         // so we must NOT use Field.create (which does ALTER TABLE ADD COLUMN).
         const typeName =
-          typeof fieldCfg.type === "string" ? fieldCfg.type : fieldCfg.type?.name;
+          typeof fieldCfg.type === "string"
+            ? fieldCfg.type
+            : fieldCfg.type?.name;
         await db.insert("_sc_fields", {
           table_id: table.id,
           name: fieldCfg.name,
@@ -1087,7 +1116,9 @@ router.post(
     }
 
     await getState().refresh_tables(true);
-    const msgs = [req.__("Imported %d orphan column(s) into Saltcorn", imported)];
+    const msgs = [
+      req.__("Imported %d orphan column(s) into Saltcorn", imported),
+    ];
     if (skipped.length)
       msgs.push(
         req.__(
@@ -3093,16 +3124,38 @@ const standardFieldForm = (table, req, existingNames = new Set()) => {
   const defs = standardFieldDefs(req).filter(
     (def) => !existingNames.has(def.name)
   );
+  const default_labels = getState().getConfig(
+    "default_standard_field_labels",
+    {}
+  );
   return new Form({
     submitLabel: req.__("Create fields"),
     action: `/table/create-standard-fields/${table.id}`,
     formStyle: "vert",
-    fields: defs.map((def) => ({
-      type: "Bool",
-      label: `${def.label} (${def.type})`,
-      name: def.name,
-      default: true,
-    })),
+    fields: [
+      ...defs
+        .map((def) => [
+          {
+            type: "Bool",
+            label: `${def.label} (${def.type})`,
+            name: def.name,
+            default: true,
+          },
+          {
+            type: "String",
+            label: `${def.label} field label`,
+            name: `${def.name}_label`,
+            default: default_labels[def.name] || def.label,
+            showIf: { set_custom_labels: true, [def.name]: true },
+          },
+        ])
+        .flat(1),
+      {
+        name: "set_custom_labels",
+        label: req.__("Set custom labels"),
+        type: "Bool",
+      },
+    ],
   });
 };
 
@@ -3146,10 +3199,21 @@ router.post(
       return;
     }
     const defs = standardFieldDefs(req);
+    const default_labels = getState().getConfig(
+      "default_standard_field_labels",
+      {}
+    );
+    const new_defaults = {};
     await db.withTransaction(async () => {
       for (const def of defs) {
         if (!form.values[def.name]) continue;
         if (existingNames.has(def.name)) continue;
+        const custom_label_value = form.values[`${def.name}_label`];
+        if (form.values.set_custom_labels && custom_label_value) {
+          def.label = custom_label_value;
+          if (custom_label_value !== default_labels[def.name])
+            new_defaults[def.name] = custom_label_value;
+        }
         await Field.create({
           table_id: table.id,
           name: def.name,
@@ -3164,6 +3228,12 @@ router.post(
         });
       }
     });
+    if (Object.keys(new_defaults).length)
+      await getState().setConfig("default_standard_field_labels", {
+        ...default_labels,
+        ...new_defaults,
+      });
+
     await getState().refresh_tables();
     res.redirect(`/table/${table.id}`);
   })

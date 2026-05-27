@@ -676,6 +676,12 @@ const configTypes: ConfigTypes = {
     default: {},
     excludeFromMobile: true,
   },
+  default_standard_field_labels: {
+    type: "hidden",
+    label: "User-defined labels for standard fields",
+    default: {},
+    excludeFromMobile: true,
+  },
   event_log_settings: {
     type: "hidden",
     label: "Event log settings",

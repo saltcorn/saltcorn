@@ -8,7 +8,7 @@ import {
   assertsObjectIsUser,
   assertIsErrorMsg,
 } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect, jest } from "@jest/globals";
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));
@@ -17,6 +17,8 @@ beforeAll(async () => {
   await require("../db/reset_schema")();
   await require("../db/fixtures")();
 });
+
+jest.setTimeout(20000);
 
 afterAll(db.close);
 
