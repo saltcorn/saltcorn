@@ -3145,7 +3145,7 @@ const standardFieldForm = (table, req, existingNames = new Set()) => {
             type: "String",
             label: `${def.label} field label`,
             name: `${def.name}_label`,
-            default: def.label,
+            default: default_labels[def.name] || def.label,
             showIf: { set_custom_labels: true, [def.name]: true },
           },
         ])
@@ -3199,10 +3199,22 @@ router.post(
       return;
     }
     const defs = standardFieldDefs(req);
+    const default_labels = getState().getConfig(
+      "default_standard_field_labels",
+      {}
+    );
+    const new_defaults = {};
     await db.withTransaction(async () => {
       for (const def of defs) {
         if (!form.values[def.name]) continue;
         if (existingNames.has(def.name)) continue;
+        const custom_label_value = form.values[`${def.name}_label`];
+        if (form.values.set_custom_labels && custom_label_value) {
+          defs.label = custom_label_value;
+          if (custom_label_value !== default_labels[def.name])
+            new_defaults[def.name] = custom_label_value;
+          //defs.name = Field.labelToName(form.values[`${def.name}_label`]);
+        }
         await Field.create({
           table_id: table.id,
           name: def.name,
@@ -3217,6 +3229,12 @@ router.post(
         });
       }
     });
+    if (Object.keys(new_defaults).length)
+      await getState().setConfig("default_standard_field_labels", {
+        ...default_labels,
+        ...new_defaults,
+      });
+
     await getState().refresh_tables();
     res.redirect(`/table/${table.id}`);
   })
