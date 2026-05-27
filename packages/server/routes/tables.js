@@ -3210,10 +3210,9 @@ router.post(
         if (existingNames.has(def.name)) continue;
         const custom_label_value = form.values[`${def.name}_label`];
         if (form.values.set_custom_labels && custom_label_value) {
-          defs.label = custom_label_value;
+          def.label = custom_label_value;
           if (custom_label_value !== default_labels[def.name])
             new_defaults[def.name] = custom_label_value;
-          //defs.name = Field.labelToName(form.values[`${def.name}_label`]);
         }
         await Field.create({
           table_id: table.id,
