@@ -3093,16 +3093,38 @@ const standardFieldForm = (table, req, existingNames = new Set()) => {
   const defs = standardFieldDefs(req).filter(
     (def) => !existingNames.has(def.name)
   );
+  const default_labels = getState().getConfig(
+    "default_standard_field_labels",
+    {}
+  );
   return new Form({
     submitLabel: req.__("Create fields"),
     action: `/table/create-standard-fields/${table.id}`,
     formStyle: "vert",
-    fields: defs.map((def) => ({
-      type: "Bool",
-      label: `${def.label} (${def.type})`,
-      name: def.name,
-      default: true,
-    })),
+    fields: [
+      ...defs
+        .map((def) => [
+          {
+            type: "Bool",
+            label: `${def.label} (${def.type})`,
+            name: def.name,
+            default: true,
+          },
+          {
+            type: "String",
+            label: `${def.label} field label`,
+            name: `${def.name}_label`,
+            default: def.label,
+            showIf: { set_custom_labels: true, [def.name]: true },
+          },
+        ])
+        .flat(1),
+      {
+        name: "set_custom_labels",
+        label: req.__("Set custom labels"),
+        type: "Bool",
+      },
+    ],
   });
 };
 
