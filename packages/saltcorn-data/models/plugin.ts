@@ -651,12 +651,9 @@ class Plugin implements AbstractPlugin {
         );
       } else {
         const depName = loc.replace("@saltcorn/", "");
-        const { getState } = require("../db/state");
-        const alreadyLoaded =
-          !!getState().plugins[loc] || !!getState().plugins[depName];
         const existing =
-          alreadyLoaded ||
           !!(await Plugin.findOne({ location: loc })) ||
+          !!(await Plugin.findOne({ name: loc })) ||
           !!(await Plugin.findOne({ name: depName }));
         if (!existing && loc !== plugin.location) {
           await Plugin.loadAndSaveNewPlugin(
