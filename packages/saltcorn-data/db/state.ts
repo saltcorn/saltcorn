@@ -588,7 +588,7 @@ class State {
       this.eventTypes[cev.name] = cev;
     });
     this.logLevel = +(this.configs.log_level.value || 1);
-    db.set_sql_logging(!!this.configs?.log_sql?.value)
+    db.set_sql_logging?.(!!this.configs?.log_sql?.value)
     if (!noSignal) this.log(5, "Refresh config");
     if (db.is_node) {
       await this.refresh_i18n();
