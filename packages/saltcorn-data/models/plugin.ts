@@ -650,11 +650,18 @@ class Plugin implements AbstractPlugin {
           noSignalOrDB
         );
       } else {
-        const existing = await Plugin.findOne({ location: loc });
+        const depName = loc.replace("@saltcorn/", "");
+        const { getState } = require("../db/state");
+        const alreadyLoaded =
+          !!getState().plugins[loc] || !!getState().plugins[depName];
+        const existing =
+          alreadyLoaded ||
+          !!(await Plugin.findOne({ location: loc })) ||
+          !!(await Plugin.findOne({ name: depName }));
         if (!existing && loc !== plugin.location) {
           await Plugin.loadAndSaveNewPlugin(
             new Plugin({
-              name: loc.replace("@saltcorn/", ""),
+              name: depName,
               location: loc,
               source: "npm",
             }),
