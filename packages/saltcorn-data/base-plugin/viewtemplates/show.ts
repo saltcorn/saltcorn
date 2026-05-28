@@ -519,9 +519,11 @@ const renderRows = async (
       container(segment: any) {
         if (segment.showIfFormula) {
           const f = get_expression_function(segment.showIfFormula, fields);
-          if (!f({ ...dollarizeObject(state || {}), ...row }, extra.req.user))
+          if (!f({ ...dollarizeObject(state || {}), ...row }, extra.req.user)) {
             segment.contents = "";
-          delete segment.showIfFormula; //avoid double eval
+            segment.type = "blank";
+            delete segment.showIfFormula; //avoid double eval
+          }
         }
       },
     });
