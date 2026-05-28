@@ -521,6 +521,7 @@ const renderRows = async (
           const f = get_expression_function(segment.showIfFormula, fields);
           if (!f({ ...dollarizeObject(state || {}), ...row }, extra.req.user))
             segment.contents = "";
+          delete segment.showIfFormula; //avoid double eval
         }
       },
     });
