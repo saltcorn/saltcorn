@@ -514,8 +514,21 @@ const renderRows = async (
     subviewExtra.req = { ...extra.req, isSubView: true };
   }
   return await asyncMap(rows, async (row: Row) => {
+    const myLayout = rows.length > 1 ? structuredClone(layout) : layout;
+    traverseSync(myLayout, {
+      container(segment: any) {
+        if (segment.showIfFormula) {
+          const f = get_expression_function(segment.showIfFormula, fields);
+          if (!f({ ...dollarizeObject(state || {}), ...row }, extra.req.user)) {
+            segment.contents = "";
+            segment.type = "blank";
+            delete segment.showIfFormula; //avoid double eval
+          }
+        }
+      },
+    });
     await eachView(
-      layout,
+      myLayout,
       async (segment: GenObj, inLazy: boolean) => {
         // do all the parsing with data here? make a factory
         const view = await getView(segment.view, segment.relation);
@@ -649,7 +662,7 @@ const renderRows = async (
       },
       state
     );
-    await Page.renderEachEmbeddedPageInLayout(layout, state, extra as any);
+    await Page.renderEachEmbeddedPageInLayout(myLayout, state, extra as any);
 
     const user_id = extra.req.user ? extra.req.user.id : null;
 
@@ -661,7 +674,7 @@ const renderRows = async (
     return render(
       row,
       fields,
-      layout,
+      myLayout,
       viewname,
       table,
       role,
