@@ -10,7 +10,7 @@ import { Layout } from "@saltcorn/types/base_types";
 import db from "../db/index";
 const { is_node } = db;
 
-type Visitors = { [key: string]: (segment: any) => any };
+type Visitors = { [key: string]: (segment: any, isLazy?: boolean) => any };
 
 /**
  * @param layout
@@ -60,32 +60,47 @@ const traverseSync = (layout: Layout, visitors: Visitors | Function): void => {
  */
 const traverse = async (layout: Layout, visitors: Visitors): Promise<void> => {
   //todo rewrite this without async/await to optimise?
-  const go = async (segment: any) => {
+  const go = async (segment: any, inLazy?: boolean) => {
     if (!segment) return;
     if (visitors[segment.type]) {
-      const vres = visitors[segment.type](segment);
+      const vres = visitors[segment.type](segment, inLazy);
       if (vres && vres instanceof Promise) await vres;
     }
     if (Array.isArray(segment)) {
-      for (const seg of segment) await go(seg);
+      for (const seg of segment) await go(seg, inLazy);
       return;
     }
     if (segment.footer) {
-      if (typeof segment.footer !== "string") await go(segment.footer);
+      if (typeof segment.footer !== "string") await go(segment.footer, inLazy);
     }
     if (segment.titleRight) {
-      if (typeof segment.titleRight !== "string") await go(segment.titleRight);
+      if (typeof segment.titleRight !== "string")
+        await go(segment.titleRight, inLazy);
     }
     if (segment.contents) {
-      if (typeof segment.contents !== "string") await go(segment.contents);
+      if (segment.lazyLoadViews && Array.isArray(segment.contents)) {
+        const curIx = 0;
+        for (let index = 0; index < segment.contents.length; index++) {
+          const seg = segment.contents[index];
+          const makingLazy =
+            !segment.acc_init_opens?.[index] &&
+            (index !== curIx || segment.startClosed);
+
+          await go(seg, inLazy || makingLazy);
+        }
+        return;
+      }
+
+      if (typeof segment.contents !== "string")
+        await go(segment.contents, inLazy);
       return;
     }
     if (segment.above) {
-      for (const seg of segment.above) await go(seg);
+      for (const seg of segment.above) await go(seg, inLazy);
       return;
     }
     if (segment.besides) {
-      for (const seg of segment.besides) await go(seg);
+      for (const seg of segment.besides) await go(seg, inLazy);
       return;
     }
   };

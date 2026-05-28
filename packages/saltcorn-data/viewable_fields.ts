@@ -2258,6 +2258,7 @@ const transformForm = async ({
   viewname,
   optionsQuery,
   state,
+  isPreview,
 }: {
   form: any;
   table: Table;
@@ -2273,6 +2274,7 @@ const transformForm = async ({
   viewname: string;
   optionsQuery?: GenObj;
   state?: GenObj;
+  isPreview?: boolean;
 }): Promise<void> => {
   let originalState = state;
   let pseudo_row: GenObj = {};
@@ -2290,11 +2292,24 @@ const transformForm = async ({
           return s;
         };
   await traverse(form.layout, {
-    container(segment: any) {
-      if (segment.click_action) {
-        segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
-      }
-    },
+    ...(isPreview
+      ? {
+          container(segment: any) {
+            if (segment.showIfFormulaInputs) {
+              delete segment.showIfFormulaInputs;
+              delete segment.showIfFormulaJoinFields;
+              segment.display = "none";
+              segment.contents = "";
+            }
+          },
+        }
+      : {
+          container(segment: any) {
+            if (segment.click_action) {
+              segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
+            }
+          },
+        }),
     async action(segment: any) {
       if (segment.action_name.startsWith("Login with ")) {
         const method_label = segment.action_name.replace("Login with ", "");
@@ -2309,7 +2324,7 @@ const transformForm = async ({
           if (minRole < userRole) return;
         }
         if (req.method === "POST") return;
-
+        if (isPreview) return;
         //run action
         try {
           const actionResult = await run_action_column({
@@ -2447,6 +2462,11 @@ const transformForm = async ({
       }
     },
     join_field(segment: any) {
+      if (isPreview) {
+        segment.type = "blank";
+        segment.contents = "";
+        return;
+      }
       const qs = objToQueryString(segment.configuration);
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },
@@ -2499,7 +2519,7 @@ const transformForm = async ({
         segment.contents = key(row || {});
       }
     },
-    async view(segment: any) {
+    async view(segment: any, inLazy?: boolean) {
       //console.log(segment);
       const view_select = parse_view_select(segment.view, segment.relation);
       //console.log({ view_select });
@@ -2623,7 +2643,7 @@ const transformForm = async ({
             }/?${relFmlQS}', ${JSON.stringify(
               segment.extra_state_fml
             )}, row, ${JSON.stringify(outerState)})`;
-            segment.contents = segment.contents = div({
+            segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
               "data-view-source-need-fields": [...needFields].join(","),
@@ -2640,7 +2660,7 @@ const transformForm = async ({
             }/?${relFmlQS}', ${JSON.stringify(
               segment.extra_state_fml
             )}, row, ${JSON.stringify(outerState)})`;
-            segment.contents = segment.contents = div({
+            segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
               "data-view-source-need-fields": [...needFields].join(","),
@@ -2740,21 +2760,24 @@ const transformForm = async ({
           class: "d-inline",
           "data-sc-embed-viewname": view.name,
           "data-sc-view-source": `/view/${view.name}${qs}`,
+          "data-sc-local-state": `/view/${view.name}${qs}`,
           "data-view-source-current": `/view/${view.name}${qs}`,
           "data-view-source-need-fields": [...needFields].join(","),
           "data-view-source": encodeURIComponent(urlFormula!),
         },
-        view.renderLocally()
-          ? await view.run(
-              { ...state, ...outerState, ...extra_state },
-              { req, res },
-              view.isRemoteTable()
-            )
-          : await renderServerSide(view.name, {
-              ...state,
-              ...outerState,
-              ...extra_state,
-            })
+        inLazy
+          ? ""
+          : view.renderLocally()
+            ? await view.run(
+                { ...state, ...outerState, ...extra_state },
+                { req, res },
+                view.isRemoteTable()
+              )
+            : await renderServerSide(view.name, {
+                ...state,
+                ...outerState,
+                ...extra_state,
+              })
       );
     },
   });
