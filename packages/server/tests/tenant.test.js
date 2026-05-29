@@ -99,3 +99,39 @@ describe("tenant routes", () => {
     });
   }
 });
+
+describe("session-tenant isolation", () => {
+  if (!db.isSQLite) {
+    const TENANT = "secauth";
+
+    beforeAll(async () => {
+      db.enable_multi_tenant();
+      await getState().setConfig("role_to_create_tenant", "100");
+      await db.query(`drop schema if exists ${TENANT} cascade`);
+      const app = await getApp({ disableCsrf: true });
+      await request(app)
+        .post("/tenant/create")
+        .send(`subdomain=${TENANT}`)
+        .expect(toInclude("Success"));
+    });
+
+    afterAll(async () => {
+      await db.query(`drop schema if exists ${TENANT} cascade`);
+    });
+
+    it("rejects cross-tenant session reuse", async () => {
+      const loginCookie = await getAdminLoginCookie();
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .get("/auth/settings")
+        .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.status).toBe(403);
+      expect(res.body.error).toBe("Session tenant mismatch");
+    });
+  } else {
+    it("does not support tenants on SQLite", () => {
+      expect(db.isSQLite).toBe(true);
+    });
+  }
+});
