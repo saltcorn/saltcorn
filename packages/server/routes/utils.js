@@ -68,7 +68,7 @@ function loggedIn(req, res, next) {
       req.user.tenant !== undefined &&
       req.user.tenant !== db.getTenantSchema()
     ) {
-      req.logout?.();
+      req.logout?.(() => {});
       return res.status(403).json({ error: "Session tenant mismatch" });
     }
     next();
@@ -92,7 +92,7 @@ function isAdmin(req, res, next) {
   if (req.user && req.user.role_id === 1) {
     // Reject tenant drift before honoring elevated privileges in this schema.
     if (req.user.tenant !== undefined && req.user.tenant !== cur_tenant) {
-      req.logout?.();
+      req.logout?.(() => {});
       return res.status(403).json({ error: "Session tenant mismatch" });
     }
     next();
