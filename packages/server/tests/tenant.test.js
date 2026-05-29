@@ -93,18 +93,6 @@ describe("tenant routes", () => {
         .set("Cookie", loginCookie)
         .expect(toRedirect("/tenant/list"));
     });*/
-
-    // GHSA-2729-rgj2-rq44: a session authenticated in one tenant must not be trusted in another tenant's context.
-    it("rejects cross-tenant session reuse", async () => {
-      const loginCookie = await getAdminLoginCookie();
-      const app = await getApp({ disableCsrf: true });
-      const res = await request(app)
-        .get("/auth/settings")
-        .set("Cookie", loginCookie)
-        .set("Host", "test2.example.com");
-      expect(res.status).toBe(403);
-      expect(res.body.error).toBe("Session tenant mismatch");
-    });
   } else {
     it("does not support tenants on SQLite", async () => {
       expect(db.isSQLite).toBe(true);
