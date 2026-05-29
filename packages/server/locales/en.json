@@ -2090,5 +2090,12 @@
 	"Public user allowed events": "Public user allowed events",
 	"Comma-separated event names that unauthenticated (public) mobile app users may emit. Empty means public users cannot emit any events.": "Comma-separated event names that unauthenticated (public) mobile app users may emit. Empty means public users cannot emit any events.",
 	"Rescan fields": "Rescan fields",
-	"Set custom labels": "Set custom labels"
+	"Set custom labels": "Set custom labels",
+	"Matching fields (%d)": "Matching fields (%d)",
+	"Match": "Match",
+	"Rescan fields: %s": "Rescan fields: %s",
+	"All fields match": "All fields match",
+	"All Saltcorn fields match the database columns.": "All Saltcorn fields match the database columns.",
+	"Back to table": "Back to table",
+	"Matches": "Matches"
 }
