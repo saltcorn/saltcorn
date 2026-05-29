@@ -201,7 +201,7 @@ const validateHostAuthority = (req) => {
   if (typeof host !== "string") return false;
   if (host.includes(",") || /\s|\x00/.test(host)) return false;
   const hostname = host.split(":")[0];
-  return /^[a-zA-Z0-9.\-\[\]]+$/.test(hostname);
+  return /^[a-zA-Z0-9.\-[\]]+$/.test(hostname);
 };
 
 /**
