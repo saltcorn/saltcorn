@@ -231,6 +231,8 @@ const getApp = async (opts = {}) => {
   // todo ability to configure session_secret Age
   app.use(getSessionStore(pruneSessionInterval));
 
+  // Bind tenant context before passport reads or trusts any session state.
+  app.use(setTenant);
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
   const isPlaywright = process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD?.length > 0;
@@ -424,7 +426,6 @@ const getApp = async (opts = {}) => {
     }
     return next();
   });
-  app.use(setTenant);
 
   // Change into s3storage compatible selector
   // existing fileupload middleware is moved into s3storage.js
