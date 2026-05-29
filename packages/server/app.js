@@ -31,6 +31,7 @@ const {
   error_catcher,
   getSessionStore,
   setTenant,
+  applyUserLocale,
 } = require("./routes/utils.js");
 const {
   getAllTenants,
@@ -235,6 +236,7 @@ const getApp = async (opts = {}) => {
   app.use(setTenant);
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
+  app.use(applyUserLocale);
   const isPlaywright = process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD?.length > 0;
   app.use((req, res, next) => {
     // no jwt and session id at the same time
