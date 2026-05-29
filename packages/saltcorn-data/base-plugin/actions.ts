@@ -190,8 +190,11 @@ const run_code = async ({
       if (trigger.action === "Workflow") {
         return trigger.runWithoutRow({
           row,
-          table,
+          table: trigger.table_id
+            ? Table.findOne({ id: trigger.table_id }) || table
+            : table,
           user,
+          trigger_id: trigger.id || undefined,
           interactive: false,
           ...rest,
           ...args,
@@ -200,8 +203,11 @@ const run_code = async ({
         const state_action = getState()!.actions[trigger.action];
         return state_action.run({
           row,
-          table,
+          table: trigger.table_id
+            ? Table.findOne({ id: trigger.table_id }) || table
+            : table,
           configuration: trigger.configuration,
+          trigger_id: trigger.id || undefined,
           user,
           ...rest,
           ...args,
@@ -1452,7 +1458,8 @@ export = {
         {
           name: "where",
           label: "Recalculate where",
-          sublabel: "Where-expression for subset of rows to recalculate. Example: <code>{manager: id}</code>",
+          sublabel:
+            "Where-expression for subset of rows to recalculate. Example: <code>{manager: id}</code>",
           input_type: "code",
           attributes: {
             mode: "application/javascript",

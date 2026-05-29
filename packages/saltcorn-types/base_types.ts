@@ -276,6 +276,7 @@ export type Action = {
     configuration?: Row;
     user?: AbstractUser;
     mode?: ActionMode;
+    trigger_id?: number;
   }) => Promise<any>;
   configFields?: ({
     table,
