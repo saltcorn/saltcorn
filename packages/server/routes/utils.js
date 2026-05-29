@@ -158,6 +158,20 @@ const setLanguage = (req, res, state) => {
   set_custom_http_headers(res, req, state);
 };
 
+const applyUserLocale = (req, res, next) => {
+  if (req.user) {
+    if (req.user.language) {
+      req.setLocale(req.user.language);
+      const rtlLanguages = ["ar", "he", "fa", "ur", "yi"];
+      req.isRTL = rtlLanguages.some((lang) =>
+        req.user.language.startsWith(lang)
+      );
+    }
+    Object.freeze(req.user);
+  }
+  next();
+};
+
 /**
  * Sets Custom HTTP headers using data from "custom_http_headers" config variable
  * @param {object} res
@@ -750,6 +764,7 @@ module.exports = {
   getGitRevision,
   getSessionStore,
   validateHostAuthority,
+  applyUserLocale,
   setTenant,
   get_tenant_from_req,
   addOnDoneRedirect,
