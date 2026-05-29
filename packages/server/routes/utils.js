@@ -62,7 +62,15 @@ const get_sys_info = async () => {
  * @returns {void}
  */
 function loggedIn(req, res, next) {
-  if (req.user && req.user.id && req.user.tenant === db.getTenantSchema()) {
+  if (req.user && req.user.id) {
+    // Reject tenant drift so a session authenticated elsewhere cannot be reused here.
+    if (
+      req.user.tenant !== undefined &&
+      req.user.tenant !== db.getTenantSchema()
+    ) {
+      req.logout?.();
+      return res.status(403).json({ error: "Session tenant mismatch" });
+    }
     next();
   } else {
     req.flash("danger", req.__("Must be logged in first"));
@@ -81,7 +89,12 @@ function loggedIn(req, res, next) {
 function isAdmin(req, res, next) {
   const cur_tenant = db.getTenantSchema();
   //console.log({ cur_tenant, user: req.user });
-  if (req.user && req.user.role_id === 1 && req.user.tenant === cur_tenant) {
+  if (req.user && req.user.role_id === 1) {
+    // Reject tenant drift before honoring elevated privileges in this schema.
+    if (req.user.tenant !== undefined && req.user.tenant !== cur_tenant) {
+      req.logout?.();
+      return res.status(403).json({ error: "Session tenant mismatch" });
+    }
     next();
   } else {
     req.flash("danger", req.__("Must be admin"));
@@ -175,6 +188,19 @@ const set_custom_http_headers = (res, req, state) => {
 };
 
 /**
+ * Validates the raw Host header before any tenant parsing happens.
+ * @param {object} req
+ * @returns {boolean}
+ */
+const validateHostAuthority = (req) => {
+  const host = req.headers?.["host"];
+  if (typeof host !== "string") return false;
+  if (host.includes(",") || /\s|\x00/.test(host)) return false;
+  const hostname = host.split(":")[0];
+  return /^[a-zA-Z0-9.\-\[\]]+$/.test(hostname);
+};
+
+/**
  * Tries to recognize tenant from HTTP Request
  * @param {object} req
  * @param {number|undefined} hostPartsOffset (optional) for socketIO, to get the tenant with localhost
@@ -203,6 +229,11 @@ const get_tenant_from_req = (req, hostPartsOffset) => {
  * @param {function} next
  */
 const setTenant = (req, res, next) => {
+  // Reject malformed authority values before subdomain parsing can switch tenant context.
+  if (!validateHostAuthority(req)) {
+    res.status(400).json({ error: "Invalid Host header" });
+    return;
+  }
   // for a saltcorn mobile request use 'req.user.tenant'
   if (req.smr) {
     if (req.user?.tenant && req.user.tenant !== db.connectObj.default_schema) {
@@ -674,6 +705,7 @@ module.exports = {
   scan_for_page_title,
   getGitRevision,
   getSessionStore,
+  validateHostAuthority,
   setTenant,
   get_tenant_from_req,
   addOnDoneRedirect,
