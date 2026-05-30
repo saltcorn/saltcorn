@@ -1266,8 +1266,10 @@ const runPost = async (
       );
     else if (trigger_return.notify)
       (req as any).flash("success", trigger_return.notify);
-    if (trigger_return.error)
+    if (trigger_return.error) {
       (req as any).flash("danger", trigger_return.error);
+      Crash.create({ message: trigger_return.error, stack: "" }, req);
+    }
     if (trigger_return.goto) {
       res.redirect(trigger_return.goto);
       return;
