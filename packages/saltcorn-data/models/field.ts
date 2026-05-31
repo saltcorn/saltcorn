@@ -50,7 +50,7 @@ import { FieldView, CalcJoinfield } from "@saltcorn/types/base_types";
 import { ForUserRequest } from "@saltcorn/types/model-abstracts/abstract_user";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
-  if (v === "") return null;
+  if (v === "" || v === "null" || v === "undefined") return null;
   if (typeof v === "string" && v.startsWith("Preset:")) return v;
   const { getState } = require("../db/state");
   if (!field.reftype)
@@ -441,8 +441,13 @@ class Field implements AbstractField {
       const Table = require("./table");
       const refTable = Table.findOne(this.reftable_name);
       const pk_name = refTable.pk_name;
-      if (fieldviewObj?.fill_options_restrict && !where)
-        where = fieldviewObj?.fill_options_restrict(this, existingValue);
+      if (fieldviewObj?.fill_options_restrict) {
+        const newWhere = fieldviewObj?.fill_options_restrict(
+          this,
+          existingValue
+        );
+        if (newWhere) where = newWhere;
+      }
 
       const whereWithExisting =
         existingValue && where
@@ -1236,17 +1241,32 @@ class Field implements AbstractField {
 
     if (!this.calculated || this.stored) {
       if (db.isSQLite && this.is_unique) await this.remove_unique_constraint();
-      await db.query(
-        `alter table ${schema}"${sqlsanitize(
-          table.name
-        )}" drop column "${sqlsanitize(this.name)}"`
-      );
-      if (table.versioned) {
+      try {
         await db.query(
           `alter table ${schema}"${sqlsanitize(
             table.name
-          )}__history" drop column "${sqlsanitize(this.name)}"`
+          )}" drop column "${sqlsanitize(this.name)}"`
         );
+      } catch (e: any) {
+        // Column already absent — safe to ignore
+        console.error(
+          `Field.delete: column "${this.name}" already absent from "${table.name}"`,
+          e.message || e
+        );
+      }
+      if (table.versioned) {
+        try {
+          await db.query(
+            `alter table ${schema}"${sqlsanitize(
+              table.name
+            )}__history" drop column "${sqlsanitize(this.name)}"`
+          );
+        } catch (e: any) {
+          console.error(
+            `Field.delete: column "${this.name}" already absent from "${table.name}__history"`,
+            e.message || e
+          );
+        }
       }
     }
     if (!db.getRequestContext()?.client)

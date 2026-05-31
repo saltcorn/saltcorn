@@ -139,7 +139,9 @@ class PageGroupMember implements AbstractPageGroupMember {
   }
 
   connected_objects(): ConnectedObjects {
-    return {};
+    const Page = require("./page").default;
+    const page = Page.findOne({ id: this.page_id });
+    return page ? { linkedPages: [page] } : {};
   }
 }
 

@@ -64,6 +64,9 @@ const {
   discoverable_tables,
   discover_tables,
   implement_discovery,
+  reconcile_table,
+  make_field,
+  findType,
 } = require("@saltcorn/data/models/discovery");
 const { getState } = require("@saltcorn/data/db/state");
 const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
@@ -794,6 +797,342 @@ const attribBadges = (f) => {
 };
 
 /**
+ * Rescan Table Fields (GET Handler)
+ * @name get/rescan/:idorname
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ */
+router.get(
+  "/rescan/:idorname",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { idorname } = req.params;
+    let id = parseInt(idorname);
+    let table;
+    if (id) [table] = await Table.find({ id });
+    if (!table) [table] = await Table.find({ name: idorname });
+    if (!table) {
+      req.flash("error", req.__(`Table not found`));
+      res.redirect(`/table`);
+      return;
+    }
+
+    const result = await reconcile_table(table);
+    const ghosts = result.fields.filter((f) => f.status === "ghost");
+    const orphans = result.fields.filter((f) => f.status === "orphan");
+    const matches = result.fields.filter((f) => f.status === "match");
+
+    const statusBadge = (status) => {
+      switch (status) {
+        case "match":
+          return badge("success", req.__("Match"));
+        case "ghost":
+          return badge("danger", req.__("Ghost"));
+        case "orphan":
+          return badge("primary", req.__("Orphan"));
+        default:
+          return "";
+      }
+    };
+
+    let ghostForm = "";
+    if (ghosts.length > 0) {
+      ghostForm = form(
+        {
+          method: "post",
+          action: `/table/rescan-delete/${table.id}`,
+        },
+        input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+        h4(
+          { class: "text-danger" },
+          req.__("Ghost fields (in Saltcorn, not in DB)")
+        ),
+        mkTable(
+          [
+            {
+              label: "",
+              key: (r) =>
+                input({
+                  type: "checkbox",
+                  name: "fields",
+                  value: r.name,
+                  checked: true,
+                }),
+            },
+            { label: req.__("Name"), key: "name" },
+            { label: req.__("Type"), key: (r) => r.type || "—" },
+            { label: req.__("Status"), key: (r) => statusBadge(r.status) },
+          ],
+          ghosts,
+          { hover: true }
+        ),
+        button(
+          {
+            type: "submit",
+            class: "btn btn-danger mt-2",
+          },
+          req.__("Remove selected ghosts from Saltcorn")
+        )
+      );
+    }
+
+    let orphanForm = "";
+    if (orphans.length > 0) {
+      orphanForm = form(
+        {
+          method: "post",
+          action: `/table/rescan-import/${table.id}`,
+        },
+        input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
+        h4(
+          { class: "text-primary" },
+          req.__("Orphan columns (in DB, not in Saltcorn)")
+        ),
+        mkTable(
+          [
+            {
+              label: "",
+              key: (r) =>
+                input({
+                  type: "checkbox",
+                  name: "columns",
+                  value: r.name,
+                  checked: true,
+                }),
+            },
+            { label: req.__("Column"), key: "name" },
+            { label: req.__("SQL Type"), key: (r) => r.type || "—" },
+            { label: req.__("Status"), key: (r) => statusBadge(r.status) },
+          ],
+          orphans,
+          { hover: true }
+        ),
+        button(
+          {
+            type: "submit",
+            class: "btn btn-primary mt-2",
+          },
+          req.__("Import selected orphans into Saltcorn")
+        )
+      );
+    }
+
+    let matchCard = "";
+    if (matches.length > 0) {
+      matchCard = div(
+        h4(req.__("Matching fields (%d)", matches.length)),
+        mkTable(
+          [
+            { label: req.__("Name"), key: "name" },
+            { label: req.__("Type"), key: (r) => r.type || "—" },
+            { label: req.__("Status"), key: (r) => statusBadge(r.status) },
+          ],
+          matches,
+          { hover: true }
+        )
+      );
+    }
+
+    const allMatch = ghosts.length === 0 && orphans.length === 0;
+
+    res.sendWrap(req.__("Rescan fields: %s", table.name), {
+      above: [
+        {
+          type: "breadcrumbs",
+          crumbs: [
+            { text: req.__("Tables"), href: "/table" },
+            {
+              text: table.name,
+              href: `/table/${encodeURIComponent(table.name)}`,
+            },
+            { text: req.__("Rescan fields") },
+          ],
+        },
+        allMatch && {
+          type: "card",
+          title: req.__("All fields match"),
+          contents:
+            p(req.__("All Saltcorn fields match the database columns.")) +
+            a(
+              { href: `/table/${table.id}`, class: "btn btn-primary" },
+              req.__("Back to table")
+            ),
+        },
+        ghosts.length > 0 && {
+          type: "card",
+          title: req.__("Ghosts (%d)", ghosts.length),
+          contents: ghostForm,
+        },
+        orphans.length > 0 && {
+          type: "card",
+          title: req.__("Orphans (%d)", orphans.length),
+          contents: orphanForm,
+        },
+        matches.length > 0 && {
+          type: "card",
+          title: req.__("Matches"),
+          contents: matchCard,
+        },
+      ].filter(Boolean),
+    });
+  })
+);
+
+/**
+ * Rescan Delete Ghosts (POST Handler)
+ * @name post/rescan-delete/:idorname
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ */
+router.post(
+  "/rescan-delete/:idorname",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { idorname } = req.params;
+    let id = parseInt(idorname);
+    let table;
+    if (id) [table] = await Table.find({ id });
+    if (!table) [table] = await Table.find({ name: idorname });
+    if (!table) {
+      req.flash("error", req.__(`Table not found`));
+      res.redirect(`/table`);
+      return;
+    }
+
+    const fieldNames = Array.isArray(req.body.fields)
+      ? req.body.fields
+      : req.body.fields
+        ? [req.body.fields]
+        : [];
+    const fields = table.getFields();
+    let removed = 0;
+
+    for (const fname of fieldNames) {
+      const field = fields.find((f) => f.name === fname);
+      if (field) {
+        await db.deleteWhere("_sc_fields", { id: field.id });
+        removed++;
+      }
+    }
+
+    await getState().refresh_tables(true);
+    req.flash(
+      "success",
+      req.__("Removed %d ghost field(s) from Saltcorn", removed)
+    );
+    res.redirect(`/table/rescan/${table.id}`);
+  })
+);
+
+/**
+ * Rescan Import Orphans (POST Handler)
+ * @name post/rescan-import/:idorname
+ * @function
+ * @memberof module:routes/tables~tablesRouter
+ */
+router.post(
+  "/rescan-import/:idorname",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { idorname } = req.params;
+    let id = parseInt(idorname);
+    let table;
+    if (id) [table] = await Table.find({ id });
+    if (!table) [table] = await Table.find({ name: idorname });
+    if (!table) {
+      req.flash("error", req.__(`Table not found`));
+      res.redirect(`/table`);
+      return;
+    }
+
+    const colNames = Array.isArray(req.body.columns)
+      ? req.body.columns
+      : req.body.columns
+        ? [req.body.columns]
+        : [];
+    let imported = 0;
+    const skipped = [];
+
+    const schema = db.getTenantSchema();
+
+    for (const colName of colNames) {
+      // Get column info from DB and build a field config
+      let fieldCfg;
+      if (!db.isSQLite) {
+        const { rows } = await db.query(
+          "SELECT * FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3",
+          [schema, table.name, colName]
+        );
+        if (rows.length) {
+          fieldCfg = await make_field(rows[0]);
+          // Fallback: if make_field couldn't determine the type, try findType directly
+          if (!fieldCfg || !fieldCfg.type) {
+            const sqlType =
+              findType(rows[0].data_type) ||
+              findType(rows[0].udt_name) ||
+              "String";
+            fieldCfg = {
+              name: rows[0].column_name,
+              label: rows[0].column_name,
+              type: sqlType,
+              required: rows[0].is_nullable === "NO",
+            };
+          }
+        }
+      } else {
+        const { rows } = await db.query(`PRAGMA table_info("${table.name}")`);
+        const col = rows.find((r) => r.name === colName);
+        if (col) {
+          const type = findType(col.type) || "String";
+          fieldCfg = {
+            name: colName,
+            label: colName,
+            type,
+            required: col.notnull === 1,
+          };
+        }
+      }
+
+      if (fieldCfg && fieldCfg.type) {
+        // Insert directly into _sc_fields — the physical column already exists,
+        // so we must NOT use Field.create (which does ALTER TABLE ADD COLUMN).
+        const typeName =
+          typeof fieldCfg.type === "string"
+            ? fieldCfg.type
+            : fieldCfg.type?.name;
+        await db.insert("_sc_fields", {
+          table_id: table.id,
+          name: fieldCfg.name,
+          label: fieldCfg.label || fieldCfg.name,
+          type: typeName,
+          required: !!fieldCfg.required,
+          is_unique: !!fieldCfg.is_unique,
+          primary_key: !!fieldCfg.primary_key,
+        });
+        imported++;
+      } else {
+        skipped.push(colName);
+      }
+    }
+
+    await getState().refresh_tables(true);
+    const msgs = [
+      req.__("Imported %d orphan column(s) into Saltcorn", imported),
+    ];
+    if (skipped.length)
+      msgs.push(
+        req.__(
+          "Skipped %d column(s) with unrecognized type: %s",
+          skipped.length,
+          skipped.join(", ")
+        )
+      );
+    req.flash("success", msgs.join(". "));
+    res.redirect(`/table/rescan/${table.id}`);
+  })
+);
+
+/**
  * Table Constructor (GET Handler)
  * @name get/:idorname
  * @function
@@ -1175,6 +1514,13 @@ router.get(
         div(
           { class: "mx-auto" },
           settingsDropdown(`dataMenuButton`, [
+            a(
+              {
+                class: "dropdown-item",
+                href: `/table/rescan/${table.id}`,
+              },
+              '<i class="fas fa-search"></i>&nbsp;' + req.__("Rescan fields")
+            ),
             // rename table doesnt supported for sqlite
             !db.isSQLite &&
               user_can_edit_tables &&
@@ -2778,16 +3124,38 @@ const standardFieldForm = (table, req, existingNames = new Set()) => {
   const defs = standardFieldDefs(req).filter(
     (def) => !existingNames.has(def.name)
   );
+  const default_labels = getState().getConfig(
+    "default_standard_field_labels",
+    {}
+  );
   return new Form({
     submitLabel: req.__("Create fields"),
     action: `/table/create-standard-fields/${table.id}`,
     formStyle: "vert",
-    fields: defs.map((def) => ({
-      type: "Bool",
-      label: `${def.label} (${def.type})`,
-      name: def.name,
-      default: true,
-    })),
+    fields: [
+      ...defs
+        .map((def) => [
+          {
+            type: "Bool",
+            label: `${def.label} (${def.type})`,
+            name: def.name,
+            default: true,
+          },
+          {
+            type: "String",
+            label: `${def.label} field label`,
+            name: `${def.name}_label`,
+            default: default_labels[def.name] || def.label,
+            showIf: { set_custom_labels: true, [def.name]: true },
+          },
+        ])
+        .flat(1),
+      {
+        name: "set_custom_labels",
+        label: req.__("Set custom labels"),
+        type: "Bool",
+      },
+    ],
   });
 };
 
@@ -2831,10 +3199,21 @@ router.post(
       return;
     }
     const defs = standardFieldDefs(req);
+    const default_labels = getState().getConfig(
+      "default_standard_field_labels",
+      {}
+    );
+    const new_defaults = {};
     await db.withTransaction(async () => {
       for (const def of defs) {
         if (!form.values[def.name]) continue;
         if (existingNames.has(def.name)) continue;
+        const custom_label_value = form.values[`${def.name}_label`];
+        if (form.values.set_custom_labels && custom_label_value) {
+          def.label = custom_label_value;
+          if (custom_label_value !== default_labels[def.name])
+            new_defaults[def.name] = custom_label_value;
+        }
         await Field.create({
           table_id: table.id,
           name: def.name,
@@ -2849,6 +3228,12 @@ router.post(
         });
       }
     });
+    if (Object.keys(new_defaults).length)
+      await getState().setConfig("default_standard_field_labels", {
+        ...default_labels,
+        ...new_defaults,
+      });
+
     await getState().refresh_tables();
     res.redirect(`/table/${table.id}`);
   })

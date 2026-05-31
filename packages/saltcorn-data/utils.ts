@@ -212,7 +212,17 @@ const mergeIntoWhere = (where: Where, newWhere: GenObj) => {
       } else where.or = v;
       return;
     }
-    if (typeof where[k] === "undefined") where[k] = v;
+    if (k === "not" && where.not) {
+      if (!where.and) {
+        where.and = [];
+      }
+      where.and.push({ not: v });
+      where.and.push({ not: where.not });
+
+      delete where.not;
+    } else if (k === "and" && Array.isArray(where.and))
+      where.and = [...where.and, ...v];
+    else if (typeof where[k] === "undefined") where[k] = v;
     else where[k] = [where[k], v];
   });
   return where;
@@ -308,11 +318,19 @@ const mergeConnectedObjects = (
 
 const objectToQueryString = (o: Object): string => {
   const f = ([k, v]: any): string =>
-    v?.or
-      ? v.or.map((val: any) => f([k, val])).join("&")
-      : Array.isArray(v)
-        ? v.map((val) => f([k, val])).join("&")
-        : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
+    k == "eq" && Array.isArray(v)
+      ? `${encodeURIComponent(v[0])}=${encodeURIComponent(v[1])}`
+      : v?.or
+        ? v.or.map((val: any) => f([k, val])).join("&")
+        : v?.and
+          ? v.and.map((val: any) => f([k, val])).join("&")
+          : Array.isArray(v)
+            ? v.map((val) => f([k, val])).join("&")
+            : v.in
+              ? v.in.map((val: any) => f([k, val])).join("&")
+              : v && typeof v === "object"
+                ? objectToQueryString(v)
+                : `${encodeURIComponent(k)}=${encodeURIComponent(v)}`;
 
   return Object.entries(o || {})
     .map(f)
@@ -616,6 +634,16 @@ const jsIdentifierValidator = (
   if (badc) return `Character ${badc} not allowed`;
 };
 
+function isValidJsIdentifier(str: string): boolean {
+  if (typeof str !== "string" || str.length === 0) return false;
+  try {
+    new Function(`"use strict"; let ${str}`);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const isPushEnabled = (user?: User): user is User => {
   if (!user?.id) return false;
   const push_policy_by_role =
@@ -837,6 +865,24 @@ function toSafeRelativeUrl(input: string): string {
 
   return sanitizeRelative(trimmed);
 }
+/**
+ * Prints elapsed time since start of timer. Inspired by matlab's tic and toc
+ * 
+ * Usage: 
+ * const toc = tic("view config")
+ * ...
+ * toc("get tables done")
+ * ...
+ * toc("returning data")
+ */
+const tic = (...s1s: any[]) => {
+  const t0 = new Date();
+  return (...s2s: []) => {
+    const t1 = new Date();
+    const seconds = (t1.getTime() - t0.getTime()) / 1000;
+    console.log(...s1s, ...s2s, seconds + "s");
+  };
+};
 
 /**
  * Sanitizes a relative URL string.
@@ -914,4 +960,6 @@ export = {
   imageAvailable,
   pluginsFolderRoot,
   decodeProvisioningProfile,
+  isValidJsIdentifier,
+  tic
 };

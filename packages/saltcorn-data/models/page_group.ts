@@ -335,7 +335,10 @@ class PageGroup implements AbstractPageGroup {
   }
 
   connected_objects(): ConnectedObjects {
-    return {};
+    const linkedPages = this.members
+      .map((m: AbstractPageGroupMember) => Page.findOne({ id: m.page_id }))
+      .filter(Boolean) as any[];
+    return linkedPages.length > 0 ? { linkedPages } : {};
   }
 }
 

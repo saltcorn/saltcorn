@@ -18,12 +18,12 @@ module.exports =
    */
   async function (err, req, res, next) {
     if (!req.__) req.__ = (s) => s;
-
-    const devmode = getState().getConfig("development_mode", false);
-    const log_sql = getState().getConfig("log_sql", false);
+    const state = getState();
+    const devmode = state.getConfig("development_mode", false);
+    const log_sql = state.getConfig("log_sql", false);
     const role = (req.user || {}).role_id || 100;
     if (err.message && err.message.includes("invalid csrf token")) {
-      console.error(err.message);
+      state.log(2, err.message);
 
       req.flash("error", req.__("Invalid form data, try again"));
       if (req.url && req.url.includes("/auth/login"))

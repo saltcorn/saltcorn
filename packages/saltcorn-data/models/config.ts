@@ -676,6 +676,12 @@ const configTypes: ConfigTypes = {
     default: {},
     excludeFromMobile: true,
   },
+  default_standard_field_labels: {
+    type: "hidden",
+    label: "User-defined labels for standard fields",
+    default: {},
+    excludeFromMobile: true,
+  },
   event_log_settings: {
     type: "hidden",
     label: "Event log settings",
@@ -699,6 +705,12 @@ const configTypes: ConfigTypes = {
     default: "",
     hide_value: true,
     attributes: { mode: "text/html" },
+  },
+  suppress_toasts: {
+    type: "Bool",
+    label: "Suppress toasts",
+    default: false,
+    blurb: "Do not show any toast notifications to users",
   },
   custom_http_headers: {
     input_type: "code",
@@ -779,6 +791,16 @@ const configTypes: ConfigTypes = {
       "Restrict use of cookie to third-party sites. Strict is more secure, but may impact authentication",
     default: "Unset",
     options: ["Unset", "None", "Lax", "Strict"],
+    excludeFromMobile: true,
+  },
+  force_secure_cookies: {
+    type: "Bool",
+    label: "Force secure cookies",
+    restart_required: true,
+    root_only: true,
+    sublabel:
+      "Set the Secure flag on session cookies. Enable when Saltcorn runs behind an HTTPS reverse proxy (nginx, Cloudflare, etc.). Automatically enabled when Let's Encrypt or a custom SSL certificate is configured.",
+    default: false,
     excludeFromMobile: true,
   },
   content_security_policy: {

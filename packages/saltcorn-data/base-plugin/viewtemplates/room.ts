@@ -382,7 +382,8 @@ const transformForm = async ({ form, table, req, res, viewname }: { form: GenObj
           row,
           segment.rndid,
           "rndid",
-          segment.confirm
+          segment.confirm,
+          segment.spinner
         );
         if ((url as any).javascript) {
           //redo to include dynamic row
@@ -837,7 +838,16 @@ export = {
     },
   }),
   connectedObjects: async (configuration: GenObj) => {
-    return extractFromLayout(configuration.layout);
+    const result = extractFromLayout(configuration.layout);
+    if (configuration.msgview) {
+      const view = View.findOne({ name: configuration.msgview });
+      if (view) (result.embeddedViews = result.embeddedViews || []).push(view);
+    }
+    if (configuration.msgform) {
+      const view = View.findOne({ name: configuration.msgform });
+      if (view) (result.embeddedViews = result.embeddedViews || []).push(view);
+    }
+    return result;
   },
 };
 /*todo:

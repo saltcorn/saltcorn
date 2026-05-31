@@ -365,7 +365,7 @@ describe("Filter view components", () => {
     });
     const vres1 = await view.run({ pages: 1 }, mockReqRes);
     expect(vres1).toBe(
-      `<div class="form-namespace"><a href="javascript:void(0)" onclick="view_post('${view.name}', 'run_action', {rndid:'624b52'}, null, true);" class="btn btn-primary ">run_js_code</a></div>`
+      `<div class="form-namespace"><a href="javascript:void(0)" onclick="{view_post('${view.name}', 'run_action', {rndid:'624b52'}, null, true);}" class="btn btn-primary ">run_js_code</a></div>`
     );
     mockReqRes.reset();
     const body = { rndid: "624b52" };
@@ -424,7 +424,7 @@ describe("Filter view components", () => {
     });
     const vres1 = await view.run({ pages: 1 }, mockReqRes);
     expect(vres1).toBe(
-      `<div class="form-namespace"><a href="javascript:void(0)" onclick="view_post('${view.name}', 'run_action', {rndid:'624b52'}, null, true);" class="btn btn-primary ">run_js_code</a></div>`
+      `<div class="form-namespace"><a href="javascript:void(0)" onclick="{view_post('${view.name}', 'run_action', {rndid:'624b52'}, null, true);}" class="btn btn-primary ">run_js_code</a></div>`
     );
     mockReqRes.reset();
     const body = { rndid: "624b52" };
@@ -439,8 +439,8 @@ describe("Filter view components", () => {
     expect(mockReqRes.getStored().json.notify).toContain(967);
     expect(mockReqRes.getStored().json.notify).toContain(728);
   });
-  it("container showif", async () => {
-    const view = await mkViewWithCfg({
+  it("filter container showif", async () => {
+    const viewCfg = {
       configuration: {
         layout: {
           type: "container",
@@ -467,12 +467,15 @@ describe("Filter view components", () => {
         },
         columns: [],
       },
-    });
-    const vres1 = await view.run({}, mockReqRes);
+    }
+    const view1 = await mkViewWithCfg(structuredClone(viewCfg));
+    const view2 = await mkViewWithCfg(structuredClone(viewCfg));
+    const view3 = await mkViewWithCfg(structuredClone(viewCfg));
+    const vres1 = await view1.run({}, mockReqRes);
     expect(vres1).toBe('<div class="form-namespace"></div>');
-    const vres2 = await view.run({ pages: 500 }, mockReqRes);
+    const vres2 = await view2.run({ pages: 500 }, mockReqRes);
     expect(vres2).toBe('<div class="form-namespace"></div>');
-    const vres3 = await view.run({ pages: 900 }, mockReqRes);
+    const vres3 = await view3.run({ pages: 900 }, mockReqRes);
     expect(vres3).toContain('<div class="form-namespace">');
     expect(vres3).toContain("More Than 800");
   });

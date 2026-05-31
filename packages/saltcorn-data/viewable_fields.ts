@@ -93,7 +93,8 @@ const action_url = (
   colIdNm: string,
   confirm: boolean,
   colIndex?: number,
-  runAsync?: boolean
+  runAsync?: boolean,
+  spinner?: boolean
 ): string | { javascript: string } => {
   const pk_name = table.pk_name;
   const __ = getReq__();
@@ -115,9 +116,9 @@ const action_url = (
     return `/edit/toggle/${table.name}/${r[pk_name]}/${field_name}?redirect=/view/${viewname}`;
   }
   return {
-    javascript: `${confirmStr}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
+    javascript: `${confirmStr}{${spinner ? "spin_action_link(this);" : ""}view_post('${viewname}', 'run_action', {${colIdNm}:'${colId}'${
       r ? `, ${pk_name}:'${r?.[pk_name]}'` : ""
-    }${columnIndex(colIndex)}}${runAsync ? `,{runAsync:true}` : ""});`,
+    }${columnIndex(colIndex)}}${runAsync ? `,{runAsync:true}` : ""});}`,
   };
 };
 
@@ -187,7 +188,7 @@ const action_link = (
     return a(
       {
         href: "javascript:void(0)",
-        onclick: `${spinner ? "spin_action_link(this);" : ""}${url.javascript}${in_row_click ? ";event.stopPropagation()" : ""}`,
+        onclick: `${url.javascript}${in_row_click ? ";event.stopPropagation()" : ""}`,
         class: [
           action_style === "btn-link"
             ? ""
@@ -1034,7 +1035,8 @@ const get_viewable_fields = (
               column.rndid ? "rndid" : "action_name",
               column.confirm,
               index,
-              column.run_async
+              column.run_async,
+              column.spinner
             );
             const label = column.action_label_formula
               ? eval_expression(
@@ -1058,7 +1060,6 @@ const get_viewable_fields = (
                   ],
                   onclick:
                     url.javascript +
-                    (column.spinner ? ";spin_action_link(this)" : "") +
                     (in_row_click ? ";event.stopPropagation()" : ""),
                   ...(!label || label === " "
                     ? { "aria-label": column.action_name }
@@ -1972,7 +1973,8 @@ const standardBlockDispatch = (
         "rndid",
         segment.confirm,
         undefined,
-        !!segment.run_async
+        !!segment.run_async,
+        !!segment.spinner
       );
       if (
         segment.action_name === "Delete" &&
@@ -2260,6 +2262,7 @@ const transformForm = async ({
   viewname,
   optionsQuery,
   state,
+  isPreview,
 }: {
   form: any;
   table: Table;
@@ -2275,6 +2278,7 @@ const transformForm = async ({
   viewname: string;
   optionsQuery?: GenObj;
   state?: GenObj;
+  isPreview?: boolean;
 }): Promise<void> => {
   let originalState = state;
   let pseudo_row: GenObj = {};
@@ -2292,12 +2296,29 @@ const transformForm = async ({
           return s;
         };
   await traverse(form.layout, {
-    container(segment: any) {
-      if (segment.click_action) {
-        segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
-      }
-    },
+    ...(isPreview
+      ? {
+          container(segment: any) {
+            if (segment.showIfFormulaInputs) {
+              delete segment.showIfFormulaInputs;
+              delete segment.showIfFormulaJoinFields;
+              segment.display = "none";
+              segment.contents = "";
+            }
+          },
+        }
+      : {
+          container(segment: any) {
+            if (segment.click_action) {
+              segment.url = `javascript:view_post(this, 'run_action', {click_action: '${segment.click_action}', ...get_form_record(this) })`;
+            }
+          },
+        }),
     async action(segment: any) {
+      if (segment.action_name.startsWith("Login with ")) {
+        const method_label = segment.action_name.replace("Login with ", "");
+        segment.auth_method = getState().auth_methods[method_label];
+      }
       if (segment.action_style === "on_page_load") {
         segment.type = "blank";
         segment.style = {};
@@ -2307,7 +2328,7 @@ const transformForm = async ({
           if (minRole < userRole) return;
         }
         if (req.method === "POST") return;
-
+        if (isPreview) return;
         //run action
         try {
           const actionResult = await run_action_column({
@@ -2399,7 +2420,8 @@ const transformForm = async ({
           row || pseudo_row,
           segment.rndid,
           "rndid",
-          segment.confirm
+          segment.confirm,
+          segment.spinner
         );
         if (typeof url !== "string" && url.javascript) {
           //redo to include dynamic row
@@ -2422,7 +2444,8 @@ const transformForm = async ({
           "rndid",
           segment.confirm,
           undefined,
-          segment.run_async
+          segment.run_async,
+          segment.spinner
         );
         if (typeof url !== "string" && url.javascript) {
           //redo to include dynamic row
@@ -2436,13 +2459,18 @@ const transformForm = async ({
           if (segment.action_name === "Multi-step action" || hasFileFields) {
             url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
           } else {
-            url.javascript = `${confirmStr}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});`;
+            url.javascript = `${confirmStr}{${segment.spinner ? "spin_action_link(this);" : ""}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});}`;
           }
         }
         segment.action_link = action_link(url, req, segment, __);
       }
     },
     join_field(segment: any) {
+      if (isPreview) {
+        segment.type = "blank";
+        segment.contents = "";
+        return;
+      }
       const qs = objToQueryString(segment.configuration);
       segment.sourceURL = `/field/show-calculated/${table.name}/${segment.join_field}/${segment.fieldview}?${qs}`;
     },
@@ -2495,7 +2523,7 @@ const transformForm = async ({
         segment.contents = key(row || {});
       }
     },
-    async view(segment: any) {
+    async view(segment: any, inLazy?: boolean) {
       //console.log(segment);
       const view_select = parse_view_select(segment.view, segment.relation);
       //console.log({ view_select });
@@ -2619,7 +2647,7 @@ const transformForm = async ({
             }/?${relFmlQS}', ${JSON.stringify(
               segment.extra_state_fml
             )}, row, ${JSON.stringify(outerState)})`;
-            segment.contents = segment.contents = div({
+            segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
               "data-view-source-need-fields": [...needFields].join(","),
@@ -2636,7 +2664,7 @@ const transformForm = async ({
             }/?${relFmlQS}', ${JSON.stringify(
               segment.extra_state_fml
             )}, row, ${JSON.stringify(outerState)})`;
-            segment.contents = segment.contents = div({
+            segment.contents = div({
               class: "d-inline",
               "data-sc-embed-viewname": view.name,
               "data-view-source-need-fields": [...needFields].join(","),
@@ -2736,21 +2764,24 @@ const transformForm = async ({
           class: "d-inline",
           "data-sc-embed-viewname": view.name,
           "data-sc-view-source": `/view/${view.name}${qs}`,
+          "data-sc-local-state": `/view/${view.name}${qs}`,
           "data-view-source-current": `/view/${view.name}${qs}`,
           "data-view-source-need-fields": [...needFields].join(","),
           "data-view-source": encodeURIComponent(urlFormula!),
         },
-        view.renderLocally()
-          ? await view.run(
-              { ...state, ...outerState, ...extra_state },
-              { req, res },
-              view.isRemoteTable()
-            )
-          : await renderServerSide(view.name, {
-              ...state,
-              ...outerState,
-              ...extra_state,
-            })
+        inLazy
+          ? ""
+          : view.renderLocally()
+            ? await view.run(
+                { ...state, ...outerState, ...extra_state },
+                { req, res },
+                view.isRemoteTable()
+              )
+            : await renderServerSide(view.name, {
+                ...state,
+                ...outerState,
+                ...extra_state,
+              })
       );
     },
   });

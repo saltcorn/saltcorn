@@ -276,6 +276,7 @@ export type Action = {
     configuration?: Row;
     user?: AbstractUser;
     mode?: ActionMode;
+    trigger_id?: number;
   }) => Promise<any>;
   configFields?: ({
     table,
@@ -288,6 +289,7 @@ export type Action = {
   disableInList?: boolean;
   disableInWorkflow?: boolean;
   requireRow?: boolean;
+  deprecated?: boolean;
   disableIf?: () => boolean;
 };
 
@@ -297,6 +299,7 @@ export type ViewTemplate = {
   tableless?: boolean;
   table_optional?: boolean;
   singleton?: boolean;
+  deprecated?: boolean;
   mobile_render_server_side?: boolean;
   get_state_fields?: (
     table_id: number | string | undefined,
@@ -414,6 +417,7 @@ export type PluginFunction = {
   returns?: string;
   arguments?: string[] | FieldLike[];
   isAsync?: boolean;
+  hidden?: boolean;
 };
 
 type FieldViewShow = {
@@ -452,6 +456,7 @@ export type FieldView = {
   readFromFormRecord?: Function;
   read?: Function;
   type?: string;
+  deprecated?: boolean;
   blockDisplay?: boolean;
   handlesTextStyle?: boolean;
   description?: string;
@@ -637,7 +642,7 @@ export type Pack = {
   model_instances: Array<ModelInstancePack>;
   event_logs?: Array<EventLogPack>;
   code_pages?: Array<CodePagePack>;
-  config?: object;
+  config?: Record<string, any>;
 };
 
 export const instanceOfPack = (object: any): object is Pack => {

@@ -22,7 +22,7 @@ import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db";
 import utils from "../utils";
 import { GenObj } from "@saltcorn/db-common/types";
-const { mergeIntoWhere, isNode } = utils;
+const { mergeIntoWhere, isNode, isValidJsIdentifier } = utils;
 const { VM } = require("vm2");
 
 function deproxy(value: any): any {
@@ -309,7 +309,30 @@ function jsexprToWhere(
     //console.log("before", ast);
     partiallyEvaluate(ast, extraCtx, fields);
     //console.log("after", JSON.stringify(ast, null, 2));
-
+    function symToWhere(whOrSym: Where | symbol): Where {
+      if (typeof whOrSym === "symbol") {
+        if (typeof whOrSym.description !== "string")
+          throw new Error("Symbol with no description");
+        const field = fields.find((f) => f.name === whOrSym.description);
+        if (!field) return { not: { [whOrSym.description]: null } };
+        if ((field.type as any)?.name === "Bool") return { [field.name]: true };
+        if ((field.type as any)?.name === "Integer")
+          return {
+            and: [
+              { not: { [field.name]: null } },
+              { not: { [field.name]: 0 } },
+            ],
+          };
+        if ((field.type as any)?.name === "String")
+         return {
+            and: [
+              { not: { [field.name]: null } },
+              { not: { [field.name]: "" } },
+            ],
+          };
+        return { not: { [whOrSym.description]: null } };
+      } else return whOrSym;
+    }
     const compile: (node: ExtendedNode) => any = (node: ExtendedNode): any =>
       (<StringToFunction>{
         BinaryExpression() {
@@ -442,18 +465,35 @@ function jsexprToWhere(
         UnaryExpression() {
           return (<StringToFunction>{
             "!"({ argument }: { argument: ExtendedNode }) {
-              return { not: compile(argument) };
+              return { not: symToWhere(compile(argument)) };
             },
           })[node.operator](node);
         },
         LogicalExpression() {
           const operators: StringToFunction = {
             "&&"({ left, right }: { left: ExtendedNode; right: ExtendedNode }) {
-              const l = compile(left);
-              const r = compile(right);
-              //Object.assign(l, r);
-              mergeIntoWhere(l, r);
-              return l;
+              const l = symToWhere(compile(left));
+              const r = symToWhere(compile(right));
+
+              const simpleCmp = (o: any) =>
+                o &&
+                typeof o === "object" &&
+                !Array.isArray(o) &&
+                !o.and &&
+                !o.eq;
+
+              if (
+                simpleCmp(l) &&
+                simpleCmp(r) &&
+                !(l.not && r.not) &&
+                !(l.or && r.or)
+              ) {
+                mergeIntoWhere(l, r);
+                return l;
+              }
+              //console.log("merged", l);
+
+              return { and: [l, r] };
             },
             "||"({ left, right }: { left: any; right: any }) {
               return { or: [compile(left), compile(right)] };
@@ -472,7 +512,7 @@ function jsexprToWhere(
         },
       })[node.type](node);
     // @ts-ignore
-    return compile(ast);
+    return symToWhere(compile(ast));
   } catch (e: any) {
     //console.error(e);
     throw new Error(
@@ -727,7 +767,7 @@ function get_expression_function(
   expression: string,
   fields: Array<Field>
 ): Function {
-  const field_names = fields.map((f) => f.name);
+  const field_names = fields.map((f) => f.name).filter(isValidJsIdentifier);
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
@@ -752,12 +792,7 @@ function eval_expression(
 ): any {
   try {
     const use_row = row || {};
-    const field_names = Object.keys(use_row).filter(
-      (nm) =>
-        nm.indexOf(".") === -1 &&
-        nm.indexOf(">") === -1 &&
-        nm.indexOf("-") === -1
-    );
+    const field_names = Object.keys(use_row).filter(isValidJsIdentifier);
     const args = field_names.includes("user")
       ? `row, {${field_names.join()}}`
       : `row, {${field_names.join()}}, user`;
@@ -814,7 +849,9 @@ function get_async_expression_function(
   fields: Array<Field | string>,
   extraContext = {}
 ): Function {
-  const field_names = fields.map((f) => (typeof f === "string" ? f : f.name));
+  const field_names = fields
+    .map((f) => (typeof f === "string" ? f : f.name))
+    .filter(isValidJsIdentifier);
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;

@@ -66,7 +66,15 @@ const get_sys_info = async () => {
  * @returns {void}
  */
 function loggedIn(req, res, next) {
-  if (req.user && req.user.id && req.user.tenant === db.getTenantSchema()) {
+  if (req.user && req.user.id) {
+    // Reject tenant drift so a session authenticated elsewhere cannot be reused here.
+    if (
+      req.user.tenant !== undefined &&
+      req.user.tenant !== db.getTenantSchema()
+    ) {
+      req.logout?.(() => {});
+      return res.status(403).json({ error: "Session tenant mismatch" });
+    }
     next();
   } else {
     req.flash("danger", req.__("Must be logged in first"));
@@ -85,7 +93,12 @@ function loggedIn(req, res, next) {
 function isAdmin(req, res, next) {
   const cur_tenant = db.getTenantSchema();
   //console.log({ cur_tenant, user: req.user });
-  if (req.user && req.user.role_id === 1 && req.user.tenant === cur_tenant) {
+  if (req.user && req.user.role_id === 1) {
+    // Reject tenant drift before honoring elevated privileges in this schema.
+    if (req.user.tenant !== undefined && req.user.tenant !== cur_tenant) {
+      req.logout?.(() => {});
+      return res.status(403).json({ error: "Session tenant mismatch" });
+    }
     next();
   } else {
     req.flash("danger", req.__("Must be admin"));
@@ -145,6 +158,20 @@ const setLanguage = (req, res, state) => {
   set_custom_http_headers(res, req, state);
 };
 
+const applyUserLocale = (req, res, next) => {
+  if (req.user) {
+    if (req.user.language) {
+      req.setLocale(req.user.language);
+      const rtlLanguages = ["ar", "he", "fa", "ur", "yi"];
+      req.isRTL = rtlLanguages.some((lang) =>
+        req.user.language.startsWith(lang)
+      );
+    }
+    Object.freeze(req.user);
+  }
+  next();
+};
+
 /**
  * Sets Custom HTTP headers using data from "custom_http_headers" config variable
  * @param {object} res
@@ -179,6 +206,19 @@ const set_custom_http_headers = (res, req, state) => {
 };
 
 /**
+ * Validates the raw Host header before any tenant parsing happens.
+ * @param {object} req
+ * @returns {boolean}
+ */
+const validateHostAuthority = (req) => {
+  const host = req.headers?.["host"];
+  if (typeof host !== "string") return false;
+  if (host.includes(",") || /\s|\x00/.test(host)) return false;
+  const hostname = host.split(":")[0];
+  return /^[a-zA-Z0-9._\-[\]]+$/.test(hostname);
+};
+
+/**
  * Tries to recognize tenant from HTTP Request
  * @param {object} req
  * @param {number|undefined} hostPartsOffset (optional) for socketIO, to get the tenant with localhost
@@ -207,6 +247,11 @@ const get_tenant_from_req = (req, hostPartsOffset) => {
  * @param {function} next
  */
 const setTenant = (req, res, next) => {
+  // Reject malformed authority values before subdomain parsing can switch tenant context.
+  if (!validateHostAuthority(req)) {
+    res.status(400).json({ error: "Invalid Host header" });
+    return;
+  }
   // for a saltcorn mobile request use 'req.user.tenant'
   if (req.smr) {
     if (req.user?.tenant && req.user.tenant !== db.connectObj.default_schema) {
@@ -359,7 +404,7 @@ const getSessionStore = (pruneInterval) => {
       secret: db.connectObj.session_secret || is.str.generate(),
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite }, // 30 days
+      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite, secure: "auto" }, // 30 days
     });
   } else {
     const pgSession = require("connect-pg-simple")(session);
@@ -373,7 +418,7 @@ const getSessionStore = (pruneInterval) => {
       secret: db.connectObj.session_secret || is.str.generate(),
       resave: false,
       saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite }, // 30 days
+      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite, secure: "auto" }, // 30 days
     });
   }
 };
@@ -489,6 +534,72 @@ const admin_config_route = ({
       }
     })
   );
+};
+
+/**
+ * Send an HTML string response with injected Saltcorn globals (CSRF token,
+ * version tag, locale, page-load tag, admin flag) and normalised static-asset paths.
+ * @param {any} req
+ * @param {any} res
+ * @param {string} html_string
+ * @returns
+ */
+const sendHtmlStringWithGlobals = (req, res, html_string) => {
+  res.set("Content-Type", "text/html");
+  const state = getState();
+  const version_tag = db.connectObj.version_tag;
+  const locale = req.getLocale?.();
+  const scGlobals =
+    `<script>var _sc_globalCsrf = ${JSON.stringify(req.csrfToken())}` +
+    `, _sc_version_tag = ${JSON.stringify(version_tag)}` +
+    (locale ? `, _sc_locale = ${JSON.stringify(locale)}` : "") +
+    `, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16)` +
+    (req?.user?.role_id === 1 ? `, _sc_is_admin = true` : "") +
+    `;</script>`;
+  const normalized = html_string.replace(
+    /\/static_assets\/[a-f0-9]+\//g,
+    `/static_assets/${version_tag}/`
+  );
+  const assetBase = `/static_assets/${version_tag}`;
+
+  // CSS and scGlobals go into <head>; scripts go before </body> (after jQuery).
+  // Core scripts (dayjs, socket.io) come before plugin scripts from state.headers.
+  let headInject = scGlobals;
+  if (!normalized.includes("saltcorn.css"))
+    headInject += `<link rel="stylesheet" href="${assetBase}/saltcorn.css">`;
+  if (!normalized.includes("saltcorn.js"))
+    headInject += `<script src="${assetBase}/saltcorn.js"></script>`;
+
+  let bodyInject = "";
+  for (const fname of ["dayjs.min.js", "socket.io.min.js"]) {
+    if (!normalized.includes(fname))
+      bodyInject += `<script src="${assetBase}/${fname}"></script>`;
+  }
+  if (locale && !normalized.includes(`dayjslocales/${locale}.js`))
+    bodyInject += `<script src="${assetBase}/dayjslocales/${locale}.js"></script>`;
+  if (!normalized.includes("dynamic_updates_cfg")) {
+    const dynamic_updates_enabled = state.getConfig("enable_dynamic_updates", false);
+    bodyInject += `<script>var dynamic_updates_cfg = ${JSON.stringify({ enabled: dynamic_updates_enabled })};</script>`;
+  }
+
+  const stateHeaders = Array.isArray(state.headers)
+    ? state.headers
+    : Object.values(state.headers || {}).flat();
+  for (const h of stateHeaders) {
+    if (h.css && !normalized.includes(h.css))
+      headInject += `<link rel="stylesheet" href="${h.css}">`;
+    else if (h.script && !normalized.includes(h.script))
+      bodyInject += `<script src="${h.script}"></script>`;
+  }
+
+  let html = normalized.includes("</head>")
+    ? normalized.replace("</head>", `${headInject}</head>`)
+    : headInject + normalized;
+  if (bodyInject)
+    html = html.includes("</body>")
+      ? html.replace("</body>", `${bodyInject}</body>`)
+      : html + bodyInject;
+  return res.send(html);
 };
 
 /**
@@ -652,6 +763,8 @@ module.exports = {
   scan_for_page_title,
   getGitRevision,
   getSessionStore,
+  validateHostAuthority,
+  applyUserLocale,
   setTenant,
   get_tenant_from_req,
   addOnDoneRedirect,
@@ -662,6 +775,7 @@ module.exports = {
   get_sys_info,
   admin_config_route,
   sendHtmlFile,
+  sendHtmlStringWithGlobals,
   setRole,
   getEligiblePage,
   getRandomPage,

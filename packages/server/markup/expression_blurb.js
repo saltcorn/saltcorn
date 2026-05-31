@@ -36,7 +36,7 @@ const expressionBlurb = (type, stored, table, req) => {
     : allFields.filter((f) => !f.calculated || f.stored);
   const funs = getState().functions;
   const funNames = Object.entries(funs)
-    .filter(([k, v]) => !(!stored && v.isAsync))
+    .filter(([k, v]) => !(!stored && v.isAsync) && !v.hidden)
     .map(([k, v]) => k);
   const examples = table.getFormulaExamples(type);
   return [

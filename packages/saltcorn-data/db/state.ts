@@ -517,6 +517,17 @@ class State {
           if (!this.isFixedConfig(key)) cfgs[key] = { value, ...v };
         }
       );
+    // special case: if search_use_websearch is not set, set it here
+    if (
+      cfgInDB &&
+      typeof cfgInDB.search_use_websearch === "undefined" &&
+      !db.isSQLite
+    ) {
+      const dbversion = await db.getVersion(true);
+      const val = +dbversion >= 11.0;
+      await setConfig("search_use_websearch", val);
+      cfgs.search_use_websearch.value = true;
+    }
     return cfgs;
   }
 
@@ -577,6 +588,7 @@ class State {
       this.eventTypes[cev.name] = cev;
     });
     this.logLevel = +(this.configs.log_level.value || 1);
+    db.set_sql_logging?.(!!this.configs?.log_sql?.value)
     if (!noSignal) this.log(5, "Refresh config");
     if (db.is_node) {
       await this.refresh_i18n();

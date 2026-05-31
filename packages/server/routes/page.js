@@ -15,6 +15,7 @@ const {
   scan_for_page_title,
   isAdmin,
   sendHtmlFile,
+  sendHtmlStringWithGlobals,
   getEligiblePage,
   getRandomPage,
 } = require("../routes/utils.js");
@@ -74,8 +75,7 @@ const runPage = async (page, req, res, tic) => {
     }
     if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
     else if (contents.html_string) {
-      res.set("Content-Type", "text/html");
-      await res.send(contents.html_string);
+      await sendHtmlStringWithGlobals(req, res, contents.html_string);
     } else
       res.sendWrap(
         {
@@ -92,7 +92,11 @@ const runPage = async (page, req, res, tic) => {
                 role,
                 title: page.name,
                 what: req.__("Page"),
-                url: `/pageedit/edit/${encodeURIComponent(page.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}&${objectToQueryString(req.query)}`,
+                url: `/pageedit/edit/${encodeURIComponent(
+                  page.name
+                )}?on_done_redirect=${encodeURIComponent(
+                  req.originalUrl.replace("/", "")
+                )}&${objectToQueryString(req.query)}`,
                 contents,
               }),
           resultCollector

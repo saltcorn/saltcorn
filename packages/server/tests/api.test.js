@@ -1236,6 +1236,15 @@ describe("API CSRF protection", () => {
     const admin = await User.findOne({ email: "admin@foo.com" });
     adminToken = await admin.getNewAPIToken();
     adminJwt = await getAdminJwt();
+    await Trigger.create({
+      action: "run_js_code",
+      when_trigger: "API call",
+      name: "apicallpublic1",
+      min_role: 100,
+      configuration: {
+        code: `return {foo: "bar"}`,
+      },
+    });
   });
 
   it("should reject POST with session cookie but no CSRF token", async () => {
@@ -1260,6 +1269,21 @@ describe("API CSRF protection", () => {
       .expect(succeedJsonWith((resp) => resp && typeof resp === "number"));
   });
 
+  it("should allow POST to public api with no bearer token and no CSRF token", async () => {
+    const app = await getApp({ disableCsrf: false });
+    await request(app)
+      .post("/api/action/apicallpublic1")
+      .send({})
+      .set("Content-Type", "application/json")
+      .set("Accept", "application/json")
+      .expect(200)
+      .expect(
+        succeedJsonWithWholeBody(
+          (resp) => resp?.data?.foo === "bar" && resp.success === true
+        )
+      );
+  });
+
   it("should allow POST with valid JWT and no CSRF token", async () => {
     const app = await getApp({ disableCsrf: false });
     await request(app)
@@ -1273,9 +1297,12 @@ describe("API CSRF protection", () => {
 
   it("should not bypass CSRF by appending a fake ?jwt= query parameter", async () => {
     const app = await getApp({ disableCsrf: false });
+    const loginCookie = await getAdminLoginCookie();
+
     await request(app)
       .post("/api/books/?jwt=fakejwt")
       .send({ author: "CSRF Bypass Attempt", pages: 4 })
+      .set("Cookie", loginCookie)
       .set("Content-Type", "application/json")
       .expect(302);
   });

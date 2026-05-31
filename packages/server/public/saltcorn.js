@@ -762,11 +762,13 @@ function ajaxSubmitForm(e, force_no_reload, event) {
   var form = $(e).closest("form");
   var url = form.attr("action");
   if (event) event.preventDefault();
+  var inModal = form.closest("#scmodal").length > 0;
   $.ajax(url, {
     type: "POST",
     headers: {
       "CSRF-Token": _sc_globalCsrf,
       "Page-Load-Tag": _sc_pageloadtag,
+      ...(inModal ? { SaltcornModalRequest: "true" } : {}),
     },
     data: new FormData(form[0]),
     processData: false,

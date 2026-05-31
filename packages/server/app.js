@@ -31,6 +31,7 @@ const {
   error_catcher,
   getSessionStore,
   setTenant,
+  applyUserLocale,
 } = require("./routes/utils.js");
 const {
   getAllTenants,
@@ -119,6 +120,8 @@ const getApp = async (opts = {}) => {
     false
   );
   app.set("query parser", "extended");
+  if (getState().getConfig("force_secure_cookies", false))
+    app.set("trust proxy", 1);
 
   const helmetOptions = {
     contentSecurityPolicy: {
@@ -229,16 +232,23 @@ const getApp = async (opts = {}) => {
   // todo ability to configure session_secret Age
   app.use(getSessionStore(pruneSessionInterval));
 
+  // Bind tenant context before passport reads or trusts any session state.
+  app.use(setTenant);
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
+  app.use(applyUserLocale);
   const isPlaywright = process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD?.length > 0;
   app.use((req, res, next) => {
     // no jwt and session id at the same time
     if (
-      !(jwt_extractor(req) && req.cookies && req.cookies["connect.sid"]) ||
+      !(req.jwtAuthenticated && req.cookies && req.cookies["connect.sid"]) ||
       isPlaywright
     )
       next();
+    else
+      res.status(400).json({
+        error: "Cannot authenticate with both JWT and session cookie",
+      });
   });
   app.use(flash());
 
@@ -418,7 +428,6 @@ const getApp = async (opts = {}) => {
     }
     return next();
   });
-  app.use(setTenant);
 
   // Change into s3storage compatible selector
   // existing fileupload middleware is moved into s3storage.js
@@ -459,7 +468,8 @@ const getApp = async (opts = {}) => {
         req.headers.authorization?.toLowerCase().startsWith("bearer ") ||
         req.url === "/auth/callback/saml" ||
         req.url.startsWith("/notifications/share-handler") ||
-        req.url.startsWith("/notifications/manifest")
+        req.url.startsWith("/notifications/manifest") ||
+        (req.url.startsWith("/api/") && !req.cookies?.["connect.sid"])
       )
         return disabledCsurf(req, res, next);
       csurf(req, res, next);

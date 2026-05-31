@@ -755,11 +755,20 @@ describe("objectToQueryString", () => {
     expect(objectToQueryString({ a: 5 })).toBe("a=5");
     expect(objectToQueryString({ a: 5, b: "Foo" })).toBe("a=5&b=Foo");
     expect(objectToQueryString({ a: 5, b: "F oo" })).toBe("a=5&b=F%20oo");
+    expect(objectToQueryString({ a: 5, b: "Foo" })).toBe("a=5&b=Foo");
+    expect(objectToQueryString({ and: [{ a: 5 }, { b: "Foo" }] })).toBe(
+      "a=5&b=Foo"
+    );
+    expect(objectToQueryString({ eq: ["a", 5] })).toBe("a=5");
   });
   it("collects or", async () => {
+    expect(objectToQueryString({ or: [{ a: 5 }, { a: 7 }] })).toBe("a=5&a=7");
     expect(objectToQueryString({ a: { or: ["Foo", "Bar"] } })).toBe(
       "a=Foo&a=Bar"
     );
     expect(objectToQueryString({ a: ["Foo", "Bar"] })).toBe("a=Foo&a=Bar");
+    expect(objectToQueryString({ a: { in: ["Foo", "Bar"] } })).toBe(
+      "a=Foo&a=Bar"
+    );
   });
 });

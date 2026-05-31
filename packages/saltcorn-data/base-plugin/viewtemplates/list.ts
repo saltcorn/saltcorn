@@ -22,7 +22,15 @@ const Library = require("../../models/library");
 const { Relation, RelationType } = require("@saltcorn/common-code");
 
 const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
-const { text, script, button, div, a, code } = require("@saltcorn/markup/tags");
+const {
+  text,
+  script,
+  button,
+  div,
+  a,
+  code,
+  i,
+} = require("@saltcorn/markup/tags");
 const {
   eachView,
   traverse,
@@ -252,10 +260,14 @@ const configuration_workflow = (req: Req) =>
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
-          const pages = await Page.find();
-          const groups = (await PageGroup.find()).map((g: GenObj) => ({
-            name: g.name,
+          const pages = (await Page.find({}, { cached: true })).map((p) => ({
+            name: p.name,
           }));
+          const groups = (await PageGroup.find({}, { cached: true })).map(
+            (g: GenObj) => ({
+              name: g.name,
+            })
+          );
           const images = await File.find({ mime_super: "image" });
           const library = (await Library.find({})).filter((l: GenObj) =>
             l.suitableFor("list")
@@ -1039,7 +1051,7 @@ const run = async (
     create_view_showif,
   }: GenObj,
   stateWithId: GenObj,
-  extraOpts: { req: Req; res: Res; [key: string]: any },
+  extraOpts: { req: Req; res: Res; [key: string]: any; isPreview?: boolean },
   { listQuery }: GenObj
 ) => {
   const table = Table.findOne(
@@ -1084,7 +1096,11 @@ const run = async (
 
   const statehash = hashState(state, viewname);
 
-  const { rows, rowCount } = await listQuery(state, statehash);
+  const { rows, rowCount } = await listQuery(
+    state,
+    statehash,
+    extraOpts.isPreview
+  );
 
   const viewResults: GenObj = {};
   var views: GenObj = {};
@@ -1289,7 +1305,10 @@ const run = async (
         is_row_click,
         !!default_state?._tree_field
       );
-  const rows_per_page = (default_state && default_state._rows_per_page) || 20;
+  let rows_per_page = (default_state && default_state._rows_per_page) || 20;
+  rows_per_page = extraOpts.isPreview
+    ? Math.min(50, rows_per_page)
+    : rows_per_page;
   const current_page = parseInt(state[`_${statehash}_page`]) || 1;
   var page_opts: GenObj =
     extraOpts && extraOpts.onRowSelect
@@ -1516,8 +1535,14 @@ const run = async (
       page_opts
     );
   }
+  const previewNote =
+    extraOpts.isPreview && default_state?._rows_per_page > 50
+      ? i("Preview limited to 50 rows")
+      : "";
 
-  return istop ? create_link_div + tableHtml : tableHtml + create_link_div;
+  return istop
+    ? create_link_div + tableHtml + previewNote
+    : tableHtml + previewNote + create_link_div;
 };
 
 const remove_null_cols = (tfields: GenObj[], rows: GenObj[]) =>
@@ -1855,7 +1880,7 @@ export = {
     configuration: { columns, layout, default_state },
     req,
   }: GenObj) => ({
-    async listQuery(state: GenObj, stateHash: string) {
+    async listQuery(state: GenObj, stateHash: string, isPreview?: boolean) {
       const table = Table.findOne(
         typeof exttable_name === "string"
           ? { name: exttable_name }
@@ -1889,7 +1914,8 @@ export = {
       });
       const rows_per_page =
         (default_state && default_state._rows_per_page) || 20;
-      if (!q.limit) q.limit = rows_per_page;
+      if (!q.limit)
+        q.limit = isPreview ? Math.min(50, rows_per_page) : rows_per_page;
       const sort_from_state = !!q.orderBy;
       if (!q.orderBy && default_state?._order_field)
         q.orderBy = default_state?._order_field;

@@ -1059,6 +1059,137 @@ describe("_only_if with old_row on Update trigger", () => {
   });
 });
 
+describe("trigger as action", () => {
+  it("should run with standard action as referenced trigger via runWithoutRow", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    resetActionCounter();
+
+    await Trigger.create({
+      name: "SharedCounter",
+      action: "incrementCounter",
+      when_trigger: "Never",
+    });
+
+    await Trigger.create({
+      name: "ProxyToShared",
+      action: "SharedCounter",
+      when_trigger: "Never",
+    });
+
+    expect(getActionCounter()).toBe(0);
+
+    const proxyTrig = Trigger.findOne({ name: "ProxyToShared" });
+    assertIsSet(proxyTrig);
+    await proxyTrig.runWithoutRow({});
+    expect(getActionCounter()).toBe(1);
+
+    await proxyTrig.runWithoutRow({});
+    expect(getActionCounter()).toBe(2);
+
+    await proxyTrig.delete();
+    const shared = Trigger.findOne({ name: "SharedCounter" });
+    assertIsSet(shared);
+    await shared.delete();
+  });
+
+  it("should fire via table insert using shared Never trigger", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    resetActionCounter();
+
+    const freshTable = await Table.create("ProxyTriggerTable");
+    await Field.create({ table: freshTable, name: "val", type: "Integer" });
+
+    await Trigger.create({
+      name: "SharedInsUpd",
+      action: "incrementCounter",
+      when_trigger: "Never",
+    });
+
+    await Trigger.create({
+      name: "ProxyInsert",
+      action: "SharedInsUpd",
+      table_id: freshTable.id,
+      when_trigger: "Insert",
+    });
+
+    await Trigger.create({
+      name: "ProxyUpdate",
+      action: "SharedInsUpd",
+      table_id: freshTable.id,
+      when_trigger: "Update",
+    });
+
+    expect(getActionCounter()).toBe(0);
+    const rowId = await freshTable.insertRow({ val: 1 });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(getActionCounter()).toBe(1);
+
+    await freshTable.updateRow({ val: 2 }, rowId);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(getActionCounter()).toBe(2);
+
+    const insT = Trigger.findOne({ name: "ProxyInsert" });
+    assertIsSet(insT);
+    await insT.delete();
+    const updT = Trigger.findOne({ name: "ProxyUpdate" });
+    assertIsSet(updT);
+    await updT.delete();
+    const shared = Trigger.findOne({ name: "SharedInsUpd" });
+    assertIsSet(shared);
+    await shared.delete();
+    await freshTable.delete();
+  });
+
+  it("should run with multi-step action as referenced trigger", async () => {
+    const myStepsTrig = Trigger.findOne({ name: "MySteps" });
+    assertIsSet(myStepsTrig);
+
+    const table = Table.findOne({ name: "patients" });
+    assertIsSet(table);
+
+    await Trigger.create({
+      name: "MultiStepProxy",
+      action: "MySteps",
+      table_id: table.id,
+      when_trigger: "Insert",
+    });
+
+    const proxyTrig = Trigger.findOne({ name: "MultiStepProxy" });
+    assertIsSet(proxyTrig);
+    const result = await proxyTrig.runWithoutRow({ row: { name: "testrow" } });
+    expect(result.error).toBe("errrr");
+    expect(result.notify).toBe("note");
+    expect(result.notify_success).toBe("fooo");
+
+    await proxyTrig.delete();
+  });
+
+  it("should run with workflow as referenced trigger", async () => {
+    const wfTrig = await Trigger.create({
+      name: "SharedWorkflow",
+      action: "Workflow",
+      when_trigger: "Never",
+      configuration: {},
+    });
+    assertIsSet(wfTrig);
+
+    const proxyTrig = await Trigger.create({
+      name: "WorkflowProxy",
+      action: "SharedWorkflow",
+      when_trigger: "Never",
+    });
+    assertIsSet(proxyTrig);
+
+    const freshProxy = Trigger.findOne({ name: "WorkflowProxy" });
+    assertIsSet(freshProxy);
+    const result = await freshProxy.runWithoutRow({});
+    expect(typeof result === "object" || result === undefined).toBe(true);
+
+    await proxyTrig.delete();
+    await wfTrig.delete();
+  });
+});
+
 describe("plain_password_triggers", () => {
   const secret = "fw78fgfw$Efgy";
   it("should set up trigger", async () => {

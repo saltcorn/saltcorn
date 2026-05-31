@@ -11,6 +11,7 @@ import Trigger from "../../models/trigger";
 import User from "../../models/user";
 import Page from "../../models/page";
 import Crash from "../../models/crash";
+const PageGroup = require("../../models/page_group");
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 import {
@@ -56,9 +57,11 @@ const {
   mergeIntoWhere,
   isWeb,
   renderServerSide,
+  interpolate,
 } = require("../../utils");
 const { jsexprToWhere } = require("../../models/expression");
 const Library = require("../../models/library");
+import { extractFromLayout } from "../../diagram/node_extract_utils";
 const { getState } = require("../../db/state");
 const {
   get_expression_function,
@@ -213,7 +216,14 @@ const configuration_workflow = (req: Req) =>
             fields as any,
             "filter"
           );
-          const pages = await Page.find();
+          const pages = (await Page.find({}, { cached: true })).map((p) => ({
+            name: p.name,
+          }));
+          const groups = (await PageGroup.find({}, { cached: true })).map(
+            (g: any) => ({
+              name: g.name,
+            })
+          );
           var agg_field_opts: GenObj = {};
 
           agg_field_opts[table.name] = table.fields
@@ -257,6 +267,7 @@ const configuration_workflow = (req: Req) =>
             actionConstraints,
             views,
             pages,
+            page_groups: groups,
             images: [], //temp fix till we rebuild builder
             library,
             field_view_options,
@@ -438,8 +449,11 @@ const run = async (
       if (segment.showIfFormula) {
         const f = get_expression_function(segment.showIfFormula, fields);
 
-        if (!f(state, extra.req.user)) segment.hide = true;
-        else segment.hide = false;
+        if (!f(state, extra.req.user)) {
+          segment.contents = "";
+          segment.type = "blank";
+          delete segment.showIfFormula; //avoid double eval
+        }
       }
     },
     tabs(segment: GenObj) {
@@ -500,6 +514,20 @@ const run = async (
           segment.contents = "";
           Crash.create(e, extra.req);
         }
+      }
+    },
+    blank: (segment: GenObj) => {
+      if (
+        segment.isHTML &&
+        typeof segment.contents === "string" &&
+        segment.contents.includes("{{")
+      ) {
+        segment.contents = interpolate(
+          segment.contents,
+          evalCtx,
+          extra.req?.user,
+          "Filter HTML element interpolation"
+        );
       }
     },
   });
@@ -747,8 +775,8 @@ const run = async (
           action_row_variable === "state";
         const url = {
           javascript:
-            `${confirmStr}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'}, ` +
-            `null, ${withState});`,
+            `${confirmStr}{${segment.spinner ? "spin_action_link(this);" : ""}view_post('${viewname}', 'run_action', {rndid:'${segment.rndid}'}, ` +
+            `null, ${withState});}`,
         };
 
         return action_link(url, extra.req, segment as any);
@@ -927,6 +955,9 @@ export = {
    */
   getStringsForI18n({ layout }: GenObj) {
     return getStringsForI18n(layout);
+  },
+  connectedObjects: async (configuration: GenObj) => {
+    return extractFromLayout(configuration.layout);
   },
   routes: { run_action },
   queries: ({

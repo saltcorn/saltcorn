@@ -268,9 +268,13 @@ const triggerForm = async (req, trigger) => {
     .filter(([k, v]) => v.hasChannel)
     .map(([k, v]) => k);
   const actionExplainers = Trigger.action_explainers();
+  Trigger.find({}).forEach((tr) => {
+    if (tr.description && tr.name) actionExplainers[tr.name] = tr.description;
+  });
   const allActions = Trigger.action_options({
     notRequireRow: false,
     workflow: true,
+    allTriggers: true,
   });
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const additional_triggers_with_onlyif = ["Login", "PageLoad"];
@@ -278,6 +282,7 @@ const triggerForm = async (req, trigger) => {
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     workflow: true,
+    allTriggers: true,
   });
 
   Trigger.when_options.forEach((t) => {
@@ -1231,6 +1236,52 @@ router.get(
 
         req.__("Test run") + "&nbsp;&raquo;"
       );
+    // Check if trigger.action is a reference to another trigger by name
+    const refTrigger =
+      !action &&
+      trigger.action !== "Workflow" &&
+      trigger.action !== "Multi-step action"
+        ? Trigger.findOne({ name: trigger.action })
+        : null;
+
+    if (refTrigger) {
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
+        contents: {
+          type: "card",
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
+          subtitle,
+          contents:
+            p(
+              req.__(
+                "This trigger delegates to %s.",
+                a(
+                  { href: `/actions/configure/${refTrigger.id}` },
+                  refTrigger.name
+                )
+              )
+            ) +
+            p(
+              a(
+                {
+                  href: `/actions/configure/${refTrigger.id}`,
+                  class: "btn btn-primary",
+                },
+                req.__("Configure %s &raquo;", refTrigger.name)
+              )
+            ),
+        },
+      });
+      return;
+    }
+
     if (trigger.action === "Workflow") {
       const wfCfg = await getWorkflowConfig(req, id, table, trigger);
       send_events_page({
@@ -2174,8 +2225,7 @@ router.get(
   error_catcher(async (req, res) => {
     const trNames = {};
     const { _page, trigger } = req.query;
-    for (const trig of await Trigger.find({ action: "Workflow" }))
-      trNames[trig.id] = trig.name;
+    for (const trig of await Trigger.find({})) trNames[trig.id] = trig.name;
     const q = {};
     const selOpts = { orderBy: "started_at", orderDesc: true, limit: 20 };
     if (_page) selOpts.offset = 20 * (parseInt(_page) - 1);

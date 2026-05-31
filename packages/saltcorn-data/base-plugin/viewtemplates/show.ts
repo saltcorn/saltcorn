@@ -240,10 +240,14 @@ const configuration_workflow = (req: Req) =>
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
-          const pages = await Page.find();
-          const groups = (await PageGroup.find()).map((g: GenObj) => ({
-            name: g.name,
+          const pages = (await Page.find({}, { cached: true })).map((p) => ({
+            name: p.name,
           }));
+          const groups = (await PageGroup.find({}, { cached: true })).map(
+            (g: GenObj) => ({
+              name: g.name,
+            })
+          );
           const images = await File.find({ mime_super: "image" });
           const library = (await Library.find({})).filter((l: GenObj) =>
             l.suitableFor("show")
@@ -513,8 +517,21 @@ const renderRows = async (
     subviewExtra.req = { ...extra.req, isSubView: true };
   }
   return await asyncMap(rows, async (row: Row) => {
+    const myLayout = rows.length > 1 ? structuredClone(layout) : layout;
+    traverseSync(myLayout, {
+      container(segment: any) {
+        if (segment.showIfFormula) {
+          const f = get_expression_function(segment.showIfFormula, fields);
+          if (!f({ ...dollarizeObject(state || {}), ...row }, extra.req.user)) {
+            segment.contents = "";
+            segment.type = "blank";
+            delete segment.showIfFormula; //avoid double eval
+          }
+        }
+      },
+    });
     await eachView(
-      layout,
+      myLayout,
       async (segment: GenObj, inLazy: boolean) => {
         // do all the parsing with data here? make a factory
         const view = await getView(segment.view, segment.relation);
@@ -648,7 +665,7 @@ const renderRows = async (
       },
       state
     );
-    await Page.renderEachEmbeddedPageInLayout(layout, state, extra as any);
+    await Page.renderEachEmbeddedPageInLayout(myLayout, state, extra as any);
 
     const user_id = extra.req.user ? extra.req.user.id : null;
 
@@ -660,7 +677,7 @@ const renderRows = async (
     return render(
       row,
       fields,
-      layout,
+      myLayout,
       viewname,
       table,
       role,

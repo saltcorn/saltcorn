@@ -102,6 +102,20 @@ describe("get_async_expression_function", () => {
 
     expect(y).toBe(20);
   });
+  it("does not use non-valid identifier as argument", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+
+    const f = get_async_expression_function(
+      `add5(1)+ add3(row["foo->bar"])+asyncAdd2(x)`,
+      [
+        new Field({ name: "x", type: "Integer" }),
+        new Field({ name: "foo->bar", type: "Integer" }),
+      ]
+    );
+    const y = await f({ x: 5, "foo->bar": 4 });
+
+    expect(y).toBe(20);
+  });
 });
 
 describe("code pages in eval", () => {
@@ -1322,6 +1336,26 @@ describe("mergeIntoWhere", () => {
       and: [{ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] }],
     });
   });
+  it("merges logic", () => {
+    expect(mergeIntoWhere({ and: [{ a: 1 }] }, { and: [{ b: 1 }] })).toEqual({
+      and: [{ a: 1 }, { b: 1 }],
+    });
+    expect(mergeIntoWhere({ not: { a: 1 } }, { not: { b: 4 } })).toEqual({
+      and: [{ not: { b: 4 } }, { not: { a: 1 } }],
+    });
+  });
+
+  it("merges bounds", () => {
+    let w = mergeIntoWhere({ a: { gt: 5 } }, { a: { lt: 15 } });
+    expect(w).toEqual({
+      a: [{ gt: 5 }, { lt: 15 }],
+    });
+    const { where, values } = mkWhere(w);
+
+    expect(where).toEqual('where "a">$1 and "a"<$2');
+    expect(values[0]).toBe(5);
+    expect(values[1]).toBe(15);
+  });
 });
 let x = {
   and: [{ or: [{ a: 1 }, { a: 2 }] }, { or: [{ b: 3 }, { b: 4 }] }],
@@ -1438,6 +1472,21 @@ describe("jsexprToWhere", () => {
     expect(jsexprToWhere("foo==4+3")).toEqual({ foo: 7 });
     expect(jsexprToWhere("foo==4+3+1")).toEqual({ foo: 8 });
   });
+  it("translates and-neq", () => {
+    const w = jsexprToWhere("id !==5 && id !== 8");
+    expect(w).toEqual({
+      and: [{ not: { id: 5 } }, { not: { id: 8 } }],
+    });
+    const { where } = mkWhere(w);
+    expect(where).toEqual('where (not ("id"=$1) and not ("id"=$2))');
+  });
+  it("translates simple and", () => {
+    const w = jsexprToWhere("id ==5 && y== 8");
+    expect(w).toEqual({
+      id: 5,
+      y: 8,
+    });
+  });
   it("translates bools", () => {
     expect(jsexprToWhere("foo==true")).toEqual({ foo: true });
     expect(jsexprToWhere("foo==false")).toEqual({ foo: false });
@@ -1527,5 +1576,68 @@ describe("jsexprToWhere", () => {
     expect(todayW.foo.equal).toEqual(true);
     expect(today instanceof Date).toBe(true);
     expect(today.toISOString()).toMatch(/^202/);
+  });
+  it("translates known stand-alone bools", async () => {
+    const readings = Table.findOne("readings");
+    assertIsSet(readings);
+    const wnormalised = jsexprToWhere("normalised", {}, readings.fields);
+    const w_not_normalised = jsexprToWhere("!normalised", {}, readings.fields);
+    expect(wnormalised).toStrictEqual({ normalised: true });
+    expect(w_not_normalised).toStrictEqual({ not: { normalised: true } });
+    const w1 = {};
+    mergeIntoWhere(w1, wnormalised);
+
+    const rows1 = await readings.getRows(w1);
+    expect(rows1.length).toBe(1);
+    expect(rows1[0].normalised).toBe(true);
+
+    const rows2 = await readings.getRows(w_not_normalised);
+    expect(rows2.length).toBeGreaterThanOrEqual(2);
+    expect(rows2[0].normalised).toBe(false);
+    expect(rows2[1].normalised).toBe(false);
+  });
+  it("translates known stand-alone integers", async () => {
+    const books = Table.findOne("books");
+    assertIsSet(books);
+    const wpages = jsexprToWhere("pages", {}, books.fields);
+    const w_no_pages = jsexprToWhere("!pages", {}, books.fields);
+    expect(wpages).toStrictEqual({
+      and: [{ not: { pages: null } }, { not: { pages: 0 } }],
+    });
+    expect(w_no_pages).toStrictEqual({
+      not: {
+        and: [{ not: { pages: null } }, { not: { pages: 0 } }],
+      },
+    });
+
+    //const { where, values } = mkWhere(wpages);
+    //console.log({ where, values, wpages });
+
+    const rows1 = await books.getRows(wpages);
+    expect(rows1.length).toBeGreaterThanOrEqual(2);
+    const rows2 = await books.getRows(w_no_pages);
+    expect(rows2.length).toBe(0);
+  });
+  it("translates known stand-alone strings", async () => {
+    const books = Table.findOne("books");
+    assertIsSet(books);
+    const wpages = jsexprToWhere("author", {}, books.fields);
+    const w_no_pages = jsexprToWhere("!author", {}, books.fields);
+    expect(wpages).toStrictEqual({
+      and: [{ not: { author: null } }, { not: { author: "" } }],
+    });
+    expect(w_no_pages).toStrictEqual({
+      not: {
+        and: [{ not: { author: null } }, { not: { author: "" } }],
+      },
+    });
+
+    //const { where, values } = mkWhere(wpages);
+    //console.log({ where, values, wpages });
+
+    const rows1 = await books.getRows(wpages);
+    expect(rows1.length).toBeGreaterThanOrEqual(2);
+    const rows2 = await books.getRows(w_no_pages);
+    expect(rows2.length).toBe(0);
   });
 });
