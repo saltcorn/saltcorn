@@ -2445,6 +2445,8 @@ const stateFieldsToWhere = ({
           json,
         },
       ];
+    } else if (k === "and" && Array.isArray(v)) {
+      qstate[k] = v.map(stripDangerousOperators);
     } else if (typeof v === "object" && field) {
       qstate[k] = stripDangerousOperators(v);
     } else if (field && field.type && (field.type as any).read)
@@ -3358,10 +3360,14 @@ const run_action_column = async ({
     const state = getState();
     state.log(2, `Asynchronous action error`, err);
     if (req.headers["page-load-tag"]) {
-      state.emitDynamicUpdate(db.getTenantSchema(), {
-        error: err.message || err,
-        page_load_tag: req.headers["page-load-tag"],
-      }, req.user ? [req.user.id] : null);
+      state.emitDynamicUpdate(
+        db.getTenantSchema(),
+        {
+          error: err.message || err,
+          page_load_tag: req.headers["page-load-tag"],
+        },
+        req.user ? [req.user.id] : null
+      );
     }
     reset_spinner(state);
   };

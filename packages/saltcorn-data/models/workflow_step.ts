@@ -14,6 +14,7 @@ import Table from "./table";
 import Expression from "./expression";
 import FieldRepeat from "./fieldrepeat";
 import tags from "@saltcorn/markup/tags";
+import { stateFieldsToWhere } from "../plugin-helper";
 const { a } = tags;
 const { jsIdentifierValidator } = require("../utils");
 
@@ -227,7 +228,9 @@ class WorkflowStep {
         user,
         `Query expression in ${this.name} step`
       );
-      const rows = await table.getRows(query);
+      const rows = await table.getRows(
+        stateFieldsToWhere({ state: query, user, table, fields: table.fields })
+      );
       return { [this.configuration.query_variable]: rows };
     }
     if (this.action_name === "SetContext") {
@@ -458,20 +461,17 @@ class WorkflowStep {
           lines.push(`${t("Error handler")}: ${cfg.error_handling_step}`);
         break;
       case "Output":
-        if (cfg.popup_title)
-          lines.push(`${t("Title")}: ${cfg.popup_title}`);
+        if (cfg.popup_title) lines.push(`${t("Title")}: ${cfg.popup_title}`);
         // if (cfg.output_text) lines.push(shorten(cfg.output_text, 180));
         if (cfg.markdown) lines.push(t("Render as markdown"));
         break;
       case "DataOutput":
-        if (cfg.popup_title)
-          lines.push(`${t("Title")}: ${cfg.popup_title}`);
+        if (cfg.popup_title) lines.push(`${t("Title")}: ${cfg.popup_title}`);
         // if (cfg.output_expr)
         //   lines.push(`${t("Expression")}: ${shorten(cfg.output_expr)}`);
         break;
       case "OutputView":
-        if (cfg.popup_title)
-          lines.push(`${t("Title")}: ${cfg.popup_title}`);
+        if (cfg.popup_title) lines.push(`${t("Title")}: ${cfg.popup_title}`);
         if (cfg.view) lines.push(`${t("View")}: ${cfg.view}`);
         // if (cfg.view_state)
         //   lines.push(`${t("View state")}: ${shorten(cfg.view_state)}`);
@@ -486,12 +486,10 @@ class WorkflowStep {
             ? t("Run immediately in background")
             : t("Resume next scheduler tick")
         );
-        if (cfg.wait_delay)
-          lines.push(`${t("Delay")}: ${cfg.wait_delay} s`);
+        if (cfg.wait_delay) lines.push(`${t("Delay")}: ${cfg.wait_delay} s`);
         break;
       case "UserForm": {
-        if (cfg.popup_title)
-          lines.push(`${t("Title")}: ${cfg.popup_title}`);
+        if (cfg.popup_title) lines.push(`${t("Title")}: ${cfg.popup_title}`);
         const questions = Array.isArray(cfg.user_form_questions)
           ? cfg.user_form_questions
           : [];
@@ -522,8 +520,7 @@ class WorkflowStep {
         //   );
         break;
       case "EditViewForm":
-        if (cfg.popup_title)
-          lines.push(`${t("Title")}: ${cfg.popup_title}`);
+        if (cfg.popup_title) lines.push(`${t("Title")}: ${cfg.popup_title}`);
         // if (cfg.edit_view) lines.push(`${t("Edit view")}: ${cfg.edit_view}`);
         // if (cfg.response_variable)
         //   lines.push(`${t("Response variable")}: ${cfg.response_variable}`);
