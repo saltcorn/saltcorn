@@ -649,6 +649,15 @@ describe("stateFieldsToWhere", () => {
       })
     ).toStrictEqual({ or: [{ age: 1 }] });
   });
+  it("age gt", async () => {
+    expect(
+      stateFieldsToWhere({
+        fields,
+        state: { age: { gt: 4 } },
+      })
+    ).toStrictEqual({ age: { gt: 4 } });
+  });
+
   it("age in", async () => {
     expect(
       stateFieldsToWhere({
