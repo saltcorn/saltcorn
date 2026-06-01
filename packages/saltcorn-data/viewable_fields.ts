@@ -2351,8 +2351,7 @@ const transformForm = async ({
           err.message = `Error in evaluating Run on Page Load action in view ${viewname}: ${err.message}`;
           throw err;
         }
-      }
-      if (segment.action_name === "Delete") {
+      } else if (segment.action_name === "Delete") {
         if (form.values && form.values[table.pk_name]) {
           segment.action_url = table.delete_url(form.values);
         } else {
