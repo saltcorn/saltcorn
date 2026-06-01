@@ -14,7 +14,7 @@ import Table from "./table";
 import Expression from "./expression";
 import FieldRepeat from "./fieldrepeat";
 import tags from "@saltcorn/markup/tags";
-import { stateFieldsToWhere } from "plugin-helper";
+import { stateFieldsToWhere } from "../plugin-helper";
 const { a } = tags;
 const { jsIdentifierValidator } = require("../utils");
 
