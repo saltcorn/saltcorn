@@ -4887,9 +4887,9 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
 
     for (const [nm, f] of Object.entries(getState().codepage_context)) {
       if (exclude_cp_ids.has(nm)) continue;
-      if (f.constructor?.name === "AsyncFunction")
+      if (f?.constructor?.name === "AsyncFunction")
         ds.push(`declare var ${nm}: AsyncFunction;`);
-      else if (f.constructor?.name === "Function")
+      else if (f?.constructor?.name === "Function")
         ds.push(`declare var ${nm}: Function;`);
       else ds.push(`declare var ${nm}: ${typeof f};`);
     }
