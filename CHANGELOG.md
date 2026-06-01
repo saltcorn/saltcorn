@@ -2,6 +2,14 @@
 
 ## 1.6.0 - In development
 
+* state objects can now be used as the query in a TableQuery workflow step. This is useful if you run a workflow action in a Filter and set row variable = state, and then use `row` as the query in  TableQuery step.
+
+* Interpolations based on user and state can now be used in HTML code elements in Page and Filter views (previously only available in Show views.)
+
+* You can now select which aspects of a snapshot to restore
+
+* Another trigger can now be chosen as the action in a trigger. This is useful if you want to run the same action (with a complex configuration) in response to multiple events.
+
 * Admin tabulator now automatically stretches to bottom of the screen
 
 * Rescan fields in table settings to resync Saltcorn representation with on-disk format.
