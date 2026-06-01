@@ -326,7 +326,7 @@ const objectToQueryString = (o: Object): string => {
           ? v.and.map((val: any) => f([k, val])).join("&")
           : Array.isArray(v)
             ? v.map((val) => f([k, val])).join("&")
-            : v.in
+            : v?.in
               ? v.in.map((val: any) => f([k, val])).join("&")
               : v && typeof v === "object"
                 ? objectToQueryString(v)
