@@ -777,6 +777,8 @@ describe("objectToQueryString", () => {
       "a=5&b=Foo"
     );
     expect(objectToQueryString({ eq: ["a", 5] })).toBe("a=5");
+    expect(objectToQueryString({ a: null })).toBe("a=null");
+
   });
   it("collects or", async () => {
     expect(objectToQueryString({ or: [{ a: 5 }, { a: 7 }] })).toBe("a=5&a=7");
