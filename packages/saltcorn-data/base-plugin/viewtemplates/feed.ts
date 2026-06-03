@@ -581,9 +581,16 @@ const run = async (
   }: GenObj,
   state: GenObj,
   extraArgs: GenObj,
-  { countRowsQuery, runManyQuery }: {
+  {
+    countRowsQuery,
+    runManyQuery,
+  }: {
     countRowsQuery: (state: GenObj) => Promise<number>;
-    runManyQuery: (state: GenObj, qextra: GenObj, selectOpts: GenObj) => Promise<GenObj[]>;
+    runManyQuery: (
+      state: GenObj,
+      qextra: GenObj,
+      selectOpts: GenObj
+    ) => Promise<GenObj[]>;
   }
 ) => {
   const table = Table.findOne({ id: table_id })!;
@@ -672,12 +679,13 @@ const run = async (
     );
   }
 
+  let totalRows: number | undefined;
   if (!hide_pagination && (sresp.length === qextra.limit || current_page > 1)) {
-    const nrows = await countRowsQuery(state);
-    if (nrows > qextra.limit || current_page > 1) {
+    totalRows = await countRowsQuery(state);
+    if (totalRows > qextra.limit || current_page > 1) {
       paginate = pagination({
         current_page,
-        pages: Math.ceil(nrows / qextra.limit),
+        pages: Math.ceil(totalRows / qextra.limit),
         get_page_link: (n: number) =>
           `gopage(${n}, ${qextra.limit}, '${stateHash}', {}, this)`,
       });
@@ -882,6 +890,12 @@ const run = async (
       groups[group].push(r);
     }
     return div(
+      {
+        "data-sc-state-hash": stateHash,
+        "data-sc-rows-per-page": String(qextra.limit),
+        "data-sc-total-rows":
+          totalRows !== undefined ? String(totalRows) : false,
+      },
       correct_order([
         Object.entries(groups as Record<string, any[]>).map(
           ([group, sr]: [string, any]) =>
@@ -943,6 +957,11 @@ const run = async (
     );
   };
   return div(
+    {
+      "data-sc-state-hash": stateHash,
+      "data-sc-rows-per-page": String(qextra.limit),
+      "data-sc-total-rows": totalRows !== undefined ? String(totalRows) : false,
+    },
     correct_order([
       is_in_card && masonry_columns
         ? div({ class: "card-columns" }, sresp.map(showRowInner))

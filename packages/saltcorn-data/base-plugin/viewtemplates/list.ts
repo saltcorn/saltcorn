@@ -1539,10 +1539,14 @@ const run = async (
     extraOpts.isPreview && default_state?._rows_per_page > 50
       ? i("Preview limited to 50 rows")
       : "";
-
-  return istop
-    ? create_link_div + tableHtml + previewNote
-    : tableHtml + previewNote + create_link_div;
+  return div(
+    {
+      "data-sc-state-hash": statehash,
+      "data-sc-rows-per-page": String(rows_per_page),
+      "data-sc-total-rows": rowCount !== undefined ? String(rowCount) : false,
+    },
+    istop ? create_link_div + tableHtml + previewNote : tableHtml + previewNote + create_link_div
+  );
 };
 
 const remove_null_cols = (tfields: GenObj[], rows: GenObj[]) =>

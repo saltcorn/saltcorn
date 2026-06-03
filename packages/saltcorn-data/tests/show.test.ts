@@ -360,7 +360,7 @@ describe("Misc Show views", () => {
     const vres1 = await view.run({ id: 1 }, mockReqRes);
 
     expect(vres1).toContain(
-      'data-sc-view-source="/view/patientlist?favbook=1"><div class="table-responsive">'
+      'data-sc-view-source="/view/patientlist?favbook=1"><div data-sc-state-hash="abf28" data-sc-rows-per-page="20" data-sc-total-rows="1"><div class="table-responsive">'
     );
   });
   it("runs view embed with exta state formula", async () => {
@@ -379,7 +379,7 @@ describe("Misc Show views", () => {
     });
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toContain(
-      'data-sc-view-source="/view/patientlist?favbook=1&parent=1"><div class="table-responsive">'
+      'data-sc-view-source="/view/patientlist?favbook=1&parent=1"><div data-sc-state-hash="9cf8b" data-sc-rows-per-page="20" data-sc-total-rows="0"><div class="table-responsive">'
     );
   });
   it("runs view embed with local state", async () => {
@@ -397,7 +397,7 @@ describe("Misc Show views", () => {
     });
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toContain(
-      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-local-state="/view/patientlist?favbook=1" data-sc-view-source="/view/patientlist?favbook=1"><div class="table-responsive"><table '
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-local-state="/view/patientlist?favbook=1" data-sc-view-source="/view/patientlist?favbook=1"><div data-sc-state-hash="abf28" data-sc-rows-per-page="20" data-sc-total-rows="1"><div class="table-responsive"><table '
     );
     expect(vres1).toContain("Kirk Douglas");
     expect(vres1).not.toContain("Michael Douglas");
@@ -417,7 +417,7 @@ describe("Misc Show views", () => {
     });
     const vres1 = await view.run({ id: 1 }, mockReqRes);
     expect(vres1).toContain(
-      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist"><div class="table-responsive"><table'
+      '<div class="d-inline" data-sc-embed-viewname="patientlist" data-sc-view-source="/view/patientlist"><div data-sc-state-hash="4043d" data-sc-rows-per-page="20" data-sc-total-rows="2"><div class="table-responsive"><table'
     );
   });
   it("fixes issue 2632", async () => {
