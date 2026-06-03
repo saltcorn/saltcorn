@@ -152,7 +152,7 @@ const layoutToNodes = (
         }
       });
       if (related.fields.some((f) => f.canBeFormula))
-        props.isFormula = segment.isFormula;
+        props.isFormula = segment.isFormula ?? {};
       if (related.hasContents)
         return (
           <Element
