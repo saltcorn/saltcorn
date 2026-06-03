@@ -163,7 +163,24 @@ const configuration_workflow = (req: Req) =>
               },
             ],
           };
-          const actionDescriptions: GenObj = {};
+          const actionDescriptions: GenObj = {
+            Save: req.__(
+              "Submit the form and save, redirecting to the destination"
+            ),
+            SaveAndContinue: req.__(
+              "Save the form contents on the server and stay on the current page"
+            ),
+            SubmitWithAjax: req.__(
+              "Submit the form with Ajax and follow the set destination if there are no errors"
+            ),
+            UpdateMatchingRows: req.__(
+              "Update rows in the table matching the filter state with the values in the form"
+            ),
+            Reset: req.__("Reset the form to the state it was in at page load"),
+            GoBack: req.__("Navigate back to the previous page"),
+            Delete: req.__("Delete the current row"),
+            Cancel: req.__("Cancel form editing and go back"),
+          };
           for (const [name, action] of stateActions) {
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
