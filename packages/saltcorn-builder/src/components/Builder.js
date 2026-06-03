@@ -343,6 +343,48 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
       window.removeEventListener("keydown", handleUserKeyPress);
     };
   }, [handleUserKeyPress]);
+
+  const [lastReload, setLastReload] = useState(null);
+  const reloadEntityContentFromServer = async () => {
+    if (lastReload && new Date() - lastReload < 1000) return;
+    setLastReload(new Date());
+    console.log(
+      "here i will load content from server and replace in the builder"
+    );
+
+    const urlroot = options.page_id ? "pageedit" : "viewedit";
+    const response = await fetch(
+      `/${urlroot}/getlayout/${options.page_id || options.view_id}`
+    )
+    const { layout } = await response.json()
+  
+    layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
+  };
+
+  const handleVisibilityChange = () => {
+    if (document.hidden === false) reloadEntityContentFromServer();
+  };
+
+  const handlePageShow = (event) => {
+    if (event.persisted || window.performance?.navigation.type === 2)
+      reloadEntityContentFromServer();
+  };
+
+  useEffect(() => {
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [handleVisibilityChange]);
+
+  useEffect(() => {
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      document.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [handlePageShow]);
+
+
   const hasChildren =
     selected && selected.children && selected.children.length > 0;
 
