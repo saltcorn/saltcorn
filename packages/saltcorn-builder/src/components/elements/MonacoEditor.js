@@ -1,7 +1,9 @@
 import React, { Fragment, useState, useEffect, useRef } from "react";
 import optionsCtx from "../context";
 
-import Editor, { useMonaco } from "@monaco-editor/react";
+import Editor, { useMonaco, loader } from "@monaco-editor/react";
+
+loader.config({ paths: { vs: "/monaco" } });
 
 export const mimeToMonacoLanguage = (mode) => {
   if (!mode) return "typescript";
