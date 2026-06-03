@@ -343,6 +343,10 @@ module.exports = (version_tag) =>
             ]
           : [];
 
+      res.header(
+        "Cache-Control",
+        "private, no-cache, no-store, must-revalidate"
+      );
       res.send(
         layout.wrap({
           title,
