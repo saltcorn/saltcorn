@@ -357,7 +357,11 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
       `/${urlroot}/getlayout/${options.page_id || options.view_id}`
     )
     const { layout } = await response.json()
-  
+
+    if(!layout) return
+    query.node("ROOT").childNodes().forEach((child) => {
+      actions.delete(child);
+    });
     layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
   };
 
