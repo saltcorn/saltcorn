@@ -21,16 +21,19 @@ export const mimeToMonacoLanguage = (mode) => {
   return map[mode] || mode;
 };
 
-const setMonacoLanguage = async (monaco, options, isStatements) => {
+const setMonacoLanguage = async (monaco, options, isStatements, nojoins) => {
   monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
     noLib: true,
     allowNonTsExtensions: true,
   });
-  if (options.setMonaco) return;
+  // Separate cache keys so nojoins and full-join contexts fetch independently
+  const cacheKey = nojoins ? "setMonacoNoJoins" : "setMonaco";
+  if (options[cacheKey]) return;
+  options[cacheKey] = true;
 
-  options.setMonaco = true;
+  const nojoinsPart = nojoins ? "&nojoins=yes" : "";
   const tsres = await fetch(
-    `/admin/ts-declares?${options.tableName ? `table=${options.tableName}` : ""}&user=yes`
+    `/admin/ts-declares?${options.tableName ? `table=${options.tableName}` : ""}&user=yes${nojoinsPart}`
   );
   const tsds = await tsres.text();
 
@@ -105,7 +108,7 @@ const setupVirtualPrefix = (editor, monaco) => {
 
 export const SingleLineEditor = React.forwardRef(
   (
-    { setProp, value, propKey, onChange, onInput, className, stateExpr },
+    { setProp, value, propKey, onChange, onInput, className, stateExpr, placeholder },
     ref
   ) => {
     const options = React.useContext(optionsCtx);
@@ -133,9 +136,22 @@ export const SingleLineEditor = React.forwardRef(
       : value;
 
     return (
-      <div ref={ref} className="form-control p-0 pt-1">
+      <div ref={ref} className="form-control p-0 pt-1" style={{ position: "relative" }}>
+        {isEmpty && !activePrefix && placeholder && (
+          <div style={{
+            position: "absolute",
+            top: "3px",
+            left: "14px",
+            color: "#999",
+            pointerEvents: "none",
+            zIndex: 1,
+            fontSize: "14px",
+            whiteSpace: "nowrap",
+          }}>
+            {placeholder}
+          </div>
+        )}
         <Editor
-          placeholder={"sdfffsd"}
           className={className || ""}
           height="22px"
           value={editorValue}
@@ -161,14 +177,14 @@ export const SingleLineEditor = React.forwardRef(
   }
 );
 
-export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = false, mode }) => {
+export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = false, mode, placeholder, nojoins }) => {
   const options = React.useContext(optionsCtx);
   const resolvedLanguage = mimeToMonacoLanguage(mode);
   const useTypeScriptSetup = resolvedLanguage === "typescript" || resolvedLanguage === "javascript";
 
   const handleEditorWillMount = (monaco) => {
     if (useTypeScriptSetup) {
-      setMonacoLanguage(monaco, options, true);
+      setMonacoLanguage(monaco, options, true, nojoins);
     }
   };
 
@@ -181,8 +197,24 @@ export const MultiLineCodeEditor = ({ setProp, value, onChange, isModalEditor = 
     }
   };
 
+  const isEmpty = !value || value.trim() === "";
+  const resolvedPlaceholder = placeholder || "// enter code here";
+
   return (
-    <div className="form-control p-0 pt-2">
+    <div className="form-control p-0 pt-2" style={{ position: "relative" }}>
+      {isEmpty && !isModalEditor && (
+        <div style={{
+          position: "absolute",
+          top: "10px",
+          left: "14px",
+          color: "#999",
+          pointerEvents: "none",
+          zIndex: 1,
+          fontSize: "14px",
+        }}>
+          {resolvedPlaceholder}
+        </div>
+      )}
       <Editor
         height={isModalEditor ? "100%" : "150px"}
         value={value}

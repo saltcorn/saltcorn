@@ -425,12 +425,15 @@ class Page implements AbstractPage {
       },
       container: (segment) => {
         if (segment.showIfFormula) {
-          const do_show = eval_expression(
-            segment.showIfFormula,
-            dollarizeObject(querystate),
-            extraArgs.req?.user
-          );
-          if (!do_show) segment.hide = true;
+          try {
+            const do_show = eval_expression(
+              segment.showIfFormula,
+              dollarizeObject(querystate),
+              extraArgs.req?.user
+            );
+            if (!do_show) segment.hide = true;
+          } catch (e) {
+          }
         }
       },
       image: async (segment) => {

@@ -153,6 +153,7 @@ const configuration_workflow = (req: Req) =>
               },
             ],
           };
+          const actionDescriptions: GenObj = {};
           for (const [name, action] of stateActions as [string, GenObj][]) {
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
@@ -161,6 +162,7 @@ const configuration_workflow = (req: Req) =>
                 { mode: "filter", req }
               );
             }
+            if (action.description) actionDescriptions[name] = action.description;
           }
           const workflowActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -270,6 +272,7 @@ const configuration_workflow = (req: Req) =>
             library,
             field_view_options,
             actionConfigForms,
+            actionDescriptions,
             //fieldViewConfigForms,
             mode: "filter",
             has_select2,

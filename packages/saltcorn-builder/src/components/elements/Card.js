@@ -132,20 +132,20 @@ const Card = ({
       {bgType === "Image" && bgFileId && imageLocation === "Top" ? (
         <img src={`/files/serve/${bgFileId}`} className="card-img-top" />
       ) : null}
-      {title && title.length > 0 && (
-        <div className="card-header right-section">
-          {isFormula?.title ? (
+      <div className="card-header right-section">
+        {title && title.length > 0 ? (
+          isFormula?.title ? (
             <span className="font-monospace">={title}</span>
           ) : (
             title
-          )}
-           <div className='title-right'>
+          )
+        ) : null}
+        <div className="title-right">
           <Element canvas id="titleRight" is={Column}>
             {titleRight}
           </Element>
         </div>
-        </div>
-      )}
+      </div>
       <div
         className={`card-body ${noPadding ? "p-0" : ""}`}
         style={
@@ -441,9 +441,9 @@ const CardSettings = () => {
                     className="form-control-sm  form-select"
                     onChange={setAProp("imageLocation")}
                   >
-                    <option>{t("Card")}</option>
-                    <option>{t("Body")}</option>
-                    <option>{t("Top")}</option>
+                    <option value="Card">{t("Card")}</option>
+                    <option value="Body">{t("Body")}</option>
+                    <option value="Top">{t("Top")}</option>
                   </select>
                 </td>
               </tr>

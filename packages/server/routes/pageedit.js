@@ -194,6 +194,7 @@ const pageBuilderData = async (req, context) => {
     apiNeverTriggers: true,
   });
   const actionConfigForms = {};
+  const actionDescriptions = {};
   for (const name of actions) {
     const action = stateActions[name];
     if (action && action.configFields) {
@@ -202,6 +203,7 @@ const pageBuilderData = async (req, context) => {
         req,
       });
     }
+    if (action && action.description) actionDescriptions[name] = action.description;
   }
   const workflowActions = Trigger.trigger_actions({
     apiNeverTriggers: true,
@@ -284,6 +286,7 @@ const pageBuilderData = async (req, context) => {
     library,
     min_role: context.min_role,
     actionConfigForms,
+    actionDescriptions,
     allowMultiStepAction: true,
     page_name: context.name,
     page_id: context.id,

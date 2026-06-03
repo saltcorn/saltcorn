@@ -32,7 +32,7 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
   const children = (nodes || []).map(recursivelyCloneToElems(query));
   if (data.displayName === "Columns") {
     const cols = ntimes(data.props.ncols, (ix) =>
-      recursivelyCloneToElems(query)(data.linkedNodes["Col" + ix])
+      cloneLinkedNodeChildren(query, data.linkedNodes["Col" + ix])
     );
     return React.createElement(Columns, {
       ...newProps,
@@ -42,7 +42,7 @@ export const recursivelyCloneToElems = (query) => (nodeId, ix) => {
   }
 
   if (data.displayName === "ListColumn") {
-    const col = recursivelyCloneToElems(query)(data.linkedNodes["listcol"]);
+    const col = cloneLinkedNodeChildren(query, data.linkedNodes["listcol"]);
 
     return React.createElement(ListColumn, {
       ...newProps,

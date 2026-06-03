@@ -171,14 +171,14 @@ const LinkSettings = () => {
                   });
                 }}
               >
-                <option>{t("URL")}</option>
-                {(options.pages || []).length > 0 && <option>{t("Page")}</option>}
+                <option value="URL">{t("URL")}</option>
+                {(options.pages || []).length > 0 && <option value="Page">{t("Page")}</option>}
                 {(options.views || []).length > 0 &&
                   ["page", "filter"].includes(options.mode) && (
-                    <option>{t("View")}</option>
+                    <option value="View">{t("View")}</option>
                   )}
                 {(options.page_groups || []).length > 0 && (
-                  <option>{t("Page Group")}</option>
+                  <option value="Page Group">{t("Page Group")}</option>
                 )}
               </select>
             </td>

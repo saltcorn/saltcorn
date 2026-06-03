@@ -5461,7 +5461,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
         const addTsFields = (table, path, nrecurse) => {
           table.fields.forEach((f) => {
             tsFields.push(`${path}${f.name}: ${scTypeToTsType(f.type, f)};`);
-            if (f.is_fkey && nrecurse >= 0) {
+            if (!req.query.nojoins && f.is_fkey && nrecurse >= 0) {
               const reftable = Table.findOne(f.reftable_name);
               if (reftable)
                 addTsFields(reftable, `${path}${f.name}Ⱶ`, nrecurse - 1);

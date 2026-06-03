@@ -282,18 +282,6 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
           selectedNodes.forEach((nodeId) => actions.delete(nodeId));
         }
       }
-      if ((event.ctrlKey || event.metaKey) && event.keyCode == 86) {
-        navigator.clipboard.readText().then((clipText) => {
-          const layout = JSON.parse(clipText);
-          layoutToNodes(
-            layout,
-            query,
-            actions,
-            selected?.id || "ROOT",
-            options
-          );
-        });
-      }
       if ((event.ctrlKey || event.metaKey) && event.keyCode == 90) {
         // undo
         actions.history.undo();
@@ -301,6 +289,43 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
       if ((event.ctrlKey || event.metaKey) && event.keyCode == 89) {
         // redo
         actions.history.redo();
+      }
+    }
+    if ((event.ctrlKey || event.metaKey) && event.keyCode == 86) {
+      const inputTags = ["input", "textarea", "select"];
+      if (!inputTags.includes(tagName) && !target.isContentEditable) {
+        navigator.clipboard.readText().then((clipText) => {
+          try {
+            const layout = JSON.parse(clipText);
+
+            let pasteTarget = "ROOT";
+            let pasteIndex = false;
+            try {
+              if (selected?.id && selected.id !== "ROOT") {
+                const selNode = query.node(selected.id).get();
+                const linkedNodes = selNode?.data?.linkedNodes;
+                if (linkedNodes && Object.keys(linkedNodes).length > 0) {
+                  const firstLinkedId = Object.values(linkedNodes)[0];
+                  pasteTarget = firstLinkedId;
+                  pasteIndex = query.node(firstLinkedId).childNodes().length;
+                } else if (selNode?.data?.isCanvas) {
+                  pasteTarget = selected.id;
+                  pasteIndex = query.node(selected.id).childNodes().length;
+                } else {
+                  const parentId = selNode?.data?.parent;
+                  if (parentId) {
+                    pasteTarget = parentId;
+                    const siblings = query.node(parentId).childNodes();
+                    const sibIx = siblings.findIndex((sib) => sib === selected.id);
+                    if (sibIx !== -1) pasteIndex = sibIx + 1;
+                  }
+                }
+              }
+            } catch (_) {}
+            layoutToNodes(layout, query, actions, pasteTarget, options, pasteIndex);
+          } catch (e) {
+          }
+        });
       }
     }
     if ((tagName === "body" || tagName === "button") &&
@@ -726,15 +751,6 @@ const HistoryPanel = () => {
   return (
     <div className="d-flex gap-1">
       <button
-        className="btn btn-sm btn-secondary redo-builder"
-        title={t("Redo")}
-        onClick={() => actions.history.redo()}
-        disabled={!canRedo}
-        style={!canRedo ? { opacity: 0.4, pointerEvents: "none" } : {}}
-      >
-        <FontAwesomeIcon icon={faRedo} />
-      </button>
-       <button
         className="btn btn-sm btn-secondary undo-builder"
         title={t("Undo")}
         onClick={() => actions.history.undo()}
@@ -742,6 +758,15 @@ const HistoryPanel = () => {
         style={!canUndo ? { opacity: 0.4, pointerEvents: "none" } : {}}
       >
         <FontAwesomeIcon icon={faUndo} />
+      </button>
+      <button
+        className="btn btn-sm btn-secondary redo-builder"
+        title={t("Redo")}
+        onClick={() => actions.history.redo()}
+        disabled={!canRedo}
+        style={!canRedo ? { opacity: 0.4, pointerEvents: "none" } : {}}
+      >
+        <FontAwesomeIcon icon={faRedo} />
       </button>
     </div>
   );
@@ -823,6 +848,61 @@ const Builder = ({ options, layout, mode }) => {
      const rect = ref.current.getBoundingClientRect();
      setBuilderTop(rect.top);
    });
+
+  // Correct the CraftJS drop indicator position when body CSS zoom is applied.
+  // getBoundingClientRect() returns visual (zoomed) coords, but position:fixed
+  // top values inside a zoomed body are in layout (pre-zoom) coords, so we
+  // divide top/height by zoom. Left/width are already in viewport coords.
+  useEffect(() => {
+    const getBodyZoom = () => {
+      const bw = document.body.offsetWidth;
+      if (!bw) return 1;
+      return document.body.getBoundingClientRect().width / bw || 1;
+    };
+
+    let isCorrecting = false;
+
+    const correctIndicator = (el) => {
+      if (isCorrecting) return;
+      const zoom = getBodyZoom();
+      if (Math.abs(zoom - 1) < 0.01) return;
+
+      isCorrecting = true;
+      const top = parseFloat(el.style.top);
+      const height = parseFloat(el.style.height);
+
+      if (!isNaN(top)) el.style.top = `${top / zoom}px`;
+      if (!isNaN(height)) el.style.height = `${height / zoom}px`;
+
+      setTimeout(() => { isCorrecting = false; }, 0);
+    };
+
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        if (mutation.type === "attributes" && mutation.attributeName === "style") {
+          const el = mutation.target;
+          if (el.classList && el.classList.contains("builder-drop-indicator")) {
+            correctIndicator(el);
+          }
+        } else if (mutation.type === "childList") {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1 && node.classList && node.classList.contains("builder-drop-indicator")) {
+              correctIndicator(node);
+            }
+          });
+        }
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["style"],
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   const canvasHeight =
     Math.max(windowHeight - builderTop, builderHeight, 600) - 10;

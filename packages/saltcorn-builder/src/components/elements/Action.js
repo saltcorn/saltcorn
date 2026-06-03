@@ -146,6 +146,7 @@ const ActionSettings = () => {
   } = node;
   const options = useContext(optionsCtx);
   const getCfgFields = (fv) => (options.actionConfigForms || {})[fv];
+  const actionDescription = (options.actionDescriptions || {})[name];
   const cfgFields = getCfgFields(name);
   const setAProp = setAPropGen(setProp);
   const use_setting_action_n =
@@ -260,6 +261,13 @@ const ActionSettings = () => {
               )}
             </td>
           </tr>
+          {actionDescription ? (
+            <tr>
+              <td colSpan="2">
+                <small className="text-muted">{actionDescription}</small>
+              </td>
+            </tr>
+          ) : null}
           {name !== "Clear" && options.mode === "filter" ? (
             <tr>
               <td>

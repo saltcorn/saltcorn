@@ -619,6 +619,19 @@ div.componets-and-library-accordion {
 
 .title-right {
   min-width: 100px;
+  min-height: 28px;
+  outline: 1px dashed #adb5bd;
+  border-radius: 3px;
+  margin-left: auto;
+}
+
+.card-footer:empty,
+.card-footer > .sc-column:empty {
+  min-height: 28px;
+}
+
+.card .card-footer {
+  outline: 1px dashed #adb5bd;
 }
 
 .builder-dark-panel .toolbox-card .card-body,

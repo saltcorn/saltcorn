@@ -89,7 +89,7 @@ test.describe('E2E Test Suite', () => {
         // Press Enter to select the option
         await page.keyboard.press('Enter');
         await page.waitForTimeout(1000);
-        await page.fill('textarea.field-row_expr', '{full_name:"Sumit"}');
+        await functions.fill_Monaco_Text('[role="code"]', '{full_name:"Sumit"}');
         // await page.waitForTimeout(1000);
         // click on next page
         await page.waitForSelector(pageobject.nextoption);

@@ -163,6 +163,24 @@ const configuration_workflow = (req: Req) =>
               },
             ],
           };
+          const actionDescriptions: GenObj = {
+            Save: req.__(
+              "Submit the form and save, redirecting to the destination"
+            ),
+            SaveAndContinue: req.__(
+              "Save the form contents on the server and stay on the current page"
+            ),
+            SubmitWithAjax: req.__(
+              "Submit the form with Ajax and follow the set destination if there are no errors"
+            ),
+            UpdateMatchingRows: req.__(
+              "Update rows in the table matching the filter state with the values in the form"
+            ),
+            Reset: req.__("Reset the form to the state it was in at page load"),
+            GoBack: req.__("Navigate back to the previous page"),
+            Delete: req.__("Delete the current row"),
+            Cancel: req.__("Cancel form editing and go back"),
+          };
           for (const [name, action] of stateActions) {
             if (action.configFields) {
               actionConfigForms[name] = await getActionConfigFields(
@@ -171,6 +189,7 @@ const configuration_workflow = (req: Req) =>
                 { mode: "edit", req }
               );
             }
+            if (action.description) actionDescriptions[name] = action.description;
           }
           const workflowActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -229,14 +248,10 @@ const configuration_workflow = (req: Req) =>
             true,
             true
           );
-          const pages = (await Page.find({}, { cached: true })).map((p) => ({
-            name: p.name,
+          const pages = await Page.find();
+          const groups = (await PageGroup.find()).map((g: any) => ({
+            name: g.name,
           }));
-          const groups = (await PageGroup.find({}, { cached: true })).map(
-            (g: any) => ({
-              name: g.name,
-            })
-          );
           const { on_done_redirect, ...current_filter_state } = req.query;
 
           return {
@@ -252,6 +267,7 @@ const configuration_workflow = (req: Req) =>
             triggerActions,
             builtInActions: edit_build_in_actions,
             actionConfigForms,
+            actionDescriptions,
             images,
             allowMultiStepAction: true,
             min_role: (myviewrow || {}).min_role,
@@ -911,7 +927,6 @@ const render = async ({
     viewname,
     optionsQuery,
     state,
-    isPreview,
   });
   form.id = formId;
   return (
@@ -1022,7 +1037,6 @@ const runPost = async (
     const originalID = id;
     let trigger_return: any;
     let ins_upd_error: any;
-    let ins_upd_error_obj: Error | undefined;
     if (!cancel) {
       getState().log(
         6,
@@ -1039,7 +1053,6 @@ const runPost = async (
             trigger_return = ins_res.trigger_return;
           } else {
             ins_upd_error = ins_res.error;
-            ins_upd_error_obj = (ins_res as any).errorObj;
           }
         } else {
           if (
@@ -1049,14 +1062,12 @@ const runPost = async (
             const upd_res = await tryInsertOrUpdateImpl(row, id, table, req);
             if ((upd_res as any).error) {
               ins_upd_error = (upd_res as any).error;
-              ins_upd_error_obj = (upd_res as any).errorObj;
             }
             trigger_return = upd_res.trigger_return;
           } else {
             const upd_res = await tryUpdateQuery(row, id);
             if ((upd_res as any).error) {
               ins_upd_error = (upd_res as any).error;
-              ins_upd_error_obj = (upd_res as any).errorObj;
             }
             trigger_return = upd_res.trigger_return;
           }
@@ -1067,11 +1078,6 @@ const runPost = async (
             6,
             `Insert or update failure ${JSON.stringify(ins_upd_error)}`
           );
-          if (ins_upd_error_obj)
-            Crash.create(
-              { message: ins_upd_error, stack: ins_upd_error_obj.stack ?? "" },
-              req
-            );
           res.status(422);
           if (req.xhr) {
             res.json({ error: ins_upd_error });
@@ -1491,7 +1497,7 @@ const run_action = async (
 ) => {
   const result = await actionQuery();
   if (result.json.error) {
-    Crash.create({ message: result.json.error, stack: "" }, req);
+    Crash.create({ message: result.json.error, stack: "" }, req as any);
   }
   return result;
 };
@@ -1639,16 +1645,7 @@ const prepare = async (
     const form_field = form.fields.find((f: any) => f.name === k);
     const tbl_field = fields.find((f: any) => f.name === k);
     if (tbl_field && !form_field && !fixed?.[`_block_${k}`]) {
-      form.fields.push(
-        new Field({
-          name: k,
-          input_type: "hidden",
-          type: tbl_field.type,
-          table,
-          table_id: table?.id,
-          reftable_name: tbl_field.reftable_name,
-        })
-      );
+      form.fields.push(new Field({ name: k, input_type: "hidden" }));
     }
   });
   setDateLocales(form, req.getLocale());
@@ -2769,21 +2766,6 @@ export = {
    * @returns
    */
   connectedObjects: async (configuration: GenObj) => {
-    const result = extractFromLayout(configuration.layout);
-    if (configuration.view_when_done) {
-      const view = View.findOne({ name: configuration.view_when_done });
-      if (view) (result.linkedViews = result.linkedViews || []).push(view);
-    }
-    if (configuration.page_when_done) {
-      const page = Page.findOne({ name: configuration.page_when_done });
-      if (page) (result.linkedPages = result.linkedPages || []).push(page);
-    }
-    for (const dest of configuration.formula_destinations || []) {
-      if (dest.view) {
-        const view = View.findOne({ name: dest.view });
-        if (view) (result.linkedViews = result.linkedViews || []).push(view);
-      }
-    }
-    return result;
+    return extractFromLayout(configuration.layout);
   },
 };

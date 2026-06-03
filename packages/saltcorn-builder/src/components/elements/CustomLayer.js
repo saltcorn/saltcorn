@@ -50,7 +50,7 @@ const CustomLayer = ({ children }) => {
       name = data?.name || name;
     }
 
-    // Rename linked Columns for Tabs and Table
+    // Rename linked Columns for Tabs, Table, and Card sections
     if (name === "Column" && data?.parent) {
       const parentNode = state.nodes[data.parent];
       const parentName = parentNode?.data?.displayName || parentNode?.data?.name;
@@ -68,6 +68,10 @@ const CustomLayer = ({ children }) => {
             if (match) {
               name = `R${parseInt(match[1], 10) + 1}C${parseInt(match[2], 10) + 1}`;
             }
+          } else if (parentName === "Card") {
+            if (key === "titleRight") name = "Title Right";
+            else if (key === "cardbody") name = "Body";
+            else if (key === "cardfooter") name = "Footer";
           }
         }
       }
@@ -79,14 +83,15 @@ const CustomLayer = ({ children }) => {
       (nodes && nodes.length > 0) ||
       (linkedNodes && Object.keys(linkedNodes).length > 0);
 
-    // Hide the ROOT Column and linked Columns of Card/Container
+    // Hide the ROOT Column and Container's single linked canvas (no ambiguity there).
+    // Card's linked canvases are NOT hidden — they show as "Title Right", "Body", "Footer".
     let shouldHide = false;
     if (id === "ROOT") {
       shouldHide = true;
     } else if ((data?.displayName === "Column" || data?.name === "Column") && data?.parent) {
       const parentNode = state.nodes[data.parent];
       const parentName = parentNode?.data?.displayName || parentNode?.data?.name;
-      if (parentName === "Card" || parentName === "Container") {
+      if (parentName === "Container") {
         const parentLinked = parentNode?.data?.linkedNodes;
         if (parentLinked && Object.values(parentLinked).includes(id)) {
           shouldHide = true;
