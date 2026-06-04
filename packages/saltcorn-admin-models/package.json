@@ -27,7 +27,8 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.735.0",
+    "@aws-sdk/client-s3": "3.1057.0",
+    "@aws-sdk/lib-storage": "3.1057.0",
     "@saltcorn/types": "1.6.0-beta.13",
     "@saltcorn/markup": "1.6.0-beta.13",
     "@saltcorn/db-common": "1.6.0-beta.13",

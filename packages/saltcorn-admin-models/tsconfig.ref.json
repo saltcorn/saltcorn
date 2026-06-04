@@ -2,7 +2,6 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "composite": true,
-    "skipLibCheck": true,
     "declaration": true /* set to true by "composite" */
   }
 }
