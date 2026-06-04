@@ -797,7 +797,7 @@ router.post(
  */
 router.post(
   "/savebuilder/:id",
-  isAdmin,
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req, res) => {
     const { id } = req.params;
 
