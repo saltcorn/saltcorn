@@ -819,6 +819,25 @@ router.post(
   })
 );
 
+router.get(
+  "/getlayout/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_pages"),
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    if (id) {
+      const page = await Page.findOne({ id });
+      if (!page) {
+        res.json({ error: req.__("No page") });
+        return;
+      }
+      res.json({ success: "ok", layout: page.layout });
+    } else {
+      res.json({ error: req.__("No view") });
+    }
+  })
+);
+
 /**
  * @name post/delete/:id
  * @function
