@@ -100,41 +100,51 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
   const { t } = useTranslation();
   const options = useContext(optionsCtx);
 
-  const [lastReload, setLastReload] = useState(null);
+  const lastReload = useRef(null);
+  const rebuildInProgress = useRef(false);
+
   const reloadEntityContentFromServer = async () => {
     if (!query.serialize) return;
-    if (lastReload && new Date() - lastReload < 1000) return;
-    setLastReload(new Date());
-    console.log(
-      "here i will load content from server and replace in the builder"
-    );
+    if (lastReload.current && new Date() - lastReload.current < 1000) return;
+    lastReload.current = new Date();
 
     const urlroot = options.page_id ? "pageedit" : "viewedit";
     const response = await fetch(
       `/${urlroot}/getlayout/${options.page_id || options.view_id}`
-    )
-    const { layout } = await response.json()
+    );
+    const { layout } = await response.json();
 
-    if(!layout) return;
+    if (!layout) return;
 
     const data = craftToSaltcorn(
       JSON.parse(query.serialize()),
       "ROOT",
       options
     );
-    console.log("data", data);
-    
-    if (isEqual(JSON.stringify(layout), JSON.stringify(data.layout))) {
-      console.log("equal, not replacing");
-      
+    if (
+      isEqual(
+        JSON.parse(JSON.stringify(layout)),
+        JSON.parse(JSON.stringify(data.layout))
+      )
+    )
       return;
+
+    try {
+      rebuildInProgress.current = true;
+      savedData.current = JSON.stringify(layout);
+      actions.selectNode();
+      query
+        .node("ROOT")
+        .childNodes()
+        .forEach((child) => {
+          actions.delete(child);
+        });
+      layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
+    } catch (e) {
+      console.error("rebuild error", e);
+    } finally {
+      rebuildInProgress.current = false;
     }
-  
-    query.node("ROOT").childNodes().forEach((child) => {
-      actions.delete(child);
-    });
-    layoutToNodes(layout, query, actions.history.ignore(), "ROOT", options);
-    savedData.current = JSON.stringify(layout);
   };
 
   const handleVisibilityChange = () => {
@@ -160,10 +170,9 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
     };
   }, [handlePageShow]);
 
-
   const doSave = (query, keepalive) => {
     if (!query.serialize) return;
-
+    if (rebuildInProgress.current) return;
     const data = craftToSaltcorn(
       JSON.parse(query.serialize()),
       "ROOT",
@@ -182,7 +191,7 @@ const InitNewElement = ({ nodekeys, savingState, setSavingState }) => {
 
     fetch(`/${urlroot}/savebuilder/${options.page_id || options.view_id}`, {
       method: "POST", // or 'PUT'
-      keepalive,//this is conditional bec body size is limited to 64KB
+      keepalive, //this is conditional bec body size is limited to 64KB
       headers: {
         "Content-Type": "application/json",
         "CSRF-Token": options.csrfToken,
@@ -279,10 +288,12 @@ export /**
  * @namespace
  */
 const Library = ({ expanded }) => {
-  const { actions, selected, selectedNodes, query, connectors } = useEditor((state, query) => ({
-    selected: getSelectedNodes(state.events.selected)[0] || null,
-    selectedNodes: getSelectedNodes(state.events.selected),
-  }));
+  const { actions, selected, selectedNodes, query, connectors } = useEditor(
+    (state, query) => ({
+      selected: getSelectedNodes(state.events.selected)[0] || null,
+      selectedNodes: getSelectedNodes(state.events.selected),
+    })
+  );
   const { t } = useTranslation();
   const options = useContext(optionsCtx);
   const [adding, setAdding] = useState(false);
