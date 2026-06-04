@@ -67,7 +67,7 @@
     "tmp-promise": "^3.0.3",
     "ua-parser-js": "^2.0.0",
     "underscore": "1.13.7",
-    "uuid": "^11.0.5",
+    "uuid": "^14.0.0",
     "fs-extra": "^11.3.0",
     "env-paths": "^2.2.1",
     "@saltcorn/db-common": "1.6.0-beta.13",
