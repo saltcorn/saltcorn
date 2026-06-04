@@ -6,7 +6,7 @@
   "homepage": "https://saltcorn.com",
   "scripts": {
     "build": "webpack --mode production",
-    "builddev": "webpack --mode none",
+    "builddev": "webpack --mode development",
     "watch": "webpack --watch --mode development",
     "test": "jest tests --runInBand",
     "tsc": "echo \"Error: no TypeScript support yet\"",
