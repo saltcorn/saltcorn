@@ -2649,7 +2649,7 @@ export = {
       const qs = Object.entries(flds)
         .map(([prefill_k, v]) => {
           const k = prefill_k.replace("_prefill_", "");
-          return v && typeof row[k] !== "undefined"
+          return v && typeof row[k] !== "undefined" && row[k] !== null
             ? `${encodeURIComponent(k)}=${encodeURIComponent(row[k])}`
             : false;
         })

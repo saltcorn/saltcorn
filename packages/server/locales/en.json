@@ -2098,5 +2098,13 @@
 	"All fields match": "All fields match",
 	"All Saltcorn fields match the database columns.": "All Saltcorn fields match the database columns.",
 	"Back to table": "Back to table",
-	"Matches": "Matches"
+	"Matches": "Matches",
+	"Submit the form and save, redirecting to the destination": "Submit the form and save, redirecting to the destination",
+	"Save the form contents on the server and stay on the current page": "Save the form contents on the server and stay on the current page",
+	"Submit the form with Ajax and follow the set destination if there are no errors": "Submit the form with Ajax and follow the set destination if there are no errors",
+	"Update rows in the table matching the filter state with the values in the form": "Update rows in the table matching the filter state with the values in the form",
+	"Reset the form to the state it was in at page load": "Reset the form to the state it was in at page load",
+	"Navigate back to the previous page": "Navigate back to the previous page",
+	"Delete the current row": "Delete the current row",
+	"Cancel form editing and go back": "Cancel form editing and go back"
 }
