@@ -2,6 +2,8 @@
 
 ## 1.6.0 - In development
 
+* The builder now resyncs with the server when its browser tab is activated or returns from a back button click
+
 * state objects can now be used as the query in a TableQuery workflow step. This is useful if you run a workflow action in a Filter and set row variable = state, and then use `row` as the query in  TableQuery step.
 
 * Interpolations based on user and state can now be used in HTML code elements in Page and Filter views (previously only available in Show views.)
