@@ -342,7 +342,11 @@ module.exports = (version_tag) =>
               },
             ]
           : [];
-
+      if (req.user)
+        res.header(
+          "Cache-Control",
+          "private, no-cache, no-store, must-revalidate"
+        );
       res.send(
         layout.wrap({
           title,

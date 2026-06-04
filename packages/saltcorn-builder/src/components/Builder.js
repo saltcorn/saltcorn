@@ -343,6 +343,7 @@ const SettingsPanel = ({ isEnlarged, setIsEnlarged }) => {
       window.removeEventListener("keydown", handleUserKeyPress);
     };
   }, [handleUserKeyPress]);
+
   const hasChildren =
     selected && selected.children && selected.children.length > 0;
 

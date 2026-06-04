@@ -922,6 +922,25 @@ router.post(
   })
 );
 
+router.get(
+  "/getlayout/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_views"),
+  error_catcher(async (req, res) => {
+    const { id } = req.params;
+
+    if (id) {
+      const view = await View.findOne({ id });
+      if (!view) {
+        res.json({ error: req.__("No view") });
+        return;
+      }
+      res.json({ success: "ok", layout: view.configuration.layout });
+    } else {
+      res.json({ error: req.__("No view") });
+    }
+  })
+);
+
 /**
  * @name post/saveconfig/:id
  * @function
