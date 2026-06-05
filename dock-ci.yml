@@ -1,0 +1,14 @@
+build:
+  dockerfile: ./deploy/dock-ci/Dockerfile.dev
+
+run_tests_sqlite:
+  image: build
+  command:
+    - run-tests saltcorn-data
+    - run-tests server
+  environment:
+    SQLITE_FILEPATH: /tmp/testdb.sqlite
+    CI: true
+    SALTCORN_MULTI_TENANT: true
+    SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+    NODE_OPTIONS: --max-old-space-size=4096

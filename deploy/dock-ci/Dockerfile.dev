@@ -1,0 +1,21 @@
+FROM node:24-trixie
+
+ENV SALTCORN_DISABLE_UPGRADE "true"
+
+RUN apt update && apt install -qqy libpq-dev build-essential python-is-python3 postgresql-client git chromium zip unzip python3-setuptools python3-venv
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD "true"
+
+WORKDIR /opt/saltcorn
+
+COPY . /opt/saltcorn
+
+RUN npm config set fund false \
+ && npm config set audit false
+
+RUN npm install --legacy-peer-deps
+RUN npm run tsc
+
+ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin"
+
+ENTRYPOINT ["/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"]

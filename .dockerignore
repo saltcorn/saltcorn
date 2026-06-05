@@ -6,3 +6,7 @@ Dockerfile
 Dockerfile.*
 **/Dockerfile
 **/Dockerfile.*
+dock-ci.yml
+deploy/dock-ci/
+.git/
+cireport.html
