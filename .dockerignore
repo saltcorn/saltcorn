@@ -4,3 +4,5 @@ plugins_folder/
 git_plugins/
 Dockerfile
 Dockerfile.*
+**/Dockerfile
+**/Dockerfile.*

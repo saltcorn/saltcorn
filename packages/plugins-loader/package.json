@@ -12,7 +12,8 @@
     "@saltcorn/data": "1.6.0-beta.14",
     "env-paths": "^2.2.1",
     "npm-registry-fetch": "17.1.0",
-    "https-proxy-agent": "^7.0.6"
+    "https-proxy-agent": "^7.0.6",
+    "fs-extra": "11.3.5"
   },
   "author": "Christian Hugo",
   "license": "MIT",
