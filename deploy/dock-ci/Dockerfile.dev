@@ -17,5 +17,3 @@ RUN npm install --legacy-peer-deps
 RUN npm run tsc
 
 ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin"
-
-ENTRYPOINT ["/opt/saltcorn/packages/saltcorn-cli/bin/saltcorn"]

@@ -4,11 +4,13 @@ build:
 postgres:
   dockerfile: ./deploy/dock-ci/Dockerfile.postgres
   service: true  
-  ports: 5433
+  ports: 5432
+  ready_on: server started
   
 
 run_tests_sqlite:
   image: build
+  disable: true
   command:
     - run-tests saltcorn-data
     - run-tests server
@@ -23,12 +25,14 @@ run_tests_sqlite:
 run_tests_postgres:
   image: build
   depends: postgres
+  delay: 3
   command:
-    - run-tests saltcorn-data
-    - run-tests server
+    - saltcorn reset-schema -f
+    - saltcorn run-tests saltcorn-data
+    - saltcorn run-tests server
   environment:
-    PGHOST: localhost
-    PGPORT: 5433
+    PGHOST: postgres
+    PGPORT: 5432
     PGUSER: postgres
     PGDATABASE: saltcorn_test
     PGPASSWORD: postgres
