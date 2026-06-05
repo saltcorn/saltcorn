@@ -1,0 +1,13 @@
+
+# Use the official PostgreSQL image as the base
+FROM postgres:16
+ 
+# Set environment variables for PostgreSQL configuration
+ENV POSTGRES_PASSWORD=postgres
+ENV POSTGRES_DB=saltcorn_test
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_HOST_AUTH_METHOD=trust
+ENV PGPORT=5433
+
+EXPOSE 5433
+ 

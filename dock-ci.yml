@@ -1,6 +1,12 @@
 build:
   dockerfile: ./deploy/dock-ci/Dockerfile.dev
 
+postgres:
+  dockerfile: ./deploy/dock-ci/Dockerfile.postgres
+  service: true  
+  ports: 5433
+  
+
 run_tests_sqlite:
   image: build
   command:
@@ -8,6 +14,24 @@ run_tests_sqlite:
     - run-tests server
   environment:
     SQLITE_FILEPATH: /tmp/testdb.sqlite
+    CI: true
+    SALTCORN_MULTI_TENANT: true
+    SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+    NODE_OPTIONS: --max-old-space-size=4096
+
+
+run_tests_postgres:
+  image: build
+  depends: postgres
+  command:
+    - run-tests saltcorn-data
+    - run-tests server
+  environment:
+    PGHOST: localhost
+    PGPORT: 5433
+    PGUSER: postgres
+    PGDATABASE: saltcorn_test
+    PGPASSWORD: postgres
     CI: true
     SALTCORN_MULTI_TENANT: true
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
