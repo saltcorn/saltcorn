@@ -2,11 +2,15 @@ build:
   dockerfile: ./deploy/dock-ci/Dockerfile.dev
 
 postgres:
-  dockerfile: ./deploy/dock-ci/Dockerfile.postgres
+  image: postgres:16
   service: true  
   ports: 5433
   ready_on: CREATE DATABASE
-  
+  environment:
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: saltcorn_test
+    POSTGRES_USER: postgres
+    PGPORT: 5433
 
 run_tests_sqlite:
   image: build
@@ -25,7 +29,6 @@ run_tests_sqlite:
 run_tests_postgres:
   image: build
   depends: postgres 
-  delay: 3
   command:
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
     - saltcorn reset-schema -f   
