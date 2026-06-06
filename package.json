@@ -56,6 +56,7 @@
       "packages/filemanager/public/build/bundle.js",
       "packages/saltcorn-sbadmin2/public/**",
       "docs/**",
+      "packages/server/docs/**",
       "deploy/"
     ],
     "extends": "eslint:recommended",
