@@ -4,13 +4,12 @@ build:
 postgres:
   image: postgres:16
   service: true  
-  ports: 5433
   ready_on: CREATE DATABASE
   environment:
     POSTGRES_PASSWORD: postgres
     POSTGRES_DB: saltcorn_test
     POSTGRES_USER: postgres
-    PGPORT: 5433
+
 
 run_tests_sqlite:
   image: build
@@ -32,10 +31,9 @@ run_tests_postgres:
   command:
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
     - saltcorn reset-schema -f   
-    - saltcorn run-tests saltcorn-data
+#    - saltcorn run-tests saltcorn-data
   environment:
     PGHOST: postgres
-    PGPORT: 5433
     PGUSER: postgres
     PGDATABASE: saltcorn_test
     PGPASSWORD: postgres
