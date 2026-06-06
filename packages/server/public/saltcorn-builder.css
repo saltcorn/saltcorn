@@ -574,6 +574,11 @@ div.builder-config-field {
   margin: 5px;
 }
 
+#builder-main-canvas .canvas > div {
+  min-width: 3em;
+  min-height: 1.5em;
+}
+
 #builder-main-canvas .list-column-outer {
   border: 1px solid black;
   margin-top: 2px;
