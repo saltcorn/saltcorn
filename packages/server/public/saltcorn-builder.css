@@ -575,7 +575,7 @@ div.builder-config-field {
 }
 
 #builder-main-canvas .canvas > div {
-  min-width: 3em;
+  min-width: 30px;
   min-height: 1.5em;
 }
 

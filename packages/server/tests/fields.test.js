@@ -569,9 +569,7 @@ describe("Field Endpoints", () => {
       .set("Cookie", loginCookie)
       .send({})
       .expect(
-        toBeTrue((r) =>
-          r.text.includes("<pre><code>Herman Melville</code></pre>")
-        )
+        toBeTrue((r) => r.text === "<pre><code>Herman Melville</code></pre>")
       );
   });
   it("should preview joinfield", async () => {
@@ -583,9 +581,7 @@ describe("Field Endpoints", () => {
       .post("/field/preview/books/publisher.name/code")
       .set("Cookie", loginCookie)
       .send({})
-      .expect(
-        toBeTrue((r) => r.text.includes("<pre><code>AK Press</code></pre>"))
-      );
+      .expect(toBeTrue((r) => r.text === "<pre><code>AK Press</code></pre>"));
   });
   it("should preview joinfield with cfg", async () => {
     const loginCookie = await getAdminLoginCookie();
@@ -600,7 +596,7 @@ describe("Field Endpoints", () => {
           code: "pub:{{it.toLowerCase()}}",
         },
       })
-      .expect(toBeTrue((r) => r.text.includes("pub:ak press")));
+      .expect(toBeTrue((r) => r.text === "pub:ak press"));
   });
 });
 
