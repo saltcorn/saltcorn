@@ -1480,7 +1480,10 @@ router.post(
       );
     else if (field.type === "File") {
       res.send(fv.run(value, "filename.ext"));
-    } else res.send(fv.run(value, req, configuration));
+    } else
+      res.send(
+        `<span style="display:inline-block;min-height:1.5em;min-width:1.875em">${fv.run(value, req, configuration)}</span>`
+      );
   })
 );
 

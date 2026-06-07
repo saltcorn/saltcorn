@@ -69,7 +69,7 @@ test.describe('E2E Test Suite - Edit Field from Show View', () => {
         await functions.submit();
         // select full name lable
         await page.waitForTimeout(4000);
-        await page.click('div.d-inline:text("Adam")');
+        await page.click('div.d-inline:has-text("Adam")');
 
         // Click the checkbox: <input class="click-to-edit form-check-input" name="inline" type="checkbox">
         await customAssert('Click the inline edit checkbox', async () => {
