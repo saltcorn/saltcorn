@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/data",
-  "version": "1.6.0-beta.14",
+  "version": "1.6.0-rc.1",
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -37,15 +37,15 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "optionalDependencies": {
-    "@saltcorn/postgres": "1.6.0-beta.14",
-    "@saltcorn/sqlite": "1.6.0-beta.14"
+    "@saltcorn/postgres": "1.6.0-rc.1",
+    "@saltcorn/sqlite": "1.6.0-rc.1"
   },
   "dependencies": {
-    "@saltcorn/types": "1.6.0-beta.14",
-    "@saltcorn/markup": "1.6.0-beta.14",
-    "@saltcorn/common-code": "1.6.0-beta.14",
-    "@saltcorn/db-common": "1.6.0-beta.14",
-    "@saltcorn/sqlite-mobile": "1.6.0-beta.14",
+    "@saltcorn/types": "1.6.0-rc.1",
+    "@saltcorn/markup": "1.6.0-rc.1",
+    "@saltcorn/common-code": "1.6.0-rc.1",
+    "@saltcorn/db-common": "1.6.0-rc.1",
+    "@saltcorn/sqlite-mobile": "1.6.0-rc.1",
     "@saltcorn/plain-date": "0.2.5",
     "@aws-sdk/client-s3": "3.1057.0",
     "@aws-sdk/s3-request-presigner": "3.1057.0",
@@ -66,7 +66,7 @@
     "estraverse": "^5.3.0",
     "fs-extra": "^11.3.3",
     "firebase-admin": "13.4.0",
-    "form-data":"3.0.4",
+    "form-data": "3.0.4",
     "fs-extended-attributes": "1.0.1",
     "htmlparser2": "^8.0.2",
     "https-proxy-agent": "^7.0.6",
