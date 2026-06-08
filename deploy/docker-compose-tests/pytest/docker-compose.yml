@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16
+    attach: false
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: saltcorn_test
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d saltcorn_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  tests:
+    build:
+      context: ../../../
+      dockerfile: deploy/docker-compose-tests/pytest/Dockerfile.test
+    command: pytest 
+    extra_hosts:
+      - "example.com:127.0.0.1"
+      - "sub.example.com:127.0.0.1"
+      - "sub1.example.com:127.0.0.1"
+      - "sub2.example.com:127.0.0.1"
+      - "sub3.example.com:127.0.0.1"
+      - "sub4.example.com:127.0.0.1"
+      - "sub5.example.com:127.0.0.1"
+      - "otherexample.com:127.0.0.1"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Adjust these to whatever your test suite / run_tests.sh expects
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: postgres
+      PGDATABASE: saltcorn_test
+      PGPASSWORD: postgres

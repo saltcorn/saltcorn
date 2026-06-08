@@ -8,5 +8,6 @@ Dockerfile.*
 **/Dockerfile.*
 dock-ci.yml
 deploy/dock-ci/
+deploy/docker-compose-tests/
 .git/
 cireport.html
