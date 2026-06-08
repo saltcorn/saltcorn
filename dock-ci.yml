@@ -15,9 +15,9 @@ run_tests_sqlite:
     NODE_OPTIONS: --max-old-space-size=4096
 
 run_tests_postgres_db:
-  image: postgres:16
+  image: postgres
   service: true
-  disable: true
+  quiet: true
   ready-on: CREATE DATABASE
   environment:
     POSTGRES_PASSWORD: postgres
@@ -26,12 +26,12 @@ run_tests_postgres_db:
 
 run_tests_postgres:
   image: build
-  disable: true
   depends: run_tests_postgres_db 
+  delay: 1
   command:
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
     - saltcorn reset-schema -f   
-    - saltcorn run-tests
+    - saltcorn run-tests server
   environment:
     PGHOST: run_tests_postgres_db
     PGUSER: postgres
@@ -45,6 +45,8 @@ run_tests_postgres:
 pytest_db:
   image: postgres:16
   service: true
+  disable: true
+  quiet: true
   ready-on: CREATE DATABASE
   environment:
     POSTGRES_PASSWORD: postgres
@@ -53,6 +55,7 @@ pytest_db:
 
 pytest:
   image: build
+  disable: true
   depends: pytest_db 
   command:
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
