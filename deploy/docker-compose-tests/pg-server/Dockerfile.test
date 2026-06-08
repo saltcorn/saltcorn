@@ -1,0 +1,28 @@
+FROM node:24-trixie
+
+ENV SALTCORN_DISABLE_UPGRADE "true"
+
+RUN apt update && apt install -qqy libpq-dev build-essential python-is-python3 postgresql-client git chromium zip unzip python3-setuptools python3-venv python3-pip
+
+RUN pip3 install --break-system-packages --ignore-installed typing_extensions
+RUN pip3 install --break-system-packages requests httpx mcp pytest pyotp python-socketio[client]
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD "true"
+
+RUN npm config set fund false \
+ && npm config set audit false
+
+RUN npm install -g eslint@8.57.0
+
+WORKDIR /opt/saltcorn
+
+COPY . /opt/saltcorn
+
+RUN eslint .
+RUN deploy/check_sourcemaps.sh 
+
+RUN npm install --legacy-peer-deps
+RUN npm run tsc
+
+ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin"
+ENTRYPOINT []

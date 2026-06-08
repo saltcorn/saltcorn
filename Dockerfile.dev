@@ -11,12 +11,11 @@ WORKDIR /opt/saltcorn
 
 COPY . /opt/saltcorn
 
-RUN npm config set install-strategy nested  \
- && npm config set fund false                \
+RUN npm config set fund false                \
  && npm config set audit false
 
-RUN npm install --legacy-peer-deps
-RUN npm run tsc --build
+RUN npm install --legacy-peer-deps --include=dev
+RUN npm run tsc
 
 ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin"
 
