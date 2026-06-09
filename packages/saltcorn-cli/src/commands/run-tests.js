@@ -149,47 +149,77 @@ class RunTestsCommand extends Command {
     else if (["saltcorn-builder", "common-code"].includes(args.package))
       await this.copySchemaIntoPck([args.package]);
     await db.close();
-    let jestParams = ["--"];
     // toddo add --logHeapUsage
-    if (flags.coverage) {
-      jestParams.push("--coverage");
-      jestParams.push("--coverageProvider", "v8");
-    }
-    if (flags.listTests) {
-      jestParams.push("--listTests");
-    }
-    if (flags.verbose) {
-      jestParams.push("--verbose");
-    }
-    if (flags.detectOpenHandles) {
-      jestParams.push("--detectOpenHandles");
-    }
-    if (flags.testFilter) {
-      jestParams.push("-t", flags.testFilter);
-    }
-    if (flags.watch) {
-      jestParams.push("--watch");
-    }
-    if (flags.watchAll) {
-      jestParams.push("--watchAll");
-    }
     if (args.package === "core") {
-      await this.do_test("npm", ["run", "test", ...jestParams], env);
+      await this.do_test("npm", ["run", "test", ...this.buildTestParams(flags, false)], env);
     } else if (args.package === "view-queries") {
-      await this.remoteQueryTest(env, jestParams);
+      await this.remoteQueryTest(env, this.buildTestParams(flags, false));
     } else if (args.package) {
       const cwd = path.join("packages", args.package);
-      await this.do_test("npm", ["run", "test", ...jestParams], env, cwd);
+      const useNodeTest = this.pkgUsesNodeTest(cwd);
+      await this.do_test(
+        "npm",
+        ["run", "test", ...this.buildTestParams(flags, useNodeTest)],
+        env,
+        cwd
+      );
     } else {
       const cwd = ".";
       await this.do_test(
         "npm",
-        ["--workspaces", "run", "test", ...jestParams],
+        ["--workspaces", "run", "test", ...this.buildTestParams(flags, false)],
         env,
         cwd
       );
     }
     this.exit(0);
+  }
+
+  /**
+   * Whether the given package runs its tests with node's built-in test
+   * runner (`node --test`) rather than jest. Test runner flags differ
+   * between the two, so the params are translated accordingly.
+   * @param {string} cwd - path to the package directory
+   * @returns {boolean}
+   */
+  pkgUsesNodeTest(cwd) {
+    try {
+      const pkg = JSON.parse(
+        fs.readFileSync(path.join(cwd, "package.json"), "utf8")
+      );
+      return !!(pkg.scripts && /\bnode\b.*--test\b/.test(pkg.scripts.test));
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Build the test runner params from the CLI flags, translating between
+   * jest and node's built-in test runner flag syntax.
+   * @param {object} flags - parsed CLI flags
+   * @param {boolean} useNodeTest - target uses `node --test`
+   * @returns {string[]}
+   */
+  buildTestParams(flags, useNodeTest) {
+    const params = ["--"];
+    if (flags.coverage) {
+      if (useNodeTest) params.push("--experimental-test-coverage");
+      else params.push("--coverage", "--coverageProvider", "v8");
+    }
+    // --listTests has no node test runner equivalent; only applies to jest
+    if (flags.listTests && !useNodeTest) params.push("--listTests");
+    if (flags.verbose && !useNodeTest) params.push("--verbose");
+    if (flags.detectOpenHandles && !useNodeTest)
+      params.push("--detectOpenHandles");
+    if (flags.testFilter) {
+      if (useNodeTest) params.push("--test-name-pattern", flags.testFilter);
+      else params.push("-t", flags.testFilter);
+    }
+    if (flags.watch || flags.watchAll) {
+      if (useNodeTest) params.push("--watch");
+      else params.push(flags.watch ? "--watch" : "--watchAll");
+    }
+    return params;
   }
 }
 

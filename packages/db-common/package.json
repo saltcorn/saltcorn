@@ -4,7 +4,7 @@
   "description": "Db common structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "node --test \"dist/**/*.test.js\"",
+    "test": "cd dist && node --test",
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*"
   },
