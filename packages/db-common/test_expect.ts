@@ -7,6 +7,24 @@
  */
 import assert from "node:assert";
 
+const deepEqual = (a: any, b: any): boolean => {
+  try {
+    assert.deepStrictEqual(a, b);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// Asymmetric matcher, returned by expect.arrayContaining and recognised by
+// toEqual/toStrictEqual.
+class ArrayContaining {
+  readonly sample: any[];
+  constructor(sample: any[]) {
+    this.sample = sample;
+  }
+}
+
 class Expectation {
   private readonly actual: any;
   private readonly isNot: boolean;
@@ -24,14 +42,36 @@ class Expectation {
     assert.ok(this.isNot ? !pass : pass, message);
   }
 
+  private deepEqualAssert(expected: any): void {
+    if (expected instanceof ArrayContaining) {
+      const pass =
+        Array.isArray(this.actual) &&
+        expected.sample.every((e) =>
+          this.actual.some((a: any) => deepEqual(a, e))
+        );
+      this.assertPass(
+        pass,
+        `expected ${JSON.stringify(this.actual)} to contain all of ${JSON.stringify(
+          expected.sample
+        )}`
+      );
+      return;
+    }
+    if (this.isNot) assert.notDeepStrictEqual(this.actual, expected);
+    else assert.deepStrictEqual(this.actual, expected);
+  }
+
   toBe(expected: any): void {
     if (this.isNot) assert.notStrictEqual(this.actual, expected);
     else assert.strictEqual(this.actual, expected);
   }
 
   toEqual(expected: any): void {
-    if (this.isNot) assert.notDeepStrictEqual(this.actual, expected);
-    else assert.deepStrictEqual(this.actual, expected);
+    this.deepEqualAssert(expected);
+  }
+
+  toStrictEqual(expected: any): void {
+    this.deepEqualAssert(expected);
   }
 
   toContain(expected: any): void {
@@ -65,4 +105,10 @@ class Expectation {
   }
 }
 
-export const expect = (actual: any): Expectation => new Expectation(actual);
+interface ExpectFn {
+  (actual: any): Expectation;
+  arrayContaining: (sample: any[]) => ArrayContaining;
+}
+
+export const expect = ((actual: any) => new Expectation(actual)) as ExpectFn;
+expect.arrayContaining = (sample: any[]) => new ArrayContaining(sample);
