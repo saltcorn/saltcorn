@@ -218,6 +218,7 @@ router.post(
             )
               continue;
             else if (table.ownership_field_id) {
+              // already filtered by ownership_field_id inside getSyncRows
             } else if (table.ownership_formula) {
               // already filtered by applyOwnershipFormula inside getSyncRows
             }
