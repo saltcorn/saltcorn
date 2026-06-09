@@ -156,7 +156,7 @@ class RunTestsCommand extends Command {
     if (args.package === "core") {
       await this.do_test("npm", ["run", "test", ...this.buildTestParams(flags, false)], env);
     } else if (args.package === "view-queries") {
-      await this.remoteQueryTest(env, this.buildTestParams(flags, false));
+      await this.remoteQueryTest(env, this.buildTestParams(flags, true));
     } else if (args.package) {
       const cwd = path.join("packages", args.package);
       const useNodeTest = this.pkgUsesNodeTest(cwd);

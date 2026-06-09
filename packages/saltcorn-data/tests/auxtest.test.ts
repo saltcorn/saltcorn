@@ -26,7 +26,7 @@ const {
   validSqlId,
 } = require("../utils");
 
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import mocks from "./mocks";
 import {
   createAnotherUserField,

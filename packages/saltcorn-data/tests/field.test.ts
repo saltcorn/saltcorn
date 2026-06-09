@@ -4,7 +4,7 @@ import db from "../db";
 const { getState } = require("../db/state");
 
 import { assertIsSet, assertsIsSuccessMessage } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect, jest } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect, jest } from "@saltcorn/db-common/test_expect";
 import mocks from "./mocks";
 import { Type } from "@saltcorn/types/common_types";
 import { writeFile } from "fs/promises";

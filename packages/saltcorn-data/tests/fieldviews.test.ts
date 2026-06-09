@@ -5,7 +5,7 @@ import db from "../db";
 import mocks from "./mocks";
 const { mockReqRes } = mocks;
 const { getState } = require("../db/state");
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 import { assertIsSet } from "./assertions";
 import {
   prepareQueryEnviroment,
