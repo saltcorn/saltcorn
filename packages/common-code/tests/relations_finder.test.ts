@@ -1,3 +1,6 @@
+import { describe, it } from "node:test";
+import assert from "node:assert";
+
 import {
   fixturesData,
   withAnotherUserField,
@@ -19,38 +22,59 @@ import {
 
 import { RelationsFinder } from "../relations/relations_finder";
 
+// jest's expect(actual).toEqual(expect.arrayContaining(expected)): every
+// element of expected is present somewhere in actual (deep equality).
+const assertArrayContaining = (actual: any[], expected: any[]) => {
+  for (const item of expected) {
+    assert.ok(
+      actual.some((a) => {
+        try {
+          assert.deepStrictEqual(a, item);
+          return true;
+        } catch {
+          return false;
+        }
+      }),
+      `expected array to contain ${JSON.stringify(item)}`
+    );
+  }
+};
+
 describe("single relations", () => {
   it("parent relations", () => {
     const { tables, views } = fixturesData(__dirname);
     const finder = new RelationsFinder(tables, views, 6);
-    expect(finder.singleRelationPaths("fan_club", "show_artist", [])).toEqual([
-      ".fan_club.artist",
-    ]);
+    assert.deepStrictEqual(
+      finder.singleRelationPaths("fan_club", "show_artist", []),
+      [".fan_club.artist"]
+    );
   });
 
   it("parent relations with layers", () => {
     const { tables, views } = fixturesData(__dirname);
     const finder = new RelationsFinder(tables, views, 6);
-    expect(
-      finder.singleRelationPaths("patients", "show_publisher", [])
-    ).toEqual([".patients.favbook.publisher"]);
+    assert.deepStrictEqual(
+      finder.singleRelationPaths("patients", "show_publisher", []),
+      [".patients.favbook.publisher"]
+    );
   });
 
   it("one to one relations", () => {
     const { tables, views } = fixturesData(__dirname);
     const finder = new RelationsFinder(tables, views, 6);
-    expect(finder.singleRelationPaths("covers", "show_album", [])).toEqual([
-      ".covers.albums$cover",
-    ]);
+    assert.deepStrictEqual(
+      finder.singleRelationPaths("covers", "show_album", []),
+      [".covers.albums$cover"]
+    );
   });
 
   it("employee department relation", () => {
     const { tables, views } = fixturesData(__dirname);
     const finder = new RelationsFinder(tables, views, 6);
-    expect(finder.singleRelationPaths("employee", "show_manager", [])).toEqual([
-      ".employee",
-      ".employee.department.manager",
-    ]);
+    assert.deepStrictEqual(
+      finder.singleRelationPaths("employee", "show_manager", []),
+      [".employee", ".employee.department.manager"]
+    );
   });
 });
 
@@ -64,8 +88,8 @@ describe("multi relations", () => {
         "blog_in_topic_feed",
         []
       );
-      expect(result).toHaveLength(expectedOne.length);
-      expect(result).toEqual(expect.arrayContaining(expectedOne));
+      assert.strictEqual(result.length, expectedOne.length);
+      assertArrayContaining(result, expectedOne);
     });
 
     it("multiple keys to source and single key to rel table", () => {
@@ -76,8 +100,8 @@ describe("multi relations", () => {
         "blog_in_topic_feed",
         []
       );
-      expect(result).toHaveLength(expectedTwo.length);
-      expect(result).toEqual(expect.arrayContaining(expectedTwo));
+      assert.strictEqual(result.length, expectedTwo.length);
+      assertArrayContaining(result, expectedTwo);
     });
 
     it("multiple keys to source and rel table", () => {
@@ -88,8 +112,8 @@ describe("multi relations", () => {
         "blog_in_topic_feed",
         []
       );
-      expect(result).toHaveLength(expectedThree.length);
-      expect(result).toEqual(expect.arrayContaining(expectedThree));
+      assert.strictEqual(result.length, expectedThree.length);
+      assertArrayContaining(result, expectedThree);
     });
 
     it("multiple inbound tables", () => {
@@ -100,8 +124,8 @@ describe("multi relations", () => {
         "blog_in_topic_feed",
         []
       );
-      expect(result).toHaveLength(expectedFour.length);
-      expect(result).toEqual(expect.arrayContaining(expectedFour));
+      assert.strictEqual(result.length, expectedFour.length);
+      assertArrayContaining(result, expectedFour);
     });
 
     it("key to source from layer two", () => {
@@ -112,8 +136,8 @@ describe("multi relations", () => {
         "blog_in_topic_feed",
         []
       );
-      expect(result).toHaveLength(expectedFive.length);
-      expect(result).toEqual(expect.arrayContaining(expectedFive));
+      assert.strictEqual(result.length, expectedFive.length);
+      assertArrayContaining(result, expectedFive);
     });
 
     it("three levels inbound", async () => {
@@ -124,8 +148,8 @@ describe("multi relations", () => {
         "blog_in_topic_feed",
         []
       );
-      expect(result).toHaveLength(expectedSix.length);
-      expect(result).toEqual(expect.arrayContaining(expectedSix));
+      assert.strictEqual(result.length, expectedSix.length);
+      assertArrayContaining(result, expectedSix);
     });
 
     it("simple post topic relation", () => {
@@ -143,8 +167,8 @@ describe("multi relations", () => {
         "simple_posts_list",
         []
       );
-      expect(result).toHaveLength(expected.length);
-      expect(result).toEqual(expect.arrayContaining(expected));
+      assert.strictEqual(result.length, expected.length);
+      assertArrayContaining(result, expected);
     });
   });
 
@@ -154,8 +178,8 @@ describe("multi relations", () => {
       const expected = [".", ".artists.artist_plays_on_album$artist.album"];
       const finder = new RelationsFinder(tables, views, 6);
       const result = finder.multiRelationPaths("artists", "albums_feed", []);
-      expect(result).toHaveLength(expected.length);
-      expect(result).toEqual(expect.arrayContaining(expected));
+      assert.strictEqual(result.length, expected.length);
+      assertArrayContaining(result, expected);
     });
 
     it("tracks on album", () => {
@@ -170,8 +194,8 @@ describe("multi relations", () => {
         "tracks_on_album_feed",
         []
       );
-      expect(result).toHaveLength(expected.length);
-      expect(result).toEqual(expect.arrayContaining(expected));
+      assert.strictEqual(result.length, expected.length);
+      assertArrayContaining(result, expected);
     });
 
     it("show pressing_job with embedded fan club feed", () => {
@@ -186,8 +210,8 @@ describe("multi relations", () => {
         "fan_club_feed",
         []
       );
-      expect(result).toHaveLength(expected.length);
-      expect(result).toEqual(expect.arrayContaining(expected));
+      assert.strictEqual(result.length, expected.length);
+      assertArrayContaining(result, expected);
     });
   });
 
@@ -202,8 +226,8 @@ describe("multi relations", () => {
         "rooms_view",
         excluded
       );
-      expect(result).toHaveLength(expected.length);
-      expect(result).toEqual(expect.arrayContaining(expected));
+      assert.strictEqual(result.length, expected.length);
+      assertArrayContaining(result, expected);
     });
   });
 });

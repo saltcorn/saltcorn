@@ -104,15 +104,18 @@ class RunTestsCommand extends Command {
 
   async copySchemaIntoPck(pckNames) {
     const schemaData = await build_schema_data();
+    const data = JSON.stringify(schemaData);
     const copy = (name) => {
-      const schemaFile = path.join(
-        process.cwd(),
-        "packages",
-        name,
-        "tests",
-        "schema_data.json"
-      );
-      fs.writeFileSync(schemaFile, JSON.stringify(schemaData));
+      // jest runs the TS source from tests/, node's test runner runs the
+      // compiled output from dist/tests/ - write to whichever exists.
+      const targets = [
+        path.join(process.cwd(), "packages", name, "tests"),
+        path.join(process.cwd(), "packages", name, "dist", "tests"),
+      ];
+      for (const dir of targets) {
+        if (fs.existsSync(dir))
+          fs.writeFileSync(path.join(dir, "schema_data.json"), data);
+      }
     };
     for (const name of pckNames) copy(name);
   }
