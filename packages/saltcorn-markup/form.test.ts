@@ -1,5 +1,5 @@
 import { describe, it } from "node:test";
-import { expect } from "./test_expect";
+import { expect } from "@saltcorn/db-common/test_expect";
 // import tags = require("./tags");
 import * as tags from "./tags";
 const { a, input, div, ul, text, text_attr } = tags;

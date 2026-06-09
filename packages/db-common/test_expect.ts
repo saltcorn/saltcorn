@@ -1,7 +1,9 @@
 /**
- * Minimal jest-compatible `expect` shim backed by node:assert, so the test
- * suites can run on node's built-in test runner without a jest dependency.
- * Only the matchers used by this package's tests are implemented.
+ * Minimal jest-compatible `expect` shim backed by node:assert, so test suites
+ * can run on node's built-in test runner without a jest dependency. Lives in
+ * db-common so it can be shared across packages via
+ * `import { expect } from "@saltcorn/db-common/test_expect"`.
+ * Only the matchers used by the migrated test suites are implemented.
  */
 import assert from "node:assert";
 
