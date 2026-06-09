@@ -1,6 +1,6 @@
 // File: tenant.test.js
 const db = require("@saltcorn/data/db");
-const request = require("supertest");
+const request = require("../auth/testhelp").request;
 
 const getApp = require("../app");
 const {
