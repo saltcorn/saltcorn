@@ -4,10 +4,11 @@
   "description": "Db common structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "jest dist --runInBand",
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest dist --runInBand",
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*"
   },
+  "type": "module",
   "main": "./dist/index.js",
   "author": "Tom Nielsen",
   "license": "MIT",

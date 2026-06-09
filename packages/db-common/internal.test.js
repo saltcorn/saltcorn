@@ -1,11 +1,11 @@
-const {
+import {
   sqlsanitize,
   mkWhere,
   mkSelectOptions,
   sqlsanitizeAllowDots,
   sqlFun,
   sqlBinOp,
-} = require("./internal");
+} from "./internal.js";
 
 const someday = new Date("2019-11-11T10:34:00.000Z");
 

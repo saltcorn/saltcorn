@@ -21,9 +21,9 @@ import type {
   StrongRow,
   PrimaryKeyValue,
   PartialSome,
-} from "./dbtypes";
+} from "./dbtypes.js";
 
-export * from "./dbtypes";
+export * from "./dbtypes.js";
 
 //https://stackoverflow.com/questions/15300704/regex-with-my-jquery-function-for-sql-variable-name-validation
 /**
@@ -764,4 +764,4 @@ export const sqlBinOp = (name: string, ...args: any[]) => ({
   args,
 });
 
-export const dbCommonModulePath = __dirname;
+export const dbCommonModulePath = import.meta.dirname;

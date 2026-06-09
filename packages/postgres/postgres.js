@@ -771,10 +771,10 @@ module.exports = (getConnectObjectPara) => {
     const connectObj = getConnectObject();
     if (connectObj) {
       pool = new Pool(connectObj);
-      getTenantSchema = require("@saltcorn/db-common/tenants")(
+      getTenantSchema = require("@saltcorn/db-common/tenants").default(
         connectObj
       ).getTenantSchema;
-      getRequestContext = require("@saltcorn/db-common/tenants")(
+      getRequestContext = require("@saltcorn/db-common/tenants").default(
         connectObj
       ).getRequestContext;
       postgresExports.pool = pool;
