@@ -359,7 +359,6 @@ export = {
         if (EventLog.hasChannel(ty)) hasChannel.push(ty);
         if (EventLog.hasTable(ty)) hasTable.push(ty);
       });
-      const allTables = await Table.find({}, { cached: true });
       return [
         {
           name: "eventType",
@@ -383,7 +382,7 @@ export = {
           type: "String",
           showIf: { eventType: hasTable },
           required: true,
-          attributes: { options: allTables.map((t) => t.name) },
+          attributes: { options: Table.allTableNames },
           help: {
             topic: "Event channel and payload",
           },
@@ -1440,14 +1439,13 @@ export = {
     description:
       "Re-calculate the stored calculated fields for a table, optionally only for the triggering row",
     configFields: async ({ table }: any) => {
-      const tables = await Table.find({}, { cached: true });
       return [
         {
           name: "table",
           label: "Table",
           sublabel: "Table on which to recalculate stored calculated fields",
           input_type: "select",
-          options: tables.map((t) => t.name),
+          options: Table.allTableNames,
         },
         {
           name: "only_triggering_row",
@@ -1531,14 +1529,13 @@ export = {
      */
     description: "insert a row into any table, using a formula expression",
     configFields: async ({ mode, table }: any) => {
-      const tables = await Table.find({}, { cached: true });
       return [
         {
           name: "table",
           label: "Table",
           sublabel: "Table to insert rows in",
           input_type: "select",
-          options: tables.map((t) => t.name),
+          options: Table.allTableNames,
         },
         {
           name: "row_expr",
@@ -1711,7 +1708,7 @@ export = {
                 type: "String",
                 required: true,
                 attributes: {
-                  options: (await Table.find()).map((t) => t.name),
+                  options: Table.allTableNames,
                   showIf: { where: "Database" },
                 },
               },
@@ -1801,7 +1798,7 @@ export = {
      */
     description: "Modify the triggering row",
     configFields: async ({ mode, table, when_trigger }: any) => {
-      const tables = await Table.find({}, { cached: true });
+      const tableNames = Table.allTableNames;
 
       return [
         ...(mode === "workflow"
@@ -1820,7 +1817,7 @@ export = {
           input_type: "select",
           showIf:
             mode === "workflow" ? undefined : { delete_triggering_row: false },
-          options: tables.map((t) => t.name),
+          options: tableNames,
         },
         {
           name: "delete_where",

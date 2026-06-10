@@ -408,6 +408,11 @@ class Table implements AbstractTable {
     } else return tbl ? new this(structuredClone(tbl)) : null;
   }
 
+  static get allTableNames(): string[] {
+    const { getState } = require("../db/state");
+    return getState().tables.map((t: TableCfg) => t.name);
+  }
+
   /**
    * Find Tables
    * @param where - where condition
