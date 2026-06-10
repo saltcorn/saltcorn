@@ -17,6 +17,7 @@ import {
   writeFile,
   mkdir,
   copyFile,
+  rename,
   readFile,
   unlink,
   readdir,
@@ -917,8 +918,7 @@ const auto_backup_now_tenant = async (state: any) => {
         await mkdir(directory, { recursive: true });
       }
 
-      await copyFile(fileName, join(directory, fileName));
-      await unlink(fileName);
+      await rename(fileName, join(directory, fileName));
       await delete_old_backups();
       break;
     case "SFTP server":
