@@ -3232,7 +3232,7 @@ export = {
     description:
       "Convert session id fields to user key fields on a table on Login events",
     configFields: async ({ table }: any) => {
-      const tables = await Table.find_with_external();
+      const tables = await Table.find({}, { cached: true });
       const sess_options: Record<string, string[]> = {};
       const user_options: Record<string, string[]> = {};
       for (const table of tables) {
