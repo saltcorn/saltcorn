@@ -772,7 +772,7 @@ class WorkflowStep {
       name: "query_table",
       type: "String",
       required: true,
-      attributes: { options: (await Table.find()).map((t) => t.name) },
+      attributes: { options: Table.allTableNames },
       showIf: { wf_action_name: "TableQuery" },
     });
     actionConfigFields.push({
