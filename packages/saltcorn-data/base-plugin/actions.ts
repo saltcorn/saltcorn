@@ -2924,7 +2924,7 @@ export = {
   reload_embedded_view: {
     description: "Reload an embedded view without full page reload",
     configFields: async ({ table }: { table: Table }) => {
-      const views = await View.find({});
+      const views = await View.find({}, { cached: true });
       return [
         {
           name: "view",
