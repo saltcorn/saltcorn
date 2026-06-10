@@ -81,39 +81,13 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "jest": "29.7.0",
-    "jest-environment-jsdom": "29.7.0",
     "supertest-fetch": "^2.0.0"
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js ./tests --runInBand",
+    "test": "NODE_ENV=test node --require ./setup-jest-globals.js --test --test-concurrency=1",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
-  },
-  "jest": {
-    "transform": {},
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ],
-    "moduleNameMapper": {
-      "@saltcorn/sqlite/(.*)": "<rootDir>/../sqlite/dist/$1",
-      "@saltcorn/db-common/(.*)": "<rootDir>/../db-common/dist/$1",
-      "@saltcorn/data/(.*)": "<rootDir>/../saltcorn-data/dist/$1",
-      "@saltcorn/types/(.*)": "<rootDir>/../saltcorn-types/dist/$1",
-      "@saltcorn/markup$": "<rootDir>/../saltcorn-markup/dist",
-      "@saltcorn/markup/(.*)": "<rootDir>/../saltcorn-markup/dist/$1",
-      "@saltcorn/server/(.*)": "<rootDir>/../server/dist/$1",
-      "@saltcorn/admin-models/(.*)": "<rootDir>/../saltcorn-admin-models/dist/$1"
-    }
   },
   "publishConfig": {
     "access": "public"
