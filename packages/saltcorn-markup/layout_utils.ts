@@ -828,7 +828,10 @@ const renderTabs = (
   if (tabsStyle === "Accordion")
     return (
       div(
-        { class: ["accordion", lazyLoadViews && "lazy-accoordion", outerClass], id: `${rndid}top` },
+        {
+          class: ["accordion", lazyLoadViews && "lazy-accoordion", outerClass],
+          id: `${rndid}top`,
+        },
         contents.map((t, ix) =>
           div(
             { class: "accordion-item" },
@@ -868,7 +871,6 @@ const renderTabs = (
                 id: `${rndid}tab${ix}`,
                 "aria-labelledby": `${rndid}head${ix}`,
                 "data-bs-parent": independent ? undefined : `#${rndid}top`,
-                "data-mdb-parent": independent ? undefined : `#${rndid}top`, //TODO fix in material instead, remove here
               },
               div(
                 { class: ["accordion-body", bodyClass || ""] },
