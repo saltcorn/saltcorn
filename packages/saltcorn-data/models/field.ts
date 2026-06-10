@@ -84,6 +84,7 @@ class Field implements AbstractField {
   default?: string;
   sublabel?: string;
   description?: string;
+  help_text?: string;
   type?: string | Type;
   typename?: string;
   help?: { topic: string; context?: Row; dynContext?: string[] };
@@ -135,6 +136,7 @@ class Field implements AbstractField {
     this.default = o.default;
     this.sublabel = o.sublabel;
     this.description = o.description;
+    this.help_text = o.help_text;
     const { getState } = require("../db/state");
 
     this.type = typeof o.type === "string" ? getState().types[o.type] : o.type;
@@ -226,6 +228,7 @@ class Field implements AbstractField {
       reftype: this.reftype,
       refname: this.refname,
       description: this.description,
+      help_text: this.help_text,
     };
   }
 

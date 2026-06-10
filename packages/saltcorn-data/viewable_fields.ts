@@ -2160,6 +2160,7 @@ const getForm = async (
             typeof f.attributes.block === "undefined"
           )
             f.attributes.block = column.block;
+          if (column.help_text) f.help_text = column.help_text;
           return f;
         } else if (table.name === "users" && column.field_name === "password") {
           return new Field({

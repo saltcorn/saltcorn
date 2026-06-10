@@ -129,6 +129,7 @@ const formRowWrap = (
           },
           h5(text(hdr.label)),
           hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
+          hdr.help_text ? helpTextIcon(hdr.help_text) : "",
           //hdr.sublabel && p(i(hdr.sublabel)),
           mkSubLabelAndHelp(hdr)
         )
@@ -144,7 +145,8 @@ const formRowWrap = (
                 },
                 text(hdr.label)
               ),
-              hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
+              hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
+              hdr.help_text ? helpTextIcon(hdr.help_text) : ""
             ) + mkSubLabelAndHelp(hdr)
           : [
               hdr.label !== " " &&
@@ -168,7 +170,8 @@ const formRowWrap = (
                     },
                     text(hdr.label)
                   ),
-                  hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
+                  hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
+                  hdr.help_text ? helpTextIcon(hdr.help_text) : ""
                 ),
               div(
                 {
@@ -1174,11 +1177,18 @@ const helpLink = ({ topic, context, dynContext, plugin }: any) => {
     i({ class: "fas fa-question-circle ms-1" })
   );
 };
+const helpTextIcon = (help_text: string) =>
+  i({
+    class: "fas fa-info-circle ms-1 text-muted",
+    "data-bs-toggle": "tooltip",
+    "data-bs-placement": "right",
+    title: text_attr(help_text),
+  });
+
 const mkSubLabelAndHelp = (hdr: any) => {
   return (
     (hdr.sublabel ? i(hdr.sublabel) : "") +
     (hdr.help && hdr.sublabel ? helpLink(hdr.help) : "")
-    //(hdr.help && !hdr.sublabel ? "Help" + helpLink(hdr.help) : "")
   );
 };
 
@@ -1210,7 +1220,8 @@ const mkFormRowAside = (
         for: `input${text_attr(hdr.form_name)}`,
       },
       text(hdr.label),
-      hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
+      hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
+      hdr.help_text ? helpTextIcon(hdr.help_text) : ""
     );
   const outerAttributes = {
     class: ["form-group row"],
@@ -1282,6 +1293,18 @@ const renderFormLayout = (form: Form): string => {
           )
         )
         .join("");
+    },
+    blank(segment: any) {
+      if (!segment.labelFor) return false;
+      const matchingField = form.fields.find(
+        (f) => f.name === segment.labelFor && (f as any).help_text
+      );
+      if (!matchingField) return false;
+      return label(
+        { for: `input${text_attr(segment.labelFor)}` },
+        text(segment.contents || ""),
+        helpTextIcon((matchingField as any).help_text)
+      );
     },
     field_repeat({ field_repeat }: any, go: any) {
       const hdr = field_repeat;
