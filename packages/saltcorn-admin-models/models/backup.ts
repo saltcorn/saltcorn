@@ -860,7 +860,10 @@ const delete_old_backups = async () => {
             const ageDays = ageMs / (1000 * 3600 * 24);
             if (ageDays > expire_days) {
               await s3.send(
-                new (awsS3().DeleteObjectCommand)({ Bucket: bucket, Key: obj.Key })
+                new (awsS3().DeleteObjectCommand)({
+                  Bucket: bucket,
+                  Key: obj.Key,
+                })
               );
             }
           }
