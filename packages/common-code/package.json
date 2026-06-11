@@ -17,7 +17,7 @@
     "./relations/*": "./dist/relations/*.js"
   },
   "devDependencies": {
-    "@saltcorn/db-common": "1.6.0-rc.1",
+    "@saltcorn/db-common": "1.6.0-rc.2",
     "@types/node": "^20.14.7"
   },
   "typesVersions": {

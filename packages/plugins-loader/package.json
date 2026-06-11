@@ -16,7 +16,7 @@
     "fs-extra": "11.3.5"
   },
   "devDependencies": {
-    "@saltcorn/db-common": "1.6.0-rc.1"
+    "@saltcorn/db-common": "1.6.0-rc.2"
   },
   "author": "Christian Hugo",
   "license": "MIT",
