@@ -2910,7 +2910,7 @@ router.post(
 );
 
 const basicViewForm = async (table, req) => {
-  const tables = await Table.find();
+  const tables = await Table.find({}, { cached: true });
   const vts = viewtemplates_with_create_basic_option();
   return new Form({
     submitLabel: req.__("Create views"),

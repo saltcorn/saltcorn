@@ -81,7 +81,7 @@ router.get(
       );
 
     const viewMarkup = await viewsList(views, req, { filterOnTag });
-    const tables = await Table.find();
+    const tables = await Table.find({}, { cached: true });
 
     res.sendWrap(req.__(`Views`), {
       above: [

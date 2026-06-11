@@ -71,7 +71,7 @@ const formOptions = async (type, tag_id) => {
     case "tables": {
       const ids = await tag.getTableIds();
       return {
-        tables: (await Table.find()).filter(
+        tables: (await Table.find({}, { cached: true })).filter(
           (value) => ids.indexOf(value.id) === -1
         ),
       };
@@ -79,7 +79,7 @@ const formOptions = async (type, tag_id) => {
     case "views": {
       const ids = await tag.getViewIds();
       return {
-        views: (await View.find()).filter(
+        views: (await View.find({}, { cached: true })).filter(
           (value) => ids.indexOf(value.id) === -1
         ),
       };
@@ -87,7 +87,7 @@ const formOptions = async (type, tag_id) => {
     case "pages": {
       const ids = await tag.getPageIds();
       return {
-        pages: (await Page.find()).filter(
+        pages: (await Page.find({}, { cached: true })).filter(
           (value) => ids.indexOf(value.id) === -1
         ),
       };
