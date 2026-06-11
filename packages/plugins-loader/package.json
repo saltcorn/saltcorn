@@ -4,7 +4,7 @@
   "description": "Saltcorn plugin loader",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "jest --runInBand",
+    "test": "NODE_ENV=test node --require ./setup-jest-globals.js --test --test-concurrency=1 \"tests/**/*.test.js\"",
     "tsc": "echo 'No TypeScript build'",
     "clean": "echo 'No TypeScript build'"
   },
@@ -15,24 +15,11 @@
     "https-proxy-agent": "^7.0.6",
     "fs-extra": "11.3.5"
   },
+  "devDependencies": {
+    "@saltcorn/db-common": "1.6.0-rc.1"
+  },
   "author": "Christian Hugo",
   "license": "MIT",
-  "jest": {
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ],
-    "moduleNameMapper": {
-      "@saltcorn/data/(.*)": "<rootDir>/../saltcorn-data/dist/$1"
-    }
-  },
   "main": "index.js",
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {
