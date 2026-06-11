@@ -38,6 +38,45 @@ const pickFields = (table, pkName, row, keepId) => {
   return result;
 };
 
+const topoSortTables = (
+  changes,
+  getFKs = (tblName) => {
+    const table = Table.findOne({ name: tblName });
+    return table ? table.getForeignKeys() : [];
+  }
+) => {
+  const tableNames = Object.keys(changes);
+  const tableSet = new Set(tableNames);
+  const adj = {};
+  const inDeg = {};
+  for (const t of tableNames) {
+    adj[t] = [];
+    inDeg[t] = 0;
+  }
+  for (const tblName of tableNames) {
+    for (const fk of getFKs(tblName)) {
+      const parent = fk.reftable_name;
+      if (tableSet.has(parent) && parent !== tblName) {
+        adj[parent].push(tblName);
+        inDeg[tblName]++;
+      }
+    }
+  }
+  const queue = tableNames.filter((t) => inDeg[t] === 0);
+  const result = [];
+  while (queue.length > 0) {
+    const t = queue.shift();
+    result.push(t);
+    for (const child of adj[t]) {
+      if (--inDeg[child] === 0) queue.push(child);
+    }
+  }
+  for (const t of tableNames) {
+    if (!result.includes(t)) result.push(t);
+  }
+  return result;
+};
+
 const checkConstraints = async (table, row) => {
   const uniques = table.constraints.filter((c) => c.type === "Unique");
   for (const { configuration } of uniques) {
@@ -74,7 +113,6 @@ class SyncHelper {
       await db.begin();
       this.inTransaction = true;
       await this.applyInserts();
-      await this.translateInsertFks();
       await this.applyUpdates();
       await this.applyDeletes();
       await db.commit();
@@ -92,60 +130,15 @@ class SyncHelper {
     return returnCode;
   }
 
-  async translateInsertFks() {
-    const schema = db.getTenantSchemaPrefix();
-    const rowIds = (fk, targetTrans, tblName, pkName, changes) => {
-      if (Object.keys(targetTrans || {}).length > 0) {
-        const srcTrans = this.allTranslations[tblName] || {};
-        // ids with a fk where the target was translated
-        const insertIds = (changes.inserts || [])
-          .filter((row) => targetTrans[row[fk.name]] !== undefined)
-          .map((row) => srcTrans[row[pkName]] || row[pkName]);
-        return insertIds;
-      }
-      return null;
-    };
-
-    for (const [tblName, changes] of Object.entries(this.changes)) {
-      const table = Table.findOne({ name: tblName });
-      if (!table) throw new Error(`The table '${tblName}' does not exists`);
-      const pkName = table.pk_name;
-      for (const fk of table.getForeignKeys()) {
-        const targetTrans = this.allTranslations[fk.reftable_name];
-        const ids = rowIds(fk, targetTrans, table.name, pkName, changes);
-        if (ids?.length > 0) {
-          for (const [from, to] of Object.entries(targetTrans)) {
-            const idParams = ids.map((_, i) => `$${i + 3}`);
-            await db.query(
-              `update ${schema}"${db.sqlsanitize(
-                tblName
-              )}" set "${db.sqlsanitize(fk.name)}" = $1
-                where "${db.sqlsanitize(
-                  fk.name
-                )}" = $2 and "${db.sqlsanitize(pkName)}" in (${idParams.join(
-                ","
-              )})`,
-              [to, from, ...ids]
-            );
-          }
-        }
-      }
-    }
-  }
-
   async applyInserts() {
-    const schema = db.getTenantSchemaPrefix();
-    for (const [tblName, vals] of Object.entries(this.changes)) {
+    for (const tblName of topoSortTables(this.changes)) {
+      const vals = this.changes[tblName];
+      if (!vals) continue;
       const table = Table.findOne({ name: tblName });
       if (!table) throw new Error(`The table '${tblName}' does not exists`);
       try {
         if (vals.inserts?.length > 0) {
           const pkName = table.pk_name;
-          await db.query(
-            `alter table ${schema}"${db.sqlsanitize(
-              tblName
-            )}" disable trigger all`
-          );
           const translations = {};
           const uniqueConflicts = [];
           const pkField = table
@@ -163,6 +156,13 @@ class SyncHelper {
               insert,
               pkHasClientDefault && insert[pkName] != null
             );
+            for (const fk of table.getForeignKeys()) {
+              const oldVal = row[fk.name];
+              if (oldVal) {
+                const newVal = this.allTranslations[fk.reftable_name]?.[oldVal];
+                if (newVal) row[fk.name] = newVal;
+              }
+            }
             const conflictRow = await checkConstraints(table, row);
             if (!conflictRow) {
               const newId = await table.insertRow(
@@ -182,11 +182,6 @@ class SyncHelper {
           }
           this.allTranslations[tblName] = translations;
           this.allUniqueConflicts[tblName] = uniqueConflicts;
-          await db.query(
-            `alter table ${schema}"${db.sqlsanitize(
-              tblName
-            )}" enable trigger all`
-          );
         }
       } catch (error) {
         throw new Error(table.normalise_error_message(error.message));
@@ -406,3 +401,4 @@ SyncUploadData.flags = {
 };
 
 module.exports = SyncUploadData;
+module.exports.topoSortTables = topoSortTables;
