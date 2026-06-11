@@ -16,7 +16,8 @@ const {
 const db = require("@saltcorn/data/db");
 
 beforeAll(async () => {
-  if (!db.isSQLite) await db.query(`drop schema if exists test101 CASCADE `);
+  // do not drop the test101 schema here: that tenant belongs to
+  // plugin_install.test.js, which may be running concurrently
   await resetToFixtures();
 });
 afterAll(db.close);
