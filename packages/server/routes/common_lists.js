@@ -230,7 +230,7 @@ const view_dropdown = (view, req, on_done_redirect_str = "", includeRun = true) 
   ]);
 
 const setTableRefs = async (views) => {
-  const tables = await Table.find();
+  const tables = await Table.find({}, { cached:true });
   const getTable = (tid) => tables.find((t) => t.id === tid).name;
 
   views.forEach((v) => {

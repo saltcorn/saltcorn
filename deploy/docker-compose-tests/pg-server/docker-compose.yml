@@ -37,3 +37,4 @@ services:
       PGUSER: postgres
       PGDATABASE: saltcorn_test
       PGPASSWORD: postgres
+      SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
