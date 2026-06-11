@@ -90,9 +90,9 @@ class RunTestsCommand extends Command {
    * @returns {void}
    */
   validateCall(args, flags) {
-    if (!args.package && flags.testFilter) {
+    if (!args.package && (flags.testFilter || flags.file)) {
       throw new Error(
-        "No package name given. To use -t please specify a package or use core."
+        "No package name given. To use -t or -f please specify a package or use core."
       );
     }
     if (flags.watch && flags.watchAll) {
@@ -260,6 +260,9 @@ class RunTestsCommand extends Command {
       if (useNodeTest) params.push("--test-name-pattern", flags.testFilter);
       else params.push("-t", flags.testFilter);
     }
+    // both runners take test files as positional args: jest as a path regex,
+    // node --test as a literal path (relative to dist/ for compiled packages)
+    if (flags.file) params.push(flags.file);
     if (flags.watch || flags.watchAll) {
       if (useNodeTest) params.push("--watch");
       else params.push(flags.watch ? "--watch" : "--watchAll");
@@ -296,6 +299,11 @@ RunTestsCommand.flags = {
   testFilter: Flags.string({
     char: "t",
     description: "Filter tests by suite or test name",
+  }),
+  file: Flags.string({
+    char: "f",
+    description:
+      "Run only the given test file (jest: path pattern; node:test packages: path relative to the package's dist directory, e.g. tests/table.test.js)",
   }),
   watch: Flags.boolean({
     string: "watch",

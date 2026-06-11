@@ -4,7 +4,7 @@
   "description": "Saltcorn plugin loader",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "NODE_ENV=test node --require ./setup-jest-globals.js --test --test-force-exit --test-concurrency=1 \"tests/**/*.test.js\"",
+    "test": "NODE_ENV=test node --require ./setup-jest-globals.js --test --test-force-exit --test-concurrency=1",
     "tsc": "echo 'No TypeScript build'",
     "clean": "echo 'No TypeScript build'"
   },
