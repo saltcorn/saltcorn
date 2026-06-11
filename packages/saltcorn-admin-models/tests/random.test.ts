@@ -28,8 +28,8 @@ import { Row } from "@saltcorn/db-common/internal";
 import {
   assertIsSet,
   assertsIsSuccessMessage,
-} from "../../saltcorn-data/tests/assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+} from "@saltcorn/data/tests/assertions";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 
 jest.setTimeout(80000);
 

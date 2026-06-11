@@ -19,10 +19,6 @@
   },
   "exclude": [
     "node_modules",
-    "dist/**",
-    "**/*.test.*",
-    "**/*.spec.*",
-    "**/tests/**",
-    "**/__tests__/**"
+    "dist/**"
   ]
 }
