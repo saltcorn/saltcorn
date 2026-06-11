@@ -1,36 +1,43 @@
 const {
-  topoSortTables,
+  kahnSort,
+  orderCycleTables,
 } = require("../../saltcorn-cli/src/commands/sync-upload-data");
 
 const fks = (map) => (tblName) =>
   (map[tblName] || []).map((ref) => ({ reftable_name: ref }));
 
-describe("topoSortTables", () => {
+const flat = (changes, fkMap) => {
+  const { sorted, cycleTables } = kahnSort(changes, fks(fkMap));
+  return [...sorted, ...cycleTables];
+};
+
+describe("kahnSort", () => {
   test("single table is returned as-is", () => {
-    const result = topoSortTables({ books: {} }, fks({}));
-    expect(result).toEqual(["books"]);
+    const { sorted, cycleTables } = kahnSort({ books: {} }, fks({}));
+    expect(sorted).toEqual(["books"]);
+    expect(cycleTables).toEqual([]);
   });
 
   test("two independent tables are both returned", () => {
-    const result = topoSortTables({ books: {}, authors: {} }, fks({}));
+    const result = flat({ books: {}, authors: {} }, {});
     expect(result).toHaveLength(2);
     expect(result).toContain("books");
     expect(result).toContain("authors");
   });
 
   test("parent comes before child", () => {
-    const result = topoSortTables(
+    const result = flat(
       { books: {}, publishers: {} },
-      fks({ books: ["publishers"] })
+      { books: ["publishers"] }
     );
     expect(result.indexOf("publishers")).toBeLessThan(result.indexOf("books"));
   });
 
   test("three-level chain is ordered correctly", () => {
     // chapters -> books -> publishers
-    const result = topoSortTables(
+    const result = flat(
       { chapters: {}, books: {}, publishers: {} },
-      fks({ chapters: ["books"], books: ["publishers"] })
+      { chapters: ["books"], books: ["publishers"] }
     );
     expect(result.indexOf("publishers")).toBeLessThan(result.indexOf("books"));
     expect(result.indexOf("books")).toBeLessThan(result.indexOf("chapters"));
@@ -38,9 +45,9 @@ describe("topoSortTables", () => {
 
   test("diamond dependency: shared parent comes first, shared child comes last", () => {
     // both b and c depend on a; d depends on both b and c
-    const result = topoSortTables(
+    const result = flat(
       { a: {}, b: {}, c: {}, d: {} },
-      fks({ b: ["a"], c: ["a"], d: ["b", "c"] })
+      { b: ["a"], c: ["a"], d: ["b", "c"] }
     );
     expect(result.indexOf("a")).toBeLessThan(result.indexOf("b"));
     expect(result.indexOf("a")).toBeLessThan(result.indexOf("c"));
@@ -49,37 +56,30 @@ describe("topoSortTables", () => {
   });
 
   test("FK to a table not in changes is ignored", () => {
-    // books has a FK to external_table which is not being synced
-    const result = topoSortTables(
-      { books: {} },
-      fks({ books: ["external_table"] })
-    );
+    const result = flat({ books: {} }, { books: ["external_table"] });
     expect(result).toEqual(["books"]);
   });
 
   test("self-referencing FK does not affect order", () => {
-    const result = topoSortTables(
-      { categories: {} },
-      fks({ categories: ["categories"] })
-    );
+    const result = flat({ categories: {} }, { categories: ["categories"] });
     expect(result).toEqual(["categories"]);
   });
 
-  test("cyclic dependency: all tables still appear in result", () => {
-    const result = topoSortTables(
+  test("cyclic dependency: cycle tables are separated out", () => {
+    const { sorted, cycleTables } = kahnSort(
       { a: {}, b: {} },
       fks({ a: ["b"], b: ["a"] })
     );
-    expect(result).toHaveLength(2);
-    expect(result).toContain("a");
-    expect(result).toContain("b");
+    expect(sorted).toHaveLength(0);
+    expect(cycleTables).toHaveLength(2);
+    expect(cycleTables).toContain("a");
+    expect(cycleTables).toContain("b");
   });
 
   test("multiple FKs to the same parent table", () => {
-    // books has two FK fields both pointing to publisher
-    const result = topoSortTables(
+    const result = flat(
       { books: {}, publishers: {} },
-      fks({ books: ["publishers", "publishers"] })
+      { books: ["publishers", "publishers"] }
     );
     expect(result.indexOf("publishers")).toBeLessThan(result.indexOf("books"));
     expect(result).toHaveLength(2);
@@ -87,11 +87,78 @@ describe("topoSortTables", () => {
   });
 
   test("all tables appear exactly once", () => {
-    const result = topoSortTables(
+    const result = flat(
       { a: {}, b: {}, c: {}, d: {} },
-      fks({ b: ["a"], c: ["a"], d: ["b", "c"] })
+      { b: ["a"], c: ["a"], d: ["b", "c"] }
     );
     expect(result).toHaveLength(4);
     expect(new Set(result).size).toBe(4);
+  });
+});
+
+// Mock a table with FK fields: [{ field, ref, required? }]
+const mockTable = (fkSpecs) => ({
+  getFields: () =>
+    fkSpecs.map(({ field, required = false }) => ({ name: field, required })),
+  getForeignKeys: () =>
+    fkSpecs.map(({ field, ref }) => ({ name: field, reftable_name: ref })),
+});
+const makeGetTable = (specs) => (name) => {
+  const s = specs[name];
+  return s ? mockTable(s) : null;
+};
+
+describe("orderCycleTables", () => {
+  test("nullable side inserted before required side", () => {
+    // A.b_ref -> B (required), B.a_ref -> A (nullable)
+    const getTable = makeGetTable({
+      A: [{ field: "b_ref", ref: "B", required: true }],
+      B: [{ field: "a_ref", ref: "A", required: false }],
+    });
+    const { cycleOrder, deferFields } = orderCycleTables(["A", "B"], getTable);
+    expect(cycleOrder[0]).toBe("B");
+    expect(cycleOrder[1]).toBe("A");
+  });
+
+  test("nullable FK field is deferred for the first-inserted table", () => {
+    const getTable = makeGetTable({
+      A: [{ field: "b_ref", ref: "B", required: true }],
+      B: [{ field: "a_ref", ref: "A", required: false }],
+    });
+    const { deferFields } = orderCycleTables(["A", "B"], getTable);
+    expect(deferFields.get("B")).toEqual(new Set(["a_ref"]));
+    expect(deferFields.has("A")).toBe(false);
+  });
+
+  test("required FK field is never deferred", () => {
+    const getTable = makeGetTable({
+      A: [{ field: "b_ref", ref: "B", required: true }],
+      B: [{ field: "a_ref", ref: "A", required: false }],
+    });
+    const { deferFields } = orderCycleTables(["A", "B"], getTable);
+    expect(deferFields.has("A")).toBe(false);
+  });
+
+  test("both nullable: first table has its FK deferred, second does not", () => {
+    const getTable = makeGetTable({
+      A: [{ field: "b_ref", ref: "B", required: false }],
+      B: [{ field: "a_ref", ref: "A", required: false }],
+    });
+    const { cycleOrder, deferFields } = orderCycleTables(["A", "B"], getTable);
+    expect(cycleOrder).toHaveLength(2);
+    // Only the first-inserted table needs deferral; the second can translate normally.
+    expect(deferFields.size).toBe(1);
+    expect(deferFields.has(cycleOrder[0])).toBe(true);
+    expect(deferFields.has(cycleOrder[1])).toBe(false);
+  });
+
+  test("all cycle tables appear in cycleOrder exactly once", () => {
+    const getTable = makeGetTable({
+      A: [{ field: "b_ref", ref: "B", required: true }],
+      B: [{ field: "a_ref", ref: "A", required: false }],
+    });
+    const { cycleOrder } = orderCycleTables(["A", "B"], getTable);
+    expect(cycleOrder).toHaveLength(2);
+    expect(new Set(cycleOrder).size).toBe(2);
   });
 });
