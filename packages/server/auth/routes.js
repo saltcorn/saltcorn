@@ -125,6 +125,7 @@ const ipLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 60 minutes
   max: 100, // limit each IP to 100 requests per windowMs
   handler,
+  validate: { trustProxy: false },
 });
 
 const userLimiter = rateLimit({
@@ -133,6 +134,7 @@ const userLimiter = rateLimit({
   max: 5, // limit each IP to 100 requests per windowMs
   keyGenerator: (req) => userIdKey(req.body || {}),
   handler,
+  validate: { trustProxy: false },
 });
 
 const pendingUserLimiter = rateLimit({
@@ -141,6 +143,7 @@ const pendingUserLimiter = rateLimit({
   max: 5, // limit each IP to 100 requests per windowMs
   keyGenerator: (req) => req.user?.pending_user?.id,
   handler,
+  validate: { trustProxy: false },
 });
 
 /**
