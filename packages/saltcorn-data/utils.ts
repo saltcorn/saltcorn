@@ -396,9 +396,16 @@ const hashString = (s: string): string => {
  * @returns string ready to use for spawn
  */
 const getSafeSaltcornCmd = () => {
+  // NODE_TEST_CONTEXT is set by node's test runner in the child process it
+  // spawns per test file (JEST_WORKER_ID was the jest equivalent); there
+  // require.main is the test file (packages/<pkg>/tests/x.test.js), so the
+  // CLI bin is two directories up.
+  const inTestRunner =
+    process.env.NODE_TEST_CONTEXT !== undefined ||
+    process.env.JEST_WORKER_ID !== undefined;
   return process.env.PATH!.indexOf("saltcorn-cli/bin") > 0
     ? "saltcorn"
-    : process.env.JEST_WORKER_ID === undefined
+    : !inTestRunner
       ? join(dirname(require!.main!.filename), "saltcorn")
       : join(
           dirname(require!.main!.filename),
