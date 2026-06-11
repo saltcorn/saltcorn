@@ -30,10 +30,10 @@ jest.setTimeout(30000000);
 beforeAll(async () => {
   await resetToFixtures();
   const mv = async (fnm) => {
-    await fs.writeFile(fnm, "nevergonnagiveyouup");
+    await fs.writeFile(fnm, "ijustwannadancewithsomebody");
   };
   await File.from_req_files(
-    { mimetype: "image/png", name: "rick.png", mv, size: 245752 },
+    { mimetype: "image/png", name: "whitney.png", mv, size: 245752 },
     1,
     40
   );
