@@ -107,7 +107,9 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
     if (ownerFieldName) params.push(userId);
     const { rows } = await db.query(
       `select
-         COALESCE(info_tbl.ref, data_tbl."${db.sqlsanitize(pkName)}"::text) "_sync_info_tbl_ref_",
+         COALESCE(info_tbl.ref, data_tbl."${db.sqlsanitize(
+           pkName
+         )}"::text) "_sync_info_tbl_ref_",
          info_tbl.last_modified "_sync_info_tbl_last_modified_",
          COALESCE(info_tbl.deleted, false) "_sync_info_tbl_deleted_",
          data_tbl.*
@@ -218,6 +220,7 @@ router.post(
             )
               continue;
             else if (table.ownership_field_id) {
+              // already filtered by ownership_field_id inside getSyncRows
             } else if (table.ownership_formula) {
               // already filtered by applyOwnershipFormula inside getSyncRows
             }
@@ -373,6 +376,8 @@ router.post(
         stdio: ["pipe", "pipe", "pipe"],
         cwd: ".",
       });
+      child.stdout.pipe(process.stdout);
+      child.stderr.pipe(process.stderr);
 
       child.on("exit", async (exitCode, signal) => {
         getState().log(
