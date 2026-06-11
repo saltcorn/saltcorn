@@ -11,10 +11,9 @@
  *
  *  - Postgres: every Saltcorn query is schema-qualified via getTenantSchema(),
  *    which falls back to connectObj.default_schema. SALTCORN_DEFAULT_SCHEMA
- *    sets that, isolating each file; resetToFixtures() (called in each suite's
- *    beforeAll) then creates the schema, since reset() -> drop_reset_schema()
- *    does CREATE SCHEMA. Leftover schemas are dropped at suite start by the
- *    run-tests CLI.
+ *    sets that, isolating each file; the reset_schema()/fixtures() each suite
+ *    runs in beforeAll then creates the schema (drop_reset_schema does CREATE
+ *    SCHEMA). Leftover schemas are dropped at suite start by the run-tests CLI.
  *
  *  - SQLite (no schemas): point the connection at a per-process db file so
  *    parallel files don't share a file.

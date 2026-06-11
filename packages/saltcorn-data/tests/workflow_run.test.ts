@@ -295,7 +295,7 @@ describe("Workflow run error handling with transaction and database ops", () => 
     });
   });
   it("should run", async () => {
-    await runWithTenant("public", async () => {
+    await runWithTenant(db.getTenantSchema(), async () => {
       await db.withTransaction(async () => {
         const user = await User.findOne({ id: 1 });
         assertIsSet(user);

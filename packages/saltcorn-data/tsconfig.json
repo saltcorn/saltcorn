@@ -28,6 +28,7 @@
     "node_modules",
     "dist/**",
     "webpack.config.js",
+    "setup-test-schema.js",
     "./mobile-mocks/node/vm.js"
   ]
 }

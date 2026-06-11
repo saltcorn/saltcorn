@@ -95,7 +95,7 @@ describe("Field", () => {
       );
     else
       expect(f.sql_type).toBe(
-        'int constraint "patients_favbook_fkey" references "public"."books" ("id") DEFERRABLE'
+        `int constraint "patients_favbook_fkey" references "${db.getTenantSchema()}"."books" ("id") DEFERRABLE`
       );
 
     expect(f.is_fkey).toBe(true);

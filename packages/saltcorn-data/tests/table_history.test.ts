@@ -381,9 +381,10 @@ describe("unique history clash", () => {
 describe("Table history with UUID pks", () => {
   if (!db.isSQLite) {
     it("should select uuid", async () => {
-      await db.query('create extension if not exists "uuid-ossp";');
-
-      const { rows } = await db.query("select uuid_generate_v4();");
+      // the uuid-ossp extension is created once (in public) by the test
+      // runner; qualify the call with the schema rather than relying on
+      // search_path, which can resolve unreliably under parallel DDL load
+      const { rows } = await db.query("select public.uuid_generate_v4();");
       expect(rows.length).toBe(1);
       expect(typeof rows[0].uuid_generate_v4).toBe("string");
     });

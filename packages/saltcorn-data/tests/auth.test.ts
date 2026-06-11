@@ -578,7 +578,7 @@ describe("Table with row ownership joined formula nocalc", () => {
         inSelect: {
           field: "id",
           table: "_Department",
-          tenant: "public",
+          tenant: db.getTenantSchema(),
           where: { manager: 1 },
         },
       },
@@ -657,7 +657,7 @@ describe("Table with row ownership joined formula nocalc", () => {
         inSelect: {
           field: "id",
           table: "_Department",
-          tenant: "public",
+          tenant: db.getTenantSchema(),
           where: { manager: 1 },
         },
       },
@@ -735,7 +735,7 @@ describe("Table with row ownership double joined", () => {
         inSelect: {
           field: "manager",
           table: "_Department",
-          tenant: "public",
+          tenant: db.getTenantSchema(),
           through: "users",
           through_pk: "id",
           valField: "id",

@@ -171,10 +171,20 @@ class RunTestsCommand extends Command {
     const reset = require("@saltcorn/data/db/reset_schema");
     await reset();
     await fixtures();
-    // The server tests run each file in its own process under a per-process
-    // Postgres schema (test_p<pid>) or SQLite file so they can run in
-    // parallel. Clear any left behind by a previous (e.g. crashed) run.
+    // The server/data tests run each file in its own process under a
+    // per-process Postgres schema (test_p<pid>) or SQLite file so they can run
+    // in parallel. Clear any left behind by a previous (e.g. crashed) run.
     await this.dropTestSchemas(db);
+    // Some tests use uuid_generate_v4() and full-text-search indexes; create
+    // the required extensions once here (in the shared public schema) so that
+    // they are never created (first time) concurrently during the parallel
+    // run - a concurrent CREATE EXTENSION can make another backend's catalog
+    // lookups transiently fail. Per-process `CREATE EXTENSION IF NOT EXISTS`
+    // calls then become harmless no-ops.
+    if (!db.isSQLite) {
+      await db.query('create extension if not exists "uuid-ossp";');
+      await db.query("create extension if not exists pg_trgm;");
+    }
     if (!args.package)
       await this.copySchemaIntoPck(["saltcorn-builder", "common-code"]);
     else if (["saltcorn-builder", "common-code"].includes(args.package))

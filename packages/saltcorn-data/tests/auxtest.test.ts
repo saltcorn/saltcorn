@@ -706,7 +706,7 @@ describe("stateFieldsToWhere", () => {
             inSelect: {
               field: "id",
               table: "books",
-              tenant: "public",
+              tenant: db.getTenantSchema(),
               where: { author: { ilike: "Herman" } },
             },
           },
