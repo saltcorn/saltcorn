@@ -8,7 +8,7 @@
     "build": "webpack --mode production",
     "builddev": "webpack --mode development",
     "watch": "webpack --watch --mode development",
-    "test": "jest tests --runInBand",
+    "test": "NODE_ENV=test node --require ./setup-node-runner.js --test",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
@@ -67,8 +67,5 @@
     "undici": "7.12.0",
     "parse5": "7.2.1",
     "parse5-htmlparser2-tree-adapter": "7.0.0"
-  },
-  "jest": {
-    "testEnvironment": "jsdom"
   }
 }

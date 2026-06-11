@@ -63,8 +63,38 @@ class ObjectContaining {
   }
 }
 
-const isAsymmetric = (x: any): x is ArrayContaining | ObjectContaining =>
-  x instanceof ArrayContaining || x instanceof ObjectContaining;
+// expect.any(Constructor): matches any value of the given type/instance.
+class Any {
+  readonly sample: any;
+  constructor(sample: any) {
+    this.sample = sample;
+  }
+  matches(actual: any): boolean {
+    switch (this.sample) {
+      case String:
+        return typeof actual === "string" || actual instanceof String;
+      case Number:
+        return typeof actual === "number" || actual instanceof Number;
+      case Boolean:
+        return typeof actual === "boolean";
+      case BigInt:
+        return typeof actual === "bigint";
+      case Function:
+        return typeof actual === "function";
+      case Object:
+        return actual !== null && typeof actual === "object";
+      case Array:
+        return Array.isArray(actual);
+      default:
+        return actual != null && actual instanceof this.sample;
+    }
+  }
+}
+
+const isAsymmetric = (x: any): x is ArrayContaining | ObjectContaining | Any =>
+  x instanceof ArrayContaining ||
+  x instanceof ObjectContaining ||
+  x instanceof Any;
 
 // jest's toEqual: recursive equality that ignores prototypes and treats
 // undefined-valued properties as absent.
@@ -290,6 +320,11 @@ class Expectation {
     );
   }
 
+  // jest alias for toHaveBeenCalled
+  toBeCalled(): void {
+    this.toHaveBeenCalled();
+  }
+
   toHaveBeenCalledTimes(n: number): void {
     const count = this.actual?.mock?.calls?.length ?? 0;
     this.assertPass(
@@ -362,12 +397,14 @@ interface ExpectFn {
   (actual: any): Expectation;
   arrayContaining: (sample: any[]) => ArrayContaining;
   objectContaining: (sample: any) => ObjectContaining;
+  any: (sample: any) => Any;
   assertions: (n: number) => void;
 }
 
 export const expect = ((actual: any) => new Expectation(actual)) as ExpectFn;
 expect.arrayContaining = (sample: any[]) => new ArrayContaining(sample);
 expect.objectContaining = (sample: any) => new ObjectContaining(sample);
+expect.any = (sample: any) => new Any(sample);
 // assertion-count expectation is not tracked; accepted as a no-op.
 expect.assertions = (_n: number) => {};
 
@@ -407,6 +444,23 @@ export const fn = (impl?: (...args: any[]) => any): any => {
   return mockFn;
 };
 
+// jest.spyOn: wrap an object method with a mock that calls through to the
+// original by default and can be restored. Tracked so restoreAllMocks() can
+// undo every active spy.
+const activeSpies: any[] = [];
+const spyOn = (obj: any, method: string): any => {
+  const original = obj[method];
+  const spy = fn((...args: any[]) =>
+    typeof original === "function" ? original.apply(obj, args) : undefined
+  );
+  spy.mockRestore = () => {
+    obj[method] = original;
+  };
+  obj[method] = spy;
+  activeSpies.push(spy);
+  return spy;
+};
+
 // ---------------------------------------------------------------------------
 // jest object: setTimeout (no-op; node:test has no default timeout), fn, mock
 // ---------------------------------------------------------------------------
@@ -414,10 +468,25 @@ export const jest = {
   // node:test has no global default timeout, so raising it is unnecessary.
   setTimeout: (_ms?: number) => {},
   fn,
-  // Automock: replace the module's function exports with mock fns. Mutates the
-  // shared require cache so the system-under-test sees the same mocks.
-  mock: (name: string) => {
+  spyOn,
+  // Mock a module. With a factory, the named exports it returns replace those
+  // on the (shared, require-cached) module; without one, function exports are
+  // auto-mocked. Mutating the cached exports means modules required afterwards
+  // see the mocks - so callers should require() the system-under-test after
+  // jest.mock (jest hoists mock calls above imports; node:test does not).
+  mock: (name: string, factory?: () => any) => {
     const mod = require(name);
+    if (factory) {
+      const replacement = factory();
+      for (const key of Object.keys(replacement)) {
+        try {
+          mod[key] = replacement[key];
+        } catch {
+          // non-writable export; skip
+        }
+      }
+      return;
+    }
     for (const key of Object.keys(mod)) {
       if (typeof mod[key] === "function") {
         try {
@@ -428,5 +497,10 @@ export const jest = {
       }
     }
   },
-  clearAllMocks: () => {},
+  clearAllMocks: () => {
+    for (const spy of activeSpies) spy.mockClear?.();
+  },
+  restoreAllMocks: () => {
+    while (activeSpies.length) activeSpies.pop().mockRestore?.();
+  },
 };
