@@ -1422,6 +1422,7 @@ const get_viewable_fields = (
               !f.calculated || f.stored
                 ? sortlinkForName(f.name, req, viewname, statehash)
                 : undefined,
+            header_underline: f.calculated && !f.stored ? true : undefined,
           };
         if (column.click_to_edit) {
           const updateKey = (fvr: any, column_key?: any) => {
