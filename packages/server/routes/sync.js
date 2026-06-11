@@ -107,7 +107,9 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
     if (ownerFieldName) params.push(userId);
     const { rows } = await db.query(
       `select
-         COALESCE(info_tbl.ref, data_tbl."${db.sqlsanitize(pkName)}"::text) "_sync_info_tbl_ref_",
+         COALESCE(info_tbl.ref, data_tbl."${db.sqlsanitize(
+           pkName
+         )}"::text) "_sync_info_tbl_ref_",
          info_tbl.last_modified "_sync_info_tbl_last_modified_",
          COALESCE(info_tbl.deleted, false) "_sync_info_tbl_deleted_",
          data_tbl.*
@@ -370,15 +372,9 @@ router.post(
       spawnParams.push("--newSyncTimestamp", newSyncTimestamp);
       spawnParams.push("--oldSyncTimestamp", oldSyncTimestamp);
       res.json({ syncDir: syncDirName });
-      const saltcornNodeModules = path.resolve(__dirname, "..", "..", "..", "node_modules");
-      const existingNodePath = process.env.NODE_PATH || "";
-      const nodePathEntries = existingNodePath ? existingNodePath.split(path.delimiter) : [];
-      if (!nodePathEntries.includes(saltcornNodeModules))
-        nodePathEntries.push(saltcornNodeModules);
       const child = spawn(getSafeSaltcornCmd(), spawnParams, {
         stdio: ["pipe", "pipe", "pipe"],
         cwd: ".",
-        env: { ...process.env, NODE_PATH: nodePathEntries.join(path.delimiter) },
       });
       child.stdout.pipe(process.stdout);
       child.stderr.pipe(process.stderr);
