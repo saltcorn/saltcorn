@@ -20,7 +20,14 @@ const {
 } = tenant;
 import config from "@saltcorn/data/models/config";
 const { getConfig } = config;
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 
 afterAll(db.close);
 
@@ -56,7 +63,7 @@ describe("Tenant", () => {
         loadAndSaveNewPlugin(plugin: Plugin): void {},
         plugin_loader() {},
       });
-      db.runWithTenant("test10", async () => {
+      await db.runWithTenant("test10", async () => {
         const ten = db.getTenantSchema();
 
         expect(ten).toBe("test10");
