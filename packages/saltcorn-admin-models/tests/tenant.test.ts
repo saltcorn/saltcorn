@@ -25,6 +25,10 @@ import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-co
 afterAll(db.close);
 
 beforeAll(async () => {
+  // initialise this process's schema (tests run each file in its own Postgres
+  // schema so they can run in parallel)
+  await require("@saltcorn/data/db/reset_schema")();
+  await require("@saltcorn/data/db/fixtures")();
   if (!db.isSQLite) await db.query(`drop schema if exists test10 CASCADE `);
   if (!db.isSQLite) await db.query(`drop schema if exists test11 CASCADE `);
 });
