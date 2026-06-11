@@ -121,6 +121,30 @@ class RunTestsCommand extends Command {
   }
 
   /**
+   * Clear per-process test artifacts left over from previous runs. The server
+   * test suite isolates parallel test files by giving each its own Postgres
+   * schema (test_p<pid>) or SQLite file (sctest_p<pid>.sqlite); this removes
+   * any that were not cleaned up (e.g. after a crash).
+   * @param {object} db - the data db module
+   * @returns {Promise<void>}
+   */
+  async dropTestSchemas(db) {
+    if (db.isSQLite) {
+      const os = require("os");
+      const tmp = os.tmpdir();
+      for (const f of fs.readdirSync(tmp))
+        if (/^sctest_p\d+\.sqlite$/.test(f))
+          fs.rmSync(path.join(tmp, f), { force: true });
+      return;
+    }
+    const { rows } = await db.query(
+      "select schema_name from information_schema.schemata where schema_name like 'test_p%'"
+    );
+    for (const { schema_name } of rows)
+      await db.query(`drop schema if exists "${schema_name}" cascade`);
+  }
+
+  /**
    * Run
    * @returns {Promise<void>}
    */
@@ -147,6 +171,10 @@ class RunTestsCommand extends Command {
     const reset = require("@saltcorn/data/db/reset_schema");
     await reset();
     await fixtures();
+    // The server tests run each file in its own process under a per-process
+    // Postgres schema (test_p<pid>) or SQLite file so they can run in
+    // parallel. Clear any left behind by a previous (e.g. crashed) run.
+    await this.dropTestSchemas(db);
     if (!args.package)
       await this.copySchemaIntoPck(["saltcorn-builder", "common-code"]);
     else if (["saltcorn-builder", "common-code"].includes(args.package))
@@ -154,7 +182,11 @@ class RunTestsCommand extends Command {
     await db.close();
     // toddo add --logHeapUsage
     if (args.package === "core") {
-      await this.do_test("npm", ["run", "test", ...this.buildTestParams(flags, false)], env);
+      await this.do_test(
+        "npm",
+        ["run", "test", ...this.buildTestParams(flags, false)],
+        env
+      );
     } else if (args.package === "view-queries") {
       await this.remoteQueryTest(env, this.buildTestParams(flags, true));
     } else if (args.package) {

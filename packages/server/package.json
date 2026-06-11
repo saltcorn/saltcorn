@@ -85,7 +85,7 @@
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "NODE_ENV=test node --require ./setup-jest-globals.js --test --test-concurrency=1",
+    "test": "NODE_ENV=test node --require ./setup-jest-globals.js --require ./setup-test-schema.js --test",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
