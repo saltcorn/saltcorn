@@ -55,7 +55,9 @@ const headerCell = (hdr: any, opts: any, ix: number): string => {
     },
     hdr.sortlink
       ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
-      : hdr.label,
+      : hdr.header_underline
+        ? span({ style: "text-decoration: underline" }, hdr.label)
+        : hdr.label,
     opts.header_filters_dropdown &&
       hdr.header_filter &&
       span(
@@ -126,7 +128,9 @@ const headerCellWithToggle = (
     return headerCell(hdr, opts, ix);
   const content = hdr.sortlink
     ? span({ onclick: hdr.sortlink, class: "link-style" }, hdr.label)
-    : hdr.label;
+    : hdr.header_underline
+      ? span({ style: "text-decoration: underline" }, hdr.label)
+      : hdr.label;
   const toggleIcon = span(
     {
       class: "header-filter-toggle link-style float-end",

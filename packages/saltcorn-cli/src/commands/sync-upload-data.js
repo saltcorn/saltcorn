@@ -38,13 +38,13 @@ const pickFields = (table, pkName, row, keepId) => {
   return result;
 };
 
-const topoSortTables = (
-  changes,
-  getFKs = (tblName) => {
-    const table = Table.findOne({ name: tblName });
-    return table ? table.getForeignKeys() : [];
-  }
-) => {
+const defaultGetFKs = (tblName) => {
+  const table = Table.findOne({ name: tblName });
+  return table ? table.getForeignKeys() : [];
+};
+
+// Returns { sorted, cycleTables } where cycleTables are tables Kahn's could not place.
+const kahnSort = (changes, getFKs = defaultGetFKs) => {
   const tableNames = Object.keys(changes);
   const tableSet = new Set(tableNames);
   const adj = {};
@@ -63,18 +63,79 @@ const topoSortTables = (
     }
   }
   const queue = tableNames.filter((t) => inDeg[t] === 0);
-  const result = [];
+  const sorted = [];
   while (queue.length > 0) {
     const t = queue.shift();
-    result.push(t);
+    sorted.push(t);
     for (const child of adj[t]) {
       if (--inDeg[child] === 0) queue.push(child);
     }
   }
-  for (const t of tableNames) {
-    if (!result.includes(t)) result.push(t);
+  const cycleTables = tableNames.filter((t) => !sorted.includes(t));
+  return { sorted, cycleTables };
+};
+
+// Orders cycle tables for insert: nullable-FK side first, required-FK side last.
+// deferFields holds the nullable cyclic FK fields to insert as null and fix up afterwards.
+const orderCycleTables = (
+  cycleTables,
+  getTable = (name) => Table.findOne({ name })
+) => {
+  const cycleSet = new Set(cycleTables);
+  const cycleOrder = [];
+  // fields of table that need a post-UPDATE after all cycle rows exist
+  const deferFields = new Map();
+  const ordered = new Set();
+  const remaining = new Set(cycleTables);
+
+  while (remaining.size > 0) {
+    let bestTable = null;
+    let bestRequiredCount = Infinity;
+    for (const tblName of remaining) {
+      const table = getTable(tblName);
+      if (!table) {
+        remaining.delete(tblName);
+        continue;
+      }
+      const fields = table.getFields();
+      let requiredCount = 0;
+      for (const fk of table.getForeignKeys()) {
+        if (
+          cycleSet.has(fk.reftable_name) &&
+          !ordered.has(fk.reftable_name) &&
+          fk.reftable_name !== tblName &&
+          fields.find((f) => f.name === fk.name)?.required
+        )
+          requiredCount++;
+      }
+      if (requiredCount < bestRequiredCount) {
+        bestRequiredCount = requiredCount;
+        bestTable = tblName;
+      }
+    }
+    if (!bestTable) break;
+    const table = getTable(bestTable);
+    if (table) {
+      const fields = table.getFields();
+      const deferred = new Set();
+      for (const fk of table.getForeignKeys()) {
+        if (
+          cycleSet.has(fk.reftable_name) &&
+          !ordered.has(fk.reftable_name) &&
+          fk.reftable_name !== bestTable
+        ) {
+          const field = fields.find((f) => f.name === fk.name);
+          if (field && !field.required) deferred.add(fk.name);
+        }
+      }
+      if (deferred.size > 0) deferFields.set(bestTable, deferred);
+    }
+    cycleOrder.push(bestTable);
+    ordered.add(bestTable);
+    remaining.delete(bestTable);
   }
-  return result;
+
+  return { cycleOrder, deferFields };
 };
 
 const checkConstraints = async (table, row) => {
@@ -131,7 +192,13 @@ class SyncHelper {
   }
 
   async applyInserts() {
-    for (const tblName of topoSortTables(this.changes)) {
+    const { sorted, cycleTables } = kahnSort(this.changes);
+
+    const { cycleOrder, deferFields } = orderCycleTables(cycleTables);
+
+    const deferredUpdates = [];
+
+    for (const tblName of [...sorted, ...cycleOrder]) {
       const vals = this.changes[tblName];
       if (!vals) continue;
       const table = Table.findOne({ name: tblName });
@@ -146,6 +213,7 @@ class SyncHelper {
             .find((f) => f.name === pkName && !f.is_fkey);
           const pkHasClientDefault =
             typeof pkField?.type?.primaryKey?.default_js === "function";
+          const deferred = deferFields.get(tblName) || new Set();
           for (const insert of vals.inserts || []) {
             // Keep the client-generated PK only for types that explicitly provide
             // a client-side default (e.g. UUID). For integer PKs the local ID may
@@ -159,8 +227,14 @@ class SyncHelper {
             for (const fk of table.getForeignKeys()) {
               const oldVal = row[fk.name];
               if (oldVal) {
-                const newVal = this.allTranslations[fk.reftable_name]?.[oldVal];
-                if (newVal) row[fk.name] = newVal;
+                if (deferred.has(fk.name)) {
+                  // Cyclic nullable FK: insert null, fix up after all inserts.
+                  row[fk.name] = null;
+                } else {
+                  const newVal =
+                    this.allTranslations[fk.reftable_name]?.[oldVal];
+                  if (newVal) row[fk.name] = newVal;
+                }
               }
             }
             const conflictRow = await checkConstraints(table, row);
@@ -173,7 +247,23 @@ class SyncHelper {
                 this.newSyncTimestamp
               );
               if (!newId) throw new Error(`Unable to insert into ${tblName}`);
-              else if (newId !== insert[pkName])
+              for (const fieldName of deferred) {
+                const localFkVal = insert[fieldName];
+                if (localFkVal != null) {
+                  const fk = table
+                    .getForeignKeys()
+                    .find((f) => f.name === fieldName);
+                  deferredUpdates.push({
+                    tblName,
+                    pkName,
+                    serverPk: newId,
+                    fieldName,
+                    reftable: fk.reftable_name,
+                    localFkVal,
+                  });
+                }
+              }
+              if (newId !== insert[pkName])
                 translations[insert[pkName]] = newId;
             } else {
               translations[insert[pkName]] = conflictRow[pkName];
@@ -185,6 +275,28 @@ class SyncHelper {
         }
       } catch (error) {
         throw new Error(table.normalise_error_message(error.message));
+      }
+    }
+
+    // now that all cyclic rows exist, set values for the null UPDATES
+    if (deferredUpdates.length > 0) {
+      const schema = db.getTenantSchemaPrefix();
+      for (const {
+        tblName,
+        pkName,
+        serverPk,
+        fieldName,
+        reftable,
+        localFkVal,
+      } of deferredUpdates) {
+        const refTrans = this.allTranslations[reftable] || {};
+        const serverFkVal = refTrans[localFkVal] ?? localFkVal;
+        await db.query(
+          `UPDATE ${schema}"${db.sqlsanitize(tblName)}" SET "${db.sqlsanitize(
+            fieldName
+          )}" = $1 WHERE "${db.sqlsanitize(pkName)}" = $2`,
+          [serverFkVal, serverPk]
+        );
       }
     }
   }
@@ -401,4 +513,5 @@ SyncUploadData.flags = {
 };
 
 module.exports = SyncUploadData;
-module.exports.topoSortTables = topoSortTables;
+module.exports.kahnSort = kahnSort;
+module.exports.orderCycleTables = orderCycleTables;

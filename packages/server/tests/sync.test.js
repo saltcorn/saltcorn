@@ -1880,6 +1880,119 @@ describe("cross-table FK translation during inserts", () => {
     });
 });
 
+describe("cyclic FK insert via sync", () => {
+  if (!db.isSQLite) {
+    let tableA, tableB;
+
+    beforeAll(async () => {
+      await resetToFixtures();
+
+      // tableA.b_ref -> tableB (required), tableB.a_ref -> tableA (nullable)
+      tableA = await Table.create("sync_cycle_a", {
+        min_role_read: 100,
+        min_role_write: 100,
+      });
+      await Field.create({
+        table: tableA,
+        name: "name",
+        label: "Name",
+        type: "String",
+      });
+
+      tableB = await Table.create("sync_cycle_b", {
+        min_role_read: 100,
+        min_role_write: 100,
+      });
+      await Field.create({
+        table: tableB,
+        name: "name",
+        label: "Name",
+        type: "String",
+      });
+
+      await Field.create({
+        table: tableA,
+        name: "b_ref",
+        label: "B ref",
+        type: "Key",
+        reftable: tableB,
+        attributes: { summary_field: "name" },
+        required: true,
+      });
+      await Field.create({
+        table: tableB,
+        name: "a_ref",
+        label: "A ref",
+        type: "Key",
+        reftable: tableA,
+        attributes: { summary_field: "name" },
+        required: false,
+      });
+
+      await initSyncInfo(["sync_cycle_a", "sync_cycle_b"]);
+      tableA = Table.findOne({ name: "sync_cycle_a" });
+      tableB = Table.findOne({ name: "sync_cycle_b" });
+    });
+
+    afterAll(async () => {
+      // Break the cycle by dropping A's FK to B first, then B can be dropped,
+      // then A.
+      const freshA = Table.findOne({ name: "sync_cycle_a" });
+      const bRefField = freshA?.getFields().find((f) => f.name === "b_ref");
+      if (bRefField) await bRefField.delete();
+      if (tableB) await tableB.delete();
+      if (tableA) await tableA.delete();
+    });
+
+    it("inserts both cyclic rows with FKs correctly resolved", async () => {
+      const oldTimestamp = new Date().valueOf();
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+
+      const localAId = 9001;
+      const localBId = 9002;
+
+      // Submit A before B so that without topo/cycle handling this would fail:
+      // A.b_ref points to a B row that doesn't exist on the server yet.
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          sync_cycle_a: {
+            inserts: [{ id: localAId, name: "row A", b_ref: localBId }],
+          },
+          sync_cycle_b: {
+            inserts: [{ id: localBId, name: "row B", a_ref: localAId }],
+          },
+        }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const result = await getResult(app, loginCookie, syncDir);
+      await cleanSyncDir(app, loginCookie, syncDir);
+
+      expect(result.translatedIds).toBeDefined();
+      const serverAId = result.translatedIds.sync_cycle_a?.[localAId];
+      const serverBId = result.translatedIds.sync_cycle_b?.[localBId];
+      expect(serverAId).toBeDefined();
+      expect(serverBId).toBeDefined();
+
+      // A.b_ref must point to the server-assigned B ID
+      const rowA = await tableA.getRow({ id: serverAId });
+      expect(rowA.b_ref).toBe(serverBId);
+
+      // B.a_ref must point to the server-assigned A ID (deferred post-UPDATE)
+      const rowB = await tableB.getRow({ id: serverBId });
+      expect(rowB.a_ref).toBe(serverAId);
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
+
 describe("sync dir email suffix attack", () => {
   if (!db.isSQLite) {
     beforeAll(async () => {
