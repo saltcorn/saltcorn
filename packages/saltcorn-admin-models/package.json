@@ -4,7 +4,7 @@
   "description": "models only required by the admin interface for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "cd dist && NODE_ENV=test node --require ../setup-test-schema.js --test",
+    "test": "cd dist && NODE_ENV=test node --require ../setup-test-schema.js --test --test-force-exit",
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*"
   },

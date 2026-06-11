@@ -13,7 +13,7 @@
     "chaos-guinea-pig": "0.2.1"
   },
   "scripts": {
-    "test": "NODE_ENV=test node --require ./setup-jest-globals.js --test --test-concurrency=1",
+    "test": "NODE_ENV=test node --require ./setup-jest-globals.js --test --test-force-exit --test-concurrency=1",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },

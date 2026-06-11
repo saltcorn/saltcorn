@@ -4,8 +4,8 @@
   "description": "Data models for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
-    "test": "cd dist && NODE_ENV=test node --require ../setup-test-schema.js --test",
-    "remote-queries-test": "REMOTE_QUERIES=true node --test dist/tests/exact_views.test.js",
+    "test": "cd dist && NODE_ENV=test node --require ../setup-test-schema.js --test --test-force-exit",
+    "remote-queries-test": "REMOTE_QUERIES=true node --test --test-force-exit dist/tests/exact_views.test.js",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\"",
     "build": "webpack --mode development"
