@@ -767,7 +767,7 @@ describe("Upload changes", () => {
       const error = await getResult(app, loginCookie, syncDir);
       await cleanSyncDir(app, loginCookie, syncDir);
       expect(error).toBeDefined();
-      expect(error).toEqual({ message: "Unable to insert into books" });
+      expect(error).toEqual({ message: "Unable to insert into publisher" });
       books.min_role_write = 100;
       await books.update(books);
     });
@@ -1759,6 +1759,120 @@ describe("load_changes authorization with ownership_formula", () => {
       expect(resp.status).toBe(200);
       const rows = resp._body.lc_owned?.rows || [];
       expect(rows.some((r) => r.id === itemId)).toBe(false);
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
+
+describe("cross-table FK translation during inserts", () => {
+  if (!db.isSQLite) {
+    beforeAll(async () => {
+      await initSyncInfo(["books", "publisher"]);
+    });
+
+    it("FK is translated when child is listed before parent in changes", async () => {
+      const oldTimestamp = new Date().valueOf();
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+
+      // Use IDs far above any existing server IDs so FK cannot be satisfied
+      // by an already-existing row — only the topo-ordered insert of publisher
+      // first makes this work.
+      const maxPublId = await maxId("publisher");
+      const maxBookId = await maxId("books");
+      const localPublisherId = maxPublId + 100;
+      const localBookId = maxBookId + 100;
+
+      // Deliberately list books (child) before publisher (parent) in the payload.
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            inserts: [
+              {
+                id: localBookId,
+                author: "Cross FK Author",
+                pages: 77,
+                publisher: localPublisherId,
+              },
+            ],
+          },
+          publisher: {
+            inserts: [{ id: localPublisherId, name: "Cross FK Publisher" }],
+          },
+        }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const result = await getResult(app, loginCookie, syncDir);
+      await cleanSyncDir(app, loginCookie, syncDir);
+
+      expect(result.translatedIds).toBeDefined();
+      const serverPublisherId =
+        result.translatedIds.publisher?.[localPublisherId];
+      const serverBookId = result.translatedIds.books?.[localBookId];
+      expect(serverPublisherId).toBeDefined();
+      expect(serverBookId).toBeDefined();
+
+      // The inserted book must reference the new server publisher ID, not the
+      // original local one.
+      const books = Table.findOne({ name: "books" });
+      const insertedBook = await books.getRow({ id: serverBookId });
+      expect(insertedBook).toBeDefined();
+      expect(insertedBook.publisher).toBe(serverPublisherId);
+    });
+
+    it("FK translation works regardless of key order in changes object", async () => {
+      const oldTimestamp = new Date().valueOf();
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+
+      const maxPublId = await maxId("publisher");
+      const maxBookId = await maxId("books");
+      const localPublisherId = maxPublId + 100;
+      const localBookId = maxBookId + 100;
+
+      // This time publisher is listed first — result should be identical.
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          publisher: {
+            inserts: [{ id: localPublisherId, name: "Cross FK Publisher 2" }],
+          },
+          books: {
+            inserts: [
+              {
+                id: localBookId,
+                author: "Cross FK Author 2",
+                pages: 88,
+                publisher: localPublisherId,
+              },
+            ],
+          },
+        }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const result = await getResult(app, loginCookie, syncDir);
+      await cleanSyncDir(app, loginCookie, syncDir);
+
+      const serverPublisherId =
+        result.translatedIds.publisher?.[localPublisherId];
+      const serverBookId = result.translatedIds.books?.[localBookId];
+      expect(serverPublisherId).toBeDefined();
+      expect(serverBookId).toBeDefined();
+
+      const books = Table.findOne({ name: "books" });
+      const insertedBook = await books.getRow({ id: serverBookId });
+      expect(insertedBook.publisher).toBe(serverPublisherId);
     });
   } else
     it("only pq support", () => {
