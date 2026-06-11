@@ -48,7 +48,6 @@ const Zip = require("adm-zip");
 const stream = require("stream");
 const { extract } = require("@saltcorn/admin-models/models/backup");
 const createDOMPurify = require("dompurify");
-const { JSDOM } = require("jsdom");
 /**
  * @type {object}
  * @const
@@ -429,6 +428,9 @@ router.get(
         file.mimetype === "image/svg+xml" ||
         file.mimetype === "application/mathml+xml"
       ) {
+        // jsdom is heavy to load (~130ms) and only needed for svg/mathml
+        // sanitization, so require it lazily rather than at module load.
+        const { JSDOM } = require("jsdom");
         const window = new JSDOM("").window;
         const DOMPurify = createDOMPurify(window);
         const contents = await fs.promises.readFile(file.location);
@@ -492,6 +494,9 @@ router.get(
         file.mimetype === "image/svg+xml" ||
         file.mimetype === "application/mathml+xml"
       ) {
+        // jsdom is heavy to load (~130ms) and only needed for svg/mathml
+        // sanitization, so require it lazily rather than at module load.
+        const { JSDOM } = require("jsdom");
         const window = new JSDOM("").window;
         const DOMPurify = createDOMPurify(window);
         const contents = await fs.promises.readFile(file.location);

@@ -58,14 +58,13 @@ import SftpClient from "ssh2-sftp-client";
 import { CodePagePack } from "@saltcorn/types/base_types";
 const os = require("os");
 const semver = require("semver");
-import {
-  S3,
-  S3Client,
-  ListObjectsV2Command,
-  ListObjectsV2CommandOutput,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
-import { Upload } from "@aws-sdk/lib-storage";
+// @aws-sdk is heavy to load (~50ms) and only used when backing up to S3,
+// so require it lazily rather than at module load time.
+let _awsS3: any;
+const awsS3 = () => _awsS3 || (_awsS3 = require("@aws-sdk/client-s3"));
+let _awsLibStorage: any;
+const awsLibStorage = () =>
+  _awsLibStorage || (_awsLibStorage = require("@aws-sdk/lib-storage"));
 import MetaData from "@saltcorn/data/models/metadata";
 import { orderBy } from "lodash";
 
@@ -822,7 +821,7 @@ const delete_old_backups = async () => {
         ? s3EndpointCfg
         : `${s3Secure ? "https" : "http"}://${s3EndpointCfg}`
       : undefined;
-    const s3 = new S3Client({
+    const s3 = new (awsS3().S3Client)({
       credentials: {
         accessKeyId: getState().getConfig("backup_s3_access_key"),
         secretAccessKey: getState().getConfig("backup_s3_access_secret"),
@@ -847,8 +846,8 @@ const delete_old_backups = async () => {
     try {
       let continuationToken: string | undefined = undefined;
       do {
-        const listedObjects: ListObjectsV2CommandOutput = await s3.send(
-          new ListObjectsV2Command({
+        const listedObjects: any = await s3.send(
+          new (awsS3().ListObjectsV2Command)({
             ...listParams,
             ContinuationToken: continuationToken,
           })
@@ -861,7 +860,7 @@ const delete_old_backups = async () => {
             const ageDays = ageMs / (1000 * 3600 * 24);
             if (ageDays > expire_days) {
               await s3.send(
-                new DeleteObjectCommand({ Bucket: bucket, Key: obj.Key })
+                new (awsS3().DeleteObjectCommand)({ Bucket: bucket, Key: obj.Key })
               );
             }
           }
@@ -953,7 +952,7 @@ const auto_backup_now_tenant = async (state: any) => {
           ? bEndpointCfg
           : `${bSecure ? "https" : "http"}://${bEndpointCfg}`
         : undefined;
-      const s3 = new S3({
+      const s3 = new (awsS3().S3)({
         credentials: {
           accessKeyId: state.getConfig("backup_s3_access_key"),
           secretAccessKey: state.getConfig("backup_s3_access_secret"),
@@ -971,7 +970,7 @@ const auto_backup_now_tenant = async (state: any) => {
         .join("/");
       const fileStream = () => createReadStream(fileName);
       try {
-        const uploadResult = await new Upload({
+        const uploadResult = await new (awsLibStorage().Upload)({
           client: s3,
           params: {
             Bucket: bucket,

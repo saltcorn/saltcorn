@@ -3,16 +3,13 @@ const getStateInstance = () => {
   const { getState } = require("../../db/state");
   return getState();
 };
-import {
-  CopyObjectCommand,
-  DeleteObjectCommand,
-  GetObjectCommand,
-  HeadObjectCommand,
-  ListObjectsV2Command,
-  PutObjectCommand,
-  S3,
-} from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+// @aws-sdk is heavy to load (~50ms) and only used when S3 storage is
+// configured, so require it lazily rather than at module load time.
+let _awsS3: any;
+const awsS3 = () => _awsS3 || (_awsS3 = require("@aws-sdk/client-s3"));
+let _presigner: any;
+const presigner = () =>
+  _presigner || (_presigner = require("@aws-sdk/s3-request-presigner"));
 
 const path = require("path");
 const posixPath = path.posix;
@@ -60,7 +57,7 @@ const META_KEYS = {
   filename: "sc-filename",
 };
 
-let cachedClient: S3 | null = null;
+let cachedClient: any = null;
 let cachedClientKey: string | null = null;
 
 const normaliseEndpoint = (endpoint?: string, secure: boolean = true) => {
@@ -245,7 +242,7 @@ const clientCacheKey = (settings: S3Settings) =>
     accessSecret: settings.accessSecret,
   });
 
-export const getS3Client = (): S3 => {
+export const getS3Client = (): any => {
   const settings = getS3Settings();
   const cacheKey = clientCacheKey(settings);
   if (!cachedClient || cachedClientKey !== cacheKey) {
@@ -260,7 +257,7 @@ export const getS3Client = (): S3 => {
         secretAccessKey: settings.accessSecret,
       };
     }
-    const client = new S3(cfg);
+    const client = new (awsS3().S3)(cfg);
     const isGcs = isGcsEndpoint(settings.endpoint);
 
     // Wrap send() to (optionally) sanitize requests for GCS and to log errors
@@ -301,7 +298,7 @@ export const getS3Client = (): S3 => {
     cachedClient = client;
     cachedClientKey = cacheKey;
   }
-  return cachedClient as S3;
+  return cachedClient as any;
 };
 
 const encodeMetadata = (meta: MetadataInput): Record<string, string> => {
@@ -374,7 +371,7 @@ export const listS3Folder = async (
 
   do {
     const resp = await client.send(
-      new ListObjectsV2Command({
+      new (awsS3().ListObjectsV2Command)({
         Bucket: bucket,
         Prefix: prefix || undefined,
         Delimiter: recursive ? undefined : "/",
@@ -439,7 +436,7 @@ export const headObject = async (
   const Key = buildKeyFromRelative(relPath);
   try {
     const resp = await client.send(
-      new HeadObjectCommand({
+      new (awsS3().HeadObjectCommand)({
         Bucket: bucket,
         Key,
       })
@@ -476,7 +473,7 @@ const copyWithinBucket = async (
     params.Metadata = encodeMetadata(metadata);
     if (contentType) params.ContentType = contentType;
   }
-  await client.send(new CopyObjectCommand(params));
+  await client.send(new (awsS3().CopyObjectCommand)(params));
 };
 
 export const setObjectMetadata = async (
@@ -508,7 +505,7 @@ export const deleteObject = async (relPath: string) => {
   const bucket = requireBucket();
   const client = getS3Client();
   const Key = buildKeyFromRelative(relPath);
-  await client.send(new DeleteObjectCommand({ Bucket: bucket, Key }));
+  await client.send(new (awsS3().DeleteObjectCommand)({ Bucket: bucket, Key }));
 };
 
 export const uploadBuffer = async (
@@ -521,7 +518,7 @@ export const uploadBuffer = async (
   const client = getS3Client();
   const Key = buildKeyFromRelative(relPath);
   await client.send(
-    new PutObjectCommand({
+    new (awsS3().PutObjectCommand)({
       Bucket: bucket,
       Key,
       Body: buffer,
@@ -536,7 +533,7 @@ export const downloadBuffer = async (relPath: string): Promise<Buffer> => {
   const client = getS3Client();
   const Key = buildKeyFromRelative(relPath);
   const resp = await client.send(
-    new GetObjectCommand({
+    new (awsS3().GetObjectCommand)({
       Bucket: bucket,
       Key,
     })
@@ -559,8 +556,8 @@ export const getSignedFileUrl = async (
     const filename = opts.filename || posixPath.basename(relPath);
     params.ResponseContentDisposition = `attachment; filename="${filename}"`;
   }
-  const command = new GetObjectCommand(params);
-  return await getSignedUrl(client, command, {
+  const command = new (awsS3().GetObjectCommand)(params);
+  return await presigner().getSignedUrl(client, command, {
     expiresIn: opts.expiresIn || 300,
   });
 };
