@@ -6,8 +6,8 @@ Dockerfile
 Dockerfile.*
 **/Dockerfile
 **/Dockerfile.*
-dock-ci.yml
-deploy/dock-ci/
+whale-ci.yml
+deploy/whale-ci/
 deploy/docker-compose-tests/
 .git/
 cireport.html
