@@ -1,19 +1,16 @@
+
+
 deb13_node24:
-  image: debian/13
+  image: images:debian/13
   runtime: incus
-  disable: true
   command:
     - apt update -q
+    - apt install -qqy wget
+    - adduser --disabled-password --gecos "" someuser
+    - echo "someuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/someuser
+    - chmod 0440 /etc/sudoers.d/someuser
     - wget -qO - https://deb.nodesource.com/setup_24.x | bash -
-    - apt-get install -qqy nodejs
-    - adduser someuser
+    - apt install -qqy nodejs
     - sudo -iu someuser npx -y saltcorn-install -y -n
     - systemctl is-active saltcorn
-    - wget -qO- http://localhost/ | grep Please 
-
-deb13_node24a:
-  image: debian/13
-  runtime: incus
-  command:
-    - cat /etc/passwd
-    
+    - wget -qO- http://localhost/ | grep Please
