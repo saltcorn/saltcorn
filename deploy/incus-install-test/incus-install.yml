@@ -62,14 +62,14 @@ ubuntu2404_node24:
     - systemctl is-active saltcorn
     - wget -qO- http://localhost/ | grep -F '<p>Please'
 
-fedora44_node24:
+fedora44:
   image: images:fedora/44
   runtime: incus
   command:
     - useradd -m -s /bin/bash someuser
     - echo "someuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/someuser
     - chmod 0440 /etc/sudoers.d/someuser
-    - dnf install -y nodejs24
+    - dnf install -y nodejs24 wget
     - sudo -iu someuser npx -y saltcorn-install -y -n
     - systemctl is-active saltcorn
     - wget -qO- http://localhost/ | grep -F '<p>Please'
