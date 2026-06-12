@@ -641,7 +641,7 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
   // if 80, setcap
   if (port === 80)
     await asyncSudo(
-      ["bash", "-c", "setcap 'cap_net_bind_service=+ep' `which node`"],
+      ["bash", "-c", "setcap 'cap_net_bind_service=+ep' `readlink -f $(which node)`"],
       false,
       dryRun
     );
