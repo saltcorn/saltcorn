@@ -161,6 +161,15 @@ const fields = [
     input_type: "select",
     options: ["Default", "Left", "Center", "Right"],
   },
+  {
+    name: "cell_css_formula",
+    label: "Cell CSS formula",
+    sublabel:
+      "Bootstrap class or inline style expression based on row value. Ex: amount < 0 ? 'text-danger fw-bold' : null",
+    class: "validate-expression",
+    type: "String",
+    required: false,
+  },
 ];
 ListColumn.craft = {
   displayName: "ListColumn",

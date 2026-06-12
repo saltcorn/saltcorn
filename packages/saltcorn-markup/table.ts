@@ -256,14 +256,20 @@ const mkTable = (
         ...mkClickHandler(opts, v),
         ...(rowColor ? { style: { backgroundColor: rowColor } } : {}),
       },
-      hdrs.map((hdr: HeadersParams, hdr_ix) =>
-        td(
+      hdrs.map((hdr: HeadersParams, hdr_ix) => {
+        const cellClass = (hdr as any).cell_class_fn
+          ? (hdr as any).cell_class_fn(v)
+          : null;
+        return td(
           {
             style: {
               ...(hdr.width && opts.noHeader ? { width: hdr.width } : {}),
               ...(rowColor ? { backgroundColor: rowColor } : {}),
             },
-            ...(hdr.align ? { class: `text-align-${hdr.align}` } : {}),
+            class: [
+              hdr.align ? `text-align-${hdr.align}` : null,
+              cellClass || null,
+            ],
           },
           hdr_ix == 0 && opts.level_indicator && v._level
             ? "&nbsp;&nbsp;".repeat(v._level) + "└&nbsp;&nbsp;"
@@ -271,8 +277,8 @@ const mkTable = (
           cellWrapper(
             typeof hdr.key === "string" ? text(v[hdr.key]) : hdr.key(v)
           )
-        )
-      )
+        );
+      })
     );
   };
   const makeTotalRow = (rows: any[], label: string): string => {

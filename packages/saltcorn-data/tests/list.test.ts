@@ -194,6 +194,88 @@ describe("Misc List views", () => {
     expect(vres1).toContain('<tr data-row-id="1">');
     expect(vres1).toContain("Leo Tolstoy");
   });
+  it("cell css formula applies class to td", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "show",
+                textStyle: "",
+                field_name: "pages",
+                configuration: {},
+                cell_css_formula: "pages < 800 ? 'text-danger fw-bold' : null",
+              },
+              alignment: "Default",
+              col_width_units: "px",
+              cell_css_formula: "pages < 800 ? 'text-danger fw-bold' : null",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "show",
+            textStyle: "",
+            field_name: "pages",
+            configuration: {},
+            cell_css_formula: "pages < 800 ? 'text-danger fw-bold' : null",
+          },
+        ],
+      },
+    });
+    const vres = await view.run({}, mockReqRes);
+    // pages >= 800 — no danger class (align class only)
+    expect(vres).toContain('<td class="text-align-right">');
+    // pages < 800 (728) — gets the danger class alongside align class
+    expect(vres).toContain('<td class="text-align-right text-danger fw-bold">');
+  });
+
+  it("cell css formula does not affect rows when formula returns null", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "show",
+                textStyle: "",
+                field_name: "pages",
+                configuration: {},
+                cell_css_formula: "null",
+              },
+              alignment: "Default",
+              col_width_units: "px",
+              cell_css_formula: "null",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "show",
+            textStyle: "",
+            field_name: "pages",
+            configuration: {},
+            cell_css_formula: "null",
+          },
+        ],
+      },
+    });
+    const vres = await view.run({}, mockReqRes);
+    expect(vres).not.toContain("text-danger");
+    expect(vres).toContain("728");
+  });
+
   it("grand total row sums numeric column", async () => {
     const view = await mkViewWithCfg({
       configuration: {
@@ -315,6 +397,7 @@ describe("Misc List views", () => {
     expect(vres).toContain("Subtotal");
     expect(vres).toContain("fw-bold");
   });
+
   it("list view with dropdown menu", async () => {
     const view = await mkViewWithCfg({
       configuration: {
