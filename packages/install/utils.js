@@ -36,6 +36,11 @@ const getUserUid = (user) => {
   return parseInt(res.stdout.toString());
 };
 
+const seLinuxDisabled = () => {
+  const res = spawnSync("sestatus", []);
+  return res.stdout.toString().includes("disabled");
+};
+
 const getDockerEnvVars = (user, dockerMode) => {
   let result = "";
   if (dockerMode === "rootless") {
@@ -267,4 +272,5 @@ module.exports = {
   doAddToDockerGroup,
   pullCapacitorBuilder,
   getDockerEnvVars,
+  seLinuxDisabled
 };

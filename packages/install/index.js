@@ -29,6 +29,7 @@ const {
   doAddToDockerGroup,
   getDockerEnvVars,
   pullCapacitorBuilder,
+  seLinuxDisabled,
 } = require("./utils");
 //const {fetchAsyncQuestionProperty} = require("inquirer/lib/utils/utils");
 
@@ -365,7 +366,15 @@ const installSystemPackages = async (osInfo, user, db, mode, port, dryRun) => {
   }
   const packages =
     installer === "apt"
-      ? ["libpq-dev", "build-essential", python, "git", "libsystemd-dev", "zip", "unzip"]
+      ? [
+          "libpq-dev",
+          "build-essential",
+          python,
+          "git",
+          "libsystemd-dev",
+          "zip",
+          "unzip",
+        ]
       : ["systemd-devel"];
   if (!skipChromium) {
     if (osInfo.distro === "Ubuntu") packages.push("chromium-browser");
@@ -461,8 +470,8 @@ echo 'export PATH=/home/saltcorn/.local/bin:$PATH' >> /home/saltcorn/.bashrc
       isRedHat(osInfo)
         ? ["adduser", user]
         : isSUSE
-        ? ["useradd", "-g", user, "-d", "/home/" + user, "-m", user]
-        : ["adduser", "--disabled-password", "--gecos", '""', user],
+          ? ["useradd", "-g", user, "-d", "/home/" + user, "-m", user]
+          : ["adduser", "--disabled-password", "--gecos", '""', user],
       true,
       dryRun
     );
@@ -641,7 +650,11 @@ const setupPostgres = async (osInfo, user, db, mode, dbName, pg_pass) => {
   // if 80, setcap
   if (port === 80)
     await asyncSudo(
-      ["bash", "-c", "setcap 'cap_net_bind_service=+ep' `readlink -f $(which node)`"],
+      [
+        "bash",
+        "-c",
+        "setcap 'cap_net_bind_service=+ep' `readlink -f $(which node)`",
+      ],
       false,
       dryRun
     );
@@ -699,46 +712,48 @@ WantedBy=multi-user.target`
       false,
       dryRun
     );
-    await asyncSudo(
-      ["restorecon", "-v", "/etc/systemd/system/saltcorn.service"],
-      false,
-      dryRun
-    );
-    await asyncSudo(
-      [
-        "semanage",
-        "fcontext",
-        "-a",
-        "-t",
-        "bin_t",
-        "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin.*",
-      ],
-      false,
-      dryRun
-    );
-    await asyncSudo(
-      [
-        "chcon",
-        "-Rv",
-        "-u",
-        "system_u",
-        "-t",
-        "bin_t",
-        "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin",
-      ],
-      false,
-      dryRun
-    );
-    await asyncSudo(
-      [
-        "restorecon",
-        "-R",
-        "-v",
-        "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin",
-      ],
-      false,
-      dryRun
-    );
+    if (!seLinuxDisabled()) {
+      await asyncSudo(
+        ["restorecon", "-v", "/etc/systemd/system/saltcorn.service"],
+        false,
+        dryRun
+      );
+      await asyncSudo(
+        [
+          "semanage",
+          "fcontext",
+          "-a",
+          "-t",
+          "bin_t",
+          "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin.*",
+        ],
+        false,
+        dryRun
+      );
+      await asyncSudo(
+        [
+          "chcon",
+          "-Rv",
+          "-u",
+          "system_u",
+          "-t",
+          "bin_t",
+          "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin",
+        ],
+        false,
+        dryRun
+      );
+      await asyncSudo(
+        [
+          "restorecon",
+          "-R",
+          "-v",
+          "/home/saltcorn/.local/lib/node_modules/@saltcorn/cli/bin",
+        ],
+        false,
+        dryRun
+      );
+    }
   }
   // start systemd service
   await asyncSudo(["systemctl", "daemon-reload"], false, dryRun);
