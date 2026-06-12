@@ -13,4 +13,4 @@ deb13_node24:
     - apt install -qqy nodejs
     - sudo -iu someuser npx -y saltcorn-install -y -n
     - systemctl is-active saltcorn
-    - wget -qO- http://localhost/ | grep Please
+    - wget -qO- http://localhost/ | grep -F '<p>Please'
