@@ -2161,6 +2161,8 @@ const getForm = async (
           )
             f.attributes.block = column.block;
           if (column.help_text) f.help_text = column.help_text;
+          if (column.help_text_position)
+            f.help_text_position = column.help_text_position;
           return f;
         } else if (table.name === "users" && column.field_name === "password") {
           return new Field({

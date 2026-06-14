@@ -134,3 +134,37 @@ describe("help_text tooltip icon", () => {
     expect(html).toContain('data-bs-placement="right"');
   });
 });
+
+describe("help_text_position inside-input", () => {
+  it("wraps the input in an input-group when position is inside-input", () => {
+    const form = baseForm([
+      baseField({ help_text: "Format: YYYY-MM-DD", help_text_position: "inside-input" }),
+    ]);
+    const html = mkFormContentNoLayout(form);
+    expect(flat(html)).toContain('class="input-group"');
+    expect(html).toContain("fa-info-circle");
+    expect(html).toContain('title="Format: YYYY-MM-DD"');
+  });
+
+  it("does NOT place the icon next to the label when position is inside-input", () => {
+    const form = baseForm([
+      baseField({ help_text: "Format: YYYY-MM-DD", help_text_position: "inside-input" }),
+    ]);
+    const html = mkFormContentNoLayout(form);
+    // Icon must NOT appear inside the label element
+    const labelMatch = html.match(/<label[^>]*>[\s\S]*?<\/label>/);
+    expect(labelMatch).not.toBeNull();
+    expect(labelMatch![0]).not.toContain("fa-info-circle");
+  });
+
+  it("defaults to after-label behaviour when position is omitted", () => {
+    const form = baseForm([
+      baseField({ help_text: "After label" }),
+    ]);
+    const html = mkFormContentNoLayout(form);
+    // No input-group wrapper
+    expect(flat(html)).not.toContain('class="input-group"');
+    // Icon still present
+    expect(html).toContain("fa-info-circle");
+  });
+});
