@@ -588,7 +588,7 @@ class State {
       this.eventTypes[cev.name] = cev;
     });
     this.logLevel = +(this.configs.log_level.value || 1);
-    db.set_sql_logging?.(!!this.configs?.log_sql?.value)
+    db.set_sql_logging?.(!!this.configs?.log_sql?.value);
     if (!noSignal) this.log(5, "Refresh config");
     if (db.is_node) {
       await this.refresh_i18n();
@@ -1534,6 +1534,12 @@ class State {
   async refresh_npmpkgs(noSignal?: boolean) {
     if (this.npm_refresh_in_progess) return;
     this.npm_refresh_in_progess = true;
+    const tenants_set_npm_modules = getRootState().getConfig(
+      "tenants_set_npm_modules",
+      false
+    );
+    const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
+    if (!isRoot && !tenants_set_npm_modules) return;
     const moduleStr: string = this.getConfigCopy("npm_available_js_code", "");
     if (!moduleStr) return;
     const moduleNames = moduleStr
