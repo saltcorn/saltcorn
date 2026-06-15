@@ -341,12 +341,24 @@ const escape_param = (val) =>
         : val;
 
 const error_catcher = (fn) => (request, response, next) => {
+  //XSS protection.
+  // By default, query is not writable in express.  
+  Object.defineProperty(request, "query", {
+    ...Object.getOwnPropertyDescriptor(request, "query"),
+    value: request.query,
+    writable: true,
+  });
+
+  //escape all query arguments
   Object.entries(request.query || {}).forEach(([nm, val]) => {
     request.query[nm] = escape_param(val);
   });
+  //escape all params
   Object.entries(request.params || {}).forEach(([nm, val]) => {
     request.params[nm] = escape_param(val);
   });
+
+  //catch errors
   Promise.resolve(fn(request, response, next)).catch(next);
 };
 
@@ -578,7 +590,10 @@ const sendHtmlStringWithGlobals = (req, res, html_string) => {
   if (locale && !normalized.includes(`dayjslocales/${locale}.js`))
     bodyInject += `<script src="${assetBase}/dayjslocales/${locale}.js"></script>`;
   if (!normalized.includes("dynamic_updates_cfg")) {
-    const dynamic_updates_enabled = state.getConfig("enable_dynamic_updates", false);
+    const dynamic_updates_enabled = state.getConfig(
+      "enable_dynamic_updates",
+      false
+    );
     bodyInject += `<script>var dynamic_updates_cfg = ${JSON.stringify({ enabled: dynamic_updates_enabled })};</script>`;
   }
 
