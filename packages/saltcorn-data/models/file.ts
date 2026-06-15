@@ -74,6 +74,8 @@ const DEFAULT_MIN_ROLE_READ = 100;
  * @category saltcorn-data
  */
 class File {
+  static fixed_user: User | undefined = undefined;
+  static sandbox_dir: string | undefined = undefined;
   filename: string;
   location: string;
   mime_super: string;
@@ -496,6 +498,16 @@ class File {
     const filename = path.basename(filepath);
     if (filename && filename.endsWith(".py")) return "text/x-python";
     return lookup(filename);
+  }
+
+  static subClass({
+    user,
+    sandbox_dir,
+  }: { user?: User; sandbox_dir?: string } = {}): typeof File {
+    return class extends this {
+      static fixed_user = user || undefined;
+      static sandbox_dir = sandbox_dir || undefined;
+    };
   }
 
   static async from_file_on_disk(
