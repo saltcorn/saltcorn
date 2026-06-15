@@ -342,7 +342,8 @@ const escape_param = (val) =>
 
 const error_catcher = (fn) => (request, response, next) => {
   //XSS protection.
-  // By default, query is not writable in express.  
+  // By default, query is not writable in express.
+  // https://stackoverflow.com/a/79604142
   Object.defineProperty(request, "query", {
     ...Object.getOwnPropertyDescriptor(request, "query"),
     value: request.query,
