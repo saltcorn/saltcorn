@@ -74,6 +74,8 @@ const DEFAULT_MIN_ROLE_READ = 100;
  * @category saltcorn-data
  */
 class File {
+  static fixed_user: User | undefined = undefined;
+  static sandbox_dir: string | undefined = undefined;
   filename: string;
   location: string;
   mime_super: string;
@@ -133,6 +135,7 @@ class File {
         relativeSearchFolder
       );
       if (absoluteFolder === null) return [];
+      this.check_sandbox(absoluteFolder);
       const files: File[] = [];
       const searcher = async (folder: string, recursive?: boolean) => {
         let fileNms;
@@ -156,7 +159,7 @@ class File {
           }
           if (where?.search && path.basename(name).indexOf(where.search) < 0)
             continue;
-          const f = await File.from_file_on_disk(
+          const f = await this.from_file_on_disk(
             path.basename(name),
             path.join(folder, path.dirname(name))
           );
@@ -168,7 +171,7 @@ class File {
 
       if (where?.filename) {
         files.push(
-          await File.from_file_on_disk(where?.filename, absoluteFolder)
+          await this.from_file_on_disk(where?.filename, absoluteFolder)
         );
       } else
         await searcher(absoluteFolder, !!where?.search || selectopts.recursive);
@@ -203,6 +206,60 @@ class File {
     // base
     if (joined_path.startsWith(trusted_base)) return joined_path;
     else return null;
+  }
+
+  /**
+   * If a sandbox directory is configured on this (sub)class (via
+   * File.subClass({ sandbox_dir })), ensure that the given absolute path lies
+   * inside the sandbox directory (or is the sandbox directory itself). This is
+   * used to confine untrusted code to a directory tree: any File method that
+   * touches the filesystem routes the path it is about to access through this
+   * guard. Throws if the path escapes the sandbox.
+   *
+   * Symlinks are resolved (on the longest existing prefix of the path) so that
+   * a symlink inside the sandbox cannot be used to read or write outside of it.
+   *
+   * When no sandbox_dir is set this is a no-op and returns the path unchanged.
+   * @param p absolute filesystem path that is about to be accessed
+   * @returns the resolved path
+   */
+  static check_sandbox(p: string): string {
+    const sandbox = this.sandbox_dir;
+    if (!sandbox) return p;
+    const resolvedSandbox = path.resolve(sandbox);
+    const within = (candidate: string) =>
+      candidate === resolvedSandbox ||
+      candidate.startsWith(resolvedSandbox + path.sep);
+    const resolved = path.resolve(p);
+    // resolve symlinks on the longest existing prefix so a symlink cannot be
+    // used to escape the sandbox
+    let real = resolved;
+    try {
+      real = fs.existsSync(resolved)
+        ? fs.realpathSync(resolved)
+        : path.join(
+            fs.realpathSync(path.dirname(resolved)),
+            path.basename(resolved)
+          );
+    } catch (e) {
+      // realpath failed (e.g. a parent does not exist yet) - fall back to the
+      // lexical resolved path only
+    }
+    if (!within(resolved) || !within(real))
+      throw new Error(
+        `File access denied: ${p} is outside the sandbox directory`
+      );
+    return resolved;
+  }
+
+  /**
+   * Instance-level sandbox guard. Reads the sandbox_dir from this instance's
+   * (sub)class so that File instances created from a sandboxed subclass cannot
+   * be used to access files outside the sandbox.
+   * @param p path to check, defaults to this.location
+   */
+  private check_sandbox(p: string = this.location): string {
+    return (this.constructor as typeof File).check_sandbox(p);
   }
 
   static isAbsoluteURL(value?: string): boolean {
@@ -275,7 +332,7 @@ class File {
     if (isS3StorageEnabled()) return File.directoryFromS3Path("/");
     const tenant = db.getTenantSchema();
 
-    return await File.from_file_on_disk(
+    return await this.from_file_on_disk(
       "/",
       path.join(db.connectObj.file_store, tenant)
     );
@@ -294,7 +351,9 @@ class File {
   get absolutePath(): string {
     const tenant = db.getTenantSchema();
     const safeDir = File.absPathToServePath(File.normalise(this.location));
-    return path.join(db.connectObj.file_store, tenant, safeDir);
+    return this.check_sandbox(
+      path.join(db.connectObj.file_store, tenant, safeDir)
+    );
   }
 
   /**
@@ -320,7 +379,9 @@ class File {
       );
     }
     const tenant = db.getTenantSchema();
-    if (!ignoreCache) {
+    // a sandboxed subclass must not use or populate the shared (per-tenant)
+    // directory cache, which can contain directories outside the sandbox
+    if (!ignoreCache && !this.sandbox_dir) {
       const cache = File.getDirCache();
       if (cache === "building") {
         return new Promise((resolve, reject) => {
@@ -350,6 +411,7 @@ class File {
       }
     }
     const root = path.join(db.connectObj.file_store, tenant);
+    this.check_sandbox(root);
     const allPaths: string[] = [];
     const iterFolder = async (folder: string) => {
       allPaths.push(folder);
@@ -363,7 +425,7 @@ class File {
     return await asyncMap(allPaths, async (p: string) => {
       let relnm = p.replace(root, "");
       if (relnm[0] === "/") relnm = relnm.slice(1);
-      const fs = await File.find({ filename: relnm || "/" });
+      const fs = await this.find({ filename: relnm || "/" });
       return fs[0];
     });
   }
@@ -484,6 +546,7 @@ class File {
   }
 
   async is_symlink(): Promise<boolean> {
+    this.check_sandbox();
     try {
       let stat = await fsp.lstat(this.location);
       return stat.isSymbolicLink();
@@ -498,10 +561,31 @@ class File {
     return lookup(filename);
   }
 
+  static subClassIfTenant(): typeof File {
+    const tenant = db.getTenantSchema();
+    const isRoot = tenant === db.connectObj.default_schema;
+    
+    if (isRoot) return File;
+
+    const fileStoreBase = path.join(db.connectObj.file_store, tenant);
+    return File.subClass({ sandbox_dir: fileStoreBase });
+  }
+
+  static subClass({
+    user,
+    sandbox_dir,
+  }: { user?: User; sandbox_dir?: string } = {}): typeof File {
+    return class extends this {
+      static fixed_user = user || undefined;
+      static sandbox_dir = sandbox_dir || undefined;
+    };
+  }
+
   static async from_file_on_disk(
     name: string,
     absoluteFolder: string
   ): Promise<File> {
+    this.check_sandbox(path.join(absoluteFolder, name));
     let stat;
     try {
       stat = await fsp.stat(path.join(absoluteFolder, name));
@@ -531,7 +615,7 @@ class File {
     const isDirectory = stat.isDirectory();
     const mimetype = File.nameToMimeType(name);
     const [mime_super, mime_sub] = mimetype ? mimetype.split("/") : ["", ""];
-    return new File({
+    return new this({
       filename: name,
       location: path.join(absoluteFolder, name),
       size_kb: Math.round(stat.size / 1024),
@@ -586,13 +670,13 @@ class File {
       const name = path.basename(absoluteFolder);
       const dir = path.dirname(absoluteFolder);
       try {
-        return await File.from_file_on_disk(name, dir);
+        return await this.from_file_on_disk(name, dir);
       } catch (e: any) {
         state?.log(2, e?.toString ? e.toString() : e);
         return null;
       }
     }
-    const files = await File.find(where);
+    const files = await this.find(where);
     return files.length > 0 ? files[0] : null;
   }
 
@@ -634,6 +718,7 @@ class File {
       safeInDir,
       safeDir
     );
+    this.check_sandbox(absoluteFolder);
     await mkdir(absoluteFolder, { recursive: true });
 
     return;
@@ -690,6 +775,7 @@ class File {
     if (this.id) {
       await File.update(this.id, { min_role_read });
     } else {
+      this.check_sandbox();
       await xattr_set(
         this.location,
         "user.saltcorn.min_role_read",
@@ -711,6 +797,7 @@ class File {
     if (this.id) {
       await File.update(this.id, { user_id });
     } else {
+      this.check_sandbox();
       await xattr_set(this.location, "user.saltcorn.user_id", `${user_id}`);
     }
   }
@@ -758,7 +845,8 @@ class File {
       await File.update(this.id, { filename });
     } else {
       const newPath = path.join(path.dirname(this.location), filename);
-
+      this.check_sandbox(this.location);
+      this.check_sandbox(newPath);
       await fsp.rename(this.location, newPath);
       await File.update_table_references(
         this.path_to_serve as string,
@@ -833,7 +921,8 @@ class File {
       newFolderNormd,
       this.filename
     );
-
+    this.check_sandbox(this.location);
+    this.check_sandbox(newPath);
     await fsp.rename(this.location, newPath);
     await File.update_table_references(
       this.path_to_serve as string,
@@ -861,6 +950,7 @@ class File {
 
     const newFnm = suggest || uuidv4();
     let newPath = join(file_store, tenant, newFnm);
+    this.check_sandbox(newPath);
     if (renameIfExisting && fs.existsSync(newPath)) {
       const dir = path.dirname(newPath);
 
@@ -928,17 +1018,17 @@ class File {
   ): Promise<File> {
     if (Array.isArray(file)) {
       return await asyncMap(file, (f: any) =>
-        File.from_req_files(f, user_id, min_role_read, folder)
+        this.from_req_files(f, user_id, min_role_read, folder)
       );
     } else {
       // get path to file
-      const newPath = File.get_new_path(path.join(folder, file.name), true);
+      const newPath = this.get_new_path(path.join(folder, file.name), true);
       // set mime type
       const [mime_super, mime_sub] = file.mimetype.split("/");
       // move file in file system to newPath
       await file.mv(newPath);
       // create file
-      return await File.create({
+      return await this.create({
         filename: file.name,
         location: newPath,
         uploaded_at: new Date(),
@@ -961,6 +1051,7 @@ class File {
         ? (buffer.toString(encoding) as unknown as Buffer)
         : buffer;
     }
+    this.check_sandbox();
     return await fsp.readFile(this.location, encoding);
   }
   /**
@@ -982,7 +1073,7 @@ class File {
     folder: string = "/"
   ): Promise<File> {
     // get path to file
-    const newPath = File.get_new_path(path.join(folder, name), true);
+    const newPath = this.get_new_path(path.join(folder, name), true);
     // set mime type
     const [mime_super, mime_sub] = mimetype.split("/");
     // move file in file system to newPath
@@ -1009,9 +1100,10 @@ class File {
         s3_store: true,
       });
     }
+    this.check_sandbox(newPath);
     await fsp.writeFile(newPath, contents1);
     // create file
-    const file = await File.create({
+    const file = await this.create({
       filename: path.basename(newPath),
       location: newPath,
       uploaded_at: new Date(),
@@ -1040,6 +1132,7 @@ class File {
       });
       return;
     }
+    this.check_sandbox();
     await fsp.writeFile(this.location, data);
   }
 
@@ -1068,6 +1161,7 @@ class File {
         }
         return;
       }
+      this.check_sandbox();
       if (unlinker) await unlinker(this);
       else if (this.isDirectory) {
         //delete all resized before attempting to delete dir
@@ -1105,7 +1199,7 @@ class File {
    * @returns {Promise<File>}
    */
   static async create(f: FileCfg): Promise<File> {
-    const file = new File(f);
+    const file = new this(f);
     if (file.s3_store) {
       file.location = File.relativeS3Path(file.location);
       await file.persistS3Metadata();
@@ -1147,7 +1241,7 @@ class File {
   ): Promise<void> {
     if (!user.id)
       throw new Error("Unable to set the attributes, the user has no id");
-    const file = await File.from_file_on_disk(name, absoluteFolder);
+    const file = await this.from_file_on_disk(name, absoluteFolder);
     await file.set_user(user.id);
     await file.set_role(user.role_id);
   }

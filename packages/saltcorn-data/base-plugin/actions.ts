@@ -52,6 +52,7 @@ const {
   mergeActionResults,
 } = require("../utils");
 const db = require("../db");
+
 const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
 const { available_languages } = require("../models/config");
 const MetaData = require("../models/metadata");
@@ -161,7 +162,6 @@ const run_code = async ({
     //console.error("strip error", e);
     code = configuration.code;
   }
-
   const run_where = configuration.run_where;
   if (run_where === "Client page")
     return {
@@ -268,7 +268,7 @@ const run_code = async ({
       await sysState.refresh();
     },
     URL,
-    File: File,
+    File: File.subClassIfTenant(),
     User,
     View,
     Page,
