@@ -337,12 +337,24 @@ const escape_param = (val) =>
         : val;
 
 const error_catcher = (fn) => (request, response, next) => {
+  //XSS protection.
+  // By default, query is not writable in express.  
+  Object.defineProperty(request, "query", {
+    ...Object.getOwnPropertyDescriptor(request, "query"),
+    value: request.query,
+    writable: true,
+  });
+
+  //escape all query arguments
   Object.entries(request.query || {}).forEach(([nm, val]) => {
     request.query[nm] = escape_param(val);
   });
+  //escape all params
   Object.entries(request.params || {}).forEach(([nm, val]) => {
     request.params[nm] = escape_param(val);
   });
+
+  //catch errors
   Promise.resolve(fn(request, response, next)).catch(next);
 };
 
