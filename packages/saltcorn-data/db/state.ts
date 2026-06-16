@@ -1216,7 +1216,7 @@ class State {
         const myContext = {
           ...this.function_context,
           Table,
-          File,
+          File: File.subClassIfTenant(),
           View,
           User,
           Page,
