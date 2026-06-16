@@ -561,6 +561,16 @@ class File {
     return lookup(filename);
   }
 
+  static subClassIfTenant(): typeof File {
+    const tenant = db.getTenantSchema();
+    const isRoot = tenant === db.connectObj.default_schema;
+    
+    if (isRoot) return File;
+
+    const fileStoreBase = path.join(db.connectObj.file_store, tenant);
+    return File.subClass({ sandbox_dir: fileStoreBase });
+  }
+
   static subClass({
     user,
     sandbox_dir,

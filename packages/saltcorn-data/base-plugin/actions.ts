@@ -52,7 +52,6 @@ const {
   mergeActionResults,
 } = require("../utils");
 const db = require("../db");
-const path = require("path");
 
 const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
 const { available_languages } = require("../models/config");
@@ -163,10 +162,6 @@ const run_code = async ({
     //console.error("strip error", e);
     code = configuration.code;
   }
-  const tenant = db.getTenantSchema();
-
-  const isRoot = tenant === db.connectObj.default_schema;
-  const fileStoreBase = path.join(db.connectObj.file_store, tenant);
   const run_where = configuration.run_where;
   if (run_where === "Client page")
     return {
@@ -273,7 +268,7 @@ const run_code = async ({
       await sysState.refresh();
     },
     URL,
-    File: isRoot ? File : File.subClass({ sandbox_dir: fileStoreBase }),
+    File: File.subClassIfTenant(),
     User,
     View,
     Page,
