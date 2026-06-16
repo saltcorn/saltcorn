@@ -2677,6 +2677,36 @@ describe("table providers", () => {
   });
 });
 
+describe("table provider state passthrough", () => {
+  it("should register plugin with state provider", async () => {
+    getState().registerPlugin("mock_plugin", plugin_with_routes());
+  });
+  it("should create table with state-reflecting provider", async () => {
+    await Table.create("StateTable", {
+      provider_name: "provtab_state",
+      provider_cfg: { label: "test" },
+    });
+    await getState().refresh_tables();
+  });
+  it("state is forwarded to getRows when getJoinedRows is called with state", async () => {
+    const table = Table.findOne({ name: "StateTable" });
+    assertIsSet(table);
+    const rows = await table.getJoinedRows({
+      where: {},
+      state: { search: "hello", page: "2" },
+    });
+    expect(rows.length).toBe(1);
+    expect(JSON.parse(rows[0].val)).toEqual({ search: "hello", page: "2" });
+  });
+  it("state is null in selopts when getJoinedRows called without state", async () => {
+    const table = Table.findOne({ name: "StateTable" });
+    assertIsSet(table);
+    const rows = await table.getJoinedRows({ where: {} });
+    expect(rows.length).toBe(1);
+    expect(JSON.parse(rows[0].val)).toBeNull();
+  });
+});
+
 describe("distance ordering", () => {
   it("should create table", async () => {
     const tc = await Table.create("geotable1");

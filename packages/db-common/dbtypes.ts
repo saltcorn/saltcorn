@@ -67,6 +67,7 @@ export type SelectOptions = {
   schema?: string;
   pk_name?: string;
   disable_ownership_postqfilter?: boolean;
+  state?: Record<string, any>;
 };
 export type JoinField = {
   ref: string;
