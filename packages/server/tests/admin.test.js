@@ -461,7 +461,10 @@ describe("actions", () => {
       .post("/api/action/myact")
       .set("Cookie", loginCookie)
       .expect(
-        respondJsonWith(200, ({ success, data }) => success && data === 27)
+        respondJsonWith(
+          200,
+          ({ success, data }) => success === true && data === 27
+        )
       );
   });
   it("deletes trigger", async () => {
@@ -627,9 +630,15 @@ describe("server logs viewer", () => {
   itShouldIncludeTextForAdmin("/admin/dev/logs_viewer", "Server logs");
 });
 
-
 describe("admin reflective xss", () => {
-  itShouldNotIncludeTextForAdmin("/admin/edit-codepage/%3Cimg%20src%3Dx%20onerror%3Dalert%281%29%3E%0A", "<img src=x onerror=alert(1)>");
+  itShouldNotIncludeTextForAdmin(
+    "/admin/edit-codepage/%3Cimg%20src%3Dx%20onerror%3Dalert%281%29%3E%0A",
+    "<img src=x onerror=alert(1)>"
+  );
+  itShouldNotIncludeTextForAdmin(
+    `/files/picker?file_exts[]=%27"%20><script>alert(window.location)</script><%20a=%27""%27`,
+    "<script>alert(window.location)</script>"
+  );
 });
 
 /**
