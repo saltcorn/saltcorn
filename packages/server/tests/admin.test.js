@@ -639,6 +639,122 @@ describe("admin reflective xss", () => {
     `/files/picker?file_exts[]=%27"%20><script>alert(window.location)</script><%20a=%27""%27`,
     "<script>alert(window.location)</script>"
   );
+  itShouldNotIncludeTextForAdmin(
+    `/files/picker?file_exts[]=%27%22tabindex=%221%22%20autofocus%20onfocus=%22alert(window.origin)%22%20x=%22%22%27`,
+    `autofocus onfocus="alert(window.origin)"`
+  );
+  // A query param value that is a JSON object/array literal must still be
+  // escaped against attribute-context breakout. The structural quotes of the
+  // JSON literal can themselves close the file_exts="..." attribute, and the
+  // string content can carry an (unquoted) event handler. file_exts arrives
+  // as an array (file_exts[]=...), which is rendered into the attribute
+  // without mktag's per-string quote escaping.
+  itShouldNotIncludeTextForAdmin(
+    // ["x autofocus onfocus=alert(window.origin) y"]
+    // A breakout closes the attribute right after the opening bracket, so the
+    // payload's quote must not appear unescaped immediately after [.
+    `/files/picker?file_exts[]=%5B%22x%20autofocus%20onfocus%3Dalert(window.origin)%20y%22%5D`,
+    `file_exts="["`
+  );
+  itShouldNotIncludeTextForAdmin(
+    // {"x onfocus=alert(window.origin) y":1}
+    `/files/picker?file_exts[]=%7B%22x%20onfocus%3Dalert(window.origin)%20y%22%3A1%7D`,
+    `file_exts="{"`
+  );
+  // mktag's ppAttrib only escapes " in attribute values, and xss() passes
+  // whitelisted tags (img, a, ...) through with their raw angle brackets.
+  // So raw markup characters land unescaped inside the file_exts attribute.
+  itShouldNotIncludeTextForAdmin(
+    // <img src=x>
+    `/files/picker?file_exts=%3Cimg%20src%3Dx%3E`,
+    `file_exts="<img`
+  );
+  itShouldNotIncludeTextForAdmin(
+    // file_exts[]=<img src=x>
+    `/files/picker?file_exts[]=%3Cimg%20src%3Dx%3E`,
+    `file_exts="<img`
+  );
+
+  // --- Regression coverage for other file_exts shapes considered during
+  // review. These are not currently vulnerable, but assert that the various
+  // query shapes (objects, nested structures, single-value JSON literals,
+  // whitelisted tags) stay escaped so future changes can't reopen a hole.
+  // All payloads carry the quoted handler onfocus="alert(1)"; if the value
+  // ever broke out of the attribute, that exact string would appear.
+  const quotedHandler = `%22%20autofocus%20onfocus%3D%22alert(1)%22%20x%3D%22`;
+  // object via qs: file_exts[a]=... -> escape_param does not recurse objects,
+  // and mktag renders the object as "[object Object]" (payload never shown).
+  itShouldNotIncludeTextForAdmin(
+    `/files/picker?file_exts[a]=${quotedHandler}`,
+    `onfocus="alert(1)"`
+  );
+  // object nested inside an array: file_exts[0][a]=...
+  itShouldNotIncludeTextForAdmin(
+    `/files/picker?file_exts[0][a]=${quotedHandler}`,
+    `onfocus="alert(1)"`
+  );
+  // nested array: file_exts[0][0]=... (value is rendered, must be escaped)
+  itShouldNotIncludeTextForAdmin(
+    `/files/picker?file_exts[0][0]=${quotedHandler}`,
+    `onfocus="alert(1)"`
+  );
+  // single-value (non-array) JSON literals must also not break out
+  itShouldNotIncludeTextForAdmin(
+    // ["x autofocus onfocus=alert(window.origin) y"]
+    `/files/picker?file_exts=%5B%22x%20autofocus%20onfocus%3Dalert(window.origin)%20y%22%5D`,
+    `file_exts="["`
+  );
+  itShouldNotIncludeTextForAdmin(
+    // {"x onfocus=alert(window.origin) y":1}
+    `/files/picker?file_exts=%7B%22x%20onfocus%3Dalert(window.origin)%20y%22%3A1%7D`,
+    `file_exts="{"`
+  );
+  // whitelisted tag carried inside a JSON literal must have its angle
+  // brackets escaped (xss() would otherwise let <img> through raw)
+  itShouldNotIncludeTextForAdmin(
+    // ["<img src=x>"]
+    `/files/picker?file_exts=%5B%22%3Cimg%20src%3Dx%3E%22%5D`,
+    "<img"
+  );
+});
+
+// /admin/xsstarget reflects ?x into an element body via div(x) (test mode only)
+describe("admin xsstarget reflective xss", () => {
+  // body-context escaping from escape_param / text(): script tags and event
+  // handlers must be neutralised.
+  itShouldNotIncludeTextForAdmin(
+    // <script>alert(1)</script>
+    `/admin/xsstarget?x=%3Cscript%3Ealert(1)%3C%2Fscript%3E`,
+    "<script>alert(1)</script>"
+  );
+  itShouldNotIncludeTextForAdmin(
+    // <img src=x onerror=alert(1)>
+    `/admin/xsstarget?x=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E`,
+    "onerror=alert(1)"
+  );
+  itShouldNotIncludeTextForAdmin(
+    // an <a href=javascript:..> link
+    `/admin/xsstarget?x=%3Ca%20href%3Djavascript:alert(1)%3Eclick%3C%2Fa%3E`,
+    "javascript:alert(1)"
+  );
+  // div(x) treats an object x as ATTRIBUTES, not body. escape_param does not
+  // recurse into objects and mktag never escapes attribute *keys*, so a query
+  // like ?x[onmouseover]=alert(1) injects a live event handler attribute.
+  itShouldNotIncludeTextForAdmin(
+    `/admin/xsstarget?x[onmouseover]=alert(1)`,
+    `onmouseover="alert(1)"`
+  );
+  // the same, with the whole handler smuggled through the object *key*
+  itShouldNotIncludeTextForAdmin(
+    // x[ onmouseover=alert(1) ]=1
+    `/admin/xsstarget?x[%20onmouseover%3Dalert(1)%20]=1`,
+    "onmouseover=alert(1)"
+  );
+  itShouldNotIncludeTextForAdmin(
+    // x[onclick]=alert(1)&x[tabindex]=1 -> two injected attributes
+    `/admin/xsstarget?x[onclick]=alert(1)&x[tabindex]=1`,
+    `onclick="alert(1)"`
+  );
 });
 
 /**
