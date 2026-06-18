@@ -661,6 +661,61 @@ describe("admin reflective xss", () => {
     `/files/picker?file_exts[]=%7B%22x%20onfocus%3Dalert(window.origin)%20y%22%3A1%7D`,
     `file_exts="{"`
   );
+  // mktag's ppAttrib only escapes " in attribute values, and xss() passes
+  // whitelisted tags (img, a, ...) through with their raw angle brackets.
+  // So raw markup characters land unescaped inside the file_exts attribute.
+  itShouldNotIncludeTextForAdmin(
+    // <img src=x>
+    `/files/picker?file_exts=%3Cimg%20src%3Dx%3E`,
+    `file_exts="<img`
+  );
+  itShouldNotIncludeTextForAdmin(
+    // file_exts[]=<img src=x>
+    `/files/picker?file_exts[]=%3Cimg%20src%3Dx%3E`,
+    `file_exts="<img`
+  );
+
+  // --- Regression coverage for other file_exts shapes considered during
+  // review. These are not currently vulnerable, but assert that the various
+  // query shapes (objects, nested structures, single-value JSON literals,
+  // whitelisted tags) stay escaped so future changes can't reopen a hole.
+  // All payloads carry the quoted handler onfocus="alert(1)"; if the value
+  // ever broke out of the attribute, that exact string would appear.
+  const quotedHandler = `%22%20autofocus%20onfocus%3D%22alert(1)%22%20x%3D%22`;
+  // object via qs: file_exts[a]=... -> escape_param does not recurse objects,
+  // and mktag renders the object as "[object Object]" (payload never shown).
+  itShouldNotIncludeTextForAdmin(
+    `/files/picker?file_exts[a]=${quotedHandler}`,
+    `onfocus="alert(1)"`
+  );
+  // object nested inside an array: file_exts[0][a]=...
+  itShouldNotIncludeTextForAdmin(
+    `/files/picker?file_exts[0][a]=${quotedHandler}`,
+    `onfocus="alert(1)"`
+  );
+  // nested array: file_exts[0][0]=... (value is rendered, must be escaped)
+  itShouldNotIncludeTextForAdmin(
+    `/files/picker?file_exts[0][0]=${quotedHandler}`,
+    `onfocus="alert(1)"`
+  );
+  // single-value (non-array) JSON literals must also not break out
+  itShouldNotIncludeTextForAdmin(
+    // ["x autofocus onfocus=alert(window.origin) y"]
+    `/files/picker?file_exts=%5B%22x%20autofocus%20onfocus%3Dalert(window.origin)%20y%22%5D`,
+    `file_exts="["`
+  );
+  itShouldNotIncludeTextForAdmin(
+    // {"x onfocus=alert(window.origin) y":1}
+    `/files/picker?file_exts=%7B%22x%20onfocus%3Dalert(window.origin)%20y%22%3A1%7D`,
+    `file_exts="{"`
+  );
+  // whitelisted tag carried inside a JSON literal must have its angle
+  // brackets escaped (xss() would otherwise let <img> through raw)
+  itShouldNotIncludeTextForAdmin(
+    // ["<img src=x>"]
+    `/files/picker?file_exts=%5B%22%3Cimg%20src%3Dx%3E%22%5D`,
+    "<img"
+  );
 });
 
 /**

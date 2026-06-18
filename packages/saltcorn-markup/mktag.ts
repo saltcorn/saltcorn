@@ -51,6 +51,18 @@ const ppStyle = (cs: StyleVal): string => {
 };
 
 /**
+ * Escape a value for use inside a double-quoted HTML attribute. Escapes the
+ * quote (to prevent breaking out of the attribute) as well as angle brackets
+ * (so attacker-controlled markup cannot be injected raw). & is intentionally
+ * left alone: upstream callers already emit entities (e.g. &quot;, &lt;), and
+ * escaping & here would double-encode them.
+ * @param {string} s
+ * @returns {string}
+ */
+const escAttrVal = (s: string): string =>
+  s.replaceAll('"', "&quot;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+
+/**
  * @param {object[]} opts
  * @param {string} opts.k
  * @param {boolean} [opts.v]
@@ -71,11 +83,11 @@ const ppAttrib = ([k, v]: [
         : k === "style"
           ? ppStyle(v as StyleVal)
           : typeof v === "string"
-            ? `${k}="${v.replaceAll('"', "&quot;")}"`
+            ? `${k}="${escAttrVal(v)}"`
             : // non-string values (e.g. arrays/numbers) are stringified into
-              // the attribute; escape quotes so a value such as an array of
-              // JSON literals cannot break out of the attribute context.
-              `${k}="${String(v).replaceAll('"', "&quot;")}"`;
+              // the attribute; escape so a value such as an array of JSON
+              // literals cannot break out of the attribute context.
+              `${k}="${escAttrVal(String(v))}"`;
 
 /**
  * @param {string} tnm
