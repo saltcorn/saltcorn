@@ -365,3 +365,25 @@
   --bs-body-color: #fff;
   --bs-card-border-color: #44484e;
 }
+
+@keyframes wf-node-highlight {
+  0% {
+    box-shadow:
+      0 0 0 1px var(--bs-primary, #0d6efd),
+      0 4px 10px rgba(0, 0, 0, 0.06);
+  }
+  60% {
+    box-shadow:
+      0 0 0 1px var(--bs-primary, #0d6efd),
+      0 4px 10px rgba(0, 0, 0, 0.06);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0px transparent,
+      0 4px 10px rgba(0, 0, 0, 0.06);
+  }
+}
+
+.wf-node--highlighted {
+  animation: wf-node-highlight 3s ease-out forwards;
+}
