@@ -17,6 +17,8 @@ RUN npm config set fund false \
 
 RUN npm install -g eslint@8.57.0
 
+RUN npx playwright install --with-deps chromium
+
 WORKDIR /opt/saltcorn
 
 COPY . /opt/saltcorn
