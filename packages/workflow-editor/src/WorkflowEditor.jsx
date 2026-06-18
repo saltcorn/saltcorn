@@ -140,7 +140,7 @@ const StepNode = ({ data }) => {
 
   return (
     <div
-      className="wf-node"
+      className={`wf-node${data.highlighted ? " wf-node--highlighted" : ""}`}
       onClick={handleClick}
       role="button"
       tabIndex={0}
@@ -783,7 +783,11 @@ const StepDrawer = ({
                   key={ns.id}
                   className="btn btn-sm btn-outline-secondary"
                   onClick={() => onNavToStep(ns.id)}
-                  title={ns.isLoopBody ? "Navigate to loop body" : "Navigate to next step"}
+                  title={
+                    ns.isLoopBody
+                      ? "Navigate to loop body"
+                      : "Navigate to next step"
+                  }
                 >
                   {ns.isLoopBody ? `↺ ${ns.name}` : `${ns.name} →`}
                 </button>
@@ -881,6 +885,8 @@ const WorkflowEditor = ({ data }) => {
   const lastHeightRef = useRef(null);
   const heightDebounceRef = useRef(null);
   const [navHistory, setNavHistory] = useState([]);
+  const [highlightedNodeId, setHighlightedNodeId] = useState(null);
+  const highlightTimerRef = useRef(null);
 
   const drawerStorageKey = useMemo(
     () => `wf-drawer:${data?.trigger?.id || "default"}`,
@@ -1481,7 +1487,12 @@ const WorkflowEditor = ({ data }) => {
   );
 
   const openStepForm = useCallback(
-    async ({ stepId, initial_step, after_step, _skipHistoryReset = false } = {}) => {
+    async ({
+      stepId,
+      initial_step,
+      after_step,
+      _skipHistoryReset = false,
+    } = {}) => {
       if (stepId && !_skipHistoryReset) setNavHistory([String(stepId)]);
       try {
         setError("");
@@ -2094,6 +2105,19 @@ const WorkflowEditor = ({ data }) => {
   useEffect(() => {
     setNodes((nds) =>
       nds.map((n) =>
+        n.type === "step"
+          ? {
+              ...n,
+              data: { ...n.data, highlighted: n.id === highlightedNodeId },
+            }
+          : n
+      )
+    );
+  }, [highlightedNodeId, setNodes]);
+
+  useEffect(() => {
+    setNodes((nds) =>
+      nds.map((n) =>
         n.type === "start"
           ? {
               ...n,
@@ -2114,7 +2138,10 @@ const WorkflowEditor = ({ data }) => {
                 ...n,
                 data: {
                   ...n.data,
-                  onEdit: (id) => openStepForm({ stepId: id }),
+                  onEdit: (id) => {
+                    openStepForm({ stepId: id });
+                    setTimeout(() => focusNode(id), 300);
+                  },
                   onAddAfter,
                   onSetStart,
                   onClearNext,
@@ -2124,6 +2151,7 @@ const WorkflowEditor = ({ data }) => {
       )
     );
   }, [
+    focusNode,
     onAddAfter,
     onClearNext,
     onDelete,
@@ -2220,12 +2248,29 @@ const WorkflowEditor = ({ data }) => {
     clearDrawerState();
   }, [clearDrawerState]);
 
+  const focusNode = useCallback((stepId) => {
+    if (!rfInstanceRef.current || !stepId) return;
+    rfInstanceRef.current.fitView({
+      nodes: [{ id: String(stepId) }],
+      duration: 400,
+      padding: 0.3,
+      maxZoom: 1.2,
+    });
+    if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
+    setHighlightedNodeId(String(stepId));
+    highlightTimerRef.current = setTimeout(() => {
+      setHighlightedNodeId(null);
+      highlightTimerRef.current = null;
+    }, 3000);
+  }, []);
+
   const navToStep = useCallback(
     async (stepId) => {
       setNavHistory((prev) => [...prev, String(stepId)]);
       await openStepForm({ stepId, _skipHistoryReset: true });
+      focusNode(stepId);
     },
-    [openStepForm]
+    [openStepForm, focusNode]
   );
 
   const navBack = useCallback(async () => {
@@ -2234,21 +2279,27 @@ const WorkflowEditor = ({ data }) => {
     const prevId = newHistory[newHistory.length - 1];
     setNavHistory(newHistory);
     await openStepForm({ stepId: prevId, _skipHistoryReset: true });
-  }, [navHistory, openStepForm]);
+    focusNode(prevId);
+  }, [navHistory, openStepForm, focusNode]);
 
   const navNextSteps = useMemo(() => {
     if (!modal?.stepId) return [];
     const step = steps.find((s) => String(s.id) === String(modal.stepId));
     if (!step) return [];
     const allStepNames = steps.map((s) => s.name).filter(Boolean);
-    const nextNames = resolveNextStepNames(step.next_step, allStepNames, idByName);
+    const nextNames = resolveNextStepNames(
+      step.next_step,
+      allStepNames,
+      idByName
+    );
     const result = nextNames
       .map((name) => ({ id: idByName[name], name }))
       .filter((x) => x.id);
     if (step.action_name === "ForLoop") {
       const loopBodyName = step.configuration?.loop_body_initial_step;
       const loopBodyId = loopBodyName && idByName[loopBodyName];
-      if (loopBodyId) result.push({ id: loopBodyId, name: loopBodyName, isLoopBody: true });
+      if (loopBodyId)
+        result.push({ id: loopBodyId, name: loopBodyName, isLoopBody: true });
     }
     return result;
   }, [modal?.stepId, steps, idByName]);
