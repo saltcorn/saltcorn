@@ -337,7 +337,10 @@ const escape_param = (val) =>
     : val === "__proto__" || val === "constructor"
       ? ""
       : typeof val === "string"
-        ? text(val)
+        ? // xss() escapes tags but leaves quotes, which allows breaking out of
+          // HTML attribute contexts. Also escape quotes so reflected query
+          // params are safe in attribute contexts.
+          text(val).replaceAll('"', "&quot;").replaceAll("'", "&#39;")
         : val;
 
 const error_catcher = (fn) => (request, response, next) => {

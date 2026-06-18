@@ -639,6 +639,10 @@ describe("admin reflective xss", () => {
     `/files/picker?file_exts[]=%27"%20><script>alert(window.location)</script><%20a=%27""%27`,
     "<script>alert(window.location)</script>"
   );
+  itShouldNotIncludeTextForAdmin(
+    `/files/picker?file_exts[]=%27%22tabindex=%221%22%20autofocus%20onfocus=%22alert(window.origin)%22%20x=%22%22%27`,
+    `autofocus onfocus="alert(window.origin)"`
+  );
 });
 
 /**
