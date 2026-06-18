@@ -2,6 +2,8 @@
 
 ## 1.6.0 - In development
 
+* When generating run_js_code code with AI, show a preview first the user can approve or reject.
+
 * The builder now resyncs with the server when its browser tab is activated or returns from a back button click
 
 * state objects can now be used as the query in a TableQuery workflow step. This is useful if you run a workflow action in a Filter and set row variable = state, and then use `row` as the query in  TableQuery step.
