@@ -356,13 +356,38 @@ const escape_param = (val) => {
         // of HTML attribute contexts. Also escape quotes so reflected
         // query params are safe in attribute contexts.
         text(val).replaceAll('"', "&quot;").replaceAll("'", "&#39;");
-  // Disallow object query/param values entirely. They are never used
-  // legitimately, and when passed to a tag helper such as div(x) the object
-  // is rendered as the element's ATTRIBUTES, turning attacker-controlled keys
-  // into attribute names (e.g. ?x[onmouseover]=alert(1)) - an attribute-name
-  // injection that escaping cannot neutralise. Drop them.
-  if (val && typeof val === "object") return "";
+  // For object query/param values, recursively escape the values but also drop
+  // keys that could become XSS/CSS attribute-name vectors. When an object is
+  // passed to a tag helper such as div(x) it is rendered as the element's
+  // ATTRIBUTES, turning attacker-controlled keys into attribute names
+  // (e.g. ?x[onmouseover]=alert(1)) - an attribute-name injection that value
+  // escaping cannot neutralise. So we keep only keys that cannot break out of,
+  // or inject into, the attribute context.
+  if (val && typeof val === "object") {
+    const out = {};
+    Object.entries(val).forEach(([k, v]) => {
+      if (is_safe_attr_key(k)) out[k] = escape_param(v);
+    });
+    return out;
+  }
   return val;
+};
+
+// A query/param object key is only safe if it cannot become a dangerous HTML
+// attribute name when the object is reflected as a tag's attributes. We reject:
+//  - prototype-pollution keys
+//  - event-handler attributes (on*) - the classic XSS vector
+//  - the style attribute - a CSS injection vector
+//  - any key containing characters that allow breaking out of the attribute
+//    name or injecting further attributes (whitespace, quotes, =, <, >, /, etc.)
+const is_safe_attr_key = (k) => {
+  if (typeof k !== "string") return false;
+  if (k === "__proto__" || k === "constructor" || k === "prototype")
+    return false;
+  if (/^on/i.test(k)) return false;
+  if (k.toLowerCase() === "style") return false;
+  // only allow conservative attribute-name characters
+  return /^[A-Za-z0-9_.:>\-[\]]+$/.test(k);
 };
 
 const error_catcher = (fn) => (request, response, next) => {
