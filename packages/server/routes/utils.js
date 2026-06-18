@@ -346,19 +346,24 @@ const is_json_literal = (s) => {
   }
 };
 
-const escape_param = (val) =>
-  Array.isArray(val)
-    ? val.map(escape_param)
-    : val === "__proto__" || val === "constructor"
-      ? ""
-      : typeof val === "string"
-        ? is_json_literal(val)
-          ? text(val)
-          : // xss() escapes tags but leaves quotes, which allows breaking out
-            // of HTML attribute contexts. Also escape quotes so reflected
-            // query params are safe in attribute contexts.
-            text(val).replaceAll('"', "&quot;").replaceAll("'", "&#39;")
-        : val;
+const escape_param = (val) => {
+  if (Array.isArray(val)) return val.map(escape_param);
+  if (val === "__proto__" || val === "constructor") return "";
+  if (typeof val === "string")
+    return is_json_literal(val)
+      ? text(val)
+      : // xss() escapes tags but leaves quotes, which allows breaking out
+        // of HTML attribute contexts. Also escape quotes so reflected
+        // query params are safe in attribute contexts.
+        text(val).replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+  // Disallow object query/param values entirely. They are never used
+  // legitimately, and when passed to a tag helper such as div(x) the object
+  // is rendered as the element's ATTRIBUTES, turning attacker-controlled keys
+  // into attribute names (e.g. ?x[onmouseover]=alert(1)) - an attribute-name
+  // injection that escaping cannot neutralise. Drop them.
+  if (val && typeof val === "object") return "";
+  return val;
+};
 
 const error_catcher = (fn) => (request, response, next) => {
   //XSS protection.

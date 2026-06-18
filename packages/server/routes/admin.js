@@ -121,6 +121,7 @@ const {
   sleep,
   dataModulePath,
   imageAvailable,
+  isTest,
 } = require("@saltcorn/data/utils");
 const stream = require("stream");
 const Crash = require("@saltcorn/data/models/crash");
@@ -5923,3 +5924,15 @@ admin_config_route({
     });
   },
 });
+
+router.get(
+  "/xsstarget",
+  isAdmin,
+  error_catcher(async (req, res) => {
+    const { x } = req.query;
+
+    res.sendWrap(`Testing`, {
+      above: [isTest() ? div(x) : "Nothing to see here"],
+    });
+  })
+);

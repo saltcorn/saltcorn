@@ -718,6 +718,45 @@ describe("admin reflective xss", () => {
   );
 });
 
+// /admin/xsstarget reflects ?x into an element body via div(x) (test mode only)
+describe("admin xsstarget reflective xss", () => {
+  // body-context escaping from escape_param / text(): script tags and event
+  // handlers must be neutralised.
+  itShouldNotIncludeTextForAdmin(
+    // <script>alert(1)</script>
+    `/admin/xsstarget?x=%3Cscript%3Ealert(1)%3C%2Fscript%3E`,
+    "<script>alert(1)</script>"
+  );
+  itShouldNotIncludeTextForAdmin(
+    // <img src=x onerror=alert(1)>
+    `/admin/xsstarget?x=%3Cimg%20src%3Dx%20onerror%3Dalert(1)%3E`,
+    "onerror=alert(1)"
+  );
+  itShouldNotIncludeTextForAdmin(
+    // an <a href=javascript:..> link
+    `/admin/xsstarget?x=%3Ca%20href%3Djavascript:alert(1)%3Eclick%3C%2Fa%3E`,
+    "javascript:alert(1)"
+  );
+  // div(x) treats an object x as ATTRIBUTES, not body. escape_param does not
+  // recurse into objects and mktag never escapes attribute *keys*, so a query
+  // like ?x[onmouseover]=alert(1) injects a live event handler attribute.
+  itShouldNotIncludeTextForAdmin(
+    `/admin/xsstarget?x[onmouseover]=alert(1)`,
+    `onmouseover="alert(1)"`
+  );
+  // the same, with the whole handler smuggled through the object *key*
+  itShouldNotIncludeTextForAdmin(
+    // x[ onmouseover=alert(1) ]=1
+    `/admin/xsstarget?x[%20onmouseover%3Dalert(1)%20]=1`,
+    "onmouseover=alert(1)"
+  );
+  itShouldNotIncludeTextForAdmin(
+    // x[onclick]=alert(1)&x[tabindex]=1 -> two injected attributes
+    `/admin/xsstarget?x[onclick]=alert(1)&x[tabindex]=1`,
+    `onclick="alert(1)"`
+  );
+});
+
 /**
  * Clear all tests
  */
