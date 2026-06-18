@@ -2049,6 +2049,10 @@ router.get(
     const csvOpts = {};
     const cast = {
       date: (value) => value.toISOString(),
+      object: (o) => {
+        if (o?.constructor?.name === "PlainDate") return o.toISOString();
+        return JSON.stringify(o);
+      },
       boolean: (v) => (v ? "true" : "false"),
     };
     const locale = req.getLocale();
