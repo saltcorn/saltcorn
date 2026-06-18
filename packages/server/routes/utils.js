@@ -331,16 +331,33 @@ const csrfField = (req) =>
  * @returns {function}
  */
 
+// Some query params carry a JSON object/array literal (e.g. _relation_path_)
+// that is consumed via JSON.parse rather than reflected into markup. xss()
+// leaves quotes intact, so such a literal stays parseable - but we must not
+// add the extra attribute-context quote escaping below, which would corrupt it.
+const is_json_literal = (s) => {
+  const t = s.trim();
+  if (!(t.startsWith("{") || t.startsWith("["))) return false;
+  try {
+    const parsed = JSON.parse(t);
+    return parsed !== null && typeof parsed === "object";
+  } catch {
+    return false;
+  }
+};
+
 const escape_param = (val) =>
   Array.isArray(val)
     ? val.map(escape_param)
     : val === "__proto__" || val === "constructor"
       ? ""
       : typeof val === "string"
-        ? // xss() escapes tags but leaves quotes, which allows breaking out of
-          // HTML attribute contexts. Also escape quotes so reflected query
-          // params are safe in attribute contexts.
-          text(val).replaceAll('"', "&quot;").replaceAll("'", "&#39;")
+        ? is_json_literal(val)
+          ? text(val)
+          : // xss() escapes tags but leaves quotes, which allows breaking out
+            // of HTML attribute contexts. Also escape quotes so reflected
+            // query params are safe in attribute contexts.
+            text(val).replaceAll('"', "&quot;").replaceAll("'", "&#39;")
         : val;
 
 const error_catcher = (fn) => (request, response, next) => {

@@ -643,6 +643,24 @@ describe("admin reflective xss", () => {
     `/files/picker?file_exts[]=%27%22tabindex=%221%22%20autofocus%20onfocus=%22alert(window.origin)%22%20x=%22%22%27`,
     `autofocus onfocus="alert(window.origin)"`
   );
+  // A query param value that is a JSON object/array literal must still be
+  // escaped against attribute-context breakout. The structural quotes of the
+  // JSON literal can themselves close the file_exts="..." attribute, and the
+  // string content can carry an (unquoted) event handler. file_exts arrives
+  // as an array (file_exts[]=...), which is rendered into the attribute
+  // without mktag's per-string quote escaping.
+  itShouldNotIncludeTextForAdmin(
+    // ["x autofocus onfocus=alert(window.origin) y"]
+    // A breakout closes the attribute right after the opening bracket, so the
+    // payload's quote must not appear unescaped immediately after [.
+    `/files/picker?file_exts[]=%5B%22x%20autofocus%20onfocus%3Dalert(window.origin)%20y%22%5D`,
+    `file_exts="["`
+  );
+  itShouldNotIncludeTextForAdmin(
+    // {"x onfocus=alert(window.origin) y":1}
+    `/files/picker?file_exts[]=%7B%22x%20onfocus%3Dalert(window.origin)%20y%22%3A1%7D`,
+    `file_exts="{"`
+  );
 });
 
 /**

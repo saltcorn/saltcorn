@@ -72,7 +72,10 @@ const ppAttrib = ([k, v]: [
           ? ppStyle(v as StyleVal)
           : typeof v === "string"
             ? `${k}="${v.replaceAll('"', "&quot;")}"`
-            : `${k}="${v}"`;
+            : // non-string values (e.g. arrays/numbers) are stringified into
+              // the attribute; escape quotes so a value such as an array of
+              // JSON literals cannot break out of the attribute context.
+              `${k}="${String(v).replaceAll('"', "&quot;")}"`;
 
 /**
  * @param {string} tnm
