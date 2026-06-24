@@ -111,6 +111,9 @@ describe("session-tenant isolation", () => {
     const SECRET = "SECRET_TENANT_DATA_xyz";
     const TENANT_ADMIN_EMAIL = "admin@secauth.com";
     const TENANT_ADMIN_PW = "fidj38v8sdfaA1";
+    // API tokens minted in each tenant for its own admin
+    let tenantAdminToken; // admin of the victim tenant (secauth)
+    let foreignAdminToken; // admin of the default tenant
 
     // log in as the victim tenant's own admin, against the victim subdomain
     const getTenantAdminLoginCookie = async () => {
@@ -153,7 +156,13 @@ describe("session-tenant isolation", () => {
           password: TENANT_ADMIN_PW,
           role_id: 1,
         });
+        const tadmin = await User.findOne({ email: TENANT_ADMIN_EMAIL });
+        tenantAdminToken = await tadmin.getNewAPIToken();
       });
+
+      // mint an API token for the default tenant's admin (admin@foo.com)
+      const fadmin = await User.findOne({ email: "admin@foo.com" });
+      foreignAdminToken = await fadmin.getNewAPIToken();
     });
 
     afterAll(async () => {
@@ -241,6 +250,74 @@ describe("session-tenant isolation", () => {
       const res = await request(app)
         .get("/api/secrets/distinct/data")
         .set("Cookie", loginCookie)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.status).toBe(200);
+      expect(res.body.success).toEqual([SECRET]);
+    });
+
+    // ---- API token (Bearer) variants ----
+
+    // Negative: an API token minted for the default tenant's admin must not be
+    // honoured against the victim tenant's subdomain. The token is looked up in
+    // the request's resolved schema, so it should resolve to the public role
+    // and be denied.
+    it("rejects foreign-tenant API token on GET /api/:table/", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .get("/api/secrets/")
+        .set("Authorization", `Bearer ${foreignAdminToken}`)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.status).not.toBe(200);
+      expect(JSON.stringify(res.body)).not.toContain(SECRET);
+    });
+
+    it("rejects foreign-tenant API token on GET /api/:table/count", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .get("/api/secrets/count")
+        .set("Authorization", `Bearer ${foreignAdminToken}`)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.status).not.toBe(200);
+      expect(res.body.success).not.toBe(1);
+    });
+
+    it("rejects foreign-tenant API token on GET /api/:table/distinct/:field", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .get("/api/secrets/distinct/data")
+        .set("Authorization", `Bearer ${foreignAdminToken}`)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.status).not.toBe(200);
+      expect(JSON.stringify(res.body)).not.toContain(SECRET);
+    });
+
+    // Positive: the victim tenant's own API token, against the victim
+    // subdomain, must read the data through the same /api endpoints.
+    it("allows same-tenant API token on GET /api/:table/", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .get("/api/secrets/")
+        .set("Authorization", `Bearer ${tenantAdminToken}`)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.status).toBe(200);
+      expect(res.body.success).toEqual([{ id: 1, data: SECRET }]);
+    });
+
+    it("allows same-tenant API token on GET /api/:table/count", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .get("/api/secrets/count")
+        .set("Authorization", `Bearer ${tenantAdminToken}`)
+        .set("Host", `${TENANT}.example.com`);
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(1);
+    });
+
+    it("allows same-tenant API token on GET /api/:table/distinct/:field", async () => {
+      const app = await getApp({ disableCsrf: true });
+      const res = await request(app)
+        .get("/api/secrets/distinct/data")
+        .set("Authorization", `Bearer ${tenantAdminToken}`)
         .set("Host", `${TENANT}.example.com`);
       expect(res.status).toBe(200);
       expect(res.body.success).toEqual([SECRET]);
