@@ -31,6 +31,8 @@ class PageFunctions {
 
 
   async drag_And_Drop(source, target) {
+    await this.page.locator(source).scrollIntoViewIfNeeded();
+    await this.page.locator(target).scrollIntoViewIfNeeded();
     await this.page.locator(source).dragTo(this.page.locator(target), { force: true });
   }
 

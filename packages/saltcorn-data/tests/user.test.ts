@@ -8,7 +8,7 @@ import {
   assertsObjectIsUser,
   assertIsErrorMsg,
 } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect, jest } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect, jest } from "@saltcorn/db-common/test_expect";
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));

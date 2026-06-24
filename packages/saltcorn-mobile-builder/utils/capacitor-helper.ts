@@ -1,13 +1,13 @@
 import { spawnSync, execSync } from "child_process";
 import { join, basename } from "path";
-import { existsSync } from "fs";
+import { existsSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
 import { copySync } from "fs-extra";
 import type User from "@saltcorn/data/models/user";
 import utils = require("@saltcorn/data/utils");
 const { safeEnding, imageAvailable } = utils;
 import File from "@saltcorn/data/models/file";
 import { copyPrepopulatedDb, extractDomain } from "./common-build-utils";
-import { writeFileSync } from "fs";
 const { getState } = require("@saltcorn/data/db/state");
 
 import type { IosCfg } from "../mobile-builder";
@@ -297,12 +297,24 @@ export class CapacitorHelper {
     console.log(`docker mode: ${dockerMode}`);
     console.log(`image version: ${imageVersion}`);
 
-    const userParams = [];
+    const userParams: string[] = [];
+    const extraVolumeParams: string[] = [];
     if (dockerMode === "Rootful") {
-      if (process.getuid && process.getgid)
-        userParams.push("--user", `${process.getuid()}:${process.getgid()}`);
-      else
+      if (process.getuid && process.getgid) {
+        const uid = process.getuid();
+        const gid = process.getgid();
+        userParams.push("--user", `${uid}:${gid}`);
+        // Mount a minimal passwd so Node.js os.userInfo() can resolve the UID
+        // inside the container (uv_os_get_passwd fails for unknown UIDs).
+        const tmpPasswd = join(tmpdir(), `saltcorn-build-passwd-${uid}`);
+        const passwdContent =
+          `root:x:0:0:root:/root:/bin/sh\n` +
+          `builduser:x:${uid}:${gid}:Build User:/tmp:/bin/sh\n`;
+        writeFileSync(tmpPasswd, passwdContent);
+        extraVolumeParams.push("-v", `${tmpPasswd}:/etc/passwd:ro`);
+      } else {
         console.log("Warning: process.getuid and process.getgid not available");
+      }
     }
 
     const spawnParams = [
@@ -310,6 +322,7 @@ export class CapacitorHelper {
       "--pull",
       "never",
       ...userParams,
+      ...extraVolumeParams,
       "--network",
       "host",
       "-v",

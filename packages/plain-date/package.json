@@ -9,26 +9,13 @@
     "directory": "packages/plain-date"
   },
   "scripts": {
-    "test": "jest",
+    "test": "node --test",
     "tsc": "tsc -p tsconfig.json",
     "clean": "echo 'No TypeScript build'"
   },
   "dependencies": {},
   "author": "Tom Nielsen",
   "license": "MIT",
-  "jest": {
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ]
-  },
   "main": "index.js",
   "publishConfig": {
     "access": "public"

@@ -1,5 +1,56 @@
-const { join, normalize, dirname } = require("path");
+const { join, normalize, dirname, delimiter } = require("path");
 const { writeFile, mkdir, pathExists, copy, symlink } = require("fs-extra");
+const {
+  existsSync,
+  mkdirSync,
+  readlinkSync,
+  unlinkSync,
+  symlinkSync,
+} = require("fs");
+const Module = require("module");
+
+const isGitCheckout = () => existsSync(join(__dirname, "..", "..", "packages"));
+
+const saltcornModules = isGitCheckout()
+  ? join(__dirname, "..", "..", "node_modules")
+  : join(__dirname, "..", "..");
+const existing = (process.env.NODE_PATH || "").split(delimiter).filter(Boolean);
+if (!existing.includes(saltcornModules)) {
+  process.env.NODE_PATH = [...existing, saltcornModules].join(delimiter);
+  Module._initPaths();
+}
+
+try {
+  const envPaths = require("env-paths");
+  const defaultRootFolder = envPaths("saltcorn", { suffix: "plugins" }).data;
+  for (const folder of ["plugins_folder", "git_plugins"]) {
+    const pluginsFolder = join(defaultRootFolder, folder);
+    const symDst = join(pluginsFolder, "node_modules");
+    try {
+      if (!existsSync(pluginsFolder))
+        mkdirSync(pluginsFolder, { recursive: true });
+      let currentTarget = null;
+      try {
+        currentTarget = readlinkSync(symDst);
+      } catch {
+        /* missing or not a symlink */
+      }
+      if (currentTarget !== saltcornModules) {
+        try {
+          unlinkSync(symDst);
+        } catch {
+          /* already gone */
+        }
+        symlinkSync(saltcornModules, symDst, "dir");
+      }
+    } catch {
+      /* _ensurePluginsRootFolders() will retry */
+    }
+  }
+} catch {
+  /* env-paths unavailable; symlink will be created by install() */
+}
+
 const { readdirSync } = require("fs");
 const { spawn } = require("child_process");
 const {
@@ -24,13 +75,6 @@ const staticDeps = [
   "@saltcorn/postgres",
   "jest",
 ];
-
-const isGitCheckout = async () => {
-  return (
-    (await pathExists(join(__dirname, "..", "..", "Dockerfile.release"))) ||
-    (await pathExists(join(__dirname, "..", "..", ".git")))
-  );
-};
 
 const readPackageJson = async (filePath) => {
   if (await pathExists(filePath)) return JSON.parse(await readFile(filePath));
@@ -315,7 +359,7 @@ class PluginInstaller {
       if (!(await pathExists(pluginsFolder)))
         await mkdir(pluginsFolder, { recursive: true });
       const symLinkDst = join(pluginsFolder, "node_modules");
-      const symLinkSrc = (await isGitCheckout())
+      const symLinkSrc = isGitCheckout()
         ? join(__dirname, "..", "..", "node_modules")
         : join(dirname(require.resolve("@saltcorn/cli")), "..", "node_modules");
       if (await pathExists(symLinkDst)) {

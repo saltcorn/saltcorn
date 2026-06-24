@@ -626,7 +626,7 @@ class WorkflowRun {
               wait_info: { form: true, user_id: user_id },
             });
 
-            if (trace) this.createTrace(step.name, user);
+            if (trace) await this.createTrace(step.name, user);
 
             if (
               interactive &&
@@ -659,7 +659,7 @@ class WorkflowRun {
                 markdown: step.configuration.markdown,
               },
             });
-            if (trace) this.createTrace(step.name, user);
+            if (trace) await this.createTrace(step.name, user);
 
             if (interactive) {
               return {
@@ -688,7 +688,7 @@ class WorkflowRun {
                 user_id: user?.id,
               },
             });
-            if (trace) this.createTrace(step.name, user);
+            if (trace) await this.createTrace(step.name, user);
 
             if (interactive) {
               return {
@@ -723,7 +723,7 @@ class WorkflowRun {
                 user_id: user?.id,
               },
             });
-            if (trace) this.createTrace(step.name, user);
+            if (trace) await this.createTrace(step.name, user);
 
             if (interactive) {
               return {
@@ -754,7 +754,7 @@ class WorkflowRun {
                   req,
                 });
               };
-              if (trace) this.createTrace(step.name, user);
+              if (trace) await this.createTrace(step.name, user);
               setTimeout(
                 () => {
                   //remove client from request context
@@ -775,7 +775,7 @@ class WorkflowRun {
               return;
             }
             state.waitingWorkflows = true;
-            if (trace) this.createTrace(step.name, user);
+            if (trace) await this.createTrace(step.name, user);
             do_break = true;
             return;
           }
@@ -796,7 +796,7 @@ class WorkflowRun {
               status: "Waiting",
               wait_info: { until_time: new Date(resume_at).toISOString() },
             });
-            if (trace) this.createTrace(step.name, user);
+            if (trace) await this.createTrace(step.name, user);
 
             do_break = true;
             return;

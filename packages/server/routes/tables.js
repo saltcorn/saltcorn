@@ -2049,6 +2049,10 @@ router.get(
     const csvOpts = {};
     const cast = {
       date: (value) => value.toISOString(),
+      object: (o) => {
+        if (o?.constructor?.name === "PlainDate") return o.toISOString();
+        return JSON.stringify(o);
+      },
       boolean: (v) => (v ? "true" : "false"),
     };
     const locale = req.getLocale();
@@ -2812,7 +2816,7 @@ const get_provider_workflow = (table, req) => {
   const provider = getState().table_providers[table.provider_name];
   if (!provider) {
     throw new InvalidConfiguration(
-      `Provider not found for rable ${table.name}: table.provider_name`
+      `Provider not found for table ${table.name}: table.provider_name`
     );
   }
   const workflow = provider.configuration_workflow(req);
@@ -2910,7 +2914,7 @@ router.post(
 );
 
 const basicViewForm = async (table, req) => {
-  const tables = await Table.find();
+  const tables = await Table.find({}, { cached: true });
   const vts = viewtemplates_with_create_basic_option();
   return new Form({
     submitLabel: req.__("Create views"),

@@ -112,6 +112,33 @@ function isAdmin(req, res, next) {
   }
 }
 
+/**
+ * Reject a request whose session/JWT identity was authenticated in a different
+ * tenant than the one resolved for this request (from the subdomain). The
+ * session store and cookie are shared across all tenants, so without this a
+ * session minted in tenant A could be replayed against tenant B and have its
+ * home-tenant role applied to tenant B's data. This is the API-router
+ * equivalent of the drift guard already enforced in `loggedIn`/`isAdmin`.
+ * Bearer (api_token) requests are not authenticated at this point (that happens
+ * per-route and is already scoped to the request's schema), so `req.user` is
+ * unset for them and they pass through untouched.
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
+ * @returns {void}
+ */
+function rejectTenantDrift(req, res, next) {
+  if (
+    req.user &&
+    req.user.tenant !== undefined &&
+    req.user.tenant !== db.getTenantSchema()
+  ) {
+    req.logout?.(() => {});
+    return res.status(403).json({ error: "Session tenant mismatch" });
+  }
+  next();
+}
+
 const isAdminOrHasConfigMinRole = (cfg) => (req, res, next) => {
   const cur_tenant = db.getTenantSchema();
   //console.log({ cur_tenant, user: req.user });
@@ -331,22 +358,85 @@ const csrfField = (req) =>
  * @returns {function}
  */
 
-const escape_param = (val) =>
-  Array.isArray(val)
-    ? val.map(escape_param)
-    : val === "__proto__" || val === "constructor"
-      ? ""
-      : typeof val === "string"
-        ? text(val)
-        : val;
+// Some query params carry a JSON object/array literal (e.g. _relation_path_)
+// that is consumed via JSON.parse rather than reflected into markup. xss()
+// leaves quotes intact, so such a literal stays parseable - but we must not
+// add the extra attribute-context quote escaping below, which would corrupt it.
+const is_json_literal = (s) => {
+  const t = s.trim();
+  if (!(t.startsWith("{") || t.startsWith("["))) return false;
+  try {
+    const parsed = JSON.parse(t);
+    return parsed !== null && typeof parsed === "object";
+  } catch {
+    return false;
+  }
+};
+
+const escape_param = (val) => {
+  if (Array.isArray(val)) return val.map(escape_param);
+  if (val === "__proto__" || val === "constructor") return "";
+  if (typeof val === "string")
+    return is_json_literal(val)
+      ? text(val)
+      : // xss() escapes tags but leaves quotes, which allows breaking out
+        // of HTML attribute contexts. Also escape quotes so reflected
+        // query params are safe in attribute contexts.
+        text(val).replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+  // For object query/param values, recursively escape the values but also drop
+  // keys that could become XSS/CSS attribute-name vectors. When an object is
+  // passed to a tag helper such as div(x) it is rendered as the element's
+  // ATTRIBUTES, turning attacker-controlled keys into attribute names
+  // (e.g. ?x[onmouseover]=alert(1)) - an attribute-name injection that value
+  // escaping cannot neutralise. So we keep only keys that cannot break out of,
+  // or inject into, the attribute context.
+  if (val && typeof val === "object") {
+    const out = {};
+    Object.entries(val).forEach(([k, v]) => {
+      if (is_safe_attr_key(k)) out[k] = escape_param(v);
+    });
+    return out;
+  }
+  return val;
+};
+
+// A query/param object key is only safe if it cannot become a dangerous HTML
+// attribute name when the object is reflected as a tag's attributes. We reject:
+//  - prototype-pollution keys
+//  - event-handler attributes (on*) - the classic XSS vector
+//  - the style attribute - a CSS injection vector
+//  - any key containing characters that allow breaking out of the attribute
+//    name or injecting further attributes (whitespace, quotes, =, <, >, /, etc.)
+const is_safe_attr_key = (k) => {
+  if (typeof k !== "string") return false;
+  if (k === "__proto__" || k === "constructor" || k === "prototype")
+    return false;
+  if (/^on/i.test(k)) return false;
+  if (k.toLowerCase() === "style") return false;
+  // only allow conservative attribute-name characters
+  return /^[A-Za-z0-9_.:>\-[\]]+$/.test(k);
+};
 
 const error_catcher = (fn) => (request, response, next) => {
+  //XSS protection.
+  // By default, query is not writable in express.
+  // https://stackoverflow.com/a/79604142
+  Object.defineProperty(request, "query", {
+    ...Object.getOwnPropertyDescriptor(request, "query"),
+    value: request.query,
+    writable: true,
+  });
+
+  //escape all query arguments
   Object.entries(request.query || {}).forEach(([nm, val]) => {
     request.query[nm] = escape_param(val);
   });
+  //escape all params
   Object.entries(request.params || {}).forEach(([nm, val]) => {
     request.params[nm] = escape_param(val);
   });
+
+  //catch errors
   Promise.resolve(fn(request, response, next)).catch(next);
 };
 
@@ -578,7 +668,10 @@ const sendHtmlStringWithGlobals = (req, res, html_string) => {
   if (locale && !normalized.includes(`dayjslocales/${locale}.js`))
     bodyInject += `<script src="${assetBase}/dayjslocales/${locale}.js"></script>`;
   if (!normalized.includes("dynamic_updates_cfg")) {
-    const dynamic_updates_enabled = state.getConfig("enable_dynamic_updates", false);
+    const dynamic_updates_enabled = state.getConfig(
+      "enable_dynamic_updates",
+      false
+    );
     bodyInject += `<script>var dynamic_updates_cfg = ${JSON.stringify({ enabled: dynamic_updates_enabled })};</script>`;
   }
 
@@ -758,6 +851,7 @@ module.exports = {
   loggedIn,
   isAdmin,
   isAdminOrHasConfigMinRole,
+  rejectTenantDrift,
   get_base_url,
   error_catcher,
   scan_for_page_title,

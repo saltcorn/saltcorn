@@ -648,6 +648,13 @@ const to_locale_string = {
     },
     {
       type: "Integer",
+      name: "minimumFractionDigits",
+      label: "Min Fraction Digits",
+      sublabel: "Pad decimals to this many places (e.g. 2 → always show cents)",
+      attributes: { min: 0, max: 20 },
+    },
+    {
+      type: "Integer",
       name: "maximumFractionDigits",
       label: "Max Fraction Digits",
       attributes: {
@@ -677,7 +684,24 @@ const to_locale_string = {
       required: true,
       showIf: { style: "currency" },
       attributes: {
-        options: ["symbol", "code", "narrrowSymbol", "name"],
+        options: ["symbol", "code", "narrowSymbol", "name"],
+      },
+    },
+    {
+      type: "String",
+      name: "currencySign",
+      label: "Currency sign",
+      sublabel: "Accounting: show negatives as (1,234.57) instead of -1,234.57",
+      showIf: { style: "currency" },
+      attributes: { options: ["standard", "accounting"] },
+    },
+    {
+      type: "String",
+      name: "signDisplay",
+      label: "Sign display",
+      sublabel: "always: show + on positives; exceptZero: show sign except on 0",
+      attributes: {
+        options: ["auto", "always", "exceptZero", "negative", "never"],
       },
     },
     {
@@ -750,14 +774,20 @@ const to_locale_string = {
   isEdit: false,
   run: (v: any, req: any, attrs: any = {}) => {
     const v1 = typeof v === "string" ? +v : v;
-    if (typeof v1 === "number") {
+    if (typeof v1 === "number" && !isNaN(v1)) {
       const locale_ = attrs.locale || locale(req);
       return v1.toLocaleString(locale_, {
         style: attrs.style,
         currency: attrs.currency,
         currencyDisplay: attrs.currencyDisplay,
+        currencySign: attrs.currencySign || undefined,
         unit: attrs.unit,
         unitDisplay: attrs.unitDisplay,
+        signDisplay: attrs.signDisplay || undefined,
+        minimumFractionDigits:
+          attrs.minimumFractionDigits === 0
+            ? 0
+            : attrs.minimumFractionDigits || undefined,
         maximumSignificantDigits:
           attrs.maximumSignificantDigits === 0
             ? 0

@@ -20,11 +20,22 @@ const {
 } = tenant;
 import config from "@saltcorn/data/models/config";
 const { getConfig } = config;
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 
 afterAll(db.close);
 
 beforeAll(async () => {
+  // initialise this process's schema (tests run each file in its own Postgres
+  // schema so they can run in parallel)
+  await require("@saltcorn/data/db/reset_schema")();
+  await require("@saltcorn/data/db/fixtures")();
   if (!db.isSQLite) await db.query(`drop schema if exists test10 CASCADE `);
   if (!db.isSQLite) await db.query(`drop schema if exists test11 CASCADE `);
 });
@@ -52,7 +63,7 @@ describe("Tenant", () => {
         loadAndSaveNewPlugin(plugin: Plugin): void {},
         plugin_loader() {},
       });
-      db.runWithTenant("test10", async () => {
+      await db.runWithTenant("test10", async () => {
         const ten = db.getTenantSchema();
 
         expect(ten).toBe("test10");

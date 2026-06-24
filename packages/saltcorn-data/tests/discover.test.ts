@@ -12,7 +12,7 @@ const { getState } = require("../db/state");
 import db from "../db";
 import Table from "../models/table";
 import Field from "../models/field";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { Row } from "@saltcorn/db-common/internal";
 import { assertIsSet } from "./assertions";
 

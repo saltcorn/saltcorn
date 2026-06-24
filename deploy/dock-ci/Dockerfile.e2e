@@ -1,5 +1,0 @@
-FROM build
-
-RUN cd deploy/playwright && npm install
-RUN cd deploy/playwright && npx playwright install --with-deps
-

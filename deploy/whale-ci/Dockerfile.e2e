@@ -1,0 +1,5 @@
+FROM build
+
+RUN cd deploy/playwright && npm install
+
+

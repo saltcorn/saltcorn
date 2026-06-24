@@ -4,13 +4,216 @@
  * @subcategory auth
  */
 /*global it, expect*/
-const request = require("supertest");
+const http = require("http");
+const assert = require("assert");
+const { makeFetch } = require("supertest-fetch");
 const app = require("../app");
 const getApp = require("../app");
 const fixtures = require("@saltcorn/data/db/fixtures");
 const reset = require("@saltcorn/data/db/reset_schema");
 const jsdom = require("jsdom");
 const { JSDOM, ResourceLoader } = jsdom;
+
+/**
+ * supertest-compatible shim over supertest-fetch (native fetch).
+ *
+ * supertest is replaced because it drags in a large tree of out-of-date
+ * dependencies. supertest-fetch uses the platform's native fetch, but exposes
+ * a fetch-style API. This shim wraps it so the existing tests keep using the
+ * familiar `request(app).get(path).set(...).send(...).expect(...)` chain and
+ * receive a supertest-style response object (`.statusCode`, `.text`, `.body`,
+ * `.headers`, `.type`).
+ */
+const lc = (h) => String(h).toLowerCase();
+
+// convert a native fetch Response into a supertest-like response object
+const toSuperRes = async (response) => {
+  const buf = Buffer.from(await response.arrayBuffer());
+  const text = buf.toString("utf-8");
+  const headers = {};
+  response.headers.forEach((v, k) => {
+    headers[lc(k)] = v;
+  });
+  // fetch joins multiple set-cookie headers; recover them as an array so
+  // cookie helpers can iterate (as they did with supertest)
+  if (typeof response.headers.getSetCookie === "function") {
+    const setCookie = response.headers.getSetCookie();
+    if (setCookie && setCookie.length) headers["set-cookie"] = setCookie;
+  }
+  const contentType = headers["content-type"] || "";
+  let body;
+  if (contentType.includes("json")) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = {};
+    }
+  } else {
+    // non-json: a Buffer, matching superagent (supports .length etc.)
+    body = buf;
+  }
+  return {
+    status: response.status,
+    statusCode: response.status,
+    ok: response.ok,
+    type: contentType.split(";")[0].trim(),
+    text,
+    body,
+    // superagent exposes the parsed body as both .body and ._body
+    _body: body,
+    headers,
+  };
+};
+
+// apply a single supertest `.expect(...)` assertion against the response
+const runExpectation = (res, args) => {
+  if (args.length >= 2) {
+    const [field, value] = args;
+    const got = res.headers[lc(field)];
+    if (got !== value)
+      throw new Error(
+        `Expected header "${field}" to be "${value}", received "${got}"`
+      );
+    return;
+  }
+  const a = args[0];
+  if (typeof a === "number") {
+    if (res.statusCode !== a) {
+      console.log(res.text);
+      throw new Error(`Expected status ${a}, received ${res.statusCode}`);
+    }
+  } else if (typeof a === "function") {
+    a(res);
+  } else if (typeof a === "string") {
+    if (res.text !== a)
+      throw new Error(`Expected body "${a}", received "${res.text}"`);
+  } else if (a && typeof a === "object") {
+    assert.deepEqual(res.body, a);
+  }
+};
+
+// a lazy, thenable request builder mirroring supertest's chainable API
+class SuperRequest {
+  constructor(fetch, method, path) {
+    this._fetch = fetch;
+    this._method = method;
+    this._path = path;
+    this._headers = {};
+    this._expectations = [];
+    this._query = undefined;
+    this._urlencoded = undefined;
+    this._json = undefined;
+    this._form = undefined;
+  }
+  set(field, value) {
+    if (field && typeof field === "object")
+      for (const [k, v] of Object.entries(field)) this._headers[k] = v;
+    else this._headers[field] = value;
+    return this;
+  }
+  query(obj) {
+    this._query = { ...(this._query || {}), ...obj };
+    return this;
+  }
+  send(data) {
+    if (data === undefined) return this;
+    if (typeof data === "string")
+      this._urlencoded =
+        (this._urlencoded ? this._urlencoded + "&" : "") + data;
+    else if (Array.isArray(data))
+      // an array body is sent verbatim as JSON (do not spread into an object)
+      this._json = data;
+    else this._json = { ...(this._json || {}), ...data };
+    return this;
+  }
+  _ensureForm() {
+    if (!this._form) this._form = new FormData();
+    return this._form;
+  }
+  field(name, value) {
+    this._ensureForm().append(name, value);
+    return this;
+  }
+  attach(name, buffer, filename) {
+    this._ensureForm().append(name, new Blob([buffer]), filename || name);
+    return this;
+  }
+  expect(...args) {
+    this._expectations.push(args);
+    return this;
+  }
+  async _run() {
+    let url = this._path;
+    if (this._query) {
+      const qs = new URLSearchParams(this._query).toString();
+      url += (url.includes("?") ? "&" : "?") + qs;
+    }
+    const headers = {};
+    for (const [k, v] of Object.entries(this._headers))
+      headers[k] = Array.isArray(v) ? v.join("; ") : v;
+    // native fetch forbids overriding the Host header; forward it as
+    // X-Forwarded-Host instead (Express reads it when "trust proxy" is set)
+    for (const k of Object.keys(headers))
+      if (lc(k) === "host") {
+        headers["X-Forwarded-Host"] = headers[k];
+        delete headers[k];
+      }
+    // supertest does not follow redirects; keep 3xx responses as-is
+    const opts = { method: this._method, headers, redirect: "manual" };
+    const hasContentType = () =>
+      Object.keys(headers).some((k) => lc(k) === "content-type");
+    if (this._form) {
+      opts.body = this._form;
+      // let fetch set the multipart content-type (with boundary)
+      for (const k of Object.keys(headers))
+        if (lc(k) === "content-type") delete headers[k];
+    } else if (this._json !== undefined) {
+      opts.body = JSON.stringify(this._json);
+      if (!hasContentType()) headers["Content-Type"] = "application/json";
+    } else if (this._urlencoded !== undefined) {
+      opts.body = this._urlencoded;
+      if (!hasContentType())
+        headers["Content-Type"] = "application/x-www-form-urlencoded";
+    }
+    const response = await this._fetch(url, opts);
+    const res = await toSuperRes(response);
+    for (const args of this._expectations) runExpectation(res, args);
+    return res;
+  }
+  then(onFulfilled, onRejected) {
+    return this._run().then(onFulfilled, onRejected);
+  }
+  catch(onRejected) {
+    return this._run().catch(onRejected);
+  }
+  finally(onFinally) {
+    return this._run().finally(onFinally);
+  }
+}
+
+/**
+ * Drop-in replacement for `require("supertest")`: returns an object with
+ * get/post/put/delete/patch/head methods that each start a chainable request.
+ * @param {object} app - an express app (or any http request listener)
+ * @returns {object}
+ */
+const request = (app) => {
+  // native fetch cannot set the Host header, so the shim forwards it as
+  // X-Forwarded-Host; trust the proxy header so Express derives the hostname
+  // (and tenant subdomain) from it, matching how supertest's real Host did.
+  if (app && typeof app.set === "function") app.set("trust proxy", true);
+  const server = http.createServer(app);
+  const fetch = makeFetch(server);
+  const make = (method) => (path) => new SuperRequest(fetch, method, path);
+  return {
+    get: make("GET"),
+    post: make("POST"),
+    put: make("PUT"),
+    delete: make("DELETE"),
+    patch: make("PATCH"),
+    head: make("HEAD"),
+  };
+};
 
 /**
  *
@@ -453,6 +656,7 @@ const load_url_dom = async (url) => {
 };
 
 module.exports = {
+  request,
   getStaffLoginCookie,
   getAdminLoginCookie,
   getUserLoginCookie,

@@ -1,8 +1,8 @@
 import email from "../models/email";
 import Notification from "../models/notification";
 import User from "../models/user";
-import { MailQueue } from "models/internal/mail_queue";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { MailQueue } from "../models/internal/mail_queue";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { createTransport } from "nodemailer";
 import mocks from "./mocks";
 const { sleep } = mocks;

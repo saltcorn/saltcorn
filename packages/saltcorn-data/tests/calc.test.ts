@@ -23,7 +23,7 @@ const {
 import { mkWhere } from "@saltcorn/db-common/internal";
 
 import { assertIsSet } from "./assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import utils from "../utils";
 import PlainDate from "@saltcorn/plain-date";
 const { interpolate, mergeIntoWhere } = utils;
@@ -1421,7 +1421,7 @@ describe("jsexprToWhere", () => {
         inSelect: {
           field: "id",
           table: "publisher",
-          tenant: "public",
+          tenant: db.getTenantSchema(),
           where: { name: "AK Press" },
         },
       },
@@ -1436,7 +1436,7 @@ describe("jsexprToWhere", () => {
         inSelect: {
           field: "publisher",
           table: "books",
-          tenant: "public",
+          tenant: db.getTenantSchema(),
           through: "publisher",
           through_pk: "id",
           valField: "id",

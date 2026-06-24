@@ -16,7 +16,7 @@ const {
   sleep,
 } = mocks;
 import { assertIsRow, assertIsSet } from "../tests/assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import baseactions from "../base-plugin/actions";
 const {
   duplicate_row,

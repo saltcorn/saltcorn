@@ -1,47 +1,23 @@
 {
   "name": "@saltcorn/random-tests",
-  "version": "1.6.0-rc.1",
+  "version": "1.6.0",
   "description": "Pluggable nocode",
   "license": "MIT",
   "dependencies": {
-    "@saltcorn/admin-models": "1.6.0-rc.1",
-    "@saltcorn/data": "1.6.0-rc.1",
-    "@saltcorn/server": "1.6.0-rc.1"
+    "@saltcorn/admin-models": "1.6.0",
+    "@saltcorn/data": "1.6.0",
+    "@saltcorn/server": "1.6.0"
   },
   "devDependencies": {
-    "chaos-guinea-pig": "0.2.1",
-    "jest": "29.7.0",
-    "supertest": "7.0.0"
+    "@saltcorn/db-common": "1.6.0-rc.2",
+    "chaos-guinea-pig": "0.2.1"
   },
   "scripts": {
-    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --runInBand",
+    "test": "NODE_ENV=test node --require ./setup-jest-globals.js --test --test-force-exit --test-concurrency=1",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
   "repository": "github:saltcorn/saltcorn",
-  "jest": {
-    "transform": {},
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ],
-    "moduleNameMapper": {
-      "@saltcorn/sqlite/(.*)": "<rootDir>/../sqlite/dist/$1",
-      "@saltcorn/db-common/(.*)": "<rootDir>/../db-common/dist/$1",
-      "@saltcorn/data/(.*)": "<rootDir>/../saltcorn-data/dist/$1",
-      "@saltcorn/types/(.*)": "<rootDir>/../saltcorn-types/dist/$1",
-      "@saltcorn/markup$": "<rootDir>/../saltcorn-markup/dist",
-      "@saltcorn/markup/(.*)": "<rootDir>/../saltcorn-markup/dist/$1",
-      "@saltcorn/admin-models/(.*)": "<rootDir>/../saltcorn-admin-models/dist/$1"
-    }
-  },
   "publishConfig": {
     "access": "public"
   },

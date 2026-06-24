@@ -6,7 +6,7 @@ import Trigger from "../models/trigger";
 
 import db from "../db";
 import { assertIsSet } from "./assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { GenObj } from "@saltcorn/types/common_types";
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 
@@ -295,7 +295,7 @@ describe("Workflow run error handling with transaction and database ops", () => 
     });
   });
   it("should run", async () => {
-    await runWithTenant("public", async () => {
+    await runWithTenant(db.getTenantSchema(), async () => {
       await db.withTransaction(async () => {
         const user = await User.findOne({ id: 1 });
         assertIsSet(user);

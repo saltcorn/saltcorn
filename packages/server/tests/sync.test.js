@@ -1,4 +1,4 @@
-const request = require("supertest");
+const request = require("../auth/testhelp").request;
 const getApp = require("../app");
 const {
   getUserLoginCookie,
@@ -374,7 +374,7 @@ const doUpload = async (
 
 const getResult = async (app, loginCookie, syncDir) => {
   let pollCount = 0;
-  while (pollCount < 10) {
+  while (pollCount++ < 10) {
     const resp = await request(app)
       .get(`/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`)
       .set("Cookie", loginCookie);
@@ -767,7 +767,7 @@ describe("Upload changes", () => {
       const error = await getResult(app, loginCookie, syncDir);
       await cleanSyncDir(app, loginCookie, syncDir);
       expect(error).toBeDefined();
-      expect(error).toEqual({ message: "Unable to insert into books" });
+      expect(error).toEqual({ message: "Unable to insert into publisher" });
       books.min_role_write = 100;
       await books.update(books);
     });
@@ -1759,6 +1759,233 @@ describe("load_changes authorization with ownership_formula", () => {
       expect(resp.status).toBe(200);
       const rows = resp._body.lc_owned?.rows || [];
       expect(rows.some((r) => r.id === itemId)).toBe(false);
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
+
+describe("cross-table FK translation during inserts", () => {
+  if (!db.isSQLite) {
+    beforeAll(async () => {
+      await initSyncInfo(["books", "publisher"]);
+    });
+
+    it("FK is translated when child is listed before parent in changes", async () => {
+      const oldTimestamp = new Date().valueOf();
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+
+      // Use IDs far above any existing server IDs so FK cannot be satisfied
+      // by an already-existing row — only the topo-ordered insert of publisher
+      // first makes this work.
+      const maxPublId = await maxId("publisher");
+      const maxBookId = await maxId("books");
+      const localPublisherId = maxPublId + 100;
+      const localBookId = maxBookId + 100;
+
+      // Deliberately list books (child) before publisher (parent) in the payload.
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          books: {
+            inserts: [
+              {
+                id: localBookId,
+                author: "Cross FK Author",
+                pages: 77,
+                publisher: localPublisherId,
+              },
+            ],
+          },
+          publisher: {
+            inserts: [{ id: localPublisherId, name: "Cross FK Publisher" }],
+          },
+        }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const result = await getResult(app, loginCookie, syncDir);
+      await cleanSyncDir(app, loginCookie, syncDir);
+
+      expect(result.translatedIds).toBeDefined();
+      const serverPublisherId =
+        result.translatedIds.publisher?.[localPublisherId];
+      const serverBookId = result.translatedIds.books?.[localBookId];
+      expect(serverPublisherId).toBeDefined();
+      expect(serverBookId).toBeDefined();
+
+      // The inserted book must reference the new server publisher ID, not the
+      // original local one.
+      const books = Table.findOne({ name: "books" });
+      const insertedBook = await books.getRow({ id: serverBookId });
+      expect(insertedBook).toBeDefined();
+      expect(insertedBook.publisher).toBe(serverPublisherId);
+    });
+
+    it("FK translation works regardless of key order in changes object", async () => {
+      const oldTimestamp = new Date().valueOf();
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+
+      const maxPublId = await maxId("publisher");
+      const maxBookId = await maxId("books");
+      const localPublisherId = maxPublId + 100;
+      const localBookId = maxBookId + 100;
+
+      // This time publisher is listed first — result should be identical.
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          publisher: {
+            inserts: [{ id: localPublisherId, name: "Cross FK Publisher 2" }],
+          },
+          books: {
+            inserts: [
+              {
+                id: localBookId,
+                author: "Cross FK Author 2",
+                pages: 88,
+                publisher: localPublisherId,
+              },
+            ],
+          },
+        }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const result = await getResult(app, loginCookie, syncDir);
+      await cleanSyncDir(app, loginCookie, syncDir);
+
+      const serverPublisherId =
+        result.translatedIds.publisher?.[localPublisherId];
+      const serverBookId = result.translatedIds.books?.[localBookId];
+      expect(serverPublisherId).toBeDefined();
+      expect(serverBookId).toBeDefined();
+
+      const books = Table.findOne({ name: "books" });
+      const insertedBook = await books.getRow({ id: serverBookId });
+      expect(insertedBook.publisher).toBe(serverPublisherId);
+    });
+  } else
+    it("only pq support", () => {
+      expect(true).toBe(true);
+    });
+});
+
+describe("cyclic FK insert via sync", () => {
+  if (!db.isSQLite) {
+    let tableA, tableB;
+
+    beforeAll(async () => {
+      await resetToFixtures();
+
+      // tableA.b_ref -> tableB (required), tableB.a_ref -> tableA (nullable)
+      tableA = await Table.create("sync_cycle_a", {
+        min_role_read: 100,
+        min_role_write: 100,
+      });
+      await Field.create({
+        table: tableA,
+        name: "name",
+        label: "Name",
+        type: "String",
+      });
+
+      tableB = await Table.create("sync_cycle_b", {
+        min_role_read: 100,
+        min_role_write: 100,
+      });
+      await Field.create({
+        table: tableB,
+        name: "name",
+        label: "Name",
+        type: "String",
+      });
+
+      await Field.create({
+        table: tableA,
+        name: "b_ref",
+        label: "B ref",
+        type: "Key",
+        reftable: tableB,
+        attributes: { summary_field: "name" },
+        required: true,
+      });
+      await Field.create({
+        table: tableB,
+        name: "a_ref",
+        label: "A ref",
+        type: "Key",
+        reftable: tableA,
+        attributes: { summary_field: "name" },
+        required: false,
+      });
+
+      await initSyncInfo(["sync_cycle_a", "sync_cycle_b"]);
+      tableA = Table.findOne({ name: "sync_cycle_a" });
+      tableB = Table.findOne({ name: "sync_cycle_b" });
+    });
+
+    afterAll(async () => {
+      // Break the cycle by dropping A's FK to B first, then B can be dropped,
+      // then A.
+      const freshA = Table.findOne({ name: "sync_cycle_a" });
+      const bRefField = freshA?.getFields().find((f) => f.name === "b_ref");
+      if (bRefField) await bRefField.delete();
+      if (tableB) await tableB.delete();
+      if (tableA) await tableA.delete();
+    });
+
+    it("inserts both cyclic rows with FKs correctly resolved", async () => {
+      const oldTimestamp = new Date().valueOf();
+      const app = await getApp({ disableCsrf: true });
+      const loginCookie = await getAdminLoginCookie();
+
+      const localAId = 9001;
+      const localBId = 9002;
+
+      // Submit A before B so that without topo/cycle handling this would fail:
+      // A.b_ref points to a B row that doesn't exist on the server yet.
+      const resp = await doUpload(
+        app,
+        loginCookie,
+        new Date().valueOf(),
+        oldTimestamp,
+        {
+          sync_cycle_a: {
+            inserts: [{ id: localAId, name: "row A", b_ref: localBId }],
+          },
+          sync_cycle_b: {
+            inserts: [{ id: localBId, name: "row B", a_ref: localAId }],
+          },
+        }
+      );
+      expect(resp.status).toBe(200);
+      const { syncDir } = resp._body;
+      const result = await getResult(app, loginCookie, syncDir);
+      await cleanSyncDir(app, loginCookie, syncDir);
+
+      expect(result.translatedIds).toBeDefined();
+      const serverAId = result.translatedIds.sync_cycle_a?.[localAId];
+      const serverBId = result.translatedIds.sync_cycle_b?.[localBId];
+      expect(serverAId).toBeDefined();
+      expect(serverBId).toBeDefined();
+
+      // A.b_ref must point to the server-assigned B ID
+      const rowA = await tableA.getRow({ id: serverAId });
+      expect(rowA.b_ref).toBe(serverBId);
+
+      // B.a_ref must point to the server-assigned A ID (deferred post-UPDATE)
+      const rowB = await tableB.getRow({ id: serverBId });
+      expect(rowB.a_ref).toBe(serverAId);
     });
   } else
     it("only pq support", () => {

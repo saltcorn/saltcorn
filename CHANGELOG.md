@@ -1,6 +1,8 @@
 # Notable changes
 
-## 1.6.0 - In development
+## 1.6.0 - Released 24 June 2026
+
+* When generating run_js_code code with AI, show a preview first the user can approve or reject.
 
 * The builder now resyncs with the server when its browser tab is activated or returns from a back button click
 
@@ -108,13 +110,19 @@
 
 * Protection against SQL injection in the jsexprToSQL function. To our knowledge this can only be accessed by users with administrative privileges.
 
-* Tenants can only be created on subtenants if the role to create tenants is public. This avoids a confusing situation where the role check was not against root roles but against the subtenant roles when the tenant was created from a subtenants.
+* Tenants can only be created on subtenants if the role to create tenants is public. This avoids a confusing situation where the role check was not against root roles but against the subtenant roles when the tenant was created from a subtenants. Reported by j2l
 
 * Prevent tenants from installing git/github plugins from backups and packs
 
-* Ownership checks in table sync with mobile apps
+* Ownership checks in table sync with mobile apps. Reported by QiaoNPC and axel-corsiez
 
 * Cookie "secure" property set if using https or if the "force secure" option is chosen
+
+* Fix XSS protection for query inputs. Prevent attribute XSS. Reported by Mathis-Z.
+
+* Fix cross-tenant authentication bypass with malformed host header Reported by Av7danger.
+
+* Fix cross-tenant authentication vulnerability in API endpoints. Reported by 5ud0 / Tarmo Technologies.
 
 ## 1.5.0 - Released 26 January 2026
 

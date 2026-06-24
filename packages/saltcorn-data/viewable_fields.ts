@@ -1422,6 +1422,7 @@ const get_viewable_fields = (
               !f.calculated || f.stored
                 ? sortlinkForName(f.name, req, viewname, statehash)
                 : undefined,
+            header_underline: f.calculated && !f.stored ? true : undefined,
           };
         if (column.click_to_edit) {
           const updateKey = (fvr: any, column_key?: any) => {
@@ -2456,7 +2457,7 @@ const transformForm = async ({
           // post multipart FormData so req.files is populated server-side.
           const hasFileFields = table.fields?.some((f) => f.type === "File");
           if (segment.action_name === "Multi-step action" || hasFileFields) {
-            url.javascript = `${confirmStr}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );`;
+            url.javascript = `${confirmStr}{${segment.spinner ? "spin_action_link(this);" : ""}view_post(this, 'run_action', get_form_data(this, '${segment.rndid}') );}`;
           } else {
             url.javascript = `${confirmStr}{${segment.spinner ? "spin_action_link(this);" : ""}view_post(this, 'run_action', {rndid:'${segment.rndid}', ...get_form_record(this)});}`;
           }

@@ -1,7 +1,7 @@
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 import db from "../db";
 import { assertIsSet } from "./assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 const Table = require("../models/table");
 
 afterAll(db.close);
@@ -43,7 +43,7 @@ describe("Transaction test", () => {
     it("should insert", async () => {
       const books = Table.findOne({ name: "books" });
       assertIsSet(books);
-      await runWithTenant("public", async () => {
+      await runWithTenant(db.getTenantSchema(), async () => {
         await db.withTransaction(async () => {
           await books.insertRow({ author: "Trans Rights", pages: 688 });
         });
@@ -55,7 +55,7 @@ describe("Transaction test", () => {
     it("should cancel", async () => {
       const books = Table.findOne({ name: "books" });
       assertIsSet(books);
-      await runWithTenant("public", async () => {
+      await runWithTenant(db.getTenantSchema(), async () => {
         await db.withTransaction(
           async () => {
             await books.insertRow({ author: "JK Rowling", pages: 684 });

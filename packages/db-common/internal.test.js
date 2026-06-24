@@ -1,3 +1,5 @@
+import { describe, it } from "node:test";
+import { expect } from "./test_expect.js";
 import {
   sqlsanitize,
   mkWhere,

@@ -3,12 +3,18 @@ import db from "../db/index";
 
 const { getState } = require("../db/state");
 import { assertIsSet } from "./assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 
 getState().registerPlugin("base", require("../base-plugin"));
 jest.setTimeout(30000);
 
 afterAll(db.close);
+beforeAll(async () => {
+  // initialise this process's schema (tests run each file in its own Postgres
+  // schema so they can run in parallel)
+  await require("../db/reset_schema")();
+  await require("../db/fixtures")();
+});
 
 describe("plugin", () => {
   it("cruds", async () => {

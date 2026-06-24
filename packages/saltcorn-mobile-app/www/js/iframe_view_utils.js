@@ -204,7 +204,7 @@ async function inline_local_submit(e, opts1) {
 }
 
 function saveAndContinueAsync(e, action) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     saveAndContinue(e, action, (x) => resolve(x));
   });
 }
@@ -744,7 +744,7 @@ async function clear_state(omit_fields_str, e) {
   try {
     showLoadSpinner();
     const newhref = get_current_state_url(e);
-    const { path, query, hash } =
+    const { path, query } =
       parent.saltcorn.mobileApp.navigation.splitPathQuery(newhref);
     let newQuery = "";
     if (omit_fields_str) {
@@ -763,8 +763,6 @@ async function clear_state(omit_fields_str, e) {
   }
 }
 
-let last_route_viewname;
-
 async function view_post(viewnameOrElem, route, data, onDone, sendState) {
   const viewname =
     typeof viewnameOrElem === "string"
@@ -772,13 +770,12 @@ async function view_post(viewnameOrElem, route, data, onDone, sendState) {
       : $(viewnameOrElem)
           .closest("[data-sc-embed-viewname]")
           .attr("data-sc-embed-viewname");
-  last_route_viewname = viewname;
+  window.last_route_viewname = viewname;
   const buildQuery = () => {
     const query = parent.saltcorn.mobileApp.navigation.currentQuery();
     return query ? `?${query}` : "";
   };
   const mobileConfig = parent.saltcorn.data.state.getState().mobileConfig;
-  const view = parent.saltcorn.data.models.View.findOne({ name: viewname });
   try {
     showLoadSpinner();
     let respData = undefined;
@@ -1038,3 +1035,38 @@ async function updateMatchingRows(e, viewname) {
 function reload_on_init() {
   console.log("not yet supported");
 }
+
+window.runUrl = runUrl;
+window.execNavbarLink = execNavbarLink;
+window.sc_form_submit_in_progress = sc_form_submit_in_progress;
+window.ajaxSubmitForm = ajaxSubmitForm;
+window.inline_local_submit = inline_local_submit;
+window.saveAndContinueAsync = saveAndContinueAsync;
+window.publicLogin = publicLogin;
+window.logout = logout;
+window.signupFormSubmit = signupFormSubmit;
+window.loginFormSubmit = loginFormSubmit;
+window.loginWith = loginWith;
+window.local_post_btn = local_post_btn;
+window.stateFormSubmit = stateFormSubmit;
+window.set_state_field = set_state_field;
+window.unset_state_field = unset_state_field;
+window.sortby = sortby;
+window.gopage = gopage;
+window.ajax_modal = ajax_modal;
+window.closeModal = closeModal;
+window.ajax_post = ajax_post;
+window.ajax_post_json = ajax_post_json;
+window.make_unique_field = make_unique_field;
+window.openFile = openFile;
+window.openInAppBrowser = openInAppBrowser;
+window.select_id = select_id;
+window.check_state_field = check_state_field;
+window.clear_state = clear_state;
+window.view_post = view_post;
+window.switchNetworkMode = switchNetworkMode;
+window.callSync = callSync;
+window.deleteOfflineDataClicked = deleteOfflineDataClicked;
+window.getPicture = getPicture;
+window.updateMatchingRows = updateMatchingRows;
+window.reload_on_init = reload_on_init;

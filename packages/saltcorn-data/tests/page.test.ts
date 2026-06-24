@@ -3,7 +3,7 @@ import File from "../models/file";
 import db from "../db";
 const { getState } = require("../db/state");
 import { assertIsSet } from "./assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import mocks from "./mocks";
 const { mockReqRes } = mocks;
 getState().registerPlugin("base", require("../base-plugin"));
