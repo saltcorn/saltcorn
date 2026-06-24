@@ -4,6 +4,13 @@ sudo -iu postgres psql -U postgres -c "CREATE USER saltcorn WITH CREATEDB;"
 adduser --disabled-password --gecos "" saltcorn
 usermod -a -G docker saltcorn
 sudo -iu saltcorn mkdir -p /home/saltcorn/.config/
+(cd /tmp && git clone --branch v0.8.3 https://github.com/pgvector/pgvector.git && cd pgvector && make && make install)
+sudo -u postgres psql -d template1 -c 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";'
+sudo -u postgres psql -d template1 -c 'CREATE EXTENSION IF NOT EXISTS vector;'
+sudo -u postgres psql -d template1 -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
+sudo -u postgres psql -d template1 -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'
+sudo -u postgres psql -d template1 -c 'CREATE EXTENSION IF NOT EXISTS citext;'
+sudo -u postgres psql -d template1 -c 'CREATE EXTENSION IF NOT EXISTS plpgsql;'
 sudo -iu saltcorn createdb saltcorn 
 sudo -iu postgres psql -U postgres -d saltcorn -c "ALTER SCHEMA public OWNER TO saltcorn;"
 sudo -iu postgres psql -U postgres -d saltcorn -c 'create extension if not exists "uuid-ossp";'
