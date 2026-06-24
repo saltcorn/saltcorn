@@ -11,6 +11,7 @@ sudo -u postgres psql -d template1 -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
 sudo -u postgres psql -d template1 -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'
 sudo -u postgres psql -d template1 -c 'CREATE EXTENSION IF NOT EXISTS citext;'
 sudo -u postgres psql -d template1 -c 'CREATE EXTENSION IF NOT EXISTS plpgsql;'
+sudo -u postgres psql -d template1 -c 'ALTER DATABASE template1 SET search_path = "$user", public, extensions;'
 sudo -iu saltcorn createdb saltcorn 
 sudo -iu postgres psql -U postgres -d saltcorn -c "ALTER SCHEMA public OWNER TO saltcorn;"
 sudo -iu postgres psql -U postgres -d saltcorn -c 'create extension if not exists "uuid-ossp";'

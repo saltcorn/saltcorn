@@ -1,6 +1,6 @@
 # Notable changes
 
-## 1.6.0 - In development
+## 1.6.0 - Released 24 June 2026
 
 * When generating run_js_code code with AI, show a preview first the user can approve or reject.
 
@@ -117,6 +117,10 @@
 * Ownership checks in table sync with mobile apps
 
 * Cookie "secure" property set if using https or if the "force secure" option is chosen
+
+* Fix XSS protection for query inputs. Prevent attribute XSS
+
+* Fix cross-tenant authenticaltion bypass with malformed host header
 
 ## 1.5.0 - Released 26 January 2026
 

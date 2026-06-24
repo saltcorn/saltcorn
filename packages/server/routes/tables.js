@@ -2816,7 +2816,7 @@ const get_provider_workflow = (table, req) => {
   const provider = getState().table_providers[table.provider_name];
   if (!provider) {
     throw new InvalidConfiguration(
-      `Provider not found for rable ${table.name}: table.provider_name`
+      `Provider not found for table ${table.name}: table.provider_name`
     );
   }
   const workflow = provider.configuration_workflow(req);
