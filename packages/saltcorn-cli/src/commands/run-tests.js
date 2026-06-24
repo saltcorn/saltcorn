@@ -129,6 +129,7 @@ class RunTestsCommand extends Command {
    * @returns {Promise<void>}
    */
   async dropTestSchemas(db) {
+    this.cleanupTestFileStores();
     if (db.isSQLite) {
       const os = require("os");
       const tmp = os.tmpdir();
@@ -142,6 +143,27 @@ class RunTestsCommand extends Command {
     );
     for (const { schema_name } of rows)
       await db.query(`drop schema if exists "${schema_name}" cascade`);
+  }
+
+  /**
+   * Remove the per-process file store directories (sctest_filestore_p<pid>)
+   * that the data/server suites create in the temp dir to isolate parallel
+   * test files (see saltcorn-data/setup-test-schema.js). Called after a run to
+   * clean up, and before a run to clear any left behind by a crashed run.
+   * @returns {void}
+   */
+  cleanupTestFileStores() {
+    const os = require("os");
+    const tmp = os.tmpdir();
+    let entries;
+    try {
+      entries = fs.readdirSync(tmp);
+    } catch {
+      return;
+    }
+    for (const f of entries)
+      if (/^sctest_filestore_p\d+$/.test(f))
+        fs.rmSync(path.join(tmp, f), { recursive: true, force: true });
   }
 
   /**
@@ -191,31 +213,38 @@ class RunTestsCommand extends Command {
       await this.copySchemaIntoPck([args.package]);
     await db.close();
     // toddo add --logHeapUsage
-    if (args.package === "core") {
-      await this.do_test(
-        "npm",
-        ["run", "test", ...this.buildTestParams(flags, false)],
-        env
-      );
-    } else if (args.package === "view-queries") {
-      await this.remoteQueryTest(env, this.buildTestParams(flags, true));
-    } else if (args.package) {
-      const cwd = path.join("packages", args.package);
-      const useNodeTest = this.pkgUsesNodeTest(cwd);
-      await this.do_test(
-        "npm",
-        ["run", "test", ...this.buildTestParams(flags, useNodeTest)],
-        env,
-        cwd
-      );
-    } else {
-      const cwd = ".";
-      await this.do_test(
-        "npm",
-        ["--workspaces", "run", "test", ...this.buildTestParams(flags, false)],
-        env,
-        cwd
-      );
+    // do_test calls this.exit() (which throws) on failure, so clean up the
+    // per-process test file stores in a finally to cover passing and failing
+    // runs alike.
+    try {
+      if (args.package === "core") {
+        await this.do_test(
+          "npm",
+          ["run", "test", ...this.buildTestParams(flags, false)],
+          env
+        );
+      } else if (args.package === "view-queries") {
+        await this.remoteQueryTest(env, this.buildTestParams(flags, true));
+      } else if (args.package) {
+        const cwd = path.join("packages", args.package);
+        const useNodeTest = this.pkgUsesNodeTest(cwd);
+        await this.do_test(
+          "npm",
+          ["run", "test", ...this.buildTestParams(flags, useNodeTest)],
+          env,
+          cwd
+        );
+      } else {
+        const cwd = ".";
+        await this.do_test(
+          "npm",
+          ["--workspaces", "run", "test", ...this.buildTestParams(flags, false)],
+          env,
+          cwd
+        );
+      }
+    } finally {
+      this.cleanupTestFileStores();
     }
     this.exit(0);
   }
