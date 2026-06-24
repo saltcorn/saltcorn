@@ -33,7 +33,15 @@
   ],
   "repository": "github:saltcorn/saltcorn",
   "jest": {
-    "preset": "ts-jest",
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "diagnostics": true,
+          "isolatedModules": false
+        }
+      ]
+    },
     "testEnvironment": "node",
     "modulePathIgnorePatterns": [
       ".*\\.js$"

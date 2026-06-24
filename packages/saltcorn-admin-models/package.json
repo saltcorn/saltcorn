@@ -62,8 +62,15 @@
     "typescript": "5.9.2"
   },
   "jest": {
-    "transform": {},
-    "preset": "ts-jest",
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "diagnostics": true,
+          "isolatedModules": false
+        }
+      ]
+    },
     "testEnvironment": "node",
     "modulePathIgnorePatterns": [
       ".*\\.js$"

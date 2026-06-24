@@ -139,8 +139,15 @@
     "webpack-cli": "6.0.1"
   },
   "jest": {
-    "transform": {},
-    "preset": "ts-jest",
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "diagnostics": true,
+          "isolatedModules": false
+        }
+      ]
+    },
     "testEnvironment": "node",
     "modulePathIgnorePatterns": [
       ".*\\.js$"

@@ -34,7 +34,15 @@
     "@types/jest": "^29.5.14"
   },
   "jest": {
-    "preset": "ts-jest",
+    "transform": {
+      "^.+\\.tsx?$": [
+        "ts-jest",
+        {
+          "diagnostics": true,
+          "isolatedModules": false
+        }
+      ]
+    },
     "testEnvironment": "node",
     "modulePathIgnorePatterns": [
       ".*\\.js$"
