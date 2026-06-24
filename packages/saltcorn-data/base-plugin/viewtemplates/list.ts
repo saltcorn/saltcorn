@@ -923,6 +923,22 @@ const configuration_workflow = (req: Req) =>
             tab: "Functionality",
             class: "validate-expression",
           });
+          formfields.push({
+            name: "_subtotals",
+            label: req.__("Show subtotals"),
+            sublabel: req.__(
+              "Show a subtotal row at the end of each group (requires Group by)"
+            ),
+            type: "Bool",
+            tab: "Functionality",
+          });
+          formfields.push({
+            name: "_grand_total",
+            label: req.__("Show grand total"),
+            sublabel: req.__("Show a grand total row at the bottom of the table"),
+            type: "Bool",
+            tab: "Functionality",
+          });
 
           if (!db.isSQLite && !table.external)
             formfields.push({
@@ -1432,6 +1448,8 @@ const run = async (
       default_state?._row_color_formula,
       fields
     );
+  page_opts.show_subtotals = !!default_state?._subtotals;
+  page_opts.show_grand_total = !!default_state?._grand_total;
 
   const [vpos, hpos] = (create_view_location || "Bottom left").split(" ");
   const istop = vpos === "Top";
@@ -1797,7 +1815,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _full_page_count _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout",
+      "_rows_per_page _full_page_count _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout _subtotals _grand_total",
       "default_state"
     );
   }
@@ -1853,6 +1871,8 @@ export = {
       _header_filters_dropdown,
       _row_color_formula,
       _sticky_header,
+      _subtotals,
+      _grand_total,
       ...ds
     } = default_state;
     return ds && removeDefaultColor(removeEmptyStrings(ds));
