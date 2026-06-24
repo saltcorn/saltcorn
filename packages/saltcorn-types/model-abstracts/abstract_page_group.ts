@@ -1,7 +1,7 @@
 import type {
   AbstractPageGroupMember,
   PageGroupMemberPack,
-} from "./abstract_page_group_member";
+} from "./abstract_page_group_member.js";
 
 export interface AbstractPageGroup {
   id?: number;

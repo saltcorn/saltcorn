@@ -1,6 +1,7 @@
-const num_between = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
+export const num_between = (lo: number, hi: number) =>
+  lo + Math.random() * (hi - lo);
 
-const oneOf = (vs: NonNullable<any>) =>
+export const oneOf = (vs: NonNullable<any>) =>
   vs[Math.floor(Math.random() * vs.length)];
 
 const char = () => {
@@ -17,7 +18,10 @@ const ntimes = (n: number, f: Function) => {
   return res;
 };
 
-const generateString = (minLength: number = 0, excludes?: string[]): string => {
+export const generateString = (
+  minLength: number = 0,
+  excludes?: string[]
+): string => {
   const n = Math.round(num_between(minLength, 15));
   let result = ntimes(n, char).join("");
   if (excludes && excludes.includes(result))
@@ -25,9 +29,12 @@ const generateString = (minLength: number = 0, excludes?: string[]): string => {
   return result;
 };
 
-const generateBool = () => Math.random() > 0.5;
+export const generateBool = () => Math.random() > 0.5;
 
-export = {
+// default export keeps the existing `import generators from
+// "@saltcorn/types/generators"` call sites working; the named exports above
+// keep `import { generateString } from ...` and CJS destructuring working.
+export default {
   generateBool,
   num_between,
   oneOf,

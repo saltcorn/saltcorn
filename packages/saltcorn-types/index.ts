@@ -2,14 +2,14 @@
  * This is the saltcorn-types package
  * @module
  */
-import * as baseTypesImports from "./base_types";
-import * as commonTypesImports from "./common_types";
+import * as baseTypesImports from "./base_types.js";
+import * as commonTypesImports from "./common_types.js";
 export namespace Types {
   export import base_types = baseTypesImports;
   export import common_types = commonTypesImports;
 }
 
-import generatorsImport from "generators";
+import generatorsImport from "./generators.js";
 /**
  * Those are generators
  */
@@ -18,4 +18,4 @@ export namespace generators {
     generatorsImport;
 }
 
-export * from "./model-abstracts";
+export * from "./model-abstracts/index.js";

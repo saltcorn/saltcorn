@@ -1,6 +1,6 @@
-import type { AbstractField, FieldCfg } from "./abstract_field";
-import type { TriggerCfg } from "./abstract_trigger";
-import type { AbstractTag } from "./abstract_tag";
+import type { AbstractField, FieldCfg } from "./abstract_field.js";
+import type { TriggerCfg } from "./abstract_trigger.js";
+import type { AbstractTag } from "./abstract_tag.js";
 
 export interface AbstractTable {
   name: string;

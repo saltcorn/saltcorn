@@ -1,7 +1,7 @@
 import { Row } from "@saltcorn/db-common/internal";
-import type { AbstractTable } from "./abstract_table";
-import type { AbstractTag } from "./abstract_tag";
-import type { WorkflowStepCfg } from "./abstract_workflow_step";
+import type { AbstractTable } from "./abstract_table.js";
+import type { AbstractTag } from "./abstract_tag.js";
+import type { WorkflowStepCfg } from "./abstract_workflow_step.js";
 
 export interface AbstractTrigger {
   name?: string;

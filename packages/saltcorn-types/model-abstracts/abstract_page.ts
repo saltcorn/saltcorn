@@ -1,7 +1,7 @@
-import type { GenObj } from "../common_types";
-import type { Layout } from "../base_types";
-import type { ConnectedObjects } from "../base_types";
-import type { AbstractTag } from "./abstract_tag";
+import type { GenObj } from "../common_types.js";
+import type { Layout } from "../base_types.js";
+import type { ConnectedObjects } from "../base_types.js";
+import type { AbstractTag } from "./abstract_tag.js";
 
 export interface AbstractPage {
   id?: number;

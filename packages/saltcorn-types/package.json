@@ -8,6 +8,7 @@
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
   },
+  "type": "module",
   "author": "Tom Nielsen",
   "license": "MIT",
   "main": "dist/index.js",
