@@ -1,5 +1,5 @@
-import type { GenObj } from "../common_types";
-import { AbstractForm } from "./abstract_form";
+import type { GenObj } from "../common_types.js";
+import { AbstractForm } from "./abstract_form.js";
 
 export type RunResult = {
   renderForm?: any;

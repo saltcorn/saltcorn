@@ -2,38 +2,41 @@
  * Those are the base types
  * @module
  */
-import type { AbstractForm } from "./model-abstracts/abstract_form";
+import type { AbstractForm } from "./model-abstracts/abstract_form.js";
 import {
   AbstractTable,
   TablePack,
   instanceOfTable,
-} from "./model-abstracts/abstract_table";
-import type { AbstractWorkflow } from "./model-abstracts/abstract_workflow";
+} from "./model-abstracts/abstract_table.js";
+import type { AbstractWorkflow } from "./model-abstracts/abstract_workflow.js";
 import type {
   AbstractTrigger,
   TriggerPack,
-} from "./model-abstracts/abstract_trigger";
-import type { InputType } from "./model-abstracts/abstract_field";
+} from "./model-abstracts/abstract_trigger.js";
+import type { InputType } from "./model-abstracts/abstract_field.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
-import type { Type, ReqRes, GenObj } from "./common_types";
-import type { RolePack } from "./model-abstracts/abstract_role";
-import type { LibraryPack } from "./model-abstracts/abstract_library";
+import type { Type, ReqRes, GenObj } from "./common_types.js";
+import type { RolePack } from "./model-abstracts/abstract_role.js";
+import type { LibraryPack } from "./model-abstracts/abstract_library.js";
 import {
   AbstractView,
   ViewPack,
   instanceOfView,
-} from "./model-abstracts/abstract_view";
-import type { AbstractPage, PagePack } from "./model-abstracts/abstract_page";
-import type { PageGroupPack } from "./model-abstracts/abstract_page_group";
+} from "./model-abstracts/abstract_view.js";
+import type {
+  AbstractPage,
+  PagePack,
+} from "./model-abstracts/abstract_page.js";
+import type { PageGroupPack } from "./model-abstracts/abstract_page_group.js";
 import {
   PluginPack,
   instanceOfPlugin,
-} from "./model-abstracts/abstract_plugin";
-import type { TagPack } from "./model-abstracts/abstract_tag";
-import type { ModelPack } from "./model-abstracts/abstract_model";
-import type { ModelInstancePack } from "./model-abstracts/abstract_model_instance";
-import type { EventLogPack } from "./model-abstracts/abstract_event_log";
-import type { AbstractUser } from "./model-abstracts/abstract_user";
+} from "./model-abstracts/abstract_plugin.js";
+import type { TagPack } from "./model-abstracts/abstract_tag.js";
+import type { ModelPack } from "./model-abstracts/abstract_model.js";
+import type { ModelInstancePack } from "./model-abstracts/abstract_model_instance.js";
+import type { EventLogPack } from "./model-abstracts/abstract_event_log.js";
+import type { AbstractUser } from "./model-abstracts/abstract_user.js";
 
 type FieldLikeBasics = {
   name: string;

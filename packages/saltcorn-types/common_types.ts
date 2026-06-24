@@ -1,5 +1,5 @@
-import type { FieldView, FieldLike, Req, Res } from "./base_types";
-import type { AbstractTable } from "./model-abstracts/abstract_table";
+import type { FieldView, FieldLike, Req, Res } from "./base_types.js";
+import type { AbstractTable } from "./model-abstracts/abstract_table.js";
 
 /**
  * Those are the common types

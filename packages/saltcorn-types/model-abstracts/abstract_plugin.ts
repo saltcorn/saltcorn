@@ -1,4 +1,4 @@
-import type { PluginSourceType } from "../base_types";
+import type { PluginSourceType } from "../base_types.js";
 
 export interface AbstractPlugin {
   id?: number | string;

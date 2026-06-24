@@ -1,5 +1,5 @@
-import type { Layout } from "../base_types";
-import type { AbstractField, AbstractFieldRepeat } from "./abstract_field";
+import type { Layout } from "../base_types.js";
+import type { AbstractField, AbstractFieldRepeat } from "./abstract_field.js";
 
 export type AdditionalButton = {
   label: string;
