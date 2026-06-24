@@ -3,37 +3,33 @@
  * @module mjml-tags
  */
 
-import mkTag = require("./mktag");
-const tags: string[] = [
-  "head",
-  "style",
-  "body",
-  "section",
-  "column",
-  "image",
-  "text",
-  "divider",
-  "raw",
-  "button",
-  "group",
-  "attributes",
-];
-const allTags: { [k: string]: (...args: any[]) => string } = Object.fromEntries(
-  tags.map((tag) => [tag, mkTag(`mj-${tag}`)])
-);
-const mjml = mkTag("mjml");
-type ExportsType = {
-  [key: string]: any; // "...allTags" properties
-};
+import mkTag from "./mktag";
+
+// MJML element helpers (rendered as <mj-*>). Named exports so they can be
+// imported individually under ESM; a default object is exported below for
+// back-compat with `import mjml from "@saltcorn/markup/mjml-tags"`.
+export const head = mkTag("mj-head");
+export const style = mkTag("mj-style");
+export const body = mkTag("mj-body");
+export const section = mkTag("mj-section");
+export const column = mkTag("mj-column");
+export const image = mkTag("mj-image");
+export const text = mkTag("mj-text");
+export const divider = mkTag("mj-divider");
+export const raw = mkTag("mj-raw");
+export const button = mkTag("mj-button");
+export const group = mkTag("mj-group");
+export const attributes = mkTag("mj-attributes");
+export const mjml = mkTag("mjml");
 
 //https://www.litmus.com/blog/a-guide-to-bulletproof-buttons-in-email-design
-const emailButton = (
+export const emailButton = (
   {
     href,
     title,
     btnStyle,
     style,
-  }: { href: string; title?: string; btnStyle?: string; style?: string },
+  }: { href: string; title?: string; btnStyle?: string; style?: string | null },
   label: string
 ) => {
   const rawType = (btnStyle || "").replace("btn ", "");
@@ -80,7 +76,7 @@ const emailButton = (
       color = borderColor = `#0dcaf0`;
       break;
   }
-//  console.log({ href, btnStyle, rawType, label, style, borderColor, color });
+  //  console.log({ href, btnStyle, rawType, label, style, borderColor, color });
   return `<a rel="noopener" target="_blank" ${title ? `title="${title}" ` : ""}href="${href}" style="${style && style.includes("color") ? `${style}; border-width: 1px; border-style: solid;` : `background-color: ${bgColor}; color: ${color};`} ${borderColor ? `border-color: ${borderColor};border-width:1px; border-style: solid; ` : ""}font-size: 18px; font-family: Helvetica, Arial, sans-serif; font-weight: bold; text-decoration: none; padding: 14px 20px; border-radius: 5px; display: inline-block; mso-padding-alt: 0;">
     <!--[if mso]>
     <i style="letter-spacing: 25px; mso-font-width: -100%; mso-text-raise: 30pt;">&nbsp;</i>
@@ -91,10 +87,21 @@ const emailButton = (
     <![endif]-->
 </a>`;
 };
-const tagsExports: ExportsType = {
-  ...allTags,
+const tagsExports = {
+  head,
+  style,
+  body,
+  section,
+  column,
+  image,
+  text,
+  divider,
+  raw,
+  button,
+  group,
+  attributes,
   mjml,
   emailButton,
 };
 
-export = tagsExports;
+export default tagsExports;

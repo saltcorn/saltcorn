@@ -2,20 +2,9 @@
  * @category saltcorn-markup
  * @module tags
  */
-
-import mkTag = require("./mktag");
+import mkTag from "./mktag";
 import escape from "escape-html";
-import htmlTags from "html-tags";
-import voidHtmlTags from "html-tags/void";
-import type {
-  ClassVal,
-  StyleVal,
-  Element,
-  Attributes,
-  AttributeVal,
-  TagFunction,
-  TagExports,
-} from "./types";
+import { allTags } from "./generated_tags";
 import {
   genericElement,
   domReady,
@@ -24,29 +13,34 @@ import {
   text_attr,
   nbsp,
 } from "./extra_tags";
-const voidHtmlTagsSet = new Set<string>(voidHtmlTags);
+import type { TagExports } from "./types";
 
-const allTags: { [k: string]: TagFunction } = Object.fromEntries(
-  htmlTags.map((tag) => [tag, mkTag(tag, voidHtmlTagsSet.has(tag))])
-);
-
-const tagsExports: TagExports = {
-  ...allTags,
-  /**
-   * @param {string} tagName
-   * @param  {...*} rest
-   * @returns {string}
-   */
+// Named exports: one per HTML tag (a, div, span, …), generated from html-tags.
+export * from "./generated_tags";
+// Named exports: the hand-written helpers that live alongside the tags.
+export {
   genericElement,
   domReady,
   with_curScript,
   text,
   text_attr,
-  /** @type {string} */
   nbsp,
-  /** @type {module:mktag} */
+} from "./extra_tags";
+export { mkTag, escape };
+
+// Back-compat default export: the whole tag surface as a single object, so that
+// `import tags from "@saltcorn/markup/tags"; tags.div(...)` and
+// `const tags = require("@saltcorn/markup/tags")` keep working.
+const tagsExports: TagExports = {
+  ...allTags,
+  genericElement,
+  domReady,
+  with_curScript,
+  text,
+  text_attr,
+  nbsp,
   mkTag,
   escape,
 } as TagExports;
 
-export = tagsExports;
+export default tagsExports;

@@ -6,6 +6,8 @@
   "main": "./dist/index.js",
   "scripts": {
     "test": "cd dist && node --test",
+    "gen:tags": "node gen-tags.js",
+    "pretsc": "node gen-tags.js",
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*",
     "build": "webpack --mode development"
