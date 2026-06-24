@@ -9,7 +9,7 @@
 /** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
 //const db = require("@saltcorn/data/db");
-const { error_catcher } = require("./utils.js");
+const { error_catcher, rejectTenantDrift } = require("./utils.js");
 const Table = require("@saltcorn/data/models/table");
 const View = require("@saltcorn/data/models/view");
 const Page = require("@saltcorn/data/models/page");
@@ -42,6 +42,9 @@ const { text } = require("@saltcorn/markup/tags");
  */
 const router = new Router();
 module.exports = router;
+
+// Reject sessions/JWTs minted in another tenant before any data is served.
+router.use(rejectTenantDrift);
 
 /**
  * Check that user has right to read sc service api data.

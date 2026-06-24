@@ -325,3 +325,108 @@ describe("File class", () => {
     expect(filenames).toContain("subfolder");
   });
 });
+
+describe("File sandbox subclass", () => {
+  const tenantBase = () =>
+    join(db.connectObj.file_store, db.getTenantSchema());
+  let SandboxFile: typeof File;
+  let sandboxDir: string;
+
+  beforeAll(async () => {
+    sandboxDir = join(tenantBase(), "sandbox");
+    await File.new_folder("sandbox");
+    // a file inside the sandbox directory
+    await File.from_contents(
+      "inside.txt",
+      "text/plain",
+      "secret-in",
+      1,
+      100,
+      "sandbox"
+    );
+    // a file outside the sandbox directory (in the tenant root)
+    await File.from_contents(
+      "outside.txt",
+      "text/plain",
+      "secret-out",
+      1,
+      100,
+      "/"
+    );
+    SandboxFile = File.subClass({ sandbox_dir: sandboxDir });
+  });
+
+  it("can read files inside the sandbox", async () => {
+    const f = await SandboxFile.findOne("sandbox/inside.txt");
+    assertIsSet(f);
+    expect(await f.get_contents("utf8")).toBe("secret-in");
+  });
+
+  it("cannot find a file outside the sandbox", async () => {
+    const f = await SandboxFile.findOne("outside.txt");
+    expect(f).toBe(null);
+  });
+
+  it("cannot escape the sandbox with path traversal", async () => {
+    const f = await SandboxFile.findOne("sandbox/../outside.txt");
+    expect(f).toBe(null);
+  });
+
+  it("cannot read a file outside the sandbox via a hand-built instance", async () => {
+    const f = new SandboxFile({
+      filename: "outside.txt",
+      location: join(tenantBase(), "outside.txt"),
+      uploaded_at: new Date(),
+      size_kb: 1,
+      mime_super: "text",
+      mime_sub: "plain",
+      min_role_read: 100,
+    });
+    await expect(f.get_contents("utf8")).rejects.toThrow(/sandbox/);
+    expect(existsSync(join(tenantBase(), "outside.txt"))).toBe(true);
+  });
+
+  it("cannot overwrite or delete a file outside the sandbox", async () => {
+    const f = new SandboxFile({
+      filename: "outside.txt",
+      location: join(tenantBase(), "outside.txt"),
+      uploaded_at: new Date(),
+      size_kb: 1,
+      mime_super: "text",
+      mime_sub: "plain",
+      min_role_read: 100,
+    });
+    await expect(f.overwrite_contents("hacked")).rejects.toThrow(/sandbox/);
+    await f.delete(); // delete swallows the error
+    // the outside file must still exist with original contents
+    const orig = await File.findOne("outside.txt");
+    assertIsSet(orig);
+    expect(await orig.get_contents("utf8")).toBe("secret-out");
+  });
+
+  it("cannot write a new file outside the sandbox", async () => {
+    await expect(
+      SandboxFile.from_contents("evil.txt", "text/plain", "x", 1, 100, "/")
+    ).rejects.toThrow(/sandbox/);
+    expect(existsSync(join(tenantBase(), "evil.txt"))).toBe(false);
+  });
+
+  it("can write a new file inside the sandbox", async () => {
+    const f = await SandboxFile.from_contents(
+      "new.txt",
+      "text/plain",
+      "ok",
+      1,
+      100,
+      "sandbox"
+    );
+    expect(await f.get_contents("utf8")).toBe("ok");
+    expect(existsSync(join(sandboxDir, "new.txt"))).toBe(true);
+  });
+
+  it("leaves the base File class unrestricted", async () => {
+    const f = await File.findOne("outside.txt");
+    assertIsSet(f);
+    expect(await f.get_contents("utf8")).toBe("secret-out");
+  });
+});

@@ -1,0 +1,95 @@
+deb13_node24:
+  image: images:debian/13
+  runtime: incus
+  command:
+    - apt update -q
+    - apt install -qqy wget
+    - adduser --disabled-password --gecos "" someuser
+    - echo "someuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/someuser
+    - chmod 0440 /etc/sudoers.d/someuser
+    - wget -qO - https://deb.nodesource.com/setup_24.x | bash -
+    - apt install -qqy nodejs
+    - sudo -iu someuser npx -y saltcorn-install -y -n
+    - systemctl is-active saltcorn
+    - wget -qO- http://localhost/ | grep -F '<p>Please'
+
+deb13_node26:
+  image: images:debian/13
+  runtime: incus
+  command:
+    - apt update -q
+    - apt install -qqy wget
+    - adduser --disabled-password --gecos "" someuser
+    - echo "someuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/someuser
+    - chmod 0440 /etc/sudoers.d/someuser
+    - wget -qO - https://deb.nodesource.com/setup_26.x | bash -
+    - apt install -qqy nodejs
+    - sudo -iu someuser npx -y saltcorn-install -y -n
+    - systemctl is-active saltcorn
+    - wget -qO- http://localhost/ | grep -F '<p>Please'
+
+ubuntu2604_node24:
+  image: images:ubuntu/26.04
+  runtime: incus
+  command:
+    - apt update -q
+    - apt install -qqy wget
+    - adduser --disabled-password --gecos "" someuser
+    - echo "someuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/someuser
+    - chmod 0440 /etc/sudoers.d/someuser
+    - wget -qO - https://deb.nodesource.com/setup_24.x | bash -
+    - apt install -qqy nodejs
+    - sudo -iu someuser npx -y saltcorn-install -y -n
+    - systemctl is-active saltcorn
+    - wget -qO- http://localhost/ | grep -F '<p>Please'
+
+ubuntu2404_node24:
+  image: images:ubuntu/24.04
+  runtime: incus
+  command:
+    - apt update -q
+    - apt install -qqy wget
+    - adduser --disabled-password --gecos "" someuser
+    - echo "someuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/someuser
+    - chmod 0440 /etc/sudoers.d/someuser
+    - wget -qO - https://deb.nodesource.com/setup_24.x | bash -
+    - apt install -qqy nodejs
+    - sudo -iu someuser npx -y saltcorn-install -y -n
+    - systemctl is-active saltcorn
+    - wget -qO- http://localhost/ | grep -F '<p>Please'
+
+fedora44:
+  image: images:fedora/44
+  runtime: incus
+  command:
+    - useradd -m -s /bin/bash someuser
+    - echo "someuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/someuser
+    - chmod 0440 /etc/sudoers.d/someuser
+    - dnf install -y nodejs24 wget
+    - sudo -iu someuser npx -y saltcorn-install -y -n
+    - systemctl is-active saltcorn
+    - wget -qO- http://localhost/ | grep -F '<p>Please'
+
+opensuse16:
+  image: images:opensuse/16.0
+  runtime: incus
+  command:
+    - useradd -m -s /bin/bash someuser
+    - echo "someuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/someuser
+    - chmod 0440 /etc/sudoers.d/someuser
+    - zypper -n install nodejs24 npm24 git nodejs24-devel wget
+    - sudo -iu someuser npx -y saltcorn-install -y -n
+    - systemctl is-active saltcorn
+    - wget -qO- http://localhost/ | grep -F '<p>Please'
+
+alma10:
+  image: images:almalinux/10
+  runtime: incus
+  command:
+    - useradd -m -s /bin/bash someuser
+    - echo "someuser ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/someuser
+    - chmod 0440 /etc/sudoers.d/someuser
+    - dnf install -y nodejs wget which
+    - sudo -iu someuser npx -y saltcorn-install -y -n
+    - systemctl is-active saltcorn
+    - wget -qO- http://localhost/ | grep -F '<p>Please'

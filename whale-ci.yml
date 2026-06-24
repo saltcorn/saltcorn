@@ -1,9 +1,8 @@
 build:
-  dockerfile: ./deploy/dock-ci/Dockerfile.dev
+  dockerfile: ./deploy/whale-ci/Dockerfile.dev
 
 run_tests_sqlite:
   image: build
-  disable: true
   command:
     - saltcorn run-tests saltcorn-data
     - saltcorn run-tests server
@@ -18,7 +17,6 @@ run_tests_postgres_db:
   image: postgres
   service: true
   quiet: true
-  disable: true
   ready-on: CREATE DATABASE
   environment:
     POSTGRES_PASSWORD: postgres
@@ -29,7 +27,6 @@ run_tests_postgres:
   image: build
   depends: run_tests_postgres_db 
   delay: 1
-  disable: true
   command:
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
     - saltcorn reset-schema -f   
@@ -47,7 +44,6 @@ run_tests_postgres:
 pytest_db:
   image: postgres:16
   service: true
-  disable: true
   quiet: true
   ready-on: CREATE DATABASE
   environment:
@@ -57,7 +53,6 @@ pytest_db:
 
 pytest:
   image: build
-  disable: true
   depends: pytest_db 
   command:
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
@@ -84,7 +79,7 @@ playwright_db:
 
 
 playwright:
-  dockerfile: ./deploy/dock-ci/Dockerfile.e2e
+  dockerfile: ./deploy/whale-ci/Dockerfile.e2e
   depends: 
     - build
     - playwright_db

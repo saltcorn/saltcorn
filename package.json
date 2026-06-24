@@ -50,6 +50,7 @@
       "**/plugin_packages/**",
       "**/plugins_folder/**",
       "packages/server/public/**",
+      "packages/saltcorn-mobile-builder/tests/**",
       "**/dist/**",
       "*.test.js",
       "packages/filemanager/public/build/bundle.js",

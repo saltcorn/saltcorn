@@ -45,7 +45,7 @@ jobs:
         run: npm install
         working-directory: ./deploy/playwright_mobile
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
         working-directory: ./deploy/playwright_mobile
 
       - name: Run Playwright mobile tests

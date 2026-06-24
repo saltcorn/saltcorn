@@ -52,6 +52,7 @@ const {
   mergeActionResults,
 } = require("../utils");
 const db = require("../db");
+
 const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
 const { available_languages } = require("../models/config");
 const MetaData = require("../models/metadata");
@@ -161,7 +162,6 @@ const run_code = async ({
     //console.error("strip error", e);
     code = configuration.code;
   }
-
   const run_where = configuration.run_where;
   if (run_where === "Client page")
     return {
@@ -268,7 +268,7 @@ const run_code = async ({
       await sysState.refresh();
     },
     URL,
-    File: File,
+    File: File.subClassIfTenant(),
     User,
     View,
     Page,
@@ -2211,27 +2211,25 @@ export = {
               return { eval_js: `return saveAndContinueAsync(${jqGet})` };
             }
           } else {
-            // update: if any file uploads present, process server-side and update row
-            const hasUploads = await applyUploadedFiles();
-            if (hasUploads) {
-              const updateres = await table.tryUpdateRow(
-                row!,
-                row![table.pk_name],
-                user
+            // update: ~if any file uploads present,~ always process server-side and update row
+            await applyUploadedFiles();
+
+            const updateres = await table.tryUpdateRow(
+              row!,
+              row![table.pk_name],
+              user
+            );
+            if (!(updateres as any)?.error)
+              return { notify_success: req ? req.__("Saved") : "Saved" };
+            else {
+              getState()!.log(
+                3,
+                `form_actions Save update failed server side, result: ${JSON.stringify(
+                  updateres
+                )} row ${JSON.stringify(row)}`
               );
-              if (!(updateres as any)?.error)
-                return { notify_success: req ? req.__("Saved") : "Saved" };
-              else {
-                getState()!.log(
-                  3,
-                  `form_actions Save update failed server side, result: ${JSON.stringify(
-                    updateres
-                  )} row ${JSON.stringify(row)}`
-                );
-                return { eval_js: `return saveAndContinueAsync(${jqGet})` };
-              }
+              return updateres;
             }
-            return { eval_js: `return saveAndContinueAsync(${jqGet})` };
           }
         case "Reset":
           return { eval_js: jqGet + ".trigger('reset')" };

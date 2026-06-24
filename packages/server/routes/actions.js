@@ -1441,7 +1441,7 @@ router.get(
               tabindex: "-1",
             },
             div(
-              { class: "modal-dialog" },
+              { class: "modal-dialog modal-lg" },
               div(
                 { class: "modal-content" },
                 div(
@@ -1455,47 +1455,91 @@ router.get(
                 ),
                 div(
                   { class: "modal-body" },
-                  p(
-                    { class: "text-muted small" },
-                    req.__(
-                      "Describe what the code should do. The existing code will be used as context."
-                    )
+                  div(
+                    { id: "jsCopilotPromptArea" },
+                    p(
+                      { class: "text-muted small" },
+                      req.__(
+                        "Describe what the code should do. The existing code will be used as context."
+                      )
+                    ),
+                    textarea({
+                      id: "jsCopilotPrompt",
+                      class: "form-control",
+                      rows: 3,
+                      placeholder: req.__("Enter your prompt..."),
+                    }),
+                    div({
+                      id: "jsCopilotError",
+                      class: "alert alert-danger mt-2 mb-0 d-none",
+                    })
                   ),
-                  textarea({
-                    id: "jsCopilotPrompt",
-                    class: "form-control",
-                    rows: 3,
-                    placeholder: req.__("Enter your prompt..."),
-                  }),
-                  div({
-                    id: "jsCopilotError",
-                    class: "alert alert-danger mt-2 mb-0 d-none",
-                  })
+                  div(
+                    { id: "jsCopilotPreviewArea", class: "d-none" },
+                    p(
+                      { class: "text-muted small mb-1" },
+                      req.__("Review the generated code:")
+                    ),
+                    pre(
+                      {
+                        style:
+                          "max-height:400px;overflow:auto;background:#1e1e1e;color:#d4d4d4;border-radius:4px;padding:12px;font-size:13px;",
+                      },
+                      code({ id: "jsCopilotPreviewCode" })
+                    )
+                  )
                 ),
                 div(
                   { class: "modal-footer" },
-                  button(
-                    { class: "btn btn-secondary", "data-bs-dismiss": "modal" },
-                    req.__("Cancel")
+                  div(
+                    { id: "jsCopilotPromptFooter" },
+                    button(
+                      {
+                        class: "btn btn-secondary",
+                        "data-bs-dismiss": "modal",
+                      },
+                      req.__("Cancel")
+                    ),
+                    button(
+                      {
+                        id: "jsCopilotGenBtn",
+                        class: "btn btn-primary ms-2",
+                        onclick: "runJsCopilot()",
+                        disabled: true,
+                      },
+                      req.__("Generate")
+                    )
                   ),
-                  button(
-                    {
-                      id: "jsCopilotGenBtn",
-                      class: "btn btn-primary",
-                      onclick: "runJsCopilot()",
-                      disabled: true,
-                    },
-                    req.__("Generate")
+                  div(
+                    { id: "jsCopilotPreviewFooter", class: "d-none" },
+                    button(
+                      {
+                        class: "btn btn-secondary",
+                        onclick: "jsCopilotBackToPrompt()",
+                      },
+                      req.__("Back")
+                    ),
+                    button(
+                      {
+                        class: "btn btn-primary ms-2",
+                        onclick: "acceptJsCopilot()",
+                      },
+                      req.__("OK")
+                    )
                   )
                 )
               )
             )
           ) +
           script(`
+var _jsCopilotGeneratedCode = null;
+
 function showJsCopilotModal() {
+  jsCopilotBackToPrompt();
   var modal = new bootstrap.Modal(document.getElementById("jsCopilotModal"));
   modal.show();
 }
+
 document.addEventListener("DOMContentLoaded", function () {
   var ta = document.getElementById("jsCopilotPrompt");
   var btn = document.getElementById("jsCopilotGenBtn");
@@ -1504,7 +1548,37 @@ document.addEventListener("DOMContentLoaded", function () {
       btn.disabled = !ta.value.trim();
     });
   }
+  var modalEl = document.getElementById("jsCopilotModal");
+  if (modalEl) {
+    modalEl.addEventListener("hidden.bs.modal", function () {
+      var ta = document.getElementById("jsCopilotPrompt");
+      if (ta) ta.value = "";
+      var btn = document.getElementById("jsCopilotGenBtn");
+      if (btn) btn.disabled = true;
+      var errDiv = document.getElementById("jsCopilotError");
+      if (errDiv) errDiv.classList.add("d-none");
+    });
+  }
 });
+
+function jsCopilotBackToPrompt() {
+  _jsCopilotGeneratedCode = null;
+  var promptArea = document.getElementById("jsCopilotPromptArea");
+  var previewArea = document.getElementById("jsCopilotPreviewArea");
+  var promptFooter = document.getElementById("jsCopilotPromptFooter");
+  var previewFooter = document.getElementById("jsCopilotPreviewFooter");
+  if (promptArea) promptArea.classList.remove("d-none");
+  if (previewArea) previewArea.classList.add("d-none");
+  if (promptFooter) promptFooter.classList.remove("d-none");
+  if (previewFooter) previewFooter.classList.add("d-none");
+  var btn = document.getElementById("jsCopilotGenBtn");
+  if (btn) {
+    var ta = document.getElementById("jsCopilotPrompt");
+    btn.disabled = !ta || !ta.value.trim();
+    btn.textContent = ${JSON.stringify(req.__("Generate"))};
+  }
+}
+
 function runJsCopilot() {
   var ta = document.getElementById("jsCopilotPrompt");
   var prompt = ta.value.trim();
@@ -1523,9 +1597,7 @@ function runJsCopilot() {
     },
     body: JSON.stringify({ description: prompt }),
   })
-    .then(function (r) {
-      return r.json();
-    })
+    .then(function (r) { return r.json(); })
     .then(function (data) {
       btn.textContent = ${JSON.stringify(req.__("Generate"))};
       if (data.error) {
@@ -1534,19 +1606,14 @@ function runJsCopilot() {
         errDiv.classList.remove("d-none");
         return;
       }
-      ta.value = "";
-      btn.disabled = true;
-      var editorDiv = document.querySelector('textarea[name="code"]');
-      if (editorDiv) {
-        var monacoDiv = editorDiv.nextElementSibling;
-        if (monacoDiv) {
-          var ed = $(monacoDiv).data("monaco-editor");
-          if (ed) ed.setValue(data.code);
-        }
-      }
-      bootstrap.Modal.getInstance(
-        document.getElementById("jsCopilotModal")
-      ).hide();
+      _jsCopilotGeneratedCode = data.code;
+      // Show preview
+      var codeEl = document.getElementById("jsCopilotPreviewCode");
+      if (codeEl) codeEl.textContent = data.code;
+      document.getElementById("jsCopilotPromptArea").classList.add("d-none");
+      document.getElementById("jsCopilotPreviewArea").classList.remove("d-none");
+      document.getElementById("jsCopilotPromptFooter").classList.add("d-none");
+      document.getElementById("jsCopilotPreviewFooter").classList.remove("d-none");
     })
     .catch(function (err) {
       btn.disabled = !ta.value.trim();
@@ -1554,6 +1621,20 @@ function runJsCopilot() {
       errDiv.textContent = err.message || "Request failed";
       errDiv.classList.remove("d-none");
     });
+}
+
+function acceptJsCopilot() {
+  if (!_jsCopilotGeneratedCode) return;
+  var editorDiv = document.querySelector('textarea[name="code"]');
+  if (editorDiv) {
+    var monacoDiv = editorDiv.nextElementSibling;
+    if (monacoDiv) {
+      var ed = $(monacoDiv).data("monaco-editor");
+      if (ed) ed.setValue(_jsCopilotGeneratedCode);
+    }
+  }
+  _jsCopilotGeneratedCode = null;
+  bootstrap.Modal.getInstance(document.getElementById("jsCopilotModal")).hide();
 }
           `)
         : "";

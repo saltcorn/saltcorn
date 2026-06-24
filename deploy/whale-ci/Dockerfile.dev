@@ -5,7 +5,7 @@ ENV SALTCORN_DISABLE_UPGRADE "true"
 RUN apt update && apt install -qqy libpq-dev build-essential python-is-python3 postgresql-client git chromium zip unzip python3-setuptools python3-venv python3-pip netcat-traditional
 
 RUN pip3 install --break-system-packages --ignore-installed typing_extensions
-RUN pip3 install --break-system-packages requests httpx mcp pytest pyotp python-socketio[client]
+RUN pip3 install --break-system-packages requests 'httpx>=0.27.0' mcp pytest pyotp python-socketio[client]
 
 RUN echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com' | tee -a /etc/hosts
 RUN echo '127.0.0.1 otherexample.com' | tee -a /etc/hosts
@@ -16,6 +16,8 @@ RUN npm config set fund false \
  && npm config set audit false
 
 RUN npm install -g eslint@8.57.0
+
+RUN npx playwright install --with-deps chromium
 
 WORKDIR /opt/saltcorn
 
