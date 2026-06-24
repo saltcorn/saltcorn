@@ -107,7 +107,11 @@ const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
           );
           await db.withTransaction(
             async () => {
-              if (!is_sqlite) await db.query(`SET search_path TO "${schema}";`);
+              // include public so shared extensions installed there (e.g.
+              // uuid-ossp, pg_trgm) remain resolvable from the tenant schema -
+              // this SET persists on the pooled connection after the migration
+              if (!is_sqlite)
+                await db.query(`SET search_path TO "${schema}", public;`);
               await doMigrationStep(name, contents, schema);
               if (verbose) console.log(".");
             },

@@ -19,8 +19,8 @@ import WorkflowStep from "@saltcorn/data/models/workflow_step";
 import {
   assertIsSet,
   assertsObjectIsUser,
-} from "../../saltcorn-data/tests/assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+} from "@saltcorn/data/tests/assertions";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import Field from "@saltcorn/data/models/field";
 import mocks from "@saltcorn/data/tests/mocks";
 const { mockReqRes, plugin_with_routes } = mocks;

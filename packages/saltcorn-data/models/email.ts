@@ -9,7 +9,16 @@ import type File from "./file";
 import { v4 as uuidv4 } from "uuid";
 import User from "./user";
 import mocks from "../tests/mocks";
-import mjml2html from "mjml";
+// mjml is heavy to load (~170ms) and only needed when actually rendering
+// email markup, so require it lazily rather than at module load time.
+let _mjml2html: any;
+const mjml2html = (mjmlMarkup: string, opts?: any) => {
+  if (!_mjml2html) {
+    const m = require("mjml");
+    _mjml2html = m && m.default ? m.default : m;
+  }
+  return _mjml2html(mjmlMarkup, opts);
+};
 const { mockReqRes } = mocks;
 import { AuthorizationCode } from "simple-oauth2";
 import type { Options as MailOpts } from "nodemailer/lib/mailer";
@@ -231,7 +240,7 @@ const viewToEmailHtml = async (
   const mjmlMarkup = await viewToMjml(view, state, options);
   const html = await mjml2html(mjmlMarkup, { minify: true });
   if (html.errors && html.errors.length > 0) {
-    html.errors.forEach((e) => {
+    html.errors.forEach((e: any) => {
       //console.error("MJML error: ", e);
     });
   }

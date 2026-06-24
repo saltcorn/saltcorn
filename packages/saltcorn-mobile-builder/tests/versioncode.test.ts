@@ -1,4 +1,5 @@
 import { generateAndroidVersionCode } from "../utils/common-build-utils";
+import { describe, it, expect } from "@saltcorn/db-common/test_expect";
 
 describe("versioncode tests", () => {
   it("should generate version code", () => {

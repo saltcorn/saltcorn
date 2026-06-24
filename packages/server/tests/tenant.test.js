@@ -1,6 +1,6 @@
 // File: tenant.test.js
 const db = require("@saltcorn/data/db");
-const request = require("supertest");
+const request = require("../auth/testhelp").request;
 
 const getApp = require("../app");
 const {
@@ -10,6 +10,7 @@ const {
   itShouldRedirectUnauthToLogin,
   toInclude,
   //toNotInclude,
+  resetToFixtures,
 } = require("../auth/testhelp");
 const { getState } = require("@saltcorn/data/db/state");
 const Table = require("@saltcorn/data/models/table");
@@ -21,6 +22,9 @@ afterAll(db.close);
 jest.setTimeout(10000);
 
 beforeAll(async () => {
+  // initialise this process's schema (server tests run each file in its own
+  // Postgres schema so they can run in parallel)
+  await resetToFixtures();
   if (!db.isSQLite) {
     await db.query(`drop schema if exists test2 cascade`);
     await db.query(`drop schema if exists peashoot cascade`);

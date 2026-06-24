@@ -1,8 +1,8 @@
 const getApp = require("@saltcorn/server/app");
-const request = require("supertest");
 
 const { chaos_guinea_pig, set_seed } = require("chaos-guinea-pig");
 const {
+  request,
   getStaffLoginCookie,
   getAdminLoginCookie,
   resetToFixtures,

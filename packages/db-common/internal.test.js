@@ -1,3 +1,5 @@
+const { describe, it } = require("node:test");
+const { expect } = require("./test_expect");
 const {
   sqlsanitize,
   mkWhere,

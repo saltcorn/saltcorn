@@ -1,4 +1,5 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, it } from "node:test";
+import { expect } from "@saltcorn/db-common/test_expect";
 import helpers from "./helpers";
 
 const {

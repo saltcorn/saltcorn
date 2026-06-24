@@ -13,13 +13,7 @@
     "@saltcorn/data": "1.6.0"
   },
   "author": "Tom Nielsen",
-  "license": "MIT",
-  "devDependencies": {
-    "jest": "^29.7.0"
-  },
-  "jest": {
-    "testEnvironment": "node"
-  },
+  "license": "MIT",  
   "publishConfig": {
     "access": "public"
   }

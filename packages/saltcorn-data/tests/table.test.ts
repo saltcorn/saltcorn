@@ -14,7 +14,7 @@ import {
   assertIsErrorMsg,
   assertIsType,
 } from "./assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import {
   add_free_variables_to_joinfields,
   stateFieldsToQuery,
@@ -65,7 +65,7 @@ describe("Table create basic tests", () => {
     expect(tc.external).toBe(false);
     expect(tf.name).toStrictEqual("mytable1");
     expect(tf.sql_name).toStrictEqual(
-      db.isSQLite ? '"mytable1"' : '"public"."mytable1"'
+      db.isSQLite ? '"mytable1"' : `"${db.getTenantSchema()}"."mytable1"`
     );
   });
   it("toggle bools", async () => {
@@ -337,7 +337,7 @@ describe("Table get data", () => {
     expect(michaels.length).toStrictEqual(2);
     expect(Math.round(michaels[0].avg_temp)).toBe(38);
     const { sql } = await patients.getJoinedQuery(arg);
-    const schema = db.isSQLite ? "" : `"public".`;
+    const schema = db.isSQLite ? "" : `"${db.getTenantSchema()}".`;
     expect(sql).toBe(
       `SELECT a."favbook",a."id",a."name",a."parent",(select avg("temperature") from ${schema}"readings"  where "patient_id"=a."id") avg_temp FROM ${schema}"patients" a    order by "a"."id"`
     );
@@ -350,7 +350,7 @@ describe("Table get data", () => {
       fields: ["id", "name"],
     };
     const { sql } = await patients.getJoinedQuery(arg);
-    const schema = db.isSQLite ? "" : `"public".`;
+    const schema = db.isSQLite ? "" : `"${db.getTenantSchema()}".`;
     expect(sql).toBe(
       `SELECT a."id",a."name" FROM ${schema}"patients" a    order by "a"."id"`
     );
@@ -411,7 +411,7 @@ describe("Table get data", () => {
     const { sql } = await books.getJoinedQuery(arg);
     if (!db.isSQLite)
       expect(sql).toBe(
-        'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg(aggjoin."name") from "public"."patients" aggto join "public"."patients" aggjoin on aggto."parent" = aggjoin.id  where aggto."favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
+        `SELECT a."author",a."id",a."pages",a."publisher",(select array_agg(aggjoin."name") from "${db.getTenantSchema()}"."patients" aggto join "${db.getTenantSchema()}"."patients" aggjoin on aggto."parent" = aggjoin.id  where aggto."favbook"=a."id") fans FROM "${db.getTenantSchema()}"."books" a    order by "a"."id"`
       );
     else
       expect(sql).toBe(
@@ -440,7 +440,7 @@ describe("Table get data", () => {
     const { sql } = await books.getJoinedQuery(arg);
     if (!db.isSQLite)
       expect(sql).toBe(
-        'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name") from "public"."patients"  where "favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
+        `SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name") from "${db.getTenantSchema()}"."patients"  where "favbook"=a."id") fans FROM "${db.getTenantSchema()}"."books" a    order by "a"."id"`
       );
     else
       expect(sql).toBe(
@@ -470,7 +470,7 @@ describe("Table get data", () => {
     const { sql } = await books.getJoinedQuery(arg);
     if (!db.isSQLite)
       expect(sql).toBe(
-        'SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name" order by "id") from "public"."patients"  where "favbook"=a."id") fans FROM "public"."books" a    order by "a"."id"'
+        `SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name" order by "id") from "${db.getTenantSchema()}"."patients"  where "favbook"=a."id") fans FROM "${db.getTenantSchema()}"."books" a    order by "a"."id"`
       );
     else
       expect(sql).toBe(
@@ -1622,7 +1622,7 @@ Pencil, 0.5,2, t`;
       expect(rows.length).toBe(2);
     });
     it("should succeed on uuid pk", async () => {
-      await db.query('create extension if not exists "uuid-ossp";');
+      // uuid-ossp is created once by the test runner (see table_history test)
 
       getState().registerPlugin("mock_plugin", plugin_with_routes());
       const csv = `id,cost,somenum, vatable
@@ -2213,7 +2213,7 @@ describe("Table constraints", () => {
     await con.delete();
   });
   it("should create constraint in transaction", async () => {
-    await runWithTenant("public", async () => {
+    await runWithTenant(db.getTenantSchema(), async () => {
       const table = Table.findOne({ name: "readings" });
       assertIsSet(table);
       assertIsSet(table.id);
@@ -2244,7 +2244,7 @@ describe("Table constraints", () => {
     });
   });
   it("should create constraint that is not translatable to SQL in transaction", async () => {
-    await runWithTenant("public", async () => {
+    await runWithTenant(db.getTenantSchema(), async () => {
       const table = Table.findOne({ name: "readings" });
       assertIsSet(table);
       assertIsSet(table.id);
@@ -2340,7 +2340,7 @@ describe("Table constraints", () => {
 describe("Table with UUID pks", () => {
   if (!db.isSQLite) {
     it("should select uuid", async () => {
-      await db.query('create extension if not exists "uuid-ossp";');
+      // uuid-ossp is created once by the test runner (see table_history test)
 
       const { rows } = await db.query("select uuid_generate_v4();");
       expect(rows.length).toBe(1);

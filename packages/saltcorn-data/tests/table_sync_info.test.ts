@@ -1,7 +1,7 @@
 import Table from "../models/table";
 import db from "../db";
 
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 
 const initSyncInfo = async (tbls: any) => {
   for (const tbl of tbls) {

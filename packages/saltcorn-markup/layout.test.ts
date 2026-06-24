@@ -1,4 +1,5 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, it } from "node:test";
+import { expect } from "@saltcorn/db-common/test_expect";
 import render from "./layout";
 // import { makeSegments, applyTextStyle, textStyleToArray } from "./internal";
 // import renderMJML = require("./mjml-layout");

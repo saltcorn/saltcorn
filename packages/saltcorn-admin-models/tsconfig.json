@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "rootDir": ".",
     "outDir": "./dist",
     "allowJs": true,
@@ -20,9 +20,6 @@
   "exclude": [
     "node_modules",
     "dist/**",
-    "**/*.test.*",
-    "**/*.spec.*",
-    "**/tests/**",
-    "**/__tests__/**"
+    "setup-test-schema.js"
   ]
 }

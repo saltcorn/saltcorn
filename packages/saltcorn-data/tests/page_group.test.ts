@@ -1,6 +1,6 @@
 import db from "../db";
 import { assertIsSet } from "./assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import PageGroup, { ScreenInfoParams } from "../models/page_group";
 import User from "../models/user";
 

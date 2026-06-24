@@ -3,7 +3,7 @@ const state = require("../db/state");
 import User from "../models/user";
 
 const { getState } = state;
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 
 getState().registerPlugin("base", require("../base-plugin"));
 beforeAll(async () => {

@@ -1,8 +1,19 @@
-/**
- * @jest-environment jsdom
- */
 const fs = require("fs");
 const path = require("path");
+const { JSDOM } = require("jsdom");
+
+// jest provided a jsdom test environment (via @jest-environment jsdom); node's
+// built-in test runner does not, so build one explicitly and expose the
+// browser-ish globals the client scripts and the assertions below rely on.
+const dom = new JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
+  runScripts: "dangerously",
+  pretendToBeVisual: true,
+  // a concrete origin gives the client scripts a working localStorage
+  url: "http://localhost/",
+});
+const { window } = dom;
+global.window = window;
+global.document = window.document;
 
 const load_script = (fnm) => {
   const srcFile = fs.readFileSync(path.join(__dirname, "..", "public", fnm), {
@@ -23,6 +34,14 @@ window.IntersectionObserver = IntersectionObserver;
 load_script("jquery-3.6.0.min.js");
 load_script("saltcorn-common.js");
 load_script("saltcorn.js");
+
+// the loaded scripts define these on the jsdom window; surface them as the
+// bare globals the tests call (in jest's jsdom env window was the global).
+global.$ = window.$;
+global.updateQueryStringParameter = window.updateQueryStringParameter;
+global.removeQueryStringParameter = window.removeQueryStringParameter;
+global.addQueryStringParameter = window.addQueryStringParameter;
+global.unique_field_from_rows = window.unique_field_from_rows;
 
 test("updateQueryStringParameter", () => {
   const element = document.createElement("div");

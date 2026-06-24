@@ -1,5 +1,5 @@
 import db from "../db";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 
 afterAll(db.close);
 

@@ -31,12 +31,15 @@
     "cors": "2.8.5",
     "csv-stringify": "^6.5.2",
     "csvtojson": "^2.0.10",
+    "dayjs": "^1.11.13",
     "dompurify": "3.4.9",
+    "env-paths": "^2.2.1",
     "express": "^5.0.1",
     "express-fileupload": "^1.5.1",
     "express-promise-router": "^3.0.3",
     "express-rate-limit": "^7.5.0",
     "express-session": "^1.18.1",
+    "fs-extra": "^11.3.0",
     "greenlock": "^4.0.4",
     "greenlock-express": "^4.0.3",
     "helmet": "^8.0.0",
@@ -68,12 +71,9 @@
     "ua-parser-js": "^2.0.0",
     "underscore": "1.13.7",
     "uuid": "^11.0.5",
-    "fs-extra": "^11.3.0",
-    "env-paths": "^2.2.1",
     "@saltcorn/db-common": "1.6.0",
     "web-push": "^3.6.7",
-    "@saltcorn/types": "1.6.0",
-    "dayjs": "^1.11.13"
+    "@saltcorn/types": "1.6.0"
   },
   "optionalDependencies": {
     "connect-sqlite3": "^0.9.15",
@@ -81,39 +81,13 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "jest": "29.7.0",
-    "jest-environment-jsdom": "29.7.0",
-    "supertest": "7.0.0"
+    "supertest-fetch": "^2.0.0"
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js ./tests --runInBand",
+    "test": "NODE_ENV=test node --require ./setup-jest-globals.js --require ./setup-test-schema.js --test --test-force-exit",
     "tsc": "echo \"Error: no TypeScript support yet\"",
     "clean": "echo \"Error: no TypeScript support yet\""
-  },
-  "jest": {
-    "transform": {},
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ],
-    "moduleNameMapper": {
-      "@saltcorn/sqlite/(.*)": "<rootDir>/../sqlite/dist/$1",
-      "@saltcorn/db-common/(.*)": "<rootDir>/../db-common/dist/$1",
-      "@saltcorn/data/(.*)": "<rootDir>/../saltcorn-data/dist/$1",
-      "@saltcorn/types/(.*)": "<rootDir>/../saltcorn-types/dist/$1",
-      "@saltcorn/markup$": "<rootDir>/../saltcorn-markup/dist",
-      "@saltcorn/markup/(.*)": "<rootDir>/../saltcorn-markup/dist/$1",
-      "@saltcorn/server/(.*)": "<rootDir>/../server/dist/$1",
-      "@saltcorn/admin-models/(.*)": "<rootDir>/../saltcorn-admin-models/dist/$1"
-    }
   },
   "publishConfig": {
     "access": "public"

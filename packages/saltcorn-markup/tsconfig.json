@@ -1,7 +1,4 @@
 {
-  "typeAcquisition": {
-    "include": ["jest"]
-  },
   "compilerOptions": {
     "rootDir": ".",
     "outDir": "./dist",
