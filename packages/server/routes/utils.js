@@ -112,6 +112,33 @@ function isAdmin(req, res, next) {
   }
 }
 
+/**
+ * Reject a request whose session/JWT identity was authenticated in a different
+ * tenant than the one resolved for this request (from the subdomain). The
+ * session store and cookie are shared across all tenants, so without this a
+ * session minted in tenant A could be replayed against tenant B and have its
+ * home-tenant role applied to tenant B's data. This is the API-router
+ * equivalent of the drift guard already enforced in `loggedIn`/`isAdmin`.
+ * Bearer (api_token) requests are not authenticated at this point (that happens
+ * per-route and is already scoped to the request's schema), so `req.user` is
+ * unset for them and they pass through untouched.
+ * @param {object} req
+ * @param {object} res
+ * @param {function} next
+ * @returns {void}
+ */
+function rejectTenantDrift(req, res, next) {
+  if (
+    req.user &&
+    req.user.tenant !== undefined &&
+    req.user.tenant !== db.getTenantSchema()
+  ) {
+    req.logout?.(() => {});
+    return res.status(403).json({ error: "Session tenant mismatch" });
+  }
+  next();
+}
+
 const isAdminOrHasConfigMinRole = (cfg) => (req, res, next) => {
   const cur_tenant = db.getTenantSchema();
   //console.log({ cur_tenant, user: req.user });
@@ -824,6 +851,7 @@ module.exports = {
   loggedIn,
   isAdmin,
   isAdminOrHasConfigMinRole,
+  rejectTenantDrift,
   get_base_url,
   error_catcher,
   scan_for_page_title,
