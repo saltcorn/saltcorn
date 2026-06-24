@@ -1,4 +1,4 @@
-import * as multiTenant from "./multi-tenant";
+import * as multiTenant from "./multi-tenant.js";
 
 let tenantExport: typeof multiTenant | null = null;
 /**
@@ -6,9 +6,9 @@ let tenantExport: typeof multiTenant | null = null;
  * @param connObj db connection object
  * @returns
  */
-export = (connObj: any) => {
+export default (connObj: any) => {
   if (!tenantExport) {
-    tenantExport = require("./multi-tenant");
+    tenantExport = multiTenant;
   }
   if (!tenantExport) throw new Error("unable to initalize a tenant");
   tenantExport.init(connObj);

@@ -7,6 +7,13 @@
  */
 import assert from "node:assert";
 import { inspect } from "node:util";
+import { createRequire } from "node:module";
+
+// This module is ESM, so the CommonJS `require` is not defined. jest.mock needs
+// to reach into the shared CommonJS module cache to mutate cached exports;
+// createRequire gives us a require bound to the same cache as the (CJS) test
+// suites that call jest.mock.
+const require = createRequire(import.meta.url);
 import {
   describe,
   it,
