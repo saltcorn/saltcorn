@@ -3,7 +3,7 @@
  * @module table
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const {
   a,
   td,
@@ -23,8 +23,8 @@ const {
   i,
   button,
 } = tags;
-import helpers = require("./helpers");
-import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
+import helpers from "./helpers.js";
+import type { SearchBarOpts, RadioGroupOpts } from "./helpers.js";
 const { pagination } = helpers;
 
 /**
@@ -287,22 +287,33 @@ const mkTable = (
         const v = row[rk];
         if (v === null || v === undefined) continue;
         const n = Number(v);
-        if (!isFinite(n)) { numeric = false; break; }
+        if (!isFinite(n)) {
+          numeric = false;
+          break;
+        }
         sum += n;
         numeric = true;
       }
-      if (numeric) { sums[rk] = sum; isNumericCol[rk] = true; }
+      if (numeric) {
+        sums[rk] = sum;
+        isNumericCol[rk] = true;
+      }
     }
     return tr(
       { class: "fw-bold table-group-divider" },
       hdrs.map((hdr: HeadersParams, ix: number) => {
         const rk = (hdr as any).row_key;
         if (ix === 0)
-          return td({ class: hdr.align ? `text-align-${hdr.align}` : null }, label);
+          return td(
+            { class: hdr.align ? `text-align-${hdr.align}` : null },
+            label
+          );
         if (rk && isNumericCol[rk]) {
           const syntheticRow = { [rk]: sums[rk] };
           const rendered =
-            typeof hdr.key === "function" ? hdr.key(syntheticRow) : String(sums[rk]);
+            typeof hdr.key === "function"
+              ? hdr.key(syntheticRow)
+              : String(sums[rk]);
           return td(
             { class: hdr.align ? `text-align-${hdr.align}` : null },
             rendered
@@ -384,9 +395,7 @@ const mkTable = (
       opts.show_grand_total &&
         tfoot(
           makeTotalRow(
-            opts.grouped
-              ? (Object.values(vs) as any[]).flat()
-              : vs || [],
+            opts.grouped ? (Object.values(vs) as any[]).flat() : vs || [],
             "Grand Total"
           )
         )
@@ -468,4 +477,4 @@ const mkClickHandler = (opts: any, v: any): any => {
 
 // declaration merging
 const TableExports = mkTable;
-export = TableExports;
+export default TableExports;

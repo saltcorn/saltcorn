@@ -3,7 +3,7 @@
  * @module workflow
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const { div, script, style } = tags;
 
 const encode = (x: any): string => encodeURIComponent(JSON.stringify(x));
@@ -17,7 +17,7 @@ const encode = (x: any): string => encodeURIComponent(JSON.stringify(x));
 const renderWorkflow = (workflowData: any, version_tag?: string): string =>
   div(
     { class: "workflow-editor-wrapper" },
-    style(/*css*/`
+    style(/*css*/ `
       .workflow-editor-wrapper {
         display: flex;
         flex-direction: column;
@@ -38,4 +38,4 @@ const renderWorkflow = (workflowData: any, version_tag?: string): string =>
     )
   );
 
-export = renderWorkflow;
+export default renderWorkflow;

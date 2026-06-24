@@ -1,5 +1,5 @@
 import type { IWhiteList } from "xss";
-import type { GeneratedTagName } from "./generated_tags";
+import type { GeneratedTagName } from "./generated_tags.js";
 
 export type Falsy = null | false | 0 | undefined;
 

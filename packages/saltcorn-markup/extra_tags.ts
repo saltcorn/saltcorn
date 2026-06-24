@@ -3,28 +3,26 @@
  * @module tags
  */
 
-import mkTag = require("./mktag");
-import xss, { whiteList, IWhiteList } from "xss";
+import mkTag from "./mktag.js";
+import xss from "xss";
 import escape from "escape-html";
-import type {
-  ClassVal,
-  StyleVal,
-  Element,
-  Attributes,
-  AttributeVal,
-  TagFunction,
-  TagExports,
-} from "./types";
+import type { Element, Attributes } from "./types.js";
+
+// xss is a CommonJS module whose `whiteList` is added dynamically: it is neither
+// detectable as a named ESM export nor declared on the callable default type, so
+// read it off the default import with a cast.
+import type { IWhiteList } from "xss";
+const whiteList: IWhiteList = (xss as any).whiteList;
 
 //https://stackoverflow.com/a/59220393
 /**
  * @param {string} js
  * @returns {string}
  */
-const domReady = (js: string): string =>
+export const domReady = (js: string): string =>
   `(function(f){if (document.readyState === "complete") f(); else document.addEventListener('DOMContentLoaded',()=>setTimeout(f),false)})(function(){${js}});`;
 
-const with_curScript = (js: string): string =>
+export const with_curScript = (js: string): string =>
   `((curScript)=>{${js}})(document.currentScript)`;
 
 whiteList.kbd = [];
@@ -46,7 +44,10 @@ const mergeWhiteList = (customWhiteList: IWhiteList): IWhiteList => {
  * @param {string|number} t
  * @returns {string}
  */
-const text = (t: string | number, customWhiteList?: IWhiteList): string =>
+export const text = (
+  t: string | number,
+  customWhiteList?: IWhiteList
+): string =>
   t === 0
     ? "0"
     : xss(
@@ -60,29 +61,19 @@ const text = (t: string | number, customWhiteList?: IWhiteList): string =>
  * @param {string|number} t
  * @returns {string}
  */
-const text_attr = (t: string | number) => (t === 0 ? "0" : escape(<string>t));
+export const text_attr = (t: string | number) =>
+  t === 0 ? "0" : escape(<string>t);
 
+/**
+ * @param {string} tagName
+ * @param  {...*} rest
+ * @returns {string}
+ */
+export const genericElement = (
+  tagName: string,
+  attributes_or_first_child?: Attributes | Element,
+  ...children: Element[]
+): string => mkTag(tagName, false)(attributes_or_first_child, ...children);
 
-const tagsExports: TagExports = {
-  /**
-   * @param {string} tagName
-   * @param  {...*} rest
-   * @returns {string}
-   */
-  genericElement: (
-    tagName: string,
-    attributes_or_first_child?: Attributes | Element,
-    ...children: Element[]
-  ) => mkTag(tagName, false)(attributes_or_first_child, ...children),
-  domReady,
-  with_curScript,
-  text,
-  text_attr,
-  /** @type {string} */
-  nbsp: "&nbsp;",
-  /** @type {module:mktag} */
-  mkTag,
-  escape,
-} as TagExports;
-
-export = tagsExports;
+/** @type {string} */
+export const nbsp = "&nbsp;";

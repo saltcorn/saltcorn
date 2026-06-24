@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import { expect } from "@saltcorn/db-common/test_expect";
-import helpers from "./helpers";
+import helpers from "./helpers.js";
 
 const {
   select_options,

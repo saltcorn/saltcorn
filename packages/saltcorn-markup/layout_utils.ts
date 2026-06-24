@@ -3,7 +3,7 @@
  * @module layout_utils
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const {
   ul,
   li,
@@ -828,7 +828,10 @@ const renderTabs = (
   if (tabsStyle === "Accordion")
     return (
       div(
-        { class: ["accordion", lazyLoadViews && "lazy-accoordion", outerClass], id: `${rndid}top` },
+        {
+          class: ["accordion", lazyLoadViews && "lazy-accoordion", outerClass],
+          id: `${rndid}top`,
+        },
         contents.map((t, ix) =>
           div(
             { class: "accordion-item" },
@@ -974,7 +977,29 @@ const renderTabs = (
   }
 };
 
-export = {
+export {
+  navbar,
+  alert,
+  toast,
+  logit,
+  navbarSolidOnScroll,
+  breadcrumbs,
+  headersInHead,
+  headersInBody,
+  cardHeaderTabs,
+  mobileBottomNavBar,
+  renderTabs,
+  show_icon,
+  show_icon_and_label,
+  activeChecker,
+  validID,
+  navSubItemsIterator,
+  navSubitems,
+  rightNavBar,
+  leftNavBar,
+  innerSections,
+};
+export default {
   navbar,
   alert,
   toast,

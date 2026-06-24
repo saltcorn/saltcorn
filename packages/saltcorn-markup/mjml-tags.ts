@@ -3,7 +3,7 @@
  * @module mjml-tags
  */
 
-import mkTag from "./mktag";
+import mkTag from "./mktag.js";
 
 // MJML element helpers (rendered as <mj-*>). Named exports so they can be
 // imported individually under ESM; a default object is exported below for

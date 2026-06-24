@@ -3,7 +3,7 @@
  * @module tabs
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const { a, text, div, ul, li } = tags;
 
 /**
@@ -52,4 +52,4 @@ const tabs = (obj: any | any[]) => {
   );
 };
 
-export = tabs;
+export default tabs;

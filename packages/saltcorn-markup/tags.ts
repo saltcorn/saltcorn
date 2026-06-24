@@ -2,9 +2,9 @@
  * @category saltcorn-markup
  * @module tags
  */
-import mkTag from "./mktag";
+import mkTag from "./mktag.js";
 import escape from "escape-html";
-import { allTags } from "./generated_tags";
+import { allTags } from "./generated_tags.js";
 import {
   genericElement,
   domReady,
@@ -12,11 +12,11 @@ import {
   text,
   text_attr,
   nbsp,
-} from "./extra_tags";
-import type { TagExports } from "./types";
+} from "./extra_tags.js";
+import type { TagExports } from "./types.js";
 
 // Named exports: one per HTML tag (a, div, span, …), generated from html-tags.
-export * from "./generated_tags";
+export * from "./generated_tags.js";
 // Named exports: the hand-written helpers that live alongside the tags.
 export {
   genericElement,
@@ -25,7 +25,7 @@ export {
   text,
   text_attr,
   nbsp,
-} from "./extra_tags";
+} from "./extra_tags.js";
 export { mkTag, escape };
 
 // Back-compat default export: the whole tag surface as a single object, so that
