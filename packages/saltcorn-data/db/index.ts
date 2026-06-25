@@ -33,7 +33,8 @@ const initDbModule = (): any => {
     dbmodule = require("@saltcorn/sqlite/sqlite");
     dbmodule.init(getConnectObject);
   } else {
-    dbmodule = require("@saltcorn/postgres/postgres")(getConnectObject);
+    dbmodule = require("@saltcorn/postgres/postgres");
+    dbmodule.init(getConnectObject);
   }
   if (!dbmodule) throw new Error("No database package found.");
   return dbmodule;

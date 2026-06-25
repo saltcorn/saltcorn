@@ -4,40 +4,45 @@
  * @module postgres
  */
 // TODO move postgresql specific to this module
-const { Pool } = require("pg");
-const copyStreams = require("pg-copy-streams");
-const { promisify } = require("util");
-const { pipeline } = require("stream/promises");
-const { Transform } = require("stream");
-const replace = require("replacestream");
-const {
+import { Pool, types } from "pg";
+import type { PoolClient } from "pg";
+import * as copyStreams from "pg-copy-streams";
+import { pipeline } from "stream/promises";
+import replace from "replacestream";
+import {
   sqlsanitize,
   mkWhere,
   mkSelectOptions,
-} = require("@saltcorn/db-common/internal");
-const PlainDate = require("@saltcorn/plain-date");
+} from "@saltcorn/db-common/internal";
+import type {
+  Value,
+  Where,
+  SelectOptions,
+  Row,
+} from "@saltcorn/db-common/internal";
+import PlainDate from "@saltcorn/plain-date";
+import tenantsModule from "@saltcorn/db-common/tenants";
 
-var types = require("pg").types;
-types.setTypeParser(types.builtins.DATE, (d) =>
+types.setTypeParser(types.builtins.DATE, (d: string) =>
   d === null ? null : new PlainDate(d)
 );
 
-let getTenantSchema;
-let getRequestContext;
-let getConnectObject = null;
-let pool = null;
+let getTenantSchema: () => string;
+let getRequestContext: () => any;
+let getConnectObject: ((connObj?: any) => any) | null = null;
+export let pool: Pool | null = null;
 
 let log_sql_enabled = false;
 
-const quote = (s) => `"${s}"`;
+const quote = (s: string): string => `"${s}"`;
 
-const ppPK = (pk) => (pk ? quote(pk) : "id");
+const ppPK = (pk?: string): string => (pk ? quote(pk) : "id");
 
 /**
  * Control Logging sql statements to console
  * @param {boolean} [val = true] - if true then log sql statements to console
  */
-function set_sql_logging(val = true) {
+export function set_sql_logging(val: boolean = true): void {
   log_sql_enabled = val;
 }
 
@@ -45,7 +50,7 @@ function set_sql_logging(val = true) {
  * Get sql logging state
  * @returns {boolean} if true then sql logging eabled
  */
-function get_sql_logging() {
+export function get_sql_logging(): boolean {
   return log_sql_enabled;
 }
 
@@ -54,7 +59,7 @@ function get_sql_logging() {
  * @param {string} sql - SQL statement
  * @param {object} [vs] - any additional parameter
  */
-function sql_log(sql, vs) {
+export function sql_log(sql: string, vs?: any): void {
   if (log_sql_enabled)
     if (typeof vs === "undefined") console.log(sql);
     else console.log(sql, vs);
@@ -64,7 +69,7 @@ function sql_log(sql, vs) {
  * Close database connection
  * @returns {Promise<void>}
  */
-const close = async () => {
+export const close = async (): Promise<void> => {
   if (pool) await pool.end();
   pool = null;
 };
@@ -74,25 +79,27 @@ const close = async () => {
  * @param {object} [connObj = {}] - connection object
  * @returns {Promise<void>}
  */
-const changeConnection = async (connObj = Object.create(null)) => {
+export const changeConnection = async (
+  connObj: any = Object.create(null)
+): Promise<void> => {
   await close();
-  pool = new Pool(getConnectObject(connObj));
+  pool = new Pool(getConnectObject!(connObj));
 };
 
-const begin = async () => {
+export const begin = async (): Promise<void> => {
   //client = await getClient();
   await query("BEGIN");
 };
 
-const commit = async () => {
+export const commit = async (): Promise<void> => {
   await query("COMMIT");
 };
 
-const rollback = async () => {
+export const rollback = async (): Promise<void> => {
   await query("ROLLBACK");
 };
 
-const getMyClient = (selopts) => {
+const getMyClient = (selopts?: any): any => {
   return selopts?.client || getRequestContext()?.client || pool;
 };
 
@@ -103,7 +110,11 @@ const getMyClient = (selopts) => {
  * @param {object} [selectopts = {}] - select options
  * @returns {Promise<*>} return rows
  */
-const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
+export const select = async (
+  tbl: string,
+  whereObj: Where,
+  selectopts: SelectOptions & { [key: string]: any } = Object.create(null)
+): Promise<Row[]> => {
   const { where, values } = mkWhere(whereObj);
   const schema = selectopts.schema || getTenantSchema();
   let sql;
@@ -112,8 +123,8 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
       SELECT ${
         selectopts.fields ? selectopts.fields.join(", ") : `*`
       }, 0 as _level
-      ${selectopts.orderBy ? `, ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy)}"${selectopts.orderDesc ? " DESC" : ""})] as _sort_path` : ""} 
-      FROM "${schema}"."${sqlsanitize(tbl)}" 
+      ${selectopts.orderBy ? `, ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy as string)}"${selectopts.orderDesc ? " DESC" : ""})] as _sort_path` : ""}
+      FROM "${schema}"."${sqlsanitize(tbl)}"
       WHERE "${selectopts.tree_field}" IS NULL ${where ? `AND ${where.replace("where ", "")}` : ""}
 
     UNION ALL
@@ -123,7 +134,7 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
         ? selectopts.fields.map((f) => `p."${f}"`).join(", ")
         : `p.*`
     }, pt._level+1
-    ${selectopts.orderBy ? `, pt._sort_path || row_number() OVER (PARTITION BY p."${selectopts.tree_field}" ORDER BY p."${selectopts.orderBy}"${selectopts.orderDesc ? " DESC" : ""})` : ""} 
+    ${selectopts.orderBy ? `, pt._sort_path || row_number() OVER (PARTITION BY p."${selectopts.tree_field}" ORDER BY p."${selectopts.orderBy}"${selectopts.orderDesc ? " DESC" : ""})` : ""}
     FROM "${schema}"."${sqlsanitize(tbl)}" p
     JOIN _tree pt ON p."${selectopts.tree_field}" = pt."${selectopts.pk_name || "id"}"
     )
@@ -156,7 +167,7 @@ const select = async (tbl, whereObj, selectopts = Object.create(null)) => {
  * @param {string} schema - db schema name
  * @returns {Promise<void>} no result
  */
-const drop_reset_schema = async (schema) => {
+export const drop_reset_schema = async (schema: string): Promise<void> => {
   const sql = `DROP SCHEMA IF EXISTS "${schema}" CASCADE;
   CREATE SCHEMA "${schema}";
   GRANT ALL ON SCHEMA "${schema}" TO postgres;
@@ -173,7 +184,11 @@ const drop_reset_schema = async (schema) => {
  * @param {object} - whereObj - where object
  * @returns {Promise<number>} count of tables
  */
-const count = async (tbl, whereObj, opts) => {
+export const count = async (
+  tbl: string,
+  whereObj: Where,
+  opts?: SelectOptions & { [key: string]: any }
+): Promise<number> => {
   const { where, values } = mkWhere(whereObj);
   if (!where) {
     try {
@@ -216,7 +231,7 @@ WHERE  c.oid = '"${opts?.schema || getTenantSchema()}"."${sqlsanitize(tbl)}"'::r
  * @param {boolean} short - if true return short version info else full version info
  * @returns {Promise<string>} returns version
  */
-const getVersion = async (short) => {
+export const getVersion = async (short?: boolean): Promise<string> => {
   const sql = `SELECT version();`;
   sql_log(sql);
   const tq = await getMyClient().query(sql);
@@ -235,7 +250,11 @@ const getVersion = async (short) => {
  * @param {object} [opts = {}]
  * @returns {Promise<object[]>} result of delete execution
  */
-const deleteWhere = async (tbl, whereObj, opts = Object.create(null)) => {
+export const deleteWhere = async (
+  tbl: string,
+  whereObj: Where,
+  opts: { schema?: string; client?: any } = Object.create(null)
+): Promise<Row[]> => {
   const { where, values } = mkWhere(whereObj);
   const sql = `delete FROM "${opts.schema || getTenantSchema()}"."${sqlsanitize(
     tbl
@@ -247,7 +266,7 @@ const deleteWhere = async (tbl, whereObj, opts = Object.create(null)) => {
   return tq.rows;
 };
 
-const truncate = async (tbl) => {
+export const truncate = async (tbl: string): Promise<Row[]> => {
   const sql = `truncate "${getTenantSchema()}"."${sqlsanitize(tbl)}"`;
   sql_log(sql, []);
 
@@ -263,14 +282,24 @@ const truncate = async (tbl) => {
  * @param {object} [opts = {}] - columns attributes
  * @returns {Promise<string>} returns primary key column or Id column value. If primary key column is not defined then return value of Id column.
  */
-const insert = async (tbl, obj, opts = Object.create(null)) => {
+export const insert = async (
+  tbl: string,
+  obj: Row,
+  opts: {
+    schema?: string;
+    onConflictDoNothing?: boolean;
+    noid?: boolean;
+    pk_name?: string;
+    client?: any;
+  } = Object.create(null)
+): Promise<any> => {
   const kvs = Object.entries(obj);
   const fnameList = kvs.map(([k, v]) => `"${sqlsanitize(k)}"`).join();
-  var valPosList = [];
-  var valList = [];
+  var valPosList: string[] = [];
+  var valList: any[] = [];
   const schema = opts.schema || getTenantSchema();
   const conflict = opts.onConflictDoNothing ? "on conflict do nothing " : "";
-  kvs.forEach(([k, v]) => {
+  kvs.forEach(([k, v]: [string, any]) => {
     if (v && v.next_version_by_id) {
       valList.push(v.next_version_by_id);
       valPosList.push(
@@ -308,7 +337,14 @@ const insert = async (tbl, obj, opts = Object.create(null)) => {
  * @param {object} [opts = {}] - columns attributes
  * @returns {Promise<void>} no result
  */
-const update = async (tbl, obj, id, opts = Object.create(null)) => {
+export const update = async (
+  tbl: string,
+  obj: Row,
+  id: any,
+  opts: { schema?: string; pk_name?: string; client?: any } = Object.create(
+    null
+  )
+): Promise<void> => {
   const kvs = Object.entries(obj);
   if (kvs.length === 0) return;
   const assigns = kvs
@@ -320,7 +356,7 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
   let whereS;
   if (id && typeof id == "object") {
     let n = kvs.length + 1;
-    const whereStrs = [];
+    const whereStrs: string[] = [];
     Object.keys(id).forEach((k) => {
       valList.push(id[k]);
       whereStrs.push(`"${k}"=$${n}`);
@@ -346,7 +382,12 @@ const update = async (tbl, obj, id, opts = Object.create(null)) => {
  * @param {object} opts - can contain a db client for transactions
  * @returns {Promise<void>} no result
  */
-const updateWhere = async (tbl, obj, whereObj, opts = Object.create(null)) => {
+export const updateWhere = async (
+  tbl: string,
+  obj: Row,
+  whereObj: Where,
+  opts: { client?: any } = Object.create(null)
+): Promise<void> => {
   const kvs = Object.entries(obj);
   if (kvs.length === 0) return;
   const { where, values } = mkWhere(whereObj, false, kvs.length);
@@ -370,7 +411,11 @@ const updateWhere = async (tbl, obj, whereObj, opts = Object.create(null)) => {
  * @returns {Promise<object>} return first record from sql result
  * @throws {Error}
  */
-const selectOne = async (tbl, where, selectopts = Object.create(null)) => {
+export const selectOne = async (
+  tbl: string,
+  where: Where,
+  selectopts: SelectOptions = Object.create(null)
+): Promise<Row> => {
   const rows = await select(tbl, where, { ...selectopts, limit: 1 });
   if (rows.length === 0) {
     const w = mkWhere(where);
@@ -385,7 +430,11 @@ const selectOne = async (tbl, where, selectopts = Object.create(null)) => {
  * @param {object} [selectopts = {}] - select options
  * @returns {Promise<null|object>} - null if no record or first record data
  */
-const selectMaybeOne = async (tbl, where, selectopts = Object.create(null)) => {
+export const selectMaybeOne = async (
+  tbl: string,
+  where: Where,
+  selectopts: SelectOptions = Object.create(null)
+): Promise<Row | null> => {
   const rows = await select(tbl, where, { ...selectopts, limit: 1 });
   if (rows.length === 0) return null;
   else return rows[0];
@@ -397,7 +446,7 @@ const selectMaybeOne = async (tbl, where, selectopts = Object.create(null)) => {
  * @returns {Promise<*>} db connection object
  */
 // TBD Currently this function supported only for PG
-const getClient = async () => await pool.connect();
+export const getClient = async (): Promise<PoolClient> => await pool!.connect();
 
 /**
  * Reset sequence
@@ -405,7 +454,10 @@ const getClient = async () => await pool.connect();
  * @param {string} tblname - table name
  * @returns {Promise<void>} no result
  */
-const reset_sequence = async (tblname, pkname = "id") => {
+export const reset_sequence = async (
+  tblname: string,
+  pkname: string = "id"
+): Promise<void> => {
   const sql = `SELECT setval(pg_get_serial_sequence('"${getTenantSchema()}"."${sqlsanitize(
     tblname
   )}"', '${pkname}'), coalesce(max("${pkname}"),0) + 1, false) FROM "${getTenantSchema()}"."${sqlsanitize(
@@ -420,7 +472,10 @@ const reset_sequence = async (tblname, pkname = "id") => {
  * @param {string[]} field_names - list of columns (members of constraint)
  * @returns {Promise<void>} no result
  */
-const add_unique_constraint = async (table_name, field_names) => {
+export const add_unique_constraint = async (
+  table_name: string,
+  field_names: string[]
+): Promise<void> => {
   // TBD check that there are no problems with lenght of constraint name
   const sql = `alter table "${getTenantSchema()}"."${sqlsanitize(
     table_name
@@ -439,7 +494,10 @@ const add_unique_constraint = async (table_name, field_names) => {
  * @param {string[]} field_names - list of columns (members of constraint)
  * @returns {Promise<void>} no results
  */
-const drop_unique_constraint = async (table_name, field_names) => {
+export const drop_unique_constraint = async (
+  table_name: string,
+  field_names: string[]
+): Promise<void> => {
   // TBD check that there are no problems with lenght of constraint name
   const sql = `alter table "${getTenantSchema()}"."${sqlsanitize(
     table_name
@@ -456,7 +514,10 @@ const drop_unique_constraint = async (table_name, field_names) => {
  * @param {string} field_name - list of columns (members of constraint)
  * @returns {Promise<void>} no result
  */
-const add_index = async (table_name, field_name) => {
+export const add_index = async (
+  table_name: string,
+  field_name: string
+): Promise<void> => {
   // TBD check that there are no problems with lenght of constraint name
   const sql = `create index "${sqlsanitize(table_name)}_${sqlsanitize(
     field_name
@@ -473,12 +534,12 @@ const add_index = async (table_name, field_name) => {
  * @param {string} field_name - list of columns (members of constraint)
  * @returns {Promise<void>} no result
  */
-const add_fts_index = async (
-  table_name,
-  field_expression,
-  language,
-  disable_fts
-) => {
+export const add_fts_index = async (
+  table_name: string,
+  field_expression: string,
+  language?: string,
+  disable_fts?: boolean
+): Promise<void> => {
   // TBD check that there are no problems with lenght of constraint name
   //CREATE INDEX ON public.test_table USING gist
   // ((name || (cars ->> 'values') || surname) gist_trgm_ops);
@@ -501,7 +562,7 @@ const add_fts_index = async (
   sql_log(sql);
   await getMyClient().query(sql);
 };
-const drop_fts_index = async (table_name) => {
+export const drop_fts_index = async (table_name: string): Promise<void> => {
   // TBD check that there are no problems with lenght of constraint name
   const sql = `drop index "${getTenantSchema()}"."${sqlsanitize(
     table_name
@@ -516,7 +577,10 @@ const drop_fts_index = async (table_name) => {
  * @param {string} field_name - list of columns (members of constraint)
  * @returns {Promise<void>} no result
  */
-const drop_index = async (table_name, field_name) => {
+export const drop_index = async (
+  table_name: string,
+  field_name: string
+): Promise<void> => {
   // TBD check that there are no problems with lenght of constraint name
   const sql = `drop index "${getTenantSchema()}"."${sqlsanitize(
     table_name
@@ -534,7 +598,12 @@ const drop_index = async (table_name, field_name) => {
  * @param {object} client - db connection
  * @returns {Promise<void>} no results
  */
-const copyFrom = async (fileStream, tableName, fieldNames, client) => {
+export const copyFrom = async (
+  fileStream: any,
+  tableName: string,
+  fieldNames: string[],
+  client: any
+): Promise<any> => {
   const sql = `COPY "${getTenantSchema()}"."${sqlsanitize(
     tableName
   )}" (${fieldNames.map(quote).join(",")}) FROM STDIN CSV HEADER`;
@@ -544,7 +613,11 @@ const copyFrom = async (fileStream, tableName, fieldNames, client) => {
   return await pipeline(fileStream, stream);
 };
 
-const copyToJson = async (fileStream, tableName, client) => {
+export const copyToJson = async (
+  fileStream: any,
+  tableName: string,
+  client?: any
+): Promise<any> => {
   const sql = `COPY (SELECT (row_to_json("${sqlsanitize(tableName)}".*) || ',')
   FROM "${getTenantSchema()}"."${sqlsanitize(tableName)}") TO STDOUT`;
   sql_log(sql);
@@ -553,13 +626,13 @@ const copyToJson = async (fileStream, tableName, client) => {
   return await pipeline(stream, replace("\\\\", "\\"), fileStream);
 };
 
-const slugify = (s) =>
+export const slugify = (s: string): string =>
   s
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^\w-]/g, "");
 
-const time = async () => {
+export const time = async (): Promise<Date> => {
   const result = await getMyClient().query("select now()");
   const row = result.rows[0];
   return new Date(row.now);
@@ -569,11 +642,11 @@ const time = async () => {
  *
  * @returns
  */
-const listTables = async () => {
+export const listTables = async (): Promise<{ name: string }[]> => {
   const tq = await getMyClient().query(
     `SELECT table_name FROM information_schema.tables WHERE table_schema = '${getTenantSchema()}'`
   );
-  return tq.rows.map((row) => {
+  return tq.rows.map((row: any) => {
     return { name: row.table_name };
   });
 };
@@ -582,11 +655,11 @@ const listTables = async () => {
  *
  * @returns
  */
-const listUserDefinedTables = async () => {
+export const listUserDefinedTables = async (): Promise<{ name: string }[]> => {
   const tq = await getMyClient().query(
     `SELECT table_name FROM information_schema.tables WHERE table_schema = '${getTenantSchema()}' AND table_name NOT LIKE '_sc_%'`
   );
-  return tq.rows.map((row) => {
+  return tq.rows.map((row: any) => {
     return { name: row.table_name };
   });
 };
@@ -595,11 +668,11 @@ const listUserDefinedTables = async () => {
  *
  * @returns
  */
-const listScTables = async () => {
+export const listScTables = async (): Promise<{ name: string }[]> => {
   const tq = await getMyClient().query(
     `SELECT table_name FROM information_schema.tables WHERE table_schema = '${getTenantSchema()}' AND table_name LIKE '_sc_%'`
   );
-  return tq.rows.map((row) => {
+  return tq.rows.map((row: any) => {
     return { name: row.table_name };
   });
 };
@@ -611,7 +684,10 @@ const listScTables = async () => {
      - you can use state.refresh_*(true) for update on own worker only
 
 */
-const withTransaction = async (f, onError) => {
+export const withTransaction = async (
+  f: (rollback: () => Promise<void>) => Promise<any>,
+  onError?: (e: Error) => any
+): Promise<any> => {
   const client = await getClient();
   const reqCon = getRequestContext();
   if (reqCon)
@@ -638,7 +714,7 @@ const withTransaction = async (f, onError) => {
       sql_log("ROLLBACK;");
       await client.query("ROLLBACK;");
     }
-    if (onError) return onError(error);
+    if (onError) return onError(error as Error);
     else throw error;
   } finally {
     if (reqCon) reqCon.client = null;
@@ -646,7 +722,7 @@ const withTransaction = async (f, onError) => {
   }
 };
 
-const commitAndBeginNewTransaction = async () => {
+export const commitAndBeginNewTransaction = async (): Promise<void> => {
   const client = await getMyClient();
   sql_log("COMMIT;");
   await client.query("COMMIT;");
@@ -654,7 +730,10 @@ const commitAndBeginNewTransaction = async () => {
   await client.query("BEGIN;");
 };
 
-const tryCatchInTransaction = async (f, onError) => {
+export const tryCatchInTransaction = async (
+  f: () => Promise<any>,
+  onError?: (e: Error) => any
+): Promise<any> => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
   const reqCon = getRequestContext();
   if (reqCon?.client) await query(`SAVEPOINT sp${rndid}`);
@@ -662,7 +741,7 @@ const tryCatchInTransaction = async (f, onError) => {
     return await f();
   } catch (error) {
     if (reqCon?.client) await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
-    if (onError) return await onError(error);
+    if (onError) return await onError(error as Error);
   } finally {
     if (reqCon?.client) await query(`RELEASE SAVEPOINT sp${rndid}`);
   }
@@ -675,7 +754,10 @@ const tryCatchInTransaction = async (f, onError) => {
  * @param {Function} onError error handler
  * @returns
  */
-const openOrUseTransaction = async (f, onError) => {
+export const openOrUseTransaction = async (
+  f: (rollback?: () => Promise<void>) => Promise<any>,
+  onError?: (e: Error) => any
+): Promise<any> => {
   const reqCon = getRequestContext();
   if (reqCon?.client) return await f();
   else return await withTransaction(f, onError);
@@ -688,7 +770,10 @@ const openOrUseTransaction = async (f, onError) => {
  * @param {Function} onError error handler
  * @returns
  */
-const whenTransactionisFree = (f, onError) => {
+export const whenTransactionisFree = (
+  f: (rollback?: () => Promise<void>) => Promise<any>,
+  onError?: (e: Error) => any
+): Promise<any> => {
   return new Promise((resolve, reject) => {
     // wait until transaction is free
     let counter = 0;
@@ -710,77 +795,28 @@ const whenTransactionisFree = (f, onError) => {
   });
 };
 
-const query = (text, params) => {
+export const query = (text: string, params?: any): Promise<any> => {
   sql_log(text, params);
   return getMyClient().query(text, params);
 };
 
-const postgresExports = {
-  pool,
-  /**
-   * @param {string} text
-   * @param {object} params
-   * @returns {object}
-   */
-  query,
-  begin,
-  commit,
-  rollback,
-  select,
-  selectOne,
-  selectMaybeOne,
-  count,
-  insert,
-  update,
-  updateWhere,
-  deleteWhere,
-  close,
-  sql_log,
-  changeConnection,
-  set_sql_logging,
-  get_sql_logging,
-  drop_fts_index,
-  getClient,
-  mkWhere,
-  drop_reset_schema,
-  add_unique_constraint,
-  drop_unique_constraint,
-  add_index,
-  add_fts_index,
-  drop_index,
-  reset_sequence,
-  getVersion,
-  copyFrom,
-  copyToJson,
-  slugify,
-  time,
-  listTables,
-  listScTables,
-  listUserDefinedTables,
-  truncate,
-  withTransaction,
-  tryCatchInTransaction,
-  openOrUseTransaction,
-  whenTransactionisFree,
-  commitAndBeginNewTransaction,
-};
+export { mkWhere };
 
-module.exports = (getConnectObjectPara) => {
+/**
+ * Initializes internals of the the postgres module.
+ * It must be called after importing the module.
+ * @param getConnectObjectPara function returning the connection object
+ */
+export const init = (getConnectObjectPara: (connObj?: any) => any): void => {
   if (!pool) {
     getConnectObject = getConnectObjectPara;
     const connectObj = getConnectObject();
     if (connectObj) {
       pool = new Pool(connectObj);
-      getTenantSchema = require("@saltcorn/db-common/tenants").default(
-        connectObj
-      ).getTenantSchema;
-      getRequestContext = require("@saltcorn/db-common/tenants").default(
-        connectObj
-      ).getRequestContext;
-      postgresExports.pool = pool;
+      getTenantSchema = tenantsModule(connectObj).getTenantSchema;
+      getRequestContext = tenantsModule(connectObj).getRequestContext;
     } else {
       throw new Error("Unable to retrieve a database connection object.");
     }
   }
-  return postgresExports;
 };

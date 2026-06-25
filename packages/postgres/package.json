@@ -5,18 +5,41 @@
   "homepage": "https://saltcorn.com",
   "scripts": {
     "test": "echo \"Error: no test specified\"",
-    "tsc": "echo \"Error: no TypeScript support yet\"",
-    "clean": "echo \"Error: no TypeScript support yet\""
+    "tsc": "tsc -p tsconfig.json",
+    "clean": "rm -rf ./dist/*"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
-  "main": "index.js",
+  "type": "module",
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js"
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "dist/*"
+      ]
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "!dist/tsconfig.ref.tsbuildinfo"
+  ],
   "dependencies": {
     "@saltcorn/db-common": "1.6.0",
     "@saltcorn/plain-date": "0.2.5",
     "pg": "^8.13.1",
     "pg-copy-streams": "^6.0.6",
     "replacestream": "4.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.7",
+    "@types/pg": "^8.11.10",
+    "@types/pg-copy-streams": "^1.2.5",
+    "@types/replacestream": "^4.0.4",
+    "typescript": "5.9.2"
   },
   "repository": "github:saltcorn/saltcorn",
   "publishConfig": {
