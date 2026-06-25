@@ -795,7 +795,7 @@ export const whenTransactionisFree = (
   });
 };
 
-export const query = (text: string, params?: any): Promise<any> => {
+export const query = (text: string, params?: any[]): Promise<any> => {
   sql_log(text, params);
   return getMyClient().query(text, params);
 };
