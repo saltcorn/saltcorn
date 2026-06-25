@@ -3,7 +3,7 @@
  * @module builder
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const {
   p,
   div,
@@ -38,7 +38,7 @@ const addCsrf = (rec: any, csrf: any): any => {
  */
 const encode = (x: any): string => encodeURIComponent(JSON.stringify(x));
 
-export = /**
+export default /**
  * @param {object} opts
  * @param {object} opts.options
  * @param {object} opts.context

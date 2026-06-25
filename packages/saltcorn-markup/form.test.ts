@@ -1,10 +1,10 @@
 import { describe, it } from "node:test";
 import { expect } from "@saltcorn/db-common/test_expect";
 // import tags = require("./tags");
-import * as tags from "./tags";
+import * as tags from "./tags.js";
 const { a, input, div, ul, text, text_attr } = tags;
 // import index = require("./index");
-import index from "./index";
+import index from "./index.js";
 const { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout } = index;
 
 import { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";

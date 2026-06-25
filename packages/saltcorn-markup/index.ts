@@ -2,18 +2,18 @@
  * This is the saltcorn-markup package
  * @module
  */
-import renderFormModule = require("./form");
+import renderFormModule from "./form.js";
 const { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout } =
   renderFormModule;
-import renderBuilder = require("./builder");
-import renderWorkflow = require("./workflow");
-import mkTable = require("./table");
-import tabs = require("./tabs");
-import tags = require("./tags");
-import helpers = require("./helpers");
+import renderBuilder from "./builder.js";
+import renderWorkflow from "./workflow.js";
+import mkTable from "./table.js";
+import tabs from "./tabs.js";
+import tags from "./tags.js";
+import helpers from "./helpers.js";
 const { a, text, div, button, hr, time, i, input, text_attr, form, span } =
   tags;
-import layoutUtils = require("./layout_utils");
+import layoutUtils from "./layout_utils.js";
 const { alert, toast, show_icon_and_label, validID } = layoutUtils;
 
 /**
@@ -346,7 +346,36 @@ const localeDate = (
 const badge = (col: string, lbl: string): string =>
   `${span({ class: `badge bg-${col}` }, lbl)}&nbsp;`;
 
-export = {
+export {
+  mkTable,
+  badge,
+  renderForm,
+  mkFormContentNoLayout,
+  mkForm,
+  renderFormLayout,
+  renderWorkflow,
+  settingsDropdown,
+  renderBuilder,
+  link,
+  post_btn,
+  post_delete_btn,
+  post_dropdown_item,
+  tabs,
+  localeTime,
+  localeDate,
+  localeDateTime,
+  div,
+  a,
+  i,
+  button,
+  input,
+  hr,
+  tags,
+  alert,
+  toast,
+  helpers,
+};
+export default {
   mkTable,
   badge,
   renderForm,

@@ -1,12 +1,12 @@
 import { describe, it } from "node:test";
 import { expect } from "@saltcorn/db-common/test_expect";
-import render from "./layout";
-// import { makeSegments, applyTextStyle, textStyleToArray } from "./internal";
+import render from "./layout.js";
+// import { makeSegments, applyTextStyle, textStyleToArray } from "./internal.js";
 // import renderMJML = require("./mjml-layout");
-import { renderMJML } from "./mjml-layout";
+import { renderMJML } from "./mjml-layout.js";
 
 // import tags = require("./tags");
-import * as tags from "./tags";
+import * as tags from "./tags.js";
 const { p } = tags;
 
 describe("layout", () => {

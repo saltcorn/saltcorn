@@ -3,7 +3,7 @@
  * @module helpers
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const {
   a,
   text,
@@ -87,20 +87,16 @@ const select_options = (
   );
 };
 
-// declaration merging
-namespace HelpersExports {
-  export type RadioGroupOpts = {
-    name: string;
-    options: Array<{ label: string; value: string } | string>;
-    value: string;
-    inline: boolean;
-    form_name: string;
-    onChange: string | undefined;
-    required: boolean;
-    [key: string]: any; // "...rest" properties
-  };
-}
-type RadioGroupOpts = HelpersExports.RadioGroupOpts;
+export type RadioGroupOpts = {
+  name: string;
+  options: Array<{ label: string; value: string } | string>;
+  value: string;
+  inline: boolean;
+  form_name: string;
+  onChange: string | undefined;
+  required: boolean;
+  [key: string]: any; // "...rest" properties
+};
 
 /**
  *
@@ -151,19 +147,15 @@ const radio_group = ({
       .join("")
   );
 
-// declaration merging
-namespace HelpersExports {
-  export type CheckBoxGroupOpts = {
-    name: string;
-    options: Array<{ label: string; value: string } | string>;
-    value: string;
-    inline: boolean;
-    form_name: string;
-    onChange: string | undefined;
-    [key: string]: any; // "...rest" properties
-  };
-}
-type CheckBoxGroupOpts = HelpersExports.CheckBoxGroupOpts;
+export type CheckBoxGroupOpts = {
+  name: string;
+  options: Array<{ label: string; value: string } | string>;
+  value: string;
+  inline: boolean;
+  form_name: string;
+  onChange: string | undefined;
+  [key: string]: any; // "...rest" properties
+};
 
 const checkbox_group = ({
   name,
@@ -203,17 +195,13 @@ const checkbox_group = ({
       .join("")
   );
 
-// declaration merging
-namespace HelpersExports {
-  export type PaginationOpts = {
-    current_page: number;
-    pages: number;
-    get_page_link: (index: number) => string;
-    trailing_ellipsis?: boolean;
-    noMaxPage?: boolean;
-  };
-}
-type PaginationOpts = HelpersExports.PaginationOpts;
+export type PaginationOpts = {
+  current_page: number;
+  pages: number;
+  get_page_link: (index: number) => string;
+  trailing_ellipsis?: boolean;
+  noMaxPage?: boolean;
+};
 
 /**
  * @param {object} opts
@@ -287,20 +275,16 @@ const pagination = ({
   return ul({ class: "pagination" }, lis);
 };
 
-// declaration merging
-namespace HelpersExports {
-  export type SearchBarOpts = {
-    placeHolder?: string;
-    has_dropdown: boolean;
-    autofocus?: boolean;
-    contents: string;
-    badges?: string[];
-    stateField: string;
-    onClick: string | undefined;
-    hints?: any;
-  };
-}
-type SearchBarOpts = HelpersExports.SearchBarOpts;
+export type SearchBarOpts = {
+  placeHolder?: string;
+  has_dropdown: boolean;
+  autofocus?: boolean;
+  contents: string;
+  badges?: string[];
+  stateField: string;
+  onClick: string | undefined;
+  hints?: any;
+};
 
 /**
  * @param {string} name
@@ -462,4 +446,13 @@ const HelpersExports = {
   checkbox_group,
   dropdown_checkboxes,
 };
-export = HelpersExports;
+export {
+  isdef,
+  select_options,
+  search_bar,
+  pagination,
+  radio_group,
+  checkbox_group,
+  dropdown_checkboxes,
+};
+export default HelpersExports;

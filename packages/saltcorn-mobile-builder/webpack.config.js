@@ -10,7 +10,8 @@ const dataCfg = require(join(
 const markupCfg = require(join(
   require.resolve("@saltcorn/markup"),
   "../..",
-  "webpack.config"
+  // @saltcorn/markup is ESM ("type": "module"), so its webpack config is .cjs
+  "webpack.config.cjs"
 ));
 const basePluginCfg = require(join(
   require.resolve("@saltcorn/base-plugin"),

@@ -3,7 +3,7 @@
  * @module layout
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const {
   div,
   a,
@@ -32,19 +32,19 @@ const {
   text_attr,
   form,
 } = tags;
-const {
+import {
   toast,
   breadcrumbs,
   renderTabs,
   show_icon,
   show_icon_and_label,
-} = require("./layout_utils");
+} from "./layout_utils.js";
 import type { Layout } from "@saltcorn/types/base_types";
 import { instanceOWithHtmlFile } from "@saltcorn/types/base_types";
-import helpers = require("./helpers");
-import { renderMJML } from "./mjml-layout";
+import helpers from "./helpers.js";
+import { renderMJML } from "./mjml-layout.js";
 const { search_bar } = helpers;
-import { StyleVal, Element, ClassVal } from "./types";
+import { StyleVal, Element, ClassVal } from "./types.js";
 
 declare const window: Window & typeof globalThis;
 
@@ -175,11 +175,12 @@ const applyTextStyle = (segment: any, inner: string): string => {
       result = h6({ style, class: klass }, inner);
       break;
     default:
-      result = segment.block || (segment.display === "block" && hasStyle)
-        ? div({ class: klass, style }, inner)
-        : segment.textStyle || hasStyle || klass
-          ? span({ class: klass, style }, inner)
-          : inner;
+      result =
+        segment.block || (segment.display === "block" && hasStyle)
+          ? div({ class: klass, style }, inner)
+          : segment.textStyle || hasStyle || klass
+            ? span({ class: klass, style }, inner)
+            : inner;
   }
   return responsiveFontStyle + result;
 };
@@ -291,7 +292,12 @@ const render = ({
         segment,
         isTop,
         ix,
-        breadcrumbs(segment.crumbs || [], segment.right, segment.after, segment.center)
+        breadcrumbs(
+          segment.crumbs || [],
+          segment.right,
+          segment.after,
+          segment.center
+        )
       );
     }
     if (segment.type === "view") {
@@ -516,194 +522,198 @@ const render = ({
         isTop,
         ix,
         cardSize.styleTag +
-        div(
-          {
-            class: [
-              "card",
-              !(segment.class || "").includes("mt-") &&
-                !segment.style?.["margin-top"] &&
-                "mt-4",
-              segment.shadow === false ? false : "shadow",
-              segment.class,
-              segment.url && "with-link",
-              hints.cardClass,
-              hAlign && `text-${hAlign}`,
-              cardSize.className,
-            ],
-            ...(segment.id ? { id: segment.id } : {}),
-            onclick: segment.url
-              ? isWeb
-                ? segment.url?.startsWith?.("javascript:")
-                  ? text_attr(segment.url.replace("javascript:", ""))
-                  : `location.href='${segment.url}'`
-                : `execLink('${segment.url}')`
-              : false,
-            style: {
-              ...segment.style,
-              ...(bgType === "Color"
-                ? { backgroundColor: segment.bgColor }
-                : bgType === "Gradient"
-                  ? {
-                      backgroundImage: `linear-gradient(${
-                        gradDirection || 0
-                      }deg, ${gradStartColor}, ${gradEndColor});`,
-                    }
-                  : bgType === "Image" && bgFileId && imageLocation === "Card"
+          div(
+            {
+              class: [
+                "card",
+                !(segment.class || "").includes("mt-") &&
+                  !segment.style?.["margin-top"] &&
+                  "mt-4",
+                segment.shadow === false ? false : "shadow",
+                segment.class,
+                segment.url && "with-link",
+                hints.cardClass,
+                hAlign && `text-${hAlign}`,
+                cardSize.className,
+              ],
+              ...(segment.id ? { id: segment.id } : {}),
+              onclick: segment.url
+                ? isWeb
+                  ? segment.url?.startsWith?.("javascript:")
+                    ? text_attr(segment.url.replace("javascript:", ""))
+                    : `location.href='${segment.url}'`
+                  : `execLink('${segment.url}')`
+                : false,
+              style: {
+                ...segment.style,
+                ...(bgType === "Color"
+                  ? { backgroundColor: segment.bgColor }
+                  : bgType === "Gradient"
                     ? {
-                        backgroundImage: `url('/files/serve/${bgFileId}')`,
-                        backgroundSize:
-                          imageSize === "repeat"
-                            ? undefined
-                            : imageSize || "contain",
-                        backgroundRepeat:
-                          imageSize === "repeat" ? imageSize : "no-repeat",
+                        backgroundImage: `linear-gradient(${
+                          gradDirection || 0
+                        }deg, ${gradStartColor}, ${gradEndColor});`,
                       }
-                    : {}),
+                    : bgType === "Image" && bgFileId && imageLocation === "Card"
+                      ? {
+                          backgroundImage: `url('/files/serve/${bgFileId}')`,
+                          backgroundSize:
+                            imageSize === "repeat"
+                              ? undefined
+                              : imageSize || "contain",
+                          backgroundRepeat:
+                            imageSize === "repeat" ? imageSize : "no-repeat",
+                        }
+                      : {}),
+              },
             },
-          },
-          bgType === "Image" &&
-            bgFileId &&
-            imageLocation === "Top" &&
-            img({
-              src: `/files/serve/${bgFileId}`,
-              class: "card-img-top",
-            }),
-          segment.title &&
-            span(
-              { class: ["card-header", segment.titleRight && "right-section"] },
-              typeof segment.title === "string"
-                ? hints.cardTitleWrapDiv
-                  ? div(
-                      { class: "card-title" },
-                      genericElement(
+            bgType === "Image" &&
+              bgFileId &&
+              imageLocation === "Top" &&
+              img({
+                src: `/files/serve/${bgFileId}`,
+                class: "card-img-top",
+              }),
+            segment.title &&
+              span(
+                {
+                  class: ["card-header", segment.titleRight && "right-section"],
+                },
+                typeof segment.title === "string"
+                  ? hints.cardTitleWrapDiv
+                    ? div(
+                        { class: "card-title" },
+                        genericElement(
+                          `h${hints.cardTitleHeader || 5}`,
+                          segment.title
+                        )
+                      )
+                    : genericElement(
                         `h${hints.cardTitleHeader || 5}`,
+                        {
+                          class:
+                            hints.cardTitleClass ||
+                            "m-0 fw-bold text-primary d-inline",
+                        },
                         segment.title
                       )
-                    )
-                  : genericElement(
-                      `h${hints.cardTitleHeader || 5}`,
-                      {
-                        class:
-                          hints.cardTitleClass ||
-                          "m-0 fw-bold text-primary d-inline",
-                      },
-                      segment.title
-                    )
-                : segment.title,
-              segment.titleRight
-                ? div({ class: "title-right" }, go(segment.titleRight))
-                : "",
-              segment.subtitle ? span(segment.subtitle) : "",
-              segment.titleAjaxIndicator &&
-                span(
-                  {
-                    class: "float-end ms-auto sc-ajax-indicator",
-                    style: { display: "none" },
-                  },
-                  i({ class: "fas fa-save" })
-                ),
-              segment.titleErrorInidicator &&
-                span(
-                  {
-                    class: "float-end sc-error-indicator",
-                    style: { display: "none", color: "#ff0033" },
-                  },
-                  i({ class: "fas fa-exclamation-triangle" })
-                )
-            ),
-          segment.tabContents && // TODO remove all calls to this, use tab in content instead
-            div(
-              { class: "card-header" },
-              ul(
-                { class: ["nav nav-tabs card-header-tabs", hints.tabClass] },
-                Object.keys(segment.tabContents).map((title, ix) =>
-                  li(
-                    { class: "nav-item" },
-
-                    a(
-                      {
-                        class: ["nav-link", ix === 0 && "active"],
-                        href: `#tab-${title}`,
-                        "data-bs-toggle": "tab",
-                        role: "tab",
-                      },
-                      title
-                    )
+                  : segment.title,
+                segment.titleRight
+                  ? div({ class: "title-right" }, go(segment.titleRight))
+                  : "",
+                segment.subtitle ? span(segment.subtitle) : "",
+                segment.titleAjaxIndicator &&
+                  span(
+                    {
+                      class: "float-end ms-auto sc-ajax-indicator",
+                      style: { display: "none" },
+                    },
+                    i({ class: "fas fa-save" })
+                  ),
+                segment.titleErrorInidicator &&
+                  span(
+                    {
+                      class: "float-end sc-error-indicator",
+                      style: { display: "none", color: "#ff0033" },
+                    },
+                    i({ class: "fas fa-exclamation-triangle" })
                   )
-                )
-              )
-            ) +
-              div(
-                {
-                  class: [
-                    "card-body",
-                    segment.bodyClass,
-                    segment.noPadding && "p-0",
-                  ],
-                },
-                div(
-                  { class: "tab-content", id: "myTabContent" },
-                  Object.entries(segment.tabContents).map(
-                    ([title, contents], ix) =>
-                      div(
-                        {
-                          class: ["tab-pane", ix == 0 && "show active"],
-                          id: `tab-${title}`,
-                        },
-                        contents as Element
-                      )
-                  )
-                )
               ),
-          segment.contents &&
-            (segment.contents.type === "tabs" &&
-            segment.contents.tabsStyle !== "Value switch"
-              ? renderTabs(
-                  {
-                    tabClass: "card-header-tabs",
-                    headerWrapperClass: "card-header",
-                    contentWrapperClass: [
-                      "card-body",
-                      segment.bodyClass,
-                      segment.noPadding && "p-0",
-                    ],
-                    ...segment.contents,
-                  },
-                  go,
-                  segment.serverRendered
-                    ? req?.query?.[segment.tabId || "_tab"]
-                    : undefined,
-                  hints
+            segment.tabContents && // TODO remove all calls to this, use tab in content instead
+              div(
+                { class: "card-header" },
+                ul(
+                  { class: ["nav nav-tabs card-header-tabs", hints.tabClass] },
+                  Object.keys(segment.tabContents).map((title, ix) =>
+                    li(
+                      { class: "nav-item" },
+
+                      a(
+                        {
+                          class: ["nav-link", ix === 0 && "active"],
+                          href: `#tab-${title}`,
+                          "data-bs-toggle": "tab",
+                          role: "tab",
+                        },
+                        title
+                      )
+                    )
+                  )
                 )
-              : div(
+              ) +
+                div(
                   {
                     class: [
                       "card-body",
                       segment.bodyClass,
                       segment.noPadding && "p-0",
                     ],
-                    style: {
-                      ...(bgType === "Image" &&
-                      bgFileId &&
-                      imageLocation === "Body"
-                        ? {
-                            backgroundImage: `url('/files/serve/${bgFileId}')`,
-                            backgroundSize:
-                              imageSize === "repeat"
-                                ? undefined
-                                : imageSize || "contain",
-                            backgroundRepeat:
-                              imageSize === "repeat" ? imageSize : "no-repeat",
-                          }
-                        : {}),
-                    },
                   },
-                  go(segment.contents)
-                )),
-          (segment.hasFooter ||
-            (segment.footer && segment.hasFooter !== false)) &&
-            div({ class: "card-footer" }, go(segment.footer))
-        )
+                  div(
+                    { class: "tab-content", id: "myTabContent" },
+                    Object.entries(segment.tabContents).map(
+                      ([title, contents], ix) =>
+                        div(
+                          {
+                            class: ["tab-pane", ix == 0 && "show active"],
+                            id: `tab-${title}`,
+                          },
+                          contents as Element
+                        )
+                    )
+                  )
+                ),
+            segment.contents &&
+              (segment.contents.type === "tabs" &&
+              segment.contents.tabsStyle !== "Value switch"
+                ? renderTabs(
+                    {
+                      tabClass: "card-header-tabs",
+                      headerWrapperClass: "card-header",
+                      contentWrapperClass: [
+                        "card-body",
+                        segment.bodyClass,
+                        segment.noPadding && "p-0",
+                      ],
+                      ...segment.contents,
+                    },
+                    go,
+                    segment.serverRendered
+                      ? req?.query?.[segment.tabId || "_tab"]
+                      : undefined,
+                    hints
+                  )
+                : div(
+                    {
+                      class: [
+                        "card-body",
+                        segment.bodyClass,
+                        segment.noPadding && "p-0",
+                      ],
+                      style: {
+                        ...(bgType === "Image" &&
+                        bgFileId &&
+                        imageLocation === "Body"
+                          ? {
+                              backgroundImage: `url('/files/serve/${bgFileId}')`,
+                              backgroundSize:
+                                imageSize === "repeat"
+                                  ? undefined
+                                  : imageSize || "contain",
+                              backgroundRepeat:
+                                imageSize === "repeat"
+                                  ? imageSize
+                                  : "no-repeat",
+                            }
+                          : {}),
+                      },
+                    },
+                    go(segment.contents)
+                  )),
+            (segment.hasFooter ||
+              (segment.footer && segment.hasFooter !== false)) &&
+              div({ class: "card-footer" }, go(segment.footer))
+          )
       );
     }
     if (segment.type === "tabs") {
@@ -858,107 +868,111 @@ const render = ({
         : "";
 
       const containerSize = responsiveSizeStyle(segment, {
-        width: segment.width ? `${segment.width}${segment.widthUnit || "px"}` : undefined,
-        height: segment.height ? `${segment.height}${segment.heightUnit || "px"}` : undefined,
+        width: segment.width
+          ? `${segment.width}${segment.widthUnit || "px"}`
+          : undefined,
+        height: segment.height
+          ? `${segment.height}${segment.heightUnit || "px"}`
+          : undefined,
       });
       return wrap(
         segment,
         isTop,
         ix,
         containerSize.styleTag +
-        genericElement(
-          htmlElement || "div",
-          {
-            class: [
-              customClass || false,
-              hAlign && `text-${to_bs5(hAlign)}`,
-              vAlign === "middle" && "d-flex align-items-center",
-              vAlign === "bottom" && "d-flex align-items-end",
-              vAlign === "middle" &&
-                hAlign === "center" &&
-                "justify-content-center",
-              displayClass,
-              url && "with-link",
-              hoverColor && `hover-${hoverColor}`,
-              fullPageWidth && "full-page-width",
-              containerSize.className,
-            ],
-            id: customId || undefined,
-            onclick: segment.url
-              ? isWeb
-                ? segment.url?.startsWith?.("javascript:")
-                  ? text_attr(segment.url.replace("javascript:", ""))
-                  : `location.href='${segment.url}'`
-                : `execLink('${segment.url}')`
-              : false,
-            "data-animate":
-              animateName && animateName !== "None" ? animateName : undefined,
-            "data-animate-delay": animateDelay || undefined,
-            "data-animate-initial-hide": animateInitialHide || undefined,
-            "data-animate-duration": animateDuration || undefined,
-            style: `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
-              "minHeight",
-              "min-height"
-            )}${sizeProp("height", "height")}${sizeProp(
-              "width",
-              "width"
-            )}${sizeProp("widthPct", "width", "%")}${legacyBorder}${sizeProp(
-              "borderRadius",
-              "border-radius"
-            )}${ppBox("padding")}${ppBox("margin")}${
-              overflow && overflow !== "visible"
-                ? ` overflow: ${overflow};`
-                : ""
-            } ${
-              hasImgBg && !useImgTagAsBg
-                ? ` ${
-                    isWeb
-                      ? `background-image: url('/files/serve/${bgFileId}');`
-                      : ""
-                  } background-size: ${
-                    imageSize === "repeat" ? "auto" : imageSize || "contain"
-                  }; background-repeat: ${
-                    imageSize === "repeat" ? "repeat" : "no-repeat"
-                  };`
-                : ""
-            } ${
-              renderBg && bgType === "Color"
-                ? `background-color: ${bgColor};`
-                : ""
-            } ${
-              renderBg && bgType === "Gradient"
-                ? `background-image: linear-gradient(${
-                    gradDirection || 0
-                  }deg, ${gradStartColor}, ${gradEndColor});`
-                : ""
-            } ${setTextColor ? `color: ${textColor};` : ""}${stransform}${
-              showIfFormulaInputs ? ` display: none;` : ``
-            }`,
-            ...(showIfFormulaInputs
-              ? {
-                  "data-show-if": encodeURIComponent(
-                    `showIfFormulaInputs(e, '${showIfFormulaInputs.replaceAll(
-                      "'",
-                      "\\'"
-                    )}')`
-                  ),
-                }
-              : {}),
-            ...(showIfFormulaJoinFields
-              ? {
-                  "data-show-if-joinfields": encodeURIComponent(
-                    JSON.stringify(showIfFormulaJoinFields)
-                  ),
-                }
-              : {}),
-            ...(!isWeb && hasImgBg && !useImgTagAsBg
-              ? { "mobile-bg-img-path": bgFileId }
-              : {}),
-          },
-          hasImgBg && useImgTagAsBg && image,
+          genericElement(
+            htmlElement || "div",
+            {
+              class: [
+                customClass || false,
+                hAlign && `text-${to_bs5(hAlign)}`,
+                vAlign === "middle" && "d-flex align-items-center",
+                vAlign === "bottom" && "d-flex align-items-end",
+                vAlign === "middle" &&
+                  hAlign === "center" &&
+                  "justify-content-center",
+                displayClass,
+                url && "with-link",
+                hoverColor && `hover-${hoverColor}`,
+                fullPageWidth && "full-page-width",
+                containerSize.className,
+              ],
+              id: customId || undefined,
+              onclick: segment.url
+                ? isWeb
+                  ? segment.url?.startsWith?.("javascript:")
+                    ? text_attr(segment.url.replace("javascript:", ""))
+                    : `location.href='${segment.url}'`
+                  : `execLink('${segment.url}')`
+                : false,
+              "data-animate":
+                animateName && animateName !== "None" ? animateName : undefined,
+              "data-animate-delay": animateDelay || undefined,
+              "data-animate-initial-hide": animateInitialHide || undefined,
+              "data-animate-duration": animateDuration || undefined,
+              style: `${flexStyles}${ppCustomCSS(customCSS || "")}${sizeProp(
+                "minHeight",
+                "min-height"
+              )}${sizeProp("height", "height")}${sizeProp(
+                "width",
+                "width"
+              )}${sizeProp("widthPct", "width", "%")}${legacyBorder}${sizeProp(
+                "borderRadius",
+                "border-radius"
+              )}${ppBox("padding")}${ppBox("margin")}${
+                overflow && overflow !== "visible"
+                  ? ` overflow: ${overflow};`
+                  : ""
+              } ${
+                hasImgBg && !useImgTagAsBg
+                  ? ` ${
+                      isWeb
+                        ? `background-image: url('/files/serve/${bgFileId}');`
+                        : ""
+                    } background-size: ${
+                      imageSize === "repeat" ? "auto" : imageSize || "contain"
+                    }; background-repeat: ${
+                      imageSize === "repeat" ? "repeat" : "no-repeat"
+                    };`
+                  : ""
+              } ${
+                renderBg && bgType === "Color"
+                  ? `background-color: ${bgColor};`
+                  : ""
+              } ${
+                renderBg && bgType === "Gradient"
+                  ? `background-image: linear-gradient(${
+                      gradDirection || 0
+                    }deg, ${gradStartColor}, ${gradEndColor});`
+                  : ""
+              } ${setTextColor ? `color: ${textColor};` : ""}${stransform}${
+                showIfFormulaInputs ? ` display: none;` : ``
+              }`,
+              ...(showIfFormulaInputs
+                ? {
+                    "data-show-if": encodeURIComponent(
+                      `showIfFormulaInputs(e, '${showIfFormulaInputs.replaceAll(
+                        "'",
+                        "\\'"
+                      )}')`
+                    ),
+                  }
+                : {}),
+              ...(showIfFormulaJoinFields
+                ? {
+                    "data-show-if-joinfields": encodeURIComponent(
+                      JSON.stringify(showIfFormulaJoinFields)
+                    ),
+                  }
+                : {}),
+              ...(!isWeb && hasImgBg && !useImgTagAsBg
+                ? { "mobile-bg-img-path": bgFileId }
+                : {}),
+            },
+            hasImgBg && useImgTagAsBg && image,
 
-          go(segment.contents)
-        )
+            go(segment.contents)
+          )
       );
     }
 
@@ -1004,115 +1018,121 @@ const render = ({
         const sameWidths =
           !(segment.widths as number[]) ||
           (segment.widths as number[]).every((w) => w === defwidth);
-        markup = colsSize.styleTag + div(
-          {
-            class: [
-              "row",
-              segment.class,
-              segment.customClass,
-              sameWidths && `row-cols-1 row-cols-md-${segment.besides.length}`,
-              typeof segment.gx !== "undefined" &&
-                segment.gx !== null &&
-                `gx-${segment.gx}`,
-              typeof segment.gy !== "undefined" &&
-                segment.gy !== null &&
-                `gy-${segment.gy}`,
-              !segment.style?.["margin-bottom"] && `mb-3`,
-              colsSize.className,
-            ],
-            style: segment.style,
-          },
-          segment.besides.map(
-            (
-              t: {
-                class?: string | string[];
-                style?: StyleVal;
-                customClass?: string;
-                [key: string]: any;
-              },
-              ixb: number
-            ) => {
-              if (!t) return ""; //blank col
-              const newt = { ...t };
-              newt.class = t.class
-                ? Array.isArray(t.class)
-                  ? ["h-100", ...t.class]
-                  : t.class + " h-100"
-                : "h-100";
-              return div(
-                {
-                  class: sameWidths
-                    ? "col"
-                    : `col-${
-                        segment.breakpoint
-                          ? segment.breakpoint + "-"
-                          : segment.breakpoints && segment.breakpoints[ixb]
-                            ? segment.breakpoints[ixb] + "-"
-                            : ""
-                      }${segment.widths ? segment.widths[ixb] : defwidth}`,
+        markup =
+          colsSize.styleTag +
+          div(
+            {
+              class: [
+                "row",
+                segment.class,
+                segment.customClass,
+                sameWidths &&
+                  `row-cols-1 row-cols-md-${segment.besides.length}`,
+                typeof segment.gx !== "undefined" &&
+                  segment.gx !== null &&
+                  `gx-${segment.gx}`,
+                typeof segment.gy !== "undefined" &&
+                  segment.gy !== null &&
+                  `gy-${segment.gy}`,
+                !segment.style?.["margin-bottom"] && `mb-3`,
+                colsSize.className,
+              ],
+              style: segment.style,
+            },
+            segment.besides.map(
+              (
+                t: {
+                  class?: string | string[];
+                  style?: StyleVal;
+                  customClass?: string;
+                  [key: string]: any;
                 },
-                go(newt, false, ixb)
-              );
-            }
-          )
-        );
+                ixb: number
+              ) => {
+                if (!t) return ""; //blank col
+                const newt = { ...t };
+                newt.class = t.class
+                  ? Array.isArray(t.class)
+                    ? ["h-100", ...t.class]
+                    : t.class + " h-100"
+                  : "h-100";
+                return div(
+                  {
+                    class: sameWidths
+                      ? "col"
+                      : `col-${
+                          segment.breakpoint
+                            ? segment.breakpoint + "-"
+                            : segment.breakpoints && segment.breakpoints[ixb]
+                              ? segment.breakpoints[ixb] + "-"
+                              : ""
+                        }${segment.widths ? segment.widths[ixb] : defwidth}`,
+                  },
+                  go(newt, false, ixb)
+                );
+              }
+            )
+          );
       } else
-        markup = colsSize.styleTag + div(
-          {
-            class: [
-              "row",
-              segment.class,
-              segment.customClass,
-              typeof segment.gx !== "undefined" &&
-                segment.gx !== null &&
-                `gx-${segment.gx}`,
-              typeof segment.gy !== "undefined" &&
-                segment.gy !== null &&
-                `gy-${segment.gy}`,
-              colsSize.className,
-            ],
-            style: segment.style,
-          },
-          segment.besides.map((t: any, ixb: number) =>
-            div(
-              {
-                class:
-                  segment.widths === false
-                    ? ""
-                    : `col-${
-                        segment.breakpoint
-                          ? segment.breakpoint + "-"
-                          : segment.breakpoints && segment.breakpoints[ixb]
-                            ? segment.breakpoints[ixb] + "-"
-                            : ""
-                      }${segment.widths ? segment.widths[ixb] : defwidth}${
-                        (() => {
+        markup =
+          colsSize.styleTag +
+          div(
+            {
+              class: [
+                "row",
+                segment.class,
+                segment.customClass,
+                typeof segment.gx !== "undefined" &&
+                  segment.gx !== null &&
+                  `gx-${segment.gx}`,
+                typeof segment.gy !== "undefined" &&
+                  segment.gy !== null &&
+                  `gy-${segment.gy}`,
+                colsSize.className,
+              ],
+              style: segment.style,
+            },
+            segment.besides.map((t: any, ixb: number) =>
+              div(
+                {
+                  class:
+                    segment.widths === false
+                      ? ""
+                      : `col-${
+                          segment.breakpoint
+                            ? segment.breakpoint + "-"
+                            : segment.breakpoints && segment.breakpoints[ixb]
+                              ? segment.breakpoints[ixb] + "-"
+                              : ""
+                        }${segment.widths ? segment.widths[ixb] : defwidth}${(() => {
                           const desktop = segment.aligns?.[ixb];
                           const tablet = segment.tabletAligns?.[ixb];
                           const mobile = segment.mobileAligns?.[ixb];
-                          if (!mobile && !tablet) return desktop ? " text-" + desktop : "";
+                          if (!mobile && !tablet)
+                            return desktop ? " text-" + desktop : "";
                           let cls = "";
                           const base = mobile || desktop;
                           if (base) cls += " text-" + base;
-                          if (tablet && tablet !== base) cls += " text-md-" + tablet;
-                          if (desktop && desktop !== (tablet || base)) cls += " text-lg-" + desktop;
+                          if (tablet && tablet !== base)
+                            cls += " text-md-" + tablet;
+                          if (desktop && desktop !== (tablet || base))
+                            cls += " text-lg-" + desktop;
                           return cls;
-                        })()
-                      }${
-                        segment.vAligns
-                          ? " align-items-" + segment.vAligns[ixb]
-                          : ""
-                      }${
-                        segment.colClasses?.[ixb]
-                          ? " " + segment.colClasses[ixb]
-                          : ""
-                      }`,
-                style: segment.colStyles?.[ixb] || undefined,
-              },
-              go(t, false, ixb)
+                        })()}${
+                          segment.vAligns
+                            ? " align-items-" + segment.vAligns[ixb]
+                            : ""
+                        }${
+                          segment.colClasses?.[ixb]
+                            ? " " + segment.colClasses[ixb]
+                            : ""
+                        }`,
+                  style: segment.colStyles?.[ixb] || undefined,
+                },
+                go(t, false, ixb)
+              )
             )
-          )
-        );
+          );
       return isTop
         ? wrap({ ...segment, customClass: null }, isTop, ix, markup)
         : markup;
@@ -1153,4 +1173,4 @@ const render = ({
 
 // declaration merging
 const LayoutExports = render;
-export = LayoutExports;
+export default LayoutExports;
