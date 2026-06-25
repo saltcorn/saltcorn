@@ -1,6 +1,6 @@
-const { describe, it } = require("node:test");
-const assert = require("node:assert");
-const PlainDate = require("./index");
+import { describe, it } from "node:test";
+import assert from "node:assert";
+import PlainDate from "./index.js";
 
 describe("PlainDate", () => {
   it("constructs today's date with no args", () => {
