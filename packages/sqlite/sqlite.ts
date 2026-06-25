@@ -4,7 +4,9 @@
  * @module sqlite
  */
 
-import { Database, verbose } from "sqlite3";
+import sqlite3 from "sqlite3";
+import type { Database } from "sqlite3";
+const { verbose } = sqlite3;
 verbose();
 import { unlink } from "fs/promises";
 
@@ -60,7 +62,7 @@ export const init = (getConnectObject: () => Database): void => {
   if (!sqliteDatabase) {
     connectObj = getConnectObject();
     current_filepath = get_db_filepath();
-    sqliteDatabase = new Database(current_filepath);
+    sqliteDatabase = new sqlite3.Database(current_filepath);
     query("PRAGMA foreign_keys = ON;");
   }
 };
@@ -138,7 +140,7 @@ export const changeConnection = async (connObj: any): Promise<void> => {
   }
   await sqliteDatabase.close();
   current_filepath = connObj.sqlite_path;
-  sqliteDatabase = new Database(current_filepath);
+  sqliteDatabase = new sqlite3.Database(current_filepath);
 };
 
 /**
@@ -198,7 +200,9 @@ export const select = async (
   if (selectopts.tree_field)
     sql = `WITH RECURSIVE _tree AS (
         SELECT ${
-          selectopts.fields ? selectopts.fields.map((f) => `p."${f}"`).join(", ") : `p.*`
+          selectopts.fields
+            ? selectopts.fields.map((f) => `p."${f}"`).join(", ")
+            : `p.*`
         }, 0 as _level
         ${
           selectopts.orderBy
@@ -222,7 +226,9 @@ export const select = async (
           ? selectopts.fields.map((f) => `c."${f}"`).join(", ")
           : `c.*`
       }, pt._level+1
-      ${selectopts.orderBy ? `, pt.sort_path || '.' ||
+      ${
+        selectopts.orderBy
+          ? `, pt.sort_path || '.' ||
         printf('%08d',
             (
                 SELECT COUNT(*)
@@ -230,7 +236,9 @@ export const select = async (
                 WHERE s."${selectopts.tree_field}" = c."${selectopts.tree_field}"
                   AND s."${selectopts.orderBy}" > c."${selectopts.orderBy}"
             )
-        )` : ""} 
+        )`
+          : ""
+      } 
       FROM "${sqlsanitize(tbl)}" c
       JOIN _tree pt ON c."${selectopts.tree_field}" = pt.id      
       )
@@ -447,7 +455,7 @@ export const drop_reset_schema = async (): Promise<void> => {
   }
   await sqliteDatabase.close();
   await unlink(current_filepath);
-  sqliteDatabase = new Database(current_filepath);
+  sqliteDatabase = new sqlite3.Database(current_filepath);
 };
 
 /**
