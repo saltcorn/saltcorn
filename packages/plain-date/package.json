@@ -22,6 +22,7 @@
   "author": "Tom Nielsen",
   "license": "MIT",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -30,13 +31,6 @@
       "default": "./dist/index.js"
     },
     "./*": "./dist/*.js"
-  },
-  "typesVersions": {
-    "*": {
-      "*": [
-        "dist/*"
-      ]
-    }
   },
   "files": [
     "dist/**/*",
