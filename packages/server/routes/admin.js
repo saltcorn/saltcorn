@@ -3757,7 +3757,8 @@ router.get(
                       )
                     ),
 
-                    // allow offline mode box
+                    // allow offline mode box (postgres only)
+                    !db.isSQLite &&
                     div(
                       { class: "row pb-2 mt-2" },
                       div(
@@ -3786,6 +3787,7 @@ router.get(
                       )
                     ),
 
+                    !db.isSQLite &&
                     div(
                       {
                         id: "tblSyncSelectorId",
@@ -3969,34 +3971,35 @@ router.get(
                           )
                         ),
 
-                        // push sync
-                        div(
-                          { class: "row pb-2 my-2" },
+                        // push sync (postgres only)
+                        !db.isSQLite &&
                           div(
-                            { class: "col-sm-10" },
-                            input({
-                              type: "checkbox",
-                              id: "pushSyncBoxId",
-                              class: "form-check-input me-2 mb-0 ",
-                              name: "pushSync",
-                              checked: builderSettings.pushSync === "on",
-                            }),
-                            label(
-                              {
-                                for: "pushSyncBoxId",
-                                class: "form-label fw-bold mb-0",
-                              },
-                              req.__("Push sync")
-                            ),
-                            div(),
-                            i(
-                              req.__(
-                                "Run Synchronizations when the server sends a push notification. " +
-                                  "On Android, this requires a Firebase JSON key and a Google Services File (see below)."
+                            { class: "row pb-2 my-2" },
+                            div(
+                              { class: "col-sm-10" },
+                              input({
+                                type: "checkbox",
+                                id: "pushSyncBoxId",
+                                class: "form-check-input me-2 mb-0 ",
+                                name: "pushSync",
+                                checked: builderSettings.pushSync === "on",
+                              }),
+                              label(
+                                {
+                                  for: "pushSyncBoxId",
+                                  class: "form-label fw-bold mb-0",
+                                },
+                                req.__("Push sync")
+                              ),
+                              div(),
+                              i(
+                                req.__(
+                                  "Run Synchronizations when the server sends a push notification. " +
+                                    "On Android, this requires a Firebase JSON key and a Google Services File (see below)."
+                                )
                               )
                             )
-                          )
-                        ),
+                          ),
 
                         // periodic sync interval
                         div(

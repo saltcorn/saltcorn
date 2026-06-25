@@ -19,7 +19,7 @@ import {
   prepAppIcon,
   modifyInfoPlist,
   writeEntitlementsPlist,
-  runAddEntitlementsScript,
+  injectCodeSignEntitlements,
   writePodfile,
   modifyXcodeProjectFile,
   writePrivacyInfo,
@@ -274,6 +274,8 @@ export class MobileBuilder {
         pushSync: this.pushSync,
         syncInterval: this.syncInterval ? this.syncInterval : 0,
         allowShareTo: this.allowShareTo,
+        apnsEnvironment:
+          this.buildType === "debug" ? "development" : "production",
       });
       let resultCode = await bundlePackagesAndPlugins(
         this.buildDir,
@@ -285,8 +287,11 @@ export class MobileBuilder {
         this.pluginsLoaded = true;
       }
       copyPluginMobileAppDirs(this.buildDir);
-      if (this.pushNotificationsEnabled || this.pushSync)
+      if (this.pushNotificationsEnabled || this.pushSync) {
         copyOptionalSource(this.buildDir, "notifications.js");
+        if (this.pushSync && this.platforms.includes("ios"))
+          copyOptionalSource(this.buildDir, "ios_silent_push.js");
+      }
       if (this.syncInterval && this.syncInterval > 0)
         copyOptionalSource(this.buildDir, "background_sync.js");
       resultCode = bundleMobileAppCode(this.buildDir);
@@ -349,8 +354,12 @@ export class MobileBuilder {
       this.allowClearTextTraffic
     );
     if (this.pushSync) {
-      writeEntitlementsPlist(this.buildDir);
-      runAddEntitlementsScript(this.buildDir);
+      writeEntitlementsPlist(
+        this.buildDir,
+        this.buildType,
+        this.iosParams?.shareExtensionProvisioningProfile?.appGroupId
+      );
+      injectCodeSignEntitlements(this.buildDir);
     }
     if (this.allowShareTo) {
       copyShareExtFiles(this.buildDir);

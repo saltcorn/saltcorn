@@ -644,6 +644,11 @@ export function modifyInfoPlist(
   const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
   const content = readFileSync(infoPlist, "utf8");
 
+  const backgroundModes = [
+    ...(backgroundSyncEnabled ? ["fetch"] : []),
+    ...(pushSyncEnabled ? ["remote-notification"] : []),
+  ];
+
   const newCfgs = `
   ${
     backgroundSyncEnabled
@@ -651,19 +656,15 @@ export function modifyInfoPlist(
   <array>
     <string>com.transistorsoft.fetch</string>
   </array>
-  <key>UIBackgroundModes</key>
-  <array>
-    <string>fetch</string>
-  </array>
   `
       : ""
   }
 
   ${
-    pushSyncEnabled
+    backgroundModes.length > 0
       ? `<key>UIBackgroundModes</key>
   <array>
-    <string>remote-notification</string>
+    ${backgroundModes.map((m) => `<string>${m}</string>`).join("\n    ")}
   </array>
   `
       : ""
@@ -714,8 +715,19 @@ export function modifyInfoPlist(
   writeFileSync(infoPlist, newContent, "utf8");
 }
 
-export function writeEntitlementsPlist(buildDir: string) {
+export function writeEntitlementsPlist(
+  buildDir: string,
+  buildType: "debug" | "release",
+  appGroupId?: string
+) {
   const file = join(buildDir, "ios", "App", "App", "App.entitlements");
+  const apsEnv = buildType === "release" ? "production" : "development";
+  const appGroupsEntry = appGroupId
+    ? `    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>${appGroupId}</string>
+    </array>`
+    : "";
   try {
     writeFileSync(
       file,
@@ -724,9 +736,8 @@ export function writeEntitlementsPlist(buildDir: string) {
 <plist version="1.0">
 <dict>
     <key>aps-environment</key>
-    <string>production</string>
-    <key>com.apple.security.application-groups</key>
-    <array />
+    <string>${apsEnv}</string>
+${appGroupsEntry}
 </dict>
 </plist>`
     );
@@ -739,16 +750,33 @@ export function writeEntitlementsPlist(buildDir: string) {
   }
 }
 
-export function runAddEntitlementsScript(buildDir: string) {
+export function injectCodeSignEntitlements(buildDir: string) {
+  const pbxprojPath = join(
+    buildDir,
+    "ios",
+    "App",
+    "App.xcodeproj",
+    "project.pbxproj"
+  );
   try {
-    const result = spawnSync("ruby", ["add_entitlements.rb"], {
-      cwd: buildDir,
-    });
-    console.log(result.output.toString());
+    let content = readFileSync(pbxprojPath, "utf8");
+    // INFOPLIST_FILE = App/Info.plist only appears in the main App target's
+    // build configuration blocks, making it a safe anchor for injection.
+    // Skip if already set to avoid duplicates on re-runs.
+    if (content.includes("CODE_SIGN_ENTITLEMENTS")) {
+      console.log("CODE_SIGN_ENTITLEMENTS already set in project.pbxproj");
+      return;
+    }
+    content = content.replaceAll(
+      "INFOPLIST_FILE = App/Info.plist;",
+      `CODE_SIGN_ENTITLEMENTS = App/App.entitlements;\n\t\t\t\tINFOPLIST_FILE = App/Info.plist;`
+    );
+    writeFileSync(pbxprojPath, content, "utf8");
+    console.log("CODE_SIGN_ENTITLEMENTS set in project.pbxproj for App target");
   } catch (error: any) {
     console.log(
-      `Unable to run the add_entitlements.rb script: ${
-        error.message ? error.message : "Unknown error"
+      `Unable to set CODE_SIGN_ENTITLEMENTS in project.pbxproj: ${
+        error.message ?? "Unknown error"
       }`
     );
   }
@@ -1081,6 +1109,7 @@ export function writeCfgFile({
   pushSync,
   syncInterval,
   allowShareTo,
+  apnsEnvironment,
 }: any) {
   const wwwDir = join(buildDir, "www");
   let cfg: any = {
@@ -1098,6 +1127,7 @@ export function writeCfgFile({
     pushSync,
     syncInterval,
     allowShareTo,
+    apnsEnvironment,
   };
   if (entryPointType !== "byrole") {
     cfg.entry_point = `get/${
@@ -1323,8 +1353,8 @@ export async function prepareSplashPage(
       body: !contents
         ? { above: [] }
         : contents.above
-          ? contents
-          : { above: [contents] },
+        ? contents
+        : { above: [contents] },
       alerts: [],
       role: role,
       menu: [],
@@ -1386,7 +1416,11 @@ export function writePodfile(
     pod 'CapacitorCommunitySqlite', :path => '../../node_modules/@capacitor-community/sqlite'
     pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
-    ${hasGeolocation ? `pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'` : ""}
+    ${
+      hasGeolocation
+        ? `pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'`
+        : ""
+    }
     pod 'CapacitorNetwork', :path => '../../node_modules/@capacitor/network'
     pod 'CapacitorScreenOrientation', :path => '../../node_modules/@capacitor/screen-orientation'
     pod 'SendIntent', :path => '../../node_modules/send-intent'
@@ -1398,8 +1432,16 @@ export function writePodfile(
     pod 'CapacitorDevice', :path => '../../node_modules/@capacitor/device'`
         : ""
     }
-    ${hasSilentPush ? `pod 'CapacitorPluginSilentNotifications', :path => '../../node_modules/capacitor-plugin-silent-notifications'` : ""}
-    ${hasBackgroundFetch ? `pod 'TransistorsoftCapacitorBackgroundFetch', :path => '../../node_modules/@transistorsoft/capacitor-background-fetch'` : ""}
+    ${
+      hasSilentPush
+        ? `pod 'CapacitorPluginSilentNotifications', :path => '../../node_modules/capacitor-plugin-silent-notifications'`
+        : ""
+    }
+    ${
+      hasBackgroundFetch
+        ? `pod 'TransistorsoftCapacitorBackgroundFetch', :path => '../../node_modules/@transistorsoft/capacitor-background-fetch'`
+        : ""
+    }
   end
   
   target 'App' do

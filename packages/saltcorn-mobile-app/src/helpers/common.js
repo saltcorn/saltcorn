@@ -1,6 +1,7 @@
 /*global saltcorn, $*/
 
 import { apiCall } from "./api";
+import { Capacitor } from "@capacitor/core";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
 import { SendIntent } from "send-intent";
@@ -224,7 +225,19 @@ export async function tryInitPush(config) {
     try {
       await initPushNotifications();
       if (saltcorn.data.utils.isPushEnabled(config.user)) addPusNotifyHandler();
-      if (config.pushSync) addPushSyncHandler();
+      if (config.pushSync) {
+        addPushSyncHandler();
+        if (Capacitor.getPlatform() === "ios") {
+          try {
+            const { initIosSilentPushListener } = await import(
+              "../helpers/ios_silent_push.js"
+            );
+            await initIosSilentPushListener();
+          } catch (e) {
+            console.log("iOS silent push not available:", e);
+          }
+        }
+      }
     } catch (error) {
       console.error("Error initializing push notifications:", error);
     }

@@ -11,28 +11,40 @@ import { Device } from "@capacitor/device";
  */
 async function notifyTokenApi(config, isSubscribe) {
   console.log("notifyTokenApi subscribe:", isSubscribe);
+  if (!config.pushConfiguration) {
+    console.warn("notifyTokenApi: pushConfiguration is not set, skipping");
+    return;
+  }
   const { token, deviceId } = config.pushConfiguration;
   const platform = Capacitor.getPlatform();
   try {
     const response = await apiCall({
       method: "POST",
-      path: `/notifications/mobile-${isSubscribe ? "subscribe" : "remove-subscription"}`,
+      path: `/notifications/mobile-${
+        isSubscribe ? "subscribe" : "remove-subscription"
+      }`,
       body: { token, deviceId, platform },
     });
     const data = response.data;
     if (data.success === "ok")
       console.log(
-        `successfully ${isSubscribe ? "subscribed" : "unsubscribed"} to push notifications`,
+        `successfully ${
+          isSubscribe ? "subscribed" : "unsubscribed"
+        } to push notifications`,
         data
       );
     else
       console.error(
-        `unable to ${isSubscribe ? "subscribe" : "unsubscribe"} to push notifications`,
+        `unable to ${
+          isSubscribe ? "subscribe" : "unsubscribe"
+        } to push notifications`,
         data
       );
   } catch (error) {
     console.error(
-      `unable to ${isSubscribe ? "subscribe" : "unsubscribe"} to push notifications`,
+      `unable to ${
+        isSubscribe ? "subscribe" : "unsubscribe"
+      } to push notifications`,
       error
     );
   }
@@ -45,18 +57,30 @@ async function notifyTokenApi(config, isSubscribe) {
  */
 async function syncTokenApi(config, isSubscribe) {
   console.log("syncTokenApi subscribe:", isSubscribe);
+  if (!config.pushConfiguration) {
+    console.warn("syncTokenApi: pushConfiguration is not set, skipping");
+    return;
+  }
   const { token, deviceId } = config.pushConfiguration;
   const platform = Capacitor.getPlatform();
   try {
     const response = await apiCall({
       method: "POST",
       path: `/sync/push_${isSubscribe ? "subscribe" : "unsubscribe"}`,
-      body: { token, deviceId, synchedTables: config.synchedTables, platform },
+      body: {
+        token,
+        deviceId,
+        synchedTables: config.synchedTables,
+        platform,
+        apnsEnvironment: config.apnsEnvironment,
+      },
     });
     const data = response.data;
     if (data.success === "ok")
       console.log(
-        `successfully ${isSubscribe ? "subscribed" : "unsubscribed"} to push sync`,
+        `successfully ${
+          isSubscribe ? "subscribed" : "unsubscribed"
+        } to push sync`,
         data
       );
     else
@@ -94,7 +118,6 @@ export async function initPushNotifications() {
     await removePushListeners();
     const permStatus = await PushNotifications.requestPermissions();
     if (permStatus.receive === "granted") {
-      await PushNotifications.register();
       registrationListener = PushNotifications.addListener(
         "registration",
         async (token) => {
@@ -109,8 +132,7 @@ export async function initPushNotifications() {
               deviceId: identifier,
             };
             await notifyTokenApi(config, true);
-            if (config.allowOfflineMode && config.pushSync)
-              await syncTokenApi(config, true);
+            if (config.pushSync) await syncTokenApi(config, true);
           }
         }
       );
@@ -126,6 +148,8 @@ export async function initPushNotifications() {
         "pushNotificationReceived",
         messageHandler
       );
+
+      await PushNotifications.register();
     } else {
       console.warn("Push notification permission not granted");
     }
@@ -134,17 +158,29 @@ export async function initPushNotifications() {
 
 export async function unregisterPushNotifications() {
   if (Capacitor.getPlatform() !== "web" && PushNotifications) {
+    const config = saltcorn.data.state.getState().mobileConfig;
     try {
       await PushNotifications.unregister();
-      const config = saltcorn.data.state.getState().mobileConfig;
       await notifyTokenApi(config, false);
-      if (config.allowOfflineMode && config.pushSync)
+      if (config.pushSync) {
         await syncTokenApi(config, false);
-      await removePushListeners();
-      config.pushConfiguration = null;
+        if (Capacitor.getPlatform() === "ios") {
+          try {
+            const { removeIosSilentPushListener } = await import(
+              "../helpers/ios_silent_push.js"
+            );
+            await removeIosSilentPushListener();
+          } catch (e) {
+            console.log("iOS silent push not available:", e);
+          }
+        }
+      }
       console.log("Push notifications unregistered successfully");
     } catch (error) {
       console.error("Error unregistering push notifications:", error);
+    } finally {
+      await removePushListeners();
+      config.pushConfiguration = null;
     }
   }
 }

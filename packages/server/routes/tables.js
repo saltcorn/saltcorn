@@ -226,7 +226,7 @@ const tableForm = async (table, req) => {
                 topic: "Table history",
               },
             },
-            ...(table.name === "users"
+            ...(table.name === "users" || db.isSQLite
               ? []
               : [
                   {
