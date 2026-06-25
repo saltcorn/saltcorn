@@ -780,7 +780,7 @@ export type ConnectObjType = {
   user?: string;
   database?: string;
   host?: string;
-  port?: string;
+  port?: string | number;
   session_secret?: string;
   sslmode?: string;
   sslcert?: string;

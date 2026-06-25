@@ -17,7 +17,10 @@
     "lib": ["ES2021"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "target": "ES2021"
+    "target": "ES2021",
+    "plugins": [
+      { "transform": "ts-runtime-checks", "assertAll": true }
+    ]
   },
   "exclude": ["node_modules", "dist/**"]
 }
