@@ -106,8 +106,15 @@ const formRowWrap = (
   error: string = "",
   fStyle: string,
   labelCols: number
-): string =>
-  div(
+): string => {
+  const insideInput =
+    hdr.help_text && hdr.help_text_position === "inside-input";
+  const resolvedInner = insideInput
+    ? helpTextInputGroup(inner, hdr.help_text)
+    : inner;
+  const labelIcon =
+    hdr.help_text && !insideInput ? helpTextIcon(hdr.help_text) : "";
+  return div(
     {
       class: [
         "form-group",
@@ -129,22 +136,23 @@ const formRowWrap = (
           },
           h5(text(hdr.label)),
           hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
-          //hdr.sublabel && p(i(hdr.sublabel)),
+          labelIcon,
           mkSubLabelAndHelp(hdr)
         )
       : hdr.input_type === "dynamic_fields"
-        ? inner
+        ? resolvedInner
         : hdr.type?.name === "Bool" && fStyle === "vert"
           ? div(
               { class: "form-check" },
-              inner,
+              resolvedInner,
               label(
                 {
                   for: `input${text_attr(hdr.form_name)}`,
                 },
                 text(hdr.label)
               ),
-              hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
+              hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
+              labelIcon
             ) + mkSubLabelAndHelp(hdr)
           : [
               hdr.label !== " " &&
@@ -168,7 +176,8 @@ const formRowWrap = (
                     },
                     text(hdr.label)
                   ),
-                  hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
+                  hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
+                  labelIcon
                 ),
               div(
                 {
@@ -181,12 +190,13 @@ const formRowWrap = (
                       `col-sm-${12 - labelCols}`,
                   ],
                 },
-                inner,
+                resolvedInner,
                 text(error),
                 mkSubLabelAndHelp(hdr)
               ),
             ]
   );
+};
 
 /**
  * builds dropdown submenus to select a field,
@@ -1174,11 +1184,34 @@ const helpLink = ({ topic, context, dynContext, plugin }: any) => {
     i({ class: "fas fa-question-circle ms-1" })
   );
 };
+const helpTextIcon = (help_text: string) =>
+  i({
+    class: "fas fa-info-circle ms-1 text-muted",
+    "data-bs-toggle": "tooltip",
+    "data-bs-placement": "right",
+    title: text_attr(help_text),
+  });
+
+const helpTextInputGroup = (inner: string, help_text: string) =>
+  div(
+    { class: "input-group" },
+    inner,
+    span(
+      {
+        class: "input-group-text",
+        "data-bs-toggle": "tooltip",
+        "data-bs-placement": "left",
+        title: text_attr(help_text),
+        style: "cursor:default",
+      },
+      i({ class: "fas fa-info-circle text-muted" })
+    )
+  );
+
 const mkSubLabelAndHelp = (hdr: any) => {
   return (
     (hdr.sublabel ? i(hdr.sublabel) : "") +
     (hdr.help && hdr.sublabel ? helpLink(hdr.help) : "")
-    //(hdr.help && !hdr.sublabel ? "Help" + helpLink(hdr.help) : "")
   );
 };
 
@@ -1201,8 +1234,12 @@ const mkFormRowAside = (
 ): string => {
   const name: any = hdr1.form_name + nameAdd;
 
-  const inner1 = innerField(v, errors, nameAdd, "")(hdr1);
-  const inner2 = innerField(v, errors, nameAdd, "")(hdr2);
+  const resolveInner = (hdr: any, raw: string) =>
+    hdr.help_text && hdr.help_text_position === "inside-input"
+      ? helpTextInputGroup(raw, hdr.help_text)
+      : raw;
+  const inner1 = resolveInner(hdr1, innerField(v, errors, nameAdd, "")(hdr1));
+  const inner2 = resolveInner(hdr2, innerField(v, errors, nameAdd, "")(hdr2));
   const inputCols = (12 - labelCols * 2) / 2;
   const mkLabel = (hdr: any) =>
     label(
@@ -1210,7 +1247,10 @@ const mkFormRowAside = (
         for: `input${text_attr(hdr.form_name)}`,
       },
       text(hdr.label),
-      hdr.help && !hdr.sublabel ? helpLink(hdr.help) : ""
+      hdr.help && !hdr.sublabel ? helpLink(hdr.help) : "",
+      hdr.help_text && hdr.help_text_position !== "inside-input"
+        ? helpTextIcon(hdr.help_text)
+        : ""
     );
   const outerAttributes = {
     class: ["form-group row"],
@@ -1282,6 +1322,18 @@ const renderFormLayout = (form: Form): string => {
           )
         )
         .join("");
+    },
+    blank(segment: any) {
+      if (!segment.labelFor) return false;
+      const matchingField = form.fields.find(
+        (f) => f.name === segment.labelFor && (f as any).help_text
+      );
+      if (!matchingField) return false;
+      return label(
+        { for: `input${text_attr(segment.labelFor)}` },
+        text(segment.contents || ""),
+        helpTextIcon((matchingField as any).help_text)
+      );
     },
     field_repeat({ field_repeat }: any, go: any) {
       const hdr = field_repeat;

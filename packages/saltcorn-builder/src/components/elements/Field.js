@@ -100,6 +100,8 @@ const FieldSettings = () => {
     click_to_edit,
     textStyle,
     onchange_action,
+    help_text,
+    help_text_position,
   } = useNode((node) => ({
     name: node.data.props.name,
     fieldview: node.data.props.fieldview,
@@ -109,6 +111,8 @@ const FieldSettings = () => {
     textStyle: node.data.props.textStyle,
     onchange_action: node.data.props.onchange_action,
     configuration: node.data.props.configuration,
+    help_text: node.data.props.help_text,
+    help_text_position: node.data.props.help_text_position,
     node_id: node.id,
   }));
   const options = useContext(optionsCtx);
@@ -277,6 +281,43 @@ const FieldSettings = () => {
           onChange={(k, v) => refetchPreview({ configuration: { [k]: v } })}
         />
       ) : null}
+      {options.mode === "edit" ? (
+        <Fragment>
+          <label>{t("Help text")}</label>
+          <textarea
+            className="form-control"
+            rows={2}
+            placeholder={t("Tooltip shown next to field label")}
+            value={help_text || ""}
+            onChange={(e) => {
+              if (!e.target) return;
+              const value = e.target.value;
+              setProp((prop) => {
+                prop.help_text = value;
+              });
+            }}
+          />
+          {help_text ? (
+            <Fragment>
+              <label className="mt-1">{t("Help text position")}</label>
+              <select
+                value={help_text_position || "after-label"}
+                className="form-control form-select"
+                onChange={(e) => {
+                  if (!e.target) return;
+                  const value = e.target.value;
+                  setProp((prop) => {
+                    prop.help_text_position = value;
+                  });
+                }}
+              >
+                <option value="after-label">{t("After label")}</option>
+                <option value="inside-input">{t("Inside input (right)")}</option>
+              </select>
+            </Fragment>
+          ) : null}
+        </Fragment>
+      ) : null}
       {options.mode === "edit" && options.triggerActions ? (
         <Fragment>
           <label>{t("On change action")}</label>
@@ -330,6 +371,8 @@ Field.craft = {
       "inline",
       "click_to_edit",
       "onchange_action",
+      "help_text",
+      "help_text_position",
       { name: "configuration", default: {} },
     ],
   },

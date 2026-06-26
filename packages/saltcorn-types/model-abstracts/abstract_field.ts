@@ -40,6 +40,7 @@ export type FieldCfg = {
   sublabel?: string;
   help?: { topic: string; context?: Row; dynContext?: string[] };
   description?: string;
+  help_text?: string;
   type?: string | Type;
   options?: Array<string | { label: string; value: string }>;
   required?: boolean;
