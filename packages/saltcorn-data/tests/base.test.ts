@@ -3,13 +3,6 @@ import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-co
 
 afterAll(db.close);
 
-/*describe("base plugin", () => {
-  const plugin = require("../base-plugin");
-  const { auto_test_plugin } = require("../plugin-testing");
-  it("passes auto test", async () => {
-    await auto_test_plugin(plugin);
-  });
-});*/
 
 describe("float read", () => {
   const plugin = require("../base-plugin");
