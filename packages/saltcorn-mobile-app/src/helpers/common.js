@@ -247,21 +247,26 @@ export async function tryInitPush(config) {
 }
 
 /**
- * init background sync, if available
+ * init background tasks (sync and/or push-sync heartbeat), if available
  */
 export async function tryInitBackgroundSync(config) {
+  if (
+    !(config.syncInterval && config.syncInterval > 0) &&
+    !(config.pushSyncHeartbeatInterval && config.pushSyncHeartbeatInterval > 0)
+  )
+    return;
   try {
-    const { startPeriodicBackgroundSync } = await import(
-      "../helpers/background_sync.js"
-    );
+    const { initBackground } = await import("../helpers/background.js");
     try {
-      if (config.syncInterval && config.syncInterval > 0)
-        await startPeriodicBackgroundSync(config.syncInterval);
+      await initBackground(
+        config.syncInterval,
+        config.pushSyncHeartbeatInterval
+      );
     } catch (error) {
-      console.error("Error initializing background sync:", error);
+      console.error("Error initializing background tasks:", error);
     }
   } catch (error) {
-    console.log("Background sync module not available:", error);
+    console.log("Background module not available:", error);
   }
 }
 
@@ -284,19 +289,17 @@ export async function tryUnregisterPush() {
 }
 
 /**
- * stop background sync, if available
+ * stop background tasks (sync and/or push-sync heartbeat), if available
  */
 export async function tryStopBackgroundSync() {
   try {
-    const { stopPeriodicBackgroundSync } = await import(
-      "../helpers/background_sync.js"
-    );
+    const { stopBackground } = await import("../helpers/background.js");
     try {
-      await stopPeriodicBackgroundSync();
+      await stopBackground();
     } catch (error) {
-      console.error("Error stopping periodic background sync:", error);
+      console.error("Error stopping background tasks:", error);
     }
   } catch (error) {
-    console.error("Push notifications module not available:", error);
+    console.log("Background module not available:", error);
   }
 }

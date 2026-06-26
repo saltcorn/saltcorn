@@ -710,6 +710,7 @@ export type MobileConfig = {
   syncOnAppResume?: boolean;
   pushSync?: boolean;
   syncInterval?: number;
+  pushSyncHeartbeatInterval?: number;
   allowShareTo?: boolean;
   apnsEnvironment?: "development" | "production";
   isOfflineMode?: boolean;

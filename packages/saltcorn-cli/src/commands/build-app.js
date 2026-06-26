@@ -109,7 +109,9 @@ class BuildAppCommand extends Command {
     );
     const db = require("@saltcorn/data/db");
     if (db.is_it_multi_tenant() && flags.tenantAppName) {
-      await init_multi_tenant(Plugin.loadAllPlugins, true, [flags.tenantAppName]);
+      await init_multi_tenant(Plugin.loadAllPlugins, true, [
+        flags.tenantAppName,
+      ]);
     }
     const doBuild = async () => {
       const user = flags.userEmail
@@ -142,6 +144,7 @@ class BuildAppCommand extends Command {
         syncOnAppResume: flags.syncOnAppResume,
         pushSync: flags.pushSync,
         syncInterval: flags.syncInterval,
+        pushSyncHeartbeatInterval: flags.pushSyncHeartbeatInterval,
         allowShareTo: flags.allowShareTo,
         plugins: await this.uniquePlugins(flags.includedPlugins),
         copyTargetDir: flags.copyAppDirectory,
@@ -339,6 +342,12 @@ BuildAppCommand.flags = {
     description:
       "Perdiodic interval (in minutes) to run synchronizations in the background. " +
       "This is just a min interval, depending on system conditions, the actual time may be longer.",
+  }),
+  pushSyncHeartbeatInterval: Flags.string({
+    name: "Push Sync Heartbeat Interval",
+    string: "pushSyncHeartbeatInterval",
+    description:
+      "Interval (in minutes) at which the device re-registers its push sync subscription to keep it alive. 0 or unset disables the heartbeat.",
   }),
   noProvisioningProfile: Flags.boolean({
     name: "no provisioning profile",

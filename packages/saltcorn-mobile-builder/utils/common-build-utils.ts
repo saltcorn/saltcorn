@@ -1214,6 +1214,7 @@ export function writeCfgFile({
   syncOnAppResume,
   pushSync,
   syncInterval,
+  pushSyncHeartbeatInterval,
   allowShareTo,
   apnsEnvironment,
 }: any) {
@@ -1232,6 +1233,7 @@ export function writeCfgFile({
     syncOnAppResume,
     pushSync,
     syncInterval,
+    pushSyncHeartbeatInterval,
     allowShareTo,
     apnsEnvironment,
   };

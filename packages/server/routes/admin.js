@@ -4028,7 +4028,40 @@ router.get(
                               )
                             )
                           )
-                        )
+                        ),
+
+                        // push sync heartbeat interval
+                        !db.isSQLite &&
+                          div(
+                            { class: "row pb-2 mt-2" },
+                            div(
+                              { class: "col-sm-10" },
+                              label(
+                                {
+                                  for: "pushSyncHeartbeatIntervalInputId",
+                                  class: "form-label fw-bold mb-0 ",
+                                },
+                                req.__("Push sync heartbeat interval")
+                              ),
+                              input({
+                                type: "text",
+                                class: "form-control mb-0",
+                                name: "pushSyncHeartbeatInterval",
+                                id: "pushSyncHeartbeatIntervalInputId",
+                                value:
+                                  builderSettings.pushSyncHeartbeatInterval ||
+                                  "",
+                              }),
+                              div(),
+                              i(
+                                req.__(
+                                  "Interval (in minutes) at which the device re-registers its push sync subscription to keep it alive. " +
+                                    "Leave empty or 0 to disable. Recommended: 60. " +
+                                    "This is a minimum interval — on iOS the actual time may be longer depending on system conditions."
+                                )
+                              )
+                            )
+                          )
                       )
                     )
                   ),
@@ -4689,6 +4722,7 @@ router.post(
       syncOnAppResume,
       pushSync,
       syncInterval,
+      pushSyncHeartbeatInterval,
       synchedTables,
       includedPlugins,
       noProvisioningProfile,
@@ -4841,6 +4875,8 @@ router.post(
     if (allowOfflineMode) spawnParams.push("--allowOfflineMode");
     if (syncInterval) spawnParams.push("--syncInterval", syncInterval);
     if (pushSync) spawnParams.push("--pushSync");
+    if (pushSyncHeartbeatInterval)
+      spawnParams.push("--pushSyncHeartbeatInterval", pushSyncHeartbeatInterval);
     if (syncOnReconnect) spawnParams.push("--syncOnReconnect");
     if (syncOnAppResume) spawnParams.push("--syncOnAppResume");
     if (allowShareTo) spawnParams.push("--allowShareTo");
