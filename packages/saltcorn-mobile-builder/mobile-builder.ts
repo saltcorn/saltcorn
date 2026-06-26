@@ -404,7 +404,11 @@ export class MobileBuilder {
       this.allowClearTextTraffic
     );
     writeDataExtractionRules(this.buildDir);
-    writeNetworkSecurityConfig(this.buildDir, this.serverURL);
+    writeNetworkSecurityConfig(
+      this.buildDir,
+      this.serverURL,
+      this.allowClearTextTraffic
+    );
     modifyGradleConfig(
       this.buildDir,
       this.appVersion,
