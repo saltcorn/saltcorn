@@ -496,12 +496,13 @@ class Field implements AbstractField {
       const files = await File.find(
         this.attributes.folder
           ? { folder: this.attributes.folder }
-          : this.attributes.select_file_where || {}
+          : this.attributes.select_file_where || {},
+        { recursive: true }
       );
       this.options = files
         .filter((f) => !f.isDirectory)
         .map((f) => ({
-          label: f.filename,
+          label: f.path_to_serve,
           value: f.field_value,
         }));
       if (!this.required) this.options.unshift({ label: "", value: "" });
