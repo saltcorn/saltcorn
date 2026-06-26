@@ -262,13 +262,16 @@ describe("mkWhere", () => {
       values: ["foo bar"],
       where: `where to_tsvector('english', coalesce("description",'') || ' ' || coalesce("name",'')) @@ plainto_tsquery('english', $1)`,
     });
+    // Single-word prefix search: uses a CASE guard so PostgreSQL stop words
+    // (e.g. "on", "by", "a") fall back to ILIKE instead of throwing a
+    // tsquery syntax error.
     expect(
       mkWhere({
         _fts: { fields: [fld("name"), fld("description")], searchTerm: "foo" },
       })
     ).toStrictEqual({
-      values: ["foo:*"],
-      where: `where to_tsvector('english', coalesce("description",'') || ' ' || coalesce("name",'')) @@ to_tsquery('english', $1)`,
+      values: ["foo", "foo:*"],
+      where: `where CASE WHEN websearch_to_tsquery('english', $1) = ''::tsquery THEN coalesce("description",'') || ' ' || coalesce("name",'') ILIKE '%' || $1 || '%' ELSE to_tsvector('english', coalesce("description",'') || ' ' || coalesce("name",'')) @@ to_tsquery('english', $2) END`,
     });
     expect(
       mkWhere(
