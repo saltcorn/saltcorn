@@ -612,7 +612,7 @@ type PluginWithoutConfig = {
 export type Plugin = {
   sc_plugin_api_version: number;
   plugin_name?: string;
-  dependencies?: string[];
+  dependencies: string[];
   onLoad?: (cfg: any) => Promise<void>;
   [key: string]: any;
 } & (PluginWithConfig | PluginWithoutConfig);

@@ -8,6 +8,8 @@ Dockerfile.*
 **/Dockerfile.*
 whale-ci.yml
 deploy/whale-ci/
+!deploy/whale-ci/add-trc-plugin.js
+!deploy/whale-ci/patch-ts-runtime-checks.js
 deploy/docker-compose-tests/
 .git/
 cireport.html

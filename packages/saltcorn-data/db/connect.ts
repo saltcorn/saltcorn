@@ -117,7 +117,7 @@ const getConnectObject = (connSpec: any = {}) => {
   setKey("sslkey", "PGSSLKEY");
   setKey("sslrootcert", "PGSSLROOTCERT");
   setKey("jwt_secret", "SALTCORN_JWT_SECRET");
-  setKey("multi_tenant", "SALTCORN_MULTI_TENANT", { default: false });
+  setKey("multi_tenant", "SALTCORN_MULTI_TENANT", { default: false, transform: stringToBool });
   setKey("multi_node", "SALTCORN_MULTI_NODE", {
     default: false,
     transform: stringToBool,

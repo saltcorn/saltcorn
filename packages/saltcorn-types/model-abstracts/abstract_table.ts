@@ -31,7 +31,7 @@ export type TableCfg = {
   has_sync_info?: boolean;
   is_user_group?: boolean;
   description?: string;
-  fields: FieldCfg[];
+  fields?: FieldCfg[];
   constraints?: any[];
   provider_name?: string;
   provider_cfg?: any;

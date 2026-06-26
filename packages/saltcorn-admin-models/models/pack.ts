@@ -439,7 +439,7 @@ const can_install_pack = async (
 
     //failure conditions: existing field with different type (warn)
 
-    pt.fields.forEach((f) => {
+    (pt.fields || []).forEach((f) => {
       const ex = matchTable.getField(f.name as string);
       if (ex && ex.type_name !== f.type) {
         warns.push(`Clashing field types for ${f.name} on table ${pt.name}`);
@@ -456,7 +456,7 @@ const can_install_pack = async (
   pack.tables.forEach((t) => {
     if (t.name === "users") {
       const userTable = Table.findOne({ name: "users" });
-      t.fields.forEach((f) => {
+      (t.fields || []).forEach((f) => {
         if (f.required) {
           const ex = userTable?.getField(f.name as string);
           if (!ex || !ex.required)
@@ -669,7 +669,7 @@ const install_pack = async (
         const table = await Table.create(tableSpec.name, tableSpec);
         [tbl_pk] = table.getFields();
       } //set pk
-      const pack_pk = tableSpec.fields.find((f) => f.primary_key);
+      const pack_pk = (tableSpec.fields || []).find((f) => f.primary_key);
       if (pack_pk && tbl_pk) {
         await tbl_pk.update(pack_pk);
       }
@@ -685,7 +685,7 @@ const install_pack = async (
 
     const exfields = _table.getFields();
     if (!_table.provider_name)
-      for (const field of tableSpec.fields) {
+      for (const field of tableSpec.fields || []) {
         const exfield = exfields.find((f) => f.name === field.name);
         if (
           !(
