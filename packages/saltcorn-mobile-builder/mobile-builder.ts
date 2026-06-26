@@ -126,6 +126,7 @@ export class MobileBuilder {
   syncInterval?: number;
   pushSyncHeartbeatInterval?: number;
   backgroundSyncEnabled: boolean;
+  backgroundFetchEnabled: boolean;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
@@ -181,6 +182,9 @@ export class MobileBuilder {
       ? +cfg.pushSyncHeartbeatInterval
       : undefined;
     this.backgroundSyncEnabled = !!this.syncInterval && this.syncInterval > 0;
+    this.backgroundFetchEnabled =
+      this.backgroundSyncEnabled ||
+      (!!this.pushSyncHeartbeatInterval && this.pushSyncHeartbeatInterval > 0);
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
     });
@@ -360,13 +364,14 @@ export class MobileBuilder {
           this.pushSyncHeartbeatInterval > 0),
       this.pushSync
     );
-    writePrivacyInfo(this.buildDir, this.backgroundSyncEnabled);
+    writePrivacyInfo(this.buildDir, this.backgroundFetchEnabled);
     modifyInfoPlist(
       this.buildDir,
       this.allowShareTo,
       this.backgroundSyncEnabled,
       this.pushSync,
-      this.allowClearTextTraffic
+      this.allowClearTextTraffic,
+      this.backgroundFetchEnabled
     );
     if (this.pushSync) {
       writeEntitlementsPlist(
@@ -386,9 +391,9 @@ export class MobileBuilder {
     }
     modifyAppDelegate(
       this.buildDir,
-      this.backgroundSyncEnabled,
       this.pushSync,
-      this.allowShareTo
+      this.allowShareTo,
+      this.backgroundFetchEnabled
     );
   }
 

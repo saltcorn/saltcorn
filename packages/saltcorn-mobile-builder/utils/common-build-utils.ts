@@ -711,31 +711,39 @@ export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
  * Patch `Info.plist` with background modes, usage descriptions, and optional URL schemes.
  * @param buildDir directory where the app will be built
  * @param allowShareTo add URL scheme for share-to integration
- * @param backgroundSyncEnabled add background fetch mode
+ * @param backgroundSyncEnabled background sync task is scheduled
  * @param pushSyncEnabled add remote-notification background mode
  * @param allowClearTextTraffic allow arbitrary HTTP loads
+ * @param backgroundFetchEnabled background.js is included (sync or heartbeat configured)
  */
 export function modifyInfoPlist(
   buildDir: string,
   allowShareTo: boolean,
   backgroundSyncEnabled: boolean,
   pushSyncEnabled: boolean,
-  allowClearTextTraffic: boolean
+  allowClearTextTraffic: boolean,
+  backgroundFetchEnabled: boolean = false
 ) {
   const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
   const content = readFileSync(infoPlist, "utf8");
 
   const backgroundModes = [
-    ...(backgroundSyncEnabled ? ["fetch"] : []),
+    ...(backgroundFetchEnabled ? ["fetch", "processing"] : []),
     ...(pushSyncEnabled ? ["remote-notification"] : []),
+  ];
+
+  const taskIds = [
+    "com.transistorsoft.fetch",
+    ...(backgroundSyncEnabled ? ["com.transistorsoft.background_sync"] : []),
+    ...(backgroundFetchEnabled ? ["com.transistorsoft.push_sync_heartbeat"] : []),
   ];
 
   const newCfgs = `
   ${
-    backgroundSyncEnabled
+    backgroundFetchEnabled
       ? `<key>BGTaskSchedulerPermittedIdentifiers</key>
   <array>
-    <string>com.transistorsoft.fetch</string>
+    ${taskIds.map((id) => `<string>${id}</string>`).join("\n    ")}
   </array>
   `
       : ""
@@ -913,15 +921,15 @@ export function modifyShareViewController(buildDir: string, groupId: string) {
 /**
  * Patch `AppDelegate.swift` to register background tasks and push handlers.
  * @param buildDir directory where the app will be built
- * @param backgroundSyncEnabled register background fetch task
  * @param pushSyncEnabled register remote-notification handler
  * @param allowShareTo register URL scheme handler for share-to
+ * @param backgroundFetchEnabled initialize TSBackgroundFetch (sync or heartbeat)
  */
 export function modifyAppDelegate(
   buildDir: string,
-  backgroundSyncEnabled: boolean,
   pushSyncEnabled: boolean,
-  allowShareTo: boolean
+  allowShareTo: boolean,
+  backgroundFetchEnabled: boolean = false
 ) {
   const appDelegateFile = join(
     buildDir,
@@ -940,7 +948,7 @@ export function modifyAppDelegate(
 
        
        ${
-         backgroundSyncEnabled
+         backgroundFetchEnabled
            ? `// [capacitor-background-fetch]
        let fetchManager = TSBackgroundFetch.sharedInstance();
        fetchManager?.didFinishLaunching();`
@@ -951,7 +959,7 @@ export function modifyAppDelegate(
 `
   );
 
-  if (backgroundSyncEnabled) {
+  if (backgroundFetchEnabled) {
     // add "import TSBackgroundFetch" before "@UIApplicationMain"
     content = content.replace(
       /@UIApplicationMain/,
@@ -1084,7 +1092,7 @@ export function modifyAppDelegate(
 
 export function writePrivacyInfo(
   buildDir: string,
-  backgroundSyncEnabled: boolean
+  backgroundFetchEnabled: boolean
 ) {
   const infoFile = join(buildDir, "ios", "App", "PrivacyInfo.xcprivacy");
   const content = `<?xml version="1.0" encoding="UTF-8"?>
@@ -1104,7 +1112,7 @@ export function writePrivacyInfo(
       </dict>
 
       ${
-        backgroundSyncEnabled
+        backgroundFetchEnabled
           ? `
       <!-- [1] background_fetch: UserDefaults -->
       <dict>

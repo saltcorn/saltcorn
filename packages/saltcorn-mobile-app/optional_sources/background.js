@@ -1,8 +1,8 @@
 import { BackgroundFetch } from "@transistorsoft/capacitor-background-fetch";
 import { performSync, performHeartbeat } from "./background_tasks.js";
 
-const SYNC_TASK_ID = "com.saltcorn.background_sync";
-const HEARTBEAT_TASK_ID = "com.saltcorn.push_sync_heartbeat";
+const SYNC_TASK_ID = "com.transistorsoft.background_sync";
+const HEARTBEAT_TASK_ID = "com.transistorsoft.push_sync_heartbeat";
 
 let isConfigured = false;
 
