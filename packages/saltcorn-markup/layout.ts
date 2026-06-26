@@ -120,8 +120,24 @@ const selfStylingTypes = new Set(["card", "container", "besides", "image"]);
 const textStyleToArray = (textStyle: any) =>
   Array.isArray(textStyle) ? textStyle : !textStyle ? [] : [textStyle];
 
+const textStyleClassNames = (textStyle: any): string[] =>
+  textStyleToArray(textStyle)
+    .filter((s: string) => s[0] !== "h")
+    .map((s: string) =>
+      s === "font-italic"
+        ? "fst-italic"
+        : s === "text-underline"
+          ? "text-decoration-underline"
+          : s
+    );
+
 const applyTextStyle = (segment: any, inner: string): string => {
-  const to_bs5 = (s: string) => (s === "font-italic" ? "fst-italic" : s);
+  const to_bs5 = (s: string) =>
+    s === "font-italic"
+      ? "fst-italic"
+      : s === "text-underline"
+        ? "text-decoration-underline"
+        : s;
   const styleArray = textStyleToArray(segment.textStyle);
   const hs = styleArray.find((s) => s[0] === "h");
   const klasses = styleArray.filter((s) => s[0] !== "h").map(to_bs5);
@@ -494,6 +510,9 @@ const render = ({
               segment.link_style &&
                 segment.link_style.includes("btn") &&
                 "d-inline-block",
+              // Apply textStyle classes directly on the <a> so they are not
+              // overridden by Bootstrap's .btn font-weight reset on the element.
+              ...textStyleClassNames(segment.textStyle),
             ],
             target: isWeb && segment.target_blank ? "_blank" : false,
             title: segment.link_title,
