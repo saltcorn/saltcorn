@@ -21,7 +21,7 @@ import mocks from "./mocks";
 const { rick_file, mockReqRes } = mocks;
 import Library from "../models/library";
 import { assertIsSet } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 import { existsSync } from "fs";
 import { open } from "fs/promises";
 import { join, basename } from "path";

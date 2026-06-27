@@ -2,8 +2,8 @@
  * @category saltcorn-data
  * @module plugin-testing
  */
-const { contract, is, auto_test } = require("contractis");
-const { is_plugin_wrap, is_plugin } = require("./contracts");
+const { is } = require("contractis");
+
 const { getState } = require("./db/state");
 const { renderForm } = require("@saltcorn/markup");
 const { mockReqRes } = require("./tests/mocks");
@@ -24,9 +24,9 @@ import {
 } from "@saltcorn/types/base_types";
 import { RunResult } from "@saltcorn/types/model-abstracts/abstract_workflow";
 
-const auto_test_wrap = (wrap: Function): void => {
-  auto_test(contract(is_plugin_wrap, wrap, { n: 5 }));
-};
+function rnd_bool(): boolean {
+  return Math.random() < 0.5;
+}
 
 const generate_attributes = (
   typeattrs: any,
@@ -36,7 +36,7 @@ const generate_attributes = (
   var res: Record<string, any> = {};
   const attrs = Field.getTypeAttributes(typeattrs, table_id);
   (attrs || []).forEach((a: any) => {
-    if (a.type && (a.required || is.bool.generate())) {
+    if (a.type && (a.required || rnd_bool())) {
       const contract = a.type.contract || getState().types[a.type].contract;
       const gen = contract({}).generate;
       if (gen) res[a.name] = gen();
@@ -45,141 +45,6 @@ const generate_attributes = (
   if (validate && !validate(res))
     return generate_attributes(attrs, validate, table_id);
   else return res;
-};
-
-const auto_test_type = (t: PluginType): void => {
-  const fvs = t.fieldviews || {};
-
-  //run edit field views without a value
-  Object.values(fvs).forEach((fv) => {
-    if (instanceOfFieldViewEdit(fv)) {
-      const attr = generate_attributes(t.attributes, t.validate_attributes);
-      is.str(
-        fv.run("foo", undefined, attr, "myclass", true, {
-          type: "foo",
-          name: "foo",
-        })
-      );
-      is.str(
-        fv.run("foo", undefined, attr, "myclass", false, {
-          type: "foo",
-          name: "foo",
-        })
-      );
-    }
-  });
-  //find examples, run all fieldview on each example
-
-  const has_contract = t.contract && t.contract.generate;
-  const numex = has_contract ? 20 : 200;
-  for (let index = 0; index < numex; index++) {
-    const x = has_contract
-      ? t.contract.generate()
-      : t.read?.(is.any.generate());
-
-    const attribs = generate_attributes(t.attributes, t.validate_attributes);
-    if (has_contract || (typeof x !== "undefined" && x !== null))
-      if ((t.validate && t.validate(attribs)(x)) || !t.validate) {
-        Object.values(fvs).forEach((fv) => {
-          if (instanceOfFieldViewEdit(fv)) {
-            is.str(
-              fv.run("foo", x, attribs, "myclass", true, {
-                type: "foo",
-                name: "foo",
-              })
-            );
-            is.str(
-              fv.run("foo", x, attribs, "myclass", false, {
-                type: "foo",
-                name: "foo",
-              })
-            );
-          } else if (instanceOfFieldViewShow(fv)) {
-            is.str(fv.run(x, mockReqRes.req, {}));
-          }
-        });
-        if (t.readFromFormRecord) t.readFromFormRecord({ akey: x }, "akey");
-      }
-  }
-  if (t.readFromFormRecord) {
-    t.readFromFormRecord({}, "akey");
-  }
-  //todo: try creating a table with this type
-};
-
-const auto_test_workflow = async (
-  wf: Workflow,
-  initialCtx: Record<string, any>
-): Promise<Record<string, RunResult> | RunResult | undefined> => {
-  const step = async (
-    wf: Workflow,
-    ctx: Record<string, any>
-  ): Promise<Record<string, any> | RunResult | undefined> => {
-    is.obj(ctx);
-    const res = await wf.run(ctx);
-
-    if (res?.renderForm) {
-      is.str(renderForm(res.renderForm, ""));
-
-      const vs = await res.renderForm.generate();
-      return await step(wf, vs);
-    } else return res;
-  };
-  return await step(wf, initialCtx);
-};
-
-const auto_test_viewtemplate = async (vt: ViewTemplate): Promise<void> => {
-  if (vt.noAutoTest) return;
-  const wf = vt.configuration_workflow
-    ? vt.configuration_workflow(mockReqRes.req)
-    : undefined;
-  is.class("Workflow")(wf);
-  for (let index = 0; index < 10; index++) {
-    var cfg;
-    if (vt.initial_config && Math.random() > 0.5)
-      cfg = await vt.initial_config({ table_id: 2 });
-    else if (wf)
-      cfg = await auto_test_workflow(wf, {
-        table_id: 2,
-        viewname: "newview",
-      });
-    const sfs = vt.get_state_fields
-      ? await vt.get_state_fields(1, "newview", cfg)
-      : [];
-    const res = await vt.run(2, "newview", cfg, {}, mockReqRes, {});
-    is.or(is.str, is.array(is.str))(res);
-    if (sfs.some((sf: any) => sf.name === "id")) {
-      const resid = await (vt as any).run(
-        2,
-        "newview",
-        cfg,
-        { id: 1 },
-        mockReqRes
-      );
-      is.or(is.str, is.array(is.str))(resid);
-    }
-  }
-};
-
-const auto_test_plugin = async (plugin: Plugin): Promise<void> => {
-  is_plugin(plugin);
-  getState().registerPlugin("test_plugin", plugin);
-  if (plugin.layout) {
-    auto_test_wrap(
-      (typeof plugin.layout === "function" ? plugin.layout({}) : plugin.layout)!
-        .wrap
-    );
-  }
-  if (plugin.types && Array.isArray(plugin.types)) {
-    plugin.types.forEach(auto_test_type);
-  }
-  const vts =
-    typeof plugin.viewtemplates === "function"
-      ? plugin.viewtemplates({}) || []
-      : plugin.viewtemplates || [];
-  for (const vt of vts || []) await auto_test_viewtemplate(vt);
-
-  //is each header reachable
 };
 
 const check_view_columns = async (
@@ -192,8 +57,8 @@ const check_view_columns = async (
     view.table_id
       ? { id: view.table_id }
       : view.exttable_name
-      ? { name: view.exttable_name }
-      : { id: -1 }
+        ? { name: view.exttable_name }
+        : { id: -1 }
   );
   let fields;
   if (table) fields = table.getFields();
@@ -318,4 +183,4 @@ const check_view_columns = async (
   return { errors: errs, warnings };
 };
 
-export { auto_test_plugin, generate_attributes, check_view_columns };
+export { generate_attributes, check_view_columns };

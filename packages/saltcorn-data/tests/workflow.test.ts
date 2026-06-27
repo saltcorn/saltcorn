@@ -4,7 +4,7 @@ import Workflow from "../models/workflow";
 import View from "../models/view";
 import db from "../db";
 import { assertIsSet } from "./assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { GenObj } from "@saltcorn/types/common_types";
 
 const { getState } = require("../db/state");

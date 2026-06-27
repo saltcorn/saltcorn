@@ -1,3 +1,10 @@
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 import React from "react";
 import renderer from "react-test-renderer";
 
@@ -19,12 +26,15 @@ import {
   expectedFive,
   expectedSix,
 } from "@saltcorn/common-code/tests/expected_relations";
-import { ViewSettings } from "../src/components/elements/View";
-import { ViewLinkSettings } from "../src/components/elements/ViewLink";
 
 jest.mock("@craftjs/core", () => ({
   useNode: jest.fn(),
 }));
+
+// required after jest.mock so they pick up the mocked @craftjs/core (jest
+// hoists mock calls above imports; node:test does not)
+const { ViewSettings } = require("../src/components/elements/View");
+const { ViewLinkSettings } = require("../src/components/elements/ViewLink");
 
 const doTest = (
   tables,

@@ -1,15 +1,8 @@
 import db from "../db";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 
 afterAll(db.close);
 
-/*describe("base plugin", () => {
-  const plugin = require("../base-plugin");
-  const { auto_test_plugin } = require("../plugin-testing");
-  it("passes auto test", async () => {
-    await auto_test_plugin(plugin);
-  });
-});*/
 
 describe("float read", () => {
   const plugin = require("../base-plugin");

@@ -3,7 +3,7 @@
  * It contains utils for "@saltcorn/sqlite" and "@saltcorn/sqlite-mobile"
  * @module
  */
-import { Row, sqlsanitize, Value, mkWhere, Where } from "./internal";
+import { Row, sqlsanitize, Value, mkWhere, Where } from "./internal.js";
 
 function isDateFromIframe(val: any) {
   return Object.prototype.toString.call(val) === "[object Date]";

@@ -1,4 +1,4 @@
-const request = require("supertest");
+const request = require("../auth/testhelp").request;
 const getApp = require("../app");
 const {
   getUserLoginCookie,
@@ -374,7 +374,7 @@ const doUpload = async (
 
 const getResult = async (app, loginCookie, syncDir) => {
   let pollCount = 0;
-  while (pollCount < 10) {
+  while (pollCount++ < 10) {
     const resp = await request(app)
       .get(`/sync/upload_finished?dir_name=${encodeURIComponent(syncDir)}`)
       .set("Cookie", loginCookie);

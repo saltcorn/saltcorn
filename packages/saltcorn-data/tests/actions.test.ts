@@ -16,7 +16,7 @@ const {
   sleep,
 } = mocks;
 import { assertIsRow, assertIsSet } from "../tests/assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@jest/globals";
+import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import baseactions from "../base-plugin/actions";
 const {
   duplicate_row,
@@ -645,9 +645,12 @@ describe("Events and eventlog", () => {
   });
 
   it("should emit table event", async () => {
-    await Trigger.emitEvent("Insert", "readings");
+    // check the starting state before emitting: emitEvent is fire-and-forget
+    // (it logs from a setTimeout), so asserting evs.length === 0 *after* the
+    // emit is a race - the log write can land before the find() resolves.
     const evs = await EventLog.find({ event_type: "Insert" });
     expect(evs.length).toBe(0);
+    await Trigger.emitEvent("Insert", "readings");
     await sleep(100);
     const evs1 = await EventLog.find({ event_type: "Insert" });
     expect(evs1.length).toBe(1);

@@ -4,7 +4,7 @@
  * @description Duplicate of layout.ts for testing purposes
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const {
   div,
   a,
@@ -33,19 +33,19 @@ const {
   text_attr,
   form,
 } = tags;
-const {
+import {
   toast,
   breadcrumbs,
   renderTabs,
   show_icon,
   show_icon_and_label,
-} = require("./layout_utils");
+} from "./layout_utils.js";
 import type { Layout } from "@saltcorn/types/base_types";
 import { instanceOWithHtmlFile } from "@saltcorn/types/base_types";
-import helpers = require("./helpers");
-import { renderMJML } from "./mjml-layout";
+import helpers from "./helpers.js";
+import { renderMJML } from "./mjml-layout.js";
 const { search_bar } = helpers;
-import { StyleVal, Element, ClassVal } from "./types";
+import { StyleVal, Element, ClassVal } from "./types.js";
 
 declare const window: Window & typeof globalThis;
 
@@ -1024,4 +1024,5 @@ const LayoutExports = {
   textStyleToArray,
   applyTextStyle,
 };
-export = LayoutExports;
+export { render, makeSegments, textStyleToArray, applyTextStyle };
+export default LayoutExports;

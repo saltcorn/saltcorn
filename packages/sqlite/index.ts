@@ -4,4 +4,4 @@
  * This is the sqlite package
  * @module
  */
-export * from "./sqlite";
+export * from "./sqlite.js";

@@ -10,7 +10,7 @@ const { mockReqRes } = mocks;
 const { getState } = require("../db/state");
 import Page from "../models/page";
 import type { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
-import { afterAll, beforeAll, describe, it, expect } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 import { assertIsSet } from "./assertions";
 import {
   prepareQueryEnviroment,
@@ -193,6 +193,127 @@ describe("Misc List views", () => {
     );
     expect(vres1).toContain('<tr data-row-id="1">');
     expect(vres1).toContain("Leo Tolstoy");
+  });
+  it("grand total row sums numeric column", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "as_text",
+                textStyle: "",
+                field_name: "author",
+                configuration: {},
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "show",
+                textStyle: "",
+                field_name: "pages",
+                configuration: {},
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            field_name: "author",
+            configuration: {},
+          },
+          {
+            type: "Field",
+            block: false,
+            fieldview: "show",
+            textStyle: "",
+            field_name: "pages",
+            configuration: {},
+          },
+        ],
+        default_state: {
+          _grand_total: true,
+        },
+      },
+    });
+    const vres = await view.run({}, mockReqRes);
+    expect(vres).toContain("<tfoot>");
+    expect(vres).toContain("Grand Total");
+    // 967 + 728 = 1695
+    expect(vres).toContain("1695");
+  });
+  it("subtotal row sums numeric column per group", async () => {
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "as_text",
+                textStyle: "",
+                field_name: "author",
+                configuration: {},
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+            {
+              contents: {
+                type: "field",
+                block: false,
+                fieldview: "show",
+                textStyle: "",
+                field_name: "pages",
+                configuration: {},
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "Field",
+            block: false,
+            fieldview: "as_text",
+            textStyle: "",
+            field_name: "author",
+            configuration: {},
+          },
+          {
+            type: "Field",
+            block: false,
+            fieldview: "show",
+            textStyle: "",
+            field_name: "pages",
+            configuration: {},
+          },
+        ],
+        default_state: {
+          _group_by: "author",
+          _subtotals: true,
+        },
+      },
+    });
+    const vres = await view.run({}, mockReqRes);
+    expect(vres).toContain("Subtotal");
+    expect(vres).toContain("fw-bold");
   });
   it("list view with dropdown menu", async () => {
     const view = await mkViewWithCfg({

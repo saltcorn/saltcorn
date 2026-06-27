@@ -2,6 +2,9 @@
   "files": [],
   "references": [
     {
+      "path": "./packages/plain-date/tsconfig.ref.json"
+    },
+    {
       "path": "./packages/db-common/tsconfig.ref.json"
     },
     {
@@ -9,6 +12,9 @@
     },
     {
       "path": "./packages/sqlite/tsconfig.ref.json"
+    },
+    {
+      "path": "./packages/postgres/tsconfig.ref.json"
     },
     {
       "path": "./packages/sqlite-mobile/tsconfig.ref.json"

@@ -1,6 +1,6 @@
-import * as multiTenant from "./multi-tenant";
+import * as multiTenant from "./multi-tenant.js";
 import { ReadStream, WriteStream } from "fs";
-import { Row, Where, SelectOptions, PrimaryKeyValue } from "./internal";
+import { Row, Where, SelectOptions, PrimaryKeyValue } from "./internal.js";
 
 type RequestContext = {
   tenant: string;

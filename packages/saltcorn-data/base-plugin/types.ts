@@ -35,7 +35,7 @@ const {
   style,
   time,
 } = require("@saltcorn/markup/tags");
-const { contract, is } = require("contractis");
+const { is } = require("contractis");
 const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
 const { getState, getApp__ } = require("../db/state");
 const { localeDate, localeDateTime } = require("@saltcorn/markup");
@@ -699,7 +699,8 @@ const to_locale_string = {
       type: "String",
       name: "signDisplay",
       label: "Sign display",
-      sublabel: "always: show + on positives; exceptZero: show sign except on 0",
+      sublabel:
+        "always: show + on positives; exceptZero: show sign except on 0",
       attributes: {
         options: ["auto", "always", "exceptZero", "negative", "never"],
       },

@@ -33,7 +33,8 @@ const initDbModule = (): any => {
     dbmodule = require("@saltcorn/sqlite/sqlite");
     dbmodule.init(getConnectObject);
   } else {
-    dbmodule = require("@saltcorn/postgres/postgres")(getConnectObject);
+    dbmodule = require("@saltcorn/postgres/postgres");
+    dbmodule.init(getConnectObject);
   }
   if (!dbmodule) throw new Error("No database package found.");
   return dbmodule;
@@ -42,7 +43,7 @@ const initDbModule = (): any => {
 const dbModule = initDbModule();
 
 /** @type {db/tenant} */
-import tenantsModule = require("@saltcorn/db-common/tenants");
+import tenantsModule from "@saltcorn/db-common/tenants";
 import { DbExportsType } from "@saltcorn/db-common/types";
 const tenant: typeof multiTenant | null = tenantsModule(connectObj);
 if (!tenant) throw new Error("tenant is null");

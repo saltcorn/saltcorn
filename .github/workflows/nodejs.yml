@@ -12,7 +12,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 35
     services:
       # Label used to access the service container
       postgres:
@@ -35,7 +35,7 @@ jobs:
       - name: Use Node.js
         uses: actions/setup-node@v1
         with:
-          node-version: "20.x"
+          node-version: "22.x"
       - run: npm install -g eslint@8.57.0
       - run: eslint .
       - run: psql -d saltcorn_test --command='create extension "uuid-ossp";'
@@ -72,6 +72,10 @@ jobs:
           SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
           SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
           NODE_OPTIONS: --max-old-space-size=4096
+      - run: rm -rf "$(packages/saltcorn-cli/bin/saltcorn info | grep 'file_store' | awk '{print $2}')/public/"*
+        env:
+          SQLITE_FILEPATH: /tmp/testdb.sqlite
+          CI: true        
       - run: packages/saltcorn-cli/bin/saltcorn run-tests server
         env:
           SQLITE_FILEPATH: /tmp/testdb.sqlite

@@ -16,7 +16,7 @@
 /** @type {module:express-promise-router} */
 const Router = require("express-promise-router");
 const db = require("@saltcorn/data/db");
-const { error_catcher } = require("./utils.js");
+const { error_catcher, rejectTenantDrift } = require("./utils.js");
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
 const { getState } = require("@saltcorn/data/db/state");
 const {
@@ -135,6 +135,9 @@ const getFlashes = (req) =>
       return { type, msg: req.flash(type) };
     })
     .filter((a) => a.msg && a.msg.length && a.msg.length > 0);
+
+// Reject sessions/JWTs minted in another tenant before any data is served.
+router.use(rejectTenantDrift);
 
 router.use(
   error_catcher(async (req, res, next) => {

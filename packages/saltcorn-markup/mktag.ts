@@ -4,7 +4,7 @@ import type {
   Element,
   Attributes,
   AttributeVal,
-} from "./types";
+} from "./types.js";
 
 /**
  * @category saltcorn-markup
@@ -131,4 +131,4 @@ const mkTag =
       : `<${tnm}${attribs}>${body}</${tnm}>`;
   };
 
-export = mkTag;
+export default mkTag;

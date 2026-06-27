@@ -5,7 +5,7 @@ import Form from "../models/form";
 import markup from "@saltcorn/markup/index";
 const { renderForm } = markup;
 import { assertIsErrorsMsg } from "./assertions";
-import { describe, it, expect } from "@jest/globals";
+import { describe, it, expect } from "@saltcorn/db-common/test_expect";
 
 const { getState } = require("../db/state");
 getState().registerPlugin("base", require("../base-plugin"));

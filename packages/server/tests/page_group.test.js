@@ -1,4 +1,4 @@
-const request = require("supertest");
+const request = require("../auth/testhelp").request;
 const getApp = require("../app");
 const {
   getAdminLoginCookie,

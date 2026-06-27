@@ -3,7 +3,7 @@
  * @module table
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const {
   a,
   td,
@@ -14,6 +14,7 @@ const {
   table,
   thead,
   tbody,
+  tfoot,
   ul,
   li,
   span,
@@ -22,8 +23,8 @@ const {
   i,
   button,
 } = tags;
-import helpers = require("./helpers");
-import type { SearchBarOpts, RadioGroupOpts } from "./helpers";
+import helpers from "./helpers.js";
+import type { SearchBarOpts, RadioGroupOpts } from "./helpers.js";
 const { pagination } = helpers;
 
 /**
@@ -274,11 +275,61 @@ const mkTable = (
       )
     );
   };
+  const makeTotalRow = (rows: any[], label: string): string => {
+    const sums: Record<string, number> = {};
+    const isNumericCol: Record<string, boolean> = {};
+    for (const hdr of hdrs) {
+      const rk = (hdr as any).row_key;
+      if (!rk) continue;
+      let sum = 0;
+      let numeric = false;
+      for (const row of rows) {
+        const v = row[rk];
+        if (v === null || v === undefined) continue;
+        const n = Number(v);
+        if (!isFinite(n)) {
+          numeric = false;
+          break;
+        }
+        sum += n;
+        numeric = true;
+      }
+      if (numeric) {
+        sums[rk] = sum;
+        isNumericCol[rk] = true;
+      }
+    }
+    return tr(
+      { class: "fw-bold table-group-divider" },
+      hdrs.map((hdr: HeadersParams, ix: number) => {
+        const rk = (hdr as any).row_key;
+        if (ix === 0)
+          return td(
+            { class: hdr.align ? `text-align-${hdr.align}` : null },
+            label
+          );
+        if (rk && isNumericCol[rk]) {
+          const syntheticRow = { [rk]: sums[rk] };
+          const rendered =
+            typeof hdr.key === "function"
+              ? hdr.key(syntheticRow)
+              : String(sums[rk]);
+          return td(
+            { class: hdr.align ? `text-align-${hdr.align}` : null },
+            rendered
+          );
+        }
+        return td("");
+      })
+    );
+  };
+
   const groupedBody = (groups: any) =>
     Object.entries(groups).map(
       ([group, rows]: [string, any]) =>
         tr(td({ colspan: "1000" }, h4({ class: "list-group-header" }, group))) +
-        rows.map(val_row).join("")
+        rows.map(val_row).join("") +
+        (opts.show_subtotals ? makeTotalRow(rows, "Subtotal") : "")
     );
 
   return div(
@@ -340,7 +391,14 @@ const mkTable = (
           : opts.grouped
             ? groupedBody(vs)
             : (vs || []).map(val_row)
-      )
+      ),
+      opts.show_grand_total &&
+        tfoot(
+          makeTotalRow(
+            opts.grouped ? (Object.values(vs) as any[]).flat() : vs || [],
+            "Grand Total"
+          )
+        )
     ),
     opts.pagination && pagination(opts.pagination),
     //https://css-tricks.com/responsive-data-tables/
@@ -419,4 +477,4 @@ const mkClickHandler = (opts: any, v: any): any => {
 
 // declaration merging
 const TableExports = mkTable;
-export = TableExports;
+export default TableExports;

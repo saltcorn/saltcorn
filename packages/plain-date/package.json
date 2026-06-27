@@ -9,27 +9,34 @@
     "directory": "packages/plain-date"
   },
   "scripts": {
-    "test": "jest",
+    "test": "cd dist && node --test",
     "tsc": "tsc -p tsconfig.json",
-    "clean": "echo 'No TypeScript build'"
+    "clean": "rm -rf ./dist/*"
   },
+  "type": "module",
   "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.14.7",
+    "typescript": "5.9.2"
+  },
   "author": "Tom Nielsen",
   "license": "MIT",
-  "jest": {
-    "testEnvironment": "node",
-    "testPathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/plugin_packages/",
-      "/plugins_folder/"
-    ]
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./cjs/index.cjs",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./*": "./dist/*.js"
   },
-  "main": "index.js",
+  "files": [
+    "dist/**/*",
+    "cjs/**/*",
+    "!dist/tsconfig.ref.tsbuildinfo"
+  ],
   "publishConfig": {
     "access": "public"
   }

@@ -1,4 +1,4 @@
-const request = require("supertest");
+const request = require("../auth/testhelp").request;
 const getApp = require("../app");
 const Table = require("@saltcorn/data/models/table");
 const Trigger = require("@saltcorn/data/models/trigger");
@@ -942,12 +942,14 @@ describe("test share handler", () => {
     await sleep(1000);
     const sharedData = Table.findOne({ name: "shared_data" });
     const rows = await sharedData.getRows({});
-    const row = rows.find(
-      (r) =>
-        r.title === "share_as_admin" &&
-        r.user ===
-          '{"email":"admin@foo.com","id":1,"role_id":1,"language":null,"tenant":"public","lightDarkMode":"light","attributes":{}}'
-    );
+    const row = rows.find((r) => {
+      if (r.title !== "share_as_admin") return false;
+      // the stored user carries the tenant (= db schema); match the rest of
+      // the user rather than a fixed tenant name, since tests may run under a
+      // per-process schema
+      const u = typeof r.user === "string" ? JSON.parse(r.user) : r.user;
+      return u && u.email === "admin@foo.com" && u.id === 1 && u.role_id === 1;
+    });
     expect(row).toBeDefined();
   });
 

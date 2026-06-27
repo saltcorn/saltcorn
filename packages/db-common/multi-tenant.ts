@@ -2,7 +2,7 @@
  * This is the multi tenant module
  * @module
  */
-import { sqlsanitize } from "./internal";
+import { sqlsanitize } from "./internal.js";
 import { AsyncLocalStorage } from "async_hooks";
 
 let is_multi_tenant = true;

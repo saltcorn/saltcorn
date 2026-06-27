@@ -1,6 +1,6 @@
-import tags = require("./tags");
+import tags from "./tags.js";
 const { table, tr, td, tbody } = tags;
-import mjml = require("./mjml-tags");
+import mjml from "./mjml-tags.js";
 const {
   div,
   a,
@@ -21,7 +21,7 @@ const {
   genericElement,
 } = tags;
 import crypto from "crypto";
-import { StyleVal, Element } from "./types";
+import { StyleVal, Element } from "./types.js";
 
 const isBlock = (segment: any) => {
   if (["h1", "h2", "h3", "h4", "h5", "h6"].indexOf(segment.textStyle) >= 0) {
@@ -583,4 +583,11 @@ const LayoutExports = {
   applyTextStyle,
   isBlock,
 };
-export = LayoutExports;
+export {
+  render as renderMJML,
+  transformLinkSize,
+  transformTextStyle,
+  applyTextStyle,
+  isBlock,
+};
+export default LayoutExports;

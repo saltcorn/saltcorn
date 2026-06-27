@@ -1,18 +1,19 @@
-import { describe, it, expect } from "@jest/globals";
+import { describe, it } from "node:test";
+import { expect } from "@saltcorn/db-common/test_expect";
 import {
   isBlock,
   transformTextStyle,
   transformLinkSize,
   applyTextStyle,
   renderMJML,
-} from "./mjml-layout";
-import * as tags from "./tags";
-import * as mjml from "./mjml-tags";
-import tabs from "./tabs";
-import mkTable from "./table";
+} from "./mjml-layout.js";
+import * as tags from "./tags.js";
+import * as mjml from "./mjml-tags.js";
+import tabs from "./tabs.js";
+import mkTable from "./table.js";
 // import index = require("./index");
-import index from "./index";
-import builder from "./builder";
+import index from "./index.js";
+import builder from "./builder.js";
 
 const {
   post_btn,

@@ -1,5 +1,3 @@
-const multer = require("multer");
-const multerS3 = require("multer-s3");
 const { getState } = require("@saltcorn/data/db/state");
 const {
   getS3Client,
@@ -9,10 +7,6 @@ const {
 const fileUpload = require("express-fileupload");
 const { v4: uuidv4 } = require("uuid");
 const fs = require("fs");
-const {
-  CopyObjectCommand,
-  DeleteObjectCommand,
-} = require("@aws-sdk/client-s3");
 
 module.exports = {
   /**
@@ -27,6 +21,10 @@ module.exports = {
     const useS3 = getState().getConfig("storage_s3_enabled");
     if (useS3 === true) {
       // Create S3 object
+
+      // multer-s3 pulls in @aws-sdk (~50ms); only load it when S3 is enabled
+      const multer = require("multer");
+      const multerS3 = require("multer-s3");
 
       // Create multer function
       const s3upload = multer({
@@ -87,6 +85,12 @@ module.exports = {
       return;
     }
 
+    // @aws-sdk is heavy (~50ms) and only needed when S3 storage is enabled,
+    // so require it lazily rather than at module load.
+    const {
+      CopyObjectCommand,
+      DeleteObjectCommand,
+    } = require("@aws-sdk/client-s3");
     const v3 = getS3Client();
     const s3 = {
       copyObject(params, cb) {

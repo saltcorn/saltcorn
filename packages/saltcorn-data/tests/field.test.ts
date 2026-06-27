@@ -4,7 +4,7 @@ import db from "../db";
 const { getState } = require("../db/state");
 
 import { assertIsSet, assertsIsSuccessMessage } from "./assertions";
-import { afterAll, beforeAll, describe, it, expect, jest } from "@jest/globals";
+import { afterAll, beforeAll, describe, it, expect, jest } from "@saltcorn/db-common/test_expect";
 import mocks from "./mocks";
 import { Type } from "@saltcorn/types/common_types";
 import { writeFile } from "fs/promises";
@@ -95,7 +95,7 @@ describe("Field", () => {
       );
     else
       expect(f.sql_type).toBe(
-        'int constraint "patients_favbook_fkey" references "public"."books" ("id") DEFERRABLE'
+        `int constraint "patients_favbook_fkey" references "${db.getTenantSchema()}"."books" ("id") DEFERRABLE`
       );
 
     expect(f.is_fkey).toBe(true);

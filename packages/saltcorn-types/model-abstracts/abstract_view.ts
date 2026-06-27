@@ -1,6 +1,6 @@
-import type { AbstractTable } from "./abstract_table";
-import type { ConnectedObjects } from "../base_types";
-import type { AbstractTag } from "./abstract_tag";
+import type { AbstractTable } from "./abstract_table.js";
+import type { ConnectedObjects } from "../base_types.js";
+import type { AbstractTag } from "./abstract_tag.js";
 
 export interface AbstractView {
   id?: number;

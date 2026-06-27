@@ -3,7 +3,7 @@
  * @module form
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const {
   p,
   div,
@@ -26,8 +26,8 @@ const {
   option,
   escape,
 } = tags;
-import renderLayout = require("./layout");
-import helpers = require("./helpers");
+import renderLayout from "./layout.js";
+import helpers from "./helpers.js";
 const { isdef, select_options, search_bar } = helpers;
 import type { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";
 import {
@@ -39,7 +39,7 @@ import type {
   JoinFieldOption,
   RelationOption,
 } from "@saltcorn/types/base_types";
-import layout_utils from "./layout_utils";
+import layout_utils from "./layout_utils.js";
 const { renderTabs } = layout_utils;
 
 declare const window: any;
@@ -1853,4 +1853,5 @@ const mkForm = (
   );
 };
 
-export = { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout };
+export { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout };
+export default { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout };

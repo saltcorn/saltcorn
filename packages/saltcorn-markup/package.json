@@ -1,19 +1,58 @@
 {
   "name": "@saltcorn/markup",
-  "version": "1.6.0-rc.4",
+  "version": "1.6.0",
   "description": "Markup for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
+  "type": "module",
   "main": "./dist/index.js",
   "scripts": {
-    "test": "jest",
+    "test": "cd dist && node --test",
+    "gen:tags": "node gen-tags.cjs",
+    "pretsc": "node gen-tags.cjs",
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*",
-    "build": "webpack --mode development"
+    "build": "webpack --mode development --config webpack.config.cjs"
   },
   "author": "Tom Nielsen",
   "license": "MIT",
   "exports": {
     ".": "./dist/index.js",
+    "./layout": {
+      "types": "./dist/layout.d.ts",
+      "require": "./cjs/layout.cjs",
+      "import": "./dist/layout.js",
+      "default": "./dist/layout.js"
+    },
+    "./table": {
+      "types": "./dist/table.d.ts",
+      "require": "./cjs/table.cjs",
+      "import": "./dist/table.js",
+      "default": "./dist/table.js"
+    },
+    "./tabs": {
+      "types": "./dist/tabs.d.ts",
+      "require": "./cjs/tabs.cjs",
+      "import": "./dist/tabs.js",
+      "default": "./dist/tabs.js"
+    },
+    "./builder": {
+      "types": "./dist/builder.d.ts",
+      "require": "./cjs/builder.cjs",
+      "import": "./dist/builder.js",
+      "default": "./dist/builder.js"
+    },
+    "./workflow": {
+      "types": "./dist/workflow.d.ts",
+      "require": "./cjs/workflow.cjs",
+      "import": "./dist/workflow.js",
+      "default": "./dist/workflow.js"
+    },
+    "./mktag": {
+      "types": "./dist/mktag.d.ts",
+      "require": "./cjs/mktag.cjs",
+      "import": "./dist/mktag.js",
+      "default": "./dist/mktag.js"
+    },
     "./*": "./dist/*.js"
   },
   "typesVersions": {
@@ -25,7 +64,8 @@
   },
   "files": [
     "dist/**/*",
-    "webpack.config.js",
+    "cjs/*.cjs",
+    "webpack.config.cjs",
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "dependencies": {
@@ -35,20 +75,14 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "@saltcorn/types": "1.6.0-rc.4",
+    "@saltcorn/types": "1.6.0",
+    "@saltcorn/db-common": "1.6.0",
     "@types/escape-html": "^1.0.4",
     "@types/estree": "^1.0.8",
-    "@types/jest": "29.5.14",
     "@types/node": "^20.14.7",
-    "jest": "29.7.0",
-    "ts-jest": "^29.2.5",
     "typescript": "5.9.2",
     "webpack": "5.97.1",
     "webpack-cli": "6.0.1"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node"
   },
   "publishConfig": {
     "access": "public"

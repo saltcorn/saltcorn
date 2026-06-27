@@ -3,7 +3,7 @@
 set -e
 cd /saltcorn-mobile-app
 
-echo "Running as user: $(whoami)"
+echo "Running as user: $(id -un 2>/dev/null || id -u)"
 
 BUILD_TYPE=$(jq -r '.buildType' saltcorn-mobile-cfg.json)
 APP_VERSION=$(jq -r '.appVersion' saltcorn-mobile-cfg.json)

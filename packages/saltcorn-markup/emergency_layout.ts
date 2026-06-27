@@ -3,12 +3,12 @@
  * @module emergency_layout
  */
 
-import tags = require("./tags");
+import tags from "./tags.js";
 const { ul, li, a, span, hr, div, text, i, h6, h1, p, header, img, footer } =
   tags;
-import renderLayout = require("./layout");
-const { renderForm, link } = require(".");
-import layoutUtils = require("./layout_utils");
+import renderLayout from "./layout.js";
+import { renderForm, link } from "./index.js";
+import layoutUtils from "./layout_utils.js";
 const { navbar, alert } = layoutUtils;
 
 /**
@@ -76,4 +76,5 @@ const wrap = ({
   navbar(brand, menu, currentUrl) + renderBody({ title, body, alerts, req });
 
 const EmergencyLayoutExports = { wrap, renderBody };
-export = EmergencyLayoutExports;
+export { wrap, renderBody };
+export default EmergencyLayoutExports;

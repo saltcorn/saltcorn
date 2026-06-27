@@ -1,4 +1,4 @@
-import type { AbstractTagEntry, TagEntryPack } from "./abstract_tag_entry";
+import type { AbstractTagEntry, TagEntryPack } from "./abstract_tag_entry.js";
 
 export interface AbstractTag {
   id?: number;

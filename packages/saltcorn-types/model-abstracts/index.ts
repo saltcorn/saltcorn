@@ -1,13 +1,13 @@
-import * as fieldImport from "./abstract_field";
-import * as formImport from "./abstract_form";
-import * as libraryImport from "./abstract_library";
-import * as pageImport from "./abstract_page";
-import * as pluginImport from "./abstract_plugin";
-import * as roleImport from "./abstract_role";
-import * as tableImport from "./abstract_table";
-import * as triggerImport from "./abstract_trigger";
-import * as viewImport from "./abstract_view";
-import * as workflowImport from "./abstract_workflow";
+import * as fieldImport from "./abstract_field.js";
+import * as formImport from "./abstract_form.js";
+import * as libraryImport from "./abstract_library.js";
+import * as pageImport from "./abstract_page.js";
+import * as pluginImport from "./abstract_plugin.js";
+import * as roleImport from "./abstract_role.js";
+import * as tableImport from "./abstract_table.js";
+import * as triggerImport from "./abstract_trigger.js";
+import * as viewImport from "./abstract_view.js";
+import * as workflowImport from "./abstract_workflow.js";
 /**
  * Those are model-abstracts
  */

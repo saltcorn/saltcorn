@@ -1,8 +1,6 @@
 {
-  "typeAcquisition": {
-    "include": ["jest"]
-  },
   "compilerOptions": {
+    "skipLibCheck": true,
     "rootDir": ".",
 
     "outDir": "./dist",
@@ -23,10 +21,7 @@
   "exclude": [
     "node_modules",
     "dist",
-    "**/*.test.*",
-    "**/*.spec.*",
-    "**/tests/**",
-    "**/__tests__/**",
+    "appium_tests",
     "webpack.config.js",
     "bundle",
     "plugin_packages",

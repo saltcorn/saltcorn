@@ -1,6 +1,6 @@
 import { PrimaryKeyValue, Row, Value } from "@saltcorn/db-common/internal";
-import type { GenObj, Type } from "../common_types";
-import type { AbstractTable } from "./abstract_table";
+import type { GenObj, Type } from "../common_types.js";
+import type { AbstractTable } from "./abstract_table.js";
 
 export interface AbstractField {
   label: string;
@@ -19,7 +19,7 @@ export interface AbstractField {
   pretty_type?: string;
   id?: PrimaryKeyValue;
   options?: string[];
-  showIf?: Record<string, any>
+  showIf?: Record<string, any>;
 }
 
 export type FieldCfg = {
