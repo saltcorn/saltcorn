@@ -495,10 +495,17 @@ router.post(
   "/push_subscribe",
   loggedIn,
   error_catcher(async (req, res) => {
-    const { token, deviceId, synchedTables, platform } = req.body || {};
+    const { token, deviceId, synchedTables, platform, apnsEnvironment } =
+      req.body || {};
     if (!token) {
       res.status(400).json({
         error: req.__("FCM token is required"),
+      });
+      return;
+    }
+    if (platform !== "android" && platform !== "ios") {
+      res.status(400).json({
+        error: req.__("Invalid platform, must be 'android' or 'ios'"),
       });
       return;
     }
@@ -523,6 +530,9 @@ router.post(
         deviceId,
         type: platform === "android" ? "fcm-push" : "apns-push",
         synchedTables,
+        ...(platform !== "android" && {
+          apnsEnvironment: apnsEnvironment || "production",
+        }),
       });
       await getState().setConfig("push_sync_subscriptions", {
         ...allSubs,

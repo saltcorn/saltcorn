@@ -19,7 +19,7 @@ import {
   prepAppIcon,
   modifyInfoPlist,
   writeEntitlementsPlist,
-  runAddEntitlementsScript,
+  injectCodeSignEntitlements,
   writePodfile,
   modifyXcodeProjectFile,
   writePrivacyInfo,
@@ -83,6 +83,7 @@ type MobileBuilderConfig = {
   syncOnAppResume: boolean;
   pushSync: boolean;
   syncInterval?: number;
+  pushSyncHeartbeatInterval?: number;
   plugins: Plugin[];
   copyTargetDir?: string;
   user?: User;
@@ -123,7 +124,9 @@ export class MobileBuilder {
   syncOnAppResume: boolean;
   pushSync: boolean;
   syncInterval?: number;
+  pushSyncHeartbeatInterval?: number;
   backgroundSyncEnabled: boolean;
+  backgroundFetchEnabled: boolean;
   pluginManager: any;
   plugins: Plugin[];
   packageRoot = join(__dirname, "../");
@@ -175,7 +178,13 @@ export class MobileBuilder {
     this.syncOnReconnect = cfg.syncOnReconnect;
     this.syncOnAppResume = cfg.syncOnAppResume;
     this.syncInterval = cfg.syncInterval ? +cfg.syncInterval : undefined;
+    this.pushSyncHeartbeatInterval = cfg.pushSyncHeartbeatInterval
+      ? +cfg.pushSyncHeartbeatInterval
+      : undefined;
     this.backgroundSyncEnabled = !!this.syncInterval && this.syncInterval > 0;
+    this.backgroundFetchEnabled =
+      this.backgroundSyncEnabled ||
+      (!!this.pushSyncHeartbeatInterval && this.pushSyncHeartbeatInterval > 0);
     this.pluginManager = new PluginManager({
       pluginsPath: join(this.buildDir, "plugin_packages", "node_modules"),
     });
@@ -230,7 +239,9 @@ export class MobileBuilder {
         this.buildDir,
         this.templateDir,
         this.pushNotificationsEnabled,
-        !!this.syncInterval && this.syncInterval > 0,
+        (!!this.syncInterval && this.syncInterval > 0) ||
+          (!!this.pushSyncHeartbeatInterval &&
+            this.pushSyncHeartbeatInterval > 0),
         this.pushSync
       );
       writeCapacitorConfig(this.buildDir, {
@@ -273,7 +284,12 @@ export class MobileBuilder {
         syncOnAppResume: this.syncOnAppResume,
         pushSync: this.pushSync,
         syncInterval: this.syncInterval ? this.syncInterval : 0,
+        pushSyncHeartbeatInterval: this.pushSyncHeartbeatInterval
+          ? this.pushSyncHeartbeatInterval
+          : 0,
         allowShareTo: this.allowShareTo,
+        apnsEnvironment:
+          this.buildType === "debug" ? "development" : "production",
       });
       let resultCode = await bundlePackagesAndPlugins(
         this.buildDir,
@@ -285,10 +301,16 @@ export class MobileBuilder {
         this.pluginsLoaded = true;
       }
       copyPluginMobileAppDirs(this.buildDir);
-      if (this.pushNotificationsEnabled || this.pushSync)
+      if (this.pushNotificationsEnabled || this.pushSync) {
         copyOptionalSource(this.buildDir, "notifications.js");
-      if (this.syncInterval && this.syncInterval > 0)
-        copyOptionalSource(this.buildDir, "background_sync.js");
+        if (this.pushSync && this.platforms.includes("ios"))
+          copyOptionalSource(this.buildDir, "ios_silent_push.js");
+      }
+      if (
+        (this.syncInterval && this.syncInterval > 0) ||
+        (this.pushSyncHeartbeatInterval && this.pushSyncHeartbeatInterval > 0)
+      )
+        copyOptionalSource(this.buildDir, "background.js");
       resultCode = bundleMobileAppCode(this.buildDir);
       if (resultCode !== 0) return resultCode;
       await copyPublicDirs(this.buildDir);
@@ -337,20 +359,27 @@ export class MobileBuilder {
     writePodfile(
       this.buildDir,
       !!this.apnsKeyId,
-      !!this.syncInterval && this.syncInterval > 0,
+      (!!this.syncInterval && this.syncInterval > 0) ||
+        (!!this.pushSyncHeartbeatInterval &&
+          this.pushSyncHeartbeatInterval > 0),
       this.pushSync
     );
-    writePrivacyInfo(this.buildDir, this.backgroundSyncEnabled);
+    writePrivacyInfo(this.buildDir, this.backgroundFetchEnabled);
     modifyInfoPlist(
       this.buildDir,
       this.allowShareTo,
       this.backgroundSyncEnabled,
       this.pushSync,
-      this.allowClearTextTraffic
+      this.allowClearTextTraffic,
+      this.backgroundFetchEnabled
     );
     if (this.pushSync) {
-      writeEntitlementsPlist(this.buildDir);
-      runAddEntitlementsScript(this.buildDir);
+      writeEntitlementsPlist(
+        this.buildDir,
+        this.buildType,
+        this.iosParams?.shareExtensionProvisioningProfile?.appGroupId
+      );
+      injectCodeSignEntitlements(this.buildDir);
     }
     if (this.allowShareTo) {
       copyShareExtFiles(this.buildDir);
@@ -362,9 +391,9 @@ export class MobileBuilder {
     }
     modifyAppDelegate(
       this.buildDir,
-      this.backgroundSyncEnabled,
       this.pushSync,
-      this.allowShareTo
+      this.allowShareTo,
+      this.backgroundFetchEnabled
     );
   }
 
@@ -395,7 +424,11 @@ export class MobileBuilder {
       this.allowClearTextTraffic
     );
     writeDataExtractionRules(this.buildDir);
-    writeNetworkSecurityConfig(this.buildDir, this.serverURL);
+    writeNetworkSecurityConfig(
+      this.buildDir,
+      this.serverURL,
+      this.allowClearTextTraffic
+    );
     modifyGradleConfig(
       this.buildDir,
       this.appVersion,

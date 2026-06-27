@@ -7,6 +7,7 @@ import webpush from "web-push";
 import admin from "firebase-admin";
 import {
   ApnsClient,
+  Host,
   SilentNotification,
   Notification as Apns2Notification,
 } from "apns2";
@@ -125,6 +126,7 @@ export type MobileSubscription = {
   type: "fcm-push" | "apns-push";
   token: string;
   deviceId: string;
+  apnsEnvironment?: "development" | "production";
 };
 
 /**
@@ -152,7 +154,8 @@ export class PushMessageHelper {
     signingKeyId: string;
     appId: string;
   };
-  apnsClient?: ApnsClient;
+  apnsClientProd?: ApnsClient;
+  apnsClientDev?: ApnsClient;
 
   state: any;
   notificationSubs: Record<
@@ -292,6 +295,7 @@ export class PushMessageHelper {
    * APNS or FCM
    */
   public async pushSync() {
+    const staleTokens = new Set<string>();
     for (const userSubs of Object.values(this.syncSubs)) {
       const pushedDeviceIds = new Set<string>();
       for (const userSub of userSubs) {
@@ -302,23 +306,40 @@ export class PushMessageHelper {
           continue;
         }
         try {
-          const { token, type, deviceId } = userSub;
+          const { token, type, deviceId, apnsEnvironment } = userSub;
           switch (type) {
             case "apns-push":
-              const sn = new SilentNotification(token);
-              try {
-                if (!this.apnsClient)
-                  throw new Error("APNS client not initialized");
-                const response = await this.apnsClient.send(sn);
+              if (!apnsEnvironment)
                 this.state.log(
                   5,
-                  `silent APNS notification sent successfully to '${deviceId}', ` +
+                  `Sync push to device '${deviceId}' has no apnsEnvironment — likely an old subscription, defaulting to production`
+                );
+              const sn = new SilentNotification(token);
+              try {
+                const client = this.apnsClientFor(apnsEnvironment);
+                const response = await client.send(sn);
+                this.state.log(
+                  5,
+                  `silent APNS notification sent successfully to '${deviceId}' ` +
+                    `(${apnsEnvironment ?? "production"}), ` +
                     `type: '${response.pushType}', priority: '${
                       response.priority
-                    }', 'options: ${JSON.stringify(response.options)}`
+                    }', options: ${JSON.stringify(response.options)}`
                 );
               } catch (err: any) {
-                console.error(err);
+                this.state.log(
+                  5,
+                  `APNS error for device '${deviceId}': ${
+                    err.reason ?? err.message
+                  }`
+                );
+                if (
+                  err.reason === "BadDeviceToken" ||
+                  err.reason === "Unregistered" ||
+                  err.reason === "ExpiredToken"
+                ) {
+                  staleTokens.add(token);
+                }
               }
               break;
             case "fcm-push":
@@ -341,6 +362,24 @@ export class PushMessageHelper {
           this.state.log(5, `Error sending sync push: ${error}`);
         }
       }
+    }
+    if (staleTokens.size > 0) await this.removeStaleTokens(staleTokens);
+  }
+
+  private async removeStaleTokens(staleTokens: Set<string>) {
+    let changed = false;
+    for (const [userId, subs] of Object.entries(this.syncSubs)) {
+      const filtered = subs.filter((s) => !staleTokens.has(s.token));
+      if (filtered.length !== subs.length) {
+        this.syncSubs[userId] = filtered;
+        changed = true;
+      }
+    }
+    if (changed) {
+      await this.state.setConfig("push_sync_subscriptions", {
+        ...this.syncSubs,
+      });
+      this.state.log(5, `Removed ${staleTokens.size} stale sync token(s)`);
     }
   }
 
@@ -402,7 +441,6 @@ export class PushMessageHelper {
 
   private async apnsPush(notification: Notification, sub: MobileSubscription) {
     this.state.log(5, "Sending APNS notification");
-    if (!this.apnsClient) throw new Error("APNS client not initialized");
     const apnsNotification = new Apns2Notification(sub.token, {
       alert: {
         title: notification.title,
@@ -415,7 +453,9 @@ export class PushMessageHelper {
       // TODO icon is app icon
     });
     try {
-      const response = await this.apnsClient.send(apnsNotification);
+      const response = await this.apnsClientFor(sub.apnsEnvironment).send(
+        apnsNotification
+      );
       this.state.log(
         5,
         `APNS notification sent successfully to '${sub.deviceId}', ` +
@@ -452,16 +492,31 @@ export class PushMessageHelper {
     this.state.log(5, `Initialized Firebase app: ${appName}`);
   }
 
+  private apnsClientFor(environment?: string): ApnsClient {
+    const client =
+      environment === "development" ? this.apnsClientDev : this.apnsClientProd;
+    if (!client) throw new Error("APNS client not initialized");
+    return client;
+  }
+
   private async initApnsClient() {
-    this.state.log(5, "Init APNS Client");
+    this.state.log(5, "Init APNS Client (production + development)");
     if (!this.apns) throw new Error("APNS not configured");
-    this.apnsClient = new ApnsClient({
+    const base = {
       team: this.apns.teamId,
       keyId: this.apns.signingKeyId,
       signingKey: this.apns.signingKey,
       defaultTopic: this.apns.appId,
-      requestTimeout: 0, // optional, Default: 0 (without timeout)
-      keepAlive: true, // optional, Default: 5000
+      requestTimeout: 0,
+      keepAlive: true,
+    };
+    this.apnsClientProd = new ApnsClient({
+      ...base,
+      host: Host.production,
+    });
+    this.apnsClientDev = new ApnsClient({
+      ...base,
+      host: Host.development,
     });
   }
 }

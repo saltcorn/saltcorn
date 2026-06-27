@@ -1,6 +1,7 @@
 /*global saltcorn, $*/
 
 import { apiCall } from "./api";
+import { Capacitor } from "@capacitor/core";
 import { Camera, CameraResultType } from "@capacitor/camera";
 import { ScreenOrientation } from "@capacitor/screen-orientation";
 import { SendIntent } from "send-intent";
@@ -224,7 +225,19 @@ export async function tryInitPush(config) {
     try {
       await initPushNotifications();
       if (saltcorn.data.utils.isPushEnabled(config.user)) addPusNotifyHandler();
-      if (config.pushSync) addPushSyncHandler();
+      if (config.pushSync) {
+        addPushSyncHandler();
+        if (Capacitor.getPlatform() === "ios") {
+          try {
+            const { initIosSilentPushListener } = await import(
+              "../helpers/ios_silent_push.js"
+            );
+            await initIosSilentPushListener();
+          } catch (e) {
+            console.log("iOS silent push not available:", e);
+          }
+        }
+      }
     } catch (error) {
       console.error("Error initializing push notifications:", error);
     }
@@ -234,21 +247,26 @@ export async function tryInitPush(config) {
 }
 
 /**
- * init background sync, if available
+ * init background tasks (sync and/or push-sync heartbeat), if available
  */
 export async function tryInitBackgroundSync(config) {
+  if (
+    !(config.syncInterval && config.syncInterval > 0) &&
+    !(config.pushSyncHeartbeatInterval && config.pushSyncHeartbeatInterval > 0)
+  )
+    return;
   try {
-    const { startPeriodicBackgroundSync } = await import(
-      "../helpers/background_sync.js"
-    );
+    const { initBackground } = await import("../helpers/background.js");
     try {
-      if (config.syncInterval && config.syncInterval > 0)
-        await startPeriodicBackgroundSync(config.syncInterval);
+      await initBackground(
+        config.syncInterval,
+        config.pushSyncHeartbeatInterval
+      );
     } catch (error) {
-      console.error("Error initializing background sync:", error);
+      console.error("Error initializing background tasks:", error);
     }
   } catch (error) {
-    console.log("Background sync module not available:", error);
+    console.log("Background module not available:", error);
   }
 }
 
@@ -271,19 +289,17 @@ export async function tryUnregisterPush() {
 }
 
 /**
- * stop background sync, if available
+ * stop background tasks (sync and/or push-sync heartbeat), if available
  */
 export async function tryStopBackgroundSync() {
   try {
-    const { stopPeriodicBackgroundSync } = await import(
-      "../helpers/background_sync.js"
-    );
+    const { stopBackground } = await import("../helpers/background.js");
     try {
-      await stopPeriodicBackgroundSync();
+      await stopBackground();
     } catch (error) {
-      console.error("Error stopping periodic background sync:", error);
+      console.error("Error stopping background tasks:", error);
     }
   } catch (error) {
-    console.error("Push notifications module not available:", error);
+    console.log("Background module not available:", error);
   }
 }

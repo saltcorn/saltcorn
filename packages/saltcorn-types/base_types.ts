@@ -713,7 +713,9 @@ export type MobileConfig = {
   syncOnAppResume?: boolean;
   pushSync?: boolean;
   syncInterval?: number;
+  pushSyncHeartbeatInterval?: number;
   allowShareTo?: boolean;
+  apnsEnvironment?: "development" | "production";
   isOfflineMode?: boolean;
   networkState?:
     | "cellular"
@@ -735,7 +737,7 @@ export type MobileConfig = {
 
   pushConfiguration?: {
     token: string;
-    devideId: string;
+    deviceId: string;
   };
 };
 

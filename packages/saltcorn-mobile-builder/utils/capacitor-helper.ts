@@ -1,6 +1,6 @@
 import { spawnSync, execSync } from "child_process";
 import { join, basename } from "path";
-import { existsSync, writeFileSync } from "fs";
+import { existsSync, rmSync, writeFileSync } from "fs";
 import { tmpdir } from "os";
 import { copySync } from "fs-extra";
 import type User from "@saltcorn/data/models/user";
@@ -167,6 +167,11 @@ export class CapacitorHelper {
           `Unable to install ${platform} (code ${result.status})` +
             `\n\n${result.error.toString()}`
         );
+      const platformDir = join(this.buildDir, platform);
+      if (existsSync(platformDir)) {
+        console.log(`Removing existing ${platform} directory before cap add`);
+        rmSync(platformDir, { recursive: true, force: true });
+      }
       result = spawnSync("npx", ["cap", "add", platform], {
         cwd: this.buildDir,
         maxBuffer: 1024 * 1024 * 10,
@@ -176,10 +181,10 @@ export class CapacitorHelper {
         },
       });
       if (result.output) console.log(result.output.toString());
-      else if (result.error)
+      if (result.status !== 0)
         throw new Error(
           `Unable to add ${platform} (code ${result.status})` +
-            `\n\n${result.error.toString()}`
+            (result.error ? `\n\n${result.error.toString()}` : "")
         );
     };
     for (const platform of this.platforms)

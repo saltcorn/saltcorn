@@ -105,6 +105,7 @@ export function prepareBuildDir(
   );
 }
 
+/** Build-time configuration passed to `writeCapacitorConfig`. */
 export interface ScCapacitorConfig {
   appName: string;
   appId?: string;
@@ -117,6 +118,11 @@ export interface ScCapacitorConfig {
   buildType: string;
 }
 
+/**
+ * Write `capacitor.config.ts` into the build directory.
+ * @param buildDir directory where the app will be built
+ * @param config capacitor build settings
+ */
 export function writeCapacitorConfig(
   buildDir: string,
   config: ScCapacitorConfig
@@ -183,6 +189,11 @@ export default config;`;
   writeFileSync(cfgFile, content);
 }
 
+/**
+ * Copy the app icon into all required asset slots (icon, splash variants).
+ * @param buildDir directory where the app will be built
+ * @param appIcon path to the source PNG
+ */
 export function prepAppIcon(buildDir: string, appIcon: string) {
   for (const icon of [
     "icon-only",
@@ -197,6 +208,11 @@ export function prepAppIcon(buildDir: string, appIcon: string) {
   }
 }
 
+/**
+ * Returns the Android permissions required for the build.
+ * @param allowFCM include FCM/push notification permissions
+ * @returns array of Android permission strings
+ */
 export function androidPermissions(allowFCM: boolean) {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
@@ -218,6 +234,10 @@ export function androidPermissions(allowFCM: boolean) {
   return Array.from(permissions);
 }
 
+/**
+ * Returns the Android hardware features required for the build.
+ * @returns array of Android feature strings
+ */
 export function androidFeatures() {
   const state = getState();
   if (!state) throw new Error("Unable to get the state object");
@@ -230,6 +250,14 @@ export function androidFeatures() {
   return Array.from(features);
 }
 
+/**
+ * Patch `AndroidManifest.xml` with permissions, features, and optional intents.
+ * @param buildDir directory where the app will be built
+ * @param allowShareTo add share-to intent filter
+ * @param allowFCM add FCM push notification support
+ * @param allowAuthIntent add authentication intent
+ * @param allowClearTextTraffic allow HTTP cleartext traffic
+ */
 export async function modifyAndroidManifest(
   buildDir: string,
   allowShareTo: boolean,
@@ -346,6 +374,11 @@ export async function modifyAndroidManifest(
   }
 }
 
+/**
+ * Returns true if any of the included plugins exposes an authentication method.
+ * @param plugins list of included plugin names
+ * @returns whether an auth method is available
+ */
 export function hasAuthMethod(plugins: string[]) {
   const state = getState();
   for (const pluginName of plugins) {
@@ -355,6 +388,10 @@ export function hasAuthMethod(plugins: string[]) {
   return false;
 }
 
+/**
+ * Write the Android data extraction rules XML (excludes app data from backups).
+ * @param buildDir directory where the app will be built
+ */
 export function writeDataExtractionRules(buildDir: string) {
   console.log("writeDataExtractionRules");
   const dataExtractionRules = join(
@@ -388,6 +425,11 @@ export function writeDataExtractionRules(buildDir: string) {
   );
 }
 
+/**
+ * Copy the pre-populated SQLite database into the platform asset directories.
+ * @param buildDir directory where the app will be built
+ * @param platforms target platforms (`"android"` / `"ios"`)
+ */
 export function copyPrepopulatedDb(buildDir: string, platforms: string[]) {
   console.log("copyPrepopulatedDb", buildDir, platforms);
   if (platforms.includes("android")) {
@@ -424,6 +466,11 @@ export function copyPrepopulatedDb(buildDir: string, platforms: string[]) {
   }
 }
 
+/**
+ * Extract the bare domain name from a URL (strips protocol, port, trailing slash).
+ * @param url full server URL
+ * @returns domain string
+ */
 export function extractDomain(url: string) {
   let domain = url;
   if (domain.startsWith("http://")) domain = domain.substring(7);
@@ -433,9 +480,18 @@ export function extractDomain(url: string) {
   return domain;
 }
 
+/**
+ * Write the Android network security config.
+ * When `allowClearTextTraffic` is true, permits HTTP for the server domain.
+ * Otherwise writes a restrictive config (HTTPS only).
+ * @param buildDir directory where the app will be built
+ * @param serverPath server URL used to extract the allowed domain
+ * @param allowClearTextTraffic permit HTTP cleartext traffic to the server domain
+ */
 export function writeNetworkSecurityConfig(
   buildDir: string,
-  serverPath: string
+  serverPath: string,
+  allowClearTextTraffic: boolean
 ) {
   console.log("writeNetworkSecurityConfig");
   const networkSecurityConfig = join(
@@ -448,18 +504,26 @@ export function writeNetworkSecurityConfig(
     "xml",
     "network_security_config.xml"
   );
-  writeFileSync(
-    networkSecurityConfig,
-    `<?xml version="1.0" encoding="utf-8"?>
+  const content = allowClearTextTraffic
+    ? `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <domain-config cleartextTrafficPermitted="true">
     <domain includeSubdomains="true">${extractDomain(serverPath)}</domain>
   </domain-config>
-</network-security-config>
-  `
-  );
+</network-security-config>`
+    : `<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+  <base-config cleartextTrafficPermitted="false" />
+</network-security-config>`;
+  writeFileSync(networkSecurityConfig, content);
 }
 
+/**
+ *
+ * Patch `config.xml` with app name, app ID, and version.
+ * @param buildDir directory where the app will be built
+ * @param config object with optional `appName`, `appId`, and `appVersion` fields
+ */
 export async function modifyConfigXml(buildDir: string, config: any) {
   try {
     const configXml = join(buildDir, "config.xml");
@@ -552,6 +616,11 @@ export async function prepareSplashIcon(
   }
 }
 
+/**
+ * Generate the iOS `AppIcon.appiconset` with all required sizes.
+ * @param buildDir directory where the app will be built
+ * @param appIcon path to the source PNG
+ */
 async function prepareAppIconSet(buildDir: string, appIcon: string) {
   console.log("prepareAppIconSet", buildDir, appIcon);
   const dir = join(buildDir, "AppIcon.appiconset");
@@ -594,6 +663,10 @@ async function prepareAppIconSet(buildDir: string, appIcon: string) {
   }
 }
 
+/**
+ * Write `ExportOptions.plist` used by `xcodebuild -exportArchive`.
+ * @param param0 buildDir, appId, and iOS provisioning parameters
+ */
 export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
   console.log("prepareExportOptionsPlist", buildDir, appId, iosParams);
   const buildShareExtBloock = () => {
@@ -634,36 +707,53 @@ export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
   }
 }
 
+/**
+ * Patch `Info.plist` with background modes, usage descriptions, and optional URL schemes.
+ * @param buildDir directory where the app will be built
+ * @param allowShareTo add URL scheme for share-to integration
+ * @param backgroundSyncEnabled background sync task is scheduled
+ * @param pushSyncEnabled add remote-notification background mode
+ * @param allowClearTextTraffic allow arbitrary HTTP loads
+ * @param backgroundFetchEnabled background.js is included (sync or heartbeat configured)
+ */
 export function modifyInfoPlist(
   buildDir: string,
   allowShareTo: boolean,
   backgroundSyncEnabled: boolean,
   pushSyncEnabled: boolean,
-  allowClearTextTraffic: boolean
+  allowClearTextTraffic: boolean,
+  backgroundFetchEnabled: boolean = false
 ) {
   const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
   const content = readFileSync(infoPlist, "utf8");
 
+  const backgroundModes = [
+    ...(backgroundFetchEnabled ? ["fetch", "processing"] : []),
+    ...(pushSyncEnabled ? ["remote-notification"] : []),
+  ];
+
+  const taskIds = [
+    "com.transistorsoft.fetch",
+    ...(backgroundSyncEnabled ? ["com.transistorsoft.background_sync"] : []),
+    ...(backgroundFetchEnabled ? ["com.transistorsoft.push_sync_heartbeat"] : []),
+  ];
+
   const newCfgs = `
   ${
-    backgroundSyncEnabled
+    backgroundFetchEnabled
       ? `<key>BGTaskSchedulerPermittedIdentifiers</key>
   <array>
-    <string>com.transistorsoft.fetch</string>
-  </array>
-  <key>UIBackgroundModes</key>
-  <array>
-    <string>fetch</string>
+    ${taskIds.map((id) => `<string>${id}</string>`).join("\n    ")}
   </array>
   `
       : ""
   }
 
   ${
-    pushSyncEnabled
+    backgroundModes.length > 0
       ? `<key>UIBackgroundModes</key>
   <array>
-    <string>remote-notification</string>
+    ${backgroundModes.map((m) => `<string>${m}</string>`).join("\n    ")}
   </array>
   `
       : ""
@@ -714,8 +804,25 @@ export function modifyInfoPlist(
   writeFileSync(infoPlist, newContent, "utf8");
 }
 
-export function writeEntitlementsPlist(buildDir: string) {
+/**
+ * Write `App.entitlements` with the APNs environment and optional app group.
+ * @param buildDir directory where the app will be built
+ * @param buildType `"debug"` → development APNs, `"release"` → production APNs
+ * @param appGroupId optional app group ID for share extension data sharing
+ */
+export function writeEntitlementsPlist(
+  buildDir: string,
+  buildType: "debug" | "release",
+  appGroupId?: string
+) {
   const file = join(buildDir, "ios", "App", "App", "App.entitlements");
+  const apsEnv = buildType === "release" ? "production" : "development";
+  const appGroupsEntry = appGroupId
+    ? `    <key>com.apple.security.application-groups</key>
+    <array>
+        <string>${appGroupId}</string>
+    </array>`
+    : "";
   try {
     writeFileSync(
       file,
@@ -724,9 +831,8 @@ export function writeEntitlementsPlist(buildDir: string) {
 <plist version="1.0">
 <dict>
     <key>aps-environment</key>
-    <string>production</string>
-    <key>com.apple.security.application-groups</key>
-    <array />
+    <string>${apsEnv}</string>
+${appGroupsEntry}
 </dict>
 </plist>`
     );
@@ -739,21 +845,45 @@ export function writeEntitlementsPlist(buildDir: string) {
   }
 }
 
-export function runAddEntitlementsScript(buildDir: string) {
+/**
+ * Inject `CODE_SIGN_ENTITLEMENTS` into `project.pbxproj` for the App target.
+ * Uses `INFOPLIST_FILE = App/Info.plist;` as an anchor (unique to the App target).
+ * Idempotent — skips if the key is already present.
+ * @param buildDir directory where the app will be built
+ */
+export function injectCodeSignEntitlements(buildDir: string) {
+  const pbxprojPath = join(
+    buildDir,
+    "ios",
+    "App",
+    "App.xcodeproj",
+    "project.pbxproj"
+  );
   try {
-    const result = spawnSync("ruby", ["add_entitlements.rb"], {
-      cwd: buildDir,
-    });
-    console.log(result.output.toString());
+    let content = readFileSync(pbxprojPath, "utf8");
+    if (content.includes("CODE_SIGN_ENTITLEMENTS")) {
+      console.log("CODE_SIGN_ENTITLEMENTS already set in project.pbxproj");
+      return;
+    }
+    content = content.replaceAll(
+      "INFOPLIST_FILE = App/Info.plist;",
+      `CODE_SIGN_ENTITLEMENTS = App/App.entitlements;\n\t\t\t\tINFOPLIST_FILE = App/Info.plist;`
+    );
+    writeFileSync(pbxprojPath, content, "utf8");
+    console.log("CODE_SIGN_ENTITLEMENTS set in project.pbxproj for App target");
   } catch (error: any) {
     console.log(
-      `Unable to run the add_entitlements.rb script: ${
-        error.message ? error.message : "Unknown error"
+      `Unable to set CODE_SIGN_ENTITLEMENTS in project.pbxproj: ${
+        error.message ?? "Unknown error"
       }`
     );
   }
 }
 
+/**
+ * Copy share extension source files into the iOS project directory.
+ * @param buildDir directory where the app will be built
+ */
 export function copyShareExtFiles(buildDir: string) {
   const iosAppDir = join(buildDir, "ios", "App");
   const sefDir = join(buildDir, "share_extension_files");
@@ -769,6 +899,11 @@ export function copyShareExtFiles(buildDir: string) {
   );
 }
 
+/**
+ * Replace `YOUR_APP_GROUP_ID` placeholder in `ShareViewController.swift`.
+ * @param buildDir directory where the app will be built
+ * @param groupId app group identifier
+ */
 export function modifyShareViewController(buildDir: string, groupId: string) {
   const shareVCFile = join(
     buildDir,
@@ -783,11 +918,18 @@ export function modifyShareViewController(buildDir: string, groupId: string) {
   writeFileSync(shareVCFile, content, "utf8");
 }
 
+/**
+ * Patch `AppDelegate.swift` to register background tasks and push handlers.
+ * @param buildDir directory where the app will be built
+ * @param pushSyncEnabled register remote-notification handler
+ * @param allowShareTo register URL scheme handler for share-to
+ * @param backgroundFetchEnabled initialize TSBackgroundFetch (sync or heartbeat)
+ */
 export function modifyAppDelegate(
   buildDir: string,
-  backgroundSyncEnabled: boolean,
   pushSyncEnabled: boolean,
-  allowShareTo: boolean
+  allowShareTo: boolean,
+  backgroundFetchEnabled: boolean = false
 ) {
   const appDelegateFile = join(
     buildDir,
@@ -806,7 +948,7 @@ export function modifyAppDelegate(
 
        
        ${
-         backgroundSyncEnabled
+         backgroundFetchEnabled
            ? `// [capacitor-background-fetch]
        let fetchManager = TSBackgroundFetch.sharedInstance();
        fetchManager?.didFinishLaunching();`
@@ -817,7 +959,7 @@ export function modifyAppDelegate(
 `
   );
 
-  if (backgroundSyncEnabled) {
+  if (backgroundFetchEnabled) {
     // add "import TSBackgroundFetch" before "@UIApplicationMain"
     content = content.replace(
       /@UIApplicationMain/,
@@ -950,7 +1092,7 @@ export function modifyAppDelegate(
 
 export function writePrivacyInfo(
   buildDir: string,
-  backgroundSyncEnabled: boolean
+  backgroundFetchEnabled: boolean
 ) {
   const infoFile = join(buildDir, "ios", "App", "PrivacyInfo.xcprivacy");
   const content = `<?xml version="1.0" encoding="UTF-8"?>
@@ -970,7 +1112,7 @@ export function writePrivacyInfo(
       </dict>
 
       ${
-        backgroundSyncEnabled
+        backgroundFetchEnabled
           ? `
       <!-- [1] background_fetch: UserDefaults -->
       <dict>
@@ -1080,7 +1222,9 @@ export function writeCfgFile({
   syncOnAppResume,
   pushSync,
   syncInterval,
+  pushSyncHeartbeatInterval,
   allowShareTo,
+  apnsEnvironment,
 }: any) {
   const wwwDir = join(buildDir, "www");
   let cfg: any = {
@@ -1097,7 +1241,9 @@ export function writeCfgFile({
     syncOnAppResume,
     pushSync,
     syncInterval,
+    pushSyncHeartbeatInterval,
     allowShareTo,
+    apnsEnvironment,
   };
   if (entryPointType !== "byrole") {
     cfg.entry_point = `get/${
@@ -1323,8 +1469,8 @@ export async function prepareSplashPage(
       body: !contents
         ? { above: [] }
         : contents.above
-          ? contents
-          : { above: [contents] },
+        ? contents
+        : { above: [contents] },
       alerts: [],
       role: role,
       menu: [],
@@ -1352,6 +1498,13 @@ export async function prepareSplashPage(
   }
 }
 
+/**
+ * Write the iOS `Podfile` and run `pod install`.
+ * @param buildDir directory where the app will be built
+ * @param hasPush include push notification pods
+ * @param hasBackgroundFetch include background fetch pod
+ * @param hasSilentPush include silent-notifications pod
+ */
 export function writePodfile(
   buildDir: string,
   hasPush: boolean,
@@ -1386,7 +1539,11 @@ export function writePodfile(
     pod 'CapacitorCommunitySqlite', :path => '../../node_modules/@capacitor-community/sqlite'
     pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
-    ${hasGeolocation ? `pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'` : ""}
+    ${
+      hasGeolocation
+        ? `pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'`
+        : ""
+    }
     pod 'CapacitorNetwork', :path => '../../node_modules/@capacitor/network'
     pod 'CapacitorScreenOrientation', :path => '../../node_modules/@capacitor/screen-orientation'
     pod 'SendIntent', :path => '../../node_modules/send-intent'
@@ -1398,8 +1555,16 @@ export function writePodfile(
     pod 'CapacitorDevice', :path => '../../node_modules/@capacitor/device'`
         : ""
     }
-    ${hasSilentPush ? `pod 'CapacitorPluginSilentNotifications', :path => '../../node_modules/capacitor-plugin-silent-notifications'` : ""}
-    ${hasBackgroundFetch ? `pod 'TransistorsoftCapacitorBackgroundFetch', :path => '../../node_modules/@transistorsoft/capacitor-background-fetch'` : ""}
+    ${
+      hasSilentPush
+        ? `pod 'CapacitorPluginSilentNotifications', :path => '../../node_modules/capacitor-plugin-silent-notifications'`
+        : ""
+    }
+    ${
+      hasBackgroundFetch
+        ? `pod 'TransistorsoftCapacitorBackgroundFetch', :path => '../../node_modules/@transistorsoft/capacitor-background-fetch'`
+        : ""
+    }
   end
   
   target 'App' do
@@ -1484,6 +1649,11 @@ export function modifyXcodeProjectFile(
   writeFileSync(projectFile, fileContent, "utf8");
 }
 
+/**
+ * Convert a semver string to an Android integer version code (`major*1e6 + minor*1e3 + patch`).
+ * @param appVersion semver string e.g. `"1.2.3"`
+ * @returns integer version code
+ */
 export function generateAndroidVersionCode(appVersion: string) {
   if (!/^\d{1,3}\.\d{1,3}\.\d{1,3}$/.test(appVersion) || appVersion === "0.0.0")
     throw new Error(`Invalid app version '${appVersion}'`);
@@ -1495,6 +1665,12 @@ export function generateAndroidVersionCode(appVersion: string) {
   );
 }
 
+/**
+ * Patch `build.gradle` with the app version and optional keystore signing config.
+ * @param buildDir directory where the app will be built
+ * @param appVersion semver string used for `versionName` and `versionCode`
+ * @param keyStoreData signing credentials; omit for unsigned debug builds
+ */
 export function modifyGradleConfig(
   buildDir: string,
   appVersion: string,
