@@ -4,10 +4,13 @@
  * @module standard-menu
  */
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("./db/state.js") as any).default;
 import type { MenuItem } from "@saltcorn/types/base_types";
 
 const create_standard_menu = async (): Promise<void> => {
-  const { getState } = require("./db/state");
+  const { getState } = _sc_db_state();
 
   const state = getState();
   await state?.refresh_config(false);
@@ -394,4 +397,4 @@ const create_standard_menu = async (): Promise<void> => {
   ]);
 };
 
-export = create_standard_menu;
+export default create_standard_menu;

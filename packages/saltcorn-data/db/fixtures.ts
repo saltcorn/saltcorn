@@ -4,25 +4,30 @@
  * @module db/fixtures
  * @subcategory db
  */
-const db = require(".");
-const { getState } = require("./state");
-import Table from "../models/table";
-import Field from "../models/field";
-import File from "../models/file";
-import Trigger from "../models/trigger";
-import View from "../models/view";
-import User from "../models/user";
-import Page from "../models/page";
-import PageGroup from "../models/page_group";
-import PageGroupMember from "../models/page_group_member";
-import Tag from "../models/tag";
-import Model from "../models/model";
-import ModelInstance from "../models/model_instance";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_state = () => (require("./state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+import _sc_ from "./index.js";
+const db = (_sc_ as any);
+const { getState } = _sc_state();
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import File from "../models/file.js";
+import Trigger from "../models/trigger.js";
+import View from "../models/view.js";
+import User from "../models/user.js";
+import Page from "../models/page.js";
+import PageGroup from "../models/page_group.js";
+import PageGroupMember from "../models/page_group_member.js";
+import Tag from "../models/tag.js";
+import Model from "../models/model.js";
+import ModelInstance from "../models/model_instance.js";
 import fs from "fs";
 const fsp = fs.promises;
 
-export = async (): Promise<void> => {
-  getState().registerPlugin("base", require("../base-plugin"));
+export default async (): Promise<void> => {
+  getState().registerPlugin("base", _sc_base_plugin());
   getState().setConfig("min_role_apikeygen", 80);
 
   const table = await Table.create("books", {

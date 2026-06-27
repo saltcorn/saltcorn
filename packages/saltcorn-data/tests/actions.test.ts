@@ -1,13 +1,18 @@
-import Trigger from "../models/trigger";
-import Table from "../models/table";
-import Field from "../models/field";
-import User from "../models/user";
-import EventLog from "../models/eventlog";
-import scheduler from "../models/scheduler";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import Trigger from "../models/trigger.js";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import User from "../models/user.js";
+import EventLog from "../models/eventlog.js";
+import scheduler from "../models/scheduler.js";
 const { runScheduler } = scheduler;
-import db from "../db";
-const { getState } = require("../db/state");
-import mocks from "./mocks";
+import db from "../db/index.js";
+const { getState } = _sc_db_state();
+import mocks from "./mocks.js";
 const {
   plugin_with_routes,
   getActionCounter,
@@ -15,9 +20,9 @@ const {
   mockReqRes,
   sleep,
 } = mocks;
-import { assertIsRow, assertIsSet } from "../tests/assertions";
+import { assertIsRow, assertIsSet } from "../tests/assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import baseactions from "../base-plugin/actions";
+import baseactions from "../base-plugin/actions.js";
 const {
   duplicate_row,
   insert_any_row,
@@ -28,16 +33,16 @@ const {
   notify_user,
   run_js_code,
 } = baseactions;
-import utils from "../utils";
-import Notification from "../models/notification";
-import { run_action_column } from "../plugin-helper";
+import utils from "../utils.js";
+import Notification from "../models/notification.js";
+import { run_action_column } from "../plugin-helper.js";
 const { applyAsync, mergeActionResults } = utils;
 
 afterAll(db.close);
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 jest.setTimeout(20000);

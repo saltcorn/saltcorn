@@ -1,11 +1,15 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_page = () => (require("./page.js") as any).default;
 import {
   AbstractPageGroupMember,
   PageGroupMemberCfg,
 } from "@saltcorn/types/model-abstracts/abstract_page_group_member";
 import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
-import db from "../db";
+import db from "../db/index.js";
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
-import utils from "../utils";
+import utils from "../utils.js";
 const { satisfies } = utils;
 
 /**
@@ -39,7 +43,7 @@ class PageGroupMember implements AbstractPageGroupMember {
     selectopts: SelectOptions = {}
   ): Promise<PageGroupMember[]> {
     if (selectopts.cached) {
-      const { getState } = require("../db/state");
+      const { getState } = _sc_db_state();
       const groups = getState().page_groups;
       const allMembers = [];
       for (const group of groups) {
@@ -59,7 +63,7 @@ class PageGroupMember implements AbstractPageGroupMember {
   }
 
   static findOne(where: number | FindOneObj): PageGroupMember | null {
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     const groups = getState().page_groups;
     let pred = PageGroupMember.findPred(where);
     if (!pred) throw new Error("Invalid where");
@@ -101,7 +105,7 @@ class PageGroupMember implements AbstractPageGroupMember {
     const fid = await db.insert("_sc_page_group_members", rest);
     pageGroupMember.id = fid;
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await _sc_db_state().getState().refresh_page_groups(true);
 
     return pageGroupMember;
   }
@@ -115,7 +119,7 @@ class PageGroupMember implements AbstractPageGroupMember {
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_page_group_members", row, id);
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await _sc_db_state().getState().refresh_page_groups(true);
   }
 
   /**
@@ -135,11 +139,11 @@ class PageGroupMember implements AbstractPageGroupMember {
   static async delete(id: number): Promise<void> {
     await db.deleteWhere("_sc_page_group_members", { id });
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await _sc_db_state().getState().refresh_page_groups(true);
   }
 
   connected_objects(): ConnectedObjects {
-    const Page = require("./page").default;
+    const Page = _sc_page().default;
     const page = Page.findOne({ id: this.page_id });
     return page ? { linkedPages: [page] } : {};
   }
@@ -162,4 +166,4 @@ function instanceOfFindOneObj(object: any): object is FindOneObj {
   );
 }
 
-export = PageGroupMember;
+export default PageGroupMember;

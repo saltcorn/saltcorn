@@ -3,11 +3,20 @@
  * @module base-plugin/viewtemplates/room
  * @subcategory base-plugin
  */
-import Table from "../../models/table";
-import View from "../../models/view";
-import Form from "../../models/form";
-import Field from "../../models/field";
-import Workflow from "../../models/workflow";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_utils = () => (require("../../utils.js") as any).default;
+const _sc_db_state = () => (require("../../db/state.js") as any).default;
+const _sc_db = () => (require("../../db/index.js") as any).default;
+const _sc_diagram_node_extract_utils = () => (require("../../diagram/node_extract_utils.js") as any);
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
+import _sc__saltcorn_markup from "@saltcorn/markup";
+import Table from "../../models/table.js";
+import View from "../../models/view.js";
+import Form from "../../models/form.js";
+import Field from "../../models/field.js";
+import Workflow from "../../models/workflow.js";
 const {
   text,
   div,
@@ -19,10 +28,10 @@ const {
   i,
   script,
   domReady,
-} = require("@saltcorn/markup/tags");
-const { pagination } = require("@saltcorn/markup/helpers");
-const { renderForm, tabs, link } = require("@saltcorn/markup");
-const { mkTable } = require("@saltcorn/markup");
+} = (_sc__saltcorn_markup_tags as any);
+const { pagination } = (_sc__saltcorn_markup_helpers as any);
+const { renderForm, tabs, link } = (_sc__saltcorn_markup as any);
+const { mkTable } = (_sc__saltcorn_markup as any);
 import {
   link_view,
   stateToQueryString,
@@ -30,21 +39,21 @@ import {
   stateFieldsToQuery,
   readState,
   run_action_column,
-} from "../../plugin-helper";
-const { InvalidConfiguration } = require("../../utils");
-const { getState } = require("../../db/state");
-const db = require("../../db");
+} from "../../plugin-helper.js";
+const { InvalidConfiguration } = _sc_utils();
+const { getState } = _sc_db_state();
+const db = _sc_db();
 import {
   getForm,
   fill_presets,
   action_url,
   action_link,
   edit_build_in_actions,
-} from "../../viewable_fields";
-const { extractFromLayout } = require("../../diagram/node_extract_utils");
+} from "../../viewable_fields.js";
+const { extractFromLayout } = _sc_diagram_node_extract_utils();
 import { GenObj } from "@saltcorn/types/common_types";
 import { Req, Res } from "@saltcorn/types/base_types";
-import layout from "../../models/layout";
+import layout from "../../models/layout.js";
 const { traverse } = layout;
 
 
@@ -631,7 +640,7 @@ const run_action = async (
   return result;
 };
 
-export = {
+export default {
   /** @type {string} */
   name: "Room",
   /** @type {string} */

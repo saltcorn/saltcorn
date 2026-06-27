@@ -15,12 +15,17 @@
  * @param {string} schema0
  * @returns {Promise<void>}
  */
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_migrate = () => (require("../migrate.js") as any);
+const _sc_state = () => (require("./state.js") as any).default;
+import _sc_ from "./index.js";
 const reset = async (
   dontDrop: boolean = false,
   schema0?: string
 ): Promise<void> => {
-  const db = require(".");
-  const { migrate } = require("../migrate");
+  const db = (_sc_ as any);
+  const { migrate } = _sc_migrate();
   const schema = schema0 || db.connectObj.default_schema;
   const is_sqlite = db.isSQLite;
   const schemaQdot = is_sqlite ? "" : `"${schema}".`;
@@ -175,8 +180,8 @@ const reset = async (
   // do db migration
   await migrate(schema);
   // refresh SC State
-  const st = require("./state").getState();
+  const st = _sc_state().getState();
   if (st) await st.refresh();
 };
 
-export = reset;
+export default reset;

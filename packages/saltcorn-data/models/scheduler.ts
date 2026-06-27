@@ -3,18 +3,22 @@
  * @module models/scheduler
  * @subcategory models
  */
-import Crash from "./crash";
-import Trigger from "./trigger";
-import db from "../db";
-const { getState } = require("../db/state");
-import fetch from "node-fetch";
-import EventLog from "./eventlog";
-import Table from "./table";
-import mocks from "../tests/mocks";
-import WorkflowRun from "./workflow_run";
-import Notification from "./notification";
-import { MailQueue } from "./internal/mail_queue";
-import User from "./user";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+import Crash from "./crash.js";
+import Trigger from "./trigger.js";
+import db from "../db/index.js";
+const { getState } = _sc_db_state();
+import _fetch from "node-fetch";
+const fetch: any = _fetch;
+import EventLog from "./eventlog.js";
+import Table from "./table.js";
+import mocks from "../tests/mocks.js";
+import WorkflowRun from "./workflow_run.js";
+import Notification from "./notification.js";
+import { MailQueue } from "./internal/mail_queue.js";
+import User from "./user.js";
 const { mockReqRes } = mocks;
 
 /**
@@ -365,4 +369,4 @@ const runScheduler = async ({
   }
 };
 
-export = { runScheduler, getDailyTriggersDueNow, getWeeklyTriggersDueNow };
+export default { runScheduler, getDailyTriggersDueNow, getWeeklyTriggersDueNow };

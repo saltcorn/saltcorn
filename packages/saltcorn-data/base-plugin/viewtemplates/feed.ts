@@ -3,11 +3,21 @@
  * @module base-plugin/viewtemplates/feed
  * @subcategory base-plugin
  */
-import Table from "../../models/table";
-import View from "../../models/view";
-import Field from "../../models/field";
-import Form from "../../models/form";
-import Workflow from "../../models/workflow";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_utils = () => (require("../../utils.js") as any).default;
+const _sc_db_state = () => (require("../../db/state.js") as any).default;
+const _sc_models_expression = () => (require("../../models/expression.js") as any).default;
+const _sc_diagram_node_extract_utils = () => (require("../../diagram/node_extract_utils.js") as any);
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
+import _sc__saltcorn_markup from "@saltcorn/markup";
+import _sc_pluralize from "pluralize";
+import Table from "../../models/table.js";
+import View from "../../models/view.js";
+import Field from "../../models/field.js";
+import Form from "../../models/form.js";
+import Workflow from "../../models/workflow.js";
 const {
   text,
   div,
@@ -20,18 +30,18 @@ const {
   h2,
   ul,
   li,
-} = require("@saltcorn/markup/tags");
-const { pagination } = require("@saltcorn/markup/helpers");
-const { renderForm, tabs, link } = require("@saltcorn/markup");
-const { mkTable } = require("@saltcorn/markup");
-const pluralize = require("pluralize");
+} = (_sc__saltcorn_markup_tags as any);
+const { pagination } = (_sc__saltcorn_markup_helpers as any);
+const { renderForm, tabs, link } = (_sc__saltcorn_markup as any);
+const { mkTable } = (_sc__saltcorn_markup as any);
+const pluralize = (_sc_pluralize as any);
 import {
   link_view,
   stateToQueryString,
   stateFieldsToWhere,
   stateFieldsToQuery,
   readState,
-} from "../../plugin-helper";
+} from "../../plugin-helper.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Req } from "@saltcorn/types/base_types";
 const {
@@ -40,18 +50,18 @@ const {
   isWeb,
   mergeConnectedObjects,
   hashState,
-} = require("../../utils");
-const { getState } = require("../../db/state");
+} = _sc_utils();
+const { getState } = _sc_db_state();
 const {
   jsexprToWhere,
   eval_expression,
   add_free_variables_to_joinfields,
   freeVariables,
-} = require("../../models/expression");
+} = _sc_models_expression();
 const {
   extractFromLayout,
   extractViewToCreate,
-} = require("../../diagram/node_extract_utils");
+} = _sc_diagram_node_extract_utils();
 
 /**
  * @param {object} req
@@ -998,7 +1008,7 @@ const run = async (
   );
 };
 
-export = {
+export default {
   /** @type {string} */
   name: "Feed",
   /** @type {string} */

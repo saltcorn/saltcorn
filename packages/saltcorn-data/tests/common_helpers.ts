@@ -1,8 +1,8 @@
-import Table from "../models/table";
-import Field from "../models/field";
-import View from "../models/view";
-import db from "../db";
-import { assertIsSet } from "./assertions";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import View from "../models/view.js";
+import db from "../db/index.js";
+import { assertIsSet } from "./assertions.js";
 
 export async function prepareSimpleTopicPostRelation() {
   if (Table.findOne({ name: "simple_topics" })) return;

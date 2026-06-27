@@ -3,25 +3,44 @@
  * @module base-plugin/viewtemplates/list
  * @subcategory base-plugin
  */
-import Field from "../../models/field";
-import Table from "../../models/table";
-import Form from "../../models/form";
-import View from "../../models/view";
-import Workflow from "../../models/workflow";
-import Crash from "../../models/crash";
-import Trigger from "../../models/trigger";
-import Page from "../../models/page";
-import User from "../../models/user";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_models_fieldrepeat = () => (require("../../models/fieldrepeat.js") as any).default;
+const _sc_models_page_group = () => (require("../../models/page_group.js") as any).default;
+const _sc_models_library = () => (require("../../models/library.js") as any).default;
+const _sc_models_layout = () => (require("../../models/layout.js") as any).default;
+const _sc_utils = () => (require("../../utils.js") as any).default;
+const _sc_viewable_fields = () => (require("../../viewable_fields.js") as any);
+const _sc_db_state = () => (require("../../db/state.js") as any).default;
+const _sc_models_expression = () => (require("../../models/expression.js") as any).default;
+const _sc_db = () => (require("../../db/index.js") as any).default;
+const _sc_models_discovery = () => (require("../../models/discovery.js") as any).default;
+const _sc_plugin_testing = () => (require("../../plugin-testing.js") as any);
+const _sc_diagram_node_extract_utils = () => (require("../../diagram/node_extract_utils.js") as any);
+import _sc__saltcorn_common_code from "@saltcorn/common-code";
+import _sc__saltcorn_markup from "@saltcorn/markup";
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc_pluralize from "pluralize";
+import _sc__saltcorn_markup_layout_utils from "@saltcorn/markup/layout_utils";
+import Field from "../../models/field.js";
+import Table from "../../models/table.js";
+import Form from "../../models/form.js";
+import View from "../../models/view.js";
+import Workflow from "../../models/workflow.js";
+import Crash from "../../models/crash.js";
+import Trigger from "../../models/trigger.js";
+import Page from "../../models/page.js";
+import User from "../../models/user.js";
 import { GenObj } from "@saltcorn/types/common_types";
-import File from "../../models/file";
+import File from "../../models/file.js";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
-const FieldRepeat = require("../../models/fieldrepeat");
-const PageGroup = require("../../models/page_group");
-const Library = require("../../models/library");
+const FieldRepeat = _sc_models_fieldrepeat();
+const PageGroup = _sc_models_page_group();
+const Library = _sc_models_library();
 
-const { Relation, RelationType } = require("@saltcorn/common-code");
+const { Relation, RelationType } = (_sc__saltcorn_common_code as any);
 
-const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
+const { mkTable, h, post_btn, link } = (_sc__saltcorn_markup as any);
 const {
   text,
   script,
@@ -30,14 +49,14 @@ const {
   a,
   code,
   i,
-} = require("@saltcorn/markup/tags");
+} = (_sc__saltcorn_markup_tags as any);
 const {
   eachView,
   traverse,
   getStringsForI18n,
   translateLayout,
-} = require("../../models/layout");
-const pluralize = require("pluralize");
+} = _sc_models_layout();
+const pluralize = (_sc_pluralize as any);
 const {
   removeEmptyStrings,
   removeDefaultColor,
@@ -47,7 +66,7 @@ const {
   hashState,
   dollarizeObject,
   getSessionId,
-} = require("../../utils");
+} = _sc_utils();
 import {
   field_picker_fields,
   picked_fields_to_query,
@@ -64,31 +83,31 @@ import {
   add_free_variables_to_joinfields,
   pathToState,
   displayType,
-} from "../../plugin-helper";
+} from "../../plugin-helper.js";
 import { PrimaryKeyValue, Row } from "@saltcorn/db-common/dbtypes";
 const {
   get_viewable_fields,
   parse_view_select,
   get_viewable_fields_from_layout,
   action_url,
-} = require("../../viewable_fields");
-const { getState } = require("../../db/state");
+} = _sc_viewable_fields();
+const { getState } = _sc_db_state();
 const {
   get_async_expression_function,
   jsexprToWhere,
   freeVariables,
   get_expression_function,
   eval_expression,
-} = require("../../models/expression");
-const db = require("../../db");
-const { get_existing_views } = require("../../models/discovery");
-const { InvalidConfiguration, isWeb } = require("../../utils");
-const { check_view_columns } = require("../../plugin-testing");
+} = _sc_models_expression();
+const db = _sc_db();
+const { get_existing_views } = _sc_models_discovery();
+const { InvalidConfiguration, isWeb } = _sc_utils();
+const { check_view_columns } = _sc_plugin_testing();
 const {
   extractFromColumns,
   extractViewToCreate,
-} = require("../../diagram/node_extract_utils");
-const { validID } = require("@saltcorn/markup/layout_utils");
+} = _sc_diagram_node_extract_utils();
+const { validID } = (_sc__saltcorn_markup_layout_utils as any);
 
 const create_db_view = async (context: GenObj, req: Req) => {
   const table = Table.findOne({ id: context.table_id })!;
@@ -1823,7 +1842,7 @@ const createBasicView = async ({
   return configuration;
 };
 
-export = {
+export default {
   name: "List",
   description:
     "Display multiple rows from a table in a grid with columns you specify",

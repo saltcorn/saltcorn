@@ -4,10 +4,10 @@
  * @subcategory models
  */
 
-import state from "../db/state";
+import state from "../db/state.js";
 const { getState } = state;
 import { Layout } from "@saltcorn/types/base_types";
-import db from "../db/index";
+import db from "../db/index.js";
 const { is_node } = db;
 
 type Visitors = { [key: string]: (segment: any, isLazy?: boolean) => any };
@@ -326,7 +326,7 @@ const findLayoutBranchWith = (
   }
 };
 
-export = {
+export default {
   eachView,
   eachPage,
   getViews,

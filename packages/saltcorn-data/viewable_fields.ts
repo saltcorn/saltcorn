@@ -3,15 +3,32 @@
  * @module base-plugin/viewtemplates/viewable_fields
  * @subcategory base-plugin
  */
-import Table from "./models/table";
-import Field from "./models/field";
-import View from "./models/view";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("./db/state.js") as any).default;
+const _sc_models_expression = () => (require("./models/expression.js") as any).default;
+const _sc_models_fieldrepeat = () => (require("./models/fieldrepeat.js") as any).default;
+const _sc_models_form = () => (require("./models/form.js") as any).default;
+const _sc_models_layout = () => (require("./models/layout.js") as any).default;
+const _sc_utils = () => (require("./utils.js") as any).default;
+const _sc_db = () => (require("./db/index.js") as any).default;
+const _sc_base_plugin_types = () => (require("./base-plugin/types.js") as any).default;
+const _sc_models_crash = () => (require("./models/crash.js") as any).default;
+import _sc__saltcorn_markup from "@saltcorn/markup";
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc_underscore from "underscore";
+import _sc__saltcorn_markup_layout from "@saltcorn/markup/layout";
+import _sc__saltcorn_common_code from "@saltcorn/common-code";
+import _sc__saltcorn_markup_layout_utils from "@saltcorn/markup/layout_utils";
+import Table from "./models/table.js";
+import Field from "./models/field.js";
+import View from "./models/view.js";
 import type { Row } from "@saltcorn/db-common/internal";
 import type { GenObj, Type } from "@saltcorn/types/common_types";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 
-const { post_btn } = require("@saltcorn/markup");
+const { post_btn } = (_sc__saltcorn_markup as any);
 const {
   text,
   a,
@@ -22,23 +39,23 @@ const {
   script,
   domReady,
   input,
-} = require("@saltcorn/markup/tags");
-const { getState, getReq__ } = require("./db/state");
+} = (_sc__saltcorn_markup_tags as any);
+const { getState, getReq__ } = _sc_db_state();
 import {
   link_view,
   displayType,
   run_action_column,
   stateToQueryString,
   pathToState,
-} from "./plugin-helper";
+} from "./plugin-helper.js";
 const {
   eval_expression,
   freeVariables,
   get_expression_function,
-} = require("./models/expression");
-const FieldRepeat = require("./models/fieldrepeat");
-const Form = require("./models/form");
-const { traverseSync, traverse, translateLayout } = require("./models/layout");
+} = _sc_models_expression();
+const FieldRepeat = _sc_models_fieldrepeat();
+const Form = _sc_models_form();
+const { traverseSync, traverse, translateLayout } = _sc_models_layout();
 const {
   structuredClone,
   isWeb,
@@ -49,21 +66,21 @@ const {
   validSqlId,
   InvalidConfiguration,
   renderServerSide,
-} = require("./utils");
-const db = require("./db");
-const { isNode, dollarizeObject, getSafeBaseUrl } = require("./utils");
-const { bool, date } = require("./base-plugin/types");
-const _ = require("underscore");
-const renderLayout = require("@saltcorn/markup/layout");
-const Crash = require("./models/crash");
+} = _sc_utils();
+const db = _sc_db();
+const { isNode, dollarizeObject, getSafeBaseUrl } = _sc_utils();
+const { bool, date } = _sc_base_plugin_types();
+const _ = (_sc_underscore as any);
+const renderLayout = (_sc__saltcorn_markup_layout as any);
+const Crash = _sc_models_crash();
 
 const {
   Relation,
   parseRelationPath,
   RelationType,
   ViewDisplayType,
-} = require("@saltcorn/common-code");
-const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
+} = (_sc__saltcorn_common_code as any);
+const { show_icon_and_label } = (_sc__saltcorn_markup_layout_utils as any);
 
 /**
  * formats the column index of a view cfg

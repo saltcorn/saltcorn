@@ -1,5 +1,5 @@
 import { SuccessMessage, Type } from "@saltcorn/types/common_types";
-import User from "../models/user";
+import User from "../models/user.js";
 import { Row } from "@saltcorn/db-common/internal";
 import { expect } from "@saltcorn/db-common/test_expect";
 

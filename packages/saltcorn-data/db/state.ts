@@ -6,14 +6,26 @@
  * @subcategory db
  */
 
-import View from "../models/view";
-import Trigger from "../models/trigger";
-import File from "../models/file";
-import Table from "../models/table";
-import TableConstraint from "../models/table_constraints";
-import Page from "../models/page";
-import PageGroup from "../models/page_group";
-import Field from "../models/field";
+const _sc_migrate = () => (require("../migrate.js") as any);
+const _sc_models_expression = () => (require("../models/expression.js") as any).default;
+const _sc_models_model = () => (require("../models/model.js") as any).default;
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import _sc_live_plugin_manager from "live-plugin-manager";
+import _sc__saltcorn_markup_emergency_layout from "@saltcorn/markup/emergency_layout";
+import _sc_vm2 from "vm2";
+import _sc_vm from "vm";
+import _sc_node_fetch from "node-fetch";
+import _sc_buffer from "buffer";
+import _sc_module from "module";
+import View from "../models/view.js";
+import Trigger from "../models/trigger.js";
+import File from "../models/file.js";
+import Table from "../models/table.js";
+import TableConstraint from "../models/table_constraints.js";
+import Page from "../models/page.js";
+import PageGroup from "../models/page_group.js";
+import Field from "../models/field.js";
 import {
   Plugin,
   PluginLayout,
@@ -31,20 +43,20 @@ import {
   CapacitorPlugin,
 } from "@saltcorn/types/base_types";
 import { GenObj, Type } from "@saltcorn/types/common_types";
-import type { ConfigTypes, SingleConfig } from "../models/config";
-import type Model from "../models/model";
-import User from "../models/user";
-const { PluginManager } = require("live-plugin-manager");
+import type { ConfigTypes, SingleConfig } from "../models/config.js";
+import type Model from "../models/model.js";
+import User from "../models/user.js";
+const { PluginManager } = (_sc_live_plugin_manager as any);
 
 import moment from "moment";
 
-import db from ".";
-import { migrate } from "../migrate"; // Shows the true args and return type
-// const { migrate } = require("../migrate"); // Shows the args and return type as 'any'
-import config from "../models/config";
+import db from "./index.js";
+import { migrate } from "../migrate.js"; // Shows the true args and return type
+// const { migrate } = _sc_migrate(); // Shows the args and return type as 'any'
+import config from "../models/config.js";
 const { getAllConfig, setConfig, deleteConfig, configTypes } = config;
-const emergency_layout = require("@saltcorn/markup/emergency_layout");
-import utils from "../utils";
+const emergency_layout = (_sc__saltcorn_markup_emergency_layout as any);
+import utils from "../utils.js";
 const {
   structuredClone,
   removeAllWhiteSpace,
@@ -55,17 +67,18 @@ const {
   flatEqual,
 } = utils;
 import I18n from "i18n";
-import { tz } from "moment-timezone";
+import _momentTimezone from "moment-timezone";
+const { tz } = _momentTimezone;
 import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
-const { VM } = require("vm2");
-const oldVm = require("vm");
-import faIcons from "./fa5-icons";
+const { VM } = (_sc_vm2 as any);
+const oldVm = (_sc_vm as any);
+import faIcons from "./fa5-icons.js";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
-import MetaData from "../models/metadata";
-import { PushMessageHelper } from "../models/internal/push_message_helper";
+import MetaData from "../models/metadata.js";
+import { PushMessageHelper } from "../models/internal/push_message_helper.js";
 import { UserLike } from "@saltcorn/db-common/dbtypes";
 import PlainDate from "@saltcorn/plain-date";
 
@@ -213,7 +226,7 @@ class State {
    * @param {string} tenant description
    */
   constructor(tenant: string) {
-    const { today } = require("../models/expression");
+    const { today } = _sc_models_expression();
 
     this.tenant = tenant;
     this.views = [];
@@ -603,7 +616,7 @@ class State {
   }
 
   async refresh_roles(noSignal: boolean) {
-    const Role = (await import("../models/role")).default;
+    const Role = (await import("../models/role.js")).default;
     this.roles = await Role.find({}, { orderBy: "id" });
 
     if (!noSignal) this.log(5, "Refresh roles");
@@ -745,7 +758,7 @@ class State {
    * @returns {Promise<void>}
    */
   async refresh_pages(noSignal: boolean) {
-    const Page = (await import("../models/page")).default;
+    const Page = (await import("../models/page.js")).default;
     this.pages = await Page.find();
     if (!noSignal) this.log(5, "Refresh pages");
 
@@ -757,7 +770,7 @@ class State {
     await db.tryCatchInTransaction(
       async () => {
         //sometimes this is run before migration
-        const PageGroup = (await import("../models/page_group")).default;
+        const PageGroup = (await import("../models/page_group.js")).default;
         this.page_groups = await PageGroup.find();
         if (!noSignal) this.log(5, "Refresh page groups");
       },
@@ -789,7 +802,7 @@ class State {
       { orderBy: "name", nocase: true }
     );
     const allConstraints = await db.select("_sc_table_constraints", {});
-    const Model = require("../models/model");
+    const Model = _sc_models_model();
     let allModels: Model[] = [];
     await db.tryCatchInTransaction(
       async () => {
@@ -1206,8 +1219,8 @@ class State {
     if (keepUnchanged && flatEqual(code_pages, this.oldCodePages)) return;
     let errMsg;
     if (Object.keys(code_pages).length > 0) {
-      const fetch = require("node-fetch");
-      const Page = (await import("../models/page")).default;
+      const fetch = (_sc_node_fetch as any);
+      const Page = (await import("../models/page.js")).default;
       const asyncFs: Function[] = [];
       const runAsync = (f: Function) => {
         asyncFs.push(f);
@@ -1248,7 +1261,7 @@ class State {
                   : [];
             this.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
           },
-          Buffer: isNode() ? Buffer : require("buffer"),
+          Buffer: isNode() ? Buffer : (_sc_buffer as any),
           URL,
           console, //TODO consoleInterceptor
           require: (nm: string) => this.codeNPMmodules[nm],
@@ -1260,7 +1273,7 @@ class State {
         const funCtxKeys = new Set(Object.keys(myContext));
         let stripTypes = (s: string) => s;
         try {
-          const { stripTypeScriptTypes } = require("module");
+          const { stripTypeScriptTypes } = (_sc_module as any);
           if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
         } catch (e) {
           //ignore
@@ -1303,7 +1316,7 @@ class State {
    * @returns {Promise<void>}
    */
   async refresh_plugins(noSignal?: boolean) {
-    const { today } = require("../models/expression");
+    const { today } = _sc_models_expression();
 
     this.viewtemplates = {};
     this.modelpatterns = {};
@@ -1800,7 +1813,7 @@ const features = Object.freeze({
   view_route_modal: true,
 });
 
-export = {
+export default {
   getState,
   getTenant,
   init_multi_tenant,

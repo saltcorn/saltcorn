@@ -1,11 +1,17 @@
-import Table from "../models/table";
-import Field from "../models/field";
-import Trigger from "../models/trigger";
-import db from "../db";
-const { getState } = require("../db/state");
-import mocks from "./mocks";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import Trigger from "../models/trigger.js";
+import db from "../db/index.js";
+const { getState } = _sc_db_state();
+import mocks from "./mocks.js";
 const { plugin_with_routes, sleep } = mocks;
-import expression from "../models/expression";
+import expression from "../models/expression.js";
 const {
   eval_expression,
   eval_statements,
@@ -22,20 +28,20 @@ const {
 } = expression;
 import { mkWhere } from "@saltcorn/db-common/internal";
 
-import { assertIsSet } from "./assertions";
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import utils from "../utils";
+import utils from "../utils.js";
 import PlainDate from "@saltcorn/plain-date";
 const { interpolate, mergeIntoWhere } = utils;
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState().registerPlugin("base", _sc_base_plugin());
 
 afterAll(db.close);
 jest.setTimeout(30000);
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 describe("identifiersInCodepage", () => {

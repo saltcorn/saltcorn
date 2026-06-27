@@ -5,16 +5,20 @@
  * @subcategory db
  */
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import _sc_contractis_is from "contractis/is.js";
+import _sc_child_process from "child_process";
 import { join } from "path";
 import { readFileSync, mkdirSync } from "fs";
 import envPaths from "env-paths";
-const is = require("contractis/is");
+const is = (_sc_contractis_is as any);
 import { randomBytes, createHash } from "crypto";
 
 const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
 
-import utils from "../utils";
+import utils from "../utils.js";
 import type { ConnectObjType } from "@saltcorn/types/base_types";
 const { isNode } = utils;
 
@@ -44,7 +48,7 @@ const stringToBool = (x: any) =>
 const getGitRevision = () => {
   let options = { stdio: "pipe", cwd: __dirname };
   try {
-    return require("child_process")
+    return (_sc_child_process as any)
       .execSync("git rev-parse HEAD", options)
       .toString()
       .trim();
@@ -224,7 +228,7 @@ const is_sqlite = (connObj: ConnectObjType) => {
   return !!connObj.sqlite_path;
 };
 
-export = {
+export default {
   getConnectObject,
   getConfigFile,
   configFileDir,

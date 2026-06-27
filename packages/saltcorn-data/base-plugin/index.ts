@@ -25,29 +25,42 @@
  * @category saltcorn-data
  * @subcategory base-plugin
  */
-// import listshowlist = require("./viewtemplates/listshowlist");
-// import list = require("./viewtemplates/list");
-// import show = require("./viewtemplates/show");
-// import feed = require("./viewtemplates/feed");
-// import room = require("./viewtemplates/room");
-// import wfroom = require("./viewtemplates/workflow-room");
-// import edit = require("./viewtemplates/edit");
-// import filter = require("./viewtemplates/filter");
-// import fileviews = require("./fileviews");
-// import fieldviews = require("./fieldviews");
-// import actions = require("./actions");
-import listshowlist from "./viewtemplates/listshowlist";
-import list from "./viewtemplates/list";
-import show from "./viewtemplates/show";
-import feed from "./viewtemplates/feed";
-import room from "./viewtemplates/room";
-import wfroom from "./viewtemplates/workflow-room";
-import edit from "./viewtemplates/edit";
-import filter from "./viewtemplates/filter";
-import fileviews from "./fileviews";
-import fieldviews from "./fieldviews";
-import actions from "./actions";
-import types from "./types";
+// import listshowlist = _sc_viewtemplates_listshowlist();
+// import list = _sc_viewtemplates_list();
+// import show = _sc_viewtemplates_show();
+// import feed = _sc_viewtemplates_feed();
+// import room = _sc_viewtemplates_room();
+// import wfroom = _sc_viewtemplates_workflow_room();
+// import edit = _sc_viewtemplates_edit();
+// import filter = _sc_viewtemplates_filter();
+// import fileviews = _sc_fileviews();
+// import fieldviews = _sc_fieldviews();
+// import actions = _sc_actions();
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_viewtemplates_listshowlist = () => (require("./viewtemplates/listshowlist.js") as any).default;
+const _sc_viewtemplates_list = () => (require("./viewtemplates/list.js") as any).default;
+const _sc_viewtemplates_show = () => (require("./viewtemplates/show.js") as any).default;
+const _sc_viewtemplates_feed = () => (require("./viewtemplates/feed.js") as any).default;
+const _sc_viewtemplates_room = () => (require("./viewtemplates/room.js") as any).default;
+const _sc_viewtemplates_workflow_room = () => (require("./viewtemplates/workflow-room.js") as any).default;
+const _sc_viewtemplates_edit = () => (require("./viewtemplates/edit.js") as any).default;
+const _sc_viewtemplates_filter = () => (require("./viewtemplates/filter.js") as any).default;
+const _sc_fileviews = () => (require("./fileviews.js") as any).default;
+const _sc_fieldviews = () => (require("./fieldviews.js") as any).default;
+const _sc_actions = () => (require("./actions.js") as any).default;
+import listshowlist from "./viewtemplates/listshowlist.js";
+import list from "./viewtemplates/list.js";
+import show from "./viewtemplates/show.js";
+import feed from "./viewtemplates/feed.js";
+import room from "./viewtemplates/room.js";
+import wfroom from "./viewtemplates/workflow-room.js";
+import edit from "./viewtemplates/edit.js";
+import filter from "./viewtemplates/filter.js";
+import fileviews from "./fileviews.js";
+import fieldviews from "./fieldviews.js";
+import actions from "./actions.js";
+import types from "./types.js";
 const { string, int, bool, date, float, color } = types;
 
 const viewtemplates = [
@@ -61,7 +74,7 @@ const viewtemplates = [
   wfroom,
 ];
 
-export = {
+export default {
   /** @type {number} */
   sc_plugin_api_version: 1,
   /** @type {object[]} */

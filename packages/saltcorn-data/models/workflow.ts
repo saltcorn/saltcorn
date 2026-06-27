@@ -5,22 +5,26 @@
  * @subcategory models
  */
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_utils = () => (require("../utils.js") as any).default;
 import { instanceOfType } from "@saltcorn/types/common_types";
 import type {
   AbstractWorkflow,
   RunResult,
 } from "@saltcorn/types/model-abstracts/abstract_workflow";
 
-import db from "../db";
+import db from "../db/index.js";
 
-import type Field from "./field";
-import Form from "./form";
+import type Field from "./field.js";
+import Form from "./form.js";
 
-import { build_schema_data } from "../plugin-helper";
-import FieldRepeat from "./fieldrepeat";
+import { build_schema_data } from "../plugin-helper.js";
+import FieldRepeat from "./fieldrepeat.js";
 
-const { getState } = require("../db/state");
-const { applyAsync, apply, asyncMap } = require("../utils");
+const { getState } = _sc_db_state();
+const { applyAsync, apply, asyncMap } = _sc_utils();
 
 /**
  * Workflow class
@@ -269,7 +273,7 @@ class Workflow implements AbstractWorkflow {
         ...(step.disablePreview ? {} : { previewURL: this.previewURL }),
       };
     } else if (step.builder) {
-      const File = (await import("./file")).default;
+      const File = (await import("./file.js")).default;
       let options;
       try {
         await File.buildDirCache();
@@ -280,7 +284,7 @@ class Workflow implements AbstractWorkflow {
       } finally {
         File.destroyDirCache();
       }
-      const Table = (await import("./table")).default;
+      const Table = (await import("./table.js")).default;
       const table = Table.findOne(
         context.table_id
           ? { id: context.table_id }
@@ -384,4 +388,4 @@ async function addApplyButtonToForm(
 
 type WorkflowCfg = Partial<Workflow>;
 
-export = Workflow;
+export default Workflow;

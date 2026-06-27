@@ -2,29 +2,35 @@
  * common structures used in the server and the mobile-app package
  */
 
-import Table from "./models/table";
-import type Field from "./models/field";
-import type WorkflowRun from "./models/workflow_run";
-import type Trigger from "./models/trigger";
-import type WorkflowStep from "./models/workflow_step";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("./db/state.js") as any).default;
+const _sc__saltcorn_data_plugin_helper = () => (require("./plugin-helper.js") as any);
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc_markdown_it from "markdown-it";
+import Table from "./models/table.js";
+import type Field from "./models/field.js";
+import type WorkflowRun from "./models/workflow_run.js";
+import type Trigger from "./models/trigger.js";
+import type WorkflowStep from "./models/workflow_step.js";
 import { instanceOfType } from "@saltcorn/types/common_types";
-import utils from "./utils";
-import expression from "./models/expression";
-import type User from "./models/user";
-import View from "./models/view";
-import Form from "./models/form";
+import utils from "./utils.js";
+import expression from "./models/expression.js";
+import type User from "./models/user.js";
+import View from "./models/view.js";
+import Form from "./models/form.js";
 const { isNode, isWeb, applyAsync } = utils;
-const { text } = require("@saltcorn/markup/tags");
-const { getState } = require("./db/state");
+const { text } = (_sc__saltcorn_markup_tags as any);
+const { getState } = _sc_db_state();
 const {
   readState,
   add_free_variables_to_joinfields,
   calcfldViewConfig,
-} = require("@saltcorn/data/plugin-helper");
-import { getForm, transformForm } from "./viewable_fields";
+} = _sc__saltcorn_data_plugin_helper();
+import { getForm, transformForm } from "./viewable_fields.js";
 import { Req } from "@saltcorn/types/base_types";
-import FieldRepeat from "./models/fieldrepeat";
-const MarkdownIt = require("markdown-it"),
+import FieldRepeat from "./models/fieldrepeat.js";
+const MarkdownIt = (_sc_markdown_it as any),
   md = new MarkdownIt();
 
 const disabledMobileMenus = ["Action", "Search", "Admin Page", "User Page"];
@@ -587,7 +593,7 @@ const getWorkflowStepUserForm = async (
   return form;
 };
 
-export = {
+export default {
   get_extra_menu,
   prepare_update_row,
   prepare_insert_row,

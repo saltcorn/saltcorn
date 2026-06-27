@@ -5,7 +5,16 @@
  * @subcategory models
  */
 
-import db from "../db";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_utils = () => (require("../utils.js") as any).default;
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_field = () => (require("./field.js") as any).default;
+const _sc_table = () => (require("./table.js") as any).default;
+import _sc_path from "path";
+import _sc_fs from "fs";
+import _sc_fs_extended_attributes from "fs-extended-attributes";
+import db from "../db/index.js";
 import { v4 as uuidv4 } from "uuid";
 import { join, parse } from "path";
 import {
@@ -23,8 +32,8 @@ import {
   publicUrlToRelativePath,
   type S3HeadResult,
   type S3ListResult,
-} from "./internal/s3_helpers";
-const { asyncMap } = require("../utils");
+} from "./internal/s3_helpers.js";
+const { asyncMap } = _sc_utils();
 import { mkdir, unlink } from "fs/promises";
 import type {
   Where,
@@ -32,16 +41,17 @@ import type {
   Row,
   PartialSome,
 } from "@saltcorn/db-common/internal";
-import axios from "axios";
+import _axios from "axios";
+const axios: any = _axios;
 import FormData from "form-data";
 import { renameSync, statSync, existsSync } from "fs";
 import { lookup } from "mime-types";
-import type User from "./user";
-const path = require("path");
+import type User from "./user.js";
+const path = (_sc_path as any);
 const posix = path.posix;
-const fsp = require("fs").promises;
-const fs = require("fs");
-const fsx = require("fs-extended-attributes");
+const fsp = (_sc_fs as any).promises;
+const fs = (_sc_fs as any);
+const fsx = (_sc_fs_extended_attributes as any);
 declare let window: any;
 
 const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//;
@@ -310,7 +320,7 @@ class File {
     if (relative === null) return trimmed;
     if (isS3StorageEnabled()) {
       try {
-        const { getState } = require("../db/state");
+        const { getState } = _sc_db_state();
         const direct = !!getState()?.getConfig("files_direct_s3_links");
         if (direct && opts.preferDirect !== false) {
           return getS3PublicFileUrl(relative, {
@@ -636,7 +646,7 @@ class File {
    */
   static async findOne(where: Where | string): Promise<File | null> {
     if (typeof where === "string") {
-      const { getState } = require("../db/state");
+      const { getState } = _sc_db_state();
       const state = getState();
       const useS3 = isS3StorageEnabled();
       //legacy serving ids
@@ -863,8 +873,8 @@ class File {
    * @param to
    */
   static async update_table_references(from: string, to: string) {
-    const Field = require("./field");
-    const Table = require("./table");
+    const Field = _sc_field();
+    const Table = _sc_table();
     const fileFields = await Field.find({ type: "File" }, { cached: true });
     const schema = db.getTenantSchemaPrefix();
     const targetValue = File.fieldValueFromRelative(to);
@@ -981,7 +991,7 @@ class File {
    */
   // TBD fs errors handling
   static async ensure_file_store(tenant_name?: string): Promise<void> {
-    const { getState, getAllTenants } = require("../db/state");
+    const { getState, getAllTenants } = _sc_db_state();
     const file_store = db.connectObj.file_store;
     if (tenant_name) {
       await mkdir(path.join(file_store, tenant_name), { recursive: true });
@@ -1216,7 +1226,7 @@ class File {
    * @returns JSON response from POST 'file/upload'
    */
   static async upload(file: { blob: Blob; fileObj: any }): Promise<any> {
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     const state = getState();
     const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000";
     const url = `${base_url}/files/upload`;
@@ -1273,4 +1283,4 @@ type FileCfg = PartialSome<
   | "min_role_read"
 >;
 
-export = File;
+export default File;

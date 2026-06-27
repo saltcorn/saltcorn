@@ -1,27 +1,33 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+import _sc_mjml from "mjml";
 import { createTransport, Transporter } from "nodemailer";
-const { getState } = require("../db/state");
+const { getState } = _sc_db_state();
 import tags from "@saltcorn/markup/tags";
 import mjml from "@saltcorn/markup/mjml-tags";
 const { link } = tags;
-import View from "./view";
-import type Table from "./table";
-import type File from "./file";
+import View from "./view.js";
+import type Table from "./table.js";
+import type File from "./file.js";
 import { v4 as uuidv4 } from "uuid";
-import User from "./user";
-import mocks from "../tests/mocks";
+import User from "./user.js";
+import mocks from "../tests/mocks.js";
 // mjml is heavy to load (~170ms) and only needed when actually rendering
 // email markup, so require it lazily rather than at module load time.
 let _mjml2html: any;
 const mjml2html = (mjmlMarkup: string, opts?: any) => {
   if (!_mjml2html) {
-    const m = require("mjml");
+    const m = (_sc_mjml as any);
     _mjml2html = m && m.default ? m.default : m;
   }
   return _mjml2html(mjmlMarkup, opts);
 };
 const { mockReqRes } = mocks;
 import { AuthorizationCode } from "simple-oauth2";
-import type { Options as MailOpts } from "nodemailer/lib/mailer";
+// nodemailer/lib/mailer's Options type is not resolvable as a subpath under
+// NodeNext; it was effectively `any` via the prior require() path anyway.
+type MailOpts = any;
 
 const emailMockReqRes = {
   req: {
@@ -319,8 +325,8 @@ const parseRelationPath = (path: string) => {
  * @returns
  */
 const loadAttachments = async (path: string, row: any, user: any) => {
-  const _File = (await import("./file")).default;
-  const _Table = (await import("./table")).default;
+  const _File = (await import("./file.js")).default;
+  const _Table = (await import("./table.js")).default;
   const allowed = (file: File | null) => {
     const isAllowed =
       file &&
@@ -426,7 +432,7 @@ const getTokenString = async () => {
   return wrapped.token.access_token as string;
 };
 
-export = {
+export default {
   getMailTransport,
   send_verification_email,
   emailMockReqRes,

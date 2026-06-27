@@ -3,15 +3,26 @@
  * @module base-plugin/viewtemplates/filter
  * @subcategory base-plugin
  */
-import Table from "../../models/table";
-import View from "../../models/view";
-import Field from "../../models/field";
-import Workflow from "../../models/workflow";
-import Trigger from "../../models/trigger";
-import User from "../../models/user";
-import Page from "../../models/page";
-import Crash from "../../models/crash";
-const PageGroup = require("../../models/page_group");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_models_page_group = () => (require("../../models/page_group.js") as any).default;
+const _sc_models_layout = () => (require("../../models/layout.js") as any).default;
+const _sc_utils = () => (require("../../utils.js") as any).default;
+const _sc_models_expression = () => (require("../../models/expression.js") as any).default;
+const _sc_models_library = () => (require("../../models/library.js") as any).default;
+const _sc_db_state = () => (require("../../db/state.js") as any).default;
+const _sc_db_index = () => (require("../../db/index.js") as any).default;
+import _sc__saltcorn_markup_layout from "@saltcorn/markup/layout";
+import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
+import Table from "../../models/table.js";
+import View from "../../models/view.js";
+import Field from "../../models/field.js";
+import Workflow from "../../models/workflow.js";
+import Trigger from "../../models/trigger.js";
+import User from "../../models/user.js";
+import Page from "../../models/page.js";
+import Crash from "../../models/crash.js";
+const PageGroup = _sc_models_page_group();
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 import {
@@ -27,7 +38,7 @@ import {
   script,
   a,
 } from "@saltcorn/markup/tags";
-const renderLayout = require("@saltcorn/markup/layout");
+const renderLayout = (_sc__saltcorn_markup_layout as any);
 
 import {
   readState,
@@ -39,15 +50,15 @@ import {
   picked_fields_to_query,
   stateFieldsToQuery,
   stateToQueryString,
-} from "../../plugin-helper";
-import { action_link } from "../../viewable_fields";
-const { search_bar } = require("@saltcorn/markup/helpers");
+} from "../../plugin-helper.js";
+import { action_link } from "../../viewable_fields.js";
+const { search_bar } = (_sc__saltcorn_markup_helpers as any);
 const {
   eachView,
   translateLayout,
   getStringsForI18n,
   traverse,
-} = require("../../models/layout");
+} = _sc_models_layout();
 const {
   InvalidConfiguration,
   objectToQueryString,
@@ -58,16 +69,16 @@ const {
   isWeb,
   renderServerSide,
   interpolate,
-} = require("../../utils");
-const { jsexprToWhere } = require("../../models/expression");
-const Library = require("../../models/library");
-import { extractFromLayout } from "../../diagram/node_extract_utils";
-const { getState } = require("../../db/state");
+} = _sc_utils();
+const { jsexprToWhere } = _sc_models_expression();
+const Library = _sc_models_library();
+import { extractFromLayout } from "../../diagram/node_extract_utils.js";
+const { getState } = _sc_db_state();
 const {
   get_expression_function,
   eval_expression,
-} = require("../../models/expression");
-const db = require("../../db/index");
+} = _sc_models_expression();
+const db = _sc_db_index();
 
 /**
  * @returns {Workflow}
@@ -938,7 +949,7 @@ const combineResults = (results: GenObj[]) => {
   return result;
 };
 
-export = {
+export default {
   /** @type {string} */
   name: "Filter",
   /** @type {string} */

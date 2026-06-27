@@ -1,14 +1,20 @@
-import db from "../db";
-const state = require("../db/state");
-import User from "../models/user";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import db from "../db/index.js";
+const state = _sc_db_state();
+import User from "../models/user.js";
 
 const { getState } = state;
 import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState().registerPlugin("base", _sc_base_plugin());
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 afterAll(db.close);

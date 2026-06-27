@@ -1,4 +1,7 @@
-const { getState } = require("./db/state");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("./db/state.js") as any).default;
+const { getState } = _sc_db_state();
 
 export const hasLLM = () => {
   return !!getState().functions.llm_generate;

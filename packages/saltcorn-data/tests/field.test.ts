@@ -1,24 +1,31 @@
-import Table from "../models/table";
-import Field from "../models/field";
-import db from "../db";
-const { getState } = require("../db/state");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import _sc__saltcorn_plain_date from "@saltcorn/plain-date";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import db from "../db/index.js";
+const { getState } = _sc_db_state();
 
-import { assertIsSet, assertsIsSuccessMessage } from "./assertions";
+import { assertIsSet, assertsIsSuccessMessage } from "./assertions.js";
 import { afterAll, beforeAll, describe, it, expect, jest } from "@saltcorn/db-common/test_expect";
-import mocks from "./mocks";
+import mocks from "./mocks.js";
 import { Type } from "@saltcorn/types/common_types";
 import { writeFile } from "fs/promises";
-const PlainDate = require("@saltcorn/plain-date");
+const PlainDate = (_sc__saltcorn_plain_date as any);
 
 const { sleep, plugin_with_routes } = mocks;
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState().registerPlugin("base", _sc_base_plugin());
 
 afterAll(db.close);
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 jest.setTimeout(20000);

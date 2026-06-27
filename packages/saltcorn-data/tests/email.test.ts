@@ -1,15 +1,21 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_db = () => (require("../db/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import { writeFileSync } from "fs";
-import email from "../models/email";
+import email from "../models/email.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import View from "../models/view";
-import Table from "../models/table";
-import User from "../models/user";
+import View from "../models/view.js";
+import Table from "../models/table.js";
+import User from "../models/user.js";
 import { createTransport } from "nodemailer";
-import mocks from "./mocks";
+import mocks from "./mocks.js";
 const { mockReqRes } = mocks;
-import { assertIsSet } from "./assertions";
-const { getState } = require("../db/state");
-const db = require("../db");
+import { assertIsSet } from "./assertions.js";
+const { getState } = _sc_db_state();
+const db = _sc_db();
 
 function removeBreaks(str: string): string {
   return str.replace(/(\r\n|\r|\n)/gm, "").toLowerCase();
@@ -22,8 +28,8 @@ const trimLines = (s: string) =>
     .join("\n");
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 jest.mock("nodemailer");

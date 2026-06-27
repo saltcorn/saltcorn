@@ -4,14 +4,21 @@
  * @subcategory base-plugin
  */
 
-import View from "../models/view";
-import Table from "../models/table";
-import Field from "../models/field";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_models_expression = () => (require("../models/expression.js") as any).default;
+const _sc_utils = () => (require("../utils.js") as any).default;
+const _sc_tests_mocks = () => (require("../tests/mocks.js") as any).default;
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
+import View from "../models/view.js";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
 const {
   eval_expression,
   jsexprToWhere,
   eval_statements,
-} = require("../models/expression");
+} = _sc_models_expression();
 const {
   option,
   a,
@@ -22,12 +29,12 @@ const {
   input,
   domReady,
   div,
-} = require("@saltcorn/markup/tags");
-const tags = require("@saltcorn/markup/tags");
-const { select_options, radio_group } = require("@saltcorn/markup/helpers");
-const { isNode, nubBy, objectToQueryString } = require("../utils");
-const { mockReqRes } = require("../tests/mocks");
-import db from "../db";
+} = (_sc__saltcorn_markup_tags as any);
+const tags = (_sc__saltcorn_markup_tags as any);
+const { select_options, radio_group } = (_sc__saltcorn_markup_helpers as any);
+const { isNode, nubBy, objectToQueryString } = _sc_utils();
+const { mockReqRes } = _sc_tests_mocks();
+import db from "../db/index.js";
 import { GenObj } from "@saltcorn/types/common_types";
 
 /**
@@ -980,7 +987,7 @@ const select_by_view = {
   },
 };
 
-export = {
+export default {
   select,
   select_from_table,
   search_or_create,

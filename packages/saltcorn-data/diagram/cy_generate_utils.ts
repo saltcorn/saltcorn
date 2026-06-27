@@ -1,6 +1,6 @@
-import Node from "./nodes/node";
-import CytoscapeRaster from "./cy_raster";
-import type { ExtractResult } from "./node_extract_utils";
+import Node from "./nodes/node.js";
+import CytoscapeRaster from "./cy_raster.js";
+import type { ExtractResult } from "./node_extract_utils.js";
 
 const cyStyle = [
   {

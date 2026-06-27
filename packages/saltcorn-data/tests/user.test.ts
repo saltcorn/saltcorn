@@ -1,21 +1,27 @@
-import db from "../db/index";
-import User from "../models/user";
-import Table from "../models/table";
-import Field from "../models/field";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import db from "../db/index.js";
+import User from "../models/user.js";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
 import {
   assertIsSet,
   assertsIsSuccessMessage,
   assertsObjectIsUser,
   assertIsErrorMsg,
-} from "./assertions";
+} from "./assertions.js";
 import { afterAll, beforeAll, describe, it, expect, jest } from "@saltcorn/db-common/test_expect";
 
-const { getState } = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
+const { getState } = _sc_db_state();
+getState().registerPlugin("base", _sc_base_plugin());
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 jest.setTimeout(20000);

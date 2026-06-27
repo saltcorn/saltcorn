@@ -3,23 +3,25 @@
  * @module base-plugin/viewtemplates/listshowlist
  * @subcategory base-plugin
  */
-import Table from "../../models/table";
-import Form from "../../models/form";
-import View from "../../models/view";
-import Workflow from "../../models/workflow";
-const { text, div, h4, h6, a } = require("@saltcorn/markup/tags");
-const { renderForm, tabs } = require("@saltcorn/markup");
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc__saltcorn_markup from "@saltcorn/markup";
+import Table from "../../models/table.js";
+import Form from "../../models/form.js";
+import View from "../../models/view.js";
+import Workflow from "../../models/workflow.js";
+const { text, div, h4, h6, a } = (_sc__saltcorn_markup_tags as any);
+const { renderForm, tabs } = (_sc__saltcorn_markup as any);
 import {
   get_child_views,
   get_parent_views,
   readState,
-} from "../../plugin-helper";
-import { splitUniques } from "../../viewable_fields";
+} from "../../plugin-helper.js";
+import { splitUniques } from "../../viewable_fields.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Req } from "@saltcorn/types/base_types";
 import type { Where, Row } from "@saltcorn/db-common/internal";
 
-import utils from "../../utils";
+import utils from "../../utils.js";
 const { InvalidConfiguration, extractPagings } = utils;
 
 
@@ -289,7 +291,7 @@ const run = async (
   }
 };
 
-export = {
+export default {
   /** @type {string} */
   name: "ListShowList",
   /** @type {string} */

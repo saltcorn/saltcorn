@@ -5,24 +5,38 @@
  * @subcategory base-plugin
  */
 
-const fetch = require("node-fetch");
-const { VM } = require("vm2");
-const oldVm = require("vm");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_models_email = () => (require("../models/email.js") as any).default;
+const _sc_models_expression = () => (require("../models/expression.js") as any).default;
+const _sc_utils = () => (require("../utils.js") as any).default;
+const _sc_db = () => (require("../db/index.js") as any).default;
+const _sc_models_config = () => (require("../models/config.js") as any).default;
+const _sc_models_metadata = () => (require("../models/metadata.js") as any).default;
+import _sc_node_fetch from "node-fetch";
+import _sc_vm2 from "vm2";
+import _sc_vm from "vm";
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc_module from "module";
+import _sc_buffer from "buffer";
+const fetch = (_sc_node_fetch as any);
+const { VM } = (_sc_vm2 as any);
+const oldVm = (_sc_vm as any);
 
-import Table from "../models/table";
-import EventLog from "../models/eventlog";
-import View from "../models/view";
-import Model from "../models/model";
-import Page from "../models/page";
-import Field from "../models/field";
-import User from "../models/user";
-import Trigger from "../models/trigger";
-import WorkflowRun from "../models/workflow_run";
-import Notification from "../models/notification";
-import File from "../models/file";
+import Table from "../models/table.js";
+import EventLog from "../models/eventlog.js";
+import View from "../models/view.js";
+import Model from "../models/model.js";
+import Page from "../models/page.js";
+import Field from "../models/field.js";
+import User from "../models/user.js";
+import Trigger from "../models/trigger.js";
+import WorkflowRun from "../models/workflow_run.js";
+import Notification from "../models/notification.js";
+import File from "../models/file.js";
 import { Where } from "@saltcorn/db-common/internal";
 import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
-import stateModule from "../db/state";
+import stateModule from "../db/state.js";
 
 const { getState } = stateModule;
 const {
@@ -31,7 +45,7 @@ const {
   loadAttachments,
   getFileAggregations,
   mjml2html,
-} = require("../models/email");
+} = _sc_models_email();
 const {
   get_async_expression_function,
   recalculate_for_stored,
@@ -39,8 +53,8 @@ const {
   freeVariablesInInterpolation,
   add_free_variables_to_joinfields,
   freeVariables,
-} = require("../models/expression");
-const { div, code, a, span } = require("@saltcorn/markup/tags");
+} = _sc_models_expression();
+const { div, code, a, span } = (_sc__saltcorn_markup_tags as any);
 const {
   sleep,
   getSessionId,
@@ -50,12 +64,12 @@ const {
   interpolate,
   comparingCaseInsensitive,
   mergeActionResults,
-} = require("../utils");
-const db = require("../db");
+} = _sc_utils();
+const db = _sc_db();
 
-const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
-const { available_languages } = require("../models/config");
-const MetaData = require("../models/metadata");
+const { isNode, isWeb, ppVal, getFetchProxyOptions } = _sc_utils();
+const { available_languages } = _sc_models_config();
+const MetaData = _sc_models_metadata();
 
 import type { GenObj } from "@saltcorn/types/common_types";
 import type {
@@ -152,7 +166,7 @@ const run_code = async ({
   let stripTypes = (s: string) => s;
   let code;
   try {
-    const { stripTypeScriptTypes } = require("module");
+    const { stripTypeScriptTypes } = (_sc_module as any);
     if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
     code = stripTypes(`async () =>{${configuration.code}
 }`)
@@ -274,7 +288,7 @@ const run_code = async ({
     Page,
     Field,
     EventLog,
-    Buffer: isNode() ? Buffer : require("buffer"),
+    Buffer: isNode() ? Buffer : (_sc_buffer as any),
     Trigger,
     Notification,
     WorkflowRun,
@@ -312,7 +326,7 @@ const run_code = async ({
   }
 };
 
-export = {
+export default {
   /**
    * @namespace
    * @category saltcorn-data
@@ -2438,7 +2452,7 @@ export = {
           validator(s: any) {
             let stripTypes = (s: string) => s;
             try {
-              const { stripTypeScriptTypes } = require("module");
+              const { stripTypeScriptTypes } = (_sc_module as any);
               if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
             } catch (e) {
               //ignore

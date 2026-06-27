@@ -2,6 +2,16 @@
  * @category saltcorn-data
  * @module utils
  */
+import _sc_unidecode from "unidecode";
+import _sc_dockerode from "dockerode";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+// db/state and db/index are referenced only inside functions here. Import them
+// lazily (require at call time) so utils stays a leaf in the ESM module graph:
+// db/index reads utils.isNode() at module-evaluation time, so a static import
+// would create an evaluation-order cycle (utils -> db/index -> utils -> TDZ).
+const _scDbState = () => (require("./db/state.js") as any).default;
+const _scDb = () => (require("./db/index.js") as any).default;
 import { serialize, deserialize } from "v8";
 import { createReadStream, readdirSync } from "fs";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
@@ -14,13 +24,16 @@ import type {
 } from "@saltcorn/types/base_types";
 import crypto from "crypto";
 import { join, dirname } from "path";
-import type Field from "./models/field"; // only type, shouldn't cause require loop
-import type User from "./models/user"; // only type, shouldn't cause require loop
-import { existsSync } from "fs-extra";
+import type Field from "./models/field.js"; // only type, shouldn't cause require loop
+import type User from "./models/user.js"; // only type, shouldn't cause require loop
+// fs-extra is CJS; its named exports are not statically analysable by Node's
+// ESM loader, so import the default and destructure at runtime.
+import _fsExtra from "fs-extra";
+const { existsSync } = _fsExtra;
 import { VM } from "vm2";
-const unidecode = require("unidecode");
+const unidecode = (_sc_unidecode as any);
 import { HttpsProxyAgent } from "https-proxy-agent";
-const Docker = require("dockerode");
+const Docker = (_sc_dockerode as any);
 import path from "path";
 import os from "os";
 import { execSync } from "child_process";
@@ -290,7 +303,7 @@ const getSessionId = (req: Req): string => {
  * @returns true if the mobile offline mode is active
  */
 const isOfflineMode = (): boolean => {
-  const state = require("./db/state").getState();
+  const state = _scDbState().getState();
   return !isNode() && state.mobileConfig?.isOfflineMode;
 };
 
@@ -422,7 +435,7 @@ const getSafeSaltcornCmd = () => {
  * @returns url or empty string
  */
 const getSafeBaseUrl = () => {
-  const path = require("./db/state").getState().getConfig("base_url");
+  const path = _scDbState().getState().getConfig("base_url");
   return !path
     ? ""
     : path.endsWith("/")
@@ -501,7 +514,7 @@ const interpolate = (
         return template({ row, user, process: undefined, ...(row || {}) });
       }
       const sandbox = {
-        ...require("./db/state").getState().eval_context,
+        ..._scDbState().getState().eval_context,
         global: undefined,
         globalThis: undefined,
         process: undefined,
@@ -608,7 +621,7 @@ const cloneName = (name: string, allNames: Array<string>): string => {
  * @returns if the current schema is the default root schema
  */
 const isRoot = () => {
-  const db = require("./db");
+  const db = _scDb();
   return db.getTenantSchema() === db.connectObj.default_schema;
 };
 
@@ -654,7 +667,7 @@ function isValidJsIdentifier(str: string): boolean {
 const isPushEnabled = (user?: User): user is User => {
   if (!user?.id) return false;
   const push_policy_by_role =
-    require("./db/state").getState()?.getConfig("push_policy_by_role") || {};
+    _scDbState().getState()?.getConfig("push_policy_by_role") || {};
   const pushPolicy = push_policy_by_role[user.role_id || 100] || "Default on";
   if (pushPolicy === "Always") return true;
   if (pushPolicy === "Never") return false;
@@ -741,7 +754,7 @@ const imageAvailable = async (imageName: string, preferedVersion: string) => {
       if (tags.length > 0)
         return { installed: true, version: tags[0].split(":")[1] };
     } catch (err: any) {
-      require("./db/state")
+      _scDbState()
         .getState()
         .log(5, `Error checking for ${imageName} image: ${err.message || err}`);
     }
@@ -757,7 +770,7 @@ const pluginsFolderRoot = path.join(
 );
 
 const decodeProvisioningProfile = async (provisioningProfile: string) => {
-  require("./db/state")
+  _scDbState()
     .getState()
     .log(5, `Decoding provisioning profile ${provisioningProfile}`);
   const outFile = join("/tmp", "provisioningProfile.xml");
@@ -774,7 +787,7 @@ const decodeProvisioningProfile = async (provisioningProfile: string) => {
     console.log(result);
     return result;
   } catch (error: any) {
-    require("./db/state")
+    _scDbState()
       .getState()
       .log(
         5,
@@ -901,7 +914,7 @@ const tic = (...s1s: any[]) => {
  * @returns {string}
  */
 
-export = {
+export default {
   is_relative_url,
   normalize_relative_url,
   toSafeRelativeUrl,

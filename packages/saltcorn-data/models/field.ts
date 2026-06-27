@@ -5,14 +5,22 @@
  * @subcategory models
  */
 
-import db from "../db";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_expression = () => (require("./expression.js") as any).default;
+const _sc_utils = () => (require("../utils.js") as any).default;
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_table = () => (require("./table.js") as any).default;
+const _sc_plugin_helper = () => (require("../plugin-helper.js") as any);
+const _sc_table_constraints = () => (require("./table_constraints.js") as any).default;
+import db from "../db/index.js";
 const {
   recalculate_for_stored,
   jsexprToWhere,
   eval_expression,
   get_async_expression_function,
   freeVariables,
-} = require("./expression");
+} = _sc_expression();
 import { sqlsanitize } from "@saltcorn/db-common/internal";
 const {
   InvalidAdminAction,
@@ -22,7 +30,7 @@ const {
   structuredClone,
   validSqlId,
   mergeIntoWhere,
-} = require("../utils");
+} = _sc_utils();
 import type {
   Where,
   SelectOptions,
@@ -37,7 +45,7 @@ import type {
   Type,
 } from "@saltcorn/types/common_types";
 import { instanceOfType } from "@saltcorn/types/common_types";
-import type Table from "./table";
+import type Table from "./table.js";
 import type {
   FieldCfg,
   AbstractField,
@@ -45,14 +53,14 @@ import type {
 } from "@saltcorn/types/model-abstracts/abstract_field";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 //import { fileSync } from "tmp-promise";
-import File from "./file";
+import File from "./file.js";
 import { FieldView, CalcJoinfield } from "@saltcorn/types/base_types";
 import { ForUserRequest } from "@saltcorn/types/model-abstracts/abstract_user";
 
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "" || v === "null" || v === "undefined") return null;
   if (typeof v === "string" && v.startsWith("Preset:")) return v;
-  const { getState } = require("../db/state");
+  const { getState } = _sc_db_state();
   if (!field.reftype)
     throw new Error("Unable to find the type, 'reftype' is undefined.");
   const type =
@@ -135,7 +143,7 @@ class Field implements AbstractField {
     this.default = o.default;
     this.sublabel = o.sublabel;
     this.description = o.description;
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
 
     this.type = typeof o.type === "string" ? getState().types[o.type] : o.type;
     if (!this.type)
@@ -290,7 +298,7 @@ class Field implements AbstractField {
     extra_joinfields: any = {},
     user?: any
   ) {
-    const Table = require("./table");
+    const Table = _sc_table();
     const label_formula = attributes?.label_formula;
     const joinFields = { ...extra_joinfields };
 
@@ -305,7 +313,7 @@ class Field implements AbstractField {
       forPublic: user?.role_id === 100,
     };
     if (label_formula) {
-      const { add_free_variables_to_joinfields } = require("../plugin-helper");
+      const { add_free_variables_to_joinfields } = _sc_plugin_helper();
       const fields = table.getFields();
       add_free_variables_to_joinfields(
         freeVariables(label_formula),
@@ -345,7 +353,7 @@ class Field implements AbstractField {
       this.is_fkey &&
       this.type !== "File"
     ) {
-      const Table = require("./table");
+      const Table = _sc_table();
       const refTable = Table.findOne(this.reftable_name);
       const relFields = await refTable.getFields();
       where = jsexprToWhere(this.attributes.where, extraCtx, relFields);
@@ -402,7 +410,7 @@ class Field implements AbstractField {
       this.fieldview === "two_level_select" &&
       this.attributes.relation
     ) {
-      const Table = require("./table");
+      const Table = _sc_table();
       const refTable = Table.findOne(this.reftable_name);
       const relFields = await refTable.getFields();
       const relField = relFields.find(
@@ -438,7 +446,7 @@ class Field implements AbstractField {
       if (!this.attributes.select_file_where)
         this.attributes.select_file_where = {};
 
-      const Table = require("./table");
+      const Table = _sc_table();
       const refTable = Table.findOne(this.reftable_name);
       const pk_name = refTable.pk_name;
       if (fieldviewObj?.fill_options_restrict) {
@@ -626,9 +634,9 @@ class Field implements AbstractField {
         );
       }
       const schema = db.getTenantSchemaPrefix();
-      const { getState } = require("../db/state");
+      const { getState } = _sc_db_state();
       const on_delete = this.on_delete_sql;
-      const Table = require("./table");
+      const Table = _sc_table();
       const reftable = Table.findOne(this.reftable_name);
       if (reftable?.external || reftable?.provider_name) {
         const ref_pk = reftable.fields.find((f: Field) => f.primary_key);
@@ -684,7 +692,7 @@ class Field implements AbstractField {
           "'reftype' and 'reftable_name' must be set if 'is_fkey' is true."
         );
       }
-      const { getState } = require("../db/state");
+      const { getState } = _sc_db_state();
       return apply(
         getState().types[
           typeof this.reftype === "string" ? this.reftype : this.reftype.name
@@ -736,7 +744,7 @@ class Field implements AbstractField {
   get multipartFormData() {
     if (this.input_type === "file") return true;
     if (this.type !== "File") return false;
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     if (!this.fieldview) return false;
     const fileview = getState().fileviews[this.fieldview];
     return !!fileview?.multipartFormData;
@@ -805,7 +813,7 @@ class Field implements AbstractField {
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Field[]> {
     if (selectopts.cached) {
-      const { getState } = require("../db/state");
+      const { getState } = _sc_db_state();
       return getState()
         .fields.map((t: FieldCfg) => new Field(structuredClone(t)))
         .filter(satisfies(where || {}));
@@ -822,7 +830,7 @@ class Field implements AbstractField {
    * @returns {Field[]}
    */
   static findCached(where?: Where): Field[] {
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     return getState()
       .fields.map((t: FieldCfg) => new Field(structuredClone(t)))
       .filter(satisfies(where || {}));
@@ -884,7 +892,7 @@ class Field implements AbstractField {
    */
   async alter_sql_type(new_field: Field) {
     if (new_field.is_fkey && new_field?.reftable_name && !new_field.reftable) {
-      const Table = require("./table");
+      const Table = _sc_table();
       const refTable = Table.findOne(new_field?.reftable_name);
       new_field.reftable = refTable;
       new_field.reftype = refTable.pk_type.name;
@@ -984,7 +992,7 @@ class Field implements AbstractField {
       );
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+      await _sc_db_state().getState().refresh_tables(true);
   }
 
   /**
@@ -992,7 +1000,7 @@ class Field implements AbstractField {
    */
   fill_table(): void {
     if (!this.table) {
-      const Table = require("./table");
+      const Table = _sc_table();
       this.table = Table.findOne({ id: this.table_id });
     }
   }
@@ -1008,10 +1016,10 @@ class Field implements AbstractField {
     )
       return;
     const joinFields = {};
-    const Table = require("./table");
+    const Table = _sc_table();
     const table = Table.findOne({ id: this.table_id });
     if (!table) return;
-    const { add_free_variables_to_joinfields } = require("../plugin-helper");
+    const { add_free_variables_to_joinfields } = _sc_plugin_helper();
     const fields = table.getFields();
     add_free_variables_to_joinfields(
       freeVariables(this.expression),
@@ -1111,7 +1119,7 @@ class Field implements AbstractField {
    */
   async update(v: Partial<Field> | Partial<FieldCfg>): Promise<void> {
     const f = new Field({ ...this, ...v });
-    const state = require("../db/state").getState();
+    const state = _sc_db_state().getState();
     const rename: boolean = f.name !== this.name;
     if (rename) this.fill_table();
     if (rename && !this.table?.name) {
@@ -1129,7 +1137,7 @@ class Field implements AbstractField {
     const schema = db.getTenantSchemaPrefix();
 
     if (f.attributes.default !== this.attributes.default) {
-      const Table = require("./table");
+      const Table = _sc_table();
       const table = Table.findOne({ id: this.table_id });
 
       if (
@@ -1225,9 +1233,9 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async delete(): Promise<void> {
-    const Table = require("./table");
+    const Table = _sc_table();
     const table = Table.findOne({ id: this.table_id });
-    const TableConstraint = require("./table_constraints");
+    const TableConstraint = _sc_table_constraints();
     await TableConstraint.delete_field_constraints(table, this);
     if (table.ownership_field_id === this.id) {
       throw new InvalidAdminAction(
@@ -1270,7 +1278,7 @@ class Field implements AbstractField {
       }
     }
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+      await _sc_db_state().getState().refresh_tables(true);
   }
 
   /**
@@ -1313,7 +1321,7 @@ class Field implements AbstractField {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
 
-    const Table = require("./table");
+    const Table = _sc_table();
     const is_sqlite = db.isSQLite;
     //const tables = await Table.find();
     //console.log({ tables, fld });
@@ -1418,7 +1426,7 @@ class Field implements AbstractField {
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client) {
       refreshed = true;
-      await require("../db/state").getState().refresh_tables(true);
+      await _sc_db_state().getState().refresh_tables(true);
     }
     if (fld.table && fld.table.fields) {
       fld.table.fields.push(f);
@@ -1427,7 +1435,7 @@ class Field implements AbstractField {
       const nrows = await table.countRows({});
       if (nrows > 0 && nrows <= 20) {
         if (!refreshed)
-          await require("../db/state").getState().refresh_tables(true);
+          await _sc_db_state().getState().refresh_tables(true);
         const table1 = Table.findOne({ id: f.table_id });
         await recalculate_for_stored(table1);
       } else if (nrows > 0) {
@@ -1450,7 +1458,7 @@ class Field implements AbstractField {
    * @returns {*}
    */
   static getTypeAttributes(typeattribs: Function | any, table_id?: number) {
-    const Table = require("./table");
+    const Table = _sc_table();
 
     if (!typeattribs) return [];
     if (typeof typeattribs === "function") {
@@ -1461,4 +1469,4 @@ class Field implements AbstractField {
   }
 }
 
-export = Field;
+export default Field;

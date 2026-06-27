@@ -16,7 +16,8 @@
     /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
     "lib": ["ES2021", "dom"],
     "types": ["node", "estree"],
-    "module": "commonjs",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "target": "ES2021"
   },
  "include": [

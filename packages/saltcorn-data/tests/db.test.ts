@@ -1,13 +1,18 @@
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_models_table = () => (require("../models/table.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
-import db from "../db";
-import { assertIsSet } from "./assertions";
+import db from "../db/index.js";
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-const Table = require("../models/table");
+const Table = _sc_models_table();
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 jest.setTimeout(30000);
 

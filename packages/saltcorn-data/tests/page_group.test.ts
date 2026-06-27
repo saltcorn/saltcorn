@@ -1,13 +1,17 @@
-import db from "../db";
-import { assertIsSet } from "./assertions";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import db from "../db/index.js";
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import PageGroup, { ScreenInfoParams } from "../models/page_group";
-import User from "../models/user";
+import PageGroup, { ScreenInfoParams } from "../models/page_group.js";
+import User from "../models/user.js";
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 describe("eligible_formula", () => {

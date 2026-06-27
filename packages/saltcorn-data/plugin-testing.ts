@@ -2,18 +2,26 @@
  * @category saltcorn-data
  * @module plugin-testing
  */
-const { is } = require("contractis");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("./db/state.js") as any).default;
+const _sc_tests_mocks = () => (require("./tests/mocks.js") as any).default;
+const _sc_models_expression = () => (require("./models/expression.js") as any).default;
+const _sc_viewable_fields = () => (require("./viewable_fields.js") as any);
+import _sc_contractis from "contractis";
+import _sc__saltcorn_markup from "@saltcorn/markup";
+const { is } = (_sc_contractis as any);
 
-const { getState } = require("./db/state");
-const { renderForm } = require("@saltcorn/markup");
-const { mockReqRes } = require("./tests/mocks");
-import Field from "./models/field";
-import Table from "./models/table";
-import Trigger from "./models/trigger";
-import Workflow from "./models/workflow";
-const { expressionValidator } = require("./models/expression");
-const { parse_view_select } = require("./viewable_fields");
-import View from "./models/view";
+const { getState } = _sc_db_state();
+const { renderForm } = (_sc__saltcorn_markup as any);
+const { mockReqRes } = _sc_tests_mocks();
+import Field from "./models/field.js";
+import Table from "./models/table.js";
+import Trigger from "./models/trigger.js";
+import Workflow from "./models/workflow.js";
+const { expressionValidator } = _sc_models_expression();
+const { parse_view_select } = _sc_viewable_fields();
+import View from "./models/view.js";
 import {
   Plugin,
   PluginType,

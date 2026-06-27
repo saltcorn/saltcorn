@@ -3,13 +3,24 @@
  * @module models/user
  * @subcategory models
  */
-import db from "../db";
-import { compareSync, hash } from "bcryptjs";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_config = () => (require("./config.js") as any).default;
+const _sc_email = () => (require("./email.js") as any).default;
+const _sc_expression = () => (require("./expression.js") as any).default;
+const _sc_field = () => (require("./field.js") as any).default;
+const _sc_plugin_helper = () => (require("../plugin-helper.js") as any);
+const _sc_trigger = () => (require("./trigger.js") as any).default;
+import db from "../db/index.js";
+import _bcrypt from "bcryptjs";
+const { compareSync, hash } = _bcrypt;
 import { v4 as uuidv4 } from "uuid";
-import { check } from "dumb-passwords";
+import _dumbPasswords from "dumb-passwords";
+const { check } = _dumbPasswords;
 import { validate } from "email-validator";
-import Trigger from "./trigger";
-import Table from "./table";
+import Trigger from "./trigger.js";
+import Table from "./table.js";
 
 import {
   Row,
@@ -143,7 +154,7 @@ class User {
     const upd: Partial<User> = { password };
     if (expireToken) upd.reset_password_token = null;
     upd.last_mobile_login = null;
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     if (getState().getConfig("plain_password_triggers", false))
       await this.update(upd, newpw);
     else await this.update(upd);
@@ -165,10 +176,10 @@ class User {
     if (u && u.disabled) return false;
     if (u) return u;
     else {
-      const { getState } = require("../db/state");
+      const { getState } = _sc_db_state();
       const email_mask = getState().getConfig("email_mask");
       if (email_mask && uo.email) {
-        const { check_email_mask } = require("./config");
+        const { check_email_mask } = _sc_config();
         if (!check_email_mask(uo.email)) {
           return false;
         }
@@ -205,7 +216,7 @@ class User {
     if (await User.matches_existing_user(uo))
       return { error: `This user already exists` };
 
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     const plain_password_triggers = getState().getConfig(
       "plain_password_triggers",
       false
@@ -265,7 +276,7 @@ class User {
    * @type {{role_id: number, language, id, email, tenant: *}}
    */
   get session_object(): any {
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     const state = getState();
     const so: any = {
       email: this.email,
@@ -312,7 +323,7 @@ class User {
   }
 
   auth_method_allowed(method_name: string): boolean {
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     const auth_method_enabled = getState().get_auth_enabled_by_role(
       this.role_id
     );
@@ -323,7 +334,7 @@ class User {
     req?: any,
     opts?: { new_verification_token?: string }
   ): Promise<boolean | any> {
-    const { send_verification_email } = require("./email");
+    const { send_verification_email } = _sc_email();
     return await send_verification_email(this, req, opts);
   }
 
@@ -334,10 +345,10 @@ class User {
    */
   static async findForSession(where: Where): Promise<User | false> {
     //get join fields in all ownership formulae
-    const { getState } = require("../db/state");
-    const { freeVariables } = require("./expression");
-    const Field = require("./field");
-    const { add_free_variables_to_joinfields } = require("../plugin-helper");
+    const { getState } = _sc_db_state();
+    const { freeVariables } = _sc_expression();
+    const Field = _sc_field();
+    const { add_free_variables_to_joinfields } = _sc_plugin_helper();
     let freeVars = new Set();
     for (const table of getState().tables)
       if (table.ownership_formula)
@@ -614,7 +625,7 @@ class User {
   //   if (check(pw)) return "Password too common";
   // }
   static unacceptable_password_reason(pw: string): string | undefined {
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     const minLength = getState().getConfig("min_password_length", 8);
     if (minLength > 0 && pw.length < minLength) return "Password too short";
     const checkCommon = getState().getConfig("check_common_passwords", true);
@@ -691,14 +702,14 @@ class User {
    */
   async set_to_verified(): Promise<true> {
     const upd: GenObj = { verified_on: new Date() };
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
 
     const elevate_verified = +getState().getConfig("elevate_verified");
     if (elevate_verified)
       upd.role_id = Math.min(elevate_verified, this.role_id);
     await this.update(upd);
     Object.assign(this, upd);
-    const Trigger = require("./trigger");
+    const Trigger = _sc_trigger();
     Trigger.emitEvent("UserVerified", null, this, this);
     return true;
   }
@@ -767,7 +778,7 @@ class User {
    * @returns {Promise<*>}
    */
   static async get_roles(): Promise<Row[]> {
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     const stateRoles = getState().roles;
     if (stateRoles?.length) return stateRoles;
     return await db.select("_sc_roles", {}, { orderBy: "id" });
@@ -848,11 +859,11 @@ class User {
    * ```
    */
   static lightDarkMode(user?: UserLike): "dark" | "light" | "auto" {
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     return getState().getLightDarkMode(user);
   }
 }
 
 type UserCfg = PartialSome<User, "email" | "password">;
 
-export = User;
+export default User;

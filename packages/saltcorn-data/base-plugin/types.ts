@@ -7,10 +7,27 @@
  * @subcategory base-plugin
  */
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_models_expression = () => (require("../models/expression.js") as any).default;
+const _sc_models_table = () => (require("../models/table.js") as any).default;
+const _sc_models_user = () => (require("../models/user.js") as any).default;
+const _sc_utils = () => (require("../utils.js") as any).default;
+const _sc_fieldviews = () => (require("./fieldviews.js") as any).default;
+const _sc_db = () => (require("../db/index.js") as any).default;
+import _sc_moment from "moment";
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc_contractis from "contractis";
+import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
+import _sc__saltcorn_markup from "@saltcorn/markup";
+import _sc_underscore from "underscore";
+import * as _sc__saltcorn_db_common_internal from "@saltcorn/db-common/internal";
+import _sc__saltcorn_plain_date from "@saltcorn/plain-date";
 import { FieldLike } from "@saltcorn/types/base_types";
 import type { GenObj } from "@saltcorn/types/common_types";
 
-const moment = require("moment");
+const moment = (_sc_moment as any);
 const {
   input,
   select,
@@ -34,20 +51,20 @@ const {
   code,
   style,
   time,
-} = require("@saltcorn/markup/tags");
-const { is } = require("contractis");
-const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
-const { getState, getApp__ } = require("../db/state");
-const { localeDate, localeDateTime } = require("@saltcorn/markup");
-const { freeVariables, eval_expression } = require("../models/expression");
-const Table = require("../models/table");
-const User = require("../models/user");
-const _ = require("underscore");
-const { interpolate } = require("../utils");
-const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
-const { select_by_code } = require("./fieldviews");
-const PlainDate = require("@saltcorn/plain-date");
-const db = require("../db");
+} = (_sc__saltcorn_markup_tags as any);
+const { is } = (_sc_contractis as any);
+const { radio_group, checkbox_group } = (_sc__saltcorn_markup_helpers as any);
+const { getState, getApp__ } = _sc_db_state();
+const { localeDate, localeDateTime } = (_sc__saltcorn_markup as any);
+const { freeVariables, eval_expression } = _sc_models_expression();
+const Table = _sc_models_table();
+const User = _sc_models_user();
+const _ = (_sc_underscore as any);
+const { interpolate } = _sc_utils();
+const { sqlFun, sqlBinOp } = (_sc__saltcorn_db_common_internal as any);
+const { select_by_code } = _sc_fieldviews();
+const PlainDate = (_sc__saltcorn_plain_date as any);
+const db = _sc_db();
 
 const isdef = (x: any) =>
   typeof x === "undefined" || x === null ? false : true;
@@ -2932,4 +2949,4 @@ const bool = {
   validate: () => (x: any) => true,
 };
 
-export = { string, int, bool, date, float, color };
+export default { string, int, bool, date, float, color };

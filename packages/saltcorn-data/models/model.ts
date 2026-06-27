@@ -4,13 +4,16 @@
  * @module models/model
  * @subcategory models
  */
-import db from "../db";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { ModelCfg } from "@saltcorn/types/model-abstracts/abstract_model";
-import ModelInstance from "./model_instance";
-import Table from "./table";
+import ModelInstance from "./model_instance.js";
+import Table from "./table.js";
 
-import state from "../db/state";
+import state from "../db/state.js";
 const { getState } = state;
 /**
  * Model Class
@@ -52,7 +55,7 @@ class Model {
     lib.id = id;
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+      await _sc_db_state().getState().refresh_tables(true);
     return lib;
   }
 
@@ -108,7 +111,7 @@ class Model {
     await db.query(`delete FROM ${schema}_sc_models WHERE id = $1`, [this.id]);
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+      await _sc_db_state().getState().refresh_tables(true);
   }
 
   /**
@@ -210,4 +213,4 @@ class Model {
   }
 }
 
-export = Model;
+export default Model;

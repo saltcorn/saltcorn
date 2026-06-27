@@ -1,17 +1,23 @@
-import db from "../../db";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../../db/state.js") as any).default;
+import _sc__aws_sdk_client_s3 from "@aws-sdk/client-s3";
+import _sc__aws_sdk_s3_request_presigner from "@aws-sdk/s3-request-presigner";
+import _sc_path from "path";
+import db from "../../db/index.js";
 const getStateInstance = () => {
-  const { getState } = require("../../db/state");
+  const { getState } = _sc_db_state();
   return getState();
 };
 // @aws-sdk is heavy to load (~50ms) and only used when S3 storage is
 // configured, so require it lazily rather than at module load time.
 let _awsS3: any;
-const awsS3 = () => _awsS3 || (_awsS3 = require("@aws-sdk/client-s3"));
+const awsS3 = () => _awsS3 || (_awsS3 = (_sc__aws_sdk_client_s3 as any));
 let _presigner: any;
 const presigner = () =>
-  _presigner || (_presigner = require("@aws-sdk/s3-request-presigner"));
+  _presigner || (_presigner = (_sc__aws_sdk_s3_request_presigner as any));
 
-const path = require("path");
+const path = (_sc_path as any);
 const posixPath = path.posix;
 
 type S3Settings = {

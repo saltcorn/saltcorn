@@ -4,18 +4,21 @@
  * @module models/workflow_run
  * @subcategory models
  */
-import db from "../db";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowRunCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_run";
-import WorkflowStep from "./workflow_step";
-import WorkflowTrace from "./workflow_trace";
-import User from "./user";
-import Expression from "./expression";
-import Notification from "./notification";
-import utils from "../utils";
+import WorkflowStep from "./workflow_step.js";
+import WorkflowTrace from "./workflow_trace.js";
+import User from "./user.js";
+import Expression from "./expression.js";
+import Notification from "./notification.js";
+import utils from "../utils.js";
 import moment from "moment";
 import { mkTable } from "@saltcorn/markup/index";
-import mocks from "../tests/mocks";
+import mocks from "../tests/mocks.js";
 import { FieldLike } from "@saltcorn/types/base_types";
 const { mockReqRes } = mocks;
 const {
@@ -25,7 +28,7 @@ const {
   secondaryReturnDirectives,
 } = utils;
 const { eval_expression } = Expression;
-const { getState } = require("../db/state");
+const { getState } = _sc_db_state();
 
 const data_output_to_html = (val: any) => {
   if (Array.isArray(val) && typeof val[0] === "object") {
@@ -433,7 +436,7 @@ class WorkflowRun {
     const state = getState();
     //state.logLevel = 6;
     state.log(6, `Running workflow id=${this.id}`);
-    const Trigger = (await import("./trigger")).default;
+    const Trigger = (await import("./trigger.js")).default;
 
     const allWorkflows = await Trigger.find({});
     const allWorkflowNames = new Set(allWorkflows.map((wf) => wf.name));
@@ -704,7 +707,7 @@ class WorkflowRun {
             !waiting_fulfilled &&
             !skip_because_only_if
           ) {
-            const View = (await import("./view")).default;
+            const View = (await import("./view.js")).default;
             const view = View.findOne({ name: step.configuration.view });
 
             const state = eval_expression(
@@ -956,7 +959,7 @@ class WorkflowRun {
     console.error("Workflow error", e);
     await this.update({ status: "Error", error: e?.message || e });
 
-    const Trigger = (await import("./trigger")).default;
+    const Trigger = (await import("./trigger.js")).default;
 
     Trigger.emitEvent("Error", null, user, {
       workflow_run: this.id,
@@ -1013,4 +1016,4 @@ class WorkflowRun {
   }
 }
 
-export = WorkflowRun;
+export default WorkflowRun;

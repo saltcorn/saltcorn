@@ -1,27 +1,33 @@
-import Form from "../models/form";
-import Field from "../models/field";
-import WorkflowRun from "../models/workflow_run";
-import WorkflowStep from "../models/workflow_step";
-import Trigger from "../models/trigger";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import Form from "../models/form.js";
+import Field from "../models/field.js";
+import WorkflowRun from "../models/workflow_run.js";
+import WorkflowStep from "../models/workflow_step.js";
+import Trigger from "../models/trigger.js";
 
-import db from "../db";
-import { assertIsSet } from "./assertions";
+import db from "../db/index.js";
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { GenObj } from "@saltcorn/types/common_types";
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 
-const { getState } = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
-import mocks from "./mocks";
-import User from "../models/user";
-import Table from "../models/table";
-import WorkflowTrace from "../models/workflow_trace";
+const { getState } = _sc_db_state();
+getState().registerPlugin("base", _sc_base_plugin());
+import mocks from "./mocks.js";
+import User from "../models/user.js";
+import Table from "../models/table.js";
+import WorkflowTrace from "../models/workflow_trace.js";
 const { mockReqRes } = mocks;
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 jest.setTimeout(10000);

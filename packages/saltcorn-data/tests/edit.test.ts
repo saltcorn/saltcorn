@@ -1,32 +1,38 @@
-import Table from "../models/table";
-import Field from "../models/field";
-import Trigger from "../models/trigger";
-import TableConstraint from "../models/table_constraints";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import Trigger from "../models/trigger.js";
+import TableConstraint from "../models/table_constraints.js";
 
-import View from "../models/view";
-import db from "../db";
-import mocks from "./mocks";
+import View from "../models/view.js";
+import db from "../db/index.js";
+import mocks from "./mocks.js";
 const { mockReqRes } = mocks;
-const { getState } = require("../db/state");
-import Page from "../models/page";
+const { getState } = _sc_db_state();
+import Page from "../models/page.js";
 import type { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import { assertIsSet } from "./assertions";
+import { assertIsSet } from "./assertions.js";
 import {
   prepareQueryEnviroment,
   sendViewToServer,
   deleteViewFromServer,
   renderEditInEditConfig,
-} from "./remote_query_helper";
+} from "./remote_query_helper.js";
 
 let remoteQueries = false;
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState().registerPlugin("base", _sc_base_plugin());
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 jest.setTimeout(10000);
 

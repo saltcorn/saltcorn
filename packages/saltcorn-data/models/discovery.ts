@@ -5,15 +5,18 @@
  * @subcategory models
  */
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
 import { Row, sqlsanitize } from "@saltcorn/db-common/internal";
 import { TablePack } from "@saltcorn/types/model-abstracts/abstract_table";
 import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
-import db from "../db";
-import state from "../db/state";
+import db from "../db/index.js";
+import state from "../db/state.js";
 const { getState } = state;
-import Field from "./field";
-import Table from "./table";
-import utils from "../utils";
+import Field from "./field.js";
+import Table from "./table.js";
+import utils from "../utils.js";
 const { asyncMap } = utils;
 
 // create table discmetable(id serial primary key, name text, age integer not null); ALTER TABLE discmetable OWNER TO tomn;
@@ -289,7 +292,7 @@ const implement_discovery = async (pack: {
   }
   // refresh Saltcorn table list (in memory)
   if (!db.getRequestContext()?.client)
-    await require("../db/state").getState().refresh_tables(true);
+    await _sc_db_state().getState().refresh_tables(true);
 };
 /**
  * Reconcile Saltcorn field metadata against physical DB columns.
@@ -377,7 +380,7 @@ const reconcile_table = async (
   };
 };
 
-export = {
+export default {
   discoverable_tables,
   discover_tables,
   implement_discovery,

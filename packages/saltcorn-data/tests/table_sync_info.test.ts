@@ -1,5 +1,9 @@
-import Table from "../models/table";
-import db from "../db";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import Table from "../models/table.js";
+import db from "../db/index.js";
 
 import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 
@@ -18,8 +22,8 @@ const initSyncInfo = async (tbls: any) => {
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 describe("Table sync info", () => {

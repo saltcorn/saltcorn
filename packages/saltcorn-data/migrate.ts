@@ -6,12 +6,17 @@
 
 /*global window*/
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import _sc_dateformat from "dateformat";
 import fs from "fs";
 import path from "path";
-import db from "./db";
-const dateFormat = require("dateformat");
+import db from "./db/index.js";
+const dateFormat = (_sc_dateformat as any);
 
-const is_sqlite = db.isSQLite;
+// Read db.isSQLite lazily: migrate participates in an ESM import cycle via
+// db/index, so reading it at module-evaluation time would hit a TDZ.
+const is_sqlite = () => db.isSQLite;
 
 interface MigrationContents {
   sql?: string | string[];
@@ -23,14 +28,14 @@ interface MigrationContents {
   js?: () => Promise<void> | void;
 }
 
-const fudge = is_sqlite
-  ? (s: string | string[]): string | string[] =>
-      Array.isArray(s)
-        ? s.map(fudge as (s: string) => string)
-        : s
-            .replace("id serial primary", "id integer primary")
-            .replace("jsonb", "json")
-  : (s: string | string[]) => s;
+const fudge = (s: string | string[]): string | string[] =>
+  !is_sqlite()
+    ? s
+    : Array.isArray(s)
+      ? s.map((x) => fudge(x) as string)
+      : s
+          .replace("id serial primary", "id integer primary")
+          .replace("jsonb", "json");
 
 const doMigrationStep = async (
   name: string,
@@ -48,16 +53,16 @@ const doMigrationStep = async (
   };
 
   if (contents.sql) {
-    if (!(is_sqlite && contents.sql.includes("DROP COLUMN"))) {
+    if (!(is_sqlite() && contents.sql.includes("DROP COLUMN"))) {
       await execMany(fudge(contents.sql));
     }
   }
-  if (contents.sql_pg && !is_sqlite) {
+  if (contents.sql_pg && !is_sqlite()) {
     if (typeof contents.sql_pg === "function")
       await execMany(contents.sql_pg({ schema }));
     else await execMany(contents.sql_pg);
   }
-  if (contents.sql_sqlite && is_sqlite) {
+  if (contents.sql_sqlite && is_sqlite()) {
     await execMany(contents.sql_sqlite);
   }
   if (contents.js) {
@@ -110,7 +115,7 @@ const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
               // include public so shared extensions installed there (e.g.
               // uuid-ossp, pg_trgm) remain resolvable from the tenant schema -
               // this SET persists on the pooled connection after the migration
-              if (!is_sqlite)
+              if (!is_sqlite())
                 await db.query(`SET search_path TO "${schema}", public;`);
               await doMigrationStep(name, contents, schema);
               if (verbose) console.log(".");
@@ -146,7 +151,7 @@ const create_blank_migration = async (): Promise<void> => {
     `
 const sql = "";
 
-module.exports = { sql };
+export { sql };
     `
   );
   console.log(fnm);

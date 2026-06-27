@@ -3,24 +3,33 @@
  * @module base-plugin/viewtemplates/edit
  * @subcategory base-plugin
  */
-import Field from "../../models/field";
-import Table from "../../models/table";
-import User from "../../models/user";
-import Crash from "../../models/crash";
-import Form from "../../models/form";
-import Page from "../../models/page";
-import View from "../../models/view";
-import Workflow from "../../models/workflow";
-import Trigger from "../../models/trigger";
-import File from "../../models/file";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_models_page_group = () => (require("../../models/page_group.js") as any).default;
+const _sc_models_fieldrepeat = () => (require("../../models/fieldrepeat.js") as any).default;
+const _sc_models_library = () => (require("../../models/library.js") as any).default;
+const _sc_db_state = () => (require("../../db/state.js") as any).default;
+import _sc__saltcorn_markup from "@saltcorn/markup";
+import _sc__saltcorn_common_code from "@saltcorn/common-code";
+import _sc_buffer_ from "buffer/index.js";
+import Field from "../../models/field.js";
+import Table from "../../models/table.js";
+import User from "../../models/user.js";
+import Crash from "../../models/crash.js";
+import Form from "../../models/form.js";
+import Page from "../../models/page.js";
+import View from "../../models/view.js";
+import Workflow from "../../models/workflow.js";
+import Trigger from "../../models/trigger.js";
+import File from "../../models/file.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 
-const PageGroup = require("../../models/page_group");
-const FieldRepeat = require("../../models/fieldrepeat");
-const Library = require("../../models/library");
+const PageGroup = _sc_models_page_group();
+const FieldRepeat = _sc_models_fieldrepeat();
+const Library = _sc_models_library();
 
-const { getState } = require("../../db/state");
+const { getState } = _sc_db_state();
 import {
   text,
   text_attr,
@@ -31,8 +40,8 @@ import {
   i,
   pre,
 } from "@saltcorn/markup/tags";
-const { renderForm } = require("@saltcorn/markup");
-import expression from "../../models/expression";
+const { renderForm } = (_sc__saltcorn_markup as any);
+import expression from "../../models/expression.js";
 const {
   get_expression_function,
   expressionChecker,
@@ -41,7 +50,7 @@ const {
   freeVariablesInInterpolation,
   add_free_variables_to_aggregations,
 } = expression;
-import utils from "../../utils";
+import utils from "../../utils.js";
 const {
   InvalidConfiguration,
   isNode,
@@ -55,7 +64,7 @@ const {
   is_relative_url,
   toSafeRelativeUrl,
 } = utils;
-import { check_view_columns } from "../../plugin-testing";
+import { check_view_columns } from "../../plugin-testing.js";
 import {
   initial_config_all_fields,
   calcfldViewOptions,
@@ -69,7 +78,7 @@ import {
   readState,
   displayType,
   runCollabEvents,
-} from "../../plugin-helper";
+} from "../../plugin-helper.js";
 import {
   splitUniques,
   getForm,
@@ -80,8 +89,8 @@ import {
   get_view_link_query,
   edit_build_in_actions,
   updateViewSelect,
-} from "../../viewable_fields";
-import layout from "../../models/layout";
+} from "../../viewable_fields.js";
+import layout from "../../models/layout.js";
 const {
   traverse,
   getStringsForI18n,
@@ -89,9 +98,9 @@ const {
   splitLayoutContainerFields,
   findLayoutBranchWith,
 } = layout;
-import { extractFromLayout } from "../../diagram/node_extract_utils";
-import db from "../../db";
-const { Relation, RelationType } = require("@saltcorn/common-code");
+import { extractFromLayout } from "../../diagram/node_extract_utils.js";
+import db from "../../db/index.js";
+const { Relation, RelationType } = (_sc__saltcorn_common_code as any);
 
 /**
  * @param req
@@ -2144,7 +2153,7 @@ const virtual_triggers = (
   ];
 };
 
-export = {
+export default {
   /** @type {string} */
   name: "Edit",
   /** @type {string} */
@@ -2374,7 +2383,7 @@ export = {
       );
       field.fieldviewObj = getState().fileviews[fieldView];
       const [pre, allData] = fieldVal.split(",");
-      const buffer = require("buffer/").Buffer.from(allData, "base64");
+      const buffer = (_sc_buffer_ as any).Buffer.from(allData, "base64");
       const mimetype = pre.split(";")[0].split(":")[1];
       const filename =
         (field.fieldviewObj as any)?.setsDataURL?.get_filename?.({
@@ -2420,7 +2429,7 @@ export = {
           (filename && File.nameToMimeType(filename)) ||
           "application/octet-stream";
       }
-      const buffer = require("buffer/").Buffer.from(allData, encoding);
+      const buffer = (_sc_buffer_ as any).Buffer.from(allData, encoding);
       const filename1 = filename || "file";
 
       const existing_file = await File.findOne(filename1);

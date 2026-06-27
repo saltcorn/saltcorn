@@ -1,8 +1,13 @@
-const db = require("../../db");
-const { getState } = require("../../db/state");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db = () => (require("../../db/index.js") as any).default;
+const _sc_db_state = () => (require("../../db/state.js") as any).default;
+const _sc_email = () => (require("../email.js") as any).default;
+const db = _sc_db();
+const { getState } = _sc_db_state();
 
-import type Notification from "models/notification";
-import type User from "models/user";
+import type Notification from "../notification.js";
+import type User from "../user.js";
 
 const buildSingleMail = (notification: Notification, recipient: string) => {
   const state = getState();
@@ -204,7 +209,7 @@ export class MailQueue {
 
   private static async send(email: any) {
     const state = getState();
-    const emailModule = require("../email");
+    const emailModule = _sc_email();
     (await emailModule.getMailTransport())
       .sendMail(email)
       .catch((e: any) => state?.log(1, e.message));

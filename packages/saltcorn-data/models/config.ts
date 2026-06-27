@@ -4,12 +4,20 @@
  * @module models/config
  * @subcategory models
  */
-import db from "../db";
-const { getConfigFile, configFilePath } = require("../db/connect");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_connect = () => (require("../db/connect.js") as any).default;
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_expression = () => (require("./expression.js") as any).default;
+const _sc_utils = () => (require("../utils.js") as any).default;
+import _sc_node_fetch from "node-fetch";
+import db from "../db/index.js";
+const { getConfigFile, configFilePath } = _sc_db_connect();
 
 import { writeFileSync } from "fs";
-import { tz } from "moment-timezone";
-import utils from "../utils";
+import _momentTimezone from "moment-timezone";
+const { tz } = _momentTimezone;
+import utils from "../utils.js";
 import { Req } from "@saltcorn/types/base_types";
 const { isNode, sleep, ensure_final_slash } = utils;
 const allTimezones = tz.names();
@@ -63,7 +71,7 @@ const configTypes: ConfigTypes = {
       const tenant = db.getTenantSchema();
       const isRoot = tenant === db.connectObj.default_schema;
       if (!isRoot && val) {
-        const { set_tenant_base_url } = require("../db/state");
+        const { set_tenant_base_url } = _sc_db_state();
         set_tenant_base_url(tenant, val);
       }
     },
@@ -374,7 +382,7 @@ const configTypes: ConfigTypes = {
       "Comma-separated list of packages which will be available in JavaScript actions",
     async onChange(val: string) {
       setTimeout(async () => {
-        const { getState } = require("../db/state");
+        const { getState } = _sc_db_state();
         await getState().refresh_npmpkgs();
       });
     },
@@ -1798,7 +1806,7 @@ type RemoveFromMenuOpts = {
  * @returns {Promise<void>}
  */
 const remove_from_menu = async (item: RemoveFromMenuOpts): Promise<void> => {
-  const { getState } = require("../db/state");
+  const { getState } = _sc_db_state();
 
   const current_menu = getState().getConfigCopy("menu_items", []);
   const new_menu = current_menu.filter(
@@ -1814,10 +1822,10 @@ const remove_from_menu = async (item: RemoveFromMenuOpts): Promise<void> => {
 };
 
 const save_menu_items = async (menu_items: any[]): Promise<void> => {
-  const { getState } = require("../db/state");
+  const { getState } = _sc_db_state();
 
-  const Table = (await import("./table")).default;
-  const { jsexprToWhere, get_expression_function } = require("./expression");
+  const Table = (await import("./table.js")).default;
+  const { jsexprToWhere, get_expression_function } = _sc_expression();
 
   const unroll: (items: any[]) => Promise<any[]> = async (items) => {
     const unrolled_menu_items = [];
@@ -1843,7 +1851,7 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
             (f) => f.name === item.dyn_section_field
           );
           if (!section_field) {
-            const { InvalidConfiguration } = require("../utils");
+            const { InvalidConfiguration } = _sc_utils();
             throw new InvalidConfiguration(
               `Dynamic menu section field ${item.dyn_section_field} not found`
             );
@@ -1899,9 +1907,9 @@ const get_latest_npm_version = async (
   pkg: string,
   timeout_ms?: number
 ): Promise<string> => {
-  const { getState } = require("../db/state");
-  const { isStale } = (await import("../utils")).default;
-  const fetch = require("node-fetch");
+  const { getState } = _sc_db_state();
+  const { isStale } = (await import("../utils.js")).default;
+  const fetch = (_sc_node_fetch as any);
   const stored = getState().getConfig("latest_npm_version", {});
   const airgap = getState().getConfig("airgap", false);
 
@@ -1947,10 +1955,10 @@ const get_latest_npm_version = async (
 const get_saltcorn_npm_versions = async (
   timeout_ms?: number
 ): Promise<string[]> => {
-  const { getState } = require("../db/state");
-  const { isStale } = (await import("../utils")).default;
+  const { getState } = _sc_db_state();
+  const { isStale } = (await import("../utils.js")).default;
   const pkg = "@saltcorn/cli";
-  const fetch = require("node-fetch");
+  const fetch = (_sc_node_fetch as any);
   const stored = getState().getConfig("saltcorn_npm_versions", {});
   const airgap = getState().getConfig("airgap", false);
 
@@ -1997,7 +2005,7 @@ const get_saltcorn_npm_versions = async (
  * @returns {string}
  */
 const get_base_url = (req?: Req): string => {
-  const { getState } = require("../db/state");
+  const { getState } = _sc_db_state();
 
   const cfg = getState().getConfig("base_url", "");
   if (cfg) return ensure_final_slash(cfg);
@@ -2018,7 +2026,7 @@ const get_base_url = (req?: Req): string => {
  * @returns {boolean}
  */
 const check_email_mask = (email: string): boolean => {
-  const { getState } = require("../db/state");
+  const { getState } = _sc_db_state();
 
   const cfg = getState().getConfig("email_mask", "");
   if (cfg) {
@@ -2060,7 +2068,8 @@ namespace configExports {
   export type SingleConfig = Record<string, any>;
   export type ConfigTypes = Record<string, SingleConfig>;
 }
-type SingleConfig = configExports.SingleConfig;
-type ConfigTypes = configExports.ConfigTypes;
+export type SingleConfig = configExports.SingleConfig;
+export type ConfigTypes = configExports.ConfigTypes;
 
-export = configExports;
+export { remove_from_menu };
+export default configExports;

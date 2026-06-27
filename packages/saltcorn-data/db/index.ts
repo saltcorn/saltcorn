@@ -5,16 +5,25 @@
  * @subcategory db
  */
 
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_connect = () => (require("./connect.js") as any).default;
+const _sc_reset_schema = () => (require("./reset_schema.js") as any).default;
+import _sc__saltcorn_sqlite_mobile_sqlite_capacitor from "@saltcorn/sqlite-mobile/sqlite_capacitor";
+import * as _sc__saltcorn_sqlite_sqlite from "@saltcorn/sqlite/sqlite";
+import * as _sc__saltcorn_postgres_postgres from "@saltcorn/postgres/postgres";
 import * as multiTenant from "@saltcorn/db-common/multi-tenant";
 
 import { sqlsanitize, mkWhere, Where } from "@saltcorn/db-common/internal";
 
-import utils from "../utils";
+import utils from "../utils.js";
 const { isNode } = utils;
-import { getConnectObject as getConnectObjectMobile } from "./connect_mobile";
-const { getConnectObject, is_sqlite } = require("./connect");
+import { getConnectObject as getConnectObjectMobile } from "./connect_mobile.js";
+const { getConnectObject, is_sqlite } = _sc_connect();
 
-const reset = require("./reset_schema");
+// reset_schema imports db/index, so load it lazily (when reset() is actually
+// called) to avoid an ESM require-in-cycle error at module-evaluation time.
+const reset = (...args: any[]) => _sc_reset_schema()(...args);
 
 /** @type {any} */
 const connectObj = isNode() ? getConnectObject() : getConnectObjectMobile();
@@ -27,13 +36,13 @@ const is_node = isNode();
 const initDbModule = (): any => {
   let dbmodule = null;
   if (!isNode()) {
-    dbmodule = require("@saltcorn/sqlite-mobile/sqlite_capacitor");
+    dbmodule = (_sc__saltcorn_sqlite_mobile_sqlite_capacitor as any);
     dbmodule.setConnectionObject(connectObj);
   } else if (isSQLite) {
-    dbmodule = require("@saltcorn/sqlite/sqlite");
+    dbmodule = (_sc__saltcorn_sqlite_sqlite as any);
     dbmodule.init(getConnectObject);
   } else {
-    dbmodule = require("@saltcorn/postgres/postgres");
+    dbmodule = (_sc__saltcorn_postgres_postgres as any);
     dbmodule.init(getConnectObject);
   }
   if (!dbmodule) throw new Error("No database package found.");
@@ -65,4 +74,4 @@ const dbExports: DbExportsType = {
   getTenantSchemaPrefix,
   reset,
 };
-export = dbExports;
+export default dbExports;

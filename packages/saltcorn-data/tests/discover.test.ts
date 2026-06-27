@@ -1,29 +1,35 @@
 /**
  * Tests for discovery.ts
  */
-import discovery from "../models/discovery";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import discovery from "../models/discovery.js";
 const {
   discoverable_tables,
   discover_tables,
   implement_discovery,
   reconcile_table,
 } = discovery;
-const { getState } = require("../db/state");
-import db from "../db";
-import Table from "../models/table";
-import Field from "../models/field";
+const { getState } = _sc_db_state();
+import db from "../db/index.js";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { Row } from "@saltcorn/db-common/internal";
-import { assertIsSet } from "./assertions";
+import { assertIsSet } from "./assertions.js";
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState().registerPlugin("base", _sc_base_plugin());
 
 // todo do we need to delete tables after tests?
 afterAll(db.close);
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 jest.setTimeout(30000);
 // todo tests with forgotten tables

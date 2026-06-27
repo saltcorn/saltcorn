@@ -1,19 +1,25 @@
-import Plugin from "../models/plugin";
-import db from "../db/index";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import Plugin from "../models/plugin.js";
+import db from "../db/index.js";
 
-const { getState } = require("../db/state");
-import { assertIsSet } from "./assertions";
+const { getState } = _sc_db_state();
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState().registerPlugin("base", _sc_base_plugin());
 jest.setTimeout(30000);
 
 afterAll(db.close);
 beforeAll(async () => {
   // initialise this process's schema (tests run each file in its own Postgres
   // schema so they can run in parallel)
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 describe("plugin", () => {

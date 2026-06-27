@@ -1,9 +1,19 @@
-import View from "../models/view";
-import db from "../db";
-import Table from "../models/table";
-import Field from "../models/field";
-import async_json_stream from "../models/internal/async_json_stream";
-const fs = require("fs");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_plugin_helper = () => (require("../plugin-helper.js") as any);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_utils = () => (require("../utils.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import _sc_fs from "fs";
+import _sc__saltcorn_plain_date from "@saltcorn/plain-date";
+import View from "../models/view.js";
+import db from "../db/index.js";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import async_json_stream from "../models/internal/async_json_stream.js";
+const fs = (_sc_fs as any);
 
 const {
   get_parent_views,
@@ -16,18 +26,18 @@ const {
   readState,
   generate_joined_query,
   stateToQueryString,
-} = require("../plugin-helper");
-const { getState } = require("../db/state");
+} = _sc_plugin_helper();
+const { getState } = _sc_db_state();
 const {
   satisfies,
   urlStringToObject,
   cloneName,
   objectToQueryString,
   validSqlId,
-} = require("../utils");
+} = _sc_utils();
 
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import mocks from "./mocks";
+import mocks from "./mocks.js";
 import {
   createAnotherUserField,
   createSecondTopicField,
@@ -35,18 +45,18 @@ import {
   createKeyFromLevelTwo,
   createLevelThreeInbound,
   prepareSimpleTopicPostRelation,
-} from "./common_helpers";
-import { assertIsSet } from "./assertions";
-import expression from "../models/expression";
+} from "./common_helpers.js";
+import { assertIsSet } from "./assertions.js";
+import expression from "../models/expression.js";
 const { freeVariables, add_free_variables_to_joinfields } = expression;
-const PlainDate = require("@saltcorn/plain-date");
+const PlainDate = (_sc__saltcorn_plain_date as any);
 
 const { mockReqRes } = mocks;
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState().registerPlugin("base", _sc_base_plugin());
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 afterAll(db.close);

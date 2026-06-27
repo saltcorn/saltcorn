@@ -4,7 +4,10 @@
  * @module models/crash
  * @subcategory models
  */
-import db from "../db";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+import db from "../db/index.js";
 import moment from "moment";
 import type {
   PartialSome,
@@ -112,7 +115,7 @@ class Crash {
       url: req.url ?? "",
       headers: req.headers,
     };
-    const { getState, getRootState } = require("../db/state");
+    const { getState, getRootState } = _sc_db_state();
     const tenants_crash_log = getRootState().getConfig("tenants_crash_log");
 
     getState().log(1, `ERROR: ${err.stack || err.message}`);
@@ -123,7 +126,7 @@ class Crash {
         await db.insert("_sc_errors", payload);
       });
     }
-    const Trigger = (await import("./trigger")).default;
+    const Trigger = (await import("./trigger.js")).default;
 
     Trigger.emitEvent("Error", null, req.user, payload);
   }
@@ -134,4 +137,4 @@ type CrashCfg = PartialSome<
   "stack" | "message" | "tenant" | "url" | "occur_at" | "headers"
 >;
 
-export = Crash;
+export default Crash;

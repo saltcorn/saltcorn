@@ -3,26 +3,34 @@
  * @category saltcorn-data
  * @module plugin-helper
  */
-import View from "./models/view";
-import Field from "./models/field";
-import Table from "./models/table";
-import Trigger from "./models/trigger";
-import Tag from "./models/tag";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("./db/state.js") as any).default;
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc__saltcorn_markup_mjml_tags from "@saltcorn/markup/mjml-tags";
+import _sc__saltcorn_plain_date from "@saltcorn/plain-date";
+import _sc__saltcorn_markup_layout_utils from "@saltcorn/markup/layout_utils";
+import _sc__saltcorn_common_code from "@saltcorn/common-code";
+import View from "./models/view.js";
+import Field from "./models/field.js";
+import Table from "./models/table.js";
+import Trigger from "./models/trigger.js";
+import Tag from "./models/tag.js";
 
-const { getState } = require("./db/state");
-import db from "./db";
-const { button, a, text, i, text_attr } = require("@saltcorn/markup/tags");
-const mjml = require("@saltcorn/markup/mjml-tags");
-const PlainDate = require("@saltcorn/plain-date");
-const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
+const { getState } = _sc_db_state();
+import db from "./db/index.js";
+const { button, a, text, i, text_attr } = (_sc__saltcorn_markup_tags as any);
+const mjml = (_sc__saltcorn_markup_mjml_tags as any);
+const PlainDate = (_sc__saltcorn_plain_date as any);
+const { show_icon_and_label } = (_sc__saltcorn_markup_layout_utils as any);
 const {
   Relation,
   RelationType,
   ViewDisplayType,
   parseRelationPath,
   buildRelationPath,
-} = require("@saltcorn/common-code");
-import utils from "./utils";
+} = (_sc__saltcorn_common_code as any);
+import utils from "./utils.js";
 const {
   applyAsync,
   InvalidConfiguration,
@@ -32,7 +40,7 @@ const {
   validSqlId,
   isNode,
 } = utils;
-import expression from "./models/expression";
+import expression from "./models/expression.js";
 const {
   jsexprToWhere,
   freeVariables,
@@ -41,14 +49,14 @@ const {
   freeVariablesInInterpolation,
   add_free_variables_to_aggregations,
 } = expression;
-import layout from "./models/layout";
+import layout from "./models/layout.js";
 const { traverseSync } = layout;
 import { sqlFun, sqlBinOp } from "@saltcorn/db-common/internal";
 import type { Where, Row } from "@saltcorn/db-common/internal";
 import type { GenObj } from "@saltcorn/types/common_types";
 import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 import type { FieldLike } from "@saltcorn/types/base_types";
-import User from "models/user";
+import User from "./models/user.js";
 
 /**
  *

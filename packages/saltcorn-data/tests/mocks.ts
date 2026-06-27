@@ -1,20 +1,25 @@
-import Field from "../models/field";
-import File from "../models/file";
-import View from "../models/view";
-import Table from "../models/table";
-import Form from "../models/form";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_plugin_helper = () => (require("../plugin-helper.js") as any);
+const _sc_utils = () => (require("../utils.js") as any).default;
+import Field from "../models/field.js";
+import File from "../models/file.js";
+import View from "../models/view.js";
+import Table from "../models/table.js";
+import Form from "../models/form.js";
 import { writeFile } from "fs/promises";
-import Workflow from "../models/workflow";
-import db from "../db";
+import Workflow from "../models/workflow.js";
+import db from "../db/index.js";
 import tags from "@saltcorn/markup/tags";
 import { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
-import exprMod from "../models/expression";
+import exprMod from "../models/expression.js";
 import { ReqRes } from "@saltcorn/types/common_types";
 const { eval_expression } = exprMod;
-const { getState } = require("../db/state");
+const { getState } = _sc_db_state();
 const { input } = tags;
-const { json_list_to_external_table } = require("../plugin-helper");
-const { sleep } = require("../utils");
+const { json_list_to_external_table } = _sc_plugin_helper();
+const { sleep } = _sc_utils();
 const rick_file = async () => {
   await File.ensure_file_store();
 
@@ -369,7 +374,7 @@ const createDefaultView = async (
   return await View.create(v);
 };
 
-export = {
+export default {
   rick_file,
   plugin_with_routes,
   configuration_workflow,

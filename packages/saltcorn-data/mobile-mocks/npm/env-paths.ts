@@ -5,4 +5,4 @@ const envPaths = () => {
   };
 };
 
-export = envPaths;
+export default envPaths;

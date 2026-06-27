@@ -1,8 +1,13 @@
-import db from "../db";
-import { sign } from "jsonwebtoken";
-import axios from "axios";
-import User from "../models/user";
-const State = require("../db/state");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+import db from "../db/index.js";
+import _jsonwebtoken from "jsonwebtoken";
+const { sign } = _jsonwebtoken;
+import _axios from "axios";
+const axios: any = _axios;
+import User from "../models/user.js";
+const State = _sc_db_state();
 
 declare let global: any;
 

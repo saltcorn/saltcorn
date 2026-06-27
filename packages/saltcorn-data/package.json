@@ -6,22 +6,41 @@
   "scripts": {
     "test": "cd dist && NODE_ENV=test node --require ../setup-test-schema.js --test --test-force-exit",
     "remote-queries-test": "REMOTE_QUERIES=true node --test --test-force-exit dist/tests/exact_views.test.js",
-    "tsc": "echo \"Error: no TypeScript support yet\"",
-    "clean": "echo \"Error: no TypeScript support yet\"",
+    "gen:cjs-shims": "node gen-cjs-shims.cjs",
+    "pretsc": "node gen-cjs-shims.cjs",
+    "tsc": "tsc -p tsconfig.json",
+    "clean": "rm -rf ./dist/*",
     "build": "webpack --mode development"
   },
+  "type": "module",
   "author": "Tom Nielsen",
   "license": "MIT",
   "main": "dist/index.js",
   "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*.js",
-    "./base-plugin/*": "./dist/base-plugin/*.js",
-    "./base-plugin": "./dist/base-plugin/index.js",
-    "./base-plugin/viewtemplate/*": "./dist/base-plugin/viewtemplate/*.js",
-    "./db": "./dist/db/index.js",
-    "./db/*": "./dist/db/*.js",
-    "./models/*": "./dist/models/*.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./cjs/index.cjs",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./db": {
+      "types": "./dist/db/index.d.ts",
+      "require": "./cjs/db/index.cjs",
+      "import": "./dist/db/index.js",
+      "default": "./dist/db/index.js"
+    },
+    "./base-plugin": {
+      "types": "./dist/base-plugin/index.d.ts",
+      "require": "./cjs/base-plugin/index.cjs",
+      "import": "./dist/base-plugin/index.js",
+      "default": "./dist/base-plugin/index.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "require": "./cjs/*.cjs",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    }
   },
   "typesVersions": {
     "*": {
@@ -33,6 +52,8 @@
   },
   "files": [
     "dist/**/*",
+    "cjs/**/*.cjs",
+    "gen-cjs-shims.cjs",
     "webpack.config.js",
     "!dist/tsconfig.ref.tsbuildinfo"
   ],

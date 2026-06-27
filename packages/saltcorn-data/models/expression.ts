@@ -3,14 +3,20 @@
  * @module models/expression
  * @subcategory models
  */
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_table = () => (require("./table.js") as any).default;
+const _sc_field = () => (require("./field.js") as any).default;
+import _sc_vm2 from "vm2";
 import { runInNewContext, Script } from "vm";
 import { parseExpressionAt, Node, parse } from "acorn";
 import { replace, traverse } from "estraverse";
 import { Identifier } from "estree";
 import { generate } from "astring";
 import moment from "moment";
-import type Table from "./table";
-import type Field from "./field";
+import type Table from "./table.js";
+import type Field from "./field.js";
 
 import {
   AggregationOptions,
@@ -19,11 +25,11 @@ import {
   Where,
 } from "@saltcorn/db-common/internal";
 import { PluginFunction } from "@saltcorn/types/base_types";
-import db from "../db";
-import utils from "../utils";
+import db from "../db/index.js";
+import utils from "../utils.js";
 import { GenObj } from "@saltcorn/db-common/types";
 const { mergeIntoWhere, isNode, isValidJsIdentifier } = utils;
-const { VM } = require("vm2");
+const { VM } = (_sc_vm2 as any);
 
 function deproxy(value: any): any {
   if (!value || typeof value !== "object") return value;
@@ -180,7 +186,7 @@ const today = (
   let default_locale: string | undefined;
   const get_locale = (): string => {
     if (!default_locale) {
-      const { getState } = require("../db/state");
+      const { getState } = _sc_db_state();
       default_locale = getState().getConfig("default_locale", "en");
     }
     return default_locale as string;
@@ -295,7 +301,7 @@ function jsexprToWhere(
   extraCtx: any = {},
   fields: Field[] = []
 ): Where {
-  const Table = require("./table");
+  const Table = _sc_table();
   if (!expression) return {};
   const now = new Date();
   if (!extraCtx.year) extraCtx.year = now.getFullYear();
@@ -629,7 +635,7 @@ const add_free_variables_to_aggregations = (
   aggregations: { [nm: string]: AggregationOptions },
   table: Table
 ) => {
-  const Field = require("./field");
+  const Field = _sc_field();
   const cfields = table
     ? Field.findCached({ reftable_name: table.name }).map((f: Field) => f.name)
     : null;
@@ -771,7 +777,7 @@ function get_expression_function(
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
-  const { getState } = require("../db/state");
+  const { getState } = _sc_db_state();
   const f = vmRun(`(${args})=>(${expression})`, getState().eval_context);
   return (row: any, user: any) => f(row, row, user);
 }
@@ -796,7 +802,7 @@ function eval_expression(
     const args = field_names.includes("user")
       ? `row, {${field_names.join()}}`
       : `row, {${field_names.join()}}, user`;
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     return vmRun(`((${args})=>(${expression}))(row, row, user)`, {
       ...getState().eval_context,
       row: use_row,
@@ -821,9 +827,9 @@ async function eval_statements(
   errorLocation?: string
 ): Promise<any> {
   try {
-    const { getState } = require("../db/state");
+    const { getState } = _sc_db_state();
     const evalStr = `(async ()=>{${expression}})()`;
-    const Table = require("./table");
+    const Table = _sc_table();
     return await vmRun(evalStr, {
       console,
       Table,
@@ -855,7 +861,7 @@ function get_async_expression_function(
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
-  const { getState } = require("../db/state");
+  const { getState } = _sc_db_state();
   const { expr_string } = transform_for_async(expression, getState().functions);
   const evalStr = `async (${args})=>(${expr_string})`;
   const f = vmRun(evalStr, { ...getState().eval_context, ...extraContext });
@@ -918,7 +924,7 @@ const apply_calculated_fields_stored = async (
   table: Table,
   user?: any
 ): Promise<Row> => {
-  const state = require("../db/state").getState();
+  const state = _sc_db_state().getState();
   let hasExprs = false;
   let transform = (x: Row) => x;
   for (const field of fields) {
@@ -1030,7 +1036,7 @@ const recalculate_for_stored = async (
   let rows = [];
   let maxid = null;
   let limit = 20;
-  const { getState } = require("../db/state");
+  const { getState } = _sc_db_state();
   const pk_name = table.pk_name;
   const go = async (rows: any) => {
     for (const row of rows) {
@@ -1066,7 +1072,7 @@ const recalculate_for_stored = async (
 function removeComments(str: string) {
   return str.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "").trim();
 }
-export = {
+export default {
   expressionValidator,
   expressionChecker,
   apply_calculated_fields,

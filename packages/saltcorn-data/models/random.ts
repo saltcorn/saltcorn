@@ -4,13 +4,18 @@
  * @module models/random
  * @subcategory models
  */
-import View from "./view";
-import Field from "./field";
-import Table from "./table";
-const { getState } = require("../db/state");
-const { generate_attributes } = require("../plugin-testing");
-const { initial_config_all_fields } = require("../plugin-helper");
-import db from "../db";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_plugin_testing = () => (require("../plugin-testing.js") as any);
+const _sc_plugin_helper = () => (require("../plugin-helper.js") as any);
+import View from "./view.js";
+import Field from "./field.js";
+import Table from "./table.js";
+const { getState } = _sc_db_state();
+const { generate_attributes } = _sc_plugin_testing();
+const { initial_config_all_fields } = _sc_plugin_helper();
+import db from "../db/index.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Row } from "@saltcorn/db-common/internal";
 import { instanceOfType } from "@saltcorn/types/common_types";
@@ -217,4 +222,4 @@ const all_views = async (
   return { list, show, edit };
 };
 
-export = { random_table, fill_table_row, initial_view, all_views };
+export default { random_table, fill_table_row, initial_view, all_views };

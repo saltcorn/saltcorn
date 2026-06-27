@@ -1,17 +1,23 @@
-import Page from "../models/page";
-import File from "../models/file";
-import db from "../db";
-const { getState } = require("../db/state");
-import { assertIsSet } from "./assertions";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import Page from "../models/page.js";
+import File from "../models/file.js";
+import db from "../db/index.js";
+const { getState } = _sc_db_state();
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import mocks from "./mocks";
+import mocks from "./mocks.js";
 const { mockReqRes } = mocks;
-getState().registerPlugin("base", require("../base-plugin"));
+getState().registerPlugin("base", _sc_base_plugin());
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 
 describe("Page model tests", () => {

@@ -3,23 +3,39 @@
  * @module base-plugin/viewtemplates/show
  * @subcategory base-plugin
  */
-import Form from "../../models/form";
-import User from "../../models/user";
-import Field from "../../models/field";
-import View from "../../models/view";
-import Table from "../../models/table";
-import Page from "../../models/page";
-import Crash from "../../models/crash";
-import Workflow from "../../models/workflow";
-import Trigger from "../../models/trigger";
-import File from "../../models/file";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_models_page_group = () => (require("../../models/page_group.js") as any).default;
+const _sc_db_state = () => (require("../../db/state.js") as any).default;
+const _sc_models_layout = () => (require("../../models/layout.js") as any).default;
+const _sc_plugin_testing = () => (require("../../plugin-testing.js") as any);
+const _sc_db = () => (require("../../db/index.js") as any).default;
+const _sc_utils = () => (require("../../utils.js") as any).default;
+const _sc_models_expression = () => (require("../../models/expression.js") as any).default;
+const _sc_models_config = () => (require("../../models/config.js") as any).default;
+const _sc_models_library = () => (require("../../models/library.js") as any).default;
+const _sc_diagram_node_extract_utils = () => (require("../../diagram/node_extract_utils.js") as any);
+import _sc__saltcorn_common_code from "@saltcorn/common-code";
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc__saltcorn_markup_layout from "@saltcorn/markup/layout";
+import _sc_underscore from "underscore";
+import Form from "../../models/form.js";
+import User from "../../models/user.js";
+import Field from "../../models/field.js";
+import View from "../../models/view.js";
+import Table from "../../models/table.js";
+import Page from "../../models/page.js";
+import Crash from "../../models/crash.js";
+import Workflow from "../../models/workflow.js";
+import Trigger from "../../models/trigger.js";
+import File from "../../models/file.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 import { Row } from "@saltcorn/db-common/dbtypes";
-const PageGroup = require("../../models/page_group");
-const { Relation } = require("@saltcorn/common-code");
+const PageGroup = _sc_models_page_group();
+const { Relation } = (_sc__saltcorn_common_code as any);
 
-const { getState } = require("../../db/state");
+const { getState } = _sc_db_state();
 const {
   eachView,
   traverse,
@@ -27,8 +43,8 @@ const {
   translateLayout,
   splitLayoutContainerFields,
   findLayoutBranchWith,
-} = require("../../models/layout");
-const { check_view_columns } = require("../../plugin-testing");
+} = _sc_models_layout();
+const { check_view_columns } = _sc_plugin_testing();
 
 const {
   div,
@@ -40,8 +56,8 @@ const {
   button,
   script,
   domReady,
-} = require("@saltcorn/markup/tags");
-const renderLayout = require("@saltcorn/markup/layout");
+} = (_sc__saltcorn_markup_tags as any);
+const renderLayout = (_sc__saltcorn_markup_layout as any);
 
 import {
   stateFieldsToWhere,
@@ -58,7 +74,7 @@ import {
   stateToQueryString,
   pathToState,
   displayType,
-} from "../../plugin-helper";
+} from "../../plugin-helper.js";
 import {
   action_url,
   view_linker,
@@ -67,8 +83,8 @@ import {
   splitUniques,
   standardBlockDispatch,
   standardLayoutRowVisitor,
-} from "../../viewable_fields";
-const db = require("../../db");
+} from "../../viewable_fields.js";
+const db = _sc_db();
 const {
   asyncMap,
   structuredClone,
@@ -82,19 +98,19 @@ const {
   interpolate,
   validSqlId,
   renderServerSide,
-} = require("../../utils");
-const { traverseSync } = require("../../models/layout");
+} = _sc_utils();
+const { traverseSync } = _sc_models_layout();
 const {
   get_expression_function,
   eval_expression,
   freeVariables,
   freeVariablesInInterpolation,
   add_free_variables_to_aggregations,
-} = require("../../models/expression");
-const { get_base_url } = require("../../models/config");
-const Library = require("../../models/library");
-const { extractFromLayout } = require("../../diagram/node_extract_utils");
-const _ = require("underscore");
+} = _sc_models_expression();
+const { get_base_url } = _sc_models_config();
+const Library = _sc_models_library();
+const { extractFromLayout } = _sc_diagram_node_extract_utils();
+const _ = (_sc_underscore as any);
 
 const configuration_workflow = (req: Req) =>
   new Workflow({
@@ -843,7 +859,7 @@ const createBasicView = async ({
   return cfg;
 };
 
-export = {
+export default {
   name: "Show",
   description: "Show a single row, with flexible layout",
   get_state_fields,

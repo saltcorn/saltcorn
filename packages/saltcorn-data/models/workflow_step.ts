@@ -4,23 +4,27 @@
  * @module models/workflow_step
  * @subcategory models
  */
-import db from "../db";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_utils = () => (require("../utils.js") as any).default;
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowStepCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_step";
-import User from "./user";
-import Trigger from "./trigger";
-import View from "./view";
-import Table from "./table";
-import Expression from "./expression";
-import FieldRepeat from "./fieldrepeat";
+import User from "./user.js";
+import Trigger from "./trigger.js";
+import View from "./view.js";
+import Table from "./table.js";
+import Expression from "./expression.js";
+import FieldRepeat from "./fieldrepeat.js";
 import tags from "@saltcorn/markup/tags";
-import { stateFieldsToWhere } from "../plugin-helper";
+import { stateFieldsToWhere } from "../plugin-helper.js";
 const { a } = tags;
-const { jsIdentifierValidator } = require("../utils");
+const { jsIdentifierValidator } = _sc_utils();
 
 const { eval_expression, get_async_expression_function } = Expression;
 
-const { getState } = require("../db/state");
+const { getState } = _sc_db_state();
 /**
  * WorkflowStep Class
  * @category saltcorn-data
@@ -883,4 +887,4 @@ class WorkflowStep {
   }
 }
 
-export = WorkflowStep;
+export default WorkflowStep;

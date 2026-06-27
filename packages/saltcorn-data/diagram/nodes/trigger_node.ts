@@ -1,5 +1,5 @@
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
-import Node from "./node";
+import Node from "./node.js";
 
 export class TriggerNode extends Node {
   constructor(

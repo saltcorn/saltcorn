@@ -1,17 +1,23 @@
-import db from "../db";
-const { getState } = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_db_state = () => (require("../db/state.js") as any).default;
+const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
+const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
+const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
+import db from "../db/index.js";
+const { getState } = _sc_db_state();
+getState().registerPlugin("base", _sc_base_plugin());
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 
-import Tag from "../models/tag";
-import Table from "../models/table";
-import View from "../models/view";
-import Page from "../models/page";
+import Tag from "../models/tag.js";
+import Table from "../models/table.js";
+import View from "../models/view.js";
+import Page from "../models/page.js";
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await _sc_db_reset_schema()();
+  await _sc_db_fixtures()();
 });
 jest.setTimeout(30000);
 

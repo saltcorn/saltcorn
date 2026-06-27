@@ -3,14 +3,27 @@
  * @module base-plugin/viewtemplates/room
  * @subcategory base-plugin
  */
-import Field from "../../models/field";
-import Table from "../../models/table";
-import Form from "../../models/form";
-import View from "../../models/view";
-import Trigger from "../../models/trigger";
-import Workflow from "../../models/workflow";
-const WorkflowRun = require("../../models/workflow_run");
-const WorkflowStep = require("../../models/workflow_step");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_models_workflow_run = () => (require("../../models/workflow_run.js") as any).default;
+const _sc_models_workflow_step = () => (require("../../models/workflow_step.js") as any).default;
+const _sc_db_state = () => (require("../../db/state.js") as any).default;
+const _sc_db = () => (require("../../db/index.js") as any).default;
+const _sc_diagram_node_extract_utils = () => (require("../../diagram/node_extract_utils.js") as any);
+const _sc_models_workflow_trace = () => (require("../../models/workflow_trace.js") as any).default;
+import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
+import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
+import _sc__saltcorn_markup from "@saltcorn/markup";
+import _sc__saltcorn_markup_index from "@saltcorn/markup/index";
+import _sc_markdown_it from "markdown-it";
+import Field from "../../models/field.js";
+import Table from "../../models/table.js";
+import Form from "../../models/form.js";
+import View from "../../models/view.js";
+import Trigger from "../../models/trigger.js";
+import Workflow from "../../models/workflow.js";
+const WorkflowRun = _sc_models_workflow_run();
+const WorkflowStep = _sc_models_workflow_step();
 const {
   text,
   div,
@@ -24,26 +37,26 @@ const {
   i,
   script,
   domReady,
-} = require("@saltcorn/markup/tags");
-const { pagination } = require("@saltcorn/markup/helpers");
-const { renderForm, tabs, link } = require("@saltcorn/markup");
-const { mkTable } = require("@saltcorn/markup");
+} = (_sc__saltcorn_markup_tags as any);
+const { pagination } = (_sc__saltcorn_markup_helpers as any);
+const { renderForm, tabs, link } = (_sc__saltcorn_markup as any);
+const { mkTable } = (_sc__saltcorn_markup as any);
 import {
   link_view,
   stateToQueryString,
   stateFieldsToWhere,
   stateFieldsToQuery,
   readState,
-} from "../../plugin-helper";
+} from "../../plugin-helper.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Req, Res } from "@saltcorn/types/base_types";
-const { getState } = require("../../db/state");
-const db = require("../../db");
-import { getForm, fill_presets } from "../../viewable_fields";
-const { extractFromLayout } = require("../../diagram/node_extract_utils");
-const WorkflowTrace = require("../../models/workflow_trace");
-const { localeDateTime } = require("@saltcorn/markup/index");
-const MarkdownIt = require("markdown-it"),
+const { getState } = _sc_db_state();
+const db = _sc_db();
+import { getForm, fill_presets } from "../../viewable_fields.js";
+const { extractFromLayout } = _sc_diagram_node_extract_utils();
+const WorkflowTrace = _sc_models_workflow_trace();
+const { localeDateTime } = (_sc__saltcorn_markup_index as any);
+const MarkdownIt = (_sc_markdown_it as any),
   md = new MarkdownIt();
 
 const configuration_workflow = (req: Req) =>
@@ -341,7 +354,7 @@ const delprevrun = async (table_id: number | null, viewname: string, config: Gen
   return;
 };
 
-export = {
+export default {
   /** @type {string} */
   name: "WorkflowRoom",
   /** @type {string} */

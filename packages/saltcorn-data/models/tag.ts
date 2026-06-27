@@ -1,18 +1,24 @@
-import Page from "./page";
-import Table from "./table";
-import Trigger from "./trigger";
-import View from "./view";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const _sc_table = () => (require("./table.js") as any).default;
+const _sc_view = () => (require("./view.js") as any).default;
+const _sc_page = () => (require("./page.js") as any).default;
+const _sc_trigger = () => (require("./trigger.js") as any).default;
+import Page from "./page.js";
+import Table from "./table.js";
+import Trigger from "./trigger.js";
+import View from "./view.js";
 import type {
   Where,
   SelectOptions,
   Row,
   PartialSome,
 } from "@saltcorn/db-common/internal";
-import db from "../db";
-import TagEntry from "./tag_entry";
-import type { TagEntryCfg } from "./tag_entry";
+import db from "../db/index.js";
+import TagEntry from "./tag_entry.js";
+import type { TagEntryCfg } from "./tag_entry.js";
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
-import utils from "../utils";
+import utils from "../utils.js";
 const { comparing } = utils;
 
 class Tag implements AbstractTag {
@@ -98,20 +104,20 @@ class Tag implements AbstractTag {
   }
 
   async getTables(): Promise<Table[]> {
-    return await this.getTypedEntries<Table>(require("./table"), "table_id");
+    return await this.getTypedEntries<Table>(_sc_table(), "table_id");
   }
 
   async getViews(): Promise<View[]> {
-    return await this.getTypedEntries<View>(require("./view"), "view_id");
+    return await this.getTypedEntries<View>(_sc_view(), "view_id");
   }
 
   async getPages(): Promise<Page[]> {
-    return await this.getTypedEntries<Page>(require("./page"), "page_id");
+    return await this.getTypedEntries<Page>(_sc_page(), "page_id");
   }
 
   async getTriggers(): Promise<Trigger[]> {
     return await this.getTypedEntries<Trigger>(
-      require("./trigger"),
+      _sc_trigger(),
       "trigger_id"
     );
   }
@@ -188,4 +194,4 @@ class Tag implements AbstractTag {
 type AttrNames = "table_id" | "view_id" | "page_id" | "trigger_id";
 type TagCfg = PartialSome<Tag, "name">;
 
-export = Tag;
+export default Tag;
