@@ -376,7 +376,9 @@ export class PushMessageHelper {
       }
     }
     if (changed) {
-      await this.state.setConfig("push_sync_subscriptions", this.syncSubs);
+      await this.state.setConfig("push_sync_subscriptions", {
+        ...this.syncSubs,
+      });
       this.state.log(5, `Removed ${staleTokens.size} stale sync token(s)`);
     }
   }
