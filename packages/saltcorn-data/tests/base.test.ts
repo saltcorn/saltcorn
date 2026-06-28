@@ -1,13 +1,18 @@
-import db from "../db";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import db from "../db/index.js";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 
+import plugin from "../base-plugin/index.js";
 afterAll(db.close);
 
-
 describe("float read", () => {
-  const plugin = require("../base-plugin");
-
-  const float = plugin.types.find((t: any) => t.name === "Float");
+  const float = (plugin.types as any[]).find((t: any) => t.name === "Float");
   it("passes auto test", async () => {
     expect(float.read("3.4")).toBe(3.4);
     expect(float.read("3")).toBe(3);

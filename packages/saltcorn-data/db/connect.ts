@@ -5,18 +5,34 @@
  * @subcategory db
  */
 
-import { join } from "path";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import is from "contractis/is.js";
+import childProcessPkg from "child_process";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+// browser bundles (mobile app) have no `fileURLToPath`; __dirname is only used
+// server-side here (spawn cwd), so degrade to "" when it is unavailable.
+const __dirname =
+  typeof fileURLToPath === "function"
+    ? dirname(fileURLToPath(import.meta.url))
+    : "";
 import { readFileSync, mkdirSync } from "fs";
 import envPaths from "env-paths";
-const is = require("contractis/is");
 import { randomBytes, createHash } from "crypto";
 
-const pathsNoApp = envPaths("", { suffix: "" });
-const pathsWithApp = envPaths("saltcorn", { suffix: "" });
+// `env-paths` is server-only; in browser bundles (mobile app) it is not the
+// real callable module, so fall back to empty paths. The path values are only
+// consumed server-side (config/data dirs, sqlite location).
+const emptyPaths = { data: "", config: "", cache: "", log: "", temp: "" };
+const safeEnvPaths = (name: string, opts: { suffix: string }) =>
+  typeof envPaths === "function" ? envPaths(name, opts) : emptyPaths;
+const pathsNoApp = safeEnvPaths("", { suffix: "" });
+const pathsWithApp = safeEnvPaths("saltcorn", { suffix: "" });
 
-import utils from "../utils";
+import * as utils from "../utils.js";
 import type { ConnectObjType } from "@saltcorn/types/base_types";
-const { isNode } = utils;
+import { isNode } from "../utils.js";
 
 /**
  * Default data path?
@@ -44,8 +60,8 @@ const stringToBool = (x: any) =>
 const getGitRevision = () => {
   let options = { stdio: "pipe", cwd: __dirname };
   try {
-    return require("child_process")
-      .execSync("git rev-parse HEAD", options)
+    return childProcessPkg
+      .execSync("git rev-parse HEAD", options as any)
       .toString()
       .trim();
   } catch (error) {
@@ -224,7 +240,7 @@ const is_sqlite = (connObj: ConnectObjType) => {
   return !!connObj.sqlite_path;
 };
 
-export = {
+export {
   getConnectObject,
   getConfigFile,
   configFileDir,

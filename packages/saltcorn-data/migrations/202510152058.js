@@ -1,9 +1,9 @@
 const js = async () => {
-  const db = require("../db");
+  const db = require("@saltcorn/data/db");
   if (db.isSQLite) return;
-  const Field = require("../models/field");
-  const Table = require("../models/table");
-  const { getState } = require("../db/state");
+  const Field = require("@saltcorn/data/models/field");
+  const Table = require("@saltcorn/data/models/table");
+  const { getState } = require("@saltcorn/data/db/state");
 
   const state = getState();
   await state?.refresh_tables(false);

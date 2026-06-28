@@ -5,16 +5,24 @@
  * @subcategory db
  */
 
+import { getConnectObject, is_sqlite } from "./connect.js";
+import sqliteCapacitorPkg from "@saltcorn/sqlite-mobile/sqlite_capacitor";
+import * as sqlitePkg from "@saltcorn/sqlite/sqlite";
+import * as postgresPkg from "@saltcorn/postgres/postgres";
 import * as multiTenant from "@saltcorn/db-common/multi-tenant";
 
 import { sqlsanitize, mkWhere, Where } from "@saltcorn/db-common/internal";
 
-import utils from "../utils";
-const { isNode } = utils;
-import { getConnectObject as getConnectObjectMobile } from "./connect_mobile";
-const { getConnectObject, is_sqlite } = require("./connect");
+import { isNode } from "../utils.js";
+import { getConnectObject as getConnectObjectMobile } from "./connect_mobile.js";
 
-const reset = require("./reset_schema");
+// reset_schema is loaded lazily (at call time) rather than statically imported:
+// reset_schema -> state -> config (etc.) read db.* at module-evaluation time, so
+// a static import here would form a load-time cycle in which db's default export
+// is still in its temporal dead zone. Deferring it lets db/index finish first.
+const reset = async (...args: any[]): Promise<void> =>
+  (await import("./reset_schema.js")).default(...args);
+
 
 /** @type {any} */
 const connectObj = isNode() ? getConnectObject() : getConnectObjectMobile();
@@ -27,13 +35,13 @@ const is_node = isNode();
 const initDbModule = (): any => {
   let dbmodule = null;
   if (!isNode()) {
-    dbmodule = require("@saltcorn/sqlite-mobile/sqlite_capacitor");
+    dbmodule = sqliteCapacitorPkg;
     dbmodule.setConnectionObject(connectObj);
   } else if (isSQLite) {
-    dbmodule = require("@saltcorn/sqlite/sqlite");
+    dbmodule = sqlitePkg;
     dbmodule.init(getConnectObject);
   } else {
-    dbmodule = require("@saltcorn/postgres/postgres");
+    dbmodule = postgresPkg;
     dbmodule.init(getConnectObject);
   }
   if (!dbmodule) throw new Error("No database package found.");
@@ -65,4 +73,4 @@ const dbExports: DbExportsType = {
   getTenantSchemaPrefix,
   reset,
 };
-export = dbExports;
+export default dbExports;

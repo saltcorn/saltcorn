@@ -5,57 +5,37 @@
  * @subcategory base-plugin
  */
 
-const fetch = require("node-fetch");
-const { VM } = require("vm2");
-const oldVm = require("vm");
+import { getMailTransport, viewToEmailHtml, loadAttachments, getFileAggregations, mjml2html } from "../models/email.js";
+import { get_async_expression_function, recalculate_for_stored, eval_expression, freeVariablesInInterpolation, add_free_variables_to_joinfields, freeVariables } from "../models/expression.js";
+import { sleep, getSessionId, urlStringToObject, dollarizeObject, objectToQueryString, interpolate, comparingCaseInsensitive, mergeActionResults, isNode, isWeb, ppVal, getFetchProxyOptions } from "../utils.js";
+import { available_languages } from "../models/config.js";
+import vm2Pkg from "vm2";
+import tagsPkg from "@saltcorn/markup/tags";
+import modulePkg from "module";
+import fetchLib from "node-fetch";
+const fetch: any = fetchLib; // NodeNext default-import interop for node-fetch
+import oldVm from "vm";
+import db from "../db/index.js";
+import MetaData from "../models/metadata.js";
+import bufferPkg from "buffer/index.js";
+const { VM } = vm2Pkg;
 
-import Table from "../models/table";
-import EventLog from "../models/eventlog";
-import View from "../models/view";
-import Model from "../models/model";
-import Page from "../models/page";
-import Field from "../models/field";
-import User from "../models/user";
-import Trigger from "../models/trigger";
-import WorkflowRun from "../models/workflow_run";
-import Notification from "../models/notification";
-import File from "../models/file";
+import Table from "../models/table.js";
+import EventLog from "../models/eventlog.js";
+import View from "../models/view.js";
+import Model from "../models/model.js";
+import Page from "../models/page.js";
+import Field from "../models/field.js";
+import User from "../models/user.js";
+import Trigger from "../models/trigger.js";
+import WorkflowRun from "../models/workflow_run.js";
+import Notification from "../models/notification.js";
+import File from "../models/file.js";
 import { Where } from "@saltcorn/db-common/internal";
 import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
-import stateModule from "../db/state";
+import { getState } from "../db/state.js";
+const { div, code, a, span } = tagsPkg;
 
-const { getState } = stateModule;
-const {
-  getMailTransport,
-  viewToEmailHtml,
-  loadAttachments,
-  getFileAggregations,
-  mjml2html,
-} = require("../models/email");
-const {
-  get_async_expression_function,
-  recalculate_for_stored,
-  eval_expression,
-  freeVariablesInInterpolation,
-  add_free_variables_to_joinfields,
-  freeVariables,
-} = require("../models/expression");
-const { div, code, a, span } = require("@saltcorn/markup/tags");
-const {
-  sleep,
-  getSessionId,
-  urlStringToObject,
-  dollarizeObject,
-  objectToQueryString,
-  interpolate,
-  comparingCaseInsensitive,
-  mergeActionResults,
-} = require("../utils");
-const db = require("../db");
-
-const { isNode, isWeb, ppVal, getFetchProxyOptions } = require("../utils");
-const { available_languages } = require("../models/config");
-const MetaData = require("../models/metadata");
 
 import type { GenObj } from "@saltcorn/types/common_types";
 import type {
@@ -152,7 +132,7 @@ const run_code = async ({
   let stripTypes = (s: string) => s;
   let code;
   try {
-    const { stripTypeScriptTypes } = require("module");
+    const { stripTypeScriptTypes } = modulePkg as any; // newer Node API, absent from @types/node
     if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
     code = stripTypes(`async () =>{${configuration.code}
 }`)
@@ -240,7 +220,7 @@ const run_code = async ({
     //other workers
     db.whenTransactionisFree(async () => {
       if (which) {
-        const state: any = getState();
+        const state: any = getState()!;
         await state[`refresh_${which}`]();
       } else await getState()!.refresh(false);
     });
@@ -274,7 +254,7 @@ const run_code = async ({
     Page,
     Field,
     EventLog,
-    Buffer: isNode() ? Buffer : require("buffer"),
+    Buffer: isNode() ? Buffer : bufferPkg,
     Trigger,
     Notification,
     WorkflowRun,
@@ -312,7 +292,7 @@ const run_code = async ({
   }
 };
 
-export = {
+export default {
   /**
    * @namespace
    * @category saltcorn-data
@@ -550,7 +530,7 @@ export = {
       [key: string]: unknown;
     }) => {
       const table = Table.findOne({ name: table_name });
-      const wh = where ? eval_expression(where, row, user) : {};
+      const wh = where ? eval_expression(where as any, row, user) : {};
       const selOpts: GenObj = { orderDesc, orderBy };
       if (limit) selOpts.limit = limit;
       const rows = await table!.getRows(wh, selOpts);
@@ -559,7 +539,7 @@ export = {
       let first = true;
       for (const row_i of rows) {
         if (!first && interval) await sleep(interval * 1000);
-        const stepres = await trigger.runWithoutRow({
+        const stepres = await trigger!.runWithoutRow({
           ...rest,
           table,
           row: row_i,
@@ -689,7 +669,7 @@ export = {
     }) => {
       let url1 = interpolate(url, row || {}, user, "Webhook URL");
 
-      const fetchOpts = {
+      const fetchOpts: any = {
         method: (method || "post").toLowerCase(),
         headers: { "Content-Type": "application/json" },
         ...getFetchProxyOptions(),
@@ -801,8 +781,8 @@ export = {
       const { participant_field } = view.configuration;
       const [part_table_name, part_key_to_room, part_user_field] =
         participant_field.split(".");
-      const roomtable = Table.findOne({ id: view.table_id });
-      const parttable = Table.findOne({ name: part_table_name });
+      const roomtable = Table.findOne({ id: view.table_id })!;
+      const parttable = Table.findOne({ name: part_table_name })!;
 
       //find a room that has both participants
       //select id from rooms r where uid1 in (select id from participants where...) and
@@ -1226,7 +1206,7 @@ export = {
         }
         const view = await View.findOne({ name: viewname });
         setBody.html = await viewToEmailHtml(
-          view,
+          view!,
           {
             [table.pk_name]: row[table.pk_name],
           },
@@ -1235,7 +1215,7 @@ export = {
       }
       // if user not supplied, default to admin rights in line with convention for insertRow/updateRow
       const attachments = await loadAttachments(
-        attachment_path,
+        attachment_path!,
         row,
         user ? user : { role_id: 1 }
       );
@@ -1509,7 +1489,7 @@ export = {
           user,
           "recalculate_stored_fields where"
         );
-        await recalculate_for_stored(table_for_recalc, where);
+        await recalculate_for_stored(table_for_recalc!, where);
       } else if (table_for_recalc) recalculate_for_stored(table_for_recalc);
       else return { error: "recalculate_stored_fields: table not found" };
     },
@@ -1593,7 +1573,7 @@ export = {
       referrer?: string;
       [key: string]: any;
     }) => {
-      const state = urlStringToObject(referrer);
+      const state = urlStringToObject(referrer!);
       const f = get_async_expression_function(
         configuration.row_expr,
         table?.fields || Object.keys(row || {}).map((k) => ({ name: k })),
@@ -1605,7 +1585,7 @@ export = {
         }
       );
       const calcrow = await f(row || {}, user);
-      const table_for_insert = Table.findOne({ name: configuration.table });
+      const table_for_insert = Table.findOne({ name: configuration.table })!;
       const all_results: GenObj = {};
       const ids: number[] = [];
 
@@ -1872,7 +1852,7 @@ export = {
         user,
         "delete_rows where"
       );
-      const tbl = Table.findOne({ name: table_name });
+      const tbl = Table.findOne({ name: table_name })!;
       await tbl!.deleteRows(where, user, false, resultCollector);
       return resultCollector;
     },
@@ -2438,7 +2418,7 @@ export = {
           validator(s: any) {
             let stripTypes = (s: string) => s;
             try {
-              const { stripTypeScriptTypes } = require("module");
+              const { stripTypeScriptTypes } = modulePkg as any; // newer Node API, absent from @types/node
               if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
             } catch (e) {
               //ignore
@@ -2584,7 +2564,7 @@ export = {
         else if (!row[ref]) return;
         else {
           const keyfield = table.getField(ref);
-          const refTable = Table.findOne({ name: keyfield!.reftable_name });
+          const refTable = Table.findOne({ name: keyfield!.reftable_name })!;
           const refRow = await refTable!.getRow({ [table.pk_name]: row[ref] });
           code = refRow![target];
         }
@@ -2845,7 +2825,7 @@ export = {
 
       const source_rows = await source_table.getRows(q);
       if (!source_rows) return { error: "No data received" };
-      const table_for_insert = Table.findOne({ name: table_dest });
+      const table_for_insert = Table.findOne({ name: table_dest })!;
       const dest_rows = await table_for_insert!.getRows({});
       const srcPKfield = source_table.fields.find((f) => f.primary_key)!.name;
       const src_pks = new Set(source_rows.map((r: any) => r[srcPKfield]));
@@ -3288,7 +3268,7 @@ export = {
     }) => {
       if (!row?.old_session_id || !user || !session_field || !user_field)
         return;
-      const table = Table.findOne({ name: table_name });
+      const table = Table.findOne({ name: table_name })!;
       const rows = await table!.getRows({
         [session_field]: row.old_session_id,
         [user_field]: null,
@@ -3311,7 +3291,7 @@ export = {
       const explainers: Record<string, string> = {};
       for (const model of models) {
         try {
-          const table = Table.findOne({ id: model.table_id });
+          const table = Table.findOne({ id: model.table_id })!;
           if (!model.templateObj) continue;
           const hyperparameter_fields =
             model.templateObj.hyperparameter_fields?.({

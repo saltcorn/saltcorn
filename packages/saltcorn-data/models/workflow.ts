@@ -5,22 +5,22 @@
  * @subcategory models
  */
 
+import { getState } from "../db/state.js";
+import { applyAsync, apply, asyncMap } from "../utils.js";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import type {
   AbstractWorkflow,
   RunResult,
 } from "@saltcorn/types/model-abstracts/abstract_workflow";
 
-import db from "../db";
+import db from "../db/index.js";
 
-import type Field from "./field";
-import Form from "./form";
+import type Field from "./field.js";
+import Form from "./form.js";
 
-import { build_schema_data } from "../plugin-helper";
-import FieldRepeat from "./fieldrepeat";
+import { build_schema_data } from "../plugin-helper.js";
+import FieldRepeat from "./fieldrepeat.js";
 
-const { getState } = require("../db/state");
-const { applyAsync, apply, asyncMap } = require("../utils");
 
 /**
  * Workflow class
@@ -107,7 +107,7 @@ class Workflow implements AbstractWorkflow {
       if (f instanceof FieldRepeat) await asyncMap(f.fields, iter);
       else if (f.type === "File") {
         if (f.fieldview && !f.fieldviewObj)
-          f.fieldviewObj = getState().fileviews[f.fieldview];
+          f.fieldviewObj = getState()!.fileviews[f.fieldview];
         await f.fill_fkey_options();
       }
     };
@@ -269,18 +269,18 @@ class Workflow implements AbstractWorkflow {
         ...(step.disablePreview ? {} : { previewURL: this.previewURL }),
       };
     } else if (step.builder) {
-      const File = (await import("./file")).default;
+      const File = (await import("./file.js")).default;
       let options;
       try {
         await File.buildDirCache();
         options = {
           ...(await applyAsync(step.builder, context)),
-          fonts: getState().fonts,
+          fonts: getState()!.fonts,
         };
       } finally {
         File.destroyDirCache();
       }
-      const Table = (await import("./table")).default;
+      const Table = (await import("./table.js")).default;
       const table = Table.findOne(
         context.table_id
           ? { id: context.table_id }
@@ -295,12 +295,12 @@ class Workflow implements AbstractWorkflow {
       const { tables, views } = await build_schema_data();
       options.tables = tables;
       options.views = views;
-      options.max_relations_layer_depth = getState().getConfig(
+      options.max_relations_layer_depth = getState()!.getConfig(
         "max_relations_layer_depth",
         6
       );
-      options.icons = getState().icons;
-      options.keyframes = getState().keyframes;
+      options.icons = getState()!.icons;
+      options.keyframes = getState()!.keyframes;
 
       return {
         renderBuilder: {
@@ -384,4 +384,4 @@ async function addApplyButtonToForm(
 
 type WorkflowCfg = Partial<Workflow>;
 
-export = Workflow;
+export default Workflow;

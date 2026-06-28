@@ -4,7 +4,7 @@
  * @module models/workflow_trace
  * @subcategory models
  */
-import db from "../db";
+import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowTraceCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_trace";
 
@@ -107,4 +107,4 @@ class WorkflowTrace {
   }
 }
 
-export = WorkflowTrace;
+export default WorkflowTrace;

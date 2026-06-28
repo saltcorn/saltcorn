@@ -1,6 +1,6 @@
 import { AbstractTagEntry } from "@saltcorn/types/model-abstracts/abstract_tag_entry";
 import type { Row, Where, SelectOptions } from "@saltcorn/db-common/internal";
-import db from "../db";
+import db from "../db/index.js";
 
 class TagEntry implements AbstractTagEntry {
   id?: number;
@@ -75,6 +75,6 @@ class TagEntry implements AbstractTagEntry {
 namespace TagEntry {
   export type TagEntryCfg = Partial<TagEntry>
 }
-type TagEntryCfg = Partial<TagEntry>;
+export type TagEntryCfg = Partial<TagEntry>;
 
-export = TagEntry;
+export default TagEntry;

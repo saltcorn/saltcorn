@@ -4,7 +4,8 @@
  * @module models/crash
  * @subcategory models
  */
-import db from "../db";
+import { getState, getRootState } from "../db/state.js";
+import db from "../db/index.js";
 import moment from "moment";
 import type {
   PartialSome,
@@ -112,10 +113,9 @@ class Crash {
       url: req.url ?? "",
       headers: req.headers,
     };
-    const { getState, getRootState } = require("../db/state");
     const tenants_crash_log = getRootState().getConfig("tenants_crash_log");
 
-    getState().log(1, `ERROR: ${err.stack || err.message}`);
+    getState()!.log(1, `ERROR: ${err.stack || err.message}`);
     if (tenants_crash_log) {
       await db.insert("_sc_errors", payload);
     } else {
@@ -123,7 +123,7 @@ class Crash {
         await db.insert("_sc_errors", payload);
       });
     }
-    const Trigger = (await import("./trigger")).default;
+    const Trigger = (await import("./trigger.js")).default;
 
     Trigger.emitEvent("Error", null, req.user, payload);
   }
@@ -134,4 +134,4 @@ type CrashCfg = PartialSome<
   "stack" | "message" | "tenant" | "url" | "occur_at" | "headers"
 >;
 
-export = Crash;
+export default Crash;

@@ -1,4 +1,4 @@
-import * as promises from "./fs/promises";
+import * as promises from "./fs/promises.js";
 export { promises };
 
 export function createReadStream(path: string, options: any) {}

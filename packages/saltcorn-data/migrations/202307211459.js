@@ -1,7 +1,7 @@
 const sql = "";
 const js = async () => {
-  const Table = require("../models/table");
-  const db = require("../db");
+  const Table = require("@saltcorn/data/models/table");
+  const db = require("@saltcorn/data/db");
   const schema = db.getTenantSchemaPrefix();
 
   const tables = await Table.find({});

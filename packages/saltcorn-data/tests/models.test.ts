@@ -1,35 +1,38 @@
-import db from "../db/index";
+import db from "../db/index.js";
 import layoutMarkup from "@saltcorn/markup/layout";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const renderLayout = layoutMarkup;
-import Table from "../models/table";
-import TableConstraint from "../models/table_constraints";
-import Form from "../models/form";
-import Field from "../models/field";
-import Crash from "../models/crash";
-import Model from "../models/model";
-import ModelInstance from "../models/model_instance";
-import File from "../models/file";
-import View from "../models/view";
-import Page from "../models/page";
-import PageGroup from "../models/page_group";
-import PageGroupMember from "../models/page_group_member";
-import layoutModel from "../models/layout";
+import Table from "../models/table.js";
+import TableConstraint from "../models/table_constraints.js";
+import Form from "../models/form.js";
+import Field from "../models/field.js";
+import Crash from "../models/crash.js";
+import Model from "../models/model.js";
+import ModelInstance from "../models/model_instance.js";
+import File from "../models/file.js";
+import View from "../models/view.js";
+import Page from "../models/page.js";
+import PageGroup from "../models/page_group.js";
+import PageGroupMember from "../models/page_group_member.js";
+import * as layoutModel from "../models/layout.js";
 const { getViews } = layoutModel;
 
-const { getState } = require("../db/state");
-import mocks from "./mocks";
+import * as mocks from "./mocks.js";
 const { rick_file, mockReqRes } = mocks;
-import Library from "../models/library";
-import { assertIsSet } from "./assertions";
+import Library from "../models/library.js";
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { existsSync } from "fs";
 import { join } from "path";
-import MetaData from "../models/metadata";
+import MetaData from "../models/metadata.js";
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState()!.registerPlugin("base", basePluginMod);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 afterAll(db.close);
@@ -38,7 +41,7 @@ describe("Table create", () => {
   it("should create", async () => {
     expect.assertions(3);
     const tc = await Table.create("mytable");
-    const tf = Table.findOne({ id: tc.id });
+    const tf = Table.findOne({ id: tc.id })!;
     assertIsSet(tf);
     expect(tf.name).toStrictEqual("mytable");
   });
@@ -154,7 +157,7 @@ describe("Page", () => {
     expect(vs[1].name).toEqual("v46747");
     expect(vs[1].contents).toContain("Herman");
     expect(vs[1].contents).toContain("Tolstoy");
-    await getState().setConfig("staff_home", "foo");
+    await getState()!.setConfig("staff_home", "foo");
     await Page.update(cs.id, { description: "miaw" });
     await cs.clone();
     const cs1 = await Page.findOne({ name: "foo-copy" });
@@ -323,7 +326,7 @@ describe("Library", () => {
 
 describe("TableConstraint", () => {
   it("should create", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const con = await TableConstraint.create({
       table,

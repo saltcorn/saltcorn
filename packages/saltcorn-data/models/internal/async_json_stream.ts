@@ -1,11 +1,15 @@
 // https://stackoverflow.com/a/37041949/19839414
 // https://github.com/uhop/stream-json/issues/82#issuecomment-685289413
 
-const { Writable } = require("stream");
-const { chain } = require("stream-chain");
-const { parser } = require("stream-json");
-const fs = require("fs");
-const { streamArray } = require("stream-json/streamers/StreamArray");
+import streamPkg from "stream";
+import streamChainPkg from "stream-chain";
+import streamJsonPkg from "stream-json";
+import streamArrayPkg from "stream-json/streamers/StreamArray.js";
+import fs from "fs";
+const { Writable } = streamPkg;
+const { chain } = streamChainPkg;
+const { parser } = streamJsonPkg;
+const { streamArray } = streamArrayPkg;
 
 type AsyncConsumer<T> = (subString: T) => Promise<void>;
 

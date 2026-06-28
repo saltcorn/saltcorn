@@ -1,24 +1,33 @@
-import db from "../db";
-const state = require("../db/state");
-import User from "../models/user";
+import db from "../db/index.js";
+import User from "../models/user.js";
 
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+import * as state from "../db/state.js";
 const { getState } = state;
-import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  it,
+  expect,
+} from "@saltcorn/db-common/test_expect";
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState()!.registerPlugin("base", basePluginMod);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 afterAll(db.close);
 
 describe("State constants", () => {
   it("should have fonts", async () => {
-    expect(getState().fonts.Arial).toBe(
+    expect(getState()!.fonts.Arial).toBe(
       "Arial, Helvetica Neue, Helvetica, sans-serif"
     );
-    Object.values(getState().fonts).forEach((v) => {
+    Object.values(getState()!.fonts).forEach((v) => {
       expect(typeof v).toBe("string");
       expect(!!v).toBe(true);
     });
@@ -38,13 +47,13 @@ describe("State constants", () => {
 describe("State queries", () => {
   it("should query layout and 2fa policy", async () => {
     const user = await User.findOne({ role_id: 1 });
-    const layout = getState().getLayout(user);
+    const layout = getState()!.getLayout(user!);
     expect(typeof layout.wrap).toBe("function");
-    const twofapol = getState().get2FApolicy(user);
+    const twofapol = getState()!.get2FApolicy(user!);
     expect(twofapol).toBe("Optional");
   });
   it("should query i18n strings", async () => {
-    const strs = getState().getStringsForI18n();
+    const strs = getState()!.getStringsForI18n();
     expect(strs).toContain("Page Group link");
     expect(strs).toContain("Hello world");
     expect(strs).toContain("<h1> foo</h1>");
@@ -57,7 +66,7 @@ describe("State queries", () => {
     expect(strs).toContain("Normalised");
   });
   it("should query type names", async () => {
-    expect(getState().type_names).toStrictEqual([
+    expect(getState()!.type_names).toStrictEqual([
       "String",
       "Integer",
       "Bool",
@@ -69,15 +78,15 @@ describe("State queries", () => {
 });
 describe("State room emission", () => {
   it("should survive emit when not set", async () => {
-    getState().emitRoom("hello", 5);
+    getState()!.emitRoom("hello", 5);
   });
   it("should use roomEmitter", async () => {
     let msg;
     const myEmit = (...args: any[]) => {
       msg = args;
     };
-    getState().setRoomEmitter(myEmit);
-    getState().emitRoom("hello", 5);
+    getState()!.setRoomEmitter(myEmit);
+    getState()!.emitRoom("hello", 5);
     expect(msg).toStrictEqual(["hello", 5]);
   });
 });

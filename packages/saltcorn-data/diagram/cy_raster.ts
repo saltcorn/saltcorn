@@ -1,6 +1,6 @@
-import { DummyNode } from "./nodes/dummy_node";
-import Node from "./nodes/node";
-import type { ExtractResult } from "./node_extract_utils";
+import { DummyNode } from "./nodes/dummy_node.js";
+import Node from "./nodes/node.js";
+import type { ExtractResult } from "./node_extract_utils.js";
 
 /**
  * aligns the nodes from the application object tree on a raster

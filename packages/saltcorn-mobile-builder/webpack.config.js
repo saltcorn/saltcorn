@@ -2,27 +2,28 @@ const { mergeWithCustomize, merge } = require("webpack-merge");
 const { join } = require("path");
 const Plugin = require("@saltcorn/data/models/plugin");
 
-const dataCfg = require(join(
-  require.resolve("@saltcorn/data"),
-  "../..",
-  "webpack.config"
-));
-const markupCfg = require(join(
-  require.resolve("@saltcorn/markup"),
-  "../..",
-  // @saltcorn/markup is ESM ("type": "module"), so its webpack config is .cjs
-  "webpack.config.cjs"
-));
-const basePluginCfg = require(join(
-  require.resolve("@saltcorn/base-plugin"),
-  "../",
-  "webpack.config"
-));
-const sbAdmin2Cfg = require(join(
-  require.resolve("@saltcorn/sbadmin2"),
-  "../",
-  "webpack.config"
-));
+const dataCfg = require(
+  join(
+    require.resolve("@saltcorn/data"),
+    "../..",
+    // @saltcorn/data is ESM ("type": "module"), so its webpack config is .cjs
+    "webpack.config.cjs"
+  )
+);
+const markupCfg = require(
+  join(
+    require.resolve("@saltcorn/markup"),
+    "../..",
+    // @saltcorn/markup is ESM ("type": "module"), so its webpack config is .cjs
+    "webpack.config.cjs"
+  )
+);
+const basePluginCfg = require(
+  join(require.resolve("@saltcorn/base-plugin"), "../", "webpack.config")
+);
+const sbAdmin2Cfg = require(
+  join(require.resolve("@saltcorn/sbadmin2"), "../", "webpack.config")
+);
 
 const addDependOn = (dataEntryPoint, b) => {
   const copy = { ...dataEntryPoint };

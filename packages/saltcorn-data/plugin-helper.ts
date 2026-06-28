@@ -3,27 +3,25 @@
  * @category saltcorn-data
  * @module plugin-helper
  */
-import View from "./models/view";
-import Field from "./models/field";
-import Table from "./models/table";
-import Trigger from "./models/trigger";
-import Tag from "./models/tag";
+import { getState } from "./db/state.js";
+import tagsPkg from "@saltcorn/markup/tags";
+import layoutUtilsPkg from "@saltcorn/markup/layout_utils";
+import commonCodePkg from "@saltcorn/common-code";
+import mjml from "@saltcorn/markup/mjml-tags";
+import PlainDate from "@saltcorn/plain-date";
+import View from "./models/view.js";
+import Field from "./models/field.js";
+import Table from "./models/table.js";
+import Trigger from "./models/trigger.js";
+import Tag from "./models/tag.js";
 
-const { getState } = require("./db/state");
-import db from "./db";
-const { button, a, text, i, text_attr } = require("@saltcorn/markup/tags");
-const mjml = require("@saltcorn/markup/mjml-tags");
-const PlainDate = require("@saltcorn/plain-date");
-const { show_icon_and_label } = require("@saltcorn/markup/layout_utils");
-const {
-  Relation,
-  RelationType,
-  ViewDisplayType,
-  parseRelationPath,
-  buildRelationPath,
-} = require("@saltcorn/common-code");
-import utils from "./utils";
-const {
+import db from "./db/index.js";
+const { button, a, text, i, text_attr } = tagsPkg;
+const { show_icon_and_label } = layoutUtilsPkg;
+const { Relation, RelationType, ViewDisplayType, parseRelationPath } =
+  commonCodePkg;
+const { buildRelationPath } = commonCodePkg as any;
+import {
   applyAsync,
   InvalidConfiguration,
   mergeActionResults,
@@ -31,24 +29,22 @@ const {
   mergeIntoWhere,
   validSqlId,
   isNode,
-} = utils;
-import expression from "./models/expression";
-const {
+} from "./utils.js";
+import {
   jsexprToWhere,
   freeVariables,
   add_free_variables_to_joinfields,
   eval_expression,
   freeVariablesInInterpolation,
   add_free_variables_to_aggregations,
-} = expression;
-import layout from "./models/layout";
-const { traverseSync } = layout;
+} from "./models/expression.js";
+import { traverseSync } from "./models/layout.js";
 import { sqlFun, sqlBinOp } from "@saltcorn/db-common/internal";
 import type { Where, Row } from "@saltcorn/db-common/internal";
 import type { GenObj } from "@saltcorn/types/common_types";
 import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 import type { FieldLike } from "@saltcorn/types/base_types";
-import User from "models/user";
+import User from "./models/user.js";
 
 /**
  *
@@ -255,17 +251,17 @@ const calcfldViewOptions = (
     blockDisplay[f.name] = [];
     if (f.type === "File") {
       if (!isEdit && !isFilter)
-        fvs[f.name] = (Object.entries(getState().fileviews) as [string, any][])
+        fvs[f.name] = (Object.entries(getState()!.fileviews) as [string, any][])
           .filter(([k, v]: [string, any]) => !v.isEdit)
           .map(([k, v]: [string, any]) => k);
       else
         fvs[f.name] = (
-          Object.entries(getState().fileviews) as [string, any][]
+          Object.entries(getState()!.fileviews) as [string, any][]
         ).map(([k, v]: [string, any]) => k);
     } else if (f.type === "Key" && !noFollowKeys) {
-      if (isEdit) fvs[f.name] = Object.keys(getState().keyFieldviews);
+      if (isEdit) fvs[f.name] = Object.keys(getState()!.keyFieldviews);
       else if (isFilter) {
-        fvs[f.name] = Object.keys(getState().keyFieldviews);
+        fvs[f.name] = Object.keys(getState()!.keyFieldviews);
       } else {
         fvs[f.name] = ["show"];
       }
@@ -305,7 +301,7 @@ const calcfldViewOptions = (
         }
       }
 
-      (Object.entries(getState().keyFieldviews) as [string, any][]).forEach(
+      (Object.entries(getState()!.keyFieldviews) as [string, any][]).forEach(
         ([k, v]) => {
           if (v && v.handlesTextStyle) handlesTextStyle[f.name].push(k);
           if (v && v.blockDisplay) blockDisplay[f.name].push(k);
@@ -398,9 +394,9 @@ const calcfldViewConfig = async (
     fieldViewConfigForms[f.name] = {};
     const fieldviews =
       f.type === "Key"
-        ? getState().keyFieldviews
+        ? getState()!.keyFieldviews
         : f.type === "File"
-          ? getState().fileviews
+          ? getState()!.fileviews
           : (f.type && (f.type as any).fieldviews) || {};
     for (const [nm, fv] of Object.entries(fieldviews) as [string, any][]) {
       if (fv.configFields)
@@ -659,7 +655,7 @@ const get_many_to_many_relation_opts = async (
     tableIdCache: Record<number, Table>;
     tableNameCache: Record<string, Table>;
     fieldCache: Record<string, Field[]>;
-  },
+  } | null,
   path: string[]
 ): Promise<{ path: string; views: View[] }[]> => {
   const result = [];
@@ -958,7 +954,7 @@ const field_picker_fields = async ({
     (f) => f.type && (f.type as any).name === "Bool"
   );
 
-  const stateActions = getState().actions;
+  const stateActions = getState()!.actions;
   const stateActionKeys = Object.entries(stateActions)
     .filter(([_k, v]: [string, any]) => !v.disableInList)
     .map(([k]) => k);
@@ -1056,7 +1052,7 @@ const field_picker_fields = async ({
   const relation_options = await table.get_relation_options();
   const aggStatOptions: Record<string, string[]> = {};
   const agg_fieldviews: GenObj[] = [];
-  Object.values(getState().types).forEach((t: any) => {
+  Object.values(getState()!.types).forEach((t: any) => {
     const fvnames = Object.entries(t.fieldviews)
       .filter(([_k, v]: [string, any]) => !v.isEdit && !v.isFilter)
       .map(([k]) => k);
@@ -2259,7 +2255,7 @@ const stateFieldsToWhere = ({
   Object.entries(state || {}).forEach(([k, v]) => {
     if (typeof v === "undefined") return;
     if (k === "_fts" || (table?.name && k === `_fts_${table.santized_name}`)) {
-      const scState = getState();
+      const scState = getState()!;
       const language = scState.pg_ts_config;
       const use_websearch = scState.getConfig("search_use_websearch", false);
       const disable_fts = scState.getConfig("search_disable_fts", false);
@@ -2461,7 +2457,7 @@ const stateFieldsToWhere = ({
       const [thoughTblNm, throughField] = throughPart.split("->");
       const [jtNm, lblField] = finalPart.split("->");
       const jtTbl = Table.findOne(jtNm);
-      const throughTable = Table.findOne(thoughTblNm);
+      const throughTable = Table.findOne(thoughTblNm)!;
       let where = { [db.sqlsanitize(lblField)]: v };
       if (
         typeof user === "undefined" ||
@@ -2517,7 +2513,7 @@ const stateFieldsToWhere = ({
       const kpath = k.split(".");
       if (kpath.length === 3) {
         const [jtNm, jFieldNm, lblField] = kpath;
-        const jTbl = Table.findOne(jtNm);
+        const jTbl = Table.findOne(jtNm)!;
         let isString = false;
         const labelField = Table.findOne({ name: jtNm })?.getField?.(lblField);
         if (labelField)
@@ -2547,8 +2543,8 @@ const stateFieldsToWhere = ({
           ];
       } else if (kpath.length === 4) {
         const [jtNm, jFieldNm, tblName, lblField] = kpath;
-        const jTbl = Table.findOne(jtNm);
-        const thTbl = Table.findOne(tblName);
+        const jTbl = Table.findOne(jtNm)!;
+        const thTbl = Table.findOne(tblName)!;
 
         const pk = table ? table.pk_name : "id";
         if (
@@ -2678,7 +2674,7 @@ const initial_config_all_fields =
               Object.entries((f.type as any).fieldviews) as [string, any][]
             ).find(([nm, fv]: [string, any]) => fv.isEdit === isEdit)?.[0]
           : f.type === "File" && !isEdit
-            ? Object.keys(getState().fileviews)[0]
+            ? Object.keys(getState()!.fileviews)[0]
             : f.type === "File" && isEdit
               ? "upload"
               : f.type === "Key"
@@ -2754,7 +2750,7 @@ const readState = (state: GenObj, fields: Field[], req?: GenObj): GenObj => {
   const read_key = (f: Field, current: unknown) =>
     current === "null" || current === "" || current === null
       ? null
-      : getState().types[f.reftype as string].read(current, f.attributes);
+      : getState()!.types[f.reftype as string].read!(current, f.attributes);
   fields.forEach((f) => {
     const current = state[f.name];
     if (typeof current !== "undefined") {
@@ -2944,7 +2940,7 @@ const json_list_to_external_table = (
       return rows.length ? rows[0] : null;
     },
     get min_role_read() {
-      const roles = getState().getConfig("exttables_min_role_read", {});
+      const roles = getState()!.getConfig("exttables_min_role_read", {});
       return roles[tbl.name] || 100;
     },
     async getJoinedRows(opts: GenObj = {}) {
@@ -3297,7 +3293,7 @@ const json_list_to_external_table = (
  */
 const shoudlRunAsync = (col: GenObj): boolean => {
   const action_name = col.action_name;
-  const state_action = getState().actions[action_name];
+  const state_action = getState()!.actions[action_name];
   if (state_action) return !!col.run_async;
   else {
     const trigger = Trigger.findOne({ name: action_name });
@@ -3325,9 +3321,9 @@ const run_action_column = async ({
   [key: string]: any;
 }): Promise<any> => {
   let run_async = shoudlRunAsync(col);
-  if (run_async && !getState().getConfig("enable_dynamic_updates")) {
+  if (run_async && !getState()!.getConfig("enable_dynamic_updates")) {
     run_async = false;
-    getState().log(
+    getState()!.log(
       4,
       `Warning: '${col.action_name}' is set to run async but dynamic updates are disabled. Running synchronously instead.`
     );
@@ -3343,7 +3339,7 @@ const run_action_column = async ({
     state.emitDynamicUpdate(db.getTenantSchema(), reset_msg, userIds);
   };
   const successAsyncHandler = (data: GenObj) => {
-    const state = getState();
+    const state = getState()!;
     state.log(6, `Asynchronous action result: ${JSON.stringify(data)}`);
     const emitData = { ...data };
     if (req.headers["page-load-tag"])
@@ -3357,7 +3353,7 @@ const run_action_column = async ({
       reset_spinner(state);
   };
   const failureAsyncHandler = (err: Error & { message: string }) => {
-    const state = getState();
+    const state = getState()!;
     state.log(2, `Asynchronous action error`, err);
     if (req.headers["page-load-tag"]) {
       state.emitDynamicUpdate(
@@ -3372,7 +3368,7 @@ const run_action_column = async ({
     reset_spinner(state);
   };
   const run_action_step = async (action_name: string, colcfg: GenObj) => {
-    let state_action = getState().actions[action_name];
+    let state_action = getState()!.actions[action_name];
     let configuration: GenObj;
     let goRun: (() => Promise<any>) | undefined;
     if (state_action) {
@@ -3383,7 +3379,7 @@ const run_action_column = async ({
           user: req.user,
           req,
           ...rest,
-        });
+        } as any);
     } else {
       const trigger = await Trigger.findOne({ name: action_name });
 
@@ -3408,15 +3404,15 @@ const run_action_column = async ({
         goRun = () =>
           trigger.runWithoutRow({ req, interactive: true, ...rest });
       } else if (trigger) {
-        state_action = getState().actions[trigger.action];
+        state_action = getState()!.actions[trigger.action];
         goRun = () =>
           state_action.run({
             configuration: trigger.configuration,
-            trigger_id: trigger.id,
+            trigger_id: trigger.id!,
             user: req.user,
             req,
             ...rest,
-          });
+          } as any);
       }
     }
     if (!goRun)
@@ -3553,7 +3549,7 @@ const pathToState = (
     case RelationType.OWN:
       return { [pkName]: getRowVal(pkName) };
     case RelationType.INDEPENDENT:
-    case RelationType.NONE:
+    case (RelationType as any).NONE:
       return {};
     case RelationType.RELATION_PATH:
       return relation.isFixedRelation()
@@ -3585,11 +3581,11 @@ const runCollabEvents = async (
   for (const { event } of events || []) {
     const trigger = Trigger.findOne({ name: event });
     if (!trigger) {
-      getState().log(6, `Trigger '${event}' not found, skipping`);
+      getState()!.log(6, `Trigger '${event}' not found, skipping`);
       continue;
     }
-    if (role > trigger.min_role) {
-      getState().log(6, `Trigger '${event}' not authorized`);
+    if (role > trigger.min_role!) {
+      getState()!.log(6, `Trigger '${event}' not authorized`);
       continue;
     }
 
@@ -3602,16 +3598,16 @@ const runCollabEvents = async (
       });
       delete resp.__wf_run_id;
     } else {
-      const action = getState().actions[trigger.action];
+      const action = getState()!.actions[trigger.action];
       if (!action) {
-        getState().log(
+        getState()!.log(
           6,
           `Action '${trigger.action}' for trigger '${event}' not found, skipping`
         );
         continue;
       }
 
-      getState().log(6, `Running trigger '${event}'`);
+      getState()!.log(6, `Running trigger '${event}'`);
       resp = await action.run({
         configuration: trigger.configuration,
         row: actionData,

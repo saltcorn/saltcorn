@@ -3,15 +3,23 @@
  * @module base-plugin/viewtemplates/filter
  * @subcategory base-plugin
  */
-import Table from "../../models/table";
-import View from "../../models/view";
-import Field from "../../models/field";
-import Workflow from "../../models/workflow";
-import Trigger from "../../models/trigger";
-import User from "../../models/user";
-import Page from "../../models/page";
-import Crash from "../../models/crash";
-const PageGroup = require("../../models/page_group");
+import { eachView, translateLayout, getStringsForI18n, traverse } from "../../models/layout.js";
+import { InvalidConfiguration, objectToQueryString, removeEmptyStrings, asyncMap, getSessionId, mergeIntoWhere, isWeb, renderServerSide, interpolate } from "../../utils.js";
+import { jsexprToWhere, get_expression_function, eval_expression } from "../../models/expression.js";
+import { getState } from "../../db/state.js";
+import helpersPkg from "@saltcorn/markup/helpers";
+import PageGroup from "../../models/page_group.js";
+import renderLayout from "@saltcorn/markup/layout";
+import Library from "../../models/library.js";
+import db from "../../db/index.js";
+import Table from "../../models/table.js";
+import View from "../../models/view.js";
+import Field from "../../models/field.js";
+import Workflow from "../../models/workflow.js";
+import Trigger from "../../models/trigger.js";
+import User from "../../models/user.js";
+import Page from "../../models/page.js";
+import Crash from "../../models/crash.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 import {
@@ -27,7 +35,6 @@ import {
   script,
   a,
 } from "@saltcorn/markup/tags";
-const renderLayout = require("@saltcorn/markup/layout");
 
 import {
   readState,
@@ -39,35 +46,10 @@ import {
   picked_fields_to_query,
   stateFieldsToQuery,
   stateToQueryString,
-} from "../../plugin-helper";
-import { action_link } from "../../viewable_fields";
-const { search_bar } = require("@saltcorn/markup/helpers");
-const {
-  eachView,
-  translateLayout,
-  getStringsForI18n,
-  traverse,
-} = require("../../models/layout");
-const {
-  InvalidConfiguration,
-  objectToQueryString,
-  removeEmptyStrings,
-  asyncMap,
-  getSessionId,
-  mergeIntoWhere,
-  isWeb,
-  renderServerSide,
-  interpolate,
-} = require("../../utils");
-const { jsexprToWhere } = require("../../models/expression");
-const Library = require("../../models/library");
-import { extractFromLayout } from "../../diagram/node_extract_utils";
-const { getState } = require("../../db/state");
-const {
-  get_expression_function,
-  eval_expression,
-} = require("../../models/expression");
-const db = require("../../db/index");
+} from "../../plugin-helper.js";
+import { action_link } from "../../viewable_fields.js";
+const { search_bar } = helpersPkg;
+import { extractFromLayout } from "../../diagram/node_extract_utils.js";
 
 /**
  * @returns {Workflow}
@@ -123,7 +105,7 @@ const configuration_workflow = (req: Req) =>
             });
           }
           const stateActions = (
-            Object.entries(getState().actions) as [string, GenObj][]
+            Object.entries(getState()!.actions) as [string, GenObj][]
           ).filter(([k, v]) => !v.disableInBuilder && !v.disableIf?.());
           const actions1 = ["Clear", ...stateActions.map(([k, v]) => k)];
           const actions = Trigger.action_options({
@@ -138,7 +120,7 @@ const configuration_workflow = (req: Req) =>
             apiNeverTriggers: true,
           });
           const actionConstraints: GenObj = {};
-          const stateActionsObj: GenObj = getState().actions;
+          const stateActionsObj: GenObj = getState()!.actions;
           for (const action of actions1) {
             if (stateActionsObj[action]?.requireRow)
               actionConstraints[action] = { requireRow: true };
@@ -238,14 +220,14 @@ const configuration_workflow = (req: Req) =>
 
           const agg_fieldview_options: GenObj = {};
 
-          Object.values(getState().types).forEach((t: any) => {
+          Object.values(getState()!.types).forEach((t: any) => {
             agg_fieldview_options[t.name] = (
               Object.entries(t.fieldviews) as [string, GenObj][]
             )
               .filter(([k, v]) => !v.isEdit && !v.isFilter)
               .map(([k, v]) => k);
           });
-          const has_select2 = Object.keys(getState().keyFieldviews).includes(
+          const has_select2 = Object.keys(getState()!.keyFieldviews).includes(
             "select2"
           );
           const { on_done_redirect, ...current_filter_state } = req.query;
@@ -277,7 +259,7 @@ const configuration_workflow = (req: Req) =>
             mode: "filter",
             has_select2,
             has_copilot_generate:
-              !!getState().functions.copilot_generate_layout,
+              !!getState()!.functions.copilot_generate_layout,
           };
         },
       },
@@ -379,10 +361,10 @@ const run = async (
             : stat === "Count" || stat === "CountUnique"
               ? "Integer"
               : (fld!.type as any)?.name;
-        const type = getState().types[outcomeType];
-        if (type?.fieldviews[agg_fieldview]) {
-          const readval = type.read(val);
-          segment.contents = type.fieldviews[agg_fieldview].run(
+        const type = getState()!.types[outcomeType];
+        if (type?.fieldviews?.[agg_fieldview]) {
+          const readval = type.read!(val);
+          segment.contents = (type.fieldviews![agg_fieldview].run as Function)(
             readval,
             extra.req,
             segment?.configuration || {}
@@ -411,7 +393,7 @@ const run = async (
       }
       field.fieldview = fieldview;
       if (field.is_fkey && !field.fieldviewObj)
-        field.fieldviewObj = getState().keyFieldviews[field.fieldview!];
+        field.fieldviewObj = getState()!.keyFieldviews[field.fieldview!] as any;
       Object.assign(field.attributes, configuration);
       await field.fill_fkey_options(
         false,
@@ -594,7 +576,7 @@ const run = async (
       if (!field) return "";
       //console.log({ fieldview, field });
       if (fieldview && field.type && field.type === "Key") {
-        const fv = getState().keyFieldviews[fieldview];
+        const fv = getState()!.keyFieldviews[fieldview] as any;
         if (fv && (fv.isEdit || fv.isFilter)) {
           segment.options = distinct_values[field_name];
           return fv.run(
@@ -838,7 +820,7 @@ const run = async (
       layout,
       role,
       req: extra.req,
-      hints: getState().getLayout(extra.req.user).hints || {},
+      hints: (getState()!.getLayout(extra.req.user as any) as any).hints || {},
     })
   );
 };
@@ -938,7 +920,7 @@ const combineResults = (results: GenObj[]) => {
   return result;
 };
 
-export = {
+export default {
   /** @type {string} */
   name: "Filter",
   /** @type {string} */
@@ -1053,14 +1035,14 @@ export = {
       }
     },
     async distinctValuesQuery(state: GenObj) {
-      const table = Table.findOne(table_id || exttable_name)!;
-      const fields = table.getFields();
+      const table = Table.findOne(table_id || exttable_name);
+      const fields = table!.getFields();
       let distinct_values: GenObj = {};
       const role = req.user ? req.user.role_id : 100;
       for (const col of columns) {
         if (col.type === "DropDownFilter") {
           const field = fields.find((f: GenObj) => f.name === col.field_name);
-          if (table.external || table.provider_name) {
+          if (table!.external || table!.provider_name) {
             distinct_values[col.field_name] = (
               await (table as any).distinctValues(
                 col.field_name,
@@ -1091,7 +1073,7 @@ export = {
               col.field_name.split(".");
             const [thoughTblNm, throughField] = throughPart.split("->");
             const [jtNm, lblField] = finalPart.split("->");
-            const target = table.getField(
+            const target = table!.getField(
               `${jFieldNm}.${throughField}.${lblField}`
             );
             if (target)
@@ -1134,7 +1116,7 @@ export = {
                   !col.all_options
                 );
             } else if (kpath.length === 2) {
-              const target = table.getField(col.field_name);
+              const target = table!.getField(col.field_name);
               if (target)
                 distinct_values[col.field_name] = await target.distinct_values(
                   req,

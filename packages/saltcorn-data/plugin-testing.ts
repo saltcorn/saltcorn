@@ -2,18 +2,20 @@
  * @category saltcorn-data
  * @module plugin-testing
  */
-const { is } = require("contractis");
+import { getState } from "./db/state.js";
+import { mockReqRes } from "./tests/mocks.js";
+import { expressionValidator } from "./models/expression.js";
+import { parse_view_select } from "./viewable_fields.js";
+import contractisPkg from "contractis";
+import markupPkg from "@saltcorn/markup";
+const { is } = contractisPkg;
 
-const { getState } = require("./db/state");
-const { renderForm } = require("@saltcorn/markup");
-const { mockReqRes } = require("./tests/mocks");
-import Field from "./models/field";
-import Table from "./models/table";
-import Trigger from "./models/trigger";
-import Workflow from "./models/workflow";
-const { expressionValidator } = require("./models/expression");
-const { parse_view_select } = require("./viewable_fields");
-import View from "./models/view";
+const { renderForm } = markupPkg;
+import Field from "./models/field.js";
+import Table from "./models/table.js";
+import Trigger from "./models/trigger.js";
+import Workflow from "./models/workflow.js";
+import View from "./models/view.js";
 import {
   Plugin,
   PluginType,
@@ -37,7 +39,7 @@ const generate_attributes = (
   const attrs = Field.getTypeAttributes(typeattrs, table_id);
   (attrs || []).forEach((a: any) => {
     if (a.type && (a.required || rnd_bool())) {
-      const contract = a.type.contract || getState().types[a.type].contract;
+      const contract = a.type.contract || getState()!.types[a.type].contract;
       const gen = contract({}).generate;
       if (gen) res[a.name] = gen();
     }
@@ -135,7 +137,7 @@ const check_view_columns = async (
             column.action_name == "UpdateMatchingRows" &&
             view.viewtemplate == "Edit"
           ) &&
-          !getState().actions[column.action_name!] &&
+          !getState()!.actions[column.action_name!] &&
           !trigger_actions.includes(column.action_name!)
         )
           errs.push(
@@ -151,7 +153,7 @@ const check_view_columns = async (
               column.extra_state_fml,
               `View link extra state formula`
             );
-          const { viewname } = parse_view_select(column.view);
+          const { viewname } = parse_view_select(column.view!);
           const linkedview = View.findOne({ name: viewname });
           if (!linkedview)
             errs.push(

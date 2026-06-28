@@ -1,11 +1,19 @@
-import View from "../models/view";
-import db from "../db";
-import Table from "../models/table";
-import Field from "../models/field";
-import async_json_stream from "../models/internal/async_json_stream";
-const fs = require("fs");
+import View from "../models/view.js";
+import db from "../db/index.js";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import async_json_stream from "../models/internal/async_json_stream.js";
 
-const {
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
+import * as mocks from "./mocks.js";
+import {
   get_parent_views,
   get_child_views,
   get_inbound_relation_opts,
@@ -16,18 +24,20 @@ const {
   readState,
   generate_joined_query,
   stateToQueryString,
-} = require("../plugin-helper");
-const { getState } = require("../db/state");
-const {
+} from "../plugin-helper.js";
+import { getState } from "../db/state.js";
+import {
   satisfies,
   urlStringToObject,
   cloneName,
   objectToQueryString,
   validSqlId,
-} = require("../utils");
-
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import mocks from "./mocks";
+} from "../utils.js";
+import fs from "fs";
+import PlainDate from "@saltcorn/plain-date";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 import {
   createAnotherUserField,
   createSecondTopicField,
@@ -35,18 +45,17 @@ import {
   createKeyFromLevelTwo,
   createLevelThreeInbound,
   prepareSimpleTopicPostRelation,
-} from "./common_helpers";
-import { assertIsSet } from "./assertions";
-import expression from "../models/expression";
+} from "./common_helpers.js";
+import { assertIsSet } from "./assertions.js";
+import * as expression from "../models/expression.js";
 const { freeVariables, add_free_variables_to_joinfields } = expression;
-const PlainDate = require("@saltcorn/plain-date");
 
 const { mockReqRes } = mocks;
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState()!.registerPlugin("base", basePluginMod);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 afterAll(db.close);
@@ -118,7 +127,7 @@ describe("async_json_stream", () => {
 
 describe("generate_joined_query", () => {
   it("should generate state", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const q = generate_joined_query({ table, state: { author: "Leo" } });
     expect(q?.where?.author?.ilike).toBe("Leo");
@@ -127,7 +136,7 @@ describe("generate_joined_query", () => {
     expect(rows[0].author).toBe("Leo Tolstoy");
   });
   it("should generate FTS state", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const q = generate_joined_query({ table, state: { _fts_books: "Leo" } });
     expect(q?.where?._fts?.searchTerm).toBe("Leo");
@@ -136,7 +145,7 @@ describe("generate_joined_query", () => {
     expect(rows[0].author).toBe("Leo Tolstoy");
   });
   it("should generate FTS state with inlcude key summary", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     const q = generate_joined_query({
       table,
@@ -152,7 +161,7 @@ describe("generate_joined_query", () => {
     expect(rows[0].author).toBe("Herman Melville");
   });
   it("should generate formulas", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const q = generate_joined_query({ table, formulas: ["publisher.name"] });
     expect(q?.joinFields?.publisher_name?.target).toBe("name");
@@ -161,7 +170,7 @@ describe("generate_joined_query", () => {
   });
   it("should generate for show view", async () => {
     const user = { id: 1 };
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const view = View.findOne({ name: "authorshow" });
     assertIsSet(view);
@@ -190,7 +199,7 @@ describe("Half-H notation for joinfields", () => {
     expect([...freeVariables("2+xⱵk")]).toEqual(["xⱵk"]);
   });
   it("add_free_variables_to_joinfields", () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const joinFields = {};
     const freeVars = freeVariables("publisherⱵname");
@@ -203,7 +212,7 @@ describe("Half-H notation for joinfields", () => {
     });
   });
   it("should generate formulas", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const q = generate_joined_query({
       table,
@@ -221,7 +230,7 @@ describe("Half-H notation for joinfields", () => {
 
 describe("plugin helper", () => {
   it("get parent views", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     const x = await get_parent_views(patients, "foobar");
     expect(x[0].views.map((v: View) => v.name).sort()).toStrictEqual([
       "admin_authoredit",
@@ -238,7 +247,7 @@ describe("plugin helper", () => {
     ]);
   });
   it("get child views", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     const x = await get_child_views(books, "foobar");
     expect(x[1].views.map((v: View) => v.name)).toStrictEqual(["patientlist"]);
   });
@@ -251,7 +260,7 @@ describe("plugin helper", () => {
     ];
 
     it("single keys to source and rel table", async () => {
-      const sourceTbl = Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" })!;
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expected of expectedBase) {
         const actual = opts.find(
@@ -269,7 +278,7 @@ describe("plugin helper", () => {
         ".users.user_interested_in_topic$another_user.topic.blog_in_topic$topic.post",
         ".users.user_interested_in_topic$another_user.topic.inbound_inbound$topic.bp_inbound.post"
       );
-      const sourceTbl = Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" })!;
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expectedPath of expected) {
         const actual = opts.find(
@@ -292,7 +301,7 @@ describe("plugin helper", () => {
         ".users.user_interested_in_topic$another_user.topic.inbound_inbound$topic.bp_inbound.post",
         ".users.user_interested_in_topic$user.topic.blog_in_topic$second_topic.post"
       );
-      const sourceTbl = Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" })!;
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expectedPath of expected) {
         const actual = opts.find(
@@ -321,7 +330,7 @@ describe("plugin helper", () => {
         ".users.user_interested_in_topic$another_user.topic.inbound_inbound$topic.bp_inbound.post",
         ".users.user_interested_in_topic$user.topic.blog_in_topic$second_topic.post"
       );
-      const sourceTbl = Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" })!;
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expectedPath of expected) {
         const actual = opts.find(
@@ -350,7 +359,7 @@ describe("plugin helper", () => {
         ".users.user_interested_in_topic$user.topic.blog_in_topic$second_topic.post",
         ".users.user_interested_in_topic$user.topic.inbound_inbound$topic.post_from_level_two"
       );
-      const sourceTbl = Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" })!;
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expectedPath of expected) {
         const actual = opts.find(
@@ -384,7 +393,7 @@ describe("plugin helper", () => {
         ".users.user_interested_in_topic$user.topic.inbound_level_three$topic.inbound_level_two.bp_inbound.post",
         ".users.user_interested_in_topic$user.topic.inbound_level_three$topic.inbound_level_two.post_from_level_two"
       );
-      const sourceTbl = Table.findOne({ name: "users" });
+      const sourceTbl = Table.findOne({ name: "users" })!;
       const opts: any = await get_inbound_relation_opts(sourceTbl, "top_view");
       for (const expectedPath of expected) {
         const actual = opts.find(
@@ -395,7 +404,7 @@ describe("plugin helper", () => {
     });
 
     it("no inbound relations", async () => {
-      const targetTbl = Table.findOne({ name: "publisher" });
+      const targetTbl = Table.findOne({ name: "publisher" })!;
       assertIsSet(targetTbl);
       const allRels: any = await get_inbound_relation_opts(
         targetTbl,
@@ -405,7 +414,7 @@ describe("plugin helper", () => {
     });
 
     it("employee department relation", async () => {
-      const employee = Table.findOne({ name: "employee" });
+      const employee = Table.findOne({ name: "employee" })!;
       assertIsSet(employee);
       const result: any = await get_inbound_self_relation_opts(
         employee,
@@ -419,9 +428,9 @@ describe("plugin helper", () => {
 
     it("simple post topic relation", async () => {
       await prepareSimpleTopicPostRelation();
-      const simplePosts = Table.findOne({ name: "simple_posts" });
+      const simplePosts = Table.findOne({ name: "simple_posts" })!;
       assertIsSet(simplePosts);
-      const users = Table.findOne({ name: "users" });
+      const users = Table.findOne({ name: "users" })!;
       assertIsSet(users);
       const expected = [
         ".users.favsimpletopic.simple_posts$topic",
@@ -442,7 +451,7 @@ describe("plugin helper", () => {
 
   describe("many to many relations", () => {
     it("artist_plays_on_album", async () => {
-      const artists = Table.findOne({ name: "artists" });
+      const artists = Table.findOne({ name: "artists" })!;
       const opts = await get_many_to_many_relation_opts(
         artists,
         "show_artist",
@@ -459,7 +468,7 @@ describe("plugin helper", () => {
     });
 
     it("show pressing_job with embedded fan club feed", async () => {
-      const pressingJob = Table.findOne({ name: "pressing_job" });
+      const pressingJob = Table.findOne({ name: "pressing_job" })!;
       const opts = await get_many_to_many_relation_opts(
         pressingJob,
         "show_pressing_job",
@@ -494,7 +503,7 @@ describe("stateFieldsToWhere", () => {
         schema: [{ key: "name", type: "String" }],
       },
     },
-  ];
+  ] as unknown as Field[];
   it("normal field", async () => {
     const w = stateFieldsToWhere({
       fields,
@@ -680,8 +689,8 @@ describe("stateFieldsToWhere", () => {
     expect(state).toStrictEqual({ favbook: 1 });
   });
   it("join field", async () => {
-    const table = Table.findOne({ name: "patients" });
-    const myFields = await table?.getFields();
+    const table = Table.findOne({ name: "patients" })!;
+    const myFields = await table.getFields();
     const w = stateFieldsToWhere({
       fields: myFields,
       state: { "favbook.books->author": "Herman" },
@@ -752,13 +761,13 @@ describe("urlStringToObject", () => {
 describe("plugin helper", () => {
   it("field_picker_fields", async () => {
     const flds = await field_picker_fields({
-      table: Table.findOne({ name: "patients" }),
+      table: Table.findOne({ name: "patients" })!,
       viewname: "myView",
       req: mockReqRes.req,
     });
     expect(flds.length).toBeGreaterThan(1);
     const flds1 = await field_picker_fields({
-      table: Table.findOne({ name: "books" }),
+      table: Table.findOne({ name: "books" })!,
       viewname: "myView",
       req: mockReqRes.req,
     });
@@ -778,7 +787,6 @@ describe("objectToQueryString", () => {
     );
     expect(objectToQueryString({ eq: ["a", 5] })).toBe("a=5");
     expect(objectToQueryString({ a: null })).toBe("a=null");
-
   });
   it("collects or", async () => {
     expect(objectToQueryString({ or: [{ a: 5 }, { a: 7 }] })).toBe("a=5&a=7");

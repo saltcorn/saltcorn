@@ -1,17 +1,27 @@
-import db from "../db";
-const { getState } = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import db from "../db/index.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+getState()!.registerPlugin("base", basePluginMod);
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 
-import Tag from "../models/tag";
-import Table from "../models/table";
-import View from "../models/view";
-import Page from "../models/page";
+import Tag from "../models/tag.js";
+import Table from "../models/table.js";
+import View from "../models/view.js";
+import Page from "../models/page.js";
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 jest.setTimeout(30000);
 

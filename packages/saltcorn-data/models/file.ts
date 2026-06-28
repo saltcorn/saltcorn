@@ -5,7 +5,14 @@
  * @subcategory models
  */
 
-import db from "../db";
+import { asyncMap } from "../utils.js";
+import { getState, getAllTenants } from "../db/state.js";
+import path from "path";
+import fs from "fs";
+import fsx from "fs-extended-attributes";
+import Field from "./field.js";
+import Table from "./table.js";
+import db from "../db/index.js";
 import { v4 as uuidv4 } from "uuid";
 import { join, parse } from "path";
 import {
@@ -23,8 +30,7 @@ import {
   publicUrlToRelativePath,
   type S3HeadResult,
   type S3ListResult,
-} from "./internal/s3_helpers";
-const { asyncMap } = require("../utils");
+} from "./internal/s3_helpers.js";
 import { mkdir, unlink } from "fs/promises";
 import type {
   Where,
@@ -32,16 +38,15 @@ import type {
   Row,
   PartialSome,
 } from "@saltcorn/db-common/internal";
-import axios from "axios";
+import axiosLib from "axios";
+const axios: any = axiosLib; // NodeNext default-import interop: axios types resolve to the module namespace
 import FormData from "form-data";
 import { renameSync, statSync, existsSync } from "fs";
-import { lookup } from "mime-types";
-import type User from "./user";
-const path = require("path");
+import mimeTypes from "mime-types";
+const { lookup } = mimeTypes;
+import type User from "./user.js";
 const posix = path.posix;
-const fsp = require("fs").promises;
-const fs = require("fs");
-const fsx = require("fs-extended-attributes");
+const fsp = fs.promises;
 declare let window: any;
 
 const ABSOLUTE_URL_RE = /^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//;
@@ -138,7 +143,7 @@ class File {
       this.check_sandbox(absoluteFolder);
       const files: File[] = [];
       const searcher = async (folder: string, recursive?: boolean) => {
-        let fileNms;
+        let fileNms: string[];
         try {
           fileNms = await fsp.readdir(
             folder,
@@ -310,7 +315,6 @@ class File {
     if (relative === null) return trimmed;
     if (isS3StorageEnabled()) {
       try {
-        const { getState } = require("../db/state");
         const direct = !!getState()?.getConfig("files_direct_s3_links");
         if (direct && opts.preferDirect !== false) {
           return getS3PublicFileUrl(relative, {
@@ -636,8 +640,7 @@ class File {
    */
   static async findOne(where: Where | string): Promise<File | null> {
     if (typeof where === "string") {
-      const { getState } = require("../db/state");
-      const state = getState();
+      const state = getState()!;
       const useS3 = isS3StorageEnabled();
       //legacy serving ids
       if (/^\d+$/.test(where)) {
@@ -863,8 +866,6 @@ class File {
    * @param to
    */
   static async update_table_references(from: string, to: string) {
-    const Field = require("./field");
-    const Table = require("./table");
     const fileFields = await Field.find({ type: "File" }, { cached: true });
     const schema = db.getTenantSchemaPrefix();
     const targetValue = File.fieldValueFromRelative(to);
@@ -874,10 +875,10 @@ class File {
     }
     for (const field of fileFields) {
       const table = Table.findOne({ id: field.table_id });
-      if (table.external || table.provider_name) continue;
+      if (table!.external || table!.provider_name) continue;
       for (const fromValue of fromValues) {
         await db.query(
-          `update ${schema}"${db.sqlsanitize(table.name)}" set "${
+          `update ${schema}"${db.sqlsanitize(table!.name)}" set "${
             field.name
           }" = $1 where "${field.name}" = $2`,
           [targetValue, fromValue]
@@ -981,7 +982,6 @@ class File {
    */
   // TBD fs errors handling
   static async ensure_file_store(tenant_name?: string): Promise<void> {
-    const { getState, getAllTenants } = require("../db/state");
     const file_store = db.connectObj.file_store;
     if (tenant_name) {
       await mkdir(path.join(file_store, tenant_name), { recursive: true });
@@ -1017,9 +1017,9 @@ class File {
     folder: string = "/"
   ): Promise<File> {
     if (Array.isArray(file)) {
-      return await asyncMap(file, (f: any) =>
+      return (await asyncMap(file, (f: any) =>
         this.from_req_files(f, user_id, min_role_read, folder)
-      );
+      )) as any;
     } else {
       // get path to file
       const newPath = this.get_new_path(path.join(folder, file.name), true);
@@ -1216,11 +1216,10 @@ class File {
    * @returns JSON response from POST 'file/upload'
    */
   static async upload(file: { blob: Blob; fileObj: any }): Promise<any> {
-    const { getState } = require("../db/state");
-    const state = getState();
+    const state = getState()!;
     const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000";
     const url = `${base_url}/files/upload`;
-    const token = state.mobileConfig.jwt;
+    const token = state.mobileConfig!.jwt;
     const formData = new FormData();
     formData.append("file", file.blob, file.fileObj.name);
     const response = await axios.post(url, formData, {
@@ -1273,4 +1272,4 @@ type FileCfg = PartialSome<
   | "min_role_read"
 >;
 
-export = File;
+export default File;

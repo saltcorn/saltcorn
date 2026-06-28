@@ -1,25 +1,25 @@
 // For the typedoc documentation
 
-import Crash from "./crash";
-import EventLog from "./eventlog";
-import Field from "./field";
-import FieldRepeat from "./fieldrepeat";
-import File from "./file";
-import Form from "./form";
-import Library from "./library";
-import Page from "./page";
-import PageGroup from "./page_group";
-import Plugin from "./plugin";
-import Role from "./role";
-import TableConstraint from "./table_constraints";
-import Table from "./table";
-import Trigger from "./trigger";
-import User from "./user";
-import View from "./view";
-import Workflow from "./workflow";
-import WorkflowRun from "./workflow_run";
-import WorkflowStep from "./workflow_step";
-import WorkflowTrace from "./workflow_trace";
+import Crash from "./crash.js";
+import EventLog from "./eventlog.js";
+import Field from "./field.js";
+import FieldRepeat from "./fieldrepeat.js";
+import File from "./file.js";
+import Form from "./form.js";
+import Library from "./library.js";
+import Page from "./page.js";
+import PageGroup from "./page_group.js";
+import Plugin from "./plugin.js";
+import Role from "./role.js";
+import TableConstraint from "./table_constraints.js";
+import Table from "./table.js";
+import Trigger from "./trigger.js";
+import User from "./user.js";
+import View from "./view.js";
+import Workflow from "./workflow.js";
+import WorkflowRun from "./workflow_run.js";
+import WorkflowStep from "./workflow_step.js";
+import WorkflowTrace from "./workflow_trace.js";
 
 export {
   Crash,
@@ -44,7 +44,7 @@ export {
   WorkflowTrace,
 };
 
-import configImport from "./config";
+import * as configImport from "./config.js";
 export namespace config {
   export const {
     getConfig,
@@ -61,7 +61,7 @@ export namespace config {
   } = configImport;
 }
 
-import discoveryImport from "./discovery";
+import * as discoveryImport from "./discovery.js";
 export namespace discovery {
   export const {
     discoverable_tables,
@@ -74,13 +74,13 @@ export namespace discovery {
   } = discoveryImport;
 }
 
-import emailImport from "./email";
+import * as emailImport from "./email.js";
 export namespace email {
   export const { getMailTransport, viewToEmailHtml, send_verification_email } =
     emailImport;
 }
 
-import expressionImport from "./expression";
+import * as expressionImport from "./expression.js";
 export namespace expression {
   export const {
     expressionValidator,
@@ -95,7 +95,7 @@ export namespace expression {
   } = expressionImport;
 }
 
-import layoutImport from "./layout";
+import * as layoutImport from "./layout.js";
 export namespace layout {
   export const {
     eachView,
@@ -107,13 +107,13 @@ export namespace layout {
   } = layoutImport;
 }
 
-import randomImport from "./random";
+import * as randomImport from "./random.js";
 export namespace random {
   export const { random_table, fill_table_row, initial_view, all_views } =
     randomImport;
 }
 
-import schedulerImport from "./scheduler";
+import * as schedulerImport from "./scheduler.js";
 export namespace scheduler {
   export const runScheduler = schedulerImport;
 }

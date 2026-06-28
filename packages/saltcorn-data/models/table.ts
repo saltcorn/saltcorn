@@ -4,7 +4,12 @@
  * @module models/table
  * @subcategory models
  */
-import db from "../db";
+import { getState } from "../db/state.js";
+import { json_list_to_external_table, readState } from "../plugin-helper.js";
+import Model from "./model.js";
+import File from "./file.js";
+import * as nsState from "../db/state.js";
+import db from "../db/index.js";
 import {
   sqlsanitize,
   mkWhere,
@@ -24,7 +29,7 @@ import type {
   Value,
 } from "@saltcorn/db-common/internal";
 
-import Field from "./field";
+import Field from "./field.js";
 import type {
   AbstractTable,
   TableCfg,
@@ -42,9 +47,8 @@ import {
   instanceOfType,
 } from "@saltcorn/types/common_types";
 
-import Trigger from "./trigger";
-import expression from "./expression";
-const {
+import Trigger from "./trigger.js";
+import {
   apply_calculated_fields,
   apply_calculated_fields_stored,
   recalculate_for_stored,
@@ -55,10 +59,9 @@ const {
   add_free_variables_to_joinfields,
   removeComments,
   jsexprToWhere,
-} = expression;
+} from "./expression.js";
 
-import type TableConstraint from "./table_constraints";
-import type File from "./file";
+import type TableConstraint from "./table_constraints.js";
 import { validate as isValidUUID } from "uuid";
 
 import csvtojson from "csvtojson";
@@ -67,8 +70,7 @@ import { createReadStream, createWriteStream } from "fs";
 import { stat, readFile, writeFile, open } from "fs/promises";
 //import { num_between } from "@saltcorn/types/generators";
 //import { devNull } from "os";
-import utils from "../utils";
-const {
+import {
   prefixFieldsInWhere,
   InvalidConfiguration,
   mergeActionResults,
@@ -82,7 +84,7 @@ const {
   apply,
   applyAsync,
   asyncMap,
-} = utils;
+} from "../utils.js";
 import tags, { em } from "@saltcorn/markup/tags";
 const { text } = tags;
 
@@ -97,14 +99,14 @@ import type {
   SubField,
   ErrorObj,
 } from "@saltcorn/types/base_types";
-import { get_formula_examples } from "./internal/table_helper";
+import { get_formula_examples } from "./internal/table_helper.js";
 import {
   aggregation_query_fields,
   getAggAndField,
   joinfield_renamer,
   process_aggregations,
-} from "./internal/query";
-import async_json_stream from "./internal/async_json_stream";
+} from "./internal/query.js";
+import async_json_stream from "./internal/async_json_stream.js";
 import { GenObj } from "@saltcorn/db-common/types";
 
 /**
@@ -333,13 +335,14 @@ class Table implements AbstractTable {
   to_provided_table() {
     const tbl = this;
     if (!tbl.provider_name) return this;
-    const { getState } = require("../db/state");
 
-    const provider = getState().table_providers[tbl.provider_name];
+    const provider = getState()!.table_providers[tbl.provider_name];
     if (!provider) return this;
-    const { getRows, ...methods } = provider.get_table(tbl.provider_cfg, tbl);
+    const { getRows, ...methods } = (provider as any).get_table(
+      tbl.provider_cfg,
+      tbl
+    );
 
-    const { json_list_to_external_table } = require("../plugin-helper");
     const t = json_list_to_external_table(
       getRows,
       tbl.fields,
@@ -388,15 +391,14 @@ class Table implements AbstractTable {
     if (typeof where === "undefined") return null;
     if (where === null) return null;
 
-    const { getState } = require("../db/state");
 
     // it works because external table hasn't id so can be found only by name
     if (where?.name) {
-      const extTable = getState().external_tables[where.name];
-      if (extTable) return extTable;
+      const extTable = getState()!.external_tables[where.name];
+      if (extTable) return extTable as Table;
     }
 
-    const tbl = getState().tables.find(
+    const tbl = getState()!.tables.find(
       where?.id
         ? (v: TableCfg) => v.id === +where.id
         : where?.name
@@ -404,13 +406,12 @@ class Table implements AbstractTable {
           : satisfies(where)
     );
     if (tbl?.provider_name) {
-      return new this(structuredClone(tbl)).to_provided_table();
+      return new this(structuredClone(tbl)).to_provided_table() as Table;
     } else return tbl ? new this(structuredClone(tbl)) : null;
   }
 
   static get allTableNames(): string[] {
-    const { getState } = require("../db/state");
-    return getState().tables.map((t: TableCfg) => t.name);
+    return getState()!.tables.map((t: TableCfg) => t.name);
   }
 
   /**
@@ -424,16 +425,14 @@ class Table implements AbstractTable {
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Table[]> {
     if (selectopts.cached) {
-      const { getState } = require("../db/state");
-      return getState()
+      return getState()!
         .tables.map((t: TableCfg) => new this(structuredClone(t)))
         .filter(satisfies(where || {}));
     }
 
     if (where?.name) {
-      const { getState } = require("../db/state");
-      const extTable = getState().external_tables[where.name];
-      if (extTable) return [extTable];
+      const extTable = getState()!.external_tables[where.name];
+      if (extTable) return [extTable as Table];
     }
 
     const tbls = await db.select("_sc_tables", where, selectopts);
@@ -443,7 +442,7 @@ class Table implements AbstractTable {
       db.isSQLite ? {} : { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
       selectopts
     );
-    const _TableConstraint = (await import("./table_constraints")).default;
+    const _TableConstraint = (await import("./table_constraints.js")).default;
 
     const constraints = await _TableConstraint.find(
       db.isSQLite ? {} : { table_id: { in: tbls.map((t: TableCfg) => t.id) } }
@@ -451,8 +450,7 @@ class Table implements AbstractTable {
 
     return await asyncMap(tbls, async (t: TableCfg) => {
       if (t.provider_name) {
-        const { getState } = require("../db/state");
-        const provider = getState().table_providers[t.provider_name];
+        const provider = getState()!.table_providers[t.provider_name];
         if (provider)
           t.fields = await applyAsync(
             provider.fields,
@@ -487,8 +485,7 @@ class Table implements AbstractTable {
       dbs = [];
     if (external !== false) {
       //do include externals
-      const { getState } = require("../db/state");
-      externals = Object.values(getState().external_tables);
+      externals = Object.values(getState()!.external_tables) as Table[];
     }
     if (external !== true) {
       //do include db tables
@@ -517,7 +514,6 @@ class Table implements AbstractTable {
    * @param opts
    */
   async get_models(where?: Where | string) {
-    const Model = require("./model");
     if (typeof where === "string")
       return await Model.find({ name: where, table_id: this.id });
     else return await Model.find({ ...(where || {}), table_id: this.id });
@@ -731,14 +727,13 @@ class Table implements AbstractTable {
             : pk_field?.type?.name) || "Integer";
     }
     if (pk_type !== "Integer") {
-      const { getState } = require("../db/state");
 
-      const type = getState().types[pk_type];
+      const type = getState()!.types[pk_type];
       if (!type)
         throw new Error(
           `Cannot find primary key type ${pk_type} in fields ${JSON.stringify(fields)}`
         );
-      pk_sql_type = type.sql_name;
+      pk_sql_type = type.sql_name as string;
       if (type.primaryKey?.default_sql)
         pk_sql_type = `${type.sql_name} default ${type.primaryKey?.default_sql}`;
     }
@@ -800,7 +795,7 @@ class Table implements AbstractTable {
       }
     }
     // create table
-    //const provider = getState().table_providers[tbl.provider_name];
+    //const provider = getState()!.table_providers[tbl.provider_name];
     //provider.get_table(tbl.provider_cfg, tbl);
     const fields = options?.provider_name
       ? [] //TODO look up
@@ -831,11 +826,10 @@ class Table implements AbstractTable {
     if (!db.getRequestContext()?.client) await Table.state_refresh(true);
 
     if (table.provider_name) {
-      const { getState } = require("../db/state");
 
-      const provider = getState().table_providers[table.provider_name];
-      if (provider?.on_create) await provider?.on_create(table);
-      return table.to_provided_table();
+      const provider = getState()!.table_providers[table.provider_name];
+      if ((provider as any)?.on_create) await (provider as any)?.on_create(table);
+      return table.to_provided_table() as Table;
     }
     return table;
   }
@@ -1079,8 +1073,8 @@ class Table implements AbstractTable {
         }
       },
       (e: Error) => {
-        require("../db/state")
-          .getState()
+        nsState
+          .getState()!
           .log(2, `Error in addDeleteSyncInfo: ${e.message}`);
       }
     );
@@ -1140,7 +1134,7 @@ class Table implements AbstractTable {
     })();
 
     if (this.updateWhereWithOwnership(where, use_user)?.notAuthorized) {
-      const state = require("../db/state").getState();
+      const state = nsState.getState()!;
       state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
       return;
     }
@@ -1186,7 +1180,6 @@ class Table implements AbstractTable {
     );
     const deleteFiles: Array<File> = [];
     if ((triggers.length > 0 || deleteFileFields.length > 0) && !noTrigger) {
-      const File = require("./file");
 
       if (!rows)
         rows = await this.getJoinedRows({
@@ -1211,7 +1204,7 @@ class Table implements AbstractTable {
               const file = await File.findOne({
                 filename: row[deleteFile.name],
               });
-              deleteFiles.push(file);
+              deleteFiles.push(file!);
             }
           }
         }
@@ -1295,7 +1288,7 @@ class Table implements AbstractTable {
       }
     );
     if (this.has_sync_info) {
-      const state = require("../db/state").getState();
+      const state = nsState.getState()!;
       if (state.pushHelper) state.pushHelper.queuePushSync();
     }
   }
@@ -1553,7 +1546,6 @@ class Table implements AbstractTable {
       if (f.calculated && f.stored && f.expression)
         freeVars = new Set([...freeVars, ...freeVariables(f.expression)]);
     const joinFields = {};
-    const { add_free_variables_to_joinfields } = require("../plugin-helper");
     add_free_variables_to_joinfields(freeVars, joinFields, this.fields);
     return joinFields;
   }
@@ -1660,7 +1652,7 @@ class Table implements AbstractTable {
     const fields = this.fields;
     const pk_name = this.pk_name;
     const role = use_user?.role_id;
-    const state = require("../db/state").getState();
+    const state = nsState.getState()!;
     let stringified = false;
     const sqliteJsonCols = !isNode()
       ? {
@@ -2008,8 +2000,8 @@ class Table implements AbstractTable {
         return result.rows;
       },
       (e: Error) => {
-        require("../db/state")
-          .getState()
+        nsState
+          .getState()!
           .log(2, `Error in latestSyncInfos: ${e.message}`);
         return null;
       }
@@ -2057,8 +2049,8 @@ class Table implements AbstractTable {
         }
       },
       (e: Error) => {
-        require("../db/state")
-          .getState()
+        nsState
+          .getState()!
           .log(2, `Error in insertSyncInfo: ${e.message}`);
       }
     );
@@ -2112,8 +2104,8 @@ class Table implements AbstractTable {
         }
       },
       (e: Error) => {
-        require("../db/state")
-          .getState()
+        nsState
+          .getState()!
           .log(2, `Error in updateSyncInfo: ${e.message}`);
       }
     );
@@ -2278,7 +2270,7 @@ class Table implements AbstractTable {
   ): Promise<any> {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
     const trigger = Trigger.findOne({ name: trigger_name });
-    return await trigger.runWithoutRow({
+    return await trigger!.runWithoutRow({
       row,
       user: use_user,
       ...(extraArgs || {}),
@@ -2329,7 +2321,7 @@ class Table implements AbstractTable {
         fields
       );
     let v, id;
-    const state = require("../db/state").getState();
+    const state = nsState.getState()!;
     const sqliteJsonCols = !isNode()
       ? {
           jsonCols: this.fields
@@ -2562,7 +2554,7 @@ class Table implements AbstractTable {
     if ((this.constructor as typeof Table).read_only)
       throw new Error("Read-only access");
 
-    const state = require("../db/state").getState();
+    const state = nsState.getState()!;
     const pk_name = this.pk_name;
     state.log(
       6,
@@ -2775,7 +2767,7 @@ class Table implements AbstractTable {
       if (id?.error) return id;
       return { success: id };
     } catch (e) {
-      await require("../db/state").getState().log(5, e);
+      await nsState.getState()!.log(5, e);
       return {
         error: this.normalise_error_message((e as ErrorObj).message),
         errorObj: e as Error,
@@ -2975,8 +2967,8 @@ class Table implements AbstractTable {
         );
       },
       (e: Error) => {
-        require("../db/state")
-          .getState()
+        nsState
+          .getState()!
           .log(
             2,
             `Error creating sync_info table for ${this.name}: ${e.message}`
@@ -2996,8 +2988,8 @@ class Table implements AbstractTable {
         drop table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info";`);
       },
       (e: any) => {
-        require("../db/state")
-          .getState()
+        nsState
+          .getState()!
           .log(
             2,
             `Error dropping sync_info table for ${this.name}: ${e.message}`
@@ -3253,7 +3245,7 @@ class Table implements AbstractTable {
 
   static async state_refresh(noSignal?: boolean) {
     try {
-      await require("../db/state").getState().refresh_tables(noSignal);
+      await nsState.getState()!.refresh_tables(noSignal);
     } catch {
       //ignore
     }
@@ -3298,7 +3290,7 @@ class Table implements AbstractTable {
       throw new Error("Read-only access");
 
     let rows;
-    const state = await require("../db/state").getState();
+    const state = await nsState.getState()!;
     try {
       let lines_limit = state.getConfig("csv_types_detection_rows", 500);
       if (!lines_limit || lines_limit < 0) lines_limit = 500; // default
@@ -3525,7 +3517,7 @@ class Table implements AbstractTable {
     const fkey_fields: Field[] = [];
     const json_schema_fields: Field[] = [];
 
-    const state = require("../db/state").getState();
+    const state = nsState.getState()!;
 
     for (const f of fields) {
       if (headers.includes(f.name)) okHeaders[f.name] = f;
@@ -3905,7 +3897,6 @@ ${rejectDetails}`,
 
     const fields = this.fields;
     const pk_name = this.pk_name;
-    const { readState } = require("../plugin-helper");
     const jsonFields = fields.filter(
       (f) => typeof f.type !== "string" && f?.type?.name === "JSON"
     );
@@ -4406,7 +4397,7 @@ ${rejectDetails}`,
                 break;
               }
               const kfield = prevTable.getField(thr);
-              const nextTable = Table.findOne({ name: kfield!.reftable_name });
+              const nextTable = Table.findOne({ name: kfield!.reftable_name })!;
               const nextRow = await nextTable!.getRow({
                 [nextTable!.pk_name]: prevRow[thr],
               });
@@ -4456,7 +4447,7 @@ ${rejectDetails}`,
               `Reference field field ${through} not found in table ${throughTable.name}`
             );
           const finalTable = throughRefField.reftable_name;
-          const finalTableObj = Table.findOne({ name: finalTable });
+          const finalTableObj = Table.findOne({ name: finalTable })!;
           jtNm1 = `${sqlsanitize(
             last_reffield.reftable_name as string
           )}_jt_${sqlsanitize(throughPath.join("_"))}_jt_${sqlsanitize(ref)}`;
@@ -4689,7 +4680,7 @@ ${rejectDetails}`,
    *
    */
   async getTags(): Promise<Array<AbstractTag>> {
-    const Tag = (await import("./tag")).default;
+    const Tag = (await import("./tag.js")).default;
     return await Tag.findWithEntries({ table_id: this.id });
   }
 
@@ -4863,4 +4854,4 @@ type ParentRelations = Table.ParentRelations;
 type ChildRelations = Table.ChildRelations;
 type RelationData = Table.RelationData;
 
-export = Table;
+export default Table;

@@ -5,16 +5,15 @@
  * @subcategory models
  */
 
+import * as nsState from "../db/state.js";
 import { Row, sqlsanitize } from "@saltcorn/db-common/internal";
 import { TablePack } from "@saltcorn/types/model-abstracts/abstract_table";
 import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
-import db from "../db";
-import state from "../db/state";
-const { getState } = state;
-import Field from "./field";
-import Table from "./table";
-import utils from "../utils";
-const { asyncMap } = utils;
+import db from "../db/index.js";
+import { getState } from "../db/state.js";
+import Field from "./field.js";
+import Table from "./table.js";
+import { asyncMap } from "../utils.js";
 
 // create table discmetable(id serial primary key, name text, age integer not null); ALTER TABLE discmetable OWNER TO tomn;
 /**
@@ -91,7 +90,7 @@ const findType = (sql_name: string): string | undefined => {
     // todo discovery "time interval" : "Date"?
   }[sql_name.toLowerCase()];
   if (fixed) return fixed;
-  const state = getState();
+  const state = getState()!;
   if (!state) {
     throw new Error("unable to get state");
   }
@@ -120,7 +119,7 @@ const make_field = async (c: Row): Promise<FieldCfg | undefined> => {
       ...basicField,
       type,
     };
-  const state = getState();
+  const state = getState()!;
   if (!state) {
     throw new Error("unable to get state");
   }
@@ -289,7 +288,7 @@ const implement_discovery = async (pack: {
   }
   // refresh Saltcorn table list (in memory)
   if (!db.getRequestContext()?.client)
-    await require("../db/state").getState().refresh_tables(true);
+    await nsState.getState()!.refresh_tables(true);
 };
 /**
  * Reconcile Saltcorn field metadata against physical DB columns.
@@ -377,7 +376,7 @@ const reconcile_table = async (
   };
 };
 
-export = {
+export {
   discoverable_tables,
   discover_tables,
   implement_discovery,

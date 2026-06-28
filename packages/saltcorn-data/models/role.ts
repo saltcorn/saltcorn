@@ -4,7 +4,7 @@
  * @subcategory models
  */
 
-import db from "../db";
+import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type {
   AbstractRole,
@@ -83,4 +83,4 @@ class Role implements AbstractRole {
   }
 }
 
-export = Role;
+export default Role;

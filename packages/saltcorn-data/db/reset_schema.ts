@@ -15,12 +15,13 @@
  * @param {string} schema0
  * @returns {Promise<void>}
  */
+import { migrate } from "../migrate.js";
+import db from "./index.js";
+import * as nsState from "./state.js";
 const reset = async (
   dontDrop: boolean = false,
   schema0?: string
 ): Promise<void> => {
-  const db = require(".");
-  const { migrate } = require("../migrate");
   const schema = schema0 || db.connectObj.default_schema;
   const is_sqlite = db.isSQLite;
   const schemaQdot = is_sqlite ? "" : `"${schema}".`;
@@ -29,7 +30,7 @@ const reset = async (
   const serial = is_sqlite ? "integer" : "serial";
   const json = is_sqlite ? "json" : "jsonb";
   if (!dontDrop) {
-    await db.drop_reset_schema(schema);
+    await (db as any).drop_reset_schema(schema);
   }
 
   await db.query(`
@@ -175,8 +176,8 @@ const reset = async (
   // do db migration
   await migrate(schema);
   // refresh SC State
-  const st = require("./state").getState();
+  const st = nsState.getState()!;
   if (st) await st.refresh();
 };
 
-export = reset;
+export default reset;

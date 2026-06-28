@@ -1,7 +1,8 @@
+import contractisPkg from "contractis";
 import { Type, instanceOfType } from "@saltcorn/types/common_types";
-import Field from "../field";
+import Field from "../field.js";
 
-const { contract, is } = require("contractis");
+const { contract, is } = contractisPkg;
 
 /**
  * @param {*} type

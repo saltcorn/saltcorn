@@ -4,26 +4,27 @@
  * @module db/fixtures
  * @subcategory db
  */
-const db = require(".");
-const { getState } = require("./state");
-import Table from "../models/table";
-import Field from "../models/field";
-import File from "../models/file";
-import Trigger from "../models/trigger";
-import View from "../models/view";
-import User from "../models/user";
-import Page from "../models/page";
-import PageGroup from "../models/page_group";
-import PageGroupMember from "../models/page_group_member";
-import Tag from "../models/tag";
-import Model from "../models/model";
-import ModelInstance from "../models/model_instance";
+import { getState } from "./state.js";
+import db from "./index.js";
+import basePluginMod from "../base-plugin/index.js";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import File from "../models/file.js";
+import Trigger from "../models/trigger.js";
+import View from "../models/view.js";
+import User from "../models/user.js";
+import Page from "../models/page.js";
+import PageGroup from "../models/page_group.js";
+import PageGroupMember from "../models/page_group_member.js";
+import Tag from "../models/tag.js";
+import Model from "../models/model.js";
+import ModelInstance from "../models/model_instance.js";
 import fs from "fs";
 const fsp = fs.promises;
 
-export = async (): Promise<void> => {
-  getState().registerPlugin("base", require("../base-plugin"));
-  getState().setConfig("min_role_apikeygen", 80);
+export default async (): Promise<void> => {
+  getState()!.registerPlugin("base", basePluginMod as any);
+  getState()!.setConfig("min_role_apikeygen", 80);
 
   const table = await Table.create("books", {
     min_role_read: 100,

@@ -3,6 +3,11 @@
  * @module base-plugin/fileview
  * @subcategory base-plugin
  */
+import { isNode } from "../utils.js";
+import { getReq__ } from "../db/state.js";
+import tagsPkg from "@saltcorn/markup/tags";
+import markupPkg from "@saltcorn/markup";
+import helpersPkg from "@saltcorn/markup/helpers";
 const {
   a,
   img,
@@ -22,14 +27,12 @@ const {
   textarea,
   with_curScript,
   escape: escapeHtml,
-} = require("@saltcorn/markup/tags");
-const { link } = require("@saltcorn/markup");
-const { isNode } = require("../utils");
-const { select_options } = require("@saltcorn/markup/helpers");
-import File from "../models/file";
+} = tagsPkg;
+const { link } = markupPkg;
+const { select_options } = helpersPkg;
+import File from "../models/file.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import path from "path";
-const { getReq__ } = require("../db/state");
 
 const buildNodeFileUrl = (
   filePath: string,
@@ -679,4 +682,4 @@ const fileviews = {
   },
 };
 
-export = fileviews;
+export default fileviews;

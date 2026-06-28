@@ -1,19 +1,22 @@
-import Plugin from "../models/plugin";
-import db from "../db/index";
+import Plugin from "../models/plugin.js";
+import db from "../db/index.js";
 
-const { getState } = require("../db/state");
-import { assertIsSet } from "./assertions";
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 
-getState().registerPlugin("base", require("../base-plugin"));
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+getState()!.registerPlugin("base", basePluginMod);
 jest.setTimeout(30000);
 
 afterAll(db.close);
 beforeAll(async () => {
   // initialise this process's schema (tests run each file in its own Postgres
   // schema so they can run in parallel)
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 describe("plugin", () => {
@@ -43,26 +46,26 @@ describe("plugin", () => {
 
 describe("plugin store", () => {
   it("reset the plugin store cache", async () => {
-    getState().deleteConfig("available_plugins");
-    getState().deleteConfig("available_plugins_fetched_at");
+    getState()!.deleteConfig("available_plugins");
+    getState()!.deleteConfig("available_plugins_fetched_at");
   });
   it("fetches the plugin store", async () => {
     const plugins = await Plugin.store_plugins_available();
     expect(plugins.length > 0).toBe(true);
-    const cache = getState().getConfig("available_plugins", false);
+    const cache = getState()!.getConfig("available_plugins", false);
     expect(plugins).toStrictEqual(cache);
 
     const plugin = await Plugin.store_by_name(plugins[0].name);
     const noplugin = await Plugin.store_by_name("nosuchplugin");
     expect(noplugin).toBe(null);
 
-    await getState().setConfig("available_plugins", []);
+    await getState()!.setConfig("available_plugins", []);
     const plugins1 = await Plugin.store_plugins_available();
     expect(plugins1).toStrictEqual([]);
   });
   it("reset the plugin store cache", async () => {});
   it("reset the plugin store cache", async () => {
-    await getState().deleteConfig("available_plugins");
-    await getState().deleteConfig("available_plugins_fetched_at");
+    await getState()!.deleteConfig("available_plugins");
+    await getState()!.deleteConfig("available_plugins_fetched_at");
   });
 });

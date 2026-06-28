@@ -4,9 +4,15 @@
  * @module models/plugin
  * @subcategory models
  */
-import db from "../db";
-import View from "./view";
-import fetch from "node-fetch";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import { getState, getRootState } from "../db/state.js";
+import npmFetch from "npm-registry-fetch";
+import * as nsState from "../db/state.js";
+import db from "../db/index.js";
+import View from "./view.js";
+import fetchLib from "node-fetch";
+const fetch: any = fetchLib; // NodeNext default-import interop for node-fetch
 import { SelectOptions, Where } from "@saltcorn/db-common/internal";
 import { ViewTemplate, PluginSourceType } from "@saltcorn/types/base_types";
 import type {
@@ -17,16 +23,14 @@ import type {
 import fs from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
-import utils from "../utils";
-const {
+import {
   stringToJSON,
   isStale,
   getFetchProxyOptions,
   pluginsFolderRoot,
   isRoot,
-} = utils;
+} from "../utils.js";
 
-const npmFetch = require("npm-registry-fetch");
 let packagejson: any = null;
 try {
   packagejson = require("../package.json");
@@ -124,9 +128,8 @@ class Plugin implements AbstractPlugin {
    */
   async delete(): Promise<void> {
     await db.deleteWhere("_sc_plugins", { id: this.id });
-    const { getState } = require("../db/state");
-    await getState().remove_plugin(this.name);
-    await getState().refresh_userlayouts();
+    await getState()!.remove_plugin(this.name);
+    await getState()!.refresh_userlayouts();
   }
 
   /**
@@ -157,13 +160,12 @@ class Plugin implements AbstractPlugin {
    */
   async dependant_views(): Promise<string[]> {
     const views = await View.find({}, { cached: true });
-    const { getState } = require("../db/state");
-    if (!getState().plugins[this.name]) return [];
-    const myViewTemplates = getState().plugins[this.name].viewtemplates || [];
+    if (!getState()!.plugins[this.name]) return [];
+    const myViewTemplates = getState()!.plugins[this.name].viewtemplates || [];
     const vt_names = Array.isArray(myViewTemplates)
       ? myViewTemplates.map((vt) => vt.name)
       : typeof myViewTemplates === "function"
-        ? myViewTemplates(getState().plugin_cfgs[this.name]).map(
+        ? (myViewTemplates(getState()!.plugin_cfgs[this.name]) || []).map(
             (vt: ViewTemplate) => vt.name
           )
         : Object.keys(myViewTemplates);
@@ -173,7 +175,7 @@ class Plugin implements AbstractPlugin {
   }
 
   ready_for_mobile(): boolean {
-    const state = require("../db/state").getState();
+    const state = nsState.getState()!;
     let module = state.plugins[this.name];
     if (!module && state.plugin_module_names[this.name])
       module = state.plugins[state.plugin_module_names[this.name]];
@@ -181,7 +183,7 @@ class Plugin implements AbstractPlugin {
   }
 
   exclude_from_mobile(): boolean {
-    const state = require("../db/state").getState();
+    const state = nsState.getState()!;
     let module = state.plugins[this.name];
     if (!module && state.plugin_module_names[this.name])
       module = state.plugins[state.plugin_module_names[this.name]];
@@ -189,9 +191,7 @@ class Plugin implements AbstractPlugin {
   }
 
   static get_cached_plugins(): Array<Plugin> {
-    const { getState } = require("../db/state");
-
-    const stored = getState().getConfigCopy("available_plugins", false);
+    const stored = getState()!.getConfigCopy("available_plugins", false);
     return stored || [];
   }
 
@@ -214,13 +214,12 @@ class Plugin implements AbstractPlugin {
   static async store_plugins_available(
     msgs?: Array<string>
   ): Promise<Array<Plugin>> {
-    const { getState, getRootState } = require("../db/state");
-    const stored = getState().getConfig("available_plugins", false);
-    const stored_at = getState().getConfig(
+    const stored = getState()!.getConfig("available_plugins", false);
+    const stored_at = getState()!.getConfig(
       "available_plugins_fetched_at",
       false
     );
-    const airgap = getState().getConfig("airgap", false);
+    const airgap = getState()!.getConfig("airgap", false);
 
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
@@ -234,18 +233,18 @@ class Plugin implements AbstractPlugin {
           .map((p: PluginCfg) => new Plugin(p))
           .filter((p: Plugin) => isRoot || !p.has_auth);
       } catch (e) {
-        getState().log(2, `Error reading store_entries.json: ${e}`);
+        getState()!.log(2, `Error reading store_entries.json: ${e}`);
         if (msgs) msgs.push("Error reading local plugin store entries.");
         return [];
       }
     } else if (!stored || !stored_at || isStale(stored_at)) {
       try {
         const from_api = await Plugin.store_plugins_available_from_store();
-        await getState().setConfig("available_plugins", from_api);
-        await getState().setConfig("available_plugins_fetched_at", new Date());
+        await getState()!.setConfig("available_plugins", from_api);
+        await getState()!.setConfig("available_plugins_fetched_at", new Date());
         return from_api.filter((p) => isRoot || !p.has_auth);
       } catch (e) {
-        getState().log(2, `Error fetching plugin store entries: ${e}`);
+        getState()!.log(2, `Error fetching plugin store entries: ${e}`);
         if (stored) {
           return stored
             .map((p: Plugin) => new Plugin(p))
@@ -260,7 +259,7 @@ class Plugin implements AbstractPlugin {
             .map((p: Plugin) => new Plugin(p))
             .filter((p: Plugin) => isRoot || !p.has_auth);
         } catch (e2) {
-          getState().log(2, `Error reading store_entries.json: ${e2}`);
+          getState()!.log(2, `Error reading store_entries.json: ${e2}`);
           if (msgs)
             msgs.push(
               "The store is not reachable and reading the local entries failed."
@@ -282,14 +281,13 @@ class Plugin implements AbstractPlugin {
     endpoint?: string
   ): Promise<Array<Plugin>> {
     //console.log("fetch plugins");
-    const { getState } = require("../db/state");
     const plugins_store_endpoint =
-      endpoint || getState().getConfig("plugins_store_endpoint", false);
+      endpoint || getState()!.getConfig("plugins_store_endpoint", false);
     // console.log(`[store_plugins_available_from_store] plugins_store_endpoint:%s`, plugins_store_endpoint);
 
     const fetchOptions = getFetchProxyOptions();
 
-    getState().log(
+    getState()!.log(
       6,
       `store_plugins_available_from_store fetch options: ${JSON.stringify(
         fetchOptions
@@ -310,9 +308,8 @@ class Plugin implements AbstractPlugin {
     name: string,
     endpoint?: string
   ): Promise<Plugin | null> {
-    const { getState } = require("../db/state");
     const plugins_store_endpoint =
-      endpoint || getState().getConfig("plugins_store_endpoint", false);
+      endpoint || getState()!.getConfig("plugins_store_endpoint", false);
     // console.log(`[store_by_name] plugins_store_endpoint:%s`, plugins_store_endpoint);
 
     const response = await fetch(
@@ -346,15 +343,14 @@ class Plugin implements AbstractPlugin {
     plugin: Plugin,
     forceFetch?: boolean
   ): Promise<any> {
-    const { getRootState, getState } = require("../db/state");
     const cached = getRootState().getConfig("engines_cache", {}) || {};
-    const airgap = getState().getConfig("airgap", false);
+    const airgap = getState()!.getConfig("airgap", false);
     if (airgap || (cached[plugin.location] && !forceFetch)) {
       return cached[plugin.location] || {};
     } else {
       //TODO do this correctly for local plugins
       if (plugin.source !== "npm") return {};
-      getState().log(5, `Fetching versions for '${plugin.location}'`);
+      getState()!.log(5, `Fetching versions for '${plugin.location}'`);
       const pkgInfo = await npmFetch.json(
         `https://registry.npmjs.org/${plugin.location}`,
         getFetchProxyOptions()
@@ -381,11 +377,10 @@ class Plugin implements AbstractPlugin {
     plugin: Plugin,
     forceFetch?: boolean
   ): Promise<void> {
-    const { getState } = require("../db/state");
     const {
       supportedVersion,
       resolveLatest,
-    } = require("@saltcorn/plugins-loader/stable_versioning");
+    } = require("@saltcorn/plugins-loader/stable_versioning.js");
     let versions = await Plugin.getEngineInfos(plugin, forceFetch);
     if (
       plugin.version &&
@@ -401,8 +396,8 @@ class Plugin implements AbstractPlugin {
       packagejson.version
     );
     if (!supported) {
-      if (getState().getConfig("airgap", false))
-        getState().log(
+      if (getState()!.getConfig("airgap", false))
+        getState()!.log(
           5,
           `Warning: No supported version for '${plugin.location}' in airgap mode"}`
         );
@@ -431,8 +426,6 @@ class Plugin implements AbstractPlugin {
     forceFetch?: boolean,
     reloadModule = false
   ): Promise<any> {
-    const { getState, getRootState } = require("../db/state");
-    const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
     if (
       !isRoot() &&
       !getRootState().getConfig("tenants_install_git", false) &&
@@ -451,13 +444,16 @@ class Plugin implements AbstractPlugin {
       }
     }
 
-    const airgap = getState().getConfig("airgap", false);
+    const airgap = getState()!.getConfig("airgap", false);
     if (airgap && !Plugin.is_fixed_plugin(plugin.location))
       Plugin.ensureAirgapedVersion(
         plugin,
         getRootState().getConfig("pre_installed_module_infos", [])
       );
 
+    // plugin_installer (CJS) require()s @saltcorn/data/models/plugin at load, so
+    // require it lazily here to avoid a require()-in-cycle at module load.
+    const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
     const loader = new PluginInstaller(plugin, {
       scVersion: packagejson.version,
       envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
@@ -470,7 +466,7 @@ class Plugin implements AbstractPlugin {
         ? JSON.parse(plugin.configuration)
         : plugin.configuration;
     try {
-      getState().registerPlugin(
+      getState()!.registerPlugin(
         res.plugin_module.plugin_name || plugin.name,
         res.plugin_module,
         configuration,
@@ -478,14 +474,14 @@ class Plugin implements AbstractPlugin {
         res.name
       );
     } catch (error: any) {
-      getState().log(
+      getState()!.log(
         3,
         `Error loading plugin ${plugin.name}: ${error.message || error}`
       );
       if (force) {
         await loader.remove();
         await loader.install();
-        getState().registerPlugin(
+        getState()!.registerPlugin(
           res.plugin_module.plugin_name || plugin.name,
           res.plugin_module,
           configuration,
@@ -495,7 +491,7 @@ class Plugin implements AbstractPlugin {
       }
     }
     if (res.plugin_module.user_config_form)
-      await getState().refresh_userlayouts();
+      await getState()!.refresh_userlayouts();
     if (res.plugin_module.onLoad) {
       try {
         await res.plugin_module.onLoad(plugin.configuration);
@@ -505,6 +501,8 @@ class Plugin implements AbstractPlugin {
     }
 
     if (isRoot() && res.plugin_module.authentication) {
+      // @saltcorn/admin-models depends on @saltcorn/data, so require it lazily
+      // (at call time) to avoid a require()-in-cycle at module load.
       const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
       await eachTenant(Plugin.reloadAuthFromRoot);
     }
@@ -518,15 +516,16 @@ class Plugin implements AbstractPlugin {
    * @returns PluginInstaller result (`{ plugin_module, location, version, … }`)
    */
   static async requirePlugin(plugin: Plugin, force?: boolean): Promise<any> {
-    const { getState, getRootState } = require("../db/state");
-    const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
-    const airgap = getState().getConfig("airgap", false);
+    const airgap = getState()!.getConfig("airgap", false);
     if (airgap && !Plugin.is_fixed_plugin(plugin.location))
       Plugin.ensureAirgapedVersion(
         plugin,
         getRootState().getConfig("pre_installed_module_infos", [])
       );
 
+    // plugin_installer (CJS) require()s @saltcorn/data/models/plugin at load, so
+    // require it lazily here to avoid a require()-in-cycle at module load.
+    const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
     const loader = new PluginInstaller(plugin, {
       scVersion: packagejson.version,
       envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
@@ -544,8 +543,7 @@ class Plugin implements AbstractPlugin {
     force?: boolean,
     reloadModule = false
   ): Promise<void> {
-    const { getState } = require("../db/state");
-    await getState().refresh(true);
+    await getState()!.refresh(true);
     const plugins = await db.select("_sc_plugins");
     for (const plugin of plugins) {
       try {
@@ -554,8 +552,8 @@ class Plugin implements AbstractPlugin {
         console.error(e);
       }
     }
-    await getState().refresh_userlayouts();
-    await getState().refresh(true, true);
+    await getState()!.refresh_userlayouts();
+    await getState()!.refresh(true, true);
     if (!isRoot()) Plugin.reloadAuthFromRoot();
   }
 
@@ -577,8 +575,6 @@ class Plugin implements AbstractPlugin {
     allowUnsafeOnTenantsWithoutConfigSetting?: boolean,
     overwriteDependencies?: Record<string, string>
   ): Promise<string[] | undefined> {
-    const { getState, getRootState } = require("../db/state");
-    const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
     const tenants_unsafe_plugins = getRootState().getConfig(
       "tenants_unsafe_plugins",
       false
@@ -617,7 +613,7 @@ class Plugin implements AbstractPlugin {
         return;
       }
     }
-    const airgap = getState().getConfig("airgap", false);
+    const airgap = getState()!.getConfig("airgap", false);
     if (plugin.source === "npm" && !airgap)
       await Plugin.ensurePluginSupport(plugin);
     if (airgap && !Plugin.is_fixed_plugin(plugin.location))
@@ -627,6 +623,9 @@ class Plugin implements AbstractPlugin {
       );
 
     const loadMsgs: string[] = [];
+    // plugin_installer (CJS) require()s @saltcorn/data/models/plugin at load, so
+    // require it lazily here to avoid a require()-in-cycle at module load.
+    const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
     const loader = new PluginInstaller(plugin, {
       scVersion: packagejson.version,
       envVars: { PUPPETEER_SKIP_DOWNLOAD: true },
@@ -671,7 +670,7 @@ class Plugin implements AbstractPlugin {
 
     let registeredWithReload = false;
     try {
-      getState().registerPlugin(
+      getState()!.registerPlugin(
         plugin_module.plugin_name || plugin.name,
         plugin_module,
         plugin.configuration,
@@ -680,13 +679,13 @@ class Plugin implements AbstractPlugin {
       );
     } catch (error) {
       if (force) {
-        getState().log(
+        getState()!.log(
           2,
           `Error registering plugin ${plugin.name}. Removing and trying again.`
         );
         await loader.remove();
         await loader.install();
-        getState().registerPlugin(
+        getState()!.registerPlugin(
           plugin_module.plugin_name || plugin.name,
           plugin_module,
           plugin.configuration,
@@ -716,13 +715,15 @@ class Plugin implements AbstractPlugin {
     if (version) plugin.version = version;
 
     if (isRoot() && plugin_module.authentication) {
+      // @saltcorn/admin-models depends on @saltcorn/data, so require it lazily
+      // (at call time) to avoid a require()-in-cycle at module load.
       const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
       await eachTenant(Plugin.reloadAuthFromRoot);
     }
 
     if (!noSignalOrDB) {
       await plugin.upsert();
-      getState().processSend({
+      getState()!.processSend({
         installPlugin: plugin,
         tenant: db.getTenantSchema(),
         force: false,
@@ -740,7 +741,6 @@ class Plugin implements AbstractPlugin {
     plugin: Plugin,
     airgapedStore: any[]
   ): void {
-    const { getState } = require("../db/state");
     const airgapedPlugin = airgapedStore.find(
       (p: any) => p.location === plugin.location
     );
@@ -750,7 +750,7 @@ class Plugin implements AbstractPlugin {
       );
     }
     if (airgapedPlugin.version !== plugin.version) {
-      getState().log(
+      getState()!.log(
         5,
         `Overriding plugin ${plugin.name} version ${plugin.version} with airgapped store version ${airgapedPlugin.version}`
       );
@@ -762,10 +762,9 @@ class Plugin implements AbstractPlugin {
    * Copy auth methods with `shareWithTenants: true` from root state into current tenant state
    */
   private static reloadAuthFromRoot(): void {
-    const { getState, getRootState } = require("../db/state");
     if (isRoot()) return;
     const rootState = getRootState();
-    const tenantState = getState();
+    const tenantState = getState()!;
     if (!rootState || !tenantState || rootState === tenantState) return;
     tenantState.auth_methods = {};
     for (const [k, v] of Object.entries(rootState.auth_methods)) {
@@ -774,4 +773,4 @@ class Plugin implements AbstractPlugin {
   }
 }
 
-export = Plugin;
+export default Plugin;

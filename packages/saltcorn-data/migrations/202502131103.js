@@ -1,10 +1,10 @@
 const js = async () => {
-  const { getState } = require("../db/state");
+  const { getState } = require("@saltcorn/data/db/state");
 
   const state = getState();
   await state?.refresh_tables(false);
 
-  const Field = require("../models/field");
+  const Field = require("@saltcorn/data/models/field");
 
   const stored_fields = await Field.find({
     calculated: true,

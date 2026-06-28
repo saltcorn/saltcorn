@@ -5,7 +5,7 @@
  * @subcategory models
  */
 import { GenObj } from "@saltcorn/types/common_types";
-import db from "../db";
+import db from "../db/index.js";
 import type {
   Where,
   SelectOptions,
@@ -113,4 +113,4 @@ class MetaData {
   }
 }
 
-export = MetaData;
+export default MetaData;

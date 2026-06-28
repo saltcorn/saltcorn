@@ -1,32 +1,35 @@
-import Table from "../models/table";
-import Field from "../models/field";
-import Trigger from "../models/trigger";
-import TableConstraint from "../models/table_constraints";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import Trigger from "../models/trigger.js";
+import TableConstraint from "../models/table_constraints.js";
 
-import View from "../models/view";
-import db from "../db";
-import mocks from "./mocks";
+import View from "../models/view.js";
+import db from "../db/index.js";
+import * as mocks from "./mocks.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { mockReqRes } = mocks;
-const { getState } = require("../db/state");
-import Page from "../models/page";
+import Page from "../models/page.js";
 import type { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
 import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
-import { assertIsSet } from "./assertions";
+import { assertIsSet } from "./assertions.js";
 import {
   prepareQueryEnviroment,
   sendViewToServer,
   deleteViewFromServer,
   renderEditInEditConfig,
-} from "./remote_query_helper";
+} from "./remote_query_helper.js";
 
 let remoteQueries = false;
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState()!.registerPlugin("base", basePluginMod);
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 const accordionConfig = {
@@ -453,7 +456,7 @@ const deReqRes = {
 
 describe("simple field localisation in show view", () => {
   it("should setup", async () => {
-    const books = Table.findOne("books");
+    const books = Table.findOne("books")!;
     assertIsSet(books);
     await Field.create({
       name: "german_name",
@@ -505,7 +508,7 @@ describe("simple field localisation in show view", () => {
         ],
       },
     });
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
     const afield = Table.findOne("books")?.getField("author");
     expect(afield?.attributes?.localized_by?.de).toBe("german_name");
   });
@@ -581,7 +584,7 @@ describe("one-to-one joinfields", () => {
 
 describe("joinfield localisation in show view", () => {
   it("should setup", async () => {
-    const books = Table.findOne("publisher");
+    const books = Table.findOne("publisher")!;
     assertIsSet(books);
     await Field.create({
       name: "german_name",
@@ -633,16 +636,16 @@ describe("joinfield localisation in show view", () => {
         ],
       },
     });
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
     const afield = Table.findOne("publisher")?.getField("name");
     expect(afield?.attributes?.localized_by?.de).toBe("german_name");
-    await getState().setConfig("localizer_languages", {
+    await getState()!.setConfig("localizer_languages", {
       de: "German",
     });
-    await getState().setConfig("localizer_strings", {
+    await getState()!.setConfig("localizer_strings", {
       de: { "Publisher:": "Verlag:" },
     });
-    await getState().refresh_i18n();
+    await getState()!.refresh_i18n();
   });
   it("should run in english", async () => {
     const view = View.findOne({ name: "just_publisher" });

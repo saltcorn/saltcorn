@@ -4,7 +4,7 @@
  * @module models/model_instance
  * @subcategory models
  */
-import db from "../db";
+import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import { GenObj } from "@saltcorn/types/common_types";
 import type { ModelInstanceCfg } from "@saltcorn/types/model-abstracts/abstract_model_instance";
@@ -147,7 +147,7 @@ class ModelInstance {
   }
 
   async predict(rows: Row[]): Promise<any> {
-    const Model = (await import("./model")).default;
+    const Model = (await import("./model.js")).default;
     const model = await Model.findOne({ id: this.model_id });
     const template = model.templateObj;
     return await template!.predict({
@@ -168,4 +168,4 @@ class ModelInstance {
   }
 }
 
-export = ModelInstance;
+export default ModelInstance;

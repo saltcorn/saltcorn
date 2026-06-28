@@ -1,13 +1,15 @@
-import db from "../db";
-import { assertIsSet } from "./assertions";
+import db from "../db/index.js";
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import PageGroup, { ScreenInfoParams } from "../models/page_group";
-import User from "../models/user";
+import PageGroup, { ScreenInfoParams } from "../models/page_group.js";
+import User from "../models/user.js";
 
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 describe("eligible_formula", () => {

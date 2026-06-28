@@ -1,8 +1,10 @@
-import Table from "../models/table";
-import db from "../db";
+import Table from "../models/table.js";
+import db from "../db/index.js";
 
 import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const initSyncInfo = async (tbls: any) => {
   for (const tbl of tbls) {
     const books = Table.findOne({ name: tbl });
@@ -18,8 +20,8 @@ const initSyncInfo = async (tbls: any) => {
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 describe("Table sync info", () => {

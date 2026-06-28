@@ -3,24 +3,26 @@
  * @module base-plugin/viewtemplates/edit
  * @subcategory base-plugin
  */
-import Field from "../../models/field";
-import Table from "../../models/table";
-import User from "../../models/user";
-import Crash from "../../models/crash";
-import Form from "../../models/form";
-import Page from "../../models/page";
-import View from "../../models/view";
-import Workflow from "../../models/workflow";
-import Trigger from "../../models/trigger";
-import File from "../../models/file";
+import { getState } from "../../db/state.js";
+import markupPkg from "@saltcorn/markup";
+import commonCodePkg from "@saltcorn/common-code";
+import PageGroup from "../../models/page_group.js";
+import FieldRepeat from "../../models/fieldrepeat.js";
+import Library from "../../models/library.js";
+import Pkg from "buffer/index.js";
+import Field from "../../models/field.js";
+import Table from "../../models/table.js";
+import User from "../../models/user.js";
+import Crash from "../../models/crash.js";
+import Form from "../../models/form.js";
+import Page from "../../models/page.js";
+import View from "../../models/view.js";
+import Workflow from "../../models/workflow.js";
+import Trigger from "../../models/trigger.js";
+import File from "../../models/file.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 
-const PageGroup = require("../../models/page_group");
-const FieldRepeat = require("../../models/fieldrepeat");
-const Library = require("../../models/library");
-
-const { getState } = require("../../db/state");
 import {
   text,
   text_attr,
@@ -31,18 +33,16 @@ import {
   i,
   pre,
 } from "@saltcorn/markup/tags";
-const { renderForm } = require("@saltcorn/markup");
-import expression from "../../models/expression";
-const {
+const { renderForm } = markupPkg;
+import {
   get_expression_function,
   expressionChecker,
   eval_expression,
   freeVariables,
   freeVariablesInInterpolation,
   add_free_variables_to_aggregations,
-} = expression;
-import utils from "../../utils";
-const {
+} from "../../models/expression.js";
+import {
   InvalidConfiguration,
   isNode,
   isWeb,
@@ -54,8 +54,8 @@ const {
   structuredClone,
   is_relative_url,
   toSafeRelativeUrl,
-} = utils;
-import { check_view_columns } from "../../plugin-testing";
+} from "../../utils.js";
+import { check_view_columns } from "../../plugin-testing.js";
 import {
   initial_config_all_fields,
   calcfldViewOptions,
@@ -69,7 +69,7 @@ import {
   readState,
   displayType,
   runCollabEvents,
-} from "../../plugin-helper";
+} from "../../plugin-helper.js";
 import {
   splitUniques,
   getForm,
@@ -80,18 +80,17 @@ import {
   get_view_link_query,
   edit_build_in_actions,
   updateViewSelect,
-} from "../../viewable_fields";
-import layout from "../../models/layout";
-const {
+} from "../../viewable_fields.js";
+import {
   traverse,
   getStringsForI18n,
   traverseSync,
   splitLayoutContainerFields,
   findLayoutBranchWith,
-} = layout;
-import { extractFromLayout } from "../../diagram/node_extract_utils";
-import db from "../../db";
-const { Relation, RelationType } = require("@saltcorn/common-code");
+} from "../../models/layout.js";
+import { extractFromLayout } from "../../diagram/node_extract_utils.js";
+import db from "../../db/index.js";
+const { Relation, RelationType } = commonCodePkg;
 
 /**
  * @param req
@@ -122,7 +121,7 @@ const configuration_workflow = (req: Req) =>
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
           const stateActions = (
-            Object.entries(getState().actions) as [string, GenObj][]
+            Object.entries(getState()!.actions) as [string, GenObj][]
           ).filter(([k, v]) => !v.disableInBuilder && !v.disableIf?.());
           const triggerActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -189,7 +188,8 @@ const configuration_workflow = (req: Req) =>
                 { mode: "edit", req }
               );
             }
-            if (action.description) actionDescriptions[name] = action.description;
+            if (action.description)
+              actionDescriptions[name] = action.description;
           }
           const workflowActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -209,7 +209,7 @@ const configuration_workflow = (req: Req) =>
           if (table.name === "users") {
             actions.push("Login");
             actions.push("Sign up");
-            Object.entries(getState().auth_methods).forEach(
+            Object.entries(getState()!.auth_methods).forEach(
               ([k, v]: [string, any]) => {
                 actions.push(`Login with ${k}`);
               }
@@ -281,7 +281,7 @@ const configuration_workflow = (req: Req) =>
             pages,
             page_groups: groups,
             has_copilot_generate:
-              !!getState().functions.copilot_generate_layout,
+              !!getState()!.functions.copilot_generate_layout,
           };
         },
       },
@@ -365,15 +365,15 @@ const configuration_workflow = (req: Req) =>
               viewrow.table_id === context.table_id ||
               state_fields.every((sf: any) => !sf.required)
           );
-          const table = Table.findOne({ id: context.table_id })!;
+          const table = Table.findOne({ id: context.table_id });
           own_views.forEach((v: any) => {
-            if (!v.table && v.table_id === table.id) v.table = table;
+            if (!v.table && v.table_id === table!.id) v.table = table;
             else if (!v.table && v.table_id) {
-              const vtable = Table.findOne({ id: v.table_id });
+              const vtable = Table.findOne({ id: v.table_id })!;
               v.table = vtable;
             }
           });
-          const parent_views = await get_parent_views(table, context.viewname);
+          const parent_views = await get_parent_views(table!, context.viewname);
 
           const done_view_opts = own_views.map((v: any) => v.select_option);
           parent_views.forEach(({ relation, related_table, views }: GenObj) =>
@@ -429,7 +429,7 @@ const configuration_workflow = (req: Req) =>
                 label: req.__("Real-time updates"),
                 sublabel: req.__("Enable real-time updates for this view"),
                 type: "Bool",
-                default: false,
+                default: false as any,
               },
 
               new FieldRepeat({
@@ -891,7 +891,7 @@ const render = async ({
     )
   );
 
-  const dynamic_updates_enabled = getState().getConfig(
+  const dynamic_updates_enabled = getState()!.getConfig(
     "enable_dynamic_updates",
     true
   );
@@ -1003,8 +1003,8 @@ const runPost = async (
   remote?: boolean
 ) => {
   const safeBody = prepSafeBody(body, columns);
-  const table = Table.findOne({ id: table_id })!;
-  const fields = table.getFields();
+  const table = Table.findOne({ id: table_id });
+  const fields = table!.getFields();
   if (safeBody?.password && table_id === User.table.id) {
     safeBody.password = await User.hashPassword(safeBody.password);
   }
@@ -1038,10 +1038,10 @@ const runPost = async (
     let trigger_return: any;
     let ins_upd_error: any;
     if (!cancel) {
-      getState().log(
+      getState()!.log(
         6,
         `Edit POST ready to insert/update into ${
-          table.name
+          table!.name
         } Row=${JSON.stringify(row)} ID=${id} Ajax=${!!req.xhr}`
       );
       const doReturn = await db.withTransaction(async (rollback: any) => {
@@ -1056,8 +1056,8 @@ const runPost = async (
           }
         } else {
           if (
-            table.composite_pk_names ||
-            table.getField(table.pk_name)!.attributes.NonSerial
+            table!.composite_pk_names ||
+            table!.getField(table!.pk_name)!.attributes.NonSerial
           ) {
             const upd_res = await tryInsertOrUpdateImpl(row, id, table, req);
             if ((upd_res as any).error) {
@@ -1074,7 +1074,7 @@ const runPost = async (
         }
         if (ins_upd_error) {
           await rollback();
-          getState().log(
+          getState()!.log(
             6,
             `Insert or update failure ${JSON.stringify(ins_upd_error)}`
           );
@@ -1169,7 +1169,7 @@ const runPost = async (
                 childRow[file_field.name] = file.field_value;
               }
             }
-            getState().log(
+            getState()!.log(
               6,
               `Edit POST ready to insert/update Child row into ${
                 childTable.name
@@ -1188,7 +1188,7 @@ const runPost = async (
               if ((upd_res as any).error) {
                 await rollback();
 
-                getState().log(
+                getState()!.log(
                   6,
                   `Update child row failure ${JSON.stringify(upd_res)}`
                 );
@@ -1203,7 +1203,7 @@ const runPost = async (
               );
               if ((ins_res as any).error) {
                 await rollback();
-                getState().log(
+                getState()!.log(
                   6,
                   `Insert child row failure ${JSON.stringify(ins_res)}`
                 );
@@ -1316,42 +1316,42 @@ const doAuthPost = async ({
   table_id: number | string;
   req: Req;
 }) => {
-  const table = Table.findOne({ id: table_id })!;
+  const table = Table.findOne({ id: table_id });
   const user_id = req.user ? req.user.id : null;
-  if (table.ownership_field_id && user_id) {
-    const field_name = await table.owner_fieldname();
+  if (table!.ownership_field_id && user_id) {
+    const field_name = await table!.owner_fieldname();
     if (typeof body[field_name || ""] === "undefined") {
-      const fields = table.getFields();
+      const fields = table!.getFields();
       const { uniques } = splitUniques(fields, body);
       if (Object.keys(uniques).length > 0) {
-        const dbrow = await table.getRow(uniques, {
+        const dbrow = await table!.getRow(uniques, {
           forUser: req.user,
           forPublic: !req.user,
         });
         if (!dbrow) return false;
-        return table.is_owner(req.user, dbrow);
+        return table!.is_owner(req.user, dbrow);
       }
     } else return field_name && `${body[field_name]}` === `${user_id}`;
   }
-  if (table.ownership_formula && user_id) {
+  if (table!.ownership_formula && user_id) {
     let row = { ...body };
-    if (body[table.pk_name]) {
+    if (body[table!.pk_name]) {
       const joinFields: GenObj = {};
-      if (table.ownership_formula) {
-        const fields = table.getFields();
-        const freeVars = freeVariables(table.ownership_formula);
+      if (table!.ownership_formula) {
+        const fields = table!.getFields();
+        const freeVars = freeVariables(table!.ownership_formula);
         add_free_variables_to_joinfields(freeVars, joinFields, fields);
       }
-      const dbrow = await table.getJoinedRows({
+      const dbrow = await table!.getJoinedRows({
         where: {
-          [table.pk_name]: body[table.pk_name],
+          [table!.pk_name]: body[table!.pk_name],
         },
         joinFields,
       });
       if (dbrow.length > 0) row = { ...body, ...dbrow[0] };
     } else {
-      const freeVars = freeVariables(table.ownership_formula);
-      const fields = table.getFields();
+      const freeVars = freeVariables(table!.ownership_formula);
+      const fields = table!.getFields();
 
       const field_names = new Set(fields.map((f: any) => f.name));
 
@@ -1360,7 +1360,7 @@ const doAuthPost = async ({
         if (field_names.has(kpath[0]) && kpath.length > 1) {
           const field = fields.find((f: any) => f.name === kpath[0]);
           if (!field)
-            throw new Error("Invalid formula:" + table.ownership_formula);
+            throw new Error("Invalid formula:" + table!.ownership_formula);
           const reftable = Table.findOne({ name: field.reftable_name })!;
           const joinFields: GenObj = {};
           const [kpath0, ...kpathrest] = kpath;
@@ -1381,10 +1381,10 @@ const doAuthPost = async ({
       }
     }
 
-    const is_owner = await table.is_owner(req.user, row);
+    const is_owner = await table!.is_owner(req.user, row);
     return is_owner;
   }
-  if (table.name === "users" && `${body.id}` === `${user_id}`) return true;
+  if (table!.name === "users" && `${body.id}` === `${user_id}`) return true;
   return false;
 };
 
@@ -1425,17 +1425,17 @@ const openDataStream = async (
   configuration: GenObj,
   targetOpts: any
 ) => {
-  const table = Table.findOne({ id: tableId })!;
-  const field = table.getField(fieldName);
+  const table = Table.findOne({ id: tableId });
+  const field = table!.getField(fieldName);
   if (!field) throw new InvalidConfiguration(`Field ${fieldName} not found`);
   if (field.type === "File") {
     const cfgCol = configuration.columns.find(
       (col: any) => col.fieldview === fieldView && col.field_name === fieldName
     );
-    const fileView = getState().fileviews[fieldView];
+    const fileView = getState()!.fileviews[fieldView];
     if (!fileView)
       throw new InvalidConfiguration(`File view ${fieldView} not found`);
-    return await fileView.openDataStream(
+    return await (fileView as any).openDataStream(
       tableId,
       id,
       fieldName,
@@ -1463,7 +1463,7 @@ const authorizeDataStream = async (
 ) => {
   if (!user || user.role_id > view.min_role) return false;
   else {
-    const table = Table.findOne({ id: view.table_id })!;
+    const table = Table.findOne({ id: view.table_id });
     if (!table || user.role_id > table.min_role_write) return false;
     else {
       const field = table.getField(fieldName)!;
@@ -2090,7 +2090,7 @@ const virtual_triggers = (
       when_trigger: "Update",
       table_id: table_id,
       run: async (row: GenObj, { old_row, user }: GenObj) => {
-        getState().log(
+        getState()!.log(
           6,
           `Virtual trigger Update for ${viewname} on table ${table.name}`
         );
@@ -2112,7 +2112,7 @@ const virtual_triggers = (
         });
 
         if (changedLayoutFields.size === 0) {
-          getState().log(
+          getState()!.log(
             6,
             "No layout fields changed, skipping real-time update"
           );
@@ -2128,7 +2128,7 @@ const virtual_triggers = (
             old_row: old_row,
             updates: updates,
           });
-          getState().log(
+          getState()!.log(
             6,
             "Emitting real-time update for row",
             rowId,
@@ -2144,7 +2144,7 @@ const virtual_triggers = (
   ];
 };
 
-export = {
+export default {
   /** @type {string} */
   name: "Edit",
   /** @type {string} */
@@ -2372,9 +2372,9 @@ export = {
       const column = columns.find(
         (c: any) => c.type === "Field" && c.field_name === field.name
       );
-      field.fieldviewObj = getState().fileviews[fieldView];
+      field.fieldviewObj = getState()!.fileviews[fieldView];
       const [pre, allData] = fieldVal.split(",");
-      const buffer = require("buffer/").Buffer.from(allData, "base64");
+      const buffer = Pkg.Buffer.from(allData, "base64");
       const mimetype = pre.split(";")[0].split(":")[1];
       const filename =
         (field.fieldviewObj as any)?.setsDataURL?.get_filename?.({
@@ -2389,7 +2389,7 @@ export = {
       const file = await File.from_contents(
         filename,
         mimetype,
-        buffer,
+        buffer as any,
         req.user?.id,
         field.attributes.min_role_read || 1,
         folder
@@ -2408,7 +2408,7 @@ export = {
       const column = columns.find(
         (c: any) => c.type === "Field" && c.field_name === field.name
       );
-      field.fieldviewObj = getState().fileviews[fieldView];
+      field.fieldviewObj = getState()!.fileviews[fieldView];
       let mimetype: string, allData: string;
       if (encoding == "base64") {
         let [pre, allData0] = fieldVal.split(",");
@@ -2420,13 +2420,13 @@ export = {
           (filename && File.nameToMimeType(filename)) ||
           "application/octet-stream";
       }
-      const buffer = require("buffer/").Buffer.from(allData, encoding);
+      const buffer = Pkg.Buffer.from(allData, encoding);
       const filename1 = filename || "file";
 
       const existing_file = await File.findOne(filename1);
       if (existing_file) {
         if (existing_file.min_role_read >= (req.user?.role_id || 100)) {
-          await existing_file.overwrite_contents(buffer);
+          await existing_file.overwrite_contents(buffer as any);
           return File.fieldValueFromRelative(existing_file.path_to_serve);
         } else throw new Error("Not authorized to write file");
       }
@@ -2434,7 +2434,7 @@ export = {
       const file = await File.from_contents(
         filename1,
         mimetype,
-        buffer,
+        buffer as any,
         req.user?.id,
         field.attributes.min_role_read || 1
       );
@@ -2445,29 +2445,29 @@ export = {
     },
     async authorizeGetQuery(query: GenObj, table_id: number | string) {
       let body = query || {};
-      const table = Table.findOne({ id: table_id })!;
+      const table = Table.findOne({ id: table_id });
       if (Object.keys(body).length == 1) {
-        if (table.ownership_field_id || table.ownership_formula) {
+        if (table!.ownership_field_id || table!.ownership_formula) {
           const fields = table!.getFields();
           const { uniques } = splitUniques(fields, body);
           if (Object.keys(uniques).length > 0) {
             const joinFields: GenObj = {};
-            if (table.ownership_formula) {
-              const freeVars = freeVariables(table.ownership_formula);
+            if (table!.ownership_formula) {
+              const freeVars = freeVariables(table!.ownership_formula);
               add_free_variables_to_joinfields(freeVars, joinFields, fields);
             }
-            const row = await table.getJoinedRows({
+            const row = await table!.getJoinedRows({
               where: uniques,
               joinFields,
             });
-            if (row.length > 0) return table.is_owner(req.user, row[0]);
+            if (row.length > 0) return table!.is_owner(req.user, row[0]);
             else return true;
           } else {
             return true;
           }
         }
       } else {
-        return table.ownership_field_id || table.ownership_formula;
+        return table!.ownership_field_id || table!.ownership_formula;
       }
       return doAuthPost({ body, table_id, req });
     },
@@ -2490,7 +2490,7 @@ export = {
       );
     },
     async getRowByIdQuery(id: any) {
-      const table = Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id })!;
       return await table!.getRow(typeof id === "object" ? id : { id }, {
         forUser: req.user,
         forPublic: !req.user,
@@ -2506,7 +2506,7 @@ export = {
         ...body
       } = req.body || {};
 
-      const table = Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id })!;
       const pk_name = table!.pk_name;
       let row = body[pk_name]
         ? (await table!.getRow(
@@ -2605,7 +2605,7 @@ export = {
       attributes: any,
       where: GenObj
     ) {
-      const refTable = Table.findOne({ name: reftable_name });
+      const refTable = Table.findOne({ name: reftable_name })!;
       const rows = await refTable!.getRows(where, {
         forUser: req.user,
         forPublic: !req.user,
@@ -2618,7 +2618,7 @@ export = {
       repeatFields: any[],
       childRows: GenObj
     ) {
-      const table = Table.findOne(table_id);
+      const table = Table.findOne(table_id)!;
       const rows = await table!.getRows(where, {
         forUser: req.user,
         forPublic: !req.user,
@@ -2638,7 +2638,7 @@ export = {
           }
           results.push(uptRes);
           for (const field of repeatFields) {
-            const childTable = Table.findOne({ id: field.metadata?.table_id });
+            const childTable = Table.findOne({ id: field.metadata?.table_id })!;
             await childTable!.deleteRows(
               { [field.metadata?.relation]: row.id },
               req.user || { role_id: 100 }

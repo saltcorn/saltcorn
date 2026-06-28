@@ -4,21 +4,21 @@
  * @module models/notification
  * @subcategory models
  */
-import db from "../db";
+import db from "../db/index.js";
 import type {
   Where,
   SelectOptions,
   Row,
   PartialSome,
 } from "@saltcorn/db-common/internal";
-import User from "./user";
-import state from "../db/state";
-import { PushMessageHelper } from "./internal/push_message_helper";
-import utils from "../utils";
-import { MailQueue } from "./internal/mail_queue";
+import User from "./user.js";
+import * as state from "../db/state.js";
+import { PushMessageHelper } from "./internal/push_message_helper.js";
+import * as utils from "../utils.js";
+import { MailQueue } from "./internal/mail_queue.js";
 
-const { getState } = state;
-const { isPushEnabled } = utils;
+import { getState } from "../db/state.js";
+import { isPushEnabled } from "../utils.js";
 
 /**
  * Notification Class
@@ -83,7 +83,7 @@ class Notification {
       send_status: null,
     });
     o.id = id;
-    const state = getState();
+    const state = getState()!;
     const user = await User.findOne({ id: o.user_id });
     if (user?._attributes?.notify_email) {
       await MailQueue.handleNotification(o, user);
@@ -130,4 +130,4 @@ class Notification {
 
 type NotificationCfg = PartialSome<Notification, "title" | "user_id">;
 
-export = Notification;
+export default Notification;

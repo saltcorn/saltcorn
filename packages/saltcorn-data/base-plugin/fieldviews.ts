@@ -4,14 +4,14 @@
  * @subcategory base-plugin
  */
 
-import View from "../models/view";
-import Table from "../models/table";
-import Field from "../models/field";
-const {
-  eval_expression,
-  jsexprToWhere,
-  eval_statements,
-} = require("../models/expression");
+import { eval_expression, jsexprToWhere, eval_statements } from "../models/expression.js";
+import { isNode, nubBy, objectToQueryString } from "../utils.js";
+import { mockReqRes } from "../tests/mocks.js";
+import tags from "@saltcorn/markup/tags";
+import helpersPkg from "@saltcorn/markup/helpers";
+import View from "../models/view.js";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
 const {
   option,
   a,
@@ -22,12 +22,10 @@ const {
   input,
   domReady,
   div,
-} = require("@saltcorn/markup/tags");
-const tags = require("@saltcorn/markup/tags");
-const { select_options, radio_group } = require("@saltcorn/markup/helpers");
-const { isNode, nubBy, objectToQueryString } = require("../utils");
-const { mockReqRes } = require("../tests/mocks");
-import db from "../db";
+} = tags;
+const { select_options } = helpersPkg;
+const radio_group = (helpersPkg as any).radio_group;
+import db from "../db/index.js";
 import { GenObj } from "@saltcorn/types/common_types";
 
 /**
@@ -857,7 +855,7 @@ const select_by_view = {
    * @type {object[]}
    */
   configFields: async (field: GenObj, modeetc?: GenObj) => {
-    const refTable = Table.findOne({ name: field.reftable_name });
+    const refTable = Table.findOne({ name: field.reftable_name })!;
     const views = await View.find_possible_links_to_table(refTable!);
     const mode = modeetc?.mode;
 
@@ -980,7 +978,7 @@ const select_by_view = {
   },
 };
 
-export = {
+export {
   select,
   select_from_table,
   search_or_create,

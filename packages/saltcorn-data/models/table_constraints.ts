@@ -4,19 +4,20 @@
  * @module models/table_constraints
  * @subcategory models
  */
+import { stringToJSON } from "../utils.js";
+import Table from "./table.js";
+import * as nsState from "../db/state.js";
 import {
   type Where,
   type SelectOptions,
   ftsFieldsSqlExpr,
   PartialSome,
 } from "@saltcorn/db-common/internal";
-import db from "../db";
-import type Field from "./field";
-const { stringToJSON } = require("../utils");
-import type Table from "./table";
-import _expr from "./expression";
+import db from "../db/index.js";
+import type Field from "./field.js";
+import * as _expr from "./expression.js";
 import { FieldLike } from "@saltcorn/types/base_types";
-const { add_free_variables_to_joinfields, freeVariables, jsexprToSQL } = _expr;
+import { add_free_variables_to_joinfields, freeVariables, jsexprToSQL } from "./expression.js";
 /**
  * TableConstraint class
  * @category saltcorn-data
@@ -81,8 +82,7 @@ class TableConstraint {
   static async create(f: TableConstraintCfg): Promise<TableConstraint> {
     const con = new TableConstraint(f);
 
-    const Table = require("./table");
-    const table = Table.findOne({ id: con.table_id });
+    const table = Table.findOne({ id: con.table_id })!;
     if (con.type === "Unique" && con.configuration.fields) {
       await db.add_unique_constraint(table.name, con.configuration.fields);
     } else if (con.type === "Index" && con.configuration.field === "_fts") {
@@ -95,9 +95,9 @@ class TableConstraint {
         table.name,
         db.getTenantSchema()
       );
-      const language = require("../db/state").getState().pg_ts_config;
-      const search_disable_fts = require("../db/state")
-        .getState()
+      const language = nsState.getState()!.pg_ts_config;
+      const search_disable_fts = nsState
+        .getState()!
         .getConfig("search_disable_fts");
       await db.add_fts_index(
         table.name,
@@ -141,7 +141,7 @@ class TableConstraint {
         );
     }
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+      await nsState.getState()!.refresh_tables(true);
 
     return con;
   }
@@ -151,8 +151,7 @@ class TableConstraint {
    */
   async delete(): Promise<void> {
     await db.deleteWhere("_sc_table_constraints", { id: this.id });
-    const Table = require("./table");
-    const table = Table.findOne({ id: this.table_id });
+    const table = Table.findOne({ id: this.table_id })!;
     if (this.type === "Unique" && this.configuration.fields) {
       await db.drop_unique_constraint(table.name, this.configuration.fields);
     } else if (this.type === "Index" && this.configuration?.field === "_fts") {
@@ -170,7 +169,7 @@ class TableConstraint {
       );
     }
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+      await nsState.getState()!.refresh_tables(true);
   }
 
   /**
@@ -188,7 +187,7 @@ class TableConstraint {
         await c.delete();
     }
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_tables(true);
+      await nsState.getState()!.refresh_tables(true);
   }
 
   /**
@@ -205,4 +204,4 @@ type TypeOption = (typeof type_options)[number];
 
 type TableConstraintCfg = PartialSome<TableConstraint, "type">;
 
-export = TableConstraint;
+export default TableConstraint;

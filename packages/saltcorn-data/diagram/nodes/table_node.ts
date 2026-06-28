@@ -1,7 +1,7 @@
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import { AbstractField } from "@saltcorn/types/model-abstracts/abstract_field";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
-import Node from "./node";
+import Node from "./node.js";
 
 export class TableNode extends Node {
   table: AbstractTable;

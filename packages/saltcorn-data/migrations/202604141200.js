@@ -1,4 +1,4 @@
-const db = require("../db");
+const db = require("@saltcorn/data/db");
 
 // Change ref column from integer to text to support UUID primary keys.
 // Uses db.sqlsanitize so table names with whitespace or special chars are safe.

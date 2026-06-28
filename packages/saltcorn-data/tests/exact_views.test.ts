@@ -1,30 +1,33 @@
-import Table from "../models/table";
-import View from "../models/view";
-import db from "../db";
-import mocks from "./mocks";
+import Table from "../models/table.js";
+import View from "../models/view.js";
+import db from "../db/index.js";
+import * as mocks from "./mocks.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { mockReqRes } = mocks;
-const { getState } = require("../db/state");
-import Page from "../models/page";
+import Page from "../models/page.js";
 import type { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
 import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
-import { assertIsSet } from "./assertions";
+import { assertIsSet } from "./assertions.js";
 import {
   prepareQueryEnviroment,
   sendViewToServer,
   deleteViewFromServer,
   renderEditInEditConfig,
-} from "./remote_query_helper";
+} from "./remote_query_helper.js";
 
 let remoteQueries = false;
 
-getState().registerPlugin("base", require("../base-plugin"));
+getState()!.registerPlugin("base", basePluginMod);
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
   if (process.env.REMOTE_QUERIES === "true") {
-    getState().setConfig("base_url", "http://localhost:3000");
+    getState()!.setConfig("base_url", "http://localhost:3000");
     remoteQueries = true;
     await prepareQueryEnviroment();
   }
@@ -50,7 +53,7 @@ const mkTester =
     id?: number;
     [key: string]: any; // ...rest
   }) => {
-    const tbl = Table.findOne({ name: rest.table || table });
+    const tbl = Table.findOne({ name: rest.table || table })!;
     assertIsSet(tbl);
     const viewCfg: any = {
       table_id: tbl.id,
@@ -60,7 +63,7 @@ const mkTester =
       min_role: 100,
     };
     const v = await View.create(viewCfg);
-    await getState().refresh_views();
+    await getState()!.refresh_views();
     if (remoteQueries) await sendViewToServer(viewCfg);
     const configFlow = await v.get_config_flow(mockReqRes.req);
     await configFlow.run(

@@ -3,25 +3,40 @@
  * @module base-plugin/viewtemplates/list
  * @subcategory base-plugin
  */
-import Field from "../../models/field";
-import Table from "../../models/table";
-import Form from "../../models/form";
-import View from "../../models/view";
-import Workflow from "../../models/workflow";
-import Crash from "../../models/crash";
-import Trigger from "../../models/trigger";
-import Page from "../../models/page";
-import User from "../../models/user";
+import { eachView, traverse, getStringsForI18n, translateLayout } from "../../models/layout.js";
+import { removeEmptyStrings, removeDefaultColor, applyAsync, mergeIntoWhere, mergeConnectedObjects, hashState, dollarizeObject, getSessionId, InvalidConfiguration, isWeb } from "../../utils.js";
+import { get_viewable_fields, parse_view_select, get_viewable_fields_from_layout, action_url } from "../../viewable_fields.js";
+import { getState } from "../../db/state.js";
+import { get_async_expression_function, jsexprToWhere, freeVariables, get_expression_function, eval_expression } from "../../models/expression.js";
+import { get_existing_views } from "../../models/discovery.js";
+import { check_view_columns } from "../../plugin-testing.js";
+import { extractFromColumns, extractViewToCreate } from "../../diagram/node_extract_utils.js";
+import commonCodePkg from "@saltcorn/common-code";
+import markupPkg from "@saltcorn/markup";
+import tagsPkg from "@saltcorn/markup/tags";
+import layoutUtilsPkg from "@saltcorn/markup/layout_utils";
+import FieldRepeat from "../../models/fieldrepeat.js";
+import PageGroup from "../../models/page_group.js";
+import Library from "../../models/library.js";
+import pluralize from "pluralize";
+import db from "../../db/index.js";
+import Field from "../../models/field.js";
+import Table from "../../models/table.js";
+import Form from "../../models/form.js";
+import View from "../../models/view.js";
+import Workflow from "../../models/workflow.js";
+import Crash from "../../models/crash.js";
+import Trigger from "../../models/trigger.js";
+import Page from "../../models/page.js";
+import User from "../../models/user.js";
 import { GenObj } from "@saltcorn/types/common_types";
-import File from "../../models/file";
+import File from "../../models/file.js";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
-const FieldRepeat = require("../../models/fieldrepeat");
-const PageGroup = require("../../models/page_group");
-const Library = require("../../models/library");
 
-const { Relation, RelationType } = require("@saltcorn/common-code");
+const { Relation, RelationType } = commonCodePkg;
 
-const { mkTable, h, post_btn, link } = require("@saltcorn/markup");
+const { mkTable, post_btn, link } = markupPkg;
+const { h } = markupPkg as any;
 const {
   text,
   script,
@@ -30,24 +45,7 @@ const {
   a,
   code,
   i,
-} = require("@saltcorn/markup/tags");
-const {
-  eachView,
-  traverse,
-  getStringsForI18n,
-  translateLayout,
-} = require("../../models/layout");
-const pluralize = require("pluralize");
-const {
-  removeEmptyStrings,
-  removeDefaultColor,
-  applyAsync,
-  mergeIntoWhere,
-  mergeConnectedObjects,
-  hashState,
-  dollarizeObject,
-  getSessionId,
-} = require("../../utils");
+} = tagsPkg;
 import {
   field_picker_fields,
   picked_fields_to_query,
@@ -64,31 +62,9 @@ import {
   add_free_variables_to_joinfields,
   pathToState,
   displayType,
-} from "../../plugin-helper";
+} from "../../plugin-helper.js";
 import { PrimaryKeyValue, Row } from "@saltcorn/db-common/dbtypes";
-const {
-  get_viewable_fields,
-  parse_view_select,
-  get_viewable_fields_from_layout,
-  action_url,
-} = require("../../viewable_fields");
-const { getState } = require("../../db/state");
-const {
-  get_async_expression_function,
-  jsexprToWhere,
-  freeVariables,
-  get_expression_function,
-  eval_expression,
-} = require("../../models/expression");
-const db = require("../../db");
-const { get_existing_views } = require("../../models/discovery");
-const { InvalidConfiguration, isWeb } = require("../../utils");
-const { check_view_columns } = require("../../plugin-testing");
-const {
-  extractFromColumns,
-  extractViewToCreate,
-} = require("../../diagram/node_extract_utils");
-const { validID } = require("@saltcorn/markup/layout_utils");
+const { validID } = layoutUtilsPkg;
 
 const create_db_view = async (context: GenObj, req: Req) => {
   const table = Table.findOne({ id: context.table_id })!;
@@ -156,7 +132,7 @@ const configuration_workflow = (req: Req) =>
             (f: GenObj) => f.type && f.type.name === "Bool"
           );
           const stateActions = (
-            Object.entries(getState().actions) as [string, GenObj][]
+            Object.entries(getState()!.actions) as [string, GenObj][]
           ).filter(([k, v]) => !v.disableInBuilder && !v.disableIf?.());
           const builtInActions = [
             "Delete",
@@ -253,7 +229,7 @@ const configuration_workflow = (req: Req) =>
           });
           const agg_fieldview_options: GenObj = {};
 
-          Object.values(getState().types).forEach((t: any) => {
+          Object.values(getState()!.types).forEach((t: any) => {
             agg_fieldview_options[t.name] = (
               Object.entries(t.fieldviews) as [string, GenObj][]
             )
@@ -375,7 +351,7 @@ const configuration_workflow = (req: Req) =>
             handlesTextStyle,
             mode: "list",
             has_copilot_generate:
-              !!getState().functions.copilot_generate_layout,
+              !!getState()!.functions.copilot_generate_layout,
             ownership:
               !!table.ownership_field_id ||
               !!table.ownership_formula ||
@@ -1075,7 +1051,7 @@ const run = async (
   )!;
   const pk_name = table.pk_name;
   const fields = table.getFields();
-  const appState = getState();
+  const appState = getState()!;
   const locale = extraOpts.req.getLocale();
   const __ = (s: string) =>
     isWeb(extraOpts.req) ? appState.i18n.__({ phrase: s, locale }) || s : s;
@@ -1157,7 +1133,9 @@ const run = async (
     if (view.view_select.type === "RelationPath") {
       const relation = new Relation(
         segment.relation,
-        view.table_id ? Table.findOne({ id: view.table_id })!.name : undefined,
+        (view.table_id
+          ? Table.findOne({ id: view.table_id })!.name
+          : undefined) as string,
         displayType(await view.get_state_fields())
       );
       switch (relation.type) {
@@ -1204,7 +1182,7 @@ const run = async (
           });
           break;
         case RelationType.INDEPENDENT:
-        case RelationType.NONE:
+        case (RelationType as any).NONE:
           stateMany = segment.extra_state_fml
             ? {
                 or: rows.map((row: GenObj) => get_extra_state(row)),
@@ -1362,7 +1340,7 @@ const run = async (
         default_state?._row_click_action,
         "action_name"
       );
-      if (actionUrl.javascript) return actionUrl.javascript;
+      if ((actionUrl as any).javascript) return (actionUrl as any).javascript;
     };
   }
   page_opts.class = "";
@@ -1541,7 +1519,7 @@ const run = async (
       default_state?.hide_null_columns
         ? remove_null_cols(tfields, rows)
         : tfields,
-      groups,
+      groups as any,
       page_opts
     );
   } else {
@@ -1613,7 +1591,7 @@ const run_action = async (
         });
         return { json: { success: "ok", ...(result || {}) } };
       }
-      const state_action = getState().actions[col.action_name];
+      const state_action = getState()!.actions[col.action_name];
       col.configuration = col.configuration || {};
       if (state_action) {
         const cfgFields = await getActionConfigFields(state_action, table, {
@@ -1636,10 +1614,10 @@ const run_action = async (
       });
       return { json: { success: "ok", ...(result || {}) } };
     },
-    (e: any) => {
+    ((e: any) => {
       Crash.create(e, req);
       return { json: { error: e.message || e } };
-    }
+    }) as any
   );
 };
 
@@ -1823,7 +1801,7 @@ const createBasicView = async ({
   return configuration;
 };
 
-export = {
+export default {
   name: "List",
   description:
     "Display multiple rows from a table in a grid with columns you specify",
@@ -2044,26 +2022,26 @@ export = {
       return { rows, rowCount };
     },
     async getRowQuery(id: any) {
-      const table = Table.findOne({ id: table_id })!;
-      if (table.ownership_formula) {
-        const freeVars = freeVariables(table.ownership_formula);
+      const table = Table.findOne({ id: table_id });
+      if (table!.ownership_formula) {
+        const freeVars = freeVariables(table!.ownership_formula);
         const joinFields: GenObj = {};
-        add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
-        return await table.getJoinedRow({
-          where: { [table.pk_name]: id },
+        add_free_variables_to_joinfields(freeVars, joinFields, table!.fields);
+        return await table!.getJoinedRow({
+          where: { [table!.pk_name]: id },
           joinFields,
           forUser: req.user || { role_id: 100 },
           forPublic: !req.user,
         });
       } else
-        return await table.getRow(
-          { [table.pk_name]: id },
+        return await table!.getRow(
+          { [table!.pk_name]: id },
           { forUser: req.user, forPublic: !req.user }
         );
     },
   }),
   configCheck: async (view: GenObj) => {
-    return await check_view_columns(view, view.configuration.columns);
+    return await check_view_columns(view as any, view.configuration.columns);
   },
   connectedObjects: async (configuration: GenObj) => {
     const fromColumns = extractFromColumns(configuration.columns);

@@ -1,17 +1,20 @@
-import Page from "../models/page";
-import File from "../models/file";
-import db from "../db";
-const { getState } = require("../db/state");
-import { assertIsSet } from "./assertions";
+import Page from "../models/page.js";
+import File from "../models/file.js";
+import db from "../db/index.js";
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import mocks from "./mocks";
+import * as mocks from "./mocks.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { mockReqRes } = mocks;
-getState().registerPlugin("base", require("../base-plugin"));
+getState()!.registerPlugin("base", basePluginMod);
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 describe("Page model tests", () => {

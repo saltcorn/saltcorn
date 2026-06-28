@@ -3,14 +3,23 @@
  * @module base-plugin/viewtemplates/room
  * @subcategory base-plugin
  */
-import Field from "../../models/field";
-import Table from "../../models/table";
-import Form from "../../models/form";
-import View from "../../models/view";
-import Trigger from "../../models/trigger";
-import Workflow from "../../models/workflow";
-const WorkflowRun = require("../../models/workflow_run");
-const WorkflowStep = require("../../models/workflow_step");
+import { getState } from "../../db/state.js";
+import { extractFromLayout } from "../../diagram/node_extract_utils.js";
+import tagsPkg from "@saltcorn/markup/tags";
+import helpersPkg from "@saltcorn/markup/helpers";
+import markupPkg from "@saltcorn/markup";
+import indexPkg from "@saltcorn/markup/index";
+import WorkflowRun from "../../models/workflow_run.js";
+import WorkflowStep from "../../models/workflow_step.js";
+import db from "../../db/index.js";
+import WorkflowTrace from "../../models/workflow_trace.js";
+import markdownItPkg from "markdown-it";
+import Field from "../../models/field.js";
+import Table from "../../models/table.js";
+import Form from "../../models/form.js";
+import View from "../../models/view.js";
+import Trigger from "../../models/trigger.js";
+import Workflow from "../../models/workflow.js";
 const {
   text,
   div,
@@ -24,26 +33,22 @@ const {
   i,
   script,
   domReady,
-} = require("@saltcorn/markup/tags");
-const { pagination } = require("@saltcorn/markup/helpers");
-const { renderForm, tabs, link } = require("@saltcorn/markup");
-const { mkTable } = require("@saltcorn/markup");
+} = tagsPkg;
+const { pagination } = helpersPkg;
+const { renderForm, tabs, link } = markupPkg;
+const { mkTable } = markupPkg;
 import {
   link_view,
   stateToQueryString,
   stateFieldsToWhere,
   stateFieldsToQuery,
   readState,
-} from "../../plugin-helper";
+} from "../../plugin-helper.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Req, Res } from "@saltcorn/types/base_types";
-const { getState } = require("../../db/state");
-const db = require("../../db");
-import { getForm, fill_presets } from "../../viewable_fields";
-const { extractFromLayout } = require("../../diagram/node_extract_utils");
-const WorkflowTrace = require("../../models/workflow_trace");
-const { localeDateTime } = require("@saltcorn/markup/index");
-const MarkdownIt = require("markdown-it"),
+import { getForm, fill_presets } from "../../viewable_fields.js";
+const { localeDateTime } = indexPkg;
+const MarkdownIt = markdownItPkg,
   md = new MarkdownIt();
 
 const configuration_workflow = (req: Req) =>
@@ -226,14 +231,14 @@ const run = async (
   if (state.id || isPreview) {
     wfRun = isPreview
       ? await WorkflowRun.findOne(
-          { trigger_id: trigger.id },
+          { trigger_id: trigger!.id },
           { limit: 1, orderBy: "id", orderDesc: true }
         )
       : await WorkflowRun.findOne({ id: state.id });
     if (wfRun) {
       if (wfRun.started_by != req.user?.id && req.user?.role_id != 1)
         return "Not authorized";
-      if (trigger.configuration.save_traces) {
+      if (trigger!.configuration.save_traces) {
         const traces = await WorkflowTrace.find(
           { run_id: wfRun.id },
           { orderBy: "step_started_at" }
@@ -246,21 +251,21 @@ const run = async (
     }
   } else
     wfRun = await WorkflowRun.create({
-      trigger_id: trigger.id,
+      trigger_id: trigger!.id!,
       context: {},
       started_by: req.user?.id,
     });
   await wfRun.run({
-    user: req.user,
+    user: req.user as any,
     noNotifications: true,
-    trace: trigger.configuration?.save_traces,
+    trace: trigger!.configuration?.save_traces,
   });
   const items = await getHtmlFromRun({ run: wfRun, req, viewname });
   //look for error status
   if (prev_runs) {
     const locale = req.getLocale();
     const runs = await WorkflowRun.find(
-      { trigger_id: trigger.id },
+      { trigger_id: trigger!.id },
       { limit: 10, orderBy: "started_at", orderDesc: true }
     );
     return div(
@@ -302,7 +307,7 @@ const submit_form = async (table_id: number | null, viewname: string, { workflow
   const wfRun = await WorkflowRun.findOne({ id: body.run_id });
   const trigger = await Trigger.findOne({ id: wfRun.trigger_id });
   const step = await WorkflowStep.findOne({
-    trigger_id: trigger.id,
+    trigger_id: trigger!.id,
     name: wfRun.current_step_name,
   });
   const form = await getWorkflowStepUserForm({ step, run: wfRun, viewname, req });
@@ -313,9 +318,9 @@ const submit_form = async (table_id: number | null, viewname: string, { workflow
     step.configuration.response_variable
   );
   await wfRun.run({
-    user: req.user,
+    user: req.user as any,
     noNotifications: true,
-    trace: trigger.configuration?.save_traces,
+    trace: trigger!.configuration?.save_traces,
   });
   const items = await getHtmlFromRun({ run: wfRun, req, viewname });
   return {
@@ -341,7 +346,7 @@ const delprevrun = async (table_id: number | null, viewname: string, config: Gen
   return;
 };
 
-export = {
+export default {
   /** @type {string} */
   name: "WorkflowRoom",
   /** @type {string} */

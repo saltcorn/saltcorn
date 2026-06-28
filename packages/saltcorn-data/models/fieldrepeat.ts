@@ -4,8 +4,9 @@
  * @module models/fieldrepeat
  * @subcategory models
  */
-const { contract, is } = require("contractis");
-import Field from "./field";
+import contractisPkg from "contractis";
+const { contract, is } = contractisPkg;
+import Field from "./field.js";
 import { AbstractFieldRepeat } from "@saltcorn/types/model-abstracts/abstract_field";
 import { instanceOfType, SuccessMessage } from "@saltcorn/types/common_types";
 import type { Layout } from "@saltcorn/types/base_types";
@@ -142,4 +143,4 @@ type FieldRepeatCfg = Omit<
   fields: Array<Field | FieldRepeat | FieldLike>;
 };
 
-export = FieldRepeat;
+export default FieldRepeat;

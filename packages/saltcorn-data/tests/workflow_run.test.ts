@@ -1,27 +1,30 @@
-import Form from "../models/form";
-import Field from "../models/field";
-import WorkflowRun from "../models/workflow_run";
-import WorkflowStep from "../models/workflow_step";
-import Trigger from "../models/trigger";
+import Form from "../models/form.js";
+import Field from "../models/field.js";
+import WorkflowRun from "../models/workflow_run.js";
+import WorkflowStep from "../models/workflow_step.js";
+import Trigger from "../models/trigger.js";
 
-import db from "../db";
-import { assertIsSet } from "./assertions";
+import db from "../db/index.js";
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { GenObj } from "@saltcorn/types/common_types";
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 
-const { getState } = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
-import mocks from "./mocks";
-import User from "../models/user";
-import Table from "../models/table";
-import WorkflowTrace from "../models/workflow_trace";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+getState()!.registerPlugin("base", basePluginMod);
+import * as mocks from "./mocks.js";
+import User from "../models/user.js";
+import Table from "../models/table.js";
+import WorkflowTrace from "../models/workflow_trace.js";
 const { mockReqRes } = mocks;
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 jest.setTimeout(10000);
@@ -79,7 +82,7 @@ describe("Workflow run steps", () => {
     const trigger = Trigger.findOne({ name: "mywf" });
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
-      trigger_id: trigger.id,
+      trigger_id: trigger.id!,
     });
     await wfrun.run({ user });
     expect(wfrun.context.x).toBe(1);
@@ -104,7 +107,7 @@ describe("Workflow run steps", () => {
     const trigger0 = Trigger.findOne({ name: "mywf" });
 
     assertIsSet(trigger0);
-    await Trigger.update(trigger0.id, { configuration: { save_traces: true } });
+    await Trigger.update(trigger0.id!, { configuration: { save_traces: true } });
     const trigger = Trigger.findOne({ name: "mywf" });
     assertIsSet(trigger);
 
@@ -173,7 +176,7 @@ describe("Workflow run forloop", () => {
     const trigger = Trigger.findOne({ name: "wfForLoop" });
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
-      trigger_id: trigger.id,
+      trigger_id: trigger.id!,
     });
     await wfrun.run({ user });
 
@@ -235,7 +238,7 @@ describe("Workflow run error handling", () => {
     const trigger = Trigger.findOne({ name: "mywf1" });
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
-      trigger_id: trigger.id,
+      trigger_id: trigger.id!,
     });
     await wfrun.run({ user });
 
@@ -302,7 +305,7 @@ describe("Workflow run error handling with transaction and database ops", () => 
         const trigger = Trigger.findOne({ name: "mywferrdb" });
         assertIsSet(trigger);
         const wfrun = await WorkflowRun.create({
-          trigger_id: trigger.id,
+          trigger_id: trigger.id!,
         });
         await wfrun.run({ user });
 
@@ -376,7 +379,7 @@ describe("Workflow run subworkflows", () => {
     const trigger = Trigger.findOne({ name: "wfmain" });
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
-      trigger_id: trigger.id,
+      trigger_id: trigger.id!,
     });
     await wfrun.run({ user });
 
@@ -391,7 +394,7 @@ describe("Workflow run subworkflows", () => {
 });
 describe("Workflow run actions", () => {
   it("should create steps", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
 
     await Trigger.create({
@@ -443,7 +446,7 @@ describe("Workflow run actions", () => {
     const trigger = Trigger.findOne({ name: "wfrunaction" });
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
-      trigger_id: trigger.id,
+      trigger_id: trigger.id!,
       context: { thepub: 2 },
     });
     await wfrun.run({ user });
@@ -457,13 +460,13 @@ describe("Workflow run actions", () => {
   it("should dereference key row fields", async () => {
     const user = await User.findOne({ id: 1 });
     assertIsSet(user);
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     await table.deleteRows({ pages: 124 });
     const trigger = Trigger.findOne({ name: "wfrunaction" });
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
-      trigger_id: trigger.id,
+      trigger_id: trigger.id!,
       context: { thepub: "No starch" },
     });
     await wfrun.run({ user });
@@ -527,7 +530,7 @@ describe("Workflow run userform", () => {
     const trigger = Trigger.findOne({ name: "uformwf" });
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
-      trigger_id: trigger.id,
+      trigger_id: trigger.id!,
     });
     await wfrun.run({ user });
     expect(wfrun.context.x).toBe(1);
@@ -554,7 +557,7 @@ describe("Workflow run userform", () => {
     const trigger = Trigger.findOne({ name: "uformwf" });
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
-      trigger_id: trigger.id,
+      trigger_id: trigger.id!,
     });
     const runres0 = await wfrun.run({ user, interactive: true });
     expect(runres0.popup).toContain("/actions/fill-workflow-form/");
@@ -712,7 +715,7 @@ describe("Workflow with notify in ForLoop", () => {
     const trigger = Trigger.findOne({ name: "forloopnotifywf" });
     assertIsSet(trigger);
     const wfrun = await WorkflowRun.create({
-      trigger_id: trigger.id,
+      trigger_id: trigger.id!,
     });
     const runres0 = await wfrun.run({ user, interactive: true });
 

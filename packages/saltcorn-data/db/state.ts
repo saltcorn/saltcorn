@@ -6,14 +6,33 @@
  * @subcategory db
  */
 
-import View from "../models/view";
-import Trigger from "../models/trigger";
-import File from "../models/file";
-import Table from "../models/table";
-import TableConstraint from "../models/table_constraints";
-import Page from "../models/page";
-import PageGroup from "../models/page_group";
-import Field from "../models/field";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+// `today` is captured into each State's function_context at construction time,
+// and the root State singleton is constructed while this module is evaluated.
+// models/expression and db/state import each other, so the imported `today`
+// binding can still be in its temporal dead zone at that point. Wrap it so the
+// binding is only dereferenced when the function is actually called (by which
+// time expression has finished evaluating).
+import { today as _today } from "../models/expression.js";
+const today = (...args: any[]): any => _today(...args);
+import livePluginManagerPkg from "live-plugin-manager";
+import vm2Pkg from "vm2";
+import modulePkg from "module";
+import emergency_layout from "@saltcorn/markup/emergency_layout";
+import oldVm from "vm";
+import Model from "../models/model.js";
+import fetch from "node-fetch";
+import bufferPkg from "buffer/index.js";
+import * as nsMigrate from "../migrate.js";
+import View from "../models/view.js";
+import Trigger from "../models/trigger.js";
+import File from "../models/file.js";
+import Table from "../models/table.js";
+import TableConstraint from "../models/table_constraints.js";
+import Page from "../models/page.js";
+import PageGroup from "../models/page_group.js";
+import Field from "../models/field.js";
 import {
   Plugin,
   PluginLayout,
@@ -31,21 +50,17 @@ import {
   CapacitorPlugin,
 } from "@saltcorn/types/base_types";
 import { GenObj, Type } from "@saltcorn/types/common_types";
-import type { ConfigTypes, SingleConfig } from "../models/config";
-import type Model from "../models/model";
-import User from "../models/user";
-const { PluginManager } = require("live-plugin-manager");
+import type { ConfigTypes, SingleConfig } from "../models/config.js";
+import User from "../models/user.js";
+const { PluginManager } = livePluginManagerPkg;
 
 import moment from "moment";
 
-import db from ".";
-import { migrate } from "../migrate"; // Shows the true args and return type
-// const { migrate } = require("../migrate"); // Shows the args and return type as 'any'
-import config from "../models/config";
-const { getAllConfig, setConfig, deleteConfig, configTypes } = config;
-const emergency_layout = require("@saltcorn/markup/emergency_layout");
-import utils from "../utils";
-const {
+import db from "./index.js";
+import { migrate } from "../migrate.js"; // Shows the true args and return type
+// const { migrate } = nsMigrate; // Shows the args and return type as 'any'
+import { getAllConfig, setConfig, deleteConfig, configTypes } from "../models/config.js";
+import {
   structuredClone,
   removeAllWhiteSpace,
   stringToJSON,
@@ -53,19 +68,19 @@ const {
   interpolate,
   isNode,
   flatEqual,
-} = utils;
+} from "../utils.js";
 import I18n from "i18n";
-import { tz } from "moment-timezone";
+import momentTz from "moment-timezone";
+const { tz } = momentTz;
 import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
-const { VM } = require("vm2");
-const oldVm = require("vm");
-import faIcons from "./fa5-icons";
+const { VM } = vm2Pkg;
+import faIcons from "./fa5-icons.js";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
 import { AbstractRole } from "@saltcorn/types/model-abstracts/abstract_role";
-import MetaData from "../models/metadata";
-import { PushMessageHelper } from "../models/internal/push_message_helper";
+import MetaData from "../models/metadata.js";
+import { PushMessageHelper } from "../models/internal/push_message_helper.js";
 import { UserLike } from "@saltcorn/db-common/dbtypes";
 import PlainDate from "@saltcorn/plain-date";
 
@@ -213,7 +228,6 @@ class State {
    * @param {string} tenant description
    */
   constructor(tenant: string) {
-    const { today } = require("../models/expression");
 
     this.tenant = tenant;
     this.views = [];
@@ -241,7 +255,7 @@ class State {
     this.eventTypes = {};
     this.fonts = standard_fonts;
     this.iconSet = new Set(get_standard_icons());
-    this.layouts = { emergency: emergency_layout };
+    this.layouts = { emergency: emergency_layout as any };
     this.userLayouts = {};
     this.headers = {};
     this.roles = [];
@@ -565,7 +579,7 @@ class State {
    * @param noSignal - Do not signal - refresh to other cluster processes.
    * @param keepUnchanged - Some members don't need rebuilding if they did not change
    */
-  async refresh(noSignal: boolean, keepUnchanged?: boolean) {
+  async refresh(noSignal?: boolean, keepUnchanged?: boolean) {
     await this.refresh_roles(noSignal);
     await this.refresh_tables(noSignal);
     await this.refresh_views(noSignal);
@@ -582,7 +596,7 @@ class State {
    * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
-  async refresh_config(noSignal: boolean) {
+  async refresh_config(noSignal?: boolean) {
     this.configs = await this.getAllConfigOrDefaults();
     this.getConfig("custom_events", []).forEach((cev: any) => {
       this.eventTypes[cev.name] = cev;
@@ -602,8 +616,8 @@ class State {
     if (this.roles.length == 0) await this.refresh_roles(true);
   }
 
-  async refresh_roles(noSignal: boolean) {
-    const Role = (await import("../models/role")).default;
+  async refresh_roles(noSignal?: boolean) {
+    const Role = (await import("../models/role.js")).default;
     this.roles = await Role.find({}, { orderBy: "id" });
 
     if (!noSignal) this.log(5, "Refresh roles");
@@ -630,7 +644,7 @@ class State {
   async refreshUserLayouts() {
     await this.refresh_userlayouts(false);
   }
-  async refresh_userlayouts(noSignal: boolean) {
+  async refresh_userlayouts(noSignal?: boolean) {
     this.userLayouts = {};
     const usersWithLayout = (await User.find({})).filter(
       (user) => user._attributes?.layout
@@ -700,7 +714,7 @@ class State {
    * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
-  async refresh_views(noSignal: boolean) {
+  async refresh_views(noSignal?: boolean) {
     this.views = await View.find();
     this.virtual_triggers = [];
     for (const view of this.views) {
@@ -731,7 +745,7 @@ class State {
    * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
-  async refresh_triggers(noSignal: boolean) {
+  async refresh_triggers(noSignal?: boolean) {
     this.triggers = await Trigger.findDB();
     if (!noSignal) this.log(5, "Refresh triggers");
 
@@ -744,8 +758,8 @@ class State {
    * @param {boolean} noSignal - Do not signal refresh to other cluster processes.
    * @returns {Promise<void>}
    */
-  async refresh_pages(noSignal: boolean) {
-    const Page = (await import("../models/page")).default;
+  async refresh_pages(noSignal?: boolean) {
+    const Page = (await import("../models/page.js")).default;
     this.pages = await Page.find();
     if (!noSignal) this.log(5, "Refresh pages");
 
@@ -753,11 +767,11 @@ class State {
       this.processSend({ refresh: "pages", tenant: db.getTenantSchema() });
   }
 
-  async refresh_page_groups(noSignal: boolean) {
+  async refresh_page_groups(noSignal?: boolean) {
     await db.tryCatchInTransaction(
       async () => {
         //sometimes this is run before migration
-        const PageGroup = (await import("../models/page_group")).default;
+        const PageGroup = (await import("../models/page_group.js")).default;
         this.page_groups = await PageGroup.find();
         if (!noSignal) this.log(5, "Refresh page groups");
       },
@@ -789,7 +803,6 @@ class State {
       { orderBy: "name", nocase: true }
     );
     const allConstraints = await db.select("_sc_table_constraints", {});
-    const Model = require("../models/model");
     let allModels: Model[] = [];
     await db.tryCatchInTransaction(
       async () => {
@@ -906,7 +919,7 @@ class State {
    * @param {*} [def] - default value
    * @returns {*}
    */
-  getConfigCopy(key: string, def: any) {
+  getConfigCopy(key: string, def?: any) {
     return structuredClone(this.getConfig(key, def));
   }
 
@@ -1178,7 +1191,7 @@ class State {
    * @param {boolean} noSignal - Do not signal removal to other cluster processes.
    * @returns {Promise<void>}
    */
-  async remove_plugin(name: string, noSignal: boolean) {
+  async remove_plugin(name: string, noSignal?: boolean) {
     delete this.plugins[name];
     await this.refresh_plugins();
     if (!noSignal && db.is_node)
@@ -1206,8 +1219,7 @@ class State {
     if (keepUnchanged && flatEqual(code_pages, this.oldCodePages)) return;
     let errMsg;
     if (Object.keys(code_pages).length > 0) {
-      const fetch = require("node-fetch");
-      const Page = (await import("../models/page")).default;
+      const Page = (await import("../models/page.js")).default;
       const asyncFs: Function[] = [];
       const runAsync = (f: Function) => {
         asyncFs.push(f);
@@ -1248,7 +1260,7 @@ class State {
                   : [];
             this.emitDynamicUpdate(db.getTenantSchema(), data, safeIds);
           },
-          Buffer: isNode() ? Buffer : require("buffer"),
+          Buffer: isNode() ? Buffer : bufferPkg,
           URL,
           console, //TODO consoleInterceptor
           require: (nm: string) => this.codeNPMmodules[nm],
@@ -1260,7 +1272,7 @@ class State {
         const funCtxKeys = new Set(Object.keys(myContext));
         let stripTypes = (s: string) => s;
         try {
-          const { stripTypeScriptTypes } = require("module");
+          const { stripTypeScriptTypes } = modulePkg as any;
           if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
         } catch (e) {
           //ignore
@@ -1303,7 +1315,6 @@ class State {
    * @returns {Promise<void>}
    */
   async refresh_plugins(noSignal?: boolean) {
-    const { today } = require("../models/expression");
 
     this.viewtemplates = {};
     this.modelpatterns = {};
@@ -1314,7 +1325,7 @@ class State {
     this.actions = {};
     this.auth_methods = {};
     this.copilot_skills = [];
-    this.layouts = { emergency: emergency_layout };
+    this.layouts = { emergency: emergency_layout as any };
     this.headers = {};
     this.function_context = { moment: myMoment, today, slugify: db.slugify };
     this.functions = { moment: myMoment, today, slugify: db.slugify };
@@ -1656,7 +1667,7 @@ const getApp__ = (): ((s: string) => string) => {
   const ctx = db.getRequestContext();
   const locale = ctx?.req?.getLocale();
   if (locale) {
-    const state = getState();
+    const state = getState()!;
     if (state) return (s) => state.i18n.__({ phrase: s, locale }) || s;
   }
   return (s: string) => s;
@@ -1800,7 +1811,7 @@ const features = Object.freeze({
   view_route_modal: true,
 });
 
-export = {
+export {
   getState,
   getTenant,
   init_multi_tenant,

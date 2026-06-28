@@ -1,8 +1,10 @@
-import db from "../db";
-import { sign } from "jsonwebtoken";
-import axios from "axios";
-import User from "../models/user";
-const State = require("../db/state");
+import db from "../db/index.js";
+import jsonwebtoken from "jsonwebtoken";
+const { sign } = jsonwebtoken;
+import axiosLib from "axios";
+const axios: any = axiosLib;
+import User from "../models/user.js";
+import * as State from "../db/state.js";
 
 declare let global: any;
 
@@ -29,7 +31,7 @@ export const prepareQueryEnviroment = async () => {
     },
   };
   const state = await State.getState();
-  state.mobileConfig = { jwt: token };
+  state!.mobileConfig = { jwt: token } as any;
 };
 
 export const sendViewToServer = async (view: any) => {

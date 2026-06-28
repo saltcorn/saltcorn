@@ -4,11 +4,11 @@
  * @module models/library
  * @subcategory models
  */
-import db from "../db";
+import { traverseSync } from "./layout.js";
+import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { LibraryCfg } from "@saltcorn/types/model-abstracts/abstract_library";
 
-const { traverseSync } = require("./layout");
 
 /**
  * Library Class
@@ -141,4 +141,4 @@ class Library {
   }
 }
 
-export = Library;
+export default Library;

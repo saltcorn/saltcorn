@@ -297,9 +297,9 @@ const orderWorkflowSteps = (steps: any[]): any[] => {
 const trigger_pack = async (name: string | Trigger): Promise<TriggerPack> => {
   const trig =
     typeof name === "string" ? await Trigger.findOne({ name }) : name;
-  const pack = trig.toJson;
-  if (trig.action === "Workflow") {
-    const steps = await WorkflowStep.find({ trigger_id: trig.id });
+  const pack = trig!.toJson;
+  if (trig!.action === "Workflow") {
+    const steps = await WorkflowStep.find({ trigger_id: trig!.id! });
     const ordered = orderWorkflowSteps(steps.map((s) => s.toJson));
     pack.steps = ordered;
   }
@@ -767,16 +767,16 @@ const install_pack = async (
       const { table_name, steps, ...tsNoTableName } = triggerSpec;
       if (table_name)
         tsNoTableName.table_id = Table.findOne({ name: table_name })?.id;
-      await Trigger.update(existing.id, tsNoTableName);
+      await Trigger.update(existing.id!, tsNoTableName);
       id = existing.id;
     } else {
       const newTrigger = await Trigger.create(triggerSpec);
       id = newTrigger.id;
     }
     if (triggerSpec.action === "Workflow" && triggerSpec.steps) {
-      await WorkflowStep.deleteForTrigger(id);
+      await WorkflowStep.deleteForTrigger(id!);
       for (const step of triggerSpec.steps) {
-        await WorkflowStep.create({ ...step, trigger_id: id });
+        await WorkflowStep.create({ ...step, trigger_id: id! });
       }
     }
   }

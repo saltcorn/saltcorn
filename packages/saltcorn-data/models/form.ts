@@ -4,6 +4,7 @@
  * @module models/form
  * @subcategory models
  */
+import contractisPkg from "contractis";
 import {
   AbstractForm,
   AdditionalButton as _AdditionalButton,
@@ -15,12 +16,12 @@ import {
   Type,
 } from "@saltcorn/types/common_types";
 import type { GenObj } from "@saltcorn/types/common_types";
-import Field from "./field";
-import User from "./user";
-import FieldRepeat from "./fieldrepeat";
+import Field from "./field.js";
+import User from "./user.js";
+import FieldRepeat from "./fieldrepeat.js";
 import type { FieldLike, Layout, Header } from "@saltcorn/types/base_types";
 
-const { is } = require("contractis");
+const { is } = contractisPkg;
 
 const isFieldLike = (object: any): object is FieldLike => {
   return object.constructor.name === Object.name;
@@ -323,4 +324,4 @@ namespace Form {
 }
 type FormCfg = Form.FormCfg;
 
-export = Form;
+export default Form;

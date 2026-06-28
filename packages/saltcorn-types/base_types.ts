@@ -281,13 +281,9 @@ export type Action = {
     mode?: ActionMode;
     trigger_id?: number;
   }) => Promise<any>;
-  configFields?: ({
-    table,
-    mode,
-  }: {
-    table: AbstractTable;
-    mode: ActionMode;
-  }) => Promise<Array<FieldLike>> | Array<FieldLike>;
+  configFields?:
+    | Array<FieldLike>
+    | ((...args: any[]) => Promise<Array<FieldLike>> | Array<FieldLike>);
   disableInBuilder?: boolean;
   disableInList?: boolean;
   disableInWorkflow?: boolean;
@@ -473,13 +469,9 @@ export type FieldView = {
     formFieldNames?: string[],
     user?: AbstractUser
   ) => Promise<void>;
-  configFields?: ({
-    table,
-    mode,
-  }: {
-    table: AbstractTable;
-    mode: ActionMode;
-  }) => Promise<Array<FieldLike>> | Array<FieldLike>;
+  configFields?:
+    | Array<FieldLike>
+    | ((...args: any[]) => Promise<Array<FieldLike>> | Array<FieldLike>);
 } & (FieldViewShow | FieldViewEdit | FieldViewFilter);
 
 export function instanceOfFieldViewEdit(object: any): object is FieldViewEdit {
@@ -589,9 +581,9 @@ export type CapacitorPlugin = {
 
 type PluginFacilities = {
   headers?: Array<Header>;
-  functions?: PluginFunction | Function;
+  functions?: Record<string, PluginFunction | Function> | Function;
   layout?: PluginLayout;
-  types?: Array<PluginType>;
+  types?: Array<Type>;
   viewtemplates?: Array<ViewTemplate>;
   actions?: Record<string, Action>;
   eventTypes?: Record<string, { hasChannel: boolean }>;
@@ -620,8 +612,8 @@ type PluginWithoutConfig = {
 export type Plugin = {
   sc_plugin_api_version: number;
   plugin_name?: string;
-  dependencies: string[];
-  onLoad: (cfg: any) => Promise<void>;
+  dependencies?: string[];
+  onLoad?: (cfg: any) => Promise<void>;
   [key: string]: any;
 } & (PluginWithConfig | PluginWithoutConfig);
 

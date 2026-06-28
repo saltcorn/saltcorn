@@ -3,14 +3,17 @@
  * @module models/expression
  * @subcategory models
  */
+import { getState } from "../db/state.js";
+import vm2Pkg from "vm2";
+import Table from "./table.js";
+import Field from "./field.js";
+import * as nsState from "../db/state.js";
 import { runInNewContext, Script } from "vm";
 import { parseExpressionAt, Node, parse } from "acorn";
 import { replace, traverse } from "estraverse";
 import { Identifier } from "estree";
 import { generate } from "astring";
 import moment from "moment";
-import type Table from "./table";
-import type Field from "./field";
 
 import {
   AggregationOptions,
@@ -19,11 +22,11 @@ import {
   Where,
 } from "@saltcorn/db-common/internal";
 import { PluginFunction } from "@saltcorn/types/base_types";
-import db from "../db";
-import utils from "../utils";
+import db from "../db/index.js";
+import * as utils from "../utils.js";
 import { GenObj } from "@saltcorn/db-common/types";
-const { mergeIntoWhere, isNode, isValidJsIdentifier } = utils;
-const { VM } = require("vm2");
+import { mergeIntoWhere, isNode, isValidJsIdentifier } from "../utils.js";
+const { VM } = vm2Pkg;
 
 function deproxy(value: any): any {
   if (!value || typeof value !== "object") return value;
@@ -50,7 +53,7 @@ function vmRun(code: string, sandbox: any): any {
  * @param {string} s
  * @returns {boolean|void}
  */
-function expressionValidator(s: string): true | string {
+function expressionValidator(s: string, loc?: any): true | string {
   if (!s || s.length == 0) return "Missing formula";
   try {
     const f = new Script(`(${s})`); // parentheses to handle record literals
@@ -180,8 +183,7 @@ const today = (
   let default_locale: string | undefined;
   const get_locale = (): string => {
     if (!default_locale) {
-      const { getState } = require("../db/state");
-      default_locale = getState().getConfig("default_locale", "en");
+      default_locale = getState()!.getConfig("default_locale", "en");
     }
     return default_locale as string;
   };
@@ -295,7 +297,6 @@ function jsexprToWhere(
   extraCtx: any = {},
   fields: Field[] = []
 ): Where {
-  const Table = require("./table");
   if (!expression) return {};
   const now = new Date();
   if (!extraCtx.year) extraCtx.year = now.getFullYear();
@@ -324,7 +325,7 @@ function jsexprToWhere(
             ],
           };
         if ((field.type as any)?.name === "String")
-         return {
+          return {
             and: [
               { not: { [field.name]: null } },
               { not: { [field.name]: "" } },
@@ -417,12 +418,18 @@ function jsexprToWhere(
               );
             }
             const throughTable = Table.findOne({ name: field.reftable_name });
+            if (!throughTable)
+              throw new Error(`Table not found: ${field.reftable_name}`);
             const throughField = throughTable.fields.find(
               (f: Field) => f.name === c2.description
             );
             const finalTable = Table.findOne({
-              name: throughField.reftable_name,
+              name: throughField!.reftable_name,
             });
+            if (!finalTable)
+              throw new Error(
+                `Table not found: ${throughField!.reftable_name}`
+              );
             return (val: any) => ({
               [cleftName]: {
                 inSelect: {
@@ -521,7 +528,9 @@ function jsexprToWhere(
   }
 }
 
-function freeVariablesInInterpolation(interpString: string): Set<string> {
+function freeVariablesInInterpolation(
+  interpString: string | undefined
+): Set<string> {
   let freeVars: Set<string> = new Set();
   ((interpString || "").match(/\{\{([^#].+?)\}\}/g) || []).forEach((s) => {
     const s1 = s.replace("{{", "").replace("}}", "").trim();
@@ -530,7 +539,7 @@ function freeVariablesInInterpolation(interpString: string): Set<string> {
   return freeVars;
 }
 
-function freeVariables(expression: string): Set<string> {
+function freeVariables(expression: string | undefined): Set<string> {
   if (!expression) return new Set();
   const ast: any = parseExpressionAt(expression, 0, {
     ecmaVersion: 2020,
@@ -629,7 +638,6 @@ const add_free_variables_to_aggregations = (
   aggregations: { [nm: string]: AggregationOptions },
   table: Table
 ) => {
-  const Field = require("./field");
   const cfields = table
     ? Field.findCached({ reftable_name: table.name }).map((f: Field) => f.name)
     : null;
@@ -733,7 +741,7 @@ function isIdentifierWithName(node: any): node is Identifier {
  */
 function transform_for_async(
   expression: string,
-  statefuns: Record<string, PluginFunction>
+  statefuns: Record<string, Function | PluginFunction>
 ) {
   var isAsync = false;
   const ast: any = parseExpressionAt(expression, 0, {
@@ -745,7 +753,7 @@ function transform_for_async(
     leave: function (node) {
       if (node.type === "CallExpression") {
         if (isIdentifierWithName(node.callee)) {
-          const sf = statefuns[node.callee.name];
+          const sf = statefuns[node.callee.name] as PluginFunction;
           if (sf && sf.isAsync) {
             isAsync = true;
             return { type: "AwaitExpression", argument: node };
@@ -771,8 +779,7 @@ function get_expression_function(
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
-  const { getState } = require("../db/state");
-  const f = vmRun(`(${args})=>(${expression})`, getState().eval_context);
+  const f = vmRun(`(${args})=>(${expression})`, getState()!.eval_context);
   return (row: any, user: any) => f(row, row, user);
 }
 
@@ -785,7 +792,7 @@ function get_expression_function(
  * @returns {any} - The result of evaluating the expression.
  */
 function eval_expression(
-  expression: string,
+  expression: string | undefined,
   row?: any,
   user?: any,
   errorLocation?: string
@@ -796,9 +803,8 @@ function eval_expression(
     const args = field_names.includes("user")
       ? `row, {${field_names.join()}}`
       : `row, {${field_names.join()}}, user`;
-    const { getState } = require("../db/state");
     return vmRun(`((${args})=>(${expression}))(row, row, user)`, {
-      ...getState().eval_context,
+      ...getState()!.eval_context,
       row: use_row,
       user,
     });
@@ -821,13 +827,11 @@ async function eval_statements(
   errorLocation?: string
 ): Promise<any> {
   try {
-    const { getState } = require("../db/state");
     const evalStr = `(async ()=>{${expression}})()`;
-    const Table = require("./table");
     return await vmRun(evalStr, {
       console,
       Table,
-      ...getState().eval_context,
+      ...getState()!.eval_context,
       ...context,
     });
   } catch (e: any) {
@@ -846,7 +850,7 @@ async function eval_statements(
  */
 function get_async_expression_function(
   expression: string,
-  fields: Array<Field | string>,
+  fields: Array<Field | string | { name: string }>,
   extraContext = {}
 ): Function {
   const field_names = fields
@@ -855,10 +859,12 @@ function get_async_expression_function(
   const args = field_names.includes("user")
     ? `row, {${field_names.join()}}`
     : `row, {${field_names.join()}}, user`;
-  const { getState } = require("../db/state");
-  const { expr_string } = transform_for_async(expression, getState().functions);
+  const { expr_string } = transform_for_async(
+    expression,
+    getState()!.functions as any
+  );
   const evalStr = `async (${args})=>(${expr_string})`;
-  const f = vmRun(evalStr, { ...getState().eval_context, ...extraContext });
+  const f = vmRun(evalStr, { ...getState()!.eval_context, ...extraContext });
   return async (row: any, user: any) => await f(row, row, user);
 }
 
@@ -918,7 +924,7 @@ const apply_calculated_fields_stored = async (
   table: Table,
   user?: any
 ): Promise<Row> => {
-  const state = require("../db/state").getState();
+  const state = nsState.getState()!;
   let hasExprs = false;
   let transform = (x: Row) => x;
   for (const field of fields) {
@@ -1030,12 +1036,11 @@ const recalculate_for_stored = async (
   let rows = [];
   let maxid = null;
   let limit = 20;
-  const { getState } = require("../db/state");
   const pk_name = table.pk_name;
   const go = async (rows: any) => {
     for (const row of rows) {
       try {
-        getState().log(
+        getState()!.log(
           6,
           `recalculate_for_stored on table ${table.name} row ${row[pk_name]}`
         );
@@ -1066,7 +1071,7 @@ const recalculate_for_stored = async (
 function removeComments(str: string) {
   return str.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "").trim();
 }
-export = {
+export {
   expressionValidator,
   expressionChecker,
   apply_calculated_fields,

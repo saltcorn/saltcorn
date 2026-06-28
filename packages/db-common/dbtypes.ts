@@ -120,7 +120,7 @@ export type PrimaryKeyValue = number | string;
 export type PartialSome<T, K extends keyof T> = Partial<T> & Pick<T, K>;
 
 export interface UserLike {
-  id: number;
+  id?: number;
   email: string;
   role_id: number;
   _attributes?: any;

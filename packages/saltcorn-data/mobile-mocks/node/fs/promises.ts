@@ -20,3 +20,11 @@ export async function unlink(path: string): Promise<void> {}
 export async function readdir(path: string, options?: any): Promise<string[]> {
   return [];
 }
+
+export async function lstat(path: string, opts?: any): Promise<any> {}
+
+export async function open(
+  path: string,
+  flags?: any,
+  mode?: any
+): Promise<any> {}

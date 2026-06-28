@@ -5,10 +5,14 @@
  * @subcategory models
  */
 
-import db from "../db";
-//import Form from "./form";
-import utils from "../utils";
-const {
+import { getState } from "../db/state.js";
+import Page from "../models/page.js";
+import Workflow from "../models/workflow.js";
+import tableMod from "./table.js";
+import * as nsState from "../db/state.js";
+import db from "../db/index.js";
+//import Form from "./form.js";
+import {
   removeEmptyStrings,
   removeEmptyStringsKeepNull,
   stringToJSON,
@@ -21,7 +25,7 @@ const {
   prepMobileRows,
   hashString,
   cloneName,
-} = utils;
+} from "../utils.js";
 
 import tags from "@saltcorn/markup/tags";
 const { div } = tags;
@@ -37,21 +41,22 @@ import type {
   Res,
   Req,
 } from "@saltcorn/types/base_types";
-import type Table from "./table";
+import type Table from "./table.js";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
-import type Workflow from "./workflow";
 import { GenObj } from "@saltcorn/types/common_types";
 import type {
   ViewCfg,
   AbstractView,
 } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
-import axios from "axios";
+import axiosLib from "axios";
+const axios: any = axiosLib; // NodeNext default-import interop: axios types resolve to the module namespace
 import { jwtDecode } from "jwt-decode";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
-import { hash } from "bcryptjs";
+import bcryptjs from "bcryptjs";
+const { hash } = bcryptjs;
 
-import { remove_from_menu } from "./config";
+import { remove_from_menu } from "./config.js";
 
 declare const saltcorn: any;
 
@@ -104,8 +109,7 @@ class View implements AbstractView {
           ? 100
           : 80
         : +o.min_role!;
-    const { getState } = require("../db/state");
-    this.viewtemplateObj = getState().viewtemplates[this.viewtemplate];
+    this.viewtemplateObj = getState()!.viewtemplates[this.viewtemplate];
     this.singleton = this.viewtemplateObj?.singleton;
     this.default_render_page = o.default_render_page;
     this.table = o.table;
@@ -121,8 +125,7 @@ class View implements AbstractView {
    * @returns {View}
    */
   static findOne(where: Where): View | undefined {
-    const { getState } = require("../db/state");
-    const v = getState().views.find(
+    const v = getState()!.views.find(
       where.id
         ? (v: View) => v.id === +where.id
         : where.name
@@ -143,16 +146,15 @@ class View implements AbstractView {
     where?: Where,
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Array<View>> {
-    const { getState } = require("../db/state");
     if (selectopts.cached) {
-      return getState()
+      return getState()!
         .views.map((t: View) => new View(t))
         .filter(satisfies(where || {}));
     }
     const views_db = await db.select("_sc_views", where, selectopts);
     const views: View[] = views_db.map((v: View) => new View(v));
     const viewtemplates: ViewTemplate[] = Object.values(
-      getState().viewtemplates
+      getState()!.viewtemplates
     );
     viewtemplates.forEach((vt) => {
       if (vt.singleton && satisfies(where || {})(vt)) {
@@ -198,7 +200,7 @@ class View implements AbstractView {
   }
 
   static async state_refresh() {
-    await require("../db/state").getState().refresh_views();
+    await nsState.getState()!.refresh_views();
   }
 
   /**
@@ -206,8 +208,7 @@ class View implements AbstractView {
    * @type {string|undefined}
    */
   get menu_label(): string | undefined {
-    const { getState } = require("../db/state");
-    const menu_items = getState().getConfig("menu_items", []);
+    const menu_items = getState()!.getConfig("menu_items", []);
     const item = menu_items.find((mi: any) => mi.viewname === this.name);
     return item ? item.label : undefined;
   }
@@ -325,7 +326,7 @@ class View implements AbstractView {
     const id = await db.insert("_sc_views", row);
     // refresh views list cache
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_views(true);
+      await nsState.getState()!.refresh_views(true);
     return new View({ id, ...v, updated_at: row.updated_at });
   }
 
@@ -376,7 +377,7 @@ class View implements AbstractView {
     await remove_from_menu({ name: this.name, type: "View" });
     // fresh view list cache
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_views(true);
+      await nsState.getState()!.refresh_views(true);
   }
 
   /**
@@ -400,7 +401,7 @@ class View implements AbstractView {
     await db.update("_sc_views", { ...v, updated_at: new Date() }, id);
     // fresh view list cache
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_views(true);
+      await nsState.getState()!.refresh_views(true);
   }
 
   /**
@@ -498,7 +499,7 @@ class View implements AbstractView {
     else if (!this.viewtemplateObj) return "";
     const table_id = this.exttable_name || this.table_id;
     const role = extraArgs.req?.user?.role_id || 100;
-    const state = require("../db/state").getState();
+    const state = nsState.getState()!;
     if (role > this.min_role) return "";
     try {
       const viewState = removeEmptyStringsKeepNull(query);
@@ -526,11 +527,10 @@ class View implements AbstractView {
       ? this.viewtemplateObj!.queries({ ...this, req, res })
       : {};
     if (remote) {
-      const { getState } = require("../db/state");
-      const state = getState();
+      const state = getState()!;
       const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req
       const queries: any = {};
-      const table = require("./table").findOne({ id: this.table_id });
+      const table = tableMod.findOne({ id: this.table_id });
       const fields = table?.getFields() || [];
       Object.entries(queryObj).forEach(([k, v]) => {
         queries[k] = async (...args: any[]) => {
@@ -546,7 +546,7 @@ class View implements AbstractView {
           let token = state.mobileConfig?.jwt;
           if (token) {
             const goToLogin = async () => {
-              state.mobileConfig.jwt = undefined;
+              state.mobileConfig!.jwt = undefined;
               await db.deleteWhere("jwt_table", {});
               const mobileNav = (globalThis as any).saltcorn?.mobileApp
                 ?.navigation;
@@ -582,7 +582,7 @@ class View implements AbstractView {
                     try {
                       jwtDecode(renewResponse.data);
                       token = renewResponse.data;
-                      state.mobileConfig.jwt = token;
+                      state.mobileConfig!.jwt = token;
                       await db.deleteWhere("jwt_table", {});
                       await db.insert("jwt_table", { jwt: token });
                     } catch {
@@ -662,15 +662,14 @@ class View implements AbstractView {
     if (isWeb(req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return "";
     if (!isNode() && this.viewtemplateObj?.name === "WorkflowRoom") {
-      const { isOfflineMode } = require("../db/state").getState().mobileConfig;
+      const { isOfflineMode } = (nsState.getState()!.mobileConfig as any) || {};
       if (!isOfflineMode) return await this.runServerSide(query);
     }
     if (view.default_render_page && (!req.xhr || req.headers.pjaxpageload)) {
-      const Page = require("../models/page");
       const db_page = await Page.findOne({ name: view.default_render_page });
       if (db_page) {
         // return contents
-        return await db_page.run(query, { res, req, ...extra });
+        return (await db_page.run(query, { res, req, ...extra })) as any;
       }
     }
     const state = view.combine_state_and_default_state(query);
@@ -702,7 +701,7 @@ class View implements AbstractView {
     if (isWeb(extraArgs.req)) this.check_viewtemplate();
     else if (!this.viewtemplateObj) return [];
     const role = extraArgs.req?.user?.role_id || 100;
-    const state = require("../db/state").getState();
+    const state = nsState.getState()!;
     if (role > this.min_role) return [];
     state.log(
       5,
@@ -726,8 +725,8 @@ class View implements AbstractView {
         );
       }
       if (this.viewtemplateObj?.renderRows) {
-        const Table = (await import("./table")).default;
-        const { stateFieldsToWhere } = await import("../plugin-helper");
+        const Table = (await import("./table.js")).default;
+        const { stateFieldsToWhere } = await import("../plugin-helper.js");
         const tbl = Table.findOne({ id: this.table_id });
         if (!tbl)
           throw new Error(`Unable to find table with id ${this.table_id}`);
@@ -774,8 +773,7 @@ class View implements AbstractView {
     extraArgs: RunExtra,
     remote: boolean = !isNode()
   ): Promise<any> {
-    const { getState } = require("../db/state");
-    const state = getState();
+    const state = getState()!;
     if (!state.mobileConfig) {
       remote = false;
     }
@@ -830,8 +828,8 @@ class View implements AbstractView {
       throw new InvalidConfiguration(
         `Unable to call runRoute of view '${this.name}', ${this.viewtemplate} is missing 'routes'.`
       );
-    require("../db/state")
-      .getState()
+    nsState
+      .getState()!
       .log(
         5,
         `Run route ${route} view ${this.name} with body ${JSON.stringify(body)}`
@@ -918,7 +916,6 @@ class View implements AbstractView {
       action = `${action}?on_done_redirect=${encodeURIComponent(onDoneRedirect)}`;
     }
     if (!this.viewtemplateObj!.configuration_workflow) {
-      const Workflow = require("../models/workflow");
 
       return new Workflow({ steps: [] });
     }
@@ -988,7 +985,7 @@ class View implements AbstractView {
   }
 
   async connected_objects(): Promise<ConnectedObjects> {
-    const Table = (await import("./table")).default;
+    const Table = (await import("./table.js")).default;
     const viewTbl = this.table_id
       ? Table.findOne({ id: this.table_id })
       : undefined;
@@ -1014,8 +1011,7 @@ class View implements AbstractView {
    */
   isRemoteTable(): boolean {
     if (isNode()) return false;
-    const { getState } = require("../db/state");
-    const mobileConfig = getState().mobileConfig;
+    const mobileConfig = getState()!.mobileConfig;
     if (mobileConfig?.isOfflineMode) return false;
     return true;
   }
@@ -1025,7 +1021,7 @@ class View implements AbstractView {
    * @returns a promise with the tags
    */
   async getTags(): Promise<Array<AbstractTag>> {
-    const Tag = (await import("./tag")).default;
+    const Tag = (await import("./tag.js")).default;
     return await Tag.findWithEntries({ view_id: this.id });
   }
 
@@ -1035,8 +1031,7 @@ class View implements AbstractView {
    * @param data object you want to get in the event handler
    */
   emitRealTimeEvent(eventType: string, data: any): void {
-    const { getState } = require("../db/state");
-    const state = getState();
+    const state = getState()!;
     const withViewName = this.getRealTimeEventName(eventType);
     state.emitCollabMessage(
       db.getTenantSchema(),
@@ -1088,4 +1083,4 @@ namespace View {
 
 type FindViewsPred = View.FindViewsPred;
 
-export = View;
+export default View;

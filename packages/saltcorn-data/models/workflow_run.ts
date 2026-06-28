@@ -4,28 +4,28 @@
  * @module models/workflow_run
  * @subcategory models
  */
-import db from "../db";
+import { getState } from "../db/state.js";
+import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowRunCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_run";
-import WorkflowStep from "./workflow_step";
-import WorkflowTrace from "./workflow_trace";
-import User from "./user";
-import Expression from "./expression";
-import Notification from "./notification";
-import utils from "../utils";
+import WorkflowStep from "./workflow_step.js";
+import WorkflowTrace from "./workflow_trace.js";
+import User from "./user.js";
+import * as Expression from "./expression.js";
+import Notification from "./notification.js";
+import * as utils from "../utils.js";
 import moment from "moment";
 import { mkTable } from "@saltcorn/markup/index";
-import mocks from "../tests/mocks";
+import * as mocks from "../tests/mocks.js";
 import { FieldLike } from "@saltcorn/types/base_types";
-const { mockReqRes } = mocks;
-const {
+import { mockReqRes } from "../tests/mocks.js";
+import {
   ensure_final_slash,
   interpolate,
   allReturnDirectives,
   secondaryReturnDirectives,
-} = utils;
-const { eval_expression } = Expression;
-const { getState } = require("../db/state");
+} from "../utils.js";
+import { eval_expression } from "./expression.js";
 
 const data_output_to_html = (val: any) => {
   if (Array.isArray(val) && typeof val[0] === "object") {
@@ -216,7 +216,7 @@ class WorkflowRun {
 
   //get worklows that can be resumed by scheduler
   static async getResumableWorkflows() {
-    const state = getState();
+    const state = getState()!;
     if (!state.waitingWorkflows) return [];
 
     const waiting_runs = await WorkflowRun.find({ status: "Waiting" });
@@ -292,7 +292,7 @@ class WorkflowRun {
           return {
             type: "Date",
             attributes: { day_only: q.day_only },
-            fieldview: getState().types.Date?.fieldviews?.flatpickr
+            fieldview: getState()!.types.Date?.fieldviews?.flatpickr
               ? "flatpickr"
               : "edit",
           };
@@ -430,10 +430,10 @@ class WorkflowRun {
     const steps = await WorkflowStep.find({ trigger_id: this.trigger_id });
     this.steps = steps;
 
-    const state = getState();
+    const state = getState()!;
     //state.logLevel = 6;
     state.log(6, `Running workflow id=${this.id}`);
-    const Trigger = (await import("./trigger")).default;
+    const Trigger = (await import("./trigger.js")).default;
 
     const allWorkflows = await Trigger.find({});
     const allWorkflowNames = new Set(allWorkflows.map((wf) => wf.name));
@@ -704,7 +704,7 @@ class WorkflowRun {
             !waiting_fulfilled &&
             !skip_because_only_if
           ) {
-            const View = (await import("./view")).default;
+            const View = (await import("./view.js")).default;
             const view = View.findOne({ name: step.configuration.view });
 
             const state = eval_expression(
@@ -956,7 +956,7 @@ class WorkflowRun {
     console.error("Workflow error", e);
     await this.update({ status: "Error", error: e?.message || e });
 
-    const Trigger = (await import("./trigger")).default;
+    const Trigger = (await import("./trigger.js")).default;
 
     Trigger.emitEvent("Error", null, user, {
       workflow_run: this.id,
@@ -1001,7 +1001,7 @@ class WorkflowRun {
   static async prune() {
     for (const status of ["Error", "Finished", "Running", "Waiting"]) {
       let k = `delete_${status.toLowerCase()}_workflows_days`;
-      const days = getState().getConfig(k, false);
+      const days = getState()!.getConfig(k, false);
       if (!days) continue;
       const cutoff = new Date();
       cutoff.setDate(cutoff.getDate() - days);
@@ -1013,4 +1013,4 @@ class WorkflowRun {
   }
 }
 
-export = WorkflowRun;
+export default WorkflowRun;

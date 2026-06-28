@@ -15,7 +15,7 @@
   "scripts": {
     "dev": "nodemon packages/saltcorn/index.js",
     "test": "jest",
-    "tsc": "tsc --build && node ./packages/saltcorn-data/mobile-mocks/copy_excluded_files.js",
+    "tsc": "tsc --build && node ./packages/saltcorn-data/mobile-mocks/copy_excluded_files.cjs",
     "clean": "tsc --build --clean",
     "docs": "typedoc --options typedoc_cfg.json",
     "jsondocs": "typedoc --json packages/server/docs.json --options typedoc_cfg.json",
@@ -76,6 +76,7 @@
     }
   },
   "overrides": {
+    "webpack": "5.107.2",
     "immer": "9.0.21",
     "undici": "7.12.0",
     "node-gyp": ">=10.2.0",

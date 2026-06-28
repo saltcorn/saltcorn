@@ -138,9 +138,9 @@ class Snapshot {
       const trigger = await Trigger.findOne({ name });
       if (trigger) await Trigger.update(trigger.id!, triggerSpec!);
       if (steps) {
-        await WorkflowStep.deleteForTrigger(trigger.id);
+        await WorkflowStep.deleteForTrigger(trigger!.id!);
         for (const step of steps) {
-          await WorkflowStep.create({ ...step, trigger_id: trigger.id });
+          await WorkflowStep.create({ ...step, trigger_id: trigger!.id! });
         }
       }
     }

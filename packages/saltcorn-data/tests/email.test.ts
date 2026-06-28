@@ -1,15 +1,17 @@
 import { writeFileSync } from "fs";
-import email from "../models/email";
+import * as email from "../models/email.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import View from "../models/view";
-import Table from "../models/table";
-import User from "../models/user";
-import { createTransport } from "nodemailer";
-import mocks from "./mocks";
+import View from "../models/view.js";
+import Table from "../models/table.js";
+import User from "../models/user.js";
+import nodemailer from "nodemailer";
+import * as mocks from "./mocks.js";
+import { getState } from "../db/state.js";
+import db from "../db/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { mockReqRes } = mocks;
-import { assertIsSet } from "./assertions";
-const { getState } = require("../db/state");
-const db = require("../db");
+import { assertIsSet } from "./assertions.js";
 
 function removeBreaks(str: string): string {
   return str.replace(/(\r\n|\r|\n)/gm, "").toLowerCase();
@@ -22,8 +24,8 @@ const trimLines = (s: string) =>
     .join("\n");
 
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 jest.mock("nodemailer");
@@ -34,7 +36,7 @@ describe("getMailTransport", () => {
   it("returns Transporter", async () => {
     let sentEmail: any;
     // @ts-ignore
-    createTransport.mockReturnValue({
+    nodemailer.createTransport.mockReturnValue({
       sendMail: (email: any) => {
         sentEmail = email;
         return;
@@ -47,7 +49,7 @@ describe("getMailTransport", () => {
       subject: "us",
       html: "<div>Hello World</div>",
     });
-    expect(createTransport).toHaveBeenCalledTimes(1);
+    expect(nodemailer.createTransport).toHaveBeenCalledTimes(1);
     expect(sentEmail?.from).toBe("me");
   });
 });
@@ -56,7 +58,7 @@ describe("send_verification_email", () => {
   it("returns Transporter", async () => {
     let sentEmail: any;
     // @ts-ignore
-    createTransport.mockReturnValue({
+    nodemailer.createTransport.mockReturnValue({
       sendMail: (email: any) => {
         sentEmail = email;
         return;
@@ -122,7 +124,7 @@ describe("send_verification_email", () => {
       },
       min_role: 100,
     });
-    await getState().setConfig("verification_view", "verifyview");
+    await getState()!.setConfig("verification_view", "verifyview");
     const user = await User.findOne({ id: 1 });
     await email.send_verification_email(user as User, mockReqRes.req, {
       new_verification_token: "newsecrettoken",
@@ -230,7 +232,7 @@ describe("MJML Mail Transformations", () => {
         },
       ],
     });
-    await getState().setConfig("base_url", "https://example.com");
+    await getState()!.setConfig("base_url", "https://example.com");
     const html = await email.viewToEmailHtml(v, { id: 1 });
     //writeFileSync("emailout2", html);
     expect(trimLines(html)).toBe(

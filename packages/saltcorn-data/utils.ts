@@ -2,6 +2,18 @@
  * @category saltcorn-data
  * @module utils
  */
+import unidecode from "unidecode";
+import Docker from "dockerode";
+// db/index and db/state are accessed lazily (inside the functions that use them)
+// rather than statically imported, so utils.ts stays a leaf in the module graph.
+// db/index imports utils (isNode) at module-evaluation time, so a static import
+// of db/index here would form a load-time cycle and crash with a temporal dead
+// zone error.
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const dbMod = (): typeof import("./db/index.js").default =>
+  (require("./db/index.js") as any).default;
+const stateMod = (): typeof import("./db/state.js") => require("./db/state.js");
 import { serialize, deserialize } from "v8";
 import { createReadStream, readdirSync } from "fs";
 import { GenObj, instanceOfType } from "@saltcorn/types/common_types";
@@ -14,13 +26,13 @@ import type {
 } from "@saltcorn/types/base_types";
 import crypto from "crypto";
 import { join, dirname } from "path";
-import type Field from "./models/field"; // only type, shouldn't cause require loop
-import type User from "./models/user"; // only type, shouldn't cause require loop
-import { existsSync } from "fs-extra";
+import { fileURLToPath } from "url";
+import type Field from "./models/field.js"; // only type, shouldn't cause require loop
+import type User from "./models/user.js"; // only type, shouldn't cause require loop
+import fsExtra from "fs-extra";
+const { existsSync } = fsExtra;
 import { VM } from "vm2";
-const unidecode = require("unidecode");
 import { HttpsProxyAgent } from "https-proxy-agent";
-const Docker = require("dockerode");
 import path from "path";
 import os from "os";
 import { execSync } from "child_process";
@@ -158,7 +170,7 @@ const sat1 = (obj: GenObj, [k, v]: [k: string, v: VType]): boolean =>
             )
           : obj[k] === v;
 
-const satisfies = (where: Where) => (obj: any) =>
+const satisfies = (where?: Where) => (obj: any) =>
   Object.entries(where || {}).every((kv) => sat1(obj, kv));
 
 // https://gist.github.com/jadaradix/fd1ef195af87f6890448
@@ -273,7 +285,7 @@ const isNode = (): boolean => {
  * a saltcorn mobile request is identified by the smr header
  * @param req express request
  */
-const isWeb = (req: Req): boolean => {
+const isWeb = (req?: Req | GenObj): boolean => {
   return isNode() && !req?.smr;
 };
 
@@ -282,7 +294,7 @@ const isWeb = (req: Req): boolean => {
  * @param req express request
  */
 
-const getSessionId = (req: Req): string => {
+const getSessionId = (req?: Req | GenObj): string => {
   return req?.sessionID || req?.cookies?.["express:sess"];
 };
 
@@ -290,8 +302,8 @@ const getSessionId = (req: Req): string => {
  * @returns true if the mobile offline mode is active
  */
 const isOfflineMode = (): boolean => {
-  const state = require("./db/state").getState();
-  return !isNode() && state.mobileConfig?.isOfflineMode;
+  const state = stateMod().getState()!;
+  return !isNode() && !!state.mobileConfig?.isOfflineMode;
 };
 
 /**
@@ -337,7 +349,7 @@ const objectToQueryString = (o: Object): string => {
     .join("&");
 };
 
-const urlStringToObject = (url: string): any => {
+const urlStringToObject = (url: string | null): any => {
   if (!url) return {};
   const noHash = url.split("#")[0];
   const qs = noHash.split("?")[1];
@@ -422,7 +434,7 @@ const getSafeSaltcornCmd = () => {
  * @returns url or empty string
  */
 const getSafeBaseUrl = () => {
-  const path = require("./db/state").getState().getConfig("base_url");
+  const path = stateMod().getState()!.getConfig("base_url");
   return !path
     ? ""
     : path.endsWith("/")
@@ -484,7 +496,7 @@ const ppVal = (x: any) =>
       : JSON.stringify(x, null, 2);
 
 const interpolate = (
-  s: string,
+  s: string | undefined,
   row: any,
   user?: any,
   errorLocation?: string
@@ -501,7 +513,7 @@ const interpolate = (
         return template({ row, user, process: undefined, ...(row || {}) });
       }
       const sandbox = {
-        ...require("./db/state").getState().eval_context,
+        ...stateMod().getState()!.eval_context,
         global: undefined,
         globalThis: undefined,
         process: undefined,
@@ -533,7 +545,7 @@ const interpolate = (
             : escapeHtml(strVal);
       };
       return go_interp(s);
-    } else return s;
+    } else return s || "";
   } catch (e: any) {
     e.message = `In evaluating the interpolation ${s}${
       errorLocation ? ` in ${errorLocation}` : ""
@@ -608,8 +620,7 @@ const cloneName = (name: string, allNames: Array<string>): string => {
  * @returns if the current schema is the default root schema
  */
 const isRoot = () => {
-  const db = require("./db");
-  return db.getTenantSchema() === db.connectObj.default_schema;
+  return dbMod().getTenantSchema() === dbMod().connectObj.default_schema;
 };
 
 /**
@@ -654,7 +665,7 @@ function isValidJsIdentifier(str: string): boolean {
 const isPushEnabled = (user?: User): user is User => {
   if (!user?.id) return false;
   const push_policy_by_role =
-    require("./db/state").getState()?.getConfig("push_policy_by_role") || {};
+    stateMod().getState()?.getConfig("push_policy_by_role") || {};
   const pushPolicy = push_policy_by_role[user.role_id || 100] || "Default on";
   if (pushPolicy === "Always") return true;
   if (pushPolicy === "Never") return false;
@@ -724,6 +735,13 @@ const returnDirectivesOnly = (
   return r;
 };
 
+// In Node `fileURLToPath` resolves the module path; in browser bundles (mobile
+// app) the `url` shim has no `fileURLToPath`, so degrade to "" — dataModulePath
+// is only read server-side (Docker build contexts, fixture paths).
+const __dirname =
+  typeof fileURLToPath === "function"
+    ? dirname(fileURLToPath(import.meta.url))
+    : "";
 const dataModulePath = __dirname;
 
 const imageAvailable = async (imageName: string, preferedVersion: string) => {
@@ -741,8 +759,8 @@ const imageAvailable = async (imageName: string, preferedVersion: string) => {
       if (tags.length > 0)
         return { installed: true, version: tags[0].split(":")[1] };
     } catch (err: any) {
-      require("./db/state")
-        .getState()
+      stateMod()
+        .getState()!
         .log(5, `Error checking for ${imageName} image: ${err.message || err}`);
     }
     return { installed: false };
@@ -757,8 +775,8 @@ const pluginsFolderRoot = path.join(
 );
 
 const decodeProvisioningProfile = async (provisioningProfile: string) => {
-  require("./db/state")
-    .getState()
+  stateMod()
+    .getState()!
     .log(5, `Decoding provisioning profile ${provisioningProfile}`);
   const outFile = join("/tmp", "provisioningProfile.xml");
   try {
@@ -774,8 +792,8 @@ const decodeProvisioningProfile = async (provisioningProfile: string) => {
     console.log(result);
     return result;
   } catch (error: any) {
-    require("./db/state")
-      .getState()
+    stateMod()
+      .getState()!
       .log(
         5,
         `Unable to decode the provisioning profile '${provisioningProfile}': ${
@@ -874,8 +892,8 @@ function toSafeRelativeUrl(input: string): string {
 }
 /**
  * Prints elapsed time since start of timer. Inspired by matlab's tic and toc
- * 
- * Usage: 
+ *
+ * Usage:
  * const toc = tic("view config")
  * ...
  * toc("get tables done")
@@ -901,7 +919,7 @@ const tic = (...s1s: any[]) => {
  * @returns {string}
  */
 
-export = {
+export {
   is_relative_url,
   normalize_relative_url,
   toSafeRelativeUrl,
@@ -968,5 +986,5 @@ export = {
   pluginsFolderRoot,
   decodeProvisioningProfile,
   isValidJsIdentifier,
-  tic
+  tic,
 };

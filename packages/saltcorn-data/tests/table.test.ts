@@ -1,26 +1,29 @@
-import Table from "../models/table";
-import TableConstraint from "../models/table_constraints";
-import Field from "../models/field";
-import View from "../models/view";
-import db from "../db";
-const { getState } = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
+import Table from "../models/table.js";
+import TableConstraint from "../models/table_constraints.js";
+import Field from "../models/field.js";
+import View from "../models/view.js";
+import db from "../db/index.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+getState()!.registerPlugin("base", basePluginMod);
 import { writeFile } from "fs/promises";
-import mocks from "./mocks";
+import * as mocks from "./mocks.js";
 const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
 import {
   assertIsSet,
   assertsIsSuccessMessage,
   assertIsErrorMsg,
   assertIsType,
-} from "./assertions";
+} from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import {
   add_free_variables_to_joinfields,
   stateFieldsToQuery,
   stateFieldsToWhere,
-} from "../plugin-helper";
-import expressionModule from "../models/expression";
+} from "../plugin-helper.js";
+import * as expressionModule from "../models/expression.js";
 import { Row, sqlBinOp, sqlFun, Where } from "@saltcorn/db-common/internal";
 import { ResultMessage } from "@saltcorn/types/common_types";
 const {
@@ -33,8 +36,8 @@ import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 jest.setTimeout(30000);
 
@@ -59,7 +62,7 @@ describe("TableIO", () => {
 describe("Table create basic tests", () => {
   it("should create", async () => {
     const tc = await Table.create("mytable1");
-    const tf = Table.findOne({ id: tc.id });
+    const tf = Table.findOne({ id: tc.id })!;
     assertIsSet(tf);
     expect(tf.external).toBe(false);
     expect(tc.external).toBe(false);
@@ -118,7 +121,7 @@ describe("Table create basic tests", () => {
     });
   });
   it("should insert", async () => {
-    const mytable1 = Table.findOne({ name: "mytable1" });
+    const mytable1 = Table.findOne({ name: "mytable1" })!;
     assertIsSet(mytable1);
     expect(mytable1.name).toBe("mytable1");
     const id = await db.insert(mytable1.name, { height1: 6 });
@@ -143,13 +146,13 @@ describe("Table create basic tests", () => {
     ).rejects.toThrow();
   });
   it("should get distinct values", async () => {
-    const table = Table.findOne({ name: "mytable1" });
+    const table = Table.findOne({ name: "mytable1" })!;
     assertIsSet(table);
     const vs = await table.distinctValues("height1");
     expect(vs).toEqual([7]);
   });
   it("should delete rows", async () => {
-    const table = Table.findOne({ name: "mytable1" });
+    const table = Table.findOne({ name: "mytable1" })!;
     assertIsSet(table);
     let rows = await table.getRows();
     expect(rows.length).toBe(1);
@@ -161,7 +164,7 @@ describe("Table create basic tests", () => {
     expect(rows.length).toBe(0);
   });
   it("should count limited rows", async () => {
-    const table = Table.findOne({ name: "mytable1" });
+    const table = Table.findOne({ name: "mytable1" })!;
     assertIsSet(table);
     await table.insertRow({ height1: 1 });
     await table.insertRow({ height1: 1 });
@@ -180,7 +183,7 @@ describe("Table create basic tests", () => {
     expect(await table.countRows({ height1: 1 }, { limit: 100 })).toBe(4);
   });
   it("should delete", async () => {
-    const table = Table.findOne({ name: "mytable1" });
+    const table = Table.findOne({ name: "mytable1" })!;
     assertIsSet(table);
     await table.delete();
     const table1 = await Table.find({ name: "mytable1" });
@@ -190,27 +193,27 @@ describe("Table create basic tests", () => {
 
 describe("Table get data", () => {
   it("should get rows", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const all = await patients.getRows();
     expect(all.length).toStrictEqual(2);
   });
   it("should get rows where name is Michael", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getRows({ name: "Michael Douglas" });
     assertIsSet(michaels);
     expect(michaels.length).toStrictEqual(1);
   });
   it("should not crash on empty in", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const ps = await patients.getRows({ id: { in: [] } });
     assertIsSet(ps);
     expect(ps.length).toStrictEqual(0);
   });
   it("should not crash on empty in with name", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const ps = await patients.getRows({
       id: { in: [] },
@@ -220,7 +223,7 @@ describe("Table get data", () => {
     expect(ps.length).toStrictEqual(0);
   });
   it("should get limited rows", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getRows(
       { name: { ilike: "Douglas" } },
@@ -230,7 +233,7 @@ describe("Table get data", () => {
     expect(michaels[0].name).toStrictEqual("Michael Douglas");
   });
   it("should get rows by expanded key", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getRows({ favbook: 1 });
     expect(michaels.length).toStrictEqual(1);
@@ -241,7 +244,7 @@ describe("Table get data", () => {
   });
   it("should get by regex", async () => {
     if (!db.isSQLite) {
-      const patients = Table.findOne({ name: "patients" });
+      const patients = Table.findOne({ name: "patients" })!;
       assertIsSet(patients);
       const michaels = await patients.getRows(
         { name: /ouglas/ },
@@ -252,7 +255,7 @@ describe("Table get data", () => {
     }
   });
   it("should get rows by slug", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const all = await books.getRows({
       author: { slugify: "herman-melville" },
@@ -261,7 +264,7 @@ describe("Table get data", () => {
     expect(all[0].pages).toStrictEqual(967);
   });
   it("should get joined rows where name is Michael", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       where: { name: "Michael Douglas" },
@@ -270,7 +273,7 @@ describe("Table get data", () => {
     expect(michaels[0].favbook).toBe(2);
   });
   it("should get joined rows where name is not null", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const nameds = await patients.getJoinedRows({
       where: { not: { name: null } },
@@ -278,13 +281,13 @@ describe("Table get data", () => {
     expect(nameds.length).toStrictEqual(2);
   });
   it("should get rows in id range", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const rows = await patients.getRows({ id: [{ gt: 0 }, { lt: 10 }] });
     expect(rows.length).toStrictEqual(2);
   });
   it("should get rows by subselect", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const nrows = await books.countRows({
       id: {
@@ -299,7 +302,7 @@ describe("Table get data", () => {
   });
 
   it("should get joined rows with limit and order", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const all = await patients.getJoinedRows({
       limit: 2,
@@ -309,7 +312,7 @@ describe("Table get data", () => {
     expect(all[1].favbook).toBe(2);
   });
   it("should get joined rows with limit and desc order", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const all = await patients.getJoinedRows({
       limit: 2,
@@ -320,7 +323,7 @@ describe("Table get data", () => {
     expect(all[0].favbook).toBe(2);
   });
   it("should get joined rows with aggregations", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const arg = {
       orderBy: "id",
@@ -343,7 +346,7 @@ describe("Table get data", () => {
     );
   });
   it("should get joined rows with limited fields", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const arg = {
       orderBy: "id",
@@ -356,7 +359,7 @@ describe("Table get data", () => {
     );
   });
   it("should get joined rows with filtered aggregations", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "id",
@@ -374,7 +377,7 @@ describe("Table get data", () => {
     expect(Math.round(michaels[0].avg_temp)).toBe(37);
   });
   it("should get joined rows with unique count aggregations", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "id",
@@ -391,7 +394,7 @@ describe("Table get data", () => {
     expect(Math.round(michaels[0].ntemps)).toBe(2);
   });
   it("should get fkey aggregations", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const arg = {
       orderBy: "id",
@@ -419,7 +422,7 @@ describe("Table get data", () => {
       );
   });
   it("should get array aggregations", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const arg = {
       orderBy: "id",
@@ -448,7 +451,7 @@ describe("Table get data", () => {
       );
   });
   it("should get array aggregations with order", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const arg = {
       orderBy: "id",
@@ -479,7 +482,7 @@ describe("Table get data", () => {
   });
   it("should get join-aggregations", async () => {
     //how many books has my publisher published
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     if (!db.isSQLite) {
       const rows = await books.getJoinedRows({
@@ -500,7 +503,7 @@ describe("Table get data", () => {
     }
   });
   it("should get joined rows with latest aggregations", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "id",
@@ -517,7 +520,7 @@ describe("Table get data", () => {
     expect(Math.round(michaels[0].last_temp)).toBe(37);
   });
   it("should get from and of ors where formula", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const rows = await books.getJoinedRows({
       where: jsexprToWhere(
@@ -529,7 +532,7 @@ describe("Table get data", () => {
     expect(rows[0].pages).toBe(728); // TODO why string
   });
   it("should get joined rows with earliest aggregations", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "id",
@@ -546,7 +549,7 @@ describe("Table get data", () => {
     expect(Math.round(michaels[0].last_temp)).toBe(37);
   });
   it("should get double joined rows", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const reads = await readings.getJoinedRows({
       orderBy: "id",
@@ -558,7 +561,7 @@ describe("Table get data", () => {
     expect(reads[0].author).toBe("Herman Melville");
   });
   it("should get triple joined rows", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const reads = await readings.getJoinedRows({
       orderBy: "id",
@@ -575,7 +578,7 @@ describe("Table get data", () => {
     expect(reads[2].publisher).toBe("AK Press");
   });
   it("should rename joined rows signly", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const pats = await patients.getJoinedRows({
       orderBy: "id",
@@ -592,7 +595,7 @@ describe("Table get data", () => {
     expect(pats[0].favbook.id).toBe(1);
   });
   it("should rename joined rows doubly", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const reads = await readings.getJoinedRows({
       orderBy: "id",
@@ -609,7 +612,7 @@ describe("Table get data", () => {
     expect(reads[0].patient_id.favbook.author).toBe("Herman Melville");
   });
   it("should get joined rows with aggregations and joins", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "id",
@@ -631,7 +634,7 @@ describe("Table get data", () => {
     expect(michaels[1].author).toBe("Leo Tolstoy");
   });
   it("should get percent true aggregations", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "id",
@@ -650,7 +653,7 @@ describe("Table get data", () => {
   });
 
   it("should support full text search", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     const fields = table.getFields();
     const rows = await db.select("patients", {
@@ -660,7 +663,7 @@ describe("Table get data", () => {
     expect(rows.length).toBe(2);
   });
   it("should get rows from full text search with key summary", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     const fields = table.getFields();
 
@@ -671,7 +674,7 @@ describe("Table get data", () => {
     expect(rows.length).toBe(1);
   });
   it("should get joined rows from full text search with key summary", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     const fields = table.getFields();
     const where = stateFieldsToWhere({
@@ -687,7 +690,7 @@ describe("Table get data", () => {
     expect(rows.length).toBe(1);
   });
   it("should count rows from full text search with key summary", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     const fields = table.getFields();
     const where = stateFieldsToWhere({
@@ -753,7 +756,7 @@ describe("Table get data", () => {
     expect(!!rows[0].reftall).toBe(false); //for sqlite
     if (!db.isSQLite) {
       await table.rename("isthisbetter");
-      const table3 = Table.findOne({ name: "refsunsure" });
+      const table3 = Table.findOne({ name: "refsunsure" })!;
       assertIsSet(table3);
       const rows1 = await table3.getJoinedRows({ joinFields });
       expect(rows1[0].theref).toBe(id);
@@ -767,7 +770,7 @@ describe("Table get data", () => {
     }
   });
   it("should get joined rows with arbitrary fieldnames", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       where: { name: "Michael Douglas" },
@@ -797,7 +800,7 @@ describe("Table get data", () => {
       table: ratings,
     });
     await ratings.insertRow({ book: 1, rating: 7 });
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     //db.set_sql_logging();
     const reads = await books.getJoinedRows({
@@ -813,7 +816,7 @@ describe("Table get data", () => {
     expect(reads[0].pages).toBe(967);
   });
   it("should get null bools", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const id = await readings.insertRow({
       temperature: 38,
@@ -830,7 +833,7 @@ describe("Table get data", () => {
 });
 describe("Table sorting", () => {
   const getPagesWithOrder = async (selopts: any) => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const all = await books.getRows({}, selopts);
     return all.map((b) => b.pages);
@@ -879,7 +882,7 @@ describe("Table sorting", () => {
     expect(ps2).toStrictEqual([728, 967]);
   });
   it("should read with stateFieldsToQuery", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const q = stateFieldsToQuery({
       state: { _foo_sortby: "pages" },
@@ -889,7 +892,7 @@ describe("Table sorting", () => {
     expect(q).toStrictEqual({ orderBy: "pages" });
   });
   it("should use operators from stateFieldsToQuery", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const q = stateFieldsToQuery({
       state: { _op_pages_near: "950" },
@@ -905,7 +908,7 @@ describe("Table sorting", () => {
     });
   });
   it("should use operators from stateFieldsToQuery from _orderBy", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const q = stateFieldsToQuery({
       state: { _orderBy: { operator: "near", field: "pages", target: 950 } },
@@ -921,7 +924,7 @@ describe("Table sorting", () => {
     });
   });
   it("should sort by joinfield", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "pages",
@@ -960,7 +963,7 @@ describe("Table sorting", () => {
     expect(michaelsDesc[1].author).toBe("Leo Tolstoy");
   });
   it("should sort by aggregation", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const michaels = await patients.getJoinedRows({
       orderBy: "avg_temp",
@@ -1001,7 +1004,7 @@ describe("Table sorting", () => {
 });
 describe("Table aggregationQuery", () => {
   it("should get avg aggregations", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const aggs = await readings.aggregationQuery({
       avg_temp: {
@@ -1012,7 +1015,7 @@ describe("Table aggregationQuery", () => {
     expect(Math.round(aggs.avg_temp)).toBe(38);
   });
   it("should get filtered avg aggregations", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const aggs = await readings.aggregationQuery(
       {
@@ -1026,7 +1029,7 @@ describe("Table aggregationQuery", () => {
     expect(Math.round(aggs.avg_temp)).toBe(37);
   });
   it("should get percent true aggregations", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const aggs = await readings.aggregationQuery({
       pcnt_norm: {
@@ -1037,7 +1040,7 @@ describe("Table aggregationQuery", () => {
     expect(Math.round(aggs.pcnt_norm)).toBe(33);
   });
   it("should get array aggregations", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     if (!db.isSQLite) {
       const aggs = await readings.aggregationQuery({
@@ -1050,7 +1053,7 @@ describe("Table aggregationQuery", () => {
     }
   });
   it("should get filtered array aggregations", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     if (!db.isSQLite) {
       const aggs = await readings.aggregationQuery(
@@ -1066,7 +1069,7 @@ describe("Table aggregationQuery", () => {
     }
   });
   it("should get grouped aggregations", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     if (!db.isSQLite) {
       const aggs = await readings.aggregationQuery(
@@ -1085,7 +1088,7 @@ describe("Table aggregationQuery", () => {
     }
   });
   it("sets up new fields", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     await Field.create({
       table,
@@ -1098,7 +1101,7 @@ describe("Table aggregationQuery", () => {
     await table.updateRow({ published: new Date("1972-05.04") }, 2);
   });
   it("should get latest by field", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     if (!db.isSQLite) {
       const aggs = await books.aggregationQuery({
@@ -1111,7 +1114,7 @@ describe("Table aggregationQuery", () => {
     }
   });
   it("should get latest by field, qualified", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     if (!db.isSQLite) {
       const aggs = await books.aggregationQuery(
@@ -1127,7 +1130,7 @@ describe("Table aggregationQuery", () => {
     }
   });
   it("should get latest by field, grouped", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     if (!db.isSQLite) {
       const aggs = await books.aggregationQuery(
@@ -1146,7 +1149,7 @@ describe("Table aggregationQuery", () => {
     }
   });
   it("should get latest by field, grouped and qualified", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     if (!db.isSQLite) {
       const aggs = await books.aggregationQuery(
@@ -1165,7 +1168,7 @@ describe("Table aggregationQuery", () => {
 
 describe("relations", () => {
   it("get parent relations", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     const rels = await table.get_parent_relations();
     expect(rels.parent_field_list).toContain("favbook.author");
@@ -1173,7 +1176,7 @@ describe("relations", () => {
   });
 
   it("get parent relations with one-to-one", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const rels = await table.get_parent_relations();
     const expected = [
@@ -1187,7 +1190,7 @@ describe("relations", () => {
     expect(rels.parent_field_list).toEqual(expect.arrayContaining(expected));
   });
   it("get child relations", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const rels = await table.get_child_relations();
     const expected = [
@@ -1417,7 +1420,7 @@ David MacKay, ITILA`;
       type: "Date",
       attributes: { day_only: true },
     });
-    await getState().setConfig("default_locale", "de");
+    await getState()!.setConfig("default_locale", "de");
     const csv = `Name,DOB
 Julius Caesaer, 15.03.2011
 David MacKay, 2012-08-13`;
@@ -1588,7 +1591,7 @@ Pencil, 0.5,2, t`;
     expect(res).toEqual({
       error: "Invalid column name ! - Use A-Z, a-z, 0-9, _ only",
     });
-    const table = Table.findOne({ name: "Invoice1" });
+    const table = Table.findOne({ name: "Invoice1" })!;
     expect(table).toBe(null);
   });
   it("ignores a col on duplicate col nm", async () => {
@@ -1616,7 +1619,7 @@ Pencil, 0.5,2, t`;
       expect(pk.name).toBe("id");
       expect(pk.type.name).toBe("String");
       expect(res.details).not.toContain("Reject");
-      const table = Table.findOne({ name: "Invoice2" });
+      const table = Table.findOne({ name: "Invoice2" })!;
       assertIsSet(table);
       const rows = await table.getRows();
       expect(rows.length).toBe(2);
@@ -1624,7 +1627,7 @@ Pencil, 0.5,2, t`;
     it("should succeed on uuid pk", async () => {
       // uuid-ossp is created once by the test runner (see table_history test)
 
-      getState().registerPlugin("mock_plugin", plugin_with_routes());
+      getState()!.registerPlugin("mock_plugin", plugin_with_routes());
       const csv = `id,cost,somenum, vatable
 179f7e88-ae48-495e-a080-68c471fac2ac, 5,4, f
 d1403829-cc1e-49b5-bcdc-488973e640ba, 0.5,2, t`;
@@ -1769,7 +1772,7 @@ Pencil, 0.5,2, t`;
   });
   it("should import JSON columns", async () => {
     //db.set_sql_logging();
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
 
     const csv = `id,cost,count, attrs
 1, 5,4, "{""foo"":5}"
@@ -1904,7 +1907,7 @@ describe("Table not null constraint", () => {
     }
   });
   it("should query null", async () => {
-    const table = Table.findOne({ name: "TableWithNotNulls" });
+    const table = Table.findOne({ name: "TableWithNotNulls" })!;
     assertIsSet(table);
     await table.insertRow({ name: "Ageless", age: null });
 
@@ -2007,7 +2010,7 @@ describe("Table with date", () => {
     expect(Math.abs(dif)).toBeLessThanOrEqual(1000);
   });
   it("should query days", async () => {
-    const table = Table.findOne({ name: "TableWithDates" });
+    const table = Table.findOne({ name: "TableWithDates" })!;
     assertIsSet(table);
     const rows = await table.getRows({ theday: "2023-11-28" });
     expect(rows.length).toBe(1);
@@ -2047,7 +2050,7 @@ describe("Tables with name clashes", () => {
     await cars.insertRow({ name: "Mustang", owner: sally });
   });
   it("should query", async () => {
-    const cars = Table.findOne({ name: "TableClashCar" });
+    const cars = Table.findOne({ name: "TableClashCar" })!;
     assertIsSet(cars);
 
     const rows = await cars.getJoinedRows({
@@ -2064,7 +2067,7 @@ describe("Tables with name clashes", () => {
   });
 
   it("should show list view", async () => {
-    const cars = Table.findOne({ name: "TableClashCar" });
+    const cars = Table.findOne({ name: "TableClashCar" })!;
     assertIsSet(cars);
     const v = await View.create({
       table_id: cars.id,
@@ -2083,7 +2086,7 @@ describe("Tables with name clashes", () => {
     expect(res).toContain("Sally");
   });
   it("should show show view", async () => {
-    const cars = Table.findOne({ name: "TableClashCar" });
+    const cars = Table.findOne({ name: "TableClashCar" })!;
     assertIsSet(cars);
     const v = await View.create({
       table_id: cars.id,
@@ -2110,7 +2113,7 @@ describe("Tables with name clashes", () => {
 });
 describe("Table joint unique constraint", () => {
   it("should create table", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     assertIsSet(table.id);
     const rows = await table.getRows();
@@ -2123,13 +2126,13 @@ describe("Table joint unique constraint", () => {
         errormsg: "Bad author/pages vibes",
       },
     });
-    const table1 = Table.findOne({ name: "books" });
+    const table1 = Table.findOne({ name: "books" })!;
     assertIsSet(table1);
     const res = await table1.tryInsertRow(row0);
     assertIsErrorMsg(res);
     expect(res.error).toBe("Bad author/pages vibes");
     await tc.delete();
-    const table2 = Table.findOne({ name: "books" });
+    const table2 = Table.findOne({ name: "books" })!;
     assertIsSet(table2);
     const res1 = await table2.tryInsertRow(row0);
     assertIsErrorMsg(res1);
@@ -2138,7 +2141,7 @@ describe("Table joint unique constraint", () => {
 });
 describe("Table constraints", () => {
   it("should create table", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     assertIsSet(table.id);
 
@@ -2152,7 +2155,7 @@ describe("Table constraints", () => {
       type: "Formula",
       configuration: { formula: "pages>500", errormsg: "Too short" },
     });
-    const table1 = Table.findOne({ name: "books" });
+    const table1 = Table.findOne({ name: "books" })!;
     assertIsSet(table1);
 
     const res = await table1.tryInsertRow(row0);
@@ -2166,7 +2169,7 @@ describe("Table constraints", () => {
     expect(uprow?.pages).toBeGreaterThan(400);
 
     await tc.delete();
-    const table2 = Table.findOne({ name: "books" });
+    const table2 = Table.findOne({ name: "books" })!;
     assertIsSet(table2);
     const res1 = await table2.tryInsertRow(row0);
 
@@ -2174,7 +2177,7 @@ describe("Table constraints", () => {
     expect(!!res1.error).toBe(false);
   });
   it("should prevent self-join loop", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     assertIsSet(table.id);
 
@@ -2186,7 +2189,7 @@ describe("Table constraints", () => {
         errormsg: "No loop",
       },
     });
-    const table1 = Table.findOne({ name: "patients" });
+    const table1 = Table.findOne({ name: "patients" })!;
     assertIsSet(table1);
 
     const res = await table1.tryInsertRow({ name: "Fred" });
@@ -2201,7 +2204,7 @@ describe("Table constraints", () => {
     expect(uprow!.parent).toBe(null);
   });
   it("should create index", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     assertIsSet(table.id);
 
@@ -2214,7 +2217,7 @@ describe("Table constraints", () => {
   });
   it("should create constraint in transaction", async () => {
     await runWithTenant(db.getTenantSchema(), async () => {
-      const table = Table.findOne({ name: "readings" });
+      const table = Table.findOne({ name: "readings" })!;
       assertIsSet(table);
       assertIsSet(table.id);
       const con = await db.withTransaction(async () => {
@@ -2228,8 +2231,8 @@ describe("Table constraints", () => {
         });
       });
 
-      await getState().refresh_tables();
-      const readings = Table.findOne({ name: "readings" });
+      await getState()!.refresh_tables();
+      const readings = Table.findOne({ name: "readings" })!;
       assertIsSet(readings);
 
       const result = await readings.tryInsertRow({
@@ -2245,7 +2248,7 @@ describe("Table constraints", () => {
   });
   it("should create constraint that is not translatable to SQL in transaction", async () => {
     await runWithTenant(db.getTenantSchema(), async () => {
-      const table = Table.findOne({ name: "readings" });
+      const table = Table.findOne({ name: "readings" })!;
       assertIsSet(table);
       assertIsSet(table.id);
       expect(table.constraints.length).toBe(0);
@@ -2261,8 +2264,8 @@ describe("Table constraints", () => {
         });
       });
 
-      await getState().refresh_tables();
-      const readings = Table.findOne({ name: "readings" });
+      await getState()!.refresh_tables();
+      const readings = Table.findOne({ name: "readings" })!;
       assertIsSet(readings);
       expect(readings.constraints.length).toBe(1);
       expect(readings.constraints[0].configuration.formula).toBe(
@@ -2347,14 +2350,14 @@ describe("Table with UUID pks", () => {
       expect(typeof rows[0].uuid_generate_v4).toBe("string");
     });
     it("should create and insert stuff in table", async () => {
-      getState().registerPlugin("mock_plugin", plugin_with_routes());
+      getState()!.registerPlugin("mock_plugin", plugin_with_routes());
       const table = await Table.create("TableUUID");
       const [pk] = table.getFields();
       await pk.update({ type: "UUID" });
       // @ts-ignore
       expect(pk.type.name).toBe("UUID");
 
-      const table1 = Table.findOne({ name: "TableUUID" });
+      const table1 = Table.findOne({ name: "TableUUID" })!;
       assertIsSet(table1);
       const flds1 = await table1.getFields();
 
@@ -2391,7 +2394,7 @@ describe("Table with UUID pks", () => {
       const fnm = "/tmp/test1.json";
       await writeFile(fnm, JSON.stringify(json));
 
-      await getState().refresh_tables();
+      await getState()!.refresh_tables();
       const table = Table.findOne({ name: "TableUUID" });
       assertIsSet(table);
       expect(!!table).toBe(true);
@@ -2406,7 +2409,7 @@ describe("Table with UUID pks", () => {
       expect(rows.length).toBe(2);
     });
     it("should be joinable to", async () => {
-      const uuidtable1 = Table.findOne({ name: "TableUUID" });
+      const uuidtable1 = Table.findOne({ name: "TableUUID" })!;
       assertIsSet(uuidtable1);
 
       const table = await Table.create("JoinUUID");
@@ -2444,13 +2447,13 @@ describe("Table with UUID pks", () => {
       await uuidtable1.delete();
     });
     it("should create and delete table", async () => {
-      getState().registerPlugin("mock_plugin", plugin_with_routes());
+      getState()!.registerPlugin("mock_plugin", plugin_with_routes());
       const table = await Table.create("TableUUID1");
       const [pk] = table.getFields();
 
       await pk.update({ type: "UUID" });
 
-      const table1 = Table.findOne({ name: table.name });
+      const table1 = Table.findOne({ name: table.name })!;
       assertIsSet(table1);
       const [pk1] = await table1.getFields();
       // @ts-ignore
@@ -2464,7 +2467,7 @@ describe("Table with UUID pks", () => {
 });
 describe("json restore", () => {
   it("should import json with json", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
 
     const json = [
       { name: "Alex", id: 1, stuff: { bar: "foo" } },
@@ -2476,7 +2479,7 @@ describe("json restore", () => {
     const fnm = "/tmp/test1.json";
     await writeFile(fnm, JSON.stringify(json));
 
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
 
     const table = await Table.create("JsonJson");
     await Field.create({
@@ -2563,7 +2566,7 @@ describe("json restore", () => {
 
 describe("external tables", () => {
   it("should register plugin", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
   });
   it("should find table", async () => {
     const table = Table.findOne({ name: "exttab" });
@@ -2581,7 +2584,7 @@ describe("external tables", () => {
     expect(dbtables.map((t) => t.name)).toContain("books");
   });
   it("should query", async () => {
-    const table = Table.findOne({ name: "exttab" });
+    const table = Table.findOne({ name: "exttab" })!;
     assertIsSet(table);
     const rows0 = await table.getRows({ name: "Sam" });
     expect(rows0.length).toBe(1);
@@ -2596,7 +2599,7 @@ describe("external tables", () => {
     expect(rows2.length).toBe(2);
   });
   it("should build view", async () => {
-    const table = Table.findOne({ name: "exttab" });
+    const table = Table.findOne({ name: "exttab" })!;
     assertIsSet(table);
     const view = await createDefaultView(table, "List", 100);
     const contents = await view.run_possibly_on_page(
@@ -2618,14 +2621,14 @@ describe("external tables", () => {
 });
 describe("table providers", () => {
   it("should register plugin", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
   });
   it("should create table", async () => {
     await Table.create("JoeTable", {
       provider_name: "provtab",
       provider_cfg: { middle_name: "Robinette" },
     });
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
   });
   it("should find", async () => {
     const [table] = await Table.find({ name: "JoeTable" });
@@ -2636,7 +2639,7 @@ describe("table providers", () => {
     expect(table.fields.length).toBe(2);
   });
   it("should query", async () => {
-    const table = Table.findOne({ name: "JoeTable" });
+    const table = Table.findOne({ name: "JoeTable" })!;
     assertIsSet(table);
     expect(table.fields.length).toBe(2);
     const rows = await table.getRows({});
@@ -2645,12 +2648,12 @@ describe("table providers", () => {
     expect(rows[0].age).toBe(36);
   });
   it("should change role", async () => {
-    const table = Table.findOne({ name: "JoeTable" });
+    const table = Table.findOne({ name: "JoeTable" })!;
     assertIsSet(table);
     await table.update({ min_role_read: 40 });
   });
   it("should get role", async () => {
-    const table = Table.findOne({ name: "JoeTable" });
+    const table = Table.findOne({ name: "JoeTable" })!;
     assertIsSet(table);
     expect(table.min_role_read).toBe(40);
   });
@@ -2700,7 +2703,7 @@ describe("distance ordering", () => {
     await tc.insertRow({ name: "George", lat: 20, long: 20 });
   });
   it("should query", async () => {
-    const table = Table.findOne({ name: "geotable1" });
+    const table = Table.findOne({ name: "geotable1" })!;
     assertIsSet(table);
 
     const fred_rows = await table.getRows(
@@ -2725,7 +2728,7 @@ describe("distance ordering", () => {
 
 describe("getField", () => {
   it("should find own field", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     const field = table.getField("name");
     expect(field?.name).toBe("name");
@@ -2800,9 +2803,9 @@ describe("field_options", () => {
 });
 describe("agg latest multiple test", () => {
   it("should get latest aggregations with the right rows", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const now = new Date();
     await readings.insertRow({ patient_id: 1, temperature: 42, date: now });
@@ -2827,9 +2830,9 @@ describe("agg latest multiple test", () => {
 
 describe("Table insert/update expanded joinfields", () => {
   it("insert expanded", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const now = new Date();
     const pid0 = await readings.insertRow({
@@ -2857,7 +2860,7 @@ describe("Table insert/update expanded joinfields", () => {
 });
 describe("aggregation formula", () => {
   it("gets agg without stat", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const aggregations = {};
     const freeVars = freeVariables("readings$patient_id$temperature");
@@ -2874,7 +2877,7 @@ describe("aggregation formula", () => {
     });
   });
   it("gets agg with stat", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const aggregations = {};
     const freeVars = freeVariables("readings$patient_id$temperature$avg");
@@ -2898,7 +2901,7 @@ describe("aggregation formula", () => {
 
 describe("grandparent join", () => {
   it("should define rows", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     const fields = table.getFields();
 
@@ -3135,7 +3138,7 @@ describe("Table recursive query", () => {
   });
   if (!db.isSQLite) {
     it("getRows tree sort by id", async () => {
-      const table = Table.findOne("recur_projects");
+      const table = Table.findOne("recur_projects")!;
       assertIsSet(table);
       const rows = await table.getRows(
         {},
@@ -3146,7 +3149,7 @@ describe("Table recursive query", () => {
       expect(rows[2].name).toBe("Verb conjugations");
     });
     it("getRows tree sort by name", async () => {
-      const table = Table.findOne("recur_projects");
+      const table = Table.findOne("recur_projects")!;
       assertIsSet(table);
       //db.set_sql_logging(true);
       const rows = await table.getRows(
@@ -3161,7 +3164,7 @@ describe("Table recursive query", () => {
       expect(rows[0]._level).toBe(0);
     });
     it("getRows tree sort by name desc", async () => {
-      const table = Table.findOne("recur_projects");
+      const table = Table.findOne("recur_projects")!;
       assertIsSet(table);
       //db.set_sql_logging(true);
       const rows = await table.getRows(
@@ -3176,7 +3179,7 @@ describe("Table recursive query", () => {
       expect(rows[0]._level).toBe(0);
     });
     it("getRows tree no sort", async () => {
-      const table = Table.findOne("recur_projects");
+      const table = Table.findOne("recur_projects")!;
       assertIsSet(table);
       //db.set_sql_logging(true);
       const rows = await table.getRows({}, { tree_field: "parent" });
@@ -3188,7 +3191,7 @@ describe("Table recursive query", () => {
       expect(rows[0]._level).toBe(0);
     });
     it("getRows tree with where", async () => {
-      const table = Table.findOne("recur_projects");
+      const table = Table.findOne("recur_projects")!;
       assertIsSet(table);
       //db.set_sql_logging(true);
       const rows = await table.getRows(
@@ -3203,7 +3206,7 @@ describe("Table recursive query", () => {
       expect(rows[0]._level).toBe(0);
     });
     it("getRows tree with tree field in where", async () => {
-      const table = Table.findOne("recur_projects");
+      const table = Table.findOne("recur_projects")!;
       assertIsSet(table);
       //db.set_sql_logging(true);
       const rows = await table.getRows(
@@ -3215,7 +3218,7 @@ describe("Table recursive query", () => {
       expect(rows[0].name).toBe("Biology");
     });
     it("getRows tree with ownership", async () => {
-      const table = Table.findOne("recur_projects");
+      const table = Table.findOne("recur_projects")!;
       assertIsSet(table);
       table.ownership_formula = "difficulty===2";
       table.min_role_read = 1;
@@ -3239,7 +3242,7 @@ describe("Table recursive query", () => {
       expect(rows[0]._level).toBe(0);
     });
     it("getRows tree with joined ownership", async () => {
-      const table = Table.findOne("recur_projects");
+      const table = Table.findOne("recur_projects")!;
       assertIsSet(table);
       table.ownership_formula = "assignee.id === user.id";
       table.min_role_read = 1;
@@ -3283,7 +3286,7 @@ describe("Field default_expression", () => {
   });
 
   it("does not override a value explicitly provided by the caller", async () => {
-    const table = Table.findOne({ name: "DefaultExprDateTable" });
+    const table = Table.findOne({ name: "DefaultExprDateTable" })!;
     assertIsSet(table);
     const fixed = new Date("2020-01-01T00:00:00Z");
     const id = await table.insertRow({ created_at: fixed });
@@ -3313,7 +3316,7 @@ describe("Field default_expression", () => {
   });
 
   it("sets Key field to null when no user is provided", async () => {
-    const table = Table.findOne({ name: "DefaultExprKeyTable" });
+    const table = Table.findOne({ name: "DefaultExprKeyTable" })!;
     assertIsSet(table);
     const id = await table.insertRow({});
     const rows = await table.getRows({ id });

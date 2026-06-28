@@ -1,28 +1,31 @@
-import Table from "../models/table";
-import Field from "../models/field";
-import View from "../models/view";
-import db from "../db";
-const { getState } = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
-import mocks from "./mocks";
+import Table from "../models/table.js";
+import Field from "../models/field.js";
+import View from "../models/view.js";
+import db from "../db/index.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+getState()!.registerPlugin("base", basePluginMod);
+import * as mocks from "./mocks.js";
 const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
 import {
   assertIsSet,
   assertsIsSuccessMessage,
   assertIsErrorMsg,
   assertIsType,
-} from "./assertions";
+} from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import { add_free_variables_to_joinfields } from "../plugin-helper";
-import expressionModule from "../models/expression";
-import User from "../models/user";
+import { add_free_variables_to_joinfields } from "../plugin-helper.js";
+import * as expressionModule from "../models/expression.js";
+import User from "../models/user.js";
 import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 const { freeVariables } = expressionModule;
 
 afterAll(db.close);
 beforeAll(async () => {
-  await require("../db/reset_schema")();
-  await require("../db/fixtures")();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 jest.setTimeout(30000);
 const non_owner_user = { id: 3, email: "foo@bar.com", role_id: 80 };
@@ -832,7 +835,7 @@ describe("Table with row ownership joined formula and stored calc", () => {
 });
 describe("ownerhip of users table", () => {
   it("should find own row", async () => {
-    const users = Table.findOne({ name: "users" });
+    const users = Table.findOne({ name: "users" })!;
     assertIsSet(users);
     const u3 = await users.getRow({ id: 3 });
     assertIsSet(u3);
@@ -873,7 +876,7 @@ describe("User group no spaces", () => {
     });
     await user_works_proj.update({ is_user_group: true });
 
-    const projs = Table.findOne({ name: "Project" });
+    const projs = Table.findOne({ name: "Project" })!;
     assertIsSet(projs);
 
     const own_opts = await projs.ownership_options();
@@ -1011,7 +1014,7 @@ describe("User group with spaces in name", () => {
     });
     await user_works_proj.update({ is_user_group: true });
 
-    const projs = Table.findOne({ name: "The Project" });
+    const projs = Table.findOne({ name: "The Project" })!;
     assertIsSet(projs);
 
     const own_opts = await projs.ownership_options();
@@ -1124,7 +1127,7 @@ describe("ownership_formula_where", () => {
     });
   });
   it("should do constant eq user", async () => {
-    const tasks = Table.findOne("tasks1");
+    const tasks = Table.findOne("tasks1")!;
     assertIsSet(tasks);
     await tasks.update({ ownership_formula: 'user?.clearance==="ALL"' });
     const where = tasks.ownership_formula_where({
@@ -1135,7 +1138,7 @@ describe("ownership_formula_where", () => {
     expect(where).toStrictEqual({ eq: ["ALL", "ALL"] });
   });
   it("should do constant eq user", async () => {
-    const tasks = Table.findOne("tasks1");
+    const tasks = Table.findOne("tasks1")!;
     assertIsSet(tasks);
     await tasks.update({ ownership_formula: 'user?.clearance==="ALL"' });
     const where = tasks.ownership_formula_where({
@@ -1147,7 +1150,7 @@ describe("ownership_formula_where", () => {
   });
 
   it("should do constant eq user", async () => {
-    const tasks = Table.findOne("tasks1");
+    const tasks = Table.findOne("tasks1")!;
     assertIsSet(tasks);
     await tasks.update({
       ownership_formula:

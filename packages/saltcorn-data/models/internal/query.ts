@@ -13,10 +13,9 @@ import {
   orderByIsObject,
   Value,
 } from "@saltcorn/db-common/internal";
-import utils from "../../utils";
-const { isNode } = utils;
-import Field from "../field";
-import db from "../../db";
+import { isNode } from "../../utils.js";
+import Field from "../field.js";
+import db from "../../db/index.js";
 
 // TODO check valueFormula for sql injection
 export const getAggAndField = (

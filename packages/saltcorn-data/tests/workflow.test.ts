@@ -1,15 +1,18 @@
-import Form from "../models/form";
-import Field from "../models/field";
-import Workflow from "../models/workflow";
-import View from "../models/view";
-import db from "../db";
-import { assertIsSet } from "./assertions";
+import Form from "../models/form.js";
+import Field from "../models/field.js";
+import Workflow from "../models/workflow.js";
+import View from "../models/view.js";
+import db from "../db/index.js";
+import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { GenObj } from "@saltcorn/types/common_types";
 
-const { getState } = require("../db/state");
-getState().registerPlugin("base", require("../base-plugin"));
-import mocks from "./mocks";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+getState()!.registerPlugin("base", basePluginMod);
+import * as mocks from "./mocks.js";
 const { mockReqRes } = mocks;
 
 afterAll(db.close);
@@ -68,8 +71,8 @@ const wfbuild = new Workflow({
 
 describe("Workflow context processing", () => {
   beforeAll(async () => {
-    await require("../db/reset_schema")();
-    await require("../db/fixtures")();
+    await resetSchemaMod();
+    await fixturesMod();
   });
   it("should run with context", async () => {
     const v = await wf.run({ foo: "bar" });
@@ -133,8 +136,8 @@ describe("Workflow context processing", () => {
 
 describe("Edit view Workflow", () => {
   beforeAll(async () => {
-    await require("../db/reset_schema")();
-    await require("../db/fixtures")();
+    await resetSchemaMod();
+    await fixturesMod();
   });
 
   it("runs step 3: Edit options", async () => {

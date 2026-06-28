@@ -1,20 +1,20 @@
-import db from "../db";
+import { getState } from "../db/state.js";
+import * as nsState from "../db/state.js";
+import db from "../db/index.js";
 import type {
   AbstractPageGroup,
   PageGroupCfg,
 } from "@saltcorn/types/model-abstracts/abstract_page_group";
-import Page from "./page";
+import Page from "./page.js";
 import { Row, SelectOptions, Where } from "@saltcorn/db-common/internal";
 import type {
   AbstractPageGroupMember,
   PageGroupMemberCfg,
 } from "@saltcorn/types/model-abstracts/abstract_page_group_member";
-import utils from "../utils";
-const { satisfies } = utils;
+import { satisfies } from "../utils.js";
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
-import PageGroupMember from "./page_group_member";
-import Expression from "./expression";
-const { eval_expression } = Expression;
+import PageGroupMember from "./page_group_member.js";
+import { eval_expression } from "./expression.js";
 
 /**
  * PageGroup class
@@ -48,14 +48,14 @@ class PageGroup implements AbstractPageGroup {
    * @returns the matching page, or null
    */
   async getEligiblePage(data: ScreenInfoParams, user: any, locale?: string) {
-    const Page = (await import("./page")).default;
+    const Page = (await import("./page.js")).default;
     const sorted = this.members.sort((a, b) => a.sequence - b.sequence);
     const expressionRow = {
       ...data,
       locale:
         locale ||
-        (await require("../db/state")
-          .getState()
+        (await nsState
+          .getState()!
           .getConfig("default_locale", "en")),
     };
     for (const member of sorted) {
@@ -70,8 +70,8 @@ class PageGroup implements AbstractPageGroup {
         if (page) {
           if (user.role_id <= page.min_role) return page;
           else
-            await require("../db/state")
-              .getState()
+            await nsState
+              .getState()!
               .log(
                 4,
                 `page ${page.name} is not accessible for role_id ${user.role_id}`
@@ -105,7 +105,7 @@ class PageGroup implements AbstractPageGroup {
       await PageGroupMember.update(member.id!, { sequence: tmp });
     }
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
   }
 
   /**
@@ -134,8 +134,7 @@ class PageGroup implements AbstractPageGroup {
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<PageGroup[]> {
     if (selectopts.cached) {
-      const { getState } = require("../db/state");
-      return getState()
+      return getState()!
         .page_groups.map((t: PageGroup) => new PageGroup(t))
         .filter(satisfies(where || {}));
     }
@@ -167,16 +166,15 @@ class PageGroup implements AbstractPageGroup {
    * @param where
    * @returns one page group or null
    */
-  static findOne(where: Where): PageGroup | null {
-    const { getState } = require("../db/state");
-    const p = getState().page_groups.find(
+  static findOne(where: Where): PageGroup | undefined {
+    const p = getState()!.page_groups.find(
       where.id
         ? (t: PageGroup) => t.id === +where.id
         : where.name
           ? (t: PageGroup) => t.name === where.name
           : satisfies(where)
     );
-    return p ? new PageGroup({ ...p }) : p;
+    return p ? new PageGroup({ ...p }) : undefined;
   }
 
   /**
@@ -200,7 +198,7 @@ class PageGroup implements AbstractPageGroup {
       });
     }
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
 
     return pageGroup;
   }
@@ -213,7 +211,7 @@ class PageGroup implements AbstractPageGroup {
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_page_groups", row, id);
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
   }
 
   /**
@@ -243,7 +241,7 @@ class PageGroup implements AbstractPageGroup {
       }
     }
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
   }
 
   /**
@@ -273,7 +271,7 @@ class PageGroup implements AbstractPageGroup {
     delete createObj.id;
     const newGroup = await PageGroup.create(createObj);
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
 
     return newGroup;
   }
@@ -283,7 +281,7 @@ class PageGroup implements AbstractPageGroup {
    * @param cfg
    */
   async addMember(cfg: PageGroupMemberCfg): Promise<PageGroupMember> {
-    const PageGroupMember = (await import("./page_group_member")).default;
+    const PageGroupMember = (await import("./page_group_member.js")).default;
     if (!this.id)
       throw new Error("Page group must be saved before adding members");
     const maxSeq =
@@ -299,7 +297,7 @@ class PageGroup implements AbstractPageGroup {
     });
     this.members.push(newMember);
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
 
     return new PageGroupMember(newMember);
   }
@@ -311,7 +309,7 @@ class PageGroup implements AbstractPageGroup {
     await db.deleteWhere("_sc_page_group_members", { page_group_id: this.id });
     this.members = [];
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
   }
 
   /**
@@ -319,10 +317,10 @@ class PageGroup implements AbstractPageGroup {
    * @param id id of the member
    */
   async removeMember(id: number): Promise<void> {
-    const PageGroupMember = (await import("./page_group_member")).default;
+    const PageGroupMember = (await import("./page_group_member.js")).default;
     await PageGroupMember.delete(id);
     if (!db.getRequestContext()?.client)
-      await require("../db/state").getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
   }
 
   /**
@@ -352,6 +350,6 @@ namespace PageGroup {
   };
 }
 
-type ScreenInfoParams = PageGroup.ScreenInfoParams;
+export type ScreenInfoParams = PageGroup.ScreenInfoParams;
 
-export = PageGroup;
+export default PageGroup;

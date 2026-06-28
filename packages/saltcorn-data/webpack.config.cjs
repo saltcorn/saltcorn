@@ -13,6 +13,7 @@ const nodeMocks = {
   async_hooks: join(mocksDir, "node", "async_hooks"),
   child_process: join(mocksDir, "node", "child_process"),
   vm: join(mocksDir, "node", "vm"),
+  module: join(mocksDir, "node", "module"),
   "../package.json": join(__dirname, "package.json"),
 };
 
@@ -23,10 +24,16 @@ const npmMocks = {
   tar: join(mocksDir, "npm", "tar"),
   "live-plugin-manager": join(mocksDir, "npm", "live-plugin-manager"),
   "firebase-admin": join(mocksDir, "npm", "firebase-admin"),
-  "dockerode": join(mocksDir, "npm", "dockerode"),
-  "xml2js": join(mocksDir, "npm", "xml2js"),
-  "apns2": join(mocksDir, "npm", "apns2"),
-  "vm2": join(mocksDir, "npm", "vm2"),
+  dockerode: join(mocksDir, "npm", "dockerode"),
+  xml2js: join(mocksDir, "npm", "xml2js"),
+  apns2: join(mocksDir, "npm", "apns2"),
+  vm2: join(mocksDir, "npm", "vm2"),
+  "@aws-sdk/client-s3": join(mocksDir, "npm", "aws-sdk-client-s3"),
+  "@aws-sdk/s3-request-presigner": join(
+    mocksDir,
+    "npm",
+    "aws-sdk-s3-request-presigner"
+  ),
 };
 
 const saltcornMocks = {
@@ -46,16 +53,42 @@ const saltcornMocks = {
     "internal",
     "async_json_stream"
   ),
+  "../models/internal/async_json_stream": join(
+    mocksDir,
+    "models",
+    "internal",
+    "async_json_stream"
+  ),
   "./pack": join(mocksDir, "models", "pack"),
   "../models/pack": join(mocksDir, "models", "pack"),
   "./email": join(mocksDir, "models", "email"),
   "../models/email": join(mocksDir, "models", "email"),
   "./internal/mail_queue": join(mocksDir, "models", "internal", "mail_queue"),
+  "../models/internal/mail_queue": join(
+    mocksDir,
+    "models",
+    "internal",
+    "mail_queue"
+  ),
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "@saltcorn/html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
   "./html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
   "../migrate": join(mocksDir, "saltcorn", "migrate"),
+};
+
+// The ESM dist imports relative/subpath modules WITH explicit ".js" extensions
+// (e.g. `from "../models/email.js"`), but webpack matches alias keys against the
+// raw request string. Without this expansion the extensionless keys silently
+// stop matching and the real (server-only) modules get bundled. Add a ".js"
+// variant for every key so both forms resolve to the mock.
+const withJsVariants = (map) => {
+  const out = {};
+  for (const [k, v] of Object.entries(map)) {
+    out[k] = v;
+    if (!/\.[cm]?js$/.test(k)) out[`${k}.js`] = v;
+  }
+  return out;
 };
 
 const dbMocks = {
@@ -95,6 +128,7 @@ module.exports = {
       dns: false,
       net: false,
       http2: false,
+      querystring: false,
       punycode: require.resolve("punycode/"),
       console: require.resolve("console-browserify"),
       assert: require.resolve("assert/"),
@@ -112,10 +146,10 @@ module.exports = {
     },
     alias: {
       process: "process/browser",
-      ...nodeMocks,
-      ...npmMocks,
-      ...saltcornMocks,
-      ...dbMocks,
+      ...withJsVariants(nodeMocks),
+      ...withJsVariants(npmMocks),
+      ...withJsVariants(saltcornMocks),
+      ...withJsVariants(dbMocks),
     },
   },
   module: {
@@ -124,9 +158,21 @@ module.exports = {
         test: /\.js$/,
         exclude: /node_modules/,
       },
+      // Allow extensionless imports inside dependencies (e.g. ProvidePlugin's
+      // "process/browser") without webpack's ESM "fully specified" requirement.
+      {
+        test: /\.m?js$/,
+        resolve: { fullySpecified: false },
+      },
     ],
   },
   plugins: [
+    // Strip the "node:" scheme so prefixed builtin imports (e.g. "node:stream")
+    // hit the browser fallbacks/mocks configured above instead of failing as an
+    // unhandled URI scheme.
+    new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+      resource.request = resource.request.replace(/^node:/, "");
+    }),
     new webpack.ProvidePlugin({
       process: "process/browser",
       Buffer: ["buffer", "Buffer"],

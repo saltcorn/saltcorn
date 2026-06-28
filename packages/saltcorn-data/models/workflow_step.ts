@@ -4,23 +4,23 @@
  * @module models/workflow_step
  * @subcategory models
  */
-import db from "../db";
+import { jsIdentifierValidator } from "../utils.js";
+import { getState } from "../db/state.js";
+import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { WorkflowStepCfg } from "@saltcorn/types/model-abstracts/abstract_workflow_step";
-import User from "./user";
-import Trigger from "./trigger";
-import View from "./view";
-import Table from "./table";
-import Expression from "./expression";
-import FieldRepeat from "./fieldrepeat";
+import User from "./user.js";
+import Trigger from "./trigger.js";
+import View from "./view.js";
+import Table from "./table.js";
+import * as Expression from "./expression.js";
+import FieldRepeat from "./fieldrepeat.js";
 import tags from "@saltcorn/markup/tags";
-import { stateFieldsToWhere } from "../plugin-helper";
+import { stateFieldsToWhere } from "../plugin-helper.js";
 const { a } = tags;
-const { jsIdentifierValidator } = require("../utils");
 
-const { eval_expression, get_async_expression_function } = Expression;
+import { eval_expression, get_async_expression_function } from "./expression.js";
 
-const { getState } = require("../db/state");
 /**
  * WorkflowStep Class
  * @category saltcorn-data
@@ -246,7 +246,7 @@ class WorkflowStep {
     if (this.action_name === "SetErrorHandler") {
       return { __errorHandler: this.configuration.error_handling_step };
     }
-    let state_action = getState().actions[this.action_name];
+    let state_action = getState()!.actions[this.action_name];
     if (state_action) {
       return await state_action.run({
         configuration: this.configuration,
@@ -254,13 +254,13 @@ class WorkflowStep {
         row: context,
         mode: "workflow",
         req,
-      });
+      } as any);
     } else {
       const trigger = await Trigger.findOne({ name: this.action_name });
       if (!trigger)
         throw new Error(`Action or trigger not found: ${this.action_name}`);
 
-      state_action = getState().actions[trigger.action];
+      state_action = getState()!.actions[trigger.action];
       if (!state_action)
         throw new Error(`Action or trigger not found: ${this.action_name}`);
       const runargs: any = {
@@ -432,9 +432,9 @@ class WorkflowStep {
       return [];
     };
 
-    const stateAction = getState().actions?.[step.action_name];
-    if (stateAction?.configuration_summary) {
-      const summary = stateAction.configuration_summary(cfg, {
+    const stateAction = getState()!.actions?.[step.action_name];
+    if ((stateAction as any)?.configuration_summary) {
+      const summary = (stateAction as any).configuration_summary(cfg, {
         req: opts.req,
         trigger: opts.trigger,
         step,
@@ -841,7 +841,7 @@ class WorkflowStep {
             type: "String",
             sublabel:
               "The answer will be set in the context with this variable name",
-            validator: jsIdentifierValidator,
+            validator: jsIdentifierValidator as any,
           },
           {
             label: "Input Type",
@@ -883,4 +883,4 @@ class WorkflowStep {
   }
 }
 
-export = WorkflowStep;
+export default WorkflowStep;

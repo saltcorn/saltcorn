@@ -4,12 +4,12 @@
  * @module standard-menu
  */
 
+import { getState } from "./db/state.js";
 import type { MenuItem } from "@saltcorn/types/base_types";
 
 const create_standard_menu = async (): Promise<void> => {
-  const { getState } = require("./db/state");
 
-  const state = getState();
+  const state = getState()!;
   await state?.refresh_config(false);
   const allow_signup = state.getConfig("allow_signup");
   const notification_in_menu = state.getConfig("notification_in_menu");
@@ -394,4 +394,4 @@ const create_standard_menu = async (): Promise<void> => {
   ]);
 };
 
-export = create_standard_menu;
+export default create_standard_menu;

@@ -3,24 +3,25 @@
  * @module base-plugin/viewtemplates/listshowlist
  * @subcategory base-plugin
  */
-import Table from "../../models/table";
-import Form from "../../models/form";
-import View from "../../models/view";
-import Workflow from "../../models/workflow";
-const { text, div, h4, h6, a } = require("@saltcorn/markup/tags");
-const { renderForm, tabs } = require("@saltcorn/markup");
+import tagsPkg from "@saltcorn/markup/tags";
+import markupPkg from "@saltcorn/markup";
+import Table from "../../models/table.js";
+import Form from "../../models/form.js";
+import View from "../../models/view.js";
+import Workflow from "../../models/workflow.js";
+const { text, div, h4, h6, a } = tagsPkg;
+const { renderForm, tabs } = markupPkg;
 import {
   get_child_views,
   get_parent_views,
   readState,
-} from "../../plugin-helper";
-import { splitUniques } from "../../viewable_fields";
+} from "../../plugin-helper.js";
+import { splitUniques } from "../../viewable_fields.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Req } from "@saltcorn/types/base_types";
 import type { Where, Row } from "@saltcorn/db-common/internal";
 
-import utils from "../../utils";
-const { InvalidConfiguration, extractPagings } = utils;
+import { InvalidConfiguration, extractPagings } from "../../utils.js";
 
 
 const configuration_workflow = (req: Req) => 
@@ -106,7 +107,7 @@ const configuration_workflow = (req: Req) =>
         name: req.__("Subtables"),
         contextField: "subtables",
         form: async (context: GenObj) => {
-          const tbl = Table.findOne({ id: context.table_id });
+          const tbl = Table.findOne({ id: context.table_id })!;
           var fields: GenObj[] = [];
           const child_views = await get_child_views(tbl!, context.viewname);
           for (const { relation, related_table, views } of child_views) {
@@ -289,7 +290,7 @@ const run = async (
   }
 };
 
-export = {
+export default {
   /** @type {string} */
   name: "ListShowList",
   /** @type {string} */

@@ -7,10 +7,24 @@
  * @subcategory base-plugin
  */
 
+import { getState, getApp__ } from "../db/state.js";
+import { freeVariables, eval_expression } from "../models/expression.js";
+import { interpolate } from "../utils.js";
+import { select_by_code } from "./fieldviews.js";
+import tagsPkg from "@saltcorn/markup/tags";
+import contractisPkg from "contractis";
+import helpersPkg from "@saltcorn/markup/helpers";
+import markupPkg from "@saltcorn/markup";
+import * as internalPkg from "@saltcorn/db-common/internal";
+import moment from "moment";
+import Table from "../models/table.js";
+import User from "../models/user.js";
+import _ from "underscore";
+import PlainDate from "@saltcorn/plain-date";
+import db from "../db/index.js";
 import { FieldLike } from "@saltcorn/types/base_types";
 import type { GenObj } from "@saltcorn/types/common_types";
 
-const moment = require("moment");
 const {
   input,
   select,
@@ -34,20 +48,11 @@ const {
   code,
   style,
   time,
-} = require("@saltcorn/markup/tags");
-const { is } = require("contractis");
-const { radio_group, checkbox_group } = require("@saltcorn/markup/helpers");
-const { getState, getApp__ } = require("../db/state");
-const { localeDate, localeDateTime } = require("@saltcorn/markup");
-const { freeVariables, eval_expression } = require("../models/expression");
-const Table = require("../models/table");
-const User = require("../models/user");
-const _ = require("underscore");
-const { interpolate } = require("../utils");
-const { sqlFun, sqlBinOp } = require("@saltcorn/db-common/internal");
-const { select_by_code } = require("./fieldviews");
-const PlainDate = require("@saltcorn/plain-date");
-const db = require("../db");
+} = tagsPkg;
+const { is } = contractisPkg;
+const { radio_group, checkbox_group }: any = helpersPkg;
+const { localeDate, localeDateTime } = markupPkg;
+const { sqlFun, sqlBinOp } = internalPkg;
 
 const isdef = (x: any) =>
   typeof x === "undefined" || x === null ? false : true;
@@ -306,7 +311,7 @@ const show_with_html = {
   isEdit: false,
   description: "Show value with any HTML code",
   run: (v: any, req: any, attrs: any = {}) => {
-    const ctx: any = { ...getState().eval_context };
+    const ctx: any = { ...getState()!.eval_context };
     ctx.it = v;
     const rendered = interpolate(
       attrs?.code,
@@ -829,7 +834,7 @@ const string = {
           !(f.attributes && f.attributes.localizes_field)
       );
     const locales = Object.keys(
-      getState().getConfig("localizer_languages", {})
+      getState()!.getConfig("localizer_languages", {})
     );
     return [
       {
@@ -1342,7 +1347,7 @@ const string = {
                 JSON.stringify(join_fields_in_formula(attrs?.formula))
               ),
               "data-formula-table": encodeURIComponent(
-                JSON.stringify(Table.findOne(field.table_id).to_json)
+                JSON.stringify(Table.findOne(field.table_id)!.to_json)
               ),
               onClick:
                 "fill_formula_btn_click(this" +
@@ -2230,7 +2235,7 @@ const float = {
  */
 const locale = (req: any) => {
   //console.log(req && req.getLocale ? req.getLocale() : undefined);
-  return req?.getLocale?.() || getState().getConfig("default_locale", "en");
+  return req?.getLocale?.() || getState()!.getConfig("default_locale", "en");
 };
 
 /**
@@ -2305,7 +2310,7 @@ const date = {
       run: (d: any, req: any) => {
         const local = locale(req);
         return typeof d === "string" || typeof d === "number"
-          ? localeDate(new Date(d), {}, locale)
+          ? localeDate(new Date(d), {}, local)
           : d && d.toISOString
             ? localeDate(d, {}, local)
             : "";
@@ -2486,7 +2491,7 @@ const date = {
    */
   read: (v0: any, attrs: any) => {
     const locale =
-      attrs?.locale || getState().getConfig("default_locale", "en");
+      attrs?.locale || getState()!.getConfig("default_locale", "en");
     const readDate = (v: any) => {
       if (v instanceof Date && !isNaN(v as any)) return v;
       if (
@@ -2932,4 +2937,11 @@ const bool = {
   validate: () => (x: any) => true,
 };
 
-export = { string, int, bool, date, float, color };
+export {
+  string,
+  int,
+  bool,
+  date,
+  float,
+  color,
+};
