@@ -6,7 +6,13 @@
 import { getState } from "./db/state.js";
 import tagsPkg from "@saltcorn/markup/tags";
 import layoutUtilsPkg from "@saltcorn/markup/layout_utils";
-import commonCodePkg from "@saltcorn/common-code";
+import {
+  Relation,
+  RelationType,
+  ViewDisplayType,
+  parseRelationPath,
+  buildRelationPath,
+} from "@saltcorn/common-code";
 import mjml from "@saltcorn/markup/mjml-tags";
 import PlainDate from "@saltcorn/plain-date";
 import View from "./models/view.js";
@@ -18,9 +24,6 @@ import Tag from "./models/tag.js";
 import db from "./db/index.js";
 const { button, a, text, i, text_attr } = tagsPkg;
 const { show_icon_and_label } = layoutUtilsPkg;
-const { Relation, RelationType, ViewDisplayType, parseRelationPath } =
-  commonCodePkg;
-const { buildRelationPath } = commonCodePkg as any;
 import {
   applyAsync,
   InvalidConfiguration,

@@ -5,7 +5,7 @@
  */
 import { getState } from "../../db/state.js";
 import markupPkg from "@saltcorn/markup";
-import commonCodePkg from "@saltcorn/common-code";
+import { Relation, RelationType } from "@saltcorn/common-code";
 import PageGroup from "../../models/page_group.js";
 import FieldRepeat from "../../models/fieldrepeat.js";
 import Library from "../../models/library.js";
@@ -90,7 +90,6 @@ import {
 } from "../../models/layout.js";
 import { extractFromLayout } from "../../diagram/node_extract_utils.js";
 import db from "../../db/index.js";
-const { Relation, RelationType } = commonCodePkg;
 
 /**
  * @param req

@@ -10,11 +10,24 @@
   },
   "author": "Christian Hugo",
   "license": "MIT",
+  "type": "module",
   "main": "dist/index.js",
   "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*.js",
-    "./relations/*": "./dist/relations/*.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./relations/*": {
+      "types": "./dist/relations/*.d.ts",
+      "import": "./dist/relations/*.js",
+      "default": "./dist/relations/*.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    }
   },
   "devDependencies": {
     "@saltcorn/db-common": "1.6.0",

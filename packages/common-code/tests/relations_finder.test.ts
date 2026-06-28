@@ -1,5 +1,10 @@
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
+import { dirname } from "node:path";
 import { expect } from "@saltcorn/db-common/test_expect";
+
+// ESM has no __dirname; derive it from the module URL.
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import {
   fixturesData,
   withAnotherUserField,
@@ -8,7 +13,7 @@ import {
   withKeyFromLayerTwo,
   withKeyFromLayerThree,
   withSimplePostTopicrelation,
-} from "./test_data";
+} from "./test_data.js";
 
 import {
   expectedOne,
@@ -17,9 +22,9 @@ import {
   expectedFour,
   expectedFive,
   expectedSix,
-} from "./expected_relations";
+} from "./expected_relations.js";
 
-import { RelationsFinder } from "../relations/relations_finder";
+import { RelationsFinder } from "../relations/relations_finder.js";
 
 describe("single relations", () => {
   it("parent relations", () => {

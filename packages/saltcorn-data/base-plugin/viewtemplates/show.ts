@@ -37,7 +37,7 @@ import {
 } from "../../models/expression.js";
 import { get_base_url } from "../../models/config.js";
 import { extractFromLayout } from "../../diagram/node_extract_utils.js";
-import commonCodePkg from "@saltcorn/common-code";
+import { Relation } from "@saltcorn/common-code";
 import tagsPkg from "@saltcorn/markup/tags";
 import PageGroup from "../../models/page_group.js";
 import renderLayout from "@saltcorn/markup/layout";
@@ -57,7 +57,6 @@ import File from "../../models/file.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 import { Row } from "@saltcorn/db-common/dbtypes";
-const { Relation } = commonCodePkg;
 
 const { div, text, span, a, text_attr, i, button, script, domReady } = tagsPkg;
 
