@@ -1,6 +1,11 @@
 import { getState } from "../db/state.js";
 import m from "mjml";
-import { createTransport, Transporter } from "nodemailer";
+// Access createTransport through the (live) default import / module.exports
+// rather than a named import: ESM named imports from a CommonJS module are
+// snapshotted at evaluation, so test suites that swap nodemailer.createTransport
+// for a mock (jest.mock) would otherwise never be seen here.
+import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
 import tags from "@saltcorn/markup/tags";
 import mjml from "@saltcorn/markup/mjml-tags";
 const { link } = tags;
@@ -75,7 +80,7 @@ const getMailTransport = async (): Promise<
     };
     if (smtp_allow_self_signed)
       transportOptions.tls = { rejectUnauthorized: false };
-    return createTransport(transportOptions);
+    return nodemailer.createTransport(transportOptions);
   }
 };
 

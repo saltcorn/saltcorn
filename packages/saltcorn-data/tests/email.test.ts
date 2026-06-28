@@ -4,7 +4,7 @@ import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-co
 import View from "../models/view.js";
 import Table from "../models/table.js";
 import User from "../models/user.js";
-import { createTransport } from "nodemailer";
+import nodemailer from "nodemailer";
 import * as mocks from "./mocks.js";
 import { getState } from "../db/state.js";
 import db from "../db/index.js";
@@ -36,7 +36,7 @@ describe("getMailTransport", () => {
   it("returns Transporter", async () => {
     let sentEmail: any;
     // @ts-ignore
-    createTransport.mockReturnValue({
+    nodemailer.createTransport.mockReturnValue({
       sendMail: (email: any) => {
         sentEmail = email;
         return;
@@ -49,7 +49,7 @@ describe("getMailTransport", () => {
       subject: "us",
       html: "<div>Hello World</div>",
     });
-    expect(createTransport).toHaveBeenCalledTimes(1);
+    expect(nodemailer.createTransport).toHaveBeenCalledTimes(1);
     expect(sentEmail?.from).toBe("me");
   });
 });
@@ -58,7 +58,7 @@ describe("send_verification_email", () => {
   it("returns Transporter", async () => {
     let sentEmail: any;
     // @ts-ignore
-    createTransport.mockReturnValue({
+    nodemailer.createTransport.mockReturnValue({
       sendMail: (email: any) => {
         sentEmail = email;
         return;

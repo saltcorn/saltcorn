@@ -3,7 +3,7 @@ import Notification from "../models/notification.js";
 import User from "../models/user.js";
 import { MailQueue } from "../models/internal/mail_queue.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import { createTransport } from "nodemailer";
+import nodemailer from "nodemailer";
 import * as mocks from "./mocks.js";
 import { getState } from "../db/state.js";
 import db from "../db/index.js";
@@ -36,7 +36,7 @@ describe("Mail queue", () => {
   it("should send when there are no previous mails", async () => {
     let sentEmail: any;
     // @ts-ignore
-    createTransport.mockReturnValue({
+    nodemailer.createTransport.mockReturnValue({
       sendMail: (email: any) => {
         sentEmail = email;
         return new Promise((resolve) => resolve(true));
@@ -48,7 +48,7 @@ describe("Mail queue", () => {
       user_id: 1,
     });
     assertIsSet(notification.id);
-    expect(createTransport).toHaveBeenCalledTimes(1);
+    expect(nodemailer.createTransport).toHaveBeenCalledTimes(1);
     const fromDb = await Notification.findOne({ id: notification.id });
     expect(fromDb?.send_status).toBe("sent");
   });
@@ -57,9 +57,9 @@ describe("Mail queue", () => {
     await emptyNotificationsTable();
     let sentEmail: any;
     // @ts-ignore
-    createTransport.mockClear();
+    nodemailer.createTransport.mockClear();
     // @ts-ignore
-    createTransport.mockReturnValue({
+    nodemailer.createTransport.mockReturnValue({
       sendMail: (email: any) => {
         sentEmail = email;
         return new Promise((resolve) => resolve(true));
@@ -76,7 +76,7 @@ describe("Mail queue", () => {
     assertIsSet(notificationA.id);
     const fromDbA = await Notification.findOne({ id: notificationA.id });
     expect(fromDbA?.send_status).toBe("sent");
-    expect(createTransport).toHaveBeenCalledTimes(1);
+    expect(nodemailer.createTransport).toHaveBeenCalledTimes(1);
 
     const notificationB = await Notification.create({
       title: "title B",
@@ -90,16 +90,16 @@ describe("Mail queue", () => {
     await sleep(minDelay + 500);
     fromDbB = await Notification.findOne({ id: notificationB.id });
     expect(fromDbB?.send_status).toBe("sent");
-    expect(createTransport).toHaveBeenCalledTimes(2);
+    expect(nodemailer.createTransport).toHaveBeenCalledTimes(2);
   });
 
   it("should send when the min interval has passed", async () => {
     await emptyNotificationsTable();
     let sentEmail: any;
     // @ts-ignore
-    createTransport.mockClear();
+    nodemailer.createTransport.mockClear();
     // @ts-ignore
-    createTransport.mockReturnValue({
+    nodemailer.createTransport.mockReturnValue({
       sendMail: (email: any) => {
         sentEmail = email;
         return new Promise((resolve) => resolve(true));
@@ -116,7 +116,7 @@ describe("Mail queue", () => {
     assertIsSet(notificationA.id);
     const fromDbA = await Notification.findOne({ id: notificationA.id });
     expect(fromDbA?.send_status).toBe("sent");
-    expect(createTransport).toHaveBeenCalledTimes(1);
+    expect(nodemailer.createTransport).toHaveBeenCalledTimes(1);
 
     await sleep(minDelay + 1);
 
@@ -128,6 +128,6 @@ describe("Mail queue", () => {
     assertIsSet(notificationB.id);
     let fromDbB = await Notification.findOne({ id: notificationB.id });
     expect(fromDbB?.send_status).toBe("sent");
-    expect(createTransport).toHaveBeenCalledTimes(2);
+    expect(nodemailer.createTransport).toHaveBeenCalledTimes(2);
   });
 });
