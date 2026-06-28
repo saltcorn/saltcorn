@@ -1,7 +1,14 @@
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 import db from "../db/index.js";
 import { assertIsSet } from "./assertions.js";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 
 import Table from "../models/table.js";
 import resetSchemaMod from "../db/reset_schema.js";
@@ -51,7 +58,7 @@ describe("Transaction test", () => {
         });
       });
       const b = await books.getRow({ author: "Trans Rights" });
-      expect(b.pages).toBe(688);
+      expect(b!.pages).toBe(688);
     });
   if (!db.isSQLite)
     it("should cancel", async () => {

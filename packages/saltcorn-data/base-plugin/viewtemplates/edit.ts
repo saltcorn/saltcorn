@@ -23,7 +23,6 @@ import File from "../../models/file.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 
-
 import {
   text,
   text_attr,
@@ -189,7 +188,8 @@ const configuration_workflow = (req: Req) =>
                 { mode: "edit", req }
               );
             }
-            if (action.description) actionDescriptions[name] = action.description;
+            if (action.description)
+              actionDescriptions[name] = action.description;
           }
           const workflowActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -2084,7 +2084,7 @@ const virtual_triggers = (
 ) => {
   if (!enable_realtime) return [];
   const table = Table.findOne({ id: table_id })!;
-  const view = View.findOne({ name: viewname });
+  const view = View.findOne({ name: viewname })!;
   return [
     {
       when_trigger: "Update",

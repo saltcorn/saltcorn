@@ -4,9 +4,26 @@
  * @subcategory base-plugin
  */
 import { getState, getReq__ } from "./db/state.js";
-import { eval_expression, freeVariables, get_expression_function } from "./models/expression.js";
+import {
+  eval_expression,
+  freeVariables,
+  get_expression_function,
+} from "./models/expression.js";
 import { traverseSync, traverse, translateLayout } from "./models/layout.js";
-import { structuredClone, isWeb, isOfflineMode, getSessionId, interpolate, objectToQueryString, validSqlId, InvalidConfiguration, renderServerSide, isNode, dollarizeObject, getSafeBaseUrl } from "./utils.js";
+import {
+  structuredClone,
+  isWeb,
+  isOfflineMode,
+  getSessionId,
+  interpolate,
+  objectToQueryString,
+  validSqlId,
+  InvalidConfiguration,
+  renderServerSide,
+  isNode,
+  dollarizeObject,
+  getSafeBaseUrl,
+} from "./utils.js";
 import { bool, date } from "./base-plugin/types.js";
 import markupPkg from "@saltcorn/markup";
 import tagsPkg from "@saltcorn/markup/tags";
@@ -27,17 +44,7 @@ import { instanceOfType } from "@saltcorn/types/common_types";
 import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 
 const { post_btn } = markupPkg;
-const {
-  text,
-  a,
-  i,
-  div,
-  button,
-  span,
-  script,
-  domReady,
-  input,
-} = tagsPkg;
+const { text, a, i, div, button, span, script, domReady, input } = tagsPkg;
 import {
   link_view,
   displayType,
@@ -46,12 +53,8 @@ import {
   pathToState,
 } from "./plugin-helper.js";
 
-const {
-  Relation,
-  parseRelationPath,
-  RelationType,
-  ViewDisplayType,
-} = commonCodePkg;
+const { Relation, parseRelationPath, RelationType, ViewDisplayType } =
+  commonCodePkg;
 const { show_icon_and_label } = layoutUtilsPkg;
 
 /**
@@ -510,9 +513,9 @@ const view_linker = (
   };
 
   if (relation) {
-    const topview = View.findOne({ name: srcViewName });
+    const topview = View.findOne({ name: srcViewName })!;
     const srcTable = Table.findOne({ id: topview.table_id })!;
-    const subview = View.findOne({ name: view });
+    const subview = View.findOne({ name: view })!;
     const subTable = Table.findOne({ id: subview.table_id });
     const relObj = new Relation(
       relation,
@@ -1170,7 +1173,10 @@ const get_viewable_fields = (
             type = getState()!.types[column.field_type];
           }
         }
-        if (fieldview && (type?.fieldviews?.[fieldview] as any)?.expandColumns) {
+        if (
+          fieldview &&
+          (type?.fieldviews?.[fieldview] as any)?.expandColumns
+        ) {
           return (type!.fieldviews![fieldview] as any).expandColumns(
             field,
             {
@@ -1202,11 +1208,15 @@ const get_viewable_fields = (
         if (!gofv && column.field_type === "File") {
           gofv = (row: Row) =>
             row[key]
-              ? (getState()!.fileviews[fieldview].run as Function)(row[key], "", {
-                  row,
-                  ...column,
-                  ...(column?.configuration || {}),
-                })
+              ? (getState()!.fileviews[fieldview].run as Function)(
+                  row[key],
+                  "",
+                  {
+                    row,
+                    ...column,
+                    ...(column?.configuration || {}),
+                  }
+                )
               : "";
         }
 
@@ -1301,7 +1311,11 @@ const get_viewable_fields = (
           const type = getState()!.types[tname];
           if (type?.fieldviews?.[column.agg_fieldview])
             showValue = (x: any) =>
-              (type.fieldviews![column.agg_fieldview].run as Function)(x, req, column);
+              (type.fieldviews![column.agg_fieldview].run as Function)(
+                x,
+                req,
+                column
+              );
         } else if (column.agg_fieldview) {
           const aggField = Table.findOne(table)?.getField?.(column.agg_field);
           const outcomeType =
@@ -1313,10 +1327,14 @@ const get_viewable_fields = (
           const type = getState()!.types[outcomeType];
           if (type?.fieldviews?.[column.agg_fieldview])
             showValue = (x: any) =>
-              (type.fieldviews![column.agg_fieldview].run as Function)(type.read!(x), req, {
-                ...column,
-                ...(column?.configuration || {}),
-              });
+              (type.fieldviews![column.agg_fieldview].run as Function)(
+                type.read!(x),
+                req,
+                {
+                  ...column,
+                  ...(column?.configuration || {}),
+                }
+              );
         }
 
         let key = (r: Row) => {
@@ -1847,7 +1865,11 @@ const standardBlockDispatch = (
       }
       if (field_type === "File") {
         return value
-          ? (getState()!.fileviews[fieldview].run as Function)(value, "", configuration || {})
+          ? (getState()!.fileviews[fieldview].run as Function)(
+              value,
+              "",
+              configuration || {}
+            )
           : "";
       }
       let fvRes;

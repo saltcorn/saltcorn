@@ -4,12 +4,35 @@ import Table from "../models/table.js";
 import Field from "../models/field.js";
 import async_json_stream from "../models/internal/async_json_stream.js";
 
-
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 import * as mocks from "./mocks.js";
-import { get_parent_views, get_child_views, get_inbound_relation_opts, get_inbound_self_relation_opts, get_many_to_many_relation_opts, stateFieldsToWhere, field_picker_fields, readState, generate_joined_query, stateToQueryString } from "../plugin-helper.js";
+import {
+  get_parent_views,
+  get_child_views,
+  get_inbound_relation_opts,
+  get_inbound_self_relation_opts,
+  get_many_to_many_relation_opts,
+  stateFieldsToWhere,
+  field_picker_fields,
+  readState,
+  generate_joined_query,
+  stateToQueryString,
+} from "../plugin-helper.js";
 import { getState } from "../db/state.js";
-import { satisfies, urlStringToObject, cloneName, objectToQueryString, validSqlId } from "../utils.js";
+import {
+  satisfies,
+  urlStringToObject,
+  cloneName,
+  objectToQueryString,
+  validSqlId,
+} from "../utils.js";
 import fs from "fs";
 import PlainDate from "@saltcorn/plain-date";
 import basePluginMod from "../base-plugin/index.js";
@@ -480,7 +503,7 @@ describe("stateFieldsToWhere", () => {
         schema: [{ key: "name", type: "String" }],
       },
     },
-  ];
+  ] as unknown as Field[];
   it("normal field", async () => {
     const w = stateFieldsToWhere({
       fields,
@@ -666,8 +689,8 @@ describe("stateFieldsToWhere", () => {
     expect(state).toStrictEqual({ favbook: 1 });
   });
   it("join field", async () => {
-    const table = Table.findOne({ name: "patients" });
-    const myFields = await table?.getFields();
+    const table = Table.findOne({ name: "patients" })!;
+    const myFields = await table.getFields();
     const w = stateFieldsToWhere({
       fields: myFields,
       state: { "favbook.books->author": "Herman" },
@@ -738,13 +761,13 @@ describe("urlStringToObject", () => {
 describe("plugin helper", () => {
   it("field_picker_fields", async () => {
     const flds = await field_picker_fields({
-      table: Table.findOne({ name: "patients" }),
+      table: Table.findOne({ name: "patients" })!,
       viewname: "myView",
       req: mockReqRes.req,
     });
     expect(flds.length).toBeGreaterThan(1);
     const flds1 = await field_picker_fields({
-      table: Table.findOne({ name: "books" }),
+      table: Table.findOne({ name: "books" })!,
       viewname: "myView",
       req: mockReqRes.req,
     });
@@ -764,7 +787,6 @@ describe("objectToQueryString", () => {
     );
     expect(objectToQueryString({ eq: ["a", 5] })).toBe("a=5");
     expect(objectToQueryString({ a: null })).toBe("a=null");
-
   });
   it("collects or", async () => {
     expect(objectToQueryString({ or: [{ a: 5 }, { a: 7 }] })).toBe("a=5&a=7");

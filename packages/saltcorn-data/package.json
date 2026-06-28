@@ -10,7 +10,7 @@
     "pretsc": "node gen-cjs-shims.cjs",
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*",
-    "build": "webpack --mode development"
+    "build": "webpack --mode development --config webpack.config.cjs"
   },
   "type": "module",
   "author": "Tom Nielsen",
@@ -54,7 +54,7 @@
     "dist/**/*",
     "cjs/**/*.cjs",
     "gen-cjs-shims.cjs",
-    "webpack.config.js",
+    "webpack.config.cjs",
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "optionalDependencies": {

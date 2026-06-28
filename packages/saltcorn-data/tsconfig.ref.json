@@ -5,5 +5,15 @@
     "composite": true,
     "declaration": true /* set to true by "composite" */,
     "baseUrl": "."
-  }
+  },
+  "references": [
+    { "path": "../plain-date/tsconfig.ref.json" },
+    { "path": "../db-common/tsconfig.ref.json" },
+    { "path": "../saltcorn-types/tsconfig.ref.json" },
+    { "path": "../sqlite/tsconfig.ref.json" },
+    { "path": "../postgres/tsconfig.ref.json" },
+    { "path": "../sqlite-mobile/tsconfig.ref.json" },
+    { "path": "../saltcorn-markup/tsconfig.ref.json" },
+    { "path": "../common-code/tsconfig.ref.json" }
+  ]
 }

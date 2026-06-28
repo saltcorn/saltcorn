@@ -1726,7 +1726,7 @@ const getConfig = async (key: string, def?: any): Promise<any> => {
  * @function
  * @returns {Promise<object>}
  */
-const getAllConfig = async (): Promise<ConfigTypes | void> => {
+const getAllConfig = async (): Promise<ConfigTypes> => {
   const cfgs = await db.select("_sc_config");
   let cfg: ConfigTypes = {};
   cfgs.forEach(({ key, value }: { key: string; value: string | any }) => {
@@ -1802,7 +1802,6 @@ type RemoveFromMenuOpts = {
  * @returns {Promise<void>}
  */
 const remove_from_menu = async (item: RemoveFromMenuOpts): Promise<void> => {
-
   const current_menu = getState()!.getConfigCopy("menu_items", []);
   const new_menu = current_menu.filter(
     (menuitem: any) =>
@@ -1817,7 +1816,6 @@ const remove_from_menu = async (item: RemoveFromMenuOpts): Promise<void> => {
 };
 
 const save_menu_items = async (menu_items: any[]): Promise<void> => {
-
   const Table = (await import("./table.js")).default;
 
   const unroll: (items: any[]) => Promise<any[]> = async (items) => {
@@ -1993,7 +1991,6 @@ const get_saltcorn_npm_versions = async (
  * @returns {string}
  */
 const get_base_url = (req?: Req): string => {
-
   const cfg = getState()!.getConfig("base_url", "");
   if (cfg) return ensure_final_slash(cfg);
   if (!req || !req.get) return "/";
@@ -2013,7 +2010,6 @@ const get_base_url = (req?: Req): string => {
  * @returns {boolean}
  */
 const check_email_mask = (email: string): boolean => {
-
   const cfg = getState()!.getConfig("email_mask", "");
   if (cfg) {
     return email.endsWith(cfg);
@@ -2056,4 +2052,3 @@ namespace configExports {
 }
 export type SingleConfig = configExports.SingleConfig;
 export type ConfigTypes = configExports.ConfigTypes;
-

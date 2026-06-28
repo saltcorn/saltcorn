@@ -349,7 +349,7 @@ const objectToQueryString = (o: Object): string => {
     .join("&");
 };
 
-const urlStringToObject = (url: string): any => {
+const urlStringToObject = (url: string | null): any => {
   if (!url) return {};
   const noHash = url.split("#")[0];
   const qs = noHash.split("?")[1];
@@ -886,8 +886,8 @@ function toSafeRelativeUrl(input: string): string {
 }
 /**
  * Prints elapsed time since start of timer. Inspired by matlab's tic and toc
- * 
- * Usage: 
+ *
+ * Usage:
  * const toc = tic("view config")
  * ...
  * toc("get tables done")

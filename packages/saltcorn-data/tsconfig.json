@@ -20,17 +20,14 @@
     "moduleResolution": "NodeNext",
     "target": "ES2021"
   },
- "include": [
-    "**/*",
-    "**/*.json"
-  ],
+  "include": ["**/*", "**/*.json"],
 
   "exclude": [
     "node_modules",
     "dist/**",
-    "webpack.config.js",
+    "migrations/**",
+    "webpack.config.cjs",
     "setup-test-schema.js",
     "./mobile-mocks/node/vm.js"
   ]
 }
-

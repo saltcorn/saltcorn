@@ -6,5 +6,10 @@
   "compilerOptions": {
     "composite": true,
     "declaration": true /* set to true by "composite" */
-  }
+  },
+  "references": [
+    { "path": "../db-common/tsconfig.ref.json" },
+    { "path": "../saltcorn-markup/tsconfig.ref.json" },
+    { "path": "../saltcorn-data/tsconfig.ref.json" }
+  ]
 }

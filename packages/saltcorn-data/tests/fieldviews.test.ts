@@ -8,7 +8,13 @@ import basePluginMod from "../base-plugin/index.js";
 import resetSchemaMod from "../db/reset_schema.js";
 import fixturesMod from "../db/fixtures.js";
 const { mockReqRes } = mocks;
-import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  it,
+  expect,
+} from "@saltcorn/db-common/test_expect";
 import { assertIsSet } from "./assertions.js";
 import {
   prepareQueryEnviroment,
@@ -33,12 +39,12 @@ beforeAll(async () => {
 });
 
 describe("to_locale_string fieldview", () => {
-  const getFloatFV = () => {
-    const state = getState();
+  const getFloatFV = (): any => {
+    const state: any = getState()!;
     return state.types["Float"].fieldviews.to_locale_string;
   };
-  const getIntFV = () => {
-    const state = getState();
+  const getIntFV = (): any => {
+    const state: any = getState()!;
     return state.types["Integer"].fieldviews.to_locale_string;
   };
 
@@ -92,9 +98,9 @@ describe("to_locale_string fieldview", () => {
 
   it("shows explicit + sign with signDisplay always", () => {
     const fv = getFloatFV();
-    expect(
-      fv.run(500, null, { style: "decimal", signDisplay: "always" })
-    ).toBe("+500");
+    expect(fv.run(500, null, { style: "decimal", signDisplay: "always" })).toBe(
+      "+500"
+    );
   });
 
   it("shows - sign on negative with signDisplay always", () => {
@@ -152,7 +158,7 @@ describe("select fieldview", () => {
     };
     const field = new Field(fieldSpec);
     await field.fill_fkey_options();
-    const fieldview = getState()!.keyFieldviews[field.fieldview as string];
+    const fieldview: any = getState()!.keyFieldviews[field.fieldview as string];
     const res = fieldview.run(
       "favbook",
       null,
@@ -185,7 +191,7 @@ describe("select fieldview", () => {
     };
     const field = new Field(fieldSpec);
     await field.fill_fkey_options();
-    const fieldview = getState()!.keyFieldviews[field.fieldview as string];
+    const fieldview: any = getState()!.keyFieldviews[field.fieldview as string];
     const res = fieldview.run(
       "favbook",
       null,

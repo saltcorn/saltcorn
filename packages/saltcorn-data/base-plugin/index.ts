@@ -59,6 +59,7 @@ import fileviews from "./fileviews.js";
 import * as fieldviews from "./fieldviews.js";
 import actions from "./actions.js";
 import { string, int, bool, date, float, color } from "./types.js";
+import type { Plugin } from "@saltcorn/types/base_types";
 
 const viewtemplates = [
   list,
@@ -71,11 +72,11 @@ const viewtemplates = [
   wfroom,
 ];
 
-export default {
+const basePlugin = {
   /** @type {number} */
   sc_plugin_api_version: 1,
   /** @type {object[]} */
-  types: [ string, int, bool, date, float, color ],
+  types: [string, int, bool, date, float, color],
   /** @type {object[]} */
   viewtemplates,
   /** @type {base-plugin/fileviews} */
@@ -86,3 +87,5 @@ export default {
   fieldviews,
   /** @type {object} */
 };
+
+export default basePlugin as unknown as Plugin;

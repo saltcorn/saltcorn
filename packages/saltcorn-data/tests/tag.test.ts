@@ -4,7 +4,14 @@ import basePluginMod from "../base-plugin/index.js";
 import resetSchemaMod from "../db/reset_schema.js";
 import fixturesMod from "../db/fixtures.js";
 getState()!.registerPlugin("base", basePluginMod);
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 
 import Tag from "../models/tag.js";
 import Table from "../models/table.js";
@@ -24,8 +31,8 @@ describe("Tag IO", () => {
   let pageA: Page;
 
   beforeAll(async () => {
-    books = Table.findOne({ name: "books" });
-    patients = Table.findOne({ name: "patients" });
+    books = Table.findOne({ name: "books" })!;
+    patients = Table.findOne({ name: "patients" })!;
     authorlist = View.findOne({ name: "authorlist" })!;
     authorshow = View.findOne({ name: "authorshow" })!;
     pageA = await Page.findOne({ name: "a_page" })!;

@@ -4,10 +4,37 @@
  * @subcategory base-plugin
  */
 import { getState } from "../../db/state.js";
-import { eachView, traverse, getStringsForI18n, translateLayout, splitLayoutContainerFields, findLayoutBranchWith, traverseSync } from "../../models/layout.js";
+import {
+  eachView,
+  traverse,
+  getStringsForI18n,
+  translateLayout,
+  splitLayoutContainerFields,
+  findLayoutBranchWith,
+  traverseSync,
+} from "../../models/layout.js";
 import { check_view_columns } from "../../plugin-testing.js";
-import { asyncMap, structuredClone, InvalidConfiguration, mergeIntoWhere, isWeb, hashState, getSafeBaseUrl, dollarizeObject, getSessionId, interpolate, validSqlId, renderServerSide } from "../../utils.js";
-import { get_expression_function, eval_expression, freeVariables, freeVariablesInInterpolation, add_free_variables_to_aggregations } from "../../models/expression.js";
+import {
+  asyncMap,
+  structuredClone,
+  InvalidConfiguration,
+  mergeIntoWhere,
+  isWeb,
+  hashState,
+  getSafeBaseUrl,
+  dollarizeObject,
+  getSessionId,
+  interpolate,
+  validSqlId,
+  renderServerSide,
+} from "../../utils.js";
+import {
+  get_expression_function,
+  eval_expression,
+  freeVariables,
+  freeVariablesInInterpolation,
+  add_free_variables_to_aggregations,
+} from "../../models/expression.js";
 import { get_base_url } from "../../models/config.js";
 import { extractFromLayout } from "../../diagram/node_extract_utils.js";
 import commonCodePkg from "@saltcorn/common-code";
@@ -32,18 +59,7 @@ import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 import { Row } from "@saltcorn/db-common/dbtypes";
 const { Relation } = commonCodePkg;
 
-
-const {
-  div,
-  text,
-  span,
-  a,
-  text_attr,
-  i,
-  button,
-  script,
-  domReady,
-} = tagsPkg;
+const { div, text, span, a, text_attr, i, button, script, domReady } = tagsPkg;
 
 import {
   stateFieldsToWhere,
@@ -141,7 +157,8 @@ const configuration_workflow = (req: Req) =>
                 { mode: "show", req }
               );
             }
-            if (action.description) actionDescriptions[name] = action.description;
+            if (action.description)
+              actionDescriptions[name] = action.description;
           }
           const workflowActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -847,7 +864,7 @@ export default {
       const aggregations: GenObj = {};
 
       add_free_variables_to_joinfields(freeVars, joinFields, tbl!.fields);
-      add_free_variables_to_aggregations(freeVars, aggregations, tbl);
+      add_free_variables_to_aggregations(freeVars, aggregations, tbl!);
       const row = await tbl!.getJoinedRow({
         where: { [tbl!.pk_name]: state[tbl!.pk_name] },
         joinFields,
@@ -886,7 +903,7 @@ export default {
         fields,
         layout,
         req,
-        tbl
+        tbl!
       );
       const unhashed_reset_password_token =
         state._unhashed_reset_password_token;
@@ -895,7 +912,7 @@ export default {
         fields,
         state,
         approximate: true,
-        table: tbl,
+        table: tbl!,
         prefix: "a.",
       });
       if (Object.keys(qstate).length === 0)
@@ -938,14 +955,14 @@ export default {
         fields,
         layout,
         req,
-        tbl
+        tbl!
       );
       Object.assign(joinFields, joinFieldsExtra || {});
       const stateHash = hashState(state, name);
       const qstate = stateFieldsToWhere({
         fields,
         state,
-        table: tbl,
+        table: tbl!,
         prefix: "a.",
       });
       const q = stateFieldsToQuery({ state, fields, stateHash });

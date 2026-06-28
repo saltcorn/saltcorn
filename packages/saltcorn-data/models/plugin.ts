@@ -7,7 +7,6 @@
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
 import { getState, getRootState } from "../db/state.js";
-import stableVersioningPkg from "@saltcorn/plugins-loader/stable_versioning.js";
 import npmFetch from "npm-registry-fetch";
 import * as nsState from "../db/state.js";
 import db from "../db/index.js";
@@ -192,7 +191,6 @@ class Plugin implements AbstractPlugin {
   }
 
   static get_cached_plugins(): Array<Plugin> {
-
     const stored = getState()!.getConfigCopy("available_plugins", false);
     return stored || [];
   }
@@ -382,7 +380,7 @@ class Plugin implements AbstractPlugin {
     const {
       supportedVersion,
       resolveLatest,
-    } = stableVersioningPkg;
+    } = require("@saltcorn/plugins-loader/stable_versioning.js");
     let versions = await Plugin.getEngineInfos(plugin, forceFetch);
     if (
       plugin.version &&

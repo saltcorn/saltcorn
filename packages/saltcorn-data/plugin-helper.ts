@@ -18,12 +18,8 @@ import Tag from "./models/tag.js";
 import db from "./db/index.js";
 const { button, a, text, i, text_attr } = tagsPkg;
 const { show_icon_and_label } = layoutUtilsPkg;
-const {
-  Relation,
-  RelationType,
-  ViewDisplayType,
-  parseRelationPath,
-} = commonCodePkg;
+const { Relation, RelationType, ViewDisplayType, parseRelationPath } =
+  commonCodePkg;
 const { buildRelationPath } = commonCodePkg as any;
 import {
   applyAsync,
@@ -659,7 +655,7 @@ const get_many_to_many_relation_opts = async (
     tableIdCache: Record<number, Table>;
     tableNameCache: Record<string, Table>;
     fieldCache: Record<string, Field[]>;
-  },
+  } | null,
   path: string[]
 ): Promise<{ path: string; views: View[] }[]> => {
   const result = [];

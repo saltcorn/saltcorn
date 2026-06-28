@@ -325,7 +325,7 @@ function jsexprToWhere(
             ],
           };
         if ((field.type as any)?.name === "String")
-         return {
+          return {
             and: [
               { not: { [field.name]: null } },
               { not: { [field.name]: "" } },
@@ -418,12 +418,18 @@ function jsexprToWhere(
               );
             }
             const throughTable = Table.findOne({ name: field.reftable_name });
+            if (!throughTable)
+              throw new Error(`Table not found: ${field.reftable_name}`);
             const throughField = throughTable.fields.find(
               (f: Field) => f.name === c2.description
             );
             const finalTable = Table.findOne({
               name: throughField!.reftable_name,
             });
+            if (!finalTable)
+              throw new Error(
+                `Table not found: ${throughField!.reftable_name}`
+              );
             return (val: any) => ({
               [cleftName]: {
                 inSelect: {
@@ -522,7 +528,9 @@ function jsexprToWhere(
   }
 }
 
-function freeVariablesInInterpolation(interpString: string | undefined): Set<string> {
+function freeVariablesInInterpolation(
+  interpString: string | undefined
+): Set<string> {
   let freeVars: Set<string> = new Set();
   ((interpString || "").match(/\{\{([^#].+?)\}\}/g) || []).forEach((s) => {
     const s1 = s.replace("{{", "").replace("}}", "").trim();
@@ -733,7 +741,7 @@ function isIdentifierWithName(node: any): node is Identifier {
  */
 function transform_for_async(
   expression: string,
-  statefuns: Record<string, PluginFunction>
+  statefuns: Record<string, Function | PluginFunction>
 ) {
   var isAsync = false;
   const ast: any = parseExpressionAt(expression, 0, {
@@ -745,7 +753,7 @@ function transform_for_async(
     leave: function (node) {
       if (node.type === "CallExpression") {
         if (isIdentifierWithName(node.callee)) {
-          const sf = statefuns[node.callee.name];
+          const sf = statefuns[node.callee.name] as PluginFunction;
           if (sf && sf.isAsync) {
             isAsync = true;
             return { type: "AwaitExpression", argument: node };

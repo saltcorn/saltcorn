@@ -6,7 +6,13 @@ import resetSchemaMod from "../db/reset_schema.js";
 import fixturesMod from "../db/fixtures.js";
 import * as state from "../db/state.js";
 const { getState } = state;
-import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  it,
+  expect,
+} from "@saltcorn/db-common/test_expect";
 
 getState()!.registerPlugin("base", basePluginMod);
 beforeAll(async () => {
@@ -41,9 +47,9 @@ describe("State constants", () => {
 describe("State queries", () => {
   it("should query layout and 2fa policy", async () => {
     const user = await User.findOne({ role_id: 1 });
-    const layout = getState()!.getLayout(user);
+    const layout = getState()!.getLayout(user!);
     expect(typeof layout.wrap).toBe("function");
-    const twofapol = getState()!.get2FApolicy(user);
+    const twofapol = getState()!.get2FApolicy(user!);
     expect(twofapol).toBe("Optional");
   });
   it("should query i18n strings", async () => {
