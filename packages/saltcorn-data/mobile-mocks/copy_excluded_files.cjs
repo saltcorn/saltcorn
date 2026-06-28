@@ -4,6 +4,15 @@ fs.copyFileSync(
   path.join(__dirname, "node", "vm.js"),
   path.join(__dirname, "..", "dist", "mobile-mocks", "node", "vm.js")
 );
+// The mobile mocks are authored/emitted as CommonJS (mobile-mocks/package.json
+// marks the source dir "type": "commonjs"). The package itself is "type": "module",
+// so mark the compiled mocks dir as commonjs too, otherwise Node/webpack would treat
+// dist/mobile-mocks/*.js as ESM. CJS lets webpack synthesize default + named interop
+// when the ESM data bundle does `import fs from "fs"` (aliased to these mocks).
+fs.writeFileSync(
+  path.join(__dirname, "..", "dist", "mobile-mocks", "package.json"),
+  JSON.stringify({ type: "commonjs" }, null, 2)
+);
 // The migration files are CommonJS (module.exports). They are excluded from the
 // TypeScript build (see tsconfig.json) so that their `require("@saltcorn/data/...")`
 // self-references are not pulled into the type-check program, where they would fail

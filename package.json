@@ -76,6 +76,7 @@
     }
   },
   "overrides": {
+    "webpack": "5.107.2",
     "immer": "9.0.21",
     "undici": "7.12.0",
     "node-gyp": ">=10.2.0",

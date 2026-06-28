@@ -13,6 +13,7 @@ const nodeMocks = {
   async_hooks: join(mocksDir, "node", "async_hooks"),
   child_process: join(mocksDir, "node", "child_process"),
   vm: join(mocksDir, "node", "vm"),
+  module: join(mocksDir, "node", "module"),
   "../package.json": join(__dirname, "package.json"),
 };
 
@@ -27,6 +28,12 @@ const npmMocks = {
   xml2js: join(mocksDir, "npm", "xml2js"),
   apns2: join(mocksDir, "npm", "apns2"),
   vm2: join(mocksDir, "npm", "vm2"),
+  "@aws-sdk/client-s3": join(mocksDir, "npm", "aws-sdk-client-s3"),
+  "@aws-sdk/s3-request-presigner": join(
+    mocksDir,
+    "npm",
+    "aws-sdk-s3-request-presigner"
+  ),
 };
 
 const saltcornMocks = {
@@ -95,6 +102,7 @@ module.exports = {
       dns: false,
       net: false,
       http2: false,
+      querystring: false,
       punycode: require.resolve("punycode/"),
       console: require.resolve("console-browserify"),
       assert: require.resolve("assert/"),
@@ -124,9 +132,21 @@ module.exports = {
         test: /\.js$/,
         exclude: /node_modules/,
       },
+      // Allow extensionless imports inside dependencies (e.g. ProvidePlugin's
+      // "process/browser") without webpack's ESM "fully specified" requirement.
+      {
+        test: /\.m?js$/,
+        resolve: { fullySpecified: false },
+      },
     ],
   },
   plugins: [
+    // Strip the "node:" scheme so prefixed builtin imports (e.g. "node:stream")
+    // hit the browser fallbacks/mocks configured above instead of failing as an
+    // unhandled URI scheme.
+    new webpack.NormalModuleReplacementPlugin(/^node:/, (resource) => {
+      resource.request = resource.request.replace(/^node:/, "");
+    }),
     new webpack.ProvidePlugin({
       process: "process/browser",
       Buffer: ["buffer", "Buffer"],
