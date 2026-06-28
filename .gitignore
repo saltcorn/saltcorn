@@ -143,3 +143,4 @@ run_project.sh
 run_saltcorn.sh
 cireport.html
 CLAUDE.md
+.claude/
