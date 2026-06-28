@@ -2,8 +2,11 @@
  * This is saltcorn data
  * @module
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
+// NB: do NOT shadow `require` with createRequire here. The migrations loader
+// below relies on webpack's `require.context` / dynamic `require`, which only
+// exist on webpack's own `require`. That code path runs only in the mobile
+// bundle (`!db.is_node`); on the Node server the block is skipped, so the
+// ambient `require` is never evaluated.
 import * as _utils from "./utils.js";
 import db from "./db/index.js";
 export { db };
@@ -29,13 +32,22 @@ export let migrations: any = {};
 function requireAll(context: any) {
   for (let key of context.keys()) {
     const fileName = key.substring(2, key.length - 3);
-    // bring webpack to bundle all .js files in migrations
-    const step = require("./migrations/" + fileName + ".js");
-    migrations[fileName] = step;
+    // load via the webpack context itself (the bundled module map); a bare
+    // `require` is not available in an ESM module under webpack.
+    migrations[fileName] = context(key);
   }
 }
 if (!db.is_node) {
-  // webpack context for all possible .js files in migrations
+  // Mobile (webpack) only: bundle every migrations/*.js so they can run against
+  // the offline DB. `import.meta.webpackContext` is the ESM equivalent of the
+  // old `require.context`; it is webpack-specific and undefined on Node, but
+  // this branch never runs there (db.is_node is true on the server).
   // @ts-ignore
-  requireAll(require.context("./migrations/", false, /\.js$/));
+  requireAll(
+    // @ts-ignore
+    import.meta.webpackContext("./migrations/", {
+      recursive: false,
+      regExp: /\.js$/,
+    })
+  );
 }

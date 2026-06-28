@@ -11,13 +11,24 @@ import is from "contractis/is.js";
 import childProcessPkg from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// browser bundles (mobile app) have no `fileURLToPath`; __dirname is only used
+// server-side here (spawn cwd), so degrade to "" when it is unavailable.
+const __dirname =
+  typeof fileURLToPath === "function"
+    ? dirname(fileURLToPath(import.meta.url))
+    : "";
 import { readFileSync, mkdirSync } from "fs";
 import envPaths from "env-paths";
 import { randomBytes, createHash } from "crypto";
 
-const pathsNoApp = envPaths("", { suffix: "" });
-const pathsWithApp = envPaths("saltcorn", { suffix: "" });
+// `env-paths` is server-only; in browser bundles (mobile app) it is not the
+// real callable module, so fall back to empty paths. The path values are only
+// consumed server-side (config/data dirs, sqlite location).
+const emptyPaths = { data: "", config: "", cache: "", log: "", temp: "" };
+const safeEnvPaths = (name: string, opts: { suffix: string }) =>
+  typeof envPaths === "function" ? envPaths(name, opts) : emptyPaths;
+const pathsNoApp = safeEnvPaths("", { suffix: "" });
+const pathsWithApp = safeEnvPaths("saltcorn", { suffix: "" });
 
 import * as utils from "../utils.js";
 import type { ConnectObjType } from "@saltcorn/types/base_types";

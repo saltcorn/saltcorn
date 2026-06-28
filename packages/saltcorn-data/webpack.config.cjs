@@ -53,16 +53,42 @@ const saltcornMocks = {
     "internal",
     "async_json_stream"
   ),
+  "../models/internal/async_json_stream": join(
+    mocksDir,
+    "models",
+    "internal",
+    "async_json_stream"
+  ),
   "./pack": join(mocksDir, "models", "pack"),
   "../models/pack": join(mocksDir, "models", "pack"),
   "./email": join(mocksDir, "models", "email"),
   "../models/email": join(mocksDir, "models", "email"),
   "./internal/mail_queue": join(mocksDir, "models", "internal", "mail_queue"),
+  "../models/internal/mail_queue": join(
+    mocksDir,
+    "models",
+    "internal",
+    "mail_queue"
+  ),
   "../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "../../plugin-testing": join(mocksDir, "saltcorn", "plugin-testing"),
   "@saltcorn/html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
   "./html-pdf-node": join(mocksDir, "saltcorn", "html-pdf-node"),
   "../migrate": join(mocksDir, "saltcorn", "migrate"),
+};
+
+// The ESM dist imports relative/subpath modules WITH explicit ".js" extensions
+// (e.g. `from "../models/email.js"`), but webpack matches alias keys against the
+// raw request string. Without this expansion the extensionless keys silently
+// stop matching and the real (server-only) modules get bundled. Add a ".js"
+// variant for every key so both forms resolve to the mock.
+const withJsVariants = (map) => {
+  const out = {};
+  for (const [k, v] of Object.entries(map)) {
+    out[k] = v;
+    if (!/\.[cm]?js$/.test(k)) out[`${k}.js`] = v;
+  }
+  return out;
 };
 
 const dbMocks = {
@@ -120,10 +146,10 @@ module.exports = {
     },
     alias: {
       process: "process/browser",
-      ...nodeMocks,
-      ...npmMocks,
-      ...saltcornMocks,
-      ...dbMocks,
+      ...withJsVariants(nodeMocks),
+      ...withJsVariants(npmMocks),
+      ...withJsVariants(saltcornMocks),
+      ...withJsVariants(dbMocks),
     },
   },
   module: {

@@ -735,7 +735,13 @@ const returnDirectivesOnly = (
   return r;
 };
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// In Node `fileURLToPath` resolves the module path; in browser bundles (mobile
+// app) the `url` shim has no `fileURLToPath`, so degrade to "" — dataModulePath
+// is only read server-side (Docker build contexts, fixture paths).
+const __dirname =
+  typeof fileURLToPath === "function"
+    ? dirname(fileURLToPath(import.meta.url))
+    : "";
 const dataModulePath = __dirname;
 
 const imageAvailable = async (imageName: string, preferedVersion: string) => {

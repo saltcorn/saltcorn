@@ -13,7 +13,12 @@ const dateFormat: any = dateFormatLib; // NodeNext default-import interop for da
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// browser bundles (mobile app) have no `fileURLToPath`; migrations only run
+// server-side, so degrade __dirname to "" when it is unavailable.
+const __dirname =
+  typeof fileURLToPath === "function"
+    ? path.dirname(fileURLToPath(import.meta.url))
+    : "";
 import db from "./db/index.js";
 
 interface MigrationContents {
