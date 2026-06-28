@@ -68,6 +68,34 @@ describe("File class", () => {
     await f.delete();
   });
 
+  it("fill_fkey_options includes files from subfolders", async () => {
+    const subfolder = "opts_subfolder";
+    if (
+      !existsSync(
+        join(db.connectObj.file_store, db.getTenantSchema(), subfolder)
+      )
+    )
+      await File.new_folder(subfolder);
+    await File.from_contents(
+      "nested.txt",
+      "text/plain",
+      "nested file content",
+      1,
+      100,
+      subfolder
+    );
+    const field = new Field({
+      name: "attachment",
+      label: "Attachment",
+      type: "File",
+      required: false,
+      attributes: {},
+    });
+    await field.fill_fkey_options();
+    const labels = (field.options as any[]).map((o: any) => o.label);
+    expect(labels).toContain(`${subfolder}/nested.txt`);
+  });
+
   it("should find in subfolders", async () => {
     const subfolder = "subfolder";
     const fileName = "fileName2.html";
