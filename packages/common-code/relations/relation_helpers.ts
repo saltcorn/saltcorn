@@ -1,4 +1,4 @@
-import { RelationType } from "./relation_types";
+import { RelationType } from "./relation_types.js";
 
 /**
  * when we don't have the saltcorn state those caches can be used

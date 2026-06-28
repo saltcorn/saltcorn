@@ -1,6 +1,6 @@
-import { buildTableCaches } from "./relation_helpers";
-import { ViewDisplayType } from "./relation_types";
-import { Relation } from "./relation";
+import { buildTableCaches } from "./relation_helpers.js";
+import { ViewDisplayType } from "./relation_types.js";
+import { Relation } from "./relation.js";
 
 /**
  * RelationsFinder class

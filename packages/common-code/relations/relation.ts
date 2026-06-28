@@ -1,5 +1,5 @@
-import { parseRelationPath } from "./relation_helpers";
-import { RelationType, ViewDisplayType } from "./relation_types";
+import { parseRelationPath } from "./relation_helpers.js";
+import { RelationType, ViewDisplayType } from "./relation_types.js";
 
 /**
  * Relation class

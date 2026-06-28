@@ -27,7 +27,12 @@ import {
 import { bool, date } from "./base-plugin/types.js";
 import markupPkg from "@saltcorn/markup";
 import tagsPkg from "@saltcorn/markup/tags";
-import commonCodePkg from "@saltcorn/common-code";
+import {
+  Relation,
+  parseRelationPath,
+  RelationType,
+  ViewDisplayType,
+} from "@saltcorn/common-code";
 import layoutUtilsPkg from "@saltcorn/markup/layout_utils";
 import FieldRepeat from "./models/fieldrepeat.js";
 import Form from "./models/form.js";
@@ -53,8 +58,6 @@ import {
   pathToState,
 } from "./plugin-helper.js";
 
-const { Relation, parseRelationPath, RelationType, ViewDisplayType } =
-  commonCodePkg;
 const { show_icon_and_label } = layoutUtilsPkg;
 
 /**

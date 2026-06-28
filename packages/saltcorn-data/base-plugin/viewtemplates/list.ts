@@ -3,15 +3,45 @@
  * @module base-plugin/viewtemplates/list
  * @subcategory base-plugin
  */
-import { eachView, traverse, getStringsForI18n, translateLayout } from "../../models/layout.js";
-import { removeEmptyStrings, removeDefaultColor, applyAsync, mergeIntoWhere, mergeConnectedObjects, hashState, dollarizeObject, getSessionId, InvalidConfiguration, isWeb } from "../../utils.js";
-import { get_viewable_fields, parse_view_select, get_viewable_fields_from_layout, action_url } from "../../viewable_fields.js";
+import {
+  eachView,
+  traverse,
+  getStringsForI18n,
+  translateLayout,
+} from "../../models/layout.js";
+import {
+  removeEmptyStrings,
+  removeDefaultColor,
+  applyAsync,
+  mergeIntoWhere,
+  mergeConnectedObjects,
+  hashState,
+  dollarizeObject,
+  getSessionId,
+  InvalidConfiguration,
+  isWeb,
+} from "../../utils.js";
+import {
+  get_viewable_fields,
+  parse_view_select,
+  get_viewable_fields_from_layout,
+  action_url,
+} from "../../viewable_fields.js";
 import { getState } from "../../db/state.js";
-import { get_async_expression_function, jsexprToWhere, freeVariables, get_expression_function, eval_expression } from "../../models/expression.js";
+import {
+  get_async_expression_function,
+  jsexprToWhere,
+  freeVariables,
+  get_expression_function,
+  eval_expression,
+} from "../../models/expression.js";
 import { get_existing_views } from "../../models/discovery.js";
 import { check_view_columns } from "../../plugin-testing.js";
-import { extractFromColumns, extractViewToCreate } from "../../diagram/node_extract_utils.js";
-import commonCodePkg from "@saltcorn/common-code";
+import {
+  extractFromColumns,
+  extractViewToCreate,
+} from "../../diagram/node_extract_utils.js";
+import { Relation, RelationType } from "@saltcorn/common-code";
 import markupPkg from "@saltcorn/markup";
 import tagsPkg from "@saltcorn/markup/tags";
 import layoutUtilsPkg from "@saltcorn/markup/layout_utils";
@@ -33,19 +63,9 @@ import { GenObj } from "@saltcorn/types/common_types";
 import File from "../../models/file.js";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 
-const { Relation, RelationType } = commonCodePkg;
-
 const { mkTable, post_btn, link } = markupPkg;
 const { h } = markupPkg as any;
-const {
-  text,
-  script,
-  button,
-  div,
-  a,
-  code,
-  i,
-} = tagsPkg;
+const { text, script, button, div, a, code, i } = tagsPkg;
 import {
   field_picker_fields,
   picked_fields_to_query,
@@ -168,7 +188,8 @@ const configuration_workflow = (req: Req) =>
                 { mode: "list", req }
               );
             }
-            if (action.description) actionDescriptions[name] = action.description;
+            if (action.description)
+              actionDescriptions[name] = action.description;
           }
           const workflowActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -911,7 +932,9 @@ const configuration_workflow = (req: Req) =>
           formfields.push({
             name: "_grand_total",
             label: req.__("Show grand total"),
-            sublabel: req.__("Show a grand total row at the bottom of the table"),
+            sublabel: req.__(
+              "Show a grand total row at the bottom of the table"
+            ),
             type: "Bool",
             tab: "Functionality",
           });
@@ -1541,7 +1564,9 @@ const run = async (
       "data-sc-rows-per-page": String(rows_per_page),
       "data-sc-total-rows": rowCount !== undefined ? String(rowCount) : false,
     },
-    istop ? create_link_div + tableHtml + previewNote : tableHtml + previewNote + create_link_div
+    istop
+      ? create_link_div + tableHtml + previewNote
+      : tableHtml + previewNote + create_link_div
   );
 };
 
