@@ -165,10 +165,19 @@ const whereFTS = (
     return `${flds} LIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
   else if (v.disable_fts)
     return `${flds} ILIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
-  else
-    return `to_tsvector('${v.language || "english"}', ${flds}) @@ ${
-      actually_use_websearch ? "websearch_" : prefixMatch ? "" : `plain`
-    }to_tsquery('${v.language || "english"}', ${phs.push(searchTerm)})`;
+  else if (actually_use_websearch)
+    return `to_tsvector('${v.language || "english"}', ${flds}) @@ websearch_to_tsquery('${v.language || "english"}', ${phs.push(searchTerm)})`;
+  else if (prefixMatch) {
+    // Guard against stop words: to_tsquery('english','on:*') raises a syntax error
+    // because stop words are stripped to an empty query. Use websearch_to_tsquery as
+    // a probe — it returns ''::tsquery for stop words without erroring. When that
+    // happens, fall back to ILIKE so common words like "on", "by", "a" still match.
+    const lang = v.language || "english";
+    const rawTermPh = phs.push(v.searchTerm);
+    const prefixTermPh = phs.push(searchTerm);
+    return `CASE WHEN websearch_to_tsquery('${lang}', ${rawTermPh}) = ''::tsquery THEN ${flds} ILIKE '%' || ${rawTermPh} || '%' ELSE to_tsvector('${lang}', ${flds}) @@ to_tsquery('${lang}', ${prefixTermPh}) END`;
+  } else
+    return `to_tsvector('${v.language || "english"}', ${flds}) @@ plainto_tsquery('${v.language || "english"}', ${phs.push(searchTerm)})`;
 };
 
 export /**
