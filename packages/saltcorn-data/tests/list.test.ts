@@ -1491,4 +1491,44 @@ describe("dual joinfielss with fieldviews", () => {
     expect(vres1).toContain("FOO1BAR1");
   });
 });
+describe("embedded view in list container column (issue #4220)", () => {
+  it("should not render 'undefined' when a Show view is embedded in a Container column", async () => {
+    // Trigger the Container code path: contents with .above wraps to type:"container"
+    // which calls renderLayout with a blockDispatch.view handler.
+    // Before the fix, undefined from viewResults caused "undefined" string via string concat.
+    const view = await mkViewWithCfg({
+      configuration: {
+        layout: {
+          besides: [
+            {
+              contents: {
+                above: [
+                  {
+                    type: "view",
+                    view: "authorshow",
+                    relation: ".books",
+                    state: "shared",
+                  },
+                ],
+              },
+              alignment: "Default",
+              col_width_units: "px",
+            },
+          ],
+          list_columns: true,
+        },
+        columns: [
+          {
+            type: "View",
+            view: "authorshow",
+            relation: ".books",
+          },
+        ],
+      },
+    });
+    const vres1 = await view.run({}, mockReqRes);
+    expect(vres1).not.toContain(">undefined<");
+    expect(vres1).toContain("<table");
+  });
+});
 //sorting
