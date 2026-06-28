@@ -26,26 +26,9 @@ COPY . /opt/saltcorn
 RUN eslint .
 RUN deploy/check_sourcemaps.sh 
 
-# Enable ts-runtime-checks for CI type-checking only
-RUN jq '.devDependencies["ts-runtime-checks"] = "^0.6.3"' package.json > /tmp/p.json && mv /tmp/p.json package.json
-RUN for f in \
-      packages/saltcorn-data/tsconfig.json \
-      packages/saltcorn-markup/tsconfig.json \
-      packages/saltcorn-types/tsconfig.json \
-      packages/db-common/tsconfig.json \
-      packages/saltcorn-admin-models/tsconfig.json \
-      packages/common-code/tsconfig.json \
-      packages/sqlite/tsconfig.json \
-      packages/sqlite-mobile/tsconfig.json \
-      packages/saltcorn-mobile-builder/tsconfig.json; do \
-    node deploy/whale-ci/add-trc-plugin.js "$f"; \
-  done
+# RUN node deploy/whale-ci/enable-ts-runtime-checks.js
 
 RUN npm install --legacy-peer-deps
-
-# Apply 5 patches to the installed ts-runtime-checks to fix Saltcorn-specific crashes
-RUN node deploy/whale-ci/patch-ts-runtime-checks.js
-
 RUN npm run tsc
 
 ENV PATH "$PATH:/opt/saltcorn/packages/saltcorn-cli/bin"

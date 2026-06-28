@@ -587,7 +587,7 @@ type PluginFacilities = {
   viewtemplates?: Array<ViewTemplate>;
   actions?: Record<string, Action>;
   eventTypes?: Record<string, { hasChannel: boolean }>;
-  fieldviews?: Record<string, FieldView & { type: string }>;
+  fieldviews?: Record<string, GenObj>;
   routes?: Array<{
     url: string;
     method: "get" | "post";
@@ -609,13 +609,26 @@ type PluginWithoutConfig = {
   configuration_workflow?: undefined;
 } & PluginFacilities;
 
-export type Plugin = {
+type PluginBase = {
   sc_plugin_api_version: number;
   plugin_name?: string;
-  dependencies: string[];
+  dependencies?: string[];
   onLoad?: (cfg: any) => Promise<void>;
   [key: string]: any;
-} & (PluginWithConfig | PluginWithoutConfig);
+};
+
+export type Plugin = PluginBase &
+  PluginFacilities & {
+    configuration_workflow?: (req?: Req) => AbstractWorkflow;
+  };
+
+// export type Plugin = {
+//   sc_plugin_api_version: number;
+//   plugin_name?: string;
+//   dependencies: string[];
+//   onLoad?: (cfg: any) => Promise<void>;
+//   [key: string]: any;
+// } & (PluginWithConfig | PluginWithoutConfig);
 
 export type CodePagePack = {
   name: string;
