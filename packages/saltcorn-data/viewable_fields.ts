@@ -1424,6 +1424,11 @@ const get_viewable_fields = (
                 : undefined,
             header_underline: f.calculated && !f.stored ? true : undefined,
           };
+        if (fvrun && column.cell_css_formula) {
+          const formula = column.cell_css_formula;
+          fvrun.cell_class_fn = (row: Row) =>
+            eval_expression(formula, row, req.user, "Cell CSS formula") || null;
+        }
         if (column.click_to_edit) {
           const updateKey = (fvr: any, column_key?: any) => {
             const oldkey =
