@@ -1,6 +1,5 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
+import { getState } from "../db/state.js";
+import * as nsState from "../db/state.js";
 import db from "../db/index.js";
 import type {
   AbstractPageGroup,
@@ -12,12 +11,10 @@ import type {
   AbstractPageGroupMember,
   PageGroupMemberCfg,
 } from "@saltcorn/types/model-abstracts/abstract_page_group_member";
-import utils from "../utils.js";
-const { satisfies } = utils;
+import { satisfies } from "../utils.js";
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 import PageGroupMember from "./page_group_member.js";
-import Expression from "./expression.js";
-const { eval_expression } = Expression;
+import { eval_expression } from "./expression.js";
 
 /**
  * PageGroup class
@@ -57,8 +54,8 @@ class PageGroup implements AbstractPageGroup {
       ...data,
       locale:
         locale ||
-        (await _sc_db_state()
-          .getState()
+        (await nsState
+          .getState()!
           .getConfig("default_locale", "en")),
     };
     for (const member of sorted) {
@@ -73,8 +70,8 @@ class PageGroup implements AbstractPageGroup {
         if (page) {
           if (user.role_id <= page.min_role) return page;
           else
-            await _sc_db_state()
-              .getState()
+            await nsState
+              .getState()!
               .log(
                 4,
                 `page ${page.name} is not accessible for role_id ${user.role_id}`
@@ -108,7 +105,7 @@ class PageGroup implements AbstractPageGroup {
       await PageGroupMember.update(member.id!, { sequence: tmp });
     }
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
   }
 
   /**
@@ -137,8 +134,7 @@ class PageGroup implements AbstractPageGroup {
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<PageGroup[]> {
     if (selectopts.cached) {
-      const { getState } = _sc_db_state();
-      return getState()
+      return getState()!
         .page_groups.map((t: PageGroup) => new PageGroup(t))
         .filter(satisfies(where || {}));
     }
@@ -170,16 +166,15 @@ class PageGroup implements AbstractPageGroup {
    * @param where
    * @returns one page group or null
    */
-  static findOne(where: Where): PageGroup | null {
-    const { getState } = _sc_db_state();
-    const p = getState().page_groups.find(
+  static findOne(where: Where): PageGroup | undefined {
+    const p = getState()!.page_groups.find(
       where.id
         ? (t: PageGroup) => t.id === +where.id
         : where.name
           ? (t: PageGroup) => t.name === where.name
           : satisfies(where)
     );
-    return p ? new PageGroup({ ...p }) : p;
+    return p ? new PageGroup({ ...p }) : undefined;
   }
 
   /**
@@ -203,7 +198,7 @@ class PageGroup implements AbstractPageGroup {
       });
     }
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
 
     return pageGroup;
   }
@@ -216,7 +211,7 @@ class PageGroup implements AbstractPageGroup {
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_page_groups", row, id);
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
   }
 
   /**
@@ -246,7 +241,7 @@ class PageGroup implements AbstractPageGroup {
       }
     }
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
   }
 
   /**
@@ -276,7 +271,7 @@ class PageGroup implements AbstractPageGroup {
     delete createObj.id;
     const newGroup = await PageGroup.create(createObj);
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
 
     return newGroup;
   }
@@ -302,7 +297,7 @@ class PageGroup implements AbstractPageGroup {
     });
     this.members.push(newMember);
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
 
     return new PageGroupMember(newMember);
   }
@@ -314,7 +309,7 @@ class PageGroup implements AbstractPageGroup {
     await db.deleteWhere("_sc_page_group_members", { page_group_id: this.id });
     this.members = [];
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
   }
 
   /**
@@ -325,7 +320,7 @@ class PageGroup implements AbstractPageGroup {
     const PageGroupMember = (await import("./page_group_member.js")).default;
     await PageGroupMember.delete(id);
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_page_groups(true);
+      await nsState.getState()!.refresh_page_groups(true);
   }
 
   /**

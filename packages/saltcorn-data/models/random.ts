@@ -4,17 +4,12 @@
  * @module models/random
  * @subcategory models
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_plugin_testing = () => (require("../plugin-testing.js") as any);
-const _sc_plugin_helper = () => (require("../plugin-helper.js") as any);
+import { getState } from "../db/state.js";
+import { generate_attributes } from "../plugin-testing.js";
+import { initial_config_all_fields } from "../plugin-helper.js";
 import View from "./view.js";
 import Field from "./field.js";
 import Table from "./table.js";
-const { getState } = _sc_db_state();
-const { generate_attributes } = _sc_plugin_testing();
-const { initial_config_all_fields } = _sc_plugin_helper();
 import db from "../db/index.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Row } from "@saltcorn/db-common/internal";
@@ -51,7 +46,7 @@ const random_table = async (opts: GenObj = {}): Promise<Table> => {
   for (let index = 0; index < 20; index++) {
     await fill_table_row(table);
   }
-  const table1 = Table.findOne({ name }) as Table;
+  const table1 = Table.findOne({ name })! as Table;
   const fields = await table1.getFields();
   const userFields = fields.filter((f) => f.reftable_name === "users");
   if (userFields.length > 0 && Math.random() > 0.5)
@@ -126,7 +121,7 @@ const random_field = async (
     "Key to users",
     "File",
   ];
-  const type_options = getState().type_names.concat(fkey_opts || []);
+  const type_options = getState()!.type_names.concat(fkey_opts || []);
   const label = generateString(3, existing_field_names);
   const type = oneOf(type_options);
   if (Math.random() < 0.2 && ["Integer", "Float", "Bool"].includes(type)) {
@@ -152,7 +147,7 @@ const random_field = async (
   if (instanceOfType(f.type) && f.type.attributes)
     f.attributes = generate_attributes(
       f.type.attributes,
-      f.type.validate_attributes,
+      f.type.validate_attributes as any,
       table.id
     );
   if (f.is_fkey) {
@@ -222,4 +217,9 @@ const all_views = async (
   return { list, show, edit };
 };
 
-export default { random_table, fill_table_row, initial_view, all_views };
+export {
+  random_table,
+  fill_table_row,
+  initial_view,
+  all_views,
+};

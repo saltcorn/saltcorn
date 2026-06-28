@@ -1,5 +1,5 @@
 const js = async () => {
-  const db = require("../db");
+  const db = require("@saltcorn/data/db");
   if (db.isSQLite) return;
 
   const schema = db.getTenantSchemaPrefix();

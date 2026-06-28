@@ -4,17 +4,14 @@
  * @module models/model
  * @subcategory models
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
+import * as nsState from "../db/state.js";
 import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { ModelCfg } from "@saltcorn/types/model-abstracts/abstract_model";
 import ModelInstance from "./model_instance.js";
 import Table from "./table.js";
 
-import state from "../db/state.js";
-const { getState } = state;
+import { getState } from "../db/state.js";
 /**
  * Model Class
  * @category saltcorn-data
@@ -55,7 +52,7 @@ class Model {
     lib.id = id;
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_tables(true);
+      await nsState.getState()!.refresh_tables(true);
     return lib;
   }
 
@@ -111,7 +108,7 @@ class Model {
     await db.query(`delete FROM ${schema}_sc_models WHERE id = $1`, [this.id]);
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_tables(true);
+      await nsState.getState()!.refresh_tables(true);
   }
 
   /**
@@ -143,7 +140,7 @@ class Model {
     state: {}
   ): Promise<ModelInstance | string> {
     const trainf = this.templateObj!.train;
-    const table = Table.findOne({ id: this.table_id });
+    const table = Table.findOne({ id: this.table_id })!;
     const result = trainf
       ? await trainf({
           table: table!,

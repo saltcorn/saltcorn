@@ -2,13 +2,13 @@
  * This is saltcorn data
  * @module
  */
-const _sc_utils = () => (require("./utils.js") as any).default;
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
+import * as _utils from "./utils.js";
 import db from "./db/index.js";
 export { db };
 
-import state from "./db/state.js";
+import * as state from "./db/state.js";
 export { state };
 
 export * as models from "./models/index.js";
@@ -18,12 +18,11 @@ export namespace plugin_helper {
   export const { run_action_column } = pluginHelper;
 }
 
-const _utils = _sc_utils();
 export namespace utils {
   export const { NotAuthorized, sleep, isPushEnabled } = _utils;
 }
 
-import web_mobile_commons from "./web-mobile-commons.js";
+import * as web_mobile_commons from "./web-mobile-commons.js";
 export { web_mobile_commons };
 
 export let migrations: any = {};

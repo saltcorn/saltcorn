@@ -3,23 +3,21 @@
  * @module models/user
  * @subcategory models
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_config = () => (require("./config.js") as any).default;
-const _sc_email = () => (require("./email.js") as any).default;
-const _sc_expression = () => (require("./expression.js") as any).default;
-const _sc_field = () => (require("./field.js") as any).default;
-const _sc_plugin_helper = () => (require("../plugin-helper.js") as any);
-const _sc_trigger = () => (require("./trigger.js") as any).default;
-import db from "../db/index.js";
-import _bcrypt from "bcryptjs";
-const { compareSync, hash } = _bcrypt;
-import { v4 as uuidv4 } from "uuid";
-import _dumbPasswords from "dumb-passwords";
-const { check } = _dumbPasswords;
-import { validate } from "email-validator";
+import { getState } from "../db/state.js";
+import { check_email_mask } from "./config.js";
+import { send_verification_email } from "./email.js";
+import { freeVariables } from "./expression.js";
+import { add_free_variables_to_joinfields } from "../plugin-helper.js";
+import Field from "./field.js";
 import Trigger from "./trigger.js";
+import db from "../db/index.js";
+import bcryptjs from "bcryptjs";
+const { compareSync, hash } = bcryptjs;
+import { v4 as uuidv4 } from "uuid";
+import dumbPasswords from "dumb-passwords";
+const { check } = dumbPasswords;
+import emailValidator from "email-validator";
+const { validate } = emailValidator;
 import Table from "./table.js";
 
 import {
@@ -154,8 +152,7 @@ class User {
     const upd: Partial<User> = { password };
     if (expireToken) upd.reset_password_token = null;
     upd.last_mobile_login = null;
-    const { getState } = _sc_db_state();
-    if (getState().getConfig("plain_password_triggers", false))
+    if (getState()!.getConfig("plain_password_triggers", false))
       await this.update(upd, newpw);
     else await this.update(upd);
   }
@@ -176,15 +173,13 @@ class User {
     if (u && u.disabled) return false;
     if (u) return u;
     else {
-      const { getState } = _sc_db_state();
-      const email_mask = getState().getConfig("email_mask");
+      const email_mask = getState()!.getConfig("email_mask");
       if (email_mask && uo.email) {
-        const { check_email_mask } = _sc_config();
         if (!check_email_mask(uo.email)) {
           return false;
         }
       }
-      const new_user_form = getState().getConfig("new_user_form");
+      const new_user_form = getState()!.getConfig("new_user_form");
       if (new_user_form) {
         // cannot create user, return pseudo-user
         const pseudoUser = { ...uo, _attributes: { [k]: v } };
@@ -216,8 +211,7 @@ class User {
     if (await User.matches_existing_user(uo))
       return { error: `This user already exists` };
 
-    const { getState } = _sc_db_state();
-    const plain_password_triggers = getState().getConfig(
+    const plain_password_triggers = getState()!.getConfig(
       "plain_password_triggers",
       false
     );
@@ -276,15 +270,14 @@ class User {
    * @type {{role_id: number, language, id, email, tenant: *}}
    */
   get session_object(): any {
-    const { getState } = _sc_db_state();
-    const state = getState();
+    const state = getState()!;
     const so: any = {
       email: this.email,
       id: this.id,
       role_id: this.role_id,
       language: this.language,
       tenant: db.getTenantSchema(),
-      lightDarkMode: state.getLightDarkMode(this),
+      lightDarkMode: state.getLightDarkMode(this as any),
       attributes: {
         ...state.plugins_cfg_context,
       },
@@ -292,7 +285,7 @@ class User {
     Object.assign(so, safeUserFields(this));
     const userLayout = this._attributes?.layout;
     if (userLayout) {
-      const moduleName = getState().plugin_module_names[userLayout.plugin];
+      const moduleName = getState()!.plugin_module_names[userLayout.plugin];
       so.attributes[moduleName] = {
         ...(so.attributes[moduleName] || {}),
         ...userLayout.config,
@@ -323,8 +316,7 @@ class User {
   }
 
   auth_method_allowed(method_name: string): boolean {
-    const { getState } = _sc_db_state();
-    const auth_method_enabled = getState().get_auth_enabled_by_role(
+    const auth_method_enabled = getState()!.get_auth_enabled_by_role(
       this.role_id
     );
     return auth_method_enabled[method_name] !== false;
@@ -334,7 +326,6 @@ class User {
     req?: any,
     opts?: { new_verification_token?: string }
   ): Promise<boolean | any> {
-    const { send_verification_email } = _sc_email();
     return await send_verification_email(this, req, opts);
   }
 
@@ -345,12 +336,8 @@ class User {
    */
   static async findForSession(where: Where): Promise<User | false> {
     //get join fields in all ownership formulae
-    const { getState } = _sc_db_state();
-    const { freeVariables } = _sc_expression();
-    const Field = _sc_field();
-    const { add_free_variables_to_joinfields } = _sc_plugin_helper();
     let freeVars = new Set();
-    for (const table of getState().tables)
+    for (const table of getState()!.tables)
       if (table.ownership_formula)
         freeVars = new Set([
           ...freeVars,
@@ -368,7 +355,7 @@ class User {
     const fields = await user_table?.getFields();
 
     const joinFields = {};
-    add_free_variables_to_joinfields(new Set(freeUserVars), joinFields, fields);
+    add_free_variables_to_joinfields(new Set(freeUserVars), joinFields, fields!);
 
     for (const wk of Object.keys(where)) {
       const field = fields?.find((f) => f.name === wk);
@@ -395,7 +382,7 @@ class User {
     );
 
     for (const cfield of cfields) {
-      const table = Table.findOne(cfield.table_id) as Table;
+      const table = Table.findOne(cfield.table_id!)! as Table;
       const fv = freeUserVars.find((fuv) =>
         fuv.startsWith(`${db.sqlsanitize(table!.name)}_by_${cfield.name}`)
       );
@@ -625,13 +612,12 @@ class User {
   //   if (check(pw)) return "Password too common";
   // }
   static unacceptable_password_reason(pw: string): string | undefined {
-    const { getState } = _sc_db_state();
-    const minLength = getState().getConfig("min_password_length", 8);
+    const minLength = getState()!.getConfig("min_password_length", 8);
     if (minLength > 0 && pw.length < minLength) return "Password too short";
-    const checkCommon = getState().getConfig("check_common_passwords", true);
+    const checkCommon = getState()!.getConfig("check_common_passwords", true);
     if (checkCommon && check(pw)) return "Password too common";
-    const complexityRegex = getState().getConfig("password_complexity", "");
-    const complexityError = getState().getConfig(
+    const complexityRegex = getState()!.getConfig("password_complexity", "");
+    const complexityError = getState()!.getConfig(
       "password_complexity_error",
       ""
     );
@@ -640,25 +626,25 @@ class User {
         complexityError || "Password does not match complexity requirements"
       );
     if (!complexityRegex) {
-      const requireUppercase = getState().getConfig(
+      const requireUppercase = getState()!.getConfig(
         "password_require_uppercase",
         false
       );
       if (requireUppercase && !/[A-Z]/.test(pw))
         return "Password must contain at least one uppercase letter";
-      const requireLowercase = getState().getConfig(
+      const requireLowercase = getState()!.getConfig(
         "password_require_lowercase",
         false
       );
       if (requireLowercase && !/[a-z]/.test(pw))
         return "Password must contain at least one lowercase letter";
-      const requireNumber = getState().getConfig(
+      const requireNumber = getState()!.getConfig(
         "password_require_number",
         false
       );
       if (requireNumber && !/\d/.test(pw))
         return "Password must contain at least one number";
-      const requireSpecialChar = getState().getConfig(
+      const requireSpecialChar = getState()!.getConfig(
         "password_require_special_char",
         false
       );
@@ -702,14 +688,12 @@ class User {
    */
   async set_to_verified(): Promise<true> {
     const upd: GenObj = { verified_on: new Date() };
-    const { getState } = _sc_db_state();
 
-    const elevate_verified = +getState().getConfig("elevate_verified");
+    const elevate_verified = +getState()!.getConfig("elevate_verified");
     if (elevate_verified)
       upd.role_id = Math.min(elevate_verified, this.role_id);
     await this.update(upd);
     Object.assign(this, upd);
-    const Trigger = _sc_trigger();
     Trigger.emitEvent("UserVerified", null, this, this);
     return true;
   }
@@ -778,8 +762,7 @@ class User {
    * @returns {Promise<*>}
    */
   static async get_roles(): Promise<Row[]> {
-    const { getState } = _sc_db_state();
-    const stateRoles = getState().roles;
+    const stateRoles = getState()!.roles;
     if (stateRoles?.length) return stateRoles;
     return await db.select("_sc_roles", {}, { orderBy: "id" });
   }
@@ -859,8 +842,7 @@ class User {
    * ```
    */
   static lightDarkMode(user?: UserLike): "dark" | "light" | "auto" {
-    const { getState } = _sc_db_state();
-    return getState().getLightDarkMode(user);
+    return getState()!.getLightDarkMode(user);
   }
 }
 

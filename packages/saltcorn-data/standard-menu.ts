@@ -4,15 +4,12 @@
  * @module standard-menu
  */
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("./db/state.js") as any).default;
+import { getState } from "./db/state.js";
 import type { MenuItem } from "@saltcorn/types/base_types";
 
 const create_standard_menu = async (): Promise<void> => {
-  const { getState } = _sc_db_state();
 
-  const state = getState();
+  const state = getState()!;
   await state?.refresh_config(false);
   const allow_signup = state.getConfig("allow_signup");
   const notification_in_menu = state.getConfig("notification_in_menu");

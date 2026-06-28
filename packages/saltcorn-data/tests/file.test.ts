@@ -1,11 +1,9 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import db from "../db/index.js";
 import layoutMarkup from "@saltcorn/markup/layout";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const renderLayout = layoutMarkup;
 import Table from "../models/table.js";
 import TableConstraint from "../models/table_constraints.js";
@@ -19,11 +17,10 @@ import View from "../models/view.js";
 import Page from "../models/page.js";
 import PageGroup from "../models/page_group.js";
 import PageGroupMember from "../models/page_group_member.js";
-import layoutModel from "../models/layout.js";
+import * as layoutModel from "../models/layout.js";
 const { getViews } = layoutModel;
 
-const { getState } = _sc_db_state();
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
 const { rick_file, mockReqRes } = mocks;
 import Library from "../models/library.js";
 import { assertIsSet } from "./assertions.js";
@@ -32,10 +29,10 @@ import { existsSync } from "fs";
 import { open } from "fs/promises";
 import { join, basename } from "path";
 
-getState().registerPlugin("base", _sc_base_plugin());
+getState()!.registerPlugin("base", basePluginMod);
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 afterAll(db.close);

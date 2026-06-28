@@ -1,13 +1,10 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
 import db from "../db/index.js";
-import _jsonwebtoken from "jsonwebtoken";
-const { sign } = _jsonwebtoken;
-import _axios from "axios";
-const axios: any = _axios;
+import jsonwebtoken from "jsonwebtoken";
+const { sign } = jsonwebtoken;
+import axiosLib from "axios";
+const axios: any = axiosLib;
 import User from "../models/user.js";
-const State = _sc_db_state();
+import * as State from "../db/state.js";
 
 declare let global: any;
 

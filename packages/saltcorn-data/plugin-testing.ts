@@ -2,25 +2,19 @@
  * @category saltcorn-data
  * @module plugin-testing
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("./db/state.js") as any).default;
-const _sc_tests_mocks = () => (require("./tests/mocks.js") as any).default;
-const _sc_models_expression = () => (require("./models/expression.js") as any).default;
-const _sc_viewable_fields = () => (require("./viewable_fields.js") as any);
-import _sc_contractis from "contractis";
-import _sc__saltcorn_markup from "@saltcorn/markup";
-const { is } = (_sc_contractis as any);
+import { getState } from "./db/state.js";
+import { mockReqRes } from "./tests/mocks.js";
+import { expressionValidator } from "./models/expression.js";
+import { parse_view_select } from "./viewable_fields.js";
+import contractisPkg from "contractis";
+import markupPkg from "@saltcorn/markup";
+const { is } = contractisPkg;
 
-const { getState } = _sc_db_state();
-const { renderForm } = (_sc__saltcorn_markup as any);
-const { mockReqRes } = _sc_tests_mocks();
+const { renderForm } = markupPkg;
 import Field from "./models/field.js";
 import Table from "./models/table.js";
 import Trigger from "./models/trigger.js";
 import Workflow from "./models/workflow.js";
-const { expressionValidator } = _sc_models_expression();
-const { parse_view_select } = _sc_viewable_fields();
 import View from "./models/view.js";
 import {
   Plugin,
@@ -45,7 +39,7 @@ const generate_attributes = (
   const attrs = Field.getTypeAttributes(typeattrs, table_id);
   (attrs || []).forEach((a: any) => {
     if (a.type && (a.required || rnd_bool())) {
-      const contract = a.type.contract || getState().types[a.type].contract;
+      const contract = a.type.contract || getState()!.types[a.type].contract;
       const gen = contract({}).generate;
       if (gen) res[a.name] = gen();
     }
@@ -143,7 +137,7 @@ const check_view_columns = async (
             column.action_name == "UpdateMatchingRows" &&
             view.viewtemplate == "Edit"
           ) &&
-          !getState().actions[column.action_name!] &&
+          !getState()!.actions[column.action_name!] &&
           !trigger_actions.includes(column.action_name!)
         )
           errs.push(
@@ -159,7 +153,7 @@ const check_view_columns = async (
               column.extra_state_fml,
               `View link extra state formula`
             );
-          const { viewname } = parse_view_select(column.view);
+          const { viewname } = parse_view_select(column.view!);
           const linkedview = View.findOne({ name: viewname });
           if (!linkedview)
             errs.push(

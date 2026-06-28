@@ -4,8 +4,8 @@
  * @module models/fieldrepeat
  * @subcategory models
  */
-import _sc_contractis from "contractis";
-const { contract, is } = (_sc_contractis as any);
+import contractisPkg from "contractis";
+const { contract, is } = contractisPkg;
 import Field from "./field.js";
 import { AbstractFieldRepeat } from "@saltcorn/types/model-abstracts/abstract_field";
 import { instanceOfType, SuccessMessage } from "@saltcorn/types/common_types";

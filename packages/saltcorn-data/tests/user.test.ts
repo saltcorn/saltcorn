@@ -1,13 +1,11 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import db from "../db/index.js";
 import User from "../models/user.js";
 import Table from "../models/table.js";
 import Field from "../models/field.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 import {
   assertIsSet,
   assertsIsSuccessMessage,
@@ -16,12 +14,11 @@ import {
 } from "./assertions.js";
 import { afterAll, beforeAll, describe, it, expect, jest } from "@saltcorn/db-common/test_expect";
 
-const { getState } = _sc_db_state();
-getState().registerPlugin("base", _sc_base_plugin());
+getState()!.registerPlugin("base", basePluginMod);
 
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 jest.setTimeout(20000);
@@ -183,7 +180,7 @@ describe("User model", () => {
   });
 
   it("should verify with token", async () => {
-    await getState().setConfig("elevate_verified", "40");
+    await getState()!.setConfig("elevate_verified", "40");
 
     const u = await User.findOne({ email: "foo@bar.com" });
     assertIsSet(u);
@@ -218,7 +215,7 @@ describe("User model", () => {
     expect(us.length).toBe(0);
   });
   it("should find or create by attribute ", async () => {
-    await getState().setConfig("email_mask", "yahoo.com");
+    await getState()!.setConfig("email_mask", "yahoo.com");
 
     const u = await User.findOrCreateByAttribute("googleId", 5, {
       email: "tom@yahoo.com",
@@ -233,13 +230,13 @@ describe("User model", () => {
       email: "tomn@hey.com",
     });
     expect(res).toBe(false);
-    await getState().setConfig("new_user_form", "some_user_view");
+    await getState()!.setConfig("new_user_form", "some_user_view");
     const u2 = await User.findOrCreateByAttribute("googleId", 9, {
       email: "foobar@yahoo.com",
     });
     assertsObjectIsUser(u2);
     expect(!!u2.id).toBe(false);
-    await getState().setConfig("new_user_form", "");
+    await getState()!.setConfig("new_user_form", "");
   });
   it("has table", async () => {
     const t = User.table;
@@ -250,7 +247,7 @@ describe("User model", () => {
 
 describe("User fields", () => {
   it("should add fields", async () => {
-    const table = Table.findOne({ name: "users" });
+    const table = Table.findOne({ name: "users" })!;
     assertIsSet(table);
     await Field.create({
       table,
@@ -331,14 +328,14 @@ describe("User fields", () => {
 describe("User join fields and aggregations in ownership", () => {
   it("should use join fields in ownership", async () => {
     // user to patient join field
-    const users = Table.findOne({ name: "users" });
+    const users = Table.findOne({ name: "users" })!;
     assertIsSet(users);
     await Field.create({
       table: users,
       label: "cares_for",
       type: "Key to patients",
     });
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     await patients.update({ ownership_formula: "user.cares_for.id===id" });
 
@@ -359,14 +356,14 @@ describe("User join fields and aggregations in ownership", () => {
     expect(patients.is_owner(u, patientRows[1])).toBe(false);
   });
   it("should use aggregation in ownership", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     await Field.create({
       table: books,
       label: "editor",
       type: "Key to users",
     });
-    const users = Table.findOne({ name: "users" });
+    const users = Table.findOne({ name: "users" })!;
     assertIsSet(users);
     const u0 = (await User.create({
       email: "foo8@bar.com",

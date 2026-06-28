@@ -1,18 +1,15 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
 import Table from "../models/table.js";
 import Field from "../models/field.js";
 import FieldRepeat from "../models/fieldrepeat.js";
 import Form from "../models/form.js";
 import markup from "@saltcorn/markup/index";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
 const { renderForm } = markup;
 import { assertIsErrorsMsg } from "./assertions.js";
 import { describe, it, expect } from "@saltcorn/db-common/test_expect";
 
-const { getState } = _sc_db_state();
-getState().registerPlugin("base", _sc_base_plugin());
+getState()!.registerPlugin("base", basePluginMod);
 
 const mkRepForm = () =>
   new Form({

@@ -1,8 +1,3 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_plugin_helper = () => (require("../plugin-helper.js") as any);
-const _sc_utils = () => (require("../utils.js") as any).default;
 import Field from "../models/field.js";
 import File from "../models/file.js";
 import View from "../models/view.js";
@@ -13,13 +8,13 @@ import Workflow from "../models/workflow.js";
 import db from "../db/index.js";
 import tags from "@saltcorn/markup/tags";
 import { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
-import exprMod from "../models/expression.js";
+import * as exprMod from "../models/expression.js";
 import { ReqRes } from "@saltcorn/types/common_types";
 const { eval_expression } = exprMod;
-const { getState } = _sc_db_state();
+import { getState } from "../db/state.js";
 const { input } = tags;
-const { json_list_to_external_table } = _sc_plugin_helper();
-const { sleep } = _sc_utils();
+import { json_list_to_external_table } from "../plugin-helper.js";
+import { sleep } from "../utils.js";
 const rick_file = async () => {
   await File.ensure_file_store();
 
@@ -317,7 +312,7 @@ let mockResReqStored: any = {};
 const mockReqRes = {
   req: {
     csrfToken: () => "",
-    getLocale: () => getState().getConfig("default_locale", "en"),
+    getLocale: () => getState()!.getConfig("default_locale", "en"),
     __: (s: any) => s,
     user: { id: 1, role_id: 1, attributes: {} },
     isAuthenticated: () => true,
@@ -360,12 +355,12 @@ const createDefaultView = async (
   viewtemplate: string,
   min_role: number
 ): Promise<View> => {
-  const vt = getState().viewtemplates[viewtemplate];
+  const vt = getState()!.viewtemplates[viewtemplate];
   const v: ViewCfg = {
     name: `${viewtemplate}${table.name}${Math.round(Math.random() * 10000)}`,
     min_role,
-    configuration: await vt.initial_config(
-      table.id ? { table_id: table.id } : { exttable_name: table.name }
+    configuration: await vt.initial_config!(
+      (table.id ? { table_id: table.id } : { exttable_name: table.name }) as any
     ),
     viewtemplate,
   };
@@ -374,7 +369,7 @@ const createDefaultView = async (
   return await View.create(v);
 };
 
-export default {
+export {
   rick_file,
   plugin_with_routes,
   configuration_workflow,

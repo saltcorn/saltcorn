@@ -1,9 +1,7 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_viewable_fields = () => (require("../viewable_fields.js") as any);
-const _sc_models_table = () => (require("../models/table.js") as any).default;
-const _sc_models_page = () => (require("../models/page.js") as any).default;
-const _sc_models_view = () => (require("../models/view.js") as any).default;
+import { parse_view_select } from "../viewable_fields.js";
+import _View from "../models/view.js";
+import _Page from "../models/page.js";
+import tableMod from "../models/table.js";
 import Node from "./nodes/node.js";
 import {
   AbstractView as View,
@@ -11,11 +9,7 @@ import {
 } from "@saltcorn/types/model-abstracts/abstract_view";
 import { AbstractPage as Page } from "@saltcorn/types/model-abstracts/abstract_page";
 import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
-import layout from "../models/layout.js";
-const { traverseSync } = layout;
-const {
-  parse_view_select,
-} = _sc_viewable_fields();
+import { traverseSync } from "../models/layout.js";
 import type { ConnectedObjects } from "@saltcorn/types/base_types";
 import Trigger from "../models/trigger.js";
 import { TableNode } from "./nodes/table_node.js";
@@ -25,8 +19,8 @@ import { PageNode } from "./nodes/page_node.js";
 
 // TODO this is a copy from 'common_list.js'
 const setTableRefs = async (views: any) => {
-  const tables = await _sc_models_table().find();
-  const getTable = (tid: any) => tables.find((t: any) => t.id === tid).name;
+  const tables = await tableMod.find();
+  const getTable = (tid: any) => tables.find((t: any) => t.id === tid)!.name;
 
   views.forEach((v: any) => {
     if (v.table_id) v.table = getTable(v.table_id);
@@ -76,12 +70,12 @@ export async function buildObjectTrees(
       ? opts.entryPages.filter((p) => !!p)
       : new Array<any>();
     const entryPageTrees = await buildTree(entryPages, helper);
-    const allPages = await _sc_models_page().find();
+    const allPages = await _Page.find();
     const pageTrees = await buildTree(allPages, helper);
     result.push(...entryPageTrees, ...pageTrees);
   }
   if (opts.showViews) {
-    const allViews = await _sc_models_view().find();
+    const allViews = await _View.find();
     await setTableRefs(allViews);
     const viewTrees = await buildTree(allViews, helper);
     result.push(...viewTrees);
@@ -121,8 +115,6 @@ export function extractFromLayout(layout: any): ConnectedObjects {
   const embeddedViews = new Array<View>();
   const linkedPages = new Array<Page>();
   const linkedViews = new Array<View>();
-  const _View = _sc_models_view();
-  const _Page = _sc_models_page();
   traverseSync(layout, {
     view(segment: any) {
       const select = parse_view_select(segment.view, segment.relation);
@@ -165,7 +157,6 @@ export function extractFromLayout(layout: any): ConnectedObjects {
  */
 export function extractFromColumns(columns: any[]): ConnectedObjects {
   const linkedViews = new Array<View>();
-  const _View = _sc_models_view();
   for (const column of columns) {
     if (column.type === "ViewLink") {
       const select = parse_view_select(column.view, column.relation);
@@ -189,7 +180,7 @@ export function extractViewToCreate(
 ): ConnectedObjects | null {
   const { view_to_create, create_view_display } = configuration;
   if (view_to_create) {
-    const View = _sc_models_view();
+    const View = _View;
     const viewToCreate = View.findOne({ name: view_to_create });
     if (viewToCreate) {
       if (create_view_display === "Link" || create_view_display === "Popup") {
@@ -314,7 +305,7 @@ class ExtractHelper {
 
   private async handleTableTrigger(table: Table, tableNode: Node) {
     const triggerNodes = new Array<Node>();
-    const triggers = await Trigger.getAllTableTriggers(table);
+    const triggers = await Trigger.getAllTableTriggers(table as any);
     let index = 0;
     for (const trigger of triggers) {
       if (trigger) {

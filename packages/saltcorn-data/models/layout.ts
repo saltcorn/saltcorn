@@ -4,11 +4,9 @@
  * @subcategory models
  */
 
-import state from "../db/state.js";
-const { getState } = state;
+import { getState } from "../db/state.js";
 import { Layout } from "@saltcorn/types/base_types";
 import db from "../db/index.js";
-const { is_node } = db;
 
 type Visitors = { [key: string]: (segment: any, isLazy?: boolean) => any };
 
@@ -233,9 +231,9 @@ const getStringsForI18n = (layout: Layout): string[] => {
  * @param locale
  */
 const translateLayout = (layout: Layout, locale: string): void => {
-  const appState = getState();
+  const appState = getState()!;
   const __ =
-    is_node && appState
+    db.is_node && appState
       ? (s: string) => appState.i18n.__({ phrase: s, locale }) || s
       : (s: string) => {
           return s;
@@ -326,7 +324,7 @@ const findLayoutBranchWith = (
   }
 };
 
-export default {
+export {
   eachView,
   eachPage,
   getViews,

@@ -1,9 +1,6 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-import _sc_mjml from "mjml";
+import { getState } from "../db/state.js";
+import m from "mjml";
 import { createTransport, Transporter } from "nodemailer";
-const { getState } = _sc_db_state();
 import tags from "@saltcorn/markup/tags";
 import mjml from "@saltcorn/markup/mjml-tags";
 const { link } = tags;
@@ -12,28 +9,26 @@ import type Table from "./table.js";
 import type File from "./file.js";
 import { v4 as uuidv4 } from "uuid";
 import User from "./user.js";
-import mocks from "../tests/mocks.js";
+import * as mocks from "../tests/mocks.js";
 // mjml is heavy to load (~170ms) and only needed when actually rendering
 // email markup, so require it lazily rather than at module load time.
 let _mjml2html: any;
 const mjml2html = (mjmlMarkup: string, opts?: any) => {
   if (!_mjml2html) {
-    const m = (_sc_mjml as any);
-    _mjml2html = m && m.default ? m.default : m;
+    _mjml2html = m && (m as any).default ? (m as any).default : m;
   }
   return _mjml2html(mjmlMarkup, opts);
 };
-const { mockReqRes } = mocks;
+import { mockReqRes } from "../tests/mocks.js";
 import { AuthorizationCode } from "simple-oauth2";
-// nodemailer/lib/mailer's Options type is not resolvable as a subpath under
-// NodeNext; it was effectively `any` via the prior require() path anyway.
+// nodemailer/lib/mailer ships no usable ESM types under NodeNext
 type MailOpts = any;
 
 const emailMockReqRes = {
   req: {
     ...mockReqRes.req,
     generate_email: true,
-    get_base_url: () => getState().getConfig("base_url"),
+    get_base_url: () => getState()!.getConfig("base_url"),
   },
   res: mockReqRes.res,
 };
@@ -43,8 +38,8 @@ type MicosoftGraphTransporter = {
 };
 
 const isMicrosoftGraph = () => {
-  const smtpHost = getState().getConfig("smtp_host");
-  const apiOption = getState().getConfig("smtp_api_option");
+  const smtpHost = getState()!.getConfig("smtp_host");
+  const apiOption = getState()!.getConfig("smtp_api_option");
   return smtpHost === "outlook.office365.com" && apiOption === "Graph";
 };
 
@@ -56,24 +51,24 @@ const getMailTransport = async (): Promise<
 > => {
   if (isMicrosoftGraph()) return getMicrosoftGraphTransport();
   else {
-    const port = getState().getConfig("smtp_port");
-    const secure = getState().getConfig("smtp_secure", port === 465);
-    const smtp_allow_self_signed = getState().getConfig(
+    const port = getState()!.getConfig("smtp_port");
+    const secure = getState()!.getConfig("smtp_secure", port === 465);
+    const smtp_allow_self_signed = getState()!.getConfig(
       "smtp_allow_self_signed",
       false
     );
-    const username = getState().getConfig("smtp_username");
-    const isOauth = getState().getConfig("smtp_auth_method") === "oauth2";
+    const username = getState()!.getConfig("smtp_username");
+    const isOauth = getState()!.getConfig("smtp_auth_method") === "oauth2";
 
     const transportOptions: any = {
-      host: getState().getConfig("smtp_host"),
+      host: getState()!.getConfig("smtp_host"),
       port,
       secure,
       auth: username
         ? {
             user: username,
             ...(!isOauth
-              ? { pass: getState().getConfig("smtp_password") }
+              ? { pass: getState()!.getConfig("smtp_password") }
               : { type: "OAuth2", accessToken: await getTokenString() }),
           }
         : undefined,
@@ -136,7 +131,7 @@ const convertToGraphMail = (mail: MailOpts) => {
 
 const getWaitTime = () => {
   let result = 0;
-  const cfg = getState().getConfig("email_wait_timestamp", null);
+  const cfg = getState()!.getConfig("email_wait_timestamp", null);
   if (cfg)
     try {
       const now = new Date();
@@ -144,7 +139,7 @@ const getWaitTime = () => {
       const waitTime = waitTimestamp.valueOf() - now.valueOf();
       if (waitTime > 0) result = waitTime;
     } catch (error) {
-      getState().log(5, `Error parsing email_wait_timestamp: ${error}`);
+      getState()!.log(5, `Error parsing email_wait_timestamp: ${error}`);
     }
   return result;
 };
@@ -152,11 +147,11 @@ const getWaitTime = () => {
 const setWaitTimestamp = async (waitTime: number) => {
   try {
     const newTimestamp = new Date().valueOf() + waitTime;
-    const oldTimestamp = getState().getConfig("email_wait_timestamp", null);
+    const oldTimestamp = getState()!.getConfig("email_wait_timestamp", null);
     if (!oldTimestamp || newTimestamp > +oldTimestamp)
-      await getState().setConfig("email_wait_timestamp", newTimestamp);
+      await getState()!.setConfig("email_wait_timestamp", newTimestamp);
   } catch (error) {
-    getState().log(5, `Error setting email_wait_timestamp: ${error}`);
+    getState()!.log(5, `Error setting email_wait_timestamp: ${error}`);
   }
 };
 
@@ -189,13 +184,16 @@ async function sendGraphMail(mail: any, tokenStr: string, retryCount = 0) {
       let waitTime = 0;
       if (retryAfterHeader) {
         waitTime = parseInt(retryAfterHeader, 10) * 1000;
-        getState().log(
+        getState()!.log(
           5,
           `Graph API throttled. Using Retry-After header: ${waitTime}ms`
         );
       } else {
         waitTime = Math.pow(2, retryCount) * 1000;
-        getState().log(`Graph API throttled. Backing off for ${waitTime}ms`);
+        getState()!.log(
+          3,
+          `Graph API throttled. Backing off for ${waitTime}ms`
+        );
       }
       await setWaitTimestamp(waitTime);
       await new Promise((resolve) => setTimeout(resolve, waitTime));
@@ -264,7 +262,7 @@ const send_verification_email = async (
   req?: any,
   opts?: { new_verification_token?: string }
 ): Promise<boolean | any> => {
-  const verification_view_name = getState().getConfig("verification_view");
+  const verification_view_name = getState()!.getConfig("verification_view");
   if (verification_view_name) {
     const verification_view = await View.findOne({
       name: verification_view_name,
@@ -277,7 +275,7 @@ const send_verification_email = async (
 
         const html = await viewToEmailHtml(verification_view, { id: user.id });
         const email = {
-          from: getState().getConfig("email_from"),
+          from: getState()!.getConfig("email_from"),
           to: user.email,
           subject: "Please verify your email address",
           html,
@@ -333,7 +331,7 @@ const loadAttachments = async (path: string, row: any, user: any) => {
       (user.role_id <= file.min_role_read ||
         (user.id && user.id === file.user_id));
     if (file && !isAllowed) {
-      getState().log(
+      getState()!.log(
         4,
         `Not authorized to attach file to email: ${file.location} role=${user.role_id}`
       );
@@ -390,10 +388,10 @@ const getOauth2Client = (
     clientId: string;
     clientSecret: string;
   } = {
-    tokenUrl: getState().getConfig("smtp_token_url"),
-    authorizeUrl: getState().getConfig("smtp_authorize_url"),
-    clientId: getState().getConfig("smtp_client_id"),
-    clientSecret: getState().getConfig("smtp_client_secret"),
+    tokenUrl: getState()!.getConfig("smtp_token_url"),
+    authorizeUrl: getState()!.getConfig("smtp_authorize_url"),
+    clientId: getState()!.getConfig("smtp_client_id"),
+    clientSecret: getState()!.getConfig("smtp_client_secret"),
   }
 ) => {
   const url = new URL(tokenUrl);
@@ -417,7 +415,7 @@ const getOauth2Client = (
 };
 
 const getTokenString = async () => {
-  const tokenData = getState().getConfig("smtp_oauth_token_data");
+  const tokenData = getState()!.getConfig("smtp_oauth_token_data");
   const client = getOauth2Client();
   let wrapped = client.createToken(tokenData);
   if (wrapped.expired()) {
@@ -426,13 +424,13 @@ const getTokenString = async () => {
     if (!newTokenData.refresh_token && tokenData.refresh_token) {
       newTokenData.refresh_token = tokenData.refresh_token;
     }
-    await getState().setConfig("smtp_oauth_token_data", newTokenData);
+    await getState()!.setConfig("smtp_oauth_token_data", newTokenData);
     wrapped = refreshed;
   }
   return wrapped.token.access_token as string;
 };
 
-export default {
+export {
   getMailTransport,
   send_verification_email,
   emailMockReqRes,

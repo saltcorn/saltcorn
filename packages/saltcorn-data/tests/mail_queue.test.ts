@@ -1,31 +1,27 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_db = () => (require("../db/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
-import email from "../models/email.js";
+import * as email from "../models/email.js";
 import Notification from "../models/notification.js";
 import User from "../models/user.js";
 import { MailQueue } from "../models/internal/mail_queue.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { createTransport } from "nodemailer";
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
+import { getState } from "../db/state.js";
+import db from "../db/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { sleep } = mocks;
 import { assertIsSet } from "./assertions.js";
-const { getState } = _sc_db_state();
-const db = _sc_db();
 
 afterAll(db.close);
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
   const admin = await User.findOne({ email: "admin@foo.com" });
   if (admin) {
     await admin.update({ _attributes: { notify_email: true } });
   }
-  await getState().setConfig("mail_throttle_per_user", 2);
-  await getState().refresh_config();
+  await getState()!.setConfig("mail_throttle_per_user", 2);
+  await getState()!.refresh_config();
 });
 
 jest.mock("nodemailer");
@@ -69,7 +65,7 @@ describe("Mail queue", () => {
         return new Promise((resolve) => resolve(true));
       },
     });
-    const minDelay = getState().getConfig("mail_throttle_per_user", 30) * 1000;
+    const minDelay = getState()!.getConfig("mail_throttle_per_user", 30) * 1000;
     expect(minDelay).toBe(2000);
 
     const notificationA = await Notification.create({
@@ -109,7 +105,7 @@ describe("Mail queue", () => {
         return new Promise((resolve) => resolve(true));
       },
     });
-    const minDelay = getState().getConfig("mail_throttle_per_user", 30) * 1000;
+    const minDelay = getState()!.getConfig("mail_throttle_per_user", 30) * 1000;
     expect(minDelay).toBe(2000);
 
     const notificationA = await Notification.create({

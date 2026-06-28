@@ -7,20 +7,21 @@
 
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-import _sc_contractis_is from "contractis/is.js";
-import _sc_child_process from "child_process";
-import { join } from "path";
+import is from "contractis/is.js";
+import childProcessPkg from "child_process";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import { readFileSync, mkdirSync } from "fs";
 import envPaths from "env-paths";
-const is = (_sc_contractis_is as any);
 import { randomBytes, createHash } from "crypto";
 
 const pathsNoApp = envPaths("", { suffix: "" });
 const pathsWithApp = envPaths("saltcorn", { suffix: "" });
 
-import utils from "../utils.js";
+import * as utils from "../utils.js";
 import type { ConnectObjType } from "@saltcorn/types/base_types";
-const { isNode } = utils;
+import { isNode } from "../utils.js";
 
 /**
  * Default data path?
@@ -48,8 +49,8 @@ const stringToBool = (x: any) =>
 const getGitRevision = () => {
   let options = { stdio: "pipe", cwd: __dirname };
   try {
-    return (_sc_child_process as any)
-      .execSync("git rev-parse HEAD", options)
+    return childProcessPkg
+      .execSync("git rev-parse HEAD", options as any)
       .toString()
       .trim();
   } catch (error) {
@@ -228,7 +229,7 @@ const is_sqlite = (connObj: ConnectObjType) => {
   return !!connObj.sqlite_path;
 };
 
-export default {
+export {
   getConnectObject,
   getConfigFile,
   configFileDir,

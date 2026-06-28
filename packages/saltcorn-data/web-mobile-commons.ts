@@ -2,35 +2,27 @@
  * common structures used in the server and the mobile-app package
  */
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("./db/state.js") as any).default;
-const _sc__saltcorn_data_plugin_helper = () => (require("./plugin-helper.js") as any);
-import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
-import _sc_markdown_it from "markdown-it";
+import { getState } from "./db/state.js";
+import { readState, add_free_variables_to_joinfields, calcfldViewConfig } from "./plugin-helper.js";
+import tagsPkg from "@saltcorn/markup/tags";
+import markdownItPkg from "markdown-it";
 import Table from "./models/table.js";
 import type Field from "./models/field.js";
 import type WorkflowRun from "./models/workflow_run.js";
 import type Trigger from "./models/trigger.js";
 import type WorkflowStep from "./models/workflow_step.js";
 import { instanceOfType } from "@saltcorn/types/common_types";
-import utils from "./utils.js";
-import expression from "./models/expression.js";
+import * as utils from "./utils.js";
+import * as expression from "./models/expression.js";
 import type User from "./models/user.js";
 import View from "./models/view.js";
 import Form from "./models/form.js";
-const { isNode, isWeb, applyAsync } = utils;
-const { text } = (_sc__saltcorn_markup_tags as any);
-const { getState } = _sc_db_state();
-const {
-  readState,
-  add_free_variables_to_joinfields,
-  calcfldViewConfig,
-} = _sc__saltcorn_data_plugin_helper();
+import { isNode, isWeb, applyAsync } from "./utils.js";
+const { text } = tagsPkg;
 import { getForm, transformForm } from "./viewable_fields.js";
 import { Req } from "@saltcorn/types/base_types";
 import FieldRepeat from "./models/fieldrepeat.js";
-const MarkdownIt = (_sc_markdown_it as any),
+const MarkdownIt = markdownItPkg,
   md = new MarkdownIt();
 
 const disabledMobileMenus = ["Action", "Search", "Admin Page", "User Page"];
@@ -68,9 +60,9 @@ const get_extra_menu = (
   locale?: string,
   req?: Req
 ) => {
-  let cfg = getState().getConfig("unrolled_menu_items", []);
+  let cfg = getState()!.getConfig("unrolled_menu_items", []);
   if (!cfg || cfg.length === 0) {
-    cfg = getState().getConfig("menu_items", []);
+    cfg = getState()!.getConfig("menu_items", []);
   }
   if (!Array.isArray(cfg)) return [];
   const is_node = isNode();
@@ -425,7 +417,7 @@ const show_calculated_fieldview = async (
       }
       let fv;
       if (targetField.type === "Key") {
-        fv = getState().keyFieldviews[fieldview];
+        fv = getState()!.keyFieldviews[fieldview];
         if (!fv) {
           const reftable2 = Table.findOne({
             name: targetField.reftable_name,
@@ -536,7 +528,7 @@ const getWorkflowStepUserForm = async (
 ) => {
   if (step.action_name === "EditViewForm") {
     const view = View.findOne({ name: step.configuration.edit_view });
-    const table = Table.findOne({ id: view!.table_id });
+    const table = Table.findOne({ id: view!.table_id })!;
     const form = await getForm(
       table!,
       view!.name,
@@ -593,7 +585,7 @@ const getWorkflowStepUserForm = async (
   return form;
 };
 
-export default {
+export {
   get_extra_menu,
   prepare_update_row,
   prepare_insert_row,

@@ -3,14 +3,14 @@
  * @module base-plugin/viewtemplates/listshowlist
  * @subcategory base-plugin
  */
-import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
-import _sc__saltcorn_markup from "@saltcorn/markup";
+import tagsPkg from "@saltcorn/markup/tags";
+import markupPkg from "@saltcorn/markup";
 import Table from "../../models/table.js";
 import Form from "../../models/form.js";
 import View from "../../models/view.js";
 import Workflow from "../../models/workflow.js";
-const { text, div, h4, h6, a } = (_sc__saltcorn_markup_tags as any);
-const { renderForm, tabs } = (_sc__saltcorn_markup as any);
+const { text, div, h4, h6, a } = tagsPkg;
+const { renderForm, tabs } = markupPkg;
 import {
   get_child_views,
   get_parent_views,
@@ -21,8 +21,7 @@ import { GenObj } from "@saltcorn/types/common_types";
 import { Req } from "@saltcorn/types/base_types";
 import type { Where, Row } from "@saltcorn/db-common/internal";
 
-import utils from "../../utils.js";
-const { InvalidConfiguration, extractPagings } = utils;
+import { InvalidConfiguration, extractPagings } from "../../utils.js";
 
 
 const configuration_workflow = (req: Req) => 
@@ -108,7 +107,7 @@ const configuration_workflow = (req: Req) =>
         name: req.__("Subtables"),
         contextField: "subtables",
         form: async (context: GenObj) => {
-          const tbl = Table.findOne({ id: context.table_id });
+          const tbl = Table.findOne({ id: context.table_id })!;
           var fields: GenObj[] = [];
           const child_views = await get_child_views(tbl!, context.viewname);
           for (const { relation, related_table, views } of child_views) {

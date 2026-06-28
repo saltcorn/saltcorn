@@ -3,23 +3,20 @@
  * @module models/scheduler
  * @subcategory models
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
+import { getState } from "../db/state.js";
 import Crash from "./crash.js";
 import Trigger from "./trigger.js";
 import db from "../db/index.js";
-const { getState } = _sc_db_state();
-import _fetch from "node-fetch";
-const fetch: any = _fetch;
+import fetchLib from "node-fetch";
+const fetch: any = fetchLib; // NodeNext default-import interop for node-fetch
 import EventLog from "./eventlog.js";
 import Table from "./table.js";
-import mocks from "../tests/mocks.js";
+import * as mocks from "../tests/mocks.js";
 import WorkflowRun from "./workflow_run.js";
 import Notification from "./notification.js";
 import { MailQueue } from "./internal/mail_queue.js";
 import User from "./user.js";
-const { mockReqRes } = mocks;
+import { mockReqRes } from "../tests/mocks.js";
 
 /**
  * @param {Date} date
@@ -34,7 +31,7 @@ const sleepUntil = (date: Date, plusSeconds: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 const intervalIsNow = async (name: string): Promise<boolean> => {
-  const state = getState();
+  const state = getState()!;
   const cfgField = `next_${name.toLowerCase()}_event`;
   const now = new Date();
   let due = state.getConfigCopy(cfgField, false);
@@ -99,7 +96,7 @@ const getIntervalTriggersDueNow = async (
   name: string,
   hours: number
 ): Promise<Array<Trigger>> => {
-  const state = getState();
+  const state = getState()!;
   const cfgField = `next_${name.toLowerCase()}_event`;
   const now = new Date();
   let due = state.getConfigCopy(cfgField, false);
@@ -117,7 +114,7 @@ const getIntervalTriggersDueNow = async (
   //console.log("after check", {due, name, now});
   let triggers = [
     ...(await Trigger.find({ when_trigger: name })),
-    ...getState().virtual_triggers.filter(
+    ...getState()!.virtual_triggers.filter(
       (tr: Trigger) => tr.when_trigger === name
     ),
   ];
@@ -225,11 +222,11 @@ const runScheduler = async ({
     const isHourly = await intervalIsNow("Hourly");
     const isDaily = await intervalIsNow("Daily");
     const isWeekly = await intervalIsNow("Weekly");
-    getState().log(
+    getState()!.log(
       4,
       `Scheduler tick ${JSON.stringify({ isHourly, isDaily, isWeekly, now: new Date().toISOString() })}`
     );
-    const tenants_crash_log = getState().getConfig("tenants_crash_log");
+    const tenants_crash_log = getState()!.getConfig("tenants_crash_log");
 
     await eachTenant(async () => {
       try {
@@ -245,7 +242,7 @@ const runScheduler = async ({
         const isThisTenantHourly = await intervalIsNow("Hourly");
 
         const triggers = await Trigger.find({ when_trigger: "Often" });
-        const vtriggers = getState().virtual_triggers.filter(
+        const vtriggers = getState()!.virtual_triggers.filter(
           (tr: Trigger) => "Often" === tr.when_trigger
         );
         const trsHourly = await getIntervalTriggersDueNow("Hourly", 1);
@@ -272,7 +269,7 @@ const runScheduler = async ({
                 });
               else {
                 //virtual trigger
-                await trigger.run({});
+                await trigger.run?.({});
               }
             });
           } catch (e) {
@@ -284,7 +281,7 @@ const runScheduler = async ({
           }
         }
 
-        const snapshots_enabled = getState().getConfig("snapshots_enabled");
+        const snapshots_enabled = getState()!.getConfig("snapshots_enabled");
         if (snapshots_enabled && isThisTenantHourly) {
           await take_snapshot();
         }
@@ -305,7 +302,7 @@ const runScheduler = async ({
       // check pending emails
       try {
         const minDelay =
-          getState().getConfig("mail_throttle_per_user", 30) * 1000;
+          getState()!.getConfig("mail_throttle_per_user", 30) * 1000;
         const now = Date.now();
         const pendingNotifications = await Notification.find({
           send_status: "pending",
@@ -327,7 +324,7 @@ const runScheduler = async ({
             await MailQueue.loadNotifications(user.id!)
           );
           if (passedDelay >= minDelay) {
-            getState().log(5, `Emptying mail queue for user ${user.email}`);
+            getState()!.log(5, `Emptying mail queue for user ${user.email}`);
             await MailQueue.emptyQueue(user);
           }
         }
@@ -341,12 +338,12 @@ const runScheduler = async ({
     });
     //auto backup
     try {
-      const auto_backup_freq = getState().getConfig("auto_backup_frequency");
+      const auto_backup_freq = getState()!.getConfig("auto_backup_frequency");
       if (
         (auto_backup_freq === "Daily" && isDaily) ||
         (auto_backup_freq === "Weekly" && isWeekly)
       ) {
-        getState().log(5, `Auto backup now`);
+        getState()!.log(5, `Auto backup now`);
         await auto_backup_now();
       }
     } catch (e) {
@@ -369,4 +366,8 @@ const runScheduler = async ({
   }
 };
 
-export default { runScheduler, getDailyTriggersDueNow, getWeeklyTriggersDueNow };
+export {
+  runScheduler,
+  getDailyTriggersDueNow,
+  getWeeklyTriggersDueNow,
+};

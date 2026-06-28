@@ -1,16 +1,15 @@
 // https://stackoverflow.com/a/37041949/19839414
 // https://github.com/uhop/stream-json/issues/82#issuecomment-685289413
 
-import _sc_stream from "stream";
-import _sc_stream_chain from "stream-chain";
-import _sc_stream_json from "stream-json";
-import _sc_fs from "fs";
-import _sc_stream_json_streamers_StreamArray from "stream-json/streamers/StreamArray.js";
-const { Writable } = (_sc_stream as any);
-const { chain } = (_sc_stream_chain as any);
-const { parser } = (_sc_stream_json as any);
-const fs = (_sc_fs as any);
-const { streamArray } = (_sc_stream_json_streamers_StreamArray as any);
+import streamPkg from "stream";
+import streamChainPkg from "stream-chain";
+import streamJsonPkg from "stream-json";
+import streamArrayPkg from "stream-json/streamers/StreamArray.js";
+import fs from "fs";
+const { Writable } = streamPkg;
+const { chain } = streamChainPkg;
+const { parser } = streamJsonPkg;
+const { streamArray } = streamArrayPkg;
 
 type AsyncConsumer<T> = (subString: T) => Promise<void>;
 

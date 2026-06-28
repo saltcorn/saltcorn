@@ -1,17 +1,14 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import Table from "../models/table.js";
 import Field from "../models/field.js";
 import Trigger from "../models/trigger.js";
 import db from "../db/index.js";
-const { getState } = _sc_db_state();
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { plugin_with_routes, sleep } = mocks;
-import expression from "../models/expression.js";
+import * as expression from "../models/expression.js";
 const {
   eval_expression,
   eval_statements,
@@ -30,18 +27,18 @@ import { mkWhere } from "@saltcorn/db-common/internal";
 
 import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import utils from "../utils.js";
+import * as utils from "../utils.js";
 import PlainDate from "@saltcorn/plain-date";
 const { interpolate, mergeIntoWhere } = utils;
 
-getState().registerPlugin("base", _sc_base_plugin());
+getState()!.registerPlugin("base", basePluginMod);
 
 afterAll(db.close);
 jest.setTimeout(30000);
 
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 describe("identifiersInCodepage", () => {
@@ -58,10 +55,10 @@ describe("eval_expression", () => {
     expect(eval_expression("x+2", { x: 5 })).toBe(7);
   });
   it("uses code pages", async () => {
-    await getState().setConfig("function_code_pages", {
+    await getState()!.setConfig("function_code_pages", {
       mypage: `function add58(x){return x+58}`,
     });
-    await getState().refresh_codepages();
+    await getState()!.refresh_codepages();
 
     expect(eval_expression("add58(x)", { x: 5 })).toBe(63);
   });
@@ -82,7 +79,7 @@ describe("eval_expression", () => {
 
 describe("eval_statements", () => {
   it("evaluates", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
 
     expect(await eval_statements("return x+2", { x: 5 })).toBe(7);
     expect(await eval_statements("return add3(x)+2", { x: 5 })).toBe(10);
@@ -99,7 +96,7 @@ describe("eval_statements", () => {
 });
 describe("get_async_expression_function", () => {
   it("evaluates with null row", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
 
     const f = get_async_expression_function("add5(1)+ add3(4)+asyncAdd2(x)", [
       new Field({ name: "x", type: "Integer" }),
@@ -109,7 +106,7 @@ describe("get_async_expression_function", () => {
     expect(y).toBe(20);
   });
   it("does not use non-valid identifier as argument", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
 
     const f = get_async_expression_function(
       `add5(1)+ add3(row["foo->bar"])+asyncAdd2(x)`,
@@ -126,17 +123,17 @@ describe("get_async_expression_function", () => {
 
 describe("code pages in eval", () => {
   it("sync codepages", async () => {
-    await getState().setConfig("function_code_pages", {
+    await getState()!.setConfig("function_code_pages", {
       mypage: `function add59(x){return x+59};
       globalThis.fooconst = 13;
       `,
     });
-    await getState().refresh_codepages();
+    await getState()!.refresh_codepages();
 
     expect(eval_expression("add59(fooconst)", {})).toBe(59 + 13);
   });
   it("async codepages", async () => {
-    await getState().setConfig("function_code_pages", {
+    await getState()!.setConfig("function_code_pages", {
       mypage: `
       globalThis.barconst = 17;
       function add8(x){return x+8}
@@ -147,7 +144,7 @@ describe("code pages in eval", () => {
       globalThis.bazconst = 12;
       `,
     });
-    await getState().refresh_codepages();
+    await getState()!.refresh_codepages();
 
     expect(eval_expression("bookpages", {})).toBe(967);
     expect(eval_expression("barconst", {})).toBe(17);
@@ -155,9 +152,9 @@ describe("code pages in eval", () => {
     expect(eval_expression("add8(bazconst)", {})).toBe(20);
   });
   it("user driven constant change in codepages", async () => {
-    const table = Table.findOne("books");
+    const table = Table.findOne("books")!;
     assertIsSet(table);
-    await getState().setConfig("function_code_pages", {
+    await getState()!.setConfig("function_code_pages", {
       mypage: `
       runAsync(async () => {
         const books = await Table.findOne("books").getRows({});
@@ -167,7 +164,7 @@ describe("code pages in eval", () => {
       })
       `,
     });
-    await getState().refresh_codepages();
+    await getState()!.refresh_codepages();
 
     expect(eval_expression("sumbookpages", {})).toBe(1695);
     const tr = await Trigger.create({
@@ -374,7 +371,7 @@ describe("calculated", () => {
       label: "x",
       type: "Integer",
     });
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
     await Field.create({
       table,
       label: "z",
@@ -402,10 +399,10 @@ describe("calculated", () => {
       label: "x",
       type: "Integer",
     });
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
     const xres = transform_for_async(
       "add5(1)+ add3(4)+asyncAdd2(x)",
-      getState().functions
+      getState()!.functions
     );
     expect(xres).toEqual({
       expr_string: "add5(1) + add3(4) + await asyncAdd2(x)",
@@ -496,7 +493,7 @@ describe("calculated field dependencies", () => {
 
 describe("single half-h joinfields in stored calculated fields", () => {
   it("creates", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const f = await Field.create({
       table: patients,
@@ -511,7 +508,7 @@ describe("single half-h joinfields in stored calculated fields", () => {
     expect(f.attributes.calc_joinfields[0].field).toBe("favbook");
   });
   it("updates", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const bookRows = await patients.getJoinedRows({});
     for (const row of bookRows) {
@@ -519,7 +516,7 @@ describe("single half-h joinfields in stored calculated fields", () => {
     }
   });
   it("check", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const bookrow = await patients.getJoinedRow({ where: { id: 1 } });
 
@@ -531,7 +528,7 @@ describe("single half-h joinfields in stored calculated fields", () => {
 });
 describe("single joinfields in stored calculated fields", () => {
   it("creates", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const f = await Field.create({
       table: patients,
@@ -546,7 +543,7 @@ describe("single joinfields in stored calculated fields", () => {
     expect(f.attributes.calc_joinfields[0].field).toBe("favbook");
   });
   it("updates", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const bookRows = await patients.getRows({});
     for (const row of bookRows) {
@@ -554,14 +551,14 @@ describe("single joinfields in stored calculated fields", () => {
     }
   });
   it("check", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const bookrow = await patients.getRow({ id: 1 });
 
     expect(bookrow?.favpages).toBe(967);
   });
   it("changes", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     await patients.updateRow({ favbook: 2 }, 1);
 
@@ -570,7 +567,7 @@ describe("single joinfields in stored calculated fields", () => {
     expect(bookrow?.favpages).toBe(728);
   });
   it("insert", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const hid = await patients.insertRow({ name: "Herman Smith", favbook: 1 });
     const hrow = await patients.getRow({ id: hid });
@@ -579,14 +576,14 @@ describe("single joinfields in stored calculated fields", () => {
     //expect(bookrow?.favpages).toBe(967);
   });
   it("recalculates", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const patient = await patients.getRow({ id: 1 });
     assertIsSet(patient);
 
     expect(patient.favbook).toBe(2);
     expect(patient.favpages).toBe(728);
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const book = await books.getRow({ id: patient.favbook });
     assertIsSet(book);
@@ -602,7 +599,7 @@ describe("single joinfields in stored calculated fields", () => {
     await books.updateRow({ pages: 728 }, book.id);
   });
   it("add reciprocal field for looped updates ", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     await Field.create({
       table: books,
@@ -638,12 +635,12 @@ describe("single joinfields in stored calculated fields", () => {
     });
   });
   it("change value without triggering infinite loop", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const patient = await patients.getRow({ id: 1 });
     assertIsSet(patient);
 
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const book = await books.getRow({ id: patient.favbook });
     assertIsSet(book);
@@ -665,8 +662,8 @@ describe("single joinfields in stored calculated fields", () => {
 
 describe("bool arrays in stored calculated JSON fields", () => {
   it("creates", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
-    const patients = Table.findOne({ name: "patients" });
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     await Field.create({
       name: "normalised_readings",
@@ -693,7 +690,7 @@ describe("bool arrays in stored calculated JSON fields", () => {
     await recalculate_for_stored(patients);
   });
   it("has array content", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const pat = await patients.getRow({ id: 1 });
     assertIsSet(pat);
@@ -701,9 +698,9 @@ describe("bool arrays in stored calculated JSON fields", () => {
     if (!db.isSQLite) expect(typeof pat.normalised_readings[0]).toBe("boolean");
   });
   it("updates on changes", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
 
     const pat = await patients.getRow({ id: 1 });
@@ -721,9 +718,9 @@ describe("bool arrays in stored calculated JSON fields", () => {
     else expect(pat1.normalised_readings[0]).toBe(false);
   });
   it("updates on insert", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const pat0 = await patients.getRow({ id: 1 });
 
@@ -746,7 +743,7 @@ describe("bool arrays in stored calculated JSON fields", () => {
 
 describe("double joinfields in stored calculated fields", () => {
   it("creates", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const f = await Field.create({
       table: readings,
@@ -766,11 +763,11 @@ describe("double joinfields in stored calculated fields", () => {
     expect(f.attributes.calc_joinfields[1].targetField).toBe("favbook");
   });
   it("recalculates if final value changes", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
 
     assertIsSet(readings);
 
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
 
     assertIsSet(patients);
 
@@ -786,7 +783,7 @@ describe("double joinfields in stored calculated fields", () => {
 
     const patient = await patients.getRow({ id: patid });
     assertIsSet(patient);
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const book = await books.getRow({ id: patient.favbook });
 
@@ -800,11 +797,11 @@ describe("double joinfields in stored calculated fields", () => {
     await books.updateRow({ pages: 728 }, book?.id);
   });
   it("recalculates if intermediate value changes", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
 
     assertIsSet(readings);
 
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
 
     assertIsSet(patients);
 
@@ -831,7 +828,7 @@ describe("double joinfields in stored calculated fields", () => {
 
 describe("double half-h joinfields in stored calculated fields", () => {
   it("creates", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
     assertIsSet(readings);
     const f = await Field.create({
       table: readings,
@@ -851,11 +848,11 @@ describe("double half-h joinfields in stored calculated fields", () => {
     expect(f.attributes.calc_joinfields[1].targetField).toBe("favbook");
   });
   it("recalculates if final value changes", async () => {
-    const readings = Table.findOne({ name: "readings" });
+    const readings = Table.findOne({ name: "readings" })!;
 
     assertIsSet(readings);
 
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
 
     assertIsSet(patients);
 
@@ -873,7 +870,7 @@ describe("double half-h joinfields in stored calculated fields", () => {
 
 describe("Simple aggregations in stored calculated fields", () => {
   it("creates", async () => {
-    const publisher = Table.findOne({ name: "publisher" });
+    const publisher = Table.findOne({ name: "publisher" })!;
     assertIsSet(publisher);
     await Field.create({
       table: publisher,
@@ -893,7 +890,7 @@ describe("Simple aggregations in stored calculated fields", () => {
     });
   });
   it("updates", async () => {
-    const publisher = Table.findOne({ name: "publisher" });
+    const publisher = Table.findOne({ name: "publisher" })!;
     assertIsSet(publisher);
     const bookRows = await publisher.getRows({});
     for (const row of bookRows) {
@@ -901,7 +898,7 @@ describe("Simple aggregations in stored calculated fields", () => {
     }
   });
   it("check", async () => {
-    const publisher = Table.findOne({ name: "publisher" });
+    const publisher = Table.findOne({ name: "publisher" })!;
     assertIsSet(publisher);
     const bookrow = await publisher.getRow({ id: 1 });
 
@@ -909,13 +906,13 @@ describe("Simple aggregations in stored calculated fields", () => {
   });
 
   it("insert", async () => {
-    const publisher = Table.findOne({ name: "publisher" });
+    const publisher = Table.findOne({ name: "publisher" })!;
     assertIsSet(publisher);
     const hid = await publisher.insertRow({ name: "Collins" });
     const hrow = await publisher.getRow({ id: hid });
     expect(hrow?.number_of_books).toBe(0);
 
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     await books.insertRow({
       author: "Murphy",
@@ -956,10 +953,10 @@ describe("Simple aggregations in stored calculated fields", () => {
     expect(hrow4?.number_of_books).toBe(2);
   });
   it("moves from one parent to another", async () => {
-    const publisher = Table.findOne({ name: "publisher" });
+    const publisher = Table.findOne({ name: "publisher" })!;
     assertIsSet(publisher);
 
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const ps = await publisher.getRows({}, { orderBy: "id" });
     //console.log("ps", ps);
@@ -968,10 +965,10 @@ describe("Simple aggregations in stored calculated fields", () => {
     expect(ps[2].number_of_books).toBe(2);
     const cbook = await books.getRow({ publisher: 3 });
     assertIsSet(cbook);
-    //await getState().setConfig("log_level", 6);
+    //await getState()!.setConfig("log_level", 6);
     await books.updateRow({ publisher: 2 }, cbook.id);
     //await recalculate_for_stored(publisher, {});
-    //await getState().setConfig("log_level", 1);
+    //await getState()!.setConfig("log_level", 1);
 
     const ps1 = await publisher.getRows({}, { orderBy: "id" });
     //onsole.log("ps1", ps1);
@@ -981,7 +978,7 @@ describe("Simple aggregations in stored calculated fields", () => {
   });
 
   it("creates and updates sum field", async () => {
-    const publisher = Table.findOne({ name: "publisher" });
+    const publisher = Table.findOne({ name: "publisher" })!;
     assertIsSet(publisher);
     await Field.create({
       table: publisher,
@@ -1006,7 +1003,7 @@ describe("Simple aggregations in stored calculated fields", () => {
     const hrow3 = await publisher.getRow({ id: 1 });
 
     expect(hrow3?.sum_of_pages).toBe(728);
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const book = await books.getRow({ publisher: 1 });
     assertIsSet(book);
@@ -1025,9 +1022,9 @@ describe("Simple aggregations in stored calculated fields", () => {
 });
 describe("Sum-where aggregations in stored calculated fields", () => {
   it("creates and updates sum field", async () => {
-    const publisher = Table.findOne({ name: "publisher" });
+    const publisher = Table.findOne({ name: "publisher" })!;
     assertIsSet(publisher);
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     await Field.create({
       table: books,
@@ -1084,7 +1081,7 @@ describe("Sum-where aggregations in stored calculated fields", () => {
 
 describe("join-aggregations in stored calculated fields", () => {
   it("creates", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     await Field.create({
       table: books,
@@ -1109,7 +1106,7 @@ describe("join-aggregations in stored calculated fields", () => {
   });
 
   it("check", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const bookrow = await books.getRow({ id: 2 });
 
@@ -1269,7 +1266,7 @@ describe("free variables", () => {
 });
 describe("interpolation function", () => {
   it("interpolates simple", () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
 
     expect(interpolate("hello {{ x }}", { x: 1 })).toBe("hello 1");
     expect(interpolate("hello {{ x+1 }}", { x: 1 })).toBe("hello 2");
@@ -1584,7 +1581,7 @@ describe("jsexprToWhere", () => {
     expect(today.toISOString()).toMatch(/^202/);
   });
   it("translates known stand-alone bools", async () => {
-    const readings = Table.findOne("readings");
+    const readings = Table.findOne("readings")!;
     assertIsSet(readings);
     const wnormalised = jsexprToWhere("normalised", {}, readings.fields);
     const w_not_normalised = jsexprToWhere("!normalised", {}, readings.fields);
@@ -1603,7 +1600,7 @@ describe("jsexprToWhere", () => {
     expect(rows2[1].normalised).toBe(false);
   });
   it("translates known stand-alone integers", async () => {
-    const books = Table.findOne("books");
+    const books = Table.findOne("books")!;
     assertIsSet(books);
     const wpages = jsexprToWhere("pages", {}, books.fields);
     const w_no_pages = jsexprToWhere("!pages", {}, books.fields);
@@ -1625,7 +1622,7 @@ describe("jsexprToWhere", () => {
     expect(rows2.length).toBe(0);
   });
   it("translates known stand-alone strings", async () => {
-    const books = Table.findOne("books");
+    const books = Table.findOne("books")!;
     assertIsSet(books);
     const wpages = jsexprToWhere("author", {}, books.fields);
     const w_no_pages = jsexprToWhere("!author", {}, books.fields);

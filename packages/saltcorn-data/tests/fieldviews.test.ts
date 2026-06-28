@@ -1,16 +1,13 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import Table from "../models/table.js";
 import Field from "../models/field.js";
 import View from "../models/view.js";
 import db from "../db/index.js";
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { mockReqRes } = mocks;
-const { getState } = _sc_db_state();
 import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 import { assertIsSet } from "./assertions.js";
 import {
@@ -22,14 +19,14 @@ import {
 
 let remoteQueries = false;
 
-getState().registerPlugin("base", _sc_base_plugin());
+getState()!.registerPlugin("base", basePluginMod);
 
 afterAll(db.close);
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
   if (process.env.REMOTE_QUERIES === "true") {
-    getState().setConfig("base_url", "http://localhost:3000");
+    getState()!.setConfig("base_url", "http://localhost:3000");
     remoteQueries = true;
     prepareQueryEnviroment();
   }
@@ -138,7 +135,7 @@ describe("to_locale_string fieldview", () => {
 
 describe("select fieldview", () => {
   it("should render without where", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     const fieldSpec: any = {
       name: "favbook",
       label: "Favbook",
@@ -155,7 +152,7 @@ describe("select fieldview", () => {
     };
     const field = new Field(fieldSpec);
     await field.fill_fkey_options();
-    const fieldview = getState().keyFieldviews[field.fieldview as string];
+    const fieldview = getState()!.keyFieldviews[field.fieldview as string];
     const res = fieldview.run(
       "favbook",
       null,
@@ -169,7 +166,7 @@ describe("select fieldview", () => {
     );
   });
   it("should render with where", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     const configuration = {
       neutral_label: "None",
       where: `pages== 728`,
@@ -188,7 +185,7 @@ describe("select fieldview", () => {
     };
     const field = new Field(fieldSpec);
     await field.fill_fkey_options();
-    const fieldview = getState().keyFieldviews[field.fieldview as string];
+    const fieldview = getState()!.keyFieldviews[field.fieldview as string];
     const res = fieldview.run(
       "favbook",
       null,

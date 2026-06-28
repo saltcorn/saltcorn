@@ -3,20 +3,16 @@
  * @category saltcorn-data
  * @module model-helper
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_models_expression = () => (require("./models/expression.js") as any).default;
-import _sc_util from "util";
-import _sc_child_process from "child_process";
+import { eval_expression } from "./models/expression.js";
+import util from "util";
+import childProcessPkg from "child_process";
 import fs from "fs";
 import { Column } from "@saltcorn/types/base_types";
 import type { Row } from "@saltcorn/db-common/internal";
 import type Field from "./models/field.js";
-const { eval_expression } = _sc_models_expression();
-const util = (_sc_util as any);
 
 const fsp = fs.promises;
-const exec = util.promisify((_sc_child_process as any).exec);
+const exec = util.promisify(childProcessPkg.exec);
 
 interface NotebookCell {
   source: string[];

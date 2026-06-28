@@ -1,20 +1,17 @@
 /**
  * Tests for discovery.ts
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
-import discovery from "../models/discovery.js";
+import * as discovery from "../models/discovery.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const {
   discoverable_tables,
   discover_tables,
   implement_discovery,
   reconcile_table,
 } = discovery;
-const { getState } = _sc_db_state();
 import db from "../db/index.js";
 import Table from "../models/table.js";
 import Field from "../models/field.js";
@@ -22,14 +19,14 @@ import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-co
 import { Row } from "@saltcorn/db-common/internal";
 import { assertIsSet } from "./assertions.js";
 
-getState().registerPlugin("base", _sc_base_plugin());
+getState()!.registerPlugin("base", basePluginMod);
 
 // todo do we need to delete tables after tests?
 afterAll(db.close);
 
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 jest.setTimeout(30000);
 // todo tests with forgotten tables
@@ -244,12 +241,12 @@ describe("Repair primary key", () => {
       await implement_discovery(pack);
     });
     it("should repair", async () => {
-      const table = Table.findOne("twoprimkeys");
+      const table = Table.findOne("twoprimkeys")!;
       assertIsSet(table);
       await table.repairCompositePrimary();
     });
     it("should have an int primary key", async () => {
-      const table = Table.findOne("twoprimkeys");
+      const table = Table.findOne("twoprimkeys")!;
       assertIsSet(table);
       expect(table.fields.length).toBe(3);
       expect(table.pk_name).toBe("id");
@@ -264,7 +261,7 @@ describe("Repair primary key", () => {
 describe("reconcile_table", () => {
   if (!db.isSQLite) {
     it("should report all matches for a healthy table", async () => {
-      const books = Table.findOne("books");
+      const books = Table.findOne("books")!;
       assertIsSet(books);
       const result = await reconcile_table(books);
       expect(result.ghost_count).toBe(0);
@@ -298,7 +295,7 @@ describe("reconcile_table", () => {
       );
 
       // Refresh table in-memory fields
-      const freshTable = Table.findOne("reconcile_test");
+      const freshTable = Table.findOne("reconcile_test")!;
       assertIsSet(freshTable);
       const result = await reconcile_table(freshTable);
 
@@ -319,7 +316,7 @@ describe("reconcile_table", () => {
         `ALTER TABLE "reconcile_test" ADD COLUMN "orphan_col" text`
       );
 
-      const freshTable = Table.findOne("reconcile_test");
+      const freshTable = Table.findOne("reconcile_test")!;
       assertIsSet(freshTable);
       const result = await reconcile_table(freshTable);
 
@@ -330,7 +327,7 @@ describe("reconcile_table", () => {
     });
 
     it("should not report transient calculated fields as ghosts", async () => {
-      const table = Table.findOne("reconcile_test");
+      const table = Table.findOne("reconcile_test")!;
       assertIsSet(table);
       // Add a transient calculated field (calculated=true, stored=false)
       await Field.create({
@@ -344,7 +341,7 @@ describe("reconcile_table", () => {
       });
 
       // Refresh and reconcile
-      const freshTable = Table.findOne("reconcile_test");
+      const freshTable = Table.findOne("reconcile_test")!;
       assertIsSet(freshTable);
       const result = await reconcile_table(freshTable);
 

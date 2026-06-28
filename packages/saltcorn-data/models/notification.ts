@@ -12,13 +12,13 @@ import type {
   PartialSome,
 } from "@saltcorn/db-common/internal";
 import User from "./user.js";
-import state from "../db/state.js";
+import * as state from "../db/state.js";
 import { PushMessageHelper } from "./internal/push_message_helper.js";
-import utils from "../utils.js";
+import * as utils from "../utils.js";
 import { MailQueue } from "./internal/mail_queue.js";
 
-const { getState } = state;
-const { isPushEnabled } = utils;
+import { getState } from "../db/state.js";
+import { isPushEnabled } from "../utils.js";
 
 /**
  * Notification Class
@@ -83,7 +83,7 @@ class Notification {
       send_status: null,
     });
     o.id = id;
-    const state = getState();
+    const state = getState()!;
     const user = await User.findOne({ id: o.user_id });
     if (user?._attributes?.notify_email) {
       await MailQueue.handleNotification(o, user);

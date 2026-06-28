@@ -1,28 +1,25 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import Table from "../models/table.js";
 import Field from "../models/field.js";
 import View from "../models/view.js";
 import db from "../db/index.js";
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { plugin_with_routes, mockReqRes } = mocks;
-const { getState } = _sc_db_state();
 import { assertIsSet } from "./assertions.js";
 import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 import { GenObj } from "../../saltcorn-types/dist/common_types.js";
 import { renderEditInEditConfig } from "./remote_query_helper.js";
 import { prepareSimpleTopicPostRelation } from "./common_helpers.js";
 
-getState().registerPlugin("base", _sc_base_plugin());
+getState()!.registerPlugin("base", basePluginMod);
 
 afterAll(db.close);
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 describe("Misc view tests", () => {
@@ -104,7 +101,7 @@ describe("Misc view tests", () => {
     });
   });
   it("should runPost with edit in edit", async () => {
-    const readingsTbl = Table.findOne({ name: "readings" });
+    const readingsTbl = Table.findOne({ name: "readings" })!;
     assertIsSet(readingsTbl);
     await View.create({
       name: "innerReads",
@@ -113,7 +110,7 @@ describe("Misc view tests", () => {
       configuration: renderEditInEditConfig.innerEdit,
       viewtemplate: "Edit",
     });
-    const patientsTable = Table.findOne({ name: "patients" });
+    const patientsTable = Table.findOne({ name: "patients" })!;
     assertIsSet(patientsTable);
     const v = await View.create({
       table_id: patientsTable.id,
@@ -136,7 +133,7 @@ describe("Misc view tests", () => {
     });
   });
   it("should find", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const link_views = await View.find({
       table_id: table.id,
@@ -150,7 +147,7 @@ describe("Misc view tests", () => {
     expect(link_views.length).toBe(1);
   });
   it("should create and delete", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const v = await View.create({
       table_id: table.id,
@@ -193,7 +190,7 @@ describe("Misc view tests", () => {
     expect(res.length > 0).toBe(true);
   });
   it("list join-aggs", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const v = await View.create({
       table_id: table.id,
@@ -252,8 +249,8 @@ describe("Misc view tests", () => {
 });
 describe("View with routes", () => {
   it("should create and delete", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
-    expect(getState().viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
+    expect(getState()!.viewtemplates.ViewWithRoutes.name).toBe("ViewWithRoutes");
     var html, json;
     const spy = {
       ...mockReqRes.res,
@@ -264,7 +261,7 @@ describe("View with routes", () => {
         json = h;
       },
     };
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
 
     const v = await View.create({
@@ -286,7 +283,7 @@ describe("View with routes", () => {
 });
 describe("nested views", () => {
   it("should create and run", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
 
     const small = await View.create({
@@ -360,7 +357,7 @@ describe("nested views", () => {
     expect(res).not.toContain("Melville");
   });
   it("should create and run feed of nested", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
 
     const large = await View.create({
@@ -495,9 +492,9 @@ describe("subviews with relations", () => {
       inbound_level_three -> inbound_inbound -> blog_post_inbound -> blog_posts
     */
     const levelThreeInbound = await Table.create("inbound_level_three");
-    const inbound_inbound = Table.findOne({ name: "inbound_inbound" });
+    const inbound_inbound = Table.findOne({ name: "inbound_inbound" })!;
     assertIsSet(inbound_inbound);
-    const topics = Table.findOne({ name: "topics" });
+    const topics = Table.findOne({ name: "topics" })!;
     assertIsSet(topics);
     await Field.create({
       table: levelThreeInbound,

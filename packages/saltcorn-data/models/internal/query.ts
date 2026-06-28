@@ -13,8 +13,7 @@ import {
   orderByIsObject,
   Value,
 } from "@saltcorn/db-common/internal";
-import utils from "../../utils.js";
-const { isNode } = utils;
+import { isNode } from "../../utils.js";
 import Field from "../field.js";
 import db from "../../db/index.js";
 

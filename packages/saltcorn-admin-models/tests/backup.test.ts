@@ -144,7 +144,7 @@ describe("Backup and restore", () => {
       role_id: 1,
     });
     assertsObjectIsUser(admu);
-    expect(typeof admu.password).toBe("string");
+    expect(typeof (admu as any).password).toBe("string");
     expect(User.table.min_role_read).toBe(1);
 
     const t2 = Table.findOne({ name: "books" });
@@ -191,14 +191,14 @@ describe("Backup and restore", () => {
     const staff = await User.findOne({ email: "staff@foo.com" });
     expect(!!staff).toBe(true);
     assertsObjectIsUser(staff);
-    expect(typeof staff.password).toBe("string");
+    expect(typeof staff!.password).toBe("string");
     const trig = await Trigger.findOne({ name: "footrig" });
     expect(!!trig).toBe(true);
     const htrig = await Trigger.findOne({ name: "hourtrig" });
     expect(!!htrig).toBe(true);
     const mywf = await Trigger.findOne({ name: "mywf" });
     expect(!!mywf).toBe(true);
-    const mySteps = await WorkflowStep.find({ trigger_id: mywf.id });
+    const mySteps = await WorkflowStep.find({ trigger_id: mywf!.id! });
     expect(mySteps.length).toBe(2);
     const lib = await Library.findOne({ name: "foo" });
     expect(!!lib).toBe(true);
@@ -210,7 +210,7 @@ describe("Backup and restore", () => {
     expect(tp?.provider_name).toBe("provtab");
     expect(tp?.provider_cfg?.middle_name).toBe("Robinette");
 
-    expect(staff.checkPassword("ghrarhr54hg")).toBe(true);
+    expect(staff!.checkPassword("ghrarhr54hg")).toBe(true);
     expect(User.table.min_role_read).toBe(40);
     expect(User.table.description).toBe("Users are the best");
   });

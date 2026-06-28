@@ -1,11 +1,9 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import db from "../db/index.js";
 import layoutMarkup from "@saltcorn/markup/layout";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const renderLayout = layoutMarkup;
 import Table from "../models/table.js";
 import TableConstraint from "../models/table_constraints.js";
@@ -19,11 +17,10 @@ import View from "../models/view.js";
 import Page from "../models/page.js";
 import PageGroup from "../models/page_group.js";
 import PageGroupMember from "../models/page_group_member.js";
-import layoutModel from "../models/layout.js";
+import * as layoutModel from "../models/layout.js";
 const { getViews } = layoutModel;
 
-const { getState } = _sc_db_state();
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
 const { rick_file, mockReqRes } = mocks;
 import Library from "../models/library.js";
 import { assertIsSet } from "./assertions.js";
@@ -32,10 +29,10 @@ import { existsSync } from "fs";
 import { join } from "path";
 import MetaData from "../models/metadata.js";
 
-getState().registerPlugin("base", _sc_base_plugin());
+getState()!.registerPlugin("base", basePluginMod);
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 afterAll(db.close);
@@ -44,7 +41,7 @@ describe("Table create", () => {
   it("should create", async () => {
     expect.assertions(3);
     const tc = await Table.create("mytable");
-    const tf = Table.findOne({ id: tc.id });
+    const tf = Table.findOne({ id: tc.id })!;
     assertIsSet(tf);
     expect(tf.name).toStrictEqual("mytable");
   });
@@ -160,7 +157,7 @@ describe("Page", () => {
     expect(vs[1].name).toEqual("v46747");
     expect(vs[1].contents).toContain("Herman");
     expect(vs[1].contents).toContain("Tolstoy");
-    await getState().setConfig("staff_home", "foo");
+    await getState()!.setConfig("staff_home", "foo");
     await Page.update(cs.id, { description: "miaw" });
     await cs.clone();
     const cs1 = await Page.findOne({ name: "foo-copy" });
@@ -329,7 +326,7 @@ describe("Library", () => {
 
 describe("TableConstraint", () => {
   it("should create", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const con = await TableConstraint.create({
       table,

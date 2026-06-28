@@ -3,23 +3,21 @@
  * @module base-plugin/viewtemplates/viewable_fields
  * @subcategory base-plugin
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("./db/state.js") as any).default;
-const _sc_models_expression = () => (require("./models/expression.js") as any).default;
-const _sc_models_fieldrepeat = () => (require("./models/fieldrepeat.js") as any).default;
-const _sc_models_form = () => (require("./models/form.js") as any).default;
-const _sc_models_layout = () => (require("./models/layout.js") as any).default;
-const _sc_utils = () => (require("./utils.js") as any).default;
-const _sc_db = () => (require("./db/index.js") as any).default;
-const _sc_base_plugin_types = () => (require("./base-plugin/types.js") as any).default;
-const _sc_models_crash = () => (require("./models/crash.js") as any).default;
-import _sc__saltcorn_markup from "@saltcorn/markup";
-import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
-import _sc_underscore from "underscore";
-import _sc__saltcorn_markup_layout from "@saltcorn/markup/layout";
-import _sc__saltcorn_common_code from "@saltcorn/common-code";
-import _sc__saltcorn_markup_layout_utils from "@saltcorn/markup/layout_utils";
+import { getState, getReq__ } from "./db/state.js";
+import { eval_expression, freeVariables, get_expression_function } from "./models/expression.js";
+import { traverseSync, traverse, translateLayout } from "./models/layout.js";
+import { structuredClone, isWeb, isOfflineMode, getSessionId, interpolate, objectToQueryString, validSqlId, InvalidConfiguration, renderServerSide, isNode, dollarizeObject, getSafeBaseUrl } from "./utils.js";
+import { bool, date } from "./base-plugin/types.js";
+import markupPkg from "@saltcorn/markup";
+import tagsPkg from "@saltcorn/markup/tags";
+import commonCodePkg from "@saltcorn/common-code";
+import layoutUtilsPkg from "@saltcorn/markup/layout_utils";
+import FieldRepeat from "./models/fieldrepeat.js";
+import Form from "./models/form.js";
+import db from "./db/index.js";
+import _ from "underscore";
+import renderLayout from "@saltcorn/markup/layout";
+import Crash from "./models/crash.js";
 import Table from "./models/table.js";
 import Field from "./models/field.js";
 import View from "./models/view.js";
@@ -28,7 +26,7 @@ import type { GenObj, Type } from "@saltcorn/types/common_types";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import type { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 
-const { post_btn } = (_sc__saltcorn_markup as any);
+const { post_btn } = markupPkg;
 const {
   text,
   a,
@@ -39,8 +37,7 @@ const {
   script,
   domReady,
   input,
-} = (_sc__saltcorn_markup_tags as any);
-const { getState, getReq__ } = _sc_db_state();
+} = tagsPkg;
 import {
   link_view,
   displayType,
@@ -48,39 +45,14 @@ import {
   stateToQueryString,
   pathToState,
 } from "./plugin-helper.js";
-const {
-  eval_expression,
-  freeVariables,
-  get_expression_function,
-} = _sc_models_expression();
-const FieldRepeat = _sc_models_fieldrepeat();
-const Form = _sc_models_form();
-const { traverseSync, traverse, translateLayout } = _sc_models_layout();
-const {
-  structuredClone,
-  isWeb,
-  isOfflineMode,
-  getSessionId,
-  interpolate,
-  objectToQueryString,
-  validSqlId,
-  InvalidConfiguration,
-  renderServerSide,
-} = _sc_utils();
-const db = _sc_db();
-const { isNode, dollarizeObject, getSafeBaseUrl } = _sc_utils();
-const { bool, date } = _sc_base_plugin_types();
-const _ = (_sc_underscore as any);
-const renderLayout = (_sc__saltcorn_markup_layout as any);
-const Crash = _sc_models_crash();
 
 const {
   Relation,
   parseRelationPath,
   RelationType,
   ViewDisplayType,
-} = (_sc__saltcorn_common_code as any);
-const { show_icon_and_label } = (_sc__saltcorn_markup_layout_utils as any);
+} = commonCodePkg;
+const { show_icon_and_label } = layoutUtilsPkg;
 
 /**
  * formats the column index of a view cfg
@@ -108,7 +80,7 @@ const action_url = (
   r: Row,
   colId: string,
   colIdNm: string,
-  confirm: boolean,
+  confirm?: boolean,
   colIndex?: number,
   runAsync?: boolean,
   spinner?: boolean
@@ -221,7 +193,7 @@ const action_link = (
       label
     );
   else
-    return post_btn(url, label, req.csrfToken(), {
+    return post_btn(url as string, label as string, req.csrfToken(), {
       confirm,
       req,
       icon: action_icon,
@@ -538,9 +510,9 @@ const view_linker = (
   };
 
   if (relation) {
-    const topview = View.findOne({ name: srcViewName })!;
+    const topview = View.findOne({ name: srcViewName });
     const srcTable = Table.findOne({ id: topview.table_id })!;
-    const subview = View.findOne({ name: view })!;
+    const subview = View.findOne({ name: view });
     const subTable = Table.findOne({ id: subview.table_id });
     const relObj = new Relation(
       relation,
@@ -972,7 +944,7 @@ const get_viewable_fields = (
               role,
               is_owner: false,
               req,
-              hints: getState().getLayout(req.user).hints || {},
+              hints: (getState()!.getLayout(req.user) as any).hints || {},
             });
           },
         };
@@ -1088,7 +1060,7 @@ const get_viewable_fields = (
                 label
               );
             else
-              return post_btn(url, label, req.csrfToken(), {
+              return post_btn(url as string, label as string, req.csrfToken(), {
                 small: true,
                 ajax: true,
                 icon,
@@ -1187,7 +1159,7 @@ const get_viewable_fields = (
         }
         const field = table.getField(column.join_field);
 
-        if (column.field_type) type = getState().types[column.field_type];
+        if (column.field_type) type = getState()!.types[column.field_type];
         else {
           if (field && field.type === "File") column.field_type = "File";
           else if (
@@ -1195,11 +1167,11 @@ const get_viewable_fields = (
             (field?.type as any)?.fieldviews?.[fieldview]
           ) {
             column.field_type = (field!.type as any).name;
-            type = getState().types[column.field_type];
+            type = getState()!.types[column.field_type];
           }
         }
-        if (fieldview && type?.fieldviews?.[fieldview]?.expandColumns) {
-          return type.fieldviews[fieldview].expandColumns(
+        if (fieldview && (type?.fieldviews?.[fieldview] as any)?.expandColumns) {
+          return (type!.fieldviews![fieldview] as any).expandColumns(
             field,
             {
               ...field!.attributes,
@@ -1220,7 +1192,7 @@ const get_viewable_fields = (
         let gofv =
           fieldview && type && type.fieldviews && type.fieldviews[fieldview]
             ? (row: Row) =>
-                type.fieldviews[fieldview].run(row[key], req, {
+                (type.fieldviews![fieldview].run as Function)(row[key], req, {
                   row,
                   ...(field?.attributes || {}),
                   ...column,
@@ -1230,7 +1202,7 @@ const get_viewable_fields = (
         if (!gofv && column.field_type === "File") {
           gofv = (row: Row) =>
             row[key]
-              ? getState().fileviews[fieldview].run(row[key], "", {
+              ? (getState()!.fileviews[fieldview].run as Function)(row[key], "", {
                   row,
                   ...column,
                   ...(column?.configuration || {}),
@@ -1319,16 +1291,17 @@ const get_viewable_fields = (
         }
         let showValue = (value: any) => {
           if (value === true || value === false)
-            return bool.fieldviews.show.run(value);
-          if (value instanceof Date) return date.fieldviews.show.run(value);
+            return (bool.fieldviews.show.run as Function)(value);
+          if (value instanceof Date)
+            return (date.fieldviews.show.run as Function)(value);
           return value?.toString ? value.toString() : value;
         };
         if (column.agg_fieldview && column.agg_field?.includes("@")) {
           const tname = column.agg_field.split("@")[1];
-          const type = getState().types[tname];
-          if (type?.fieldviews[column.agg_fieldview])
+          const type = getState()!.types[tname];
+          if (type?.fieldviews?.[column.agg_fieldview])
             showValue = (x: any) =>
-              type.fieldviews[column.agg_fieldview].run(x, req, column);
+              (type.fieldviews![column.agg_fieldview].run as Function)(x, req, column);
         } else if (column.agg_fieldview) {
           const aggField = Table.findOne(table)?.getField?.(column.agg_field);
           const outcomeType =
@@ -1337,10 +1310,10 @@ const get_viewable_fields = (
               : column.stat === "Count" || column.stat === "CountUnique"
                 ? "Integer"
                 : (aggField?.type as any)?.name;
-          const type = getState().types[outcomeType];
-          if (type?.fieldviews[column.agg_fieldview])
+          const type = getState()!.types[outcomeType];
+          if (type?.fieldviews?.[column.agg_fieldview])
             showValue = (x: any) =>
-              type.fieldviews[column.agg_fieldview].run(type.read(x), req, {
+              (type.fieldviews![column.agg_fieldview].run as Function)(type.read!(x), req, {
                 ...column,
                 ...(column?.configuration || {}),
               });
@@ -1415,7 +1388,7 @@ const get_viewable_fields = (
               column.fieldview && f.type === "File"
                 ? (row: Row) =>
                     row[f!.name] &&
-                    getState().fileviews[column.fieldview].run(
+                    (getState()!.fileviews[column.fieldview].run as Function)(
                       row[f!.name],
                       row[`${f!.name}__filename`],
                       { row, ...column, ...(column?.configuration || {}) }
@@ -1424,7 +1397,7 @@ const get_viewable_fields = (
                     ftype.fieldviews &&
                     ftype.fieldviews[column.fieldview]
                   ? (row: Row) =>
-                      ftype.fieldviews[column.fieldview].run(
+                      (ftype.fieldviews[column.fieldview].run as Function)(
                         row[f_with_val!.name],
                         req,
                         { row, ...f!.attributes, ...column.configuration }
@@ -1585,7 +1558,7 @@ const headerFilterForField =
 
     let fieldviewObjs;
     /*if (f.is_fkey) {
-    fieldviewObjs = [getState().keyFieldviews.select];
+    fieldviewObjs = [getState()!.keyFieldviews.select];
   } else */
     let extraAttrs: Record<string, any> = {};
     if (ftype?.name === "Bool") {
@@ -1812,7 +1785,7 @@ const standardBlockDispatch = (
       if (fieldview && ftype === "File") {
         if (req.generate_email) cfg.targetPrefix = getSafeBaseUrl();
         fvrun = val
-          ? getState().fileviews[fieldview].run(
+          ? (getState()!.fileviews[fieldview].run as Function)(
               val,
               row[`${field_name}__filename`],
               cfg
@@ -1824,7 +1797,7 @@ const standardBlockDispatch = (
         ftype.fieldviews &&
         ftype.fieldviews[fieldview]
       )
-        fvrun = ftype.fieldviews[fieldview].run(val, req, cfg);
+        fvrun = (ftype.fieldviews[fieldview].run as Function)(val, req, cfg);
       else fvrun = text(val);
       if (
         click_to_edit &&
@@ -1874,7 +1847,7 @@ const standardBlockDispatch = (
       }
       if (field_type === "File") {
         return value
-          ? getState().fileviews[fieldview].run(value, "", configuration || {})
+          ? (getState()!.fileviews[fieldview].run as Function)(value, "", configuration || {})
           : "";
       }
       let fvRes;
@@ -1883,9 +1856,9 @@ const standardBlockDispatch = (
         if (field) field_type = (field?.type as any)?.name;
       }
       if (field_type && fieldview) {
-        const type = getState().types[field_type];
-        if (type && getState().types[field_type]) {
-          fvRes = type.fieldviews[fieldview].run(value, req, {
+        const type = getState()!.types[field_type];
+        if (type && getState()!.types[field_type]) {
+          fvRes = (type.fieldviews![fieldview].run as Function)(value, req, {
             row,
             ...(target_field_attributes || {}),
             ...configuration,
@@ -1960,10 +1933,10 @@ const standardBlockDispatch = (
             : stat === "Count" || stat === "CountUnique"
               ? "Integer"
               : (aggField?.type as any)?.name;
-        const type = getState().types[outcomeType];
-        if (type?.fieldviews[column.agg_fieldview]) {
-          const readval = type.read(val);
-          return type.fieldviews[column.agg_fieldview].run(
+        const type = getState()!.types[outcomeType];
+        if (type?.fieldviews?.[column.agg_fieldview]) {
+          const readval = type.read!(val);
+          return (type.fieldviews![column.agg_fieldview].run as Function)(
             readval,
             req,
             column?.configuration || {}
@@ -2143,7 +2116,7 @@ const getForm = async (
   isRemote?: boolean
 ): Promise<any> => {
   const fields = table.getFields();
-  const state = getState();
+  const state = getState()!;
   const tfields = (columns || [])
     .map((column: any) => {
       if (column.type === "Field") {
@@ -2154,7 +2127,7 @@ const getForm = async (
           f.fieldview = column.fieldview;
           if (f.type === "Key") {
             if (state.keyFieldviews[column.fieldview])
-              f.fieldviewObj = state.keyFieldviews[column.fieldview];
+              f.fieldviewObj = state.keyFieldviews[column.fieldview] as any;
             f.input_type =
               !f.fieldview ||
               !f.fieldviewObj ||
@@ -2235,10 +2208,10 @@ const getForm = async (
     },
   });
   if (!req.layout_hints)
-    req.layout_hints = state.getLayout(req.user).hints || {};
+    req.layout_hints = (state.getLayout(req.user) as any).hints || {};
   let isMobileLogin = false;
   if (isRemote) {
-    const loginForm = getState().getConfig("login_form", "");
+    const loginForm = getState()!.getConfig("login_form", "");
     if (loginForm && viewname === loginForm) isMobileLogin = true;
   }
   let submitActionJS = undefined;
@@ -2266,7 +2239,7 @@ const getForm = async (
     req,
     pk_name: table.pk_name,
   });
-  if (id) form.hidden(form.pk_name);
+  if (id) form.hidden(form.pk_name!);
   return form;
 };
 
@@ -2305,7 +2278,7 @@ const transformForm = async ({
       pseudo_row[f.name] = undefined;
     });
   }
-  const appState = getState();
+  const appState = getState()!;
   const __ =
     db.is_node && appState
       ? (s: string) =>
@@ -2335,7 +2308,7 @@ const transformForm = async ({
     async action(segment: any) {
       if (segment.action_name.startsWith("Login with ")) {
         const method_label = segment.action_name.replace("Login with ", "");
-        segment.auth_method = getState().auth_methods[method_label];
+        segment.auth_method = getState()!.auth_methods[method_label];
       }
       if (segment.action_style === "on_page_load") {
         segment.type = "blank";
@@ -2623,7 +2596,7 @@ const transformForm = async ({
             fr.fields.push({
               name: childTable.pk_name,
               input_type: "hidden",
-            });
+            } as any);
         }
         form.fields.push(fr);
         segment.type = "field_repeat";

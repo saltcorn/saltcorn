@@ -3,22 +3,20 @@
  * @module base-plugin/viewtemplates/show
  * @subcategory base-plugin
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_models_page_group = () => (require("../../models/page_group.js") as any).default;
-const _sc_db_state = () => (require("../../db/state.js") as any).default;
-const _sc_models_layout = () => (require("../../models/layout.js") as any).default;
-const _sc_plugin_testing = () => (require("../../plugin-testing.js") as any);
-const _sc_db = () => (require("../../db/index.js") as any).default;
-const _sc_utils = () => (require("../../utils.js") as any).default;
-const _sc_models_expression = () => (require("../../models/expression.js") as any).default;
-const _sc_models_config = () => (require("../../models/config.js") as any).default;
-const _sc_models_library = () => (require("../../models/library.js") as any).default;
-const _sc_diagram_node_extract_utils = () => (require("../../diagram/node_extract_utils.js") as any);
-import _sc__saltcorn_common_code from "@saltcorn/common-code";
-import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
-import _sc__saltcorn_markup_layout from "@saltcorn/markup/layout";
-import _sc_underscore from "underscore";
+import { getState } from "../../db/state.js";
+import { eachView, traverse, getStringsForI18n, translateLayout, splitLayoutContainerFields, findLayoutBranchWith, traverseSync } from "../../models/layout.js";
+import { check_view_columns } from "../../plugin-testing.js";
+import { asyncMap, structuredClone, InvalidConfiguration, mergeIntoWhere, isWeb, hashState, getSafeBaseUrl, dollarizeObject, getSessionId, interpolate, validSqlId, renderServerSide } from "../../utils.js";
+import { get_expression_function, eval_expression, freeVariables, freeVariablesInInterpolation, add_free_variables_to_aggregations } from "../../models/expression.js";
+import { get_base_url } from "../../models/config.js";
+import { extractFromLayout } from "../../diagram/node_extract_utils.js";
+import commonCodePkg from "@saltcorn/common-code";
+import tagsPkg from "@saltcorn/markup/tags";
+import PageGroup from "../../models/page_group.js";
+import renderLayout from "@saltcorn/markup/layout";
+import db from "../../db/index.js";
+import Library from "../../models/library.js";
+import _ from "underscore";
 import Form from "../../models/form.js";
 import User from "../../models/user.js";
 import Field from "../../models/field.js";
@@ -32,19 +30,8 @@ import File from "../../models/file.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Layout, Column, Req, Res } from "@saltcorn/types/base_types";
 import { Row } from "@saltcorn/db-common/dbtypes";
-const PageGroup = _sc_models_page_group();
-const { Relation } = (_sc__saltcorn_common_code as any);
+const { Relation } = commonCodePkg;
 
-const { getState } = _sc_db_state();
-const {
-  eachView,
-  traverse,
-  getStringsForI18n,
-  translateLayout,
-  splitLayoutContainerFields,
-  findLayoutBranchWith,
-} = _sc_models_layout();
-const { check_view_columns } = _sc_plugin_testing();
 
 const {
   div,
@@ -56,8 +43,7 @@ const {
   button,
   script,
   domReady,
-} = (_sc__saltcorn_markup_tags as any);
-const renderLayout = (_sc__saltcorn_markup_layout as any);
+} = tagsPkg;
 
 import {
   stateFieldsToWhere,
@@ -84,33 +70,6 @@ import {
   standardBlockDispatch,
   standardLayoutRowVisitor,
 } from "../../viewable_fields.js";
-const db = _sc_db();
-const {
-  asyncMap,
-  structuredClone,
-  InvalidConfiguration,
-  mergeIntoWhere,
-  isWeb,
-  hashState,
-  getSafeBaseUrl,
-  dollarizeObject,
-  getSessionId,
-  interpolate,
-  validSqlId,
-  renderServerSide,
-} = _sc_utils();
-const { traverseSync } = _sc_models_layout();
-const {
-  get_expression_function,
-  eval_expression,
-  freeVariables,
-  freeVariablesInInterpolation,
-  add_free_variables_to_aggregations,
-} = _sc_models_expression();
-const { get_base_url } = _sc_models_config();
-const Library = _sc_models_library();
-const { extractFromLayout } = _sc_diagram_node_extract_utils();
-const _ = (_sc_underscore as any);
 
 const configuration_workflow = (req: Req) =>
   new Workflow({
@@ -127,7 +86,7 @@ const configuration_workflow = (req: Req) =>
             (f: GenObj) => f.type && f.type.name === "Bool"
           );
           const stateActions = (
-            Object.entries(getState().actions) as [string, GenObj][]
+            Object.entries(getState()!.actions) as [string, GenObj][]
           ).filter(([k, v]) => !v.disableInBuilder && !v.disableIf?.());
           const builtInActions = [
             "Delete",
@@ -249,7 +208,7 @@ const configuration_workflow = (req: Req) =>
           });
           const agg_fieldview_options: GenObj = {};
 
-          Object.values(getState().types).forEach((t: any) => {
+          Object.values(getState()!.types).forEach((t: any) => {
             agg_fieldview_options[t.name] = (
               Object.entries(t.fieldviews) as [string, GenObj][]
             )
@@ -298,7 +257,7 @@ const configuration_workflow = (req: Req) =>
             handlesTextStyle,
             mode: "show",
             has_copilot_generate:
-              !!getState().functions.copilot_generate_layout,
+              !!getState()!.functions.copilot_generate_layout,
             ownership:
               !!table.ownership_field_id ||
               !!table.ownership_formula ||
@@ -339,9 +298,9 @@ const run = async (
   { showQuery }: GenObj
 ) => {
   if (!columns || !layout) return "View not yet built";
-  const tbl = Table.findOne(table_id)!;
-  const fields = await tbl.getFields();
-  if (tbl.name === "users") {
+  const tbl = Table.findOne(table_id);
+  const fields = await tbl!.getFields();
+  if (tbl!.name === "users") {
     fields.push(
       new Field({
         name: "verification_token",
@@ -371,7 +330,7 @@ const run = async (
     });
 
   if (rows.length == 0) return extra.req.__("No row selected");
-  if (tbl.name === "users") {
+  if (tbl!.name === "users") {
     const base = get_base_url(extra.req);
     fields.push(
       new Field({
@@ -731,7 +690,10 @@ const runMany = async (
     state
   );
 
-  return rendered.map((html: string, ix: number) => ({ html, row: rows[ix] }));
+  return (rendered as any[]).map((html: string, ix: number) => ({
+    html,
+    row: rows[ix],
+  }));
 };
 
 const render = (
@@ -766,7 +728,7 @@ const render = (
     role,
     is_owner,
     req,
-    hints: getState().getLayout(req.user).hints || {},
+    hints: (getState()!.getLayout(req.user as any) as any).hints || {},
   });
 };
 
@@ -828,7 +790,7 @@ const createBasicView = async ({
         );
       }) || defaultBranch;
     let oldField: any;
-    traverseSync(branch, {
+    traverseSync(branch!, {
       field(s: GenObj) {
         oldField = template_table.getField(s.field_name);
       },
@@ -878,16 +840,16 @@ export default {
     title: string,
     state: GenObj
   ) {
-    const tbl = Table.findOne(table_id)!;
-    if (state?.[tbl.pk_name]) {
+    const tbl = Table.findOne(table_id);
+    if (state?.[tbl!.pk_name]) {
       const freeVars = freeVariablesInInterpolation(title);
       const joinFields: GenObj = {};
       const aggregations: GenObj = {};
 
-      add_free_variables_to_joinfields(freeVars, joinFields, tbl.fields);
+      add_free_variables_to_joinfields(freeVars, joinFields, tbl!.fields);
       add_free_variables_to_aggregations(freeVars, aggregations, tbl);
-      const row = await tbl.getJoinedRow({
-        where: { [tbl.pk_name]: state[tbl.pk_name] },
+      const row = await tbl!.getJoinedRow({
+        where: { [tbl!.pk_name]: state[tbl!.pk_name] },
         joinFields,
         aggregations,
       });
@@ -903,9 +865,9 @@ export default {
     res,
   }: GenObj) => ({
     async showQuery(state: GenObj) {
-      const tbl = Table.findOne(table_id || exttable_name)!;
-      const fields = tbl.getFields();
-      if (tbl.name === "users") {
+      const tbl = Table.findOne(table_id || exttable_name);
+      const fields = tbl!.getFields();
+      if (tbl!.name === "users") {
         fields.push(
           new Field({
             name: "verification_token",
@@ -941,20 +903,20 @@ export default {
           rows: null,
           message: "No row selected",
         };
-      if (tbl.ownership_formula) {
-        const freeVars = freeVariables(tbl.ownership_formula);
+      if (tbl!.ownership_formula) {
+        const freeVars = freeVariables(tbl!.ownership_formula);
         add_free_variables_to_joinfields(freeVars, joinFields, fields);
       }
-      const rows = await tbl.getJoinedRows({
+      const rows = await tbl!.getJoinedRows({
         where: qstate,
         joinFields,
         aggregations,
         limit: 5,
-        starFields: tbl.name === "users",
+        starFields: tbl!.name === "users",
         forPublic: !req.user,
         forUser: req.user,
       });
-      if (unhashed_reset_password_token && tbl.name === "users")
+      if (unhashed_reset_password_token && tbl!.name === "users")
         rows.forEach((r: Row) => {
           r.reset_password_token = unhashed_reset_password_token;
         });
@@ -968,8 +930,8 @@ export default {
       state: GenObj,
       { where, limit, offset, joinFieldsExtra, orderBy, orderDesc }: GenObj
     ) {
-      const tbl = Table.findOne({ id: table_id })!;
-      const fields = await tbl.getFields();
+      const tbl = Table.findOne({ id: table_id });
+      const fields = await tbl!.getFields();
       readState(state, fields);
       const { joinFields, aggregations } = picked_fields_to_query(
         columns,
@@ -989,9 +951,9 @@ export default {
       const q = stateFieldsToQuery({ state, fields, stateHash });
       if (where) mergeIntoWhere(qstate, where);
       const role = req && req.user ? req.user.role_id : 100;
-      if (tbl.ownership_field_id && role > tbl.min_role_read && req) {
+      if (tbl!.ownership_field_id && role > tbl!.min_role_read && req) {
         const owner_field = fields.find(
-          (f: GenObj) => f.id === tbl.ownership_field_id
+          (f: GenObj) => f.id === tbl!.ownership_field_id
         )!;
         if (qstate[owner_field.name])
           qstate[owner_field.name] = [
@@ -1000,11 +962,11 @@ export default {
           ];
         else qstate[owner_field.name] = req.user ? req.user.id : -1;
       }
-      if (tbl.ownership_formula && role > tbl.min_role_read) {
-        const freeVars = freeVariables(tbl.ownership_formula);
+      if (tbl!.ownership_formula && role > tbl!.min_role_read) {
+        const freeVars = freeVariables(tbl!.ownership_formula);
         add_free_variables_to_joinfields(freeVars, joinFields, fields);
       }
-      let rows = await tbl.getJoinedRows({
+      let rows = await tbl!.getJoinedRows({
         where: qstate,
         joinFields,
         aggregations,
@@ -1016,8 +978,8 @@ export default {
         forPublic: !req.user,
         forUser: req.user,
       });
-      if (tbl.ownership_formula && role > tbl.min_role_read && req) {
-        rows = rows.filter((row: Row) => tbl.is_owner(req.user, row));
+      if (tbl!.ownership_formula && role > tbl!.min_role_read && req) {
+        rows = rows.filter((row: Row) => tbl!.is_owner(req.user, row));
       }
       return rows;
     },
@@ -1030,25 +992,25 @@ export default {
             (c: GenObj) =>
               c.type === "Action" && c.rndid === body.rndid && body.rndid
           );
-          const table = Table.findOne({ id: table_id })!;
+          const table = Table.findOne({ id: table_id });
           let row;
-          if (table.ownership_formula) {
-            const freeVars = freeVariables(table.ownership_formula);
+          if (table!.ownership_formula) {
+            const freeVars = freeVariables(table!.ownership_formula);
             const joinFields: GenObj = {};
             add_free_variables_to_joinfields(
               freeVars,
               joinFields,
-              table.fields
+              table!.fields
             );
-            row = await table.getJoinedRow({
-              where: { [table.pk_name]: body[table.pk_name] },
+            row = await table!.getJoinedRow({
+              where: { [table!.pk_name]: body[table!.pk_name] },
               joinFields,
               forUser: req.user || { role_id: 100 },
               forPublic: !req.user,
             });
           } else
-            row = await table.getRow(
-              { [table.pk_name]: body[table.pk_name] },
+            row = await table!.getRow(
+              { [table!.pk_name]: body[table!.pk_name] },
               { forUser: req.user, forPublic: !req.user }
             );
 
@@ -1086,14 +1048,14 @@ export default {
           });
           return { json: { success: "ok", ...(result || {}) } };
         },
-        (e: any) => {
+        ((e: any) => {
           return { json: { error: e.message || e } };
-        }
+        }) as any
       );
     },
   }),
   configCheck: async (view: GenObj) => {
-    return await check_view_columns(view, view.configuration.columns);
+    return await check_view_columns(view as any, view.configuration.columns);
   },
   connectedObjects: async (configuration: GenObj) => {
     return extractFromLayout(configuration.layout);

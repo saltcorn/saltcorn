@@ -4,14 +4,11 @@
  * @module models/library
  * @subcategory models
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_layout = () => (require("./layout.js") as any).default;
+import { traverseSync } from "./layout.js";
 import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
 import type { LibraryCfg } from "@saltcorn/types/model-abstracts/abstract_library";
 
-const { traverseSync } = _sc_layout();
 
 /**
  * Library Class

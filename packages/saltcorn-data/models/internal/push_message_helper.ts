@@ -1,11 +1,10 @@
-const _sc_db_state = () => (require("../../db/state.js") as any).default;
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
+import * as nsState from "../../db/state.js";
 import File from "../file.js";
 import type Notification from "../notification.js";
 import db from "../../db/index.js";
-import utils from "../../utils.js";
-const { getSafeBaseUrl, decodeProvisioningProfile } = utils;
+import { getSafeBaseUrl, decodeProvisioningProfile } from "../../utils.js";
 import webpush from "web-push";
 import admin from "firebase-admin";
 import {
@@ -45,7 +44,7 @@ type PushMessageHelperConfig = {
 };
 
 const prepareConfig = async (oldInstance?: any) => {
-  const state = _sc_db_state().getState();
+  const state = nsState.getState()!;
   const config: PushMessageHelperConfig = {
     icon: state.getConfig("push_notification_icon"),
     badge: state.getConfig("push_notification_badge"),
@@ -186,7 +185,7 @@ export class PushMessageHelper {
     this.apns = config.apns;
     this.firebase = config.firebase;
 
-    this.state = _sc_db_state().getState();
+    this.state = nsState.getState()!;
     if (this.firebase) this.initFCMApp();
     if (this.apns) this.initApnsClient();
   }

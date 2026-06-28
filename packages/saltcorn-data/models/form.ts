@@ -4,7 +4,7 @@
  * @module models/form
  * @subcategory models
  */
-import _sc_contractis from "contractis";
+import contractisPkg from "contractis";
 import {
   AbstractForm,
   AdditionalButton as _AdditionalButton,
@@ -21,7 +21,7 @@ import User from "./user.js";
 import FieldRepeat from "./fieldrepeat.js";
 import type { FieldLike, Layout, Header } from "@saltcorn/types/base_types";
 
-const { is } = (_sc_contractis as any);
+const { is } = contractisPkg;
 
 const isFieldLike = (object: any): object is FieldLike => {
   return object.constructor.name === Object.name;

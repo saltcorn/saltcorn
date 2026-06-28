@@ -1,12 +1,10 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import Table from "../models/table.js";
 import db from "../db/index.js";
 
 import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
 
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const initSyncInfo = async (tbls: any) => {
   for (const tbl of tbls) {
     const books = Table.findOne({ name: tbl });
@@ -22,8 +20,8 @@ const initSyncInfo = async (tbls: any) => {
 
 afterAll(db.close);
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 describe("Table sync info", () => {

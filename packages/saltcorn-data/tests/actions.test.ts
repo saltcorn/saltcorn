@@ -1,18 +1,15 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import Trigger from "../models/trigger.js";
 import Table from "../models/table.js";
 import Field from "../models/field.js";
 import User from "../models/user.js";
 import EventLog from "../models/eventlog.js";
-import scheduler from "../models/scheduler.js";
+import * as scheduler from "../models/scheduler.js";
+import { getState } from "../db/state.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { runScheduler } = scheduler;
 import db from "../db/index.js";
-const { getState } = _sc_db_state();
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
 const {
   plugin_with_routes,
   getActionCounter,
@@ -33,7 +30,7 @@ const {
   notify_user,
   run_js_code,
 } = baseactions;
-import utils from "../utils.js";
+import * as utils from "../utils.js";
 import Notification from "../models/notification.js";
 import { run_action_column } from "../plugin-helper.js";
 const { applyAsync, mergeActionResults } = utils;
@@ -41,19 +38,19 @@ const { applyAsync, mergeActionResults } = utils;
 afterAll(db.close);
 
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 jest.setTimeout(20000);
 
 describe("Action and Trigger model", () => {
   it("should add insert trigger", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
 
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     const trigger = await Trigger.create({
       action: "incrementCounter",
@@ -67,8 +64,8 @@ describe("Action and Trigger model", () => {
     expect(getActionCounter()).toBe(1);
     const trigger1 = await Trigger.findOne({ id: trigger.id });
     expect(!!trigger1).toBe(true);
-    expect(trigger1.id).toBe(trigger.id);
-    expect(trigger1.toJson).toStrictEqual({
+    expect(trigger1!.id).toBe(trigger.id);
+    expect(trigger1!.toJson).toStrictEqual({
       action: "incrementCounter",
       channel: null,
       configuration: {},
@@ -92,7 +89,7 @@ describe("Action and Trigger model", () => {
   it("should add update trigger", async () => {
     expect(getActionCounter()).toBe(1);
 
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
 
     await Trigger.create({
@@ -110,7 +107,7 @@ describe("Action and Trigger model", () => {
   it("should add update trigger", async () => {
     expect(getActionCounter()).toBe(17);
 
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
 
     await Trigger.create({
@@ -127,7 +124,7 @@ describe("Action and Trigger model", () => {
     expect(getActionCounter()).toBe(37);
   });
   it("should run js code", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
 
     await Trigger.create({
@@ -142,7 +139,7 @@ describe("Action and Trigger model", () => {
       },
     });
     await table.insertRow({ author: "Giuseppe Tomasi", pages: 209 });
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
 
     await sleep(10);
@@ -151,7 +148,7 @@ describe("Action and Trigger model", () => {
     expect(rows.length).toBe(1);
   });
   it("should run webhook", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
 
     await Trigger.create({
@@ -170,7 +167,7 @@ describe("Action and Trigger model", () => {
   });
 
   it("should list triggers", async () => {
-    //const table = Table.findOne({ name: "books" });
+    //const table = Table.findOne({ name: "books" })!;
 
     const triggers = await Trigger.findAllWithTableName();
     const trigger = triggers.find(
@@ -183,20 +180,20 @@ describe("Action and Trigger model", () => {
     expect(Trigger.when_options).toContain("Insert");
   });
   it("should get triggers", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
     const trigger = await Trigger.findOne({
       table_id: table.id,
       when_trigger: "Update",
     });
-    expect(trigger.action).toBe("webhook");
-    await Trigger.update(trigger.id, { when_trigger: "Insert" });
+    expect(trigger!.action).toBe("webhook");
+    await Trigger.update(trigger!.id!, { when_trigger: "Insert" });
     const ins_trigger = Trigger.find({
       table_id: table.id,
       when_trigger: "Insert",
     });
     expect(ins_trigger.length).toBe(2);
-    await trigger.delete();
+    await trigger!.delete();
     const ins_trigger1 = Trigger.find({
       table_id: table.id,
       when_trigger: "Insert",
@@ -204,7 +201,7 @@ describe("Action and Trigger model", () => {
     expect(ins_trigger1.length).toBe(1);
   });
   it("should run webhook on insert", async () => {
-    const table = Table.findOne({ name: "books" });
+    const table = Table.findOne({ name: "books" })!;
     assertIsSet(table);
 
     await Trigger.create({
@@ -228,11 +225,11 @@ describe("Action and Trigger model", () => {
     expect(['{"success":true}', "Error in workflow"]).toContain(row?.author);
   });
   it("should run triggerwith table.run_trigger", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
 
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     await table.run_trigger("incCount", { name: "Mary Boas" });
     expect(getActionCounter()).toBe(1);
@@ -248,7 +245,7 @@ describe("base plugin actions", () => {
     });
     expect(result).toStrictEqual({});
 
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
 
     const rows = await patients.getRows({ name: "Simon1" });
@@ -269,7 +266,7 @@ describe("base plugin actions", () => {
     assertIsRow(result);
     expect(typeof result.myid).toBe("number");
 
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
 
     const rows = await patients.getRows({ name: "Simon9" });
@@ -291,7 +288,7 @@ describe("base plugin actions", () => {
     });
     expect(result).toStrictEqual({ myid: id });
 
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
 
     const rows = await patients.getRows({ name: "Simon99" });
@@ -314,7 +311,7 @@ describe("base plugin actions", () => {
     });
     expect(result).toStrictEqual({});
 
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
 
     const rows = await patients.getRows({ name: "Simon2" });
@@ -337,7 +334,7 @@ describe("base plugin actions", () => {
     expect(typeof result.myids[0]).toBe("number");
     expect(result.myids[0]).toBeGreaterThan(2);
 
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
 
     const rows = await patients.getRows({ name: "Simon2" });
@@ -345,9 +342,9 @@ describe("base plugin actions", () => {
     expect(rows.length).toBe(2);
   });
   it("should insert_any_row with field", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
 
     const action = insert_any_row;
@@ -368,7 +365,7 @@ describe("base plugin actions", () => {
     expect(rows.length).toBe(1);
   });
   it("should modify_row", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const row = await patients.getRow({ name: "Simon1" });
     assertIsSet(row);
@@ -388,7 +385,7 @@ describe("base plugin actions", () => {
     expect(row1.favbook).toBe(1);
   });
   it("should delete_rows", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const id1 = await patients.insertRow({ name: "Del1" });
     await patients.insertRow({ name: "Del2" });
@@ -420,7 +417,7 @@ describe("base plugin actions", () => {
     expect(row2).toBe(null);
   });
   it("should duplicate_row", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     assertIsSet(patients);
     const rows = await patients.getRows({ name: "Simon1" });
 
@@ -435,11 +432,11 @@ describe("base plugin actions", () => {
     expect(rows1.length).toBe(2);
   });
   it("should insert_joined_row", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const book = await books.getRow({ id: 1 });
     assertIsSet(book);
-    const discusses_books = Table.findOne({ name: "discusses_books" });
+    const discusses_books = Table.findOne({ name: "discusses_books" })!;
     assertIsSet(discusses_books);
     const npats_before = await discusses_books.countRows({});
     const result = await insert_joined_row.run({
@@ -452,7 +449,7 @@ describe("base plugin actions", () => {
     expect(npats_after).toBe(npats_before + 1);
   });
   it("should notify_user", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const book = await books.getRow({ id: 1 });
     assertIsSet(book);
@@ -473,7 +470,7 @@ describe("base plugin actions", () => {
   });
 
   it("should have valid configFields", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     for (const [name, action] of Object.entries(baseactions)) {
       // @ts-ignore
@@ -533,7 +530,7 @@ describe("run_js_code", () => {
 
 describe("Events and eventlog", () => {
   it("should add custom event", async () => {
-    await getState().setConfig("custom_events", [
+    await getState()!.setConfig("custom_events", [
       {
         name: "FooHappened",
         hasChannel: false,
@@ -543,14 +540,14 @@ describe("Events and eventlog", () => {
         hasChannel: true,
       },
     ]);
-    await getState().setConfig("event_log_settings", {
+    await getState()!.setConfig("event_log_settings", {
       FooHappened: true,
       BarWasHere: true,
       BarWasHere_channel: "Baz,oldbooks",
       Insert: true,
       Insert_readings: true,
     });
-    await getState().refresh_config();
+    await getState()!.refresh_config();
   });
   it("should emit custom event", async () => {
     const evs = await EventLog.find({ event_type: "FooHappened" });
@@ -661,7 +658,7 @@ describe("Events and eventlog", () => {
     expect(evs1.length).toBe(1);
   });
   it("should run emit_event action", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const book = await books.getRow({ id: 1 });
     assertIsSet(book);
@@ -689,7 +686,7 @@ describe("Events and eventlog", () => {
 
 describe("Scheduler", () => {
   it("should run and tick", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
 
@@ -741,7 +738,7 @@ describe("Validate action", () => {
   });
 
   it("it should insert valid rows", async () => {
-    const table = Table.findOne({ name: "ValidatedTable" });
+    const table = Table.findOne({ name: "ValidatedTable" })!;
     assertIsSet(table);
     await table.insertRow({ name: "Mike", age: 19 });
     const row = await table.getRow({ name: "Mike" });
@@ -749,14 +746,14 @@ describe("Validate action", () => {
     expect(row.age).toBe(19);
   });
   it("it should not insert invalid rows", async () => {
-    const table = Table.findOne({ name: "ValidatedTable" });
+    const table = Table.findOne({ name: "ValidatedTable" })!;
     assertIsSet(table);
     await table.insertRow({ name: "Fred", age: 14 });
     const row = await table.getRow({ name: "Fred" });
     expect(row).toBe(null);
   });
   it("it should set fields", async () => {
-    const table = Table.findOne({ name: "ValidatedTable" });
+    const table = Table.findOne({ name: "ValidatedTable" })!;
     assertIsSet(table);
     await table.insertRow({ age: 25 });
     const row = await table.getRow({ age: 25 });
@@ -764,7 +761,7 @@ describe("Validate action", () => {
     expect(row.name).toBe("PersonAged25");
   });
   it("it should not update to invalid row", async () => {
-    const table = Table.findOne({ name: "ValidatedTable" });
+    const table = Table.findOne({ name: "ValidatedTable" })!;
     assertIsSet(table);
     const row = await table.getRow({ name: "Mike" });
     assertIsSet(row);
@@ -778,7 +775,7 @@ describe("Validate action", () => {
     expect(row1.name).toBe("Mike");
   });
   it("it should update to valid row", async () => {
-    const table = Table.findOne({ name: "ValidatedTable" });
+    const table = Table.findOne({ name: "ValidatedTable" })!;
     assertIsSet(table);
     const row = await table.getRow({ name: "Mike" });
     assertIsSet(row);
@@ -792,7 +789,7 @@ describe("Validate action", () => {
     expect(row1.name).toBe("Mike");
   });
   it("it should not change missing fields on update", async () => {
-    const table = Table.findOne({ name: "ValidatedTable" });
+    const table = Table.findOne({ name: "ValidatedTable" })!;
     assertIsSet(table);
     const row = await table.getRow({ name: "Mike" });
     assertIsSet(row);
@@ -873,7 +870,7 @@ describe("mergeActionResults", () => {
 describe("multistep triggers", () => {
   it("should run", async () => {
     const trigger = await Trigger.findOne({ name: "MySteps" });
-    const runres = await trigger.runWithoutRow({});
+    const runres = await trigger!.runWithoutRow({});
     expect(runres.error).toBe("errrr");
     expect(runres.notify).toBe("note");
     expect(runres.notify_success).toBe("fooo");
@@ -1014,10 +1011,10 @@ describe("run_action_column", () => {
 
 describe("_only_if with old_row on Update trigger", () => {
   it("should set up trigger with _only_if using old_row", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
 
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
 
     await Trigger.create({
@@ -1034,7 +1031,7 @@ describe("_only_if with old_row on Update trigger", () => {
 
   it("should fire trigger when name changes (row.old_row.name !== row.name)", async () => {
     resetActionCounter();
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
 
     const row = await table.getRow({ name: "Kirk Douglas" });
@@ -1045,7 +1042,7 @@ describe("_only_if with old_row on Update trigger", () => {
 
   it("should not fire trigger when name is unchanged", async () => {
     resetActionCounter();
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
 
     const row = await table.getRow({ name: "Kirk Douglas Updated" });
@@ -1059,7 +1056,7 @@ describe("_only_if with old_row on Update trigger", () => {
     assertIsSet(trigger);
     await trigger.delete();
 
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     const row = await table.getRow({ name: "Kirk Douglas Updated" });
     assertIsSet(row);
@@ -1069,7 +1066,7 @@ describe("_only_if with old_row on Update trigger", () => {
 
 describe("trigger as action", () => {
   it("should run with standard action as referenced trigger via runWithoutRow", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
 
     await Trigger.create({
@@ -1101,7 +1098,7 @@ describe("trigger as action", () => {
   });
 
   it("should fire via table insert using shared Never trigger", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
 
     const freshTable = await Table.create("ProxyTriggerTable");
@@ -1152,7 +1149,7 @@ describe("trigger as action", () => {
     const myStepsTrig = Trigger.findOne({ name: "MySteps" });
     assertIsSet(myStepsTrig);
 
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
 
     await Trigger.create({
@@ -1201,7 +1198,7 @@ describe("trigger as action", () => {
 describe("plain_password_triggers", () => {
   const secret = "fw78fgfw$Efgy";
   it("should set up trigger", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
     await Trigger.create({
@@ -1242,7 +1239,7 @@ describe("plain_password_triggers", () => {
     expect(getActionCounter()).toBe(0);
   });
   it("should pass password on update with setting", async () => {
-    await getState().setConfig("plain_password_triggers", true);
+    await getState()!.setConfig("plain_password_triggers", true);
     const u = await User.findOne({ email: "staff@foo.com" });
     assertIsSet(u);
     resetActionCounter();
@@ -1251,7 +1248,7 @@ describe("plain_password_triggers", () => {
     expect(getActionCounter()).toBe(1);
   });
   it("should pass password on create with setting", async () => {
-    await getState().setConfig("plain_password_triggers", true);
+    await getState()!.setConfig("plain_password_triggers", true);
     resetActionCounter();
     expect(getActionCounter()).toBe(0);
     await User.create({

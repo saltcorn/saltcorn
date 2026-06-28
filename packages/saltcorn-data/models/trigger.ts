@@ -5,14 +5,13 @@
  * @subcategory models
  */
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_utils = () => (require("../utils.js") as any).default;
-const _sc_table = () => (require("./table.js") as any).default;
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_workflow_run = () => (require("./workflow_run.js") as any).default;
-const _sc_expression = () => (require("./expression.js") as any).default;
-const _sc__saltcorn_data_models_workflow_step = () => (require("./workflow_step.js") as any).default;
+import { comparingCaseInsensitiveValue, satisfies, mergeActionResults, cloneName, isNode } from "../utils.js";
+import { getState } from "../db/state.js";
+import { eval_expression } from "./expression.js";
+import Table from "./table.js";
+import WorkflowStep from "./workflow_step.js";
+import workflowRunMod from "./workflow_run.js";
+import * as nsState from "../db/state.js";
 import db from "../db/index.js";
 import EventLog from "./eventlog.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
@@ -21,20 +20,10 @@ import type {
   AbstractTrigger,
 } from "@saltcorn/types/model-abstracts/abstract_trigger";
 import Crash from "./crash.js";
-import { AbstractTable as Table } from "@saltcorn/types/model-abstracts/abstract_table";
-const {
-  comparingCaseInsensitiveValue,
-  satisfies,
-  mergeActionResults,
-  cloneName,
-  isNode,
-} = _sc_utils();
 import type Tag from "./tag.js";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
-import expression from "./expression.js";
 import User from "./user.js";
 import type { Action } from "@saltcorn/types/base_types";
-const { eval_expression } = expression;
 
 declare const saltcorn: any;
 
@@ -90,8 +79,7 @@ class Trigger implements AbstractTrigger {
   get toJson(): any {
     let table_name = this.table_name;
     if (!table_name && this.table_id) {
-      const Table = _sc_table();
-      const table = Table.findOne(+this.table_id);
+      const table = Table.findOne(+this.table_id)!;
       table_name = table.name;
     }
     return {
@@ -112,8 +100,7 @@ class Trigger implements AbstractTrigger {
    * @returns {Trigger[]}
    */
   static find(where?: Where): Trigger[] {
-    const { getState } = _sc_db_state();
-    return getState().triggers.filter(satisfies(where));
+    return getState()!.triggers.filter(satisfies(where));
   }
 
   /**
@@ -149,14 +136,13 @@ class Trigger implements AbstractTrigger {
    * @returns {Trigger}
    */
   static findOne(where: Where) {
-    const { getState } = _sc_db_state();
-    return getState().triggers.find(
+    return getState()!.triggers.find(
       where.id ? (v: Trigger) => v.id === +where.id : satisfies(where)
     );
   }
 
   static async state_refresh() {
-    await _sc_db_state().getState().refresh_triggers();
+    await nsState.getState()!.refresh_triggers();
   }
 
   /**
@@ -166,12 +152,11 @@ class Trigger implements AbstractTrigger {
    * @returns {Promise<void>}
    */
   static async update(id: number, row: Row): Promise<void> {
-    const { getState } = _sc_db_state();
-    getState().log(6, `Update trigger ID=${id} Row=${JSON.stringify(row)}`);
+    getState()!.log(6, `Update trigger ID=${id} Row=${JSON.stringify(row)}`);
     if (row.table_id === "") row.table_id = null;
     await db.update("_sc_triggers", { ...row, updated_at: new Date() }, id);
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_triggers(true);
+      await nsState.getState()!.refresh_triggers(true);
   }
 
   /**
@@ -184,13 +169,12 @@ class Trigger implements AbstractTrigger {
     trigger.updated_at = new Date();
     const { id, table_name, ...rest } = trigger;
     if (table_name && !rest.table_id) {
-      const Table = _sc_table();
-      const table = Table.findOne(table_name);
+      const table = Table.findOne(table_name)!;
       rest.table_id = table.id;
     }
     trigger.id = await db.insert("_sc_triggers", rest);
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_triggers(true);
+      await nsState.getState()!.refresh_triggers(true);
     return trigger;
   }
 
@@ -205,7 +189,7 @@ class Trigger implements AbstractTrigger {
     await db.deleteWhere("_sc_tag_entries", { trigger_id: this.id });
     await db.deleteWhere("_sc_triggers", { id: this.id });
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_triggers(true);
+      await nsState.getState()!.refresh_triggers(true);
   }
 
   static async sendEventToServer(
@@ -240,28 +224,26 @@ class Trigger implements AbstractTrigger {
   ): void {
     if (
       !isNode() &&
-      !_sc_db_state().getState().mobileConfig?.isOfflineMode
+      !nsState.getState()!.mobileConfig?.isOfflineMode
     ) {
       Trigger.sendEventToServer(eventType, channel, userPW, payload);
       return;
     }
     setTimeout(async () => {
       const { password, ...user } = (userPW || {}) as User;
-      const { getState } = _sc_db_state();
       if (!getState) return; // probably in a test
       const findArgs: Where = { when_trigger: eventType };
-      const state = getState();
+      const state = getState()!;
       state.log(5, `Event ${eventType} ${channel} ${JSON.stringify(payload)}`);
       let table;
       if (
         channel &&
         ["Insert", "Update", "Delete", "Validate"].includes(channel)
       ) {
-        const Table = _sc_table();
         table = Table.findOne({ name: channel });
-        findArgs.table_id = table.id;
+        findArgs.table_id = table!.id;
       } else if (channel) findArgs.channel = { in: ["", channel] };
-      const virtual_triggers = getState().virtual_triggers.filter(
+      const virtual_triggers = getState()!.virtual_triggers.filter(
         (tr: Trigger) =>
           eventType === tr.when_trigger &&
           (tr.channel === channel || !tr.channel)
@@ -273,12 +255,12 @@ class Trigger implements AbstractTrigger {
         state.log(4, `Trigger run ${trigger.name} ${trigger.action} `);
         try {
           if (trigger.action === "Workflow") {
-            const wfrun = await _sc_workflow_run().create({
-              trigger_id: trigger.id,
+            const wfrun = await workflowRunMod.create({
+              trigger_id: trigger.id!,
               context: payload,
               started_by: user?.id || undefined,
             });
-            await wfrun.run({ user });
+            await wfrun.run({ user: user as any });
           } else if (trigger.action === "Multi-step action") {
             let step_count = 0;
             const MAX_STEPS = 200;
@@ -379,8 +361,7 @@ class Trigger implements AbstractTrigger {
     extraArgs?: any
   ): Promise<void> {
     const triggers = Trigger.getTableTriggers(when_trigger, table, user);
-    const { getState } = _sc_db_state();
-    const state = getState();
+    const state = getState()!;
     for (const trigger of triggers) {
       state.log(
         4,
@@ -430,11 +411,10 @@ class Trigger implements AbstractTrigger {
    * @returns {Promise<any>}
    */
   async runWithoutRow(runargs: any = {}): Promise<any> {
-    const { getState } = _sc_db_state();
-    const state = getState();
+    const state = getState()!;
     state.log(4, `Trigger run ${this.name} ${this.action} no row`);
     const table = this.table_id
-      ? _sc_table().findOne({ id: this.table_id })
+      ? Table.findOne({ id: this.table_id })
       : undefined;
 
     // Halt if _only_if condition evaluates to falsy
@@ -450,8 +430,8 @@ class Trigger implements AbstractTrigger {
 
     if (this.action === "Workflow") {
       const user = runargs?.user || runargs?.req?.user;
-      const wfrun = await _sc_workflow_run().create({
-        trigger_id: this.id,
+      const wfrun = await workflowRunMod.create({
+        trigger_id: this.id!,
         context: runargs?.row || undefined,
         started_by: user?.id,
       });
@@ -494,7 +474,7 @@ class Trigger implements AbstractTrigger {
             name: step.step_action_name,
           });
           if (trigger) {
-            action = getState().actions[trigger.action];
+            action = getState()!.actions[trigger.action];
             configuration = trigger.configuration;
           }
         }
@@ -560,7 +540,6 @@ class Trigger implements AbstractTrigger {
    */
   haltOnOnlyIf(row: Row, user?: Row): boolean {
     if (this.configuration?._only_if) {
-      const { eval_expression } = _sc_expression();
       return !eval_expression(
         this.configuration._only_if,
         row || {},
@@ -576,7 +555,6 @@ class Trigger implements AbstractTrigger {
     table: Table | null,
     user?: Row
   ) {
-    const { getState } = _sc_db_state();
     for (const trigger of triggers) {
       if (
         trigger.action === "Multi-step action" ||
@@ -592,7 +570,7 @@ class Trigger implements AbstractTrigger {
             ...(extraArgs || {}),
           });
       } else {
-        const action = getState().actions[trigger.action];
+        const action = getState()!.actions[trigger.action];
         if (action) {
           trigger.run = (row: Row, extraArgs?: any) =>
             action.run &&
@@ -632,13 +610,12 @@ class Trigger implements AbstractTrigger {
     table: Table | null,
     user?: Row
   ): Trigger[] {
-    const { getState } = _sc_db_state();
     const triggers = Trigger.find({
       when_trigger,
       ...(table ? { table_id: table.id } : {}),
     });
     Trigger.setRunFunctions(triggers, table, user);
-    const virtual_triggers = getState().virtual_triggers.filter(
+    const virtual_triggers = getState()!.virtual_triggers.filter(
       (tr: Trigger) =>
         when_trigger === tr.when_trigger && tr.table_id == table?.id
     );
@@ -651,9 +628,8 @@ class Trigger implements AbstractTrigger {
    * @returns {boolean}
    */
   static hasTableTriggers(when_trigger: string, table: Table): boolean {
-    const { getState } = _sc_db_state();
     const triggers = Trigger.find({ when_trigger, table_id: table.id });
-    const virtual_triggers = getState().virtual_triggers.filter(
+    const virtual_triggers = getState()!.virtual_triggers.filter(
       (tr: Trigger) =>
         when_trigger === tr.when_trigger && tr.table_id == table.id
     );
@@ -666,10 +642,9 @@ class Trigger implements AbstractTrigger {
    * @returns {Trigger[]}
    */
   static getAllTableTriggers(table: Table): Trigger[] {
-    const { getState } = _sc_db_state();
     const triggers = Trigger.find({ table_id: table.id });
     Trigger.setRunFunctions(triggers, table);
-    const virtual_triggers = getState().virtual_triggers.filter(
+    const virtual_triggers = getState()!.virtual_triggers.filter(
       (tr: Trigger) => tr.table_id == table.id
     );
     return [...triggers, ...virtual_triggers];
@@ -680,7 +655,6 @@ class Trigger implements AbstractTrigger {
    * @type {string[]}
    */
   static get when_options(): string[] {
-    const { getState } = _sc_db_state();
 
     return [
       "Never",
@@ -701,7 +675,7 @@ class Trigger implements AbstractTrigger {
       "UserVerified",
       "ReceiveMobileShareData",
       "AppChange",
-      ...Object.keys(getState().eventTypes),
+      ...Object.keys(getState()!.eventTypes),
     ];
   }
 
@@ -716,7 +690,7 @@ class Trigger implements AbstractTrigger {
     );
     const newname = cloneName(
       myname,
-      existingNames.map((v) => v.name)
+      existingNames.map((v) => v.name) as string[]
     );
 
     const createObj = {
@@ -726,11 +700,10 @@ class Trigger implements AbstractTrigger {
     delete createObj.id;
     const trig = await Trigger.create(createObj);
     if (trig.action === "Workflow") {
-      const WorkflowStep = _sc__saltcorn_data_models_workflow_step();
       const steps = await WorkflowStep.find({ trigger_id: this.id });
       for (const step of steps) {
         const { id, trigger_id, ...stepNoId } = step;
-        await WorkflowStep.create({ ...stepNoId, trigger_id: trig.id });
+        await WorkflowStep.create({ ...stepNoId, trigger_id: trig.id! });
       }
     }
     return trig;
@@ -742,9 +715,8 @@ class Trigger implements AbstractTrigger {
   }
 
   static get abbreviated_actions() {
-    const { getState } = _sc_db_state();
 
-    return Object.entries(getState().actions)
+    return Object.entries(getState()!.actions)
       .filter(([k, v]: [string, any]) => !v.disableIf || !v.disableIf())
       .map(([k, v]: [string, any]) => {
         const hasConfig = !!v.configFields;
@@ -764,8 +736,7 @@ class Trigger implements AbstractTrigger {
 
   static actionsNotRequiringRow(): string[] {
     const result = [];
-    const { getState } = _sc_db_state();
-    for (const [name, action] of Object.entries(getState().actions) as [
+    for (const [name, action] of Object.entries(getState()!.actions) as [
       string,
       Action,
     ][]) {
@@ -833,9 +804,8 @@ class Trigger implements AbstractTrigger {
   }
 
   static action_explainers(): Record<string, string> {
-    const { getState } = _sc_db_state();
     const actionExplainers: Record<string, string> = {};
-    Object.entries(getState().actions).map(([k, v]: [string, any]) => {
+    Object.entries(getState()!.actions).map(([k, v]: [string, any]) => {
       if (v.description) actionExplainers[k] = v.description;
     });
     return actionExplainers;

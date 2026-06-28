@@ -4,9 +4,7 @@
  * @module models/crash
  * @subcategory models
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
+import { getState, getRootState } from "../db/state.js";
 import db from "../db/index.js";
 import moment from "moment";
 import type {
@@ -115,10 +113,9 @@ class Crash {
       url: req.url ?? "",
       headers: req.headers,
     };
-    const { getState, getRootState } = _sc_db_state();
     const tenants_crash_log = getRootState().getConfig("tenants_crash_log");
 
-    getState().log(1, `ERROR: ${err.stack || err.message}`);
+    getState()!.log(1, `ERROR: ${err.stack || err.message}`);
     if (tenants_crash_log) {
       await db.insert("_sc_errors", payload);
     } else {

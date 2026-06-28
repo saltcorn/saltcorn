@@ -1,12 +1,9 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import db from "../db/index.js";
-const { getState } = _sc_db_state();
-getState().registerPlugin("base", _sc_base_plugin());
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+getState()!.registerPlugin("base", basePluginMod);
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 
 import Tag from "../models/tag.js";
@@ -16,8 +13,8 @@ import Page from "../models/page.js";
 
 afterAll(db.close);
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 jest.setTimeout(30000);
 
@@ -27,8 +24,8 @@ describe("Tag IO", () => {
   let pageA: Page;
 
   beforeAll(async () => {
-    books = Table.findOne({ name: "books" })!;
-    patients = Table.findOne({ name: "patients" })!;
+    books = Table.findOne({ name: "books" });
+    patients = Table.findOne({ name: "patients" });
     authorlist = View.findOne({ name: "authorlist" })!;
     authorshow = View.findOne({ name: "authorshow" })!;
     pageA = await Page.findOne({ name: "a_page" })!;

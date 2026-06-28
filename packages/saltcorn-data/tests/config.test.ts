@@ -1,30 +1,19 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_models_config = () => (require("../models/config.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import db from "../db/index.js";
-const { getState } = _sc_db_state();
-getState().registerPlugin("base", _sc_base_plugin());
+import { getState } from "../db/state.js";
+import { getConfig, getAllConfig, setConfig, get_base_url, check_email_mask, get_latest_npm_version } from "../models/config.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+getState()!.registerPlugin("base", basePluginMod);
 
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 
-const {
-  getConfig,
-  getAllConfig,
-  setConfig,
-  get_base_url,
-  check_email_mask,
-  get_latest_npm_version,
-} = _sc_models_config();
 
 afterAll(db.close);
 
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 describe("Config", () => {
@@ -47,8 +36,8 @@ describe("Config", () => {
     await setConfig("log_sql", false);
   });
   it("should set value via state", async () => {
-    await getState().setConfig("cfgStr1", "FooBaz");
-    const s = getState().getConfig("cfgStr1", "");
+    await getState()!.setConfig("cfgStr1", "FooBaz");
+    const s = getState()!.getConfig("cfgStr1", "");
     expect(s).toBe("FooBaz");
     const s1 = await getConfig("cfgStr1", "");
     expect(s1).toBe("FooBaz");
@@ -68,27 +57,27 @@ describe("Config", () => {
     expect(d.cfg1).toBe(9);
   });
   it("should get all value", async () => {
-    const d = await getState().getAllConfigOrDefaults();
+    const d = await getState()!.getAllConfigOrDefaults();
     expect(d.cfg1).toBe(undefined);
     expect(d.log_sql.value).toBe(false);
   });
   it("should get base url", async () => {
     expect(get_base_url()).toBe("/");
-    await getState().setConfig("base_url", "foo");
+    await getState()!.setConfig("base_url", "foo");
     const s = get_base_url();
     expect(s).toBe("foo/");
-    await getState().setConfig("base_url", "bar/");
+    await getState()!.setConfig("base_url", "bar/");
     const s1 = get_base_url();
     expect(s1).toBe("bar/");
   });
   it("should check email mask", async () => {
     expect(check_email_mask("foo@bar.com")).toBe(true);
-    await getState().setConfig("email_mask", "bar.com");
+    await getState()!.setConfig("email_mask", "bar.com");
     expect(check_email_mask("foo@bar.com")).toBe(true);
     expect(check_email_mask("foo@baz.com")).toBe(false);
   });
   it("should check email mask", async () => {
-    await getState().setConfig("latest_npm_version", {
+    await getState()!.setConfig("latest_npm_version", {
       foopkg: { version: "1.2.3", time: new Date() },
     });
     const foov = await get_latest_npm_version("foopkg");

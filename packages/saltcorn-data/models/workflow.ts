@@ -5,10 +5,8 @@
  * @subcategory models
  */
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_utils = () => (require("../utils.js") as any).default;
+import { getState } from "../db/state.js";
+import { applyAsync, apply, asyncMap } from "../utils.js";
 import { instanceOfType } from "@saltcorn/types/common_types";
 import type {
   AbstractWorkflow,
@@ -23,8 +21,6 @@ import Form from "./form.js";
 import { build_schema_data } from "../plugin-helper.js";
 import FieldRepeat from "./fieldrepeat.js";
 
-const { getState } = _sc_db_state();
-const { applyAsync, apply, asyncMap } = _sc_utils();
 
 /**
  * Workflow class
@@ -111,7 +107,7 @@ class Workflow implements AbstractWorkflow {
       if (f instanceof FieldRepeat) await asyncMap(f.fields, iter);
       else if (f.type === "File") {
         if (f.fieldview && !f.fieldviewObj)
-          f.fieldviewObj = getState().fileviews[f.fieldview];
+          f.fieldviewObj = getState()!.fileviews[f.fieldview];
         await f.fill_fkey_options();
       }
     };
@@ -279,7 +275,7 @@ class Workflow implements AbstractWorkflow {
         await File.buildDirCache();
         options = {
           ...(await applyAsync(step.builder, context)),
-          fonts: getState().fonts,
+          fonts: getState()!.fonts,
         };
       } finally {
         File.destroyDirCache();
@@ -299,12 +295,12 @@ class Workflow implements AbstractWorkflow {
       const { tables, views } = await build_schema_data();
       options.tables = tables;
       options.views = views;
-      options.max_relations_layer_depth = getState().getConfig(
+      options.max_relations_layer_depth = getState()!.getConfig(
         "max_relations_layer_depth",
         6
       );
-      options.icons = getState().icons;
-      options.keyframes = getState().keyframes;
+      options.icons = getState()!.icons;
+      options.keyframes = getState()!.keyframes;
 
       return {
         renderBuilder: {

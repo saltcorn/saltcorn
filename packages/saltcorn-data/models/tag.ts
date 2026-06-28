@@ -1,9 +1,7 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_table = () => (require("./table.js") as any).default;
-const _sc_view = () => (require("./view.js") as any).default;
-const _sc_page = () => (require("./page.js") as any).default;
-const _sc_trigger = () => (require("./trigger.js") as any).default;
+import tableMod from "./table.js";
+import viewMod from "./view.js";
+import pageMod from "./page.js";
+import triggerMod from "./trigger.js";
 import Page from "./page.js";
 import Table from "./table.js";
 import Trigger from "./trigger.js";
@@ -18,8 +16,7 @@ import db from "../db/index.js";
 import TagEntry from "./tag_entry.js";
 import type { TagEntryCfg } from "./tag_entry.js";
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
-import utils from "../utils.js";
-const { comparing } = utils;
+import { comparing } from "../utils.js";
 
 class Tag implements AbstractTag {
   name: string;
@@ -104,20 +101,20 @@ class Tag implements AbstractTag {
   }
 
   async getTables(): Promise<Table[]> {
-    return await this.getTypedEntries<Table>(_sc_table(), "table_id");
+    return await this.getTypedEntries<Table>(tableMod, "table_id");
   }
 
   async getViews(): Promise<View[]> {
-    return await this.getTypedEntries<View>(_sc_view(), "view_id");
+    return await this.getTypedEntries<View>(viewMod, "view_id");
   }
 
   async getPages(): Promise<Page[]> {
-    return await this.getTypedEntries<Page>(_sc_page(), "page_id");
+    return await this.getTypedEntries<Page>(pageMod, "page_id");
   }
 
   async getTriggers(): Promise<Trigger[]> {
     return await this.getTypedEntries<Trigger>(
-      _sc_trigger(),
+      triggerMod,
       "trigger_id"
     );
   }

@@ -8,7 +8,7 @@ export async function prepareSimpleTopicPostRelation() {
   if (Table.findOne({ name: "simple_topics" })) return;
   const simpleTopic = await Table.create("simple_topics");
   const simplePost = await Table.create("simple_posts");
-  const users = Table.findOne({ name: "users" });
+  const users = Table.findOne({ name: "users" })!;
   assertIsSet(users);
 
   await Field.create({
@@ -277,7 +277,7 @@ export async function prepareEmployeeDepartment() {
 
 export async function createAnotherUserField() {
   if ((await Field.find({ name: "another_user" })).length === 0) {
-    const uiit = Table.findOne({ name: "user_interested_in_topic" });
+    const uiit = Table.findOne({ name: "user_interested_in_topic" })!;
     await Field.create({
       table: uiit,
       name: "another_user",
@@ -292,8 +292,8 @@ export async function createAnotherUserField() {
 
 export async function createSecondTopicField() {
   if ((await Field.find({ name: "second_topic" })).length === 0) {
-    const bit = Table.findOne({ name: "blog_in_topic" });
-    const topics = Table.findOne({ name: "topics" });
+    const bit = Table.findOne({ name: "blog_in_topic" })!;
+    const topics = Table.findOne({ name: "topics" })!;
     assertIsSet(bit);
     assertIsSet(topics);
     await Field.create({
@@ -334,9 +334,9 @@ export async function createMultipleInbounds() {
 
 export async function createKeyFromLevelTwo() {
   if ((await Field.find({ name: "post_from_level_two" })).length === 0) {
-    const inbound_inbound = Table.findOne({ name: "inbound_inbound" });
+    const inbound_inbound = Table.findOne({ name: "inbound_inbound" })!;
     assertIsSet(inbound_inbound);
-    const blog_posts = Table.findOne({ name: "blog_posts" });
+    const blog_posts = Table.findOne({ name: "blog_posts" })!;
     assertIsSet(blog_posts);
     await Field.create({
       table: inbound_inbound,
@@ -352,9 +352,9 @@ export async function createKeyFromLevelTwo() {
 export async function createLevelThreeInbound() {
   if (!Table.findOne({ name: "inbound_level_three" })) {
     const levelThreeInbound = await Table.create("inbound_level_three");
-    const inbound_inbound = Table.findOne({ name: "inbound_inbound" });
+    const inbound_inbound = Table.findOne({ name: "inbound_inbound" })!;
     assertIsSet(inbound_inbound);
-    const topics = Table.findOne({ name: "topics" });
+    const topics = Table.findOne({ name: "topics" })!;
     assertIsSet(topics);
     await Field.create({
       table: levelThreeInbound,

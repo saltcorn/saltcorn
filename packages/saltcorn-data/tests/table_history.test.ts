@@ -1,18 +1,15 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import Table from "../models/table.js";
 import TableConstraint from "../models/table_constraints.js";
 import Field from "../models/field.js";
 import View from "../models/view.js";
 import db from "../db/index.js";
-const { getState } = _sc_db_state();
-getState().registerPlugin("base", _sc_base_plugin());
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+getState()!.registerPlugin("base", basePluginMod);
 import { writeFile } from "fs/promises";
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
 const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
 import {
   assertIsSet,
@@ -22,22 +19,22 @@ import {
 } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import { add_free_variables_to_joinfields } from "../plugin-helper.js";
-import expressionModule from "../models/expression.js";
+import * as expressionModule from "../models/expression.js";
 import { text } from "stream/consumers";
-import utils from "../utils.js";
+import * as utils from "../utils.js";
 import User from "../models/user.js";
 const { freeVariables } = expressionModule;
 
 afterAll(db.close);
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 jest.setTimeout(30000);
 
 describe("Table history", () => {
   it("should enable versioning", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     table.versioned = true;
     await table.update(table);
@@ -45,7 +42,7 @@ describe("Table history", () => {
     expect(vtables.map((t) => t.name)).toContain("patients");
   });
   it("should save version on insert", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     await table.insertRow({ name: "Bunny foo-foo", favbook: 1 });
     const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
@@ -57,7 +54,7 @@ describe("Table history", () => {
     expect(history1[0].name).toBe("Bunny foo-foo");
   });
   it("should save version on update", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
 
     const bunnyFooFoo = await table.getRow({ name: "Bunny foo-foo" });
@@ -80,7 +77,7 @@ describe("Table history", () => {
     expect(goon.favbook).toBe(1);
   });
   it("create field on version table", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
 
     const fc = await Field.create({
       table: table,
@@ -93,7 +90,7 @@ describe("Table history", () => {
     await fc.delete();
   });
   it("should disable versioning", async () => {
-    const table = Table.findOne({ name: "patients" });
+    const table = Table.findOne({ name: "patients" })!;
     assertIsSet(table);
     table.getFields();
     await table.update({ versioned: false });
@@ -127,7 +124,7 @@ describe("Table history", () => {
     expect(!!rows[0].reftall).toBe(false); //for sqlite
     if (!db.isSQLite) {
       await table.rename("isthisbetter");
-      const table3 = Table.findOne({ name: "refsunsure" });
+      const table3 = Table.findOne({ name: "refsunsure" })!;
       assertIsSet(table3);
       const rows1 = await table3.getJoinedRows({ joinFields });
       expect(rows1[0].theref).toBe(id);
@@ -161,7 +158,7 @@ describe("undo/redo", () => {
     await tc.updateRow({ number: 105 }, 1);
   });
   it("should undo", async () => {
-    const tc = Table.findOne({ name: "counttable23" });
+    const tc = Table.findOne({ name: "counttable23" })!;
     assertIsSet(tc);
     //db.set_sql_logging(true);
     await tc.undo_row_changes(1);
@@ -170,7 +167,7 @@ describe("undo/redo", () => {
     //console.log(await tc.get_history(1));
   });
   it("should undo again", async () => {
-    const tc = Table.findOne({ name: "counttable23" });
+    const tc = Table.findOne({ name: "counttable23" })!;
     assertIsSet(tc);
     //db.set_sql_logging(true);
     await tc.undo_row_changes(1);
@@ -179,7 +176,7 @@ describe("undo/redo", () => {
     expect(r2?.number).toBe(103);
   });
   it("should redo", async () => {
-    const tc = Table.findOne({ name: "counttable23" });
+    const tc = Table.findOne({ name: "counttable23" })!;
     assertIsSet(tc);
 
     await tc.redo_row_changes(1);
@@ -188,7 +185,7 @@ describe("undo/redo", () => {
     expect(r2?.number).toBe(104);
   });
   it("should redo again", async () => {
-    const tc = Table.findOne({ name: "counttable23" });
+    const tc = Table.findOne({ name: "counttable23" })!;
     assertIsSet(tc);
 
     await tc.redo_row_changes(1);
@@ -197,7 +194,7 @@ describe("undo/redo", () => {
     expect(r2?.number).toBe(105);
   });
   it("should undo after redo", async () => {
-    const tc = Table.findOne({ name: "counttable23" });
+    const tc = Table.findOne({ name: "counttable23" })!;
     assertIsSet(tc);
 
     await tc.undo_row_changes(1);
@@ -324,13 +321,13 @@ describe("unique history clash", () => {
     });
   });
   it("should enable versioning", async () => {
-    const table = Table.findOne({ name: "unihistory" });
+    const table = Table.findOne({ name: "unihistory" })!;
     assertIsSet(table);
     table.versioned = true;
     await table.update(table);
   });
   it("should not error on history with unique", async () => {
-    const table = Table.findOne({ name: "unihistory" });
+    const table = Table.findOne({ name: "unihistory" })!;
     assertIsSet(table);
 
     await table.insertRow({ name: "Bartimaeus", age: 2500 });
@@ -342,7 +339,7 @@ describe("unique history clash", () => {
     expect(row1!.name).toBe("Bartimaeus");
   });
   it("should duplicate row manually", async () => {
-    const table = Table.findOne({ name: "unihistory" });
+    const table = Table.findOne({ name: "unihistory" })!;
     assertIsSet(table);
 
     const row = await table.getRow({ name: "Bartimaeus" });
@@ -357,7 +354,7 @@ describe("unique history clash", () => {
     expect(history0.length + 1).toBe(history1.length);
   });
   it("should not clash unique with history", async () => {
-    const table = Table.findOne({ name: "unihistory" });
+    const table = Table.findOne({ name: "unihistory" })!;
     assertIsSet(table);
 
     const row = await table.getRow({ name: "Bartimaeus" });
@@ -366,7 +363,7 @@ describe("unique history clash", () => {
     await table.insertRow({ name: "Bartimaeus", age: 2499 });
   });
   it("should disable and enable history", async () => {
-    const table = Table.findOne({ name: "unihistory" });
+    const table = Table.findOne({ name: "unihistory" })!;
     assertIsSet(table);
     table.versioned = false;
     await table.update(table);
@@ -395,7 +392,7 @@ describe("Table history with UUID pks", () => {
       expect(typeof rows[0].uuid_generate_v4).toBe("string");
     });
     it("should create table", async () => {
-      getState().registerPlugin("mock_plugin", plugin_with_routes());
+      getState()!.registerPlugin("mock_plugin", plugin_with_routes());
       const table = await Table.create("TableUUID1");
       const [pk] = table.getFields();
       await pk.update({ type: "UUID" });
@@ -405,7 +402,7 @@ describe("Table history with UUID pks", () => {
       await table.update(table);
     });
     it("should insert stuff in table", async () => {
-      const table1 = Table.findOne({ name: "TableUUID1" });
+      const table1 = Table.findOne({ name: "TableUUID1" })!;
       assertIsSet(table1);
       const flds1 = await table1.getFields();
 

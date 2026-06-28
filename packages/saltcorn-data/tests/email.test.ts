@@ -1,21 +1,17 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_db = () => (require("../db/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import { writeFileSync } from "fs";
-import email from "../models/email.js";
+import * as email from "../models/email.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
 import View from "../models/view.js";
 import Table from "../models/table.js";
 import User from "../models/user.js";
 import { createTransport } from "nodemailer";
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
+import { getState } from "../db/state.js";
+import db from "../db/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { mockReqRes } = mocks;
 import { assertIsSet } from "./assertions.js";
-const { getState } = _sc_db_state();
-const db = _sc_db();
 
 function removeBreaks(str: string): string {
   return str.replace(/(\r\n|\r|\n)/gm, "").toLowerCase();
@@ -28,8 +24,8 @@ const trimLines = (s: string) =>
     .join("\n");
 
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 jest.mock("nodemailer");
@@ -128,7 +124,7 @@ describe("send_verification_email", () => {
       },
       min_role: 100,
     });
-    await getState().setConfig("verification_view", "verifyview");
+    await getState()!.setConfig("verification_view", "verifyview");
     const user = await User.findOne({ id: 1 });
     await email.send_verification_email(user as User, mockReqRes.req, {
       new_verification_token: "newsecrettoken",
@@ -236,7 +232,7 @@ describe("MJML Mail Transformations", () => {
         },
       ],
     });
-    await getState().setConfig("base_url", "https://example.com");
+    await getState()!.setConfig("base_url", "https://example.com");
     const html = await email.viewToEmailHtml(v, { id: 1 });
     //writeFileSync("emailout2", html);
     expect(trimLines(html)).toBe(

@@ -5,9 +5,7 @@
  * @subcategory models
  */
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
+import { getState } from "../db/state.js";
 import db from "../db/index.js";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
 import moment from "moment";
@@ -105,9 +103,8 @@ class EventLog {
    * @returns {Promise<EventLog>}
    */
   static async create(o: EventLogCfg): Promise<EventLog | void> {
-    const { getState } = _sc_db_state();
 
-    const settings = getState().getConfig("event_log_settings", {});
+    const settings = getState()!.getConfig("event_log_settings", {});
     if (!settings[o.event_type]) return;
     const hasTable = EventLog.hasTable(o.event_type);
     if (hasTable && !settings[`${o.event_type}_${o.channel}`]) return;
@@ -139,8 +136,7 @@ class EventLog {
    * @returns {boolean}
    */
   static hasChannel(evType: string): boolean {
-    const { getState } = _sc_db_state();
-    const t = getState().eventTypes[evType];
+    const t = getState()!.eventTypes[evType];
     return t && t.hasChannel;
   }
 
@@ -160,6 +156,6 @@ namespace EventLog {
     payload?: any | null;
   };
 }
-type EventLogCfg = EventLog.EventLogCfg;
+export type EventLogCfg = EventLog.EventLogCfg;
 
 export default EventLog;

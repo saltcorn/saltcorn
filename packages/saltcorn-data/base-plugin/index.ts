@@ -25,30 +25,28 @@
  * @category saltcorn-data
  * @subcategory base-plugin
  */
-// import listshowlist = _sc_viewtemplates_listshowlist();
-// import list = _sc_viewtemplates_list();
-// import show = _sc_viewtemplates_show();
-// import feed = _sc_viewtemplates_feed();
-// import room = _sc_viewtemplates_room();
-// import wfroom = _sc_viewtemplates_workflow_room();
-// import edit = _sc_viewtemplates_edit();
-// import filter = _sc_viewtemplates_filter();
-// import fileviews = _sc_fileviews();
-// import fieldviews = _sc_fieldviews();
-// import actions = _sc_actions();
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_viewtemplates_listshowlist = () => (require("./viewtemplates/listshowlist.js") as any).default;
-const _sc_viewtemplates_list = () => (require("./viewtemplates/list.js") as any).default;
-const _sc_viewtemplates_show = () => (require("./viewtemplates/show.js") as any).default;
-const _sc_viewtemplates_feed = () => (require("./viewtemplates/feed.js") as any).default;
-const _sc_viewtemplates_room = () => (require("./viewtemplates/room.js") as any).default;
-const _sc_viewtemplates_workflow_room = () => (require("./viewtemplates/workflow-room.js") as any).default;
-const _sc_viewtemplates_edit = () => (require("./viewtemplates/edit.js") as any).default;
-const _sc_viewtemplates_filter = () => (require("./viewtemplates/filter.js") as any).default;
-const _sc_fileviews = () => (require("./fileviews.js") as any).default;
-const _sc_fieldviews = () => (require("./fieldviews.js") as any).default;
-const _sc_actions = () => (require("./actions.js") as any).default;
+// import listshowlist = listshowlistMod;
+// import list = listMod;
+// import show = showMod;
+// import feed = feedMod;
+// import room = roomMod;
+// import wfroom = workflowRoomMod;
+// import edit = editMod;
+// import filter = filterMod;
+// import fileviews = fileviewsMod;
+// import fieldviews = nsFieldviews;
+// import actions = actionsMod;
+import listshowlistMod from "./viewtemplates/listshowlist.js";
+import listMod from "./viewtemplates/list.js";
+import showMod from "./viewtemplates/show.js";
+import feedMod from "./viewtemplates/feed.js";
+import roomMod from "./viewtemplates/room.js";
+import workflowRoomMod from "./viewtemplates/workflow-room.js";
+import editMod from "./viewtemplates/edit.js";
+import filterMod from "./viewtemplates/filter.js";
+import fileviewsMod from "./fileviews.js";
+import actionsMod from "./actions.js";
+import * as nsFieldviews from "./fieldviews.js";
 import listshowlist from "./viewtemplates/listshowlist.js";
 import list from "./viewtemplates/list.js";
 import show from "./viewtemplates/show.js";
@@ -58,10 +56,9 @@ import wfroom from "./viewtemplates/workflow-room.js";
 import edit from "./viewtemplates/edit.js";
 import filter from "./viewtemplates/filter.js";
 import fileviews from "./fileviews.js";
-import fieldviews from "./fieldviews.js";
+import * as fieldviews from "./fieldviews.js";
 import actions from "./actions.js";
-import types from "./types.js";
-const { string, int, bool, date, float, color } = types;
+import { string, int, bool, date, float, color } from "./types.js";
 
 const viewtemplates = [
   list,

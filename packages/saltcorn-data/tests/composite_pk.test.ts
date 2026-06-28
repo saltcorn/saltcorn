@@ -1,20 +1,17 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import Table from "../models/table.js";
 import TableConstraint from "../models/table_constraints.js";
 import Field from "../models/field.js";
 import View from "../models/view.js";
 import db from "../db/index.js";
-const { getState } = _sc_db_state();
-getState().registerPlugin("base", _sc_base_plugin());
-import discovery from "../models/discovery.js";
+import { getState } from "../db/state.js";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
+getState()!.registerPlugin("base", basePluginMod);
+import * as discovery from "../models/discovery.js";
 const { discoverable_tables, discover_tables, implement_discovery } = discovery;
 import { writeFile } from "fs/promises";
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
 const { rick_file, plugin_with_routes, mockReqRes, createDefaultView } = mocks;
 import {
   assertIsSet,
@@ -28,7 +25,7 @@ import {
   stateFieldsToQuery,
   stateFieldsToWhere,
 } from "../plugin-helper.js";
-import expressionModule from "../models/expression.js";
+import * as expressionModule from "../models/expression.js";
 import {
   PrimaryKeyValue,
   Row,
@@ -42,8 +39,8 @@ const { freeVariables, jsexprToWhere, add_free_variables_to_aggregations } =
 
 afterAll(db.close);
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
   if (!db.isSQLite) {
     await db.query(
       `create table tstcomppk ( name text, age int, address text, primary key(name,age));`
@@ -57,7 +54,7 @@ jest.setTimeout(30000);
 describe("Composite PK table properties", () => {
   if (!db.isSQLite) {
     it("should store attributes", async () => {
-      const tc = Table.findOne("tstcomppk");
+      const tc = Table.findOne("tstcomppk")!;
       assertIsSet(tc);
       expect(tc.composite_pk_names?.length).toBe(2);
       expect(tc.composite_pk_names).toContain("name");
@@ -65,7 +62,7 @@ describe("Composite PK table properties", () => {
       expect(tc.pk_name).toBe("age");
     });
     it("should insert", async () => {
-      const tc = Table.findOne("tstcomppk");
+      const tc = Table.findOne("tstcomppk")!;
       assertIsSet(tc);
       await tc.insertRow({ name: "Sam", age: 38 });
       const count = await tc.countRows({});
@@ -75,7 +72,7 @@ describe("Composite PK table properties", () => {
       expect(rows[0].age).toBe(38);
     });
     it("should update", async () => {
-      const tc = Table.findOne("tstcomppk");
+      const tc = Table.findOne("tstcomppk")!;
       assertIsSet(tc);
       await tc.insertRow({ name: "Alex", age: 38 });
       await tc.updateRow(
@@ -93,7 +90,7 @@ describe("Composite PK table properties", () => {
       expect(names).toContain("Sammy");
     });
     it("should delete", async () => {
-      const tc = Table.findOne("tstcomppk");
+      const tc = Table.findOne("tstcomppk")!;
       assertIsSet(tc);
       await tc.deleteRows({ name: "Sammy", age: 38 });
 
@@ -103,7 +100,7 @@ describe("Composite PK table properties", () => {
     });
 
     it("should create Edit view", async () => {
-      const tc = Table.findOne("tstcomppk");
+      const tc = Table.findOne("tstcomppk")!;
       assertIsSet(tc);
       const view = await createDefaultView(tc, "Edit", 1);
       expect(view.configuration.columns.length).toBe(3);

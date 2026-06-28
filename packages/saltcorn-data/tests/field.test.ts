@@ -1,38 +1,34 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
-import _sc__saltcorn_plain_date from "@saltcorn/plain-date";
 import Table from "../models/table.js";
 import Field from "../models/field.js";
 import db from "../db/index.js";
-const { getState } = _sc_db_state();
 
 import { assertIsSet, assertsIsSuccessMessage } from "./assertions.js";
 import { afterAll, beforeAll, describe, it, expect, jest } from "@saltcorn/db-common/test_expect";
-import mocks from "./mocks.js";
+import * as mocks from "./mocks.js";
 import { Type } from "@saltcorn/types/common_types";
 import { writeFile } from "fs/promises";
-const PlainDate = (_sc__saltcorn_plain_date as any);
 
+import { getState } from "../db/state.js";
+import PlainDate from "@saltcorn/plain-date";
+import basePluginMod from "../base-plugin/index.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 const { sleep, plugin_with_routes } = mocks;
 
-getState().registerPlugin("base", _sc_base_plugin());
+getState()!.registerPlugin("base", basePluginMod);
 
 afterAll(db.close);
 
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 
 jest.setTimeout(20000);
 
 describe("Field", () => {
   it("should add and then delete required field", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     const fc = await Field.create({
       table: patients,
       label: "Height1",
@@ -63,7 +59,7 @@ describe("Field", () => {
     expect(fc_recreate.id > 0).toBe(true);
   });
   it("should add and then delete nonrequired field", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     const fc = await Field.create({
       table: patients,
       name: "Height11",
@@ -82,7 +78,7 @@ describe("Field", () => {
     expect(fsc.length).toBe(0);
   });
   it("creates file field", async () => {
-    const patients = Table.findOne({ name: "patients" });
+    const patients = Table.findOne({ name: "patients" })!;
     const fc = await Field.create({
       table: patients,
       name: "pic",
@@ -318,7 +314,7 @@ describe("Field update", () => {
     await Table.create("changingtable");
   });
   it("changes to on delete cascade", async () => {
-    const table = Table.findOne({ name: "changingtable" });
+    const table = Table.findOne({ name: "changingtable" })!;
 
     const fc = await Field.create({
       table,
@@ -337,7 +333,7 @@ describe("Field update", () => {
     }
   });
   it("changes to required", async () => {
-    const table = Table.findOne({ name: "changingtable" });
+    const table = Table.findOne({ name: "changingtable" })!;
 
     const fc = await Field.create({
       table,
@@ -353,7 +349,7 @@ describe("Field update", () => {
     }
   });
   it("changes int to float", async () => {
-    const table = Table.findOne({ name: "changingtable" });
+    const table = Table.findOne({ name: "changingtable" })!;
 
     const fc = await Field.create({
       table,
@@ -367,7 +363,7 @@ describe("Field update", () => {
     }
   });
   it("changes fkey ref table", async () => {
-    const table = Table.findOne({ name: "changingtable" });
+    const table = Table.findOne({ name: "changingtable" })!;
 
     const fc = await Field.create({
       table,
@@ -503,7 +499,7 @@ describe("Field.distinct_values", () => {
   });
 
   it("gives int values", async () => {
-    const table = Table.findOne({ name: "fdvtable" });
+    const table = Table.findOne({ name: "fdvtable" })!;
     assertIsSet(table);
     const fc = await Field.create({
       table,
@@ -541,7 +537,7 @@ describe("Field.distinct_values", () => {
     ]);
   });
   it("gives string values", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     await books.insertRow({ author: "Herman Melville", pages: 56 });
     const fc = await Field.findOne({ name: "author" });
@@ -630,7 +626,7 @@ describe("adds new fields to history #1202", () => {
       type: "String",
     });
     await f.delete();
-    const table1 = Table.findOne({ id: table.id });
+    const table1 = Table.findOne({ id: table.id })!;
     assertIsSet(table1);
     const fields = await table1.getFields();
     expect(fields.length).toBe(1); // id
@@ -638,7 +634,7 @@ describe("adds new fields to history #1202", () => {
 });
 describe("fields with sql types depending on attribute", () => {
   it("should create", async () => {
-    getState().registerPlugin("mock_plugin", plugin_with_routes());
+    getState()!.registerPlugin("mock_plugin", plugin_with_routes());
     const table = await Table.create("TableVarchar");
     await Field.create({
       table,

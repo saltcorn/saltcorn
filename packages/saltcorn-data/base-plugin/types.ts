@@ -7,27 +7,24 @@
  * @subcategory base-plugin
  */
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_models_expression = () => (require("../models/expression.js") as any).default;
-const _sc_models_table = () => (require("../models/table.js") as any).default;
-const _sc_models_user = () => (require("../models/user.js") as any).default;
-const _sc_utils = () => (require("../utils.js") as any).default;
-const _sc_fieldviews = () => (require("./fieldviews.js") as any).default;
-const _sc_db = () => (require("../db/index.js") as any).default;
-import _sc_moment from "moment";
-import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
-import _sc_contractis from "contractis";
-import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
-import _sc__saltcorn_markup from "@saltcorn/markup";
-import _sc_underscore from "underscore";
-import * as _sc__saltcorn_db_common_internal from "@saltcorn/db-common/internal";
-import _sc__saltcorn_plain_date from "@saltcorn/plain-date";
+import { getState, getApp__ } from "../db/state.js";
+import { freeVariables, eval_expression } from "../models/expression.js";
+import { interpolate } from "../utils.js";
+import { select_by_code } from "./fieldviews.js";
+import tagsPkg from "@saltcorn/markup/tags";
+import contractisPkg from "contractis";
+import helpersPkg from "@saltcorn/markup/helpers";
+import markupPkg from "@saltcorn/markup";
+import * as internalPkg from "@saltcorn/db-common/internal";
+import moment from "moment";
+import Table from "../models/table.js";
+import User from "../models/user.js";
+import _ from "underscore";
+import PlainDate from "@saltcorn/plain-date";
+import db from "../db/index.js";
 import { FieldLike } from "@saltcorn/types/base_types";
 import type { GenObj } from "@saltcorn/types/common_types";
 
-const moment = (_sc_moment as any);
 const {
   input,
   select,
@@ -51,20 +48,11 @@ const {
   code,
   style,
   time,
-} = (_sc__saltcorn_markup_tags as any);
-const { is } = (_sc_contractis as any);
-const { radio_group, checkbox_group } = (_sc__saltcorn_markup_helpers as any);
-const { getState, getApp__ } = _sc_db_state();
-const { localeDate, localeDateTime } = (_sc__saltcorn_markup as any);
-const { freeVariables, eval_expression } = _sc_models_expression();
-const Table = _sc_models_table();
-const User = _sc_models_user();
-const _ = (_sc_underscore as any);
-const { interpolate } = _sc_utils();
-const { sqlFun, sqlBinOp } = (_sc__saltcorn_db_common_internal as any);
-const { select_by_code } = _sc_fieldviews();
-const PlainDate = (_sc__saltcorn_plain_date as any);
-const db = _sc_db();
+} = tagsPkg;
+const { is } = contractisPkg;
+const { radio_group, checkbox_group }: any = helpersPkg;
+const { localeDate, localeDateTime } = markupPkg;
+const { sqlFun, sqlBinOp } = internalPkg;
 
 const isdef = (x: any) =>
   typeof x === "undefined" || x === null ? false : true;
@@ -323,7 +311,7 @@ const show_with_html = {
   isEdit: false,
   description: "Show value with any HTML code",
   run: (v: any, req: any, attrs: any = {}) => {
-    const ctx: any = { ...getState().eval_context };
+    const ctx: any = { ...getState()!.eval_context };
     ctx.it = v;
     const rendered = interpolate(
       attrs?.code,
@@ -846,7 +834,7 @@ const string = {
           !(f.attributes && f.attributes.localizes_field)
       );
     const locales = Object.keys(
-      getState().getConfig("localizer_languages", {})
+      getState()!.getConfig("localizer_languages", {})
     );
     return [
       {
@@ -1359,7 +1347,7 @@ const string = {
                 JSON.stringify(join_fields_in_formula(attrs?.formula))
               ),
               "data-formula-table": encodeURIComponent(
-                JSON.stringify(Table.findOne(field.table_id).to_json)
+                JSON.stringify(Table.findOne(field.table_id)!.to_json)
               ),
               onClick:
                 "fill_formula_btn_click(this" +
@@ -2247,7 +2235,7 @@ const float = {
  */
 const locale = (req: any) => {
   //console.log(req && req.getLocale ? req.getLocale() : undefined);
-  return req?.getLocale?.() || getState().getConfig("default_locale", "en");
+  return req?.getLocale?.() || getState()!.getConfig("default_locale", "en");
 };
 
 /**
@@ -2322,7 +2310,7 @@ const date = {
       run: (d: any, req: any) => {
         const local = locale(req);
         return typeof d === "string" || typeof d === "number"
-          ? localeDate(new Date(d), {}, locale)
+          ? localeDate(new Date(d), {}, local)
           : d && d.toISOString
             ? localeDate(d, {}, local)
             : "";
@@ -2503,7 +2491,7 @@ const date = {
    */
   read: (v0: any, attrs: any) => {
     const locale =
-      attrs?.locale || getState().getConfig("default_locale", "en");
+      attrs?.locale || getState()!.getConfig("default_locale", "en");
     const readDate = (v: any) => {
       if (v instanceof Date && !isNaN(v as any)) return v;
       if (
@@ -2949,4 +2937,11 @@ const bool = {
   validate: () => (x: any) => true,
 };
 
-export default { string, int, bool, date, float, color };
+export {
+  string,
+  int,
+  bool,
+  date,
+  float,
+  color,
+};

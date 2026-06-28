@@ -4,22 +4,21 @@
  * @module models/page
  * @subcategory models
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_viewable_fields = () => (require("../viewable_fields.js") as any);
-const _sc_plugin_helper = () => (require("../plugin-helper.js") as any);
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_user = () => (require("./user.js") as any).default;
+import { action_link, fill_presets } from "../viewable_fields.js";
+import { run_action_column, stateToQueryString } from "../plugin-helper.js";
+import { getState } from "../db/state.js";
+import User from "./user.js";
+import * as nsState from "../db/state.js";
 import db from "../db/index.js";
 import View from "./view.js";
 import Table from "./table.js";
 import File from "./file.js";
 import { readFile } from "fs/promises";
 import { parseDocument, DomUtils } from "htmlparser2";
-import layout from "./layout.js";
+import * as layout from "./layout.js";
 const { eachView, eachPage, traverse, getStringsForI18n, translateLayout } =
   layout;
-import config from "./config.js";
+import * as config from "./config.js";
 import type {
   Layout,
   RunExtra,
@@ -33,18 +32,16 @@ import type {
   PageCfg,
   PagePack,
 } from "@saltcorn/types/model-abstracts/abstract_page";
-import expression from "./expression.js";
+import * as expression from "./expression.js";
 import tags from "@saltcorn/markup/tags";
 const { script, domReady, div } = tags;
-const { eval_expression } = expression;
+import { eval_expression } from "./expression.js";
 
-const { remove_from_menu } = config;
-const { action_link, fill_presets } = _sc_viewable_fields();
-import utils from "../utils.js";
-const { run_action_column, stateToQueryString } = _sc_plugin_helper();
+import { remove_from_menu } from "./config.js";
+import * as utils from "../utils.js";
 
 import { extractFromLayout } from "../diagram/node_extract_utils.js";
-const {
+import {
   InvalidConfiguration,
   satisfies,
   structuredClone,
@@ -57,7 +54,7 @@ const {
   isNode,
   isOfflineMode,
   interpolate,
-} = utils;
+} from "../utils.js";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 
 declare const saltcorn: any;
@@ -110,8 +107,7 @@ class Page implements AbstractPage {
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Array<Page>> {
     if (selectopts.cached) {
-      const { getState } = _sc_db_state();
-      return getState()
+      return getState()!
         .pages.map((t: Page) => new Page(t))
         .filter(satisfies(where || {}));
     }
@@ -124,9 +120,8 @@ class Page implements AbstractPage {
    * @param where
    * @returns {Promise<Page|*>}
    */
-  static findOne(where: Where): Page | null {
-    const { getState } = _sc_db_state();
-    const p = getState().pages.find(
+  static findOne(where: Where): Page | undefined {
+    const p = getState()!.pages.find(
       where.id
         ? (v: Page) => v.id === +where.id
         : where.name
@@ -139,7 +134,7 @@ class Page implements AbstractPage {
           layout: structuredClone(p.layout),
           fixed_states: structuredClone(p.fixed_states),
         })
-      : p;
+      : undefined;
   }
 
   /**
@@ -151,11 +146,11 @@ class Page implements AbstractPage {
   static async update(id: number, row: Row): Promise<void> {
     await db.update("_sc_pages", { ...row, updated_at: new Date() }, id);
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_pages(true);
+      await nsState.getState()!.refresh_pages(true);
   }
 
   static async state_refresh() {
-    await _sc_db_state().getState().refresh_pages();
+    await nsState.getState()!.refresh_pages();
   }
 
   getStringsForI18n() {
@@ -173,7 +168,7 @@ class Page implements AbstractPage {
     const fid = await db.insert("_sc_pages", rest);
     page.id = fid;
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_pages(true);
+      await nsState.getState()!.refresh_pages(true);
     return page;
   }
 
@@ -188,12 +183,11 @@ class Page implements AbstractPage {
     await db.deleteWhere("_sc_pages", { id: this.id });
     const root_page_for_roles = await this.is_root_page_for_roles();
     for (const role of root_page_for_roles) {
-      const { getState } = _sc_db_state();
-      await getState().setConfig(role + "_home", "");
+      await getState()!.setConfig(role + "_home", "");
     }
     await remove_from_menu({ name: this.name, type: "Page" });
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_pages(true);
+      await nsState.getState()!.refresh_pages(true);
   }
 
   /**
@@ -201,15 +195,13 @@ class Page implements AbstractPage {
    * @returns {Promise<*>}
    */
   async is_root_page_for_roles(): Promise<Array<string>> {
-    const User = _sc_user();
-    const { getState } = _sc_db_state();
 
     const roles = await User.get_roles();
     return roles
       .filter(
-        (r: Role) => getState().getConfig(r.role + "_home", "") === this.name
+        (r: any) => getState()!.getConfig(r.role + "_home", "") === this.name
       )
-      .map((r: Role) => r.role);
+      .map((r: any) => r.role);
   }
 
   /**
@@ -217,8 +209,7 @@ class Page implements AbstractPage {
    * @type {string|undefined}
    */
   get menu_label(): string | undefined {
-    const { getState } = _sc_db_state();
-    const menu_items = getState().getConfig("menu_items", []);
+    const menu_items = getState()!.getConfig("menu_items", []);
     const item = menu_items.find((mi: any) => mi.pagename === this.name);
     return item ? item.label : undefined;
   }
@@ -249,8 +240,8 @@ class Page implements AbstractPage {
    * @returns {Promise<any>}
    */
   async run(querystate: any, extraArgs: RunExtra): Promise<Layout | null> {
-    _sc_db_state()
-      .getState()
+    nsState
+      .getState()!
       .log(5, `Run page ${this.name} with query ${JSON.stringify(querystate)}`);
 
     await eachView(
@@ -326,7 +317,7 @@ class Page implements AbstractPage {
           }
         } else {
           // segment.state === "fixed"
-          const table = Table.findOne({ id: view.table_id });
+          const table = Table.findOne({ id: view.table_id })!;
           const state =
             segment.configuration || this.fixed_states[segment.name];
           const filled = await fill_presets(table, extraArgs.req, state);
@@ -569,8 +560,9 @@ class Page implements AbstractPage {
       } else {
         const role = (extraArgs.req.user || {}).role_id || 100;
         const pageContent = await page.run(querystate, extraArgs);
-        const { getState } = _sc_db_state();
-        segment.contents = getState().getLayout(extraArgs.req.user).renderBody({
+        segment.contents = (
+          getState()!.getLayout(extraArgs.req.user as any) as any
+        ).renderBody({
           title: "",
           body: pageContent,
           req: extraArgs.req,

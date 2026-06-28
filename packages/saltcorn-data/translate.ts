@@ -1,10 +1,7 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db_state = () => (require("./db/state.js") as any).default;
-const { getState } = _sc_db_state();
 
+import { getState } from "./db/state.js";
 export const hasLLM = () => {
-  return !!getState().functions.llm_generate;
+  return !!getState()!.functions.llm_generate;
 };
 
 export const translate = async (
@@ -28,7 +25,7 @@ export const translate = async (
   Translate anything the user enters${srcLocale ? ` from ${languageNames.of(srcLocale)}` : ""} to ${languageNames.of(locale)}.`;
 
   process.stdout.write(`Translating ${str} to: `);
-  const answer = await getState().functions.llm_generate.run(str, {
+  const answer = await (getState()!.functions.llm_generate as any).run(str, {
     systemPrompt: systemPrompt,
     temperature: 0,
   });

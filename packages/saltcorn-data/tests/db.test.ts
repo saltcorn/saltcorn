@@ -1,18 +1,15 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_models_table = () => (require("../models/table.js") as any).default;
-const _sc_db_reset_schema = () => (require("../db/reset_schema.js") as any).default;
-const _sc_db_fixtures = () => (require("../db/fixtures.js") as any).default;
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 import db from "../db/index.js";
 import { assertIsSet } from "./assertions.js";
 import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-const Table = _sc_models_table();
 
+import Table from "../models/table.js";
+import resetSchemaMod from "../db/reset_schema.js";
+import fixturesMod from "../db/fixtures.js";
 afterAll(db.close);
 beforeAll(async () => {
-  await _sc_db_reset_schema()();
-  await _sc_db_fixtures()();
+  await resetSchemaMod();
+  await fixturesMod();
 });
 jest.setTimeout(30000);
 
@@ -46,7 +43,7 @@ describe("where", () => {
 describe("Transaction test", () => {
   if (!db.isSQLite)
     it("should insert", async () => {
-      const books = Table.findOne({ name: "books" });
+      const books = Table.findOne({ name: "books" })!;
       assertIsSet(books);
       await runWithTenant(db.getTenantSchema(), async () => {
         await db.withTransaction(async () => {
@@ -58,7 +55,7 @@ describe("Transaction test", () => {
     });
   if (!db.isSQLite)
     it("should cancel", async () => {
-      const books = Table.findOne({ name: "books" });
+      const books = Table.findOne({ name: "books" })!;
       assertIsSet(books);
       await runWithTenant(db.getTenantSchema(), async () => {
         await db.withTransaction(
@@ -82,7 +79,7 @@ describe("delete where test", () => {
   ];
 
   beforeAll(async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     const rows = await books.getRows();
     if (rows.length === 2) {
@@ -91,7 +88,7 @@ describe("delete where test", () => {
   });
 
   it("should delete where", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     await books.insertRow({ author: "Crime and Punishment", pages: 688 });
     await books.insertRow({ author: "For Whom the Bell Tolls", pages: 401 });
@@ -112,7 +109,7 @@ describe("delete where test", () => {
   });
 
   it("should delete where with not in", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     await books.insertRow({ author: "Crime and Punishment", pages: 688 });
     await books.insertRow({ author: "For Whom the Bell Tolls", pages: 401 });
@@ -166,7 +163,7 @@ describe("delete where test", () => {
   });
 
   it("should delete where with in", async () => {
-    const books = Table.findOne({ name: "books" });
+    const books = Table.findOne({ name: "books" })!;
     assertIsSet(books);
     await books.insertRow({ author: "Crime and Punishment", pages: 688 });
     await books.insertRow({ author: "For Whom the Bell Tolls", pages: 401 });

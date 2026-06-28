@@ -44,7 +44,7 @@ export {
   WorkflowTrace,
 };
 
-import configImport from "./config.js";
+import * as configImport from "./config.js";
 export namespace config {
   export const {
     getConfig,
@@ -61,7 +61,7 @@ export namespace config {
   } = configImport;
 }
 
-import discoveryImport from "./discovery.js";
+import * as discoveryImport from "./discovery.js";
 export namespace discovery {
   export const {
     discoverable_tables,
@@ -74,13 +74,13 @@ export namespace discovery {
   } = discoveryImport;
 }
 
-import emailImport from "./email.js";
+import * as emailImport from "./email.js";
 export namespace email {
   export const { getMailTransport, viewToEmailHtml, send_verification_email } =
     emailImport;
 }
 
-import expressionImport from "./expression.js";
+import * as expressionImport from "./expression.js";
 export namespace expression {
   export const {
     expressionValidator,
@@ -95,7 +95,7 @@ export namespace expression {
   } = expressionImport;
 }
 
-import layoutImport from "./layout.js";
+import * as layoutImport from "./layout.js";
 export namespace layout {
   export const {
     eachView,
@@ -107,13 +107,13 @@ export namespace layout {
   } = layoutImport;
 }
 
-import randomImport from "./random.js";
+import * as randomImport from "./random.js";
 export namespace random {
   export const { random_table, fill_table_row, initial_view, all_views } =
     randomImport;
 }
 
-import schedulerImport from "./scheduler.js";
+import * as schedulerImport from "./scheduler.js";
 export namespace scheduler {
   export const runScheduler = schedulerImport;
 }

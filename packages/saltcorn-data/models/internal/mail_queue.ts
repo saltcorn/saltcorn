@@ -1,16 +1,12 @@
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_db = () => (require("../../db/index.js") as any).default;
-const _sc_db_state = () => (require("../../db/state.js") as any).default;
-const _sc_email = () => (require("../email.js") as any).default;
-const db = _sc_db();
-const { getState } = _sc_db_state();
 
+import { getState } from "../../db/state.js";
+import db from "../../db/index.js";
+import * as emailModule from "../email.js";
 import type Notification from "../notification.js";
 import type User from "../user.js";
 
 const buildSingleMail = (notification: Notification, recipient: string) => {
-  const state = getState();
+  const state = getState()!;
   state.log(6, `Building single mail for notification id: '${notification.id}`);
   const email = {
     from: state?.getConfig("email_from"),
@@ -30,7 +26,7 @@ const buildCombinedMail = (
   notifications: Notification[],
   recipient: string
 ) => {
-  const state = getState();
+  const state = getState()!;
   state.log(
     6,
     `Building combined mail for notification ids: '${notifications.map((n) => n.id).join(", ")}'`
@@ -78,7 +74,7 @@ export class MailQueue {
   ) {
     await db.openOrUseTransaction(async () => {
       const minDelay =
-        getState().getConfig("mail_throttle_per_user", 30) * 1000;
+        getState()!.getConfig("mail_throttle_per_user", 30) * 1000;
       if (!minDelay || minDelay <= 0) {
         // send immediately
         await MailQueue.send(buildSingleMail(notification, user.email));
@@ -208,8 +204,7 @@ export class MailQueue {
   }
 
   private static async send(email: any) {
-    const state = getState();
-    const emailModule = _sc_email();
+    const state = getState()!;
     (await emailModule.getMailTransport())
       .sendMail(email)
       .catch((e: any) => state?.log(1, e.message));

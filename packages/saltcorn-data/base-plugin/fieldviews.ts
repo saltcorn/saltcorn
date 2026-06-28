@@ -4,21 +4,14 @@
  * @subcategory base-plugin
  */
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_models_expression = () => (require("../models/expression.js") as any).default;
-const _sc_utils = () => (require("../utils.js") as any).default;
-const _sc_tests_mocks = () => (require("../tests/mocks.js") as any).default;
-import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
-import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
+import { eval_expression, jsexprToWhere, eval_statements } from "../models/expression.js";
+import { isNode, nubBy, objectToQueryString } from "../utils.js";
+import { mockReqRes } from "../tests/mocks.js";
+import tags from "@saltcorn/markup/tags";
+import helpersPkg from "@saltcorn/markup/helpers";
 import View from "../models/view.js";
 import Table from "../models/table.js";
 import Field from "../models/field.js";
-const {
-  eval_expression,
-  jsexprToWhere,
-  eval_statements,
-} = _sc_models_expression();
 const {
   option,
   a,
@@ -29,11 +22,9 @@ const {
   input,
   domReady,
   div,
-} = (_sc__saltcorn_markup_tags as any);
-const tags = (_sc__saltcorn_markup_tags as any);
-const { select_options, radio_group } = (_sc__saltcorn_markup_helpers as any);
-const { isNode, nubBy, objectToQueryString } = _sc_utils();
-const { mockReqRes } = _sc_tests_mocks();
+} = tags;
+const { select_options } = helpersPkg;
+const radio_group = (helpersPkg as any).radio_group;
 import db from "../db/index.js";
 import { GenObj } from "@saltcorn/types/common_types";
 
@@ -864,7 +855,7 @@ const select_by_view = {
    * @type {object[]}
    */
   configFields: async (field: GenObj, modeetc?: GenObj) => {
-    const refTable = Table.findOne({ name: field.reftable_name });
+    const refTable = Table.findOne({ name: field.reftable_name })!;
     const views = await View.find_possible_links_to_table(refTable!);
     const mode = modeetc?.mode;
 
@@ -987,7 +978,7 @@ const select_by_view = {
   },
 };
 
-export default {
+export {
   select,
   select_from_table,
   search_or_create,

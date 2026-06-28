@@ -3,15 +3,13 @@
  * @module base-plugin/viewtemplates/room
  * @subcategory base-plugin
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_utils = () => (require("../../utils.js") as any).default;
-const _sc_db_state = () => (require("../../db/state.js") as any).default;
-const _sc_db = () => (require("../../db/index.js") as any).default;
-const _sc_diagram_node_extract_utils = () => (require("../../diagram/node_extract_utils.js") as any);
-import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
-import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
-import _sc__saltcorn_markup from "@saltcorn/markup";
+import { InvalidConfiguration } from "../../utils.js";
+import { getState } from "../../db/state.js";
+import { extractFromLayout } from "../../diagram/node_extract_utils.js";
+import tagsPkg from "@saltcorn/markup/tags";
+import helpersPkg from "@saltcorn/markup/helpers";
+import markupPkg from "@saltcorn/markup";
+import db from "../../db/index.js";
 import Table from "../../models/table.js";
 import View from "../../models/view.js";
 import Form from "../../models/form.js";
@@ -28,10 +26,10 @@ const {
   i,
   script,
   domReady,
-} = (_sc__saltcorn_markup_tags as any);
-const { pagination } = (_sc__saltcorn_markup_helpers as any);
-const { renderForm, tabs, link } = (_sc__saltcorn_markup as any);
-const { mkTable } = (_sc__saltcorn_markup as any);
+} = tagsPkg;
+const { pagination } = helpersPkg;
+const { renderForm, tabs, link } = markupPkg;
+const { mkTable } = markupPkg;
 import {
   link_view,
   stateToQueryString,
@@ -40,9 +38,6 @@ import {
   readState,
   run_action_column,
 } from "../../plugin-helper.js";
-const { InvalidConfiguration } = _sc_utils();
-const { getState } = _sc_db_state();
-const db = _sc_db();
 import {
   getForm,
   fill_presets,
@@ -50,11 +45,9 @@ import {
   action_link,
   edit_build_in_actions,
 } from "../../viewable_fields.js";
-const { extractFromLayout } = _sc_diagram_node_extract_utils();
 import { GenObj } from "@saltcorn/types/common_types";
 import { Req, Res } from "@saltcorn/types/base_types";
-import layout from "../../models/layout.js";
-const { traverse } = layout;
+import { traverse } from "../../models/layout.js";
 
 
 
@@ -242,7 +235,7 @@ const run = async (
   const fields = table.getFields();
   readState(state, fields);
   if (!state.id) return "Need room id";
-  const appState = getState();
+  const appState = getState()!;
   const locale = req.getLocale();
   const role = req && req.user ? req.user.role_id : 100;
   const __ = (s: string) => appState.i18n.__({ phrase: s, locale }) || s;
@@ -373,7 +366,7 @@ const transformForm = async ({ form, table, req, res, viewname }: { form: GenObj
               )
             );
         } catch (e: any) {
-          getState().log(
+          getState()!.log(
             5,
             `Error in Edit ${viewname} on page load action: ${e.message}`
           );
@@ -553,7 +546,7 @@ const submit_msg_ajax = async (
     const newreq = { ...req, user: { ...req.user, id: 0 } };
     const theirhtml = await v!.run({ id: msgid.success }, { req: newreq, res } as any);
     const tenant = db.getTenantSchema();
-    getState().emitRoom(tenant, viewname, +body.room_id, {
+    getState()!.emitRoom(tenant, viewname, +body.room_id, {
       append: theirhtml,
       not_for_user_id: req.user?.id,
       pls_ack_msg_id: msgid.success,
@@ -603,7 +596,7 @@ const virtual_triggers = (
       when_trigger: "Insert",
       table_id: msgtable.id,
       run: async (row: GenObj) => {
-        const state = getState();
+        const state = getState()!;
         if (row[msgsender_field]) return; // TODO how else to avoid double emit
         const v = await View.findOne({ name: msgview });
 
@@ -733,7 +726,7 @@ export default {
       if (participant_field) {
         const [part_table_name, part_key_to_room, part_user_field] =
           participant_field.split(".");
-        parttable = Table.findOne({ name: part_table_name })!;
+        parttable = Table.findOne({ name: part_table_name });
         // check we participate
 
         partRow = await parttable.getRow({

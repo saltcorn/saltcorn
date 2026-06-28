@@ -4,13 +4,9 @@
  * @module db/fixtures
  * @subcategory db
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_state = () => (require("./state.js") as any).default;
-const _sc_base_plugin = () => (require("../base-plugin/index.js") as any).default;
-import _sc_ from "./index.js";
-const db = (_sc_ as any);
-const { getState } = _sc_state();
+import { getState } from "./state.js";
+import db from "./index.js";
+import basePluginMod from "../base-plugin/index.js";
 import Table from "../models/table.js";
 import Field from "../models/field.js";
 import File from "../models/file.js";
@@ -27,8 +23,8 @@ import fs from "fs";
 const fsp = fs.promises;
 
 export default async (): Promise<void> => {
-  getState().registerPlugin("base", _sc_base_plugin());
-  getState().setConfig("min_role_apikeygen", 80);
+  getState()!.registerPlugin("base", basePluginMod as any);
+  getState()!.setConfig("min_role_apikeygen", 80);
 
   const table = await Table.create("books", {
     min_role_read: 100,

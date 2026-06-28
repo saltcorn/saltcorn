@@ -3,16 +3,14 @@
  * @module base-plugin/viewtemplates/feed
  * @subcategory base-plugin
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_utils = () => (require("../../utils.js") as any).default;
-const _sc_db_state = () => (require("../../db/state.js") as any).default;
-const _sc_models_expression = () => (require("../../models/expression.js") as any).default;
-const _sc_diagram_node_extract_utils = () => (require("../../diagram/node_extract_utils.js") as any);
-import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
-import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
-import _sc__saltcorn_markup from "@saltcorn/markup";
-import _sc_pluralize from "pluralize";
+import { InvalidConfiguration, isNode, isWeb, mergeConnectedObjects, hashState } from "../../utils.js";
+import { getState } from "../../db/state.js";
+import { jsexprToWhere, eval_expression, add_free_variables_to_joinfields, freeVariables } from "../../models/expression.js";
+import { extractFromLayout, extractViewToCreate } from "../../diagram/node_extract_utils.js";
+import tagsPkg from "@saltcorn/markup/tags";
+import helpersPkg from "@saltcorn/markup/helpers";
+import markupPkg from "@saltcorn/markup";
+import pluralize from "pluralize";
 import Table from "../../models/table.js";
 import View from "../../models/view.js";
 import Field from "../../models/field.js";
@@ -30,11 +28,10 @@ const {
   h2,
   ul,
   li,
-} = (_sc__saltcorn_markup_tags as any);
-const { pagination } = (_sc__saltcorn_markup_helpers as any);
-const { renderForm, tabs, link } = (_sc__saltcorn_markup as any);
-const { mkTable } = (_sc__saltcorn_markup as any);
-const pluralize = (_sc_pluralize as any);
+} = tagsPkg;
+const { pagination } = helpersPkg;
+const { renderForm, tabs, link } = markupPkg;
+const { mkTable } = markupPkg;
 import {
   link_view,
   stateToQueryString,
@@ -44,24 +41,6 @@ import {
 } from "../../plugin-helper.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import { Req } from "@saltcorn/types/base_types";
-const {
-  InvalidConfiguration,
-  isNode,
-  isWeb,
-  mergeConnectedObjects,
-  hashState,
-} = _sc_utils();
-const { getState } = _sc_db_state();
-const {
-  jsexprToWhere,
-  eval_expression,
-  add_free_variables_to_joinfields,
-  freeVariables,
-} = _sc_models_expression();
-const {
-  extractFromLayout,
-  extractViewToCreate,
-} = _sc_diagram_node_extract_utils();
 
 /**
  * @param {object} req
@@ -73,7 +52,7 @@ const configuration_workflow = (req: Req) =>
       {
         name: req.__("Views"),
         form: async (context: GenObj) => {
-          const table = Table.findOne(context.table_id);
+          const table = Table.findOne(context.table_id)!;
           const show_views = await View.find_table_views_where(
             context.table_id,
             ({ state_fields, viewtemplate, viewrow }: GenObj) =>
@@ -297,7 +276,7 @@ const configuration_workflow = (req: Req) =>
       {
         name: req.__("Order and layout"),
         form: async (context: GenObj) => {
-          const table = Table.findOne({ id: context.table_id });
+          const table = Table.findOne({ id: context.table_id })!;
           const fields = table!.getFields();
           const { child_field_list, child_relations } =
             await table!.get_child_relations();
@@ -526,7 +505,7 @@ const get_state_fields = async (
   viewname: string,
   { show_view }: GenObj
 ) => {
-  const table = Table.findOne(table_id);
+  const table = Table.findOne(table_id)!;
   const table_fields = table!.fields;
   return table_fields
     .filter((f: GenObj) => !f.primary_key)
@@ -607,7 +586,7 @@ const run = async (
   const fields = table.getFields();
   readState(state, fields);
   const stateHash = hashState(state, show_view);
-  const appState = getState();
+  const appState = getState()!;
   const locale = extraArgs.req.getLocale();
   const __ = isNode()
     ? (s: string) => appState.i18n.__({ phrase: s, locale }) || s

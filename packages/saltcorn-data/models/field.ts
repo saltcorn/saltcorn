@@ -5,32 +5,15 @@
  * @subcategory models
  */
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_expression = () => (require("./expression.js") as any).default;
-const _sc_utils = () => (require("../utils.js") as any).default;
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-const _sc_table = () => (require("./table.js") as any).default;
-const _sc_plugin_helper = () => (require("../plugin-helper.js") as any);
-const _sc_table_constraints = () => (require("./table_constraints.js") as any).default;
+import { recalculate_for_stored, jsexprToWhere, eval_expression, get_async_expression_function, freeVariables } from "./expression.js";
+import { InvalidAdminAction, isNode, satisfies, apply, structuredClone, validSqlId, mergeIntoWhere } from "../utils.js";
+import { getState } from "../db/state.js";
+import { add_free_variables_to_joinfields } from "../plugin-helper.js";
+import Table from "./table.js";
+import TableConstraint from "./table_constraints.js";
+import * as nsState from "../db/state.js";
 import db from "../db/index.js";
-const {
-  recalculate_for_stored,
-  jsexprToWhere,
-  eval_expression,
-  get_async_expression_function,
-  freeVariables,
-} = _sc_expression();
 import { sqlsanitize } from "@saltcorn/db-common/internal";
-const {
-  InvalidAdminAction,
-  isNode,
-  satisfies,
-  apply,
-  structuredClone,
-  validSqlId,
-  mergeIntoWhere,
-} = _sc_utils();
 import type {
   Where,
   SelectOptions,
@@ -45,7 +28,6 @@ import type {
   Type,
 } from "@saltcorn/types/common_types";
 import { instanceOfType } from "@saltcorn/types/common_types";
-import type Table from "./table.js";
 import type {
   FieldCfg,
   AbstractField,
@@ -60,14 +42,13 @@ import { ForUserRequest } from "@saltcorn/types/model-abstracts/abstract_user";
 const readKey = (v: any, field: Field): string | null | ErrorMessage => {
   if (v === "" || v === "null" || v === "undefined") return null;
   if (typeof v === "string" && v.startsWith("Preset:")) return v;
-  const { getState } = _sc_db_state();
   if (!field.reftype)
     throw new Error("Unable to find the type, 'reftype' is undefined.");
   const type =
-    getState().types[
+    getState()!.types[
       typeof field.reftype === "string" ? field.reftype : field.reftype.name
     ];
-  const parsed = type.read(v);
+  const parsed = type.read!(v);
   return parsed || (v ? { error: "Unable to read key" } : null);
 };
 
@@ -143,9 +124,8 @@ class Field implements AbstractField {
     this.default = o.default;
     this.sublabel = o.sublabel;
     this.description = o.description;
-    const { getState } = _sc_db_state();
 
-    this.type = typeof o.type === "string" ? getState().types[o.type] : o.type;
+    this.type = typeof o.type === "string" ? getState()!.types[o.type] : o.type;
     if (!this.type)
       this.typename = typeof o.type === "string" ? o.type : o.type?.name;
     this.options = o.options;
@@ -298,11 +278,10 @@ class Field implements AbstractField {
     extra_joinfields: any = {},
     user?: any
   ) {
-    const Table = _sc_table();
     const label_formula = attributes?.label_formula;
     const joinFields = { ...extra_joinfields };
 
-    const table: Table = Table.findOne(table_name);
+    const table: Table | null = Table.findOne(table_name);
     if (!table) {
       return await db.select(table_name, where);
     }
@@ -313,7 +292,6 @@ class Field implements AbstractField {
       forPublic: user?.role_id === 100,
     };
     if (label_formula) {
-      const { add_free_variables_to_joinfields } = _sc_plugin_helper();
       const fields = table.getFields();
       add_free_variables_to_joinfields(
         freeVariables(label_formula),
@@ -353,8 +331,7 @@ class Field implements AbstractField {
       this.is_fkey &&
       this.type !== "File"
     ) {
-      const Table = _sc_table();
-      const refTable = Table.findOne(this.reftable_name);
+      const refTable = Table.findOne(this.reftable_name!)!;
       const relFields = await refTable.getFields();
       where = jsexprToWhere(this.attributes.where, extraCtx, relFields);
     } else if (!where)
@@ -410,8 +387,7 @@ class Field implements AbstractField {
       this.fieldview === "two_level_select" &&
       this.attributes.relation
     ) {
-      const Table = _sc_table();
-      const refTable = Table.findOne(this.reftable_name);
+      const refTable = Table.findOne(this.reftable_name!)!;
       const relFields = await refTable.getFields();
       const relField = relFields.find(
         (f: any) => f.name === this.attributes.relation
@@ -423,7 +399,7 @@ class Field implements AbstractField {
         joinFields: {
           first_level: {
             ref: this.attributes.relation,
-            target: relField.attributes.summary_field,
+            target: relField!.attributes.summary_field,
           },
         },
       });
@@ -446,8 +422,7 @@ class Field implements AbstractField {
       if (!this.attributes.select_file_where)
         this.attributes.select_file_where = {};
 
-      const Table = _sc_table();
-      const refTable = Table.findOne(this.reftable_name);
+      const refTable = Table.findOne(this.reftable_name!)!;
       const pk_name = refTable.pk_name;
       if (fieldviewObj?.fill_options_restrict) {
         const newWhere = fieldviewObj?.fill_options_restrict(
@@ -634,9 +609,7 @@ class Field implements AbstractField {
         );
       }
       const schema = db.getTenantSchemaPrefix();
-      const { getState } = _sc_db_state();
       const on_delete = this.on_delete_sql;
-      const Table = _sc_table();
       const reftable = Table.findOne(this.reftable_name);
       if (reftable?.external || reftable?.provider_name) {
         const ref_pk = reftable.fields.find((f: Field) => f.primary_key);
@@ -647,7 +620,7 @@ class Field implements AbstractField {
         return ref_pk.sql_type;
       }
       return `${apply(
-        getState().types[
+        getState()!.types[
           typeof this.reftype === "string" ? this.reftype : this.reftype.name
         ].sql_name,
         this.attributes
@@ -692,9 +665,8 @@ class Field implements AbstractField {
           "'reftype' and 'reftable_name' must be set if 'is_fkey' is true."
         );
       }
-      const { getState } = _sc_db_state();
       return apply(
-        getState().types[
+        getState()!.types[
           typeof this.reftype === "string" ? this.reftype : this.reftype.name
         ].sql_name,
         this.attributes
@@ -744,10 +716,9 @@ class Field implements AbstractField {
   get multipartFormData() {
     if (this.input_type === "file") return true;
     if (this.type !== "File") return false;
-    const { getState } = _sc_db_state();
     if (!this.fieldview) return false;
-    const fileview = getState().fileviews[this.fieldview];
-    return !!fileview?.multipartFormData;
+    const fileview = getState()!.fileviews[this.fieldview];
+    return !!(fileview as any)?.multipartFormData;
   }
 
   validate(whole_rec: GenObj, originalBody?: GenObj): ResultMessage | {} {
@@ -813,8 +784,7 @@ class Field implements AbstractField {
     selectopts: SelectOptions = { orderBy: "name", nocase: true }
   ): Promise<Field[]> {
     if (selectopts.cached) {
-      const { getState } = _sc_db_state();
-      return getState()
+      return getState()!
         .fields.map((t: FieldCfg) => new Field(structuredClone(t)))
         .filter(satisfies(where || {}));
     }
@@ -830,8 +800,7 @@ class Field implements AbstractField {
    * @returns {Field[]}
    */
   static findCached(where?: Where): Field[] {
-    const { getState } = _sc_db_state();
-    return getState()
+    return getState()!
       .fields.map((t: FieldCfg) => new Field(structuredClone(t)))
       .filter(satisfies(where || {}));
   }
@@ -892,8 +861,7 @@ class Field implements AbstractField {
    */
   async alter_sql_type(new_field: Field) {
     if (new_field.is_fkey && new_field?.reftable_name && !new_field.reftable) {
-      const Table = _sc_table();
-      const refTable = Table.findOne(new_field?.reftable_name);
+      const refTable = Table.findOne(new_field?.reftable_name)!;
       new_field.reftable = refTable;
       new_field.reftype = refTable.pk_type.name;
       new_field.refname = refTable.pk_name;
@@ -992,7 +960,7 @@ class Field implements AbstractField {
       );
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_tables(true);
+      await nsState.getState()!.refresh_tables(true);
   }
 
   /**
@@ -1000,7 +968,6 @@ class Field implements AbstractField {
    */
   fill_table(): void {
     if (!this.table) {
-      const Table = _sc_table();
       this.table = Table.findOne({ id: this.table_id });
     }
   }
@@ -1016,10 +983,8 @@ class Field implements AbstractField {
     )
       return;
     const joinFields = {};
-    const Table = _sc_table();
     const table = Table.findOne({ id: this.table_id });
     if (!table) return;
-    const { add_free_variables_to_joinfields } = _sc_plugin_helper();
     const fields = table.getFields();
     add_free_variables_to_joinfields(
       freeVariables(this.expression),
@@ -1119,7 +1084,7 @@ class Field implements AbstractField {
    */
   async update(v: Partial<Field> | Partial<FieldCfg>): Promise<void> {
     const f = new Field({ ...this, ...v });
-    const state = _sc_db_state().getState();
+    const state = nsState.getState()!;
     const rename: boolean = f.name !== this.name;
     if (rename) this.fill_table();
     if (rename && !this.table?.name) {
@@ -1137,8 +1102,7 @@ class Field implements AbstractField {
     const schema = db.getTenantSchemaPrefix();
 
     if (f.attributes.default !== this.attributes.default) {
-      const Table = _sc_table();
-      const table = Table.findOne({ id: this.table_id });
+      const table = Table.findOne({ id: this.table_id })!;
 
       if (
         typeof f.attributes.default === "undefined" ||
@@ -1233,13 +1197,11 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async delete(): Promise<void> {
-    const Table = _sc_table();
     const table = Table.findOne({ id: this.table_id });
-    const TableConstraint = _sc_table_constraints();
-    await TableConstraint.delete_field_constraints(table, this);
-    if (table.ownership_field_id === this.id) {
+    await TableConstraint.delete_field_constraints(table!, this);
+    if (table!.ownership_field_id === this.id) {
       throw new InvalidAdminAction(
-        `Cannot delete field ${this.name} as it sets ownership for table ${table.name}`
+        `Cannot delete field ${this.name} as it sets ownership for table ${table!.name}`
       );
     }
 
@@ -1252,33 +1214,33 @@ class Field implements AbstractField {
       try {
         await db.query(
           `alter table ${schema}"${sqlsanitize(
-            table.name
+            table!.name
           )}" drop column "${sqlsanitize(this.name)}"`
         );
       } catch (e: any) {
         // Column already absent — safe to ignore
         console.error(
-          `Field.delete: column "${this.name}" already absent from "${table.name}"`,
+          `Field.delete: column "${this.name}" already absent from "${table!.name}"`,
           e.message || e
         );
       }
-      if (table.versioned) {
+      if (table!.versioned) {
         try {
           await db.query(
             `alter table ${schema}"${sqlsanitize(
-              table.name
+              table!.name
             )}__history" drop column "${sqlsanitize(this.name)}"`
           );
         } catch (e: any) {
           console.error(
-            `Field.delete: column "${this.name}" already absent from "${table.name}__history"`,
+            `Field.delete: column "${this.name}" already absent from "${table!.name}__history"`,
             e.message || e
           );
         }
       }
     }
     if (!db.getRequestContext()?.client)
-      await _sc_db_state().getState().refresh_tables(true);
+      await nsState.getState()!.refresh_tables(true);
   }
 
   /**
@@ -1321,7 +1283,6 @@ class Field implements AbstractField {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
 
-    const Table = _sc_table();
     const is_sqlite = db.isSQLite;
     //const tables = await Table.find();
     //console.log({ tables, fld });
@@ -1331,8 +1292,8 @@ class Field implements AbstractField {
       if (reftable) {
         const reffields = await reftable.getFields();
         const refpk = reffields.find((rf: Field) => rf.primary_key);
-        f.reftype = refpk.type.name;
-        f.refname = refpk.name;
+        f.reftype = (refpk!.type as any)?.name;
+        f.refname = refpk!.name;
       }
     }
 
@@ -1359,7 +1320,7 @@ class Field implements AbstractField {
     if (!f.calculated || f.stored) {
       if (typeof f.attributes.default === "undefined") {
         const q = `alter table ${schema}"${sqlsanitize(
-          table.name
+          table!.name
         )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
           f.required ? `not null ${is_sqlite ? 'default ""' : ""}` : ""
         }`;
@@ -1367,7 +1328,7 @@ class Field implements AbstractField {
       } else if (is_sqlite) {
         //warning: not safe but for sqlite we don't care
         const q = `alter table ${schema}"${sqlsanitize(
-          table.name
+          table!.name
         )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
           f.required
             ? `not null default ${JSON.stringify(f.attributes.default)}`
@@ -1381,7 +1342,7 @@ class Field implements AbstractField {
       }) RETURNS void AS $$
       BEGIN
       EXECUTE format('alter table ${schema}"${sqlsanitize(
-        table.name
+        table!.name
       )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
         f.required ? "not null" : ""
       } default %L', thedef);
@@ -1412,10 +1373,10 @@ class Field implements AbstractField {
           description: f.description,
         });
 
-    if (isNode() && table.versioned && !(f.calculated && !f.stored)) {
+    if (isNode() && (table! as Table).versioned && !(f.calculated && !f.stored)) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
-          table.name
+          table!.name
         )}__history" add column "${sqlsanitize(f.name)}" ${f.sql_bare_type}`
       );
     }
@@ -1426,23 +1387,23 @@ class Field implements AbstractField {
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client) {
       refreshed = true;
-      await _sc_db_state().getState().refresh_tables(true);
+      await nsState.getState()!.refresh_tables(true);
     }
     if (fld.table && fld.table.fields) {
       fld.table.fields.push(f);
     }
     if (f.calculated && f.stored) {
-      const nrows = await table.countRows({});
+      const nrows = await (table! as Table).countRows({});
       if (nrows > 0 && nrows <= 20) {
         if (!refreshed)
-          await _sc_db_state().getState().refresh_tables(true);
-        const table1 = Table.findOne({ id: f.table_id });
+          await nsState.getState()!.refresh_tables(true);
+        const table1 = Table.findOne({ id: f.table_id })!;
         await recalculate_for_stored(table1);
       } else if (nrows > 0) {
         //intentionally omit await
         //not waiting as there could be a lot of data
         db.whenTransactionisFree(async () => {
-          const table1 = Table.findOne({ id: f.table_id });
+          const table1 = Table.findOne({ id: f.table_id })!;
 
           await recalculate_for_stored(table1);
         });
@@ -1458,12 +1419,11 @@ class Field implements AbstractField {
    * @returns {*}
    */
   static getTypeAttributes(typeattribs: Function | any, table_id?: number) {
-    const Table = _sc_table();
 
     if (!typeattribs) return [];
     if (typeof typeattribs === "function") {
       if (!table_id) return typeattribs({});
-      const table = Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id })!;
       return typeattribs({ table });
     } else return typeattribs;
   }

@@ -3,13 +3,11 @@
  * @module base-plugin/fileview
  * @subcategory base-plugin
  */
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const _sc_utils = () => (require("../utils.js") as any).default;
-const _sc_db_state = () => (require("../db/state.js") as any).default;
-import _sc__saltcorn_markup_tags from "@saltcorn/markup/tags";
-import _sc__saltcorn_markup from "@saltcorn/markup";
-import _sc__saltcorn_markup_helpers from "@saltcorn/markup/helpers";
+import { isNode } from "../utils.js";
+import { getReq__ } from "../db/state.js";
+import tagsPkg from "@saltcorn/markup/tags";
+import markupPkg from "@saltcorn/markup";
+import helpersPkg from "@saltcorn/markup/helpers";
 const {
   a,
   img,
@@ -29,14 +27,12 @@ const {
   textarea,
   with_curScript,
   escape: escapeHtml,
-} = (_sc__saltcorn_markup_tags as any);
-const { link } = (_sc__saltcorn_markup as any);
-const { isNode } = _sc_utils();
-const { select_options } = (_sc__saltcorn_markup_helpers as any);
+} = tagsPkg;
+const { link } = markupPkg;
+const { select_options } = helpersPkg;
 import File from "../models/file.js";
 import { GenObj } from "@saltcorn/types/common_types";
 import path from "path";
-const { getReq__ } = _sc_db_state();
 
 const buildNodeFileUrl = (
   filePath: string,
