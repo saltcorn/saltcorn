@@ -116,7 +116,18 @@ const add_edit_bar = ({
   table,
   view,
   cfgUrl,
-}: any) => {
+}: {
+  role: number;
+  title: string;
+  contents: Layout | string;
+  what?: string;
+  url?: string;
+  req?: Req;
+  viewtemplate?: string;
+  table?: string;
+  view?: any;
+  cfgUrl?: string;
+}) => {
   if (req && req.headers.localizedstate)
     return { above: [contents], noWrapTop: true };
   if (role > 1 && req && req.xhr) return { above: [contents] }; //make sure not put in card
@@ -195,6 +206,21 @@ const add_results_to_contents = (
  * @param {*} opts.sub2_page,
  * @param {*} opts.requestFluidLayout,
  */
+type SettingsPageOpts = {
+  req: Req;
+  res: Res;
+  main_section: string;
+  main_section_href: string;
+  sub_sections: Array<{ text: string; href: string }>;
+  active_sub: string;
+  contents: Layout | string;
+  headers?: Array<Header>;
+  no_nav_pills?: boolean;
+  sub2_page?: string;
+  page_title?: string;
+  requestFluidLayout?: boolean;
+};
+
 const send_settings_page = ({
   req,
   res,
@@ -208,20 +234,7 @@ const send_settings_page = ({
   sub2_page,
   page_title,
   requestFluidLayout,
-}: {
-  req: Req;
-  res: Res;
-  main_section: string;
-  main_section_href: string;
-  sub_sections: Array<{ text: string; href: string }>;
-  active_sub: string;
-  contents: Layout | string;
-  headers?: Array<Header>;
-  no_nav_pills?: boolean;
-  sub2_page?: string;
-  page_title?: string;
-  requestFluidLayout?: boolean;
-}) => {
+}: SettingsPageOpts) => {
   const pillCard = no_nav_pills
     ? []
     : [
@@ -232,7 +245,7 @@ const send_settings_page = ({
             { class: "d-flex" },
             ul(
               { class: "nav nav-pills plugin-section" },
-              sub_sections.map(({ text, href }: any) =>
+              sub_sections.map(({ text, href }) =>
                 li(
                   { class: "nav-item" },
                   a(
@@ -271,8 +284,7 @@ const send_settings_page = ({
           {
             text: req.__(active_sub),
             href: sub2_page
-              ? sub_sections.find((subsec: any) => subsec.text === active_sub)
-                  ?.href
+              ? sub_sections.find((subsec) => subsec.text === active_sub)?.href
               : null,
           },
           ...(sub2_page
@@ -295,11 +307,16 @@ const send_settings_page = ({
  * @param {object} args
  * @returns {void}
  */
-const send_infoarch_page = (args: any) => {
+const send_infoarch_page = (
+  args: Omit<
+    SettingsPageOpts,
+    "main_section" | "main_section_href" | "sub_sections"
+  >
+) => {
   const tenant_list =
     db.is_it_multi_tenant() &&
     db.getTenantSchema() === db.connectObj.default_schema;
-  const role = args.req?.user.role_id || 100;
+  const role = args.req?.user?.role_id || 100;
   const isUserAdmin = role === 1;
   const state = getState()!;
   const canEditMenu = state.getConfig("min_role_edit_menu", 1) >= role;
@@ -342,9 +359,14 @@ const send_infoarch_page = (args: any) => {
  * @param {object} args
  * @returns {void}
  */
-const send_users_page = (args: any) => {
+const send_users_page = (
+  args: Omit<
+    SettingsPageOpts,
+    "main_section" | "main_section_href" | "sub_sections"
+  >
+) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-  const role = args.req?.user.role_id || 100;
+  const role = args.req?.user?.role_id || 100;
   const isUserAdmin = role === 1;
 
   return send_settings_page({
@@ -370,8 +392,13 @@ const send_users_page = (args: any) => {
  * @param {object} args
  * @returns {void}
  */
-const send_files_page = (args: any) => {
-  const isUserAdmin = args.req?.user.role_id === 1;
+const send_files_page = (
+  args: Omit<
+    SettingsPageOpts,
+    "main_section" | "main_section_href" | "sub_sections" | "no_nav_pills"
+  >
+) => {
+  const isUserAdmin = args.req?.user?.role_id === 1;
   return send_settings_page({
     main_section: "Files",
     main_section_href: "/files",
@@ -386,12 +413,12 @@ const send_files_page = (args: any) => {
               ]
             : []),
         ]
-      : null,
+      : [],
     ...args,
   });
 };
 
-const send_tags_page = (args: any) => {
+const send_tags_page = (args: Omit<SettingsPageOpts, "main_section">) => {
   return send_settings_page({
     main_section: "Tags",
     ...args,
@@ -403,9 +430,14 @@ const send_tags_page = (args: any) => {
  * @param {object} args
  * @returns {void}
  */
-const send_events_page = (args: any) => {
+const send_events_page = (
+  args: Omit<
+    SettingsPageOpts,
+    "main_section" | "main_section_href" | "sub_sections"
+  >
+) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-  const isUserAdmin = args.req?.user.role_id === 1;
+  const isUserAdmin = args.req?.user?.role_id === 1;
   const tenants_crash_log = getRootState().getConfig("tenants_crash_log");
   return send_settings_page({
     main_section: "Events",
@@ -433,7 +465,12 @@ const send_events_page = (args: any) => {
  * @param {object} args
  * @returns {void}
  */
-const send_admin_page = (args: any) => {
+const send_admin_page = (
+  args: Omit<
+    SettingsPageOpts,
+    "main_section" | "main_section_href" | "sub_sections"
+  >
+) => {
   //const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
     main_section: "About application",
@@ -456,7 +493,7 @@ const send_admin_page = (args: any) => {
  * @param {object} key
  * @returns {Promise<object>}
  */
-const viewAttributes = async (key: any) => {
+const viewAttributes = async (key: string) => {
   const [v, table_name] = configTypes[key].type.split(" ");
   const table = Table.findOne({ name: table_name });
   if (!table) throw new Error(`Table ${table_name} not found`);
@@ -678,14 +715,14 @@ const getBaseDomain = (): string | null => {
  * @param {string} domain
  * @returns {boolean}
  */
-const hostname_matches_baseurl = (req: Req, domain: string):boolean =>
+const hostname_matches_baseurl = (req: Req, domain: string): boolean =>
   domain === req.hostname;
 
 /**
  * @param {string} domain
  * @returns {string[]|boolean}
  */
-const is_hsts_tld = (domain: string):boolean => {
+const is_hsts_tld = (domain: string): boolean => {
   if (!domain) return false;
   const ds = domain.split(".");
   const tld = ds[ds.length - 1];
