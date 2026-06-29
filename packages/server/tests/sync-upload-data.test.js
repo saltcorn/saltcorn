@@ -1,7 +1,7 @@
 import {
   kahnSort,
   orderCycleTables,
-} from "../../saltcorn-cli/src/commands/sync-upload-data.js";
+} from "@saltcorn/cli/src/commands/sync-upload-data.js";
 
 const fks = (map) => (tblName) =>
   (map[tblName] || []).map((ref) => ({ reftable_name: ref }));

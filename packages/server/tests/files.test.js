@@ -70,7 +70,17 @@ beforeAll(async () => {
       mimetype: "image/png",
       name: "large-image.png",
       mv: async (fnm) => {
-        await fs.copyFile(path.join(__dirname, "assets/large-image.png"), fnm);
+        await fs.copyFile(
+          path.join(
+            __dirname,
+            "..",
+            "..",
+            "tests",
+            "assets",
+            "large-image.png"
+          ),
+          fnm
+        );
       },
       size: 219422,
     },

@@ -2,8 +2,9 @@
   "compilerOptions": {
     "skipLibCheck": true,
     "rootDir": ".",
-    "outDir": ".",
-    "allowJs": false,
+    "outDir": "./dist",
+    "allowJs": true,
+    "checkJs": false,
     "sourceMap": true,
     "composite": true,
     "declaration": true /* set to true by "composite" */,
@@ -20,6 +21,14 @@
     "moduleResolution": "NodeNext",
     "target": "ES2021"
   },
-  "include": ["routes/delete.ts"],
-  "exclude": ["node_modules", "cjs"]
+  "include": ["**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "cjs",
+    "public",
+    "docs",
+    "setup-jest-globals.cjs",
+    "setup-test-schema.cjs"
+  ]
 }

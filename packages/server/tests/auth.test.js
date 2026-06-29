@@ -188,7 +188,7 @@ describe("AuthTest forgot password", () => {
 
     i18n.configure({
       locales: ["en"],
-      directory: path.join(__dirname, "..", "/locales"),
+      directory: path.join(__dirname, "..", "..", "/locales"),
     });
     const email = generate_email(link, u, i18n);
     expect(email.text).toContain(link);
@@ -713,13 +713,13 @@ describe("AuthTest signup with custom login form", () => {
 describe("AuthTest Locale files", () => {
   it("should be valid JSON", async () => {
     const localeFiles = await fs.promises.readdir(
-      path.join(__dirname, "..", "/locales")
+      path.join(__dirname, "..", "..", "/locales")
     );
     expect(localeFiles.length).toBeGreaterThan(3);
     expect(localeFiles).toContain("en.json");
     for (const fnm of localeFiles) {
       const conts = await fs.promises.readFile(
-        path.join(__dirname, "..", "/locales", fnm)
+        path.join(__dirname, "..", "..", "/locales", fnm)
       );
       expect(conts.length).toBeGreaterThan(1);
 

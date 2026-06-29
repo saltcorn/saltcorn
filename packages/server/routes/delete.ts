@@ -6,7 +6,6 @@
 
 import Router from "express-promise-router";
 
-// @ts-ignore -- utils.js has not been converted to TypeScript yet
 import { error_catcher, is_relative_url, safe_redirect } from "./utils.js";
 import Table from "@saltcorn/data/models/table";
 import { readState } from "@saltcorn/data/plugin-helper";

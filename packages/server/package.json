@@ -3,32 +3,50 @@
   "version": "1.6.0",
   "description": "Server app for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
-  "main": "index.js",
+  "main": "dist/index.js",
   "type": "module",
   "exports": {
-    ".": "./index.js",
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
     "./app": {
+      "types": "./dist/app.d.ts",
       "require": "./cjs/app.cjs",
-      "import": "./app.js",
-      "default": "./app.js"
+      "import": "./dist/app.js",
+      "default": "./dist/app.js"
     },
     "./serve": {
+      "types": "./dist/serve.d.ts",
       "require": "./cjs/serve.cjs",
-      "import": "./serve.js",
-      "default": "./serve.js"
+      "import": "./dist/serve.js",
+      "default": "./dist/serve.js"
     },
     "./restart_watcher": {
+      "types": "./dist/restart_watcher.d.ts",
       "require": "./cjs/restart_watcher.cjs",
-      "import": "./restart_watcher.js",
-      "default": "./restart_watcher.js"
+      "import": "./dist/restart_watcher.js",
+      "default": "./dist/restart_watcher.js"
     },
     "./auth/testhelp": {
+      "types": "./dist/auth/testhelp.d.ts",
       "require": "./cjs/auth/testhelp.cjs",
-      "import": "./auth/testhelp.js",
-      "default": "./auth/testhelp.js"
+      "import": "./dist/auth/testhelp.js",
+      "default": "./dist/auth/testhelp.js"
     },
     "./package.json": "./package.json"
   },
+  "files": [
+    "dist/**/*",
+    "cjs/**/*.cjs",
+    "public/**/*",
+    "locales/**/*",
+    "help/**/*",
+    "docs/**/*",
+    "!dist/tsconfig.ref.tsbuildinfo",
+    "!dist/tsconfig.tsbuildinfo"
+  ],
   "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-s3": "3.1057.0",
@@ -110,9 +128,9 @@
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "NODE_ENV=test node --require ./setup-jest-globals.cjs --require ./setup-test-schema.cjs --test --test-force-exit",
+    "test": "cd dist && NODE_ENV=test node --require ../setup-jest-globals.cjs --require ../setup-test-schema.cjs --test --test-force-exit",
     "tsc": "tsc -p tsconfig.json",
-    "clean": "rm -f routes/delete.js routes/delete.js.map routes/delete.d.ts routes/delete.d.ts.map *.tsbuildinfo"
+    "clean": "rm -rf ./dist/*"
   },
   "publishConfig": {
     "access": "public"

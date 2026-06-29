@@ -1,1 +1,1 @@
-module.exports = require("../../auth/testhelp.js");
+module.exports = require("../../dist/auth/testhelp.js");

@@ -52,7 +52,7 @@ const excludePatterns = [
  * @returns {string} project root path
  */
 const getProjectRoot = () => {
-  return path.normalize(`${__dirname}/../../`);
+  return path.normalize(`${__dirname}/../../../`);
 };
 
 /**

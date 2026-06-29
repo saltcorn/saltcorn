@@ -22,7 +22,10 @@ const get_md_file = async (topic, isFullPath) => {
       const fileBuf = await fs.readFile(topic);
       return fileBuf.toString();
     } else {
-      const fp = File.normalise_in_base(__dirname, `${topic}.tmd`);
+      const fp = File.normalise_in_base(
+        path.join(__dirname, "..", "..", "help"),
+        `${topic}.tmd`
+      );
       if (!fp) return false;
       const fileBuf = await fs.readFile(fp);
       return fileBuf.toString();

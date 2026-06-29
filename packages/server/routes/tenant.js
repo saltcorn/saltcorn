@@ -339,7 +339,7 @@ router.post(
             // greenlock logic
             const Greenlock = require("greenlock");
             const greenlock = Greenlock.create({
-              packageRoot: path.resolve(__dirname, ".."),
+              packageRoot: path.resolve(__dirname, "..", ".."),
               configDir: path.join(file_store, "greenlock.d"),
               maintainerEmail: admin_users[0].email,
             });
