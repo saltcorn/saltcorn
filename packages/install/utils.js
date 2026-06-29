@@ -247,7 +247,7 @@ const asyncSudoPostgres = (args, allowFail, dryRun) => {
  * @returns {*}
  */
 const gen_password = () => {
-  export const oneOf = (vs) => vs[Math.floor(Math.random() * vs.length)];
+  const oneOf = (vs) => vs[Math.floor(Math.random() * vs.length)];
 
   const char = () => {
     const chars =
@@ -255,7 +255,7 @@ const gen_password = () => {
     return oneOf(chars);
   };
 
-  export const generateString = () => {
+  const generateString = () => {
     const n = Math.round(num_between(10, 15));
     let result = ntimes(n, char).join("");
     return result;
