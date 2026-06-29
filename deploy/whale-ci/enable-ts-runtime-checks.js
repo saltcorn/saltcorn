@@ -35,6 +35,10 @@ try {
 }
 pkg.devDependencies = pkg.devDependencies || {};
 pkg.devDependencies["ts-runtime-checks"] = "^0.6.3";
+pkg.devDependencies["ts-patch"] = "^3.3.0";
+pkg.scripts = pkg.scripts || {};
+pkg.scripts["tsc"] = pkg.scripts["tsc"].replace(/^tsc /, "tspc ");
+pkg.scripts["clean"] = pkg.scripts["clean"].replace(/^tsc /, "tspc ");
 try {
   fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
 } catch (e) {
