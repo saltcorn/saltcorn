@@ -44,7 +44,6 @@ import wrapper from "./wrapper.js";
 import csrf from "@dr.pogodin/csurf";
 import { I18n } from "i18n";
 import { h1 } from "@saltcorn/markup/tags";
-import is from "contractis/is.js";
 import Trigger from "@saltcorn/data/models/trigger";
 import s3storage from "./s3storage.js";
 import { Strategy as TotpStrategy } from "passport-totp";
@@ -321,7 +320,7 @@ const getApp = async (opts = {}) => {
       loginAttempt();
       async function loginAttempt() {
         const { remember, _csrf, dest, ...userobj } = req.body || {};
-        if (!is.objVals(is.str).check(userobj))
+        if (!Object.values(userobj).every((v) => typeof v === "string"))
           return done(
             null,
             false,

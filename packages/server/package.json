@@ -68,7 +68,6 @@
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^9.0.1",
     "content-disposition": "^0.5.4",
-    "contractis": "^0.1.0",
     "cookie-parser": "^1.4.7",
     "cookie-session": "^2.1.0",
     "cors": "2.8.5",
