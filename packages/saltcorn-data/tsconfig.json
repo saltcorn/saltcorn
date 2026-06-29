@@ -16,12 +16,8 @@
     /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
     "lib": ["ES2021", "dom"],
     "types": ["node", "estree"],
-<<<<<<< HEAD
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-=======
-    "module": "commonjs",
->>>>>>> 2fba598ba3 (add ts-runtime-checks to Docker CI build)
     "target": "ES2021"
   },
   "include": ["**/*", "**/*.json"],
