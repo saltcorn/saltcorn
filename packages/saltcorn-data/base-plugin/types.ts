@@ -2515,7 +2515,7 @@ const date = {
       }
     };
     const readPlainDate = (v: any) => {
-      if (v instanceof Date && !isNaN(v as any)) return new PlainDate(v as any);
+      if (v instanceof Date && !isNaN(v as any)) return new PlainDate(v);
       if (
         (v instanceof PlainDate || v?.constructor?.name === "PlainDate") &&
         v.isValid()

@@ -62,7 +62,7 @@ import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 import { getState } from "../db/state.js";
 const { div, code, a, span } = tagsPkg;
 
-import type { GenObj } from "@saltcorn/types/common_types";
+import { instanceOfErrorMsg, type GenObj } from "@saltcorn/types/common_types";
 import type {
   FieldLike,
   Req,
@@ -544,7 +544,7 @@ export default {
       row: Row;
       configuration: {
         table_name: string;
-        where?: Where;
+        where?: string;
         limit?: number;
         orderBy?: string;
         orderDesc?: boolean;
@@ -555,7 +555,7 @@ export default {
       [key: string]: unknown;
     }) => {
       const table = Table.findOne({ name: table_name });
-      const wh = where ? eval_expression(where as any, row, user) : {};
+      const wh = where ? eval_expression(where, row, user) : {};
       const selOpts: GenObj = { orderDesc, orderBy };
       if (limit) selOpts.limit = limit;
       const rows = await table!.getRows(wh, selOpts);
@@ -1789,7 +1789,7 @@ export default {
         row![table!.pk_name],
         user
       );
-      if ((res as any).error) return res;
+      if (instanceOfErrorMsg(res)) return res;
       else return;
     },
     namespace: "Database",
@@ -2224,7 +2224,7 @@ export default {
               row![table.pk_name],
               user
             );
-            if (!(updateres as any)?.error)
+            if (!instanceOfErrorMsg(updateres))
               return { notify_success: req ? req.__("Saved") : "Saved" };
             else {
               getState()!.log(
@@ -2699,10 +2699,7 @@ export default {
         await u.set_language(language);
         req.login(u.session_object, function (err: any) {
           if (!err) {
-            req.flash(
-              "success",
-              req.__("Language changed to %s", language)
-            );
+            req.flash("success", req.__("Language changed to %s", language));
             return { reload_page: true };
           } else {
             req.flash("danger", err);
