@@ -13,7 +13,13 @@ import fixturesMod from "../db/fixtures.js";
 const { mockReqRes } = mocks;
 import Page from "../models/page.js";
 import type { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
-import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  beforeAll,
+  describe,
+  it,
+  expect,
+} from "@saltcorn/db-common/test_expect";
 import { assertIsSet } from "./assertions.js";
 import {
   prepareQueryEnviroment,
@@ -21,6 +27,7 @@ import {
   deleteViewFromServer,
   renderEditInEditConfig,
 } from "./remote_query_helper.js";
+import PlainDate from "@saltcorn/plain-date";
 
 let remoteQueries = false;
 
@@ -658,5 +665,44 @@ describe("joinfield localisation in show view", () => {
     assertIsSet(view);
     const vres1 = await view.run({ id: 2 }, deReqRes);
     expect(vres1).toBe("Verlag:Deutsche AK");
+  });
+});
+
+describe("get by date error", () => {
+  let row_id: number;
+  beforeAll(async () => {
+    const books = Table.findOne("books")!;
+    assertIsSet(books);
+    await Field.create({
+      name: "created_at",
+      label: "Created at",
+      type: "Date",
+      table: books,
+      attributes: {},
+    });
+    await Field.create({
+      name: "created_day",
+      label: "Created day",
+      type: "Date",
+      table: books,
+      attributes: { day_only: true },
+    });
+    row_id = await books.insertRow({
+      author: "Carl Rogers",
+      pages: "356",
+      created_at: new Date(),
+      created_day: new PlainDate()
+    });
+
+    await getState()!.refresh_tables();
+  });
+  it("should run view on date", async () => {
+    const view = View.findOne({ name: "authorshow" });
+    assertIsSet(view);
+    const row = await Table.findOne("books")!.getRow({ id: row_id });
+    const vres1 = await view.run({ created_at: row!.created_at }, mockReqRes);
+    expect(vres1).toBe("Carl Rogers");
+    const vres2 = await view.run({ created_day: row!.created_day }, mockReqRes);
+    expect(vres2).toBe("Carl Rogers");
   });
 });
