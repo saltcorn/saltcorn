@@ -679,19 +679,29 @@ describe("get by date error", () => {
       table: books,
       attributes: {},
     });
+    await Field.create({
+      name: "created_day",
+      label: "Created day",
+      type: "Date",
+      table: books,
+      attributes: { day_only: true },
+    });
     row_id = await books.insertRow({
       author: "Carl Rogers",
       pages: "356",
       created_at: new Date(),
+      created_day: new Date()
     });
 
     await getState()!.refresh_tables();
   });
-  it("should run view", async () => {
+  it("should run view on date", async () => {
     const view = View.findOne({ name: "authorshow" });
     assertIsSet(view);
     const row = await Table.findOne("books")!.getRow({ id: row_id });
     const vres1 = await view.run({ created_at: row!.created_at }, mockReqRes);
     expect(vres1).toBe("Carl Rogers");
+    const vres2 = await view.run({ created_day: row!.created_day }, mockReqRes);
+    expect(vres2).toBe("Carl Rogers");
   });
 });
