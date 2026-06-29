@@ -1143,7 +1143,7 @@ export function copyServerFiles(buildDir: string) {
   if (!existsSync(assetsDst)) {
     mkdirSync(assetsDst, { recursive: true });
   }
-  const serverRoot = join(require.resolve("@saltcorn/server"), "..");
+  const serverRoot = join(require.resolve("@saltcorn/server/package.json"), "..");
   const srcPrefix = join(serverRoot, "public");
   const srcAssests = [
     "jquery-3.6.0.min.js",
@@ -1399,7 +1399,11 @@ export async function buildTablesFile(
  * @param buildDir directory where the app will be build
  */
 export function copyTranslationFiles(buildDir: string) {
-  const localesDir = join(require.resolve("@saltcorn/server"), "..", "locales");
+  const localesDir = join(
+    require.resolve("@saltcorn/server/package.json"),
+    "..",
+    "locales"
+  );
   copySync(localesDir, join(buildDir, "www", "data", "locales"));
 }
 
