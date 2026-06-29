@@ -24,6 +24,7 @@ import PlainDate from "@saltcorn/plain-date";
 import db from "../db/index.js";
 import { FieldLike } from "@saltcorn/types/base_types";
 import type { GenObj } from "@saltcorn/types/common_types";
+import Field from "models/field.js";
 
 const {
   input,
@@ -62,8 +63,8 @@ const eqStr = (x: any, y: any) => `${x}` === `${y}`;
 const or_if_undefined = (x: any, def: any) =>
   typeof x === "undefined" ? def : x;
 
-const number_slider = (type: any) => ({
-  configFields: (field: any) => [
+const number_slider = (type: string) => ({
+  configFields: (field: Field) => [
     ...(!isdef(field.attributes.min)
       ? [{ name: "min", type, required: false }]
       : []),
@@ -102,8 +103,8 @@ const number_slider = (type: any) => ({
       ...(isdef(v) && { value: text_attr(v) }),
     }),
 });
-const range_interval = (type: any) => ({
-  configFields: (field: any) => [
+const range_interval = (type: string) => ({
+  configFields: (field: Field) => [
     ...(!isdef(field.attributes.min)
       ? [{ name: "min", type, required: false }]
       : []),
@@ -163,7 +164,7 @@ const range_interval = (type: any) => ({
   },
 });
 
-const none_available = (required: any) =>
+const none_available = (required: boolean) =>
   required
     ? div(
         { class: "alert alert-danger", role: "alert" },
@@ -172,8 +173,8 @@ const none_available = (required: any) =>
       )
     : i("None available");
 
-const progress_bar = (type: any) => ({
-  configFields: (field: any) => [
+const progress_bar = (type: string) => ({
+  configFields: (field: Field) => [
     { name: "max_min_formula", type: "Bool", label: "Max/min Formula" },
     ...(!isdef(field.attributes.min)
       ? [
@@ -323,8 +324,8 @@ const show_with_html = {
   },
 };
 
-const heat_cell = (type: any) => ({
-  configFields: (field: any) => [
+const heat_cell = (type: string) => ({
+  configFields: (field: Field) => [
     { name: "max_min_formula", type: "Bool", label: "Max/min Formula" },
     ...(!isdef(field.attributes.min)
       ? [
@@ -448,7 +449,7 @@ const heat_cell = (type: any) => ({
   },
 });
 
-const number_limit = (direction: any) => ({
+const number_limit = (direction: "gte" | "lte") => ({
   isEdit: false,
   isFilter: true,
   blockDisplay: true,
@@ -456,7 +457,7 @@ const number_limit = (direction: any) => ({
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
   run: (
-    nm: any,
+    nm: string,
     v: any,
     attrs: any = {},
     cls: any,
@@ -495,12 +496,12 @@ const number_limit = (direction: any) => ({
   },
 });
 
-const float_number_limit = (direction: any) => ({
+const float_number_limit = (direction:  "gte" | "lte") => ({
   isEdit: false,
   isFilter: true,
   blockDisplay: true,
   run: (
-    nm: any,
+    nm: string,
     v: any,
     attrs: any = {},
     cls: any,
@@ -2937,11 +2938,4 @@ const bool = {
   validate: () => (x: any) => true,
 };
 
-export {
-  string,
-  int,
-  bool,
-  date,
-  float,
-  color,
-};
+export { string, int, bool, date, float, color };
