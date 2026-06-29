@@ -21,6 +21,7 @@ import type {
   StrongRow,
   PrimaryKeyValue,
   PartialSome,
+  FieldLikeForFTS,
 } from "./dbtypes.js";
 
 export * from "./dbtypes.js";
@@ -100,7 +101,7 @@ const sqlitePlaceHolderStack = (): PlaceHolderStack => {
 };
 
 export const ftsFieldsSqlExpr = (
-  fields: any[],
+  fields: FieldLikeForFTS[],
   table?: string,
   schema?: string
 ) => {
@@ -124,7 +125,7 @@ export const ftsFieldsSqlExpr = (
       fldsArray.push(
         `coalesce((select "${f.attributes.summary_field}" from ${
           schema ? `"${schema}".` : ""
-        }"${sqlsanitize(f.reftable_name)}" rt where rt."${f.refname}"=${
+        }"${sqlsanitize(f.reftable_name!)}" rt where rt."${f.refname}"=${
           table ? `"${sqlsanitize(table)}".` : ""
         }"${f.name}"),'')`
       );
@@ -144,7 +145,7 @@ export const ftsFieldsSqlExpr = (
  */
 const whereFTS = (
   v: {
-    fields: any[];
+    fields: FieldLikeForFTS[];
     table?: string;
     searchTerm: string;
     schema?: string;
@@ -346,7 +347,7 @@ const whereOr =
   (ors: any[]): string =>
     wrapParens(
       ors
-        .map((vi: any) =>
+        .map((vi) =>
           Object.entries(vi)
             .map((kv) => whereClause(phs)(kv))
             .join(" and ")
@@ -359,7 +360,7 @@ const whereAnd =
   (ors: any[]): string =>
     wrapParens(
       ors
-        .map((vi: any) =>
+        .map((vi) =>
           Object.entries(vi)
             .map((kv) => whereClause(phs)(kv))
             .join(" and ")
@@ -671,7 +672,7 @@ const getOperatorOrder = (
     if (s.includes(" ")) return "";
     return s;
   };
-  const ppOp = (ast: any): string => {
+  const ppOp = (ast: Operator): string => {
     if (ast === "target") {
       values.push(target);
       return isSQLite ? "?" : `$${values.length}`;
