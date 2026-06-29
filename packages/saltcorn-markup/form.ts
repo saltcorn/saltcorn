@@ -805,7 +805,7 @@ const mkFormRowForRepeatFancy = (
   });
   for (let i = 0; i < hdr.fields.length; i++) {
     const field = hdr.fields[i];
-    if ((field as any)?.attributes?.asideNext) {
+    if (field?.attributes?.asideNext) {
       fldHtmls.push(
         mkFormRowAside(
           {},
