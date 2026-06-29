@@ -1218,3 +1218,49 @@ span.copy-to-clipboard.copied::after {
   right: unset;
   left: 0;
 }
+
+/* ── Kanban board ─────────────────────────────────────────────────────────── */
+.sc-kanban-board {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  overflow-x: auto;
+  align-items: flex-start;
+  padding-bottom: 1rem;
+}
+.sc-kanban-column {
+  min-width: 240px;
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--bs-body-bg, #fff);
+}
+.sc-kanban-col-header {
+  background: var(--bs-secondary-bg, #f8f9fa);
+  font-size: .9rem;
+}
+.sc-kanban-cards {
+  min-height: 60px;
+  padding: .5rem !important;
+}
+.sc-kanban-card {
+  cursor: grab;
+  border: 1px solid var(--bs-border-color, #dee2e6);
+  border-radius: .375rem;
+  background: var(--bs-body-bg, #fff);
+  transition: box-shadow .15s;
+  position: relative;
+}
+.sc-kanban-card:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+.sc-kanban-card:active {
+  cursor: grabbing;
+}
+.sc-kanban-ghost {
+  opacity: .4;
+  background: var(--bs-primary-bg-subtle, #cfe2ff);
+  border: 2px dashed var(--bs-primary, #0d6efd);
+}
+.sc-kanban-add {
+  font-size: .8rem;
+}

@@ -44,6 +44,7 @@ import roomMod from "./viewtemplates/room.js";
 import workflowRoomMod from "./viewtemplates/workflow-room.js";
 import editMod from "./viewtemplates/edit.js";
 import filterMod from "./viewtemplates/filter.js";
+import kanbanMod from "./viewtemplates/kanban.js";
 import fileviewsMod from "./fileviews.js";
 import actionsMod from "./actions.js";
 import * as nsFieldviews from "./fieldviews.js";
@@ -55,6 +56,7 @@ import room from "./viewtemplates/room.js";
 import wfroom from "./viewtemplates/workflow-room.js";
 import edit from "./viewtemplates/edit.js";
 import filter from "./viewtemplates/filter.js";
+import kanban from "./viewtemplates/kanban.js";
 import fileviews from "./fileviews.js";
 import * as fieldviews from "./fieldviews.js";
 import actions from "./actions.js";
@@ -70,6 +72,7 @@ const viewtemplates = [
   filter,
   room,
   wfroom,
+  kanban,
 ];
 
 const basePlugin = {
