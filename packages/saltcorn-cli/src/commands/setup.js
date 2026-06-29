@@ -10,7 +10,6 @@ const {
   configFileDir,
   defaultDataPath,
 } = require("@saltcorn/data/db/connect");
-const { is } = require("contractis");
 const path = require("path");
 const fs = require("fs");
 const inquirer = require("inquirer").default;
@@ -18,6 +17,7 @@ const tcpPortUsed = require("tcp-port-used");
 const { spawnSync } = require("child_process");
 const sudo = require("sudo");
 const crypto = require("crypto");
+const { generateString } = require("@saltcorn/types/generators");
 
 /**
  * Generate password for user
@@ -25,9 +25,7 @@ const crypto = require("crypto");
  */
 // todo deduplicate code - the same function in User
 const gen_password = () => {
-  const s = is.str.generate().replace(" ", "");
-  if (s.length > 7) return s;
-  else return gen_password();
+  return generateString();
 };
 /**
  * Generate jwt secret
