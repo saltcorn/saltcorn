@@ -28,6 +28,7 @@ import User from "@saltcorn/data/models/user";
 import FieldRepeat from "@saltcorn/data/models/fieldrepeat";
 import Field from "@saltcorn/data/models/field";
 import Page from "@saltcorn/data/models/page";
+import { Header, Layout, Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * Restore Backup
@@ -36,7 +37,11 @@ import Page from "@saltcorn/data/models/page";
  * @param {string} action
  * @returns {*}
  */
-const restore_backup = (csrf, inner, action = `/admin/restore`) =>
+const restore_backup = (
+  csrf: string,
+  inner: string,
+  action = `/admin/restore`
+) =>
   form(
     {
       method: "post",
@@ -62,7 +67,7 @@ const restore_backup = (csrf, inner, action = `/admin/restore`) =>
     })
   );
 
-const upload_language_pack = (req) =>
+const upload_language_pack = (req: Req) =>
   form(
     {
       method: "post",
@@ -111,7 +116,7 @@ const add_edit_bar = ({
   table,
   view,
   cfgUrl,
-}) => {
+}: any) => {
   if (req && req.headers.localizedstate)
     return { above: [contents], noWrapTop: true };
   if (role > 1 && req && req.xhr) return { above: [contents] }; //make sure not put in card
@@ -153,14 +158,20 @@ const add_edit_bar = ({
   return append_to_contents(contents, bar);
 };
 
-const append_to_contents = (contents, toAppend) => {
-  if (contents.above) {
+const append_to_contents = (
+  contents: Layout | string,
+  toAppend: Layout | string
+) => {
+  if (typeof contents !== "string" && contents.above) {
     contents.above.unshift(toAppend);
     return contents;
   } else return { above: [toAppend, contents] };
 };
 
-const add_results_to_contents = (content, resultCollector) => {
+const add_results_to_contents = (
+  content: Layout | string,
+  resultCollector: any
+) => {
   if (Object.keys(resultCollector).length) {
     return append_to_contents(
       content,
@@ -197,6 +208,19 @@ const send_settings_page = ({
   sub2_page,
   page_title,
   requestFluidLayout,
+}: {
+  req: Req;
+  res: Res;
+  main_section: string;
+  main_section_href: string;
+  sub_sections: Array<{ text: string; href: string }>;
+  active_sub: string;
+  contents: Layout | string;
+  headers?: Array<Header>;
+  no_nav_pills?: boolean;
+  sub2_page?: string;
+  page_title?: string;
+  requestFluidLayout?: boolean;
 }) => {
   const pillCard = no_nav_pills
     ? []
@@ -208,7 +232,7 @@ const send_settings_page = ({
             { class: "d-flex" },
             ul(
               { class: "nav nav-pills plugin-section" },
-              sub_sections.map(({ text, href }) =>
+              sub_sections.map(({ text, href }: any) =>
                 li(
                   { class: "nav-item" },
                   a(
@@ -247,7 +271,8 @@ const send_settings_page = ({
           {
             text: req.__(active_sub),
             href: sub2_page
-              ? sub_sections.find((subsec) => subsec.text === active_sub).href
+              ? sub_sections.find((subsec: any) => subsec.text === active_sub)
+                  ?.href
               : null,
           },
           ...(sub2_page
@@ -270,13 +295,13 @@ const send_settings_page = ({
  * @param {object} args
  * @returns {void}
  */
-const send_infoarch_page = (args) => {
+const send_infoarch_page = (args: any) => {
   const tenant_list =
     db.is_it_multi_tenant() &&
     db.getTenantSchema() === db.connectObj.default_schema;
   const role = args.req?.user.role_id || 100;
   const isUserAdmin = role === 1;
-  const state = getState();
+  const state = getState()!;
   const canEditMenu = state.getConfig("min_role_edit_menu", 1) >= role;
   const canEditSearch = state.getConfig("min_role_edit_search", 1) >= role;
   const canCreateSnapshot =
@@ -317,7 +342,7 @@ const send_infoarch_page = (args) => {
  * @param {object} args
  * @returns {void}
  */
-const send_users_page = (args) => {
+const send_users_page = (args: any) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const role = args.req?.user.role_id || 100;
   const isUserAdmin = role === 1;
@@ -345,7 +370,7 @@ const send_users_page = (args) => {
  * @param {object} args
  * @returns {void}
  */
-const send_files_page = (args) => {
+const send_files_page = (args: any) => {
   const isUserAdmin = args.req?.user.role_id === 1;
   return send_settings_page({
     main_section: "Files",
@@ -366,7 +391,7 @@ const send_files_page = (args) => {
   });
 };
 
-const send_tags_page = (args) => {
+const send_tags_page = (args: any) => {
   return send_settings_page({
     main_section: "Tags",
     ...args,
@@ -378,7 +403,7 @@ const send_tags_page = (args) => {
  * @param {object} args
  * @returns {void}
  */
-const send_events_page = (args) => {
+const send_events_page = (args: any) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const isUserAdmin = args.req?.user.role_id === 1;
   const tenants_crash_log = getRootState().getConfig("tenants_crash_log");
@@ -408,7 +433,7 @@ const send_events_page = (args) => {
  * @param {object} args
  * @returns {void}
  */
-const send_admin_page = (args) => {
+const send_admin_page = (args: any) => {
   //const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   return send_settings_page({
     main_section: "About application",
@@ -431,9 +456,10 @@ const send_admin_page = (args) => {
  * @param {object} key
  * @returns {Promise<object>}
  */
-const viewAttributes = async (key) => {
+const viewAttributes = async (key: any) => {
   const [v, table_name] = configTypes[key].type.split(" ");
   const table = Table.findOne({ name: table_name });
+  if (!table) throw new Error(`Table ${table_name} not found`);
   const views = await View.find({ table_id: table.id });
   return {
     options: views.map((v) => {
@@ -449,11 +475,11 @@ const viewAttributes = async (key) => {
  * @param {*} req
  * @returns {void}
  */
-const check_if_restart_required = (cfgForm, req) => {
+const check_if_restart_required = (cfgForm: Form) => {
   let restart = false;
-  cfgForm.fields.forEach((f) => {
+  cfgForm.fields.forEach((f: any) => {
     if (configTypes[f.name]?.restart_required) {
-      const current = getState().getConfig(f.name);
+      const current = getState()!.getConfig(f.name);
       if (current !== cfgForm.values[f.name]) restart = true;
     }
   });
@@ -465,7 +491,7 @@ const check_if_restart_required = (cfgForm, req) => {
  * @param {object} req
  * @returns {void}
  */
-const flash_restart = (req) => {
+const flash_restart = (req: Req) => {
   req.flash(
     "warning",
     req.__(`Restart required for changes to take effect.`) +
@@ -487,10 +513,17 @@ const config_fields_form = async ({
   req,
   action,
   ...formArgs
-}) => {
-  const values = {};
-  const state = getState();
-  const fields = [];
+}: {
+  field_names: Array<
+    | string
+    | { section_header?: string; sublabel?: string; name?: string; showIf: any }
+  >;
+  req: Req;
+  action: string;
+} & Partial<Form>) => {
+  const values: Record<string, any> = {};
+  const state = getState()!;
+  const fields: any[] = [];
   const tenant = db.getTenantSchema();
   const roleAttribs = {
     options: (await User.get_roles()).map((r) => ({
@@ -500,7 +533,7 @@ const config_fields_form = async ({
   };
   const getTenants = async () => {
     const tens = await db.select("_sc_tenants");
-    return { options: tens.map((t) => t.subdomain) };
+    return { options: tens.map((t: any) => t.subdomain) };
   };
   for (const name0 of field_names) {
     if (typeof name0 === "object" && name0.section_header) {
@@ -516,12 +549,12 @@ const config_fields_form = async ({
       });
       continue;
     }
-    let name, showIf;
+    let name: string, showIf;
     if (typeof name0 === "object" && name0.name) {
       name = name0.name;
       showIf = name0.showIf;
     } else {
-      name = name0;
+      name = name0 as string;
     }
     values[name] = state.getConfig(name);
     // console.log(`config field name: %s`,name);
@@ -616,8 +649,8 @@ const config_fields_form = async ({
  * @param {*} form
  * @returns {Promise<void>}
  */
-const save_config_from_form = async (form) => {
-  const state = getState();
+const save_config_from_form = async (form: Form) => {
+  const state = getState()!;
 
   for (const [k, v] of Object.entries(form.values)) {
     if (!state.isFixedConfig(k) && typeof v !== "undefined") {
@@ -630,8 +663,8 @@ const save_config_from_form = async (form) => {
  * Get Base Domain
  * @returns {string|null} base domain
  */
-const getBaseDomain = () => {
-  const base_url = getState().getConfig("base_url");
+const getBaseDomain = (): string | null => {
+  const base_url = getState()!.getConfig("base_url");
   if (!base_url) return null;
   return base_url
     .toLowerCase()
@@ -645,13 +678,14 @@ const getBaseDomain = () => {
  * @param {string} domain
  * @returns {boolean}
  */
-const hostname_matches_baseurl = (req, domain) => domain === req.hostname;
+const hostname_matches_baseurl = (req: Req, domain: string):boolean =>
+  domain === req.hostname;
 
 /**
  * @param {string} domain
  * @returns {string[]|boolean}
  */
-const is_hsts_tld = (domain) => {
+const is_hsts_tld = (domain: string):boolean => {
   if (!domain) return false;
   const ds = domain.split(".");
   const tld = ds[ds.length - 1];
