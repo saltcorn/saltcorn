@@ -7,7 +7,6 @@
 
 import { createRequire } from "module";
 const require = createRequire(import.meta.url);
-import is from "contractis/is.js";
 import childProcessPkg from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -33,6 +32,7 @@ const pathsWithApp = safeEnvPaths("saltcorn", { suffix: "" });
 import * as utils from "../utils.js";
 import type { ConnectObjType } from "@saltcorn/types/base_types";
 import { isNode } from "../utils.js";
+import { generateString } from "@saltcorn/types/generators";
 
 /**
  * Default data path?
@@ -161,7 +161,7 @@ const getConnectObject = (connSpec: any = {}) => {
   let random_session_secret = false;
   if (!connObj.session_secret) {
     random_session_secret = true;
-    connObj.session_secret = is.str.generate();
+    connObj.session_secret = generateString(10, [" "]);
   }
   if (!connObj.jwt_secret) connObj.jwt_secret = randomBytes(64).toString("hex");
   connObj.version_tag = createHash("sha256")

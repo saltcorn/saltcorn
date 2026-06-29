@@ -4,7 +4,6 @@
  * @module models/form
  * @subcategory models
  */
-import contractisPkg from "contractis";
 import {
   AbstractForm,
   AdditionalButton as _AdditionalButton,
@@ -20,8 +19,7 @@ import Field from "./field.js";
 import User from "./user.js";
 import FieldRepeat from "./fieldrepeat.js";
 import type { FieldLike, Layout, Header } from "@saltcorn/types/base_types";
-
-const { is } = contractisPkg;
+import { generateBool } from "@saltcorn/types/generators";
 
 const isFieldLike = (object: any): object is FieldLike => {
   return object.constructor.name === Object.name;
@@ -162,7 +160,7 @@ class Form implements AbstractForm {
       if (hasFieldMembers(f))
         if (f.input_type === "hidden") r[f.name] = this.values[f.name];
         else if (f.name.endsWith("_fml")) r[f.name] = "";
-        else if (f.required || is.bool.generate()) {
+        else if (f.required || generateBool()) {
           r[f.name] = await f.generate();
         }
     }

@@ -4,14 +4,14 @@
  * @module models/fieldrepeat
  * @subcategory models
  */
-import contractisPkg from "contractis";
-const { contract, is } = contractisPkg;
+
 import Field from "./field.js";
 import { AbstractFieldRepeat } from "@saltcorn/types/model-abstracts/abstract_field";
 import { instanceOfType, SuccessMessage } from "@saltcorn/types/common_types";
 import type { Layout } from "@saltcorn/types/base_types";
 import type { FieldLike } from "@saltcorn/types/base_types";
 import { PartialSome } from "@saltcorn/db-common/internal";
+import { generateBool } from "@saltcorn/types/generators";
 
 /**
  * FieldRepeat Class
@@ -65,7 +65,7 @@ class FieldRepeat implements AbstractFieldRepeat {
     var r: any = {};
     for (let index = 0; index < nrepeats; index++) {
       for (const f of this.fields) {
-        if ((f as any).generate && (f.required || is.bool.generate())) {
+        if ((f as any).generate && (f.required || generateBool())) {
           r[`${f.name}_${index}`] = await (f as any).generate();
         }
       }
