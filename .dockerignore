@@ -9,6 +9,7 @@ Dockerfile.*
 whale-ci.yml
 deploy/whale-ci/
 !deploy/whale-ci/enable-ts-runtime-checks.js
+!deploy/whale-ci/trc-stack-hook.js
 deploy/docker-compose-tests/
 .git/
 cireport.html

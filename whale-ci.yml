@@ -4,7 +4,6 @@ build:
 run_tests_sqlite:
   image: build
   command:
-    - bash -c "echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com otherexample.com' >> /etc/hosts"
     - saltcorn run-tests saltcorn-data
     - saltcorn run-tests server
   environment:
@@ -29,7 +28,6 @@ run_tests_postgres:
   depends: run_tests_postgres_db 
   delay: 1
   command:
-    - bash -c "echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com otherexample.com' >> /etc/hosts"
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
     - saltcorn reset-schema -f   
     - saltcorn run-tests server
@@ -41,7 +39,7 @@ run_tests_postgres:
     CI: true
     SALTCORN_MULTI_TENANT: true
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
-    NODE_OPTIONS: --max-old-space-size=4096
+    NODE_OPTIONS: --max-old-space-size=4096 --enable-source-maps --require /opt/saltcorn/deploy/whale-ci/trc-stack-hook.js
 
 pytest_db:
   image: postgres:16
@@ -57,7 +55,6 @@ pytest:
   image: build
   depends: pytest_db 
   command:
-    - bash -c "echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com otherexample.com' >> /etc/hosts"
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
     - pytest
   environment:
@@ -87,7 +84,6 @@ playwright:
     - build
     - playwright_db
   command:
-    - bash -c "echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com otherexample.com' >> /etc/hosts"
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
     - deploy/playwright/run.sh
   environment:
