@@ -1,5 +1,5 @@
 import db from "@saltcorn/data/db/index";
-import pack from "../models/pack";
+import pack from "../models/pack.js";
 const {
   table_pack,
   view_pack,
@@ -19,13 +19,23 @@ const {
   uninstall_pack,
   create_pack_from_tag,
 } = pack;
-import utils from "@saltcorn/data/utils";
+import * as utils from "@saltcorn/data/utils";
 const { isStale } = utils;
-const { getState } = require("@saltcorn/data/db/state");
+import { getState } from "@saltcorn/data/db/state";
+import basePlugin from "@saltcorn/data/base-plugin";
+import reset from "@saltcorn/data/db/reset_schema";
+import fixtures from "@saltcorn/data/db/fixtures";
 import Table from "@saltcorn/data/models/table";
 import Tag from "@saltcorn/data/models/tag";
 import { Pack } from "@saltcorn/types/base_types";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 import Trigger from "@saltcorn/data/models/trigger";
 import PageGroup from "@saltcorn/data/models/page_group";
 import WorkflowStep from "@saltcorn/data/models/workflow_step";
@@ -35,16 +45,16 @@ import { instanceOfType } from "@saltcorn/types/common_types";
 
 //import Trigger from "@saltcorn/data/models/trigger";
 
-getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
+getState()!.registerPlugin("base", basePlugin);
 
 beforeAll(async () => {
-  await require("@saltcorn/data/db/reset_schema")();
-  await require("@saltcorn/data/db/fixtures")();
+  await reset();
+  await fixtures();
 });
 
 afterAll(async () => {
-  await require("@saltcorn/data/db/reset_schema")();
-  await require("@saltcorn/data/db/fixtures")();
+  await reset();
+  await fixtures();
 
   await db.close();
 });
@@ -416,13 +426,13 @@ describe("pack create", () => {
 describe("pack store", () => {
   let packs = new Array<{ name: string }>();
   it("reset the pack store cache", async () => {
-    await getState().deleteConfig("available_packs");
-    await getState().deleteConfig("available_packs_fetched_at");
+    await getState()!.deleteConfig("available_packs");
+    await getState()!.deleteConfig("available_packs_fetched_at");
   });
   it("fetches the pack store", async () => {
     packs = await fetch_available_packs();
     expect(packs.length > 0).toBe(true);
-    const cache = getState().getConfig("available_packs", false);
+    const cache = getState()!.getConfig("available_packs", false);
     expect(packs).toStrictEqual(cache);
   });
   it("fetches packs from the pack store", async () => {
@@ -435,15 +445,18 @@ describe("pack store", () => {
     expect(nopack).toBe(null);
   });
   it("caches the pack store", async () => {
-    const stored_at = getState().getConfig("available_packs_fetched_at", false);
+    const stored_at = getState()!.getConfig(
+      "available_packs_fetched_at",
+      false
+    );
     expect(isStale(stored_at)).toBe(false);
-    await getState().setConfig("available_packs", []);
+    await getState()!.setConfig("available_packs", []);
     const packs1 = await fetch_available_packs();
     expect(packs1).toEqual([]);
   });
   it("reset the pack store cache", async () => {
-    await getState().deleteConfig("available_packs");
-    await getState().deleteConfig("available_packs_fetched_at");
+    await getState()!.deleteConfig("available_packs");
+    await getState()!.deleteConfig("available_packs_fetched_at");
   });
 });
 
@@ -615,7 +628,7 @@ describe("pack install", () => {
     await install_pack(todoPack, "Todo list", () => {});
     const tbl = Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(true);
-    const menu = getState().getConfig("menu_items", []);
+    const menu = getState()!.getConfig("menu_items", []);
     expect(menu).toContainEqual({
       label: "List",
       type: "View",
@@ -628,7 +641,7 @@ describe("pack install", () => {
       type: "Page",
       min_role: 100,
     });
-    const pubhome = getState().getConfig("public_home", []);
+    const pubhome = getState()!.getConfig("public_home", []);
     expect(pubhome).toBe("FooPage");
     const group = PageGroup.findOne({ name: "FooPageGroup" });
     assertIsSet(group);

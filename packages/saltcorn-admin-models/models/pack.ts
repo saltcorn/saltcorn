@@ -10,8 +10,9 @@ import View from "@saltcorn/data/models/view";
 import Field from "@saltcorn/data/models/field";
 import Trigger from "@saltcorn/data/models/trigger";
 import WorkflowStep from "@saltcorn/data/models/workflow_step";
-const { getState } = require("@saltcorn/data/db/state");
-import fetch from "node-fetch";
+import { getState } from "@saltcorn/data/db/state";
+import fetchLib from "node-fetch";
+const fetch: any = fetchLib; // NodeNext default-import interop for node-fetch
 import Page from "@saltcorn/data/models/page";
 import PageGroup from "@saltcorn/data/models/page_group";
 import type { AbstractPageGroupMember } from "@saltcorn/types/model-abstracts/abstract_page_group_member";
@@ -24,7 +25,7 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog, { EventLogCfg } from "@saltcorn/data/models/eventlog";
 import User from "@saltcorn/data/models/user";
-import config from "@saltcorn/data/models/config";
+import * as config from "@saltcorn/data/models/config";
 import type { CodePagePack, Pack } from "@saltcorn/types/base_types";
 import type { PagePack } from "@saltcorn/types/model-abstracts/abstract_page";
 const { save_menu_items } = config;
@@ -40,9 +41,10 @@ import type { EventLogPack } from "@saltcorn/types/model-abstracts/abstract_even
 import type { ModelPack } from "@saltcorn/types/model-abstracts/abstract_model";
 import type { ModelInstancePack } from "@saltcorn/types/model-abstracts/abstract_model_instance";
 import type { TagPack } from "@saltcorn/types/model-abstracts/abstract_tag";
-import { isEqual } from "lodash";
+import lodash from "lodash";
+const { isEqual } = lodash;
 
-const { isStale, getFetchProxyOptions } = require("@saltcorn/data/utils");
+import { isStale, getFetchProxyOptions } from "@saltcorn/data/utils";
 
 /**
  * Table Pack
@@ -123,7 +125,7 @@ const plugin_pack = async (name: string): Promise<PluginPack> => {
     ? { ...plugin.configuration }
     : null;
   if (configuration) {
-    const state = getState();
+    const state = getState()!;
     Object.keys(configuration).forEach((k) => {
       if (state.isFixedPluginConfig(name, k)) delete configuration[k];
     });
@@ -510,9 +512,9 @@ const uninstall_pack = async (pack: Pack, name?: string): Promise<void> => {
   }
 
   if (name) {
-    const existPacks = getState().getConfigCopy("installed_packs", []);
+    const existPacks = getState()!.getConfigCopy("installed_packs", []);
 
-    await getState().setConfig(
+    await getState()!.setConfig(
       "installed_packs",
       existPacks.filter((p: string) => p !== name)
     );
@@ -538,7 +540,7 @@ const add_to_menu = async (item: {
   min_role: number;
 }): Promise<void> => {
   item.min_role = old_to_new_role(item.min_role);
-  const current_menu = getState().getConfigCopy("menu_items", []);
+  const current_menu = getState()!.getConfigCopy("menu_items", []);
   const existing = current_menu.findIndex((m: any) => m.label === item.label);
   if (existing >= 0) return;
   const tableIndex = current_menu.findIndex(
@@ -651,7 +653,7 @@ const install_pack = async (
     if (tableSpec.name !== "users") {
       let tbl_pk;
       const existing = Table.findOne({ name: tableSpec.name });
-      getState().log(
+      getState()!.log(
         5,
         `Restoring table pack name=${
           tableSpec.name
@@ -675,7 +677,7 @@ const install_pack = async (
       await User.table.update(updrow);
     }
   }
-  await getState().refresh_tables(true);
+  await getState()!.refresh_tables(true);
 
   for (const tableSpec of pack.tables) {
     const _table = Table.findOne({ name: tableSpec.name });
@@ -733,7 +735,7 @@ const install_pack = async (
       await _table.update({ ownership_field_id: owner_field.id });
     }
   }
-  await getState().refresh_tables(true);
+  await getState()!.refresh_tables(true);
 
   for (const viewSpec of pack.views) {
     viewSpec.min_role = old_to_new_role(viewSpec.min_role);
@@ -757,7 +759,7 @@ const install_pack = async (
         min_role: viewSpec.min_role || 100,
       });
   }
-  await getState().refresh_views(true);
+  await getState()!.refresh_views(true);
 
   for (const triggerSpec of pack.triggers || []) {
     triggerSpec.min_role = old_to_new_role(triggerSpec.min_role);
@@ -780,7 +782,7 @@ const install_pack = async (
       }
     }
   }
-  await getState().refresh_triggers(true);
+  await getState()!.refresh_triggers(true);
 
   for (const pageFullSpec of pack.pages || []) {
     pageFullSpec.min_role = old_to_new_role(pageFullSpec.min_role);
@@ -789,9 +791,9 @@ const install_pack = async (
     if (existing?.id) await Page.update(existing.id, pageSpec);
     else await Page.create(pageSpec as PagePack);
     for (const role of root_page_for_roles || []) {
-      const current_root = getState().getConfigCopy(role + "_home", "");
+      const current_root = getState()!.getConfigCopy(role + "_home", "");
       if (!current_root || current_root === "")
-        await getState().setConfig(role + "_home", pageSpec.name);
+        await getState()!.setConfig(role + "_home", pageSpec.name);
     }
     if (menu_label)
       await add_to_menu({
@@ -802,7 +804,7 @@ const install_pack = async (
       });
   }
 
-  await getState().refresh_pages(true);
+  await getState()!.refresh_pages(true);
 
   for (const pageGroupSpec of pack.page_groups || []) {
     pageGroupSpec.min_role = old_to_new_role(pageGroupSpec.min_role);
@@ -920,7 +922,7 @@ const install_pack = async (
       const user = await User.findOne({ email: user_email });
       if (user) eventLogCfg.user_id = user.id;
       else {
-        getState().log(
+        getState()!.log(
           3,
           `User '${user_email}' not found for event log ${eventLog.event_type}`
         );
@@ -930,7 +932,7 @@ const install_pack = async (
   }
 
   if (pack.config) {
-    const state = getState();
+    const state = getState()!;
 
     for (const [k, v] of Object.entries(pack.config)) {
       await state.setConfig(k, v);
@@ -938,8 +940,8 @@ const install_pack = async (
   }
 
   if (pack.code_pages) {
-    const code_pages = getState().getConfigCopy("function_code_pages", {});
-    const function_code_pages_tags = getState().getConfigCopy(
+    const code_pages = getState()!.getConfigCopy("function_code_pages", {});
+    const function_code_pages_tags = getState()!.getConfigCopy(
       "function_code_pages_tags",
       {}
     );
@@ -948,17 +950,17 @@ const install_pack = async (
       code_pages[name] = code;
       function_code_pages_tags[name] = tags;
     }
-    await getState().setConfig("function_code_pages", code_pages);
-    await getState().setConfig(
+    await getState()!.setConfig("function_code_pages", code_pages);
+    await getState()!.setConfig(
       "function_code_pages_tags",
       function_code_pages_tags
     );
-    await getState().refresh_codepages();
+    await getState()!.refresh_codepages();
   }
 
   if (name) {
-    const existPacks = getState().getConfigCopy("installed_packs", []);
-    await getState().setConfig("installed_packs", [...existPacks, name]);
+    const existPacks = getState()!.getConfigCopy("installed_packs", []);
+    await getState()!.setConfig("installed_packs", [...existPacks, name]);
   }
 };
 
@@ -966,19 +968,19 @@ const install_pack = async (
  * Fetch available packs from the store endpoint (packs_store_endpoint cfg)
  */
 const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
-  const stored = getState().getConfigCopy("available_packs", false);
-  const stored_at = getState().getConfigCopy(
+  const stored = getState()!.getConfigCopy("available_packs", false);
+  const stored_at = getState()!.getConfigCopy(
     "available_packs_fetched_at",
     false
   );
-  const airgap = getState().getConfig("airgap", false);
+  const airgap = getState()!.getConfig("airgap", false);
 
   //console.log("in fetch", stored_at, stored)
   if (!airgap && (!stored || !stored_at || isStale(stored_at))) {
     try {
       const from_api = await fetch_available_packs_from_store();
-      await getState().setConfig("available_packs", from_api);
-      await getState().setConfig("available_packs_fetched_at", new Date());
+      await getState()!.setConfig("available_packs", from_api);
+      await getState()!.setConfig("available_packs_fetched_at", new Date());
       return from_api;
     } catch (e) {
       console.error("fetch store error", e);
@@ -991,7 +993,7 @@ const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
  * Get cached packs
  */
 const get_cached_packs = (): Array<{ name: string }> => {
-  const stored = getState().getConfigCopy("available_packs", false);
+  const stored = getState()!.getConfigCopy("available_packs", false);
   return stored || [];
 };
 
@@ -1003,7 +1005,7 @@ const fetch_available_packs_from_store = async (): Promise<
 > => {
   //console.log("fetch packs");
   //const { getState } = require("../db/state");
-  const packs_store_endpoint = getState().getConfig(
+  const packs_store_endpoint = getState()!.getConfig(
     "packs_store_endpoint",
     false
   );
@@ -1028,7 +1030,7 @@ const fetch_pack_by_name = async (
   name: string
 ): Promise<{ name: string; pack: any } | null> => {
   //const { getState } = require("../db/state");
-  const packs_store_endpoint = getState().getConfig(
+  const packs_store_endpoint = getState()!.getConfig(
     "packs_store_endpoint",
     false
   );
@@ -1046,8 +1048,8 @@ const fetch_pack_by_name = async (
 
 const code_pages_from_tag = async (tag: Tag): Promise<Array<CodePagePack>> => {
   const function_code_pages_tags: { string: [string] } =
-    getState().getConfigCopy("function_code_pages_tags", {});
-  const function_code_pages = getState().getConfigCopy(
+    getState()!.getConfigCopy("function_code_pages_tags", {});
+  const function_code_pages = getState()!.getConfigCopy(
     "function_code_pages",
     {}
   );
@@ -1091,7 +1093,7 @@ const create_pack_from_tag = async (tag: Tag): Promise<any> => {
   //TODO add models, plugins
 };
 
-export = {
+export default {
   table_pack,
   view_pack,
   plugin_pack,

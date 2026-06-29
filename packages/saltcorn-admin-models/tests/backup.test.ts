@@ -1,14 +1,16 @@
 import db from "@saltcorn/data/db/index";
-const { getState } = require("@saltcorn/data/db/state");
-getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
-import backup from "../models/backup";
+import { getState } from "@saltcorn/data/db/state";
+import basePlugin from "@saltcorn/data/base-plugin";
+getState()!.registerPlugin("base", basePlugin);
+import backup from "../models/backup.js";
 const { create_backup, restore } = backup;
-const reset = require("@saltcorn/data/db/reset_schema");
+import reset from "@saltcorn/data/db/reset_schema";
+import fixtures from "@saltcorn/data/db/fixtures";
 import { unlink } from "fs/promises";
 import Table from "@saltcorn/data/models/table";
 import View from "@saltcorn/data/models/view";
 import User from "@saltcorn/data/models/user";
-import config from "@saltcorn/data/models/config";
+import * as config from "@saltcorn/data/models/config";
 const { setConfig, getConfig } = config;
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
@@ -20,17 +22,24 @@ import {
   assertIsSet,
   assertsObjectIsUser,
 } from "@saltcorn/data/tests/assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 import Field from "@saltcorn/data/models/field";
-import mocks from "@saltcorn/data/tests/mocks";
+import * as mocks from "@saltcorn/data/tests/mocks";
 const { mockReqRes, plugin_with_routes } = mocks;
 
 afterAll(db.close);
 
 beforeAll(async () => {
-  await require("@saltcorn/data/db/reset_schema")();
-  await require("@saltcorn/data/db/fixtures")();
-  getState().registerPlugin("mock_plugin", plugin_with_routes());
+  await reset();
+  await fixtures();
+  getState()!.registerPlugin("mock_plugin", plugin_with_routes());
 });
 jest.setTimeout(30000);
 
@@ -128,7 +137,7 @@ describe("Backup and restore", () => {
       min_role_read: 40,
       description: "Users are the best",
     });
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
 
     const fnm = await create_backup();
     const t1 = Table.findOne({ name: "books" });

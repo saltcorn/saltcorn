@@ -5,7 +5,7 @@
  * It contains models only required by the admin interface.
  * @module
  */
-import backupImport from "./models/backup";
+import backupImport from "./models/backup.js";
 /**
  * This is the backup module
  */
@@ -13,7 +13,7 @@ export namespace backup {
   export const { create_backup, restore, create_csv_from_rows } = backupImport;
 }
 
-import packImport from "./models/pack";
+import packImport from "./models/pack.js";
 /**
  * This is the pack module
  */
@@ -38,7 +38,7 @@ export namespace pack {
   } = packImport;
 }
 
-import tenantImport from "./models/tenant";
+import tenantImport from "./models/tenant.js";
 /**
  * This is the tenant module
  */
