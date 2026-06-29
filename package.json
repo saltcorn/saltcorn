@@ -61,7 +61,7 @@
     ],
     "extends": "eslint:recommended",
     "parserOptions": {
-      "ecmaVersion": 2021
+      "ecmaVersion": 2022
     },
     "env": {
       "node": true,
@@ -73,7 +73,17 @@
       "no-empty": "warn",
       "no-control-regex": "off",
       "no-fallthrough": "warn"
-    }
+    },
+    "overrides": [
+      {
+        "files": [
+          "packages/server/**/*.js"
+        ],
+        "parserOptions": {
+          "sourceType": "module"
+        }
+      }
+    ]
   },
   "overrides": {
     "webpack": "5.107.2",

@@ -4,9 +4,9 @@
  * @subcategory markup
  */
 
-const { p, code, li, ul, pre, span } = require("@saltcorn/markup/tags");
-const { contract, is } = require("contractis");
-const { getState } = require("@saltcorn/data/db/state");
+import { p, code, li, ul, pre, span } from "@saltcorn/markup/tags";
+import { contract, is } from "contractis";
+import { getState } from "@saltcorn/data/db/state";
 
 /**
  * @param {*} type
@@ -67,4 +67,4 @@ const expressionBlurb = (type, stored, table, req) => {
   ];
 };
 
-module.exports = expressionBlurb;
+export default expressionBlurb;

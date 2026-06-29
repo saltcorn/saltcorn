@@ -1,37 +1,33 @@
-const { a, text, i, div } = require("@saltcorn/markup/tags");
+import { a, text, i, div } from "@saltcorn/markup/tags";
 
-const Tag = require("@saltcorn/data/models/tag");
-const TagEntry = require("@saltcorn/data/models/tag_entry");
-const Router = require("express-promise-router");
-const Form = require("@saltcorn/data/models/form");
-const User = require("@saltcorn/data/models/user");
-const stream = require("stream");
+import Tag from "@saltcorn/data/models/tag";
+import TagEntry from "@saltcorn/data/models/tag_entry";
+import Router from "express-promise-router";
+import Form from "@saltcorn/data/models/form";
+import User from "@saltcorn/data/models/user";
+import stream from "stream";
 
-const { isAdmin, error_catcher, csrfField } = require("./utils");
-const { send_infoarch_page } = require("../markup/admin");
+import { isAdmin, error_catcher, csrfField } from "./utils.js";
+import { send_infoarch_page } from "../markup/admin.js";
 
-const {
-  mkTable,
-  post_delete_btn,
-  link,
-  renderForm,
-} = require("@saltcorn/markup");
+import { mkTable, post_delete_btn, link, renderForm } from "@saltcorn/markup";
 
-const {
+import {
   tablesList,
   setTableRefs,
   viewsList,
   getPageList,
   getTriggerList,
-} = require("./common_lists");
+} from "./common_lists.js";
 
-const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
-const { create_pack_from_tag } = require("@saltcorn/admin-models/models/pack");
-const Table = require("@saltcorn/data/models/table");
+import db from "@saltcorn/data/db";
+import { getState } from "@saltcorn/data/db/state";
+import _am_pack from "@saltcorn/admin-models/models/pack";
+const { create_pack_from_tag } = _am_pack;
+import Table from "@saltcorn/data/models/table";
 
 const router = new Router();
-module.exports = router;
+export default router;
 
 router.get(
   "/",

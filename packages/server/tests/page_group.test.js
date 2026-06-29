@@ -1,6 +1,6 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const {
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import {
   getAdminLoginCookie,
   prepScreenInfoCookie,
   prepUserAgent,
@@ -9,11 +9,11 @@ const {
   notFound,
   toNotInclude,
   resetToFixtures,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const Page = require("@saltcorn/data/models/page");
-const PageGroup = require("@saltcorn/data/models/page_group");
-const PageGroupMember = require("@saltcorn/data/models/page_group_member");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import Page from "@saltcorn/data/models/page";
+import PageGroup from "@saltcorn/data/models/page_group";
+import PageGroupMember from "@saltcorn/data/models/page_group_member";
 
 beforeAll(async () => {
   await resetToFixtures();

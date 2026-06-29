@@ -4,34 +4,34 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const {
+import Router from "express-promise-router";
+import {
   isAdmin,
   setTenant,
   error_catcher,
   isAdminOrHasConfigMinRole,
-} = require("./utils.js");
-const {
+} from "./utils.js";
+import {
   send_infoarch_page,
   send_admin_page,
   config_fields_form,
   save_config_from_form,
   upload_language_pack,
-} = require("../markup/admin.js");
-const { getState } = require("@saltcorn/data/db/state");
-const { span, div, a, i, text, button } = require("@saltcorn/markup/tags");
-const {
+} from "../markup/admin.js";
+import { getState } from "@saltcorn/data/db/state";
+import { span, div, a, i, text, button } from "@saltcorn/markup/tags";
+import {
   mkTable,
   renderForm,
   post_delete_btn,
   post_btn,
-} = require("@saltcorn/markup");
-const Form = require("@saltcorn/data/models/form");
-const Snapshot = require("@saltcorn/admin-models/models/snapshot");
-const { stringify } = require("csv-stringify");
-const csvtojson = require("csvtojson");
-const { hasLLM, translate } = require("@saltcorn/data/translate");
-const { escapeHtml } = require("@saltcorn/data/utils");
+} from "@saltcorn/markup";
+import Form from "@saltcorn/data/models/form";
+import Snapshot from "@saltcorn/admin-models/models/snapshot";
+import { stringify } from "csv-stringify";
+import csvtojson from "csvtojson";
+import { hasLLM, translate } from "@saltcorn/data/translate";
+import { escapeHtml } from "@saltcorn/data/utils";
 
 /**
  * @type {object}
@@ -41,7 +41,7 @@ const { escapeHtml } = require("@saltcorn/data/utils");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @name get

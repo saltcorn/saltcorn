@@ -1,19 +1,19 @@
-const User = require("@saltcorn/data/models/user");
-const Table = require("@saltcorn/data/models/table");
-const Tag = require("@saltcorn/data/models/tag");
-const TagEntry = require("@saltcorn/data/models/tag_entry");
-const { editRoleForm } = require("../markup/forms.js");
-const {
+import User from "@saltcorn/data/models/user";
+import Table from "@saltcorn/data/models/table";
+import Tag from "@saltcorn/data/models/tag";
+import TagEntry from "@saltcorn/data/models/tag_entry";
+import { editRoleForm } from "../markup/forms.js";
+import {
   mkTable,
   link,
   post_delete_btn,
   settingsDropdown,
   post_dropdown_item,
   badge,
-} = require("@saltcorn/markup");
-const { get_base_url } = require("./utils.js");
-const { getState } = require("@saltcorn/data/db/state");
-const {
+} from "@saltcorn/markup";
+import { get_base_url } from "./utils.js";
+import { getState } from "@saltcorn/data/db/state";
+import {
   h4,
   p,
   div,
@@ -23,7 +23,7 @@ const {
   span,
   nbsp,
   button,
-} = require("@saltcorn/markup/tags");
+} from "@saltcorn/markup/tags";
 
 /**
  * @param {string} col
@@ -170,7 +170,12 @@ const editViewRoleForm = (view, roles, req, on_done_redirect_str) =>
  * @param {object} req
  * @returns {div}
  */
-const view_dropdown = (view, req, on_done_redirect_str = "", includeRun = true) =>
+const view_dropdown = (
+  view,
+  req,
+  on_done_redirect_str = "",
+  includeRun = true
+) =>
   settingsDropdown(`dropdownMenuButton${view.id}`, [
     includeRun &&
       a(
@@ -230,7 +235,7 @@ const view_dropdown = (view, req, on_done_redirect_str = "", includeRun = true) 
   ]);
 
 const setTableRefs = async (views) => {
-  const tables = await Table.find({}, { cached:true });
+  const tables = await Table.find({}, { cached: true });
   const getTable = (tid) => tables.find((t) => t.id === tid).name;
 
   views.forEach((v) => {
@@ -873,7 +878,7 @@ const getTriggerList = async (
   );
 };
 
-module.exports = {
+export {
   tablesList,
   setTableRefs,
   viewsList,

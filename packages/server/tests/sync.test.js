@@ -1,6 +1,6 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const {
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import {
   getUserLoginCookie,
   getAdminLoginCookie,
   resetToFixtures,
@@ -9,15 +9,15 @@ const {
   toInclude,
   toSucceed,
   resToLoginCookie,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const { sleep } = require("@saltcorn/data/tests/mocks");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import { sleep } from "@saltcorn/data/tests/mocks";
 
-const Table = require("@saltcorn/data/models/table");
-const TableConstraint = require("@saltcorn/data/models/table_constraints");
-const Field = require("@saltcorn/data/models/field");
-const User = require("@saltcorn/data/models/user");
-const Plugin = require("@saltcorn/data/models/plugin");
+import Table from "@saltcorn/data/models/table";
+import TableConstraint from "@saltcorn/data/models/table_constraints";
+import Field from "@saltcorn/data/models/field";
+import User from "@saltcorn/data/models/user";
+import Plugin from "@saltcorn/data/models/plugin";
 
 beforeAll(async () => {
   await resetToFixtures();

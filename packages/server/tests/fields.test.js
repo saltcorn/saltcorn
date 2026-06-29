@@ -1,9 +1,9 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const Field = require("@saltcorn/data/models/field");
-const Table = require("@saltcorn/data/models/table");
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import Field from "@saltcorn/data/models/field";
+import Table from "@saltcorn/data/models/table";
 
-const {
+import {
   getStaffLoginCookie,
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
@@ -13,8 +13,8 @@ const {
   toRedirect,
   resetToFixtures,
   respondJsonWith,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
 
 afterAll(db.close);
 
@@ -366,7 +366,7 @@ describe("Field Endpoints", () => {
       .set("Cookie", loginCookie)
       .expect(toInclude(" is: <pre>"));
   });
-   it("should show on stored expression with half-hjoinfield", async () => {
+  it("should show on stored expression with half-hjoinfield", async () => {
     const loginCookie = await getAdminLoginCookie();
     const table = Table.findOne({ name: "books" });
 

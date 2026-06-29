@@ -3,10 +3,10 @@
  * @module routes/config
  * @subcategory routes
  */
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const { isAdmin, error_catcher } = require("./utils.js");
-const { getState } = require("@saltcorn/data/db/state");
+import { isAdmin, error_catcher } from "./utils.js";
+import { getState } from "@saltcorn/data/db/state";
 
 /**
  * @type {object}
@@ -16,7 +16,7 @@ const { getState } = require("@saltcorn/data/db/state");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @name post/delete/:key
@@ -65,8 +65,8 @@ router.post(
       typeof boolcheck === "undefined"
         ? []
         : Array.isArray(boolcheck)
-        ? boolcheck
-        : [boolcheck];
+          ? boolcheck
+          : [boolcheck];
     for (const k of boolchecks) {
       if (typeof (req.body || {})[k] === "undefined" && validKeyName(k))
         await state.setConfig(k, false);

@@ -1,6 +1,10 @@
-const fs = require("fs");
-const path = require("path");
-const { JSDOM } = require("jsdom");
+import { fileURLToPath as __fileURLToPath } from "url";
+import { dirname as __pathDirname } from "path";
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __pathDirname(__filename);
+import fs from "fs";
+import path from "path";
+import { JSDOM } from "jsdom";
 
 // jest provided a jsdom test environment (via @jest-environment jsdom); node's
 // built-in test runner does not, so build one explicitly and expose the

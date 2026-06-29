@@ -3,13 +3,17 @@
  * @module restart_watcher
  */
 
-const path = require("path");
-const { spawnSync } = require("child_process");
-const watch = require("node-watch");
-const Plugin = require("@saltcorn/data/models/plugin");
-const db = require("@saltcorn/data/db");
-const { eachTenant } = require("@saltcorn/admin-models/models/tenant");
-
+import { fileURLToPath as __fileURLToPath } from "url";
+import { dirname as __pathDirname } from "path";
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __pathDirname(__filename);
+import path from "path";
+import { spawnSync } from "child_process";
+import watch from "node-watch";
+import Plugin from "@saltcorn/data/models/plugin";
+import db from "@saltcorn/data/db";
+import _am_tenant from "@saltcorn/admin-models/models/tenant";
+const { eachTenant } = _am_tenant;
 /**
  * packages that should trigger a server re-start
  */
@@ -188,7 +192,7 @@ const listenForChanges = (projectDirs, pluginDirs) => {
   }
 };
 
-module.exports = {
+export {
   listenForChanges,
   getProjectRoot,
   getPackagesDirectory,

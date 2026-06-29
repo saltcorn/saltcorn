@@ -2,13 +2,13 @@
  * @category server
  * @module fixture_persons
  */
-const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
-const Table = require("@saltcorn/data/models/table");
-const Field = require("@saltcorn/data/models/field");
-const View = require("@saltcorn/data/models/view");
-const User = require("@saltcorn/data/models/user");
-const basePlugin = require("@saltcorn/base-plugin");
+import db from "@saltcorn/data/db";
+import { getState } from "@saltcorn/data/db/state";
+import Table from "@saltcorn/data/models/table";
+import Field from "@saltcorn/data/models/field";
+import View from "@saltcorn/data/models/view";
+import User from "@saltcorn/data/models/user";
+import basePlugin from "@saltcorn/base-plugin";
 
 getState().registerPlugin("base", basePlugin);
 

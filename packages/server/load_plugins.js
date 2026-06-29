@@ -1,7 +1,7 @@
-const Plugin = require("@saltcorn/data/models/plugin");
+import Plugin from "@saltcorn/data/models/plugin";
 
 /** @deprecated Import directly from @saltcorn/data/models/plugin (Plugin static methods) */
-module.exports = {
+export default {
   loadAndSaveNewPlugin: Plugin.loadAndSaveNewPlugin,
   loadAllPlugins: Plugin.loadAllPlugins,
   loadPlugin: Plugin.loadPlugin,

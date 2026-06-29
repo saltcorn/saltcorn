@@ -4,11 +4,11 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const Crash = require("@saltcorn/data/models/crash");
-const db = require("@saltcorn/data/db");
-const { link, post_btn, mkTable } = require("@saltcorn/markup");
-const {
+import Router from "express-promise-router";
+import Crash from "@saltcorn/data/models/crash";
+import db from "@saltcorn/data/db";
+import { link, post_btn, mkTable } from "@saltcorn/markup";
+import {
   table,
   tbody,
   tr,
@@ -18,10 +18,10 @@ const {
   div,
   h3,
   p,
-} = require("@saltcorn/markup/tags");
+} from "@saltcorn/markup/tags";
 
-const { isAdmin, error_catcher } = require("./utils.js");
-const { send_events_page } = require("../markup/admin.js");
+import { isAdmin, error_catcher } from "./utils.js";
+import { send_events_page } from "../markup/admin.js";
 
 /**
  * @type {object}
@@ -31,7 +31,7 @@ const { send_events_page } = require("../markup/admin.js");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @name get

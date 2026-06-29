@@ -5,13 +5,16 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const Form = require("@saltcorn/data/models/form");
-const {
-  getState,
-  add_tenant,
-  getRootState,
-} = require("@saltcorn/data/db/state");
+import { fileURLToPath as __fileURLToPath } from "url";
+import { dirname as __pathDirname } from "path";
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __pathDirname(__filename);
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import Router from "express-promise-router";
+import Form from "@saltcorn/data/models/form";
+import { getState, add_tenant, getRootState } from "@saltcorn/data/db/state";
+import _am_tenant from "@saltcorn/admin-models/models/tenant";
 const {
   create_tenant,
   getAllTenants,
@@ -20,15 +23,15 @@ const {
   switchToTenant,
   insertTenant,
   Tenant,
-} = require("@saltcorn/admin-models/models/tenant");
-const {
+} = _am_tenant;
+import {
   renderForm,
   link,
   post_delete_btn,
   localeDateTime,
   mkTable,
-} = require("@saltcorn/markup");
-const {
+} from "@saltcorn/markup";
+import {
   div,
   p,
   a,
@@ -40,25 +43,25 @@ const {
   th,
   td,
   code,
-} = require("@saltcorn/markup/tags");
-const db = require("@saltcorn/data/db");
+} from "@saltcorn/markup/tags";
+import db from "@saltcorn/data/db";
 
-const Plugin = require("@saltcorn/data/models/plugin");
-const {
+import Plugin from "@saltcorn/data/models/plugin";
+import {
   isAdmin,
   error_catcher,
   is_ip_address,
   tenant_letsencrypt_name,
-} = require("./utils.js");
-const User = require("@saltcorn/data/models/user");
-const File = require("@saltcorn/data/models/file");
-const {
+} from "./utils.js";
+import User from "@saltcorn/data/models/user";
+import File from "@saltcorn/data/models/file";
+import {
   send_infoarch_page,
   config_fields_form,
   save_config_from_form,
-} = require("../markup/admin.js");
-const { getConfig } = require("@saltcorn/data/models/config");
-const path = require("path");
+} from "../markup/admin.js";
+import { getConfig } from "@saltcorn/data/models/config";
+import path from "path";
 //const {quote} = require("@saltcorn/db-common");
 // todo add button backup / restore for particular tenant (available in admin tenants screens)
 //const {
@@ -74,7 +77,7 @@ const path = require("path");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 const remove_leading_chars = (cs, s) =>
   s.startsWith(cs) ? remove_leading_chars(cs, s.substring(cs.length)) : s;

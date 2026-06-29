@@ -4,57 +4,58 @@
  * @module app
  */
 
-const express = require("express");
-const mountRoutes = require("./routes");
+import { fileURLToPath as __fileURLToPath } from "url";
+import { dirname as __pathDirname } from "path";
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __pathDirname(__filename);
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import express from "express";
+import mountRoutes from "./routes/index.js";
 
-const {
+import {
   getState,
   getRootState,
   init_multi_tenant,
-} = require("@saltcorn/data/db/state");
-const db = require("@saltcorn/data/db");
-const passport = require("passport");
-const CustomStrategy = require("passport-custom").Strategy;
-const BearerStrategy = require("passport-http-bearer");
-const User = require("@saltcorn/data/models/user");
-const File = require("@saltcorn/data/models/file");
-const flash = require("connect-flash");
-const Plugin = require("@saltcorn/data/models/plugin");
-const homepage = require("./routes/homepage");
-const errors = require("./errors");
-const {
-  getConfig,
-  available_languages,
-} = require("@saltcorn/data/models/config");
-const {
+} from "@saltcorn/data/db/state";
+import db from "@saltcorn/data/db";
+import passport from "passport";
+import { Strategy as CustomStrategy } from "passport-custom";
+import BearerStrategy from "passport-http-bearer";
+import User from "@saltcorn/data/models/user";
+import File from "@saltcorn/data/models/file";
+import flash from "connect-flash";
+import Plugin from "@saltcorn/data/models/plugin";
+import homepage from "./routes/homepage.js";
+import errors from "./errors.js";
+import { getConfig, available_languages } from "@saltcorn/data/models/config";
+import {
   get_base_url,
   error_catcher,
   getSessionStore,
   setTenant,
   applyUserLocale,
-} = require("./routes/utils.js");
-const {
-  getAllTenants,
-  eachTenant,
-} = require("@saltcorn/admin-models/models/tenant");
-const path = require("path");
-const helmet = require("helmet");
-const wrapper = require("./wrapper");
-const csrf = require("@dr.pogodin/csurf");
-const { I18n } = require("i18n");
-const { h1 } = require("@saltcorn/markup/tags");
-const is = require("contractis/is");
-const Trigger = require("@saltcorn/data/models/trigger");
-const s3storage = require("./s3storage");
-const TotpStrategy = require("passport-totp").Strategy;
-const JwtStrategy = require("passport-jwt").Strategy;
-const ExtractJwt = require("passport-jwt").ExtractJwt;
-const cors = require("cors");
-const api = require("./routes/api");
-const scapi = require("./routes/scapi");
-const fs = require("fs");
-const PluginRoutesHandler = require("./plugin_routes_handler");
-const compression = require("compression");
+} from "./routes/utils.js";
+import _am_tenant from "@saltcorn/admin-models/models/tenant";
+const { getAllTenants, eachTenant } = _am_tenant;
+import path from "path";
+import helmet from "helmet";
+import wrapper from "./wrapper.js";
+import csrf from "@dr.pogodin/csurf";
+import { I18n } from "i18n";
+import { h1 } from "@saltcorn/markup/tags";
+import is from "contractis/is.js";
+import Trigger from "@saltcorn/data/models/trigger";
+import s3storage from "./s3storage.js";
+import { Strategy as TotpStrategy } from "passport-totp";
+import { Strategy as JwtStrategy } from "passport-jwt";
+import { ExtractJwt as ExtractJwt } from "passport-jwt";
+import cors from "cors";
+import api from "./routes/api.js";
+import scapi from "./routes/scapi.js";
+import fs from "fs";
+import PluginRoutesHandler from "./plugin_routes_handler.js";
+import compression from "compression";
 
 const locales = Object.keys(available_languages);
 // jwt config
@@ -564,4 +565,4 @@ Sitemap: ${base}sitemap.xml
   delete Object.prototype.__proto__;
   return app;
 };
-module.exports = getApp;
+export default getApp;

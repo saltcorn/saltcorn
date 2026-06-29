@@ -1,6 +1,6 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const {
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import {
   getAdminLoginCookie,
   getStaffLoginCookie,
   toInclude,
@@ -8,11 +8,11 @@ const {
   toSucceed,
   toNotInclude,
   resetToFixtures,
-} = require("../auth/testhelp");
-const { save_menu_items } = require("@saltcorn/data/models/config");
+} from "../auth/testhelp.js";
+import { save_menu_items } from "@saltcorn/data/models/config";
 
-const db = require("@saltcorn/data/db");
-const Page = require("@saltcorn/data/models/page");
+import db from "@saltcorn/data/db";
+import Page from "@saltcorn/data/models/page";
 
 beforeAll(async () => {
   await resetToFixtures();

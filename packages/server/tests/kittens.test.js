@@ -1,6 +1,6 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const {
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import {
   toRedirect,
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
@@ -8,11 +8,11 @@ const {
   toNotInclude,
   toSucceed,
   resetToFixtures,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
-const View = require("@saltcorn/data/models/view");
-const Table = require("@saltcorn/data/models/table");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import { getState } from "@saltcorn/data/db/state";
+import View from "@saltcorn/data/models/view";
+import Table from "@saltcorn/data/models/table";
 
 afterAll(db.close);
 beforeAll(async () => {

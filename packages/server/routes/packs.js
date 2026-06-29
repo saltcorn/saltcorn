@@ -4,28 +4,24 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const {
-  isAdmin,
-  error_catcher,
-  setTenant,
-  is_relative_url,
-} = require("./utils.js");
-const { renderForm } = require("@saltcorn/markup");
-const Table = require("@saltcorn/data/models/table");
-const Form = require("@saltcorn/data/models/form");
-const View = require("@saltcorn/data/models/view");
-const Plugin = require("@saltcorn/data/models/plugin");
-const Page = require("@saltcorn/data/models/page");
-const PageGroup = require("@saltcorn/data/models/page_group");
-const Tag = require("@saltcorn/data/models/tag");
-const EventLog = require("@saltcorn/data/models/eventlog");
-const Model = require("@saltcorn/data/models/model");
-const ModelInstance = require("@saltcorn/data/models/model_instance");
-const { getState } = require("@saltcorn/data/db/state");
-const db = require("@saltcorn/data/db/index");
-const { instanceOfPack } = require("@saltcorn/types/base_types");
+import Router from "express-promise-router";
+import { isAdmin, error_catcher, setTenant, is_relative_url } from "./utils.js";
+import { renderForm } from "@saltcorn/markup";
+import Table from "@saltcorn/data/models/table";
+import Form from "@saltcorn/data/models/form";
+import View from "@saltcorn/data/models/view";
+import Plugin from "@saltcorn/data/models/plugin";
+import Page from "@saltcorn/data/models/page";
+import PageGroup from "@saltcorn/data/models/page_group";
+import Tag from "@saltcorn/data/models/tag";
+import EventLog from "@saltcorn/data/models/eventlog";
+import Model from "@saltcorn/data/models/model";
+import ModelInstance from "@saltcorn/data/models/model_instance";
+import { getState } from "@saltcorn/data/db/state";
+import db from "@saltcorn/data/db/index";
+import { instanceOfPack } from "@saltcorn/types/base_types";
 
+import _am_pack from "@saltcorn/admin-models/models/pack";
 const {
   table_pack,
   view_pack,
@@ -43,12 +39,12 @@ const {
   can_install_pack,
   uninstall_pack,
   event_log_pack,
-} = require("@saltcorn/admin-models/models/pack");
-const { pre, code, p, text, text_attr } = require("@saltcorn/markup/tags");
-const Library = require("@saltcorn/data/models/library");
-const Trigger = require("@saltcorn/data/models/trigger");
-const Role = require("@saltcorn/data/models/role");
-const fs = require("fs");
+} = _am_pack;
+import { pre, code, p, text, text_attr } from "@saltcorn/markup/tags";
+import Library from "@saltcorn/data/models/library";
+import Trigger from "@saltcorn/data/models/trigger";
+import Role from "@saltcorn/data/models/role";
+import fs from "fs";
 
 /**
  * @type {object}
@@ -58,7 +54,7 @@ const fs = require("fs");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 const getOnDoneRedirect = (req, fallback = "/plugins") => {
   if (

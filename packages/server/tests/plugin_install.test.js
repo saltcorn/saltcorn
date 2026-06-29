@@ -1,15 +1,13 @@
-const Table = require("@saltcorn/data/models/table");
-const Plugin = require("@saltcorn/data/models/plugin");
-const { getState, add_tenant } = require("@saltcorn/data/db/state");
-const { install_pack } = require("@saltcorn/admin-models/models/pack");
-const {
-  switchToTenant,
-  insertTenant,
-  create_tenant,
-} = require("@saltcorn/admin-models/models/tenant");
-const { resetToFixtures } = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const { get_store_items } = require("../routes/plugins");
+import Table from "@saltcorn/data/models/table";
+import Plugin from "@saltcorn/data/models/plugin";
+import { getState, add_tenant } from "@saltcorn/data/db/state";
+import _am_pack from "@saltcorn/admin-models/models/pack";
+const { install_pack } = _am_pack;
+import _am_tenant from "@saltcorn/admin-models/models/tenant";
+const { switchToTenant, insertTenant, create_tenant } = _am_tenant;
+import { resetToFixtures } from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import { get_store_items } from "../routes/plugins.js";
 
 beforeAll(async () => {
   if (!db.isSQLite) await db.query(`drop schema if exists test101 CASCADE `);

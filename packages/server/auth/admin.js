@@ -5,43 +5,34 @@
  * @subcategory auth
  */
 // todo refactor to few modules + rename to be in sync with router url
-const Router = require("express-promise-router");
-const { contract, is } = require("contractis");
-const { X509Certificate } = require("crypto");
-const db = require("@saltcorn/data/db");
-const User = require("@saltcorn/data/models/user");
-const View = require("@saltcorn/data/models/view");
-const Field = require("@saltcorn/data/models/field");
-const Form = require("@saltcorn/data/models/form");
-const {
+import Router from "express-promise-router";
+import { contract, is } from "contractis";
+import { X509Certificate } from "crypto";
+import db from "@saltcorn/data/db";
+import User from "@saltcorn/data/models/user";
+import View from "@saltcorn/data/models/view";
+import Field from "@saltcorn/data/models/field";
+import Form from "@saltcorn/data/models/form";
+import {
   mkTable,
   renderForm,
   link,
   post_btn,
   settingsDropdown,
   post_dropdown_item,
-} = require("@saltcorn/markup");
-const {
+} from "@saltcorn/markup";
+import {
   isAdmin,
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
   isAdminOrHasConfigMinRole,
-} = require("../routes/utils");
-const { send_reset_email } = require("./resetpw");
-const { getState } = require("@saltcorn/data/db/state");
-const {
-  a,
-  div,
-  span,
-  code,
-  h5,
-  i,
-  p,
-  input,
-} = require("@saltcorn/markup/tags");
-const Table = require("@saltcorn/data/models/table");
-const {
+} from "../routes/utils.js";
+import { send_reset_email } from "./resetpw.js";
+import { getState } from "@saltcorn/data/db/state";
+import { a, div, span, code, h5, i, p, input } from "@saltcorn/markup/tags";
+import Table from "@saltcorn/data/models/table";
+import {
   send_users_page,
   config_fields_form,
   save_config_from_form,
@@ -49,11 +40,11 @@ const {
   hostname_matches_baseurl,
   is_hsts_tld,
   check_if_restart_required,
-} = require("../markup/admin");
-const { send_verification_email } = require("@saltcorn/data/models/email");
-const { expressionValidator } = require("@saltcorn/data/models/expression");
+} from "../markup/admin.js";
+import { send_verification_email } from "@saltcorn/data/models/email";
+import { expressionValidator } from "@saltcorn/data/models/expression";
 const router = new Router();
-module.exports = router;
+export default router;
 
 const getOnDoneRedirect = (req, fallback = "/useradmin") => {
   if (

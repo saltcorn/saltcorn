@@ -1,6 +1,10 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const {
+import { fileURLToPath as __fileURLToPath } from "url";
+import { dirname as __pathDirname } from "path";
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __pathDirname(__filename);
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import {
   getStaffLoginCookie,
   getAdminLoginCookie,
   toRedirect,
@@ -10,16 +14,16 @@ const {
   resetToFixtures,
   toSucceedWithImage,
   respondJsonWith,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const fs = require("fs").promises;
-const path = require("path");
-const File = require("@saltcorn/data/models/file");
-const Field = require("@saltcorn/data/models/field");
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const { existsSync } = require("fs");
-const { getState } = require("@saltcorn/data/db/state");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import { promises as fs } from "fs";
+import path from "path";
+import File from "@saltcorn/data/models/file";
+import Field from "@saltcorn/data/models/field";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import { existsSync } from "fs";
+import { getState } from "@saltcorn/data/db/state";
 
 const createTestFile = async (
   folder,
@@ -487,7 +491,7 @@ describe("visible_entries test", () => {
   };
 
   it("shows allowed files", async () => {
-    await getState().setConfig("min_role_edit_files", 40)
+    await getState().setConfig("min_role_edit_files", 40);
     await setRole(100, path.join("_sc_test_subfolder_one", "foo_image.png"));
     await setDirRole(100, "_sc_test_subfolder_one");
 

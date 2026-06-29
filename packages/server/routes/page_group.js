@@ -1,19 +1,14 @@
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const Form = require("@saltcorn/data/models/form");
-const { error_catcher, isAdmin } = require("./utils.js");
-const { send_infoarch_page } = require("../markup/admin.js");
-const { getState } = require("@saltcorn/data/db/state");
-const { a, div, i, p } = require("@saltcorn/markup/tags");
-const {
-  renderForm,
-  link,
-  post_delete_btn,
-  mkTable,
-} = require("@saltcorn/markup");
+import Form from "@saltcorn/data/models/form";
+import { error_catcher, isAdmin } from "./utils.js";
+import { send_infoarch_page } from "../markup/admin.js";
+import { getState } from "@saltcorn/data/db/state";
+import { a, div, i, p } from "@saltcorn/markup/tags";
+import { renderForm, link, post_delete_btn, mkTable } from "@saltcorn/markup";
 
 const router = new Router();
-module.exports = router;
+export default router;
 
 const deviceTypes = [
   "mobile",

@@ -5,38 +5,40 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const {
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import Router from "express-promise-router";
+import {
   isAdmin,
   loggedIn,
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
-} = require("./utils.js");
-const { renderForm, link, post_btn } = require("@saltcorn/markup");
-const {
+} from "./utils.js";
+import { renderForm, link, post_btn } from "@saltcorn/markup";
+import {
   getState,
   restart_tenant,
   getRootState,
-} = require("@saltcorn/data/db/state");
-const Form = require("@saltcorn/data/models/form");
-const Field = require("@saltcorn/data/models/field");
-const Plugin = require("@saltcorn/data/models/plugin");
-const User = require("@saltcorn/data/models/user");
-const { fetch_available_packs } = require("@saltcorn/admin-models/models/pack");
-const {
-  upgrade_all_tenants_plugins,
-} = require("@saltcorn/admin-models/models/tenant");
-const db = require("@saltcorn/data/db");
-const {
+} from "@saltcorn/data/db/state";
+import Form from "@saltcorn/data/models/form";
+import Field from "@saltcorn/data/models/field";
+import Plugin from "@saltcorn/data/models/plugin";
+import User from "@saltcorn/data/models/user";
+import _am_pack from "@saltcorn/admin-models/models/pack";
+const { fetch_available_packs } = _am_pack;
+import _am_tenant from "@saltcorn/admin-models/models/tenant";
+const { upgrade_all_tenants_plugins } = _am_tenant;
+import db from "@saltcorn/data/db";
+import {
   plugin_types_info_card,
   plugin_functions_info_card,
   plugin_viewtemplates_info_card,
   showRepository,
-} = require("../markup/plugin-store");
-const MarkdownIt = require("markdown-it"),
-  md = new MarkdownIt();
-const {
+} from "../markup/plugin-store.js";
+import MarkdownIt from "markdown-it";
+const md = new MarkdownIt();
+import {
   h5,
   a,
   div,
@@ -60,23 +62,23 @@ const {
   domReady,
   details,
   summary,
-} = require("@saltcorn/markup/tags");
-const { search_bar } = require("@saltcorn/markup/helpers");
-const fs = require("fs");
-const path = require("path");
-const { get_latest_npm_version } = require("@saltcorn/data/models/config");
-const { flash_restart } = require("../markup/admin.js");
-const {
+} from "@saltcorn/markup/tags";
+import { search_bar } from "@saltcorn/markup/helpers";
+import fs from "fs";
+import path from "path";
+import { get_latest_npm_version } from "@saltcorn/data/models/config";
+import { flash_restart } from "../markup/admin.js";
+import {
   sleep,
   removeNonWordChars,
   getFetchProxyOptions,
-} = require("@saltcorn/data/utils");
-const npmFetch = require("npm-registry-fetch");
-const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer");
-const {
+} from "@saltcorn/data/utils";
+import npmFetch from "npm-registry-fetch";
+import PluginInstaller from "@saltcorn/plugins-loader/plugin_installer";
+import {
   supportedVersion,
   isVersionSupported,
-} = require("@saltcorn/plugins-loader/stable_versioning");
+} from "@saltcorn/plugins-loader/stable_versioning";
 
 const getOnDoneRedirect = (req, fallback = "/plugins") => {
   if (
@@ -96,7 +98,7 @@ const getOnDoneRedirect = (req, fallback = "/plugins") => {
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * Plugin Form Creation
@@ -1714,3 +1716,4 @@ router.post(
 );
 
 router.get_store_items = get_store_items;
+export { get_store_items };

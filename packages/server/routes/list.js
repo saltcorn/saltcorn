@@ -8,11 +8,11 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const db = require("@saltcorn/data/db");
-const { mkTable, link, post_btn } = require("@saltcorn/markup");
-const {
+import db from "@saltcorn/data/db";
+import { mkTable, link, post_btn } from "@saltcorn/markup";
+import {
   script,
   domReady,
   div,
@@ -23,16 +23,12 @@ const {
   input,
   label,
   form,
-} = require("@saltcorn/markup/tags");
-const Table = require("@saltcorn/data/models/table");
-const {
-  isAdmin,
-  error_catcher,
-  isAdminOrHasConfigMinRole,
-} = require("./utils");
-const moment = require("moment");
-const { getState } = require("@saltcorn/data/db/state");
-const { comparingCaseInsensitive } = require("@saltcorn/data/utils");
+} from "@saltcorn/markup/tags";
+import Table from "@saltcorn/data/models/table";
+import { isAdmin, error_catcher, isAdminOrHasConfigMinRole } from "./utils.js";
+import moment from "moment";
+import { getState } from "@saltcorn/data/db/state";
+import { comparingCaseInsensitive } from "@saltcorn/data/utils";
 
 /**
  * @type {object}
@@ -44,7 +40,7 @@ const { comparingCaseInsensitive } = require("@saltcorn/data/utils");
 const router = new Router();
 
 // export our router to be mounted by the parent application
-module.exports = router;
+export default router;
 
 /**
  * Show list of table data history (GET handler)

@@ -4,13 +4,13 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const Page = require("@saltcorn/data/models/page");
-const PageGroup = require("@saltcorn/data/models/page_group");
-const Trigger = require("@saltcorn/data/models/trigger");
-const { getState } = require("@saltcorn/data/db/state");
-const {
+import Page from "@saltcorn/data/models/page";
+import PageGroup from "@saltcorn/data/models/page_group";
+import Trigger from "@saltcorn/data/models/trigger";
+import { getState } from "@saltcorn/data/db/state";
+import {
   error_catcher,
   scan_for_page_title,
   isAdmin,
@@ -18,13 +18,13 @@ const {
   sendHtmlStringWithGlobals,
   getEligiblePage,
   getRandomPage,
-} = require("../routes/utils.js");
-const { isTest, objectToQueryString } = require("@saltcorn/data/utils");
-const { add_edit_bar, add_results_to_contents } = require("../markup/admin.js");
-const { traverseSync } = require("@saltcorn/data/models/layout");
-const { run_action_column } = require("@saltcorn/data/plugin-helper");
-const db = require("@saltcorn/data/db");
-const Crash = require("@saltcorn/data/models/crash");
+} from "../routes/utils.js";
+import { isTest, objectToQueryString } from "@saltcorn/data/utils";
+import { add_edit_bar, add_results_to_contents } from "../markup/admin.js";
+import { traverseSync } from "@saltcorn/data/models/layout";
+import { run_action_column } from "@saltcorn/data/plugin-helper";
+import db from "@saltcorn/data/db";
+import Crash from "@saltcorn/data/models/crash";
 
 /**
  * @type {object}
@@ -34,7 +34,7 @@ const Crash = require("@saltcorn/data/models/crash");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 const findPageOrGroup = (pagename) => {
   const page = Page.findOne({ name: pagename });

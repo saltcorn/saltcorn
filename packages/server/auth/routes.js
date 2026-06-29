@@ -3,20 +3,20 @@
  * @module auth/routes
  * @subcategory auth
  */
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const db = require("@saltcorn/data/db");
-const User = require("@saltcorn/data/models/user");
-const Field = require("@saltcorn/data/models/field");
-const Page = require("@saltcorn/data/models/page");
-const Form = require("@saltcorn/data/models/form");
-const File = require("@saltcorn/data/models/file");
+import db from "@saltcorn/data/db";
+import User from "@saltcorn/data/models/user";
+import Field from "@saltcorn/data/models/field";
+import Page from "@saltcorn/data/models/page";
+import Form from "@saltcorn/data/models/form";
+import File from "@saltcorn/data/models/file";
 
-const {
+import {
   send_verification_email,
   getOauth2Client,
-} = require("@saltcorn/data/models/email");
-const {
+} from "@saltcorn/data/models/email";
+import {
   error_catcher,
   loggedIn,
   csrfField,
@@ -24,12 +24,12 @@ const {
   is_relative_url,
   isAdmin,
   normalize_relative_url,
-} = require("../routes/utils.js");
-const { getState } = require("@saltcorn/data/db/state");
-const { send_reset_email } = require("./resetpw");
-const { renderForm, post_btn } = require("@saltcorn/markup");
-const passport = require("passport");
-const {
+} from "../routes/utils.js";
+import { getState } from "@saltcorn/data/db/state";
+import { send_reset_email } from "./resetpw.js";
+import { renderForm, post_btn } from "@saltcorn/markup";
+import passport from "passport";
+import {
   a,
   img,
   text,
@@ -51,31 +51,32 @@ const {
   script,
   domReady,
   button,
-} = require("@saltcorn/markup/tags");
-const {
+} from "@saltcorn/markup/tags";
+import {
   available_languages,
   check_email_mask,
-} = require("@saltcorn/data/models/config");
-const rateLimit = require("express-rate-limit");
-const moment = require("moment");
-const View = require("@saltcorn/data/models/view");
-const Table = require("@saltcorn/data/models/table");
-const { getForm } = require("@saltcorn/data/viewable_fields");
-const {
+} from "@saltcorn/data/models/config";
+import rateLimit from "express-rate-limit";
+import moment from "moment";
+import View from "@saltcorn/data/models/view";
+import Table from "@saltcorn/data/models/table";
+import { getForm } from "@saltcorn/data/viewable_fields";
+import {
   InvalidConfiguration,
   getSessionId,
   isTest,
   toSafeRelativeUrl,
-} = require("@saltcorn/data/utils");
-const Trigger = require("@saltcorn/data/models/trigger");
-const { restore_backup } = require("../markup/admin.js");
-const { restore } = require("@saltcorn/admin-models/models/backup");
-const Plugin = require("@saltcorn/data/models/plugin");
-const fs = require("fs");
-const base32 = require("thirty-two");
-const qrcode = require("qrcode");
-const totp = require("notp").totp;
-const jwt = require("jsonwebtoken");
+} from "@saltcorn/data/utils";
+import Trigger from "@saltcorn/data/models/trigger";
+import { restore_backup } from "../markup/admin.js";
+import _am_backup from "@saltcorn/admin-models/models/backup";
+const { restore } = _am_backup;
+import Plugin from "@saltcorn/data/models/plugin";
+import fs from "fs";
+import base32 from "thirty-two";
+import qrcode from "qrcode";
+import { totp as totp } from "notp";
+import jwt from "jsonwebtoken";
 
 /**
  * @type {object}
@@ -86,7 +87,7 @@ const jwt = require("jsonwebtoken");
  */
 
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @param {object} req

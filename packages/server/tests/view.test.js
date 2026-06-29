@@ -1,6 +1,6 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const {
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import {
   toRedirect,
   getAdminLoginCookie,
   getStaffLoginCookie,
@@ -10,13 +10,13 @@ const {
   resetToFixtures,
   respondJsonWith,
   toSucceed,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
-const View = require("@saltcorn/data/models/view");
-const Table = require("@saltcorn/data/models/table");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import { getState } from "@saltcorn/data/db/state";
+import View from "@saltcorn/data/models/view";
+import Table from "@saltcorn/data/models/table";
 
-const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
+import { plugin_with_routes } from "@saltcorn/data/tests/mocks";
 
 afterAll(db.close);
 beforeAll(async () => {
@@ -1198,7 +1198,7 @@ describe("check redirect via _referer in Edit view", () => {
       .post("/view/authoredit_open_redirect_sec_test")
       .set("Cookie", loginCookie)
       .send("author=SecurityTestAuthor&_referer=https://evil.com/phishing");
-    
+
     expect(res.statusCode).toBe(302);
     expect(res.headers["location"]).not.toBe("https://evil.com/phishing");
     expect(res.headers["location"]).not.toMatch(/^https?:\/\//);

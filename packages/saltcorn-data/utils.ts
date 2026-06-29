@@ -409,9 +409,10 @@ const hashString = (s: string): string => {
  */
 const getSafeSaltcornCmd = () => {
   // NODE_TEST_CONTEXT is set by node's test runner in the child process it
-  // spawns per test file (JEST_WORKER_ID was the jest equivalent); there
-  // require.main is the test file (packages/<pkg>/tests/x.test.js), so the
-  // CLI bin is two directories up.
+  // spawns per test file (JEST_WORKER_ID was the jest equivalent). Under an
+  // ESM test entry (e.g. the server's node --test suite) require.main is
+  // undefined, so resolve the CLI bin from this module's own location:
+  // dataModulePath is packages/saltcorn-data/dist, two levels up is packages/.
   const inTestRunner =
     process.env.NODE_TEST_CONTEXT !== undefined ||
     process.env.JEST_WORKER_ID !== undefined;
@@ -419,14 +420,7 @@ const getSafeSaltcornCmd = () => {
     ? "saltcorn"
     : !inTestRunner
       ? join(dirname(require!.main!.filename), "saltcorn")
-      : join(
-          dirname(require!.main!.filename),
-          "..",
-          "..",
-          "saltcorn-cli",
-          "bin",
-          "saltcorn"
-        );
+      : join(dataModulePath, "..", "..", "saltcorn-cli", "bin", "saltcorn");
 };
 
 /**
