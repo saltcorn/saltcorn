@@ -1,20 +1,20 @@
-const { error_catcher, loggedIn } = require("./utils.js");
-const Router = require("express-promise-router");
-const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
-const Table = require("@saltcorn/data/models/table");
-const File = require("@saltcorn/data/models/file");
-const { getSafeSaltcornCmd } = require("@saltcorn/data/utils");
-const {
+import { error_catcher, loggedIn } from "./utils.js";
+import Router from "express-promise-router";
+import db from "@saltcorn/data/db";
+import { getState } from "@saltcorn/data/db/state";
+import Table from "@saltcorn/data/models/table";
+import File from "@saltcorn/data/models/file";
+import { getSafeSaltcornCmd } from "@saltcorn/data/utils";
+import {
   freeVariables,
   add_free_variables_to_joinfields,
-} = require("@saltcorn/data/models/expression");
-const { spawn, spawnSync } = require("child_process");
-const path = require("path");
-const fs = require("fs").promises;
+} from "@saltcorn/data/models/expression";
+import { spawn, spawnSync } from "child_process";
+import path from "path";
+import { promises as fs } from "fs";
 
 const router = new Router();
-module.exports = router;
+export default router;
 
 router.get(
   "/sync_timestamp",
@@ -52,7 +52,7 @@ const applyOwnershipFormula = async (rows, table, user) => {
   }
   // table.ownership_formula
   return rows.filter((row) => {
-    const evalRow = rowMap ? rowMap[row[pkName]] ?? row : row;
+    const evalRow = rowMap ? (rowMap[row[pkName]] ?? row) : row;
     return table.is_owner(user, evalRow);
   });
 };
@@ -258,8 +258,8 @@ const getDelRows = async (tblName, syncFrom, syncUntil, userId = null) => {
     `select *
      from (
       select ref, max(last_modified), owner_id, owner_fields from ${schema}"${db.sqlsanitize(
-      tblName
-    )}_sync_info"
+        tblName
+      )}_sync_info"
       group by ref, deleted, owner_id, owner_fields having deleted = true) as alias
       where alias.max < to_timestamp($1)
         and alias.max > to_timestamp($2)

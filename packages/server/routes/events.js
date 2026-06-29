@@ -4,8 +4,8 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const { isAdmin, setTenant, error_catcher } = require("./utils.js");
+import Router from "express-promise-router";
+import { isAdmin, setTenant, error_catcher } from "./utils.js";
 
 /**
  * @type {object}
@@ -15,7 +15,7 @@ const { isAdmin, setTenant, error_catcher } = require("./utils.js");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @name get

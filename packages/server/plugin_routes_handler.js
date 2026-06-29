@@ -1,6 +1,6 @@
-const express = require("express");
-const passport = require("passport");
-const { error_catcher } = require("./routes/utils.js");
+import express from "express";
+import passport from "passport";
+import { error_catcher } from "./routes/utils.js";
 
 const apiTokenMiddleware = (req, res, next) => {
   if (req.user) return next();
@@ -37,12 +37,20 @@ class PluginRoutesHandler {
           const middlewares = route.apiToken ? [apiTokenMiddleware] : [];
           switch (route.method) {
             case "post":
-              tenantRouter.post(route.url, ...middlewares, error_catcher(route.callback));
+              tenantRouter.post(
+                route.url,
+                ...middlewares,
+                error_catcher(route.callback)
+              );
               if (route.noCsrf === true) this.noCsrfUrls.add(route.url);
               break;
             case "get":
             default:
-              tenantRouter.get(route.url, ...middlewares, error_catcher(route.callback));
+              tenantRouter.get(
+                route.url,
+                ...middlewares,
+                error_catcher(route.callback)
+              );
               if (route.noCsrf === true) this.noCsrfUrls.add(route.url);
               break;
           }
@@ -53,4 +61,4 @@ class PluginRoutesHandler {
   }
 }
 
-module.exports = PluginRoutesHandler;
+export default PluginRoutesHandler;

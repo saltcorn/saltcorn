@@ -2,8 +2,11 @@
  * @category server
  * @module systemd
  */
-const fetch = require("node-fetch");
-const { getState } = require("@saltcorn/data/db/state");
+import fetch from "node-fetch";
+import { getState } from "@saltcorn/data/db/state";
+import User from "@saltcorn/data/models/user";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 
 /**
  * @param {number} interval
@@ -19,7 +22,6 @@ const watchDog = (interval, notify, { port }) => {
     if (Math.random() < 1.0 / pings_per_5_min) {
       if (Math.random() < 0.5) {
         // count users - check db connection is alive
-        const User = require("@saltcorn/data/models/user");
         User.count()
           .then((c) => {
             getState().log(5, `watchdog user count ${c}`);
@@ -53,30 +55,29 @@ const watchDog = (interval, notify, { port }) => {
   }
 };
 
-module.exports =
-  /**
-   * @function
-   * @name "module.exports function"
-   * @param {object} opts
-   */
-  (opts) => {
-    try {
-      const notify = require("sd-notify");
-      getState().log(4, `systemd notify ready`);
-      notify.ready();
-      const watchdogInterval = notify.watchdogInterval();
-      if (watchdogInterval && watchdogInterval > 0) {
-        const interval = Math.floor(watchdogInterval / 3);
-        setInterval(() => {
-          watchDog(interval, notify, opts);
-        }, interval);
-      }
-    } catch (e) {
-      //ignore, systemd lib not installed
-      getState().log(
-        4,
-        `Failed to notify systemd on startup (systemd lib not installed?) with error ${e}`
-      );
+export default /**
+ * @function
+ * @name "module.exports function"
+ * @param {object} opts
+ */
+(opts) => {
+  try {
+    const notify = require("sd-notify");
+    getState().log(4, `systemd notify ready`);
+    notify.ready();
+    const watchdogInterval = notify.watchdogInterval();
+    if (watchdogInterval && watchdogInterval > 0) {
+      const interval = Math.floor(watchdogInterval / 3);
+      setInterval(() => {
+        watchDog(interval, notify, opts);
+      }, interval);
     }
-  };
+  } catch (e) {
+    //ignore, systemd lib not installed
+    getState().log(
+      4,
+      `Failed to notify systemd on startup (systemd lib not installed?) with error ${e}`
+    );
+  }
+};
 4;

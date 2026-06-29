@@ -4,19 +4,19 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const { error_catcher, is_relative_url, isAdmin } = require("./utils.js");
-const Table = require("@saltcorn/data/models/table");
-const Form = require("@saltcorn/data/models/form");
-const Model = require("@saltcorn/data/models/model");
-const ModelInstance = require("@saltcorn/data/models/model_instance");
-const { getState } = require("@saltcorn/data/db/state");
-const db = require("@saltcorn/data/db");
-const moment = require("moment");
+import { error_catcher, is_relative_url, isAdmin } from "./utils.js";
+import Table from "@saltcorn/data/models/table";
+import Form from "@saltcorn/data/models/form";
+import Model from "@saltcorn/data/models/model";
+import ModelInstance from "@saltcorn/data/models/model_instance";
+import { getState } from "@saltcorn/data/db/state";
+import db from "@saltcorn/data/db";
+import moment from "moment";
 
-const { mkTable, renderForm, post_delete_btn } = require("@saltcorn/markup");
-const {
+import { mkTable, renderForm, post_delete_btn } from "@saltcorn/markup";
+import {
   span,
   h4,
   p,
@@ -33,10 +33,10 @@ const {
   iframe,
   style,
   pre,
-} = require("@saltcorn/markup/tags");
+} from "@saltcorn/markup/tags";
 
 const router = new Router();
-module.exports = router;
+export default router;
 
 const newModelForm = (table, req) => {
   return new Form({

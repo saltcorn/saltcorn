@@ -2,75 +2,71 @@
  * @category server
  * @module errors
  */
-const db = require("@saltcorn/data/db");
-const { pre, p, text, h3 } = require("@saltcorn/markup/tags");
-const Crash = require("@saltcorn/data/models/crash");
-const { getState } = require("@saltcorn/data/db/state");
+import db from "@saltcorn/data/db";
+import { pre, p, text, h3 } from "@saltcorn/markup/tags";
+import Crash from "@saltcorn/data/models/crash";
+import { getState } from "@saltcorn/data/db/state";
 
-module.exports =
-  /**
-   *
-   * @param {object} err
-   * @param {object} req
-   * @param {object} res
-   * @param {*} next
-   * @returns {Promise<void>}
-   */
-  async function (err, req, res, next) {
-    if (!req.__) req.__ = (s) => s;
-    const state = getState();
-    const devmode = state.getConfig("development_mode", false);
-    const log_sql = state.getConfig("log_sql", false);
-    const role = (req.user || {}).role_id || 100;
-    if (err.message && err.message.includes("invalid csrf token")) {
-      state.log(2, err.message);
+export default /**
+ *
+ * @param {object} err
+ * @param {object} req
+ * @param {object} res
+ * @param {*} next
+ * @returns {Promise<void>}
+ */
+async function (err, req, res, next) {
+  if (!req.__) req.__ = (s) => s;
+  const state = getState();
+  const devmode = state.getConfig("development_mode", false);
+  const log_sql = state.getConfig("log_sql", false);
+  const role = (req.user || {}).role_id || 100;
+  if (err.message && err.message.includes("invalid csrf token")) {
+    state.log(2, err.message);
 
-      req.flash("error", req.__("Invalid form data, try again"));
-      if (req.url && req.url.includes("/auth/login"))
-        res.redirect("/auth/login");
-      else res.redirect("/");
-      return;
-    }
-    const code = err.httpCode || 500;
-    const headline = err.headline || "An error occurred";
-    const severity = err.severity || 2;
-    const createCrash = severity <= 3;
-    //console.error(err.stack);
-    if (!(devmode && log_sql) && createCrash) await Crash.create(err, req);
-    else console.error(err);
-    const err_message = err.message + (err.detail ? ": " + err.detail : "");
-    if (req.xhr) {
-      res
-        .status(code)
-        .send(
-          devmode || role === 1
-            ? text(err_message)
-            : req.__("An error occurred")
-        );
-    } else {
-      const _res = res.status(code);
-      if (_res.sendWrap)
-        _res.sendWrap(
-          req.__(headline),
-          devmode ? pre(text(err.stack)) : h3(req.__(headline)),
-          role === 1 && !devmode ? pre(text(err_message)) : "",
-          createCrash
-            ? p(
-                req.__(
-                  `A report has been logged and a team of bug-squashing squirrels has been dispatched to deal with the situation.`
-                )
+    req.flash("error", req.__("Invalid form data, try again"));
+    if (req.url && req.url.includes("/auth/login")) res.redirect("/auth/login");
+    else res.redirect("/");
+    return;
+  }
+  const code = err.httpCode || 500;
+  const headline = err.headline || "An error occurred";
+  const severity = err.severity || 2;
+  const createCrash = severity <= 3;
+  //console.error(err.stack);
+  if (!(devmode && log_sql) && createCrash) await Crash.create(err, req);
+  else console.error(err);
+  const err_message = err.message + (err.detail ? ": " + err.detail : "");
+  if (req.xhr) {
+    res
+      .status(code)
+      .send(
+        devmode || role === 1 ? text(err_message) : req.__("An error occurred")
+      );
+  } else {
+    const _res = res.status(code);
+    if (_res.sendWrap)
+      _res.sendWrap(
+        req.__(headline),
+        devmode ? pre(text(err.stack)) : h3(req.__(headline)),
+        role === 1 && !devmode ? pre(text(err_message)) : "",
+        createCrash
+          ? p(
+              req.__(
+                `A report has been logged and a team of bug-squashing squirrels has been dispatched to deal with the situation.`
               )
-            : ""
-        );
-      else
-        _res.send(
-          `<h2>${
-            err.message
-              ? err_message
-              : req.__
-                ? req.__("An error occurred")
-                : "An error occurred"
-          }</h2>`
-        );
-    }
-  };
+            )
+          : ""
+      );
+    else
+      _res.send(
+        `<h2>${
+          err.message
+            ? err_message
+            : req.__
+              ? req.__("An error occurred")
+              : "An error occurred"
+        }</h2>`
+      );
+  }
+}

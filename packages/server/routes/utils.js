@@ -4,42 +4,40 @@
  * @subcategory routes
  */
 
-const db = require("@saltcorn/data/db");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import db from "@saltcorn/data/db";
 const { sqlsanitize } = db;
-const {
+import {
   getState,
   getTenant,
   get_other_domain_tenant,
   features,
-} = require("@saltcorn/data/db/state");
-const { get_base_url } = require("@saltcorn/data/models/config");
-const {
-  hash,
-  is_relative_url,
-  normalize_relative_url,
-} = require("@saltcorn/data/utils");
-const { input, script, domReady, a, text } = require("@saltcorn/markup/tags");
-const session = require("express-session");
-const cookieSession = require("cookie-session");
-const is = require("contractis/is");
-const { validateHeaderName, validateHeaderValue } = require("http");
-const Crash = require("@saltcorn/data/models/crash");
-const File = require("@saltcorn/data/models/file");
-const User = require("@saltcorn/data/models/user");
-const Page = require("@saltcorn/data/models/page");
-const Trigger = require("@saltcorn/data/models/trigger");
-const si = require("systeminformation");
-const {
+} from "@saltcorn/data/db/state";
+import { get_base_url } from "@saltcorn/data/models/config";
+import { is_relative_url, normalize_relative_url } from "@saltcorn/data/utils";
+import { input, script, domReady, a, text } from "@saltcorn/markup/tags";
+import session from "express-session";
+import cookieSession from "cookie-session";
+import is from "contractis/is.js";
+import { validateHeaderName, validateHeaderValue } from "http";
+import Crash from "@saltcorn/data/models/crash";
+import File from "@saltcorn/data/models/file";
+import User from "@saltcorn/data/models/user";
+import Page from "@saltcorn/data/models/page";
+import Trigger from "@saltcorn/data/models/trigger";
+import si from "systeminformation";
+import {
   config_fields_form,
   save_config_from_form,
   check_if_restart_required,
   flash_restart,
-} = require("../markup/admin.js");
-const path = require("path");
-const { UAParser } = require("ua-parser-js");
-const crypto = require("crypto");
-const { domain_sanitize } = require("@saltcorn/admin-models/models/tenant");
-
+} from "../markup/admin.js";
+import path from "path";
+import { UAParser } from "ua-parser-js";
+import crypto from "crypto";
+import _am_tenant from "@saltcorn/admin-models/models/tenant";
+const { domain_sanitize } = _am_tenant;
 const get_sys_info = async () => {
   const disks = await si.fsSize();
   let size = 0;
@@ -845,7 +843,7 @@ const checkEditPermission = (type, user) => {
   }
 };
 
-module.exports = {
+export {
   sqlsanitize,
   csrfField,
   loggedIn,

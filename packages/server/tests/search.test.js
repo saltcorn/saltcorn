@@ -1,7 +1,7 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const Table = require("@saltcorn/data/models/table");
-const {
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import Table from "@saltcorn/data/models/table";
+import {
   getStaffLoginCookie,
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
@@ -9,8 +9,8 @@ const {
   toRedirect,
   toNotInclude,
   resetToFixtures,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
 
 afterAll(db.close);
 

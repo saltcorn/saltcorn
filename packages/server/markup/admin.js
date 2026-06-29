@@ -5,7 +5,7 @@
  * @subcategory markup
  */
 
-const {
+import {
   div,
   form,
   input,
@@ -17,17 +17,17 @@ const {
   li,
   script,
   domReady,
-} = require("@saltcorn/markup/tags");
-const db = require("@saltcorn/data/db");
-const { configTypes } = require("@saltcorn/data/models/config");
-const { getState, getRootState } = require("@saltcorn/data/db/state");
-const Form = require("@saltcorn/data/models/form");
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const User = require("@saltcorn/data/models/user");
-const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
-const Field = require("@saltcorn/data/models/field");
-const Page = require("@saltcorn/data/models/page");
+} from "@saltcorn/markup/tags";
+import db from "@saltcorn/data/db";
+import { configTypes } from "@saltcorn/data/models/config";
+import { getState, getRootState } from "@saltcorn/data/db/state";
+import Form from "@saltcorn/data/models/form";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import User from "@saltcorn/data/models/user";
+import FieldRepeat from "@saltcorn/data/models/fieldrepeat";
+import Field from "@saltcorn/data/models/field";
+import Page from "@saltcorn/data/models/page";
 
 /**
  * Restore Backup
@@ -702,7 +702,7 @@ const is_hsts_tld = (domain) => {
     "esq",
   ].includes(tld);
 };
-module.exports = {
+export {
   is_hsts_tld,
   getBaseDomain,
   hostname_matches_baseurl,

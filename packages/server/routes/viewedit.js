@@ -5,40 +5,40 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const { renderForm, renderBuilder, toast } = require("@saltcorn/markup");
-const tags = require("@saltcorn/markup/tags");
+import { renderForm, renderBuilder, toast } from "@saltcorn/markup";
+import tags from "@saltcorn/markup/tags";
 const { p, a, div, script, text, domReady, code, pre, tbody, tr, th, td } =
   tags;
 
-const { getState } = require("@saltcorn/data/db/state");
-const {
+import { getState } from "@saltcorn/data/db/state";
+import {
   isAdmin,
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
   setTenant,
   isAdminOrHasConfigMinRole,
-} = require("./utils.js");
-const { setTableRefs, viewsList } = require("./common_lists");
-const Form = require("@saltcorn/data/models/form");
-const Field = require("@saltcorn/data/models/field");
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const Workflow = require("@saltcorn/data/models/workflow");
-const User = require("@saltcorn/data/models/user");
-const Trigger = require("@saltcorn/data/models/trigger");
-const Page = require("@saltcorn/data/models/page");
-const File = require("@saltcorn/data/models/file");
-const Tag = require("@saltcorn/data/models/tag");
-const TagEntry = require("@saltcorn/data/models/tag_entry");
+} from "./utils.js";
+import { setTableRefs, viewsList } from "./common_lists.js";
+import Form from "@saltcorn/data/models/form";
+import Field from "@saltcorn/data/models/field";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import Workflow from "@saltcorn/data/models/workflow";
+import User from "@saltcorn/data/models/user";
+import Trigger from "@saltcorn/data/models/trigger";
+import Page from "@saltcorn/data/models/page";
+import File from "@saltcorn/data/models/file";
+import Tag from "@saltcorn/data/models/tag";
+import TagEntry from "@saltcorn/data/models/tag_entry";
 
-const db = require("@saltcorn/data/db");
-const { sleep } = require("@saltcorn/data/utils");
+import db from "@saltcorn/data/db";
+import { sleep } from "@saltcorn/data/utils";
 
-const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
-
+import _am_pack from "@saltcorn/admin-models/models/pack";
+const { add_to_menu } = _am_pack;
 /**
  * @type {object}
  * @const
@@ -47,7 +47,7 @@ const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @name get

@@ -3,37 +3,38 @@
  * @module routes/pageedit
  * @subcategory routes
  */
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const View = require("@saltcorn/data/models/view");
-const Field = require("@saltcorn/data/models/field");
-const Table = require("@saltcorn/data/models/table");
-const Page = require("@saltcorn/data/models/page");
-const PageGroup = require("@saltcorn/data/models/page_group");
-const { div, a, iframe, script, p } = require("@saltcorn/markup/tags");
-const { getState } = require("@saltcorn/data/db/state");
-const User = require("@saltcorn/data/models/user");
-const Workflow = require("@saltcorn/data/models/workflow");
-const Form = require("@saltcorn/data/models/form");
-const File = require("@saltcorn/data/models/file");
-const Trigger = require("@saltcorn/data/models/trigger");
-const { getViews, traverseSync } = require("@saltcorn/data/models/layout");
-const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
-const db = require("@saltcorn/data/db");
-const { getPageList, getPageGroupList } = require("./common_lists");
-const TagEntry = require("@saltcorn/data/models/tag_entry");
-const Tag = require("@saltcorn/data/models/tag");
+import View from "@saltcorn/data/models/view";
+import Field from "@saltcorn/data/models/field";
+import Table from "@saltcorn/data/models/table";
+import Page from "@saltcorn/data/models/page";
+import PageGroup from "@saltcorn/data/models/page_group";
+import { div, a, iframe, script, p } from "@saltcorn/markup/tags";
+import { getState } from "@saltcorn/data/db/state";
+import User from "@saltcorn/data/models/user";
+import Workflow from "@saltcorn/data/models/workflow";
+import Form from "@saltcorn/data/models/form";
+import File from "@saltcorn/data/models/file";
+import Trigger from "@saltcorn/data/models/trigger";
+import { getViews, traverseSync } from "@saltcorn/data/models/layout";
+import _am_pack from "@saltcorn/admin-models/models/pack";
+const { add_to_menu } = _am_pack;
+import db from "@saltcorn/data/db";
+import { getPageList, getPageGroupList } from "./common_lists.js";
+import TagEntry from "@saltcorn/data/models/tag_entry";
+import Tag from "@saltcorn/data/models/tag";
 
-const {
+import {
   isAdmin,
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
   setRole,
   isAdminOrHasConfigMinRole,
-} = require("./utils.js");
-const { asyncMap } = require("@saltcorn/data/utils");
-const {
+} from "./utils.js";
+import { asyncMap } from "@saltcorn/data/utils";
+import {
   mkTable,
   renderForm,
   link,
@@ -42,11 +43,11 @@ const {
   post_dropdown_item,
   renderBuilder,
   settingsDropdown,
-} = require("@saltcorn/markup");
-const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
-const Library = require("@saltcorn/data/models/library");
-const path = require("path");
-const fsp = require("fs").promises;
+} from "@saltcorn/markup";
+import { getActionConfigFields } from "@saltcorn/data/plugin-helper";
+import Library from "@saltcorn/data/models/library";
+import path from "path";
+import { promises as fsp } from "fs";
 
 /**
  * @type {object}
@@ -56,7 +57,7 @@ const fsp = require("fs").promises;
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  *
@@ -203,7 +204,8 @@ const pageBuilderData = async (req, context) => {
         req,
       });
     }
-    if (action && action.description) actionDescriptions[name] = action.description;
+    if (action && action.description)
+      actionDescriptions[name] = action.description;
   }
   const workflowActions = Trigger.trigger_actions({
     apiNeverTriggers: true,

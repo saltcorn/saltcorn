@@ -1,4 +1,4 @@
-const {
+import {
   div,
   button,
   form,
@@ -6,29 +6,29 @@ const {
   option,
   label,
   text,
-} = require("@saltcorn/markup/tags");
-const db = require("@saltcorn/data/db");
+} from "@saltcorn/markup/tags";
+import db from "@saltcorn/data/db";
 
-const Tag = require("@saltcorn/data/models/tag");
-const TagEntry = require("@saltcorn/data/models/tag_entry");
-const Router = require("express-promise-router");
+import Tag from "@saltcorn/data/models/tag";
+import TagEntry from "@saltcorn/data/models/tag_entry";
+import Router from "express-promise-router";
 
-const {
+import {
   isAdmin,
   error_catcher,
   csrfField,
   isAdminOrHasConfigMinRole,
   checkEditPermission,
   is_relative_url,
-} = require("./utils");
+} from "./utils.js";
 
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const Page = require("@saltcorn/data/models/page");
-const Trigger = require("@saltcorn/data/models/trigger");
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import Page from "@saltcorn/data/models/page";
+import Trigger from "@saltcorn/data/models/trigger";
 
 const router = new Router();
-module.exports = router;
+export default router;
 
 const buildFields = (entryType, formOptions, req) => {
   return Object.entries(formOptions).map(([type, list]) => {

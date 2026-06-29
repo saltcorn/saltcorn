@@ -3,13 +3,10 @@
  * @module auth/resetpw
  * @subcategory auth
  */
-const { getState } = require("@saltcorn/data/db/state");
-const {
-  getMailTransport,
-  viewToEmailHtml,
-} = require("@saltcorn/data/models/email");
-const { get_base_url } = require("../routes/utils");
-const View = require("@saltcorn/data/models/view");
+import { getState } from "@saltcorn/data/db/state";
+import { getMailTransport, viewToEmailHtml } from "@saltcorn/data/models/email";
+import { get_base_url } from "../routes/utils.js";
+import View from "@saltcorn/data/models/view";
 
 /**
  * @param {string} link
@@ -141,4 +138,4 @@ const get_reset_link = async (user, req) => {
   };
 };
 
-module.exports = { send_reset_email, get_reset_link, generate_email };
+export { send_reset_email, get_reset_link, generate_email };

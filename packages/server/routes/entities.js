@@ -5,19 +5,19 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const Page = require("@saltcorn/data/models/page");
-const Trigger = require("@saltcorn/data/models/trigger");
-const Tag = require("@saltcorn/data/models/tag");
-const TagEntry = require("@saltcorn/data/models/tag_entry");
-const User = require("@saltcorn/data/models/user");
-const Role = require("@saltcorn/data/models/role");
-const Plugin = require("@saltcorn/data/models/plugin");
-const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
-const {
+import Router from "express-promise-router";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import Page from "@saltcorn/data/models/page";
+import Trigger from "@saltcorn/data/models/trigger";
+import Tag from "@saltcorn/data/models/tag";
+import TagEntry from "@saltcorn/data/models/tag_entry";
+import User from "@saltcorn/data/models/user";
+import Role from "@saltcorn/data/models/role";
+import Plugin from "@saltcorn/data/models/plugin";
+import db from "@saltcorn/data/db";
+import { getState } from "@saltcorn/data/db/state";
+import {
   div,
   input,
   button,
@@ -36,18 +36,19 @@ const {
   label,
   select,
   option,
-} = require("@saltcorn/markup/tags");
-const {
+} from "@saltcorn/markup/tags";
+import {
   post_dropdown_item,
   settingsDropdown,
   post_btn,
-} = require("@saltcorn/markup");
-const {
+} from "@saltcorn/markup";
+import {
   view_dropdown,
   page_dropdown,
   trigger_dropdown,
-} = require("./common_lists.js");
-const { error_catcher, isAdminOrHasConfigMinRole } = require("./utils.js");
+} from "./common_lists.js";
+import { error_catcher, isAdminOrHasConfigMinRole } from "./utils.js";
+import _am_pack from "@saltcorn/admin-models/models/pack";
 const {
   fetch_pack_by_name,
   fetch_available_packs,
@@ -57,8 +58,8 @@ const {
   trigger_pack,
   uninstall_pack,
   plugin_pack,
-} = require("@saltcorn/admin-models/models/pack");
-const { escapeHtml } = require("@saltcorn/data/utils");
+} = _am_pack;
+import { escapeHtml } from "@saltcorn/data/utils";
 
 /**
  * @type {object}
@@ -68,7 +69,7 @@ const { escapeHtml } = require("@saltcorn/data/utils");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 // Ensure on_done_redirect values remain relative to the app root
 const stripLeadingSlash = (path = "") =>

@@ -4,7 +4,7 @@
  * @subcategory markup
  */
 
-const {
+import {
   h5,
   h4,
   nbsp,
@@ -21,8 +21,8 @@ const {
   p,
   td,
   strong,
-} = require("@saltcorn/markup/tags");
-const { link } = require("@saltcorn/markup");
+} from "@saltcorn/markup/tags";
+import { link } from "@saltcorn/markup";
 
 /**
  * @param {object} args
@@ -101,12 +101,12 @@ const showRepository = (repo) =>
   !repo
     ? repo
     : repo.url
-    ? link(repo.url, repo.url)
-    : repo.startsWith && repo.startsWith("github:")
-    ? link(repo.replace("github:", "https://github.com/"), repo)
-    : repo;
+      ? link(repo.url, repo.url)
+      : repo.startsWith && repo.startsWith("github:")
+        ? link(repo.replace("github:", "https://github.com/"), repo)
+        : repo;
 
-module.exports = {
+export {
   plugin_types_info_card,
   plugin_functions_info_card,
   plugin_viewtemplates_info_card,

@@ -4,15 +4,15 @@
  * @subcategory markup
  */
 
-const {
+import {
   form,
   select,
   option,
   text,
   label,
   input,
-} = require("@saltcorn/markup/tags");
-const { csrfField } = require("../routes/utils");
+} from "@saltcorn/markup/tags";
+import { csrfField } from "../routes/utils.js";
 
 /**
  * Edit Role form (for admin)
@@ -91,4 +91,4 @@ const fileUploadForm = (req, folder) => {
 const wizardCardTitle = (wizardTitle, wf, wfres) =>
   `${wizardTitle}: ${wfres.stepName}`;
 
-module.exports = { editRoleForm, wizardCardTitle, fileUploadForm };
+export { editRoleForm, wizardCardTitle, fileUploadForm };

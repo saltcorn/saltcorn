@@ -1,17 +1,21 @@
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const File = require("@saltcorn/data/models/file");
-const _ = require("underscore");
-const fs = require("fs").promises;
-const MarkdownIt = require("markdown-it"),
-  md = new MarkdownIt();
-const moment = require("moment");
+import { fileURLToPath as __fileURLToPath } from "url";
+import { dirname as __pathDirname } from "path";
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __pathDirname(__filename);
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import File from "@saltcorn/data/models/file";
+import _ from "underscore";
+import { promises as fs } from "fs";
+import MarkdownIt from "markdown-it";
+const md = new MarkdownIt();
+import moment from "moment";
 
-const { pre } = require("@saltcorn/markup/tags");
-const path = require("path");
-const { getState } = require("@saltcorn/data/db/state");
-const { oneOf } = require("@saltcorn/types/generators");
-const { configTypes } = require("@saltcorn/data/models/config");
+import { pre } from "@saltcorn/markup/tags";
+import path from "path";
+import { getState } from "@saltcorn/data/db/state";
+import { oneOf } from "@saltcorn/types/generators";
+import { configTypes } from "@saltcorn/data/models/config";
 const get_md_file = async (topic, isFullPath) => {
   try {
     if (isFullPath) {
@@ -59,4 +63,4 @@ const get_help_markup = async (topic, query, req, isFullPath) => {
   }
 };
 
-module.exports = { get_help_markup };
+export { get_help_markup };

@@ -3,23 +3,18 @@
  * @module auth/roleadmin
  * @subcategory auth
  */
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
 //const db = require("@saltcorn/data/db");
-const User = require("@saltcorn/data/models/user");
-const Role = require("@saltcorn/data/models/role");
-const Form = require("@saltcorn/data/models/form");
-const {
-  mkTable,
-  renderForm,
-  link,
-  post_delete_btn,
-} = require("@saltcorn/markup");
-const { dropdown_checkboxes } = require("@saltcorn/markup/helpers");
-const { isAdmin, error_catcher, csrfField } = require("../routes/utils");
-const { getState } = require("@saltcorn/data/db/state");
-const { text, form, option, select, a, i } = require("@saltcorn/markup/tags");
-const { send_users_page } = require("../markup/admin");
+import User from "@saltcorn/data/models/user";
+import Role from "@saltcorn/data/models/role";
+import Form from "@saltcorn/data/models/form";
+import { mkTable, renderForm, link, post_delete_btn } from "@saltcorn/markup";
+import { dropdown_checkboxes } from "@saltcorn/markup/helpers";
+import { isAdmin, error_catcher, csrfField } from "../routes/utils.js";
+import { getState } from "@saltcorn/data/db/state";
+import { text, form, option, select, a, i } from "@saltcorn/markup/tags";
+import { send_users_page } from "../markup/admin.js";
 
 /**
  * @type {object}
@@ -29,7 +24,7 @@ const { send_users_page } = require("../markup/admin");
  * @subcategory auth
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @param {Role} role

@@ -1,13 +1,11 @@
-const Page = require("@saltcorn/data/models/page");
-const {
-  buildObjectTrees,
-} = require("@saltcorn/data/diagram/node_extract_utils");
-const {
+import Page from "@saltcorn/data/models/page";
+import { buildObjectTrees } from "@saltcorn/data/diagram/node_extract_utils";
+import {
   generateCyCode,
   genereateCyCfg,
-} = require("@saltcorn/data/diagram/cy_generate_utils");
-const { getState } = require("@saltcorn/data/db/state");
-const {
+} from "@saltcorn/data/diagram/cy_generate_utils";
+import { getState } from "@saltcorn/data/db/state";
+import {
   a,
   input,
   label,
@@ -16,16 +14,16 @@ const {
   script,
   i,
   domReady,
-} = require("@saltcorn/markup/tags");
-const { send_infoarch_page } = require("../markup/admin");
-const { isAdmin, error_catcher } = require("./utils.js");
-const Tag = require("@saltcorn/data/models/tag");
-const Router = require("express-promise-router");
-const User = require("@saltcorn/data/models/user");
-const db = require("@saltcorn/data/db");
+} from "@saltcorn/markup/tags";
+import { send_infoarch_page } from "../markup/admin.js";
+import { isAdmin, error_catcher } from "./utils.js";
+import Tag from "@saltcorn/data/models/tag";
+import Router from "express-promise-router";
+import User from "@saltcorn/data/models/user";
+import db from "@saltcorn/data/db";
 
 const router = new Router();
-module.exports = router;
+export default router;
 
 const buildGlobalVars = (tags, roles) => {
   return `

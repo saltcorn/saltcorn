@@ -1,8 +1,8 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const Table = require("@saltcorn/data/models/table");
-const Field = require("@saltcorn/data/models/field");
-const {
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import Table from "@saltcorn/data/models/table";
+import Field from "@saltcorn/data/models/field";
+import {
   getStaffLoginCookie,
   getAdminLoginCookie,
   getUserLoginCookie,
@@ -12,12 +12,12 @@ const {
   toRedirect,
   resetToFixtures,
   succeedJsonWith,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const User = require("@saltcorn/data/models/user");
-const { plugin_with_routes } = require("@saltcorn/data/tests/mocks");
-const { getState } = require("@saltcorn/data/db/state");
-const { sleep } = require("@saltcorn/data/utils");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import User from "@saltcorn/data/models/user";
+import { plugin_with_routes } from "@saltcorn/data/tests/mocks";
+import { getState } from "@saltcorn/data/db/state";
+import { sleep } from "@saltcorn/data/utils";
 
 afterAll(async () => {
   await sleep(200);

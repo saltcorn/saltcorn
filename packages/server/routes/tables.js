@@ -4,19 +4,19 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const db = require("@saltcorn/data/db");
-const Table = require("@saltcorn/data/models/table");
-const Field = require("@saltcorn/data/models/field");
-const File = require("@saltcorn/data/models/file");
-const View = require("@saltcorn/data/models/view");
-const User = require("@saltcorn/data/models/user");
-const Model = require("@saltcorn/data/models/model");
-const Trigger = require("@saltcorn/data/models/trigger");
-const TagEntry = require("@saltcorn/data/models/tag_entry");
-const Notification = require("@saltcorn/data/models/notification");
-const {
+import db from "@saltcorn/data/db";
+import Table from "@saltcorn/data/models/table";
+import Field from "@saltcorn/data/models/field";
+import File from "@saltcorn/data/models/file";
+import View from "@saltcorn/data/models/view";
+import User from "@saltcorn/data/models/user";
+import Model from "@saltcorn/data/models/model";
+import Trigger from "@saltcorn/data/models/trigger";
+import TagEntry from "@saltcorn/data/models/tag_entry";
+import Notification from "@saltcorn/data/models/notification";
+import {
   mkTable,
   renderForm,
   link,
@@ -24,19 +24,19 @@ const {
   post_delete_btn,
   post_btn,
   post_dropdown_item,
-} = require("@saltcorn/markup");
-const {
+} from "@saltcorn/markup";
+import {
   recalculate_for_stored,
   expressionValidator,
-} = require("@saltcorn/data/models/expression");
-const {
+} from "@saltcorn/data/models/expression";
+import {
   isAdmin,
   error_catcher,
   setTenant,
   isAdminOrHasConfigMinRole,
-} = require("./utils.js");
-const Form = require("@saltcorn/data/models/form");
-const {
+} from "./utils.js";
+import Form from "@saltcorn/data/models/form";
+import {
   span,
   h4,
   p,
@@ -56,34 +56,34 @@ const {
   br,
   select,
   option,
-} = require("@saltcorn/markup/tags");
-const { stringify } = require("csv-stringify");
-const TableConstraint = require("@saltcorn/data/models/table_constraints");
-const fs = require("fs").promises;
-const {
+} from "@saltcorn/markup/tags";
+import { stringify } from "csv-stringify";
+import TableConstraint from "@saltcorn/data/models/table_constraints";
+import { promises as fs } from "fs";
+import {
   discoverable_tables,
   discover_tables,
   implement_discovery,
   reconcile_table,
   make_field,
   findType,
-} = require("@saltcorn/data/models/discovery");
-const { getState } = require("@saltcorn/data/db/state");
-const { cardHeaderTabs } = require("@saltcorn/markup/layout_utils");
-const { tablesList, viewsList, getTriggerList } = require("./common_lists");
-const {
+} from "@saltcorn/data/models/discovery";
+import { getState } from "@saltcorn/data/db/state";
+import { cardHeaderTabs } from "@saltcorn/markup/layout_utils";
+import { tablesList, viewsList, getTriggerList } from "./common_lists.js";
+import {
   InvalidConfiguration,
   removeAllWhiteSpace,
   comparingCaseInsensitive,
   validSqlId,
   interpolate,
-} = require("@saltcorn/data/utils");
-const { EOL } = require("os");
+} from "@saltcorn/data/utils";
+import { EOL } from "os";
 
-const path = require("path");
-const Tag = require("@saltcorn/data/models/tag");
-const { initial_config_all_fields } = require("@saltcorn/data/plugin-helper");
-const { save_menu_items } = require("@saltcorn/data/models/config");
+import path from "path";
+import Tag from "@saltcorn/data/models/tag";
+import { initial_config_all_fields } from "@saltcorn/data/plugin-helper";
+import { save_menu_items } from "@saltcorn/data/models/config";
 /**
  * @type {object}
  * @const
@@ -92,7 +92,7 @@ const { save_menu_items } = require("@saltcorn/data/models/config");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 /**
  * Show Table Form
  * @param {object} table

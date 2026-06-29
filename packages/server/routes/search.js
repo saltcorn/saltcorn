@@ -4,24 +4,20 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const { span, h5, h4, nbsp, p, a, div } = require("@saltcorn/markup/tags");
+import Router from "express-promise-router";
+import { span, h5, h4, nbsp, p, a, div } from "@saltcorn/markup/tags";
 
-const { getState } = require("@saltcorn/data/db/state");
-const db = require("@saltcorn/data/db");
+import { getState } from "@saltcorn/data/db/state";
+import db from "@saltcorn/data/db";
 
-const {
-  isAdmin,
-  error_catcher,
-  isAdminOrHasConfigMinRole,
-} = require("./utils.js");
-const Form = require("@saltcorn/data/models/form");
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const { renderForm } = require("@saltcorn/markup");
-const { pagination } = require("@saltcorn/markup/helpers");
-const { send_infoarch_page } = require("../markup/admin.js");
-const { InvalidConfiguration } = require("@saltcorn/data/utils");
+import { isAdmin, error_catcher, isAdminOrHasConfigMinRole } from "./utils.js";
+import Form from "@saltcorn/data/models/form";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import { renderForm } from "@saltcorn/markup";
+import { pagination } from "@saltcorn/markup/helpers";
+import { send_infoarch_page } from "../markup/admin.js";
+import { InvalidConfiguration } from "@saltcorn/data/utils";
 
 /**
  * @type {object}
@@ -31,7 +27,7 @@ const { InvalidConfiguration } = require("@saltcorn/data/utils");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * Search Configuration form

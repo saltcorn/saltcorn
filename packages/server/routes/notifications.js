@@ -4,22 +4,24 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const { isAdmin, setTenant, error_catcher, loggedIn } = require("./utils.js");
-const Notification = require("@saltcorn/data/models/notification");
-const { div, a, i, text, h5, p, span } = require("@saltcorn/markup/tags");
-const moment = require("moment");
-const { getState } = require("@saltcorn/data/db/state");
-const Form = require("@saltcorn/data/models/form");
-const File = require("@saltcorn/data/models/file");
-const User = require("@saltcorn/data/models/user");
-const Trigger = require("@saltcorn/data/models/trigger");
-const Table = require("@saltcorn/data/models/table");
-const { renderForm, post_btn } = require("@saltcorn/markup");
-const db = require("@saltcorn/data/db");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import Router from "express-promise-router";
+import { isAdmin, setTenant, error_catcher, loggedIn } from "./utils.js";
+import Notification from "@saltcorn/data/models/notification";
+import { div, a, i, text, h5, p, span } from "@saltcorn/markup/tags";
+import moment from "moment";
+import { getState } from "@saltcorn/data/db/state";
+import Form from "@saltcorn/data/models/form";
+import File from "@saltcorn/data/models/file";
+import User from "@saltcorn/data/models/user";
+import Trigger from "@saltcorn/data/models/trigger";
+import Table from "@saltcorn/data/models/table";
+import { renderForm, post_btn } from "@saltcorn/markup";
+import db from "@saltcorn/data/db";
 
 const router = new Router();
-module.exports = router;
+export default router;
 
 router.use(
   error_catcher(async (req, res, next) => {

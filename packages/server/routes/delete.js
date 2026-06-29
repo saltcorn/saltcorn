@@ -4,15 +4,15 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const { error_catcher, is_relative_url, safe_redirect } = require("./utils.js");
-const Table = require("@saltcorn/data/models/table");
-const { readState } = require("@saltcorn/data/plugin-helper");
-const {
+import { error_catcher, is_relative_url, safe_redirect } from "./utils.js";
+import Table from "@saltcorn/data/models/table";
+import { readState } from "@saltcorn/data/plugin-helper";
+import {
   freeVariables,
   add_free_variables_to_joinfields,
-} = require("@saltcorn/data/models/expression");
+} from "@saltcorn/data/models/expression";
 /**
  * @type {object}
  * @const
@@ -23,7 +23,7 @@ const {
 const router = new Router();
 
 // export our router to be mounted by the parent application
-module.exports = router;
+export default router;
 
 /**
  * @name post/:name/:id

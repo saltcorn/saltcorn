@@ -4,52 +4,57 @@
  * @category server
  * @module serve
  */
-const { runScheduler } = require("@saltcorn/data/models/scheduler");
-const User = require("@saltcorn/data/models/user");
-const Plugin = require("@saltcorn/data/models/plugin");
-const db = require("@saltcorn/data/db");
-const { getConfigFile, configFilePath } = require("@saltcorn/data/db/connect");
-const {
+import { fileURLToPath as __fileURLToPath } from "url";
+import { dirname as __pathDirname } from "path";
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __pathDirname(__filename);
+import { runScheduler } from "@saltcorn/data/models/scheduler";
+import User from "@saltcorn/data/models/user";
+import Plugin from "@saltcorn/data/models/plugin";
+import db from "@saltcorn/data/db";
+import { getConfigFile, configFilePath } from "@saltcorn/data/db/connect";
+import {
   getState,
   getRootState,
   init_multi_tenant,
   restart_tenant,
   add_tenant,
   get_other_domain_tenant,
-} = require("@saltcorn/data/db/state");
-const { create_tenant } = require("@saltcorn/admin-models/models/tenant");
+} from "@saltcorn/data/db/state";
+import _am_tenant from "@saltcorn/admin-models/models/tenant";
+const { create_tenant, eachTenant, getAllTenants } = _am_tenant;
+import path from "path";
 
-const path = require("path");
-
-const getApp = require("./app");
-const Trigger = require("@saltcorn/data/models/trigger");
-const cluster = require("cluster");
-const { getConfig, setConfig } = require("@saltcorn/data/models/config");
-const { migrate } = require("@saltcorn/data/migrate");
-const socketio = require("socket.io");
-const { createAdapter, setupPrimary } = require("@socket.io/cluster-adapter");
-const {
+import getApp from "./app.js";
+import systemd from "./systemd.js";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import Trigger from "@saltcorn/data/models/trigger";
+import cluster from "cluster";
+import { getConfig, setConfig } from "@saltcorn/data/models/config";
+import { migrate } from "@saltcorn/data/migrate";
+import * as socketio from "socket.io";
+import { createAdapter, setupPrimary } from "@socket.io/cluster-adapter";
+import {
   setTenant,
   getSessionStore,
   get_tenant_from_req,
-} = require("./routes/utils");
-const passport = require("passport");
-const { authenticate } = require("passport");
-const View = require("@saltcorn/data/models/view");
-const {
+} from "./routes/utils.js";
+import passport from "passport";
+const { authenticate } = passport;
+import View from "@saltcorn/data/models/view";
+import {
   listenForChanges,
   getRelevantPackages,
   getPluginDirectories,
-} = require("./restart_watcher");
-const {
-  eachTenant,
-  getAllTenants,
-} = require("@saltcorn/admin-models/models/tenant");
-const { auto_backup_now } = require("@saltcorn/admin-models/models/backup");
-const Snapshot = require("@saltcorn/admin-models/models/snapshot");
-const { writeFileSync, rmSync, readFileSync, readdirSync } = require("fs");
-const { pathExistsSync } = require("fs-extra");
-const envPaths = require("env-paths");
+} from "./restart_watcher.js";
+import _am_backup from "@saltcorn/admin-models/models/backup";
+const { auto_backup_now } = _am_backup;
+import Snapshot from "@saltcorn/admin-models/models/snapshot";
+import { writeFileSync, rmSync, readFileSync, readdirSync } from "fs";
+import fsExtra from "fs-extra";
+const { pathExistsSync } = fsExtra;
+import envPaths from "env-paths";
 
 const take_snapshot = async () => {
   return await Snapshot.take_if_changed();
@@ -372,7 +377,7 @@ const onMessageFromWorker =
           wasLeader: isLeader,
         });
       }
-      require("./systemd")({ port });
+      systemd({ port });
       return true;
     } else if (msg === "RestartServer") {
       process.exit(0);
@@ -470,269 +475,266 @@ const startLeadershipMonitor = ({
   }, intervalMs);
 };
 
-module.exports =
-  /**
-   * @function
-   * @name "module.exports function"
-   * @param {object} [opts = {}]
-   * @param {number} [opts.port = 3000]
-   * @param {host} [opts.host]
-   * @param {boolean} opts.watchReaper
-   * @param {boolean} opts.disableScheduler
-   * @param {number} opts.defaultNCPUs
-   * @param {boolean} opts.dev
-   * @param {...*} opts.appargs
-   * @returns {Promise<void>}
-   */
-  async ({
-    port = 3000,
-    host,
-    watchReaper,
-    disableScheduler,
-    defaultNCPUs,
-    dev,
-    ...appargs
-  } = {}) => {
-    if (cluster.isPrimary) {
-      ensureJwtSecret();
-      await ensurePluginsFolder();
-      await ensureNotificationSubscriptions();
+export default /**
+ * @function
+ * @name "module.exports function"
+ * @param {object} [opts = {}]
+ * @param {number} [opts.port = 3000]
+ * @param {host} [opts.host]
+ * @param {boolean} opts.watchReaper
+ * @param {boolean} opts.disableScheduler
+ * @param {number} opts.defaultNCPUs
+ * @param {boolean} opts.dev
+ * @param {...*} opts.appargs
+ * @returns {Promise<void>}
+ */
+async ({
+  port = 3000,
+  host,
+  watchReaper,
+  disableScheduler,
+  defaultNCPUs,
+  dev,
+  ...appargs
+} = {}) => {
+  if (cluster.isPrimary) {
+    ensureJwtSecret();
+    await ensurePluginsFolder();
+    await ensureNotificationSubscriptions();
 
-      // reload plugins on SIGHUP
-      process.on("SIGHUP", async () => {
-        getState().log(
-          4,
-          "SIGHUP received: reloading plugins and state for all tenants"
-        );
-        await Plugin.loadAllPlugins(true, true);
-        await getState().refresh_plugins(true);
-        Object.entries(cluster.workers || {}).forEach(([wpid, w]) => {
-          w.send({ reload_plugins: true });
-        });
-        if (db.is_it_multi_tenant()) {
-          for (const tenant of await getAllTenants()) {
-            await db.runWithTenant(tenant, async () => {
-              await Plugin.loadAllPlugins(true, true);
-              await getState().refresh_plugins(true);
-              Object.entries(cluster.workers || {}).forEach(([wpid, w]) => {
-                w.send({ tenant, reload_plugins: true });
-              });
-            });
-          }
-        }
-      });
-    }
-    process.on("unhandledRejection", (reason, p) => {
-      console.error(reason, "Unhandled Rejection at Promise");
-    });
-
-    if (dev && cluster.isMaster) {
-      listenForChanges(getRelevantPackages(), await getPluginDirectories());
-    }
-    const useNCpus = process.env.SALTCORN_NWORKERS
-      ? +process.env.SALTCORN_NWORKERS
-      : defaultNCPUs;
-
-    const letsEncrypt = await getConfig("letsencrypt", false);
-    const pruneSessionInterval = +(await getConfig(
-      "prune_session_interval",
-      900
-    ));
-    const masterState = {
-      started: false,
-      listeningTo: new Set([]),
-    };
-
-    let nodesDispatchMsg = null;
-    let multiNodeClient = null;
-    let isLeaderFn = null;
-    let isLeader = true;
-    if (db.connectObj.multi_node) {
-      multiNodeClient = await db.getClient();
-      if (cluster.isMaster) {
-        isLeaderFn = await getIsLeaderFn();
-        isLeader = await isLeaderFn();
-      }
-      nodesDispatchMsg = async ({ tenant, ...msg }) => {
-        if (tenant) {
-          db.runWithTenant(tenant, () => nodesDispatchMsg(msg));
-          return;
-        }
-        if (
-          msg.restart_tenant ||
-          msg.installPlugin ||
-          msg.removePlugin ||
-          msg.refresh_plugin_cfg ||
-          msg.dynamic_update ||
-          msg.real_time_collab_event ||
-          msg.real_time_chat_event ||
-          msg.log_event ||
-          (msg.refresh && msg.refresh !== "ephemeral_config")
-        ) {
-          const payload = escapeSingleQuotes(JSON.stringify(msg));
-          const payloadBytes = Buffer.byteLength(payload, "utf8");
-          if (payloadBytes < 8000) {
-            await multiNodeClient.query(
-              `NOTIFY ${db.getTenantSchema()}_events, '${payload}'`
-            );
-          } else {
-            getState().log(
-              2,
-              `Not sending multinode message, too large (${payloadBytes} bytes)`
-            );
-          }
-        }
-      };
-    }
-
-    const scheduleHelper = {
-      stopScheduler: false,
-      start: () => {
-        this.stopScheduler = false;
-        runScheduler({
-          stop_when: () => this.stopScheduler,
-          port,
-          host,
-          watchReaper,
-          disableScheduler,
-          eachTenant,
-          auto_backup_now,
-          take_snapshot,
-        });
-      },
-      stop: () => {
-        this.stopScheduler = true;
-      },
-      isLeaderFn,
-    };
-
-    const addWorker = (worker) => {
-      worker.on(
-        "message",
-        onMessageFromWorker(masterState, {
-          port,
-          pid: worker.process.pid,
-          nodesDispatchMsg,
-          scheduleHelper,
-          isLeader,
-        })
+    // reload plugins on SIGHUP
+    process.on("SIGHUP", async () => {
+      getState().log(
+        4,
+        "SIGHUP received: reloading plugins and state for all tenants"
       );
-    };
-    await initOfflineStoreCfg();
-
-    if (port === 80 && letsEncrypt) {
-      const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
-      const file_store = db.connectObj.file_store;
-      const Greenlock = require("greenlock");
-      const greenlock = Greenlock.create({
-        packageRoot: __dirname,
-        configDir: path.join(file_store, "greenlock.d"),
-        maintainerEmail: admin_users[0].email,
+      await Plugin.loadAllPlugins(true, true);
+      await getState().refresh_plugins(true);
+      Object.entries(cluster.workers || {}).forEach(([wpid, w]) => {
+        w.send({ reload_plugins: true });
       });
-      const certs = await greenlock._find({});
-      console.log("Certificates:", certs);
-
-      if (certs && certs.length > 0) {
-        const app = await getApp(appargs);
-        const timeout = +getState().getConfig("timeout", 120);
-        const initMasterListeners = () => {
-          Object.entries(cluster.workers).forEach(([id, w]) => {
-            if (!masterState.listeningTo.has(id)) {
-              addWorker(w);
-              masterState.listeningTo.add(id);
-            }
-          });
-          getState().sendMessageToWorkers = (msg) => {
-            Object.entries(cluster.workers).forEach(([wpid, w]) => {
-              w.send(msg);
+      if (db.is_it_multi_tenant()) {
+        for (const tenant of await getAllTenants()) {
+          await db.runWithTenant(tenant, async () => {
+            await Plugin.loadAllPlugins(true, true);
+            await getState().refresh_plugins(true);
+            Object.entries(cluster.workers || {}).forEach(([wpid, w]) => {
+              w.send({ tenant, reload_plugins: true });
             });
-            workerDispatchMsg(msg); //also master
-            if (nodesDispatchMsg && useNCpus === 1)
-              nodesDispatchMsg(msg).catch((e) => {
-                console.log("Error sending multinode message", e.message);
-              });
-          };
-
-          if (masterState.listeningTo.size < useNCpus)
-            setTimeout(initMasterListeners, 250);
-        };
-        require("greenlock-express")
-          .init({
-            packageRoot: __dirname,
-            configDir: path.join(file_store, "greenlock.d"),
-            maintainerEmail: admin_users[0].email,
-            cluster: true,
-            workers: useNCpus,
-          })
-          .ready((glx) => {
-            const httpsServer = glx.httpsServer();
-            setupSocket(
-              appargs?.subdomainOffset,
-              pruneSessionInterval,
-              httpsServer
-            );
-            httpsServer.setTimeout(timeout * 1000);
-            process.on("message", workerDispatchMsg);
-            glx.serveApp(app);
-            getState().processSend("Start");
-          })
-          .master(() => {
-            initMaster(appargs, true, multiNodeClient).then(
-              initMasterListeners
-            );
           });
-
-        return; // none of stuff below will execute
+        }
       }
-    }
-    // No greenlock!
+    });
+  }
+  process.on("unhandledRejection", (reason, p) => {
+    console.error(reason, "Unhandled Rejection at Promise");
+  });
 
+  if (dev && cluster.isMaster) {
+    listenForChanges(getRelevantPackages(), await getPluginDirectories());
+  }
+  const useNCpus = process.env.SALTCORN_NWORKERS
+    ? +process.env.SALTCORN_NWORKERS
+    : defaultNCPUs;
+
+  const letsEncrypt = await getConfig("letsencrypt", false);
+  const pruneSessionInterval = +(await getConfig(
+    "prune_session_interval",
+    900
+  ));
+  const masterState = {
+    started: false,
+    listeningTo: new Set([]),
+  };
+
+  let nodesDispatchMsg = null;
+  let multiNodeClient = null;
+  let isLeaderFn = null;
+  let isLeader = true;
+  if (db.connectObj.multi_node) {
+    multiNodeClient = await db.getClient();
     if (cluster.isMaster) {
-      const forkAnyWorkers = useNCpus > 1 && process.platform !== "win32";
-      await initMaster(appargs, forkAnyWorkers, multiNodeClient);
+      isLeaderFn = await getIsLeaderFn();
+      isLeader = await isLeaderFn();
+    }
+    nodesDispatchMsg = async ({ tenant, ...msg }) => {
+      if (tenant) {
+        db.runWithTenant(tenant, () => nodesDispatchMsg(msg));
+        return;
+      }
+      if (
+        msg.restart_tenant ||
+        msg.installPlugin ||
+        msg.removePlugin ||
+        msg.refresh_plugin_cfg ||
+        msg.dynamic_update ||
+        msg.real_time_collab_event ||
+        msg.real_time_chat_event ||
+        msg.log_event ||
+        (msg.refresh && msg.refresh !== "ephemeral_config")
+      ) {
+        const payload = escapeSingleQuotes(JSON.stringify(msg));
+        const payloadBytes = Buffer.byteLength(payload, "utf8");
+        if (payloadBytes < 8000) {
+          await multiNodeClient.query(
+            `NOTIFY ${db.getTenantSchema()}_events, '${payload}'`
+          );
+        } else {
+          getState().log(
+            2,
+            `Not sending multinode message, too large (${payloadBytes} bytes)`
+          );
+        }
+      }
+    };
+  }
 
-      if (forkAnyWorkers) {
-        for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
+  const scheduleHelper = {
+    stopScheduler: false,
+    start: () => {
+      this.stopScheduler = false;
+      runScheduler({
+        stop_when: () => this.stopScheduler,
+        port,
+        host,
+        watchReaper,
+        disableScheduler,
+        eachTenant,
+        auto_backup_now,
+        take_snapshot,
+      });
+    },
+    stop: () => {
+      this.stopScheduler = true;
+    },
+    isLeaderFn,
+  };
+
+  const addWorker = (worker) => {
+    worker.on(
+      "message",
+      onMessageFromWorker(masterState, {
+        port,
+        pid: worker.process.pid,
+        nodesDispatchMsg,
+        scheduleHelper,
+        isLeader,
+      })
+    );
+  };
+  await initOfflineStoreCfg();
+
+  if (port === 80 && letsEncrypt) {
+    const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
+    const file_store = db.connectObj.file_store;
+    const Greenlock = require("greenlock");
+    const greenlock = Greenlock.create({
+      packageRoot: __dirname,
+      configDir: path.join(file_store, "greenlock.d"),
+      maintainerEmail: admin_users[0].email,
+    });
+    const certs = await greenlock._find({});
+    console.log("Certificates:", certs);
+
+    if (certs && certs.length > 0) {
+      const app = await getApp(appargs);
+      const timeout = +getState().getConfig("timeout", 120);
+      const initMasterListeners = () => {
+        Object.entries(cluster.workers).forEach(([id, w]) => {
+          if (!masterState.listeningTo.has(id)) {
+            addWorker(w);
+            masterState.listeningTo.add(id);
+          }
+        });
         getState().sendMessageToWorkers = (msg) => {
           Object.entries(cluster.workers).forEach(([wpid, w]) => {
             w.send(msg);
           });
           workerDispatchMsg(msg); //also master
-        };
-
-        cluster.on("exit", (worker, code, signal) => {
-          console.log(`worker ${worker.process.pid} died`);
-          addWorker(cluster.fork());
-        });
-      } else {
-        getState().sendMessageToWorkers = (msg) => {
-          if (
-            !msg.dynamic_update &&
-            !msg.real_time_collab_event &&
-            !msg.real_time_chat_event &&
-            !msg.log_event
-          )
-            workerDispatchMsg(msg); //also master
-          if (nodesDispatchMsg)
+          if (nodesDispatchMsg && useNCpus === 1)
             nodesDispatchMsg(msg).catch((e) => {
               console.log("Error sending multinode message", e.message);
             });
         };
-        await nonGreenlockWorkerSetup(appargs, port, host);
-        if (isLeader) scheduleHelper.start();
-        if (db.connectObj.multi_node) {
-          startLeadershipMonitor({
-            scheduleHelper,
-            wasLeader: isLeader,
-          });
-        }
-        require("./systemd")({ port });
-      }
-      Trigger.emitEvent("Startup");
-    } else {
-      await nonGreenlockWorkerSetup(appargs, port, host);
+
+        if (masterState.listeningTo.size < useNCpus)
+          setTimeout(initMasterListeners, 250);
+      };
+      require("greenlock-express")
+        .init({
+          packageRoot: __dirname,
+          configDir: path.join(file_store, "greenlock.d"),
+          maintainerEmail: admin_users[0].email,
+          cluster: true,
+          workers: useNCpus,
+        })
+        .ready((glx) => {
+          const httpsServer = glx.httpsServer();
+          setupSocket(
+            appargs?.subdomainOffset,
+            pruneSessionInterval,
+            httpsServer
+          );
+          httpsServer.setTimeout(timeout * 1000);
+          process.on("message", workerDispatchMsg);
+          glx.serveApp(app);
+          getState().processSend("Start");
+        })
+        .master(() => {
+          initMaster(appargs, true, multiNodeClient).then(initMasterListeners);
+        });
+
+      return; // none of stuff below will execute
     }
-  };
+  }
+  // No greenlock!
+
+  if (cluster.isMaster) {
+    const forkAnyWorkers = useNCpus > 1 && process.platform !== "win32";
+    await initMaster(appargs, forkAnyWorkers, multiNodeClient);
+
+    if (forkAnyWorkers) {
+      for (let i = 0; i < useNCpus; i++) addWorker(cluster.fork());
+      getState().sendMessageToWorkers = (msg) => {
+        Object.entries(cluster.workers).forEach(([wpid, w]) => {
+          w.send(msg);
+        });
+        workerDispatchMsg(msg); //also master
+      };
+
+      cluster.on("exit", (worker, code, signal) => {
+        console.log(`worker ${worker.process.pid} died`);
+        addWorker(cluster.fork());
+      });
+    } else {
+      getState().sendMessageToWorkers = (msg) => {
+        if (
+          !msg.dynamic_update &&
+          !msg.real_time_collab_event &&
+          !msg.real_time_chat_event &&
+          !msg.log_event
+        )
+          workerDispatchMsg(msg); //also master
+        if (nodesDispatchMsg)
+          nodesDispatchMsg(msg).catch((e) => {
+            console.log("Error sending multinode message", e.message);
+          });
+      };
+      await nonGreenlockWorkerSetup(appargs, port, host);
+      if (isLeader) scheduleHelper.start();
+      if (db.connectObj.multi_node) {
+        startLeadershipMonitor({
+          scheduleHelper,
+          wasLeader: isLeader,
+        });
+      }
+      systemd({ port });
+    }
+    Trigger.emitEvent("Startup");
+  } else {
+    await nonGreenlockWorkerSetup(appargs, port, host);
+  }
+};
 
 /**
  * @param {*} appargs

@@ -1,12 +1,12 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const { resetToFixtures, load_url_dom } = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
-const View = require("@saltcorn/data/models/view");
-const Field = require("@saltcorn/data/models/field");
-const Table = require("@saltcorn/data/models/table");
-const { plugin_with_routes, sleep } = require("@saltcorn/data/tests/mocks");
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import { resetToFixtures, load_url_dom } from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import { getState } from "@saltcorn/data/db/state";
+import View from "@saltcorn/data/models/view";
+import Field from "@saltcorn/data/models/field";
+import Table from "@saltcorn/data/models/table";
+import { plugin_with_routes, sleep } from "@saltcorn/data/tests/mocks";
 
 afterAll(db.close);
 beforeAll(async () => {
