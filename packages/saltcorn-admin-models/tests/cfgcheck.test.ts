@@ -1,19 +1,30 @@
 import db from "@saltcorn/data/db/index";
 
-const { getState } = require("@saltcorn/data/db/state");
+import { getState } from "@saltcorn/data/db/state";
 
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
-import { runConfigurationCheck } from "../models/config-check";
-import mocks from "@saltcorn/data/tests/mocks";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
+import { runConfigurationCheck } from "../models/config-check.js";
+import * as mocks from "@saltcorn/data/tests/mocks";
+import basePlugin from "@saltcorn/data/base-plugin";
+import sbadmin2 from "@saltcorn/sbadmin2";
+import reset from "@saltcorn/data/db/reset_schema";
+import fixtures from "@saltcorn/data/db/fixtures";
 
 const { mockReqRes } = mocks;
 
-getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
-getState().registerPlugin("sbadmin2", require("@saltcorn/sbadmin2"));
+getState()!.registerPlugin("base", basePlugin);
+getState()!.registerPlugin("sbadmin2", sbadmin2 as any);
 
 beforeAll(async () => {
-  await require("@saltcorn/data/db/reset_schema")();
-  await require("@saltcorn/data/db/fixtures")();
+  await reset();
+  await fixtures();
 });
 
 afterAll(async () => {

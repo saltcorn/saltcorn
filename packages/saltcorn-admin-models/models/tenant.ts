@@ -4,24 +4,23 @@
  * @module tenant
  */
 import db from "@saltcorn/data/db/index";
-const { getState } = require("@saltcorn/data/db/state");
+import { getState, process_send } from "@saltcorn/data/db/state";
 
-const reset = require("@saltcorn/data/db/reset_schema");
+import reset from "@saltcorn/data/db/reset_schema";
 import {
   SelectOptions,
   sqlsanitize,
   Where,
 } from "@saltcorn/db-common/internal";
-import config from "@saltcorn/data/models/config";
+import * as config from "@saltcorn/data/models/config";
 const { setConfig } = config;
 import { unlink } from "fs/promises";
 import Plugin from "@saltcorn/data/models/plugin";
 import File from "@saltcorn/data/models/file";
 import type { Row } from "@saltcorn/db-common/internal";
-import backup from "./backup";
+import backup from "./backup.js";
 const { create_backup, restore } = backup;
-const { process_send } = require("@saltcorn/data/db/state");
-const { isTest } = require("@saltcorn/data/utils");
+import { isTest } from "@saltcorn/data/utils";
 
 /**
  * List all Tenants
@@ -255,7 +254,7 @@ const upgrade_all_tenants_plugins = async (
             const prevVersion = plugin.version;
             plugin.version = "latest";
             const { version } = await loadPlugin(plugin, true, true);
-            getState().log(
+            getState()!.log(
               5,
               `Plugin ${plugin.location} latest version ${version} (previously ${prevVersion})`
             );
@@ -263,7 +262,7 @@ const upgrade_all_tenants_plugins = async (
             if (version) {
               latest_versions[plugin.location] = version;
               if (prevVersion !== version) {
-                getState().log(
+                getState()!.log(
                   3,
                   `Upgrading plugin ${plugin.location} to version ${version}`
                 );
@@ -274,7 +273,7 @@ const upgrade_all_tenants_plugins = async (
           }
         }
       } catch (e: any) {
-        getState().log(
+        getState()!.log(
           1,
           `Upgrading plugins error in tenant ${domain}: ${e.message}`
         );
@@ -347,7 +346,7 @@ class Tenant {
   }
 }
 
-export = {
+export default {
   create_tenant,
   insertTenant,
   switchToTenant,

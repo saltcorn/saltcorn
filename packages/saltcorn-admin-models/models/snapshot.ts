@@ -1,6 +1,6 @@
 import db from "@saltcorn/data/db/index";
-const { getState } = require("@saltcorn/data/db/state");
-import pack from "./pack";
+import { getState } from "@saltcorn/data/db/state";
+import pack from "./pack.js";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
 
 const {
@@ -11,9 +11,10 @@ const {
   install_pack,
   can_install_pack,
 } = pack;
-import backup from "./backup";
-const crypto = require("crypto");
-import { isEqual } from "lodash";
+import backup from "./backup.js";
+import crypto from "crypto";
+import lodash from "lodash";
+const { isEqual } = lodash;
 import View from "@saltcorn/data/models/view";
 import { CodePagePack, Pack } from "@saltcorn/types/base_types";
 import Page from "@saltcorn/data/models/page";
@@ -119,13 +120,13 @@ class Snapshot {
           ? JSON.parse(this.pack)?.code_pages.find((p: any) => p.name === name)
           : this.pack?.code_pages?.find((p: any) => p.name === name);
       if (cppack) {
-        const code_pages = getState().getConfigCopy("function_code_pages", {});
+        const code_pages = getState()!.getConfigCopy("function_code_pages", {});
 
-        await getState().setConfig("function_code_pages", {
+        await getState()!.setConfig("function_code_pages", {
           ...code_pages,
           [cppack.name]: cppack.code,
         });
-        await getState().refresh_codepages();
+        await getState()!.refresh_codepages();
       }
     }
     if ((type || "").toLowerCase() === "trigger") {
@@ -205,4 +206,4 @@ class Snapshot {
   }
 }
 
-export = Snapshot;
+export default Snapshot;

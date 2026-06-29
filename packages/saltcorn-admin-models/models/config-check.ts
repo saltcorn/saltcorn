@@ -1,12 +1,12 @@
-const { getState } = require("@saltcorn/data/db/state");
+import { getState } from "@saltcorn/data/db/state";
 import Table from "@saltcorn/data/models/table";
 import View from "@saltcorn/data/models/view";
 import File from "@saltcorn/data/models/file";
 import Page from "@saltcorn/data/models/page";
 import Trigger from "@saltcorn/data/models/trigger";
-import mocks from "@saltcorn/data/tests/mocks";
+import * as mocks from "@saltcorn/data/tests/mocks";
 
-const { chaos_guinea_pig, set_seed } = require("chaos-guinea-pig");
+import { chaos_guinea_pig, set_seed } from "chaos-guinea-pig";
 
 // todo tests for files
 // todo tests for tenants
@@ -173,7 +173,7 @@ const test_trigger = async (
 ) => {
   try {
     if (trigger.action === "Multi-step action") return;
-    const action = getState().actions[trigger.action];
+    const action: any = getState()!.actions[trigger.action];
     if (!action) {
       errors.push(
         `Trigger ${trigger.name} action not found: ${trigger.action}`

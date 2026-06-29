@@ -1,12 +1,13 @@
-const {
+import {
   random_table,
   fill_table_row,
   all_views,
-} = require("@saltcorn/data/models/random");
+} from "@saltcorn/data/models/random";
 import db from "@saltcorn/data/db/index";
-const { getState } = require("@saltcorn/data/db/state");
-getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
-const { set_seed } = require("chaos-guinea-pig");
+import { getState } from "@saltcorn/data/db/state";
+import basePlugin from "@saltcorn/data/base-plugin";
+getState()!.registerPlugin("base", basePlugin);
+import { set_seed } from "chaos-guinea-pig";
 import generators from "@saltcorn/types/generators";
 const { oneOf, generateBool } = generators;
 import Form from "@saltcorn/data/models/form";
@@ -15,10 +16,11 @@ import User from "@saltcorn/data/models/user";
 import markup from "@saltcorn/markup/index";
 const { renderForm } = markup;
 import { unlink } from "fs/promises";
-import backup from "../models/backup";
+import backup from "../models/backup.js";
 const { create_backup, restore, create_csv_from_rows } = backup;
-const reset = require("@saltcorn/data/db/reset_schema");
-import mocks from "@saltcorn/data/tests/mocks";
+import reset from "@saltcorn/data/db/reset_schema";
+import fixtures from "@saltcorn/data/db/fixtures";
+import * as mocks from "@saltcorn/data/tests/mocks";
 const { mockReqRes, plugin_with_routes } = mocks;
 import Table from "@saltcorn/data/models/table";
 import Field from "@saltcorn/data/models/field";
@@ -29,16 +31,23 @@ import {
   assertIsSet,
   assertsIsSuccessMessage,
 } from "@saltcorn/data/tests/assertions";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 
 jest.setTimeout(80000);
 
 afterAll(db.close);
 
 beforeAll(async () => {
-  await require("@saltcorn/data/db/reset_schema")();
-  await require("@saltcorn/data/db/fixtures")();
-  getState().registerPlugin("mock_plugin", plugin_with_routes());
+  await reset();
+  await fixtures();
+  getState()!.registerPlugin("mock_plugin", plugin_with_routes());
 });
 const seed = set_seed();
 
@@ -64,6 +73,7 @@ describe("Random tables", () => {
         has_rows = true;
         id = oneOf(rows.map((r: Row) => r.id));
         const row = await table.getRow({ id });
+        assertIsSet(row);
 
         if (nonFkey.length > 0) {
           const f = oneOf(nonFkey);
@@ -86,7 +96,7 @@ describe("Random tables", () => {
       const rendered = renderForm(form, "123");
       expect(rendered).toContain("<form");
 
-      const { list, show, edit } = await all_views(table, "List");
+      const { list, show, edit } = await (all_views as any)(table, "List");
       const listres = await list.run({}, mockReqRes);
       expect(listres).toContain("<table");
       const editres = await edit.run({}, mockReqRes);

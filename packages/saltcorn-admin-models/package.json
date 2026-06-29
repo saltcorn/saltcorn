@@ -3,8 +3,11 @@
   "version": "1.6.0",
   "description": "models only required by the admin interface for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
+  "type": "module",
   "scripts": {
-    "test": "cd dist && NODE_ENV=test node --require ../setup-test-schema.js --test --test-force-exit",
+    "test": "cd dist && NODE_ENV=test node --require ../setup-test-schema.cjs --test --test-force-exit",
+    "gen:cjs-shims": "node gen-cjs-shims.cjs",
+    "pretsc": "node gen-cjs-shims.cjs",
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*"
   },
@@ -12,8 +15,24 @@
   "license": "MIT",
   "main": "dist/index.js",
   "exports": {
-    ".": "./dist/index.js",
-    "./*": "./dist/*.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./cjs/index.cjs",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./*.js": {
+      "types": "./dist/*.d.ts",
+      "require": "./cjs/*.cjs",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    },
+    "./*": {
+      "types": "./dist/*.d.ts",
+      "require": "./cjs/*.cjs",
+      "import": "./dist/*.js",
+      "default": "./dist/*.js"
+    }
   },
   "typesVersions": {
     "*": {
@@ -24,7 +43,9 @@
   },
   "files": [
     "dist/**/*",
-    "!dist/tsconfig.ref.tsbuildinfo"
+    "!dist/tsconfig.ref.tsbuildinfo",
+    "cjs/**/*.cjs",
+    "gen-cjs-shims.cjs"
   ],
   "dependencies": {
     "@aws-sdk/client-s3": "3.1057.0",

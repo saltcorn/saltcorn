@@ -1,13 +1,16 @@
 import db from "@saltcorn/data/db/index";
 import Plugin from "@saltcorn/data/models/plugin";
-const {
+import {
   getState,
   add_tenant,
   init_multi_tenant,
   restart_tenant,
-} = require("@saltcorn/data/db/state");
-getState().registerPlugin("base", require("@saltcorn/data/base-plugin"));
-import tenant from "../models/tenant";
+} from "@saltcorn/data/db/state";
+import basePlugin from "@saltcorn/data/base-plugin";
+import reset from "@saltcorn/data/db/reset_schema";
+import fixtures from "@saltcorn/data/db/fixtures";
+getState()!.registerPlugin("base", basePlugin);
+import tenant from "../models/tenant.js";
 const {
   create_tenant,
   deleteTenant,
@@ -18,7 +21,7 @@ const {
   getAllTenantRows,
   eachTenant,
 } = tenant;
-import config from "@saltcorn/data/models/config";
+import * as config from "@saltcorn/data/models/config";
 const { getConfig } = config;
 import {
   afterAll,
@@ -34,8 +37,8 @@ afterAll(db.close);
 beforeAll(async () => {
   // initialise this process's schema (tests run each file in its own Postgres
   // schema so they can run in parallel)
-  await require("@saltcorn/data/db/reset_schema")();
-  await require("@saltcorn/data/db/fixtures")();
+  await reset();
+  await fixtures();
   if (!db.isSQLite) await db.query(`drop schema if exists test10 CASCADE `);
   if (!db.isSQLite) await db.query(`drop schema if exists test11 CASCADE `);
 });
@@ -44,7 +47,7 @@ describe("Tenant", () => {
   if (!db.isSQLite) {
     it("can create a new tenant", async () => {
       db.enable_multi_tenant();
-      await getState().setConfig("base_url", "http://example.com/");
+      await getState()!.setConfig("base_url", "http://example.com/");
       await db.query(`drop schema if exists test10 CASCADE `);
 
       add_tenant("test10");
@@ -70,7 +73,7 @@ describe("Tenant", () => {
         // test base url
         const base = await getConfig("base_url");
         expect(base).toBe("http://test10.example.com/");
-        const state = getState();
+        const state = getState()!;
         expect(!!state).toBe(true);
         const tables = state.tables;
         expect(tables.length).toBe(1);
@@ -82,7 +85,7 @@ describe("Tenant", () => {
       const tens = await getAllTenants();
       expect(tens).toContain("test10");
       expect(tens).not.toContain("public");
-      await init_multi_tenant(() => {}, undefined, tens);
+      await (init_multi_tenant as any)(() => {}, undefined, tens);
     });
 
     it("can update template", async () => {
@@ -92,9 +95,9 @@ describe("Tenant", () => {
     });
 
     it("can create a new tenant with template without description", async () => {
-      await getState().setConfig("tenant_template", "test10");
+      await getState()!.setConfig("tenant_template", "test10");
 
-      const tenant_template = getState().getConfig("tenant_template");
+      const tenant_template = getState()!.getConfig("tenant_template");
       await db.query(`drop schema if exists test11 CASCADE `);
       add_tenant("test11");
 

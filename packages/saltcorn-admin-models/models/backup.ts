@@ -1,4 +1,6 @@
-const { getState } = require("@saltcorn/data/db/state");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import { getState } from "@saltcorn/data/db/state";
 import db from "@saltcorn/data/db/index";
 import Table from "@saltcorn/data/models/table";
 import { instanceOfErrorMsg } from "@saltcorn/types/common_types";
@@ -25,10 +27,11 @@ import {
 } from "fs/promises";
 import { existsSync, readdirSync, statSync, createReadStream } from "fs";
 import { join, basename } from "path";
-import dateFormat from "dateformat";
+import dateFormatLib from "dateformat";
+const dateFormat: any = dateFormatLib; // NodeNext default-import interop for dateformat
 import { stringify } from "csv-stringify/sync";
 import csvtojson from "csvtojson";
-import pack from "./pack";
+import pack from "./pack.js";
 const {
   table_pack,
   view_pack,
@@ -42,9 +45,9 @@ const {
   can_install_pack,
   trigger_pack,
 } = pack;
-import config from "@saltcorn/data/models/config";
+import * as config from "@saltcorn/data/models/config";
 const { configTypes } = config;
-const { asyncMap, isTest } = require("@saltcorn/data/utils");
+import { asyncMap, isTest } from "@saltcorn/data/utils";
 import Trigger from "@saltcorn/data/models/trigger";
 import Library from "@saltcorn/data/models/library";
 import Tag from "@saltcorn/data/models/tag";
@@ -52,12 +55,12 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import EventLog from "@saltcorn/data/models/eventlog";
 import path from "path";
-const { exec, execSync, spawn } = require("child_process");
+import { exec, execSync, spawn } from "child_process";
 
 import SftpClient from "ssh2-sftp-client";
 import { CodePagePack } from "@saltcorn/types/base_types";
-const os = require("os");
-const semver = require("semver");
+import os from "os";
+import semver from "semver";
 // @aws-sdk is heavy to load (~50ms) and only used when backing up to S3,
 // so require it lazily rather than at module load time.
 let _awsS3: any;
@@ -66,7 +69,8 @@ let _awsLibStorage: any;
 const awsLibStorage = () =>
   _awsLibStorage || (_awsLibStorage = require("@aws-sdk/lib-storage"));
 import MetaData from "@saltcorn/data/models/metadata";
-import { orderBy } from "lodash";
+import lodash from "lodash";
+const { orderBy } = lodash;
 
 /**
  * @param [withEventLog] - include event log
@@ -75,7 +79,7 @@ const create_pack_json = async (
   withEventLog: boolean = false,
   forSnapshot: boolean = false
 ): Promise<object> => {
-  const state = getState();
+  const state = getState()!;
 
   // tables
   const tables = await asyncMap(
@@ -194,7 +198,7 @@ const create_pack_json = async (
  */
 const create_pack = async (dirpath: string): Promise<void> => {
   const pack = await create_pack_json(
-    getState().getConfig("backup_with_event_log", false)
+    getState()!.getConfig("backup_with_event_log", false)
   );
 
   await writeFile(join(dirpath, "pack.json"), JSON.stringify(pack));
@@ -247,7 +251,7 @@ const create_table_jsons = async (root_dirpath: string): Promise<void> => {
   const dirpath = join(root_dirpath, "tables");
   await mkdir(dirpath, { recursive: true });
   const tables = await Table.find({});
-  const backup_history = getState().getConfig("backup_history", true);
+  const backup_history = getState()!.getConfig("backup_history", true);
 
   for (const t of tables) {
     if (!t.external && !t.provider_name) {
@@ -267,7 +271,7 @@ const create_table_jsons = async (root_dirpath: string): Promise<void> => {
  * @returns {Promise<void>}
  */
 const backup_files = async (root_dirpath: string): Promise<void> => {
-  const backup_file_prefix = getState().getConfig("backup_file_prefix");
+  const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
 
   const dirpath = join(root_dirpath, "files");
   await mkdir(dirpath);
@@ -285,7 +289,7 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
         //exclude auto backups
         if (
           base.startsWith(
-            `${backup_file_prefix}${getState().getConfig(
+            `${backup_file_prefix}${getState()!.getConfig(
               "site_name",
               "Saltcorn"
             )}`
@@ -332,7 +336,7 @@ const backup_config = async (root_dirpath: string): Promise<void> => {
 
   const cfgs = await db.select("_sc_config");
 
-  const state = getState();
+  const state = getState()!;
   for (const cfg of cfgs) {
     if (!state.isFixedConfig(cfg.key))
       await writeFile(
@@ -343,7 +347,7 @@ const backup_config = async (root_dirpath: string): Promise<void> => {
 };
 
 const backup_info_file = async (root_dirpath: string): Promise<void> => {
-  const state = getState();
+  const state = getState()!;
   const migrations_run = await getMigrationsInDB();
   const dbversion = await db.getVersion(true);
   const saltcorn_version = db.connectObj.sc_version;
@@ -375,7 +379,7 @@ const backup_info_file = async (root_dirpath: string): Promise<void> => {
 
 const zipFolder = async (folder: string, zipFileName: string) => {
   const backup_with_system_zip = executableIsAvailable("zip");
-  const backup_password = getState().getConfig("backup_password", "");
+  const backup_password = getState()!.getConfig("backup_password", "");
   if (backup_with_system_zip) {
     return await new Promise((resolve, reject) => {
       const absZipPath = path.join(process.cwd(), zipFileName);
@@ -389,11 +393,11 @@ const zipFolder = async (folder: string, zipFileName: string) => {
 
       const subprocess = spawn("zip", args, { cwd: folder });
       subprocess.stdout.on("data", (data: any) => {
-        getState().log(6, data.toString());
+        getState()!.log(6, data.toString());
       });
 
       subprocess.stderr.on("data", (data: any) => {
-        getState().log(1, data.toString());
+        getState()!.log(1, data.toString());
       });
 
       subprocess.on("close", (exitCode: any) => {
@@ -427,9 +431,9 @@ const create_backup = async (fnm?: string): Promise<string> => {
   const ten = db.getTenantSchema();
   const tens =
     ten === db.connectObj.default_schema
-      ? getState().getConfig("site_name", "Saltcorn")
+      ? getState()!.getConfig("site_name", "Saltcorn")
       : ten;
-  const backup_file_prefix = getState().getConfig("backup_file_prefix");
+  const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
   const zipFileName = fnm || `${backup_file_prefix}${tens}-${day}.zip`;
 
   await zipFolder(tmpDir.path, zipFileName);
@@ -459,7 +463,7 @@ const extract = async (
   dir: string,
   password?: string
 ): Promise<void> => {
-  const state = getState();
+  const state = getState()!;
   const backup_with_system_zip = executableIsAvailable("unzip");
 
   if (backup_with_system_zip) {
@@ -519,7 +523,7 @@ const restore_files = async (dirpath: string): Promise<any> => {
   const fnm = join(dirpath, "files.csv");
   const file_users: any = {};
   const newLocations: any = {};
-  const state = getState();
+  const state = getState()!;
 
   if (existsSync(fnm)) {
     const file_rows = await csvtojson().fromFile(fnm);
@@ -562,7 +566,7 @@ const restore_files = async (dirpath: string): Promise<any> => {
  */
 const correct_fileid_references_to_location = async (newLocations: any) => {
   const fileFields = await Field.find({ type: "File" });
-  getState().log(2, `Correcting file id references to locations`);
+  getState()!.log(2, `Correcting file id references to locations`);
 
   for (const field of fileFields) {
     const table = Table.findOne({ id: field.table_id });
@@ -584,7 +588,7 @@ const correct_fileid_references_to_location = async (newLocations: any) => {
  * @returns {Promise<void>}
  */
 const restore_file_users = async (file_users: any): Promise<void> => {
-  if (!isTest()) getState().log(2, `Restoring file users`);
+  if (!isTest()) getState()!.log(2, `Restoring file users`);
   for (const [id, user_id] of Object.entries(file_users)) {
     if (user_id) {
       const file = await File.findOne(id);
@@ -607,9 +611,9 @@ const restore_tables = async (
   let err;
   const tables = await Table.find();
 
-  const restore_history = getState().getConfig("restore_history", true);
+  const restore_history = getState()!.getConfig("restore_history", true);
   for (const table of tables) {
-    if (!isTest()) getState().log(2, `restoring table ${table.name}`);
+    if (!isTest()) getState()!.log(2, `restoring table ${table.name}`);
 
     const fnm_csv =
       table.name === "users"
@@ -646,7 +650,7 @@ const restore_tables = async (
       );
       if (existsSync(fnm_hist_json)) {
         if (!isTest())
-          getState().log(2, `restoring table history ${table.name}`);
+          getState()!.log(2, `restoring table history ${table.name}`);
 
         await table.import_json_history_file(fnm_hist_json);
       }
@@ -670,7 +674,7 @@ const restore_tables = async (
  */
 const restore_config = async (dirpath: string): Promise<void> => {
   const cfgs = readdirSync(join(dirpath, "config"));
-  const state = getState();
+  const state = getState()!;
 
   for (const cfg of cfgs) {
     const s = await readFile(join(dirpath, "config", cfg));
@@ -681,7 +685,7 @@ const restore_config = async (dirpath: string): Promise<void> => {
 const restore_metadata = async (dirpath: string): Promise<void> => {
   const fnm: string = join(dirpath, "metadata.json");
   if (!existsSync(fnm)) return;
-  if (!isTest()) getState().log(2, `Restoring metadata`);
+  if (!isTest()) getState()!.log(2, `Restoring metadata`);
   const mds = JSON.parse((await readFile(fnm)).toString()) as Array<MetaData>;
 
   for (const md of mds) {
@@ -701,7 +705,7 @@ const restore = async (
   restore_first_user?: boolean,
   password?: string
 ): Promise<string | void> => {
-  const state = getState();
+  const state = getState()!;
   state.log(2, `Starting restore to tenant ${db.getTenantSchema()}`);
 
   const tmpDir = await dir({ unsafeCleanup: true });
@@ -794,10 +798,10 @@ const restore = async (
  * Delete old backups
  */
 const delete_old_backups = async () => {
-  const directory = getState().getConfig("auto_backup_directory");
-  const expire_days = getState().getConfig("auto_backup_expire_days");
-  const backup_file_prefix = getState().getConfig("backup_file_prefix");
-  const destination = getState().getConfig("auto_backup_destination");
+  const directory = getState()!.getConfig("auto_backup_directory");
+  const expire_days = getState()!.getConfig("auto_backup_expire_days");
+  const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
+  const destination = getState()!.getConfig("auto_backup_destination");
 
   if (!expire_days || expire_days < 0) return;
 
@@ -814,8 +818,8 @@ const delete_old_backups = async () => {
       if (ageDays > expire_days) await unlink(path.join(directory, file));
     }
   } else if (destination === "S3") {
-    const s3EndpointCfg = getState().getConfig("backup_s3_endpoint");
-    const s3Secure = getState().getConfig("backup_s3_secure", true);
+    const s3EndpointCfg = getState()!.getConfig("backup_s3_endpoint");
+    const s3Secure = getState()!.getConfig("backup_s3_secure", true);
     const endpoint = s3EndpointCfg
       ? /:\/\//.test(s3EndpointCfg)
         ? s3EndpointCfg
@@ -823,15 +827,15 @@ const delete_old_backups = async () => {
       : undefined;
     const s3 = new (awsS3().S3Client)({
       credentials: {
-        accessKeyId: getState().getConfig("backup_s3_access_key"),
-        secretAccessKey: getState().getConfig("backup_s3_access_secret"),
+        accessKeyId: getState()!.getConfig("backup_s3_access_key"),
+        secretAccessKey: getState()!.getConfig("backup_s3_access_secret"),
       },
-      region: getState().getConfig("backup_s3_region"),
+      region: getState()!.getConfig("backup_s3_region"),
       ...(endpoint ? { endpoint } : {}),
     });
 
-    const bucket = getState().getConfig("backup_s3_bucket");
-    const keyPrefix = (getState().getConfig("backup_s3_path_prefix", "") || "")
+    const bucket = getState()!.getConfig("backup_s3_bucket");
+    const keyPrefix = (getState()!.getConfig("backup_s3_path_prefix", "") || "")
       .toString()
       .replace(/^\/+|\/+$/g, "");
     const listPrefix = [keyPrefix, backup_file_prefix]
@@ -1001,8 +1005,8 @@ const auto_backup_now_tenant = async (state: any) => {
 };
 const auto_backup_now = async () => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-  const state = getState();
-  const tenantModule = require("./tenant");
+  const state = getState()!;
+  const tenantModule = (await import("./tenant.js")).default;
   if (isRoot && state.getConfig("auto_backup_tenants"))
     await tenantModule.eachTenant(async () => {
       try {
@@ -1040,7 +1044,7 @@ const auto_backup_now = async () => {
       throw new Error(e);
     }
 };
-export = {
+export default {
   create_backup,
   restore,
   create_csv_from_rows,
