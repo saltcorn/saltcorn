@@ -534,7 +534,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const fullPath = File.normalise_in_base(
-      path.join(__dirname, "..", "docs"),
+      path.join(__dirname, "..", "..", "docs"),
       ...req.params.filepath
     );
     if (fs.existsSync(fullPath)) res.sendFile(fullPath, { dotfiles: "allow" });
@@ -549,7 +549,7 @@ router.get(
   "/whatsnew",
   isAdmin,
   error_catcher(async (req, res) => {
-    const fp = path.join(__dirname, "..", "CHANGELOG.md");
+    const fp = path.join(__dirname, "..", "..", "CHANGELOG.md");
     const fileBuf = await fs.promises.readFile(fp);
     const mdContents = fileBuf.toString().replace("# Notable changes\n", "");
     const markup = md.render(mdContents);
@@ -1928,7 +1928,15 @@ document.getElementById('version_select').addEventListener('change', () => {
 );
 
 const cleanNodeModules = async () => {
-  const topSaltcornDir = path.join(__dirname, "..", "..", "..", "..", "..");
+  const topSaltcornDir = path.join(
+    __dirname,
+    "..",
+    "..",
+    "..",
+    "..",
+    "..",
+    ".."
+  );
   if (path.basename(topSaltcornDir) === "@saltcorn")
     await fs.promises.rm(topSaltcornDir, { recursive: true, force: true });
   else
@@ -2199,7 +2207,7 @@ router.post(
         // greenlock logic
         const Greenlock = require("greenlock");
         const greenlock = Greenlock.create({
-          packageRoot: path.resolve(__dirname, ".."),
+          packageRoot: path.resolve(__dirname, "..", ".."),
           configDir: path.join(file_store, "greenlock.d"),
           maintainerEmail: admin_users[0].email,
         });
@@ -2277,7 +2285,7 @@ router.post(
         // greenlock logic
         const Greenlock = require("greenlock");
         const greenlock = Greenlock.create({
-          packageRoot: path.resolve(__dirname, ".."),
+          packageRoot: path.resolve(__dirname, "..", ".."),
           configDir: path.join(file_store, "greenlock.d"),
           maintainerEmail: admin_users[0].email,
         });
@@ -5462,14 +5470,20 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
     const cachedTableNames = getState().tables.map((t) => `"${t.name}"`);
 
     const dsPaths = [
-      path.join(__dirname, "tsdecls/lib.es5.d.ts"),
-      path.join(__dirname, "tsdecls/es2015.core.d.ts"),
-      path.join(__dirname, "tsdecls/es2015.collection.d.ts"),
-      path.join(__dirname, "tsdecls/es2015.promise.d.ts"),
-      path.join(__dirname, "tsdecls/es2017.object.d.ts"),
-      path.join(__dirname, "tsdecls/es2017.string.d.ts"),
-      path.join(__dirname, "tsdecls/es2019.object.d.ts"),
-      path.join(__dirname, "tsdecls/assert.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/lib.es5.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/es2015.core.d.ts"),
+      path.join(
+        __dirname,
+        "..",
+        "..",
+        "routes",
+        "tsdecls/es2015.collection.d.ts"
+      ),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/es2015.promise.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/es2017.object.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/es2017.string.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/es2019.object.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/assert.d.ts"),
       path.join(dbCommonModulePath, "/dbtypes.d.ts"),
       path.join(dataModulePath, "/models/table.d.ts"),
       path.join(dataModulePath, "/models/user.d.ts"),

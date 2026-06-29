@@ -1,1 +1,1 @@
-module.exports = require("../serve.js").default;
+module.exports = require("../dist/serve.js").default;

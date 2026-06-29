@@ -186,14 +186,14 @@ const getApp = async (opts = {}) => {
     // i18n configuration
     i18n = new I18n({
       locales,
-      directory: path.join(__dirname, "locales"),
+      directory: path.join(__dirname, "..", "locales"),
       mustacheConfig: { disable: true },
       defaultLocale: getState().getConfig("default_locale"),
     });
   } else {
     const staticCatalog = {};
     for (const locale of locales) {
-      staticCatalog[locale] = require(`./locales/${locale}.json`);
+      staticCatalog[locale] = require(`../locales/${locale}.json`);
     }
 
     for (const [nm, loc] of Object.entries(getState().plugin_locations))
@@ -257,7 +257,7 @@ const getApp = async (opts = {}) => {
 
   //legacy
   app.use(
-    express.static(__dirname + "/public", {
+    express.static(path.join(__dirname, "..", "public"), {
       maxAge: 1000 * 60 * 60 * 24,
     })
   );
@@ -281,7 +281,7 @@ const getApp = async (opts = {}) => {
 
   app.use(
     `/static_assets/${version_tag}`,
-    express.static(__dirname + "/public", {
+    express.static(path.join(__dirname, "..", "public"), {
       maxAge: "100d",
     })
   );

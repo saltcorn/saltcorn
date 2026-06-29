@@ -20,9 +20,12 @@ global.window = window;
 global.document = window.document;
 
 const load_script = (fnm) => {
-  const srcFile = fs.readFileSync(path.join(__dirname, "..", "public", fnm), {
-    encoding: "utf-8",
-  });
+  const srcFile = fs.readFileSync(
+    path.join(__dirname, "..", "..", "public", fnm),
+    {
+      encoding: "utf-8",
+    }
+  );
   const scriptEl = document.createElement("script");
   scriptEl.textContent = srcFile;
   document.body.appendChild(scriptEl);

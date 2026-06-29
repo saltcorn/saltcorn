@@ -20,7 +20,7 @@ import {
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 
 // export our router to be mounted by the parent application
 export default router;
@@ -33,11 +33,12 @@ export default router;
  */
 router.post(
   "/:tableName/:id",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: any, res: any) => {
     const { tableName, id } = req.params;
     const { redirect } = req.query;
     // todo check that works after where change
     const table = Table.findOne({ name: tableName });
+    if (!table) throw new Error(`Table ${tableName} not found`);
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const where = { [table.pk_name]: id };
     const resultCollector = {};
@@ -80,7 +81,7 @@ router.post(
           "error",
           req.__("Not allowed to write to table %s", table.name)
         );
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       req.flash("error", e.message);
     }
@@ -91,13 +92,14 @@ router.post(
 );
 router.post(
   "/:tableName",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: any, res: any) => {
     const { tableName } = req.params;
     const { redirect, ...restQuery } = req.query;
     // todo check that works after where change
     const table = Table.findOne({ name: tableName });
+    if (!table) throw new Error(`Table ${tableName} not found`);
     const role = req.user && req.user.id ? req.user.role_id : 100;
-    const query = {};
+    const query: Record<string, any> = {};
     table.fields.forEach((f) => {
       if (typeof restQuery[f.name] !== "undefined")
         query[f.name] = restQuery[f.name];
@@ -124,7 +126,7 @@ router.post(
           "error",
           req.__("Not allowed to write to table %s", table.name)
         );
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       req.flash("error", e.message);
     }

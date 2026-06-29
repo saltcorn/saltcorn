@@ -629,7 +629,7 @@ async ({
     const file_store = db.connectObj.file_store;
     const Greenlock = require("greenlock");
     const greenlock = Greenlock.create({
-      packageRoot: __dirname,
+      packageRoot: path.join(__dirname, ".."),
       configDir: path.join(file_store, "greenlock.d"),
       maintainerEmail: admin_users[0].email,
     });
@@ -662,7 +662,7 @@ async ({
       };
       require("greenlock-express")
         .init({
-          packageRoot: __dirname,
+          packageRoot: path.join(__dirname, ".."),
           configDir: path.join(file_store, "greenlock.d"),
           maintainerEmail: admin_users[0].email,
           cluster: true,
