@@ -943,7 +943,9 @@ const get_viewable_fields = (
                   in_row_click
                 ),
                 view(column: any) {
-                  return viewResults?.[column.view + column.relation]?.(r) ?? "";
+                  return (
+                    viewResults?.[column.view + column.relation]?.(r) ?? ""
+                  );
                 },
               },
               layout,
@@ -1169,10 +1171,10 @@ const get_viewable_fields = (
         else {
           if (field && field.type === "File") column.field_type = "File";
           else if (
-            (field?.type as any)?.name &&
+            field?.type_name &&
             (field?.type as any)?.fieldviews?.[fieldview]
           ) {
-            column.field_type = (field!.type as any).name;
+            column.field_type = field!.type_name;
             type = getState()!.types[column.field_type];
           }
         }
@@ -1326,7 +1328,7 @@ const get_viewable_fields = (
               ? "Float"
               : column.stat === "Count" || column.stat === "CountUnique"
                 ? "Integer"
-                : (aggField?.type as any)?.name;
+                : aggField?.type_name || "nosuchtype";
           const type = getState()!.types[outcomeType];
           if (type?.fieldviews?.[column.agg_fieldview])
             showValue = (x: any) =>
@@ -1883,7 +1885,7 @@ const standardBlockDispatch = (
       let fvRes;
       if (!field_type) {
         const field = table.getField(join_field);
-        if (field) field_type = (field?.type as any)?.name;
+        if (field) field_type = field?.type_name;
       }
       if (field_type && fieldview) {
         const type = getState()!.types[field_type];
@@ -1962,7 +1964,7 @@ const standardBlockDispatch = (
             ? "Float"
             : stat === "Count" || stat === "CountUnique"
               ? "Integer"
-              : (aggField?.type as any)?.name;
+              : aggField?.type_name || "nosuchtype";
         const type = getState()!.types[outcomeType];
         if (type?.fieldviews?.[column.agg_fieldview]) {
           const readval = type.read!(val);
@@ -2114,7 +2116,7 @@ const splitUniques = (
       (field.is_unique || field.primary_key) &&
       fuzzyStrings &&
       field.type &&
-      (field.type as any).name === "String"
+      field.type_name === "String"
     )
       uniques[k] = { ilike: v };
     else if (field && (field.is_unique || field.primary_key))

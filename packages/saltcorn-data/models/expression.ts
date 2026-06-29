@@ -316,15 +316,15 @@ function jsexprToWhere(
           throw new Error("Symbol with no description");
         const field = fields.find((f) => f.name === whOrSym.description);
         if (!field) return { not: { [whOrSym.description]: null } };
-        if ((field.type as any)?.name === "Bool") return { [field.name]: true };
-        if ((field.type as any)?.name === "Integer")
+        if (field.type_name === "Bool") return { [field.name]: true };
+        if (field.type_name === "Integer")
           return {
             and: [
               { not: { [field.name]: null } },
               { not: { [field.name]: 0 } },
             ],
           };
-        if ((field.type as any)?.name === "String")
+        if (field.type_name === "String")
           return {
             and: [
               { not: { [field.name]: null } },

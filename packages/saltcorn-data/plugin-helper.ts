@@ -953,9 +953,7 @@ const field_picker_fields = async ({
       if (field.reftable) await field.reftable.getFields();
     }
   }
-  const boolfields = fields.filter(
-    (f) => f.type && (f.type as any).name === "Bool"
-  );
+  const boolfields = fields.filter((f) => f.type && f.type_name === "Bool");
 
   const stateActions = getState()!.actions;
   const stateActionKeys = Object.entries(stateActions)
@@ -1109,7 +1107,7 @@ const field_picker_fields = async ({
         "Array_Agg",
       ];
       table.fields.forEach((f) => {
-        if (f.type && (f.type as any).name === "Date") {
+        if (f.type && f.type_name === "Date") {
           aggStatOptions[aggKey].push(`Latest ${f.name}`);
           aggStatOptions[aggKey].push(`Earliest ${f.name}`);
         }
@@ -2228,9 +2226,13 @@ const handleRelationPath = (
  * to prevent subquery injection through passthrough code paths.
  */
 function stripDangerousOperators(obj: any): any {
-  if(obj && Object.prototype.toString.call(obj) === "[object Date]" && !isNaN(obj)) 
+  if (
+    obj &&
+    Object.prototype.toString.call(obj) === "[object Date]" &&
+    !isNaN(obj)
+  )
     return obj;
-  if(obj?.constructor?.name === "PlainDate") return obj;
+  if (obj?.constructor?.name === "PlainDate") return obj;
 
   if (typeof obj !== "object" || obj === null) return obj;
   if (Array.isArray(obj)) return obj.map(stripDangerousOperators);
@@ -2373,12 +2375,7 @@ const stateFieldsToWhere = ({
         if (!qstate.not) qstate.not = {};
         qstate.not[notfield] = stripDangerousOperators(v);
       }
-    } else if (
-      field &&
-      (field.type as any)?.name === "String" &&
-      v &&
-      v.slugify
-    ) {
+    } else if (field && field.type_name === "String" && v && v.slugify) {
       qstate[k] = v;
     } else if (
       Array.isArray(v) &&
@@ -2397,23 +2394,15 @@ const stateFieldsToWhere = ({
       qstate[k] = { or: v.map((v) => (v && !isNaN(+v) ? +v : v)) };
     } else if (
       field &&
-      (field.type as any)?.name === "String" &&
+      field.type_name === "String" &&
       !(field.attributes && field.attributes.options) &&
       approximate &&
       !field.attributes?.exact_search_only
     ) {
       qstate[k] = { ilike: v };
-    } else if (
-      field &&
-      (field.type as any)?.name === "Bool" &&
-      state[k] === "?"
-    ) {
+    } else if (field && field.type_name === "Bool" && state[k] === "?") {
       // omit
-    } else if (
-      typeof v === "object" &&
-      v &&
-      (field?.type as any)?.name === "JSON"
-    ) {
+    } else if (typeof v === "object" && v && field?.type_name === "JSON") {
       let json: Record<string, any> = {};
       if (Object.values(v).length === 1 && Object.values(v)[0] === "") return;
       Object.entries(v).forEach(([kj, vj]: [string, any]) => {
@@ -2495,7 +2484,7 @@ const stateFieldsToWhere = ({
       const lblFld = (jTable?.fields || []).find((f) => f.name === lblField);
       if (
         lblFld &&
-        (lblFld.type as any)?.name === "String" &&
+        lblFld.type_name === "String" &&
         !lblFld.attributes?.options
       )
         where = { [db.sqlsanitize(lblField)]: { ilike: v } };
@@ -2525,7 +2514,7 @@ const stateFieldsToWhere = ({
         const labelField = Table.findOne({ name: jtNm })?.getField?.(lblField);
         if (labelField)
           isString =
-            (labelField.type as any)?.name === "String" &&
+            labelField.type_name === "String" &&
             !labelField.attributes?.exact_search_only;
 
         const pk = table ? table.pk_name : "id";
@@ -3511,10 +3500,7 @@ const build_schema_data = async (): Promise<any> => {
       //for edit-in-edit
       int_fields: t.fields
         .filter(
-          (f) =>
-            (f.type as any)?.name === "Integer" &&
-            !f.calculated &&
-            !f.primary_key
+          (f) => f.type_name === "Integer" && !f.calculated && !f.primary_key
         )
         .map((f) => f.name),
       foreign_keys: t.getForeignKeys().map((f) => ({
