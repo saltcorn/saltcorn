@@ -38,6 +38,7 @@ import { UAParser } from "ua-parser-js";
 import crypto from "crypto";
 import _am_tenant from "@saltcorn/admin-models/models/tenant";
 import { Header, Req, Res } from "@saltcorn/types/base_types";
+import PageGroup from "@saltcorn/data/models/page_group";
 const { domain_sanitize } = _am_tenant;
 const get_sys_info = async () => {
   const disks = await si.fsSize();
@@ -802,7 +803,7 @@ const screenInfoFromCfg = (req: Req) => {
  * @param {any} res
  * @returns eligible page an error message or an object with reload flag
  */
-const getEligiblePage = async (pageGroup: any, req: Req, res: Res) => {
+const getEligiblePage = async (pageGroup: PageGroup, req: Req, res: Res) => {
   if (pageGroup.members.length === 0)
     return req.__("Pagegroup %s has no members", pageGroup.name);
   else {
@@ -841,7 +842,7 @@ const getEligiblePage = async (pageGroup: any, req: Req, res: Res) => {
  * @param {any} req
  * @returns the page, null or an error msg
  */
-const getRandomPage = (pageGroup: any, req: Req) => {
+const getRandomPage = (pageGroup: PageGroup, req: Req) => {
   if (pageGroup.members.length === 0)
     return req.__("Pagegroup %s has no members", pageGroup.name);
   const hash = crypto.createHash("sha1").update(req.sessionID!).digest("hex");
@@ -851,7 +852,7 @@ const getRandomPage = (pageGroup: any, req: Req) => {
   return Page.findOne({ id: sessionMember.page_id });
 };
 
-const checkEditPermission = (type: string, user: any) => {
+const checkEditPermission = (type: string, user: User) => {
   if (user.role_id === 1) return true;
   switch (type) {
     case "views":
