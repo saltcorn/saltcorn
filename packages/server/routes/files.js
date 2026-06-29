@@ -5,26 +5,28 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const File = require("@saltcorn/data/models/file");
-const User = require("@saltcorn/data/models/user");
-const View = require("@saltcorn/data/models/view");
-const Form = require("@saltcorn/data/models/form");
-const { getState } = require("@saltcorn/data/db/state");
-const s3storage = require("../s3storage");
-const resizer = require("resize-with-sharp-or-jimp");
-const db = require("@saltcorn/data/db");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import Router from "express-promise-router";
+import File from "@saltcorn/data/models/file";
+import User from "@saltcorn/data/models/user";
+import View from "@saltcorn/data/models/view";
+import Form from "@saltcorn/data/models/form";
+import { getState } from "@saltcorn/data/db/state";
+import s3storage from "../s3storage.js";
+import resizer from "resize-with-sharp-or-jimp";
+import db from "@saltcorn/data/db";
 
-const { renderForm } = require("@saltcorn/markup");
-const {
+import { renderForm } from "@saltcorn/markup";
+import {
   isAdmin,
   error_catcher,
   setTenant,
   is_relative_url,
   isAdminOrHasConfigMinRole,
   safe_redirect,
-} = require("./utils.js");
-const {
+} from "./utils.js";
+import {
   h1,
   div,
   text,
@@ -34,20 +36,21 @@ const {
   domReady,
   img,
   a,
-} = require("@saltcorn/markup/tags");
-const { editRoleForm, fileUploadForm } = require("../markup/forms.js");
-const { strictParseInt } = require("@saltcorn/data/plugin-helper");
-const {
+} from "@saltcorn/markup/tags";
+import { editRoleForm, fileUploadForm } from "../markup/forms.js";
+import { strictParseInt } from "@saltcorn/data/plugin-helper";
+import {
   send_files_page,
   config_fields_form,
   save_config_from_form,
-} = require("../markup/admin");
-const fs = require("fs");
-const path = require("path");
-const Zip = require("adm-zip");
-const stream = require("stream");
-const { extract } = require("@saltcorn/admin-models/models/backup");
-const createDOMPurify = require("dompurify");
+} from "../markup/admin.js";
+import fs from "fs";
+import path from "path";
+import Zip from "adm-zip";
+import stream from "stream";
+import _am_backup from "@saltcorn/admin-models/models/backup";
+const { extract } = _am_backup;
+import createDOMPurify from "dompurify";
 /**
  * @type {object}
  * @const
@@ -56,7 +59,7 @@ const createDOMPurify = require("dompurify");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 router.use(
   error_catcher(async (req, res, next) => {

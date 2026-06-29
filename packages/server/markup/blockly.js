@@ -4,7 +4,7 @@
  * @subcategory markup
  */
 
-const {
+import {
   div,
   code,
   a,
@@ -12,8 +12,8 @@ const {
   script,
   domReady,
   button,
-} = require("@saltcorn/markup/tags");
-const db = require("@saltcorn/data/db");
+} from "@saltcorn/markup/tags";
+import db from "@saltcorn/data/db";
 
 /**
  * @param {object} opts
@@ -111,4 +111,4 @@ const blocklyToolbox = (hasActions) => `
 
   </xml>`;
 
-module.exports = { blocklyImportScripts, blocklyToolbox };
+export { blocklyImportScripts, blocklyToolbox };

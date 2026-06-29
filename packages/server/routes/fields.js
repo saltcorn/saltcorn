@@ -6,40 +6,36 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const { getState } = require("@saltcorn/data/db/state");
-const { renderForm } = require("@saltcorn/markup");
-const Field = require("@saltcorn/data/models/field");
-const Table = require("@saltcorn/data/models/table");
-const Trigger = require("@saltcorn/data/models/trigger");
-const Form = require("@saltcorn/data/models/form");
-const Workflow = require("@saltcorn/data/models/workflow");
-const User = require("@saltcorn/data/models/user");
-const {
+import { getState } from "@saltcorn/data/db/state";
+import { renderForm } from "@saltcorn/markup";
+import Field from "@saltcorn/data/models/field";
+import Table from "@saltcorn/data/models/table";
+import Trigger from "@saltcorn/data/models/trigger";
+import Form from "@saltcorn/data/models/form";
+import Workflow from "@saltcorn/data/models/workflow";
+import User from "@saltcorn/data/models/user";
+import {
   expressionValidator,
   get_async_expression_function,
   get_expression_function,
   freeVariables,
-} = require("@saltcorn/data/models/expression");
-const db = require("@saltcorn/data/db");
+} from "@saltcorn/data/models/expression";
+import db from "@saltcorn/data/db";
 
-const {
-  isAdmin,
-  error_catcher,
-  isAdminOrHasConfigMinRole,
-} = require("./utils.js");
-const expressionBlurb = require("../markup/expression_blurb");
-const {
+import { isAdmin, error_catcher, isAdminOrHasConfigMinRole } from "./utils.js";
+import expressionBlurb from "../markup/expression_blurb.js";
+import {
   readState,
   add_free_variables_to_joinfields,
   calcfldViewConfig,
-} = require("@saltcorn/data/plugin-helper");
-const { wizardCardTitle } = require("../markup/forms.js");
-const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
-const { applyAsync, isWeb } = require("@saltcorn/data/utils");
-const { text, div } = require("@saltcorn/markup/tags");
-const { mkFormContentNoLayout } = require("@saltcorn/markup/form");
+} from "@saltcorn/data/plugin-helper";
+import { wizardCardTitle } from "../markup/forms.js";
+import FieldRepeat from "@saltcorn/data/models/fieldrepeat";
+import { applyAsync, isWeb } from "@saltcorn/data/utils";
+import { text, div } from "@saltcorn/markup/tags";
+import { mkFormContentNoLayout } from "@saltcorn/markup/form";
 
 /**
  * @type {object}
@@ -49,7 +45,7 @@ const { mkFormContentNoLayout } = require("@saltcorn/markup/form");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @param {object} req

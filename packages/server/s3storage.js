@@ -1,14 +1,16 @@
-const { getState } = require("@saltcorn/data/db/state");
-const {
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import { getState } from "@saltcorn/data/db/state";
+import {
   getS3Client,
-  getServeUrl: getS3ServeUrl,
-  deleteObject: deleteS3Object,
-} = require("@saltcorn/data/models/internal/s3_helpers");
-const fileUpload = require("express-fileupload");
-const { v4: uuidv4 } = require("uuid");
-const fs = require("fs");
+  getServeUrl as getS3ServeUrl,
+  deleteObject as deleteS3Object,
+} from "@saltcorn/data/models/internal/s3_helpers";
+import fileUpload from "express-fileupload";
+import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
 
-module.exports = {
+export default {
   /**
    * Selector for file upload handler middleware. It will dispatch the
    * file upload handler to the engine specified in the configuration.

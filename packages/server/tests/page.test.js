@@ -1,6 +1,6 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const {
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import {
   getStaffLoginCookie,
   getAdminLoginCookie,
   toRedirect,
@@ -10,14 +10,14 @@ const {
   toSucceed,
   toNotInclude,
   resetToFixtures,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
-const Page = require("@saltcorn/data/models/page");
-const File = require("@saltcorn/data/models/file");
-const { existsSync } = require("fs");
-const { join } = require("path");
-const fs = require("fs");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import { getState } from "@saltcorn/data/db/state";
+import Page from "@saltcorn/data/models/page";
+import File from "@saltcorn/data/models/file";
+import { existsSync } from "fs";
+import { join } from "path";
+import fs from "fs";
 
 let htmlFile = null;
 
@@ -194,7 +194,7 @@ describe("homepage with html-file page", () => {
 
   it("serves html content when role home page uses an html file", async () => {
     await getState().setConfig("home_page_by_role", {
-      "1": "html_home_test_page",
+      1: "html_home_test_page",
     });
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();

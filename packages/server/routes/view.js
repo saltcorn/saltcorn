@@ -4,24 +4,28 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const View = require("@saltcorn/data/models/view");
-const Table = require("@saltcorn/data/models/table");
-const Trigger = require("@saltcorn/data/models/trigger");
-const Page = require("@saltcorn/data/models/page");
+import View from "@saltcorn/data/models/view";
+import Table from "@saltcorn/data/models/table";
+import Trigger from "@saltcorn/data/models/trigger";
+import Page from "@saltcorn/data/models/page";
 
-const { text, style, div } = require("@saltcorn/markup/tags");
-const {
+import { text, style, div } from "@saltcorn/markup/tags";
+import {
   isAdmin,
   error_catcher,
   scan_for_page_title,
   setTenant,
   isAdminOrHasConfigMinRole,
-} = require("../routes/utils.js");
-const { add_edit_bar, add_results_to_contents } = require("../markup/admin.js");
-const { InvalidConfiguration, isTest, objectToQueryString } = require("@saltcorn/data/utils");
-const { getState } = require("@saltcorn/data/db/state");
+} from "../routes/utils.js";
+import { add_edit_bar, add_results_to_contents } from "../markup/admin.js";
+import {
+  InvalidConfiguration,
+  isTest,
+  objectToQueryString,
+} from "@saltcorn/data/utils";
+import { getState } from "@saltcorn/data/db/state";
 
 /**
  * @type {object}
@@ -31,7 +35,7 @@ const { getState } = require("@saltcorn/data/db/state");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @name get/:viewname

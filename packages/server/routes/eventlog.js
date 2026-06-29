@@ -4,10 +4,10 @@
  * @module routes/eventlog
  * @subcategory routes
  */
-const Router = require("express-promise-router");
-const { isAdmin, error_catcher } = require("./utils.js");
-const { getState } = require("@saltcorn/data/db/state");
-const Trigger = require("@saltcorn/data/models/trigger");
+import Router from "express-promise-router";
+import { isAdmin, error_catcher } from "./utils.js";
+import { getState } from "@saltcorn/data/db/state";
+import Trigger from "@saltcorn/data/models/trigger";
 
 /**
  * @type {object}
@@ -17,23 +17,17 @@ const Trigger = require("@saltcorn/data/models/trigger");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
-const {
+export default router;
+import {
   mkTable,
   renderForm,
-  //link,
-  //post_btn,
-  //settingsDropdown,
-  //post_dropdown_item,
   post_delete_btn,
   localeDateTime,
-} = require("@saltcorn/markup");
-const Form = require("@saltcorn/data/models/form");
-const {
+} from "@saltcorn/markup";
+import Form from "@saltcorn/data/models/form";
+import {
   div,
-  //code,
   a,
-  //span,
   tr,
   table,
   tbody,
@@ -42,10 +36,10 @@ const {
   th,
   pre,
   text,
-} = require("@saltcorn/markup/tags");
-const Table = require("@saltcorn/data/models/table");
-const { send_events_page } = require("../markup/admin.js");
-const EventLog = require("@saltcorn/data/models/eventlog");
+} from "@saltcorn/markup/tags";
+import Table from "@saltcorn/data/models/table";
+import { send_events_page } from "../markup/admin.js";
+import EventLog from "@saltcorn/data/models/eventlog";
 
 /**
  * @param {object} req

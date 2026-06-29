@@ -1,15 +1,15 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const Table = require("@saltcorn/data/models/table");
-const Trigger = require("@saltcorn/data/models/trigger");
-const File = require("@saltcorn/data/models/file");
-const Field = require("@saltcorn/data/models/field");
-const User = require("@saltcorn/data/models/user");
-const { getState } = require("@saltcorn/data/db/state");
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import Table from "@saltcorn/data/models/table";
+import Trigger from "@saltcorn/data/models/trigger";
+import File from "@saltcorn/data/models/file";
+import Field from "@saltcorn/data/models/field";
+import User from "@saltcorn/data/models/user";
+import { getState } from "@saltcorn/data/db/state";
 
-const fs = require("fs").promises;
+import { promises as fs } from "fs";
 
-const {
+import {
   getStaffLoginCookie,
   getAdminLoginCookie,
   resetToFixtures,
@@ -21,9 +21,9 @@ const {
   succeedJsonWithWholeBody,
   getAdminJwt,
   toSucceed,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const { sleep } = require("@saltcorn/data/tests/mocks");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import { sleep } from "@saltcorn/data/tests/mocks";
 
 beforeAll(async () => {
   await resetToFixtures();

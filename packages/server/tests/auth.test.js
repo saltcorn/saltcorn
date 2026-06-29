@@ -1,10 +1,14 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const Field = require("@saltcorn/data/models/field");
-const User = require("@saltcorn/data/models/user");
-const {
+import { fileURLToPath as __fileURLToPath } from "url";
+import { dirname as __pathDirname } from "path";
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __pathDirname(__filename);
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import Field from "@saltcorn/data/models/field";
+import User from "@saltcorn/data/models/user";
+import {
   getStaffLoginCookie,
   getAdminLoginCookie,
   toRedirect,
@@ -14,14 +18,14 @@ const {
   toNotInclude,
   resToLoginCookie,
   succeedJsonWith,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const { getState } = require("@saltcorn/data/db/state");
-const { get_reset_link, generate_email } = require("../auth/resetpw");
-const i18n = require("i18n");
-const path = require("path");
-const fs = require("fs");
-const { sleep } = require("@saltcorn/data/utils");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import { getState } from "@saltcorn/data/db/state";
+import { get_reset_link, generate_email } from "../auth/resetpw.js";
+import i18n from "i18n";
+import path from "path";
+import fs from "fs";
+import { sleep } from "@saltcorn/data/utils";
 
 afterAll(async () => {
   await sleep(100);
@@ -184,7 +188,7 @@ describe("AuthTest forgot password", () => {
 
     i18n.configure({
       locales: ["en"],
-      directory: path.join(__dirname, "..", "/locales"),
+      directory: path.join(__dirname, "..", "..", "/locales"),
     });
     const email = generate_email(link, u, i18n);
     expect(email.text).toContain(link);
@@ -709,13 +713,13 @@ describe("AuthTest signup with custom login form", () => {
 describe("AuthTest Locale files", () => {
   it("should be valid JSON", async () => {
     const localeFiles = await fs.promises.readdir(
-      path.join(__dirname, "..", "/locales")
+      path.join(__dirname, "..", "..", "/locales")
     );
     expect(localeFiles.length).toBeGreaterThan(3);
     expect(localeFiles).toContain("en.json");
     for (const fnm of localeFiles) {
       const conts = await fs.promises.readFile(
-        path.join(__dirname, "..", "/locales", fnm)
+        path.join(__dirname, "..", "..", "/locales", fnm)
       );
       expect(conts.length).toBeGreaterThan(1);
 
@@ -789,7 +793,7 @@ describe("JWT login rate limiting", () => {
         .post("/auth/login-with/jwt")
         .set(headers)
         .send({ email: "user@foo.com", password: `wrongpassword${i}` });
-        
+
       if (res.statusCode === 429 || res.headers["x-ratelimit-redirect"]) {
         rateLimited = true;
         break;

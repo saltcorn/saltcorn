@@ -14,31 +14,31 @@
  * @subcategory routes
  */
 /** @type {module:express-promise-router} */
-const Router = require("express-promise-router");
-const db = require("@saltcorn/data/db");
-const { error_catcher, rejectTenantDrift } = require("./utils.js");
+import Router from "express-promise-router";
+import db from "@saltcorn/data/db";
+import { error_catcher, rejectTenantDrift } from "./utils.js";
 //const { mkTable, renderForm, link, post_btn } = require("@saltcorn/markup");
-const { getState } = require("@saltcorn/data/db/state");
-const {
+import { getState } from "@saltcorn/data/db/state";
+import {
   prepare_update_row,
   prepare_insert_row,
-} = require("@saltcorn/data/web-mobile-commons");
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
+} from "@saltcorn/data/web-mobile-commons";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
 //const Field = require("@saltcorn/data/models/field");
-const Trigger = require("@saltcorn/data/models/trigger");
-const File = require("@saltcorn/data/models/file");
+import Trigger from "@saltcorn/data/models/trigger";
+import File from "@saltcorn/data/models/file";
 //const load_plugins = require("../load_plugins");
-const passport = require("passport");
-const path = require("path");
-const s3storage = require("../s3storage");
+import passport from "passport";
+import path from "path";
+import s3storage from "../s3storage.js";
 
-const {
+import {
   readState,
   strictParseInt,
   stateFieldsToWhere,
-} = require("@saltcorn/data/plugin-helper");
-const Crash = require("@saltcorn/data/models/crash");
+} from "@saltcorn/data/plugin-helper";
+import Crash from "@saltcorn/data/models/crash";
 
 /**
  * @type {object}
@@ -48,7 +48,7 @@ const Crash = require("@saltcorn/data/models/crash");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @param {*} fields
@@ -159,7 +159,6 @@ router.post(
   error_catcher(async (req, res, next) => {
     let { viewName, queryName } = req.params;
     const view = await View.findOne({ name: viewName });
-    const db = require("@saltcorn/data/db");
     if (!view) {
       getState().log(3, `API viewQuery ${viewName} not found`);
       res.status(404).json({

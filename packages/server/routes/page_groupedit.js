@@ -1,24 +1,26 @@
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
+import db from "@saltcorn/data/db";
 
-const PageGroup = require("@saltcorn/data/models/page_group");
-const PageGroupMember = require("@saltcorn/data/models/page_group_member");
-const Page = require("@saltcorn/data/models/page");
-const Form = require("@saltcorn/data/models/form");
-const User = require("@saltcorn/data/models/user");
-const { div, a, code, span, br } = require("@saltcorn/markup/tags");
-const {
+import PageGroup from "@saltcorn/data/models/page_group";
+import PageGroupMember from "@saltcorn/data/models/page_group_member";
+import Page from "@saltcorn/data/models/page";
+import Form from "@saltcorn/data/models/form";
+import User from "@saltcorn/data/models/user";
+import { div, a, code, span, br } from "@saltcorn/markup/tags";
+import {
   renderForm,
   mkTable,
   post_btn,
   post_delete_btn,
   link,
-} = require("@saltcorn/markup");
-const { add_to_menu } = require("@saltcorn/admin-models/models/pack");
-const { error_catcher, isAdmin, setRole } = require("./utils.js");
-const { getState } = require("@saltcorn/data/db/state");
+} from "@saltcorn/markup";
+import _am_pack from "@saltcorn/admin-models/models/pack";
+const { add_to_menu } = _am_pack;
+import { error_catcher, isAdmin, setRole } from "./utils.js";
+import { getState } from "@saltcorn/data/db/state";
 
 const router = new Router();
-module.exports = router;
+export default router;
 
 const groupPropsForm = async (req, isNew) => {
   const roles = await User.get_roles();
@@ -230,7 +232,6 @@ const wrapMember = (contents, req, pageGroup, pageMember) => {
 };
 
 const pageGroupMembers = async (pageGroup, req) => {
-  const db = require("@saltcorn/data/db");
   const pages = !db.isSQLite
     ? await Page.find({
         id: { in: pageGroup.members.map((r) => r.page_id) },

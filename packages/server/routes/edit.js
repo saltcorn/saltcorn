@@ -4,10 +4,10 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const { error_catcher, is_relative_url, safe_redirect } = require("./utils.js");
-const Table = require("@saltcorn/data/models/table");
+import { error_catcher, is_relative_url, safe_redirect } from "./utils.js";
+import Table from "@saltcorn/data/models/table";
 
 /**
  * @type {object}
@@ -17,7 +17,7 @@ const Table = require("@saltcorn/data/models/table");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @name post/toggle/:name/:id/:field_name

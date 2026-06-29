@@ -6,34 +6,37 @@
  * @subcategory routes
  */
 
-const { getState } = require("@saltcorn/data/db/state");
-const db = require("@saltcorn/data/db");
-const View = require("@saltcorn/data/models/view");
-const User = require("@saltcorn/data/models/user");
-const File = require("@saltcorn/data/models/file");
-const Page = require("@saltcorn/data/models/page");
-const PageGroup = require("@saltcorn/data/models/page_group");
-const Plugin = require("@saltcorn/data/models/plugin");
-const { link, mkTable } = require("@saltcorn/markup");
-const { div, a, p, i, h5, span, title } = require("@saltcorn/markup/tags");
-const Table = require("@saltcorn/data/models/table");
-const { get_cached_packs } = require("@saltcorn/admin-models/models/pack");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import { getState } from "@saltcorn/data/db/state";
+import db from "@saltcorn/data/db";
+import View from "@saltcorn/data/models/view";
+import User from "@saltcorn/data/models/user";
+import File from "@saltcorn/data/models/file";
+import Page from "@saltcorn/data/models/page";
+import PageGroup from "@saltcorn/data/models/page_group";
+import Plugin from "@saltcorn/data/models/plugin";
+import { link, mkTable } from "@saltcorn/markup";
+import { div, a, p, i, h5, span, title } from "@saltcorn/markup/tags";
+import Table from "@saltcorn/data/models/table";
+import _am_pack from "@saltcorn/admin-models/models/pack";
+const { get_cached_packs } = _am_pack;
 // const { restore_backup } = require("../markup/admin");
-const {
+import {
   get_latest_npm_version,
   get_saltcorn_npm_versions,
-} = require("@saltcorn/data/models/config");
+} from "@saltcorn/data/models/config";
 const packagejson = require("../package.json");
-const Trigger = require("@saltcorn/data/models/trigger");
-const { fileUploadForm } = require("../markup/forms");
-const {
+import Trigger from "@saltcorn/data/models/trigger";
+import { fileUploadForm } from "../markup/forms.js";
+import {
   get_base_url,
   sendHtmlFile,
   sendHtmlStringWithGlobals,
   getEligiblePage,
-} = require("./utils.js");
-const semver = require("semver");
-const { add_results_to_contents } = require("../markup/admin.js");
+} from "./utils.js";
+import semver from "semver";
+import { add_results_to_contents } from "../markup/admin.js";
 
 /**
  * Tables List
@@ -687,26 +690,25 @@ const get_config_response = async (role_id, res, req) => {
   }
 };
 
-module.exports =
-  /**
-   * Function assigned to 'module.exports'.
-   * @param {object} req
-   * @param {object} res
-   * @returns {Promise<void>}
-   */
-  async (req, res) => {
-    const isAuth = req.user && req.user.id;
-    const role_id = req.user ? req.user.role_id : 100;
-    const cfgResp = await get_config_response(role_id, res, req);
-    if (cfgResp) return;
+export default /**
+ * Function assigned to 'module.exports'.
+ * @param {object} req
+ * @param {object} res
+ * @returns {Promise<void>}
+ */
+async (req, res) => {
+  const isAuth = req.user && req.user.id;
+  const role_id = req.user ? req.user.role_id : 100;
+  const cfgResp = await get_config_response(role_id, res, req);
+  if (cfgResp) return;
 
-    if (!isAuth) {
-      const hasUsers = await User.nonEmpty();
-      if (!hasUsers) {
-        res.redirect("/auth/create_first_user");
-        // return;
-      } else res.redirect("/auth/login");
-    } else {
-      await no_views_logged_in(req, res);
-    }
-  };
+  if (!isAuth) {
+    const hasUsers = await User.nonEmpty();
+    if (!hasUsers) {
+      res.redirect("/auth/create_first_user");
+      // return;
+    } else res.redirect("/auth/login");
+  } else {
+    await no_views_logged_in(req, res);
+  }
+};

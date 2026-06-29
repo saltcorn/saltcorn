@@ -1,7 +1,6 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const {
-  //getStaffLoginCookie,
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import {
   getAdminLoginCookie,
   toRedirect,
   itShouldRedirectUnauthToLogin,
@@ -9,22 +8,17 @@ const {
   itShouldNotIncludeTextForAdmin,
   toInclude,
   toSucceed,
-  //toNotInclude,
   resetToFixtures,
   respondJsonWith,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const { sleep } = require("@saltcorn/data/tests/mocks");
-const fs = require("fs").promises;
-const File = require("@saltcorn/data/models/file");
-const User = require("@saltcorn/data/models/user");
-const EventLog = require("@saltcorn/data/models/eventlog");
-const {
-  create_backup,
-  restore,
-  auto_backup_now,
-} = require("@saltcorn/admin-models/models/backup");
-
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import { sleep } from "@saltcorn/data/tests/mocks";
+import { promises as fs } from "fs";
+import File from "@saltcorn/data/models/file";
+import User from "@saltcorn/data/models/user";
+import EventLog from "@saltcorn/data/models/eventlog";
+import _am_backup from "@saltcorn/admin-models/models/backup";
+const { create_backup, restore, auto_backup_now } = _am_backup;
 jest.setTimeout(30000000);
 
 beforeAll(async () => {

@@ -5,38 +5,27 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
 //const Field = require("@saltcorn/data/models/field");
-const Form = require("@saltcorn/data/models/form");
-const {
-  isAdmin,
-  error_catcher,
-  isAdminOrHasConfigMinRole,
-} = require("./utils.js");
-const { getState } = require("@saltcorn/data/db/state");
+import Form from "@saltcorn/data/models/form";
+import { isAdmin, error_catcher, isAdminOrHasConfigMinRole } from "./utils.js";
+import { getState } from "@saltcorn/data/db/state";
 //const File = require("@saltcorn/data/models/file");
-const User = require("@saltcorn/data/models/user");
-const View = require("@saltcorn/data/models/view");
-const Page = require("@saltcorn/data/models/page");
-const PageGroup = require("@saltcorn/data/models/page_group");
-const { save_menu_items } = require("@saltcorn/data/models/config");
-const db = require("@saltcorn/data/db");
+import User from "@saltcorn/data/models/user";
+import View from "@saltcorn/data/models/view";
+import Page from "@saltcorn/data/models/page";
+import PageGroup from "@saltcorn/data/models/page_group";
+import { save_menu_items } from "@saltcorn/data/models/config";
+import db from "@saltcorn/data/db";
 
-const { renderForm } = require("@saltcorn/markup");
-const {
-  script,
-  domReady,
-  div,
-  ul,
-  i,
-  style,
-} = require("@saltcorn/markup/tags");
-const { send_infoarch_page } = require("../markup/admin.js");
-const Table = require("@saltcorn/data/models/table");
-const Trigger = require("@saltcorn/data/models/trigger");
-const { run_action_column } = require("@saltcorn/data/plugin-helper");
-const path = require("path");
+import { renderForm } from "@saltcorn/markup";
+import { script, domReady, div, ul, i, style } from "@saltcorn/markup/tags";
+import { send_infoarch_page } from "../markup/admin.js";
+import Table from "@saltcorn/data/models/table";
+import Trigger from "@saltcorn/data/models/trigger";
+import { run_action_column } from "@saltcorn/data/plugin-helper";
+import path from "path";
 
 /**
  * @type {object}
@@ -46,7 +35,7 @@ const path = require("path");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * Menu Form
@@ -495,7 +484,7 @@ const menuForm = async (req) => {
         class: "item-menu",
         input_type: "text",
         required: false,
-        help: { topic: "Menu item shortcuts"},
+        help: { topic: "Menu item shortcuts" },
         showIf: {
           type: [
             "View",

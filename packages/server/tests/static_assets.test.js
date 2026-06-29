@@ -1,7 +1,7 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const { resetToFixtures } = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import { resetToFixtures } from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
 
 beforeAll(async () => {
   await resetToFixtures();

@@ -1,22 +1,20 @@
 // File: tenant.test.js
-const db = require("@saltcorn/data/db");
-const request = require("../auth/testhelp").request;
+import db from "@saltcorn/data/db";
+import { request as request } from "../auth/testhelp.js";
 
-const getApp = require("../app");
-const {
+import getApp from "../app.js";
+import {
   toRedirect,
   getAdminLoginCookie,
-  //getStaffLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
-  //toNotInclude,
   resetToFixtures,
-} = require("../auth/testhelp");
-const { getState } = require("@saltcorn/data/db/state");
-const Table = require("@saltcorn/data/models/table");
-const Field = require("@saltcorn/data/models/field");
-const User = require("@saltcorn/data/models/user");
-const { resToLoginCookie } = require("../auth/testhelp");
+} from "../auth/testhelp.js";
+import { getState } from "@saltcorn/data/db/state";
+import Table from "@saltcorn/data/models/table";
+import Field from "@saltcorn/data/models/field";
+import User from "@saltcorn/data/models/user";
+import { resToLoginCookie } from "../auth/testhelp.js";
 
 afterAll(db.close);
 jest.setTimeout(10000);

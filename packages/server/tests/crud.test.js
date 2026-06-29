@@ -1,6 +1,6 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const {
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import {
   getStaffLoginCookie,
   getAdminLoginCookie,
   toRedirect,
@@ -9,13 +9,13 @@ const {
   toNotInclude,
   succeedJsonWith,
   resetToFixtures,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const Notification = require("@saltcorn/data/models/notification");
-const User = require("@saltcorn/data/models/user");
-const reset = require("@saltcorn/data/db/reset_schema");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import Notification from "@saltcorn/data/models/notification";
+import User from "@saltcorn/data/models/user";
+import reset from "@saltcorn/data/db/reset_schema";
 
 beforeAll(async () => {
   await resetToFixtures();

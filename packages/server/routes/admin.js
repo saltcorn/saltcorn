@@ -3,9 +3,16 @@
  * @module routes/admin
  * @subcategory routes
  */
-const Router = require("express-promise-router");
+import { fileURLToPath as __fileURLToPath } from "url";
+import { dirname as __pathDirname } from "path";
+const __filename = __fileURLToPath(import.meta.url);
+const __dirname = __pathDirname(__filename);
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import standardMenu from "@saltcorn/data/standard-menu";
+import Router from "express-promise-router";
 
-const {
+import {
   isAdmin,
   error_catcher,
   getGitRevision,
@@ -17,25 +24,26 @@ const {
   checkEditPermission,
   addOnDoneRedirect,
   is_relative_url,
-} = require("./utils.js");
-const Table = require("@saltcorn/data/models/table");
-const Plugin = require("@saltcorn/data/models/plugin");
-const File = require("@saltcorn/data/models/file");
-const { spawn, exec } = require("child_process");
-const User = require("@saltcorn/data/models/user");
-const Trigger = require("@saltcorn/data/models/trigger");
-const path = require("path");
-const { X509Certificate } = require("crypto");
-const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
-const { identifiersInCodepage } = require("@saltcorn/data/models/expression");
-const {
+} from "./utils.js";
+import Table from "@saltcorn/data/models/table";
+import Plugin from "@saltcorn/data/models/plugin";
+import File from "@saltcorn/data/models/file";
+import { spawn, exec } from "child_process";
+import User from "@saltcorn/data/models/user";
+import Trigger from "@saltcorn/data/models/trigger";
+import path from "path";
+import { X509Certificate } from "crypto";
+import _am_tenant from "@saltcorn/admin-models/models/tenant";
+const { getAllTenants } = _am_tenant;
+import { identifiersInCodepage } from "@saltcorn/data/models/expression";
+import {
   post_btn,
   renderForm,
   mkTable,
   link,
   localeDateTime,
-} = require("@saltcorn/markup");
-const {
+} from "@saltcorn/markup";
+import {
   div,
   a,
   hr,
@@ -66,77 +74,65 @@ const {
   script,
   text,
   domReady,
-} = require("@saltcorn/markup/tags");
-const db = require("@saltcorn/data/db");
-const {
+} from "@saltcorn/markup/tags";
+import db from "@saltcorn/data/db";
+import {
   getState,
   restart_tenant,
   getTenant,
   getRootState,
-  //get_other_domain_tenant,
   get_process_init_time,
-} = require("@saltcorn/data/db/state");
-const {
-  create_backup,
-  restore,
-  auto_backup_now,
-} = require("@saltcorn/admin-models/models/backup");
-const {
-  install_pack,
-  filter_pack,
-} = require("@saltcorn/admin-models/models/pack");
-const Snapshot = require("@saltcorn/admin-models/models/snapshot");
-const {
-  runConfigurationCheck,
-} = require("@saltcorn/admin-models/models/config-check");
-const fs = require("fs");
-const {
+} from "@saltcorn/data/db/state";
+import _am_backup from "@saltcorn/admin-models/models/backup";
+const { create_backup, restore, auto_backup_now } = _am_backup;
+import _am_pack from "@saltcorn/admin-models/models/pack";
+const { install_pack, filter_pack } = _am_pack;
+import Snapshot from "@saltcorn/admin-models/models/snapshot";
+import { runConfigurationCheck } from "@saltcorn/admin-models/models/config-check";
+import fs from "fs";
+import {
   restore_backup,
   send_admin_page,
-  //send_files_page,
   config_fields_form,
   save_config_from_form,
-} = require("../markup/admin.js");
+} from "../markup/admin.js";
 const packagejson = require("../package.json");
-const Form = require("@saltcorn/data/models/form");
-const { get_latest_npm_version } = require("@saltcorn/data/models/config");
-const {
-  getMailTransport,
-  getOauth2Client,
-} = require("@saltcorn/data/models/email");
-const {
+import Form from "@saltcorn/data/models/form";
+import { get_latest_npm_version } from "@saltcorn/data/models/config";
+import { getMailTransport, getOauth2Client } from "@saltcorn/data/models/email";
+import {
   getBaseDomain,
   hostname_matches_baseurl,
   is_hsts_tld,
-} = require("../markup/admin");
-const moment = require("moment");
-const View = require("@saltcorn/data/models/view");
-const PageGroup = require("@saltcorn/data/models/page_group");
-const { getConfigFile } = require("@saltcorn/data/db/connect");
-const os = require("os");
-const Page = require("@saltcorn/data/models/page");
-const {
+} from "../markup/admin.js";
+import moment from "moment";
+import View from "@saltcorn/data/models/view";
+import PageGroup from "@saltcorn/data/models/page_group";
+import { getConfigFile } from "@saltcorn/data/db/connect";
+import os from "os";
+import Page from "@saltcorn/data/models/page";
+import {
   getSafeSaltcornCmd,
   getFetchProxyOptions,
   sleep,
   dataModulePath,
   imageAvailable,
   isTest,
-} = require("@saltcorn/data/utils");
-const stream = require("stream");
-const Crash = require("@saltcorn/data/models/crash");
-const { get_help_markup } = require("../help/index.js");
-const npmFetch = require("npm-registry-fetch");
-const Tag = require("@saltcorn/data/models/tag");
-const PluginInstaller = require("@saltcorn/plugins-loader/plugin_installer.js");
-const TableConstraint = require("@saltcorn/data/models/table_constraints");
-const MarkdownIt = require("markdown-it"),
-  md = new MarkdownIt();
-const semver = require("semver");
-const { dbCommonModulePath } = require("@saltcorn/db-common/internal");
+} from "@saltcorn/data/utils";
+import stream from "stream";
+import Crash from "@saltcorn/data/models/crash";
+import { get_help_markup } from "../help/index.js";
+import npmFetch from "npm-registry-fetch";
+import Tag from "@saltcorn/data/models/tag";
+import PluginInstaller from "@saltcorn/plugins-loader/plugin_installer.js";
+import TableConstraint from "@saltcorn/data/models/table_constraints";
+import MarkdownIt from "markdown-it";
+const md = new MarkdownIt();
+import semver from "semver";
+import { dbCommonModulePath } from "@saltcorn/db-common/internal";
 
 const router = new Router();
-module.exports = router;
+export default router;
 
 const app_files_table = (files, buildDirName, req) =>
   mkTable(
@@ -538,7 +534,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req, res) => {
     const fullPath = File.normalise_in_base(
-      path.join(__dirname, "..", "docs"),
+      path.join(__dirname, "..", "..", "docs"),
       ...req.params.filepath
     );
     if (fs.existsSync(fullPath)) res.sendFile(fullPath, { dotfiles: "allow" });
@@ -553,7 +549,7 @@ router.get(
   "/whatsnew",
   isAdmin,
   error_catcher(async (req, res) => {
-    const fp = path.join(__dirname, "..", "CHANGELOG.md");
+    const fp = path.join(__dirname, "..", "..", "CHANGELOG.md");
     const fileBuf = await fs.promises.readFile(fp);
     const mdContents = fileBuf.toString().replace("# Notable changes\n", "");
     const markup = md.render(mdContents);
@@ -1932,7 +1928,15 @@ document.getElementById('version_select').addEventListener('change', () => {
 );
 
 const cleanNodeModules = async () => {
-  const topSaltcornDir = path.join(__dirname, "..", "..", "..", "..", "..");
+  const topSaltcornDir = path.join(
+    __dirname,
+    "..",
+    "..",
+    "..",
+    "..",
+    "..",
+    ".."
+  );
   if (path.basename(topSaltcornDir) === "@saltcorn")
     await fs.promises.rm(topSaltcornDir, { recursive: true, force: true });
   else
@@ -2203,7 +2207,7 @@ router.post(
         // greenlock logic
         const Greenlock = require("greenlock");
         const greenlock = Greenlock.create({
-          packageRoot: path.resolve(__dirname, ".."),
+          packageRoot: path.resolve(__dirname, "..", ".."),
           configDir: path.join(file_store, "greenlock.d"),
           maintainerEmail: admin_users[0].email,
         });
@@ -2281,7 +2285,7 @@ router.post(
         // greenlock logic
         const Greenlock = require("greenlock");
         const greenlock = Greenlock.create({
-          packageRoot: path.resolve(__dirname, ".."),
+          packageRoot: path.resolve(__dirname, "..", ".."),
           configDir: path.join(file_store, "greenlock.d"),
           maintainerEmail: admin_users[0].email,
         });
@@ -3759,311 +3763,315 @@ router.get(
 
                     // allow offline mode box (postgres only)
                     !db.isSQLite &&
-                    div(
-                      { class: "row pb-2 mt-2" },
                       div(
-                        { class: "col-sm-10" },
-                        input({
-                          type: "checkbox",
-                          id: "offlineModeBoxId",
-                          class: "form-check-input me-2 mb-0 ",
-                          name: "allowOfflineMode",
-                          onClick: "toggle_tbl_sync()",
-                          checked: builderSettings.allowOfflineMode === "on",
-                        }),
-                        label(
-                          {
-                            for: "offlineModeBoxId",
-                            class: "form-label fw-bold mb-0",
-                          },
-                          req.__("Allow offline mode")
-                        ),
-                        div(),
-                        i(
-                          req.__(
-                            "Enable this to integrate offline/online Synchronization into your app."
+                        { class: "row pb-2 mt-2" },
+                        div(
+                          { class: "col-sm-10" },
+                          input({
+                            type: "checkbox",
+                            id: "offlineModeBoxId",
+                            class: "form-check-input me-2 mb-0 ",
+                            name: "allowOfflineMode",
+                            onClick: "toggle_tbl_sync()",
+                            checked: builderSettings.allowOfflineMode === "on",
+                          }),
+                          label(
+                            {
+                              for: "offlineModeBoxId",
+                              class: "form-label fw-bold mb-0",
+                            },
+                            req.__("Allow offline mode")
+                          ),
+                          div(),
+                          i(
+                            req.__(
+                              "Enable this to integrate offline/online Synchronization into your app."
+                            )
                           )
                         )
-                      )
-                    ),
+                      ),
 
                     !db.isSQLite &&
-                    div(
-                      {
-                        id: "tblSyncSelectorId",
-                        class: "mb-3 mt-1",
-                        hidden: builderSettings.allowOfflineMode !== "on",
-                      },
-                      p({ class: "h3 ps-3" }, "Synchronization settings"),
                       div(
-                        { class: "form-group border border-2 p-3 rounded" },
-
+                        {
+                          id: "tblSyncSelectorId",
+                          class: "mb-3 mt-1",
+                          hidden: builderSettings.allowOfflineMode !== "on",
+                        },
+                        p({ class: "h3 ps-3" }, "Synchronization settings"),
                         div(
+                          { class: "form-group border border-2 p-3 rounded" },
+
                           div(
-                            {
-                              class: "row pb-3",
-                            },
                             div(
-                              label(
-                                { class: "form-label fw-bold" },
-                                req.__("Tables to synchronize") +
-                                  a(
-                                    {
-                                      href: "javascript:ajax_modal('/admin/help/Capacitor Builder?')",
-                                    },
-                                    i({ class: "fas fa-question-circle ps-1" })
-                                  )
-                              )
-                            ),
-                            div(
-                              { class: "container" },
+                              {
+                                class: "row pb-3",
+                              },
                               div(
-                                { class: "row" },
-                                div(
-                                  { class: "col-sm-4 text-center" },
-                                  req.__("unsynched")
-                                ),
-                                div({ class: "col-sm-1" }),
-                                div(
-                                  { class: "col-sm-4 text-center" },
-                                  req.__("synched")
+                                label(
+                                  { class: "form-label fw-bold" },
+                                  req.__("Tables to synchronize") +
+                                    a(
+                                      {
+                                        href: "javascript:ajax_modal('/admin/help/Capacitor Builder?')",
+                                      },
+                                      i({
+                                        class: "fas fa-question-circle ps-1",
+                                      })
+                                    )
                                 )
                               ),
                               div(
-                                { class: "row" },
+                                { class: "container" },
                                 div(
-                                  { class: "col-sm-4" },
-                                  select(
-                                    {
-                                      id: "unsynched-tbls-select-id",
-                                      class: "form-control form-select",
-                                      multiple: true,
-                                    },
-                                    withSyncInfo
-                                      .filter(
-                                        (table) =>
-                                          !builderSettings.synchedTables ||
-                                          builderSettings.synchedTables.indexOf(
-                                            table.name
-                                          ) < 0
-                                      )
-                                      .map((table) =>
-                                        option({
-                                          id: `${table.name}_unsynched_opt`,
-                                          value: table.name,
-                                          label: table.name,
-                                        })
-                                      )
+                                  { class: "row" },
+                                  div(
+                                    { class: "col-sm-4 text-center" },
+                                    req.__("unsynched")
+                                  ),
+                                  div({ class: "col-sm-1" }),
+                                  div(
+                                    { class: "col-sm-4 text-center" },
+                                    req.__("synched")
                                   )
                                 ),
                                 div(
-                                  {
-                                    class:
-                                      "col-sm-1 d-flex justify-content-center",
-                                  },
+                                  { class: "row" },
                                   div(
+                                    { class: "col-sm-4" },
+                                    select(
+                                      {
+                                        id: "unsynched-tbls-select-id",
+                                        class: "form-control form-select",
+                                        multiple: true,
+                                      },
+                                      withSyncInfo
+                                        .filter(
+                                          (table) =>
+                                            !builderSettings.synchedTables ||
+                                            builderSettings.synchedTables.indexOf(
+                                              table.name
+                                            ) < 0
+                                        )
+                                        .map((table) =>
+                                          option({
+                                            id: `${table.name}_unsynched_opt`,
+                                            value: table.name,
+                                            label: table.name,
+                                          })
+                                        )
+                                    )
+                                  ),
+                                  div(
+                                    {
+                                      class:
+                                        "col-sm-1 d-flex justify-content-center",
+                                    },
                                     div(
-                                      button(
-                                        {
-                                          id: "move-right-btn-id",
-                                          type: "button",
-                                          onClick: `move_to_synched()`,
-                                          class: "btn btn-light pt-1 mb-1",
-                                        },
-                                        i({ class: "fas fa-arrow-right" })
-                                      )
-                                    ),
-                                    div(
-                                      button(
-                                        {
-                                          id: "move-left-btn-id",
-                                          type: "button",
-                                          onClick: `move_to_unsynched()`,
-                                          class: "btn btn-light pt-1",
-                                        },
-                                        i({ class: "fas fa-arrow-left" })
+                                      div(
+                                        button(
+                                          {
+                                            id: "move-right-btn-id",
+                                            type: "button",
+                                            onClick: `move_to_synched()`,
+                                            class: "btn btn-light pt-1 mb-1",
+                                          },
+                                          i({ class: "fas fa-arrow-right" })
+                                        )
+                                      ),
+                                      div(
+                                        button(
+                                          {
+                                            id: "move-left-btn-id",
+                                            type: "button",
+                                            onClick: `move_to_unsynched()`,
+                                            class: "btn btn-light pt-1",
+                                          },
+                                          i({ class: "fas fa-arrow-left" })
+                                        )
                                       )
                                     )
-                                  )
-                                ),
-                                div(
-                                  { class: "col-sm-4" },
-                                  select(
-                                    {
-                                      id: "synched-tbls-select-id",
-                                      class: "form-control form-select",
-                                      multiple: true,
-                                    },
-                                    withSyncInfo
-                                      .filter(
-                                        (table) =>
-                                          builderSettings.synchedTables?.indexOf(
-                                            table.name
-                                          ) >= 0
-                                      )
-                                      .map((table) =>
-                                        option({
-                                          id: `${table.name}_synched_opt`,
-                                          value: table.name,
-                                          label: table.name,
-                                        })
-                                      )
+                                  ),
+                                  div(
+                                    { class: "col-sm-4" },
+                                    select(
+                                      {
+                                        id: "synched-tbls-select-id",
+                                        class: "form-control form-select",
+                                        multiple: true,
+                                      },
+                                      withSyncInfo
+                                        .filter(
+                                          (table) =>
+                                            builderSettings.synchedTables?.indexOf(
+                                              table.name
+                                            ) >= 0
+                                        )
+                                        .map((table) =>
+                                          option({
+                                            id: `${table.name}_synched_opt`,
+                                            value: table.name,
+                                            label: table.name,
+                                          })
+                                        )
+                                    )
                                   )
                                 )
                               )
                             )
-                          )
-                        ),
+                          ),
 
-                        // sync when connection restored
-                        div(
-                          { class: "row pb-2 my-2" },
-                          div(
-                            { class: "col-sm-10" },
-                            input({
-                              type: "checkbox",
-                              id: "connRestoredBoxId",
-                              class: "form-check-input me-2 mb-0 ",
-                              name: "syncOnReconnect",
-                              checked: builderSettings.syncOnReconnect === "on",
-                            }),
-                            label(
-                              {
-                                for: "connRestoredBoxId",
-                                class: "form-label fw-bold mb-0",
-                              },
-                              req.__("Sync on reconnect")
-                            ),
-                            div(),
-                            i(
-                              req.__(
-                                "Run Synchronizations when the network connection is restored."
-                              )
-                            )
-                          )
-                        ),
-
-                        // sync when the app resumes
-                        div(
-                          { class: "row pb-2 my-2" },
-                          div(
-                            { class: "col-sm-10" },
-                            input({
-                              type: "checkbox",
-                              id: "appResumeSyncBoxId",
-                              class: "form-check-input me-2 mb-0 ",
-                              name: "syncOnAppResume",
-                              checked: builderSettings.syncOnAppResume === "on",
-                            }),
-                            label(
-                              {
-                                for: "appResumeSyncBoxId",
-                                class: "form-label fw-bold mb-0",
-                              },
-                              req.__("Sync on app resume")
-                            ),
-                            div(),
-                            i(
-                              req.__(
-                                "Run Synchronizations when the app is resumed from background."
-                              )
-                            )
-                          )
-                        ),
-
-                        // push sync (postgres only)
-                        !db.isSQLite &&
+                          // sync when connection restored
                           div(
                             { class: "row pb-2 my-2" },
                             div(
                               { class: "col-sm-10" },
                               input({
                                 type: "checkbox",
-                                id: "pushSyncBoxId",
+                                id: "connRestoredBoxId",
                                 class: "form-check-input me-2 mb-0 ",
-                                name: "pushSync",
-                                checked: builderSettings.pushSync === "on",
+                                name: "syncOnReconnect",
+                                checked:
+                                  builderSettings.syncOnReconnect === "on",
                               }),
                               label(
                                 {
-                                  for: "pushSyncBoxId",
+                                  for: "connRestoredBoxId",
                                   class: "form-label fw-bold mb-0",
                                 },
-                                req.__("Push sync")
+                                req.__("Sync on reconnect")
                               ),
                               div(),
                               i(
                                 req.__(
-                                  "Run Synchronizations when the server sends a push notification. " +
-                                    "On Android, this requires a Firebase JSON key and a Google Services File (see below)."
+                                  "Run Synchronizations when the network connection is restored."
                                 )
                               )
                             )
                           ),
 
-                        // periodic sync interval
-                        div(
-                          { class: "row pb-2 mt-2" },
+                          // sync when the app resumes
                           div(
-                            { class: "col-sm-10" },
-                            label(
-                              {
-                                for: "syncIntervalInputId",
-                                class: "form-label fw-bold mb-0 ",
-                              },
-                              req.__("Background Sync interval")
-                            ),
-                            input({
-                              type: "text",
-                              class: "form-control mb-0",
-                              name: "syncInterval",
-                              id: "syncIntervalInputId",
-                              value: builderSettings.syncInterval || "",
-                            }),
-                            div(),
-                            i(
-                              req.__(
-                                "Perdiodic interval (in minutes) to run synchronizations in the background. " +
-                                  "This is just a min interval, depending on system conditions, the actual time may be longer."
+                            { class: "row pb-2 my-2" },
+                            div(
+                              { class: "col-sm-10" },
+                              input({
+                                type: "checkbox",
+                                id: "appResumeSyncBoxId",
+                                class: "form-check-input me-2 mb-0 ",
+                                name: "syncOnAppResume",
+                                checked:
+                                  builderSettings.syncOnAppResume === "on",
+                              }),
+                              label(
+                                {
+                                  for: "appResumeSyncBoxId",
+                                  class: "form-label fw-bold mb-0",
+                                },
+                                req.__("Sync on app resume")
+                              ),
+                              div(),
+                              i(
+                                req.__(
+                                  "Run Synchronizations when the app is resumed from background."
+                                )
                               )
                             )
-                          )
-                        ),
+                          ),
 
-                        // push sync heartbeat interval
-                        !db.isSQLite &&
+                          // push sync (postgres only)
+                          !db.isSQLite &&
+                            div(
+                              { class: "row pb-2 my-2" },
+                              div(
+                                { class: "col-sm-10" },
+                                input({
+                                  type: "checkbox",
+                                  id: "pushSyncBoxId",
+                                  class: "form-check-input me-2 mb-0 ",
+                                  name: "pushSync",
+                                  checked: builderSettings.pushSync === "on",
+                                }),
+                                label(
+                                  {
+                                    for: "pushSyncBoxId",
+                                    class: "form-label fw-bold mb-0",
+                                  },
+                                  req.__("Push sync")
+                                ),
+                                div(),
+                                i(
+                                  req.__(
+                                    "Run Synchronizations when the server sends a push notification. " +
+                                      "On Android, this requires a Firebase JSON key and a Google Services File (see below)."
+                                  )
+                                )
+                              )
+                            ),
+
+                          // periodic sync interval
                           div(
                             { class: "row pb-2 mt-2" },
                             div(
                               { class: "col-sm-10" },
                               label(
                                 {
-                                  for: "pushSyncHeartbeatIntervalInputId",
+                                  for: "syncIntervalInputId",
                                   class: "form-label fw-bold mb-0 ",
                                 },
-                                req.__("Push sync heartbeat interval")
+                                req.__("Background Sync interval")
                               ),
                               input({
                                 type: "text",
                                 class: "form-control mb-0",
-                                name: "pushSyncHeartbeatInterval",
-                                id: "pushSyncHeartbeatIntervalInputId",
-                                value:
-                                  builderSettings.pushSyncHeartbeatInterval ||
-                                  "",
+                                name: "syncInterval",
+                                id: "syncIntervalInputId",
+                                value: builderSettings.syncInterval || "",
                               }),
                               div(),
                               i(
                                 req.__(
-                                  "Interval (in minutes) at which the device re-registers its push sync subscription to keep it alive. " +
-                                    "Leave empty or 0 to disable. Recommended: 60. " +
-                                    "This is a minimum interval — on iOS the actual time may be longer depending on system conditions."
+                                  "Perdiodic interval (in minutes) to run synchronizations in the background. " +
+                                    "This is just a min interval, depending on system conditions, the actual time may be longer."
                                 )
                               )
                             )
-                          )
+                          ),
+
+                          // push sync heartbeat interval
+                          !db.isSQLite &&
+                            div(
+                              { class: "row pb-2 mt-2" },
+                              div(
+                                { class: "col-sm-10" },
+                                label(
+                                  {
+                                    for: "pushSyncHeartbeatIntervalInputId",
+                                    class: "form-label fw-bold mb-0 ",
+                                  },
+                                  req.__("Push sync heartbeat interval")
+                                ),
+                                input({
+                                  type: "text",
+                                  class: "form-control mb-0",
+                                  name: "pushSyncHeartbeatInterval",
+                                  id: "pushSyncHeartbeatIntervalInputId",
+                                  value:
+                                    builderSettings.pushSyncHeartbeatInterval ||
+                                    "",
+                                }),
+                                div(),
+                                i(
+                                  req.__(
+                                    "Interval (in minutes) at which the device re-registers its push sync subscription to keep it alive. " +
+                                      "Leave empty or 0 to disable. Recommended: 60. " +
+                                      "This is a minimum interval — on iOS the actual time may be longer depending on system conditions."
+                                  )
+                                )
+                              )
+                            )
+                        )
                       )
-                    )
                   ),
                   div(
                     { class: "mt-3 mb-3" },
@@ -4876,7 +4884,10 @@ router.post(
     if (syncInterval) spawnParams.push("--syncInterval", syncInterval);
     if (pushSync) spawnParams.push("--pushSync");
     if (pushSyncHeartbeatInterval)
-      spawnParams.push("--pushSyncHeartbeatInterval", pushSyncHeartbeatInterval);
+      spawnParams.push(
+        "--pushSyncHeartbeatInterval",
+        pushSyncHeartbeatInterval
+      );
     if (syncOnReconnect) spawnParams.push("--syncOnReconnect");
     if (syncOnAppResume) spawnParams.push("--syncOnAppResume");
     if (allowShareTo) spawnParams.push("--allowShareTo");
@@ -5193,7 +5204,7 @@ router.post(
       await db.deleteWhere("_sc_metadata");
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
       await getState().refresh();
-      await require("@saltcorn/data/standard-menu")();
+      await standardMenu();
     }
     await getState().refresh();
 
@@ -5459,14 +5470,20 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
     const cachedTableNames = getState().tables.map((t) => `"${t.name}"`);
 
     const dsPaths = [
-      path.join(__dirname, "tsdecls/lib.es5.d.ts"),
-      path.join(__dirname, "tsdecls/es2015.core.d.ts"),
-      path.join(__dirname, "tsdecls/es2015.collection.d.ts"),
-      path.join(__dirname, "tsdecls/es2015.promise.d.ts"),
-      path.join(__dirname, "tsdecls/es2017.object.d.ts"),
-      path.join(__dirname, "tsdecls/es2017.string.d.ts"),
-      path.join(__dirname, "tsdecls/es2019.object.d.ts"),
-      path.join(__dirname, "tsdecls/assert.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/lib.es5.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/es2015.core.d.ts"),
+      path.join(
+        __dirname,
+        "..",
+        "..",
+        "routes",
+        "tsdecls/es2015.collection.d.ts"
+      ),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/es2015.promise.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/es2017.object.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/es2017.string.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/es2019.object.d.ts"),
+      path.join(__dirname, "..", "..", "routes", "tsdecls/assert.d.ts"),
       path.join(dbCommonModulePath, "/dbtypes.d.ts"),
       path.join(dataModulePath, "/models/table.d.ts"),
       path.join(dataModulePath, "/models/user.d.ts"),

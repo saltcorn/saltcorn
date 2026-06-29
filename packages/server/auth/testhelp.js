@@ -4,14 +4,14 @@
  * @subcategory auth
  */
 /*global it, expect*/
-const http = require("http");
-const assert = require("assert");
-const { makeFetch } = require("supertest-fetch");
-const app = require("../app");
-const getApp = require("../app");
-const fixtures = require("@saltcorn/data/db/fixtures");
-const reset = require("@saltcorn/data/db/reset_schema");
-const jsdom = require("jsdom");
+import http from "http";
+import assert from "assert";
+import { makeFetch } from "supertest-fetch";
+import app from "../app.js";
+import getApp from "../app.js";
+import fixtures from "@saltcorn/data/db/fixtures";
+import reset from "@saltcorn/data/db/reset_schema";
+import jsdom from "jsdom";
 const { JSDOM, ResourceLoader } = jsdom;
 
 /**
@@ -655,7 +655,7 @@ const load_url_dom = async (url) => {
   return dom;
 };
 
-module.exports = {
+export {
   request,
   getStaffLoginCookie,
   getAdminLoginCookie,

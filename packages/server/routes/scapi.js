@@ -7,31 +7,24 @@
  */
 
 /** @type {module:express-promise-router} */
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 //const db = require("@saltcorn/data/db");
-const { error_catcher, rejectTenantDrift } = require("./utils.js");
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const Page = require("@saltcorn/data/models/page");
-const File = require("@saltcorn/data/models/file");
-const Trigger = require("@saltcorn/data/models/trigger");
-const Role = require("@saltcorn/data/models/role");
-const Tenant = require("@saltcorn/admin-models/models/tenant");
-const Plugin = require("@saltcorn/data/models/plugin");
-const Config = require("@saltcorn/data/models/config");
-const passport = require("passport");
+import { error_catcher, rejectTenantDrift } from "./utils.js";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import Page from "@saltcorn/data/models/page";
+import File from "@saltcorn/data/models/file";
+import Trigger from "@saltcorn/data/models/trigger";
+import Role from "@saltcorn/data/models/role";
+import Tenant from "@saltcorn/admin-models/models/tenant";
+import Plugin from "@saltcorn/data/models/plugin";
+import * as Config from "@saltcorn/data/models/config";
+import passport from "passport";
 
-const {
-  stateFieldsToWhere,
-  readState,
-} = require("@saltcorn/data/plugin-helper");
-const {
-  getState,
-  process_send,
-  add_tenant,
-} = require("@saltcorn/data/db/state");
-const db = require("@saltcorn/data/db");
-const { text } = require("@saltcorn/markup/tags");
+import { stateFieldsToWhere, readState } from "@saltcorn/data/plugin-helper";
+import { getState, process_send, add_tenant } from "@saltcorn/data/db/state";
+import db from "@saltcorn/data/db";
+import { text } from "@saltcorn/markup/tags";
 
 /**
  * @type {object}
@@ -41,7 +34,7 @@ const { text } = require("@saltcorn/markup/tags");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 // Reject sessions/JWTs minted in another tenant before any data is served.
 router.use(rejectTenantDrift);

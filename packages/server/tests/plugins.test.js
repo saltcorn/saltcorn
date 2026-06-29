@@ -1,10 +1,10 @@
-const request = require("../auth/testhelp").request;
-const getApp = require("../app");
-const Table = require("@saltcorn/data/models/table");
-const Plugin = require("@saltcorn/data/models/plugin");
-const { getState } = require("@saltcorn/data/db/state");
+import { request as request } from "../auth/testhelp.js";
+import getApp from "../app.js";
+import Table from "@saltcorn/data/models/table";
+import Plugin from "@saltcorn/data/models/plugin";
+import { getState } from "@saltcorn/data/db/state";
 
-const {
+import {
   getAdminLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
@@ -12,8 +12,8 @@ const {
   toRedirect,
   toSucceed,
   resetToFixtures,
-} = require("../auth/testhelp");
-const db = require("@saltcorn/data/db");
+} from "../auth/testhelp.js";
+import db from "@saltcorn/data/db";
 
 beforeAll(async () => {
   // do not drop the test101 schema here: that tenant belongs to

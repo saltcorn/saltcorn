@@ -4,42 +4,41 @@
  * @subcategory routes
  */
 
-const db = require("@saltcorn/data/db");
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+import db from "@saltcorn/data/db";
 const { sqlsanitize } = db;
-const {
+import {
   getState,
   getTenant,
   get_other_domain_tenant,
   features,
-} = require("@saltcorn/data/db/state");
-const { get_base_url } = require("@saltcorn/data/models/config");
-const {
-  hash,
-  is_relative_url,
-  normalize_relative_url,
-} = require("@saltcorn/data/utils");
-const { input, script, domReady, a, text } = require("@saltcorn/markup/tags");
-const session = require("express-session");
-const cookieSession = require("cookie-session");
-const is = require("contractis/is");
-const { validateHeaderName, validateHeaderValue } = require("http");
-const Crash = require("@saltcorn/data/models/crash");
-const File = require("@saltcorn/data/models/file");
-const User = require("@saltcorn/data/models/user");
-const Page = require("@saltcorn/data/models/page");
-const Trigger = require("@saltcorn/data/models/trigger");
-const si = require("systeminformation");
-const {
+} from "@saltcorn/data/db/state";
+import { get_base_url } from "@saltcorn/data/models/config";
+import { is_relative_url, normalize_relative_url } from "@saltcorn/data/utils";
+import { input, script, domReady, a, text } from "@saltcorn/markup/tags";
+import session from "express-session";
+import cookieSession from "cookie-session";
+import is from "contractis/is.js";
+import { validateHeaderName, validateHeaderValue } from "http";
+import Crash from "@saltcorn/data/models/crash";
+import File from "@saltcorn/data/models/file";
+import User from "@saltcorn/data/models/user";
+import Page from "@saltcorn/data/models/page";
+import Trigger from "@saltcorn/data/models/trigger";
+import si from "systeminformation";
+import {
   config_fields_form,
   save_config_from_form,
   check_if_restart_required,
   flash_restart,
-} = require("../markup/admin.js");
-const path = require("path");
-const { UAParser } = require("ua-parser-js");
-const crypto = require("crypto");
-const { domain_sanitize } = require("@saltcorn/admin-models/models/tenant");
-
+} from "../markup/admin.js";
+import path from "path";
+import { UAParser } from "ua-parser-js";
+import crypto from "crypto";
+import _am_tenant from "@saltcorn/admin-models/models/tenant";
+import { Header, Req, Res } from "@saltcorn/types/base_types";
+const { domain_sanitize } = _am_tenant;
 const get_sys_info = async () => {
   const disks = await si.fsSize();
   let size = 0;
@@ -65,7 +64,7 @@ const get_sys_info = async () => {
  * @param {function} next
  * @returns {void}
  */
-function loggedIn(req, res, next) {
+function loggedIn(req: Req, res: Res, next: any) {
   if (req.user && req.user.id) {
     // Reject tenant drift so a session authenticated elsewhere cannot be reused here.
     if (
@@ -73,7 +72,8 @@ function loggedIn(req, res, next) {
       req.user.tenant !== db.getTenantSchema()
     ) {
       req.logout?.(() => {});
-      return res.status(403).json({ error: "Session tenant mismatch" });
+      res.status(403);
+      return res.json({ error: "Session tenant mismatch" });
     }
     next();
   } else {
@@ -90,14 +90,15 @@ function loggedIn(req, res, next) {
  * @param {function} next
  * @returns {void}
  */
-function isAdmin(req, res, next) {
+function isAdmin(req: Req, res: Res, next: any) {
   const cur_tenant = db.getTenantSchema();
   //console.log({ cur_tenant, user: req.user });
   if (req.user && req.user.role_id === 1) {
     // Reject tenant drift before honoring elevated privileges in this schema.
     if (req.user.tenant !== undefined && req.user.tenant !== cur_tenant) {
       req.logout?.(() => {});
-      return res.status(403).json({ error: "Session tenant mismatch" });
+      res.status(403);
+      return res.json({ error: "Session tenant mismatch" });
     }
     next();
   } else {
@@ -127,43 +128,46 @@ function isAdmin(req, res, next) {
  * @param {function} next
  * @returns {void}
  */
-function rejectTenantDrift(req, res, next) {
+function rejectTenantDrift(req: Req, res: Res, next: any) {
   if (
     req.user &&
     req.user.tenant !== undefined &&
     req.user.tenant !== db.getTenantSchema()
   ) {
     req.logout?.(() => {});
-    return res.status(403).json({ error: "Session tenant mismatch" });
+    res.status(403);
+    return res.json({ error: "Session tenant mismatch" });
   }
   next();
 }
 
-const isAdminOrHasConfigMinRole = (cfg) => (req, res, next) => {
-  const cur_tenant = db.getTenantSchema();
-  //console.log({ cur_tenant, user: req.user });
-  if (
-    req.user &&
-    (req.user.role_id === 1 ||
-      (Array.isArray(cfg)
-        ? cfg.some(
-            (one_cfg) => getState().getConfig(one_cfg, 1) >= req.user.role_id
-          )
-        : getState().getConfig(cfg, 1) >= req.user.role_id)) &&
-    req.user.tenant === cur_tenant
-  ) {
-    next();
-  } else {
-    req.flash("danger", req.__("Must be admin"));
-    res.redirect(
-      req.user && req.user.pending_user
-        ? "/auth/twofa/login/totp"
-        : req.user
-          ? "/"
-          : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
-    );
-  }
-};
+const isAdminOrHasConfigMinRole =
+  (cfg: string | string[]) => (req: Req, res: Res, next: any) => {
+    const cur_tenant = db.getTenantSchema();
+    //console.log({ cur_tenant, user: req.user });
+    if (
+      req.user &&
+      (req.user.role_id === 1 ||
+        (Array.isArray(cfg)
+          ? cfg.some(
+              (one_cfg) =>
+                getState()!.getConfig(one_cfg, 1) >= req.user!.role_id
+            )
+          : getState()!.getConfig(cfg, 1) >= req.user.role_id)) &&
+      req.user.tenant === cur_tenant
+    ) {
+      next();
+    } else {
+      req.flash("danger", req.__("Must be admin"));
+      res.redirect(
+        req.user && req.user.pending_user
+          ? "/auth/twofa/login/totp"
+          : req.user
+            ? "/"
+            : `/auth/login?dest=${encodeURIComponent(req.originalUrl)}`
+      );
+    }
+  };
 
 /**
  * Sets language for HTTP Request / HTTP Responce
@@ -172,7 +176,7 @@ const isAdminOrHasConfigMinRole = (cfg) => (req, res, next) => {
  * @param {string} state
  * @returns {void}
  */
-const setLanguage = (req, res, state) => {
+const setLanguage = (req: Req, res: Res, state?: any) => {
   if (req.user && req.user.language) {
     req.setLocale(req.user.language);
   } else if (req.cookies?.lang) {
@@ -185,13 +189,13 @@ const setLanguage = (req, res, state) => {
   set_custom_http_headers(res, req, state);
 };
 
-const applyUserLocale = (req, res, next) => {
+const applyUserLocale = (req: Req, res: Res, next: any) => {
   if (req.user) {
     if (req.user.language) {
       req.setLocale(req.user.language);
       const rtlLanguages = ["ar", "he", "fa", "ur", "yi"];
       req.isRTL = rtlLanguages.some((lang) =>
-        req.user.language.startsWith(lang)
+        req.user!.language.startsWith(lang)
       );
     }
     Object.freeze(req.user);
@@ -205,8 +209,8 @@ const applyUserLocale = (req, res, next) => {
  * @param {string} state
  * @returns {void}
  */
-const set_custom_http_headers = (res, req, state) => {
-  const state1 = state || getState();
+const set_custom_http_headers = (res: Res, req: Req, state?: any) => {
+  const state1 = state || getState()!;
   const hdrs = state1.getConfig("custom_http_headers");
   if (!req.user) {
     const public_cache_maxage = +state1.getConfig("public_cache_maxage", 0);
@@ -237,7 +241,7 @@ const set_custom_http_headers = (res, req, state) => {
  * @param {object} req
  * @returns {boolean}
  */
-const validateHostAuthority = (req) => {
+const validateHostAuthority = (req: Req) => {
   const host = req.headers?.["host"];
   if (typeof host !== "string") return false;
   if (host.includes(",") || /\s|\x00/.test(host)) return false;
@@ -251,7 +255,7 @@ const validateHostAuthority = (req) => {
  * @param {number|undefined} hostPartsOffset (optional) for socketIO, to get the tenant with localhost
  * @returns {string}
  */
-const get_tenant_from_req = (req, hostPartsOffset) => {
+const get_tenant_from_req = (req: Req, hostPartsOffset?: number) => {
   if (req.subdomains && req.subdomains.length > 0)
     return req.subdomains[req.subdomains.length - 1];
 
@@ -273,10 +277,11 @@ const get_tenant_from_req = (req, hostPartsOffset) => {
  * @param {object} res
  * @param {function} next
  */
-const setTenant = (req, res, next) => {
+const setTenant = (req: Req, res: Res, next: any) => {
   // Reject malformed authority values before subdomain parsing can switch tenant context.
   if (!validateHostAuthority(req)) {
-    res.status(400).json({ error: "Invalid Host header" });
+    res.status(400);
+    res.json({ error: "Invalid Host header" });
     return;
   }
   // for a saltcorn mobile request use 'req.user.tenant'
@@ -298,7 +303,7 @@ const setTenant = (req, res, next) => {
       next();
     }
   } else {
-    const other_domain = get_other_domain_tenant(req.hostname);
+    const other_domain = get_other_domain_tenant(req.hostname!);
     if (other_domain) {
       const state = getTenant(other_domain);
       if (!state) {
@@ -345,7 +350,7 @@ const setTenant = (req, res, next) => {
  * @param {object} req
  * @returns {input}
  */
-const csrfField = (req) =>
+const csrfField = (req: Req) =>
   input({
     type: "hidden",
     name: "_csrf",
@@ -362,7 +367,7 @@ const csrfField = (req) =>
 // that is consumed via JSON.parse rather than reflected into markup. xss()
 // leaves quotes intact, so such a literal stays parseable - but we must not
 // add the extra attribute-context quote escaping below, which would corrupt it.
-const is_json_literal = (s) => {
+const is_json_literal = (s: string) => {
   const t = s.trim();
   if (!(t.startsWith("{") || t.startsWith("["))) return false;
   try {
@@ -373,7 +378,7 @@ const is_json_literal = (s) => {
   }
 };
 
-const escape_param = (val) => {
+const escape_param = (val: any): any => {
   if (Array.isArray(val)) return val.map(escape_param);
   if (val === "__proto__" || val === "constructor") return "";
   if (typeof val === "string")
@@ -382,7 +387,7 @@ const escape_param = (val) => {
       : // xss() escapes tags but leaves quotes, which allows breaking out
         // of HTML attribute contexts. Also escape quotes so reflected
         // query params are safe in attribute contexts.
-        text(val).replaceAll('"', "&quot;").replaceAll("'", "&#39;");
+        text(val).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   // For object query/param values, recursively escape the values but also drop
   // keys that could become XSS/CSS attribute-name vectors. When an object is
   // passed to a tag helper such as div(x) it is rendered as the element's
@@ -391,7 +396,7 @@ const escape_param = (val) => {
   // escaping cannot neutralise. So we keep only keys that cannot break out of,
   // or inject into, the attribute context.
   if (val && typeof val === "object") {
-    const out = {};
+    const out: Record<string, any> = {};
     Object.entries(val).forEach(([k, v]) => {
       if (is_safe_attr_key(k)) out[k] = escape_param(v);
     });
@@ -407,7 +412,7 @@ const escape_param = (val) => {
 //  - the style attribute - a CSS injection vector
 //  - any key containing characters that allow breaking out of the attribute
 //    name or injecting further attributes (whitespace, quotes, =, <, >, /, etc.)
-const is_safe_attr_key = (k) => {
+const is_safe_attr_key = (k: string) => {
   if (typeof k !== "string") return false;
   if (k === "__proto__" || k === "constructor" || k === "prototype")
     return false;
@@ -417,28 +422,30 @@ const is_safe_attr_key = (k) => {
   return /^[A-Za-z0-9_.:>\-[\]]+$/.test(k);
 };
 
-const error_catcher = (fn) => (request, response, next) => {
-  //XSS protection.
-  // By default, query is not writable in express.
-  // https://stackoverflow.com/a/79604142
-  Object.defineProperty(request, "query", {
-    ...Object.getOwnPropertyDescriptor(request, "query"),
-    value: request.query,
-    writable: true,
-  });
+const error_catcher =
+  (fn: (req: Req, res: Res, next: any) => any) =>
+  (request: Req, response: Res, next: any) => {
+    //XSS protection.
+    // By default, query is not writable in express.
+    // https://stackoverflow.com/a/79604142
+    Object.defineProperty(request, "query", {
+      ...Object.getOwnPropertyDescriptor(request, "query"),
+      value: request.query,
+      writable: true,
+    });
 
-  //escape all query arguments
-  Object.entries(request.query || {}).forEach(([nm, val]) => {
-    request.query[nm] = escape_param(val);
-  });
-  //escape all params
-  Object.entries(request.params || {}).forEach(([nm, val]) => {
-    request.params[nm] = escape_param(val);
-  });
+    //escape all query arguments
+    Object.entries(request.query || {}).forEach(([nm, val]) => {
+      request.query[nm] = escape_param(val);
+    });
+    //escape all params
+    Object.entries(request.params || {}).forEach(([nm, val]) => {
+      request.params[nm] = escape_param(val);
+    });
 
-  //catch errors
-  Promise.resolve(fn(request, response, next)).catch(next);
-};
+    //catch errors
+    Promise.resolve(fn(request, response, next)).catch(next);
+  };
 
 /**
  * Scans for page title from contents
@@ -446,7 +453,7 @@ const error_catcher = (fn) => (request, response, next) => {
  * @param {string} viewname
  * @returns {string}
  */
-const scan_for_page_title = (contents, viewname) => {
+const scan_for_page_title = (contents: string | object, viewname: string) => {
   let scanstr = "";
   try {
     scanstr =
@@ -473,8 +480,8 @@ const getGitRevision = () => db.connectObj.git_commit;
  * Gets session store
  * @returns {session|cookieSession}
  */
-const getSessionStore = (pruneInterval) => {
-  /*if (getState().getConfig("cookie_sessions", false)) {
+const getSessionStore = (pruneInterval?: number) => {
+  /*if (getState()!.getConfig("cookie_sessions", false)) {
     return cookieSession({
       keys: [db.connectObj.session_secret || is.str.generate()],
       maxAge: 30 * 24 * 60 * 60 * 1000,
@@ -485,7 +492,7 @@ const getSessionStore = (pruneInterval) => {
     console.warn(
       "WARNING: Session secret not set, degrading functionality. Set session_secret in the config file"
     );
-  let sameSite = getState().getConfig("cookie_samesite", "None").toLowerCase();
+  let sameSite = getState()!.getConfig("cookie_samesite", "None").toLowerCase();
   if (sameSite === "unset") sameSite = undefined;
   if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
@@ -503,7 +510,7 @@ const getSessionStore = (pruneInterval) => {
         schemaName: db.connectObj.default_schema,
         pool: db.pool,
         tableName: "_sc_session",
-        pruneSessionInterval: pruneInterval > 0 ? pruneInterval : false,
+        pruneSessionInterval: (pruneInterval ?? 0) > 0 ? pruneInterval : false,
       }),
       secret: db.connectObj.session_secret || is.str.generate(),
       resave: false,
@@ -519,7 +526,7 @@ const getSessionStore = (pruneInterval) => {
  * @param {any} req express request
  * @returns a new string with or without on_done_redirect=...
  */
-const addOnDoneRedirect = (oldPath, req) => {
+const addOnDoneRedirect = (oldPath: string, req: Req) => {
   const separator = oldPath.indexOf("?") > -1 ? "&" : "?";
   if (req.query.on_done_redirect) {
     const encoded = encodeURIComponent(req.query.on_done_redirect);
@@ -528,7 +535,11 @@ const addOnDoneRedirect = (oldPath, req) => {
   return oldPath;
 };
 
-const safe_redirect = (res, url, default_url) => {
+const safe_redirect = (
+  res: Res,
+  url: string | undefined,
+  default_url: string
+) => {
   if (!url) {
     res.redirect(default_url);
     return;
@@ -545,16 +556,16 @@ const safe_redirect = (res, url, default_url) => {
  */
 // TBD not sure that false is correct return if type of is not string
 // TBD Add IPv6 support
-const is_ip_address = (hostname) => {
+const is_ip_address = (hostname: string) => {
   if (typeof hostname !== "string") return false;
   return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
 };
 
-const tenant_letsencrypt_name = async (subdomain) => {
+const tenant_letsencrypt_name = async (subdomain: string) => {
   const saneDomain = domain_sanitize(subdomain);
-  let altname;
+  let altname: string | undefined;
   await db.runWithTenant(saneDomain, async () => {
-    altname = getState()
+    altname = getState()!
       .getConfig("base_url", "")
       .replace("https://", "")
       .replace("http://", "")
@@ -571,8 +582,16 @@ const admin_config_route = ({
   field_names,
   response,
   flash,
+}: {
+  router: any;
+  path: string;
+  super_path?: string;
+  get_form?: any;
+  field_names?: any;
+  response: (form: any, req: Req, res: Res) => void;
+  flash: string;
 }) => {
-  const getTheForm = async (req) =>
+  const getTheForm = async (req: Req) =>
     !get_form && field_names
       ? await config_fields_form({
           req,
@@ -599,7 +618,7 @@ const admin_config_route = ({
       if (form.hasErrors) {
         response(form, req, res);
       } else {
-        const restart_required = check_if_restart_required(form, req);
+        const restart_required = check_if_restart_required(form);
 
         await save_config_from_form(form);
         Trigger.emitEvent("AppChange", `Config`, req.user, {
@@ -634,9 +653,9 @@ const admin_config_route = ({
  * @param {string} html_string
  * @returns
  */
-const sendHtmlStringWithGlobals = (req, res, html_string) => {
+const sendHtmlStringWithGlobals = (req: Req, res: Res, html_string: string) => {
   res.set("Content-Type", "text/html");
-  const state = getState();
+  const state = getState()!;
   const version_tag = db.connectObj.version_tag;
   const locale = req.getLocale?.();
   const scGlobals =
@@ -675,7 +694,7 @@ const sendHtmlStringWithGlobals = (req, res, html_string) => {
     bodyInject += `<script>var dynamic_updates_cfg = ${JSON.stringify({ enabled: dynamic_updates_enabled })};</script>`;
   }
 
-  const stateHeaders = Array.isArray(state.headers)
+  const stateHeaders: Header[] = Array.isArray(state.headers)
     ? state.headers
     : Object.values(state.headers || {}).flat();
   for (const h of stateHeaders) {
@@ -702,7 +721,7 @@ const sendHtmlStringWithGlobals = (req, res, html_string) => {
  * @param {string} file
  * @returns
  */
-const sendHtmlFile = async (req, res, file) => {
+const sendHtmlFile = async (req: Req, res: Res, file: string) => {
   const fullPath = path.join((await File.rootFolder()).location, file);
   const role = req.user && req.user.id ? req.user.role_id : 100;
   try {
@@ -713,18 +732,19 @@ const sendHtmlFile = async (req, res, file) => {
     if (scFile && role <= scFile.min_role_read) {
       res.sendFile(fullPath, { dotfiles: "allow" });
     } else {
-      return res
-        .status(404)
-        .sendWrap(req.__("An error occurred"), req.__("File not found"));
-    }
-  } catch (e) {
-    console.error(e);
-    return res
-      .status(404)
-      .sendWrap(
+      res.status(404);
+      return res.sendWrap(
         req.__("An error occurred"),
-        e.message || req.__("An error occurred")
+        req.__("File not found")
       );
+    }
+  } catch (e: any) {
+    console.error(e);
+    res.status(404);
+    return res.sendWrap(
+      req.__("An error occurred"),
+      e.message || req.__("An error occurred")
+    );
   }
 };
 
@@ -734,7 +754,7 @@ const sendHtmlFile = async (req, res, file) => {
  * @param {any} res
  * @param {any} model
  */
-const setRole = async (req, res, model) => {
+const setRole = async (req: Req, res: Res, model: any) => {
   const { id } = req.params;
   const role = (req.body || {}).role;
   await model.update(+id, { min_role: role });
@@ -757,7 +777,7 @@ const setRole = async (req, res, model) => {
  * @param {any} req
  * @returns device type as string
  */
-const uaDevice = (req) => {
+const uaDevice = (req: Req) => {
   const uaParser = new UAParser(req.headers["user-agent"]);
   const device = uaParser.getDevice();
   if (!device.type) return "web";
@@ -769,9 +789,9 @@ const uaDevice = (req) => {
  * @param {any} req
  * @returns object with device type and screen info
  */
-const screenInfoFromCfg = (req) => {
+const screenInfoFromCfg = (req: Req) => {
   const device = uaDevice(req);
-  const uaScreenInfos = getState().getConfig("user_agent_screen_infos", {});
+  const uaScreenInfos = getState()!.getConfig("user_agent_screen_infos", {});
   return { device, ...uaScreenInfos[device] };
 };
 
@@ -782,7 +802,7 @@ const screenInfoFromCfg = (req) => {
  * @param {any} res
  * @returns eligible page an error message or an object with reload flag
  */
-const getEligiblePage = async (pageGroup, req, res) => {
+const getEligiblePage = async (pageGroup: any, req: Req, res: Res) => {
   if (pageGroup.members.length === 0)
     return req.__("Pagegroup %s has no members", pageGroup.name);
   else {
@@ -791,7 +811,7 @@ const getEligiblePage = async (pageGroup, req, res) => {
       screenInfos = JSON.parse(req.cookies["_sc_screen_info_"]);
       screenInfos.device = uaDevice(req);
     } else {
-      const strategy = getState().getConfig(
+      const strategy = getState()!.getConfig(
         "missing_screen_info_strategy",
         "guess_from_user_agent"
       );
@@ -821,31 +841,31 @@ const getEligiblePage = async (pageGroup, req, res) => {
  * @param {any} req
  * @returns the page, null or an error msg
  */
-const getRandomPage = (pageGroup, req) => {
+const getRandomPage = (pageGroup: any, req: Req) => {
   if (pageGroup.members.length === 0)
     return req.__("Pagegroup %s has no members", pageGroup.name);
-  const hash = crypto.createHash("sha1").update(req.sessionID).digest("hex");
+  const hash = crypto.createHash("sha1").update(req.sessionID!).digest("hex");
   const idx =
     parseInt(hash.substring(hash.length - 4), 16) % pageGroup.members.length;
   const sessionMember = pageGroup.members[idx];
   return Page.findOne({ id: sessionMember.page_id });
 };
 
-const checkEditPermission = (type, user) => {
+const checkEditPermission = (type: string, user: any) => {
   if (user.role_id === 1) return true;
   switch (type) {
     case "views":
-      return getState().getConfig("min_role_edit_views", 1) >= user.role_id;
+      return getState()!.getConfig("min_role_edit_views", 1) >= user.role_id;
     case "pages":
-      return getState().getConfig("min_role_edit_pages", 1) >= user.role_id;
+      return getState()!.getConfig("min_role_edit_pages", 1) >= user.role_id;
     case "triggers":
-      return getState().getConfig("min_role_edit_triggers", 1) >= user.role_id;
+      return getState()!.getConfig("min_role_edit_triggers", 1) >= user.role_id;
     default:
       return false;
   }
 };
 
-module.exports = {
+export {
   sqlsanitize,
   csrfField,
   loggedIn,

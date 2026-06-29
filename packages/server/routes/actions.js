@@ -4,35 +4,33 @@
  * @module routes/actions
  * @subcategory routes
  */
-const Router = require("express-promise-router");
-const {
+import Router from "express-promise-router";
+import {
   isAdmin,
   isAdminOrHasConfigMinRole,
   error_catcher,
   addOnDoneRedirect,
   is_relative_url,
-} = require("./utils.js");
-const {
+} from "./utils.js";
+import {
   ppVal,
   escapeHtml,
   jsIdentifierValidator,
   returnDirectivesOnly,
-} = require("@saltcorn/data/utils");
-const { getState } = require("@saltcorn/data/db/state");
-const Trigger = require("@saltcorn/data/models/trigger");
-const FieldRepeat = require("@saltcorn/data/models/fieldrepeat");
-const { getTriggerList } = require("./common_lists");
-const TagEntry = require("@saltcorn/data/models/tag_entry");
-const WorkflowStep = require("@saltcorn/data/models/workflow_step");
-const WorkflowRun = require("@saltcorn/data/models/workflow_run");
-const WorkflowTrace = require("@saltcorn/data/models/workflow_trace");
-const Tag = require("@saltcorn/data/models/tag");
-const db = require("@saltcorn/data/db");
-const MarkdownIt = require("markdown-it"),
-  md = new MarkdownIt();
-const {
-  getWorkflowStepUserForm,
-} = require("@saltcorn/data/web-mobile-commons");
+} from "@saltcorn/data/utils";
+import { getState } from "@saltcorn/data/db/state";
+import Trigger from "@saltcorn/data/models/trigger";
+import FieldRepeat from "@saltcorn/data/models/fieldrepeat";
+import { getTriggerList } from "./common_lists.js";
+import TagEntry from "@saltcorn/data/models/tag_entry";
+import WorkflowStep from "@saltcorn/data/models/workflow_step";
+import WorkflowRun from "@saltcorn/data/models/workflow_run";
+import WorkflowTrace from "@saltcorn/data/models/workflow_trace";
+import Tag from "@saltcorn/data/models/tag";
+import db from "@saltcorn/data/db";
+import MarkdownIt from "markdown-it";
+const md = new MarkdownIt();
+import { getWorkflowStepUserForm } from "@saltcorn/data/web-mobile-commons";
 
 /**
  * @type {object}
@@ -42,17 +40,17 @@ const {
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
-const {
+export default router;
+import {
   renderForm,
   link,
   mkTable,
   localeDateTime,
   renderWorkflow,
   post_delete_btn,
-} = require("@saltcorn/markup");
-const Form = require("@saltcorn/data/models/form");
-const {
+} from "@saltcorn/markup";
+import Form from "@saltcorn/data/models/form";
+import {
   div,
   code,
   a,
@@ -77,15 +75,12 @@ const {
   style,
   h5,
   textarea,
-} = require("@saltcorn/markup/tags");
-const Table = require("@saltcorn/data/models/table");
-const { getActionConfigFields } = require("@saltcorn/data/plugin-helper");
-const { send_events_page } = require("../markup/admin.js");
-const User = require("@saltcorn/data/models/user");
-const {
-  blocklyImportScripts,
-  blocklyToolbox,
-} = require("../markup/blockly.js");
+} from "@saltcorn/markup/tags";
+import Table from "@saltcorn/data/models/table";
+import { getActionConfigFields } from "@saltcorn/data/plugin-helper";
+import { send_events_page } from "../markup/admin.js";
+import User from "@saltcorn/data/models/user";
+import { blocklyImportScripts, blocklyToolbox } from "../markup/blockly.js";
 
 const serializeWorkflowStep = (s, opts = {}) => ({
   id: s.id,

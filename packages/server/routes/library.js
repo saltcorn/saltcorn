@@ -4,12 +4,12 @@
  * @subcategory routes
  */
 
-const Library = require("@saltcorn/data/models/library");
-const Router = require("express-promise-router");
-const { isAdmin, error_catcher } = require("./utils.js");
-const { send_infoarch_page } = require("../markup/admin.js");
-const { mkTable, post_delete_btn } = require("@saltcorn/markup");
-const { i } = require("@saltcorn/markup/tags");
+import Library from "@saltcorn/data/models/library";
+import Router from "express-promise-router";
+import { isAdmin, error_catcher } from "./utils.js";
+import { send_infoarch_page } from "../markup/admin.js";
+import { mkTable, post_delete_btn } from "@saltcorn/markup";
+import { i } from "@saltcorn/markup/tags";
 
 /**
  * @type {object}
@@ -19,7 +19,7 @@ const { i } = require("@saltcorn/markup/tags");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @name post/savefrombuilder

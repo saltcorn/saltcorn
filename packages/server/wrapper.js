@@ -2,13 +2,13 @@
  * @category server
  * @module wrapper
  */
-const { getState } = require("@saltcorn/data/db/state");
-const { get_extra_menu } = require("@saltcorn/data/web-mobile-commons");
+import { getState } from "@saltcorn/data/db/state";
+import { get_extra_menu } from "@saltcorn/data/web-mobile-commons";
 //const db = require("@saltcorn/data/db");
-const { h3, div, small, domReady } = require("@saltcorn/markup/tags");
-const { renderForm, link } = require("@saltcorn/markup");
-const renderLayout = require("@saltcorn/markup/layout");
-const { isPushEnabled } = require("@saltcorn/data/utils");
+import { h3, div, small, domReady } from "@saltcorn/markup/tags";
+import { renderForm, link } from "@saltcorn/markup";
+import renderLayout from "@saltcorn/markup/layout";
+import { isPushEnabled } from "@saltcorn/data/utils";
 /**
  * get flashes
  * @param req
@@ -103,7 +103,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
         locale ? `, _sc_locale = "${locale}"` : ""
       }, _sc_lightmode = ${JSON.stringify(
         state.getLightDarkMode?.(req.user) || "light"
-      )}, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16)${req?.user?.role_id===1 ? `, _sc_is_admin = true`:""};</script>`,
+      )}, _sc_pageloadtag = Math.floor(Math.random() * 16777215).toString(16)${req?.user?.role_id === 1 ? `, _sc_is_admin = true` : ""};</script>`,
     },
     { css: `/static_assets/${version_tag}/saltcorn.css` },
     { script: `/static_assets/${version_tag}/saltcorn-common.js` },
@@ -177,7 +177,7 @@ const get_headers = (req, version_tag, description, extras = []) => {
   }
   from_cfg.push({
     scriptBody: `var dynamic_updates_cfg = ${JSON.stringify({
-      enabled: dynamic_updates_enabled
+      enabled: dynamic_updates_enabled,
     })}`,
   });
   return [
@@ -231,7 +231,7 @@ const collect_menu_shortcuts = (menu_sections) => {
   return shortcuts;
 };
 
-module.exports = (version_tag) =>
+export default (version_tag) =>
   /**
    *
    * @param req
@@ -358,12 +358,10 @@ module.exports = (version_tag) =>
             typeof opts === "string" ? false : opts.requestFluidLayout,
           alerts,
           body: html.length === 1 ? html[0] : html.join(""),
-          headers: get_headers(
-            req,
-            version_tag,
-            opts.description,
-            [...(pageHeaders || []), ...shortcutHeaders]
-          ),
+          headers: get_headers(req, version_tag, opts.description, [
+            ...(pageHeaders || []),
+            ...shortcutHeaders,
+          ]),
           role,
           req,
           bodyClass,

@@ -4,9 +4,9 @@
  * @subcategory routes
  */
 
-const Router = require("express-promise-router");
-const { i, h3, p, a } = require("@saltcorn/markup/tags");
-const { isAdmin, error_catcher } = require("./utils.js");
+import Router from "express-promise-router";
+import { i, h3, p, a } from "@saltcorn/markup/tags";
+import { isAdmin, error_catcher } from "./utils.js";
 
 /**
  * @type {object}
@@ -16,7 +16,7 @@ const { isAdmin, error_catcher } = require("./utils.js");
  * @subcategory routes
  */
 const router = new Router();
-module.exports = router;
+export default router;
 
 /**
  * @param {object} opts

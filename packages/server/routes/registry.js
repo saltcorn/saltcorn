@@ -1,8 +1,8 @@
-const Router = require("express-promise-router");
+import Router from "express-promise-router";
 
-const db = require("@saltcorn/data/db");
-const { mkTable, link, post_btn, renderForm } = require("@saltcorn/markup");
-const {
+import db from "@saltcorn/data/db";
+import { mkTable, link, post_btn, renderForm } from "@saltcorn/markup";
+import {
   script,
   domReady,
   a,
@@ -18,15 +18,16 @@ const {
   li,
   details,
   summary,
-} = require("@saltcorn/markup/tags");
-const { isAdmin, error_catcher } = require("./utils");
-const { send_infoarch_page } = require("../markup/admin.js");
-const Table = require("@saltcorn/data/models/table");
-const View = require("@saltcorn/data/models/view");
-const Page = require("@saltcorn/data/models/page");
-const Form = require("@saltcorn/data/models/form");
-const Trigger = require("@saltcorn/data/models/trigger");
-const Plugin = require("@saltcorn/data/models/plugin");
+} from "@saltcorn/markup/tags";
+import { isAdmin, error_catcher } from "./utils.js";
+import { send_infoarch_page } from "../markup/admin.js";
+import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import Page from "@saltcorn/data/models/page";
+import Form from "@saltcorn/data/models/form";
+import Trigger from "@saltcorn/data/models/trigger";
+import Plugin from "@saltcorn/data/models/plugin";
+import _am_pack from "@saltcorn/admin-models/models/pack";
 const {
   table_pack,
   view_pack,
@@ -41,9 +42,9 @@ const {
   model_instance_pack,
   event_log_pack,
   install_pack,
-} = require("@saltcorn/admin-models/models/pack");
-const { getState } = require("@saltcorn/data/db/state");
-const { sleep } = require("@saltcorn/data/utils");
+} = _am_pack;
+import { getState } from "@saltcorn/data/db/state";
+import { sleep } from "@saltcorn/data/utils";
 /**
  * @type {object}
  * @const
@@ -54,7 +55,7 @@ const { sleep } = require("@saltcorn/data/utils");
 const router = new Router();
 
 // export our router to be mounted by the parent application
-module.exports = router;
+export default router;
 
 async function asyncFilter(arr, cb) {
   const filtered = [];
