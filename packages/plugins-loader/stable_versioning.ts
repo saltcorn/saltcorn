@@ -1,20 +1,35 @@
-const semver = require("semver");
-const { getState } = require("@saltcorn/data/db/state");
+import semver from "semver";
+import { getState } from "@saltcorn/data/db/state";
+
+/**
+ * version info as found in the npm registry (resembles a package.json version)
+ */
+export type VersionInfo = {
+  engines?: { saltcorn?: string } | string;
+  [key: string]: any;
+};
+
+export type VersionInfos = { [version: string]: VersionInfo };
 
 /*
  internal helper
 */
-const doCheck = (pluginVersion, versionInfos, scVersion) => {
+const doCheck = (
+  pluginVersion: string,
+  versionInfos: VersionInfos,
+  scVersion?: string
+): boolean => {
   if (!versionInfos[pluginVersion])
     throw new Error(`Version ${pluginVersion} not found in available versions`);
-  const scEngine = versionInfos[pluginVersion].engines?.saltcorn;
+  const engines = versionInfos[pluginVersion].engines;
+  const scEngine = typeof engines === "string" ? engines : engines?.saltcorn;
   if (!scEngine) return true;
   if (semver.validRange(scEngine) === null) {
-    getState().log(4, `invalid engine property: ${scEngine}`);
+    getState()!.log(4, `invalid engine property: ${scEngine}`);
     return true;
   }
-  if (semver.valid(scVersion) === null) {
-    getState().log(4, `invalid saltcorn version: ${scVersion}`);
+  if (!scVersion || semver.valid(scVersion) === null) {
+    getState()!.log(4, `invalid saltcorn version: ${scVersion}`);
     return true;
   }
   return semver.satisfies(scVersion, scEngine, { includePrerelease: true });
@@ -28,14 +43,14 @@ const doCheck = (pluginVersion, versionInfos, scVersion) => {
  * @param scVersion - optional saltcorn version (if not set it will be taken from the state)
  * @returns
  */
-const supportedVersion = (
-  pluginVersion = "latest",
-  versionInfos,
-  scVersion
-) => {
+export const supportedVersion = (
+  pluginVersion: string = "latest",
+  versionInfos: VersionInfos,
+  scVersion?: string
+): string | null => {
   const resolved =
     pluginVersion === "latest" ? resolveLatest(versionInfos) : pluginVersion;
-  const safeScVersion = scVersion || getState().scVersion;
+  const safeScVersion = scVersion || getState()!.scVersion;
   if (doCheck(resolved, versionInfos, safeScVersion)) return resolved;
   else {
     const keys = Object.keys(versionInfos);
@@ -57,12 +72,16 @@ const supportedVersion = (
  *                        If versionInfos is a string, it will be treated as the engines.saltcorn property.
  * @param scVersion - optional saltcorn version (if not set it will be taken from the state)
  */
-const isVersionSupported = (pluginVersion, scEngine, scVersion) => {
-  const safeInfos =
+export const isVersionSupported = (
+  pluginVersion: string,
+  scEngine: string | VersionInfos,
+  scVersion?: string
+): boolean => {
+  const safeInfos: VersionInfos =
     typeof scEngine === "string"
       ? { [pluginVersion]: { engines: scEngine } }
       : scEngine;
-  const safeScVersion = scVersion || getState().scVersion;
+  const safeScVersion = scVersion || getState()!.scVersion;
   return doCheck(pluginVersion, safeInfos, safeScVersion);
 };
 
@@ -72,15 +91,18 @@ const isVersionSupported = (pluginVersion, scEngine, scVersion) => {
  * @param scVersion optional saltcorn version (if not set it will be taken from the state)
  * @returns true if the saltcorn version fullfilles scEngine
  */
-const isEngineSatisfied = (scEngine, scVersion) => {
+export const isEngineSatisfied = (
+  scEngine?: string,
+  scVersion?: string
+): boolean => {
   if (!scEngine) return true;
   if (semver.validRange(scEngine) === null) {
-    getState().log(4, `invalid engine property: ${scEngine}`);
+    getState()!.log(4, `invalid engine property: ${scEngine}`);
     return true;
   }
-  const safeScVersion = scVersion || getState().scVersion;
-  if (semver.valid(safeScVersion) === null) {
-    getState().log(4, `invalid saltcorn version: ${scVersion}`);
+  const safeScVersion = scVersion || getState()!.scVersion;
+  if (!safeScVersion || semver.valid(safeScVersion) === null) {
+    getState()!.log(4, `invalid saltcorn version: ${scVersion}`);
     return true;
   }
   return semver.satisfies(safeScVersion, scEngine, { includePrerelease: true });
@@ -90,15 +112,8 @@ const isEngineSatisfied = (scEngine, scVersion) => {
  * change latest to the actual version
  * @param versionInfos - version infos from the npm registry
  */
-const resolveLatest = (versionInfos) => {
+export const resolveLatest = (versionInfos: VersionInfos): string => {
   const keys = Object.keys(versionInfos);
   keys.sort((a, b) => semver.rcompare(a, b));
   return keys[0];
-};
-
-module.exports = {
-  isVersionSupported,
-  isEngineSatisfied,
-  supportedVersion,
-  resolveLatest,
 };

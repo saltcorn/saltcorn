@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "rootDir": ".",
+    "outDir": "./dist",
+    "allowJs": true,
+    "sourceMap": true,
+    "composite": true,
+    "declaration": true /* set to true by "composite" */,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true /* set to true by "esModuleInterop" and "module" */,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
+    "lib": ["ES2021"],
+    "types": ["node"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2021"
+  },
+  "include": ["**/*", "**/*.json"],
+  "exclude": ["node_modules", "dist/**", "cjs/**", "gen-cjs-shims.cjs"]
+}

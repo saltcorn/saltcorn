@@ -29,6 +29,9 @@
       "path": "./packages/saltcorn-data/tsconfig.ref.json"
     },
     {
+      "path": "./packages/plugins-loader/tsconfig.ref.json"
+    },
+    {
       "path": "./packages/saltcorn-admin-models/tsconfig.ref.json"
     },
     {

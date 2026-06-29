@@ -1,31 +1,55 @@
-const fs = require("fs");
-const { rm } = require("fs").promises;
-const { mkdir, pathExists } = require("fs-extra");
-const { tmpName } = require("tmp-promise");
-const { execFileSync } = require("child_process");
-const { extract } = require("tar");
-const { join } = require("path");
-const { createWriteStream, unlink } = require("fs");
-const { get } = require("https");
-const npmFetch = require("npm-registry-fetch");
-const { HttpsProxyAgent } = require("https-proxy-agent");
+import fs from "fs";
+import { createWriteStream } from "fs";
+import fsExtra from "fs-extra";
+import { tmpName } from "tmp-promise";
+import { execFileSync } from "child_process";
+import { extract } from "tar";
+import { join } from "path";
+import { get } from "https";
+import type { IncomingMessage } from "http";
+import npmFetch from "npm-registry-fetch";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
-const getFetchProxyOptions = () => {
+const { rm } = fs.promises;
+const { mkdir, pathExists } = fsExtra;
+
+/**
+ * minimal shape of a plugin used by the download helpers
+ */
+export type PluginObj = {
+  name: string;
+  location: string;
+  version?: string;
+  source?: string;
+  deploy_private_key?: string;
+  [key: string]: any;
+};
+
+export const getFetchProxyOptions = (): { agent?: HttpsProxyAgent<string> } => {
   if (process.env["HTTPS_PROXY"]) {
     const agent = new HttpsProxyAgent(process.env["HTTPS_PROXY"]);
     return { agent };
   } else return {};
 };
 
-const downloadFromGithub = async (plugin, rootFolder, pluginDir) => {
+export const downloadFromGithub = async (
+  plugin: PluginObj,
+  rootFolder: string,
+  pluginDir: string
+): Promise<void> => {
   const tarballUrl = `https://api.github.com/repos/${plugin.location}/tarball`;
-  const fileName = plugin.name.split("/").pop();
+  const fileName = plugin.name.split("/").pop()!;
   const filePath = await loadTarball(rootFolder, tarballUrl, fileName);
   await mkdir(pluginDir, { recursive: true });
   await extractTarball(filePath, pluginDir);
 };
 
-const downloadFromNpm = async (plugin, rootFolder, pluginDir, pckJson) => {
+export const downloadFromNpm = async (
+  plugin: PluginObj,
+  rootFolder: string,
+  pluginDir: string,
+  pckJson: any
+): Promise<boolean> => {
   const pkgInfo = await npmFetch.json(
     `https://registry.npmjs.org/${plugin.location}`,
     getFetchProxyOptions()
@@ -38,7 +62,7 @@ const downloadFromNpm = async (plugin, rootFolder, pluginDir, pckJson) => {
   if (pckJson && pckJson.version === vToInstall) return false;
   else {
     const tarballUrl = pkgInfo.versions[vToInstall].dist.tarball;
-    const fileName = plugin.name.split("/").pop();
+    const fileName = plugin.name.split("/").pop()!;
     const filePath = await loadTarball(rootFolder, tarballUrl, fileName);
     await mkdir(pluginDir, { recursive: true });
     await extractTarball(filePath, pluginDir);
@@ -46,14 +70,18 @@ const downloadFromNpm = async (plugin, rootFolder, pluginDir, pckJson) => {
   }
 };
 
-const loadTarball = (rootFolder, url, name) => {
-  const options = {
+export const loadTarball = (
+  rootFolder: string,
+  url: string,
+  name: string
+): Promise<string> => {
+  const options: any = {
     headers: {
       "User-Agent": "request",
     },
-    ...getFetchProxyOptions()
+    ...getFetchProxyOptions(),
   };
-  const writeTarball = async (res) => {
+  const writeTarball = async (res: IncomingMessage): Promise<string> => {
     const filePath = join(rootFolder, "plugins_folder", `${name}.tar.gz`);
     const stream = createWriteStream(filePath);
     res.pipe(stream);
@@ -72,7 +100,7 @@ const loadTarball = (rootFolder, url, name) => {
   return new Promise((resolve, reject) => {
     get(url, options, async (res) => {
       if (res.statusCode === 302) {
-        get(res.headers.location, options, async (redirect) => {
+        get(res.headers.location!, options, async (redirect) => {
           if (redirect.statusCode === 200) {
             const filePath = await writeTarball(redirect);
             resolve(filePath);
@@ -103,8 +131,11 @@ const loadTarball = (rootFolder, url, name) => {
  * Git pull or clone
  * @param plugin
  */
-const gitPullOrClone = async (plugin, pluginDir) => {
-  let keyfnm,
+export const gitPullOrClone = async (
+  plugin: PluginObj,
+  pluginDir: string
+): Promise<void> => {
+  let keyfnm: string | undefined,
     setKey = [
       "-c",
       `core.sshCommand="ssh -oBatchMode=yes -o 'StrictHostKeyChecking no'"`,
@@ -132,7 +163,10 @@ const gitPullOrClone = async (plugin, pluginDir) => {
   if (plugin.deploy_private_key && keyfnm) await fs.promises.unlink(keyfnm);
 };
 
-const extractTarball = async (tarFile, destination) => {
+export const extractTarball = async (
+  tarFile: string,
+  destination: string
+): Promise<void> => {
   await extract({
     file: tarFile,
     cwd: destination,
@@ -140,23 +174,18 @@ const extractTarball = async (tarFile, destination) => {
   });
 };
 
-const tarballExists = async (rootFolder, plugin) => {
+export const tarballExists = async (
+  rootFolder: string,
+  plugin: PluginObj
+): Promise<boolean> => {
   const fileName = `${plugin.name.split("/").pop()}.tar.gz`;
   return await pathExists(join(rootFolder, "plugins_folder", fileName));
 };
 
-const removeTarball = async (rootFolder, plugin) => {
+export const removeTarball = async (
+  rootFolder: string,
+  plugin: PluginObj
+): Promise<void> => {
   const fileName = `${plugin.name.split("/").pop()}.tar.gz`;
   await rm(join(rootFolder, "plugins_folder", fileName));
-};
-
-module.exports = {
-  downloadFromGithub,
-  downloadFromNpm,
-  gitPullOrClone,
-  loadTarball,
-  extractTarball,
-  tarballExists,
-  removeTarball,
-  getFetchProxyOptions,
 };

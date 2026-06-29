@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "composite": true,
+    "declaration": true /* set to true by "composite" */,
+    "baseUrl": "."
+  },
+  "references": [
+    { "path": "../db-common/tsconfig.ref.json" },
+    { "path": "../saltcorn-data/tsconfig.ref.json" }
+  ]
+}
