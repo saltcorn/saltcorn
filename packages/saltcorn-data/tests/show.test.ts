@@ -692,8 +692,6 @@ describe("get by date error", () => {
     assertIsSet(view);
     const row = await Table.findOne("books")!.getRow({ id: row_id });
     const vres1 = await view.run({ created_at: row!.created_at }, mockReqRes);
-    console.log({vres1});
-    
-    //expect(vres1).toBe("Publisher:AK Press");
+    expect(vres1).toBe("Carl Rogers");
   });
 });
