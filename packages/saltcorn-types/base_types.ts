@@ -486,14 +486,14 @@ type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
 export type Req = {
   query: GenObj;
-  flash: (flash_type: "warning" | "success", message: string) => void;
+  flash: (flash_type: string, message: string) => void;
   user?: AbstractUser;
   csrfToken: () => string;
   getLocale: () => string;
   isAuthenticated: () => boolean;
   headers: GenObj;
   xhr: boolean;
-  __: (s: string) => string;
+  __: (s: string, ...args: any[]) => string;
   get: (s: string) => string;
   body: any;
   sessionID?: string;
