@@ -27,6 +27,7 @@ import {
   deleteViewFromServer,
   renderEditInEditConfig,
 } from "./remote_query_helper.js";
+import PlainDate from "@saltcorn/plain-date";
 
 let remoteQueries = false;
 
@@ -690,7 +691,7 @@ describe("get by date error", () => {
       author: "Carl Rogers",
       pages: "356",
       created_at: new Date(),
-      created_day: new Date()
+      created_day: new PlainDate()
     });
 
     await getState()!.refresh_tables();
