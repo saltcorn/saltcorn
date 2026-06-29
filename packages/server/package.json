@@ -111,8 +111,8 @@
   "scripts": {
     "dev": "nodemon index.js",
     "test": "NODE_ENV=test node --require ./setup-jest-globals.cjs --require ./setup-test-schema.cjs --test --test-force-exit",
-    "tsc": "echo \"Error: no TypeScript support yet\"",
-    "clean": "echo \"Error: no TypeScript support yet\""
+    "tsc": "tsc -p tsconfig.json",
+    "clean": "rm -f routes/delete.js routes/delete.js.map routes/delete.d.ts routes/delete.d.ts.map *.tsbuildinfo"
   },
   "publishConfig": {
     "access": "public"

@@ -108,3 +108,9 @@ plugins_folder/
 sessions.sqlite
 
 mobile-app-out
+
+# Compiled output of in-place TypeScript files (see tsconfig.json)
+routes/delete.js
+routes/delete.js.map
+routes/delete.d.ts
+routes/delete.d.ts.map

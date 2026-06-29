@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "rootDir": ".",
+    "outDir": ".",
+    "allowJs": false,
+    "sourceMap": true,
+    "composite": true,
+    "declaration": true /* set to true by "composite" */,
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true /* set to true by "esModuleInterop" and "module" */,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    /* https://github.com/microsoft/TypeScript/wiki/Node-Target-Mapping */
+    "lib": ["ES2021", "dom"],
+    "types": ["node"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "target": "ES2021"
+  },
+  "include": ["routes/delete.ts"],
+  "exclude": ["node_modules", "cjs"]
+}
