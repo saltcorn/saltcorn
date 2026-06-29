@@ -1,14 +1,12 @@
-const npmFetch = require("npm-registry-fetch");
-const semver = require("semver");
+import npmFetch from "npm-registry-fetch";
+import semver from "semver";
+import { describe, it, expect, jest } from "@saltcorn/db-common/test_expect";
 
-const {
-  supportedVersion,
-  isVersionSupported,
-} = require("../stable_versioning");
+import { supportedVersion, isVersionSupported } from "../stable_versioning.js";
 
 jest.setTimeout(30000);
 
-const getSortedKeys = (pkgInfo) => {
+const getSortedKeys = (pkgInfo: any): string[] => {
   const keys = [...Object.keys(pkgInfo.versions)];
   keys.sort((a, b) => semver.rcompare(a, b));
   return keys;
@@ -128,7 +126,7 @@ describe("Stable versioning", () => {
       scVersion
     );
     expect(result).toBe(sortedKeys[1]);
-    expect(isVersionSupported(result, pkgInfo.versions, scVersion)).toBe(true);
+    expect(isVersionSupported(result!, pkgInfo.versions, scVersion)).toBe(true);
     expect(isVersionSupported(sortedKeys[0], pkgInfo.versions, scVersion)).toBe(
       false
     );
@@ -153,7 +151,7 @@ describe("Stable versioning", () => {
       scVersion
     );
     expect(result).toBe(sortedKeys[0]);
-    expect(isVersionSupported(result, pkgInfo.versions, scVersion)).toBe(true);
+    expect(isVersionSupported(result!, pkgInfo.versions, scVersion)).toBe(true);
     expect(isVersionSupported(sortedKeys[0], pkgInfo.versions, scVersion)).toBe(
       true
     );
@@ -178,7 +176,7 @@ describe("Stable versioning", () => {
       scVersion
     );
     expect(result).toBe(sortedKeys[0]);
-    expect(isVersionSupported(result, pkgInfo.versions, scVersion)).toBe(true);
+    expect(isVersionSupported(result!, pkgInfo.versions, scVersion)).toBe(true);
     expect(isVersionSupported(sortedKeys[1], pkgInfo.versions, scVersion)).toBe(
       true
     );
@@ -202,7 +200,7 @@ describe("Stable versioning", () => {
       scVersion
     );
     expect(result).toBe(sortedKeys[0]);
-    expect(isVersionSupported(result, pkgInfo.versions, scVersion)).toBe(true);
+    expect(isVersionSupported(result!, pkgInfo.versions, scVersion)).toBe(true);
     expect(isVersionSupported(sortedKeys[1], pkgInfo.versions, scVersion)).toBe(
       true
     );
@@ -228,7 +226,7 @@ describe("Stable versioning", () => {
       scVersion
     );
     expect(result).toBe(sortedKeys[2]);
-    expect(isVersionSupported(result, pkgInfo.versions, scVersion)).toBe(true);
+    expect(isVersionSupported(result!, pkgInfo.versions, scVersion)).toBe(true);
     expect(isVersionSupported(sortedKeys[0], pkgInfo.versions, scVersion)).toBe(
       false
     );
