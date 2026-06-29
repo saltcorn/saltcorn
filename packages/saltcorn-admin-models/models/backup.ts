@@ -811,7 +811,7 @@ const delete_old_backups = async () => {
       if (!file.startsWith(backup_file_prefix)) continue;
       const stats = await stat(path.join(directory, file));
       const fileTime = (stats as any).birthtime?.getTime
-        ? (stats as any).birthtime.getTime()
+        ? stats.birthtime.getTime()
         : stats.mtime.getTime();
       const ageMs = new Date().getTime() - fileTime;
       const ageDays = ageMs / (1000 * 3600 * 24);
