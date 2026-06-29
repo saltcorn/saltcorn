@@ -592,9 +592,9 @@ async ({
   const scheduleHelper = {
     stopScheduler: false,
     start: () => {
-      this.stopScheduler = false;
+      scheduleHelper.stopScheduler = false;
       runScheduler({
-        stop_when: () => this.stopScheduler,
+        stop_when: () => scheduleHelper.stopScheduler,
         port,
         host,
         watchReaper,
@@ -605,7 +605,7 @@ async ({
       });
     },
     stop: () => {
-      this.stopScheduler = true;
+      scheduleHelper.stopScheduler = true;
     },
     isLeaderFn,
   };
