@@ -1497,7 +1497,7 @@ const run_action = async (
 ) => {
   const result = await actionQuery();
   if (result.json.error) {
-    Crash.create({ message: result.json.error, stack: "" }, req as any);
+    Crash.create({ message: result.json.error, stack: "" }, req);
   }
   return result;
 };

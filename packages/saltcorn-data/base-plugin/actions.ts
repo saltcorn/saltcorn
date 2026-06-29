@@ -2699,13 +2699,13 @@ export default {
         await u.set_language(language);
         req.login(u.session_object, function (err: any) {
           if (!err) {
-            (req as any).flash(
+            req.flash(
               "success",
-              (req as any).__("Language changed to %s", language)
+              req.__("Language changed to %s", language)
             );
             return { reload_page: true };
           } else {
-            (req as any).flash("danger", err);
+            req.flash("danger", err);
           }
         });
       } else {
