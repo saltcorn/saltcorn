@@ -948,7 +948,7 @@ const get_viewable_fields = (
                   in_row_click
                 ),
                 view(column: any) {
-                  return viewResults?.[column.view + column.relation]?.(r);
+                  return viewResults?.[column.view + column.relation]?.(r) ?? "";
                 },
               },
               layout,
