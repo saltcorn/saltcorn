@@ -10,7 +10,7 @@ import tags from "@saltcorn/markup/tags";
 import { ViewCfg } from "@saltcorn/types/model-abstracts/abstract_view";
 import * as exprMod from "../models/expression.js";
 import { ReqRes } from "@saltcorn/types/common_types";
-import type { Plugin } from "@saltcorn/types/base_types";
+import type { Plugin, Req, Res } from "@saltcorn/types/base_types";
 const { eval_expression } = exprMod;
 import { getState } from "../db/state.js";
 const { input } = tags;

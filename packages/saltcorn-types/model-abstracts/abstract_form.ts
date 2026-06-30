@@ -1,4 +1,4 @@
-import type { Layout } from "../base_types.js";
+import type { Layout, Req } from "../base_types.js";
 import type { AbstractField, AbstractFieldRepeat } from "./abstract_field.js";
 
 export type AdditionalButton = {
@@ -32,8 +32,8 @@ export interface AbstractForm {
   isOwner?: boolean;
   onSubmit?: string;
   tabs?: any;
-  req: any;
-  __?: any;
+  req?: Req;
+  __?: (s: string, ...args: any[]) => string;
   isWorkflow?: boolean;
   pk_name?: string;
 }

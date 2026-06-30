@@ -749,7 +749,7 @@ export type PluginRoute = {
   url: string;
   method?: string;
   noCsrf?: boolean;
-  callback: ({ req, res }: { req: any; res: any }) => void;
+  callback: ({ req, res }: { req: Req; res: Res }) => void;
 };
 
 export type ResultType = {

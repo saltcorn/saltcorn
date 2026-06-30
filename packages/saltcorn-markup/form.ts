@@ -1588,14 +1588,16 @@ const splitSnippet = (form: Form) =>
  */
 const renderForm = (
   form: Form | string,
-  csrfToken0: string | boolean
+  csrfToken0: string | false
 ): string => {
   if (typeof form === "string") return form;
 
   const csrfToken =
-    csrfToken0 === false || csrfToken0 === ""
-      ? csrfToken0
-      : csrfToken0 || (form.req && form.req.csrfToken && form.req.csrfToken());
+    csrfToken0 === false
+      ? "false"
+      : csrfToken0 === ""
+        ? ""
+        : (form.req && form.req.csrfToken && form.req.csrfToken()) || "";
   if (form.layout) return mkFormWithLayout(form, csrfToken);
   else return mkForm(form, csrfToken, form.errors);
 };
@@ -1605,7 +1607,7 @@ const renderForm = (
  * @param csrfToken
  * @returns
  */
-const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
+const mkFormWithLayout = (form: Form, csrfToken: string): string => {
   const hasFile = form.fields.some(
     (f: any) =>
       f.multipartFormData ||

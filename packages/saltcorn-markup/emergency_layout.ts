@@ -9,6 +9,7 @@ const { ul, li, a, span, hr, div, text, i, h6, h1, p, header, img, footer } =
 import renderLayout from "./layout.js";
 import { renderForm, link } from "./index.js";
 import layoutUtils from "./layout_utils.js";
+import { Req } from "@saltcorn/types/base_types";
 const { navbar, alert } = layoutUtils;
 
 /**
@@ -26,7 +27,7 @@ const renderBody = ({
   title: string;
   body: string | any;
   alerts: any[];
-  req: any;
+  req: Req;
 }): string =>
   renderLayout({
     blockDispatch: {},
@@ -42,7 +43,7 @@ namespace EmergencyLayoutExports {
     title: string;
     menu: any;
     brand: any;
-    req: any;
+    req: Req;
     alerts: any[];
     currentUrl: string;
     body: string | any;

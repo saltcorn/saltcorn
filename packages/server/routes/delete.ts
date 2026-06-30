@@ -13,6 +13,7 @@ import {
   freeVariables,
   add_free_variables_to_joinfields,
 } from "@saltcorn/data/models/expression";
+import { Req, Res } from "@saltcorn/types/base_types";
 /**
  * @type {object}
  * @const
@@ -33,7 +34,7 @@ export default router;
  */
 router.post(
   "/:tableName/:id",
-  error_catcher(async (req: any, res: any) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { tableName, id } = req.params;
     const { redirect } = req.query;
     // todo check that works after where change
@@ -92,7 +93,7 @@ router.post(
 );
 router.post(
   "/:tableName",
-  error_catcher(async (req: any, res: any) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { tableName } = req.params;
     const { redirect, ...restQuery } = req.query;
     // todo check that works after where change

@@ -57,6 +57,7 @@ import {
   stateToQueryString,
   pathToState,
 } from "./plugin-helper.js";
+import { Layout, Req, Res } from "@saltcorn/types/base_types";
 
 const { show_icon_and_label } = layoutUtilsPkg;
 
@@ -2142,9 +2143,9 @@ const getForm = async (
   table: Table,
   viewname: string,
   columns: any[],
-  layout0: any,
+  layout0: Layout,
   id: any,
-  req: any,
+  req: Req,
   isRemote?: boolean
 ): Promise<any> => {
   const fields = table.getFields();
@@ -2289,9 +2290,9 @@ const transformForm = async ({
 }: {
   form: any;
   table: Table;
-  req: any;
+  req: Req;
   row: Row | null;
-  res: any;
+  res: Res;
   getRowQuery?: (
     tableId: number,
     viewSelect: GenObj,

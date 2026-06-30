@@ -8,8 +8,11 @@ import index from "./index.js";
 const { renderForm, mkFormContentNoLayout, mkForm, renderFormLayout } = index;
 
 import { AbstractForm as Form } from "@saltcorn/types/model-abstracts/abstract_form";
+import { Req } from "@saltcorn/types/base_types";
 
 const nolines = (s: string) => s.split("\n").join("");
+
+const req = {} as Req;
 
 describe("form render", () => {
   it("renders a simple form", () => {
@@ -32,7 +35,7 @@ describe("form render", () => {
       formStyle: "",
       methodGET: false,
       xhrSubmit: false,
-      req: {},
+      req,
     };
     const want = `<form data-viewname="testform" action="/" class="form-namespace " method="post">
 <input type="hidden" name="_csrf" value=""><div class="form-group">
@@ -66,7 +69,7 @@ describe("form render", () => {
       formStyle: "",
       methodGET: false,
       xhrSubmit: false,
-      req: {},
+      req,
       viewname: "testform",
       layout: {
         above: [
@@ -108,7 +111,7 @@ describe("form render", () => {
       methodGET: false,
       xhrSubmit: false,
       viewname: "testform",
-      req: {},
+      req,
     };
     const want = `<form data-viewname="testform" action="/" class="form-namespace " method="post">
 <input type="hidden" name="_csrf" value=""><div class="form-group">
@@ -152,7 +155,7 @@ describe("form render", () => {
       formStyle: "",
       methodGET: false,
       xhrSubmit: false,
-      req: {},
+      req,
     };
     const want = `<form data-viewname="testform" action="/" class="form-namespace " method="post">
 <input type="hidden" name="_csrf" value=""><div class="form-group">
@@ -200,7 +203,7 @@ describe("mkFormContentNoLayout", () => {
       formStyle: "vert",
       methodGET: false,
       xhrSubmit: false,
-      req: {},
+      req,
     };
     const result = mkFormContentNoLayout(form);
     expect(result).toContain('<label for="inputusername">Username</label>');
@@ -230,7 +233,7 @@ describe("mkForm", () => {
       formStyle: "vert",
       methodGET: false,
       xhrSubmit: false,
-      req: {},
+      req,
       submitLabel: "Submit",
       viewname: "test-form",
     };
@@ -269,7 +272,7 @@ describe("mkForm", () => {
       formStyle: "vert",
       methodGET: false,
       xhrSubmit: false,
-      req: {},
+      req,
       viewname: "test-form",
     };
     const csrfToken = "test-csrf-token";
@@ -318,7 +321,7 @@ describe("renderFormLayout", () => {
       formStyle: "vert",
       methodGET: false,
       xhrSubmit: false,
-      req: {},
+      req,
     };
     const result = renderFormLayout(form);
     expect(result).toBe(
@@ -359,7 +362,7 @@ describe("renderFormLayout", () => {
       formStyle: "vert",
       methodGET: false,
       xhrSubmit: false,
-      req: {},
+      req,
     };
     const result = renderFormLayout(form);
     expect(result).toBe(

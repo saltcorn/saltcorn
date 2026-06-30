@@ -14,6 +14,7 @@ import helpers from "./helpers.js";
 const { a, text, div, button, hr, time, i, input, text_attr, form, span } =
   tags;
 import layoutUtils from "./layout_utils.js";
+import { Req } from "@saltcorn/types/base_types";
 const { alert, toast, show_icon_and_label, validID } = layoutUtils;
 
 /**
@@ -35,7 +36,7 @@ type PostBtnOpts = {
   klass: string;
   formClass?: string;
   spinner?: boolean;
-  req: any;
+  req: Req;
   confirm?: boolean;
   icon?: string;
   title?: string;
@@ -174,7 +175,7 @@ const post_btn = (
  * @param what- Item
  * @returns return html form
  */
-const post_delete_btn = (href: string, req: any, what?: string): string =>
+const post_delete_btn = (href: string, req: Req, what?: string): string =>
   form(
     { action: text(href), method: "post" },
     input({ type: "hidden", name: "_csrf", value: req.csrfToken() }),
@@ -203,7 +204,7 @@ const post_delete_btn = (href: string, req: any, what?: string): string =>
 const post_dropdown_item = (
   href: string,
   s: string,
-  req: any,
+  req: Req,
   confirm?: boolean,
   what?: string
 ): string => {
