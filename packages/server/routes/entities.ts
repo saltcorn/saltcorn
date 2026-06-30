@@ -81,7 +81,10 @@ const stripLeadingSlash = (path = "") =>
  */
 const req__ = (req: any, s: any) => (req && req.__(s)) || s;
 
-const getExtendedEntites = async (req: any, { includeAllModules = false }: any = {}) => {
+const getExtendedEntites = async (
+  req: any,
+  { includeAllModules = false }: any = {}
+) => {
   const entities: any[] = [];
   const can_reset = getState()!.getConfig("smtp_host", "") !== "";
 
@@ -219,7 +222,8 @@ const getExtendedEntites = async (req: any, { includeAllModules = false }: any =
     try {
       storeModules
         .filter(
-          (mod: any) => mod.name !== "base" && !installedModuleNames.has(mod.name)
+          (mod: any) =>
+            mod.name !== "base" && !installedModuleNames.has(mod.name)
         )
         .forEach((mod: any) => {
           const source = mod.source;
@@ -502,16 +506,17 @@ const getAllEntities = async () => {
 /**
  * Generate entity type badge
  */
-const entityTypeBadge = (type: any) => {
-  const badges = {
-    table: { class: "primary", icon: "table", label: "Table" },
-    view: { class: "success", icon: "eye", label: "View" },
-    page: { class: "info", icon: "file", label: "Page" },
-    trigger: { class: "warning", icon: "play", label: "Trigger" },
-    module: { class: "secondary", icon: "cube", label: "Module" },
-    user: { class: "dark", icon: "user", label: "User" },
-    role: { class: "danger", icon: "lock", label: "Role" },
-  };
+const entityTypeBadge = (type: string) => {
+  const badges: Record<string, { class: string; icon: string; label: string }> =
+    {
+      table: { class: "primary", icon: "table", label: "Table" },
+      view: { class: "success", icon: "eye", label: "View" },
+      page: { class: "info", icon: "file", label: "Page" },
+      trigger: { class: "warning", icon: "play", label: "Trigger" },
+      module: { class: "secondary", icon: "cube", label: "Module" },
+      user: { class: "dark", icon: "user", label: "User" },
+      role: { class: "danger", icon: "lock", label: "Role" },
+    };
   const badge = badges[type];
   return span(
     { class: `badge bg-${badge.class} me-2` },
@@ -593,7 +598,8 @@ const detailsContent = (entity: any, req: any, roles: any) => {
 
 // Helper: role label per entity
 const roleLabel = (entity: any, roles: any) => {
-  const getRole = (rid: any) => roles.find((r: any) => r.id === rid)?.role || "?";
+  const getRole = (rid: any) =>
+    roles.find((r: any) => r.id === rid)?.role || "?";
   if (entity.type === "table") {
     const r = entity.metadata;
     if (r.external) return `${getRole(r.min_role_read)} (read only)`;
@@ -609,7 +615,11 @@ const roleLabel = (entity: any, roles: any) => {
   }
 };
 
-const tableActionsDropdown = (entity: any, req: any, user_can_edit_tables: any) => {
+const tableActionsDropdown = (
+  entity: any,
+  req: any,
+  user_can_edit_tables: any
+) => {
   const metadata = entity.metadata || {};
   if (metadata.external || metadata.provider_name) return "";
   const items = [
@@ -1098,7 +1108,7 @@ router.get(
       th(req.__("Actions"))
     );
 
-    const typePlural = (t: any) =>
+    const typePlural = (t: string) =>
       ({ table: "tables", view: "views", page: "pages", trigger: "triggers" })[
         t
       ];
@@ -1654,7 +1664,7 @@ router.post(
     for (const item of items) {
       const type = item?.type;
       const idNum = Number(item?.id);
-      const id = Number.isNaN(idNum) ? null : idNum;
+      const id = (Number.isNaN(idNum) ? null : idNum) as number;
       const key = item?.key;
       try {
         if (type === "table") {
@@ -1708,7 +1718,7 @@ router.post(
     const items = Array.isArray(req.body.items) ? req.body.items : [];
     if (!items.length) return res.status(400).json({ error: "No items" });
 
-    const pack = {
+    const pack: any = {
       tables: [],
       views: [],
       plugins: [],
@@ -1724,7 +1734,7 @@ router.post(
       code_pages: [],
     };
 
-    const added = {
+    const added: Record<string, Set<number>> = {
       table: new Set(),
       view: new Set(),
       page: new Set(),
