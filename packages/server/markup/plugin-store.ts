@@ -24,6 +24,7 @@ import {
 } from "@saltcorn/markup/tags";
 import { link } from "@saltcorn/markup";
 import { PluginLoaderResult, Req } from "@saltcorn/types/base_types";
+import { Type } from "@saltcorn/types/common_types";
 
 /**
  * @param {object} args
@@ -38,10 +39,10 @@ const show_function_arguments = (args: { name: string; type: string }[]) =>
  * @param {object} def
  * @returns {*}
  */
-const withCfg = (plugin: any, key: string, def: any) =>
+const withCfg = (plugin: PluginLoaderResult, key: string, def: any) =>
   plugin.plugin_module.configuration_workflow
     ? plugin.plugin_module[key]
-      ? plugin.plugin_module[key](plugin.configuration || {})
+      ? plugin.plugin_module[key]({})
       : def
     : plugin.plugin_module[key] || def;
 
@@ -50,13 +51,16 @@ const withCfg = (plugin: any, key: string, def: any) =>
  * @param {object} req
  * @returns {*}
  */
-const plugin_types_info_card = (plugin: any, req: Req) => ({
-  type: "card",
-  title: req.__("Types"),
-  contents: plugin.plugin_module?.types.map((type: any) =>
-    span({ class: "badge bg-primary ms-2" }, type.name)
-  ),
-});
+const plugin_types_info_card = (plugin: PluginLoaderResult, req: Req) => {
+  const types: [Type] = withCfg(plugin, "types", []) || [];
+  return {
+    type: "card",
+    title: req.__("Types"),
+    contents: types.map((type: any) =>
+      span({ class: "badge bg-primary ms-2" }, type.name)
+    ),
+  };
+};
 
 /**
  * @param {object} plugin
@@ -86,7 +90,10 @@ const plugin_functions_info_card = (plugin: PluginLoaderResult, req: Req) => ({
  * @param {object} req
  * @returns {*}
  */
-const plugin_viewtemplates_info_card = (plugin: PluginLoaderResult, req: Req) => ({
+const plugin_viewtemplates_info_card = (
+  plugin: PluginLoaderResult,
+  req: Req
+) => ({
   type: "card",
   title: req.__("View patterns"),
   contents: withCfg(plugin, "viewtemplates", [])
@@ -100,10 +107,10 @@ const plugin_viewtemplates_info_card = (plugin: PluginLoaderResult, req: Req) =>
  * @param {object} repo
  * @returns {*}
  */
-const showRepository = (repo: any) =>
+const showRepository = (repo: string | null | { url: string }): string =>
   !repo
-    ? repo
-    : repo.url
+    ? ""
+    : typeof repo === "object" && "url" in repo
       ? link(repo.url, repo.url)
       : repo.startsWith && repo.startsWith("github:")
         ? link(repo.replace("github:", "https://github.com/"), repo)
