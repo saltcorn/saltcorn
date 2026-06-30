@@ -81,8 +81,14 @@ import { getActionConfigFields } from "@saltcorn/data/plugin-helper";
 import { send_events_page } from "../markup/admin.js";
 import User from "@saltcorn/data/models/user";
 import { blocklyImportScripts, blocklyToolbox } from "../markup/blockly.js";
-import { FieldLike, Req, Res } from "@saltcorn/types/base_types";
+import {
+  FieldLike,
+  PluginFunction,
+  Req,
+  Res,
+} from "@saltcorn/types/base_types";
 import { TriggerCfg } from "@saltcorn/types/model-abstracts/abstract_trigger";
+import { SelectOptions } from "@saltcorn/db-common";
 
 const serializeWorkflowStep = (s: any, opts: any = {}) => ({
   id: s.id,
@@ -143,7 +149,11 @@ const workflowStrings = (req: any, trigger: any) => ({
   copyStep: req.__("Copy"),
 });
 
-const getWorkflowEditorData = async (req: Req, trigger: Trigger, stepsIn?: any) => {
+const getWorkflowEditorData = async (
+  req: Req,
+  trigger: Trigger,
+  stepsIn?: any
+) => {
   let steps =
     stepsIn ||
     (await WorkflowStep.find({ trigger_id: trigger.id! }, { orderBy: "id" }));
@@ -641,7 +651,12 @@ router.post(
   })
 );
 
-const getWorkflowConfig = async (req: any, id: any, table: any, trigger: any) => {
+const getWorkflowConfig = async (
+  req: any,
+  id: any,
+  table: any,
+  trigger: any
+) => {
   const steps = (await WorkflowStep.find(
     { trigger_id: trigger.id },
     { orderBy: "id" }
@@ -925,7 +940,14 @@ router.post(
   })
 );
 
-const getWorkflowStepForm = async (trigger: any, req: any, step_id?: any, after_step?: any, before_step?: any, after_step_for?: any) => {
+const getWorkflowStepForm = async (
+  trigger: any,
+  req: any,
+  step_id?: any,
+  after_step?: any,
+  before_step?: any,
+  after_step_for?: any
+) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
   const actionExplainers: Record<string, any> = {};
 
@@ -978,7 +1000,9 @@ const getWorkflowStepForm = async (trigger: any, req: any, step_id?: any, after_
     sublabel:
       "Optional. A key on the current workflow's context, the values of which will be the called workflow's context.",
     showIf: {
-      wf_action_name: Trigger.find({ action: "Workflow" }).map((wf: any) => wf.name),
+      wf_action_name: Trigger.find({ action: "Workflow" }).map(
+        (wf: any) => wf.name
+      ),
     },
   });
   const nonWfTriggerNames = Trigger.find({})!
@@ -2034,7 +2058,9 @@ router.post(
         : null;
     const stepsForTrigger = (await WorkflowStep.find({ trigger_id }))!;
     const previouslyInitial = existingStep
-      ? stepsForTrigger.find((s: any) => s.initial_step && s.id !== existingStep.id)
+      ? stepsForTrigger.find(
+          (s: any) => s.initial_step && s.id !== existingStep.id
+        )
       : stepsForTrigger.find((s: any) => s.initial_step);
     Object.entries(configuration).forEach(([k, v]: any) => {
       if (v === null) delete configuration[k];
@@ -2230,12 +2256,9 @@ router.post(
       ? Table.findOne({ id: trigger.table_id })
       : null;
     const existing_code = trigger.configuration?.code || "";
-    const generated =
-      await getState()!.functions.copilot_generate_javascript.run(
-        description,
-        existing_code,
-        table?.name || null
-      );
+    const generated = await (
+      getState()!.functions.copilot_generate_javascript as PluginFunction
+    ).run(description, existing_code, table?.name || null);
     await Trigger.update(trigger.id!, {
       configuration: { ...trigger.configuration, code: generated },
     });
@@ -2261,10 +2284,9 @@ router.post(
     await WorkflowStep.deleteForTrigger(trigger.id!);
     const description = (req.body || {}).description;
     await Trigger.update(trigger.id!, { description });
-    const steps = await getState()!.functions.copilot_generate_workflow.run(
-      description,
-      trigger.id
-    );
+    const steps = await (
+      getState()!.functions.copilot_generate_workflow as PluginFunction
+    ).run(description, trigger.id);
     if (steps.length) steps[0].initial_step = true;
     for (const step of steps) {
       step.trigger_id = trigger.id;
@@ -2299,7 +2321,11 @@ router.get(
     const { _page, trigger } = req.query;
     for (const trig of await Trigger.find({})) trNames[trig.id!] = trig.name;
     const q: Record<string, any> = {};
-    const selOpts = { orderBy: "started_at", orderDesc: true, limit: 20 };
+    const selOpts: SelectOptions = {
+      orderBy: "started_at",
+      orderDesc: true,
+      limit: 20,
+    };
     if (_page) selOpts.offset = 20 * (parseInt(_page) - 1);
     let trName = "";
     if (trigger) {
@@ -2311,7 +2337,10 @@ router.get(
 
     const wfTable = mkTable(
       [
-        { label: req.__("Trigger"), key: (run: any) => trNames[run.trigger_id] },
+        {
+          label: req.__("Trigger"),
+          key: (run: any) => trNames[run.trigger_id],
+        },
         {
           label: req.__("Started"),
           key: (run: any) => localeDateTime(run.started_at),

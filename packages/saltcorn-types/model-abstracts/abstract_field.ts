@@ -85,4 +85,5 @@ export type InputType =
   | "textarea"
   | "custom_html"
   | "code"
+  | "time_of_day"
   | "time_of_week";

@@ -305,6 +305,7 @@ export type Action = {
   requireRow?: boolean;
   deprecated?: boolean;
   disableIf?: () => boolean;
+  configFormOptions?: GenObj
 };
 
 export type ViewTemplate = {
