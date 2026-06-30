@@ -344,7 +344,7 @@ const themeCard = (req: any, roleMap: any) => {
   const state_layouts = getState()!.layouts;
   const state_layout_names = Object.keys(state_layouts);
   const layout_by_role = getState()!.getConfig("layout_by_role");
-  const used_layout_by_role = {};
+  const used_layout_by_role: Record<string, any> = {};
   Object.keys(roleMap).forEach((role_id: any) => {
     used_layout_by_role[role_id] =
       layout_by_role[role_id] ||
@@ -464,9 +464,9 @@ const welcome_page = async (req: any) => {
   const triggers = await Trigger.findAllWithTableName();
   const users = (await User.find({}, { orderBy: "id" }))!;
   const roles = await User.get_roles();
-  let roleMap = {};
+  let roleMap: Record<string, any> = {};
   roles.forEach((r: any) => {
-    roleMap[r.id] = r.role;
+    roleMap[r.id!] = r.role;
   });
   return {
     above: [
@@ -607,7 +607,7 @@ const get_config_response = async (role_id: any, res: any, req: any) => {
   }
 
   const wrap = async (contents: any, homeCfg: any, title: any, description: any, no_menu: any, requestFluidLayout: any) => {
-    const resultCollector = {};
+    const resultCollector: Record<string, any> = {};
 
     await Trigger.runTableTriggers(
       "PageLoad",

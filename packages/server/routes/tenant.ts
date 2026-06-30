@@ -587,7 +587,7 @@ router.post(
 const get_tenant_info = async (subdomain: any) => {
   const saneDomain = domain_sanitize(subdomain);
 
-  let info = {};
+  let info: Record<string, any> = {};
 
   // get tenant row
   const ten = await Tenant.findOne({ subdomain: saneDomain });
@@ -688,7 +688,7 @@ router.get(
     const has_cert = tenant_letsencrypt_sites.includes(altname);
 
     // get list of files
-    let files;
+    let files: any;
     await db.runWithTenant(subdomain, async () => {
       files = (await File.find({}))!;
     });

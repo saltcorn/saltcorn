@@ -79,7 +79,7 @@ import {
   supportedVersion,
   isVersionSupported,
 } from "@saltcorn/plugins-loader/stable_versioning";
-import { Req } from "@saltcorn/types/base_types";
+import { Req, Res} from "@saltcorn/types/base_types";
 
 const getOnDoneRedirect = (req: Req, fallback = "/plugins") => {
   if (
@@ -1326,7 +1326,7 @@ router.get(
     }
     const can_update = update_permitted && latest && mod.version !== latest;
     const can_select_version = update_permitted && plugin_db.source === "npm";
-    let pkgjson;
+    let pkgjson: any;
     if (mod.location && fs.existsSync(path.join(mod.location, "package.json")))
       pkgjson = require(path.join(mod.location, "package.json"));
     const domId = `${removeNonWordChars(mod.name)}_store_version_btn`;
@@ -1407,7 +1407,7 @@ router.get(
           : null
       )
     );
-    let cards = [];
+    let cards: any[] = [];
     if (mod.plugin_module.layout)
       cards.push({
         type: "card",

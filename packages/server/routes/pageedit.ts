@@ -195,8 +195,8 @@ const pageBuilderData = async (req: any, context: any) => {
   const triggerActions = Trigger.trigger_actions({
     apiNeverTriggers: true,
   });
-  const actionConfigForms = {};
-  const actionDescriptions = {};
+  const actionConfigForms: Record<string, any> = {};
+  const actionDescriptions: Record<string, any> = {};
   for (const name of actions) {
     const action = stateActions[name];
     if (action && action.configFields) {
@@ -230,7 +230,7 @@ const pageBuilderData = async (req: any, context: any) => {
     builtIns: ["GoBack"],
   });
   const library = (await Library.find({})).filter((l: any) => l.suitableFor("page"));
-  const fixed_state_fields = {};
+  const fixed_state_fields: Record<string, any> = {};
   for (const view of views) {
     fixed_state_fields[view.name] = [];
     const table = Table.findOne(view.table_id || view.exttable_name)!;
@@ -349,7 +349,7 @@ const getRootPageForm = (pages: any, pageGroups: any, roles: any, req: any) => {
   });
   const modernCfg = getState()!.getConfig("home_page_by_role", false);
   for (const role of roles) {
-    form.values[role.role] = modernCfg && modernCfg[role.id];
+    form.values[role.role] = modernCfg && modernCfg[role.id!];
     if (typeof form.values[role.role] !== "string")
       form.values[role.role] = getState()!.getConfig(role.role + "_home", "");
   }
@@ -366,8 +366,8 @@ router.get(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req: Req, res: Res) => {
-    const pageq = {};
-    let filterOnTag;
+    const pageq: Record<string, any> = {};
+    let filterOnTag: any;
 
     if (req.query._tag) {
       const tagEntries = (await TagEntry.find({
@@ -885,7 +885,7 @@ router.post(
       const home_page_by_role =
         getState()!.getConfigCopy("home_page_by_role", {}) || {};
       for (const role of roles) {
-        home_page_by_role[role.id] = valres.success[role.role];
+        home_page_by_role[role.id!] = valres.success[role.role];
       }
       await getState()!.setConfig("home_page_by_role", home_page_by_role);
       req.flash("success", req.__(`Root pages updated`));

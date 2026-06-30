@@ -350,7 +350,7 @@ router.get(
       res.redirect(`/files/serve/${file.path_to_serve}`);
       return;
     }
-    let imgSrc;
+    let imgSrc: any;
     if (file.s3_store) {
       try {
         imgSrc = await s3storage.getObjectUrl(file, false);
@@ -398,7 +398,7 @@ router.get(
     const role = req.user && req.user!.id ? req.user!.role_id : 100;
     const user_id = req.user && req.user!.id;
     const serve_path = path.join(...req.params.serve_path);
-    //let file;
+    //let file: any;
     //if (typeof strictParseInt(id) !== "undefined")
     const file = (await File.findOne(serve_path))!;
 
@@ -636,10 +636,10 @@ router.post(
   setTenant,
   error_catcher(async (req: Req, res: Res) => {
     let { folder, sortBy, sortDesc } = req.body || {};
-    let jsonResp = {};
+    let jsonResp: Record<string, any> = {};
     const min_role_upload = getState()!.getConfig("min_role_upload", 1);
     const role = req.user && req.user!.id ? req.user!.role_id : 100;
-    let file_for_redirect;
+    let file_for_redirect: any;
     if (role > +min_role_upload) {
       if (!req.xhr) req.flash("warning", req.__("Not authorized"));
       else jsonResp = { error: "Not authorized" };

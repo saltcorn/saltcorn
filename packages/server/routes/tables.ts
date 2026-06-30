@@ -809,7 +809,7 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     let id = parseInt(idorname);
-    let table;
+    let table: any;
     if (id) [table] = (await Table.find({ id }))!;
     if (!table) [table] = (await Table.find({ name: idorname }))!;
     if (!table) {
@@ -991,7 +991,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     let id = parseInt(idorname);
-    let table;
+    let table: any;
     if (id) [table] = (await Table.find({ id }))!;
     if (!table) [table] = (await Table.find({ name: idorname }))!;
     if (!table) {
@@ -1037,7 +1037,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     let id = parseInt(idorname);
-    let table;
+    let table: any;
     if (id) [table] = (await Table.find({ id }))!;
     if (!table) [table] = (await Table.find({ name: idorname }))!;
     if (!table) {
@@ -1052,13 +1052,13 @@ router.post(
         ? [req.body.columns]
         : [];
     let imported = 0;
-    const skipped = [];
+    const skipped: any[] = [];
 
     const schema = db.getTenantSchema();
 
     for (const colName of colNames) {
       // Get column info from DB and build a field config
-      let fieldCfg;
+      let fieldCfg: any;
       if (!db.isSQLite) {
         const { rows } = await db.query(
           "SELECT * FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3",
@@ -1149,7 +1149,7 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     let id = parseInt(idorname);
-    let table;
+    let table: any;
     if (id) [table] = (await Table.find({ id }))!;
 
     if (!table) {
@@ -1172,7 +1172,7 @@ router.get(
     const user_can_edit_triggers =
       req.user!.role_id === 1 ||
       getState()!.getConfig("min_role_edit_triggers", 1) >= req.user!.role_id;
-    let nrows;
+    let nrows: any;
     try {
       nrows = await table.countRows({}, { forUser: req.user });
     } catch {
@@ -1185,7 +1185,7 @@ router.get(
     ];
     const triggers = table.id ? Trigger.find({ table_id: table.id }) : [];
     triggers.sort(comparingCaseInsensitive("name"));
-    let fieldCard;
+    let fieldCard: any;
     const primaryKeys = fields.filter((f: any) => f.primary_key);
     const nPrimaryKeys = primaryKeys.length;
     const standardFieldNames = [
@@ -1323,7 +1323,7 @@ router.get(
           ),
       ];
     }
-    let viewCard;
+    let viewCard: any;
     let triggerCard = "";
     if (fields.length > 0) {
       const views = (await View.find(
@@ -1666,7 +1666,7 @@ router.post(
         res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
         delete rest.provider_name;
-        let table;
+        let table: any;
         await db.withTransaction(async () => {
           table = await Table.create(name, rest);
           Trigger.emitEvent("AppChange", `Table ${name}`, req.user, {
@@ -1924,8 +1924,8 @@ router.get(
     "min_role_inspect_tables",
   ]),
   error_catcher(async (req: Req, res: Res) => {
-    const tblq = {};
-    let filterOnTag;
+    const tblq: Record<string, any> = {};
+    let filterOnTag: any;
     if (req.query._tag) {
       const tagEntries = (await TagEntry.find({
         tag_id: +req.query._tag,
@@ -2047,7 +2047,7 @@ router.get(
     }
     const localize = getState()!.getConfig("localize_csv_download");
 
-    const csvOpts = {};
+    const csvOpts: Record<string, any> = {};
     const cast = {
       date: (value: any) => value.toISOString(),
       object: (o: any) => {
@@ -2323,7 +2323,7 @@ router.post(
     form.validate(req.body || {});
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
-      let configuration = {};
+      let configuration: Record<string, any> = {};
       if (type === "Unique") {
         configuration.fields = fields
           .map((f: any) => f.name)
@@ -2461,7 +2461,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const cons = await TableConstraint.findOne({ id });
+    const cons = (await TableConstraint.findOne({ id }))!;
     await db.withTransaction(async () => {
       await cons.delete();
     });
@@ -2472,8 +2472,8 @@ router.post(
   })
 );
 
-const previewCSV = async ({ newPath: any, table: any, req: any, res: any, full }: any) => {
-  let parse_res;
+const previewCSV = async ({ newPath, table, req, res, full }: any) => {
+  let parse_res: any;
   try {
     parse_res = await table.import_csv_file(newPath, {
       recalc_stored: true,
@@ -2950,7 +2950,7 @@ const basicViewForm = async (table: any, req: any) => {
 };
 
 const viewtemplates_with_create_basic_option = () => {
-  const vts = [];
+  const vts: any[] = [];
   Object.entries(getState()!.viewtemplates).forEach(([nm, obj]: any) => {
     if (obj.createBasicView) vts.push(nm);
   });
@@ -3030,7 +3030,7 @@ router.post(
           viewpattern: viewtemplate,
           tablename: table.name,
         }).trim();
-      const all_views_created = {};
+      const all_views_created: Record<string, any> = {};
       const vts = viewtemplates_with_create_basic_option();
       vts.forEach((vt: any) => {
         if (form.values[vt]) all_views_created[vt] = getName(vt);
@@ -3208,7 +3208,7 @@ router.post(
       "default_standard_field_labels",
       {}
     );
-    const new_defaults = {};
+    const new_defaults: Record<string, any> = {};
     await db.withTransaction(async () => {
       for (const def of defs) {
         if (!form.values[def.name]) continue;

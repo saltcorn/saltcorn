@@ -239,7 +239,7 @@ const pageGroupMembers = async (pageGroup: any, req: any) => {
       })
     : await Page.find();
   const pageIdToName = pages.reduce((acc: any, page: any) => {
-    acc[page.id] = page.name;
+    acc[page.id!] = page.name;
     return acc;
   }, {});
   let members = pageGroup.sortedMembers();

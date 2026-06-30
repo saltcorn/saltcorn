@@ -38,8 +38,8 @@ export default router;
  * @returns {Forms}
  */
 const searchConfigForm = (tables: any, views: any, req: any) => {
-  let fields = [];
-  let tbls_noviews = [];
+  let fields: any[] = [];
+  let tbls_noviews: any[] = [];
   for (const t of tables) {
     const ok_views = views.filter(
       (v: any) =>
@@ -218,7 +218,7 @@ const searchForm = () =>
  * @param {object} res
  * @returns {Promise<void>}
  */
-const runSearch = async ({ q: any, _page: any, table }: any, req: any, res: any) => {
+const runSearch = async ({ q, _page, table }: any, req: any, res: any) => {
   const role = (req.user || {}).role_id || 100;
   // globalSearch contains list of pairs: table, view
   const cfg = getState()!.getConfig("globalSearch");
@@ -239,7 +239,7 @@ const runSearch = async ({ q: any, _page: any, table }: any, req: any, res: any)
   );
   const current_page = parseInt(_page) || 1;
   const offset = (current_page - 1) * page_size;
-  let tablesWithResults = [];
+  let tablesWithResults: any[] = [];
   let tablesConfigured = 0;
   for (const [tableName, viewName] of Object.entries(cfg)) {
     if (
@@ -297,7 +297,7 @@ const runSearch = async ({ q: any, _page: any, table }: any, req: any, res: any)
   const mkResultDisplay = () => {
     switch (search_results_decoration) {
       case "Tabs":
-        const tabContents = {};
+        const tabContents: Record<string, any> = {};
         tablesWithResults.forEach((tblRes: any) => {
           tabContents[tblRes.label] = tblRes.contents;
         });

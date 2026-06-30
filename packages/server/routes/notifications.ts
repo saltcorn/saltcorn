@@ -235,11 +235,11 @@ router.post(
     const pushEnabled = _attributes.notify_push;
     const allSubs = getState()!.getConfig("push_notification_subscriptions", {});
     const newSubs = { ...allSubs };
-    if (!pushEnabled && newSubs[req.user!.id]) {
-      delete newSubs[req.user!.id];
+    if (!pushEnabled && newSubs[req.user!.id!]) {
+      delete newSubs[req.user!.id!];
       await getState()!.setConfig("push_notification_subscriptions", newSubs);
-    } else if (pushEnabled && !newSubs[req.user!.id]) {
-      newSubs[req.user!.id] = [];
+    } else if (pushEnabled && !newSubs[req.user!.id!]) {
+      newSubs[req.user!.id!] = [];
       await getState()!.setConfig("push_notification_subscriptions", newSubs);
     }
     res.json({ success: "ok" });
@@ -320,7 +320,7 @@ router.post(
         "push_notification_subscriptions",
         {}
       );
-      const userSubs = allSubs[user.id] || [];
+      const userSubs = allSubs[user.id!] || [];
       const existingSub = userSubs.find(
         (s: any) =>
           s.endpoint === req.body.endpoint &&
@@ -343,7 +343,7 @@ router.post(
         });
         await getState()!.setConfig("push_notification_subscriptions", {
           ...allSubs,
-          [user.id]: userSubs,
+          [user.id!]: userSubs,
         });
         res.json({
           success: "ok",
@@ -367,7 +367,7 @@ router.post(
     }
     const user = req.user!;
     const allSubs = getState()!.getConfig("push_notification_subscriptions", {});
-    let userSubs = allSubs[user.id] || [];
+    let userSubs = allSubs[user.id!] || [];
     const existingSub = userSubs.find(
       (s: any) =>
         s.type === "fcm-push" && s.token === token && s.deviceId === deviceId
@@ -391,7 +391,7 @@ router.post(
       });
       await getState()!.setConfig("push_notification_subscriptions", {
         ...allSubs,
-        [user.id]: userSubs,
+        [user.id!]: userSubs,
       });
       res.json({
         success: "ok",
@@ -417,7 +417,7 @@ router.post(
         "push_notification_subscriptions",
         {}
       );
-      let userSubs = oldSubs[user.id];
+      let userSubs = oldSubs[user.id!];
       if (userSubs) {
         userSubs = userSubs.filter(
           (s: any) =>
@@ -427,7 +427,7 @@ router.post(
         );
         await getState()!.setConfig("push_notification_subscriptions", {
           ...oldSubs,
-          [user.id]: userSubs,
+          [user.id!]: userSubs,
         });
       }
       res.json({
@@ -451,14 +451,14 @@ router.post(
     }
     const user = req.user!;
     const oldSubs = getState()!.getConfig("push_notification_subscriptions", {});
-    let userSubs = oldSubs[user.id];
+    let userSubs = oldSubs[user.id!];
     if (userSubs) {
       userSubs = userSubs.filter(
         (s: any) => s.type !== "fcm-push" || s.deviceId !== deviceId
       );
       await getState()!.setConfig("push_notification_subscriptions", {
         ...oldSubs,
-        [user.id]: userSubs,
+        [user.id!]: userSubs,
       });
       res.json({
         success: "ok",
@@ -486,7 +486,7 @@ router.post(
         "push_notification_subscriptions",
         {}
       );
-      const newSubs = {};
+      const newSubs: Record<string, any> = {};
       for (const k of Object.keys(allSubs)) {
         newSubs[k] = [];
       }

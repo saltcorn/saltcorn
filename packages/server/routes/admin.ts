@@ -3011,14 +3011,14 @@ router.get(
       "saltcorn/capacitor-builder",
       scVersion
     );
-    const xcodeCheckRes = await checkXcodebuild();
+    const xcodeCheckRes = (await checkXcodebuild()) as any;
     const xcodebuildAvailable = xcodeCheckRes.installed;
     const xcodebuildVersion = xcodeCheckRes.version;
     const isMac = process.platform === "darwin";
-    const cocoaPodCheckRes = await checkCocoaPods();
+    const cocoaPodCheckRes = (await checkCocoaPods()) as any;
     const cocoaPodsAvailable = cocoaPodCheckRes.installed;
     const cocoaPodsVersion = cocoaPodCheckRes.version;
-    const iosRuntimeCheckRes = await checkIosRuntime();
+    const iosRuntimeCheckRes = (await checkIosRuntime()) as any;
     const iosRuntimeAvailable = iosRuntimeCheckRes.available;
     const iosRuntimeVersion = iosRuntimeCheckRes.version;
     const layout = getState()!.getLayout(req.user);
@@ -4593,7 +4593,7 @@ router.post(
         cwd: ".",
       }
     );
-    const childOutputs = [];
+    const childOutputs: any[] = [];
     child.stdout.on("data", (data: any) => {
       const outMsg = data.toString();
       getState()!.log(5, outMsg);
@@ -4709,7 +4709,7 @@ router.post(
       2,
       `starting mobile build: ${JSON.stringify(req.body || {})}`
     );
-    const msgs = [];
+    const msgs: any[] = [];
     let mode = "full";
     let {
       entryPoint,
@@ -4946,7 +4946,7 @@ router.post(
       stdio: ["ignore", "pipe", "pipe"],
       cwd: ".",
     });
-    const childOutputs = [];
+    const childOutputs: any[] = [];
     child.stdout.on("data", (data: any) => {
       const outMsg = data.toString();
       getState()!.log(5, outMsg);
@@ -5515,7 +5515,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
     } else if (req.query.table) {
       const table = Table.findOne(req.query.table)!;
       if (table) {
-        const tsFields = [];
+        const tsFields: any[] = [];
         const addTsFields = (table: any, path: any, nrecurse: any) => {
           table.fields.forEach((f: any) => {
             tsFields.push(`${path}${f.name}: ${scTypeToTsType(f.type, f)};`);

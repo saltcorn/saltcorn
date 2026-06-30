@@ -62,8 +62,8 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     let orderBy = "name";
     if (req.query._sortby === "viewtemplate") orderBy = "viewtemplate";
-    const viewq = {};
-    let filterOnTag;
+    const viewq: Record<string, any> = {};
+    let filterOnTag: any;
     if (req.query._tag) {
       const tagEntries = (await TagEntry.find({
         tag_id: +req.query._tag,
@@ -741,7 +741,7 @@ router.get(
     (view.configuration?.columns || []).forEach((c: any) => {
       c._columndef = JSON.stringify(c);
     });
-    let table;
+    let table: any;
     if (view.table_id) table = Table.findOne({ id: view.table_id })!;
     if (view.exttable_name) table = Table.findOne({ name: view.exttable_name })!;
     const configFlow = await view.get_config_flow(req);
@@ -778,7 +778,7 @@ router.post(
     const view = (await View.findOne({ name }))!;
     const configFlow = await view.get_config_flow(req);
     configFlow.onStepSuccess = async (step: any, context: any) => {
-      let newcfg;
+      let newcfg: any;
       if (step.contextField)
         newcfg = {
           ...view.configuration,
@@ -796,7 +796,7 @@ router.post(
     };
     const wfres = await configFlow.run(req.body || {}, req);
 
-    let table;
+    let table: any;
     if (view.table_id) table = Table.findOne({ id: view.table_id })!;
     if (view.exttable_name) table = Table.findOne({ name: view.exttable_name })!;
     respondWorkflow(view, configFlow, wfres, req, res, table);
@@ -962,7 +962,7 @@ router.post(
       const step = await configFlow.singleStepForm(req.body || {}, req);
       if (step?.renderForm) {
         if (!step.renderForm.hasErrors) {
-          let newcfg;
+          let newcfg: any;
           if (step.contextField)
             newcfg = {
               ...view.configuration,

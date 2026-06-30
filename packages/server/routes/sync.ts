@@ -36,7 +36,7 @@ router.get(
 const applyOwnershipFormula = async (rows: any, table: any, user: any) => {
   if (!rows.length) return rows;
   const pkName = table.pk_name;
-  const joinFields = {};
+  const joinFields: Record<string, any> = {};
   add_free_variables_to_joinfields(
     freeVariables(table.ownership_formula),
     joinFields,
@@ -204,9 +204,9 @@ router.post(
     try {
       const result = await db.withTransaction(async () => {
         let rowLimit = 1000;
-        const result = {};
+        const result: Record<string, any> = {};
 
-        for (const [tblName, syncInfo] of Object.entries(syncInfos)) {
+        for (const [tblName, syncInfo] of (Object.entries(syncInfos) as [string, any][])) {
           const table = Table.findOne({ name: tblName })!;
           if (!table) throw new Error(`The table '${tblName}' does not exists`);
           if (!table.has_sync_info)
@@ -290,7 +290,7 @@ router.post(
         const result = {
           deletes: {},
         };
-        for (const [tblName, syncInfo] of Object.entries(syncInfos)) {
+        for (const [tblName, syncInfo] of (Object.entries(syncInfos) as [string, any][])) {
           const table = Table.findOne({ name: tblName })!;
           if (!table) throw new Error(`The table '${tblName}' does not exists`);
           if (!table.has_sync_info)
@@ -514,7 +514,7 @@ router.post(
     const user = req.user!;
     const state = getState()!;
     const allSubs = state.getConfig("push_sync_subscriptions", {});
-    let userSubs = allSubs[user.id] || [];
+    let userSubs = allSubs[user.id!] || [];
     const existingSub = userSubs.find(
       (s: any) => s.token === token && s.deviceId === deviceId
     )!;
@@ -537,7 +537,7 @@ router.post(
       });
       await getState()!.setConfig("push_sync_subscriptions", {
         ...allSubs,
-        [user.id]: userSubs,
+        [user.id!]: userSubs,
       });
       res.json({
         success: "ok",
@@ -562,7 +562,7 @@ router.post(
     const user = req.user!;
     const state = getState()!;
     const allSubs = state.getConfig("push_sync_subscriptions", {});
-    let userSubs = allSubs[user.id] || [];
+    let userSubs = allSubs[user.id!] || [];
     const newUserSubs = userSubs.filter((s: any) => s.deviceId !== deviceId);
     if (newUserSubs.length === userSubs.length) {
       res.json({
@@ -572,7 +572,7 @@ router.post(
     } else {
       await getState()!.setConfig("push_sync_subscriptions", {
         ...allSubs,
-        [user.id]: newUserSubs,
+        [user.id!]: newUserSubs,
       });
       res.json({
         success: "ok",

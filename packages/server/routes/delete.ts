@@ -42,7 +42,7 @@ router.post(
     if (!table) throw new Error(`Table ${tableName} not found`);
     const role = req.user && req.user!.id ? req.user!.role_id : 100;
     const where = { [table.pk_name]: id };
-    const resultCollector = {};
+    const resultCollector: Record<string, any> = {};
     let success = false;
     try {
       if (role <= table.min_role_write) {
@@ -57,7 +57,7 @@ router.post(
         (table.ownership_field_id || table.ownership_formula) &&
         req.user
       ) {
-        const joinFields = {};
+        const joinFields: Record<string, any> = {};
         if (table.ownership_formula) {
           const freeVars = freeVariables(table.ownership_formula);
           add_free_variables_to_joinfields(freeVars, joinFields, table.fields);
@@ -115,10 +115,10 @@ router.post(
         (table.ownership_field_id || table.ownership_formula) &&
         req.user
       ) {
-        const row = await table.getRow(where, {
+        const row = (await table.getRow(where, {
           forUser: req.user,
           forPublic: !req.user,
-        });
+        }))!;
         if (row && table.is_owner(req.user, row))
           await table.deleteRows(where, req.user || { role_id: 100 });
         else req.flash("error", req.__("Not authorized"));

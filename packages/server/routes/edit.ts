@@ -34,10 +34,10 @@ router.post(
     // todo check that works after where change
     const table = Table.findOne({ name: tableName })!;
 
-    const row = await table.getRow(
+    const row = (await table.getRow(
       { [table.pk_name]: id },
       { forUser: req.user, forPublic: !req.user }
-    );
+    ))!;
     if (row)
       await table.updateRow(
         { [field_name]: !row[field_name] },

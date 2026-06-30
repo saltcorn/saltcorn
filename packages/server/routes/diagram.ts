@@ -35,7 +35,7 @@ const buildGlobalVars = (tags: any, roles: any) => {
 
 const findEntryPages = async () => {
   const modernCfg = getState()!.getConfig("home_page_by_role");
-  let pages;
+  let pages: any;
   if (modernCfg) {
     pages = Object.values(modernCfg)
       .filter((val: any) => val)

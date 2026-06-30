@@ -136,8 +136,8 @@ const typeToGridType = (t: any, field: any) => {
     jsgField.editorParams = { values };
   } else if (t === "Key" || t === "File") {
     jsgField.editor = "list";
-    const values = [];
-    const valuesObj = {};
+    const values: any[] = [];
+    const valuesObj: Record<string, any> = {};
     field.options
       .sort(comparingCaseInsensitive("label"))
       .forEach(({ label, value }: any) => {
@@ -501,7 +501,7 @@ router.get(
                 if (ps !== window.tabulator_table.getPageSize())
                   window.tabulator_table.setPageSize(ps);
               });
-              let _tab_resize_timer;
+              let _tab_resize_timer: any;
               window.addEventListener('resize', function() {
                 clearTimeout(_tab_resize_timer);
                 _tab_resize_timer = setTimeout(function() {
@@ -522,7 +522,7 @@ router.get(
               }
 
               window.tabulator_table.on("cellEdited", function(cell){
-                const row = cell.getRow().getData()
+                const row = cell.getRow()!.getData()
                 const fieldName = cell.getColumn().getField()
                 let ident = encodeURIComponent(row.${pkNm}||"");
                 if(fieldName === "${pkNm}")

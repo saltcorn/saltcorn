@@ -57,7 +57,7 @@ export default router;
  */
 const limitFields = (fields: any) => (r: any) => {
   if (fields) {
-    let res = {};
+    let res: Record<string, any> = {};
 
     fields.split(",").forEach((f: any) => {
       res[f] = r[f];
@@ -259,7 +259,7 @@ router.post(
       { session: false },
       async function (err: any, user: any, info: any) {
         const authUser = req.user || user;
-        let jsonResp = {};
+        let jsonResp: Record<string, any> = {};
         const min_role_upload = getState()!.getConfig("min_role_upload", 1);
         const role = authUser && authUser.id ? authUser.role_id : 100;
         if (role > +min_role_upload) {
@@ -335,7 +335,7 @@ router.get(
             res.status(404).json({ error: req.__("Not found") });
             return;
           }
-          let dvs;
+          let dvs: any;
           if (
             field.is_fkey ||
             (field.type.name === "String" && field.attributes?.options)
@@ -396,7 +396,7 @@ router.get(
     } = req.query;
 
     let req_query = req_query0;
-    let tabulator_size, tabulator_page, tabulator_sort, tabulator_dir;
+    let tabulator_size: any, tabulator_page: any, tabulator_sort: any, tabulator_dir: any;
     if (tabulator_pagination_format) {
       const { page, size, sort, ...rq } = req_query0;
       req_query = rq;
@@ -446,7 +446,7 @@ router.get(
       { session: false },
       async function (err: any, user: any, info: any) {
         if (potentiallyAccessAllowedRead(req, user, table, true)) {
-          let rows;
+          let rows: any;
           if (versioncount === "on") {
             const joinOpts = {
               forUser: req.user || user || { role_id: 100 },
@@ -477,7 +477,7 @@ router.get(
               prefix: "a.",
               user: req.user || user,
             });
-            const joinFields = {};
+            const joinFields: Record<string, any> = {};
             const derefs = Array.isArray(dereference)
               ? dereference
               : !dereference
@@ -663,7 +663,7 @@ router.all(
       async function (err: any, user: any, info: any) {
         if (accessAllowed(req, user, trigger)) {
           try {
-            let resp;
+            let resp: any;
             const row = req.method === "GET" ? req.query : req.body || {};
             if (trigger.action === "Workflow") {
               resp = await trigger.runWithoutRow({

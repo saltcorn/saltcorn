@@ -53,8 +53,8 @@ const menuForm = async (req: any) => {
   const roles = await User.get_roles();
   const tables = await Table.find_with_external({});
   const dynTableOptions = tables.map((t: any) => t.name);
-  const dynOrderFieldOptions = {},
-    dynSectionFieldOptions = {};
+  const dynOrderFieldOptions: Record<string, any> = {},
+    dynSectionFieldOptions: Record<string, any> = {};
   for (const table of tables) {
     dynOrderFieldOptions[table.name] = [""];
     dynSectionFieldOptions[table.name] = [""];
@@ -542,8 +542,8 @@ const menuForm = async (req: any) => {
 // todo move to file the content of menuEditorScript
 const menuEditorScript = (menu_items: any) => `
   var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
-  let lastState;
-  let editor;  
+  let lastState: any;
+  let editor: any;  
   function ajax_save_menu(skip_check) {
     const s = editor.getString()    
     if(s===lastState && !skip_check) return;
@@ -624,7 +624,7 @@ const menuEditorScript = (menu_items: any) => `
     if (parts.length === 0 || parts.some(function(p) { return p === ""; })) {
       return "Invalid format. Use Modifier+Key, e.g. Alt+k";
     }
-    const mods = [];
+    const mods: any[] = [];
     let key = null;
     for (var i = 0; i < parts.length; i++) {
       const p = parts[i];
@@ -782,7 +782,7 @@ router.post(
     const role = (req.user || {}).role_id || 100;
     const state = getState()!;
     const menu_items = state.getConfig("menu_items");
-    let menu_item;
+    let menu_item: any;
     const search = (items: any) =>
       items
         .filter((item: any) => role <= +item.min_role)

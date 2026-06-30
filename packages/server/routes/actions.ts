@@ -99,7 +99,7 @@ const serializeWorkflowStep = (s: any, opts: any = {}) => ({
 });
 
 const buildWorkflowActionExplainers = async (trigger: any) => {
-  const actionExplainers = {};
+  const actionExplainers: Record<string, any> = {};
   const stateActions = getState()!.actions;
   for (const [name, action] of Object.entries(stateActions)) {
     if (action.disableInWorkflow) continue;
@@ -186,7 +186,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     let triggers = await Trigger.findAllWithTableName();
-    let filterOnTag;
+    let filterOnTag: any;
 
     if (req.query._tag) {
       const tagEntries = (await TagEntry.find({
@@ -253,8 +253,8 @@ const triggerForm = async (req: any, trigger: any) => {
   }));
   const actions = Trigger.abbreviated_actions;
   const tables = (await Table.find({}))!;
-  let id;
-  let form_action;
+  let id: any;
+  let form_action: any;
   if (typeof trigger !== "undefined") {
     id = trigger.id;
     form_action = `/actions/edit/${id}`;
@@ -274,7 +274,7 @@ const triggerForm = async (req: any, trigger: any) => {
   });
   const table_triggers = ["Insert", "Update", "Delete", "Validate"];
   const additional_triggers_with_onlyif = ["Login", "PageLoad"];
-  const action_options = {};
+  const action_options: Record<string, any> = {};
   const actionsNotRequiringRow = Trigger.action_options({
     notRequireRow: true,
     workflow: true,
@@ -564,7 +564,7 @@ router.post(
         },
       });
     } else {
-      let id;
+      let id: any;
       if (form.values.id) {
         id = form.values.id;
         await Trigger.update(id, form.values);
@@ -738,7 +738,7 @@ router.post(
     const previouslyInitial = allSteps.find(
       (s: any) => s.initial_step && s.id !== step.id
     )!;
-    const updateRow = {};
+    const updateRow: Record<string, any> = {};
     if (typeof next_step !== "undefined")
       updateRow.next_step = next_step || null;
     if (initial_step !== undefined)
@@ -926,14 +926,14 @@ router.post(
 
 const getWorkflowStepForm = async (trigger: any, req: any, step_id: any, after_step: any, before_step: any, after_step_for: any) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
-  const actionExplainers = {};
+  const actionExplainers: Record<string, any> = {};
 
   let stateActions = getState()!.actions;
   const stateActionKeys = Object.entries(stateActions)
     .filter(([k, v]: any) => !v.disableInWorkflow)
     .map(([k, v]: any) => k);
 
-  const actionConfigFields = [];
+  const actionConfigFields: any[] = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
 
@@ -946,7 +946,7 @@ const getWorkflowStepForm = async (trigger: any, req: any, step_id: any, after_s
       });
 
       for (const field of cfgFields) {
-        let cfgFld;
+        let cfgFld: any;
         if (field.isRepeat)
           cfgFld = new FieldRepeat({
             ...field,
@@ -1113,7 +1113,7 @@ const getMultiStepForm = async (req: any, id: any, table: any) => {
   triggers.forEach((tr: any) => {
     actions.push(tr.name);
   });
-  const actionConfigFields = [];
+  const actionConfigFields: any[] = [];
   for (const [name, action] of Object.entries(stateActions)) {
     if (!stateActionKeys.includes(name)) continue;
     const cfgFields = await getActionConfigFields(action, table, { req });
@@ -1177,7 +1177,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
-    let trigger;
+    let trigger: any;
     let id = parseInt(idorname);
     if (id) trigger = (await Trigger.findOne({ id }))!;
 
@@ -1666,7 +1666,7 @@ router.post(
     const table = trigger.table_id
       ? Table.findOne({ id: trigger.table_id })
       : null;
-    let form;
+    let form: any;
     if (trigger.action === "Multi-step action") {
       form = await getMultiStepForm(req, id, table);
     } else if (trigger.action === "Workflow") {
@@ -1766,13 +1766,13 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const trigger = (await Trigger.findOne({ id }))!;
-    const output = [];
+    const output: any[] = [];
     const fakeConsole = {
-      log(...s) {
+      log(...s: any[]) {
         console.log(...s);
         output.push(div(code(pre(text(s.map(ppVal).join(" "))))));
       },
-      error(...s) {
+      error(...s: any[]) {
         output.push(
           div(
             code(
@@ -1783,13 +1783,13 @@ router.get(
         );
       },
     };
-    let table, row;
+    let table: any, row: any;
     if (trigger.table_id) {
       table = Table.findOne({ id: trigger.table_id })!;
-      row = await table.getRow(
+      row = (await table.getRow(
         {},
         { orderBy: "RANDOM()", forUser: req.user, forPublic: !req.user }
-      );
+      ))!;
     }
 
     const runres = await db.withTransaction(
@@ -2181,7 +2181,7 @@ router.post(
       if (existingStep && existingStep.name !== step.name) {
         const stepsForTrigger = (await WorkflowStep.find({ trigger_id }))!;
         for (const s of stepsForTrigger) {
-          const update = {};
+          const update: Record<string, any> = {};
           if (s.next_step === existingStep.name) update.next_step = step.name;
           if (
             s.action_name === "ForLoop" &&
@@ -2293,10 +2293,10 @@ router.get(
   "/runs",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
-    const trNames = {};
+    const trNames: Record<string, any> = {};
     const { _page, trigger } = req.query;
-    for (const trig of await Trigger.find({})) trNames[trig.id] = trig.name;
-    const q = {};
+    for (const trig of await Trigger.find({})) trNames[trig.id!] = trig.name;
+    const q: Record<string, any> = {};
     const selOpts = { orderBy: "started_at", orderDesc: true, limit: 20 };
     if (_page) selOpts.offset = 20 * (parseInt(_page) - 1);
     let trName = "";
@@ -2563,7 +2563,7 @@ const workflowRunPromiseHandler = (promise: any, run: any, req: any) => {
         ...retDirs,
         page_load_tag: req.headers["page-load-tag"],
       };
-      const userIds = req.user ? [req.user!.id] : null;
+      const userIds = req.user ? [req.user!.id!] : null;
       getState()!.emitDynamicUpdate(db.getTenantSchema(), emitData, userIds);
       if (
         !emitData.resume_workflow &&
@@ -2586,7 +2586,7 @@ const workflowRunPromiseHandler = (promise: any, run: any, req: any) => {
           error: e.message,
           page_load_tag: req.headers["page-load-tag"],
         },
-        req.user ? [req.user!.id] : null
+        req.user ? [req.user!.id!] : null
       );
     });
 };

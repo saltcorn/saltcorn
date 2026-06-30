@@ -82,7 +82,7 @@ const stripLeadingSlash = (path = "") =>
 const req__ = (req: any, s: any) => (req && req.__(s)) || s;
 
 const getExtendedEntites = async (req: any, { includeAllModules = false }: any = {}) => {
-  const entities = [];
+  const entities: any[] = [];
   const can_reset = getState()!.getConfig("smtp_host", "") !== "";
 
   const users = (await User.find({}, { cached: true }))!;
@@ -121,7 +121,7 @@ const getExtendedEntites = async (req: any, { includeAllModules = false }: any =
     })
   );
   const availablePackSummaries = new Map();
-  let storeModules = [];
+  let storeModules: any[] = [];
   const storeModuleSummaries = new Map();
   try {
     storeModules = await Plugin.store_plugins_available();
@@ -405,7 +405,7 @@ const getAllEntities = async () => {
   const pages = (await Page.find({}, { cached: true }))!;
   const triggers = await Trigger.findAllWithTableName();
 
-  const entities = [];
+  const entities: any[] = [];
 
   // Add tables
   tables.forEach((t: any) => {
@@ -522,7 +522,7 @@ const entityTypeBadge = (type: any) => {
 
 // Helper: build details column content based on entity type
 const detailsContent = (entity: any, req: any, roles: any) => {
-  const bits = [];
+  const bits: any[] = [];
   if (entity.type === "table") {
     if (entity.metadata.external)
       bits.push(span({ class: "badge bg-info me-1" }, req.__("External")));
@@ -682,7 +682,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_views"),
   error_catcher(async (req: Req, res: Res) => {
     const entities = await getAllEntities();
-    const deepSearchIndex = {};
+    const deepSearchIndex: Record<string, any> = {};
     const addDeepSearch = (key: any, pack: any) => {
       if (!pack) return;
       try {
@@ -760,8 +760,8 @@ router.get(
       return "";
     };
 
-    const tagsById = {};
-    tags.forEach((t: any) => (tagsById[t.id] = t));
+    const tagsById: Record<string, any> = {};
+    tags.forEach((t: any) => (tagsById[t.id!] = t));
 
     const tagsByEntityKey = new Map();
     const addTag = (key: any, tag_id: any) => {
@@ -1497,8 +1497,8 @@ router.post(
     if (!items.length)
       return res.status(400).json({ error: "No items selected" });
 
-    const deletedKeys = [];
-    const errors = [];
+    const deletedKeys: any[] = [];
+    const errors: any[] = [];
     const installedPackNames = new Set(
       getState()!.getConfig("installed_packs", []) || []
     );
@@ -1648,8 +1648,8 @@ router.post(
     const role = (await Role.findOne({ id: roleIdNum }))!;
     if (!role) return res.status(404).json({ error: "Role not found" });
 
-    const errors = [];
-    const updatedKeys = [];
+    const errors: any[] = [];
+    const updatedKeys: any[] = [];
 
     for (const item of items) {
       const type = item?.type;
@@ -1662,7 +1662,7 @@ router.post(
             (id !== null ? Table.findOne({ id }) : null) ||
             Table.findOne({ name: item?.name });
           if (!table) throw new Error("Table not found");
-          const update = {};
+          const update: Record<string, any> = {};
           if (mode === "read") update.min_role_read = roleIdNum;
           if (mode === "write") update.min_role_write = roleIdNum;
           if (!Object.keys(update).length)

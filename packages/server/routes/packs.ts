@@ -19,7 +19,7 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import { getState } from "@saltcorn/data/db/state";
 import db from "@saltcorn/data/db/index";
-import { instanceOfPack } from "@saltcorn/types/base_types";
+import { instanceOfPack, Req, Res} from "@saltcorn/types/base_types";
 
 import _am_pack from "@saltcorn/admin-models/models/pack";
 const {
@@ -403,7 +403,7 @@ router.post(
   setTenant, // TODO why is this needed?????
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    var pack, error;
+    var pack: any, error: any;
     const source = (req.body || {}).source || "from_text";
     try {
       switch (source) {

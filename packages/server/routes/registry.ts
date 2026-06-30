@@ -103,7 +103,7 @@ router.get(
       }))
       .filter((c: any) => isRoot || !c.root_only);
 
-    let tables, views, pages, triggers, configs, plugins;
+    let tables: any, views: any, pages: any, triggers: any, configs: any, plugins: any;
     if (q) {
       const qlower = q.toLowerCase();
       const includesQ = (s: string) => s.toLowerCase().includes(qlower);

@@ -63,8 +63,8 @@ const tablesList = async (tables: any, req: any, { tagId, domId, showList, filte
   const tag_entries = (await TagEntry.find({
     not: { table_id: null },
   }))!;
-  const tagsById = {};
-  tags.forEach((t: any) => (tagsById[t.id] = t));
+  const tagsById: Record<string, any> = {};
+  tags.forEach((t: any) => (tagsById[t.id!] = t));
   const user_can_edit_tables =
     req.user!.role_id === 1 ||
     getState()!.getConfig("min_role_edit_tables", 1) >= req.user!.role_id;
@@ -343,8 +343,8 @@ const viewsList = async (views: any, req: any, { tagId, domId, showList, on_done
   const tag_entries = (await TagEntry.find({
     not: { view_id: null },
   }))!;
-  const tagsById = {};
-  tags.forEach((t: any) => (tagsById[t.id] = t));
+  const tagsById: Record<string, any> = {};
+  tags.forEach((t: any) => (tagsById[t.id!] = t));
   const user_can_inspect_tables =
     req.user!.role_id === 1 ||
     getState()!.getConfig("min_role_edit_tables", 1) >= req.user!.role_id ||
@@ -583,8 +583,8 @@ const getPageList = async (rows: any, roles: any, req: any, { tagId, domId, show
   const tag_entries = (await TagEntry.find({
     not: { page_id: null },
   }))!;
-  const tagsById = {};
-  tags.forEach((t: any) => (tagsById[t.id] = t));
+  const tagsById: Record<string, any> = {};
+  tags.forEach((t: any) => (tagsById[t.id!] = t));
 
   const tagBadges = (page: any) => {
     const myTags = tag_entries.filter((te: any) => te.page_id === page.id);
@@ -755,8 +755,8 @@ const getTriggerList = async (triggers: any, req: any, { tagId, domId, showList,
   const tag_entries = (await TagEntry.find({
     not: { trigger_id: null },
   }))!;
-  const tagsById = {};
-  tags.forEach((t: any) => (tagsById[t.id] = t));
+  const tagsById: Record<string, any> = {};
+  tags.forEach((t: any) => (tagsById[t.id!] = t));
   const user_can_inspect_tables =
     req.user!.role_id === 1 ||
     getState()!.getConfig("min_role_edit_tables", 1) >= req.user!.role_id ||
