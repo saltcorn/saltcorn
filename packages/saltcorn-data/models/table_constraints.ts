@@ -17,13 +17,17 @@ import db from "../db/index.js";
 import type Field from "./field.js";
 import * as _expr from "./expression.js";
 import { FieldLike } from "@saltcorn/types/base_types";
-import { add_free_variables_to_joinfields, freeVariables, jsexprToSQL } from "./expression.js";
+import {
+  add_free_variables_to_joinfields,
+  freeVariables,
+  jsexprToSQL,
+} from "./expression.js";
 /**
  * TableConstraint class
  * @category saltcorn-data
  */
 class TableConstraint {
-  table_id?: number;
+  table_id: number;
   type: TypeOption;
   id?: number | null;
   configuration: any;
@@ -34,9 +38,9 @@ class TableConstraint {
   constructor(o: TableConstraintCfg) {
     if (!o.table_id && !o.table)
       throw new Error(`Please specify ether 'table._id' or 'table'.`);
-    if (o.table_id) this.table_id = +o.table_id;
-    if (o.table) {
-      this.table_id = o.table.id;
+    else if (o.table_id) this.table_id = +o.table_id;
+    else {
+      this.table_id = o.table!.id!;
     }
     this.type = o.type;
     this.id = !o.id ? null : +o.id;

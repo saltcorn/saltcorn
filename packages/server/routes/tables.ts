@@ -84,7 +84,9 @@ import path from "path";
 import Tag from "@saltcorn/data/models/tag";
 import { initial_config_all_fields } from "@saltcorn/data/plugin-helper";
 import { save_menu_items } from "@saltcorn/data/models/config";
-import { Req, Res } from "@saltcorn/types/base_types";
+import { FieldLike, Req, Res } from "@saltcorn/types/base_types";
+import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
+import { instanceOfErrorMsg } from "@saltcorn/types/common_types";
 /**
  * @type {object}
  * @const
@@ -241,7 +243,7 @@ const tableForm = async (table: any, req: any) => {
                   },
                 ]),
           ]),
-    ],
+    ] as FieldLike[],
   });
   if (table) {
     if (table.id) form.hidden("id");
@@ -303,7 +305,7 @@ router.get(
                       },
                     ]
                   : []),
-              ],
+              ] as FieldLike[],
             }),
             req.csrfToken()
           ),
@@ -491,7 +493,7 @@ router.post(
       await req.files.file.mv(newPath);
       const parse_res = await Table.create_from_csv(name, newPath);
       await fs.unlink(newPath);
-      if (parse_res.error) {
+      if (instanceOfErrorMsg(parse_res)) {
         req.flash("error", parse_res.error);
         res.redirect(`/table/create-from-csv`);
       } else {
@@ -732,7 +734,7 @@ router.get(
  * @param {string} lbl
  * @returns {string}
  */
-const badge = (col: any, lbl: any, title: any) =>
+const badge = (col: string, lbl: string, title?: any) =>
   `<span ${
     title ? `title="${title}" ` : ""
   }class="badge bg-${col}">${lbl}</span>&nbsp;`;
@@ -1297,7 +1299,9 @@ router.get(
         tableHtml,
         inbound_refs.length > 0
           ? req.__("Inbound keys: ") +
-            inbound_refs.map((tnm: any) => link(`/table/${tnm}`, tnm)).join(", ") +
+            inbound_refs
+              .map((tnm: any) => link(`/table/${tnm}`, tnm))
+              .join(", ") +
             "<br>"
           : "",
         !table.external &&
@@ -1324,7 +1328,7 @@ router.get(
       ];
     }
     let viewCard: any;
-    let triggerCard = "";
+    let triggerCard: any = "";
     if (fields.length > 0) {
       const views = (await View.find(
         table.id ? { table_id: table.id } : { exttable_name: table.name }
@@ -1931,7 +1935,9 @@ router.get(
         tag_id: +req.query._tag,
         not: { table_id: null },
       }))!;
-      tblq.id = { in: tagEntries.map((te: any) => te.table_id).filter(Boolean) };
+      tblq.id = {
+        in: tagEntries.map((te: any) => te.table_id).filter(Boolean),
+      };
       filterOnTag = (await Tag.findOne({ id: +req.query._tag }))!;
     }
 
@@ -1944,7 +1950,7 @@ router.get(
       nocase: true,
     });
     const roles = await User.get_roles();
-    const getRole = (rid: any) => roles.find((r: any) => r.id === rid).role;
+    const getRole = (rid: any) => roles.find((r: any) => r.id === rid)!.role;
     const mainCard = await tablesList(rows, req, { filterOnTag });
     const createCard = div(
       user_can_edit_tables &&
@@ -2030,9 +2036,11 @@ router.get(
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Pragma", "no-cache");
-    const columns = table.fields.sort((a: any, b: any) => a.id - b.id).map((f: any) => f.name);
+    const columns = table.fields
+      .sort((a: any, b: any) => a.id - b.id)
+      .map((f: any) => f.name);
     for (const field of table.fields) {
-      if (field.type?.name === "JSON" && field.attributes?.hasSchema) {
+      if (field.type_name === "JSON" && field.attributes?.hasSchema) {
         (field.attributes?.schema || []).forEach((s: any) => {
           columns.push(`${field.name}.${s.key}`);
         });
@@ -2164,7 +2172,12 @@ router.get(
  * @param {object[]} fields
  * @returns {Form}
  */
-const constraintForm = (req: any, table: any, fields: any, type: any) => {
+const constraintForm = (
+  req: Req,
+  table: Table,
+  fields: Field[],
+  type: "Formula" | "Unique" | "Index"
+): Form => {
   switch (type) {
     case "Formula":
       return new Form({
@@ -2225,8 +2238,13 @@ const constraintForm = (req: any, table: any, fields: any, type: any) => {
         ],
       });
     case "Index":
-      const fieldopts = fields.map((f: any) => ({ label: f.label, name: f.name }));
-      const hasIncludeFts = fields.filter((f: any) => f.attributes?.include_fts);
+      const fieldopts = fields.map((f: any) => ({
+        label: f.label,
+        name: f.name,
+      }));
+      const hasIncludeFts = fields.filter(
+        (f: any) => f.attributes?.include_fts
+      );
       if (!db.isSQLite)
         fieldopts.push({ label: "Full-text search", name: "_fts" });
       return new Form({
@@ -2466,7 +2484,7 @@ router.post(
       await cons.delete();
     });
     //set updated_at
-    await Table.findOne(cons.table_id).update({});
+    await Table.findOne(cons.table_id)!.update({});
     await getState()!.refresh_tables();
     res.redirect(`/table/constraints/${cons.table_id}`);
   })
@@ -2681,7 +2699,7 @@ router.post(
             Notification.create({
               title: "CSV import complete",
               body: parse_res.error || parse_res.success,
-              user_id: req.user!.id,
+              user_id: req.user!.id!,
             });
           })
           .catch((e: any) => {
@@ -2689,13 +2707,13 @@ router.post(
             Notification.create({
               title: "Error importing CSV file",
               body: e.message,
-              user_id: req.user!.id,
+              user_id: req.user!.id!,
             });
           });
         req.flash("success", req.__("Processing CSV file"));
       } else {
         const parse_res = await promise;
-        if (parse_res.error) req.flash("error", parse_res.error);
+        if (instanceOfErrorMsg(parse_res)) req.flash("error", parse_res.error);
         else req.flash("success", parse_res.success);
       }
     } catch (e: any) {
@@ -2764,7 +2782,13 @@ router.post(
   })
 );
 
-const respondWorkflow = (table: any, wf: any, wfres: any, req: any, res: any) => {
+const respondWorkflow = (
+  table: any,
+  wf: any,
+  wfres: any,
+  req: any,
+  res: any
+) => {
   const wrap = (contents: any, noCard: any, previewURL: any) => ({
     above: [
       {
@@ -3042,11 +3066,11 @@ router.post(
         const name = getName(viewtemplate);
         const template_view = form.values.template_table
           ? View.findOne({
-              table_id: Table.findOne(form.values.template_table).id,
+              table_id: Table.findOne(form.values.template_table)!.id,
               viewtemplate,
             })
           : undefined;
-        const configuration = await vtObj.createBasicView({
+        const configuration = await vtObj.createBasicView?.({
           table,
           viewname: name,
           all_views_created,
@@ -3125,7 +3149,11 @@ const standardFieldDefs = (req: any) => [
   },
 ];
 
-const standardFieldForm = (table: any, req: any, existingNames: any = new Set()) => {
+const standardFieldForm = (
+  table: any,
+  req: any,
+  existingNames: any = new Set()
+) => {
   const defs = standardFieldDefs(req).filter(
     (def: any) => !existingNames.has(def.name)
   );

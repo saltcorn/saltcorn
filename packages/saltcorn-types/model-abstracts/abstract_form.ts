@@ -3,7 +3,7 @@ import type { AbstractField, AbstractFieldRepeat } from "./abstract_field.js";
 
 export type AdditionalButton = {
   label: string;
-  id: string;
+  id?: string;
   class: string;
   onclick?: string;
 };

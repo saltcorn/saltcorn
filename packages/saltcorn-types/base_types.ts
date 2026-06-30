@@ -59,7 +59,7 @@ type FieldLikeWithSelectInputType = {
   options: Array<string | { label: string; value: string }>;
 } & FieldLikeBasics;
 type FieldLikeWithInputType = {
-  input_type: string;
+  input_type: InputType;
 } & FieldLikeBasics;
 type FieldLikeWithType = {
   type: string | Type;
@@ -417,6 +417,7 @@ export type ViewTemplate = {
   queries?: (configuration?: any, req?: any) => Record<string, any>;
   connectedObjects?: (configuration?: any) => Promise<ConnectedObjects>;
   noAutoTest?: boolean;
+  createBasicView?: Function
 };
 
 export type RouteAction = (
