@@ -200,16 +200,16 @@ const get_store_items = async (req: Req) => {
     "tenants_install_git",
     false
   );
-  const isGitBlocked = (p: any) =>
+  const isGitBlocked = (p: Plugin) =>
     !isRoot &&
     !tenants_install_git &&
     (p.source === "git" || p.source === "github");
   const installed_plugin_names = installed_plugins
     .filter((p) => !isGitBlocked(p))
     .map((p) => p.name);
-  const store_plugin_names = instore.map((p: any) => p.name);
+  const store_plugin_names = instore.map((p) => p.name);
   const plugins_item = instore
-    .map((plugin: any) => ({
+    .map((plugin) => ({
       name: plugin.name,
       installed: installed_plugin_names.includes(plugin.name),
       plugin: true,
@@ -221,8 +221,7 @@ const get_store_items = async (req: Req) => {
       unsafe: plugin.unsafe,
       source: plugin.source,
       version: plugin.version,
-      ready_for_mobile:
-        plugin.ready_for_mobile && plugin.ready_for_mobile(plugin.name),
+      ready_for_mobile: plugin.ready_for_mobile && plugin.ready_for_mobile(),
     }))
     .filter((p) => !p.unsafe || isRoot || tenants_unsafe_plugins);
   const local_logins = installed_plugins
@@ -232,22 +231,25 @@ const get_store_items = async (req: Req) => {
         p.name !== "base" &&
         !isGitBlocked(p)
     )
-    .map((plugin: any) => ({
+    .map((plugin: Plugin) => ({
       name: plugin.name,
       installed: true,
       plugin: true,
+      contents: plugin.contents,
       description: plugin.description,
+      documentation_link: plugin.documentation_link,
       has_theme: local_has_theme(plugin.name),
       github: plugin.source === "github",
       git: plugin.source === "git",
       local: plugin.source === "local",
-      ready_for_mobile:
-        plugin.ready_for_mobile && plugin.ready_for_mobile(plugin.name),
+      ready_for_mobile: plugin.ready_for_mobile && plugin.ready_for_mobile(),
     }));
 
   const pack_items = packs_available.map((pack: any) => ({
     name: pack.name,
     installed: packs_installed.includes(pack.name),
+    documentation_link: undefined,
+    contents: undefined,
     pack: true,
     description: pack.description,
   }));
@@ -1199,11 +1201,11 @@ router.post(
       delete userAttrs.layout;
       await user.update({ _attributes: userAttrs });
       getState()!.userLayouts[req.user!.email!] = null as any;
-      let module: any = getState()!.plugins[plugin];
+      let module = getState()!.plugins[plugin];
       if (!module) {
         module = getState()!.plugins[getState()!.plugin_module_names[plugin]];
       }
-      const pluginName = module.plugin_name;
+      const pluginName = module.plugin_name || "";
       const sessionUser = req.session?.passport?.user;
       if (sessionUser?.attributes[pluginName])
         sessionUser.attributes[pluginName] = {};
@@ -1303,12 +1305,12 @@ router.get(
     }
     const mod = await Plugin.requirePlugin(plugin_db);
     const store_items = await get_store_items(req);
-    const store_item: any = store_items.find((item) => item.name === name);
+    const store_item = store_items.find((item) => item.name === name);
     const update_permitted = plugin_db.source === "npm";
 
-    let latest: any =
-      update_permitted &&
-      (await get_latest_npm_version(plugin_db.location, 1000));
+    let latest = update_permitted
+      ? await get_latest_npm_version(plugin_db.location, 1000)
+      : null;
     let isNpm = plugin_db.source === "npm";
     let engineInfos = await Plugin.getEngineInfos(plugin_db); // with cache
     let forceFetch = true;
@@ -1430,7 +1432,7 @@ router.get(
         {
           type: "card",
           title: req.__(`%s module information`, plugin_db.name),
-          contents: p(store_item.description) + infoTable,
+          contents: p(store_item?.description) + infoTable,
         },
         ...cards,
       ],
@@ -1685,7 +1687,7 @@ router.post(
       return;
     }
 
-    let msgs: any = null;
+    let msgs: string[] | undefined = undefined;
     try {
       msgs = await Plugin.loadAndSaveNewPlugin(
         plugin,
@@ -1715,18 +1717,20 @@ router.post(
           plugin_db.name
         )
       );
-      if (msgs?.length > 0) req.flash("warning", msgs.join("<br>"));
+      if (Array.isArray(msgs) && msgs?.length > 0)
+        req.flash("warning", msgs.join("<br>"));
       const configurePath = `/plugins/configure/${encodeURIComponent(
         plugin_db.name
       )}`;
       res.redirect(addOnDoneRedirect(configurePath, req));
     } else {
       req.flash("success", req.__(`Module %s installed`, plugin.name));
-      if (msgs?.length > 0) req.flash("warning", msgs.join("<br>"));
+      if (Array.isArray(msgs) && msgs?.length > 0)
+        req.flash("warning", msgs.join("<br>"));
       res.redirect(getOnDoneRedirect(req));
     }
   })
 );
 
-(router as any).get_store_items = get_store_items;
+//router.get_store_items = get_store_items;
 export { get_store_items };
