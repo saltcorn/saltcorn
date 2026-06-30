@@ -906,7 +906,7 @@ const get_link_view_opts = async (
  */
 const getActionConfigFields = async (
   action: GenObj,
-  table: Table,
+  table: Table | null,
   extra: GenObj = {}
 ): Promise<any[]> =>
   typeof action.configFields === "function"
@@ -2146,7 +2146,7 @@ const handleRelationPath = (
   queryObj: GenObj,
   qstate: GenObj,
   table: Table,
-  user?: User
+  user?: AbstractUser
 ): void => {
   if (queryObj.path.length > 0) {
     const levels = [];
@@ -2257,7 +2257,7 @@ const stateFieldsToWhere = ({
   approximate?: boolean;
   table?: Table;
   prefix?: string;
-  user?: User;
+  user?: AbstractUser;
 }): Where => {
   let qstate: GenObj = {};
   const orFields: string[] = [];

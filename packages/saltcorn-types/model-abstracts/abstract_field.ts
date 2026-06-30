@@ -84,4 +84,5 @@ export type InputType =
   | "section_header"
   | "textarea"
   | "custom_html"
-  | "code";
+  | "code"
+  | "time_of_week";

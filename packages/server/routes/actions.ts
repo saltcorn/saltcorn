@@ -81,7 +81,8 @@ import { getActionConfigFields } from "@saltcorn/data/plugin-helper";
 import { send_events_page } from "../markup/admin.js";
 import User from "@saltcorn/data/models/user";
 import { blocklyImportScripts, blocklyToolbox } from "../markup/blockly.js";
-import { Req, Res } from "@saltcorn/types/base_types";
+import { FieldLike, Req, Res } from "@saltcorn/types/base_types";
+import { TriggerCfg } from "@saltcorn/types/model-abstracts/abstract_trigger";
 
 const serializeWorkflowStep = (s: any, opts: any = {}) => ({
   id: s.id,
@@ -142,10 +143,10 @@ const workflowStrings = (req: any, trigger: any) => ({
   copyStep: req.__("Copy"),
 });
 
-const getWorkflowEditorData = async (req: any, trigger: any, stepsIn: any) => {
+const getWorkflowEditorData = async (req: Req, trigger: Trigger, stepsIn?: any) => {
   let steps =
     stepsIn ||
-    (await WorkflowStep.find({ trigger_id: trigger.id }, { orderBy: "id" }));
+    (await WorkflowStep.find({ trigger_id: trigger.id! }, { orderBy: "id" }));
   const initial_step = steps.find((step: any) => step.initial_step)!;
   if (initial_step)
     steps = [initial_step, ...steps.filter((s: any) => !s.initial_step)];
@@ -246,7 +247,7 @@ router.get(
  * @param trigger
  * @returns {Promise<Form>}
  */
-const triggerForm = async (req: any, trigger: any) => {
+const triggerForm = async (req: Req, trigger?: any) => {
   const roleOptions = (await User.get_roles()).map((r: any) => ({
     value: r.id,
     label: r.role,
@@ -570,7 +571,7 @@ router.post(
         await Trigger.update(id, form.values);
       } else {
         if (form.values.name) form.values.name = form.values.name.trim();
-        const tr = await Trigger.create(form.values);
+        const tr = await Trigger.create(form.values as TriggerCfg);
         id = tr.id;
       }
       await getState()!.refresh_triggers();
@@ -618,7 +619,7 @@ router.post(
           ...trigger.configuration,
           ...form.values.configuration,
         };
-      await Trigger.update(trigger.id, form.values); //{configuration: form.values});
+      await Trigger.update(trigger.id!, form.values); //{configuration: form.values});
       await getState()!.refresh_triggers();
       Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
         entity_type: "Trigger",
@@ -818,7 +819,7 @@ router.post(
     }
     Trigger.emitEvent(
       "AppChange",
-      trigger,
+      `Trigger ${trigger.name}`,
       req.user
         ? {
             user_id: req.user!.id,
@@ -854,7 +855,7 @@ router.post(
     const newStepId = await WorkflowStep.create({
       trigger_id,
       name: candidate,
-      next_step: null,
+      next_step: undefined,
       only_if: source.only_if,
       action_name: source.action_name,
       initial_step: false,
@@ -910,7 +911,7 @@ router.post(
     const trigger = (await Trigger.findOne({ id: trigger_id }))!;
     Trigger.emitEvent(
       "AppChange",
-      trigger,
+      `Trigger ${trigger.name}`,
       req.user
         ? {
             user_id: req.user!.id,
@@ -924,7 +925,7 @@ router.post(
   })
 );
 
-const getWorkflowStepForm = async (trigger: any, req: any, step_id: any, after_step: any, before_step: any, after_step_for: any) => {
+const getWorkflowStepForm = async (trigger: any, req: any, step_id?: any, after_step?: any, before_step?: any, after_step_for?: any) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
   const actionExplainers: Record<string, any> = {};
 
@@ -1318,7 +1319,7 @@ router.get(
       const locale = req.getLocale();
       const form = new Form({
         action: addOnDoneRedirect(`/actions/configure/${id}`, req),
-        fields: action.configFields,
+        fields: action.configFields as FieldLike[],
         noSubmitButton: true,
         id: "blocklyForm",
       });
@@ -1416,6 +1417,7 @@ router.get(
         form.additionalButtons = [
           {
             label: req.__("Edit with AI"),
+            id: "edit_js_code_with_ai",
             onclick: "showJsCopilotModal(this)",
             class: "btn btn-secondary",
           },
@@ -1703,7 +1705,7 @@ router.post(
           },
         });
     } else {
-      await Trigger.update(trigger.id, {
+      await Trigger.update(trigger.id!, {
         configuration: { ...trigger.configuration, ...form.values },
       });
       await getState()!.refresh_triggers();
@@ -1805,7 +1807,7 @@ router.get(
           user: req.user,
         });
       },
-      (e: any) => {
+      async (e: Error) => {
         console.error(e);
         fakeConsole.error(e.message);
       }
@@ -2234,7 +2236,7 @@ router.post(
         existing_code,
         table?.name || null
       );
-    await Trigger.update(trigger.id, {
+    await Trigger.update(trigger.id!, {
       configuration: { ...trigger.configuration, code: generated },
     });
     await getState()!.refresh_triggers();
@@ -2256,9 +2258,9 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { trigger_id } = req.params;
     const trigger = (await Trigger.findOne({ id: trigger_id }))!;
-    await WorkflowStep.deleteForTrigger(trigger.id);
+    await WorkflowStep.deleteForTrigger(trigger.id!);
     const description = (req.body || {}).description;
-    await Trigger.update(trigger.id, { description });
+    await Trigger.update(trigger.id!, { description });
     const steps = await getState()!.functions.copilot_generate_workflow.run(
       description,
       trigger.id

@@ -20,6 +20,7 @@ import { stateFieldsToWhere } from "../plugin-helper.js";
 const { a } = tags;
 
 import { eval_expression, get_async_expression_function } from "./expression.js";
+import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 
 /**
  * WorkflowStep Class
@@ -207,7 +208,7 @@ class WorkflowStep {
     await db.update("_sc_workflow_steps", row, this.id);
   }
 
-  async run(context: any, user: User, req?: any) {
+  async run(context: any, user: AbstractUser, req?: any) {
     if (this.only_if) {
       const proceed = eval_expression(
         this.only_if,

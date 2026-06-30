@@ -184,7 +184,7 @@ class WorkflowRun {
     await this.update({ wait_info: this.wait_info, context: this.context });
   }
 
-  get_next_step(step: WorkflowStep, user?: User): WorkflowStep | null {
+  get_next_step(step: WorkflowStep, user?: AbstractUser): WorkflowStep | null {
     let nextStep;
     if (!step?.next_step) {
       return null;
@@ -208,7 +208,7 @@ class WorkflowRun {
     }
   }
 
-  user_allowed_to_fill_form(user: User) {
+  user_allowed_to_fill_form(user: AbstractUser | undefined) {
     if (this.wait_info.user_id) {
       if (this.wait_info.user_id != user?.id) return false;
     }
@@ -248,7 +248,7 @@ class WorkflowRun {
     return this.current_step[this.current_step.length - 1];
   }
 
-  async createTrace(step_name: string, user?: User) {
+  async createTrace(step_name: string, user?: AbstractUser) {
     await WorkflowTrace.create({
       run_id: this.id!,
       context: this.context,
@@ -266,7 +266,7 @@ class WorkflowRun {
 
   async userFormFields(
     step0?: WorkflowStep,
-    user?: User | AbstractUser
+    user?: AbstractUser
   ): Promise<{ fields: FieldLike[]; validator?: (r: Row) => any }> {
     const step =
       step0 ||
@@ -419,7 +419,7 @@ class WorkflowRun {
     trace,
     req,
   }: {
-    user?: User;
+    user?: AbstractUser;
     interactive?: boolean;
     noNotifications?: boolean;
     api_call?: boolean;
@@ -953,7 +953,7 @@ class WorkflowRun {
     return this.context;
   }
 
-  async markAsError(e: Error, step: WorkflowStep, user?: User) {
+  async markAsError(e: Error, step: WorkflowStep, user?: AbstractUser) {
     console.error("Workflow error", e);
     await this.update({ status: "Error", error: e?.message || e });
 
