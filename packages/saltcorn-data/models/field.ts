@@ -5,8 +5,22 @@
  * @subcategory models
  */
 
-import { recalculate_for_stored, jsexprToWhere, eval_expression, get_async_expression_function, freeVariables } from "./expression.js";
-import { InvalidAdminAction, isNode, satisfies, apply, structuredClone, validSqlId, mergeIntoWhere } from "../utils.js";
+import {
+  recalculate_for_stored,
+  jsexprToWhere,
+  eval_expression,
+  get_async_expression_function,
+  freeVariables,
+} from "./expression.js";
+import {
+  InvalidAdminAction,
+  isNode,
+  satisfies,
+  apply,
+  structuredClone,
+  validSqlId,
+  mergeIntoWhere,
+} from "../utils.js";
 import { getState } from "../db/state.js";
 import { add_free_variables_to_joinfields } from "../plugin-helper.js";
 import Table from "./table.js";
@@ -256,10 +270,12 @@ class Field implements AbstractField {
     return label.split("_").join(" ");
   }
 
-  get type_name(): string | undefined {
+  get type_name(): string {
     if (typeof this.type === "string") return this.type;
     else if (this.type?.name) return this.type.name;
     else if (this.typename) return this.typename;
+    else if (this.input_type) return this.input_type;
+    throw new Error("Field without type name")
   }
 
   /**
@@ -1293,7 +1309,7 @@ class Field implements AbstractField {
       if (reftable) {
         const reffields = await reftable.getFields();
         const refpk = reffields.find((rf: Field) => rf.primary_key);
-        f.reftype = (refpk!.type as any)?.name;
+        f.reftype = refpk!.type_name;
         f.refname = refpk!.name;
       }
     }
@@ -1374,7 +1390,11 @@ class Field implements AbstractField {
           description: f.description,
         });
 
-    if (isNode() && (table! as Table).versioned && !(f.calculated && !f.stored)) {
+    if (
+      isNode() &&
+      (table! as Table).versioned &&
+      !(f.calculated && !f.stored)
+    ) {
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           table!.name
@@ -1396,8 +1416,7 @@ class Field implements AbstractField {
     if (f.calculated && f.stored) {
       const nrows = await (table! as Table).countRows({});
       if (nrows > 0 && nrows <= 20) {
-        if (!refreshed)
-          await nsState.getState()!.refresh_tables(true);
+        if (!refreshed) await nsState.getState()!.refresh_tables(true);
         const table1 = Table.findOne({ id: f.table_id })!;
         await recalculate_for_stored(table1);
       } else if (nrows > 0) {
@@ -1420,7 +1439,6 @@ class Field implements AbstractField {
    * @returns {*}
    */
   static getTypeAttributes(typeattribs: Function | any, table_id?: number) {
-
     if (!typeattribs) return [];
     if (typeof typeattribs === "function") {
       if (!table_id) return typeattribs({});

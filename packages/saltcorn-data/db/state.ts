@@ -59,7 +59,12 @@ import moment from "moment";
 import db from "./index.js";
 import { migrate } from "../migrate.js"; // Shows the true args and return type
 // const { migrate } = nsMigrate; // Shows the args and return type as 'any'
-import { getAllConfig, setConfig, deleteConfig, configTypes } from "../models/config.js";
+import {
+  getAllConfig,
+  setConfig,
+  deleteConfig,
+  configTypes,
+} from "../models/config.js";
 import {
   structuredClone,
   removeAllWhiteSpace,
@@ -83,6 +88,7 @@ import MetaData from "../models/metadata.js";
 import { PushMessageHelper } from "../models/internal/push_message_helper.js";
 import { UserLike } from "@saltcorn/db-common/dbtypes";
 import PlainDate from "@saltcorn/plain-date";
+import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 
 /**
  * @param v
@@ -228,7 +234,6 @@ class State {
    * @param {string} tenant description
    */
   constructor(tenant: string) {
-
     this.tenant = tenant;
     this.views = [];
     this.triggers = [];
@@ -389,7 +394,9 @@ class State {
    * @param {object} user
    * @returns {object}
    */
-  getLayout(user?: UserLike): PluginLayout & { config: GenObj } {
+  getLayout(
+    user?: UserLike | AbstractUser | User
+  ): PluginLayout & { config: GenObj } {
     // first, try if role set
     const role_id = user ? +user.role_id : 100;
     const layout_by_role = this.getConfig("layout_by_role");
@@ -1315,7 +1322,6 @@ class State {
    * @returns {Promise<void>}
    */
   async refresh_plugins(noSignal?: boolean) {
-
     this.viewtemplates = {};
     this.modelpatterns = {};
     this.types = {};

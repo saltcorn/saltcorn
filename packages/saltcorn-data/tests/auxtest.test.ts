@@ -488,22 +488,22 @@ describe("plugin helper", () => {
   });
 });
 describe("stateFieldsToWhere", () => {
-  const fields = [
+  const fields: Field[] = [
     new Field({ name: "astr", type: "String" }),
     new Field({ name: "age", type: "Integer" }),
     new Field({ name: "dob", type: "Date", attributes: { day_only: true } }),
     new Field({ name: "tob", type: "Date", attributes: { day_only: false } }),
     new Field({ name: "favbook", type: "Key to books" }),
-    { name: "props", type: { name: "JSON" } },
-    {
+    new Field({ name: "props", type: { name: "JSON" } }),
+    new Field({
       name: "attrs",
       type: { name: "JSON" },
       attributes: {
         hasSchema: true,
         schema: [{ key: "name", type: "String" }],
       },
-    },
-  ] as unknown as Field[];
+    }),
+  ];
   it("normal field", async () => {
     const w = stateFieldsToWhere({
       fields,
@@ -592,7 +592,7 @@ describe("stateFieldsToWhere", () => {
     });
     expect(w).toStrictEqual({});
   });
-  it("json field", async () => {
+  it("json field standard", async () => {
     const w = stateFieldsToWhere({
       fields,
       state: { props: { name: "Tom" } },

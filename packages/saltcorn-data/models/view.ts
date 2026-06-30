@@ -904,7 +904,7 @@ class View implements AbstractView {
    * @param {object} req
    * @returns {Promise<object>}
    */
-  async get_config_flow(req: any): Promise<Workflow> {
+  async get_config_flow(req: Req): Promise<Workflow> {
     this.check_viewtemplate();
     if (!this.id)
       throw new InvalidConfiguration(

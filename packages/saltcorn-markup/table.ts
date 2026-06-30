@@ -25,6 +25,7 @@ const {
 } = tags;
 import helpers from "./helpers.js";
 import type { SearchBarOpts, RadioGroupOpts } from "./helpers.js";
+import { GenObj } from "@saltcorn/types/common_types";
 const { pagination } = helpers;
 
 /**
@@ -161,6 +162,7 @@ namespace TableExports {
     align?: string;
     header_filter?: (id?: string) => string;
     row_key?: string;
+    cell_class_fn?: Function;
   };
 
   export type OptsParams = {
@@ -234,11 +236,11 @@ const mkTable = (
 ): string => {
   const pk_name = opts.pk_name || "id";
 
-  const val_row = (v: any) => {
+  const val_row = (v: GenObj) => {
     let rowColor: string | undefined;
     if (opts.row_color_function) {
       try {
-        rowColor = (opts as any).row_color_function?.(v);
+        rowColor = opts.row_color_function?.(v);
       } catch {
         rowColor = undefined;
       }
@@ -257,9 +259,7 @@ const mkTable = (
         ...(rowColor ? { style: { backgroundColor: rowColor } } : {}),
       },
       hdrs.map((hdr: HeadersParams, hdr_ix) => {
-        const cellClass = (hdr as any).cell_class_fn
-          ? (hdr as any).cell_class_fn(v)
-          : null;
+        const cellClass = hdr.cell_class_fn ? hdr.cell_class_fn(v) : null;
         return td(
           {
             style: {
@@ -285,7 +285,7 @@ const mkTable = (
     const sums: Record<string, number> = {};
     const isNumericCol: Record<string, boolean> = {};
     for (const hdr of hdrs) {
-      const rk = (hdr as any).row_key;
+      const rk = hdr.row_key;
       if (!rk) continue;
       let sum = 0;
       let numeric = false;
@@ -308,7 +308,7 @@ const mkTable = (
     return tr(
       { class: "fw-bold table-group-divider" },
       hdrs.map((hdr: HeadersParams, ix: number) => {
-        const rk = (hdr as any).row_key;
+        const rk = hdr.row_key;
         if (ix === 0)
           return td(
             { class: hdr.align ? `text-align-${hdr.align}` : null },

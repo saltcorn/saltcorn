@@ -22,8 +22,9 @@ import User from "../models/user.js";
 import _ from "underscore";
 import PlainDate from "@saltcorn/plain-date";
 import db from "../db/index.js";
-import { FieldLike } from "@saltcorn/types/base_types";
+import { FieldLike, Req } from "@saltcorn/types/base_types";
 import type { GenObj } from "@saltcorn/types/common_types";
+import Field from "models/field.js";
 
 const {
   input,
@@ -62,8 +63,8 @@ const eqStr = (x: any, y: any) => `${x}` === `${y}`;
 const or_if_undefined = (x: any, def: any) =>
   typeof x === "undefined" ? def : x;
 
-const number_slider = (type: any) => ({
-  configFields: (field: any) => [
+const number_slider = (type: string) => ({
+  configFields: (field: Field) => [
     ...(!isdef(field.attributes.min)
       ? [{ name: "min", type, required: false }]
       : []),
@@ -102,8 +103,8 @@ const number_slider = (type: any) => ({
       ...(isdef(v) && { value: text_attr(v) }),
     }),
 });
-const range_interval = (type: any) => ({
-  configFields: (field: any) => [
+const range_interval = (type: string) => ({
+  configFields: (field: Field) => [
     ...(!isdef(field.attributes.min)
       ? [{ name: "min", type, required: false }]
       : []),
@@ -163,7 +164,7 @@ const range_interval = (type: any) => ({
   },
 });
 
-const none_available = (required: any) =>
+const none_available = (required: boolean) =>
   required
     ? div(
         { class: "alert alert-danger", role: "alert" },
@@ -172,8 +173,8 @@ const none_available = (required: any) =>
       )
     : i("None available");
 
-const progress_bar = (type: any) => ({
-  configFields: (field: any) => [
+const progress_bar = (type: string) => ({
+  configFields: (field: Field) => [
     { name: "max_min_formula", type: "Bool", label: "Max/min Formula" },
     ...(!isdef(field.attributes.min)
       ? [
@@ -226,7 +227,7 @@ const progress_bar = (type: any) => ({
   isEdit: false,
   description:
     "Show value as a percentage filled on a horizontal or radial progress bar",
-  run: (v: any, req: any, attrs: any = {}) => {
+  run: (v: any, req: Req, attrs: any = {}) => {
     let max = attrs.max;
     let min = attrs.min;
     if (attrs.max_min_formula && attrs.min_formula)
@@ -310,7 +311,7 @@ const show_with_html = {
   ],
   isEdit: false,
   description: "Show value with any HTML code",
-  run: (v: any, req: any, attrs: any = {}) => {
+  run: (v: any, req: Req, attrs: any = {}) => {
     const ctx: any = { ...getState()!.eval_context };
     ctx.it = v;
     const rendered = interpolate(
@@ -323,8 +324,8 @@ const show_with_html = {
   },
 };
 
-const heat_cell = (type: any) => ({
-  configFields: (field: any) => [
+const heat_cell = (type: string) => ({
+  configFields: (field: Field) => [
     { name: "max_min_formula", type: "Bool", label: "Max/min Formula" },
     ...(!isdef(field.attributes.min)
       ? [
@@ -375,7 +376,7 @@ const heat_cell = (type: any) => ({
   ],
   isEdit: false,
   description: "Set background color on according to value on a color scale",
-  run: (v: any, req: any, attrs: any = {}) => {
+  run: (v: any, req: Req, attrs: any = {}) => {
     let max = attrs.max;
     let min = attrs.min;
     if (attrs.max_min_formula && attrs.min_formula)
@@ -448,7 +449,7 @@ const heat_cell = (type: any) => ({
   },
 });
 
-const number_limit = (direction: any) => ({
+const number_limit = (direction: "gte" | "lte") => ({
   isEdit: false,
   isFilter: true,
   blockDisplay: true,
@@ -456,7 +457,7 @@ const number_limit = (direction: any) => ({
     { name: "stepper_btns", label: "Stepper buttons", type: "Bool" },
   ],
   run: (
-    nm: any,
+    nm: string,
     v: any,
     attrs: any = {},
     cls: any,
@@ -495,12 +496,12 @@ const number_limit = (direction: any) => ({
   },
 });
 
-const float_number_limit = (direction: any) => ({
+const float_number_limit = (direction: "gte" | "lte") => ({
   isEdit: false,
   isFilter: true,
   blockDisplay: true,
   run: (
-    nm: any,
+    nm: string,
     v: any,
     attrs: any = {},
     cls: any,
@@ -524,12 +525,12 @@ const float_number_limit = (direction: any) => ({
 });
 
 const number_stepper = (
-  name: any,
+  name: string | undefined,
   v: any,
-  attrs: any,
-  cls: any,
-  fieldname: any,
-  id: any
+  attrs: GenObj,
+  cls: string,
+  fieldname: string | undefined,
+  id: string
 ) =>
   div(
     { class: "input-group" },
@@ -578,7 +579,7 @@ const number_stepper = (
  * @param {string} optsStr
  * @returns {string[]}
  */
-const getStrOptions = (v: any, optsStr: any, exclude_values_string: any) => {
+const getStrOptions = (v: any, optsStr: any, exclude_values_string: string) => {
   const exclude_values = exclude_values_string
     ? new Set(
         exclude_values_string
@@ -628,7 +629,7 @@ const getStrOptions = (v: any, optsStr: any, exclude_values_string: any) => {
             : option({ value: o, ...(eqStr(v, o) && { selected: true }) }, o)
       );
 };
-const join_fields_in_formula = (fml: any) => {
+const join_fields_in_formula = (fml: string) => {
   if (!fml) return [];
   return [...freeVariables(fml)];
 };
@@ -778,7 +779,7 @@ const to_locale_string = {
     },
   ],
   isEdit: false,
-  run: (v: any, req: any, attrs: any = {}) => {
+  run: (v: any, req: Req, attrs: any = {}) => {
     const v1 = typeof v === "string" ? +v : v;
     if (typeof v1 === "number" && !isNaN(v1)) {
       const locale_ = attrs.locale || locale(req);
@@ -942,7 +943,7 @@ const string = {
       configFields: [
         { name: "copy_to_clipbaord", label: "Copy to clipboard", type: "Bool" },
       ],
-      run: (s: any, _req: any, attrs: any = {}) => {
+      run: (s: any, _req: Req, attrs: any = {}) => {
         const __ =
           typeof attrs?.options === "string" ? getApp__() : (s: any) => s;
         return attrs?.copy_to_clipbaord
@@ -973,7 +974,7 @@ const string = {
         { name: "copy_btn", label: "Copy button", type: "Bool" },
       ],
       description: "Show as a monospace block",
-      run: (s: any, _req: any, attrs: any = {}) => {
+      run: (s: any, _req: Req, attrs: any = {}) => {
         if (!s) return "";
         const copy_btn = attrs.copy_btn
           ? button(
@@ -1033,7 +1034,7 @@ const string = {
       ],
       description:
         "Show First N characters of text followed by ... if truncated",
-      run: (s: any, req: any, attrs: any = {}) => {
+      run: (s: any, req: Req, attrs: any = {}) => {
         if (!s || !s.length) return "";
         if (s.length <= (attrs.nchars || 20)) return text_attr(s);
         return text_attr(s.substr(0, (attrs.nchars || 20) - 3)) + "...";
@@ -1060,7 +1061,7 @@ const string = {
       ],
       description: "Show a link with the field value as the URL.",
       isEdit: false,
-      run: (s: any, req: any, attrs: any = {}) =>
+      run: (s: any, req: Req, attrs: any = {}) =>
         s
           ? a(
               {
@@ -1079,7 +1080,7 @@ const string = {
     img_from_url: {
       isEdit: false,
       description: "Show an image from the URL in the field value",
-      run: (s: any, req: any, attrs: any) =>
+      run: (s: any, req: Req, attrs: any) =>
         img({ src: text(s || ""), style: "width:100%" }),
     },
     /**
@@ -1850,7 +1851,7 @@ const int = {
       ],
       isEdit: false,
       blockDisplay: true,
-      run: (v: any, req: any, attrs: any = {}) => {
+      run: (v: any, req: Req, attrs: any = {}) => {
         return div(
           { style: "white-space: nowrap" },
           Array.from(
@@ -2233,7 +2234,7 @@ const float = {
  * @param {object} req
  * @returns {string|undefined}
  */
-const locale = (req: any) => {
+const locale = (req: Req) => {
   //console.log(req && req.getLocale ? req.getLocale() : undefined);
   return req?.getLocale?.() || getState()!.getConfig("default_locale", "en");
 };
@@ -2288,7 +2289,7 @@ const date = {
     show: {
       isEdit: false,
       description: "Show date and time in the users locale",
-      run: (d: any, req: any, attrs: any = {}) => {
+      run: (d: any, req: Req, attrs: any = {}) => {
         const shower = attrs?.day_only ? localeDate : localeDateTime;
         const local = locale(req);
         return typeof d === "string" || typeof d === "number"
@@ -2307,7 +2308,7 @@ const date = {
       isEdit: false,
       description: "Show date in the users locale",
 
-      run: (d: any, req: any) => {
+      run: (d: any, req: Req) => {
         const local = locale(req);
         return typeof d === "string" || typeof d === "number"
           ? localeDate(new Date(d), {}, local)
@@ -2334,7 +2335,7 @@ const date = {
           },
         },
       ],
-      run: (d: any, req: any, options: any) => {
+      run: (d: any, req: Req, options: any) => {
         if (!d) return "";
         const jsdate = options?.day_only && d.toDate ? d.toDate() : d;
         if (req?.noHTML) return moment(jsdate).format(options?.format);
@@ -2360,7 +2361,7 @@ const date = {
     relative: {
       isEdit: false,
       description: "Display relative to current time (e.g. 2 hours ago)",
-      run: (d: any, req: any) => {
+      run: (d: any, req: Req) => {
         if (!d) return "";
 
         const wrapit = (s: string) =>
@@ -2388,7 +2389,7 @@ const date = {
       isEdit: false,
       description: "Show how many years ago this occurred.",
 
-      run: (d: any, req: any) => {
+      run: (d: any, req: Req) => {
         if (!d) return "";
         return text(moment.duration((new Date() as any) - d).years());
       },
@@ -2515,7 +2516,7 @@ const date = {
       }
     };
     const readPlainDate = (v: any) => {
-      if (v instanceof Date && !isNaN(v as any)) return new PlainDate(v as any);
+      if (v instanceof Date && !isNaN(v as any)) return new PlainDate(v);
       if (
         (v instanceof PlainDate || v?.constructor?.name === "PlainDate") &&
         v.isValid()
@@ -2608,7 +2609,7 @@ const bool = {
     show: {
       isEdit: false,
       description: "Show as a green tick or red cross circle",
-      run: (v: any, req: any) =>
+      run: (v: any, req: Req) =>
         typeof v === "undefined" || v === null
           ? ""
           : req.generate_email
@@ -2937,11 +2938,4 @@ const bool = {
   validate: () => (x: any) => true,
 };
 
-export {
-  string,
-  int,
-  bool,
-  date,
-  float,
-  color,
-};
+export { string, int, bool, date, float, color };

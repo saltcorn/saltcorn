@@ -7,6 +7,7 @@ import Trigger from "@saltcorn/data/models/trigger";
 import * as mocks from "@saltcorn/data/tests/mocks";
 
 import { chaos_guinea_pig, set_seed } from "chaos-guinea-pig";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 // todo tests for files
 // todo tests for tenants
@@ -74,8 +75,8 @@ const test_view_render = async (
   view: View,
   passes: string[],
   errors: string[],
-  req: any,
-  res: any
+  req: Req,
+  res: Res
 ) => {
   try {
     const sfs = await view.get_state_fields();
@@ -114,8 +115,8 @@ const test_view_config = async (
   view: View,
   passes: string[],
   errors: string[],
-  req: any,
-  res: any,
+  req: Req,
+  res: Res,
   warnings: string[]
 ) => {
   try {
@@ -200,7 +201,7 @@ const test_trigger = async (
  * @param req
  */
 export const runConfigurationCheck = async (
-  req: any,
+  req: Req,
   destructive?: boolean,
   app?: any
 ) => {

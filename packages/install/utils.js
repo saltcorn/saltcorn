@@ -1,5 +1,4 @@
 const sudo = require("sudo");
-const { is } = require("contractis");
 const { execSync, spawnSync, spawn } = require("child_process");
 const os = require("os");
 const crypto = require("crypto");
@@ -248,9 +247,29 @@ const asyncSudoPostgres = (args, allowFail, dryRun) => {
  * @returns {*}
  */
 const gen_password = () => {
-  const s = is.str.generate().replace(" ", "");
-  if (s.length > 7) return s;
-  else return gen_password();
+  const num_between = (lo, hi) => lo + Math.random() * (hi - lo);
+  
+  const oneOf = (vs) => vs[Math.floor(Math.random() * vs.length)];
+
+  const char = () => {
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    return oneOf(chars);
+  };
+  const ntimes = (n, f) => {
+    var res = new Array(n);
+    for (let index = 0; index < n; index++) {
+      res[index] = f();
+    }
+    return res;
+  };
+
+  const generateString = () => {
+    const n = Math.round(num_between(10, 15));
+    let result = ntimes(n, char).join("");
+    return result;
+  };
+  return generateString();
 };
 
 /**
@@ -272,5 +291,5 @@ module.exports = {
   doAddToDockerGroup,
   pullCapacitorBuilder,
   getDockerEnvVars,
-  seLinuxDisabled
+  seLinuxDisabled,
 };

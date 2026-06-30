@@ -107,15 +107,16 @@ const configuration_workflow = (req: Req) =>
             .filter((f: any) => !f.primary_key || f.attributes?.NonSerial);
           for (const field of fields) {
             if (field.type === "Key") {
-              field.reftable = Table.findOne({
-                name: field.reftable_name,
-              }) as any;
-              if (field.reftable) await field.reftable.getFields();
+              field.reftable =
+                Table.findOne({
+                  name: field.reftable_name,
+                }) || undefined;
+              if (field.reftable) field.reftable.getFields();
             }
           }
 
           const { field_view_options, handlesTextStyle, blockDisplay } =
-            calcfldViewOptions(fields as any, "edit");
+            calcfldViewOptions(fields, "edit");
 
           const roles = await User.get_roles();
           const images = await File.find({ mime_super: "image" });
@@ -321,7 +322,7 @@ const configuration_workflow = (req: Req) =>
               formFields.push(
                 new Field({
                   name: "preset_" + f.name,
-                  label: (req as any).__("Preset %s", f.label),
+                  label: req.__("Preset %s", f.label),
                   type: "String",
                   attributes: { options: Object.keys(f.presets) },
                 })
@@ -1082,7 +1083,7 @@ const runPost = async (
             res.json({ error: ins_upd_error });
           } else {
             await form.fill_fkey_options(false, optionsQuery, req.user);
-            (req as any).flash("error", text_attr(ins_upd_error));
+            req.flash("error", text_attr(ins_upd_error));
             for (const file_field of fields.filter(
               (f: any) => f.type === "File"
             )) {
@@ -1191,7 +1192,7 @@ const runPost = async (
                   6,
                   `Update child row failure ${JSON.stringify(upd_res)}`
                 );
-                (req as any).flash("error", text_attr((upd_res as any).error));
+                req.flash("error", text_attr((upd_res as any).error));
                 res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
                 return true;
               }
@@ -1206,7 +1207,7 @@ const runPost = async (
                   6,
                   `Insert child row failure ${JSON.stringify(ins_res)}`
                 );
-                (req as any).flash("error", text_attr((ins_res as any).error));
+                req.flash("error", text_attr((ins_res as any).error));
                 res.sendWrap(pagetitle, renderForm(form, req.csrfToken()));
                 return true;
               } else if ((ins_res as any).success) {
@@ -1247,7 +1248,7 @@ const runPost = async (
     }
     trigger_return = trigger_return || {};
     if (trigger_return.notify && trigger_return.details)
-      (req as any).flash(
+      req.flash(
         "success",
         div(
           { class: "d-inline" },
@@ -1270,9 +1271,9 @@ const runPost = async (
         )
       );
     else if (trigger_return.notify)
-      (req as any).flash("success", trigger_return.notify);
+      req.flash("success", trigger_return.notify);
     if (trigger_return.error) {
-      (req as any).flash("danger", trigger_return.error);
+      req.flash("danger", trigger_return.error);
       Crash.create({ message: trigger_return.error, stack: "" }, req);
     }
     if (trigger_return.goto) {
@@ -1496,7 +1497,7 @@ const run_action = async (
 ) => {
   const result = await actionQuery();
   if (result.json.error) {
-    Crash.create({ message: result.json.error, stack: "" }, req as any);
+    Crash.create({ message: result.json.error, stack: "" }, req);
   }
   return result;
 };
@@ -1568,7 +1569,7 @@ const update_matching_rows = async (
     );
     if (uptResults.error || uptResults.rowError || uptResults.inEditError) {
       res.status(422);
-      (req as any).flash(
+      req.flash(
         "error",
         text_attr(
           uptResults.error || uptResults.rowError || uptResults.inEditError
@@ -1579,10 +1580,10 @@ const update_matching_rows = async (
     }
     const { success, danger, goto } = combineResults(uptResults);
     if (success.length > 0) {
-      (req as any).flash("success", success);
+      req.flash("success", success);
     }
     if (danger.length > 0) {
-      (req as any).flash("danger", danger);
+      req.flash("danger", danger);
     } else if (goto) {
       res.redirect(goto);
       return;
@@ -1795,7 +1796,7 @@ const whenDone = async (
   table?: any
 ) => {
   const res_redirect = (url: string) => {
-    if (check_ajax && req.xhr && !(req as any).smr)
+    if (check_ajax && req.xhr && !req.smr)
       res.json({
         view_when_done,
         url_when_done: url,
@@ -1808,7 +1809,7 @@ const whenDone = async (
     res_redirect(redirect);
     return;
   }
-  if (check_ajax && req.xhr && !(req as any).smr && trigger_return?.error) {
+  if (check_ajax && req.xhr && !req.smr && trigger_return?.error) {
     res.json({
       view_when_done,
       ...(trigger_return || {}),
@@ -1859,7 +1860,7 @@ const whenDone = async (
   const [viewname_when_done, relation] = use_view_when_done.split(".");
   const nxview = View.findOne({ name: viewname_when_done });
   if (!nxview) {
-    (req as any).flash(
+    req.flash(
       "warning",
       `View "${use_view_when_done}" not found - change "View when done" in "${viewname}" view`
     );

@@ -5,9 +5,35 @@
  * @subcategory base-plugin
  */
 
-import { getMailTransport, viewToEmailHtml, loadAttachments, getFileAggregations, mjml2html } from "../models/email.js";
-import { get_async_expression_function, recalculate_for_stored, eval_expression, freeVariablesInInterpolation, add_free_variables_to_joinfields, freeVariables } from "../models/expression.js";
-import { sleep, getSessionId, urlStringToObject, dollarizeObject, objectToQueryString, interpolate, comparingCaseInsensitive, mergeActionResults, isNode, isWeb, ppVal, getFetchProxyOptions } from "../utils.js";
+import {
+  getMailTransport,
+  viewToEmailHtml,
+  loadAttachments,
+  getFileAggregations,
+  mjml2html,
+} from "../models/email.js";
+import {
+  get_async_expression_function,
+  recalculate_for_stored,
+  eval_expression,
+  freeVariablesInInterpolation,
+  add_free_variables_to_joinfields,
+  freeVariables,
+} from "../models/expression.js";
+import {
+  sleep,
+  getSessionId,
+  urlStringToObject,
+  dollarizeObject,
+  objectToQueryString,
+  interpolate,
+  comparingCaseInsensitive,
+  mergeActionResults,
+  isNode,
+  isWeb,
+  ppVal,
+  getFetchProxyOptions,
+} from "../utils.js";
 import { available_languages } from "../models/config.js";
 import vm2Pkg from "vm2";
 import tagsPkg from "@saltcorn/markup/tags";
@@ -36,8 +62,7 @@ import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 import { getState } from "../db/state.js";
 const { div, code, a, span } = tagsPkg;
 
-
-import type { GenObj } from "@saltcorn/types/common_types";
+import { instanceOfErrorMsg, type GenObj } from "@saltcorn/types/common_types";
 import type {
   FieldLike,
   Req,
@@ -519,7 +544,7 @@ export default {
       row: Row;
       configuration: {
         table_name: string;
-        where?: Where;
+        where?: string;
         limit?: number;
         orderBy?: string;
         orderDesc?: boolean;
@@ -530,7 +555,7 @@ export default {
       [key: string]: unknown;
     }) => {
       const table = Table.findOne({ name: table_name });
-      const wh = where ? eval_expression(where as any, row, user) : {};
+      const wh = where ? eval_expression(where, row, user) : {};
       const selOpts: GenObj = { orderDesc, orderBy };
       if (limit) selOpts.limit = limit;
       const rows = await table!.getRows(wh, selOpts);
@@ -1163,7 +1188,7 @@ export default {
         case "Field":
           const fields = table.getFields();
           const field = fields.find((f) => f.name === to_email_field);
-          if (field && (field.type as any).name === "String")
+          if (field && field.type_name === "String")
             to_addr = row[to_email_field as string];
           else if (field && field.reftable_name === "users") {
             const refuser = await User.findOne({
@@ -1764,7 +1789,7 @@ export default {
         row![table!.pk_name],
         user
       );
-      if ((res as any).error) return res;
+      if (instanceOfErrorMsg(res)) return res;
       else return;
     },
     namespace: "Database",
@@ -2199,7 +2224,7 @@ export default {
               row![table.pk_name],
               user
             );
-            if (!(updateres as any)?.error)
+            if (!instanceOfErrorMsg(updateres))
               return { notify_success: req ? req.__("Saved") : "Saved" };
             else {
               getState()!.log(
@@ -2674,13 +2699,10 @@ export default {
         await u.set_language(language);
         req.login(u.session_object, function (err: any) {
           if (!err) {
-            (req as any).flash(
-              "success",
-              (req as any).__("Language changed to %s", language)
-            );
+            req.flash("success", req.__("Language changed to %s", language));
             return { reload_page: true };
           } else {
-            (req as any).flash("danger", err);
+            req.flash("danger", err);
           }
         });
       } else {

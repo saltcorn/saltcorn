@@ -26,6 +26,7 @@ import {
   secondaryReturnDirectives,
 } from "../utils.js";
 import { eval_expression } from "./expression.js";
+import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 
 const data_output_to_html = (val: any) => {
   if (Array.isArray(val) && typeof val[0] === "object") {
@@ -265,7 +266,7 @@ class WorkflowRun {
 
   async userFormFields(
     step0?: WorkflowStep,
-    user?: User
+    user?: User | AbstractUser
   ): Promise<{ fields: FieldLike[]; validator?: (r: Row) => any }> {
     const step =
       step0 ||

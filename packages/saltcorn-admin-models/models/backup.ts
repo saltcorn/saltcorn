@@ -70,6 +70,7 @@ const awsLibStorage = () =>
   _awsLibStorage || (_awsLibStorage = require("@aws-sdk/lib-storage"));
 import MetaData from "@saltcorn/data/models/metadata";
 import lodash from "lodash";
+import { Row } from "@saltcorn/db-common";
 const { orderBy } = lodash;
 
 /**
@@ -210,7 +211,7 @@ const create_pack = async (dirpath: string): Promise<void> => {
  * @param fnm
  */
 const create_csv_from_rows = async (
-  rows: any[],
+  rows: Row[],
   fnm: string
 ): Promise<void> => {
   if (rows.length === 0) return;
@@ -811,7 +812,7 @@ const delete_old_backups = async () => {
       if (!file.startsWith(backup_file_prefix)) continue;
       const stats = await stat(path.join(directory, file));
       const fileTime = (stats as any).birthtime?.getTime
-        ? (stats as any).birthtime.getTime()
+        ? stats.birthtime.getTime()
         : stats.mtime.getTime();
       const ageMs = new Date().getTime() - fileTime;
       const ageDays = ageMs / (1000 * 3600 * 24);

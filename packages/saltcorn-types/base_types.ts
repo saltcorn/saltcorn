@@ -486,7 +486,7 @@ type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
 export type Req = {
   query: GenObj;
-  flash: (flash_type: string, message: string) => void;
+  flash: (flash_type: "warning" | "success" | "error" | "danger", message: string) => void;
   user?: AbstractUser;
   csrfToken: () => string;
   getLocale: () => string;
@@ -749,7 +749,7 @@ export type PluginRoute = {
   url: string;
   method?: string;
   noCsrf?: boolean;
-  callback: ({ req, res }: { req: any; res: any }) => void;
+  callback: ({ req, res }: { req: Req; res: Res }) => void;
 };
 
 export type ResultType = {

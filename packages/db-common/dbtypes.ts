@@ -10,8 +10,20 @@ export type Value =
 export type JsonPathElem = string | number;
 export type JsonPath = JsonPathElem | JsonPathElem[];
 
+export type FieldLikeForFTS = {
+  name: string;
+  refname?: string;
+  reftable_name?: string;
+  attributes: { summary_field?: string; [key: string]: any };
+};
+
 export type Where = {
-  _fts?: { fields: any[]; table?: string; searchTerm: string; schema?: string };
+  _fts?: {
+    fields: FieldLikeForFTS[];
+    table?: string;
+    searchTerm: string;
+    schema?: string;
+  };
   or?: Where[];
   not?: Where | symbol;
   eq?: Value[];

@@ -153,7 +153,7 @@ describe("Backup and restore", () => {
       role_id: 1,
     });
     assertsObjectIsUser(admu);
-    expect(typeof (admu as any).password).toBe("string");
+    expect(typeof admu.password).toBe("string");
     expect(User.table.min_role_read).toBe(1);
 
     const t2 = Table.findOne({ name: "books" });

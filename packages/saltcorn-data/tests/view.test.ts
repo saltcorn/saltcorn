@@ -13,6 +13,7 @@ import { afterAll, beforeAll, describe, it, expect } from "@saltcorn/db-common/t
 import { GenObj } from "../../saltcorn-types/dist/common_types.js";
 import { renderEditInEditConfig } from "./remote_query_helper.js";
 import { prepareSimpleTopicPostRelation } from "./common_helpers.js";
+import { Req } from "@saltcorn/types/base_types";
 
 getState()!.registerPlugin("base", basePluginMod);
 
@@ -63,7 +64,7 @@ describe("Misc view tests", () => {
   it("should get config flow", async () => {
     const v = await View.findOne({ name: "authorlist" });
     assertIsSet(v);
-    const res = await v.get_config_flow({ __: (s: string) => s });
+    const res = await v.get_config_flow({ __: (s: string) => s } as Req);
     expect(res.constructor.name).toBe("Workflow");
     expect(res.steps.length > 0).toBe(true);
   });

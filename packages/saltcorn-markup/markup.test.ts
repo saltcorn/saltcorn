@@ -14,6 +14,7 @@ import mkTable from "./table.js";
 // import index = require("./index");
 import index from "./index.js";
 import builder from "./builder.js";
+import { Req } from "@saltcorn/types/base_types";
 
 const {
   post_btn,
@@ -749,7 +750,7 @@ describe("index", () => {
         csrfToken: () => "csrfToken123",
         __: (str: string) => str,
         "Are you sure?": "Are you sure?",
-      };
+      } as unknown as Req;
       const result = post_delete_btn("/delete", req);
       const normalized = result.replace(/\s+/g, " ").trim();
 
@@ -767,7 +768,7 @@ describe("index", () => {
         csrfToken: () => "csrfToken123",
         __: (str: string) => str,
         "Are you sure?": "Are you sure?",
-      };
+      }as unknown as Req;
       const result = post_dropdown_item("/delete", "Delete", req, true);
       expect(result).toContain('<a class="dropdown-item"');
       expect(result).toContain("onclick=\"if(confirm('Are you sure?'))");

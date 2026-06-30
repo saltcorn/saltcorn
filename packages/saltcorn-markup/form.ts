@@ -1595,7 +1595,9 @@ const renderForm = (
   const csrfToken =
     csrfToken0 === false || csrfToken0 === ""
       ? csrfToken0
-      : csrfToken0 || (form.req && form.req.csrfToken && form.req.csrfToken());
+      : csrfToken0 ||
+        (form.req && form.req.csrfToken && form.req.csrfToken()) ||
+        "";
   if (form.layout) return mkFormWithLayout(form, csrfToken);
   else return mkForm(form, csrfToken, form.errors);
 };

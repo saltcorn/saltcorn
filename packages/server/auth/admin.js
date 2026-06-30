@@ -6,7 +6,6 @@
  */
 // todo refactor to few modules + rename to be in sync with router url
 import Router from "express-promise-router";
-import { contract, is } from "contractis";
 import { X509Certificate } from "crypto";
 import db from "@saltcorn/data/db";
 import User from "@saltcorn/data/models/user";

@@ -3,9 +3,28 @@
  * @module base-plugin/viewtemplates/filter
  * @subcategory base-plugin
  */
-import { eachView, translateLayout, getStringsForI18n, traverse } from "../../models/layout.js";
-import { InvalidConfiguration, objectToQueryString, removeEmptyStrings, asyncMap, getSessionId, mergeIntoWhere, isWeb, renderServerSide, interpolate } from "../../utils.js";
-import { jsexprToWhere, get_expression_function, eval_expression } from "../../models/expression.js";
+import {
+  eachView,
+  translateLayout,
+  getStringsForI18n,
+  traverse,
+} from "../../models/layout.js";
+import {
+  InvalidConfiguration,
+  objectToQueryString,
+  removeEmptyStrings,
+  asyncMap,
+  getSessionId,
+  mergeIntoWhere,
+  isWeb,
+  renderServerSide,
+  interpolate,
+} from "../../utils.js";
+import {
+  jsexprToWhere,
+  get_expression_function,
+  eval_expression,
+} from "../../models/expression.js";
 import { getState } from "../../db/state.js";
 import helpersPkg from "@saltcorn/markup/helpers";
 import PageGroup from "../../models/page_group.js";
@@ -144,7 +163,8 @@ const configuration_workflow = (req: Req) =>
                 { mode: "filter", req }
               );
             }
-            if (action.description) actionDescriptions[name] = action.description;
+            if (action.description)
+              actionDescriptions[name] = action.description;
           }
           const workflowActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -213,7 +233,7 @@ const configuration_workflow = (req: Req) =>
             .map((f: GenObj) => ({
               name: f.name,
               label: f.label,
-              ftype: (f.type as any)?.name || f.type,
+              ftype: f.type_name || f.type,
               table_name: table.name,
               table_id: table.id,
             }));
@@ -360,7 +380,7 @@ const run = async (
             ? "Float"
             : stat === "Count" || stat === "CountUnique"
               ? "Integer"
-              : (fld!.type as any)?.name;
+              : fld!.type_name;
         const type = getState()!.types[outcomeType];
         if (type?.fieldviews?.[agg_fieldview]) {
           const readval = type.read!(val);
@@ -773,7 +793,7 @@ const run = async (
       style,
     }: GenObj) {
       const field: any = fields.find((f: GenObj) => f.name === field_name);
-      const isBool = field && (field.type as any).name === "Bool";
+      const isBool = field && field.type_name === "Bool";
 
       const use_value =
         preset_value && field?.presets

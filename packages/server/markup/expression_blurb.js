@@ -5,7 +5,6 @@
  */
 
 import { p, code, li, ul, pre, span } from "@saltcorn/markup/tags";
-import { contract, is } from "contractis";
 import { getState } from "@saltcorn/data/db/state";
 
 /**

@@ -101,7 +101,7 @@ class Snapshot {
       const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
         typeof this.pack === "string"
           ? JSON.parse(this.pack)?.views.find((v: any) => v.name === name)
-          : (this.pack?.views.find((v: any) => v.name === name) as any);
+          : this.pack?.views.find((v: any) => v.name === name);
       const view = await View.findOne({ name });
       if (view) await View.update(viewNoTable, view.id!);
     }
@@ -110,8 +110,8 @@ class Snapshot {
         typeof this.pack === "string"
           ? JSON.parse(this.pack)?.pages.find((p: any) => p.name === name)
           : this.pack?.pages?.find((p: any) => p.name === name);
-      const { root_page_for_roles, menu_label, ...pageSpec } = pageData as any;
-      const page = await Page.findOne({ name });
+      const { root_page_for_roles, menu_label, ...pageSpec } = pageData;
+      const page = Page.findOne({ name });
       if (page) await Page.update(page.id!, pageSpec!);
     }
     if ((type || "").toLowerCase() === "codepage") {
@@ -132,10 +132,8 @@ class Snapshot {
     if ((type || "").toLowerCase() === "trigger") {
       const { table_name, steps, ...triggerSpec } =
         typeof this.pack === "string"
-          ? (JSON.parse(this.pack)?.triggers.find(
-              (p: any) => p.name === name
-            ) as any)
-          : (this.pack?.triggers.find((p: any) => p.name === name) as any);
+          ? JSON.parse(this.pack)?.triggers.find((p: any) => p.name === name)
+          : this.pack?.triggers.find((p: any) => p.name === name);
       const trigger = await Trigger.findOne({ name });
       if (trigger) await Trigger.update(trigger.id!, triggerSpec!);
       if (steps) {

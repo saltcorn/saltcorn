@@ -3,7 +3,11 @@
  */
 
 import { getState } from "./db/state.js";
-import { readState, add_free_variables_to_joinfields, calcfldViewConfig } from "./plugin-helper.js";
+import {
+  readState,
+  add_free_variables_to_joinfields,
+  calcfldViewConfig,
+} from "./plugin-helper.js";
 import tagsPkg from "@saltcorn/markup/tags";
 import markdownItPkg from "markdown-it";
 import Table from "./models/table.js";
@@ -20,7 +24,7 @@ import Form from "./models/form.js";
 import { isNode, isWeb, applyAsync } from "./utils.js";
 const { text } = tagsPkg;
 import { getForm, transformForm } from "./viewable_fields.js";
-import { Req } from "@saltcorn/types/base_types";
+import { Req, Res } from "@saltcorn/types/base_types";
 import FieldRepeat from "./models/fieldrepeat.js";
 const MarkdownIt = markdownItPkg,
   md = new MarkdownIt();
@@ -315,8 +319,8 @@ const prepare_insert_row = async (row: any, fields: Field[]) => {
  * @returns void and writes to res
  */
 const show_calculated_fieldview = async (
-  req: any,
-  res: any,
+  req: Req,
+  res: Res,
   {
     tableName,
     fieldName,
@@ -383,7 +387,8 @@ const show_calculated_fieldview = async (
     !(req.user && table.is_owner(req.user, row))
   ) {
     //console.log("not owner", row, table.is_owner(req.user, row));
-    res.status(401).send("");
+    res.status(401);
+    res.send("");
     return;
   }
   if (fieldName.includes(".")) {
@@ -412,7 +417,8 @@ const show_calculated_fieldview = async (
       ) {
         //console.log("not jointable owner", refRow);
 
-        res.status(401).send("");
+        res.status(401);
+        res.send("");
         return;
       }
       let fv;
@@ -465,7 +471,8 @@ const show_calculated_fieldview = async (
             throw new Error(`reftable ${field.reftable_name} not found`);
           if (!oldRow[ref]) break;
           if (role > reftable.min_role_read) {
-            res.status(401).send("");
+            res.status(401);
+            res.send("");
             return;
           }
           const q = { [reftable.pk_name]: oldRow[ref] };
@@ -507,7 +514,8 @@ const show_calculated_fieldview = async (
     if (!fv) res.send(text(result));
     else res.send(fv.run(result));
   } catch (e: any) {
-    return res.status(400).send(`Error: ${e.message}`);
+    res.status(400);
+    return res.send(`Error: ${e.message}`);
   }
 };
 
@@ -523,8 +531,8 @@ const getWorkflowStepUserForm = async (
   run: WorkflowRun,
   trigger: Trigger,
   step: WorkflowStep,
-  req: any,
-  res: any
+  req: Req,
+  res: Res
 ) => {
   if (step.action_name === "EditViewForm") {
     const view = View.findOne({ name: step.configuration.edit_view });

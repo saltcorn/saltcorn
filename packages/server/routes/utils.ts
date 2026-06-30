@@ -19,7 +19,6 @@ import { is_relative_url, normalize_relative_url } from "@saltcorn/data/utils";
 import { input, script, domReady, a, text } from "@saltcorn/markup/tags";
 import session from "express-session";
 import cookieSession from "cookie-session";
-import is from "contractis/is.js";
 import { validateHeaderName, validateHeaderValue } from "http";
 import Crash from "@saltcorn/data/models/crash";
 import File from "@saltcorn/data/models/file";
@@ -38,6 +37,8 @@ import { UAParser } from "ua-parser-js";
 import crypto from "crypto";
 import _am_tenant from "@saltcorn/admin-models/models/tenant";
 import { Header, Req, Res } from "@saltcorn/types/base_types";
+import PageGroup from "@saltcorn/data/models/page_group";
+import { generateString } from "@saltcorn/types/generators";
 const { domain_sanitize } = _am_tenant;
 const get_sys_info = async () => {
   const disks = await si.fsSize();
@@ -64,7 +65,7 @@ const get_sys_info = async () => {
  * @param {function} next
  * @returns {void}
  */
-function loggedIn(req: Req, res: Res, next: any) {
+function loggedIn(req: Req, res: Res, next: any): void {
   if (req.user && req.user.id) {
     // Reject tenant drift so a session authenticated elsewhere cannot be reused here.
     if (
@@ -483,7 +484,7 @@ const getGitRevision = () => db.connectObj.git_commit;
 const getSessionStore = (pruneInterval?: number) => {
   /*if (getState()!.getConfig("cookie_sessions", false)) {
     return cookieSession({
-      keys: [db.connectObj.session_secret || is.str.generate()],
+      keys: [db.connectObj.session_secret || generateString()],
       maxAge: 30 * 24 * 60 * 60 * 1000,
       sameSite: "strict",
     });
@@ -498,7 +499,7 @@ const getSessionStore = (pruneInterval?: number) => {
     var SQLiteStore = require("connect-sqlite3")(session);
     return session({
       store: new SQLiteStore({ db: "sessions.sqlite" }),
-      secret: db.connectObj.session_secret || is.str.generate(),
+      secret: db.connectObj.session_secret || generateString(),
       resave: false,
       saveUninitialized: false,
       cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite, secure: "auto" }, // 30 days
@@ -512,7 +513,7 @@ const getSessionStore = (pruneInterval?: number) => {
         tableName: "_sc_session",
         pruneSessionInterval: (pruneInterval ?? 0) > 0 ? pruneInterval : false,
       }),
-      secret: db.connectObj.session_secret || is.str.generate(),
+      secret: db.connectObj.session_secret || generateString(),
       resave: false,
       saveUninitialized: false,
       cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite, secure: "auto" }, // 30 days
@@ -802,7 +803,7 @@ const screenInfoFromCfg = (req: Req) => {
  * @param {any} res
  * @returns eligible page an error message or an object with reload flag
  */
-const getEligiblePage = async (pageGroup: any, req: Req, res: Res) => {
+const getEligiblePage = async (pageGroup: PageGroup, req: Req, res: Res) => {
   if (pageGroup.members.length === 0)
     return req.__("Pagegroup %s has no members", pageGroup.name);
   else {
@@ -841,7 +842,7 @@ const getEligiblePage = async (pageGroup: any, req: Req, res: Res) => {
  * @param {any} req
  * @returns the page, null or an error msg
  */
-const getRandomPage = (pageGroup: any, req: Req) => {
+const getRandomPage = (pageGroup: PageGroup, req: Req) => {
   if (pageGroup.members.length === 0)
     return req.__("Pagegroup %s has no members", pageGroup.name);
   const hash = crypto.createHash("sha1").update(req.sessionID!).digest("hex");
@@ -851,7 +852,7 @@ const getRandomPage = (pageGroup: any, req: Req) => {
   return Page.findOne({ id: sessionMember.page_id });
 };
 
-const checkEditPermission = (type: string, user: any) => {
+const checkEditPermission = (type: string, user: User) => {
   if (user.role_id === 1) return true;
   switch (type) {
     case "views":

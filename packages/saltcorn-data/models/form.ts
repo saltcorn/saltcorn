@@ -4,7 +4,6 @@
  * @module models/form
  * @subcategory models
  */
-import contractisPkg from "contractis";
 import {
   AbstractForm,
   AdditionalButton as _AdditionalButton,
@@ -19,9 +18,13 @@ import type { GenObj } from "@saltcorn/types/common_types";
 import Field from "./field.js";
 import User from "./user.js";
 import FieldRepeat from "./fieldrepeat.js";
-import type { FieldLike, Layout, Header } from "@saltcorn/types/base_types";
-
-const { is } = contractisPkg;
+import type {
+  FieldLike,
+  Layout,
+  Header,
+  Req,
+} from "@saltcorn/types/base_types";
+import { generateBool } from "@saltcorn/types/generators";
 
 const isFieldLike = (object: any): object is FieldLike => {
   return object.constructor.name === Object.name;
@@ -59,9 +62,9 @@ class Form implements AbstractForm {
   splitPaste: boolean;
   isOwner: boolean;
   onSubmit?: string;
-  req: any;
+  req?: Req;
   tabs?: string;
-  __?: any;
+  __?: (s: string, ...args: any[]) => string;
   isWorkflow?: boolean;
   pk_name?: string;
   popup_width?: string;
@@ -162,7 +165,7 @@ class Form implements AbstractForm {
       if (hasFieldMembers(f))
         if (f.input_type === "hidden") r[f.name] = this.values[f.name];
         else if (f.name.endsWith("_fml")) r[f.name] = "";
-        else if (f.required || is.bool.generate()) {
+        else if (f.required || generateBool()) {
           r[f.name] = await f.generate();
         }
     }
@@ -312,12 +315,12 @@ namespace Form {
     splitPaste?: boolean;
     isOwner?: boolean;
     onSubmit?: string;
-    req?: any;
+    req?: Req;
     tabs?: any;
     validate?: any;
     isWorkflow?: boolean;
     pk_name?: string;
-    __?: any;
+    __?: (s: string, ...args: any[]) => string;
   };
 
   export type AdditionalButton = _AdditionalButton;
