@@ -5,3 +5,5 @@
 // without changing runtime behaviour.
 declare module "express-session";
 declare module "cookie-session";
+declare module "markdown-it";
+declare module "npm-registry-fetch";
