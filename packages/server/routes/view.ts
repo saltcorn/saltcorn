@@ -26,6 +26,7 @@ import {
   objectToQueryString,
 } from "@saltcorn/data/utils";
 import { getState } from "@saltcorn/data/db/state";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -34,7 +35,7 @@ import { getState } from "@saltcorn/data/db/state";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -45,8 +46,8 @@ export default router;
  */
 router.get(
   ["/:viewname", "/:viewname/*slug"],
-  error_catcher(async (req, res) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res) => {
+    const state = getState()!;
     const maintenanceModeEnabled = state.getConfig(
       "maintenance_mode_enabled",
       false
@@ -58,9 +59,8 @@ router.get(
       (!req.user || req.user.role_id > 1) &&
       maintenanceModePage
     ) {
-      const maintenancePage = await Page.findOne({ name: maintenanceModePage });
+      const maintenancePage = Page.findOne({ name: maintenanceModePage });
       if (maintenancePage) {
-        const tic = new Date();
         await maintenancePage.run(req.query, { res, req });
         return;
       }
@@ -68,7 +68,7 @@ router.get(
 
     const { viewname } = req.params;
     const query = { ...req.query };
-    const view = await View.findOne({ name: viewname });
+    const view = View.findOne({ name: viewname });
     const role = req.user && req.user.id ? req.user.role_id : 100;
     state.log(
       3,
@@ -94,7 +94,7 @@ router.get(
     view.rewrite_query_from_slug(query, req.params.slug);
     if (
       role > view.min_role &&
-      !(await view.authorise_get({ query, req, ...view }))
+      !(await view.authorise_get({ query, req, ...(view as any) }))
     ) {
       if (!req.user) {
         res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
@@ -108,9 +108,11 @@ router.get(
     const isModal = req.headers?.saltcornmodalrequest;
 
     const contents0 = await view.run_possibly_on_page(query, req, res);
-    const __ = (s) =>
+    const __ = (s: string) =>
       state.i18n.__({ phrase: s, locale: req.getLocale() }) || s;
-    let title =
+    let title:
+      | string
+      | { title: string; no_menu?: boolean; description?: string } =
       isModal && view.attributes?.popup_title
         ? __(view.attributes?.popup_title)
         : __(view.attributes?.page_title) ||
@@ -118,12 +120,12 @@ router.get(
     if ((title || "").includes("{{")) {
       try {
         title = await view.interpolate_title_string(title, query);
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         title = e?.message || e;
       }
     }
-    title = { title };
+    title = { title: title as string };
     if (isModal && view.attributes?.popup_width)
       res.set(
         "SaltcornModalWidth",
@@ -154,7 +156,7 @@ router.get(
     }
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
-    const resultCollector = {};
+    const resultCollector: any = {};
 
     if (!isTest() && !req.xhr)
       await Trigger.runTableTriggers(
@@ -171,10 +173,9 @@ router.get(
         req.user,
         { req }
       );
-    if (typeof contents0 === "object" && contents0.goto)
-      res.redirect(contents0.goto);
+    if (typeof contents0 === "object" && "goto" in contents0)
+      res.redirect((contents0 as any).goto);
     else {
-      const qs = "";
       const contents =
         typeof contents0 === "string"
           ? div(
@@ -196,13 +197,13 @@ router.get(
                 what: req.__("View"),
                 url: `/viewedit/edit/${encodeURIComponent(view.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}`,
                 cfgUrl: `/viewedit/config/${encodeURIComponent(view.name)}?on_done_redirect=${encodeURIComponent(req.originalUrl.replace("/", ""))}&${objectToQueryString(req.query)}`,
-                contents,
+                contents: contents as string,
                 req,
                 view,
                 viewtemplate: view.viewtemplate,
-                table: view.table_id || view.exttable_name,
+                table: (view.table_id || view.exttable_name) as any,
               })
-            : contents,
+            : (contents as string),
           resultCollector
         )
       );
@@ -219,7 +220,7 @@ router.get(
 router.post(
   "/:viewname/preview",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { viewname } = req.params;
 
     const [view] = await View.find({ name: viewname });
@@ -228,14 +229,13 @@ router.post(
       return;
     }
     let query = req.body || {};
-    let row;
-    let table;
+    let row: any;
+    let table: any;
     const sfs = await view.get_state_fields();
     for (const sf of sfs) {
       if (sf.required && !query[sf.name]) {
         if (!row) {
           if (!table)
-            // todo check after where change
             table = Table.findOne(
               view.table_id
                 ? { id: view.table_id }
@@ -246,7 +246,11 @@ router.post(
         if (row) query[sf.name] = row[sf.name];
       }
     }
-    const contents = await view.run(query, { req, res, isPreview: true });
+    const contents = await view.run(query, {
+      req,
+      res,
+      isPreview: true,
+    } as any);
 
     res.send(contents);
   })
@@ -261,8 +265,8 @@ router.post(
 router.post(
   "/:viewname/:route",
   setTenant,
-  error_catcher(async (req, res, next) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res, next: any) => {
+    const state = getState()!;
     const maintenanceModeEnabled = state.getConfig(
       "maintenance_mode_enabled",
       false
@@ -274,10 +278,10 @@ router.post(
     }
     next();
   }),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { viewname, route } = req.params;
     const role = req.user && req.user.id ? req.user.role_id : 100;
-    const state = getState();
+    const state = getState()!;
     state.log(
       3,
       `Route /view/${viewname} viewroute ${route} user=${req.user?.id}${
@@ -309,8 +313,8 @@ router.post(
  */
 router.post(
   ["/:viewname", "/:viewname/*slug"],
-  error_catcher(async (req, res, next) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res, next: any) => {
+    const state = getState()!;
     const maintenanceModeEnabled = state.getConfig(
       "maintenance_mode_enabled",
       false
@@ -322,11 +326,11 @@ router.post(
     next();
   }),
   setTenant,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { viewname } = req.params;
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const query = { ...req.query };
-    const state = getState();
+    const state = getState()!;
     state.log(
       3,
       `Route /view/${viewname} POST user=${req.user?.id}${
@@ -344,7 +348,11 @@ router.post(
 
     if (
       role > view.min_role &&
-      !(await view.authorise_post({ body: req.body || {}, req, ...view }))
+      !(await view.authorise_post({
+        body: req.body || {},
+        req,
+        ...(view as any),
+      }))
     ) {
       req.flash("danger", req.__("Not authorized"));
       state.log(2, `View ${viewname} POST not authorized`);
