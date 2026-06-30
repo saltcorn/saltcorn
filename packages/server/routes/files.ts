@@ -171,7 +171,7 @@ router.get(
           isDirectory: true,
           mime_super: "",
           mime_sub: "",
-        })
+        } as any)
       );
     }
 
@@ -229,7 +229,7 @@ router.get(
           isDirectory: true,
           mime_super: "",
           mime_sub: "",
-        })
+        } as any)
       );
     }
     if (req.xhr) {
@@ -430,7 +430,7 @@ router.get(
         const { JSDOM } = require("jsdom");
         const window = new JSDOM("").window;
         const DOMPurify = createDOMPurify(window);
-        const contents = await fs.promises.readFile(file.location);
+        const contents = await fs.promises.readFile(file.location, "utf-8");
         const clean = DOMPurify.sanitize(contents);
         res.send(clean);
         return;
@@ -496,7 +496,7 @@ router.get(
         const { JSDOM } = require("jsdom");
         const window = new JSDOM("").window;
         const DOMPurify = createDOMPurify(window);
-        const contents = await fs.promises.readFile(file.location);
+        const contents = await fs.promises.readFile(file.location, "utf-8");
         const clean = DOMPurify.sanitize(contents);
         res.send(clean);
         return;
@@ -705,7 +705,7 @@ router.post(
       return;
     }
     const result = await f.delete(
-      f.s3_store ? s3storage.unlinkObject : undefined
+      f.s3_store ? s3storage.unlinkObject : undefined as any
     );
     if (result && result.error) {
       if (req.xhr) {

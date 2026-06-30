@@ -45,7 +45,7 @@ type FieldLikeBasics = {
   fieldview?: string;
   input_type?: InputType;
   type?: string | Type;
-  class?: string;
+  class?: string | string[];
   primary_key?: boolean;
   sublabel?: string;
   validator?: (arg0: any) => boolean | string | undefined;
@@ -76,6 +76,7 @@ export type Header = {
   onlyViews?: string[];
   onlyFieldviews?: string[];
   only_if?: (req: Req) => boolean | undefined;
+  defer?: boolean;
 };
 
 export type MenuItem = {
@@ -417,7 +418,7 @@ export type ViewTemplate = {
   queries?: (configuration?: any, req?: any) => Record<string, any>;
   connectedObjects?: (configuration?: any) => Promise<ConnectedObjects>;
   noAutoTest?: boolean;
-  createBasicView?: Function
+  createBasicView?: Function;
 };
 
 export type RouteAction = (
