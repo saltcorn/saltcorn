@@ -8,6 +8,7 @@ import Router from "express-promise-router";
 
 import { error_catcher, is_relative_url, safe_redirect } from "./utils.js";
 import Table from "@saltcorn/data/models/table";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -16,7 +17,7 @@ import Table from "@saltcorn/data/models/table";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -27,11 +28,11 @@ export default router;
  */
 router.post(
   "/toggle/:tableName/:id/:field_name",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { tableName, id, field_name } = req.params;
     const { redirect } = req.query;
     // todo check that works after where change
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
 
     const row = await table.getRow(
       { [table.pk_name]: id },
@@ -45,7 +46,7 @@ router.post(
       );
 
     if (req.xhr) res.send("OK");
-    else if (req.get("referer")) res.redirect(req.get("referer"));
-    else safe_redirect(res, redirect, `/list/${table.name}`);
+    else if (req.get("referer")) res.redirect(req.get("referer")!);
+    else safe_redirect(res, redirect as string | undefined, `/list/${table.name}`);
   })
 );

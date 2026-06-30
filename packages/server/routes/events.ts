@@ -6,6 +6,7 @@
 
 import Router from "express-promise-router";
 import { isAdmin, setTenant, error_catcher } from "./utils.js";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -14,7 +15,7 @@ import { isAdmin, setTenant, error_catcher } from "./utils.js";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -26,7 +27,7 @@ export default router;
 router.get(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.redirect(`/actions`);
   })
 );

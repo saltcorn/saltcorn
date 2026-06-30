@@ -7,6 +7,7 @@ import Router from "express-promise-router";
 
 import { isAdmin, error_catcher } from "./utils.js";
 import { getState } from "@saltcorn/data/db/state";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -15,7 +16,7 @@ import { getState } from "@saltcorn/data/db/state";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -27,9 +28,9 @@ export default router;
 router.post(
   "/delete/:key",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { key } = req.params;
-    await getState().deleteConfig(key);
+    await getState()!.deleteConfig(key);
     if (req.xhr) res.json({ success: "ok" });
     else {
       req.flash("success", req.__(`Configuration key %s deleted`, key));
@@ -41,11 +42,11 @@ router.post(
 router.post(
   "/save",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res) => {
+    const state = getState()!;
 
     //TODO check this is a config key
-    const validKeyName = (k) =>
+    const validKeyName = (k: string) =>
       k !== "_csrf" && k !== "constructor" && k !== "__proto__";
 
     for (const [k, v] of Object.entries(req.body || {})) {
@@ -61,12 +62,12 @@ router.post(
 
     // checkboxes that are false are not sent in post body. Check here
     const { boolcheck } = req.query;
-    const boolchecks =
+    const boolchecks: string[] =
       typeof boolcheck === "undefined"
         ? []
         : Array.isArray(boolcheck)
-          ? boolcheck
-          : [boolcheck];
+          ? (boolcheck as string[])
+          : [boolcheck as string];
     for (const k of boolchecks) {
       if (typeof (req.body || {})[k] === "undefined" && validKeyName(k))
         await state.setConfig(k, false);

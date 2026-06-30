@@ -7,6 +7,7 @@
 import Router from "express-promise-router";
 import { i, h3, p, a } from "@saltcorn/markup/tags";
 import { isAdmin, error_catcher } from "./utils.js";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -15,7 +16,7 @@ import { isAdmin, error_catcher } from "./utils.js";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -26,7 +27,17 @@ export default router;
  * @param {string} opts.href
  * @returns {object}
  */
-const settingsCard = ({ title, icon, blurb, href }) => ({
+const settingsCard = ({
+  title,
+  icon,
+  blurb,
+  href,
+}: {
+  title: string;
+  icon: string;
+  blurb: string;
+  href: string;
+}) => ({
   type: "card",
   url: href,
   contents: {
@@ -47,7 +58,7 @@ const settingsCard = ({ title, icon, blurb, href }) => ({
 router.get(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.sendWrap(req.__("Settings"), {
       above: [
         {
