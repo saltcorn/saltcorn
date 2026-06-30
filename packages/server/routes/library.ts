@@ -52,7 +52,7 @@ router.get(
       res,
       req,
       active_sub: "Library",
-      contents: ({
+      contents: {
         type: "card",
         title: req.__(
           "Library: component assemblies that can be used in the builder"
@@ -75,7 +75,7 @@ router.get(
           ],
           libs
         ),
-      }) as any,
+      },
     });
   })
 );
