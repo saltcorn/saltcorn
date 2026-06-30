@@ -49,8 +49,8 @@ router.use(rejectTenantDrift);
  */
 function accessAllowedRead(req: any, user: any) {
   const role =
-    req.user && req.user.id
-      ? req.user.role_id
+    req.user && req.user!.id
+      ? req.user!.role_id
       : user && user.role_id
         ? user.role_id
         : 100;
@@ -77,7 +77,7 @@ router.get(
       { session: false },
       async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
-          const tables = await Table.find({});
+          const tables = (await Table.find({}))!;
 
           res.json({ success: tables });
         } else {
@@ -105,7 +105,7 @@ router.get(
       { session: false },
       async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
-          const views = await View.find({}, { cached: true });
+          const views = (await View.find({}, { cached: true }))!;
 
           res.json({ success: views });
         } else {
@@ -133,7 +133,7 @@ router.get(
       { session: false },
       async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
-          const pages = await Page.find({});
+          const pages = (await Page.find({}))!;
 
           res.json({ success: pages });
         } else {
@@ -161,7 +161,7 @@ router.get(
       { session: false },
       async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
-          const files = await File.find({});
+          const files = (await File.find({}))!;
 
           res.json({ success: files });
         } else {
@@ -189,7 +189,7 @@ router.get(
       { session: false },
       async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
-          const triggers = Trigger.find({});
+          const triggers = Trigger.find({})!;
 
           res.json({ success: triggers });
         } else {
@@ -217,7 +217,7 @@ router.get(
       { session: false },
       async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
-          const roles = await Role.find({});
+          const roles = (await Role.find({}))!;
 
           res.json({ success: roles });
         } else {
@@ -273,7 +273,7 @@ router.get(
       { session: false },
       async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
-          const plugins = await Plugin.find({});
+          const plugins = (await Plugin.find({}))!;
 
           res.json({ success: plugins });
         } else {
@@ -377,7 +377,7 @@ router.post(
           }`
         );
 
-        const view = View.findOne({ name: viewname });
+        const view = View.findOne({ name: viewname })!;
         if (!view) {
           res
             .status(404)

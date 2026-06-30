@@ -62,7 +62,7 @@ const fieldForm = async (req: any, fkey_opts: any, existing_names: any, id: any,
     .filter(([k, v]: any) => v.primaryKey)
     .map(([k, v]: any) => k);
   if (id) {
-    const field = await Field.findOne({ id });
+    const field = (await Field.findOne({ id }))!;
     if (field) {
       isPrimary = !!field.primary_key;
     }
@@ -316,11 +316,11 @@ const fieldFlow = (req: any) =>
         fldRow.is_unique = false;
         fldRow.required = false;
       }
-      const table = Table.findOne({ id: table_id });
+      const table = Table.findOne({ id: table_id })!;
       try {
         await db.withTransaction(async () => {
           if (context.id) {
-            const field = await Field.findOne({ id: context.id });
+            const field = (await Field.findOne({ id: context.id }))!;
             await field.update(fldRow);
             Trigger.emitEvent(
               "AppChange",
@@ -369,8 +369,8 @@ const fieldFlow = (req: any) =>
       {
         name: req.__("Basic properties"),
         form: async (context: any) => {
-          const tables = await Table.find({});
-          const table = tables.find((t: any) => t.id === context.table_id);
+          const tables = (await Table.find({}))!;
+          const table = tables.find((t: any) => t.id === context.table_id)!;
           const nrows = await table.countRows({});
           const existing_fields = table.getFields();
           const existingNames = existing_fields.map((f: any) => f.name);
@@ -466,7 +466,7 @@ const fieldFlow = (req: any) =>
         name: req.__("Expression"),
         onlyWhen: (context: any) => context.calculated,
         form: async (context: any) => {
-          const table = Table.findOne({ id: context.table_id });
+          const table = Table.findOne({ id: context.table_id })!;
           const fields = table.getFields();
           const models = await table.get_models();
           const instance_options = {};
@@ -681,7 +681,7 @@ const fieldFlow = (req: any) =>
           context.type !== "File" && new Field(context).is_fkey,
         form: async (context: any) => {
           const fld = new Field(context);
-          const table = Table.findOne({ name: fld.reftable_name });
+          const table = Table.findOne({ name: fld.reftable_name })!;
           const fields = table.getFields();
           const orderedFields = [
             ...fields.filter((f: any) => !f.primary_key),
@@ -762,7 +762,7 @@ const fieldFlow = (req: any) =>
           context.required && !context.calculated && !context.primary_key,
 
         form: async (context: any) => {
-          const table = Table.findOne({ id: context.table_id });
+          const table = Table.findOne({ id: context.table_id })!;
           const nrows = await table.countRows();
           const formfield = new Field({
             name: "default",
@@ -905,13 +905,13 @@ router.get(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const field = await Field.findOne({ id });
+    const field = (await Field.findOne({ id }))!;
     if (!field) {
       req.flash("danger", req.__(`Field not found`));
       res.redirect(`/table`);
       return;
     }
-    const table = Table.findOne({ id: field.table_id });
+    const table = Table.findOne({ id: field.table_id })!;
     if (!field.type) {
       req.flash("danger", req.__(`Type %s not found`, field.typename));
       res.redirect(`/table/${field.table_id}`);
@@ -961,7 +961,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { table_id } = req.params;
-    const table = Table.findOne({ id: table_id });
+    const table = Table.findOne({ id: table_id })!;
     const wf = fieldFlow(req);
     const wfres = await wf.run({ table_id: +table_id }, req);
     res.sendWrap(req.__(`New field`), {
@@ -998,7 +998,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const f = await Field.findOne({ id });
+    const f = (await Field.findOne({ id }))!;
     if (!f) {
       req.flash("danger", req.__(`Field not found`));
       res.redirect(`/table`);
@@ -1029,7 +1029,7 @@ router.post(
     const wf = fieldFlow(req);
     const wfres = await wf.run(req.body || {}, req);
     if (wfres.renderForm) {
-      const table = Table.findOne({ id: wfres.context.table_id });
+      const table = Table.findOne({ id: wfres.context.table_id })!;
       res.sendWrap(req.__(`Field attributes`), {
         above: [
           {
@@ -1081,7 +1081,7 @@ router.post(
     let { formula, tablename, stored } = req.body || {};
     if (stored === "false") stored = false;
 
-    const table = Table.findOne({ name: tablename });
+    const table = Table.findOne({ name: tablename })!;
     const fields = table.getFields();
     const freeVars = freeVariables(formula);
     const joinFields = {};
@@ -1136,8 +1136,8 @@ router.post(
   "/show-calculated/:tableName/:fieldName/:fieldview",
   error_catcher(async (req: Req, res: Res) => {
     const { tableName, fieldName, fieldview } = req.params;
-    const table = Table.findOne({ name: tableName });
-    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const table = Table.findOne({ name: tableName })!;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
 
     getState()!.log(
       5,
@@ -1161,15 +1161,15 @@ router.post(
       row = { ...dbrow, ...row };
       //prevent overwriting ownership field
       if (table.ownership_field_id) {
-        const ofield = fields.find((f: any) => f.id === table.ownership_field_id);
+        const ofield = fields.find((f: any) => f.id === table.ownership_field_id)!;
         row[ofield.name] = dbrow[ofield.name];
       }
     } else {
       //may need to add joinfields
       for (const { ref } of Object.values(joinFields)) {
         if (row[ref]) {
-          const field = fields.find((f: any) => f.name === ref);
-          const reftable = Table.findOne({ name: field.reftable_name });
+          const field = fields.find((f: any) => f.name === ref)!;
+          const reftable = Table.findOne({ name: field.reftable_name })!;
           const refFields = await reftable.getFields();
 
           const joinFields = {};
@@ -1202,10 +1202,10 @@ router.post(
       //join field
       const kpath = fieldName.split(".");
       if (kpath.length === 2 && row[kpath[0]]) {
-        const field = fields.find((f: any) => f.name === kpath[0]);
-        const reftable = Table.findOne({ name: field.reftable_name });
+        const field = fields.find((f: any) => f.name === kpath[0])!;
+        const reftable = Table.findOne({ name: field.reftable_name })!;
         const refFields = await reftable.getFields();
-        const targetField = refFields.find((f: any) => f.name === kpath[1]);
+        const targetField = refFields.find((f: any) => f.name === kpath[1])!;
         //console.log({ kpath, fieldview, targetField });
         const q = { [reftable.pk_name]: row[kpath[0]] };
         const joinFields = {};
@@ -1229,7 +1229,7 @@ router.post(
           if (!fv) {
             const reftable2 = Table.findOne({
               name: targetField.reftable_name,
-            });
+            })!;
             const refRow2 = await reftable2.getRow(
               {
                 [reftable2.pk_name]: refRow[kpath[1]],
@@ -1268,9 +1268,9 @@ router.post(
         let oldRow = row;
         for (const ref of kpath) {
           const ofields = await oldTable.getFields();
-          const field = ofields.find((f: any) => f.name === ref);
+          const field = ofields.find((f: any) => f.name === ref)!;
           if (field.is_fkey) {
-            const reftable = Table.findOne({ name: field.reftable_name });
+            const reftable = Table.findOne({ name: field.reftable_name })!;
             if (!oldRow[ref]) break;
             if (role > reftable.min_role_read) {
               res.status401.send("");
@@ -1303,7 +1303,7 @@ router.post(
       return;
     }
 
-    const field = fields.find((f: any) => f.name === fieldName);
+    const field = fields.find((f: any) => f.name === fieldName)!;
 
     const formula = field.expression;
 
@@ -1325,16 +1325,16 @@ router.post(
         for (const { target, ref, through, rename_object } of Object.values(
           joinFields
         )) {
-          const jf = table.getField(ref);
-          const jtable = Table.findOne(jf.reftable_name);
+          const jf = table.getField(ref)!;
+          const jtable = Table.findOne(jf.reftable_name)!;
           const jrow = await jtable.getRow(
             { [jtable.pk_name]: row[ref]?.[jtable.pk_name] || row[ref] },
             { forUser: req.user, forPublic: !req.user }
           );
           row[ref] = jrow;
           if (through) {
-            const jf2 = jtable.getField(through);
-            const jtable2 = Table.findOne(jf2.reftable_name);
+            const jf2 = jtable.getField(through)!;
+            const jtable2 = Table.findOne(jf2.reftable_name)!;
             const jrow2 = await jtable2.getRow(
               {
                 [jtable2.pk_name]: jrow[through],
@@ -1376,7 +1376,7 @@ router.post(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { tableName, fieldName, fieldview } = req.params;
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
     const fields = table.getFields();
     const state = getState()!;
 
@@ -1390,18 +1390,18 @@ router.post(
     const whereClause = row_id ? { id: row_id } : {};
     if (fieldName.includes(".")) {
       const [refNm, targetNm] = fieldName.split(".");
-      const ref = fields.find((f: any) => f.name === refNm);
+      const ref = fields.find((f: any) => f.name === refNm)!;
       if (!ref) {
         res.send("");
         return;
       }
-      const reftable = Table.findOne({ name: ref.reftable_name });
+      const reftable = Table.findOne({ name: ref.reftable_name })!;
       if (!reftable) {
         res.send("");
         return;
       }
       const reffields = await reftable.getFields();
-      field = reffields.find((f: any) => f.name === targetNm);
+      field = reffields.find((f: any) => f.name === targetNm)!;
       if (row_id) {
         const mainRow = await table.getRow(whereClause, { forUser: req.user });
         const refId = mainRow && mainRow[refNm];
@@ -1413,7 +1413,7 @@ router.post(
       }
       value = row && row[targetNm];
     } else {
-      field = fields.find((f: any) => f.name === fieldName);
+      field = fields.find((f: any) => f.name === fieldName)!;
       row = await table.getRow(whereClause, { forUser: req.user });
       value = row && row[fieldName];
     }
@@ -1523,7 +1523,7 @@ router.post(
       mode,
       _columndef,
     } = req.body || {};
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
     if (agg_outcome_type && agg_fieldview) {
       const type = getState()!.types[agg_outcome_type];
       const fv = type?.fieldviews?.[agg_fieldview];
@@ -1531,7 +1531,7 @@ router.post(
         res.send(req.query?.accept == "json" ? "[]" : "");
         return;
       }
-      const field = table.getField(agg_field);
+      const field = table.getField(agg_field)!;
       const cfgfields = await applyAsync(fv.configFields, field || { table }, {
         mode,
       });
@@ -1552,11 +1552,11 @@ router.post(
       return;
     }
 
-    let field = table.getField(fieldName);
+    let field = table.getField(fieldName)!;
     if (!field && fieldName.split(".").length === 3) {
       const [inboundTableName, inboundKey, refField] = fieldName.split(".");
-      const inboundTable = Table.findOne(inboundTableName);
-      field = inboundTable.getField(refField);
+      const inboundTable = Table.findOne(inboundTableName)!;
+      field = inboundTable.getField(refField)!;
     }
     if (
       !field &&
@@ -1605,12 +1605,12 @@ router.post(
   "/edit-get-fieldview",
   error_catcher(async (req: Req, res: Res) => {
     const { field_name, table_name, pk, fieldview, configuration } = req.body;
-    const table = Table.findOne({ name: table_name });
+    const table = Table.findOne({ name: table_name })!;
     const row = await table.getRow(
       { [table.pk_name]: pk },
       { forUser: req.user, forPublic: !req.user }
     );
-    const field = table.getField(field_name);
+    const field = table.getField(field_name)!;
     let fv;
     if (field.is_fkey) {
       await field.fill_fkey_options(
@@ -1654,8 +1654,8 @@ router.post(
     const fielddata = JSON.parse(decodeURIComponent(req.body._fielddata));
     const { field_name, table_name, pk, fieldview, configuration, join_field } =
       fielddata;
-    const table = Table.findOne({ name: table_name });
-    const field = table.getField(field_name);
+    const table = Table.findOne({ name: table_name })!;
+    const field = table.getField(field_name)!;
     let val = field.type?.read
       ? field.type?.read(req.body[field_name], field.attributes)
       : req.body[field_name];
@@ -1665,10 +1665,10 @@ router.post(
     let fv;
     if (field.is_fkey) {
       if (join_field) {
-        const refTable = Table.findOne({ name: field.reftable_name });
+        const refTable = Table.findOne({ name: field.reftable_name })!;
         const refRow = await refTable.getRow({ [refTable.pk_name]: val });
         val = refRow[join_field];
-        const targetField = refTable.getField(join_field);
+        const targetField = refTable.getField(join_field)!;
         const fieldviews = targetField.type.fieldviews;
 
         fv = fieldviews[fieldview];

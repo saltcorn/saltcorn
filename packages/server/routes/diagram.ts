@@ -43,7 +43,7 @@ const findEntryPages = async () => {
   } else {
     pages = [];
     for (const legacyRole of ["public", "user", "staff", "admin"]) {
-      const page = await Page.findOne({ name: `${legacyRole}_home` });
+      const page = (await Page.findOne({ name: `${legacyRole}_home` }))!;
       if (page) pages.push(page);
     }
   }
@@ -88,7 +88,7 @@ router.get(
       showTrigger: true,
     };
     const initialCyCode = generateCyCode(await buildObjectTrees(extractOpts));
-    const tags = await Tag.find();
+    const tags = (await Tag.find())!;
     const roles = await User.get_roles();
     send_infoarch_page({
       res,

@@ -44,12 +44,12 @@ export default router;
  * @returns {Promise<Form>}
  */
 const menuForm = async (req: any) => {
-  const views = await View.find({}, { orderBy: "name", nocase: true });
-  const pages = await Page.find({}, { orderBy: "name", nocase: true });
-  const pageGroups = await PageGroup.find(
+  const views = (await View.find({}, { orderBy: "name", nocase: true }))!;
+  const pages = (await Page.find({}, { orderBy: "name", nocase: true }))!;
+  const pageGroups = (await PageGroup.find(
     {},
     { orderBy: "name", nocase: true }
-  );
+  ))!;
   const roles = await User.get_roles();
   const tables = await Table.find_with_external({});
   const dynTableOptions = tables.map((t: any) => t.name);
@@ -78,7 +78,7 @@ const menuForm = async (req: any) => {
   ];
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
-  });
+  })!;
   triggers.forEach((tr: any) => {
     actions.push(tr.name);
   });
@@ -820,7 +820,7 @@ router.post(
       false
     );
 
-    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+    if (maintenanceModeEnabled && (!req.user || req.user!.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
     }

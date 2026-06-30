@@ -105,9 +105,9 @@ const buildWorkflowActionExplainers = async (trigger: any) => {
     if (action.disableInWorkflow) continue;
     if (action.description) actionExplainers[name] = action.description;
   }
-  const triggers = await Trigger.find({
+  const triggers = (await Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
-  });
+  }))!;
   triggers.forEach((tr: any) => {
     if (tr.description) actionExplainers[tr.name] = tr.description;
   });
@@ -146,7 +146,7 @@ const getWorkflowEditorData = async (req: any, trigger: any, stepsIn: any) => {
   let steps =
     stepsIn ||
     (await WorkflowStep.find({ trigger_id: trigger.id }, { orderBy: "id" }));
-  const initial_step = steps.find((step: any) => step.initial_step);
+  const initial_step = steps.find((step: any) => step.initial_step)!;
   if (initial_step)
     steps = [initial_step, ...steps.filter((s: any) => !s.initial_step)];
 
@@ -189,15 +189,15 @@ router.get(
     let filterOnTag;
 
     if (req.query._tag) {
-      const tagEntries = await TagEntry.find({
+      const tagEntries = (await TagEntry.find({
         tag_id: +req.query._tag,
         not: { trigger_id: null },
-      });
+      }))!;
       const tagged_trigger_ids = new Set(
         tagEntries.map((te: any) => te.trigger_id).filter(Boolean)
       );
       triggers = triggers.filter((t: any) => tagged_trigger_ids.has(t.id));
-      filterOnTag = await Tag.findOne({ id: +req.query._tag });
+      filterOnTag = (await Tag.findOne({ id: +req.query._tag }))!;
     }
     const blurb =
       p(
@@ -252,7 +252,7 @@ const triggerForm = async (req: any, trigger: any) => {
     label: r.role,
   }));
   const actions = Trigger.abbreviated_actions;
-  const tables = await Table.find({});
+  const tables = (await Table.find({}))!;
   let id;
   let form_action;
   if (typeof trigger !== "undefined") {
@@ -478,7 +478,7 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const form = await triggerForm(req);
     if (req.query.table) {
-      const table = Table.findOne({ name: req.query.table });
+      const table = Table.findOne({ name: req.query.table })!;
       if (table) form.values.table_id = table.id;
     }
 
@@ -518,7 +518,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const trigger = await Trigger.findOne({ id });
+    const trigger = (await Trigger.findOne({ id }))!;
 
     const form = await triggerForm(req, trigger);
     form.values = trigger;
@@ -594,7 +594,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const trigger = await Trigger.findOne({ id });
+    const trigger = (await Trigger.findOne({ id }))!;
     // todo check that trigger exists
 
     const form = await triggerForm(req, trigger);
@@ -641,10 +641,10 @@ router.post(
 );
 
 const getWorkflowConfig = async (req: any, id: any, table: any, trigger: any) => {
-  const steps = await WorkflowStep.find(
+  const steps = (await WorkflowStep.find(
     { trigger_id: trigger.id },
     { orderBy: "id" }
-  );
+  ))!;
   const trigCfgForm = new Form({
     action: addOnDoneRedirect(`/actions/configure/${id}`, req),
     onChange: "saveAndContinue(this)",
@@ -718,7 +718,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { trigger_id } = req.params;
-    const trigger = await Trigger.findOne({ id: trigger_id });
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
     if (!trigger) return res.status(404).json({ error: "Trigger not found" });
     const data = await getWorkflowEditorData(req, trigger);
     res.json(data);
@@ -732,12 +732,12 @@ router.post(
     const { trigger_id } = req.params;
     const { step_id, next_step, initial_step, loop_body_step } = req.body || {};
     const stepId = step_id ? +step_id : null;
-    const step = await WorkflowStep.findOne({ id: stepId, trigger_id });
+    const step = (await WorkflowStep.findOne({ id: stepId, trigger_id }))!;
     if (!step) return res.status(404).json({ error: "Step not found" });
-    const allSteps = await WorkflowStep.find({ trigger_id });
+    const allSteps = (await WorkflowStep.find({ trigger_id }))!;
     const previouslyInitial = allSteps.find(
       (s: any) => s.initial_step && s.id !== step.id
-    );
+    )!;
     const updateRow = {};
     if (typeof next_step !== "undefined")
       updateRow.next_step = next_step || null;
@@ -761,7 +761,7 @@ router.post(
       };
     }
     await step.update(updateRow);
-    const trigger = await Trigger.findOne({ id: trigger_id });
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
     Trigger.emitEvent(
       "AppChange",
       `Trigger ${trigger?.name || step.trigger_id}`,
@@ -797,7 +797,7 @@ router.post(
         startPos = { x, y };
         continue;
       }
-      const step = await WorkflowStep.findOne({ id: +pos.id, trigger_id });
+      const step = (await WorkflowStep.findOne({ id: +pos.id, trigger_id }))!;
       if (!step) continue;
       await step.update({
         configuration: {
@@ -807,7 +807,7 @@ router.post(
       });
     }
 
-    const trigger = await Trigger.findOne({ id: trigger_id });
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
     if (startPos) {
       await Trigger.update(trigger_id, {
         configuration: {
@@ -821,8 +821,8 @@ router.post(
       trigger,
       req.user
         ? {
-            user_id: req.user.id,
-            role_id: req.user.role_id,
+            user_id: req.user!.id,
+            role_id: req.user!.role_id,
             entity_type: "Trigger",
             entity_name: trigger?.name || trigger_id,
           }
@@ -838,10 +838,10 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const trigger_id = +req.params.trigger_id;
     const { step_id } = req.body || {};
-    const source = await WorkflowStep.findOne({ id: +step_id, trigger_id });
+    const source = (await WorkflowStep.findOne({ id: +step_id, trigger_id }))!;
     if (!source) return res.status(404).json({ error: "Step not found" });
 
-    const steps = await WorkflowStep.find({ trigger_id });
+    const steps = (await WorkflowStep.find({ trigger_id }))!;
     const existingNames = new Set(steps.map((s: any) => s.name));
     const safeName = String(source.name || "").replace(/\s+/g, "_");
     const baseName = `${safeName}_copy`;
@@ -861,7 +861,7 @@ router.post(
       configuration: source.configuration,
     });
 
-    const trigger = await Trigger.findOne({ id: trigger_id });
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
     Trigger.emitEvent(
       "AppChange",
       `Trigger ${trigger?.name || trigger_id}`,
@@ -872,7 +872,7 @@ router.post(
       }
     );
 
-    const newStep = await WorkflowStep.findOne({ id: newStepId });
+    const newStep = (await WorkflowStep.findOne({ id: newStepId }))!;
 
     res.json({
       success: "ok",
@@ -897,7 +897,7 @@ router.post(
       const width = numeric(size.width);
       const height = numeric(size.height);
       if (!Number.isFinite(width) || !Number.isFinite(height)) continue;
-      const step = await WorkflowStep.findOne({ id: +size.id, trigger_id });
+      const step = (await WorkflowStep.findOne({ id: +size.id, trigger_id }))!;
       if (!step) continue;
       await step.update({
         configuration: {
@@ -907,14 +907,14 @@ router.post(
       });
     }
 
-    const trigger = await Trigger.findOne({ id: trigger_id });
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
     Trigger.emitEvent(
       "AppChange",
       trigger,
       req.user
         ? {
-            user_id: req.user.id,
-            role_id: req.user.role_id,
+            user_id: req.user!.id,
+            role_id: req.user!.role_id,
             entity_type: "Trigger",
             entity_name: trigger?.name || trigger_id,
           }
@@ -980,7 +980,7 @@ const getWorkflowStepForm = async (trigger: any, req: any, step_id: any, after_s
       wf_action_name: Trigger.find({ action: "Workflow" }).map((wf: any) => wf.name),
     },
   });
-  const nonWfTriggerNames = Trigger.find({})
+  const nonWfTriggerNames = Trigger.find({})!
     .filter((tr: any) => tr.action !== "Workflow")
     .map((wf: any) => wf.name);
 
@@ -1009,7 +1009,7 @@ const getWorkflowStepForm = async (trigger: any, req: any, step_id: any, after_s
   });
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
-  });
+  })!;
   triggers.forEach((tr: any) => {
     if (tr.description) actionExplainers[tr.name] = tr.description;
   });
@@ -1086,7 +1086,7 @@ const getWorkflowStepForm = async (trigger: any, req: any, step_id: any, after_s
   else if (after_step) form.values._after_step = after_step;
   else if (after_step_for) form.values._after_step_for = after_step_for;
   if (step_id) {
-    const step = await WorkflowStep.findOne({ id: step_id });
+    const step = (await WorkflowStep.findOne({ id: step_id }))!;
     if (!step) throw new Error("Step not found");
     form.values = {
       wf_step_id: step.id,
@@ -1109,7 +1109,7 @@ const getMultiStepForm = async (req: any, id: any, table: any) => {
   const actions = [...stateActionKeys];
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
-  });
+  })!;
   triggers.forEach((tr: any) => {
     actions.push(tr.name);
   });
@@ -1179,10 +1179,10 @@ router.get(
     const { idorname } = req.params;
     let trigger;
     let id = parseInt(idorname);
-    if (id) trigger = await Trigger.findOne({ id });
+    if (id) trigger = (await Trigger.findOne({ id }))!;
 
     if (!trigger) {
-      trigger = await Trigger.findOne({ name: idorname });
+      trigger = (await Trigger.findOne({ name: idorname }))!;
       id = trigger.id;
     }
 
@@ -1326,7 +1326,7 @@ router.get(
       const events = Trigger.when_options;
       const actions = Trigger.find({
         when_trigger: { or: ["API call", "Never"] },
-      });
+      })!;
       const tables = (await Table.find({})).map((t: any) => ({
         name: t.name,
         external: t.external,
@@ -1661,7 +1661,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const trigger = await Trigger.findOne({ id });
+    const trigger = (await Trigger.findOne({ id }))!;
     const action = getState()!.actions[trigger.action];
     const table = trigger.table_id
       ? Table.findOne({ id: trigger.table_id })
@@ -1736,7 +1736,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const trigger = await Trigger.findOne({ id });
+    const trigger = (await Trigger.findOne({ id }))!;
     await db.withTransaction(async () => {
       await trigger.delete();
     });
@@ -1765,7 +1765,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const trigger = await Trigger.findOne({ id });
+    const trigger = (await Trigger.findOne({ id }))!;
     const output = [];
     const fakeConsole = {
       log(...s) {
@@ -1785,7 +1785,7 @@ router.get(
     };
     let table, row;
     if (trigger.table_id) {
-      table = Table.findOne({ id: trigger.table_id });
+      table = Table.findOne({ id: trigger.table_id })!;
       row = await table.getRow(
         {},
         { orderBy: "RANDOM()", forUser: req.user, forPublic: !req.user }
@@ -1901,7 +1901,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const trig = await Trigger.findOne({ id });
+    const trig = (await Trigger.findOne({ id }))!;
     const newtrig = await trig.clone();
     await getState()!.refresh_triggers();
     Trigger.emitEvent("AppChange", `Trigger ${newtrig.name}`, req.user, {
@@ -1933,7 +1933,7 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const { trigger_id, step_id } = req.params;
     const { initial_step, after_step, before_step, after_step_for } = req.query;
-    const trigger = await Trigger.findOne({ id: trigger_id });
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
     const form = await getWorkflowStepForm(
       trigger,
       req,
@@ -1947,7 +1947,7 @@ router.get(
 
     if (initial_step) form.values.wf_initial_step = true;
     if (!step_id) {
-      const steps = await WorkflowStep.find({ trigger_id });
+      const steps = (await WorkflowStep.find({ trigger_id }))!;
       const stepNames = new Set(steps.map((s: any) => s.name));
       let name_ix = steps.length + 1;
       while (stepNames.has(`step${name_ix}`)) name_ix += 1;
@@ -1986,7 +1986,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { trigger_id } = req.params;
-    const trigger = await Trigger.findOne({ id: trigger_id });
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
     const form = await getWorkflowStepForm(trigger, req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -2030,7 +2030,7 @@ router.post(
       wf_step_id && wf_step_id !== "undefined"
         ? await WorkflowStep.findOne({ id: wf_step_id, trigger_id })
         : null;
-    const stepsForTrigger = await WorkflowStep.find({ trigger_id });
+    const stepsForTrigger = (await WorkflowStep.find({ trigger_id }))!;
     const previouslyInitial = existingStep
       ? stepsForTrigger.find((s: any) => s.initial_step && s.id !== existingStep.id)
       : stepsForTrigger.find((s: any) => s.initial_step);
@@ -2044,10 +2044,10 @@ router.post(
       _after_step !== "undefined" &&
       !configuration.workflow_position
     ) {
-      const afterStep = await WorkflowStep.findOne({
+      const afterStep = (await WorkflowStep.findOne({
         id: _after_step,
         trigger_id,
-      });
+      }))!;
       const afterPos = afterStep?.configuration?.workflow_position;
       if (afterPos) {
         const size = afterStep?.configuration?.workflow_size || {};
@@ -2141,7 +2141,7 @@ router.post(
 
         const id = await WorkflowStep.create(step);
         if (wf_initial_step && previouslyInitial && !step.next_step) {
-          const newStep = await WorkflowStep.findOne({ id, trigger_id });
+          const newStep = (await WorkflowStep.findOne({ id, trigger_id }))!;
           if (newStep && !newStep.next_step)
             await newStep.update({ next_step: previouslyInitial.name });
         }
@@ -2157,17 +2157,17 @@ router.post(
         entity_name: trigger.name,
       });
       if (_after_step && _after_step !== "undefined") {
-        const astep = await WorkflowStep.findOne({
+        const astep = (await WorkflowStep.findOne({
           id: _after_step,
           trigger_id,
-        });
+        }))!;
         if (astep) await astep.update({ next_step: step.name });
       }
       if (_after_step_for && _after_step_for !== "undefined") {
-        const astep = await WorkflowStep.findOne({
+        const astep = (await WorkflowStep.findOne({
           id: _after_step_for,
           trigger_id,
-        });
+        }))!;
         if (astep)
           await astep.update({
             configuration: {
@@ -2179,7 +2179,7 @@ router.post(
 
       // if the step was renamed, update references from other steps
       if (existingStep && existingStep.name !== step.name) {
-        const stepsForTrigger = await WorkflowStep.find({ trigger_id });
+        const stepsForTrigger = (await WorkflowStep.find({ trigger_id }))!;
         for (const s of stepsForTrigger) {
           const update = {};
           if (s.next_step === existingStep.name) update.next_step = step.name;
@@ -2216,7 +2216,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const trigger = await Trigger.findOne({ id });
+    const trigger = (await Trigger.findOne({ id }))!;
     if (!trigger) {
       req.flash("warning", req.__("Action not found"));
       res.redirect(`/actions/`);
@@ -2255,7 +2255,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { trigger_id } = req.params;
-    const trigger = await Trigger.findOne({ id: trigger_id });
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
     await WorkflowStep.deleteForTrigger(trigger.id);
     const description = (req.body || {}).description;
     await Trigger.update(trigger.id, { description });
@@ -2281,7 +2281,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
   error_catcher(async (req: Req, res: Res) => {
     const { step_id } = req.params;
-    const step = await WorkflowStep.findOne({ id: step_id });
+    const step = (await WorkflowStep.findOne({ id: step_id }))!;
     await db.withTransaction(async () => {
       await step.delete(true);
     });
@@ -2304,7 +2304,7 @@ router.get(
       q.trigger_id = trigger;
       trName = trNames[+q.trigger_id];
     }
-    const runs = await WorkflowRun.find(q, selOpts);
+    const runs = (await WorkflowRun.find(q, selOpts))!;
     const count = await WorkflowRun.count(q);
 
     const wfTable = mkTable(
@@ -2378,12 +2378,12 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const run = await WorkflowRun.findOne({ id });
-    const trigger = await Trigger.findOne({ id: run.trigger_id });
-    const traces = await WorkflowTrace.find(
+    const run = (await WorkflowRun.findOne({ id }))!;
+    const trigger = (await Trigger.findOne({ id: run.trigger_id }))!;
+    const traces = (await WorkflowTrace.find(
       { run_id: run.id },
       { orderBy: "id" }
-    );
+    ))!;
     const traces_accordion_items = div(
       { class: "accordion" },
       traces.map((trace: any, ix: any) =>
@@ -2510,7 +2510,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const run = await WorkflowRun.findOne({ id });
+    const run = (await WorkflowRun.findOne({ id }))!;
     await run.delete();
     res.redirect("/actions/runs");
   })
@@ -2521,7 +2521,7 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const run = await WorkflowRun.findOne({ id: +id });
+    const run = (await WorkflowRun.findOne({ id: +id }))!;
 
     if (!run || !run.user_allowed_to_fill_form(req.user)) {
       if (req.xhr) res.json({ error: "Not authorized" });
@@ -2532,11 +2532,11 @@ router.get(
       return;
     }
 
-    const trigger = await Trigger.findOne({ id: run.trigger_id });
-    const step = await WorkflowStep.findOne({
+    const trigger = (await Trigger.findOne({ id: run.trigger_id }))!;
+    const step = (await WorkflowStep.findOne({
       trigger_id: trigger.id,
       name: run.current_step_name,
-    });
+    }))!;
     try {
       const form = await getWorkflowStepUserForm(run, trigger, step, req, res);
       if (req.xhr) form.xhrSubmit = true;
@@ -2563,7 +2563,7 @@ const workflowRunPromiseHandler = (promise: any, run: any, req: any) => {
         ...retDirs,
         page_load_tag: req.headers["page-load-tag"],
       };
-      const userIds = req.user ? [req.user.id] : null;
+      const userIds = req.user ? [req.user!.id] : null;
       getState()!.emitDynamicUpdate(db.getTenantSchema(), emitData, userIds);
       if (
         !emitData.resume_workflow &&
@@ -2586,7 +2586,7 @@ const workflowRunPromiseHandler = (promise: any, run: any, req: any) => {
           error: e.message,
           page_load_tag: req.headers["page-load-tag"],
         },
-        req.user ? [req.user.id] : null
+        req.user ? [req.user!.id] : null
       );
     });
 };
@@ -2596,7 +2596,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const run = await WorkflowRun.findOne({ id });
+    const run = (await WorkflowRun.findOne({ id }))!;
     if (!run || !run.user_allowed_to_fill_form(req.user)) {
       if (req.xhr) res.json({ error: "Not authorized" });
       else {
@@ -2606,11 +2606,11 @@ router.post(
       return;
     }
 
-    const trigger = await Trigger.findOne({ id: run.trigger_id });
-    const step = await WorkflowStep.findOne({
+    const trigger = (await Trigger.findOne({ id: run.trigger_id }))!;
+    const step = (await WorkflowStep.findOne({
       trigger_id: trigger.id,
       name: run.current_step_name,
-    });
+    }))!;
 
     const form = await getWorkflowStepUserForm(run, trigger, step, req, res);
     form.validate(req.body || {});
@@ -2655,7 +2655,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const run = await WorkflowRun.findOne({ id: +id });
+    const run = (await WorkflowRun.findOne({ id: +id }))!;
     //TODO session if not logged in
     if (!run || run.started_by !== req.user?.id) {
       if (req.xhr) res.json({ error: "Not authorized" });
@@ -2665,7 +2665,7 @@ router.post(
       }
       return;
     }
-    const trigger = await Trigger.findOne({ id: run.trigger_id });
+    const trigger = (await Trigger.findOne({ id: run.trigger_id }))!;
     const run_async =
       getState()!.getConfig("enable_dynamic_updates") &&
       req.headers["page-load-tag"] &&

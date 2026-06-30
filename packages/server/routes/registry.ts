@@ -82,17 +82,17 @@ router.get(
     const { etype, ename, q } = req.query as Record<string, string>;
     const qlink = q ? `&q=${encodeURIComponent(q)}` : "";
     let edContents = "Choose an entity to edit";
-    const all_tables = await Table.find({}, { orderBy: "name", nocase: true });
-    const all_views = await View.find({}, { orderBy: "name", nocase: true });
-    const all_pages = await Page.find({}, { orderBy: "name", nocase: true });
+    const all_tables = (await Table.find({}, { orderBy: "name", nocase: true }))!;
+    const all_views = (await View.find({}, { orderBy: "name", nocase: true }))!;
+    const all_pages = (await Page.find({}, { orderBy: "name", nocase: true }))!;
     const all_triggers = await Trigger.findDB(
       {},
       { orderBy: "name", nocase: true }
     );
-    const all_plugins = await Plugin.find(
+    const all_plugins = (await Plugin.find(
       { name: { not: { in: ["base", "sbadmin2"] } } },
       { orderBy: "name", nocase: true }
-    );
+    ))!;
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
     const all_configs_obj = await getState()!.getAllConfigOrDefaults();
@@ -210,7 +210,7 @@ router.get(
         edContents = renderForm(mkForm(ppack), req.csrfToken());
         break;
       case "config":
-        const config = all_configs.find((t: any) => t.name === ename);
+        const config = all_configs.find((t: any) => t.name === ename)!;
         edContents =
           h4(config.label) +
           (config.blurb || "") +
@@ -218,7 +218,7 @@ router.get(
           renderForm(mkForm(config.value), req.csrfToken());
         break;
       case "trigger":
-        const trigger = all_triggers.find((t: any) => t.name === ename);
+        const trigger = all_triggers.find((t: any) => t.name === ename)!;
         const trpack = await trigger_pack(trigger!);
         cfg_link =
           `${ename} ${etype}` +
@@ -242,7 +242,7 @@ router.get(
         edContents = renderForm(mkForm(trpack), req.csrfToken());
         break;
       case "module":
-        const plugin = all_plugins.find((p: any) => p.name === ename);
+        const plugin = all_plugins.find((p: any) => p.name === ename)!;
         cfg_link =
           `${ename} ${etype}` +
           a(
@@ -422,7 +422,7 @@ router.post(
     }
     await db.withTransaction(async () => {
       if (etype === "module") {
-        const plugin = await Plugin.findOne({ name: ename });
+        const plugin = (await Plugin.findOne({ name: ename }))!;
         if (!plugin) throw new Error(`Module ${ename} not found`);
         let module: any = getState()!.plugins[plugin.name];
         if (!module) {

@@ -77,8 +77,8 @@ const limitFields = (fields: any) => (r: any) => {
  */
 function potentiallyAccessAllowedRead(req: any, user: any, table: any, allow_ownership: any) {
   const role =
-    req.user && req.user.id
-      ? req.user.role_id
+    req.user && req.user!.id
+      ? req.user!.role_id
       : user && user.role_id
         ? user.role_id
         : 100;
@@ -100,8 +100,8 @@ function potentiallyAccessAllowedRead(req: any, user: any, table: any, allow_own
  */
 function potentiallyAccessAllowedWrite(req: any, user: any, table: any) {
   const role =
-    req.user && req.user.id
-      ? req.user.role_id
+    req.user && req.user!.id
+      ? req.user!.role_id
       : user && user.role_id
         ? user.role_id
         : 100;
@@ -121,8 +121,8 @@ function potentiallyAccessAllowedWrite(req: any, user: any, table: any) {
  */
 function accessAllowed(req: any, user: any, trigger: any) {
   const role =
-    req.user && req.user.id
-      ? req.user.role_id
+    req.user && req.user!.id
+      ? req.user!.role_id
       : user && user.role_id
         ? user.role_id
         : 100;
@@ -147,7 +147,7 @@ router.use(
       "maintenance_mode_enabled",
       false
     );
-    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+    if (maintenanceModeEnabled && (!req.user || req.user!.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
     }
@@ -159,7 +159,7 @@ router.post(
   "/viewQuery/:viewName/:queryName",
   error_catcher(async (req: Req, res: Res, next: any) => {
     let { viewName, queryName } = req.params;
-    const view = await View.findOne({ name: viewName });
+    const view = (await View.findOne({ name: viewName }))!;
     if (!view) {
       getState()!.log(3, `API viewQuery ${viewName} not found`);
       res.status(404).json({
@@ -222,7 +222,7 @@ router.get(
         const role = req?.user?.role_id || user?.role_id || 100;
         const user_id = req?.user?.id || user?.id;
         const serve_path = path.join(...req.params.serve_path);
-        const file = await File.findOne(serve_path);
+        const file = (await File.findOne(serve_path))!;
         if (
           file &&
           (role <= file.min_role_read || (user_id && user_id === file.user_id))
@@ -318,7 +318,7 @@ router.get(
       strictParseInt(tableName)
         ? { id: strictParseInt(tableName) }
         : { name: tableName }
-    );
+    )!;
     if (!table) {
       res.status(404).json({ error: req.__("Not found") });
       return;
@@ -418,8 +418,8 @@ router.get(
     const strictIntId = strictParseInt(tableName);
     let table = Table.findOne(
       strictIntId ? { id: strictParseInt(tableName) } : { name: tableName }
-    );
-    if (strictIntId && !table) table = Table.findOne({ name: tableName });
+    )!;
+    if (strictIntId && !table) table = Table.findOne({ name: tableName })!;
     if (!table) {
       getState()!.log(3, `API get ${tableName} table not found`);
       getState()!.log(
@@ -484,7 +484,7 @@ router.get(
                 ? []
                 : [dereference];
             derefs.forEach((f: any) => {
-              const field = table.getField(f);
+              const field = table.getField(f)!;
               if (field?.attributes?.summary_field)
                 joinFields[`${f}_${field?.attributes?.summary_field}`] = {
                   ref: f,
@@ -540,7 +540,7 @@ router.get(
       strictParseInt(tableName)
         ? { id: strictParseInt(tableName) }
         : { name: tableName }
-    );
+    )!;
     if (!table) {
       getState()!.log(3, `API get ${tableName} table not found`);
       res.status(404).json({ error: req.__("Not found") });
@@ -647,10 +647,10 @@ router.all(
     // todo add to trigger role that can call it
     // todo include role public - anyone can call it
 
-    const trigger = await Trigger.findOne({
+    const trigger = (await Trigger.findOne({
       name: actionname,
       when_trigger: "API call",
-    });
+    }))!;
 
     if (!trigger) {
       getState()!.log(3, `API action ${actionname} not found`);
@@ -727,7 +727,7 @@ router.post(
   "/:tableName/",
   error_catcher(async (req: Req, res: Res, next: any) => {
     const { tableName } = req.params;
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
     if (!table) {
       getState()!.log(3, `API POST ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
@@ -781,7 +781,7 @@ router.post(
   // in case of primary key different from id - id will be string "undefined"
   error_catcher(async (req: Req, res: Res, next: any) => {
     const { tableName, id } = req.params;
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
     if (!table) {
       getState()!.log(3, `API DELETE ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
@@ -834,7 +834,7 @@ router.post(
   "/:tableName/:id",
   error_catcher(async (req: Req, res: Res, next: any) => {
     const { tableName, id } = req.params;
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
     if (!table) {
       getState()!.log(3, `API POST ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });
@@ -889,7 +889,7 @@ router.delete(
   // in case of primary key different from id - id will be string "undefined"
   error_catcher(async (req: Req, res: Res, next: any) => {
     const { tableName, id } = req.params;
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
     if (!table) {
       getState()!.log(3, `API DELETE ${tableName} not found`);
       res.status(404).json({ error: req.__("Not found") });

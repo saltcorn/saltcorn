@@ -185,7 +185,7 @@ const local_has_theme = (name: string) => {
  * @returns {Promise<Object[]>}
  */
 const get_store_items = async (req: Req) => {
-  const installed_plugins = await Plugin.find({});
+  const installed_plugins = (await Plugin.find({}))!;
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
@@ -670,7 +670,7 @@ router.get(
     const withoutOrg = name.replace(/^@saltcorn\//, "");
     let plugin = await Plugin.store_by_name(decodeURIComponent(withoutOrg));
     if (!plugin)
-      plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+      plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     if (!plugin) {
       getState()!.log(
         2,
@@ -835,7 +835,7 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     if (!plugin) {
       req.flash("warning", req.__("Module not found"));
       res.redirect(getOnDoneRedirect(req));
@@ -964,7 +964,7 @@ router.post(
       await plugin.upsert();
       await Plugin.loadPlugin(plugin);
       const instore = await Plugin.store_plugins_available();
-      const store_plugin = instore.find((p: any) => p.name === plugin.name);
+      const store_plugin = instore.find((p: any) => p.name === plugin.name)!;
       if (store_plugin && store_plugin.has_auth) flash_restart(req);
       if (module.exposed_configs?.length > 0)
         flash_relogin(req, module.exposed_configs);
@@ -1017,13 +1017,13 @@ router.get(
   "/user_configure/:name",
   loggedIn,
   error_catcher(async (req: Req, res: Res) => {
-    const user = await User.findOne({ id: req.user?.id });
+    const user = (await User.findOne({ id: req.user?.id }))!;
     if (!user) {
       req.flash("error", req.__("Not authorized"));
       return res.redirect("/");
     }
     const { name } = req.params;
-    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     if (!plugin) {
       req.flash("warning", req.__("Module not found"));
       return res.redirect("/auth/settings");
@@ -1087,7 +1087,7 @@ router.post(
   "/user_configure/:name",
   loggedIn,
   error_catcher(async (req: Req, res: Res) => {
-    const user = await User.findOne({ id: req.user?.id });
+    const user = (await User.findOne({ id: req.user?.id }))!;
     if (!user) {
       req.flash("error", req.__("Not authorized"));
       return res.redirect("/");
@@ -1144,7 +1144,7 @@ router.post(
   "/user_saveconfig/:name",
   loggedIn,
   error_catcher(async (req: Req, res: Res) => {
-    const user = await User.findOne({ id: req.user?.id });
+    const user = (await User.findOne({ id: req.user?.id }))!;
     if (!user) return res.status(401).json({ error: req.__("Not authorized") });
     const { name } = req.params;
     const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
@@ -1192,7 +1192,7 @@ router.post(
   "/remove_user_layout",
   loggedIn,
   error_catcher(async (req: Req, res: Res) => {
-    const user = await User.findOne({ id: req.user!.id });
+    const user = (await User.findOne({ id: req.user!.id }))!;
     if (!user) {
       return res.status(401).json({ error: req.__("Not authorized") });
     } else if (user._attributes?.layout) {
@@ -1297,7 +1297,7 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    let plugin_db = await Plugin.findOne({ name });
+    let plugin_db = (await Plugin.findOne({ name }))!;
     if (!plugin_db) {
       req.flash("warning", req.__("Module not found"));
       res.redirect("/plugins");
@@ -1305,7 +1305,7 @@ router.get(
     }
     const mod = await Plugin.requirePlugin(plugin_db);
     const store_items = await get_store_items(req);
-    const store_item = store_items.find((item: any) => item.name === name);
+    const store_item = store_items.find((item: any) => item.name === name)!;
     const update_permitted = plugin_db.source === "npm";
 
     let latest = update_permitted
@@ -1485,7 +1485,7 @@ router.get(
           a({ href: "/admin/system" }, req.__("Restart here"))
       );
     } else {
-      const installed_plugins = await Plugin.find({});
+      const installed_plugins = (await Plugin.find({}))!;
       for (const plugin of installed_plugins) {
         await plugin.upgrade_version(((
           p: Plugin,
@@ -1610,7 +1610,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
 
-    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     if (!plugin) {
       req.flash("warning", req.__("Module not found"));
       res.redirect(getOnDoneRedirect(req));
@@ -1654,7 +1654,7 @@ router.post(
     // when no version is specified, allways use the plugin from the store
     let plugin = null;
     if (version) {
-      plugin = await Plugin.findOne({ name: name });
+      plugin = (await Plugin.findOne({ name: name }))!;
       if (plugin) plugin.version = version;
     }
     if (!plugin) {

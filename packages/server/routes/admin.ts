@@ -428,7 +428,7 @@ router.get(
     const from = getState()!.getConfig("email_from");
     const email = {
       from,
-      to: req.user.email,
+      to: req.user!.email,
       subject: req.__("Saltcorn test email"),
       html: req.__("Hello from Saltcorn"),
     };
@@ -437,7 +437,7 @@ router.get(
       getState()!.log(6, sendres);
       req.flash(
         "success",
-        req.__("Email sent to %s with no errors", req.user.email)
+        req.__("Email sent to %s with no errors", req.user!.email)
       );
     } catch (e: any) {
       console.error(e);
@@ -811,14 +811,14 @@ router.get(
   "/snapshot-list",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    const snaps = await Snapshot.find(
+    const snaps = (await Snapshot.find(
       {},
       {
         orderBy: "created",
         orderDesc: true,
         fields: ["id", "created", "hash", "name"],
       }
-    );
+    ))!;
     const locale = getState()!.getConfig("default_locale", "en");
     send_admin_page({
       res,
@@ -866,7 +866,7 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const snap = await Snapshot.findOne({ id });
+    const snap = (await Snapshot.findOne({ id }))!;
     const readStream = new stream.PassThrough();
     readStream.end(JSON.stringify(snap.pack));
     res.type("application/json");
@@ -956,7 +956,7 @@ router.post(
       req.flash("error", "Not authorized");
     } else {
       const snap = await db.withTransaction(async () => {
-        const snap = await Snapshot.findOne({ id });
+        const snap = (await Snapshot.findOne({ id }))!;
         await snap.restore_entity(type, name);
         return snap;
       });
@@ -2204,7 +2204,7 @@ router.post(
 
       try {
         const file_store = db.connectObj.file_store;
-        const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
+        const admin_users = (await User.find({ role_id: 1 }, { orderBy: "id" }))!;
         // greenlock logic
         const Greenlock = require("greenlock");
         const greenlock = Greenlock.create({
@@ -2282,7 +2282,7 @@ router.post(
       }
       try {
         const file_store = db.connectObj.file_store;
-        const admin_users = await User.find({ role_id: 1 }, { orderBy: "id" });
+        const admin_users = (await User.find({ role_id: 1 }, { orderBy: "id" }))!;
         // greenlock logic
         const Greenlock = require("greenlock");
         const greenlock = Greenlock.create({
@@ -2414,7 +2414,7 @@ router.get(
         filename,
         "text/html",
         report,
-        req.user.id,
+        req.user!.id,
         1,
         "/configuration_checks"
       );
@@ -2973,20 +2973,20 @@ router.get(
   "/build-mobile-app",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    const views = await View.find();
-    const pages = await Page.find();
-    const pageGroups = await PageGroup.find();
+    const views = (await View.find())!;
+    const pages = (await Page.find())!;
+    const pageGroups = (await PageGroup.find())!;
     const images = (await File.find({ mime_super: "image" })).filter((image: any) =>
       image.filename?.endsWith(".png")
     );
-    const pushCfgFiles = await File.find({
+    const pushCfgFiles = (await File.find({
       folder: "/mobile-app-configurations",
       mime_super: "application",
       min_role_read: 100,
-    });
-    const allAppCfgFiles = await File.find({
+    }))!;
+    const allAppCfgFiles = (await File.find({
       folder: "mobile-app-configurations",
-    });
+    }))!;
     const keystoreFiles = [
       ...(await File.find({ folder: "keystore_files" })),
       ...allAppCfgFiles,
@@ -2995,7 +2995,7 @@ router.get(
       ...(await File.find({ folder: "provisioning_files" })),
       ...allAppCfgFiles,
     ];
-    const withSyncInfo = await Table.find({ has_sync_info: true });
+    const withSyncInfo = (await Table.find({ has_sync_info: true }))!;
     const plugins = (await Plugin.find()).filter(
       (plugin: any) =>
         ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
@@ -4541,7 +4541,7 @@ router.get(
           : "";
     const resultMsg = files.find(
       (file: any) => file.filename === `logs${stepDesc}.txt`
-    )
+    )!
       ? req.__("The build was successfully")
       : req.__("Unable to build the app");
     const appFilesTbl =
@@ -4673,7 +4673,7 @@ router.post(
       if (visited.has(tblName)) continue;
       visited.add(tblName);
 
-      const table = Table.findOne({ name: tblName });
+      const table = Table.findOne({ name: tblName })!;
       if (!table) continue;
 
       for (const field of table.getFields()) {
@@ -4750,7 +4750,7 @@ router.post(
     } = req.body || {};
     const receiveShareTriggers = Trigger.find({
       when_trigger: "ReceiveMobileShareData",
-    });
+    })!;
     let allowShareTo = receiveShareTriggers.length > 0;
     if (allowShareTo && iOSPlatform) {
       if (!shareProvisioningProfile) {
@@ -4858,7 +4858,7 @@ router.post(
       "-b",
       buildDir,
       "-u",
-      req.user.email, // ensured by isAdmin
+      req.user!.email, // ensured by isAdmin
     ];
     if (!entryPointByRole) spawnParams.push("-e", entryPoint);
     if (useDocker) spawnParams.push("-d");
@@ -5115,7 +5115,7 @@ router.post(
       await View.delete({});
     }
     //user fields
-    const users = Table.findOne({ name: "users" });
+    const users = Table.findOne({ name: "users" })!;
     const userfields = await users.getFields();
     for (const f of userfields) {
       if (f.is_fkey) {
@@ -5140,10 +5140,10 @@ router.post(
       await db.deleteWhere("_sc_models");
 
       //in revers order of creation in case any provided tables depend on real tables
-      const tables = await Table.find({}, { orderBy: "id", orderDesc: true });
+      const tables = (await Table.find({}, { orderBy: "id", orderDesc: true }))!;
 
       for (const table of tables) {
-        const constraints = await TableConstraint.find({ table_id: table.id });
+        const constraints = (await TableConstraint.find({ table_id: table.id }))!;
 
         for (const con of constraints) {
           await con.delete();
@@ -5178,14 +5178,14 @@ router.post(
       }
     }
     if (form.values.files) {
-      const files = await File.find();
+      const files = (await File.find())!;
       for (const file of files) {
         await file.delete();
       }
       if (db.reset_sequence) await db.reset_sequence("_sc_files");
     }
     if (form.values.plugins) {
-      const ps = await Plugin.find();
+      const ps = (await Plugin.find())!;
       for (const p of ps) {
         // todo configurable list of mandatory plugins
         if (!["base", "sbadmin2"].includes(p.name)) await p.delete();
@@ -5212,7 +5212,7 @@ router.post(
     if (form.values.users) {
       await db.deleteWhere("_sc_notifications");
 
-      const users1 = Table.findOne({ name: "users" });
+      const users1 = Table.findOne({ name: "users" })!;
       const userfields1 = await users1.getFields();
 
       for (const f of userfields1) {
@@ -5513,14 +5513,14 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
     if (req.query.workflow) {
       ds.push(`declare const row: Row;`);
     } else if (req.query.table) {
-      const table = Table.findOne(req.query.table);
+      const table = Table.findOne(req.query.table)!;
       if (table) {
         const tsFields = [];
         const addTsFields = (table: any, path: any, nrecurse: any) => {
           table.fields.forEach((f: any) => {
             tsFields.push(`${path}${f.name}: ${scTypeToTsType(f.type, f)};`);
             if (!req.query.nojoins && f.is_fkey && nrecurse >= 0) {
-              const reftable = Table.findOne(f.reftable_name);
+              const reftable = Table.findOne(f.reftable_name)!;
               if (reftable)
                 addTsFields(reftable, `${path}${f.name}Ⱶ`, nrecurse - 1);
             }
@@ -5593,9 +5593,9 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
     }
 
     if (!req.query.codepage) {
-      const trigger_actions = await Trigger.find({
+      const trigger_actions = (await Trigger.find({
         when_trigger: { or: ["API call", "Never"] },
-      });
+      }))!;
       ds.push(
         `declare const Actions: {
         ${Object.keys(getState()!.actions)
@@ -5663,7 +5663,7 @@ router.get(
       "function_code_pages_tags",
       {}
     );
-    const tags = await Tag.find();
+    const tags = (await Tag.find())!;
     const tagMarkup = span(
       { class: "ms-1" },
       "Tags:",

@@ -200,14 +200,14 @@ router.post(
       getState()!.log(2, `POST /load_changes: syncInfos is missing`);
       return res.status(400).json({ error: "syncInfos is missing" });
     }
-    const role = req.user ? req.user.role_id : 100;
+    const role = req.user ? req.user!.role_id : 100;
     try {
       const result = await db.withTransaction(async () => {
         let rowLimit = 1000;
         const result = {};
 
         for (const [tblName, syncInfo] of Object.entries(syncInfos)) {
-          const table = Table.findOne({ name: tblName });
+          const table = Table.findOne({ name: tblName })!;
           if (!table) throw new Error(`The table '${tblName}' does not exists`);
           if (!table.has_sync_info)
             throw new Error(`The table '${tblName}' has no sync info`);
@@ -283,7 +283,7 @@ router.post(
   loggedIn,
   error_catcher(async (req: Req, res: Res) => {
     const { syncInfos, syncTimestamp } = req.body || {};
-    const role = req.user ? req.user.role_id : 100;
+    const role = req.user ? req.user!.role_id : 100;
     try {
       const result = await db.withTransaction(async () => {
         const syncUntil = new Date(syncTimestamp);
@@ -291,7 +291,7 @@ router.post(
           deletes: {},
         };
         for (const [tblName, syncInfo] of Object.entries(syncInfos)) {
-          const table = Table.findOne({ name: tblName });
+          const table = Table.findOne({ name: tblName })!;
           if (!table) throw new Error(`The table '${tblName}' does not exists`);
           if (!table.has_sync_info)
             throw new Error(`The table '${tblName}' has no sync info`);
@@ -304,7 +304,7 @@ router.post(
                 tblName,
                 new Date(syncInfo.syncFrom),
                 syncUntil,
-                req.user.id
+                req.user!.id
               );
             } else {
               // ownership_formula: fetch all deletes and evaluate formula in JS
@@ -362,7 +362,7 @@ router.post(
         JSON.stringify(changes)
       );
       const spawnParams = ["sync-upload-data"];
-      if (req.user?.email) spawnParams.push("--userEmail", req.user.email);
+      if (req.user?.email) spawnParams.push("--userEmail", req.user!.email);
       spawnParams.push("--directory", syncDir);
       if (
         db.is_it_multi_tenant() &&
@@ -511,13 +511,13 @@ router.post(
       return;
     }
 
-    const user = req.user;
+    const user = req.user!;
     const state = getState()!;
     const allSubs = state.getConfig("push_sync_subscriptions", {});
     let userSubs = allSubs[user.id] || [];
     const existingSub = userSubs.find(
       (s: any) => s.token === token && s.deviceId === deviceId
-    );
+    )!;
     if (existingSub) {
       res.json({
         success: "ok",
@@ -559,7 +559,7 @@ router.post(
       return;
     }
 
-    const user = req.user;
+    const user = req.user!;
     const state = getState()!;
     const allSubs = state.getConfig("push_sync_subscriptions", {});
     let userSubs = allSubs[user.id] || [];

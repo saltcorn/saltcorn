@@ -69,14 +69,14 @@ const pagePropertiesForm = async (req: any, isNew: any) => {
   const roles = await User.get_roles();
   const pages = (await Page.find()).map((p: any) => p.name);
   const groups = (await PageGroup.find()).map((g: any) => g.name);
-  const htmlFiles = await File.find(
+  const htmlFiles = (await File.find(
     {
       mime_super: "text",
       mime_sub: "html",
       ext: "html",
     },
     { recursive: true }
-  );
+  ))!;
   const htmlOptions = await asyncMap(htmlFiles, async (f: any) => {
     return {
       label: path.join(f.current_folder, f.filename),
@@ -171,10 +171,10 @@ const pagePropertiesForm = async (req: any, isNew: any) => {
  * @returns {Promise<object>}
  */
 const pageBuilderData = async (req: any, context: any) => {
-  const views = await View.find();
-  const pages = await Page.find();
+  const views = (await View.find())!;
+  const pages = (await Page.find())!;
   const page_groups = (await PageGroup.find()).map((g: any) => ({ name: g.name }));
-  const images = await File.find({ mime_super: "image" });
+  const images = (await File.find({ mime_super: "image" }))!;
   images.forEach((im: any) => (im.location = im.field_value));
   const roles = await User.get_roles();
   const stateActions = getState()!.actions;
@@ -186,9 +186,9 @@ const pageBuilderData = async (req: any, context: any) => {
       )
       .map(([k, v]: any) => k),
   ];
-  const triggers = await Trigger.find({
+  const triggers = (await Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
-  });
+  }))!;
   triggers.forEach((tr: any) => {
     actions.push(tr.name);
   });
@@ -233,7 +233,7 @@ const pageBuilderData = async (req: any, context: any) => {
   const fixed_state_fields = {};
   for (const view of views) {
     fixed_state_fields[view.name] = [];
-    const table = Table.findOne(view.table_id || view.exttable_name);
+    const table = Table.findOne(view.table_id || view.exttable_name)!;
     if (table) view.table_name = table.name;
     const fs = await view.get_state_fields();
     let added_fields = new Set();
@@ -370,18 +370,18 @@ router.get(
     let filterOnTag;
 
     if (req.query._tag) {
-      const tagEntries = await TagEntry.find({
+      const tagEntries = (await TagEntry.find({
         tag_id: +req.query._tag,
         not: { page_id: null },
-      });
+      }))!;
       pageq.id = { in: tagEntries.map((te: any) => te.page_id).filter(Boolean) };
-      filterOnTag = await Tag.findOne({ id: +req.query._tag });
+      filterOnTag = (await Tag.findOne({ id: +req.query._tag }))!;
     }
-    const pages = await Page.find(pageq, { orderBy: "name", nocase: true });
-    const pageGroups = await PageGroup.find(
+    const pages = (await Page.find(pageq, { orderBy: "name", nocase: true }))!;
+    const pageGroups = (await PageGroup.find(
       {},
       { orderBy: "name", nocase: true }
-    );
+    ))!;
     const roles = await User.get_roles();
 
     res.sendWrap(req.__("Pages"), {
@@ -480,7 +480,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req: Req, res: Res) => {
     const { pagename } = req.params;
-    const page = Page.findOne({ name: pagename });
+    const page = Page.findOne({ name: pagename })!;
     if (!page) {
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
@@ -553,7 +553,7 @@ router.post(
         };
       }
       if (+id) {
-        const dbPage = Page.findOne({ id: id });
+        const dbPage = Page.findOne({ id: id })!;
         if (dbPage.layout?.html_file && !html_file) {
           pageRow.layout = {};
         }
@@ -636,7 +636,7 @@ const getEditPageWithHtmlFile = async (req: Req, res: Res, page: any) => {
   const htmlFile = page.html_file;
   const iframeId = "page_preview_iframe";
   const updateBttnId = "addnUpdBtn";
-  const file = await File.findOne(htmlFile);
+  const file = (await File.findOne(htmlFile))!;
   if (!file) {
     req.flash("error", req.__("File not found"));
     return res.redirect(`/pageedit`);
@@ -717,7 +717,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req: Req, res: Res) => {
     const { pagename } = req.params;
-    const [page] = await Page.find({ name: pagename });
+    const [page] = (await Page.find({ name: pagename }))!;
     if (!page) {
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(`/pageedit`);
@@ -745,7 +745,7 @@ router.post(
       is_relative_url("/" + req.query.on_done_redirect)
         ? `/${req.query.on_done_redirect}`
         : "/pageedit";
-    const page = await Page.findOne({ name: pagename });
+    const page = (await Page.findOne({ name: pagename }))!;
     if (!page) {
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(redirectTarget);
@@ -763,7 +763,7 @@ router.post(
     } else if ((req.body || {}).code) {
       try {
         if (!page.html_file) throw new Error(req.__("File not found"));
-        const file = await File.findOne(page.html_file);
+        const file = (await File.findOne(page.html_file))!;
         if (!file) throw new Error(req.__("File not found"));
         await fsp.writeFile(file.location, (req.body || {}).code);
         Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
@@ -806,7 +806,7 @@ router.post(
 
     if (id && (req.body || {}).layout) {
       await Page.update(+id, { layout: (req.body || {}).layout });
-      const page = await Page.findOne({ id });
+      const page = (await Page.findOne({ id }))!;
       await getState()!.refresh_pages();
 
       Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
@@ -829,7 +829,7 @@ router.get(
     const { id } = req.params;
 
     if (id) {
-      const page = await Page.findOne({ id });
+      const page = (await Page.findOne({ id }))!;
       if (!page) {
         res.json({ error: req.__("No page") });
         return;
@@ -852,7 +852,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const page = await Page.findOne({ id });
+    const page = (await Page.findOne({ id }))!;
     Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
       entity_type: "Page",
       entity_name: page.name,
@@ -876,8 +876,8 @@ router.post(
   "/set_root_page",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req: Req, res: Res) => {
-    const pages = await Page.find({}, { orderBy: "name" });
-    const pageGroups = await PageGroup.find({}, { orderBy: "name" });
+    const pages = (await Page.find({}, { orderBy: "name" }))!;
+    const pageGroups = (await PageGroup.find({}, { orderBy: "name" }))!;
     const roles = await User.get_roles();
     const form = getRootPageForm(pages, pageGroups, roles, req);
     const valres = form.validate(req.body || {});
@@ -905,7 +905,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const page = Page.findOne({ id });
+    const page = Page.findOne({ id })!;
     await add_to_menu({
       label: page.name,
       type: "Page",
@@ -935,7 +935,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const page = await Page.findOne({ id });
+    const page = (await Page.findOne({ id }))!;
     const newpage = await page.clone();
     Trigger.emitEvent("AppChange", `Page ${newpage.name}`, req.user, {
       entity_type: "Page",

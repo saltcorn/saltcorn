@@ -58,7 +58,7 @@ router.get(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { tableName, id } = req.params;
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
 
     const fields = table.getFields();
     var tfields = fields.map((f: any) => ({ label: f.label, key: f.listKey }));
@@ -109,7 +109,7 @@ router.post(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { tableName, id, _version } = req.params;
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
     await db.withTransaction(async () => {
       await table.restore_row_version(id, _version);
     });
@@ -233,7 +233,7 @@ jsGrid.fields.versions = VersionsField;
 
 const arrangeIdFirst = (flds: any) => {
   const noId = flds.filter((f: any) => !f.primary_key);
-  const id = flds.find((f: any) => f.primary_key);
+  const id = flds.find((f: any) => f.primary_key)!;
   if (id) return [id, ...noId];
   else return flds;
 };
@@ -253,7 +253,7 @@ router.get(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { tname } = req.params;
-    const table = Table.findOne({ name: tname });
+    const table = Table.findOne({ name: tname })!;
     if (!table) {
       req.flash("error", req.__("Table %s not found", text(tname)));
       res.redirect(`/table`);

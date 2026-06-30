@@ -207,7 +207,7 @@ const pageCard = (pages: any, req: any) => ({
  * @returns {Promise<div>}
  */
 const filesTab = async (req: any) => {
-  const files = await File.find({}, { orderBy: "filename", cached: true });
+  const files = (await File.find({}, { orderBy: "filename", cached: true }))!;
   return div(
     files.length === 0
       ? p(req.__("No files"))
@@ -458,11 +458,11 @@ const welcome_page = async (req: any) => {
     ...(packs_available || []).slice(0, 5),
     { name: req.__("More..."), description: "" },
   ];
-  const tables = await Table.find({}, { cached: true });
-  const views = await View.find({}, { cached: true });
-  const pages = await Page.find({}, { cached: true });
+  const tables = (await Table.find({}, { cached: true }))!;
+  const views = (await View.find({}, { cached: true }))!;
+  const pages = (await Page.find({}, { cached: true }))!;
   const triggers = await Trigger.findAllWithTableName();
-  const users = await User.find({}, { orderBy: "id" });
+  const users = (await User.find({}, { orderBy: "id" }))!;
   const roles = await User.get_roles();
   let roleMap = {};
   roles.forEach((r: any) => {
@@ -531,8 +531,8 @@ const welcome_page = async (req: any) => {
  * @returns {Promise<void>}
  */
 const no_views_logged_in = async (req: Req, res: Res) => {
-  const role = req.user && req.user.id ? req.user.role_id : 100;
-  if (role > 1 || req.user.tenant !== db.getTenantSchema())
+  const role = req.user && req.user!.id ? req.user!.role_id : 100;
+  if (role > 1 || req.user!.tenant !== db.getTenantSchema())
     res.sendWrap(
       req.__("Hello"),
       req.__("Welcome to %s!", getState()!.getConfig("site_name", "Saltcorn"))
@@ -586,10 +586,10 @@ const get_config_response = async (role_id: any, res: any, req: any) => {
 
   if (
     maintenanceModeEnabled &&
-    (!req.user || req.user.role_id > 1) &&
+    (!req.user || req.user!.role_id > 1) &&
     maintenanceModePage
   ) {
-    const db_page = await Page.findOne({ name: maintenanceModePage });
+    const db_page = (await Page.findOne({ name: maintenanceModePage }))!;
     if (db_page) {
       res.sendWrap(
         {
@@ -650,7 +650,7 @@ const get_config_response = async (role_id: any, res: any, req: any) => {
     return true;
   }
   if (homeCfg) {
-    const db_page = Page.findOne({ name: homeCfg });
+    const db_page = Page.findOne({ name: homeCfg })!;
     if (db_page) {
       const pgcontents = await db_page.run(req.query, { res, req });
       if (!pgcontents) return true;
@@ -663,7 +663,7 @@ const get_config_response = async (role_id: any, res: any, req: any) => {
         db_page.attributes?.request_fluid_layout
       );
     } else {
-      const group = PageGroup.findOne({ name: homeCfg });
+      const group = PageGroup.findOne({ name: homeCfg })!;
       if (group) {
         const eligible = await getEligiblePage(group, req, res);
         if (typeof eligible === "string") wrap(eligible);
@@ -691,8 +691,8 @@ export default /**
  * @returns {Promise<void>}
  */
 async (req: Req, res: Res) => {
-  const isAuth = req.user && req.user.id;
-  const role_id = req.user ? req.user.role_id : 100;
+  const isAuth = req.user && req.user!.id;
+  const role_id = req.user ? req.user!.role_id : 100;
   const cfgResp = await get_config_response(role_id, res, req);
   if (cfgResp) return;
 

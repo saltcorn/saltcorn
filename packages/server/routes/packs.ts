@@ -76,63 +76,63 @@ router.get(
   "/create/",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    const tables = await Table.find({});
+    const tables = (await Table.find({}))!;
     const tableFields = tables.map((t: any) => ({
       label: `${t.name} table`,
       name: `table.${t.name}`,
       type: "Bool",
     }));
-    const views = await View.find({});
+    const views = (await View.find({}))!;
     const viewFields = views.map((t: any) => ({
       label: `${t.name} view`,
       name: `view.${t.name}`,
       type: "Bool",
     }));
-    const plugins = await Plugin.find({});
+    const plugins = (await Plugin.find({}))!;
     const pluginFields = plugins.map((t: any) => ({
       label: `${t.name} plugin`,
       name: `plugin.${t.name}`,
       type: "Bool",
     }));
-    const pages = await Page.find({});
+    const pages = (await Page.find({}))!;
     const pageFields = pages.map((t: any) => ({
       label: `${t.name} page`,
       name: `page.${t.name}`,
       type: "Bool",
     }));
-    const pageGroups = await PageGroup.find({});
+    const pageGroups = (await PageGroup.find({}))!;
     const pageGroupFields = pageGroups.map((t: any) => ({
       label: `${t.name} page group`,
       name: `page_group.${t.name}`,
       type: "Bool",
     }));
-    const libs = await Library.find({});
+    const libs = (await Library.find({}))!;
     const libFields = libs.map((l: any) => ({
       label: `${l.name} library item`,
       name: `library.${l.name}`,
       type: "Bool",
     }));
-    const trigs = await Trigger.find({});
+    const trigs = (await Trigger.find({}))!;
     const trigFields = trigs.map((l: any) => ({
       label: `${l.name} trigger`,
       name: `trigger.${l.name}`,
       type: "Bool",
     }));
-    const roles = await Role.find({ not: { id: { in: [1, 8, 10] } } });
+    const roles = (await Role.find({ not: { id: { in: [1, 8, 10] } } }))!;
     const roleFields = roles.map((l: any) => ({
       label: `${l.role} role`,
       name: `role.${l.role}`,
       type: "Bool",
     }));
-    const tags = await Tag.find({});
+    const tags = (await Tag.find({}))!;
     const tagFields = tags.map((t: any) => ({
       label: `${t.name} tag`,
       name: `tag.${t.name}`,
       type: "Bool",
     }));
-    const models = await Model.find({});
+    const models = (await Model.find({}))!;
     const modelFields = models.map((m: any) => {
-      const modelTbl = Table.findOne({ id: m.table_id });
+      const modelTbl = Table.findOne({ id: m.table_id })!;
       return {
         label: `${m.name} model, table: ${
           modelTbl.name || req.__("Table not found")
@@ -141,11 +141,11 @@ router.get(
         type: "Bool",
       };
     });
-    const modelInstances = await ModelInstance.find({});
+    const modelInstances = (await ModelInstance.find({}))!;
     const modelInstanceFields = (
       await Promise.all(
         modelInstances.map(async (instance: any) => {
-          const model = await Model.findOne({ id: instance.model_id });
+          const model = (await Model.findOne({ id: instance.model_id }))!;
           if (!model) {
             req.flash(
               "warning",
@@ -153,7 +153,7 @@ router.get(
             );
             return null;
           }
-          const mTable = await Table.findOne({ id: model.table_id });
+          const mTable = (await Table.findOne({ id: model.table_id }))!;
           if (!mTable) {
             req.flash(
               "warning",
@@ -283,7 +283,7 @@ router.post(
           break;
         }
         case "with_event_logs":
-          const logs = await EventLog.find({});
+          const logs = (await EventLog.find({}))!;
           pack.event_logs = await Promise.all(
             logs.map(async (l: any) => await event_log_pack(l))
           );

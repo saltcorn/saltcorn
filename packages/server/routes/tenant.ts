@@ -123,7 +123,7 @@ const tenant_form = (req: any, base_url: any) =>
 const create_tenant_allowed = (req: any) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const required_role = +getRootState().getConfig("role_to_create_tenant") || 1;
-  const user_role = req.user ? req.user.role_id : 100;
+  const user_role = req.user ? req.user!.role_id : 100;
   return user_role <= required_role && (isRoot || required_role === 100);
 };
 
@@ -299,7 +299,7 @@ router.post(
         // tenant template
         const tenant_template = getState()!.getConfig("tenant_template");
         // tenant creator
-        const user_email = req.user && req.user.email;
+        const user_email = req.user && req.user!.email;
         const tenrow = await insertTenant(
           subdomain,
           user_email,
@@ -333,10 +333,10 @@ router.post(
           const has_cert = tenant_letsencrypt_sites.includes(altname);
           if (!has_cert) {
             const file_store = db.connectObj.file_store;
-            const admin_users = await User.find(
+            const admin_users = (await User.find(
               { role_id: 1 },
               { orderBy: "id" }
-            );
+            ))!;
             // greenlock logic
             const Greenlock = require("greenlock");
             const greenlock = Greenlock.create({
@@ -602,7 +602,7 @@ const get_tenant_info = async (subdomain: any) => {
   // get data from tenant schema
   return await db.runWithTenant(saneDomain, async () => {
     // TBD fix the first user issue because not always firt user by id is creator of tenant
-    const firstUser = await User.find({}, { orderBy: "id", limit: 1 });
+    const firstUser = (await User.find({}, { orderBy: "id", limit: 1 }))!;
     if (firstUser && firstUser.length > 0) {
       info.first_user_email = firstUser[0].email;
     }
@@ -690,7 +690,7 @@ router.get(
     // get list of files
     let files;
     await db.runWithTenant(subdomain, async () => {
-      files = await File.find({});
+      files = (await File.find({}))!;
     });
     send_infoarch_page({
       res,

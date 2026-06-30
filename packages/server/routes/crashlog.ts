@@ -51,10 +51,10 @@ router.get(
       current_page = parseInt(state._page as string) || 1,
       offset = (parseInt(state._page as string) - 1) * rows_per_page;
 
-    const crashes = await Crash.find(
+    const crashes = (await Crash.find(
       {},
       { orderBy: "occur_at", orderDesc: true, limit: rows_per_page, offset }
-    );
+    ))!;
     if (crashes.length === rows_per_page || current_page > 1) {
       const nrows = await Crash.count({});
       if (nrows > rows_per_page || current_page > 1) {
@@ -126,7 +126,7 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const crash = await Crash.findOne({ id });
+    const crash = (await Crash.findOne({ id }))!;
     send_events_page({
       res,
       req,

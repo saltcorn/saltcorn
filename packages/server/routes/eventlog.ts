@@ -125,7 +125,7 @@ const logSettingsForm = async (req: any) => {
       type: "Bool",
     });
     if (EventLog.hasTable(w)) {
-      const tables = await Table.find({}, { orderBy: "name" });
+      const tables = (await Table.find({}, { orderBy: "name" }))!;
       for (const table of tables) {
         fields.push({
           name: `${w}_${table.name}`,
@@ -473,10 +473,10 @@ router.get(
       current_page = parseInt(state._page) || 1,
       offset = (parseInt(state._page) - 1) * rows_per_page;
 
-    const evlog = await EventLog.find(
+    const evlog = (await EventLog.find(
       {},
       { orderBy: "occur_at", orderDesc: true, limit: rows_per_page, offset }
-    );
+    ))!;
     if (evlog.length === rows_per_page || current_page > 1) {
       const nrows = await EventLog.count({});
       if (nrows > rows_per_page || current_page > 1) {
@@ -527,12 +527,12 @@ router.get(
     const locale = getState()!.getConfig("default_locale", "en");
     let ev = await EventLog.findOneWithUser(id);
     if (!ev && (or_less || or_more)) {
-      const evFound = await EventLog.find(
+      const evFound = (await EventLog.find(
         {
           id: or_less ? { lt: +id } : { gt: +id },
         },
         { limit: 1, orderBy: "id", orderDesc: !!or_less }
-      );
+      ))!;
       if (evFound.length) ev = await EventLog.findOneWithUser(evFound[0].id);
     }
     if (!ev) {

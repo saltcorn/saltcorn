@@ -34,7 +34,7 @@ router.get(
   "/",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    const rows = await Tag.find();
+    const rows = (await Tag.find())!;
     send_infoarch_page({
       res,
       req,
@@ -115,7 +115,7 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     const id = parseInt(idorname);
-    const tag = await Tag.findOne(id ? { id } : { name: idorname });
+    const tag = (await Tag.findOne(id ? { id } : { name: idorname }))!;
     if (!tag) {
       req.flash("error", req.__("Tag not found"));
       return res.redirect(`/tag`);
@@ -158,7 +158,7 @@ router.get(
     const { idorname } = req.params;
     const { show_list } = req.query;
     const id = parseInt(idorname);
-    const tag = await Tag.findOne(id ? { id } : { name: idorname });
+    const tag = (await Tag.findOne(id ? { id } : { name: idorname }))!;
     if (!tag) {
       req.flash("error", req.__("Tag not found"));
       return res.redirect(`/tag`);
@@ -169,7 +169,7 @@ router.get(
     const pages = await tag.getPages();
     const triggers = await tag.getTriggers();
     triggers.forEach((tr: any) => {
-      if (tr.table_id) tr.table_name = Table.findOne(tr.table_id)?.name;
+      if (tr.table_id) tr.table_name = Table.findOne(tr.table_id)!?.name;
     });
     const roles = await User.get_roles();
 
@@ -332,7 +332,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const tag = await Tag.findOne({ id });
+    const tag = (await Tag.findOne({ id }))!;
     if (!tag) {
       req.flash("error", req.__("Tag not found"));
       return res.redirect("/tag");

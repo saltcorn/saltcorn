@@ -38,9 +38,9 @@ router.post(
     const { tableName, id } = req.params;
     const { redirect } = req.query;
     // todo check that works after where change
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
     if (!table) throw new Error(`Table ${tableName} not found`);
-    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
     const where = { [table.pk_name]: id };
     const resultCollector = {};
     let success = false;
@@ -97,9 +97,9 @@ router.post(
     const { tableName } = req.params;
     const { redirect, ...restQuery } = req.query;
     // todo check that works after where change
-    const table = Table.findOne({ name: tableName });
+    const table = Table.findOne({ name: tableName })!;
     if (!table) throw new Error(`Table ${tableName} not found`);
-    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
     const query: Record<string, any> = {};
     table.fields.forEach((f: any) => {
       if (typeof restQuery[f.name] !== "undefined")

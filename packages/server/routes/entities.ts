@@ -85,7 +85,7 @@ const getExtendedEntites = async (req: any, { includeAllModules = false }: any =
   const entities = [];
   const can_reset = getState()!.getConfig("smtp_host", "") !== "";
 
-  const users = await User.find({}, { cached: true });
+  const users = (await User.find({}, { cached: true }))!;
   users.forEach((u: any) => {
     entities.push({
       type: "user",
@@ -170,7 +170,7 @@ const getExtendedEntites = async (req: any, { includeAllModules = false }: any =
     );
   };
 
-  const modules = await Plugin.find();
+  const modules = (await Plugin.find())!;
   const installedModuleNames = new Set();
   modules
     .filter((mod: any) => mod.name !== "base")
@@ -399,10 +399,10 @@ const buildUserActionsDropdown = (user: any, req: any, can_reset: any) => {
  * Get all entities with their type and metadata
  */
 const getAllEntities = async () => {
-  const tables = await Table.find({}, { cached: true });
+  const tables = (await Table.find({}, { cached: true }))!;
   const tableNameById = new Map(tables.map((t: any) => [t.id, t.name]));
-  const views = await View.find({}, { cached: true });
-  const pages = await Page.find({}, { cached: true });
+  const views = (await View.find({}, { cached: true }))!;
+  const pages = (await Page.find({}, { cached: true }))!;
   const triggers = await Trigger.findAllWithTableName();
 
   const entities = [];
@@ -699,10 +699,10 @@ router.get(
       const keyById = `${entity.type}:${entity.id}`;
       try {
         if (entity.type === "table") {
-          const table = Table.findOne({ id: entity.id });
+          const table = Table.findOne({ id: entity.id })!;
           if (table) addDeepSearch(keyById, await table_pack(table));
         } else if (entity.type === "view") {
-          const view = View.findOne({ name: entity.name });
+          const view = View.findOne({ name: entity.name })!;
           if (view) {
             const viewKeyById = `view:${view.id ?? entity.id ?? entity.name}`;
             const viewKeyByName = `view:${entity.name}`;
@@ -712,10 +712,10 @@ router.get(
               addDeepSearch(viewKeyByName, vpack);
           }
         } else if (entity.type === "page") {
-          const page = Page.findOne({ name: entity.name });
+          const page = Page.findOne({ name: entity.name })!;
           if (page) addDeepSearch(keyById, await page_pack(page));
         } else if (entity.type === "trigger") {
-          const trigger = Trigger.findOne({ id: entity.id });
+          const trigger = Trigger.findOne({ id: entity.id })!;
           if (trigger) addDeepSearch(keyById, await trigger_pack(trigger));
         }
       } catch (e: any) {
@@ -739,8 +739,8 @@ router.get(
     const entities = await getAllEntities();
     // fetch roles and tags
     const roles = await User.get_roles();
-    const tags = await Tag.find();
-    const tagEntries = await TagEntry.find();
+    const tags = (await Tag.find())!;
+    const tagEntries = (await TagEntry.find())!;
     const userRoleId = req.user?.role_id ?? Infinity;
     const user_can_edit_tables =
       userRoleId === 1 ||
@@ -1516,22 +1516,22 @@ router.post(
       const key = item?.key;
       try {
         if (type === "table" && id) {
-          const table = Table.findOne({ id });
+          const table = Table.findOne({ id })!;
           if (!table) throw new Error("Table not found");
           await table.delete(false);
           if (key) deletedKeys.push(key);
         } else if (type === "view" && id) {
-          const view = View.findOne({ id });
+          const view = View.findOne({ id })!;
           if (!view) throw new Error("View not found");
           await view.delete();
           if (key) deletedKeys.push(key);
         } else if (type === "page" && id) {
-          const page = Page.findOne({ id });
+          const page = Page.findOne({ id })!;
           if (!page) throw new Error("Page not found");
           await page.delete();
           if (key) deletedKeys.push(key);
         } else if (type === "trigger" && id) {
-          const trigger = await Trigger.findOne({ id });
+          const trigger = (await Trigger.findOne({ id }))!;
           if (!trigger) throw new Error("Trigger not found");
           await trigger.delete();
           if (key) deletedKeys.push(key);
@@ -1545,13 +1545,13 @@ router.post(
             });
             await getState()!.refresh();
           } else {
-            const plugin = await Plugin.findOne({ name });
+            const plugin = (await Plugin.findOne({ name }))!;
             if (!plugin) throw new Error("Plugin not found");
             await plugin.delete();
           }
           if (key) deletedKeys.push(key);
         } else if (type === "user" && id) {
-          const user = await User.findOne({ id });
+          const user = (await User.findOne({ id }))!;
           if (!user) throw new Error("User not found");
           await user.delete();
           if (key) deletedKeys.push(key);
@@ -1612,7 +1612,7 @@ router.post(
     if (!Array.isArray(items) || !items.length || Number.isNaN(tagIdNum)) {
       return res.status(400).json({ error: "Invalid request" });
     }
-    const tag = await Tag.findOne({ id: tagIdNum });
+    const tag = (await Tag.findOne({ id: tagIdNum }))!;
     if (!tag) return res.status(404).json({ error: "Tag not found" });
     for (const item of items) {
       const field = idField(item?.type);
@@ -1645,7 +1645,7 @@ router.post(
     ) {
       return res.status(400).json({ error: "Invalid request" });
     }
-    const role = await Role.findOne({ id: roleIdNum });
+    const role = (await Role.findOne({ id: roleIdNum }))!;
     if (!role) return res.status(404).json({ error: "Role not found" });
 
     const errors = [];

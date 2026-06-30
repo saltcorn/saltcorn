@@ -473,7 +473,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     if ((req.body || {}).name && req.files && req.files.file) {
       const name = (req.body || {}).name;
-      const alltables = await Table.find({});
+      const alltables = (await Table.find({}))!;
       const existing_tables = [
         "users",
         ...alltables.map((t: any) => db.sqlsanitize(t.name).toLowerCase()),
@@ -810,8 +810,8 @@ router.get(
     const { idorname } = req.params;
     let id = parseInt(idorname);
     let table;
-    if (id) [table] = await Table.find({ id });
-    if (!table) [table] = await Table.find({ name: idorname });
+    if (id) [table] = (await Table.find({ id }))!;
+    if (!table) [table] = (await Table.find({ name: idorname }))!;
     if (!table) {
       req.flash("error", req.__(`Table not found`));
       res.redirect(`/table`);
@@ -992,8 +992,8 @@ router.post(
     const { idorname } = req.params;
     let id = parseInt(idorname);
     let table;
-    if (id) [table] = await Table.find({ id });
-    if (!table) [table] = await Table.find({ name: idorname });
+    if (id) [table] = (await Table.find({ id }))!;
+    if (!table) [table] = (await Table.find({ name: idorname }))!;
     if (!table) {
       req.flash("error", req.__(`Table not found`));
       res.redirect(`/table`);
@@ -1009,7 +1009,7 @@ router.post(
     let removed = 0;
 
     for (const fname of fieldNames) {
-      const field = fields.find((f: any) => f.name === fname);
+      const field = fields.find((f: any) => f.name === fname)!;
       if (field) {
         await db.deleteWhere("_sc_fields", { id: field.id });
         removed++;
@@ -1038,8 +1038,8 @@ router.post(
     const { idorname } = req.params;
     let id = parseInt(idorname);
     let table;
-    if (id) [table] = await Table.find({ id });
-    if (!table) [table] = await Table.find({ name: idorname });
+    if (id) [table] = (await Table.find({ id }))!;
+    if (!table) [table] = (await Table.find({ name: idorname }))!;
     if (!table) {
       req.flash("error", req.__(`Table not found`));
       res.redirect(`/table`);
@@ -1082,7 +1082,7 @@ router.post(
         }
       } else {
         const { rows } = await db.query(`PRAGMA table_info("${table.name}")`);
-        const col = rows.find((r: any) => r.name === colName);
+        const col = rows.find((r: any) => r.name === colName)!;
         if (col) {
           const type = findType(col.type) || "String";
           fieldCfg = {
@@ -1150,10 +1150,10 @@ router.get(
     const { idorname } = req.params;
     let id = parseInt(idorname);
     let table;
-    if (id) [table] = await Table.find({ id });
+    if (id) [table] = (await Table.find({ id }))!;
 
     if (!table) {
-      [table] = await Table.find({ name: idorname });
+      [table] = (await Table.find({ name: idorname }))!;
     }
 
     if (!table) {
@@ -1163,15 +1163,15 @@ router.get(
     }
 
     const user_can_edit_tables =
-      req.user.role_id === 1 ||
-      getState()!.getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+      req.user!.role_id === 1 ||
+      getState()!.getConfig("min_role_edit_tables", 1) >= req.user!.role_id;
 
     const user_can_edit_views =
-      req.user.role_id === 1 ||
-      getState()!.getConfig("min_role_edit_views", 1) >= req.user.role_id;
+      req.user!.role_id === 1 ||
+      getState()!.getConfig("min_role_edit_views", 1) >= req.user!.role_id;
     const user_can_edit_triggers =
-      req.user.role_id === 1 ||
-      getState()!.getConfig("min_role_edit_triggers", 1) >= req.user.role_id;
+      req.user!.role_id === 1 ||
+      getState()!.getConfig("min_role_edit_triggers", 1) >= req.user!.role_id;
     let nrows;
     try {
       nrows = await table.countRows({}, { forUser: req.user });
@@ -1326,9 +1326,9 @@ router.get(
     let viewCard;
     let triggerCard = "";
     if (fields.length > 0) {
-      const views = await View.find(
+      const views = (await View.find(
         table.id ? { table_id: table.id } : { exttable_name: table.name }
-      );
+      ))!;
       var viewCardContents;
       if (views.length > 0) {
         viewCardContents = await viewsList(views, req, {
@@ -1396,7 +1396,7 @@ router.get(
             ),
         };
     }
-    const models = await Model.find({ table_id: table.id });
+    const models = (await Model.find({ table_id: table.id }))!;
     const modelCard = div(
       mkTable(
         [
@@ -1563,7 +1563,7 @@ router.get(
                 req,
                 true
               ),
-            req.user.role_id === 1 &&
+            req.user!.role_id === 1 &&
               table.name !== "users" &&
               post_dropdown_item(
                 `/table/delete-with-trig-views/${table.id}`,
@@ -1620,7 +1620,7 @@ router.get(
           titleAjaxIndicator: true,
           contents: renderForm(tblForm, req.csrfToken()),
         },
-        ...(Model.has_templates && req.user.role_id === 1
+        ...(Model.has_templates && req.user!.role_id === 1
           ? [
               {
                 type: "card",
@@ -1649,7 +1649,7 @@ router.post(
       // insert
       v.name = v.name.trim();
       const { name, ...rest } = v;
-      const alltables = await Table.find({});
+      const alltables = (await Table.find({}))!;
       const existing_tables = [
         "users",
         ...alltables.map((t: any) => db.sqlsanitize(t.name).toLowerCase()),
@@ -1682,7 +1682,7 @@ router.post(
       // todo check that works after where change
       // todo findOne can be have parameter for external table here
       //we can only save min role
-      const table = Table.findOne({ name: v.name });
+      const table = Table.findOne({ name: v.name })!;
       if (table) {
         const exttables_min_role_read = getState()!.getConfigCopy(
           "exttables_min_role_read",
@@ -1700,7 +1700,7 @@ router.post(
       }
     } else {
       const { id, _csrf, ...rest } = v;
-      const table = Table.findOne({ id: parseInt(id) });
+      const table = Table.findOne({ id: parseInt(id) })!;
       const old_versioned = table.versioned;
       const old_has_sync_info = table.has_sync_info;
       let hasError = false;
@@ -1774,7 +1774,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const t = Table.findOne({ id });
+    const t = Table.findOne({ id })!;
     if (!t) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -1787,12 +1787,12 @@ router.post(
     }
     try {
       await db.withTransaction(async () => {
-        const views = await View.find(
+        const views = (await View.find(
           t.id ? { table_id: t.id } : { exttable_name: t.name }
-        );
+        ))!;
         for (const view of views) await view.delete();
         if (t.id) {
-          const triggers = await Trigger.find({ table_id: t.id });
+          const triggers = (await Trigger.find({ table_id: t.id }))!;
           for (const trig of triggers) await trig.delete();
         }
 
@@ -1823,7 +1823,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const t = Table.findOne({ id });
+    const t = Table.findOne({ id })!;
     if (!t) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -1834,9 +1834,9 @@ router.post(
       res.redirect(`/table`);
       return;
     }
-    const views = await View.find(
+    const views = (await View.find(
       t.id ? { table_id: t.id } : { exttable_name: t.name }
-    );
+    ))!;
     if (views.length) {
       req.flash(
         "error",
@@ -1848,7 +1848,7 @@ router.post(
       return;
     }
     if (t.id) {
-      const triggers = await Trigger.find({ table_id: t.id });
+      const triggers = (await Trigger.find({ table_id: t.id }))!;
       if (triggers.length) {
         req.flash(
           "error",
@@ -1882,7 +1882,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const t = Table.findOne({ id });
+    const t = Table.findOne({ id })!;
     if (!t) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -1927,17 +1927,17 @@ router.get(
     const tblq = {};
     let filterOnTag;
     if (req.query._tag) {
-      const tagEntries = await TagEntry.find({
+      const tagEntries = (await TagEntry.find({
         tag_id: +req.query._tag,
         not: { table_id: null },
-      });
+      }))!;
       tblq.id = { in: tagEntries.map((te: any) => te.table_id).filter(Boolean) };
-      filterOnTag = await Tag.findOne({ id: +req.query._tag });
+      filterOnTag = (await Tag.findOne({ id: +req.query._tag }))!;
     }
 
     const user_can_edit_tables =
-      req.user.role_id === 1 ||
-      getState()!.getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+      req.user!.role_id === 1 ||
+      getState()!.getConfig("min_role_edit_tables", 1) >= req.user!.role_id;
 
     const rows = await Table.find_with_external(tblq, {
       orderBy: "name",
@@ -1962,7 +1962,7 @@ router.get(
           i({ class: "fas fa-upload me-1" }),
           req.__("Create from CSV upload")
         ),
-      req.user.role_id === 1 &&
+      req.user!.role_id === 1 &&
         !db.isSQLite &&
         a(
           {
@@ -2016,8 +2016,8 @@ router.get(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const table = Table.findOne({ name });
-    if (table.min_role_read < req.user.role_id) {
+    const table = Table.findOne({ name })!;
+    if (table.min_role_read < req.user!.role_id) {
       req.flash("error", "Not authorized to read table");
       res.redirect(`/table/${table.id}`);
       return;
@@ -2092,13 +2092,13 @@ router.get(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
       return;
     }
-    const cons = await TableConstraint.find({ table_id: table.id });
+    const cons = (await TableConstraint.find({ table_id: table.id }))!;
     res.sendWrap(req.__(`%s constraints`, table.name), {
       above: [
         {
@@ -2268,7 +2268,7 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id, type } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2312,7 +2312,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { id, type } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2396,7 +2396,7 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
 
     const form = renameForm(table.id, req);
     res.sendWrap(req.__(`Rename table %s`, table.name), {
@@ -2433,7 +2433,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     const form = renameForm(table.id, req);
 
     form.validate(req.body || {});
@@ -2620,13 +2620,13 @@ router.post(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const table = Table.findOne({ name });
+    const table = Table.findOne({ name })!;
     if (!req.files || !req.files.file) {
       req.flash("error", "Missing file");
       res.redirect(`/table/${table.id}`);
       return;
     }
-    if (table.min_role_write < req.user.role_id) {
+    if (table.min_role_write < req.user!.role_id) {
       req.flash("error", "Not authorized to write to table");
       res.redirect(`/table/${table.id}`);
       return;
@@ -2647,8 +2647,8 @@ router.get(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { name, filename } = req.params;
-    const table = Table.findOne({ name });
-    const f = await File.findOne(filename);
+    const table = Table.findOne({ name })!;
+    const f = (await File.findOne(filename))!;
     await previewCSV({ newPath: f.location, table, res, req, full: true });
   })
 );
@@ -2661,8 +2661,8 @@ router.post(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { name, filename } = req.params;
-    const table = Table.findOne({ name });
-    const f = await File.findOne(filename);
+    const table = Table.findOne({ name })!;
+    const f = (await File.findOne(filename))!;
 
     try {
       const { import_method, import_async } = req.body || {};
@@ -2681,7 +2681,7 @@ router.post(
             Notification.create({
               title: "CSV import complete",
               body: parse_res.error || parse_res.success,
-              user_id: req.user.id,
+              user_id: req.user!.id,
             });
           })
           .catch((e: any) => {
@@ -2689,7 +2689,7 @@ router.post(
             Notification.create({
               title: "Error importing CSV file",
               body: e.message,
-              user_id: req.user.id,
+              user_id: req.user!.id,
             });
           });
         req.flash("success", req.__("Processing CSV file"));
@@ -2718,7 +2718,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const table = Table.findOne({ name });
+    const table = Table.findOne({ name })!;
 
     try {
       await db.withTransaction(async () => {
@@ -2749,7 +2749,7 @@ router.post(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const table = Table.findOne({ name });
+    const table = Table.findOne({ name })!;
     if (!table) {
       req.flash("error", `Table not found: ${text(name)}`);
       res.redirect(`/table`);
@@ -2846,7 +2846,7 @@ router.get(
     const { id } = req.params;
     const { step } = req.query;
 
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2872,7 +2872,7 @@ router.post(
     const { id } = req.params;
     const { step } = req.query;
 
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2900,7 +2900,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2915,7 +2915,7 @@ router.post(
 );
 
 const basicViewForm = async (table: any, req: any) => {
-  const tables = await Table.find({}, { cached: true });
+  const tables = (await Table.find({}, { cached: true }))!;
   const vts = viewtemplates_with_create_basic_option();
   return new Form({
     submitLabel: req.__("Create views"),
@@ -2964,7 +2964,7 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2992,7 +2992,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -3169,7 +3169,7 @@ router.get(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -3188,7 +3188,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);

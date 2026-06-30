@@ -105,8 +105,8 @@ router.get(
   "/config",
   isAdminOrHasConfigMinRole("min_role_edit_search"),
   error_catcher(async (req: Req, res: Res) => {
-    const views = await View.find({}, { orderBy: "name" });
-    const tables = await Table.find();
+    const views = (await View.find({}, { orderBy: "name" }))!;
+    const tables = (await Table.find())!;
     const form = searchConfigForm(tables, views, req);
     form.values = getState()!.getConfig("globalSearch", {});
     form.values.search_table_description = getState()!.getConfig(
@@ -146,8 +146,8 @@ router.post(
   "/config",
   isAdminOrHasConfigMinRole("min_role_edit_search"),
   error_catcher(async (req: Req, res: Res) => {
-    const views = await View.find({}, { orderBy: "name" });
-    const tables = await Table.find();
+    const views = (await View.find({}, { orderBy: "name" }))!;
+    const tables = (await Table.find())!;
     const form = searchConfigForm(tables, views, req);
     const result = form.validate(req.body || {});
 
@@ -258,9 +258,9 @@ const runSearch = async ({ q: any, _page: any, table }: any, req: any, res: any)
     let sectionHeader = tableName;
     if (search_table_description) {
       sectionHeader =
-        Table.findOne({ name: tableName })?.description || tableName;
+        Table.findOne({ name: tableName })!?.description || tableName;
     }
-    const view = await View.findOne({ name: viewName });
+    const view = (await View.findOne({ name: viewName }))!;
     if (!view)
       throw new InvalidConfiguration(
         `View ${viewName} selected as search results for ${tableName}: view not found`
@@ -387,7 +387,7 @@ router.get(
       false
     );
 
-    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+    if (maintenanceModeEnabled && (!req.user || req.user!.role_id > 1)) {
       res.status(503).send("Page Unavailable: in maintenance mode");
       return;
     }

@@ -31,7 +31,7 @@ router.use(
       "maintenance_mode_enabled",
       false
     );
-    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+    if (maintenanceModeEnabled && (!req.user || req.user!.role_id > 1)) {
       res.status(503).send("Page Unavailable: in maintenance mode");
       return;
     }
@@ -67,13 +67,13 @@ router.get(
   loggedIn,
   error_catcher(async (req: Req, res: Res) => {
     const { after } = req.query;
-    const where = { user_id: req.user.id };
+    const where = { user_id: req.user!.id };
     if (after) where.id = { lt: after };
-    const nots = await Notification.find(where, {
+    const nots = (await Notification.find(where, {
       orderBy: "id",
       orderDesc: true,
       limit: 20,
-    });
+    }))!;
     const unreads = nots.filter((n: any) => !n.read);
     if (unreads.length > 0)
       await Notification.mark_as_read(
@@ -87,7 +87,7 @@ router.get(
       );
 
     const form = notificationSettingsForm(req.user);
-    const user = await User.findOne({ id: req.user?.id });
+    const user = (await User.findOne({ id: req.user?.id }))!;
     form.values = {
       notify_email: user?._attributes?.notify_email,
     };
@@ -203,7 +203,7 @@ router.get(
   loggedIn,
   error_catcher(async (req: Req, res: Res) => {
     const num_unread = await Notification.count({
-      user_id: req.user.id,
+      user_id: req.user!.id,
       read: false,
     });
     res.set("Cache-Control", "public, max-age=60"); // 1 minute
@@ -215,7 +215,7 @@ router.post(
   "/settings",
   loggedIn,
   error_catcher(async (req: Req, res: Res) => {
-    const user = await User.findOne({ id: req.user.id });
+    const user = (await User.findOne({ id: req.user!.id }))!;
     const form = notificationSettingsForm(req.user);
     form.validate(req.body || {});
     const _attributes = { ...user._attributes, ...form.values };
@@ -235,11 +235,11 @@ router.post(
     const pushEnabled = _attributes.notify_push;
     const allSubs = getState()!.getConfig("push_notification_subscriptions", {});
     const newSubs = { ...allSubs };
-    if (!pushEnabled && newSubs[req.user.id]) {
-      delete newSubs[req.user.id];
+    if (!pushEnabled && newSubs[req.user!.id]) {
+      delete newSubs[req.user!.id];
       await getState()!.setConfig("push_notification_subscriptions", newSubs);
-    } else if (pushEnabled && !newSubs[req.user.id]) {
-      newSubs[req.user.id] = [];
+    } else if (pushEnabled && !newSubs[req.user!.id]) {
+      newSubs[req.user!.id] = [];
       await getState()!.setConfig("push_notification_subscriptions", newSubs);
     }
     res.json({ success: "ok" });
@@ -252,7 +252,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { idlike } = req.params;
     if (idlike == "read") {
-      await Notification.deleteRead(req.user.id);
+      await Notification.deleteRead(req.user!.id);
     } else {
       const id = +idlike;
       const notif = await Notification.findOne({ id });
@@ -276,7 +276,7 @@ router.post(
     } else {
       const receiveShareTriggers = Trigger.find({
         when_trigger: "ReceiveMobileShareData",
-      });
+      })!;
       if (receiveShareTriggers.length === 0) {
         const msg = req.__("Sharing not enabled");
         if (!req.smr) {
@@ -315,7 +315,7 @@ router.post(
         error: req.__("Notifications are not enabled on this server"),
       });
     } else {
-      const user = req.user;
+      const user = req.user!;
       const allSubs = getState()!.getConfig(
         "push_notification_subscriptions",
         {}
@@ -326,7 +326,7 @@ router.post(
           s.endpoint === req.body.endpoint &&
           s.keys.p256dh === req.body.keys.p256dh &&
           s.keys.auth === req.body.keys.auth
-      );
+      )!;
       if (existingSub) {
         res.json({
           success: "ok",
@@ -365,13 +365,13 @@ router.post(
       });
       return;
     }
-    const user = req.user;
+    const user = req.user!;
     const allSubs = getState()!.getConfig("push_notification_subscriptions", {});
     let userSubs = allSubs[user.id] || [];
     const existingSub = userSubs.find(
       (s: any) =>
         s.type === "fcm-push" && s.token === token && s.deviceId === deviceId
-    );
+    )!;
     if (existingSub) {
       res.json({
         success: "ok",
@@ -412,7 +412,7 @@ router.post(
       });
     } else {
       const { subscription } = req.body;
-      const user = req.user;
+      const user = req.user!;
       const oldSubs = getState()!.getConfig(
         "push_notification_subscriptions",
         {}
@@ -449,7 +449,7 @@ router.post(
       });
       return;
     }
-    const user = req.user;
+    const user = req.user!;
     const oldSubs = getState()!.getConfig("push_notification_subscriptions", {});
     let userSubs = oldSubs[user.id];
     if (userSubs) {
@@ -512,7 +512,7 @@ router.get(
     const pwa_icons = state.getConfig("pwa_icons");
     const receiveShareTriggers = Trigger.find({
       when_trigger: "ReceiveMobileShareData",
-    });
+    })!;
     if (receiveShareTriggers.length > 0) {
       manifest.share_target = {
         action: "/notifications/share-handler",

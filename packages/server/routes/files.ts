@@ -69,7 +69,7 @@ router.use(
       "maintenance_mode_enabled",
       false
     );
-    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+    if (maintenanceModeEnabled && (!req.user || req.user!.role_id > 1)) {
       res.status(503).send("Page Unavailable: in maintenance mode");
       return;
     }
@@ -116,14 +116,14 @@ router.get(
 router.get(
   "/visible_entries",
   error_catcher(async (req: Req, res: Res) => {
-    const role = req.user?.role_id ? req.user.role_id : 100;
+    const role = req.user?.role_id ? req.user!.role_id : 100;
     const userId = req.user?.id;
     const min_role_edit_files = getState()!.getConfig("min_role_edit_files", 1);
     if (role > min_role_edit_files) {
       // check if there is a use_picker set
       let role_needed = min_role_edit_files;
 
-      const all_views = await View.find({}, { cached: true });
+      const all_views = (await View.find({}, { cached: true }))!;
       for (const view of all_views)
         if (JSON.stringify(view.configuration).includes('"use_picker":true'))
           role_needed = Math.max(role_needed, view.min_role);
@@ -214,10 +214,10 @@ router.get(
     // todo limit select from file by 10 or 20
     const { dir, search } = req.query;
     const safeDir = File.normalise(dir || "/");
-    const rows = await File.find(
+    const rows = (await File.find(
       { folder: dir, search },
       { orderBy: "filename" }
-    );
+    ))!;
     const roles = await User.get_roles();
     if (safeDir && safeDir !== "/" && safeDir !== ".") {
       let dirname = path.dirname(safeDir);
@@ -278,10 +278,10 @@ router.get(
 router.get(
   "/download/*serve_path",
   error_catcher(async (req: Req, res: Res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 100;
-    const user_id = req.user && req.user.id;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
+    const user_id = req.user && req.user!.id;
     const serve_path = path.join(...req.params.serve_path);
-    const file = await File.findOne(serve_path);
+    const file = (await File.findOne(serve_path))!;
 
     if (
       file &&
@@ -305,14 +305,14 @@ router.post(
   "/download-zip",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req: Req, res: Res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 100;
-    const user_id = req.user && req.user.id;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
+    const user_id = req.user && req.user!.id;
     const files = (req.body || {}).files;
     const location = (req.body || {}).location;
     const zip = new Zip();
 
     for (const fileNm of files) {
-      const file = await File.findOne(path.join(location, fileNm));
+      const file = (await File.findOne(path.join(location, fileNm)))!;
       if (
         file &&
         (role <= file.min_role_read || (user_id && user_id === file.user_id))
@@ -333,10 +333,10 @@ router.post(
 router.get(
   "/view/*serve_path",
   error_catcher(async (req: Req, res: Res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 100;
-    const user_id = req.user && req.user.id;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
+    const user_id = req.user && req.user!.id;
     const serve_path = path.join(...req.params.serve_path);
-    const file = await File.findOne(serve_path);
+    const file = (await File.findOne(serve_path))!;
     const authorized =
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id));
@@ -395,12 +395,12 @@ router.get(
 router.get(
   "/serve/*serve_path",
   error_catcher(async (req: Req, res: Res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 100;
-    const user_id = req.user && req.user.id;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
+    const user_id = req.user && req.user!.id;
     const serve_path = path.join(...req.params.serve_path);
     //let file;
     //if (typeof strictParseInt(id) !== "undefined")
-    const file = await File.findOne(serve_path);
+    const file = (await File.findOne(serve_path))!;
 
     if (
       file &&
@@ -459,12 +459,12 @@ router.get(
 router.get(
   "/resize/:width_str/:height_str/*serve_path",
   error_catcher(async (req: Req, res: Res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 100;
-    const user_id = req.user && req.user.id;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
+    const user_id = req.user && req.user!.id;
     const { width_str, height_str } = req.params;
     const serve_path = path.join(...req.params.serve_path);
 
-    const file = await File.findOne(serve_path);
+    const file = (await File.findOne(serve_path))!;
 
     if (
       file &&
@@ -538,10 +538,10 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req: Req, res: Res) => {
     const serve_path = path.join(...req.params.serve_path);
-    const file = await File.findOne(serve_path);
+    const file = (await File.findOne(serve_path))!;
     const role = (req.body || {}).role;
     const roles = await User.get_roles();
-    const roleRow = roles.find((r: any) => r.id === +role);
+    const roleRow = roles.find((r: any) => r.id === +role)!;
 
     if (roleRow && file) {
       await file.set_role(role);
@@ -558,7 +558,7 @@ router.post(
   isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req: Req, res: Res) => {
     const serve_path = path.join(...req.params.serve_path);
-    const file = await File.findOne(serve_path);
+    const file = (await File.findOne(serve_path))!;
     const new_path = (req.body || {}).new_path;
 
     if (file) {
@@ -587,7 +587,7 @@ router.post(
     const serve_path = path.join(...req.params.serve_path);
     const filename = (req.body || {}).value;
 
-    const file = await File.findOne(serve_path);
+    const file = (await File.findOne(serve_path))!;
     await file.rename(filename);
 
     res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
@@ -607,7 +607,7 @@ router.post(
     const serve_path = path.join(...req.params.serve_path);
     const filename = (req.body || {}).value;
 
-    const file = await File.findOne(serve_path);
+    const file = (await File.findOne(serve_path))!;
     const dir = path.dirname(file.location);
     if (file) await extract(file.location, dir);
     res.redirect(`/files?dir=${encodeURIComponent(file.current_folder)}`);
@@ -638,7 +638,7 @@ router.post(
     let { folder, sortBy, sortDesc } = req.body || {};
     let jsonResp = {};
     const min_role_upload = getState()!.getConfig("min_role_upload", 1);
-    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
     let file_for_redirect;
     if (role > +min_role_upload) {
       if (!req.xhr) req.flash("warning", req.__("Not authorized"));
@@ -651,7 +651,7 @@ router.post(
         req.body || {} ? (req.body || {}).min_role_read || 1 : 1;
       const f = await File.from_req_files(
         req.files.file,
-        req.user.id,
+        req.user!.id,
         +min_role_read,
         folder ? File.normalise(folder) : undefined
       );
@@ -698,7 +698,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const serve_path = path.join(...req.params.serve_path);
     const { redirect } = req.query;
-    const f = await File.findOne(serve_path);
+    const f = (await File.findOne(serve_path))!;
     if (!f) {
       req.flash("error", req.__("File not found"));
       res.redirect("/files");
@@ -912,10 +912,10 @@ router.get(
   "/edit/*serve_path",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req: Req, res: Res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 100;
-    const user_id = req.user && req.user.id;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
+    const user_id = req.user && req.user!.id;
     const serve_path = path.join(...req.params.serve_path);
-    const file = await File.findOne(serve_path);
+    const file = (await File.findOne(serve_path))!;
     if (
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))
@@ -1019,10 +1019,10 @@ router.post(
   "/edit/*serve_path",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
   error_catcher(async (req: Req, res: Res) => {
-    const role = req.user && req.user.id ? req.user.role_id : 100;
-    const user_id = req.user && req.user.id;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
+    const user_id = req.user && req.user!.id;
     const serve_path = path.join(...req.params.serve_path);
-    const file = await File.findOne(serve_path);
+    const file = (await File.findOne(serve_path))!;
     if (
       file &&
       (role <= file.min_role_read || (user_id && user_id === file.user_id))

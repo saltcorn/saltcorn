@@ -60,7 +60,7 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { table_id } = req.params;
-    const table = await Table.findOne({ id: table_id });
+    const table = (await Table.findOne({ id: table_id }))!;
     res.sendWrap(req.__(`New model`), {
       above: [
         {
@@ -87,7 +87,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { table_id } = req.params;
-    const table = await Table.findOne({ id: table_id });
+    const table = (await Table.findOne({ id: table_id }))!;
     const form = newModelForm(table, req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -175,8 +175,8 @@ router.get(
     const { id } = req.params;
     const { step } = req.query;
 
-    const model = await Model.findOne({ id });
-    const table = await Table.findOne({ id: model.table_id });
+    const model = (await Model.findOne({ id }))!;
+    const table = (await Table.findOne({ id: model.table_id }))!;
     const configFlow = get_model_workflow(model, req);
     const wfres = await configFlow.run(
       {
@@ -198,8 +198,8 @@ router.post(
     const { id } = req.params;
     const { step } = req.query;
 
-    const model = await Model.findOne({ id });
-    const table = await Table.findOne({ id: model.table_id });
+    const model = (await Model.findOne({ id }))!;
+    const table = (await Table.findOne({ id: model.table_id }))!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -216,9 +216,9 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model = await Model.findOne({ id });
-    const table = await Table.findOne({ id: model.table_id });
-    const instances = await ModelInstance.find({ model_id: model.id });
+    const model = (await Model.findOne({ id }))!;
+    const table = (await Table.findOne({ id: model.table_id }))!;
+    const instances = (await ModelInstance.find({ model_id: model.id }))!;
     const metrics = model.templateObj.metrics || {};
     const rendered = await model.templateObj.renderModel?.({ table, ...model });
     const metricCols = Object.entries(metrics).map(([k, v]: any) => ({
@@ -351,7 +351,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model = await Model.findOne({ id });
+    const model = (await Model.findOne({ id }))!;
     await model.delete();
     await getState()!.refresh_tables();
     req.flash("success", req.__("Model %s deleted", model.name));
@@ -364,7 +364,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model_inst = await ModelInstance.findOne({ id });
+    const model_inst = (await ModelInstance.findOne({ id }))!;
     await model_inst.delete();
     req.flash("success", req.__("Model instance %s deleted", model_inst.name));
     res.redirect(`/models/show/${model_inst.model_id}`);
@@ -376,8 +376,8 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model = await Model.findOne({ id });
-    const table = await Table.findOne({ id: model.table_id });
+    const model = (await Model.findOne({ id }))!;
+    const table = (await Table.findOne({ id: model.table_id }))!;
     const form = model_train_form(model, table, req);
     res.sendWrap(req.__(`Train model`), {
       above: [
@@ -405,8 +405,8 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model = await Model.findOne({ id });
-    const table = Table.findOne({ id: model.table_id });
+    const model = (await Model.findOne({ id }))!;
+    const table = Table.findOne({ id: model.table_id })!;
     const form = model_train_form(model, table, req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -448,7 +448,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model_instance = await ModelInstance.findOne({ id });
+    const model_instance = (await ModelInstance.findOne({ id }))!;
     await model_instance.make_default(!(req.body || {}).enabled);
     res.redirect(`/models/show/${model_instance.model_id}`);
   })
@@ -473,9 +473,9 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model_instance = await ModelInstance.findOne({ id });
-    const model = await Model.findOne({ id: model_instance.model_id });
-    const table = Table.findOne({ id: model.table_id });
+    const model_instance = (await ModelInstance.findOne({ id }))!;
+    const model = (await Model.findOne({ id: model_instance.model_id }))!;
+    const table = Table.findOne({ id: model.table_id })!;
     res.sendWrap(req.__(`Train model`), {
       above: [
         {

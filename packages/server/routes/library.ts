@@ -47,7 +47,7 @@ router.get(
   "/list",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    const libs = await Library.find({});
+    const libs = (await Library.find({}))!;
     send_infoarch_page({
       res,
       req,
@@ -91,7 +91,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const t = await Library.findOne({ id });
+    const t = (await Library.findOne({ id }))!;
     try {
       await t.delete();
       req.flash("success", req.__(`Library item %s deleted`, t.name));

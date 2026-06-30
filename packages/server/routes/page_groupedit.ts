@@ -25,8 +25,8 @@ export default router;
 
 const groupPropsForm = async (req: any, isNew: any) => {
   const roles = await User.get_roles();
-  const pages = await Page.find();
-  const groups = await PageGroup.find();
+  const pages = (await Page.find())!;
+  const groups = (await PageGroup.find())!;
   return new Form({
     action: "/page_groupedit/edit-properties",
     ...(isNew
@@ -157,9 +157,9 @@ const memberForm = async (action: any, req: any, group: any, pageValidator: any)
 };
 
 const editMemberForm = async (member: any, req: any) => {
-  const group = PageGroup.findOne({ id: member.page_group_id });
+  const group = PageGroup.findOne({ id: member.page_group_id })!;
   const validator = (s: any, whole: any) => {
-    const page = Page.findOne({ name: s });
+    const page = Page.findOne({ name: s })!;
     if (group.members.find((m: any) => m.page_id === page.id && +whole.id !== m.id))
       return req.__("A member with this page already exists");
   };
@@ -206,7 +206,7 @@ const wrapGroup = (contents: any, req: any) => {
 
 const wrapMember = (contents: any, req: any, pageGroup: any, pageMember: any) => {
   const memberCrumb = (pageId: any) => {
-    const page = Page.findOne({ id: pageId });
+    const page = Page.findOne({ id: pageId })!;
     return page ? { text: page.name, href: `/page/${page.name}` } : {};
   };
   return {
@@ -346,7 +346,7 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { page_groupname } = req.params;
-    const pageGroup = PageGroup.findOne({ name: page_groupname });
+    const pageGroup = PageGroup.findOne({ name: page_groupname })!;
     const propertiesForm = await groupPropsForm(req);
     propertiesForm.hidden("id");
     propertiesForm.values = pageGroup;
@@ -434,7 +434,7 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { page_groupname } = req.params;
-    const group = PageGroup.findOne({ name: page_groupname });
+    const group = PageGroup.findOne({ name: page_groupname })!;
     if (!group) {
       req.flash("error", req.__("Page group %s not found", page_groupname));
       res.redirect(`/page_groupedit/${page_groupname}`);
@@ -456,7 +456,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { page_groupname } = req.params;
-    const group = PageGroup.findOne({ name: page_groupname });
+    const group = PageGroup.findOne({ name: page_groupname })!;
     if (!group) {
       req.flash("error", req.__("Page group %s not found", page_groupname));
       res.redirect(`/page_groupedit/${page_groupname}`);
@@ -470,7 +470,7 @@ router.post(
       );
     } else {
       const { page_name, eligible_formula, description } = form.values;
-      const page = Page.findOne({ name: page_name });
+      const page = Page.findOne({ name: page_name })!;
       if (!page) {
         req.flash("error", req.__("Page %s not found", page_name));
         res.sendWrap(
@@ -500,8 +500,8 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { member_id, mode } = req.params;
     try {
-      const member = PageGroupMember.findOne({ id: member_id });
-      const pageGroup = PageGroup.findOne({ id: member.page_group_id });
+      const member = PageGroupMember.findOne({ id: member_id })!;
+      const pageGroup = PageGroup.findOne({ id: member.page_group_id })!;
       await pageGroup.moveMember(member, mode);
       await getState()!.refresh_page_groups();
       res.json({ success: "ok" });
@@ -520,12 +520,12 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { member_id } = req.params;
-    const member = PageGroupMember.findOne({ id: member_id });
+    const member = PageGroupMember.findOne({ id: member_id })!;
     if (!member) {
       req.flash("error", req.__("member %s does not exist", member_id));
       return res.redirect("/pageedit");
     }
-    const group = PageGroup.findOne({ id: member.page_group_id });
+    const group = PageGroup.findOne({ id: member.page_group_id })!;
     if (!group) {
       req.flash(
         "error",
@@ -533,7 +533,7 @@ router.get(
       );
       return res.redirect("/pageedit");
     }
-    const page = Page.findOne({ id: member.page_id });
+    const page = Page.findOne({ id: member.page_id })!;
     if (!page) {
       req.flash("error", req.__("Page %s not found", member.page_id));
       return res.redirect(`/page_groupedit/${group.name}`);
@@ -557,8 +557,8 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { member_id } = req.params;
-    const member = PageGroupMember.findOne({ id: member_id });
-    const group = PageGroup.findOne({ id: member.page_group_id });
+    const member = PageGroupMember.findOne({ id: member_id })!;
+    const group = PageGroup.findOne({ id: member.page_group_id })!;
     const form = await editMemberForm(member, req);
     form.hidden("id");
     form.validate(req.body || {});
@@ -569,7 +569,7 @@ router.post(
       );
     } else {
       const { id, page_name, eligible_formula, description } = form.values;
-      const page = Page.findOne({ name: page_name });
+      const page = Page.findOne({ name: page_name })!;
       if (!page) {
         req.flash("error", req.__("Page %s not found", page_name));
         res.redirect(`/page_groupedit/${group.name}`);
@@ -595,7 +595,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { group_id } = req.params;
-    const group = PageGroup.findOne({ id: group_id });
+    const group = PageGroup.findOne({ id: group_id })!;
     if (!group) {
       req.flash("error", req.__("Page group %s not found", group_id));
       res.redirect("/pageedit");
@@ -616,12 +616,12 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { member_id } = req.params;
-    const member = PageGroupMember.findOne({ id: member_id });
+    const member = PageGroupMember.findOne({ id: member_id })!;
     if (!member) {
       req.flash("error", req.__("Page group member %s not found", member_id));
       res.redirect("/pageedit");
     } else {
-      const group = PageGroup.findOne({ id: member.page_group_id });
+      const group = PageGroup.findOne({ id: member.page_group_id })!;
       if (!group) {
         req.flash(
           "error",
@@ -655,7 +655,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const group = PageGroup.findOne({ id });
+    const group = PageGroup.findOne({ id })!;
     if (!group) {
       req.flash("error", req.__("Page group %s not found", id));
       res.redirect("/pageedit");
@@ -676,7 +676,7 @@ router.post(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const group = PageGroup.findOne({ id });
+    const group = PageGroup.findOne({ id })!;
     if (!group) {
       req.flash("error", req.__("Page group %s not found", id));
       res.redirect("/pageedit");

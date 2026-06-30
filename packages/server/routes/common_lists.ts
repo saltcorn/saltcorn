@@ -59,15 +59,15 @@ const listClass = (tagId: any, showList: any) =>
 const tablesList = async (tables: any, req: any, { tagId, domId, showList, filterOnTag }: any = {}) => {
   const roles = await User.get_roles();
   const getRole = (rid: any) => roles.find((r: any) => r.id === rid)?.role || "?";
-  const tags = await Tag.find();
-  const tag_entries = await TagEntry.find({
+  const tags = (await Tag.find())!;
+  const tag_entries = (await TagEntry.find({
     not: { table_id: null },
-  });
+  }))!;
   const tagsById = {};
   tags.forEach((t: any) => (tagsById[t.id] = t));
   const user_can_edit_tables =
-    req.user.role_id === 1 ||
-    getState()!.getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+    req.user!.role_id === 1 ||
+    getState()!.getConfig("min_role_edit_tables", 1) >= req.user!.role_id;
   const tagBadges = (table: any) => {
     const myTags = tag_entries.filter((te: any) => te.table_id === table.id);
     const myTagIds = new Set(myTags.map((t: any) => t.tag_id));
@@ -232,7 +232,7 @@ const view_dropdown = (
   ]);
 
 const setTableRefs = async (views: any) => {
-  const tables = await Table.find({}, { cached: true });
+  const tables = (await Table.find({}, { cached: true }))!;
   const getTable = (tid: any) => tables.find((t: any) => t.id === tid).name;
 
   views.forEach((v: any) => {
@@ -339,16 +339,16 @@ const viewsList = async (views: any, req: any, { tagId, domId, showList, on_done
   const on_done_redirect_str = on_done_redirect
     ? `?on_done_redirect=${on_done_redirect}`
     : "";
-  const tags = await Tag.find();
-  const tag_entries = await TagEntry.find({
+  const tags = (await Tag.find())!;
+  const tag_entries = (await TagEntry.find({
     not: { view_id: null },
-  });
+  }))!;
   const tagsById = {};
   tags.forEach((t: any) => (tagsById[t.id] = t));
   const user_can_inspect_tables =
-    req.user.role_id === 1 ||
-    getState()!.getConfig("min_role_edit_tables", 1) >= req.user.role_id ||
-    getState()!.getConfig("min_role_inspect_tables", 1) >= req.user.role_id;
+    req.user!.role_id === 1 ||
+    getState()!.getConfig("min_role_edit_tables", 1) >= req.user!.role_id ||
+    getState()!.getConfig("min_role_inspect_tables", 1) >= req.user!.role_id;
 
   const tagBadges = (view: any) => {
     const myTags = tag_entries.filter((te: any) => te.view_id === view.id);
@@ -579,10 +579,10 @@ const editPageRoleForm = (page: any, roles: any, req: any, isGroup: any) =>
  * @returns {div}
  */
 const getPageList = async (rows: any, roles: any, req: any, { tagId, domId, showList, filterOnTag }: any = {}) => {
-  const tags = await Tag.find();
-  const tag_entries = await TagEntry.find({
+  const tags = (await Tag.find())!;
+  const tag_entries = (await TagEntry.find({
     not: { page_id: null },
-  });
+  }))!;
   const tagsById = {};
   tags.forEach((t: any) => (tagsById[t.id] = t));
 
@@ -748,19 +748,19 @@ const trigger_dropdown = (
 
 const getTriggerList = async (triggers: any, req: any, { tagId, domId, showList, filterOnTag, on_done_redirect }: any = {}) => {
   const base_url = get_base_url(req);
-  const tags = await Tag.find();
+  const tags = (await Tag.find())!;
   const on_done_redirect_str = on_done_redirect
     ? `?on_done_redirect=${on_done_redirect}`
     : "";
-  const tag_entries = await TagEntry.find({
+  const tag_entries = (await TagEntry.find({
     not: { trigger_id: null },
-  });
+  }))!;
   const tagsById = {};
   tags.forEach((t: any) => (tagsById[t.id] = t));
   const user_can_inspect_tables =
-    req.user.role_id === 1 ||
-    getState()!.getConfig("min_role_edit_tables", 1) >= req.user.role_id ||
-    getState()!.getConfig("min_role_inspect_tables", 1) >= req.user.role_id;
+    req.user!.role_id === 1 ||
+    getState()!.getConfig("min_role_edit_tables", 1) >= req.user!.role_id ||
+    getState()!.getConfig("min_role_inspect_tables", 1) >= req.user!.role_id;
 
   const tagBadges = (trigger: any) => {
     const myTags = tag_entries.filter((te: any) => te.trigger_id === trigger.id);

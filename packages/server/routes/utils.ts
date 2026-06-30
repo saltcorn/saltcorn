@@ -67,11 +67,11 @@ const get_sys_info = async () => {
  * @returns {void}
  */
 function loggedIn(req: Req, res: Res, next: any): void {
-  if (req.user && req.user.id) {
+  if (req.user && req.user!.id) {
     // Reject tenant drift so a session authenticated elsewhere cannot be reused here.
     if (
-      req.user.tenant !== undefined &&
-      req.user.tenant !== db.getTenantSchema()
+      req.user!.tenant !== undefined &&
+      req.user!.tenant !== db.getTenantSchema()
     ) {
       req.logout?.(() => {});
       res.status(403);
@@ -95,9 +95,9 @@ function loggedIn(req: Req, res: Res, next: any): void {
 function isAdmin(req: Req, res: Res, next: any) {
   const cur_tenant = db.getTenantSchema();
   //console.log({ cur_tenant, user: req.user });
-  if (req.user && req.user.role_id === 1) {
+  if (req.user && req.user!.role_id === 1) {
     // Reject tenant drift before honoring elevated privileges in this schema.
-    if (req.user.tenant !== undefined && req.user.tenant !== cur_tenant) {
+    if (req.user!.tenant !== undefined && req.user!.tenant !== cur_tenant) {
       req.logout?.(() => {});
       res.status(403);
       return res.json({ error: "Session tenant mismatch" });
@@ -106,7 +106,7 @@ function isAdmin(req: Req, res: Res, next: any) {
   } else {
     req.flash("danger", req.__("Must be admin"));
     res.redirect(
-      req.user && req.user.pending_user
+      req.user && req.user!.pending_user
         ? "/auth/twofa/login/totp"
         : req.user
           ? "/"
@@ -133,8 +133,8 @@ function isAdmin(req: Req, res: Res, next: any) {
 function rejectTenantDrift(req: Req, res: Res, next: any) {
   if (
     req.user &&
-    req.user.tenant !== undefined &&
-    req.user.tenant !== db.getTenantSchema()
+    req.user!.tenant !== undefined &&
+    req.user!.tenant !== db.getTenantSchema()
   ) {
     req.logout?.(() => {});
     res.status(403);
@@ -149,20 +149,20 @@ const isAdminOrHasConfigMinRole =
     //console.log({ cur_tenant, user: req.user });
     if (
       req.user &&
-      (req.user.role_id === 1 ||
+      (req.user!.role_id === 1 ||
         (Array.isArray(cfg)
           ? cfg.some(
               (one_cfg: any) =>
                 getState()!.getConfig(one_cfg, 1) >= req.user!.role_id
             )
-          : getState()!.getConfig(cfg, 1) >= req.user.role_id)) &&
-      req.user.tenant === cur_tenant
+          : getState()!.getConfig(cfg, 1) >= req.user!.role_id)) &&
+      req.user!.tenant === cur_tenant
     ) {
       next();
     } else {
       req.flash("danger", req.__("Must be admin"));
       res.redirect(
-        req.user && req.user.pending_user
+        req.user && req.user!.pending_user
           ? "/auth/twofa/login/totp"
           : req.user
             ? "/"
@@ -179,8 +179,8 @@ const isAdminOrHasConfigMinRole =
  * @returns {void}
  */
 const setLanguage = (req: Req, res: Res, state?: any) => {
-  if (req.user && req.user.language) {
-    req.setLocale(req.user.language);
+  if (req.user && req.user!.language) {
+    req.setLocale(req.user!.language);
   } else if (req.cookies?.lang) {
     req.setLocale(req.cookies?.lang);
   }
@@ -193,8 +193,8 @@ const setLanguage = (req: Req, res: Res, state?: any) => {
 
 const applyUserLocale = (req: Req, res: Res, next: any) => {
   if (req.user) {
-    if (req.user.language) {
-      req.setLocale(req.user.language);
+    if (req.user!.language) {
+      req.setLocale(req.user!.language);
       const rtlLanguages = ["ar", "he", "fa", "ur", "yi"];
       req.isRTL = rtlLanguages.some((lang: any) =>
         req.user!.language.startsWith(lang)
@@ -286,15 +286,15 @@ const setTenant = (req: Req, res: Res, next: any) => {
     res.json({ error: "Invalid Host header" });
     return;
   }
-  // for a saltcorn mobile request use 'req.user.tenant'
+  // for a saltcorn mobile request use 'req.user!.tenant'
   if (req.smr) {
-    if (req.user?.tenant && req.user.tenant !== db.connectObj.default_schema) {
-      const state = getTenant(req.user.tenant);
+    if (req.user?.tenant && req.user!.tenant !== db.connectObj.default_schema) {
+      const state = getTenant(req.user!.tenant);
       if (!state) {
         setLanguage(req, res);
         next();
       } else {
-        db.runWithTenant({ tenant: req.user.tenant, req }, () => {
+        db.runWithTenant({ tenant: req.user!.tenant, req }, () => {
           setLanguage(req, res, state);
           state.log(5, `${req.method} ${req.originalUrl}`);
           next();
@@ -725,7 +725,7 @@ const sendHtmlStringWithGlobals = (req: Req, res: Res, html_string: string) => {
  */
 const sendHtmlFile = async (req: Req, res: Res, file: string) => {
   const fullPath = path.join((await File.rootFolder()).location, file);
-  const role = req.user && req.user.id ? req.user.role_id : 100;
+  const role = req.user && req.user!.id ? req.user!.role_id : 100;
   try {
     const scFile = await File.from_file_on_disk(
       path.basename(fullPath),
@@ -762,7 +762,7 @@ const setRole = async (req: Req, res: Res, model: any) => {
   await model.update(+id, { min_role: role });
   const page = model.findOne({ id });
   const roles = await User.get_roles();
-  const roleRow = roles.find((r: any) => r.id === +role);
+  const roleRow = roles.find((r: any) => r.id === +role)!;
   const message =
     roleRow && page
       ? req.__(`Minimum role for %s updated to %s`, page.name, roleRow.role)
