@@ -23,7 +23,7 @@ import {
   strong,
 } from "@saltcorn/markup/tags";
 import { link } from "@saltcorn/markup";
-import { Req } from "@saltcorn/types/base_types";
+import { PluginLoaderResult, Req } from "@saltcorn/types/base_types";
 
 /**
  * @param {object} args
@@ -53,7 +53,7 @@ const withCfg = (plugin: any, key: string, def: any) =>
 const plugin_types_info_card = (plugin: any, req: Req) => ({
   type: "card",
   title: req.__("Types"),
-  contents: plugin.plugin_module.types.map((type: any) =>
+  contents: plugin.plugin_module?.types.map((type: any) =>
     span({ class: "badge bg-primary ms-2" }, type.name)
   ),
 });
@@ -63,7 +63,7 @@ const plugin_types_info_card = (plugin: any, req: Req) => ({
  * @param {object} req
  * @returns {*}
  */
-const plugin_functions_info_card = (plugin: any, req: Req) => ({
+const plugin_functions_info_card = (plugin: PluginLoaderResult, req: Req) => ({
   type: "card",
   title: req.__("Functions"),
   contents: Object.entries(withCfg(plugin, "functions", {}))
@@ -86,7 +86,7 @@ const plugin_functions_info_card = (plugin: any, req: Req) => ({
  * @param {object} req
  * @returns {*}
  */
-const plugin_viewtemplates_info_card = (plugin: any, req: Req) => ({
+const plugin_viewtemplates_info_card = (plugin: PluginLoaderResult, req: Req) => ({
   type: "card",
   title: req.__("View patterns"),
   contents: withCfg(plugin, "viewtemplates", [])

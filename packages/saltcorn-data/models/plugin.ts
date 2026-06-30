@@ -14,7 +14,7 @@ import View from "./view.js";
 import fetchLib from "node-fetch";
 const fetch: any = fetchLib; // NodeNext default-import interop for node-fetch
 import { SelectOptions, Where } from "@saltcorn/db-common/internal";
-import { ViewTemplate, PluginSourceType } from "@saltcorn/types/base_types";
+import { ViewTemplate, PluginSourceType, PluginLoaderResult } from "@saltcorn/types/base_types";
 import type {
   PluginCfg,
   PluginPack,
@@ -515,7 +515,7 @@ class Plugin implements AbstractPlugin {
    * @param force - force reinstall even if already present
    * @returns PluginInstaller result (`{ plugin_module, location, version, … }`)
    */
-  static async requirePlugin(plugin: Plugin, force?: boolean): Promise<any> {
+  static async requirePlugin(plugin: Plugin, force?: boolean): Promise<PluginLoaderResult> {
     const airgap = getState()!.getConfig("airgap", false);
     if (airgap && !Plugin.is_fixed_plugin(plugin.location))
       Plugin.ensureAirgapedVersion(
