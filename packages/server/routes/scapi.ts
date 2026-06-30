@@ -19,6 +19,7 @@ import Role from "@saltcorn/data/models/role";
 import Tenant from "@saltcorn/admin-models/models/tenant";
 import Plugin from "@saltcorn/data/models/plugin";
 import * as Config from "@saltcorn/data/models/config";
+// @ts-ignore
 import passport from "passport";
 
 import { stateFieldsToWhere, readState } from "@saltcorn/data/plugin-helper";

@@ -413,7 +413,7 @@ router.post(
         case "from_file":
           if (req.files?.pack_file?.tempFilePath)
             pack = JSON.parse(
-              fs.readFileSync(req.files?.pack_file?.tempFilePath)
+              fs.readFileSync(req.files?.pack_file?.tempFilePath as string, "utf8")
             );
           else throw new Error(req.__("No file uploaded"));
           break;

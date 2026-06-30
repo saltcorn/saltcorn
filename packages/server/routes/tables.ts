@@ -2081,7 +2081,7 @@ router.get(
       bom: !!bom,
       cast,
       ...csvOpts,
-    }).pipe(res);
+    }).pipe(res as any);
   })
 );
 

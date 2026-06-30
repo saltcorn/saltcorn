@@ -93,9 +93,9 @@ router.post(
     if (form.hasErrors) {
       res.sendWrap(req.__(`New model`), renderForm(form, req.csrfToken()));
     } else {
-      const model = await Model.create({ ...form.values, table_id: table.id });
+      const model = await Model.create({ ...form.values, table_id: table.id } as any);
       await getState()!.refresh_tables();
-      if (model.templateObj.configuration_workflow)
+      if ((model.templateObj as any)?.configuration_workflow)
         res.redirect(`/models/config/${model.id}`);
       else res.redirect(`/models/show/${model.id}`);
     }
@@ -162,7 +162,7 @@ const get_model_workflow = (model: any, req: any) => {
     await getState()!.refresh_tables();
     return {
       redirect: `/models/show/${model.id}`,
-      flash: ["success", `Model ${this.name || ""} saved`],
+      flash: ["success", `Model ${model.name || ""} saved`],
     };
   };
   return workflow;
@@ -219,8 +219,8 @@ router.get(
     const model = (await Model.findOne({ id }))!;
     const table = (await Table.findOne({ id: model.table_id }))!;
     const instances = (await ModelInstance.find({ model_id: model.id }))!;
-    const metrics = model.templateObj.metrics || {};
-    const rendered = await model.templateObj.renderModel?.({ table, ...model });
+    const metrics = (model.templateObj as any)?.metrics || {};
+    const rendered = await (model.templateObj as any)?.renderModel?.({ table, ...model });
     const metricCols = Object.entries(metrics).map(([k, v]: any) => ({
       label: k,
       key: (inst: any) => inst.metric_values?.[k]?.toPrecision(6),
@@ -465,7 +465,7 @@ const encode = (s: any) =>
         ">": "&gt;",
         "'": "&#39;",
         '"': "&quot;",
-      })[tag]
+      } as any)[tag]
   );
 
 router.get(

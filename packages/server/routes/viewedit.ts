@@ -131,7 +131,7 @@ const mapObjectValues = (o: any, f: any) =>
  * @param {object} values
  * @returns {Form}
  */
-const viewForm = async (req: any, tableOptions: any, roles: any, pages: any, values: any) => {
+const viewForm = async (req: any, tableOptions: any, roles: any, pages: any, values?: any) => {
   const devmode = getState()!.getConfig("development_mode", false);
   const isEdit = values && values.id && !devmode;
   const hasTable = Object.entries(getState()!.viewtemplates)
@@ -458,12 +458,12 @@ router.get(
               tr(
                 th({ class: "me-2" }, req.__("Embedded in")),
                 td(
-                  inbound_connected.embeddedViews.map((v: any) => v.name).join(", ")
+                  inbound_connected.embeddedViews!.map((v: any) => v.name).join(", ")
                 )
               ),
               tr(
                 th({ class: "me-2" }, req.__("Linked from")),
-                td(inbound_connected.linkedViews.map((v: any) => v.name).join(", "))
+                td(inbound_connected.linkedViews!.map((v: any) => v.name).join(", "))
               )
             )
           ),
@@ -547,13 +547,13 @@ router.post(
       });
     };
 
-    if (result.success) {
-      if (result.success.name.replace(" ", "") === "") {
+    if ((result as any).success) {
+      if ((result as any).success.name.replace(" ", "") === "") {
         form.errors.name = req.__("Name required");
         form.hasErrors = true;
         sendForm(form);
       } else {
-        const existing_view = (await View.findOne({ name: result.success.name }))!;
+        const existing_view = (await View.findOne({ name: (result as any).success.name }))!;
         if (existing_view)
           if (+(req.body || {}).id !== existing_view.id) {
             // may be need !== but doesnt work
@@ -563,7 +563,7 @@ router.post(
             return;
           }
 
-        const v = result.success;
+        const v = (result as any).success;
         const vt = getState()!.viewtemplates[v.viewtemplate];
         if (v.table_name) {
           const table = Table.findOne({ name: v.table_name })!;
@@ -619,7 +619,7 @@ router.post(
  * @returns {void}
  */
 const respondWorkflow = (view: any, wf: any, wfres: any, req: any, res: any, table: any) => {
-  const wrap = (contents: any, noCard: any, previewURL: any) => ({
+  const wrap = (contents: any, noCard: any, previewURL?: any) => ({
     above: [
       {
         type: "breadcrumbs",
@@ -788,7 +788,7 @@ router.post(
           },
         };
       else newcfg = { ...view.configuration, ...context };
-      await View.update({ configuration: newcfg }, view.id);
+      await View.update({ configuration: newcfg }, view.id!);
       Trigger.emitEvent("AppChange", `View ${view.name}`, req.user, {
         entity_type: "View",
         entity_name: view.name,
@@ -972,7 +972,7 @@ router.post(
               },
             };
           else newcfg = { ...view.configuration, ...step.renderForm.values };
-          await View.update({ configuration: newcfg }, view.id);
+          await View.update({ configuration: newcfg }, view.id!);
           await getState()!.refresh_views();
           Trigger.emitEvent("AppChange", `View ${view.name}`, req.user, {
             entity_type: "View",
@@ -1050,7 +1050,7 @@ router.post(
       });
       return;
     }
-    const layout = await f.run(prompt, mode, table, existing);
+    const layout = await (f as any).run(prompt, mode, table, existing);
     res.json({ success: "ok", layout });
   })
 );

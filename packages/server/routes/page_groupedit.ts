@@ -23,7 +23,7 @@ import { Req, Res } from "@saltcorn/types/base_types";
 const router = Router();
 export default router;
 
-const groupPropsForm = async (req: any, isNew: any) => {
+const groupPropsForm = async (req: any, isNew?: any) => {
   const roles = await User.get_roles();
   const pages = (await Page.find())!;
   const groups = (await PageGroup.find())!;
@@ -65,7 +65,7 @@ const groupPropsForm = async (req: any, isNew: any) => {
         },
         sublabel: req.__("A short name that will be in your URL"),
         attributes: { autofocus: true },
-      },
+      } as any,
       {
         name: "description",
         label: req.__("Description"),
@@ -141,7 +141,7 @@ const memberForm = async (action: any, req: any, group: any, pageValidator: any)
       type: "String",
       required: true,
       class: "validate-expression",
-    });
+    } as any);
   }
   return new Form({
     action,
@@ -204,7 +204,7 @@ const wrapGroup = (contents: any, req: any) => {
   };
 };
 
-const wrapMember = (contents: any, req: any, pageGroup: any, pageMember: any) => {
+const wrapMember = (contents: any, req: any, pageGroup: any, pageMember?: any) => {
   const memberCrumb = (pageId: any) => {
     const page = Page.findOne({ id: pageId })!;
     return page ? { text: page.name, href: `/page/${page.name}` } : {};
@@ -418,7 +418,7 @@ router.post(
         res.json({ success: "ok", row });
       } else {
         row.name = row.name.trim();
-        const pageGroup = await PageGroup.create(row);
+        const pageGroup = await PageGroup.create(row as any);
         await getState()!.refresh_page_groups();
         res.redirect(`/page_groupedit/${pageGroup.name}`);
       }
@@ -479,7 +479,7 @@ router.post(
         );
       } else {
         await group.addMember({
-          page_id: page.id,
+          page_id: page.id!,
           eligible_formula,
           description: description || "",
         });
@@ -543,7 +543,7 @@ router.get(
     form.values = { ...member, page_name: page.name };
 
     res.sendWrap(
-      req.__(`%s edit-member`, member.name || member.id),
+      req.__(`%s edit-member`, (member as any).name || member.id),
       wrapMember(renderForm(form, req.csrfToken()), req, group, member)
     );
   })
@@ -564,7 +564,7 @@ router.post(
     form.validate(req.body || {});
     if (form.hasErrors) {
       res.sendWrap(
-        req.__(`%s edit-member`, member.name || member.id),
+        req.__(`%s edit-member`, (member as any).name || member.id),
         wrapMember(renderForm(form, req.csrfToken()), req, group, member)
       );
     } else {
@@ -634,7 +634,7 @@ router.post(
           await getState()!.refresh_page_groups();
           req.flash(
             "success",
-            req.__("Removed member %s", member.name || member_id)
+            req.__("Removed member %s", (member as any).name || member_id)
           );
           res.redirect(`/page_groupedit/${group.name}`);
         } catch (e: any) {

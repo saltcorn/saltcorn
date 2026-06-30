@@ -80,7 +80,7 @@ import { Req, Res } from "@saltcorn/types/base_types";
 const router = Router();
 export default router;
 
-const remove_leading_chars = (cs: any, s: any) =>
+const remove_leading_chars = (cs: any, s: any): any =>
   s.startsWith(cs) ? remove_leading_chars(cs, s.substring(cs.length)) : s;
 
 /**
@@ -161,7 +161,7 @@ router.get(
       return;
     }
 
-    if (is_ip_address(req.hostname))
+    if (is_ip_address(req.hostname!))
       req.flash(
         "danger",
         req.__(
@@ -231,7 +231,7 @@ router.get(
  * @param base_url - Base URL
  * @returns {string}
  */
-const getNewURL = (req: any, subdomain: any, base_url: any) => {
+const getNewURL = (req: any, subdomain: any, base_url?: any) => {
   var ports = "";
   const host = req.get("host");
   if (typeof host === "string") {
@@ -269,7 +269,7 @@ router.post(
     const base_url = get_cfg_tenant_base_url(req);
     const form = tenant_form(req, base_url);
     // validate ui form
-    const valres = form.validate(req.body || {});
+    const valres = form.validate(req.body || {}) as any;
     if (valres.errors)
       res.sendWrap(
         req.__("Create application"),
@@ -501,7 +501,7 @@ const tenant_settings_form = (req: any) =>
       "tenant_baseurl",
       "tenant_create_unauth_redirect",
       "tenant_inherit_cfgs",
-      { section_header: req.__("Tenant application capabilities") },
+      { section_header: req.__("Tenant application capabilities") } as any,
       "tenants_install_git",
       "tenants_set_npm_modules",
       "tenants_unsafe_plugins",

@@ -561,7 +561,7 @@ const no_views_logged_in = async (req: Req, res: Res) => {
         req.__(
           "An upgrade to Saltcorn is available! Current version: %s; latest version: %s.",
           packagejson.version,
-          (eligible_upgrades || [])[eligible_upgrades.length - 1]
+          (eligible_upgrades || [])[(eligible_upgrades as string[]).length - 1]
         ) +
           " " +
           a({ href: "/admin/system" }, req.__("Upgrade here"))

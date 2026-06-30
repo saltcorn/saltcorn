@@ -243,7 +243,7 @@ router.get(
       return res.redirect(`/site-structure/localizer`);
     }
     const default_lang =
-      Object.values(cfgLangs).find((lobj: any) => lobj.is_default)?.locale ||
+      (Object.values(cfgLangs).find((lobj: any) => lobj.is_default) as any)?.locale ||
       getState()!.getConfig("default_locale", "en");
 
     const cfgStrings = getState()!.getConfig("localizer_strings", {});
@@ -259,7 +259,7 @@ router.get(
       header: true,
       columns: [default_lang, lang],
       quoted: true,
-    }).pipe(res);
+    }).pipe(res as any);
   })
 );
 
@@ -271,7 +271,7 @@ router.post(
     if (req.files?.file?.tempFilePath) {
       const cfgLangs = getState()!.getConfig("localizer_languages");
       const default_lang =
-        Object.values(cfgLangs).find((lobj: any) => lobj.is_default)?.locale ||
+        (Object.values(cfgLangs).find((lobj: any) => lobj.is_default) as any)?.locale ||
         getState()!.getConfig("default_locale", "en");
       const cfgStrings = getState()!.getConfigCopy("localizer_strings");
 
@@ -434,7 +434,7 @@ router.post(
       return res.redirect(`/site-structure/localizer`);
     }
     const default_lang =
-      Object.values(cfgLangs).find((lobj: any) => lobj.is_default)?.locale ||
+      (Object.values(cfgLangs).find((lobj: any) => lobj.is_default) as any)?.locale ||
       getState()!.getConfig("default_locale", "en");
     let count = 0;
     for (const defstring of getState()!.getStringsForI18n()) {

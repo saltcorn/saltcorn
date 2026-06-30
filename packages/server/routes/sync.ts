@@ -105,7 +105,7 @@ const getSyncRows = async (syncInfo: any, table: any, syncUntil: any, user: any)
     const ownerClause = ownerFieldName
       ? `and data_tbl."${db.sqlsanitize(ownerFieldName)}" = $3`
       : "";
-    if (ownerFieldName) params.push(userId);
+    if (ownerFieldName) params.push(userId as number);
     const { rows } = await db.query(
       `select
          COALESCE(info_tbl.ref, data_tbl."${db.sqlsanitize(
@@ -153,7 +153,7 @@ const getSyncRows = async (syncInfo: any, table: any, syncUntil: any, user: any)
     const ownerClause = ownerFieldName
       ? `and data_tbl."${db.sqlsanitize(ownerFieldName)}" = $5`
       : "";
-    if (ownerFieldName) params.push(userId);
+    if (ownerFieldName) params.push(userId as number);
     const { rows } = await db.query(
       `select
          info_tbl.ref "_sync_info_tbl_ref_",

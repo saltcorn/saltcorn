@@ -591,7 +591,7 @@ const admin_config_route = ({
   get_form?: any;
   field_names?: any;
   response: (form: any, req: Req, res: Res) => void;
-  flash: string;
+  flash?: string;
 }) => {
   const getTheForm = async (req: Req) =>
     !get_form && field_names
@@ -629,7 +629,7 @@ const admin_config_route = ({
         if (!req.xhr) {
           if (restart_required) {
             flash_restart(req);
-          } else req.flash("success", req.__(flash));
+          } else req.flash("success", req.__(flash || ""));
           res.redirect(super_path + path);
         } else {
           if (restart_required)

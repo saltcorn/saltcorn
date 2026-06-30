@@ -20,7 +20,7 @@ const deviceTypes = [
   "web",
 ];
 
-const deviceForm = (req: any, deviceValidator: any, device: any) => {
+const deviceForm = (req: any, deviceValidator: any, device?: any) => {
   const sizeValidator = (v: any) => {
     const n = +v;
     if (isNaN(n)) return req.__("Not a number");
@@ -133,7 +133,7 @@ router.get(
       res,
       req,
       active_sub: "Pagegroups",
-      contents: [
+      contents: ([
         {
           type: "card",
           title: req.__("User Agent screen infos"),
@@ -189,7 +189,7 @@ router.get(
           title: req.__("Page Group settings"),
           contents: [renderForm(pgForm, req.csrfToken())],
         },
-      ],
+      ] as any),
     });
   })
 );

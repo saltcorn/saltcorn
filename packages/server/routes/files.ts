@@ -14,6 +14,7 @@ import View from "@saltcorn/data/models/view";
 import Form from "@saltcorn/data/models/form";
 import { getState } from "@saltcorn/data/db/state";
 import s3storage from "../s3storage.js";
+// @ts-ignore
 import resizer from "resize-with-sharp-or-jimp";
 import db from "@saltcorn/data/db";
 
@@ -326,7 +327,7 @@ router.post(
     res.attachment(
       `${getState()!.getConfig("site_name", db.getTenantSchema())}-files.zip`
     );
-    readStream.pipe(res);
+    readStream.pipe(res as any);
   })
 );
 
@@ -711,7 +712,7 @@ router.post(
       if (req.xhr) {
         const root = path.join(db.connectObj.file_store, db.getTenantSchema());
         res.json({
-          error: result.error.replaceAll(root, ""),
+          error: (result.error as any).replaceAll(root, ""),
         });
         return;
       }

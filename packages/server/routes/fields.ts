@@ -1075,7 +1075,7 @@ router.post(
         ],
       });
     } else {
-      if (wfres.flash) req.flash(...wfres.flash);
+      if (wfres.flash) (req.flash as any)(...wfres.flash);
       res.redirect(wfres.redirect!);
     }
   })

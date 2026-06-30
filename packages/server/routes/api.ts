@@ -29,6 +29,7 @@ import View from "@saltcorn/data/models/view";
 import Trigger from "@saltcorn/data/models/trigger";
 import File from "@saltcorn/data/models/file";
 //const load_plugins = require("../load_plugins");
+// @ts-ignore
 import passport from "passport";
 import path from "path";
 import s3storage from "../s3storage.js";
