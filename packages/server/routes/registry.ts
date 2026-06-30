@@ -260,7 +260,7 @@ router.get(
       res,
       req,
       active_sub: "Registry editor",
-      contents: ({
+      contents: {
         widths: [3, 9],
         besides: [
           {
@@ -374,7 +374,7 @@ router.get(
             },
           },
         ],
-      }) as any,
+      },
     });
   })
 );

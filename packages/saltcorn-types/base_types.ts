@@ -140,11 +140,15 @@ type LayoutWithHtmlString = {
 type LayoutContainer = null | LayoutWithTypeProp | any;
 type LayoutArray = Array<
   | LayoutContainer
-  | { besides: Array<LayoutContainer> }
+  | { besides: Array<LayoutContainer>; widths?: number[] }
   | { above: Array<LayoutContainer> }
 >;
 type LayoutWithAbove = { above: LayoutArray; besides?: never };
-type LayoutWithBesides = { besides: LayoutArray; above?: never };
+type LayoutWithBesides = {
+  besides: LayoutArray;
+  widths?: number[];
+  above?: never;
+};
 
 export type Layout =
   | LayoutWithAbove
