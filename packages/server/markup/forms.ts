@@ -13,6 +13,8 @@ import {
   input,
 } from "@saltcorn/markup/tags";
 import { csrfField } from "../routes/utils.js";
+import Role from "@saltcorn/data/models/role";
+import { Req } from "@saltcorn/types/base_types";
 
 /**
  * Edit Role form (for admin)
@@ -23,7 +25,17 @@ import { csrfField } from "../routes/utils.js";
  * @param {object} opts.req
  * @returns {Form}
  */
-const editRoleForm = ({ url, current_role, roles, req }) =>
+const editRoleForm = ({
+  url,
+  current_role,
+  roles,
+  req,
+}: {
+  url: string;
+  current_role: number;
+  roles: Role[];
+  req: Req;
+}) =>
   form(
     {
       action: url,
@@ -54,7 +66,7 @@ const editRoleForm = ({ url, current_role, roles, req }) =>
  * @param folder
  * @returns {Form}
  */
-const fileUploadForm = (req, folder) => {
+const fileUploadForm = (req: Req, folder?: string) => {
   const frm = form(
     {
       action: "/files/upload",
@@ -88,7 +100,7 @@ const fileUploadForm = (req, folder) => {
  * @param {object} wfres
  * @returns {string}
  */
-const wizardCardTitle = (wizardTitle, wf, wfres) =>
+const wizardCardTitle = (wizardTitle: string, wf: any, wfres: any) =>
   `${wizardTitle}: ${wfres.stepName}`;
 
 export { editRoleForm, wizardCardTitle, fileUploadForm };

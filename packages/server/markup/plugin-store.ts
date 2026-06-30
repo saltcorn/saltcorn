@@ -23,12 +23,13 @@ import {
   strong,
 } from "@saltcorn/markup/tags";
 import { link } from "@saltcorn/markup";
+import { Req } from "@saltcorn/types/base_types";
 
 /**
  * @param {object} args
  * @returns {string}
  */
-const show_function_arguments = (args) =>
+const show_function_arguments = (args: { name: string; type: string }[]) =>
   (args || []).map(({ name, type }) => `${name}: ${type}`).join(", ");
 
 /**
@@ -37,7 +38,7 @@ const show_function_arguments = (args) =>
  * @param {object} def
  * @returns {*}
  */
-const withCfg = (plugin, key, def) =>
+const withCfg = (plugin: any, key: string, def: any) =>
   plugin.plugin_module.configuration_workflow
     ? plugin.plugin_module[key]
       ? plugin.plugin_module[key](plugin.configuration || {})
@@ -49,10 +50,10 @@ const withCfg = (plugin, key, def) =>
  * @param {object} req
  * @returns {*}
  */
-const plugin_types_info_card = (plugin, req) => ({
+const plugin_types_info_card = (plugin: any, req: Req) => ({
   type: "card",
   title: req.__("Types"),
-  contents: plugin.plugin_module.types.map((type) =>
+  contents: plugin.plugin_module.types.map((type: any) =>
     span({ class: "badge bg-primary ms-2" }, type.name)
   ),
 });
@@ -62,11 +63,11 @@ const plugin_types_info_card = (plugin, req) => ({
  * @param {object} req
  * @returns {*}
  */
-const plugin_functions_info_card = (plugin, req) => ({
+const plugin_functions_info_card = (plugin: any, req: Req) => ({
   type: "card",
   title: req.__("Functions"),
   contents: Object.entries(withCfg(plugin, "functions", {}))
-    .map(([nm, v]) =>
+    .map(([nm, v]: [string, any]) =>
       div(
         h4(
           { class: "d-inline me-2" },
@@ -85,11 +86,13 @@ const plugin_functions_info_card = (plugin, req) => ({
  * @param {object} req
  * @returns {*}
  */
-const plugin_viewtemplates_info_card = (plugin, req) => ({
+const plugin_viewtemplates_info_card = (plugin: any, req: Req) => ({
   type: "card",
   title: req.__("View patterns"),
   contents: withCfg(plugin, "viewtemplates", [])
-    .map(({ name, description }) => div(h4(name), p(description)))
+    .map(({ name, description }: { name: string; description: string }) =>
+      div(h4(name), p(description))
+    )
     .join("<hr>"),
 });
 
@@ -97,7 +100,7 @@ const plugin_viewtemplates_info_card = (plugin, req) => ({
  * @param {object} repo
  * @returns {*}
  */
-const showRepository = (repo) =>
+const showRepository = (repo: any) =>
   !repo
     ? repo
     : repo.url
