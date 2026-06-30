@@ -8,6 +8,7 @@ import Router from "express-promise-router";
 import Crash from "@saltcorn/data/models/crash";
 import db from "@saltcorn/data/db";
 import { link, post_btn, mkTable } from "@saltcorn/markup";
+
 import {
   table,
   tbody,
@@ -22,6 +23,7 @@ import {
 
 import { isAdmin, error_catcher } from "./utils.js";
 import { send_events_page } from "../markup/admin.js";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -30,7 +32,7 @@ import { send_events_page } from "../markup/admin.js";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -42,24 +44,24 @@ export default router;
 router.get(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const state = req.query,
       rows_per_page = 20,
-      page_opts = { hover: true },
-      current_page = parseInt(state._page) || 1,
-      offset = (parseInt(state._page) - 1) * rows_per_page;
+      page_opts:any = { hover: true },
+      current_page = parseInt(state._page as string) || 1,
+      offset = (parseInt(state._page as string) - 1) * rows_per_page;
 
     const crashes = await Crash.find(
       {},
       { orderBy: "occur_at", orderDesc: true, limit: rows_per_page, offset }
     );
     if (crashes.length === rows_per_page || current_page > 1) {
-      const nrows = await Crash.count();
+      const nrows = await Crash.count({});
       if (nrows > rows_per_page || current_page > 1) {
         page_opts.pagination = {
           current_page,
           pages: Math.ceil(nrows / rows_per_page),
-          get_page_link: (n) => `gopage(${n}, ${rows_per_page})`,
+          get_page_link: (n: number) => `gopage(${n}, ${rows_per_page})`,
         };
       }
     }
@@ -79,9 +81,10 @@ router.get(
                 [
                   {
                     label: req.__("Show"),
-                    key: (r) => link(`/crashlog/${r.id}`, text(r.msg_short)),
+                    key: (r: any) =>
+                      link(`/crashlog/${r.id}`, text(r.msg_short)),
                   },
-                  { label: req.__("When"), key: (r) => r.reltime },
+                  { label: req.__("When"), key: (r: any) => r.reltime },
                   ...(db.is_it_multi_tenant()
                     ? [{ label: req.__("Tenant"), key: "tenant" }]
                     : []),
@@ -102,7 +105,7 @@ router.get(
  */
 router.post(
   "/",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const err = {
       stack: (req.body || {}).stack,
       message: `[JS] ${(req.body || {}).message}`,
@@ -121,14 +124,14 @@ router.post(
 router.get(
   "/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const crash = await Crash.findOne({ id });
     send_events_page({
       res,
       req,
       active_sub: "Crash log",
-      sub2_page: crash.id,
+      sub2_page: String(crash.id),
       contents: {
         type: "card",
         class: "crashlog-entry",
@@ -143,7 +146,7 @@ router.get(
                     text(
                       ["headers", "body"].includes(k)
                         ? JSON.stringify(v, null, 2)
-                        : v
+                        : (v as any)
                     )
                   )
                 )

@@ -123,7 +123,7 @@ type LayoutWithTypeProp = {
     | "line_break view";
   besides?: never;
   above?: never;
-  contents?: Layout | string;
+  contents?: Layout | string | Array<Layout | string>;
   [key: string]: any;
 };
 

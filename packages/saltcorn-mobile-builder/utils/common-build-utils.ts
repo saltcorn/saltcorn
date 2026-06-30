@@ -1472,7 +1472,7 @@ export async function prepareSplashPage(
       title: page.title,
       body: !contents
         ? { above: [] }
-        : contents.above
+        : "above" in contents
         ? contents
         : { above: [contents] },
       alerts: [],

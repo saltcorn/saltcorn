@@ -25,6 +25,7 @@ import { traverseSync } from "@saltcorn/data/models/layout";
 import { run_action_column } from "@saltcorn/data/plugin-helper";
 import db from "@saltcorn/data/db";
 import Crash from "@saltcorn/data/models/crash";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -33,10 +34,12 @@ import Crash from "@saltcorn/data/models/crash";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
-const findPageOrGroup = (pagename) => {
+const findPageOrGroup = (
+  pagename: string
+): { page: Page | null; pageGroup: PageGroup | null } => {
   const page = Page.findOne({ name: pagename });
   if (page) return { page, pageGroup: null };
   else {
@@ -46,9 +49,8 @@ const findPageOrGroup = (pagename) => {
   }
 };
 
-const runPage = async (page, req, res, tic) => {
+const runPage = async (page: Page, req: Req, res: Res, tic: Date) => {
   const role = req.user && req.user.id ? req.user.role_id : 100;
-  // let resultCollector = {};
   if (role <= page.min_role) {
     const contents = await page.run(req.query, { res, req });
     if (!contents) return;
@@ -56,7 +58,7 @@ const runPage = async (page, req, res, tic) => {
     const tock = new Date();
     const ms = tock.getTime() - tic.getTime();
 
-    const resultCollector = {};
+    const resultCollector: any = {};
     if (!isTest() && !req.xhr) {
       await Trigger.runTableTriggers(
         "PageLoad",
@@ -73,8 +75,9 @@ const runPage = async (page, req, res, tic) => {
         { req }
       );
     }
-    if (contents.html_file) await sendHtmlFile(req, res, contents.html_file);
-    else if (contents.html_string) {
+    if ("html_file" in contents)
+      await sendHtmlFile(req, res, contents.html_file);
+    else if ("html_string" in contents) {
       await sendHtmlStringWithGlobals(req, res, contents.html_string);
     } else
       res.sendWrap(
@@ -84,7 +87,7 @@ const runPage = async (page, req, res, tic) => {
           bodyClass: "page_" + db.sqlsanitize(page.name),
           no_menu: page.attributes?.no_menu,
           requestFluidLayout: page.attributes?.request_fluid_layout,
-        } || `${page.name} page`,
+        },
         add_results_to_contents(
           req.smr
             ? contents
@@ -103,7 +106,7 @@ const runPage = async (page, req, res, tic) => {
         )
       );
   } else {
-    getState().log(2, `Page ${page.name} not authorized`);
+    getState()!.log(2, `Page ${page.name} not authorized`);
     if (!req.user) {
       res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
       return;
@@ -117,16 +120,16 @@ const runPage = async (page, req, res, tic) => {
   }
 };
 
-const runPageGroup = async (pageGroup, req, res, tic) => {
+const runPageGroup = async (pageGroup: PageGroup, req: Req, res: Res, tic: Date) => {
   const role = req.user && req.user.id ? req.user.role_id : 100;
   if (role <= pageGroup.min_role) {
     if (pageGroup.random_allocation) {
       const page = getRandomPage(pageGroup, req);
       if (typeof page === "string") {
-        getState().log(2, page);
+        getState()!.log(2, page);
         res.status(400).sendWrap(req.__("Internal Error"), page);
       } else if (!page) {
-        getState().log(2, `Unable to find a random page in ${pageGroup.name}`);
+        getState()!.log(2, `Unable to find a random page in ${pageGroup.name}`);
         res
           .status(404)
           .sendWrap(
@@ -137,12 +140,12 @@ const runPageGroup = async (pageGroup, req, res, tic) => {
     } else {
       const eligible = await getEligiblePage(pageGroup, req, res);
       if (typeof eligible === "string") {
-        getState().log(2, eligible);
+        getState()!.log(2, eligible);
         res.status(400).sendWrap(req.__("Internal Error"), eligible);
       } else if (eligible) {
-        if (!eligible.isReload) await runPage(eligible, req, res, tic);
+        if (!("isReload" in eligible)) await runPage(eligible, req, res, tic);
       } else {
-        getState().log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
+        getState()!.log(2, `Pagegroup ${pageGroup.name} has no eligible page`);
         res
           .status(404)
           .sendWrap(
@@ -152,7 +155,7 @@ const runPageGroup = async (pageGroup, req, res, tic) => {
       }
     }
   } else {
-    getState().log(2, `Pagegroup ${pageGroup.name} not authorized`);
+    getState()!.log(2, `Pagegroup ${pageGroup.name} not authorized`);
     if (!req.user) {
       res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
       return;
@@ -168,8 +171,8 @@ const runPageGroup = async (pageGroup, req, res, tic) => {
 
 router.get(
   "/:pagename",
-  error_catcher(async (req, res) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res) => {
+    const state = getState()!;
     const maintenanceModeEnabled = state.getConfig(
       "maintenance_mode_enabled",
       false
@@ -218,8 +221,8 @@ router.get(
 router.post(
   "/:pagename/preview",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res) => {
+    const state = getState()!;
     const maintenanceModeEnabled = state.getConfig(
       "maintenance_mode_enabled",
       false
@@ -242,8 +245,8 @@ router.post(
 
 router.post(
   "/:pagename/action/:rndid",
-  error_catcher(async (req, res) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res) => {
+    const state = getState()!;
     const maintenanceModeEnabled = state.getConfig(
       "maintenance_mode_enabled",
       false
@@ -257,9 +260,9 @@ router.post(
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const db_page = await Page.findOne({ name: pagename });
     if (db_page && role <= db_page.min_role) {
-      let col;
+      let col: any;
       traverseSync(db_page.layout, {
-        action(segment) {
+        action(segment: any) {
           if (segment.rndid === rndid) col = segment;
         },
       });
@@ -274,8 +277,8 @@ router.post(
             });
           });
           res.json({ success: "ok", ...(result || {}) });
-        } catch (e) {
-          getState().log(2, e?.stack);
+        } catch (e: any) {
+          getState()!.log(2, e?.stack);
           await Crash.create(e, req);
           res.status(400).json({ error: e.message || e });
         }

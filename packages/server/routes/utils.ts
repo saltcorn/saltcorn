@@ -39,6 +39,7 @@ import _am_tenant from "@saltcorn/admin-models/models/tenant";
 import { Header, Req, Res } from "@saltcorn/types/base_types";
 import PageGroup from "@saltcorn/data/models/page_group";
 import { generateString } from "@saltcorn/types/generators";
+import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 const { domain_sanitize } = _am_tenant;
 const get_sys_info = async () => {
   const disks = await si.fsSize();
@@ -852,7 +853,7 @@ const getRandomPage = (pageGroup: PageGroup, req: Req) => {
   return Page.findOne({ id: sessionMember.page_id });
 };
 
-const checkEditPermission = (type: string, user: User) => {
+const checkEditPermission = (type: string, user: AbstractUser) => {
   if (user.role_id === 1) return true;
   switch (type) {
     case "views":
