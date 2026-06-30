@@ -25,6 +25,7 @@ import {
   button,
 } from "@saltcorn/markup/tags";
 import { Req, Res } from "@saltcorn/types/base_types";
+import Page from "@saltcorn/data/models/page";
 
 /**
  * @param {string} col
@@ -233,7 +234,7 @@ const view_dropdown = (
 
 const setTableRefs = async (views: any) => {
   const tables = (await Table.find({}, { cached: true }))!;
-  const getTable = (tid: any) => tables.find((t: any) => t.id === tid).name;
+  const getTable = (tid: any) => tables.find((t: any) => t.id === tid)!.name;
 
   views.forEach((v: any) => {
     if (v.table_id) v.table = getTable(v.table_id);
@@ -302,7 +303,7 @@ const tagsDropdown = (tags: any, altHeader: any, req: any) =>
     )
   );
 
-const mkAddBtn = (tags: any, entityType: any, id: any, req: any, myTagIds: any, on_done_redirect_str: any) =>
+const mkAddBtn = (tags: any, entityType: string, id: number, req: Req, myTagIds: any, on_done_redirect_str?: string) =>
   div(
     { class: "dropdown d-inline ms-1" },
     span(
@@ -564,7 +565,7 @@ const page_dropdown = (
  * @param {object} req
  * @returns {Form}
  */
-const editPageRoleForm = (page: any, roles: any, req: any, isGroup: any) =>
+const editPageRoleForm = (page: Page, roles: any, req: Req, isGroup?: any) =>
   editRoleForm({
     url: `/${!isGroup ? "page" : "page_group"}edit/setrole/${page.id}`,
     current_role: page.min_role,

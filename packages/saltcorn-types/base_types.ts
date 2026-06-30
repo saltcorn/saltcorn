@@ -72,6 +72,7 @@ export type FieldLike =
 export type Header = {
   script?: string;
   css?: string;
+  style?: string;
   headerTag?: string;
   onlyViews?: string[];
   onlyFieldviews?: string[];

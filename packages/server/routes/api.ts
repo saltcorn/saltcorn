@@ -40,6 +40,7 @@ import {
 } from "@saltcorn/data/plugin-helper";
 import Crash from "@saltcorn/data/models/crash";
 import { Req, Res } from "@saltcorn/types/base_types";
+import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 
 /**
  * @type {object}
@@ -75,7 +76,12 @@ const limitFields = (fields: any) => (r: any) => {
  * @param {Table} table
  * @returns {boolean}
  */
-function potentiallyAccessAllowedRead(req: any, user: any, table: any, allow_ownership: any) {
+function potentiallyAccessAllowedRead(
+  req: Req,
+  user: AbstractUser,
+  table: Table,
+  allow_ownership?: boolean
+) {
   const role =
     req.user && req.user!.id
       ? req.user!.role_id
@@ -180,7 +186,7 @@ router.post(
         const role = user && user.id ? user.role_id : 100;
         if (
           role <= view.min_role ||
-          (await view.authorise_get({ req, ...view })) // TODO set query to state
+          (await view.authorise_get({ req, ...view } as any)) // TODO set query to state
         ) {
           const queries = view.queries(false, req, res);
           if (Object.prototype.hasOwnProperty.call(queries, queryName)) {
@@ -330,7 +336,9 @@ router.get(
       async function (err: any, user: any, info: any) {
         if (potentiallyAccessAllowedRead(req, user, table)) {
           const myReq = { user: user || req.user, __: req.__ };
-          const field = table.getFields().find((f: any) => f.name === fieldName);
+          const field = table
+            .getFields()
+            .find((f: any) => f.name === fieldName);
           if (!field) {
             res.status(404).json({ error: req.__("Not found") });
             return;
@@ -338,7 +346,7 @@ router.get(
           let dvs: any;
           if (
             field.is_fkey ||
-            (field.type.name === "String" && field.attributes?.options)
+            (field.type_name === "String" && field.attributes?.options)
           ) {
             dvs = await field.distinct_values(myReq);
           } else {
@@ -396,7 +404,10 @@ router.get(
     } = req.query;
 
     let req_query = req_query0;
-    let tabulator_size: any, tabulator_page: any, tabulator_sort: any, tabulator_dir: any;
+    let tabulator_size: any,
+      tabulator_page: any,
+      tabulator_sort: any,
+      tabulator_dir: any;
     if (tabulator_pagination_format) {
       const { page, size, sort, ...rq } = req_query0;
       req_query = rq;
@@ -408,12 +419,12 @@ router.get(
     if (typeof limit !== "undefined")
       if (isNaN(limit) || !validateNumberMin(limit, 1)) {
         getState()!.log(3, `API get ${tableName} Invalid limit parameter`);
-        return res.status(400).send({ error: "Invalid limit parameter" });
+        return res.status(400).json({ error: "Invalid limit parameter" });
       }
     if (typeof offset !== "undefined")
       if (isNaN(offset) || !validateNumberMin(offset, 0)) {
         getState()!.log(3, `API get ${tableName} Invalid offset parameter`);
-        return res.status(400).send({ error: "Invalid offset parameter" });
+        return res.status(400).json({ error: "Invalid offset parameter" });
       }
     const strictIntId = strictParseInt(tableName);
     let table = Table.findOne(
@@ -758,7 +769,10 @@ router.post(
             );
           });
           if (ins_res?.error) {
-            getState()!.log(2, `API POST ${table.name} error: ${ins_res.error}`);
+            getState()!.log(
+              2,
+              `API POST ${table.name} error: ${ins_res.error}`
+            );
             res.status(400).json(ins_res);
           } else res.json(ins_res);
         } else {
@@ -866,7 +880,10 @@ router.post(
           });
 
           if (ins_res?.error) {
-            getState()!.log(2, `API POST ${table.name} error: ${ins_res.error}`);
+            getState()!.log(
+              2,
+              `API POST ${table.name} error: ${ins_res.error}`
+            );
             res.status(400).json(ins_res);
           } else res.json(ins_res);
         } else {

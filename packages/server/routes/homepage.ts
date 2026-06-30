@@ -278,7 +278,8 @@ const actionsTab = async (req: any, triggers: any) => {
           [
             {
               label: req.__("Name"),
-              key: (tr: any) => a({ href: `actions/configure/${tr.id}` }, tr.name),
+              key: (tr: any) =>
+                a({ href: `actions/configure/${tr.id}` }, tr.name),
             },
             { label: req.__("Action"), key: "action" },
             {
@@ -545,21 +546,22 @@ const no_views_logged_in = async (req: Req, res: Res) => {
     const eligible_upgrades =
       isRoot &&
       !airgap &&
-      versions?.filter?.(
+      (versions || []).filter?.(
         (v: any) =>
           semver.gt(v, packagejson.version) &&
           (packagejson.version.includes("-") || !v?.includes("-"))
       );
 
     const can_update =
-      eligible_upgrades?.length && !process.env.SALTCORN_DISABLE_UPGRADE;
+      (eligible_upgrades || [])?.length &&
+      !process.env.SALTCORN_DISABLE_UPGRADE;
     if (can_update && isRoot)
       req.flash(
         "warning",
         req.__(
           "An upgrade to Saltcorn is available! Current version: %s; latest version: %s.",
           packagejson.version,
-          eligible_upgrades[eligible_upgrades.length - 1]
+          (eligible_upgrades || [])[eligible_upgrades.length - 1]
         ) +
           " " +
           a({ href: "/admin/system" }, req.__("Upgrade here"))
@@ -606,7 +608,14 @@ const get_config_response = async (role_id: any, res: any, req: any) => {
     }
   }
 
-  const wrap = async (contents: any, homeCfg: any, title: any, description: any, no_menu: any, requestFluidLayout: any) => {
+  const wrap = async (
+    contents: any,
+    homeCfg?: any,
+    title?: string,
+    description?: string,
+    no_menu?: boolean,
+    requestFluidLayout?: boolean
+  ) => {
     const resultCollector: Record<string, any> = {};
 
     await Trigger.runTableTriggers(
@@ -639,9 +648,12 @@ const get_config_response = async (role_id: any, res: any, req: any) => {
   };
   const modernCfg = getState()!.getConfig("home_page_by_role", false);
   // predefined roles
-  const legacy_role = { 100: "public", 80: "user", 40: "staff", 1: "admin" }[
-    role_id
-  ];
+  const legacy_role: string = {
+    100: "public",
+    80: "user",
+    40: "staff",
+    1: "admin",
+  }[role_id as number] as string;
   let homeCfg = modernCfg && modernCfg[role_id];
   if (typeof homeCfg !== "string")
     homeCfg = getState()!.getConfig(legacy_role + "_home");
@@ -668,7 +680,7 @@ const get_config_response = async (role_id: any, res: any, req: any) => {
         const eligible = await getEligiblePage(group, req, res);
         if (typeof eligible === "string") wrap(eligible);
         else if (eligible) {
-          if (!eligible.isReload)
+          if (!("isReload" in eligible))
             wrap(
               await eligible.run(req.query, { res, req }),
               homeCfg,

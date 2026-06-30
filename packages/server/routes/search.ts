@@ -151,7 +151,7 @@ router.post(
     const form = searchConfigForm(tables, views, req);
     const result = form.validate(req.body || {});
 
-    if (result.success) {
+    if ("success" in result) {
       const dbversion = await db.getVersion(true);
       const search_table_description =
         !!result.success.search_table_description;

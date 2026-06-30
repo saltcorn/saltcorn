@@ -101,7 +101,7 @@ const getSyncRows = async (syncInfo: any, table: any, syncUntil: any, user: any)
   if (!syncInfo.syncFrom) {
     // First sync: all non-deleted rows after the cursor, ordered by
     // (last_modified, ref) so pagination is stable across PK types.
-    const params = [lastModifiedAt / 1000.0, lastRef];
+    const params :any[] = [lastModifiedAt / 1000.0, lastRef];
     const ownerClause = ownerFieldName
       ? `and data_tbl."${db.sqlsanitize(ownerFieldName)}" = $3`
       : "";
@@ -287,7 +287,7 @@ router.post(
     try {
       const result = await db.withTransaction(async () => {
         const syncUntil = new Date(syncTimestamp);
-        const result = {
+        const result :any= {
           deletes: {},
         };
         for (const [tblName, syncInfo] of (Object.entries(syncInfos) as [string, any][])) {
@@ -402,7 +402,7 @@ router.post(
 
 const readOutFile = async (entries: any, syncDir: any, fileName: any) => {
   if (entries.indexOf(fileName) >= 0) {
-    return JSON.parse(await fs.readFile(path.join(syncDir, fileName)));
+    return JSON.parse(await fs.readFile(path.join(syncDir, fileName), "utf-8"));
   }
   return null;
 };

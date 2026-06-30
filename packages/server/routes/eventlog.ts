@@ -40,7 +40,8 @@ import {
 import Table from "@saltcorn/data/models/table";
 import { send_events_page } from "../markup/admin.js";
 import EventLog from "@saltcorn/data/models/eventlog";
-import { Req, Res } from "@saltcorn/types/base_types";
+import { FieldLike, Req, Res } from "@saltcorn/types/base_types";
+import TableExports from "@saltcorn/markup/table";
 
 /**
  * @param {object} req
@@ -53,7 +54,7 @@ const logSettingsForm = async (req: any) => {
     t.setHours(t.getHours() + nhrs);
     return t;
   };
-  const fields = [
+  const fields: any[] = [
     {
       input_type: "section_header",
       label: req.__("Periodic trigger timing (next event)"),
@@ -194,7 +195,10 @@ router.get(
       "next_hourly_event",
       {}
     );
-    form.values.next_daily_event = getState()!.getConfig("next_daily_event", {});
+    form.values.next_daily_event = getState()!.getConfig(
+      "next_daily_event",
+      {}
+    );
     form.values.next_weekly_event = getState()!.getConfig(
       "next_weekly_event",
       {}
@@ -469,7 +473,7 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const state = req.query,
       rows_per_page = 20,
-      page_opts = { hover: true },
+      page_opts: TableExports.OptsParams = { hover: true },
       current_page = parseInt(state._page) || 1,
       offset = (parseInt(state._page) - 1) * rows_per_page;
 
@@ -533,7 +537,7 @@ router.get(
         },
         { limit: 1, orderBy: "id", orderDesc: !!or_less }
       ))!;
-      if (evFound.length) ev = await EventLog.findOneWithUser(evFound[0].id);
+      if (evFound.length) ev = await EventLog.findOneWithUser(evFound[0].id!);
     }
     if (!ev) {
       req.flash("warning", "Event not found");
@@ -543,7 +547,7 @@ router.get(
         res,
         req,
         active_sub: "Event log",
-        sub2_page: ev.id,
+        sub2_page: String(ev.id),
         contents: {
           type: "card",
           contents:
@@ -560,7 +564,7 @@ router.get(
                         +id > 1
                           ? a(
                               {
-                                href: `/eventlog/${ev.id - 1}?or_less=1`,
+                                href: `/eventlog/${ev.id! - 1}?or_less=1`,
                                 class: "btn btn-sm btn-secondary me-1",
                               },
                               i({ class: "fas fa-chevron-left" })
@@ -568,7 +572,7 @@ router.get(
                           : "",
                         a(
                           {
-                            href: `/eventlog/${ev.id + 1}?or_more=1`,
+                            href: `/eventlog/${ev.id! + 1}?or_more=1`,
                             class: "btn btn-sm btn-secondary",
                           },
                           i({ class: "fas fa-chevron-right" })
