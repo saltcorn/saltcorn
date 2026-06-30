@@ -159,6 +159,15 @@ export function instanceOWithHtmlFile(
   return object && typeof object !== "string" && "html_file" in object;
 }
 
+export type PluginLoaderResult = {
+  version?: string;
+  location: string;
+  name: string;
+  loadedWithReload?: boolean;
+  msgs: string[];
+  plugin_module: Plugin;
+};
+
 export type PluginWrapArg = {
   title: string;
   body: string | Layout;
@@ -486,7 +495,10 @@ type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
 export type Req = {
   query: GenObj;
-  flash: (flash_type: "warning" | "success" | "error" | "danger", message: string) => void;
+  flash: (
+    flash_type: "warning" | "success" | "error" | "danger",
+    message: string
+  ) => void;
   user?: AbstractUser;
   csrfToken: () => string;
   getLocale: () => string;
