@@ -123,6 +123,8 @@ type LayoutWithTypeProp = {
     | "line_break view";
   besides?: never;
   above?: never;
+  contents?: Layout | string | Array<Layout | string>;
+  [key: string]: any;
 };
 
 type LayoutWithHtmlFile = {
@@ -140,11 +142,15 @@ type LayoutWithHtmlString = {
 type LayoutContainer = null | LayoutWithTypeProp | any;
 type LayoutArray = Array<
   | LayoutContainer
-  | { besides: Array<LayoutContainer> }
+  | { besides: Array<LayoutContainer>; widths?: number[] }
   | { above: Array<LayoutContainer> }
 >;
 type LayoutWithAbove = { above: LayoutArray; besides?: never };
-type LayoutWithBesides = { besides: LayoutArray; above?: never };
+type LayoutWithBesides = {
+  besides: LayoutArray;
+  widths?: number[];
+  above?: never;
+};
 
 export type Layout =
   | LayoutWithAbove
@@ -158,6 +164,15 @@ export function instanceOWithHtmlFile(
 ): object is LayoutWithHtmlFile {
   return object && typeof object !== "string" && "html_file" in object;
 }
+
+export type PluginLoaderResult = {
+  version?: string;
+  location: string;
+  name: string;
+  loadedWithReload?: boolean;
+  msgs: string[];
+  plugin_module: Plugin;
+};
 
 export type PluginWrapArg = {
   title: string;
@@ -486,7 +501,10 @@ type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
 export type Req = {
   query: GenObj;
-  flash: (flash_type: "warning" | "success" | "error" | "danger", message: string) => void;
+  flash: (
+    flash_type: "warning" | "success" | "error" | "danger",
+    message: string
+  ) => void;
   user?: AbstractUser;
   csrfToken: () => string;
   getLocale: () => string;
@@ -506,7 +524,7 @@ export type Res = {
   send: (contents: string) => void;
   sendWrap: (...contents: any[]) => void;
   json: (value: unknown) => void;
-  status: (http_code: number) => void;
+  status: (http_code: number) => Res;
   [k: string]: any;
 };
 

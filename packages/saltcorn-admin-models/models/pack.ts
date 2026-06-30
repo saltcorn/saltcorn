@@ -967,7 +967,9 @@ const install_pack = async (
 /**
  * Fetch available packs from the store endpoint (packs_store_endpoint cfg)
  */
-const fetch_available_packs = async (): Promise<Array<{ name: string }>> => {
+const fetch_available_packs = async (): Promise<
+  Array<{ name: string; description: string }>
+> => {
   const stored = getState()!.getConfigCopy("available_packs", false);
   const stored_at = getState()!.getConfigCopy(
     "available_packs_fetched_at",
@@ -1001,7 +1003,7 @@ const get_cached_packs = (): Array<{ name: string }> => {
  * Fetch available packs from store
  */
 const fetch_available_packs_from_store = async (): Promise<
-  Array<{ name: string }>
+  Array<{ name: string; description: string }>
 > => {
   //console.log("fetch packs");
   //const { getState } = require("../db/state");

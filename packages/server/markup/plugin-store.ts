@@ -23,12 +23,14 @@ import {
   strong,
 } from "@saltcorn/markup/tags";
 import { link } from "@saltcorn/markup";
+import { PluginLoaderResult, Req } from "@saltcorn/types/base_types";
+import { Type } from "@saltcorn/types/common_types";
 
 /**
  * @param {object} args
  * @returns {string}
  */
-const show_function_arguments = (args) =>
+const show_function_arguments = (args: { name: string; type: string }[]) =>
   (args || []).map(({ name, type }) => `${name}: ${type}`).join(", ");
 
 /**
@@ -37,10 +39,10 @@ const show_function_arguments = (args) =>
  * @param {object} def
  * @returns {*}
  */
-const withCfg = (plugin, key, def) =>
+const withCfg = (plugin: PluginLoaderResult, key: string, def: any) =>
   plugin.plugin_module.configuration_workflow
     ? plugin.plugin_module[key]
-      ? plugin.plugin_module[key](plugin.configuration || {})
+      ? plugin.plugin_module[key]({})
       : def
     : plugin.plugin_module[key] || def;
 
@@ -49,24 +51,27 @@ const withCfg = (plugin, key, def) =>
  * @param {object} req
  * @returns {*}
  */
-const plugin_types_info_card = (plugin, req) => ({
-  type: "card",
-  title: req.__("Types"),
-  contents: plugin.plugin_module.types.map((type) =>
-    span({ class: "badge bg-primary ms-2" }, type.name)
-  ),
-});
+const plugin_types_info_card = (plugin: PluginLoaderResult, req: Req) => {
+  const types: [Type] = withCfg(plugin, "types", []) || [];
+  return {
+    type: "card",
+    title: req.__("Types"),
+    contents: types.map((type: any) =>
+      span({ class: "badge bg-primary ms-2" }, type.name)
+    ),
+  };
+};
 
 /**
  * @param {object} plugin
  * @param {object} req
  * @returns {*}
  */
-const plugin_functions_info_card = (plugin, req) => ({
+const plugin_functions_info_card = (plugin: PluginLoaderResult, req: Req) => ({
   type: "card",
   title: req.__("Functions"),
   contents: Object.entries(withCfg(plugin, "functions", {}))
-    .map(([nm, v]) =>
+    .map(([nm, v]: [string, any]) =>
       div(
         h4(
           { class: "d-inline me-2" },
@@ -85,11 +90,16 @@ const plugin_functions_info_card = (plugin, req) => ({
  * @param {object} req
  * @returns {*}
  */
-const plugin_viewtemplates_info_card = (plugin, req) => ({
+const plugin_viewtemplates_info_card = (
+  plugin: PluginLoaderResult,
+  req: Req
+) => ({
   type: "card",
   title: req.__("View patterns"),
   contents: withCfg(plugin, "viewtemplates", [])
-    .map(({ name, description }) => div(h4(name), p(description)))
+    .map(({ name, description }: { name: string; description: string }) =>
+      div(h4(name), p(description))
+    )
     .join("<hr>"),
 });
 
@@ -97,10 +107,10 @@ const plugin_viewtemplates_info_card = (plugin, req) => ({
  * @param {object} repo
  * @returns {*}
  */
-const showRepository = (repo) =>
+const showRepository = (repo: string | null | { url: string }): string =>
   !repo
-    ? repo
-    : repo.url
+    ? ""
+    : typeof repo === "object" && "url" in repo
       ? link(repo.url, repo.url)
       : repo.startsWith && repo.startsWith("github:")
         ? link(repo.replace("github:", "https://github.com/"), repo)

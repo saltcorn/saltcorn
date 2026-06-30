@@ -6,12 +6,14 @@
 
 import { p, code, li, ul, pre, span } from "@saltcorn/markup/tags";
 import { getState } from "@saltcorn/data/db/state";
+import Table from "@saltcorn/data/models/table";
+import { Req } from "@saltcorn/types/base_types";
 
 /**
  * @param {*} type
  * @returns {*}
  */
-const toJsType = (type) =>
+const toJsType = (type: string): string =>
   ({
     Integer: "number",
     Float: "number",
@@ -28,14 +30,19 @@ const toJsType = (type) =>
  * @param {object} req
  * @returns {p[]}
  */
-const expressionBlurb = (type, stored, table, req) => {
+const expressionBlurb = (
+  type: string,
+  stored: boolean,
+  table: Table,
+  req: Req
+) => {
   const allFields = table.fields;
   const fields = stored
     ? allFields.filter((f) => !f.stored || f.expression === "__aggregation")
     : allFields.filter((f) => !f.calculated || f.stored);
-  const funs = getState().functions;
+  const funs = getState()!.functions;
   const funNames = Object.entries(funs)
-    .filter(([k, v]) => !(!stored && v.isAsync) && !v.hidden)
+    .filter(([k, v]: [string, any]) => !(!stored && v.isAsync) && !v.hidden)
     .map(([k, v]) => k);
   const examples = table.getFormulaExamples(type);
   return [

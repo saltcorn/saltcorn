@@ -25,14 +25,15 @@ import { getState } from "@saltcorn/data/db/state";
 import _am_pack from "@saltcorn/admin-models/models/pack";
 const { create_pack_from_tag } = _am_pack;
 import Table from "@saltcorn/data/models/table";
+import { Req, Res } from "@saltcorn/types/base_types";
 
-const router = new Router();
+const router = Router();
 export default router;
 
 router.get(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const rows = await Tag.find();
     send_infoarch_page({
       res,
@@ -46,12 +47,13 @@ router.get(
             [
               {
                 label: req.__("Tag name"),
-                key: (r) =>
+                key: (r: any) =>
                   link(`/tag/${r.id || r.name}?show_list=tables`, text(r.name)),
               },
               {
                 label: req.__("Delete"),
-                key: (r) => post_delete_btn(`/tag/delete/${r.id}`, req, r.name),
+                key: (r: any) =>
+                  post_delete_btn(`/tag/delete/${r.id}`, req, r.name),
               },
             ],
             rows,
@@ -73,7 +75,7 @@ router.get(
 router.get(
   "/new",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.sendWrap(req.__(`New tag`), {
       above: [
         {
@@ -110,7 +112,7 @@ router.get(
 router.get(
   "/download-pack/:idorname",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     const id = parseInt(idorname);
     const tag = await Tag.findOne(id ? { id } : { name: idorname });
@@ -123,10 +125,16 @@ router.get(
     readStream.end(JSON.stringify(pack));
     res.type("application/json");
     res.attachment(`${tag.name}-pack.json`);
-    readStream.pipe(res);
+    readStream.pipe(res as any);
   })
 );
-const headerWithCollapser = (title, cardId, showList, count) =>
+
+const headerWithCollapser = (
+  title: string,
+  cardId: string,
+  showList: boolean,
+  count: number
+) =>
   a(
     {
       class: `card-header-left-collapse ${!showList ? "collapsed" : ""} ps-3`,
@@ -140,12 +148,13 @@ const headerWithCollapser = (title, cardId, showList, count) =>
     ` (${count})`
   );
 
-const isShowList = (showList, listType) => showList === listType;
+const isShowList = (showList: string | string[], listType: string) =>
+  showList === listType;
 
 router.get(
   "/:idorname",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     const { show_list } = req.query;
     const id = parseInt(idorname);
@@ -159,7 +168,7 @@ router.get(
     await setTableRefs(views);
     const pages = await tag.getPages();
     const triggers = await tag.getTriggers();
-    triggers.forEach((tr) => {
+    triggers.forEach((tr: any) => {
       if (tr.table_id) tr.table_name = Table.findOne(tr.table_id)?.name;
     });
     const roles = await User.get_roles();
@@ -168,12 +177,12 @@ router.get(
     const viewsDomId = "viewsListId";
     const pagesDomId = "pagesDomId";
     const triggersDomId = "triggerDomId";
-    const function_code_pages_tags = getState().getConfigCopy(
+    const function_code_pages_tags = getState()!.getConfigCopy(
       "function_code_pages_tags",
       {}
     );
     const code_pages = Object.entries(function_code_pages_tags)
-      .filter(([nm, tags]) => (tags || []).includes(tag.name))
+      .filter(([nm, tags]) => (tags as string[] || []).includes(tag.name))
       .map(([nm, tags]) => nm);
     res.sendWrap(req.__("%s Tag", tag.name), {
       above: [
@@ -186,14 +195,14 @@ router.get(
           title: headerWithCollapser(
             req.__("Tables"),
             tablesDomId,
-            isShowList(show_list, "tables"),
+            isShowList(show_list as string, "tables"),
             tables.length
           ),
           contents: [
             await tablesList(tables, req, {
               tagId: tag.id,
               domId: tablesDomId,
-              showList: isShowList(show_list, "tables"),
+              showList: isShowList(show_list as string, "tables"),
             }),
             a(
               {
@@ -209,14 +218,14 @@ router.get(
           title: headerWithCollapser(
             req.__("Views"),
             viewsDomId,
-            isShowList(show_list, "views"),
+            isShowList(show_list as string, "views"),
             views.length
           ),
           contents: [
             await viewsList(views, req, {
               tagId: tag.id,
               domId: viewsDomId,
-              showList: isShowList(show_list, "views"),
+              showList: isShowList(show_list as string, "views"),
             }),
             a(
               {
@@ -232,14 +241,14 @@ router.get(
           title: headerWithCollapser(
             req.__("Pages"),
             pagesDomId,
-            isShowList(show_list, "pages"),
+            isShowList(show_list as string, "pages"),
             pages.length
           ),
           contents: [
             await getPageList(pages, roles, req, {
               tagId: tag.id,
               domId: pagesDomId,
-              showList: isShowList(show_list, "pages"),
+              showList: isShowList(show_list as string, "pages"),
             }),
             a(
               {
@@ -256,14 +265,14 @@ router.get(
           title: headerWithCollapser(
             req.__("Triggers"),
             triggersDomId,
-            isShowList(show_list, "triggers"),
+            isShowList(show_list as string, "triggers"),
             triggers.length
           ),
           contents: [
             await getTriggerList(triggers, req, {
               tagId: tag.id,
               domId: triggersDomId,
-              showList: isShowList(show_list, "triggers"),
+              showList: isShowList(show_list as string, "triggers"),
             }),
             a(
               {
@@ -277,7 +286,6 @@ router.get(
         {
           type: "card",
           title: req.__("Code pages") + ` (${code_pages.length})`,
-
           contents: code_pages.map((cp) =>
             a(
               {
@@ -310,7 +318,7 @@ router.get(
 router.post(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.body || {};
     const tag = await Tag.create({ name });
     req.flash("success", req.__(`Tag %s created`, name));
@@ -322,7 +330,7 @@ router.post(
 router.post(
   "/delete/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const tag = await Tag.findOne({ id });
     if (!tag) {
@@ -333,7 +341,7 @@ router.post(
       await tag.delete();
       req.flash("success", req.__("Tag %s deleted", tag.name));
       res.redirect(`/tag`);
-    } catch (error) {
+    } catch (error: any) {
       req.flash("error", error.message);
       res.redirect(`/tag`);
     }

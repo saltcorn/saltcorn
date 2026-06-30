@@ -342,6 +342,7 @@ const mockReqRes = {
     },
     status(st: any) {
       mockResReqStored.status = st;
+      return mockReqRes.res;
     },
     sendWrap: (...sw: any[]) => {
       mockResReqStored.sendWrap = sw;

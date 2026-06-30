@@ -45,6 +45,8 @@ const {
 } = _am_pack;
 import { getState } from "@saltcorn/data/db/state";
 import { sleep } from "@saltcorn/data/utils";
+import { Req, Res } from "@saltcorn/types/base_types";
+
 /**
  * @type {object}
  * @const
@@ -52,13 +54,16 @@ import { sleep } from "@saltcorn/data/utils";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 
 // export our router to be mounted by the parent application
 export default router;
 
-async function asyncFilter(arr, cb) {
-  const filtered = [];
+async function asyncFilter<T>(
+  arr: T[],
+  cb: (element: T) => Promise<boolean>
+): Promise<T[]> {
+  const filtered: T[] = [];
 
   for (const element of arr) {
     const needAdd = await cb(element);
@@ -73,14 +78,14 @@ async function asyncFilter(arr, cb) {
 router.get(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const { etype, ename, q } = req.query;
+  error_catcher(async (req: Req, res: Res) => {
+    const { etype, ename, q } = req.query as Record<string, string>;
     const qlink = q ? `&q=${encodeURIComponent(q)}` : "";
     let edContents = "Choose an entity to edit";
     const all_tables = await Table.find({}, { orderBy: "name", nocase: true });
     const all_views = await View.find({}, { orderBy: "name", nocase: true });
     const all_pages = await Page.find({}, { orderBy: "name", nocase: true });
-    const all_triggers = await Trigger.find(
+    const all_triggers = await Trigger.findDB(
       {},
       { orderBy: "name", nocase: true }
     );
@@ -90,10 +95,10 @@ router.get(
     );
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
-    const all_configs_obj = await getState().getAllConfigOrDefaults();
-    const all_configs = Object.entries(all_configs_obj)
+    const all_configs_obj = await getState()!.getAllConfigOrDefaults();
+    const all_configs: any[] = Object.entries(all_configs_obj)
       .map(([name, v]) => ({
-        ...v,
+        ...(v as any),
         name,
       }))
       .filter((c) => isRoot || !c.root_only);
@@ -101,7 +106,7 @@ router.get(
     let tables, views, pages, triggers, configs, plugins;
     if (q) {
       const qlower = q.toLowerCase();
-      const includesQ = (s) => s.toLowerCase().includes(qlower);
+      const includesQ = (s: string) => s.toLowerCase().includes(qlower);
 
       tables = await asyncFilter(all_tables, async (t) => {
         const pack = await table_pack(t);
@@ -132,7 +137,7 @@ router.get(
       configs = all_configs;
       plugins = all_plugins;
     }
-    const li_link = (etype1, ename1) =>
+    const li_link = (etype1: string, ename1: string) =>
       li(
         a(
           {
@@ -144,7 +149,7 @@ router.get(
           ename1
         )
       );
-    const mkForm = (jsonVal) =>
+    const mkForm = (jsonVal: any) =>
       new Form({
         labelCols: 0,
         action: `/registry-editor?etype=${etype}&ename=${encodeURIComponent(
@@ -166,7 +171,7 @@ router.get(
     switch (etype) {
       case "table":
         const tpack = await table_pack(
-          all_tables.find((t) => t.name === ename)
+          all_tables.find((t) => t.name === ename)!
         );
         cfg_link = a(
           { href: `/table/${encodeURIComponent(ename)}` },
@@ -193,7 +198,7 @@ router.get(
             "Configure&nbsp;",
             i({ class: "fas fa-cog" })
           );
-        const vpack = await view_pack(all_views.find((v) => v.name === ename));
+        const vpack = await view_pack(all_views.find((v) => v.name === ename)!);
         edContents = renderForm(mkForm(vpack), req.csrfToken());
         break;
       case "page":
@@ -201,7 +206,7 @@ router.get(
           { href: `/pageedit/edit/${encodeURIComponent(ename)}` },
           `${ename} ${etype}`
         );
-        const ppack = await page_pack(all_pages.find((v) => v.name === ename));
+        const ppack = await page_pack(all_pages.find((v) => v.name === ename)!);
         edContents = renderForm(mkForm(ppack), req.csrfToken());
         break;
       case "config":
@@ -214,7 +219,7 @@ router.get(
         break;
       case "trigger":
         const trigger = all_triggers.find((t) => t.name === ename);
-        const trpack = await trigger_pack(trigger);
+        const trpack = await trigger_pack(trigger!);
         cfg_link =
           `${ename} ${etype}` +
           a(
@@ -248,7 +253,7 @@ router.get(
             "Configure&nbsp;",
             i({ class: "fas fa-cog" })
           );
-        edContents = renderForm(mkForm(plugin.configuration), req.csrfToken());
+        edContents = renderForm(mkForm(plugin!.configuration), req.csrfToken());
         break;
     }
     send_infoarch_page({
@@ -329,7 +334,7 @@ router.get(
                     summary("Triggers"),
                     ul(
                       { class: "ps-3" },
-                      triggers.map((t) => li_link("trigger", t.name))
+                      triggers.map((t) => li_link("trigger", t.name || ""))
                     )
                   )
                 ),
@@ -377,12 +382,19 @@ router.get(
 router.post(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const { etype, ename, q } = req.query;
+  error_catcher(async (req: Req, res: Res) => {
+    const { etype, ename, q } = req.query as Record<string, string>;
     const qlink = q ? `&q=${encodeURIComponent(q)}` : "";
 
     const entVal = JSON.parse((req.body || {}).regval);
-    let pack = {
+    let pack: {
+      plugins: any[];
+      tables: any[];
+      views: any[];
+      pages: any[];
+      triggers: any[];
+      config: Record<string, any>;
+    } = {
       plugins: [],
       tables: [],
       views: [],
@@ -412,10 +424,10 @@ router.post(
       if (etype === "module") {
         const plugin = await Plugin.findOne({ name: ename });
         if (!plugin) throw new Error(`Module ${ename} not found`);
-        let module = getState().plugins[plugin.name];
+        let module: any = getState()!.plugins[plugin.name];
         if (!module) {
           module =
-            getState().plugins[getState().plugin_module_names[plugin.name]];
+            getState()!.plugins[getState()!.plugin_module_names[plugin.name]];
         }
         if (module.configuration_workflow) {
           const flow = module.configuration_workflow();
@@ -427,26 +439,26 @@ router.post(
         }
         plugin.configuration = entVal;
         await plugin.upsert();
-      } else await install_pack(pack);
+      } else await install_pack(pack as any, undefined, () => {});
     });
     switch (etype) {
       case "table":
-        await getState().refresh_tables();
+        await getState()!.refresh_tables();
         break;
       case "view":
-        await getState().refresh_views();
+        await getState()!.refresh_views();
         break;
       case "page":
-        await getState().refresh_pages();
+        await getState()!.refresh_pages();
         break;
       case "trigger":
-        await getState().refresh_triggers();
+        await getState()!.refresh_triggers();
         break;
       case "config":
-        await getState().refresh_config();
+        await getState()!.refresh_config();
         break;
       case "module":
-        getState().processSend({
+        getState()!.processSend({
           refresh_plugin_cfg: ename,
           tenant: db.getTenantSchema(),
         });

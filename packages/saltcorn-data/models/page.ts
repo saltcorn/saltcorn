@@ -195,7 +195,6 @@ class Page implements AbstractPage {
    * @returns {Promise<*>}
    */
   async is_root_page_for_roles(): Promise<Array<string>> {
-
     const roles = await User.get_roles();
     return roles
       .filter(
@@ -239,7 +238,10 @@ class Page implements AbstractPage {
    * @param extraArgs
    * @returns {Promise<any>}
    */
-  async run(querystate: any, extraArgs: RunExtra): Promise<Layout | null> {
+  async run(
+    querystate: any,
+    extraArgs: RunExtra
+  ): Promise<Layout | { html_file: string } | { html_string: string } |null> {
     nsState
       .getState()!
       .log(5, `Run page ${this.name} with query ${JSON.stringify(querystate)}`);
@@ -429,8 +431,7 @@ class Page implements AbstractPage {
               extraArgs.req?.user
             );
             if (!do_show) segment.hide = true;
-          } catch (e) {
-          }
+          } catch (e) {}
         }
       },
       image: async (segment) => {

@@ -20,7 +20,7 @@ import db from "@saltcorn/data/db";
  * @param {string} opts.locale
  * @returns {string}
  */
-const blocklyImportScripts = ({ locale }) =>
+const blocklyImportScripts = ({ locale }: { locale: string }) =>
   script({
     src: `/static_assets/${db.connectObj.version_tag}/blockly/blockly_compressed.js`,
   }) +
@@ -41,7 +41,7 @@ const blocklyImportScripts = ({ locale }) =>
  * @param {boolean} hasActions
  * @returns {string}
  */
-const blocklyToolbox = (hasActions) => `
+const blocklyToolbox = (hasActions: boolean) => `
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
     <category name="Control Flow"  categorystyle="loop_category">
       <block type="controls_if"></block>

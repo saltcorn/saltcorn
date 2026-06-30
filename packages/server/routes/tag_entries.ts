@@ -26,11 +26,16 @@ import Table from "@saltcorn/data/models/table";
 import View from "@saltcorn/data/models/view";
 import Page from "@saltcorn/data/models/page";
 import Trigger from "@saltcorn/data/models/trigger";
+import { Req, Res } from "@saltcorn/types/base_types";
 
-const router = new Router();
+const router = Router();
 export default router;
 
-const buildFields = (entryType, formOptions, req) => {
+const buildFields = (
+  entryType: string,
+  formOptions: Record<string, any[]>,
+  req: Req
+) => {
   return Object.entries(formOptions).map(([type, list]) => {
     return div(
       { class: "form-group row" },
@@ -57,7 +62,12 @@ const buildFields = (entryType, formOptions, req) => {
   });
 };
 
-const buildForm = (entryType, tag_id, formOptions, req) => {
+const buildForm = (
+  entryType: string,
+  tag_id: string,
+  formOptions: Record<string, any[]>,
+  req: Req
+) => {
   return form(
     { action: `/tag-entries/add/${entryType}/${tag_id}`, method: "post" },
     csrfField(req),
@@ -65,14 +75,17 @@ const buildForm = (entryType, tag_id, formOptions, req) => {
   );
 };
 
-const formOptions = async (type, tag_id) => {
+const formOptions = async (
+  type: string,
+  tag_id: string
+): Promise<Record<string, any[]> | undefined> => {
   const tag = await Tag.findOne({ id: tag_id });
   switch (type) {
     case "tables": {
       const ids = await tag.getTableIds();
       return {
         tables: (await Table.find({}, { cached: true })).filter(
-          (value) => ids.indexOf(value.id) === -1
+          (value: any) => ids.indexOf(value.id) === -1
         ),
       };
     }
@@ -80,7 +93,7 @@ const formOptions = async (type, tag_id) => {
       const ids = await tag.getViewIds();
       return {
         views: (await View.find({}, { cached: true })).filter(
-          (value) => ids.indexOf(value.id) === -1
+          (value: any) => ids.indexOf(value.id) === -1
         ),
       };
     }
@@ -88,7 +101,7 @@ const formOptions = async (type, tag_id) => {
       const ids = await tag.getPageIds();
       return {
         pages: (await Page.find({}, { cached: true })).filter(
-          (value) => ids.indexOf(value.id) === -1
+          (value: any) => ids.indexOf(value.id) === -1
         ),
       };
     }
@@ -97,7 +110,7 @@ const formOptions = async (type, tag_id) => {
       return {
         triggers: (
           await Trigger.findDB({}, { orderBy: "name", nocase: true })
-        ).filter((value) => ids.indexOf(value.id) === -1),
+        ).filter((value: any) => ids.indexOf(value.id) === -1),
       };
     }
   }
@@ -106,7 +119,7 @@ const formOptions = async (type, tag_id) => {
 router.get(
   "/add/:entry_type/:tag_id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { entry_type, tag_id } = req.params;
     const tag = await Tag.findOne({ id: tag_id });
 
@@ -126,7 +139,7 @@ router.get(
           contents: buildForm(
             entry_type,
             tag_id,
-            await formOptions(entry_type, tag_id),
+            (await formOptions(entry_type, tag_id)) || {},
             req
           ),
         },
@@ -135,7 +148,7 @@ router.get(
   })
 );
 
-const idField = (entryType) => {
+const idField = (entryType: string): string | null => {
   switch (entryType) {
     case "tables":
     case "table": {
@@ -161,7 +174,7 @@ const idField = (entryType) => {
 router.post(
   "/add/:entry_type/:tag_id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { entry_type, tag_id } = req.params;
     const { ids } = req.body || {};
     if (!ids) {
@@ -172,7 +185,7 @@ router.post(
     const fieldName = idField(entry_type);
     const tag = await Tag.findOne({ id: tag_id });
     for (const id of ids_array) {
-      await tag.addEntry({ [fieldName]: id });
+      await tag.addEntry({ [fieldName!]: id });
     }
     res.redirect(`/tag/${tag_id}?show_list=${entry_type}`);
   })
@@ -186,16 +199,16 @@ router.post(
     "min_role_edit_pages",
     "min_role_edit_triggers",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { tagname, entitytype, entityid } = req.params;
     const tag = await Tag.findOne({ name: tagname });
 
     const fieldName = idField(entitytype);
-    const auth = checkEditPermission(entitytype, req.user);
+    const auth = checkEditPermission(entitytype, req.user! );
     if (!auth) req.flash("error", "Not authorized");
     else
       await db.withTransaction(async () => {
-        await tag.addEntry({ [fieldName]: +entityid });
+        await tag.addEntry({ [fieldName!]: +entityid });
       });
 
     let redirectTarget =
@@ -227,15 +240,17 @@ router.post(
 router.post(
   "/add/multiple_tags/:entry_type/:object_id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     let { entry_type, object_id } = req.params;
     let { tag_ids } = req.body || {};
-    object_id = parseInt(object_id);
-    tag_ids = tag_ids.map((id) => parseInt(id));
-    const tags = (await Tag.find()).filter((tag) => tag_ids.includes(tag.id));
+    const object_id_int = parseInt(object_id);
+    tag_ids = tag_ids.map((id: string) => parseInt(id));
+    const tags = (await Tag.find()).filter((tag: any) =>
+      tag_ids.includes(tag.id)
+    );
     const fieldName = idField(entry_type);
     for (const tag of tags) {
-      await tag.addEntry({ [fieldName]: object_id });
+      await tag.addEntry({ [fieldName!]: object_id_int });
     }
     res.json({ tags });
   })
@@ -244,15 +259,15 @@ router.post(
 router.post(
   "/remove/:entry_type/:entry_id/:tag_id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { tag_id, entry_type, entry_id } = req.params;
     const fieldName = idField(entry_type);
-    const entry = await TagEntry.findOne({ tag_id, [fieldName]: entry_id });
-    entry[fieldName] = undefined;
+    const entry = await TagEntry.findOne({ tag_id, [fieldName!]: entry_id });
+    (entry as any)[fieldName!] = undefined;
     if (entry.isEmpty()) {
       await entry.delete();
     } else {
-      await TagEntry.update(entry.id, { [fieldName]: null });
+      await TagEntry.update(entry.id!, { [fieldName!]: null });
     }
     if (!req.xhr) res.redirect(`/tag/${tag_id}?show_list=${entry_type}`);
     else res.json({ okay: true });
