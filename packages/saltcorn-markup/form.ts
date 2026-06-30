@@ -805,7 +805,7 @@ const mkFormRowForRepeatFancy = (
   });
   for (let i = 0; i < hdr.fields.length; i++) {
     const field = hdr.fields[i];
-    if (field?.attributes?.asideNext) {
+    if ((field as any)?.attributes?.asideNext) {
       fldHtmls.push(
         mkFormRowAside(
           {},
@@ -1588,16 +1588,16 @@ const splitSnippet = (form: Form) =>
  */
 const renderForm = (
   form: Form | string,
-  csrfToken0: string | false
+  csrfToken0: string | boolean
 ): string => {
   if (typeof form === "string") return form;
 
   const csrfToken =
-    csrfToken0 === false
-      ? "false"
-      : csrfToken0 === ""
-        ? ""
-        : (form.req && form.req.csrfToken && form.req.csrfToken()) || "";
+    csrfToken0 === false || csrfToken0 === ""
+      ? csrfToken0
+      : csrfToken0 ||
+        (form.req && form.req.csrfToken && form.req.csrfToken()) ||
+        "";
   if (form.layout) return mkFormWithLayout(form, csrfToken);
   else return mkForm(form, csrfToken, form.errors);
 };
@@ -1607,7 +1607,7 @@ const renderForm = (
  * @param csrfToken
  * @returns
  */
-const mkFormWithLayout = (form: Form, csrfToken: string): string => {
+const mkFormWithLayout = (form: Form, csrfToken: string | boolean): string => {
   const hasFile = form.fields.some(
     (f: any) =>
       f.multipartFormData ||
