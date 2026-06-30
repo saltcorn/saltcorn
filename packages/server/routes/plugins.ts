@@ -674,7 +674,7 @@ router.get(
         2,
         `GET /versions_dialog${withoutOrg}: '${withoutOrg}' not found`
       );
-      return (res as any)
+      return res
         .status(404)
         .json({ error: req.__("Module '%s' not found", withoutOrg) });
     } else {
@@ -805,7 +805,7 @@ document.getElementById('version_select').onchange = () => {
             error.message || "unknown error"
           }`
         );
-        return (res as any)
+        return res
           .status(500)
           .json({ error: error.message || "unknown error" });
       }
@@ -992,7 +992,7 @@ router.post(
     const step = await flow.singleStepForm(req.body || {}, req);
     if (step?.renderForm) {
       if (step.renderForm.hasErrors || step.savingErrors)
-        (res as any).status(400).send(step.savingErrors || "Error");
+        res.status(400).send(step.savingErrors || "Error");
       else {
         plugin.configuration = {
           ...plugin.configuration,
@@ -1143,8 +1143,7 @@ router.post(
   loggedIn,
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user?.id });
-    if (!user)
-      return (res as any).status(401).json({ error: req.__("Not authorized") });
+    if (!user) return res.status(401).json({ error: req.__("Not authorized") });
     const { name } = req.params;
     const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     let module: any = getState()!.plugins[plugin.name];
@@ -1158,9 +1157,7 @@ router.post(
     });
     const valResult = form.validate(req.body || {});
     if (form.hasErrors) {
-      return (res as any)
-        .status(400)
-        .json({ error: req.__("An error occured") });
+      return res.status(400).json({ error: req.__("An error occured") });
     }
     const values = valResult.success;
     values.is_user_config = true;
@@ -1195,7 +1192,7 @@ router.post(
   error_catcher(async (req, res) => {
     const user = await User.findOne({ id: req.user!.id });
     if (!user) {
-      return (res as any).status(401).json({ error: req.__("Not authorized") });
+      return res.status(401).json({ error: req.__("Not authorized") });
     } else if (user._attributes?.layout) {
       const userAttrs = { ...user._attributes };
       const plugin = userAttrs.layout.plugin;
@@ -1275,14 +1272,14 @@ router.get(
         });
       else {
         getState()!.log(6, `Plugin serve public: file not found ${fullpath}`);
-        (res as any).status(404).send(req.__("Not found"));
+        res.status(404).send(req.__("Not found"));
       }
     } else {
       getState()!.log(
         6,
         `Plugin serve public: No location for plugin: ${plugin}`
       );
-      (res as any).status(404).send(req.__("Not found"));
+      res.status(404).send(req.__("Not found"));
     }
   })
 );

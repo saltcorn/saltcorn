@@ -518,7 +518,7 @@ export type Res = {
   send: (contents: string) => void;
   sendWrap: (...contents: any[]) => void;
   json: (value: unknown) => void;
-  status: (http_code: number) => void;
+  status: (http_code: number) => Res;
   [k: string]: any;
 };
 
