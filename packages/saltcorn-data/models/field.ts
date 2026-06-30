@@ -275,7 +275,7 @@ class Field implements AbstractField {
     else if (this.type?.name) return this.type.name;
     else if (this.typename) return this.typename;
     else if (this.input_type) return this.input_type;
-    throw new Error("Field without type name")
+    throw new Error("Field without type name");
   }
 
   /**
@@ -285,6 +285,14 @@ class Field implements AbstractField {
   get form_name(): string {
     if (this.parent_field) return `${this.parent_field}_${this.name}`;
     else return this.name;
+  }
+
+  get fieldviews(): Record<string, FieldView> {
+    if (this.type === "File") return getState()!.fileviews;
+    if (this.is_fkey) return getState()!.keyFieldviews;
+    if (typeof this.type === "string") return {};
+    if (instanceOfType(this.type)) return this.type.fieldviews || {};
+    return {};
   }
 
   static async select_options_query(

@@ -12,6 +12,8 @@ export type RunResult = {
   contextField?: string;
   previewURL?: string;
   savingErrors?: any;
+  flash?: any;
+  redirect?: string;
 };
 
 type BuilderConfig = {

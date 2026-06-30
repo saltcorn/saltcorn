@@ -204,7 +204,7 @@ class State {
   codepage_context: Record<string, unknown>;
   plugins_cfg_context: any;
   functions: Record<string, Function | PluginFunction>;
-  keyFieldviews: Record<string, unknown>;
+  keyFieldviews: Record<string, FieldView>;
   external_tables: Record<string, AbstractTable>;
   verifier: any;
   i18n: I18n.I18n;

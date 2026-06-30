@@ -437,12 +437,12 @@ export type PluginFunction = {
   hidden?: boolean;
 };
 
-type FieldViewShow = {
+export type FieldViewShow = {
   isEdit?: false;
   isFilter?: false;
   run: (value: any, req: Req, attrs: GenObj) => string;
 };
-type FieldViewEdit = {
+export type FieldViewEdit = {
   isEdit: true;
   isFilter?: false;
   run: (
@@ -455,7 +455,7 @@ type FieldViewEdit = {
   ) => string;
 };
 
-type FieldViewFilter = {
+export type FieldViewFilter = {
   isEdit?: boolean;
   isFilter: true;
   run: (

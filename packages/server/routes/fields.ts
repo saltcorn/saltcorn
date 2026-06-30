@@ -36,7 +36,8 @@ import FieldRepeat from "@saltcorn/data/models/fieldrepeat";
 import { applyAsync, isWeb } from "@saltcorn/data/utils";
 import { text, div } from "@saltcorn/markup/tags";
 import { mkFormContentNoLayout } from "@saltcorn/markup/form";
-import { Req, Res } from "@saltcorn/types/base_types";
+import { FieldViewShow, Req, Res } from "@saltcorn/types/base_types";
+import { instanceOfType, Type } from "@saltcorn/types/common_types";
 
 /**
  * @type {object}
@@ -56,7 +57,13 @@ export default router;
  * @param {*} hasData
  * @returns {Promise<Form>}
  */
-const fieldForm = async (req: any, fkey_opts: any, existing_names: any, id: any, hasData: any) => {
+const fieldForm = async (
+  req: any,
+  fkey_opts: any,
+  existing_names: any,
+  id: any,
+  hasData: any
+) => {
   let isPrimary = false;
   let primaryTypes = Object.entries(getState()!.types)
     .filter(([k, v]: any) => v.primaryKey)
@@ -374,7 +381,10 @@ const fieldFlow = (req: any) =>
           const nrows = await table.countRows({});
           const existing_fields = table.getFields();
           const existingNames = existing_fields.map((f: any) => f.name);
-          const fkey_opts = ["File", ...tables.map((t: any) => `Key to ${t.name}`)];
+          const fkey_opts = [
+            "File",
+            ...tables.map((t: any) => `Key to ${t.name}`),
+          ];
           const form = await fieldForm(
             req,
             fkey_opts,
@@ -422,7 +432,10 @@ const fieldFlow = (req: any) =>
                     "The user uploading the file has access irrespective of their role"
                   ),
                   input_type: "select",
-                  options: roles.map((r: any) => ({ value: r.id, label: r.role })),
+                  options: roles.map((r: any) => ({
+                    value: r.id,
+                    label: r.role,
+                  })),
                 },
                 {
                   name: "also_delete_file",
@@ -474,7 +487,9 @@ const fieldFlow = (req: any) =>
           for (const model of models) {
             instance_options[model.name] = ["Default"];
             const instances = await model.get_instances();
-            instance_options[model.name].push(...instances.map((i: any) => i.name));
+            instance_options[model.name].push(
+              ...instances.map((i: any) => i.name)
+            );
 
             const outputs = await applyAsync(
               model.templateObj?.prediction_outputs || [], // unit tests can have templateObj undefined
@@ -702,7 +717,8 @@ const fieldFlow = (req: any) =>
             }));
           const textfields = orderedFields
             .filter(
-              (f: any) => (!f.calculated || f.stored) && f.type?.sql_name === "text"
+              (f: any) =>
+                (!f.calculated || f.stored) && f.type?.sql_name === "text"
             )
             .map((f: any) => f.name);
           return new Form({
@@ -1008,7 +1024,7 @@ router.post(
     await db.withTransaction(async () => {
       await f.delete();
     });
-    await Table.findOne(table_id).update({});
+    await Table.findOne(table_id!)!.update({});
     await getState()!.refresh_tables();
 
     req.flash("success", req.__(`Field %s deleted`, f.label));
@@ -1060,7 +1076,7 @@ router.post(
       });
     } else {
       if (wfres.flash) req.flash(...wfres.flash);
-      res.redirect(wfres.redirect);
+      res.redirect(wfres.redirect!);
     }
   })
 );
@@ -1161,7 +1177,9 @@ router.post(
       row = { ...dbrow, ...row };
       //prevent overwriting ownership field
       if (table.ownership_field_id) {
-        const ofield = fields.find((f: any) => f.id === table.ownership_field_id)!;
+        const ofield = fields.find(
+          (f: any) => f.id === table.ownership_field_id
+        )!;
         row[ofield.name] = dbrow[ofield.name];
       }
     } else {
@@ -1248,12 +1266,12 @@ router.post(
         }
         if (targetField.type === "File") {
           fv = getState()!.fileviews[fieldview];
-        } else {
-          fv = targetField.type?.fieldviews?.[fieldview];
+        } else  {
+          fv = targetField.fieldviews?.[fieldview];
           if (!fv)
             fv =
-              targetField.type.fieldviews.show ||
-              targetField.type.fieldviews.as_text;
+              targetField.fieldviews?.show ||
+              targetField.fieldviews?.as_text;
         }
 
         const configuration = req.query;
@@ -1314,7 +1332,7 @@ router.post(
       } else if (field.stored && field.expression === "__aggregation") {
         result = row[field.name];
       } else if (field.stored) {
-        const f = get_async_expression_function(formula, fields);
+        const f = get_async_expression_function(formula as string, fields);
         //are there join fields in formula?
         const joinFields: Record<string, any> = {};
         add_free_variables_to_joinfields(
@@ -1326,7 +1344,7 @@ router.post(
           joinFields
         )) {
           const jf = table.getField(ref)!;
-          const jtable = Table.findOne(jf.reftable_name)!;
+          const jtable = Table.findOne(jf.reftable_name!)!;
           const jrow = (await jtable.getRow(
             { [jtable.pk_name]: row[ref]?.[jtable.pk_name] || row[ref] },
             { forUser: req.user, forPublic: !req.user }
@@ -1334,7 +1352,7 @@ router.post(
           row[ref] = jrow;
           if (through) {
             const jf2 = jtable.getField(through)!;
-            const jtable2 = Table.findOne(jf2.reftable_name)!;
+            const jtable2 = Table.findOne(jf2.reftable_name!)!;
             const jrow2 = (await jtable2.getRow(
               {
                 [jtable2.pk_name]: jrow[through],
@@ -1347,13 +1365,13 @@ router.post(
 
         result = await f(row);
       } else {
-        const f = get_expression_function(formula, fields);
+        const f = get_expression_function(formula as string, fields);
         result = f(row);
       }
       const configuration = req.query;
-      const fv = field.type.fieldviews[fieldview];
+      const fv = field.fieldviews[fieldview];
       if (!fv) res.send(text(result));
-      else res.send(fv.run(result, req, { row, ...configuration }));
+      else res.send((fv as FieldViewShow).run(result, req, { row, ...configuration }));
     } catch (e: any) {
       console.error("show-calculated error", e);
       return res.status(200).send(``);
@@ -1403,7 +1421,9 @@ router.post(
       const reffields = await reftable.getFields();
       field = reffields.find((f: any) => f.name === targetNm)!;
       if (row_id) {
-        const mainRow = (await table.getRow(whereClause, { forUser: req.user }))!;
+        const mainRow = (await table.getRow(whereClause, {
+          forUser: req.user,
+        }))!;
         const refId = mainRow && mainRow[refNm];
         row = refId
           ? await reftable.getRow({ id: refId }, { forUser: req.user })
@@ -1623,13 +1643,13 @@ router.post(
         req.user
       );
       fv = getState()!.keyFieldviews.select;
-    } else if (fieldview === "subfield" && field.type?.name === "JSON") {
-      fv = field.type.fieldviews.edit_subfield;
-    } else if (field.type.name === "Date" && field.type.fieldviews.flatpickr) {
-      fv = field.type.fieldviews.flatpickr;
+    } else if (fieldview === "subfield" && field.type_name === "JSON") {
+      fv = field.fieldviews.edit_subfield;
+    } else if (field.type_name === "Date" && field.fieldviews.flatpickr) {
+      fv = field.fieldviews.flatpickr;
     } else {
       //TODO: json subfield is special
-      const fieldviews = field.type.fieldviews;
+      const fieldviews = field.fieldviews;
       fv = Object.values(fieldviews).find((v: any) => v.isEdit);
     }
     res.send(
@@ -1656,9 +1676,10 @@ router.post(
       fielddata;
     const table = Table.findOne({ name: table_name })!;
     const field = table.getField(field_name)!;
-    let val = field.type?.read
-      ? field.type?.read(req.body[field_name], field.attributes)
-      : req.body[field_name];
+    let val =
+      typeof field.type === "object" && field.type?.read
+        ? field.type?.read(req.body[field_name], field.attributes)
+        : req.body[field_name];
     await db.withTransaction(async () => {
       await table.updateRow({ [field_name]: val }, pk, req.user);
     });
@@ -1669,12 +1690,12 @@ router.post(
         const refRow = (await refTable.getRow({ [refTable.pk_name]: val }))!;
         val = refRow[join_field];
         const targetField = refTable.getField(join_field)!;
-        const fieldviews = targetField.type.fieldviews;
+        const fieldviews = targetField.fieldviews;
 
         fv = fieldviews[fieldview];
       } else fv = { run: (v: any) => `${v}` };
     } else {
-      const fieldviews = field.type.fieldviews;
+      const fieldviews = field.fieldviews;
 
       fv = fieldviews[fieldview];
 
