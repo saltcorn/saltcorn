@@ -1732,5 +1732,4 @@ router.post(
   })
 );
 
-//router.get_store_items = get_store_items;
 export { get_store_items };
