@@ -39,7 +39,7 @@ import { getWorkflowStepUserForm } from "@saltcorn/data/web-mobile-commons";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 import {
   renderForm,
@@ -81,8 +81,9 @@ import { getActionConfigFields } from "@saltcorn/data/plugin-helper";
 import { send_events_page } from "../markup/admin.js";
 import User from "@saltcorn/data/models/user";
 import { blocklyImportScripts, blocklyToolbox } from "../markup/blockly.js";
+import { Req, Res } from "@saltcorn/types/base_types";
 
-const serializeWorkflowStep = (s, opts = {}) => ({
+const serializeWorkflowStep = (s: any, opts: any = {}) => ({
   id: s.id,
   name: s.name,
   trigger_id: s.trigger_id,
@@ -97,9 +98,9 @@ const serializeWorkflowStep = (s, opts = {}) => ({
   }),
 });
 
-const buildWorkflowActionExplainers = async (trigger) => {
+const buildWorkflowActionExplainers = async (trigger: any) => {
   const actionExplainers = {};
-  const stateActions = getState().actions;
+  const stateActions = getState()!.actions;
   for (const [name, action] of Object.entries(stateActions)) {
     if (action.disableInWorkflow) continue;
     if (action.description) actionExplainers[name] = action.description;
@@ -107,7 +108,7 @@ const buildWorkflowActionExplainers = async (trigger) => {
   const triggers = await Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
   });
-  triggers.forEach((tr) => {
+  triggers.forEach((tr: any) => {
     if (tr.description) actionExplainers[tr.name] = tr.description;
   });
   Object.assign(
@@ -119,7 +120,7 @@ const buildWorkflowActionExplainers = async (trigger) => {
   return actionExplainers;
 };
 
-const workflowStrings = (req, trigger) => ({
+const workflowStrings = (req: any, trigger: any) => ({
   addStep: req.__("Add step"),
   editStep: req.__("Edit step"),
   addAfter: req.__("Add after"),
@@ -141,13 +142,13 @@ const workflowStrings = (req, trigger) => ({
   copyStep: req.__("Copy"),
 });
 
-const getWorkflowEditorData = async (req, trigger, stepsIn) => {
+const getWorkflowEditorData = async (req: any, trigger: any, stepsIn: any) => {
   let steps =
     stepsIn ||
     (await WorkflowStep.find({ trigger_id: trigger.id }, { orderBy: "id" }));
-  const initial_step = steps.find((step) => step.initial_step);
+  const initial_step = steps.find((step: any) => step.initial_step);
   if (initial_step)
-    steps = [initial_step, ...steps.filter((s) => !s.initial_step)];
+    steps = [initial_step, ...steps.filter((s: any) => !s.initial_step)];
 
   return {
     trigger: {
@@ -155,7 +156,7 @@ const getWorkflowEditorData = async (req, trigger, stepsIn) => {
       name: trigger.name,
       when_trigger: trigger.when_trigger,
     },
-    steps: steps.map((s) => serializeWorkflowStep(s, { req, trigger })),
+    steps: steps.map((s: any) => serializeWorkflowStep(s, { req, trigger })),
     actionExplainers: await buildWorkflowActionExplainers(trigger),
     csrfToken: req.csrfToken(),
     strings: workflowStrings(req, trigger),
@@ -183,7 +184,7 @@ const getWorkflowEditorData = async (req, trigger, stepsIn) => {
 router.get(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     let triggers = await Trigger.findAllWithTableName();
     let filterOnTag;
 
@@ -193,9 +194,9 @@ router.get(
         not: { trigger_id: null },
       });
       const tagged_trigger_ids = new Set(
-        tagEntries.map((te) => te.trigger_id).filter(Boolean)
+        tagEntries.map((te: any) => te.trigger_id).filter(Boolean)
       );
-      triggers = triggers.filter((t) => tagged_trigger_ids.has(t.id));
+      triggers = triggers.filter((t: any) => tagged_trigger_ids.has(t.id));
       filterOnTag = await Tag.findOne({ id: +req.query._tag });
     }
     const blurb =
@@ -245,8 +246,8 @@ router.get(
  * @param trigger
  * @returns {Promise<Form>}
  */
-const triggerForm = async (req, trigger) => {
-  const roleOptions = (await User.get_roles()).map((r) => ({
+const triggerForm = async (req: any, trigger: any) => {
+  const roleOptions = (await User.get_roles()).map((r: any) => ({
     value: r.id,
     label: r.role,
   }));
@@ -259,11 +260,11 @@ const triggerForm = async (req, trigger) => {
     form_action = `/actions/edit/${id}`;
   } else form_action = "/actions/new";
   form_action = addOnDoneRedirect(form_action, req);
-  const hasChannel = Object.entries(getState().eventTypes)
-    .filter(([k, v]) => v.hasChannel)
-    .map(([k, v]) => k);
+  const hasChannel = Object.entries(getState()!.eventTypes)
+    .filter(([k, v]: any) => v.hasChannel)
+    .map(([k, v]: any) => k);
   const actionExplainers = Trigger.action_explainers();
-  Trigger.find({}).forEach((tr) => {
+  Trigger.find({}).forEach((tr: any) => {
     if (tr.description && tr.name) actionExplainers[tr.name] = tr.description;
   });
   const allActions = Trigger.action_options({
@@ -280,7 +281,7 @@ const triggerForm = async (req, trigger) => {
     allTriggers: true,
   });
 
-  Trigger.when_options.forEach((t) => {
+  Trigger.when_options.forEach((t: any) => {
     if (table_triggers.includes(t)) action_options[t] = allActions;
     else action_options[t] = actionsNotRequiringRow;
   });
@@ -300,7 +301,7 @@ const triggerForm = async (req, trigger) => {
         label: req.__("When"),
         input_type: "select",
         required: true,
-        options: Trigger.when_options.map((t) => ({ value: t, label: t })),
+        options: Trigger.when_options.map((t: any) => ({ value: t, label: t })),
         sublabel: req.__("Event type which runs the trigger"),
         help: { topic: "Event types" },
         attributes: {
@@ -316,7 +317,7 @@ const triggerForm = async (req, trigger) => {
         name: "table_id",
         label: req.__("Table"),
         input_type: "select",
-        options: [...tables.map((t) => ({ value: t.id, label: t.name }))],
+        options: [...tables.map((t: any) => ({ value: t.id, label: t.name }))],
         showIf: { when_trigger: table_triggers },
         sublabel: req.__(
           "The table for which the trigger condition is checked."
@@ -328,7 +329,7 @@ const triggerForm = async (req, trigger) => {
         input_type: "select",
         options: [
           { value: "", label: "Table not set" },
-          ...tables.map((t) => ({ value: t.id, label: t.name })),
+          ...tables.map((t: any) => ({ value: t.id, label: t.name })),
         ],
         showIf: { when_trigger: "Never" },
         sublabel: req.__("Optionally associate a table with this trigger"),
@@ -365,7 +366,7 @@ const triggerForm = async (req, trigger) => {
           onChange: "$('select[name=action]').val(event.target.value)",
         },
         showIf: {
-          when_trigger: Trigger.when_options.filter((t) => t !== "Never"),
+          when_trigger: Trigger.when_options.filter((t: any) => t !== "Never"),
         },
         sublabel: req.__("The action to be taken when the trigger fires"),
       },
@@ -399,7 +400,7 @@ const triggerForm = async (req, trigger) => {
         },
         showIf: {
           when_trigger: "Never",
-          table_id: tables.map((t) => t.id),
+          table_id: tables.map((t: any) => t.id),
         },
         sublabel: req.__("The action to be taken when the trigger fires"),
       },
@@ -474,7 +475,7 @@ const triggerForm = async (req, trigger) => {
 router.get(
   "/new",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await triggerForm(req);
     if (req.query.table) {
       const table = Table.findOne({ name: req.query.table });
@@ -515,7 +516,7 @@ router.get(
 router.get(
   "/edit/:id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
 
@@ -546,7 +547,7 @@ router.get(
 router.post(
   "/new",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await triggerForm(req);
 
     form.validate(req.body || {});
@@ -572,7 +573,7 @@ router.post(
         const tr = await Trigger.create(form.values);
         id = tr.id;
       }
-      await getState().refresh_triggers();
+      await getState()!.refresh_triggers();
       Trigger.emitEvent("AppChange", `Trigger ${form.values.name}`, req.user, {
         entity_type: "Trigger",
         entity_name: form.values.name,
@@ -591,7 +592,7 @@ router.post(
 router.post(
   "/edit/:id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
     // todo check that trigger exists
@@ -618,7 +619,7 @@ router.post(
           ...form.values.configuration,
         };
       await Trigger.update(trigger.id, form.values); //{configuration: form.values});
-      await getState().refresh_triggers();
+      await getState()!.refresh_triggers();
       Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
         entity_type: "Trigger",
         entity_name: trigger.name,
@@ -639,7 +640,7 @@ router.post(
   })
 );
 
-const getWorkflowConfig = async (req, id, table, trigger) => {
+const getWorkflowConfig = async (req: any, id: any, table: any, trigger: any) => {
   const steps = await WorkflowStep.find(
     { trigger_id: trigger.id },
     { orderBy: "id" }
@@ -661,7 +662,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
   trigCfgForm.values = trigger.configuration;
   let copilot_form = "";
 
-  if (getState().functions.copilot_generate_workflow && !steps.length) {
+  if (getState()!.functions.copilot_generate_workflow && !steps.length) {
     copilot_form = renderForm(
       new Form({
         action: `/actions/gen-copilot/${id}`,
@@ -715,7 +716,7 @@ const getWorkflowConfig = async (req, id, table, trigger) => {
 router.get(
   "/workflow/data/:trigger_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { trigger_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
     if (!trigger) return res.status(404).json({ error: "Trigger not found" });
@@ -727,7 +728,7 @@ router.get(
 router.post(
   "/workflow/connect/:trigger_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { trigger_id } = req.params;
     const { step_id, next_step, initial_step, loop_body_step } = req.body || {};
     const stepId = step_id ? +step_id : null;
@@ -735,7 +736,7 @@ router.post(
     if (!step) return res.status(404).json({ error: "Step not found" });
     const allSteps = await WorkflowStep.find({ trigger_id });
     const previouslyInitial = allSteps.find(
-      (s) => s.initial_step && s.id !== step.id
+      (s: any) => s.initial_step && s.id !== step.id
     );
     const updateRow = {};
     if (typeof next_step !== "undefined")
@@ -777,13 +778,13 @@ router.post(
 router.post(
   "/workflow/positions/:trigger_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const trigger_id = +req.params.trigger_id;
     const { positions } = req.body || {};
     if (!Array.isArray(positions))
       return res.status(400).json({ error: "positions array required" });
 
-    const numeric = (v) => (typeof v === "string" ? +v : v);
+    const numeric = (v: any) => (typeof v === "string" ? +v : v);
 
     let startPos = null;
 
@@ -834,14 +835,14 @@ router.post(
 router.post(
   "/workflow/copy/:trigger_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const trigger_id = +req.params.trigger_id;
     const { step_id } = req.body || {};
     const source = await WorkflowStep.findOne({ id: +step_id, trigger_id });
     if (!source) return res.status(404).json({ error: "Step not found" });
 
     const steps = await WorkflowStep.find({ trigger_id });
-    const existingNames = new Set(steps.map((s) => s.name));
+    const existingNames = new Set(steps.map((s: any) => s.name));
     const safeName = String(source.name || "").replace(/\s+/g, "_");
     const baseName = `${safeName}_copy`;
     let candidate = baseName;
@@ -883,13 +884,13 @@ router.post(
 router.post(
   "/workflow/sizes/:trigger_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const trigger_id = +req.params.trigger_id;
     const { sizes } = req.body || {};
     if (!Array.isArray(sizes))
       return res.status(400).json({ error: "sizes array required" });
 
-    const numeric = (v) => (typeof v === "string" ? +v : v);
+    const numeric = (v: any) => (typeof v === "string" ? +v : v);
 
     for (const size of sizes) {
       if (!size || !size.id) continue;
@@ -923,21 +924,14 @@ router.post(
   })
 );
 
-const getWorkflowStepForm = async (
-  trigger,
-  req,
-  step_id,
-  after_step,
-  before_step,
-  after_step_for
-) => {
+const getWorkflowStepForm = async (trigger: any, req: any, step_id: any, after_step: any, before_step: any, after_step_for: any) => {
   const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
   const actionExplainers = {};
 
-  let stateActions = getState().actions;
+  let stateActions = getState()!.actions;
   const stateActionKeys = Object.entries(stateActions)
-    .filter(([k, v]) => !v.disableInWorkflow)
-    .map(([k, v]) => k);
+    .filter(([k, v]: any) => !v.disableInWorkflow)
+    .map(([k, v]: any) => k);
 
   const actionConfigFields = [];
   for (const [name, action] of Object.entries(stateActions)) {
@@ -983,12 +977,12 @@ const getWorkflowStepForm = async (
     sublabel:
       "Optional. A key on the current workflow's context, the values of which will be the called workflow's context.",
     showIf: {
-      wf_action_name: Trigger.find({ action: "Workflow" }).map((wf) => wf.name),
+      wf_action_name: Trigger.find({ action: "Workflow" }).map((wf: any) => wf.name),
     },
   });
   const nonWfTriggerNames = Trigger.find({})
-    .filter((tr) => tr.action !== "Workflow")
-    .map((wf) => wf.name);
+    .filter((tr: any) => tr.action !== "Workflow")
+    .map((wf: any) => wf.name);
 
   actionConfigFields.push({
     label: "Row expression",
@@ -1016,7 +1010,7 @@ const getWorkflowStepForm = async (
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
   });
-  triggers.forEach((tr) => {
+  triggers.forEach((tr: any) => {
     if (tr.description) actionExplainers[tr.name] = tr.description;
   });
   Object.assign(actionExplainers, builtInActionExplainers);
@@ -1107,16 +1101,16 @@ const getWorkflowStepForm = async (
   return form;
 };
 
-const getMultiStepForm = async (req, id, table) => {
-  let stateActions = getState().actions;
+const getMultiStepForm = async (req: any, id: any, table: any) => {
+  let stateActions = getState()!.actions;
   const stateActionKeys = Object.entries(stateActions)
-    .filter(([k, v]) => !v.disableInList && (table || !v.requireRow))
-    .map(([k, v]) => k);
+    .filter(([k, v]: any) => !v.disableInList && (table || !v.requireRow))
+    .map(([k, v]: any) => k);
   const actions = [...stateActionKeys];
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
   });
-  triggers.forEach((tr) => {
+  triggers.forEach((tr: any) => {
     actions.push(tr.name);
   });
   const actionConfigFields = [];
@@ -1181,7 +1175,7 @@ const getMultiStepForm = async (req, id, table) => {
 router.get(
   "/configure/:idorname",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     let trigger;
     let id = parseInt(idorname);
@@ -1197,7 +1191,7 @@ router.get(
       res.redirect(`/actions/`);
       return;
     }
-    const action = getState().actions[trigger.action];
+    const action = getState()!.actions[trigger.action];
     // get table related to trigger
     const table = trigger.table_id
       ? Table.findOne({ id: trigger.table_id })
@@ -1333,7 +1327,7 @@ router.get(
       const actions = Trigger.find({
         when_trigger: { or: ["API call", "Never"] },
       });
-      const tables = (await Table.find({})).map((t) => ({
+      const tables = (await Table.find({})).map((t: any) => ({
         name: t.name,
         external: t.external,
       }));
@@ -1416,7 +1410,7 @@ router.get(
 
       const hasCopilot =
         trigger.action === "run_js_code" &&
-        !!getState().functions.copilot_generate_javascript;
+        !!getState()!.functions.copilot_generate_javascript;
 
       if (hasCopilot) {
         form.additionalButtons = [
@@ -1665,10 +1659,10 @@ function acceptJsCopilot() {
 router.post(
   "/configure/:id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
-    const action = getState().actions[trigger.action];
+    const action = getState()!.actions[trigger.action];
     const table = trigger.table_id
       ? Table.findOne({ id: trigger.table_id })
       : null;
@@ -1712,7 +1706,7 @@ router.post(
       await Trigger.update(trigger.id, {
         configuration: { ...trigger.configuration, ...form.values },
       });
-      await getState().refresh_triggers();
+      await getState()!.refresh_triggers();
       Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
         entity_type: "Trigger",
         entity_name: trigger.name,
@@ -1740,7 +1734,7 @@ router.post(
 router.post(
   "/delete/:id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
     await db.withTransaction(async () => {
@@ -1750,7 +1744,7 @@ router.post(
       entity_type: "Trigger",
       entity_name: trigger.name,
     });
-    await getState().refresh_triggers();
+    await getState()!.refresh_triggers();
     req.flash("success", req.__(`Trigger %s deleted`, trigger.name));
     let redirectTarget =
       req.query.on_done_redirect &&
@@ -1769,7 +1763,7 @@ router.post(
 router.get(
   "/testrun/:id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
     const output = [];
@@ -1811,7 +1805,7 @@ router.get(
           user: req.user,
         });
       },
-      (e) => {
+      (e: any) => {
         console.error(e);
         fakeConsole.error(e.message);
       }
@@ -1905,11 +1899,11 @@ router.get(
 router.post(
   "/clone/:id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const trig = await Trigger.findOne({ id });
     const newtrig = await trig.clone();
-    await getState().refresh_triggers();
+    await getState()!.refresh_triggers();
     Trigger.emitEvent("AppChange", `Trigger ${newtrig.name}`, req.user, {
       entity_type: "Trigger",
       entity_name: newtrig.name,
@@ -1936,7 +1930,7 @@ router.post(
 router.get(
   "/stepedit/:trigger_id{/:step_id}",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { trigger_id, step_id } = req.params;
     const { initial_step, after_step, before_step, after_step_for } = req.query;
     const trigger = await Trigger.findOne({ id: trigger_id });
@@ -1954,7 +1948,7 @@ router.get(
     if (initial_step) form.values.wf_initial_step = true;
     if (!step_id) {
       const steps = await WorkflowStep.find({ trigger_id });
-      const stepNames = new Set(steps.map((s) => s.name));
+      const stepNames = new Set(steps.map((s: any) => s.name));
       let name_ix = steps.length + 1;
       while (stepNames.has(`step${name_ix}`)) name_ix += 1;
       form.values.wf_step_name = `step${name_ix}`;
@@ -1990,7 +1984,7 @@ router.get(
 router.post(
   "/stepedit/:trigger_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { trigger_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
     const form = await getWorkflowStepForm(trigger, req);
@@ -2038,9 +2032,9 @@ router.post(
         : null;
     const stepsForTrigger = await WorkflowStep.find({ trigger_id });
     const previouslyInitial = existingStep
-      ? stepsForTrigger.find((s) => s.initial_step && s.id !== existingStep.id)
-      : stepsForTrigger.find((s) => s.initial_step);
-    Object.entries(configuration).forEach(([k, v]) => {
+      ? stepsForTrigger.find((s: any) => s.initial_step && s.id !== existingStep.id)
+      : stepsForTrigger.find((s: any) => s.initial_step);
+    Object.entries(configuration).forEach(([k, v]: any) => {
       if (v === null) delete configuration[k];
     });
     // set position if not set and after_step is given (new steps from adder)
@@ -2201,7 +2195,7 @@ router.post(
           if (Object.keys(update).length) await s.update(update);
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       const emsg =
         e.message ===
@@ -2220,7 +2214,7 @@ router.post(
 router.post(
   "/gen-js-copilot/:id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const trigger = await Trigger.findOne({ id });
     if (!trigger) {
@@ -2235,7 +2229,7 @@ router.post(
       : null;
     const existing_code = trigger.configuration?.code || "";
     const generated =
-      await getState().functions.copilot_generate_javascript.run(
+      await getState()!.functions.copilot_generate_javascript.run(
         description,
         existing_code,
         table?.name || null
@@ -2243,7 +2237,7 @@ router.post(
     await Trigger.update(trigger.id, {
       configuration: { ...trigger.configuration, code: generated },
     });
-    await getState().refresh_triggers();
+    await getState()!.refresh_triggers();
     Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
       entity_type: "Trigger",
       entity_name: trigger.name,
@@ -2259,13 +2253,13 @@ router.post(
 router.post(
   "/gen-copilot/:trigger_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { trigger_id } = req.params;
     const trigger = await Trigger.findOne({ id: trigger_id });
     await WorkflowStep.deleteForTrigger(trigger.id);
     const description = (req.body || {}).description;
     await Trigger.update(trigger.id, { description });
-    const steps = await getState().functions.copilot_generate_workflow.run(
+    const steps = await getState()!.functions.copilot_generate_workflow.run(
       description,
       trigger.id
     );
@@ -2285,7 +2279,7 @@ router.post(
 router.post(
   "/delete-step/:step_id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { step_id } = req.params;
     const step = await WorkflowStep.findOne({ id: step_id });
     await db.withTransaction(async () => {
@@ -2298,7 +2292,7 @@ router.post(
 router.get(
   "/runs",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const trNames = {};
     const { _page, trigger } = req.query;
     for (const trig of await Trigger.find({})) trNames[trig.id] = trig.name;
@@ -2315,19 +2309,19 @@ router.get(
 
     const wfTable = mkTable(
       [
-        { label: req.__("Trigger"), key: (run) => trNames[run.trigger_id] },
+        { label: req.__("Trigger"), key: (run: any) => trNames[run.trigger_id] },
         {
           label: req.__("Started"),
-          key: (run) => localeDateTime(run.started_at),
+          key: (run: any) => localeDateTime(run.started_at),
         },
         {
           label: req.__("Updated"),
-          key: (run) => localeDateTime(run.status_updated_at),
+          key: (run: any) => localeDateTime(run.status_updated_at),
         },
         { label: req.__("Status"), key: "status" },
         {
           label: "",
-          key: (run) => {
+          key: (run: any) => {
             switch (run.status) {
               case "Running":
                 return run.current_step_name;
@@ -2349,11 +2343,11 @@ router.get(
       ],
       runs,
       {
-        onRowSelect: (row) => `location.href='/actions/run/${row.id}'`,
+        onRowSelect: (row: any) => `location.href='/actions/run/${row.id}'`,
         pagination: {
           current_page: parseInt(_page) || 1,
           pages: Math.ceil(count / 20),
-          get_page_link: (n) => `gopage(${n}, 20)`,
+          get_page_link: (n: any) => `gopage(${n}, 20)`,
         },
       }
     );
@@ -2381,7 +2375,7 @@ router.get(
 router.get(
   "/run/:id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
     const run = await WorkflowRun.findOne({ id });
@@ -2392,7 +2386,7 @@ router.get(
     );
     const traces_accordion_items = div(
       { class: "accordion" },
-      traces.map((trace, ix) =>
+      traces.map((trace: any, ix: any) =>
         div(
           { class: "accordion-item" },
 
@@ -2513,7 +2507,7 @@ router.get(
 router.post(
   "/delete-run/:id",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
     const run = await WorkflowRun.findOne({ id });
@@ -2524,7 +2518,7 @@ router.post(
 
 router.get(
   "/fill-workflow-form/:id",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
     const run = await WorkflowRun.findOne({ id: +id });
@@ -2551,7 +2545,7 @@ router.get(
         (run.wait_info.output ? "Workflow output" : "Fill form");
       if (form.popup_width) res.set("SaltcornModalWidth", form.popup_width);
       res.sendWrap(title, renderForm(form, req.csrfToken()));
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       await run.markAsError(e, step, req.user);
       const title = req.__("Error running workflow");
@@ -2560,9 +2554,9 @@ router.get(
   })
 );
 
-const workflowRunPromiseHandler = (promise, run, req) => {
+const workflowRunPromiseHandler = (promise: any, run: any, req: any) => {
   promise
-    .then(async (runres) => {
+    .then(async (runres: any) => {
       const retDirs = await run.popReturnDirectives();
       const emitData = {
         ...runres,
@@ -2570,12 +2564,12 @@ const workflowRunPromiseHandler = (promise, run, req) => {
         page_load_tag: req.headers["page-load-tag"],
       };
       const userIds = req.user ? [req.user.id] : null;
-      getState().emitDynamicUpdate(db.getTenantSchema(), emitData, userIds);
+      getState()!.emitDynamicUpdate(db.getTenantSchema(), emitData, userIds);
       if (
         !emitData.resume_workflow &&
         !emitData.popup?.startsWith?.("/actions/fill-workflow-form/")
       )
-        getState().emitDynamicUpdate(
+        getState()!.emitDynamicUpdate(
           db.getTenantSchema(),
           {
             eval_js: "reset_spinners()",
@@ -2584,9 +2578,9 @@ const workflowRunPromiseHandler = (promise, run, req) => {
           userIds
         );
     })
-    .catch((e) => {
+    .catch((e: any) => {
       console.error(e);
-      getState().emitDynamicUpdate(
+      getState()!.emitDynamicUpdate(
         db.getTenantSchema(),
         {
           error: e.message,
@@ -2599,7 +2593,7 @@ const workflowRunPromiseHandler = (promise, run, req) => {
 
 router.post(
   "/fill-workflow-form/:id",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
     const run = await WorkflowRun.findOne({ id });
@@ -2625,7 +2619,7 @@ router.post(
       res.sendWrap(title, renderForm(form, req.csrfToken()));
     } else {
       const run_async =
-        getState().getConfig("enable_dynamic_updates") &&
+        getState()!.getConfig("enable_dynamic_updates") &&
         req.headers["page-load-tag"] &&
         req.xhr;
       await run.provide_form_input(
@@ -2658,7 +2652,7 @@ router.post(
 
 router.post(
   "/resume-workflow/:id",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
     const run = await WorkflowRun.findOne({ id: +id });
@@ -2673,7 +2667,7 @@ router.post(
     }
     const trigger = await Trigger.findOne({ id: run.trigger_id });
     const run_async =
-      getState().getConfig("enable_dynamic_updates") &&
+      getState()!.getConfig("enable_dynamic_updates") &&
       req.headers["page-load-tag"] &&
       req.xhr;
     const promise = run.run({

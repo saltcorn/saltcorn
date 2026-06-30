@@ -16,7 +16,7 @@ import Trigger from "@saltcorn/data/models/trigger";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 import {
   mkTable,
@@ -40,14 +40,15 @@ import {
 import Table from "@saltcorn/data/models/table";
 import { send_events_page } from "../markup/admin.js";
 import EventLog from "@saltcorn/data/models/eventlog";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @param {object} req
  * @returns {Promise<Form>}
  */
 
-const logSettingsForm = async (req) => {
-  const hoursFuture = (nhrs) => {
+const logSettingsForm = async (req: any) => {
+  const hoursFuture = (nhrs: any) => {
     const t = new Date();
     t.setHours(t.getHours() + nhrs);
     return t;
@@ -186,31 +187,31 @@ const logSettingsForm = async (req) => {
 router.get(
   "/settings",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await logSettingsForm(req);
-    form.values = getState().getConfig("event_log_settings", {});
-    form.values.next_hourly_event = getState().getConfig(
+    form.values = getState()!.getConfig("event_log_settings", {});
+    form.values.next_hourly_event = getState()!.getConfig(
       "next_hourly_event",
       {}
     );
-    form.values.next_daily_event = getState().getConfig("next_daily_event", {});
-    form.values.next_weekly_event = getState().getConfig(
+    form.values.next_daily_event = getState()!.getConfig("next_daily_event", {});
+    form.values.next_weekly_event = getState()!.getConfig(
       "next_weekly_event",
       {}
     );
-    form.values.enable_dynamic_updates = getState().getConfig(
+    form.values.enable_dynamic_updates = getState()!.getConfig(
       "enable_dynamic_updates",
       true
     );
-    ["error", "finished", "running", "waiting"].forEach((k) => {
+    ["error", "finished", "running", "waiting"].forEach((k: any) => {
       let cfgk = `delete_${k}_workflows_days`;
-      form.values[cfgk] = getState().getConfig(cfgk);
+      form.values[cfgk] = getState()!.getConfig(cfgk);
     });
     for (const k of [
       "mobile_emit_allowed_events",
       "mobile_emit_public_events",
     ]) {
-      const arr = getState().getConfig(k, []);
+      const arr = getState()!.getConfig(k, []);
       form.values[k] = Array.isArray(arr) ? arr.join(", ") : arr;
     }
 
@@ -238,8 +239,8 @@ router.get(
 router.get(
   "/custom",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const cevs = getState().getConfig("custom_events", []);
+  error_catcher(async (req: Req, res: Res) => {
+    const cevs = getState()!.getConfig("custom_events", []);
     send_events_page({
       res,
       req,
@@ -259,11 +260,11 @@ router.get(
               },
               {
                 label: req.__("Channels"),
-                key: (r) => (r.hasChannel ? req.__("Yes") : ""),
+                key: (r: any) => (r.hasChannel ? req.__("Yes") : ""),
               },
               {
                 label: req.__("Delete"),
-                key: (r) =>
+                key: (r: any) =>
                   post_delete_btn(`/eventlog/custom/delete/${r.name}`, req),
               },
             ],
@@ -285,7 +286,7 @@ router.get(
 /**
  * @returns {Form}
  */
-const customEventForm = async (req) => {
+const customEventForm = async (req: any) => {
   return new Form({
     action: "/eventlog/custom/new",
     submitButtonClass: "btn-outline-primary",
@@ -314,7 +315,7 @@ const customEventForm = async (req) => {
 router.get(
   "/custom/new",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await customEventForm(req);
     send_events_page({
       res,
@@ -339,7 +340,7 @@ router.get(
 router.post(
   "/custom/new",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await customEventForm(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -355,10 +356,10 @@ router.post(
         },
       });
     } else {
-      const cevs = getState().getConfig("custom_events", []);
+      const cevs = getState()!.getConfig("custom_events", []);
 
-      await getState().setConfig("custom_events", [...cevs, form.values]);
-      await getState().refresh_config();
+      await getState()!.setConfig("custom_events", [...cevs, form.values]);
+      await getState()!.refresh_config();
 
       res.redirect(`/eventlog/custom`);
     }
@@ -374,16 +375,16 @@ router.post(
 router.post(
   "/custom/delete{/:name}",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     let { name } = req.params;
     if (!name) name = "";
-    const cevs = getState().getConfig("custom_events", []);
+    const cevs = getState()!.getConfig("custom_events", []);
 
-    await getState().setConfig(
+    await getState()!.setConfig(
       "custom_events",
-      cevs.filter((cev) => cev.name !== name)
+      cevs.filter((cev: any) => cev.name !== name)
     );
-    await getState().refresh_plugins();
+    await getState()!.refresh_plugins();
     res.redirect(`/eventlog/custom`);
   })
 );
@@ -397,7 +398,7 @@ router.post(
 router.post(
   "/settings",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await logSettingsForm(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -416,18 +417,18 @@ router.post(
       for (const tm of ["hourly", "daily", "weekly"]) {
         const k = `next_${tm}_event`;
         if (form.values[k]) {
-          await getState().setConfig(k, form.values[k]);
+          await getState()!.setConfig(k, form.values[k]);
           delete form.values[k];
         }
       }
-      await getState().setConfig(
+      await getState()!.setConfig(
         "enable_dynamic_updates",
         form.values.enable_dynamic_updates
       );
       for (const status of ["error", "finished", "running", "waiting"]) {
         let k = `delete_${status}_workflows_days`;
         if (form.values[k]) {
-          await getState().setConfig(k, form.values[k]);
+          await getState()!.setConfig(k, form.values[k]);
           delete form.values[k];
         }
       }
@@ -437,18 +438,18 @@ router.post(
         "mobile_emit_public_events",
       ]) {
         const raw = form.values[k];
-        await getState().setConfig(
+        await getState()!.setConfig(
           k,
           raw
             ? raw
                 .split(",")
-                .map((s) => s.trim())
+                .map((s: any) => s.trim())
                 .filter(Boolean)
             : []
         );
         delete form.values[k];
       }
-      await getState().setConfig("event_log_settings", form.values);
+      await getState()!.setConfig("event_log_settings", form.values);
 
       if (!req.xhr) res.redirect(`/eventlog/settings`);
       else res.json({ success: "ok" });
@@ -465,7 +466,7 @@ router.post(
 router.get(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const state = req.query,
       rows_per_page = 20,
       page_opts = { hover: true },
@@ -482,7 +483,7 @@ router.get(
         page_opts.pagination = {
           current_page,
           pages: Math.ceil(nrows / rows_per_page),
-          get_page_link: (n) => `gopage(${n}, ${rows_per_page})`,
+          get_page_link: (n: any) => `gopage(${n}, ${rows_per_page})`,
         };
       }
     }
@@ -498,7 +499,7 @@ router.get(
           [
             {
               label: req.__("When"),
-              key: (r) => a({ href: `/eventlog/${r.id}` }, r.reltime),
+              key: (r: any) => a({ href: `/eventlog/${r.id}` }, r.reltime),
             },
             { label: req.__("Type"), key: "event_type" },
             { label: req.__("Channel"), key: "channel" },
@@ -520,10 +521,10 @@ router.get(
 router.get(
   "/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const { or_less, or_more } = req.query;
-    const locale = getState().getConfig("default_locale", "en");
+    const locale = getState()!.getConfig("default_locale", "en");
     let ev = await EventLog.findOneWithUser(id);
     if (!ev && (or_less || or_more)) {
       const evFound = await EventLog.find(

@@ -19,13 +19,14 @@ import Trigger from "@saltcorn/data/models/trigger";
 import Table from "@saltcorn/data/models/table";
 import { renderForm, post_btn } from "@saltcorn/markup";
 import db from "@saltcorn/data/db";
+import { Req, Res } from "@saltcorn/types/base_types";
 
-const router = new Router();
+const router = Router();
 export default router;
 
 router.use(
-  error_catcher(async (req, res, next) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res, next: any) => {
+    const state = getState()!;
     const maintenanceModeEnabled = state.getConfig(
       "maintenance_mode_enabled",
       false
@@ -38,10 +39,10 @@ router.use(
   })
 );
 
-const notificationSettingsForm = (user) => {
+const notificationSettingsForm = (user: any) => {
   const fields = [{ name: "notify_email", label: "Email", type: "Bool" }];
-  if (getState().getConfig("enable_push_notify", false)) {
-    const policyByRole = getState()?.getConfig("push_policy_by_role") || {};
+  if (getState()!.getConfig("enable_push_notify", false)) {
+    const policyByRole = getState()!?.getConfig("push_policy_by_role") || {};
     const pushPolicy = policyByRole[user?.role_id || 100] || "Default on";
     if (!["Always", "Never"].includes(pushPolicy)) {
       fields.push({
@@ -64,7 +65,7 @@ const notificationSettingsForm = (user) => {
 router.get(
   "/",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { after } = req.query;
     const where = { user_id: req.user.id };
     if (after) where.id = { lt: after };
@@ -73,15 +74,15 @@ router.get(
       orderDesc: true,
       limit: 20,
     });
-    const unreads = nots.filter((n) => !n.read);
+    const unreads = nots.filter((n: any) => !n.read);
     if (unreads.length > 0)
       await Notification.mark_as_read(
         !db.isSQLite
           ? {
-              id: { in: unreads.map((n) => n.id) },
+              id: { in: unreads.map((n: any) => n.id) },
             }
           : {
-              or: unreads.map((n) => ({ id: n.id })),
+              or: unreads.map((n: any) => ({ id: n.id })),
             }
       );
 
@@ -91,10 +92,10 @@ router.get(
       notify_email: user?._attributes?.notify_email,
     };
 
-    if (getState().getConfig("enable_push_notify", false)) {
+    if (getState()!.getConfig("enable_push_notify", false)) {
       let notifPushAttr = user?._attributes?.notify_push;
       if (notifPushAttr === undefined) {
-        const policyByRole = getState()?.getConfig("push_policy_by_role") || {};
+        const policyByRole = getState()!?.getConfig("push_policy_by_role") || {};
         const pushPolicy = policyByRole[user.role_id || 100] || "Default on";
         if (pushPolicy === "Default on") notifPushAttr = true;
         else if (pushPolicy === "Default off") notifPushAttr = false;
@@ -103,7 +104,7 @@ router.get(
     }
 
     const notifyCards = nots.length
-      ? nots.map((not) => ({
+      ? nots.map((not: any) => ({
           type: "card",
           class: [!not.read && "unread-notify"],
           id: `notify-${not.id}`,
@@ -200,7 +201,7 @@ router.get(
 router.get(
   "/count-unread",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const num_unread = await Notification.count({
       user_id: req.user.id,
       read: false,
@@ -213,15 +214,15 @@ router.get(
 router.post(
   "/settings",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const user = await User.findOne({ id: req.user.id });
     const form = notificationSettingsForm(req.user);
     form.validate(req.body || {});
     const _attributes = { ...user._attributes, ...form.values };
 
     // apply push enabled policy if needed
-    if (getState().getConfig("enable_push_notify", false)) {
-      const policyByRole = getState()?.getConfig("push_policy_by_role") || {};
+    if (getState()!.getConfig("enable_push_notify", false)) {
+      const policyByRole = getState()!?.getConfig("push_policy_by_role") || {};
       const pushPolicy = policyByRole[user.role_id || 100] || "Default on";
       if (pushPolicy === "Always") _attributes.notify_push = true;
       else if (pushPolicy === "Never") _attributes.notify_push = false;
@@ -232,14 +233,14 @@ router.post(
 
     await user.update({ _attributes });
     const pushEnabled = _attributes.notify_push;
-    const allSubs = getState().getConfig("push_notification_subscriptions", {});
+    const allSubs = getState()!.getConfig("push_notification_subscriptions", {});
     const newSubs = { ...allSubs };
     if (!pushEnabled && newSubs[req.user.id]) {
       delete newSubs[req.user.id];
-      await getState().setConfig("push_notification_subscriptions", newSubs);
+      await getState()!.setConfig("push_notification_subscriptions", newSubs);
     } else if (pushEnabled && !newSubs[req.user.id]) {
       newSubs[req.user.id] = [];
-      await getState().setConfig("push_notification_subscriptions", newSubs);
+      await getState()!.setConfig("push_notification_subscriptions", newSubs);
     }
     res.json({ success: "ok" });
   })
@@ -248,7 +249,7 @@ router.post(
 router.post(
   "/delete/:idlike",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { idlike } = req.params;
     if (idlike == "read") {
       await Notification.deleteRead(req.user.id);
@@ -264,7 +265,7 @@ router.post(
 
 router.post(
   "/share-handler",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const role = req.user?.role_id || 100;
     if (role === 100) {
       const msg = req.__("You must be logged in to share");
@@ -307,21 +308,21 @@ router.post(
 router.post(
   "/subscribe",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const enabled = getState().getConfig("enable_push_notify", false);
+  error_catcher(async (req: Req, res: Res) => {
+    const enabled = getState()!.getConfig("enable_push_notify", false);
     if (!enabled) {
       res.status(403).json({
         error: req.__("Notifications are not enabled on this server"),
       });
     } else {
       const user = req.user;
-      const allSubs = getState().getConfig(
+      const allSubs = getState()!.getConfig(
         "push_notification_subscriptions",
         {}
       );
       const userSubs = allSubs[user.id] || [];
       const existingSub = userSubs.find(
-        (s) =>
+        (s: any) =>
           s.endpoint === req.body.endpoint &&
           s.keys.p256dh === req.body.keys.p256dh &&
           s.keys.auth === req.body.keys.auth
@@ -340,7 +341,7 @@ router.post(
             p256dh: req.body.keys.p256dh,
           },
         });
-        await getState().setConfig("push_notification_subscriptions", {
+        await getState()!.setConfig("push_notification_subscriptions", {
           ...allSubs,
           [user.id]: userSubs,
         });
@@ -356,7 +357,7 @@ router.post(
 router.post(
   "/mobile-subscribe",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { token, deviceId, platform } = req.body || {};
     if (!token) {
       res.status(400).json({
@@ -365,10 +366,10 @@ router.post(
       return;
     }
     const user = req.user;
-    const allSubs = getState().getConfig("push_notification_subscriptions", {});
+    const allSubs = getState()!.getConfig("push_notification_subscriptions", {});
     let userSubs = allSubs[user.id] || [];
     const existingSub = userSubs.find(
-      (s) =>
+      (s: any) =>
         s.type === "fcm-push" && s.token === token && s.deviceId === deviceId
     );
     if (existingSub) {
@@ -379,7 +380,7 @@ router.post(
     } else {
       // web based subscriptions and other device subscriptions for this user
       userSubs = userSubs.filter(
-        (s) =>
+        (s: any) =>
           (s.type !== "fcm-push" && s.type !== "apns-push") ||
           s.deviceId !== deviceId
       );
@@ -388,7 +389,7 @@ router.post(
         token: token,
         deviceId: deviceId,
       });
-      await getState().setConfig("push_notification_subscriptions", {
+      await getState()!.setConfig("push_notification_subscriptions", {
         ...allSubs,
         [user.id]: userSubs,
       });
@@ -403,8 +404,8 @@ router.post(
 router.post(
   "/remove-subscription",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const enabled = getState().getConfig("enable_push_notify", false);
+  error_catcher(async (req: Req, res: Res) => {
+    const enabled = getState()!.getConfig("enable_push_notify", false);
     if (!enabled) {
       res.status(403).json({
         error: req.__("Notifications are not enabled on this server"),
@@ -412,19 +413,19 @@ router.post(
     } else {
       const { subscription } = req.body;
       const user = req.user;
-      const oldSubs = getState().getConfig(
+      const oldSubs = getState()!.getConfig(
         "push_notification_subscriptions",
         {}
       );
       let userSubs = oldSubs[user.id];
       if (userSubs) {
         userSubs = userSubs.filter(
-          (s) =>
+          (s: any) =>
             s.endpoint !== subscription.endpoint ||
             s.keys.p256dh !== subscription.keys.p256dh ||
             s.keys.auth !== subscription.keys.auth
         );
-        await getState().setConfig("push_notification_subscriptions", {
+        await getState()!.setConfig("push_notification_subscriptions", {
           ...oldSubs,
           [user.id]: userSubs,
         });
@@ -440,7 +441,7 @@ router.post(
 router.post(
   "/mobile-remove-subscription",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { token, deviceId } = req.body || {};
     if (!token) {
       res.status(400).json({
@@ -449,13 +450,13 @@ router.post(
       return;
     }
     const user = req.user;
-    const oldSubs = getState().getConfig("push_notification_subscriptions", {});
+    const oldSubs = getState()!.getConfig("push_notification_subscriptions", {});
     let userSubs = oldSubs[user.id];
     if (userSubs) {
       userSubs = userSubs.filter(
-        (s) => s.type !== "fcm-push" || s.deviceId !== deviceId
+        (s: any) => s.type !== "fcm-push" || s.deviceId !== deviceId
       );
-      await getState().setConfig("push_notification_subscriptions", {
+      await getState()!.setConfig("push_notification_subscriptions", {
         ...oldSubs,
         [user.id]: userSubs,
       });
@@ -470,8 +471,8 @@ router.post(
 router.post(
   "/generate-vapid-keys",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const enabled = getState().getConfig("enable_push_notify", false);
+  error_catcher(async (req: Req, res: Res) => {
+    const enabled = getState()!.getConfig("enable_push_notify", false);
     if (!enabled) {
       res.status(403).json({
         error: req.__("Notifications are not enabled on this server"),
@@ -479,9 +480,9 @@ router.post(
     } else {
       const webPush = require("web-push");
       const vapidKeys = webPush.generateVAPIDKeys();
-      await getState().setConfig("vapid_public_key", vapidKeys.publicKey);
-      await getState().setConfig("vapid_private_key", vapidKeys.privateKey);
-      const allSubs = getState().setConfig(
+      await getState()!.setConfig("vapid_public_key", vapidKeys.publicKey);
+      await getState()!.setConfig("vapid_private_key", vapidKeys.privateKey);
+      const allSubs = getState()!.setConfig(
         "push_notification_subscriptions",
         {}
       );
@@ -489,7 +490,7 @@ router.post(
       for (const k of Object.keys(allSubs)) {
         newSubs[k] = [];
       }
-      await getState().setConfig("push_notification_subscriptions", newSubs);
+      await getState()!.setConfig("push_notification_subscriptions", newSubs);
       res.json({
         success: "ok",
       });
@@ -499,9 +500,9 @@ router.post(
 
 router.get(
   "/manifest.json{:opt_cache_bust}",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { pretty } = req.query;
-    const state = getState();
+    const state = getState()!;
     const manifest = {
       name: state.getConfig("site_name"),
       start_url: "/",
@@ -525,7 +526,7 @@ router.get(
       };
     }
     if (Array.isArray(pwa_icons) && pwa_icons.length > 0)
-      manifest.icons = pwa_icons.map(({ image, size, maskable }) => ({
+      manifest.icons = pwa_icons.map(({ image, size, maskable }: any) => ({
         src: /^(?:[a-z]+:)?\/\//i.test(image) ? image : `/files/serve/${image}`,
         type: File.nameToMimeType(image),
         sizes: size ? `${size}x${size}` : "144x144",

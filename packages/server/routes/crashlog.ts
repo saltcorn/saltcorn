@@ -138,7 +138,7 @@ router.get(
         contents: table(
           { class: "table" },
           tbody(
-            Object.entries(crash).map(([k, v]) =>
+            Object.entries(crash).map(([k, v]: any) =>
               tr(
                 td(k),
                 td(

@@ -62,6 +62,7 @@ import {
 } from "../markup/admin.js";
 import { getConfig } from "@saltcorn/data/models/config";
 import path from "path";
+import { Req, Res } from "@saltcorn/types/base_types";
 //const {quote} = require("@saltcorn/db-common");
 // todo add button backup / restore for particular tenant (available in admin tenants screens)
 //const {
@@ -76,10 +77,10 @@ import path from "path";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
-const remove_leading_chars = (cs, s) =>
+const remove_leading_chars = (cs: any, s: any) =>
   s.startsWith(cs) ? remove_leading_chars(cs, s.substring(cs.length)) : s;
 
 /**
@@ -91,7 +92,7 @@ const remove_leading_chars = (cs, s) =>
  */
 // TBD add form field email for tenant admin
 
-const tenant_form = (req, base_url) =>
+const tenant_form = (req: any, base_url: any) =>
   new Form({
     action: "/tenant/create",
     submitLabel: req.__("Create"),
@@ -119,14 +120,14 @@ const tenant_form = (req, base_url) =>
  * @returns {boolean} true if role has righs to create tenant
  */
 // TBD To allow few roles to create tenants - currently only one role has such rights simultaneously
-const create_tenant_allowed = (req) => {
+const create_tenant_allowed = (req: any) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const required_role = +getRootState().getConfig("role_to_create_tenant") || 1;
   const user_role = req.user ? req.user.role_id : 100;
   return user_role <= required_role && (isRoot || required_role === 100);
 };
 
-const get_cfg_tenant_base_url = (req) =>
+const get_cfg_tenant_base_url = (req: any) =>
   remove_leading_chars(
     ".",
     getRootState().getConfig("tenant_baseurl", req.hostname) || req.hostname
@@ -141,7 +142,7 @@ const get_cfg_tenant_base_url = (req) =>
  */
 router.get(
   "/create",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (!db.is_it_multi_tenant()) {
       res.sendWrap(
         req.__("Create application"),
@@ -150,7 +151,7 @@ router.get(
       return;
     }
     if (!create_tenant_allowed(req)) {
-      const redir = getState().getConfig("tenant_create_unauth_redirect");
+      const redir = getState()!.getConfig("tenant_create_unauth_redirect");
       const redirRoot = getRootState().getConfig(
         "tenant_create_unauth_redirect"
       );
@@ -169,8 +170,8 @@ router.get(
       );
     let create_tenant_warning_text = "";
     const base_url = get_cfg_tenant_base_url(req);
-    if (getState().getConfig("create_tenant_warning")) {
-      create_tenant_warning_text = getState().getConfig(
+    if (getState()!.getConfig("create_tenant_warning")) {
+      create_tenant_warning_text = getState()!.getConfig(
         "create_tenant_warning_text"
       );
       if (create_tenant_warning_text && create_tenant_warning_text.length > 0)
@@ -230,7 +231,7 @@ router.get(
  * @param base_url - Base URL
  * @returns {string}
  */
-const getNewURL = (req, subdomain, base_url) => {
+const getNewURL = (req: any, subdomain: any, base_url: any) => {
   var ports = "";
   const host = req.get("host");
   if (typeof host === "string") {
@@ -250,7 +251,7 @@ const getNewURL = (req, subdomain, base_url) => {
  */
 router.post(
   "/create",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     // check that multi-tenancy is enabled
     if (!db.is_it_multi_tenant()) {
       res.sendWrap(
@@ -296,7 +297,7 @@ router.post(
         const base_url = get_cfg_tenant_base_url(req);
         const newurl = getNewURL(req, subdomain, base_url);
         // tenant template
-        const tenant_template = getState().getConfig("tenant_template");
+        const tenant_template = getState()!.getConfig("tenant_template");
         // tenant creator
         const user_email = req.user && req.user.email;
         const tenrow = await insertTenant(
@@ -318,14 +319,14 @@ router.post(
           tenant_template,
         });
         let new_url_create = newurl;
-        const hasTemplate = getState().getConfig("tenant_template");
+        const hasTemplate = getState()!.getConfig("tenant_template");
         if (hasTemplate) {
           new_url_create += "auth/create_first_user";
         }
-        const letsencrypt = getState().getConfig("letsencrypt", false);
+        const letsencrypt = getState()!.getConfig("letsencrypt", false);
         if (letsencrypt) {
           let altname = await tenant_letsencrypt_name(subdomain);
-          const tenant_letsencrypt_sites = getState().getConfig(
+          const tenant_letsencrypt_sites = getState()!.getConfig(
             "tenant_letsencrypt_sites",
             []
           );
@@ -349,11 +350,11 @@ router.post(
               altnames: [altname],
             });
             // letsencrypt
-            const tenant_letsencrypt_sites = getState().getConfig(
+            const tenant_letsencrypt_sites = getState()!.getConfig(
               "tenant_letsencrypt_sites",
               []
             );
-            await getState().setConfig("tenant_letsencrypt_sites", [
+            await getState()!.setConfig("tenant_letsencrypt_sites", [
               altname,
               ...tenant_letsencrypt_sites,
             ]);
@@ -412,7 +413,7 @@ router.post(
 router.get(
   "/list",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (
       !db.is_it_multi_tenant() ||
       db.getTenantSchema() !== db.connectObj.default_schema
@@ -424,7 +425,7 @@ router.get(
       return;
     }
     const tens = await db.select("_sc_tenants");
-    const locale = getState().getConfig("default_locale", "en");
+    const locale = getState()!.getConfig("default_locale", "en");
     send_infoarch_page({
       res,
       req,
@@ -437,7 +438,7 @@ router.get(
             [
               {
                 label: req.__("Subdomain"),
-                key: (r) =>
+                key: (r: any) =>
                   link(
                     getNewURL(req, r.subdomain, get_cfg_tenant_base_url(req)),
                     text(r.subdomain)
@@ -445,21 +446,21 @@ router.get(
               },
               {
                 label: req.__("Description"),
-                key: (r) => text(r.description),
+                key: (r: any) => text(r.description),
                 //blurb: req.__("Specify some description for tenant if need"),
               },
               {
                 label: req.__("Creator email"),
-                key: (r) => text(r.email),
+                key: (r: any) => text(r.email),
               },
               {
                 label: req.__("Created"),
-                key: (r) =>
+                key: (r: any) =>
                   r.created ? localeDateTime(r.created, {}, locale) : "",
               },
               {
                 label: req.__("Information"),
-                key: (r) =>
+                key: (r: any) =>
                   a(
                     { href: `/tenant/info/${text(r.subdomain)}` },
                     i({ class: "fas fa-lg fa-info-circle" })
@@ -467,7 +468,7 @@ router.get(
               },
               {
                 label: req.__("Delete"),
-                key: (r) =>
+                key: (r: any) =>
                   post_delete_btn(
                     `/tenant/delete/${r.subdomain}`,
                     req,
@@ -489,7 +490,7 @@ router.get(
  * @param {object} req
  * @returns {Form}
  */
-const tenant_settings_form = (req) =>
+const tenant_settings_form = (req: any) =>
   config_fields_form({
     req,
     field_names: [
@@ -518,7 +519,7 @@ const tenant_settings_form = (req) =>
 router.get(
   "/settings",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (
       !db.is_it_multi_tenant() ||
       db.getTenantSchema() !== db.connectObj.default_schema
@@ -553,7 +554,7 @@ router.get(
 router.post(
   "/settings",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await tenant_settings_form(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -583,7 +584,7 @@ router.post(
  * @returns {Promise<*>}
  */
 // TBD move this function data layer or just separate file(reengineering)
-const get_tenant_info = async (subdomain) => {
+const get_tenant_info = async (subdomain: any) => {
   const saneDomain = domain_sanitize(subdomain);
 
   let info = {};
@@ -662,7 +663,7 @@ const get_tenant_info = async (subdomain) => {
 router.get(
   "/info/:subdomain",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (
       !db.is_it_multi_tenant() ||
       db.getTenantSchema() !== db.connectObj.default_schema
@@ -677,10 +678,10 @@ router.get(
 
     // get tenant info
     const info = await get_tenant_info(subdomain);
-    const letsencrypt = getState().getConfig("letsencrypt", false);
+    const letsencrypt = getState()!.getConfig("letsencrypt", false);
 
     let altname = await tenant_letsencrypt_name(subdomain);
-    const tenant_letsencrypt_sites = getState().getConfig(
+    const tenant_letsencrypt_sites = getState()!.getConfig(
       "tenant_letsencrypt_sites",
       []
     );
@@ -839,14 +840,14 @@ router.get(
               [
                 {
                   label: req.__("Name"),
-                  key: (r) =>
+                  key: (r: any) =>
                     link(
                       `${getNewURL(req, text(subdomain))}files/serve/${r.id}`,
                       r.filename
                     ),
                 },
                 { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
-                { label: req.__("Media type"), key: (r) => r.mimetype },
+                { label: req.__("Media type"), key: (r: any) => r.mimetype },
               ],
               files
             ),
@@ -867,7 +868,7 @@ router.get(
 router.post(
   "/info/:subdomain",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (
       !db.is_it_multi_tenant() ||
       db.getTenantSchema() !== db.connectObj.default_schema
@@ -887,7 +888,7 @@ router.post(
     await Tenant.update(saneDomain, { description: description });
 
     await db.runWithTenant(saneDomain, async () => {
-      await getState().setConfig("base_url", base_url);
+      await getState()!.setConfig("base_url", base_url);
     });
     res.redirect(`/tenant/info/${text(subdomain)}`);
   })
@@ -902,7 +903,7 @@ router.post(
 router.post(
   "/delete/:sub",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (
       !db.is_it_multi_tenant() ||
       db.getTenantSchema() !== db.connectObj.default_schema

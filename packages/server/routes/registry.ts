@@ -97,36 +97,36 @@ router.get(
 
     const all_configs_obj = await getState()!.getAllConfigOrDefaults();
     const all_configs: any[] = Object.entries(all_configs_obj)
-      .map(([name, v]) => ({
+      .map(([name, v]: any) => ({
         ...(v as any),
         name,
       }))
-      .filter((c) => isRoot || !c.root_only);
+      .filter((c: any) => isRoot || !c.root_only);
 
     let tables, views, pages, triggers, configs, plugins;
     if (q) {
       const qlower = q.toLowerCase();
       const includesQ = (s: string) => s.toLowerCase().includes(qlower);
 
-      tables = await asyncFilter(all_tables, async (t) => {
+      tables = await asyncFilter(all_tables, async (t: any) => {
         const pack = await table_pack(t);
         return includesQ(JSON.stringify(pack));
       });
-      views = await asyncFilter(all_views, async (t) => {
+      views = await asyncFilter(all_views, async (t: any) => {
         const pack = await view_pack(t);
         return includesQ(JSON.stringify(pack));
       });
-      pages = await asyncFilter(all_pages, async (t) => {
+      pages = await asyncFilter(all_pages, async (t: any) => {
         const pack = await page_pack(t);
         return includesQ(JSON.stringify(pack));
       });
-      triggers = await asyncFilter(all_triggers, async (t) => {
+      triggers = await asyncFilter(all_triggers, async (t: any) => {
         const pack = await trigger_pack(t);
         return includesQ(JSON.stringify(pack));
       });
-      configs = all_configs.filter((c) => includesQ(JSON.stringify(c)));
+      configs = all_configs.filter((c: any) => includesQ(JSON.stringify(c)));
       plugins = all_plugins.filter(
-        (p) =>
+        (p: any) =>
           includesQ(p.name) || includesQ(JSON.stringify(p.configuration || {}))
       );
     } else {
@@ -171,7 +171,7 @@ router.get(
     switch (etype) {
       case "table":
         const tpack = await table_pack(
-          all_tables.find((t) => t.name === ename)!
+          all_tables.find((t: any) => t.name === ename)!
         );
         cfg_link = a(
           { href: `/table/${encodeURIComponent(ename)}` },
@@ -198,7 +198,7 @@ router.get(
             "Configure&nbsp;",
             i({ class: "fas fa-cog" })
           );
-        const vpack = await view_pack(all_views.find((v) => v.name === ename)!);
+        const vpack = await view_pack(all_views.find((v: any) => v.name === ename)!);
         edContents = renderForm(mkForm(vpack), req.csrfToken());
         break;
       case "page":
@@ -206,11 +206,11 @@ router.get(
           { href: `/pageedit/edit/${encodeURIComponent(ename)}` },
           `${ename} ${etype}`
         );
-        const ppack = await page_pack(all_pages.find((v) => v.name === ename)!);
+        const ppack = await page_pack(all_pages.find((v: any) => v.name === ename)!);
         edContents = renderForm(mkForm(ppack), req.csrfToken());
         break;
       case "config":
-        const config = all_configs.find((t) => t.name === ename);
+        const config = all_configs.find((t: any) => t.name === ename);
         edContents =
           h4(config.label) +
           (config.blurb || "") +
@@ -218,7 +218,7 @@ router.get(
           renderForm(mkForm(config.value), req.csrfToken());
         break;
       case "trigger":
-        const trigger = all_triggers.find((t) => t.name === ename);
+        const trigger = all_triggers.find((t: any) => t.name === ename);
         const trpack = await trigger_pack(trigger!);
         cfg_link =
           `${ename} ${etype}` +
@@ -242,7 +242,7 @@ router.get(
         edContents = renderForm(mkForm(trpack), req.csrfToken());
         break;
       case "module":
-        const plugin = all_plugins.find((p) => p.name === ename);
+        const plugin = all_plugins.find((p: any) => p.name === ename);
         cfg_link =
           `${ename} ${etype}` +
           a(
@@ -304,7 +304,7 @@ router.get(
                     summary("Tables"),
                     ul(
                       { class: "ps-3" },
-                      tables.map((t) => li_link("table", t.name))
+                      tables.map((t: any) => li_link("table", t.name))
                     )
                   )
                 ),
@@ -314,7 +314,7 @@ router.get(
                     summary("Views"),
                     ul(
                       { class: "ps-3" },
-                      views.map((v) => li_link("view", v.name))
+                      views.map((v: any) => li_link("view", v.name))
                     )
                   )
                 ),
@@ -324,7 +324,7 @@ router.get(
                     summary("Pages"),
                     ul(
                       { class: "ps-3" },
-                      pages.map((p) => li_link("page", p.name))
+                      pages.map((p: any) => li_link("page", p.name))
                     )
                   )
                 ),
@@ -334,7 +334,7 @@ router.get(
                     summary("Triggers"),
                     ul(
                       { class: "ps-3" },
-                      triggers.map((t) => li_link("trigger", t.name || ""))
+                      triggers.map((t: any) => li_link("trigger", t.name || ""))
                     )
                   )
                 ),
@@ -344,7 +344,7 @@ router.get(
                     summary("Configuration"),
                     ul(
                       { class: "ps-3" },
-                      configs.map((t) => li_link("config", t.name))
+                      configs.map((t: any) => li_link("config", t.name))
                     )
                   )
                 ),
@@ -354,7 +354,7 @@ router.get(
                     summary("Modules"),
                     ul(
                       { class: "ps-3" },
-                      plugins.map((m) => li_link("module", m.name))
+                      plugins.map((m: any) => li_link("module", m.name))
                     )
                   )
                 )

@@ -53,10 +53,10 @@ import fs from "fs";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
-const getOnDoneRedirect = (req, fallback = "/plugins") => {
+const getOnDoneRedirect = (req: any, fallback: any = "/plugins") => {
   if (
     req.query.on_done_redirect &&
     is_relative_url("/" + req.query.on_done_redirect)
@@ -75,63 +75,63 @@ const getOnDoneRedirect = (req, fallback = "/plugins") => {
 router.get(
   "/create/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const tables = await Table.find({});
-    const tableFields = tables.map((t) => ({
+    const tableFields = tables.map((t: any) => ({
       label: `${t.name} table`,
       name: `table.${t.name}`,
       type: "Bool",
     }));
     const views = await View.find({});
-    const viewFields = views.map((t) => ({
+    const viewFields = views.map((t: any) => ({
       label: `${t.name} view`,
       name: `view.${t.name}`,
       type: "Bool",
     }));
     const plugins = await Plugin.find({});
-    const pluginFields = plugins.map((t) => ({
+    const pluginFields = plugins.map((t: any) => ({
       label: `${t.name} plugin`,
       name: `plugin.${t.name}`,
       type: "Bool",
     }));
     const pages = await Page.find({});
-    const pageFields = pages.map((t) => ({
+    const pageFields = pages.map((t: any) => ({
       label: `${t.name} page`,
       name: `page.${t.name}`,
       type: "Bool",
     }));
     const pageGroups = await PageGroup.find({});
-    const pageGroupFields = pageGroups.map((t) => ({
+    const pageGroupFields = pageGroups.map((t: any) => ({
       label: `${t.name} page group`,
       name: `page_group.${t.name}`,
       type: "Bool",
     }));
     const libs = await Library.find({});
-    const libFields = libs.map((l) => ({
+    const libFields = libs.map((l: any) => ({
       label: `${l.name} library item`,
       name: `library.${l.name}`,
       type: "Bool",
     }));
     const trigs = await Trigger.find({});
-    const trigFields = trigs.map((l) => ({
+    const trigFields = trigs.map((l: any) => ({
       label: `${l.name} trigger`,
       name: `trigger.${l.name}`,
       type: "Bool",
     }));
     const roles = await Role.find({ not: { id: { in: [1, 8, 10] } } });
-    const roleFields = roles.map((l) => ({
+    const roleFields = roles.map((l: any) => ({
       label: `${l.role} role`,
       name: `role.${l.role}`,
       type: "Bool",
     }));
     const tags = await Tag.find({});
-    const tagFields = tags.map((t) => ({
+    const tagFields = tags.map((t: any) => ({
       label: `${t.name} tag`,
       name: `tag.${t.name}`,
       type: "Bool",
     }));
     const models = await Model.find({});
-    const modelFields = models.map((m) => {
+    const modelFields = models.map((m: any) => {
       const modelTbl = Table.findOne({ id: m.table_id });
       return {
         label: `${m.name} model, table: ${
@@ -144,7 +144,7 @@ router.get(
     const modelInstances = await ModelInstance.find({});
     const modelInstanceFields = (
       await Promise.all(
-        modelInstances.map(async (instance) => {
+        modelInstances.map(async (instance: any) => {
           const model = await Model.findOne({ id: instance.model_id });
           if (!model) {
             req.flash(
@@ -168,7 +168,7 @@ router.get(
           };
         })
       )
-    ).filter((f) => f);
+    ).filter((f: any) => f);
 
     const form = new Form({
       action: "/packs/create",
@@ -220,7 +220,7 @@ router.get(
 router.post(
   "/create",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const pack = {
       tables: [],
       views: [],
@@ -285,7 +285,7 @@ router.post(
         case "with_event_logs":
           const logs = await EventLog.find({});
           pack.event_logs = await Promise.all(
-            logs.map(async (l) => await event_log_pack(l))
+            logs.map(async (l: any) => await event_log_pack(l))
           );
           break;
         default:
@@ -326,7 +326,7 @@ router.post(
  * @param {object} req
  * @returns {Form}
  */
-const install_pack_form = (req) =>
+const install_pack_form = (req: any) =>
   new Form({
     action: "/packs/install",
     submitLabel: req.__("Install"),
@@ -371,7 +371,7 @@ const install_pack_form = (req) =>
 router.get(
   "/install",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.sendWrap(req.__(`Install Pack`), {
       above: [
         {
@@ -402,7 +402,7 @@ router.post(
   "/install",
   setTenant, // TODO why is this needed?????
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     var pack, error;
     const source = (req.body || {}).source || "from_text";
     try {
@@ -420,7 +420,7 @@ router.post(
         default:
           throw new Error(req.__("Invalid source"));
       }
-    } catch (e) {
+    } catch (e: any) {
       error = e.message;
     }
     if (!error && !instanceOfPack(pack)) {
@@ -458,11 +458,11 @@ router.post(
       });
     } else {
       await db.withTransaction(async () => {
-        await install_pack(pack, undefined, (p) =>
+        await install_pack(pack, undefined, (p: any) =>
           Plugin.loadAndSaveNewPlugin(p)
         );
       });
-      await getState().refresh();
+      await getState()!.refresh();
       res.redirect(`/`);
     }
   })
@@ -477,7 +477,7 @@ router.post(
 router.post(
   "/install-named/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
 
     const pack = await fetch_pack_by_name(name);
@@ -496,11 +496,11 @@ router.post(
       req.flash("warning", can_install.warning);
     }
     await db.withTransaction(async () => {
-      await install_pack(pack.pack, name, (p) =>
+      await install_pack(pack.pack, name, (p: any) =>
         Plugin.loadAndSaveNewPlugin(p)
       );
     });
-    await getState().refresh();
+    await getState()!.refresh();
     req.flash("success", req.__(`Pack %s installed`, text(name)));
     res.redirect(getOnDoneRedirect(req, "/"));
   })
@@ -515,7 +515,7 @@ router.post(
 router.post(
   "/uninstall/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
 
     const pack = await fetch_pack_by_name(name);
@@ -527,7 +527,7 @@ router.post(
     await db.withTransaction(async () => {
       await uninstall_pack(pack.pack, name);
     });
-    await getState().refresh();
+    await getState()!.refresh();
 
     req.flash("success", req.__(`Pack %s uninstalled`, text(name)));
 

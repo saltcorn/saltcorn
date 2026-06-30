@@ -18,11 +18,12 @@ import _am_pack from "@saltcorn/admin-models/models/pack";
 const { add_to_menu } = _am_pack;
 import { error_catcher, isAdmin, setRole } from "./utils.js";
 import { getState } from "@saltcorn/data/db/state";
+import { Req, Res } from "@saltcorn/types/base_types";
 
-const router = new Router();
+const router = Router();
 export default router;
 
-const groupPropsForm = async (req, isNew) => {
+const groupPropsForm = async (req: any, isNew: any) => {
   const roles = await User.get_roles();
   const pages = await Page.find();
   const groups = await PageGroup.find();
@@ -32,7 +33,7 @@ const groupPropsForm = async (req, isNew) => {
       ? {}
       : {
           onChange: `
-  saveAndContinue(this, (res) => {
+  saveAndContinue(this, (res: any) => {
     history.replaceState(null, '', res.responseJSON.row.name);
     const arrowsVisible = $('#upDownArrowsId').length > 0;
     if (
@@ -50,12 +51,12 @@ const groupPropsForm = async (req, isNew) => {
         label: req.__("Name"),
         type: "String",
         required: true,
-        validator(s, whole) {
+        validator(s: any, whole: any) {
           if (s.length < 1) return req.__("Missing name");
-          if (pages.find((p) => p.name === s))
+          if (pages.find((p: any) => p.name === s))
             return req.__("A page with this name already exists");
           if (
-            groups.find((g) =>
+            groups.find((g: any) =>
               !isNew ? g.name === s && g.id !== +whole.id : g.name === s
             )
           ) {
@@ -76,7 +77,7 @@ const groupPropsForm = async (req, isNew) => {
         label: req.__("Minimum role"),
         sublabel: req.__("Role required to access page"),
         input_type: "select",
-        options: roles.map((r) => ({ value: r.id, label: r.role })),
+        options: roles.map((r: any) => ({ value: r.id, label: r.role })),
       },
       {
         name: "random_allocation",
@@ -92,8 +93,8 @@ const groupPropsForm = async (req, isNew) => {
   });
 };
 
-const memberForm = async (action, req, group, pageValidator) => {
-  const pageOptions = (await Page.find()).map((p) => p.name);
+const memberForm = async (action: any, req: any, group: any, pageValidator: any) => {
+  const pageOptions = (await Page.find()).map((p: any) => p.name);
   const fields = [
     {
       name: "page_name",
@@ -131,7 +132,7 @@ const memberForm = async (action, req, group, pageValidator) => {
             "locale",
             "device",
           ]
-            .map((f) => code(f))
+            .map((f: any) => code(f))
             .join(", ")
         ),
       help: {
@@ -155,11 +156,11 @@ const memberForm = async (action, req, group, pageValidator) => {
   });
 };
 
-const editMemberForm = async (member, req) => {
+const editMemberForm = async (member: any, req: any) => {
   const group = PageGroup.findOne({ id: member.page_group_id });
-  const validator = (s, whole) => {
+  const validator = (s: any, whole: any) => {
     const page = Page.findOne({ name: s });
-    if (group.members.find((m) => m.page_id === page.id && +whole.id !== m.id))
+    if (group.members.find((m: any) => m.page_id === page.id && +whole.id !== m.id))
       return req.__("A member with this page already exists");
   };
   return await memberForm(
@@ -170,10 +171,10 @@ const editMemberForm = async (member, req) => {
   );
 };
 
-const addMemberForm = async (group, req) => {
+const addMemberForm = async (group: any, req: any) => {
   const groupPages = await group.loadPages();
-  const validator = (s) => {
-    if (groupPages.find((page) => page.name === s))
+  const validator = (s: any) => {
+    if (groupPages.find((page: any) => page.name === s))
       return req.__("A member with this page already exists");
   };
   return await memberForm(
@@ -184,7 +185,7 @@ const addMemberForm = async (group, req) => {
   );
 };
 
-const wrapGroup = (contents, req) => {
+const wrapGroup = (contents: any, req: any) => {
   return {
     above: [
       {
@@ -203,8 +204,8 @@ const wrapGroup = (contents, req) => {
   };
 };
 
-const wrapMember = (contents, req, pageGroup, pageMember) => {
-  const memberCrumb = (pageId) => {
+const wrapMember = (contents: any, req: any, pageGroup: any, pageMember: any) => {
+  const memberCrumb = (pageId: any) => {
     const page = Page.findOne({ id: pageId });
     return page ? { text: page.name, href: `/page/${page.name}` } : {};
   };
@@ -231,18 +232,18 @@ const wrapMember = (contents, req, pageGroup, pageMember) => {
   };
 };
 
-const pageGroupMembers = async (pageGroup, req) => {
+const pageGroupMembers = async (pageGroup: any, req: any) => {
   const pages = !db.isSQLite
     ? await Page.find({
-        id: { in: pageGroup.members.map((r) => r.page_id) },
+        id: { in: pageGroup.members.map((r: any) => r.page_id) },
       })
     : await Page.find();
-  const pageIdToName = pages.reduce((acc, page) => {
+  const pageIdToName = pages.reduce((acc: any, page: any) => {
     acc[page.id] = page.name;
     return acc;
   }, {});
   let members = pageGroup.sortedMembers();
-  const upDownBtns = (r, req) => {
+  const upDownBtns = (r: any, req: any) => {
     if (members.length <= 1) return "";
     else
       return div(
@@ -291,25 +292,25 @@ const pageGroupMembers = async (pageGroup, req) => {
   const tblArr = [
     {
       label: req.__("Page"),
-      key: (r) =>
+      key: (r: any) =>
         link(`/page/${pageIdToName[r.page_id]}`, pageIdToName[r.page_id]),
     },
   ];
   if (!pageGroup.random_allocation) {
     tblArr.push({
       label: "",
-      key: (r) => upDownBtns(r, req),
+      key: (r: any) => upDownBtns(r, req),
     });
   }
   tblArr.push(
     {
       label: req.__("Edit"),
-      key: (member) =>
+      key: (member: any) =>
         link(`/page_groupedit/edit-member/${member.id}`, req.__("Edit")),
     },
     {
       label: req.__("Delete"),
-      key: (member) =>
+      key: (member: any) =>
         post_delete_btn(
           `/page_groupedit/remove-member/${member.id}`,
           req,
@@ -328,7 +329,7 @@ const pageGroupMembers = async (pageGroup, req) => {
 router.get(
   "/new",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await groupPropsForm(req, true);
     res.sendWrap(
       req.__(`New page group`),
@@ -343,7 +344,7 @@ router.get(
 router.get(
   "/:page_groupname",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { page_groupname } = req.params;
     const pageGroup = PageGroup.findOne({ name: page_groupname });
     const propertiesForm = await groupPropsForm(req);
@@ -392,7 +393,7 @@ router.get(
 router.post(
   "/edit-properties",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await groupPropsForm(req, !(req.body || {}).id);
     form.hidden("id");
     form.validate(req.body || {});
@@ -406,19 +407,19 @@ router.post(
       } else {
         // from edit
         const error = form.errorSummary;
-        getState().log(2, `POST /page_groupedit/edit-properties: '${error}'`);
+        getState()!.log(2, `POST /page_groupedit/edit-properties: '${error}'`);
         res.status(400).json({ notify: { type: "danger", text: error } });
       }
     } else {
       const { id, ...row } = form.values;
       if (+id) {
         await PageGroup.update(id, row);
-        await getState().refresh_page_groups();
+        await getState()!.refresh_page_groups();
         res.json({ success: "ok", row });
       } else {
         row.name = row.name.trim();
         const pageGroup = await PageGroup.create(row);
-        await getState().refresh_page_groups();
+        await getState()!.refresh_page_groups();
         res.redirect(`/page_groupedit/${pageGroup.name}`);
       }
     }
@@ -431,7 +432,7 @@ router.post(
 router.get(
   "/add-member/:page_groupname",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { page_groupname } = req.params;
     const group = PageGroup.findOne({ name: page_groupname });
     if (!group) {
@@ -453,7 +454,7 @@ router.get(
 router.post(
   "/add-member/:page_groupname",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { page_groupname } = req.params;
     const group = PageGroup.findOne({ name: page_groupname });
     if (!group) {
@@ -482,7 +483,7 @@ router.post(
           eligible_formula,
           description: description || "",
         });
-        await getState().refresh_page_groups();
+        await getState()!.refresh_page_groups();
         req.flash("success", req.__("Added member"));
         res.redirect(`/page_groupedit/${page_groupname}`);
       }
@@ -496,16 +497,16 @@ router.post(
 router.post(
   "/move-member/:member_id/:mode",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { member_id, mode } = req.params;
     try {
       const member = PageGroupMember.findOne({ id: member_id });
       const pageGroup = PageGroup.findOne({ id: member.page_group_id });
       await pageGroup.moveMember(member, mode);
-      await getState().refresh_page_groups();
+      await getState()!.refresh_page_groups();
       res.json({ success: "ok" });
-    } catch (error) {
-      getState().log(2, `POST /page_groupedit/move-member: '${error.message}'`);
+    } catch (error: any) {
+      getState()!.log(2, `POST /page_groupedit/move-member: '${error.message}'`);
       res.status(400).json({ error: error.message || error });
     }
   })
@@ -517,7 +518,7 @@ router.post(
 router.get(
   "/edit-member/:member_id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { member_id } = req.params;
     const member = PageGroupMember.findOne({ id: member_id });
     if (!member) {
@@ -554,7 +555,7 @@ router.get(
 router.post(
   "/edit-member/:member_id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { member_id } = req.params;
     const member = PageGroupMember.findOne({ id: member_id });
     const group = PageGroup.findOne({ id: member.page_group_id });
@@ -579,7 +580,7 @@ router.post(
           eligible_formula,
           description: description || "",
         });
-      await getState().refresh_page_groups();
+      await getState()!.refresh_page_groups();
       req.flash("success", req.__("Updated member"));
       res.redirect(`/page_groupedit/${group.name}`);
     }
@@ -592,7 +593,7 @@ router.post(
 router.post(
   "/delete/:group_id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { group_id } = req.params;
     const group = PageGroup.findOne({ id: group_id });
     if (!group) {
@@ -600,7 +601,7 @@ router.post(
       res.redirect("/pageedit");
     } else {
       await group.delete();
-      await getState().refresh_page_groups();
+      await getState()!.refresh_page_groups();
       req.flash("success", req.__("Deleted page group %s", group_id));
       res.redirect("/pageedit");
     }
@@ -613,7 +614,7 @@ router.post(
 router.post(
   "/remove-member/:member_id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { member_id } = req.params;
     const member = PageGroupMember.findOne({ id: member_id });
     if (!member) {
@@ -630,13 +631,13 @@ router.post(
       } else {
         try {
           await group.removeMember(member_id);
-          await getState().refresh_page_groups();
+          await getState()!.refresh_page_groups();
           req.flash(
             "success",
             req.__("Removed member %s", member.name || member_id)
           );
           res.redirect(`/page_groupedit/${group.name}`);
-        } catch (e) {
+        } catch (e: any) {
           console.error(e);
           req.flash("error", e.message);
           res.redirect(`/page_groupedit/${group.name}`);
@@ -652,7 +653,7 @@ router.post(
 router.post(
   "/clone/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const group = PageGroup.findOne({ id });
     if (!group) {
@@ -660,7 +661,7 @@ router.post(
       res.redirect("/pageedit");
     } else {
       const copy = await group.clone();
-      await getState().refresh_page_groups();
+      await getState()!.refresh_page_groups();
       req.flash("success", req.__("Cloned page group %s", group.name));
       res.redirect(`/page_groupedit/${copy.name}`);
     }
@@ -673,7 +674,7 @@ router.post(
 router.post(
   "/add-to-menu/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const group = PageGroup.findOne({ id });
     if (!group) {
@@ -704,7 +705,7 @@ router.post(
 router.post(
   "/setrole/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     await setRole(req, res, PageGroup);
   })
 );

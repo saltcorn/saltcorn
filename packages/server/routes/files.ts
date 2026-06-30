@@ -51,6 +51,7 @@ import stream from "stream";
 import _am_backup from "@saltcorn/admin-models/models/backup";
 const { extract } = _am_backup;
 import createDOMPurify from "dompurify";
+import { Req, Res } from "@saltcorn/types/base_types";
 /**
  * @type {object}
  * @const
@@ -58,12 +59,12 @@ import createDOMPurify from "dompurify";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 router.use(
-  error_catcher(async (req, res, next) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res, next: any) => {
+    const state = getState()!;
     const maintenanceModeEnabled = state.getConfig(
       "maintenance_mode_enabled",
       false
@@ -76,14 +77,7 @@ router.use(
   })
 );
 
-const send_files_picker = async (
-  folder,
-  noSubdirs,
-  inputId,
-  req,
-  res,
-  file_exts
-) => {
+const send_files_picker = async (folder: any, noSubdirs: any, inputId: any, req: any, res: any, file_exts: any) => {
   res.set("SaltcornModalWidth", "1200px");
   res.sendWrap(req.__("Please select a file"), {
     above: [
@@ -113,7 +107,7 @@ const send_files_picker = async (
 
 router.get(
   "/picker",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { folder, input_id, no_subdirs, file_exts } = req.query;
     send_files_picker(folder, no_subdirs, input_id, req, res, file_exts);
   })
@@ -121,10 +115,10 @@ router.get(
 
 router.get(
   "/visible_entries",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const role = req.user?.role_id ? req.user.role_id : 100;
     const userId = req.user?.id;
-    const min_role_edit_files = getState().getConfig("min_role_edit_files", 1);
+    const min_role_edit_files = getState()!.getConfig("min_role_edit_files", 1);
     if (role > min_role_edit_files) {
       // check if there is a use_picker set
       let role_needed = min_role_edit_files;
@@ -156,13 +150,13 @@ router.get(
       path.dirname(absFolder)
     );
     if (dirOnDisk.min_role_read < role) {
-      getState().log(5, `Directory denied. path=${dir} role=${role}`);
+      getState()!.log(5, `Directory denied. path=${dir} role=${role}`);
       res.json({ files: [], roles: [], directories: [] });
       return;
     }
     let rows = (
       await File.find({ folder: dir }, { orderBy: "filename" })
-    ).filter((f) => {
+    ).filter((f: any) => {
       if (noSubdirs && f.isDirectory) return false;
       else return role <= f.min_role_read || (userId && userId === f.user_id);
     });
@@ -185,19 +179,19 @@ router.get(
       file.location = file.isDirectory ? file.path_to_serve : file.field_value;
     }
     if (file_exts) {
-      const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const escapeRegex = (s: any) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const re = new RegExp(
         `\\.(${file_exts
           .split(",")
-          .map((s) => escapeRegex(s.trim()))
+          .map((s: any) => escapeRegex(s.trim()))
           .join("|")})$`,
         "i"
       );
-      rows = rows.filter((f) => re.test(f.location));
+      rows = rows.filter((f: any) => re.test(f.location));
     }
     const directories = !noSubdirs
       ? (await File.allDirectories(true)).filter(
-          (dir) => role <= dir.min_role_read
+          (dir: any) => role <= dir.min_role_read
         )
       : [];
     for (const dir of directories) {
@@ -216,7 +210,7 @@ router.get(
 router.get(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     // todo limit select from file by 10 or 20
     const { dir, search } = req.query;
     const safeDir = File.normalise(dir || "/");
@@ -283,7 +277,7 @@ router.get(
  */
 router.get(
   "/download/*serve_path",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const serve_path = path.join(...req.params.serve_path);
@@ -310,7 +304,7 @@ router.get(
 router.post(
   "/download-zip",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const files = (req.body || {}).files;
@@ -330,7 +324,7 @@ router.post(
     readStream.end(zip.toBuffer());
     res.type("application/zip");
     res.attachment(
-      `${getState().getConfig("site_name", db.getTenantSchema())}-files.zip`
+      `${getState()!.getConfig("site_name", db.getTenantSchema())}-files.zip`
     );
     readStream.pipe(res);
   })
@@ -338,7 +332,7 @@ router.post(
 
 router.get(
   "/view/*serve_path",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const serve_path = path.join(...req.params.serve_path);
@@ -360,8 +354,8 @@ router.get(
     if (file.s3_store) {
       try {
         imgSrc = await s3storage.getObjectUrl(file, false);
-      } catch (e) {
-        getState().log(3, e?.message || e);
+      } catch (e: any) {
+        getState()!.log(3, e?.message || e);
         res.redirect(`/files/serve/${file.path_to_serve}`);
         return;
       }
@@ -400,7 +394,7 @@ router.get(
  */
 router.get(
   "/serve/*serve_path",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const serve_path = path.join(...req.params.serve_path);
@@ -419,13 +413,13 @@ router.get(
       if (
         (file.mimetype === "text/html" ||
           file.mimetype === "application/xhtml+xml") &&
-        !getState().getConfig("file_serve_html") &&
+        !getState()!.getConfig("file_serve_html") &&
         user_id !== file.user_id
       )
         res.type("text/plain");
       else res.type(file.mimetype);
       const cacheability = file.min_role_read === 100 ? "public" : "private";
-      const maxAge = getState().getConfig("files_cache_maxage", 86400);
+      const maxAge = getState()!.getConfig("files_cache_maxage", 86400);
       res.set("Cache-Control", `${cacheability}, max-age=${maxAge}`);
       if (
         file.mimetype === "image/svg+xml" ||
@@ -443,7 +437,7 @@ router.get(
       }
       res.sendFile(file.location, { dotfiles: "allow" });
     } else {
-      getState().log(
+      getState()!.log(
         5,
         `File serve denied. path=${serve_path} file_exists=${!!file} file_min_role=${
           file?.min_role_read
@@ -464,7 +458,7 @@ router.get(
  */
 router.get(
   "/resize/:width_str/:height_str/*serve_path",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const { width_str, height_str } = req.params;
@@ -483,7 +477,7 @@ router.get(
       if (
         (file.mimetype === "text/html" ||
           file.mimetype === "application/xhtml+xml") &&
-        !getState().getConfig("file_serve_html")
+        !getState()!.getConfig("file_serve_html")
       )
         res.type("text/plain");
       else res.type(file.mimetype);
@@ -542,12 +536,12 @@ router.get(
 router.post(
   "/setrole/*serve_path",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const serve_path = path.join(...req.params.serve_path);
     const file = await File.findOne(serve_path);
     const role = (req.body || {}).role;
     const roles = await User.get_roles();
-    const roleRow = roles.find((r) => r.id === +role);
+    const roleRow = roles.find((r: any) => r.id === +role);
 
     if (roleRow && file) {
       await file.set_role(role);
@@ -562,7 +556,7 @@ router.post(
 router.post(
   "/move/*serve_path",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const serve_path = path.join(...req.params.serve_path);
     const file = await File.findOne(serve_path);
     const new_path = (req.body || {}).new_path;
@@ -589,7 +583,7 @@ router.post(
 router.post(
   "/setname/*serve_path",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const serve_path = path.join(...req.params.serve_path);
     const filename = (req.body || {}).value;
 
@@ -609,7 +603,7 @@ router.post(
 router.post(
   "/unzip/*serve_path",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const serve_path = path.join(...req.params.serve_path);
     const filename = (req.body || {}).value;
 
@@ -623,7 +617,7 @@ router.post(
 router.post(
   "/new-folder",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name, folder } = req.body || {};
     await File.new_folder(name, folder);
 
@@ -640,10 +634,10 @@ router.post(
 router.post(
   "/upload",
   setTenant,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     let { folder, sortBy, sortDesc } = req.body || {};
     let jsonResp = {};
-    const min_role_upload = getState().getConfig("min_role_upload", 1);
+    const min_role_upload = getState()!.getConfig("min_role_upload", 1);
     const role = req.user && req.user.id ? req.user.role_id : 100;
     let file_for_redirect;
     if (role > +min_role_upload) {
@@ -665,16 +659,16 @@ router.post(
       file_for_redirect = many ? f[0] : f;
       const successMsg = req.__(
         `File %s uploaded`,
-        many ? f.map((fl) => text(fl.filename)).join(", ") : text(f.filename)
+        many ? f.map((fl: any) => text(fl.filename)).join(", ") : text(f.filename)
       );
-      const asLocation = (fl) => File.fieldValueFromRelative(fl.path_to_serve);
-      const asUrl = (fl) =>
+      const asLocation = (fl: any) => File.fieldValueFromRelative(fl.path_to_serve);
+      const asUrl = (fl: any) =>
         File.pathToServeUrl(asLocation(fl), { filename: fl.filename });
       if (!req.xhr) req.flash("success", successMsg);
       else
         jsonResp = {
           success: {
-            filename: many ? f.map((fl) => fl.filename) : f.filename,
+            filename: many ? f.map((fl: any) => fl.filename) : f.filename,
             location: many ? f.map(asLocation) : asLocation(f),
             url: many ? f.map(asUrl) : asUrl(f),
             msg: successMsg,
@@ -701,7 +695,7 @@ router.post(
 router.post(
   "/delete/*serve_path",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const serve_path = path.join(...req.params.serve_path);
     const { redirect } = req.query;
     const f = await File.findOne(serve_path);
@@ -738,7 +732,7 @@ router.post(
  * @param {object} req request
  * @returns {Promise<Form>} form
  */
-const storage_form = async (req) => {
+const storage_form = async (req: any) => {
   return await config_fields_form({
     req,
     field_names: [
@@ -763,7 +757,7 @@ const storage_form = async (req) => {
 router.get(
   "/storage",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await storage_form(req);
     form.blurb = [
       `<div class="alert alert-warning">S3 storage is experimental</div>`,
@@ -790,7 +784,7 @@ router.get(
 router.post(
   "/storage",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await storage_form(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -820,7 +814,7 @@ router.post(
  * @param {object} req request
  * @returns {Promise<Form>} form
  */
-const files_settings_form = async (req) => {
+const files_settings_form = async (req: any) => {
   return await config_fields_form({
     req,
     field_names: [
@@ -845,7 +839,7 @@ const files_settings_form = async (req) => {
 router.get(
   "/settings",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await files_settings_form(req);
     send_files_page({
       res,
@@ -869,7 +863,7 @@ router.get(
 router.post(
   "/settings",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await files_settings_form(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -917,7 +911,7 @@ const editableExtensions = [
 router.get(
   "/edit/*serve_path",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const serve_path = path.join(...req.params.serve_path);
@@ -1001,8 +995,8 @@ router.get(
             },
           ],
         });
-      } catch (err) {
-        getState().log(3, `Error reading file ${serve_path}: ${err.message}`);
+      } catch (err: any) {
+        getState()!.log(3, `Error reading file ${serve_path}: ${err.message}`);
         res
           .status(500)
           .sendWrap(
@@ -1024,7 +1018,7 @@ router.get(
 router.post(
   "/edit/*serve_path",
   isAdminOrHasConfigMinRole("min_role_edit_files"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const user_id = req.user && req.user.id;
     const serve_path = path.join(...req.params.serve_path);
@@ -1068,8 +1062,8 @@ router.post(
           const currentFolder = file.current_folder;
           res.redirect(`/files${currentFolder ? `?dir=${currentFolder}` : ""}`);
         }
-      } catch (err) {
-        getState().log(3, `Error writing file ${serve_path}: ${err.message}`);
+      } catch (err: any) {
+        getState()!.log(3, `Error writing file ${serve_path}: ${err.message}`);
         if (req.xhr) res.json({ error: err.message });
         else {
           req.flash("error", err.message);

@@ -101,7 +101,7 @@ router.post(
     if (!table) throw new Error(`Table ${tableName} not found`);
     const role = req.user && req.user.id ? req.user.role_id : 100;
     const query: Record<string, any> = {};
-    table.fields.forEach((f) => {
+    table.fields.forEach((f: any) => {
       if (typeof restQuery[f.name] !== "undefined")
         query[f.name] = restQuery[f.name];
     });

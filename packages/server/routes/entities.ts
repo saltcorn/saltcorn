@@ -60,6 +60,7 @@ const {
   plugin_pack,
 } = _am_pack;
 import { escapeHtml } from "@saltcorn/data/utils";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -68,7 +69,7 @@ import { escapeHtml } from "@saltcorn/data/utils";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 // Ensure on_done_redirect values remain relative to the app root
@@ -78,14 +79,14 @@ const stripLeadingSlash = (path = "") =>
 /**
  * Get additional entities (modules, users)
  */
-const req__ = (req, s) => (req && req.__(s)) || s;
+const req__ = (req: any, s: any) => (req && req.__(s)) || s;
 
-const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
+const getExtendedEntites = async (req: any, { includeAllModules = false }: any = {}) => {
   const entities = [];
-  const can_reset = getState().getConfig("smtp_host", "") !== "";
+  const can_reset = getState()!.getConfig("smtp_host", "") !== "";
 
   const users = await User.find({}, { cached: true });
-  users.forEach((u) => {
+  users.forEach((u: any) => {
     entities.push({
       type: "user",
       name: u.email,
@@ -102,16 +103,16 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
     });
   });
 
-  const statePlugins = getState().plugins;
+  const statePlugins = getState()!.plugins;
   const csrfToken = req?.csrfToken ? req.csrfToken() : null;
-  const packs = getState().getConfig("installed_packs", []);
+  const packs = getState()!.getConfig("installed_packs", []);
   const installedPackNames = new Set(packs);
   const packDetails = await Promise.all(
-    packs.map(async (pname) => {
+    packs.map(async (pname: any) => {
       try {
         return (await fetch_pack_by_name(pname)) || { name: pname };
-      } catch (e) {
-        getState().log?.(
+      } catch (e: any) {
+        getState()!.log?.(
           2,
           `Failed to fetch installed pack ${pname}: ${e.message}`
         );
@@ -124,24 +125,24 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
   const storeModuleSummaries = new Map();
   try {
     storeModules = await Plugin.store_plugins_available();
-    storeModules.forEach((mod) => {
+    storeModules.forEach((mod: any) => {
       if (mod?.name) storeModuleSummaries.set(mod.name, mod);
     });
-  } catch (e) {
-    getState().log?.(2, `Failed to fetch available modules: ${e.message}`);
+  } catch (e: any) {
+    getState()!.log?.(2, `Failed to fetch available modules: ${e.message}`);
   }
   if (includeAllModules) {
     try {
       const availablePacks = await fetch_available_packs();
-      availablePacks.forEach((pack) => {
+      availablePacks.forEach((pack: any) => {
         if (pack?.name) availablePackSummaries.set(pack.name, pack);
       });
-    } catch (e) {
-      getState().log?.(2, `Failed to fetch available packs: ${e.message}`);
+    } catch (e: any) {
+      getState()!.log?.(2, `Failed to fetch available packs: ${e.message}`);
     }
   }
 
-  const buildModuleActions = (moduleName, installed) => {
+  const buildModuleActions = (moduleName: any, installed: any) => {
     if (!csrfToken) return "";
     if (installed) {
       return post_btn(
@@ -172,8 +173,8 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
   const modules = await Plugin.find();
   const installedModuleNames = new Set();
   modules
-    .filter((mod) => mod.name !== "base")
-    .forEach((mod) => {
+    .filter((mod: any) => mod.name !== "base")
+    .forEach((mod: any) => {
       installedModuleNames.add(mod.name);
       const has_theme =
         typeof mod.has_theme !== "undefined"
@@ -218,9 +219,9 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
     try {
       storeModules
         .filter(
-          (mod) => mod.name !== "base" && !installedModuleNames.has(mod.name)
+          (mod: any) => mod.name !== "base" && !installedModuleNames.has(mod.name)
         )
-        .forEach((mod) => {
+        .forEach((mod: any) => {
           const source = mod.source;
           entities.push({
             type: "module",
@@ -243,12 +244,12 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
             actionsHtml: buildModuleActions(mod.name, false),
           });
         });
-    } catch (e) {
-      getState().log?.(2, `Failed to fetch available modules: ${e.message}`);
+    } catch (e: any) {
+      getState()!.log?.(2, `Failed to fetch available modules: ${e.message}`);
     }
   }
 
-  const buildPackActions = (packName, installed) => {
+  const buildPackActions = (packName: any, installed: any) => {
     if (!csrfToken) return "";
     if (installed) {
       return post_btn(
@@ -274,7 +275,7 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
     );
   };
 
-  packDetails.forEach((pack) => {
+  packDetails.forEach((pack: any) => {
     if (!pack || !pack.name) return;
     const summary = availablePackSummaries.get(pack.name);
     if (summary) availablePackSummaries.delete(pack.name);
@@ -326,7 +327,7 @@ const getExtendedEntites = async (req, { includeAllModules = false } = {}) => {
   return entities;
 };
 
-const buildUserActionsDropdown = (user, req, can_reset) => {
+const buildUserActionsDropdown = (user: any, req: any, can_reset: any) => {
   if (!req) return "";
   const dropdownId = `entityUserDropdown${user.id}`;
   const items = [
@@ -357,7 +358,7 @@ const buildUserActionsDropdown = (user, req, can_reset) => {
       ),
     can_reset &&
       !user.verified_on &&
-      getState().getConfig("verification_view", "") &&
+      getState()!.getConfig("verification_view", "") &&
       post_dropdown_item(
         `/useradmin/send-verification/${user.id}`,
         '<i class="fas fa-envelope"></i>&nbsp;' +
@@ -399,7 +400,7 @@ const buildUserActionsDropdown = (user, req, can_reset) => {
  */
 const getAllEntities = async () => {
   const tables = await Table.find({}, { cached: true });
-  const tableNameById = new Map(tables.map((t) => [t.id, t.name]));
+  const tableNameById = new Map(tables.map((t: any) => [t.id, t.name]));
   const views = await View.find({}, { cached: true });
   const pages = await Page.find({}, { cached: true });
   const triggers = await Trigger.findAllWithTableName();
@@ -407,7 +408,7 @@ const getAllEntities = async () => {
   const entities = [];
 
   // Add tables
-  tables.forEach((t) => {
+  tables.forEach((t: any) => {
     entities.push({
       type: "table",
       name: t.name,
@@ -428,7 +429,7 @@ const getAllEntities = async () => {
   });
 
   // Add views
-  views.forEach((v) => {
+  views.forEach((v: any) => {
     const has_config =
       v.configuration &&
       typeof v.configuration === "object" &&
@@ -454,7 +455,7 @@ const getAllEntities = async () => {
   });
 
   // Add pages
-  pages.forEach((p) => {
+  pages.forEach((p: any) => {
     entities.push({
       type: "page",
       name: p.name,
@@ -470,7 +471,7 @@ const getAllEntities = async () => {
   });
 
   // Add triggers
-  triggers.forEach((tr) => {
+  triggers.forEach((tr: any) => {
     entities.push({
       type: "trigger",
       name: tr.name,
@@ -489,7 +490,7 @@ const getAllEntities = async () => {
   });
 
   // Sort by name
-  entities.sort((a, b) =>
+  entities.sort((a: any, b: any) =>
     (a.name || "").localeCompare(b.name || "", undefined, {
       sensitivity: "base",
     })
@@ -501,7 +502,7 @@ const getAllEntities = async () => {
 /**
  * Generate entity type badge
  */
-const entityTypeBadge = (type) => {
+const entityTypeBadge = (type: any) => {
   const badges = {
     table: { class: "primary", icon: "table", label: "Table" },
     view: { class: "success", icon: "eye", label: "View" },
@@ -520,7 +521,7 @@ const entityTypeBadge = (type) => {
 };
 
 // Helper: build details column content based on entity type
-const detailsContent = (entity, req, roles) => {
+const detailsContent = (entity: any, req: any, roles: any) => {
   const bits = [];
   if (entity.type === "table") {
     if (entity.metadata.external)
@@ -572,7 +573,7 @@ const detailsContent = (entity, req, roles) => {
   } else if (entity.type === "user") {
     const disabled = entity.metadata.disabled;
     const roleName = Array.isArray(roles)
-      ? roles.find((r) => r.id === entity.metadata.role_id)?.role
+      ? roles.find((r: any) => r.id === entity.metadata.role_id)?.role
       : null;
     if (roleName)
       bits.push(span({ class: "badge bg-secondary me-1" }, text(roleName)));
@@ -591,8 +592,8 @@ const detailsContent = (entity, req, roles) => {
 };
 
 // Helper: role label per entity
-const roleLabel = (entity, roles) => {
-  const getRole = (rid) => roles.find((r) => r.id === rid)?.role || "?";
+const roleLabel = (entity: any, roles: any) => {
+  const getRole = (rid: any) => roles.find((r: any) => r.id === rid)?.role || "?";
   if (entity.type === "table") {
     const r = entity.metadata;
     if (r.external) return `${getRole(r.min_role_read)} (read only)`;
@@ -608,7 +609,7 @@ const roleLabel = (entity, roles) => {
   }
 };
 
-const tableActionsDropdown = (entity, req, user_can_edit_tables) => {
+const tableActionsDropdown = (entity: any, req: any, user_can_edit_tables: any) => {
   const metadata = entity.metadata || {};
   if (metadata.external || metadata.provider_name) return "";
   const items = [
@@ -679,14 +680,14 @@ const tableActionsDropdown = (entity, req, user_can_edit_tables) => {
 router.get(
   "/deep-search-index",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const entities = await getAllEntities();
     const deepSearchIndex = {};
-    const addDeepSearch = (key, pack) => {
+    const addDeepSearch = (key: any, pack: any) => {
       if (!pack) return;
       try {
         deepSearchIndex[key] = escapeHtml(JSON.stringify(pack).toLowerCase());
-      } catch (e) {
+      } catch (e: any) {
         console.error(
           `Failed to stringify pack ${pack.name} for deep search index:`,
           e
@@ -717,8 +718,8 @@ router.get(
           const trigger = Trigger.findOne({ id: entity.id });
           if (trigger) addDeepSearch(keyById, await trigger_pack(trigger));
         }
-      } catch (e) {
-        getState().log?.(
+      } catch (e: any) {
+        getState()!.log?.(
           2,
           `Failed to build deep search index for ${keyById}: ${e.message}`
         );
@@ -734,7 +735,7 @@ router.get(
 router.get(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const entities = await getAllEntities();
     // fetch roles and tags
     const roles = await User.get_roles();
@@ -743,11 +744,11 @@ router.get(
     const userRoleId = req.user?.role_id ?? Infinity;
     const user_can_edit_tables =
       userRoleId === 1 ||
-      getState().getConfig("min_role_edit_tables", 1) >= userRoleId;
+      getState()!.getConfig("min_role_edit_tables", 1) >= userRoleId;
     const on_done_redirect_str = `?on_done_redirect=${encodeURIComponent(
       stripLeadingSlash(req.originalUrl || "")
     )}`;
-    const buildActionMenu = (entity) => {
+    const buildActionMenu = (entity: any) => {
       if (entity.type === "table")
         return tableActionsDropdown(entity, req, user_can_edit_tables);
       if (entity.type === "view")
@@ -760,15 +761,15 @@ router.get(
     };
 
     const tagsById = {};
-    tags.forEach((t) => (tagsById[t.id] = t));
+    tags.forEach((t: any) => (tagsById[t.id] = t));
 
     const tagsByEntityKey = new Map();
-    const addTag = (key, tag_id) => {
+    const addTag = (key: any, tag_id: any) => {
       const arr = tagsByEntityKey.get(key) || [];
       if (!arr.includes(tag_id)) arr.push(tag_id);
       tagsByEntityKey.set(key, arr);
     };
-    tagEntries.forEach((te) => {
+    tagEntries.forEach((te: any) => {
       if (te.table_id) addTag(`table:${te.table_id}`, te.tag_id);
       if (te.view_id) addTag(`view:${te.view_id}`, te.tag_id);
       if (te.page_id) addTag(`page:${te.page_id}`, te.tag_id);
@@ -909,7 +910,7 @@ router.get(
         i({ class: "fas fa-tags me-1" }),
         req.__("Tags:")
       ),
-      ...tags.map((t) =>
+      ...tags.map((t: any) =>
         button(
           {
             type: "button",
@@ -1009,7 +1010,7 @@ router.get(
                 "--entity-bulk-role-border: var(--bs-secondary); border: 2px solid var(--entity-bulk-role-border) !important;",
             },
             option({ value: "" }, req.__("Set write role")),
-            ...roles.map((r) => option({ value: r.id }, r.role))
+            ...roles.map((r: any) => option({ value: r.id }, r.role))
           ),
           button(
             {
@@ -1038,7 +1039,7 @@ router.get(
                 "--entity-bulk-role-border: var(--bs-secondary); border: 2px solid var(--entity-bulk-role-border) !important;",
             },
             option({ value: "", disabled: true }, req.__("Set access role")),
-            ...roles.map((r) => option({ value: r.id }, r.role))
+            ...roles.map((r: any) => option({ value: r.id }, r.role))
           ),
           button(
             {
@@ -1070,7 +1071,7 @@ router.get(
               { value: "", disabled: true, selected: true },
               req.__("Select tag")
             ),
-            ...tags.map((t) => option({ value: t.id }, t.name))
+            ...tags.map((t: any) => option({ value: t.id }, t.name))
           ),
           button(
             {
@@ -1097,7 +1098,7 @@ router.get(
       th(req.__("Actions"))
     );
 
-    const typePlural = (t) =>
+    const typePlural = (t: any) =>
       ({ table: "tables", view: "views", page: "pages", trigger: "triggers" })[
         t
       ];
@@ -1111,12 +1112,12 @@ router.get(
 
     const initially_hidden = Object.keys(req.query || {}).length;
 
-    const bodyRows = entities.map((entity) => {
+    const bodyRows = entities.map((entity: any) => {
       const key = `${entity.type}:${
         entity.type === "view" ? (entity.id ?? entity.name) : entity.id
       }`;
       const tagIds = tagsByEntityKey.get(key) || [];
-      const tagBadges = tagIds.map((tid) =>
+      const tagBadges = tagIds.map((tid: any) =>
         a(
           {
             class: "badge bg-secondary me-1",
@@ -1143,8 +1144,8 @@ router.get(
         div(
           { class: "dropdown-menu dropdown-menu-end" },
           ...tags
-            .filter((t) => !tagIds.includes(t.id))
-            .map((t) =>
+            .filter((t: any) => !tagIds.includes(t.id))
+            .map((t: any) =>
               post_dropdown_item(
                 `/tag-entries/add-tag-entity/${encodeURIComponent(
                   t.name
@@ -1158,7 +1159,7 @@ router.get(
 
       // searchable content
       const searchableValues = [entity.name.toLowerCase(), entity.type];
-      Object.entries(entity.metadata).forEach(([k, v]) => {
+      Object.entries(entity.metadata).forEach(([k, v]: any) => {
         if (v && typeof v === "string") searchableValues.push(v.toLowerCase());
       });
 
@@ -1398,8 +1399,8 @@ router.get(
         document.getElementById("entities-main-body").style.opacity = "1";
         entitiesListInit({
           LEGACY_LINK_META: ${JSON.stringify(legacyLinkMeta)},
-          TAGS_BY_ID: ${JSON.stringify(Object.fromEntries(tags.map((t) => [t.id, t.name])))},
-          ROLES_BY_ID: ${JSON.stringify(Object.fromEntries(roles.map((r) => [r.id, r.role])))},
+          TAGS_BY_ID: ${JSON.stringify(Object.fromEntries(tags.map((t: any) => [t.id, t.name])))},
+          ROLES_BY_ID: ${JSON.stringify(Object.fromEntries(roles.map((r: any) => [r.id, r.role])))},
           TXT_SELECTED: ${JSON.stringify(req.__("selected"))},
           TXT_DELETE_SELECTED_CONFIRM: ${JSON.stringify(req.__("Delete %s selected items?"))},
           TXT_DELETE_SELECTED_FALLBACK: ${JSON.stringify(req.__("Delete selected items?"))},
@@ -1467,7 +1468,7 @@ router.get(
 router.get(
   "/extended",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const includeAllModules =
       req.query.include_all_modules === "1" ||
       req.query.include_all_modules === "true";
@@ -1475,7 +1476,7 @@ router.get(
       includeAllModules,
     });
     res.json({
-      entities: extendedEntities.map((entity) => ({
+      entities: extendedEntities.map((entity: any) => ({
         type: entity.type,
         name: entity.name,
         id: entity.id,
@@ -1491,7 +1492,7 @@ router.get(
 router.post(
   "/bulk-delete",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const items = Array.isArray(req.body.items) ? req.body.items : [];
     if (!items.length)
       return res.status(400).json({ error: "No items selected" });
@@ -1499,9 +1500,9 @@ router.post(
     const deletedKeys = [];
     const errors = [];
     const installedPackNames = new Set(
-      getState().getConfig("installed_packs", []) || []
+      getState()!.getConfig("installed_packs", []) || []
     );
-    const asNumber = (val) => {
+    const asNumber = (val: any) => {
       if (val === null || typeof val === "undefined") return null;
       if (val === "") return null;
       const num = Number(val);
@@ -1542,7 +1543,7 @@ router.post(
             await db.withTransaction(async () => {
               await uninstall_pack(pack.pack, name);
             });
-            await getState().refresh();
+            await getState()!.refresh();
           } else {
             const plugin = await Plugin.findOne({ name });
             if (!plugin) throw new Error("Plugin not found");
@@ -1557,7 +1558,7 @@ router.post(
         } else {
           throw new Error("Invalid item type or id: " + JSON.stringify(item));
         }
-      } catch (e) {
+      } catch (e: any) {
         const isPack = type === "module" && installedPackNames.has(name);
         errors.push({
           type: isPack ? "pack" : type,
@@ -1578,7 +1579,7 @@ router.post(
   })
 );
 
-const idField = (entryType) => {
+const idField = (entryType: any) => {
   switch (entryType) {
     case "table":
     case "tables":
@@ -1605,7 +1606,7 @@ router.post(
     "min_role_edit_pages",
     "min_role_edit_triggers",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { items, tag_id } = req.body || {};
     const tagIdNum = Number(tag_id);
     if (!Array.isArray(items) || !items.length || Number.isNaN(tagIdNum)) {
@@ -1632,7 +1633,7 @@ router.post(
     "min_role_edit_views",
     "min_role_edit_pages",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { items, role_id, mode } = req.body || {};
     const roleIdNum = Number(role_id);
     const validMode = mode === "read" || mode === "write";
@@ -1687,7 +1688,7 @@ router.post(
         } else {
           throw new Error("Unsupported item type for role change");
         }
-      } catch (e) {
+      } catch (e: any) {
         errors.push({ type, id, key, message: e.message });
       }
     }
@@ -1703,7 +1704,7 @@ router.post(
 router.post(
   "/download-pack",
   isAdminOrHasConfigMinRole("min_role_edit_views"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const items = Array.isArray(req.body.items) ? req.body.items : [];
     if (!items.length) return res.status(400).json({ error: "No items" });
 

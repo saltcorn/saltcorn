@@ -18,6 +18,7 @@ import { renderForm } from "@saltcorn/markup";
 import { pagination } from "@saltcorn/markup/helpers";
 import { send_infoarch_page } from "../markup/admin.js";
 import { InvalidConfiguration } from "@saltcorn/data/utils";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -26,7 +27,7 @@ import { InvalidConfiguration } from "@saltcorn/data/utils";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -36,12 +37,12 @@ export default router;
  * @param {object} req
  * @returns {Forms}
  */
-const searchConfigForm = (tables, views, req) => {
+const searchConfigForm = (tables: any, views: any, req: any) => {
   let fields = [];
   let tbls_noviews = [];
   for (const t of tables) {
     const ok_views = views.filter(
-      (v) =>
+      (v: any) =>
         v.table_id === t.id && v.viewtemplateObj && v.viewtemplateObj.runMany
     );
     if (ok_views.length === 0) tbls_noviews.push(t.name);
@@ -51,7 +52,7 @@ const searchConfigForm = (tables, views, req) => {
         label: req.__("Result preview for ") + t.name,
         required: false,
         type: "String",
-        attributes: { options: ok_views.map((v) => v.name).join() },
+        attributes: { options: ok_views.map((v: any) => v.name).join() },
       });
   }
   fields.push({
@@ -103,20 +104,20 @@ const searchConfigForm = (tables, views, req) => {
 router.get(
   "/config",
   isAdminOrHasConfigMinRole("min_role_edit_search"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const views = await View.find({}, { orderBy: "name" });
     const tables = await Table.find();
     const form = searchConfigForm(tables, views, req);
-    form.values = getState().getConfig("globalSearch", {});
-    form.values.search_table_description = getState().getConfig(
+    form.values = getState()!.getConfig("globalSearch", {});
+    form.values.search_table_description = getState()!.getConfig(
       "search_table_description",
       false
     );
-    form.values.search_results_decoration = getState().getConfig(
+    form.values.search_results_decoration = getState()!.getConfig(
       "search_results_decoration",
       "Cards"
     );
-    form.values.search_disable_fts = getState().getConfig(
+    form.values.search_disable_fts = getState()!.getConfig(
       "search_disable_fts",
       true
     );
@@ -144,7 +145,7 @@ router.get(
 router.post(
   "/config",
   isAdminOrHasConfigMinRole("min_role_edit_search"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const views = await View.find({}, { orderBy: "name" });
     const tables = await Table.find();
     const form = searchConfigForm(tables, views, req);
@@ -154,22 +155,22 @@ router.post(
       const dbversion = await db.getVersion(true);
       const search_table_description =
         !!result.success.search_table_description;
-      await getState().setConfig(
+      await getState()!.setConfig(
         "search_table_description",
         search_table_description
       );
-      await getState().setConfig(
+      await getState()!.setConfig(
         "search_results_decoration",
         result.success.search_results_decoration || "Cards"
       );
-      await getState().setConfig(
+      await getState()!.setConfig(
         "search_disable_fts",
         result.success.search_disable_fts || false
       );
-      await getState().setConfig("search_use_websearch", +dbversion >= 11.0);
+      await getState()!.setConfig("search_use_websearch", +dbversion >= 11.0);
       delete result.success.search_table_description;
       delete result.success.search_results_decoration;
-      await getState().setConfig("globalSearch", result.success);
+      await getState()!.setConfig("globalSearch", result.success);
       if (!req.xhr) res.redirect("/search/config");
       else res.json({ success: "ok" });
     } else {
@@ -217,22 +218,22 @@ const searchForm = () =>
  * @param {object} res
  * @returns {Promise<void>}
  */
-const runSearch = async ({ q, _page, table }, req, res) => {
+const runSearch = async ({ q: any, _page: any, table }: any, req: any, res: any) => {
   const role = (req.user || {}).role_id || 100;
   // globalSearch contains list of pairs: table, view
-  const cfg = getState().getConfig("globalSearch");
-  const page_size = getState().getConfig("search_page_size");
+  const cfg = getState()!.getConfig("globalSearch");
+  const page_size = getState()!.getConfig("search_page_size");
 
   if (!cfg) {
     req.flash("warning", req.__("Search not configured"));
     res.redirect("/");
     return;
   }
-  const search_table_description = getState().getConfig(
+  const search_table_description = getState()!.getConfig(
     "search_table_description",
     false
   );
-  const search_results_decoration = getState().getConfig(
+  const search_results_decoration = getState()!.getConfig(
     "search_results_decoration",
     "Cards"
   );
@@ -275,7 +276,7 @@ const runSearch = async ({ q, _page, table }, req, res) => {
         current_page,
         pages: current_page + (vresps.length === page_size ? 1 : 0),
         trailing_ellipsis: vresps.length === page_size,
-        get_page_link: (n) =>
+        get_page_link: (n: any) =>
           `gopage(${n}, ${page_size}, undefined, {table:'${tableName}'}, this)`,
       });
     }
@@ -284,7 +285,7 @@ const runSearch = async ({ q, _page, table }, req, res) => {
       tablesWithResults.push({
         tableName,
         label: sectionHeader,
-        contents: vresps.map((vr) => vr.html).join("<hr>") + paginate,
+        contents: vresps.map((vr: any) => vr.html).join("<hr>") + paginate,
       });
     }
   }
@@ -297,13 +298,13 @@ const runSearch = async ({ q, _page, table }, req, res) => {
     switch (search_results_decoration) {
       case "Tabs":
         const tabContents = {};
-        tablesWithResults.forEach((tblRes) => {
+        tablesWithResults.forEach((tblRes: any) => {
           tabContents[tblRes.label] = tblRes.contents;
         });
         return [{ type: "card", tabContents }];
 
       default:
-        return tablesWithResults.map((tblRes) => ({
+        return tablesWithResults.map((tblRes: any) => ({
           type: "card",
           title: span({ id: tblRes.tableName }, tblRes.label),
           contents: tblRes.contents,
@@ -340,7 +341,7 @@ const runSearch = async ({ q, _page, table }, req, res) => {
               req.__("Show only matches in table:"),
               "&nbsp;",
               tablesWithResults
-                .map(({ tableName, label }) =>
+                .map(({ tableName, label }: any) =>
                   a(
                     {
                       href: `javascript:set_state_field('table', '${tableName}')`,
@@ -357,8 +358,8 @@ const runSearch = async ({ q, _page, table }, req, res) => {
   });
 };
 
-const syntax_help_link = (req) => {
-  const use_websearch = getState().getConfig("search_use_websearch", false);
+const syntax_help_link = (req: any) => {
+  const use_websearch = getState()!.getConfig("search_use_websearch", false);
   if (use_websearch)
     return a(
       {
@@ -379,8 +380,8 @@ const syntax_help_link = (req) => {
  */
 router.get(
   "/",
-  error_catcher(async (req, res, next) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res, next: any) => {
+    const state = getState()!;
     const maintenanceModeEnabled = state.getConfig(
       "maintenance_mode_enabled",
       false
@@ -392,8 +393,8 @@ router.get(
     }
     next();
   }),
-  error_catcher(async (req, res) => {
-    const min_role = getState().getConfig("min_role_search");
+  error_catcher(async (req: Req, res: Res) => {
+    const min_role = getState()!.getConfig("min_role_search");
     const role = (req.user || {}).role_id || 100;
     if (role > min_role) {
       res.redirect("/"); // silent redirect to home page
@@ -403,7 +404,7 @@ router.get(
     if (req.query && req.query.q) {
       await runSearch(req.query, req, res);
     } else {
-      const cfg = getState().getConfig("globalSearch");
+      const cfg = getState()!.getConfig("globalSearch");
 
       if (!cfg) {
         const role = (req.user || {}).role_id || 100;
@@ -424,7 +425,7 @@ router.get(
 
 router.get(
   "/syntax-help",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.sendWrap(
       req.__("Search syntax help"),
       div(

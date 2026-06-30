@@ -182,8 +182,8 @@ router.get(
       {}
     );
     const code_pages = Object.entries(function_code_pages_tags)
-      .filter(([nm, tags]) => (tags as string[] || []).includes(tag.name))
-      .map(([nm, tags]) => nm);
+      .filter(([nm, tags]: any) => (tags as string[] || []).includes(tag.name))
+      .map(([nm, tags]: any) => nm);
     res.sendWrap(req.__("%s Tag", tag.name), {
       above: [
         {
@@ -286,7 +286,7 @@ router.get(
         {
           type: "card",
           title: req.__("Code pages") + ` (${code_pages.length})`,
-          contents: code_pages.map((cp) =>
+          contents: code_pages.map((cp: any) =>
             a(
               {
                 class: "me-2",

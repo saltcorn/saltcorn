@@ -130,22 +130,23 @@ import MarkdownIt from "markdown-it";
 const md = new MarkdownIt();
 import semver from "semver";
 import { dbCommonModulePath } from "@saltcorn/db-common/internal";
+import { Req, Res } from "@saltcorn/types/base_types";
 
-const router = new Router();
+const router = Router();
 export default router;
 
-const app_files_table = (files, buildDirName, req) =>
+const app_files_table = (files: any, buildDirName: any, req: any) =>
   mkTable(
     [
       {
         label: req.__("Filename"),
-        key: (r) => div(r.filename),
+        key: (r: any) => div(r.filename),
       },
       { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
-      { label: req.__("Media type"), key: (r) => r.mimetype },
+      { label: req.__("Media type"), key: (r: any) => r.mimetype },
       {
         label: req.__("Open"),
-        key: (r) =>
+        key: (r: any) =>
           link(
             `/files/serve/mobile_app/${buildDirName}/${r.filename}`,
             req.__("Open")
@@ -153,7 +154,7 @@ const app_files_table = (files, buildDirName, req) =>
       },
       {
         label: req.__("Download"),
-        key: (r) =>
+        key: (r: any) =>
           link(
             `/files/download/mobile_app/${buildDirName}/${r.filename}`,
             req.__("Download")
@@ -164,12 +165,12 @@ const app_files_table = (files, buildDirName, req) =>
   );
 
 const tutorial_step = (
-  stepNumber,
-  headline,
-  description,
-  imageName,
-  imageWidth = "100%",
-  footer = ""
+  stepNumber: any,
+  headline: any,
+  description: any,
+  imageName: any,
+  imageWidth: any = "100%",
+  footer: any = ""
 ) => {
   return div(
     {
@@ -186,7 +187,7 @@ const tutorial_step = (
   );
 };
 
-const intermediate_build_result = (outDirName, buildDir, req, appFilesTbl) => {
+const intermediate_build_result = (outDirName: any, buildDir: any, req: any, appFilesTbl: any) => {
   return div(
     h3("Intermediate build result"),
     div(
@@ -403,7 +404,7 @@ admin_config_route({
   if (authMethod) {
     const authMethodValue = authMethod.value;
     authMethodChange(authMethodValue);
-    authMethod.addEventListener('change', (e) => {
+    authMethod.addEventListener('change', (e: any) => {
       const authMethod = e.target.value;
       authMethodChange(authMethod);
     });
@@ -423,8 +424,8 @@ admin_config_route({
 router.get(
   "/send-test-email",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const from = getState().getConfig("email_from");
+  error_catcher(async (req: Req, res: Res) => {
+    const from = getState()!.getConfig("email_from");
     const email = {
       from,
       to: req.user.email,
@@ -433,12 +434,12 @@ router.get(
     };
     try {
       const sendres = await (await getMailTransport()).sendMail(email);
-      getState().log(6, sendres);
+      getState()!.log(6, sendres);
       req.flash(
         "success",
         req.__("Email sent to %s with no errors", req.user.email)
       );
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       req.flash("error", e.message);
     }
@@ -453,12 +454,12 @@ router.get(
 router.get(
   "/authorize-mail-oauth",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const client = getOauth2Client();
-    const smtpRedirectUri = getState().getConfig("smtp_redirect_uri");
-    const scopes = getState().getConfig("smtp_outh_scopes");
-    const scopeArray = scopes.split(" ").map((s) => s.trim());
-    const smtpHost = getState().getConfig("smtp_host");
+    const smtpRedirectUri = getState()!.getConfig("smtp_redirect_uri");
+    const scopes = getState()!.getConfig("smtp_outh_scopes");
+    const scopeArray = scopes.split(" ").map((s: any) => s.trim());
+    const smtpHost = getState()!.getConfig("smtp_host");
 
     // Mail.Send SMTP.Send profile openid email https://outlook.office365.com/IMAP.AccessAsUser.All
     const authorizeUrl = client.authorizeURL({
@@ -490,7 +491,7 @@ router.get(
     "min_role_edit_files",
     "min_role_edit_users",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { topic } = req.params;
     const { markup } = await get_help_markup(topic, req.query, req);
 
@@ -501,9 +502,9 @@ router.get(
 router.get(
   "/help-plugin/:plugin/:topic",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { plugin, topic } = req.params;
-    const location = getState().plugin_locations[plugin];
+    const location = getState()!.plugin_locations[plugin];
     if (location) {
       const safeFile = path
         .normalize(topic + ".tmd")
@@ -519,11 +520,11 @@ router.get(
 
         res.sendWrap(`Help: ${topic}`, { above: [markup] });
       } else {
-        getState().log(6, `Plugin serve help: file not found ${fullpath}`);
+        getState()!.log(6, `Plugin serve help: file not found ${fullpath}`);
         res.status(404).send(req.__("Not found"));
       }
     } else {
-      getState().log(6, `Plugin serve heko: plogin not found ${plugin}`);
+      getState()!.log(6, `Plugin serve heko: plogin not found ${plugin}`);
       res.status(404).send(req.__("Not found"));
     }
   })
@@ -532,7 +533,7 @@ router.get(
 router.get(
   "/jsdoc/*filepath",
   isAdminOrHasConfigMinRole("min_role_edit_triggers"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const fullPath = File.normalise_in_base(
       path.join(__dirname, "..", "..", "docs"),
       ...req.params.filepath
@@ -548,7 +549,7 @@ router.get(
 router.get(
   "/whatsnew",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const fp = path.join(__dirname, "..", "..", "CHANGELOG.md");
     const fileBuf = await fs.promises.readFile(fp);
     const mdContents = fileBuf.toString().replace("# Notable changes\n", "");
@@ -565,64 +566,64 @@ router.get(
 router.get(
   "/backup",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     //
     const aBackupFilePrefixForm = backupFilePrefixForm(req);
     aBackupFilePrefixForm.values.backup_file_prefix =
-      getState().getConfig("backup_file_prefix");
+      getState()!.getConfig("backup_file_prefix");
     aBackupFilePrefixForm.values.backup_history =
-      getState().getConfig("backup_history");
+      getState()!.getConfig("backup_history");
     //
     const backupForm = autoBackupForm(req);
-    backupForm.values.auto_backup_frequency = getState().getConfig(
+    backupForm.values.auto_backup_frequency = getState()!.getConfig(
       "auto_backup_frequency"
     );
-    backupForm.values.auto_backup_destination = getState().getConfig(
+    backupForm.values.auto_backup_destination = getState()!.getConfig(
       "auto_backup_destination"
     );
-    backupForm.values.auto_backup_tenants = getState().getConfig(
+    backupForm.values.auto_backup_tenants = getState()!.getConfig(
       "auto_backup_tenants"
     );
-    backupForm.values.auto_backup_directory = getState().getConfig(
+    backupForm.values.auto_backup_directory = getState()!.getConfig(
       "auto_backup_directory"
     );
-    backupForm.values.auto_backup_retain_local_directory = getState().getConfig(
+    backupForm.values.auto_backup_retain_local_directory = getState()!.getConfig(
       "auto_backup_retain_local_directory"
     );
-    backupForm.values.auto_backup_username = getState().getConfig(
+    backupForm.values.auto_backup_username = getState()!.getConfig(
       "auto_backup_username"
     );
     backupForm.values.auto_backup_server =
-      getState().getConfig("auto_backup_server");
-    backupForm.values.auto_backup_password = getState().getConfig(
+      getState()!.getConfig("auto_backup_server");
+    backupForm.values.auto_backup_password = getState()!.getConfig(
       "auto_backup_password"
     );
     backupForm.values.auto_backup_port =
-      getState().getConfig("auto_backup_port");
+      getState()!.getConfig("auto_backup_port");
 
-    backupForm.values.auto_backup_expire_days = getState().getConfig(
+    backupForm.values.auto_backup_expire_days = getState()!.getConfig(
       "auto_backup_expire_days"
     );
     backupForm.values.backup_s3_bucket =
-      getState().getConfig("backup_s3_bucket");
+      getState()!.getConfig("backup_s3_bucket");
     backupForm.values.backup_s3_endpoint =
-      getState().getConfig("backup_s3_endpoint");
-    backupForm.values.backup_s3_access_key = getState().getConfig(
+      getState()!.getConfig("backup_s3_endpoint");
+    backupForm.values.backup_s3_access_key = getState()!.getConfig(
       "backup_s3_access_key"
     );
-    backupForm.values.backup_s3_access_secret = getState().getConfig(
+    backupForm.values.backup_s3_access_secret = getState()!.getConfig(
       "backup_s3_access_secret"
     );
     backupForm.values.backup_s3_region =
-      getState().getConfig("backup_s3_region");
-    aBackupFilePrefixForm.values.backup_with_event_log = getState().getConfig(
+      getState()!.getConfig("backup_s3_region");
+    aBackupFilePrefixForm.values.backup_with_event_log = getState()!.getConfig(
       "backup_with_event_log"
     );
     aBackupFilePrefixForm.values.backup_password =
-      getState().getConfig("backup_password");
+      getState()!.getConfig("backup_password");
     const aSnapshotForm = snapshotForm(req);
     aSnapshotForm.values.snapshots_enabled =
-      getState().getConfig("snapshots_enabled");
+      getState()!.getConfig("snapshots_enabled");
     //
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     //
@@ -731,22 +732,22 @@ router.get(
 router.get(
   "/auto-backup-list",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     if (!isRoot) {
       res.redirect("/admin/backup");
       return;
     }
-    const auto_backup_directory = getState().getConfig("auto_backup_directory");
+    const auto_backup_directory = getState()!.getConfig("auto_backup_directory");
 
-    const backup_file_prefix = getState().getConfig("backup_file_prefix");
+    const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
 
     const fileNms = auto_backup_directory
       ? await fs.promises.readdir(auto_backup_directory)
       : [];
 
     const backupFiles = fileNms.filter(
-      (fnm) => fnm.startsWith(backup_file_prefix) && fnm.endsWith(".zip")
+      (fnm: any) => fnm.startsWith(backup_file_prefix) && fnm.endsWith(".zip")
     );
 
     send_admin_page({
@@ -761,7 +762,7 @@ router.get(
             contents: div(
               backupFiles.length > 0
                 ? ul(
-                    backupFiles.map((fnm) =>
+                    backupFiles.map((fnm: any) =>
                       li(
                         a(
                           {
@@ -809,7 +810,7 @@ router.get(
 router.get(
   "/snapshot-list",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const snaps = await Snapshot.find(
       {},
       {
@@ -818,7 +819,7 @@ router.get(
         fields: ["id", "created", "hash", "name"],
       }
     );
-    const locale = getState().getConfig("default_locale", "en");
+    const locale = getState()!.getConfig("default_locale", "en");
     send_admin_page({
       res,
       req,
@@ -831,7 +832,7 @@ router.get(
             contents: div(
               snaps.length > 0
                 ? ul(
-                    snaps.map((snap) =>
+                    snaps.map((snap: any) =>
                       li(
                         a(
                           {
@@ -863,14 +864,14 @@ router.get(
 router.get(
   "/snapshot-download/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const snap = await Snapshot.findOne({ id });
     const readStream = new stream.PassThrough();
     readStream.end(JSON.stringify(snap.pack));
     res.type("application/json");
     res.attachment(
-      `${getState().getConfig("site_name", db.getTenantSchema())}-snapshot-${
+      `${getState()!.getConfig("site_name", db.getTenantSchema())}-snapshot-${
         snap.id
       }.json`
     );
@@ -885,7 +886,7 @@ router.get(
     "min_role_edit_pages",
     "min_role_edit_triggers",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { type, name } = req.params;
     const snapOffset = parseInt(req.query.snap_offset) || 0;
     const { history: snaps, hasMore } = await Snapshot.entity_history(
@@ -893,7 +894,7 @@ router.get(
       name,
       snapOffset
     );
-    const locale = getState().getConfig("default_locale", "en");
+    const locale = getState()!.getConfig("default_locale", "en");
     const auth = checkEditPermission(type + "s", req.user);
     if (!auth) {
       res.send("Not authorized");
@@ -908,7 +909,7 @@ router.get(
         [
           {
             label: req.__("When"),
-            key: (r) =>
+            key: (r: any) =>
               `${moment(r.created).fromNow()}<br><small>${localeDateTime(
                 r.created,
                 {},
@@ -917,11 +918,11 @@ router.get(
           },
           {
             label: req.__("Name"),
-            key: (r) => r.name || "",
+            key: (r: any) => r.name || "",
           },
           {
             label: req.__("Restore"),
-            key: (r) =>
+            key: (r: any) =>
               post_btn(
                 addOnDoneRedirect(
                   `/admin/snapshot-restore/${type}/${name}/${r.id}`,
@@ -948,7 +949,7 @@ router.post(
     "min_role_edit_pages",
     "min_role_edit_triggers",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { type, name, id } = req.params;
     const auth = checkEditPermission(type + "s", req.user);
     if (!auth) {
@@ -966,7 +967,7 @@ router.post(
         ).fromNow()}`
       );
     }
-    await getState().refresh();
+    await getState()!.refresh();
     res.redirect(
       req.query.on_done_redirect &&
         is_relative_url("/" + req.query.on_done_redirect)
@@ -985,7 +986,7 @@ router.post(
 router.get(
   "/snapshot-restore-full",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const snapForm = new Form({
       action: "/admin/snapshot-restore-full",
       formStyle: "vert",
@@ -1054,19 +1055,19 @@ router.post(
   "/snapshot-restore-full",
   setTenant, // TODO why is this needed?????
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (req.files?.file?.tempFilePath) {
       try {
         const pack = JSON.parse(fs.readFileSync(req.files?.file?.tempFilePath));
         filter_pack(pack, req.body);
         await db.withTransaction(async () => {
-          await install_pack(pack, undefined, (p) =>
+          await install_pack(pack, undefined, (p: any) =>
             Plugin.loadAndSaveNewPlugin(p)
           );
         });
-        await getState().refresh();
+        await getState()!.refresh();
         req.flash("success", req.__("Snapshot restored"));
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         req.flash("error", e.message);
       }
@@ -1078,11 +1079,11 @@ router.post(
 router.get(
   "/auto-backup-download/:filename",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { filename } = req.params;
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
-    const backup_file_prefix = getState().getConfig("backup_file_prefix");
-    const auto_backup_directory = getState().getConfig("auto_backup_directory");
+    const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
+    const auto_backup_directory = getState()!.getConfig("auto_backup_directory");
     const fp = File.normalise_in_base(auto_backup_directory, filename);
 
     if (
@@ -1105,7 +1106,7 @@ router.get(
  * @param req
  * @returns {Form}
  */
-const backupFilePrefixForm = (req) =>
+const backupFilePrefixForm = (req: any) =>
   new Form({
     action: "/admin/set-backup-prefix",
     onChange: `saveAndContinue(this);`,
@@ -1148,7 +1149,7 @@ const backupFilePrefixForm = (req) =>
  * @param {object} req
  * @returns {Form} form
  */
-const autoBackupForm = (req) => {
+const autoBackupForm = (req: any) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
   return new Form({
@@ -1323,7 +1324,7 @@ const autoBackupForm = (req) => {
  * @param req
  * @returns {Form}
  */
-const snapshotForm = (req) =>
+const snapshotForm = (req: any) =>
   new Form({
     action: "/admin/set-snapshot",
     onChange: `saveAndContinue(this);`,
@@ -1354,7 +1355,7 @@ const snapshotForm = (req) =>
 router.post(
   "/set-snapshot",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await snapshotForm(req);
     form.validate(req.body || {});
 
@@ -1372,7 +1373,7 @@ router.post(
 router.post(
   "/set-backup-prefix",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await backupFilePrefixForm(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -1401,7 +1402,7 @@ router.post(
 router.post(
   "/set-auto-backup",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await autoBackupForm(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -1431,12 +1432,12 @@ router.post(
 router.post(
   "/auto-backup-now",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     try {
       await auto_backup_now();
       req.flash("success", req.__("Backup successful"));
-    } catch (e) {
-      getState().log(1, e);
+    } catch (e: any) {
+      getState()!.log(1, e);
       req.flash("error", e.message);
     }
     res.json({ reload_page: true });
@@ -1448,7 +1449,7 @@ router.post(
 router.post(
   "/snapshot-now{/:snapshotname}",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { snapshotname } = req.params;
     if (snapshotname == "null") {
       //user clicked cancel on prompt
@@ -1461,7 +1462,7 @@ router.post(
       if (taken) req.flash("success", req.__("Snapshot successful"));
       else
         req.flash("success", req.__("No changes detected, snapshot skipped"));
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       req.flash("error", e.message);
     }
@@ -1478,7 +1479,7 @@ router.post(
 router.get(
   "/system",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const latest =
       isRoot && (await get_latest_npm_version("@saltcorn/cli", 1000));
@@ -1601,7 +1602,7 @@ router.get(
                             href:
                               `javascript:ajax_modal('/admin/install_dialog', ` +
                               `{ onOpen: () => { restore_old_button('${rndid}'); }, ` +
-                              ` onError: (res) => { selectVersionError(res, '${rndid}') } });`,
+                              ` onError: (res: any) => { selectVersionError(res, '${rndid}') } });`,
                           },
                           req.__("Choose version")
                         ),
@@ -1696,13 +1697,13 @@ router.get(
 router.post(
   "/restart",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
-      if (process.send) getState().processSend("RestartServer");
+      if (process.send) getState()!.processSend("RestartServer");
       else process.exit(0);
     } else {
       await restart_tenant(Plugin.loadAllPlugins);
-      getState().processSend({
+      getState()!.processSend({
         restart_tenant: true,
         tenant: db.getTenantSchema(),
       });
@@ -1712,7 +1713,7 @@ router.post(
   })
 );
 
-const pullCapacitorBuilder = (req, res, version) => {
+const pullCapacitorBuilder = (req: any, res: any, version: any) => {
   const child = spawn(
     "docker",
     ["pull", `saltcorn/capacitor-builder:${version}`],
@@ -1720,17 +1721,17 @@ const pullCapacitorBuilder = (req, res, version) => {
       stdio: ["ignore", "pipe", "pipe"],
     }
   );
-  return new Promise((resolve, reject) => {
-    child.stdout.on("data", (data) => {
+  return new Promise((resolve: any, reject: any) => {
+    child.stdout.on("data", (data: any) => {
       res.write(data);
     });
-    child.stderr?.on("data", (data) => {
+    child.stderr?.on("data", (data: any) => {
       res.write(data);
     });
-    child.on("exit", function (code, signal) {
+    child.on("exit", function (code: any, signal: any) {
       resolve(code);
     });
-    child.on("error", (msg) => {
+    child.on("error", (msg: any) => {
       const message = msg.message ? msg.message : msg.code;
       res.write(req.__("Error: ") + message + "\n");
       resolve(msg.code);
@@ -1738,21 +1739,21 @@ const pullCapacitorBuilder = (req, res, version) => {
   });
 };
 
-const tryInstallSdNotify = (req, res) => {
+const tryInstallSdNotify = (req: any, res: any) => {
   const child = spawn("npm", ["install", "-g", "sd-notify"], {
     stdio: ["ignore", "pipe", "pipe"],
   });
-  return new Promise((resolve, reject) => {
-    child.stdout.on("data", (data) => {
+  return new Promise((resolve: any, reject: any) => {
+    child.stdout.on("data", (data: any) => {
       res.write(data);
     });
-    child.stderr?.on("data", (data) => {
+    child.stderr?.on("data", (data: any) => {
       res.write(data);
     });
-    child.on("exit", function (code, signal) {
+    child.on("exit", function (code: any, signal: any) {
       resolve(code);
     });
-    child.on("error", (msg) => {
+    child.on("error", (msg: any) => {
       const message = msg.message ? msg.message : msg.code;
       res.write(req.__("Error: ") + message + "\n");
       resolve(msg.code);
@@ -1760,21 +1761,21 @@ const tryInstallSdNotify = (req, res) => {
   });
 };
 
-const pruneDocker = (req, res) => {
+const pruneDocker = (req: any, res: any) => {
   const child = spawn("docker", ["image", "prune", "-f"], {
     stdio: ["ignore", "pipe", "pipe"],
   });
-  return new Promise((resolve, reject) => {
-    child.stdout.on("data", (data) => {
+  return new Promise((resolve: any, reject: any) => {
+    child.stdout.on("data", (data: any) => {
       res.write(data);
     });
-    child.stderr?.on("data", (data) => {
+    child.stderr?.on("data", (data: any) => {
       res.write(data);
     });
-    child.on("exit", function (code, signal) {
+    child.on("exit", function (code: any, signal: any) {
       resolve(code);
     });
-    child.on("error", (msg) => {
+    child.on("error", (msg: any) => {
       const message = msg.message ? msg.message : msg.code;
       res.write(req.__("Error: ") + message + "\n");
       resolve(msg.code);
@@ -1788,7 +1789,7 @@ const pruneDocker = (req, res) => {
 router.get(
   "/install_dialog",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     try {
       const pkgInfo = await npmFetch.json(
         "https://registry.npmjs.org/@saltcorn/cli",
@@ -1797,7 +1798,7 @@ router.get(
       if (!pkgInfo?.versions)
         throw new Error(req.__("Unable to fetch versions"));
       const versions = Object.keys(pkgInfo.versions)
-        .filter((v) => !!semver.valid(v))
+        .filter((v: any) => !!semver.valid(v))
         .sort(semver.rcompare);
 
       if (versions.length === 0) throw new Error(req.__("No versions found"));
@@ -1827,7 +1828,7 @@ router.get(
                 class: "form-control form-select",
                 name: "version",
               },
-              versions.map((version) =>
+              versions.map((version: any) =>
                 option({
                   id: `${version}_opt`,
                   value: version,
@@ -1858,7 +1859,7 @@ router.get(
                 label: req.__("Select tag"),
                 selected: true,
               }),
-              Object.keys(tags).map((tag) =>
+              Object.keys(tags).map((tag: any) =>
                 option({
                   id: `${tag}_opt`,
                   value: tags[tag],
@@ -1917,8 +1918,8 @@ document.getElementById('version_select').addEventListener('change', () => {
 `)
           )
       );
-    } catch (error) {
-      getState().log(
+    } catch (error: any) {
+      getState()!.log(
         2,
         `GET /install_dialog: ${error.message || "unknown error"}`
       );
@@ -1946,13 +1947,13 @@ const cleanNodeModules = async () => {
   await PluginInstaller.cleanPluginsDirectory();
 };
 
-const doInstall = async (req, res, version, deepClean, runPull) => {
-  const state = getState();
-  let res_write = (s) => {
+const doInstall = async (req: Req, res: Res, version: any, deepClean: any, runPull: any) => {
+  const state = getState()!;
+  let res_write = (s: any) => {
     try {
       res.write(s);
       state.log(5, s);
-    } catch (e) {
+    } catch (e: any) {
       console.error("Install write error: ", e?.message || e);
     }
   };
@@ -1969,7 +1970,7 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
       res_write(req.__("Cleaning node_modules...\n"));
       try {
         await cleanNodeModules();
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         res_write(req.__("Error cleaning node_modules: %s\n", e.message));
       }
@@ -1981,13 +1982,13 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
         stdio: ["ignore", "pipe", "pipe"],
       }
     );
-    child.stdout.on("data", (data) => {
+    child.stdout.on("data", (data: any) => {
       res_write(data);
     });
-    child.stderr?.on("data", (data) => {
+    child.stderr?.on("data", (data: any) => {
       res_write(data);
     });
-    child.on("exit", async function (code, signal) {
+    child.on("exit", async function (code: any, signal: any) {
       if (code === 0) {
         if (deepClean) {
           res_write(req.__("Installing sd-notify") + "\n");
@@ -2010,7 +2011,7 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
         }
       }
       setTimeout(() => {
-        getState().processSend("RestartServer");
+        getState()!.processSend("RestartServer");
         process.exit(0);
       }, 200);
       res.end(
@@ -2026,7 +2027,7 @@ const doInstall = async (req, res, version, deepClean, runPull) => {
   }
 };
 
-router.post("/install", isAdmin, async (req, res) => {
+router.post("/install", isAdmin, async (req: Req, res: Res) => {
   const { version, deep_clean } = req.body || {};
   await doInstall(req, res, version, deep_clean === "on", false);
 });
@@ -2040,7 +2041,7 @@ router.post("/install", isAdmin, async (req, res) => {
 router.post(
   "/upgrade",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     await doInstall(req, res, "latest", false, true);
   })
 );
@@ -2050,8 +2051,8 @@ router.post(
 router.post(
   "/check-for-upgrade",
   isAdmin,
-  error_catcher(async (req, res) => {
-    await getState().deleteConfig("latest_npm_version");
+  error_catcher(async (req: Req, res: Res) => {
+    await getState()!.deleteConfig("latest_npm_version");
     req.flash("success", req.__(`Versions refreshed`));
     res.redirect(`/admin/system`);
   })
@@ -2065,7 +2066,7 @@ router.post(
 router.post(
   "/backup",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const fileName = await create_backup();
     res.type("application/zip");
     res.attachment(fileName);
@@ -2087,13 +2088,13 @@ router.post(
   "/restore",
   setTenant, // TODO why is this needed?????
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const newPath = File.get_new_path();
     await req.files.file.mv(newPath);
-    const err = await restore(newPath, (p) => Plugin.loadAndSaveNewPlugin(p));
+    const err = await restore(newPath, (p: any) => Plugin.loadAndSaveNewPlugin(p));
     if (err) req.flash("error", err);
     else req.flash("success", req.__("Successfully restored backup"));
-    await getState().refresh_plugins();
+    await getState()!.refresh_plugins();
     Trigger.emitEvent("Startup");
     fs.unlink(newPath, function () {});
     res.redirect(`/admin`);
@@ -2105,7 +2106,7 @@ router.post(
  * @param {object} req
  * @returns {Form} form
  */
-const clearAllForm = (req) =>
+const clearAllForm = (req: any) =>
   new Form({
     action: "/admin/clear-all",
     submitLabel: "Delete",
@@ -2185,7 +2186,7 @@ const clearAllForm = (req) =>
 router.post(
   "/acq-ssl-tenant/:subdomain",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (
       db.is_it_multi_tenant() &&
       db.getTenantSchema() === db.connectObj.default_schema
@@ -2217,11 +2218,11 @@ router.post(
           altnames: [altname],
         });
         // letsencrypt
-        const tenant_letsencrypt_sites = getState().getConfig(
+        const tenant_letsencrypt_sites = getState()!.getConfig(
           "tenant_letsencrypt_sites",
           []
         );
-        await getState().setConfig("tenant_letsencrypt_sites", [
+        await getState()!.setConfig("tenant_letsencrypt_sites", [
           altname,
           ...tenant_letsencrypt_sites,
         ]);
@@ -2230,7 +2231,7 @@ router.post(
           success: true,
           notify: "Certificate added, please restart server",
         });
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         res.json({ error: e.message });
       }
@@ -2249,7 +2250,7 @@ router.post(
 router.post(
   "/enable-letsencrypt",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (db.getTenantSchema() === db.connectObj.default_schema) {
       const domain = getBaseDomain();
       if (!domain) {
@@ -2299,12 +2300,12 @@ router.post(
           altnames,
         });
         // letsencrypt
-        await getState().setConfig("letsencrypt", true);
-        const tenant_letsencrypt_sites = getState().getConfig(
+        await getState()!.setConfig("letsencrypt", true);
+        const tenant_letsencrypt_sites = getState()!.getConfig(
           "tenant_letsencrypt_sites",
           []
         );
-        await getState().setConfig("tenant_letsencrypt_sites", [
+        await getState()!.setConfig("tenant_letsencrypt_sites", [
           ...altnames,
           ...tenant_letsencrypt_sites,
         ]);
@@ -2318,7 +2319,7 @@ router.post(
             a({ href: "/admin/system" }, req.__("Restart here"))
         );
         res.redirect("/useradmin/ssl");
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         req.flash("error", e.message);
         res.redirect("/useradmin/ssl");
@@ -2339,7 +2340,7 @@ router.post(
 router.get(
   "/clear-all",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.sendWrap(req.__(`Admin`), {
       above: [
         {
@@ -2365,7 +2366,7 @@ router.get(
 router.get(
   "/configuration-check",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const start = new Date();
     const filename = `${moment(start).format("YYYYMMDDHHmm")}.html`;
     await File.new_folder("configuration_checks");
@@ -2375,12 +2376,12 @@ router.get(
       const end = new Date();
       const secs = Math.round((end.getTime() - start.getTime()) / 1000);
 
-      const mkError = (err) =>
+      const mkError = (err: any) =>
         div(
           { class: "alert alert-danger", role: "alert" },
           pre({ class: "mb-0" }, code(err))
         );
-      const mkWarning = (err) =>
+      const mkWarning = (err: any) =>
         div(
           { class: "alert alert-warning", role: "alert" },
           pre({ class: "mb-0" }, code(err))
@@ -2418,7 +2419,7 @@ router.get(
         "/configuration_checks"
       );
     };
-    go().catch((err) => Crash.create(err, req));
+    go().catch((err: any) => Crash.create(err, req));
     res.sendWrap(req.__(`Admin`), {
       above: [
         {
@@ -2446,7 +2447,7 @@ router.get(
     });
   })
 );
-const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
+const buildDialogScript = (capacitorBuilderAvailable: any, isSbadmin2: any) =>
   `<script>
   var capacitorBuilderAvailable = ${capacitorBuilderAvailable.installed};
   var isSbadmin2 = ${isSbadmin2};
@@ -2506,8 +2507,8 @@ const buildDialogScript = (capacitorBuilderAvailable, isSbadmin2) =>
   </script>`;
 
 const checkXcodebuild = () => {
-  return new Promise((resolve) => {
-    exec("xcodebuild -version", (error, stdout, stderr) => {
+  return new Promise((resolve: any) => {
+    exec("xcodebuild -version", (error: any, stdout: any, stderr: any) => {
       if (error) {
         resolve({ installed: false });
       } else {
@@ -2524,8 +2525,8 @@ const checkXcodebuild = () => {
 };
 
 const checkCocoaPods = () => {
-  return new Promise((resolve) => {
-    exec("pod --version", (error, stdout, stderr) => {
+  return new Promise((resolve: any) => {
+    exec("pod --version", (error: any, stdout: any, stderr: any) => {
       if (error) {
         resolve({ installed: false });
       } else {
@@ -2541,8 +2542,8 @@ const checkCocoaPods = () => {
 };
 
 const checkIosRuntime = () => {
-  return new Promise((resolve) => {
-    exec("xcrun simctl list runtimes --json", (error, stdout) => {
+  return new Promise((resolve: any) => {
+    exec("xcrun simctl list runtimes --json", (error: any, stdout: any) => {
       if (error) {
         resolve({ available: false });
       } else {
@@ -2550,7 +2551,7 @@ const checkIosRuntime = () => {
           const data = JSON.parse(stdout);
           const runtimes = data.runtimes || [];
           const iosRuntimes = runtimes.filter(
-            (r) => r.isAvailable && r.name && r.name.startsWith("iOS")
+            (r: any) => r.isAvailable && r.name && r.name.startsWith("iOS")
           );
           if (iosRuntimes.length > 0) {
             resolve({
@@ -2560,7 +2561,7 @@ const checkIosRuntime = () => {
           } else {
             resolve({ available: false });
           }
-        } catch (e) {
+        } catch (e: any) {
           resolve({ available: false });
         }
       }
@@ -2568,7 +2569,7 @@ const checkIosRuntime = () => {
   });
 };
 
-const versFullfilled = (version, minMajVersion) => {
+const versFullfilled = (version: any, minMajVersion: any) => {
   const vTokens = version.split(".");
   const majVers = parseInt(vTokens[0]);
   return majVers >= minMajVersion;
@@ -2590,10 +2591,10 @@ const buildIosConfigBox = ({
   provisioningFiles,
   allAppCfgFiles,
   builderSettings,
-}) => {
+}: any) => {
   const xCodeFullfilled = versFullfilled(xcodebuildVersion || "0.0.0", 11);
   const cocoaPodsFullfilled = versFullfilled(cocoaPodsVersion || "0.0.0", 1);
-  const keyCfg = getState().getConfig("apn_signing_key", "");
+  const keyCfg = getState()!.getConfig("apn_signing_key", "");
   const apnSigningKey = keyCfg ? path.basename(keyCfg) : null;
 
   // xcodebuild and cocoapods infos
@@ -2772,7 +2773,7 @@ const buildIosConfigBox = ({
             },
             [
               option({ value: "" }, ""),
-              ...provisioningFiles.map((file) =>
+              ...provisioningFiles.map((file: any) =>
                 option(
                   {
                     value: file.location,
@@ -2806,7 +2807,7 @@ const buildIosConfigBox = ({
             },
             [
               option({ value: "" }, ""),
-              ...provisioningFiles.map((file) =>
+              ...provisioningFiles.map((file: any) =>
                 option(
                   {
                     value: file.location,
@@ -2875,7 +2876,7 @@ const buildIosConfigBox = ({
             },
             [
               option({ value: "" }, ""),
-              ...allAppCfgFiles.map((file) =>
+              ...allAppCfgFiles.map((file: any) =>
                 option(
                   {
                     value: file.path_to_serve,
@@ -2971,11 +2972,11 @@ const buildIosConfigBox = ({
 router.get(
   "/build-mobile-app",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const views = await View.find();
     const pages = await Page.find();
     const pageGroups = await PageGroup.find();
-    const images = (await File.find({ mime_super: "image" })).filter((image) =>
+    const images = (await File.find({ mime_super: "image" })).filter((image: any) =>
       image.filename?.endsWith(".png")
     );
     const pushCfgFiles = await File.find({
@@ -2996,16 +2997,16 @@ router.get(
     ];
     const withSyncInfo = await Table.find({ has_sync_info: true });
     const plugins = (await Plugin.find()).filter(
-      (plugin) =>
+      (plugin: any) =>
         ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
         !plugin.exclude_from_mobile()
     );
     const pluginsReadyForMobile = plugins
-      .filter((plugin) => plugin.ready_for_mobile())
-      .map((plugin) => plugin.name);
+      .filter((plugin: any) => plugin.ready_for_mobile())
+      .map((plugin: any) => plugin.name);
     const builderSettings =
-      getState().getConfig("mobile_builder_settings") || {};
-    const scVersion = getState().scVersion;
+      getState()!.getConfig("mobile_builder_settings") || {};
+    const scVersion = getState()!.scVersion;
     const dockerAvailable = await imageAvailable(
       "saltcorn/capacitor-builder",
       scVersion
@@ -3020,13 +3021,13 @@ router.get(
     const iosRuntimeCheckRes = await checkIosRuntime();
     const iosRuntimeAvailable = iosRuntimeCheckRes.available;
     const iosRuntimeVersion = iosRuntimeCheckRes.version;
-    const layout = getState().getLayout(req.user);
-    const isSbadmin2 = layout === getState().layouts.sbadmin2;
+    const layout = getState()!.getLayout(req.user);
+    const isSbadmin2 = layout === getState()!.layouts.sbadmin2;
     const isEntrypointByRole = builderSettings.entryPointByRole === "on";
 
-    const keyCfg = getState().getConfig("firebase_json_key");
+    const keyCfg = getState()!.getConfig("firebase_json_key");
     const fbJSONKey = keyCfg ? path.basename(keyCfg) : null;
-    const servicesCfg = getState().getConfig("firebase_app_services");
+    const servicesCfg = getState()!.getConfig("firebase_app_services");
     const fbAppServices = servicesCfg ? path.basename(servicesCfg) : null;
 
     send_admin_page({
@@ -3227,7 +3228,7 @@ router.get(
                               id: "viewInputID",
                             },
                             views
-                              .map((view) =>
+                              .map((view: any) =>
                                 option(
                                   {
                                     value: view.name,
@@ -3257,7 +3258,7 @@ router.get(
                               id: "pageInputID",
                             },
                             pages
-                              .map((page) =>
+                              .map((page: any) =>
                                 option(
                                   {
                                     value: page.name,
@@ -3287,7 +3288,7 @@ router.get(
                               id: "pagegroupInputID",
                             },
                             pageGroups
-                              .map((group) =>
+                              .map((group: any) =>
                                 option(
                                   {
                                     value: group.name,
@@ -3444,7 +3445,7 @@ router.get(
                           name: "serverURL",
                           id: "serverURLInputId",
                           value: builderSettings.serverURL || "",
-                          placeholder: getState().getConfig("base_url") || "",
+                          placeholder: getState()!.getConfig("base_url") || "",
                         })
                       )
                     ),
@@ -3468,7 +3469,7 @@ router.get(
                           },
                           [
                             option({ value: "" }, ""),
-                            ...images.map((image) =>
+                            ...images.map((image: any) =>
                               option(
                                 {
                                   value: image.location,
@@ -3501,7 +3502,7 @@ router.get(
                           },
                           [
                             option({ value: "" }, ""),
-                            ...pages.map((page) =>
+                            ...pages.map((page: any) =>
                               option(
                                 {
                                   value: page.name,
@@ -3691,12 +3692,12 @@ router.get(
                               },
                               plugins
                                 .filter(
-                                  (plugin) =>
+                                  (plugin: any) =>
                                     builderSettings.excludedPlugins?.indexOf(
                                       plugin.name
                                     ) >= 0
                                 )
-                                .map((plugin) =>
+                                .map((plugin: any) =>
                                   option({
                                     id: `${plugin.name}_excluded_opt`,
                                     value: plugin.name,
@@ -3742,13 +3743,13 @@ router.get(
                               },
                               plugins
                                 .filter(
-                                  (plugin) =>
+                                  (plugin: any) =>
                                     !builderSettings.excludedPlugins ||
                                     builderSettings.excludedPlugins.indexOf(
                                       plugin.name
                                     ) < 0
                                 )
-                                .map((plugin) =>
+                                .map((plugin: any) =>
                                   option({
                                     id: `${plugin.name}_included_opt`,
                                     value: plugin.name,
@@ -3847,13 +3848,13 @@ router.get(
                                       },
                                       withSyncInfo
                                         .filter(
-                                          (table) =>
+                                          (table: any) =>
                                             !builderSettings.synchedTables ||
                                             builderSettings.synchedTables.indexOf(
                                               table.name
                                             ) < 0
                                         )
-                                        .map((table) =>
+                                        .map((table: any) =>
                                           option({
                                             id: `${table.name}_unsynched_opt`,
                                             value: table.name,
@@ -3902,12 +3903,12 @@ router.get(
                                       },
                                       withSyncInfo
                                         .filter(
-                                          (table) =>
+                                          (table: any) =>
                                             builderSettings.synchedTables?.indexOf(
                                               table.name
                                             ) >= 0
                                         )
-                                        .map((table) =>
+                                        .map((table: any) =>
                                           option({
                                             id: `${table.name}_synched_opt`,
                                             value: table.name,
@@ -4226,7 +4227,7 @@ router.get(
                             },
                             [
                               option({ value: "" }, ""),
-                              ...keystoreFiles.map((file) =>
+                              ...keystoreFiles.map((file: any) =>
                                 option(
                                   {
                                     value: file.location,
@@ -4321,7 +4322,7 @@ router.get(
                             },
                             [
                               option({ value: "" }, ""),
-                              ...pushCfgFiles.map((file) =>
+                              ...pushCfgFiles.map((file: any) =>
                                 option(
                                   {
                                     value: file.path_to_serve,
@@ -4369,7 +4370,7 @@ router.get(
                             },
                             [
                               option({ value: "" }, ""),
-                              ...pushCfgFiles.map((file) =>
+                              ...pushCfgFiles.map((file: any) =>
                                 option(
                                   {
                                     value: file.path_to_serve,
@@ -4429,31 +4430,31 @@ router.get(
   })
 );
 
-const checkFiles = async (outDirName, fileNames) => {
+const checkFiles = async (outDirName: any, fileNames: any) => {
   const rootFolder = await File.rootFolder();
   const outDir = path.join(rootFolder.location, "mobile_app", outDirName);
   const unsafeFiles = await Promise.all(
     fs
       .readdirSync(outDir)
-      .map(async (outFile) => await File.from_file_on_disk(outFile, outDir))
+      .map(async (outFile: any) => await File.from_file_on_disk(outFile, outDir))
   );
   const entries = unsafeFiles
     .filter(
-      (file) =>
+      (file: any) =>
         file.user_id &&
         !isNaN(file.user_id) &&
         file.min_role_read &&
         !isNaN(file.min_role_read)
     )
-    .map((file) => file.filename);
-  return fileNames.some((fileName) => entries.indexOf(fileName) >= 0);
+    .map((file: any) => file.filename);
+  return fileNames.some((fileName: any) => entries.indexOf(fileName) >= 0);
 };
 
 // check if a build has finished (poll service)
 router.get(
   "/build-mobile-app/finished",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { out_dir_name, mode } = req.query;
     const stepDesc =
       mode === "prepare"
@@ -4470,10 +4471,10 @@ router.get(
   })
 );
 
-const validateBuildDirName = (buildDirName) => {
+const validateBuildDirName = (buildDirName: any) => {
   // ensure characters
   if (!/^[a-zA-Z0-9_-]+$/.test(buildDirName)) {
-    getState().log(
+    getState()!.log(
       4,
       `Invalid characters in build directory name '${buildDirName}'`
     );
@@ -4481,16 +4482,16 @@ const validateBuildDirName = (buildDirName) => {
   }
   // ensure format is 'build_1234567890'
   if (!/^build_\d+$/.test(buildDirName)) {
-    getState().log(4, `Invalid build directory name format '${buildDirName}'`);
+    getState()!.log(4, `Invalid build directory name format '${buildDirName}'`);
     return false;
   }
   return true;
 };
 
-const validateBuildDir = (buildDir, rootPath) => {
+const validateBuildDir = (buildDir: any, rootPath: any) => {
   const resolvedBuildDir = path.resolve(buildDir);
   if (!resolvedBuildDir.startsWith(path.join(rootPath, "mobile_app"))) {
-    getState().log(4, `Invalid build directory path '${buildDir}'`);
+    getState()!.log(4, `Invalid build directory path '${buildDir}'`);
     return false;
   }
   return true;
@@ -4499,7 +4500,7 @@ const validateBuildDir = (buildDir, rootPath) => {
 router.get(
   "/build-mobile-app/result",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { out_dir_name, build_dir, mode } = req.query;
     if (!validateBuildDirName(out_dir_name)) {
       return res.sendWrap(req.__(`Admin`), {
@@ -4529,7 +4530,7 @@ router.get(
     const files = await Promise.all(
       fs
         .readdirSync(buildDir)
-        .map(async (outFile) => await File.from_file_on_disk(outFile, buildDir))
+        .map(async (outFile: any) => await File.from_file_on_disk(outFile, buildDir))
     );
 
     const stepDesc =
@@ -4539,7 +4540,7 @@ router.get(
           ? "_finish_step"
           : "";
     const resultMsg = files.find(
-      (file) => file.filename === `logs${stepDesc}.txt`
+      (file: any) => file.filename === `logs${stepDesc}.txt`
     )
       ? req.__("The build was successfully")
       : req.__("Unable to build the app");
@@ -4569,7 +4570,7 @@ router.get(
 router.post(
   "/build-mobile-app/finish",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { out_dir_name, build_dir } = req.body || {};
     const content = await fs.promises.readFile(
       path.join(build_dir, "spawnParams.json")
@@ -4593,17 +4594,17 @@ router.post(
       }
     );
     const childOutputs = [];
-    child.stdout.on("data", (data) => {
+    child.stdout.on("data", (data: any) => {
       const outMsg = data.toString();
-      getState().log(5, outMsg);
+      getState()!.log(5, outMsg);
       if (data) childOutputs.push(outMsg);
     });
-    child.stderr.on("data", (data) => {
+    child.stderr.on("data", (data: any) => {
       const errMsg = data ? data.toString() : req.__("An error occurred");
-      getState().log(5, errMsg);
+      getState()!.log(5, errMsg);
       childOutputs.push(errMsg);
     });
-    child.on("exit", async (exitCode, signal) => {
+    child.on("exit", async (exitCode: any, signal: any) => {
       const logFile =
         exitCode === 0 ? "logs_finish_step.txt" : "error_logs_finish_step.txt";
       try {
@@ -4617,21 +4618,21 @@ router.post(
           outDirFullPath,
           req.user
         );
-      } catch (error) {
+      } catch (error: any) {
         console.log(`unable to write '${logFile}' to '${outDirFullPath}'`);
         console.log(error);
       }
     });
-    child.on("error", (msg) => {
+    child.on("error", (msg: any) => {
       const message = msg.message ? msg.message : msg.code;
       const stack = msg.stack ? msg.stack : "";
       const logFile = "error_logs.txt";
       const errMsg = [message, stack].join("\n");
-      getState().log(5, msg);
+      getState()!.log(5, msg);
       fs.writeFile(
         path.join(outDirFullPath, "error_logs.txt"),
         errMsg,
-        async (error) => {
+        async (error: any) => {
           if (error) {
             console.log(`unable to write logFile to '${outDirFullPath}'`);
             console.log(error);
@@ -4656,7 +4657,7 @@ router.post(
 router.post(
   "/build-mobile-app/validate-synced-tables",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { synchedTables } = req.body || {};
     if (!Array.isArray(synchedTables) || synchedTables.length === 0) {
       return res.json({ warnings: [] });
@@ -4690,7 +4691,7 @@ router.post(
     }
 
     const warnings = [...missing].map(
-      (tblName) =>
+      (tblName: any) =>
         `Table "${tblName}" is referenced by a synced table but is not itself synced.`
     );
     res.json({ warnings });
@@ -4703,8 +4704,8 @@ router.post(
 router.post(
   "/build-mobile-app",
   isAdmin,
-  error_catcher(async (req, res) => {
-    getState().log(
+  error_catcher(async (req: Req, res: Res) => {
+    getState()!.log(
       2,
       `starting mobile build: ${JSON.stringify(req.body || {})}`
     );
@@ -4790,7 +4791,7 @@ router.post(
       });
     }
     if (!serverURL || serverURL.length === 0) {
-      serverURL = getState().getConfig("base_url") || "";
+      serverURL = getState()!.getConfig("base_url") || "";
     }
     if (!serverURL.startsWith("http")) {
       return res.json({
@@ -4895,11 +4896,11 @@ router.post(
     if (showContinueAsPublicUser)
       spawnParams.push("--showContinueAsPublicUser");
     if (synchedTables.length > 0)
-      spawnParams.push("--synchedTables", ...synchedTables.map((tbl) => tbl));
+      spawnParams.push("--synchedTables", ...synchedTables.map((tbl: any) => tbl));
     if (includedPlugins.length > 0)
       spawnParams.push(
         "--includedPlugins",
-        ...includedPlugins.map((pluginName) => pluginName)
+        ...includedPlugins.map((pluginName: any) => pluginName)
       );
     if (
       db.is_it_multi_tenant() &&
@@ -4927,9 +4928,9 @@ router.post(
     ) {
       try {
         await fs.promises.rm(buildDir, { recursive: true, force: true });
-        getState().log(5, `Removed existing build directory: ${buildDir}`);
-      } catch (error) {
-        getState().log(4, `Error removing build directory: ${error.message}`);
+        getState()!.log(5, `Removed existing build directory: ${buildDir}`);
+      } catch (error: any) {
+        getState()!.log(4, `Error removing build directory: ${error.message}`);
       }
     }
 
@@ -4946,24 +4947,24 @@ router.post(
       cwd: ".",
     });
     const childOutputs = [];
-    child.stdout.on("data", (data) => {
+    child.stdout.on("data", (data: any) => {
       const outMsg = data.toString();
-      getState().log(5, outMsg);
+      getState()!.log(5, outMsg);
       if (data) childOutputs.push(outMsg);
     });
-    child.stderr.on("data", (data) => {
+    child.stderr.on("data", (data: any) => {
       const errMsg = data ? data.toString() : req.__("An error occurred");
-      getState().log(5, errMsg);
+      getState()!.log(5, errMsg);
       childOutputs.push(errMsg);
     });
-    child.on("exit", async (exitCode, signal) => {
+    child.on("exit", async (exitCode: any, signal: any) => {
       if (mode === "prepare" && exitCode === 0) {
         try {
           fs.promises.writeFile(
             path.join(buildDir, "spawnParams.json"),
             JSON.stringify(spawnParams)
           );
-        } catch (error) {
+        } catch (error: any) {
           console.log(`unable to write spawnParams to '${buildDir}'`);
           console.log(error);
         }
@@ -4975,21 +4976,21 @@ router.post(
         const exitMsg = childOutputs.join("\n");
         await fs.promises.writeFile(path.join(outDir, logFile), exitMsg);
         await File.set_xattr_of_existing_file(logFile, outDir, req.user);
-      } catch (error) {
+      } catch (error: any) {
         console.log(`unable to write '${logFile}' to '${outDir}'`);
         console.log(error);
       }
     });
-    child.on("error", (msg) => {
+    child.on("error", (msg: any) => {
       const message = msg.message ? msg.message : msg.code;
       const stack = msg.stack ? msg.stack : "";
       const logFile = "error_logs.txt";
       const errMsg = [message, stack].join("\n");
-      getState().log(5, msg);
+      getState()!.log(5, msg);
       fs.writeFile(
         path.join(outDir, "error_logs.txt"),
         errMsg,
-        async (error) => {
+        async (error: any) => {
           if (error) {
             console.log(`unable to write logFile to '${outDir}'`);
             console.log(error);
@@ -5006,8 +5007,8 @@ router.post(
 router.post(
   "/mobile-app/pull-capacitor-builder",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res) => {
+    const state = getState()!;
     const child = spawn(
       `${process.env.DOCKER_BIN ? `${process.env.DOCKER_BIN}/` : ""}docker`,
       ["pull", `saltcorn/capacitor-builder:${state.scVersion}`],
@@ -5016,19 +5017,19 @@ router.post(
         cwd: ".",
       }
     );
-    child.stdout.on("data", (data) => {
+    child.stdout.on("data", (data: any) => {
       state.log(5, data.toString());
     });
-    child.stderr.on("data", (data) => {
+    child.stderr.on("data", (data: any) => {
       state.log(1, data.toString());
     });
-    child.on("exit", (exitCode, signal) => {
+    child.on("exit", (exitCode: any, signal: any) => {
       state.log(
         2,
         `"pull capacitor-builder exit with code: ${exitCode} and signal: ${signal}`
       );
     });
-    child.on("error", (msg) => {
+    child.on("error", (msg: any) => {
       state.log(1, `pull capacitor-builder error: ${msg}`);
     });
 
@@ -5039,8 +5040,8 @@ router.post(
 router.get(
   "/mobile-app/check-capacitor-builder",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res) => {
+    const state = getState()!;
     const { installed, version } = await imageAvailable(
       "saltcorn/capacitor-builder",
       state.scVersion
@@ -5052,7 +5053,7 @@ router.get(
 router.get(
   "/mobile-app/check-ios-build-tools",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const xcodebuild = await checkXcodebuild();
     const cocoapods = await checkCocoaPods();
     const iosRuntime = await checkIosRuntime();
@@ -5064,28 +5065,28 @@ router.get(
 router.post(
   "/mobile-app/save-config",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     try {
       const newCfg = { ...(req.body || {}) };
       const excludedPlugins = (await Plugin.find())
         .filter(
-          (plugin) =>
+          (plugin: any) =>
             ["base", "sbadmin2"].indexOf(plugin.name) < 0 &&
             (newCfg.includedPlugins || []).indexOf(plugin.name) < 0
         )
-        .map((plugin) => plugin.name);
+        .map((plugin: any) => plugin.name);
       newCfg.excludedPlugins = excludedPlugins;
-      await getState().setConfig("mobile_builder_settings", newCfg);
-      await getState().setConfig("firebase_json_key", newCfg.firebaseJSONKey);
-      await getState().setConfig(
+      await getState()!.setConfig("mobile_builder_settings", newCfg);
+      await getState()!.setConfig("firebase_json_key", newCfg.firebaseJSONKey);
+      await getState()!.setConfig(
         "firebase_app_services",
         newCfg.googleServicesFile
       );
-      await getState().setConfig("apn_signing_key", newCfg.apnSigningKey);
-      await getState().setConfig("apn_signing_key_id", newCfg.apnSigningKeyId);
+      await getState()!.setConfig("apn_signing_key", newCfg.apnSigningKey);
+      await getState()!.setConfig("apn_signing_key_id", newCfg.apnSigningKeyId);
       res.json({ success: true });
-    } catch (e) {
-      getState().log(1, `Unable to save mobile builder config: ${e.message}`);
+    } catch (e: any) {
+      getState()!.log(1, `Unable to save mobile builder config: ${e.message}`);
       res.json({ error: e.message });
     }
   })
@@ -5099,7 +5100,7 @@ router.post(
 router.post(
   "/clear-all",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = clearAllForm(req);
     form.validate(req.body || {});
     //order: page_groups, pages, views, user fields, tableconstraints, fields, table triggers, table history, tables, plugins, config+crashes+nontable triggers, users
@@ -5132,7 +5133,7 @@ router.post(
       await db.deleteWhere("_sc_workflow_steps");
       await db.deleteWhere("_sc_triggers");
       if (db.reset_sequence) await db.reset_sequence("_sc_triggers");
-      await getState().refresh_triggers();
+      await getState()!.refresh_triggers();
     }
     if (form.values.tables) {
       await db.deleteWhere("_sc_model_instances");
@@ -5189,7 +5190,7 @@ router.post(
         // todo configurable list of mandatory plugins
         if (!["base", "sbadmin2"].includes(p.name)) await p.delete();
       }
-      await getState().refresh_plugins();
+      await getState()!.refresh_plugins();
     }
 
     if (form.values.library) {
@@ -5203,10 +5204,10 @@ router.post(
       await db.deleteWhere("_sc_errors");
       await db.deleteWhere("_sc_metadata");
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
-      await getState().refresh();
+      await getState()!.refresh();
       await standardMenu();
     }
-    await getState().refresh();
+    await getState()!.refresh();
 
     if (form.values.users) {
       await db.deleteWhere("_sc_notifications");
@@ -5224,9 +5225,9 @@ router.post(
       });
       if (db.reset_sequence) await db.reset_sequence("users");
       await User.destroy_all_tenant_sessions();
-      req.logout(function (err) {
+      req.logout(function (err: any) {
         if (req.session.destroy)
-          req.session.destroy((err) => {
+          req.session.destroy((err: any) => {
             req.logout(() => {
               res.redirect(`/auth/create_first_user`);
             });
@@ -5245,8 +5246,8 @@ router.post(
         req.__(
           "Deleted all %s",
           Object.entries(form.values)
-            .filter(([k, v]) => v)
-            .map(([k, v]) => k)
+            .filter(([k, v]: any) => v)
+            .map(([k, v]: any) => k)
             .join(", ")
         )
       );
@@ -5258,7 +5259,7 @@ router.post(
 router.get(
   "/dev/logs_viewer",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     return send_admin_page({
       res,
       req,
@@ -5308,7 +5309,7 @@ admin_config_route({
   path: "/dev",
   super_path: "/admin",
   flash: "Development mode settings updated",
-  async get_form(req) {
+  async get_form(req: any) {
     const tenants_set_npm_modules = getRootState().getConfig(
       "tenants_set_npm_modules",
       false
@@ -5331,7 +5332,7 @@ admin_config_route({
     });
   },
   response(form, req, res) {
-    const code_pages = getState().getConfig("function_code_pages", {});
+    const code_pages = getState()!.getConfig("function_code_pages", {});
     send_admin_page({
       res,
       req,
@@ -5364,7 +5365,7 @@ admin_config_route({
             contents: [
               div(
                 Object.keys(code_pages)
-                  .map((k) =>
+                  .map((k: any) =>
                     a(
                       {
                         href: `/admin/edit-codepage/${encodeURIComponent(k)}`,
@@ -5395,7 +5396,7 @@ admin_config_route({
 router.get(
   "/ts-declares",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const ds = [
       `interface Console {
     error(...data: any[]): void;
@@ -5408,7 +5409,7 @@ declare var console: Console;
 function setTimeout(f:Function, timeout?:number)
 declare const page_load_tag: string
 function emit_to_client(message: object, to_user_ids?: number | number[] | null)
-function emitEvent(eventType: ${Trigger.when_options.map((o) => `"${o}"`).join(" | ")}, channel?: string, payload?: any)
+function emitEvent(eventType: ${Trigger.when_options.map((o: any) => `"${o}"`).join(" | ")}, channel?: string, payload?: any)
 async function sleep(milliseconds: number)
 function interpolate(s: string,
   row: Row,
@@ -5451,7 +5452,7 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
 async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | "triggers" | "pages" | "page_groups"|"config"|"npmpkgs"|"userlayouts"|"i18n"|"push_helper"|"ephemeral_config"|"plugins");
 `);
     }
-    const scTypeToTsType = (type, field) => {
+    const scTypeToTsType = (type: any, field: any) => {
       if (field?.is_fkey) {
         if (field.reftype) return scTypeToTsType(field.reftype);
       }
@@ -5467,7 +5468,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       );
     };
 
-    const cachedTableNames = getState().tables.map((t) => `"${t.name}"`);
+    const cachedTableNames = getState()!.tables.map((t: any) => `"${t.name}"`);
 
     const dsPaths = [
       path.join(__dirname, "..", "..", "routes", "tsdecls/lib.es5.d.ts"),
@@ -5497,9 +5498,9 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       const lines = fileContents.split("\n");
       ds.push(
         lines
-          .filter((ln) => !ln.startsWith("import "))
-          .map((ln) => ln.replace(/^export /, ""))
-          .map((ln) =>
+          .filter((ln: any) => !ln.startsWith("import "))
+          .map((ln: any) => ln.replace(/^export /, ""))
+          .map((ln: any) =>
             ln.replace(
               "static findOne(where: Where | Table | number | string): Table | null;",
               `static findOne(where: Where | ${cachedTableNames.join(" | ")} | number): Table | null;`
@@ -5515,8 +5516,8 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       const table = Table.findOne(req.query.table);
       if (table) {
         const tsFields = [];
-        const addTsFields = (table, path, nrecurse) => {
-          table.fields.forEach((f) => {
+        const addTsFields = (table: any, path: any, nrecurse: any) => {
+          table.fields.forEach((f: any) => {
             tsFields.push(`${path}${f.name}: ${scTypeToTsType(f.type, f)};`);
             if (!req.query.nojoins && f.is_fkey && nrecurse >= 0) {
               const reftable = Table.findOne(f.reftable_name);
@@ -5530,7 +5531,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
         ds.push(`declare const row: {
          ${tsFields.join("\n")}
       }`);
-        tsFields.forEach((tsf) => {
+        tsFields.forEach((tsf: any) => {
           ds.push(`declare const ${tsf}`);
         });
       }
@@ -5540,7 +5541,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       if (table) {
         ds.push(`declare const user: {
          ${table.fields
-           .map((f) => `${f.name}: ${scTypeToTsType(f.type, f)};`)
+           .map((f: any) => `${f.name}: ${scTypeToTsType(f.type, f)};`)
            .join("\n")}
          lightDarkMode: "light" | "dark";
          language: string;
@@ -5548,7 +5549,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       }
     }
 
-    for (const [nm, f] of Object.entries(getState().functions)) {
+    for (const [nm, f] of Object.entries(getState()!.functions)) {
       if (nm === "today") {
         ds.push(
           `function today(offset_days?: number | {startOf:  "year" | "quarter" | "month" | "week" | "day" | "hour"} | {endOf:  "year" | "quarter" | "month" | "week" | "day" | "hour"}): Date`
@@ -5564,7 +5565,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
               ? `: ${scTypeToTsType(f.returns)}`
               : "";
           const args = (f["arguments"] || []).map(
-            ({ name, type, tstype, required }) =>
+            ({ name, type, tstype, required }: any) =>
               `${name}${required ? "" : "?"}: ${tstype || scTypeToTsType(type)}`
           );
           ds.push(
@@ -5578,11 +5579,11 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
     }
     let exclude_cp_ids = req.query.codepage
       ? identifiersInCodepage(
-          getState().getConfig("function_code_pages", {})[req.query.codepage]
+          getState()!.getConfig("function_code_pages", {})[req.query.codepage]
         )
       : new Set([]);
 
-    for (const [nm, f] of Object.entries(getState().codepage_context)) {
+    for (const [nm, f] of Object.entries(getState()!.codepage_context)) {
       if (exclude_cp_ids.has(nm)) continue;
       if (f?.constructor?.name === "AsyncFunction")
         ds.push(`declare var ${nm}: AsyncFunction;`);
@@ -5597,14 +5598,14 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       });
       ds.push(
         `declare const Actions: {
-        ${Object.keys(getState().actions)
+        ${Object.keys(getState()!.actions)
           .map(
-            (nm) =>
+            (nm: any) =>
               `["${nm}"]: ({row, table}?:{row?: Row, table?: Table})=>Promise<void>,`
           )
           .join("\n")}
         ${trigger_actions
-          .map((tr) => `["${tr.name}"]: ({row}?:{row?: Row})=>Promise<void>,`)
+          .map((tr: any) => `["${tr.name}"]: ({row}?:{row?: Row})=>Promise<void>,`)
           .join("\n")}
         }`
       );
@@ -5617,9 +5618,9 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
 router.get(
   "/edit-codepage/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const code_pages = getState().getConfig("function_code_pages", {});
+    const code_pages = getState()!.getConfig("function_code_pages", {});
     const existing = code_pages[name] || "";
     const form = new Form({
       action: `/admin/edit-codepage/${encodeURIComponent(name)}`,
@@ -5651,14 +5652,14 @@ router.get(
               ).constructor;
               AsyncFunction(s);
               return true;
-            } catch (e) {
+            } catch (e: any) {
               return e.message;
             }
           },
         },
       ],
     });
-    const function_code_pages_tags = getState().getConfigCopy(
+    const function_code_pages_tags = getState()!.getConfigCopy(
       "function_code_pages_tags",
       {}
     );
@@ -5666,7 +5667,7 @@ router.get(
     const tagMarkup = span(
       { class: "ms-1" },
       "Tags:",
-      (function_code_pages_tags[name] || []).map((tagnm) =>
+      (function_code_pages_tags[name] || []).map((tagnm: any) =>
         span(
           {
             class: ["ms-2 badge bg-secondary"],
@@ -5694,7 +5695,7 @@ router.get(
         div(
           { class: "dropdown-menu", "aria-labelledby": "ddcodetags" },
           tags
-            .map((t) =>
+            .map((t: any) =>
               a(
                 {
                   class: "dropdown-item",
@@ -5757,19 +5758,19 @@ router.get(
 router.post(
   "/edit-codepage/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const code_pages = getState().getConfigCopy("function_code_pages", {});
+    const code_pages = getState()!.getConfigCopy("function_code_pages", {});
 
     const code = (req.body || {}).code;
-    await getState().setConfig("function_code_pages", {
+    await getState()!.setConfig("function_code_pages", {
       ...code_pages,
       [name]: code,
     });
     //allow workers to sync cfg before refresh code pages
     //TODO we need a better way to sync codepage after all workers have updated cfg
     await sleep(500);
-    const err = await getState().refresh_codepages();
+    const err = await getState()!.refresh_codepages();
     if (err)
       res.json({
         success: false,
@@ -5783,13 +5784,13 @@ router.post(
 router.post(
   "/strip-types",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const code = (req.body || {}).code;
-    let stripTypes = (s) => s;
+    let stripTypes = (s: any) => s;
     try {
       const { stripTypeScriptTypes } = require("module");
       if (stripTypeScriptTypes) stripTypes = stripTypeScriptTypes;
-    } catch (e) {
+    } catch (e: any) {
       //ignore
     }
     try {
@@ -5798,7 +5799,7 @@ router.post(
         code: stripTypes(`async () =>{${code}
 }`),
       });
-    } catch (error) {
+    } catch (error: any) {
       res.json({ success: false, error: error.message });
     }
   })
@@ -5807,12 +5808,12 @@ router.post(
 router.post(
   "/delete-codepage/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const code_pages = getState().getConfigCopy("function_code_pages", {});
+    const code_pages = getState()!.getConfigCopy("function_code_pages", {});
     delete code_pages[name];
-    await getState().setConfig("function_code_pages", code_pages);
-    await getState().refresh_codepages();
+    await getState()!.setConfig("function_code_pages", code_pages);
+    await getState()!.refresh_codepages();
 
     res.json({ goto: `/admin/dev` });
   })
@@ -5820,9 +5821,9 @@ router.post(
 router.post(
   "/add-codepage-tag/:cpname/:tagnm",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { cpname, tagnm } = req.params;
-    const function_code_pages_tags = getState().getConfigCopy(
+    const function_code_pages_tags = getState()!.getConfigCopy(
       "function_code_pages_tags",
       {}
     );
@@ -5831,7 +5832,7 @@ router.post(
       ...(function_code_pages_tags[cpname] || []),
       tagnm,
     ];
-    await getState().setConfig(
+    await getState()!.setConfig(
       "function_code_pages_tags",
       function_code_pages_tags
     );
@@ -5842,18 +5843,18 @@ router.post(
 router.post(
   "/rm-codepage-tag/:cpname/:tagnm",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { cpname, tagnm } = req.params;
-    const function_code_pages_tags = getState().getConfigCopy(
+    const function_code_pages_tags = getState()!.getConfigCopy(
       "function_code_pages_tags",
       {}
     );
 
     function_code_pages_tags[cpname] = (
       function_code_pages_tags[cpname] || []
-    ).filter((t) => t != tagnm);
+    ).filter((t: any) => t != tagnm);
 
-    await getState().setConfig(
+    await getState()!.setConfig(
       "function_code_pages_tags",
       function_code_pages_tags
     );
@@ -5970,7 +5971,7 @@ admin_config_route({
   setTimeout(fn, 0);
   const mainForm = document.querySelector("form[action='/admin/notifications']");
   if (mainForm) {
-    mainForm.addEventListener("change", (e) => {
+    mainForm.addEventListener("change", (e: any) => {
       fn();
     });
   }`)
@@ -5984,7 +5985,7 @@ admin_config_route({
 router.get(
   "/xsstarget",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { x } = req.query;
 
     res.sendWrap(`Testing`, {

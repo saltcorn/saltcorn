@@ -29,6 +29,7 @@ import { isAdmin, error_catcher, isAdminOrHasConfigMinRole } from "./utils.js";
 import moment from "moment";
 import { getState } from "@saltcorn/data/db/state";
 import { comparingCaseInsensitive } from "@saltcorn/data/utils";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -37,7 +38,7 @@ import { comparingCaseInsensitive } from "@saltcorn/data/utils";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 
 // export our router to be mounted by the parent application
 export default router;
@@ -55,28 +56,28 @@ router.get(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { tableName, id } = req.params;
     const table = Table.findOne({ name: tableName });
 
     const fields = table.getFields();
-    var tfields = fields.map((f) => ({ label: f.label, key: f.listKey }));
+    var tfields = fields.map((f: any) => ({ label: f.label, key: f.listKey }));
     const pk_name = table.pk_name;
     tfields.push({
       label: req.__("Version"),
-      key: (r) => r._version,
+      key: (r: any) => r._version,
     });
     tfields.push({
       label: req.__("Saved"),
-      key: (r) => moment(r._time).fromNow(),
+      key: (r: any) => moment(r._time).fromNow(),
     });
     tfields.push({
       label: req.__("By user ID"),
-      key: (r) => r._userid,
+      key: (r: any) => r._userid,
     });
     tfields.push({
       label: req.__("Restore"),
-      key: (r) =>
+      key: (r: any) =>
         post_btn(
           `/list/_restore/${table.name}/${r[pk_name]}/${r._version}`,
           req.__("Restore"),
@@ -106,7 +107,7 @@ router.post(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { tableName, id, _version } = req.params;
     const table = Table.findOne({ name: tableName });
     await db.withTransaction(async () => {
@@ -122,14 +123,14 @@ router.post(
  * @param field
  * @returns {{name, title}}
  */
-const typeToGridType = (t, field) => {
+const typeToGridType = (t: any, field: any) => {
   const jsgField = { field: field.name, title: field.label, editor: true };
   if (t.name === "String" && field.attributes && field.attributes.options) {
     jsgField.editor = "list";
 
     const values = Array.isArray(field.attributes.options)
       ? field.attributes.options
-      : field.attributes.options.split(",").map((o) => o.trim());
+      : field.attributes.options.split(",").map((o: any) => o.trim());
     if (!field.required) values.unshift("");
 
     jsgField.editorParams = { values };
@@ -139,7 +140,7 @@ const typeToGridType = (t, field) => {
     const valuesObj = {};
     field.options
       .sort(comparingCaseInsensitive("label"))
-      .forEach(({ label, value }) => {
+      .forEach(({ label, value }: any) => {
         //en space. tabulator workaround
         const l = label === "" ? "\u2002" : label;
         values.push({ label: l, value });
@@ -211,13 +212,13 @@ const typeToGridType = (t, field) => {
  * @param {string} tname
  * @returns {string}
  */
-const versionsField = (tname) => `
+const versionsField = (tname: any) => `
 var VersionsField = function(config) {
   jsGrid.Field.call(this, config);
 };
 VersionsField.prototype = new jsGrid.Field({
   align: "right",
-  itemTemplate: function(value, item) {
+  itemTemplate: function (value: any, item: any) {
       if(value) {
         //return +value+1;
         return '<a href="/list/_versions/${tname}/'+item.id+'">'+
@@ -230,9 +231,9 @@ jsGrid.fields.versions = VersionsField;
 `;
 // end of versionsField
 
-const arrangeIdFirst = (flds) => {
-  const noId = flds.filter((f) => !f.primary_key);
-  const id = flds.find((f) => f.primary_key);
+const arrangeIdFirst = (flds: any) => {
+  const noId = flds.filter((f: any) => !f.primary_key);
+  const id = flds.find((f: any) => f.primary_key);
   if (id) return [id, ...noId];
   else return flds;
 };
@@ -250,7 +251,7 @@ router.get(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { tname } = req.params;
     const table = Table.findOne({ name: tname });
     if (!table) {
@@ -266,13 +267,13 @@ router.get(
       if (f.type === "File") {
         //add existing values in folders
         const dvs = await f.distinct_values();
-        dvs.forEach((dv) => {
+        dvs.forEach((dv: any) => {
           if (dv?.value?.includes("/")) f.options.push(dv);
         });
       }
     }
 
-    const jsfields = arrangeIdFirst(fields).map((f) =>
+    const jsfields = arrangeIdFirst(fields).map((f: any) =>
       typeToGridType(f.type, f)
     );
     if (table.versioned) {
@@ -293,7 +294,7 @@ router.get(
       frozen: true,
       cellClick: "__delete_tabulator_row",
     });
-    const isDark = getState().getLightDarkMode(req.user) === "dark";
+    const isDark = getState()!.getLightDarkMode(req.user) === "dark";
     const pkNm = table.pk_name;
     res.sendWrap(
       {
@@ -398,7 +399,7 @@ router.get(
                       },
                       "None"
                     ),
-                    fields.map((f) =>
+                    fields.map((f: any) =>
                       div(
                         { class: "form-check" },
                         input({
@@ -511,7 +512,7 @@ router.get(
                     window.tabulator_table.setPageSize(ps);
                 }, 150);
               });
-              window.allnonecols= (do_show, e) =>{
+              window.allnonecols= (do_show: any, e: any) =>{
                 columns.forEach(col=>{
                   if(col.frozen && !do_show) return;
                   if (do_show) window.tabulator_table.showColumn(col.field);
@@ -554,7 +555,7 @@ router.get(
               div({
                 id: "jsGrid",
                 class:
-                  getState().getLightDarkMode(req.user) === "dark"
+                  getState()!.getLightDarkMode(req.user) === "dark"
                     ? "table-dark"
                     : undefined,
               })

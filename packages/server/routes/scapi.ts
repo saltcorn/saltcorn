@@ -25,6 +25,7 @@ import { stateFieldsToWhere, readState } from "@saltcorn/data/plugin-helper";
 import { getState, process_send, add_tenant } from "@saltcorn/data/db/state";
 import db from "@saltcorn/data/db";
 import { text } from "@saltcorn/markup/tags";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -33,7 +34,7 @@ import { text } from "@saltcorn/markup/tags";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 // Reject sessions/JWTs minted in another tenant before any data is served.
@@ -46,7 +47,7 @@ router.use(rejectTenantDrift);
  * @param {object} user user based on access token
  * @returns {boolean}
  */
-function accessAllowedRead(req, user) {
+function accessAllowedRead(req: any, user: any) {
   const role =
     req.user && req.user.id
       ? req.user.role_id
@@ -70,11 +71,11 @@ function accessAllowedRead(req, user) {
  */
 router.get(
   "/sc_tables/",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
           const tables = await Table.find({});
 
@@ -98,11 +99,11 @@ router.get(
  */
 router.get(
   "/sc_views/",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
           const views = await View.find({}, { cached: true });
 
@@ -126,11 +127,11 @@ router.get(
  */
 router.get(
   "/sc_pages/",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
           const pages = await Page.find({});
 
@@ -154,11 +155,11 @@ router.get(
  */
 router.get(
   "/sc_files/",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
           const files = await File.find({});
 
@@ -182,11 +183,11 @@ router.get(
  */
 router.get(
   "/sc_triggers/",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
           const triggers = Trigger.find({});
 
@@ -210,11 +211,11 @@ router.get(
  */
 router.get(
   "/sc_roles/",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
           const roles = await Role.find({});
 
@@ -238,11 +239,11 @@ router.get(
  */
 router.get(
   "/sc_tenants/",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
           const tenants = await Tenant.getAllTenants();
 
@@ -266,11 +267,11 @@ router.get(
  */
 router.get(
   "/sc_plugins/",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
           const plugins = await Plugin.find({});
 
@@ -294,11 +295,11 @@ router.get(
  */
 router.get(
   "/sc_config/",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
           const configVars = await Config.getAllConfig();
 
@@ -313,13 +314,13 @@ router.get(
 
 router.get(
   "/reload",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
-          await getState().refresh_plugins();
+          await getState()!.refresh_plugins();
           res.json({ success: true });
         } else {
           res.status(401).json({ error: req.__("Not authorized") });
@@ -331,11 +332,11 @@ router.get(
 
 router.post(
   "/reload",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         if (accessAllowedRead(req, user)) {
           const { tenant, new_tenant } = req.body;
           if (new_tenant) {
@@ -347,9 +348,9 @@ router.post(
           }
           if (tenant) {
             await db.runWithTenant(tenant, async () => {
-              await getState().refresh_plugins();
+              await getState()!.refresh_plugins();
             });
-          } else await getState().refresh_plugins();
+          } else await getState()!.refresh_plugins();
           res.json({ success: true });
         } else {
           res.status(401).json({ error: req.__("Not authorized") });
@@ -361,14 +362,14 @@ router.post(
 
 router.post(
   "/run-view-route/:viewname/:route",
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
       "api-bearer",
       { session: false },
-      async function (err, user, info) {
+      async function (err: any, user: any, info: any) {
         const { viewname, route } = req.params;
         const role = user?.id ? user.role_id : 100;
-        const state = getState();
+        const state = getState()!;
         state.log(
           3,
           `Route /view/${viewname} viewroute ${route} user=${req.user?.id}${

@@ -36,7 +36,7 @@ const buildFields = (
   formOptions: Record<string, any[]>,
   req: Req
 ) => {
-  return Object.entries(formOptions).map(([type, list]) => {
+  return Object.entries(formOptions).map(([type, list]: any) => {
     return div(
       { class: "form-group row" },
       div({ class: "col-sm-2" }, label("type")),
@@ -49,7 +49,7 @@ const buildFields = (
             multiple: true,
             size: 20,
           },
-          list.map((entry) => {
+          list.map((entry: any) => {
             return option({ value: entry.id, label: entry.name });
           })
         )

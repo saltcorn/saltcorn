@@ -45,7 +45,7 @@ const get_sys_info = async () => {
   const disks = await si.fsSize();
   let size = 0;
   let used = 0;
-  disks.forEach((d) => {
+  disks.forEach((d: any) => {
     if (d && d.used && d.size) {
       size += d.size;
       used += d.used;
@@ -152,7 +152,7 @@ const isAdminOrHasConfigMinRole =
       (req.user.role_id === 1 ||
         (Array.isArray(cfg)
           ? cfg.some(
-              (one_cfg) =>
+              (one_cfg: any) =>
                 getState()!.getConfig(one_cfg, 1) >= req.user!.role_id
             )
           : getState()!.getConfig(cfg, 1) >= req.user.role_id)) &&
@@ -186,7 +186,7 @@ const setLanguage = (req: Req, res: Res, state?: any) => {
   }
   const rtlLanguages = ["ar", "he", "fa", "ur", "yi"];
   const currentLocale = req.getLocale();
-  req.isRTL = rtlLanguages.some((lang) => currentLocale.startsWith(lang));
+  req.isRTL = rtlLanguages.some((lang: any) => currentLocale.startsWith(lang));
   if (req.user) Object.freeze(req.user);
   set_custom_http_headers(res, req, state);
 };
@@ -196,7 +196,7 @@ const applyUserLocale = (req: Req, res: Res, next: any) => {
     if (req.user.language) {
       req.setLocale(req.user.language);
       const rtlLanguages = ["ar", "he", "fa", "ur", "yi"];
-      req.isRTL = rtlLanguages.some((lang) =>
+      req.isRTL = rtlLanguages.some((lang: any) =>
         req.user!.language.startsWith(lang)
       );
     }
@@ -231,7 +231,7 @@ const set_custom_http_headers = (res: Res, req: Req, state?: any) => {
         validateHeaderName(k);
         validateHeaderValue(k, val);
         res.header(k, val);
-      } catch (e) {
+      } catch (e: any) {
         Crash.create(e, { url: "/", headers: {} });
       }
     }
@@ -399,7 +399,7 @@ const escape_param = (val: any): any => {
   // or inject into, the attribute context.
   if (val && typeof val === "object") {
     const out: Record<string, any> = {};
-    Object.entries(val).forEach(([k, v]) => {
+    Object.entries(val).forEach(([k, v]: any) => {
       if (is_safe_attr_key(k)) out[k] = escape_param(v);
     });
     return out;
@@ -437,11 +437,11 @@ const error_catcher =
     });
 
     //escape all query arguments
-    Object.entries(request.query || {}).forEach(([nm, val]) => {
+    Object.entries(request.query || {}).forEach(([nm, val]: any) => {
       request.query[nm] = escape_param(val);
     });
     //escape all params
-    Object.entries(request.params || {}).forEach(([nm, val]) => {
+    Object.entries(request.params || {}).forEach(([nm, val]: any) => {
       request.params[nm] = escape_param(val);
     });
 
@@ -560,7 +560,7 @@ const safe_redirect = (
 // TBD Add IPv6 support
 const is_ip_address = (hostname: string) => {
   if (typeof hostname !== "string") return false;
-  return hostname.split(".").every((s) => +s >= 0 && +s <= 255);
+  return hostname.split(".").every((s: any) => +s >= 0 && +s <= 255);
 };
 
 const tenant_letsencrypt_name = async (subdomain: string) => {
@@ -607,14 +607,14 @@ const admin_config_route = ({
   router.get(
     path,
     isAdmin,
-    error_catcher(async (req, res) => {
+    error_catcher(async (req: Req, res: Res) => {
       response(await getTheForm(req), req, res);
     })
   );
   router.post(
     path,
     isAdmin,
-    error_catcher(async (req, res) => {
+    error_catcher(async (req: Req, res: Res) => {
       const form = await getTheForm(req);
       form.validate(req.body || {});
       if (form.hasErrors) {
@@ -762,7 +762,7 @@ const setRole = async (req: Req, res: Res, model: any) => {
   await model.update(+id, { min_role: role });
   const page = model.findOne({ id });
   const roles = await User.get_roles();
-  const roleRow = roles.find((r) => r.id === +role);
+  const roleRow = roles.find((r: any) => r.id === +role);
   const message =
     roleRow && page
       ? req.__(`Minimum role for %s updated to %s`, page.name, roleRow.role)

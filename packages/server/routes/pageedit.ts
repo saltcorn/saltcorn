@@ -48,6 +48,7 @@ import { getActionConfigFields } from "@saltcorn/data/plugin-helper";
 import Library from "@saltcorn/data/models/library";
 import path from "path";
 import { promises as fsp } from "fs";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -56,7 +57,7 @@ import { promises as fsp } from "fs";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -64,10 +65,10 @@ export default router;
  * @param {object} req
  * @returns {Promise<Form>}
  */
-const pagePropertiesForm = async (req, isNew) => {
+const pagePropertiesForm = async (req: any, isNew: any) => {
   const roles = await User.get_roles();
-  const pages = (await Page.find()).map((p) => p.name);
-  const groups = (await PageGroup.find()).map((g) => g.name);
+  const pages = (await Page.find()).map((p: any) => p.name);
+  const groups = (await PageGroup.find()).map((g: any) => g.name);
   const htmlFiles = await File.find(
     {
       mime_super: "text",
@@ -76,7 +77,7 @@ const pagePropertiesForm = async (req, isNew) => {
     },
     { recursive: true }
   );
-  const htmlOptions = await asyncMap(htmlFiles, async (f) => {
+  const htmlOptions = await asyncMap(htmlFiles, async (f: any) => {
     return {
       label: path.join(f.current_folder, f.filename),
       value: File.absPathToServePath(f.location),
@@ -120,7 +121,7 @@ const pagePropertiesForm = async (req, isNew) => {
         label: req.__("Minimum role"),
         sublabel: req.__("User role required to access page"),
         input_type: "select",
-        options: roles.map((r) => ({ value: r.id, label: r.role })),
+        options: roles.map((r: any) => ({ value: r.id, label: r.role })),
         help: {
           topic: "Role to access",
           context: {},
@@ -169,26 +170,26 @@ const pagePropertiesForm = async (req, isNew) => {
  * @param {object} context
  * @returns {Promise<object>}
  */
-const pageBuilderData = async (req, context) => {
+const pageBuilderData = async (req: any, context: any) => {
   const views = await View.find();
   const pages = await Page.find();
-  const page_groups = (await PageGroup.find()).map((g) => ({ name: g.name }));
+  const page_groups = (await PageGroup.find()).map((g: any) => ({ name: g.name }));
   const images = await File.find({ mime_super: "image" });
-  images.forEach((im) => (im.location = im.field_value));
+  images.forEach((im: any) => (im.location = im.field_value));
   const roles = await User.get_roles();
-  const stateActions = getState().actions;
+  const stateActions = getState()!.actions;
   const actions = [
     "GoBack",
     ...Object.entries(stateActions)
       .filter(
-        ([k, v]) => !v.requireRow && !v.disableInBuilder && !v.disableIf?.()
+        ([k, v]: any) => !v.requireRow && !v.disableInBuilder && !v.disableIf?.()
       )
-      .map(([k, v]) => k),
+      .map(([k, v]: any) => k),
   ];
   const triggers = await Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
   });
-  triggers.forEach((tr) => {
+  triggers.forEach((tr: any) => {
     actions.push(tr.name);
   });
   const triggerActions = Trigger.trigger_actions({
@@ -228,7 +229,7 @@ const pageBuilderData = async (req, context) => {
     builtInLabel: "Page Actions",
     builtIns: ["GoBack"],
   });
-  const library = (await Library.find({})).filter((l) => l.suitableFor("page"));
+  const library = (await Library.find({})).filter((l: any) => l.suitableFor("page"));
   const fixed_state_fields = {};
   for (const view of views) {
     fixed_state_fields[view.name] = [];
@@ -271,18 +272,18 @@ const pageBuilderData = async (req, context) => {
   }
   const { on_done_redirect, ...current_filter_state } = req.query;
   //console.log(fixed_state_fields.ListTasks);
-  const icons = getState().icons;
+  const icons = getState()!.icons;
   return {
     isRTL: req.isRTL,
     translations:
       req.getLocale() === "en" ? {} : req.getCatalog(req.getLocale()) || {},
-    views: views.map((v) => v.select_option),
+    views: views.map((v: any) => v.select_option),
     images,
     pages,
     page_groups,
     current_filter_state,
     actions: actionsNotRequiringRow,
-    has_copilot_generate: !!getState().functions.copilot_generate_layout,
+    has_copilot_generate: !!getState()!.functions.copilot_generate_layout,
     builtInActions: ["GoBack"],
     triggerActions,
     library,
@@ -297,9 +298,9 @@ const pageBuilderData = async (req, context) => {
     icons,
     fixed_state_fields,
     next_button_label: "Done",
-    fonts: getState().fonts,
+    fonts: getState()!.fonts,
     tables: [],
-    keyframes: getState().keyframes,
+    keyframes: getState()!.keyframes,
   };
 };
 
@@ -313,7 +314,7 @@ const pageBuilderData = async (req, context) => {
  * @param {any} req - request
  * @returns {Form} return Form
  */
-const getRootPageForm = (pages, pageGroups, roles, req) => {
+const getRootPageForm = (pages: any, pageGroups: any, roles: any, req: any) => {
   const form = new Form({
     action: "/pageedit/set_root_page",
     noSubmitButton: true,
@@ -322,15 +323,15 @@ const getRootPageForm = (pages, pageGroups, roles, req) => {
       "The home page is the page that is served when the user visits the home location (/). This can be set for each user role."
     ),
     fields: roles.map(
-      (r) =>
+      (r: any) =>
         new Field({
           name: r.role,
           label: r.role,
           input_type: "select",
           options: [
             r.id === 1 ? { label: req.__("Admin dashboard"), value: "" } : "",
-            ...pages.filter((p) => p.min_role >= r.id).map((p) => p.name),
-            ...pageGroups.map((g) => ({
+            ...pages.filter((p: any) => p.min_role >= r.id).map((p: any) => p.name),
+            ...pageGroups.map((g: any) => ({
               label: `${g.name} (group)`,
               value: g.name,
             })),
@@ -346,11 +347,11 @@ const getRootPageForm = (pages, pageGroups, roles, req) => {
         })
     ),
   });
-  const modernCfg = getState().getConfig("home_page_by_role", false);
+  const modernCfg = getState()!.getConfig("home_page_by_role", false);
   for (const role of roles) {
     form.values[role.role] = modernCfg && modernCfg[role.id];
     if (typeof form.values[role.role] !== "string")
-      form.values[role.role] = getState().getConfig(role.role + "_home", "");
+      form.values[role.role] = getState()!.getConfig(role.role + "_home", "");
   }
   return form;
 };
@@ -364,7 +365,7 @@ const getRootPageForm = (pages, pageGroups, roles, req) => {
 router.get(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const pageq = {};
     let filterOnTag;
 
@@ -373,7 +374,7 @@ router.get(
         tag_id: +req.query._tag,
         not: { page_id: null },
       });
-      pageq.id = { in: tagEntries.map((te) => te.page_id).filter(Boolean) };
+      pageq.id = { in: tagEntries.map((te: any) => te.page_id).filter(Boolean) };
       filterOnTag = await Tag.findOne({ id: +req.query._tag });
     }
     const pages = await Page.find(pageq, { orderBy: "name", nocase: true });
@@ -446,7 +447,7 @@ router.get(
  * @param {*} page
  * @returns {*}
  */
-const wrap = (contents, noCard, req, page) => ({
+const wrap = (contents: any, noCard: any, req: any, page: any) => ({
   above: [
     {
       type: "breadcrumbs",
@@ -477,7 +478,7 @@ const wrap = (contents, noCard, req, page) => ({
 router.get(
   "/edit-properties/:pagename",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { pagename } = req.params;
     const page = Page.findOne({ name: pagename });
     if (!page) {
@@ -508,7 +509,7 @@ router.get(
 router.get(
   "/new",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await pagePropertiesForm(req, true);
     res.sendWrap(
       req.__(`Page attributes`),
@@ -526,7 +527,7 @@ router.get(
 router.post(
   "/edit-properties",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await pagePropertiesForm(req, !(req.body || {}).id);
     form.hidden("id");
     form.validate(req.body || {});
@@ -557,7 +558,7 @@ router.post(
           pageRow.layout = {};
         }
         await Page.update(+id, pageRow);
-        await getState().refresh_pages();
+        await getState()!.refresh_pages();
         Trigger.emitEvent("AppChange", `Page ${dbPage.name}`, req.user, {
           entity_type: "Page",
           entity_name: dbPage.name,
@@ -576,7 +577,7 @@ router.post(
         if (!pageRow.fixed_states) pageRow.fixed_states = {};
         pageRow.name = pageRow.name.trim();
         await Page.create(pageRow);
-        await getState().refresh_pages();
+        await getState()!.refresh_pages();
         Trigger.emitEvent("AppChange", `Page ${pageRow.name}`, req.user, {
           entity_type: "Page",
           entity_name: pageRow.name,
@@ -598,7 +599,7 @@ router.post(
  * @param {*} res
  * @param {*} page
  */
-const getEditNormalPage = async (req, res, page) => {
+const getEditNormalPage = async (req: Req, res: Res, page: any) => {
   // set fixed states in page directly for legacy builds
   traverseSync(page.layout, {
     view(s) {
@@ -631,7 +632,7 @@ const getEditNormalPage = async (req, res, page) => {
  * @param {*} res
  * @param {*} page
  */
-const getEditPageWithHtmlFile = async (req, res, page) => {
+const getEditPageWithHtmlFile = async (req: Req, res: Res, page: any) => {
   const htmlFile = page.html_file;
   const iframeId = "page_preview_iframe";
   const updateBttnId = "addnUpdBtn";
@@ -714,7 +715,7 @@ const getEditPageWithHtmlFile = async (req, res, page) => {
 router.get(
   "/edit/:pagename",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { pagename } = req.params;
     const [page] = await Page.find({ name: pagename });
     if (!page) {
@@ -736,7 +737,7 @@ router.get(
 router.post(
   "/edit/:pagename",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { pagename } = req.params;
 
     let redirectTarget =
@@ -752,7 +753,7 @@ router.post(
       await Page.update(page.id, {
         layout: decodeURIComponent((req.body || {}).layout),
       });
-      await getState().refresh_pages();
+      await getState()!.refresh_pages();
       Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
         entity_type: "Page",
         entity_name: page.name,
@@ -773,8 +774,8 @@ router.post(
           req.flash("success", req.__(`Page %s saved`, pagename));
           res.redirect(redirectTarget);
         } else res.json({ okay: true });
-      } catch (error) {
-        getState().log(2, `POST /edit/${pagename}: '${error.message}'`);
+      } catch (error: any) {
+        getState()!.log(2, `POST /edit/${pagename}: '${error.message}'`);
         req.flash(
           "error",
           `${req.__("Error")}: ${error.message || req.__("An error occurred")}`
@@ -783,11 +784,11 @@ router.post(
         else res.json({ error: error.message });
       }
     } else {
-      getState().log(2, `POST /edit/${pagename}: '${req.body || {}}'`);
+      getState()!.log(2, `POST /edit/${pagename}: '${req.body || {}}'`);
       req.flash("error", req.__(`Error processing page`));
       res.redirect(redirectTarget);
     }
-    getState().log(5, `POST /edit/${pagename}: Success`);
+    getState()!.log(5, `POST /edit/${pagename}: Success`);
   })
 );
 
@@ -800,13 +801,13 @@ router.post(
 router.post(
   "/savebuilder/:id",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
     if (id && (req.body || {}).layout) {
       await Page.update(+id, { layout: (req.body || {}).layout });
       const page = await Page.findOne({ id });
-      await getState().refresh_pages();
+      await getState()!.refresh_pages();
 
       Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
         entity_type: "Page",
@@ -824,7 +825,7 @@ router.post(
 router.get(
   "/getlayout/:id",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
     if (id) {
@@ -849,7 +850,7 @@ router.get(
 router.post(
   "/delete/:id",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const page = await Page.findOne({ id });
     Trigger.emitEvent("AppChange", `Page ${page.name}`, req.user, {
@@ -859,7 +860,7 @@ router.post(
     await db.withTransaction(async () => {
       await page.delete();
     });
-    await getState().refresh_pages();
+    await getState()!.refresh_pages();
     req.flash("success", req.__(`Page deleted`));
     res.redirect(`/pageedit`);
   })
@@ -874,7 +875,7 @@ router.post(
 router.post(
   "/set_root_page",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const pages = await Page.find({}, { orderBy: "name" });
     const pageGroups = await PageGroup.find({}, { orderBy: "name" });
     const roles = await User.get_roles();
@@ -882,11 +883,11 @@ router.post(
     const valres = form.validate(req.body || {});
     if (valres.success) {
       const home_page_by_role =
-        getState().getConfigCopy("home_page_by_role", {}) || {};
+        getState()!.getConfigCopy("home_page_by_role", {}) || {};
       for (const role of roles) {
         home_page_by_role[role.id] = valres.success[role.role];
       }
-      await getState().setConfig("home_page_by_role", home_page_by_role);
+      await getState()!.setConfig("home_page_by_role", home_page_by_role);
       req.flash("success", req.__(`Root pages updated`));
     } else req.flash("danger", req.__(`Error reading pages`));
     res.redirect(`/pageedit`);
@@ -902,7 +903,7 @@ router.post(
 router.post(
   "/add-to-menu/:id",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const page = Page.findOne({ id });
     await add_to_menu({
@@ -932,7 +933,7 @@ router.post(
 router.post(
   "/clone/:id",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const page = await Page.findOne({ id });
     const newpage = await page.clone();
@@ -940,7 +941,7 @@ router.post(
       entity_type: "Page",
       entity_name: newpage.name,
     });
-    await getState().refresh_pages();
+    await getState()!.refresh_pages();
     req.flash(
       "success",
       req.__("Page %s duplicated as %s", page.name, newpage.name)
@@ -958,7 +959,7 @@ router.post(
 router.post(
   "/setrole/:id",
   isAdminOrHasConfigMinRole("min_role_edit_pages"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     await setRole(req, res, Page);
   })
 );

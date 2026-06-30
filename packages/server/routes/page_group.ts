@@ -6,8 +6,9 @@ import { send_infoarch_page } from "../markup/admin.js";
 import { getState } from "@saltcorn/data/db/state";
 import { a, div, i, p } from "@saltcorn/markup/tags";
 import { renderForm, link, post_delete_btn, mkTable } from "@saltcorn/markup";
+import { Req, Res } from "@saltcorn/types/base_types";
 
-const router = new Router();
+const router = Router();
 export default router;
 
 const deviceTypes = [
@@ -19,8 +20,8 @@ const deviceTypes = [
   "web",
 ];
 
-const deviceForm = (req, deviceValidator, device) => {
-  const sizeValidator = (v) => {
+const deviceForm = (req: any, deviceValidator: any, device: any) => {
+  const sizeValidator = (v: any) => {
     const n = +v;
     if (isNaN(n)) return req.__("Not a number");
     if (n < 0) return req.__("Must be positive");
@@ -78,17 +79,17 @@ const deviceForm = (req, deviceValidator, device) => {
 };
 
 const loadDeviceConfigs = () => {
-  const cfg = getState().getConfig("user_agent_screen_infos", {});
+  const cfg = getState()!.getConfig("user_agent_screen_infos", {});
   const deviceConfigs = deviceTypes
-    .filter((device) => cfg[device])
-    .map((device) => ({
+    .filter((device: any) => cfg[device])
+    .map((device: any) => ({
       device,
       ...cfg[device],
     }));
   return deviceConfigs;
 };
 
-const pageGroupSettingsForm = (req) => {
+const pageGroupSettingsForm = (req: any) => {
   return new Form({
     action: "/page_group/settings/config",
     noSubmitButton: true,
@@ -121,10 +122,10 @@ const pageGroupSettingsForm = (req) => {
 router.get(
   "/settings",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const deviceConfigs = loadDeviceConfigs();
     const pgForm = pageGroupSettingsForm(req);
-    pgForm.values.missing_screen_info_strategy = getState().getConfig(
+    pgForm.values.missing_screen_info_strategy = getState()!.getConfig(
       "missing_screen_info_strategy",
       "guess_from_user_agent"
     );
@@ -147,19 +148,19 @@ router.get(
               [
                 {
                   label: "Device",
-                  key: (r) =>
+                  key: (r: any) =>
                     link(
                       `/page_group/settings/edit-device/${r.device}`,
                       r.device
                     ),
                 },
-                { label: "width", key: (r) => r.width },
-                { label: "height", key: (r) => r.height },
-                { label: "innerWidth", key: (r) => r.innerWidth },
-                { label: "innerHeight", key: (r) => r.innerHeight },
+                { label: "width", key: (r: any) => r.width },
+                { label: "height", key: (r: any) => r.height },
+                { label: "innerWidth", key: (r: any) => r.innerWidth },
+                { label: "innerHeight", key: (r: any) => r.innerHeight },
                 {
                   label: req.__("Delete"),
-                  key: (r) =>
+                  key: (r: any) =>
                     post_delete_btn(
                       `/page_group/settings/remove-device/${r.device}`,
                       req,
@@ -198,7 +199,7 @@ router.get(
 router.get(
   "/settings/add-device",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     send_infoarch_page({
       res,
       req,
@@ -223,9 +224,9 @@ router.get(
 router.post(
   "/settings/add-device",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const cfg = getState().getConfig("user_agent_screen_infos", {});
-    const validator = (v) => {
+  error_catcher(async (req: Req, res: Res) => {
+    const cfg = getState()!.getConfig("user_agent_screen_infos", {});
+    const validator = (v: any) => {
       if (cfg[v]) return req.__("Device already exists");
     };
     const form = deviceForm(req, validator);
@@ -247,7 +248,7 @@ router.post(
         ...cfg,
         [device]: { width, height, innerWidth, innerHeight },
       };
-      await getState().setConfig("user_agent_screen_infos", newCfg);
+      await getState()!.setConfig("user_agent_screen_infos", newCfg);
       req.flash("success", req.__("Screen info added"));
       res.redirect("/page_group/settings");
     }
@@ -260,12 +261,12 @@ router.post(
 router.post(
   "/settings/remove-device/:device",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { device } = req.params;
-    const cfg = getState().getConfig("user_agent_screen_infos", {});
+    const cfg = getState()!.getConfig("user_agent_screen_infos", {});
     const newCfg = { ...cfg };
     delete newCfg[device];
-    await getState().setConfig("user_agent_screen_infos", newCfg);
+    await getState()!.setConfig("user_agent_screen_infos", newCfg);
     req.flash("success", req.__("Screen info removed"));
     res.redirect("/page_group/settings");
   })
@@ -277,9 +278,9 @@ router.post(
 router.get(
   "/settings/edit-device/:device",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { device } = req.params;
-    const cfg = getState().getConfig("user_agent_screen_infos", {});
+    const cfg = getState()!.getConfig("user_agent_screen_infos", {});
     const deviceCfg = cfg[device];
     const form = deviceForm(req, () => {}, device);
     form.values = { device, ...deviceCfg };
@@ -302,10 +303,10 @@ router.get(
 router.post(
   "/settings/edit-device/:device",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { device } = req.params;
-    const cfg = getState().getConfig("user_agent_screen_infos", {});
-    const validator = (v) => {
+    const cfg = getState()!.getConfig("user_agent_screen_infos", {});
+    const validator = (v: any) => {
       if (cfg[v] && v !== device) return req.__("Device already exists");
     };
     const form = deviceForm(req, validator, device);
@@ -330,7 +331,7 @@ router.post(
         [form.values.device]: { width, height, innerWidth, innerHeight },
       };
       if (device !== form.values.device) delete newCfg[device];
-      await getState().setConfig("user_agent_screen_infos", newCfg);
+      await getState()!.setConfig("user_agent_screen_infos", newCfg);
       req.flash("success", req.__("Screen info saved"));
       res.redirect("/page_group/settings");
     }
@@ -344,7 +345,7 @@ router.post(
 router.post(
   "/settings/config",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = pageGroupSettingsForm(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -360,7 +361,7 @@ router.post(
       });
     } else {
       const { missing_screen_info_strategy } = form.values;
-      await getState().setConfig(
+      await getState()!.setConfig(
         "missing_screen_info_strategy",
         missing_screen_info_strategy
       );

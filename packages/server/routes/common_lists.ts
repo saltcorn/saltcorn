@@ -24,6 +24,7 @@ import {
   nbsp,
   button,
 } from "@saltcorn/markup/tags";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @param {string} col
@@ -41,7 +42,7 @@ import {
  * @param {object} req http request
  * @returns {string} html string with list of badges
  */
-const tableBadges = (t, req) => {
+const tableBadges = (t: any, req: any) => {
   let s = "";
   if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
   if (t.versioned) s += badge("success", req.__("History"));
@@ -50,32 +51,28 @@ const tableBadges = (t, req) => {
   return s;
 };
 
-const valIfSet = (check, value) => (check ? value : "");
+const valIfSet = (check: any, value: any) => (check ? value : "");
 
-const listClass = (tagId, showList) =>
+const listClass = (tagId: any, showList: any) =>
   valIfSet(tagId, `collapse ${valIfSet(showList, "show")}`);
 
-const tablesList = async (
-  tables,
-  req,
-  { tagId, domId, showList, filterOnTag } = {}
-) => {
+const tablesList = async (tables: any, req: any, { tagId, domId, showList, filterOnTag }: any = {}) => {
   const roles = await User.get_roles();
-  const getRole = (rid) => roles.find((r) => r.id === rid)?.role || "?";
+  const getRole = (rid: any) => roles.find((r: any) => r.id === rid)?.role || "?";
   const tags = await Tag.find();
   const tag_entries = await TagEntry.find({
     not: { table_id: null },
   });
   const tagsById = {};
-  tags.forEach((t) => (tagsById[t.id] = t));
+  tags.forEach((t: any) => (tagsById[t.id] = t));
   const user_can_edit_tables =
     req.user.role_id === 1 ||
-    getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
-  const tagBadges = (table) => {
-    const myTags = tag_entries.filter((te) => te.table_id === table.id);
-    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+    getState()!.getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+  const tagBadges = (table: any) => {
+    const myTags = tag_entries.filter((te: any) => te.table_id === table.id);
+    const myTagIds = new Set(myTags.map((t: any) => t.tag_id));
     return (
-      myTags.map((te) => tagBadge(tagsById[te.tag_id], "tables")).join(nbsp) +
+      myTags.map((te: any) => tagBadge(tagsById[te.tag_id], "tables")).join(nbsp) +
       mkAddBtn(tags, "tables", table.id, req, myTagIds)
     );
   };
@@ -85,7 +82,7 @@ const tablesList = async (
       [
         {
           label: req.__("Name"),
-          key: (r) => link(`/table/${r.id || r.name}`, text(r.name)),
+          key: (r: any) => link(`/table/${r.id || r.name}`, text(r.name)),
         },
         ...(tagId
           ? []
@@ -96,17 +93,17 @@ const tablesList = async (
                   filterOnTag ? `Tag:${filterOnTag.name}` : undefined,
                   req
                 ),
-                key: (r) => tagBadges(r),
+                key: (r: any) => tagBadges(r),
               },
             ]),
         {
           label: "",
-          key: (r) => tableBadges(r, req),
+          key: (r: any) => tableBadges(r, req),
         },
 
         {
           label: req.__("Access Read/Write"),
-          key: (t) =>
+          key: (t: any) =>
             t.external
               ? `${getRole(t.min_role_read)} (read only)`
               : `${getRole(t.min_role_read)}/${getRole(t.min_role_write)}`,
@@ -116,14 +113,14 @@ const tablesList = async (
               !tagId
                 ? {
                     label: req.__("Delete"),
-                    key: (r) =>
+                    key: (r: any) =>
                       r.name === "users" || r.external
                         ? ""
                         : post_delete_btn(`/table/delete/${r.id}`, req, r.name),
                   }
                 : {
                     label: req.__("Remove From Tag"),
-                    key: (r) =>
+                    key: (r: any) =>
                       post_delete_btn(
                         `/tag-entries/remove/tables/${r.id}/${tagId}`,
                         req,
@@ -157,7 +154,7 @@ const tablesList = async (
  * @param {object} req
  * @returns {Form}
  */
-const editViewRoleForm = (view, roles, req, on_done_redirect_str) =>
+const editViewRoleForm = (view: any, roles: any, req: any, on_done_redirect_str: any) =>
   editRoleForm({
     url: `/viewedit/setrole/${view.id}${on_done_redirect_str || ""}`,
     current_role: view.min_role,
@@ -171,10 +168,10 @@ const editViewRoleForm = (view, roles, req, on_done_redirect_str) =>
  * @returns {div}
  */
 const view_dropdown = (
-  view,
-  req,
-  on_done_redirect_str = "",
-  includeRun = true
+  view: any,
+  req: any,
+  on_done_redirect_str: any = "",
+  includeRun: any = true
 ) =>
   settingsDropdown(`dropdownMenuButton${view.id}`, [
     includeRun &&
@@ -234,11 +231,11 @@ const view_dropdown = (
       ),
   ]);
 
-const setTableRefs = async (views) => {
+const setTableRefs = async (views: any) => {
   const tables = await Table.find({}, { cached: true });
-  const getTable = (tid) => tables.find((t) => t.id === tid).name;
+  const getTable = (tid: any) => tables.find((t: any) => t.id === tid).name;
 
-  views.forEach((v) => {
+  views.forEach((v: any) => {
     if (v.table_id) v.table = getTable(v.table_id);
     else if (v.exttable_name) v.table = v.exttable_name;
     else v.table = "";
@@ -246,7 +243,7 @@ const setTableRefs = async (views) => {
   return views;
 };
 
-const tagBadge = (tag, type) =>
+const tagBadge = (tag: any, type: any) =>
   a(
     {
       href: `/tag/${tag.id}?show_list=${type}`,
@@ -255,7 +252,7 @@ const tagBadge = (tag, type) =>
     tag.name
   );
 
-const tagsDropdown = (tags, altHeader, req) =>
+const tagsDropdown = (tags: any, altHeader: any, req: any) =>
   div(
     { class: "dropdown" },
     div(
@@ -284,7 +281,7 @@ const tagsDropdown = (tags, altHeader, req) =>
         },
         req.__("All tags")
       ),
-      tags.map((tag) =>
+      tags.map((tag: any) =>
         a(
           {
             class: "dropdown-item",
@@ -305,7 +302,7 @@ const tagsDropdown = (tags, altHeader, req) =>
     )
   );
 
-const mkAddBtn = (tags, entityType, id, req, myTagIds, on_done_redirect_str) =>
+const mkAddBtn = (tags: any, entityType: any, id: any, req: any, myTagIds: any, on_done_redirect_str: any) =>
   div(
     { class: "dropdown d-inline ms-1" },
     span(
@@ -324,8 +321,8 @@ const mkAddBtn = (tags, entityType, id, req, myTagIds, on_done_redirect_str) =>
       },
 
       tags
-        .filter((t) => !myTagIds.has(t.id))
-        .map((t) =>
+        .filter((t: any) => !myTagIds.has(t.id))
+        .map((t: any) =>
           post_dropdown_item(
             `/tag-entries/add-tag-entity/${encodeURIComponent(
               t.name
@@ -337,11 +334,7 @@ const mkAddBtn = (tags, entityType, id, req, myTagIds, on_done_redirect_str) =>
     )
   );
 
-const viewsList = async (
-  views,
-  req,
-  { tagId, domId, showList, on_done_redirect, notable, filterOnTag } = {}
-) => {
+const viewsList = async (views: any, req: any, { tagId, domId, showList, on_done_redirect, notable, filterOnTag }: any = {}) => {
   const roles = await User.get_roles();
   const on_done_redirect_str = on_done_redirect
     ? `?on_done_redirect=${on_done_redirect}`
@@ -351,15 +344,15 @@ const viewsList = async (
     not: { view_id: null },
   });
   const tagsById = {};
-  tags.forEach((t) => (tagsById[t.id] = t));
+  tags.forEach((t: any) => (tagsById[t.id] = t));
   const user_can_inspect_tables =
     req.user.role_id === 1 ||
-    getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id ||
-    getState().getConfig("min_role_inspect_tables", 1) >= req.user.role_id;
+    getState()!.getConfig("min_role_edit_tables", 1) >= req.user.role_id ||
+    getState()!.getConfig("min_role_inspect_tables", 1) >= req.user.role_id;
 
-  const tagBadges = (view) => {
-    const myTags = tag_entries.filter((te) => te.view_id === view.id);
-    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+  const tagBadges = (view: any) => {
+    const myTags = tag_entries.filter((te: any) => te.view_id === view.id);
+    const myTagIds = new Set(myTags.map((t: any) => t.tag_id));
     const addBtn = mkAddBtn(
       tags,
       "views",
@@ -369,7 +362,7 @@ const viewsList = async (
       on_done_redirect_str
     );
     return (
-      myTags.map((te) => tagBadge(tagsById[te.tag_id], "views")).join(nbsp) +
+      myTags.map((te: any) => tagBadge(tagsById[te.tag_id], "views")).join(nbsp) +
       addBtn
     );
   };
@@ -379,14 +372,14 @@ const viewsList = async (
       [
         {
           label: req.__("Name"),
-          key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
+          key: (r: any) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
           sortlink: !tagId
             ? `set_state_field('_sortby', 'name', this)`
             : undefined,
         },
         {
           label: "",
-          key: (r) =>
+          key: (r: any) =>
             r.id && r.viewtemplateObj?.configuration_workflow
               ? link(
                   `/viewedit/config/${encodeURIComponent(
@@ -405,7 +398,7 @@ const viewsList = async (
                   filterOnTag ? `Tag:${filterOnTag.name}` : undefined,
                   req
                 ),
-                key: (r) => (r.id ? tagBadges(r) : ""),
+                key: (r: any) => (r.id ? tagBadges(r) : ""),
               },
             ]),
         {
@@ -420,7 +413,7 @@ const viewsList = async (
           : [
               {
                 label: req.__("Table"),
-                key: (r) =>
+                key: (r: any) =>
                   user_can_inspect_tables
                     ? link(`/table/${r.table}`, r.table)
                     : r.table,
@@ -431,7 +424,7 @@ const viewsList = async (
             ]),
         {
           label: req.__("Role to access"),
-          key: (row) =>
+          key: (row: any) =>
             row.id
               ? editViewRoleForm(row, roles, req, on_done_redirect_str)
               : "admin",
@@ -439,11 +432,11 @@ const viewsList = async (
         !tagId
           ? {
               label: "",
-              key: (r) => view_dropdown(r, req, on_done_redirect_str),
+              key: (r: any) => view_dropdown(r, req, on_done_redirect_str),
             }
           : {
               label: req.__("Remove From Tag"),
-              key: (r) =>
+              key: (r: any) =>
                 post_delete_btn(
                   `/tag-entries/remove/views/${r.id}/${tagId}`,
                   req,
@@ -469,7 +462,7 @@ const viewsList = async (
   );
 };
 
-const page_group_dropdown = (page_group, req) =>
+const page_group_dropdown = (page_group: any, req: any) =>
   settingsDropdown(`groupDropdownMenuButton${page_group.id}`, [
     post_dropdown_item(
       `/page_groupedit/add-to-menu/${page_group.id}`,
@@ -505,11 +498,11 @@ const page_group_dropdown = (page_group, req) =>
  * @returns {string}
  */
 const page_dropdown = (
-  page,
-  req,
-  on_done_redirect_str = "",
-  includeTestRun = false,
-  includeRun = true
+  page: any,
+  req: any,
+  on_done_redirect_str: any = "",
+  includeTestRun: any = false,
+  includeRun: any = true
 ) =>
   settingsDropdown(`dropdownMenuButton${page.id}`, [
     includeRun &&
@@ -571,7 +564,7 @@ const page_dropdown = (
  * @param {object} req
  * @returns {Form}
  */
-const editPageRoleForm = (page, roles, req, isGroup) =>
+const editPageRoleForm = (page: any, roles: any, req: any, isGroup: any) =>
   editRoleForm({
     url: `/${!isGroup ? "page" : "page_group"}edit/setrole/${page.id}`,
     current_role: page.min_role,
@@ -585,24 +578,19 @@ const editPageRoleForm = (page, roles, req, isGroup) =>
  * @param {object} req
  * @returns {div}
  */
-const getPageList = async (
-  rows,
-  roles,
-  req,
-  { tagId, domId, showList, filterOnTag } = {}
-) => {
+const getPageList = async (rows: any, roles: any, req: any, { tagId, domId, showList, filterOnTag }: any = {}) => {
   const tags = await Tag.find();
   const tag_entries = await TagEntry.find({
     not: { page_id: null },
   });
   const tagsById = {};
-  tags.forEach((t) => (tagsById[t.id] = t));
+  tags.forEach((t: any) => (tagsById[t.id] = t));
 
-  const tagBadges = (page) => {
-    const myTags = tag_entries.filter((te) => te.page_id === page.id);
-    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+  const tagBadges = (page: any) => {
+    const myTags = tag_entries.filter((te: any) => te.page_id === page.id);
+    const myTagIds = new Set(myTags.map((t: any) => t.tag_id));
     return (
-      myTags.map((te) => tagBadge(tagsById[te.tag_id], "pages")).join(nbsp) +
+      myTags.map((te: any) => tagBadge(tagsById[te.tag_id], "pages")).join(nbsp) +
       mkAddBtn(tags, "pages", page.id, req, myTagIds)
     );
   };
@@ -610,11 +598,11 @@ const getPageList = async (
     [
       {
         label: req.__("Name"),
-        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, r.name),
+        key: (r: any) => link(`/page/${encodeURIComponent(r.name)}`, r.name),
       },
       {
         label: "",
-        key: (r) =>
+        key: (r: any) =>
           link(
             `/pageedit/edit/${encodeURIComponent(r.name)}`,
             req.__("Configure")
@@ -622,7 +610,7 @@ const getPageList = async (
       },
       {
         label: "",
-        key: (r) =>
+        key: (r: any) =>
           link(
             `/pageedit/edit-properties/${encodeURIComponent(r.name)}`,
             req.__("Edit")
@@ -637,22 +625,22 @@ const getPageList = async (
                 filterOnTag ? `Tag:${filterOnTag.name}` : undefined,
                 req
               ),
-              key: (r) => tagBadges(r),
+              key: (r: any) => tagBadges(r),
             },
           ]),
       {
         label: req.__("Role to access"),
-        key: (row) => editPageRoleForm(row, roles, req),
+        key: (row: any) => editPageRoleForm(row, roles, req),
       },
 
       !tagId
         ? {
             label: "",
-            key: (r) => page_dropdown(r, req),
+            key: (r: any) => page_dropdown(r, req),
           }
         : {
             label: req.__("Remove From Tag"),
-            key: (r) =>
+            key: (r: any) =>
               post_delete_btn(
                 `/tag-entries/remove/pages/${r.id}/${tagId}`,
                 req,
@@ -675,24 +663,24 @@ const getPageList = async (
  * @param {*} roles
  * @param {*} req
  */
-const getPageGroupList = (rows, roles, req) => {
+const getPageGroupList = (rows: any, roles: any, req: any) => {
   return mkTable(
     [
       {
         label: req.__("Name"),
-        key: (r) => link(`/page/${r.name}`, r.name),
+        key: (r: any) => link(`/page/${r.name}`, r.name),
       },
       {
         label: req.__("Role to access"),
-        key: (row) => editPageRoleForm(row, roles, req, true),
+        key: (row: any) => editPageRoleForm(row, roles, req, true),
       },
       {
         label: req.__("Edit"),
-        key: (r) => link(`/page_groupedit/${r.name}`, req.__("Edit")),
+        key: (r: any) => link(`/page_groupedit/${r.name}`, req.__("Edit")),
       },
       {
         label: "",
-        key: (r) => page_group_dropdown(r, req),
+        key: (r: any) => page_group_dropdown(r, req),
       },
     ],
     rows,
@@ -704,10 +692,10 @@ const getPageGroupList = (rows, roles, req) => {
 };
 
 const trigger_dropdown = (
-  trigger,
-  req,
-  on_done_redirect_str = "",
-  includeTestRun = false
+  trigger: any,
+  req: any,
+  on_done_redirect_str: any = "",
+  includeTestRun: any = false
 ) =>
   settingsDropdown(`dropdownMenuButton${trigger.id}`, [
     a(
@@ -758,11 +746,7 @@ const trigger_dropdown = (
     ),
   ]);
 
-const getTriggerList = async (
-  triggers,
-  req,
-  { tagId, domId, showList, filterOnTag, on_done_redirect } = {}
-) => {
+const getTriggerList = async (triggers: any, req: any, { tagId, domId, showList, filterOnTag, on_done_redirect }: any = {}) => {
   const base_url = get_base_url(req);
   const tags = await Tag.find();
   const on_done_redirect_str = on_done_redirect
@@ -772,17 +756,17 @@ const getTriggerList = async (
     not: { trigger_id: null },
   });
   const tagsById = {};
-  tags.forEach((t) => (tagsById[t.id] = t));
+  tags.forEach((t: any) => (tagsById[t.id] = t));
   const user_can_inspect_tables =
     req.user.role_id === 1 ||
-    getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id ||
-    getState().getConfig("min_role_inspect_tables", 1) >= req.user.role_id;
+    getState()!.getConfig("min_role_edit_tables", 1) >= req.user.role_id ||
+    getState()!.getConfig("min_role_inspect_tables", 1) >= req.user.role_id;
 
-  const tagBadges = (trigger) => {
-    const myTags = tag_entries.filter((te) => te.trigger_id === trigger.id);
-    const myTagIds = new Set(myTags.map((t) => t.tag_id));
+  const tagBadges = (trigger: any) => {
+    const myTags = tag_entries.filter((te: any) => te.trigger_id === trigger.id);
+    const myTagIds = new Set(myTags.map((t: any) => t.tag_id));
     return (
-      myTags.map((te) => tagBadge(tagsById[te.tag_id], "triggers")).join(nbsp) +
+      myTags.map((te: any) => tagBadge(tagsById[te.tag_id], "triggers")).join(nbsp) +
       mkAddBtn(
         tags,
         "triggers",
@@ -793,14 +777,14 @@ const getTriggerList = async (
       )
     );
   };
-  const whenCanHaveTable = (when) =>
+  const whenCanHaveTable = (when: any) =>
     ["Insert", "Update", "Delete", "Validate", "Never"].includes(when);
   return mkTable(
     [
       { label: req.__("Name"), key: "name" },
       {
         label: req.__("Test run"),
-        key: (r) =>
+        key: (r: any) =>
           link(
             `/actions/testrun/${r.id}${on_done_redirect_str}`,
             req.__("Test run"),
@@ -811,7 +795,7 @@ const getTriggerList = async (
       },
       {
         label: req.__("Configure"),
-        key: (r) =>
+        key: (r: any) =>
           link(
             `/actions/configure/${r.id}${on_done_redirect_str}`,
             req.__("Configure")
@@ -826,14 +810,14 @@ const getTriggerList = async (
                 filterOnTag ? `Tag:${filterOnTag.name}` : undefined,
                 req
               ),
-              key: (r) => tagBadges(r),
+              key: (r: any) => tagBadges(r),
             },
           ]),
       { label: req.__("Action"), key: "action" },
 
       {
         label: req.__("When"),
-        key: (act) =>
+        key: (act: any) =>
           act.when_trigger +
           (act.when_trigger === "API call"
             ? a(
@@ -846,7 +830,7 @@ const getTriggerList = async (
       },
       {
         label: req.__("Table or Channel"),
-        key: (r) =>
+        key: (r: any) =>
           r.table_name && whenCanHaveTable(r.when_trigger)
             ? user_can_inspect_tables
               ? a({ href: `/table/${r.table_name}` }, r.table_name)
@@ -856,11 +840,11 @@ const getTriggerList = async (
       !tagId
         ? {
             label: "",
-            key: (r) => trigger_dropdown(r, req, on_done_redirect_str),
+            key: (r: any) => trigger_dropdown(r, req, on_done_redirect_str),
           }
         : {
             label: req.__("Remove From Tag"),
-            key: (r) =>
+            key: (r: any) =>
               post_delete_btn(
                 `/tag-entries/remove/trigger/${r.id}/${tagId}`,
                 req,

@@ -61,7 +61,7 @@ router.get(
           [
             {
               label: req.__("Name"),
-              key: "name", //(r) => link(`/table/${r.id || r.name}`, text(r.name)),
+              key: "name", //(r: any) => link(`/table/${r.id || r.name}`, text(r.name)),
             },
             {
               label: req.__("Icon"),
