@@ -538,7 +538,7 @@ router.get(
       path.join(__dirname, "..", "..", "docs"),
       ...req.params.filepath
     );
-    if (fs.existsSync(fullPath)) res.sendFile(fullPath, { dotfiles: "allow" });
+    if (fullPath && fs.existsSync(fullPath)) res.sendFile(fullPath, { dotfiles: "allow" });
     else {
       res.status(404);
       res.sendWrap(`File not found`, { above: ["Help file not found"] });
@@ -895,7 +895,7 @@ router.get(
       snapOffset
     );
     const locale = getState()!.getConfig("default_locale", "en");
-    const auth = checkEditPermission(type + "s", req.user);
+    const auth = checkEditPermission(type + "s", req.user!);
     if (!auth) {
       res.send("Not authorized");
       return;
@@ -951,7 +951,7 @@ router.post(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { type, name, id } = req.params;
-    const auth = checkEditPermission(type + "s", req.user);
+    const auth = checkEditPermission(type + "s", req.user!);
     if (!auth) {
       req.flash("error", "Not authorized");
     } else {
@@ -1058,7 +1058,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     if (req.files?.file?.tempFilePath) {
       try {
-        const pack = JSON.parse(fs.readFileSync(req.files?.file?.tempFilePath));
+        const pack = JSON.parse(fs.readFileSync(req.files?.file?.tempFilePath, "utf-8" ));
         filter_pack(pack, req.body);
         await db.withTransaction(async () => {
           await install_pack(pack, undefined, (p: any) =>
@@ -2074,7 +2074,7 @@ router.post(
     file.on("end", function () {
       fs.unlink(fileName, function () {});
     });
-    file.pipe(res);
+    file.pipe(res as any);
   })
 );
 
@@ -2414,7 +2414,7 @@ router.get(
         filename,
         "text/html",
         report,
-        req.user!.id,
+        req.user!.id!,
         1,
         "/configuration_checks"
       );
@@ -4573,7 +4573,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { out_dir_name, build_dir } = req.body || {};
     const content = await fs.promises.readFile(
-      path.join(build_dir, "spawnParams.json")
+      path.join(build_dir, "spawnParams.json"), "utf8"
     );
     const spawnParams = JSON.parse(content);
     const rootFolder = await File.rootFolder();
@@ -4616,7 +4616,7 @@ router.post(
         await File.set_xattr_of_existing_file(
           logFile,
           outDirFullPath,
-          req.user
+          req.user!
         );
       } catch (error: any) {
         console.log(`unable to write '${logFile}' to '${outDirFullPath}'`);
@@ -4641,7 +4641,7 @@ router.post(
             await File.set_xattr_of_existing_file(
               logFile,
               outDirFullPath,
-              req.user
+              req.user!
             );
           }
         }
@@ -4975,7 +4975,7 @@ router.post(
       try {
         const exitMsg = childOutputs.join("\n");
         await fs.promises.writeFile(path.join(outDir, logFile), exitMsg);
-        await File.set_xattr_of_existing_file(logFile, outDir, req.user);
+        await File.set_xattr_of_existing_file(logFile, outDir, req.user!);
       } catch (error: any) {
         console.log(`unable to write '${logFile}' to '${outDir}'`);
         console.log(error);
@@ -4996,7 +4996,7 @@ router.post(
             console.log(error);
           } else {
             // no transaction, '/build-mobile-app/finished' filters for valid attributes
-            await File.set_xattr_of_existing_file(logFile, outDir, req.user);
+            await File.set_xattr_of_existing_file(logFile, outDir, req.user!);
           }
         }
       );
@@ -5109,7 +5109,7 @@ router.post(
     }
     if (form.values.pages) {
       await db.deleteWhere("_sc_tag_entries", { not: { page_id: null } });
-      await db.deleteWhere("_sc_pages");
+      await db.deleteWhere("_sc_pages", {});
     }
     if (form.values.views) {
       await View.delete({});
@@ -5128,16 +5128,16 @@ router.post(
     }
     if (form.values.triggers) {
       await db.deleteWhere("_sc_tag_entries", { not: { trigger_id: null } });
-      await db.deleteWhere("_sc_workflow_trace");
-      await db.deleteWhere("_sc_workflow_runs");
-      await db.deleteWhere("_sc_workflow_steps");
-      await db.deleteWhere("_sc_triggers");
+      await db.deleteWhere("_sc_workflow_trace", {});
+      await db.deleteWhere("_sc_workflow_runs", {});
+      await db.deleteWhere("_sc_workflow_steps", {});
+      await db.deleteWhere("_sc_triggers", {});
       if (db.reset_sequence) await db.reset_sequence("_sc_triggers");
       await getState()!.refresh_triggers();
     }
     if (form.values.tables) {
-      await db.deleteWhere("_sc_model_instances");
-      await db.deleteWhere("_sc_models");
+      await db.deleteWhere("_sc_model_instances",{});
+      await db.deleteWhere("_sc_models",{});
 
       //in revers order of creation in case any provided tables depend on real tables
       const tables = (await Table.find({}, { orderBy: "id", orderDesc: true }))!;
@@ -5154,7 +5154,7 @@ router.post(
         });
         await table.update({ ownership_field_id: null });
         const fields = table.getFields();
-        if (!table.extername && !table.provider_name)
+        if (!table.external && !table.provider_name)
           for (const f of fields) {
             if (f.is_fkey) {
               await f.delete();
@@ -5169,7 +5169,7 @@ router.post(
             min_role_read: 1,
             min_role_write: 1,
             description: "",
-            ownership_formula: null,
+            ownership_formula: undefined,
             ownership_field_id: null,
             versioned: false,
             has_sync_info: false,
@@ -5194,15 +5194,15 @@ router.post(
     }
 
     if (form.values.library) {
-      await db.deleteWhere("_sc_library");
+      await db.deleteWhere("_sc_library",{});
     }
     if (form.values.eventlog) {
-      await db.deleteWhere("_sc_event_log");
+      await db.deleteWhere("_sc_event_log",{});
     }
     if (form.values.config) {
       //config+crashes
-      await db.deleteWhere("_sc_errors");
-      await db.deleteWhere("_sc_metadata");
+      await db.deleteWhere("_sc_errors",{});
+      await db.deleteWhere("_sc_metadata",{});
       await db.deleteWhere("_sc_config", { not: { key: "letsencrypt" } });
       await getState()!.refresh();
       await standardMenu();
@@ -5210,7 +5210,7 @@ router.post(
     await getState()!.refresh();
 
     if (form.values.users) {
-      await db.deleteWhere("_sc_notifications");
+      await db.deleteWhere("_sc_notifications",{});
 
       const users1 = Table.findOne({ name: "users" })!;
       const userfields1 = await users1.getFields();
@@ -5219,7 +5219,7 @@ router.post(
         if (f.name !== "email" && f.name !== "id" && f.name !== "role_id")
           await f.delete();
       }
-      await db.deleteWhere("users");
+      await db.deleteWhere("users",{});
       await db.deleteWhere("_sc_roles", {
         not: { id: { in: [1, 40, 80, 100] } },
       });
@@ -5276,8 +5276,11 @@ router.get(
                 {
                   label: req.__("Timestamp"),
                   width: "15%",
+                  key() {return ""}
                 },
-                { label: req.__("Message") },
+                { label: req.__("Message"),
+                  key() {return ""}
+                },
               ],
               [],
               {
@@ -5452,7 +5455,7 @@ async function run_js_code({code, row, table}:{ code: string, row?: Row, table?:
 async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | "triggers" | "pages" | "page_groups"|"config"|"npmpkgs"|"userlayouts"|"i18n"|"push_helper"|"ephemeral_config"|"plugins");
 `);
     }
-    const scTypeToTsType = (type: any, field: any) => {
+    const scTypeToTsType = (type: any, field?: any) => {
       if (field?.is_fkey) {
         if (field.reftype) return scTypeToTsType(field.reftype);
       }
@@ -5464,7 +5467,7 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
           Bool: "boolean",
           Date: "Date",
           HTML: "string",
-        }[type?.name || type] || "any"
+        }[(type?.name || type) as string] || "any"
       );
     };
 
@@ -5557,10 +5560,11 @@ async function refreshSystemCache(entities?: "codepages" | "tables" | "views" | 
       }
       if (nm === "slugify") {
         ds.push(`function slugify(s: string): string`);
-      } else if (f.run) {
+      } else if ("run" in f) {
+        let fany = f as any
         if (f["arguments"]) {
-          const returns = f["tsreturns"]
-            ? `: ${f.tsreturns}`
+          const returns = fany["tsreturns"]
+            ? `: ${fany.tsreturns}`
             : f["returns"]
               ? `: ${scTypeToTsType(f.returns)}`
               : "";

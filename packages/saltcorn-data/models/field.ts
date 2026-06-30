@@ -84,7 +84,7 @@ class Field implements AbstractField {
   postText?: string;
   class: string;
   id?: number;
-  default?: string;
+  default?: any;
   sublabel?: string;
   description?: string;
   type?: string | Type;

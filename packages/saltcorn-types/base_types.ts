@@ -149,6 +149,7 @@ type LayoutWithAbove = { above: LayoutArray; besides?: never };
 type LayoutWithBesides = {
   besides: LayoutArray;
   widths?: number[];
+  breakpoint?: "md" | "sm" | "lg";
   above?: never;
 };
 
@@ -305,7 +306,7 @@ export type Action = {
   requireRow?: boolean;
   deprecated?: boolean;
   disableIf?: () => boolean;
-  configFormOptions?: GenObj
+  configFormOptions?: GenObj;
 };
 
 export type ViewTemplate = {
