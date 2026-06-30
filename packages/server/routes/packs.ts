@@ -19,7 +19,7 @@ import Model from "@saltcorn/data/models/model";
 import ModelInstance from "@saltcorn/data/models/model_instance";
 import { getState } from "@saltcorn/data/db/state";
 import db from "@saltcorn/data/db/index";
-import { instanceOfPack, Req, Res} from "@saltcorn/types/base_types";
+import { FieldLike, instanceOfPack, Req, Res} from "@saltcorn/types/base_types";
 
 import _am_pack from "@saltcorn/admin-models/models/pack";
 const {
@@ -189,7 +189,7 @@ router.get(
           label: req.__("Include Event Logs"),
           type: "Bool",
         },
-      ],
+      ] as FieldLike[],
     });
     res.sendWrap(req.__(`Create Pack`), {
       above: [
@@ -221,7 +221,7 @@ router.post(
   "/create",
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
-    const pack = {
+    const pack :any = {
       tables: [],
       views: [],
       plugins: [],
@@ -429,9 +429,9 @@ router.post(
 
     if (!error) {
       const can_install = await can_install_pack(pack);
-      if (can_install.error) {
+      if (typeof can_install ==="object" && can_install.error) {
         error = can_install.error;
-      } else if (can_install.warning) {
+      } else if (typeof can_install ==="object" && can_install.warning) {
         req.flash("warning", can_install.warning);
       }
     }
@@ -488,11 +488,11 @@ router.post(
     }
     const can_install = await can_install_pack(pack.pack);
 
-    if (can_install.error) {
+    if (typeof can_install ==="object" && can_install.error) {
       req.flash("error", can_install.error);
       res.redirect(getOnDoneRedirect(req, "/plugins"));
       return;
-    } else if (can_install.warning) {
+    } else if (typeof can_install ==="object" && can_install.warning) {
       req.flash("warning", can_install.warning);
     }
     await db.withTransaction(async () => {

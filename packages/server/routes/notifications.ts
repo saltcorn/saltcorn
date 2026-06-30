@@ -67,7 +67,7 @@ router.get(
   loggedIn,
   error_catcher(async (req: Req, res: Res) => {
     const { after } = req.query;
-    const where = { user_id: req.user!.id };
+    const where:any = { user_id: req.user!.id };
     if (after) where.id = { lt: after };
     const nots = (await Notification.find(where, {
       orderBy: "id",
@@ -252,7 +252,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { idlike } = req.params;
     if (idlike == "read") {
-      await Notification.deleteRead(req.user!.id);
+      await Notification.deleteRead(req.user!.id!);
     } else {
       const id = +idlike;
       const notif = await Notification.findOne({ id });
@@ -503,7 +503,7 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const { pretty } = req.query;
     const state = getState()!;
-    const manifest = {
+    const manifest :any= {
       name: state.getConfig("site_name"),
       start_url: "/",
       display: state.getConfig("pwa_display", "browser"),

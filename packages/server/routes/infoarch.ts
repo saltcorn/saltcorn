@@ -112,7 +112,7 @@ router.post(
  * @param {object} req
  * @returns {Form}
  */
-const languageForm = (req: any, hasSaveButton: any) =>
+const languageForm = (req: Req, hasSaveButton?: any) =>
   new Form({
     action: "/site-structure/localizer/save-lang",
     onChange: hasSaveButton ? undefined : "saveAndContinue(this)",
@@ -533,7 +533,7 @@ router.post(
         sub2_page: "New",
         contents: {
           type: "card",
-          contents: [renderForm(form), req.csrfToken()],
+          contents: [renderForm(form, req.csrfToken())],
         },
       });
     else {

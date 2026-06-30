@@ -30,6 +30,7 @@ import moment from "moment";
 import { getState } from "@saltcorn/data/db/state";
 import { comparingCaseInsensitive } from "@saltcorn/data/utils";
 import { Req, Res } from "@saltcorn/types/base_types";
+import Field from "@saltcorn/data/models/field";
 
 /**
  * @type {object}
@@ -123,8 +124,8 @@ router.post(
  * @param field
  * @returns {{name, title}}
  */
-const typeToGridType = (t: any, field: any) => {
-  const jsgField = { field: field.name, title: field.label, editor: true };
+const typeToGridType = (t: any, field: Field) => {
+  const jsgField :any= { field: field.name, title: field.label, editor: true };
   if (t.name === "String" && field.attributes && field.attributes.options) {
     jsgField.editor = "list";
 
@@ -294,7 +295,7 @@ router.get(
       frozen: true,
       cellClick: "__delete_tabulator_row",
     });
-    const isDark = getState()!.getLightDarkMode(req.user) === "dark";
+    const isDark = getState()!.getLightDarkMode(req.user!) === "dark";
     const pkNm = table.pk_name;
     res.sendWrap(
       {

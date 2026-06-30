@@ -63,7 +63,7 @@ const menuForm = async (req: any) => {
       dynOrderFieldOptions[table.name].push(field.name);
       if (
         field.type &&
-        field.type.name === "String" &&
+        field.type_name === "String" &&
         field.attributes &&
         field.attributes.options
       )

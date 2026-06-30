@@ -7,6 +7,7 @@ export type AdditionalButton = {
   class: string;
   onclick?: string;
   type?: string;
+  disabled?: boolean
 };
 
 export interface AbstractForm {

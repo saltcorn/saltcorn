@@ -48,7 +48,9 @@ import { getActionConfigFields } from "@saltcorn/data/plugin-helper";
 import Library from "@saltcorn/data/models/library";
 import path from "path";
 import { promises as fsp } from "fs";
-import { Req, Res } from "@saltcorn/types/base_types";
+import { FieldLike, Req, Res } from "@saltcorn/types/base_types";
+import { PageCfg } from "@saltcorn/types/model-abstracts/abstract_page";
+import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
 
 /**
  * @type {object}
@@ -65,7 +67,7 @@ export default router;
  * @param {object} req
  * @returns {Promise<Form>}
  */
-const pagePropertiesForm = async (req: any, isNew: any) => {
+const pagePropertiesForm = async (req: Req, isNew?: any) => {
   const roles = await User.get_roles();
   const pages = (await Page.find()).map((p: any) => p.name);
   const groups = (await PageGroup.find()).map((g: any) => g.name);
@@ -159,7 +161,7 @@ const pagePropertiesForm = async (req: any, isNew: any) => {
         ),
         type: "Bool",
       },
-    ],
+    ] as FieldLike[],
   });
   return form;
 };
@@ -233,17 +235,17 @@ const pageBuilderData = async (req: any, context: any) => {
   const fixed_state_fields: Record<string, any> = {};
   for (const view of views) {
     fixed_state_fields[view.name] = [];
-    const table = Table.findOne(view.table_id || view.exttable_name)!;
+    const table = Table.findOne(view.table_id! || view.exttable_name!)!;
     if (table) view.table_name = table.name;
     const fs = await view.get_state_fields();
     let added_fields = new Set();
     for (const frec of fs) {
-      const f = new Field(frec);
+      const f = new Field(frec as FieldCfg);
       if (f.input_type === "hidden") continue;
       if (f.name === "_fts") continue;
 
       f.required = false;
-      if (f.type && f.type.name === "Bool") f.fieldview = "tristate";
+      if (f.type && f.type_name === "Bool") f.fieldview = "tristate";
 
       //await f.fill_fkey_options(true);
       if (added_fields.has(f.name)) continue;
@@ -447,7 +449,7 @@ router.get(
  * @param {*} page
  * @returns {*}
  */
-const wrap = (contents: any, noCard: any, req: any, page: any) => ({
+const wrap = (contents: any, noCard: any, req: Req, page?: any) => ({
   above: [
     {
       type: "breadcrumbs",
@@ -554,7 +556,7 @@ router.post(
       }
       if (+id) {
         const dbPage = Page.findOne({ id: id })!;
-        if (dbPage.layout?.html_file && !html_file) {
+        if ("html_file" in dbPage.layout && !html_file) {
           pageRow.layout = {};
         }
         await Page.update(+id, pageRow);
@@ -576,7 +578,7 @@ router.post(
         if (!pageRow.layout) pageRow.layout = {};
         if (!pageRow.fixed_states) pageRow.fixed_states = {};
         pageRow.name = pageRow.name.trim();
-        await Page.create(pageRow);
+        await Page.create(pageRow as PageCfg);
         await getState()!.refresh_pages();
         Trigger.emitEvent("AppChange", `Page ${pageRow.name}`, req.user, {
           entity_type: "Page",
@@ -750,7 +752,7 @@ router.post(
       req.flash("error", req.__(`Page %s not found`, pagename));
       res.redirect(redirectTarget);
     } else if ((req.body || {}).layout) {
-      await Page.update(page.id, {
+      await Page.update(page.id!, {
         layout: decodeURIComponent((req.body || {}).layout),
       });
       await getState()!.refresh_pages();
@@ -881,7 +883,7 @@ router.post(
     const roles = await User.get_roles();
     const form = getRootPageForm(pages, pageGroups, roles, req);
     const valres = form.validate(req.body || {});
-    if (valres.success) {
+    if ("success" in valres) {
       const home_page_by_role =
         getState()!.getConfigCopy("home_page_by_role", {}) || {};
       for (const role of roles) {
