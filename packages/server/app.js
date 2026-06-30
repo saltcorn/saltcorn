@@ -34,6 +34,7 @@ import {
   error_catcher,
   getSessionStore,
   setTenant,
+  attachRequestClient,
   applyUserLocale,
 } from "./routes/utils.js";
 import _am_tenant from "@saltcorn/admin-models/models/tenant";
@@ -234,6 +235,14 @@ const getApp = async (opts = {}) => {
 
   // Bind tenant context before passport reads or trusts any session state.
   app.use(setTenant);
+  app.use(async (req, res, next) => {
+    try {
+      await attachRequestClient(res);
+      next();
+    } catch (e) {
+      next(e);
+    }
+  });
   app.use(passport.initialize());
   app.use(passport.authenticate(["jwt", "session"]));
   app.use(applyUserLocale);

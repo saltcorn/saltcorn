@@ -541,6 +541,55 @@ class Table implements AbstractTable {
   }
 
   /**
+   * Create RLS policies for direct ownership_field_id.
+   * Idempotent — drops existing policies before recreating them.
+   * Only supported on PostgreSQL; no-op on SQLite.
+   */
+  async enableOwnershipRLS(): Promise<void> {
+    if (db.isSQLite) return;
+    const owner_field = this.owner_fieldname();
+    if (!owner_field) return;
+
+    const schema = db.getTenantSchemaPrefix();
+    const tbl = `${schema}"${sqlsanitize(this.name)}"`;
+    const col = `"${sqlsanitize(owner_field)}"`;
+
+    await db.query(`ALTER TABLE ${tbl} ENABLE ROW LEVEL SECURITY`);
+    await db.query(`ALTER TABLE ${tbl} FORCE ROW LEVEL SECURITY`);
+
+    await db.query(`DROP POLICY IF EXISTS sc_rls_owner ON ${tbl}`);
+    await db.query(`DROP POLICY IF EXISTS sc_rls_elevated ON ${tbl}`);
+
+    // Rows are visible/writable to the user who owns them.
+    await db.query(`
+      CREATE POLICY sc_rls_owner ON ${tbl}
+      USING     (nullif(current_setting('app.current_user_id', true), '')::integer = ${col})
+      WITH CHECK (nullif(current_setting('app.current_user_id', true), '')::integer = ${col})
+    `);
+
+    // Users whose role is privileged enough bypass ownership and see all rows.
+    await db.query(`
+      CREATE POLICY sc_rls_elevated ON ${tbl}
+      USING     (nullif(current_setting('app.current_user_role', true), '')::integer <= ${this.min_role_read})
+      WITH CHECK (nullif(current_setting('app.current_user_role', true), '')::integer <= ${this.min_role_write})
+    `);
+  }
+
+  /**
+   * Drop RLS policies and disable RLS for this table.
+   * No-op on SQLite.
+   */
+  async disableOwnershipRLS(): Promise<void> {
+    if (db.isSQLite) return;
+    const schema = db.getTenantSchemaPrefix();
+    const tbl = `${schema}"${sqlsanitize(this.name)}"`;
+
+    await db.query(`DROP POLICY IF EXISTS sc_rls_owner ON ${tbl}`);
+    await db.query(`DROP POLICY IF EXISTS sc_rls_elevated ON ${tbl}`);
+    await db.query(`ALTER TABLE ${tbl} DISABLE ROW LEVEL SECURITY`);
+  }
+
+  /**
    * Check if user is owner of row
    * @param user - user
    * @param row - table row
@@ -3238,6 +3287,16 @@ class Table implements AbstractTable {
         await this.create_sync_info_table();
       } else if (!new_table.has_sync_info && existing.has_sync_info) {
         await new_table.drop_sync_table();
+      }
+      const ownershipChanged =
+        new_table.ownership_field_id !== existing.ownership_field_id ||
+        new_table.min_role_read !== existing.min_role_read ||
+        new_table.min_role_write !== existing.min_role_write;
+      if (ownershipChanged) {
+        if (new_table.ownership_field_id)
+          await new_table.enableOwnershipRLS();
+        else
+          await new_table.disableOwnershipRLS();
       }
       Object.assign(this, new_table_rec);
     }
