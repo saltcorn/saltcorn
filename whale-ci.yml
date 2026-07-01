@@ -39,7 +39,7 @@ run_tests_postgres:
     CI: true
     SALTCORN_MULTI_TENANT: true
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
-    NODE_OPTIONS: --max-old-space-size=4096
+    NODE_OPTIONS: --max-old-space-size=4096 --enable-source-maps --require /opt/saltcorn/deploy/whale-ci/trc-stack-hook.js
 
 pytest_db:
   image: postgres:16

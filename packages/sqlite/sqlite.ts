@@ -190,7 +190,7 @@ export const close = async (): Promise<void> => {
  */
 export const select = async (
   tbl: string,
-  whereObj: Where,
+  whereObj: Where | undefined,
   selectopts: SelectOptions = {}
 ): Promise<Row[]> => {
   const { where, values } = mkWhere(whereObj, true);
@@ -331,7 +331,7 @@ export const update = async (
 export const updateWhere = async (
   tbl: string,
   obj: Row,
-  whereObj: Where
+  whereObj: Where | undefined
 ): Promise<void> => {
   const kvs = Object.entries(obj);
   if (kvs.length === 0) return;
@@ -350,7 +350,7 @@ export const updateWhere = async (
  */
 export const deleteWhere = async (
   tbl: string,
-  whereObj: Where
+  whereObj: Where | undefined
 ): Promise<void> => {
   await doDeleteWhere(tbl, whereObj, query);
 };
@@ -424,7 +424,7 @@ export const selectMaybeOne = async (
  */
 export const count = async (
   tbl: string,
-  whereObj: Where,
+  whereObj: Where | undefined,
   opts?: SelectOptions
 ) => {
   if (opts?.limit) return await doCount(tbl, whereObj, query, +opts?.limit);

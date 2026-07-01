@@ -56,7 +56,7 @@ function xattr_set(fp: string, attrName: string, value: string): Promise<void> {
 }
 function xattr_get(fp: string, attrName: string): Promise<string> {
   return new Promise((resolve, reject) =>
-    fsx.get(fp, attrName, (err: string, attrBuf: Buffer) => {
+    fsx.get(fp, attrName, (err: string | null, attrBuf: Buffer) => {
       if (err) reject(err);
       else resolve(attrBuf?.toString?.("utf8"));
     })

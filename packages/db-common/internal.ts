@@ -598,7 +598,7 @@ type WhereAndVals = {
  * @returns {object}
  */
 export const mkWhere = (
-  whereObj: Where,
+  whereObj: Where | undefined,
   is_sqlite: boolean = false,
   initCount: number = 0
 ): WhereAndVals => {
