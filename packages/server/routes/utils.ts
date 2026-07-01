@@ -273,31 +273,6 @@ const get_tenant_from_req = (req: Req, hostPartsOffset?: number) => {
 };
 
 /**
- * Establishes the baseline pg client for the request with the user GUC set for RLS.
- * withTransaction may temporarily override it but always restores this baseline.
- */
-const attachRequestClient = async (res: Res) => {
-  if (db.isSQLite) return;
-  const client = await db.getClient();
-  const reqCon = db.getRequestContext();
-  reqCon.client = client;
-  let released = false;
-  const releaseClient = () => {
-    if (released) return;
-    released = true;
-    reqCon.client = null;
-    client.release();
-  };
-  res.once("finish", releaseClient);
-  res.once("close", releaseClient);
-  try {
-    await db.setRequestUserContext(client);
-  } catch (_e) {
-    // GUC setting failed; non-fatal — queries fall through without RLS filtering
-  }
-};
-
-/**
  * middleware to extract the tenant domain and call runWithtenant()
  * @param {object} req
  * @param {object} res
@@ -906,7 +881,6 @@ export {
   validateHostAuthority,
   applyUserLocale,
   setTenant,
-  attachRequestClient,
   get_tenant_from_req,
   addOnDoneRedirect,
   is_relative_url,

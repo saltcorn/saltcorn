@@ -5,7 +5,6 @@ import { Row, Where, SelectOptions, PrimaryKeyValue } from "./internal.js";
 type RequestContext = {
   tenant: string;
   client?: any;
-  inTransaction?: boolean;
   req?: any;
 };
 

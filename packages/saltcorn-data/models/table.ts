@@ -568,10 +568,12 @@ class Table implements AbstractTable {
     `);
 
     // Users whose role is privileged enough bypass ownership and see all rows.
+    // COALESCE to 1 (admin) when no GUC is set so internal queries outside
+    // transactions are not blocked.
     await db.query(`
       CREATE POLICY sc_rls_elevated ON ${tbl}
-      USING     (nullif(current_setting('app.current_user_role', true), '')::integer <= ${this.min_role_read})
-      WITH CHECK (nullif(current_setting('app.current_user_role', true), '')::integer <= ${this.min_role_write})
+      USING     (coalesce(nullif(current_setting('app.current_user_role', true), '')::integer, 1) <= ${this.min_role_read})
+      WITH CHECK (coalesce(nullif(current_setting('app.current_user_role', true), '')::integer, 1) <= ${this.min_role_write})
     `);
   }
 

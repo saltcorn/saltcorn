@@ -11,7 +11,6 @@ let connObj: any = null;
 type RequestContext = {
   tenant: string;
   client?: any;
-  inTransaction?: boolean;
   req?: any;
 };
 

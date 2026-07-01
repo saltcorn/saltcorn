@@ -702,10 +702,8 @@ export const withTransaction = async (
 ): Promise<any> => {
   const client = await getClient();
   const reqCon = getRequestContext();
-  const prevClient = reqCon?.client;
   if (reqCon) {
     reqCon.client = client;
-    reqCon.inTransaction = true;
   }
   sql_log("BEGIN;");
   await client.query("BEGIN;");
@@ -733,8 +731,7 @@ export const withTransaction = async (
     else throw error;
   } finally {
     if (reqCon) {
-      reqCon.client = prevClient ?? null;
-      reqCon.inTransaction = false;
+      reqCon.client = null;
     }
     client.release();
   }
@@ -754,14 +751,14 @@ export const tryCatchInTransaction = async (
 ): Promise<any> => {
   const rndid = Math.floor(Math.random() * 16777215).toString(16);
   const reqCon = getRequestContext();
-  if (reqCon?.inTransaction) await query(`SAVEPOINT sp${rndid}`);
+  if (reqCon?.client) await query(`SAVEPOINT sp${rndid}`);
   try {
     return await f();
   } catch (error) {
-    if (reqCon?.inTransaction) await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
+    if (reqCon?.client) await query(`ROLLBACK TO SAVEPOINT sp${rndid}`);
     if (onError) return await onError(error as Error);
   } finally {
-    if (reqCon?.inTransaction) await query(`RELEASE SAVEPOINT sp${rndid}`);
+    if (reqCon?.client) await query(`RELEASE SAVEPOINT sp${rndid}`);
   }
 };
 
@@ -777,7 +774,7 @@ export const openOrUseTransaction = async (
   onError?: (e: Error) => any
 ): Promise<any> => {
   const reqCon = getRequestContext();
-  if (reqCon?.inTransaction) return await f();
+  if (reqCon?.client) return await f();
   else return await withTransaction(f, onError);
 };
 
