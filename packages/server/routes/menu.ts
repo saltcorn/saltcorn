@@ -542,8 +542,8 @@ const menuForm = async (req: Req) => {
 // todo move to file the content of menuEditorScript
 const menuEditorScript = (menu_items: any) => `
   var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
-  let lastState: any;
-  let editor: any;  
+  let lastState;
+  let editor;  
   function ajax_save_menu(skip_check) {
     const s = editor.getString()    
     if(s===lastState && !skip_check) return;
@@ -554,7 +554,7 @@ const menuEditorScript = (menu_items: any) => `
       success: ()=>{ ajax_indicator(false)}, 
       dataType : 'json', 
       contentType: 'application/json;charset=UTF-8',
-      error: (r: any) => {ajax_indicate_error(undefined, r); }
+      error: (r) => {ajax_indicate_error(undefined, r); }
     })
   }
   var sortableListOptions = {
@@ -565,7 +565,7 @@ const menuEditorScript = (menu_items: any) => `
               { 
               listOptions: sortableListOptions, 
               iconPicker: iconPickerOptions,
-              getLabelText: (item: any) => item?.text || item?.type,
+              getLabelText: (item) => item?.text || item?.type,
               labelEdit: 'Edit&nbsp;<i class="fas fa-edit clickable"></i>',
               maxLevel: 2 // (Optional) Default is -1 (no level limit)
               // Valid levels are from [0, 1, 2, 3,...N]
@@ -613,18 +613,18 @@ const menuEditorScript = (menu_items: any) => `
     "Ctrl+Shift+n", "Ctrl+Shift+Delete",
     "F1", "F3", "F5", "F7", "F11", "F12"
   ];
-  const normalizeShortcut = (s: any) => {
+  const normalizeShortcut = (s) => {
     return s.split("+").map(function(p) { return p.trim().toLowerCase(); }).join("+");
   };
   const reservedSet = new Set(reservedShortcuts.map(normalizeShortcut));
 
   function validateShortcut(val) {
     if (!val) return null;
-    const parts = val.split("+").map((p: any) => { return p.trim(); });
+    const parts = val.split("+").map((p) => { return p.trim(); });
     if (parts.length === 0 || parts.some(function(p) { return p === ""; })) {
       return "Invalid format. Use Modifier+Key, e.g. Alt+k";
     }
-    const mods: any[] = [];
+    const mods = [];
     let key = null;
     for (var i = 0; i < parts.length; i++) {
       const p = parts[i];
