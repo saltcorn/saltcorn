@@ -219,7 +219,7 @@ var VersionsField = function(config) {
 };
 VersionsField.prototype = new jsGrid.Field({
   align: "right",
-  itemTemplate: function (value: any, item: any) {
+  itemTemplate: function (value, item) {
       if(value) {
         //return +value+1;
         return '<a href="/list/_versions/${tname}/'+item.id+'">'+
@@ -502,7 +502,7 @@ router.get(
                 if (ps !== window.tabulator_table.getPageSize())
                   window.tabulator_table.setPageSize(ps);
               });
-              let _tab_resize_timer: any;
+              let _tab_resize_timer;
               window.addEventListener('resize', function() {
                 clearTimeout(_tab_resize_timer);
                 _tab_resize_timer = setTimeout(function() {
@@ -513,7 +513,7 @@ router.get(
                     window.tabulator_table.setPageSize(ps);
                 }, 150);
               });
-              window.allnonecols= (do_show: any, e: any) =>{
+              window.allnonecols= (do_show, e) =>{
                 columns.forEach(col=>{
                   if(col.frozen && !do_show) return;
                   if (do_show) window.tabulator_table.showColumn(col.field);
@@ -523,7 +523,7 @@ router.get(
               }
 
               window.tabulator_table.on("cellEdited", function(cell){
-                const row = cell.getRow()!.getData()
+                const row = cell.getRow().getData()
                 const fieldName = cell.getColumn().getField()
                 let ident = encodeURIComponent(row.${pkNm}||"");
                 if(fieldName === "${pkNm}")
