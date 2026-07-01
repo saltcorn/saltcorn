@@ -57,6 +57,7 @@ export type Type = {
   discovery_match?: (
     info_schema_col: GenObj
   ) => Promise<Partial<FieldLike> | void>;
+  setTypeAttributesForCalculatedFields?:Function
 };
 
 export function instanceOfType(object: any): object is Type {

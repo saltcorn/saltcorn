@@ -36,7 +36,7 @@ const buildFields = (
   formOptions: Record<string, any[]>,
   req: Req
 ) => {
-  return Object.entries(formOptions).map(([type, list]) => {
+  return Object.entries(formOptions).map(([type, list]: any) => {
     return div(
       { class: "form-group row" },
       div({ class: "col-sm-2" }, label("type")),
@@ -49,7 +49,7 @@ const buildFields = (
             multiple: true,
             size: 20,
           },
-          list.map((entry) => {
+          list.map((entry: any) => {
             return option({ value: entry.id, label: entry.name });
           })
         )
@@ -79,7 +79,7 @@ const formOptions = async (
   type: string,
   tag_id: string
 ): Promise<Record<string, any[]> | undefined> => {
-  const tag = await Tag.findOne({ id: tag_id });
+  const tag = (await Tag.findOne({ id: tag_id }))!;
   switch (type) {
     case "tables": {
       const ids = await tag.getTableIds();
@@ -121,7 +121,7 @@ router.get(
   isAdmin,
   error_catcher(async (req: Req, res: Res) => {
     const { entry_type, tag_id } = req.params;
-    const tag = await Tag.findOne({ id: tag_id });
+    const tag = (await Tag.findOne({ id: tag_id }))!;
 
     res.sendWrap(req.__("Add %s to tag %s", entry_type, tag.name), {
       above: [
@@ -183,7 +183,7 @@ router.post(
     }
     const ids_array = Array.isArray(ids) ? ids : [ids];
     const fieldName = idField(entry_type);
-    const tag = await Tag.findOne({ id: tag_id });
+    const tag = (await Tag.findOne({ id: tag_id }))!;
     for (const id of ids_array) {
       await tag.addEntry({ [fieldName!]: id });
     }
@@ -201,7 +201,7 @@ router.post(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const { tagname, entitytype, entityid } = req.params;
-    const tag = await Tag.findOne({ name: tagname });
+    const tag = (await Tag.findOne({ name: tagname }))!;
 
     const fieldName = idField(entitytype);
     const auth = checkEditPermission(entitytype, req.user! );
@@ -262,7 +262,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { tag_id, entry_type, entry_id } = req.params;
     const fieldName = idField(entry_type);
-    const entry = await TagEntry.findOne({ tag_id, [fieldName!]: entry_id });
+    const entry = (await TagEntry.findOne({ tag_id, [fieldName!]: entry_id }))!;
     (entry as any)[fieldName!] = undefined;
     if (entry.isEmpty()) {
       await entry.delete();

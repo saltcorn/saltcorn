@@ -56,10 +56,10 @@ router.get(
 
     if (
       maintenanceModeEnabled &&
-      (!req.user || req.user.role_id > 1) &&
+      (!req.user || req.user!.role_id > 1) &&
       maintenanceModePage
     ) {
-      const maintenancePage = Page.findOne({ name: maintenanceModePage });
+      const maintenancePage = Page.findOne({ name: maintenanceModePage })!;
       if (maintenancePage) {
         await maintenancePage.run(req.query, { res, req });
         return;
@@ -68,8 +68,8 @@ router.get(
 
     const { viewname } = req.params;
     const query = { ...req.query };
-    const view = View.findOne({ name: viewname });
-    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const view = View.findOne({ name: viewname })!;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
     state.log(
       3,
       `Route /view/${viewname} user=${req.user?.id}${
@@ -223,7 +223,7 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { viewname } = req.params;
 
-    const [view] = await View.find({ name: viewname });
+    const [view] = (await View.find({ name: viewname }))!;
     if (!view) {
       res.send("");
       return;
@@ -240,8 +240,8 @@ router.post(
               view.table_id
                 ? { id: view.table_id }
                 : { name: view.exttable_name }
-            );
-          row = await table.getRow({}, { forUser: req.user });
+            )!;
+          row = (await table.getRow({}, { forUser: req.user }))!;
         }
         if (row) query[sf.name] = row[sf.name];
       }
@@ -272,7 +272,7 @@ router.post(
       false
     );
 
-    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+    if (maintenanceModeEnabled && (!req.user || req.user!.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
     }
@@ -280,7 +280,7 @@ router.post(
   }),
   error_catcher(async (req: Req, res: Res) => {
     const { viewname, route } = req.params;
-    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
     const state = getState()!;
     state.log(
       3,
@@ -289,7 +289,7 @@ router.post(
       }`
     );
 
-    const view = await View.findOne({ name: viewname });
+    const view = (await View.findOne({ name: viewname }))!;
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       state.log(2, `View ${viewname} not found`);
@@ -319,7 +319,7 @@ router.post(
       "maintenance_mode_enabled",
       false
     );
-    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+    if (maintenanceModeEnabled && (!req.user || req.user!.role_id > 1)) {
       res.status(503).send("Page Unavailable: in maintenance mode");
       return;
     }
@@ -328,7 +328,7 @@ router.post(
   setTenant,
   error_catcher(async (req: Req, res: Res) => {
     const { viewname } = req.params;
-    const role = req.user && req.user.id ? req.user.role_id : 100;
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
     const query = { ...req.query };
     const state = getState()!;
     state.log(
@@ -337,7 +337,7 @@ router.post(
         state.getConfig("log_ip_address", false) ? ` IP=${req.ip}` : ""
       }`
     );
-    const view = await View.findOne({ name: viewname });
+    const view = (await View.findOne({ name: viewname }))!;
     if (!view) {
       req.flash("danger", req.__(`No such view: %s`, text(viewname)));
       state.log(2, `View ${viewname} not found`);

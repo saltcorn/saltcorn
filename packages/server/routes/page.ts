@@ -40,17 +40,17 @@ export default router;
 const findPageOrGroup = (
   pagename: string
 ): { page: Page | null; pageGroup: PageGroup | null } => {
-  const page = Page.findOne({ name: pagename });
+  const page = Page.findOne({ name: pagename })!;
   if (page) return { page, pageGroup: null };
   else {
-    const pageGroup = PageGroup.findOne({ name: pagename });
+    const pageGroup = PageGroup.findOne({ name: pagename })!;
     if (pageGroup) return { page: null, pageGroup };
     else return { page: null, pageGroup: null };
   }
 };
 
 const runPage = async (page: Page, req: Req, res: Res, tic: Date) => {
-  const role = req.user && req.user.id ? req.user.role_id : 100;
+  const role = req.user && req.user!.id ? req.user!.role_id : 100;
   if (role <= page.min_role) {
     const contents = await page.run(req.query, { res, req });
     if (!contents) return;
@@ -121,7 +121,7 @@ const runPage = async (page: Page, req: Req, res: Res, tic: Date) => {
 };
 
 const runPageGroup = async (pageGroup: PageGroup, req: Req, res: Res, tic: Date) => {
-  const role = req.user && req.user.id ? req.user.role_id : 100;
+  const role = req.user && req.user!.id ? req.user!.role_id : 100;
   if (role <= pageGroup.min_role) {
     if (pageGroup.random_allocation) {
       const page = getRandomPage(pageGroup, req);
@@ -181,10 +181,10 @@ router.get(
 
     if (
       maintenanceModeEnabled &&
-      (!req.user || req.user.role_id > 1) &&
+      (!req.user || req.user!.role_id > 1) &&
       maintenanceModePage
     ) {
-      const maintenancePage = await Page.findOne({ name: maintenanceModePage });
+      const maintenancePage = (await Page.findOne({ name: maintenanceModePage }))!;
       if (maintenancePage) {
         await runPage(maintenancePage, req, res, new Date());
         return;
@@ -227,13 +227,13 @@ router.post(
       "maintenance_mode_enabled",
       false
     );
-    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+    if (maintenanceModeEnabled && (!req.user || req.user!.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
     }
 
     const { pagename } = req.params;
-    const page = await Page.findOne({ name: pagename });
+    const page = (await Page.findOne({ name: pagename }))!;
     if (!page) {
       res.send("");
       return;
@@ -251,14 +251,14 @@ router.post(
       "maintenance_mode_enabled",
       false
     );
-    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+    if (maintenanceModeEnabled && (!req.user || req.user!.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
     }
 
     const { pagename, rndid } = req.params;
-    const role = req.user && req.user.id ? req.user.role_id : 100;
-    const db_page = await Page.findOne({ name: pagename });
+    const role = req.user && req.user!.id ? req.user!.role_id : 100;
+    const db_page = (await Page.findOne({ name: pagename }))!;
     if (db_page && role <= db_page.min_role) {
       let col: any;
       traverseSync(db_page.layout, {

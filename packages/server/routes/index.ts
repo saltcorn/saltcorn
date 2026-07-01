@@ -39,12 +39,13 @@ import diagram from "./diagram.js";
 import registry from "./registry.js";
 import sync from "./sync.js";
 import entities from "./entities.js";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 export default /**
  * Function assigned to 'module.exports'
  * @returns {void}
  */
-(app) => {
+(app: any) => {
   app.use("/table", table);
   app.use("/field", field);
   app.use("/files", files);

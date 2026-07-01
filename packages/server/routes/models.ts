@@ -34,11 +34,12 @@ import {
   style,
   pre,
 } from "@saltcorn/markup/tags";
+import { Req, Res } from "@saltcorn/types/base_types";
 
-const router = new Router();
+const router = Router();
 export default router;
 
-const newModelForm = (table, req) => {
+const newModelForm = (table: any, req: Req) => {
   return new Form({
     action: "/models/new/" + table.id,
     fields: [
@@ -48,7 +49,7 @@ const newModelForm = (table, req) => {
         label: "Model pattern",
         type: "String",
         required: true,
-        attributes: { options: Object.keys(getState().modelpatterns) },
+        attributes: { options: Object.keys(getState()!.modelpatterns) },
       },
     ],
   });
@@ -57,9 +58,9 @@ const newModelForm = (table, req) => {
 router.get(
   "/new/:table_id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { table_id } = req.params;
-    const table = await Table.findOne({ id: table_id });
+    const table = (await Table.findOne({ id: table_id }))!;
     res.sendWrap(req.__(`New model`), {
       above: [
         {
@@ -84,25 +85,25 @@ router.get(
 router.post(
   "/new/:table_id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { table_id } = req.params;
-    const table = await Table.findOne({ id: table_id });
+    const table = (await Table.findOne({ id: table_id }))!;
     const form = newModelForm(table, req);
     form.validate(req.body || {});
     if (form.hasErrors) {
       res.sendWrap(req.__(`New model`), renderForm(form, req.csrfToken()));
     } else {
-      const model = await Model.create({ ...form.values, table_id: table.id });
-      await getState().refresh_tables();
-      if (model.templateObj.configuration_workflow)
+      const model = await Model.create({ ...form.values, table_id: table.id } as any);
+      await getState()!.refresh_tables();
+      if ((model.templateObj as any)?.configuration_workflow)
         res.redirect(`/models/config/${model.id}`);
       else res.redirect(`/models/show/${model.id}`);
     }
   })
 );
 
-const respondWorkflow = (model, table, wf, wfres, req, res) => {
-  const wrap = (contents, noCard, previewURL) => ({
+const respondWorkflow = (model: any, table: any, wf: any, wfres: any, req: Req, res: any) => {
+  const wrap = (contents: any, noCard: any, previewURL: any) => ({
     above: [
       {
         type: "breadcrumbs",
@@ -151,17 +152,17 @@ const respondWorkflow = (model, table, wf, wfres, req, res) => {
   else res.redirect(wfres.redirect);
 };
 
-const get_model_workflow = (model, req) => {
+const get_model_workflow = (model: any, req: Req) => {
   const workflow = model.templateObj.configuration_workflow(req);
   workflow.action = `/models/config/${model.id}`;
-  const oldOnDone = workflow.onDone || ((c) => c);
-  workflow.onDone = async (ctx) => {
+  const oldOnDone = workflow.onDone || ((c: any) => c);
+  workflow.onDone = async (ctx: any) => {
     const { id, ...configuration } = await oldOnDone(ctx);
     await model.update({ configuration });
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
     return {
       redirect: `/models/show/${model.id}`,
-      flash: ["success", `Model ${this.name || ""} saved`],
+      flash: ["success", `Model ${model.name || ""} saved`],
     };
   };
   return workflow;
@@ -170,12 +171,12 @@ const get_model_workflow = (model, req) => {
 router.get(
   "/config/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const { step } = req.query;
 
-    const model = await Model.findOne({ id });
-    const table = await Table.findOne({ id: model.table_id });
+    const model = (await Model.findOne({ id }))!;
+    const table = (await Table.findOne({ id: model.table_id }))!;
     const configFlow = get_model_workflow(model, req);
     const wfres = await configFlow.run(
       {
@@ -193,12 +194,12 @@ router.get(
 router.post(
   "/config/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const { step } = req.query;
 
-    const model = await Model.findOne({ id });
-    const table = await Table.findOne({ id: model.table_id });
+    const model = (await Model.findOne({ id }))!;
+    const table = (await Table.findOne({ id: model.table_id }))!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -213,18 +214,18 @@ router.post(
 router.get(
   "/show/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model = await Model.findOne({ id });
-    const table = await Table.findOne({ id: model.table_id });
-    const instances = await ModelInstance.find({ model_id: model.id });
-    const metrics = model.templateObj.metrics || {};
-    const rendered = await model.templateObj.renderModel?.({ table, ...model });
-    const metricCols = Object.entries(metrics).map(([k, v]) => ({
+    const model = (await Model.findOne({ id }))!;
+    const table = (await Table.findOne({ id: model.table_id }))!;
+    const instances = (await ModelInstance.find({ model_id: model.id }))!;
+    const metrics = (model.templateObj as any)?.metrics || {};
+    const rendered = await (model.templateObj as any)?.renderModel?.({ table, ...model });
+    const metricCols = Object.entries(metrics).map(([k, v]: any) => ({
       label: k,
-      key: (inst) => inst.metric_values?.[k]?.toPrecision(6),
+      key: (inst: any) => inst.metric_values?.[k]?.toPrecision(6),
     }));
-    const anyReport = instances.some((i) => !!i.report);
+    const anyReport = instances.some((i: any) => !!i.report);
     res.sendWrap(req.__(`Show model`), {
       above: [
         {
@@ -260,13 +261,13 @@ router.get(
                 { label: req.__("Name"), key: "name" },
                 {
                   label: req.__("Trained"),
-                  key: (inst) => moment(inst.trained_on).fromNow(),
+                  key: (inst: any) => moment(inst.trained_on).fromNow(),
                 },
                 ...(anyReport
                   ? [
                       {
                         label: req.__("Report"),
-                        key: (inst) =>
+                        key: (inst: any) =>
                           inst.report
                             ? a(
                                 { href: `/models/show-report/${inst.id}` },
@@ -279,7 +280,7 @@ router.get(
                 ...metricCols,
                 {
                   label: req.__("Default"),
-                  key: (inst) =>
+                  key: (inst: any) =>
                     form(
                       {
                         action: `/models/make-default-instance/${inst.id}`,
@@ -305,7 +306,7 @@ router.get(
                 },
                 {
                   label: req.__("Delete"),
-                  key: (r) =>
+                  key: (r: any) =>
                     post_delete_btn(
                       `/models/delete-instance/${encodeURIComponent(r.id)}`,
                       req
@@ -325,7 +326,7 @@ router.get(
     });
   })
 );
-const model_train_form = (model, table, req) => {
+const model_train_form = (model: any, table: any, req: Req) => {
   const hyperparameter_fields =
     model.templateObj.hyperparameter_fields?.({
       table,
@@ -348,11 +349,11 @@ const model_train_form = (model, table, req) => {
 router.post(
   "/delete/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model = await Model.findOne({ id });
+    const model = (await Model.findOne({ id }))!;
     await model.delete();
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
     req.flash("success", req.__("Model %s deleted", model.name));
     res.redirect(`/table/${model.table_id}`);
   })
@@ -361,9 +362,9 @@ router.post(
 router.post(
   "/delete-instance/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model_inst = await ModelInstance.findOne({ id });
+    const model_inst = (await ModelInstance.findOne({ id }))!;
     await model_inst.delete();
     req.flash("success", req.__("Model instance %s deleted", model_inst.name));
     res.redirect(`/models/show/${model_inst.model_id}`);
@@ -373,10 +374,10 @@ router.post(
 router.get(
   "/train/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model = await Model.findOne({ id });
-    const table = await Table.findOne({ id: model.table_id });
+    const model = (await Model.findOne({ id }))!;
+    const table = (await Table.findOne({ id: model.table_id }))!;
     const form = model_train_form(model, table, req);
     res.sendWrap(req.__(`Train model`), {
       above: [
@@ -402,10 +403,10 @@ router.get(
 router.post(
   "/train/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model = await Model.findOne({ id });
-    const table = Table.findOne({ id: model.table_id });
+    const model = (await Model.findOne({ id }))!;
+    const table = Table.findOne({ id: model.table_id })!;
     const form = model_train_form(model, table, req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -445,36 +446,36 @@ router.post(
 router.post(
   "/make-default-instance/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model_instance = await ModelInstance.findOne({ id });
+    const model_instance = (await ModelInstance.findOne({ id }))!;
     await model_instance.make_default(!(req.body || {}).enabled);
     res.redirect(`/models/show/${model_instance.model_id}`);
   })
 );
 
-const encode = (s) =>
+const encode = (s: any) =>
   s.replace(
     //https://stackoverflow.com/a/57448862/19839414
     /[&<>'"]/g,
-    (tag) =>
+    (tag: any) =>
       ({
         "&": "&amp;",
         "<": "&lt;",
         ">": "&gt;",
         "'": "&#39;",
         '"': "&quot;",
-      })[tag]
+      } as any)[tag]
   );
 
 router.get(
   "/show-report/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const model_instance = await ModelInstance.findOne({ id });
-    const model = await Model.findOne({ id: model_instance.model_id });
-    const table = Table.findOne({ id: model.table_id });
+    const model_instance = (await ModelInstance.findOne({ id }))!;
+    const model = (await Model.findOne({ id: model_instance.model_id }))!;
+    const table = Table.findOne({ id: model.table_id })!;
     res.sendWrap(req.__(`Train model`), {
       above: [
         {

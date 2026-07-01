@@ -79,7 +79,7 @@ import {
   supportedVersion,
   isVersionSupported,
 } from "@saltcorn/plugins-loader/stable_versioning";
-import { Req } from "@saltcorn/types/base_types";
+import { Req, Res} from "@saltcorn/types/base_types";
 
 const getOnDoneRedirect = (req: Req, fallback = "/plugins") => {
   if (
@@ -185,7 +185,7 @@ const local_has_theme = (name: string) => {
  * @returns {Promise<Object[]>}
  */
 const get_store_items = async (req: Req) => {
-  const installed_plugins = await Plugin.find({});
+  const installed_plugins = (await Plugin.find({}))!;
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const tenants_unsafe_plugins = getRootState().getConfig(
     "tenants_unsafe_plugins",
@@ -205,11 +205,11 @@ const get_store_items = async (req: Req) => {
     !tenants_install_git &&
     (p.source === "git" || p.source === "github");
   const installed_plugin_names = installed_plugins
-    .filter((p) => !isGitBlocked(p))
-    .map((p) => p.name);
-  const store_plugin_names = instore.map((p) => p.name);
+    .filter((p: any) => !isGitBlocked(p))
+    .map((p: any) => p.name);
+  const store_plugin_names = instore.map((p: any) => p.name);
   const plugins_item = instore
-    .map((plugin) => ({
+    .map((plugin: any) => ({
       name: plugin.name,
       installed: installed_plugin_names.includes(plugin.name),
       plugin: true,
@@ -223,10 +223,10 @@ const get_store_items = async (req: Req) => {
       version: plugin.version,
       ready_for_mobile: plugin.ready_for_mobile && plugin.ready_for_mobile(),
     }))
-    .filter((p) => !p.unsafe || isRoot || tenants_unsafe_plugins);
+    .filter((p: any) => !p.unsafe || isRoot || tenants_unsafe_plugins);
   const local_logins = installed_plugins
     .filter(
-      (p) =>
+      (p: any) =>
         !store_plugin_names.includes(p.name) &&
         p.name !== "base" &&
         !isGitBlocked(p)
@@ -254,7 +254,7 @@ const get_store_items = async (req: Req) => {
     description: pack.description,
   }));
 
-  return [...plugins_item, ...local_logins, ...pack_items].sort((a, b) =>
+  return [...plugins_item, ...local_logins, ...pack_items].sort((a: any, b: any) =>
     a.name.toLowerCase() > b.name.toLowerCase() ? 1 : -1
   );
 };
@@ -461,7 +461,7 @@ const storeNavPills = (req: Req) => {
 const filter_items = (items: any[], query: any) => {
   const in_set = filter_items_set(items, query);
   if (!query.q) return in_set;
-  return in_set.filter((p) => satisfy_q(p, query.q.toLowerCase()));
+  return in_set.filter((p: any) => satisfy_q(p, query.q.toLowerCase()));
 };
 
 /**
@@ -495,13 +495,13 @@ const satisfy_q = (p: any, q: string) => {
 const filter_items_set = (items: any[], query: any) => {
   switch (query.set) {
     case "modules":
-      return items.filter((item) => item.plugin && !item.has_theme);
+      return items.filter((item: any) => item.plugin && !item.has_theme);
     case "packs":
-      return items.filter((item) => item.pack);
+      return items.filter((item: any) => item.pack);
     case "themes":
-      return items.filter((item) => item.has_theme);
+      return items.filter((item: any) => item.has_theme);
     case "installed":
-      return items.filter((item) => item.installed);
+      return items.filter((item: any) => item.installed);
     default:
       return items;
   }
@@ -652,7 +652,7 @@ const flash_relogin = (req: Req, exposedConfigs: string[]) => {
 router.get(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const items = await get_store_items(req);
     const relevant_items = filter_items(items, req.query);
     res.sendWrap(
@@ -665,12 +665,12 @@ router.get(
 router.get(
   "/versions_dialog/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
     const withoutOrg = name.replace(/^@saltcorn\//, "");
     let plugin = await Plugin.store_by_name(decodeURIComponent(withoutOrg));
     if (!plugin)
-      plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+      plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     if (!plugin) {
       getState()!.log(
         2,
@@ -722,10 +722,10 @@ router.get(
                   name: "version",
                 },
                 versions
-                  .filter((v) =>
+                  .filter((v: any) =>
                     isVersionSupported(v, pkgInfo.versions, scVersion)
                   )
-                  .map((version) =>
+                  .map((version: any) =>
                     option({
                       id: `${version}_opt`,
                       value: version,
@@ -755,10 +755,10 @@ router.get(
                   selected: true,
                 }),
                 Object.keys(tags)
-                  .filter((tag) =>
+                  .filter((tag: any) =>
                     isVersionSupported(tags[tag], pkgInfo.versions, scVersion)
                   )
-                  .map((tag) =>
+                  .map((tag: any) =>
                     option({
                       id: `${tag}_opt`,
                       value: tags[tag],
@@ -818,8 +818,8 @@ document.getElementById('version_select').onchange = () => {
 const remove_fixed_fields = (name: string) => (form: Form) => {
   const fields = form.fields;
   const fixed = db.connectObj.fixed_plugin_configuration?.[name];
-  Object.keys(fixed || {}).forEach((k) => {
-    const ix = fields.findIndex((f) => f.name === k);
+  Object.keys(fixed || {}).forEach((k: any) => {
+    const ix = fields.findIndex((f: any) => f.name === k);
     fields.splice(ix, 1);
   });
 };
@@ -833,9 +833,9 @@ const remove_fixed_fields = (name: string) => (form: Form) => {
 router.get(
   "/configure/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     if (!plugin) {
       req.flash("warning", req.__("Module not found"));
       res.redirect(getOnDoneRedirect(req));
@@ -916,7 +916,7 @@ else location.reload();`,
 router.post(
   "/configure/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
     const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     let module: any = getState()!.plugins[plugin.name];
@@ -964,7 +964,7 @@ router.post(
       await plugin.upsert();
       await Plugin.loadPlugin(plugin);
       const instore = await Plugin.store_plugins_available();
-      const store_plugin = instore.find((p) => p.name === plugin.name);
+      const store_plugin = instore.find((p: any) => p.name === plugin.name)!;
       if (store_plugin && store_plugin.has_auth) flash_restart(req);
       if (module.exposed_configs?.length > 0)
         flash_relogin(req, module.exposed_configs);
@@ -982,7 +982,7 @@ router.post(
 router.post(
   "/saveconfig/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
     const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     let module: any = getState()!.plugins[plugin.name];
@@ -1016,14 +1016,14 @@ router.post(
 router.get(
   "/user_configure/:name",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user?.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const user = (await User.findOne({ id: req.user?.id }))!;
     if (!user) {
       req.flash("error", req.__("Not authorized"));
       return res.redirect("/");
     }
     const { name } = req.params;
-    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     if (!plugin) {
       req.flash("warning", req.__("Module not found"));
       return res.redirect("/auth/settings");
@@ -1086,8 +1086,8 @@ router.get(
 router.post(
   "/user_configure/:name",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user?.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const user = (await User.findOne({ id: req.user?.id }))!;
     if (!user) {
       req.flash("error", req.__("Not authorized"));
       return res.redirect("/");
@@ -1143,8 +1143,8 @@ router.post(
 router.post(
   "/user_saveconfig/:name",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user?.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const user = (await User.findOne({ id: req.user?.id }))!;
     if (!user) return res.status(401).json({ error: req.__("Not authorized") });
     const { name } = req.params;
     const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
@@ -1191,8 +1191,8 @@ router.post(
 router.post(
   "/remove_user_layout",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user!.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const user = (await User.findOne({ id: req.user!.id }))!;
     if (!user) {
       return res.status(401).json({ error: req.__("Not authorized") });
     } else if (user._attributes?.layout) {
@@ -1227,7 +1227,7 @@ router.post(
 router.get(
   "/new",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.sendWrap(req.__(`New Plugin`), {
       above: [
         {
@@ -1256,7 +1256,7 @@ router.get(
  */
 router.get(
   "/public/:plugin/*filepath",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { plugin } = req.params;
     const filepath = path.join(...req.params.filepath);
     const hasVersion = plugin.includes("@");
@@ -1295,9 +1295,9 @@ router.get(
 router.get(
   "/info/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    let plugin_db = await Plugin.findOne({ name });
+    let plugin_db = (await Plugin.findOne({ name }))!;
     if (!plugin_db) {
       req.flash("warning", req.__("Module not found"));
       res.redirect("/plugins");
@@ -1305,7 +1305,7 @@ router.get(
     }
     const mod = await Plugin.requirePlugin(plugin_db);
     const store_items = await get_store_items(req);
-    const store_item = store_items.find((item) => item.name === name);
+    const store_item = store_items.find((item: any) => item.name === name)!;
     const update_permitted = plugin_db.source === "npm";
 
     let latest = update_permitted
@@ -1326,7 +1326,7 @@ router.get(
     }
     const can_update = update_permitted && latest && mod.version !== latest;
     const can_select_version = update_permitted && plugin_db.source === "npm";
-    let pkgjson;
+    let pkgjson: any;
     if (mod.location && fs.existsSync(path.join(mod.location, "package.json")))
       pkgjson = require(path.join(mod.location, "package.json"));
     const domId = `${removeNonWordChars(mod.name)}_store_version_btn`;
@@ -1348,7 +1348,7 @@ router.get(
                     onClick: "press_store_button(this, true)",
                     href: `javascript:ajax_modal('/plugins/versions_dialog/${encodeURIComponent(
                       encodeURIComponent(plugin_db.name)
-                    )}', { onOpen: () => { restore_old_button('${domId}'); }, onError: (res) => { selectVersionError(res, '${domId}') } });`,
+                    )}', { onOpen: () => { restore_old_button('${domId}'); }, onError: (res: any) => { selectVersionError(res, '${domId}') } });`,
                   },
                   req.__("install a different version")
                 )
@@ -1379,7 +1379,7 @@ router.get(
           ? tr(
               th(req.__("Module dependencies")),
               td(
-                mod.plugin_module.dependencies.map((d) =>
+                mod.plugin_module.dependencies.map((d: any) =>
                   span({ class: "badge bg-primary me-1" }, d)
                 )
               )
@@ -1407,7 +1407,7 @@ router.get(
           : null
       )
     );
-    let cards = [];
+    let cards: any[] = [];
     if (mod.plugin_module.layout)
       cards.push({
         type: "card",
@@ -1449,7 +1449,7 @@ router.get(
 router.get(
   "/refresh",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     await getState()!.deleteConfig(
       "available_plugins",
       "available_plugins_fetched_at",
@@ -1472,10 +1472,10 @@ router.get(
 router.get(
   "/upgrade",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const schema = db.getTenantSchema();
     if (schema === db.connectObj.default_schema) {
-      await upgrade_all_tenants_plugins((p, f, forceFetch) =>
+      await upgrade_all_tenants_plugins((p: any, f: any, forceFetch: any) =>
         Plugin.loadPlugin(p, f, forceFetch)
       );
       req.flash(
@@ -1485,7 +1485,7 @@ router.get(
           a({ href: "/admin/system" }, req.__("Restart here"))
       );
     } else {
-      const installed_plugins = await Plugin.find({});
+      const installed_plugins = (await Plugin.find({}))!;
       for (const plugin of installed_plugins) {
         await plugin.upgrade_version(((
           p: Plugin,
@@ -1513,7 +1513,7 @@ router.get(
 router.get(
   "/reinstall-all",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     //TODO make this post
     const schema = db.getTenantSchema();
     if (schema === db.connectObj.default_schema) {
@@ -1537,7 +1537,7 @@ router.get(
 router.get(
   "/upgrade-plugin/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
 
     const plugin = (await Plugin.findOne({ name }))!;
@@ -1548,7 +1548,7 @@ router.get(
       supportedVersion(
         "latest",
         versions,
-        require("../package.json").version
+        require("../../package.json").version
       ) || undefined
     );
     req.flash("success", req.__(`Module up-to-date`));
@@ -1566,7 +1566,7 @@ router.get(
 router.post(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const plugin = new Plugin(req.body || {});
     const schema = db.getTenantSchema();
     const tenants_install_git = getRootState().getConfig(
@@ -1607,10 +1607,10 @@ router.post(
 router.post(
   "/delete/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
 
-    const plugin = await Plugin.findOne({ name: decodeURIComponent(name) });
+    const plugin = (await Plugin.findOne({ name: decodeURIComponent(name) }))!;
     if (!plugin) {
       req.flash("warning", req.__("Module not found"));
       res.redirect(getOnDoneRedirect(req));
@@ -1643,7 +1643,7 @@ router.post(
 router.post(
   "/install/:name",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
     const { version } = req.body || {};
     const tenants_unsafe_plugins = getRootState().getConfig(
@@ -1654,7 +1654,7 @@ router.post(
     // when no version is specified, allways use the plugin from the store
     let plugin = null;
     if (version) {
-      plugin = await Plugin.findOne({ name: name });
+      plugin = (await Plugin.findOne({ name: name }))!;
       if (plugin) plugin.version = version;
     }
     if (!plugin) {

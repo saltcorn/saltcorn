@@ -21,11 +21,12 @@ import Tag from "@saltcorn/data/models/tag";
 import Router from "express-promise-router";
 import User from "@saltcorn/data/models/user";
 import db from "@saltcorn/data/db";
+import { Req, Res } from "@saltcorn/types/base_types";
 
-const router = new Router();
+const router = Router();
 export default router;
 
-const buildGlobalVars = (tags, roles) => {
+const buildGlobalVars = (tags: any, roles: any) => {
   return `
     const allTags = ${JSON.stringify(tags)};
     const roles = ${JSON.stringify(roles)};
@@ -33,23 +34,23 @@ const buildGlobalVars = (tags, roles) => {
 };
 
 const findEntryPages = async () => {
-  const modernCfg = getState().getConfig("home_page_by_role");
-  let pages;
+  const modernCfg = getState()!.getConfig("home_page_by_role");
+  let pages: any;
   if (modernCfg) {
     pages = Object.values(modernCfg)
-      .filter((val) => val)
-      .map((val) => Page.findOne({ name: val }));
+      .filter((val: any) => val)
+      .map((val: any) => Page.findOne({ name: val }));
   } else {
     pages = [];
     for (const legacyRole of ["public", "user", "staff", "admin"]) {
-      const page = await Page.findOne({ name: `${legacyRole}_home` });
+      const page = (await Page.findOne({ name: `${legacyRole}_home` }))!;
       if (page) pages.push(page);
     }
   }
   return pages;
 };
 
-const buildFilterIds = async (tags) => {
+const buildFilterIds = async (tags: any) => {
   if (!tags || tags.length === 0) return null;
   else {
     const viewFilterIds = new Set();
@@ -71,14 +72,14 @@ const buildFilterIds = async (tags) => {
   }
 };
 
-const parseBool = (str) => {
+const parseBool = (str: any) => {
   return str === "true";
 };
 
 router.get(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const extractOpts = {
       entryPages: await findEntryPages(),
       showViews: true,
@@ -87,7 +88,7 @@ router.get(
       showTrigger: true,
     };
     const initialCyCode = generateCyCode(await buildObjectTrees(extractOpts));
-    const tags = await Tag.find();
+    const tags = (await Tag.find())!;
     const roles = await User.get_roles();
     send_infoarch_page({
       res,
@@ -280,7 +281,7 @@ router.get(
                         autocomplete: "off",
                       })
                     ),
-                    tags.map((tag) => {
+                    tags.map((tag: any) => {
                       const inputId = `tagFilter_box_${tag.name}_id`;
                       return div(
                         { class: "m-3 form-check" },
@@ -373,13 +374,13 @@ router.get(
 router.get(
   "/data",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { showViews, showPages, showTables, showTrigger } = req.query;
     const tagFilterIds = req.query.tagFilterIds
-      ? req.query.tagFilterIds.map((id) => parseInt(id))
+      ? req.query.tagFilterIds.map((id: any) => parseInt(id))
       : [];
     const tags = (await Tag.find()).filter(
-      (tag) => tagFilterIds.indexOf(tag.id) > -1
+      (tag: any) => tagFilterIds.indexOf(tag.id) > -1
     );
     let extractOpts = {
       entryPages: await findEntryPages(),

@@ -317,7 +317,7 @@ let mockResReqStored: any = {};
 const mockReqRes = {
   req: {
     csrfToken: () => "",
-    getLocale: () => getState()!.getConfig("default_locale", "en"),
+    getLocale: () => getState()!.getConfig("default_locale", "en") || "en",
     __: (s: any) => s,
     user: { id: 1, role_id: 1, attributes: {} },
     isAuthenticated: () => true,
@@ -329,7 +329,7 @@ const mockReqRes = {
     },
     body: "",
     get: (s: string) => "",
-  },
+  } as unknown as Req,
   res: {
     redirect(url: string) {
       mockResReqStored.url = url;
@@ -348,7 +348,7 @@ const mockReqRes = {
       mockResReqStored.sendWrap = sw;
     },
     __: (s: any) => s,
-  },
+  } as unknown as Res,
   getStored: () => mockResReqStored,
   reset: () => {
     mockResReqStored = {};

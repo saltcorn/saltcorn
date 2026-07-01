@@ -34,7 +34,7 @@ export type FieldCfg = {
   showIf?: { [field_name: string]: string | boolean | string[] };
   parent_field?: string;
   postText?: string;
-  class?: string;
+  class?: string | string[];
   id?: number;
   default?: string;
   sublabel?: string;
@@ -85,4 +85,6 @@ export type InputType =
   | "section_header"
   | "textarea"
   | "custom_html"
-  | "code";
+  | "code"
+  | "time_of_day"
+  | "time_of_week";

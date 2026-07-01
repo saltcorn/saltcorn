@@ -26,6 +26,7 @@ import Table from "@saltcorn/data/models/table";
 import Trigger from "@saltcorn/data/models/trigger";
 import { run_action_column } from "@saltcorn/data/plugin-helper";
 import path from "path";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -34,7 +35,7 @@ import path from "path";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -42,18 +43,18 @@ export default router;
  * @param {object} req
  * @returns {Promise<Form>}
  */
-const menuForm = async (req) => {
-  const views = await View.find({}, { orderBy: "name", nocase: true });
-  const pages = await Page.find({}, { orderBy: "name", nocase: true });
-  const pageGroups = await PageGroup.find(
+const menuForm = async (req: Req) => {
+  const views = (await View.find({}, { orderBy: "name", nocase: true }))!;
+  const pages = (await Page.find({}, { orderBy: "name", nocase: true }))!;
+  const pageGroups = (await PageGroup.find(
     {},
     { orderBy: "name", nocase: true }
-  );
+  ))!;
   const roles = await User.get_roles();
   const tables = await Table.find_with_external({});
-  const dynTableOptions = tables.map((t) => t.name);
-  const dynOrderFieldOptions = {},
-    dynSectionFieldOptions = {};
+  const dynTableOptions = tables.map((t: any) => t.name);
+  const dynOrderFieldOptions: Record<string, any> = {},
+    dynSectionFieldOptions: Record<string, any> = {};
   for (const table of tables) {
     dynOrderFieldOptions[table.name] = [""];
     dynSectionFieldOptions[table.name] = [""];
@@ -62,23 +63,23 @@ const menuForm = async (req) => {
       dynOrderFieldOptions[table.name].push(field.name);
       if (
         field.type &&
-        field.type.name === "String" &&
+        field.type_name === "String" &&
         field.attributes &&
         field.attributes.options
       )
         dynSectionFieldOptions[table.name].push(field.name);
     }
   }
-  const stateActions = getState().actions;
+  const stateActions = getState()!.actions;
   const actions = [
     ...Object.entries(stateActions)
-      .filter(([k, v]) => !v.requireRow && !v.disableInBuilder)
-      .map(([k, v]) => k),
+      .filter(([k, v]: any) => !v.requireRow && !v.disableInBuilder)
+      .map(([k, v]: any) => k),
   ];
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
-  });
-  triggers.forEach((tr) => {
+  })!;
+  triggers.forEach((tr: any) => {
     actions.push(tr.name);
   });
 
@@ -138,7 +139,7 @@ const menuForm = async (req) => {
         label: req.__("Page"),
         input_type: "select",
         class: "item-menu",
-        options: pages.map((r) => r.name),
+        options: pages.map((r: any) => r.name),
         showIf: { type: "Page" },
       },
       {
@@ -181,7 +182,7 @@ const menuForm = async (req) => {
         type: "String",
         class: "item-menu",
         required: true,
-        attributes: { options: views.map((r) => r.select_option) },
+        attributes: { options: views.map((r: any) => r.select_option) },
         showIf: { type: "View" },
       },
       {
@@ -189,7 +190,7 @@ const menuForm = async (req) => {
         label: req.__("Page group"),
         input_type: "select",
         class: "item-menu",
-        options: pageGroups.map((r) => r.name),
+        options: pageGroups.map((r: any) => r.name),
         showIf: { type: "Page Group" },
       },
       {
@@ -366,14 +367,14 @@ const menuForm = async (req) => {
         label: req.__("Minimum role"),
         class: "item-menu",
         input_type: "select",
-        options: roles.map((r) => ({ label: r.role, value: r.id })),
+        options: roles.map((r: any) => ({ label: r.role, value: r.id })),
       },
       {
         name: "max_role",
         label: req.__("Maximum role"),
         class: "item-menu",
         input_type: "select",
-        options: roles.map((r) => ({ label: r.role, value: r.id })),
+        options: roles.map((r: any) => ({ label: r.role, value: r.id })),
       },
       {
         name: "showif",
@@ -539,7 +540,7 @@ const menuForm = async (req) => {
  * @returns {string}
  */
 // todo move to file the content of menuEditorScript
-const menuEditorScript = (menu_items) => `
+const menuEditorScript = (menu_items: any) => `
   var iconPickerOptions = {searchText: "Search icon...", labelHeader: "{0}/{1}"};
   let lastState;
   let editor;  
@@ -671,8 +672,8 @@ const menuEditorScript = (menu_items) => `
  * @param {object[]} menu_items
  * @returns {object[]}
  */
-const menuTojQME = (menu_items) =>
-  (menu_items || []).map((mi) => ({
+const menuTojQME = (menu_items: any) =>
+  (menu_items || []).map((mi: any) => ({
     ...mi,
     text: mi.label,
     subitems: undefined,
@@ -688,9 +689,9 @@ const menuTojQME = (menu_items) =>
 router.get(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_menu"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await menuForm(req);
-    const state = getState();
+    const state = getState()!;
     const menu_items = menuTojQME(state.getConfig("menu_items"));
     const static_pre = `/static_assets/${db.connectObj.version_tag}`;
     send_infoarch_page({
@@ -747,8 +748,8 @@ router.get(
  * @param {object[]} menu_items
  * @returns {object[]}
  */
-const jQMEtoMenu = (menu_items) =>
-  menu_items.map((mi) => ({
+const jQMEtoMenu = (menu_items: any) =>
+  menu_items.map((mi: any) => ({
     ...mi,
     label: mi.text,
     children: undefined,
@@ -764,7 +765,7 @@ const jQMEtoMenu = (menu_items) =>
 router.post(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_menu"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const new_menu = req.body || {};
     const menu_items = jQMEtoMenu(new_menu);
     await save_menu_items(menu_items);
@@ -776,16 +777,16 @@ router.post(
 
 router.post(
   "/runaction/:name",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
     const role = (req.user || {}).role_id || 100;
-    const state = getState();
+    const state = getState()!;
     const menu_items = state.getConfig("menu_items");
-    let menu_item;
-    const search = (items) =>
+    let menu_item: any;
+    const search = (items: any) =>
       items
-        .filter((item) => role <= +item.min_role)
-        .forEach((item) => {
+        .filter((item: any) => role <= +item.min_role)
+        .forEach((item: any) => {
           if (item.type === "Action" && item.action_name === name)
             menu_item = item;
           else if (item.subitems) search(item.subitems);
@@ -802,7 +803,7 @@ router.post(
           });
         });
         res.json({ success: "ok", ...(result || {}) });
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         res.status(400).json({ error: e.message || e });
       }
@@ -812,14 +813,14 @@ router.post(
 
 router.post(
   "/action/:rndid",
-  error_catcher(async (req, res, next) => {
-    const state = getState();
+  error_catcher(async (req: Req, res: Res, next: any) => {
+    const state = getState()!;
     const maintenanceModeEnabled = state.getConfig(
       "maintenance_mode_enabled",
       false
     );
 
-    if (maintenanceModeEnabled && (!req.user || req.user.role_id > 1)) {
+    if (maintenanceModeEnabled && (!req.user || req.user!.role_id > 1)) {
       res.status(503).json({ error: "in maintenance mode" });
       return;
     }
@@ -828,15 +829,15 @@ router.post(
 );
 
 const getIcons = () => {
-  return getState().icons;
+  return getState()!.icons;
 };
 
 const setIconStyle = () => {
   const icons = getIcons();
   return icons
-    .filter((icon) => icon.startsWith("unicode-"))
+    .filter((icon: any) => icon.startsWith("unicode-"))
     .map(
-      (icon) =>
+      (icon: any) =>
         `i.${icon}:after {content: '${String.fromCharCode(
           parseInt(icon.substring(8, 12), 16)
         )}'}`
@@ -847,7 +848,7 @@ const setIconStyle = () => {
 router.get(
   "/icon-options",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { format } = req.query;
     const icons = getIcons();
     switch (format) {

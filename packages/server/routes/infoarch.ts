@@ -32,6 +32,7 @@ import { stringify } from "csv-stringify";
 import csvtojson from "csvtojson";
 import { hasLLM, translate } from "@saltcorn/data/translate";
 import { escapeHtml } from "@saltcorn/data/utils";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -40,7 +41,7 @@ import { escapeHtml } from "@saltcorn/data/utils";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -52,7 +53,7 @@ export default router;
 router.get(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.redirect(`/menu`);
   })
 );
@@ -60,7 +61,7 @@ router.get(
 router.get(
   "/create-snapshot",
   isAdminOrHasConfigMinRole("min_role_create_snapshots"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     send_infoarch_page({
       res,
       req,
@@ -86,7 +87,7 @@ router.get(
 router.post(
   "/create-snapshot/:snapshotname",
   isAdminOrHasConfigMinRole("min_role_create_snapshots"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { snapshotname } = req.params;
     if (snapshotname == "null") {
       //user clicked cancel on prompt
@@ -99,7 +100,7 @@ router.post(
       if (taken) req.flash("success", req.__("Snapshot successful"));
       else
         req.flash("success", req.__("No changes detected, snapshot skipped"));
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       req.flash("error", e.message);
     }
@@ -111,7 +112,7 @@ router.post(
  * @param {object} req
  * @returns {Form}
  */
-const languageForm = (req, hasSaveButton) =>
+const languageForm = (req: Req, hasSaveButton?: any) =>
   new Form({
     action: "/site-structure/localizer/save-lang",
     onChange: hasSaveButton ? undefined : "saveAndContinue(this)",
@@ -152,8 +153,8 @@ const languageForm = (req, hasSaveButton) =>
 router.get(
   "/localizer",
   isAdmin,
-  error_catcher(async (req, res) => {
-    const cfgLangs = getState().getConfig("localizer_languages");
+  error_catcher(async (req: Req, res: Res) => {
+    const cfgLangs = getState()!.getConfig("localizer_languages");
 
     send_infoarch_page({
       res,
@@ -166,7 +167,7 @@ router.get(
             [
               {
                 label: req.__("Language"),
-                key: (r) =>
+                key: (r: any) =>
                   a(
                     { href: `/site-structure/localizer/edit/${r.locale}` },
                     r.name
@@ -178,7 +179,7 @@ router.get(
               },
               {
                 label: req.__("Default"),
-                key: (r) =>
+                key: (r: any) =>
                   r.is_default
                     ? i({
                         class: "fas fa-check-circle text-success",
@@ -187,7 +188,7 @@ router.get(
               },
               {
                 label: req.__("Language CSV"),
-                key: (r) =>
+                key: (r: any) =>
                   a(
                     {
                       href: `/site-structure/localizer/download-pack/${r.locale}`,
@@ -198,7 +199,7 @@ router.get(
               },
               {
                 label: req.__("Delete"),
-                key: (r) =>
+                key: (r: any) =>
                   post_delete_btn(
                     `/site-structure/localizer/delete-lang/${r.locale}`,
                     req,
@@ -229,27 +230,27 @@ router.get(
 router.get(
   "/localizer/download-pack/:lang",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { lang } = req.params;
     if (lang === "__proto__" || lang === "constructor") {
       res.redirect(`/`);
       return;
     }
-    const cfgLangs = getState().getConfig("localizer_languages");
+    const cfgLangs = getState()!.getConfig("localizer_languages");
 
     if (!cfgLangs[lang]) {
       req.flash("error", req.__("Language not found"));
       return res.redirect(`/site-structure/localizer`);
     }
     const default_lang =
-      Object.values(cfgLangs).find((lobj) => lobj.is_default)?.locale ||
-      getState().getConfig("default_locale", "en");
+      (Object.values(cfgLangs).find((lobj: any) => lobj.is_default) as any)?.locale ||
+      getState()!.getConfig("default_locale", "en");
 
-    const cfgStrings = getState().getConfig("localizer_strings", {});
+    const cfgStrings = getState()!.getConfig("localizer_strings", {});
     const translation = cfgStrings[lang] || {};
-    const strings = getState()
+    const strings = getState()!
       .getStringsForI18n()
-      .map((s) => ({ [default_lang]: s, [lang]: translation[s] || s }));
+      .map((s: any) => ({ [default_lang]: s, [lang]: translation[s] || s }));
     res.type("text/csv");
     res.setHeader("Content-Disposition", `attachment; filename="${lang}.csv"`);
     res.setHeader("Cache-Control", "no-cache");
@@ -258,7 +259,7 @@ router.get(
       header: true,
       columns: [default_lang, lang],
       quoted: true,
-    }).pipe(res);
+    }).pipe(res as any);
   })
 );
 
@@ -266,27 +267,27 @@ router.post(
   "/localizer/upload-language-pack",
   isAdmin,
   setTenant, // TODO why is this needed?????
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (req.files?.file?.tempFilePath) {
-      const cfgLangs = getState().getConfig("localizer_languages");
+      const cfgLangs = getState()!.getConfig("localizer_languages");
       const default_lang =
-        Object.values(cfgLangs).find((lobj) => lobj.is_default)?.locale ||
-        getState().getConfig("default_locale", "en");
-      const cfgStrings = getState().getConfigCopy("localizer_strings");
+        (Object.values(cfgLangs).find((lobj: any) => lobj.is_default) as any)?.locale ||
+        getState()!.getConfig("default_locale", "en");
+      const cfgStrings = getState()!.getConfigCopy("localizer_strings");
 
       try {
         const rows = await csvtojson().fromFile(req.files?.file?.tempFilePath);
-        const langs = Object.keys(rows[0]).filter((k) => k !== default_lang);
+        const langs = Object.keys(rows[0]).filter((k: any) => k !== default_lang);
         for (const lang of langs)
           for (const row of rows) {
             const defstring = row[default_lang];
             if (cfgStrings[lang]) cfgStrings[lang][defstring] = row[lang];
             else cfgStrings[lang] = { [defstring]: row[lang] };
           }
-        await getState().setConfig("localizer_strings", cfgStrings);
+        await getState()!.setConfig("localizer_strings", cfgStrings);
 
         req.flash("success", `Updated languages: ${langs.join(", ")}`);
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         req.flash("error", e.message);
       }
@@ -304,7 +305,7 @@ router.post(
 router.get(
   "/localizer/add-lang",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     send_infoarch_page({
       res,
       req,
@@ -327,17 +328,17 @@ router.get(
 router.get(
   "/localizer/edit/:lang",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { lang } = req.params;
-    const cfgLangs = getState().getConfig("localizer_languages");
+    const cfgLangs = getState()!.getConfig("localizer_languages");
     const form = languageForm(req);
     form.values = cfgLangs[lang];
     const { is_default } = form.values;
-    const cfgStrings = getState().getConfig("localizer_strings", {});
+    const cfgStrings = getState()!.getConfig("localizer_strings", {});
     const translation = cfgStrings[lang] || {};
-    const strings = getState()
+    const strings = getState()!
       .getStringsForI18n()
-      .map((s) => ({ in_default: s, translated: translation[s] || s }));
+      .map((s: any) => ({ in_default: s, translated: translation[s] || s }));
     send_infoarch_page({
       res,
       req,
@@ -371,11 +372,11 @@ router.get(
                 [
                   {
                     label: req.__("In default language"),
-                    key: (r) => escapeHtml(r.in_default),
+                    key: (r: any) => escapeHtml(r.in_default),
                   },
                   {
                     label: req.__("In %s", form.values.name),
-                    key: (r) =>
+                    key: (r: any) =>
                       span(
                         div(
                           {
@@ -416,7 +417,7 @@ router.get(
 router.post(
   "/localizer/translate-llm/:lang/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { lang, defstring } = req.params;
     if (
       lang === "__proto__" ||
@@ -426,18 +427,18 @@ router.post(
       res.redirect(`/`);
       return;
     }
-    const cfgLangs = getState().getConfig("localizer_languages");
+    const cfgLangs = getState()!.getConfig("localizer_languages");
 
     if (!cfgLangs[lang]) {
       req.flash("error", req.__("Language not found"));
       return res.redirect(`/site-structure/localizer`);
     }
     const default_lang =
-      Object.values(cfgLangs).find((lobj) => lobj.is_default)?.locale ||
-      getState().getConfig("default_locale", "en");
+      (Object.values(cfgLangs).find((lobj: any) => lobj.is_default) as any)?.locale ||
+      getState()!.getConfig("default_locale", "en");
     let count = 0;
-    for (const defstring of getState().getStringsForI18n()) {
-      const cfgStrings = getState().getConfigCopy("localizer_strings", {});
+    for (const defstring of getState()!.getStringsForI18n()) {
+      const cfgStrings = getState()!.getConfigCopy("localizer_strings", {});
       if (!cfgStrings[lang]) cfgStrings[lang] = {};
       if (
         cfgStrings[lang][defstring] &&
@@ -449,7 +450,7 @@ router.post(
       const translated = await translate(defstring, lang, default_lang);
       if (cfgStrings[lang]) cfgStrings[lang][defstring] = translated;
       else cfgStrings[lang] = { [defstring]: translated };
-      await getState().setConfig("localizer_strings", cfgStrings);
+      await getState()!.setConfig("localizer_strings", cfgStrings);
     }
     if (count == 20)
       req.flash(
@@ -474,7 +475,7 @@ router.post(
 router.post(
   "/localizer/save-string/:lang/:defstring",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { lang, defstring } = req.params;
     if (
       lang === "__proto__" ||
@@ -484,10 +485,10 @@ router.post(
       res.redirect(`/`);
       return;
     }
-    const cfgStrings = getState().getConfigCopy("localizer_strings");
+    const cfgStrings = getState()!.getConfigCopy("localizer_strings");
     if (cfgStrings[lang]) cfgStrings[lang][defstring] = (req.body || {}).value;
     else cfgStrings[lang] = { [defstring]: (req.body || {}).value };
-    await getState().setConfig("localizer_strings", cfgStrings);
+    await getState()!.setConfig("localizer_strings", cfgStrings);
     res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
 );
@@ -495,7 +496,7 @@ router.post(
 router.post(
   "/localizer/delete-string/:lang/:defstring",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { lang, defstring } = req.params;
     if (
       lang === "__proto__" ||
@@ -505,9 +506,9 @@ router.post(
       res.redirect(`/`);
       return;
     }
-    const cfgStrings = getState().getConfigCopy("localizer_strings");
+    const cfgStrings = getState()!.getConfigCopy("localizer_strings");
     if (cfgStrings[lang]) delete cfgStrings[lang][defstring];
-    await getState().setConfig("localizer_strings", cfgStrings);
+    await getState()!.setConfig("localizer_strings", cfgStrings);
     res.redirect(`/site-structure/localizer/edit/${lang}`);
   })
 );
@@ -521,7 +522,7 @@ router.post(
 router.post(
   "/localizer/save-lang",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = languageForm(req);
     form.validate(req.body || {});
     if (form.hasErrors)
@@ -532,13 +533,13 @@ router.post(
         sub2_page: "New",
         contents: {
           type: "card",
-          contents: [renderForm(form), req.csrfToken()],
+          contents: [renderForm(form, req.csrfToken())],
         },
       });
     else {
       const lang = form.values;
-      const cfgLangs = getState().getConfig("localizer_languages");
-      await getState().setConfig("localizer_languages", {
+      const cfgLangs = getState()!.getConfig("localizer_languages");
+      await getState()!.setConfig("localizer_languages", {
         ...cfgLangs,
         [lang.locale]: lang,
       });
@@ -559,13 +560,13 @@ router.post(
 router.post(
   "/localizer/delete-lang/:lang",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { lang } = req.params;
 
-    const cfgLangs = getState().getConfig("localizer_languages");
+    const cfgLangs = getState()!.getConfig("localizer_languages");
     if (cfgLangs[lang]) {
       delete cfgLangs[lang];
-      await getState().setConfig("localizer_languages", cfgLangs);
+      await getState()!.setConfig("localizer_languages", cfgLangs);
     }
     if (!req.xhr) res.redirect(`/site-structure/localizer`);
     else res.json({ success: "ok" });

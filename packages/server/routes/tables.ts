@@ -84,6 +84,9 @@ import path from "path";
 import Tag from "@saltcorn/data/models/tag";
 import { initial_config_all_fields } from "@saltcorn/data/plugin-helper";
 import { save_menu_items } from "@saltcorn/data/models/config";
+import { FieldLike, Req, Res } from "@saltcorn/types/base_types";
+import { FieldCfg } from "@saltcorn/types/model-abstracts/abstract_field";
+import { instanceOfErrorMsg } from "@saltcorn/types/common_types";
 /**
  * @type {object}
  * @const
@@ -91,7 +94,7 @@ import { save_menu_items } from "@saltcorn/data/models/config";
  * @category server
  * @subcategory routes
  */
-const router = new Router();
+const router = Router();
 export default router;
 /**
  * Show Table Form
@@ -99,9 +102,9 @@ export default router;
  * @param {object} req
  * @returns {Promise<Form>}
  */
-const tableForm = async (table, req) => {
+const tableForm = async (table: any, req: Req) => {
   const fields = table.getFields();
-  const roleOptions = (await User.get_roles()).map((r) => ({
+  const roleOptions = (await User.get_roles()).map((r: any) => ({
     value: r.id,
     label: r.role,
   }));
@@ -181,8 +184,8 @@ const tableForm = async (table, req) => {
               },
               sublabel:
                 req.__("User is treated as owner if true. In scope: ") +
-                ["user", ...fields.map((f) => f.name)]
-                  .map((fn) => code(fn))
+                ["user", ...fields.map((f: any) => f.name)]
+                  .map((fn: any) => code(fn))
                   .join(", "),
               showIf: { ownership_field_id: "_formula" },
             },
@@ -240,7 +243,7 @@ const tableForm = async (table, req) => {
                   },
                 ]),
           ]),
-    ],
+    ] as FieldLike[],
   });
   if (table) {
     if (table.id) form.hidden("id");
@@ -261,8 +264,8 @@ const tableForm = async (table, req) => {
 router.get(
   "/new/",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
-    const table_provider_names = Object.keys(getState().table_providers);
+  error_catcher(async (req: Req, res: Res) => {
+    const table_provider_names = Object.keys(getState()!.table_providers);
     res.sendWrap(req.__(`New table`), {
       above: [
         {
@@ -302,7 +305,7 @@ router.get(
                       },
                     ]
                   : []),
-              ],
+              ] as FieldLike[],
             }),
             req.csrfToken()
           ),
@@ -317,7 +320,7 @@ router.get(
  * @param {object} req HTTP Request
  * @returns {Form}
  */
-const discoverForm = (tables, req) => {
+const discoverForm = (tables: any, req: Req) => {
   return new Form({
     action: "/table/discover",
     blurb:
@@ -329,7 +332,7 @@ const discoverForm = (tables, req) => {
             "There are no tables in the database that can be imported into Saltcorn."
           ),
     submitLabel: req.__("Import"),
-    fields: tables.map((t) => ({
+    fields: tables.map((t: any) => ({
       name: t.table_name,
       label: t.table_name,
       type: "Bool",
@@ -347,7 +350,7 @@ const discoverForm = (tables, req) => {
 router.get(
   "/discover",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     // get list of discoverable tables
     const tbls = await discoverable_tables();
     // create discoverable tables list form
@@ -381,16 +384,16 @@ router.get(
 router.post(
   "/discover",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const tbls = await discoverable_tables();
     const form = discoverForm(tbls, req);
     form.validate(req.body || {});
     const tableNames = tbls
-      .filter((t) => form.values[t.table_name])
-      .map((t) => t.table_name);
+      .filter((t: any) => form.values[t.table_name])
+      .map((t: any) => t.table_name);
     const pack = await discover_tables(tableNames);
     await implement_discovery(pack);
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
     req.flash(
       "success",
       req.__("Discovered tables: %s", tableNames.join(", "))
@@ -409,7 +412,7 @@ router.post(
 router.get(
   "/create-from-csv",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.sendWrap(req.__(`Create table from CSV file`), {
       above: [
         {
@@ -469,13 +472,13 @@ router.post(
   "/create-from-csv",
   setTenant,
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if ((req.body || {}).name && req.files && req.files.file) {
       const name = (req.body || {}).name;
-      const alltables = await Table.find({});
+      const alltables = (await Table.find({}))!;
       const existing_tables = [
         "users",
-        ...alltables.map((t) => db.sqlsanitize(t.name).toLowerCase()),
+        ...alltables.map((t: any) => db.sqlsanitize(t.name).toLowerCase()),
       ];
       if (existing_tables.includes(db.sqlsanitize(name).toLowerCase())) {
         req.flash("error", req.__(`Table %s already exists`, name));
@@ -490,11 +493,11 @@ router.post(
       await req.files.file.mv(newPath);
       const parse_res = await Table.create_from_csv(name, newPath);
       await fs.unlink(newPath);
-      if (parse_res.error) {
+      if (instanceOfErrorMsg(parse_res)) {
         req.flash("error", parse_res.error);
         res.redirect(`/table/create-from-csv`);
       } else {
-        await getState().refresh_tables();
+        await getState()!.refresh_tables();
         Trigger.emitEvent(
           "AppChange",
           `Table ${parse_res.table.name}`,
@@ -517,15 +520,15 @@ router.post(
   })
 );
 
-const indentString = (str, indent) => `${" ".repeat(indent)}${str}`;
+const indentString = (str: any, indent: any) => `${" ".repeat(indent)}${str}`;
 
-const srcCardinality = (field) => (field.required ? "||" : "|o");
+const srcCardinality = (field: any) => (field.required ? "||" : "|o");
 
-const buildTableMarkup = (table) => {
+const buildTableMarkup = (table: any) => {
   const fields = table.getFields();
   const members = fields
-    // .filter((f) => !f.reftable_name)
-    .map((f) =>
+    // .filter((f: any) => !f.reftable_name)
+    .map((f: any) =>
       indentString(
         `${removeAllWhiteSpace(f.type_name)} ${validSqlId(f.name)}`,
         6
@@ -534,7 +537,7 @@ const buildTableMarkup = (table) => {
     .join(EOL);
   const keys = table
     .getForeignKeys()
-    .map((f) =>
+    .map((f: any) =>
       indentString(
         `"${table.name}"${srcCardinality(f)}--|| "${f.reftable_name}" : "${
           f.name
@@ -547,8 +550,8 @@ const buildTableMarkup = (table) => {
   "${table.name}" {${EOL}${members}${EOL}  }`;
 };
 
-const buildMermaidMarkup = (tables) => {
-  const lines = tables.map((table) => buildTableMarkup(table)).join(EOL);
+const buildMermaidMarkup = (tables: any) => {
+  const lines = tables.map((table: any) => buildTableMarkup(table)).join(EOL);
   return `${indentString("erDiagram", 2)}${EOL}${lines}`;
 };
 
@@ -628,7 +631,7 @@ router.get(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const tables = await Table.find_with_external({}, { orderBy: "name" });
     res.sendWrap(
       {
@@ -646,7 +649,7 @@ router.get(
               });
               await mermaid.run({
                 querySelector: ".mermaid",
-                postRenderCallback: (id) => {
+                postRenderCallback: (id: any) => {
                   $("#" + id).css("height", "calc(100vh - 250px)");
                   $("#" + id + " > g").each(function(index) {
                     const jThis = $(this);
@@ -731,7 +734,7 @@ router.get(
  * @param {string} lbl
  * @returns {string}
  */
-const badge = (col, lbl, title) =>
+const badge = (col: string, lbl: string, title?: any) =>
   `<span ${
     title ? `title="${title}" ` : ""
   }class="badge bg-${col}">${lbl}</span>&nbsp;`;
@@ -741,7 +744,7 @@ const badge = (col, lbl, title) =>
  * @param {object} req
  * @returns {string}
  */
-const typeBadges = (f, req) => {
+const typeBadges = (f: any, req: Req) => {
   let s = "";
   if (f.primary_key) s += badge("warning", req.__("Primary key"));
   if (f.required) s += badge("primary", req.__("Required"));
@@ -762,10 +765,10 @@ const typeBadges = (f, req) => {
  * @param {object} f
  * @returns {string}
  */
-const attribBadges = (f) => {
+const attribBadges = (f: any) => {
   let s = "";
   if (f.attributes) {
-    Object.entries(f.attributes).forEach(([k, v]) => {
+    Object.entries(f.attributes).forEach(([k, v]: any) => {
       if (k === "summary_field") s += badge("secondary", "Summary", v);
       if (k === "include_fts" && v)
         s += badge("secondary", "FTS", "Include in full-text search");
@@ -805,12 +808,12 @@ const attribBadges = (f) => {
 router.get(
   "/rescan/:idorname",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     let id = parseInt(idorname);
-    let table;
-    if (id) [table] = await Table.find({ id });
-    if (!table) [table] = await Table.find({ name: idorname });
+    let table: any;
+    if (id) [table] = (await Table.find({ id }))!;
+    if (!table) [table] = (await Table.find({ name: idorname }))!;
     if (!table) {
       req.flash("error", req.__(`Table not found`));
       res.redirect(`/table`);
@@ -818,11 +821,11 @@ router.get(
     }
 
     const result = await reconcile_table(table);
-    const ghosts = result.fields.filter((f) => f.status === "ghost");
-    const orphans = result.fields.filter((f) => f.status === "orphan");
-    const matches = result.fields.filter((f) => f.status === "match");
+    const ghosts = result.fields.filter((f: any) => f.status === "ghost");
+    const orphans = result.fields.filter((f: any) => f.status === "orphan");
+    const matches = result.fields.filter((f: any) => f.status === "match");
 
-    const statusBadge = (status) => {
+    const statusBadge = (status: any) => {
       switch (status) {
         case "match":
           return badge("success", req.__("Match"));
@@ -851,7 +854,7 @@ router.get(
           [
             {
               label: "",
-              key: (r) =>
+              key: (r: any) =>
                 input({
                   type: "checkbox",
                   name: "fields",
@@ -860,8 +863,8 @@ router.get(
                 }),
             },
             { label: req.__("Name"), key: "name" },
-            { label: req.__("Type"), key: (r) => r.type || "—" },
-            { label: req.__("Status"), key: (r) => statusBadge(r.status) },
+            { label: req.__("Type"), key: (r: any) => r.type || "—" },
+            { label: req.__("Status"), key: (r: any) => statusBadge(r.status) },
           ],
           ghosts,
           { hover: true }
@@ -892,7 +895,7 @@ router.get(
           [
             {
               label: "",
-              key: (r) =>
+              key: (r: any) =>
                 input({
                   type: "checkbox",
                   name: "columns",
@@ -901,8 +904,8 @@ router.get(
                 }),
             },
             { label: req.__("Column"), key: "name" },
-            { label: req.__("SQL Type"), key: (r) => r.type || "—" },
-            { label: req.__("Status"), key: (r) => statusBadge(r.status) },
+            { label: req.__("SQL Type"), key: (r: any) => r.type || "—" },
+            { label: req.__("Status"), key: (r: any) => statusBadge(r.status) },
           ],
           orphans,
           { hover: true }
@@ -924,8 +927,8 @@ router.get(
         mkTable(
           [
             { label: req.__("Name"), key: "name" },
-            { label: req.__("Type"), key: (r) => r.type || "—" },
-            { label: req.__("Status"), key: (r) => statusBadge(r.status) },
+            { label: req.__("Type"), key: (r: any) => r.type || "—" },
+            { label: req.__("Status"), key: (r: any) => statusBadge(r.status) },
           ],
           matches,
           { hover: true }
@@ -987,12 +990,12 @@ router.get(
 router.post(
   "/rescan-delete/:idorname",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     let id = parseInt(idorname);
-    let table;
-    if (id) [table] = await Table.find({ id });
-    if (!table) [table] = await Table.find({ name: idorname });
+    let table: any;
+    if (id) [table] = (await Table.find({ id }))!;
+    if (!table) [table] = (await Table.find({ name: idorname }))!;
     if (!table) {
       req.flash("error", req.__(`Table not found`));
       res.redirect(`/table`);
@@ -1008,14 +1011,14 @@ router.post(
     let removed = 0;
 
     for (const fname of fieldNames) {
-      const field = fields.find((f) => f.name === fname);
+      const field = fields.find((f: any) => f.name === fname)!;
       if (field) {
         await db.deleteWhere("_sc_fields", { id: field.id });
         removed++;
       }
     }
 
-    await getState().refresh_tables(true);
+    await getState()!.refresh_tables(true);
     req.flash(
       "success",
       req.__("Removed %d ghost field(s) from Saltcorn", removed)
@@ -1033,12 +1036,12 @@ router.post(
 router.post(
   "/rescan-import/:idorname",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     let id = parseInt(idorname);
-    let table;
-    if (id) [table] = await Table.find({ id });
-    if (!table) [table] = await Table.find({ name: idorname });
+    let table: any;
+    if (id) [table] = (await Table.find({ id }))!;
+    if (!table) [table] = (await Table.find({ name: idorname }))!;
     if (!table) {
       req.flash("error", req.__(`Table not found`));
       res.redirect(`/table`);
@@ -1051,13 +1054,13 @@ router.post(
         ? [req.body.columns]
         : [];
     let imported = 0;
-    const skipped = [];
+    const skipped: any[] = [];
 
     const schema = db.getTenantSchema();
 
     for (const colName of colNames) {
       // Get column info from DB and build a field config
-      let fieldCfg;
+      let fieldCfg: any;
       if (!db.isSQLite) {
         const { rows } = await db.query(
           "SELECT * FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3",
@@ -1081,7 +1084,7 @@ router.post(
         }
       } else {
         const { rows } = await db.query(`PRAGMA table_info("${table.name}")`);
-        const col = rows.find((r) => r.name === colName);
+        const col = rows.find((r: any) => r.name === colName)!;
         if (col) {
           const type = findType(col.type) || "String";
           fieldCfg = {
@@ -1115,7 +1118,7 @@ router.post(
       }
     }
 
-    await getState().refresh_tables(true);
+    await getState()!.refresh_tables(true);
     const msgs = [
       req.__("Imported %d orphan column(s) into Saltcorn", imported),
     ];
@@ -1145,14 +1148,14 @@ router.get(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { idorname } = req.params;
     let id = parseInt(idorname);
-    let table;
-    if (id) [table] = await Table.find({ id });
+    let table: any;
+    if (id) [table] = (await Table.find({ id }))!;
 
     if (!table) {
-      [table] = await Table.find({ name: idorname });
+      [table] = (await Table.find({ name: idorname }))!;
     }
 
     if (!table) {
@@ -1162,16 +1165,16 @@ router.get(
     }
 
     const user_can_edit_tables =
-      req.user.role_id === 1 ||
-      getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+      req.user!.role_id === 1 ||
+      getState()!.getConfig("min_role_edit_tables", 1) >= req.user!.role_id;
 
     const user_can_edit_views =
-      req.user.role_id === 1 ||
-      getState().getConfig("min_role_edit_views", 1) >= req.user.role_id;
+      req.user!.role_id === 1 ||
+      getState()!.getConfig("min_role_edit_views", 1) >= req.user!.role_id;
     const user_can_edit_triggers =
-      req.user.role_id === 1 ||
-      getState().getConfig("min_role_edit_triggers", 1) >= req.user.role_id;
-    let nrows;
+      req.user!.role_id === 1 ||
+      getState()!.getConfig("min_role_edit_triggers", 1) >= req.user!.role_id;
+    let nrows: any;
     try {
       nrows = await table.countRows({}, { forUser: req.user });
     } catch {
@@ -1180,12 +1183,12 @@ router.get(
     const fields = table.getFields();
     const { child_relations } = await table.get_child_relations();
     const inbound_refs = [
-      ...new Set(child_relations.map(({ table }) => table.name)),
+      ...new Set(child_relations.map(({ table }: any) => table.name)),
     ];
     const triggers = table.id ? Trigger.find({ table_id: table.id }) : [];
     triggers.sort(comparingCaseInsensitive("name"));
-    let fieldCard;
-    const primaryKeys = fields.filter((f) => f.primary_key);
+    let fieldCard: any;
+    const primaryKeys = fields.filter((f: any) => f.primary_key);
     const nPrimaryKeys = primaryKeys.length;
     const standardFieldNames = [
       "name",
@@ -1195,8 +1198,8 @@ router.get(
       "created_by",
       "updated_by",
     ];
-    const fieldNameSet = new Set(fields.map((f) => f.name));
-    const hasAllStandardFields = standardFieldNames.every((n) =>
+    const fieldNameSet = new Set(fields.map((f: any) => f.name));
+    const hasAllStandardFields = standardFieldNames.every((n: any) =>
       fieldNameSet.has(n)
     );
 
@@ -1232,7 +1235,7 @@ router.get(
           { label: req.__("Label"), key: "label" },
           {
             label: req.__("Type"),
-            key: (r) =>
+            key: (r: any) =>
               r.type === "Key"
                 ? `Key to ` +
                   a({ href: `/table/${r.reftable_name}` }, r.reftable_name)
@@ -1246,27 +1249,27 @@ router.get(
             : [
                 {
                   label: req.__("Edit"),
-                  key: (r) => link(`/field/${r.id}`, req.__("Edit")),
+                  key: (r: any) => link(`/field/${r.id}`, req.__("Edit")),
                 },
               ]),
           {
             label: "",
-            key: (r) => typeBadges(r, req),
+            key: (r: any) => typeBadges(r, req),
           },
           {
             label: req.__("Attributes"),
-            key: (r) => attribBadges(r),
+            key: (r: any) => attribBadges(r),
           },
           {
             label: req.__("Variable name"),
-            key: (t) => span({ class: "copy-to-clipboard" }, code(t.name)),
+            key: (t: any) => span({ class: "copy-to-clipboard" }, code(t.name)),
           },
           ...(table.external || !user_can_edit_tables || table.provider_name
             ? []
             : [
                 {
                   label: req.__("Delete"),
-                  key: (r) =>
+                  key: (r: any) =>
                     (table.name === "users" && r.name === "email") ||
                     r.primary_key
                       ? ""
@@ -1296,7 +1299,9 @@ router.get(
         tableHtml,
         inbound_refs.length > 0
           ? req.__("Inbound keys: ") +
-            inbound_refs.map((tnm) => link(`/table/${tnm}`, tnm)).join(", ") +
+            inbound_refs
+              .map((tnm: any) => link(`/table/${tnm}`, tnm))
+              .join(", ") +
             "<br>"
           : "",
         !table.external &&
@@ -1322,12 +1327,12 @@ router.get(
           ),
       ];
     }
-    let viewCard;
-    let triggerCard = "";
+    let viewCard: any;
+    let triggerCard: any = "";
     if (fields.length > 0) {
-      const views = await View.find(
+      const views = (await View.find(
         table.id ? { table_id: table.id } : { exttable_name: table.name }
-      );
+      ))!;
       var viewCardContents;
       if (views.length > 0) {
         viewCardContents = await viewsList(views, req, {
@@ -1395,18 +1400,18 @@ router.get(
             ),
         };
     }
-    const models = await Model.find({ table_id: table.id });
+    const models = (await Model.find({ table_id: table.id }))!;
     const modelCard = div(
       mkTable(
         [
           {
             label: req.__("Name"),
-            key: (r) => link(`/models/show/${r.id}`, r.name),
+            key: (r: any) => link(`/models/show/${r.id}`, r.name),
           },
           { label: req.__("Pattern"), key: "modelpattern" },
           {
             label: req.__("Delete"),
-            key: (r) =>
+            key: (r: any) =>
               post_delete_btn(
                 `/models/delete/${encodeURIComponent(r.id)}`,
                 req
@@ -1562,7 +1567,7 @@ router.get(
                 req,
                 true
               ),
-            req.user.role_id === 1 &&
+            req.user!.role_id === 1 &&
               table.name !== "users" &&
               post_dropdown_item(
                 `/table/delete-with-trig-views/${table.id}`,
@@ -1579,7 +1584,7 @@ router.get(
       table.ownership_field_id = "_formula";
     const tblForm = await tableForm(table, req);
     if (!user_can_edit_tables) {
-      tblForm.fields.forEach((f) => (f.disabled = true));
+      tblForm.fields.forEach((f: any) => (f.disabled = true));
     }
     res.sendWrap(req.__(`%s table`, table.name), {
       above: [
@@ -1619,7 +1624,7 @@ router.get(
           titleAjaxIndicator: true,
           contents: renderForm(tblForm, req.csrfToken()),
         },
-        ...(Model.has_templates && req.user.role_id === 1
+        ...(Model.has_templates && req.user!.role_id === 1
           ? [
               {
                 type: "card",
@@ -1642,16 +1647,16 @@ router.get(
 router.post(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const v = req.body || {};
     if (typeof v.id === "undefined" && typeof v.external === "undefined") {
       // insert
       v.name = v.name.trim();
       const { name, ...rest } = v;
-      const alltables = await Table.find({});
+      const alltables = (await Table.find({}))!;
       const existing_tables = [
         "users",
-        ...alltables.map((t) => db.sqlsanitize(t.name).toLowerCase()),
+        ...alltables.map((t: any) => db.sqlsanitize(t.name).toLowerCase()),
       ];
       if (existing_tables.includes(db.sqlsanitize(name).toLowerCase())) {
         req.flash("error", req.__(`Table %s already exists`, name));
@@ -1661,11 +1666,11 @@ router.post(
         res.redirect(`/table/new`);
       } else if (rest.provider_name && rest.provider_name !== "-") {
         const table = await Table.create(name, rest);
-        await getState().refresh_tables();
+        await getState()!.refresh_tables();
         res.redirect(`/table/provider-cfg/${table.id}`);
       } else {
         delete rest.provider_name;
-        let table;
+        let table: any;
         await db.withTransaction(async () => {
           table = await Table.create(name, rest);
           Trigger.emitEvent("AppChange", `Table ${name}`, req.user, {
@@ -1673,7 +1678,7 @@ router.post(
             entity_name: name,
           });
         });
-        await getState().refresh_tables();
+        await getState()!.refresh_tables();
         req.flash("success", req.__(`Table %s created`, name));
         res.redirect(`/table/${table.id}`);
       }
@@ -1681,14 +1686,14 @@ router.post(
       // todo check that works after where change
       // todo findOne can be have parameter for external table here
       //we can only save min role
-      const table = Table.findOne({ name: v.name });
+      const table = Table.findOne({ name: v.name })!;
       if (table) {
-        const exttables_min_role_read = getState().getConfigCopy(
+        const exttables_min_role_read = getState()!.getConfigCopy(
           "exttables_min_role_read",
           {}
         );
         exttables_min_role_read[table.name] = +v.min_role_read;
-        await getState().setConfig(
+        await getState()!.setConfig(
           "exttables_min_role_read",
           exttables_min_role_read
         );
@@ -1699,7 +1704,7 @@ router.post(
       }
     } else {
       const { id, _csrf, ...rest } = v;
-      const table = Table.findOne({ id: parseInt(id) });
+      const table = Table.findOne({ id: parseInt(id) })!;
       const old_versioned = table.versioned;
       const old_has_sync_info = table.has_sync_info;
       let hasError = false;
@@ -1740,7 +1745,7 @@ router.post(
           }
         }
       });
-      await getState().refresh_tables();
+      await getState()!.refresh_tables();
       if (!req.xhr) {
         if (!old_versioned && rest.versioned)
           req.flash(
@@ -1771,9 +1776,9 @@ router.post(
 router.post(
   "/delete-with-trig-views/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const t = Table.findOne({ id });
+    const t = Table.findOne({ id })!;
     if (!t) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -1786,23 +1791,23 @@ router.post(
     }
     try {
       await db.withTransaction(async () => {
-        const views = await View.find(
+        const views = (await View.find(
           t.id ? { table_id: t.id } : { exttable_name: t.name }
-        );
+        ))!;
         for (const view of views) await view.delete();
         if (t.id) {
-          const triggers = await Trigger.find({ table_id: t.id });
+          const triggers = (await Trigger.find({ table_id: t.id }))!;
           for (const trig of triggers) await trig.delete();
         }
 
         await t.delete();
       });
-      await getState().refresh_tables();
-      await getState().refresh_views();
-      await getState().refresh_triggers();
+      await getState()!.refresh_tables();
+      await getState()!.refresh_views();
+      await getState()!.refresh_triggers();
       req.flash("success", req.__(`Table %s deleted`, t.name));
       res.redirect(`/table`);
-    } catch (err) {
+    } catch (err: any) {
       req.flash("error", err.message);
       res.redirect(`/table`);
     }
@@ -1820,9 +1825,9 @@ router.post(
 router.post(
   "/delete/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const t = Table.findOne({ id });
+    const t = Table.findOne({ id })!;
     if (!t) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -1833,9 +1838,9 @@ router.post(
       res.redirect(`/table`);
       return;
     }
-    const views = await View.find(
+    const views = (await View.find(
       t.id ? { table_id: t.id } : { exttable_name: t.name }
-    );
+    ))!;
     if (views.length) {
       req.flash(
         "error",
@@ -1847,7 +1852,7 @@ router.post(
       return;
     }
     if (t.id) {
-      const triggers = await Trigger.find({ table_id: t.id });
+      const triggers = (await Trigger.find({ table_id: t.id }))!;
       if (triggers.length) {
         req.flash(
           "error",
@@ -1868,9 +1873,9 @@ router.post(
           entity_name: t.name,
         });
       });
-      await getState().refresh_tables();
+      await getState()!.refresh_tables();
       res.redirect(`/table`);
-    } catch (err) {
+    } catch (err: any) {
       req.flash("error", err.message);
       res.redirect(`/table`);
     }
@@ -1879,9 +1884,9 @@ router.post(
 router.post(
   "/forget-table/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const t = Table.findOne({ id });
+    const t = Table.findOne({ id })!;
     if (!t) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -1896,13 +1901,13 @@ router.post(
       await db.withTransaction(async () => {
         await t.delete(true);
       });
-      await getState().refresh_tables();
+      await getState()!.refresh_tables();
       req.flash(
         "success",
         req.__(`Table %s forgotten. You can now discover it.`, t.name)
       );
       res.redirect(`/table`);
-    } catch (err) {
+    } catch (err: any) {
       req.flash("error", err.message);
       res.redirect(`/table`);
     }
@@ -1922,28 +1927,30 @@ router.get(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
-    const tblq = {};
-    let filterOnTag;
+  error_catcher(async (req: Req, res: Res) => {
+    const tblq: Record<string, any> = {};
+    let filterOnTag: any;
     if (req.query._tag) {
-      const tagEntries = await TagEntry.find({
+      const tagEntries = (await TagEntry.find({
         tag_id: +req.query._tag,
         not: { table_id: null },
-      });
-      tblq.id = { in: tagEntries.map((te) => te.table_id).filter(Boolean) };
-      filterOnTag = await Tag.findOne({ id: +req.query._tag });
+      }))!;
+      tblq.id = {
+        in: tagEntries.map((te: any) => te.table_id).filter(Boolean),
+      };
+      filterOnTag = (await Tag.findOne({ id: +req.query._tag }))!;
     }
 
     const user_can_edit_tables =
-      req.user.role_id === 1 ||
-      getState().getConfig("min_role_edit_tables", 1) >= req.user.role_id;
+      req.user!.role_id === 1 ||
+      getState()!.getConfig("min_role_edit_tables", 1) >= req.user!.role_id;
 
     const rows = await Table.find_with_external(tblq, {
       orderBy: "name",
       nocase: true,
     });
     const roles = await User.get_roles();
-    const getRole = (rid) => roles.find((r) => r.id === rid).role;
+    const getRole = (rid: any) => roles.find((r: any) => r.id === rid)!.role;
     const mainCard = await tablesList(rows, req, { filterOnTag });
     const createCard = div(
       user_can_edit_tables &&
@@ -1961,7 +1968,7 @@ router.get(
           i({ class: "fas fa-upload me-1" }),
           req.__("Create from CSV upload")
         ),
-      req.user.role_id === 1 &&
+      req.user!.role_id === 1 &&
         !db.isSQLite &&
         a(
           {
@@ -2013,10 +2020,10 @@ router.get(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const table = Table.findOne({ name });
-    if (table.min_role_read < req.user.role_id) {
+    const table = Table.findOne({ name })!;
+    if (table.min_role_read < req.user!.role_id) {
       req.flash("error", "Not authorized to read table");
       res.redirect(`/table/${table.id}`);
       return;
@@ -2029,31 +2036,33 @@ router.get(
     res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
     res.setHeader("Cache-Control", "no-cache");
     res.setHeader("Pragma", "no-cache");
-    const columns = table.fields.sort((a, b) => a.id - b.id).map((f) => f.name);
+    const columns = table.fields
+      .sort((a: any, b: any) => a.id - b.id)
+      .map((f: any) => f.name);
     for (const field of table.fields) {
-      if (field.type?.name === "JSON" && field.attributes?.hasSchema) {
-        (field.attributes?.schema || []).forEach((s) => {
+      if (field.type_name === "JSON" && field.attributes?.hasSchema) {
+        (field.attributes?.schema || []).forEach((s: any) => {
           columns.push(`${field.name}.${s.key}`);
         });
         columns.splice(columns.indexOf(field.name), 1);
         for (const row of rows) {
-          Object.keys(row[field.name] || {}).forEach((k) => {
+          Object.keys(row[field.name] || {}).forEach((k: any) => {
             row[`${field.name}.${k}`] = row[field.name][k];
           });
           delete row[field.name];
         }
       }
     }
-    const localize = getState().getConfig("localize_csv_download");
+    const localize = getState()!.getConfig("localize_csv_download");
 
-    const csvOpts = {};
+    const csvOpts: Record<string, any> = {};
     const cast = {
-      date: (value) => value.toISOString(),
-      object: (o) => {
+      date: (value: any) => value.toISOString(),
+      object: (o: any) => {
         if (o?.constructor?.name === "PlainDate") return o.toISOString();
         return JSON.stringify(o);
       },
-      boolean: (v) => (v ? "true" : "false"),
+      boolean: (v: any) => (v ? "true" : "false"),
     };
     const locale = req.getLocale();
     if (locale && localize) {
@@ -2061,10 +2070,10 @@ router.get(
       if (numSep === ",") {
         csvOpts.delimiter = ";";
         // this opens a can of worms - how to read CSV back again
-        //cast.number = (v) => v.toLocaleString(locale);
+        //cast.number = (v: any) => v.toLocaleString(locale);
       }
     }
-    const bom = getState().getConfig("bom_csv_download");
+    const bom = getState()!.getConfig("bom_csv_download");
 
     stringify(rows, {
       header: true,
@@ -2072,7 +2081,7 @@ router.get(
       bom: !!bom,
       cast,
       ...csvOpts,
-    }).pipe(res);
+    }).pipe(res as any);
   })
 );
 
@@ -2089,15 +2098,15 @@ router.get(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
       return;
     }
-    const cons = await TableConstraint.find({ table_id: table.id });
+    const cons = (await TableConstraint.find({ table_id: table.id }))!;
     res.sendWrap(req.__(`%s constraints`, table.name), {
       above: [
         {
@@ -2117,7 +2126,7 @@ router.get(
                 { label: req.__("Type"), key: "type" },
                 {
                   label: req.__("What"),
-                  key: (r) =>
+                  key: (r: any) =>
                     r.type === "Unique"
                       ? r.configuration.fields.join(", ")
                       : r.type === "Index" && r.configuration?.field === "_fts"
@@ -2130,7 +2139,7 @@ router.get(
                 },
                 {
                   label: req.__("Delete"),
-                  key: (r) =>
+                  key: (r: any) =>
                     post_delete_btn(`/table/delete-constraint/${r.id}`, req),
                 },
               ],
@@ -2163,7 +2172,12 @@ router.get(
  * @param {object[]} fields
  * @returns {Form}
  */
-const constraintForm = (req, table, fields, type) => {
+const constraintForm = (
+  req: Req,
+  table: Table,
+  fields: Field[],
+  type: "Formula" | "Unique" | "Index"
+): Form => {
   switch (type) {
     case "Formula":
       return new Form({
@@ -2190,8 +2204,8 @@ const constraintForm = (req, table, fields, type) => {
                 "Formula must evaluate to true for valid rows. In scope: "
               ) +
               fields
-                .map((f) => f.name)
-                .map((fn) => code(fn))
+                .map((f: any) => f.name)
+                .map((fn: any) => code(fn))
                 .join(", "),
           },
           {
@@ -2210,7 +2224,7 @@ const constraintForm = (req, table, fields, type) => {
         ),
         onSubmit: "press_store_button(this)",
         fields: [
-          ...fields.map((f) => ({
+          ...fields.map((f: any) => ({
             name: f.name,
             label: f.label,
             type: "Bool",
@@ -2224,8 +2238,13 @@ const constraintForm = (req, table, fields, type) => {
         ],
       });
     case "Index":
-      const fieldopts = fields.map((f) => ({ label: f.label, name: f.name }));
-      const hasIncludeFts = fields.filter((f) => f.attributes?.include_fts);
+      const fieldopts = fields.map((f: any) => ({
+        label: f.label,
+        name: f.name,
+      }));
+      const hasIncludeFts = fields.filter(
+        (f: any) => f.attributes?.include_fts
+      );
       if (!db.isSQLite)
         fieldopts.push({ label: "Full-text search", name: "_fts" });
       return new Form({
@@ -2265,9 +2284,9 @@ const constraintForm = (req, table, fields, type) => {
 router.get(
   "/add-constraint/:id/:type",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id, type } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2309,9 +2328,9 @@ router.get(
 router.post(
   "/add-constraint/:id/:type",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id, type } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2322,11 +2341,11 @@ router.post(
     form.validate(req.body || {});
     if (form.hasErrors) req.flash("error", req.__("An error occurred"));
     else {
-      let configuration = {};
+      let configuration: Record<string, any> = {};
       if (type === "Unique") {
         configuration.fields = fields
-          .map((f) => f.name)
-          .filter((f) => form.values[f]);
+          .map((f: any) => f.name)
+          .filter((f: any) => form.values[f]);
         configuration.errormsg = form.values.errormsg;
       } else configuration = form.values;
       await db.withTransaction(async () => {
@@ -2338,7 +2357,7 @@ router.post(
       });
       // set updated_at
       await table.update({});
-      await getState().refresh_tables();
+      await getState()!.refresh_tables();
 
       Trigger.emitEvent(
         "AppChange",
@@ -2360,7 +2379,7 @@ router.post(
  * @param {object} req
  * @returns {Form}
  */
-const renameForm = (table_id, req) =>
+const renameForm = (table_id: any, req: Req) =>
   new Form({
     action: `/table/rename/${table_id}`,
     blurb: req.__(
@@ -2393,9 +2412,9 @@ const renameForm = (table_id, req) =>
 router.get(
   "/rename/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
 
     const form = renameForm(table.id, req);
     res.sendWrap(req.__(`Rename table %s`, table.name), {
@@ -2430,9 +2449,9 @@ router.get(
 router.post(
   "/rename/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     const form = renameForm(table.id, req);
 
     form.validate(req.body || {});
@@ -2441,7 +2460,7 @@ router.post(
       await db.withTransaction(async () => {
         await table.rename(form.values.name);
       });
-      await getState().refresh_tables();
+      await getState()!.refresh_tables();
     }
 
     res.redirect(`/table/${table.id}`);
@@ -2458,27 +2477,27 @@ router.post(
 router.post(
   "/delete-constraint/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const cons = await TableConstraint.findOne({ id });
+    const cons = (await TableConstraint.findOne({ id }))!;
     await db.withTransaction(async () => {
       await cons.delete();
     });
     //set updated_at
-    await Table.findOne(cons.table_id).update({});
-    await getState().refresh_tables();
+    await Table.findOne(cons.table_id)!.update({});
+    await getState()!.refresh_tables();
     res.redirect(`/table/constraints/${cons.table_id}`);
   })
 );
 
-const previewCSV = async ({ newPath, table, req, res, full }) => {
-  let parse_res;
+const previewCSV = async ({ newPath, table, req, res, full }: any) => {
+  let parse_res: any;
   try {
     parse_res = await table.import_csv_file(newPath, {
       recalc_stored: true,
       no_table_write: true,
     });
-  } catch (e) {
+  } catch (e: any) {
     parse_res = { error: e.message };
   }
   if (parse_res.error) {
@@ -2568,11 +2587,11 @@ const previewCSV = async ({ newPath, table, req, res, full }) => {
           title: req.__(`Preview`),
           contents: div(
             mkTable(
-              table.fields.map((f) => ({
+              table.fields.map((f: any) => ({
                 label: f.name,
                 key:
                   f.type?.name === "JSON"
-                    ? (r) => JSON.stringify(r[f.name])
+                    ? (r: any) => JSON.stringify(r[f.name])
                     : f.name,
               })),
               full ? rows : rows.slice(0, 10)
@@ -2617,15 +2636,15 @@ router.post(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const table = Table.findOne({ name });
+    const table = Table.findOne({ name })!;
     if (!req.files || !req.files.file) {
       req.flash("error", "Missing file");
       res.redirect(`/table/${table.id}`);
       return;
     }
-    if (table.min_role_write < req.user.role_id) {
+    if (table.min_role_write < req.user!.role_id) {
       req.flash("error", "Not authorized to write to table");
       res.redirect(`/table/${table.id}`);
       return;
@@ -2644,10 +2663,10 @@ router.get(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name, filename } = req.params;
-    const table = Table.findOne({ name });
-    const f = await File.findOne(filename);
+    const table = Table.findOne({ name })!;
+    const f = (await File.findOne(filename))!;
     await previewCSV({ newPath: f.location, table, res, req, full: true });
   })
 );
@@ -2658,10 +2677,10 @@ router.post(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name, filename } = req.params;
-    const table = Table.findOne({ name });
-    const f = await File.findOne(filename);
+    const table = Table.findOne({ name })!;
+    const f = (await File.findOne(filename))!;
 
     try {
       const { import_method, import_async } = req.body || {};
@@ -2676,28 +2695,28 @@ router.post(
         });
       if (import_async) {
         promise
-          .then((parse_res) => {
+          .then((parse_res: any) => {
             Notification.create({
               title: "CSV import complete",
               body: parse_res.error || parse_res.success,
-              user_id: req.user.id,
+              user_id: req.user!.id!,
             });
           })
-          .catch((e) => {
+          .catch((e: any) => {
             console.error("CSV upload error", e);
             Notification.create({
               title: "Error importing CSV file",
               body: e.message,
-              user_id: req.user.id,
+              user_id: req.user!.id!,
             });
           });
         req.flash("success", req.__("Processing CSV file"));
       } else {
         const parse_res = await promise;
-        if (parse_res.error) req.flash("error", parse_res.error);
+        if (instanceOfErrorMsg(parse_res)) req.flash("error", parse_res.error);
         else req.flash("success", parse_res.success);
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("CSV upload error", e);
       req.flash("error", e.message);
     }
@@ -2715,16 +2734,16 @@ router.post(
 router.post(
   "/delete-all-rows/:name",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const table = Table.findOne({ name });
+    const table = Table.findOne({ name })!;
 
     try {
       await db.withTransaction(async () => {
         await table.deleteRows({}, req.user, true);
       });
       req.flash("success", req.__("Deleted all rows"));
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
       req.flash("error", e.message);
     }
@@ -2746,9 +2765,9 @@ router.post(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { name } = req.params;
-    const table = Table.findOne({ name });
+    const table = Table.findOne({ name })!;
     if (!table) {
       req.flash("error", `Table not found: ${text(name)}`);
       res.redirect(`/table`);
@@ -2763,8 +2782,14 @@ router.post(
   })
 );
 
-const respondWorkflow = (table, wf, wfres, req, res) => {
-  const wrap = (contents, noCard, previewURL) => ({
+const respondWorkflow = (
+  table: any,
+  wf: any,
+  wfres: any,
+  req: Req,
+  res: any
+) => {
+  const wrap = (contents: any, noCard: any, previewURL: any) => ({
     above: [
       {
         type: "breadcrumbs",
@@ -2812,8 +2837,8 @@ const respondWorkflow = (table, wf, wfres, req, res) => {
   else res.redirect(wfres.redirect);
 };
 
-const get_provider_workflow = (table, req) => {
-  const provider = getState().table_providers[table.provider_name];
+const get_provider_workflow = (table: any, req: Req) => {
+  const provider = getState()!.table_providers[table.provider_name];
   if (!provider) {
     throw new InvalidConfiguration(
       `Provider not found for table ${table.name}: table.provider_name`
@@ -2821,11 +2846,11 @@ const get_provider_workflow = (table, req) => {
   }
   const workflow = provider.configuration_workflow(req);
   workflow.action = `/table/provider-cfg/${table.id}`;
-  const oldOnDone = workflow.onDone || ((c) => c);
-  workflow.onDone = async (ctx) => {
+  const oldOnDone = workflow.onDone || ((c: any) => c);
+  workflow.onDone = async (ctx: any) => {
     const { table_id, ...configuration } = await oldOnDone(ctx);
     await table.update({ provider_cfg: configuration });
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
 
     return {
       redirect: `/table/${table.id}`,
@@ -2841,11 +2866,11 @@ router.get(
     "min_role_edit_tables",
     "min_role_inspect_tables",
   ]),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const { step } = req.query;
 
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2867,11 +2892,11 @@ router.get(
 router.post(
   "/provider-cfg/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const { step } = req.query;
 
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2889,17 +2914,17 @@ router.post(
     const workflow = get_provider_workflow(table, req);
     const wfres = await workflow.run(req.body || {}, req);
     respondWorkflow(table, workflow, wfres, req, res);
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
   })
 );
 
 router.post(
   "/repair-composite-primary/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2908,13 +2933,13 @@ router.post(
     await db.withTransaction(async () => {
       await table.repairCompositePrimary();
     });
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
     res.redirect(`/table/${table.id}`);
   })
 );
 
-const basicViewForm = async (table, req) => {
-  const tables = await Table.find({}, { cached: true });
+const basicViewForm = async (table: any, req: Req) => {
+  const tables = (await Table.find({}, { cached: true }))!;
   const vts = viewtemplates_with_create_basic_option();
   return new Form({
     submitLabel: req.__("Create views"),
@@ -2933,12 +2958,12 @@ const basicViewForm = async (table, req) => {
         type: "String",
         label: "Template table",
         name: "template_table",
-        attributes: { options: tables.map((t) => t.name) },
+        attributes: { options: tables.map((t: any) => t.name) },
         help: {
           topic: "Template tables",
         },
       },
-      ...vts.map((vt) => ({
+      ...vts.map((vt: any) => ({
         type: "Bool",
         label: vt,
         name: vt,
@@ -2949,8 +2974,8 @@ const basicViewForm = async (table, req) => {
 };
 
 const viewtemplates_with_create_basic_option = () => {
-  const vts = [];
-  Object.entries(getState().viewtemplates).forEach(([nm, obj]) => {
+  const vts: any[] = [];
+  Object.entries(getState()!.viewtemplates).forEach(([nm, obj]: any) => {
     if (obj.createBasicView) vts.push(nm);
   });
   return vts;
@@ -2960,10 +2985,10 @@ router.get(
   "/create-basic-views/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   isAdminOrHasConfigMinRole("min_role_edit_views"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -2971,10 +2996,10 @@ router.get(
     }
     res.set("Page-Title", req.__("Create basic views"));
     const form = await basicViewForm(table, req);
-    form.values.naming_convention = getState().getConfig(
+    form.values.naming_convention = getState()!.getConfig(
       "viewgen_naming_convention"
     );
-    form.values.template_table = getState().getConfig(
+    form.values.template_table = getState()!.getConfig(
       "viewgen_template_table",
       ""
     );
@@ -2988,10 +3013,10 @@ router.post(
   "/create-basic-views/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
   isAdminOrHasConfigMinRole("min_role_edit_views"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
 
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
@@ -3008,44 +3033,44 @@ router.post(
     if (
       form.values.naming_convention &&
       form.values.naming_convention !==
-        getState().getConfig("viewgen_naming_convention")
+        getState()!.getConfig("viewgen_naming_convention")
     )
-      await getState().setConfig(
+      await getState()!.setConfig(
         "viewgen_naming_convention",
         form.values.naming_convention
       );
     if (
       form.values.template_table !==
-      getState().getConfig("viewgen_template_table")
+      getState()!.getConfig("viewgen_template_table")
     )
-      await getState().setConfig(
+      await getState()!.setConfig(
         "viewgen_template_table",
         form.values.template_table
       );
 
     await db.withTransaction(async () => {
-      const getName = (viewtemplate) =>
+      const getName = (viewtemplate: any) =>
         interpolate(form.values.naming_convention, {
           viewpattern: viewtemplate,
           tablename: table.name,
         }).trim();
-      const all_views_created = {};
+      const all_views_created: Record<string, any> = {};
       const vts = viewtemplates_with_create_basic_option();
-      vts.forEach((vt) => {
+      vts.forEach((vt: any) => {
         if (form.values[vt]) all_views_created[vt] = getName(vt);
       });
 
-      const initial_view = async (table, viewtemplate) => {
+      const initial_view = async (table: any, viewtemplate: any) => {
         const isEdit = viewtemplate === "Edit";
-        const vtObj = getState().viewtemplates[viewtemplate];
+        const vtObj = getState()!.viewtemplates[viewtemplate];
         const name = getName(viewtemplate);
         const template_view = form.values.template_table
           ? View.findOne({
-              table_id: Table.findOne(form.values.template_table).id,
+              table_id: Table.findOne(form.values.template_table)!.id,
               viewtemplate,
             })
           : undefined;
-        const configuration = await vtObj.createBasicView({
+        const configuration = await vtObj.createBasicView?.({
           table,
           viewname: name,
           all_views_created,
@@ -3068,12 +3093,12 @@ router.post(
         await initial_view(table, vtnm);
       }
     });
-    await getState().refresh_views();
+    await getState()!.refresh_views();
     res.redirect(`/table/${table.id}`);
   })
 );
 
-const standardFieldDefs = (req) => [
+const standardFieldDefs = (req: Req) => [
   {
     name: "name",
     label: req.__("Name"),
@@ -3124,11 +3149,15 @@ const standardFieldDefs = (req) => [
   },
 ];
 
-const standardFieldForm = (table, req, existingNames = new Set()) => {
+const standardFieldForm = (
+  table: any,
+  req: Req,
+  existingNames: any = new Set()
+) => {
   const defs = standardFieldDefs(req).filter(
-    (def) => !existingNames.has(def.name)
+    (def: any) => !existingNames.has(def.name)
   );
-  const default_labels = getState().getConfig(
+  const default_labels = getState()!.getConfig(
     "default_standard_field_labels",
     {}
   );
@@ -3138,7 +3167,7 @@ const standardFieldForm = (table, req, existingNames = new Set()) => {
     formStyle: "vert",
     fields: [
       ...defs
-        .map((def) => [
+        .map((def: any) => [
           {
             type: "Bool",
             label: `${def.label} (${def.type})`,
@@ -3166,16 +3195,16 @@ const standardFieldForm = (table, req, existingNames = new Set()) => {
 router.get(
   "/create-standard-fields/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
       return;
     }
     const existingFields = await table.getFields();
-    const existingNames = new Set(existingFields.map((f) => f.name));
+    const existingNames = new Set(existingFields.map((f: any) => f.name));
     res.set("Page-Title", req.__("Create standard fields"));
     const form = standardFieldForm(table, req, existingNames);
     res.send(renderForm(form, req.csrfToken()));
@@ -3185,16 +3214,16 @@ router.get(
 router.post(
   "/create-standard-fields/:id",
   isAdminOrHasConfigMinRole("min_role_edit_tables"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const table = Table.findOne({ id });
+    const table = Table.findOne({ id })!;
     if (!table) {
       req.flash("error", `Table not found`);
       res.redirect(`/table`);
       return;
     }
     const existingFields = await table.getFields();
-    const existingNames = new Set(existingFields.map((f) => f.name));
+    const existingNames = new Set(existingFields.map((f: any) => f.name));
     const form = standardFieldForm(table, req, existingNames);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -3203,11 +3232,11 @@ router.post(
       return;
     }
     const defs = standardFieldDefs(req);
-    const default_labels = getState().getConfig(
+    const default_labels = getState()!.getConfig(
       "default_standard_field_labels",
       {}
     );
-    const new_defaults = {};
+    const new_defaults: Record<string, any> = {};
     await db.withTransaction(async () => {
       for (const def of defs) {
         if (!form.values[def.name]) continue;
@@ -3233,12 +3262,12 @@ router.post(
       }
     });
     if (Object.keys(new_defaults).length)
-      await getState().setConfig("default_standard_field_labels", {
+      await getState()!.setConfig("default_standard_field_labels", {
         ...default_labels,
         ...new_defaults,
       });
 
-    await getState().refresh_tables();
+    await getState()!.refresh_tables();
     res.redirect(`/table/${table.id}`);
   })
 );

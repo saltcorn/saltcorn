@@ -12,18 +12,19 @@ import {
 import { spawn, spawnSync } from "child_process";
 import path from "path";
 import { promises as fs } from "fs";
+import { Req, Res } from "@saltcorn/types/base_types";
 
-const router = new Router();
+const router = Router();
 export default router;
 
 router.get(
   "/sync_timestamp",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     try {
       res.json({ syncTimestamp: (await db.time()).valueOf() });
-    } catch (error) {
-      getState().log(2, `GET /sync_timestamp: '${error.message}'`);
+    } catch (error: any) {
+      getState()!.log(2, `GET /sync_timestamp: '${error.message}'`);
       res.status(400).json({ error: error.message || error });
     }
   })
@@ -32,10 +33,10 @@ router.get(
 // Apply ownership_formula filter to rows fetched by getSyncRows.
 // For formulas that reference join fields, resolves them via a second
 // getJoinedRows pass bounded to the PKs already in the result set.
-const applyOwnershipFormula = async (rows, table, user) => {
+const applyOwnershipFormula = async (rows: any, table: any, user: any) => {
   if (!rows.length) return rows;
   const pkName = table.pk_name;
-  const joinFields = {};
+  const joinFields: Record<string, any> = {};
   add_free_variables_to_joinfields(
     freeVariables(table.ownership_formula),
     joinFields,
@@ -43,21 +44,21 @@ const applyOwnershipFormula = async (rows, table, user) => {
   );
   let rowMap = null;
   if (Object.keys(joinFields).length > 0) {
-    const pks = rows.map((r) => r[pkName]);
+    const pks = rows.map((r: any) => r[pkName]);
     const joinedRows = await table.getJoinedRows({
       where: { [pkName]: { in: pks } },
       joinFields,
     });
-    rowMap = Object.fromEntries(joinedRows.map((r) => [r[pkName], r]));
+    rowMap = Object.fromEntries(joinedRows.map((r: any) => [r[pkName], r]));
   }
   // table.ownership_formula
-  return rows.filter((row) => {
+  return rows.filter((row: any) => {
     const evalRow = rowMap ? (rowMap[row[pkName]] ?? row) : row;
     return table.is_owner(user, evalRow);
   });
 };
 
-const getSyncRows = async (syncInfo, table, syncUntil, user) => {
+const getSyncRows = async (syncInfo: any, table: any, syncUntil: any, user: any) => {
   const tblName = table.name;
   const pkName = table.pk_name;
   const minRole = table.min_role_read;
@@ -71,9 +72,9 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
   if (user?.id && role < 100 && role > minRole && table.ownership_field_id) {
     const ownerField = table
       .getFields()
-      .find((f) => f.id === table.ownership_field_id);
+      .find((f: any) => f.id === table.ownership_field_id);
     if (!ownerField) {
-      getState().log(
+      getState()!.log(
         5,
         `GET /load_changes: The ownership field of '${table.name}' does not exist.`
       );
@@ -100,11 +101,11 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
   if (!syncInfo.syncFrom) {
     // First sync: all non-deleted rows after the cursor, ordered by
     // (last_modified, ref) so pagination is stable across PK types.
-    const params = [lastModifiedAt / 1000.0, lastRef];
+    const params :any[] = [lastModifiedAt / 1000.0, lastRef];
     const ownerClause = ownerFieldName
       ? `and data_tbl."${db.sqlsanitize(ownerFieldName)}" = $3`
       : "";
-    if (ownerFieldName) params.push(userId);
+    if (ownerFieldName) params.push(userId as number);
     const { rows } = await db.query(
       `select
          COALESCE(info_tbl.ref, data_tbl."${db.sqlsanitize(
@@ -152,7 +153,7 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
     const ownerClause = ownerFieldName
       ? `and data_tbl."${db.sqlsanitize(ownerFieldName)}" = $5`
       : "";
-    if (ownerFieldName) params.push(userId);
+    if (ownerFieldName) params.push(userId as number);
     const { rows } = await db.query(
       `select
          info_tbl.ref "_sync_info_tbl_ref_",
@@ -189,24 +190,24 @@ const getSyncRows = async (syncInfo, table, syncUntil, user) => {
 router.post(
   "/load_changes",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { syncInfos, loadUntil } = req.body || {};
     if (!loadUntil) {
-      getState().log(2, `POST /load_changes: loadUntil is missing`);
+      getState()!.log(2, `POST /load_changes: loadUntil is missing`);
       return res.status(400).json({ error: "loadUntil is missing" });
     }
     if (!syncInfos) {
-      getState().log(2, `POST /load_changes: syncInfos is missing`);
+      getState()!.log(2, `POST /load_changes: syncInfos is missing`);
       return res.status(400).json({ error: "syncInfos is missing" });
     }
-    const role = req.user ? req.user.role_id : 100;
+    const role = req.user ? req.user!.role_id : 100;
     try {
       const result = await db.withTransaction(async () => {
         let rowLimit = 1000;
-        const result = {};
+        const result: Record<string, any> = {};
 
-        for (const [tblName, syncInfo] of Object.entries(syncInfos)) {
-          const table = Table.findOne({ name: tblName });
+        for (const [tblName, syncInfo] of (Object.entries(syncInfos) as [string, any][])) {
+          const table = Table.findOne({ name: tblName })!;
           if (!table) throw new Error(`The table '${tblName}' does not exists`);
           if (!table.has_sync_info)
             throw new Error(`The table '${tblName}' has no sync info`);
@@ -239,14 +240,14 @@ router.post(
         return result;
       });
       res.json(result);
-    } catch (error) {
-      getState().log(2, `POST /load_changes: '${error.message}'`);
+    } catch (error: any) {
+      getState()!.log(2, `POST /load_changes: '${error.message}'`);
       res.status(400).json({ error: error.message || error });
     }
   })
 );
 
-const getDelRows = async (tblName, syncFrom, syncUntil, userId = null) => {
+const getDelRows = async (tblName: any, syncFrom: any, syncUntil: any, userId: any = null) => {
   const syncFromMs = syncFrom.valueOf();
   const syncUntilMs = syncUntil.valueOf();
   if (!Number.isFinite(syncFromMs)) throw new Error("Invalid syncFrom");
@@ -280,17 +281,17 @@ const getDelRows = async (tblName, syncFrom, syncUntil, userId = null) => {
 router.post(
   "/deletes",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { syncInfos, syncTimestamp } = req.body || {};
-    const role = req.user ? req.user.role_id : 100;
+    const role = req.user ? req.user!.role_id : 100;
     try {
       const result = await db.withTransaction(async () => {
         const syncUntil = new Date(syncTimestamp);
-        const result = {
+        const result :any= {
           deletes: {},
         };
-        for (const [tblName, syncInfo] of Object.entries(syncInfos)) {
-          const table = Table.findOne({ name: tblName });
+        for (const [tblName, syncInfo] of (Object.entries(syncInfos) as [string, any][])) {
+          const table = Table.findOne({ name: tblName })!;
           if (!table) throw new Error(`The table '${tblName}' does not exists`);
           if (!table.has_sync_info)
             throw new Error(`The table '${tblName}' has no sync info`);
@@ -303,7 +304,7 @@ router.post(
                 tblName,
                 new Date(syncInfo.syncFrom),
                 syncUntil,
-                req.user.id
+                req.user!.id
               );
             } else {
               // ownership_formula: fetch all deletes and evaluate formula in JS
@@ -313,7 +314,7 @@ router.post(
                 new Date(syncInfo.syncFrom),
                 syncUntil
               );
-              result.deletes[tblName] = rows.filter((row) =>
+              result.deletes[tblName] = rows.filter((row: any) =>
                 table.is_owner(req.user, row.owner_fields || {})
               );
             }
@@ -330,8 +331,8 @@ router.post(
         return result;
       });
       res.json(result);
-    } catch (error) {
-      getState().log(2, `POST /sync/deletes: '${error.message}'`);
+    } catch (error: any) {
+      getState()!.log(2, `POST /sync/deletes: '${error.message}'`);
       res.status(400).json({ error: error.message || error });
     }
   })
@@ -343,7 +344,7 @@ router.post(
 router.post(
   "/offline_changes",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { changes, newSyncTimestamp, oldSyncTimestamp } = req.body || {};
     const rootFolder = await File.rootFolder();
     try {
@@ -361,7 +362,7 @@ router.post(
         JSON.stringify(changes)
       );
       const spawnParams = ["sync-upload-data"];
-      if (req.user?.email) spawnParams.push("--userEmail", req.user.email);
+      if (req.user?.email) spawnParams.push("--userEmail", req.user!.email);
       spawnParams.push("--directory", syncDir);
       if (
         db.is_it_multi_tenant() &&
@@ -379,29 +380,29 @@ router.post(
       child.stdout.pipe(process.stdout);
       child.stderr.pipe(process.stderr);
 
-      child.on("exit", async (exitCode, signal) => {
-        getState().log(
+      child.on("exit", async (exitCode: any, signal: any) => {
+        getState()!.log(
           5,
           `POST /sync/offline_changes: upload offline data finished with code: ${exitCode}`
         );
       });
-      child.on("error", (msg) => {
+      child.on("error", (msg: any) => {
         const message = msg.message ? msg.message : msg.code;
-        getState().log(
+        getState()!.log(
           5,
           `POST /sync/offline_changes: upload offline data failed: ${message}`
         );
       });
-    } catch (error) {
-      getState().log(2, `POST /sync/offline_changes: '${error.message}'`);
+    } catch (error: any) {
+      getState()!.log(2, `POST /sync/offline_changes: '${error.message}'`);
       res.status(400).json({ error: error.message || error });
     }
   })
 );
 
-const readOutFile = async (entries, syncDir, fileName) => {
+const readOutFile = async (entries: any, syncDir: any, fileName: any) => {
   if (entries.indexOf(fileName) >= 0) {
-    return JSON.parse(await fs.readFile(path.join(syncDir, fileName)));
+    return JSON.parse(await fs.readFile(path.join(syncDir, fileName), "utf-8"));
   }
   return null;
 };
@@ -409,7 +410,7 @@ const readOutFile = async (entries, syncDir, fileName) => {
 router.get(
   "/upload_finished",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { dir_name } = req.query;
     try {
       const expectedEmail = req.user?.email || "public";
@@ -428,7 +429,7 @@ router.get(
       let entries = null;
       try {
         entries = await fs.readdir(syncDir);
-      } catch (error) {
+      } catch (error: any) {
         return res.json({ finished: false });
       }
       const translatedIds = await readOutFile(
@@ -459,8 +460,8 @@ router.get(
           dataConflicts,
         });
       } else res.json({ finished: false });
-    } catch (error) {
-      getState().log(2, `GET /sync/upload_finished: '${error.message}'`);
+    } catch (error: any) {
+      getState()!.log(2, `GET /sync/upload_finished: '${error.message}'`);
       res.status(400).json({ error: error.message || error });
     }
   })
@@ -469,7 +470,7 @@ router.get(
 router.post(
   "/clean_sync_dir",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { dir_name } = req.body || {};
     try {
       const expectedEmail = req.user?.email || "public";
@@ -484,8 +485,8 @@ router.post(
       );
       if (syncDir) await fs.rm(syncDir, { recursive: true, force: true });
       res.status(200).send("");
-    } catch (error) {
-      getState().log(2, `POST /sync/clean_sync_dir: '${error.message}'`);
+    } catch (error: any) {
+      getState()!.log(2, `POST /sync/clean_sync_dir: '${error.message}'`);
       res.status(400).json({ error: error.message || error });
     }
   })
@@ -494,7 +495,7 @@ router.post(
 router.post(
   "/push_subscribe",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { token, deviceId, synchedTables, platform, apnsEnvironment } =
       req.body || {};
     if (!token) {
@@ -510,13 +511,13 @@ router.post(
       return;
     }
 
-    const user = req.user;
-    const state = getState();
+    const user = req.user!;
+    const state = getState()!;
     const allSubs = state.getConfig("push_sync_subscriptions", {});
-    let userSubs = allSubs[user.id] || [];
+    let userSubs = allSubs[user.id!] || [];
     const existingSub = userSubs.find(
-      (s) => s.token === token && s.deviceId === deviceId
-    );
+      (s: any) => s.token === token && s.deviceId === deviceId
+    )!;
     if (existingSub) {
       res.json({
         success: "ok",
@@ -524,7 +525,7 @@ router.post(
       });
     } else {
       // remove old subscriptions for this deviceId before adding
-      userSubs = userSubs.filter((s) => s.deviceId !== deviceId);
+      userSubs = userSubs.filter((s: any) => s.deviceId !== deviceId);
       userSubs.push({
         token,
         deviceId,
@@ -534,9 +535,9 @@ router.post(
           apnsEnvironment: apnsEnvironment || "production",
         }),
       });
-      await getState().setConfig("push_sync_subscriptions", {
+      await getState()!.setConfig("push_sync_subscriptions", {
         ...allSubs,
-        [user.id]: userSubs,
+        [user.id!]: userSubs,
       });
       res.json({
         success: "ok",
@@ -549,7 +550,7 @@ router.post(
 router.post(
   "/push_unsubscribe",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { token, deviceId } = req.body || {};
     if (!token) {
       res.status(400).json({
@@ -558,20 +559,20 @@ router.post(
       return;
     }
 
-    const user = req.user;
-    const state = getState();
+    const user = req.user!;
+    const state = getState()!;
     const allSubs = state.getConfig("push_sync_subscriptions", {});
-    let userSubs = allSubs[user.id] || [];
-    const newUserSubs = userSubs.filter((s) => s.deviceId !== deviceId);
+    let userSubs = allSubs[user.id!] || [];
+    const newUserSubs = userSubs.filter((s: any) => s.deviceId !== deviceId);
     if (newUserSubs.length === userSubs.length) {
       res.json({
         success: "ok",
         message: req.__("FCM token not found"),
       });
     } else {
-      await getState().setConfig("push_sync_subscriptions", {
+      await getState()!.setConfig("push_sync_subscriptions", {
         ...allSubs,
-        [user.id]: newUserSubs,
+        [user.id!]: newUserSubs,
       });
       res.json({
         success: "ok",

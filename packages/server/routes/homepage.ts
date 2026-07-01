@@ -26,7 +26,7 @@ import {
   get_latest_npm_version,
   get_saltcorn_npm_versions,
 } from "@saltcorn/data/models/config";
-const packagejson = require("../package.json");
+const packagejson = require("../../package.json");
 import Trigger from "@saltcorn/data/models/trigger";
 import { fileUploadForm } from "../markup/forms.js";
 import {
@@ -37,6 +37,7 @@ import {
 } from "./utils.js";
 import semver from "semver";
 import { add_results_to_contents } from "../markup/admin.js";
+import { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * Tables List
@@ -44,12 +45,12 @@ import { add_results_to_contents } from "../markup/admin.js";
  * @param {object} req
  * @returns {Table}
  */
-const tableTable = (tables, req) =>
+const tableTable = (tables: any, req: Req) =>
   mkTable(
     [
       {
         label: req.__("Name"),
-        key: (r) => link(`/table/${r.id}`, r.name),
+        key: (r: any) => link(`/table/${r.id}`, r.name),
       },
     ],
     tables
@@ -61,7 +62,7 @@ const tableTable = (tables, req) =>
  * @param {object} req
  * @returns {object}
  */
-const tableCard = (tables, req) => ({
+const tableCard = (tables: any, req: Req) => ({
   type: "card",
   class: "welcome-page-entity-list mt-1",
   title: link("/table", req.__("Tables")),
@@ -92,16 +93,16 @@ const tableCard = (tables, req) => ({
  * @param {object} req
  * @returns {Table}
  */
-const viewTable = (views, req) =>
+const viewTable = (views: any, req: Req) =>
   mkTable(
     [
       {
         label: req.__("Name"),
-        key: (r) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
+        key: (r: any) => link(`/view/${encodeURIComponent(r.name)}`, r.name),
       },
       {
         label: req.__("Edit"),
-        key: (r) =>
+        key: (r: any) =>
           r.singleton
             ? ""
             : link(
@@ -119,7 +120,7 @@ const viewTable = (views, req) =>
  * @param {object} req
  * @returns {object}
  */
-const viewCard = (views, req) => ({
+const viewCard = (views: any, req: Req) => ({
   type: "card",
   title: link("/viewedit", req.__("Views")),
   class: "welcome-page-entity-list mt-1",
@@ -151,16 +152,16 @@ const viewCard = (views, req) => ({
  * @param {object} req
  * @returns {Table}
  */
-const pageTable = (pages, req) =>
+const pageTable = (pages: any, req: Req) =>
   mkTable(
     [
       {
         label: req.__("Name"),
-        key: (r) => link(`/page/${encodeURIComponent(r.name)}`, r.name),
+        key: (r: any) => link(`/page/${encodeURIComponent(r.name)}`, r.name),
       },
       {
         label: req.__("Edit"),
-        key: (r) =>
+        key: (r: any) =>
           link(`/pageedit/edit/${encodeURIComponent(r.name)}`, req.__("Edit")),
       },
     ],
@@ -173,7 +174,7 @@ const pageTable = (pages, req) =>
  * @param {object} req
  * @returns {object}
  */
-const pageCard = (pages, req) => ({
+const pageCard = (pages: any, req: Req) => ({
   type: "card",
   title: link("/pageedit", req.__("Pages")),
   class: "welcome-page-entity-list mt-1",
@@ -205,8 +206,8 @@ const pageCard = (pages, req) => ({
  * @param {object} req
  * @returns {Promise<div>}
  */
-const filesTab = async (req) => {
-  const files = await File.find({}, { orderBy: "filename", cached: true });
+const filesTab = async (req: Req) => {
+  const files = (await File.find({}, { orderBy: "filename", cached: true }))!;
   return div(
     files.length === 0
       ? p(req.__("No files"))
@@ -214,13 +215,13 @@ const filesTab = async (req) => {
           [
             {
               label: req.__("Filename"),
-              key: (r) =>
+              key: (r: any) =>
                 r.isDirectory
                   ? r.filename
                   : link(`/files/serve/${r.path_to_serve}`, r.filename),
             },
             { label: req.__("Size (KiB)"), key: "size_kb", align: "right" },
-            { label: req.__("Media type"), key: (r) => r.mimetype },
+            { label: req.__("Media type"), key: (r: any) => r.mimetype },
           ],
           files
         ),
@@ -235,16 +236,16 @@ const filesTab = async (req) => {
  * @param roleMap
  * @returns {Promise<div>}
  */
-const usersTab = async (req, users, roleMap) => {
+const usersTab = async (req: Req, users: any, roleMap: any) => {
   return div(
     mkTable(
       [
         {
           label: req.__("Email"),
-          key: (r) => link(`/useradmin/${r.id}`, r.email),
+          key: (r: any) => link(`/useradmin/${r.id}`, r.email),
         },
 
-        { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
+        { label: req.__("Role"), key: (r: any) => roleMap[r.role_id] },
       ],
       users
     ),
@@ -261,7 +262,7 @@ const usersTab = async (req, users, roleMap) => {
  * @param triggers
  * @returns {Promise<div>}
  */
-const actionsTab = async (req, triggers) => {
+const actionsTab = async (req: Req, triggers: any) => {
   const base_url = get_base_url(req);
 
   return div(
@@ -277,16 +278,17 @@ const actionsTab = async (req, triggers) => {
           [
             {
               label: req.__("Name"),
-              key: (tr) => a({ href: `actions/configure/${tr.id}` }, tr.name),
+              key: (tr: any) =>
+                a({ href: `actions/configure/${tr.id}` }, tr.name),
             },
             { label: req.__("Action"), key: "action" },
             {
               label: req.__("Table or Channel"),
-              key: (r) => r.table_name || r.channel,
+              key: (r: any) => r.table_name || r.channel,
             },
             {
               label: req.__("When"),
-              key: (act) =>
+              key: (act: any) =>
                 act.when_trigger +
                 (act.when_trigger === "API call"
                   ? a(
@@ -312,7 +314,7 @@ const actionsTab = async (req, triggers) => {
  * @param packlist
  * @returns {*}
  */
-const packTab = (req, packlist) =>
+const packTab = (req: Req, packlist: any) =>
   div(
     { class: "pb-3 pt-2 pe-4" },
     p(req.__("Instead of building, get up and running in no time with packs")),
@@ -339,26 +341,26 @@ const packTab = (req, packlist) =>
     )
   );
 
-const themeCard = (req, roleMap) => {
-  const state_layouts = getState().layouts;
+const themeCard = (req: Req, roleMap: any) => {
+  const state_layouts = getState()!.layouts;
   const state_layout_names = Object.keys(state_layouts);
-  const layout_by_role = getState().getConfig("layout_by_role");
-  const used_layout_by_role = {};
-  Object.keys(roleMap).forEach((role_id) => {
+  const layout_by_role = getState()!.getConfig("layout_by_role");
+  const used_layout_by_role: Record<string, any> = {};
+  Object.keys(roleMap).forEach((role_id: any) => {
     used_layout_by_role[role_id] =
       layout_by_role[role_id] ||
       state_layout_names[state_layout_names.length - 1];
   });
   const themes_available = Plugin.get_cached_plugins().filter(
-    (p) => p.has_theme && !state_layout_names.includes(p.name)
+    (p: any) => p.has_theme && !state_layout_names.includes(p.name)
   );
-  const layouts = Object.entries(getState().layouts)
-    .filter(([nm, v]) => nm !== "emergency")
-    .map(([name, layout]) => {
-      let plugin = getState().plugins[name];
+  const layouts = Object.entries(getState()!.layouts)
+    .filter(([nm, v]: any) => nm !== "emergency")
+    .map(([name, layout]: any) => {
+      let plugin = getState()!.plugins[name];
       const for_role = Object.entries(used_layout_by_role)
-        .filter(([role, rname]) => rname === name)
-        .map(([role, rname]) =>
+        .filter(([role, rname]: any) => rname === name)
+        .map(([role, rname]: any) =>
           span({ class: "badge bg-info" }, roleMap[role])
         );
 
@@ -384,11 +386,11 @@ const themeCard = (req, roleMap) => {
       [
         {
           label: req.__("Installed theme"),
-          key: ({ name, edit_cfg_link }) => `${name}${edit_cfg_link}`,
+          key: ({ name, edit_cfg_link }: any) => `${name}${edit_cfg_link}`,
         },
         {
           label: req.__("Theme for role"),
-          key: ({ for_role }) => for_role.join(" "),
+          key: ({ for_role }: any) => for_role.join(" "),
         },
       ],
       layouts
@@ -398,7 +400,7 @@ const themeCard = (req, roleMap) => {
     show_installable &&
       div(
         themes_available
-          .map((p) => span({ class: "badge bg-secondary" }, p.name))
+          .map((p: any) => span({ class: "badge bg-secondary" }, p.name))
           .join(" ")
       ),
     show_installable &&
@@ -413,7 +415,7 @@ const themeCard = (req, roleMap) => {
  * @param req
  * @returns {*}
  */
-const helpCard = (req) =>
+const helpCard = (req: Req) =>
   div(
     { class: "pb-3 pt-2 pe-4" },
     p(req.__("Confused?")),
@@ -451,21 +453,21 @@ const helpCard = (req) =>
  * @param {object} req
  * @returns {Promise<object>}
  */
-const welcome_page = async (req) => {
+const welcome_page = async (req: Req) => {
   const packs_available = await get_cached_packs();
   const packlist = [
     ...(packs_available || []).slice(0, 5),
     { name: req.__("More..."), description: "" },
   ];
-  const tables = await Table.find({}, { cached: true });
-  const views = await View.find({}, { cached: true });
-  const pages = await Page.find({}, { cached: true });
+  const tables = (await Table.find({}, { cached: true }))!;
+  const views = (await View.find({}, { cached: true }))!;
+  const pages = (await Page.find({}, { cached: true }))!;
   const triggers = await Trigger.findAllWithTableName();
-  const users = await User.find({}, { orderBy: "id" });
+  const users = (await User.find({}, { orderBy: "id" }))!;
   const roles = await User.get_roles();
-  let roleMap = {};
-  roles.forEach((r) => {
-    roleMap[r.id] = r.role;
+  let roleMap: Record<string, any> = {};
+  roles.forEach((r: any) => {
+    roleMap[r.id!] = r.role;
   });
   return {
     above: [
@@ -529,36 +531,37 @@ const welcome_page = async (req) => {
  * @param {object} res
  * @returns {Promise<void>}
  */
-const no_views_logged_in = async (req, res) => {
-  const role = req.user && req.user.id ? req.user.role_id : 100;
-  if (role > 1 || req.user.tenant !== db.getTenantSchema())
+const no_views_logged_in = async (req: Req, res: Res) => {
+  const role = req.user && req.user!.id ? req.user!.role_id : 100;
+  if (role > 1 || req.user!.tenant !== db.getTenantSchema())
     res.sendWrap(
       req.__("Hello"),
-      req.__("Welcome to %s!", getState().getConfig("site_name", "Saltcorn"))
+      req.__("Welcome to %s!", getState()!.getConfig("site_name", "Saltcorn"))
     );
   else {
-    const airgap = getState().getConfig("airgap", false);
+    const airgap = getState()!.getConfig("airgap", false);
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     const versions =
       isRoot && !airgap && (await get_saltcorn_npm_versions(500));
     const eligible_upgrades =
       isRoot &&
       !airgap &&
-      versions?.filter?.(
-        (v) =>
+      (versions || []).filter?.(
+        (v: any) =>
           semver.gt(v, packagejson.version) &&
           (packagejson.version.includes("-") || !v?.includes("-"))
       );
 
     const can_update =
-      eligible_upgrades?.length && !process.env.SALTCORN_DISABLE_UPGRADE;
+      (eligible_upgrades || [])?.length &&
+      !process.env.SALTCORN_DISABLE_UPGRADE;
     if (can_update && isRoot)
       req.flash(
         "warning",
         req.__(
           "An upgrade to Saltcorn is available! Current version: %s; latest version: %s.",
           packagejson.version,
-          eligible_upgrades[eligible_upgrades.length - 1]
+          (eligible_upgrades || [])[(eligible_upgrades as string[]).length - 1]
         ) +
           " " +
           a({ href: "/admin/system" }, req.__("Upgrade here"))
@@ -575,8 +578,8 @@ const no_views_logged_in = async (req, res) => {
  * @param {object} req
  * @returns {Promise<boolean>}
  */
-const get_config_response = async (role_id, res, req) => {
-  const state = getState();
+const get_config_response = async (role_id: any, res: any, req: Req) => {
+  const state = getState()!;
   const maintenanceModeEnabled = state.getConfig(
     "maintenance_mode_enabled",
     false
@@ -585,10 +588,10 @@ const get_config_response = async (role_id, res, req) => {
 
   if (
     maintenanceModeEnabled &&
-    (!req.user || req.user.role_id > 1) &&
+    (!req.user || req.user!.role_id > 1) &&
     maintenanceModePage
   ) {
-    const db_page = await Page.findOne({ name: maintenanceModePage });
+    const db_page = (await Page.findOne({ name: maintenanceModePage }))!;
     if (db_page) {
       res.sendWrap(
         {
@@ -606,14 +609,14 @@ const get_config_response = async (role_id, res, req) => {
   }
 
   const wrap = async (
-    contents,
-    homeCfg,
-    title,
-    description,
-    no_menu,
-    requestFluidLayout
+    contents: any,
+    homeCfg?: any,
+    title?: string,
+    description?: string,
+    no_menu?: boolean,
+    requestFluidLayout?: boolean
   ) => {
-    const resultCollector = {};
+    const resultCollector: Record<string, any> = {};
 
     await Trigger.runTableTriggers(
       "PageLoad",
@@ -643,20 +646,23 @@ const get_config_response = async (role_id, res, req) => {
         add_results_to_contents(contents, resultCollector)
       );
   };
-  const modernCfg = getState().getConfig("home_page_by_role", false);
+  const modernCfg = getState()!.getConfig("home_page_by_role", false);
   // predefined roles
-  const legacy_role = { 100: "public", 80: "user", 40: "staff", 1: "admin" }[
-    role_id
-  ];
+  const legacy_role: string = {
+    100: "public",
+    80: "user",
+    40: "staff",
+    1: "admin",
+  }[role_id as number] as string;
   let homeCfg = modernCfg && modernCfg[role_id];
   if (typeof homeCfg !== "string")
-    homeCfg = getState().getConfig(legacy_role + "_home");
+    homeCfg = getState()!.getConfig(legacy_role + "_home");
   if (homeCfg === "_sc_entities_list") {
     res.redirect("/entities");
     return true;
   }
   if (homeCfg) {
-    const db_page = Page.findOne({ name: homeCfg });
+    const db_page = Page.findOne({ name: homeCfg })!;
     if (db_page) {
       const pgcontents = await db_page.run(req.query, { res, req });
       if (!pgcontents) return true;
@@ -669,12 +675,12 @@ const get_config_response = async (role_id, res, req) => {
         db_page.attributes?.request_fluid_layout
       );
     } else {
-      const group = PageGroup.findOne({ name: homeCfg });
+      const group = PageGroup.findOne({ name: homeCfg })!;
       if (group) {
         const eligible = await getEligiblePage(group, req, res);
         if (typeof eligible === "string") wrap(eligible);
         else if (eligible) {
-          if (!eligible.isReload)
+          if (!("isReload" in eligible))
             wrap(
               await eligible.run(req.query, { res, req }),
               homeCfg,
@@ -696,9 +702,9 @@ export default /**
  * @param {object} res
  * @returns {Promise<void>}
  */
-async (req, res) => {
-  const isAuth = req.user && req.user.id;
-  const role_id = req.user ? req.user.role_id : 100;
+async (req: Req, res: Res) => {
+  const isAuth = req.user && req.user!.id;
+  const role_id = req.user ? req.user!.role_id : 100;
   const cfgResp = await get_config_response(role_id, res, req);
   if (cfgResp) return;
 

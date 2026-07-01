@@ -732,7 +732,7 @@ const cardHeaderTabs = (
   tabList: {
     href: string;
     label: string;
-    active: boolean;
+    active?: boolean;
   }[]
 ): string =>
   ul(
@@ -745,7 +745,7 @@ const cardHeaderTabs = (
       }: {
         href: string;
         label: string;
-        active: boolean;
+        active?: boolean;
       }): string =>
         li(
           { class: "nav-item" },

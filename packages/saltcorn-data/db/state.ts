@@ -204,7 +204,7 @@ class State {
   codepage_context: Record<string, unknown>;
   plugins_cfg_context: any;
   functions: Record<string, Function | PluginFunction>;
-  keyFieldviews: Record<string, unknown>;
+  keyFieldviews: Record<string, FieldView>;
   external_tables: Record<string, AbstractTable>;
   verifier: any;
   i18n: I18n.I18n;
@@ -479,7 +479,7 @@ class State {
   }
 
   // TODO auto is poorly supported
-  getLightDarkMode(user?: UserLike): "dark" | "light" | "auto" {
+  getLightDarkMode(user?: AbstractUser): "dark" | "light" | "auto" {
     const { config } = this.getLayout(user);
     if (config?.mode) return config.mode;
 
@@ -492,7 +492,7 @@ class State {
    * @param {object} user
    * @returns {string}
    */
-  get2FApolicy(user: UserLike) {
+  get2FApolicy(user: AbstractUser) {
     const role_id = user ? +user.role_id : 100;
     const twofa_policy_by_role = this.getConfig("twofa_policy_by_role");
     if (twofa_policy_by_role && twofa_policy_by_role[role_id])

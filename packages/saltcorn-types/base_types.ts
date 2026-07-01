@@ -45,7 +45,7 @@ type FieldLikeBasics = {
   fieldview?: string;
   input_type?: InputType;
   type?: string | Type;
-  class?: string;
+  class?: string | string[];
   primary_key?: boolean;
   sublabel?: string;
   validator?: (arg0: any) => boolean | string | undefined;
@@ -59,7 +59,7 @@ type FieldLikeWithSelectInputType = {
   options: Array<string | { label: string; value: string }>;
 } & FieldLikeBasics;
 type FieldLikeWithInputType = {
-  input_type: string;
+  input_type: InputType;
 } & FieldLikeBasics;
 type FieldLikeWithType = {
   type: string | Type;
@@ -72,10 +72,12 @@ export type FieldLike =
 export type Header = {
   script?: string;
   css?: string;
+  style?: string;
   headerTag?: string;
   onlyViews?: string[];
   onlyFieldviews?: string[];
   only_if?: (req: Req) => boolean | undefined;
+  defer?: boolean;
 };
 
 export type MenuItem = {
@@ -149,6 +151,7 @@ type LayoutWithAbove = { above: LayoutArray; besides?: never };
 type LayoutWithBesides = {
   besides: LayoutArray;
   widths?: number[];
+  breakpoint?: "md" | "sm" | "lg";
   above?: never;
 };
 
@@ -305,6 +308,7 @@ export type Action = {
   requireRow?: boolean;
   deprecated?: boolean;
   disableIf?: () => boolean;
+  configFormOptions?: GenObj;
 };
 
 export type ViewTemplate = {
@@ -415,6 +419,7 @@ export type ViewTemplate = {
   queries?: (configuration?: any, req?: any) => Record<string, any>;
   connectedObjects?: (configuration?: any) => Promise<ConnectedObjects>;
   noAutoTest?: boolean;
+  createBasicView?: Function;
 };
 
 export type RouteAction = (
@@ -434,12 +439,12 @@ export type PluginFunction = {
   hidden?: boolean;
 };
 
-type FieldViewShow = {
+export type FieldViewShow = {
   isEdit?: false;
   isFilter?: false;
   run: (value: any, req: Req, attrs: GenObj) => string;
 };
-type FieldViewEdit = {
+export type FieldViewEdit = {
   isEdit: true;
   isFilter?: false;
   run: (
@@ -452,7 +457,7 @@ type FieldViewEdit = {
   ) => string;
 };
 
-type FieldViewFilter = {
+export type FieldViewFilter = {
   isEdit?: boolean;
   isFilter: true;
   run: (
@@ -499,12 +504,17 @@ export function instanceOfFieldViewShow(object: any): object is FieldViewShow {
 
 type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
+declare function flash(
+  flash_type: "warning" | "success" | "error" | "danger",
+  message: string
+): void;
+declare function flash(
+  flash_type: "warning" | "success" | "error" | "danger"
+): string;
+
 export type Req = {
   query: GenObj;
-  flash: (
-    flash_type: "warning" | "success" | "error" | "danger",
-    message: string
-  ) => void;
+  flash: typeof flash;
   user?: AbstractUser;
   csrfToken: () => string;
   getLocale: () => string;
