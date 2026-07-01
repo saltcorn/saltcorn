@@ -96,7 +96,7 @@ import {
   config_fields_form,
   save_config_from_form,
 } from "../markup/admin.js";
-const packagejson = require("../package.json");
+const packagejson = require("../../package.json");
 import Form from "@saltcorn/data/models/form";
 import { get_latest_npm_version } from "@saltcorn/data/models/config";
 import { getMailTransport, getOauth2Client } from "@saltcorn/data/models/email";
