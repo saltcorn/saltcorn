@@ -112,7 +112,7 @@ const getMyClient = (selopts?: any): any => {
  */
 export const select = async (
   tbl: string,
-  whereObj: Where,
+  whereObj: Where = Object.create(null),
   selectopts: SelectOptions & { [key: string]: any } = Object.create(null)
 ): Promise<Row[]> => {
   const { where, values } = mkWhere(whereObj);
@@ -123,7 +123,7 @@ export const select = async (
       SELECT ${
         selectopts.fields ? selectopts.fields.join(", ") : `*`
       }, 0 as _level
-      ${selectopts.orderBy ? `, ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy as string)}"${selectopts.orderDesc ? " DESC" : ""})] as _sort_path` : ""}
+      ${selectopts.orderBy && typeof selectopts.orderBy ==="string" ? `, ARRAY[row_number() over (ORDER BY "${sqlsanitize(selectopts.orderBy)}"${selectopts.orderDesc ? " DESC" : ""})] as _sort_path` : ""}
       FROM "${schema}"."${sqlsanitize(tbl)}"
       WHERE "${selectopts.tree_field}" IS NULL ${where ? `AND ${where.replace("where ", "")}` : ""}
 
