@@ -20,7 +20,7 @@ const deviceTypes = [
   "web",
 ];
 
-const deviceForm = (req: any, deviceValidator: any, device?: any) => {
+const deviceForm = (req: Req, deviceValidator: any, device?: any) => {
   const sizeValidator = (v: any) => {
     const n = +v;
     if (isNaN(n)) return req.__("Not a number");
@@ -89,7 +89,7 @@ const loadDeviceConfigs = () => {
   return deviceConfigs;
 };
 
-const pageGroupSettingsForm = (req: any) => {
+const pageGroupSettingsForm = (req: Req) => {
   return new Form({
     action: "/page_group/settings/config",
     noSubmitButton: true,

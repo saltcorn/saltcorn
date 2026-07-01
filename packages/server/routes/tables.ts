@@ -102,7 +102,7 @@ export default router;
  * @param {object} req
  * @returns {Promise<Form>}
  */
-const tableForm = async (table: any, req: any) => {
+const tableForm = async (table: any, req: Req) => {
   const fields = table.getFields();
   const roleOptions = (await User.get_roles()).map((r: any) => ({
     value: r.id,
@@ -320,7 +320,7 @@ router.get(
  * @param {object} req HTTP Request
  * @returns {Form}
  */
-const discoverForm = (tables: any, req: any) => {
+const discoverForm = (tables: any, req: Req) => {
   return new Form({
     action: "/table/discover",
     blurb:
@@ -744,7 +744,7 @@ const badge = (col: string, lbl: string, title?: any) =>
  * @param {object} req
  * @returns {string}
  */
-const typeBadges = (f: any, req: any) => {
+const typeBadges = (f: any, req: Req) => {
   let s = "";
   if (f.primary_key) s += badge("warning", req.__("Primary key"));
   if (f.required) s += badge("primary", req.__("Required"));
@@ -2379,7 +2379,7 @@ router.post(
  * @param {object} req
  * @returns {Form}
  */
-const renameForm = (table_id: any, req: any) =>
+const renameForm = (table_id: any, req: Req) =>
   new Form({
     action: `/table/rename/${table_id}`,
     blurb: req.__(
@@ -2786,7 +2786,7 @@ const respondWorkflow = (
   table: any,
   wf: any,
   wfres: any,
-  req: any,
+  req: Req,
   res: any
 ) => {
   const wrap = (contents: any, noCard: any, previewURL: any) => ({
@@ -2837,7 +2837,7 @@ const respondWorkflow = (
   else res.redirect(wfres.redirect);
 };
 
-const get_provider_workflow = (table: any, req: any) => {
+const get_provider_workflow = (table: any, req: Req) => {
   const provider = getState()!.table_providers[table.provider_name];
   if (!provider) {
     throw new InvalidConfiguration(
@@ -2938,7 +2938,7 @@ router.post(
   })
 );
 
-const basicViewForm = async (table: any, req: any) => {
+const basicViewForm = async (table: any, req: Req) => {
   const tables = (await Table.find({}, { cached: true }))!;
   const vts = viewtemplates_with_create_basic_option();
   return new Form({
@@ -3098,7 +3098,7 @@ router.post(
   })
 );
 
-const standardFieldDefs = (req: any) => [
+const standardFieldDefs = (req: Req) => [
   {
     name: "name",
     label: req.__("Name"),
@@ -3151,7 +3151,7 @@ const standardFieldDefs = (req: any) => [
 
 const standardFieldForm = (
   table: any,
-  req: any,
+  req: Req,
   existingNames: any = new Set()
 ) => {
   const defs = standardFieldDefs(req).filter(

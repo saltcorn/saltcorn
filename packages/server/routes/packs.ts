@@ -56,7 +56,7 @@ import fs from "fs";
 const router = Router();
 export default router;
 
-const getOnDoneRedirect = (req: any, fallback: any = "/plugins") => {
+const getOnDoneRedirect = (req: Req, fallback: any = "/plugins") => {
   if (
     req.query.on_done_redirect &&
     is_relative_url("/" + req.query.on_done_redirect)
@@ -326,7 +326,7 @@ router.post(
  * @param {object} req
  * @returns {Form}
  */
-const install_pack_form = (req: any) =>
+const install_pack_form = (req: Req) =>
   new Form({
     action: "/packs/install",
     submitLabel: req.__("Install"),

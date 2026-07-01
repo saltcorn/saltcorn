@@ -45,7 +45,7 @@ import { Req, Res } from "@saltcorn/types/base_types";
  * @param {object} req
  * @returns {Table}
  */
-const tableTable = (tables: any, req: any) =>
+const tableTable = (tables: any, req: Req) =>
   mkTable(
     [
       {
@@ -62,7 +62,7 @@ const tableTable = (tables: any, req: any) =>
  * @param {object} req
  * @returns {object}
  */
-const tableCard = (tables: any, req: any) => ({
+const tableCard = (tables: any, req: Req) => ({
   type: "card",
   class: "welcome-page-entity-list mt-1",
   title: link("/table", req.__("Tables")),
@@ -93,7 +93,7 @@ const tableCard = (tables: any, req: any) => ({
  * @param {object} req
  * @returns {Table}
  */
-const viewTable = (views: any, req: any) =>
+const viewTable = (views: any, req: Req) =>
   mkTable(
     [
       {
@@ -120,7 +120,7 @@ const viewTable = (views: any, req: any) =>
  * @param {object} req
  * @returns {object}
  */
-const viewCard = (views: any, req: any) => ({
+const viewCard = (views: any, req: Req) => ({
   type: "card",
   title: link("/viewedit", req.__("Views")),
   class: "welcome-page-entity-list mt-1",
@@ -152,7 +152,7 @@ const viewCard = (views: any, req: any) => ({
  * @param {object} req
  * @returns {Table}
  */
-const pageTable = (pages: any, req: any) =>
+const pageTable = (pages: any, req: Req) =>
   mkTable(
     [
       {
@@ -174,7 +174,7 @@ const pageTable = (pages: any, req: any) =>
  * @param {object} req
  * @returns {object}
  */
-const pageCard = (pages: any, req: any) => ({
+const pageCard = (pages: any, req: Req) => ({
   type: "card",
   title: link("/pageedit", req.__("Pages")),
   class: "welcome-page-entity-list mt-1",
@@ -206,7 +206,7 @@ const pageCard = (pages: any, req: any) => ({
  * @param {object} req
  * @returns {Promise<div>}
  */
-const filesTab = async (req: any) => {
+const filesTab = async (req: Req) => {
   const files = (await File.find({}, { orderBy: "filename", cached: true }))!;
   return div(
     files.length === 0
@@ -236,7 +236,7 @@ const filesTab = async (req: any) => {
  * @param roleMap
  * @returns {Promise<div>}
  */
-const usersTab = async (req: any, users: any, roleMap: any) => {
+const usersTab = async (req: Req, users: any, roleMap: any) => {
   return div(
     mkTable(
       [
@@ -262,7 +262,7 @@ const usersTab = async (req: any, users: any, roleMap: any) => {
  * @param triggers
  * @returns {Promise<div>}
  */
-const actionsTab = async (req: any, triggers: any) => {
+const actionsTab = async (req: Req, triggers: any) => {
   const base_url = get_base_url(req);
 
   return div(
@@ -314,7 +314,7 @@ const actionsTab = async (req: any, triggers: any) => {
  * @param packlist
  * @returns {*}
  */
-const packTab = (req: any, packlist: any) =>
+const packTab = (req: Req, packlist: any) =>
   div(
     { class: "pb-3 pt-2 pe-4" },
     p(req.__("Instead of building, get up and running in no time with packs")),
@@ -341,7 +341,7 @@ const packTab = (req: any, packlist: any) =>
     )
   );
 
-const themeCard = (req: any, roleMap: any) => {
+const themeCard = (req: Req, roleMap: any) => {
   const state_layouts = getState()!.layouts;
   const state_layout_names = Object.keys(state_layouts);
   const layout_by_role = getState()!.getConfig("layout_by_role");
@@ -415,7 +415,7 @@ const themeCard = (req: any, roleMap: any) => {
  * @param req
  * @returns {*}
  */
-const helpCard = (req: any) =>
+const helpCard = (req: Req) =>
   div(
     { class: "pb-3 pt-2 pe-4" },
     p(req.__("Confused?")),
@@ -453,7 +453,7 @@ const helpCard = (req: any) =>
  * @param {object} req
  * @returns {Promise<object>}
  */
-const welcome_page = async (req: any) => {
+const welcome_page = async (req: Req) => {
   const packs_available = await get_cached_packs();
   const packlist = [
     ...(packs_available || []).slice(0, 5),
@@ -578,7 +578,7 @@ const no_views_logged_in = async (req: Req, res: Res) => {
  * @param {object} req
  * @returns {Promise<boolean>}
  */
-const get_config_response = async (role_id: any, res: any, req: any) => {
+const get_config_response = async (role_id: any, res: any, req: Req) => {
   const state = getState()!;
   const maintenanceModeEnabled = state.getConfig(
     "maintenance_mode_enabled",

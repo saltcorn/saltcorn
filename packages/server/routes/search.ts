@@ -37,7 +37,7 @@ export default router;
  * @param {object} req
  * @returns {Forms}
  */
-const searchConfigForm = (tables: any, views: any, req: any) => {
+const searchConfigForm = (tables: any, views: any, req: Req) => {
   let fields: any[] = [];
   let tbls_noviews: any[] = [];
   for (const t of tables) {
@@ -218,7 +218,7 @@ const searchForm = () =>
  * @param {object} res
  * @returns {Promise<void>}
  */
-const runSearch = async ({ q, _page, table }: any, req: any, res: any) => {
+const runSearch = async ({ q, _page, table }: any, req: Req, res: any) => {
   const role = (req.user || {}).role_id || 100;
   // globalSearch contains list of pairs: table, view
   const cfg = getState()!.getConfig("globalSearch");
@@ -358,7 +358,7 @@ const runSearch = async ({ q, _page, table }: any, req: any, res: any) => {
   });
 };
 
-const syntax_help_link = (req: any) => {
+const syntax_help_link = (req: Req) => {
   const use_websearch = getState()!.getConfig("search_use_websearch", false);
   if (use_websearch)
     return a(

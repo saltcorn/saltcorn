@@ -43,7 +43,7 @@ import Page from "@saltcorn/data/models/page";
  * @param {object} req http request
  * @returns {string} html string with list of badges
  */
-const tableBadges = (t: any, req: any) => {
+const tableBadges = (t: any, req: Req) => {
   let s = "";
   if (t.ownership_field_id) s += badge("primary", req.__("Owned"));
   if (t.versioned) s += badge("success", req.__("History"));
@@ -57,7 +57,7 @@ const valIfSet = (check: any, value: any) => (check ? value : "");
 const listClass = (tagId: any, showList: any) =>
   valIfSet(tagId, `collapse ${valIfSet(showList, "show")}`);
 
-const tablesList = async (tables: any, req: any, { tagId, domId, showList, filterOnTag }: any = {}) => {
+const tablesList = async (tables: any, req: Req, { tagId, domId, showList, filterOnTag }: any = {}) => {
   const roles = await User.get_roles();
   const getRole = (rid: any) => roles.find((r: any) => r.id === rid)?.role || "?";
   const tags = (await Tag.find())!;
@@ -155,7 +155,7 @@ const tablesList = async (tables: any, req: any, { tagId, domId, showList, filte
  * @param {object} req
  * @returns {Form}
  */
-const editViewRoleForm = (view: any, roles: any, req: any, on_done_redirect_str: any) =>
+const editViewRoleForm = (view: any, roles: any, req: Req, on_done_redirect_str: any) =>
   editRoleForm({
     url: `/viewedit/setrole/${view.id}${on_done_redirect_str || ""}`,
     current_role: view.min_role,
@@ -170,7 +170,7 @@ const editViewRoleForm = (view: any, roles: any, req: any, on_done_redirect_str:
  */
 const view_dropdown = (
   view: any,
-  req: any,
+  req: Req,
   on_done_redirect_str: any = "",
   includeRun: any = true
 ) =>
@@ -253,7 +253,7 @@ const tagBadge = (tag: any, type: any) =>
     tag.name
   );
 
-const tagsDropdown = (tags: any, altHeader: any, req: any) =>
+const tagsDropdown = (tags: any, altHeader: any, req: Req) =>
   div(
     { class: "dropdown" },
     div(
@@ -335,7 +335,7 @@ const mkAddBtn = (tags: any, entityType: string, id: number, req: Req, myTagIds:
     )
   );
 
-const viewsList = async (views: any, req: any, { tagId, domId, showList, on_done_redirect, notable, filterOnTag }: any = {}) => {
+const viewsList = async (views: any, req: Req, { tagId, domId, showList, on_done_redirect, notable, filterOnTag }: any = {}) => {
   const roles = await User.get_roles();
   const on_done_redirect_str = on_done_redirect
     ? `?on_done_redirect=${on_done_redirect}`
@@ -463,7 +463,7 @@ const viewsList = async (views: any, req: any, { tagId, domId, showList, on_done
   );
 };
 
-const page_group_dropdown = (page_group: any, req: any) =>
+const page_group_dropdown = (page_group: any, req: Req) =>
   settingsDropdown(`groupDropdownMenuButton${page_group.id}`, [
     post_dropdown_item(
       `/page_groupedit/add-to-menu/${page_group.id}`,
@@ -500,7 +500,7 @@ const page_group_dropdown = (page_group: any, req: any) =>
  */
 const page_dropdown = (
   page: any,
-  req: any,
+  req: Req,
   on_done_redirect_str: any = "",
   includeTestRun: any = false,
   includeRun: any = true
@@ -579,7 +579,7 @@ const editPageRoleForm = (page: Page, roles: any, req: Req, isGroup?: any) =>
  * @param {object} req
  * @returns {div}
  */
-const getPageList = async (rows: any, roles: any, req: any, { tagId, domId, showList, filterOnTag }: any = {}) => {
+const getPageList = async (rows: any, roles: any, req: Req, { tagId, domId, showList, filterOnTag }: any = {}) => {
   const tags = (await Tag.find())!;
   const tag_entries = (await TagEntry.find({
     not: { page_id: null },
@@ -664,7 +664,7 @@ const getPageList = async (rows: any, roles: any, req: any, { tagId, domId, show
  * @param {*} roles
  * @param {*} req
  */
-const getPageGroupList = (rows: any, roles: any, req: any) => {
+const getPageGroupList = (rows: any, roles: any, req: Req) => {
   return mkTable(
     [
       {
@@ -694,7 +694,7 @@ const getPageGroupList = (rows: any, roles: any, req: any) => {
 
 const trigger_dropdown = (
   trigger: any,
-  req: any,
+  req: Req,
   on_done_redirect_str: any = "",
   includeTestRun: any = false
 ) =>
@@ -747,7 +747,7 @@ const trigger_dropdown = (
     ),
   ]);
 
-const getTriggerList = async (triggers: any, req: any, { tagId, domId, showList, filterOnTag, on_done_redirect }: any = {}) => {
+const getTriggerList = async (triggers: any, req: Req, { tagId, domId, showList, filterOnTag, on_done_redirect }: any = {}) => {
   const base_url = get_base_url(req);
   const tags = (await Tag.find())!;
   const on_done_redirect_str = on_done_redirect

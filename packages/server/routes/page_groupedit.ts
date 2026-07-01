@@ -23,7 +23,7 @@ import { Req, Res } from "@saltcorn/types/base_types";
 const router = Router();
 export default router;
 
-const groupPropsForm = async (req: any, isNew?: any) => {
+const groupPropsForm = async (req: Req, isNew?: any) => {
   const roles = await User.get_roles();
   const pages = (await Page.find())!;
   const groups = (await PageGroup.find())!;
@@ -93,7 +93,7 @@ const groupPropsForm = async (req: any, isNew?: any) => {
   });
 };
 
-const memberForm = async (action: any, req: any, group: any, pageValidator: any) => {
+const memberForm = async (action: any, req: Req, group: any, pageValidator: any) => {
   const pageOptions = (await Page.find()).map((p: any) => p.name);
   const fields = [
     {
@@ -156,7 +156,7 @@ const memberForm = async (action: any, req: any, group: any, pageValidator: any)
   });
 };
 
-const editMemberForm = async (member: any, req: any) => {
+const editMemberForm = async (member: any, req: Req) => {
   const group = PageGroup.findOne({ id: member.page_group_id })!;
   const validator = (s: any, whole: any) => {
     const page = Page.findOne({ name: s })!;
@@ -171,7 +171,7 @@ const editMemberForm = async (member: any, req: any) => {
   );
 };
 
-const addMemberForm = async (group: any, req: any) => {
+const addMemberForm = async (group: any, req: Req) => {
   const groupPages = await group.loadPages();
   const validator = (s: any) => {
     if (groupPages.find((page: any) => page.name === s))
@@ -185,7 +185,7 @@ const addMemberForm = async (group: any, req: any) => {
   );
 };
 
-const wrapGroup = (contents: any, req: any) => {
+const wrapGroup = (contents: any, req: Req) => {
   return {
     above: [
       {
@@ -204,7 +204,7 @@ const wrapGroup = (contents: any, req: any) => {
   };
 };
 
-const wrapMember = (contents: any, req: any, pageGroup: any, pageMember?: any) => {
+const wrapMember = (contents: any, req: Req, pageGroup: any, pageMember?: any) => {
   const memberCrumb = (pageId: any) => {
     const page = Page.findOne({ id: pageId })!;
     return page ? { text: page.name, href: `/page/${page.name}` } : {};
@@ -232,7 +232,7 @@ const wrapMember = (contents: any, req: any, pageGroup: any, pageMember?: any) =
   };
 };
 
-const pageGroupMembers = async (pageGroup: any, req: any) => {
+const pageGroupMembers = async (pageGroup: any, req: Req) => {
   const pages = !db.isSQLite
     ? await Page.find({
         id: { in: pageGroup.members.map((r: any) => r.page_id) },
@@ -243,7 +243,7 @@ const pageGroupMembers = async (pageGroup: any, req: any) => {
     return acc;
   }, {});
   let members = pageGroup.sortedMembers();
-  const upDownBtns = (r: any, req: any) => {
+  const upDownBtns = (r: any, req: Req) => {
     if (members.length <= 1) return "";
     else
       return div(

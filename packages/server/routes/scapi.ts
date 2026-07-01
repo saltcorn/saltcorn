@@ -48,7 +48,7 @@ router.use(rejectTenantDrift);
  * @param {object} user user based on access token
  * @returns {boolean}
  */
-function accessAllowedRead(req: any, user: any) {
+function accessAllowedRead(req: Req, user: any) {
   const role =
     req.user && req.user!.id
       ? req.user!.role_id

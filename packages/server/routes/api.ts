@@ -105,7 +105,7 @@ function potentiallyAccessAllowedRead(
  * @param {Table} table
  * @returns {boolean}
  */
-function potentiallyAccessAllowedWrite(req: any, user: any, table: any) {
+function potentiallyAccessAllowedWrite(req: Req, user: any, table: any) {
   const role =
     req.user && req.user!.id
       ? req.user!.role_id
@@ -126,7 +126,7 @@ function potentiallyAccessAllowedWrite(req: any, user: any, table: any) {
  * @param {Trigger} trigger
  * @returns {boolean}
  */
-function accessAllowed(req: any, user: any, trigger: any) {
+function accessAllowed(req: Req, user: any, trigger: any) {
   const role =
     req.user && req.user!.id
       ? req.user!.role_id
@@ -137,7 +137,7 @@ function accessAllowed(req: any, user: any, trigger: any) {
   return role <= trigger.min_role;
 }
 
-const getFlashes = (req: any) =>
+const getFlashes = (req: Req) =>
   ["error", "success", "danger", "warning", "information"]
     .map((type: any) => {
       return { type, msg: req.flash(type) };

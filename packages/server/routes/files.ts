@@ -78,7 +78,7 @@ router.use(
   })
 );
 
-const send_files_picker = async (folder: any, noSubdirs: any, inputId: any, req: any, res: any, file_exts: any) => {
+const send_files_picker = async (folder: any, noSubdirs: any, inputId: any, req: Req, res: any, file_exts: any) => {
   res.set("SaltcornModalWidth", "1200px");
   res.sendWrap(req.__("Please select a file"), {
     above: [
@@ -733,7 +733,7 @@ router.post(
  * @param {object} req request
  * @returns {Promise<Form>} form
  */
-const storage_form = async (req: any) => {
+const storage_form = async (req: Req) => {
   return await config_fields_form({
     req,
     field_names: [
@@ -815,7 +815,7 @@ router.post(
  * @param {object} req request
  * @returns {Promise<Form>} form
  */
-const files_settings_form = async (req: any) => {
+const files_settings_form = async (req: Req) => {
   return await config_fields_form({
     req,
     field_names: [

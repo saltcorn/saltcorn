@@ -504,12 +504,17 @@ export function instanceOfFieldViewShow(object: any): object is FieldViewShow {
 
 type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
+declare function flash(
+  flash_type: "warning" | "success" | "error" | "danger",
+  message: string
+): void;
+declare function flash(
+  flash_type: "warning" | "success" | "error" | "danger"
+): string;
+
 export type Req = {
   query: GenObj;
-  flash: (
-    flash_type: "warning" | "success" | "error" | "danger",
-    message: string
-  ) => void;
+  flash: typeof flash;
   user?: AbstractUser;
   csrfToken: () => string;
   getLocale: () => string;

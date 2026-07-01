@@ -58,7 +58,7 @@ export default router;
  * @returns {Promise<Form>}
  */
 const fieldForm = async (
-  req: any,
+  req: Req,
   fkey_opts: any,
   existing_names: any,
   id: any,
@@ -225,7 +225,7 @@ const calcFieldType = (ctxType: any) =>
  * @param {object} req
  * @returns {*}
  */
-const translateAttributes = (attrs: any, req: any) =>
+const translateAttributes = (attrs: any, req: Req) =>
   Array.isArray(attrs)
     ? attrs.map((attr: any) => translateAttribute(attr, req))
     : attrs;
@@ -235,7 +235,7 @@ const translateAttributes = (attrs: any, req: any) =>
  * @param {*} req
  * @returns {object}
  */
-const translateAttribute = (attr: any, req: any) => {
+const translateAttribute = (attr: any, req: Req) => {
   let res = { ...attr, label: req.__(attr.label) };
   if (res.sublabel) res.sublabel = req.__(res.sublabel);
   if (res.isRepeat) res = new FieldRepeat(res);
@@ -246,7 +246,7 @@ const translateAttribute = (attr: any, req: any) => {
  * @param {*} req
  * @returns {Workflow}
  */
-const fieldFlow = (req: any) =>
+const fieldFlow = (req: Req) =>
   new Workflow({
     action: "/field",
     onDone: async (context: any) => {

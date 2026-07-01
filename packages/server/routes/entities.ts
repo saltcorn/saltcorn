@@ -79,10 +79,10 @@ const stripLeadingSlash = (path = "") =>
 /**
  * Get additional entities (modules, users)
  */
-const req__ = (req: any, s: any) => (req && req.__(s)) || s;
+const req__ = (req: Req, s: any) => (req && req.__(s)) || s;
 
 const getExtendedEntites = async (
-  req: any,
+  req: Req,
   { includeAllModules = false }: any = {}
 ) => {
   const entities: any[] = [];
@@ -331,7 +331,7 @@ const getExtendedEntites = async (
   return entities;
 };
 
-const buildUserActionsDropdown = (user: any, req: any, can_reset: any) => {
+const buildUserActionsDropdown = (user: any, req: Req, can_reset: any) => {
   if (!req) return "";
   const dropdownId = `entityUserDropdown${user.id}`;
   const items = [
@@ -526,7 +526,7 @@ const entityTypeBadge = (type: string) => {
 };
 
 // Helper: build details column content based on entity type
-const detailsContent = (entity: any, req: any, roles: any) => {
+const detailsContent = (entity: any, req: Req, roles: any) => {
   const bits: any[] = [];
   if (entity.type === "table") {
     if (entity.metadata.external)
@@ -617,7 +617,7 @@ const roleLabel = (entity: any, roles: any) => {
 
 const tableActionsDropdown = (
   entity: any,
-  req: any,
+  req: Req,
   user_can_edit_tables: any
 ) => {
   const metadata = entity.metadata || {};

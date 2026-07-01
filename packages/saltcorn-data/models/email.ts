@@ -215,7 +215,7 @@ const viewToMjml = async (
 ) => {
   const reqRes = emailMockReqRes;
   if (options?.locale) {
-    reqRes.req.getLocale = () => options.locale;
+    reqRes.req.getLocale = () => options.locale as string;
   }
   const result = await view.run(state, reqRes);
   const faCss = link({

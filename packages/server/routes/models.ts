@@ -39,7 +39,7 @@ import { Req, Res } from "@saltcorn/types/base_types";
 const router = Router();
 export default router;
 
-const newModelForm = (table: any, req: any) => {
+const newModelForm = (table: any, req: Req) => {
   return new Form({
     action: "/models/new/" + table.id,
     fields: [
@@ -102,7 +102,7 @@ router.post(
   })
 );
 
-const respondWorkflow = (model: any, table: any, wf: any, wfres: any, req: any, res: any) => {
+const respondWorkflow = (model: any, table: any, wf: any, wfres: any, req: Req, res: any) => {
   const wrap = (contents: any, noCard: any, previewURL: any) => ({
     above: [
       {
@@ -152,7 +152,7 @@ const respondWorkflow = (model: any, table: any, wf: any, wfres: any, req: any, 
   else res.redirect(wfres.redirect);
 };
 
-const get_model_workflow = (model: any, req: any) => {
+const get_model_workflow = (model: any, req: Req) => {
   const workflow = model.templateObj.configuration_workflow(req);
   workflow.action = `/models/config/${model.id}`;
   const oldOnDone = workflow.onDone || ((c: any) => c);
@@ -326,7 +326,7 @@ router.get(
     });
   })
 );
-const model_train_form = (model: any, table: any, req: any) => {
+const model_train_form = (model: any, table: any, req: Req) => {
   const hyperparameter_fields =
     model.templateObj.hyperparameter_fields?.({
       table,

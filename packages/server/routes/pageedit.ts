@@ -172,7 +172,7 @@ const pagePropertiesForm = async (req: Req, isNew?: any) => {
  * @param {object} context
  * @returns {Promise<object>}
  */
-const pageBuilderData = async (req: any, context: any) => {
+const pageBuilderData = async (req: Req, context: any) => {
   const views = (await View.find())!;
   const pages = (await Page.find())!;
   const page_groups = (await PageGroup.find()).map((g: any) => ({ name: g.name }));
@@ -316,7 +316,7 @@ const pageBuilderData = async (req: any, context: any) => {
  * @param {any} req - request
  * @returns {Form} return Form
  */
-const getRootPageForm = (pages: any, pageGroups: any, roles: any, req: any) => {
+const getRootPageForm = (pages: any, pageGroups: any, roles: any, req: Req) => {
   const form = new Form({
     action: "/pageedit/set_root_page",
     noSubmitButton: true,

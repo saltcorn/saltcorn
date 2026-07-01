@@ -127,7 +127,7 @@ const buildWorkflowActionExplainers = async (trigger: any) => {
   return actionExplainers;
 };
 
-const workflowStrings = (req: any, trigger: any) => ({
+const workflowStrings = (req: Req, trigger: Trigger) => ({
   addStep: req.__("Add step"),
   editStep: req.__("Edit step"),
   addAfter: req.__("Add after"),
@@ -652,10 +652,10 @@ router.post(
 );
 
 const getWorkflowConfig = async (
-  req: any,
+  req: Req,
   id: any,
   table: any,
-  trigger: any
+  trigger: Trigger
 ) => {
   const steps = (await WorkflowStep.find(
     { trigger_id: trigger.id },
@@ -942,7 +942,7 @@ router.post(
 
 const getWorkflowStepForm = async (
   trigger: any,
-  req: any,
+  req: Req,
   step_id?: any,
   after_step?: any,
   before_step?: any,
@@ -1126,7 +1126,7 @@ const getWorkflowStepForm = async (
   return form;
 };
 
-const getMultiStepForm = async (req: any, id: any, table: any) => {
+const getMultiStepForm = async (req: Req, id: any, table: any) => {
   let stateActions = getState()!.actions;
   const stateActionKeys = Object.entries(stateActions)
     .filter(([k, v]: any) => !v.disableInList && (table || !v.requireRow))
@@ -2585,7 +2585,7 @@ router.get(
   })
 );
 
-const workflowRunPromiseHandler = (promise: any, run: any, req: any) => {
+const workflowRunPromiseHandler = (promise: any, run: any, req: Req) => {
   promise
     .then(async (runres: any) => {
       const retDirs = await run.popReturnDirectives();

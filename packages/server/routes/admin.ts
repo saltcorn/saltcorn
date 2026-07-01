@@ -135,7 +135,7 @@ import { Req, Res } from "@saltcorn/types/base_types";
 const router = Router();
 export default router;
 
-const app_files_table = (files: any, buildDirName: any, req: any) =>
+const app_files_table = (files: any, buildDirName: any, req: Req) =>
   mkTable(
     [
       {
@@ -187,7 +187,7 @@ const tutorial_step = (
   );
 };
 
-const intermediate_build_result = (outDirName: any, buildDir: any, req: any, appFilesTbl: any) => {
+const intermediate_build_result = (outDirName: any, buildDir: any, req: Req, appFilesTbl: any) => {
   return div(
     h3("Intermediate build result"),
     div(
@@ -1106,7 +1106,7 @@ router.get(
  * @param req
  * @returns {Form}
  */
-const backupFilePrefixForm = (req: any) =>
+const backupFilePrefixForm = (req: Req) =>
   new Form({
     action: "/admin/set-backup-prefix",
     onChange: `saveAndContinue(this);`,
@@ -1149,7 +1149,7 @@ const backupFilePrefixForm = (req: any) =>
  * @param {object} req
  * @returns {Form} form
  */
-const autoBackupForm = (req: any) => {
+const autoBackupForm = (req: Req) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
 
   return new Form({
@@ -1324,7 +1324,7 @@ const autoBackupForm = (req: any) => {
  * @param req
  * @returns {Form}
  */
-const snapshotForm = (req: any) =>
+const snapshotForm = (req: Req) =>
   new Form({
     action: "/admin/set-snapshot",
     onChange: `saveAndContinue(this);`,
@@ -1713,7 +1713,7 @@ router.post(
   })
 );
 
-const pullCapacitorBuilder = (req: any, res: any, version: any) => {
+const pullCapacitorBuilder = (req: Req, res: any, version: any) => {
   const child = spawn(
     "docker",
     ["pull", `saltcorn/capacitor-builder:${version}`],
@@ -1739,7 +1739,7 @@ const pullCapacitorBuilder = (req: any, res: any, version: any) => {
   });
 };
 
-const tryInstallSdNotify = (req: any, res: any) => {
+const tryInstallSdNotify = (req: Req, res: any) => {
   const child = spawn("npm", ["install", "-g", "sd-notify"], {
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -1761,7 +1761,7 @@ const tryInstallSdNotify = (req: any, res: any) => {
   });
 };
 
-const pruneDocker = (req: any, res: any) => {
+const pruneDocker = (req: Req, res: any) => {
   const child = spawn("docker", ["image", "prune", "-f"], {
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -2106,7 +2106,7 @@ router.post(
  * @param {object} req
  * @returns {Form} form
  */
-const clearAllForm = (req: any) =>
+const clearAllForm = (req: Req) =>
   new Form({
     action: "/admin/clear-all",
     submitLabel: "Delete",
@@ -5312,7 +5312,7 @@ admin_config_route({
   path: "/dev",
   super_path: "/admin",
   flash: "Development mode settings updated",
-  async get_form(req: any) {
+  async get_form(req: Req) {
     const tenants_set_npm_modules = getRootState().getConfig(
       "tenants_set_npm_modules",
       false

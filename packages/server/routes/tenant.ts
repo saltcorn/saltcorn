@@ -92,7 +92,7 @@ const remove_leading_chars = (cs: any, s: any): any =>
  */
 // TBD add form field email for tenant admin
 
-const tenant_form = (req: any, base_url: any) =>
+const tenant_form = (req: Req, base_url: any) =>
   new Form({
     action: "/tenant/create",
     submitLabel: req.__("Create"),
@@ -120,14 +120,14 @@ const tenant_form = (req: any, base_url: any) =>
  * @returns {boolean} true if role has righs to create tenant
  */
 // TBD To allow few roles to create tenants - currently only one role has such rights simultaneously
-const create_tenant_allowed = (req: any) => {
+const create_tenant_allowed = (req: Req) => {
   const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
   const required_role = +getRootState().getConfig("role_to_create_tenant") || 1;
   const user_role = req.user ? req.user!.role_id : 100;
   return user_role <= required_role && (isRoot || required_role === 100);
 };
 
-const get_cfg_tenant_base_url = (req: any) =>
+const get_cfg_tenant_base_url = (req: Req) =>
   remove_leading_chars(
     ".",
     getRootState().getConfig("tenant_baseurl", req.hostname) || req.hostname
@@ -231,7 +231,7 @@ router.get(
  * @param base_url - Base URL
  * @returns {string}
  */
-const getNewURL = (req: any, subdomain: any, base_url?: any) => {
+const getNewURL = (req: Req, subdomain: any, base_url?: any) => {
   var ports = "";
   const host = req.get("host");
   if (typeof host === "string") {
@@ -490,7 +490,7 @@ router.get(
  * @param {object} req
  * @returns {Form}
  */
-const tenant_settings_form = (req: any) =>
+const tenant_settings_form = (req: Req) =>
   config_fields_form({
     req,
     field_names: [

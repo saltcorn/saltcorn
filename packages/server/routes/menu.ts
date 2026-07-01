@@ -43,7 +43,7 @@ export default router;
  * @param {object} req
  * @returns {Promise<Form>}
  */
-const menuForm = async (req: any) => {
+const menuForm = async (req: Req) => {
   const views = (await View.find({}, { orderBy: "name", nocase: true }))!;
   const pages = (await Page.find({}, { orderBy: "name", nocase: true }))!;
   const pageGroups = (await PageGroup.find(

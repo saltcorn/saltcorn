@@ -48,7 +48,7 @@ import TableExports from "@saltcorn/markup/table";
  * @returns {Promise<Form>}
  */
 
-const logSettingsForm = async (req: any) => {
+const logSettingsForm = async (req: Req) => {
   const hoursFuture = (nhrs: any) => {
     const t = new Date();
     t.setHours(t.getHours() + nhrs);
@@ -290,7 +290,7 @@ router.get(
 /**
  * @returns {Form}
  */
-const customEventForm = async (req: any) => {
+const customEventForm = async (req: Req) => {
   return new Form({
     action: "/eventlog/custom/new",
     submitButtonClass: "btn-outline-primary",

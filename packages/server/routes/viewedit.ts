@@ -131,7 +131,7 @@ const mapObjectValues = (o: any, f: any) =>
  * @param {object} values
  * @returns {Form}
  */
-const viewForm = async (req: any, tableOptions: any, roles: any, pages: any, values?: any) => {
+const viewForm = async (req: Req, tableOptions: any, roles: any, pages: any, values?: any) => {
   const devmode = getState()!.getConfig("development_mode", false);
   const isEdit = values && values.id && !devmode;
   const hasTable = Object.entries(getState()!.viewtemplates)
@@ -618,7 +618,7 @@ router.post(
  * @param {object} res
  * @returns {void}
  */
-const respondWorkflow = (view: any, wf: any, wfres: any, req: any, res: any, table: any) => {
+const respondWorkflow = (view: any, wf: any, wfres: any, req: Req, res: any, table: any) => {
   const wrap = (contents: any, noCard: any, previewURL?: any) => ({
     above: [
       {
