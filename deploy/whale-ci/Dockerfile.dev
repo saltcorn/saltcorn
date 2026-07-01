@@ -26,7 +26,8 @@ COPY . /opt/saltcorn
 RUN eslint .
 RUN deploy/check_sourcemaps.sh 
 
-# RUN node deploy/whale-ci/enable-ts-runtime-checks.js
+# RUN node deploy/whale-ci/enable-ts-runtime-checks.js \
+#     postgres saltcorn-markup db-common
 
 RUN npm install --legacy-peer-deps
 RUN npm run tsc

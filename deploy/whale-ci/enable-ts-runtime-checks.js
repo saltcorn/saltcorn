@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 // Activates ts-runtime-checks for Saltcorn's CI build in four steps:
 //   1. Adds ts-runtime-checks@^0.6.3 to root package.json devDependencies
-//   2. Injects the ts-runtime-checks plugin into each package's tsconfig.json
+//   2. Injects the ts-runtime-checks plugin into each specified package's tsconfig.json
 //   3. Runs `npm install --legacy-peer-deps`
-//   4. Applies 5 patches to fix Saltcorn-specific ts-runtime-checks crashes
+//   4. Applies 7 patches to fix Saltcorn-specific ts-runtime-checks crashes
 //
-// Uncomment in Dockerfile.dev to enable:
-//   RUN node deploy/whale-ci/enable-ts-runtime-checks.js
+// Usage: node enable-ts-runtime-checks.js <package> [<package> ...]
+// Example (Dockerfile.dev):
+//   RUN node deploy/whale-ci/enable-ts-runtime-checks.js \
+//       postgres saltcorn-markup db-common
 "use strict";
 
 const fs = require("fs");
@@ -36,6 +38,11 @@ try {
 pkg.devDependencies = pkg.devDependencies || {};
 pkg.devDependencies["ts-runtime-checks"] = "^0.6.3";
 pkg.devDependencies["ts-patch"] = "^3.3.0";
+// node-gyp v8.4.1 (pinned in lock file) fails on Node.js 24 due to a cacache incompatibility.
+// Override it to v10+ which has the fix, taking precedence over the lock file.
+pkg.devDependencies["node-gyp"] = "^10.0.0";
+pkg.overrides = pkg.overrides || {};
+pkg.overrides["node-gyp"] = "^10.0.0";
 pkg.scripts = pkg.scripts || {};
 pkg.scripts["tsc"] = pkg.scripts["tsc"].replace(/^tsc /, "tspc ");
 pkg.scripts["clean"] = pkg.scripts["clean"].replace(/^tsc /, "tspc ");
@@ -46,21 +53,19 @@ try {
 }
 console.log("  done");
 
-// Step 2: inject plugin into each tsconfig.json
-const TSCONFIGS = [
-  "packages/saltcorn-data/tsconfig.json",
-  "packages/saltcorn-markup/tsconfig.json",
-  "packages/saltcorn-types/tsconfig.json",
-  "packages/db-common/tsconfig.json",
-  "packages/saltcorn-admin-models/tsconfig.json",
-  "packages/common-code/tsconfig.json",
-  "packages/sqlite/tsconfig.json",
-  "packages/sqlite-mobile/tsconfig.json",
-  "packages/saltcorn-mobile-builder/tsconfig.json",
-];
+// Step 2: inject plugin into each specified package's tsconfig.json
+const pkgArgs = process.argv.slice(2);
+if (pkgArgs.length === 0) {
+  fail(
+    "No packages specified.\n" +
+    "Usage: node enable-ts-runtime-checks.js <package> [<package> ...]\n" +
+    "Example: node enable-ts-runtime-checks.js saltcorn-markup db-common saltcorn-types"
+  );
+}
+const TSCONFIGS = pkgArgs.map(name => `packages/${name}/tsconfig.json`);
 
 const PLUGIN_LINE =
-  '    "inlineSources": true,\n    "plugins": [{ "transform": "ts-runtime-checks", "assertAll": true }]';
+  '    "plugins": [{ "transform": "ts-runtime-checks", "assertAll": true }]';
 
 step(
   `Injecting ts-runtime-checks plugin into ${TSCONFIGS.length} tsconfig.json files`
