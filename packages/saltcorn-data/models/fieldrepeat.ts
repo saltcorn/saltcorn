@@ -23,7 +23,7 @@ class FieldRepeat implements AbstractFieldRepeat {
   type: string;
   fields: Array<Field | FieldRepeat>;
   layout?: Layout;
-  isRepeat = true;
+  isRepeat = true as const;
   showIf?: any;
   fancyMenuEditor: boolean;
   metadata?: any;

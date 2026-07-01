@@ -584,7 +584,7 @@ type PluginFacilities = {
   functions?: Record<string, PluginFunction | Function> | Function;
   layout?: PluginLayout;
   types?: Array<Type>;
-  viewtemplates?: Array<ViewTemplate>;
+  viewtemplates?: Array<ViewTemplate> | ((cfg: any) => Array<ViewTemplate>) | Record<string, ViewTemplate>;
   actions?: Record<string, Action>;
   eventTypes?: Record<string, { hasChannel: boolean }>;
   fieldviews?: Record<string, GenObj>;

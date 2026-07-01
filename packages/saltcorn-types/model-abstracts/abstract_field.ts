@@ -66,6 +66,7 @@ export type FieldCfg = {
 
 export interface AbstractFieldRepeat {
   name: string;
+  isRepeat: true;
   fields: FieldCfg[];
 }
 
