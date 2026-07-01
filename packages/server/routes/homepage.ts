@@ -26,7 +26,7 @@ import {
   get_latest_npm_version,
   get_saltcorn_npm_versions,
 } from "@saltcorn/data/models/config";
-const packagejson = require("../package.json");
+const packagejson = require("../../package.json");
 import Trigger from "@saltcorn/data/models/trigger";
 import { fileUploadForm } from "../markup/forms.js";
 import {

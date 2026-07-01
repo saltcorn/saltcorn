@@ -1548,7 +1548,7 @@ router.get(
       supportedVersion(
         "latest",
         versions,
-        require("../package.json").version
+        require("../../package.json").version
       ) || undefined
     );
     req.flash("success", req.__(`Module up-to-date`));
