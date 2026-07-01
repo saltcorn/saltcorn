@@ -289,7 +289,10 @@ class Table implements AbstractTable {
     this.id = o.id;
     this.min_role_read = o.min_role_read;
     this.min_role_write = o.min_role_write;
-    this.ownership_field_id = o.ownership_field_id;
+    this.ownership_field_id =
+      typeof o.ownership_field_id === "string"
+        ? parseInt(o.ownership_field_id, 10) || o.ownership_field_id
+        : o.ownership_field_id;
     this.ownership_formula = o.ownership_formula;
     this.versioned = !!o.versioned;
     this.has_sync_info = !!o.has_sync_info;
@@ -353,7 +356,7 @@ class Table implements AbstractTable {
     Object.assign(t, tbl);
     t.update = async (upd_rec: Row) => {
       const { fields, constraints, ...updDB } = upd_rec;
-      if (updDB.ownership_field_id === "") delete updDB.ownership_field_id;
+      if (updDB.ownership_field_id === "") updDB.ownership_field_id = null;
       updDB.updated_at = new Date();
       await db.update("_sc_tables", updDB, tbl.id);
       //limited refresh if we do not have a client
@@ -3266,7 +3269,7 @@ class Table implements AbstractTable {
       throw new Error("Read-only access");
 
     if (new_table_rec.ownership_field_id === ("" as any))
-      delete new_table_rec.ownership_field_id;
+      new_table_rec.ownership_field_id = null;
     const existing = Table.findOne({ id: this.id });
     if (!existing) {
       throw new Error(`Unable to find table with id: ${this.id}`);
