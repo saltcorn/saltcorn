@@ -68,10 +68,10 @@ const escAttrVal = (s: string): string =>
  * @param {boolean} [opts.v]
  * @returns {string}
  */
-const ppAttrib = ([k, v]: [
-  string,
-  AttributeVal | ClassVal | StyleVal,
-]): string =>
+const ppAttrib = ([k, v]:
+  | ["style", StyleVal]
+  | ["class", ClassVal]
+  | [string, AttributeVal]): string =>
   typeof v === "boolean"
     ? v
       ? k
@@ -118,7 +118,7 @@ const mkTag =
       attributes_or_first_child !== null
     ) {
       attribs += Object.entries(attributes_or_first_child as Attributes)
-        .map(ppAttrib)
+        .map(a=>ppAttrib(a as any))
         .filter((s) => s)
         .join(" ");
       children.forEach(argIter);
