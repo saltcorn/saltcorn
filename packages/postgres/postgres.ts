@@ -99,8 +99,9 @@ export const rollback = async (): Promise<void> => {
   await query("ROLLBACK");
 };
 
-const getMyClient = (selopts?: any): any => {
-  return selopts?.client || getRequestContext()?.client || pool;
+const getMyClient = (selopts?: any) => {
+  const ctx = getRequestContext();
+  return selopts?.client || ctx?.client || pool;
 };
 
 /**
@@ -677,6 +678,17 @@ export const listScTables = async (): Promise<{ name: string }[]> => {
   });
 };
 
+export const setRequestUserContext = async (client: any, isLocal = false) => {
+  const reqCon = getRequestContext();
+  const user = reqCon?.req?.user;
+  if (!user?.id) return;
+  await client.query(
+    `SELECT set_config('app.current_user_id', $1, ${isLocal}), ` +
+      `set_config('app.current_user_role', $2, ${isLocal})`,
+    [String(user.id), String(user.role_id ?? 100)]
+  );
+};
+
 /* rules of using this:
 
 - no try catch inside unless you rethrow: wouldnt roll back
@@ -690,11 +702,12 @@ export const withTransaction = async (
 ): Promise<any> => {
   const client = await getClient();
   const reqCon = getRequestContext();
-  if (reqCon)
-    //if not, probably in a test
+  if (reqCon) {
     reqCon.client = client;
+  }
   sql_log("BEGIN;");
   await client.query("BEGIN;");
+  await setRequestUserContext(client, true);
   let aborted = false;
   const rollback = async () => {
     aborted = true;
@@ -717,7 +730,9 @@ export const withTransaction = async (
     if (onError) return onError(error as Error);
     else throw error;
   } finally {
-    if (reqCon) reqCon.client = null;
+    if (reqCon) {
+      reqCon.client = null;
+    }
     client.release();
   }
 };

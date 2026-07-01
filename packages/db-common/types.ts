@@ -73,7 +73,7 @@ export type DbExportsType = {
       getLocale: () => string;
       __: (str: string) => string;
     };
-    client?: object | string;
+    client?: object | string | null;
   };
   drop_fts_index: (table: string) => Promise<void>;
   drop_index: (table: string, columns: string[]) => Promise<void>;
@@ -95,6 +95,7 @@ export type DbExportsType = {
     client: any
   ) => Promise<any>;
   set_sql_logging: (enabled: boolean) => void;
+  setRequestUserContext: (client: any, isLocal?: boolean) => Promise<void>;
   is_it_multi_tenant: () => boolean;
   updateWhere: (table: string, data: Row, where: Where) => Promise<any>;
   slugify: (str: string) => string;
