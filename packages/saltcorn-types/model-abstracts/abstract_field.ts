@@ -34,7 +34,7 @@ export type FieldCfg = {
   showIf?: { [field_name: string]: string | boolean | string[] };
   parent_field?: string;
   postText?: string;
-  class?: string;
+  class?: string | string[];
   id?: number;
   default?: string;
   sublabel?: string;

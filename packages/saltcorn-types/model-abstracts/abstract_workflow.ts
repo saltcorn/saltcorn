@@ -46,9 +46,9 @@ export interface AbstractWorkflow {
   autoSave?: boolean;
   previewURL?: string;
 
-  run: (body: any, req: any) => Promise<RunResult | undefined>;
+  run: (body: any, req: any) => Promise<RunResult>;
   singleStepForm: (body: any, req: any) => Promise<RunResult | undefined>;
-  runStep: (context: any, stepIx: number) => Promise<RunResult | undefined>;
+  runStep: (context: any, stepIx: number) => Promise<RunResult>;
   title: (step: any, stepIx: number) => string;
   prepareForm: (form: any) => Promise<void>;
 }
