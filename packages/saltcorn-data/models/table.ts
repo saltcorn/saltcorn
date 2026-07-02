@@ -572,6 +572,7 @@ class Table implements AbstractTable {
    */
   async enableOwnershipRLS(): Promise<void> {
     if (db.isSQLite) return;
+    if (!getState()?.getConfig("enable_rls", true)) return;
 
     const schema = db.getTenantSchemaPrefix();
     const tbl = `${schema}"${sqlsanitize(this.name)}"`;
@@ -609,6 +610,7 @@ class Table implements AbstractTable {
    */
   async disableOwnershipRLS(): Promise<void> {
     if (db.isSQLite) return;
+    if (!getState()?.getConfig("enable_rls", true)) return;
     const schema = db.getTenantSchemaPrefix();
     const tbl = `${schema}"${sqlsanitize(this.name)}"`;
 

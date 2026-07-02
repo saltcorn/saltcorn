@@ -1666,6 +1666,13 @@ const configTypes: ConfigTypes = {
     default: [],
     excludeFromMobile: true,
   },
+  enable_rls: {
+    type: "Bool",
+    label: "Enable Row Level Security",
+    default: true,
+    blurb:
+      "Enable PostgreSQL Row Level Security for tables with ownership configured. Requires PostgreSQL.",
+  },
 };
 // TODO move list of languages from code to configuration
 const available_languages = {
