@@ -404,7 +404,7 @@ admin_config_route({
   if (authMethod) {
     const authMethodValue = authMethod.value;
     authMethodChange(authMethodValue);
-    authMethod.addEventListener('change', (e: any) => {
+    authMethod.addEventListener('change', (e) => {
       const authMethod = e.target.value;
       authMethodChange(authMethod);
     });
@@ -5975,7 +5975,7 @@ admin_config_route({
   setTimeout(fn, 0);
   const mainForm = document.querySelector("form[action='/admin/notifications']");
   if (mainForm) {
-    mainForm.addEventListener("change", (e: any) => {
+    mainForm.addEventListener("change", (e) => {
       fn();
     });
   }`)
