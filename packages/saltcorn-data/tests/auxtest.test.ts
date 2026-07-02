@@ -48,7 +48,8 @@ import {
 } from "./common_helpers.js";
 import { assertIsSet } from "./assertions.js";
 import * as expression from "../models/expression.js";
-const { freeVariables, add_free_variables_to_joinfields } = expression;
+const { freeVariables, add_free_variables_to_joinfields, formulaToRlsUsing } =
+  expression;
 
 const { mockReqRes } = mocks;
 
@@ -187,6 +188,75 @@ describe("generate_joined_query", () => {
     );
     const rows = await table.getJoinedRows(q);
     expect(rows.length).toBe(1);
+  });
+});
+
+describe("formulaToRlsUsing", () => {
+  const schema = `"public".`;
+  const curUserId = `nullif(current_setting('app.current_user_id', true), '')::integer`;
+
+  it("user.X===id (reverse FK)", () => {
+    expect(formulaToRlsUsing("user.manager===id", schema)).toBe(
+      `((SELECT "manager" FROM ${schema}"users" WHERE "id" = ${curUserId}) = "id")`
+    );
+  });
+  it("id===user.X (reversed operands)", () => {
+    expect(formulaToRlsUsing("id===user.manager", schema)).toBe(
+      `("id" = (SELECT "manager" FROM ${schema}"users" WHERE "id" = ${curUserId}))`
+    );
+  });
+  it("user.department===row.authorized_department", () => {
+    expect(
+      formulaToRlsUsing("user.department===row.authorized_department", schema)
+    ).toBe(
+      `((SELECT "department" FROM ${schema}"users" WHERE "id" = ${curUserId}) = "authorized_department")`
+    );
+  });
+  it("compound: user.dept===row.dept && user.level>=row.min_level", () => {
+    expect(
+      formulaToRlsUsing(
+        "user.dept===row.dept && user.level>=row.min_level",
+        schema
+      )
+    ).toBe(
+      `(((SELECT "dept" FROM ${schema}"users" WHERE "id" = ${curUserId}) = "dept") AND ((SELECT "level" FROM ${schema}"users" WHERE "id" = ${curUserId}) >= "min_level"))`
+    );
+  });
+  it("FK traversal: publisher?.manager===user.id", () => {
+    const fields = [{ name: "publisher", reftable_name: "publishers" }];
+    expect(
+      formulaToRlsUsing("publisher?.manager===user.id", schema, fields)
+    ).toBe(
+      `"publisher" IN (SELECT "id" FROM ${schema}"publishers" WHERE "manager" = ${curUserId})`
+    );
+  });
+  it("returns null for unsupported formula", () => {
+    expect(
+      formulaToRlsUsing("user.groups.map(g=>g.id).includes(group_id)", schema)
+    ).toBeNull();
+  });
+  it("numeric literal: id > 3", () => {
+    expect(formulaToRlsUsing("id > 3", schema)).toBe(`("id" > 3)`);
+  });
+  it("string literal: row.status === 'active'", () => {
+    expect(formulaToRlsUsing("row.status === 'active'", schema)).toBe(
+      `("status" = 'active')`
+    );
+  });
+  it("string literal with single quote: row.name === \"it's\"", () => {
+    expect(formulaToRlsUsing(`row.name === "it's"`, schema)).toBe(
+      `("name" = 'it''s')`
+    );
+  });
+  it("boolean literal: row.active === true", () => {
+    expect(formulaToRlsUsing("row.active === true", schema)).toBe(
+      `("active" = true)`
+    );
+  });
+  it("null literal: row.deleted === null", () => {
+    expect(formulaToRlsUsing("row.deleted === null", schema)).toBe(
+      `("deleted" = null)`
+    );
   });
 });
 

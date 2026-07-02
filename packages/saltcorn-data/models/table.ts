@@ -59,6 +59,7 @@ import {
   add_free_variables_to_joinfields,
   removeComments,
   jsexprToWhere,
+  formulaToRlsUsing,
 } from "./expression.js";
 
 import type TableConstraint from "./table_constraints.js";
@@ -544,18 +545,42 @@ class Table implements AbstractTable {
   }
 
   /**
-   * Create RLS policies for direct ownership_field_id.
+   * Returns the USING/WITH CHECK expression for the owner policy, or null if the
+   * current ownership configuration cannot be expressed as a PG policy.
+   */
+  private async rlsOwnerUsing(schema: string): Promise<string | null> {
+    if (this.ownership_field_id) {
+      const owner_field = this.owner_fieldname();
+      if (!owner_field) return null;
+      const curUserId = `nullif(current_setting('app.current_user_id', true), '')::integer`;
+      return `${curUserId} = "${sqlsanitize(owner_field)}"`;
+    }
+
+    if (this.ownership_formula) {
+      const fields = this.fields ?? this.getFields();
+      return formulaToRlsUsing(this.ownership_formula, schema, fields);
+    }
+
+    return null;
+  }
+
+  /**
+   * Create RLS policies based on ownership_field_id or a parseable ownership_formula.
    * Idempotent — drops existing policies before recreating them.
-   * Only supported on PostgreSQL; no-op on SQLite.
+   * Falls back to disableOwnershipRLS() when the formula cannot be mapped to SQL.
+   * No-op on SQLite.
    */
   async enableOwnershipRLS(): Promise<void> {
     if (db.isSQLite) return;
-    const owner_field = this.owner_fieldname();
-    if (!owner_field) return;
 
     const schema = db.getTenantSchemaPrefix();
     const tbl = `${schema}"${sqlsanitize(this.name)}"`;
-    const col = `"${sqlsanitize(owner_field)}"`;
+
+    const ownerUsing = await this.rlsOwnerUsing(schema);
+    if (!ownerUsing) {
+      await this.disableOwnershipRLS();
+      return;
+    }
 
     await db.query(`ALTER TABLE ${tbl} ENABLE ROW LEVEL SECURITY`);
     await db.query(`ALTER TABLE ${tbl} FORCE ROW LEVEL SECURITY`);
@@ -563,14 +588,12 @@ class Table implements AbstractTable {
     await db.query(`DROP POLICY IF EXISTS sc_rls_owner ON ${tbl}`);
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated ON ${tbl}`);
 
-    // Rows are visible/writable to the user who owns them.
     await db.query(`
       CREATE POLICY sc_rls_owner ON ${tbl}
-      USING     (nullif(current_setting('app.current_user_id', true), '')::integer = ${col})
-      WITH CHECK (nullif(current_setting('app.current_user_id', true), '')::integer = ${col})
+      USING     (${ownerUsing})
+      WITH CHECK (${ownerUsing})
     `);
 
-    // Users whose role is privileged enough bypass ownership and see all rows.
     // COALESCE to 1 (admin) when no GUC is set so internal queries outside
     // transactions are not blocked.
     await db.query(`
@@ -3295,10 +3318,11 @@ class Table implements AbstractTable {
       }
       const ownershipChanged =
         new_table.ownership_field_id !== existing.ownership_field_id ||
+        new_table.ownership_formula !== existing.ownership_formula ||
         new_table.min_role_read !== existing.min_role_read ||
         new_table.min_role_write !== existing.min_role_write;
       if (ownershipChanged) {
-        if (new_table.ownership_field_id)
+        if (new_table.ownership_field_id || new_table.ownership_formula)
           await new_table.enableOwnershipRLS();
         else
           await new_table.disableOwnershipRLS();
