@@ -7,6 +7,13 @@ import { getState } from "@saltcorn/data/db/state";
 import { getMailTransport, viewToEmailHtml } from "@saltcorn/data/models/email";
 import { get_base_url } from "../routes/utils.js";
 import View from "@saltcorn/data/models/view";
+import type User from "@saltcorn/data/models/user";
+import type { Req } from "@saltcorn/types/base_types";
+
+type ResetEmailOptions = {
+  creating?: boolean;
+  from_admin?: boolean;
+};
 
 /**
  * @param {string} link
@@ -14,24 +21,29 @@ import View from "@saltcorn/data/models/view";
  * @param {object} req
  * @returns {void}
  */
-const generate_email = (link, user, req, options) => {
+const generate_email = (
+  link: string,
+  user: User,
+  req: Req,
+  options?: ResetEmailOptions
+) => {
   const subject = options?.creating
-    ? req.__(`Welcome to %s`, getState().getConfig("site_name", "Saltcorn"))
+    ? req.__(`Welcome to %s`, getState()!.getConfig("site_name", "Saltcorn"))
     : req.__("Reset password instructions");
   const initial = options?.creating
     ? req.__(
         "We have created an account for you on %s. You can set your new password through this link: ",
-        getState().getConfig("site_name", "Saltcorn")
+        getState()!.getConfig("site_name", "Saltcorn")
       )
     : options?.from_admin
       ? req.__(
           "We request that you change your password on %s. You can set your new password through this link: ",
-          getState().getConfig("site_name", "Saltcorn")
+          getState()!.getConfig("site_name", "Saltcorn")
         )
       : req.__(
           "You have requested a link to change your password. You can do this through this link:"
         );
-  const base_url = getState().getConfig("base_url", "");
+  const base_url = getState()!.getConfig("base_url", "");
   const final =
     options?.creating && base_url
       ? req.__(
@@ -47,7 +59,7 @@ const generate_email = (link, user, req, options) => {
         )
       : "";
   return {
-    from: getState().getConfig("email_from"),
+    from: getState()!.getConfig("email_from"),
     to: user.email,
     subject,
     text: `${req.__("Hi %s", user.email)},
@@ -92,10 +104,14 @@ ${final ? `<br />${final}<br />` : ""}
  * @param {object} req
  * @returns {Promise<void>}
  */
-const send_reset_email = async (user, req, options = {}) => {
+const send_reset_email = async (
+  user: User,
+  req: Req,
+  options: ResetEmailOptions = {}
+) => {
   const { link, token } = await get_reset_link(user, req);
   const transporter = await getMailTransport();
-  const reset_password_email_view_name = getState().getConfig(
+  const reset_password_email_view_name = getState()!.getConfig(
     "reset_password_email_view",
     false
   );
@@ -110,7 +126,7 @@ const send_reset_email = async (user, req, options = {}) => {
         _unhashed_reset_password_token: token,
       });
       email = {
-        from: getState().getConfig("email_from"),
+        from: getState()!.getConfig("email_from"),
         to: user.email,
         subject:
           reset_password_email_view.attributes?.page_title ||
@@ -127,7 +143,7 @@ const send_reset_email = async (user, req, options = {}) => {
  * @param {object} user
  * @param {object} req
  */
-const get_reset_link = async (user, req) => {
+const get_reset_link = async (user: User, req: Req) => {
   const token = await user.getNewResetToken();
   const base = get_base_url(req);
   return {

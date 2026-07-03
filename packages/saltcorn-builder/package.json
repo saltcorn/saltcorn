@@ -46,7 +46,7 @@
     "react-contenteditable": "3.3.7",
     "react-dom": "^18.2.0",
     "react-select": "5.8.0",
-    "react-test-renderer": "^18.2.0",
+    "react-test-renderer": "18.2.0",
     "react-transition-group": "4.4.5",
     "webpack": "^5.105.1",
     "webpack-cli": "6.0.1"

@@ -15,6 +15,7 @@ import { isAdmin, error_catcher, csrfField } from "../routes/utils.js";
 import { getState } from "@saltcorn/data/db/state";
 import { text, form, option, select, a, i } from "@saltcorn/markup/tags";
 import { send_users_page } from "../markup/admin.js";
+import type { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -23,7 +24,7 @@ import { send_users_page } from "../markup/admin.js";
  * @category server
  * @subcategory auth
  */
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -33,11 +34,16 @@ export default router;
  * @param {object} req
  * @returns {Form}
  */
-const editRoleLayoutForm = (role, layouts, layout_by_role, req) => {
+const editRoleLayoutForm = (
+  role: Role,
+  layouts: string[],
+  layout_by_role: any,
+  req: Req
+) => {
   //console.log(layouts);
   let edit_link = "";
   const current_layout = layout_by_role[role.id] || layouts[layouts.length - 1];
-  let plugin = getState().plugins[current_layout];
+  let plugin = getState()!.plugins[current_layout];
 
   if (plugin?.configuration_workflow)
     edit_link = a(
@@ -80,7 +86,11 @@ const editRoleLayoutForm = (role, layouts, layout_by_role, req) => {
  * @param {object} req
  * @returns {Form}
  */
-const editRole2FAPolicyForm = (role, twofa_policy_by_role, req) =>
+const editRole2FAPolicyForm = (
+  role: Role,
+  twofa_policy_by_role: any,
+  req: Req
+) =>
   form(
     {
       action: `/roleadmin/setrole2fapolicy/${role.id}`,
@@ -99,7 +109,11 @@ const editRole2FAPolicyForm = (role, twofa_policy_by_role, req) =>
     )
   );
 
-const editRolePushPolicyForm = (role, push_policy_by_role, req) =>
+const editRolePushPolicyForm = (
+  role: Role,
+  push_policy_by_role: any,
+  req: Req
+) =>
   form(
     {
       action: `/roleadmin/setrolepushpolicy/${role.id}`,
@@ -125,7 +139,7 @@ const editRolePushPolicyForm = (role, push_policy_by_role, req) =>
  * @param {object} req
  * @returns {Form}
  */
-const roleForm = (req) =>
+const roleForm = (req: Req) =>
   new Form({
     action: "/roleadmin/edit",
     fields: [
@@ -151,27 +165,27 @@ const roleForm = (req) =>
 router.get(
   "/",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const roles = await User.get_roles();
-    let roleMap = {};
+    let roleMap: Record<number, string> = {};
     roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });
-    const layouts = Object.keys(getState().layouts).filter(
+    const layouts = Object.keys(getState()!.layouts).filter(
       (l) => l !== "emergency"
     );
-    const layout_by_role = getState().getConfig("layout_by_role");
-    const twofa_policy_by_role = getState().getConfig("twofa_policy_by_role");
+    const layout_by_role = getState()!.getConfig("layout_by_role");
+    const twofa_policy_by_role = getState()!.getConfig("twofa_policy_by_role");
     const push_policy_by_role =
       getState()?.getConfig("push_policy_by_role") || {};
-    const pushEnabled = getState().getConfig("enable_push_notify");
-    const auth_methods = Object.keys(getState().auth_methods);
+    const pushEnabled = getState()!.getConfig("enable_push_notify");
+    const auth_methods = Object.keys(getState()!.auth_methods);
 
     auth_methods.unshift("Password");
-    const auth_enabled_by_role = {};
+    const auth_enabled_by_role: Record<number, any> = {};
     for (const role of roles) {
       if (role.id === 100) continue;
-      auth_enabled_by_role[role.id] = getState().get_auth_enabled_by_role(
+      auth_enabled_by_role[role.id] = getState()!.get_auth_enabled_by_role(
         role.id
       );
     }
@@ -192,12 +206,12 @@ router.get(
               { label: req.__("Role"), key: "role" },
               {
                 label: req.__("Theme"),
-                key: (role) =>
+                key: (role: any) =>
                   editRoleLayoutForm(role, layouts, layout_by_role, req),
               },
               {
                 label: req.__("2FA policy"),
-                key: (role) =>
+                key: (role: any) =>
                   role.id === 100
                     ? ""
                     : editRole2FAPolicyForm(role, twofa_policy_by_role, req),
@@ -206,7 +220,7 @@ router.get(
                 ? [
                     {
                       label: req.__("Push notifications"),
-                      key: (role) =>
+                      key: (role: any) =>
                         role.id === 100
                           ? ""
                           : editRolePushPolicyForm(
@@ -221,7 +235,7 @@ router.get(
                 ? [
                     {
                       label: req.__("Allow login methods"),
-                      key: (role) =>
+                      key: (role: any) =>
                         role.id === 100
                           ? ""
                           : dropdown_checkboxes({
@@ -241,7 +255,7 @@ router.get(
                 : []),
               {
                 label: req.__("Delete"),
-                key: (r) =>
+                key: (r: any) =>
                   unDeletableRoles.includes(r.id)
                     ? ""
                     : post_delete_btn(`/roleadmin/delete/${r.id}`, req),
@@ -264,7 +278,7 @@ router.get(
 router.get(
   "/new",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await roleForm(req);
 
     send_users_page({
@@ -291,7 +305,7 @@ router.get(
 router.post(
   "/edit",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await roleForm(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -307,14 +321,14 @@ router.post(
         },
       });
     } else {
-      const r = new Role(form.values);
+      const r = new Role(form.values as any);
       const ex = await Role.findOne({ id: r.id });
       if (ex) {
         await ex.update(r);
       } else {
         await Role.create(r);
       }
-      await getState().refresh_roles();
+      await getState()!.refresh_roles();
       req.flash("success", req.__(`Role updated`));
       res.redirect(`/roleadmin`);
     }
@@ -329,11 +343,11 @@ router.post(
 router.post(
   "/setrolelayout/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const layout_by_role = getState().getConfigCopy("layout_by_role");
+    const layout_by_role = getState()!.getConfigCopy("layout_by_role");
     layout_by_role[+id] = (req.body || {}).layout;
-    await getState().setConfig("layout_by_role", layout_by_role);
+    await getState()!.setConfig("layout_by_role", layout_by_role);
     req.flash("success", req.__(`Saved layout for role`));
 
     res.redirect(`/roleadmin`);
@@ -348,13 +362,13 @@ router.post(
 router.post(
   "/setrole2fapolicy/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const twofa_policy_by_role = getState().getConfigCopy(
+    const twofa_policy_by_role = getState()!.getConfigCopy(
       "twofa_policy_by_role"
     );
     twofa_policy_by_role[+id] = (req.body || {}).policy;
-    await getState().setConfig("twofa_policy_by_role", twofa_policy_by_role);
+    await getState()!.setConfig("twofa_policy_by_role", twofa_policy_by_role);
     req.flash("success", req.__(`Saved 2FA policy for role`));
 
     res.redirect(`/roleadmin`);
@@ -364,12 +378,12 @@ router.post(
 router.post(
   "/setrolepushpolicy/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const push_policy_by_role =
       getState()?.getConfigCopy("push_policy_by_role") || {};
     push_policy_by_role[+id] = (req.body || {}).policy;
-    await getState().setConfig("push_policy_by_role", push_policy_by_role);
+    await getState()!.setConfig("push_policy_by_role", push_policy_by_role);
     req.flash("success", req.__(`Saved push policy for role`));
 
     res.redirect(`/roleadmin`);
@@ -379,15 +393,17 @@ router.post(
 router.post(
   "/setrole_allowed_auth_methods/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const enabled = (req.body || {}).enabled;
     const method = (req.body || {}).method;
 
-    const auth_method_by_role = getState().getConfigCopy("auth_method_by_role");
+    const auth_method_by_role = getState()!.getConfigCopy(
+      "auth_method_by_role"
+    );
     if (!auth_method_by_role[+id]) auth_method_by_role[+id] = {};
     auth_method_by_role[+id][method] = enabled;
-    await getState().setConfig("auth_method_by_role", auth_method_by_role);
+    await getState()!.setConfig("auth_method_by_role", auth_method_by_role);
     res.json({ success: true });
   })
 );
@@ -401,9 +417,9 @@ const unDeletableRoles = [1, 80, 100];
 router.post(
   "/delete/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const u = await Role.findOne({ id });
+    const u = (await Role.findOne({ id }))!;
     const nuser = await User.count({ role_id: id });
     if (unDeletableRoles.includes(+id))
       req.flash("warning", req.__(`Cannot delete this role`));
@@ -412,10 +428,10 @@ router.post(
     } else {
       try {
         await u.delete();
-        await getState().refresh_roles();
+        await getState()!.refresh_roles();
 
         req.flash("success", req.__(`Role %s deleted`, u.role));
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         req.flash("error", e.message);
       }

@@ -28,6 +28,7 @@ import {
 import { getState } from "@saltcorn/data/db/state";
 import { send_reset_email } from "./resetpw.js";
 import { renderForm, post_btn } from "@saltcorn/markup";
+// @ts-ignore
 import passport from "passport";
 import {
   a,
@@ -73,10 +74,14 @@ import _am_backup from "@saltcorn/admin-models/models/backup";
 const { restore } = _am_backup;
 import Plugin from "@saltcorn/data/models/plugin";
 import fs from "fs";
+// @ts-ignore
 import base32 from "thirty-two";
+// @ts-ignore
 import qrcode from "qrcode";
+// @ts-ignore
 import { totp as totp } from "notp";
 import jwt from "jsonwebtoken";
+import type { Req, Res } from "@saltcorn/types/base_types";
 
 /**
  * @type {object}
@@ -86,7 +91,7 @@ import jwt from "jsonwebtoken";
  * @subcategory auth
  */
 
-const router = new Router();
+const router = Router();
 export default router;
 
 /**
@@ -94,7 +99,7 @@ export default router;
  * @param {object} res
  * @returns {void}
  */
-function handler(req, res) {
+function handler(req: any, res: Res) {
   console.log(
     `Failed login attempt for: ${(req.body || {}).email} from ${
       req.ip
@@ -114,7 +119,7 @@ function handler(req, res) {
  * @param {object} body
  * @returns {string}
  */
-const userIdKey = (body) => {
+const userIdKey = (body: any) => {
   if (body.email) return body.email;
   const { remember, password, _csrf, passwordRepeat, ...rest } = body;
   const kvs = Object.entries(rest);
@@ -133,7 +138,7 @@ const userLimiter = rateLimit({
   // TBD create config parameter
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 5, // limit each IP to 100 requests per windowMs
-  keyGenerator: (req) => userIdKey(req.body || {}),
+  keyGenerator: (req: any) => userIdKey(req.body || {}),
   handler,
   validate: { trustProxy: false },
 });
@@ -142,7 +147,7 @@ const pendingUserLimiter = rateLimit({
   // TBD create config parameter
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 5, // limit each IP to 100 requests per windowMs
-  keyGenerator: (req) => req.user?.pending_user?.id,
+  keyGenerator: (req: any) => req.user?.pending_user?.id,
   handler,
   validate: { trustProxy: false },
 });
@@ -153,15 +158,15 @@ const pendingUserLimiter = rateLimit({
  * @param {boolean} isCreating
  * @returns {Form}
  */
-const loginForm = (req, isCreating) => {
-  const postAuthMethods = Object.entries(getState().auth_methods)
+const loginForm = (req: Req, isCreating?: boolean) => {
+  const postAuthMethods = Object.entries(getState()!.auth_methods)
     // TBD unresolved parameter K
     // TBD unresolved postUsernamePassword
-    .filter(([k, v]) => v.postUsernamePassword)
-    .map(([k, v]) => v);
+    .filter(([k, v]: [string, any]) => v.postUsernamePassword)
+    .map(([k, v]: [string, any]) => v);
   const user_sublabel = postAuthMethods
     // TBD unresolved usernameLabel
-    .map((auth) => `${auth.usernameLabel} for ${auth.label}`)
+    .map((auth: any) => `${auth.usernameLabel} for ${auth.label}`)
     .join(", ");
   const form = new Form({
     class: "login",
@@ -206,7 +211,7 @@ const loginForm = (req, isCreating) => {
  * @param {object} req
  * @returns {Form}
  */
-const forgotForm = (req) =>
+const forgotForm = (req: Req) =>
   new Form({
     blurb: req.__(
       "Enter your email address below and we'll send you a link to reset your password."
@@ -233,7 +238,7 @@ const forgotForm = (req) =>
  * @param {object} req
  * @returns {Form}
  */
-const resetForm = (body, req) => {
+const resetForm = (body: any, req: Req) => {
   const form = new Form({
     blurb: req.__("Enter your new password below"),
     fields: [
@@ -275,7 +280,7 @@ const resetForm = (body, req) => {
  * @param {string} fileId
  * @returns {Form}
  */
-const restoreBackupPasswordForm = (req) =>
+const restoreBackupPasswordForm = (req: Req) =>
   new Form({
     blurb: req.__(
       "To restore a system backup, please enter the password you set when you created the backup."
@@ -299,9 +304,9 @@ const restoreBackupPasswordForm = (req) =>
  * @param {boolean} noMethods
  * @returns {object}
  */
-const getAuthLinks = (current, noMethods, req) => {
-  const links = { methods: [] };
-  const state = getState();
+const getAuthLinks = (current: string, noMethods?: boolean, req?: Req) => {
+  const links: any = { methods: [] };
+  const state = getState()!;
   if (current !== "login") links.login = "/auth/login";
   if (current !== "signup" && state.getConfig("allow_signup"))
     links.signup = "/auth/signup";
@@ -311,17 +316,19 @@ const getAuthLinks = (current, noMethods, req) => {
     ? `?dest=${encodeURIComponent(req.query.dest)}`
     : "";
   if (!noMethods)
-    Object.entries(getState().auth_methods).forEach(([name, auth]) => {
-      const url = auth.postUsernamePassword
-        ? `javascript:$('form.login').attr('action','/auth/login-with/${name}${dest}').submit();`
-        : `/auth/login-with/${name}${dest}`;
-      links.methods.push({
-        icon: auth.icon,
-        label: auth.label,
-        name,
-        url,
-      });
-    });
+    Object.entries(getState()!.auth_methods).forEach(
+      ([name, auth]: [string, any]) => {
+        const url = auth.postUsernamePassword
+          ? `javascript:$('form.login').attr('action','/auth/login-with/${name}${dest}').submit();`
+          : `/auth/login-with/${name}${dest}`;
+        links.methods.push({
+          icon: auth.icon,
+          label: auth.label,
+          name,
+          url,
+        });
+      }
+    );
   return links;
 };
 /**
@@ -331,12 +338,18 @@ const getAuthLinks = (current, noMethods, req) => {
  * @param {*} saltcornApp
  * @param {*} res
  */
-const loginWithJwt = async (email, password, saltcornApp, res, req) => {
+const loginWithJwt = async (
+  email: string,
+  password: string,
+  saltcornApp: string,
+  res: Res,
+  req: Req
+) => {
   const loginFn = async () => {
     const jwt_secret = db.connectObj.jwt_secret;
     if (email !== undefined && password !== undefined) {
       // with credentials
-      const user = await User.findOne({ email });
+      const user = (await User.findOne({ email }))!;
       if (
         user &&
         !user.disabled &&
@@ -405,8 +418,8 @@ const loginWithJwt = async (email, password, saltcornApp, res, req) => {
  */
 router.get(
   "/login",
-  error_catcher(async (req, res) => {
-    const login_form_name = getState().getConfig("login_form", "");
+  error_catcher(async (req: Req, res: Res) => {
+    const login_form_name = getState()!.getConfig("login_form", "");
     if (login_form_name) {
       const login_form = await View.findOne({ name: login_form_name });
       if (!login_form)
@@ -452,23 +465,23 @@ router.get(
  * @function
  * @memberof module:auth/routes~routesRouter
  */
-router.get("/logout", async (req, res, next) => {
+router.get("/logout", async (req: Req, res: Res, next: any) => {
   if (req.smr && req.user?.id) {
-    const user = await User.findOne({ id: req.user.id });
+    const user = (await User.findOne({ id: req.user!.id }))!;
     await user.updateLastMobileLogin(null);
     res.json({ success: true });
   } else if (req.logout) {
-    req.logout(function (err) {
-      const destination = getState().getConfig("logout_url", "/auth/login");
+    req.logout(function (err: any) {
+      const destination = getState()!.getConfig("logout_url", "/auth/login");
       if (req.session.destroy)
-        req.session.destroy((err) => {
+        req.session.destroy((err: any) => {
           if (err) return next(err);
           req.logout(() => {
             res.redirect(destination);
           });
         });
       else {
-        req.logout(function (err) {
+        req.logout(function (err: any) {
           req.session = null;
           res.redirect(destination);
         });
@@ -484,8 +497,8 @@ router.get("/logout", async (req, res, next) => {
  */
 router.get(
   "/forgot",
-  error_catcher(async (req, res) => {
-    if (getState().getConfig("allow_forgot", false)) {
+  error_catcher(async (req: Req, res: Res) => {
+    if (getState()!.getConfig("allow_forgot", false)) {
       res.sendAuthWrap(
         req.__(`Reset password`),
         forgotForm(req),
@@ -508,7 +521,7 @@ router.get(
  */
 router.get(
   "/reset",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = resetForm(req.query, req);
     res.sendAuthWrap(req.__(`Reset password`), form, {});
   })
@@ -521,16 +534,16 @@ router.get(
  */
 router.get(
   "/verify",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { token, email } = req.query;
-    const result = await User.verifyWithToken({
+    const result: any = await User.verifyWithToken({
       email,
       verification_token: token,
     });
     if (result.error) req.flash("danger", result.error);
     else if (result) {
       req.flash("success", req.__("Email verified"));
-      const u = await User.findForSession({ email });
+      const u = (await User.findForSession({ email })) as User;
       if (u) await u.relogin(req);
     }
     res.redirect("/");
@@ -546,8 +559,8 @@ router.post(
   "/reset",
   ipLimiter,
   userLimiter,
-  error_catcher(async (req, res) => {
-    const result = await User.resetPasswordWithToken({
+  error_catcher(async (req: Req, res: Res) => {
+    const result: any = await User.resetPasswordWithToken({
       email: (req.body || {}).email,
       reset_password_token: (req.body || {}).token,
       password: (req.body || {}).password,
@@ -586,8 +599,8 @@ router.post(
   "/forgot",
   ipLimiter,
   userLimiter,
-  error_catcher(async (req, res) => {
-    if (getState().getConfig("allow_forgot")) {
+  error_catcher(async (req: Req, res: Res) => {
+    if (getState()!.getConfig("allow_forgot")) {
       const { email } = req.body || {};
       const u = await User.findOne({
         email: { ilike: email, fullMatch: true },
@@ -600,7 +613,7 @@ router.post(
         respond();
         return;
       }
-      const auth_method_enabled = getState().get_auth_enabled_by_role(
+      const auth_method_enabled = getState()!.get_auth_enabled_by_role(
         u.role_id
       );
       if (auth_method_enabled?.Password === false) {
@@ -621,11 +634,11 @@ router.post(
   })
 );
 
-const default_signup_form = async (req) => {
+const default_signup_form = async (req: Req) => {
   const form = loginForm(req, true);
-  const new_user_form = getState().getConfig("new_user_form", "");
+  const new_user_form = getState()!.getConfig("new_user_form", "");
   if (!new_user_form) {
-    const userTable = Table.findOne({ name: "users" });
+    const userTable = Table.findOne({ name: "users" })!;
     const userFields = await userTable.getFields();
 
     for (const f of userFields) {
@@ -645,8 +658,8 @@ const default_signup_form = async (req) => {
  */
 router.get(
   "/signup",
-  error_catcher(async (req, res) => {
-    if (!getState().getConfig("allow_signup")) {
+  error_catcher(async (req: Req, res: Res) => {
+    if (!getState()!.getConfig("allow_signup")) {
       req.flash("danger", req.__("Signups not enabled"));
       res.redirect("/auth/login");
       return;
@@ -655,7 +668,7 @@ router.get(
       const form = await default_signup_form(req);
       res.sendAuthWrap(req.__(`Sign up`), form, getAuthLinks("signup"));
     };
-    const signup_form_name = getState().getConfig("signup_form", "");
+    const signup_form_name = getState()!.getConfig("signup_form", "");
     if (signup_form_name) {
       const signup_form = await View.findOne({ name: signup_form_name });
       if (!signup_form) await defaultSignup();
@@ -679,10 +692,12 @@ const default_language_field = new Field({
   name: "default_language",
   input_type: "select",
   attributes: { onChange: "cfu_translate(this)" },
-  options: Object.entries(available_languages).map(([locale, language]) => ({
-    value: locale,
-    label: language,
-  })),
+  options: Object.entries(available_languages).map(
+    ([locale, language]: [string, any]) => ({
+      value: locale,
+      label: language,
+    })
+  ),
 });
 
 /**
@@ -692,7 +707,7 @@ const default_language_field = new Field({
  */
 router.get(
   "/create_first_user",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
       const form = loginForm(req, true);
@@ -711,20 +726,20 @@ router.get(
         ],
         `/auth/create_from_restore`
       );
-      const translations = {};
-      Object.keys(available_languages).map((locale) => {
+      const translations: Record<string, any> = {};
+      Object.keys(available_languages).map((locale: any) => {
         translations[locale] = {
-          submitLabel: req.__({ phrase: "Create user", locale }),
-          header: req.__({ phrase: "Create first user", locale }),
-          blurb: req.__({
+          submitLabel: (req.__ as any)({ phrase: "Create user", locale }),
+          header: (req.__ as any)({ phrase: "Create first user", locale }),
+          blurb: (req.__ as any)({
             phrase:
               "Please create your first user account, which will have administrative privileges. You can add other users and give them administrative privileges later.",
             locale,
           }),
-          restore: req.__({ phrase: "Restore a backup", locale }),
-          language: req.__({ phrase: "Language", locale }),
-          email: req.__({ phrase: "E-mail", locale }),
-          password: req.__({ phrase: "Password", locale }),
+          restore: (req.__ as any)({ phrase: "Restore a backup", locale }),
+          language: (req.__ as any)({ phrase: "Language", locale }),
+          email: (req.__ as any)({ phrase: "E-mail", locale }),
+          password: (req.__ as any)({ phrase: "Password", locale }),
         };
       });
 
@@ -755,7 +770,7 @@ router.get(
 router.post(
   "/create_from_restore",
   setTenant, // TODO why is this needed?????
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const hasUsers = await User.nonEmpty();
     if (hasUsers) {
       req.flash("danger", req.__("Users already present"));
@@ -783,10 +798,10 @@ router.post(
       } else req.flash("success", req.__("Successfully restored backup"));
 
       fs.unlink(newPath, () => {});
-      await getState().refresh_plugins();
+      await getState()!.refresh_plugins();
       Trigger.emitEvent("Startup");
       return res.redirect("/auth/login");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       if (error.requiresPassword) {
         // Storing the file path in session
@@ -808,7 +823,7 @@ router.post(
  */
 router.post(
   "/create_first_user",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const hasUsers = await User.nonEmpty();
     if (!hasUsers) {
       const form = loginForm(req, true);
@@ -824,14 +839,14 @@ router.post(
         res.sendAuthWrap(req.__(`Create first user`), form, {});
       } else {
         const { email, password, default_language } = form.values;
-        const u = await User.create({
+        const u: any = await User.create({
           email,
           password,
           role_id: 1,
           language: default_language,
         });
-        await getState().setConfig("default_locale", default_language);
-        req.login(u.session_object, function (err) {
+        await getState()!.setConfig("default_locale", default_language);
+        req.login(u.session_object, function (err: any) {
           if (!err) {
             Trigger.emitEvent("Login", null, u);
             res.redirect("/");
@@ -855,7 +870,7 @@ router.post(
  */
 router.get(
   "/restore_backup_password",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (!req.session.restoreBackupPath) {
       req.flash("danger", req.__("Backup session expired"));
       return res.redirect("/auth/create_first_user");
@@ -876,7 +891,7 @@ router.get(
  */
 router.post(
   "/restore_backup_password",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { password } = req.body;
     const backupPath = req.session.restoreBackupPath;
 
@@ -902,11 +917,11 @@ router.post(
         req.flash("error", err);
       } else req.flash("success", req.__("Successfully restored backup"));
 
-      await getState().refresh_plugins();
+      await getState()!.refresh_plugins();
       Trigger.emitEvent("Startup");
 
       return res.redirect("/auth/login");
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       req.flash(
         "danger",
@@ -924,25 +939,29 @@ router.post(
  * @returns {Promise<Form>}
  * @throws {InvalidConfiguration}
  */
-const getNewUserForm = async (new_user_view_name, req, askEmail) => {
+const getNewUserForm = async (
+  new_user_view_name: string,
+  req: Req,
+  askEmail?: boolean
+) => {
   if (!new_user_view_name) return;
   const view = await View.findOne({ name: new_user_view_name });
   if (!view)
     throw new InvalidConfiguration("New user form view does not exist");
   if (view.viewtemplate !== "Edit") return;
-  const table = Table.findOne({ name: "users" });
+  const table = Table.findOne({ name: "users" })!;
   const fields = table.getFields();
   const { columns, layout } = view.configuration;
 
   const tfields = (columns || [])
-    .map((column) => {
+    .map((column: any) => {
       if (column.type === "Field") {
-        const f = fields.find((fld) => fld.name === column.field_name);
+        const f = fields.find((fld: any) => fld.name === column.field_name);
         if (f) {
           f.fieldview = column.fieldview;
           if (f.type === "Key") {
-            if (getState().keyFieldviews[column.fieldview])
-              f.fieldviewObj = getState().keyFieldviews[column.fieldview];
+            if (getState()!.keyFieldviews[column.fieldview])
+              f.fieldviewObj = getState()!.keyFieldviews[column.fieldview];
             f.input_type =
               !f.fieldview || !f.fieldviewObj || f.fieldview === "select"
                 ? "select"
@@ -952,7 +971,7 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
         }
       }
     })
-    .filter((tf) => !!tf);
+    .filter((tf: any) => !!tf);
 
   const form = new Form({
     action: `/auth/signup_final`,
@@ -960,7 +979,11 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
     layout,
     submitLabel: req.__("Sign up"),
   });
-  await form.fill_fkey_options(false, undefined, req.user || { role_id: 100 });
+  await form.fill_fkey_options(
+    false,
+    undefined,
+    (req.user || { role_id: 100 }) as any
+  );
   if (askEmail) {
     form.fields.push(
       new Field({
@@ -1003,14 +1026,19 @@ const getNewUserForm = async (new_user_view_name, req, askEmail) => {
  * @param {object} res
  * @returns {void}
  */
-const signup_login_with_user = (u, req, res, redirUrl) => {
+const signup_login_with_user = (
+  u: any,
+  req: Req,
+  res: Res,
+  redirUrl?: string
+) => {
   const old_session_id = getSessionId(req);
-  return req.login(u.session_object, function (err) {
+  return req.login(u.session_object, function (err: any) {
     if (!err) {
       const session_id = getSessionId(req);
       Trigger.emitEvent("Login", null, u, { old_session_id, session_id });
-      if (getState().verifier) res.redirect("/auth/verification-flow");
-      else if (getState().get2FApolicy(u) === "Mandatory")
+      if (getState()!.verifier) res.redirect("/auth/verification-flow");
+      else if (getState()!.get2FApolicy(u) === "Mandatory")
         res.redirect("/auth/twofa/setup/totp");
       else res.redirect(redirUrl || "/");
     } else {
@@ -1026,16 +1054,16 @@ const signup_login_with_user = (u, req, res, redirUrl) => {
  */
 router.get(
   "/signup_final_ext",
-  error_catcher(async (req, res) => {
-    const new_user_form = getState().getConfig("new_user_form");
-    if (!req.user || req.user.id || !new_user_form) {
+  error_catcher(async (req: Req, res: Res) => {
+    const new_user_form = getState()!.getConfig("new_user_form");
+    if (!req.user || req.user!.id || !new_user_form) {
       req.flash("danger", req.__("This is the wrong place"));
       res.redirect("/auth/login");
       return;
     }
-    const form = await getNewUserForm(new_user_form, req, !req.user.email);
+    const form = (await getNewUserForm(new_user_form, req, !req.user!.email))!;
     form.action = "/auth/signup_final_ext";
-    form.values.email = req.user.email;
+    form.values.email = req.user!.email;
     res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
   })
 );
@@ -1048,14 +1076,14 @@ router.get(
 router.post(
   "/signup_final_ext",
   setTenant,
-  error_catcher(async (req, res) => {
-    const new_user_form = getState().getConfig("new_user_form");
-    if (!req.user || req.user.id || !new_user_form) {
+  error_catcher(async (req: Req, res: Res) => {
+    const new_user_form = getState()!.getConfig("new_user_form");
+    if (!req.user || req.user!.id || !new_user_form) {
       req.flash("danger", req.__("This is the wrong place"));
       res.redirect("/auth/login");
       return;
     }
-    const form = await getNewUserForm(new_user_form, req, !req.user.email);
+    const form = (await getNewUserForm(new_user_form, req, !req.user!.email))!;
     form.action = "/auth/signup_final_ext";
 
     await form.asyncValidate(req.body || {});
@@ -1072,13 +1100,13 @@ router.post(
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
         return;
       }
-      uobj.role_id = +getState().getConfig("signup_role", "80");
-      const u = await User.create(uobj);
+      uobj.role_id = +getState()!.getConfig("signup_role", "80");
+      const u: any = await User.create(uobj);
       await send_verification_email(u, req);
 
       signup_login_with_user(u, req, res);
-    } catch (e) {
-      const table = Table.findOne({ name: "users" });
+    } catch (e: any) {
+      const table = Table.findOne({ name: "users" })!;
       const fields = table.getFields();
       form.hasErrors = true;
       const unique_field_error = fields.find(
@@ -1102,15 +1130,15 @@ router.post(
 router.post(
   "/signup_final",
   setTenant,
-  error_catcher(async (req, res) => {
-    if (getState().getConfig("allow_signup")) {
-      const new_user_form = getState().getConfig("new_user_form");
-      const form = await getNewUserForm(new_user_form, req);
-      const signup_form_name = getState().getConfig("signup_form", "");
+  error_catcher(async (req: Req, res: Res) => {
+    if (getState()!.getConfig("allow_signup")) {
+      const new_user_form = getState()!.getConfig("new_user_form");
+      const form = (await getNewUserForm(new_user_form, req))!;
+      const signup_form_name = getState()!.getConfig("signup_form", "");
       if (signup_form_name) {
         const signup_form = await View.findOne({ name: signup_form_name });
         if (signup_form) {
-          signup_form.configuration.columns.forEach((col) => {
+          signup_form.configuration.columns.forEach((col: any) => {
             if (
               col.type === "Field" &&
               !["email", "password"].includes(col.field_name)
@@ -1130,13 +1158,13 @@ router.post(
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else {
         try {
-          form.values.role_id = +getState().getConfig("signup_role", "80");
-          const u = await User.create(form.values);
+          form.values.role_id = +getState()!.getConfig("signup_role", "80");
+          const u: any = await User.create(form.values);
           await send_verification_email(u, req);
 
           signup_login_with_user(u, req, res);
-        } catch (e) {
-          const table = Table.findOne({ name: "users" });
+        } catch (e: any) {
+          const table = Table.findOne({ name: "users" })!;
           const fields = table.getFields();
           form.hasErrors = true;
           const unique_field_error = fields.find(
@@ -1167,14 +1195,14 @@ router.post(
   ipLimiter,
   userLimiter,
   setTenant,
-  error_catcher(async (req, res) => {
-    if (!getState().getConfig("allow_signup")) {
+  error_catcher(async (req: Req, res: Res) => {
+    if (!getState()!.getConfig("allow_signup")) {
       req.flash("danger", req.__("Signups not enabled"));
       res.redirect("/auth/login");
       return;
     }
 
-    const unsuitableEmailPassword = async (urecord) => {
+    const unsuitableEmailPassword = async (urecord: any) => {
       const { email, password, passwordRepeat } = urecord;
       if (email == "" || !password) {
         req.flash("danger", req.__("E-mail and password required"));
@@ -1222,14 +1250,14 @@ router.post(
         return true;
       }
     };
-    const new_user_form = getState().getConfig("new_user_form");
+    const new_user_form = getState()!.getConfig("new_user_form");
 
-    const signup_form_name = getState().getConfig("signup_form", "");
+    const signup_form_name = getState()!.getConfig("signup_form", "");
     if (signup_form_name) {
       const signup_view = await View.findOne({ name: signup_form_name });
       if (signup_view) {
         const signup_form = await getForm(
-          Table.findOne({ name: "users" }),
+          Table.findOne({ name: "users" })!,
           signup_form_name,
           signup_view.configuration.columns,
           signup_view.configuration.layout,
@@ -1248,7 +1276,7 @@ router.post(
           return;
         }
         //ensure pw repeat is set if used.
-        signup_form.fields.forEach((f) => {
+        signup_form.fields.forEach((f: any) => {
           if (f.name === "passwordRepeat")
             signup_form.values[f.name] = signup_form.values[f.name] || "";
         });
@@ -1257,9 +1285,9 @@ router.post(
         if (await unsuitableEmailPassword(userObject)) return;
         const new_user_form_form = await getNewUserForm(new_user_form, req);
         if (new_user_form_form) {
-          Object.entries(userObject).forEach(([k, v]) => {
+          Object.entries(userObject).forEach(([k, v]: [string, any]) => {
             new_user_form_form.values[k] = v;
-            if (!new_user_form_form.fields.find((f) => f.name === k))
+            if (!new_user_form_form.fields.find((f: any) => f.name === k))
               new_user_form_form.hidden(k);
           });
           res.sendAuthWrap(
@@ -1268,8 +1296,8 @@ router.post(
             getAuthLinks("signup", true)
           );
         } else {
-          userObject.role_id = +getState().getConfig("signup_role", "80");
-          const u = await User.create(userObject);
+          userObject.role_id = +getState()!.getConfig("signup_role", "80");
+          const u: any = await User.create(userObject);
           await send_verification_email(u, req);
 
           signup_login_with_user(
@@ -1296,13 +1324,13 @@ router.post(
       const { email, password } = form.values;
       if (await unsuitableEmailPassword({ email, password })) return;
       if (new_user_form) {
-        const form = await getNewUserForm(new_user_form, req);
+        const form = (await getNewUserForm(new_user_form, req))!;
         form.values.email = email;
         form.values.password = password;
         res.sendAuthWrap(new_user_form, form, getAuthLinks("signup", true));
       } else {
-        form.values.role_id = +getState().getConfig("signup_role", "80");
-        const u = await User.create(form.values);
+        form.values.role_id = +getState()!.getConfig("signup_role", "80");
+        const u: any = await User.create(form.values);
         await send_verification_email(u, req);
         if (req.smr)
           await loginWithJwt(
@@ -1318,7 +1346,7 @@ router.post(
   })
 );
 
-function setOldSessionID(req, res, next) {
+function setOldSessionID(req: any, res: Res, next: any) {
   req.old_session_id = getSessionId(req);
   next();
 }
@@ -1339,23 +1367,23 @@ router.post(
     failureRedirect: "/auth/login",
     failureFlash: true,
   }),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     ipLimiter.resetKey(req.ip);
     userLimiter.resetKey(userIdKey(req.body || {}));
-    if (req.user.pending_user) {
+    if (req.user!.pending_user) {
       res.redirect("/auth/twofa/login/totp");
       return;
     }
     let maxAge = null;
     if (req.session.cookie)
       if ((req.body || {}).remember) {
-        const setDur = +getState().getConfig("cookie_duration_remember", 720);
+        const setDur = +getState()!.getConfig("cookie_duration_remember", 720);
         if (setDur) {
           maxAge = setDur * 60 * 60 * 1000;
           req.session.cookie.maxAge = maxAge;
         } else req.session.cookie.expires = false;
       } else {
-        const setDur = +getState().getConfig("cookie_duration", 720);
+        const setDur = +getState()!.getConfig("cookie_duration", 720);
         if (setDur) {
           maxAge = setDur * 60 * 60 * 1000;
           req.session.cookie.maxAge = maxAge;
@@ -1363,13 +1391,13 @@ router.post(
       }
     const session_id = getSessionId(req);
 
-    const resultCollector = {};
+    const resultCollector: any = {};
     await Trigger.runTableTriggers(
       "Login",
       null,
-      req.user,
+      req.user as any,
       resultCollector,
-      req.user,
+      req.user as any,
       { req }
     );
     let own_welcome = false;
@@ -1391,13 +1419,13 @@ router.post(
     }
     res?.cookie?.("loggedin", "true", maxAge ? { maxAge } : undefined);
     if (!own_welcome)
-      req.flash("success", req.__("Welcome, %s!", req.user.email));
+      req.flash("success", req.__("Welcome, %s!", req.user!.email));
     if (req.smr) {
-      const dbUser = await User.findOne({ id: req.user.id });
+      const dbUser = (await User.findOne({ id: req.user!.id }))!;
       if (!dbUser.last_mobile_login)
         await dbUser.updateLastMobileLogin(new Date());
     }
-    if (getState().get2FApolicy(req.user) === "Mandatory") {
+    if (getState()!.get2FApolicy(req.user!) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
     } else if (req.body?.dest) {
       const dest = normalize_relative_url(decodeURIComponent(req.body.dest));
@@ -1416,7 +1444,7 @@ router.get(
   "/login-with/:method",
   ipLimiter,
   userLimiter,
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     const { method } = req.params;
     if (method === "jwt") {
       const { email, password } = req.query;
@@ -1428,7 +1456,7 @@ router.get(
         req
       );
     } else {
-      const auth = getState().auth_methods[method];
+      const auth = getState()!.auth_methods[method];
       if (auth) {
         if (req.query?.dest) res.cookie("login_dest", req.query.dest);
         const passportParams =
@@ -1456,7 +1484,7 @@ router.post(
   "/login-with/jwt",
   ipLimiter,
   userLimiter,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { email, password } = req.body;
     await loginWithJwt(
       email,
@@ -1476,12 +1504,12 @@ router.post(
 router.post(
   "/renew-jwt",
   passport.authenticate("jwt", { session: false }),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     if (!req.user?.email) {
       return res.status(401).json({ error: req.__("Not authenticated") });
     }
     const renewFn = async () => {
-      const user = await User.findOne({ email: req.user.email });
+      const user = (await User.findOne({ email: req.user!.email }))!;
       if (!user || user.disabled)
         return res.status(401).json({ error: req.__("User not found") });
       if (user._attributes?.totp_enabled)
@@ -1521,8 +1549,8 @@ router.post(
  */
 router.get(
   "/authenticated",
-  error_catcher((req, res, next) => {
-    const isAuth = req.user && req.user.id ? true : false;
+  error_catcher((req: Req, res: Res, next: any) => {
+    const isAuth = req.user && req.user!.id ? true : false;
     res.json({ authenticated: isAuth });
   })
 );
@@ -1536,9 +1564,9 @@ router.post(
   "/login-with/:method",
   ipLimiter,
   userLimiter,
-  error_catcher(async (req, res, next) => {
+  error_catcher(async (req: Req, res: Res, next: any) => {
     const { method } = req.params;
-    const auth = getState().auth_methods[method];
+    const auth = getState()!.auth_methods[method];
     if (auth) {
       const passportParams =
         typeof auth.parameters === "function"
@@ -1560,8 +1588,8 @@ router.post(
   })
 );
 
-const generateTokenForUser = async (user, now) => {
-  const userDb = await User.findOne({ email: user.email });
+const generateTokenForUser = async (user: any, now: Date) => {
+  const userDb = (await User.findOne({ email: user.email }))!;
   const tokenUser = { ...userDb.session_object };
   const token = jwt.sign(
     {
@@ -1581,21 +1609,21 @@ const generateTokenForUser = async (user, now) => {
  * @param {object} res
  * @returns {void}
  */
-const loginCallback = (req, res, method) => async () => {
+const loginCallback = (req: Req, res: Res, method: string) => async () => {
   if (!req.user) return;
-  if (!req.user.id) {
+  if (!req.user!.id) {
     res.redirect("/auth/signup_final_ext");
   }
-  if (!req.user.email) {
+  if (!req.user!.email) {
     res.redirect("/auth/set-email");
   } else {
-    const resultCollector = {};
+    const resultCollector: any = {};
     await Trigger.runTableTriggers(
       "Login",
       null,
-      req.user,
+      req.user as any,
       resultCollector,
-      req.user,
+      req.user as any,
       { req }
     );
     if (resultCollector.notify) {
@@ -1611,7 +1639,7 @@ const loginCallback = (req, res, method) => async () => {
       res.redirect(resultCollector.goto);
       return;
     }
-    req.flash("success", req.__("Welcome, %s!", req.user.email));
+    req.flash("success", req.__("Welcome, %s!", req.user!.email));
     if (req.cookies["login_dest"]) {
       res.clearCookie("login_dest");
       res.redirect(toSafeRelativeUrl(req.cookies["login_dest"]));
@@ -1620,11 +1648,11 @@ const loginCallback = (req, res, method) => async () => {
     const source = req.query.state;
     if (source === "mobile_app") {
       const now = new Date();
-      const user = await User.findOne({ email: req.user.email });
+      const user = (await User.findOne({ email: req.user!.email }))!;
       if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
       res.redirect(
         `mobileapp://auth/callback?token=${await generateTokenForUser(
-          req.user,
+          req.user as any,
           now
         )}&method=${encodeURIComponent(method)}`
       );
@@ -1632,9 +1660,9 @@ const loginCallback = (req, res, method) => async () => {
   }
 };
 
-const callbackFn = async (req, res, next) => {
+const callbackFn = async (req: Req, res: Res, next: any) => {
   const { method } = req.params;
-  const auth = getState().auth_methods[method];
+  const auth = getState()!.auth_methods[method];
   if (auth) {
     const passportParams =
       typeof auth.parameters === "function"
@@ -1667,7 +1695,7 @@ router.post(
  * @param {object} req
  * @returns {Form}
  */
-const changPwForm = (req) =>
+const changPwForm = (req: Req) =>
   new Form({
     action: "/auth/settings",
     submitLabel: req.__("Change"),
@@ -1701,26 +1729,27 @@ const changPwForm = (req) =>
  * @param {object} user
  * @returns {Form}
  */
-const setLanguageForm = (req, user) =>
+const setLanguageForm = (req: Req, user: any) =>
   form(
     {
       action: `/auth/setlanguage/`,
       method: "post",
     },
-    csrfField(req.csrfToken()),
+    csrfField(req.csrfToken() as any),
     select(
       { name: "locale", onchange: "form.submit()" },
-      Object.entries(available_languages).map(([locale, language]) =>
-        option(
-          {
-            value: locale,
-            ...(((user && user.language === locale) ||
-              (user && !user.language && req.getLocale() === locale)) && {
-              selected: true,
-            }),
-          },
-          language
-        )
+      Object.entries(available_languages).map(
+        ([locale, language]: [string, any]) =>
+          option(
+            {
+              value: locale,
+              ...(((user && user.language === locale) ||
+                (user && !user.language && req.getLocale() === locale)) && {
+                selected: true,
+              }),
+            },
+            language
+          )
       )
     )
   );
@@ -1733,9 +1762,19 @@ const setLanguageForm = (req, user) =>
  * @param {object} opts.user
  * @returns {Promise<object>}
  */
-const userSettings = async ({ req, res, pwform, user }) => {
+const userSettings = async ({
+  req,
+  res,
+  pwform,
+  user,
+}: {
+  req: Req;
+  res: Res;
+  pwform: Form;
+  user: any;
+}) => {
   let usersets, userSetsName;
-  const user_settings_form = getState().getConfig("user_settings_form", "");
+  const user_settings_form = getState()!.getConfig("user_settings_form", "");
   if (user_settings_form) {
     const view = await View.findOne({ name: user_settings_form });
     if (view) {
@@ -1744,8 +1783,8 @@ const userSettings = async ({ req, res, pwform, user }) => {
     }
   }
   let apikeycard;
-  const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
-  const twoFaPolicy = getState().get2FApolicy(user);
+  const min_role_apikeygen = +getState()!.getConfig("min_role_apikeygen", 1);
+  const twoFaPolicy = getState()!.get2FApolicy(user);
   const show2FAPolicy =
     twoFaPolicy !== "Disabled" || user._attributes.totp_enabled;
   if (user.role_id <= min_role_apikeygen) {
@@ -1763,7 +1802,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
           ? [
               {
                 type: "container",
-                contents: tokens.map((t) =>
+                contents: tokens.map((t: any) =>
                   div(
                     { class: "mt-2 d-flex align-items-center" },
                     code(t.token),
@@ -1816,9 +1855,9 @@ const userSettings = async ({ req, res, pwform, user }) => {
     };
   }
   let themeCfgCard;
-  const layoutPlugin = getState().getLayoutPlugin(user);
-  const modNames = getState().plugin_module_names;
-  const pluginName = layoutPlugin.plugin_name;
+  const layoutPlugin = getState()!.getLayoutPlugin(user);
+  const modNames = getState()!.plugin_module_names;
+  const pluginName = layoutPlugin.plugin_name as string;
   let safeName = pluginName;
   for (const [k, v] of Object.entries(modNames)) {
     if (v === pluginName) safeName = k;
@@ -1827,7 +1866,7 @@ const userSettings = async ({ req, res, pwform, user }) => {
   const hasUserConfigs =
     layoutPlugin.user_config_form &&
     (await layoutPlugin.user_config_form(
-      getState().plugin_cfgs[pluginName] || {}
+      getState()!.plugin_cfgs[pluginName] || {}
     )) !== null;
   themeCfgCard = {
     type: "card",
@@ -1865,7 +1904,9 @@ const userSettings = async ({ req, res, pwform, user }) => {
         : "",
     ],
   };
-  const auth_method_enabled = getState().get_auth_enabled_by_role(user.role_id);
+  const auth_method_enabled = getState()!.get_auth_enabled_by_role(
+    user.role_id
+  );
   return {
     above: [
       {
@@ -1885,12 +1926,12 @@ const userSettings = async ({ req, res, pwform, user }) => {
       {
         type: "card",
         title: req.__("User"),
-        class: !usersets && "mt-0",
+        class: !usersets ? "mt-0" : undefined,
         contents: table(
           tbody(
             tr(
               th(req.__("Email: ")),
-              td(a({ href: "mailto:" + req.user.email }, req.user.email))
+              td(a({ href: "mailto:" + req.user!.email }, req.user!.email))
             ),
             tr(th(req.__("Language: ")), td(setLanguageForm(req, user)))
           )
@@ -1950,10 +1991,10 @@ const userSettings = async ({ req, res, pwform, user }) => {
  */
 router.post(
   "/gen-api-token",
-  error_catcher(async (req, res) => {
-    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
-    if (req.user.role_id <= min_role_apikeygen) {
-      const u = await User.findOne({ id: req.user.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const min_role_apikeygen = +getState()!.getConfig("min_role_apikeygen", 1);
+    if (req.user!.role_id <= min_role_apikeygen) {
+      const u = (await User.findOne({ id: req.user!.id }))!;
       await u.getNewAPIToken();
       req.flash("success", req.__(`New API token generated`));
     }
@@ -1969,10 +2010,10 @@ router.post(
  */
 router.post(
   "/remove-api-token",
-  error_catcher(async (req, res) => {
-    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
-    if (req.user.role_id <= min_role_apikeygen) {
-      const u = await User.findOne({ id: req.user.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const min_role_apikeygen = +getState()!.getConfig("min_role_apikeygen", 1);
+    if (req.user!.role_id <= min_role_apikeygen) {
+      const u = (await User.findOne({ id: req.user!.id }))!;
       await u.removeAPIToken();
       req.flash("success", req.__(`API token removed`));
     }
@@ -1989,10 +2030,10 @@ router.post(
 router.post(
   "/revoke-api-token/:tokenId",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
-    if (req.user.role_id <= min_role_apikeygen) {
-      const u = await User.findOne({ id: req.user.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const min_role_apikeygen = +getState()!.getConfig("min_role_apikeygen", 1);
+    if (req.user!.role_id <= min_role_apikeygen) {
+      const u = (await User.findOne({ id: req.user!.id }))!;
       const tokenId = +req.params.tokenId;
       await u.revokeApiToken(tokenId);
       req.flash("success", req.__(`API token revoked`));
@@ -2007,10 +2048,10 @@ router.post(
 router.post(
   "/revoke-original-api-token",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const min_role_apikeygen = +getState().getConfig("min_role_apikeygen", 1);
-    if (req.user.role_id <= min_role_apikeygen) {
-      const u = await User.findOne({ id: req.user.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const min_role_apikeygen = +getState()!.getConfig("min_role_apikeygen", 1);
+    if (req.user!.role_id <= min_role_apikeygen) {
+      const u = (await User.findOne({ id: req.user!.id }))!;
       await u.revokeOriginalApiToken();
       req.flash("success", req.__(`API token revoked`));
     }
@@ -2027,12 +2068,12 @@ router.post(
 router.post(
   "/setlanguage",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const u = await User.findForSession({ id: req.user.id });
-    const newlang = available_languages[(req.body || {}).locale];
+  error_catcher(async (req: Req, res: Res) => {
+    const u = (await User.findForSession({ id: req.user!.id })) as User;
+    const newlang = (available_languages as any)[(req.body || {}).locale];
     if (newlang && u) {
       await u.set_language((req.body || {}).locale);
-      req.login(u.session_object, function (err) {
+      req.login(u.session_object, function (err: any) {
         if (!err) {
           req.flash("success", req.__("Language changed to %s", newlang));
           res.redirect("/auth/settings");
@@ -2056,8 +2097,8 @@ router.post(
 router.get(
   "/settings",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const user = (await User.findOne({ id: req.user!.id }))!;
     if (!user) {
       req.logout(() => {
         req.flash("danger", req.__("Must be logged in first"));
@@ -2076,7 +2117,7 @@ router.get(
  * @param {object} req
  * @returns {Form}
  */
-const setEmailForm = (req) =>
+const setEmailForm = (req: Req) =>
   new Form({
     action: "/auth/set-email",
     blurb: req.__("Please enter your email address"),
@@ -2101,7 +2142,7 @@ const setEmailForm = (req) =>
  */
 router.get(
   "/set-email",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.sendWrap(
       req.__("Set Email"),
       renderForm(setEmailForm(req), req.csrfToken())
@@ -2117,14 +2158,14 @@ router.get(
  */
 router.post(
   "/set-email",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = setEmailForm(req);
     form.validate(req.body || {});
-    if (form.hasErrors || !req.user || !req.user.id) {
+    if (form.hasErrors || !req.user || !req.user!.id) {
       res.sendWrap(req.__("Set Email"), renderForm(form, req.csrfToken()));
       return;
     }
-    const existing = await User.findOne({ email: form.values.email });
+    const existing = (await User.findOne({ email: form.values.email }))!;
     if (existing) {
       form.hasErrors = true;
       form.errors.email = req.__(
@@ -2134,10 +2175,10 @@ router.post(
       return;
     }
 
-    const u = await User.findForSession({ id: req.user.id });
+    const u = (await User.findForSession({ id: req.user!.id })) as User;
     await u.update({ email: form.values.email });
     u.email = form.values.email;
-    req.login(u.session_object, function (err) {
+    req.login(u.session_object, function (err: any) {
       if (!err) {
         Trigger.emitEvent("Login", null, u);
         req.flash("success", req.__("Welcome, %s!", u.email));
@@ -2160,8 +2201,8 @@ router.post(
   "/settings",
   setTenant,
   loggedIn,
-  error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user?.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const user = (await User.findOne({ id: req.user?.id }))!;
     if (!user) {
       res.sendWrap(
         req.__("User settings") || "User settings",
@@ -2172,7 +2213,7 @@ router.post(
     if ((req.body || {}).new_password && user.password) {
       const pwform = changPwForm(req);
 
-      pwform.fields[0].validator = (oldpw) => {
+      (pwform.fields[0] as any).validator = (oldpw: any) => {
         const cmp = user.checkPassword(oldpw);
         if (cmp) return true;
         else return req.__("Password does not match");
@@ -2191,11 +2232,14 @@ router.post(
         res.redirect("/auth/settings");
       }
     } else {
-      const user_settings_form = getState().getConfig("user_settings_form", "");
+      const user_settings_form = getState()!.getConfig(
+        "user_settings_form",
+        ""
+      );
       if (user_settings_form) {
         const view = await View.findOne({ name: user_settings_form });
         if (view) {
-          const fakeRes = {
+          const fakeRes: any = {
             status() {},
             sendWrap() {},
             json() {},
@@ -2206,8 +2250,8 @@ router.post(
             res: fakeRes,
             redirect: "/auth/settings",
           });
-          const u = await User.findForSession({ id: user.id });
-          req.login(u.session_object, function (err) {
+          const u = (await User.findForSession({ id: user.id })) as User;
+          req.login(u.session_object, function (err: any) {
             if (err) req.flash("danger", err);
             else req.flash("success", req.__("User settings changed"));
 
@@ -2229,8 +2273,8 @@ router.post(
 router.all(
   "/verification-flow",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const verifier = await (getState().verifier || (() => null))(req.user);
+  error_catcher(async (req: Req, res: Res) => {
+    const verifier = await (getState()!.verifier || (() => null))(req.user);
     if (!verifier) {
       res.redirect("/");
       return;
@@ -2246,7 +2290,7 @@ router.all(
       return;
     }
     if (wfres.verified === true) {
-      const user = await User.findForSession({ id: req.user.id });
+      const user = (await User.findForSession({ id: req.user!.id })) as User;
       await user.set_to_verified();
       req.flash("success", req.__("User verified"));
       await user.relogin(req);
@@ -2268,8 +2312,8 @@ router.all(
 router.get(
   "/twofa/setup/totp",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const user = (await User.findOne({ id: req.user!.id }))!;
     let key;
     if (user._attributes.totp_key) key = user._attributes.totp_key;
     else {
@@ -2282,7 +2326,7 @@ router.get(
 
     // generate QR code for scanning into Google Authenticator
     // reference: https://code.google.com/p/google-authenticator/wiki/KeyUriFormat
-    const site_name = getState().getConfig("site_name");
+    const site_name = getState()!.getConfig("site_name");
     const otpUrl = `otpauth://totp/${
       user.email
     }?secret=${encodedKey}&period=30&issuer=${encodeURIComponent(site_name)}`;
@@ -2311,8 +2355,8 @@ router.get(
 router.post(
   "/twofa/setup/totp",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const user = (await User.findOne({ id: req.user!.id }))!;
 
     if (!user._attributes.totp_key) {
       //key not set
@@ -2331,7 +2375,9 @@ router.post(
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
-    const code = `${form.values.totpCode}`;
+    // totpCode is read as an Integer, which strips any leading zero(s)
+    // (~10% of TOTP codes). Pad back to 6 digits before verifying.
+    const code = `${form.values.totpCode}`.padStart(6, "0");
     const rv = totp.verify(code, user._attributes.totp_key, {
       time: 30,
     });
@@ -2361,7 +2407,7 @@ router.post(
 router.get(
   "/twofa/disable/totp",
   loggedIn,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     res.sendWrap(req.__("Disable two-factor authentication"), {
       type: "card",
       title: req.__("Disable two-factor authentication"),
@@ -2379,8 +2425,8 @@ router.get(
 router.post(
   "/twofa/disable/totp",
   loggedIn,
-  error_catcher(async (req, res) => {
-    const user = await User.findOne({ id: req.user.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const user = (await User.findOne({ id: req.user!.id }))!;
     const form = totpForm(req, "/auth/twofa/disable/totp");
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -2388,7 +2434,9 @@ router.post(
       res.redirect("/auth/twofa/disable/totp");
       return;
     }
-    const code = `${form.values.totpCode}`;
+    // totpCode is read as an Integer, which strips any leading zero(s)
+    // (~10% of TOTP codes). Pad back to 6 digits before verifying.
+    const code = `${form.values.totpCode}`.padStart(6, "0");
     const rv = totp.verify(code, user._attributes.totp_key, {
       time: 30,
     });
@@ -2412,9 +2460,9 @@ router.post(
 router.post(
   "/twofa/disable-totp-admin/:uid",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { uid } = req.params;
-    const user = await User.findOne({ id: uid });
+    const user = (await User.findOne({ id: uid }))!;
     if (!user) {
       req.flash("danger", req.__("User not found"));
       res.redirect("/useradmin");
@@ -2439,7 +2487,7 @@ router.post(
  * @param {*} action
  * @returns
  */
-const totpForm = (req, action) =>
+const totpForm = (req: Req, action?: string) =>
   new Form({
     action: action || "/auth/twofa/setup/totp",
     fields: [
@@ -2462,8 +2510,8 @@ const totpForm = (req, action) =>
  * @param {*} len
  * @returns
  */
-const randomKey = function (len) {
-  function getRandomInt(min, max) {
+const randomKey = function (len: number) {
+  function getRandomInt(min: number, max: number) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
   var buf = [],
@@ -2481,7 +2529,7 @@ const randomKey = function (len) {
  */
 router.get(
   "/twofa/login/totp",
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = new Form({
       action: "/auth/twofa/login/totp",
       submitLabel: "Verify",
@@ -2518,8 +2566,10 @@ router.post(
     failureRedirect: "/auth/twofa/login/totp",
     failureFlash: true,
   }),
-  error_catcher(async (req, res) => {
-    const user = await User.findForSession({ id: req.user.pending_user.id });
+  error_catcher(async (req: Req, res: Res) => {
+    const user = (await User.findForSession({
+      id: req.user!.pending_user.id,
+    })) as User;
     await user.relogin(req);
     Trigger.emitEvent("Login", null, user);
     res.redirect("/");
@@ -2529,19 +2579,19 @@ router.post(
 router.get(
   "/callback_mail",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const code = req.query.code;
     try {
       if (!code) throw new Error("No code received");
-      const smtpRedirectUri = getState().getConfig("smtp_redirect_uri");
+      const smtpRedirectUri = getState()!.getConfig("smtp_redirect_uri");
       const client = getOauth2Client();
       const tokenResult = await client.getToken({
         code,
         redirect_uri: smtpRedirectUri,
       });
-      await getState().setConfig("smtp_oauth_token_data", tokenResult.token);
+      await getState()!.setConfig("smtp_oauth_token_data", tokenResult.token);
       req.flash("success", req.__("Access token retrieved successfully"));
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error retrieving access token:", error);
       req.flash(
         "danger",

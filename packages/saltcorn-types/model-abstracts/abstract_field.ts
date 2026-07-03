@@ -36,7 +36,7 @@ export type FieldCfg = {
   postText?: string;
   class?: string | string[];
   id?: number;
-  default?: string;
+  default?: any;
   sublabel?: string;
   help?: { topic: string; context?: Row; dynContext?: string[] };
   description?: string;
