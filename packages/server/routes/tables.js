@@ -1726,8 +1726,9 @@ router.post(
         rest.ownership_formula = rest.ownership_field_id.replace("Fml:", "");
         rest.ownership_field_id = null;
       } else rest.ownership_formula = null;
+      let rlsError;
       await db.withTransaction(async () => {
-        await table.update(rest);
+        rlsError = await table.update(rest, { skipRls: hasError });
         // Update table field's min_role_write attributes
         const fields = table.getFields();
 
@@ -1741,7 +1742,10 @@ router.post(
         }
       });
       await getState().refresh_tables();
+      if (rlsError)
+        notify = req.__("Row Level Security policy error: %s", rlsError);
       if (!req.xhr) {
+        if (rlsError) req.flash("warning", notify);
         if (!old_versioned && rest.versioned)
           req.flash(
             "success",

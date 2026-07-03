@@ -1193,8 +1193,11 @@ function formulaToRlsUsing(
           return `(SELECT "${sqlsanitize(
             chain.path[1]
           )}" FROM ${schema}"users" WHERE "id" = ${curUserId})`;
-        if (chain.path[0] === "row" && chain.path.length === 2)
-          return `"${sqlsanitize(chain.path[1])}"`;
+        if (chain.path[0] === "row" && chain.path.length === 2) {
+          const col = chain.path[1];
+          if (fields && !fields.find((f: any) => f.name === col)) return null;
+          return `"${sqlsanitize(col)}"`;
+        }
         return null;
       }
 

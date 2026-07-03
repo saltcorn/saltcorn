@@ -1118,12 +1118,6 @@ describe("User group with spaces in name", () => {
 });
 
 describe("ownership_formula_where", () => {
-  beforeAll(async () => {
-    await getState()!.setConfig("enable_rls", false);
-  });
-  afterAll(async () => {
-    await getState()!.setConfig("enable_rls", true);
-  });
   it("should create table", async () => {
     const tasks = await Table.create("tasks1");
     await Field.create({

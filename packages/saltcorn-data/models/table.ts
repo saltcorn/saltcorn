@@ -395,7 +395,6 @@ class Table implements AbstractTable {
     if (typeof where === "undefined") return null;
     if (where === null) return null;
 
-
     // it works because external table hasn't id so can be found only by name
     if (where?.name) {
       const extTable = getState()!.external_tables[where.name];
@@ -806,7 +805,6 @@ class Table implements AbstractTable {
             : pk_field?.type?.name) || "Integer";
     }
     if (pk_type !== "Integer") {
-
       const type = getState()!.types[pk_type];
       if (!type)
         throw new Error(
@@ -905,7 +903,6 @@ class Table implements AbstractTable {
     if (!db.getRequestContext()?.client) await Table.state_refresh(true);
 
     if (table.provider_name) {
-
       const provider = getState()!.table_providers[table.provider_name];
       if ((provider as any)?.on_create) await (provider as any)?.on_create(table);
       return table.to_provided_table() as Table;
@@ -1259,7 +1256,6 @@ class Table implements AbstractTable {
     );
     const deleteFiles: Array<File> = [];
     if ((triggers.length > 0 || deleteFileFields.length > 0) && !noTrigger) {
-
       if (!rows)
         rows = await this.getJoinedRows({
           where,
@@ -3289,7 +3285,10 @@ class Table implements AbstractTable {
    * @param new_table_rec
    * @returns {Promise<void>}
    */
-  async update(new_table_rec: Partial<Table>): Promise<void> {
+  async update(
+    new_table_rec: Partial<Table>,
+    opts?: { skipRls?: boolean }
+  ): Promise<string | void> {
     if ((this.constructor as typeof Table).read_only)
       throw new Error("Read-only access");
 
@@ -3323,11 +3322,15 @@ class Table implements AbstractTable {
         new_table.ownership_formula !== existing.ownership_formula ||
         new_table.min_role_read !== existing.min_role_read ||
         new_table.min_role_write !== existing.min_role_write;
-      if (ownershipChanged) {
-        if (new_table.ownership_field_id || new_table.ownership_formula)
-          await new_table.enableOwnershipRLS();
-        else
-          await new_table.disableOwnershipRLS();
+      if (ownershipChanged && !opts?.skipRls) {
+        try {
+          if (new_table.ownership_field_id || new_table.ownership_formula)
+            await new_table.enableOwnershipRLS();
+          else await new_table.disableOwnershipRLS();
+        } catch (e: any) {
+          Object.assign(this, new_table_rec);
+          return e?.message || String(e);
+        }
       }
       Object.assign(this, new_table_rec);
     }
