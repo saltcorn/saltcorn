@@ -269,12 +269,14 @@ describe("formulaToRlsUsing", () => {
   // Case 3: inherit via FK whose target has ownership_field_id
   // (same shape as FK traversal — already covered by "publisher?.manager===user.id")
 
-  // Case 4: user.X===fkField.id — fkField.id is unresolvable in USING context → null
-  it("returns null for user.X===fkField.id (case 4 gap)", () => {
+  // Case 4 (6a): user.X===fkField.id — fkField.id resolves to the FK column value
+  it("user.X===fkField.id: user.home_project===project.id", () => {
     const fields = [{ name: "project", reftable_name: "projects" }];
     expect(
       formulaToRlsUsing("user.home_project===project.id", schema, fields)
-    ).toBeNull();
+    ).toBe(
+      `((SELECT "home_project" FROM ${schema}"users" WHERE "id" = ${curUserId}) = "project")`
+    );
   });
 
   // Case 5: inherit via formula ending ==user.id  (same shape as FK traversal)

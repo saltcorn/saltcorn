@@ -1198,6 +1198,16 @@ function formulaToRlsUsing(
           if (fields && !fields.find((f: any) => f.name === col)) return null;
           return `"${sqlsanitize(col)}"`;
         }
+        // fkField.id  →  the FK column value (which stores the referenced PK)
+        if (fields && chain.path.length === 2) {
+          const [fkName, refField] = chain.path;
+          if (refField === "id") {
+            const fkField = fields.find(
+              (f: any) => f.name === fkName && f.reftable_name
+            );
+            if (fkField) return `"${sqlsanitize(fkName)}"`;
+          }
+        }
         return null;
       }
 
