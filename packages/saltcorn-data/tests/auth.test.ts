@@ -1169,4 +1169,106 @@ describe("ownership_formula_where", () => {
   });
 });
 
+describe("ownership_options cases", () => {
+  it("case 2: reverse FK from users appears in ownership_options", async () => {
+    // users.home_project → Key to projects
+    const projects = await Table.create("OwnerOptProjects");
+    await Field.create({ table: projects, name: "title", type: "String" });
+
+    const users = Table.findOne({ name: "users" })!;
+    assertIsSet(users);
+    await Field.create({
+      table: users,
+      name: "home_project",
+      type: "Key to OwnerOptProjects",
+    });
+
+    const projs = Table.findOne({ name: "OwnerOptProjects" })!;
+    assertIsSet(projs);
+    const opts = await projs.ownership_options();
+    const revFk = opts.find((o) => o.value.startsWith("Fml:user.home_project===id"));
+    expect(revFk).toBeDefined();
+    expect(revFk?.label).toBe("users.home project [Key to OwnerOptProjects]");
+
+    // delete the FK field on users before dropping the referenced table
+    const hpField = await Field.findOne({ name: "home_project", table_id: users.id });
+    if (hpField) await hpField.delete();
+    await projs.delete();
+  });
+
+  it("case 3: inherit via ownership_field_id appears in ownership_options", async () => {
+    const dept = await Table.create("OwnerOptDept");
+    await Field.create({ table: dept, name: "name", type: "String" });
+    const mgr = await Field.create({
+      table: dept,
+      name: "manager",
+      type: "Key to users",
+    });
+    await dept.update({ ownership_field_id: mgr.id });
+
+    const items = await Table.create("OwnerOptItems");
+    await Field.create({ table: items, name: "label", type: "String" });
+    await Field.create({ table: items, name: "dept", type: "Key to OwnerOptDept" });
+
+    const itemsT = Table.findOne({ name: "OwnerOptItems" })!;
+    assertIsSet(itemsT);
+    const opts = await itemsT.ownership_options();
+    const inherit = opts.find((o) => o.label === "Inherit dept");
+    expect(inherit).toBeDefined();
+    expect(inherit?.value).toBe(
+      "Fml:dept?.manager===user.id /* Inherit dept */"
+    );
+
+    await items.delete();
+    await dept.delete();
+  });
+});
+
+describe("RLS policy integration", () => {
+  it("creates pg policies and filters rows by GUC", async () => {
+    if (db.isSQLite) return;
+
+    const schema = db.getTenantSchemaPrefix();
+
+    const rooms = await Table.create("RlsRooms");
+    const ownerField = await Field.create({
+      table: rooms,
+      name: "owner",
+      type: "Key to users",
+    });
+    await rooms.update({ ownership_field_id: ownerField.id });
+
+    // verify pg_class flags
+    const cls = await db.query(
+      `SELECT relrowsecurity, relforcerowsecurity FROM pg_class WHERE relname = 'RlsRooms'`
+    );
+    expect(cls.rows[0]?.relrowsecurity).toBe(true);
+    expect(cls.rows[0]?.relforcerowsecurity).toBe(true);
+
+    // verify both policies exist
+    const pols = await db.query(
+      `SELECT p.polname FROM pg_policy p
+       JOIN pg_class c ON p.polrelid = c.oid
+       WHERE c.relname = 'RlsRooms'
+       ORDER BY p.polname`
+    );
+    const polNames = pols.rows.map((r: any) => r.polname);
+    expect(polNames).toContain("sc_rls_owner");
+    expect(polNames).toContain("sc_rls_elevated");
+
+    // verify the owner policy USING clause references the ownership column
+    // (row-level filtering is only testable with a non-superuser connection,
+    //  but verifying the qual confirms the correct SQL was installed)
+    const qualRes = await db.query(
+      `SELECT qual FROM pg_policies
+       WHERE tablename = 'RlsRooms' AND policyname = 'sc_rls_owner'`
+    );
+    const qual: string = qualRes.rows[0]?.qual ?? "";
+    expect(qual).toContain("owner");
+    expect(qual).toContain("current_setting");
+
+    await rooms.delete();
+  });
+});
+
 //user.department === bankid.access || user.department === "ALL

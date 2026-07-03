@@ -258,6 +258,51 @@ describe("formulaToRlsUsing", () => {
       `("deleted" = null)`
     );
   });
+
+  // Case 2: reverse FK — users table has a field pointing to this table
+  it("reverse FK from users: user.home_project===id", () => {
+    expect(formulaToRlsUsing("user.home_project===id", schema)).toBe(
+      `((SELECT "home_project" FROM ${schema}"users" WHERE "id" = ${curUserId}) = "id")`
+    );
+  });
+
+  // Case 3: inherit via FK whose target has ownership_field_id
+  // (same shape as FK traversal — already covered by "publisher?.manager===user.id")
+
+  // Case 4: user.X===fkField.id — fkField.id is unresolvable in USING context → null
+  it("returns null for user.X===fkField.id (case 4 gap)", () => {
+    const fields = [{ name: "project", reftable_name: "projects" }];
+    expect(
+      formulaToRlsUsing("user.home_project===project.id", schema, fields)
+    ).toBeNull();
+  });
+
+  // Case 5: inherit via formula ending ==user.id  (same shape as FK traversal)
+  it("inherit via formula ending ===user.id: project?.manager===user.id", () => {
+    const fields = [{ name: "project", reftable_name: "projects" }];
+    expect(
+      formulaToRlsUsing("project?.manager===user.id", schema, fields)
+    ).toBe(
+      `"project" IN (SELECT "id" FROM ${schema}"projects" WHERE "manager" = ${curUserId})`
+    );
+  });
+
+  // NOT operator
+  it("NOT: !row.archived", () => {
+    expect(formulaToRlsUsing("!row.archived", schema)).toBe(
+      `NOT ("archived")`
+    );
+  });
+
+  // User group / .includes() — intentional gap, documents that it returns null
+  it("returns null for .map().includes() user-group formula", () => {
+    expect(
+      formulaToRlsUsing(
+        "user.UserWorksOnProject_by_user.map(g=>g.project).includes(id)",
+        schema
+      )
+    ).toBeNull();
+  });
 });
 
 describe("Half-H notation for joinfields", () => {
