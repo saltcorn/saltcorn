@@ -553,7 +553,12 @@ const config_fields_form = async ({
 }: {
   field_names: Array<
     | string
-    | { section_header?: string; sublabel?: string; name?: string; showIf: any }
+    | {
+        section_header?: string;
+        sublabel?: string;
+        name?: string;
+        showIf?: any;
+      }
   >;
   req: Req;
   action: string;
