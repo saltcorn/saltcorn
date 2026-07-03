@@ -42,10 +42,11 @@ import {
 } from "../markup/admin.js";
 import { send_verification_email } from "@saltcorn/data/models/email";
 import { expressionValidator } from "@saltcorn/data/models/expression";
-const router = new Router();
+import type { Req, Res } from "@saltcorn/types/base_types";
+const router = Router();
 export default router;
 
-const getOnDoneRedirect = (req, fallback = "/useradmin") => {
+const getOnDoneRedirect = (req: Req, fallback: string = "/useradmin") => {
   if (
     req.query.on_done_redirect &&
     is_relative_url("/" + req.query.on_done_redirect)
@@ -60,21 +61,21 @@ const getOnDoneRedirect = (req, fallback = "/useradmin") => {
  * @param {object} req
  * @returns {Promise<object>}
  */
-const getUserFields = async (req) => {
-  const userTable = Table.findOne({ name: "users" });
+const getUserFields = async (req: Req) => {
+  const userTable = Table.findOne({ name: "users" })!;
   const userFields = userTable
     .getFields()
     .filter((f) => !f.calculated && f.name !== "id");
   //console.log("userFields:",userFields);
-  const iterForm = async (cfgField) => {
-    const signup_form_name = getState().getConfig(cfgField, "");
+  const iterForm = async (cfgField: string) => {
+    const signup_form_name = getState()!.getConfig(cfgField, "");
     if (signup_form_name) {
       const signup_form = await View.findOne({ name: signup_form_name });
       if (signup_form) {
-        (signup_form.configuration.columns || []).forEach((f) => {
+        (signup_form.configuration.columns || []).forEach((f: any) => {
           const uf = userFields.find((uff) => uff.name === f.field_name);
           if (uf) {
-            const fvObj = uf.type?.fieldviews?.[uf.fieldview];
+            const fvObj = (uf.type as any)?.fieldviews?.[uf.fieldview!];
             if (fvObj && !fvObj?.fieldview?.unsuitableAsAdminDefault) {
               uf.fieldview = f.fieldview;
               uf.attributes = { ...f.configuration, ...uf.attributes };
@@ -89,7 +90,7 @@ const getUserFields = async (req) => {
   //console.log(userFields);
   for (const f of userFields) {
     if (f.is_fkey && !f.fieldview) {
-      f.fieldviewObj = getState().keyFieldviews?.select;
+      f.fieldviewObj = getState()!.keyFieldviews?.select;
       if (f.fieldviewObj) {
         f.input_type = "fromtype";
         f.fieldview = "select";
@@ -97,7 +98,7 @@ const getUserFields = async (req) => {
     }
     await f.fill_fkey_options();
     if (f.name === "email") {
-      f.validator = (s) => {
+      f.validator = (s: string) => {
         if (!User.valid_email(s)) return req.__("Not a valid e-mail address");
       };
       f.attributes = {
@@ -120,7 +121,7 @@ const getUserFields = async (req) => {
  * @param {User} user
  * @returns {Promise<Form>}
  */
-const userForm = async (req, user) => {
+const userForm = async (req: Req, user?: User) => {
   const roleField = new Field({
     label: req.__("Role"),
     name: "role_id",
@@ -128,10 +129,10 @@ const userForm = async (req, user) => {
     reftable_name: "roles",
   });
   const roles = (await User.get_roles()).filter(
-    (r) => r.role !== "public" && r.id >= req.user.role_id
+    (r) => r.role !== "public" && r.id >= req.user!.role_id
   );
   roleField.options = roles.map((r) => ({ label: r.role, value: r.id }));
-  const can_reset = getState().getConfig("smtp_host", "") !== "";
+  const can_reset = getState()!.getConfig("smtp_host", "") !== "";
   const userFields = (await getUserFields(req)).filter(
     (f) => f.type !== "File"
   );
@@ -185,7 +186,7 @@ const userForm = async (req, user) => {
  * @param {boolean} can_reset
  * @returns {string}
  */
-const user_dropdown = (user, req, can_reset) =>
+const user_dropdown = (user: User, req: Req, can_reset: boolean) =>
   settingsDropdown(`dropdownMenuButton${user.id}`, [
     a(
       {
@@ -194,7 +195,7 @@ const user_dropdown = (user, req, can_reset) =>
       },
       '<i class="fas fa-edit"></i>&nbsp;' + req.__("Edit")
     ),
-    ...(req.user.role_id === 1
+    ...(req.user!.role_id === 1
       ? [
           post_dropdown_item(
             `/useradmin/become-user/${user.id}`,
@@ -218,7 +219,7 @@ const user_dropdown = (user, req, can_reset) =>
       ),
     can_reset &&
       !user.verified_on &&
-      getState().getConfig("verification_view", "") &&
+      getState()!.getConfig("verification_view", "") &&
       post_dropdown_item(
         `/useradmin/send-verification/${user.id}`,
         '<i class="fas fa-envelope"></i>&nbsp;' +
@@ -262,9 +263,9 @@ const user_dropdown = (user, req, can_reset) =>
 router.get(
   "/",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
-  error_catcher(async (req, res) => {
-    const auth_methods = getState().auth_methods;
-    const userBadges = (user) =>
+  error_catcher(async (req: Req, res: Res) => {
+    const auth_methods = getState()!.auth_methods;
+    const userBadges = (user: any) =>
       span(
         !!user.disabled &&
           span({ class: "badge bg-danger me-1" }, req.__("Disabled")),
@@ -272,23 +273,23 @@ router.get(
           span({ class: "badge bg-success me-1" }, req.__("Verified")),
         Object.entries(auth_methods)
           .filter(
-            ([k, v]) =>
+            ([k, v]: [string, any]) =>
               v.setsUserAttribute && user._attributes[v.setsUserAttribute]
           )
-          .map(([k, v]) =>
+          .map(([k, v]: [string, any]) =>
             span({ class: "badge bg-secondary me-1" }, v.label || k)
           )
       );
     const users = await User.find(
-      { role_id: { gt: req.user.role_id, equal: true } },
+      { role_id: { gt: req.user!.role_id, equal: true } },
       { orderBy: "id" }
     );
     const roles = await User.get_roles();
-    let roleMap = {};
+    let roleMap: Record<number, string> = {};
     roles.forEach((r) => {
       roleMap[r.id] = r.role;
     });
-    const can_reset = getState().getConfig("smtp_host", "") !== "";
+    const can_reset = getState()!.getConfig("smtp_host", "") !== "";
     send_users_page({
       res,
       req,
@@ -314,16 +315,16 @@ router.get(
               { label: req.__("ID"), key: "id" },
               {
                 label: req.__("Email"),
-                key: (r) => link(`/useradmin/${r.id}`, r.email),
+                key: (r: any) => link(`/useradmin/${r.id}`, r.email),
               },
               {
                 label: "",
                 key: userBadges,
               },
-              { label: req.__("Role"), key: (r) => roleMap[r.role_id] },
+              { label: req.__("Role"), key: (r: any) => roleMap[r.role_id] },
               {
                 label: "",
-                key: (r) => user_dropdown(r, req, can_reset),
+                key: (r: any) => user_dropdown(r, req, can_reset),
               },
             ],
             users,
@@ -346,7 +347,7 @@ router.get(
   "/new",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
 
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await userForm(req);
     send_users_page({
       res,
@@ -367,7 +368,7 @@ router.get(
  * @param {object} req
  * @returns {Form}
  */
-const auth_settings_form = async (req) =>
+const auth_settings_form = async (req: Req) =>
   await config_fields_form({
     req,
     field_names: [
@@ -408,7 +409,7 @@ const auth_settings_form = async (req) =>
  * @param {object} req
  * @returns {Form}
  */
-const http_settings_form = async (req) =>
+const http_settings_form = async (req: Req) =>
   await config_fields_form({
     req,
     field_names: [
@@ -436,7 +437,7 @@ const http_settings_form = async (req) =>
  * @param {object} req
  * @returns {Form}
  */
-const permissions_settings_form = async (req) =>
+const permissions_settings_form = async (req: Req) =>
   await config_fields_form({
     req,
     field_names: [
@@ -477,7 +478,7 @@ const permissions_settings_form = async (req) =>
 router.get(
   "/settings",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await auth_settings_form(req);
     send_users_page({
       res,
@@ -502,7 +503,7 @@ router.get(
 router.post(
   "/settings",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await auth_settings_form(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -535,7 +536,7 @@ router.post(
 router.get(
   "/http",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await http_settings_form(req);
     send_users_page({
       res,
@@ -560,7 +561,7 @@ router.get(
 router.post(
   "/http",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await http_settings_form(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -575,7 +576,7 @@ router.post(
         },
       });
     } else {
-      const restart_required = check_if_restart_required(form, req);
+      const restart_required = check_if_restart_required(form);
 
       await save_config_from_form(form);
 
@@ -606,7 +607,7 @@ router.post(
 router.get(
   "/permissions",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await permissions_settings_form(req);
     send_users_page({
       res,
@@ -631,7 +632,7 @@ router.get(
 router.post(
   "/permissions",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await permissions_settings_form(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -665,7 +666,7 @@ router.post(
 router.get(
   "/ssl",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const isRoot = db.getTenantSchema() === db.connectObj.default_schema;
     if (!isRoot) {
       req.flash(
@@ -676,16 +677,16 @@ router.get(
       return;
     }
     // TBD describe logic around letsencrypt
-    const letsencrypt = getState().getConfig("letsencrypt", false);
+    const letsencrypt = getState()!.getConfig("letsencrypt", false);
     const has_custom =
-      getState().getConfig("custom_ssl_certificate", false) &&
-      getState().getConfig("custom_ssl_private_key", false);
+      getState()!.getConfig("custom_ssl_certificate", false) &&
+      getState()!.getConfig("custom_ssl_private_key", false);
+    const baseDomain = getBaseDomain()!;
     const show_warning =
-      !hostname_matches_baseurl(req, getBaseDomain()) &&
-      is_hsts_tld(getBaseDomain());
+      !hostname_matches_baseurl(req, baseDomain) && is_hsts_tld(baseDomain);
     let expiry = "";
     if (has_custom && X509Certificate) {
-      const cert = getState().getConfig("custom_ssl_certificate", "");
+      const cert = getState()!.getConfig("custom_ssl_certificate", "");
       const { validTo } = new X509Certificate(cert);
       expiry = div({ class: "me-2" }, "Expires: ", validTo);
     }
@@ -793,7 +794,7 @@ router.get(
  * @param {object} req
  * @returns {Form}
  */
-const ssl_form = async (req) =>
+const ssl_form = async (req: Req) =>
   await config_fields_form({
     req,
     field_names: ["custom_ssl_certificate", "custom_ssl_private_key"],
@@ -809,7 +810,7 @@ const ssl_form = async (req) =>
 router.get(
   "/ssl/custom",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await ssl_form(req);
     send_users_page({
       res,
@@ -835,7 +836,7 @@ router.get(
 router.post(
   "/ssl/custom",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const form = await ssl_form(req);
     form.validate(req.body || {});
     if (form.hasErrors) {
@@ -874,7 +875,7 @@ router.post(
 router.get(
   "/table-access",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const tables = await Table.find();
     const roleOptions = (await User.get_roles()).map((r) => ({
       value: r.id,
@@ -972,10 +973,10 @@ router.get(
   "/:id",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
 
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const user = await User.findOne({ id });
-    if (user.role_id < req.user.role_id) {
+    const user = (await User.findOne({ id }))!;
+    if (user.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1128,10 +1129,10 @@ router.post(
   "/save",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
 
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     let form, sub2;
     if ((req.body || {}).id) {
-      const user = await User.findOne({ id: (req.body || {}).id });
+      const user = (await User.findOne({ id: (req.body || {}).id }))!;
       form = await userForm(req, user);
       sub2 = user.email;
     } else {
@@ -1163,17 +1164,17 @@ router.post(
       _csrf,
       ...rest
     } = form.values;
-    if (role_id < req.user.role_id) {
+    if (role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
     }
     if (id) {
       try {
-        const u = await User.findOne({ id });
+        const u = (await User.findOne({ id }))!;
         await u.update({ email, role_id, ...rest });
         req.flash("success", req.__(`User %s saved`, email));
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
         req.flash("error", req.__(`Error editing user: %s`, e.message));
       }
@@ -1201,7 +1202,7 @@ router.post(
         );
 
         if (rnd_password && send_pwreset_email)
-          await send_reset_email(u, req, { creating: true });
+          await send_reset_email(u as User, req, { creating: true });
       }
     }
     res.redirect(getOnDoneRedirect(req));
@@ -1218,10 +1219,10 @@ router.post(
   "/reset-password/:id",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
 
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const u = await User.findOne({ id });
-    if (u.role_id < req.user.role_id) {
+    const u = (await User.findOne({ id }))!;
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1243,11 +1244,11 @@ router.post(
   "/send-verification/:id",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
 
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const u = await User.findOne({ id });
+    const u = (await User.findOne({ id }))!;
     // todo add test case
-    if (u.role_id < req.user.role_id) {
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1278,10 +1279,10 @@ router.post(
   "/gen-api-token/:id",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
 
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const u = await User.findOne({ id });
-    if (u.role_id < req.user.role_id) {
+    const u = (await User.findOne({ id }))!;
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1303,10 +1304,10 @@ router.post(
   "/remove-api-token/:id",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
 
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const u = await User.findOne({ id });
-    if (u.role_id < req.user.role_id) {
+    const u = (await User.findOne({ id }))!;
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1328,10 +1329,10 @@ router.post(
   "/revoke-api-token/:uid/:tokenId",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
 
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { uid, tokenId } = req.params;
-    const u = await User.findOne({ id: uid });
-    if (u.role_id < req.user.role_id) {
+    const u = (await User.findOne({ id: uid }))!;
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1349,10 +1350,10 @@ router.post(
   "/revoke-original-api-token/:uid",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
 
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { uid } = req.params;
-    const u = await User.findOne({ id: uid });
-    if (u.role_id < req.user.role_id) {
+    const u = (await User.findOne({ id: uid }))!;
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1373,10 +1374,10 @@ router.post(
   "/set-random-password/:id",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
 
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const u = await User.findOne({ id });
-    if (u.role_id < req.user.role_id) {
+    const u = (await User.findOne({ id }))!;
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1402,7 +1403,7 @@ router.post(
 router.post(
   "/become-user/:id",
   isAdmin,
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
     const u = await User.findForSession({ id });
     if (u) {
@@ -1430,10 +1431,10 @@ router.post(
 router.post(
   "/disable/:id",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const u = await User.findOne({ id });
-    if (u.role_id < req.user.role_id) {
+    const u = (await User.findOne({ id }))!;
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1453,10 +1454,10 @@ router.post(
 router.post(
   "/force-logout/:id",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const u = await User.findOne({ id });
-    if (u.role_id < req.user.role_id) {
+    const u = (await User.findOne({ id }))!;
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1475,10 +1476,10 @@ router.post(
 router.post(
   "/enable/:id",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const u = await User.findOne({ id });
-    if (u.role_id < req.user.role_id) {
+    const u = (await User.findOne({ id }))!;
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
@@ -1497,10 +1498,10 @@ router.post(
 router.post(
   "/delete/:id",
   isAdminOrHasConfigMinRole("min_role_edit_users"),
-  error_catcher(async (req, res) => {
+  error_catcher(async (req: Req, res: Res) => {
     const { id } = req.params;
-    const u = await User.findOne({ id });
-    if (u.role_id < req.user.role_id) {
+    const u = (await User.findOne({ id }))!;
+    if (u.role_id < req.user!.role_id) {
       req.flash("error", req.__(`Not authorized`));
       res.redirect("/useradmin");
       return;
