@@ -45,7 +45,7 @@ type FieldLikeBasics = {
   fieldview?: string;
   input_type?: InputType;
   type?: string | Type;
-  class?: string;
+  class?: string | string[];
   primary_key?: boolean;
   sublabel?: string;
   validator?: (arg0: any) => boolean | string | undefined;
@@ -59,7 +59,7 @@ type FieldLikeWithSelectInputType = {
   options: Array<string | { label: string; value: string }>;
 } & FieldLikeBasics;
 type FieldLikeWithInputType = {
-  input_type: string;
+  input_type: InputType;
 } & FieldLikeBasics;
 type FieldLikeWithType = {
   type: string | Type;
@@ -72,10 +72,12 @@ export type FieldLike =
 export type Header = {
   script?: string;
   css?: string;
+  style?: string;
   headerTag?: string;
   onlyViews?: string[];
   onlyFieldviews?: string[];
   only_if?: (req: Req) => boolean | undefined;
+  defer?: boolean;
 };
 
 export type MenuItem = {
@@ -123,6 +125,8 @@ type LayoutWithTypeProp = {
     | "line_break view";
   besides?: never;
   above?: never;
+  contents?: Layout | string | Array<Layout | string>;
+  [key: string]: any;
 };
 
 type LayoutWithHtmlFile = {
@@ -140,11 +144,16 @@ type LayoutWithHtmlString = {
 type LayoutContainer = null | LayoutWithTypeProp | any;
 type LayoutArray = Array<
   | LayoutContainer
-  | { besides: Array<LayoutContainer> }
+  | { besides: Array<LayoutContainer>; widths?: number[] }
   | { above: Array<LayoutContainer> }
 >;
 type LayoutWithAbove = { above: LayoutArray; besides?: never };
-type LayoutWithBesides = { besides: LayoutArray; above?: never };
+type LayoutWithBesides = {
+  besides: LayoutArray;
+  widths?: number[];
+  breakpoint?: "md" | "sm" | "lg";
+  above?: never;
+};
 
 export type Layout =
   | LayoutWithAbove
@@ -158,6 +167,15 @@ export function instanceOWithHtmlFile(
 ): object is LayoutWithHtmlFile {
   return object && typeof object !== "string" && "html_file" in object;
 }
+
+export type PluginLoaderResult = {
+  version?: string;
+  location: string;
+  name: string;
+  loadedWithReload?: boolean;
+  msgs: string[];
+  plugin_module: Plugin;
+};
 
 export type PluginWrapArg = {
   title: string;
@@ -290,6 +308,7 @@ export type Action = {
   requireRow?: boolean;
   deprecated?: boolean;
   disableIf?: () => boolean;
+  configFormOptions?: GenObj;
 };
 
 export type ViewTemplate = {
@@ -400,6 +419,7 @@ export type ViewTemplate = {
   queries?: (configuration?: any, req?: any) => Record<string, any>;
   connectedObjects?: (configuration?: any) => Promise<ConnectedObjects>;
   noAutoTest?: boolean;
+  createBasicView?: Function;
 };
 
 export type RouteAction = (
@@ -419,12 +439,12 @@ export type PluginFunction = {
   hidden?: boolean;
 };
 
-type FieldViewShow = {
+export type FieldViewShow = {
   isEdit?: false;
   isFilter?: false;
   run: (value: any, req: Req, attrs: GenObj) => string;
 };
-type FieldViewEdit = {
+export type FieldViewEdit = {
   isEdit: true;
   isFilter?: false;
   run: (
@@ -437,7 +457,7 @@ type FieldViewEdit = {
   ) => string;
 };
 
-type FieldViewFilter = {
+export type FieldViewFilter = {
   isEdit?: boolean;
   isFilter: true;
   run: (
@@ -484,9 +504,17 @@ export function instanceOfFieldViewShow(object: any): object is FieldViewShow {
 
 type CfgFun<T> = { [P in keyof T]: (cfg: GenObj) => T[P] };
 
+declare function flash(
+  flash_type: "warning" | "success" | "error" | "danger",
+  message: string
+): void;
+declare function flash(
+  flash_type: "warning" | "success" | "error" | "danger"
+): string;
+
 export type Req = {
   query: GenObj;
-  flash: (flash_type: "warning" | "success" | "error" | "danger", message: string) => void;
+  flash: typeof flash;
   user?: AbstractUser;
   csrfToken: () => string;
   getLocale: () => string;
@@ -506,7 +534,7 @@ export type Res = {
   send: (contents: string) => void;
   sendWrap: (...contents: any[]) => void;
   json: (value: unknown) => void;
-  status: (http_code: number) => void;
+  status: (http_code: number) => Res;
   [k: string]: any;
 };
 
@@ -584,10 +612,10 @@ type PluginFacilities = {
   functions?: Record<string, PluginFunction | Function> | Function;
   layout?: PluginLayout;
   types?: Array<Type>;
-  viewtemplates?: Array<ViewTemplate>;
+  viewtemplates?: Array<ViewTemplate> | ((cfg: any) => Array<ViewTemplate>) | Record<string, ViewTemplate>;
   actions?: Record<string, Action>;
   eventTypes?: Record<string, { hasChannel: boolean }>;
-  fieldviews?: Record<string, FieldView & { type: string }>;
+  fieldviews?: Record<string, GenObj>;
   routes?: Array<{
     url: string;
     method: "get" | "post";
@@ -609,13 +637,26 @@ type PluginWithoutConfig = {
   configuration_workflow?: undefined;
 } & PluginFacilities;
 
-export type Plugin = {
+type PluginBase = {
   sc_plugin_api_version: number;
   plugin_name?: string;
   dependencies?: string[];
   onLoad?: (cfg: any) => Promise<void>;
   [key: string]: any;
-} & (PluginWithConfig | PluginWithoutConfig);
+};
+
+export type Plugin = PluginBase &
+  PluginFacilities & {
+    configuration_workflow?: (req?: Req) => AbstractWorkflow;
+  };
+
+// export type Plugin = {
+//   sc_plugin_api_version: number;
+//   plugin_name?: string;
+//   dependencies: string[];
+//   onLoad?: (cfg: any) => Promise<void>;
+//   [key: string]: any;
+// } & (PluginWithConfig | PluginWithoutConfig);
 
 export type CodePagePack = {
   name: string;
@@ -780,7 +821,7 @@ export type ConnectObjType = {
   user?: string;
   database?: string;
   host?: string;
-  port?: string;
+  port?: string | number;
   session_secret?: string;
   sslmode?: string;
   sslcert?: string;

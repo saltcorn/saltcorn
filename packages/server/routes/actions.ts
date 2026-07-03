@@ -1,0 +1,2749 @@
+/**
+ * Actions (Triggers) Handler
+ * @category server
+ * @module routes/actions
+ * @subcategory routes
+ */
+import Router from "express-promise-router";
+import {
+  isAdmin,
+  isAdminOrHasConfigMinRole,
+  error_catcher,
+  addOnDoneRedirect,
+  is_relative_url,
+} from "./utils.js";
+import {
+  ppVal,
+  escapeHtml,
+  jsIdentifierValidator,
+  returnDirectivesOnly,
+} from "@saltcorn/data/utils";
+import { getState } from "@saltcorn/data/db/state";
+import Trigger from "@saltcorn/data/models/trigger";
+import FieldRepeat from "@saltcorn/data/models/fieldrepeat";
+import { getTriggerList } from "./common_lists.js";
+import TagEntry from "@saltcorn/data/models/tag_entry";
+import WorkflowStep from "@saltcorn/data/models/workflow_step";
+import WorkflowRun from "@saltcorn/data/models/workflow_run";
+import WorkflowTrace from "@saltcorn/data/models/workflow_trace";
+import Tag from "@saltcorn/data/models/tag";
+import db from "@saltcorn/data/db";
+import MarkdownIt from "markdown-it";
+const md = new MarkdownIt();
+import { getWorkflowStepUserForm } from "@saltcorn/data/web-mobile-commons";
+
+/**
+ * @type {object}
+ * @const
+ * @namespace actionsRouter
+ * @category server
+ * @subcategory routes
+ */
+const router = Router();
+export default router;
+import {
+  renderForm,
+  link,
+  mkTable,
+  localeDateTime,
+  renderWorkflow,
+  post_delete_btn,
+} from "@saltcorn/markup";
+import Form from "@saltcorn/data/models/form";
+import {
+  div,
+  code,
+  a,
+  span,
+  script,
+  domReady,
+  button,
+  table,
+  tbody,
+  tr,
+  td,
+  h6,
+  pre,
+  th,
+  text,
+  i,
+  ul,
+  li,
+  h2,
+  h4,
+  p,
+  style,
+  h5,
+  textarea,
+} from "@saltcorn/markup/tags";
+import Table from "@saltcorn/data/models/table";
+import { getActionConfigFields } from "@saltcorn/data/plugin-helper";
+import { send_events_page } from "../markup/admin.js";
+import User from "@saltcorn/data/models/user";
+import { blocklyImportScripts, blocklyToolbox } from "../markup/blockly.js";
+import {
+  FieldLike,
+  PluginFunction,
+  Req,
+  Res,
+} from "@saltcorn/types/base_types";
+import { TriggerCfg } from "@saltcorn/types/model-abstracts/abstract_trigger";
+import { SelectOptions } from "@saltcorn/db-common";
+
+const serializeWorkflowStep = (s: any, opts: any = {}) => ({
+  id: s.id,
+  name: s.name,
+  trigger_id: s.trigger_id,
+  next_step: s.next_step || "",
+  only_if: s.only_if || "",
+  action_name: s.action_name,
+  initial_step: !!s.initial_step,
+  configuration: s.configuration || {},
+  summary: WorkflowStep.actionSummary(s, {
+    req: opts.req,
+    trigger: opts.trigger,
+  }),
+});
+
+const buildWorkflowActionExplainers = async (trigger: any) => {
+  const actionExplainers: Record<string, any> = {};
+  const stateActions = getState()!.actions;
+  for (const [name, action] of Object.entries(stateActions)) {
+    if (action.disableInWorkflow) continue;
+    if (action.description) actionExplainers[name] = action.description;
+  }
+  const triggers = (await Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  }))!;
+  triggers.forEach((tr: any) => {
+    if (tr.description) actionExplainers[tr.name] = tr.description;
+  });
+  Object.assign(
+    actionExplainers,
+    WorkflowStep.builtInActionExplainers({
+      api_call: trigger.when_trigger == "API call",
+    })
+  );
+  return actionExplainers;
+};
+
+const workflowStrings = (req: Req, trigger: Trigger) => ({
+  addStep: req.__("Add step"),
+  editStep: req.__("Edit step"),
+  addAfter: req.__("Add after"),
+  setAsStart: req.__("Set as start"),
+  deleteStep: req.__("Delete"),
+  confirmDelete: req.__("Are you sure?"),
+  start: req.__("Start"),
+  runs: req.__("Show runs"),
+  refresh: req.__("Refresh"),
+  layout: req.__("Auto layout"),
+  empty: req.__("No steps yet"),
+  loading: req.__("Loading"),
+  action: req.__("Action"),
+  nextStep: req.__("Next step"),
+  onlyIf: req.__("Only if"),
+  loopBody: req.__("Loop body"),
+  openRuns: req.__("Show runs &raquo;"),
+  configure: req.__(`Configure trigger %s`, trigger.name),
+  copyStep: req.__("Copy"),
+});
+
+const getWorkflowEditorData = async (
+  req: Req,
+  trigger: Trigger,
+  stepsIn?: any
+) => {
+  let steps =
+    stepsIn ||
+    (await WorkflowStep.find({ trigger_id: trigger.id! }, { orderBy: "id" }));
+  const initial_step = steps.find((step: any) => step.initial_step)!;
+  if (initial_step)
+    steps = [initial_step, ...steps.filter((s: any) => !s.initial_step)];
+
+  return {
+    trigger: {
+      id: trigger.id,
+      name: trigger.name,
+      when_trigger: trigger.when_trigger,
+    },
+    steps: steps.map((s: any) => serializeWorkflowStep(s, { req, trigger })),
+    actionExplainers: await buildWorkflowActionExplainers(trigger),
+    csrfToken: req.csrfToken(),
+    strings: workflowStrings(req, trigger),
+    urls: {
+      stepForm: `/actions/stepedit/${trigger.id}`,
+      data: `/actions/workflow/data/${trigger.id}`,
+      connect: `/actions/workflow/connect/${trigger.id}`,
+      positions: `/actions/workflow/positions/${trigger.id}`,
+      sizes: `/actions/workflow/sizes/${trigger.id}`,
+      copy: `/actions/workflow/copy/${trigger.id}`,
+      deleteStep: `/actions/delete-step`,
+      configure: `/actions/configure/${trigger.id}`,
+      runs: `/actions/runs/?trigger=${trigger.id}`,
+    },
+    config: trigger.configuration || {},
+  };
+};
+
+/**
+ * Show list of Actions (Triggers) (HTTP GET)
+ * @name get
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
+router.get(
+  "/",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    let triggers = await Trigger.findAllWithTableName();
+    let filterOnTag: any;
+
+    if (req.query._tag) {
+      const tagEntries = (await TagEntry.find({
+        tag_id: +req.query._tag,
+        not: { trigger_id: null },
+      }))!;
+      const tagged_trigger_ids = new Set(
+        tagEntries.map((te: any) => te.trigger_id).filter(Boolean)
+      );
+      triggers = triggers.filter((t: any) => tagged_trigger_ids.has(t.id));
+      filterOnTag = (await Tag.findOne({ id: +req.query._tag }))!;
+    }
+    const blurb =
+      p(
+        req.__(
+          `There currently no triggers, but you can create one by clicking the button below. Triggers are actions that are run in response to some event which can be periodic, caused by a database table change, a button click or some other external event.`
+        )
+      ) +
+      p(
+        req.__(
+          `A trigger is defined by a condition (when the trigger will run), an action (which is supplied by a module) and the configuration for that action.`
+        )
+      );
+    send_events_page({
+      res,
+      req,
+      active_sub: "Triggers",
+      contents: {
+        above: [
+          {
+            type: "card",
+            class: "card-max-full-screen",
+            title:
+              req.__("Triggers") +
+              `<a href="javascript:ajax_modal('/admin/help/Triggers')"><i class="fas fa-question-circle ms-1"></i></a>`,
+            contents: div(
+              triggers.length
+                ? await getTriggerList(triggers, req, { filterOnTag })
+                : blurb
+            ),
+            footer: a(
+              {
+                href: "/actions/new",
+                class: "btn btn-primary",
+              },
+              req.__("Create trigger")
+            ),
+          },
+        ],
+      },
+    });
+  })
+);
+/**
+ * Trigger Edit Form
+ * @param req
+ * @param trigger
+ * @returns {Promise<Form>}
+ */
+const triggerForm = async (req: Req, trigger?: any) => {
+  const roleOptions = (await User.get_roles()).map((r: any) => ({
+    value: r.id,
+    label: r.role,
+  }));
+  const actions = Trigger.abbreviated_actions;
+  const tables = (await Table.find({}))!;
+  let id: any;
+  let form_action: any;
+  if (typeof trigger !== "undefined") {
+    id = trigger.id;
+    form_action = `/actions/edit/${id}`;
+  } else form_action = "/actions/new";
+  form_action = addOnDoneRedirect(form_action, req);
+  const hasChannel = Object.entries(getState()!.eventTypes)
+    .filter(([k, v]: any) => v.hasChannel)
+    .map(([k, v]: any) => k);
+  const actionExplainers = Trigger.action_explainers();
+  Trigger.find({}).forEach((tr: any) => {
+    if (tr.description && tr.name) actionExplainers[tr.name] = tr.description;
+  });
+  const allActions = Trigger.action_options({
+    notRequireRow: false,
+    workflow: true,
+    allTriggers: true,
+  });
+  const table_triggers = ["Insert", "Update", "Delete", "Validate"];
+  const additional_triggers_with_onlyif = ["Login", "PageLoad"];
+  const action_options: Record<string, any> = {};
+  const actionsNotRequiringRow = Trigger.action_options({
+    notRequireRow: true,
+    workflow: true,
+    allTriggers: true,
+  });
+
+  Trigger.when_options.forEach((t: any) => {
+    if (table_triggers.includes(t)) action_options[t] = allActions;
+    else action_options[t] = actionsNotRequiringRow;
+  });
+  const form = new Form({
+    action: form_action,
+    fields: [
+      {
+        name: "name",
+        label: req.__("Name"),
+        type: "String",
+        required: true,
+        attributes: { autofocus: true, spellcheck: false },
+        sublabel: req.__("Name of action"),
+      },
+      {
+        name: "when_trigger",
+        label: req.__("When"),
+        input_type: "select",
+        required: true,
+        options: Trigger.when_options.map((t: any) => ({ value: t, label: t })),
+        sublabel: req.__("Event type which runs the trigger"),
+        help: { topic: "Event types" },
+        attributes: {
+          explainers: {
+            Often: req.__("Every 5 minutes"),
+            Never: req.__(
+              "Not scheduled but can be run as an action from a button click"
+            ),
+          },
+        },
+      },
+      {
+        name: "table_id",
+        label: req.__("Table"),
+        input_type: "select",
+        options: [...tables.map((t: any) => ({ value: t.id, label: t.name }))],
+        showIf: { when_trigger: table_triggers },
+        sublabel: req.__(
+          "The table for which the trigger condition is checked."
+        ),
+      },
+      {
+        name: "table_id",
+        label: req.__("Table"),
+        input_type: "select",
+        options: [
+          { value: "", label: "Table not set" },
+          ...tables.map((t: any) => ({ value: t.id, label: t.name })),
+        ],
+        showIf: { when_trigger: "Never" },
+        sublabel: req.__("Optionally associate a table with this trigger"),
+      },
+      {
+        name: "channel",
+        label: req.__("Time of day"),
+        input_type: "time_of_day",
+        showIf: { when_trigger: "Daily" },
+        sublabel: req.__("UTC timezone"),
+      },
+      {
+        name: "channel",
+        label: req.__("Time to run"),
+        input_type: "time_of_week",
+        showIf: { when_trigger: "Weekly" },
+        sublabel: req.__("UTC timezone"),
+      },
+      {
+        name: "channel",
+        label: req.__("Channel"),
+        type: "String",
+        sublabel: req.__("Leave blank for all channels"),
+        showIf: { when_trigger: hasChannel },
+      },
+      {
+        name: "action",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        help: { topic: "Actions" },
+        attributes: {
+          calcOptions: ["when_trigger", action_options],
+          onChange: "$('select[name=action]').val(event.target.value)",
+        },
+        showIf: {
+          when_trigger: Trigger.when_options.filter((t: any) => t !== "Never"),
+        },
+        sublabel: req.__("The action to be taken when the trigger fires"),
+      },
+      {
+        name: "action",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        help: { topic: "Actions" },
+        attributes: {
+          options: actionsNotRequiringRow,
+          onChange: "$('select[name=action]').val(event.target.value)",
+          explainers: actionExplainers,
+        },
+        showIf: {
+          when_trigger: "Never",
+          table_id: "",
+        },
+        sublabel: req.__("The action to be taken when the trigger fires"),
+      },
+      {
+        name: "action",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        help: { topic: "Actions" },
+        attributes: {
+          options: allActions,
+          onChange: "$('select[name=action]').val(event.target.value)",
+          explainers: actionExplainers,
+        },
+        showIf: {
+          when_trigger: "Never",
+          table_id: tables.map((t: any) => t.id),
+        },
+        sublabel: req.__("The action to be taken when the trigger fires"),
+      },
+      {
+        name: "description",
+        label: req.__("Description"),
+        type: "String",
+        fieldview: "textarea",
+        attributes: { rows: 2 },
+        sublabel: req.__(
+          "Description allows you to give more information about the action"
+        ),
+      },
+      {
+        name: "min_role",
+        label: req.__("Minimum role"),
+        sublabel: req.__(
+          "User must have this role or higher to make API call for action (trigger)"
+        ),
+        input_type: "select",
+        showIf: { when_trigger: ["API call"] },
+        options: roleOptions,
+      },
+      {
+        name: "_raw_output",
+        label: "Raw Output",
+        parent_field: "configuration",
+        sublabel: req.__("Do not wrap response in a success object"),
+        type: "Bool",
+        showIf: { when_trigger: ["API call"] },
+      },
+      {
+        name: "_response_mime",
+        label: "Response MIME type",
+        parent_field: "configuration",
+        type: "String",
+        showIf: { when_trigger: ["API call"], _raw_output: true },
+      },
+      {
+        name: "_only_if",
+        label: req.__("Only if"),
+        type: "String",
+        class: "validate-expression",
+        sublabel:
+          req.__(
+            "Optional JavaScript expression to determine if the trigger should run."
+          ) +
+          " " +
+          req.__(
+            "On updates, use <code>row.old_row</code> to access values before the update."
+          ),
+        parent_field: "configuration",
+        showIf: {
+          when_trigger: [...table_triggers, ...additional_triggers_with_onlyif],
+        },
+      },
+    ],
+  });
+  // if (trigger) {
+  //     form.hidden("id");
+  //     form.values = trigger;
+  //  }
+  return form;
+};
+
+/**
+ * Show form to create new Trigger (get)
+ * @name get/new
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
+router.get(
+  "/new",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const form = await triggerForm(req);
+    if (req.query.table) {
+      const table = Table.findOne({ name: req.query.table })!;
+      if (table) form.values.table_id = table.id;
+    }
+
+    send_events_page({
+      res,
+      req,
+      headers: [
+        // date flat picker external component
+        {
+          script: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.js`,
+        },
+
+        // css for date flat picker external component
+        {
+          css: `/static_assets/${db.connectObj.version_tag}/flatpickr.min.css`,
+        },
+      ],
+      active_sub: "Triggers",
+      sub2_page: "New",
+      contents: {
+        type: "card",
+        title: req.__("New trigger"),
+        contents: renderForm(form, req.csrfToken()),
+      },
+    });
+  })
+);
+
+/**
+ * Show form to Edit existing Trigger (get)
+ * @name get/edit/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
+router.get(
+  "/edit/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+    const trigger = (await Trigger.findOne({ id }))!;
+
+    const form = await triggerForm(req, trigger);
+    form.values = trigger;
+    form.onChange = `saveAndContinue(this)`;
+    send_events_page({
+      res,
+      req,
+      active_sub: "Triggers",
+      sub2_page: "Edit",
+      contents: {
+        type: "card",
+        title: req.__("Edit trigger %s", trigger.name || trigger.id),
+        titleAjaxIndicator: true,
+        contents: renderForm(form, req.csrfToken()),
+      },
+    });
+  })
+);
+
+/**
+ * POST for new or existing trigger (Save trigger)
+ * @name post/new
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
+router.post(
+  "/new",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const form = await triggerForm(req);
+
+    form.validate(req.body || {});
+    if (form.hasErrors) {
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Edit",
+        contents: {
+          type: "card",
+          title: req.__("Edit trigger"),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
+    } else {
+      let id: any;
+      if (form.values.id) {
+        id = form.values.id;
+        await Trigger.update(id, form.values);
+      } else {
+        if (form.values.name) form.values.name = form.values.name.trim();
+        const tr = await Trigger.create(form.values as TriggerCfg);
+        id = tr.id;
+      }
+      await getState()!.refresh_triggers();
+      Trigger.emitEvent("AppChange", `Trigger ${form.values.name}`, req.user, {
+        entity_type: "Trigger",
+        entity_name: form.values.name,
+      });
+      res.redirect(addOnDoneRedirect(`/actions/configure/${id}`, req));
+    }
+  })
+);
+
+/**
+ * POST for existing trigger (Save trigger)
+ * @name /edit/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
+router.post(
+  "/edit/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+    const trigger = (await Trigger.findOne({ id }))!;
+    // todo check that trigger exists
+
+    const form = await triggerForm(req, trigger);
+
+    form.validate(req.body || {});
+    if (form.hasErrors) {
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Edit",
+        contents: {
+          type: "card",
+          title: req.__("Edit trigger"),
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
+    } else {
+      if (form.values.configuration)
+        form.values.configuration = {
+          ...trigger.configuration,
+          ...form.values.configuration,
+        };
+      await Trigger.update(trigger.id!, form.values); //{configuration: form.values});
+      await getState()!.refresh_triggers();
+      Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+        entity_type: "Trigger",
+        entity_name: trigger.name,
+      });
+      if (req.xhr) {
+        res.json({ success: "ok" });
+        return;
+      }
+      req.flash("success", req.__("Action information saved"));
+
+      res.redirect(
+        req.query.on_done_redirect &&
+          is_relative_url("/" + req.query.on_done_redirect)
+          ? `/${req.query.on_done_redirect}`
+          : `/actions/`
+      );
+    }
+  })
+);
+
+const getWorkflowConfig = async (
+  req: Req,
+  id: any,
+  table: any,
+  trigger: Trigger
+) => {
+  const steps = (await WorkflowStep.find(
+    { trigger_id: trigger.id },
+    { orderBy: "id" }
+  ))!;
+  const trigCfgForm = new Form({
+    action: addOnDoneRedirect(`/actions/configure/${id}`, req),
+    onChange: "saveAndContinue(this)",
+    noSubmitButton: true,
+    formStyle: "vert",
+    class: "compact-form-group",
+    fields: [
+      {
+        name: "save_traces",
+        label: "Save step traces for each run",
+        type: "Bool",
+      },
+    ],
+  });
+  trigCfgForm.values = trigger.configuration;
+  let copilot_form = "";
+
+  if (getState()!.functions.copilot_generate_workflow && !steps.length) {
+    copilot_form = renderForm(
+      new Form({
+        action: `/actions/gen-copilot/${id}`,
+        values: { description: trigger.description || "" },
+        submitLabel: "Generate workflow with copilot",
+        formStyle: "vert",
+        fields: [
+          {
+            name: "description",
+            label: "Description",
+            type: "String",
+            fieldview: "textarea",
+          },
+        ],
+      }),
+      req.csrfToken()
+    );
+  }
+  const workflowData = await getWorkflowEditorData(req, trigger, steps);
+  return (
+    copilot_form +
+    renderWorkflow(workflowData, db.connectObj.version_tag) +
+    div(
+      { class: "mt-3" },
+      div(
+        {
+          class:
+            "d-flex justify-content-between align-items-center flex-wrap gap-2",
+        },
+        renderForm(trigCfgForm, req.csrfToken()),
+        a(
+          {
+            href: `/actions/runs/?trigger=${trigger.id}`,
+            class: "d-inline-block",
+          },
+          req.__("Show runs &raquo;")
+        )
+      ),
+      style(/*css*/ `
+        .compact-form-group > .form-group {
+          margin-bottom: 0;
+        }
+        .compact-form-group form {
+          margin-bottom: 0;
+        }
+      `)
+    )
+  );
+};
+
+router.get(
+  "/workflow/data/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { trigger_id } = req.params;
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
+    if (!trigger) return res.status(404).json({ error: "Trigger not found" });
+    const data = await getWorkflowEditorData(req, trigger);
+    res.json(data);
+  })
+);
+
+router.post(
+  "/workflow/connect/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { trigger_id } = req.params;
+    const { step_id, next_step, initial_step, loop_body_step } = req.body || {};
+    const stepId = step_id ? +step_id : null;
+    const step = (await WorkflowStep.findOne({ id: stepId, trigger_id }))!;
+    if (!step) return res.status(404).json({ error: "Step not found" });
+    const allSteps = (await WorkflowStep.find({ trigger_id }))!;
+    const previouslyInitial = allSteps.find(
+      (s: any) => s.initial_step && s.id !== step.id
+    )!;
+    const updateRow: Record<string, any> = {};
+    if (typeof next_step !== "undefined")
+      updateRow.next_step = next_step || null;
+    if (initial_step !== undefined)
+      updateRow.initial_step = initial_step === "true" || initial_step === true;
+    if (
+      updateRow.initial_step === true &&
+      previouslyInitial &&
+      typeof updateRow.next_step === "undefined" &&
+      !step.next_step
+    ) {
+      updateRow.next_step = previouslyInitial.name;
+    }
+    if (
+      typeof loop_body_step !== "undefined" &&
+      step.action_name === "ForLoop"
+    ) {
+      updateRow.configuration = {
+        ...step.configuration,
+        loop_body_initial_step: loop_body_step || "",
+      };
+    }
+    await step.update(updateRow);
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
+    Trigger.emitEvent(
+      "AppChange",
+      `Trigger ${trigger?.name || step.trigger_id}`,
+      req.user,
+      {
+        entity_type: "Trigger",
+        entity_name: trigger?.name || step.trigger_id,
+      }
+    );
+    res.json({ success: "ok" });
+  })
+);
+
+router.post(
+  "/workflow/positions/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const trigger_id = +req.params.trigger_id;
+    const { positions } = req.body || {};
+    if (!Array.isArray(positions))
+      return res.status(400).json({ error: "positions array required" });
+
+    const numeric = (v: any) => (typeof v === "string" ? +v : v);
+
+    let startPos = null;
+
+    for (const pos of positions) {
+      if (!pos || !pos.id) continue;
+      const x = numeric(pos.x);
+      const y = numeric(pos.y);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) continue;
+      if (String(pos.id) === "start") {
+        startPos = { x, y };
+        continue;
+      }
+      const step = (await WorkflowStep.findOne({ id: +pos.id, trigger_id }))!;
+      if (!step) continue;
+      await step.update({
+        configuration: {
+          ...(step.configuration || {}),
+          workflow_position: { x, y },
+        },
+      });
+    }
+
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
+    if (startPos) {
+      await Trigger.update(trigger_id, {
+        configuration: {
+          ...(trigger?.configuration || {}),
+          workflow_start_position: startPos,
+        },
+      });
+    }
+    Trigger.emitEvent(
+      "AppChange",
+      `Trigger ${trigger.name}`,
+      req.user
+        ? {
+            user_id: req.user!.id,
+            role_id: req.user!.role_id,
+            entity_type: "Trigger",
+            entity_name: trigger?.name || trigger_id,
+          }
+        : undefined
+    );
+    res.json({ success: "ok" });
+  })
+);
+
+router.post(
+  "/workflow/copy/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const trigger_id = +req.params.trigger_id;
+    const { step_id } = req.body || {};
+    const source = (await WorkflowStep.findOne({ id: +step_id, trigger_id }))!;
+    if (!source) return res.status(404).json({ error: "Step not found" });
+
+    const steps = (await WorkflowStep.find({ trigger_id }))!;
+    const existingNames = new Set(steps.map((s: any) => s.name));
+    const safeName = String(source.name || "").replace(/\s+/g, "_");
+    const baseName = `${safeName}_copy`;
+    let candidate = baseName;
+    let suffix = 2;
+    while (existingNames.has(candidate)) {
+      candidate = `${baseName}${suffix++}`;
+    }
+
+    const newStepId = await WorkflowStep.create({
+      trigger_id,
+      name: candidate,
+      next_step: undefined,
+      only_if: source.only_if,
+      action_name: source.action_name,
+      initial_step: false,
+      configuration: source.configuration,
+    });
+
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
+    Trigger.emitEvent(
+      "AppChange",
+      `Trigger ${trigger?.name || trigger_id}`,
+      req.user,
+      {
+        entity_type: "Trigger",
+        entity_name: trigger?.name || trigger_id,
+      }
+    );
+
+    const newStep = (await WorkflowStep.findOne({ id: newStepId }))!;
+
+    res.json({
+      success: "ok",
+      step: serializeWorkflowStep(newStep, { req, trigger }),
+    });
+  })
+);
+
+router.post(
+  "/workflow/sizes/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const trigger_id = +req.params.trigger_id;
+    const { sizes } = req.body || {};
+    if (!Array.isArray(sizes))
+      return res.status(400).json({ error: "sizes array required" });
+
+    const numeric = (v: any) => (typeof v === "string" ? +v : v);
+
+    for (const size of sizes) {
+      if (!size || !size.id) continue;
+      const width = numeric(size.width);
+      const height = numeric(size.height);
+      if (!Number.isFinite(width) || !Number.isFinite(height)) continue;
+      const step = (await WorkflowStep.findOne({ id: +size.id, trigger_id }))!;
+      if (!step) continue;
+      await step.update({
+        configuration: {
+          ...(step.configuration || {}),
+          workflow_size: { width, height },
+        },
+      });
+    }
+
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
+    Trigger.emitEvent(
+      "AppChange",
+      `Trigger ${trigger.name}`,
+      req.user
+        ? {
+            user_id: req.user!.id,
+            role_id: req.user!.role_id,
+            entity_type: "Trigger",
+            entity_name: trigger?.name || trigger_id,
+          }
+        : undefined
+    );
+    res.json({ success: "ok" });
+  })
+);
+
+const getWorkflowStepForm = async (
+  trigger: any,
+  req: Req,
+  step_id?: any,
+  after_step?: any,
+  before_step?: any,
+  after_step_for?: any
+) => {
+  const table = trigger.table_id ? Table.findOne(trigger.table_id) : null;
+  const actionExplainers: Record<string, any> = {};
+
+  let stateActions = getState()!.actions;
+  const stateActionKeys = Object.entries(stateActions)
+    .filter(([k, v]: any) => !v.disableInWorkflow)
+    .map(([k, v]: any) => k);
+
+  const actionConfigFields: any[] = [];
+  for (const [name, action] of Object.entries(stateActions)) {
+    if (!stateActionKeys.includes(name)) continue;
+
+    if (action.description) actionExplainers[name] = action.description;
+
+    try {
+      const cfgFields = await getActionConfigFields(action, table, {
+        mode: "workflow",
+        req,
+      });
+
+      for (const field of cfgFields) {
+        let cfgFld: any;
+        if (field.isRepeat)
+          cfgFld = new FieldRepeat({
+            ...field,
+            showIf: {
+              wf_action_name: name,
+              ...(field.showIf || {}),
+            },
+          });
+        else
+          cfgFld = {
+            ...field,
+            showIf: {
+              wf_action_name: name,
+              ...(field.showIf || {}),
+            },
+          };
+        //if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+        actionConfigFields.push(cfgFld);
+      }
+    } catch {
+      //ignore
+    }
+  }
+  actionConfigFields.push({
+    label: "Subcontext",
+    name: "subcontext",
+    type: "String",
+    sublabel:
+      "Optional. A key on the current workflow's context, the values of which will be the called workflow's context.",
+    showIf: {
+      wf_action_name: Trigger.find({ action: "Workflow" }).map(
+        (wf: any) => wf.name
+      ),
+    },
+  });
+  const nonWfTriggerNames = Trigger.find({})!
+    .filter((tr: any) => tr.action !== "Workflow")
+    .map((wf: any) => wf.name);
+
+  actionConfigFields.push({
+    label: "Row expression",
+    name: "row_expr",
+    type: "String",
+    class: "validate-expression",
+    sublabel:
+      "Expression for the object to set the <code>row</code> value to inside the action. If blank, set to whole context",
+    showIf: {
+      wf_action_name: nonWfTriggerNames,
+    },
+  });
+
+  const builtInActionExplainers = WorkflowStep.builtInActionExplainers({
+    api_call: trigger.when_trigger == "API call",
+  });
+  const actionsNotRequiringRow = Trigger.action_options({
+    notRequireRow: true,
+    noMultiStep: true,
+    apiNeverTriggers: true,
+    builtInLabel: "Workflow Actions",
+    builtIns: Object.keys(builtInActionExplainers),
+    forWorkflow: true,
+  });
+  const triggers = Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  })!;
+  triggers.forEach((tr: any) => {
+    if (tr.description) actionExplainers[tr.name] = tr.description;
+  });
+  Object.assign(actionExplainers, builtInActionExplainers);
+  actionConfigFields.push(
+    ...(await WorkflowStep.builtInActionConfigFields({ trigger }))
+  );
+
+  const form = new Form({
+    action: addOnDoneRedirect(`/actions/stepedit/${trigger.id}`, req),
+    noSubmitButton: true,
+    fields: [
+      {
+        input_type: "section_header",
+        label: req.__("Step settings"),
+      },
+      {
+        name: "wf_step_name",
+        label: req.__("Step name"),
+        type: "String",
+        required: true,
+        class: "validate-identifier",
+        sublabel: "An identifier by which this step can be referred to.",
+        validator: jsIdentifierValidator,
+      },
+      {
+        name: "wf_initial_step",
+        label: req.__("Initial step"),
+        sublabel: "Is this the first step in the workflow?",
+        type: "Bool",
+      },
+      {
+        name: "wf_only_if",
+        label: req.__("Only if..."),
+        class: "validate-expression",
+        sublabel:
+          "Optional JavaScript expression based on the run context. If given, the chosen action will only be executed if evaluates to true",
+        type: "String",
+      },
+      {
+        name: "wf_next_step",
+        label: req.__("Next step"),
+        type: "String",
+        class: "validate-expression",
+        sublabel:
+          "Name of next step. Can be a JavaScript expression based on the run context. Blank if final step",
+      },
+      {
+        input_type: "section_header",
+        label: req.__("Action"),
+      },
+      {
+        name: "wf_action_name",
+        label: req.__("Action"),
+        type: "String",
+        required: true,
+        attributes: {
+          options: actionsNotRequiringRow,
+          explainers: actionExplainers,
+        },
+      },
+      {
+        input_type: "section_header",
+        label: req.__("Action settings"),
+      },
+      ...actionConfigFields,
+    ],
+  });
+  form.hidden("wf_step_id");
+  form.hidden("_after_step");
+  form.hidden("_after_step_for");
+  if (before_step) form.values.wf_next_step = before_step;
+  if (after_step == "0") form.values.wf_initial_step = true;
+  else if (after_step) form.values._after_step = after_step;
+  else if (after_step_for) form.values._after_step_for = after_step_for;
+  if (step_id) {
+    const step = (await WorkflowStep.findOne({ id: step_id }))!;
+    if (!step) throw new Error("Step not found");
+    form.values = {
+      wf_step_id: step.id,
+      wf_step_name: step.name,
+      wf_initial_step: step.initial_step,
+      wf_only_if: step.only_if,
+      wf_action_name: step.action_name,
+      wf_next_step: step.next_step,
+      ...step.configuration,
+    };
+  }
+  return form;
+};
+
+const getMultiStepForm = async (req: Req, id: any, table: any) => {
+  let stateActions = getState()!.actions;
+  const stateActionKeys = Object.entries(stateActions)
+    .filter(([k, v]: any) => !v.disableInList && (table || !v.requireRow))
+    .map(([k, v]: any) => k);
+  const actions = [...stateActionKeys];
+  const triggers = Trigger.find({
+    when_trigger: { or: ["API call", "Never"] },
+  })!;
+  triggers.forEach((tr: any) => {
+    actions.push(tr.name);
+  });
+  const actionConfigFields: any[] = [];
+  for (const [name, action] of Object.entries(stateActions)) {
+    if (!stateActionKeys.includes(name)) continue;
+    const cfgFields = await getActionConfigFields(action, table, { req });
+
+    for (const field of cfgFields) {
+      const cfgFld = {
+        ...field,
+        showIf: {
+          step_action_name: name,
+          ...(field.showIf || {}),
+        },
+      };
+      if (cfgFld.input_type === "code") cfgFld.input_type = "textarea";
+      actionConfigFields.push(cfgFld);
+    }
+  }
+  const form = new Form({
+    action: addOnDoneRedirect(`/actions/configure/${id}`, req),
+    onChange: "saveAndContinue(this)",
+    submitLabel: req.__("Done"),
+    fields: [
+      new FieldRepeat({
+        name: "steps",
+        fields: [
+          {
+            name: "step_action_name",
+            label: req.__("Action"),
+            type: "String",
+            required: true,
+            attributes: {
+              options: actions,
+            },
+          },
+          {
+            name: "step_only_if",
+            label: req.__("Only if..."),
+            type: "String",
+            class: "validate-expression",
+          },
+          ...actionConfigFields,
+        ],
+      }),
+    ],
+  });
+  return form;
+};
+
+/**
+ * Edit Trigger configuration (GET)
+ *
+ * /actions/configure/:id
+ *
+ * - get configuration fields
+ * - create form
+ * @name get/configure/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
+router.get(
+  "/configure/:idorname",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { idorname } = req.params;
+    let trigger: any;
+    let id = parseInt(idorname);
+    if (id) trigger = (await Trigger.findOne({ id }))!;
+
+    if (!trigger) {
+      trigger = (await Trigger.findOne({ name: idorname }))!;
+      id = trigger.id;
+    }
+
+    if (!trigger) {
+      req.flash("warning", req.__("Action not found"));
+      res.redirect(`/actions/`);
+      return;
+    }
+    const action = getState()!.actions[trigger.action];
+    // get table related to trigger
+    const table = trigger.table_id
+      ? Table.findOne({ id: trigger.table_id })
+      : null;
+
+    const edit_redirect =
+      req.query.on_done_redirect &&
+      is_relative_url("/" + req.query.on_done_redirect)
+        ? `?on_done_redirect=${req.query.on_done_redirect}`
+        : "";
+
+    const subtitle =
+      span(
+        { class: "ms-2" },
+        trigger.action,
+        "&nbsp;",
+        trigger.when_trigger,
+        table ? ` on ` + a({ href: `/table/${table.name}` }, table.name) : ""
+      ) +
+      a(
+        { href: `/actions/edit/${id}${edit_redirect}`, class: "ms-2" },
+        req.__("Edit"),
+        '&nbsp;<i class="fas fa-edit"></i>'
+      ) +
+      a(
+        {
+          href: `/actions/testrun/${id}`,
+          class: "ms-2",
+          onclick: `press_store_button(this)`,
+        },
+
+        req.__("Test run") + "&nbsp;&raquo;"
+      );
+    // Check if trigger.action is a reference to another trigger by name
+    const refTrigger =
+      !action &&
+      trigger.action !== "Workflow" &&
+      trigger.action !== "Multi-step action"
+        ? Trigger.findOne({ name: trigger.action })
+        : null;
+
+    if (refTrigger) {
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
+        contents: {
+          type: "card",
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
+          subtitle,
+          contents:
+            p(
+              req.__(
+                "This trigger delegates to %s.",
+                a(
+                  { href: `/actions/configure/${refTrigger.id}` },
+                  refTrigger.name
+                )
+              )
+            ) +
+            p(
+              a(
+                {
+                  href: `/actions/configure/${refTrigger.id}`,
+                  class: "btn btn-primary",
+                },
+                req.__("Configure %s &raquo;", refTrigger.name)
+              )
+            ),
+        },
+      });
+      return;
+    }
+
+    if (trigger.action === "Workflow") {
+      const wfCfg = await getWorkflowConfig(req, id, table, trigger);
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
+        requestFluidLayout: true,
+        contents: {
+          type: "card",
+          titleAjaxIndicator: true,
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
+          subtitle,
+          contents: wfCfg,
+        },
+      });
+    } else if (trigger.action === "Multi-step action") {
+      const form = await getMultiStepForm(req, id, table);
+      form.values = trigger.configuration;
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
+        contents: {
+          type: "card",
+          titleAjaxIndicator: true,
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
+          subtitle,
+          contents: renderForm(form, req.csrfToken()),
+        },
+      });
+    } else if (!action) {
+      req.flash("warning", req.__("Action not found"));
+      res.redirect(`/actions/`);
+    } else if (trigger.action === "blocks") {
+      const locale = req.getLocale();
+      const form = new Form({
+        action: addOnDoneRedirect(`/actions/configure/${id}`, req),
+        fields: action.configFields as FieldLike[],
+        noSubmitButton: true,
+        id: "blocklyForm",
+      });
+      form.values = trigger.configuration;
+      const events = Trigger.when_options;
+      const actions = Trigger.find({
+        when_trigger: { or: ["API call", "Never"] },
+      })!;
+      const tables = (await Table.find({})).map((t: any) => ({
+        name: t.name,
+        external: t.external,
+      }));
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: trigger.name,
+        contents: {
+          type: "card",
+          titleAjaxIndicator: true,
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
+          subtitle,
+          contents: {
+            widths: [8, 4],
+            besides: [
+              div(
+                blocklyImportScripts({ locale }),
+                div({ id: "blocklyDiv", style: "height: 600px; width: 100%;" }),
+                blocklyToolbox(actions.length > 0)
+              ),
+              {
+                above: [
+                  div(
+                    button(
+                      { class: "btn btn-primary mt-2", id: "blocklySave" },
+                      req.__("Save")
+                    ),
+                    renderForm(form, req.csrfToken()),
+                    script(
+                      domReady(
+                        `activate_blockly(${JSON.stringify({
+                          events,
+                          actions,
+                          tables,
+                        })})`
+                      )
+                    )
+                  ),
+                  h6({ class: "mt-1" }, req.__("JavaScript code:")),
+                  div(
+                    { class: "mt-1" },
+
+                    pre(
+                      { class: "js-code-display" },
+                      code({ id: "blockly_js_output" }, req.__("code here"))
+                    )
+                  ),
+                ],
+              },
+            ],
+          },
+        },
+      });
+    } else if (!action.configFields) {
+      req.flash("warning", req.__("Action not configurable"));
+      res.redirect(`/actions/`);
+    } else {
+      // get configuration fields
+      const cfgFields = await getActionConfigFields(action, table, {
+        mode: "trigger",
+        when_trigger: trigger.when_trigger,
+        old_config: trigger.configuration,
+        req,
+      });
+      // create form
+      const form = new Form({
+        action: addOnDoneRedirect(`/actions/configure/${id}`, req),
+        onChange: "saveAndContinue(this)",
+        submitLabel: req.__("Done"),
+        fields: cfgFields,
+        ...(action.configFormOptions || {}),
+      });
+      // populate form values
+      form.values = trigger.configuration;
+
+      const hasCopilot =
+        trigger.action === "run_js_code" &&
+        !!getState()!.functions.copilot_generate_javascript;
+
+      if (hasCopilot) {
+        form.additionalButtons = [
+          {
+            label: req.__("Edit with AI"),
+            id: "edit_js_code_with_ai",
+            onclick: "showJsCopilotModal(this)",
+            class: "btn btn-secondary",
+          },
+        ];
+      }
+
+      const copilotModal = hasCopilot
+        ? div(
+            {
+              class: "modal fade",
+              id: "jsCopilotModal",
+              tabindex: "-1",
+            },
+            div(
+              { class: "modal-dialog modal-lg" },
+              div(
+                { class: "modal-content" },
+                div(
+                  { class: "modal-header" },
+                  h5({ class: "modal-title" }, req.__("Edit with AI")),
+                  button({
+                    type: "button",
+                    class: "btn-close",
+                    "data-bs-dismiss": "modal",
+                  })
+                ),
+                div(
+                  { class: "modal-body" },
+                  div(
+                    { id: "jsCopilotPromptArea" },
+                    p(
+                      { class: "text-muted small" },
+                      req.__(
+                        "Describe what the code should do. The existing code will be used as context."
+                      )
+                    ),
+                    textarea({
+                      id: "jsCopilotPrompt",
+                      class: "form-control",
+                      rows: 3,
+                      placeholder: req.__("Enter your prompt..."),
+                    }),
+                    div({
+                      id: "jsCopilotError",
+                      class: "alert alert-danger mt-2 mb-0 d-none",
+                    })
+                  ),
+                  div(
+                    { id: "jsCopilotPreviewArea", class: "d-none" },
+                    p(
+                      { class: "text-muted small mb-1" },
+                      req.__("Review the generated code:")
+                    ),
+                    pre(
+                      {
+                        style:
+                          "max-height:400px;overflow:auto;background:#1e1e1e;color:#d4d4d4;border-radius:4px;padding:12px;font-size:13px;",
+                      },
+                      code({ id: "jsCopilotPreviewCode" })
+                    )
+                  )
+                ),
+                div(
+                  { class: "modal-footer" },
+                  div(
+                    { id: "jsCopilotPromptFooter" },
+                    button(
+                      {
+                        class: "btn btn-secondary",
+                        "data-bs-dismiss": "modal",
+                      },
+                      req.__("Cancel")
+                    ),
+                    button(
+                      {
+                        id: "jsCopilotGenBtn",
+                        class: "btn btn-primary ms-2",
+                        onclick: "runJsCopilot()",
+                        disabled: true,
+                      },
+                      req.__("Generate")
+                    )
+                  ),
+                  div(
+                    { id: "jsCopilotPreviewFooter", class: "d-none" },
+                    button(
+                      {
+                        class: "btn btn-secondary",
+                        onclick: "jsCopilotBackToPrompt()",
+                      },
+                      req.__("Back")
+                    ),
+                    button(
+                      {
+                        class: "btn btn-primary ms-2",
+                        onclick: "acceptJsCopilot()",
+                      },
+                      req.__("OK")
+                    )
+                  )
+                )
+              )
+            )
+          ) +
+          script(`
+var _jsCopilotGeneratedCode = null;
+
+function showJsCopilotModal() {
+  jsCopilotBackToPrompt();
+  var modal = new bootstrap.Modal(document.getElementById("jsCopilotModal"));
+  modal.show();
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+  var ta = document.getElementById("jsCopilotPrompt");
+  var btn = document.getElementById("jsCopilotGenBtn");
+  if (ta && btn) {
+    ta.addEventListener("input", function () {
+      btn.disabled = !ta.value.trim();
+    });
+  }
+  var modalEl = document.getElementById("jsCopilotModal");
+  if (modalEl) {
+    modalEl.addEventListener("hidden.bs.modal", function () {
+      var ta = document.getElementById("jsCopilotPrompt");
+      if (ta) ta.value = "";
+      var btn = document.getElementById("jsCopilotGenBtn");
+      if (btn) btn.disabled = true;
+      var errDiv = document.getElementById("jsCopilotError");
+      if (errDiv) errDiv.classList.add("d-none");
+    });
+  }
+});
+
+function jsCopilotBackToPrompt() {
+  _jsCopilotGeneratedCode = null;
+  var promptArea = document.getElementById("jsCopilotPromptArea");
+  var previewArea = document.getElementById("jsCopilotPreviewArea");
+  var promptFooter = document.getElementById("jsCopilotPromptFooter");
+  var previewFooter = document.getElementById("jsCopilotPreviewFooter");
+  if (promptArea) promptArea.classList.remove("d-none");
+  if (previewArea) previewArea.classList.add("d-none");
+  if (promptFooter) promptFooter.classList.remove("d-none");
+  if (previewFooter) previewFooter.classList.add("d-none");
+  var btn = document.getElementById("jsCopilotGenBtn");
+  if (btn) {
+    var ta = document.getElementById("jsCopilotPrompt");
+    btn.disabled = !ta || !ta.value.trim();
+    btn.textContent = ${JSON.stringify(req.__("Generate"))};
+  }
+}
+
+function runJsCopilot() {
+  var ta = document.getElementById("jsCopilotPrompt");
+  var prompt = ta.value.trim();
+  if (!prompt) return;
+  var btn = document.getElementById("jsCopilotGenBtn");
+  var errDiv = document.getElementById("jsCopilotError");
+  btn.disabled = true;
+  btn.textContent = ${JSON.stringify(req.__("Generating..."))};
+  errDiv.classList.add("d-none");
+  fetch("/actions/gen-js-copilot/${id}", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    body: JSON.stringify({ description: prompt }),
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      btn.textContent = ${JSON.stringify(req.__("Generate"))};
+      if (data.error) {
+        btn.disabled = !ta.value.trim();
+        errDiv.textContent = data.error;
+        errDiv.classList.remove("d-none");
+        return;
+      }
+      _jsCopilotGeneratedCode = data.code;
+      // Show preview
+      var codeEl = document.getElementById("jsCopilotPreviewCode");
+      if (codeEl) codeEl.textContent = data.code;
+      document.getElementById("jsCopilotPromptArea").classList.add("d-none");
+      document.getElementById("jsCopilotPreviewArea").classList.remove("d-none");
+      document.getElementById("jsCopilotPromptFooter").classList.add("d-none");
+      document.getElementById("jsCopilotPreviewFooter").classList.remove("d-none");
+    })
+    .catch(function (err) {
+      btn.disabled = !ta.value.trim();
+      btn.textContent = ${JSON.stringify(req.__("Generate"))};
+      errDiv.textContent = err.message || "Request failed";
+      errDiv.classList.remove("d-none");
+    });
+}
+
+function acceptJsCopilot() {
+  if (!_jsCopilotGeneratedCode) return;
+  var editorDiv = document.querySelector('textarea[name="code"]');
+  if (editorDiv) {
+    var monacoDiv = editorDiv.nextElementSibling;
+    if (monacoDiv) {
+      var ed = $(monacoDiv).data("monaco-editor");
+      if (ed) ed.setValue(_jsCopilotGeneratedCode);
+    }
+  }
+  _jsCopilotGeneratedCode = null;
+  bootstrap.Modal.getInstance(document.getElementById("jsCopilotModal")).hide();
+}
+          `)
+        : "";
+
+      // send events page
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Configure",
+        page_title: req.__(`%s configuration`, trigger.name),
+        contents: {
+          type: "card",
+          titleAjaxIndicator: true,
+          title: req.__(
+            "Configure trigger %s",
+            span({ class: "copy-to-clipboard" }, trigger.name)
+          ),
+          subtitle,
+          contents: copilotModal + renderForm(form, req.csrfToken()),
+        },
+      });
+    }
+  })
+);
+
+/**
+ * Configure Trigger (POST)
+ * @name post/configure/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
+router.post(
+  "/configure/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+    const trigger = (await Trigger.findOne({ id }))!;
+    const action = getState()!.actions[trigger.action];
+    const table = trigger.table_id
+      ? Table.findOne({ id: trigger.table_id })
+      : null;
+    let form: any;
+    if (trigger.action === "Multi-step action") {
+      form = await getMultiStepForm(req, id, table);
+    } else if (trigger.action === "Workflow") {
+      form = new Form({
+        action: `/actions/configure/${id}`,
+        fields: [{ name: "save_traces", label: "Save traces", type: "Bool" }],
+      });
+    } else {
+      const cfgFields = await getActionConfigFields(action, table, {
+        mode: "trigger",
+        when_trigger: trigger.when_trigger,
+        old_config: trigger.configuration,
+        req,
+      });
+      form = new Form({
+        action: `/actions/configure/${id}`,
+        fields: cfgFields,
+      });
+    }
+    form.validate(req.body || {});
+    if (form.hasErrors) {
+      if (req.xhr) {
+        res.status(400).json({ error: form.errorSummary });
+      } else
+        send_events_page({
+          res,
+          req,
+          active_sub: "Triggers",
+          sub2_page: "Configure",
+          contents: {
+            type: "card",
+            title: req.__("Configure trigger"),
+            contents: renderForm(form, req.csrfToken()),
+          },
+        });
+    } else {
+      await Trigger.update(trigger.id!, {
+        configuration: { ...trigger.configuration, ...form.values },
+      });
+      await getState()!.refresh_triggers();
+      Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+        entity_type: "Trigger",
+        entity_name: trigger.name,
+      });
+      if (req.xhr) {
+        res.json({ success: "ok" });
+        return;
+      }
+      req.flash("success", req.__("Action configuration saved"));
+      res.redirect(
+        req.query.on_done_redirect &&
+          is_relative_url("/" + req.query.on_done_redirect)
+          ? `/${req.query.on_done_redirect}`
+          : "/actions/"
+      );
+    }
+  })
+);
+
+/**
+ * @name post/delete/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
+router.post(
+  "/delete/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+    const trigger = (await Trigger.findOne({ id }))!;
+    await db.withTransaction(async () => {
+      await trigger.delete();
+    });
+    Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+      entity_type: "Trigger",
+      entity_name: trigger.name,
+    });
+    await getState()!.refresh_triggers();
+    req.flash("success", req.__(`Trigger %s deleted`, trigger.name));
+    let redirectTarget =
+      req.query.on_done_redirect &&
+      is_relative_url("/" + req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : "/actions/";
+    res.redirect(redirectTarget);
+  })
+);
+
+/**
+ * @name get/testrun/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ */
+router.get(
+  "/testrun/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+    const trigger = (await Trigger.findOne({ id }))!;
+    const output: any[] = [];
+    const fakeConsole = {
+      log(...s: any[]) {
+        console.log(...s);
+        output.push(div(code(pre(text(s.map(ppVal).join(" "))))));
+      },
+      error(...s: any[]) {
+        output.push(
+          div(
+            code(
+              { style: "color:red;font-weight:bold;" },
+              pre(text(s.map(ppVal).join(" ")))
+            )
+          )
+        );
+      },
+    };
+    let table: any, row: any;
+    if (trigger.table_id) {
+      table = Table.findOne({ id: trigger.table_id })!;
+      row = (await table.getRow(
+        {},
+        { orderBy: "RANDOM()", forUser: req.user, forPublic: !req.user }
+      ))!;
+    }
+
+    const runres = await db.withTransaction(
+      async () => {
+        return await trigger.runWithoutRow({
+          console: fakeConsole,
+          table,
+          row,
+          req,
+          interactive: true,
+          ...(row || {}),
+          Table,
+          user: req.user,
+        });
+      },
+      async (e: Error) => {
+        console.error(e);
+        fakeConsole.error(e.message);
+      }
+    );
+
+    if (output.length === 0) {
+      req.flash(
+        "success",
+        req.__(
+          "Action %s run successfully with no console output",
+          trigger.action
+        ) + runres
+          ? script(
+              domReady(
+                `common_done(${JSON.stringify(returnDirectivesOnly(runres))})`
+              )
+            )
+          : ""
+      );
+      if (trigger.action === "Workflow")
+        res.redirect(
+          runres?.__wf_run_id
+            ? `/actions/run/${runres?.__wf_run_id}`
+            : `/actions/runs/?trigger=${trigger.id}`
+        );
+      else
+        res.redirect(
+          req.query.on_done_redirect &&
+            is_relative_url("/" + req.query.on_done_redirect)
+            ? `/${req.query.on_done_redirect}`
+            : `/actions/`
+        );
+    } else {
+      send_events_page({
+        res,
+        req,
+        active_sub: "Triggers",
+        sub2_page: "Test run output",
+        contents: {
+          type: "card",
+          title: req.__("Test run output") + " - " + trigger.name,
+          contents: div(
+            div({ class: "testrunoutput" }, output),
+            runres
+              ? script(
+                  domReady(
+                    `common_done(${JSON.stringify(returnDirectivesOnly(runres))})`
+                  )
+                )
+              : "",
+            a(
+              {
+                href:
+                  req.query.on_done_redirect &&
+                  is_relative_url("/" + req.query.on_done_redirect)
+                    ? `/${req.query.on_done_redirect}`
+                    : `/actions`,
+                class: "mt-4 btn btn-primary me-1",
+              },
+              "&laquo;&nbsp;" + req.__("back to actions")
+            ),
+            a(
+              {
+                href: `/actions/configure/${trigger.id}`,
+                class: "mt-4 btn btn-primary me-1",
+              },
+              req.__("Configure action")
+            ),
+            a(
+              {
+                href: `/actions/testrun/${id}`,
+                class: "ms-1 mt-4 btn btn-primary",
+                onclick: `press_store_button(this)`,
+              },
+              i({ class: "fas fa-redo me-1" }),
+              req.__("Re-run")
+            )
+          ),
+        },
+      });
+    }
+  })
+);
+
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ * @function
+ */
+router.post(
+  "/clone/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+    const trig = (await Trigger.findOne({ id }))!;
+    const newtrig = await trig.clone();
+    await getState()!.refresh_triggers();
+    Trigger.emitEvent("AppChange", `Trigger ${newtrig.name}`, req.user, {
+      entity_type: "Trigger",
+      entity_name: newtrig.name,
+    });
+    req.flash(
+      "success",
+      req.__("Trigger %s duplicated as %s", trig.name, newtrig.name)
+    );
+    res.redirect(
+      req.query.on_done_redirect &&
+        is_relative_url("/" + req.query.on_done_redirect)
+        ? `/${req.query.on_done_redirect}`
+        : `/actions`
+    );
+  })
+);
+
+/**
+ * @name post/clone/:id
+ * @function
+ * @memberof module:routes/actions~actionsRouter
+ * @function
+ */
+router.get(
+  "/stepedit/:trigger_id{/:step_id}",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { trigger_id, step_id } = req.params;
+    const { initial_step, after_step, before_step, after_step_for } = req.query;
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
+    const form = await getWorkflowStepForm(
+      trigger,
+      req,
+      step_id,
+      after_step,
+      before_step,
+      after_step_for
+    );
+    if (+req.query.vw < 1000 && req.query.render === "dialog")
+      form.formStyle = "vert";
+
+    if (initial_step) form.values.wf_initial_step = true;
+    if (!step_id) {
+      const steps = (await WorkflowStep.find({ trigger_id }))!;
+      const stepNames = new Set(steps.map((s: any) => s.name));
+      let name_ix = steps.length + 1;
+      while (stepNames.has(`step${name_ix}`)) name_ix += 1;
+      form.values.wf_step_name = `step${name_ix}`;
+    }
+    const formHtml = renderForm(form, req.csrfToken());
+    const titleText = req.__(`%s configuration`, trigger.name);
+    if (req.xhr || req.query.render === "dialog") {
+      res.json({
+        title: titleText,
+        form: formHtml,
+      });
+      return;
+    }
+    send_events_page({
+      res,
+      req,
+      active_sub: "Triggers",
+      sub2_page: "Configure",
+      page_title: req.__(`%s configuration`, trigger.name),
+      contents: {
+        type: "card",
+        titleAjaxIndicator: true,
+        title: req.__(
+          "Configure trigger %s",
+          a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
+        ),
+        contents: formHtml,
+      },
+    });
+  })
+);
+
+router.post(
+  "/stepedit/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { trigger_id } = req.params;
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
+    const form = await getWorkflowStepForm(trigger, req);
+    form.validate(req.body || {});
+    if (form.hasErrors) {
+      if (req.xhr) {
+        res.json({ error: form.errorSummary });
+      } else
+        send_events_page({
+          res,
+          req,
+          active_sub: "Triggers",
+          sub2_page: "Configure",
+          page_title: req.__(`%s configuration`, trigger.name),
+          contents: {
+            type: "card",
+            titleAjaxIndicator: true,
+            title: req.__(
+              "Configure trigger %s",
+              a({ href: `/actions/configure/${trigger.id}` }, trigger.name)
+            ),
+            contents: renderForm(form, req.csrfToken()),
+          },
+        });
+      return;
+    }
+    const {
+      wf_step_name,
+      wf_action_name,
+      wf_next_step,
+      wf_initial_step,
+      wf_only_if,
+      wf_step_id,
+      _after_step,
+      _after_step_for,
+      ...configuration
+    } = form.values;
+    const DEFAULT_NODE_WIDTH = 220;
+    const DEFAULT_NODE_HEIGHT = 120;
+    const V_GAP = 60;
+    const H_GAP = 60;
+    const existingStep =
+      wf_step_id && wf_step_id !== "undefined"
+        ? await WorkflowStep.findOne({ id: wf_step_id, trigger_id })
+        : null;
+    const stepsForTrigger = (await WorkflowStep.find({ trigger_id }))!;
+    const previouslyInitial = existingStep
+      ? stepsForTrigger.find(
+          (s: any) => s.initial_step && s.id !== existingStep.id
+        )
+      : stepsForTrigger.find((s: any) => s.initial_step);
+    Object.entries(configuration).forEach(([k, v]: any) => {
+      if (v === null) delete configuration[k];
+    });
+    // set position if not set and after_step is given (new steps from adder)
+    if (
+      (!wf_step_id || wf_step_id === "undefined") &&
+      _after_step &&
+      _after_step !== "undefined" &&
+      !configuration.workflow_position
+    ) {
+      const afterStep = (await WorkflowStep.findOne({
+        id: _after_step,
+        trigger_id,
+      }))!;
+      const afterPos = afterStep?.configuration?.workflow_position;
+      if (afterPos) {
+        const size = afterStep?.configuration?.workflow_size || {};
+        const height = Number(size.height);
+        const useHeight = Number.isFinite(height)
+          ? height
+          : DEFAULT_NODE_HEIGHT;
+        const x = Number(afterPos.x);
+        const y = Number(afterPos.y);
+        if (Number.isFinite(x) && Number.isFinite(y))
+          configuration.workflow_position = {
+            x,
+            y: y + useHeight + V_GAP,
+          };
+      }
+    }
+
+    if (
+      existingStep &&
+      !configuration.workflow_position &&
+      existingStep.configuration?.workflow_position
+    ) {
+      configuration.workflow_position =
+        existingStep.configuration.workflow_position;
+    }
+
+    if (
+      (!wf_step_id || wf_step_id === "undefined") &&
+      (!_after_step || _after_step === "undefined") &&
+      !configuration.workflow_position &&
+      Array.isArray(stepsForTrigger) &&
+      stepsForTrigger.length
+    ) {
+      let maxPos = null;
+      let maxStep = null;
+      for (const s of stepsForTrigger) {
+        const pos = s.configuration?.workflow_position;
+        if (!pos) continue;
+        const y = Number(pos.y);
+        if (!Number.isFinite(y)) continue;
+        if (!maxPos || y > maxPos.y) {
+          maxPos = pos;
+          maxStep = s;
+        }
+      }
+      if (maxPos && maxStep) {
+        const size = maxStep.configuration?.workflow_size || {};
+        const height = Number(size.height);
+        const useHeight = Number.isFinite(height)
+          ? height
+          : DEFAULT_NODE_HEIGHT;
+        const x = Number(maxPos.x);
+        const y = Number(maxPos.y);
+        if (Number.isFinite(x) && Number.isFinite(y)) {
+          configuration.workflow_position = {
+            x,
+            y: y + useHeight + V_GAP,
+          };
+        }
+      }
+    }
+    const step = {
+      name: wf_step_name,
+      action_name: wf_action_name,
+      next_step: wf_next_step,
+      only_if: wf_only_if,
+      initial_step: wf_initial_step,
+      trigger_id,
+      configuration,
+    };
+    try {
+      if (wf_step_id && wf_step_id !== "undefined") {
+        const wfStep = new WorkflowStep({ id: wf_step_id, ...step });
+
+        await wfStep.update(step);
+        if (
+          wf_initial_step &&
+          previouslyInitial &&
+          previouslyInitial.id !== wfStep.id &&
+          !wfStep.next_step
+        ) {
+          await wfStep.update({ next_step: previouslyInitial.name });
+        }
+        if (req.xhr) res.json({ success: "ok" });
+        else {
+          req.flash("success", req.__("Step saved"));
+          res.redirect(`/actions/configure/${step.trigger_id}`);
+        }
+      } else {
+        //insert
+
+        const id = await WorkflowStep.create(step);
+        if (wf_initial_step && previouslyInitial && !step.next_step) {
+          const newStep = (await WorkflowStep.findOne({ id, trigger_id }))!;
+          if (newStep && !newStep.next_step)
+            await newStep.update({ next_step: previouslyInitial.name });
+        }
+        if (req.xhr)
+          res.json({ success: "ok", set_fields: { wf_step_id: id } });
+        else {
+          req.flash("success", req.__("Step saved"));
+          res.redirect(`/actions/configure/${step.trigger_id}`);
+        }
+      }
+      Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+        entity_type: "Trigger",
+        entity_name: trigger.name,
+      });
+      if (_after_step && _after_step !== "undefined") {
+        const astep = (await WorkflowStep.findOne({
+          id: _after_step,
+          trigger_id,
+        }))!;
+        if (astep) await astep.update({ next_step: step.name });
+      }
+      if (_after_step_for && _after_step_for !== "undefined") {
+        const astep = (await WorkflowStep.findOne({
+          id: _after_step_for,
+          trigger_id,
+        }))!;
+        if (astep)
+          await astep.update({
+            configuration: {
+              ...astep.configuration,
+              loop_body_initial_step: step.name,
+            },
+          });
+      }
+
+      // if the step was renamed, update references from other steps
+      if (existingStep && existingStep.name !== step.name) {
+        const stepsForTrigger = (await WorkflowStep.find({ trigger_id }))!;
+        for (const s of stepsForTrigger) {
+          const update: Record<string, any> = {};
+          if (s.next_step === existingStep.name) update.next_step = step.name;
+          if (
+            s.action_name === "ForLoop" &&
+            s.configuration?.loop_body_initial_step === existingStep.name
+          ) {
+            update.configuration = {
+              ...s.configuration,
+              loop_body_initial_step: step.name,
+            };
+          }
+          if (Object.keys(update).length) await s.update(update);
+        }
+      }
+    } catch (e: any) {
+      console.error(e);
+      const emsg =
+        e.message ===
+        'duplicate key value violates unique constraint "workflow_steps_name_uniq"'
+          ? `A step with the name ${wf_step_name} already exists`
+          : e.message;
+      if (req.xhr) res.json({ error: emsg });
+      else {
+        req.flash("error", emsg);
+        res.redirect(`/actions/configure/${step.trigger_id}`);
+      }
+    }
+  })
+);
+
+router.post(
+  "/gen-js-copilot/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+    const trigger = (await Trigger.findOne({ id }))!;
+    if (!trigger) {
+      req.flash("warning", req.__("Action not found"));
+      res.redirect(`/actions/`);
+      return;
+    }
+    const description = (req.body || {}).description;
+    // await Trigger.update(trigger.id, { description });
+    const table = trigger.table_id
+      ? Table.findOne({ id: trigger.table_id })
+      : null;
+    const existing_code = trigger.configuration?.code || "";
+    const generated = await (
+      getState()!.functions.copilot_generate_javascript as PluginFunction
+    ).run(description, existing_code, table?.name || null);
+    await Trigger.update(trigger.id!, {
+      configuration: { ...trigger.configuration, code: generated },
+    });
+    await getState()!.refresh_triggers();
+    Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+      entity_type: "Trigger",
+      entity_name: trigger.name,
+    });
+    if (req.xhr) {
+      res.json({ code: generated });
+    } else {
+      res.redirect(`/actions/configure/${trigger.id}`);
+    }
+  })
+);
+
+router.post(
+  "/gen-copilot/:trigger_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { trigger_id } = req.params;
+    const trigger = (await Trigger.findOne({ id: trigger_id }))!;
+    await WorkflowStep.deleteForTrigger(trigger.id!);
+    const description = (req.body || {}).description;
+    await Trigger.update(trigger.id!, { description });
+    const steps = await (
+      getState()!.functions.copilot_generate_workflow as PluginFunction
+    ).run(description, trigger.id);
+    if (steps.length) steps[0].initial_step = true;
+    for (const step of steps) {
+      step.trigger_id = trigger.id;
+      await WorkflowStep.create(step);
+    }
+    Trigger.emitEvent("AppChange", `Trigger ${trigger.name}`, req.user, {
+      entity_type: "Trigger",
+      entity_name: trigger.name,
+    });
+    res.redirect(`/actions/configure/${trigger.id}`);
+  })
+);
+
+router.post(
+  "/delete-step/:step_id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { step_id } = req.params;
+    const step = (await WorkflowStep.findOne({ id: step_id }))!;
+    await db.withTransaction(async () => {
+      await step.delete(true);
+    });
+    res.json({ goto: `/actions/configure/${step.trigger_id}` });
+  })
+);
+
+router.get(
+  "/runs",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const trNames: Record<string, any> = {};
+    const { _page, trigger } = req.query;
+    for (const trig of await Trigger.find({})) trNames[trig.id!] = trig.name;
+    const q: Record<string, any> = {};
+    const selOpts: SelectOptions = {
+      orderBy: "started_at",
+      orderDesc: true,
+      limit: 20,
+    };
+    if (_page) selOpts.offset = 20 * (parseInt(_page) - 1);
+    let trName = "";
+    if (trigger) {
+      q.trigger_id = trigger;
+      trName = trNames[+q.trigger_id];
+    }
+    const runs = (await WorkflowRun.find(q, selOpts))!;
+    const count = await WorkflowRun.count(q);
+
+    const wfTable = mkTable(
+      [
+        {
+          label: req.__("Trigger"),
+          key: (run: any) => trNames[run.trigger_id],
+        },
+        {
+          label: req.__("Started"),
+          key: (run: any) => localeDateTime(run.started_at),
+        },
+        {
+          label: req.__("Updated"),
+          key: (run: any) => localeDateTime(run.status_updated_at),
+        },
+        { label: req.__("Status"), key: "status" },
+        {
+          label: "",
+          key: (run: any) => {
+            switch (run.status) {
+              case "Running":
+                return run.current_step_name;
+              case "Error":
+                return run.error;
+              case "Waiting":
+                if (run.wait_info?.form || run.wait_info.output)
+                  return a(
+                    { href: `/actions/fill-workflow-form/${run.id}` },
+                    run.wait_info.output ? "Show " : "Fill ",
+                    run.current_step_name
+                  );
+                return run.current_step_name;
+              default:
+                return "";
+            }
+          },
+        },
+      ],
+      runs,
+      {
+        onRowSelect: (row: any) => `location.href='/actions/run/${row.id}'`,
+        pagination: {
+          current_page: parseInt(_page) || 1,
+          pages: Math.ceil(count / 20),
+          get_page_link: (n: any) => `gopage(${n}, 20)`,
+        },
+      }
+    );
+    const title = trName
+      ? req.__(
+          `Workflow runs: %s`,
+          a({ href: `/actions/configure/${+trigger}` }, trName)
+        )
+      : req.__(`Workflow runs`);
+    send_events_page({
+      res,
+      req,
+      active_sub: "Workflow runs",
+      page_title: title,
+      contents: {
+        type: "card",
+        titleAjaxIndicator: true,
+        title,
+        contents: wfTable,
+      },
+    });
+  })
+);
+
+router.get(
+  "/run/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+
+    const run = (await WorkflowRun.findOne({ id }))!;
+    const trigger = (await Trigger.findOne({ id: run.trigger_id }))!;
+    const traces = (await WorkflowTrace.find(
+      { run_id: run.id },
+      { orderBy: "id" }
+    ))!;
+    const traces_accordion_items = div(
+      { class: "accordion" },
+      traces.map((trace: any, ix: any) =>
+        div(
+          { class: "accordion-item" },
+
+          h2(
+            { class: "accordion-header", id: `trhead${ix}` },
+            button(
+              {
+                class: ["accordion-button", "collapsed"],
+                type: "button",
+
+                "data-bs-toggle": "collapse",
+                "data-bs-target": `#trtab${ix}`,
+                "aria-expanded": "false",
+                "aria-controls": `trtab${ix}`,
+              },
+              `${ix + 1}: ${trace.step_name_run}`
+            )
+          ),
+          div(
+            {
+              class: ["accordion-collapse", "collapse"],
+              id: `trtab${ix}`,
+              "aria-labelledby": `trhead${ix}`,
+            },
+            div(
+              { class: ["accordion-body"] },
+              table(
+                { class: "table table-condensed w-unset" },
+                tbody(
+                  tr(
+                    th("Started at"),
+                    td(localeDateTime(trace.step_started_at))
+                  ),
+                  tr(th("Elapsed"), td(trace.elapsed, "s")),
+                  tr(th("Run by user"), td(trace.user_id)),
+                  tr(th("Status"), td(trace.status)),
+                  trace.status === "Waiting"
+                    ? tr(th("Waiting for"), td(JSON.stringify(trace.wait_info)))
+                    : null,
+                  tr(
+                    th("Context"),
+                    td(
+                      pre(
+                        text(escapeHtml(JSON.stringify(trace.context, null, 2)))
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    );
+
+    send_events_page({
+      res,
+      req,
+      active_sub: "Workflow runs",
+      page_title: req.__(`Workflow runs`),
+      sub2_page: trigger?.name,
+      contents: {
+        above: [
+          {
+            type: "card",
+            titleAjaxIndicator: true,
+            title: req.__("Workflow run"),
+            contents:
+              table(
+                { class: "table table-condensed w-unset" },
+                tbody(
+                  tr(th("Run ID"), td(run.id)),
+                  trigger &&
+                    tr(
+                      th("Trigger"),
+                      td(
+                        a(
+                          { href: `/actions/configure/${trigger.id}` },
+                          trigger.name
+                        )
+                      )
+                    ),
+                  tr(th("Started at"), td(localeDateTime(run.started_at))),
+                  tr(th("Started by user"), td(run.started_by)),
+                  tr(th("Status"), td(run.status)),
+                  run.status === "Waiting"
+                    ? tr(th("Waiting for"), td(JSON.stringify(run.wait_info)))
+                    : null,
+                  run.status === "Error"
+                    ? tr(th("Error message"), td(run.error))
+                    : null,
+                  tr(
+                    th("Context"),
+                    td(
+                      pre(
+                        text(escapeHtml(JSON.stringify(run.context, null, 2)))
+                      )
+                    )
+                  )
+                )
+              ) + post_delete_btn("/actions/delete-run/" + run.id, req),
+          },
+          ...(traces.length
+            ? [
+                {
+                  type: "card",
+                  title: req.__("Step traces"),
+                  contents: traces_accordion_items,
+                },
+              ]
+            : []),
+        ],
+      },
+    });
+  })
+);
+
+router.post(
+  "/delete-run/:id",
+  isAdminOrHasConfigMinRole("min_role_edit_triggers"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+
+    const run = (await WorkflowRun.findOne({ id }))!;
+    await run.delete();
+    res.redirect("/actions/runs");
+  })
+);
+
+router.get(
+  "/fill-workflow-form/:id",
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+
+    const run = (await WorkflowRun.findOne({ id: +id }))!;
+
+    if (!run || !run.user_allowed_to_fill_form(req.user)) {
+      if (req.xhr) res.json({ error: "Not authorized" });
+      else {
+        req.flash("danger", req.__("Not authorized"));
+        res.redirect("/");
+      }
+      return;
+    }
+
+    const trigger = (await Trigger.findOne({ id: run.trigger_id }))!;
+    const step = (await WorkflowStep.findOne({
+      trigger_id: trigger.id,
+      name: run.current_step_name,
+    }))!;
+    try {
+      const form = await getWorkflowStepUserForm(run, trigger, step, req, res);
+      if (req.xhr) form.xhrSubmit = true;
+      const title =
+        step.configuration?.popup_title ||
+        (run.wait_info.output ? "Workflow output" : "Fill form");
+      if (form.popup_width) res.set("SaltcornModalWidth", form.popup_width);
+      res.sendWrap(title, renderForm(form, req.csrfToken()));
+    } catch (e: any) {
+      console.error(e);
+      await run.markAsError(e, step, req.user);
+      const title = req.__("Error running workflow");
+      res.sendWrap(title, renderForm(e.message, req.csrfToken()));
+    }
+  })
+);
+
+const workflowRunPromiseHandler = (promise: any, run: any, req: Req) => {
+  promise
+    .then(async (runres: any) => {
+      const retDirs = await run.popReturnDirectives();
+      const emitData = {
+        ...runres,
+        ...retDirs,
+        page_load_tag: req.headers["page-load-tag"],
+      };
+      const userIds = req.user ? [req.user!.id!] : null;
+      getState()!.emitDynamicUpdate(db.getTenantSchema(), emitData, userIds);
+      if (
+        !emitData.resume_workflow &&
+        !emitData.popup?.startsWith?.("/actions/fill-workflow-form/")
+      )
+        getState()!.emitDynamicUpdate(
+          db.getTenantSchema(),
+          {
+            eval_js: "reset_spinners()",
+            page_load_tag: req.headers["page-load-tag"],
+          },
+          userIds
+        );
+    })
+    .catch((e: any) => {
+      console.error(e);
+      getState()!.emitDynamicUpdate(
+        db.getTenantSchema(),
+        {
+          error: e.message,
+          page_load_tag: req.headers["page-load-tag"],
+        },
+        req.user ? [req.user!.id!] : null
+      );
+    });
+};
+
+router.post(
+  "/fill-workflow-form/:id",
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+
+    const run = (await WorkflowRun.findOne({ id }))!;
+    if (!run || !run.user_allowed_to_fill_form(req.user)) {
+      if (req.xhr) res.json({ error: "Not authorized" });
+      else {
+        req.flash("danger", req.__("Not authorized"));
+        res.redirect("/");
+      }
+      return;
+    }
+
+    const trigger = (await Trigger.findOne({ id: run.trigger_id }))!;
+    const step = (await WorkflowStep.findOne({
+      trigger_id: trigger.id,
+      name: run.current_step_name,
+    }))!;
+
+    const form = await getWorkflowStepUserForm(run, trigger, step, req, res);
+    form.validate(req.body || {});
+    if (form.hasErrors) {
+      const title = "Fill form";
+      res.sendWrap(title, renderForm(form, req.csrfToken()));
+    } else {
+      const run_async =
+        getState()!.getConfig("enable_dynamic_updates") &&
+        req.headers["page-load-tag"] &&
+        req.xhr;
+      await run.provide_form_input(
+        form.values,
+        step.configuration.response_variable
+      );
+      const promise = run.run({
+        user: req.user,
+        trace: trigger.configuration?.save_traces,
+        interactive: true,
+      });
+      if (run_async) {
+        workflowRunPromiseHandler(promise, run, req);
+        res.json({ success: "ok" });
+      } else {
+        const runres = await promise;
+        if (req.xhr) {
+          const retDirs = await run.popReturnDirectives();
+
+          //if (runres?.popup) retDirs.popup = runres.popup;
+          res.json({ success: "ok", ...runres, ...retDirs });
+        } else {
+          if (run.context.goto) res.redirect(run.context.goto);
+          else res.redirect("/");
+        }
+      }
+    }
+  })
+);
+
+router.post(
+  "/resume-workflow/:id",
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+
+    const run = (await WorkflowRun.findOne({ id: +id }))!;
+    //TODO session if not logged in
+    if (!run || run.started_by !== req.user?.id) {
+      if (req.xhr) res.json({ error: "Not authorized" });
+      else {
+        req.flash("danger", req.__("Not authorized"));
+        res.redirect("/");
+      }
+      return;
+    }
+    const trigger = (await Trigger.findOne({ id: run.trigger_id }))!;
+    const run_async =
+      getState()!.getConfig("enable_dynamic_updates") &&
+      req.headers["page-load-tag"] &&
+      req.xhr;
+    const promise = run.run({
+      user: req.user,
+      interactive: true,
+      trace: trigger.configuration?.save_traces,
+    });
+    if (run_async) {
+      workflowRunPromiseHandler(promise, run, req);
+      res.json({ success: "ok" });
+    } else {
+      const runResult = await promise;
+      if (req.xhr) {
+        if (
+          runResult &&
+          typeof runResult === "object" &&
+          Object.keys(runResult).length
+        ) {
+          res.json({ success: "ok", ...runResult });
+          return;
+        }
+        const retDirs = await run.popReturnDirectives();
+        res.json({ success: "ok", ...retDirs });
+      } else {
+        if (run.context.goto) res.redirect(run.context.goto);
+        else res.redirect("/");
+      }
+    }
+  })
+);
+
+/* 
+
+WORKFLOWS TODO
+
+help file to explain steps, and context
+
+workflow actions: ReadFile, WriteFile, 
+
+EditViewForm: presets. response var can be blank
+other triggers can be steps
+interactive workflows for not logged in
+actions can declare which variables they inject into scope
+
+show unconnected steps
+drag and drop edges
+
+*/

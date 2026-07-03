@@ -30,7 +30,7 @@ run_tests_postgres:
   command:
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
     - saltcorn reset-schema -f   
-    - saltcorn run-tests server
+    - saltcorn run-tests
   environment:
     PGHOST: run_tests_postgres_db
     PGUSER: postgres
@@ -39,7 +39,7 @@ run_tests_postgres:
     CI: true
     SALTCORN_MULTI_TENANT: true
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
-    NODE_OPTIONS: --max-old-space-size=4096
+    NODE_OPTIONS: --max-old-space-size=4096 --enable-source-maps --require /opt/saltcorn/deploy/whale-ci/trc-stack-hook.js
 
 pytest_db:
   image: postgres:16

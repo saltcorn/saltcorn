@@ -26,6 +26,7 @@ import { promises as fsPromises } from "fs";
 import envPaths from "env-paths";
 import semver from "semver";
 import path from "path";
+import { PluginLoaderResult } from "@saltcorn/types/base_types";
 
 const { rm, rename, cp, readFile, readdir, readlink, unlink } = fsPromises;
 const { writeFile, mkdir, pathExists, copy, symlink } = fsExtra;
@@ -220,13 +221,16 @@ class PluginInstaller {
    * @param {boolean} preInstall Only npm install without loading the module
    * @returns
    */
-  async install(preInstall = false): Promise<any> {
+  async install(preInstall = false): Promise<PluginLoaderResult> {
     getState()!.log(5, `loading plugin ${this.plugin.name}`);
     await this._ensurePluginsRootFolders();
     if (Plugin.is_fixed_plugin(this.plugin.location))
       return {
         location: path.join(require.resolve(this.plugin.location), ".."),
         plugin_module: require(this.plugin.location),
+        name: this.plugin.name,
+        loadedWithReload: false,
+        msgs: [],
       };
     const msgs: string[] = [];
     let loadedModule: any = null;

@@ -64,7 +64,7 @@ describe("pack create", () => {
   // table packs
   it("creates table pack", async () => {
     const tpack = await table_pack("patients");
-    expect(tpack.fields.length > 1).toBe(true);
+    expect(tpack.fields!.length > 1).toBe(true);
     expect(tpack.name).toBe("patients");
   });
 
@@ -72,13 +72,13 @@ describe("pack create", () => {
     const table = Table.findOne({ name: "patients" });
     expect(table !== null).toBe(true);
     const tpack = await table_pack(table !== null ? table : "patients");
-    expect(tpack.fields.length > 1).toBe(true);
+    expect(tpack.fields!.length > 1).toBe(true);
     expect(tpack.name).toBe("patients");
   });
 
   it("creates table pack for users", async () => {
     const tpack = await table_pack("users");
-    expect(tpack.fields.length > 1).toBe(true);
+    expect(tpack.fields!.length > 1).toBe(true);
     expect(tpack.name).toBe("users");
   });
 

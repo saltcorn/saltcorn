@@ -304,7 +304,7 @@ class Table implements AbstractTable {
     this.provider_cfg = stringToJSON(o.provider_cfg);
     this.provider_name = o.provider_name;
 
-    this.fields = o.fields.map((f) => new Field(f));
+    this.fields = (o.fields || []).map((f) => new Field(f));
     this.updated_at = ["string", "number"].includes(typeof o.updated_at)
       ? new Date(o.updated_at as any)
       : o.updated_at;

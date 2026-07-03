@@ -163,6 +163,7 @@ namespace TableExports {
     header_filter?: (id?: string) => string;
     row_key?: string;
     cell_class_fn?: Function;
+    sortlink?:string
   };
 
   export type OptsParams = {

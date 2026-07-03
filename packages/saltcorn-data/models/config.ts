@@ -1604,7 +1604,7 @@ const configTypes: ConfigTypes = {
     type: "File",
     name: "push_notification_icon",
     label: "Push icon",
-    default: 0,
+    default: undefined,
     attributes: {
       select_file_where: { min_role_read: 100, mime_super: "image" },
     },
@@ -1614,7 +1614,7 @@ const configTypes: ConfigTypes = {
     type: "File",
     name: "push_notification_badge",
     label: "Push badge",
-    default: 0,
+    default: undefined,
     attributes: {
       select_file_where: { min_role_read: 100, mime_super: "image" },
     },

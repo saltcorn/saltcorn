@@ -1,0 +1,160 @@
+/**
+ * @category server
+ * @module routes/crashlog
+ * @subcategory routes
+ */
+
+import Router from "express-promise-router";
+import Crash from "@saltcorn/data/models/crash";
+import db from "@saltcorn/data/db";
+import { link, post_btn, mkTable } from "@saltcorn/markup";
+
+import {
+  table,
+  tbody,
+  tr,
+  td,
+  text,
+  pre,
+  div,
+  h3,
+  p,
+} from "@saltcorn/markup/tags";
+
+import { isAdmin, error_catcher } from "./utils.js";
+import { send_events_page } from "../markup/admin.js";
+import { Req, Res } from "@saltcorn/types/base_types";
+
+/**
+ * @type {object}
+ * @const
+ * @namespace crashlogRouter
+ * @category server
+ * @subcategory routes
+ */
+const router = Router();
+export default router;
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/crashlog~crashlogRouter
+ * @function
+ */
+router.get(
+  "/",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const state = req.query,
+      rows_per_page = 20,
+      page_opts:any = { hover: true },
+      current_page = parseInt(state._page as string) || 1,
+      offset = (parseInt(state._page as string) - 1) * rows_per_page;
+
+    const crashes = (await Crash.find(
+      {},
+      { orderBy: "occur_at", orderDesc: true, limit: rows_per_page, offset }
+    ))!;
+    if (crashes.length === rows_per_page || current_page > 1) {
+      const nrows = await Crash.count({});
+      if (nrows > rows_per_page || current_page > 1) {
+        page_opts.pagination = {
+          current_page,
+          pages: Math.ceil(nrows / rows_per_page),
+          get_page_link: (n: number) => `gopage(${n}, ${rows_per_page})`,
+        };
+      }
+    }
+    send_events_page({
+      res,
+      req,
+      active_sub: "Crash log",
+      contents: {
+        type: "card",
+        contents:
+          crashes.length === 0
+            ? div(
+                h3(req.__("No errors reported")),
+                p(req.__("Everything is going extremely well."))
+              )
+            : mkTable(
+                [
+                  {
+                    label: req.__("Show"),
+                    key: (r: any) =>
+                      link(`/crashlog/${r.id}`, text(r.msg_short)),
+                  },
+                  { label: req.__("When"), key: (r: any) => r.reltime },
+                  ...(db.is_it_multi_tenant()
+                    ? [{ label: req.__("Tenant"), key: "tenant" }]
+                    : []),
+                ],
+                crashes,
+                page_opts
+              ),
+      },
+    });
+  })
+);
+
+/**
+ * @name post
+ * @function
+ * @memberof module:routes/crashlog~crashlogRouter
+ * @function
+ */
+router.post(
+  "/",
+  error_catcher(async (req: Req, res: Res) => {
+    const err = {
+      stack: (req.body || {}).stack,
+      message: `[JS] ${(req.body || {}).message}`,
+    };
+    await Crash.create(err, req);
+    res.json({});
+  })
+);
+
+/**
+ * @name get/:id
+ * @function
+ * @memberof module:routes/crashlog~crashlogRouter
+ * @function
+ */
+router.get(
+  "/:id",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { id } = req.params;
+    const crash = (await Crash.findOne({ id }))!;
+    send_events_page({
+      res,
+      req,
+      active_sub: "Crash log",
+      sub2_page: String(crash.id),
+      contents: {
+        type: "card",
+        class: "crashlog-entry",
+        contents: table(
+          { class: "table" },
+          tbody(
+            Object.entries(crash).map(([k, v]: any) =>
+              tr(
+                td(k),
+                td(
+                  pre(
+                    text(
+                      ["headers", "body"].includes(k)
+                        ? JSON.stringify(v, null, 2)
+                        : (v as any)
+                    )
+                  )
+                )
+              )
+            )
+          )
+        ),
+      },
+    });
+  })
+);

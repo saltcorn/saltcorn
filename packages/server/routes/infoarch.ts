@@ -1,0 +1,574 @@
+/**
+ * @category server
+ * @module routes/infoarch
+ * @subcategory routes
+ */
+
+import Router from "express-promise-router";
+import {
+  isAdmin,
+  setTenant,
+  error_catcher,
+  isAdminOrHasConfigMinRole,
+} from "./utils.js";
+import {
+  send_infoarch_page,
+  send_admin_page,
+  config_fields_form,
+  save_config_from_form,
+  upload_language_pack,
+} from "../markup/admin.js";
+import { getState } from "@saltcorn/data/db/state";
+import { span, div, a, i, text, button } from "@saltcorn/markup/tags";
+import {
+  mkTable,
+  renderForm,
+  post_delete_btn,
+  post_btn,
+} from "@saltcorn/markup";
+import Form from "@saltcorn/data/models/form";
+import Snapshot from "@saltcorn/admin-models/models/snapshot";
+import { stringify } from "csv-stringify";
+import csvtojson from "csvtojson";
+import { hasLLM, translate } from "@saltcorn/data/translate";
+import { escapeHtml } from "@saltcorn/data/utils";
+import { Req, Res } from "@saltcorn/types/base_types";
+
+/**
+ * @type {object}
+ * @const
+ * @namespace infoarchRouter
+ * @category server
+ * @subcategory routes
+ */
+const router = Router();
+export default router;
+
+/**
+ * @name get
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
+router.get(
+  "/",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    res.redirect(`/menu`);
+  })
+);
+
+router.get(
+  "/create-snapshot",
+  isAdminOrHasConfigMinRole("min_role_create_snapshots"),
+  error_catcher(async (req: Req, res: Res) => {
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Snapshots",
+      contents: {
+        type: "card",
+        contents: div(
+          button(
+            {
+              class: "btn btn-outline-secondary",
+              type: "button",
+              onclick:
+                "ajax_post('/site-structure/create-snapshot/'+prompt('Name of snapshot (optional)'))",
+            },
+            req.__("Snapshot now")
+          )
+        ),
+      },
+    });
+  })
+);
+
+router.post(
+  "/create-snapshot/:snapshotname",
+  isAdminOrHasConfigMinRole("min_role_create_snapshots"),
+  error_catcher(async (req: Req, res: Res) => {
+    const { snapshotname } = req.params;
+    if (snapshotname == "null") {
+      //user clicked cancel on prompt
+      res.json({ success: true });
+      return;
+    }
+
+    try {
+      const taken = await Snapshot.take_if_changed(snapshotname);
+      if (taken) req.flash("success", req.__("Snapshot successful"));
+      else
+        req.flash("success", req.__("No changes detected, snapshot skipped"));
+    } catch (e: any) {
+      console.error(e);
+      req.flash("error", e.message);
+    }
+    res.json({ reload_page: true });
+  })
+);
+
+/**
+ * @param {object} req
+ * @returns {Form}
+ */
+const languageForm = (req: Req, hasSaveButton?: any) =>
+  new Form({
+    action: "/site-structure/localizer/save-lang",
+    onChange: hasSaveButton ? undefined : "saveAndContinue(this)",
+    noSubmitButton: !hasSaveButton,
+    fields: [
+      {
+        name: "name",
+        label: req.__("Name"),
+        type: "String",
+        required: true,
+      },
+      {
+        name: "locale",
+        label: req.__("Locale"),
+        sublabel: req.__(
+          "Locale identifier short code, e.g. en, zh, fr, ar etc. "
+        ),
+        type: "String",
+        required: true,
+      },
+      {
+        name: "is_default",
+        label: req.__("Default language"),
+        sublabel: req.__(
+          "Is this the default language in which the application is built?"
+        ),
+        type: "Bool",
+      },
+    ],
+  });
+
+/**
+ * @name get/localizer
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
+router.get(
+  "/localizer",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const cfgLangs = getState()!.getConfig("localizer_languages");
+
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Languages",
+      contents: {
+        type: "card",
+        contents: div(
+          mkTable(
+            [
+              {
+                label: req.__("Language"),
+                key: (r: any) =>
+                  a(
+                    { href: `/site-structure/localizer/edit/${r.locale}` },
+                    r.name
+                  ),
+              },
+              {
+                label: req.__("Locale"),
+                key: "locale",
+              },
+              {
+                label: req.__("Default"),
+                key: (r: any) =>
+                  r.is_default
+                    ? i({
+                        class: "fas fa-check-circle text-success",
+                      })
+                    : "",
+              },
+              {
+                label: req.__("Language CSV"),
+                key: (r: any) =>
+                  a(
+                    {
+                      href: `/site-structure/localizer/download-pack/${r.locale}`,
+                    },
+                    i({ class: "fas fa-download me-2" }),
+                    req.__("Download")
+                  ),
+              },
+              {
+                label: req.__("Delete"),
+                key: (r: any) =>
+                  post_delete_btn(
+                    `/site-structure/localizer/delete-lang/${r.locale}`,
+                    req,
+                    r.name
+                  ),
+              },
+            ],
+            Object.values(cfgLangs)
+          ),
+          div(
+            { class: "d-flex mt-1" },
+            a(
+              {
+                href: "/site-structure/localizer/add-lang",
+                class: "btn btn-primary me-2",
+              },
+              i({ class: "fas fa-plus-square me-1" }),
+              req.__("Add language")
+            ),
+            upload_language_pack(req)
+          )
+        ),
+      },
+    });
+  })
+);
+
+router.get(
+  "/localizer/download-pack/:lang",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { lang } = req.params;
+    if (lang === "__proto__" || lang === "constructor") {
+      res.redirect(`/`);
+      return;
+    }
+    const cfgLangs = getState()!.getConfig("localizer_languages");
+
+    if (!cfgLangs[lang]) {
+      req.flash("error", req.__("Language not found"));
+      return res.redirect(`/site-structure/localizer`);
+    }
+    const default_lang =
+      (Object.values(cfgLangs).find((lobj: any) => lobj.is_default) as any)?.locale ||
+      getState()!.getConfig("default_locale", "en");
+
+    const cfgStrings = getState()!.getConfig("localizer_strings", {});
+    const translation = cfgStrings[lang] || {};
+    const strings = getState()!
+      .getStringsForI18n()
+      .map((s: any) => ({ [default_lang]: s, [lang]: translation[s] || s }));
+    res.type("text/csv");
+    res.setHeader("Content-Disposition", `attachment; filename="${lang}.csv"`);
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Pragma", "no-cache");
+    stringify(strings, {
+      header: true,
+      columns: [default_lang, lang],
+      quoted: true,
+    }).pipe(res as any);
+  })
+);
+
+router.post(
+  "/localizer/upload-language-pack",
+  isAdmin,
+  setTenant, // TODO why is this needed?????
+  error_catcher(async (req: Req, res: Res) => {
+    if (req.files?.file?.tempFilePath) {
+      const cfgLangs = getState()!.getConfig("localizer_languages");
+      const default_lang =
+        (Object.values(cfgLangs).find((lobj: any) => lobj.is_default) as any)?.locale ||
+        getState()!.getConfig("default_locale", "en");
+      const cfgStrings = getState()!.getConfigCopy("localizer_strings");
+
+      try {
+        const rows = await csvtojson().fromFile(req.files?.file?.tempFilePath);
+        const langs = Object.keys(rows[0]).filter((k: any) => k !== default_lang);
+        for (const lang of langs)
+          for (const row of rows) {
+            const defstring = row[default_lang];
+            if (cfgStrings[lang]) cfgStrings[lang][defstring] = row[lang];
+            else cfgStrings[lang] = { [defstring]: row[lang] };
+          }
+        await getState()!.setConfig("localizer_strings", cfgStrings);
+
+        req.flash("success", `Updated languages: ${langs.join(", ")}`);
+      } catch (e: any) {
+        console.error(e);
+        req.flash("error", e.message);
+      }
+    }
+    res.redirect(`/site-structure/localizer`);
+  })
+);
+
+/**
+ * @name get/localizer/add-lang
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
+router.get(
+  "/localizer/add-lang",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Languages",
+      sub2_page: "New",
+      contents: {
+        type: "card",
+        contents: [renderForm(languageForm(req, true), req.csrfToken())],
+      },
+    });
+  })
+);
+
+/**
+ * @name get/localizer/edit/:lang
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
+router.get(
+  "/localizer/edit/:lang",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { lang } = req.params;
+    const cfgLangs = getState()!.getConfig("localizer_languages");
+    const form = languageForm(req);
+    form.values = cfgLangs[lang];
+    const { is_default } = form.values;
+    const cfgStrings = getState()!.getConfig("localizer_strings", {});
+    const translation = cfgStrings[lang] || {};
+    const strings = getState()!
+      .getStringsForI18n()
+      .map((s: any) => ({ in_default: s, translated: translation[s] || s }));
+    send_infoarch_page({
+      res,
+      req,
+      active_sub: "Languages",
+      sub2_page: form.values.name || form.values.locale,
+      contents: {
+        above: [
+          {
+            type: "card",
+            contents: [
+              renderForm(form, req.csrfToken()),
+              hasLLM() &&
+                renderForm(
+                  new Form({
+                    fields: [],
+                    action: `/site-structure/localizer/translate-llm/${lang}`,
+                    submitLabel: req.__("Translate with LLM"),
+                    onSubmit: "press_store_button(this)",
+
+                    submitButtonClass: "btn-secondary",
+                  }),
+                  req.csrfToken()
+                ),
+            ],
+          },
+          !is_default && {
+            type: "card",
+            title: req.__("Strings"),
+            contents: div(
+              mkTable(
+                [
+                  {
+                    label: req.__("In default language"),
+                    key: (r: any) => escapeHtml(r.in_default),
+                  },
+                  {
+                    label: req.__("In %s", form.values.name),
+                    key: (r: any) =>
+                      span(
+                        div(
+                          {
+                            "data-inline-edit-dest-url": `/site-structure/localizer/save-string/${lang}/${encodeURIComponent(
+                              r.in_default
+                            )}`,
+                            "data-inline-edit-unescape": "true",
+                            class: "d-inline",
+                          },
+                          escapeHtml(r.translated)
+                        ),
+                        r.in_default !== r.translated &&
+                          post_btn(
+                            `/site-structure/localizer/delete-string/${lang}/${encodeURIComponent(
+                              r.in_default
+                            )}`,
+                            "",
+                            req.csrfToken(),
+                            {
+                              icon: "fas fa-trash-alt",
+                              btnClass: "btn-sm btn-xs btn-link link-danger",
+                              formClass: "d-inline",
+                            }
+                          )
+                      ),
+                  },
+                ],
+                strings
+              )
+            ),
+          },
+        ],
+      },
+    });
+  })
+);
+
+router.post(
+  "/localizer/translate-llm/:lang/",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { lang, defstring } = req.params;
+    if (
+      lang === "__proto__" ||
+      defstring === "__proto__" ||
+      lang === "constructor"
+    ) {
+      res.redirect(`/`);
+      return;
+    }
+    const cfgLangs = getState()!.getConfig("localizer_languages");
+
+    if (!cfgLangs[lang]) {
+      req.flash("error", req.__("Language not found"));
+      return res.redirect(`/site-structure/localizer`);
+    }
+    const default_lang =
+      (Object.values(cfgLangs).find((lobj: any) => lobj.is_default) as any)?.locale ||
+      getState()!.getConfig("default_locale", "en");
+    let count = 0;
+    for (const defstring of getState()!.getStringsForI18n()) {
+      const cfgStrings = getState()!.getConfigCopy("localizer_strings", {});
+      if (!cfgStrings[lang]) cfgStrings[lang] = {};
+      if (
+        cfgStrings[lang][defstring] &&
+        cfgStrings[lang][defstring] !== defstring
+      )
+        continue;
+      if (count >= 20) break;
+      count += 1;
+      const translated = await translate(defstring, lang, default_lang);
+      if (cfgStrings[lang]) cfgStrings[lang][defstring] = translated;
+      else cfgStrings[lang] = { [defstring]: translated };
+      await getState()!.setConfig("localizer_strings", cfgStrings);
+    }
+    if (count == 20)
+      req.flash(
+        "success",
+        req.__(
+          `Translated %s strings. Click 'Translate with LLM' again to continue`,
+          count
+        )
+      );
+    else
+      req.flash("success", req.__(`Finished translating %s strings.`, count));
+    res.redirect(`/site-structure/localizer/edit/${lang}`);
+  })
+);
+
+/**
+ * @name post/localizer/save-string/:lang/:defstring
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
+router.post(
+  "/localizer/save-string/:lang/:defstring",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { lang, defstring } = req.params;
+    if (
+      lang === "__proto__" ||
+      defstring === "__proto__" ||
+      lang === "constructor"
+    ) {
+      res.redirect(`/`);
+      return;
+    }
+    const cfgStrings = getState()!.getConfigCopy("localizer_strings");
+    if (cfgStrings[lang]) cfgStrings[lang][defstring] = (req.body || {}).value;
+    else cfgStrings[lang] = { [defstring]: (req.body || {}).value };
+    await getState()!.setConfig("localizer_strings", cfgStrings);
+    res.redirect(`/site-structure/localizer/edit/${lang}`);
+  })
+);
+
+router.post(
+  "/localizer/delete-string/:lang/:defstring",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { lang, defstring } = req.params;
+    if (
+      lang === "__proto__" ||
+      defstring === "__proto__" ||
+      lang === "constructor"
+    ) {
+      res.redirect(`/`);
+      return;
+    }
+    const cfgStrings = getState()!.getConfigCopy("localizer_strings");
+    if (cfgStrings[lang]) delete cfgStrings[lang][defstring];
+    await getState()!.setConfig("localizer_strings", cfgStrings);
+    res.redirect(`/site-structure/localizer/edit/${lang}`);
+  })
+);
+
+/**
+ * @name post/localizer/save-lang
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
+router.post(
+  "/localizer/save-lang",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const form = languageForm(req);
+    form.validate(req.body || {});
+    if (form.hasErrors)
+      send_infoarch_page({
+        res,
+        req,
+        active_sub: "Languages",
+        sub2_page: "New",
+        contents: {
+          type: "card",
+          contents: [renderForm(form, req.csrfToken())],
+        },
+      });
+    else {
+      const lang = form.values;
+      const cfgLangs = getState()!.getConfig("localizer_languages");
+      await getState()!.setConfig("localizer_languages", {
+        ...cfgLangs,
+        [lang.locale]: lang,
+      });
+
+      if (!req.xhr)
+        res.redirect(`/site-structure/localizer/edit/${lang.locale}`);
+      else res.json({ success: "ok" });
+    }
+  })
+);
+
+/**
+ * @name post/localizer/save-lang
+ * @function
+ * @memberof module:routes/infoarch~infoarchRouter
+ * @function
+ */
+router.post(
+  "/localizer/delete-lang/:lang",
+  isAdmin,
+  error_catcher(async (req: Req, res: Res) => {
+    const { lang } = req.params;
+
+    const cfgLangs = getState()!.getConfig("localizer_languages");
+    if (cfgLangs[lang]) {
+      delete cfgLangs[lang];
+      await getState()!.setConfig("localizer_languages", cfgLangs);
+    }
+    if (!req.xhr) res.redirect(`/site-structure/localizer`);
+    else res.json({ success: "ok" });
+  })
+);

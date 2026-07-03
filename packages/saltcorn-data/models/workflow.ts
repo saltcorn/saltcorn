@@ -21,7 +21,6 @@ import Form from "./form.js";
 import { build_schema_data } from "../plugin-helper.js";
 import FieldRepeat from "./fieldrepeat.js";
 
-
 /**
  * Workflow class
  * @category saltcorn-data
@@ -119,7 +118,7 @@ class Workflow implements AbstractWorkflow {
    * @param {object} req
    * @returns {Promise<object>}
    */
-  async run(body?: any, req?: any): Promise<RunResult | undefined> {
+  async run(body?: any, req?: any): Promise<RunResult> {
     if (req) this.__ = (s: any) => req.__(s);
     if (!body || !body.stepName) {
       return this.runStep(body || {}, 0);
@@ -202,6 +201,7 @@ class Workflow implements AbstractWorkflow {
         : toCtx0;
       return this.runStep({ ...context, ...toCtx }, stepIx + 1);
     }
+    throw new Error("unknown workflow run result");
   }
 
   /**
@@ -209,7 +209,7 @@ class Workflow implements AbstractWorkflow {
    * @param {number} stepIx
    * @returns {Promise<object>}
    */
-  async runStep(context: any, stepIx: number): Promise<RunResult | undefined> {
+  async runStep(context: any, stepIx: number): Promise<RunResult> {
     if (stepIx >= this.steps.length) {
       return await this.onDone(context);
     }
@@ -319,6 +319,7 @@ class Workflow implements AbstractWorkflow {
         title: this.title(step, stepIx),
       };
     }
+    throw new Error("unknown workflow run result");
   }
 
   /**

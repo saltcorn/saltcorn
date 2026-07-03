@@ -45,6 +45,7 @@ import { renameSync, statSync, existsSync } from "fs";
 import mimeTypes from "mime-types";
 const { lookup } = mimeTypes;
 import type User from "./user.js";
+import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
 const posix = path.posix;
 const fsp = fs.promises;
 declare let window: any;
@@ -56,7 +57,7 @@ function xattr_set(fp: string, attrName: string, value: string): Promise<void> {
 }
 function xattr_get(fp: string, attrName: string): Promise<string> {
   return new Promise((resolve, reject) =>
-    fsx.get(fp, attrName, (err: string, attrBuf: Buffer) => {
+    fsx.get(fp, attrName, (err: string | null, attrBuf: Buffer) => {
       if (err) reject(err);
       else resolve(attrBuf?.toString?.("utf8"));
     })
@@ -1236,7 +1237,7 @@ class File {
   static async set_xattr_of_existing_file(
     name: string,
     absoluteFolder: string,
-    user: User
+    user: AbstractUser
   ): Promise<void> {
     if (!user.id)
       throw new Error("Unable to set the attributes, the user has no id");

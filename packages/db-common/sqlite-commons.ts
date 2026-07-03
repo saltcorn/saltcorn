@@ -156,7 +156,7 @@ export const buildInsertBulkSql = (
  */
 export const doCount = async (
   tbl: string,
-  whereObj: Where,
+  whereObj: Where | undefined,
   queryFunc: any,
   limit?: number
 ) => {
@@ -177,7 +177,7 @@ export const doCount = async (
  */
 export const doDeleteWhere = async (
   tbl: string,
-  whereObj: Where,
+  whereObj: Where | undefined,
   queryFunc: any
 ) => {
   const { where, values } = mkWhere(whereObj, true);

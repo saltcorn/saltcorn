@@ -39,7 +39,7 @@ import { Header, Layout, Req, Res } from "@saltcorn/types/base_types";
  */
 const restore_backup = (
   csrf: string,
-  inner: string,
+  inner: string | string[],
   action = `/admin/restore`
 ) =>
   form(

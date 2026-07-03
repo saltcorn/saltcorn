@@ -1,0 +1,52 @@
+/**
+ * @category server
+ * @module routes/edit
+ * @subcategory routes
+ */
+
+import Router from "express-promise-router";
+
+import { error_catcher, is_relative_url, safe_redirect } from "./utils.js";
+import Table from "@saltcorn/data/models/table";
+import { Req, Res } from "@saltcorn/types/base_types";
+
+/**
+ * @type {object}
+ * @const
+ * @namespace editRouter
+ * @category server
+ * @subcategory routes
+ */
+const router = Router();
+export default router;
+
+/**
+ * @name post/toggle/:name/:id/:field_name
+ * @function
+ * @memberof module:routes/edit~editRouter
+ * @function
+ */
+router.post(
+  "/toggle/:tableName/:id/:field_name",
+  error_catcher(async (req: Req, res: Res) => {
+    const { tableName, id, field_name } = req.params;
+    const { redirect } = req.query;
+    // todo check that works after where change
+    const table = Table.findOne({ name: tableName })!;
+
+    const row = (await table.getRow(
+      { [table.pk_name]: id },
+      { forUser: req.user, forPublic: !req.user }
+    ))!;
+    if (row)
+      await table.updateRow(
+        { [field_name]: !row[field_name] },
+        id,
+        req.user || { role_id: 100 }
+      );
+
+    if (req.xhr) res.send("OK");
+    else if (req.get("referer")) res.redirect(req.get("referer")!);
+    else safe_redirect(res, redirect as string | undefined, `/list/${table.name}`);
+  })
+);
