@@ -2375,7 +2375,9 @@ router.post(
       res.redirect("/auth/twofa/setup/totp");
       return;
     }
-    const code = `${form.values.totpCode}`;
+    // totpCode is read as an Integer, which strips any leading zero(s)
+    // (~10% of TOTP codes). Pad back to 6 digits before verifying.
+    const code = `${form.values.totpCode}`.padStart(6, "0");
     const rv = totp.verify(code, user._attributes.totp_key, {
       time: 30,
     });
@@ -2432,7 +2434,9 @@ router.post(
       res.redirect("/auth/twofa/disable/totp");
       return;
     }
-    const code = `${form.values.totpCode}`;
+    // totpCode is read as an Integer, which strips any leading zero(s)
+    // (~10% of TOTP codes). Pad back to 6 digits before verifying.
+    const code = `${form.values.totpCode}`.padStart(6, "0");
     const rv = totp.verify(code, user._attributes.totp_key, {
       time: 30,
     });
