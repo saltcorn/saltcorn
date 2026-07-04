@@ -1255,6 +1255,7 @@ describe("RLS policy integration", () => {
     const polNames = pols.rows.map((r: any) => r.polname);
     expect(polNames).toContain("sc_rls_owner");
     expect(polNames).toContain("sc_rls_elevated");
+    expect(polNames).toContain("sc_rls_elevated_write");
 
     // verify the owner policy USING clause references the ownership column
     // (row-level filtering is only testable with a non-superuser connection,

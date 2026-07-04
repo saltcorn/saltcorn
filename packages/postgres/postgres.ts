@@ -680,12 +680,16 @@ export const listScTables = async (): Promise<{ name: string }[]> => {
 
 export const setRequestUserContext = async (client: any, isLocal = false) => {
   const reqCon = getRequestContext();
+  // No request context means an internal/background operation — leave GUC unset
+  // so COALESCE(…, 1) in sc_rls_elevated grants it admin-level access intentionally.
+  if (!reqCon) return;
   const user = reqCon?.req?.user;
-  if (!user?.id) return;
   await client.query(
     `SELECT set_config('app.current_user_id', $1, ${isLocal}), ` +
       `set_config('app.current_user_role', $2, ${isLocal})`,
-    [String(user.id), String(user.role_id ?? 100)]
+    user?.id
+      ? [String(user.id), String(user.role_id ?? 100)]
+      : ["0", "100"]
   );
 };
 

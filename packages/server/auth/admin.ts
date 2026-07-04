@@ -1000,10 +1000,7 @@ router.post(
       if (table.external) continue;
       const tbl = `${schema}"${db.sqlsanitize(table.name)}"`;
       if (enable_rls) {
-        if (table.ownership_field_id || table.ownership_formula) {
-          await db.query(`ALTER TABLE ${tbl} ENABLE ROW LEVEL SECURITY`);
-          await db.query(`ALTER TABLE ${tbl} FORCE ROW LEVEL SECURITY`);
-        }
+        await table.enableOwnershipRLS();
       } else {
         await db.query(`ALTER TABLE ${tbl} NO FORCE ROW LEVEL SECURITY`);
         await db.query(`ALTER TABLE ${tbl} DISABLE ROW LEVEL SECURITY`);

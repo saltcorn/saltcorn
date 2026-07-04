@@ -587,6 +587,7 @@ class Table implements AbstractTable {
 
     await db.query(`DROP POLICY IF EXISTS sc_rls_owner ON ${tbl}`);
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated ON ${tbl}`);
+    await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write ON ${tbl}`);
 
     await db.query(`
       CREATE POLICY sc_rls_owner ON ${tbl}
@@ -594,12 +595,19 @@ class Table implements AbstractTable {
       WITH CHECK (${ownerUsing})
     `);
 
-    // COALESCE to 1 (admin) when no GUC is set so internal queries outside
-    // transactions are not blocked.
+    // FOR SELECT uses min_role_read; FOR ALL uses min_role_write — PG applies USING to DELETE,
+    // so one FOR ALL USING(min_role_read) would let readers delete. COALESCE to 1 = internal access.
+    const roleGuc = `coalesce(nullif(current_setting('app.current_user_role', true), '')::integer, 1)`;
     await db.query(`
       CREATE POLICY sc_rls_elevated ON ${tbl}
-      USING     (coalesce(nullif(current_setting('app.current_user_role', true), '')::integer, 1) <= ${this.min_role_read})
-      WITH CHECK (coalesce(nullif(current_setting('app.current_user_role', true), '')::integer, 1) <= ${this.min_role_write})
+      FOR SELECT
+      USING     (${roleGuc} <= ${this.min_role_read})
+    `);
+    await db.query(`
+      CREATE POLICY sc_rls_elevated_write ON ${tbl}
+      FOR ALL
+      USING     (${roleGuc} <= ${this.min_role_write})
+      WITH CHECK (${roleGuc} <= ${this.min_role_write})
     `);
   }
 
@@ -615,6 +623,7 @@ class Table implements AbstractTable {
 
     await db.query(`DROP POLICY IF EXISTS sc_rls_owner ON ${tbl}`);
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated ON ${tbl}`);
+    await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write ON ${tbl}`);
     await db.query(`ALTER TABLE ${tbl} DISABLE ROW LEVEL SECURITY`);
   }
 
