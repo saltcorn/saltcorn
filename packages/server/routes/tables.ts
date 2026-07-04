@@ -1730,7 +1730,10 @@ router.post(
       ) {
         rest.ownership_formula = rest.ownership_field_id.replace("Fml:", "");
         rest.ownership_field_id = null;
-      } else rest.ownership_formula = null;
+      } else {
+        rest.ownership_formula = null;
+        if (rest.ownership_field_id === "") rest.ownership_field_id = null;
+      }
       let rlsError;
       await db.withTransaction(async () => {
         rlsError = await table.update(rest, { skipRls: hasError });

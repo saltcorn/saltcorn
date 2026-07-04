@@ -711,7 +711,6 @@ export const withTransaction = async (
   }
   sql_log("BEGIN;");
   await client.query("BEGIN;");
-  await setRequestUserContext(client, true);
   let aborted = false;
   const rollback = async () => {
     aborted = true;
@@ -719,6 +718,7 @@ export const withTransaction = async (
     await client.query("ROLLBACK;");
   };
   try {
+    await setRequestUserContext(client, true);
     const result = await f(rollback);
 
     if (!aborted) {

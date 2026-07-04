@@ -3302,7 +3302,7 @@ class Table implements AbstractTable {
       throw new Error("Read-only access");
 
     if (new_table_rec.ownership_field_id === ("" as any))
-      new_table_rec.ownership_field_id = null;
+      delete (new_table_rec as any).ownership_field_id;
     const existing = Table.findOne({ id: this.id });
     if (!existing) {
       throw new Error(`Unable to find table with id: ${this.id}`);

@@ -1233,9 +1233,11 @@ function formulaToRlsUsing(
       rchain.path.length === 2 &&
       rchain.path[1] === "id"
     ) {
-      return `"${sqlsanitize(
-        fkName
-      )}" IN (SELECT "id" FROM ${schema}"${sqlsanitize(
+      const refPk =
+        Table.findOne({ name: fkField.reftable_name })?.pk_name || "id";
+      return `"${sqlsanitize(fkName)}" IN (SELECT "${sqlsanitize(
+        refPk
+      )}" FROM ${schema}"${sqlsanitize(
         fkField.reftable_name
       )}" WHERE "${sqlsanitize(refField)}" = ${curUserId})`;
     }
