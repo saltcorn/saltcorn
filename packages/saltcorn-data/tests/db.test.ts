@@ -11,6 +11,7 @@ import {
 } from "@saltcorn/db-common/test_expect";
 
 import Table from "../models/table.js";
+import Field from "../models/field.js";
 import resetSchemaMod from "../db/reset_schema.js";
 import fixturesMod from "../db/fixtures.js";
 afterAll(db.close);
@@ -198,5 +199,188 @@ describe("delete where test", () => {
     });
     rows = await books.getRows();
     expect(rows.length).toBe(3);
+  });
+});
+
+describe("RLS CRUD enforcement", () => {
+  if (db.isSQLite) return;
+
+  const WRITER = { id: 201, role: 40 }; // role 40 = staff (min_role_write)
+  const READER = { id: 202, role: 80 }; // role 80 = user  (min_role_read only)
+  const PUBLIC = { id: 0, role: 100 }; // unauthenticated
+
+  let table: Table;
+  let writerRowId: number;
+  let readerRowId: number;
+
+  const asUser = (user: { id: number; role: number }, fn: () => Promise<any>) =>
+    runWithTenant(
+      {
+        tenant: db.getTenantSchema(),
+        req: { user: { id: user.id, role_id: user.role } },
+      },
+      () =>
+        db.withTransaction(async () => {
+          await db.query("SET LOCAL ROLE saltcorn_rls_tester");
+          return fn();
+        })
+    );
+
+  beforeAll(async () => {
+    // Clean up any leftover from a previous failed run.
+    const existing = Table.findOne({ name: "rls_crud_test" });
+    if (existing) await existing.delete();
+
+    const newTable = await Table.create("rls_crud_test");
+    const ownerField = await Field.create({
+      table: newTable,
+      label: "Owner",
+      name: "owner_id",
+      type: "Integer",
+      required: false,
+    });
+    await Field.create({
+      table: newTable,
+      label: "Name",
+      name: "name",
+      type: "String",
+      required: false,
+    });
+    table = Table.findOne({ name: "rls_crud_test" })!;
+    await table.update({
+      min_role_read: 80,
+      min_role_write: 40,
+      ownership_field_id: ownerField.id,
+    });
+
+    // Non-superuser role so RLS is enforced inside asUser transactions.
+    // Superusers bypass FORCE ROW LEVEL SECURITY; SET LOCAL ROLE switches identity.
+    await db.query(`DROP ROLE IF EXISTS saltcorn_rls_tester`);
+    await db.query(`CREATE ROLE saltcorn_rls_tester NOSUPERUSER NOLOGIN`);
+    const pfx = db.getTenantSchemaPrefix();
+    await db.query(
+      `GRANT SELECT, INSERT, UPDATE, DELETE ON ${pfx}"rls_crud_test" TO saltcorn_rls_tester`
+    );
+    const seqRef = `${pfx}"rls_crud_test_id_seq"`;
+    await db.query(`GRANT USAGE ON SEQUENCE ${seqRef} TO saltcorn_rls_tester`);
+
+    // Seed rows via pool (no GUC → role defaults to 1 = admin → sc_rls_elevated_write passes).
+    writerRowId = await table.insertRow({
+      owner_id: WRITER.id,
+      name: "writer-owned",
+    });
+    readerRowId = await table.insertRow({
+      owner_id: READER.id,
+      name: "reader-owned",
+    });
+  });
+
+  afterAll(async () => {
+    await table.delete();
+    await db.query(`DROP ROLE IF EXISTS saltcorn_rls_tester`);
+  });
+
+  // ── SELECT ────────────────────────────────────────────────────────────────
+
+  it("writer sees all rows via sc_rls_elevated", async () => {
+    const rows = await asUser(WRITER, () => table.getRows());
+    expect(rows.map((r: any) => r.id)).toEqual(
+      expect.arrayContaining([writerRowId, readerRowId])
+    );
+  });
+
+  it("reader sees all rows via sc_rls_elevated", async () => {
+    const rows = await asUser(READER, () => table.getRows());
+    expect(rows.map((r: any) => r.id)).toEqual(
+      expect.arrayContaining([writerRowId, readerRowId])
+    );
+  });
+
+  it("public user sees no rows", async () => {
+    const rows = await asUser(PUBLIC, () => table.getRows());
+    expect(rows).toHaveLength(0);
+  });
+
+  // ── INSERT ────────────────────────────────────────────────────────────────
+
+  it("writer can insert a row owned by anyone", async () => {
+    const newId = await asUser(WRITER, async () => {
+      const id = await table.insertRow({ owner_id: READER.id, name: "temp" });
+      await table.deleteRows({ id });
+      return id;
+    });
+    expect(newId).toBeDefined();
+  });
+
+  it("reader can insert a row they own", async () => {
+    const newId = await asUser(READER, async () => {
+      const id = await table.insertRow({
+        owner_id: READER.id,
+        name: "reader self-insert",
+      });
+      await table.deleteRows({ id });
+      return id;
+    });
+    expect(newId).toBeDefined();
+  });
+
+  it("reader cannot insert a row owned by someone else", async () => {
+    await expect(
+      asUser(READER, () =>
+        table.insertRow({ owner_id: WRITER.id, name: "reader forging owner" })
+      )
+    ).rejects.toThrow();
+  });
+
+  // ── UPDATE ────────────────────────────────────────────────────────────────
+
+  it("writer can update any row", async () => {
+    await asUser(WRITER, () =>
+      table.updateRow({ name: "writer-updated" }, readerRowId)
+    );
+    const row = await table.getRow({ id: readerRowId });
+    expect(row?.name).toBe("writer-updated");
+  });
+
+  it("reader can update their own row", async () => {
+    await asUser(READER, () =>
+      table.updateRow({ name: "reader-updated" }, readerRowId)
+    );
+    const row = await table.getRow({ id: readerRowId });
+    expect(row?.name).toBe("reader-updated");
+  });
+
+  it("reader cannot update a row they do not own", async () => {
+    const before = await table.getRow({ id: writerRowId });
+    await asUser(READER, () =>
+      table.updateRow({ name: "hacked" }, writerRowId)
+    );
+    const after = await table.getRow({ id: writerRowId });
+    expect(after?.name).toBe(before?.name);
+  });
+
+  // ── DELETE ────────────────────────────────────────────────────────────────
+
+  it("writer can delete any row", async () => {
+    const tmpId = await table.insertRow({
+      owner_id: READER.id,
+      name: "to be deleted by writer",
+    });
+    await asUser(WRITER, () => table.deleteRows({ id: tmpId }));
+    expect(await table.getRow({ id: tmpId })).toBeNull();
+  });
+
+  it("reader cannot delete a row they do not own (DELETE uses min_role_write, not min_role_read)", async () => {
+    await asUser(READER, () => table.deleteRows({ id: writerRowId }));
+    expect(await table.getRow({ id: writerRowId })).toBeTruthy();
+  });
+
+  it("reader can delete their own row", async () => {
+    const tmpId = await table.insertRow({
+      owner_id: READER.id,
+      name: "reader-owned deletable",
+    });
+    await asUser(READER, () => table.deleteRows({ id: tmpId }));
+    expect(await table.getRow({ id: tmpId })).toBeNull();
   });
 });

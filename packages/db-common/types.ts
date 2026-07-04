@@ -10,6 +10,7 @@ type RequestContext = {
 
 export type DbClient = {
   query: (text: string, values?: any[]) => Promise<any>;
+  release: () => void;
 };
 
 export type DbExportsType = {
