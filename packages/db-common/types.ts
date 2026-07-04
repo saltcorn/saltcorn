@@ -8,6 +8,10 @@ type RequestContext = {
   req?: any;
 };
 
+export type DbClient = {
+  query: (text: string, values?: any[]) => Promise<any>;
+};
+
 export type DbExportsType = {
   tenant: typeof multiTenant;
   sqlsanitize: (s?: string) => string;
@@ -73,7 +77,7 @@ export type DbExportsType = {
       getLocale: () => string;
       __: (str: string) => string;
     };
-    client?: object | string | null;
+    client?: DbClient | null;
   };
   drop_fts_index: (table: string) => Promise<void>;
   drop_index: (table: string, columns: string[]) => Promise<void>;
