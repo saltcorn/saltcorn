@@ -3332,11 +3332,20 @@ class Table implements AbstractTable {
         new_table.min_role_read !== existing.min_role_read ||
         new_table.min_role_write !== existing.min_role_write;
       if (ownershipChanged && !opts?.skipRls) {
+        // Use a savepoint so a DDL failure rolls back only the policy statements,
+        // not the _sc_tables UPDATE above — otherwise PG aborts the whole transaction
+        const txClient = db.getRequestContext()?.client;
+        if (txClient) await txClient.query("SAVEPOINT sc_rls");
         try {
           if (new_table.ownership_field_id || new_table.ownership_formula)
             await new_table.enableOwnershipRLS();
           else await new_table.disableOwnershipRLS();
+          if (txClient) await txClient.query("RELEASE SAVEPOINT sc_rls");
         } catch (e: any) {
+          if (txClient) {
+            await txClient.query("ROLLBACK TO SAVEPOINT sc_rls");
+            await txClient.query("RELEASE SAVEPOINT sc_rls");
+          }
           Object.assign(this, new_table_rec);
           return e?.message || String(e);
         }
