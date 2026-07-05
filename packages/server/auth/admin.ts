@@ -882,25 +882,6 @@ router.get(
       label: r.role,
     }));
 
-    let rlsFormHtml = "";
-    if (!db.isSQLite) {
-      const rlsForm = new Form({
-        action: "/useradmin/table-access",
-        noSubmitButton: true,
-        onChange: "saveAndContinue(this)",
-        fields: [
-          {
-            name: "enable_rls",
-            label: req.__("Enable Row Level Security"),
-            type: "Bool",
-            sublabel: req.__("Enforce ownership via PostgreSQL Row Level Security"),
-          },
-        ],
-      });
-      rlsForm.values = { enable_rls: getState()!.getConfig("enable_rls", true) };
-      rlsFormHtml = renderForm(rlsForm, req.csrfToken());
-    }
-
     const contents = [];
     for (const table of tables) {
       if (table.external) continue;
@@ -956,6 +937,16 @@ router.get(
             ),
             options: roleOptions,
           },
+          ...(!db.isSQLite
+            ? [
+                {
+                  name: "rls_enabled",
+                  label: req.__("Enable Row Level Security"),
+                  type: "Bool",
+                  sublabel: req.__("Enforce ownership at the PostgreSQL level"),
+                },
+              ]
+            : []),
         ],
       });
       form.hidden("id", "name");
@@ -977,36 +968,9 @@ router.get(
         type: "card",
         title: req.__("Table access"),
         titleAjaxIndicator: true,
-        contents: [
-          ...(rlsFormHtml
-            ? [div(h5({ class: "text-primary" }, req.__("Common")), rlsFormHtml)]
-            : []),
-          ...contents,
-        ],
+        contents,
       },
     });
-  })
-);
-
-router.post(
-  "/table-access",
-  isAdmin,
-  error_catcher(async (req, res) => {
-    const enable_rls = req.body.enable_rls === "on" || req.body.enable_rls === true;
-    await getState()!.setConfig("enable_rls", enable_rls);
-    const schema = db.getTenantSchemaPrefix();
-    const tables = await Table.find();
-    for (const table of tables) {
-      if (table.external) continue;
-      const tbl = `${schema}"${db.sqlsanitize(table.name)}"`;
-      if (enable_rls) {
-        await table.enableOwnershipRLS();
-      } else {
-        await db.query(`ALTER TABLE ${tbl} NO FORCE ROW LEVEL SECURITY`);
-        await db.query(`ALTER TABLE ${tbl} DISABLE ROW LEVEL SECURITY`);
-      }
-    }
-    res.json({ success: "ok" });
   })
 );
 

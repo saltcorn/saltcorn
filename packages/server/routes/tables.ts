@@ -201,6 +201,14 @@ const tableForm = async (table: any, req: Req) => {
               name: "is_user_group",
               type: "Bool",
             },
+            {
+              label: req.__("Enable Row Level Security"),
+              sublabel: req.__(
+                "Enforce ownership at the PostgreSQL level. Requires an ownership field and PostgreSQL."
+              ),
+              name: "rls_enabled",
+              type: "Bool",
+            },
           ]
         : []),
       // description of table
@@ -1712,6 +1720,7 @@ router.post(
       if (!rest.versioned) rest.versioned = false;
       if (!rest.has_sync_info) rest.has_sync_info = false;
       rest.is_user_group = !!rest.is_user_group;
+      rest.rls_enabled = !!rest.rls_enabled;
       if (rest.ownership_field_id === "_formula") {
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);

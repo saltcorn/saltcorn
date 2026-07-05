@@ -272,6 +272,9 @@ class Table implements AbstractTable {
   /** Is this a user group? If yes it will appear as options in the ownership dropdown */
   is_user_group: boolean;
 
+  /** Whether PostgreSQL Row Level Security is enabled for this table */
+  rls_enabled: boolean;
+
   /** Name of the table provider for this table (not a database table) */
   provider_name?: string;
 
@@ -298,6 +301,7 @@ class Table implements AbstractTable {
     this.versioned = !!o.versioned;
     this.has_sync_info = !!o.has_sync_info;
     this.is_user_group = !!o.is_user_group;
+    this.rls_enabled = !!o.rls_enabled;
     this.external = false;
     this.description = o.description;
     this.constraints = o.constraints || [];
@@ -571,7 +575,7 @@ class Table implements AbstractTable {
    */
   async enableOwnershipRLS(): Promise<void> {
     if (db.isSQLite) return;
-    if (!getState()?.getConfig("enable_rls", true)) return;
+    if (!this.rls_enabled) return;
 
     const schema = db.getTenantSchemaPrefix();
     const tbl = `${schema}"${sqlsanitize(this.name)}"`;
@@ -617,7 +621,6 @@ class Table implements AbstractTable {
    */
   async disableOwnershipRLS(): Promise<void> {
     if (db.isSQLite) return;
-    if (!getState()?.getConfig("enable_rls", true)) return;
     const schema = db.getTenantSchemaPrefix();
     const tbl = `${schema}"${sqlsanitize(this.name)}"`;
 
@@ -625,6 +628,41 @@ class Table implements AbstractTable {
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated ON ${tbl}`);
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write ON ${tbl}`);
     await db.query(`ALTER TABLE ${tbl} DISABLE ROW LEVEL SECURITY`);
+  }
+
+  /**
+   * Run `fn` with GUCs set for `user` so RLS policies evaluate the right identity.
+   * Uses SET LOCAL inside an existing transaction, or a dedicated client otherwise.
+   * @param user - the user whose id and role_id are applied as GUCs; no-op if undefined
+   * @param fn - the database operation to execute under the user's RLS context
+   */
+  private async withRlsUser<T>(
+    user: AbstractUser | undefined,
+    fn: () => Promise<T>
+  ): Promise<T> {
+    if (!this.rls_enabled || db.isSQLite || !user) return fn();
+    const uid = user.id ?? 0;
+    const rid = user.role_id ?? 100;
+    const ctx = db.getRequestContext();
+    if (ctx?.client) {
+      await ctx.client.query(`SET LOCAL app.current_user_id = '${uid}'`);
+      await ctx.client.query(`SET LOCAL app.current_user_role = '${rid}'`);
+      return fn();
+    }
+    // No open transaction — use a dedicated client so session-level GUCs
+    // don't leak to other pool connections.
+    const client = await db.getClient();
+    if (ctx) ctx.client = client;
+    try {
+      await client.query(`SET app.current_user_id = '${uid}'`);
+      await client.query(`SET app.current_user_role = '${rid}'`);
+      return await fn();
+    } finally {
+      await client.query(`RESET app.current_user_id`);
+      await client.query(`RESET app.current_user_role`);
+      if (ctx) ctx.client = null;
+      client.release();
+    }
   }
 
   /**
@@ -1342,7 +1380,9 @@ class Table implements AbstractTable {
             }
           }
 
-          await db.deleteWhere(this.name, where);
+          await this.withRlsUser(use_user, () =>
+            db.deleteWhere(this.name, where)
+          );
           if (this.has_sync_info && preDeleteRows) {
             const dbTime = await db.time();
             await this.addDeleteSyncInfo(
@@ -1435,10 +1475,8 @@ class Table implements AbstractTable {
 
     const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     this.normalise_fkey_values(where);
-    const row = await db.selectMaybeOne(
-      this.name,
-      where,
-      this.processSelectOptions(selopts1)
+    const row = await this.withRlsUser(use_forUser, () =>
+      db.selectMaybeOne(this.name, where, this.processSelectOptions(selopts1))
     );
     if (!row || !this.fields) return null;
     if (role && role > this.min_role_read) {
@@ -1508,10 +1546,8 @@ class Table implements AbstractTable {
       return [];
     }
     this.normalise_fkey_values(where);
-    let rows = await db.select(
-      this.name,
-      where,
-      this.processSelectOptions(selopts1)
+    let rows = await this.withRlsUser(use_forUser, () =>
+      db.select(this.name, where, this.processSelectOptions(selopts1))
     );
     if (role && role > this.min_role_read) {
       //check ownership
@@ -1967,10 +2003,9 @@ class Table implements AbstractTable {
         forUser: use_user,
         joinFields,
       });
-    await db.update(this.name, v, id, {
-      pk_name,
-      ...sqliteJsonCols,
-    });
+    await this.withRlsUser(use_user, () =>
+      db.update(this.name, v, id, { pk_name, ...sqliteJsonCols })
+    );
 
     if (this.has_sync_info) {
       const oldInfo = await this.latestSyncInfo(id as PrimaryKeyValue);
@@ -2253,9 +2288,16 @@ class Table implements AbstractTable {
   delete_url(row: Row, moreQuery?: string) {
     const comppk = this.composite_pk_names;
     if (!comppk)
-      return `/delete/${this.name}/${encodeURIComponent(row[this.pk_name])}${moreQuery ? `?${moreQuery}` : ""}`;
+      return `/delete/${this.name}/${encodeURIComponent(row[this.pk_name])}${
+        moreQuery ? `?${moreQuery}` : ""
+      }`;
     else
-      return `/delete/${this.name}?${comppk.map((pknm) => `${encodeURIComponent(pknm)}=${encodeURIComponent(row[pknm])}`).join("&")}${moreQuery ? `&${moreQuery}` : ""}`;
+      return `/delete/${this.name}?${comppk
+        .map(
+          (pknm) =>
+            `${encodeURIComponent(pknm)}=${encodeURIComponent(row[pknm])}`
+        )
+        .join("&")}${moreQuery ? `&${moreQuery}` : ""}`;
   }
 
   get composite_pk_names(): string[] | null {
@@ -2404,7 +2446,7 @@ class Table implements AbstractTable {
         joinFields,
         fields
       );
-    let v, id;
+    let v: Row, id;
     const state = nsState.getState()!;
     const sqliteJsonCols = !isNode()
       ? {
@@ -2503,7 +2545,9 @@ class Table implements AbstractTable {
         `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
       );
       this.prepare_row_for_writing(v_in);
-      id = await db.insert(this.name, v_in, { pk_name, ...sqliteJsonCols });
+      id = await this.withRlsUser(use_user, () =>
+        db.insert(this.name, v_in, { pk_name, ...sqliteJsonCols })
+      );
       // db.insert returns SQLite rowid, not the PK for non-integer PK types
       if (!isNode() && v_in[pk_name] != null) id = v_in[pk_name];
       let existing = await this.getJoinedRows({
@@ -2540,10 +2584,9 @@ class Table implements AbstractTable {
       v = await apply_calculated_fields_stored(v_in, fields, this, use_user);
       this.prepare_row_for_writing(v);
       state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
-      id = await db.insert(this.name, v, {
-        pk_name,
-        ...sqliteJsonCols,
-      });
+      id = await this.withRlsUser(use_user, () =>
+        db.insert(this.name, v, { pk_name, ...sqliteJsonCols })
+      );
       // db.insert returns SQLite rowid, not the PK for non-integer PK types
       if (!isNode() && v[pk_name] != null) id = v[pk_name];
     }
@@ -3330,14 +3373,18 @@ class Table implements AbstractTable {
         new_table.ownership_field_id !== existing.ownership_field_id ||
         new_table.ownership_formula !== existing.ownership_formula ||
         new_table.min_role_read !== existing.min_role_read ||
-        new_table.min_role_write !== existing.min_role_write;
+        new_table.min_role_write !== existing.min_role_write ||
+        new_table.rls_enabled !== existing.rls_enabled;
       if (ownershipChanged && !opts?.skipRls) {
         // Use a savepoint so a DDL failure rolls back only the policy statements,
         // not the _sc_tables UPDATE above — otherwise PG aborts the whole transaction
         const txClient = db.getRequestContext()?.client;
         if (txClient) await txClient.query("SAVEPOINT sc_rls");
         try {
-          if (new_table.ownership_field_id || new_table.ownership_formula)
+          if (
+            new_table.rls_enabled &&
+            (new_table.ownership_field_id || new_table.ownership_formula)
+          )
             await new_table.enableOwnershipRLS();
           else await new_table.disableOwnershipRLS();
           if (txClient) await txClient.query("RELEASE SAVEPOINT sc_rls");
@@ -4571,7 +4618,9 @@ ${rejectDetails}`,
             joinTables.push(jtNm1);
             joinq += `\n left join ${schema}"${sqlsanitize(
               finalTable
-            )}" "${jtNm1}" on "${jtNm1}"."${finalTableObj!.pk_name}"="${lastJtNm}"."${sqlsanitize(through1)}"`;
+            )}" "${jtNm1}" on "${jtNm1}"."${
+              finalTableObj!.pk_name
+            }"="${lastJtNm}"."${sqlsanitize(through1)}"`;
           }
 
           last_reffield = throughRefField;

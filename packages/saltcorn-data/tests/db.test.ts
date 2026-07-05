@@ -251,6 +251,7 @@ describe("RLS CRUD enforcement", () => {
       min_role_read: 80,
       min_role_write: 40,
       ownership_field_id: ownerField.id,
+      rls_enabled: true,
     });
 
     // Non-superuser role so RLS is enforced inside asUser transactions.

@@ -1228,15 +1228,13 @@ describe("RLS policy integration", () => {
   it("creates pg policies and filters rows by GUC", async () => {
     if (db.isSQLite) return;
 
-    const schema = db.getTenantSchemaPrefix();
-
     const rooms = await Table.create("RlsRooms");
     const ownerField = await Field.create({
       table: rooms,
       name: "owner",
       type: "Key to users",
     });
-    await rooms.update({ ownership_field_id: ownerField.id });
+    await rooms.update({ ownership_field_id: ownerField.id, rls_enabled: true });
 
     // verify pg_class flags
     const cls = await db.query(
