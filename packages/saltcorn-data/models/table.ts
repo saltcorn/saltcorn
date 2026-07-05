@@ -1256,7 +1256,10 @@ class Table implements AbstractTable {
       return f?.name ?? null;
     })();
 
-    if (this.updateWhereWithOwnership(where, use_user)?.notAuthorized) {
+    if (
+      !this.rls_enabled &&
+      this.updateWhereWithOwnership(where, use_user)?.notAuthorized
+    ) {
       const state = nsState.getState()!;
       state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
       return;
@@ -1336,19 +1339,21 @@ class Table implements AbstractTable {
       async () => {
         if (rows) {
           const pkIds = rows.map((r: GenObj) => r[this.pk_name]);
-          if (!db.isSQLite) {
-            await db.deleteWhere(this.name, {
-              [this.pk_name]: { in: pkIds },
-            });
-          } else {
-            await db.query(
-              `delete from "${db.sqlsanitize(
-                this.name
-              )}" where "${db.sqlsanitize(this.pk_name)}" in (${pkIds.join(
-                ","
-              )})`
-            );
-          }
+          await this.withRlsUser(use_user, async () => {
+            if (!db.isSQLite) {
+              await db.deleteWhere(this.name, {
+                [this.pk_name]: { in: pkIds },
+              });
+            } else {
+              await db.query(
+                `delete from "${db.sqlsanitize(
+                  this.name
+                )}" where "${db.sqlsanitize(this.pk_name)}" in (${pkIds.join(
+                  ","
+                )})`
+              );
+            }
+          });
           for (const row of rows) await this.auto_update_calc_aggregations(row);
           if (this.has_sync_info) {
             const dbTime = await db.time();
@@ -1479,7 +1484,7 @@ class Table implements AbstractTable {
       db.selectMaybeOne(this.name, where, this.processSelectOptions(selopts1))
     );
     if (!row || !this.fields) return null;
-    if (role && role > this.min_role_read) {
+    if (!this.rls_enabled && role && role > this.min_role_read) {
       //check ownership
       if (forPublic) return null;
       else if (this.ownership_field_id) {
@@ -1536,6 +1541,7 @@ class Table implements AbstractTable {
       (this.constructor as typeof Table).fixed_user || forUser;
     const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     if (
+      !this.rls_enabled &&
       role &&
       this.updateWhereWithOwnership(
         where,
@@ -1549,7 +1555,7 @@ class Table implements AbstractTable {
     let rows = await this.withRlsUser(use_forUser, () =>
       db.select(this.name, where, this.processSelectOptions(selopts1))
     );
-    if (role && role > this.min_role_read) {
+    if (!this.rls_enabled && role && role > this.min_role_read) {
       //check ownership
       if (forPublic) return [];
       else if (this.ownership_field_id) {
@@ -1625,6 +1631,7 @@ class Table implements AbstractTable {
   ): Promise<any[]> {
     const useWhere = { ...(whereObj || {}) };
     if (
+      !this.rls_enabled &&
       user &&
       user.role_id > this.min_role_read &&
       !(this.ownership_field_id || this.ownership_formula)
@@ -1632,29 +1639,32 @@ class Table implements AbstractTable {
       return [];
     }
     if (
+      !this.rls_enabled &&
       user &&
       user.role_id > this.min_role_read &&
       (this.ownership_field_id || this.ownership_formula)
     ) {
       this.updateWhereWithOwnership(useWhere, user, true);
     }
-    if (Object.keys(useWhere).length) {
-      const { where, values } = mkWhere(useWhere, db.isSQLite);
-      const res = await db.query(
-        `select distinct "${db.sqlsanitize(fieldnm)}" from ${
-          this.sql_name
-        } ${where} order by "${db.sqlsanitize(fieldnm)}" limit 1000`,
-        values
-      );
-      return res.rows.map((r: Row) => r[fieldnm]);
-    } else {
-      const res = await db.query(
-        `select distinct "${db.sqlsanitize(fieldnm)}" from ${
-          this.sql_name
-        } order by "${db.sqlsanitize(fieldnm)}" limit 1000`
-      );
-      return res.rows.map((r: Row) => r[fieldnm]);
-    }
+    return this.withRlsUser(user, async () => {
+      if (Object.keys(useWhere).length) {
+        const { where, values } = mkWhere(useWhere, db.isSQLite);
+        const res = await db.query(
+          `select distinct "${db.sqlsanitize(fieldnm)}" from ${
+            this.sql_name
+          } ${where} order by "${db.sqlsanitize(fieldnm)}" limit 1000`,
+          values
+        );
+        return res.rows.map((r: Row) => r[fieldnm]);
+      } else {
+        const res = await db.query(
+          `select distinct "${db.sqlsanitize(fieldnm)}" from ${
+            this.sql_name
+          } order by "${db.sqlsanitize(fieldnm)}" limit 1000`
+        );
+        return res.rows.map((r: Row) => r[fieldnm]);
+      }
+    });
   }
 
   /**
@@ -1799,6 +1809,7 @@ class Table implements AbstractTable {
         fields
       );
     if (
+      !this.rls_enabled &&
       use_user &&
       role &&
       (role > this.min_role_write || role > this.min_role_read)
@@ -2460,7 +2471,7 @@ class Table implements AbstractTable {
 
     this.normalise_fkey_values(v_in);
 
-    if (use_user && use_user.role_id > this.min_role_write) {
+    if (!this.rls_enabled && use_user && use_user.role_id > this.min_role_write) {
       if (this.ownership_field_id) {
         const owner_field = fields.find(
           (f) => f.id === this.ownership_field_id
@@ -4399,6 +4410,7 @@ ${rejectDetails}`,
       (this.constructor as typeof Table).fixed_user || forUser;
     const where = { ...(options?.where || {}) };
     if (
+      !this.rls_enabled &&
       role &&
       this.updateWhereWithOwnership(
         where,
