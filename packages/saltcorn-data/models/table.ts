@@ -409,8 +409,8 @@ class Table implements AbstractTable {
       where?.id
         ? (v: TableCfg) => v.id === +where.id
         : where?.name
-          ? (v: TableCfg) => v.name === where.name
-          : satisfies(where)
+        ? (v: TableCfg) => v.name === where.name
+        : satisfies(where)
     );
     if (tbl?.provider_name) {
       return new this(structuredClone(tbl)).to_provided_table() as Table;
@@ -672,8 +672,14 @@ class Table implements AbstractTable {
     const rid = String(user.role_id ?? 100);
     const ctx = db.getRequestContext();
     if (ctx?.client) {
-      await ctx.client.query(`SELECT set_config('app.current_user_id', $1, true)`, [uid]);
-      await ctx.client.query(`SELECT set_config('app.current_user_role', $1, true)`, [rid]);
+      await ctx.client.query(
+        `SELECT set_config('app.current_user_id', $1, true)`,
+        [uid]
+      );
+      await ctx.client.query(
+        `SELECT set_config('app.current_user_role', $1, true)`,
+        [rid]
+      );
       return fn();
     }
     // No open transaction — use a dedicated client so session-level GUCs
@@ -681,12 +687,22 @@ class Table implements AbstractTable {
     const client = await db.getClient();
     if (ctx) ctx.client = client;
     try {
-      await client.query(`SELECT set_config('app.current_user_id', $1, false)`, [uid]);
-      await client.query(`SELECT set_config('app.current_user_role', $1, false)`, [rid]);
+      await client.query(
+        `SELECT set_config('app.current_user_id', $1, false)`,
+        [uid]
+      );
+      await client.query(
+        `SELECT set_config('app.current_user_role', $1, false)`,
+        [rid]
+      );
       return await fn();
     } finally {
-      try { await client.query(`RESET app.current_user_id`); } catch (_) {}
-      try { await client.query(`RESET app.current_user_role`); } catch (_) {}
+      try {
+        await client.query(`RESET app.current_user_id`);
+      } catch (_) {}
+      try {
+        await client.query(`RESET app.current_user_role`);
+      } catch (_) {}
       if (ctx) ctx.client = null;
       client.release();
     }
@@ -875,14 +891,16 @@ class Table implements AbstractTable {
         (typeof pk_field === "string"
           ? pk_field
           : typeof pk_field?.type === "string"
-            ? pk_field?.type
-            : pk_field?.type?.name) || "Integer";
+          ? pk_field?.type
+          : pk_field?.type?.name) || "Integer";
     }
     if (pk_type !== "Integer") {
       const type = getState()!.types[pk_type];
       if (!type)
         throw new Error(
-          `Cannot find primary key type ${pk_type} in fields ${JSON.stringify(fields)}`
+          `Cannot find primary key type ${pk_type} in fields ${JSON.stringify(
+            fields
+          )}`
         );
       pk_sql_type = type.sql_name as string;
       if (type.primaryKey?.default_sql)
@@ -981,7 +999,8 @@ class Table implements AbstractTable {
 
     if (table.provider_name) {
       const provider = getState()!.table_providers[table.provider_name];
-      if ((provider as any)?.on_create) await (provider as any)?.on_create(table);
+      if ((provider as any)?.on_create)
+        await (provider as any)?.on_create(table);
       return table.to_provided_table() as Table;
     }
     return table;
@@ -1185,7 +1204,7 @@ class Table implements AbstractTable {
             const insertParams: any[] = [tsParam];
             const valueClauses = pkVals.map((pkVal, i) => {
               const ownerVal = ownerFieldName
-                ? (ids[i][ownerFieldName] ?? null)
+                ? ids[i][ownerFieldName] ?? null
                 : null;
               const ownerFieldsVal =
                 formulaTopKeys && formulaTopKeys.length > 0
@@ -1226,9 +1245,7 @@ class Table implements AbstractTable {
         }
       },
       (e: Error) => {
-        nsState
-          .getState()!
-          .log(2, `Error in addDeleteSyncInfo: ${e.message}`);
+        nsState.getState()!.log(2, `Error in addDeleteSyncInfo: ${e.message}`);
       }
     );
   }
@@ -1255,121 +1272,120 @@ class Table implements AbstractTable {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
     if ((this.constructor as typeof Table).read_only)
       throw new Error("Read-only access");
-
-    //Fast truncate if user is admin and where is blank
-    const cfields = await Field.find(
-      { reftable_name: this.name },
-      { cached: true }
-    );
-    if (
-      (!use_user || use_user?.role_id === 1) &&
-      Object.keys(where).length == 0 &&
-      db.truncate &&
-      noTrigger &&
-      !cfields.length
-    ) {
-      let done = false;
-      await db.tryCatchInTransaction(async () => {
-        await db.truncate(this.name);
-        done = true;
-      });
-      if (done) return;
-    }
-
-    // get triggers on delete
-    const triggers = await Trigger.getTableTriggers("Delete", this);
-    const fields = this.fields;
-
-    const ownerFieldName: string | null = (() => {
-      if (!this.has_sync_info || !this.ownership_field_id) return null;
-      const f = fields?.find((f) => f.id === this.ownership_field_id);
-      return f?.name ?? null;
-    })();
-
-    if (
-      !this.canEnforceRls() &&
-      this.updateWhereWithOwnership(where, use_user)?.notAuthorized
-    ) {
-      const state = nsState.getState()!;
-      state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
-      return;
-    }
-    this.normalise_fkey_values(where);
-    const calc_agg_fields = await Field.find(
-      {
-        calculated: true,
-        stored: true,
-        expression: "__aggregation",
-        attributes: { json: { table: this.name } },
-      },
-      { cached: true }
-    );
-    // Join fields needed to snapshot ownership_formula values into sync_info.
-    // Computed once here; used either via the existing rows fetch (if it runs)
-    // or via a separate minimal fetch in the else branch below.
-    const ownershipJoinFields: JoinFields = {};
-    if (this.has_sync_info && this.ownership_formula) {
-      add_free_variables_to_joinfields(
-        freeVariables(this.ownership_formula),
-        ownershipJoinFields,
-        fields
+    return this.withRlsUser(use_user, async () => {
+      //Fast truncate if user is admin and where is blank
+      const cfields = await Field.find(
+        { reftable_name: this.name },
+        { cached: true }
       );
-    }
+      if (
+        (!use_user || use_user?.role_id === 1) &&
+        Object.keys(where).length == 0 &&
+        db.truncate &&
+        noTrigger &&
+        !cfields.length
+      ) {
+        let done = false;
+        await db.tryCatchInTransaction(async () => {
+          await db.truncate(this.name);
+          done = true;
+        });
+        if (done) return;
+      }
 
-    let rows: any;
-    if (
-      calc_agg_fields.length ||
-      (use_user &&
-        use_user.role_id > this.min_role_write &&
-        this.ownership_formula)
-    ) {
-      rows = await this.getJoinedRows({
-        where,
-        forUser: use_user,
-        forPublic: use_user?.role_id === 100,
-        joinFields: ownershipJoinFields,
-      });
-    }
+      // get triggers on delete
+      const triggers = await Trigger.getTableTriggers("Delete", this);
+      const fields = this.fields;
 
-    const deleteFileFields = fields.filter(
-      (f) => f.type === "File" && f.attributes?.also_delete_file
-    );
-    const deleteFiles: Array<File> = [];
-    if ((triggers.length > 0 || deleteFileFields.length > 0) && !noTrigger) {
-      if (!rows)
+      const ownerFieldName: string | null = (() => {
+        if (!this.has_sync_info || !this.ownership_field_id) return null;
+        const f = fields?.find((f) => f.id === this.ownership_field_id);
+        return f?.name ?? null;
+      })();
+
+      if (
+        !this.canEnforceRls() &&
+        this.updateWhereWithOwnership(where, use_user)?.notAuthorized
+      ) {
+        const state = nsState.getState()!;
+        state.log(4, `Not authorized to deleteRows in table ${this.name}.`);
+        return;
+      }
+      this.normalise_fkey_values(where);
+      const calc_agg_fields = await Field.find(
+        {
+          calculated: true,
+          stored: true,
+          expression: "__aggregation",
+          attributes: { json: { table: this.name } },
+        },
+        { cached: true }
+      );
+      // Join fields needed to snapshot ownership_formula values into sync_info.
+      // Computed once here; used either via the existing rows fetch (if it runs)
+      // or via a separate minimal fetch in the else branch below.
+      const ownershipJoinFields: JoinFields = {};
+      if (this.has_sync_info && this.ownership_formula) {
+        add_free_variables_to_joinfields(
+          freeVariables(this.ownership_formula),
+          ownershipJoinFields,
+          fields
+        );
+      }
+
+      let rows: any;
+      if (
+        calc_agg_fields.length ||
+        (use_user &&
+          use_user.role_id > this.min_role_write &&
+          this.ownership_formula)
+      ) {
         rows = await this.getJoinedRows({
           where,
           forUser: use_user,
           forPublic: use_user?.role_id === 100,
+          joinFields: ownershipJoinFields,
         });
-      for (const trigger of triggers) {
-        for (const row of rows) {
-          // run triggers on delete
-          if (trigger.haltOnOnlyIf?.(row, use_user)) continue;
-          const runres = await trigger.run!(row, { user: use_user });
-
-          if (runres && resultCollector)
-            mergeActionResults(resultCollector, runres);
-        }
       }
-      if (isNode()) {
-        for (const deleteFile of deleteFileFields) {
+
+      const deleteFileFields = fields.filter(
+        (f) => f.type === "File" && f.attributes?.also_delete_file
+      );
+      const deleteFiles: Array<File> = [];
+      if ((triggers.length > 0 || deleteFileFields.length > 0) && !noTrigger) {
+        if (!rows)
+          rows = await this.getJoinedRows({
+            where,
+            forUser: use_user,
+            forPublic: use_user?.role_id === 100,
+          });
+        for (const trigger of triggers) {
           for (const row of rows) {
-            if (row[deleteFile.name]) {
-              const file = await File.findOne({
-                filename: row[deleteFile.name],
-              });
-              deleteFiles.push(file!);
+            // run triggers on delete
+            if (trigger.haltOnOnlyIf?.(row, use_user)) continue;
+            const runres = await trigger.run!(row, { user: use_user });
+
+            if (runres && resultCollector)
+              mergeActionResults(resultCollector, runres);
+          }
+        }
+        if (isNode()) {
+          for (const deleteFile of deleteFileFields) {
+            for (const row of rows) {
+              if (row[deleteFile.name]) {
+                const file = await File.findOne({
+                  filename: row[deleteFile.name],
+                });
+                deleteFiles.push(file!);
+              }
             }
           }
         }
       }
-    }
-    await db.tryCatchInTransaction(
-      async () => {
-        if (rows) {
-          const pkIds = rows.map((r: GenObj) => r[this.pk_name]);
-          await this.withRlsUser(use_user, async () => {
+      await db.tryCatchInTransaction(
+        async () => {
+          if (rows) {
+            const pkIds = rows.map((r: GenObj) => r[this.pk_name]);
             if (!db.isSQLite) {
               await db.deleteWhere(this.name, {
                 [this.pk_name]: { in: pkIds },
@@ -1383,73 +1399,73 @@ class Table implements AbstractTable {
                 )})`
               );
             }
-          });
-          for (const row of rows) await this.auto_update_calc_aggregations(row);
-          if (this.has_sync_info) {
-            const dbTime = await db.time();
-            await this.addDeleteSyncInfo(
-              rows,
-              dbTime,
-              ownerFieldName,
-              this.ownership_formula
-            );
-          }
-        } else {
-          let preDeleteRows: any[] | null = null;
-          if (this.has_sync_info) {
-            if (this.ownership_formula) {
-              // ownership_formula: fetch all fields (including join fields) so
-              // addDeleteSyncInfo can snapshot them into owner_fields.
-              preDeleteRows = await this.getJoinedRows({
-                where,
-                joinFields: ownershipJoinFields,
-              });
-            } else {
-              // Simple case: fetch only the pk (and owner field if present).
-              const selectFields = ownerFieldName
-                ? [this.pk_name, ownerFieldName]
-                : [this.pk_name];
-              preDeleteRows = await db.select(this.name, where, {
-                fields: selectFields,
-              });
+            for (const row of rows)
+              await this.auto_update_calc_aggregations(row);
+            if (this.has_sync_info) {
+              const dbTime = await db.time();
+              await this.addDeleteSyncInfo(
+                rows,
+                dbTime,
+                ownerFieldName,
+                this.ownership_formula
+              );
+            }
+          } else {
+            let preDeleteRows: any[] | null = null;
+            if (this.has_sync_info) {
+              if (this.ownership_formula) {
+                // ownership_formula: fetch all fields (including join fields) so
+                // addDeleteSyncInfo can snapshot them into owner_fields.
+                preDeleteRows = await this.getJoinedRows({
+                  where,
+                  joinFields: ownershipJoinFields,
+                });
+              } else {
+                // Simple case: fetch only the pk (and owner field if present).
+                const selectFields = ownerFieldName
+                  ? [this.pk_name, ownerFieldName]
+                  : [this.pk_name];
+                preDeleteRows = await db.select(this.name, where, {
+                  fields: selectFields,
+                });
+              }
+            }
+
+            await db.deleteWhere(this.name, where);
+            if (this.has_sync_info && preDeleteRows) {
+              const dbTime = await db.time();
+              await this.addDeleteSyncInfo(
+                preDeleteRows,
+                dbTime,
+                ownerFieldName,
+                this.ownership_formula
+              );
             }
           }
-
-          await this.withRlsUser(use_user, () =>
-            db.deleteWhere(this.name, where)
-          );
-          if (this.has_sync_info && preDeleteRows) {
-            const dbTime = await db.time();
-            await this.addDeleteSyncInfo(
-              preDeleteRows,
-              dbTime,
-              ownerFieldName,
-              this.ownership_formula
-            );
+          //if (fields.find((f) => f.primary_key)) await this.resetSequence();
+          for (const file of deleteFiles) {
+            await file.delete();
           }
+        },
+        (e: any) => {
+          if (+e.code == 23503 && e.table) {
+            const table = Table.findOne(e.table);
+            const field = table?.fields.find(
+              (f) =>
+                f.reftable_name === this.name && f.attributes.fkey_error_msg
+            );
+            // TODO there could in theory be multiple key fields onto this table.
+            // check if e.constraint matches tableName_fieldName_fkey. if yes that is field
+            if (field) throw new Error(field.attributes.fkey_error_msg);
+            else throw e;
+          } else throw e;
         }
-        //if (fields.find((f) => f.primary_key)) await this.resetSequence();
-        for (const file of deleteFiles) {
-          await file.delete();
-        }
-      },
-      (e: any) => {
-        if (+e.code == 23503 && e.table) {
-          const table = Table.findOne(e.table);
-          const field = table?.fields.find(
-            (f) => f.reftable_name === this.name && f.attributes.fkey_error_msg
-          );
-          // TODO there could in theory be multiple key fields onto this table.
-          // check if e.constraint matches tableName_fieldName_fkey. if yes that is field
-          if (field) throw new Error(field.attributes.fkey_error_msg);
-          else throw e;
-        } else throw e;
+      );
+      if (this.has_sync_info) {
+        const state = nsState.getState()!;
+        if (state.pushHelper) state.pushHelper.queuePushSync();
       }
-    );
-    if (this.has_sync_info) {
-      const state = nsState.getState()!;
-      if (state.pushHelper) state.pushHelper.queuePushSync();
-    }
+    });
   }
 
   /**
@@ -1509,30 +1525,34 @@ class Table implements AbstractTable {
       (this.constructor as typeof Table).fixed_user || forUser;
 
     const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
-    this.normalise_fkey_values(where);
-    const row = await this.withRlsUser(use_forUser, () =>
-      db.selectMaybeOne(this.name, where, this.processSelectOptions(selopts1))
-    );
-    if (!row || !this.fields) return null;
-    if (!this.canEnforceRls() && role && role > this.min_role_read) {
-      //check ownership
-      if (forPublic) return null;
-      else if (this.ownership_field_id) {
-        const owner_field = fields.find(
-          (f) => f.id === this.ownership_field_id
-        );
-        if (!owner_field)
-          throw new Error(`Owner field in table ${this.name} not found`);
-        if (row[owner_field.name] !== (use_forUser as AbstractUser).id)
-          return null;
-      } else if (this.ownership_formula || this.name === "users") {
-        if (!this.is_owner(use_forUser, row)) return null;
-      } else return null; //no ownership
-    }
-    return apply_calculated_fields(
-      [this.readFromDB(this.parse_json_fields(row))],
-      this.fields
-    )[0];
+    return this.withRlsUser(use_forUser, async () => {
+      this.normalise_fkey_values(where);
+      const row = await db.selectMaybeOne(
+        this.name,
+        where,
+        this.processSelectOptions(selopts1)
+      );
+      if (!row || !this.fields) return null;
+      if (!this.canEnforceRls() && role && role > this.min_role_read) {
+        //check ownership
+        if (forPublic) return null;
+        else if (this.ownership_field_id) {
+          const owner_field = fields.find(
+            (f) => f.id === this.ownership_field_id
+          );
+          if (!owner_field)
+            throw new Error(`Owner field in table ${this.name} not found`);
+          if (row[owner_field.name] !== (use_forUser as AbstractUser).id)
+            return null;
+        } else if (this.ownership_formula || this.name === "users") {
+          if (!this.is_owner(use_forUser, row)) return null;
+        } else return null; //no ownership
+      }
+      return apply_calculated_fields(
+        [this.readFromDB(this.parse_json_fields(row))],
+        this.fields
+      )[0];
+    });
   }
 
   /**
@@ -1570,37 +1590,40 @@ class Table implements AbstractTable {
     const use_forUser =
       (this.constructor as typeof Table).fixed_user || forUser;
     const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
-    if (
-      !this.canEnforceRls() &&
-      role &&
-      this.updateWhereWithOwnership(
+    return this.withRlsUser(use_forUser, async () => {
+      if (
+        !this.canEnforceRls() &&
+        role &&
+        this.updateWhereWithOwnership(
+          where,
+          use_forUser || { role_id: 100 },
+          true
+        )?.notAuthorized
+      ) {
+        return [];
+      }
+      this.normalise_fkey_values(where);
+      let rows = await db.select(
+        this.name,
         where,
-        use_forUser || { role_id: 100 },
-        true
-      )?.notAuthorized
-    ) {
-      return [];
-    }
-    this.normalise_fkey_values(where);
-    let rows = await this.withRlsUser(use_forUser, () =>
-      db.select(this.name, where, this.processSelectOptions(selopts1))
-    );
-    if (!this.canEnforceRls() && role && role > this.min_role_read) {
-      //check ownership
-      if (forPublic) return [];
-      else if (this.ownership_field_id) {
-        //already dealt with by changing where
-      } else if (this.ownership_formula || this.name === "users") {
-        if (!selopts?.disable_ownership_postqfilter)
-          rows = rows.filter((row: Row) => this.is_owner(use_forUser, row));
-      } else return []; //no ownership
-    }
-
-    return apply_calculated_fields(
-      rows.map((r: Row) => this.readFromDB(this.parse_json_fields(r))),
-      this.fields,
-      !!selopts.ignore_errors
-    );
+        this.processSelectOptions(selopts1)
+      );
+      if (!this.canEnforceRls() && role && role > this.min_role_read) {
+        //check ownership
+        if (forPublic) return [];
+        else if (this.ownership_field_id) {
+          //already dealt with by changing where
+        } else if (this.ownership_formula || this.name === "users") {
+          if (!selopts?.disable_ownership_postqfilter)
+            rows = rows.filter((row: Row) => this.is_owner(use_forUser, row));
+        } else return []; //no ownership
+      }
+      return apply_calculated_fields(
+        rows.map((r: Row) => this.readFromDB(this.parse_json_fields(r))),
+        this.fields,
+        !!selopts.ignore_errors
+      );
+    });
   }
 
   processSelectOptions(
@@ -1644,8 +1667,12 @@ class Table implements AbstractTable {
     where?: Where,
     opts?: SelectOptions & ForUserRequest
   ): Promise<number> {
+    const use_forUser =
+      (this.constructor as typeof Table).fixed_user || opts?.forUser;
     if (where) this.normalise_fkey_values(where);
-    return await db.count(this.name, where, opts);
+    return this.withRlsUser(use_forUser, async () =>
+      db.count(this.name, where, opts)
+    );
   }
 
   /**
@@ -1659,24 +1686,25 @@ class Table implements AbstractTable {
     whereObj?: Where,
     user?: AbstractUser
   ): Promise<any[]> {
-    const useWhere = { ...(whereObj || {}) };
-    if (
-      !this.canEnforceRls() &&
-      user &&
-      user.role_id > this.min_role_read &&
-      !(this.ownership_field_id || this.ownership_formula)
-    ) {
-      return [];
-    }
-    if (
-      !this.canEnforceRls() &&
-      user &&
-      user.role_id > this.min_role_read &&
-      (this.ownership_field_id || this.ownership_formula)
-    ) {
-      this.updateWhereWithOwnership(useWhere, user, true);
-    }
-    return this.withRlsUser(user, async () => {
+    const use_user = (this.constructor as typeof Table).fixed_user || user;
+    return this.withRlsUser(use_user, async () => {
+      const useWhere = { ...(whereObj || {}) };
+      if (
+        !this.canEnforceRls() &&
+        use_user &&
+        use_user.role_id > this.min_role_read &&
+        !(this.ownership_field_id || this.ownership_formula)
+      ) {
+        return [];
+      }
+      if (
+        !this.canEnforceRls() &&
+        use_user &&
+        use_user.role_id > this.min_role_read &&
+        (this.ownership_field_id || this.ownership_formula)
+      ) {
+        this.updateWhereWithOwnership(useWhere, use_user, true);
+      }
       if (Object.keys(useWhere).length) {
         const { where, values } = mkWhere(useWhere, db.isSQLite);
         const res = await db.query(
@@ -1772,323 +1800,323 @@ class Table implements AbstractTable {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
     if ((this.constructor as typeof Table).read_only)
       throw new Error("Read-only access");
-    // migrating to options arg
-    if (typeof noTrigger === "object") {
-      const extraOptions = noTrigger;
-      resultCollector = extraOptions.resultCollector;
-      restore_of_version = extraOptions.restore_of_version;
-      syncTimestamp = extraOptions.syncTimestamp;
-      additionalTriggerValues = extraOptions.additionalTriggerValues;
-      autoRecalcIterations = extraOptions.autoRecalcIterations;
-      noTrigger = extraOptions.noTrigger;
-      extraArgs = extraOptions.extraArgs;
-    }
+    return this.withRlsUser(use_user, async () => {
+      // migrating to options arg
+      if (typeof noTrigger === "object") {
+        const extraOptions = noTrigger;
+        resultCollector = extraOptions.resultCollector;
+        restore_of_version = extraOptions.restore_of_version;
+        syncTimestamp = extraOptions.syncTimestamp;
+        additionalTriggerValues = extraOptions.additionalTriggerValues;
+        autoRecalcIterations = extraOptions.autoRecalcIterations;
+        noTrigger = extraOptions.noTrigger;
+        extraArgs = extraOptions.extraArgs;
+      }
 
-    if (typeof autoRecalcIterations === "number" && autoRecalcIterations > 5)
-      return;
-    let existing: Row | undefined | null;
-    let changedFromCalc = new Set([]);
-    let v = { ...v_in };
-    if (typeof id_in === "undefined")
-      throw new Error(
-        this.name + " updateRow called without primary key value"
-      );
-    if (id_in === null)
-      throw new Error(
-        this.name + " updateRow called with null as primary key value"
-      );
+      if (typeof autoRecalcIterations === "number" && autoRecalcIterations > 5)
+        return;
+      let existing: Row | undefined | null;
+      let changedFromCalc = new Set([]);
+      let v = { ...v_in };
+      if (typeof id_in === "undefined")
+        throw new Error(
+          this.name + " updateRow called without primary key value"
+        );
+      if (id_in === null)
+        throw new Error(
+          this.name + " updateRow called with null as primary key value"
+        );
 
-    const composite_pk_names = this.composite_pk_names;
-    const id: PrimaryKeyValue | Row = composite_pk_names
-      ? id_in
-      : typeof id_in === "object"
+      const composite_pk_names = this.composite_pk_names;
+      const id: PrimaryKeyValue | Row = composite_pk_names
+        ? id_in
+        : typeof id_in === "object"
         ? id_in[this.pk_name]
         : id_in;
-    //these may have changed
-    let changedFieldNames = new Set([
-      ...Object.keys(v_in),
-      ...this.fields.filter((f) => f.calculated).map((f) => f.name),
-    ]);
-    const fields = this.fields;
-    const pk_name = this.pk_name;
-    const role = use_user?.role_id;
-    const state = nsState.getState()!;
-    let stringified = false;
-    const sqliteJsonCols = !isNode()
-      ? {
-          jsonCols: this.fields
-            .filter(
-              (f) => typeof f.type !== "string" && f.type?.name === "JSON"
-            )
-            .map((f) => f.name),
-        }
-      : {};
+      //these may have changed
+      let changedFieldNames = new Set([
+        ...Object.keys(v_in),
+        ...this.fields.filter((f) => f.calculated).map((f) => f.name),
+      ]);
+      const fields = this.fields;
+      const pk_name = this.pk_name;
+      const role = use_user?.role_id;
+      const state = nsState.getState()!;
+      let stringified = false;
+      const sqliteJsonCols = !isNode()
+        ? {
+            jsonCols: this.fields
+              .filter(
+                (f) => typeof f.type !== "string" && f.type?.name === "JSON"
+              )
+              .map((f) => f.name),
+          }
+        : {};
 
-    // normalise id passed from expanded join field
+      // normalise id passed from expanded join field
 
-    this.normalise_fkey_values(v);
+      this.normalise_fkey_values(v);
 
-    let joinFields = {} as JoinFields;
-    if (fields.some((f: Field) => f.calculated && f.stored)) {
-      joinFields = this.storedExpressionJoinFields();
-    }
-    if (this.ownership_formula)
-      add_free_variables_to_joinfields(
-        freeVariables(this.ownership_formula),
-        joinFields,
-        fields
-      );
-    if (
-      !this.canEnforceRls() &&
-      use_user &&
-      role &&
-      (role > this.min_role_write || role > this.min_role_read)
-    ) {
-      if (role === 100) return "Not authorized"; //no possibility of ownership
-      if (this.ownership_field_id) {
-        const owner_field = fields.find(
-          (f) => f.id === this.ownership_field_id
-        );
-        if (!owner_field)
-          throw new Error(`Owner field in table ${this.name} not found`);
-        if (v[owner_field.name] && v[owner_field.name] != use_user.id) {
-          state.log(
-            4,
-            `Not authorized to updateRow in table ${this.name}. ${use_user.id} does not match owner field in updates`
-          );
-          return "Not authorized";
-        }
-
-        //need to check existing
-        if (!existing)
-          existing = await this.getJoinedRow({
-            where: { [pk_name]: id },
-            forUser: use_user,
-            joinFields,
-          });
-        if (!existing || existing?.[owner_field.name] !== use_user.id) {
-          state.log(
-            4,
-            `Not authorized to updateRow in table ${this.name}. ${use_user.id} does not match owner field in exisiting`
-          );
-          return "Not authorized";
-        }
+      let joinFields = {} as JoinFields;
+      if (fields.some((f: Field) => f.calculated && f.stored)) {
+        joinFields = this.storedExpressionJoinFields();
       }
-      if (this.ownership_formula) {
-        if (!existing)
-          existing = await this.getJoinedRow({
-            where: { [pk_name]: id },
-            forUser: use_user,
-            joinFields,
-          });
-
-        if (!existing || !this.is_owner(use_user, existing)) {
-          state.log(
-            4,
-            `Not authorized to updateRow in table ${
-              this.name
-            }. User does not match formula: ${JSON.stringify(use_user)}`
-          );
-          return "Not authorized";
-        }
-      }
-      if (!this.ownership_field_id && !this.ownership_formula) {
-        state.log(
-          4,
-          `Not authorized to updateRow in table ${this.name}. No ownership`
-        );
-        return "Not authorized";
-      }
-    }
-    if (this.constraints.filter((c) => c.type === "Formula").length) {
-      if (!existing)
-        existing = await this.getJoinedRow({
-          where: { [pk_name]: id },
-          forUser: use_user,
+      if (this.ownership_formula)
+        add_free_variables_to_joinfields(
+          freeVariables(this.ownership_formula),
           joinFields,
-        });
-      const newRow = { ...existing, ...v };
-      let constraint_check = this.check_table_constraints(newRow);
-      if (constraint_check) return constraint_check;
-    }
-    if (use_user) {
-      let field_write_check = this.check_field_write_role(v, use_user);
-      if (field_write_check) return field_write_check;
-    }
-
-    //check validation here
-    if (Trigger.hasTableTriggers("Validate", this)) {
-      if (!existing)
-        existing = await this.getJoinedRow({
-          where: { [pk_name]: id },
-          forUser: use_user,
-          joinFields,
-        });
-      const valResCollector = resultCollector || {};
-      await Trigger.runTableTriggers(
-        "Validate",
-        this,
-        { ...(additionalTriggerValues || {}), ...existing, ...v },
-        valResCollector,
-        use_user,
-        { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
-      );
-      if ("error" in valResCollector) return valResCollector.error as string;
-      if ("set_fields" in valResCollector)
-        Object.assign(v, valResCollector.set_fields);
-    }
-
-    if (fields.some((f: Field) => f.calculated && f.stored)) {
-      //if any freevars are join fields, update row in db first
-      const freeVarFKFields = new Set(
-        Object.values(joinFields).map((jf: JoinField) => jf.ref)
-      );
-      let need_to_update = Object.keys(v_in).some((k) =>
-        freeVarFKFields.has(k)
-      );
-      existing = await this.getJoinedRow({
-        where: { [pk_name]: id },
-        forUser: use_user,
-        joinFields,
-      });
-      let updated;
-      if (need_to_update) {
-        state.log(
-          6,
-          `Updating ${this.name} because calculated fields: ${JSON.stringify(
-            v
-          )}, id=${id}`
+          fields
         );
-        this.prepare_row_for_writing(v);
-        stringified = true;
-        await db.update(this.name, v, id, {
-          pk_name,
-          ...sqliteJsonCols,
-        });
-        updated = await this.getJoinedRow({
-          where: { [pk_name]: id },
-          forUser: use_user,
-          joinFields,
-        });
-      }
-
-      let calced = await apply_calculated_fields_stored(
-        need_to_update ? updated || {} : { ...existing, ...v_in },
-        this.fields,
-        this,
-        use_user
-      );
-
-      for (const f of fields)
-        if (f.calculated && f.stored) {
-          if (
-            typeof f.type !== "string" &&
-            f.type?.name === "JSON" &&
-            stringified &&
-            !db.isSQLite
-          ) {
-            v[f.name] = JSON.stringify(calced[f.name]);
-          } else v[f.name] = calced[f.name];
-        }
-    }
-
-    if (this.versioned) {
-      const existing1 = await db.selectOne(this.name, { [pk_name]: id });
-      if (!existing) existing = existing1;
-      //store all changes EXCEPT users with only last_mobile_login
       if (
-        !(
-          this.name === "users" &&
-          Object.keys(v_in).length == 1 &&
-          v_in.last_mobile_login
-        )
-      )
-        await this.insert_history_row({
-          ...existing1,
-          ...v,
-          [pk_name]: id,
-          _version: {
-            next_version_by_id: id,
-            pk_name,
-          },
-          _time: new Date(),
-          _userid: use_user?.id,
-          _restore_of_version: restore_of_version || null,
-        });
-    }
-    if (typeof existing === "undefined") {
-      const triggers = await Trigger.getTableTriggers("Update", this);
-      if (triggers.length > 0)
+        !this.canEnforceRls() &&
+        use_user &&
+        role &&
+        (role > this.min_role_write || role > this.min_role_read)
+      ) {
+        if (role === 100) return "Not authorized"; //no possibility of ownership
+        if (this.ownership_field_id) {
+          const owner_field = fields.find(
+            (f) => f.id === this.ownership_field_id
+          );
+          if (!owner_field)
+            throw new Error(`Owner field in table ${this.name} not found`);
+          if (v[owner_field.name] && v[owner_field.name] != use_user.id) {
+            state.log(
+              4,
+              `Not authorized to updateRow in table ${this.name}. ${use_user.id} does not match owner field in updates`
+            );
+            return "Not authorized";
+          }
+
+          //need to check existing
+          if (!existing)
+            existing = await this.getJoinedRow({
+              where: { [pk_name]: id },
+              forUser: use_user,
+              joinFields,
+            });
+          if (!existing || existing?.[owner_field.name] !== use_user.id) {
+            state.log(
+              4,
+              `Not authorized to updateRow in table ${this.name}. ${use_user.id} does not match owner field in exisiting`
+            );
+            return "Not authorized";
+          }
+        }
+        if (this.ownership_formula) {
+          if (!existing)
+            existing = await this.getJoinedRow({
+              where: { [pk_name]: id },
+              forUser: use_user,
+              joinFields,
+            });
+
+          if (!existing || !this.is_owner(use_user, existing)) {
+            state.log(
+              4,
+              `Not authorized to updateRow in table ${
+                this.name
+              }. User does not match formula: ${JSON.stringify(use_user)}`
+            );
+            return "Not authorized";
+          }
+        }
+        if (!this.ownership_field_id && !this.ownership_formula) {
+          state.log(
+            4,
+            `Not authorized to updateRow in table ${this.name}. No ownership`
+          );
+          return "Not authorized";
+        }
+      }
+      if (this.constraints.filter((c) => c.type === "Formula").length) {
+        if (!existing)
+          existing = await this.getJoinedRow({
+            where: { [pk_name]: id },
+            forUser: use_user,
+            joinFields,
+          });
+        const newRow = { ...existing, ...v };
+        let constraint_check = this.check_table_constraints(newRow);
+        if (constraint_check) return constraint_check;
+      }
+      if (use_user) {
+        let field_write_check = this.check_field_write_role(v, use_user);
+        if (field_write_check) return field_write_check;
+      }
+
+      //check validation here
+      if (Trigger.hasTableTriggers("Validate", this)) {
+        if (!existing)
+          existing = await this.getJoinedRow({
+            where: { [pk_name]: id },
+            forUser: use_user,
+            joinFields,
+          });
+        const valResCollector = resultCollector || {};
+        await Trigger.runTableTriggers(
+          "Validate",
+          this,
+          { ...(additionalTriggerValues || {}), ...existing, ...v },
+          valResCollector,
+          use_user,
+          { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
+        );
+        if ("error" in valResCollector) return valResCollector.error as string;
+        if ("set_fields" in valResCollector)
+          Object.assign(v, valResCollector.set_fields);
+      }
+
+      if (fields.some((f: Field) => f.calculated && f.stored)) {
+        //if any freevars are join fields, update row in db first
+        const freeVarFKFields = new Set(
+          Object.values(joinFields).map((jf: JoinField) => jf.ref)
+        );
+        let need_to_update = Object.keys(v_in).some((k) =>
+          freeVarFKFields.has(k)
+        );
         existing = await this.getJoinedRow({
           where: { [pk_name]: id },
           forUser: use_user,
           joinFields,
         });
-    }
-    state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
-    if (!stringified) this.prepare_row_for_writing(v);
-    const really_changed_field_names: Set<string> = existing
-      ? new Set(Object.keys(v).filter((k) => v[k] !== (existing as Row)[k]))
-      : changedFieldNames;
-    let keyChanged = false;
-    for (const fnm of really_changed_field_names || []) {
-      const field = this.getField(fnm);
-      if (field?.is_fkey) {
-        keyChanged = true;
-        break;
-      }
-    }
-    if (!existing && really_changed_field_names.size && keyChanged)
-      existing = await this.getJoinedRow({
-        where: { [pk_name]: id },
-        forUser: use_user,
-        joinFields,
-      });
-    await this.withRlsUser(use_user, () =>
-      db.update(this.name, v, id, { pk_name, ...sqliteJsonCols })
-    );
+        let updated;
+        if (need_to_update) {
+          state.log(
+            6,
+            `Updating ${this.name} because calculated fields: ${JSON.stringify(
+              v
+            )}, id=${id}`
+          );
+          this.prepare_row_for_writing(v);
+          stringified = true;
+          await db.update(this.name, v, id, {
+            pk_name,
+            ...sqliteJsonCols,
+          });
+          updated = await this.getJoinedRow({
+            where: { [pk_name]: id },
+            forUser: use_user,
+            joinFields,
+          });
+        }
 
-    if (this.has_sync_info) {
-      const oldInfo = await this.latestSyncInfo(id as PrimaryKeyValue);
-      if (oldInfo && !oldInfo.deleted)
-        await this.updateSyncInfo(
-          id as PrimaryKeyValue,
-          v,
-          oldInfo.last_modified,
-          syncTimestamp
+        let calced = await apply_calculated_fields_stored(
+          need_to_update ? updated || {} : { ...existing, ...v_in },
+          this.fields,
+          this,
+          use_user
         );
-      else await this.insertSyncInfo(id as PrimaryKeyValue, v, syncTimestamp);
-      if (state.pushHelper) state.pushHelper.queuePushSync();
-    }
-    const newRow = { ...existing, ...v, [pk_name]: id };
-    if (really_changed_field_names.size > 0) {
-      await this.auto_update_calc_aggregations(
-        newRow,
-        !existing,
-        (autoRecalcIterations || 0) + 1,
-        really_changed_field_names,
-        keyChanged
-      );
-      if (existing && keyChanged)
+
+        for (const f of fields)
+          if (f.calculated && f.stored) {
+            if (
+              typeof f.type !== "string" &&
+              f.type?.name === "JSON" &&
+              stringified &&
+              !db.isSQLite
+            ) {
+              v[f.name] = JSON.stringify(calced[f.name]);
+            } else v[f.name] = calced[f.name];
+          }
+      }
+
+      if (this.versioned) {
+        const existing1 = await db.selectOne(this.name, { [pk_name]: id });
+        if (!existing) existing = existing1;
+        //store all changes EXCEPT users with only last_mobile_login
+        if (
+          !(
+            this.name === "users" &&
+            Object.keys(v_in).length == 1 &&
+            v_in.last_mobile_login
+          )
+        )
+          await this.insert_history_row({
+            ...existing1,
+            ...v,
+            [pk_name]: id,
+            _version: {
+              next_version_by_id: id,
+              pk_name,
+            },
+            _time: new Date(),
+            _userid: use_user?.id,
+            _restore_of_version: restore_of_version || null,
+          });
+      }
+      if (typeof existing === "undefined") {
+        const triggers = await Trigger.getTableTriggers("Update", this);
+        if (triggers.length > 0)
+          existing = await this.getJoinedRow({
+            where: { [pk_name]: id },
+            forUser: use_user,
+            joinFields,
+          });
+      }
+      state.log(6, `Updating ${this.name}: ${JSON.stringify(v)}, id=${id}`);
+      if (!stringified) this.prepare_row_for_writing(v);
+      const really_changed_field_names: Set<string> = existing
+        ? new Set(Object.keys(v).filter((k) => v[k] !== (existing as Row)[k]))
+        : changedFieldNames;
+      let keyChanged = false;
+      for (const fnm of really_changed_field_names || []) {
+        const field = this.getField(fnm);
+        if (field?.is_fkey) {
+          keyChanged = true;
+          break;
+        }
+      }
+      if (!existing && really_changed_field_names.size && keyChanged)
+        existing = await this.getJoinedRow({
+          where: { [pk_name]: id },
+          forUser: use_user,
+          joinFields,
+        });
+      await db.update(this.name, v, id, { pk_name, ...sqliteJsonCols });
+
+      if (this.has_sync_info) {
+        const oldInfo = await this.latestSyncInfo(id as PrimaryKeyValue);
+        if (oldInfo && !oldInfo.deleted)
+          await this.updateSyncInfo(
+            id as PrimaryKeyValue,
+            v,
+            oldInfo.last_modified,
+            syncTimestamp
+          );
+        else await this.insertSyncInfo(id as PrimaryKeyValue, v, syncTimestamp);
+        if (state.pushHelper) state.pushHelper.queuePushSync();
+      }
+      const newRow = { ...existing, ...v, [pk_name]: id };
+      if (really_changed_field_names.size > 0) {
         await this.auto_update_calc_aggregations(
-          existing,
+          newRow,
           !existing,
           (autoRecalcIterations || 0) + 1,
           really_changed_field_names,
           keyChanged
         );
-    }
+        if (existing && keyChanged)
+          await this.auto_update_calc_aggregations(
+            existing,
+            !existing,
+            (autoRecalcIterations || 0) + 1,
+            really_changed_field_names,
+            keyChanged
+          );
+      }
 
-    if (!noTrigger) {
-      await Trigger.runTableTriggers(
-        "Update",
-        this,
-        { ...(additionalTriggerValues || {}), ...newRow },
-        resultCollector,
-        role === 100 ? undefined : use_user,
-        { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
-      );
-    }
+      if (!noTrigger) {
+        await Trigger.runTableTriggers(
+          "Update",
+          this,
+          { ...(additionalTriggerValues || {}), ...newRow },
+          resultCollector,
+          role === 100 ? undefined : use_user,
+          { old_row: existing, updated_fields: v_in, ...(extraArgs || {}) }
+        );
+      }
+    });
   }
 
   static async analyze_all_indexed_tables() {
@@ -2160,9 +2188,7 @@ class Table implements AbstractTable {
         return result.rows;
       },
       (e: Error) => {
-        nsState
-          .getState()!
-          .log(2, `Error in latestSyncInfos: ${e.message}`);
+        nsState.getState()!.log(2, `Error in latestSyncInfos: ${e.message}`);
         return null;
       }
     );
@@ -2209,9 +2235,7 @@ class Table implements AbstractTable {
         }
       },
       (e: Error) => {
-        nsState
-          .getState()!
-          .log(2, `Error in insertSyncInfo: ${e.message}`);
+        nsState.getState()!.log(2, `Error in insertSyncInfo: ${e.message}`);
       }
     );
   }
@@ -2264,9 +2288,7 @@ class Table implements AbstractTable {
         }
       },
       (e: Error) => {
-        nsState
-          .getState()!
-          .log(2, `Error in updateSyncInfo: ${e.message}`);
+        nsState.getState()!.log(2, `Error in updateSyncInfo: ${e.message}`);
       }
     );
   }
@@ -2477,239 +2499,245 @@ class Table implements AbstractTable {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
     if ((this.constructor as typeof Table).read_only)
       throw new Error("Read-only access");
-    const v_in = { ...v_in0 };
-    const fields = this.fields;
-    const pk_name = this.pk_name;
-    const joinFields = this.storedExpressionJoinFields();
-    if (this.ownership_formula)
-      add_free_variables_to_joinfields(
-        freeVariables(this.ownership_formula),
-        joinFields,
-        fields
-      );
-    let v: Row, id;
-    const state = nsState.getState()!;
-    const sqliteJsonCols = !isNode()
-      ? {
-          jsonCols: this.fields
-            .filter(
-              (f) => typeof f.type !== "string" && f.type?.name === "JSON"
-            )
-            .map((f) => f.name),
-        }
-      : {};
-
-    this.normalise_fkey_values(v_in);
-
-    if (!this.canEnforceRls() && use_user && use_user.role_id > this.min_role_write) {
-      if (this.ownership_field_id) {
-        const owner_field = fields.find(
-          (f) => f.id === this.ownership_field_id
+    return this.withRlsUser(use_user, async () => {
+      const v_in = { ...v_in0 };
+      const fields = this.fields;
+      const pk_name = this.pk_name;
+      const joinFields = this.storedExpressionJoinFields();
+      if (this.ownership_formula)
+        add_free_variables_to_joinfields(
+          freeVariables(this.ownership_formula),
+          joinFields,
+          fields
         );
-        if (!owner_field)
-          throw new Error(`Owner field in table ${this.name} not found`);
-        if (v_in[owner_field.name] != use_user.id) {
+      let v: Row, id;
+      const state = nsState.getState()!;
+      const sqliteJsonCols = !isNode()
+        ? {
+            jsonCols: this.fields
+              .filter(
+                (f) => typeof f.type !== "string" && f.type?.name === "JSON"
+              )
+              .map((f) => f.name),
+          }
+        : {};
+
+      this.normalise_fkey_values(v_in);
+
+      if (
+        !this.canEnforceRls() &&
+        use_user &&
+        use_user.role_id > this.min_role_write
+      ) {
+        if (this.ownership_field_id) {
+          const owner_field = fields.find(
+            (f) => f.id === this.ownership_field_id
+          );
+          if (!owner_field)
+            throw new Error(`Owner field in table ${this.name} not found`);
+          if (v_in[owner_field.name] != use_user.id) {
+            state.log(
+              4,
+              `Not authorized to insertRow in table ${this.name}. ${use_user.id} does not match owner field`
+            );
+
+            return;
+          }
+        }
+        if (!this.ownership_field_id && !this.ownership_formula) {
           state.log(
             4,
-            `Not authorized to insertRow in table ${this.name}. ${use_user.id} does not match owner field`
+            `Not authorized to insertRow in table ${this.name}. No ownership.`
           );
-
           return;
         }
       }
-      if (!this.ownership_field_id && !this.ownership_formula) {
-        state.log(
-          4,
-          `Not authorized to insertRow in table ${this.name}. No ownership.`
-        );
-        return;
+      let constraint_check = this.check_table_constraints(v_in);
+      if (constraint_check) throw new Error(constraint_check);
+      if (use_user) {
+        let field_write_check = this.check_field_write_role(v_in, use_user);
+        if (field_write_check) return field_write_check;
       }
-    }
-    let constraint_check = this.check_table_constraints(v_in);
-    if (constraint_check) throw new Error(constraint_check);
-    if (use_user) {
-      let field_write_check = this.check_field_write_role(v_in, use_user);
-      if (field_write_check) return field_write_check;
-    }
-    //check validate here based on v_in
-    const valResCollector: ResultType = resultCollector || {};
-    await Trigger.runTableTriggers(
-      "Validate",
-      this,
-      { ...v_in },
-      valResCollector,
-      use_user
-    );
-    if ("error" in valResCollector) return valResCollector; //???
-    if ("set_fields" in valResCollector)
-      Object.assign(v_in, valResCollector.set_fields);
-
-    // Apply expression defaults for fields not provided or left null by the caller
-    for (const field of fields) {
-      if (
-        !field.primary_key &&
-        field.attributes?.default_expression &&
-        (!(field.name in v_in) || v_in[field.name] == null)
-      ) {
-        try {
-          const exprFn = get_async_expression_function(
-            field.attributes.default_expression,
-            fields,
-            {}
-          );
-          v_in[field.name] = await exprFn(v_in, use_user);
-        } catch (_e) {
-          state.log(
-            4,
-            `Error applying default_expression for field ${field.name}: ${(_e as Error).message}`
-          );
-        }
-      }
-    }
-
-    // On mobile (SQLite), PKs with a client-side default (e.g. UUID via the
-    // uuid-type plugin's default_js) must be generated before the insert.
-    if (!isNode() && v_in[pk_name] == null) {
-      const pkField = fields?.find((f) => f.primary_key && !f.is_fkey);
-      const defaultJs = (pkField?.type as any)?.primaryKey?.default_js;
-      if (typeof defaultJs === "function") {
-        v_in[pk_name] = defaultJs();
-      }
-    }
-
-    if (
-      Object.keys(joinFields).length > 0 ||
-      fields.some((f) => f.expression === "__aggregation")
-    ) {
-      state.log(
-        6,
-        `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
-      );
-      this.prepare_row_for_writing(v_in);
-      id = await this.withRlsUser(use_user, () =>
-        db.insert(this.name, v_in, { pk_name, ...sqliteJsonCols })
-      );
-      // db.insert returns SQLite rowid, not the PK for non-integer PK types
-      if (!isNode() && v_in[pk_name] != null) id = v_in[pk_name];
-      let existing = await this.getJoinedRows({
-        where: { [pk_name]: id },
-        joinFields,
-        forUser: use_user,
-      });
-      if (!existing?.[0]) {
-        //failed ownership test
-        if (id) await db.deleteWhere(this.name, { [pk_name]: id });
-        state.log(
-          4,
-          `Not authorized to insertRow in table ${this.name}. Inserted row not retrieved.`
-        );
-        return;
-      }
-
-      let calced = await apply_calculated_fields_stored(
-        existing[0],
-        fields,
+      //check validate here based on v_in
+      const valResCollector: ResultType = resultCollector || {};
+      await Trigger.runTableTriggers(
+        "Validate",
         this,
+        { ...v_in },
+        valResCollector,
         use_user
       );
-      v = { ...v_in };
+      if ("error" in valResCollector) return valResCollector; //???
+      if ("set_fields" in valResCollector)
+        Object.assign(v_in, valResCollector.set_fields);
 
-      for (const f of fields)
-        if (f.calculated && f.stored) v[f.name] = calced[f.name];
-      state.log(
-        6,
-        `Updating ${this.name} because join fields: ${JSON.stringify(v_in)}`
-      );
-      await db.update(this.name, v, id, { pk_name, ...sqliteJsonCols });
-    } else {
-      v = await apply_calculated_fields_stored(v_in, fields, this, use_user);
-      this.prepare_row_for_writing(v);
-      state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
-      id = await this.withRlsUser(use_user, () =>
-        db.insert(this.name, v, { pk_name, ...sqliteJsonCols })
-      );
-      // db.insert returns SQLite rowid, not the PK for non-integer PK types
-      if (!isNode() && v[pk_name] != null) id = v[pk_name];
-    }
-    if (
-      use_user &&
-      use_user.role_id > this.min_role_write &&
-      this.ownership_formula
-    ) {
-      let existing = await this.getJoinedRow({
-        where: { [pk_name]: id },
-        joinFields,
-        forUser: use_user,
-      });
-
-      if (!existing || !this.is_owner(use_user, existing)) {
-        await this.deleteRows({ [pk_name]: id });
-        state.log(
-          4,
-          `Not authorized to insertRow in table ${
-            this.name
-          }. User does not match formula: ${JSON.stringify(use_user)}`
-        );
-        return;
-      }
-    }
-    if (this.versioned)
-      await this.insert_history_row({
-        ...v,
-        [pk_name]: id,
-        _version: {
-          next_version_by_id: id,
-          pk_name,
-        },
-        _userid: use_user?.id,
-        _time: new Date(),
-      });
-
-    if (this.has_sync_info) {
-      await db.tryCatchInTransaction(
-        async () => {
-          if (isNode()) {
-            // sync_info for insert
-            const schemaPrefix = db.getTenantSchemaPrefix();
-            const tsParam =
-              (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
-              1000.0;
-            await db.query(
-              `insert into ${schemaPrefix}"${db.sqlsanitize(this.name)}_sync_info"
-              (ref, last_modified) values($1::text, date_trunc('milliseconds', to_timestamp($2)))`,
-              [id, tsParam]
+      // Apply expression defaults for fields not provided or left null by the caller
+      for (const field of fields) {
+        if (
+          !field.primary_key &&
+          field.attributes?.default_expression &&
+          (!(field.name in v_in) || v_in[field.name] == null)
+        ) {
+          try {
+            const exprFn = get_async_expression_function(
+              field.attributes.default_expression,
+              fields,
+              {}
             );
-          } else {
-            await db.query(
-              `insert into "${db.sqlsanitize(this.name)}_sync_info"
-           (last_modified, ref, modified_local, deleted)
-           values(NULL, CAST($1 AS TEXT), true, false)`,
-              [id]
+            v_in[field.name] = await exprFn(v_in, use_user);
+          } catch (_e) {
+            state.log(
+              4,
+              `Error applying default_expression for field ${field.name}: ${
+                (_e as Error).message
+              }`
             );
           }
-        },
-        (e: Error) => {
-          state.log(
-            2,
-            `Error inserting sync info for table ${this.name}: ${e.message}`
-          );
         }
-      );
-      if (state.pushHelper) state.pushHelper.queuePushSync();
-    }
-    const newRow = { [pk_name]: id, ...v };
-    await this.auto_update_calc_aggregations(newRow);
-    if (!noTrigger) {
-      apply_calculated_fields([newRow], this.fields);
-      await Trigger.runTableTriggers(
-        "Insert",
-        this,
-        newRow,
-        resultCollector,
-        use_user
-      );
-    }
-    return id;
+      }
+
+      // On mobile (SQLite), PKs with a client-side default (e.g. UUID via the
+      // uuid-type plugin's default_js) must be generated before the insert.
+      if (!isNode() && v_in[pk_name] == null) {
+        const pkField = fields?.find((f) => f.primary_key && !f.is_fkey);
+        const defaultJs = (pkField?.type as any)?.primaryKey?.default_js;
+        if (typeof defaultJs === "function") {
+          v_in[pk_name] = defaultJs();
+        }
+      }
+
+      if (
+        Object.keys(joinFields).length > 0 ||
+        fields.some((f) => f.expression === "__aggregation")
+      ) {
+        state.log(
+          6,
+          `Inserting ${this.name} because join fields: ${JSON.stringify(v_in)}`
+        );
+        this.prepare_row_for_writing(v_in);
+        id = await db.insert(this.name, v_in, { pk_name, ...sqliteJsonCols });
+        // db.insert returns SQLite rowid, not the PK for non-integer PK types
+        if (!isNode() && v_in[pk_name] != null) id = v_in[pk_name];
+        let existing = await this.getJoinedRows({
+          where: { [pk_name]: id },
+          joinFields,
+          forUser: use_user,
+        });
+        if (!existing?.[0]) {
+          //failed ownership test
+          if (id) await db.deleteWhere(this.name, { [pk_name]: id });
+          state.log(
+            4,
+            `Not authorized to insertRow in table ${this.name}. Inserted row not retrieved.`
+          );
+          return;
+        }
+
+        let calced = await apply_calculated_fields_stored(
+          existing[0],
+          fields,
+          this,
+          use_user
+        );
+        v = { ...v_in };
+
+        for (const f of fields)
+          if (f.calculated && f.stored) v[f.name] = calced[f.name];
+        state.log(
+          6,
+          `Updating ${this.name} because join fields: ${JSON.stringify(v_in)}`
+        );
+        await db.update(this.name, v, id, { pk_name, ...sqliteJsonCols });
+      } else {
+        v = await apply_calculated_fields_stored(v_in, fields, this, use_user);
+        this.prepare_row_for_writing(v);
+        state.log(6, `Inserting ${this.name} row: ${JSON.stringify(v)}`);
+        id = await db.insert(this.name, v, { pk_name, ...sqliteJsonCols });
+        // db.insert returns SQLite rowid, not the PK for non-integer PK types
+        if (!isNode() && v[pk_name] != null) id = v[pk_name];
+      }
+      if (
+        use_user &&
+        use_user.role_id > this.min_role_write &&
+        this.ownership_formula
+      ) {
+        let existing = await this.getJoinedRow({
+          where: { [pk_name]: id },
+          joinFields,
+          forUser: use_user,
+        });
+
+        if (!existing || !this.is_owner(use_user, existing)) {
+          await this.deleteRows({ [pk_name]: id });
+          state.log(
+            4,
+            `Not authorized to insertRow in table ${
+              this.name
+            }. User does not match formula: ${JSON.stringify(use_user)}`
+          );
+          return;
+        }
+      }
+      if (this.versioned)
+        await this.insert_history_row({
+          ...v,
+          [pk_name]: id,
+          _version: {
+            next_version_by_id: id,
+            pk_name,
+          },
+          _userid: use_user?.id,
+          _time: new Date(),
+        });
+
+      if (this.has_sync_info) {
+        await db.tryCatchInTransaction(
+          async () => {
+            if (isNode()) {
+              // sync_info for insert
+              const schemaPrefix = db.getTenantSchemaPrefix();
+              const tsParam =
+                (syncTimestamp ? syncTimestamp : await db.time()).valueOf() /
+                1000.0;
+              await db.query(
+                `insert into ${schemaPrefix}"${db.sqlsanitize(
+                  this.name
+                )}_sync_info"
+              (ref, last_modified) values($1::text, date_trunc('milliseconds', to_timestamp($2)))`,
+                [id, tsParam]
+              );
+            } else {
+              await db.query(
+                `insert into "${db.sqlsanitize(this.name)}_sync_info"
+           (last_modified, ref, modified_local, deleted)
+           values(NULL, CAST($1 AS TEXT), true, false)`,
+                [id]
+              );
+            }
+          },
+          (e: Error) => {
+            state.log(
+              2,
+              `Error inserting sync info for table ${this.name}: ${e.message}`
+            );
+          }
+        );
+        if (state.pushHelper) state.pushHelper.queuePushSync();
+      }
+      const newRow = { [pk_name]: id, ...v };
+      await this.auto_update_calc_aggregations(newRow);
+      if (!noTrigger) {
+        apply_calculated_fields([newRow], this.fields);
+        await Trigger.runTableTriggers(
+          "Insert",
+          this,
+          newRow,
+          resultCollector,
+          use_user
+        );
+      }
+      return id;
+    });
   }
 
   private async auto_update_calc_aggregations(
@@ -3289,8 +3317,8 @@ class Table implements AbstractTable {
           select h1."${sqlsanitize(pk)}", h1._version
           FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
           JOIN ${schemaPrefix}"${sqlsanitize(
-            this.name
-          )}__history" h2 ON h1."${sqlsanitize(pk)}" = h2."${sqlsanitize(pk)}"
+        this.name
+      )}__history" h2 ON h1."${sqlsanitize(pk)}" = h2."${sqlsanitize(pk)}"
           AND h1._version < h2._version
           AND h1._time < h2._time
           AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
@@ -3318,7 +3346,9 @@ class Table implements AbstractTable {
           ON curr.rn = prev.rn + 1 AND curr."${pk}" = prev."${pk}"
         )     
         DELETE FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history"
-          where ("${sqlsanitize(pk)}", _version) in (select id, this_version from paired where not is_changed);`);
+          where ("${sqlsanitize(
+            pk
+          )}", _version) in (select id, this_version from paired where not is_changed);`);
     }
   }
   /**
@@ -3393,13 +3423,28 @@ class Table implements AbstractTable {
     }
     const { external, fields, constraints, ...upd_rec } = new_table_rec;
     upd_rec.updated_at = new Date();
-    await db.update("_sc_tables", upd_rec, this.id);
-    //limited refresh if we do not have a client
-    if (!db.getRequestContext()?.client) await Table.state_refresh(true);
     const new_table = new Table({ ...this, ...upd_rec });
-    if (!new_table) {
-      throw new Error(`Unable to find table with id: ${this.id}`);
-    } else {
+
+    const ownershipChanged =
+      new_table.ownership_field_id !== existing.ownership_field_id ||
+      new_table.ownership_formula !== existing.ownership_formula ||
+      new_table.min_role_read !== existing.min_role_read ||
+      new_table.min_role_write !== existing.min_role_write ||
+      new_table.rls_enabled !== existing.rls_enabled;
+
+    // Open the savepoint BEFORE the _sc_tables DML so that a policy DDL failure
+    // rolls back the metadata row together with the policy statements, keeping
+    // _sc_tables and pg_policy in sync.
+    const txClient =
+      ownershipChanged && !opts?.skipRls
+        ? db.getRequestContext()?.client
+        : undefined;
+    if (txClient) await txClient.query("SAVEPOINT sc_rls");
+
+    try {
+      await db.update("_sc_tables", upd_rec, this.id);
+      //limited refresh if we do not have a client
+      if (!db.getRequestContext()?.client) await Table.state_refresh(true);
       if (new_table.versioned && !existing.versioned) {
         await new_table.create_history_table();
       } else if (!new_table.versioned && existing.versioned) {
@@ -3410,36 +3455,40 @@ class Table implements AbstractTable {
       } else if (!new_table.has_sync_info && existing.has_sync_info) {
         await new_table.drop_sync_table();
       }
-      const ownershipChanged =
-        new_table.ownership_field_id !== existing.ownership_field_id ||
-        new_table.ownership_formula !== existing.ownership_formula ||
-        new_table.min_role_read !== existing.min_role_read ||
-        new_table.min_role_write !== existing.min_role_write ||
-        new_table.rls_enabled !== existing.rls_enabled;
       if (ownershipChanged && !opts?.skipRls) {
-        // Use a savepoint so a DDL failure rolls back only the policy statements,
-        // not the _sc_tables UPDATE above — otherwise PG aborts the whole transaction
-        const txClient = db.getRequestContext()?.client;
-        if (txClient) await txClient.query("SAVEPOINT sc_rls");
-        try {
-          if (
-            new_table.rls_enabled &&
-            (new_table.ownership_field_id || new_table.ownership_formula)
-          )
-            await new_table.enableOwnershipRLS();
-          else await new_table.disableOwnershipRLS();
-          if (txClient) await txClient.query("RELEASE SAVEPOINT sc_rls");
-        } catch (e: any) {
-          if (txClient) {
-            await txClient.query("ROLLBACK TO SAVEPOINT sc_rls");
-            await txClient.query("RELEASE SAVEPOINT sc_rls");
-          }
-          Object.assign(this, new_table_rec);
-          return e?.message || String(e);
-        }
+        if (
+          new_table.rls_enabled &&
+          (new_table.ownership_field_id || new_table.ownership_formula)
+        )
+          await new_table.enableOwnershipRLS();
+        else await new_table.disableOwnershipRLS();
       }
-      Object.assign(this, new_table_rec);
+      if (txClient) await txClient.query("RELEASE SAVEPOINT sc_rls");
+    } catch (e: any) {
+      if (txClient) {
+        await txClient.query("ROLLBACK TO SAVEPOINT sc_rls");
+        await txClient.query("RELEASE SAVEPOINT sc_rls");
+      } else if (ownershipChanged && !opts?.skipRls) {
+        // No open transaction: the _sc_tables UPDATE already auto-committed.
+        // Restore the original ownership/RLS columns to keep metadata in sync.
+        try {
+          await db.update(
+            "_sc_tables",
+            {
+              rls_enabled: existing.rls_enabled,
+              ownership_field_id: existing.ownership_field_id ?? null,
+              ownership_formula: existing.ownership_formula ?? null,
+              min_role_read: existing.min_role_read,
+              min_role_write: existing.min_role_write,
+              updated_at: new Date(),
+            },
+            this.id
+          );
+        } catch (_) {}
+      }
+      return e?.message || String(e);
     }
+    Object.assign(this, new_table_rec);
   }
 
   static async state_refresh(noSignal?: boolean) {
@@ -3956,7 +4005,9 @@ class Table implements AbstractTable {
                               "current transaction is aborted, commands ignored until end of transaction"
                             )
                           )
-                            rejectDetails += `Reject row ${i} because: ${(e as ErrorObj)?.message}\n`;
+                            rejectDetails += `Reject row ${i} because: ${
+                              (e as ErrorObj)?.message
+                            }\n`;
                           rejects += 1;
                         }
                     } else if (options?.no_table_write) {
@@ -3971,7 +4022,9 @@ class Table implements AbstractTable {
                           pk_name,
                         });
                       } catch (e: any) {
-                        rejectDetails += `Reject row ${i} because: ${(e as ErrorObj)?.message}\n`;
+                        rejectDetails += `Reject row ${i} because: ${
+                          (e as ErrorObj)?.message
+                        }\n`;
                         rejects += 1;
                       }
                   } else {
@@ -3999,7 +4052,9 @@ class Table implements AbstractTable {
       }
     } catch (e) {
       return {
-        error: `Error processing CSV file: ${!e ? e : (e as ErrorObj).error || (e as ErrorObj).message || e}
+        error: `Error processing CSV file: ${
+          !e ? e : (e as ErrorObj).error || (e as ErrorObj).message || e
+        }
 ${rejectDetails}`,
       };
     }
@@ -4230,16 +4285,16 @@ ${rejectDetails}`,
    */
   async get_relation_options(): Promise<RelationOption[]> {
     return await Promise.all(
-      (await this.get_relation_data()).map(
-        async ({ relationTable, relationField }: RelationData) => {
-          const path = `${relationTable.name}.${relationField.name}`;
-          const relFields = await relationTable.getFields();
-          const names = relFields
-            .filter((f: Field) => f.type !== "Key")
-            .map((f: Field) => f.name);
-          return { relationPath: path, relationFields: names };
-        }
-      )
+      (
+        await this.get_relation_data()
+      ).map(async ({ relationTable, relationField }: RelationData) => {
+        const path = `${relationTable.name}.${relationField.name}`;
+        const relFields = await relationTable.getFields();
+        const names = relFields
+          .filter((f: Field) => f.type !== "Key")
+          .map((f: Field) => f.name);
+        return { relationPath: path, relationFields: names };
+      })
     );
   }
 
@@ -4438,37 +4493,37 @@ ${rejectDetails}`,
     const role = forUser ? forUser.role_id : forPublic ? 100 : null;
     const use_forUser =
       (this.constructor as typeof Table).fixed_user || forUser;
-    const where = { ...(options?.where || {}) };
-    if (
-      !this.canEnforceRls() &&
-      role &&
-      this.updateWhereWithOwnership(
-        where,
-        use_forUser || { role_id: 100 },
-        true
-      )?.notAuthorized
-    ) {
-      const emptyRet: Row = {};
-      Object.entries(aggregations).forEach(([nm, aggObj]) => {
-        const agg = aggObj?.aggregate?.toLowerCase?.() || "count";
-        if (agg === "array_agg") emptyRet[nm] = [];
-        if (agg.startsWith("Percent")) emptyRet[nm] = null;
-        if (agg.startsWith("Latest ")) emptyRet[nm] = null;
-        if (agg.startsWith("Earliest ")) emptyRet[nm] = null;
-        else emptyRet[nm] = 0;
-      });
-      return emptyRet;
-    }
-
-    const { sql, values, groupBy } = aggregation_query_fields(
-      this.name,
-      aggregations,
-      { ...options, where }
-    );
-
-    const res = await this.withRlsUser(use_forUser, () => db.query(sql, values));
-    if (groupBy) return res.rows;
-    return res.rows[0];
+    return this.withRlsUser(use_forUser, async () => {
+      const where = { ...(options?.where || {}) };
+      if (
+        !this.canEnforceRls() &&
+        role &&
+        this.updateWhereWithOwnership(
+          where,
+          use_forUser || { role_id: 100 },
+          true
+        )?.notAuthorized
+      ) {
+        const emptyRet: Row = {};
+        Object.entries(aggregations).forEach(([nm, aggObj]) => {
+          const agg = aggObj?.aggregate?.toLowerCase?.() || "count";
+          if (agg === "array_agg") emptyRet[nm] = [];
+          if (agg.startsWith("Percent")) emptyRet[nm] = null;
+          if (agg.startsWith("Latest ")) emptyRet[nm] = null;
+          if (agg.startsWith("Earliest ")) emptyRet[nm] = null;
+          else emptyRet[nm] = 0;
+        });
+        return emptyRet;
+      }
+      const { sql, values, groupBy } = aggregation_query_fields(
+        this.name,
+        aggregations,
+        { ...options, where }
+      );
+      const res = await db.query(sql, values);
+      if (groupBy) return res.rows;
+      return res.rows[0];
+    });
   }
 
   ownership_formula_where(user: AbstractUser) {
@@ -4617,11 +4672,15 @@ ${rejectDetails}`,
         if (ontable)
           joinq += `\n left join ${schema}"${sqlsanitize(
             reftable
-          )}" "${jtNm}" on "${jtNm}"."${sqlsanitize(ref)}"=a."${reffield.refname}"`;
+          )}" "${jtNm}" on "${jtNm}"."${sqlsanitize(ref)}"=a."${
+            reffield.refname
+          }"`;
         else
           joinq += `\n left join ${schema}"${sqlsanitize(
             reftable
-          )}" "${jtNm}" on "${jtNm}"."${reffield.refname}"=a."${sqlsanitize(ref)}"`;
+          )}" "${jtNm}" on "${jtNm}"."${reffield.refname}"=a."${sqlsanitize(
+            ref
+          )}"`;
       }
       if (through) {
         const throughs = Array.isArray(through) ? through : [through];
@@ -4698,14 +4757,14 @@ ${rejectDetails}`,
         (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
           : typeof opts.orderBy === "string" &&
-              (joinFields[opts.orderBy] || aggregations[opts.orderBy])
-            ? opts.orderBy
-            : joinFields[odbUnderscore]
-              ? odbUnderscore
-              : typeof opts.orderBy === "string" &&
-                  opts.orderBy.toLowerCase?.() === "random()"
-                ? opts.orderBy
-                : "a." + opts.orderBy),
+            (joinFields[opts.orderBy] || aggregations[opts.orderBy])
+          ? opts.orderBy
+          : joinFields[odbUnderscore]
+          ? odbUnderscore
+          : typeof opts.orderBy === "string" &&
+            opts.orderBy.toLowerCase?.() === "random()"
+          ? opts.orderBy
+          : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     });
@@ -4776,60 +4835,62 @@ ${rejectDetails}`,
     const use_forUser =
       (this.constructor as typeof Table).fixed_user || forUser;
     const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
-    const { sql, values, notAuthorized, joinFields, aggregations } =
-      await this.getJoinedQuery(opts);
+    return this.withRlsUser(use_forUser, async () => {
+      const { sql, values, notAuthorized, joinFields, aggregations } =
+        await this.getJoinedQuery(opts);
 
-    if (!this.canEnforceRls() && notAuthorized) return [];
-    const res = await this.withRlsUser(use_forUser, () =>
-      db.query(sql as string, values)
-    );
-    if (res.rows?.length === 0) return []; // check
-    let calcRow = apply_calculated_fields(
-      res.rows.map((row: Row) => this.parse_json_fields(row)),
-      fields,
-      !!opts?.ignore_errors
-    );
-    //need to json parse array agg values on sqlite
-    if (
-      db.isSQLite &&
-      Object.values(aggregations || {}).some(
-        (agg) => agg.aggregate.toLowerCase() === "array_agg"
-      )
-    ) {
-      Object.entries(aggregations || {}).forEach(([k, agg]: any) => {
-        if (agg.aggregate.toLowerCase() === "array_agg") {
-          calcRow.forEach((row) => {
-            if (row[k]) row[k] = JSON.parse(row[k]);
-          });
-        }
-      });
-    }
-    //rename aggregations and joinfields
-    if (
-      Object.values(joinFields || {}).some((jf: any) => jf.rename_object) ||
-      Object.values(aggregations || {}).some((jf: any) => jf.rename_to)
-    ) {
-      const f = joinfield_renamer(joinFields, aggregations);
-      calcRow = calcRow.map(f);
-    }
-
-    for (const k of Object.keys(joinFields || {})) {
-      if (!joinFields?.[k].lookupFunction) continue;
-      for (const row of calcRow) {
-        row[k] = await joinFields[k].lookupFunction(row);
+      if (!this.canEnforceRls() && notAuthorized) return [];
+      const res = await db.query(sql as string, values);
+      if (res.rows?.length === 0) return []; // check
+      let calcRow = apply_calculated_fields(
+        res.rows.map((row: Row) => this.parse_json_fields(row)),
+        fields,
+        !!opts?.ignore_errors
+      );
+      //need to json parse array agg values on sqlite
+      if (
+        db.isSQLite &&
+        Object.values(aggregations || {}).some(
+          (agg) => agg.aggregate.toLowerCase() === "array_agg"
+        )
+      ) {
+        Object.entries(aggregations || {}).forEach(([k, agg]: any) => {
+          if (agg.aggregate.toLowerCase() === "array_agg") {
+            calcRow.forEach((row) => {
+              if (row[k]) row[k] = JSON.parse(row[k]);
+            });
+          }
+        });
       }
-    }
+      //rename aggregations and joinfields
+      if (
+        Object.values(joinFields || {}).some((jf: any) => jf.rename_object) ||
+        Object.values(aggregations || {}).some((jf: any) => jf.rename_to)
+      ) {
+        const f = joinfield_renamer(joinFields, aggregations);
+        calcRow = calcRow.map(f);
+      }
 
-    if (!this.canEnforceRls() && role && role > this.min_role_read) {
-      //check ownership
-      if (forPublic) return [];
-      else if (this.ownership_field_id) {
-        //already dealt with by changing where
-      } else if (this.ownership_formula || this.name === "users") {
-        calcRow = calcRow.filter((row: Row) => this.is_owner(use_forUser, row));
-      } else return []; //no ownership
-    }
-    return calcRow;
+      for (const k of Object.keys(joinFields || {})) {
+        if (!joinFields?.[k].lookupFunction) continue;
+        for (const row of calcRow) {
+          row[k] = await joinFields[k].lookupFunction(row);
+        }
+      }
+
+      if (!this.canEnforceRls() && role && role > this.min_role_read) {
+        //check ownership
+        if (forPublic) return [];
+        else if (this.ownership_field_id) {
+          //already dealt with by changing where
+        } else if (this.ownership_formula || this.name === "users") {
+          calcRow = calcRow.filter((row: Row) =>
+            this.is_owner(use_forUser, row)
+          );
+        } else return []; //no ownership
+      }
+      return calcRow;
+    });
   }
 
   /**
