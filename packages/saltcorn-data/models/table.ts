@@ -583,7 +583,9 @@ class Table implements AbstractTable {
     const ownerUsing = await this.rlsOwnerUsing(schema);
     if (!ownerUsing) {
       await this.disableOwnershipRLS();
-      return;
+      throw new Error(
+        `Cannot enable RLS on table "${this.name}": ownership formula could not be translated to a SQL expression`
+      );
     }
 
     await db.query(`ALTER TABLE ${tbl} ENABLE ROW LEVEL SECURITY`);
@@ -599,19 +601,36 @@ class Table implements AbstractTable {
       WITH CHECK (${ownerUsing})
     `);
 
-    // FOR SELECT uses min_role_read; FOR ALL uses min_role_write — PG applies USING to DELETE,
-    // so one FOR ALL USING(min_role_read) would let readers delete. COALESCE to 1 = internal access.
+    // Separate policies for read and write so the write threshold cannot
+    // widen SELECT visibility via PG's OR-of-permissive-policies rule.
     const roleGuc = `coalesce(nullif(current_setting('app.current_user_role', true), '')::integer, 1)`;
     await db.query(`
       CREATE POLICY sc_rls_elevated ON ${tbl}
       FOR SELECT
       USING     (${roleGuc} <= ${this.min_role_read})
     `);
+    // PostgreSQL requires a separate CREATE POLICY per command.
+    // INSERT: only WITH CHECK (no existing row to filter via USING).
+    // UPDATE: both USING (filter old row) and WITH CHECK (validate new row).
+    // DELETE: only USING (no new row, WITH CHECK not allowed).
+    await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write_ins ON ${tbl}`);
+    await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write_upd ON ${tbl}`);
+    await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write_del ON ${tbl}`);
     await db.query(`
-      CREATE POLICY sc_rls_elevated_write ON ${tbl}
-      FOR ALL
+      CREATE POLICY sc_rls_elevated_write_ins ON ${tbl}
+      FOR INSERT
+      WITH CHECK (${roleGuc} <= ${this.min_role_write})
+    `);
+    await db.query(`
+      CREATE POLICY sc_rls_elevated_write_upd ON ${tbl}
+      FOR UPDATE
       USING     (${roleGuc} <= ${this.min_role_write})
       WITH CHECK (${roleGuc} <= ${this.min_role_write})
+    `);
+    await db.query(`
+      CREATE POLICY sc_rls_elevated_write_del ON ${tbl}
+      FOR DELETE
+      USING     (${roleGuc} <= ${this.min_role_write})
     `);
   }
 
@@ -627,6 +646,9 @@ class Table implements AbstractTable {
     await db.query(`DROP POLICY IF EXISTS sc_rls_owner ON ${tbl}`);
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated ON ${tbl}`);
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write ON ${tbl}`);
+    await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write_ins ON ${tbl}`);
+    await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write_upd ON ${tbl}`);
+    await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write_del ON ${tbl}`);
     await db.query(`ALTER TABLE ${tbl} DISABLE ROW LEVEL SECURITY`);
   }
 
@@ -636,17 +658,22 @@ class Table implements AbstractTable {
    * @param user - the user whose id and role_id are applied as GUCs; no-op if undefined
    * @param fn - the database operation to execute under the user's RLS context
    */
+  /** True only when RLS can actually be enforced: flag set, PG, and inside a runWithTenant ALS context. */
+  private canEnforceRls(): boolean {
+    return this.rls_enabled && !db.isSQLite && !!db.getRequestContext();
+  }
+
   private async withRlsUser<T>(
     user: AbstractUser | undefined,
     fn: () => Promise<T>
   ): Promise<T> {
-    if (!this.rls_enabled || db.isSQLite || !user) return fn();
-    const uid = user.id ?? 0;
-    const rid = user.role_id ?? 100;
+    if (!this.canEnforceRls() || !user) return fn();
+    const uid = String(user.id ?? 0);
+    const rid = String(user.role_id ?? 100);
     const ctx = db.getRequestContext();
     if (ctx?.client) {
-      await ctx.client.query(`SET LOCAL app.current_user_id = '${uid}'`);
-      await ctx.client.query(`SET LOCAL app.current_user_role = '${rid}'`);
+      await ctx.client.query(`SELECT set_config('app.current_user_id', $1, true)`, [uid]);
+      await ctx.client.query(`SELECT set_config('app.current_user_role', $1, true)`, [rid]);
       return fn();
     }
     // No open transaction — use a dedicated client so session-level GUCs
@@ -654,12 +681,12 @@ class Table implements AbstractTable {
     const client = await db.getClient();
     if (ctx) ctx.client = client;
     try {
-      await client.query(`SET app.current_user_id = '${uid}'`);
-      await client.query(`SET app.current_user_role = '${rid}'`);
+      await client.query(`SELECT set_config('app.current_user_id', $1, false)`, [uid]);
+      await client.query(`SELECT set_config('app.current_user_role', $1, false)`, [rid]);
       return await fn();
     } finally {
-      await client.query(`RESET app.current_user_id`);
-      await client.query(`RESET app.current_user_role`);
+      try { await client.query(`RESET app.current_user_id`); } catch (_) {}
+      try { await client.query(`RESET app.current_user_role`); } catch (_) {}
       if (ctx) ctx.client = null;
       client.release();
     }
@@ -899,6 +926,7 @@ class Table implements AbstractTable {
       min_role_write: options.min_role_write || 1,
       ownership_field_id: options.ownership_field_id,
       ownership_formula: options.ownership_formula,
+      rls_enabled: !!(options as TablePack).rls_enabled,
       description: options.description || "",
       provider_name: options.provider_name,
       provider_cfg: options.provider_cfg,
@@ -945,6 +973,8 @@ class Table implements AbstractTable {
     if (table?.versioned) await table.create_history_table();
     // create sync info
     if (table.has_sync_info) await table.create_sync_info_table();
+    // RLS setup is deferred: ownership fields don't exist yet at create time.
+    // enableOwnershipRLS() is called via Table.update() once fields are in place.
     // refresh tables cache
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client) await Table.state_refresh(true);
@@ -1257,7 +1287,7 @@ class Table implements AbstractTable {
     })();
 
     if (
-      !this.rls_enabled &&
+      !this.canEnforceRls() &&
       this.updateWhereWithOwnership(where, use_user)?.notAuthorized
     ) {
       const state = nsState.getState()!;
@@ -1484,7 +1514,7 @@ class Table implements AbstractTable {
       db.selectMaybeOne(this.name, where, this.processSelectOptions(selopts1))
     );
     if (!row || !this.fields) return null;
-    if (!this.rls_enabled && role && role > this.min_role_read) {
+    if (!this.canEnforceRls() && role && role > this.min_role_read) {
       //check ownership
       if (forPublic) return null;
       else if (this.ownership_field_id) {
@@ -1541,7 +1571,7 @@ class Table implements AbstractTable {
       (this.constructor as typeof Table).fixed_user || forUser;
     const role = use_forUser ? use_forUser.role_id : forPublic ? 100 : null;
     if (
-      !this.rls_enabled &&
+      !this.canEnforceRls() &&
       role &&
       this.updateWhereWithOwnership(
         where,
@@ -1555,7 +1585,7 @@ class Table implements AbstractTable {
     let rows = await this.withRlsUser(use_forUser, () =>
       db.select(this.name, where, this.processSelectOptions(selopts1))
     );
-    if (!this.rls_enabled && role && role > this.min_role_read) {
+    if (!this.canEnforceRls() && role && role > this.min_role_read) {
       //check ownership
       if (forPublic) return [];
       else if (this.ownership_field_id) {
@@ -1631,7 +1661,7 @@ class Table implements AbstractTable {
   ): Promise<any[]> {
     const useWhere = { ...(whereObj || {}) };
     if (
-      !this.rls_enabled &&
+      !this.canEnforceRls() &&
       user &&
       user.role_id > this.min_role_read &&
       !(this.ownership_field_id || this.ownership_formula)
@@ -1639,7 +1669,7 @@ class Table implements AbstractTable {
       return [];
     }
     if (
-      !this.rls_enabled &&
+      !this.canEnforceRls() &&
       user &&
       user.role_id > this.min_role_read &&
       (this.ownership_field_id || this.ownership_formula)
@@ -1809,7 +1839,7 @@ class Table implements AbstractTable {
         fields
       );
     if (
-      !this.rls_enabled &&
+      !this.canEnforceRls() &&
       use_user &&
       role &&
       (role > this.min_role_write || role > this.min_role_read)
@@ -2471,7 +2501,7 @@ class Table implements AbstractTable {
 
     this.normalise_fkey_values(v_in);
 
-    if (!this.rls_enabled && use_user && use_user.role_id > this.min_role_write) {
+    if (!this.canEnforceRls() && use_user && use_user.role_id > this.min_role_write) {
       if (this.ownership_field_id) {
         const owner_field = fields.find(
           (f) => f.id === this.ownership_field_id
@@ -4410,7 +4440,7 @@ ${rejectDetails}`,
       (this.constructor as typeof Table).fixed_user || forUser;
     const where = { ...(options?.where || {}) };
     if (
-      !this.rls_enabled &&
+      !this.canEnforceRls() &&
       role &&
       this.updateWhereWithOwnership(
         where,
@@ -4436,7 +4466,7 @@ ${rejectDetails}`,
       { ...options, where }
     );
 
-    const res = await db.query(sql, values);
+    const res = await this.withRlsUser(use_forUser, () => db.query(sql, values));
     if (groupBy) return res.rows;
     return res.rows[0];
   }
@@ -4749,8 +4779,10 @@ ${rejectDetails}`,
     const { sql, values, notAuthorized, joinFields, aggregations } =
       await this.getJoinedQuery(opts);
 
-    if (notAuthorized) return [];
-    const res = await db.query(sql as string, values);
+    if (!this.canEnforceRls() && notAuthorized) return [];
+    const res = await this.withRlsUser(use_forUser, () =>
+      db.query(sql as string, values)
+    );
     if (res.rows?.length === 0) return []; // check
     let calcRow = apply_calculated_fields(
       res.rows.map((row: Row) => this.parse_json_fields(row)),
@@ -4788,7 +4820,7 @@ ${rejectDetails}`,
       }
     }
 
-    if (role && role > this.min_role_read) {
+    if (!this.canEnforceRls() && role && role > this.min_role_read) {
       //check ownership
       if (forPublic) return [];
       else if (this.ownership_field_id) {

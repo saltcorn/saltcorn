@@ -201,14 +201,18 @@ const tableForm = async (table: any, req: Req) => {
               name: "is_user_group",
               type: "Bool",
             },
-            {
-              label: req.__("Enable Row Level Security"),
-              sublabel: req.__(
-                "Enforce ownership at the PostgreSQL level. Requires an ownership field and PostgreSQL."
-              ),
-              name: "rls_enabled",
-              type: "Bool",
-            },
+            ...(!db.isSQLite
+              ? [
+                  {
+                    label: req.__("Enable Row Level Security"),
+                    sublabel: req.__(
+                      "Enforce ownership at the PostgreSQL level. Requires an ownership field and PostgreSQL."
+                    ),
+                    name: "rls_enabled",
+                    type: "Bool",
+                  },
+                ]
+              : []),
           ]
         : []),
       // description of table
