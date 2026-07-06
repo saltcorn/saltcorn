@@ -385,3 +385,110 @@ describe("RLS CRUD enforcement", () => {
     expect(await table.getRow({ id: tmpId })).toBeNull();
   });
 });
+
+describe("RLS policy structure", () => {
+  if (db.isSQLite) return;
+
+  let table: Table;
+
+  beforeAll(async () => {
+    const existing = Table.findOne({ name: "rls_policy_structure_test" });
+    if (existing) await existing.delete();
+
+    const newTable = await Table.create("rls_policy_structure_test");
+    const ownerField = await Field.create({
+      table: newTable,
+      label: "Owner",
+      name: "owner_id",
+      type: "Integer",
+      required: false,
+    });
+    table = Table.findOne({ name: "rls_policy_structure_test" })!;
+    await table.update({
+      min_role_read: 80,
+      min_role_write: 40,
+      ownership_field_id: ownerField.id,
+      rls_enabled: true,
+    });
+    // Reload so rls_enabled reflects what was actually committed.
+    table = Table.findOne({ name: "rls_policy_structure_test" })!;
+  });
+
+  afterAll(async () => {
+    if (table) await table.delete();
+  });
+
+  it("persists rls_enabled=true after enableOwnershipRLS succeeds", () => {
+    // If enableOwnershipRLS() threw (e.g. invalid policy syntax), the savepoint
+    // would have rolled back and rls_enabled would still be false here.
+    expect(table.rls_enabled).toBe(true);
+  });
+
+  it("enables and forces RLS on the pg_class row", async () => {
+    const cls = await db.query(
+      `SELECT relrowsecurity, relforcerowsecurity FROM pg_class WHERE relname = $1`,
+      ["rls_policy_structure_test"]
+    );
+    expect(cls.rows[0]?.relrowsecurity).toBe(true);
+    expect(cls.rows[0]?.relforcerowsecurity).toBe(true);
+  });
+
+  it("creates exactly the expected policies in pg_policies", async () => {
+    const schema = db.getTenantSchema();
+    const res = await db.query(
+      `SELECT policyname, cmd
+       FROM pg_catalog.pg_policies
+       WHERE schemaname = $1 AND tablename = $2
+       ORDER BY policyname`,
+      [schema, "rls_policy_structure_test"]
+    );
+    const policies = res.rows.map((r: any) => ({
+      name: r.policyname,
+      cmd: r.cmd,
+    }));
+    // Verify the three write policies exist with the correct per-command scope.
+    // The old single 'FOR INSERT, UPDATE, DELETE' policy was a PostgreSQL syntax
+    // error — only one command keyword is allowed per CREATE POLICY.
+    expect(policies).toEqual(
+      expect.arrayContaining([
+        { name: "sc_rls_elevated", cmd: "SELECT" },
+        { name: "sc_rls_elevated_write_ins", cmd: "INSERT" },
+        { name: "sc_rls_elevated_write_upd", cmd: "UPDATE" },
+        { name: "sc_rls_elevated_write_del", cmd: "DELETE" },
+        { name: "sc_rls_owner", cmd: "ALL" },
+      ])
+    );
+    // The old combined policy must not exist.
+    expect(policies.map((p: any) => p.name)).not.toContain(
+      "sc_rls_elevated_write"
+    );
+  });
+
+  it("sc_rls_owner USING clause references the ownership column and GUC", async () => {
+    const schema = db.getTenantSchema();
+    const qualRes = await db.query(
+      `SELECT qual FROM pg_policies
+       WHERE schemaname = $1 AND tablename = $2 AND policyname = 'sc_rls_owner'`,
+      [schema, "rls_policy_structure_test"]
+    );
+    const qual: string = qualRes.rows[0]?.qual ?? "";
+    expect(qual).toContain("owner_id");
+    expect(qual).toContain("current_setting");
+  });
+
+  it("disableOwnershipRLS removes all policies and clears pg_class flags", async () => {
+    await table.disableOwnershipRLS();
+    const schema = db.getTenantSchema();
+    const polRes = await db.query(
+      `SELECT policyname FROM pg_catalog.pg_policies
+       WHERE schemaname = $1 AND tablename = $2`,
+      [schema, "rls_policy_structure_test"]
+    );
+    expect(polRes.rows).toHaveLength(0);
+    const cls = await db.query(
+      `SELECT relrowsecurity FROM pg_class WHERE relname = $1`,
+      ["rls_policy_structure_test"]
+    );
+    expect(cls.rows[0]?.relrowsecurity).toBe(false);
+  });
+});
