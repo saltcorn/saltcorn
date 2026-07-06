@@ -79,6 +79,7 @@ export type DbExportsType = {
       __: (str: string) => string;
     };
     client?: DbClient | null;
+    inTransaction?: boolean;
   };
   drop_fts_index: (table: string) => Promise<void>;
   drop_index: (table: string, columns: string[]) => Promise<void>;

@@ -12,6 +12,7 @@ type RequestContext = {
   tenant: string;
   client?: any;
   req?: any;
+  inTransaction?: boolean;
 };
 
 export const tenantNamespace: AsyncLocalStorage<RequestContext> =

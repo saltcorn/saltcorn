@@ -650,6 +650,8 @@ class Table implements AbstractTable {
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write_upd ON ${tbl}`);
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write_del ON ${tbl}`);
     await db.query(`ALTER TABLE ${tbl} DISABLE ROW LEVEL SECURITY`);
+    if (this.id)
+      await db.update("_sc_tables", { rls_enabled: false }, this.id);
   }
 
   /**
@@ -1868,7 +1870,6 @@ class Table implements AbstractTable {
           fields
         );
       if (
-        !this.canEnforceRls() &&
         use_user &&
         role &&
         (role > this.min_role_write || role > this.min_role_read)
@@ -3435,9 +3436,10 @@ class Table implements AbstractTable {
     // Open the savepoint BEFORE the _sc_tables DML so that a policy DDL failure
     // rolls back the metadata row together with the policy statements, keeping
     // _sc_tables and pg_policy in sync.
+    const _ctx = db.getRequestContext();
     const txClient =
-      ownershipChanged && !opts?.skipRls
-        ? db.getRequestContext()?.client
+      ownershipChanged && !opts?.skipRls && _ctx?.inTransaction
+        ? _ctx.client
         : undefined;
     if (txClient) await txClient.query("SAVEPOINT sc_rls");
 
@@ -3484,6 +3486,7 @@ class Table implements AbstractTable {
             },
             this.id
           );
+          await Table.state_refresh(true);
         } catch (_) {}
       }
       return e?.message || String(e);
