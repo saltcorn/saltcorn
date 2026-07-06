@@ -25,8 +25,8 @@ module.exports = {
   resolve: {
     extensions: [".js", ".jsx"],
     alias: { // Fix:  Ensure only one copy of React is used
-      react: path.resolve(__dirname, "node_modules/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      react: path.dirname(require.resolve("react/package.json")),
+      "react-dom": path.dirname(require.resolve("react-dom/package.json")),
     },
     fallback: { "process/browser": require.resolve("process/browser") },
   },
