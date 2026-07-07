@@ -361,7 +361,7 @@ class Table implements AbstractTable {
     Object.assign(t, tbl);
     t.update = async (upd_rec: Row) => {
       const { fields, constraints, ...updDB } = upd_rec;
-      if (updDB.ownership_field_id === "") updDB.ownership_field_id = null;
+      if (updDB.ownership_field_id === "") delete updDB.ownership_field_id;
       updDB.updated_at = new Date();
       await db.update("_sc_tables", updDB, tbl.id);
       //limited refresh if we do not have a client
@@ -654,17 +654,18 @@ class Table implements AbstractTable {
       await db.update("_sc_tables", { rls_enabled: false }, this.id);
   }
 
-  /**
-   * Run `fn` with GUCs set for `user` so RLS policies evaluate the right identity.
-   * Uses SET LOCAL inside an existing transaction, or a dedicated client otherwise.
-   * @param user - the user whose id and role_id are applied as GUCs; no-op if undefined
-   * @param fn - the database operation to execute under the user's RLS context
-   */
+
   /** True only when RLS can actually be enforced: flag set, PG, and inside a runWithTenant ALS context. */
   private canEnforceRls(): boolean {
     return this.rls_enabled && !db.isSQLite && !!db.getRequestContext();
   }
 
+  /**
+   * Run `fn` with GUCs set for `user` so RLS policies evaluate the right identity.
+   * Uses SET LOCAL inside an existing transaction or exisitng client, or creates a dedicated client.
+   * @param user - the user whose id and role_id are applied as GUCs; no-op if undefined
+   * @param fn - the database operation to execute under the user's RLS context
+   */
   private async withRlsUser<T>(
     user: AbstractUser | undefined,
     fn: () => Promise<T>
@@ -993,8 +994,6 @@ class Table implements AbstractTable {
     if (table?.versioned) await table.create_history_table();
     // create sync info
     if (table.has_sync_info) await table.create_sync_info_table();
-    // RLS setup is deferred: ownership fields don't exist yet at create time.
-    // enableOwnershipRLS() is called via Table.update() once fields are in place.
     // refresh tables cache
     //limited refresh if we do not have a client
     if (!db.getRequestContext()?.client) await Table.state_refresh(true);
