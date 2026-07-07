@@ -780,7 +780,7 @@ export const openOrUseTransaction = async (
   onError?: (e: Error) => any
 ): Promise<any> => {
   const reqCon = getRequestContext();
-  if (reqCon?.client) return await f();
+  if (reqCon?.inTransaction) return await f();
   else return await withTransaction(f, onError);
 };
 
@@ -800,7 +800,7 @@ export const whenTransactionisFree = (
     let counter = 0;
     const interval = setInterval(async () => {
       const reqCon = getRequestContext();
-      if (!reqCon?.client) {
+      if (!reqCon?.inTransaction) {
         clearInterval(interval);
         try {
           resolve(await withTransaction(f, onError));
