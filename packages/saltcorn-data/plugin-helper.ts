@@ -2229,6 +2229,10 @@ const handleRelationPath = (
  * to prevent subquery injection through passthrough code paths.
  */
 function stripDangerousOperators(obj: any): any {
+  if(obj && Object.prototype.toString.call(obj) === "[object Date]" && !isNaN(obj)) 
+    return obj;
+  if(obj?.constructor?.name === "PlainDate") return obj;
+
   if (typeof obj !== "object" || obj === null) return obj;
   if (Array.isArray(obj)) return obj.map(stripDangerousOperators);
   const result: any = {};
