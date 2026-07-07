@@ -689,6 +689,12 @@ describe("pack install", () => {
     const fimp = table.getField("important");
     expect(instanceOfType(fimp?.type) && fimp?.type?.name).toBe("Bool");
   });
+  it("uninstalls rls tables before rls pack tests", async () => {
+    for (const name of ["rls_field_owner_table", "rls_formula_owner_table"]) {
+      const t = Table.findOne({ name });
+      if (t) await t.delete();
+    }
+  });
   it("warns on clashing types", async () => {
     const newpack = JSON.parse(JSON.stringify(todoPack));
     newpack.tables[0].fields.push({
@@ -705,5 +711,164 @@ describe("pack install", () => {
     assertIsSet(table);
     const fimp = table.getField("important");
     expect(instanceOfType(fimp?.type) && fimp?.type?.name).toBe("String");
+  });
+});
+
+// Two minimal pack fixtures used by the RLS tests below.
+const rlsFieldOwnerPack: Pack = {
+  tables: [
+    {
+      name: "rls_field_owner_table",
+      fields: [
+        {
+          name: "title",
+          label: "Title",
+          type: "String",
+          required: false,
+          attributes: {},
+        },
+        {
+          name: "owner_id",
+          label: "Owner",
+          type: "Integer",
+          required: false,
+          attributes: {},
+        },
+      ],
+      min_role_read: 80,
+      min_role_write: 80,
+      rls_enabled: true,
+      ownership_field_name: "owner_id",
+    },
+  ],
+  views: [],
+  pages: [],
+  page_groups: [],
+  plugins: [],
+  roles: [],
+  library: [],
+  triggers: [],
+  tags: [],
+  models: [],
+  model_instances: [],
+};
+
+const rlsFormulaOwnerPack: Pack = {
+  tables: [
+    {
+      name: "rls_formula_owner_table",
+      fields: [
+        {
+          name: "title",
+          label: "Title",
+          type: "String",
+          required: false,
+          attributes: {},
+        },
+        {
+          name: "owner_id",
+          label: "Owner",
+          type: "Integer",
+          required: false,
+          attributes: {},
+        },
+      ],
+      min_role_read: 80,
+      min_role_write: 80,
+      rls_enabled: true,
+      ownership_formula: "user.id == row.owner_id",
+    },
+  ],
+  views: [],
+  pages: [],
+  page_groups: [],
+  plugins: [],
+  roles: [],
+  library: [],
+  triggers: [],
+  tags: [],
+  models: [],
+  model_instances: [],
+};
+
+describe("rls_enabled in packs", () => {
+  afterAll(async () => {
+    for (const name of ["rls_field_owner_table", "rls_formula_owner_table"]) {
+      const t = Table.findOne({ name });
+      if (t) await t.delete();
+    }
+  });
+
+  it("table_pack serializes rls_enabled=false for a regular table", async () => {
+    const tpack = await table_pack("books");
+    expect(tpack.rls_enabled).toBeFalsy();
+  });
+
+  it("installs field-based RLS pack and sets rls_enabled=true with ownership_field_id", async () => {
+    await install_pack(rlsFieldOwnerPack, "RLS field owner test", () => {});
+    const table = Table.findOne({ name: "rls_field_owner_table" });
+    assertIsSet(table);
+    expect(table.rls_enabled).toBe(true);
+    expect(table.ownership_field_id).toBeTruthy();
+  });
+
+  it("table_pack round-trips rls_enabled=true with field-based ownership", async () => {
+    const tpack = await table_pack("rls_field_owner_table");
+    expect(tpack.rls_enabled).toBe(true);
+    expect(tpack.ownership_field_name).toBe("owner_id");
+  });
+
+  it("field-based RLS pack install enables RLS in PostgreSQL", async () => {
+    if (db.isSQLite) return;
+    const schema = db.getTenantSchema();
+    const cls = await db.query(
+      `SELECT relrowsecurity, relforcerowsecurity
+       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+       WHERE c.relname = $1 AND n.nspname = $2`,
+      ["rls_field_owner_table", schema]
+    );
+    expect(cls.rows[0]?.relrowsecurity).toBe(true);
+    expect(cls.rows[0]?.relforcerowsecurity).toBe(true);
+    const polRes = await db.query(
+      `SELECT policyname FROM pg_catalog.pg_policies
+       WHERE schemaname = $1 AND tablename = $2`,
+      [schema, "rls_field_owner_table"]
+    );
+    expect(polRes.rows.length).toBeGreaterThan(0);
+  });
+
+  it("installs formula-only RLS pack and sets rls_enabled=true with ownership_formula", async () => {
+    await install_pack(rlsFormulaOwnerPack, "RLS formula owner test", () => {});
+    const table = Table.findOne({ name: "rls_formula_owner_table" });
+    assertIsSet(table);
+    expect(table.rls_enabled).toBe(true);
+    expect(table.ownership_formula).toBe("user.id == row.owner_id");
+    expect(table.ownership_field_id).toBeFalsy();
+  });
+
+  it("table_pack round-trips rls_enabled=true with formula-only ownership", async () => {
+    const tpack = await table_pack("rls_formula_owner_table");
+    expect(tpack.rls_enabled).toBe(true);
+    expect(tpack.ownership_formula).toBe("user.id == row.owner_id");
+    expect(tpack.ownership_field_name).toBeFalsy();
+  });
+
+  it("formula-only RLS pack install enables RLS in PostgreSQL", async () => {
+    if (db.isSQLite) return;
+    const schema = db.getTenantSchema();
+    const cls = await db.query(
+      `SELECT relrowsecurity, relforcerowsecurity
+       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+       WHERE c.relname = $1 AND n.nspname = $2`,
+      ["rls_formula_owner_table", schema]
+    );
+    expect(cls.rows[0]?.relrowsecurity).toBe(true);
+    expect(cls.rows[0]?.relforcerowsecurity).toBe(true);
+    const polRes = await db.query(
+      `SELECT policyname FROM pg_catalog.pg_policies
+       WHERE schemaname = $1 AND tablename = $2`,
+      [schema, "rls_formula_owner_table"]
+    );
+    expect(polRes.rows.length).toBeGreaterThan(0);
   });
 });
