@@ -1672,6 +1672,14 @@ class Table implements AbstractTable {
     if (fields.some((f: Field) => f.calculated && f.stored)) {
       joinFields = this.storedExpressionJoinFields();
     }
+    const getExisting = async () => {
+      if (!existing)
+        existing = await this.getJoinedRow({
+          where: { [pk_name]: id },
+          forUser: use_user,
+          joinFields,
+        });
+    };
     if (this.ownership_formula)
       add_free_variables_to_joinfields(
         freeVariables(this.ownership_formula),
@@ -1699,12 +1707,7 @@ class Table implements AbstractTable {
         }
 
         //need to check existing
-        if (!existing)
-          existing = await this.getJoinedRow({
-            where: { [pk_name]: id },
-            forUser: use_user,
-            joinFields,
-          });
+        await getExisting();
         if (!existing || existing?.[owner_field.name] !== use_user.id) {
           state.log(
             4,
@@ -1714,12 +1717,8 @@ class Table implements AbstractTable {
         }
       }
       if (this.ownership_formula) {
-        if (!existing)
-          existing = await this.getJoinedRow({
-            where: { [pk_name]: id },
-            forUser: use_user,
-            joinFields,
-          });
+
+        await getExisting();
 
         if (!existing || !this.is_owner(use_user, existing)) {
           state.log(
@@ -1740,18 +1739,19 @@ class Table implements AbstractTable {
       }
     }
     if (this.constraints.filter((c) => c.type === "Formula").length) {
-      if (!existing)
-        existing = await this.getJoinedRow({
-          where: { [pk_name]: id },
-          forUser: use_user,
-          joinFields,
-        });
+      await getExisting();
       const newRow = { ...existing, ...v };
       let constraint_check = this.check_table_constraints(newRow);
       if (constraint_check) return constraint_check;
     }
-    if (use_user) {
-      let field_write_check = this.check_field_write_role(v, use_user);
+    if (use_user && fields.some((f) => f.attributes?.min_role_write)) {
+      await getExisting();
+      let field_write_check = this.check_field_write_role(
+        v,
+        use_user,
+        existing as Row
+      );
+
       if (field_write_check) return field_write_check;
     }
 
@@ -2235,14 +2235,16 @@ class Table implements AbstractTable {
    */
   private check_field_write_role(
     row: Row,
-    user: AbstractUser
+    user: AbstractUser,
+    existing: Row
   ): string | undefined {
     let use_user = (this.constructor as typeof Table).fixed_user || user;
     for (const field of this.fields) {
       if (
         typeof row[field.name] !== "undefined" &&
         field.attributes?.min_role_write &&
-        use_user.role_id > +field.attributes?.min_role_write
+        use_user.role_id > +field.attributes?.min_role_write &&
+        row[field.name] != existing[field.name]
       )
         return "Not authorized";
     }
@@ -2361,7 +2363,7 @@ class Table implements AbstractTable {
     let constraint_check = this.check_table_constraints(v_in);
     if (constraint_check) throw new Error(constraint_check);
     if (use_user) {
-      let field_write_check = this.check_field_write_role(v_in, use_user);
+      let field_write_check = this.check_field_write_role(v_in, use_user, {});
       if (field_write_check) return field_write_check;
     }
     //check validate here based on v_in
