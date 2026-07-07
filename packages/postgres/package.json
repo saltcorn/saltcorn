@@ -30,6 +30,7 @@
   "dependencies": {
     "@saltcorn/db-common": "1.6.0",
     "@saltcorn/plain-date": "0.2.5",
+    "connect-pg-simple": "^9.0.1",
     "pg": "^8.13.1",
     "pg-copy-streams": "^6.0.6",
     "replacestream": "4.0.3"

@@ -29,7 +29,11 @@ class ResetCommand extends Command {
             type: "confirm",
             name: "continue",
             message: `This will wipe all data from database "${
-              db.isSQLite ? "SQLite" : db.connectObj.database + "." + schema
+              db.isSQLite
+                ? "SQLite"
+                : (db.connectObj.database || db.connectObj.connectionString) +
+                  "." +
+                  schema
             }".\nContinue?`,
             default: false,
           },

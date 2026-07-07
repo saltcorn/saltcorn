@@ -4,8 +4,6 @@
  * @subcategory routes
  */
 
-import { createRequire } from "module";
-const require = createRequire(import.meta.url);
 import db from "@saltcorn/data/db";
 const { sqlsanitize } = db;
 import {
@@ -496,30 +494,13 @@ const getSessionStore = (pruneInterval?: number) => {
     );
   let sameSite = getState()!.getConfig("cookie_samesite", "None").toLowerCase();
   if (sameSite === "unset") sameSite = undefined;
-  if (db.isSQLite) {
-    var SQLiteStore = require("connect-sqlite3")(session);
-    return session({
-      store: new SQLiteStore({ db: "sessions.sqlite" }),
-      secret: db.connectObj.session_secret || generateString(),
-      resave: false,
-      saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite, secure: "auto" }, // 30 days
-    });
-  } else {
-    const pgSession = require("connect-pg-simple")(session);
-    return session({
-      store: new pgSession({
-        schemaName: db.connectObj.default_schema,
-        pool: db.pool,
-        tableName: "_sc_session",
-        pruneSessionInterval: (pruneInterval ?? 0) > 0 ? pruneInterval : false,
-      }),
-      secret: db.connectObj.session_secret || generateString(),
-      resave: false,
-      saveUninitialized: false,
-      cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite, secure: "auto" }, // 30 days
-    });
-  }
+  return session({
+    store: db.getExpressSessionStore(session, { pruneInterval }),
+    secret: db.connectObj.session_secret || generateString(),
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000, sameSite, secure: "auto" }, // 30 days
+  });
 };
 
 /**

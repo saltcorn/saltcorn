@@ -3,13 +3,21 @@ const js = async () => {
   const Table = require("@saltcorn/data/models/table");
   const db = require("@saltcorn/data/db");
   const tables = await Table.find({});
-  const schema = db.getTenantSchemaPrefix();
   for (const t of tables) {
     try {
-      await db.query(
-        `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
-          values($1,'id','ID','Integer', '{}', true, true, true)`,
-        [t.id]
+      await db.insert(
+        "_sc_fields",
+        {
+          table_id: t.id,
+          name: "id",
+          label: "ID",
+          type: "Integer",
+          attributes: {},
+          required: true,
+          is_unique: true,
+          primary_key: true,
+        },
+        { noid: true }
       );
     } catch (e) {
       console.error(e);

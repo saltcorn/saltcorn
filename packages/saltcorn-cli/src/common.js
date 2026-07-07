@@ -29,7 +29,7 @@ const maybe_as_tenant_in_transaction = async (ten, f0) => {
       await f0();
     });
   };
-  if (!ten) return await db.runWithTenant("public", f);
+  if (!ten) return await db.runWithTenant(db.connectObj.default_schema || "public", f);
   if (ten === "*") {
     const { getAllTenants } = require("@saltcorn/admin-models/models/tenant");
     const tenants = await getAllTenants();

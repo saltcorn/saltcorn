@@ -9,6 +9,8 @@ import type { PoolClient } from "pg";
 import * as copyStreams from "pg-copy-streams";
 import { pipeline } from "stream/promises";
 import replace from "replacestream";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 import {
   sqlsanitize,
   mkWhere,
@@ -176,6 +178,68 @@ export const drop_reset_schema = async (schema: string): Promise<void> => {
   sql_log(sql);
 
   await getMyClient().query(sql);
+};
+
+/**
+ * Create the Postgres schema backing a tenant namespace.
+ * @param {string} name - tenant/schema name
+ * @param {boolean} [ifNotExists] - use IF NOT EXISTS (idempotent, used by tests)
+ * @returns {Promise<void>} no result
+ */
+export const create_tenant_schema = async (
+  name: string,
+  ifNotExists?: boolean
+): Promise<void> => {
+  const sql = `CREATE SCHEMA ${
+    ifNotExists ? "IF NOT EXISTS " : ""
+  }"${sqlsanitize(name)}";`;
+  sql_log(sql);
+  await getMyClient().query(sql);
+};
+
+/**
+ * Drop the Postgres schema backing a tenant namespace.
+ * @param {string} name - tenant/schema name
+ * @returns {Promise<void>} no result
+ */
+export const drop_tenant_schema = async (name: string): Promise<void> => {
+  const sql = `drop schema if exists "${sqlsanitize(name)}" CASCADE`;
+  sql_log(sql);
+  await getMyClient().query(sql);
+};
+
+/**
+ * Upsert a row into _sc_config.
+ * @param {string} key
+ * @param {any} value
+ * @returns {Promise<void>} no result
+ */
+export const upsert_config = async (key: string, value: any): Promise<void> => {
+  const sql = `insert into "${getTenantSchema()}"."_sc_config"("key", value) values($1, $2)
+                on conflict ("key") do update set value = $2`;
+  sql_log(sql, [key, { v: value }]);
+  await getMyClient().query(sql, [key, { v: value }]);
+};
+
+/**
+ * Build the express-session Store backed by this Postgres pool.
+ * @param {any} session - the express-session module instance the app uses
+ * @param {object} [opts]
+ * @returns {any} a session.Store instance
+ */
+export const getExpressSessionStore = (
+  session: any,
+  opts: { pruneInterval?: number } = {}
+): any => {
+  const pgSession = require("connect-pg-simple")(session);
+  return new pgSession({
+    schemaName: getTenantSchema(),
+    pool,
+    tableName: "_sc_session",
+    createTableIfMissing: true,
+    pruneSessionInterval:
+      (opts.pruneInterval ?? 0) > 0 ? opts.pruneInterval : false,
+  });
 };
 
 /**
@@ -801,6 +865,13 @@ export const query = (text: string, params?: any[]): Promise<any> => {
 };
 
 export { mkWhere };
+
+export const driverName = "postgres";
+export const array_agg_sql_fn = "array_agg";
+export const serial_pk_sql_type = "serial";
+export const json_sql_type = "jsonb";
+export const indexable_text_sql_type = "text";
+export const supports_search_path = true;
 
 /**
  * Initializes internals of the the postgres module.

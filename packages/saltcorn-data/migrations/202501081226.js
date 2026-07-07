@@ -6,4 +6,9 @@ const sql_pg =
   "alter table _sc_workflow_runs add column current_step json;",
 ];
 
-module.exports = { sql_pg, sql_sqlite };
+const sql_mysql = [
+  "alter table _sc_workflow_runs drop column current_step;",
+  "alter table _sc_workflow_runs add column current_step JSON;",
+];
+
+module.exports = { sql_pg, sql_sqlite, sql_mysql };

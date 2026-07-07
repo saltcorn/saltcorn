@@ -644,12 +644,17 @@ class Field implements AbstractField {
           );
         return ref_pk.sql_type;
       }
-      return `${apply(
+      const ref_sql_type = apply(
         getState()!.types[
           typeof this.reftype === "string" ? this.reftype : this.reftype.name
         ].sql_name,
         this.attributes
-      )} constraint "${sqlsanitize(this!.table!.name)}_${sqlsanitize(
+      );
+      if (db.driverName === "mysql")
+        return ref_sql_type as string;
+      return `${ref_sql_type} constraint "${sqlsanitize(
+        this!.table!.name
+      )}_${sqlsanitize(
         this.name
       )}_fkey" references ${schema}"${sqlsanitize(this.reftable_name)}" ("${
         this.refname
@@ -943,7 +948,7 @@ class Field implements AbstractField {
           new_field.name
         )}") references ${schema}"${sqlsanitize(new_field.reftable_name)}"("${new_field.refname || "id"}")${
           new_field.on_delete_sql
-        } DEFERRABLE`
+        }${db.driverName === "postgres" ? " DEFERRABLE" : ""}`
       );
     } else if (!new_field.is_fkey && this.is_fkey) {
       await db.query(
@@ -973,7 +978,9 @@ class Field implements AbstractField {
           new_field.name
         )}") references ${schema}"${sqlsanitize(
           new_field!.reftable_name
-        )}"("${new_field!.refname}")${new_field.on_delete_sql} DEFERRABLE`
+        )}"("${new_field!.refname}")${new_field.on_delete_sql}${
+          db.driverName === "postgres" ? " DEFERRABLE" : ""
+        }`
       );
     } else
       await db.query(
@@ -1236,6 +1243,22 @@ class Field implements AbstractField {
 
     if (!this.calculated || this.stored) {
       if (db.isSQLite && this.is_unique) await this.remove_unique_constraint();
+      if (this.is_fkey && db.driverName === "mysql") {
+        try {
+          await db.query(
+            `alter table ${schema}"${sqlsanitize(
+              table!.name
+            )}" drop constraint "${sqlsanitize(table!.name)}_${sqlsanitize(
+              this.name
+            )}_fkey"`
+          );
+        } catch (e: any) {
+          console.error(
+            `Field.delete: could not drop fkey constraint for "${this.name}" on "${table!.name}"`,
+            e.message || e
+          );
+        }
+      }
       try {
         await db.query(
           `alter table ${schema}"${sqlsanitize(
@@ -1289,7 +1312,7 @@ class Field implements AbstractField {
         this.name
       )}") references ${schema}"${sqlsanitize(this.reftable_name)}" ("${this.refname}")${
         this.on_delete_sql
-      } DEFERRABLE`;
+      }${db.driverName === "postgres" ? " DEFERRABLE" : ""}`;
       await db.query(q);
     }
   }
@@ -1360,6 +1383,18 @@ class Field implements AbstractField {
             : ""
         }`;
         await db.query(q);
+      } else if (db.driverName === "mysql") {
+        const defVal =
+          typeof f.attributes.default === "object" &&
+          f.attributes.default !== null
+            ? JSON.stringify(f.attributes.default)
+            : f.attributes.default;
+        const q = `alter table ${schema}"${sqlsanitize(
+          table!.name
+        )}" add column "${sqlsanitize(f.name)}" ${sql_type} ${
+          f.required ? "not null" : ""
+        } default (?)`;
+        await db.query(q, [defVal]);
       } else {
         const q = `DROP FUNCTION IF EXISTS add_field_${sqlsanitize(f.name)};
       CREATE FUNCTION add_field_${sqlsanitize(f.name)}(thedef ${
@@ -1377,6 +1412,11 @@ class Field implements AbstractField {
         await db.query(`SELECT add_field_${sqlsanitize(f.name)}($1)`, [
           f.attributes.default,
         ]);
+      }
+      if (f.is_fkey && db.driverName === "mysql") {
+        const reftable = Table.findOne({ name: f.reftable_name });
+        if (reftable && !reftable.external && !reftable.provider_name)
+          await f.enable_fkey_constraint(table! as Table);
       }
     }
     f.id = id

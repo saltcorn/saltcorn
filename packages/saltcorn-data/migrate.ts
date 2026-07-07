@@ -28,18 +28,23 @@ interface MigrationContents {
     | string[]
     | (({ schema }: { schema: string }) => string | string[]);
   sql_sqlite?: string | string[];
+  sql_mysql?:
+    | string
+    | string[]
+    | (({ schema }: { schema: string }) => string | string[]);
   js?: () => Promise<void> | void;
 }
 
-// db.isSQLite is read lazily at call time: a top-level read would touch the
-// cyclically-imported db module before it has finished initialising.
+// db.driverName/db.serial_pk_sql_type/db.json_sql_type are read lazily at call
+// time: a top-level read would touch the cyclically-imported db module before
+// it has finished initialising.
 const fudge = (s: string | string[]): string | string[] => {
-  if (!db.isSQLite) return s;
+  if (db.driverName === "postgres") return s;
   return Array.isArray(s)
     ? s.map((x) => fudge(x) as string)
     : s
-        .replace("id serial primary", "id integer primary")
-        .replace("jsonb", "json");
+        .replace(/\bserial primary\b/gi, `${db.serial_pk_sql_type} primary`)
+        .replace(/\bjsonb\b/gi, db.json_sql_type);
 };
 
 const doMigrationStep = async (
@@ -62,13 +67,18 @@ const doMigrationStep = async (
       await execMany(fudge(contents.sql));
     }
   }
-  if (contents.sql_pg && !db.isSQLite) {
+  if (contents.sql_pg && db.driverName === "postgres") {
     if (typeof contents.sql_pg === "function")
       await execMany(contents.sql_pg({ schema }));
     else await execMany(contents.sql_pg);
   }
   if (contents.sql_sqlite && db.isSQLite) {
     await execMany(contents.sql_sqlite);
+  }
+  if (contents.sql_mysql && db.driverName === "mysql") {
+    if (typeof contents.sql_mysql === "function")
+      await execMany(contents.sql_mysql({ schema }));
+    else await execMany(contents.sql_mysql);
   }
   if (contents.js) {
     await contents.js();
@@ -120,7 +130,7 @@ const migrate = async (schema0?: string, verbose?: boolean): Promise<void> => {
               // include public so shared extensions installed there (e.g.
               // uuid-ossp, pg_trgm) remain resolvable from the tenant schema -
               // this SET persists on the pooled connection after the migration
-              if (!db.isSQLite)
+              if (db.supports_search_path)
                 await db.query(`SET search_path TO "${schema}", public;`);
               await doMigrationStep(name, contents, schema);
               if (verbose) console.log(".");

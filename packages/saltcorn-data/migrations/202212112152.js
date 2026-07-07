@@ -1,4 +1,3 @@
-const sql_pg = `alter table _sc_views add column "attributes" jsonb`;
-const sql_sqlite = `alter table _sc_views add column "attributes" json`;
+const sql = `alter table _sc_views add column "attributes" jsonb`;
 
-module.exports = { sql_pg, sql_sqlite };
+module.exports = { sql };
