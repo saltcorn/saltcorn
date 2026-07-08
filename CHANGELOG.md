@@ -1,5 +1,10 @@
 # Notable changes
 
+## 1.6.1 - In Development
+
+* fix form_action save when there are protected fields
+* Fix TOTP with leading 0
+
 ## 1.6.0 - Released 24 June 2026
 
 * When generating run_js_code code with AI, show a preview first the user can approve or reject.
