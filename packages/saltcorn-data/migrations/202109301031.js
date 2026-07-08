@@ -1,8 +1,15 @@
-const sql = `CREATE TABLE IF NOT EXISTS _sc_library (
+const sql_pg = `CREATE TABLE IF NOT EXISTS  _sc_library (
     id serial primary key,
-    name varchar(255) NOT NULL UNIQUE,
+    name text NOT NULL UNIQUE,
     icon text,
     layout jsonb
 );`;
 
-module.exports = { sql };
+const sql_sqlite = `CREATE TABLE _sc_library (
+    id integer primary key,
+    name text NOT NULL UNIQUE,
+    icon text,
+    layout json
+);`;
+
+module.exports = { sql_pg, sql_sqlite };

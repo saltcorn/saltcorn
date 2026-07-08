@@ -35,16 +35,14 @@ interface MigrationContents {
   js?: () => Promise<void> | void;
 }
 
-// db.driverName/db.serial_pk_sql_type/db.json_sql_type are read lazily at call
-// time: a top-level read would touch the cyclically-imported db module before
-// it has finished initialising.
-const fudge = (s: string | string[]): string | string[] => {
-  if (db.driverName === "postgres") return s;
-  return Array.isArray(s)
-    ? s.map((x) => fudge(x) as string)
-    : s
-        .replace(/\bserial primary\b/gi, `${db.serial_pk_sql_type} primary`)
-        .replace(/\bjsonb\b/gi, db.json_sql_type);
+// Translate PostgreSQL migration SQL to the active driver's dialect (identity
+// for postgres, which has no translate function). 
+// db is read lazily to avoid touching the cyclically-imported module
+// before it has initialised.
+const translate = (s: string | string[]): string | string[] => {
+  const t = db.translateMigrationsFromPostgresql;
+  if (!t) return s;
+  return Array.isArray(s) ? s.map((x) => t(x)) : t(s);
 };
 
 const doMigrationStep = async (
@@ -61,24 +59,33 @@ const doMigrationStep = async (
       return await db.query(sqls);
     }
   };
+  const resolve = (
+    v: string | string[] | (({ schema }: { schema: string }) => string | string[])
+  ): string | string[] => (typeof v === "function" ? v({ schema }) : v);
 
+  // Shared, portable SQL: runs on every dialect, translated for non-postgres.
   if (contents.sql) {
     if (!(db.isSQLite && contents.sql.includes("DROP COLUMN"))) {
-      await execMany(fudge(contents.sql));
+      await execMany(translate(contents.sql));
     }
   }
+  // Dialect-split migrations. postgres and sqlite run their own block. For
+  // mysql: an explicit sql_mysql wins; otherwise, if the migration has both a
+  // pg and a sqlite block (i.e. it is a cross-dialect migration, not a
+  // postgres-only one that sqlite skips), derive from the postgres block by
+  // translating it - so no per-migration MySQL SQL is needed.
   if (contents.sql_pg && db.driverName === "postgres") {
-    if (typeof contents.sql_pg === "function")
-      await execMany(contents.sql_pg({ schema }));
-    else await execMany(contents.sql_pg);
+    await execMany(resolve(contents.sql_pg));
   }
   if (contents.sql_sqlite && db.isSQLite) {
     await execMany(contents.sql_sqlite);
   }
-  if (contents.sql_mysql && db.driverName === "mysql") {
-    if (typeof contents.sql_mysql === "function")
-      await execMany(contents.sql_mysql({ schema }));
-    else await execMany(contents.sql_mysql);
+  if (db.driverName === "mysql") {
+    if (contents.sql_mysql) {
+      await execMany(resolve(contents.sql_mysql));
+    } else if (contents.sql_pg && contents.sql_sqlite) {
+      await execMany(translate(resolve(contents.sql_pg)));
+    }
   }
   if (contents.js) {
     await contents.js();

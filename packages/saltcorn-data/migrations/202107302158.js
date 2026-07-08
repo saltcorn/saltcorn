@@ -16,13 +16,4 @@ const sql_sqlite = `CREATE TABLE _sc_event_log (
     payload json
 );`;
 
-const sql_mysql = `CREATE TABLE IF NOT EXISTS _sc_event_log (
-    id INT AUTO_INCREMENT primary key,
-    event_type text NOT NULL,
-    channel text,
-    occur_at timestamp not null,
-    user_id int,
-    payload JSON
-);`;
-
-module.exports = { sql_pg, sql_sqlite, sql_mysql };
+module.exports = { sql_pg, sql_sqlite };

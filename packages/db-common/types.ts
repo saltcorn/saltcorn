@@ -124,6 +124,7 @@ export type DbExportsType = {
   serial_pk_sql_type: string;
   json_sql_type: string;
   indexable_text_sql_type: string;
+  translateMigrationsFromPostgresql?: (sql: string) => string;
   upsert_config: (key: string, value: any) => Promise<void>;
   array_agg_sql_fn?: string;
   sqlDialectFactory?: (initCount?: number) => any;

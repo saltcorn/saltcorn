@@ -550,3 +550,9 @@ export const serial_pk_sql_type = "integer";
 export const json_sql_type = "json";
 export const indexable_text_sql_type = "text";
 export const supports_search_path = false;
+
+// Translate a postgresql migration to sqlite
+export const translateMigrationsFromPostgresql = (sql: string): string =>
+  sql
+    .replace("id serial primary", "id integer primary")
+    .replace("jsonb", "json");

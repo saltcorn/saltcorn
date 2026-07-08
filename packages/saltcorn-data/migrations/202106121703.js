@@ -44,13 +44,5 @@ alter table _sc_pages drop column description;
 alter table _sc_pages rename column description1 to description;
 `;
 
-const sql_mysql = `
-update _sc_triggers set description = '' where description is null;
-update _sc_tables set description = '' where description is null;
-update _sc_views set description = '' where description is null;
-update _sc_fields set description = '' where description is null;
-update _sc_pages set description = '' where description is null;
-`;
-
-module.exports = { sql_pg, sql_sqlite, sql_mysql };
+module.exports = { sql_pg, sql_sqlite };
     

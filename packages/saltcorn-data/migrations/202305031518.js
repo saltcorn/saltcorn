@@ -49,31 +49,4 @@ create table _sc_model_instances (
 );`,
 ];
 
-const sql_mysql = [
-  `
-create table IF NOT EXISTS _sc_models (
-  id INT AUTO_INCREMENT primary key,
-  name varchar(255) not null,
-  table_id integer references _sc_tables(id),
-  modelpattern text not null,
-  configuration JSON,
-  UNIQUE (table_id, name)
-);`,
-  `
-create table IF NOT EXISTS _sc_model_instances (
-  id INT AUTO_INCREMENT primary key,
-  name varchar(255) not null,
-  model_id integer references _sc_models(id),
-  state JSON,
-  hyperparameters JSON,
-  trained_on timestamp not null,
-  report text,
-  metric_values JSON,
-  parameters JSON,
-  fit_object LONGBLOB,
-  is_default boolean,
-  unique (model_id, name)
-);`,
-];
-
-module.exports = { sql_pg, sql_sqlite, sql_mysql };
+module.exports = { sql_pg, sql_sqlite };
