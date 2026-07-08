@@ -1169,4 +1169,57 @@ describe("ownership_formula_where", () => {
   });
 });
 
-//user.department === bankid.access || user.department === "ALL
+describe("ownership_options cases", () => {
+  it("case 2: reverse FK from users appears in ownership_options", async () => {
+    // users.home_project → Key to projects
+    const projects = await Table.create("OwnerOptProjects");
+    await Field.create({ table: projects, name: "title", type: "String" });
+
+    const users = Table.findOne({ name: "users" })!;
+    assertIsSet(users);
+    await Field.create({
+      table: users,
+      name: "home_project",
+      type: "Key to OwnerOptProjects",
+    });
+
+    const projs = Table.findOne({ name: "OwnerOptProjects" })!;
+    assertIsSet(projs);
+    const opts = await projs.ownership_options();
+    const revFk = opts.find((o) => o.value.startsWith("Fml:user.home_project===id"));
+    expect(revFk).toBeDefined();
+    expect(revFk?.label).toBe("users.home project [Key to OwnerOptProjects]");
+
+    // delete the FK field on users before dropping the referenced table
+    const hpField = await Field.findOne({ name: "home_project", table_id: users.id });
+    if (hpField) await hpField.delete();
+    await projs.delete();
+  });
+
+  it("case 3: inherit via ownership_field_id appears in ownership_options", async () => {
+    const dept = await Table.create("OwnerOptDept");
+    await Field.create({ table: dept, name: "name", type: "String" });
+    const mgr = await Field.create({
+      table: dept,
+      name: "manager",
+      type: "Key to users",
+    });
+    await dept.update({ ownership_field_id: mgr.id });
+
+    const items = await Table.create("OwnerOptItems");
+    await Field.create({ table: items, name: "label", type: "String" });
+    await Field.create({ table: items, name: "dept", type: "Key to OwnerOptDept" });
+
+    const itemsT = Table.findOne({ name: "OwnerOptItems" })!;
+    assertIsSet(itemsT);
+    const opts = await itemsT.ownership_options();
+    const inherit = opts.find((o) => o.label === "Inherit dept");
+    expect(inherit).toBeDefined();
+    expect(inherit?.value).toBe(
+      "Fml:dept?.manager===user.id /* Inherit dept */"
+    );
+
+    await items.delete();
+    await dept.delete();
+  });
+});

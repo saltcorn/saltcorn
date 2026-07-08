@@ -1229,6 +1229,19 @@ function initialize_page() {
     validate_expression_elem(target);
   });
 
+  const _debouncedOwnershipFormulaSave = $.debounce(
+    function (form) {
+      saveAndContinue(form);
+    },
+    800,
+    null,
+    true
+  );
+  $(document).on("input", "[name='ownership_formula']", function (e) {
+    e.stopPropagation();
+    _debouncedOwnershipFormulaSave($(this).closest("form")[0]);
+  });
+
   $(".validate-expression-conditional").each(function () {
     const theInput = $(this);
     theInput

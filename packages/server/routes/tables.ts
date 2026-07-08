@@ -201,6 +201,18 @@ const tableForm = async (table: any, req: Req) => {
               name: "is_user_group",
               type: "Bool",
             },
+            ...(!db.isSQLite
+              ? [
+                  {
+                    label: req.__("Enable Row Level Security"),
+                    sublabel: req.__(
+                      "Enforce ownership at the PostgreSQL level. Requires an ownership field and PostgreSQL."
+                    ),
+                    name: "rls_enabled",
+                    type: "Bool",
+                  },
+                ]
+              : []),
           ]
         : []),
       // description of table
@@ -1712,6 +1724,7 @@ router.post(
       if (!rest.versioned) rest.versioned = false;
       if (!rest.has_sync_info) rest.has_sync_info = false;
       rest.is_user_group = !!rest.is_user_group;
+      rest.rls_enabled = !!rest.rls_enabled;
       if (rest.ownership_field_id === "_formula") {
         rest.ownership_field_id = null;
         const fmlValidRes = expressionValidator(rest.ownership_formula);
@@ -1730,9 +1743,13 @@ router.post(
       ) {
         rest.ownership_formula = rest.ownership_field_id.replace("Fml:", "");
         rest.ownership_field_id = null;
-      } else rest.ownership_formula = null;
+      } else {
+        rest.ownership_formula = null;
+        if (rest.ownership_field_id === "") rest.ownership_field_id = null;
+      }
+      let rlsError;
       await db.withTransaction(async () => {
-        await table.update(rest);
+        rlsError = await table.update(rest, { skipRls: hasError });
         // Update table field's min_role_write attributes
         const fields = table.getFields();
 
@@ -1746,7 +1763,10 @@ router.post(
         }
       });
       await getState()!.refresh_tables();
+      if (rlsError)
+        notify = req.__("Row Level Security policy error: %s", rlsError);
       if (!req.xhr) {
+        if (rlsError) req.flash("warning", notify);
         if (!old_versioned && rest.versioned)
           req.flash(
             "success",

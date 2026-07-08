@@ -937,6 +937,16 @@ router.get(
             ),
             options: roleOptions,
           },
+          ...(!db.isSQLite
+            ? [
+                {
+                  name: "rls_enabled",
+                  label: req.__("Enable Row Level Security"),
+                  type: "Bool",
+                  sublabel: req.__("Enforce ownership at the PostgreSQL level"),
+                },
+              ]
+            : []),
         ],
       });
       form.hidden("id", "name");

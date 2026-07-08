@@ -79,6 +79,7 @@ const table_pack = async (nameOrTable: string | Table): Promise<TablePack> => {
     provider_name: table.provider_name,
     provider_cfg: table.provider_cfg,
     ownership_formula: table.ownership_formula,
+    rls_enabled: table.rls_enabled,
     fields: fields.map((f) => strip_ids(f.toJson)),
     //triggers: triggers.map((tr) => tr.toJson),
     constraints: constraints.map((c) => c.toJson),
@@ -733,6 +734,9 @@ const install_pack = async (
         name: tableSpec.ownership_field_name,
       });
       await _table.update({ ownership_field_id: owner_field.id });
+    } else if (tableSpec.rls_enabled && tableSpec.ownership_formula) {
+      const freshTable = Table.findOne({ name: _table.name });
+      if (freshTable) await freshTable.enableOwnershipRLS();
     }
   }
   await getState()!.refresh_tables(true);

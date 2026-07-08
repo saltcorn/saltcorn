@@ -20,6 +20,7 @@ import {
   JoinFields,
   Row,
   Where,
+  sqlsanitize,
 } from "@saltcorn/db-common/internal";
 import { PluginFunction } from "@saltcorn/types/base_types";
 import db from "../db/index.js";
@@ -1071,6 +1072,181 @@ const recalculate_for_stored = async (
 function removeComments(str: string) {
   return str.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, "").trim();
 }
+
+/**
+ * Extract a flat identifier chain from a (possibly optional) member expression.
+ * Returns null for computed access or anything that isn't a plain chain.
+ * e.g. `user.dept.manager` → { path: ["user","dept","manager"], optional: false }
+ *      `row?.owner`        → { path: ["row","owner"],            optional: true  }
+ */
+function memberChain(node: any): { path: string[]; optional: boolean } | null {
+  if (node.type === "Identifier") return { path: [node.name], optional: false };
+  if (node.type === "ChainExpression") {
+    const inner = memberChain(node.expression);
+    return inner ? { ...inner, optional: true } : null;
+  }
+  if (
+    node.type === "MemberExpression" &&
+    !node.computed &&
+    node.property?.type === "Identifier"
+  ) {
+    const obj = memberChain(node.object);
+    if (obj)
+      return {
+        path: [...obj.path, node.property.name],
+        optional: obj.optional || !!node.optional,
+      };
+  }
+  return null;
+}
+
+const RLS_OP_MAP: Record<string, string> = {
+  "===": "=",
+  "==": "=",
+  "!==": "<>",
+  "!=": "<>",
+  ">": ">",
+  "<": "<",
+  ">=": ">=",
+  "<=": "<=",
+  "&&": "AND",
+  "||": "OR",
+};
+
+/**
+ * Translate an ownership formula to a PostgreSQL RLS USING expression by
+ * recursively transpiling the acorn AST to SQL. Returns null for any JS
+ * construct that has no direct SQL equivalent (function calls, template
+ * literals, etc.), which causes the caller to fall back to disabling RLS.
+ *
+ * Magic variable bindings:
+ *   user.X  → (SELECT "X" FROM "users" WHERE "id" = curUserId)
+ *   row.X   → "X"  (column reference — RLS evaluates per-row implicitly)
+ *   id      → "id"
+ *   a.b (FK traversal, needs fields)
+ *             → "a" IN (SELECT "id" FROM reftable WHERE "b" = curUserId)
+ */
+function formulaToRlsUsing(
+  formula: string,
+  schema: string,
+  fields?: any[]
+): string | null {
+  let ast: any;
+  try {
+    ast = parseExpressionAt(removeComments(formula).trim(), 0, {
+      ecmaVersion: 2020,
+    });
+  } catch {
+    return null;
+  }
+
+  const curUserId = `nullif(current_setting('app.current_user_id', true), '')::integer`;
+
+  function transpile(node: any): string | null {
+    switch (node.type) {
+      case "ChainExpression":
+        return transpile(node.expression);
+
+      case "LogicalExpression":
+      case "BinaryExpression": {
+        const sqlOp = RLS_OP_MAP[node.operator];
+        if (!sqlOp) return null;
+
+        // FK traversal requires looking at both sides together — try before
+        // falling through to independent side translation.
+        if (node.type === "BinaryExpression" && sqlOp === "=" && fields) {
+          const fk =
+            tryFkTraversal(node.left, node.right) ??
+            tryFkTraversal(node.right, node.left);
+          if (fk) return fk;
+        }
+
+        const left = transpile(node.left);
+        const right = transpile(node.right);
+        if (left === null || right === null) return null;
+        return `(${left} ${sqlOp} ${right})`;
+      }
+
+      case "UnaryExpression":
+        if (node.operator === "!") {
+          const arg = transpile(node.argument);
+          return arg !== null ? `NOT (${arg})` : null;
+        }
+        return null;
+
+      case "Identifier":
+        return node.name === "id" ? `"id"` : null;
+
+      case "Literal": {
+        if (typeof node.value === "string")
+          return `'${(node.value as string).replace(/'/g, "''")}'`;
+        if (typeof node.value === "number" || typeof node.value === "boolean")
+          return String(node.value);
+        if (node.value === null) return "null";
+        return null;
+      }
+
+      case "MemberExpression": {
+        const chain = memberChain(node);
+        if (!chain) return null;
+        if (chain.path[0] === "user" && chain.path.length === 2)
+          return `(SELECT "${sqlsanitize(
+            chain.path[1]
+          )}" FROM ${schema}"users" WHERE "id" = ${curUserId})`;
+        if (chain.path[0] === "row" && chain.path.length === 2) {
+          const col = chain.path[1];
+          if (fields && !fields.find((f: any) => f.name === col)) return null;
+          return `"${sqlsanitize(col)}"`;
+        }
+        // fkField.id  →  the FK column value (which stores the referenced PK)
+        if (fields && chain.path.length === 2) {
+          const [fkName, refField] = chain.path;
+          if (refField === "id") {
+            const fkField = fields.find(
+              (f: any) => f.name === fkName && f.reftable_name
+            );
+            if (fkField) return `"${sqlsanitize(fkName)}"`;
+          }
+        }
+        return null;
+      }
+
+      default:
+        return null;
+    }
+  }
+
+  // FK traversal: lhs is a.b where a is a FK field on this table and b is a
+  // field on the referenced table; rhs must resolve to the current user's id.
+  function tryFkTraversal(lhs: any, rhs: any): string | null {
+    const lchain = memberChain(lhs);
+    const rchain = memberChain(rhs);
+    if (!lchain || !rchain) return null;
+    if (lchain.path[0] === "user" || lchain.path[0] === "row") return null;
+    if (lchain.path.length !== 2) return null;
+    const [fkName, refField] = lchain.path;
+    const fkField = fields!.find((f: any) => f.name === fkName);
+    if (!fkField?.reftable_name) return null;
+    // rhs must be user.id (the current user's primary key)
+    if (
+      rchain.path[0] === "user" &&
+      rchain.path.length === 2 &&
+      rchain.path[1] === "id"
+    ) {
+      const refPk =
+        Table.findOne({ name: fkField.reftable_name })?.pk_name || "id";
+      return `"${sqlsanitize(fkName)}" IN (SELECT "${sqlsanitize(
+        refPk
+      )}" FROM ${schema}"${sqlsanitize(
+        fkField.reftable_name
+      )}" WHERE "${sqlsanitize(refField)}" = ${curUserId})`;
+    }
+    return null;
+  }
+
+  return transpile(ast);
+}
+
 export {
   expressionValidator,
   expressionChecker,
@@ -1091,4 +1267,5 @@ export {
   removeComments,
   today,
   identifiersInCodepage,
+  formulaToRlsUsing,
 };

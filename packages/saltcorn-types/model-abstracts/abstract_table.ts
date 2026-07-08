@@ -30,6 +30,7 @@ export type TableCfg = {
   versioned?: boolean;
   has_sync_info?: boolean;
   is_user_group?: boolean;
+  rls_enabled?: boolean;
   description?: string;
   fields?: FieldCfg[];
   constraints?: any[];
