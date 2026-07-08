@@ -700,14 +700,22 @@ class Table implements AbstractTable {
       );
       return await fn();
     } finally {
+      let resetFailed = false;
       try {
         await client.query(`RESET app.current_user_id`);
-      } catch (_) {}
+      } catch (_) {
+        resetFailed = true;
+      }
       try {
         await client.query(`RESET app.current_user_role`);
-      } catch (_) {}
+      } catch (_) {
+        resetFailed = true;
+      }
       if (ctx) ctx.client = null;
-      client.release();
+      // If either RESET failed the connection has stale GUCs — destroy it
+      // rather than returning it to the pool where the next caller would
+      // inherit the previous user's identity.
+      client.release(resetFailed || undefined);
     }
   }
 
