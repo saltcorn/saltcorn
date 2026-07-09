@@ -161,6 +161,20 @@ const reset = async (
     { ignoreExisting }
   );
 
+  if (db.driverName === "postgres" && schema === db.connectObj.default_schema)
+    await db.query(`
+    CREATE UNLOGGED TABLE ${ifNotExists} "${db.connectObj.default_schema}"."_sc_session" (
+      "sid" varchar NOT NULL COLLATE "default",
+      "sess" json NOT NULL,
+      "expire" timestamp(6) NOT NULL
+    )
+    WITH (OIDS=FALSE);
+
+    ALTER TABLE "${db.connectObj.default_schema}"."_sc_session" ADD CONSTRAINT "_sc_session_pkey" PRIMARY KEY ("sid") NOT DEFERRABLE INITIALLY IMMEDIATE;
+
+    CREATE INDEX ${ifNotExists} "_sc_IDX_session_expire" ON "${db.connectObj.default_schema}"."_sc_session" ("expire");
+  `);
+
   // do db migration
   await migrate(schema);
   // refresh SC State
