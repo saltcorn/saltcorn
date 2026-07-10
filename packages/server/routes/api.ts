@@ -187,7 +187,7 @@ router.post(
         const role = user && user.id ? user.role_id : 100;
         if (
           role <= view.min_role ||
-          (await view.authorise_get({ req, ...view } as any)) // TODO set query to state
+          (await view.authorize(user, { action: "get", req })) // TODO set query to state
         ) {
           const queries = view.queries(false, req, res);
           if (Object.prototype.hasOwnProperty.call(queries, queryName)) {

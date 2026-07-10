@@ -409,26 +409,6 @@ class View implements AbstractView {
    * @param {boolean} remote
    * @returns {Promise<object>}
    */
-  async authorise_post(
-    arg: {
-      body: any;
-      table_id: number;
-      req: NonNullable<any>;
-    },
-    remote: boolean = false
-  ): Promise<boolean> {
-    if (!this.viewtemplateObj?.authorise_post) return false;
-    return await this.viewtemplateObj.authorise_post(
-      arg,
-      this.queries(remote, arg.req)
-    );
-  }
-
-  /**
-   * @param {*} arg
-   * @param {boolean} remote
-   * @returns {Promise<object>}
-   */
   async interpolate_title_string(title: string, query: any): Promise<string> {
     if (!this.viewtemplateObj?.interpolate_title_string) return title;
     return await this.viewtemplateObj.interpolate_title_string(
@@ -439,9 +419,104 @@ class View implements AbstractView {
   }
 
   /**
-   * @param {*} arg
-   * @param {boolean} remote
-   * @returns {Promise<object>}
+   * Checks plugin `authorize_view` hooks and the viewtemplate's legacy
+   * `authorise_get`/`authorise_post`.
+   * @param user - the acting user (or undefined/public)
+   * @param opts.action - "get" or "post"
+   * @param opts.req - the request object, forwarded to hooks and to
+   *   `queries()` for the legacy path
+   * @param opts.state - query/state, for action "get"
+   * @param opts.body - POST body, for action "post"
+   * @param opts.remote - forwarded to `queries()` for the legacy path;
+   *   defaults to `this.isRemoteTable()`
+   * @returns {Promise<boolean>}
+   */
+  async authorize(
+    user: any,
+    opts: {
+      action: "get" | "post";
+      req: any;
+      state?: GenObj;
+      body?: GenObj;
+      remote?: boolean;
+    }
+  ): Promise<boolean> {
+    const hookResult = await getState()!.runAuthorizeAccess(
+      {
+        kind: "view",
+        action: opts.action,
+        name: this.name,
+        view: this,
+        table_id: this.table_id,
+        state: opts.state,
+        body: opts.body,
+        req: opts.req,
+      },
+      user
+    );
+    if (hookResult.decision === "allow") return true;
+
+    const legacyFn =
+      opts.action === "post"
+        ? this.viewtemplateObj?.authorise_post
+        : this.viewtemplateObj?.authorise_get;
+    if (legacyFn) {
+      let remote = opts.remote;
+      if (remote === undefined) remote = this.isRemoteTable();
+      const queries = this.queries(remote, opts.req);
+      const legacyAllowed =
+        opts.action === "post"
+          ? await this.viewtemplateObj!.authorise_post!(
+              {
+                body: opts.body || {},
+                table_id: this.table_id as number,
+                req: opts.req,
+              },
+              queries
+            )
+          : await this.viewtemplateObj!.authorise_get!(
+              {
+                query: opts.state || {},
+                table_id: this.table_id as number,
+                req: opts.req,
+              },
+              queries
+            );
+      if (legacyAllowed) return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * @deprecated use `authorize(user, { action: "post", ... })` instead.
+   * Kept for third-party code calling this method directly.
+   * @param arg
+   * @param remote
+   * @returns {Promise<boolean>}
+   */
+  async authorise_post(
+    arg: {
+      body: any;
+      table_id: number;
+      req: NonNullable<any>;
+    },
+    remote: boolean = false
+  ): Promise<boolean> {
+    return await this.authorize(arg.req?.user, {
+      action: "post",
+      req: arg.req,
+      body: arg.body,
+      remote,
+    });
+  }
+
+  /**
+   * @deprecated use `authorize(user, { action: "get", ... })` instead.
+   * Kept for third-party code calling this method directly.
+   * @param arg
+   * @param remote
+   * @returns {Promise<boolean>}
    */
   async authorise_get(
     arg: {
@@ -451,11 +526,12 @@ class View implements AbstractView {
     },
     remote: boolean = false
   ): Promise<boolean> {
-    if (!this.viewtemplateObj?.authorise_get) return false;
-    return await this.viewtemplateObj.authorise_get(
-      arg,
-      this.queries(remote, arg.req)
-    );
+    return await this.authorize(arg.req?.user, {
+      action: "get",
+      req: arg.req,
+      state: arg.query,
+      remote,
+    });
   }
 
   /**
@@ -916,7 +992,6 @@ class View implements AbstractView {
       action = `${action}?on_done_redirect=${encodeURIComponent(onDoneRedirect)}`;
     }
     if (!this.viewtemplateObj!.configuration_workflow) {
-
       return new Workflow({ steps: [] });
     }
     const configFlow = this.viewtemplateObj!.configuration_workflow(req);

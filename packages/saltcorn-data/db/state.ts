@@ -48,6 +48,10 @@ import {
   AuthenticationMethod,
   CopilotSkill,
   CapacitorPlugin,
+  AuthorizeAccessHook,
+  AuthorizeAccessKind,
+  AuthorizeAccessRequest,
+  AuthorizeAccessResult,
 } from "@saltcorn/types/base_types";
 import { GenObj, Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config.js";
@@ -223,6 +227,10 @@ class State {
   copilot_skills: Array<CopilotSkill>;
   capacitorPlugins: Array<CapacitorPlugin>;
   exchange: Record<string, Array<unknown>>;
+  authorize_view_hooks: Array<AuthorizeAccessHook>;
+  authorize_page_hooks: Array<AuthorizeAccessHook>;
+  authorize_trigger_hooks: Array<AuthorizeAccessHook>;
+  authorize_api_hooks: Array<AuthorizeAccessHook>;
   sendMessageToWorkers?: Function;
   mobile_push_handler: Record<string, Function>;
   pushHelper?: PushMessageHelper;
@@ -271,6 +279,10 @@ class State {
     this.keyFieldviews = {};
     this.external_tables = {};
     this.exchange = {};
+    this.authorize_view_hooks = [];
+    this.authorize_page_hooks = [];
+    this.authorize_trigger_hooks = [];
+    this.authorize_api_hooks = [];
     this.verifier = null;
     this.i18n = new I18n.I18n();
     this.i18n.configure({
@@ -1087,6 +1099,15 @@ class State {
       if (!this.exchange[k]) this.exchange[k] = [];
       this.exchange[k].push(...(v as Array<unknown>));
     });
+    const authorizeViewHook = withCfg("authorize_view");
+    if (authorizeViewHook) this.authorize_view_hooks.push(authorizeViewHook);
+    const authorizePageHook = withCfg("authorize_page");
+    if (authorizePageHook) this.authorize_page_hooks.push(authorizePageHook);
+    const authorizeTriggerHook = withCfg("authorize_trigger");
+    if (authorizeTriggerHook)
+      this.authorize_trigger_hooks.push(authorizeTriggerHook);
+    const authorizeApiHook = withCfg("authorize_api");
+    if (authorizeApiHook) this.authorize_api_hooks.push(authorizeApiHook);
     withCfg("copilot_skills", []).forEach((v: CopilotSkill) => {
       if (
         v?.function_name &&
@@ -1166,6 +1187,45 @@ class State {
 
     if (hasFunctions)
       this.refresh_codepages(true).catch((e) => console.error(e));
+  }
+
+  /**
+   * The registered authorize_* hooks for a given request kind.
+   * @param kind
+   * @returns {Array<AuthorizeAccessHook>}
+   */
+  private authorizeHooksFor(
+    kind: AuthorizeAccessKind
+  ): Array<AuthorizeAccessHook> {
+    switch (kind) {
+      case "view":
+        return this.authorize_view_hooks;
+      case "page":
+        return this.authorize_page_hooks;
+      case "trigger":
+        return this.authorize_trigger_hooks;
+      case "api":
+        return this.authorize_api_hooks;
+    }
+  }
+
+  /**
+   * Runs the registered authorize_* plugin hooks matching request.kind;
+   * "allow" if any hook allows, else "deny".
+   * @param request - what is being accessed: kind (view/page/trigger/api),
+   *   action (get/post), the target (e.g. view), table_id, state/body, req
+   * @param user
+   * @returns {Promise<AuthorizeAccessResult>}
+   */
+  async runAuthorizeAccess(
+    request: AuthorizeAccessRequest,
+    user: any
+  ): Promise<AuthorizeAccessResult> {
+    for (const hook of this.authorizeHooksFor(request.kind)) {
+      const res = await hook(request, user);
+      if (res?.decision === "allow") return res;
+    }
+    return { decision: "deny" };
   }
 
   /**
@@ -1339,6 +1399,10 @@ class State {
     this.external_tables = {};
     this.eventTypes = {};
     this.exchange = {};
+    this.authorize_view_hooks = [];
+    this.authorize_page_hooks = [];
+    this.authorize_trigger_hooks = [];
+    this.authorize_api_hooks = [];
     this.verifier = null;
     this.fonts = standard_fonts;
     this.iconSet = new Set(get_standard_icons());

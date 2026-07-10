@@ -94,7 +94,7 @@ router.get(
     view.rewrite_query_from_slug(query, req.params.slug);
     if (
       role > view.min_role &&
-      !(await view.authorise_get({ query, req, ...(view as any) }))
+      !(await view.authorize(req.user, { action: "get", req, state: query }))
     ) {
       if (!req.user) {
         res.redirect(`/auth/login?dest=${encodeURIComponent(req.originalUrl)}`);
@@ -348,10 +348,10 @@ router.post(
 
     if (
       role > view.min_role &&
-      !(await view.authorise_post({
-        body: req.body || {},
+      !(await view.authorize(req.user, {
+        action: "post",
         req,
-        ...(view as any),
+        body: req.body || {},
       }))
     ) {
       req.flash("danger", req.__("Not authorized"));

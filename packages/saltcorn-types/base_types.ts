@@ -359,6 +359,9 @@ export type ViewTemplate = {
     viewname: string,
     configuration: { default_state: any }
   ) => Promise<void>;
+  /** @deprecated legacy per-viewtemplate authorization escape hatch; prefer
+   * the plugin-level `authorize_view` hook (PluginFacilities). Still
+   * honored by View.authorize() for backwards compatibility. */
   authorise_post?: (
     opts: {
       body: any;
@@ -372,6 +375,9 @@ export type ViewTemplate = {
     title: string,
     query: any
   ) => Promise<string>;
+  /** @deprecated legacy per-viewtemplate authorization escape hatch; prefer
+   * the plugin-level `authorize_view` hook (PluginFacilities). Still
+   * honored by View.authorize() for backwards compatibility. */
   authorise_get?: (
     opts: {
       query: any;
@@ -607,12 +613,38 @@ export type CapacitorPlugin = {
   androidFeatures?: string[];
 };
 
+export type AuthorizeAccessKind = "view" | "page" | "trigger" | "api";
+
+export type AuthorizeAccessRequest = {
+  kind: AuthorizeAccessKind;
+  action: "get" | "post";
+  name?: string; // identifier of the target: view/page/trigger name, or a
+  // plugin-chosen route id for kind "api" (e.g. "react/run_build")
+  view?: AbstractView; // present when kind === "view"
+  table_id?: number | string;
+  state?: GenObj; // query/state, for action "get"
+  body?: GenObj; // POST body, for action "post"
+  req: Req;
+};
+
+export type AuthorizeAccessResult =
+  | { decision: "allow" }
+  | { decision: "deny"; reason?: string };
+
+export type AuthorizeAccessHook = (
+  request: AuthorizeAccessRequest,
+  user: any
+) => Promise<AuthorizeAccessResult> | AuthorizeAccessResult;
+
 type PluginFacilities = {
   headers?: Array<Header>;
   functions?: Record<string, PluginFunction | Function> | Function;
   layout?: PluginLayout;
   types?: Array<Type>;
-  viewtemplates?: Array<ViewTemplate> | ((cfg: any) => Array<ViewTemplate>) | Record<string, ViewTemplate>;
+  viewtemplates?:
+    | Array<ViewTemplate>
+    | ((cfg: any) => Array<ViewTemplate>)
+    | Record<string, ViewTemplate>;
   actions?: Record<string, Action>;
   eventTypes?: Record<string, { hasChannel: boolean }>;
   fieldviews?: Record<string, GenObj>;
@@ -627,6 +659,10 @@ type PluginFacilities = {
   copilot_skills?: Array<CopilotSkill>;
   icons?: Array<string>;
   exchange?: Record<string, Array<unknown>>;
+  authorize_view?: AuthorizeAccessHook;
+  authorize_page?: AuthorizeAccessHook;
+  authorize_trigger?: AuthorizeAccessHook;
+  authorize_api?: AuthorizeAccessHook;
 };
 
 type PluginWithConfig = {
