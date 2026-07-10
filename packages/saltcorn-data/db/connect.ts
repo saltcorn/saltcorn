@@ -107,6 +107,7 @@ const getConnectObject = (connSpec: any = {}) => {
 
   setKey("user", "PGUSER");
   setKey("sqlite_path", "SQLITE_FILEPATH");
+  setKey("db_driver", "SALTCORN_DB_DRIVER");
   setKey("host", "PGHOST");
   setKey("port", "PGPORT");
   setKey("password", "PGPASSWORD");
@@ -234,6 +235,7 @@ const getConfigFile = () => {
  */
 const is_sqlite = (connObj: ConnectObjType) => {
   if (!isNode()) return true;
+  if (connObj.db_driver) return false;
   if (connObj.connectionString)
     return connObj.connectionString.startsWith("sqlite");
 

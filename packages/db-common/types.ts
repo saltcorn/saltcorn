@@ -19,6 +19,7 @@ export type DbExportsType = {
   connectObj: GenObj;
   isSQLite: boolean;
   is_node: boolean;
+  driverName: string;
   mkWhere: (q: Where) => any;
   getTenantSchemaPrefix: () => string;
   insert: (table: string, data: GenObj, opts?: any) => Promise<any>;
@@ -125,6 +126,20 @@ export type DbExportsType = {
   get_sql_logging: () => boolean;
   getVersion: (arg?: boolean) => Promise<string>;
   enable_multi_tenant: () => void;
+  create_tenant_schema: (name: string, ifNotExists?: boolean) => Promise<void>;
+  drop_tenant_schema: (name: string) => Promise<void>;
+  serial_pk_sql_type: string;
+  json_sql_type: string;
+  indexable_text_sql_type: string;
+  translateMigrationsFromPostgresql?: (sql: string) => string;
+  upsert_config: (key: string, value: any) => Promise<void>;
+  array_agg_sql_fn?: string;
+  sqlDialectFactory?: (initCount?: number) => any;
+  supports_search_path: boolean;
+  getExpressSessionStore: (
+    session: any,
+    opts?: { pruneInterval?: number }
+  ) => any;
   [key: string]: any;
 };
 

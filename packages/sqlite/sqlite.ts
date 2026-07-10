@@ -9,6 +9,8 @@ import type { Database } from "sqlite3";
 const { verbose } = sqlite3;
 verbose();
 import { unlink } from "fs/promises";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
 
 import {
   sqlsanitize,
@@ -509,3 +511,48 @@ export const drop_index = async (
 ): Promise<void> => {
   await do_drop_index(table_name, [field_name], query, false, sql_log);
 };
+
+/**
+ * SQLite is a single-file database with no schema/tenant-database concept,
+ * so tenant namespace creation/deletion is a no-op here.
+ */
+export const create_tenant_schema = async (
+  name: string,
+  ifNotExists?: boolean
+): Promise<void> => {};
+export const drop_tenant_schema = async (name: string): Promise<void> => {};
+
+/**
+ * Build the express-session Store backed by a local sqlite file.
+ * @param {any} session - the express-session module instance the app uses
+ * @returns {any} a session.Store instance
+ */
+export const getExpressSessionStore = (session: any): any => {
+  const SQLiteStore = require("connect-sqlite3")(session);
+  return new SQLiteStore({ db: "sessions.sqlite" });
+};
+
+/**
+ * Upsert a row into _sc_config.
+ * @param {string} key
+ * @param {any} value
+ * @returns {Promise<void>} no result
+ */
+export const upsert_config = async (key: string, value: any): Promise<void> => {
+  const sql = `insert into "_sc_config"("key", value) values($key, json($value))
+                on conflict ("key") do update set value = json($value)`;
+  await query(sql, { $key: key, $value: JSON.stringify({ v: value }) } as any);
+};
+
+export const driverName = "sqlite";
+export const array_agg_sql_fn = "json_group_array";
+export const serial_pk_sql_type = "integer";
+export const json_sql_type = "json";
+export const indexable_text_sql_type = "text";
+export const supports_search_path = false;
+
+// Translate a postgresql migration to sqlite
+export const translateMigrationsFromPostgresql = (sql: string): string =>
+  sql
+    .replace("id serial primary", "id integer primary")
+    .replace("jsonb", "json");

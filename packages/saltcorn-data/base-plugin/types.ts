@@ -2259,7 +2259,12 @@ const date = {
   name: "Date",
   description: "Dates, with or without time",
   /** @type {string} */
-  sql_name: (opts: any) => (opts?.day_only ? "date" : "timestamptz"),
+  sql_name: (opts: any) =>
+    opts?.day_only
+      ? "date"
+      : db.driverName === "mysql"
+        ? "datetime"
+        : "timestamptz",
   js_type: "Date",
 
   /**
