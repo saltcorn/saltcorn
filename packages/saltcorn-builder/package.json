@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/builder",
-  "version": "1.6.0",
+  "version": "1.7.0-alpha.0",
   "description": "Drag and drop view builder for Saltcorn, open-source no-code platform",
   "main": "index.js",
   "homepage": "https://saltcorn.com",
@@ -30,7 +30,7 @@
     "@fortawesome/free-solid-svg-icons": "5.15.2",
     "@fortawesome/react-fontawesome": "0.1.14",
     "@monaco-editor/react": "4.7.0",
-    "@saltcorn/common-code": "1.6.0",
+    "@saltcorn/common-code": "1.7.0-alpha.0",
     "@tippyjs/react": "4.2.6",
     "babel-loader": "9.2.1",
     "ckeditor4-react": "2.0.0",

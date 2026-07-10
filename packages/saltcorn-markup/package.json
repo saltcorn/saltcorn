@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/markup",
-  "version": "1.6.0",
+  "version": "1.7.0-alpha.0",
   "description": "Markup for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "type": "module",
@@ -75,8 +75,8 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "@saltcorn/types": "1.6.0",
-    "@saltcorn/db-common": "1.6.0",
+    "@saltcorn/types": "1.7.0-alpha.0",
+    "@saltcorn/db-common": "1.7.0-alpha.0",
     "@types/escape-html": "^1.0.4",
     "@types/estree": "^1.0.8",
     "@types/node": "^20.14.7",

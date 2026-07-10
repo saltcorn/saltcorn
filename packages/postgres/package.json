@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/postgres",
-  "version": "1.6.0",
+  "version": "1.7.0-alpha.0",
   "description": "Postgres structures for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -28,7 +28,7 @@
     "!dist/tsconfig.ref.tsbuildinfo"
   ],
   "dependencies": {
-    "@saltcorn/db-common": "1.6.0",
+    "@saltcorn/db-common": "1.7.0-alpha.0",
     "@saltcorn/plain-date": "0.2.5",
     "connect-pg-simple": "^9.0.1",
     "pg": "^8.13.1",
