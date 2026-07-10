@@ -1221,11 +1221,50 @@ class State {
     request: AuthorizeAccessRequest,
     user: any
   ): Promise<AuthorizeAccessResult> {
+    let denyReason: string | undefined;
     for (const hook of this.authorizeHooksFor(request.kind)) {
       const res = await hook(request, user);
       if (res?.decision === "allow") return res;
+      if (res?.decision === "deny" && res.reason && !denyReason)
+        denyReason = res.reason;
     }
-    return { decision: "deny" };
+    return { decision: "deny", reason: denyReason };
+  }
+
+  /**
+   * Checks plugin `authorize_api` hooks, for plugin-registered routes with
+   * no dedicated model (view/page/trigger) to hang an `authorize()` method
+   * off of. Combine with the caller's own role check.
+   * @param user - the acting user (or undefined/public)
+   * @param opts.name - identifier of the target route/action
+   * @param opts.action - "get" or "post"
+   * @param opts.req - the request object, forwarded to hooks
+   * @param opts.state - query/state, for action "get"
+   * @param opts.body - POST body, for action "post"
+   * @returns {Promise<boolean>}
+   */
+  async authorizeApi(
+    user: any,
+    opts: {
+      name: string;
+      action: "get" | "post";
+      req: any;
+      state?: GenObj;
+      body?: GenObj;
+    }
+  ): Promise<boolean> {
+    const result = await this.runAuthorizeAccess(
+      {
+        kind: "api",
+        action: opts.action,
+        name: opts.name,
+        state: opts.state,
+        body: opts.body,
+        req: opts.req,
+      },
+      user
+    );
+    return result.decision === "allow";
   }
 
   /**
@@ -1879,6 +1918,7 @@ const features = Object.freeze({
   table_create_callback: true,
   getrows_tree_field: true,
   view_route_modal: true,
+  authorize_access_hooks: true,
 });
 
 export {

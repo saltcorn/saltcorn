@@ -51,7 +51,10 @@ const findPageOrGroup = (
 
 const runPage = async (page: Page, req: Req, res: Res, tic: Date) => {
   const role = req.user && req.user!.id ? req.user!.role_id : 100;
-  if (role <= page.min_role) {
+  if (
+    role <= page.min_role ||
+    (await page.authorize(req.user, { action: "get", req, state: req.query }))
+  ) {
     const contents = await page.run(req.query, { res, req });
     if (!contents) return;
     const title = scan_for_page_title(contents, page.title);
@@ -259,7 +262,15 @@ router.post(
     const { pagename, rndid } = req.params;
     const role = req.user && req.user!.id ? req.user!.role_id : 100;
     const db_page = (await Page.findOne({ name: pagename }))!;
-    if (db_page && role <= db_page.min_role) {
+    if (
+      db_page &&
+      (role <= db_page.min_role ||
+        (await db_page.authorize(req.user, {
+          action: "post",
+          req,
+          body: req.body,
+        })))
+    ) {
       let col: any;
       traverseSync(db_page.layout, {
         action(segment: any) {

@@ -621,6 +621,8 @@ export type AuthorizeAccessRequest = {
   name?: string; // identifier of the target: view/page/trigger name, or a
   // plugin-chosen route id for kind "api" (e.g. "react/run_build")
   view?: AbstractView; // present when kind === "view"
+  page?: AbstractPage; // present when kind === "page"
+  trigger?: AbstractTrigger; // present when kind === "trigger"
   table_id?: number | string;
   state?: GenObj; // query/state, for action "get"
   body?: GenObj; // POST body, for action "post"

@@ -526,6 +526,40 @@ class Page implements AbstractPage {
     return this.layout;
   }
 
+  /**
+   * Checks plugin `authorize_page` hooks. Combine with the caller's own
+   * role/min_role check, e.g. `role <= page.min_role || (await page.authorize(...))`.
+   * @param user - the acting user (or undefined/public)
+   * @param opts.action - "get" or "post"
+   * @param opts.req - the request object, forwarded to hooks
+   * @param opts.state - query/state, for action "get"
+   * @param opts.body - POST body, for action "post"
+   * @returns {Promise<boolean>}
+   */
+  async authorize(
+    user: any,
+    opts: {
+      action: "get" | "post";
+      req: any;
+      state?: Row;
+      body?: Row;
+    }
+  ): Promise<boolean> {
+    const result = await nsState.getState()!.runAuthorizeAccess(
+      {
+        kind: "page",
+        action: opts.action,
+        name: this.name,
+        page: this,
+        state: opts.state,
+        body: opts.body,
+        req: opts.req,
+      },
+      user
+    );
+    return result.decision === "allow";
+  }
+
   get html_file(): string | undefined {
     if (instanceOWithHtmlFile(this.layout)) return this.layout.html_file;
     else null;
