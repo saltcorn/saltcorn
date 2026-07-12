@@ -591,10 +591,13 @@ class View implements AbstractView {
       const table = tableMod.findOne({ id: this.table_id });
       const fields = table?.getFields() || [];
       Object.entries(queryObj).forEach(([k, v]) => {
+        // authorizeAccessQuery is a security decision, not data - never cache it,
+        // so it can't replay a stale allow/deny after the underlying state changes.
+        const cacheable = k !== "authorizeAccessQuery";
         queries[k] = async (...args: any[]) => {
           const argsStr = `${JSON.stringify(args)}${this.name}`;
           const hashedArgs = hashString(argsStr);
-          if (state.queriesCache && state.queriesCache[hashedArgs])
+          if (cacheable && state.queriesCache && state.queriesCache[hashedArgs])
             return state.queriesCache[hashedArgs];
           const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
           const headers: any = {
@@ -673,7 +676,8 @@ class View implements AbstractView {
             const result = Array.isArray(response.data.success)
               ? prepMobileRows(response.data.success, fields)
               : response.data.success;
-            if (state.queriesCache) state.queriesCache[hashedArgs] = result;
+            if (cacheable && state.queriesCache)
+              state.queriesCache[hashedArgs] = result;
             return result;
           } catch (error: any) {
             state.log(1, `Query error: ${k}in ${this.name}: ${error.message}`);
