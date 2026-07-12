@@ -48,10 +48,16 @@ import {
   AuthenticationMethod,
   CopilotSkill,
   CapacitorPlugin,
-  AuthorizeAccessHook,
   AuthorizeAccessKind,
-  AuthorizeAccessRequest,
+  AuthorizeAccessRequestBase,
+  AuthorizeAccessViewRequest,
+  AuthorizeAccessPageRequest,
+  AuthorizeAccessTriggerRequest,
   AuthorizeAccessResult,
+  AuthorizeAccessViewHook,
+  AuthorizeAccessPageHook,
+  AuthorizeAccessTriggerHook,
+  AuthorizeAccessApiHook,
 } from "@saltcorn/types/base_types";
 import { GenObj, Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config.js";
@@ -168,6 +174,15 @@ const myMoment: Function = (...args: any[]) =>
     )
   );
 
+type AnyAuthorizeAccessHook = (
+  request: any,
+  user: any
+) =>
+  | Promise<AuthorizeAccessResult | null | undefined>
+  | AuthorizeAccessResult
+  | null
+  | undefined;
+
 /**
  * State Class
  * @category saltcorn-data
@@ -227,10 +242,10 @@ class State {
   copilot_skills: Array<CopilotSkill>;
   capacitorPlugins: Array<CapacitorPlugin>;
   exchange: Record<string, Array<unknown>>;
-  authorize_view_hooks: Array<AuthorizeAccessHook>;
-  authorize_page_hooks: Array<AuthorizeAccessHook>;
-  authorize_trigger_hooks: Array<AuthorizeAccessHook>;
-  authorize_api_hooks: Array<AuthorizeAccessHook>;
+  authorize_view_hooks: Array<AuthorizeAccessViewHook>;
+  authorize_page_hooks: Array<AuthorizeAccessPageHook>;
+  authorize_trigger_hooks: Array<AuthorizeAccessTriggerHook>;
+  authorize_api_hooks: Array<AuthorizeAccessApiHook>;
   sendMessageToWorkers?: Function;
   mobile_push_handler: Record<string, Function>;
   pushHelper?: PushMessageHelper;
@@ -1190,39 +1205,35 @@ class State {
   }
 
   /**
-   * The registered authorize_* hooks for a given request kind.
-   * @param kind
-   * @returns {Array<AuthorizeAccessHook>}
-   */
-  private authorizeHooksFor(
-    kind: AuthorizeAccessKind
-  ): Array<AuthorizeAccessHook> {
-    switch (kind) {
-      case "view":
-        return this.authorize_view_hooks;
-      case "page":
-        return this.authorize_page_hooks;
-      case "trigger":
-        return this.authorize_trigger_hooks;
-      case "api":
-        return this.authorize_api_hooks;
-    }
-  }
-
-  /**
-   * Runs the registered authorize_* plugin hooks matching request.kind;
+   * Runs the registered authorize_* plugin hooks for the given kind;
    * "allow" if any hook allows, else "deny".
-   * @param request - what is being accessed: kind (view/page/trigger/api),
-   *   action (get/post), the target (e.g. view), table_id, state/body, req
+   * @param kind - which authorize_* hook array to run
+   * @param request - action (get/post), the target entity, state/body, req
    * @param user
    * @returns {Promise<AuthorizeAccessResult>}
    */
-  async runAuthorizeAccess(
-    request: AuthorizeAccessRequest,
+  private async dispatchAuthorize(
+    kind: AuthorizeAccessKind,
+    request: AuthorizeAccessRequestBase,
     user: any
   ): Promise<AuthorizeAccessResult> {
+    let hooks: Array<AnyAuthorizeAccessHook>;
+    switch (kind) {
+      case "view":
+        hooks = this.authorize_view_hooks;
+        break;
+      case "page":
+        hooks = this.authorize_page_hooks;
+        break;
+      case "trigger":
+        hooks = this.authorize_trigger_hooks;
+        break;
+      case "api":
+        hooks = this.authorize_api_hooks;
+        break;
+    }
     let denyReason: string | undefined;
-    for (const hook of this.authorizeHooksFor(request.kind)) {
+    for (const hook of hooks) {
       const res = await hook(request, user);
       if (res?.decision === "allow") return res;
       if (res?.decision === "deny" && res.reason && !denyReason)
@@ -1232,11 +1243,50 @@ class State {
   }
 
   /**
+   * Checks plugin `authorize_view` hooks.
+   * @param request
+   * @param user
+   * @returns {Promise<AuthorizeAccessResult>}
+   */
+  async authorizeView(
+    request: AuthorizeAccessViewRequest,
+    user: any
+  ): Promise<AuthorizeAccessResult> {
+    return this.dispatchAuthorize("view", request, user);
+  }
+
+  /**
+   * Checks plugin `authorize_page` hooks.
+   * @param request
+   * @param user
+   * @returns {Promise<AuthorizeAccessResult>}
+   */
+  async authorizePage(
+    request: AuthorizeAccessPageRequest,
+    user: any
+  ): Promise<AuthorizeAccessResult> {
+    return this.dispatchAuthorize("page", request, user);
+  }
+
+  /**
+   * Checks plugin `authorize_trigger` hooks.
+   * @param request
+   * @param user
+   * @returns {Promise<AuthorizeAccessResult>}
+   */
+  async authorizeTrigger(
+    request: AuthorizeAccessTriggerRequest,
+    user: any
+  ): Promise<AuthorizeAccessResult> {
+    return this.dispatchAuthorize("trigger", request, user);
+  }
+
+  /**
    * Checks plugin `authorize_api` hooks, for plugin-registered routes with
    * no dedicated model (view/page/trigger) to hang an `authorize()` method
    * off of. Combine with the caller's own role check.
    * @param user - the acting user (or undefined/public)
-   * @param opts.name - identifier of the target route/action
+   * @param opts.route - identifier of the target route/action
    * @param opts.action - "get" or "post"
    * @param opts.req - the request object, forwarded to hooks
    * @param opts.state - query/state, for action "get"
@@ -1246,18 +1296,18 @@ class State {
   async authorizeApi(
     user: any,
     opts: {
-      name: string;
+      route: string;
       action: "get" | "post";
       req: any;
       state?: GenObj;
       body?: GenObj;
     }
   ): Promise<boolean> {
-    const result = await this.runAuthorizeAccess(
+    const result = await this.dispatchAuthorize(
+      "api",
       {
-        kind: "api",
         action: opts.action,
-        name: opts.name,
+        route: opts.route,
         state: opts.state,
         body: opts.body,
         req: opts.req,

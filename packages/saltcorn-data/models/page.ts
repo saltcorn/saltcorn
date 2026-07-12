@@ -241,7 +241,7 @@ class Page implements AbstractPage {
   async run(
     querystate: any,
     extraArgs: RunExtra
-  ): Promise<Layout | { html_file: string } | { html_string: string } |null> {
+  ): Promise<Layout | { html_file: string } | { html_string: string } | null> {
     nsState
       .getState()!
       .log(5, `Run page ${this.name} with query ${JSON.stringify(querystate)}`);
@@ -545,11 +545,9 @@ class Page implements AbstractPage {
       body?: Row;
     }
   ): Promise<boolean> {
-    const result = await nsState.getState()!.runAuthorizeAccess(
+    const result = await nsState.getState()!.authorizePage(
       {
-        kind: "page",
         action: opts.action,
-        name: this.name,
         page: this,
         state: opts.state,
         body: opts.body,

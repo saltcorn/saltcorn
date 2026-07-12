@@ -429,6 +429,8 @@ class View implements AbstractView {
    * @param opts.body - POST body, for action "post"
    * @param opts.remote - forwarded to `queries()` for the legacy path;
    *   defaults to `this.isRemoteTable()`
+   * @param opts.route - name of a specific viewtemplate custom route being
+   *   invoked (ViewTemplate.routes key), if any
    * @returns {Promise<boolean>}
    */
   async authorize(
@@ -439,15 +441,14 @@ class View implements AbstractView {
       state?: GenObj;
       body?: GenObj;
       remote?: boolean;
+      route?: string;
     }
   ): Promise<boolean> {
-    const hookResult = await getState()!.runAuthorizeAccess(
+    const hookResult = await getState()!.authorizeView(
       {
-        kind: "view",
         action: opts.action,
-        name: this.name,
         view: this,
-        table_id: this.table_id,
+        route: opts.route,
         state: opts.state,
         body: opts.body,
         req: opts.req,

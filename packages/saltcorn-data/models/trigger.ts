@@ -5,7 +5,13 @@
  * @subcategory models
  */
 
-import { comparingCaseInsensitiveValue, satisfies, mergeActionResults, cloneName, isNode } from "../utils.js";
+import {
+  comparingCaseInsensitiveValue,
+  satisfies,
+  mergeActionResults,
+  cloneName,
+  isNode,
+} from "../utils.js";
 import { getState } from "../db/state.js";
 import { eval_expression } from "./expression.js";
 import Table from "./table.js";
@@ -655,7 +661,6 @@ class Trigger implements AbstractTrigger {
    * @type {string[]}
    */
   static get when_options(): string[] {
-
     return [
       "Never",
       "Insert",
@@ -733,11 +738,9 @@ class Trigger implements AbstractTrigger {
       body?: Row;
     }
   ): Promise<boolean> {
-    const result = await getState()!.runAuthorizeAccess(
+    const result = await getState()!.authorizeTrigger(
       {
-        kind: "trigger",
         action: opts.action,
-        name: this.name,
         trigger: this,
         state: opts.state,
         body: opts.body,
@@ -749,7 +752,6 @@ class Trigger implements AbstractTrigger {
   }
 
   static get abbreviated_actions() {
-
     return Object.entries(getState()!.actions)
       .filter(([k, v]: [string, any]) => !v.disableIf || !v.disableIf())
       .map(([k, v]: [string, any]) => {

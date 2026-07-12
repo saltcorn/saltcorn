@@ -615,28 +615,59 @@ export type CapacitorPlugin = {
 
 export type AuthorizeAccessKind = "view" | "page" | "trigger" | "api";
 
-export type AuthorizeAccessRequest = {
-  kind: AuthorizeAccessKind;
+export type AuthorizeAccessRequestBase = {
   action: "get" | "post";
-  name?: string; // identifier of the target: view/page/trigger name, or a
-  // plugin-chosen route id for kind "api" (e.g. "react/run_build")
-  view?: AbstractView; // present when kind === "view"
-  page?: AbstractPage; // present when kind === "page"
-  trigger?: AbstractTrigger; // present when kind === "trigger"
-  table_id?: number | string;
+  route?: string; // specific route/action invoked, e.g. a ViewTemplate.routes key
   state?: GenObj; // query/state, for action "get"
   body?: GenObj; // POST body, for action "post"
   req: Req;
+};
+
+export type AuthorizeAccessViewRequest = AuthorizeAccessRequestBase & {
+  view: AbstractView; // carries name and table_id
+};
+export type AuthorizeAccessPageRequest = AuthorizeAccessRequestBase & {
+  page: AbstractPage; // carries name
+};
+export type AuthorizeAccessTriggerRequest = AuthorizeAccessRequestBase & {
+  trigger: AbstractTrigger; // carries name and table_id
+};
+// no entity to name it, so route is the identifier and is required
+export type AuthorizeAccessApiRequest = Omit<
+  AuthorizeAccessRequestBase,
+  "route"
+> & {
+  route: string;
 };
 
 export type AuthorizeAccessResult =
   | { decision: "allow" }
   | { decision: "deny"; reason?: string };
 
-export type AuthorizeAccessHook = (
-  request: AuthorizeAccessRequest,
+// Return null/undefined to abstain (no opinion); { decision: "deny" } is an
+// active decision, whose reason is kept for diagnostics.
+type AuthorizeAccessHookReturn =
+  | Promise<AuthorizeAccessResult | null | undefined>
+  | AuthorizeAccessResult
+  | null
+  | undefined;
+
+export type AuthorizeAccessViewHook = (
+  request: AuthorizeAccessViewRequest,
   user: any
-) => Promise<AuthorizeAccessResult> | AuthorizeAccessResult;
+) => AuthorizeAccessHookReturn;
+export type AuthorizeAccessPageHook = (
+  request: AuthorizeAccessPageRequest,
+  user: any
+) => AuthorizeAccessHookReturn;
+export type AuthorizeAccessTriggerHook = (
+  request: AuthorizeAccessTriggerRequest,
+  user: any
+) => AuthorizeAccessHookReturn;
+export type AuthorizeAccessApiHook = (
+  request: AuthorizeAccessApiRequest,
+  user: any
+) => AuthorizeAccessHookReturn;
 
 type PluginFacilities = {
   headers?: Array<Header>;
@@ -661,10 +692,10 @@ type PluginFacilities = {
   copilot_skills?: Array<CopilotSkill>;
   icons?: Array<string>;
   exchange?: Record<string, Array<unknown>>;
-  authorize_view?: AuthorizeAccessHook;
-  authorize_page?: AuthorizeAccessHook;
-  authorize_trigger?: AuthorizeAccessHook;
-  authorize_api?: AuthorizeAccessHook;
+  authorize_view?: AuthorizeAccessViewHook;
+  authorize_page?: AuthorizeAccessPageHook;
+  authorize_trigger?: AuthorizeAccessTriggerHook;
+  authorize_api?: AuthorizeAccessApiHook;
 };
 
 type PluginWithConfig = {
