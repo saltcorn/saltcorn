@@ -40,6 +40,7 @@ import type {
   ConnectedObjects,
   Res,
   Req,
+  AuthorizeAccessResult,
 } from "@saltcorn/types/base_types";
 import type Table from "./table.js";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
@@ -419,18 +420,16 @@ class View implements AbstractView {
   }
 
   /**
-   * Checks plugin `authorize_view` hooks and the viewtemplate's legacy
-   * `authorise_get`/`authorise_post`.
+   * Checks plugin `authorize_view` hooks, proxied to the server on mobile
+   * for remote tables, so hooks never need to handle remote/local.
    * @param user - the acting user (or undefined/public)
    * @param opts.action - "get" or "post"
-   * @param opts.req - the request object, forwarded to hooks and to
-   *   `queries()` for the legacy path
+   * @param opts.req - the request object, forwarded to hooks
    * @param opts.state - query/state, for action "get"
    * @param opts.body - POST body, for action "post"
-   * @param opts.remote - forwarded to `queries()` for the legacy path;
-   *   defaults to `this.isRemoteTable()`
    * @param opts.route - name of a specific viewtemplate custom route being
    *   invoked (ViewTemplate.routes key), if any
+   * @param opts.remote - defaults to `this.isRemoteTable()`
    * @returns {Promise<boolean>}
    */
   async authorize(
@@ -440,58 +439,27 @@ class View implements AbstractView {
       req: any;
       state?: GenObj;
       body?: GenObj;
-      remote?: boolean;
       route?: string;
+      remote?: boolean;
     }
   ): Promise<boolean> {
-    const hookResult = await getState()!.authorizeView(
-      {
-        action: opts.action,
-        view: this,
-        route: opts.route,
-        state: opts.state,
-        body: opts.body,
-        req: opts.req,
-      },
-      user
-    );
-    if (hookResult.decision === "allow") return true;
-
-    const legacyFn =
-      opts.action === "post"
-        ? this.viewtemplateObj?.authorise_post
-        : this.viewtemplateObj?.authorise_get;
-    if (legacyFn) {
-      let remote = opts.remote;
-      if (remote === undefined) remote = this.isRemoteTable();
-      const queries = this.queries(remote, opts.req);
-      const legacyAllowed =
-        opts.action === "post"
-          ? await this.viewtemplateObj!.authorise_post!(
-              {
-                body: opts.body || {},
-                table_id: this.table_id as number,
-                req: opts.req,
-              },
-              queries
-            )
-          : await this.viewtemplateObj!.authorise_get!(
-              {
-                query: opts.state || {},
-                table_id: this.table_id as number,
-                req: opts.req,
-              },
-              queries
-            );
-      if (legacyAllowed) return true;
-    }
-
-    return false;
+    let remote = opts.remote;
+    if (remote === undefined) remote = this.isRemoteTable();
+    const queries: any = this.queries(remote, opts.req);
+    const hookResult: AuthorizeAccessResult =
+      await queries.authorizeAccessQuery(
+        opts.action,
+        user,
+        opts.route,
+        opts.state,
+        opts.body
+      );
+    return hookResult?.decision === "allow";
   }
 
   /**
    * @deprecated use `authorize(user, { action: "post", ... })` instead.
-   * Kept for third-party code calling this method directly.
+   * `remote` defaults to `false` here, not `isRemoteTable()`.
    * @param arg
    * @param remote
    * @returns {Promise<boolean>}
@@ -514,7 +482,7 @@ class View implements AbstractView {
 
   /**
    * @deprecated use `authorize(user, { action: "get", ... })` instead.
-   * Kept for third-party code calling this method directly.
+   * `remote` defaults to `false` here, not `isRemoteTable()`.
    * @param arg
    * @param remote
    * @returns {Promise<boolean>}
@@ -600,9 +568,22 @@ class View implements AbstractView {
   }
 
   queries(remote?: boolean, req?: Req, res?: any) {
-    const queryObj = this?.viewtemplateObj?.queries
+    const queryObj: GenObj = this?.viewtemplateObj?.queries
       ? this.viewtemplateObj!.queries({ ...this, req, res })
       : {};
+    // Gives authorize_view hooks the same remote-proxy dispatch as any query.
+    queryObj.authorizeAccessQuery = async (
+      action: "get" | "post",
+      userArg: any,
+      route?: string,
+      qstate?: GenObj,
+      qbody?: GenObj
+    ): Promise<AuthorizeAccessResult> => {
+      return await getState()!.authorizeView(
+        { action, view: this, route, state: qstate, body: qbody, req: req! },
+        userArg
+      );
+    };
     if (remote) {
       const state = getState()!;
       const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req

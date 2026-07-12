@@ -1411,12 +1411,13 @@ describe("authorize_* hook dispatch", () => {
     let wrappedHookRequestCalls = 0;
     getState()!.registerPlugin("configured_plugin_correct_hook", {
       sc_plugin_api_version: 1,
-      configuration_workflow: () => ({}) as any,
-      authorize_view: (cfg: any) => async (request: AuthorizeAccessViewRequest) => {
-        if (request.view.name !== "cfg_wrapped_view") return null;
-        wrappedHookRequestCalls++;
-        return { decision: "allow" };
-      },
+      configuration_workflow: () => ({} as any),
+      authorize_view:
+        (cfg: any) => async (request: AuthorizeAccessViewRequest) => {
+          if (request.view.name !== "cfg_wrapped_view") return null;
+          wrappedHookRequestCalls++;
+          return { decision: "allow" };
+        },
     } as unknown as Plugin);
     expect(wrappedHookRequestCalls).toBe(0); // not called at registration time
 
@@ -1434,7 +1435,7 @@ describe("authorize_* hook dispatch", () => {
 });
 
 describe("View.authorize", () => {
-  it("defaults to false with no matching hooks or legacy authorise_get/post", async () => {
+  it("defaults to false with no matching authorize_view hooks", async () => {
     const v = await View.findOne({ name: "authorlist" });
     assertIsSet(v);
     const allowed = await v.authorize(req.user, {
@@ -1463,7 +1464,7 @@ describe("View.authorize", () => {
     expect(allowed).toBe(true);
   });
 
-  it("falls back to the Edit viewtemplate's legacy ownership escape hatch", async () => {
+  it("grants access to a row's owner via the base-plugin's authorize_view hook for Edit", async () => {
     const owned = await Table.create("AuthzOwnedTable");
     await Field.create({ table: owned, name: "name", type: "String" });
     const ownerField = await Field.create({

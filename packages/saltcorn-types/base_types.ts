@@ -359,33 +359,11 @@ export type ViewTemplate = {
     viewname: string,
     configuration: { default_state: any }
   ) => Promise<void>;
-  /** @deprecated legacy per-viewtemplate authorization escape hatch; prefer
-   * the plugin-level `authorize_view` hook (PluginFacilities). Still
-   * honored by View.authorize() for backwards compatibility. */
-  authorise_post?: (
-    opts: {
-      body: any;
-      table_id: number;
-      req: NonNullable<any>;
-    },
-    queries: any
-  ) => Promise<boolean>;
   interpolate_title_string?: (
     table_id: number | string | undefined,
     title: string,
     query: any
   ) => Promise<string>;
-  /** @deprecated legacy per-viewtemplate authorization escape hatch; prefer
-   * the plugin-level `authorize_view` hook (PluginFacilities). Still
-   * honored by View.authorize() for backwards compatibility. */
-  authorise_get?: (
-    opts: {
-      query: any;
-      table_id: number;
-      req: NonNullable<any>;
-    },
-    queries: any
-  ) => Promise<boolean>;
   runPost?: (
     table_id: number | number | undefined,
     viewname: string,
