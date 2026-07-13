@@ -2555,7 +2555,7 @@ const date = {
    * @returns {boolean}
    */
   validate: () => (v: any) => v instanceof Date && !isNaN(v as any),
-  ...(db.isSQLite
+  ...(db.stores_dates_as_text
     ? {
         readFromDB: (v: any, fld: FieldLike) =>
           !v

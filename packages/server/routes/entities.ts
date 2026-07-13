@@ -623,7 +623,7 @@ const tableActionsDropdown = (
   const metadata = entity.metadata || {};
   if (metadata.external || metadata.provider_name) return "";
   const items = [
-    !db.isSQLite &&
+    db.supports_alter_table && // rename table needs ALTER TABLE
       user_can_edit_tables &&
       entity.name !== "users" &&
       a(

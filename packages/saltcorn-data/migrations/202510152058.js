@@ -1,6 +1,6 @@
 const js = async () => {
   const db = require("@saltcorn/data/db");
-  if (db.isSQLite) return;
+  if (!db.supports_alter_table) return; // ALTER COLUMN TYPE
   const Field = require("@saltcorn/data/models/field");
   const Table = require("@saltcorn/data/models/table");
   const { getState } = require("@saltcorn/data/db/state");

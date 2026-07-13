@@ -201,7 +201,7 @@ const tableForm = async (table: any, req: Req) => {
               name: "is_user_group",
               type: "Bool",
             },
-            ...(!db.isSQLite
+            ...(db.supports_row_level_security
               ? [
                   {
                     label: req.__("Enable Row Level Security"),
@@ -241,7 +241,7 @@ const tableForm = async (table: any, req: Req) => {
                 topic: "Table history",
               },
             },
-            ...(table.name === "users" || db.isSQLite
+            ...(table.name === "users" || db.driverName !== "postgres"
               ? []
               : [
                   {
@@ -1073,7 +1073,7 @@ router.post(
     for (const colName of colNames) {
       // Get column info from DB and build a field config
       let fieldCfg: any;
-      if (!db.isSQLite) {
+      if (db.driverName !== "sqlite") {
         const { rows } = await db.query(
           "SELECT * FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3",
           [schema, table.name, colName]
@@ -1538,8 +1538,8 @@ router.get(
               },
               '<i class="fas fa-search"></i>&nbsp;' + req.__("Rescan fields")
             ),
-            // rename table doesnt supported for sqlite
-            !db.isSQLite &&
+            // rename table needs ALTER TABLE (not supported on sqlite)
+            db.supports_alter_table &&
               user_can_edit_tables &&
               table.name !== "users" &&
               a(
@@ -1989,7 +1989,7 @@ router.get(
           req.__("Create from CSV upload")
         ),
       req.user!.role_id === 1 &&
-        !db.isSQLite &&
+        db.supports_table_discovery &&
         a(
           {
             href: `/table/discover`,
@@ -2265,7 +2265,8 @@ const constraintForm = (
       const hasIncludeFts = fields.filter(
         (f: any) => f.attributes?.include_fts
       );
-      if (!db.isSQLite)
+      // full-text-search index is offered on backends that support it (not sqlite)
+      if (db.driverName !== "sqlite")
         fieldopts.push({ label: "Full-text search", name: "_fts" });
       return new Form({
         action: `/table/add-constraint/${table.id}/${type}`,

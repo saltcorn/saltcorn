@@ -77,7 +77,7 @@ router.get(
     const unreads = nots.filter((n: any) => !n.read);
     if (unreads.length > 0)
       await Notification.mark_as_read(
-        !db.isSQLite
+        db.supports_large_bind_lists
           ? {
               id: { in: unreads.map((n: any) => n.id) },
             }

@@ -1,6 +1,6 @@
 const js = async () => {
   const db = require("@saltcorn/data/db");
-  if (db.isSQLite) return;
+  if (!db.supports_alter_table) return; // ALTER TABLE ADD COLUMN
 
   const schema = db.getTenantSchemaPrefix();
   const { rows } = await db.query(

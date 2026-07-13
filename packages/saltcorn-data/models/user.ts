@@ -795,7 +795,8 @@ class User {
   }
 
   static async destroy_all_tenant_sessions(tenant?: string): Promise<void> {
-    if (!db.isSQLite) {
+    // tenant sessions live in the DB session store of multi-tenant deployments
+    if (db.supports_multiple_schemas) {
       const schema = tenant || db.getTenantSchema();
 
       await db.query(
@@ -825,7 +826,7 @@ class User {
   async updateLastMobileLogin(date: Date | null): Promise<void> {
     const dateVal = !date
       ? date
-      : db.isSQLite
+      : db.stores_dates_as_text
         ? date.valueOf()
         : date.toISOString();
     await this.update({ last_mobile_login: dateVal as unknown as Date });

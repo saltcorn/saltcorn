@@ -88,7 +88,7 @@ class BackupCommand extends Command {
     } else {
       // else do pg_dump backup
       const db = require("@saltcorn/data/db");
-      if (db.isSQLite) {
+      if (db.driverName !== "postgres") {
         console.log(`Database Backup is supported only for PostgreSQL`);
         this.exit(1);
       }

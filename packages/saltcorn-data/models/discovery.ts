@@ -317,9 +317,9 @@ const reconcile_table = async (
   const schemaPrefix = db.getTenantSchemaPrefix();
   const scFields = table.getFields();
 
-  // Get physical column names from the DB
+  // Get physical column names from the DB (engine-specific introspection)
   let physicalRows: Row[];
-  if (db.isSQLite) {
+  if (db.driverName === "sqlite") {
     const { rows } = await db.query(
       `PRAGMA table_info("${sqlsanitize(table.name)}")`
     );
@@ -354,9 +354,9 @@ const reconcile_table = async (
   // DB columns not in Saltcorn → orphan
   for (const colName of physicalNames) {
     if (!scNames.has(colName)) {
-      // Try to determine the SQL type for display
+      // Try to determine the SQL type for display (engine-specific introspection)
       let sqlType: string | undefined;
-      if (!db.isSQLite) {
+      if (db.driverName !== "sqlite") {
         const { rows } = await db.query(
           "SELECT data_type FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3",
           [schema, table.name, colName]

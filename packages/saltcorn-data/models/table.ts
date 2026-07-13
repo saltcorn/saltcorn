@@ -446,13 +446,17 @@ class Table implements AbstractTable {
 
     const flds = await db.select(
       "_sc_fields",
-      db.isSQLite ? {} : { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
+      db.supports_large_bind_lists
+        ? { table_id: { in: tbls.map((t: TableCfg) => t.id) } }
+        : {},
       selectopts
     );
     const _TableConstraint = (await import("./table_constraints.js")).default;
 
     const constraints = await _TableConstraint.find(
-      db.isSQLite ? {} : { table_id: { in: tbls.map((t: TableCfg) => t.id) } }
+      db.supports_large_bind_lists
+        ? { table_id: { in: tbls.map((t: TableCfg) => t.id) } }
+        : {}
     );
 
     return await asyncMap(tbls, async (t: TableCfg) => {
@@ -499,9 +503,9 @@ class Table implements AbstractTable {
       const tbls = await db.select("_sc_tables", where, selectopts);
       const flds = await db.select(
         "_sc_fields",
-        db.isSQLite
-          ? {}
-          : { table_id: { in: tbls.map((t: TableCfg) => t.id) } },
+        db.supports_large_bind_lists
+          ? { table_id: { in: tbls.map((t: TableCfg) => t.id) } }
+          : {},
         selectopts
       );
       dbs = tbls.map((t: TableCfg) => {
@@ -574,7 +578,7 @@ class Table implements AbstractTable {
    * No-op on SQLite.
    */
   async enableOwnershipRLS(): Promise<void> {
-    if (db.isSQLite) return;
+    if (!db.supports_row_level_security) return;
     if (!this.rls_enabled) return;
 
     const schema = db.getTenantSchemaPrefix();
@@ -639,7 +643,7 @@ class Table implements AbstractTable {
    * No-op on SQLite.
    */
   async disableOwnershipRLS(): Promise<void> {
-    if (db.isSQLite) return;
+    if (!db.supports_row_level_security) return;
     const schema = db.getTenantSchemaPrefix();
     const tbl = `${schema}"${sqlsanitize(this.name)}"`;
 
@@ -657,7 +661,11 @@ class Table implements AbstractTable {
 
   /** True only when RLS can actually be enforced: flag set, PG, and inside a runWithTenant ALS context. */
   private canEnforceRls(): boolean {
-    return this.rls_enabled && !db.isSQLite && !!db.getRequestContext();
+    return (
+      this.rls_enabled &&
+      db.supports_row_level_security &&
+      !!db.getRequestContext()
+    );
   }
 
   /**
@@ -893,8 +901,7 @@ class Table implements AbstractTable {
     pk_sql_type: string;
   } {
     let pk_type: string = "Integer";
-    let pk_sql_type =
-      db.serial_pk_sql_type || (db.isSQLite ? "integer" : "serial");
+    let pk_sql_type = db.serial_pk_sql_type;
     if (fields && Array.isArray(fields)) {
       const pk_field = fields.find?.(
         (f) => typeof f !== "string" && f?.primary_key
@@ -1030,7 +1037,9 @@ class Table implements AbstractTable {
     if ((this.constructor as typeof Table).read_only)
       throw new Error("Read-only access");
 
-    const is_sqlite = db.isSQLite;
+    // engine-specific CREATE TABLE DDL (this path is used by the mobile
+    // sqlite backend; postgres/mysql create tables via migrations)
+    const is_sqlite = db.driverName === "sqlite";
     const schema = db.getTenantSchemaPrefix();
     const { pk_sql_type } = Table.pkSqlType(table.fields);
     const columnDefs = [`id ${pk_sql_type} primary key`];
@@ -1073,7 +1082,6 @@ class Table implements AbstractTable {
       throw new Error("Read-only access");
 
     const schema = db.getTenantSchemaPrefix();
-    const is_sqlite = db.isSQLite;
     await this.update({ ownership_field_id: null });
 
     // drop table
@@ -1398,7 +1406,7 @@ class Table implements AbstractTable {
         async () => {
           if (rows) {
             const pkIds = rows.map((r: GenObj) => r[this.pk_name]);
-            if (!db.isSQLite) {
+            if (db.supports_large_bind_lists) {
               await db.deleteWhere(this.name, {
                 [this.pk_name]: { in: pkIds },
               });
@@ -2025,7 +2033,7 @@ class Table implements AbstractTable {
               typeof f.type !== "string" &&
               f.type?.name === "JSON" &&
               stringified &&
-              !db.isSQLite
+              db.json_write_needs_stringify
             ) {
               v[f.name] = JSON.stringify(calced[f.name]);
             } else v[f.name] = calced[f.name];
@@ -2176,7 +2184,10 @@ class Table implements AbstractTable {
     return await db.tryCatchInTransaction(
       async () => {
         const schema = db.getTenantSchemaPrefix();
-        const sql = !db.isSQLite
+        // engine-specific SQL: postgres uses `= ANY(array-param)`; sqlite has no
+        // array params. A new backend (e.g. mysql) needs its own variant here.
+        const isSqlite = db.driverName === "sqlite";
+        const sql = !isSqlite
           ? `
   SELECT s.last_modified, s.ref, s.updated_fields
   FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info" s
@@ -2185,7 +2196,7 @@ class Table implements AbstractTable {
       ref,
       MAX(last_modified) AS last_modified
     FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info"
-    WHERE ref = ${db.isSQLite ? "" : "ANY"} ($1)
+    WHERE ref = ${isSqlite ? "" : "ANY"} ($1)
     GROUP BY ref
   ) m
     ON s.ref = m.ref
@@ -2195,7 +2206,7 @@ class Table implements AbstractTable {
   FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info"
   GROUP BY ref HAVING ref = ($1)`;
         const strIds = ids.map((id) => String(id));
-        const result = await db.query(sql, db.isSQLite ? strIds : [strIds]);
+        const result = await db.query(sql, isSqlite ? strIds : [strIds]);
         return result.rows;
       },
       (e: Error) => {
@@ -2263,7 +2274,9 @@ class Table implements AbstractTable {
     await db.tryCatchInTransaction(
       async () => {
         const schema = db.getTenantSchemaPrefix();
-        if (!db.isSQLite) {
+        // engine-specific sync SQL (postgres date_trunc/to_timestamp/jsonb vs
+        // sqlite). A new backend needs its own variant here.
+        if (db.driverName !== "sqlite") {
           const timestamp = syncTimestamp
             ? new Date(syncTimestamp)
             : await db.time();
@@ -2905,7 +2918,9 @@ class Table implements AbstractTable {
               inSelect: {
                 table: matching.throughTable[0],
                 field: Table.findOne(matching.throughTable[0])?.pk_name || "id",
-                tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+                tenant: db.supports_multiple_schemas
+                  ? db.getTenantSchema()
+                  : undefined,
                 where: { [matching.through[0]]: v[this.pk_name] },
               },
             },
@@ -2991,17 +3006,7 @@ class Table implements AbstractTable {
   normalise_error_message(msg: string): string {
     let fieldnm: string = "";
     if (msg.toLowerCase().includes("unique constraint")) {
-      if (db.isSQLite) {
-        fieldnm = msg.replace(
-          `SQLITE_CONSTRAINT: UNIQUE constraint failed: ${this.name}.`,
-          ""
-        );
-      } else {
-        const m = msg.match(
-          /duplicate key value violates unique constraint "(.*?)_(.*?)_unique"/
-        );
-        if (m) fieldnm = m[2];
-      }
+      fieldnm = db.parseUniqueConstraintError(msg, this.name);
       if (fieldnm) {
         const field = this.fields.find((f) => f.name === fieldnm);
         if (field?.attributes?.unique_error_msg)
@@ -3009,18 +3014,10 @@ class Table implements AbstractTable {
         else {
           const tc_unique = this.constraints.find((c) => {
             if (c.type !== "Unique") return false;
-            let conNm = "";
-            if (db.isSQLite) {
-              // SQLITE_CONSTRAINT: UNIQUE constraint failed: books.author, books.pages
-              // first table name stripped by replace
-              let [field1, ...rest_fields] = c.configuration.fields;
-              conNm = [
-                field1,
-                ...rest_fields.map((fnm: string) => `${this.name}.${fnm}`),
-              ].join(", ");
-            } else {
-              conNm = c.configuration.fields.join("_");
-            }
+            const conNm = db.uniqueConstraintFieldsKey(
+              c.configuration.fields,
+              this.name
+            );
             return c.configuration.errormsg && conNm === fieldnm;
           });
 
@@ -3387,8 +3384,8 @@ class Table implements AbstractTable {
       throw new Error("Read-only access");
 
     //in transaction
-    if (db.isSQLite)
-      throw new InvalidAdminAction("Cannot rename table on SQLite");
+    if (!db.supports_alter_table)
+      throw new InvalidAdminAction("Cannot rename table on this database");
     const schemaPrefix = db.getTenantSchemaPrefix();
 
     //rename table
@@ -3628,7 +3625,7 @@ class Table implements AbstractTable {
       });
       //console.log(fld);
       if (db.sqlsanitize(k.toLowerCase()) === "id") {
-        if (db.isSQLite && type !== "Integer") {
+        if (!db.supports_non_integer_pk && type !== "Integer") {
           await table.delete();
           return { error: `Columns named "id" must have only integers` };
         }
@@ -3844,15 +3841,16 @@ class Table implements AbstractTable {
     let rejects = 0;
     let rejectDetails = "";
     const client =
-      db.isSQLite || options?.no_transaction ? db : await db.getClient();
+      !db.pools_connections || options?.no_transaction
+        ? db
+        : await db.getClient();
 
     const stats = await stat(filePath);
     const fileSizeInMegabytes = stats.size / (1024 * 1024);
 
     // start sql transaction
     if (!options?.no_transaction) await client.query("BEGIN");
-    if (db.isSQLite) await client.query("PRAGMA defer_foreign_keys = ON");
-    else await client.query("SET CONSTRAINTS ALL DEFERRED");
+    await db.deferForeignKeys(client);
 
     const readStream = createReadStream(filePath);
     const returnedRows: any = [];
@@ -4049,7 +4047,7 @@ class Table implements AbstractTable {
                 } catch (e) {
                   if (!options?.no_transaction) await client.query("ROLLBACK");
 
-                  if (!db.isSQLite && !options?.no_transaction)
+                  if (db.pools_connections && !options?.no_transaction)
                     await client.release(true);
                   if (e instanceof Error)
                     reject({ error: `${e.message} in row ${i}` });
@@ -4080,7 +4078,8 @@ ${rejectDetails}`,
     // stop sql transaction
     if (!options?.no_transaction) await client.query("COMMIT");
 
-    if (!db.isSQLite && !options?.no_transaction) await client.release(true);
+    if (db.pools_connections && !options?.no_transaction)
+      await client.release(true);
 
     if (options?.no_table_write) {
       return {
@@ -4121,7 +4120,7 @@ ${rejectDetails}`,
       )
         v1[f.name] = null;
     });
-    if (db.isSQLite) return;
+    if (!db.json_write_needs_stringify) return;
     this.fields
       .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
       .forEach((f) => {
@@ -4130,7 +4129,7 @@ ${rejectDetails}`,
       });
   }
   private parse_json_fields(v1: Row): Row {
-    if (db.isSQLite)
+    if (db.json_read_returns_string)
       this.fields
         .filter((f) => typeof f.type !== "string" && f?.type?.name === "JSON")
         .forEach((f) => {
@@ -4171,7 +4170,7 @@ ${rejectDetails}`,
     );
     let i = 1;
     let importError: string | undefined;
-    const client = db.isSQLite ? db : await db.getClient();
+    const client = db.pools_connections ? await db.getClient() : db;
     await client.query("BEGIN");
     const consume = async (rec: Row) => {
       i += 1;
@@ -4188,7 +4187,7 @@ ${rejectDetails}`,
       try {
         readState(rec, fields);
         jsonFields.forEach((f) => {
-          if (!db.isSQLite && typeof rec[f.name] !== "undefined")
+          if (db.json_write_needs_stringify && typeof rec[f.name] !== "undefined")
             rec[f.name] = JSON.stringify(rec[f.name]);
         });
         if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)
@@ -4197,7 +4196,7 @@ ${rejectDetails}`,
       } catch (e) {
         await client.query("ROLLBACK");
 
-        if (!db.isSQLite) await client.release(true);
+        if (db.pools_connections) await client.release(true);
         importError = `${(e as ErrorObj).message} in row ${i}`;
       }
     };
@@ -4207,7 +4206,7 @@ ${rejectDetails}`,
     if (importError) return { error: importError };
 
     await client.query("COMMIT");
-    if (!db.isSQLite) await client.release(true);
+    if (db.pools_connections) await client.release(true);
 
     await this.resetSequence();
 
@@ -4862,9 +4861,9 @@ ${rejectDetails}`,
         fields,
         !!opts?.ignore_errors
       );
-      //need to json parse array agg values on sqlite
+      //need to json parse array agg values when the driver returns them as text
       if (
-        db.isSQLite &&
+        db.json_read_returns_string &&
         Object.values(aggregations || {}).some(
           (agg) => agg.aggregate.toLowerCase() === "array_agg"
         )
@@ -5105,10 +5104,10 @@ where table_schema = '${db.getTenantSchema() || "public"}'
 
 async function dump_table_to_json_file(filePath: string, tableName: string) {
   const writeStream = createWriteStream(filePath);
-  const client = db.isSQLite ? db : await db.getClient();
+  const client = db.pools_connections ? await db.getClient() : db;
   writeStream.write("[");
   db.copyToJson && (await db.copyToJson(writeStream, tableName, client));
-  if (!db.isSQLite) await client.release(true);
+  if (db.pools_connections) await client.release(true);
   writeStream.destroy();
   const h = await open(filePath, "r+");
   const stat = await h.stat();

@@ -425,7 +425,7 @@ const http_settings_form = async (req: Req) =>
       "cross_domain_iframe",
       "body_limit",
       "url_encoded_limit",
-      ...(!db.isSQLite ? ["prune_session_interval"] : []),
+      ...(db.supports_session_pruning ? ["prune_session_interval"] : []),
       "disable_csrf_routes",
     ],
     action: "/useradmin/http",
@@ -937,7 +937,7 @@ router.get(
             ),
             options: roleOptions,
           },
-          ...(!db.isSQLite
+          ...(db.supports_row_level_security
             ? [
                 {
                   name: "rls_enabled",
