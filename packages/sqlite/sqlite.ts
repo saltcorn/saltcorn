@@ -524,12 +524,17 @@ export const drop_tenant_schema = async (name: string): Promise<void> => {};
 
 /**
  * Build the express-session Store backed by a local sqlite file.
+ *
+ * connect-sqlite3 (^0.9.15, but this changed between 0.9.16 and 0.9.17) no
+ * longer opens the database itself - it expects `options.db` to already be
+ * an open handle with .exec/.get/.all/.run, so we have to open it here.
  * @param {any} session - the express-session module instance the app uses
  * @returns {any} a session.Store instance
  */
 export const getExpressSessionStore = (session: any): any => {
   const SQLiteStore = require("connect-sqlite3")(session);
-  return new SQLiteStore({ db: "sessions.sqlite" });
+  const db = new sqlite3.Database("sessions.sqlite");
+  return new SQLiteStore({ db });
 };
 
 /**
