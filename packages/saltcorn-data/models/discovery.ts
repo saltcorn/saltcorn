@@ -29,9 +29,10 @@ const discoverable_tables = async (
   dbModule: typeof db = db
 ): Promise<Row[]> => {
   const schema = schema0 || dbModule.getTenantSchema();
+  const { where, values } = dbModule.mkWhere({ table_schema: schema });
   const { rows } = await dbModule.query(
-    "select * from information_schema.tables where table_schema=$1 order by table_name",
-    [schema]
+    `select * from information_schema.tables ${where} order by table_name`,
+    values
   );
   const myTables = await Table.find({});
   const myTableNames = myTables.map((t) => sqlsanitize(t.name));
@@ -56,9 +57,10 @@ const discoverable_tables = async (
  */
 const get_existing_views = async (schema0?: string): Promise<Row[]> => {
   const schema = schema0 || db.getTenantSchema();
+  const { where, values } = db.mkWhere({ table_schema: schema });
   const { rows } = await db.query(
-    "select * from information_schema.views where table_schema=$1",
-    [schema]
+    `select * from information_schema.views ${where}`,
+    values
   );
   return rows;
 };
@@ -329,9 +331,7 @@ const reconcile_table = async (
     );
     physicalRows = rows;
   }
-  const physicalNames = new Set(
-    physicalRows.map((r: Row) => r.column_name)
-  );
+  const physicalNames = new Set(physicalRows.map((r: Row) => r.column_name));
   const scNames = new Set(scFields.map((f: Field) => f.name));
 
   const fields: Array<{

@@ -376,7 +376,7 @@ const configTypes: ConfigTypes = {
     default: "",
     restart_required: true,
     blurb:
-      "Comma-separated list of packages which will be available in JavaScript actions",
+      "Comma-separated list of packages which will be available in JavaScript actions. Set version with <code>{package name}=={version number}",
     async onChange(val: string) {
       setTimeout(async () => {
         await getState()!.refresh_npmpkgs();
@@ -1762,27 +1762,16 @@ const getAllConfig = async (): Promise<ConfigTypes> => {
  * @param {object} value
  * @returns {Promise<void>}
  */
-// TODO move db specific to pg/sqlite
 const setConfig = async (key: string, value: any): Promise<void> => {
-  if (db.isSQLite) {
-    if (isNode()) {
-      await db.query(
-        `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($key, json($value)) 
-                      on conflict (key) do update set value = json($value)`,
-        { $key: key, $value: JSON.stringify({ v: value }) }
-      );
-    } else
-      await db.query(
-        `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values(?1, json(?2)) 
-                      on conflict (key) do update set value = json(?2)`,
-        [key, JSON.stringify({ v: value })]
-      );
-  } else
+  if (db.isSQLite && !isNode()) {
+    // mobile/capacitor sqlite binding - distinct from the node @saltcorn/sqlite
+    // driver, which (like postgres/mysql) goes through db.upsert_config below
     await db.query(
-      `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values($1, $2) 
-                    on conflict (key) do update set value = $2`,
-      [key, { v: value }]
+      `insert into ${db.getTenantSchemaPrefix()}_sc_config(key, value) values(?1, json(?2))
+                    on conflict (key) do update set value = json(?2)`,
+      [key, JSON.stringify({ v: value })]
     );
+  } else await db.upsert_config(key, value);
   if (configTypes[key] && configTypes[key].onChange)
     await configTypes[key].onChange(value);
 };

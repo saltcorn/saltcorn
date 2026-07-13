@@ -370,7 +370,7 @@ class Table implements AbstractTable {
     t.delete = async (upd_rec: Row) => {
       const schema = db.getTenantSchemaPrefix();
       await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
-      await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [tbl.id]);
+      await db.deleteWhere("_sc_tables", { id: tbl.id });
       //limited refresh if we do not have a client
       if (!db.getRequestContext()?.client) await Table.state_refresh(true);
     };
@@ -893,7 +893,8 @@ class Table implements AbstractTable {
     pk_sql_type: string;
   } {
     let pk_type: string = "Integer";
-    let pk_sql_type = db.isSQLite ? "integer" : "serial";
+    let pk_sql_type =
+      db.serial_pk_sql_type || (db.isSQLite ? "integer" : "serial");
     if (fields && Array.isArray(fields)) {
       const pk_field = fields.find?.(
         (f) => typeof f !== "string" && f?.primary_key
@@ -967,12 +968,16 @@ class Table implements AbstractTable {
       id = await db.insert("_sc_tables", tblrow);
       // add primary key column ID
       if (!options.provider_name) {
-        const insfldres = await db.query(
-          `insert into ${schema}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
-            values($1,'id','ID','${pk_type}', '{}', true, true, true) returning id`,
-          [id]
-        );
-        pk_fld_id = insfldres.rows[0].id;
+        pk_fld_id = await db.insert("_sc_fields", {
+          table_id: id,
+          name: "id",
+          label: "ID",
+          type: pk_type,
+          attributes: {},
+          required: true,
+          is_unique: true,
+          primary_key: true,
+        });
       }
     }
     // create table
@@ -1079,11 +1084,9 @@ class Table implements AbstractTable {
     // delete tag entries from _sc_tag_entries
     await db.deleteWhere("_sc_tag_entries", { table_id: this.id });
     // delete fields
-    await db.query(`delete FROM ${schema}_sc_fields WHERE table_id = $1`, [
-      this.id,
-    ]);
+    await db.deleteWhere("_sc_fields", { table_id: this.id });
     // delete table description
-    await db.query(`delete FROM ${schema}_sc_tables WHERE id = $1`, [this.id]);
+    await db.deleteWhere("_sc_tables", { id: this.id });
     // delete versioned table
     if (this.versioned)
       await db.query(
@@ -4992,13 +4995,20 @@ ${rejectDetails}`,
     const schemaPrefix = db.getTenantSchemaPrefix();
     if (primaryKeys.length == 0) {
       await db.query(
-        `alter table ${schemaPrefix}"${this.name}" add column id serial primary key;`
+        `alter table ${schemaPrefix}"${this.name}" add column id ${
+          db.serial_pk_sql_type || "serial"
+        } primary key;`
       );
-      await db.query(
-        `insert into ${schemaPrefix}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
-        values($1,'id','ID','Integer', '{}', true, true, true) returning id`,
-        [this.id]
-      );
+      await db.insert("_sc_fields", {
+        table_id: this.id,
+        name: "id",
+        label: "ID",
+        type: "Integer",
+        attributes: {},
+        required: true,
+        is_unique: true,
+        primary_key: true,
+      });
     } else if (primaryKeys.length > 1) {
       const { rows } = await db.query(`select constraint_name
 from information_schema.table_constraints
@@ -5017,11 +5027,16 @@ where table_schema = '${db.getTenantSchema() || "public"}'
       await db.query(
         `alter table ${schemaPrefix}"${this.name}" add column id ${pk_sql_type} primary key;`
       );
-      await db.query(
-        `insert into ${schemaPrefix}_sc_fields(table_id, name, label, type, attributes, required, is_unique,primary_key)
-        values($1,'id','ID','${pk_type}', '{}', true, true, true) returning id`,
-        [this.id]
-      );
+      await db.insert("_sc_fields", {
+        table_id: this.id,
+        name: "id",
+        label: "ID",
+        type: pk_type,
+        attributes: {},
+        required: true,
+        is_unique: true,
+        primary_key: true,
+      });
     } else if (nonSerialPKS) {
       //https://stackoverflow.com/questions/23578427/changing-primary-key-int-type-to-serial
       await db.query(`CREATE SEQUENCE ${schemaPrefix}"${this.name}_id_seq";`);

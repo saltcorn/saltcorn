@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/plugins-loader",
-  "version": "1.6.0",
+  "version": "1.7.0-alpha.0",
   "description": "Saltcorn plugin loader",
   "homepage": "https://saltcorn.com",
   "type": "module",
@@ -45,7 +45,7 @@
     "gen-cjs-shims.cjs"
   ],
   "dependencies": {
-    "@saltcorn/data": "1.6.0",
+    "@saltcorn/data": "1.7.0-alpha.0",
     "env-paths": "^2.2.1",
     "npm-registry-fetch": "17.1.0",
     "https-proxy-agent": "^7.0.6",
@@ -55,7 +55,7 @@
     "tmp-promise": "^3.0.3"
   },
   "devDependencies": {
-    "@saltcorn/db-common": "1.6.0",
+    "@saltcorn/db-common": "1.7.0-alpha.0",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^20.14.7",
     "@types/semver": "^7.7.1",

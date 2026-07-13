@@ -782,7 +782,7 @@ class User {
    * @returns {Promise<void>}
    */
   async destroy_sessions(): Promise<void> {
-    if (!db.isSQLite) {
+    if (db.driverName === "postgres") {
       const schema = db.getTenantSchema();
 
       await db.query(

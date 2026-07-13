@@ -27,8 +27,9 @@ const reset = async (
   const schemaQdot = is_sqlite ? "" : `"${schema}".`;
   const ignoreExisting = is_sqlite && dontDrop;
   const ifNotExists = ignoreExisting ? "IF NOT EXISTS" : "";
-  const serial = is_sqlite ? "integer" : "serial";
-  const json = is_sqlite ? "json" : "jsonb";
+  const serial = db.serial_pk_sql_type;
+  const json = db.json_sql_type;
+  const shortText = db.indexable_text_sql_type;
   if (!dontDrop) {
     await (db as any).drop_reset_schema(schema);
   }
@@ -42,14 +43,14 @@ const reset = async (
 
   await db.query(`
     CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_config (
-      key text primary key,
-      value JSONB not null
+      "key" ${shortText} primary key,
+      value ${json} not null
     )
   `);
 
   await db.query(`
     CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_migrations (
-      migration text primary key
+      migration ${shortText} primary key
     )
   `);
 
@@ -78,11 +79,11 @@ const reset = async (
     CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_tables
     (
       id ${serial} primary key,
-      name text NOT NULL unique,
+      name ${shortText} NOT NULL unique,
       expose_api_read boolean NOT NULL DEFAULT false,
       expose_api_write boolean NOT NULL DEFAULT false,
-      min_role_read integer NOT NULL references ${schemaQdot}_sc_roles(id) DEFAULT 1,
-      min_role_write integer NOT NULL references ${schemaQdot}_sc_roles(id) DEFAULT 1
+      min_role_read integer NOT NULL DEFAULT 1 references ${schemaQdot}_sc_roles(id),
+      min_role_write integer NOT NULL DEFAULT 1 references ${schemaQdot}_sc_roles(id)
     )
   `);
 
@@ -94,7 +95,7 @@ const reset = async (
     CREATE TABLE ${ifNotExists} ${schemaQdot}_sc_fields
     (
       id ${serial} primary key,
-      table_id integer references ${schemaQdot}_sc_tables(id) NOT NULL,
+      table_id integer NOT NULL references ${schemaQdot}_sc_tables(id),
       name text NOT NULL,
       label text,
       type text,
@@ -112,9 +113,9 @@ const reset = async (
     (
       id ${serial} primary key,
       viewtemplate text NOT NULL,
-      name text NOT NULL,
+      name ${shortText} NOT NULL,
       table_id integer references ${schemaQdot}_sc_tables(id),
-      configuration jsonb NOT NULL,
+      configuration ${json} NOT NULL,
       is_public boolean NOT NULL DEFAULT false,
       on_root_page boolean NOT NULL DEFAULT false,
       on_menu boolean NOT NULL DEFAULT false
@@ -159,7 +160,8 @@ const reset = async (
     },
     { ignoreExisting }
   );
-  if (schema === db.connectObj.default_schema && !is_sqlite)
+
+  if (db.driverName === "postgres" && schema === db.connectObj.default_schema)
     await db.query(`
     CREATE UNLOGGED TABLE ${ifNotExists} "${db.connectObj.default_schema}"."_sc_session" (
       "sid" varchar NOT NULL COLLATE "default",

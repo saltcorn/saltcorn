@@ -1,6 +1,6 @@
 {
   "name": "@saltcorn/types",
-  "version": "1.6.0",
+  "version": "1.7.0-alpha.0",
   "description": "Data types for Saltcorn, open-source no-code platform",
   "homepage": "https://saltcorn.com",
   "scripts": {
@@ -30,7 +30,7 @@
   ],
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
-    "@saltcorn/db-common": "1.6.0",
+    "@saltcorn/db-common": "1.7.0-alpha.0",
     "@types/adm-zip": "^0.5.7",
     "@types/node": "^20.14.7"
   }

@@ -82,11 +82,9 @@ const insertTenant = async (
     },
     { noid: true, schema: db.connectObj.default_schema }
   );
-  // create tenant schema
-  if (!db.isSQLite)
-    await db.query(
-      `CREATE SCHEMA ${isTest() ? "IF NOT EXISTS " : ""}"${saneDomain}";`
-    );
+  // create tenant namespace (a Postgres schema, a MySQL database, ... - a
+  // no-op for single-file engines like SQLite)
+  await db.create_tenant_schema(saneDomain, isTest());
   // ensure file store
   await File.ensure_file_store(saneDomain);
   return saneDomain;
@@ -159,8 +157,8 @@ const copy_tenant_template = async ({
  */
 const deleteTenant = async (sub: string): Promise<void> => {
   const subdomain = domain_sanitize(sub);
-  // drop tenant db schema
-  await db.query(`drop schema if exists "${subdomain}" CASCADE `);
+  // drop tenant namespace
+  await db.drop_tenant_schema(subdomain);
   // delete information about tenant from main site
   await db.deleteWhere("_sc_tenants", { subdomain });
 };

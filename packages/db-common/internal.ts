@@ -62,42 +62,184 @@ export const sqlsanitizeAllowDots = (nm: string | symbol): string => {
   else return s;
 };
 
-type PlaceHolderStack = {
-  push: (x: Value) => string; //push value, return placeholder
+/**
+ * Owns everything that differs syntactically between database engines, so the
+ * query builders below (whereClause, mkWhere, ...) never branch on the engine.
+ * Each driver package (postgres, sqlite, mysql-backend, ...) provides one.
+ *
+ * `is_sqlite` is kept because many call sites use it as a proxy for "no
+ * schema/tenant prefix" (true only for sqlite).
+ */
+export type SqlDialect = {
+  name: string;
   is_sqlite: boolean;
+  push: (x: Value) => string; //push value, return placeholder
   getValues: () => Value[];
+  // placeholder text for the nth pushed value, without pushing
+  placeholderAt: (n: number) => string;
+  // operator for a case-insensitive substring match ("ilike" Where key)
+  like: () => string;
+  // operator for a regular expression match
+  regexOperator: () => string;
+  // wrap an already-quoted column/expression in a date cast/truncation
+  castDateExpr: (doCast: boolean, s: string) => string;
+  // fieldExpr already quote()d, jsonPath an already-escaped `$...` path
+  jsonExtractExpr: (
+    fieldExpr: string,
+    jsonPath: string,
+    asText: boolean
+  ) => string;
+  // full clause for a `_fts` Where key
+  ftsWhereClause: (v: {
+    fields: FieldLikeForFTS[];
+    table?: string;
+    searchTerm: string;
+    schema?: string;
+    language?: string;
+    use_websearch?: boolean;
+    disable_fts?: boolean;
+  }) => string;
+  // full "= ANY (...)" / "IN (...)" fragment (pushes its own placeholders)
+  arrayInClause: (values: Value[]) => string;
+  // full clause for the "slugify" Where key
+  slugifyWhereClause: (k: string, s: string) => string;
+  // cast suffix after a pushed placeholder in the "eq" Where key
+  textCastSuffix: () => string;
 };
 
-const postgresPlaceHolderStack = (init: number = 0): PlaceHolderStack => {
+// push each array element and return that many placeholders
+const prepInList = (v: any[], phs: SqlDialect) =>
+  v.map((current) => phs.push(current)).join(", ");
+
+/*
+ * Dialect used by the boolean-signature mkWhere/mkSelectOptions when
+ * is_sqlite is false. Defaults to postgres; a pluggable driver registers its
+ * own (see db/index.ts in saltcorn-data) so the many call sites passing
+ * db.isSQLite positionally emit SQL for the active driver.
+ */
+let defaultDialectFactory: (initCount?: number) => SqlDialect = (
+  initCount = 0
+) => postgresPlaceHolderStack(initCount);
+
+export const setDefaultDialectFactory = (
+  f: (initCount?: number) => SqlDialect
+): void => {
+  defaultDialectFactory = f;
+};
+
+const postgresPlaceHolderStack = (init: number = 0): SqlDialect => {
   let values: Value[] = [];
   let i = init;
+  const push = (x: Value): string => {
+    values.push(x);
+    i += 1;
+    return `$${i}`;
+  };
   return {
-    push(x) {
-      values.push(x);
-      i += 1;
-      return `$${i}`;
-    },
+    name: "postgres",
     is_sqlite: false,
+    push,
     getValues() {
       return values;
+    },
+    placeholderAt(n: number) {
+      return `$${n}`;
+    },
+    like() {
+      return "ILIKE";
+    },
+    regexOperator() {
+      return "~";
+    },
+    castDateExpr(doCast: boolean, s: string) {
+      return !doCast ? s : `${s}::date`;
+    },
+    jsonExtractExpr(fieldExpr: string, jsonPath: string, asText: boolean) {
+      return `${asText ? "jsonb_build_array(" : ""}jsonb_path_query_first(${fieldExpr}, '${jsonPath}')${asText ? ")->>0" : ""}`;
+    },
+    ftsWhereClause(v) {
+      const { fields, table, schema } = v;
+      const prefixMatch = !v.searchTerm?.includes(" ");
+      const actually_use_websearch = v.use_websearch && !prefixMatch;
+      const searchTerm =
+        prefixMatch && !v.disable_fts ? `${v.searchTerm}:*` : v.searchTerm;
+      let flds = ftsFieldsSqlExpr(fields, table, schema);
+      if (v.disable_fts)
+        return `${flds} ILIKE '%' || ${push(v.searchTerm)} || '%'`;
+      else if (actually_use_websearch)
+        return `to_tsvector('${v.language || "english"}', ${flds}) @@ websearch_to_tsquery('${v.language || "english"}', ${push(searchTerm)})`;
+      else if (prefixMatch) {
+        // Guard against stop words: to_tsquery('english','on:*') raises a syntax error
+        // because stop words are stripped to an empty query. Use websearch_to_tsquery as
+        // a probe — it returns ''::tsquery for stop words without erroring. When that
+        // happens, fall back to ILIKE so common words like "on", "by", "a" still match.
+        const lang = v.language || "english";
+        const rawTermPh = push(v.searchTerm);
+        const prefixTermPh = push(searchTerm);
+        return `CASE WHEN websearch_to_tsquery('${lang}', ${rawTermPh}) = ''::tsquery THEN ${flds} ILIKE '%' || ${rawTermPh} || '%' ELSE to_tsvector('${lang}', ${flds}) @@ to_tsquery('${lang}', ${prefixTermPh}) END`;
+      } else
+        return `to_tsvector('${v.language || "english"}', ${flds}) @@ plainto_tsquery('${v.language || "english"}', ${push(searchTerm)})`;
+    },
+    arrayInClause(vals: Value[]) {
+      return `= ANY (${push(vals)})`;
+    },
+    slugifyWhereClause(k: string, s: string) {
+      return `REGEXP_REPLACE(REPLACE(LOWER(${quote(
+        sqlsanitizeAllowDots(k)
+      )}),' ','-'),'[^\\w-]','','g')=${push(s)}`;
+    },
+    textCastSuffix() {
+      return "::text";
     },
   };
 };
 
-const sqlitePlaceHolderStack = (): PlaceHolderStack => {
+const sqlitePlaceHolderStack = (): SqlDialect => {
   let values: Value[] = [];
-  return {
-    push(x) {
-      values.push(x);
-      return `?`;
-    },
+  const push = (x: Value): string => {
+    values.push(x);
+    return `?`;
+  };
+  const self: SqlDialect = {
+    name: "sqlite",
     is_sqlite: true,
+    push,
     getValues() {
       return values.map((v) =>
         v?.constructor?.name === "PlainDate" ? (v.valueOf() as number) : v
       );
     },
+    placeholderAt() {
+      return "?";
+    },
+    like() {
+      return "LIKE";
+    },
+    regexOperator() {
+      return "REGEXP";
+    },
+    castDateExpr(doCast: boolean, s: string) {
+      return !doCast ? s : `date(${s})`;
+    },
+    jsonExtractExpr(fieldExpr: string, jsonPath: string) {
+      return `json_extract(${fieldExpr}, '${jsonPath}')`;
+    },
+    ftsWhereClause(v) {
+      const { fields, table, schema } = v;
+      let flds = ftsFieldsSqlExpr(fields, table, schema);
+      return `${flds} LIKE '%' || ${push(v.searchTerm)} || '%'`;
+    },
+    arrayInClause(vals: Value[]) {
+      return `IN (${prepInList(vals, self)})`;
+    },
+    slugifyWhereClause(k: string, s: string) {
+      return `REPLACE(LOWER(${quote(sqlsanitizeAllowDots(k))}),' ','-')=${push(s)}`;
+    },
+    textCastSuffix() {
+      return "::text";
+    },
   };
+  return self;
 };
 
 export const ftsFieldsSqlExpr = (
@@ -136,51 +278,6 @@ export const ftsFieldsSqlExpr = (
   return flds;
 };
 
-/**
- * Where FTS (Search)
- * @param {object} v
- * @param {string} i
- * @param {boolean} is_sqlite
- * @returns {string}
- */
-const whereFTS = (
-  v: {
-    fields: FieldLikeForFTS[];
-    table?: string;
-    searchTerm: string;
-    schema?: string;
-    language?: string;
-    use_websearch?: boolean;
-    disable_fts?: boolean;
-  },
-  phs: PlaceHolderStack
-): string => {
-  const { fields, table, schema } = v;
-  const prefixMatch = !v.searchTerm?.includes(" ");
-  const actually_use_websearch = v.use_websearch && !prefixMatch;
-  const no_fts = phs.is_sqlite || v.disable_fts;
-  const searchTerm =
-    prefixMatch && !no_fts ? `${v.searchTerm}:*` : v.searchTerm;
-  let flds = ftsFieldsSqlExpr(fields, table, schema);
-  if (phs.is_sqlite)
-    return `${flds} LIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
-  else if (v.disable_fts)
-    return `${flds} ILIKE '%' || ${phs.push(v.searchTerm)} || '%'`;
-  else if (actually_use_websearch)
-    return `to_tsvector('${v.language || "english"}', ${flds}) @@ websearch_to_tsquery('${v.language || "english"}', ${phs.push(searchTerm)})`;
-  else if (prefixMatch) {
-    // Guard against stop words: to_tsquery('english','on:*') raises a syntax error
-    // because stop words are stripped to an empty query. Use websearch_to_tsquery as
-    // a probe — it returns ''::tsquery for stop words without erroring. When that
-    // happens, fall back to ILIKE so common words like "on", "by", "a" still match.
-    const lang = v.language || "english";
-    const rawTermPh = phs.push(v.searchTerm);
-    const prefixTermPh = phs.push(searchTerm);
-    return `CASE WHEN websearch_to_tsquery('${lang}', ${rawTermPh}) = ''::tsquery THEN ${flds} ILIKE '%' || ${rawTermPh} || '%' ELSE to_tsvector('${lang}', ${flds}) @@ to_tsquery('${lang}', ${prefixTermPh}) END`;
-  } else
-    return `to_tsvector('${v.language || "english"}', ${flds}) @@ plainto_tsquery('${v.language || "english"}', ${phs.push(searchTerm)})`;
-};
-
 export /**
  *
  * @param {boolean} is_sqlite
@@ -188,7 +285,7 @@ export /**
  * @returns {function}
  */
 const subSelectWhere =
-  (phs: PlaceHolderStack) =>
+  (phs: SqlDialect) =>
   (
     k: string,
     v: {
@@ -237,7 +334,7 @@ const subSelectWhere =
  * @returns in select sql command
  */
 const inSelectWithLevels =
-  (phs: PlaceHolderStack) =>
+  (phs: SqlDialect) =>
   (
     k: string,
     v: {
@@ -343,7 +440,7 @@ const quote = (s: string): string =>
  * @returns {function}
  */
 const whereOr =
-  (phs: PlaceHolderStack): ((ors: any[]) => string) =>
+  (phs: SqlDialect): ((ors: any[]) => string) =>
   (ors: any[]): string =>
     wrapParens(
       ors
@@ -356,7 +453,7 @@ const whereOr =
     );
 
 const whereAnd =
-  (phs: PlaceHolderStack): ((ors: any[]) => string) =>
+  (phs: SqlDialect): ((ors: any[]) => string) =>
   (ors: any[]): string =>
     wrapParens(
       ors
@@ -368,68 +465,50 @@ const whereAnd =
         .join(" and ")
     );
 
-const equals = ([v1, v2]: [any, any], phs: PlaceHolderStack) => {
+const equals = ([v1, v2]: [any, any], phs: SqlDialect) => {
   const pVal = (v: any) =>
     typeof v === "symbol"
       ? quote(sqlsanitizeAllowDots(v))
-      : phs.push(v) + (typeof v === "string" ? "::text" : "");
+      : phs.push(v) + (typeof v === "string" ? phs.textCastSuffix() : "");
   const isNull = (v: any) => `${pVal(v)} is null`;
   if (v1 === null && v2 === null) return "null is null";
   if (v1 === null) return isNull(v2);
   if (v2 === null) return isNull(v1);
   return `${pVal(v1)}=${pVal(v2)}`;
 };
-const slugifyQuery = (k: string, s: string, phs: PlaceHolderStack) =>
-  phs.is_sqlite
-    ? `REPLACE(LOWER(${quote(sqlsanitizeAllowDots(k))}),' ','-')=${phs.push(s)}`
-    : `REGEXP_REPLACE(REPLACE(LOWER(${quote(
-        sqlsanitizeAllowDots(k)
-      )}),' ','-'),'[^\\w-]','','g')=${phs.push(s)}`;
+
 /**
  * @param {boolean} is_sqlite
  * @param {string} i
  * @returns {function}
  */
 
-const castDate = (doCast: boolean, is_sqlite: boolean, s: string) =>
-  !doCast ? s : is_sqlite ? `date(${s})` : `${s}::date`;
-
 /*
  * add elements of the array as single items to the placeholder stack
  * and return the same amount of placeholders
  */
-const prepSqliteIn = (v: any[], phs: PlaceHolderStack) => {
-  const placeholders = [];
-  for (const current of v) {
-    phs.push(current);
-    placeholders.push("?");
-  }
-  return placeholders.join(", ");
-};
 
 const whereClause =
-  (phs: PlaceHolderStack): (([k, v]: [string, any | [any, any]]) => string) =>
+  (phs: SqlDialect): (([k, v]: [string, any | [any, any]]) => string) =>
   ([k, v]: [string, any | [any, any]]): string =>
     k === "_fts"
-      ? whereFTS(v, phs)
+      ? phs.ftsWhereClause(v)
       : typeof (v || {}).not !== "undefined" && v.not.in
-        ? `not (${quote(sqlsanitizeAllowDots(k))} ${
-            phs.is_sqlite
-              ? `IN (${prepSqliteIn(v.not.in, phs)})`
-              : `= ANY (${phs.push(v.not.in)})`
-          })`
+        ? // empty list: "not in ()" is always true (and "IN ()" is invalid
+          // outside Postgres)
+          v.not.in.length === 0
+          ? "TRUE"
+          : `not (${quote(sqlsanitizeAllowDots(k))} ${phs.arrayInClause(v.not.in)})`
         : typeof (v || {}).in !== "undefined"
-          ? `${quote(sqlsanitizeAllowDots(k))} ${
-              phs.is_sqlite
-                ? `IN (${prepSqliteIn(v.in, phs)})`
-                : `= ANY (${phs.push(v.in)})`
-            }`
+          ? v.in.length === 0
+            ? "FALSE"
+            : `${quote(sqlsanitizeAllowDots(k))} ${phs.arrayInClause(v.in)}`
           : k === "or" && Array.isArray(v)
             ? whereOr(phs)(v)
             : k === "and" && Array.isArray(v)
               ? whereAnd(phs)(v)
               : typeof (v || {}).slugify !== "undefined"
-                ? slugifyQuery(k, v.slugify, phs)
+                ? phs.slugifyWhereClause(k, v.slugify)
                 : k === "not" && typeof v === "object"
                   ? `not (${Object.entries(v)
                       .map((kv) => whereClause(phs)(kv))
@@ -451,55 +530,41 @@ const whereClause =
                               .join(" and ")
                           : typeof (v || {}).ilike !== "undefined" &&
                               v.fullMatch
-                            ? `${quote(sqlsanitizeAllowDots(k))} ${
-                                phs.is_sqlite ? "LIKE" : "ILIKE"
-                              } ${phs.push(v.ilike)}`
+                            ? `${quote(sqlsanitizeAllowDots(k))} ${phs.like()} ${phs.push(v.ilike)}`
                             : typeof (v || {}).ilike !== "undefined"
-                              ? `${quote(sqlsanitizeAllowDots(k))} ${
-                                  phs.is_sqlite ? "LIKE" : "ILIKE"
-                                } '%' || ${phs.push(v.ilike)} || '%'`
+                              ? `${quote(sqlsanitizeAllowDots(k))} ${phs.like()} '%' || ${phs.push(v.ilike)} || '%'`
                               : v instanceof RegExp ||
                                   v?.constructor?.name === "RegExp"
-                                ? `${quote(sqlsanitizeAllowDots(k))} ${
-                                    phs.is_sqlite ? "REGEXP" : "~"
-                                  } ${phs.push(v.source)}`
+                                ? `${quote(sqlsanitizeAllowDots(k))} ${phs.regexOperator()} ${phs.push(v.source)}`
                                 : typeof (v || {}).gt !== "undefined" &&
                                     typeof (v || {}).lt !== "undefined"
-                                  ? `${castDate(
+                                  ? `${phs.castDateExpr(
                                       v.day_only,
-                                      phs.is_sqlite,
                                       quote(sqlsanitizeAllowDots(k))
-                                    )}>${v.equal ? "=" : ""}${castDate(
+                                    )}>${v.equal ? "=" : ""}${phs.castDateExpr(
                                       v.day_only,
-                                      phs.is_sqlite,
                                       phs.push(v.gt)
-                                    )} and ${castDate(
+                                    )} and ${phs.castDateExpr(
                                       v.day_only,
-                                      phs.is_sqlite,
                                       quote(sqlsanitizeAllowDots(k))
-                                    )}<${v.equal ? "=" : ""}${castDate(
+                                    )}<${v.equal ? "=" : ""}${phs.castDateExpr(
                                       v.day_only,
-                                      phs.is_sqlite,
                                       phs.push(v.lt)
                                     )}`
                                   : typeof (v || {}).gt !== "undefined"
-                                    ? `${castDate(
+                                    ? `${phs.castDateExpr(
                                         v.day_only,
-                                        phs.is_sqlite,
                                         quote(sqlsanitizeAllowDots(k))
-                                      )}>${v.equal ? "=" : ""}${castDate(
+                                      )}>${v.equal ? "=" : ""}${phs.castDateExpr(
                                         v.day_only,
-                                        phs.is_sqlite,
                                         phs.push(v.gt)
                                       )}`
                                     : typeof (v || {}).lt !== "undefined"
-                                      ? `${castDate(
+                                      ? `${phs.castDateExpr(
                                           v.day_only,
-                                          phs.is_sqlite,
                                           quote(sqlsanitizeAllowDots(k))
-                                        )}<${v.equal ? "=" : ""}${castDate(
+                                        )}<${v.equal ? "=" : ""}${phs.castDateExpr(
                                           v.day_only,
-                                          phs.is_sqlite,
                                           phs.push(v.lt)
                                         )}`
                                       : typeof (v || {}).inSelect !==
@@ -526,11 +591,7 @@ function isdef(x: any) {
   return typeof x !== "undefined";
 }
 
-function jsonWhere(
-  k: string,
-  v: any[] | Object,
-  phs: PlaceHolderStack
-): string {
+function jsonWhere(k: string, v: any[] | Object, phs: SqlDialect): string {
   const jsonpathElemEscape = (sf: JsonPathElem): string =>
     typeof sf == "number"
       ? `[${sf}]`
@@ -549,22 +610,18 @@ function jsonWhere(
         }`
     ).replace(/'/g, "''");
   const lhs = (f: string, sf: JsonPath, convText: boolean): string =>
-    phs.is_sqlite
-      ? `json_extract(${quote(sqlsanitizeAllowDots(f))}, '${jsonpathPrepare(
-          sf
-        )}')`
-      : `${convText ? "jsonb_build_array(" : ""}jsonb_path_query_first(${quote(
-          sqlsanitizeAllowDots(f)
-        )}, '${jsonpathPrepare(sf)}')${convText ? ")->>0" : ""}`;
+    phs.jsonExtractExpr(
+      quote(sqlsanitizeAllowDots(f)),
+      jsonpathPrepare(sf),
+      convText
+    );
 
   if (Array.isArray(v)) return `${lhs(k, v[0], true)}=${phs.push(v[1])}`;
   else {
     return andArray(
       Object.entries(v).map(([kj, vj]) =>
         vj.ilike
-          ? `${lhs(k, kj, true)} ${
-              phs.is_sqlite ? "LIKE" : "ILIKE"
-            } '%' || ${phs.push(vj.ilike as Value)} || '%'`
+          ? `${lhs(k, kj, true)} ${phs.like()} '%' || ${phs.push(vj.ilike as Value)} || '%'`
           : isdef(vj.gte) || isdef(vj.lte)
             ? andArray(
                 [
@@ -591,6 +648,26 @@ type WhereAndVals = {
   where: string;
   values: Value[];
 };
+
+/**
+ * Build a where-clause and its bound values for an arbitrary SqlDialect.
+ * @param whereObj
+ * @param dialect
+ * @returns {object}
+ */
+export const mkWhereForDialect = (
+  whereObj: Where | undefined,
+  dialect: SqlDialect
+): WhereAndVals => {
+  const wheres = whereObj ? Object.entries(whereObj) : [];
+  const where =
+    whereObj && wheres.length > 0
+      ? "where " + wheres.map(whereClause(dialect)).join(" and ")
+      : "";
+  const values = dialect.getValues();
+  return { where, values };
+};
+
 /**
  * @param {object} whereObj
  * @param {boolean} is_sqlite
@@ -601,19 +678,11 @@ export const mkWhere = (
   whereObj: Where | undefined,
   is_sqlite: boolean = false,
   initCount: number = 0
-): WhereAndVals => {
-  const wheres = whereObj ? Object.entries(whereObj) : [];
-  //console.log({ wheres });
-  const placeHolderStack = is_sqlite
-    ? sqlitePlaceHolderStack()
-    : postgresPlaceHolderStack(initCount);
-  const where =
-    whereObj && wheres.length > 0
-      ? "where " + wheres.map(whereClause(placeHolderStack)).join(" and ")
-      : "";
-  const values = placeHolderStack.getValues();
-  return { where, values };
-};
+): WhereAndVals =>
+  mkWhereForDialect(
+    whereObj,
+    is_sqlite ? sqlitePlaceHolderStack() : defaultDialectFactory(initCount)
+  );
 
 /**
  * @param {number|string} x
@@ -647,6 +716,8 @@ const getDistanceOrder = ({ latField, longField, lat, long }: CoordOpts) => {
   )} - ${+long})*${cos_lat_2})`;
 };
 
+type PlaceholderFormatter = { placeholderAt: (n: number) => string };
+
 const getOperatorOrder = (
   {
     operator,
@@ -658,7 +729,7 @@ const getOperatorOrder = (
     field: string;
   },
   values: any[],
-  isSQLite: boolean
+  fmt: PlaceholderFormatter
 ) => {
   const validOp = (s: string) => {
     if (s.includes("--")) return "";
@@ -675,7 +746,7 @@ const getOperatorOrder = (
   const ppOp = (ast: Operator): string => {
     if (ast === "target") {
       values.push(target);
-      return isSQLite ? "?" : `$${values.length}`;
+      return fmt.placeholderAt(values.length);
     }
     if (ast === "field") return sqlsanitize(field);
     const { type, name, args } = ast;
@@ -704,13 +775,14 @@ export const orderByIsOperator = (
 };
 
 /**
- * @param {object} selopts
+ * Build the "order by / limit / offset / for update" tail of a select for a
+ * given dialect. Only fmt.placeholderAt is used (rare operator-orderBy case).
  * @returns {string}
  */
-export const mkSelectOptions = (
+export const mkSelectOptionsForDialect = (
   selopts: SelectOptions,
   values: any[],
-  isSQLite: boolean
+  fmt: PlaceholderFormatter
 ): string => {
   const orderby =
     selopts.orderBy === "RANDOM()"
@@ -733,13 +805,28 @@ export const mkSelectOptions = (
                 typeof selopts.orderBy === "object" &&
                 "operator" in selopts.orderBy &&
                 typeof selopts.orderBy.operator === "object"
-              ? `order by ${getOperatorOrder(selopts.orderBy as any, values, isSQLite)}`
+              ? `order by ${getOperatorOrder(selopts.orderBy as any, values, fmt)}`
               : "";
   const limit = selopts.limit ? `limit ${toInt(selopts.limit)}` : "";
   const offset = selopts.offset ? `offset ${toInt(selopts.offset)}` : "";
   const forupdate = selopts.forupdate ? "FOR UPDATE" : "";
   return [orderby, limit, offset, forupdate].filter((s) => s).join(" ");
 };
+
+/**
+ * @param {object} selopts
+ * @returns {string}
+ */
+export const mkSelectOptions = (
+  selopts: SelectOptions,
+  values: any[],
+  isSQLite: boolean
+): string =>
+  mkSelectOptionsForDialect(
+    selopts,
+    values,
+    isSQLite ? sqlitePlaceHolderStack() : defaultDialectFactory()
+  );
 
 export const prefixFieldsInWhere = (inputWhere: any, tablePrefix: string) => {
   if (!inputWhere) return {};

@@ -864,6 +864,7 @@ export type SlugStepType = {
 export type ConnectObjType = {
   connectionString?: string;
   sqlite_path?: string;
+  db_driver?: string;
   password?: string;
   user?: string;
   database?: string;
