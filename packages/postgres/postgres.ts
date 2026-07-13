@@ -894,6 +894,47 @@ export const json_sql_type = "jsonb";
 export const indexable_text_sql_type = "text";
 export const supports_search_path = true;
 
+// --- Backend capability flags (see DbExportsType in db-common/types) ---
+export const supports_multiple_schemas = true;
+export const pools_connections = true;
+export const supports_for_update = true;
+export const supports_row_level_security = true;
+export const supports_alter_table = true;
+export const supports_non_integer_pk = true;
+export const json_read_returns_string = false;
+export const json_write_needs_stringify = true;
+export const stores_dates_as_text = false;
+export const supports_large_bind_lists = true;
+export const supports_database_views = true;
+export const supports_table_discovery = true;
+export const supports_session_pruning = true;
+
+// Defer FK checks for the remainder of the current transaction.
+export const deferForeignKeys = async (client: {
+  query: (sql: string) => Promise<any>;
+}): Promise<void> => {
+  await client.query("SET CONSTRAINTS ALL DEFERRED");
+};
+
+// Pull the offending field name out of a unique-violation error message.
+// e.g. `duplicate key value violates unique constraint "books_author_unique"`
+export const parseUniqueConstraintError = (
+  msg: string,
+  _tableName: string
+): string => {
+  const m = msg.match(
+    /duplicate key value violates unique constraint "(.*?)_(.*?)_unique"/
+  );
+  return m ? m[2] : "";
+};
+
+// Canonical key for a multi-field unique constraint, to compare against the
+// field name parsed above (postgres names them `<field1>_<field2>_...`).
+export const uniqueConstraintFieldsKey = (
+  fields: string[],
+  _tableName: string
+): string => fields.join("_");
+
 /**
  * Initializes internals of the the postgres module.
  * It must be called after importing the module.

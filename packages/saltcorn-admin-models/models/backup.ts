@@ -187,7 +187,9 @@ const create_pack_json = async (
       if (configTypes[cfg.key]?.excludeFromSnapshot) continue;
       if (state.isFixedConfig(cfg.key)) continue;
 
-      config[cfg.key] = (db.isSQLite ? JSON.parse(cfg.value) : cfg.value)?.v;
+      config[cfg.key] = (
+        db.json_read_returns_string ? JSON.parse(cfg.value) : cfg.value
+      )?.v;
     }
     pack.config = config;
   }
@@ -342,7 +344,9 @@ const backup_config = async (root_dirpath: string): Promise<void> => {
     if (!state.isFixedConfig(cfg.key))
       await writeFile(
         join(dirpath, cfg.key),
-        JSON.stringify(db.isSQLite ? JSON.parse(cfg.value) : cfg.value)
+        JSON.stringify(
+          db.json_read_returns_string ? JSON.parse(cfg.value) : cfg.value
+        )
       );
   }
 };
@@ -361,7 +365,12 @@ const backup_info_file = async (root_dirpath: string): Promise<void> => {
         migrations_run,
         backup_date: new Date().toISOString(),
         node_version: process.version,
-        database_type: db.isSQLite ? "SQLite" : "PostgreSQL",
+        database_type:
+          db.driverName === "sqlite"
+            ? "SQLite"
+            : db.driverName === "mysql"
+              ? "MySQL"
+              : "PostgreSQL",
         database_version: dbversion,
         os: {
           platform: os.platform(),

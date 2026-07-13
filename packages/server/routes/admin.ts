@@ -1633,7 +1633,14 @@ router.get(
                   tr(th(req.__("Node.js version")), td(process.version)),
                   tr(
                     th(req.__("Database type")),
-                    td(db.isSQLite ? "SQLite " : "PostgreSQL ", dbversion)
+                    td(
+                      db.driverName === "sqlite"
+                        ? "SQLite "
+                        : db.driverName === "mysql"
+                          ? "MySQL "
+                          : "PostgreSQL ",
+                      dbversion
+                    )
                   ),
                   isRoot
                     ? tr(
@@ -3763,7 +3770,7 @@ router.get(
                     ),
 
                     // allow offline mode box (postgres only)
-                    !db.isSQLite &&
+                    db.driverName === "postgres" &&
                       div(
                         { class: "row pb-2 mt-2" },
                         div(
@@ -3792,7 +3799,7 @@ router.get(
                         )
                       ),
 
-                    !db.isSQLite &&
+                    db.driverName === "postgres" &&
                       div(
                         {
                           id: "tblSyncSelectorId",
@@ -3981,7 +3988,7 @@ router.get(
                           ),
 
                           // push sync (postgres only)
-                          !db.isSQLite &&
+                          db.driverName === "postgres" &&
                             div(
                               { class: "row pb-2 my-2" },
                               div(
@@ -4040,7 +4047,7 @@ router.get(
                           ),
 
                           // push sync heartbeat interval
-                          !db.isSQLite &&
+                          db.driverName === "postgres" &&
                             div(
                               { class: "row pb-2 mt-2" },
                               div(

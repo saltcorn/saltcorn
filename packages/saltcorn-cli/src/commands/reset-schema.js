@@ -29,7 +29,7 @@ class ResetCommand extends Command {
             type: "confirm",
             name: "continue",
             message: `This will wipe all data from database "${
-              db.isSQLite
+              db.driverName === "sqlite"
                 ? "SQLite"
                 : (db.connectObj.database || db.connectObj.connectionString) +
                   "." +

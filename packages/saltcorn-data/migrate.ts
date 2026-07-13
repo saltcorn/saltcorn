@@ -65,7 +65,8 @@ const doMigrationStep = async (
 
   // Shared, portable SQL: runs on every dialect, translated for non-postgres.
   if (contents.sql) {
-    if (!(db.isSQLite && contents.sql.includes("DROP COLUMN"))) {
+    // sqlite (no ALTER TABLE DROP COLUMN) skips DROP COLUMN migrations
+    if (db.supports_alter_table || !contents.sql.includes("DROP COLUMN")) {
       await execMany(translate(contents.sql));
     }
   }
@@ -77,7 +78,7 @@ const doMigrationStep = async (
   if (contents.sql_pg && db.driverName === "postgres") {
     await execMany(resolve(contents.sql_pg));
   }
-  if (contents.sql_sqlite && db.isSQLite) {
+  if (contents.sql_sqlite && db.driverName === "sqlite") {
     await execMany(contents.sql_sqlite);
   }
   if (db.driverName === "mysql") {

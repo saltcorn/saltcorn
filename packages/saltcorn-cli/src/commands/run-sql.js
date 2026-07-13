@@ -37,8 +37,10 @@ class RunSQLCommand extends Command {
     await maybe_as_tenant(flags.tenant, async () => {
       const schema = db.getTenantSchema();
       if (flags.tenant)
-        if (db.isSQLite) {
-          console.warn("SQLite is used as datasource. Tenants are unsupported");
+        if (!db.supports_search_path) {
+          console.warn(
+            "This database has no schema search path. Tenants are unsupported"
+          );
         } else {
           // https://www.commandprompt.com/education/how-do-i-setchange-the-default-schema-in-postgresql/
           // life hack to set default schema for tables in PG

@@ -542,7 +542,7 @@ class State {
     if (
       cfgInDB &&
       typeof cfgInDB.search_use_websearch === "undefined" &&
-      !db.isSQLite
+      db.driverName === "postgres"
     ) {
       const dbversion = await db.getVersion(true);
       const val = +dbversion >= 11.0;
@@ -837,7 +837,7 @@ class State {
         .filter((f: any) => f.table_id === table.id)
         .map((c: any) => new TableConstraint(c));
       table.fields.forEach((f: GenObj) => {
-        if (db.isSQLite && typeof f.attributes === "string")
+        if (db.json_read_returns_string && typeof f.attributes === "string")
           f.attributes = JSON.parse(f.attributes);
         if (
           f.attributes &&
@@ -848,7 +848,10 @@ class State {
             (lf: Field) => lf.name === f.attributes.localizes_field
           );
           if (localized) {
-            if (db.isSQLite && typeof localized.attributes === "string")
+            if (
+              db.json_read_returns_string &&
+              typeof localized.attributes === "string"
+            )
               localized.attributes = JSON.parse(localized.attributes);
             if (!localized.attributes) localized.attributes = {};
 
