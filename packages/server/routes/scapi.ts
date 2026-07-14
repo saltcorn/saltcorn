@@ -42,13 +42,15 @@ export default router;
 router.use(rejectTenantDrift);
 
 /**
- * Check that user has right to read sc service api data.
- * Only admin currently can call this api.
+ * Check that user has right to read sc service api data. Admins always can;
+ * a plugin's `authorize_api` hook can additionally grant access to a
+ * specific endpoint (identified by `route`) to non-admins.
  * @param {object} req httprequest
  * @param {object} user user based on access token
- * @returns {boolean}
+ * @param {string} route identifies which sc api endpoint is being checked
+ * @returns {Promise<boolean>}
  */
-function accessAllowedRead(req: Req, user: any) {
+async function accessAllowedRead(req: Req, user: any, route: string) {
   const role =
     req.user && req.user!.id
       ? req.user!.role_id
@@ -57,7 +59,11 @@ function accessAllowedRead(req: Req, user: any) {
         : 100;
 
   if (role === 1) return true;
-  return false;
+  return await getState()!.authorizeApi(user || req.user, {
+    route: `scapi/${route}`,
+    action: "get",
+    req,
+  });
 }
 
 // todo add paging
@@ -77,7 +83,7 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "sc_tables")) {
           const tables = (await Table.find({}))!;
 
           res.json({ success: tables });
@@ -105,7 +111,7 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "sc_views")) {
           const views = (await View.find({}, { cached: true }))!;
 
           res.json({ success: views });
@@ -133,7 +139,7 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "sc_pages")) {
           const pages = (await Page.find({}))!;
 
           res.json({ success: pages });
@@ -161,7 +167,7 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "sc_files")) {
           const files = (await File.find({}))!;
 
           res.json({ success: files });
@@ -189,7 +195,7 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "sc_triggers")) {
           const triggers = Trigger.find({})!;
 
           res.json({ success: triggers });
@@ -217,7 +223,7 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "sc_roles")) {
           const roles = (await Role.find({}))!;
 
           res.json({ success: roles });
@@ -245,7 +251,7 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "sc_tenants")) {
           const tenants = await Tenant.getAllTenants();
 
           res.json({ success: tenants });
@@ -273,7 +279,7 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "sc_plugins")) {
           const plugins = (await Plugin.find({}))!;
 
           res.json({ success: plugins });
@@ -301,7 +307,7 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "sc_config")) {
           const configVars = await Config.getAllConfig();
 
           res.json({ success: configVars });
@@ -320,7 +326,7 @@ router.get(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "reload_get")) {
           await getState()!.refresh_plugins();
           res.json({ success: true });
         } else {
@@ -338,7 +344,7 @@ router.post(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowedRead(req, user)) {
+        if (await accessAllowedRead(req, user, "reload_post")) {
           const { tenant, new_tenant } = req.body;
           if (new_tenant) {
             add_tenant(new_tenant);
@@ -369,6 +375,7 @@ router.post(
       { session: false },
       async function (err: any, user: any, info: any) {
         const { viewname, route } = req.params;
+        req.user = user;
         const role = user?.id ? user.role_id : 100;
         const state = getState()!;
         state.log(
@@ -384,11 +391,18 @@ router.post(
             .status(404)
             .json({ error: req.__(`No such view: %s`, text(viewname)) });
           state.log(2, `View ${viewname} not found`);
-        } else if (role > view.min_role) {
+        } else if (
+          role > view.min_role &&
+          !(await view.authorize(user, {
+            action: "post",
+            route,
+            req,
+            body: req.body || {},
+          }))
+        ) {
           res.status(401).json({ error: req.__("Not authorized") });
           state.log(2, `View ${viewname} viewroute ${route} not authorized`);
         } else {
-          req.user = user;
           await view.runRoute(route, req.body || {}, res, { res, req });
         }
       }

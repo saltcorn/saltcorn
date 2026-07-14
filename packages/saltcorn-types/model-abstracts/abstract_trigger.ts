@@ -22,6 +22,10 @@ export interface AbstractTrigger {
   runWithoutRow(runargs: any): Promise<boolean>;
   getTags(): Promise<Array<AbstractTag>>;
   haltOnOnlyIf: (row: Row, user?: Row) => boolean;
+  authorize(
+    user: any,
+    opts: { action: "get" | "post"; req: any; state?: Row; body?: Row }
+  ): Promise<boolean>;
 }
 
 export type TriggerCfg = {

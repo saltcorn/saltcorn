@@ -7,6 +7,7 @@ export interface AbstractView {
   name: string;
   viewtemplate: string;
   configuration?: string | any;
+  table_id?: number;
   table_name?: string;
   min_role: number;
   attributes?: any;

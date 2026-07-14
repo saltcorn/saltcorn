@@ -39,7 +39,7 @@ export const postView = async (context) => {
   const mobileCfg = state.mobileConfig;
   if (
     mobileCfg.user.role_id > view.min_role &&
-    !(await view.authorise_post({ body, req, ...view }))
+    !(await view.authorize(mobileCfg.user, { action: "post", req, body }))
   ) {
     throw new saltcorn.data.utils.NotAuthorized(req.__("Not authorized"));
   }
@@ -150,7 +150,11 @@ export const getView = async (context) => {
   if (!view) throw new Error(req.__("No such view: %s", viewname));
   if (
     state.mobileConfig.user.role_id > view.min_role &&
-    !(await view.authorise_get({ query, req, ...view }))
+    !(await view.authorize(state.mobileConfig.user, {
+      action: "get",
+      req,
+      state: query,
+    }))
   ) {
     const additionalInfos = `: your role: ${state.mobileConfig.user.role_id}, view min_role: ${view.min_role}`;
     throw new saltcorn.data.utils.NotAuthorized(
@@ -161,7 +165,9 @@ export const getView = async (context) => {
   if (!view.renderLocally()) {
     const response = await apiCall({
       method: "GET",
-      path: `/view/${encodeURIComponent(viewname)}${context.query ? `?${context.query}` : ""}`,
+      path: `/view/${encodeURIComponent(viewname)}${
+        context.query ? `?${context.query}` : ""
+      }`,
     });
     const data = response.data;
     contents0 = data;

@@ -1,6 +1,8 @@
 import Table from "../models/table.js";
 import Field from "../models/field.js";
 import View from "../models/view.js";
+import Page from "../models/page.js";
+import Trigger from "../models/trigger.js";
 import db from "../db/index.js";
 import { getState } from "../db/state.js";
 import basePluginMod from "../base-plugin/index.js";
@@ -15,11 +17,25 @@ import {
   assertIsErrorMsg,
   assertIsType,
 } from "./assertions.js";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 import { add_free_variables_to_joinfields } from "../plugin-helper.js";
 import * as expressionModule from "../models/expression.js";
 import User from "../models/user.js";
 import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
+import type {
+  Plugin,
+  AuthorizeAccessViewRequest,
+  AuthorizeAccessPageRequest,
+  AuthorizeAccessTriggerRequest,
+  AuthorizeAccessApiRequest,
+} from "@saltcorn/types/base_types";
 const { freeVariables } = expressionModule;
 
 afterAll(db.close);
@@ -30,6 +46,7 @@ beforeAll(async () => {
 jest.setTimeout(30000);
 const non_owner_user = { id: 3, email: "foo@bar.com", role_id: 80 };
 const owner_user = { id: 1, email: "foo@bar.com", role_id: 80 };
+const req = mockReqRes.req;
 
 const test_person_table = async (persons: Table) => {
   const row = await persons.getRow({ age: 12 });
@@ -323,9 +340,13 @@ describe("Table with simple row ownership field", () => {
     expect(dvs6.length).toBe(2);
 
     //prevent setting owner to someone else
-    const upres = await persons.updateRow({ owner: non_owner_user }, alexid, owner_user);
-    expect(upres).toBe("Not authorized")
-    
+    const upres = await persons.updateRow(
+      { owner: non_owner_user },
+      alexid,
+      owner_user
+    );
+    expect(upres).toBe("Not authorized");
+
     //not deleting as nonowner
     await persons.deleteRows({ id: timid }, non_owner_user);
     expect((await persons.getRow({ lastname: "Tim" }))?.age).toBe(99);
@@ -1186,12 +1207,17 @@ describe("ownership_options cases", () => {
     const projs = Table.findOne({ name: "OwnerOptProjects" })!;
     assertIsSet(projs);
     const opts = await projs.ownership_options();
-    const revFk = opts.find((o) => o.value.startsWith("Fml:user.home_project===id"));
+    const revFk = opts.find((o) =>
+      o.value.startsWith("Fml:user.home_project===id")
+    );
     expect(revFk).toBeDefined();
     expect(revFk?.label).toBe("users.home project [Key to OwnerOptProjects]");
 
     // delete the FK field on users before dropping the referenced table
-    const hpField = await Field.findOne({ name: "home_project", table_id: users.id });
+    const hpField = await Field.findOne({
+      name: "home_project",
+      table_id: users.id,
+    });
     if (hpField) await hpField.delete();
     await projs.delete();
   });
@@ -1208,7 +1234,11 @@ describe("ownership_options cases", () => {
 
     const items = await Table.create("OwnerOptItems");
     await Field.create({ table: items, name: "label", type: "String" });
-    await Field.create({ table: items, name: "dept", type: "Key to OwnerOptDept" });
+    await Field.create({
+      table: items,
+      name: "dept",
+      type: "Key to OwnerOptDept",
+    });
 
     const itemsT = Table.findOne({ name: "OwnerOptItems" })!;
     assertIsSet(itemsT);
@@ -1221,5 +1251,301 @@ describe("ownership_options cases", () => {
 
     await items.delete();
     await dept.delete();
+  });
+});
+
+describe("authorize_* hook dispatch", () => {
+  it("only runs hooks matching the request kind", async () => {
+    let viewCalls = 0;
+    let pageCalls = 0;
+    let triggerCalls = 0;
+    let apiCalls = 0;
+    const countingPlugin = {
+      sc_plugin_api_version: 1,
+      authorize_view: async () => {
+        viewCalls++;
+        return { decision: "deny" };
+      },
+      authorize_page: async () => {
+        pageCalls++;
+        return { decision: "deny" };
+      },
+      authorize_trigger: async () => {
+        triggerCalls++;
+        return { decision: "deny" };
+      },
+      authorize_api: async () => {
+        apiCalls++;
+        return { decision: "deny" };
+      },
+    } as unknown as Plugin;
+    getState()!.registerPlugin("counting_hooks_plugin", countingPlugin);
+
+    // view/page/trigger are omitted below on purpose (unknown-cast) - this
+    // test only checks that dispatch is scoped by kind, not any specific
+    // target. The real call sites (View.authorize, Page.authorize,
+    // Trigger.authorize) always populate a real entity.
+    await getState()!.authorizeView(
+      { action: "get", req } as unknown as AuthorizeAccessViewRequest,
+      req.user
+    );
+    expect(viewCalls).toBe(1);
+    expect(pageCalls).toBe(0);
+    expect(triggerCalls).toBe(0);
+    expect(apiCalls).toBe(0);
+
+    await getState()!.authorizePage(
+      { action: "get", req } as unknown as AuthorizeAccessPageRequest,
+      req.user
+    );
+    expect(pageCalls).toBe(1);
+    expect(viewCalls).toBe(1);
+
+    await getState()!.authorizeTrigger(
+      { action: "post", req } as unknown as AuthorizeAccessTriggerRequest,
+      req.user
+    );
+    expect(triggerCalls).toBe(1);
+    expect(pageCalls).toBe(1);
+    expect(viewCalls).toBe(1);
+
+    await getState()!.authorizeApi(req.user, {
+      route: "dispatch_test_api",
+      action: "get",
+      req,
+    });
+    expect(apiCalls).toBe(1);
+    expect(triggerCalls).toBe(1);
+    expect(pageCalls).toBe(1);
+    expect(viewCalls).toBe(1);
+  });
+
+  it("allows if any hook allows, regardless of registration order", async () => {
+    const probeName = "authz_test_allow_wins";
+    getState()!.registerPlugin("deny_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_api: async (request: AuthorizeAccessApiRequest) => {
+        if (request.route !== probeName) return null;
+        return { decision: "deny", reason: "first hook says no" };
+      },
+    } as unknown as Plugin);
+    getState()!.registerPlugin("allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_api: async (request: AuthorizeAccessApiRequest) => {
+        if (request.route !== probeName) return null;
+        return { decision: "allow" };
+      },
+    } as unknown as Plugin);
+
+    const allowed = await getState()!.authorizeApi(req.user, {
+      route: probeName,
+      action: "get",
+      req,
+    });
+    expect(allowed).toBe(true);
+  });
+
+  it("denies by default and preserves a hook's deny reason", async () => {
+    // Uses authorizeTrigger (rather than authorizeApi) since it's one of
+    // the methods that surfaces the raw AuthorizeAccessResult (with
+    // .reason), needed to check the deny-reason-preservation behavior
+    // below - the underlying aggregation logic is shared across all kinds.
+    const result = await getState()!.authorizeTrigger(
+      {
+        action: "get",
+        trigger: { name: "authz_test_no_hook_allows" } as any,
+        req,
+      } as AuthorizeAccessTriggerRequest,
+      req.user
+    );
+    expect(result.decision).toBe("deny");
+
+    getState()!.registerPlugin("reason_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_trigger: async (request: AuthorizeAccessTriggerRequest) => {
+        if (request.trigger.name !== "authz_test_reason") return null;
+        return { decision: "deny", reason: "explicitly not allowed" };
+      },
+    } as unknown as Plugin);
+    const result2 = await getState()!.authorizeTrigger(
+      {
+        action: "get",
+        trigger: { name: "authz_test_reason" } as any,
+        req,
+      } as AuthorizeAccessTriggerRequest,
+      req.user
+    );
+    expect(result2.decision).toBe("deny");
+    expect((result2 as any).reason).toBe("explicitly not allowed");
+  });
+
+  it("skips hooks that abstain by returning null/undefined", async () => {
+    const probeName = "authz_test_abstain";
+    getState()!.registerPlugin("null_abstain_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_api: async (request: AuthorizeAccessApiRequest) => {
+        if (request.route !== probeName) return null;
+        return undefined; // abstains even though it matched the route
+      },
+    } as unknown as Plugin);
+    getState()!.registerPlugin("undefined_abstain_then_allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_api: async (request: AuthorizeAccessApiRequest) => {
+        if (request.route !== probeName) return undefined;
+        return { decision: "allow" };
+      },
+    } as unknown as Plugin);
+
+    const allowed = await getState()!.authorizeApi(req.user, {
+      route: probeName,
+      action: "get",
+      req,
+    });
+    expect(allowed).toBe(true);
+  });
+
+  it("calls (cfg) => hook once per request on a plugin with a configuration_workflow, not once at registration", async () => {
+    // Plugins with a configuration_workflow have every facility, including
+    // authorize_* hooks, invoked as (cfg) => value by registerPlugin - so
+    // the hook itself must be wrapped in an extra (cfg) => ... layer.
+    let wrappedHookRequestCalls = 0;
+    getState()!.registerPlugin("configured_plugin_correct_hook", {
+      sc_plugin_api_version: 1,
+      configuration_workflow: () => ({} as any),
+      authorize_view:
+        (cfg: any) => async (request: AuthorizeAccessViewRequest) => {
+          if (request.view.name !== "cfg_wrapped_view") return null;
+          wrappedHookRequestCalls++;
+          return { decision: "allow" };
+        },
+    } as unknown as Plugin);
+    expect(wrappedHookRequestCalls).toBe(0); // not called at registration time
+
+    const allowed = await getState()!.authorizeView(
+      {
+        action: "get",
+        view: { name: "cfg_wrapped_view" } as any,
+        req,
+      } as AuthorizeAccessViewRequest,
+      req.user
+    );
+    expect(allowed.decision).toBe("allow");
+    expect(wrappedHookRequestCalls).toBe(1);
+  });
+});
+
+describe("View.authorize", () => {
+  it("defaults to false with no matching authorize_view hooks", async () => {
+    const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
+    const allowed = await v.authorize(req.user, {
+      action: "get",
+      req,
+      state: {},
+    });
+    expect(allowed).toBe(false);
+  });
+
+  it("grants access when an authorize_view hook allows", async () => {
+    const v = await View.findOne({ name: "authorlist" });
+    assertIsSet(v);
+    getState()!.registerPlugin("view_allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_view: async (request: AuthorizeAccessViewRequest) => {
+        if (request.view.name !== "authorlist") return null;
+        return { decision: "allow" };
+      },
+    } as unknown as Plugin);
+    const allowed = await v.authorize(req.user, {
+      action: "get",
+      req,
+      state: {},
+    });
+    expect(allowed).toBe(true);
+  });
+
+  it("deprecated authorise_get/authorise_post still delegate to authorize()", async () => {
+    // uses authorshow, not authorlist - an earlier test registered a hook
+    // that always allows "authorlist", which would otherwise mask this check
+    const v = await View.findOne({ name: "authorshow" });
+    assertIsSet(v);
+    const allowedGet = await v.authorise_get({
+      query: {},
+      table_id: v.table_id as number,
+      req,
+    });
+    expect(allowedGet).toBe(false);
+  });
+});
+
+describe("Page.authorize", () => {
+  it("defaults to false with no matching hooks", async () => {
+    const page = await Page.create({
+      name: "AuthzTestPage",
+      title: "t",
+      description: "",
+      min_role: 1,
+      layout: { type: "blank", contents: "hi" },
+    });
+    const allowed = await page.authorize(req.user, {
+      action: "get",
+      req,
+      state: {},
+    });
+    expect(allowed).toBe(false);
+  });
+
+  it("grants access when an authorize_page hook allows", async () => {
+    const page = Page.findOne({ name: "AuthzTestPage" });
+    assertIsSet(page);
+    getState()!.registerPlugin("page_allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_page: async (request: AuthorizeAccessPageRequest) => {
+        if (request.page.name !== "AuthzTestPage") return null;
+        return { decision: "allow" };
+      },
+    } as unknown as Plugin);
+    const allowed = await page.authorize(req.user, {
+      action: "get",
+      req,
+      state: {},
+    });
+    expect(allowed).toBe(true);
+  });
+});
+
+describe("Trigger.authorize", () => {
+  it("defaults to false with no matching hooks", async () => {
+    const trig = await Trigger.create({
+      name: "AuthzTestTrigger",
+      action: "run_js_code",
+      when_trigger: "API call",
+      min_role: 1,
+      configuration: { code: "return 1" },
+    });
+    const allowed = await trig.authorize(req.user, {
+      action: "post",
+      req,
+      body: {},
+    });
+    expect(allowed).toBe(false);
+  });
+
+  it("grants access when an authorize_trigger hook allows", async () => {
+    const trig = Trigger.findOne({ name: "AuthzTestTrigger" });
+    assertIsSet(trig);
+    getState()!.registerPlugin("trigger_allow_hook_plugin", {
+      sc_plugin_api_version: 1,
+      authorize_trigger: async (request: AuthorizeAccessTriggerRequest) => {
+        if (request.trigger.name !== "AuthzTestTrigger") return null;
+        return { decision: "allow" };
+      },
+    } as unknown as Plugin);
+    const allowed = await trig.authorize(req.user, {
+      action: "post",
+      req,
+      body: {},
+    });
+    expect(allowed).toBe(true);
   });
 });
