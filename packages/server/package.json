@@ -118,7 +118,7 @@
     "@saltcorn/types": "1.7.0-alpha.0"
   },
   "optionalDependencies": {
-    "connect-sqlite3": "^0.9.15",
+    "connect-sqlite3": "0.9.17",
     "sd-notify": "^2.8.0"
   },
   "repository": "github:saltcorn/saltcorn",
