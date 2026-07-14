@@ -67,7 +67,7 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
         await page.click(pageobject.EditlinkLocator);
         // Click on add row button
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.addrowlocator);
         // click on tab cell to activate it
         await page.waitForSelector(pageobject.Nametab);
@@ -131,7 +131,7 @@ test.describe('E2E Test Suite', () => {
         await functions.submit();
         await page.click(pageobject.EditlinkLocator);
         // Click on add row button
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.addrowlocator);
         // click on tab cell to activate it
         await page.waitForSelector(pageobject.manageCell);
@@ -260,7 +260,7 @@ test.describe('E2E Test Suite', () => {
         // add lable for link
         await page.waitForSelector(pageobject.lebelforfield);
         await functions.fill_Text(pageobject.lebelforfield, 'Show Department');
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         // click on next button
         await page.click(pageobject.nextoption);
         await functions.views()
@@ -348,7 +348,7 @@ test.describe('E2E Test Suite', () => {
         // add lable for link
         await page.waitForSelector(pageobject.lebelforfield);
         await functions.fill_Text(pageobject.lebelforfield, 'Managed by');
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         // click on next button
         await page.click(pageobject.nextoption);
         await functions.views()
@@ -396,7 +396,7 @@ test.describe('E2E Test Suite', () => {
         // click on save button to delete
         await page.click(pageobject.saveactionbutton);
         await page.click(pageobject.deletebutton);
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         // click on next page
         await page.click(pageobject.nextoption);
         // select the auto save to save any changes immediately
@@ -491,7 +491,7 @@ test.describe('E2E Test Suite', () => {
         await functions.drag_And_Drop(pageobject.columnsElement, pageobject.saveactionbutton);
         await functions.fill_Text(pageobject.numbercolumn, '3');
         await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.thirdrowcolumn2);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // click to view link dropdown
         await customAssert('view to link dropdown should be visible', async () => {
             await page.click(pageobject.viewtolinkdropdown);
@@ -534,7 +534,7 @@ test.describe('E2E Test Suite', () => {
         // visit view page
         await functions.views();
         await page.click(pageobject.configureDepartmentlist);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // click on add column button on page
         await page.click(pageobject.addcolumnbutton);
         // drag and drop the action view link
@@ -549,7 +549,7 @@ test.describe('E2E Test Suite', () => {
         // add lable for link
         await functions.fill_Text(pageobject.lebelforfield, 'Edit');
         await page.click(pageobject.viewtolinkdropdown);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         // click on next button
         await functions.submit();

@@ -48,7 +48,7 @@ test.describe('E2E Test Suite', () => {
     await functions.clear_Data();
     // Create a new page 
     await functions.create_New_Page('toast_validation');
-    // await page.waitForTimeout(2500);
+    // await page.waitForTimeout(1000);
     // Drag and drop the text source
     await page.waitForSelector(pageobject.ActionLocator);
     await functions.drag_And_Drop(pageobject.ActionLocator, pageobject.target);

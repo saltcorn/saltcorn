@@ -111,7 +111,7 @@ test.describe.serial('E2E Test Suite', () => {
         await page.click(pageobject.Tasktable);
         // Click on edit link
         await page.click(pageobject.EditlinkLocator);
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await customAssert('Add data on first row in task table ', async () => {
             // Click on add row button
             await page.click(pageobject.addrowlocator);
@@ -173,7 +173,7 @@ test.describe.serial('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
         // Delete all existing rows/columns until canvas is clear
         await customAssert('Delete all content until canvas is clear', async () => {
@@ -192,7 +192,7 @@ test.describe.serial('E2E Test Suite', () => {
         // Drag first field to canvas
         await customAssert('Drag first field to canvas', async () => {
             await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
-            await page.waitForTimeout(1500);
+            await page.waitForTimeout(1000);
         });
 
         // Click field, select Name, apply H4
@@ -200,7 +200,7 @@ test.describe.serial('E2E Test Suite', () => {
             const fieldInCanvas = page.locator(pageobject.target).locator('div.d-inline-block').first();
             await fieldInCanvas.waitFor({ state: 'visible', timeout: 10000 });
             await fieldInCanvas.click();
-            await page.waitForTimeout(1500);
+            await page.waitForTimeout(1000);
             await page.locator('select.field').first().waitFor({ state: 'visible', timeout: 10000 });
             await page.locator('select.field').first().selectOption({ label: 'Name' });
             await page.click('button.style-h4');
@@ -210,7 +210,7 @@ test.describe.serial('E2E Test Suite', () => {
         // Drag second field below first column
         await customAssert('Drag second field below first column', async () => {
             await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
-            await page.waitForTimeout(1500);
+            await page.waitForTimeout(1000);
         });
 
         // Save

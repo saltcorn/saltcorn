@@ -38,7 +38,7 @@ test.describe("Offline Delete", () => {
       await iframe.locator('input[type="email"]').fill("user@foo.com");
       await iframe.locator('input[type="password"]').fill("AhGGr6rhu45");
       await iframe.locator('button[type="submit"]').click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
       const newIframe = page.frameLocator("#content-iframe");
       const toast = newIframe.locator(".toast .toast-body");
       await expect(toast).toHaveText(/Welcome, user@foo.com!/i);
@@ -54,7 +54,7 @@ test.describe("Offline Delete", () => {
       const networkLink = iframe.locator("a", { hasText: "Network" });
       await expect(networkLink).toBeVisible();
       await networkLink.click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
       const newIframe = page.frameLocator("#content-iframe");
 
       await expect(
@@ -74,7 +74,7 @@ test.describe("Offline Delete", () => {
       await iframe
         .locator(".form-check.form-switch input[type='checkbox']")
         .click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       const newIframe = page.frameLocator("#content-iframe");
       const alert = newIframe.locator(".alert.alert-info");
@@ -92,7 +92,7 @@ test.describe("Offline Delete", () => {
     try {
       const iframe = page.frameLocator("#content-iframe");
       await iframe.locator("a.navbar-brand").click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
       const newIframe = page.frameLocator("#content-iframe");
       await expect(
         newIframe.getByText("guitar_list", {
@@ -109,7 +109,7 @@ test.describe("Offline Delete", () => {
     try {
       const iframe = page.frameLocator("#content-iframe");
       await iframe.getByText("guitar_list", { exact: true }).click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
       const newIframe = page.frameLocator("#content-iframe");
       await expect(newIframe.locator("table tbody tr")).toHaveCount(1);
     } catch (error) {
@@ -122,7 +122,7 @@ test.describe("Offline Delete", () => {
     try {
       const iframe = page.frameLocator("#content-iframe");
       await iframe.getByText("Delete", { exact: true }).click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
       const newIframe = page.frameLocator("#content-iframe");
       await expect(newIframe.locator("table tbody tr")).toHaveCount(0);
     } catch (error) {
@@ -137,13 +137,13 @@ test.describe("Offline Delete", () => {
       const networkLink = iframe.locator("a", { hasText: "Network" });
       await expect(networkLink).toBeVisible();
       await networkLink.click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       const newIframe = page.frameLocator("#content-iframe");
       await newIframe
         .locator(".form-check.form-switch input[type='checkbox']")
         .click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       const toast = page
         .frameLocator("#content-iframe")
@@ -162,13 +162,13 @@ test.describe("Offline Delete", () => {
       const networkLink = iframe.locator("a", { hasText: "Network" });
       await expect(networkLink).toBeVisible();
       await networkLink.click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       const newIframe = page.frameLocator("#content-iframe");
       const syncButton = newIframe.locator('button[onClick="callSync()"]');
       await expect(syncButton).toBeVisible();
       await syncButton.click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       const toast = page
         .frameLocator("#content-iframe")
@@ -185,7 +185,7 @@ test.describe("Offline Delete", () => {
     try {
       const iframe = page.frameLocator("#content-iframe");
       await iframe.locator("a.navbar-brand").click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       const newIframe = page.frameLocator("#content-iframe");
       await expect(
@@ -195,7 +195,7 @@ test.describe("Offline Delete", () => {
         .frameLocator("#content-iframe")
         .getByText("guitar_list", { exact: true })
         .click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       await expect(
         page.frameLocator("#content-iframe").locator("table tbody tr")

@@ -81,7 +81,7 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(2500); // Wait for view list to render
+    await page.waitForTimeout(1000); // Wait for view list to render
 
     // Click on any email cell in the list (avoid hard-coding domain)
     const emailCell = page.locator('div.d-inline:has-text("@")').first();
@@ -92,7 +92,7 @@ test.describe('E2E Test Suite', () => {
       await expect(checkboxLocator).toBeVisible();  // Assert checkbox is visible
       await checkboxLocator.click();
     });
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(1000);
     await customAssert('Click the next option twice', async () => {
       await page.locator(pageobject.nextoption).click();
       await page.locator(pageobject.nextoption).click();
@@ -109,7 +109,7 @@ test.describe('E2E Test Suite', () => {
       
         // Hover over the email to make the edit icon appear
         await emailEditLocator.hover(); 
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         
         const editIconLocator = emailEditLocator.locator('.editicon');
         // Assertion to check if edit icon is visible
@@ -202,7 +202,7 @@ test.describe('E2E Test Suite', () => {
     await functions.submit();
     await page.click(pageobject.EditlinkLocator);
     // Click on add row button
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2000);
     await page.click(pageobject.addrowlocator);
     // click on tab cell to activate it
     await page.waitForSelector(pageobject.Nametab);
@@ -238,7 +238,7 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     const nameLocator = page.locator('div.d-inline:has-text("Adam")');
     await page.waitForTimeout(1000);
     await nameLocator.click();
@@ -286,7 +286,7 @@ test.describe('E2E Test Suite', () => {
     // add lable for link
     await page.waitForSelector(pageobject.lebelforfield);
     await functions.fill_Text(pageobject.lebelforfield, 'Show Employee');
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(1000);
     // click on next button
     await page.click(pageobject.nextoption);
     await functions.views()

@@ -68,7 +68,7 @@ test.describe('E2E Test Suite - Edit Field from Show View', () => {
         // submit the page
         await functions.submit();
         // select full name lable
-        await page.waitForTimeout(4000);
+        await page.waitForTimeout(2000);
         await page.click('div.d-inline:has-text("Adam")');
 
         // Click the checkbox: <input class="click-to-edit form-check-input" name="inline" type="checkbox">
@@ -76,7 +76,7 @@ test.describe('E2E Test Suite - Edit Field from Show View', () => {
             const checkbox = page.locator('input.click-to-edit.form-check-input[name="inline"][type="checkbox"]');
             await checkbox.click();
         });
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2000);
         // click on next button
         await page.click(pageobject.nextoption);
     });
@@ -106,7 +106,7 @@ test.describe('E2E Test Suite - Edit Field from Show View', () => {
         // add lable for link
         await page.waitForSelector(pageobject.lebelforfield);
         await functions.fill_Text(pageobject.lebelforfield, 'Show');
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2000);
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);

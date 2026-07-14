@@ -73,7 +73,7 @@ test.describe('E2E Test Suite', () => {
             await functions.drag_And_Drop(pageobject.Column2FullName, pageobject.Column0Address);
             await functions.drag_And_Drop(pageobject.Column2DOB, pageobject.Column1Address);
         });
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2000);
         // click on next button
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
@@ -164,7 +164,7 @@ test.describe('E2E Test Suite', () => {
         });
 
         await registryEditorMenuItem.click();
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await takeDebugScreenshot('tc_39_open_03_registry_editor_landing');
 
         await customAssert('URL should navigate to /registry-editor', async () => {

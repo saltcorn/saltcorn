@@ -38,7 +38,7 @@ test.describe("Login Navigate Upload", () => {
       await iframe.locator('input[type="email"]').fill("admin@foo.com");
       await iframe.locator('input[type="password"]').fill("AhGGr6rhu45");
       await iframe.locator('button[type="submit"]').click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
       const newIframe = page.frameLocator("iframe");
       const guitarFeedLink = newIframe.getByText("guitar feed", {
         exact: true,
@@ -64,7 +64,7 @@ test.describe("Login Navigate Upload", () => {
       const networkLink = iframe.locator("a", { hasText: "Network" });
       await expect(networkLink).toBeVisible();
       await networkLink.click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
       const newIframe = page.frameLocator("iframe");
 
       await expect(
@@ -84,7 +84,7 @@ test.describe("Login Navigate Upload", () => {
       await iframe
         .locator(".form-check.form-switch input[type='checkbox']")
         .click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       const newIframe = page.frameLocator("iframe");
       const alert = newIframe.locator(".alert.alert-info");
@@ -103,7 +103,7 @@ test.describe("Login Navigate Upload", () => {
 
     // open dashboard
     await iframe.locator("a.navbar-brand").click();
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
     let newIframe = page.frameLocator("iframe");
     await expect(
       newIframe.getByText("guitar feed", {
@@ -123,7 +123,7 @@ test.describe("Login Navigate Upload", () => {
 
     // open processed list
     await iframe.getByText("process list", { exact: true }).click();
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
 
     newIframe = page.frameLocator("iframe");
     await expect(
@@ -135,7 +135,7 @@ test.describe("Login Navigate Upload", () => {
 
     // click add processed
     await iframe.locator("a", { hasText: "Add processed" }).click();
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
     newIframe = page.frameLocator("iframe");
 
     // check calendar input exists
@@ -176,7 +176,7 @@ test.describe("Login Navigate Upload", () => {
 
     // click submit
     await iframe.locator('button[type="submit"]').click();
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
     newIframe = page.frameLocator("iframe");
     await expect(
       newIframe.locator('div[data-sc-embed-viewname="list_processed"]')
@@ -208,14 +208,14 @@ test.describe("Login Navigate Upload", () => {
       const networkLink = iframe.locator("a", { hasText: "Network" });
       await expect(networkLink).toBeVisible();
       await networkLink.click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       let newIframe = page.frameLocator("iframe");
       // click switcher
       await newIframe
         .locator(".form-check.form-switch input[type='checkbox']")
         .click();
-      await page.waitForTimeout(3000);
+      await page.waitForTimeout(1500);
 
       newIframe = page.frameLocator("iframe");
       const toast = newIframe.locator(".toast .toast-body");
@@ -232,7 +232,7 @@ test.describe("Login Navigate Upload", () => {
 
     // open dashboard
     await iframe.locator("a.navbar-brand").click();
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
     let newIframe = page.frameLocator("iframe");
     await expect(
       newIframe.getByText("guitar feed", {
@@ -242,7 +242,7 @@ test.describe("Login Navigate Upload", () => {
 
     // open processed list
     await iframe.getByText("process list", { exact: true }).click();
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
 
     newIframe = page.frameLocator("iframe");
     await expect(
@@ -262,14 +262,14 @@ test.describe("Login Navigate Upload", () => {
     const networkLink = iframe.locator("a", { hasText: "Network" });
     await expect(networkLink).toBeVisible();
     await networkLink.click();
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
 
     let newIframe = page.frameLocator("iframe");
     // button with callSync() onclick
     const syncButton = newIframe.locator('button[onClick="callSync()"]');
     await expect(syncButton).toBeVisible();
     await syncButton.click();
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
     newIframe = page.frameLocator("iframe");
     const toast = newIframe.locator(".toast .toast-body");
     await expect(toast).toBeVisible();
@@ -280,7 +280,7 @@ test.describe("Login Navigate Upload", () => {
     const iframe = page.frameLocator("iframe");
     // open dashboard
     await iframe.locator("a.navbar-brand").click();
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
     let newIframe = page.frameLocator("iframe");
     await expect(
       newIframe.getByText("guitar feed", {
@@ -289,7 +289,7 @@ test.describe("Login Navigate Upload", () => {
     ).toBeVisible();
     // open processed list
     await iframe.getByText("process list", { exact: true }).click();
-    await page.waitForTimeout(3000);
+    await page.waitForTimeout(1500);
     newIframe = page.frameLocator("iframe");
     await expect(
       newIframe.locator('div[data-sc-embed-viewname="list_processed"]')
