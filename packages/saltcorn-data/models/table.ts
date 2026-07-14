@@ -559,7 +559,7 @@ class Table implements AbstractTable {
     if (this.ownership_field_id) {
       const owner_field = this.owner_fieldname();
       if (!owner_field) return null;
-      const curUserId = `nullif(current_setting('app.current_user_id', true), '')::integer`;
+      const curUserId = `(select nullif(current_setting('app.current_user_id', true), '')::integer)`;
       return `${curUserId} = "${sqlsanitize(owner_field)}"`;
     }
 
@@ -607,7 +607,7 @@ class Table implements AbstractTable {
 
     // Separate policies for read and write so the write threshold cannot
     // widen SELECT visibility via PG's OR-of-permissive-policies rule.
-    const roleGuc = `coalesce(nullif(current_setting('app.current_user_role', true), '')::integer, 1)`;
+    const roleGuc = `(select coalesce(nullif(current_setting('app.current_user_role', true), '')::integer, 1))`;
     await db.query(`
       CREATE POLICY sc_rls_elevated ON ${tbl}
       FOR SELECT
