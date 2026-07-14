@@ -43,7 +43,7 @@ test.describe('E2E Test Suite', () => {
     test('Add Aggregation to field on People list view', async () => {
         await functions.views();
         await page.click(pageobject.configurePeopleList);
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         // Click on add column button
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
@@ -60,7 +60,7 @@ test.describe('E2E Test Suite', () => {
             const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
             await StatisticDropdown.selectOption({ value: 'Count' });
         });
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await functions.views();
         await page.click(pageobject.PeopleList);
@@ -108,7 +108,7 @@ test.describe('E2E Test Suite', () => {
     test('Add Estimated hours on aggregation on people list', async () => {
         await functions.views();
         await page.click(pageobject.configurePeopleList);
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
             await functions.drag_And_Drop(pageobject.aggregationDiv, pageobject.newcolumn);
@@ -120,7 +120,7 @@ test.describe('E2E Test Suite', () => {
             const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
             await StatisticDropdown.selectOption({ value: 'Sum' });
         });
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await functions.views();
         await page.click(pageobject.PeopleList);
@@ -145,7 +145,7 @@ test.describe('E2E Test Suite', () => {
             const StatisticDropdown = await page.locator('select.form-control.form-select').nth(2);
             await StatisticDropdown.selectOption({ value: 'Array_Agg' });
         });
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await functions.views();
         await page.click(pageobject.PeopleList);
@@ -179,18 +179,18 @@ test.describe('E2E Test Suite', () => {
     test('Add Show person link on people list', async () => {
         await functions.views();
         await page.click(pageobject.configurePeopleList);
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
             await functions.drag_And_Drop(pageobject.viewlinksource, pageobject.newcolumn);
         });
         await customAssert('Select show_people on view to link dropdown', async () => {
-            await page.waitForTimeout(2500);
+            await page.waitForTimeout(1000);
             await page.click(pageobject.viewtolinkdropdown);
             await page.click(pageobject.view2showpeople);
         });
         await functions.fill_Text(pageobject.lebelforfield, 'Show');
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await page.waitForTimeout(500);
         await page.click(pageobject.nextoption);
@@ -250,7 +250,7 @@ test.describe('E2E Test Suite', () => {
         await customAssert('Check open popup checkbox', async () => {
             await page.locator(pageobject.popupcheckbox).nth(1).click();
         });
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         // click on next button
         await page.click(pageobject.nextoption);
 
@@ -285,7 +285,7 @@ test.describe('E2E Test Suite', () => {
             await page.click(pageobject.View2Showdropdown);
             await page.click(pageobject.view2showteam, { force: true });
         });
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         // click on next button
         await page.click(pageobject.nextoption);
         await functions.views();
@@ -314,7 +314,7 @@ test.describe('E2E Test Suite', () => {
         });
         // Add lable for link
         await functions.fill_Text(pageobject.textInputLabel, 'List of assigned tasks');
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         // click on next button
         await page.click(pageobject.nextoption);
         await functions.views();

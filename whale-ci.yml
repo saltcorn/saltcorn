@@ -4,8 +4,9 @@ build:
 run_tests_sqlite:
   image: build
   command:
-    - saltcorn run-tests saltcorn-data
-    - saltcorn run-tests server
+    - nice -n 15 saltcorn run-tests saltcorn-data
+    - nice -n 15 saltcorn run-tests server
+    - nice -n 15 saltcorn run-tests view-queries
   extra_hosts:
     - "example.com:127.0.0.1"
     - "sub.example.com:127.0.0.1"
@@ -21,6 +22,10 @@ run_tests_sqlite:
     SALTCORN_MULTI_TENANT: true
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
     NODE_OPTIONS: --max-old-space-size=4096
+    SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
+    # workaround for prepareQueryEnviroment()
+    JSON_WEB_TOKEN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBmb28uY29tIiwicm9sZV9pZCI6MSwiaXNzIjoic2FsdGNvcm5Ac2FsdGNvcm4iLCJhdWQiOiJzYWx0Y29ybi1tb2JpbGUtYXBwIiwiaWF0IjoxOTI0OTA1NjAwMDAwLCJleHAiOjE5MjQ5MDU2MDAwMDB9.eE370EdQr90y9woWDzeDzZgGVsUSlfAmtykeAJ_gJjA"
+          
 
 run_tests_postgres_db:
   image: postgres
@@ -38,8 +43,8 @@ run_tests_postgres:
   delay: 1
   command:
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
-    - saltcorn reset-schema -f   
-    - saltcorn run-tests
+    - nice -n 15 saltcorn reset-schema -f   
+    - nice -n 15 saltcorn run-tests
   extra_hosts:
     - "example.com:127.0.0.1"
     - "sub.example.com:127.0.0.1"
@@ -74,7 +79,7 @@ pytest:
   depends: pytest_db 
   command:
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
-    - pytest
+    - nice -n 15 pytest
   extra_hosts:
     - "example.com:127.0.0.1"
     - "sub.example.com:127.0.0.1"
@@ -94,10 +99,48 @@ pytest:
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
     NODE_OPTIONS: --max-old-space-size=4096
 
+playwright_mobile_db:
+  image: postgres:16
+  service: true
+  quiet: true
+  ready-on: CREATE DATABASE
+  environment:
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: saltcorn_test
+    POSTGRES_USER: postgres
+
+playwright_mobile:
+  dockerfile: ./deploy/whale-ci/Dockerfile.e2e
+  depends: 
+    - build
+    - playwright_mobile_db
+  command:
+    - psql -d saltcorn_test --command='create extension "uuid-ossp";'
+    - nice -n 15 deploy/playwright_mobile/run.sh
+  extra_hosts:
+    - "example.com:127.0.0.1"
+    - "sub.example.com:127.0.0.1"
+    - "sub1.example.com:127.0.0.1"
+    - "sub2.example.com:127.0.0.1"
+    - "sub3.example.com:127.0.0.1"
+    - "sub4.example.com:127.0.0.1"
+    - "sub5.example.com:127.0.0.1"
+    - "otherexample.com:127.0.0.1"
+  environment:
+    PGHOST: playwright_mobile_db
+    PGUSER: postgres
+    PGDATABASE: saltcorn_test
+    PGPASSWORD: postgres
+    CI: true
+    SALTCORN_MULTI_TENANT: true
+    SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+    SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
+
+
 playwright_db:
   image: postgres:16
   service: true
-  disable: true
+  #disable: true
   quiet: true
   ready-on: CREATE DATABASE
   environment:
@@ -108,15 +151,22 @@ playwright_db:
 
 playwright:
   dockerfile: ./deploy/whale-ci/Dockerfile.e2e
-  disable: true
+  #disable: true
   depends: 
     - build
     - playwright_db
   command:
-    - bash -c "echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com otherexample.com' >> /etc/hosts"
-
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
-    - deploy/playwright/run.sh
+    - nice -n 15 deploy/playwright/run.sh
+  extra_hosts:
+    - "example.com:127.0.0.1"
+    - "sub.example.com:127.0.0.1"
+    - "sub1.example.com:127.0.0.1"
+    - "sub2.example.com:127.0.0.1"
+    - "sub3.example.com:127.0.0.1"
+    - "sub4.example.com:127.0.0.1"
+    - "sub5.example.com:127.0.0.1"
+    - "otherexample.com:127.0.0.1"
   environment:
     PGHOST: playwright_db
     PGUSER: postgres

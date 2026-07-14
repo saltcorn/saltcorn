@@ -47,10 +47,10 @@ test.describe('E2E Test Suite', () => {
         await functions.SALTCORN();
         await functions.navigate_To_Settings();
         await functions.navigate_To_File();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         const filePath = 'Csv_file_to_uplaod/People1.csv';
         await functions.upload_file(filePath);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
 
     });
@@ -75,7 +75,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator(pageobject.actionselector).nth(2).click();
         await page.keyboard.type('Delete');
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         const deletedFile = page.locator(pageobject.tablebodylocator + " td:nth-child(2)", { hasText: 'People2.csv' });
         await expect(deletedFile).toHaveCount(0);
 
@@ -84,7 +84,7 @@ test.describe('E2E Test Suite', () => {
     test('Upload a jpg file', async () => {
         const filePath = 'Csv_file_to_uplaod/images.jpg';
         await functions.upload_file(filePath);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
     });
 
@@ -107,7 +107,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator(pageobject.actionselector).nth(2).click();
         await page.keyboard.type('Delete');
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         const deletedFile = page.locator(pageobject.tablebodylocator + " td:nth-child(2)", { hasText: 'images2.jpg' });
         await expect(deletedFile).toHaveCount(0);
     });
@@ -115,7 +115,7 @@ test.describe('E2E Test Suite', () => {
     test('Upload a pdf file', async () => {
         const filePath = 'Csv_file_to_uplaod/file_sample.pdf';
         await functions.upload_file(filePath);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
 
     });
 
@@ -138,7 +138,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator(pageobject.actionselector).nth(2).click();
         await page.keyboard.type('Delete');
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         const deletedFile = page.locator(pageobject.tablebodylocator + " td:nth-child(2)", { hasText: 'file_sample2.pdf' });
         await expect(deletedFile).toHaveCount(0);
     });
@@ -146,13 +146,13 @@ test.describe('E2E Test Suite', () => {
     test('Change access of the file to public', async () => {
         const filePath = 'Csv_file_to_uplaod/file_sample.pdf';
         await functions.upload_file(filePath);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.locator(pageobject.tablebodylocator).nth(0).click();
         await page.locator(pageobject.actionselector).nth(0).waitFor({ state: "visible" });
         await page.locator(pageobject.actionselector).nth(0).click();
         await page.keyboard.type('public');
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         const firstRow = page.locator(pageobject.tablelocator).nth(0);
         const mediaType = firstRow.locator("td").nth(2); // Media type column
         const roleToAccess = firstRow.locator("td").nth(4); // Role to access column
@@ -163,13 +163,13 @@ test.describe('E2E Test Suite', () => {
     test('Change access of the file to staff', async () => {
         const filePath = 'Csv_file_to_uplaod/file_sample.pdf';
         await functions.upload_file(filePath);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.locator(pageobject.tablebodylocator).nth(0).click();
         await page.locator(pageobject.actionselector).nth(0).waitFor({ state: "visible" });
         await page.locator(pageobject.actionselector).nth(0).click();
         await page.keyboard.type('staff');
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         const firstRow = page.locator(pageobject.tablelocator).nth(0);
         const mediaType = firstRow.locator("td").nth(2); // Media type column
         const roleToAccess = firstRow.locator("td").nth(4); // Role to access column
@@ -180,13 +180,13 @@ test.describe('E2E Test Suite', () => {
     test('Change access of the file to user', async () => {
         const filePath = 'Csv_file_to_uplaod/file_sample.pdf';
         await functions.upload_file(filePath);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.locator(pageobject.tablebodylocator).nth(0).click();
         await page.locator(pageobject.actionselector).nth(0).waitFor({ state: "visible" });
         await page.locator(pageobject.actionselector).nth(0).click();
         await page.keyboard.type('user');
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         const firstRow = page.locator(pageobject.tablelocator).nth(0);
         const mediaType = firstRow.locator("td").nth(2); // Media type column
         const roleToAccess = firstRow.locator("td").nth(4); // Role to access column
@@ -197,13 +197,13 @@ test.describe('E2E Test Suite', () => {
     test('Change access of the file to admin', async () => {
         const filePath = 'Csv_file_to_uplaod/file_sample.pdf';
         await functions.upload_file(filePath);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.locator(pageobject.tablebodylocator).nth(0).click();
         await page.locator(pageobject.actionselector).nth(0).waitFor({ state: "visible" });
         await page.locator(pageobject.actionselector).nth(0).click();
         await page.keyboard.type('admin');
         await page.keyboard.press('Enter');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         const firstRow = page.locator(pageobject.tablelocator).nth(0);
         const mediaType = firstRow.locator("td").nth(2); // Media type column
         const roleToAccess = firstRow.locator("td").nth(4); // Role to access column
@@ -215,7 +215,7 @@ test.describe('E2E Test Suite', () => {
         await functions.dialog_handle("folder1");
         const createNewFolderRow = page.locator(pageobject.tablelocator, { hasText: "Create new folder..." });
         await createNewFolderRow.click();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await expect(page.locator('tbody td').filter({ hasText: 'folder1/' })).toBeVisible();
         const firstRow = page.locator(pageobject.tablelocator).nth(0);
         const roleToAccess = firstRow.locator("td").nth(4); 
@@ -227,7 +227,7 @@ test.describe('E2E Test Suite', () => {
         await functions.SALTCORN();
         await functions.navigate_To_Settings();
         await functions.navigate_To_File();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.upload_file('Csv_file_to_uplaod/file_sample.pdf');
         await functions.upload_file('Csv_file_to_uplaod/basic.png');
         await functions.upload_file('Csv_file_to_uplaod/images.jpg');

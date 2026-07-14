@@ -243,7 +243,7 @@ class PageFunctions {
   }
 
   async navigate_To_Users_And_Security() {
-    await this.page.waitForTimeout(5000);
+    await this.page.waitForTimeout(2000);
     await this.page.waitForSelector(this.locators.UsersAndSecurity, { timeout: 25000 });
     await this.page.click(this.locators.UsersAndSecurity, { force: true });
   }
@@ -259,7 +259,7 @@ class PageFunctions {
   }
 
   async navigate_To_File() {
-    await this.page.waitForTimeout(5000);
+    await this.page.waitForTimeout(2000);
     await this.page.waitForSelector(this.locators.File, { timeout: 25000 });
     await this.page.click(this.locators.File, { force: true });
   }
@@ -270,6 +270,8 @@ class PageFunctions {
     await this.page.click('#inputusers');
     await this.page.waitForSelector(this.locators.submitButton);
     await this.page.click(this.locators.submitButton);
+    await this.page.waitForTimeout(1000);
+
   }
 
   async wait_For_Toaster_Message() {
@@ -899,7 +901,7 @@ class PageFunctions {
     await this.page.waitForSelector(this.locators.tablebodylocator + " td:nth-child(2)");
     let fileName = await this.page.textContent(this.locators.tablebodylocator + " td:nth-child(2)");
     expect(fileName?.trim()).toBe(current_file_name);
-    await this.page.waitForTimeout(2000);
+    await this.page.waitForTimeout(1000);
     await this.dialog_handle(new_file_name); //a dialog handler BEFORE the action that triggers it
 
     // Wait for the Action dropdown to be visible
@@ -907,7 +909,7 @@ class PageFunctions {
     await this.page.locator(this.locators.actionselector).nth(2).click();
     await this.page.keyboard.type('Rename');
     await this.page.keyboard.press('Enter');
-    await this.page.waitForTimeout(2000);
+    await this.page.waitForTimeout(1000);
     fileName = await this.page.textContent(this.locators.tablebodylocator + " td:nth-child(2)");
     expect(fileName?.trim()).toBe(new_file_name);
   }
@@ -1640,7 +1642,7 @@ class PageFunctions {
     await expect(registryEditorMenuItem).toBeVisible({ timeout: 5000 });
 
     await registryEditorMenuItem.click();
-    await this.page.waitForTimeout(2500);
+    await this.page.waitForTimeout(1500);
 
     await expect(this.page).toHaveURL(/\/registry-editor/, { timeout: 15000 });
     await expect(this.page.locator(this.locators.registrylocator)).toBeVisible({ timeout: 15000 });

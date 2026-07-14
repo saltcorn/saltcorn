@@ -61,7 +61,7 @@ test.describe('E2E Test Suite', () => {
     const fileInput = await page.waitForSelector(pageobject.FileInputForUpload);
     const filePath = 'Csv_file_to_uplaod/images.jpg';
     await fileInput.setInputFiles(filePath);
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(2000);
 
     // Wait for the save button and click to save the uploaded image
     await page.waitForSelector(pageobject.UploadImageSave, { state: 'visible' });

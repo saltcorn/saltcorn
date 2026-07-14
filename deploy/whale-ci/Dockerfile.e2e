@@ -1,5 +1,4 @@
 FROM build
 
 RUN cd deploy/playwright && npm install
-
-
+RUN cd deploy/playwright_mobile && npm install

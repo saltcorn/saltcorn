@@ -13,3 +13,4 @@ deploy/whale-ci/
 deploy/docker-compose-tests/
 .git/
 cireport.html
+.github

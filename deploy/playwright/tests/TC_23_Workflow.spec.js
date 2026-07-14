@@ -160,7 +160,7 @@ test.describe('E2E Test Suite', () => {
 
         // Verify that the created workflow view is reachable
         await page.locator("table.table-sm td").nth(0).click();
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
 
         await customAssert('Page URL should be /view/WorkFlowRoom', async () => {
             expect(page.url()).toBe(`${baseURL}${derivedURL}view/WorkFlowRoom`);
