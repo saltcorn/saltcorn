@@ -60,6 +60,7 @@ describe("notifications", () => {
       .set("Cookie", loginCookie)
       .expect(succeedJsonWith((n) => n === 0));
   });
+  
   it("add notification", async () => {
     const user = await User.findOne({ role_id: 40 });
     await Notification.create({
