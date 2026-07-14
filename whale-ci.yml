@@ -6,6 +6,7 @@ run_tests_sqlite:
   command:
     - nice -n 15 saltcorn run-tests saltcorn-data
     - nice -n 15 saltcorn run-tests server
+    - nice -n 15 saltcorn run-tests view-queries
   extra_hosts:
     - "example.com:127.0.0.1"
     - "sub.example.com:127.0.0.1"
@@ -21,6 +22,10 @@ run_tests_sqlite:
     SALTCORN_MULTI_TENANT: true
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
     NODE_OPTIONS: --max-old-space-size=4096
+    SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
+    # workaround for prepareQueryEnviroment()
+    JSON_WEB_TOKEN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBmb28uY29tIiwicm9sZV9pZCI6MSwiaXNzIjoic2FsdGNvcm5Ac2FsdGNvcm4iLCJhdWQiOiJzYWx0Y29ybi1tb2JpbGUtYXBwIiwiaWF0IjoxOTI0OTA1NjAwMDAwLCJleHAiOjE5MjQ5MDU2MDAwMDB9.eE370EdQr90y9woWDzeDzZgGVsUSlfAmtykeAJ_gJjA"
+          
 
 run_tests_postgres_db:
   image: postgres
