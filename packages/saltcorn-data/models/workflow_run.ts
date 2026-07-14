@@ -841,7 +841,7 @@ class WorkflowRun {
             nextUpdate.context = this.context;
           }
           if (trace && !skip_because_only_if)
-            this.createTrace(step?.name as string, user);
+            await this.createTrace(step?.name as string, user);
 
           //find next step
           const nextStep = step ? this.get_next_step(step, user) : null;
