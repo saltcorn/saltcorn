@@ -69,7 +69,6 @@ describe("notifications", () => {
       link: "https://www.sainsburys.co.uk/",
     });
   });
-  
   it("one unread notifications", async () => {
     const loginCookie = await getStaffLoginCookie();
     const app = await getApp({ disableCsrf: true });
