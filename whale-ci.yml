@@ -97,7 +97,7 @@ pytest:
 playwright_db:
   image: postgres:16
   service: true
-  disable: true
+  #disable: true
   quiet: true
   ready-on: CREATE DATABASE
   environment:
@@ -108,7 +108,7 @@ playwright_db:
 
 playwright:
   dockerfile: ./deploy/whale-ci/Dockerfile.e2e
-  disable: true
+  #disable: true
   depends: 
     - build
     - playwright_db
