@@ -1464,47 +1464,6 @@ describe("View.authorize", () => {
     expect(allowed).toBe(true);
   });
 
-  it("grants access to a row's owner via the base-plugin's authorize_view hook for Edit", async () => {
-    const owned = await Table.create("AuthzOwnedTable");
-    await Field.create({ table: owned, name: "name", type: "String" });
-    const ownerField = await Field.create({
-      table: owned,
-      name: "owner",
-      type: "Key to users",
-    });
-    await owned.update({ ownership_field_id: ownerField.id });
-    const rowId = await owned.insertRow({ name: "row1", owner: 1 });
-
-    const editView = await View.create({
-      name: "AuthzOwnedEdit",
-      table_id: owned.id,
-      viewtemplate: "Edit",
-      min_role: 1,
-      configuration: {},
-    });
-
-    const ownerUser = { id: 1, role_id: 8 };
-    const nonOwnerUser = { id: 2, role_id: 8 };
-    const ownerReq = { ...req, user: ownerUser };
-    const nonOwnerReq = { ...req, user: nonOwnerUser };
-
-    expect(
-      await editView.authorize(ownerUser, {
-        action: "get",
-        req: ownerReq,
-        state: { id: rowId },
-      })
-    ).toBe(true);
-
-    expect(
-      await editView.authorize(nonOwnerUser, {
-        action: "get",
-        req: nonOwnerReq,
-        state: { id: rowId },
-      })
-    ).toBe(false);
-  });
-
   it("deprecated authorise_get/authorise_post still delegate to authorize()", async () => {
     // uses authorshow, not authorlist - an earlier test registered a hook
     // that always allows "authorlist", which would otherwise mask this check
@@ -1516,16 +1475,6 @@ describe("View.authorize", () => {
       req,
     });
     expect(allowedGet).toBe(false);
-
-    const editView = await View.findOne({ name: "AuthzOwnedEdit" });
-    assertIsSet(editView);
-    const ownerReq = { ...req, user: { id: 1, role_id: 8 } };
-    const allowedPost = await editView.authorise_post({
-      body: { owner: 1 },
-      table_id: editView.table_id as number,
-      req: ownerReq,
-    });
-    expect(allowedPost).toBe(true);
   });
 });
 

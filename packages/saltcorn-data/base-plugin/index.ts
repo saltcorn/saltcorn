@@ -55,7 +55,6 @@ import room from "./viewtemplates/room.js";
 import wfroom from "./viewtemplates/workflow-room.js";
 import edit from "./viewtemplates/edit.js";
 import filter from "./viewtemplates/filter.js";
-import { authorize_view } from "./ownership_authorize.js";
 import fileviews from "./fileviews.js";
 import * as fieldviews from "./fieldviews.js";
 import actions from "./actions.js";
@@ -86,7 +85,6 @@ const basePlugin = {
   actions,
   /** @type {base-plugin/fieldviews} */
   fieldviews,
-  authorize_view,
   /** @type {object} */
 };
 
