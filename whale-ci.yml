@@ -4,9 +4,17 @@ build:
 run_tests_sqlite:
   image: build
   command:
-    - bash -c "echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com otherexample.com' >> /etc/hosts"
     - saltcorn run-tests saltcorn-data
     - saltcorn run-tests server
+  extra_hosts:
+    - "example.com:127.0.0.1"
+    - "sub.example.com:127.0.0.1"
+    - "sub1.example.com:127.0.0.1"
+    - "sub2.example.com:127.0.0.1"
+    - "sub3.example.com:127.0.0.1"
+    - "sub4.example.com:127.0.0.1"
+    - "sub5.example.com:127.0.0.1"
+    - "otherexample.com:127.0.0.1"
   environment:
     SQLITE_FILEPATH: /tmp/testdb.sqlite
     CI: true
@@ -29,10 +37,18 @@ run_tests_postgres:
   depends: run_tests_postgres_db 
   delay: 1
   command:
-    - bash -c "echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com otherexample.com' >> /etc/hosts"
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
     - saltcorn reset-schema -f   
     - saltcorn run-tests
+  extra_hosts:
+    - "example.com:127.0.0.1"
+    - "sub.example.com:127.0.0.1"
+    - "sub1.example.com:127.0.0.1"
+    - "sub2.example.com:127.0.0.1"
+    - "sub3.example.com:127.0.0.1"
+    - "sub4.example.com:127.0.0.1"
+    - "sub5.example.com:127.0.0.1"
+    - "otherexample.com:127.0.0.1"
   environment:
     PGHOST: run_tests_postgres_db
     PGUSER: postgres
@@ -57,9 +73,17 @@ pytest:
   image: build
   depends: pytest_db 
   command:
-    - bash -c "echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com otherexample.com' >> /etc/hosts"
     - psql -d saltcorn_test --command='create extension "uuid-ossp";'
     - pytest
+  extra_hosts:
+    - "example.com:127.0.0.1"
+    - "sub.example.com:127.0.0.1"
+    - "sub1.example.com:127.0.0.1"
+    - "sub2.example.com:127.0.0.1"
+    - "sub3.example.com:127.0.0.1"
+    - "sub4.example.com:127.0.0.1"
+    - "sub5.example.com:127.0.0.1"
+    - "otherexample.com:127.0.0.1"
   environment:
     PGHOST: pytest_db
     PGUSER: postgres
