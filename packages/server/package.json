@@ -127,7 +127,7 @@
   },
   "scripts": {
     "dev": "nodemon index.js",
-    "test": "cd dist && NODE_ENV=test node --require ../setup-jest-globals.cjs --require ../setup-test-schema.cjs --test --test-force-exit",
+    "test": "cd dist && NODE_ENV=test node --require ../setup-jest-globals.cjs --require ../setup-test-schema.cjs --test --test-concurrency=4 --test-force-exit",
     "tsc": "tsc -p tsconfig.json",
     "clean": "rm -rf ./dist/*"
   },
