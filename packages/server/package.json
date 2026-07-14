@@ -111,7 +111,7 @@
     "thirty-two": "1.0.2",
     "tmp-promise": "^3.0.3",
     "ua-parser-js": "^2.0.0",
-    "underscore": "1.13.7",
+    "underscore": "1.13.8",
     "uuid": "^11.0.5",
     "@saltcorn/db-common": "1.7.0-alpha.0",
     "web-push": "^3.6.7",
