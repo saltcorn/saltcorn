@@ -99,6 +99,44 @@ pytest:
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
     NODE_OPTIONS: --max-old-space-size=4096
 
+playwright_mobile_db:
+  image: postgres:16
+  service: true
+  quiet: true
+  ready-on: CREATE DATABASE
+  environment:
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: saltcorn_test
+    POSTGRES_USER: postgres
+
+playwright_mobile:
+  dockerfile: ./deploy/whale-ci/Dockerfile.e2e
+  depends: 
+    - build
+    - playwright_mobile_db
+  command:
+    - psql -d saltcorn_test --command='create extension "uuid-ossp";'
+    - nice -n 15 deploy/playwright_mobile/run.sh
+  extra_hosts:
+    - "example.com:127.0.0.1"
+    - "sub.example.com:127.0.0.1"
+    - "sub1.example.com:127.0.0.1"
+    - "sub2.example.com:127.0.0.1"
+    - "sub3.example.com:127.0.0.1"
+    - "sub4.example.com:127.0.0.1"
+    - "sub5.example.com:127.0.0.1"
+    - "otherexample.com:127.0.0.1"
+  environment:
+    PGHOST: playwright_mobile_db
+    PGUSER: postgres
+    PGDATABASE: saltcorn_test
+    PGPASSWORD: postgres
+    CI: true
+    SALTCORN_MULTI_TENANT: true
+    SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+    SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
+
+
 playwright_db:
   image: postgres:16
   service: true
