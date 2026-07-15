@@ -1415,6 +1415,30 @@ class State {
   }
 
   /**
+   * Send a backup-restore progress update to whoever is watching a
+   * restore job. Not persisted anywhere - if no client is currently
+   * connected to the job's room, the message is simply dropped.
+   * @param ten
+   * @param jobId
+   * @param data
+   * @param noMultiNodePropagate - if true, do not propagate to other nodes in multi-node setup
+   */
+  emitRestoreProgress(
+    ten: string,
+    jobId: string,
+    data: any,
+    noMultiNodePropagate?: boolean
+  ) {
+    globalRestoreEmitter(ten, jobId, data);
+    if (!noMultiNodePropagate && db.connectObj.multi_node) {
+      this.processSend({
+        restore_progress_event: { jobId, data },
+        tenant: ten,
+      });
+    }
+  }
+
+  /**
    * @param f Function to emit collaborative editing messages
    */
   setCollabEmitter(f: Function) {
@@ -1426,6 +1450,13 @@ class State {
    */
   setDynamicUpdateEmitter(f: Function) {
     globalDynamicUpdateEmitter = f;
+  }
+
+  /**
+   * @param f Function to emit backup-restore progress messages
+   */
+  setRestoreEmitter(f: Function) {
+    globalRestoreEmitter = f;
   }
 
   /**
@@ -1624,6 +1655,7 @@ let globalRoomEmitter: Function = () => {};
 let globalLogEmitter: Function = () => {};
 let globalCollabEmitter: Function = () => {};
 let globalDynamicUpdateEmitter: Function = () => {};
+let globalRestoreEmitter: Function = () => {};
 
 // the root tenant's state is singleton
 const singleton = new State(db.connectObj.default_schema || "public");

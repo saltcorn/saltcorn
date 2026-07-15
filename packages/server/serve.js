@@ -194,7 +194,8 @@ const getMultiNodeListener = (client) => {
             payload.dynamic_update ||
             payload.real_time_collab_event ||
             payload.real_time_chat_event ||
-            payload.log_event
+            payload.log_event ||
+            payload.restore_progress_event
           ) {
             const workers = Object.values(cluster.workers || {});
             if (workers.length > 0) {
@@ -324,6 +325,14 @@ const workerDispatchMsg = ({ tenant, ...msg }) => {
       true
     );
   }
+  if (msg.restore_progress_event) {
+    getState().emitRestoreProgress(
+      tenant || "public",
+      msg.restore_progress_event.jobId,
+      msg.restore_progress_event.data,
+      true
+    );
+  }
 
   if (msg.reload_plugins) {
     Plugin.loadAllPlugins(cluster.isPrimary, true);
@@ -386,7 +395,8 @@ const onMessageFromWorker =
       (msg.dynamic_update ||
         msg.real_time_collab_event ||
         msg.real_time_chat_event ||
-        msg.log_event) &&
+        msg.log_event ||
+        msg.restore_progress_event) &&
       nodesDispatchMsg
     ) {
       nodesDispatchMsg(msg);
@@ -571,6 +581,7 @@ async ({
         msg.real_time_collab_event ||
         msg.real_time_chat_event ||
         msg.log_event ||
+        msg.restore_progress_event ||
         (msg.refresh && msg.refresh !== "ephemeral_config")
       ) {
         const payload = escapeSingleQuotes(JSON.stringify(msg));
@@ -712,7 +723,8 @@ async ({
           !msg.dynamic_update &&
           !msg.real_time_collab_event &&
           !msg.real_time_chat_event &&
-          !msg.log_event
+          !msg.log_event &&
+          !msg.restore_progress_event
         )
           workerDispatchMsg(msg); //also master
         if (nodesDispatchMsg)
@@ -847,6 +859,13 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
       .emit("log_msg", { text: msg, time, level });
   });
 
+  // backup-restore progress, pre-login (create first user) so no auth check;
+  // the jobId (an unguessable uuid, known only to the browser that started
+  // the restore) is the room name and doubles as the access token
+  getState().setRestoreEmitter((tenant, jobId, data) => {
+    io.of("/").to(`_restore_${jobId}_`).emit("restore_progress", data);
+  });
+
   // Real-time collaboration emitter (tied to views)
   getState().setCollabEmitter((tenant, type, data, viewname) => {
     io.of("/").to(`_${tenant}_collab_room_${viewname}_`).emit(type, data);
@@ -901,6 +920,18 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
       };
       if (ten && ten !== "public") db.runWithTenant(ten, f);
       else f();
+    });
+
+    // no auth check: this is used pre-login (restoring a backup while
+    // creating the first user), and the jobId - an unguessable uuid shown
+    // only to the browser that started the job - is itself the capability
+    socket.on("join_restore_room", (jobId, callback) => {
+      if (typeof jobId === "string" && /^[0-9a-f-]{36}$/i.test(jobId)) {
+        socket.join(`_restore_${jobId}_`);
+        if (typeof callback === "function") callback({ status: "ok" });
+      } else if (typeof callback === "function") {
+        callback({ status: "error", msg: "invalid job id" });
+      }
     });
 
     socket.on("join_log_room", async (callback) => {
