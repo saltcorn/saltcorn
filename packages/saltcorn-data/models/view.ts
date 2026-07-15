@@ -40,6 +40,7 @@ import type {
   ConnectedObjects,
   Res,
   Req,
+  AuthorizeAccessResult,
 } from "@saltcorn/types/base_types";
 import type Table from "./table.js";
 import type { Where, SelectOptions } from "@saltcorn/db-common/internal";
@@ -409,26 +410,6 @@ class View implements AbstractView {
    * @param {boolean} remote
    * @returns {Promise<object>}
    */
-  async authorise_post(
-    arg: {
-      body: any;
-      table_id: number;
-      req: NonNullable<any>;
-    },
-    remote: boolean = false
-  ): Promise<boolean> {
-    if (!this.viewtemplateObj?.authorise_post) return false;
-    return await this.viewtemplateObj.authorise_post(
-      arg,
-      this.queries(remote, arg.req)
-    );
-  }
-
-  /**
-   * @param {*} arg
-   * @param {boolean} remote
-   * @returns {Promise<object>}
-   */
   async interpolate_title_string(title: string, query: any): Promise<string> {
     if (!this.viewtemplateObj?.interpolate_title_string) return title;
     return await this.viewtemplateObj.interpolate_title_string(
@@ -439,9 +420,72 @@ class View implements AbstractView {
   }
 
   /**
-   * @param {*} arg
-   * @param {boolean} remote
-   * @returns {Promise<object>}
+   * Checks plugin `authorize_view` hooks, proxied to the server on mobile
+   * for remote tables, so hooks never need to handle remote/local.
+   * @param user - the acting user (or undefined/public)
+   * @param opts.action - "get" or "post"
+   * @param opts.req - the request object, forwarded to hooks
+   * @param opts.state - query/state, for action "get"
+   * @param opts.body - POST body, for action "post"
+   * @param opts.route - name of a specific viewtemplate custom route being
+   *   invoked (ViewTemplate.routes key), if any
+   * @param opts.remote - defaults to `this.isRemoteTable()`
+   * @returns {Promise<boolean>}
+   */
+  async authorize(
+    user: any,
+    opts: {
+      action: "get" | "post";
+      req: any;
+      state?: GenObj;
+      body?: GenObj;
+      route?: string;
+      remote?: boolean;
+    }
+  ): Promise<boolean> {
+    let remote = opts.remote;
+    if (remote === undefined) remote = this.isRemoteTable();
+    const queries: any = this.queries(remote, opts.req);
+    const hookResult: AuthorizeAccessResult =
+      await queries.authorizeAccessQuery(
+        opts.action,
+        user,
+        opts.route,
+        opts.state,
+        opts.body
+      );
+    return hookResult?.decision === "allow";
+  }
+
+  /**
+   * @deprecated use `authorize(user, { action: "post", ... })` instead.
+   * `remote` defaults to `false` here, not `isRemoteTable()`.
+   * @param arg
+   * @param remote
+   * @returns {Promise<boolean>}
+   */
+  async authorise_post(
+    arg: {
+      body: any;
+      table_id: number;
+      req: NonNullable<any>;
+    },
+    remote: boolean = false
+  ): Promise<boolean> {
+    return await this.authorize(arg.req?.user, {
+      action: "post",
+      req: arg.req,
+      body: arg.body,
+      remote,
+    });
+  }
+
+  /**
+   * @deprecated use `authorize(user, { action: "get", ... })` instead.
+   * `remote` defaults to `false` here, not `isRemoteTable()`.
+   * @param arg
+   * @param remote
+   * @returns {Promise<boolean>}
    */
   async authorise_get(
     arg: {
@@ -451,11 +495,12 @@ class View implements AbstractView {
     },
     remote: boolean = false
   ): Promise<boolean> {
-    if (!this.viewtemplateObj?.authorise_get) return false;
-    return await this.viewtemplateObj.authorise_get(
-      arg,
-      this.queries(remote, arg.req)
-    );
+    return await this.authorize(arg.req?.user, {
+      action: "get",
+      req: arg.req,
+      state: arg.query,
+      remote,
+    });
   }
 
   /**
@@ -523,9 +568,22 @@ class View implements AbstractView {
   }
 
   queries(remote?: boolean, req?: Req, res?: any) {
-    const queryObj = this?.viewtemplateObj?.queries
+    const queryObj: GenObj = this?.viewtemplateObj?.queries
       ? this.viewtemplateObj!.queries({ ...this, req, res })
       : {};
+    // Gives authorize_view hooks the same remote-proxy dispatch as any query.
+    queryObj.authorizeAccessQuery = async (
+      action: "get" | "post",
+      userArg: any,
+      route?: string,
+      qstate?: GenObj,
+      qbody?: GenObj
+    ): Promise<AuthorizeAccessResult> => {
+      return await getState()!.authorizeView(
+        { action, view: this, route, state: qstate, body: qbody, req: req! },
+        userArg
+      );
+    };
     if (remote) {
       const state = getState()!;
       const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000"; //TODO default from req
@@ -533,10 +591,13 @@ class View implements AbstractView {
       const table = tableMod.findOne({ id: this.table_id });
       const fields = table?.getFields() || [];
       Object.entries(queryObj).forEach(([k, v]) => {
+        // authorizeAccessQuery is a security decision, not data - never cache it,
+        // so it can't replay a stale allow/deny after the underlying state changes.
+        const cacheable = k !== "authorizeAccessQuery";
         queries[k] = async (...args: any[]) => {
           const argsStr = `${JSON.stringify(args)}${this.name}`;
           const hashedArgs = hashString(argsStr);
-          if (state.queriesCache && state.queriesCache[hashedArgs])
+          if (cacheable && state.queriesCache && state.queriesCache[hashedArgs])
             return state.queriesCache[hashedArgs];
           const url = `${base_url}/api/viewQuery/${this.name}/${k}`;
           const headers: any = {
@@ -615,7 +676,8 @@ class View implements AbstractView {
             const result = Array.isArray(response.data.success)
               ? prepMobileRows(response.data.success, fields)
               : response.data.success;
-            if (state.queriesCache) state.queriesCache[hashedArgs] = result;
+            if (cacheable && state.queriesCache)
+              state.queriesCache[hashedArgs] = result;
             return result;
           } catch (error: any) {
             state.log(1, `Query error: ${k}in ${this.name}: ${error.message}`);
@@ -916,7 +978,6 @@ class View implements AbstractView {
       action = `${action}?on_done_redirect=${encodeURIComponent(onDoneRedirect)}`;
     }
     if (!this.viewtemplateObj!.configuration_workflow) {
-
       return new Workflow({ steps: [] });
     }
     const configFlow = this.viewtemplateObj!.configuration_workflow(req);

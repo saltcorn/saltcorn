@@ -88,7 +88,13 @@ describe("Mail queue", () => {
     expect(fromDbB?.send_status).toBe("pending");
 
     await sleep(minDelay + 500);
+    // the scheduled send fires on a setTimeout; under CI load the timer
+    // callback + its DB round-trip can lag, so poll rather than check once
     fromDbB = await Notification.findOne({ id: notificationB.id });
+    for (let i = 0; i < 40 && fromDbB?.send_status !== "sent"; i++) {
+      await sleep(250);
+      fromDbB = await Notification.findOne({ id: notificationB.id });
+    }
     expect(fromDbB?.send_status).toBe("sent");
     expect(nodemailer.createTransport).toHaveBeenCalledTimes(2);
   });

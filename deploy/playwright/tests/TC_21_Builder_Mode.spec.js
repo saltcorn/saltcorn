@@ -102,7 +102,7 @@ test.describe('E2E Test Suite', () => {
         // await page.waitForSelector(pageobject.textSource);
         await page.locator(pageobject.Library).click();
         await functions.drag_And_Drop(pageobject.dragElement, pageobject.target);
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.testPage2);
         // await page.waitForTimeout(5000);
         await customAssert('Page URL should be /testpage2', async () => {
@@ -178,7 +178,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator(pageobject.Library).click();
         await page.waitForSelector(pageobject.dragElement1, { state: 'visible', timeout: 15000 });
         await functions.drag_And_Drop(pageobject.dragElement1, pageobject.target);
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.testPage4);
         await customAssert('Page URL should be /testpage4', async () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'page/testpage4');
@@ -370,7 +370,7 @@ test.describe('E2E Test Suite', () => {
             const tableViewLink = page.locator('a', { hasText: 'Table_View' });
             // await expect(page.locator(page.tableViewLink)).toBeVisible();
             await tableViewLink.click();
-            // await page.waitForTimeout(2000);
+            // await page.waitForTimeout(1000);
             await functions.clear_Data();
         });
     });

@@ -68,7 +68,7 @@ test.describe('E2E Test Suite', () => {
     await functions.submit();
     // click on edit link
     await page.click(pageobject.EditlinkLocator);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await customAssert('Select assignee for every task ', async () => {
       await page.click(pageobject.assignedToTab);
       await page.waitForTimeout(500);
@@ -101,7 +101,7 @@ test.describe('E2E Test Suite', () => {
     });
     // submit the page
     await functions.submit();
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await customAssert('Remove assigned and position column', async () => {
       await page.click('text=assigned_to');
       await page.click(pageobject.deletebutton);
@@ -117,7 +117,7 @@ test.describe('E2E Test Suite', () => {
       await page.click(pageobject.assignedToDropdown);
       await page.click(pageobject.fullNameItem);
     });
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(1500);
     await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.Tasklist);
@@ -131,7 +131,7 @@ test.describe('E2E Test Suite', () => {
   test('Add view to link show people as assignee', async () => {
     await functions.views();
     await page.click(pageobject.configureTasklist);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await customAssert('Add link to view in new columm', async () => {
       await page.click(pageobject.addcolumnbutton);
       await page.waitForTimeout(500);
@@ -147,7 +147,7 @@ test.describe('E2E Test Suite', () => {
     await page.click(pageobject.assignedToItem);
     // add label for link
     await functions.fill_Text(pageobject.lebelforfield, 'Show Assignee');
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(1500);
     // click on next button
     await page.click(pageobject.nextoption);
     // Go to task list
@@ -246,7 +246,7 @@ test.describe('E2E Test Suite', () => {
   test('Add join field in task list for teams', async () => {
     await functions.views();
     await page.click(pageobject.configureTasklist);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await page.click('text=Column 4');
     await page.click(pageobject.deletebutton);
     await customAssert('Add join field in new columm', async () => {
@@ -266,7 +266,7 @@ test.describe('E2E Test Suite', () => {
         }
       }
     });
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(1500);
     await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.Tasklist);
@@ -280,7 +280,7 @@ test.describe('E2E Test Suite', () => {
   test('Add join field for date of birth in task list for teams', async () => {
     await functions.views();
     await page.click(pageobject.configureTasklist);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(1000);
     await page.click(pageobject.TeamNameSpan);
     await customAssert('Select full name for join field', async () => {
       await page.click(pageobject.fieldsButton);
@@ -291,7 +291,7 @@ test.describe('E2E Test Suite', () => {
       // Select 'format' from the dropdown
       await page.selectOption(pageobject.fieldViewdropdown, { label: 'format' }); // using field view dropdown
     });
-    await page.waitForTimeout(2500);
+    await page.waitForTimeout(1500);
     await page.click(pageobject.nextoption);
     await functions.views();
     await page.click(pageobject.Tasklist);

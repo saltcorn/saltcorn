@@ -388,7 +388,7 @@ export default async (): Promise<void> => {
     temperature: 37,
     patient_id: kirk_id,
     normalised: true,
-    date: db.isSQLite ? date.toString() : date,
+    date: db.stores_dates_as_text ? date.toString() : date,
   });
   await db.insert("readings", {
     temperature: 39,
@@ -405,19 +405,19 @@ export default async (): Promise<void> => {
     email: "admin@foo.com",
     password: "AhGGr6rhu45",
     role_id: 1,
-    last_mobile_login: db.isSQLite ? now.valueOf() : now,
+    last_mobile_login: db.stores_dates_as_text ? now.valueOf() : now,
   });
   await User.create({
     email: "staff@foo.com",
     password: "ghrarhr54hg",
     role_id: 40,
-    last_mobile_login: db.isSQLite ? now.valueOf() : now,
+    last_mobile_login: db.stores_dates_as_text ? now.valueOf() : now,
   });
   await User.create({
     email: "user@foo.com",
     password: "GFeggwrwq45fjn",
     role_id: 80,
-    last_mobile_login: db.isSQLite ? now.valueOf() : now,
+    last_mobile_login: db.stores_dates_as_text ? now.valueOf() : now,
   });
   await File.ensure_file_store();
   const mv = async (fnm: string) => {

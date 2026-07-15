@@ -233,7 +233,7 @@ const wrapMember = (contents: any, req: Req, pageGroup: any, pageMember?: any) =
 };
 
 const pageGroupMembers = async (pageGroup: any, req: Req) => {
-  const pages = !db.isSQLite
+  const pages = db.supports_large_bind_lists
     ? await Page.find({
         id: { in: pageGroup.members.map((r: any) => r.page_id) },
       })

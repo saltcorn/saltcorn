@@ -147,11 +147,13 @@ export class MailQueue {
       "_sc_notifications",
       {
         user_id: userId,
-        created: { gt: !db.isSQLite ? dateLimit : dateLimit.valueOf() },
+        created: {
+          gt: db.stores_dates_as_text ? dateLimit.valueOf() : dateLimit,
+        },
         ...(sendStatus ? { send_status: sendStatus } : {}),
       },
       {
-        ...(!db.isSQLite ? { forupdate: true } : {}),
+        ...(db.supports_for_update ? { forupdate: true } : {}),
         orderBy: "id",
       }
     );
@@ -169,8 +171,8 @@ export class MailQueue {
     const schema = db.getTenantSchemaPrefix();
     const now = new Date();
     if (status === "sent") {
-      if (!db.isSQLite) {
-        // pg
+      if (db.driverName !== "sqlite") {
+        // pg (uses `= ANY(array)`; a new backend needs its own variant)
         await db.query(
           `UPDATE ${schema}_sc_notifications SET send_status=$1, created=$2 WHERE id = ANY($3)`,
           [status, now, notificationIds]
@@ -185,8 +187,8 @@ export class MailQueue {
         );
       }
     } else {
-      if (!db.isSQLite) {
-        //pg
+      if (db.driverName !== "sqlite") {
+        //pg (uses `= ANY(array)`; a new backend needs its own variant)
         await db.query(
           `UPDATE ${schema}_sc_notifications SET send_status=$1 WHERE id = ANY($2)`,
           [status, notificationIds]

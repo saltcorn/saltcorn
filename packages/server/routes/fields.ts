@@ -129,7 +129,7 @@ const fieldForm = async (
         disabled:
           !!id &&
           !getState()!.getConfig("development_mode", false) &&
-          (hasData || db.isSQLite),
+          (hasData || !db.supports_alter_table),
       }),
       // description
       new Field({
@@ -156,7 +156,7 @@ const fieldForm = async (
         name: "required",
         type: "Bool",
         sublabel: req.__("There must be a value in every row"),
-        disabled: !!id && db.isSQLite,
+        disabled: !!id && !db.supports_alter_table,
         showIf: { calculated: false },
       }),
       new Field({

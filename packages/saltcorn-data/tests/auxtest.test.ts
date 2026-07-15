@@ -193,7 +193,7 @@ describe("generate_joined_query", () => {
 
 describe("formulaToRlsUsing", () => {
   const schema = `"public".`;
-  const curUserId = `nullif(current_setting('app.current_user_id', true), '')::integer`;
+  const curUserId = `(select nullif(current_setting('app.current_user_id', true), '')::integer)`;
 
   it("user.X===id (reverse FK)", () => {
     expect(formulaToRlsUsing("user.manager===id", schema)).toBe(

@@ -443,9 +443,11 @@ const initOfflineStoreCfg = async () => {
  */
 const getIsLeaderFn = async () => {
   const electLeaderConn = await db.getClient();
-  const isSqlite = db.isSQLite;
+  // leader election uses postgres advisory locks; other backends (sqlite
+  // embedded, or those without advisory locks) are always the leader
+  const usesAdvisoryLock = db.driverName === "postgres";
   return async () => {
-    if (isSqlite) return true;
+    if (!usesAdvisoryLock) return true;
     const lockId = 11565;
     const result = await electLeaderConn.query(
       "SELECT pg_try_advisory_lock($1) AS is_leader",

@@ -117,7 +117,7 @@ class TableConstraint {
     const fid = await db.insert("_sc_table_constraints", rest);
     con.id = fid;
 
-    if (con.type === "Formula" && !db.isSQLite) {
+    if (con.type === "Formula" && db.supports_alter_table) {
       // implement in db if no join fields
       const jfs = {};
       add_free_variables_to_joinfields(
@@ -162,7 +162,7 @@ class TableConstraint {
       await db.drop_fts_index(table.name);
     } else if (this.type === "Index") {
       await db.drop_index(table.name, this.configuration.field);
-    } else if (this.type === "Formula" && !db.isSQLite) {
+    } else if (this.type === "Formula" && db.supports_alter_table) {
       const schema = db.getTenantSchemaPrefix();
       await db.query(
         `alter table ${schema}"${db.sqlsanitize(

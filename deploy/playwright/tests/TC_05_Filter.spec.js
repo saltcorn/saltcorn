@@ -100,7 +100,7 @@ test.describe.serial('E2E Test Suite', () => {
             await page.selectOption(pageobject.fielddropdown, { label: 'Status' });
             await page.selectOption(pageobject.fieldViewdropdown, { label: 'as_text' });
         });
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2000);
         await functions.views();
         await page.waitForSelector(pageobject.newviewlink, { timeout: 15000 });
         await page.click(pageobject.newviewlink);
@@ -126,7 +126,7 @@ test.describe.serial('E2E Test Suite', () => {
         });
         // submit the page
         await functions.submit();
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         // add new input box in page
         await functions.drag_And_Drop(pageobject.fieldsource, pageobject.target);
         // click on field dropdown for field
@@ -152,9 +152,9 @@ test.describe.serial('E2E Test Suite', () => {
     test('Create new page for Filter', async () => {
         test.setTimeout(60000);
         await functions.create_New_Page(filteredPageName);
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.drag_And_Drop(pageobject.columnsElement, pageobject.target);
-        await page.waitForTimeout(1500);
+        await page.waitForTimeout(1000);
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.builderColSm6First);
         await customAssert('Select NewView_List in view to show dropdown', async () => {
             await page.waitForSelector(pageobject.View2Showdropdown, { timeout: 15000 });
@@ -174,12 +174,12 @@ test.describe.serial('E2E Test Suite', () => {
             await filterOption.waitFor({ state: 'visible', timeout: 10000 });
             await filterOption.click();
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.Save_Page_Project();
         await page.click(pageobject.newPage_sidebar);
         await page.waitForSelector('a[href^="/page/Filtered_page"]', { timeout: 15000 });
         await page.click('a[href^="/page/Filtered_page"]');
-        // await page.waitForTimeout(2000);
+        // await page.waitForTimeout(1000);
         await customAssert('Select Status dropdown should be present', async () => {
             await expect(page.locator(pageobject.pagestatusdropdown)).toBeVisible();
             await page.click(pageobject.pagestatusdropdown);
@@ -219,7 +219,7 @@ test.describe.serial('E2E Test Suite', () => {
             await page.selectOption(pageobject.fielddropdown, { label: 'Status' });
             await functions.fill_Text(pageobject.inputValueField, 'Lapsed');
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await page.click(pageobject.newPage_sidebar);
         await page.waitForSelector('a[href^="/page/Filtered_page"]', { timeout: 15000 });
@@ -252,7 +252,7 @@ test.describe.serial('E2E Test Suite', () => {
         await customAssert('Select checkbox_group in field view dropdown', async () => {
             await page.selectOption(pageobject.fieldViewdropdown, { label: 'checkbox_group' });
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await page.click(pageobject.newPage_sidebar);
         await page.waitForSelector('a[href^="/page/Filtered_page"]', { timeout: 15000 });
@@ -281,7 +281,7 @@ test.describe.serial('E2E Test Suite', () => {
         await customAssert('Select Status in field dropdown', async () => {
             await page.selectOption(pageobject.fielddropdown, { label: 'Status' });
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await page.click(pageobject.nextoption);
         await page.click(pageobject.newPage_sidebar);
         await page.waitForSelector('a[href^="/page/Filtered_page"]', { timeout: 15000 });
@@ -298,7 +298,7 @@ test.describe.serial('E2E Test Suite', () => {
     // Create new page for fixed status
     /*test('Create new page for Fixed state', async () => {
         await functions.create_New_Page('Fixed_state');
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.drag_And_Drop(pageobject.viewsource, pageobject.target);
         await customAssert('Select NewView_List in view to show dropdown', async () => {
             await page.click(pageobject.View2Showdropdown);
@@ -310,7 +310,7 @@ test.describe.serial('E2E Test Suite', () => {
         await customAssert('Select member in status dropdown', async () => {
             await page.selectOption(pageobject.statusfixed, { label: 'Member' });
         });
-        await page.waitForTimeout(2000);
+        await page.waitForTimeout(1000);
         await functions.Save_Page_Project();
         await page.click(pageobject.newPage_sidebar);
         await page.click(pageobject.FixedStatePage);

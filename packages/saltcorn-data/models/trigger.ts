@@ -5,7 +5,13 @@
  * @subcategory models
  */
 
-import { comparingCaseInsensitiveValue, satisfies, mergeActionResults, cloneName, isNode } from "../utils.js";
+import {
+  comparingCaseInsensitiveValue,
+  satisfies,
+  mergeActionResults,
+  cloneName,
+  isNode,
+} from "../utils.js";
 import { getState } from "../db/state.js";
 import { eval_expression } from "./expression.js";
 import Table from "./table.js";
@@ -655,7 +661,6 @@ class Trigger implements AbstractTrigger {
    * @type {string[]}
    */
   static get when_options(): string[] {
-
     return [
       "Never",
       "Insert",
@@ -714,8 +719,39 @@ class Trigger implements AbstractTrigger {
     return await Tag.findWithEntries({ trigger_id: this.id });
   }
 
-  static get abbreviated_actions() {
+  /**
+   * Checks plugin `authorize_trigger` hooks. Combine with the caller's own
+   * role/min_role check, e.g. `role <= trigger.min_role || (await trigger.authorize(...))`.
+   * @param user - the acting user (or undefined/public)
+   * @param opts.action - "get" or "post"
+   * @param opts.req - the request object, forwarded to hooks
+   * @param opts.state - query/state, for action "get"
+   * @param opts.body - POST body, for action "post"
+   * @returns {Promise<boolean>}
+   */
+  async authorize(
+    user: any,
+    opts: {
+      action: "get" | "post";
+      req: any;
+      state?: Row;
+      body?: Row;
+    }
+  ): Promise<boolean> {
+    const result = await getState()!.authorizeTrigger(
+      {
+        action: opts.action,
+        trigger: this,
+        state: opts.state,
+        body: opts.body,
+        req: opts.req,
+      },
+      user
+    );
+    return result.decision === "allow";
+  }
 
+  static get abbreviated_actions() {
     return Object.entries(getState()!.actions)
       .filter(([k, v]: [string, any]) => !v.disableIf || !v.disableIf())
       .map(([k, v]: [string, any]) => {

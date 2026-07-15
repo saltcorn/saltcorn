@@ -1140,7 +1140,7 @@ class Field implements AbstractField {
         typeof f.attributes.default === "undefined" ||
         f.attributes.default === null
       ) {
-        if (!db.isSQLite)
+        if (db.supports_alter_table)
           await db.query(
             `alter table ${schema}"${sqlsanitize(
               table!.name // ensured above
@@ -1242,7 +1242,8 @@ class Field implements AbstractField {
     await db.deleteWhere("_sc_fields", { id: this.id });
 
     if (!this.calculated || this.stored) {
-      if (db.isSQLite && this.is_unique) await this.remove_unique_constraint();
+      if (!db.supports_alter_table && this.is_unique)
+        await this.remove_unique_constraint();
       if (this.is_fkey && db.driverName === "mysql") {
         try {
           await db.query(
@@ -1296,7 +1297,7 @@ class Field implements AbstractField {
    * @returns {Promise<void>}
    */
   async enable_fkey_constraint(table: Table) {
-    if (this.is_fkey && !db.isSQLite) {
+    if (this.is_fkey && db.supports_alter_table) {
       if (!this.reftable_name) {
         throw new Error(
           "To enable a foreign key constraint, the 'reftable_name' must be set."
@@ -1331,7 +1332,8 @@ class Field implements AbstractField {
     const f = new Field(fld);
     const schema = db.getTenantSchemaPrefix();
 
-    const is_sqlite = db.isSQLite;
+    // engine-specific ADD COLUMN DDL (sqlite/mysql/postgres branches below)
+    const is_sqlite = db.driverName === "sqlite";
     //const tables = await Table.find();
     //console.log({ tables, fld });
     if (f.is_fkey) {
@@ -1351,7 +1353,7 @@ class Field implements AbstractField {
       !f.calculated &&
       typeof f.attributes.default === "undefined" &&
       f.attributes.default_expression &&
-      !db.isSQLite
+      db.driverName !== "sqlite"
     ) {
       try {
         const exprFn = get_async_expression_function(

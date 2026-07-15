@@ -118,7 +118,7 @@ class PageGroup implements AbstractPageGroup {
   async loadPages(): Promise<Array<Page>> {
     const pageIds = this.members.map(({ page_id }) => page_id);
     const idsLookup = new Set(pageIds);
-    return !db.isSQLite
+    return db.supports_large_bind_lists
       ? await Page.find({ id: { in: pageIds } })
       : (await Page.find({})).filter(({ id }) => id && idsLookup.has(id));
   }
@@ -140,7 +140,7 @@ class PageGroup implements AbstractPageGroup {
     }
     const groupsDb = await db.select("_sc_page_groups", where, selectopts);
     const groupIds = groupsDb.map((g: PageGroupCfg) => g.id);
-    const members = !db.isSQLite
+    const members = db.supports_large_bind_lists
       ? await db.select("_sc_page_group_members", {
           page_group_id: { in: groupIds },
         })
@@ -227,7 +227,7 @@ class PageGroup implements AbstractPageGroup {
       const pageGroups = await PageGroup.find(where);
       if (pageGroups.length > 0) {
         const pageGroupIds = pageGroups.map((p) => p.id);
-        if (!db.isSQLite)
+        if (db.supports_large_bind_lists)
           await db.deleteWhere("_sc_page_group_members", {
             page_group_id: { in: pageGroupIds },
           });

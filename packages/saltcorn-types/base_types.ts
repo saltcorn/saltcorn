@@ -359,27 +359,11 @@ export type ViewTemplate = {
     viewname: string,
     configuration: { default_state: any }
   ) => Promise<void>;
-  authorise_post?: (
-    opts: {
-      body: any;
-      table_id: number;
-      req: NonNullable<any>;
-    },
-    queries: any
-  ) => Promise<boolean>;
   interpolate_title_string?: (
     table_id: number | string | undefined,
     title: string,
     query: any
   ) => Promise<string>;
-  authorise_get?: (
-    opts: {
-      query: any;
-      table_id: number;
-      req: NonNullable<any>;
-    },
-    queries: any
-  ) => Promise<boolean>;
   runPost?: (
     table_id: number | number | undefined,
     viewname: string,
@@ -607,12 +591,71 @@ export type CapacitorPlugin = {
   androidFeatures?: string[];
 };
 
+export type AuthorizeAccessKind = "view" | "page" | "trigger" | "api";
+
+export type AuthorizeAccessRequestBase = {
+  action: "get" | "post";
+  route?: string; // specific route/action invoked, e.g. a ViewTemplate.routes key
+  state?: GenObj; // query/state, for action "get"
+  body?: GenObj; // POST body, for action "post"
+  req: Req;
+};
+
+export type AuthorizeAccessViewRequest = AuthorizeAccessRequestBase & {
+  view: AbstractView; // carries name and table_id
+};
+export type AuthorizeAccessPageRequest = AuthorizeAccessRequestBase & {
+  page: AbstractPage; // carries name
+};
+export type AuthorizeAccessTriggerRequest = AuthorizeAccessRequestBase & {
+  trigger: AbstractTrigger; // carries name and table_id
+};
+// no entity to name it, so route is the identifier and is required
+export type AuthorizeAccessApiRequest = Omit<
+  AuthorizeAccessRequestBase,
+  "route"
+> & {
+  route: string;
+};
+
+export type AuthorizeAccessResult =
+  | { decision: "allow" }
+  | { decision: "deny"; reason?: string };
+
+// Return null/undefined to abstain (no opinion); { decision: "deny" } is an
+// active decision, whose reason is kept for diagnostics.
+type AuthorizeAccessHookReturn =
+  | Promise<AuthorizeAccessResult | null | undefined>
+  | AuthorizeAccessResult
+  | null
+  | undefined;
+
+export type AuthorizeAccessViewHook = (
+  request: AuthorizeAccessViewRequest,
+  user: any
+) => AuthorizeAccessHookReturn;
+export type AuthorizeAccessPageHook = (
+  request: AuthorizeAccessPageRequest,
+  user: any
+) => AuthorizeAccessHookReturn;
+export type AuthorizeAccessTriggerHook = (
+  request: AuthorizeAccessTriggerRequest,
+  user: any
+) => AuthorizeAccessHookReturn;
+export type AuthorizeAccessApiHook = (
+  request: AuthorizeAccessApiRequest,
+  user: any
+) => AuthorizeAccessHookReturn;
+
 type PluginFacilities = {
   headers?: Array<Header>;
   functions?: Record<string, PluginFunction | Function> | Function;
   layout?: PluginLayout;
   types?: Array<Type>;
-  viewtemplates?: Array<ViewTemplate> | ((cfg: any) => Array<ViewTemplate>) | Record<string, ViewTemplate>;
+  viewtemplates?:
+    | Array<ViewTemplate>
+    | ((cfg: any) => Array<ViewTemplate>)
+    | Record<string, ViewTemplate>;
   actions?: Record<string, Action>;
   eventTypes?: Record<string, { hasChannel: boolean }>;
   fieldviews?: Record<string, GenObj>;
@@ -627,6 +670,10 @@ type PluginFacilities = {
   copilot_skills?: Array<CopilotSkill>;
   icons?: Array<string>;
   exchange?: Record<string, Array<unknown>>;
+  authorize_view?: AuthorizeAccessViewHook;
+  authorize_page?: AuthorizeAccessPageHook;
+  authorize_trigger?: AuthorizeAccessTriggerHook;
+  authorize_api?: AuthorizeAccessApiHook;
 };
 
 type PluginWithConfig = {

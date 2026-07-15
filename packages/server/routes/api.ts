@@ -126,7 +126,7 @@ function potentiallyAccessAllowedWrite(req: Req, user: any, table: any) {
  * @param {Trigger} trigger
  * @returns {boolean}
  */
-function accessAllowed(req: Req, user: any, trigger: any) {
+async function accessAllowed(req: Req, user: any, trigger: any) {
   const role =
     req.user && req.user!.id
       ? req.user!.role_id
@@ -134,7 +134,14 @@ function accessAllowed(req: Req, user: any, trigger: any) {
         ? user.role_id
         : 100;
 
-  return role <= trigger.min_role;
+  if (role <= trigger.min_role) return true;
+  const action = req.method === "GET" ? "get" : "post";
+  return await trigger.authorize(user || req.user, {
+    action,
+    req,
+    state: action === "get" ? req.query : undefined,
+    body: action === "post" ? req.body : undefined,
+  });
 }
 
 const getFlashes = (req: Req) =>
@@ -187,7 +194,7 @@ router.post(
         const role = user && user.id ? user.role_id : 100;
         if (
           role <= view.min_role ||
-          (await view.authorise_get({ req, ...view } as any)) // TODO set query to state
+          (await view.authorize(user, { action: "get", req })) // TODO set query to state
         ) {
           const queries = view.queries(false, req, res);
           if (Object.prototype.hasOwnProperty.call(queries, queryName)) {
@@ -654,10 +661,6 @@ router.all(
   "/action/:actionname/",
   error_catcher(async (req: Req, res: Res, next: any) => {
     const { actionname } = req.params;
-    // todo protect action by authorization check
-    // todo we need protection from hackers
-    // todo add to trigger role that can call it
-    // todo include role public - anyone can call it
 
     const trigger = (await Trigger.findOne({
       name: actionname,
@@ -673,7 +676,7 @@ router.all(
       "api-bearer",
       { session: false },
       async function (err: any, user: any, info: any) {
-        if (accessAllowed(req, user, trigger)) {
+        if (await accessAllowed(req, user, trigger)) {
           try {
             let resp: any;
             const row = req.method === "GET" ? req.query : req.body || {};

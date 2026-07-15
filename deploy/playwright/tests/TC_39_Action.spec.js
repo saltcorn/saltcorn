@@ -39,7 +39,7 @@ test.describe('E2E Test Suite - Action confirmation and spinner on click', () =>
     test('Add delete action on People list and check confirmation popup', async () => {
         await functions.views();
         await page.click(pageobject.configurePeopleList);
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         // Click on add column button
         await page.click(pageobject.addcolumnbutton);
         await customAssert('Drag and drop Aggregation field on page', async () => {
@@ -50,7 +50,7 @@ test.describe('E2E Test Suite - Action confirmation and spinner on click', () =>
         // Assert that the spinner on click checkbox is checked
         const spinnerCheckbox = page.locator(pageobject.spinneronclickcheckbox);
         await expect(spinnerCheckbox).toBeChecked();
-        await page.waitForTimeout(5000);
+        await page.waitForTimeout(2000);
         await page.click(pageobject.nextoption);
         await functions.views();
     });

@@ -84,6 +84,7 @@ describe("notifications", () => {
       .get("/notifications")
       .set("Cookie", loginCookie)
       .expect(toInclude("This is a staff announcement"))
+      .expect(toInclude(">a few seconds ago<"))
       .expect(toInclude("unread-notify"));
   });
   it("no unread notifications", async () => {

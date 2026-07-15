@@ -524,12 +524,17 @@ export const drop_tenant_schema = async (name: string): Promise<void> => {};
 
 /**
  * Build the express-session Store backed by a local sqlite file.
+ *
+ * connect-sqlite3 (^0.9.15, but this changed between 0.9.16 and 0.9.17) no
+ * longer opens the database itself - it expects `options.db` to already be
+ * an open handle with .exec/.get/.all/.run, so we have to open it here.
  * @param {any} session - the express-session module instance the app uses
  * @returns {any} a session.Store instance
  */
 export const getExpressSessionStore = (session: any): any => {
   const SQLiteStore = require("connect-sqlite3")(session);
-  return new SQLiteStore({ db: "sessions.sqlite" });
+  const db = new sqlite3.Database("sessions.sqlite");
+  return new SQLiteStore({ db });
 };
 
 /**
@@ -550,6 +555,48 @@ export const serial_pk_sql_type = "integer";
 export const json_sql_type = "json";
 export const indexable_text_sql_type = "text";
 export const supports_search_path = false;
+
+// --- Backend capability flags (see DbExportsType in db-common/types) ---
+export const supports_multiple_schemas = false;
+export const pools_connections = false;
+export const supports_for_update = false;
+export const supports_row_level_security = false;
+export const supports_alter_table = false;
+export const supports_non_integer_pk = false;
+export const json_read_returns_string = true;
+export const json_write_needs_stringify = false;
+export const stores_dates_as_text = true;
+export const supports_large_bind_lists = false;
+export const supports_database_views = false;
+export const supports_table_discovery = false;
+export const supports_session_pruning = false;
+
+// Defer FK checks for the remainder of the current transaction.
+export const deferForeignKeys = async (client: {
+  query: (sql: string) => Promise<any>;
+}): Promise<void> => {
+  await client.query("PRAGMA defer_foreign_keys = ON");
+};
+
+// Pull the offending field name out of a unique-violation error message.
+// e.g. `SQLITE_CONSTRAINT: UNIQUE constraint failed: books.author`
+export const parseUniqueConstraintError = (
+  msg: string,
+  tableName: string
+): string =>
+  msg.replace(`SQLITE_CONSTRAINT: UNIQUE constraint failed: ${tableName}.`, "");
+
+// Canonical key for a multi-field unique constraint, to compare against the
+// field name parsed above. sqlite reports `books.author, books.pages`; the
+// leading `<table>.` is stripped by parseUniqueConstraintError, so only the
+// remaining fields keep the table prefix.
+export const uniqueConstraintFieldsKey = (
+  fields: string[],
+  tableName: string
+): string => {
+  const [field1, ...rest] = fields;
+  return [field1, ...rest.map((fnm) => `${tableName}.${fnm}`)].join(", ");
+};
 
 // Translate a postgresql migration to sqlite
 export const translateMigrationsFromPostgresql = (sql: string): string =>

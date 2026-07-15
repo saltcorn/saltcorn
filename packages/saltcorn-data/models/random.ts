@@ -29,7 +29,7 @@ const random_table = async (opts: GenObj = {}): Promise<Table> => {
   const name = generateString(3);
   const table = await Table.create(name);
   // test UUID type
-  if (Math.random() < 0.3 && !opts.force_int_pk && !db.isSQLite) {
+  if (Math.random() < 0.3 && !opts.force_int_pk && db.supports_non_integer_pk) {
     const [pk] = table.getFields();
     await pk.update({ type: "UUID" });
   }

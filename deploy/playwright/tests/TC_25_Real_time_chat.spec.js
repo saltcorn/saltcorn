@@ -373,7 +373,7 @@ test.describe('E2E Test Suite', () => {
         await page.locator('#inputtable_name').selectOption({ label: 'Room' });
         // submit the page
         await functions.submit();
-        // await page.waitForTimeout(2000);
+        // await page.waitForTimeout(1000);
 
         // Select Message.room for message relation
         await page.locator('#inputmsg_relation').selectOption({ label: 'Messages.room' });

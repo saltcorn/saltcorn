@@ -117,7 +117,7 @@ const on_delete = async (
   viewname: string,
   { default_state }: GenObj
 ) => {
-  if (!db.isSQLite) {
+  if (db.supports_database_views) {
     const sqlviews = (await get_existing_views()).map(
       (v: GenObj) => v.table_name
     );
@@ -667,7 +667,8 @@ const configuration_workflow = (req: Req) =>
             sublabel: "Formula for the group headings",
             class: "validate-expression",
           });
-          if (!db.isSQLite)
+          // tree list uses recursive queries not wired up for the sqlite backend
+          if (db.driverName !== "sqlite")
             formfields.push({
               name: "_tree_field",
               label: req.__("Tree field"),
@@ -939,7 +940,7 @@ const configuration_workflow = (req: Req) =>
             tab: "Functionality",
           });
 
-          if (!db.isSQLite && !table.external)
+          if (db.supports_database_views && !table.external)
             formfields.push({
               name: "_create_db_view",
               label: req.__("Create database view"),
@@ -1978,7 +1979,7 @@ export default {
           : {};
         const relRows = await relTable.getRows(relWhere);
         if (relRows.length > 0) {
-          const mergeObj = !db.isSQLite
+          const mergeObj = db.supports_large_bind_lists
             ? {
                 [table.pk_name]: {
                   not: { in: relRows.map((r: GenObj) => r[relfld]) },

@@ -5,7 +5,7 @@
   "homepage": "https://saltcorn.com",
   "type": "module",
   "scripts": {
-    "test": "cd dist && NODE_ENV=test node --require ../setup-test-schema.cjs --test --test-force-exit",
+    "test": "cd dist && NODE_ENV=test node --require ../setup-test-schema.cjs --test --test-concurrency=4 --test-force-exit",
     "gen:cjs-shims": "node gen-cjs-shims.cjs",
     "pretsc": "node gen-cjs-shims.cjs",
     "tsc": "tsc -p tsconfig.json",

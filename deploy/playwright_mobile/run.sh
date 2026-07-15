@@ -16,7 +16,7 @@ if [ -f $BUILD_DIR/www/data/tables.json ]; then
 fi
 
 echo Starting background Saltcorn server...
-PGDATABASE=saltcorn_test SALTCORN_SERVE_MOBILE_TEST_BUILD=/tmp/saltcorn_build/www saltcorn serve -p 3010 &
+SALTCORN_NWORKERS=1 PGDATABASE=saltcorn_test SALTCORN_SERVE_MOBILE_TEST_BUILD=/tmp/saltcorn_build/www saltcorn serve -p 3010 &
 SCPID=$!
 trap "kill $SCPID" EXIT
 

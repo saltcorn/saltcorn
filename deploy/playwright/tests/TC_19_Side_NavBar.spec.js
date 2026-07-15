@@ -113,7 +113,7 @@ test.describe('E2E Test Suite', () => {
         // submit the page
         await functions.submit();
         // click on next button
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         await page.waitForSelector(pageobject.nextoption);
         await page.click(pageobject.nextoption);
         // click on next button
@@ -168,7 +168,7 @@ test.describe('E2E Test Suite', () => {
             expect(page.url()).toBe(baseURL + derivedURL + 'pageedit');
         });
         await functions.create_New_Page('My_project_' + randomString);
-        await page.waitForTimeout(2500);
+        await page.waitForTimeout(1000);
         // Drag and drop the text source
         await page.waitForSelector(pageobject.textSource);
         await functions.drag_And_Drop(pageobject.textSource, pageobject.target);

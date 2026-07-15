@@ -23,9 +23,9 @@ const reset = async (
   schema0?: string
 ): Promise<void> => {
   const schema = schema0 || db.connectObj.default_schema;
-  const is_sqlite = db.isSQLite;
-  const schemaQdot = is_sqlite ? "" : `"${schema}".`;
-  const ignoreExisting = is_sqlite && dontDrop;
+  const has_schemas = db.supports_multiple_schemas;
+  const schemaQdot = has_schemas ? `"${schema}".` : "";
+  const ignoreExisting = !has_schemas && dontDrop;
   const ifNotExists = ignoreExisting ? "IF NOT EXISTS" : "";
   const serial = db.serial_pk_sql_type;
   const json = db.json_sql_type;

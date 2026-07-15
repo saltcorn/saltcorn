@@ -48,6 +48,16 @@ import {
   AuthenticationMethod,
   CopilotSkill,
   CapacitorPlugin,
+  AuthorizeAccessKind,
+  AuthorizeAccessRequestBase,
+  AuthorizeAccessViewRequest,
+  AuthorizeAccessPageRequest,
+  AuthorizeAccessTriggerRequest,
+  AuthorizeAccessResult,
+  AuthorizeAccessViewHook,
+  AuthorizeAccessPageHook,
+  AuthorizeAccessTriggerHook,
+  AuthorizeAccessApiHook,
 } from "@saltcorn/types/base_types";
 import { GenObj, Type } from "@saltcorn/types/common_types";
 import type { ConfigTypes, SingleConfig } from "../models/config.js";
@@ -164,6 +174,15 @@ const myMoment: Function = (...args: any[]) =>
     )
   );
 
+type AnyAuthorizeAccessHook = (
+  request: any,
+  user: any
+) =>
+  | Promise<AuthorizeAccessResult | null | undefined>
+  | AuthorizeAccessResult
+  | null
+  | undefined;
+
 /**
  * State Class
  * @category saltcorn-data
@@ -223,6 +242,10 @@ class State {
   copilot_skills: Array<CopilotSkill>;
   capacitorPlugins: Array<CapacitorPlugin>;
   exchange: Record<string, Array<unknown>>;
+  authorize_view_hooks: Array<AuthorizeAccessViewHook>;
+  authorize_page_hooks: Array<AuthorizeAccessPageHook>;
+  authorize_trigger_hooks: Array<AuthorizeAccessTriggerHook>;
+  authorize_api_hooks: Array<AuthorizeAccessApiHook>;
   sendMessageToWorkers?: Function;
   mobile_push_handler: Record<string, Function>;
   pushHelper?: PushMessageHelper;
@@ -271,6 +294,10 @@ class State {
     this.keyFieldviews = {};
     this.external_tables = {};
     this.exchange = {};
+    this.authorize_view_hooks = [];
+    this.authorize_page_hooks = [];
+    this.authorize_trigger_hooks = [];
+    this.authorize_api_hooks = [];
     this.verifier = null;
     this.i18n = new I18n.I18n();
     this.i18n.configure({
@@ -542,7 +569,7 @@ class State {
     if (
       cfgInDB &&
       typeof cfgInDB.search_use_websearch === "undefined" &&
-      !db.isSQLite
+      db.driverName === "postgres"
     ) {
       const dbversion = await db.getVersion(true);
       const val = +dbversion >= 11.0;
@@ -837,7 +864,7 @@ class State {
         .filter((f: any) => f.table_id === table.id)
         .map((c: any) => new TableConstraint(c));
       table.fields.forEach((f: GenObj) => {
-        if (db.isSQLite && typeof f.attributes === "string")
+        if (db.json_read_returns_string && typeof f.attributes === "string")
           f.attributes = JSON.parse(f.attributes);
         if (
           f.attributes &&
@@ -848,7 +875,10 @@ class State {
             (lf: Field) => lf.name === f.attributes.localizes_field
           );
           if (localized) {
-            if (db.isSQLite && typeof localized.attributes === "string")
+            if (
+              db.json_read_returns_string &&
+              typeof localized.attributes === "string"
+            )
               localized.attributes = JSON.parse(localized.attributes);
             if (!localized.attributes) localized.attributes = {};
 
@@ -1087,6 +1117,15 @@ class State {
       if (!this.exchange[k]) this.exchange[k] = [];
       this.exchange[k].push(...(v as Array<unknown>));
     });
+    const authorizeViewHook = withCfg("authorize_view");
+    if (authorizeViewHook) this.authorize_view_hooks.push(authorizeViewHook);
+    const authorizePageHook = withCfg("authorize_page");
+    if (authorizePageHook) this.authorize_page_hooks.push(authorizePageHook);
+    const authorizeTriggerHook = withCfg("authorize_trigger");
+    if (authorizeTriggerHook)
+      this.authorize_trigger_hooks.push(authorizeTriggerHook);
+    const authorizeApiHook = withCfg("authorize_api");
+    if (authorizeApiHook) this.authorize_api_hooks.push(authorizeApiHook);
     withCfg("copilot_skills", []).forEach((v: CopilotSkill) => {
       if (
         v?.function_name &&
@@ -1166,6 +1205,119 @@ class State {
 
     if (hasFunctions)
       this.refresh_codepages(true).catch((e) => console.error(e));
+  }
+
+  /**
+   * Runs the registered authorize_* plugin hooks for the given kind;
+   * "allow" if any hook allows, else "deny".
+   * @param kind - which authorize_* hook array to run
+   * @param request - action (get/post), the target entity, state/body, req
+   * @param user
+   * @returns {Promise<AuthorizeAccessResult>}
+   */
+  private async dispatchAuthorize(
+    kind: AuthorizeAccessKind,
+    request: AuthorizeAccessRequestBase,
+    user: any
+  ): Promise<AuthorizeAccessResult> {
+    let hooks: Array<AnyAuthorizeAccessHook>;
+    switch (kind) {
+      case "view":
+        hooks = this.authorize_view_hooks;
+        break;
+      case "page":
+        hooks = this.authorize_page_hooks;
+        break;
+      case "trigger":
+        hooks = this.authorize_trigger_hooks;
+        break;
+      case "api":
+        hooks = this.authorize_api_hooks;
+        break;
+    }
+    let denyReason: string | undefined;
+    for (const hook of hooks) {
+      const res = await hook(request, user);
+      if (res?.decision === "allow") return res;
+      if (res?.decision === "deny" && res.reason && !denyReason)
+        denyReason = res.reason;
+    }
+    return { decision: "deny", reason: denyReason };
+  }
+
+  /**
+   * Checks plugin `authorize_view` hooks.
+   * @param request
+   * @param user
+   * @returns {Promise<AuthorizeAccessResult>}
+   */
+  async authorizeView(
+    request: AuthorizeAccessViewRequest,
+    user: any
+  ): Promise<AuthorizeAccessResult> {
+    return this.dispatchAuthorize("view", request, user);
+  }
+
+  /**
+   * Checks plugin `authorize_page` hooks.
+   * @param request
+   * @param user
+   * @returns {Promise<AuthorizeAccessResult>}
+   */
+  async authorizePage(
+    request: AuthorizeAccessPageRequest,
+    user: any
+  ): Promise<AuthorizeAccessResult> {
+    return this.dispatchAuthorize("page", request, user);
+  }
+
+  /**
+   * Checks plugin `authorize_trigger` hooks.
+   * @param request
+   * @param user
+   * @returns {Promise<AuthorizeAccessResult>}
+   */
+  async authorizeTrigger(
+    request: AuthorizeAccessTriggerRequest,
+    user: any
+  ): Promise<AuthorizeAccessResult> {
+    return this.dispatchAuthorize("trigger", request, user);
+  }
+
+  /**
+   * Checks plugin `authorize_api` hooks, for plugin-registered routes with
+   * no dedicated model (view/page/trigger) to hang an `authorize()` method
+   * off of. Combine with the caller's own role check.
+   * @param user - the acting user (or undefined/public)
+   * @param opts.route - identifier of the target route/action
+   * @param opts.action - "get" or "post"
+   * @param opts.req - the request object, forwarded to hooks
+   * @param opts.state - query/state, for action "get"
+   * @param opts.body - POST body, for action "post"
+   * @returns {Promise<boolean>}
+   */
+  async authorizeApi(
+    user: any,
+    opts: {
+      route: string;
+      action: "get" | "post";
+      req: any;
+      state?: GenObj;
+      body?: GenObj;
+    }
+  ): Promise<boolean> {
+    const result = await this.dispatchAuthorize(
+      "api",
+      {
+        action: opts.action,
+        route: opts.route,
+        state: opts.state,
+        body: opts.body,
+        req: opts.req,
+      },
+      user
+    );
+    return result.decision === "allow";
   }
 
   /**
@@ -1339,6 +1491,10 @@ class State {
     this.external_tables = {};
     this.eventTypes = {};
     this.exchange = {};
+    this.authorize_view_hooks = [];
+    this.authorize_page_hooks = [];
+    this.authorize_trigger_hooks = [];
+    this.authorize_api_hooks = [];
     this.verifier = null;
     this.fonts = standard_fonts;
     this.iconSet = new Set(get_standard_icons());
@@ -1847,6 +2003,7 @@ const features = Object.freeze({
   table_create_callback: true,
   getrows_tree_field: true,
   view_route_modal: true,
+  authorize_access_hooks: true,
 });
 
 export {

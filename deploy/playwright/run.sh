@@ -8,7 +8,7 @@ PGDATABASE=saltcorn_test saltcorn reset-schema -f
 PGDATABASE=saltcorn_test saltcorn create-user -a -e myproject19july@mailinator.com -p myproject19july
 
 echo Starting background Saltcorn server...
-PGDATABASE=saltcorn_test saltcorn serve -p 3014 &
+SALTCORN_NWORKERS=1 PGDATABASE=saltcorn_test saltcorn serve -p 3014 &
 SCPID=$!
 trap "kill $SCPID" EXIT
 

@@ -2279,7 +2279,7 @@ const stateFieldsToWhere = ({
           : table
             ? table.name
             : undefined,
-        schema: db.isSQLite ? undefined : db.getTenantSchema(),
+        schema: db.supports_multiple_schemas ? db.getTenantSchema() : undefined,
       };
       return;
     }
@@ -2466,7 +2466,7 @@ const stateFieldsToWhere = ({
             // where jFieldNm in (select id from jtnm where lblField=v)
             inSelect: {
               table: db.sqlsanitize(thoughTblNm),
-              tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+              tenant: db.supports_multiple_schemas ? db.getTenantSchema() : undefined,
               field: db.sqlsanitize(throughField),
               valField: jtTbl?.pk_name || "id",
               through: db.sqlsanitize(jtNm),
@@ -2499,7 +2499,7 @@ const stateFieldsToWhere = ({
             // where jFieldNm in (select id from jtnm where lblField=v)
             inSelect: {
               table: db.sqlsanitize(jtNm),
-              tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+              tenant: db.supports_multiple_schemas ? db.getTenantSchema() : undefined,
               field: jTable?.pk_name,
               where,
             },
@@ -2528,7 +2528,7 @@ const stateFieldsToWhere = ({
               // where id in (select jFieldNm from jtnm where lblField=v)
               inSelect: {
                 table: db.sqlsanitize(jtNm),
-                tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+                tenant: db.supports_multiple_schemas ? db.getTenantSchema() : undefined,
                 field: db.sqlsanitize(jFieldNm),
                 where: {
                   [db.sqlsanitize(lblField)]:
@@ -2554,7 +2554,7 @@ const stateFieldsToWhere = ({
               // where id in (select ss1.id from jtNm ss1 join tblName ss2 on ss2.id = ss1.jFieldNm where ss2.lblField=v)
               inSelect: {
                 table: db.sqlsanitize(jtNm),
-                tenant: db.isSQLite ? undefined : db.getTenantSchema(),
+                tenant: db.supports_multiple_schemas ? db.getTenantSchema() : undefined,
                 field: db.sqlsanitize(jFieldNm),
                 valField: Table.findOne(jtNm)?.pk_name || "id",
                 through: db.sqlsanitize(tblName),

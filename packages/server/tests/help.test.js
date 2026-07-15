@@ -34,4 +34,17 @@ describe("Help topics", () => {
       .expect(toInclude("<title>Help: View patterns</title>"))
       .expect(toInclude("The view pattern is a fundamental concept"));
   });
+  it("should show fields in formula help", async () => {
+    const loginCookie = await getAdminLoginCookie();
+
+    const app = await getApp({ disableCsrf: true });
+    await request(app)
+      .get("/admin/help/Extra%20state%20formula?view_name=show_publisher&srcTable=books&")
+      .set("Cookie", loginCookie)
+      .expect(toInclude(`<tr>
+<td>Author</td>
+<td><code>author</code></td>
+<td>String</td>
+</tr>`));
+  });
 });

@@ -195,7 +195,7 @@ test.describe('E2E Test Suite', () => {
     // Submit
     await page.waitForSelector(pageobject.submitButton);
     await page.click(pageobject.submitButton);
-    // await page.waitForTimeout(2000);
+    // await page.waitForTimeout(1000);
 
     // Assert that the displayed age matches calculation.
     // The age is shown on the resulting show view page; wait for any age display.
