@@ -70,7 +70,11 @@ import {
 } from "@saltcorn/data/utils";
 import Trigger from "@saltcorn/data/models/trigger";
 import { restore_backup } from "../markup/admin.js";
-import { startRestoreJob } from "./restore_jobs.js";
+import {
+  startRestoreJob,
+  getRestoreJobStatus,
+  JOB_ID_RE,
+} from "./restore_jobs.js";
 import { v4 as uuidv4 } from "uuid";
 // @ts-ignore
 import base32 from "thirty-two";
@@ -297,10 +301,8 @@ const restoreBackupPasswordForm = (req: Req, jobId: string) =>
   });
 
 /**
- * "Please wait" page for a background restore job. Joins the job's
- * socket.io room and navigates onward on a terminal restore_progress
- * message. Nothing is persisted, so this needs a working websocket -
- * no polling fallback yet.
+ * "Please wait" page for a background restore job. Shows live progress
+ * over a websocket, falling back to polling if that never works.
  * @param {object} req
  * @param {object} res
  * @param {string} jobId
@@ -320,11 +322,19 @@ const sendRestoreWaitPage = (
     {},
     div(
       { class: "text-center" },
-      p(req.__("Restoring backup, please wait…")),
       div(
-        { class: "spinner-border", role: "status" },
-        span({ class: "visually-hidden" }, req.__("Loading..."))
+        { id: "restore-waiting" },
+        p(req.__("Restoring backup, please wait…")),
+        div(
+          { class: "spinner-border", role: "status" },
+          span({ class: "visually-hidden" }, req.__("Loading..."))
+        )
       ),
+      div({
+        id: "restore-success",
+        class: "alert alert-success d-none mt-3 fs-5",
+        role: "alert",
+      }),
       pre({
         id: "restore-status",
         class: "text-start mt-3",
@@ -333,35 +343,93 @@ const sendRestoreWaitPage = (
     ) +
       script(
         domReady(`
-function handleRestoreProgress(data) {
-  if (data.status === "done") {
-    window.location.href = "/auth/login";
-  } else if (data.status === "password_required") {
-    window.location.href = "${passwordRequiredUrl}";
-  } else if (data.status === "error") {
-    document.getElementById("restore-status").textContent =
-      data.message || "Restore failed";
-  } else if (data.status === "progress") {
-    var el = document.getElementById("restore-status");
-    el.textContent += (el.textContent ? "\\n" : "") + data.message;
-    el.scrollTop = el.scrollHeight;
-  }
+const jobId = ${JSON.stringify(jobId)};
+let lastMsg = null;
+let settled = false; // true once we know whether the socket is usable
+
+function appendLine(msg) {
+  if (!msg || msg === lastMsg) return;
+  lastMsg = msg;
+  const el = document.getElementById("restore-status");
+  el.textContent += (el.textContent ? "\\n" : "") + msg;
+  el.scrollTop = el.scrollHeight;
 }
+
+// returns true when the restore is finished (done, failed, or needs a password)
+function handleStatus(data) {
+  if (!data) return false;
+  if (data.status === "done") {
+    document.getElementById("restore-waiting").classList.add("d-none");
+    const successEl = document.getElementById("restore-success");
+    successEl.textContent = ${JSON.stringify(
+      req.__("✓ Backup restored successfully! Redirecting to login…")
+    )};
+    successEl.classList.remove("d-none");
+    setTimeout(function () {
+      window.location.href = "/auth/login";
+    }, 4000);
+    return true;
+  } else if (data.status === "password_required") {
+    window.location.href = ${JSON.stringify(passwordRequiredUrl)};
+    return true;
+  } else if (data.status === "error") {
+    appendLine(data.message || "Restore failed");
+    return true;
+  } else if (data.status === "progress") {
+    appendLine(data.message);
+  }
+  return false;
+}
+
+function startPolling() {
+  if (startPolling.started) return;
+  startPolling.started = true;
+  (function poll() {
+    fetch("/auth/restore_status/" + jobId)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!handleStatus(data)) setTimeout(poll, 1500);
+      })
+      .catch(function () { setTimeout(poll, 1500); });
+  })();
+}
+
 if (typeof io === "function") {
-  var restoreSocket = get_shared_socket();
-  var joinRestoreRoom = function () {
-    restoreSocket.emit("join_restore_room", "${jobId}", function (ack) {
-      if (!ack || ack.status !== "ok")
-        document.getElementById("restore-status").textContent =
-          "Unable to track restore progress";
+  const restoreSocket = get_shared_socket();
+  const fallbackToPolling = function () {
+    if (settled) return;
+    settled = true;
+    startPolling();
+  };
+  const joinRestoreRoom = function () {
+    restoreSocket.emit("join_restore_room", jobId, function (ack) {
+      if (!ack || ack.status !== "ok") {
+        fallbackToPolling();
+        return;
+      }
+      // connected and joined, but does a message actually arrive? a proxy
+      // can let the handshake through while still dropping frames
+      setTimeout(function () {
+        if (!settled) fallbackToPolling();
+      }, 5000);
     });
   };
+  // socket never connects at all (e.g. proxy blocks the websocket upgrade)
+  setTimeout(function () {
+    if (!restoreSocket.connected) fallbackToPolling();
+  }, 5000);
+  restoreSocket.on("connect_error", fallbackToPolling);
+  restoreSocket.on("test_conn_msg", function () {
+    settled = true; // confirmed working, stick with the socket
+  });
+  restoreSocket.on("restore_progress", function (data) {
+    settled = true; // any real message proves the socket works
+    handleStatus(data);
+  });
   if (restoreSocket.connected) joinRestoreRoom();
   else restoreSocket.on("connect", joinRestoreRoom);
-  restoreSocket.on("restore_progress", handleRestoreProgress);
 } else {
-  document.getElementById("restore-status").textContent =
-    "Dynamic updates are disabled, unable to track restore progress. The restore is still running in the background.";
+  startPolling();
 }
 `)
       )
@@ -865,6 +933,20 @@ router.post(
 );
 
 /**
+ * Polling fallback for clients whose websocket isn't working.
+ * @name get/restore_status/:jobId
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
+router.get(
+  "/restore_status/:jobId",
+  error_catcher(async (req: Req, res: Res) => {
+    const status = getRestoreJobStatus(req.params.jobId);
+    res.json(status || { status: "error", message: req.__("Unknown job") });
+  })
+);
+
+/**
  * @name post/create_first_user
  * @function
  * @memberof module:auth/routes~routesRouter
@@ -916,8 +998,6 @@ router.post(
  * @function
  * @memberof module:auth/routes~routesRouter
  */
-const JOB_ID_RE = /^[0-9a-f-]{36}$/i;
-
 router.get(
   "/restore_backup_password",
   error_catcher(async (req: Req, res: Res) => {

@@ -927,8 +927,14 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     // only to the browser that started the job - is itself the capability
     socket.on("join_restore_room", (jobId, callback) => {
       if (typeof jobId === "string" && /^[0-9a-f-]{36}$/i.test(jobId)) {
-        socket.join(`_restore_${jobId}_`);
+        const room = `_restore_${jobId}_`;
+        socket.join(room);
         if (typeof callback === "function") callback({ status: "ok" });
+        // let the client confirm messages actually arrive, not just that
+        // the handshake succeeded (a proxy can allow one but not the other)
+        setTimeout(() => {
+          io.of("/").to(room).emit("test_conn_msg", {});
+        }, 1000);
       } else if (typeof callback === "function") {
         callback({ status: "error", msg: "invalid job id" });
       }
