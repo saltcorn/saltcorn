@@ -625,7 +625,20 @@ describe("pack install", () => {
   it("installs pack", async () => {
     const can = await can_install_pack(todoPack);
     expect(can).toBe(true);
-    await install_pack(todoPack, "Todo list", () => {});
+    const logMsgs: string[] = [];
+    await install_pack(todoPack, "Todo list", () => {}, undefined, (msg) =>
+      logMsgs.push(msg)
+    );
+    // one line per entity type that's actually in the pack...
+    expect(logMsgs).toContain("Restoring table definitions");
+    expect(logMsgs).toContain("Restoring views");
+    expect(logMsgs).toContain("Restoring pages");
+    expect(logMsgs).toContain("Restoring page groups");
+    // ...and nothing for the empty sections
+    expect(logMsgs).not.toContain("Restoring triggers");
+    expect(logMsgs).not.toContain("Restoring tags");
+    expect(logMsgs).not.toContain("Restoring models");
+    expect(logMsgs).not.toContain("Restoring roles");
     const tbl = Table.findOne({ name: "TodoItems" });
     expect(!!tbl).toBe(true);
     const menu = getState()!.getConfig("menu_items", []);

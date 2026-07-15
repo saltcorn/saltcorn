@@ -605,9 +605,12 @@ const install_pack = async (
   pack: Pack,
   name: string | undefined,
   loadAndSaveNewPlugin: (arg0: Plugin) => void,
-  bare_tables = false
+  bare_tables = false,
+  onLog?: (msg: string) => void
 ): Promise<void> => {
+  const log = (msg: string) => onLog?.(msg);
   const Plugin = (await import("@saltcorn/data/models/plugin")).default;
+  if (pack.plugins?.length) log("Restoring plugins");
   for (const plugin of pack.plugins) {
     if (plugin.source === "npm" && plugin.name.startsWith("@saltcorn/"))
       plugin.name = plugin.name.replace("@saltcorn/", "");
@@ -622,12 +625,14 @@ const install_pack = async (
       }
     }
   }
+  if (pack.roles?.length) log("Restoring roles");
   for (const role of pack.roles || []) {
     role.id = old_to_new_role(role.id);
     const existing = await Role.findOne({ id: role.id });
     if (existing) await existing.update(role);
     else await Role.create(role);
   }
+  if (pack.library?.length) log("Restoring library");
   for (const lib of pack.library || []) {
     const exisiting = await Library.findOne({ name: lib.name });
     if (exisiting) await exisiting.update(lib);
@@ -640,6 +645,7 @@ const install_pack = async (
   const packTables = pack.tables.sort((left, right) =>
     left.provider_name ? 1 : right.provider_name ? -1 : 0
   );
+  if (packTables.length) log("Restoring table definitions");
   for (const tableSpec of packTables) {
     const {
       id,
@@ -741,6 +747,7 @@ const install_pack = async (
   }
   await getState()!.refresh_tables(true);
 
+  if (pack.views?.length) log("Restoring views");
   for (const viewSpec of pack.views) {
     viewSpec.min_role = old_to_new_role(viewSpec.min_role);
     const { table, on_menu, menu_label, on_root_page, ...viewNoTable } =
@@ -765,6 +772,7 @@ const install_pack = async (
   }
   await getState()!.refresh_views(true);
 
+  if (pack.triggers?.length) log("Restoring triggers");
   for (const triggerSpec of pack.triggers || []) {
     triggerSpec.min_role = old_to_new_role(triggerSpec.min_role);
     let id;
@@ -788,6 +796,7 @@ const install_pack = async (
   }
   await getState()!.refresh_triggers(true);
 
+  if (pack.pages?.length) log("Restoring pages");
   for (const pageFullSpec of pack.pages || []) {
     pageFullSpec.min_role = old_to_new_role(pageFullSpec.min_role);
     const { root_page_for_roles, menu_label, ...pageSpec } = pageFullSpec;
@@ -810,6 +819,7 @@ const install_pack = async (
 
   await getState()!.refresh_pages(true);
 
+  if (pack.page_groups?.length) log("Restoring page groups");
   for (const pageGroupSpec of pack.page_groups || []) {
     pageGroupSpec.min_role = old_to_new_role(pageGroupSpec.min_role);
     const { members, ...pageGroupNoMembers } = pageGroupSpec;
@@ -829,6 +839,7 @@ const install_pack = async (
     }
   }
 
+  if (pack.tags?.length) log("Restoring tags");
   for (const tag of pack.tags || []) {
     const entries = tag.entries
       ? tag.entries.map((e) => {
@@ -866,6 +877,7 @@ const install_pack = async (
       }
     }
   }
+  if (pack.models?.length) log("Restoring models");
   for (const model of pack.models || []) {
     const mTbl = Table.findOne({ name: model.table_name });
     if (!mTbl) throw new Error(`Unable to find table '${model.table_name}'`);
@@ -897,6 +909,7 @@ const install_pack = async (
       });
   }
 
+  if (pack.model_instances?.length) log("Restoring model instances");
   for (const modelInst of pack.model_instances || []) {
     const table = Table.findOne({ name: modelInst.table_name });
     if (!table)
@@ -919,6 +932,7 @@ const install_pack = async (
     } else await ModelInstance.create(mICfg);
   }
 
+  if (pack.event_logs?.length) log("Restoring event logs");
   for (const eventLog of pack.event_logs || []) {
     const { user_email, ...rest } = eventLog;
     const eventLogCfg = rest as EventLogCfg;

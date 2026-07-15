@@ -70,10 +70,12 @@ import {
 } from "@saltcorn/data/utils";
 import Trigger from "@saltcorn/data/models/trigger";
 import { restore_backup } from "../markup/admin.js";
-import _am_backup from "@saltcorn/admin-models/models/backup";
-const { restore } = _am_backup;
-import Plugin from "@saltcorn/data/models/plugin";
-import fs from "fs";
+import {
+  startRestoreJob,
+  getRestoreJobStatus,
+  JOB_ID_RE,
+} from "./restore_jobs.js";
+import { v4 as uuidv4 } from "uuid";
 // @ts-ignore
 import base32 from "thirty-two";
 // @ts-ignore
@@ -280,7 +282,7 @@ const resetForm = (body: any, req: Req) => {
  * @param {string} fileId
  * @returns {Form}
  */
-const restoreBackupPasswordForm = (req: Req) =>
+const restoreBackupPasswordForm = (req: Req, jobId: string) =>
   new Form({
     blurb: req.__(
       "To restore a system backup, please enter the password you set when you created the backup."
@@ -294,9 +296,145 @@ const restoreBackupPasswordForm = (req: Req) =>
         validator: (s) => s.length > 0,
       }),
     ],
-    action: "/auth/restore_backup_password",
+    action: `/auth/restore_backup_password?jobId=${encodeURIComponent(jobId)}`,
     submitLabel: req.__("Restore system backup"),
   });
+
+/**
+ * "Please wait" page for a background restore job. Shows live progress
+ * over a websocket, falling back to polling if that never works.
+ * @param {object} req
+ * @param {object} res
+ * @param {string} jobId
+ */
+const sendRestoreWaitPage = (
+  req: Req,
+  res: Res,
+  jobId: string,
+  isPasswordRetry?: boolean
+) => {
+  const passwordRequiredUrl = `/auth/restore_backup_password?jobId=${jobId}${
+    isPasswordRetry ? "&retry=1" : ""
+  }`;
+  res.sendAuthWrap(
+    req.__("Restoring backup"),
+    new Form({ fields: [], noSubmitButton: true }),
+    {},
+    div(
+      { class: "text-center" },
+      div(
+        { id: "restore-waiting" },
+        p(req.__("Restoring backup, please wait…")),
+        div(
+          { class: "spinner-border", role: "status" },
+          span({ class: "visually-hidden" }, req.__("Loading..."))
+        )
+      ),
+      div({
+        id: "restore-success",
+        class: "alert alert-success d-none mt-3 fs-5",
+        role: "alert",
+      }),
+      pre({
+        id: "restore-status",
+        class: "text-start mt-3",
+        style: "max-height: 40vh; overflow-y: auto;",
+      })
+    ) +
+      script(
+        domReady(`
+const jobId = ${JSON.stringify(jobId)};
+let lastMsg = null;
+let settled = false; // true once we know whether the socket is usable
+
+function appendLine(msg) {
+  if (!msg || msg === lastMsg) return;
+  lastMsg = msg;
+  const el = document.getElementById("restore-status");
+  el.textContent += (el.textContent ? "\\n" : "") + msg;
+  el.scrollTop = el.scrollHeight;
+}
+
+// returns true when the restore is finished (done, failed, or needs a password)
+function handleStatus(data) {
+  if (!data) return false;
+  if (data.status === "done") {
+    document.getElementById("restore-waiting").classList.add("d-none");
+    const successEl = document.getElementById("restore-success");
+    successEl.textContent = ${JSON.stringify(
+      req.__("✓ Backup restored successfully! Redirecting to login…")
+    )};
+    successEl.classList.remove("d-none");
+    setTimeout(function () {
+      window.location.href = "/auth/login";
+    }, 4000);
+    return true;
+  } else if (data.status === "password_required") {
+    window.location.href = ${JSON.stringify(passwordRequiredUrl)};
+    return true;
+  } else if (data.status === "error") {
+    appendLine(data.message || "Restore failed");
+    return true;
+  } else if (data.status === "progress") {
+    appendLine(data.message);
+  }
+  return false;
+}
+
+function startPolling() {
+  if (startPolling.started) return;
+  startPolling.started = true;
+  (function poll() {
+    fetch("/auth/restore_status/" + jobId)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!handleStatus(data)) setTimeout(poll, 1500);
+      })
+      .catch(function () { setTimeout(poll, 1500); });
+  })();
+}
+
+if (typeof io === "function") {
+  const restoreSocket = get_shared_socket();
+  const fallbackToPolling = function () {
+    if (settled) return;
+    settled = true;
+    startPolling();
+  };
+  const joinRestoreRoom = function () {
+    restoreSocket.emit("join_restore_room", jobId, function (ack) {
+      if (!ack || ack.status !== "ok") {
+        fallbackToPolling();
+        return;
+      }
+      // connected and joined, but does a message actually arrive? a proxy
+      // can let the handshake through while still dropping frames
+      setTimeout(function () {
+        if (!settled) fallbackToPolling();
+      }, 5000);
+    });
+  };
+  // socket never connects at all (e.g. proxy blocks the websocket upgrade)
+  setTimeout(function () {
+    if (!restoreSocket.connected) fallbackToPolling();
+  }, 5000);
+  restoreSocket.on("connect_error", fallbackToPolling);
+  restoreSocket.on("test_conn_msg", function () {
+    settled = true; // confirmed working, stick with the socket
+  });
+  restoreSocket.on("restore_progress", function (data) {
+    settled = true; // any real message proves the socket works
+    handleStatus(data);
+  });
+  if (restoreSocket.connected) joinRestoreRoom();
+  else restoreSocket.on("connect", joinRestoreRoom);
+} else {
+  startPolling();
+}
+`)
+      )
+  );
+};
 
 /**
  * get Auth Links
@@ -782,37 +920,29 @@ router.post(
       return res.redirect("/auth/create_first_user");
     }
 
-    const newPath = File.get_new_path();
+    // name the upload after the job id, so the path can be recomputed
+    // deterministically later (e.g. on a password retry) with nothing
+    // persisted in between
+    const jobId = uuidv4();
+    const newPath = File.get_new_path(jobId);
     await req.files.file.mv(newPath);
 
-    try {
-      const err = await restore(
-        newPath,
-        (p) => Plugin.loadAndSaveNewPlugin(p),
-        true
-      );
+    startRestoreJob(newPath, true, undefined, jobId);
+    return sendRestoreWaitPage(req, res, jobId);
+  })
+);
 
-      if (err) {
-        console.error(err);
-        req.flash("error", err);
-      } else req.flash("success", req.__("Successfully restored backup"));
-
-      fs.unlink(newPath, () => {});
-      await getState()!.refresh_plugins();
-      Trigger.emitEvent("Startup");
-      return res.redirect("/auth/login");
-    } catch (error: any) {
-      console.error(error);
-      if (error.requiresPassword) {
-        // Storing the file path in session
-        req.session.restoreBackupPath = newPath;
-        return res.redirect("/auth/restore_backup_password");
-      }
-
-      fs.unlink(newPath, () => {});
-      req.flash("danger", error.message);
-      return res.redirect("/auth/create_first_user");
-    }
+/**
+ * Polling fallback for clients whose websocket isn't working.
+ * @name get/restore_status/:jobId
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
+router.get(
+  "/restore_status/:jobId",
+  error_catcher(async (req: Req, res: Res) => {
+    const status = getRestoreJobStatus(req.params.jobId);
+    res.json(status || { status: "error", message: req.__("Unknown job") });
   })
 );
 
@@ -871,14 +1001,19 @@ router.post(
 router.get(
   "/restore_backup_password",
   error_catcher(async (req: Req, res: Res) => {
-    if (!req.session.restoreBackupPath) {
+    const jobId = req.query?.jobId as string;
+
+    if (!jobId || !JOB_ID_RE.test(jobId)) {
       req.flash("danger", req.__("Backup session expired"));
       return res.redirect("/auth/create_first_user");
     }
 
+    if (req.query?.retry)
+      req.flash("danger", req.__("Incorrect backup password, try again"));
+
     res.sendAuthWrap(
       req.__("Restore system backup"),
-      restoreBackupPasswordForm(req),
+      restoreBackupPasswordForm(req, jobId),
       {}
     );
   })
@@ -893,42 +1028,18 @@ router.post(
   "/restore_backup_password",
   error_catcher(async (req: Req, res: Res) => {
     const { password } = req.body;
-    const backupPath = req.session.restoreBackupPath;
+    const jobId = req.query?.jobId as string;
 
-    if (!backupPath) {
+    if (!jobId || !JOB_ID_RE.test(jobId)) {
       req.flash("danger", req.__("Backup session expired"));
       return res.redirect("/auth/create_first_user");
     }
 
-    try {
-      const err = await restore(
-        backupPath,
-        (p) => Plugin.loadAndSaveNewPlugin(p),
-        true,
-        password
-      );
-
-      // Cleanup
-      fs.unlink(backupPath, () => {});
-      delete req.session.restoreBackupPath;
-
-      if (err) {
-        console.error(err);
-        req.flash("error", err);
-      } else req.flash("success", req.__("Successfully restored backup"));
-
-      await getState()!.refresh_plugins();
-      Trigger.emitEvent("Startup");
-
-      return res.redirect("/auth/login");
-    } catch (error: any) {
-      console.error(error);
-      req.flash(
-        "danger",
-        error.message || req.__("Incorrect backup password, try again")
-      );
-      return res.redirect("/auth/restore_backup_password");
-    }
+    // the upload from create_from_restore was named after the job id, so
+    // the path is recomputed rather than looked up anywhere
+    const backupPath = File.get_new_path(jobId);
+    startRestoreJob(backupPath, true, password, jobId);
+    return sendRestoreWaitPage(req, res, jobId, true);
   })
 );
 

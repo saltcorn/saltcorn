@@ -616,7 +616,8 @@ const restore_file_users = async (file_users: any): Promise<void> => {
  */
 const restore_tables = async (
   dirpath: string,
-  restore_first_user?: boolean
+  restore_first_user?: boolean,
+  onLog?: (msg: string) => void
 ): Promise<string | void> => {
   let err;
   const tables = await Table.find();
@@ -624,6 +625,7 @@ const restore_tables = async (
   const restore_history = getState()!.getConfig("restore_history", true);
   for (const table of tables) {
     if (!isTest()) getState()!.log(2, `restoring table ${table.name}`);
+    onLog?.(`Restoring table ${table.name}`);
 
     const fnm_csv =
       table.name === "users"
@@ -708,21 +710,30 @@ const restore_metadata = async (dirpath: string): Promise<void> => {
  * @param fnm
  * @param loadAndSaveNewPlugin
  * @param restore_first_user
+ * @param password
+ * @param onLog optional callback, called with a short progress message for
+ *   each restore step and entity type/table - in addition to, not instead
+ *   of, the usual state.log calls
  */
 const restore = async (
   fnm: string,
   loadAndSaveNewPlugin: (plugin: Plugin) => void,
   restore_first_user?: boolean,
-  password?: string
+  password?: string,
+  onLog?: (msg: string) => void
 ): Promise<string | void> => {
   const state = getState()!;
-  state.log(2, `Starting restore to tenant ${db.getTenantSchema()}`);
+  const log = (msg: string) => {
+    if (!isTest()) state.log(2, msg);
+    onLog?.(msg);
+  };
+  log(`Starting restore to tenant ${db.getTenantSchema()}`);
 
   const tmpDir = await dir({ unsafeCleanup: true });
 
   await extract(fnm, tmpDir.path, password);
 
-  state.log(2, `Unzip done`);
+  log(`Unzip done`);
 
   let basePath = tmpDir.path;
   // safari re-compressed. Safari unpacks zip files on download. If the user
@@ -758,35 +769,35 @@ const restore = async (
   }
 
   //install pack
-  if (!isTest()) state.log(2, `Reading pack`);
+  log(`Reading pack`);
   const pack = JSON.parse(
     (await readFile(join(basePath, "pack.json"))).toString()
   );
 
   const can_restore = await can_install_pack(pack);
   if (typeof can_restore !== "boolean" && can_restore.error) {
-    return `Cannot restore backup, clashing entities: 
+    return `Cannot restore backup, clashing entities:
     ${can_restore.error || ""}
     Delete these entities or restore to a pristine instance.
     `;
   }
   //config
-  if (!isTest()) state.log(2, `Restoring config`);
+  log(`Restoring config`);
   await restore_config(basePath);
 
-  if (!isTest()) state.log(2, `Restoring pack`);
-  await install_pack(pack, undefined, loadAndSaveNewPlugin, true);
+  log(`Restoring pack`);
+  await install_pack(pack, undefined, loadAndSaveNewPlugin, true, log);
 
   // files
-  if (!isTest()) state.log(2, `Restoring files`);
+  log(`Restoring files`);
   const { file_users, newLocations } = await restore_files(basePath);
 
   //table csvs
-  if (!isTest()) state.log(2, `Restoring tables`);
-  const tabres = await restore_tables(basePath, restore_first_user);
+  log(`Restoring tables`);
+  const tabres = await restore_tables(basePath, restore_first_user, log);
   if (tabres) err = (err || "") + tabres;
 
-  if (!isTest()) state.log(2, `Restoring metadata`);
+  log(`Restoring metadata`);
   await restore_metadata(basePath);
 
   if (Object.keys(newLocations).length > 0)
