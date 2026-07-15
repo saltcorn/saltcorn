@@ -90,3 +90,17 @@ describe("State room emission", () => {
     expect(msg).toStrictEqual(["hello", 5]);
   });
 });
+describe("State restore progress emission", () => {
+  it("should survive emit when not set", async () => {
+    getState()!.emitRestoreProgress("public", "job1", { status: "done" });
+  });
+  it("should use restoreEmitter", async () => {
+    let msg;
+    const myEmit = (...args: any[]) => {
+      msg = args;
+    };
+    getState()!.setRestoreEmitter(myEmit);
+    getState()!.emitRestoreProgress("public", "job1", { status: "done" });
+    expect(msg).toStrictEqual(["public", "job1", { status: "done" }]);
+  });
+});
