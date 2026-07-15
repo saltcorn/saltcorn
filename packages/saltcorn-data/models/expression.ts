@@ -1140,7 +1140,7 @@ function formulaToRlsUsing(
     return null;
   }
 
-  const curUserId = `nullif(current_setting('app.current_user_id', true), '')::integer`;
+  const curUserId = `(select nullif(current_setting('app.current_user_id', true), '')::integer)`;
 
   function transpile(node: any): string | null {
     switch (node.type) {
