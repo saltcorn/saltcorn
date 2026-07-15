@@ -1003,6 +1003,14 @@ router.get(
   error_catcher(async (req: Req, res: Res) => {
     const jobId = req.query?.jobId as string;
 
+    // this flow is unauthenticated because it bootstraps an empty instance
+    // from the create-first-user page, so it must stop once there are users
+    const hasUsers = await User.nonEmpty();
+    if (hasUsers) {
+      req.flash("danger", req.__("Users already present"));
+      return res.redirect("/auth/login");
+    }
+
     if (!jobId || !JOB_ID_RE.test(jobId)) {
       req.flash("danger", req.__("Backup session expired"));
       return res.redirect("/auth/create_first_user");
@@ -1029,6 +1037,14 @@ router.post(
   error_catcher(async (req: Req, res: Res) => {
     const { password } = req.body;
     const jobId = req.query?.jobId as string;
+
+    // this flow is unauthenticated because it bootstraps an empty instance
+    // from the create-first-user page, so it must stop once there are users
+    const hasUsers = await User.nonEmpty();
+    if (hasUsers) {
+      req.flash("danger", req.__("Users already present"));
+      return res.redirect("/auth/login");
+    }
 
     if (!jobId || !JOB_ID_RE.test(jobId)) {
       req.flash("danger", req.__("Backup session expired"));
