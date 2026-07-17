@@ -37,7 +37,11 @@ function deproxy(value: any): any {
 
 function vmRun(code: string, sandbox: any): any {
   if (isNode()) {
-    const result = new VM({ sandbox, eval: false, wasm: false }).run(code);
+    const result = new VM({
+      sandbox,
+      eval: db.getTenantSchema() === db.connectObj.default_schema,
+      wasm: false,
+    }).run(code);
     if (typeof result === "function")
       return (...args: any[]) => deproxy(result(...args));
     return deproxy(result);

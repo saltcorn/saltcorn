@@ -60,6 +60,8 @@ import { join } from "path";
 import { existsSync } from "fs";
 import { writeFile, mkdir } from "fs/promises";
 const { VM } = require("vm2");
+const vmSandboxIntrinsics = new Set(["eval", "Function", "global", "globalThis"]);
+
 const oldVm = require("vm");
 import faIcons from "./fa5-icons";
 import { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
@@ -1269,7 +1271,12 @@ class State {
 
         let sandboxCtx: any;
         if (isNode()) {
-          const vm = new VM({ sandbox: myContext, eval: false, wasm: false });
+          const vm = new VM({
+            sandbox: myContext,
+            // eval is enabled in the root tenant only
+            eval: this.tenant === db.connectObj.default_schema,
+            wasm: false,
+          });
           vm.run(codeStr);
           sandboxCtx = vm.sandbox;
         } else {
@@ -1282,7 +1289,11 @@ class State {
         }
         this.codepage_context = {};
         Object.keys(sandboxCtx).forEach((k) => {
-          if (!funCtxKeys.has(k)) {
+          // vm2 exposes its own intrinsics (eval, Function, global) on the
+          // sandbox. Do not copy these into codepage_context: they are bound to
+          // the code-page VM and would shadow the intrinsics of any expression
+          // VM that uses the eval context as its sandbox (e.g. disabling eval).
+          if (!funCtxKeys.has(k) && !vmSandboxIntrinsics.has(k)) {
             this.codepage_context[k] = sandboxCtx[k];
           }
         });

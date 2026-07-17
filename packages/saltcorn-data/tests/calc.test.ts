@@ -2,7 +2,7 @@ import Table from "../models/table";
 import Field from "../models/field";
 import Trigger from "../models/trigger";
 import db from "../db";
-const { getState } = require("../db/state");
+const { getState, add_tenant } = require("../db/state");
 import mocks from "./mocks";
 const { plugin_with_routes, sleep } = mocks;
 import expression from "../models/expression";
@@ -116,6 +116,56 @@ describe("get_async_expression_function", () => {
 
     expect(y).toBe(20);
   });
+});
+
+describe("get_expression_function", () => {
+  it("allows eval in the root tenant", () => {
+    // eval is enabled in vm2 for the root (default) tenant only
+    expect(db.getTenantSchema()).toBe(db.connectObj.default_schema);
+    const f = get_expression_function(`eval("2 + 3") + x`, [
+      new Field({ name: "x", type: "Integer" }),
+    ]);
+    expect(f({ x: 5 }, undefined)).toBe(10);
+  });
+  it("allows eval when a function code page is defined", async () => {
+    // refresh_codepages builds codepage_context in a VM; it must not leak that
+    // VM's `eval` into the eval context and disable eval in expressions.
+    await getState()!.setConfig("function_code_pages", {
+      mypage: `function add58(x){return x+58}`,
+    });
+    await getState()!.refresh_codepages();
+    try {
+      // the code-page VM's intrinsics must not leak into the eval context,
+      // otherwise they shadow the intrinsics of expression VMs
+      const ctxKeys = Object.keys(getState()!.codepage_context);
+      expect(ctxKeys).toContain("add58");
+      expect(ctxKeys).not.toContain("eval");
+      expect(ctxKeys).not.toContain("Function");
+      expect(ctxKeys).not.toContain("global");
+
+      const f = get_expression_function(`add58(eval("2 + 3")) + x`, [
+        new Field({ name: "x", type: "Integer" }),
+      ]);
+      // add58(eval("2 + 3")) = add58(5) = 63, + x (5) = 68
+      expect(f({ x: 5 }, undefined)).toBe(68);
+    } finally {
+      await getState()!.setConfig("function_code_pages", {});
+      getState()!.codepage_context = {};
+    }
+  });
+  if (db.supports_multiple_schemas)
+    it("disallows eval in a sub tenant", async () => {
+      add_tenant("subtenant1");
+      await db.runWithTenant("subtenant1", async () => {
+        expect(db.getTenantSchema()).not.toBe(db.connectObj.default_schema);
+        const f = get_expression_function(`eval("2 + 3") + x`, [
+          new Field({ name: "x", type: "Integer" }),
+        ]);
+        expect(() => f({ x: 5 }, undefined)).toThrow(
+          /Code generation from strings disallowed/
+        );
+      });
+    });
 });
 
 describe("code pages in eval", () => {
