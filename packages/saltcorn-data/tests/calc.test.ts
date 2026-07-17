@@ -3,7 +3,7 @@ import Field from "../models/field.js";
 import Trigger from "../models/trigger.js";
 import db from "../db/index.js";
 import * as mocks from "./mocks.js";
-import { getState } from "../db/state.js";
+import { getState, add_tenant } from "../db/state.js";
 import basePluginMod from "../base-plugin/index.js";
 import resetSchemaMod from "../db/reset_schema.js";
 import fixturesMod from "../db/fixtures.js";
@@ -129,6 +129,18 @@ describe("get_expression_function", () => {
       new Field({ name: "x", type: "Integer" }),
     ]);
     expect(f({ x: 5 }, undefined)).toBe(10);
+  });
+  it("disallows eval in a sub tenant", async () => {
+    add_tenant("subtenant1");
+    await db.runWithTenant("subtenant1", async () => {
+      expect(db.getTenantSchema()).not.toBe(db.connectObj.default_schema);
+      const f = get_expression_function(`eval("2 + 3") + x`, [
+        new Field({ name: "x", type: "Integer" }),
+      ]);
+      expect(() => f({ x: 5 }, undefined)).toThrow(
+        /Code generation from strings disallowed/
+      );
+    });
   });
 });
 
