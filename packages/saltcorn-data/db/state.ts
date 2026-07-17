@@ -1446,7 +1446,7 @@ class State {
           const vm = new VM({
             sandbox: myContext,
             // eval is enabled in the root tenant only
-            eval: db.getTenantSchema() === db.connectObj.default_schema,
+            eval: this.tenant === db.connectObj.default_schema,
             wasm: false,
           });
           vm.run(codeStr);
