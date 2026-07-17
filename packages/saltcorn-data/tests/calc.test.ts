@@ -26,7 +26,14 @@ const {
 import { mkWhere } from "@saltcorn/db-common/internal";
 
 import { assertIsSet } from "./assertions.js";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 import * as utils from "../utils.js";
 import PlainDate from "@saltcorn/plain-date";
 const { interpolate, mergeIntoWhere } = utils;
@@ -130,18 +137,19 @@ describe("get_expression_function", () => {
     ]);
     expect(f({ x: 5 }, undefined)).toBe(10);
   });
-  it("disallows eval in a sub tenant", async () => {
-    add_tenant("subtenant1");
-    await db.runWithTenant("subtenant1", async () => {
-      expect(db.getTenantSchema()).not.toBe(db.connectObj.default_schema);
-      const f = get_expression_function(`eval("2 + 3") + x`, [
-        new Field({ name: "x", type: "Integer" }),
-      ]);
-      expect(() => f({ x: 5 }, undefined)).toThrow(
-        /Code generation from strings disallowed/
-      );
+  if (db.supports_multiple_schemas)
+    it("disallows eval in a sub tenant", async () => {
+      add_tenant("subtenant1");
+      await db.runWithTenant("subtenant1", async () => {
+        expect(db.getTenantSchema()).not.toBe(db.connectObj.default_schema);
+        const f = get_expression_function(`eval("2 + 3") + x`, [
+          new Field({ name: "x", type: "Integer" }),
+        ]);
+        expect(() => f({ x: 5 }, undefined)).toThrow(
+          /Code generation from strings disallowed/
+        );
+      });
     });
-  });
 });
 
 describe("code pages in eval", () => {
