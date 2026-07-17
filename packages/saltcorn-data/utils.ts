@@ -647,10 +647,11 @@ const jsIdentifierValidator = (
 };
 
 function isValidJsIdentifier(str: string): boolean {
-  if (typeof str !== "string" || str.length === 0) return false;
+   if (typeof str !== 'string' || str.length === 0) return false;
+  if (!/^[\p{ID_Start}$_][\p{ID_Continue}$\u200C\u200D]*$/u.test(str)) return false;
   try {
-    new Function(`"use strict"; let ${str}`);
-    return true;
+    const fn = new Function(`"use strict"; return (async function ${str}() {});`)();
+    return fn.name === str;
   } catch {
     return false;
   }
