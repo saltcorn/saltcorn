@@ -2436,7 +2436,11 @@ const date = {
                   : attrs.day_only
                     ? v1.toLocaleDateString(attrs.locale)
                     : v1.toLocaleString(attrs.locale))(
-                typeof v === "string" ? new Date(v) : v
+                // backends with stores_dates_as_text hand back text *or* epoch
+                // numbers (see fixtures), neither of which has toLocale*
+                typeof v === "string" || typeof v === "number"
+                  ? new Date(v)
+                  : v
               )
             ),
           }),
@@ -2472,7 +2476,10 @@ const date = {
                 attrs.date_picker
                   ? v1.toISOString()
                   : v1.toLocaleDateString(attrs.locale))(
-                typeof v === "string" ? new Date(v) : v
+                // see note above: text *or* epoch numbers reach here
+                typeof v === "string" || typeof v === "number"
+                  ? new Date(v)
+                  : v
               )
             ),
           }),

@@ -105,6 +105,9 @@ export type SqlDialect = {
   slugifyWhereClause: (k: string, s: string) => string;
   // cast suffix after a pushed placeholder in the "eq" Where key
   textCastSuffix: () => string;
+  // random-ordering expression for `order by RANDOM()` (postgres/sqlite use
+  // RANDOM(), mysql uses RAND()). Optional so an older driver falls back below.
+  randomOrderExpr?: () => string;
 };
 
 // push each array element and return that many placeholders
@@ -786,7 +789,7 @@ export const mkSelectOptionsForDialect = (
 ): string => {
   const orderby =
     selopts.orderBy === "RANDOM()"
-      ? "order by RANDOM()"
+      ? `order by ${(fmt as SqlDialect).randomOrderExpr?.() ?? "RANDOM()"}`
       : selopts.orderBy &&
           typeof selopts.orderBy === "object" &&
           "distance" in selopts.orderBy

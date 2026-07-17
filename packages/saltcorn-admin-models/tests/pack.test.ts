@@ -832,7 +832,7 @@ describe("rls_enabled in packs", () => {
   });
 
   it("field-based RLS pack install enables RLS in PostgreSQL", async () => {
-    if (db.isSQLite) return;
+    if (!db.supports_row_level_security) return;
     const schema = db.getTenantSchema();
     const cls = await db.query(
       `SELECT relrowsecurity, relforcerowsecurity
@@ -867,7 +867,7 @@ describe("rls_enabled in packs", () => {
   });
 
   it("formula-only RLS pack install enables RLS in PostgreSQL", async () => {
-    if (db.isSQLite) return;
+    if (!db.supports_row_level_security) return;
     const schema = db.getTenantSchema();
     const cls = await db.query(
       `SELECT relrowsecurity, relforcerowsecurity

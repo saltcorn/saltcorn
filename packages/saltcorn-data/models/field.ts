@@ -982,7 +982,15 @@ class Field implements AbstractField {
           db.driverName === "postgres" ? " DEFERRABLE" : ""
         }`
       );
-    } else
+    } else if (db.driverName === "mysql")
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          this.table.name
+        )}" modify column "${sqlsanitize(
+          this.name
+        )}" ${new_sql_type} ${def};`
+      );
+    else
       await db.query(
         `alter table ${schema}"${sqlsanitize(
           this.table.name
@@ -1168,8 +1176,8 @@ class Field implements AbstractField {
       await this.toggle_not_null(!!v.required);
 
     if (
-      f.sql_type !== this.sql_type ||
-      this.reftable_name !== f.reftable_name
+      db.supports_alter_table &&
+      (f.sql_type !== this.sql_type || this.reftable_name !== f.reftable_name)
     ) {
       await this.alter_sql_type(f);
     }

@@ -3123,7 +3123,7 @@ class Table implements AbstractTable {
           _restore_of_version integer,
           _userid integer
           ${flds.join("")}
-          ${this.name === "users" ? ",_attributes JSONB" : ""}
+          ${this.name === "users" ? `,_attributes ${db.json_sql_type}` : ""}
           ,PRIMARY KEY("${pk}", _version)
           );`
     );
@@ -3146,9 +3146,9 @@ class Table implements AbstractTable {
             ref text not null,
             last_modified timestamp,
             deleted boolean default false,
-            updated_fields jsonb,
+            updated_fields ${db.json_sql_type},
             owner_id integer,
-            owner_fields jsonb)`
+            owner_fields ${db.json_sql_type})`
         );
         await db.query(
           `create index "${sqlsanitize(
