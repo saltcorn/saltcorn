@@ -2193,7 +2193,7 @@ const handleRelationPath = (
         const finalTable = Table.findOne({ name: lastTableName });
         if (
           typeof user !== "undefined" &&
-          (user?.role_id || 100) > lastTable!.min_role_read
+          (!finalTable || (user?.role_id || 100) > finalTable.min_role_read)
         )
           return;
         if (!where)

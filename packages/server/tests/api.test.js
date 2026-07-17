@@ -1227,6 +1227,127 @@ describe("API cross-table sub-select access control", () => {
     const rows2 = resp2.body.success || [];
     expect(rows1.length).toBe(rows2.length);
   });
+
+  it("should not allow probing a restricted parent table via forward-key relation path (ISSUE3)", async () => {
+    const app = await getApp({ disableCsrf: true });
+    // the forward foreign-key branch of handleRelationPath() checks the
+    // requesting user's role against the SOURCE table twice, instead of against
+    // the referenced (destination) table on the second check. A public user who
+    // can read `books` (min_role_read=100) can therefore traverse the FK
+    // `books.publisher` into the admin-only `publisher` table (min_role_read=1)
+    // and use the empty-vs-nonempty result set as an oracle to enumerate which
+    // publisher primary keys exist.
+    const books = Table.findOne({ name: "books" });
+    const publisher = Table.findOne({ name: "publisher" });
+    expect(books.min_role_read).toBe(100); // publicly readable
+    expect(publisher.min_role_read).toBe(1); // admin only
+
+    // Direct access to the restricted table is correctly blocked for the public.
+    await request(app).get("/api/publisher/").expect(notAuthorized);
+
+    // Find a publisher id that is actually referenced by a book, so a leaking
+    // query would return a non-empty result.
+    const referencingBook = await books.getRow({ publisher: { gt: 0 } });
+    const existingPublisherId = referencingBook.publisher;
+    expect(existingPublisherId).toBeGreaterThan(0);
+    const nonExistentPublisherId = 999999;
+
+    // Probe with an existing publisher id vs a non-existent one, unauthenticated.
+    const resp1 = await request(app)
+      .get("/api/books/")
+      .query({
+        _relation_path_: JSON.stringify({
+          relation: ".books.publisher",
+          srcId: `${existingPublisherId}`,
+        }),
+      })
+      .expect(200);
+    const resp2 = await request(app)
+      .get("/api/books/")
+      .query({
+        _relation_path_: JSON.stringify({
+          relation: ".books.publisher",
+          srcId: `${nonExistentPublisherId}`,
+        }),
+      })
+      .expect(200);
+
+    // Secure behavior: the traversal into the admin-only publisher table is
+    // blocked/ignored, so the two probes are indistinguishable (both same
+    // count). If vulnerable, the existing-id probe leaks the referencing book
+    // while the non-existent-id probe returns nothing.
+    const rows1 = resp1.body.success || [];
+    const rows2 = resp2.body.success || [];
+    expect(rows1.length).toBe(rows2.length);
+  });
+
+  it("ownership on the destination table must not reopen the relation-path oracle (ISSUE3)", async () => {
+    // Guards against a future well-meaning change that allows relation-path
+    // traversal when the user *owns* rows in the restricted destination table
+    // (e.g. `role_id <= min_role_read || is_owner`). That would let an owner
+    // filter by any destination primary key — not just owned rows — because the
+    // subquery filters by raw pk and does NOT apply the destination's
+    // ownership_formula_where. The security invariant: a user who does not meet
+    // the destination table's min_role_read cannot distinguish existing from
+    // non-existing destination pks, EVEN IF they own rows in that table.
+    const books = Table.findOne({ name: "books" });
+    const publisher = Table.findOne({ name: "publisher" });
+    expect(publisher.min_role_read).toBe(1); // admin only
+
+    // Find a publisher id that is referenced by a book (so a leaking traversal
+    // would return that book).
+    const referencingBook = await books.getRow({ publisher: { gt: 0 } });
+    const existingPublisherId = referencingBook.publisher;
+    const nonExistentPublisherId = 999999;
+
+    // Make user@foo.com (id 3, role 80) an owner of publisher rows.
+    const originalFormula = publisher.ownership_formula;
+    try {
+      await publisher.update({ ownership_formula: "user.id === 3" });
+      const reloaded = Table.findOne({ name: "publisher" });
+      const somePublisher = await reloaded.getRow({ id: existingPublisherId });
+      // Sanity: the user genuinely owns the referenced destination row.
+      expect(reloaded.is_owner({ id: 3, role_id: 80 }, somePublisher)).toBe(
+        true
+      );
+
+      const user = await User.findOne({ email: "user@foo.com" });
+      expect(user.role_id).toBe(80); // does NOT meet publisher.min_role_read=1
+      const userToken = await user.getNewAPIToken();
+      const app = await getApp({ disableCsrf: true });
+
+      const respOwned = await request(app)
+        .get("/api/books/")
+        .set("Authorization", "Bearer " + userToken)
+        .query({
+          _relation_path_: JSON.stringify({
+            relation: ".books.publisher",
+            srcId: `${existingPublisherId}`,
+          }),
+        })
+        .expect(200);
+      const respMissing = await request(app)
+        .get("/api/books/")
+        .set("Authorization", "Bearer " + userToken)
+        .query({
+          _relation_path_: JSON.stringify({
+            relation: ".books.publisher",
+            srcId: `${nonExistentPublisherId}`,
+          }),
+        })
+        .expect(200);
+
+      // Even though the user owns publisher rows, probing an existing (owned,
+      // referenced) publisher pk must be indistinguishable from probing a
+      // missing pk — the role gate blocks the traversal before ownership is
+      // ever consulted.
+      const ownedRows = respOwned.body.success || [];
+      const missingRows = respMissing.body.success || [];
+      expect(ownedRows.length).toBe(missingRows.length);
+    } finally {
+      await publisher.update({ ownership_formula: originalFormula || null });
+    }
+  });
 });
 
 describe("API CSRF protection", () => {
