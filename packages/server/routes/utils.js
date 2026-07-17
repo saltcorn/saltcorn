@@ -490,7 +490,7 @@ const getSessionStore = (pruneInterval) => {
   if (db.isSQLite) {
     var SQLiteStore = require("connect-sqlite3")(session);
     return session({
-      store: new SQLiteStore({ db: "sessions.sqlite" }),
+      store: new SQLiteStore({ db: new sqlite3.Database("sessions.sqlite") }),
       secret: db.connectObj.session_secret || is.str.generate(),
       resave: false,
       saveUninitialized: false,
