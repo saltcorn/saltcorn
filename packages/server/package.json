@@ -77,7 +77,8 @@
   },
   "optionalDependencies": {
     "connect-sqlite3": "^0.9.15",
-    "sd-notify": "^2.8.0"
+    "sd-notify": "^2.8.0",
+    "sqlite3": "5.1.7"
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {

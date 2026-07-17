@@ -488,7 +488,8 @@ const getSessionStore = (pruneInterval) => {
   let sameSite = getState().getConfig("cookie_samesite", "None").toLowerCase();
   if (sameSite === "unset") sameSite = undefined;
   if (db.isSQLite) {
-    var SQLiteStore = require("connect-sqlite3")(session);
+    const SQLiteStore = require("connect-sqlite3")(session);
+    const sqlite3 = require("sqlite3")
     return session({
       store: new SQLiteStore({ db: new sqlite3.Database("sessions.sqlite") }),
       secret: db.connectObj.session_secret || is.str.generate(),
