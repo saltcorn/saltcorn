@@ -137,6 +137,32 @@ describe("get_expression_function", () => {
     ]);
     expect(f({ x: 5 }, undefined)).toBe(10);
   });
+  it("allows eval when a function code page is defined", async () => {
+    // refresh_codepages builds codepage_context in a VM; it must not leak that
+    // VM's `eval` into the eval context and disable eval in expressions.
+    await getState()!.setConfig("function_code_pages", {
+      mypage: `function add58(x){return x+58}`,
+    });
+    await getState()!.refresh_codepages();
+    try {
+      // the code-page VM's intrinsics must not leak into the eval context,
+      // otherwise they shadow the intrinsics of expression VMs
+      const ctxKeys = Object.keys(getState()!.codepage_context);
+      expect(ctxKeys).toContain("add58");
+      expect(ctxKeys).not.toContain("eval");
+      expect(ctxKeys).not.toContain("Function");
+      expect(ctxKeys).not.toContain("global");
+
+      const f = get_expression_function(`add58(eval("2 + 3")) + x`, [
+        new Field({ name: "x", type: "Integer" }),
+      ]);
+      // add58(eval("2 + 3")) = add58(5) = 63, + x (5) = 68
+      expect(f({ x: 5 }, undefined)).toBe(68);
+    } finally {
+      await getState()!.setConfig("function_code_pages", {});
+      getState()!.codepage_context = {};
+    }
+  });
   if (db.supports_multiple_schemas)
     it("disallows eval in a sub tenant", async () => {
       add_tenant("subtenant1");
