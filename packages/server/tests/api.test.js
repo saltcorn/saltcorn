@@ -1350,6 +1350,50 @@ describe("API cross-table sub-select access control", () => {
   });
 });
 
+describe("API action expression injection", () => {
+  it("must not execute JavaScript from request body keys of a table-less webhook", async () => {
+    // isValidJsIdentifier() accepts any string that forms a valid `let`
+    // binding tail (e.g. `pwn=<expr>`), not just identifiers. For a table-less
+    // "API call" webhook trigger, the field names used to build the generated
+    // expression function come straight from the request body keys
+    // (Object.keys(row)). A crafted key like `pwn=(()=>{throw ...})()` is joined
+    // into a destructuring-default parameter and its default expression EXECUTES
+    // during parameter binding. Since an "API call" trigger defaults to
+    // min_role=100 (public), this is unauthenticated code injection.
+    const marker = "SC_INJECT_MARKER_ISSUE4_" + Date.now();
+    const trigger = await Trigger.create({
+      name: "issue4_pwnhook",
+      when_trigger: "API call",
+      action: "webhook",
+      min_role: 100, // public / unauthenticated
+      configuration: {
+        url: "http://127.0.0.1:9/nowhere",
+        method: "POST",
+        body: "{ok: 1}",
+      },
+    });
+    try {
+      const app = await getApp({ disableCsrf: true });
+      const craftedKey = `pwn=(()=>{throw new Error(${JSON.stringify(
+        marker
+      )})})()`;
+      const resp = await request(app)
+        .post("/api/action/issue4_pwnhook")
+        .set("Content-Type", "application/json")
+        .send({ [craftedKey]: 1, realfield: 42 });
+
+      // Sanity: the request actually reached the public action (not 404/401).
+      expect(resp.body.success).toBe(false);
+
+      // The crafted body key must be treated as inert data. If the injected
+      // code ran, its unique marker surfaces as the thrown error message.
+      expect(JSON.stringify(resp.body)).not.toContain(marker);
+    } finally {
+      await trigger.delete();
+    }
+  });
+});
+
 describe("API CSRF protection", () => {
   let adminToken, adminJwt;
 
