@@ -1,7 +1,7 @@
 name: Playwright Mobile Tests
 on:
   push:
-    branches: [master]
+    branches: [master, stable-1.4.x, stable-1.5.0, stable-1.6.x]
   pull_request:
     branches: [master]
 jobs:
