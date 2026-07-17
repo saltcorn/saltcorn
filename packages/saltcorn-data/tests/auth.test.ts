@@ -529,6 +529,56 @@ describe("Table with row ownership formula", () => {
     await persons.delete();
   });
 });
+describe("Table with row ownership formula and no ownership field", () => {
+  it("blocks non-owner inserts and forging ownership", async () => {
+    const notes = await Table.create("PrivateNotes", { min_role_write: 1 });
+    await Field.create({
+      table: notes,
+      name: "author_id",
+      type: "Integer",
+    });
+    await Field.create({
+      table: notes,
+      name: "content",
+      type: "String",
+    });
+    // Formula-only ownership: the row's author_id must equal the acting user's id.
+    await notes.update({
+      ownership_formula: "user.id === author_id",
+      ownership_field_id: null,
+    });
+    const owner_less_than_min = owner_user.role_id > notes.min_role_write;
+    expect(owner_less_than_min).toBe(true); // role 80 > min_role_write 1
+
+    // A below-min_role_write user forging another user's ownership: blocked.
+    const forged = await notes.insertRow(
+      { author_id: 999, content: "injected by attacker" },
+      non_owner_user
+    );
+    expect(forged).toBe(undefined);
+    expect(await notes.getRow({ content: "injected by attacker" })).toBe(null);
+
+    // Same user trying to attribute a row to another real user: blocked.
+    const forgedAdmin = await notes.insertRow(
+      { author_id: owner_user.id, content: "spam" },
+      non_owner_user
+    );
+    expect(forgedAdmin).toBe(undefined);
+    expect(await notes.getRow({ content: "spam" })).toBe(null);
+
+    // Inserting a row the user actually owns (author_id === own id): allowed.
+    const okId = await notes.insertRow(
+      { author_id: non_owner_user.id, content: "mine" },
+      non_owner_user
+    );
+    expect(okId).toBeTruthy();
+    expect((await notes.getRow({ content: "mine" }))?.author_id).toBe(
+      non_owner_user.id
+    );
+
+    await notes.delete();
+  });
+});
 describe("Table with row ownership joined formula nocalc", () => {
   it("should create and delete table", async () => {
     const department = await Table.create("_Department");
