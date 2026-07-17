@@ -1394,6 +1394,82 @@ describe("API action expression injection", () => {
   });
 });
 
+describe("API insert with ownership_formula", () => {
+ 
+  const tableName = "issue1_private_notes";
+
+  const makeTable = async () => {
+    const notes = await Table.create(tableName, {
+      min_role_write: 1, // admin only by role
+      min_role_read: 1,
+    });
+    await Field.create({ table: notes, name: "author_id", type: "Integer" });
+    await Field.create({ table: notes, name: "content", type: "String" });
+    // Formula-only ownership: a user owns a row iff its author_id is their id.
+    await notes.update({
+      ownership_formula: "user.id === author_id",
+      ownership_field_id: null,
+    });
+    return Table.findOne({ name: tableName });
+  };
+
+  it("blocks a non-owner (role 80) from forging ownership via POST /api/<table>/", async () => {
+    const notes = await makeTable();
+    try {
+      const user = await User.findOne({ email: "user@foo.com" });
+      expect(user.role_id).toBe(80); // greater than min_role_write=1
+      const userToken = await user.getNewAPIToken();
+      const app = await getApp({ disableCsrf: true });
+
+      // Attack: insert a row attributed to a different user (id 999).
+      const resp = await request(app)
+        .post(`/api/${tableName}/`)
+        .set("Authorization", "Bearer " + userToken)
+        .set("Content-Type", "application/json")
+        .send({ author_id: 999, content: "injected by attacker" });
+
+      // Must NOT succeed, and no row may persist.
+      expect(resp.body.success).toBeUndefined();
+      expect(resp.body.error).toBeTruthy();
+      expect(await notes.getRow({ content: "injected by attacker" })).toBe(null);
+
+      // Also cannot forge a row attributed to the admin (id 1).
+      const resp2 = await request(app)
+        .post(`/api/${tableName}/`)
+        .set("Authorization", "Bearer " + userToken)
+        .set("Content-Type", "application/json")
+        .send({ author_id: 1, content: "spam as admin" });
+      expect(resp2.body.success).toBeUndefined();
+      expect(await notes.getRow({ content: "spam as admin" })).toBe(null);
+    } finally {
+      await notes.delete();
+    }
+  });
+
+  it("allows a user to insert a row they actually own via the API", async () => {
+    const notes = await makeTable();
+    try {
+      const user = await User.findOne({ email: "user@foo.com" });
+      const userToken = await user.getNewAPIToken();
+      const app = await getApp({ disableCsrf: true });
+
+      // author_id === own id -> the user owns the row -> allowed.
+      const resp = await request(app)
+        .post(`/api/${tableName}/`)
+        .set("Authorization", "Bearer " + userToken)
+        .set("Content-Type", "application/json")
+        .send({ author_id: user.id, content: "mine" });
+
+      expect(resp.body.success).toBeDefined();
+      const row = await notes.getRow({ content: "mine" });
+      expect(row).not.toBe(null);
+      expect(row.author_id).toBe(user.id);
+    } finally {
+      await notes.delete();
+    }
+  });
+});
+
 describe("API CSRF protection", () => {
   let adminToken, adminJwt;
 
