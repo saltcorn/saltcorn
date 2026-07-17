@@ -121,6 +121,17 @@ describe("get_async_expression_function", () => {
   });
 });
 
+describe("get_expression_function", () => {
+  it("allows eval in the root tenant", () => {
+    // eval is enabled in vm2 for the root (default) tenant only
+    expect(db.getTenantSchema()).toBe(db.connectObj.default_schema);
+    const f = get_expression_function(`eval("2 + 3") + x`, [
+      new Field({ name: "x", type: "Integer" }),
+    ]);
+    expect(f({ x: 5 }, undefined)).toBe(10);
+  });
+});
+
 describe("code pages in eval", () => {
   it("sync codepages", async () => {
     await getState()!.setConfig("function_code_pages", {
