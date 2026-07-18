@@ -63,7 +63,7 @@
     "@saltcorn/sbadmin2": "1.7.0-alpha.0",
     "@socket.io/cluster-adapter": "^0.2.1",
     "@socket.io/sticky": "^1.0.1",
-    "adm-zip": "0.5.16",
+    "adm-zip": "0.6.0",
     "compression": "1.8.1",
     "connect-flash": "^0.1.1",
     "connect-pg-simple": "^9.0.1",
