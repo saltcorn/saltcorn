@@ -54,7 +54,7 @@
     "@saltcorn/markup": "1.7.0-alpha.0",
     "@saltcorn/db-common": "1.7.0-alpha.0",
     "@saltcorn/data": "1.7.0-alpha.0",
-    "adm-zip": "0.5.16",
+    "adm-zip": "0.6.0",
     "chaos-guinea-pig": "0.2.1",
     "csv-stringify": "^6.5.2",
     "csvtojson": "^2.0.10",
