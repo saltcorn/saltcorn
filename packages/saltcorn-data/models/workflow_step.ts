@@ -4,7 +4,7 @@
  * @module models/workflow_step
  * @subcategory models
  */
-import { jsIdentifierValidator } from "../utils.js";
+import { jsIdentifierValidator, withLock } from "../utils.js";
 import { getState } from "../db/state.js";
 import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
@@ -208,7 +208,7 @@ class WorkflowStep {
     await db.update("_sc_workflow_steps", row, this.id);
   }
 
-  async run(context: any, user: AbstractUser, req?: any) {
+  async run(context: any, user: AbstractUser, req?: any, workflowRun?: any) {
     if (this.only_if) {
       const proceed = eval_expression(
         this.only_if,
@@ -219,6 +219,51 @@ class WorkflowStep {
       if (!proceed) return;
     }
 
+    if (
+      this.action_name === "AcquireLock" ||
+      this.action_name === "ReleaseLock"
+    ) {
+      if (!workflowRun)
+        throw new Error(`${this.action_name} step requires a workflow run`);
+      const lockName = eval_expression(
+        this.configuration.lock_name,
+        context,
+        user,
+        `Lock name expression in ${this.name} step`
+      );
+      if (this.action_name === "AcquireLock") {
+        const timeoutSecs = this.configuration.lock_timeout;
+        await workflowRun.mutex.acquire(String(lockName), {
+          timeoutMs:
+            typeof timeoutSecs === "number" ? timeoutSecs * 1000 : undefined,
+        });
+      } else {
+        await workflowRun.mutex.release(String(lockName));
+      }
+      return;
+    }
+
+    if (this.configuration?.mutex_enabled && this.configuration?.mutex_lock_name) {
+      const lockName = eval_expression(
+        this.configuration.mutex_lock_name,
+        context,
+        user,
+        `Lock name expression in ${this.name} step`
+      );
+      const timeoutSecs = this.configuration.mutex_lock_timeout;
+      return await withLock(
+        String(lockName),
+        () => this.runAction(context, user, req),
+        {
+          timeoutMs:
+            typeof timeoutSecs === "number" ? timeoutSecs * 1000 : undefined,
+        }
+      );
+    }
+    return await this.runAction(context, user, req);
+  }
+
+  private async runAction(context: any, user: AbstractUser, req?: any) {
     if (this.action_name === "TableQuery") {
       const table = Table.findOne({ name: this.configuration.query_table });
       if (!table)
@@ -461,6 +506,11 @@ class WorkflowStep {
         if (cfg.error_handling_step)
           lines.push(`${t("Error handler")}: ${cfg.error_handling_step}`);
         break;
+      case "AcquireLock":
+      case "ReleaseLock":
+        if (cfg.lock_name)
+          lines.push(`${t("Lock name")}: ${shorten(cfg.lock_name)}`);
+        break;
       case "Output":
         if (cfg.popup_title) lines.push(`${t("Title")}: ${cfg.popup_title}`);
         // if (cfg.output_text) lines.push(shorten(cfg.output_text, 180));
@@ -568,6 +618,10 @@ class WorkflowStep {
       "Ask the user to fill in a form from an Edit view, storing the response in the context";
     actionExplainers.TerminateWorkflow =
       "Terminate the entire workflow run execution immediately";
+    actionExplainers.AcquireLock =
+      "Wait for and hold an exclusive lock, so that no other run of any workflow holding the same named lock can proceed until it is released. Held across subsequent steps until a matching Release lock step, or until the run ends or pauses.";
+    actionExplainers.ReleaseLock =
+      "Release a lock acquired by an earlier Acquire lock step in this run";
     if (opts?.api_call)
       actionExplainers.APIResponse = "Provide the response to an API call";
 
@@ -807,6 +861,25 @@ class WorkflowStep {
       required: true,
       validator: jsIdentifierValidator,
       showIf: { wf_action_name: "TableQuery" },
+    });
+    actionConfigFields.push({
+      label: "Lock name",
+      name: "lock_name",
+      sublabel:
+        "Name of the lock. Can be a JavaScript expression based on the run context, e.g. " +
+        '<code>"invoice-"+customer_id</code>. Runs sharing the same lock name across all nodes are mutually exclusive.',
+      type: "String",
+      required: true,
+      class: "validate-expression",
+      showIf: { wf_action_name: ["AcquireLock", "ReleaseLock"] },
+    });
+    actionConfigFields.push({
+      label: "Lock timeout (s)",
+      name: "lock_timeout",
+      sublabel:
+        "Optional. If the lock is not acquired within this many seconds, the step fails instead of waiting indefinitely.",
+      type: "Float",
+      showIf: { wf_action_name: "AcquireLock" },
     });
     actionConfigFields.push({
       label: "Popup title",

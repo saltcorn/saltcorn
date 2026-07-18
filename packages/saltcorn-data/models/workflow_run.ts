@@ -27,6 +27,7 @@ import {
 } from "../utils.js";
 import { eval_expression } from "./expression.js";
 import { AbstractUser } from "@saltcorn/types/model-abstracts/abstract_user";
+import { MultiNodeMutex } from "./multi_node_mutex.js";
 
 const data_output_to_html = (val: any) => {
   if (Array.isArray(val) && typeof val[0] === "object") {
@@ -71,6 +72,11 @@ class WorkflowRun {
 
   step_start?: Date;
 
+  // holds locks acquired by an AcquireLock step until released or the run
+  // ends/pauses (see models/mutex.ts); excluded from toJson below, it isn't
+  // a real column
+  mutex: MultiNodeMutex = new MultiNodeMutex();
+
   /**
    * WorkflowRun constructor
    * @param {object} o
@@ -111,7 +117,7 @@ class WorkflowRun {
    * @type {...*}
    */
   get toJson(): any {
-    const { id, steps, step_start, ...rest } = this;
+    const { id, steps, step_start, mutex, ...rest } = this;
     return rest;
   }
 
@@ -411,7 +417,22 @@ class WorkflowRun {
     this.current_step[Math.max(0, this.current_step.length - 1)] = stepName;
   }
 
-  async run({
+  async run(args: {
+    user?: AbstractUser;
+    interactive?: boolean;
+    noNotifications?: boolean;
+    api_call?: boolean;
+    trace?: boolean;
+    req?: any;
+  }) {
+    try {
+      return await this.runInner(args);
+    } finally {
+      await this.mutex.releaseAll();
+    }
+  }
+
+  private async runInner({
     user,
     interactive,
     noNotifications,
@@ -833,7 +854,7 @@ class WorkflowRun {
           } else if (waiting_fulfilled) {
             waiting_fulfilled = false;
           } else if (step && user)
-            result = await step.run(this.context, user, req);
+            result = await step.run(this.context, user, req, this);
 
           const nextUpdate: any = {};
           if (typeof result === "object" && result !== null) {

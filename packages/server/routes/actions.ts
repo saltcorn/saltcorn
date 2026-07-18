@@ -1083,6 +1083,29 @@ const getWorkflowStepForm = async (
           "Name of next step. Can be a JavaScript expression based on the run context. Blank if final step",
       },
       {
+        name: "mutex_enabled",
+        label: req.__("Protect with lock"),
+        sublabel: "Serialize this step using a cross-node lock.",
+        type: "Bool",
+      },
+      {
+        name: "mutex_lock_name",
+        label: req.__("Lock name"),
+        class: "validate-expression",
+        sublabel:
+          "Can be an expression, e.g. <code>&quot;invoice-&quot;+customer_id</code>. Released when the step finishes.",
+        type: "String",
+        showIf: { mutex_enabled: true },
+      },
+      {
+        name: "mutex_lock_timeout",
+        label: req.__("Lock timeout (s)"),
+        sublabel:
+          "Optional. If the lock is not acquired within this many seconds, the step fails instead of waiting indefinitely.",
+        type: "Float",
+        showIf: { mutex_enabled: true },
+      },
+      {
         input_type: "section_header",
         label: req.__("Action"),
       },
