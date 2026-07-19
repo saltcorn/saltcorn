@@ -78,8 +78,7 @@ run_tests_mysql:
   depends: run_tests_mysql_db
   delay: 5
   command:
-    - npm install --legacy-peer-deps ./deploy/whale-ci/local/saltcorn-mysql-backend-0.1.1.tgz
-    # - npm install --legacy-peer-deps @saltcorn/mysql-backend
+    - npm install --legacy-peer-deps @saltcorn/mysql-backend
     - saltcorn run-tests saltcorn-data
     - saltcorn run-tests server
     - saltcorn run-tests saltcorn-admin-models
