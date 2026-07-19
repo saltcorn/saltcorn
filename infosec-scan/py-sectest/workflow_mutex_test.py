@@ -284,3 +284,26 @@ class Test:
       f"expected only the first run's start/end (the second should have "
       f"been blocked before it ran) but got {markers}"
     )
+
+  # TEST: checking "Protect with lock" without giving a Lock name should be
+  # rejected by the step editor, not saved as a silently-unlocked step.
+  def test_blank_lock_name_rejected_when_protect_with_lock_enabled(self):
+    trigger_id = self._create_trigger('mutex_test_blank_name_wf')
+    self.sess1.get(f'/actions/stepedit/{trigger_id}')
+    self.sess1.postForm(f'/actions/stepedit/{trigger_id}', {
+      'wf_step_name': 'locked_step',
+      'wf_action_name': 'run_js_code',
+      'wf_initial_step': 'on',
+      'wf_only_if': '',
+      'wf_next_step': '',
+      'mutex_enabled': 'on',
+      'mutex_lock_name': '',
+      'code': 'return {};',
+      'run_where': 'Server',
+      '_csrf': self.sess1.csrf(),
+    })
+    assert self.sess1.status != 302, (
+      "expected the step save to be rejected (blank lock name with "
+      f"Protect with lock enabled) but it redirected: {self.sess1.content}"
+    )
+    assert 'Lock name is required' in self.sess1.content, self.sess1.content

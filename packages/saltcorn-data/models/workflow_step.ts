@@ -877,7 +877,7 @@ class WorkflowStep {
       label: "Lock timeout (s)",
       name: "lock_timeout",
       sublabel:
-        "Optional. If the lock is not acquired within this many seconds, the step fails instead of waiting indefinitely.",
+        "Optional. If the lock is not acquired within this many seconds, the step fails instead of waiting. Leave blank for a default 30s wait, or set to 0 to wait forever.",
       type: "Float",
       showIf: { wf_action_name: "AcquireLock" },
     });

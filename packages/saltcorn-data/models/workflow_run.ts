@@ -425,11 +425,28 @@ class WorkflowRun {
     trace?: boolean;
     req?: any;
   }) {
+    let result: any;
+    let runError: unknown;
+    let hasRunError = false;
     try {
-      return await this.runInner(args);
-    } finally {
-      await this.mutex.releaseAll();
+      result = await this.runInner(args);
+    } catch (e) {
+      runError = e;
+      hasRunError = true;
     }
+    try {
+      await this.mutex.releaseAll();
+    } catch (releaseErr) {
+      // don't let a lock-release failure hide the real run error - just log it
+      if (hasRunError)
+        console.error(
+          "Error releasing locks after workflow run error",
+          releaseErr
+        );
+      else throw releaseErr;
+    }
+    if (hasRunError) throw runError;
+    return result;
   }
 
   private async runInner({

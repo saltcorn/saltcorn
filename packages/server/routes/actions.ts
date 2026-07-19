@@ -1106,7 +1106,7 @@ const getWorkflowStepForm = async (
         name: "mutex_lock_timeout",
         label: req.__("Lock timeout (s)"),
         sublabel:
-          "Optional. If the lock is not acquired within this many seconds, the step fails instead of waiting indefinitely.",
+          "Optional. If the lock is not acquired within this many seconds, the step fails instead of waiting. Leave blank for a default 30s wait, or set to 0 to wait forever.",
         type: "Float",
         showIf: { mutex_enabled: true, wf_action_name: actionsAllowingMutex },
       },
@@ -1130,6 +1130,12 @@ const getWorkflowStepForm = async (
       },
       ...actionConfigFields,
     ],
+    validator: (vs: any) => {
+      if (vs.mutex_enabled && !vs.mutex_lock_name)
+        return req.__(
+          'Lock name is required when "Protect with lock" is enabled'
+        );
+    },
   });
   form.hidden("wf_step_id");
   form.hidden("_after_step");
