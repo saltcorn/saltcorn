@@ -1322,7 +1322,12 @@ class Field implements AbstractField {
       )}") references ${schema}"${sqlsanitize(this.reftable_name)}" ("${this.refname}")${
         this.on_delete_sql
       }${db.driverName === "postgres" ? " DEFERRABLE" : ""}`;
-      await db.query(q);
+      try {
+        await db.query(q);
+      } catch (e: any) {
+        if (db.driverName === "mysql" && e?.code === "ER_FK_DUP_NAME") return;
+        throw e;
+      }
     }
   }
 

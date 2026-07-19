@@ -1624,10 +1624,11 @@ Pencil, 0.5,2, t`;
       const rows = await table.getRows();
       expect(rows.length).toBe(2);
     });
-    it("should succeed on uuid pk", async () => {
-      // uuid-ossp is created once by the test runner (see table_history test)
+    if (db.driverName === "postgres")
+      it("should succeed on uuid pk", async () => {
+        // uuid-ossp is created once by the test runner (see table_history test)
 
-      getState()!.registerPlugin("mock_plugin", plugin_with_routes());
+        getState()!.registerPlugin("mock_plugin", plugin_with_routes());
       const csv = `id,cost,somenum, vatable
 179f7e88-ae48-495e-a080-68c471fac2ac, 5,4, f
 d1403829-cc1e-49b5-bcdc-488973e640ba, 0.5,2, t`;
@@ -2341,7 +2342,7 @@ describe("Table constraints", () => {
   });
 });
 describe("Table with UUID pks", () => {
-  if (!db.isSQLite) {
+  if (db.driverName === "postgres") {
     it("should select uuid", async () => {
       // uuid-ossp is created once by the test runner (see table_history test)
 

@@ -17,6 +17,15 @@ import { Req, Res } from "@saltcorn/types/base_types";
 const router = Router();
 export default router;
 
+const tsFromEpoch = (param: string): string =>
+  db.driverName === "mysql"
+    ? `FROM_UNIXTIME(${param})`
+    : `to_timestamp(${param})`;
+const asText = (expr: string): string =>
+  db.driverName === "mysql" ? `CAST(${expr} AS CHAR)` : `${expr}::text`;
+const msTrunc = (expr: string): string =>
+  db.driverName === "mysql" ? expr : `date_trunc('milliseconds', ${expr})`;
+
 router.get(
   "/sync_timestamp",
   loggedIn,
@@ -106,26 +115,25 @@ const getSyncRows = async (syncInfo: any, table: any, syncUntil: any, user: any)
       ? `and data_tbl."${db.sqlsanitize(ownerFieldName)}" = $3`
       : "";
     if (ownerFieldName) params.push(userId as number);
+    const pkText = asText(`data_tbl."${db.sqlsanitize(pkName)}"`);
     const { rows } = await db.query(
       `select
-         COALESCE(info_tbl.ref, data_tbl."${db.sqlsanitize(
-           pkName
-         )}"::text) "_sync_info_tbl_ref_",
+         COALESCE(info_tbl.ref, ${pkText}) "_sync_info_tbl_ref_",
          info_tbl.last_modified "_sync_info_tbl_last_modified_",
          COALESCE(info_tbl.deleted, false) "_sync_info_tbl_deleted_",
          data_tbl.*
        from ${schema}"${db.sqlsanitize(tblName)}_sync_info" "info_tbl"
        right join "${db.sqlsanitize(tblName)}" "data_tbl"
-         on info_tbl.ref = data_tbl."${db.sqlsanitize(pkName)}"::text
+         on info_tbl.ref = ${pkText}
          and info_tbl.deleted = false
        where (
-           COALESCE(info_tbl.last_modified, to_timestamp(0)),
-           COALESCE(info_tbl.ref, data_tbl."${db.sqlsanitize(pkName)}"::text)
-         ) > (to_timestamp($1), $2)
+           COALESCE(info_tbl.last_modified, ${tsFromEpoch("0")}),
+           COALESCE(info_tbl.ref, ${pkText})
+         ) > (${tsFromEpoch("$1")}, $2)
        ${ownerClause}
        order by
-         COALESCE(info_tbl.last_modified, to_timestamp(0)),
-         COALESCE(info_tbl.ref, data_tbl."${db.sqlsanitize(pkName)}"::text)`,
+         COALESCE(info_tbl.last_modified, ${tsFromEpoch("0")}),
+         COALESCE(info_tbl.ref, ${pkText})`,
       params
     );
     for (const row of rows) {
@@ -162,11 +170,11 @@ const getSyncRows = async (syncInfo: any, table: any, syncUntil: any, user: any)
          data_tbl.*
        from ${schema}"${db.sqlsanitize(tblName)}_sync_info" "info_tbl"
        join ${schema}"${db.sqlsanitize(tblName)}" "data_tbl"
-         on info_tbl.ref = data_tbl."${db.sqlsanitize(pkName)}"::text
-       where date_trunc('milliseconds', info_tbl.last_modified) > to_timestamp($1)
-         and date_trunc('milliseconds', info_tbl.last_modified) < to_timestamp($2)
+         on info_tbl.ref = ${asText(`data_tbl."${db.sqlsanitize(pkName)}"`)}
+       where ${msTrunc("info_tbl.last_modified")} > ${tsFromEpoch("$1")}
+         and ${msTrunc("info_tbl.last_modified")} < ${tsFromEpoch("$2")}
          and info_tbl.deleted = false
-         and (info_tbl.last_modified, info_tbl.ref) > (to_timestamp($3), $4)
+         and (info_tbl.last_modified, info_tbl.ref) > (${tsFromEpoch("$3")}, $4)
        ${ownerClause}
        order by info_tbl.last_modified, info_tbl.ref`,
       params
@@ -258,12 +266,12 @@ const getDelRows = async (tblName: any, syncFrom: any, syncUntil: any, userId: a
   const dbRes = await db.query(
     `select *
      from (
-      select ref, max(last_modified), owner_id, owner_fields from ${schema}"${db.sqlsanitize(
+      select ref, max(last_modified) as "max", owner_id, owner_fields from ${schema}"${db.sqlsanitize(
         tblName
       )}_sync_info"
       group by ref, deleted, owner_id, owner_fields having deleted = true) as alias
-      where alias.max < to_timestamp($1)
-        and alias.max > to_timestamp($2)
+      where alias.max < ${tsFromEpoch("$1")}
+        and alias.max > ${tsFromEpoch("$2")}
         ${ownerFilter}`,
     [syncUntilMs / 1000.0, syncFromMs / 1000.0]
   );

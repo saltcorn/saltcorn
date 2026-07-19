@@ -203,7 +203,7 @@ describe("delete where test", () => {
 });
 
 describe("RLS CRUD enforcement", () => {
-  if (db.isSQLite) return;
+  if (!db.supports_row_level_security) return;
 
   const WRITER = { id: 201, role: 40 }; // role 40 = staff (min_role_write)
   const READER = { id: 202, role: 80 }; // role 80 = user  (min_role_read only)
@@ -387,7 +387,7 @@ describe("RLS CRUD enforcement", () => {
 });
 
 describe("RLS policy structure", () => {
-  if (db.isSQLite) return;
+  if (!db.supports_row_level_security) return;
 
   let table: Table;
 

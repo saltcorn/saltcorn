@@ -67,12 +67,6 @@ run_tests_postgres:
 run_tests_mysql_db:
   image: mysql:8
   service: true
-  # DISABLED until @saltcorn/mysql-backend is published to npm with the
-  # capability flags and dialect fixes current core requires. Until then this
-  # step fails at reset, and whale-ci is fail-fast (a failing step aborts the
-  # run and leaves later steps, e.g. playwright, "skipped"). Re-enable both
-  # run_tests_mysql_db and run_tests_mysql (remove disable) once published.
-  disable: true
   quiet: true
   ready-on: MySQL init process done
   environment:
@@ -81,12 +75,11 @@ run_tests_mysql_db:
 
 run_tests_mysql:
   image: build
-  # DISABLED until @saltcorn/mysql-backend is published (see run_tests_mysql_db).
-  disable: true
   depends: run_tests_mysql_db
   delay: 5
   command:
-    - npm install --legacy-peer-deps @saltcorn/mysql-backend
+    - npm install --legacy-peer-deps ./deploy/whale-ci/local/saltcorn-mysql-backend-0.1.1.tgz
+    # - npm install --legacy-peer-deps @saltcorn/mysql-backend
     - saltcorn run-tests saltcorn-data
     - saltcorn run-tests server
     - saltcorn run-tests saltcorn-admin-models
