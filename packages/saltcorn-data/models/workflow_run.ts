@@ -72,9 +72,8 @@ class WorkflowRun {
 
   step_start?: Date;
 
-  // holds locks acquired by an AcquireLock step until released or the run
-  // ends/pauses (see models/mutex.ts); excluded from toJson below, it isn't
-  // a real column
+  // Holds locks acquired by an AcquireLock step (see models/multi_node_mutex.ts).
+  // Excluded from toJson below since it isn't a real column.
   mutex: MultiNodeMutex = new MultiNodeMutex();
 
   /**
