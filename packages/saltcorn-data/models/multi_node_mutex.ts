@@ -21,14 +21,35 @@ export const DEFAULT_TIMEOUT_MS = 30_000;
 
 // SQLite fallback
 const localLocksHeld: Set<string> = new Set();
-const localLockWaiters: Map<string, Array<() => void>> = new Map();
+const localLockWaiters: Map<string, Array<{ resolve: () => void }>> = new Map();
 
-const acquireLockLocally = async (name: string): Promise<void> => {
+// timeoutMs === 0 means wait forever, same as the Postgres path
+const acquireLockLocally = async (
+  name: string,
+  timeoutMs: number
+): Promise<void> => {
   while (localLocksHeld.has(name)) {
-    await new Promise<void>((resolve) => {
+    await new Promise<void>((resolve, reject) => {
+      let timer: NodeJS.Timeout | undefined;
+      const waiter = {
+        resolve: () => {
+          if (timer) clearTimeout(timer);
+          resolve();
+        },
+      };
       const waiters = localLockWaiters.get(name) || [];
-      waiters.push(resolve);
+      waiters.push(waiter);
       localLockWaiters.set(name, waiters);
+      if (timeoutMs > 0) {
+        timer = setTimeout(() => {
+          const current = localLockWaiters.get(name);
+          const idx = current?.indexOf(waiter) ?? -1;
+          if (idx !== -1) {
+            current!.splice(idx, 1);
+            reject(new Error(`lock timeout waiting for "${name}"`));
+          }
+        }, timeoutMs);
+      }
     });
   }
   localLocksHeld.add(name);
@@ -37,7 +58,7 @@ const acquireLockLocally = async (name: string): Promise<void> => {
 const releaseLockLocally = (name: string): void => {
   localLocksHeld.delete(name);
   const next = localLockWaiters.get(name)?.shift();
-  if (next) next();
+  if (next) next.resolve();
 };
 
 // Clear lock_timeout before returning this connection to the pool, so it
@@ -72,12 +93,6 @@ export class MultiNodeMutex {
     opts: { timeoutMs?: number } = {}
   ): Promise<void> {
     if (this.lockConnections.has(name)) return;
-    if (db.driverName !== "postgres") {
-      await acquireLockLocally(name);
-      this.lockConnections.set(name, true);
-      return;
-    }
-    const client = await db.getClient();
     // not given at all -> bounded default; explicitly 0 -> wait forever
     const timeoutMs =
       opts.timeoutMs === undefined ||
@@ -85,6 +100,12 @@ export class MultiNodeMutex {
       opts.timeoutMs < 0
         ? DEFAULT_TIMEOUT_MS
         : Math.floor(opts.timeoutMs);
+    if (db.driverName !== "postgres") {
+      await acquireLockLocally(name, timeoutMs);
+      this.lockConnections.set(name, true);
+      return;
+    }
+    const client = await db.getClient();
     try {
       await client.query("select set_config('lock_timeout', $1, false)", [
         String(timeoutMs),
