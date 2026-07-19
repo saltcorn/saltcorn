@@ -1098,7 +1098,10 @@ const getWorkflowStepForm = async (
         label: req.__("Lock name"),
         class: "validate-expression",
         sublabel:
-          "Can be an expression, e.g. <code>&quot;invoice-&quot;+customer_id</code>. Released when the step finishes.",
+          "JavaScript expression, e.g. " +
+          "<code>&quot;mylock&quot;</code> for a fixed name, or " +
+          "<code>&quot;invoice-&quot;+customer_id</code> using a variable. Released " +
+          "when the step finishes.",
         type: "String",
         showIf: { mutex_enabled: true, wf_action_name: actionsAllowingMutex },
       },

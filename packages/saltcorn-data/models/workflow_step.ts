@@ -866,8 +866,10 @@ class WorkflowStep {
       label: "Lock name",
       name: "lock_name",
       sublabel:
-        "Name of the lock. Can be a JavaScript expression based on the run context, e.g. " +
-        '<code>"invoice-"+customer_id</code>. Runs sharing the same lock name across all nodes are mutually exclusive.',
+        "JavaScript expression, e.g. " +
+        '<code>"mylock"</code> for a fixed name, or ' +
+        '<code>"invoice-"+customer_id</code> using a variable. Runs sharing ' +
+        "the same lock name across all nodes are mutually exclusive.",
       type: "String",
       required: true,
       class: "validate-expression",
