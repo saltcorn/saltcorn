@@ -6,7 +6,14 @@ import Trigger from "../models/trigger.js";
 
 import db from "../db/index.js";
 import { assertIsSet } from "./assertions.js";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 import { GenObj } from "@saltcorn/types/common_types";
 import { runWithTenant } from "@saltcorn/db-common/multi-tenant";
 
@@ -19,6 +26,7 @@ import * as mocks from "./mocks.js";
 import User from "../models/user.js";
 import Table from "../models/table.js";
 import WorkflowTrace from "../models/workflow_trace.js";
+import { sleep } from "../utils.js";
 const { mockReqRes } = mocks;
 
 afterAll(db.close);
@@ -107,7 +115,9 @@ describe("Workflow run steps", () => {
     const trigger0 = Trigger.findOne({ name: "mywf" });
 
     assertIsSet(trigger0);
-    await Trigger.update(trigger0.id!, { configuration: { save_traces: true } });
+    await Trigger.update(trigger0.id!, {
+      configuration: { save_traces: true },
+    });
     const trigger = Trigger.findOne({ name: "mywf" });
     assertIsSet(trigger);
 
@@ -962,5 +972,192 @@ describe("Workflow step operations", () => {
     );
     expect(diagram).toContain("_Start--");
     expect(diagram).toContain("--> _End__subgraph_");
+  });
+});
+
+describe("Workflow mutex", () => {
+  let logTable: Table;
+
+  beforeAll(async () => {
+    logTable = await Table.create("wf_mutex_log");
+    await Field.create({
+      table: logTable,
+      name: "case",
+      label: "case",
+      type: "String",
+    });
+    await Field.create({
+      table: logTable,
+      name: "phase",
+      label: "phase",
+      type: "String",
+    });
+  });
+
+  const markers = async (caseName: string): Promise<string[]> => {
+    const rows = await logTable.getRows({ case: caseName }, { orderBy: "id" });
+    return rows.map((r: any) => r.phase);
+  };
+
+  const logStepCode = (caseName: string, sleepMs: number) => `
+    const table = Table.findOne({name: "wf_mutex_log"});
+    await table.insertRow({case: "${caseName}", phase: "start"});
+    await sleep(${sleepMs});
+    await table.insertRow({case: "${caseName}", phase: "end"});
+    return {};
+  `;
+
+  it("step-scoped lock keeps concurrent runs from overlapping", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "mutex_steplock_wf",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "locked_step",
+      action_name: "run_js_code",
+      initial_step: true,
+      configuration: {
+        mutex_enabled: true,
+        mutex_lock_name: `"ts-steplock"`,
+        code: logStepCode("steplock", 300),
+        run_where: "Server",
+      },
+    });
+
+    const run1 = await WorkflowRun.create({ trigger_id: trigger.id! });
+    const run2 = await WorkflowRun.create({ trigger_id: trigger.id! });
+    await Promise.all([run1.run({ user }), run2.run({ user })]);
+
+    expect(await markers("steplock")).toStrictEqual([
+      "start",
+      "end",
+      "start",
+      "end",
+    ]);
+  });
+
+  // Without the lock, the same setup should overlap instead - proving
+  // this test can actually tell locked from unlocked.
+  it("without the lock, concurrent runs interleave", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "mutex_nolock_wf",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "unlocked_step",
+      action_name: "run_js_code",
+      initial_step: true,
+      configuration: {
+        code: logStepCode("nolock", 300),
+        run_where: "Server",
+      },
+    });
+
+    const run1 = await WorkflowRun.create({ trigger_id: trigger.id! });
+    const run2 = await WorkflowRun.create({ trigger_id: trigger.id! });
+    await Promise.all([run1.run({ user }), run2.run({ user })]);
+
+    expect(await markers("nolock")).toStrictEqual([
+      "start",
+      "start",
+      "end",
+      "end",
+    ]);
+  });
+
+  it("run-scoped AcquireLock/ReleaseLock keeps concurrent runs from overlapping across steps", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "mutex_runlock_wf",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "acquire",
+      action_name: "AcquireLock",
+      next_step: "log",
+      initial_step: true,
+      configuration: { lock_name: `"ts-runlock"` },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "log",
+      action_name: "run_js_code",
+      next_step: "release",
+      initial_step: false,
+      configuration: {
+        code: logStepCode("runlock", 300),
+        run_where: "Server",
+      },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "release",
+      action_name: "ReleaseLock",
+      initial_step: false,
+      configuration: { lock_name: `"ts-runlock"` },
+    });
+
+    const run1 = await WorkflowRun.create({ trigger_id: trigger.id! });
+    const run2 = await WorkflowRun.create({ trigger_id: trigger.id! });
+    await Promise.all([run1.run({ user }), run2.run({ user })]);
+
+    expect(await markers("runlock")).toStrictEqual([
+      "start",
+      "end",
+      "start",
+      "end",
+    ]);
+  });
+
+  // First run holds the lock for 1s; the second, started 200ms later with
+  // a 300ms timeout, should fail while the first is still holding it.
+  it("lock timeout fails a run that can't acquire in time", async () => {
+    const user = await User.findOne({ id: 1 });
+    assertIsSet(user);
+    const trigger = await Trigger.create({
+      action: "Workflow",
+      when_trigger: "Never",
+      name: "mutex_timeout_wf",
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "locked_step",
+      action_name: "run_js_code",
+      initial_step: true,
+      configuration: {
+        mutex_enabled: true,
+        mutex_lock_name: `"ts-timeoutlock"`,
+        mutex_lock_timeout: 0.3,
+        code: logStepCode("timeoutlock", 1000),
+        run_where: "Server",
+      },
+    });
+
+    const run1 = await WorkflowRun.create({ trigger_id: trigger.id! });
+    const run2 = await WorkflowRun.create({ trigger_id: trigger.id! });
+
+    const firstPromise = run1.run({ user });
+    await sleep(200); // let run1 acquire the lock and start its 1s sleep
+    // markAsError logs the (here, expected) failure to console.error -
+    // silence it for just this call so the test output stays clean
+    const errSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    await run2.run({ user });
+    errSpy.mockRestore();
+    await firstPromise;
+
+    expect(run2.status).toBe("Error");
+    expect(String(run2.error)).toMatch(/lock timeout/i);
+    expect(await markers("timeoutlock")).toStrictEqual(["start", "end"]);
   });
 });

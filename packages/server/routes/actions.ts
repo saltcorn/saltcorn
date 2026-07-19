@@ -1032,6 +1032,10 @@ const getWorkflowStepForm = async (
     builtIns: Object.keys(builtInActionExplainers),
     forWorkflow: true,
   });
+  // AcquireLock/ReleaseLock steps don't need the lock option below.
+  const actionsAllowingMutex = actionsNotRequiringRow
+    .flatMap((g: any) => g.options || [])
+    .filter((name: string) => name !== "AcquireLock" && name !== "ReleaseLock");
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
   })!;
@@ -1085,8 +1089,9 @@ const getWorkflowStepForm = async (
       {
         name: "mutex_enabled",
         label: req.__("Protect with lock"),
-        sublabel: "Serialize this step using a cross-node lock.",
+        sublabel: "Run this step only while holding a named lock.",
         type: "Bool",
+        showIf: { wf_action_name: actionsAllowingMutex },
       },
       {
         name: "mutex_lock_name",
@@ -1095,7 +1100,7 @@ const getWorkflowStepForm = async (
         sublabel:
           "Can be an expression, e.g. <code>&quot;invoice-&quot;+customer_id</code>. Released when the step finishes.",
         type: "String",
-        showIf: { mutex_enabled: true },
+        showIf: { mutex_enabled: true, wf_action_name: actionsAllowingMutex },
       },
       {
         name: "mutex_lock_timeout",
@@ -1103,7 +1108,7 @@ const getWorkflowStepForm = async (
         sublabel:
           "Optional. If the lock is not acquired within this many seconds, the step fails instead of waiting indefinitely.",
         type: "Float",
-        showIf: { mutex_enabled: true },
+        showIf: { mutex_enabled: true, wf_action_name: actionsAllowingMutex },
       },
       {
         input_type: "section_header",
