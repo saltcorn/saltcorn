@@ -68,6 +68,18 @@ which is the same as
 const data = await fetchJSON('https://api.github.com/users/github');
 ```
 
+#### `withLock`
+
+Run code while holding a named lock, so that no other run holding the same lock name (even on a different server node) can proceed until it finishes.
+
+Example:
+
+```
+await withLock("invoice-" + customer_id, async () => {
+  await table.insertRow({customer_id, total: 42})
+})
+```
+
 ## Return directives
 
 Your code can with its return value give directives to the current page. 

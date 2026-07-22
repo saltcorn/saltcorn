@@ -214,6 +214,19 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Runs fn() while holding a cross-node exclusive lock named `name`,
+ * released as soon as fn() finishes or throws.
+ */
+async function withLock<T>(
+  name: string,
+  fn: () => Promise<T>,
+  opts: { timeoutMs?: number } = {}
+): Promise<T> {
+  const { MultiNodeMutex } = await import("./models/multi_node_mutex.js");
+  return await new MultiNodeMutex().withLock(name, fn, opts);
+}
+
 const mergeIntoWhere = (where: Where, newWhere: GenObj) => {
   Object.entries(newWhere).forEach(([k, v]) => {
     if (k == "or") {
@@ -943,6 +956,7 @@ export {
   getLines,
   removeAllWhiteSpace,
   sleep,
+  withLock,
   mergeIntoWhere,
   isStale,
   isNode,
