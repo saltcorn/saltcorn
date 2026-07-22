@@ -103,48 +103,10 @@ class Test:
     assert m, f"could not parse count from run-sql output: {out}"
     return int(m.group(1))
 
-  # TEST: step-scoped lock (the "Protect with lock" checkbox + Lock name
-  # config on any step) serializes concurrent runs across two node
-  # processes sharing one database.
-  def test_step_scoped_lock_serializes_across_nodes(self):
-    prefix = 'steplock'
-    trigger_id = self._create_trigger('mutex_test_step_lock_wf')
-    self._add_step(trigger_id, {
-      'wf_step_name': 'locked_step',
-      'wf_action_name': 'run_js_code',
-      'wf_initial_step': 'on',
-      'wf_only_if': '',
-      'wf_next_step': '',
-      'mutex_enabled': 'on',
-      'mutex_lock_name': '"steplock-shared-lock"',
-      'code': log_step_code(prefix, 1500),
-      'run_where': 'Server',
-    })
-
-    results = {}
-    t1 = threading.Thread(
-      target=self._fire_testrun, args=(self.sess1, trigger_id, results, 's1')
-    )
-    t2 = threading.Thread(
-      target=self._fire_testrun, args=(self.sess2, trigger_id, results, 's2')
-    )
-    t1.start()
-    t2.start()
-    t1.join(timeout=30)
-    t2.join(timeout=30)
-
-    assert results['s1'][0] == 302, results['s1'][1]
-    assert results['s2'][0] == 302, results['s2'][1]
-
-    markers = self._markers(prefix)
-    logger.info(f"[{prefix}] marker sequence: {markers}")
-    assert markers == [
-      f'{prefix}-start', f'{prefix}-end', f'{prefix}-start', f'{prefix}-end'
-    ], f"expected serialized start,end,start,end but got {markers}"
-
-  # Without the lock, the same setup should overlap instead - proving
-  # this test can actually tell locked from unlocked.
-  def test_step_scope_without_lock_interleaves(self):
+  # Without a lock, concurrent runs should overlap - proving the markers
+  # setup can actually tell locked from unlocked (used as the baseline for
+  # the AcquireLock/ReleaseLock test below).
+  def test_without_lock_interleaves(self):
     prefix = 'nolock'
     trigger_id = self._create_trigger('mutex_test_no_lock_wf')
     self._add_step(trigger_id, {
@@ -237,20 +199,35 @@ class Test:
 
   # The first run holds the lock for 4s. The second starts 1s later with
   # a 1s timeout, so it should fail instead of waiting.
-  def test_step_scoped_lock_timeout_fails_second_run(self):
+  def test_acquire_lock_timeout_fails_second_run(self):
     prefix = 'timeoutlock'
+    lock_name = 'timeoutlock-shared-lock'
     trigger_id = self._create_trigger('mutex_test_timeout_wf')
     self._add_step(trigger_id, {
-      'wf_step_name': 'locked_step',
-      'wf_action_name': 'run_js_code',
+      'wf_step_name': 'acquire',
+      'wf_action_name': 'AcquireLock',
       'wf_initial_step': 'on',
       'wf_only_if': '',
-      'wf_next_step': '',
-      'mutex_enabled': 'on',
-      'mutex_lock_name': '"timeoutlock-shared-lock"',
-      'mutex_lock_timeout': '1',
+      'wf_next_step': 'log',
+      'lock_name': f'"{lock_name}"',
+      'lock_timeout': '1',
+    })
+    self._add_step(trigger_id, {
+      'wf_step_name': 'log',
+      'wf_action_name': 'run_js_code',
+      'wf_initial_step': '',
+      'wf_only_if': '',
+      'wf_next_step': 'release',
       'code': log_step_code(prefix, 4000),
       'run_where': 'Server',
+    })
+    self._add_step(trigger_id, {
+      'wf_step_name': 'release',
+      'wf_action_name': 'ReleaseLock',
+      'wf_initial_step': '',
+      'wf_only_if': '',
+      'wf_next_step': '',
+      'lock_name': f'"{lock_name}"',
     })
 
     results = {}
@@ -284,26 +261,3 @@ class Test:
       f"expected only the first run's start/end (the second should have "
       f"been blocked before it ran) but got {markers}"
     )
-
-  # TEST: checking "Protect with lock" without giving a Lock name should be
-  # rejected by the step editor, not saved as a silently-unlocked step.
-  def test_blank_lock_name_rejected_when_protect_with_lock_enabled(self):
-    trigger_id = self._create_trigger('mutex_test_blank_name_wf')
-    self.sess1.get(f'/actions/stepedit/{trigger_id}')
-    self.sess1.postForm(f'/actions/stepedit/{trigger_id}', {
-      'wf_step_name': 'locked_step',
-      'wf_action_name': 'run_js_code',
-      'wf_initial_step': 'on',
-      'wf_only_if': '',
-      'wf_next_step': '',
-      'mutex_enabled': 'on',
-      'mutex_lock_name': '',
-      'code': 'return {};',
-      'run_where': 'Server',
-      '_csrf': self.sess1.csrf(),
-    })
-    assert self.sess1.status != 302, (
-      "expected the step save to be rejected (blank lock name with "
-      f"Protect with lock enabled) but it redirected: {self.sess1.content}"
-    )
-    assert 'Lock name is required' in self.sess1.content, self.sess1.content

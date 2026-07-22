@@ -4,7 +4,7 @@
  * @module models/workflow_step
  * @subcategory models
  */
-import { jsIdentifierValidator, withLock } from "../utils.js";
+import { jsIdentifierValidator } from "../utils.js";
 import { getState } from "../db/state.js";
 import db from "../db/index.js";
 import type { Where, SelectOptions, Row } from "@saltcorn/db-common/internal";
@@ -243,23 +243,6 @@ class WorkflowStep {
       return;
     }
 
-    if (this.configuration?.mutex_enabled && this.configuration?.mutex_lock_name) {
-      const lockName = eval_expression(
-        this.configuration.mutex_lock_name,
-        context,
-        user,
-        `Lock name expression in ${this.name} step`
-      );
-      const timeoutSecs = this.configuration.mutex_lock_timeout;
-      return await withLock(
-        String(lockName),
-        () => this.runAction(context, user, req),
-        {
-          timeoutMs:
-            typeof timeoutSecs === "number" ? timeoutSecs * 1000 : undefined,
-        }
-      );
-    }
     return await this.runAction(context, user, req);
   }
 

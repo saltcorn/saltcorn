@@ -1007,39 +1007,6 @@ describe("Workflow mutex", () => {
     return {};
   `;
 
-  it("step-scoped lock keeps concurrent runs from overlapping", async () => {
-    const user = await User.findOne({ id: 1 });
-    assertIsSet(user);
-    const trigger = await Trigger.create({
-      action: "Workflow",
-      when_trigger: "Never",
-      name: "mutex_steplock_wf",
-    });
-    await WorkflowStep.create({
-      trigger_id: trigger.id!,
-      name: "locked_step",
-      action_name: "run_js_code",
-      initial_step: true,
-      configuration: {
-        mutex_enabled: true,
-        mutex_lock_name: `"ts-steplock"`,
-        code: logStepCode("steplock", 300),
-        run_where: "Server",
-      },
-    });
-
-    const run1 = await WorkflowRun.create({ trigger_id: trigger.id! });
-    const run2 = await WorkflowRun.create({ trigger_id: trigger.id! });
-    await Promise.all([run1.run({ user }), run2.run({ user })]);
-
-    expect(await markers("steplock")).toStrictEqual([
-      "start",
-      "end",
-      "start",
-      "end",
-    ]);
-  });
-
   // Without the lock, the same setup should overlap instead - proving
   // this test can actually tell locked from unlocked.
   it("without the lock, concurrent runs interleave", async () => {
@@ -1132,16 +1099,32 @@ describe("Workflow mutex", () => {
     });
     await WorkflowStep.create({
       trigger_id: trigger.id!,
-      name: "locked_step",
-      action_name: "run_js_code",
+      name: "acquire",
+      action_name: "AcquireLock",
+      next_step: "log",
       initial_step: true,
       configuration: {
-        mutex_enabled: true,
-        mutex_lock_name: `"ts-timeoutlock"`,
-        mutex_lock_timeout: 0.3,
+        lock_name: `"ts-timeoutlock"`,
+        lock_timeout: 0.3,
+      },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "log",
+      action_name: "run_js_code",
+      next_step: "release",
+      initial_step: false,
+      configuration: {
         code: logStepCode("timeoutlock", 1000),
         run_where: "Server",
       },
+    });
+    await WorkflowStep.create({
+      trigger_id: trigger.id!,
+      name: "release",
+      action_name: "ReleaseLock",
+      initial_step: false,
+      configuration: { lock_name: `"ts-timeoutlock"` },
     });
 
     const run1 = await WorkflowRun.create({ trigger_id: trigger.id! });

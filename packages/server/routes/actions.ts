@@ -1032,10 +1032,6 @@ const getWorkflowStepForm = async (
     builtIns: Object.keys(builtInActionExplainers),
     forWorkflow: true,
   });
-  // AcquireLock/ReleaseLock steps don't need the lock option below.
-  const actionsAllowingMutex = actionsNotRequiringRow
-    .flatMap((g: any) => g.options || [])
-    .filter((name: string) => name !== "AcquireLock" && name !== "ReleaseLock");
   const triggers = Trigger.find({
     when_trigger: { or: ["API call", "Never"] },
   })!;
@@ -1087,33 +1083,6 @@ const getWorkflowStepForm = async (
           "Name of next step. Can be a JavaScript expression based on the run context. Blank if final step",
       },
       {
-        name: "mutex_enabled",
-        label: req.__("Protect with lock"),
-        sublabel: "Run this step only while holding a named lock.",
-        type: "Bool",
-        showIf: { wf_action_name: actionsAllowingMutex },
-      },
-      {
-        name: "mutex_lock_name",
-        label: req.__("Lock name"),
-        class: "validate-expression",
-        sublabel:
-          "JavaScript expression, e.g. " +
-          "<code>&quot;mylock&quot;</code> for a fixed name, or " +
-          "<code>&quot;invoice-&quot;+customer_id</code> using a variable. Released " +
-          "when the step finishes.",
-        type: "String",
-        showIf: { mutex_enabled: true, wf_action_name: actionsAllowingMutex },
-      },
-      {
-        name: "mutex_lock_timeout",
-        label: req.__("Lock timeout (s)"),
-        sublabel:
-          "Optional. If the lock is not acquired within this many seconds, the step fails instead of waiting. Leave blank for a default 30s wait, or set to 0 to wait forever.",
-        type: "Float",
-        showIf: { mutex_enabled: true, wf_action_name: actionsAllowingMutex },
-      },
-      {
         input_type: "section_header",
         label: req.__("Action"),
       },
@@ -1133,12 +1102,6 @@ const getWorkflowStepForm = async (
       },
       ...actionConfigFields,
     ],
-    validator: (vs: any) => {
-      if (vs.mutex_enabled && !vs.mutex_lock_name)
-        return req.__(
-          'Lock name is required when "Protect with lock" is enabled'
-        );
-    },
   });
   form.hidden("wf_step_id");
   form.hidden("_after_step");
