@@ -23,10 +23,8 @@ beforeAll(async () => {
   // initialise this process's schema (server tests run each file in its own
   // Postgres schema so they can run in parallel)
   await resetToFixtures();
-  if (!db.isSQLite) {
-    await db.query(`drop schema if exists test2 cascade`);
-    await db.query(`drop schema if exists peashoot cascade`);
-  }
+  await db.drop_tenant_schema("test2");
+  await db.drop_tenant_schema("peashoot");
 });
 
 describe("tenant routes", () => {
@@ -154,8 +152,8 @@ describe("session-tenant isolation", () => {
     beforeAll(async () => {
       db.enable_multi_tenant();
       await getState().setConfig("role_to_create_tenant", "100");
-      await db.query(`drop schema if exists ${TENANT} cascade`);
-      await db.query(`drop schema if exists ${ATTACKER_TENANT} cascade`);
+      await db.drop_tenant_schema(TENANT);
+      await db.drop_tenant_schema(ATTACKER_TENANT);
       const app = await getApp({ disableCsrf: true });
       await request(app)
         .post("/tenant/create")
@@ -208,8 +206,8 @@ describe("session-tenant isolation", () => {
     });
 
     afterAll(async () => {
-      await db.query(`drop schema if exists ${TENANT} cascade`);
-      await db.query(`drop schema if exists ${ATTACKER_TENANT} cascade`);
+      await db.drop_tenant_schema(TENANT);
+      await db.drop_tenant_schema(ATTACKER_TENANT);
     });
 
     it("rejects cross-tenant session reuse", async () => {

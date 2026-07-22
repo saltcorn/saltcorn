@@ -786,11 +786,25 @@ class User {
       const schema = db.getTenantSchema();
 
       await db.query(
-        `delete from _sc_session 
-        where sess->'passport'->'user'->>'id' = $1 
+        `delete from _sc_session
+        where sess->'passport'->'user'->>'id' = $1
         and sess->'passport'->'user'->>'tenant' = $2`,
         [`${this.id}`, schema]
       );
+    } else if (db.driverName === "mysql") {
+      const schema = db.getTenantSchema();
+      const sessionDb = db.connectObj.database || db.connectObj.default_schema;
+      try {
+        await db.query(
+          `delete from "${sessionDb}"."_sc_session"
+          where JSON_UNQUOTE(JSON_EXTRACT(sess, '$.passport.user.id')) = $1
+          and JSON_UNQUOTE(JSON_EXTRACT(sess, '$.passport.user.tenant')) = $2`,
+          [`${this.id}`, schema]
+        );
+      } catch (e: any) {
+        // the session table only exists once a server session store has run
+        if (e?.code !== "ER_NO_SUCH_TABLE") throw e;
+      }
     }
   }
 
@@ -799,11 +813,24 @@ class User {
     if (db.supports_multiple_schemas) {
       const schema = tenant || db.getTenantSchema();
 
-      await db.query(
-        `delete from _sc_session 
-        where sess->'passport'->'user'->>'tenant' = $1`,
-        [schema]
-      );
+      if (db.driverName === "mysql") {
+        const sessionDb = db.connectObj.database || db.connectObj.default_schema;
+        try {
+          await db.query(
+            `delete from "${sessionDb}"."_sc_session"
+            where JSON_UNQUOTE(JSON_EXTRACT(sess, '$.passport.user.tenant')) = $1`,
+            [schema]
+          );
+        } catch (e: any) {
+          if (e?.code !== "ER_NO_SUCH_TABLE") throw e;
+        }
+      } else {
+        await db.query(
+          `delete from _sc_session
+          where sess->'passport'->'user'->>'tenant' = $1`,
+          [schema]
+        );
+      }
     }
   }
 

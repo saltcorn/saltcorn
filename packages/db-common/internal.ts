@@ -708,15 +708,9 @@ const toInt = (x: number | string): number | null =>
  */
 const getDistanceOrder = ({ latField, longField, lat, long }: CoordOpts) => {
   const cos_lat_2 = Math.pow(Math.cos((+lat * Math.PI) / 180), 2);
-  return `((${sqlsanitizeAllowDots(
-    `${latField}`
-  )} - ${+lat})*(${sqlsanitizeAllowDots(
-    `${latField}`
-  )} - ${+lat})) + ((${sqlsanitizeAllowDots(
-    `${longField}`
-  )} - ${+long})*(${sqlsanitizeAllowDots(
-    `${longField}`
-  )} - ${+long})*${cos_lat_2})`;
+  const latf = `"${sqlsanitizeAllowDots(`${latField}`)}"`;
+  const longf = `"${sqlsanitizeAllowDots(`${longField}`)}"`;
+  return `((${latf} - ${+lat})*(${latf} - ${+lat})) + ((${longf} - ${+long})*(${longf} - ${+long})*${cos_lat_2})`;
 };
 
 type PlaceholderFormatter = { placeholderAt: (n: number) => string };

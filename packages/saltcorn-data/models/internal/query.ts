@@ -23,18 +23,39 @@ export const getAggAndField = (
   field: string | undefined,
   valueFormula: string | undefined,
   orderBy?: string
-) =>
-  aggregate.toLowerCase() === "countunique"
+) => {
+  const agg = aggregate.toLowerCase();
+  const supportsAggOrderBy = db.driverName !== "mysql";
+  return agg === "countunique"
     ? `count(distinct ${field ? `"${sqlsanitize(field)}"` : "*"})`
     : `${
-        aggregate.toLowerCase() === "array_agg"
-          ? db.array_agg_sql_fn
-          : sqlsanitize(aggregate)
+        agg === "array_agg" ? db.array_agg_sql_fn : sqlsanitize(aggregate)
       }(${field ? `"${sqlsanitize(field)}"` : valueFormula || "*"}${
-        orderBy && aggregate.toLowerCase() === "array_agg"
+        orderBy && agg === "array_agg" && supportsAggOrderBy
           ? ` order by "${sqlsanitize(orderBy)}"`
           : ""
       })`;
+};
+
+export const coerceAggResultTypes = (
+  rows: any,
+  aggregations: { [nm: string]: { aggregate?: string } }
+): void => {
+  if (db.driverName !== "mysql" || !rows) return;
+  const stringAggCols = Object.entries(aggregations)
+    .filter(([, a]) =>
+      ["count", "countunique", "sum", "avg"].includes(
+        (a?.aggregate || "").toLowerCase()
+      )
+    )
+    .map(([nm]) => nm);
+  if (!stringAggCols.length) return;
+  const rowArr = Array.isArray(rows) ? rows : [rows];
+  for (const row of rowArr)
+    for (const col of stringAggCols)
+      if (row != null && typeof row[col] === "number")
+        row[col] = String(row[col]);
+};
 
 export const process_aggregations = (
   this_table: any, //Table
@@ -254,7 +275,20 @@ export const aggregation_query_fields = (
     groupBy ? ` group by ${groupBy.map((f) => sqlsanitize(f)).join(", ")}` : ""
   }`;
 
-  return { fldNms, sql, where, values, groupBy };
+  let outValues = values;
+  if ((db.driverName === "mysql" || db.isSQLite) && where && values.length) {
+    outValues = [];
+    Object.entries(aggregations).forEach(([, { field, aggregate }]) => {
+      if (
+        field &&
+        (aggregate.startsWith("Latest ") || aggregate.startsWith("Earliest "))
+      )
+        outValues.push(...values);
+    });
+    outValues.push(...values); // the outer where
+  }
+
+  return { fldNms, sql, where, values: outValues, groupBy };
 };
 
 export const joinfield_renamer = (joinFields: any, aggregations: any) => {

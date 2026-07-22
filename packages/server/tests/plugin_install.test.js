@@ -10,7 +10,7 @@ import db from "@saltcorn/data/db";
 import { get_store_items } from "../routes/plugins.js";
 
 beforeAll(async () => {
-  if (!db.isSQLite) await db.query(`drop schema if exists test101 CASCADE `);
+  await db.drop_tenant_schema("test101");
   await resetToFixtures();
 });
 afterAll(db.close);

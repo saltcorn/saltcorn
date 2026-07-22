@@ -121,6 +121,7 @@ import {
   getAggAndField,
   joinfield_renamer,
   process_aggregations,
+  coerceAggResultTypes,
 } from "./internal/query.js";
 import async_json_stream from "./internal/async_json_stream.js";
 import { GenObj } from "@saltcorn/db-common/types";
@@ -3165,7 +3166,7 @@ class Table implements AbstractTable {
     await db.query(
       `create table ${schemaPrefix}"${sqlsanitize(this.name)}__history" (
           _version integer,
-          _time timestamp,
+          _time ${db.driverName === "mysql" ? "datetime(3)" : "timestamp"},
           _restore_of_version integer,
           _userid integer
           ${flds.join("")}
@@ -3189,7 +3190,9 @@ class Table implements AbstractTable {
         }
         await db.query(
           `create table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info" (
-            ref text not null,
+            ref ${
+              db.driverName === "mysql" ? db.indexable_text_sql_type : "text"
+            } not null,
             last_modified ${
               db.driverName === "mysql" ? "datetime(3)" : "timestamp"
             },
@@ -3369,23 +3372,50 @@ class Table implements AbstractTable {
     const pk = this.pk_name;
 
     if (typeof interval_secs === "number" && interval_secs > 0.199) {
-      await db.query(`
-      delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
+      if (db.driverName === "mysql") {
+        await db.query(`
+        delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history"
+          where ("${sqlsanitize(pk)}", _version) in (
+            select * from (
+              select h1."${sqlsanitize(pk)}", h1._version
+              FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
+              JOIN ${schemaPrefix}"${sqlsanitize(
+                this.name
+              )}__history" h2 ON h1."${sqlsanitize(pk)}" = h2."${sqlsanitize(
+          pk
+        )}"
+              AND h1._version < h2._version
+              AND h1._time < h2._time
+              AND TIMESTAMPDIFF(MICROSECOND, h1._time, h2._time) <= ${Math.round(
+                +interval_secs * 1e6
+              )}
+            ) as _d
+          );`);
+      } else {
+        await db.query(`
+      delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history"
         where ("${sqlsanitize(pk)}", _version) in (
           select h1."${sqlsanitize(pk)}", h1._version
           FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
           JOIN ${schemaPrefix}"${sqlsanitize(
-        this.name
-      )}__history" h2 ON h1."${sqlsanitize(pk)}" = h2."${sqlsanitize(pk)}"
+          this.name
+        )}__history" h2 ON h1."${sqlsanitize(pk)}" = h2."${sqlsanitize(pk)}"
           AND h1._version < h2._version
           AND h1._time < h2._time
           AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
         );`);
+      }
     }
     if (typeof options === "object" && options?.delete_unchanged) {
+      const isMysql = db.driverName === "mysql";
       const isDistinct = this.fields
-        .map((f) => `curr."${f.name}" IS DISTINCT FROM prev."${f.name}"`)
+        .map((f) =>
+          isMysql
+            ? `NOT (curr."${f.name}" <=> prev."${f.name}")`
+            : `curr."${f.name}" IS DISTINCT FROM prev."${f.name}"`
+        )
         .join(" OR ");
+      const changedSubquery = `select id, this_version from paired where not is_changed`;
       await db.query(`
         WITH ordered_versions AS (
         SELECT *,
@@ -3394,7 +3424,7 @@ class Table implements AbstractTable {
         WHERE "${sqlsanitize(pk)}" IS NOT NULL
         ),
         paired AS (
-        SELECT 
+        SELECT
           curr."_version" AS this_version,
           prev."_version" AS prev_version,
           curr."${pk}" AS id,
@@ -3402,11 +3432,11 @@ class Table implements AbstractTable {
         FROM ordered_versions curr
         LEFT JOIN ordered_versions prev
           ON curr.rn = prev.rn + 1 AND curr."${pk}" = prev."${pk}"
-        )     
+        )
         DELETE FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history"
-          where ("${sqlsanitize(
-            pk
-          )}", _version) in (select id, this_version from paired where not is_changed);`);
+          where ("${sqlsanitize(pk)}", _version) in (${
+            isMysql ? `select * from (${changedSubquery}) as _d` : changedSubquery
+          });`);
     }
   }
   /**
@@ -4584,6 +4614,7 @@ ${rejectDetails}`,
         { ...options, where }
       );
       const res = await db.query(sql, values);
+      coerceAggResultTypes(res.rows, aggregations);
       if (groupBy) return res.rows;
       return res.rows[0];
     });
@@ -4910,6 +4941,7 @@ ${rejectDetails}`,
         fields,
         !!opts?.ignore_errors
       );
+      coerceAggResultTypes(calcRow, aggregations || {});
       //need to json parse array agg values when the driver returns them as text
       if (
         db.json_read_returns_string &&
@@ -5058,15 +5090,21 @@ ${rejectDetails}`,
         primary_key: true,
       });
     } else if (primaryKeys.length > 1) {
-      const { rows } = await db.query(`select constraint_name
+      if (db.driverName === "mysql") {
+        await db.query(
+          `alter table ${schemaPrefix}"${this.name}" drop primary key`
+        );
+      } else {
+        const { rows } = await db.query(`select constraint_name
 from information_schema.table_constraints
 where table_schema = '${db.getTenantSchema() || "public"}'
       and table_name = '${this.name}'
       and constraint_type = 'PRIMARY KEY';`);
-      const cname = rows[0]?.constraint_name;
-      await db.query(
-        `alter table ${schemaPrefix}"${this.name}" drop constraint "${cname}"`
-      );
+        const cname = rows[0]?.constraint_name;
+        await db.query(
+          `alter table ${schemaPrefix}"${this.name}" drop constraint "${cname}"`
+        );
+      }
       for (const field of this.fields) {
         if (field.primary_key) await field.update({ primary_key: false });
       }

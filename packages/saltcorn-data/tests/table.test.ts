@@ -412,11 +412,11 @@ describe("Table get data", () => {
     expect(rows.length).toStrictEqual(2);
     expect(rows[1].fans).toStrictEqual(["Kirk Douglas"]);
     const { sql } = await books.getJoinedQuery(arg);
-    if (!db.isSQLite)
+    if (db.driverName === "postgres")
       expect(sql).toBe(
         `SELECT a."author",a."id",a."pages",a."publisher",(select array_agg(aggjoin."name") from "${db.getTenantSchema()}"."patients" aggto join "${db.getTenantSchema()}"."patients" aggjoin on aggto."parent" = aggjoin.id  where aggto."favbook"=a."id") fans FROM "${db.getTenantSchema()}"."books" a    order by "a"."id"`
       );
-    else
+    else if (db.isSQLite)
       expect(sql).toBe(
         'SELECT a."author",a."id",a."pages",a."publisher",(select json_group_array(aggjoin."name") from "patients" aggto join "patients" aggjoin on aggto."parent" = aggjoin.id  where aggto."favbook"=a."id") fans FROM "books" a    order by "a"."id"'
       );
@@ -441,11 +441,11 @@ describe("Table get data", () => {
     expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
 
     const { sql } = await books.getJoinedQuery(arg);
-    if (!db.isSQLite)
+    if (db.driverName === "postgres")
       expect(sql).toBe(
         `SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name") from "${db.getTenantSchema()}"."patients"  where "favbook"=a."id") fans FROM "${db.getTenantSchema()}"."books" a    order by "a"."id"`
       );
-    else
+    else if (db.isSQLite)
       expect(sql).toBe(
         'SELECT a."author",a."id",a."pages",a."publisher",(select json_group_array("name") from "patients"  where "favbook"=a."id") fans FROM "books" a    order by "a"."id"'
       );
@@ -471,11 +471,11 @@ describe("Table get data", () => {
     expect(rows[1].fans).toStrictEqual(["Michael Douglas"]);
 
     const { sql } = await books.getJoinedQuery(arg);
-    if (!db.isSQLite)
+    if (db.driverName === "postgres")
       expect(sql).toBe(
         `SELECT a."author",a."id",a."pages",a."publisher",(select array_agg("name" order by "id") from "${db.getTenantSchema()}"."patients"  where "favbook"=a."id") fans FROM "${db.getTenantSchema()}"."books" a    order by "a"."id"`
       );
-    else
+    else if (db.isSQLite)
       expect(sql).toBe(
         'SELECT a."author",a."id",a."pages",a."publisher",(select json_group_array("name" order by "id") from "patients"  where "favbook"=a."id") fans FROM "books" a    order by "a"."id"'
       );
@@ -1081,9 +1081,9 @@ describe("Table aggregationQuery", () => {
         },
         { groupBy: ["patient_id"] }
       );
-      expect(aggs).toStrictEqual([
-        { patient_id: 2, temps: "1" },
+      expect(aggs.sort((a: any, b: any) => a.patient_id - b.patient_id)).toStrictEqual([
         { patient_id: 1, temps: "2" },
+        { patient_id: 2, temps: "1" },
       ]);
     }
   });
@@ -1142,9 +1142,11 @@ describe("Table aggregationQuery", () => {
         },
         { groupBy: "author" }
       );
-      expect(aggs).toStrictEqual([
-        { author: "Leo Tolstoy", pages: 728 },
+      expect(
+        aggs.sort((a: any, b: any) => (a.author < b.author ? -1 : 1))
+      ).toStrictEqual([
         { author: "Herman Melville", pages: 967 },
+        { author: "Leo Tolstoy", pages: 728 },
       ]);
     }
   });

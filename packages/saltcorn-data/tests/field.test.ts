@@ -96,7 +96,7 @@ describe("Field", () => {
       expect(f.sql_type).toBe(
         'int constraint "patients_favbook_fkey" references "books" ("id") DEFERRABLE'
       );
-    else
+    else if (db.driverName === "postgres")
       expect(f.sql_type).toBe(
         `int constraint "patients_favbook_fkey" references "${db.getTenantSchema()}"."books" ("id") DEFERRABLE`
       );

@@ -876,13 +876,22 @@ class Field implements AbstractField {
       throw new Error("To toggle a not null constraint, 'table' must be set.");
     }
     const schema = db.getTenantSchemaPrefix();
-    await db.query(
-      `alter table ${schema}"${sqlsanitize(
-        this.table.name
-      )}" alter column "${sqlsanitize(this.name)}" ${
-        not_null ? "set" : "drop"
-      } not null;`
-    );
+    if (db.driverName === "mysql")
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          this.table.name
+        )}" modify column "${sqlsanitize(this.name)}" ${this.sql_type} ${
+          not_null ? "not null" : "null"
+        };`
+      );
+    else
+      await db.query(
+        `alter table ${schema}"${sqlsanitize(
+          this.table.name
+        )}" alter column "${sqlsanitize(this.name)}" ${
+          not_null ? "set" : "drop"
+        } not null;`
+      );
   }
 
   /**
@@ -911,12 +920,6 @@ class Field implements AbstractField {
       );
     }
     if (new_field.primary_key) {
-      await db.query(
-        `ALTER TABLE ${schema}"${sqlsanitize(
-          this.table.name
-        )}" drop column "${sqlsanitize(this.name)}";`
-      );
-
       if (instanceOfType(new_field.type)) {
         if (new_field.type.primaryKey?.sql_type)
           new_sql_type = new_field.type.primaryKey.sql_type;
@@ -924,13 +927,30 @@ class Field implements AbstractField {
           def = `default ${new_field.type.primaryKey.default_sql}`;
         }
       }
-      await db.query(
-        `ALTER TABLE ${schema}"${sqlsanitize(
-          this.table.name
-        )}" add column "${sqlsanitize(
-          this.name
-        )}" ${new_sql_type} primary key ${def};`
-      );
+      if (db.driverName === "mysql" && /\btext\b/i.test(new_sql_type))
+        new_sql_type = db.indexable_text_sql_type;
+      if (db.driverName === "mysql" && this.primary_key) {
+        await db.query(
+          `ALTER TABLE ${schema}"${sqlsanitize(
+            this.table.name
+          )}" modify column "${sqlsanitize(
+            this.name
+          )}" ${new_sql_type} ${def};`
+        );
+      } else {
+        await db.query(
+          `ALTER TABLE ${schema}"${sqlsanitize(
+            this.table.name
+          )}" drop column "${sqlsanitize(this.name)}";`
+        );
+        await db.query(
+          `ALTER TABLE ${schema}"${sqlsanitize(
+            this.table.name
+          )}" add column "${sqlsanitize(
+            this.name
+          )}" ${new_sql_type} primary key ${def};`
+        );
+      }
     } else if (
       new_field.is_fkey &&
       !this.is_fkey &&
@@ -939,6 +959,14 @@ class Field implements AbstractField {
       new_field.reftype === this?.type.name &&
       new_field?.reftable_name
     ) {
+      if (db.driverName === "mysql" && /\btext\b/i.test(new_field.sql_type))
+        await db.query(
+          `ALTER TABLE ${schema}"${sqlsanitize(
+            this.table.name
+          )}" modify column "${sqlsanitize(new_field.name)}" ${
+            db.indexable_text_sql_type
+          };`
+        );
       await db.query(
         `ALTER TABLE ${schema}"${sqlsanitize(
           this.table.name
@@ -951,13 +979,25 @@ class Field implements AbstractField {
         }${db.driverName === "postgres" ? " DEFERRABLE" : ""}`
       );
     } else if (!new_field.is_fkey && this.is_fkey) {
-      await db.query(
-        `ALTER TABLE ${schema}"${sqlsanitize(
-          this.table.name
-        )}" drop constraint if exists "${sqlsanitize(
-          new_field!.table!.name
-        )}_${sqlsanitize(new_field.name)}_fkey"`
-      );
+      const conName = `${sqlsanitize(new_field!.table!.name)}_${sqlsanitize(
+        new_field.name
+      )}_fkey`;
+      if (db.driverName === "mysql") {
+        try {
+          await db.query(
+            `ALTER TABLE ${schema}"${sqlsanitize(
+              this.table.name
+            )}" drop foreign key "${conName}"`
+          );
+        } catch (e: any) {
+          if (e?.code !== "ER_CANT_DROP_FIELD_OR_KEY") throw e;
+        }
+      } else
+        await db.query(
+          `ALTER TABLE ${schema}"${sqlsanitize(
+            this.table.name
+          )}" drop constraint if exists "${conName}"`
+        );
     } else if (
       new_field.is_fkey &&
       this.reftable_name &&
@@ -967,21 +1007,41 @@ class Field implements AbstractField {
     ) {
       //add or remove on delete cascade - https://stackoverflow.com/a/10356720
 
-      await db.query(
-        `ALTER TABLE ${schema}"${sqlsanitize(
-          this.table.name
-        )}" drop constraint "${sqlsanitize(this.table.name)}_${sqlsanitize(
-          this.name
-        )}_fkey", add constraint "${sqlsanitize(
-          new_field!.table!.name
-        )}_${sqlsanitize(new_field.name)}_fkey" foreign key ("${sqlsanitize(
-          new_field.name
-        )}") references ${schema}"${sqlsanitize(
-          new_field!.reftable_name
-        )}"("${new_field!.refname}")${new_field.on_delete_sql}${
-          db.driverName === "postgres" ? " DEFERRABLE" : ""
-        }`
-      );
+      if (db.driverName === "mysql") {
+        await db.query(
+          `ALTER TABLE ${schema}"${sqlsanitize(
+            this.table.name
+          )}" drop foreign key "${sqlsanitize(this.table.name)}_${sqlsanitize(
+            this.name
+          )}_fkey"`
+        );
+        await db.query(
+          `ALTER TABLE ${schema}"${sqlsanitize(
+            this.table.name
+          )}" add constraint "${sqlsanitize(
+            new_field!.table!.name
+          )}_${sqlsanitize(new_field.name)}_fkey" foreign key ("${sqlsanitize(
+            new_field.name
+          )}") references ${schema}"${sqlsanitize(
+            new_field!.reftable_name
+          )}"("${new_field!.refname}")${new_field.on_delete_sql}`
+        );
+      } else
+        await db.query(
+          `ALTER TABLE ${schema}"${sqlsanitize(
+            this.table.name
+          )}" drop constraint "${sqlsanitize(this.table.name)}_${sqlsanitize(
+            this.name
+          )}_fkey", add constraint "${sqlsanitize(
+            new_field!.table!.name
+          )}_${sqlsanitize(new_field.name)}_fkey" foreign key ("${sqlsanitize(
+            new_field.name
+          )}") references ${schema}"${sqlsanitize(
+            new_field!.reftable_name
+          )}"("${new_field!.refname}")${new_field.on_delete_sql}${
+            db.driverName === "postgres" ? " DEFERRABLE" : ""
+          }`
+        );
     } else if (db.driverName === "mysql")
       await db.query(
         `alter table ${schema}"${sqlsanitize(

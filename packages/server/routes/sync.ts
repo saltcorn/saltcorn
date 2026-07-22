@@ -142,6 +142,7 @@ const getSyncRows = async (syncInfo: any, table: any, syncUntil: any, user: any)
           row._sync_info_tbl_last_modified_.valueOf();
       else row._sync_info_tbl_last_modified_ = syncUntilMs;
       row._sync_info_tbl_ref_ = row[pkName];
+      row._sync_info_tbl_deleted_ = !!row._sync_info_tbl_deleted_;
     }
     if (table.ownership_formula && role > minRole)
       return applyOwnershipFormula(rows, table, user);

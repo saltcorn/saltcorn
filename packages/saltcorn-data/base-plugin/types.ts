@@ -2546,7 +2546,11 @@ const date = {
           }
         }
         try {
-          const d = new PlainDate(v as any);
+          const dv =
+            typeof v === "string"
+              ? (v.match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? v)
+              : v;
+          const d = new PlainDate(dv as any);
           if (d.isValid()) return d;
           else return null;
         } catch {
@@ -2562,7 +2566,7 @@ const date = {
    * @returns {boolean}
    */
   validate: () => (v: any) => v instanceof Date && !isNaN(v as any),
-  ...(db.stores_dates_as_text
+  ...(db.stores_dates_as_text || db.driverName === "mysql"
     ? {
         readFromDB: (v: any, fld: FieldLike) =>
           !v
