@@ -42,23 +42,27 @@ describe("Table Discovery", () => {
       await db.query(
         `create table "disc breed"(id serial primary key, name text, rating smallint, population bigint );`
       );
-      // this table has FK to users!
+      // this table has FK to users! Table-level FOREIGN KEY: MySQL 8 ignores
+      // inline column-level REFERENCES, so no constraint would be created.
       await db.query(
         `create table discperson(
-id serial primary key, 
-name text, 
-age integer not null, 
-"user" int references users(id)
+id serial primary key,
+name text,
+age integer not null,
+"user" int,
+foreign key ("user") references users(id)
 );`
       );
       // this table has 2 FK and column with space in name
       await db.query(
         `create table discdog(
-id serial primary key, 
+id serial primary key,
 name text,
-"birth date" date, 
-owner int references discperson(id), 
-breed int references "disc breed"(id));`
+"birth date" date,
+owner int,
+breed int,
+foreign key (owner) references discperson(id),
+foreign key (breed) references "disc breed"(id));`
       );
       // this table added to check that *_history tables are not discovered
       const table = await Table.create("table_with_history");

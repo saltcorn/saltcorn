@@ -64,6 +64,7 @@ describe("notifications", () => {
     const user = await User.findOne({ role_id: 40 });
     await Notification.create({
       user_id: user.id,
+      created: new Date(Date.now() - 5000),
       title: "This is a staff announcement",
       body: "Will a member of staff please proceed to the checkout area",
       link: "https://www.sainsburys.co.uk/",

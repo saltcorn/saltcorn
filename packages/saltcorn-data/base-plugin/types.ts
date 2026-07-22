@@ -2448,7 +2448,11 @@ const date = {
                   : attrs.day_only
                     ? v1.toLocaleDateString(attrs.locale)
                     : v1.toLocaleString(attrs.locale))(
-                typeof v === "string" ? new Date(v) : v
+                // backends with stores_dates_as_text hand back text *or* epoch
+                // numbers (see fixtures), neither of which has toLocale*
+                typeof v === "string" || typeof v === "number"
+                  ? new Date(v)
+                  : v
               )
             ),
           }),
@@ -2484,7 +2488,10 @@ const date = {
                 attrs.date_picker
                   ? v1.toISOString()
                   : v1.toLocaleDateString(attrs.locale))(
-                typeof v === "string" ? new Date(v) : v
+                // see note above: text *or* epoch numbers reach here
+                typeof v === "string" || typeof v === "number"
+                  ? new Date(v)
+                  : v
               )
             ),
           }),
@@ -2551,7 +2558,11 @@ const date = {
           }
         }
         try {
-          const d = new PlainDate(v as any);
+          const dv =
+            typeof v === "string"
+              ? (v.match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? v)
+              : v;
+          const d = new PlainDate(dv as any);
           if (d.isValid()) return d;
           else return null;
         } catch {
@@ -2567,7 +2578,7 @@ const date = {
    * @returns {boolean}
    */
   validate: () => (v: any) => v instanceof Date && !isNaN(v as any),
-  ...(db.stores_dates_as_text
+  ...(db.stores_dates_as_text || db.driverName === "mysql"
     ? {
         readFromDB: (v: any, fld: FieldLike) =>
           !v

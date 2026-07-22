@@ -105,6 +105,9 @@ export type SqlDialect = {
   slugifyWhereClause: (k: string, s: string) => string;
   // cast suffix after a pushed placeholder in the "eq" Where key
   textCastSuffix: () => string;
+  // random-ordering expression for `order by RANDOM()` (postgres/sqlite use
+  // RANDOM(), mysql uses RAND()). Optional so an older driver falls back below.
+  randomOrderExpr?: () => string;
 };
 
 // push each array element and return that many placeholders
@@ -705,15 +708,9 @@ const toInt = (x: number | string): number | null =>
  */
 const getDistanceOrder = ({ latField, longField, lat, long }: CoordOpts) => {
   const cos_lat_2 = Math.pow(Math.cos((+lat * Math.PI) / 180), 2);
-  return `((${sqlsanitizeAllowDots(
-    `${latField}`
-  )} - ${+lat})*(${sqlsanitizeAllowDots(
-    `${latField}`
-  )} - ${+lat})) + ((${sqlsanitizeAllowDots(
-    `${longField}`
-  )} - ${+long})*(${sqlsanitizeAllowDots(
-    `${longField}`
-  )} - ${+long})*${cos_lat_2})`;
+  const latf = `"${sqlsanitizeAllowDots(`${latField}`)}"`;
+  const longf = `"${sqlsanitizeAllowDots(`${longField}`)}"`;
+  return `((${latf} - ${+lat})*(${latf} - ${+lat})) + ((${longf} - ${+long})*(${longf} - ${+long})*${cos_lat_2})`;
 };
 
 type PlaceholderFormatter = { placeholderAt: (n: number) => string };
@@ -786,7 +783,7 @@ export const mkSelectOptionsForDialect = (
 ): string => {
   const orderby =
     selopts.orderBy === "RANDOM()"
-      ? "order by RANDOM()"
+      ? `order by ${(fmt as SqlDialect).randomOrderExpr?.() ?? "RANDOM()"}`
       : selopts.orderBy &&
           typeof selopts.orderBy === "object" &&
           "distance" in selopts.orderBy

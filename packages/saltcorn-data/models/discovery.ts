@@ -15,6 +15,15 @@ import Field from "./field.js";
 import Table from "./table.js";
 import { asyncMap } from "../utils.js";
 
+const lcKeys = (rows: Row[]): Row[] =>
+  db.driverName === "mysql"
+    ? rows.map((r) =>
+        Object.fromEntries(
+          Object.entries(r).map(([k, v]) => [k.toLowerCase(), v])
+        )
+      )
+    : rows;
+
 // create table discmetable(id serial primary key, name text, age integer not null); ALTER TABLE discmetable OWNER TO tomn;
 /**
  * List of discoverable tables.
@@ -30,10 +39,11 @@ const discoverable_tables = async (
 ): Promise<Row[]> => {
   const schema = schema0 || dbModule.getTenantSchema();
   const { where, values } = dbModule.mkWhere({ table_schema: schema });
-  const { rows } = await dbModule.query(
+  const { rows: rows0 } = await dbModule.query(
     `select * from information_schema.tables ${where} order by table_name`,
     values
   );
+  const rows = lcKeys(rows0);
   const myTables = await Table.find({});
   const myTableNames = myTables.map((t) => sqlsanitize(t.name));
   const myTableHistoryNames = myTables
@@ -62,7 +72,7 @@ const get_existing_views = async (schema0?: string): Promise<Row[]> => {
     `select * from information_schema.views ${where}`,
     values
   );
-  return rows;
+  return lcKeys(rows);
 };
 /**
  * Mapping SQL Type to Saltcorn type (For Discovery)
@@ -74,10 +84,15 @@ const findType = (sql_name: string): string | undefined => {
     // todo more types
     // todo attributes: length, pres
     integer: "Integer",
+    int: "Integer", // mysql
+    mediumint: "Integer", // mysql
     smallint: "Integer",
     bigint: "Integer",
     numeric: "Float", // required pres
     decimal: "Float", // required pres
+    double: "Float", // mysql
+    "double precision": "Float",
+    real: "Float",
     character: "String", // char - if length is not defined is 1 else length needs to be defined
     "character varying": "String", // varchar  - this type can have length
     varchar: "String",
@@ -85,10 +100,12 @@ const findType = (sql_name: string): string | undefined => {
     text: "String",
     date: "Date",
     timestamp: "Date",
+    datetime: "Date", // mysql
     "timestamp without time zone": "Date",
     "timestamp with time zone": "Date",
     timestamptz: "Date",
     boolean: "Bool",
+    tinyint: "Bool", // mysql stores Bool as tinyint(1)
     // todo discovery "time interval" : "Date"?
   }[sql_name.toLowerCase()];
   if (fixed) return fixed;
@@ -148,10 +165,13 @@ const discover_tables = async (
   const packTables = new Array<TablePack>();
 
   for (const tnm of tableNames) {
-    const { rows } = await dbModule.query(
-      "select * from information_schema.columns where table_schema=$1 and table_name=$2",
+    const { rows: rows0 } = await dbModule.query(
+      `select * from information_schema.columns where table_schema=$1 and table_name=$2${
+        db.driverName === "mysql" ? " order by ordinal_position" : ""
+      }`,
       [schema, tnm]
     );
+    const rows = lcKeys(rows0);
     // TBD add logic about column length, scale, etc
     //console.log(rows);
 
@@ -159,43 +179,73 @@ const discover_tables = async (
       (f: FieldCfg) => f?.type
     );
 
-    // try to find column name for primary key of table
+    // try to find column name for primary key of table. MySQL has no
+    // information_schema.constraint_column_usage, so use key_column_usage
+    // (its pk constraint is always named 'PRIMARY').
     const pkq = await dbModule.query(
-      `SELECT c.column_name, c.column_default
-      FROM information_schema.table_constraints tc 
-      JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name) 
+      db.driverName === "mysql"
+        ? `SELECT k.column_name, c.column_default, c.extra
+           FROM information_schema.key_column_usage k
+           JOIN information_schema.columns c
+             ON c.table_schema = k.table_schema
+            AND c.table_name = k.table_name
+            AND c.column_name = k.column_name
+           WHERE k.constraint_name = 'PRIMARY'
+             AND k.table_schema = $1 AND k.table_name = $2;`
+        : `SELECT c.column_name, c.column_default
+      FROM information_schema.table_constraints tc
+      JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name)
       JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
         AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
       WHERE constraint_type = 'PRIMARY KEY' and tc.table_schema=$1 and tc.table_name = $2;`,
       [schema, tnm]
     );
     // set primary_key and unique attributes for column
-    pkq.rows.forEach(
+    (lcKeys(pkq.rows) as any[]).forEach(
       ({
         column_name,
         column_default,
+        extra,
       }: {
         column_name: string;
         column_default: string;
+        extra?: string;
       }) => {
         const field = fields.find((f: FieldCfg) => f.name === column_name);
         field.primary_key = true;
         field.is_unique = true;
-        if (!column_default) field.attributes = { NonSerial: true };
+        // MySQL AUTO_INCREMENT pks report a null default but are serial, not
+        // NonSerial (its serial-ness shows in `extra`, not `column_default`).
+        const isAutoInc = (extra || "").toLowerCase().includes("auto_increment");
+        if (!column_default && !isAutoInc)
+          field.attributes = { NonSerial: true };
       }
     );
-    // try to find foreign keys
+    // try to find foreign keys. MySQL exposes the referenced table/column
+    // directly on key_column_usage (no constraint_column_usage needed).
     const fkq = await dbModule.query(
-      `SELECT
-      tc.table_schema, 
-      tc.constraint_name, 
-      tc.table_name, 
-      kcu.column_name, 
+      db.driverName === "mysql"
+        ? `SELECT
+             table_schema,
+             constraint_name,
+             table_name,
+             column_name,
+             referenced_table_schema AS foreign_table_schema,
+             referenced_table_name AS foreign_table_name,
+             referenced_column_name AS foreign_column_name
+           FROM information_schema.key_column_usage
+           WHERE referenced_table_name IS NOT NULL
+             AND table_schema = $1 AND table_name = $2;`
+        : `SELECT
+      tc.table_schema,
+      tc.constraint_name,
+      tc.table_name,
+      kcu.column_name,
       ccu.table_schema AS foreign_table_schema,
       ccu.table_name AS foreign_table_name,
-      ccu.column_name AS foreign_column_name 
-  FROM 
-      information_schema.table_constraints AS tc 
+      ccu.column_name AS foreign_column_name
+  FROM
+      information_schema.table_constraints AS tc
       JOIN information_schema.key_column_usage AS kcu
         ON tc.constraint_name = kcu.constraint_name
         AND tc.table_schema = kcu.table_schema
@@ -206,7 +256,7 @@ const discover_tables = async (
       [schema, tnm]
     );
     // construct foreign key relations
-    fkq.rows.forEach(
+    (lcKeys(fkq.rows) as any[]).forEach(
       ({
         column_name,
         foreign_table_name,
@@ -329,7 +379,7 @@ const reconcile_table = async (
       "SELECT column_name FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2",
       [schema, table.name]
     );
-    physicalRows = rows;
+    physicalRows = lcKeys(rows);
   }
   const physicalNames = new Set(physicalRows.map((r: Row) => r.column_name));
   const scNames = new Set(scFields.map((f: Field) => f.name));
@@ -361,7 +411,8 @@ const reconcile_table = async (
           "SELECT data_type FROM information_schema.columns WHERE table_schema = $1 AND table_name = $2 AND column_name = $3",
           [schema, table.name, colName]
         );
-        if (rows.length) sqlType = rows[0].data_type;
+        const lcr = lcKeys(rows);
+        if (lcr.length) sqlType = lcr[0].data_type;
       }
       fields.push({ name: colName, type: sqlType, status: "orphan" });
     }

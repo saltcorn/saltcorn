@@ -39,16 +39,18 @@ beforeAll(async () => {
   // schema so they can run in parallel)
   await reset();
   await fixtures();
-  if (!db.isSQLite) await db.query(`drop schema if exists test10 CASCADE `);
-  if (!db.isSQLite) await db.query(`drop schema if exists test11 CASCADE `);
+  if (db.supports_multiple_schemas) {
+    await db.drop_tenant_schema("test10");
+    await db.drop_tenant_schema("test11");
+  }
 });
 
 describe("Tenant", () => {
-  if (!db.isSQLite) {
+  if (db.supports_multiple_schemas) {
     it("can create a new tenant", async () => {
       db.enable_multi_tenant();
       await getState()!.setConfig("base_url", "http://example.com/");
-      await db.query(`drop schema if exists test10 CASCADE `);
+      await db.drop_tenant_schema("test10");
 
       add_tenant("test10");
 
@@ -98,7 +100,7 @@ describe("Tenant", () => {
       await getState()!.setConfig("tenant_template", "test10");
 
       const tenant_template = getState()!.getConfig("tenant_template");
-      await db.query(`drop schema if exists test11 CASCADE `);
+      await db.drop_tenant_schema("test11");
       add_tenant("test11");
 
       await switchToTenant(

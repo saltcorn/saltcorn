@@ -382,7 +382,7 @@ describe("unique history clash", () => {
 });
 
 describe("Table history with UUID pks", () => {
-  if (!db.isSQLite) {
+  if (db.driverName === "postgres") {
     it("should select uuid", async () => {
       // the uuid-ossp extension is created once (in public) by the test
       // runner; qualify the call with the schema rather than relying on

@@ -1727,8 +1727,8 @@ router.post(
       const old_has_sync_info = table.has_sync_info;
       let hasError = false;
       let notify = "";
-      if (!rest.versioned) rest.versioned = false;
-      if (!rest.has_sync_info) rest.has_sync_info = false;
+      rest.versioned = !!rest.versioned;
+      rest.has_sync_info = !!rest.has_sync_info;
       rest.is_user_group = !!rest.is_user_group;
       rest.rls_enabled = !!rest.rls_enabled;
       if (rest.ownership_field_id === "_formula") {

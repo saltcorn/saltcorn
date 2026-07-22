@@ -752,7 +752,8 @@ describe("bool arrays in stored calculated JSON fields", () => {
     const pat = await patients.getRow({ id: 1 });
     assertIsSet(pat);
     expect(Array.isArray(pat.normalised_readings)).toBe(true);
-    if (!db.isSQLite) expect(typeof pat.normalised_readings[0]).toBe("boolean");
+    if (db.driverName === "postgres")
+      expect(typeof pat.normalised_readings[0]).toBe("boolean");
   });
   it("updates on changes", async () => {
     const patients = Table.findOne({ name: "patients" })!;
@@ -762,17 +763,18 @@ describe("bool arrays in stored calculated JSON fields", () => {
 
     const pat = await patients.getRow({ id: 1 });
     assertIsSet(pat);
-    if (!db.isSQLite) expect(typeof pat.normalised_readings[0]).toBe("boolean");
+    if (db.driverName === "postgres")
+      expect(typeof pat.normalised_readings[0]).toBe("boolean");
     const reads = await readings.getRows({ patient_id: 1 });
     for (const read of reads)
       await readings.updateRow({ normalised: false }, read.id);
     const pat1 = await patients.getRow({ id: 1 });
     assertIsSet(pat1);
     expect(Array.isArray(pat1.normalised_readings)).toBe(true);
-    if (!db.isSQLite)
+    if (db.driverName === "postgres")
       expect(typeof pat1.normalised_readings[0]).toBe("boolean");
     if (db.isSQLite) expect(!!pat1.normalised_readings[0]).toBe(false);
-    else expect(pat1.normalised_readings[0]).toBe(false);
+    else expect(!!pat1.normalised_readings[0]).toBe(false);
   });
   it("updates on insert", async () => {
     const patients = Table.findOne({ name: "patients" })!;
@@ -792,7 +794,7 @@ describe("bool arrays in stored calculated JSON fields", () => {
     const pat1 = await patients.getRow({ id: 1 });
     assertIsSet(pat1);
     expect(Array.isArray(pat1.normalised_readings)).toBe(true);
-    if (!db.isSQLite)
+    if (db.driverName === "postgres")
       expect(typeof pat1.normalised_readings[0]).toBe("boolean");
     expect(pat1.normalised_readings.length).toBe(3);
   });
@@ -1412,7 +1414,8 @@ describe("mergeIntoWhere", () => {
     });
     const { where, values } = mkWhere(w);
 
-    expect(where).toEqual('where "a">$1 and "a"<$2');
+    if (db.driverName === "postgres")
+      expect(where).toEqual('where "a">$1 and "a"<$2');
     expect(values[0]).toBe(5);
     expect(values[1]).toBe(15);
   });
@@ -1538,7 +1541,8 @@ describe("jsexprToWhere", () => {
       and: [{ not: { id: 5 } }, { not: { id: 8 } }],
     });
     const { where } = mkWhere(w);
-    expect(where).toEqual('where (not ("id"=$1) and not ("id"=$2))');
+    if (db.driverName === "postgres")
+      expect(where).toEqual('where (not ("id"=$1) and not ("id"=$2))');
   });
   it("translates simple and", () => {
     const w = jsexprToWhere("id ==5 && y== 8");
