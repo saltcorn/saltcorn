@@ -46,28 +46,11 @@ var builder;(()=>{var e,t,n={8792:e=>{"use strict";e.exports=function e(t,n){if(
   transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
   cursor: pointer;
 
-  svg {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    opacity: ${e=>e.$isHidden?.2:1};
-  }
-  &:after {
-    content: ' ';
-    width: 2px;
-    height: ${e=>e.$isHidden?100:0}%;
-    position: absolute;
-    left: 2px;
-    top: 3px;
-    background: ${e=>e.$selected?"#fff":"#808184"};
-    transform: rotate(-45deg);
-    transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-    transform-origin: 0% 0%;
-    opacity: ${e=>e.$isHidden?.4:1};
-  }
-`,Wa=ua.div`
-  margin-left: -22px;
-  margin-right: 10px;
+/***/ "../../node_modules/@craftjs/core/dist/esm/index.js":
+/*!**********************************************************!*\
+  !*** ../../node_modules/@craftjs/core/dist/esm/index.js ***!
+  \**********************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
   svg {
     width: 12px;
