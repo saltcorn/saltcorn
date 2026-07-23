@@ -280,6 +280,8 @@ const configuration_workflow = (req: Req) =>
             has_select2,
             has_copilot_generate:
               !!getState()!.functions.copilot_generate_layout,
+            has_js_copilot:
+              !!getState()!.functions.copilot_generate_javascript,
           };
         },
       },
