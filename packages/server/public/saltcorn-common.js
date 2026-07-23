@@ -2127,7 +2127,11 @@ let _js_copilot_generated_code = null;
 function add_js_copilot_button(el, editorDiv, editor) {
   if (!window._sc_has_js_copilot) return;
   if (el.getAttribute("singleline")) return;
+  // the copilot returns statements, which are invalid in an expression field.
+  // is-expression only covers row/query; validate-expression also catches the
+  // value/boolean ones(calculated formulas, defailt expressions)
   if (el.getAttribute("is-expression") === "yes") return;
+  if ($(el).hasClass("validate-expression")) return;
   // only data-disabled marks a genuinely read-only field: apply_showif also
   // disables textareas in hidden show-if groups, and those become editable
   // later without the editor being recreated
