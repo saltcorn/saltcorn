@@ -1040,7 +1040,13 @@ const EditCodeWithAI = ({ mode, isExpression, value, onChange, className }) => {
                       className="form-control"
                       rows={3}
                       value={prompt}
+                      autoFocus
                       onChange={(e) => setPrompt(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key !== "Enter" || e.shiftKey) return;
+                        e.preventDefault();
+                        if (!generating && prompt.trim()) generate();
+                      }}
                       placeholder={t("Enter your prompt...")}
                     />
                     {error && (

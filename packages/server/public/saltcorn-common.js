@@ -271,16 +271,18 @@ function apply_showif() {
           )
           .join("");
         e.append($(`<optgroup label="${o.label}">` + opts + "</optgroup>"));
-      } else if (
-        !(o && typeof o.label !== "undefined" && typeof o.value !== "undefined")
-      ) {
+      } else if (!(
+        o &&
+        typeof o.label !== "undefined" &&
+        typeof o.value !== "undefined"
+      )) {
         if (`${current}` === `${o}`)
           e.append($("<option selected>" + o + "</option>"));
         else e.append($("<option>" + o + "</option>"));
       } else {
         e.append(
           $(
-            `<option ${o.disabled? "disabled ":""}${
+            `<option ${o.disabled ? "disabled " : ""}${
               `${current}` === `${o.value}` ? "selected" : ""
             } value="${o.value}">${o.label}</option>`
           )
@@ -2184,6 +2186,14 @@ function get_js_copilot_modal() {
   $("#jsCopilotPrompt").on("input", function () {
     $("#jsCopilotGenBtn").prop("disabled", !this.value.trim());
   });
+  $("#jsCopilotPrompt").on("keydown", function (e) {
+    if (e.key !== "Enter" || e.shiftKey) return;
+    e.preventDefault();
+    if (!$("#jsCopilotGenBtn").prop("disabled")) run_js_copilot();
+  });
+  $(modalEl).on("shown.bs.modal", function () {
+    $("#jsCopilotPrompt").trigger("focus");
+  });
   $(modalEl).on("hidden.bs.modal", function () {
     $("#jsCopilotPrompt").val("");
     $("#jsCopilotGenBtn").prop("disabled", true);
@@ -2209,6 +2219,7 @@ function js_copilot_back_to_prompt() {
   $("#jsCopilotGenBtn")
     .text("Generate")
     .prop("disabled", !$("#jsCopilotPrompt").val().trim());
+  $("#jsCopilotPrompt").trigger("focus");
 }
 
 function run_js_copilot() {
