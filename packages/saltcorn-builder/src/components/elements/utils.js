@@ -1565,9 +1565,10 @@ const ConfigField = ({
           label={field?.label || field?.name || "Code"}
           placeholder={field?.attributes?.placeholder}
           nojoins={field?.attributes?.nojoins}
-          isExpression={["row", "query"].includes(
-            field?.attributes?.expression_type
-          )}
+          isExpression={
+            !!field?.attributes?.expression_type ||
+            !!field?.class?.includes?.("validate-expression")
+          }
         />
       );
     },
