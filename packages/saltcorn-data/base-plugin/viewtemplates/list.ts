@@ -373,6 +373,8 @@ const configuration_workflow = (req: Req) =>
             mode: "list",
             has_copilot_generate:
               !!getState()!.functions.copilot_generate_layout,
+            has_js_copilot:
+              !!getState()!.functions.copilot_generate_javascript,
             ownership:
               !!table.ownership_field_id ||
               !!table.ownership_formula ||

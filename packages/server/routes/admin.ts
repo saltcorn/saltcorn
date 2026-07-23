@@ -130,7 +130,7 @@ import MarkdownIt from "markdown-it";
 const md = new MarkdownIt();
 import semver from "semver";
 import { dbCommonModulePath } from "@saltcorn/db-common/internal";
-import { Req, Res } from "@saltcorn/types/base_types";
+import { PluginFunction, Req, Res } from "@saltcorn/types/base_types";
 
 const router = Router();
 export default router;
@@ -5812,6 +5812,47 @@ router.post(
       });
     } catch (error: any) {
       res.json({ success: false, error: error.message });
+    }
+  })
+);
+
+/**
+ * Generate or edit JavaScript with the copilot, for any multi-line code editor.
+ * Does not persist anything: the caller puts the code in the editor, which
+ * saves through the normal form flow.
+ * @name post/gen-js-copilot
+ * @function
+ * @memberof module:routes/admin~adminRouter
+ */
+router.post(
+  "/gen-js-copilot",
+  isAdminOrHasConfigMinRole([
+    "min_role_edit_triggers",
+    "min_role_edit_views",
+    "min_role_edit_pages",
+    "min_role_edit_tables",
+  ]),
+  error_catcher(async (req: Req, res: Res) => {
+    const copilot = getState()!.functions.copilot_generate_javascript;
+    if (!copilot) {
+      res.json({ error: req.__("AI code generation is not available") });
+      return;
+    }
+    const { description, code, table } = req.body || {};
+    if (!description || !`${description}`.trim()) {
+      res.json({ error: req.__("Please describe what the code should do") });
+      return;
+    }
+    const tbl = table ? Table.findOne({ name: table }) : null;
+    try {
+      const generated = await (copilot as PluginFunction).run(
+        description,
+        code || "",
+        tbl?.name || null
+      );
+      res.json({ code: generated });
+    } catch (e: any) {
+      res.json({ error: e.message });
     }
   })
 );

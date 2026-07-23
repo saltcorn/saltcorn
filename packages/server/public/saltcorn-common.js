@@ -1531,6 +1531,7 @@ ${value}`;
             : {}),
         });
         $(div).data("monaco-editor", editor);
+        add_js_copilot_button(el, div, editor);
         monaco.languages.typescript.typescriptDefaults.setCompilerOptions({
           noLib: true,
           allowNonTsExtensions: true,
@@ -2104,6 +2105,157 @@ function enable_codemirror(f) {
     success: f,
     error: checkNetworkError,
   });
+}
+
+/*
+  "Edit with AI" for multi-line JavaScript editors. The copilot generates
+  statements, so single-line and expression editors are excluded.
+*/
+const js_copilot_modes = [
+  "",
+  "text/javascript",
+  "application/javascript",
+  "application/x-javascript",
+  "text/typescript",
+  "application/typescript",
+];
+let _js_copilot_target = null;
+let _js_copilot_generated_code = null;
+
+function add_js_copilot_button(el, editorDiv, editor) {
+  if (!window._sc_has_js_copilot) return;
+  if (el.getAttribute("singleline")) return;
+  if (el.getAttribute("is-expression") === "yes") return;
+  // only data-disabled marks a genuinely read-only field: apply_showif also
+  // disables textareas in hidden show-if groups, and those become editable
+  // later without the editor being recreated
+  if (el.getAttribute("data-disabled") === "true") return;
+  const mode = (el.getAttribute("mode") || "").toLowerCase();
+  if (!js_copilot_modes.includes(mode)) return;
+  const bar = document.createElement("div");
+  bar.className = "d-flex justify-content-end edit-code-with-ai-bar";
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className =
+    "btn btn-sm btn-link p-0 text-decoration-none edit-code-with-ai";
+  btn.innerHTML = '<i class="fas fa-magic me-1"></i>Edit with AI';
+  btn.addEventListener("click", function () {
+    show_js_copilot_modal(el, editor);
+  });
+  bar.appendChild(btn);
+  editorDiv.parentNode.insertBefore(bar, editorDiv);
+}
+
+function get_js_copilot_modal() {
+  let modalEl = document.getElementById("jsCopilotModal");
+  if (modalEl) return modalEl;
+  $("body").append(`<div class="modal fade" id="jsCopilotModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit with AI</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div id="jsCopilotPromptArea">
+          <p class="text-muted small">Describe what the code should do. The existing code will be used as context.</p>
+          <textarea id="jsCopilotPrompt" class="form-control" rows="3" placeholder="Enter your prompt..."></textarea>
+          <div id="jsCopilotError" class="alert alert-danger mt-2 mb-0 d-none"></div>
+        </div>
+        <div id="jsCopilotPreviewArea" class="d-none">
+          <p class="text-muted small mb-1">Review the generated code:</p>
+          <pre style="max-height:400px;overflow:auto;background:#1e1e1e;color:#d4d4d4;border-radius:4px;padding:12px;font-size:13px;"><code id="jsCopilotPreviewCode"></code></pre>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <div id="jsCopilotPromptFooter">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" id="jsCopilotGenBtn" class="btn btn-primary ms-2" onclick="run_js_copilot()" disabled>Generate</button>
+        </div>
+        <div id="jsCopilotPreviewFooter" class="d-none">
+          <button type="button" class="btn btn-secondary" onclick="js_copilot_back_to_prompt()">Back</button>
+          <button type="button" class="btn btn-primary ms-2" onclick="accept_js_copilot()">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>`);
+  modalEl = document.getElementById("jsCopilotModal");
+  $("#jsCopilotPrompt").on("input", function () {
+    $("#jsCopilotGenBtn").prop("disabled", !this.value.trim());
+  });
+  $(modalEl).on("hidden.bs.modal", function () {
+    $("#jsCopilotPrompt").val("");
+    $("#jsCopilotGenBtn").prop("disabled", true);
+    $("#jsCopilotError").addClass("d-none");
+    _js_copilot_target = null;
+  });
+  return modalEl;
+}
+
+function show_js_copilot_modal(el, editor) {
+  const modalEl = get_js_copilot_modal();
+  _js_copilot_target = { el, editor };
+  js_copilot_back_to_prompt();
+  new bootstrap.Modal(modalEl).show();
+}
+
+function js_copilot_back_to_prompt() {
+  _js_copilot_generated_code = null;
+  $("#jsCopilotPromptArea").removeClass("d-none");
+  $("#jsCopilotPreviewArea").addClass("d-none");
+  $("#jsCopilotPromptFooter").removeClass("d-none");
+  $("#jsCopilotPreviewFooter").addClass("d-none");
+  $("#jsCopilotGenBtn")
+    .text("Generate")
+    .prop("disabled", !$("#jsCopilotPrompt").val().trim());
+}
+
+function run_js_copilot() {
+  if (!_js_copilot_target) return;
+  const prompt = $("#jsCopilotPrompt").val().trim();
+  if (!prompt) return;
+  const { el, editor } = _js_copilot_target;
+  const $btn = $("#jsCopilotGenBtn");
+  const $err = $("#jsCopilotError");
+  $btn.prop("disabled", true).text("Generating...");
+  $err.addClass("d-none");
+  const showError = (msg) => {
+    $btn.prop("disabled", !$("#jsCopilotPrompt").val().trim()).text("Generate");
+    $err.text(msg || "Request failed").removeClass("d-none");
+  };
+  fetch("/admin/gen-js-copilot", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+      "CSRF-Token": _sc_globalCsrf,
+    },
+    body: JSON.stringify({
+      description: prompt,
+      code: editor.getValue(),
+      table: el.getAttribute("tableName") || undefined,
+    }),
+  })
+    .then((r) => r.json())
+    .then((data) => {
+      if (data.error) return showError(data.error);
+      $btn.text("Generate");
+      _js_copilot_generated_code = data.code;
+      $("#jsCopilotPreviewCode").text(data.code);
+      $("#jsCopilotPromptArea").addClass("d-none");
+      $("#jsCopilotPreviewArea").removeClass("d-none");
+      $("#jsCopilotPromptFooter").addClass("d-none");
+      $("#jsCopilotPreviewFooter").removeClass("d-none");
+    })
+    .catch((err) => showError(err.message));
+}
+
+function accept_js_copilot() {
+  if (_js_copilot_generated_code !== null && _js_copilot_target)
+    _js_copilot_target.editor.setValue(_js_copilot_generated_code);
+  _js_copilot_generated_code = null;
+  bootstrap.Modal.getInstance(document.getElementById("jsCopilotModal")).hide();
 }
 
 let monaco_enabled_declares = false;
