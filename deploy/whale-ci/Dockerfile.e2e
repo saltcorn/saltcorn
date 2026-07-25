@@ -1,4 +1,4 @@
 FROM build
 
-RUN cd deploy/playwright && npm install
-RUN cd deploy/playwright_mobile && npm install
+RUN cd deploy/playwright && npm install && npx playwright install --with-deps chromium
+RUN cd deploy/playwright_mobile && npm install && npx playwright install --with-deps chromium
