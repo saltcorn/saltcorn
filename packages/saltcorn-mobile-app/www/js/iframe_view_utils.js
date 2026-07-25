@@ -446,22 +446,50 @@ async function pjax_to(href, query, e) {
     await parent.saltcorn.mobileApp.navigation.handleRoute(safeHref, query);
   else
     try {
-      const headers = {
-        pjaxpageload: "true",
-      };
-      if (localizer.length) headers.localizedstate = "true";
-      const result = await parent.saltcorn.mobileApp.api.apiCall({
-        path: path,
-        method: "GET",
-        additionalHeaders: headers,
-      });
+      const { isOfflineMode } =
+        parent.saltcorn.data.state.getState().mobileConfig;
+      let content;
+      if (isOfflineMode) {
+        const page = await parent.saltcorn.mobileApp.navigation.router.resolve(
+          {
+            pathname: `get${safeHref}`,
+            query: query,
+          }
+        );
+        if (page.redirect) {
+          const { path: redirectPath, query: redirectQuery } =
+            parent.saltcorn.mobileApp.navigation.splitPathQuery(
+              page.redirect
+            );
+          await parent.saltcorn.mobileApp.navigation.handleRoute(
+            redirectPath.startsWith("/") && redirectPath.length > 1
+              ? `get${redirectPath}`
+              : redirectPath,
+            redirectQuery
+          );
+          return;
+        }
+        content = typeof page === "string" ? page : page.content;
+      } else {
+        const headers = {
+          pjaxpageload: "true",
+        };
+        if (localizer.length) headers.localizedstate = "true";
+        const result = await parent.saltcorn.mobileApp.api.apiCall({
+          path: path,
+          method: "GET",
+          additionalHeaders: headers,
+          responseType: "text",
+        });
+        content = result.data;
+      }
       if (!inModal && !localizer.length) {
         // not sure for mobile
         // window.history.pushState({ url: href }, "", href);
       }
       if (inModal && !localizer.length)
         $(".sc-modal-linkout").attr("href", path);
-      $dest.html(result.data);
+      $dest.html(content);
       if (localizer.length) localizer.attr("data-sc-local-state", path);
       initialize_page();
     } catch (error) {
