@@ -50,8 +50,6 @@ import type {
   AbstractView,
 } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
-import axiosLib from "axios";
-const axios: any = axiosLib; // NodeNext default-import interop: axios types resolve to the module namespace
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import bcryptjs from "bcryptjs";
 const { hash } = bcryptjs;
@@ -602,29 +600,37 @@ class View implements AbstractView {
           const headers: any = {
             "X-Requested-With": "XMLHttpRequest",
             "X-Saltcorn-Client": "mobile-app",
+            "Content-Type": "application/json",
           };
           if (state.mobileConfig?.csrfToken)
             headers["CSRF-Token"] = state.mobileConfig.csrfToken;
+          if (state.mobileConfig?.cookie)
+            headers["Cookie"] = state.mobileConfig.cookie;
           try {
-            let response = await axios.post(
-              url,
-              { args },
-              {
-                headers,
-                withCredentials: true,
-              }
-            );
-            for (const { type, msg } of response.data.alerts)
-              req?.flash(type, msg);
-            const result = Array.isArray(response.data.success)
-              ? prepMobileRows(response.data.success, fields)
-              : response.data.success;
+            const res = await fetch(url, {
+              method: "POST",
+              headers,
+              credentials: "include",
+              body: JSON.stringify({ args }),
+            });
+            if (!res.ok) {
+              const error: any = new Error(
+                `Request failed with status code ${res.status}`
+              );
+              error.response = { status: res.status };
+              throw error;
+            }
+            const data = await res.json();
+            for (const { type, msg } of data.alerts) req?.flash(type, msg);
+            const result = Array.isArray(data.success)
+              ? prepMobileRows(data.success, fields)
+              : data.success;
             if (cacheable && state.queriesCache)
               state.queriesCache[hashedArgs] = result;
             return result;
           } catch (error: any) {
             state.log(1, `Query error: ${k}in ${this.name}: ${error.message}`);
-            if (error.request?.status === 401)
+            if (error.response?.status === 401)
               error.message = req?.__("Not authorized");
             else
               error.message = `Unable to call POST ${url}:\n${error.message}`;

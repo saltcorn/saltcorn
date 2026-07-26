@@ -38,8 +38,6 @@ import type {
   Row,
   PartialSome,
 } from "@saltcorn/db-common/internal";
-import axiosLib from "axios";
-const axios: any = axiosLib; // NodeNext default-import interop: axios types resolve to the module namespace
 import FormData from "form-data";
 import { renameSync, statSync, existsSync } from "fs";
 import mimeTypes from "mime-types";
@@ -1223,16 +1221,23 @@ class File {
     const csrfToken = state.mobileConfig?.csrfToken;
     const formData = new FormData();
     formData.append("file", file.blob, file.fileObj.name);
-    const response = await axios.post(url, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        ...(csrfToken ? { "CSRF-Token": csrfToken } : {}),
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Saltcorn-Client": "mobile-app",
-      },
-      withCredentials: true,
+    const headers: any = {
+      // No Content-Type here - fetch sets the multipart boundary itself.
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Saltcorn-Client": "mobile-app",
+    };
+    if (csrfToken) headers["CSRF-Token"] = csrfToken;
+    if (state.mobileConfig?.cookie) headers["Cookie"] = state.mobileConfig.cookie;
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      credentials: "include",
+      body: formData as any,
     });
-    return response.data.success;
+    if (!res.ok)
+      throw new Error(`Request failed with status code ${res.status}`);
+    const data = await res.json();
+    return data.success;
   }
 
   static async set_xattr_of_existing_file(

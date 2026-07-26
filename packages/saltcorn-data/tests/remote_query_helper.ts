@@ -1,33 +1,32 @@
-import axiosLib from "axios";
-const axios: any = axiosLib;
 import * as State from "../db/state.js";
 
 declare let global: any;
 
 const baseURL = "http://localhost:3000";
 
-// Node's axios has no browser cookie jar, so the session cookie has to be
-// tracked and attached by hand. Registered once on the shared default axios
-// instance, so it also covers view.ts's own internal axios calls for remote
-// queries (it imports the same default axios module).
+// Node's fetch has no browser cookie jar, so the session cookie has to be
+// tracked and attached by hand, and stashed on mobileConfig.cookie so it
+// also covers view.ts's/file.ts's own internal fetch calls for remote
+// queries and file uploads.
 let sessionCookie: string | undefined;
-axios.interceptors.request.use((config: any) => {
-  if (sessionCookie) {
-    config.headers = config.headers || {};
-    config.headers["Cookie"] = sessionCookie;
-  }
-  return config;
-});
-axios.interceptors.response.use((response: any) => {
-  const setCookie = response.headers?.["set-cookie"];
-  if (setCookie)
-    sessionCookie = setCookie.map((c: string) => c.split(";")[0]).join("; ");
-  return response;
+
+const captureSessionCookie = (res: Response) => {
+  const setCookie = res.headers.get("set-cookie");
+  if (setCookie) sessionCookie = setCookie.split(";")[0];
+};
+
+const withCookie = (headers: Record<string, string> = {}) => ({
+  ...(sessionCookie ? { Cookie: sessionCookie } : {}),
+  ...headers,
 });
 
 const fetchCsrfToken = async (): Promise<string> => {
-  const res = await axios.get(`${baseURL}/auth/csrf-token`);
-  return res.data.csrfToken;
+  const res = await fetch(`${baseURL}/auth/csrf-token`, {
+    headers: withCookie(),
+  });
+  captureSessionCookie(res);
+  const data = await res.json();
+  return data.csrfToken;
 };
 
 export const prepareQueryEnviroment = async () => {
@@ -37,17 +36,23 @@ export const prepareQueryEnviroment = async () => {
   // these remote-query tests are meant to exercise.
   global.window = {};
   const csrfToken = await fetchCsrfToken();
-  const loginRes = await axios.post(
-    `${baseURL}/auth/login-with/session`,
-    { email: "admin@foo.com", password: "AhGGr6rhu45" },
-    { headers: { "CSRF-Token": csrfToken } }
-  );
-  if (!loginRes.data.success) throw new Error("Test admin login failed");
+  const loginRes = await fetch(`${baseURL}/auth/login-with/session`, {
+    method: "POST",
+    headers: withCookie({
+      "Content-Type": "application/json",
+      "CSRF-Token": csrfToken,
+    }),
+    body: JSON.stringify({ email: "admin@foo.com", password: "AhGGr6rhu45" }),
+  });
+  captureSessionCookie(loginRes);
+  const loginData = await loginRes.json();
+  if (!loginData.success) throw new Error("Test admin login failed");
   // req.login() regenerates the session, so the pre-login CSRF token is stale.
   const state = await State.getState();
   state!.mobileConfig = {
     hasSession: true,
     csrfToken: await fetchCsrfToken(),
+    cookie: sessionCookie,
   } as any;
 };
 
@@ -55,26 +60,28 @@ export const sendViewToServer = async (view: any) => {
   let copy = JSON.parse(JSON.stringify(view));
   copy.id = undefined;
   const state = await State.getState();
-  await axios.post(`${baseURL}/viewedit/test/inserter`, copy, {
-    headers: {
+  await fetch(`${baseURL}/viewedit/test/inserter`, {
+    method: "POST",
+    headers: withCookie({
+      "Content-Type": "application/json",
       "X-Requested-With": "XMLHttpRequest",
-      "CSRF-Token": state!.mobileConfig?.csrfToken,
-    },
+      "CSRF-Token": state!.mobileConfig?.csrfToken || "",
+    }),
+    body: JSON.stringify(copy),
   });
 };
 
 export const deleteViewFromServer = async (id: number) => {
   const state = await State.getState();
-  await axios.post(
-    `${baseURL}/viewedit/delete/${id}`,
-    {},
-    {
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-        "CSRF-Token": state!.mobileConfig?.csrfToken,
-      },
-    }
-  );
+  await fetch(`${baseURL}/viewedit/delete/${id}`, {
+    method: "POST",
+    headers: withCookie({
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+      "CSRF-Token": state!.mobileConfig?.csrfToken || "",
+    }),
+    body: JSON.stringify({}),
+  });
 };
 
 export const renderEditInEditConfig = {

@@ -63,6 +63,7 @@ const prepareConfig = async (oldInstance?: any) => {
     provisioningProfile,
     appId,
     firebaseJSONKey,
+    teamId,
   } = builderSettings;
 
   if (apnSigningKey && apnSigningKeyId && provisioningProfile && appId) {
@@ -76,19 +77,30 @@ const prepareConfig = async (oldInstance?: any) => {
       }
     }
 
-    let teamId = null;
-    if (
-      oldInstance &&
-      oldInstance.apns?.provisioningProfile === provisioningProfile
-    ) {
-      teamId = oldInstance.apns.teamId;
-    } else {
-      const decoded = await decodeProvisioningProfile(provisioningProfile);
-      teamId = decoded.teamId;
+    // teamId is normally already saved in config; this decode is only a
+    // fallback for older config saved before we started storing it.
+    let resolvedTeamId = teamId;
+    if (!resolvedTeamId) {
+      if (oldInstance?.apns?.provisioningProfile === provisioningProfile) {
+        resolvedTeamId = oldInstance.apns.teamId;
+      } else {
+        try {
+          resolvedTeamId = (
+            await decodeProvisioningProfile(provisioningProfile)
+          ).teamId;
+        } catch (error: any) {
+          state.log(
+            1,
+            `Unable to decode the provisioning profile to get the Team ID: ${
+              error.message || error
+            }. Re-save the mobile app settings from a Mac to fix this.`
+          );
+        }
+      }
     }
 
     config.apns = {
-      teamId: teamId,
+      teamId: resolvedTeamId,
       appId: appId,
       signingKey: keyContent,
       provisioningProfile: provisioningProfile,

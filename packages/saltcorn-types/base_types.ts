@@ -812,6 +812,9 @@ export type MobileConfig = {
   isPublicUser?: boolean;
   hasSession?: boolean;
   csrfToken?: string;
+  // Only set by Node-based tests: fetch has no cookie jar outside a browser,
+  // so the session cookie has to be tracked and attached by hand.
+  cookie?: string;
   inErrorState?: boolean;
   inLoadState?: boolean;
   encodedSiteLogo?: string;
