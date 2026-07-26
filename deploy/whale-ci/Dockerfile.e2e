@@ -2,3 +2,11 @@ FROM build
 
 RUN cd deploy/playwright && npm install
 RUN cd deploy/playwright_mobile && npm install
+
+# The browsers baked into the `build` image come from a cached layer, whose
+# playwright CLI drifts from the @playwright/test version the installs above
+# resolve (both are caret ranges). Newer releases also split the headless shell
+# into its own download, which that layer never fetched. Install the browsers
+# that match, after the installs that decide which version is in play.
+RUN cd deploy/playwright && npx playwright install --with-deps chromium
+RUN cd deploy/playwright_mobile && npx playwright install --with-deps chromium

@@ -14,7 +14,7 @@ on:
       runner:
         description: "whale-ci package to run the pipeline with."
         required: false
-        default: "ziman-whale-ci@0.2.7"
+        default: "ziman-whale-ci@0.2.8"
 
 jobs:
   ziman-whale-ci:
@@ -36,7 +36,7 @@ jobs:
 
       - name: Run pipeline
         env:
-          RUNNER: ${{ inputs.runner || 'ziman-whale-ci@0.2.7' }}
+          RUNNER: ${{ inputs.runner || 'ziman-whale-ci@0.2.8' }}
           STEP: ${{ inputs.step || 'build' }}
         run: |
           if [ "$STEP" = "all" ]; then
