@@ -22,6 +22,7 @@ import {
 } from "../models/expression.js";
 import {
   sleep,
+  withLock,
   getSessionId,
   urlStringToObject,
   dollarizeObject,
@@ -268,6 +269,11 @@ const run_code = async ({
     ...(isNode() ? { assert } : {}),
     tryCatchInTransaction: db.tryCatchInTransaction,
     commitAndBeginNewTransaction: db.commitAndBeginNewTransaction,
+    withLock: (
+      name: string,
+      fn: () => Promise<any>,
+      opts?: { timeoutMs?: number }
+    ) => withLock(name, fn, opts),
     commitBeginNewTransactionAndRefreshCache: async () => {
       await db.commitAndBeginNewTransaction();
       await sysState.refresh();

@@ -645,6 +645,7 @@ router.get(
   ]),
   error_catcher(async (req: Req, res: Res) => {
     const tables = await Table.find_with_external({}, { orderBy: "name" });
+    const mode = getState()!.getLightDarkMode(req.user);
     res.sendWrap(
       {
         title: req.__("Tables"),
@@ -657,11 +658,16 @@ router.get(
             <script type="module">
               mermaid.initialize({ 
                 startOnLoad: false,
-                securityLevel: 'loose',
+                securityLevel: 'loose',${
+                  mode === "dark" ? "theme: 'dark'," : ""
+                }
               });
               await mermaid.run({
                 querySelector: ".mermaid",
-                postRenderCallback: (id: any) => {
+                ${
+                  mode === "dark" ? "theme: 'dark'," : ""
+                }
+                postRenderCallback: (id) => {
                   $("#" + id).css("height", "calc(100vh - 250px)");
                   $("#" + id + " > g").each(function(index) {
                     const jThis = $(this);

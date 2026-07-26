@@ -376,7 +376,7 @@ const configTypes: ConfigTypes = {
     default: "",
     restart_required: true,
     blurb:
-      "Comma-separated list of packages which will be available in JavaScript actions. Set version with <code>{package name}=={version number}",
+      "Comma-separated list of packages which will be available in JavaScript actions. Set version with <code>{package name}=={version number}</code>",
     async onChange(val: string) {
       setTimeout(async () => {
         await getState()!.refresh_npmpkgs();
