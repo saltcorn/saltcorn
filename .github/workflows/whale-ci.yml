@@ -1,0 +1,57 @@
+name: ziman-whale-ci
+
+on:
+  push:
+    branches-ignore: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+    inputs:
+      step:
+        description: "Step to run, with its dependencies. Use 'all' for the whole pipeline."
+        required: false
+        default: "build"
+      runner:
+        description: "whale-ci package to run the pipeline with."
+        required: false
+        default: "ziman-whale-ci@0.2.7"
+
+jobs:
+  ziman-whale-ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.x"
+
+      # The pipeline builds a large image (node + chromium + a full npm install),
+      # so reclaim the runner space taken by toolchains this build does not use.
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h /
+
+      - name: Run pipeline
+        env:
+          RUNNER: ${{ inputs.runner || 'ziman-whale-ci@0.2.7' }}
+          STEP: ${{ inputs.step || 'build' }}
+        run: |
+          if [ "$STEP" = "all" ]; then
+            npx --yes "$RUNNER" -o cireport.html whale-ci.yml
+          else
+            npx --yes "$RUNNER" -o cireport.html whale-ci.yml "$STEP"
+          fi
+
+      # Written whether the run passed or failed: on a failure the report is the
+      # thing that says which step died and why. Before the runner fix a failed
+      # build produced no report at all, so "file not found" is itself a result.
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ziman-whale-ci-report
+          path: cireport.html
+          if-no-files-found: warn
