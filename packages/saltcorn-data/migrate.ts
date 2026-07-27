@@ -75,18 +75,15 @@ const doMigrationStep = async (
   // pg and a sqlite block (i.e. it is a cross-dialect migration, not a
   // postgres-only one that sqlite skips), derive from the postgres block by
   // translating it - so no per-migration MySQL SQL is needed.
-  if (contents.sql_pg && db.driverName === "postgres") {
-    await execMany(resolve(contents.sql_pg));
-  }
-  if (contents.sql_sqlite && db.driverName === "sqlite") {
-    await execMany(contents.sql_sqlite);
-  }
-  if (db.driverName === "mysql") {
-    if (contents.sql_mysql) {
-      await execMany(resolve(contents.sql_mysql));
-    } else if (contents.sql_pg && contents.sql_sqlite) {
-      await execMany(translate(resolve(contents.sql_pg)));
-    }
+  const ownSql = (contents as any)[db.migration_sql_dialect];
+  if (ownSql) {
+    await execMany(resolve(ownSql));
+  } else if (
+    db.migration_translates_from_pg &&
+    contents.sql_pg &&
+    contents.sql_sqlite
+  ) {
+    await execMany(translate(resolve(contents.sql_pg)));
   }
   if (contents.js) {
     await contents.js();

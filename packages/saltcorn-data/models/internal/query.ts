@@ -25,7 +25,7 @@ export const getAggAndField = (
   orderBy?: string
 ) => {
   const agg = aggregate.toLowerCase();
-  const supportsAggOrderBy = db.driverName !== "mysql";
+  const supportsAggOrderBy = db.supports_agg_order_by;
   return agg === "countunique"
     ? `count(distinct ${field ? `"${sqlsanitize(field)}"` : "*"})`
     : `${
@@ -41,7 +41,7 @@ export const coerceAggResultTypes = (
   rows: any,
   aggregations: { [nm: string]: { aggregate?: string } }
 ): void => {
-  if (db.driverName !== "mysql" || !rows) return;
+  if (!db.coerce_numeric_aggregates_to_string || !rows) return;
   const stringAggCols = Object.entries(aggregations)
     .filter(([, a]) =>
       ["count", "countunique", "sum", "avg"].includes(
@@ -276,7 +276,7 @@ export const aggregation_query_fields = (
   }`;
 
   let outValues = values;
-  if ((db.driverName === "mysql" || db.isSQLite) && where && values.length) {
+  if (db.uses_positional_placeholders && where && values.length) {
     outValues = [];
     Object.entries(aggregations).forEach(([, { field, aggregate }]) => {
       if (

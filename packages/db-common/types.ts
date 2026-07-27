@@ -20,6 +20,7 @@ export type DbExportsType = {
   isSQLite: boolean;
   is_node: boolean;
   driverName: string;
+  sql_backend_display_name: string;
   mkWhere: (q: Where) => any;
   getTenantSchemaPrefix: () => string;
   insert: (table: string, data: GenObj, opts?: any) => Promise<any>;
@@ -131,6 +132,112 @@ export type DbExportsType = {
   serial_pk_sql_type: string;
   json_sql_type: string;
   indexable_text_sql_type: string;
+  timestamp_sql_type: string;
+  millis_timestamp_sql_type: string;
+  epochToTimestampSql: (param: string) => string;
+  truncateMillisSql: (expr: string) => string;
+  castExprToTextSql: (expr: string) => string;
+  castBindParamSql: (param: string, sqlType: "text" | "jsonb") => string;
+  timeDiffWithinSql: (
+    startExpr: string,
+    endExpr: string,
+    seconds: number
+  ) => string;
+  // boolean: two expressions differ, treating NULLs as comparable (null == null)
+  isDistinctFromSql: (a: string, b: string) => string;
+  wrapDeleteSubselect: (subquery: string) => string;
+  text_requires_length_for_index: boolean;
+  // set/drop a column's NOT NULL constraint (qTable/qCol are already quoted)
+  setColumnNullabilitySql: (
+    qTable: string,
+    qCol: string,
+    sqlType: string,
+    notNull: boolean
+  ) => string;
+  // change a column's type (postgres ALTER COLUMN TYPE ... USING vs MySQL MODIFY)
+  alterColumnTypeSql: (
+    qTable: string,
+    qCol: string,
+    newType: string,
+    using: string,
+    def: string
+  ) => string;
+  // statements to change a primary-key column's type: MySQL modifies in place
+  // when the column was already the PK, others drop and re-add the column
+  changePkColumnTypeStatements: (
+    qTable: string,
+    qCol: string,
+    newType: string,
+    def: string,
+    wasAlreadyPk: boolean
+  ) => string[];
+  // foreign-key DDL (dialect-specific):
+  // FK constraint is declared inline in the column type (postgres/sqlite) vs
+  // added separately after the column (MySQL)
+  inline_fk_in_column_type: boolean;
+  // the FK constraint must be dropped before its column can be dropped (MySQL)
+  fk_must_be_dropped_before_column: boolean;
+  // suffix appended to ADD CONSTRAINT ... FOREIGN KEY (" DEFERRABLE" on postgres;
+  // empty where deferrable constraints are unsupported)
+  fk_deferrable_clause: string;
+  // drop a FK constraint if present, swallowing "already absent" errors
+  dropForeignKeyIfExists: (qTable: string, conName: string) => Promise<void>;
+  // drop an existing FK and add a replacement (changed ON DELETE / reftable)
+  replaceForeignKey: (params: {
+    qTable: string;
+    oldConName: string;
+    newConName: string;
+    colName: string;
+    qRefTable: string;
+    refCol: string;
+    onDelete: string;
+  }) => Promise<void>;
+  // add a column carrying a non-trivial default value
+  addColumnWithDefault: (params: {
+    qTable: string;
+    colName: string;
+    sqlType: string;
+    bareType: string;
+    required: boolean;
+    defaultValue: any;
+  }) => Promise<void>;
+  // whether an error is a "duplicate foreign key name" error (idempotent add)
+  isDuplicateForeignKeyError: (e: any) => boolean;
+  // misc dialect-specific SQL / behaviour:
+  // merge a JSON object (param) into a JSON column, coalescing NULL to {}
+  jsonMergeExpr: (colExpr: string, param: string) => string;
+  // IN-list matching uses a single array parameter (`= ANY($n)`); engines
+  // where this is false expand to positional `in ($a,$b,...)`
+  supports_array_param_in: boolean;
+  // delete stored sessions for a user / for a whole tenant (session storage is
+  // engine-specific; sqlite has no server-side session store to clear)
+  deleteSessionsForUser: (userId: string, tenant: string) => Promise<void>;
+  deleteSessionsForTenant: (tenant: string) => Promise<void>;
+  // drop a CHECK constraint if present, swallowing "not found" errors
+  dropCheckConstraintIfExists: (
+    qTable: string,
+    conName: string
+  ) => Promise<void>;
+  // migration-file key holding this engine's SQL ("sql_pg"/"sql_sqlite"/"sql_mysql")
+  migration_sql_dialect: string;
+  // derive migration SQL by translating the postgres block when this engine has
+  // no dedicated block (and the migration is cross-dialect)
+  migration_translates_from_pg: boolean;
+  // information_schema introspection returns column aliases upper-cased
+  discovery_keys_uppercase: boolean;
+  // trailing ORDER BY appended to the discovery columns query
+  discovery_columns_order_by: string;
+  // engine-specific queries returning a table's primary-key / foreign-key rows
+  // (bind params $1 = schema, $2 = table)
+  discovery_pk_sql: string;
+  discovery_fk_sql: string;
+  // drop a table's primary-key constraint (MySQL DROP PRIMARY KEY vs looking up
+  // and dropping the named constraint)
+  dropPrimaryKey: (
+    schemaPrefix: string,
+    tableName: string,
+    tenantSchema: string
+  ) => Promise<void>;
   translateMigrationsFromPostgresql?: (sql: string) => string;
   upsert_config: (key: string, value: any) => Promise<void>;
   array_agg_sql_fn?: string;
@@ -165,6 +272,18 @@ export type DbExportsType = {
   supports_table_discovery: boolean;
   // session store supports pruning expired sessions on an interval
   supports_session_pruning: boolean;
+  // `array_agg(... ORDER BY ...)` is supported (postgres/sqlite yes; MySQL's
+  // JSON_ARRAYAGG has no in-aggregate ordering)
+  supports_agg_order_by: boolean;
+  // numeric aggregates (count/sum/avg) come back as JS numbers and must be
+  // stringified to match the string representation other engines return
+  coerce_numeric_aggregates_to_string: boolean;
+  // bound parameters are positional `?` (repeated per use) rather than numbered
+  // `$n` (referenced by index) — affects how repeated where-clauses are bound
+  uses_positional_placeholders: boolean;
+  // the Date type's readFromDB must coerce the raw DB value into a Date/PlainDate
+  // (engines that hand back text/epoch, or MySQL's day-only values)
+  coerce_read_dates: boolean;
   // emit engine SQL to defer foreign-key checks within an open transaction
   deferForeignKeys: (client: any) => Promise<void>;
   // extract the offending field name from a unique-violation error message

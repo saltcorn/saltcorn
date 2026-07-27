@@ -888,13 +888,16 @@ export const query = (text: string, params?: any[]): Promise<any> => {
 export { mkWhere };
 
 export const driverName = "postgres";
+export const sql_backend_display_name = "PostgreSQL";
 export const array_agg_sql_fn = "array_agg";
 export const serial_pk_sql_type = "serial";
 export const json_sql_type = "jsonb";
 export const indexable_text_sql_type = "text";
+export const timestamp_sql_type = "timestamptz";
+export const millis_timestamp_sql_type = "timestamp";
 export const supports_search_path = true;
 
-// --- Backend capability flags (see DbExportsType in db-common/types) ---
+// Backend capability flags (see DbExportsType in db-common/types)
 export const supports_multiple_schemas = true;
 export const pools_connections = true;
 export const supports_for_update = true;
@@ -908,6 +911,175 @@ export const supports_large_bind_lists = true;
 export const supports_database_views = true;
 export const supports_table_discovery = true;
 export const supports_session_pruning = true;
+export const supports_agg_order_by = true;
+export const coerce_numeric_aggregates_to_string = false;
+export const uses_positional_placeholders = false;
+export const coerce_read_dates = false;
+export const epochToTimestampSql = (param: string): string =>
+  `to_timestamp(${param})`;
+export const truncateMillisSql = (expr: string): string =>
+  `date_trunc('milliseconds', ${expr})`;
+export const castExprToTextSql = (expr: string): string => `${expr}::text`;
+export const castBindParamSql = (
+  param: string,
+  sqlType: "text" | "jsonb"
+): string => `${param}::${sqlType}`;
+export const timeDiffWithinSql = (
+  startExpr: string,
+  endExpr: string,
+  seconds: number
+): string => `${endExpr} - ${startExpr} <= INTERVAL '${seconds} seconds'`;
+export const isDistinctFromSql = (a: string, b: string): string =>
+  `${a} IS DISTINCT FROM ${b}`;
+export const wrapDeleteSubselect = (subquery: string): string => subquery;
+export const text_requires_length_for_index = false;
+export const setColumnNullabilitySql = (
+  qTable: string,
+  qCol: string,
+  _sqlType: string,
+  notNull: boolean
+): string =>
+  `alter table ${qTable} alter column ${qCol} ${
+    notNull ? "set" : "drop"
+  } not null;`;
+export const alterColumnTypeSql = (
+  qTable: string,
+  qCol: string,
+  newType: string,
+  using: string,
+  def: string
+): string =>
+  `alter table ${qTable} alter column ${qCol} TYPE ${newType} ${using} ${def};`;
+export const changePkColumnTypeStatements = (
+  qTable: string,
+  qCol: string,
+  newType: string,
+  def: string,
+  _wasAlreadyPk: boolean
+): string[] => [
+  `ALTER TABLE ${qTable} drop column ${qCol};`,
+  `ALTER TABLE ${qTable} add column ${qCol} ${newType} primary key ${def};`,
+];
+
+// foreign-key DDL (see DbExportsType in db-common/types)
+export const inline_fk_in_column_type = true;
+export const fk_must_be_dropped_before_column = false;
+export const fk_deferrable_clause = " DEFERRABLE";
+export const dropForeignKeyIfExists = async (
+  qTable: string,
+  conName: string
+): Promise<void> => {
+  await query(`ALTER TABLE ${qTable} drop constraint if exists "${conName}"`);
+};
+export const replaceForeignKey = async (params: {
+  qTable: string;
+  oldConName: string;
+  newConName: string;
+  colName: string;
+  qRefTable: string;
+  refCol: string;
+  onDelete: string;
+}): Promise<void> => {
+  const { qTable, oldConName, newConName, colName, qRefTable, refCol, onDelete } =
+    params;
+  await query(
+    `ALTER TABLE ${qTable} drop constraint "${oldConName}", add constraint "${newConName}" foreign key ("${colName}") references ${qRefTable}("${refCol}")${onDelete}${fk_deferrable_clause}`
+  );
+};
+export const addColumnWithDefault = async (params: {
+  qTable: string;
+  colName: string;
+  sqlType: string;
+  bareType: string;
+  required: boolean;
+  defaultValue: any;
+}): Promise<void> => {
+  const { qTable, colName, sqlType, bareType, required, defaultValue } = params;
+  const cn = sqlsanitize(colName);
+  await query(`DROP FUNCTION IF EXISTS add_field_${cn};
+      CREATE FUNCTION add_field_${cn}(thedef ${bareType}) RETURNS void AS $$
+      BEGIN
+      EXECUTE format('alter table ${qTable} add column "${cn}" ${sqlType} ${
+        required ? "not null" : ""
+      } default %L', thedef);
+      END;
+      $$ LANGUAGE plpgsql;`);
+  await query(`SELECT add_field_${cn}($1)`, [defaultValue]);
+};
+export const isDuplicateForeignKeyError = (_e: any): boolean => false;
+
+// misc dialect-specific SQL / behaviour (see DbExportsType)
+export const jsonMergeExpr = (colExpr: string, param: string): string =>
+  `coalesce(${colExpr}, '{}'::jsonb) || ${param}::jsonb`;
+export const supports_array_param_in = true;
+export const deleteSessionsForUser = async (
+  userId: string,
+  tenant: string
+): Promise<void> => {
+  await query(
+    `delete from _sc_session
+        where sess->'passport'->'user'->>'id' = $1
+        and sess->'passport'->'user'->>'tenant' = $2`,
+    [userId, tenant]
+  );
+};
+export const deleteSessionsForTenant = async (
+  tenant: string
+): Promise<void> => {
+  await query(
+    `delete from _sc_session
+          where sess->'passport'->'user'->>'tenant' = $1`,
+    [tenant]
+  );
+};
+export const dropCheckConstraintIfExists = async (
+  qTable: string,
+  conName: string
+): Promise<void> => {
+  await query(`alter table ${qTable} drop constraint IF EXISTS "${conName}";`);
+};
+export const migration_sql_dialect = "sql_pg";
+export const migration_translates_from_pg = false;
+export const discovery_keys_uppercase = false;
+export const discovery_columns_order_by = "";
+export const discovery_pk_sql = `SELECT c.column_name, c.column_default
+      FROM information_schema.table_constraints tc
+      JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name)
+      JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
+        AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
+      WHERE constraint_type = 'PRIMARY KEY' and tc.table_schema=$1 and tc.table_name = $2;`;
+export const discovery_fk_sql = `SELECT
+      tc.table_schema,
+      tc.constraint_name,
+      tc.table_name,
+      kcu.column_name,
+      ccu.table_schema AS foreign_table_schema,
+      ccu.table_name AS foreign_table_name,
+      ccu.column_name AS foreign_column_name
+  FROM
+      information_schema.table_constraints AS tc
+      JOIN information_schema.key_column_usage AS kcu
+        ON tc.constraint_name = kcu.constraint_name
+        AND tc.table_schema = kcu.table_schema
+      JOIN information_schema.constraint_column_usage AS ccu
+        ON ccu.constraint_name = tc.constraint_name
+        AND ccu.table_schema = tc.table_schema
+  WHERE tc.constraint_type = 'FOREIGN KEY' and tc.table_schema=$1 AND tc.table_name=$2;`;
+export const dropPrimaryKey = async (
+  schemaPrefix: string,
+  tableName: string,
+  tenantSchema: string
+): Promise<void> => {
+  const { rows } = await query(`select constraint_name
+from information_schema.table_constraints
+where table_schema = '${tenantSchema || "public"}'
+      and table_name = '${tableName}'
+      and constraint_type = 'PRIMARY KEY';`);
+  const cname = rows[0]?.constraint_name;
+  await query(
+    `alter table ${schemaPrefix}"${tableName}" drop constraint "${cname}"`
+  );
+};
 
 // Defer FK checks for the remainder of the current transaction.
 export const deferForeignKeys = async (client: {

@@ -2260,11 +2260,7 @@ const date = {
   description: "Dates, with or without time",
   /** @type {string} */
   sql_name: (opts: any) =>
-    opts?.day_only
-      ? "date"
-      : db.driverName === "mysql"
-        ? "datetime"
-        : "timestamptz",
+    opts?.day_only ? "date" : db.timestamp_sql_type,
   js_type: "Date",
 
   /**
@@ -2566,7 +2562,7 @@ const date = {
    * @returns {boolean}
    */
   validate: () => (v: any) => v instanceof Date && !isNaN(v as any),
-  ...(db.stores_dates_as_text || db.driverName === "mysql"
+  ...(db.coerce_read_dates
     ? {
         readFromDB: (v: any, fld: FieldLike) =>
           !v

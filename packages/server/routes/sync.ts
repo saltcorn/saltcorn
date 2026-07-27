@@ -17,14 +17,9 @@ import { Req, Res } from "@saltcorn/types/base_types";
 const router = Router();
 export default router;
 
-const tsFromEpoch = (param: string): string =>
-  db.driverName === "mysql"
-    ? `FROM_UNIXTIME(${param})`
-    : `to_timestamp(${param})`;
-const asText = (expr: string): string =>
-  db.driverName === "mysql" ? `CAST(${expr} AS CHAR)` : `${expr}::text`;
-const msTrunc = (expr: string): string =>
-  db.driverName === "mysql" ? expr : `date_trunc('milliseconds', ${expr})`;
+const tsFromEpoch = (param: string): string => db.epochToTimestampSql(param);
+const asText = (expr: string): string => db.castExprToTextSql(expr);
+const msTrunc = (expr: string): string => db.truncateMillisSql(expr);
 
 router.get(
   "/sync_timestamp",

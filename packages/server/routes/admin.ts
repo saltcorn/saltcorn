@@ -1634,11 +1634,7 @@ router.get(
                   tr(
                     th(req.__("Database type")),
                     td(
-                      db.driverName === "sqlite"
-                        ? "SQLite "
-                        : db.driverName === "mysql"
-                          ? "MySQL "
-                          : "PostgreSQL ",
+                      `${db.sql_backend_display_name} `,
                       dbversion
                     )
                   ),

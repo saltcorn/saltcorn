@@ -165,22 +165,10 @@ class TableConstraint {
     } else if (this.type === "Formula" && db.supports_alter_table) {
       const schema = db.getTenantSchemaPrefix();
       const conName = `${db.sqlsanitize(table.name)}_fml_${this.id}`;
-      if (db.driverName === "mysql") {
-        try {
-          await db.query(
-            `alter table ${schema}"${db.sqlsanitize(
-              table.name
-            )}" drop check "${conName}";`
-          );
-        } catch (e: any) {
-          if (e?.code !== "ER_CHECK_CONSTRAINT_NOT_FOUND") throw e;
-        }
-      } else
-        await db.query(
-          `alter table ${schema}"${db.sqlsanitize(
-            table.name
-          )}" drop constraint IF EXISTS "${conName}";`
-        );
+      await db.dropCheckConstraintIfExists(
+        `${schema}"${db.sqlsanitize(table.name)}"`,
+        conName
+      );
     }
     if (!db.getRequestContext()?.client)
       await nsState.getState()!.refresh_tables(true);

@@ -782,56 +782,13 @@ class User {
    * @returns {Promise<void>}
    */
   async destroy_sessions(): Promise<void> {
-    if (db.driverName === "postgres") {
-      const schema = db.getTenantSchema();
-
-      await db.query(
-        `delete from _sc_session
-        where sess->'passport'->'user'->>'id' = $1
-        and sess->'passport'->'user'->>'tenant' = $2`,
-        [`${this.id}`, schema]
-      );
-    } else if (db.driverName === "mysql") {
-      const schema = db.getTenantSchema();
-      const sessionDb = db.connectObj.database || db.connectObj.default_schema;
-      try {
-        await db.query(
-          `delete from "${sessionDb}"."_sc_session"
-          where JSON_UNQUOTE(JSON_EXTRACT(sess, '$.passport.user.id')) = $1
-          and JSON_UNQUOTE(JSON_EXTRACT(sess, '$.passport.user.tenant')) = $2`,
-          [`${this.id}`, schema]
-        );
-      } catch (e: any) {
-        // the session table only exists once a server session store has run
-        if (e?.code !== "ER_NO_SUCH_TABLE") throw e;
-      }
-    }
+    await db.deleteSessionsForUser(`${this.id}`, db.getTenantSchema());
   }
 
   static async destroy_all_tenant_sessions(tenant?: string): Promise<void> {
     // tenant sessions live in the DB session store of multi-tenant deployments
-    if (db.supports_multiple_schemas) {
-      const schema = tenant || db.getTenantSchema();
-
-      if (db.driverName === "mysql") {
-        const sessionDb = db.connectObj.database || db.connectObj.default_schema;
-        try {
-          await db.query(
-            `delete from "${sessionDb}"."_sc_session"
-            where JSON_UNQUOTE(JSON_EXTRACT(sess, '$.passport.user.tenant')) = $1`,
-            [schema]
-          );
-        } catch (e: any) {
-          if (e?.code !== "ER_NO_SUCH_TABLE") throw e;
-        }
-      } else {
-        await db.query(
-          `delete from _sc_session
-          where sess->'passport'->'user'->>'tenant' = $1`,
-          [schema]
-        );
-      }
-    }
+    if (db.supports_multiple_schemas)
+      await db.deleteSessionsForTenant(tenant || db.getTenantSchema());
   }
 
   /**

@@ -16,7 +16,7 @@ import Table from "./table.js";
 import { asyncMap } from "../utils.js";
 
 const lcKeys = (rows: Row[]): Row[] =>
-  db.driverName === "mysql"
+  db.discovery_keys_uppercase
     ? rows.map((r) =>
         Object.fromEntries(
           Object.entries(r).map(([k, v]) => [k.toLowerCase(), v])
@@ -166,9 +166,7 @@ const discover_tables = async (
 
   for (const tnm of tableNames) {
     const { rows: rows0 } = await dbModule.query(
-      `select * from information_schema.columns where table_schema=$1 and table_name=$2${
-        db.driverName === "mysql" ? " order by ordinal_position" : ""
-      }`,
+      `select * from information_schema.columns where table_schema=$1 and table_name=$2${db.discovery_columns_order_by}`,
       [schema, tnm]
     );
     const rows = lcKeys(rows0);
@@ -182,24 +180,7 @@ const discover_tables = async (
     // try to find column name for primary key of table. MySQL has no
     // information_schema.constraint_column_usage, so use key_column_usage
     // (its pk constraint is always named 'PRIMARY').
-    const pkq = await dbModule.query(
-      db.driverName === "mysql"
-        ? `SELECT k.column_name, c.column_default, c.extra
-           FROM information_schema.key_column_usage k
-           JOIN information_schema.columns c
-             ON c.table_schema = k.table_schema
-            AND c.table_name = k.table_name
-            AND c.column_name = k.column_name
-           WHERE k.constraint_name = 'PRIMARY'
-             AND k.table_schema = $1 AND k.table_name = $2;`
-        : `SELECT c.column_name, c.column_default
-      FROM information_schema.table_constraints tc
-      JOIN information_schema.constraint_column_usage AS ccu USING (constraint_schema, constraint_name)
-      JOIN information_schema.columns AS c ON c.table_schema = tc.constraint_schema
-        AND tc.table_name = c.table_name AND ccu.column_name = c.column_name
-      WHERE constraint_type = 'PRIMARY KEY' and tc.table_schema=$1 and tc.table_name = $2;`,
-      [schema, tnm]
-    );
+    const pkq = await dbModule.query(db.discovery_pk_sql, [schema, tnm]);
     // set primary_key and unique attributes for column
     (lcKeys(pkq.rows) as any[]).forEach(
       ({
@@ -223,38 +204,7 @@ const discover_tables = async (
     );
     // try to find foreign keys. MySQL exposes the referenced table/column
     // directly on key_column_usage (no constraint_column_usage needed).
-    const fkq = await dbModule.query(
-      db.driverName === "mysql"
-        ? `SELECT
-             table_schema,
-             constraint_name,
-             table_name,
-             column_name,
-             referenced_table_schema AS foreign_table_schema,
-             referenced_table_name AS foreign_table_name,
-             referenced_column_name AS foreign_column_name
-           FROM information_schema.key_column_usage
-           WHERE referenced_table_name IS NOT NULL
-             AND table_schema = $1 AND table_name = $2;`
-        : `SELECT
-      tc.table_schema,
-      tc.constraint_name,
-      tc.table_name,
-      kcu.column_name,
-      ccu.table_schema AS foreign_table_schema,
-      ccu.table_name AS foreign_table_name,
-      ccu.column_name AS foreign_column_name
-  FROM
-      information_schema.table_constraints AS tc
-      JOIN information_schema.key_column_usage AS kcu
-        ON tc.constraint_name = kcu.constraint_name
-        AND tc.table_schema = kcu.table_schema
-      JOIN information_schema.constraint_column_usage AS ccu
-        ON ccu.constraint_name = tc.constraint_name
-        AND ccu.table_schema = tc.table_schema
-  WHERE tc.constraint_type = 'FOREIGN KEY' and tc.table_schema=$1 AND tc.table_name=$2;`,
-      [schema, tnm]
-    );
+    const fkq = await dbModule.query(db.discovery_fk_sql, [schema, tnm]);
     // construct foreign key relations
     (lcKeys(fkq.rows) as any[]).forEach(
       ({

@@ -90,19 +90,15 @@ import tags, { em } from "@saltcorn/markup/tags";
 const { text } = tags;
 
 const syncTsExpr = (param: string): string =>
-  db.driverName === "mysql"
-    ? `FROM_UNIXTIME(${param})`
-    : `date_trunc('milliseconds', to_timestamp(${param}))`;
+  db.truncateMillisSql(db.epochToTimestampSql(param));
 
 const syncTsMatchExpr = (param: string): string =>
-  db.driverName === "mysql"
-    ? `FROM_UNIXTIME(${param})`
-    : `to_timestamp(${param})`;
+  db.epochToTimestampSql(param);
 
 const syncTextParam = (param: string): string =>
-  db.driverName === "mysql" ? param : `${param}::text`;
+  db.castBindParamSql(param, "text");
 const syncJsonParam = (param: string): string =>
-  db.driverName === "mysql" ? param : `${param}::jsonb`;
+  db.castBindParamSql(param, "jsonb");
 
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import type {
@@ -1230,20 +1226,20 @@ class Table implements AbstractTable {
           const pkName = this.pk_name || "id";
           if (isNode()) {
             const pkVals = ids.map((row) => String(row[pkName]));
-            if (db.driverName === "mysql") {
+            if (db.supports_array_param_in) {
+              await db.query(
+                `delete from ${schema}"${db.sqlsanitize(
+                  this.name
+                )}_sync_info" where ref = ANY($1::text[])`,
+                [pkVals]
+              );
+            } else {
               const ph = pkVals.map((_, i) => `$${i + 1}`).join(",");
               await db.query(
                 `delete from ${schema}"${db.sqlsanitize(
                   this.name
                 )}_sync_info" where ref in (${ph})`,
                 pkVals
-              );
-            } else {
-              await db.query(
-                `delete from ${schema}"${db.sqlsanitize(
-                  this.name
-                )}_sync_info" where ref = ANY($1::text[])`,
-                [pkVals]
               );
             }
             const tsParam = timestamp.valueOf() / 1000.0;
@@ -2210,8 +2206,7 @@ class Table implements AbstractTable {
         const schema = db.getTenantSchemaPrefix();
         // engine-specific SQL: postgres uses `= ANY(array-param)`; sqlite has no
         // array params; mysql expands to `ref in ($1,$2,...)`.
-        const isSqlite = db.driverName === "sqlite";
-        const isMysql = db.driverName === "mysql";
+        const isSqlite = db.isSQLite;
         const strIds = ids.map((id) => String(id));
         const groupedFrom = (refClause: string) => `
   SELECT s.last_modified, s.ref, s.updated_fields
@@ -2234,7 +2229,7 @@ class Table implements AbstractTable {
   FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info"
   GROUP BY ref HAVING ref = ($1)`;
           params = strIds;
-        } else if (isMysql) {
+        } else if (!db.supports_array_param_in) {
           const ph = strIds.map((_, i) => `$${i + 1}`).join(",");
           sql = groupedFrom(`ref in (${ph})`);
           params = strIds;
@@ -2322,10 +2317,7 @@ class Table implements AbstractTable {
           )) {
             fieldTimestamps[k] = timestamp;
           }
-          const mergedUpdatedFields =
-            db.driverName === "mysql"
-              ? `JSON_MERGE_PATCH(coalesce(updated_fields, CAST('{}' AS JSON)), CAST($4 AS JSON))`
-              : `coalesce(updated_fields, '{}'::jsonb) || $4::jsonb`;
+          const mergedUpdatedFields = db.jsonMergeExpr("updated_fields", "$4");
           await db.query(
             `update ${schema}"${db.sqlsanitize(this.name)}_sync_info"
             set
@@ -3166,7 +3158,7 @@ class Table implements AbstractTable {
     await db.query(
       `create table ${schemaPrefix}"${sqlsanitize(this.name)}__history" (
           _version integer,
-          _time ${db.driverName === "mysql" ? "datetime(3)" : "timestamp"},
+          _time ${db.millis_timestamp_sql_type},
           _restore_of_version integer,
           _userid integer
           ${flds.join("")}
@@ -3190,12 +3182,8 @@ class Table implements AbstractTable {
         }
         await db.query(
           `create table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info" (
-            ref ${
-              db.driverName === "mysql" ? db.indexable_text_sql_type : "text"
-            } not null,
-            last_modified ${
-              db.driverName === "mysql" ? "datetime(3)" : "timestamp"
-            },
+            ref ${db.indexable_text_sql_type} not null,
+            last_modified ${db.millis_timestamp_sql_type},
             deleted boolean default false,
             updated_fields ${db.json_sql_type},
             owner_id integer,
@@ -3372,47 +3360,26 @@ class Table implements AbstractTable {
     const pk = this.pk_name;
 
     if (typeof interval_secs === "number" && interval_secs > 0.199) {
-      if (db.driverName === "mysql") {
-        await db.query(`
-        delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history"
-          where ("${sqlsanitize(pk)}", _version) in (
-            select * from (
-              select h1."${sqlsanitize(pk)}", h1._version
+      const trimSubselect = `select h1."${sqlsanitize(pk)}", h1._version
               FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
               JOIN ${schemaPrefix}"${sqlsanitize(
                 this.name
               )}__history" h2 ON h1."${sqlsanitize(pk)}" = h2."${sqlsanitize(
-          pk
-        )}"
+                pk
+              )}"
               AND h1._version < h2._version
               AND h1._time < h2._time
-              AND TIMESTAMPDIFF(MICROSECOND, h1._time, h2._time) <= ${Math.round(
-                +interval_secs * 1e6
-              )}
-            ) as _d
-          );`);
-      } else {
-        await db.query(`
-      delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history"
-        where ("${sqlsanitize(pk)}", _version) in (
-          select h1."${sqlsanitize(pk)}", h1._version
-          FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
-          JOIN ${schemaPrefix}"${sqlsanitize(
-          this.name
-        )}__history" h2 ON h1."${sqlsanitize(pk)}" = h2."${sqlsanitize(pk)}"
-          AND h1._version < h2._version
-          AND h1._time < h2._time
-          AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
-        );`);
-      }
+              AND ${db.timeDiffWithinSql("h1._time", "h2._time", +interval_secs)}`;
+      await db.query(`
+        delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history"
+          where ("${sqlsanitize(pk)}", _version) in (${db.wrapDeleteSubselect(
+            trimSubselect
+          )});`);
     }
     if (typeof options === "object" && options?.delete_unchanged) {
-      const isMysql = db.driverName === "mysql";
       const isDistinct = this.fields
         .map((f) =>
-          isMysql
-            ? `NOT (curr."${f.name}" <=> prev."${f.name}")`
-            : `curr."${f.name}" IS DISTINCT FROM prev."${f.name}"`
+          db.isDistinctFromSql(`curr."${f.name}"`, `prev."${f.name}"`)
         )
         .join(" OR ");
       const changedSubquery = `select id, this_version from paired where not is_changed`;
@@ -3434,9 +3401,9 @@ class Table implements AbstractTable {
           ON curr.rn = prev.rn + 1 AND curr."${pk}" = prev."${pk}"
         )
         DELETE FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history"
-          where ("${sqlsanitize(pk)}", _version) in (${
-            isMysql ? `select * from (${changedSubquery}) as _d` : changedSubquery
-          });`);
+          where ("${sqlsanitize(pk)}", _version) in (${db.wrapDeleteSubselect(
+            changedSubquery
+          )});`);
     }
   }
   /**
@@ -5090,21 +5057,7 @@ ${rejectDetails}`,
         primary_key: true,
       });
     } else if (primaryKeys.length > 1) {
-      if (db.driverName === "mysql") {
-        await db.query(
-          `alter table ${schemaPrefix}"${this.name}" drop primary key`
-        );
-      } else {
-        const { rows } = await db.query(`select constraint_name
-from information_schema.table_constraints
-where table_schema = '${db.getTenantSchema() || "public"}'
-      and table_name = '${this.name}'
-      and constraint_type = 'PRIMARY KEY';`);
-        const cname = rows[0]?.constraint_name;
-        await db.query(
-          `alter table ${schemaPrefix}"${this.name}" drop constraint "${cname}"`
-        );
-      }
+      await db.dropPrimaryKey(schemaPrefix, this.name, db.getTenantSchema());
       for (const field of this.fields) {
         if (field.primary_key) await field.update({ primary_key: false });
       }
