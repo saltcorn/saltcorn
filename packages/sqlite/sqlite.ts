@@ -550,13 +550,16 @@ export const upsert_config = async (key: string, value: any): Promise<void> => {
 };
 
 export const driverName = "sqlite";
+export const sql_backend_display_name = "SQLite";
 export const array_agg_sql_fn = "json_group_array";
 export const serial_pk_sql_type = "integer";
 export const json_sql_type = "json";
 export const indexable_text_sql_type = "text";
+export const timestamp_sql_type = "timestamptz";
+export const millis_timestamp_sql_type = "timestamp";
 export const supports_search_path = false;
 
-// --- Backend capability flags (see DbExportsType in db-common/types) ---
+// Backend capability flags (see DbExportsType in db-common/types)
 export const supports_multiple_schemas = false;
 export const pools_connections = false;
 export const supports_for_update = false;
@@ -570,6 +573,143 @@ export const supports_large_bind_lists = false;
 export const supports_database_views = false;
 export const supports_table_discovery = false;
 export const supports_session_pruning = false;
+export const supports_agg_order_by = true;
+export const coerce_numeric_aggregates_to_string = false;
+export const uses_positional_placeholders = true;
+export const coerce_read_dates = true;
+
+// SQL-expression builders (see DbExportsType in db-common/types):
+// These mirror the Postgres forms: the sync/history SQL paths were only ever
+// specialised for MySQL, so non-MySQL engines keep the original Postgres SQL.
+export const epochToTimestampSql = (param: string): string =>
+  `to_timestamp(${param})`;
+export const truncateMillisSql = (expr: string): string =>
+  `date_trunc('milliseconds', ${expr})`;
+export const castExprToTextSql = (expr: string): string => `${expr}::text`;
+export const castBindParamSql = (
+  param: string,
+  sqlType: "text" | "jsonb"
+): string => `${param}::${sqlType}`;
+
+// history-trim SQL fragments (mirror Postgres; only MySQL specialised)
+export const timeDiffWithinSql = (
+  startExpr: string,
+  endExpr: string,
+  seconds: number
+): string => `${endExpr} - ${startExpr} <= INTERVAL '${seconds} seconds'`;
+export const isDistinctFromSql = (a: string, b: string): string =>
+  `${a} IS DISTINCT FROM ${b}`;
+export const wrapDeleteSubselect = (subquery: string): string => subquery;
+
+// column DDL (mirror Postgres; only MySQL specialised)
+export const text_requires_length_for_index = false;
+export const setColumnNullabilitySql = (
+  qTable: string,
+  qCol: string,
+  _sqlType: string,
+  notNull: boolean
+): string =>
+  `alter table ${qTable} alter column ${qCol} ${
+    notNull ? "set" : "drop"
+  } not null;`;
+export const alterColumnTypeSql = (
+  qTable: string,
+  qCol: string,
+  newType: string,
+  using: string,
+  def: string
+): string =>
+  `alter table ${qTable} alter column ${qCol} TYPE ${newType} ${using} ${def};`;
+export const changePkColumnTypeStatements = (
+  qTable: string,
+  qCol: string,
+  newType: string,
+  def: string,
+  _wasAlreadyPk: boolean
+): string[] => [
+  `ALTER TABLE ${qTable} drop column ${qCol};`,
+  `ALTER TABLE ${qTable} add column ${qCol} ${newType} primary key ${def};`,
+];
+
+// foreign-key DDL (mirror Postgres; only MySQL specialised)
+export const inline_fk_in_column_type = true;
+export const fk_must_be_dropped_before_column = false;
+export const fk_deferrable_clause = "";
+export const dropForeignKeyIfExists = async (
+  qTable: string,
+  conName: string
+): Promise<void> => {
+  await query(`ALTER TABLE ${qTable} drop constraint if exists "${conName}"`);
+};
+export const replaceForeignKey = async (params: {
+  qTable: string;
+  oldConName: string;
+  newConName: string;
+  colName: string;
+  qRefTable: string;
+  refCol: string;
+  onDelete: string;
+}): Promise<void> => {
+  const { qTable, oldConName, newConName, colName, qRefTable, refCol, onDelete } =
+    params;
+  await query(
+    `ALTER TABLE ${qTable} drop constraint "${oldConName}", add constraint "${newConName}" foreign key ("${colName}") references ${qRefTable}("${refCol}")${onDelete}${fk_deferrable_clause}`
+  );
+};
+export const addColumnWithDefault = async (params: {
+  qTable: string;
+  colName: string;
+  sqlType: string;
+  bareType: string;
+  required: boolean;
+  defaultValue: any;
+}): Promise<void> => {
+  const { qTable, colName, sqlType, required, defaultValue } = params;
+  await query(
+    `alter table ${qTable} add column "${sqlsanitize(colName)}" ${sqlType} ${
+      required ? `not null default ${JSON.stringify(defaultValue)}` : ""
+    }`
+  );
+};
+export const isDuplicateForeignKeyError = (_e: any): boolean => false;
+
+// misc dialect-specific SQL / behaviour (mirror Postgres unless noted)
+export const jsonMergeExpr = (colExpr: string, param: string): string =>
+  `coalesce(${colExpr}, '{}'::jsonb) || ${param}::jsonb`;
+// no array parameters: IN-lists expand to positional placeholders
+export const supports_array_param_in = false;
+// sqlite has no server-side session store to clear
+export const deleteSessionsForUser = async (): Promise<void> => {};
+export const deleteSessionsForTenant = async (): Promise<void> => {};
+export const dropCheckConstraintIfExists = async (
+  qTable: string,
+  conName: string
+): Promise<void> => {
+  await query(`alter table ${qTable} drop constraint IF EXISTS "${conName}";`);
+};
+export const migration_sql_dialect = "sql_sqlite";
+export const migration_translates_from_pg = false;
+// discovery is unsupported on sqlite (supports_table_discovery=false); values
+// below are placeholders so the exports exist.
+export const discovery_keys_uppercase = false;
+export const discovery_columns_order_by = "";
+export const discovery_pk_sql = "";
+export const discovery_fk_sql = "";
+export const dropPrimaryKey = async (
+  schemaPrefix: string,
+  tableName: string,
+  tenantSchema: string
+): Promise<void> => {
+  const { rows } = await query(`select constraint_name
+from information_schema.table_constraints
+where table_schema = '${tenantSchema || "public"}'
+      and table_name = '${tableName}'
+      and constraint_type = 'PRIMARY KEY';`);
+  const cname = rows[0]?.constraint_name;
+  await query(
+    `alter table ${schemaPrefix}"${tableName}" drop constraint "${cname}"`
+  );
+};
 
 // Defer FK checks for the remainder of the current transaction.
 export const deferForeignKeys = async (client: {

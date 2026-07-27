@@ -37,12 +37,7 @@ class InfoCommand extends Command {
       configFilePath,
       nodeVersion: process.version,
       cliPath,
-      databaseVendor:
-        db.driverName === "sqlite"
-          ? "SQLite"
-          : db.driverName === "mysql"
-            ? "MySQL"
-            : "PostgreSQL",
+      databaseVendor: db.sql_backend_display_name,
       defaultNWorkers: cpu.performanceCores || cpu.physicalCores,
     };
     try {

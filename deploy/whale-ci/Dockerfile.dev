@@ -1,6 +1,6 @@
 FROM node:24-trixie
 
-ENV SALTCORN_DISABLE_UPGRADE "true"
+ENV SALTCORN_DISABLE_UPGRADE=true
 
 RUN apt update && apt install -qqy libpq-dev build-essential python-is-python3 postgresql-client git chromium zip unzip python3-setuptools python3-venv python3-pip netcat-traditional jq
 
@@ -10,7 +10,7 @@ RUN pip3 install --break-system-packages requests 'httpx>=0.27.0' mcp pytest pyo
 #RUN echo '127.0.0.1 example.com sub.example.com sub1.example.com sub2.example.com sub3.example.com sub4.example.com sub5.example.com' | tee -a /etc/hosts
 #RUN echo '127.0.0.1 otherexample.com' | tee -a /etc/hosts
 
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD "true"
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
 
 RUN npm config set fund false \
  && npm config set audit false

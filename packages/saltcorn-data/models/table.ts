@@ -89,6 +89,17 @@ import {
 import tags, { em } from "@saltcorn/markup/tags";
 const { text } = tags;
 
+const syncTsExpr = (param: string): string =>
+  db.truncateMillisSql(db.epochToTimestampSql(param));
+
+const syncTsMatchExpr = (param: string): string =>
+  db.epochToTimestampSql(param);
+
+const syncTextParam = (param: string): string =>
+  db.castBindParamSql(param, "text");
+const syncJsonParam = (param: string): string =>
+  db.castBindParamSql(param, "jsonb");
+
 import type { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import type {
   FieldLike,
@@ -106,6 +117,7 @@ import {
   getAggAndField,
   joinfield_renamer,
   process_aggregations,
+  coerceAggResultTypes,
 } from "./internal/query.js";
 import async_json_stream from "./internal/async_json_stream.js";
 import { GenObj } from "@saltcorn/db-common/types";
@@ -1217,12 +1229,22 @@ class Table implements AbstractTable {
           const pkName = this.pk_name || "id";
           if (isNode()) {
             const pkVals = ids.map((row) => String(row[pkName]));
-            await db.query(
-              `delete from ${schema}"${db.sqlsanitize(
-                this.name
-              )}_sync_info" where ref = ANY($1::text[])`,
-              [pkVals]
-            );
+            if (db.supports_array_param_in) {
+              await db.query(
+                `delete from ${schema}"${db.sqlsanitize(
+                  this.name
+                )}_sync_info" where ref = ANY($1::text[])`,
+                [pkVals]
+              );
+            } else {
+              const ph = pkVals.map((_, i) => `$${i + 1}`).join(",");
+              await db.query(
+                `delete from ${schema}"${db.sqlsanitize(
+                  this.name
+                )}_sync_info" where ref in (${ph})`,
+                pkVals
+              );
+            }
             const tsParam = timestamp.valueOf() / 1000.0;
             const insertParams: any[] = [tsParam];
             const valueClauses = pkVals.map((pkVal, i) => {
@@ -1240,11 +1262,9 @@ class Table implements AbstractTable {
               insertParams.push(pkVal);
               insertParams.push(ownerVal);
               insertParams.push(ownerFieldsVal);
-              return `($${
-                insertParams.length - 2
-              }::text, date_trunc('milliseconds', to_timestamp($1)), true, $${
-                insertParams.length - 1
-              }, $${insertParams.length})`;
+              return `(${syncTextParam(`$${insertParams.length - 2}`)}, ${syncTsExpr(
+                "$1"
+              )}, true, $${insertParams.length - 1}, $${insertParams.length})`;
             });
             await db.query(
               `insert into ${schema}"${db.sqlsanitize(
@@ -2184,10 +2204,10 @@ class Table implements AbstractTable {
       async () => {
         const schema = db.getTenantSchemaPrefix();
         // engine-specific SQL: postgres uses `= ANY(array-param)`; sqlite has no
-        // array params. A new backend (e.g. mysql) needs its own variant here.
-        const isSqlite = db.driverName === "sqlite";
-        const sql = !isSqlite
-          ? `
+        // array params; mysql expands to `ref in ($1,$2,...)`.
+        const isSqlite = db.isSQLite;
+        const strIds = ids.map((id) => String(id));
+        const groupedFrom = (refClause: string) => `
   SELECT s.last_modified, s.ref, s.updated_fields
   FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info" s
   JOIN (
@@ -2195,17 +2215,28 @@ class Table implements AbstractTable {
       ref,
       MAX(last_modified) AS last_modified
     FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info"
-    WHERE ref = ${isSqlite ? "" : "ANY"} ($1)
+    WHERE ${refClause}
     GROUP BY ref
   ) m
     ON s.ref = m.ref
-   AND s.last_modified = m.last_modified`
-          : `
+   AND s.last_modified = m.last_modified`;
+        let sql: string;
+        let params: any[];
+        if (isSqlite) {
+          sql = `
   SELECT MAX(last_modified) "last_modified", ref
   FROM ${schema}"${db.sqlsanitize(this.name)}_sync_info"
   GROUP BY ref HAVING ref = ($1)`;
-        const strIds = ids.map((id) => String(id));
-        const result = await db.query(sql, isSqlite ? strIds : [strIds]);
+          params = strIds;
+        } else if (!db.supports_array_param_in) {
+          const ph = strIds.map((_, i) => `$${i + 1}`).join(",");
+          sql = groupedFrom(`ref in (${ph})`);
+          params = strIds;
+        } else {
+          sql = groupedFrom(`ref = ANY ($1)`);
+          params = [strIds];
+        }
+        const result = await db.query(sql, params);
         return result.rows;
       },
       (e: Error) => {
@@ -2240,9 +2271,9 @@ class Table implements AbstractTable {
               this.name
             )}_sync_info" (ref, last_modified, updated_fields)
             values(
-              $1::text,
-              date_trunc('milliseconds', to_timestamp($2)),
-              $3::jsonb
+              ${syncTextParam("$1")},
+              ${syncTsExpr("$2")},
+              ${syncJsonParam("$3")}
             )`,
             [id, timestamp.valueOf() / 1000.0, JSON.stringify(fieldTimestamps)]
           );
@@ -2284,14 +2315,16 @@ class Table implements AbstractTable {
           )) {
             fieldTimestamps[k] = timestamp;
           }
+          const mergedUpdatedFields = db.jsonMergeExpr("updated_fields", "$4");
           await db.query(
             `update ${schema}"${db.sqlsanitize(this.name)}_sync_info"
             set
-              last_modified=date_trunc('milliseconds', to_timestamp($1)),
-              updated_fields =
-                coalesce(updated_fields, '{}'::jsonb) || $4::jsonb
+              last_modified=${syncTsExpr("$1")},
+              updated_fields = ${mergedUpdatedFields}
             where
-              ref=$2::text and last_modified = to_timestamp($3)`,
+              ref=${syncTextParam("$2")} and last_modified = ${syncTsMatchExpr(
+                "$3"
+              )}`,
             [
               timestamp.valueOf() / 1000.0,
               id,
@@ -2727,7 +2760,9 @@ class Table implements AbstractTable {
                 `insert into ${schemaPrefix}"${db.sqlsanitize(
                   this.name
                 )}_sync_info"
-              (ref, last_modified) values($1::text, date_trunc('milliseconds', to_timestamp($2)))`,
+              (ref, last_modified) values(${syncTextParam("$1")}, ${syncTsExpr(
+                "$2"
+              )})`,
                 [id, tsParam]
               );
             } else {
@@ -3002,7 +3037,11 @@ class Table implements AbstractTable {
    */
   normalise_error_message(msg: string): string {
     let fieldnm: string = "";
-    if (msg.toLowerCase().includes("unique constraint")) {
+    const lower = msg.toLowerCase();
+    if (
+      lower.includes("unique constraint") ||
+      (lower.includes("duplicate entry") && lower.includes("for key"))
+    ) {
       fieldnm = db.parseUniqueConstraintError(msg, this.name);
       if (fieldnm) {
         const field = this.fields.find((f) => f.name === fieldnm);
@@ -3116,11 +3155,11 @@ class Table implements AbstractTable {
     await db.query(
       `create table ${schemaPrefix}"${sqlsanitize(this.name)}__history" (
           _version integer,
-          _time timestamp,
+          _time ${db.millis_timestamp_sql_type},
           _restore_of_version integer,
           _userid integer
           ${flds.join("")}
-          ${this.name === "users" ? ",_attributes JSONB" : ""}
+          ${this.name === "users" ? `,_attributes ${db.json_sql_type}` : ""}
           ,PRIMARY KEY("${pk}", _version)
           );`
     );
@@ -3140,12 +3179,12 @@ class Table implements AbstractTable {
         }
         await db.query(
           `create table ${schemaPrefix}"${sqlsanitize(this.name)}_sync_info" (
-            ref text not null,
-            last_modified timestamp,
+            ref ${db.indexable_text_sql_type} not null,
+            last_modified ${db.millis_timestamp_sql_type},
             deleted boolean default false,
-            updated_fields jsonb,
+            updated_fields ${db.json_sql_type},
             owner_id integer,
-            owner_fields jsonb)`
+            owner_fields ${db.json_sql_type})`
         );
         await db.query(
           `create index "${sqlsanitize(
@@ -3318,23 +3357,29 @@ class Table implements AbstractTable {
     const pk = this.pk_name;
 
     if (typeof interval_secs === "number" && interval_secs > 0.199) {
+      const trimSubselect = `select h1."${sqlsanitize(pk)}", h1._version
+              FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
+              JOIN ${schemaPrefix}"${sqlsanitize(
+                this.name
+              )}__history" h2 ON h1."${sqlsanitize(pk)}" = h2."${sqlsanitize(
+                pk
+              )}"
+              AND h1._version < h2._version
+              AND h1._time < h2._time
+              AND ${db.timeDiffWithinSql("h1._time", "h2._time", +interval_secs)}`;
       await db.query(`
-      delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history" 
-        where ("${sqlsanitize(pk)}", _version) in (
-          select h1."${sqlsanitize(pk)}", h1._version
-          FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history" h1
-          JOIN ${schemaPrefix}"${sqlsanitize(
-        this.name
-      )}__history" h2 ON h1."${sqlsanitize(pk)}" = h2."${sqlsanitize(pk)}"
-          AND h1._version < h2._version
-          AND h1._time < h2._time
-          AND h2._time - h1._time <= INTERVAL '${+interval_secs} seconds'
-        );`);
+        delete from ${schemaPrefix}"${sqlsanitize(this.name)}__history"
+          where ("${sqlsanitize(pk)}", _version) in (${db.wrapDeleteSubselect(
+            trimSubselect
+          )});`);
     }
     if (typeof options === "object" && options?.delete_unchanged) {
       const isDistinct = this.fields
-        .map((f) => `curr."${f.name}" IS DISTINCT FROM prev."${f.name}"`)
+        .map((f) =>
+          db.isDistinctFromSql(`curr."${f.name}"`, `prev."${f.name}"`)
+        )
         .join(" OR ");
+      const changedSubquery = `select id, this_version from paired where not is_changed`;
       await db.query(`
         WITH ordered_versions AS (
         SELECT *,
@@ -3343,7 +3388,7 @@ class Table implements AbstractTable {
         WHERE "${sqlsanitize(pk)}" IS NOT NULL
         ),
         paired AS (
-        SELECT 
+        SELECT
           curr."_version" AS this_version,
           prev."_version" AS prev_version,
           curr."${pk}" AS id,
@@ -3351,11 +3396,11 @@ class Table implements AbstractTable {
         FROM ordered_versions curr
         LEFT JOIN ordered_versions prev
           ON curr.rn = prev.rn + 1 AND curr."${pk}" = prev."${pk}"
-        )     
+        )
         DELETE FROM ${schemaPrefix}"${sqlsanitize(this.name)}__history"
-          where ("${sqlsanitize(
-            pk
-          )}", _version) in (select id, this_version from paired where not is_changed);`);
+          where ("${sqlsanitize(pk)}", _version) in (${db.wrapDeleteSubselect(
+            changedSubquery
+          )});`);
     }
   }
   /**
@@ -4169,6 +4214,7 @@ ${rejectDetails}`,
     let importError: string | undefined;
     const client = db.pools_connections ? await db.getClient() : db;
     await client.query("BEGIN");
+    await db.deferForeignKeys(client);
     const consume = async (rec: Row) => {
       i += 1;
       if (skip_first_data_row && i === 2) return;
@@ -4532,6 +4578,7 @@ ${rejectDetails}`,
         { ...options, where }
       );
       const res = await db.query(sql, values);
+      coerceAggResultTypes(res.rows, aggregations);
       if (groupBy) return res.rows;
       return res.rows[0];
     });
@@ -4858,6 +4905,7 @@ ${rejectDetails}`,
         fields,
         !!opts?.ignore_errors
       );
+      coerceAggResultTypes(calcRow, aggregations || {});
       //need to json parse array agg values when the driver returns them as text
       if (
         db.json_read_returns_string &&
@@ -5006,15 +5054,7 @@ ${rejectDetails}`,
         primary_key: true,
       });
     } else if (primaryKeys.length > 1) {
-      const { rows } = await db.query(`select constraint_name
-from information_schema.table_constraints
-where table_schema = '${db.getTenantSchema() || "public"}'
-      and table_name = '${this.name}'
-      and constraint_type = 'PRIMARY KEY';`);
-      const cname = rows[0]?.constraint_name;
-      await db.query(
-        `alter table ${schemaPrefix}"${this.name}" drop constraint "${cname}"`
-      );
+      await db.dropPrimaryKey(schemaPrefix, this.name, db.getTenantSchema());
       for (const field of this.fields) {
         if (field.primary_key) await field.update({ primary_key: false });
       }

@@ -124,7 +124,7 @@ describe("Mail queue", () => {
     expect(fromDbA?.send_status).toBe("sent");
     expect(nodemailer.createTransport).toHaveBeenCalledTimes(1);
 
-    await sleep(minDelay + 1);
+    await sleep(minDelay + 1000);
 
     const notificationB = await Notification.create({
       title: "title B",

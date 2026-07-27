@@ -170,35 +170,28 @@ export class MailQueue {
   ) {
     const schema = db.getTenantSchemaPrefix();
     const now = new Date();
+    const inList = notificationIds.map(() => "?").join(",");
     if (status === "sent") {
-      if (db.driverName !== "sqlite") {
-        // pg (uses `= ANY(array)`; a new backend needs its own variant)
+      if (db.driverName === "postgres") {
         await db.query(
           `UPDATE ${schema}_sc_notifications SET send_status=$1, created=$2 WHERE id = ANY($3)`,
           [status, now, notificationIds]
         );
       } else {
-        // sqlite
         await db.query(
-          `UPDATE _sc_notifications
-           SET send_status = ?, created = ?
-           WHERE id IN (${notificationIds.map(() => "?").join(",")})`,
-          [status, now.valueOf(), ...notificationIds]
+          `UPDATE ${schema}_sc_notifications SET send_status = ?, created = ? WHERE id IN (${inList})`,
+          [status, db.isSQLite ? now.valueOf() : now, ...notificationIds]
         );
       }
     } else {
-      if (db.driverName !== "sqlite") {
-        //pg (uses `= ANY(array)`; a new backend needs its own variant)
+      if (db.driverName === "postgres") {
         await db.query(
           `UPDATE ${schema}_sc_notifications SET send_status=$1 WHERE id = ANY($2)`,
           [status, notificationIds]
         );
       } else {
-        // sqlite
         await db.query(
-          `UPDATE _sc_notifications
-           SET send_status = ?
-           WHERE id IN (${notificationIds.map(() => "?").join(",")})`,
+          `UPDATE ${schema}_sc_notifications SET send_status = ? WHERE id IN (${inList})`,
           [status, ...notificationIds]
         );
       }

@@ -365,12 +365,7 @@ const backup_info_file = async (root_dirpath: string): Promise<void> => {
         migrations_run,
         backup_date: new Date().toISOString(),
         node_version: process.version,
-        database_type:
-          db.driverName === "sqlite"
-            ? "SQLite"
-            : db.driverName === "mysql"
-              ? "MySQL"
-              : "PostgreSQL",
+        database_type: db.sql_backend_display_name,
         database_version: dbversion,
         os: {
           platform: os.platform(),

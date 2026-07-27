@@ -782,29 +782,13 @@ class User {
    * @returns {Promise<void>}
    */
   async destroy_sessions(): Promise<void> {
-    if (db.driverName === "postgres") {
-      const schema = db.getTenantSchema();
-
-      await db.query(
-        `delete from _sc_session 
-        where sess->'passport'->'user'->>'id' = $1 
-        and sess->'passport'->'user'->>'tenant' = $2`,
-        [`${this.id}`, schema]
-      );
-    }
+    await db.deleteSessionsForUser(`${this.id}`, db.getTenantSchema());
   }
 
   static async destroy_all_tenant_sessions(tenant?: string): Promise<void> {
     // tenant sessions live in the DB session store of multi-tenant deployments
-    if (db.supports_multiple_schemas) {
-      const schema = tenant || db.getTenantSchema();
-
-      await db.query(
-        `delete from _sc_session 
-        where sess->'passport'->'user'->>'tenant' = $1`,
-        [schema]
-      );
-    }
+    if (db.supports_multiple_schemas)
+      await db.deleteSessionsForTenant(tenant || db.getTenantSchema());
   }
 
   /**

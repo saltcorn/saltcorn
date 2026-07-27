@@ -70,7 +70,7 @@ const plugin_with_routes = (): Plugin =>
   ({
     sc_plugin_api_version: 1,
     onLoad: async () => {
-      if (!db.isSQLite)
+      if (db.driverName === "postgres")
         await db.query('create extension if not exists "uuid-ossp";');
     },
     external_tables: {

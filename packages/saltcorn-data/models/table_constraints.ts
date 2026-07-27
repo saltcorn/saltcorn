@@ -164,12 +164,10 @@ class TableConstraint {
       await db.drop_index(table.name, this.configuration.field);
     } else if (this.type === "Formula" && db.supports_alter_table) {
       const schema = db.getTenantSchemaPrefix();
-      await db.query(
-        `alter table ${schema}"${db.sqlsanitize(
-          table.name
-        )}" drop constraint IF EXISTS "${db.sqlsanitize(table.name)}_fml_${
-          this.id
-        }";`
+      const conName = `${db.sqlsanitize(table.name)}_fml_${this.id}`;
+      await db.dropCheckConstraintIfExists(
+        `${schema}"${db.sqlsanitize(table.name)}"`,
+        conName
       );
     }
     if (!db.getRequestContext()?.client)
