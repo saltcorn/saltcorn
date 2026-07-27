@@ -61,6 +61,7 @@
     "dateformat": "^4.6.3",
     "lodash": "^4.17.23",
     "node-fetch": "2.6.9",
+    "semver": "^7.6.3",
     "ssh2-sftp-client": "11.0.0",
     "tmp-promise": "^3.0.3"
   },
@@ -75,6 +76,7 @@
     "@types/lodash": "4.14.182",
     "@types/node": "^20.14.7",
     "@types/node-fetch": "2.5.12",
+    "@types/semver": "^7.7.1",
     "@types/ssh2-sftp-client": "9.0.3",
     "@types/tmp": "^0.2.3",
     "typescript": "5.9.2"

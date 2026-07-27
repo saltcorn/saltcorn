@@ -123,6 +123,9 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/semver": "^7.7.1",
     "supertest-fetch": "^2.0.0"
   },
   "scripts": {
