@@ -13,7 +13,9 @@
     "minipass": "3.1.6",
     "typedoc": "^0.28.11",
     "typedoc-plugin-rename-defaults": "^0.7.3",
-    "typescript": "5.9.2"
+    "typescript": "5.9.2",
+    "webpack": "5.107.2",
+    "webpack-cli": "6.0.1"
   },
   "scripts": {
     "dev": "nodemon packages/saltcorn/index.js",
@@ -91,6 +93,7 @@
   },
   "overrides": {
     "webpack": "5.107.2",
+    "webpack-cli": "6.0.1",
     "immer": "9.0.21",
     "undici": "7.12.0",
     "node-gyp": ">=10.2.0",

@@ -24,6 +24,7 @@
     "js-yaml": "^4.1.0",
     "node-fetch": "2.6.9",
     "node-watch": "^0.7.4",
+    "npm-registry-fetch": "17.1.0",
     "source-map-support": "^0.5.21",
     "sudo": "^1.0.3",
     "systeminformation": "^5.25.11",

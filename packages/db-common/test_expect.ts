@@ -482,7 +482,19 @@ export const jest = {
   // see the mocks - so callers should require() the system-under-test after
   // jest.mock (jest hoists mock calls above imports; node:test does not).
   mock: (name: string, factory?: () => any) => {
-    const mod = require(name);
+    // require(name) must resolve as the *calling test file* would resolve it,
+    // not as this shared shim (living in db-common) would - otherwise mocking
+    // a package only installed for the caller's own workspace (e.g. a builder
+    // test mocking a builder-only UI dependency) fails to resolve here even
+    // though it resolves fine from the test file itself. Walk the stack to
+    // find that caller and scope a fresh require to its location.
+    const origPrepare = Error.prepareStackTrace;
+    Error.prepareStackTrace = (_, stack) => stack;
+    const stack = new Error().stack as unknown as NodeJS.CallSite[];
+    Error.prepareStackTrace = origPrepare;
+    const callerFile = stack[1]?.getFileName();
+    const scopedRequire = callerFile ? createRequire(callerFile) : require;
+    const mod = scopedRequire(name);
     if (factory) {
       const replacement = factory();
       for (const key of Object.keys(replacement)) {

@@ -107,6 +107,7 @@
     "resize-with-sharp-or-jimp": "0.1.9",
     "semver": "^7.6.3",
     "socket.io": "4.8.1",
+    "socket.io-adapter": "~2.5.2",
     "systeminformation": "^5.25.11",
     "thirty-two": "1.0.2",
     "tmp-promise": "^3.0.3",

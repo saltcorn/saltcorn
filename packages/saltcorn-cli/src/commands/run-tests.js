@@ -60,8 +60,31 @@ class RunTestsCommand extends Command {
         env: serverEnv,
       }
     );
-    await sleep(2000);
+    await this.waitForServerReady(port);
     return server;
+  }
+
+  /**
+   * Poll the test server until it actually answers requests, instead of
+   * guessing a fixed startup delay - a slower CI run just polls a bit
+   * longer rather than racing the server and failing with ECONNREFUSED.
+   * @param {number} port
+   * @param {number} timeoutMs - give up and throw after this long
+   */
+  async waitForServerReady(port, timeoutMs = 30000) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      try {
+        const res = await fetch(`http://localhost:${port}/auth/csrf-token`);
+        if (res.ok) return;
+      } catch {
+        // not listening yet
+      }
+      await sleep(200);
+    }
+    throw new Error(
+      `Test server on port ${port} did not become ready within ${timeoutMs}ms`
+    );
   }
 
   /**
@@ -238,7 +261,12 @@ class RunTestsCommand extends Command {
         const cwd = ".";
         await this.do_test(
           "npm",
-          ["--workspaces", "run", "test", ...this.buildTestParams(flags, false)],
+          [
+            "--workspaces",
+            "run",
+            "test",
+            ...this.buildTestParams(flags, false),
+          ],
           env,
           cwd
         );
