@@ -64,6 +64,46 @@ run_tests_postgres:
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
     NODE_OPTIONS: --max-old-space-size=4096 --enable-source-maps --require /opt/saltcorn/deploy/whale-ci/trc-stack-hook.js
 
+run_tests_mysql_db:
+  image: mysql:8
+  service: true
+  quiet: true
+  ready-on: MySQL init process done
+  environment:
+    MYSQL_ROOT_PASSWORD: mysql
+    MYSQL_DATABASE: saltcorn_test
+
+run_tests_mysql:
+  image: build
+  depends: run_tests_mysql_db
+  delay: 5
+  command:
+    - npm install --legacy-peer-deps @saltcorn/mysql-backend
+    - saltcorn run-tests saltcorn-data
+    - saltcorn run-tests server
+    - saltcorn run-tests saltcorn-admin-models
+  extra_hosts:
+    - "example.com:127.0.0.1"
+    - "sub.example.com:127.0.0.1"
+    - "sub1.example.com:127.0.0.1"
+    - "sub2.example.com:127.0.0.1"
+    - "sub3.example.com:127.0.0.1"
+    - "sub4.example.com:127.0.0.1"
+    - "sub5.example.com:127.0.0.1"
+    - "otherexample.com:127.0.0.1"
+  environment:
+    SALTCORN_DB_DRIVER: "@saltcorn/mysql-backend"
+    PGHOST: run_tests_mysql_db
+    PGPORT: "3306"
+    PGUSER: root
+    PGPASSWORD: mysql
+    PGDATABASE: saltcorn_test
+    SALTCORN_DEFAULT_SCHEMA: saltcorn_test
+    CI: true
+    SALTCORN_MULTI_TENANT: true
+    SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+    NODE_OPTIONS: --max-old-space-size=4096
+
 pytest_db:
   image: postgres:16
   service: true

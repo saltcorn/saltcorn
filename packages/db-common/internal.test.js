@@ -567,7 +567,9 @@ describe("mkSelectOptions", () => {
           distance: { latField: "x", longField: "y", lat: 5, long: 10 },
         },
       })
-    ).toContain("order by ((x - 5)*(x - 5)) + ((y - 10)*(y - 10)*0.99240");
+    ).toContain(
+      'order by (("x" - 5)*("x" - 5)) + (("y" - 10)*("y" - 10)*0.99240'
+    );
   });
   it("should order by operator", () => {
     const nearOp = sqlFun("ABS", sqlBinOp("-", "target", "field"));

@@ -123,8 +123,8 @@ class RunTestsCommand extends Command {
   /**
    * Clear per-process test artifacts left over from previous runs. The server
    * test suite isolates parallel test files by giving each its own Postgres
-   * schema (test_p<pid>) or SQLite file (sctest_p<pid>.sqlite); this removes
-   * any that were not cleaned up (e.g. after a crash).
+   * schema / MySQL database (test_p<pid>) or SQLite file (sctest_p<pid>.sqlite);
+   * this removes any that were not cleaned up (e.g. after a crash).
    * @param {object} db - the data db module
    * @returns {Promise<void>}
    */
@@ -138,11 +138,17 @@ class RunTestsCommand extends Command {
           fs.rmSync(path.join(tmp, f), { force: true });
       return;
     }
+    // Both Postgres and MySQL list the per-process test namespaces here, but
+    // MySQL maps each to a database (dropped with DROP DATABASE, no CASCADE).
     const { rows } = await db.query(
       "select schema_name from information_schema.schemata where schema_name like 'test_p%'"
     );
     for (const { schema_name } of rows)
-      await db.query(`drop schema if exists "${schema_name}" cascade`);
+      await db.query(
+        db.driverName === "postgres"
+          ? `drop schema if exists "${schema_name}" cascade`
+          : `drop database if exists "${schema_name}"`
+      );
   }
 
   /**
@@ -203,7 +209,9 @@ class RunTestsCommand extends Command {
     // run - a concurrent CREATE EXTENSION can make another backend's catalog
     // lookups transiently fail. Per-process `CREATE EXTENSION IF NOT EXISTS`
     // calls then become harmless no-ops.
-    if (!db.isSQLite) {
+    // uuid-ossp / pg_trgm are Postgres extensions; other backends (MySQL) have
+    // no CREATE EXTENSION, so gate on the driver rather than just !isSQLite.
+    if (db.driverName === "postgres") {
       await db.query('create extension if not exists "uuid-ossp";');
       await db.query("create extension if not exists pg_trgm;");
     }
