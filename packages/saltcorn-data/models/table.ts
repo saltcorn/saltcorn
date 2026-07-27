@@ -4842,7 +4842,7 @@ ${rejectDetails}`,
    * @returns {Promise<object[]>}
    */
   async getJoinedRows(
-    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean } = {}
+    opts: JoinOptions & ForUserRequest & { ignoreExternal?: boolean; state?: GenObj } = {}
   ): Promise<Array<Row>> {
     const fields = this.fields;
     const { forUser, forPublic, ...selopts1 } = opts;

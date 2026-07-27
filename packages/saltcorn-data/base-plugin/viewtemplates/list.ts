@@ -2014,6 +2014,7 @@ export default {
           ...q,
           forPublic: !req.user || req.user.role_id === 100,
           forUser: req.user,
+          state,
         });
 
         const joined_map: Record<PrimaryKeyValue, GenObj> = {};
@@ -2031,6 +2032,7 @@ export default {
           ...q,
           forPublic: !req.user || req.user.role_id === 100,
           forUser: req.user,
+          state,
         });
       //console.log("rows", rows);
 
@@ -2041,6 +2043,7 @@ export default {
           : await table.countRows(whereForCount, {
               forPublic: !req.user,
               forUser: req.user,
+              state,
               ...(default_state?._full_page_count === false
                 ? { limit: (q.offset || 0) + 4 * (q.limit || 100) + 1 }
                 : {}),
