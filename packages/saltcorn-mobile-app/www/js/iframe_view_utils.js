@@ -102,7 +102,10 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb, matchingState) {
     const urlParams = new URLSearchParams();
     const data = matchingState ? {} : null;
     for (const entry of new FormData(e).entries()) {
-      if (entry[1] instanceof File) files[entry[0]] = entry[1];
+      // cordova-plugin-file replaces window.File with its own class, so a
+      // real picked file no longer passes "instanceof File" - Blob still
+      // works, since every File is also a Blob.
+      if (entry[1] instanceof Blob) files[entry[0]] = entry[1];
       else {
         // is there a hidden input with a filename?
         const domEl = $(e).find(
@@ -718,19 +721,16 @@ async function make_unique_field(
   }
 }
 
-function openFile(fileId) {
+async function openFile(fileId) {
   const config = parent.saltcorn.data.state.getState().mobileConfig;
   const serverPath = config.server_path;
-  // TODO: session-based auth doesn't carry into this InAppBrowser - it's a
-  // separate browser context and may not share the main WebView's cookie
-  // jar. The old ?jwt= query param worked around that; protected files may
-  // now fail to open here until this gets its own solution (e.g. a
-  // short-lived signed download URL minted server-side).
   const url = `${serverPath}/files/serve/${encodeURIComponent(fileId)}`;
   parent.cordova.InAppBrowser.open(
     url,
     "_blank",
-    "clearcache=yes,clearsessioncache=yes,location=no,toolbar=yes,toolbarposition=top"
+    // No clearcache - it clears cookies app-wide (Android's cookie store
+    // isn't scoped per tab), which would log the main app out too.
+    "location=no,toolbar=yes,toolbarposition=top"
   );
 }
 
@@ -740,7 +740,9 @@ function openInAppBrowser(url, domId) {
     const ref = parent.cordova.InAppBrowser.open(
       url,
       "_blank",
-      "clearcache=yes,clearsessioncache=yes,location=no,toolbar=yes,toolbarposition=top"
+      // No clearcache - it clears cookies app-wide (Android's cookie store
+      // isn't scoped per tab), which would log the main app out too.
+      "location=no,toolbar=yes,toolbarposition=top"
     );
     ref.addEventListener("exit", function () {
       $(`#${domId}`).find(".spinner-border").addClass("d-none");

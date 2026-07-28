@@ -63,6 +63,7 @@ export function prepareBuildDir(
     "@capacitor/core@7.4.5",
     "@capacitor/assets@3.0.5",
     "@capacitor/filesystem@7.1.6",
+    "@capacitor/file-transfer@1.0.12",
     "@capacitor/camera@7.0.3",
     "@capacitor/network@7.0.3",
     "@capacitor-community/sqlite@7.0.3",
@@ -1539,6 +1540,7 @@ export function writePodfile(
     pod 'CapacitorCommunitySqlite', :path => '../../node_modules/@capacitor-community/sqlite'
     pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
+    pod 'CapacitorFileTransfer', :path => '../../node_modules/@capacitor/file-transfer'
     ${
       hasGeolocation
         ? `pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'`

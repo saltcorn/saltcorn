@@ -396,9 +396,9 @@ router.get(
 router.get(
   "/serve/*serve_path",
   error_catcher(async (req: Req, res: Res) => {
+    const serve_path = path.join(...req.params.serve_path);
     const role = req.user && req.user!.id ? req.user!.role_id : 100;
     const user_id = req.user && req.user!.id;
-    const serve_path = path.join(...req.params.serve_path);
     //let file: any;
     //if (typeof strictParseInt(id) !== "undefined")
     const file = (await File.findOne(serve_path))!;
