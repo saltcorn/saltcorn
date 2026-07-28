@@ -468,6 +468,51 @@ const spyOn = (obj: any, method: string): any => {
   return spy;
 };
 
+// Mock a module. With a factory, the named exports it returns replace those
+// on the (shared, require-cached) module; without one, function exports are
+// auto-mocked. Mutating the cached exports means modules required afterwards
+// see the mocks - so callers should require() the system-under-test after
+// jest.mock (jest hoists mock calls above imports; node:test does not).
+//
+// require(name) must resolve from the *calling test file*, not from this
+// shared shim - otherwise mocking a package only installed for the caller's
+// own workspace fails here even though it resolves fine from the test file.
+// captureStackTrace(target, mockFn) gets that caller's frame directly, with
+// no guessing - some test setups replace global.Error with a wrapper, which
+// breaks a plain new Error() here, so we go through a real native Error.
+function mockFn(name: string, factory?: () => any) {
+  const RealError: any = new Error().constructor;
+  const origPrepare = RealError.prepareStackTrace;
+  RealError.prepareStackTrace = (_: any, stack: any) => stack;
+  const target: any = {};
+  RealError.captureStackTrace(target, mockFn);
+  const stack = target.stack as unknown as NodeJS.CallSite[];
+  RealError.prepareStackTrace = origPrepare;
+  const callerFile = stack[0]?.getFileName();
+  const scopedRequire = callerFile ? createRequire(callerFile) : require;
+  const mod = scopedRequire(name);
+  if (factory) {
+    const replacement = factory();
+    for (const key of Object.keys(replacement)) {
+      try {
+        mod[key] = replacement[key];
+      } catch {
+        // non-writable export; skip
+      }
+    }
+    return;
+  }
+  for (const key of Object.keys(mod)) {
+    if (typeof mod[key] === "function") {
+      try {
+        mod[key] = fn();
+      } catch {
+        // non-writable export; skip
+      }
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // jest object: setTimeout (no-op; node:test has no default timeout), fn, mock
 // ---------------------------------------------------------------------------
@@ -476,46 +521,7 @@ export const jest = {
   setTimeout: (_ms?: number) => {},
   fn,
   spyOn,
-  // Mock a module. With a factory, the named exports it returns replace those
-  // on the (shared, require-cached) module; without one, function exports are
-  // auto-mocked. Mutating the cached exports means modules required afterwards
-  // see the mocks - so callers should require() the system-under-test after
-  // jest.mock (jest hoists mock calls above imports; node:test does not).
-  mock: (name: string, factory?: () => any) => {
-    // require(name) must resolve as the *calling test file* would resolve it,
-    // not as this shared shim (living in db-common) would - otherwise mocking
-    // a package only installed for the caller's own workspace (e.g. a builder
-    // test mocking a builder-only UI dependency) fails to resolve here even
-    // though it resolves fine from the test file itself. Walk the stack to
-    // find that caller and scope a fresh require to its location.
-    const origPrepare = Error.prepareStackTrace;
-    Error.prepareStackTrace = (_, stack) => stack;
-    const stack = new Error().stack as unknown as NodeJS.CallSite[];
-    Error.prepareStackTrace = origPrepare;
-    const callerFile = stack[1]?.getFileName();
-    const scopedRequire = callerFile ? createRequire(callerFile) : require;
-    const mod = scopedRequire(name);
-    if (factory) {
-      const replacement = factory();
-      for (const key of Object.keys(replacement)) {
-        try {
-          mod[key] = replacement[key];
-        } catch {
-          // non-writable export; skip
-        }
-      }
-      return;
-    }
-    for (const key of Object.keys(mod)) {
-      if (typeof mod[key] === "function") {
-        try {
-          mod[key] = fn();
-        } catch {
-          // non-writable export; skip
-        }
-      }
-    }
-  },
+  mock: mockFn,
   clearAllMocks: () => {
     for (const spy of activeSpies) spy.mockClear?.();
   },
