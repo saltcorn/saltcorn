@@ -104,6 +104,56 @@ run_tests_mysql:
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
     NODE_OPTIONS: --max-old-space-size=4096
 
+email_tests_db:
+  image: postgres:16
+  service: true
+  quiet: true
+  ready-on: CREATE DATABASE
+  environment:
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: saltcorn_test
+    POSTGRES_USER: postgres
+
+# SMTP + IMAP server for the email tests. GreenMail creates a mailbox on first
+# delivery, with login and password both set to the recipient address, so the
+# tests can read back mail sent to any address without provisioning it.
+email_tests_smtp:
+  image: greenmail/standalone:2.1.8
+  service: true
+  quiet: true
+  ready-on: Starting GreenMail API server
+  environment:
+    GREENMAIL_OPTS: -Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.users=saltcorn:scpassword@example.com
+
+email_tests:
+  image: build
+  depends:
+    - email_tests_db
+    - email_tests_smtp
+  command:
+    - psql -d saltcorn_test --command='create extension "uuid-ossp";'
+    - nice -n 15 saltcorn run-tests server -f tests/email_smtp.test.js
+  extra_hosts:
+    - "example.com:127.0.0.1"
+    - "sub.example.com:127.0.0.1"
+  environment:
+    PGHOST: email_tests_db
+    PGUSER: postgres
+    PGDATABASE: saltcorn_test
+    PGPASSWORD: postgres
+    CI: true
+    SALTCORN_MULTI_TENANT: true
+    SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
+    NODE_OPTIONS: --max-old-space-size=4096
+    # presence of SALTCORN_TEST_SMTP_HOST enables tests/email_smtp.test.js
+    SALTCORN_TEST_SMTP_HOST: email_tests_smtp
+    SALTCORN_TEST_SMTP_PORT: "3025"
+    SALTCORN_TEST_IMAP_PORT: "3143"
+    SALTCORN_TEST_MAIL_API_PORT: "8080"
+    SALTCORN_TEST_SMTP_USER: saltcorn
+    SALTCORN_TEST_SMTP_PASSWORD: scpassword
+    SALTCORN_TEST_EMAIL_FROM: saltcorn@example.com
+
 pytest_db:
   image: postgres:16
   service: true

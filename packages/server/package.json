@@ -126,6 +126,8 @@
     "@types/adm-zip": "^0.5.7",
     "@types/jsonwebtoken": "^9.0.0",
     "@types/semver": "^7.7.1",
+    "imapflow": "^1.6.1",
+    "mailparser": "^3.9.14",
     "supertest-fetch": "^2.0.0"
   },
   "scripts": {
