@@ -126,6 +126,14 @@ describe("event log", () => {
       .send("email=staff@foo.com")
       .send("password=fotyjtyjr")
       .expect(toRedirect("/auth/login"));
+    // Trigger.emitEvent writes the event log row from a setTimeout without
+    // awaiting the insert, so poll until it has been persisted
+    let evs = [];
+    for (let i = 0; i < 100 && evs.length === 0; i++) {
+      await sleep(50);
+      evs = await EventLog.find({ event_type: "LoginFailed" });
+    }
+    expect(evs.length).toBeGreaterThan(0);
   });
 
   it("shows entry in event log list", async () => {
@@ -137,7 +145,7 @@ describe("event log", () => {
       .expect(toInclude("LoginFailed"));
   });
   it("shows an entry in event log", async () => {
-    const evs = await EventLog.find({});
+    const evs = await EventLog.find({ event_type: "LoginFailed" });
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();
     await request(app)
