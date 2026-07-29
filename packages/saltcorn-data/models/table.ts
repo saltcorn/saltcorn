@@ -4164,6 +4164,12 @@ ${rejectDetails}`,
         isNaN(v1[f.name])
       )
         v1[f.name] = null;
+      if (
+        (f.type === "Key" || (typeof f.type !== "string" && f?.type?.name === "Integer")) &&
+        v1[f.name] === ""
+      )
+        v1[f.name] = null;
+
     });
     if (!db.json_write_needs_stringify) return;
     this.fields
