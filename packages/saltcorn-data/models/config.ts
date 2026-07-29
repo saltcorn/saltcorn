@@ -833,7 +833,7 @@ const configTypes: ConfigTypes = {
   },
   files_cache_maxage: {
     type: "Integer",
-    label: "Files cache TTL (minutes)",
+    label: "Files cache TTL (seconds)",
     sublabel: "Cache-control max-age for files.",
     default: 86400,
     excludeFromMobile: true,
