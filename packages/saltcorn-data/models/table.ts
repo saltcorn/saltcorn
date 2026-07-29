@@ -4858,7 +4858,7 @@ ${rejectDetails}`,
 
   /**
    * Get rows along with joined and aggregated fields. The argument to `getJoinedRows` is an object
-   * with several different possible fields, all of which are optional
+   * with several different possible fields, all of which are optional 
    *
    * * `where`: A Where expression indicating the criterion to match
    * * `joinFields`: An object with the joinfields to retrieve
