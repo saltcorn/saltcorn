@@ -5,7 +5,7 @@
  * `*` (any run of characters within one path segment), `**` (any run of
  * characters, crossing directory separators), `?` (a single character) and
  * `[abc]` character classes. Matching is case-insensitive. Brace alternation
- * is not available here because the comma is the list separator.
+ * is not available here because the comma is the list separator. 
  *
  * I/O-free, so it is unit-testable without a database.
  * @category saltcorn-admin-models
