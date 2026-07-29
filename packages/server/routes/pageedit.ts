@@ -286,6 +286,7 @@ const pageBuilderData = async (req: Req, context: any) => {
     current_filter_state,
     actions: actionsNotRequiringRow,
     has_copilot_generate: !!getState()!.functions.copilot_generate_layout,
+    has_js_copilot: !!getState()!.functions.copilot_generate_javascript,
     builtInActions: ["GoBack"],
     triggerActions,
     library,
