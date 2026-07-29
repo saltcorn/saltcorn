@@ -573,6 +573,8 @@ router.get(
       getState()!.getConfig("backup_file_prefix");
     aBackupFilePrefixForm.values.backup_history =
       getState()!.getConfig("backup_history");
+    aBackupFilePrefixForm.values.backup_exclude_file_globs =
+      getState()!.getConfig("backup_exclude_file_globs");
     //
     const backupForm = autoBackupForm(req);
     backupForm.values.auto_backup_frequency = getState()!.getConfig(
@@ -1149,6 +1151,14 @@ const backupFilePrefixForm = (req: Req) =>
         label: req.__("Include Event Logs"),
         sublabel: req.__("Backup with event logs"),
         name: "backup_with_event_log",
+      },
+      {
+        type: "String",
+        label: req.__("Exclude files"),
+        name: "backup_exclude_file_globs",
+        sublabel: req.__(
+          "Comma separated globs, for example: *.mp4, cache/**. Files whose name or path matches any of these are not included in the backup"
+        ),
       },
       {
         type: "String",

@@ -103,7 +103,24 @@ describe("admin page", () => {
       .set("Cookie", loginCookie)
       .expect(toSucceed());
   });
-  adminPageContains([["/admin/backup", "Retention mode"]]);
+  adminPageContains([
+    ["/admin/backup", "Retention mode"],
+    ["/admin/backup", "Exclude files"],
+  ]);
+  it("saves file exclusion globs", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/admin/set-backup-prefix")
+      .set("Cookie", loginCookie)
+      .send("backup_file_prefix=sc-backup-")
+      .send("backup_exclude_file_globs=*.mp4, cache/**")
+      .expect(toRedirect("/admin/backup"));
+    expect(getState().getConfig("backup_exclude_file_globs")).toBe(
+      "*.mp4, cache/**"
+    );
+    await getState().setConfig("backup_exclude_file_globs", "");
+  });
   it("saves tiered retention settings", async () => {
     const app = await getApp({ disableCsrf: true });
     const loginCookie = await getAdminLoginCookie();

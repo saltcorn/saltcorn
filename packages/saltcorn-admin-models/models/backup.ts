@@ -73,6 +73,7 @@ import {
   BackupEntry,
   RetentionPolicy,
 } from "./backup-retention.js";
+import { parseGlobList, matchesAnyGlob } from "./file-globs.js";
 import MetaData from "@saltcorn/data/models/metadata";
 import lodash from "lodash";
 import { Row } from "@saltcorn/db-common";
@@ -280,6 +281,9 @@ const create_table_jsons = async (root_dirpath: string): Promise<void> => {
  */
 const backup_files = async (root_dirpath: string): Promise<void> => {
   const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
+  const excludeGlobs = parseGlobList(
+    getState()!.getConfig("backup_exclude_file_globs", "")
+  );
 
   const dirpath = join(root_dirpath, "files");
   await mkdir(dirpath);
@@ -289,6 +293,12 @@ const backup_files = async (root_dirpath: string): Promise<void> => {
     const files = await File.find(folder ? { folder } : {});
     for (const f of files) {
       const base = basename(f.location);
+      const relPath = folder ? `${folder}/${base}` : base;
+      //exclude files and folders matching the configured globs
+      if (matchesAnyGlob(excludeGlobs, relPath, !!f.isDirectory)) {
+        getState()!.log(6, `Excluding ${relPath} from backup`);
+        continue;
+      }
       if (f.isDirectory && (await f.is_symlink())) continue;
       else if (f.isDirectory && !(await f.is_symlink())) {
         await mkdir(join(dirpath, f.path_to_serve as string));

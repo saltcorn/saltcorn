@@ -1447,6 +1447,14 @@ const configTypes: ConfigTypes = {
     default: true,
     excludeFromMobile: true,
   },
+  backup_exclude_file_globs: {
+    type: "String",
+    label: "Exclude files from backup",
+    default: "",
+    blurb:
+      "Comma separated globs. Files whose name or path matches any of these are not included in the backup.",
+    excludeFromMobile: true,
+  },
   restore_history: {
     type: "Bool",
     label: "Restore history tables",

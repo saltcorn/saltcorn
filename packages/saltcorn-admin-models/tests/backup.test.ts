@@ -32,6 +32,8 @@ import {
   jest,
 } from "@saltcorn/db-common/test_expect";
 import Field from "@saltcorn/data/models/field";
+import File from "@saltcorn/data/models/file";
+import Zip from "adm-zip";
 import * as mocks from "@saltcorn/data/tests/mocks";
 const { mockReqRes, plugin_with_routes } = mocks;
 
@@ -283,5 +285,63 @@ describe("auto backup retention to local directory", () => {
     expect(remaining).toContain(`${prefix}RetTest-2020-01-02-00-00.zip`);
 
     await rm(dir, { recursive: true, force: true });
+  });
+});
+
+describe("backup file exclusion", () => {
+  it("excludes files matching the configured globs", async () => {
+    await File.ensure_file_store();
+    const mv = async (fnm: string) => {
+      await writeFile(fnm, "cecinestpasunpng");
+    };
+    await File.from_req_files(
+      { mimetype: "video/mp4", name: "bigvideo.mp4", mv, size: 16 },
+      1,
+      100
+    );
+    await File.from_req_files(
+      { mimetype: "image/png", name: "keepme.png", mv, size: 16 },
+      1,
+      100
+    );
+    await File.new_folder("cache");
+    await File.from_req_files(
+      { mimetype: "image/png", name: "thumb.png", mv, size: 16 },
+      1,
+      100,
+      "cache"
+    );
+    await getState()!.setConfig("backup_exclude_file_globs", "*.mp4, cache/**");
+
+    const fnm = await create_backup();
+    const zip = new Zip(fnm);
+    const entries = zip.getEntries().map((e: any) => e.entryName);
+    const filesCsv = zip.readAsText("files.csv");
+    await unlink(fnm);
+    await getState()!.setConfig("backup_exclude_file_globs", "");
+
+    expect(entries).toContain("files/keepme.png");
+    expect(entries.filter((e: string) => e.includes("bigvideo"))).toHaveLength(
+      0
+    );
+    expect(entries.filter((e: string) => e.includes("thumb.png"))).toHaveLength(
+      0
+    );
+    // excluded files are also left out of the file metadata
+    expect(filesCsv.includes("keepme.png")).toBe(true);
+    expect(filesCsv.includes("bigvideo.mp4")).toBe(false);
+    expect(filesCsv.includes("thumb.png")).toBe(false);
+  });
+
+  it("includes all files when no globs are configured", async () => {
+    const fnm = await create_backup();
+    const entries = new Zip(fnm)
+      .getEntries()
+      .map((e: any) => e.entryName)
+      .join("\n");
+    await unlink(fnm);
+    expect(entries.includes("bigvideo.mp4")).toBe(true);
+    expect(entries.includes("keepme.png")).toBe(true);
+    expect(entries.includes("thumb.png")).toBe(true);
   });
 });
