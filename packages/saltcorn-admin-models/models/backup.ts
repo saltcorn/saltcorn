@@ -68,6 +68,11 @@ const awsS3 = () => _awsS3 || (_awsS3 = require("@aws-sdk/client-s3"));
 let _awsLibStorage: any;
 const awsLibStorage = () =>
   _awsLibStorage || (_awsLibStorage = require("@aws-sdk/lib-storage"));
+import {
+  selectBackupsToDeleteGrouped,
+  BackupEntry,
+  RetentionPolicy,
+} from "./backup-retention.js";
 import MetaData from "@saltcorn/data/models/metadata";
 import lodash from "lodash";
 import { Row } from "@saltcorn/db-common";
@@ -811,46 +816,80 @@ const restore = async (
 };
 
 /**
- * Delete old backups
+ * Configuration object shared by the S3 upload and the S3 retention client.
+ */
+const s3ClientConfig = (state: any) => {
+  const s3EndpointCfg = state.getConfig("backup_s3_endpoint");
+  const s3Secure = state.getConfig("backup_s3_secure", true);
+  const endpoint = s3EndpointCfg
+    ? /:\/\//.test(s3EndpointCfg)
+      ? s3EndpointCfg
+      : `${s3Secure ? "https" : "http"}://${s3EndpointCfg}`
+    : undefined;
+  return {
+    credentials: {
+      accessKeyId: state.getConfig("backup_s3_access_key"),
+      secretAccessKey: state.getConfig("backup_s3_access_secret"),
+    },
+    region: state.getConfig("backup_s3_region"),
+    ...(endpoint ? { endpoint } : {}),
+  };
+};
+
+const buildS3Client = (state: any) =>
+  new (awsS3().S3Client)(s3ClientConfig(state));
+
+/**
+ * The tiered (GFS) retention policy, or null if retention is by expiration age
+ */
+const getRetentionPolicy = (): RetentionPolicy | null => {
+  const mode = getState()!.getConfig(
+    "auto_backup_retention_mode",
+    "Expiration"
+  );
+  if (mode !== "Tiered (GFS)") return null;
+  return {
+    keep_daily: +getState()!.getConfig("auto_backup_keep_daily", 7),
+    keep_weekly: +getState()!.getConfig("auto_backup_keep_weekly", 4),
+    keep_monthly: +getState()!.getConfig("auto_backup_keep_monthly", 12),
+    keep_yearly: +getState()!.getConfig("auto_backup_keep_yearly", 3),
+    keep_min: +getState()!.getConfig("auto_backup_keep_min", 3),
+  };
+};
+
+/**
+ * Delete old backups: collect the existing backups at the destination,
+ * classify them according to the configured retention policy (expiration
+ * age or tiered GFS), then delete those not retained.
  */
 const delete_old_backups = async () => {
   const directory = getState()!.getConfig("auto_backup_directory");
   const expire_days = getState()!.getConfig("auto_backup_expire_days");
   const backup_file_prefix = getState()!.getConfig("backup_file_prefix");
   const destination = getState()!.getConfig("auto_backup_destination");
+  const retention = getRetentionPolicy();
 
-  if (!expire_days || expire_days < 0) return;
+  // nothing to do: neither expiration nor tiered retention configured
+  if (!retention && (!expire_days || expire_days < 0)) return;
 
+  // ---- 1. collect --------------------------------------------------------
+  const entries: BackupEntry[] = [];
+  let s3: any;
+  let bucket: string = "";
   if (destination === "Local directory") {
     const files = await readdir(directory);
     for (const file of files) {
       if (!file.startsWith(backup_file_prefix)) continue;
+      if (!file.endsWith(".zip")) continue;
       const stats = await stat(path.join(directory, file));
       const fileTime = (stats as any).birthtime?.getTime
         ? stats.birthtime.getTime()
         : stats.mtime.getTime();
-      const ageMs = new Date().getTime() - fileTime;
-      const ageDays = ageMs / (1000 * 3600 * 24);
-      if (ageDays > expire_days) await unlink(path.join(directory, file));
+      entries.push({ key: file, date: new Date(fileTime) });
     }
   } else if (destination === "S3") {
-    const s3EndpointCfg = getState()!.getConfig("backup_s3_endpoint");
-    const s3Secure = getState()!.getConfig("backup_s3_secure", true);
-    const endpoint = s3EndpointCfg
-      ? /:\/\//.test(s3EndpointCfg)
-        ? s3EndpointCfg
-        : `${s3Secure ? "https" : "http"}://${s3EndpointCfg}`
-      : undefined;
-    const s3 = new (awsS3().S3Client)({
-      credentials: {
-        accessKeyId: getState()!.getConfig("backup_s3_access_key"),
-        secretAccessKey: getState()!.getConfig("backup_s3_access_secret"),
-      },
-      region: getState()!.getConfig("backup_s3_region"),
-      ...(endpoint ? { endpoint } : {}),
-    });
-
-    const bucket = getState()!.getConfig("backup_s3_bucket");
+    s3 = buildS3Client(getState()!);
+    bucket = getState()!.getConfig("backup_s3_bucket");
     const keyPrefix = (getState()!.getConfig("backup_s3_path_prefix", "") || "")
       .toString()
       .replace(/^\/+|\/+$/g, "");
@@ -858,42 +897,65 @@ const delete_old_backups = async () => {
       .filter((s) => s && s.length)
       .join("/");
 
-    const listParams: any = {
-      Bucket: bucket,
-      Prefix: listPrefix,
-    };
-
     try {
       let continuationToken: string | undefined = undefined;
       do {
         const listedObjects: any = await s3.send(
           new (awsS3().ListObjectsV2Command)({
-            ...listParams,
+            Bucket: bucket,
+            Prefix: listPrefix,
             ContinuationToken: continuationToken,
           })
         );
-        if (listedObjects.Contents) {
-          for (const obj of listedObjects.Contents) {
-            if (!obj.Key || !obj.LastModified) continue;
-            const ageMs =
-              new Date().getTime() - new Date(obj.LastModified).getTime();
-            const ageDays = ageMs / (1000 * 3600 * 24);
-            if (ageDays > expire_days) {
-              await s3.send(
-                new (awsS3().DeleteObjectCommand)({
-                  Bucket: bucket,
-                  Key: obj.Key,
-                })
-              );
-            }
-          }
+        for (const obj of listedObjects.Contents || []) {
+          if (!obj.Key || !obj.LastModified) continue;
+          if (!obj.Key.endsWith(".zip")) continue;
+          entries.push({ key: obj.Key, date: new Date(obj.LastModified) });
         }
         continuationToken = listedObjects.IsTruncated
           ? listedObjects.NextContinuationToken
           : undefined;
       } while (continuationToken);
     } catch (err: any) {
-      console.error(`Error deleting old backups from S3: ${err.message}`);
+      console.error(`Error listing old backups in S3: ${err.message}`);
+      return;
+    }
+  } else return; // Saltcorn files / SFTP: no retention
+
+  // guard against acting on a misconfigured prefix
+  if (entries.length === 0) return;
+
+  // ---- 2. classify -------------------------------------------------------
+  let toDelete: BackupEntry[];
+  if (retention) {
+    toDelete = selectBackupsToDeleteGrouped(entries, retention);
+    getState()!.log(
+      5,
+      `Backup retention (GFS): ${entries.length} found, ` +
+        `${entries.length - toDelete.length} kept, ${toDelete.length} to delete`
+    );
+  } else {
+    const now = new Date().getTime();
+    toDelete = entries.filter(
+      (e) => (now - e.date.getTime()) / (1000 * 3600 * 24) > expire_days
+    );
+  }
+
+  // ---- 3. delete ---------------------------------------------------------
+  for (const entry of toDelete) {
+    try {
+      if (destination === "Local directory")
+        await unlink(path.join(directory, entry.key));
+      else
+        await s3.send(
+          new (awsS3().DeleteObjectCommand)({
+            Bucket: bucket,
+            Key: entry.key,
+          })
+        );
+      getState()!.log(6, `Deleted expired backup ${entry.key}`);
+    } catch (err: any) {
+      console.error(`Error deleting old backup ${entry.key}: ${err.message}`);
     }
   }
 };
@@ -968,21 +1030,7 @@ const auto_backup_now_tenant = async (state: any) => {
       await unlink(fileName);
       break;
     case "S3":
-      const bEndpointCfg = state.getConfig("backup_s3_endpoint");
-      const bSecure = state.getConfig("backup_s3_secure", true);
-      const bEndpoint = bEndpointCfg
-        ? /:\/\//.test(bEndpointCfg)
-          ? bEndpointCfg
-          : `${bSecure ? "https" : "http"}://${bEndpointCfg}`
-        : undefined;
-      const s3 = new (awsS3().S3)({
-        credentials: {
-          accessKeyId: state.getConfig("backup_s3_access_key"),
-          secretAccessKey: state.getConfig("backup_s3_access_secret"),
-        },
-        region: state.getConfig("backup_s3_region"),
-        ...(bEndpoint ? { endpoint: bEndpoint } : {}),
-      });
+      const s3 = new (awsS3().S3)(s3ClientConfig(state));
 
       const bucket = state.getConfig("backup_s3_bucket");
       const pathPrefix = (state.getConfig("backup_s3_path_prefix", "") || "")

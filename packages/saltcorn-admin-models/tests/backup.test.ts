@@ -3,10 +3,11 @@ import { getState } from "@saltcorn/data/db/state";
 import basePlugin from "@saltcorn/data/base-plugin";
 getState()!.registerPlugin("base", basePlugin);
 import backup from "../models/backup.js";
-const { create_backup, restore } = backup;
+const { create_backup, restore, auto_backup_now } = backup;
 import reset from "@saltcorn/data/db/reset_schema";
 import fixtures from "@saltcorn/data/db/fixtures";
-import { unlink } from "fs/promises";
+import { unlink, mkdtemp, writeFile, readdir, rm } from "fs/promises";
+import { join } from "path";
 import Table from "@saltcorn/data/models/table";
 import View from "@saltcorn/data/models/view";
 import User from "@saltcorn/data/models/user";
@@ -222,5 +223,65 @@ describe("Backup and restore", () => {
     expect(staff!.checkPassword("ghrarhr54hg")).toBe(true);
     expect(User.table.min_role_read).toBe(40);
     expect(User.table.description).toBe("Users are the best");
+  });
+});
+
+describe("auto backup retention to local directory", () => {
+  it("deletes backups not retained by the tiered policy", async () => {
+    // in cwd rather than tmpdir: auto_backup_now renames the zip into the
+    // directory, and rename fails across filesystems
+    const dir = await mkdtemp(join(process.cwd(), "sc-backup-retention-"));
+    const prefix = getState()!.getConfig("backup_file_prefix");
+    await getState()!.setConfig("site_name", "RetTest");
+    await getState()!.setConfig("auto_backup_destination", "Local directory");
+    await getState()!.setConfig("auto_backup_directory", dir);
+    await getState()!.setConfig("auto_backup_retention_mode", "Tiered (GFS)");
+    await getState()!.setConfig("auto_backup_keep_daily", 1);
+    await getState()!.setConfig("auto_backup_keep_weekly", 0);
+    await getState()!.setConfig("auto_backup_keep_monthly", 0);
+    await getState()!.setConfig("auto_backup_keep_yearly", 0);
+    await getState()!.setConfig("auto_backup_keep_min", 1);
+
+    // older backups of the same site, plus files the policy must not touch
+    for (const day of ["2020-01-01-00-00", "2020-01-02-00-00"])
+      await writeFile(join(dir, `${prefix}RetTest-${day}.zip`), "old");
+    await writeFile(join(dir, "not-a-backup.zip"), "keep me");
+    await writeFile(join(dir, `${prefix}RetTest-2020-01-03.txt`), "keep me");
+
+    await auto_backup_now();
+
+    const remaining = await readdir(dir);
+    // one backup of this site is retained (keep_daily=1, all in one day bucket)
+    expect(
+      remaining.filter(
+        (f) => f.startsWith(`${prefix}RetTest`) && f.endsWith(".zip")
+      )
+    ).toHaveLength(1);
+    // files outside the backup prefix or not zips are never deleted
+    expect(remaining).toContain("not-a-backup.zip");
+    expect(remaining).toContain(`${prefix}RetTest-2020-01-03.txt`);
+
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("does not delete anything when retention is not configured", async () => {
+    // in cwd rather than tmpdir: auto_backup_now renames the zip into the
+    // directory, and rename fails across filesystems
+    const dir = await mkdtemp(join(process.cwd(), "sc-backup-retention-"));
+    const prefix = getState()!.getConfig("backup_file_prefix");
+    await getState()!.setConfig("auto_backup_directory", dir);
+    await getState()!.setConfig("auto_backup_retention_mode", "Expiration");
+    await getState()!.setConfig("auto_backup_expire_days", null);
+
+    for (const day of ["2020-01-01-00-00", "2020-01-02-00-00"])
+      await writeFile(join(dir, `${prefix}RetTest-${day}.zip`), "old");
+
+    await auto_backup_now();
+
+    const remaining = await readdir(dir);
+    expect(remaining).toContain(`${prefix}RetTest-2020-01-01-00-00.zip`);
+    expect(remaining).toContain(`${prefix}RetTest-2020-01-02-00-00.zip`);
+
+    await rm(dir, { recursive: true, force: true });
   });
 });

@@ -604,6 +604,24 @@ router.get(
     backupForm.values.auto_backup_expire_days = getState()!.getConfig(
       "auto_backup_expire_days"
     );
+    backupForm.values.auto_backup_retention_mode = getState()!.getConfig(
+      "auto_backup_retention_mode"
+    );
+    backupForm.values.auto_backup_keep_daily = getState()!.getConfig(
+      "auto_backup_keep_daily"
+    );
+    backupForm.values.auto_backup_keep_weekly = getState()!.getConfig(
+      "auto_backup_keep_weekly"
+    );
+    backupForm.values.auto_backup_keep_monthly = getState()!.getConfig(
+      "auto_backup_keep_monthly"
+    );
+    backupForm.values.auto_backup_keep_yearly = getState()!.getConfig(
+      "auto_backup_keep_yearly"
+    );
+    backupForm.values.auto_backup_keep_min = getState()!.getConfig(
+      "auto_backup_keep_min"
+    );
     backupForm.values.backup_s3_bucket =
       getState()!.getConfig("backup_s3_bucket");
     backupForm.values.backup_s3_endpoint =
@@ -1304,6 +1322,17 @@ const autoBackupForm = (req: Req) => {
         },
       },
       {
+        type: "String",
+        label: req.__("Retention mode"),
+        name: "auto_backup_retention_mode",
+        required: true,
+        attributes: { options: ["Expiration", "Tiered (GFS)"] },
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: ["Local directory", "S3"],
+        },
+      },
+      {
         type: "Integer",
         label: req.__("Expiration in days"),
         sublabel: req.__(
@@ -1313,6 +1342,36 @@ const autoBackupForm = (req: Req) => {
         showIf: {
           auto_backup_frequency: ["Daily", "Weekly"],
           auto_backup_destination: ["Local directory", "S3"],
+          auto_backup_retention_mode: "Expiration",
+        },
+      },
+      ...["daily", "weekly", "monthly", "yearly"].map((tier) => ({
+        type: "Integer",
+        label: req.__("Keep %s", tier),
+        sublabel: req.__(
+          "Keep the newest backup of each of the last N %s periods",
+          tier
+        ),
+        name: `auto_backup_keep_${tier}`,
+        attributes: { min: 0 },
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: ["Local directory", "S3"],
+          auto_backup_retention_mode: "Tiered (GFS)",
+        },
+      })),
+      {
+        type: "Integer",
+        label: req.__("Minimum backups to keep"),
+        sublabel: req.__(
+          "Never delete backups below this total count, regardless of age"
+        ),
+        name: "auto_backup_keep_min",
+        attributes: { min: 0 },
+        showIf: {
+          auto_backup_frequency: ["Daily", "Weekly"],
+          auto_backup_destination: ["Local directory", "S3"],
+          auto_backup_retention_mode: "Tiered (GFS)",
         },
       },
     ],

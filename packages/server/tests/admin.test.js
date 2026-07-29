@@ -12,6 +12,7 @@ import {
   respondJsonWith,
 } from "../auth/testhelp.js";
 import db from "@saltcorn/data/db";
+import { getState } from "@saltcorn/data/db/state";
 import { sleep } from "@saltcorn/data/tests/mocks";
 import { promises as fs } from "fs";
 import File from "@saltcorn/data/models/file";
@@ -101,6 +102,30 @@ describe("admin page", () => {
       .post("/admin/backup")
       .set("Cookie", loginCookie)
       .expect(toSucceed());
+  });
+  adminPageContains([["/admin/backup", "Retention mode"]]);
+  it("saves tiered retention settings", async () => {
+    const app = await getApp({ disableCsrf: true });
+    const loginCookie = await getAdminLoginCookie();
+    await request(app)
+      .post("/admin/set-auto-backup")
+      .set("Cookie", loginCookie)
+      .send("auto_backup_frequency=Daily")
+      .send("auto_backup_destination=Local directory")
+      .send("auto_backup_retention_mode=Tiered (GFS)")
+      .send("auto_backup_keep_daily=5")
+      .send("auto_backup_keep_weekly=3")
+      .send("auto_backup_keep_monthly=6")
+      .send("auto_backup_keep_yearly=2")
+      .send("auto_backup_keep_min=4")
+      .expect(toRedirect("/admin/backup"));
+    expect(getState().getConfig("auto_backup_retention_mode")).toBe(
+      "Tiered (GFS)"
+    );
+    expect(getState().getConfig("auto_backup_keep_daily")).toBe(5);
+    expect(getState().getConfig("auto_backup_keep_min")).toBe(4);
+    await getState().setConfig("auto_backup_frequency", "Never");
+    await getState().setConfig("auto_backup_retention_mode", "Expiration");
   });
 });
 /**
