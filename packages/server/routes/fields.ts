@@ -1266,12 +1266,11 @@ router.post(
         }
         if (targetField.type === "File") {
           fv = getState()!.fileviews[fieldview];
-        } else  {
+        } else {
           fv = targetField.fieldviews?.[fieldview];
           if (!fv)
             fv =
-              targetField.fieldviews?.show ||
-              targetField.fieldviews?.as_text;
+              targetField.fieldviews?.show || targetField.fieldviews?.as_text;
         }
 
         const configuration = req.query;
@@ -1371,7 +1370,10 @@ router.post(
       const configuration = req.query;
       const fv = field.fieldviews[fieldview];
       if (!fv) res.send(text(result));
-      else res.send((fv as FieldViewShow).run(result, req, { row, ...configuration }));
+      else
+        res.send(
+          (fv as FieldViewShow).run(result, req, { row, ...configuration })
+        );
     } catch (e: any) {
       console.error("show-calculated error", e);
       return res.status(200).send(``);
