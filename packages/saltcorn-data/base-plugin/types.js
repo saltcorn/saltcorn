@@ -51,6 +51,18 @@ const eqStr = (x, y) => `${x}` === `${y}`;
 
 const or_if_undefined = (x, def) => (typeof x === "undefined" ? def : x);
 
+// Neutralize dangerous URL schemes so a stored field value rendered as an href
+// cannot execute script when clicked (stored XSS). Browsers strip ASCII
+// whitespace/control chars before resolving the scheme, so we do the same
+// before testing the prefix. A rejected URL becomes "" (a harmless href).
+const dangerous_url_schemes = ["javascript:", "data:", "vbscript:"];
+const safe_href = (url) => {
+  if (typeof url !== "string") return url;
+  const stripped = url.replace(/[\u0000-\u0020]+/g, "").toLowerCase();
+  if (dangerous_url_schemes.some((s) => stripped.startsWith(s))) return "";
+  return url;
+};
+
 const number_slider = (type) => ({
   configFields: (field) => [
     ...(!isdef(field.attributes.min)
@@ -972,7 +984,7 @@ const string = {
         s
           ? a(
               {
-                href: text(s || ""),
+                href: text(safe_href(s || "")),
                 ...(attrs.target_blank ? { target: "_blank" } : {}),
               },
               text_attr(attrs?.link_title || s || "")
