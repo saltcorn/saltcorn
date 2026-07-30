@@ -424,8 +424,8 @@ class Table implements AbstractTable {
       where?.id
         ? (v: TableCfg) => v.id === +where.id
         : where?.name
-        ? (v: TableCfg) => v.name === where.name
-        : satisfies(where)
+          ? (v: TableCfg) => v.name === where.name
+          : satisfies(where)
     );
     if (tbl?.provider_name) {
       return new this(structuredClone(tbl)).to_provided_table() as Table;
@@ -669,10 +669,8 @@ class Table implements AbstractTable {
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write_upd ON ${tbl}`);
     await db.query(`DROP POLICY IF EXISTS sc_rls_elevated_write_del ON ${tbl}`);
     await db.query(`ALTER TABLE ${tbl} DISABLE ROW LEVEL SECURITY`);
-    if (this.id)
-      await db.update("_sc_tables", { rls_enabled: false }, this.id);
+    if (this.id) await db.update("_sc_tables", { rls_enabled: false }, this.id);
   }
-
 
   /** True only when RLS can actually be enforced: flag set, PG, and inside a runWithTenant ALS context. */
   private canEnforceRls(): boolean {
@@ -925,8 +923,8 @@ class Table implements AbstractTable {
         (typeof pk_field === "string"
           ? pk_field
           : typeof pk_field?.type === "string"
-          ? pk_field?.type
-          : pk_field?.type?.name) || "Integer";
+            ? pk_field?.type
+            : pk_field?.type?.name) || "Integer";
     }
     if (pk_type !== "Integer") {
       const type = getState()!.types[pk_type];
@@ -1249,7 +1247,7 @@ class Table implements AbstractTable {
             const insertParams: any[] = [tsParam];
             const valueClauses = pkVals.map((pkVal, i) => {
               const ownerVal = ownerFieldName
-                ? ids[i][ownerFieldName] ?? null
+                ? (ids[i][ownerFieldName] ?? null)
                 : null;
               const ownerFieldsVal =
                 formulaTopKeys && formulaTopKeys.length > 0
@@ -1870,8 +1868,8 @@ class Table implements AbstractTable {
       const id: PrimaryKeyValue | Row = composite_pk_names
         ? id_in
         : typeof id_in === "object"
-        ? id_in[this.pk_name]
-        : id_in;
+          ? id_in[this.pk_name]
+          : id_in;
       //these may have changed
       let changedFieldNames = new Set([
         ...Object.keys(v_in),
@@ -1945,7 +1943,6 @@ class Table implements AbstractTable {
           }
         }
         if (this.ownership_formula) {
-
           await getExisting();
 
           if (!existing || !this.is_owner(use_user, existing)) {
@@ -2063,13 +2060,11 @@ class Table implements AbstractTable {
         const existing1 = await db.selectOne(this.name, { [pk_name]: id });
         if (!existing) existing = existing1;
         //store all changes EXCEPT users with only last_mobile_login
-        if (
-          !(
-            this.name === "users" &&
-            Object.keys(v_in).length == 1 &&
-            v_in.last_mobile_login
-          )
-        )
+        if (!(
+          this.name === "users" &&
+          Object.keys(v_in).length == 1 &&
+          v_in.last_mobile_login
+        ))
           await this.insert_history_row({
             ...existing1,
             ...v,
@@ -4161,6 +4156,12 @@ ${rejectDetails}`,
         isNaN(v1[f.name])
       )
         v1[f.name] = null;
+      if (
+        (f.type === "Key" ||
+          (typeof f.type !== "string" && f?.type?.name === "Integer")) &&
+        v1[f.name] === ""
+      )
+        v1[f.name] = null;
     });
     if (!db.json_write_needs_stringify) return;
     this.fields
@@ -4230,7 +4231,10 @@ ${rejectDetails}`,
       try {
         readState(rec, fields);
         jsonFields.forEach((f) => {
-          if (db.json_write_needs_stringify && typeof rec[f.name] !== "undefined")
+          if (
+            db.json_write_needs_stringify &&
+            typeof rec[f.name] !== "undefined"
+          )
             rec[f.name] = JSON.stringify(rec[f.name]);
         });
         if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)
@@ -4342,16 +4346,16 @@ ${rejectDetails}`,
    */
   async get_relation_options(): Promise<RelationOption[]> {
     return await Promise.all(
-      (
-        await this.get_relation_data()
-      ).map(async ({ relationTable, relationField }: RelationData) => {
-        const path = `${relationTable.name}.${relationField.name}`;
-        const relFields = await relationTable.getFields();
-        const names = relFields
-          .filter((f: Field) => f.type !== "Key")
-          .map((f: Field) => f.name);
-        return { relationPath: path, relationFields: names };
-      })
+      (await this.get_relation_data()).map(
+        async ({ relationTable, relationField }: RelationData) => {
+          const path = `${relationTable.name}.${relationField.name}`;
+          const relFields = await relationTable.getFields();
+          const names = relFields
+            .filter((f: Field) => f.type !== "Key")
+            .map((f: Field) => f.name);
+          return { relationPath: path, relationFields: names };
+        }
+      )
     );
   }
 
@@ -4815,14 +4819,14 @@ ${rejectDetails}`,
         (orderByIsObject(opts.orderBy) || orderByIsOperator(opts.orderBy)
           ? opts.orderBy
           : typeof opts.orderBy === "string" &&
-            (joinFields[opts.orderBy] || aggregations[opts.orderBy])
-          ? opts.orderBy
-          : joinFields[odbUnderscore]
-          ? odbUnderscore
-          : typeof opts.orderBy === "string" &&
-            opts.orderBy.toLowerCase?.() === "random()"
-          ? opts.orderBy
-          : "a." + opts.orderBy),
+              (joinFields[opts.orderBy] || aggregations[opts.orderBy])
+            ? opts.orderBy
+            : joinFields[odbUnderscore]
+              ? odbUnderscore
+              : typeof opts.orderBy === "string" &&
+                  opts.orderBy.toLowerCase?.() === "random()"
+                ? opts.orderBy
+                : "a." + opts.orderBy),
       orderDesc: opts.orderDesc,
       offset: opts.offset,
     });
@@ -4851,7 +4855,7 @@ ${rejectDetails}`,
 
   /**
    * Get rows along with joined and aggregated fields. The argument to `getJoinedRows` is an object
-   * with several different possible fields, all of which are optional
+   * with several different possible fields, all of which are optional 
    *
    * * `where`: A Where expression indicating the criterion to match
    * * `joinFields`: An object with the joinfields to retrieve

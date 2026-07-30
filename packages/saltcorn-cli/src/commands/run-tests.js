@@ -156,8 +156,10 @@ class RunTestsCommand extends Command {
     if (db.isSQLite) {
       const os = require("os");
       const tmp = os.tmpdir();
+      // the bare db file, plus its sidecars: -journal, -wal, -shm and the
+      // -sessions.sqlite express session store
       for (const f of fs.readdirSync(tmp))
-        if (/^sctest_p\d+\.sqlite$/.test(f))
+        if (/^sctest_p\d+\.sqlite(-.*)?$/.test(f))
           fs.rmSync(path.join(tmp, f), { force: true });
       return;
     }
