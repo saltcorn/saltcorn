@@ -1721,6 +1721,43 @@ router.post(
 );
 
 /**
+ * Redeems the short-lived code an OAuth-provider mobile login (Google etc.)
+ * was handed off with, and logs the app's own WebView in with a session -
+ * see the matching note above mintOAuthSessionCode.
+ * @name post/session-from-code
+ * @function
+ * @memberof module:auth/routes~routesRouter
+ */
+router.post(
+  "/session-from-code",
+  ipLimiter,
+  setOldSessionID,
+  error_catcher(async (req: Req, res: Res) => {
+    const email = verifyOAuthSessionCode(req.body?.code);
+    if (!email) {
+      return res.status(401).json({ error: req.__("Invalid or expired code") });
+    }
+    const user = await User.findOne({ email });
+    if (!user || user.disabled) {
+      return res.status(401).json({ error: req.__("User not found") });
+    }
+    req.login(user.session_object, async (loginErr: any) => {
+      if (loginErr) {
+        res.status(500).json({ error: req.__("Login failed") });
+        return;
+      }
+      // see the matching note in the /login-with/session route
+      if (req.mobileCrossOrigin && req.session?.cookie) {
+        req.session.cookie.sameSite = "none";
+        req.session.cookie.secure = true;
+      }
+      ipLimiter.resetKey(req.ip);
+      res.json({ success: true, user: user.session_object });
+    });
+  })
+);
+
+/**
  * @name post/renew-jwt
  * @function
  * @memberof module:auth/routes~routesRouter
@@ -1825,22 +1862,26 @@ router.post(
   })
 );
 
-const generateTokenForUser = async (user: any, now: Date) => {
-  const userDb = (await User.findOne({ email: user.email }))!;
-  const tokenUser = { ...userDb.session_object };
-  const token = jwt.sign(
-    {
-      sub: user.email,
-      user: tokenUser,
-      iss: "saltcorn@saltcorn",
-      aud: "saltcorn-mobile-app",
-      iat: now.valueOf(),
-      tenant: db.getTenantSchema(),
-    },
-    db.connectObj.jwt_secret
-  );
-  return token;
+// Hands off an OAuth-provider mobile login (Google etc.) to the app's own
+// WebView: the callback above runs in the system browser, whose session
+// cookie the app can't see, so a short-lived signed code stands in for it -
+// redeemed once, right after the deep link, at POST /auth/session-from-code.
+const OAUTH_CODE_TTL = "60s";
+
+const mintOAuthSessionCode = (email: string): string =>
+  jwt.sign({ email }, db.connectObj.jwt_secret, {
+    expiresIn: OAUTH_CODE_TTL,
+  });
+
+const verifyOAuthSessionCode = (code: string): string | null => {
+  try {
+    const payload: any = jwt.verify(code, db.connectObj.jwt_secret);
+    return payload.email || null;
+  } catch {
+    return null; // invalid signature or expired
+  }
 };
+
 /**
  * @param {object} req
  * @param {object} res
@@ -1888,9 +1929,8 @@ const loginCallback = (req: Req, res: Res, method: string) => async () => {
       const user = (await User.findOne({ email: req.user!.email }))!;
       if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
       res.redirect(
-        `mobileapp://auth/callback?token=${await generateTokenForUser(
-          req.user as any,
-          now
+        `mobileapp://auth/callback?code=${mintOAuthSessionCode(
+          user.email
         )}&method=${encodeURIComponent(method)}`
       );
     } else res.redirect("/");

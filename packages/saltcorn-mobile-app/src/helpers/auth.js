@@ -29,9 +29,15 @@ export async function refreshCsrfToken() {
  * @param {any} param0
  * @returns
  */
-async function loginRequest({ email, password, isSignup }) {
+async function loginRequest({ email, password, isSignup, code }) {
   await refreshCsrfToken();
-  const opts = isSignup
+  const opts = code
+    ? {
+        method: "POST",
+        path: "/auth/session-from-code",
+        body: { code },
+      }
+    : isSignup
     ? {
         method: "POST",
         path: "/auth/signup",
@@ -101,17 +107,18 @@ const getEntryPoint = (config) => {
 };
 
 /**
- * For normal login/signup email and password are used.
- * OAuth-provider login (e.g. google-auth) isn't supported yet - see finishLogin().
+ * Normal login/signup use email and password. An OAuth-provider login
+ * (e.g. google-auth's finishLogin) instead passes the short-lived code
+ * its deep-link callback was handed, which stands in for a session here.
  * @param {*} param0
  */
 export async function login({ email, password, isSignup, token }) {
-  if (token) {
-    throw new Error(
-      "OAuth-provider mobile login is not yet supported with session auth."
-    );
-  }
-  const loginResult = await loginRequest({ email, password, isSignup });
+  const loginResult = await loginRequest({
+    email,
+    password,
+    isSignup,
+    code: token,
+  });
   if (loginResult?.success && loginResult?.user) {
     const alerts = [];
     const config = saltcorn.data.state.getState().mobileConfig;

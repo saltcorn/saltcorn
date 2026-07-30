@@ -383,7 +383,7 @@ export async function init(mobileConfig) {
       try {
         const url = event.url;
         if (url.startsWith("mobileapp://auth/callback")) {
-          const token = new URL(url).searchParams.get("token");
+          const token = new URL(url).searchParams.get("code");
           const method = new URL(url).searchParams.get("method");
           const methods = saltcorn.data.state.getState().auth_methods;
           if (!methods[method])
