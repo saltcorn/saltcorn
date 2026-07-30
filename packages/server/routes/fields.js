@@ -1529,22 +1529,29 @@ router.post(
       fielddata;
     const table = Table.findOne({ name: table_name });
     const field = table.getField(field_name);
-    let val = field.type?.read
-      ? field.type?.read(req.body[field_name], field.attributes)
-      : req.body[field_name];
+    let val =
+      typeof field.type === "object" && field.type?.read
+        ? field.type?.read(req.body[field_name], field.attributes)
+        : field.type === "Key" && req.body[field_name] === ""
+          ? null
+          : req.body[field_name];
     await db.withTransaction(async () => {
       await table.updateRow({ [field_name]: val }, pk, req.user);
     });
     let fv;
+    let blank = false;
     if (field.is_fkey) {
       if (join_field) {
         const refTable = Table.findOne({ name: field.reftable_name });
-        const refRow = await refTable.getRow({ [refTable.pk_name]: val });
-        val = refRow[join_field];
-        const targetField = refTable.getField(join_field);
-        const fieldviews = targetField.type.fieldviews;
+        const refRow = (await refTable.getRow({ [refTable.pk_name]: val }));
+        if (!refRow) blank = true;
+        else {
+          val = refRow[join_field];
+          const targetField = refTable.getField(join_field);
+          const fieldviews = targetField.type.fieldviews;
 
-        fv = fieldviews[fieldview];
+          fv = fieldviews[fieldview];
+        }
       } else fv = { run: (v) => `${v}` };
     } else {
       const fieldviews = field.type.fieldviews;
@@ -1567,10 +1574,12 @@ router.post(
           "data-inline-edit-dest-url": `/api/${table.name}/${pk}`,
           class: !isWeb(req) ? "mobile-data-inline-edit" : "",
         },
-        fv.run(val, req, {
-          ...field.attributes,
-          ...configuration,
-        })
+        blank
+          ? ""
+          : fv.run(val, req, {
+              ...field.attributes,
+              ...configuration,
+            })
       )
     );
   })
