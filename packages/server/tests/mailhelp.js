@@ -27,7 +27,6 @@
  */
 import { ImapFlow } from "imapflow";
 import { simpleParser } from "mailparser";
-import { lookup } from "dns/promises";
 import { getState } from "@saltcorn/data/db/state";
 
 const envOr = (key, dflt) => process.env[key] || dflt;
@@ -37,10 +36,6 @@ const mailHost = () => process.env.SALTCORN_TEST_SMTP_HOST;
 
 /** Whether a mail server was configured for this run. */
 const mailTestsEnabled = () => !!mailHost();
-
-console.log(
-  `Mail tests ${mailTestsEnabled() ? "enabled" : "disabled"} (host: ${mailHost()})`
-);
 
 const smtpPort = () => +envOr("SALTCORN_TEST_SMTP_PORT", 3025);
 const imapPort = () => +envOr("SALTCORN_TEST_IMAP_PORT", 3143);
@@ -69,35 +64,12 @@ const configureSmtp = async () => {
 };
 
 /**
- * The URL of the mail server's REST API, addressed by IP.
- *
- * GreenMail serves the API through Grizzly, which rejects a Host header
- * containing an underscore (RFC 3986 does not allow one in a reg-name) by
- * closing the connection - the client sees a bare "fetch failed". The host
- * here is a container hostname taken from the whale-ci step name, and those
- * do contain underscores, so resolve it first and address the API by IP,
- * which always yields a legal Host header. SMTP and IMAP are unaffected:
- * neither protocol sends a Host header.
- *
- * @param {string} path
- * @returns {Promise<string>}
- */
-let apiAuthority;
-const apiUrl = async (path) => {
-  if (!apiAuthority) {
-    const { address, family } = await lookup(mailHost());
-    apiAuthority = `${family === 6 ? `[${address}]` : address}:${apiPort()}`;
-  }
-  return `http://${apiAuthority}${path}`;
-};
-
-/**
  * Delete all messages and restore the configured users. Call at the start of
  * each test so it does not see mail left by an earlier one.
  * @returns {Promise<void>}
  */
 const resetMailServer = async () => {
-  const url = await apiUrl("/api/service/reset");
+  const url = `http://${mailHost()}:${apiPort()}/api/service/reset`;
   // the container announces itself in its log before the API port is bound,
   // so the first call of a run can arrive too early: retry briefly
   let lastError;
