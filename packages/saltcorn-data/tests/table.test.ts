@@ -1098,6 +1098,7 @@ describe("Table aggregationQuery", () => {
     });
 
     await table.updateRow({ published: new Date("1971-05.04") }, 1);
+    await table.updateRow({ publisher: "" }, 1);
     await table.updateRow({ published: new Date("1972-05.04") }, 2);
   });
   it("should get latest by field", async () => {

@@ -523,6 +523,16 @@ export const create_tenant_schema = async (
 export const drop_tenant_schema = async (name: string): Promise<void> => {};
 
 /**
+ * Path of the sqlite file holding express sessions. It sits next to the
+ * application database, so that it follows the configured database rather
+ * than the process working directory (which changes between invocations, and
+ * which parallel test processes share even though their databases differ).
+ * @returns {string} path to the session database file
+ */
+export const get_session_filepath = (): string =>
+  current_filepath ? `${current_filepath}-sessions.sqlite` : "sessions.sqlite";
+
+/**
  * Build the express-session Store backed by a local sqlite file.
  *
  * connect-sqlite3 (^0.9.15, but this changed between 0.9.16 and 0.9.17) no
@@ -533,7 +543,10 @@ export const drop_tenant_schema = async (name: string): Promise<void> => {};
  */
 export const getExpressSessionStore = (session: any): any => {
   const SQLiteStore = require("connect-sqlite3")(session);
-  const db = new sqlite3.Database("sessions.sqlite");
+  const db = new sqlite3.Database(get_session_filepath());
+  // wait rather than fail with SQLITE_BUSY if the file is locked; a failed
+  // session write silently logs the user out on their next request
+  db.run("PRAGMA busy_timeout = 10000;");
   return new SQLiteStore({ db });
 };
 
