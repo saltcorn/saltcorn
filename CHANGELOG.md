@@ -1,5 +1,9 @@
 # Notable changes
 
+## 1.4.7 - Released 30 July 2026
+
+* Fix setting joinfield values to null in click-to-edit
+
 ## 1.4.5 - Released 5 April 2026
 
 * Security: Prevent malicious payloads from traversing paths in sync endpoints
