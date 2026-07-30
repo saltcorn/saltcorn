@@ -842,6 +842,7 @@ const s3ClientConfig = (state: any) => {
       secretAccessKey: state.getConfig("backup_s3_access_secret"),
     },
     region: state.getConfig("backup_s3_region"),
+    forcePathStyle: true,
     ...(endpoint ? { endpoint } : {}),
   };
 };
