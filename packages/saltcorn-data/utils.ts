@@ -568,7 +568,7 @@ const jsIdentifierValidator = (
 ) => {
   if (!s && field?.required) return "An identifier is required";
   if (s.includes(" ")) return "Spaces not allowd";
-  let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|"
+  let badc = "'#:/\\@()[]{}\"!%^&*-+*~<>,.?|="
     .split("")
     .find((c) => s.includes(c));
 
