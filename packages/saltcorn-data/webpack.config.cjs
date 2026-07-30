@@ -138,7 +138,7 @@ module.exports = {
       stream: require.resolve("stream-browserify"),
       http: require.resolve("stream-http"),
       https: require.resolve("https-browserify"),
-      util: require.resolve("util"),
+      util: require.resolve("util/"),
       os: require.resolve("os-browserify/browser"),
       vm: require.resolve("vm-browserify"),
       zlib: require.resolve("browserify-zlib"),

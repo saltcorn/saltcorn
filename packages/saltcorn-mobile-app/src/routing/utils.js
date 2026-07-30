@@ -24,7 +24,7 @@ export const getHeaders = () => {
     from_cfg.push({ style: state.getConfig("page_custom_css", "") });
   if (state.getConfig("page_custom_html", ""))
     from_cfg.push({ headerTag: state.getConfig("page_custom_html", "") });
-  return [...stdHeaders, ...config.pluginHeaders, ...from_cfg];
+  return [...stdHeaders, ...(config.pluginHeaders || []), ...from_cfg];
 };
 
 export const parseQuery = (queryStr) => {

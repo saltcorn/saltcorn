@@ -135,14 +135,29 @@ export async function login({ email, password, isSignup, token }) {
     });
 
     // open first page
-    const entryPoint = getEntryPoint(config);
-    addRoute({ route: entryPoint, query: undefined });
-    const page = await router.resolve({
-      pathname: entryPoint,
-      fullWrap: true,
-      alerts,
-    });
-    if (page.content) await replaceIframe(page.content, page.isFile);
+    try {
+      const entryPoint = getEntryPoint(config);
+      addRoute({ route: entryPoint, query: undefined });
+      const page = await router.resolve({
+        pathname: entryPoint,
+        fullWrap: true,
+        alerts,
+      });
+      if (page.content) await replaceIframe(page.content, page.isFile);
+    } catch (error) {
+      // Logged in fine, but this user can't open the app's entry point
+      // (e.g. its role doesn't allow it) - say so instead of leaving
+      // them stuck on the login page with no explanation.
+      showToasts([
+        {
+          type: "error",
+          msg: i18next.t("Logged in as %s, but unable to open the app: %s", {
+            postProcess: "sprintf",
+            sprintf: [config.user.email, error.message || "unknown error"],
+          }),
+        },
+      ]);
+    }
   } else if (loginResult?.error) {
     showToasts([{ type: "error", msg: loginResult.error }]);
   } else if (loginResult?.alerts) {
