@@ -19,7 +19,6 @@ import {
   toRedirect,
   toInclude,
   succeedJsonWithWholeBody,
-  getAdminJwt,
   toSucceed,
 } from "../auth/testhelp.js";
 import db from "@saltcorn/data/db";
@@ -756,18 +755,18 @@ describe("API action", () => {
 });
 
 describe("API emit", () => {
-  it("emits an event via POST with JWT", async () => {
+  it("emits an event via POST with a session", async () => {
     const app = await getApp({ disableCsrf: true });
-    const token = await getAdminJwt();
+    const cookie = await getAdminLoginCookie();
     await request(app)
       .post("/api/emit-event/ReceiveMobileShareData")
-      .set("Authorization", `jwt ${token}`)
+      .set("Cookie", cookie)
       .send({ payload: { latitude: 20, longitude: 30 } })
       .expect(succeedJsonWith((success) => success === true));
     await sleep(200);
   });
 
-  it("denies an event without JWT", async () => {
+  it("denies an event without a session", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/api/emit-event/ReceiveMobileShareData")
@@ -777,19 +776,9 @@ describe("API emit", () => {
 });
 
 describe("API emit-event access control", () => {
-  const getPublicJwt = async () => {
-    const app = await getApp({ disableCsrf: true });
-    const res = await request(app)
-      .post("/auth/login-with/jwt")
-      .set("X-Requested-With", "XMLHttpRequest")
-      .set("X-Saltcorn-Client", "mobile-app")
-      .send({});
-    return res.body;
-  };
-
-  let adminJwt;
+  let adminCookie;
   beforeAll(async () => {
-    adminJwt = await getAdminJwt();
+    adminCookie = await getAdminLoginCookie();
   });
 
   afterEach(async () => {
@@ -803,7 +792,7 @@ describe("API emit-event access control", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/api/emit-event/ReceiveMobileShareData")
-      .set("Authorization", `jwt ${adminJwt}`)
+      .set("Cookie", adminCookie)
       .send({ payload: {} })
       .expect(succeedJsonWith((success) => success === true));
   });
@@ -819,7 +808,7 @@ describe("API emit-event access control", () => {
     ]) {
       await request(app)
         .post(`/api/emit-event/${eventName}`)
-        .set("Authorization", `jwt ${adminJwt}`)
+        .set("Cookie", adminCookie)
         .send({ payload: {} })
         .expect(
           respondJsonWith(
@@ -835,7 +824,7 @@ describe("API emit-event access control", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/api/emit-event/AppChange")
-      .set("Authorization", `jwt ${adminJwt}`)
+      .set("Cookie", adminCookie)
       .send({ payload: {} })
       .expect(succeedJsonWith((success) => success === true));
   });
@@ -845,57 +834,41 @@ describe("API emit-event access control", () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/api/emit-event/Login")
-      .set("Authorization", `jwt ${adminJwt}`)
+      .set("Cookie", adminCookie)
       .send({ payload: {} })
       .expect(
         respondJsonWith(403, (resp) => resp.error === "Event type not allowed")
       );
   });
 
-  // --- public user ---
+  // --- public user (no session at all) ---
 
-  it("blocks public JWT user from emitting any event by default", async () => {
-    const publicJwt = await getPublicJwt();
+  it("blocks public user from emitting any event by default", async () => {
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/api/emit-event/ReceiveMobileShareData")
-      .set("Authorization", `jwt ${publicJwt}`)
       .send({ payload: {} })
       .expect(notAuthorized);
   });
 
-  it("allows public JWT user to emit event listed in mobile_emit_public_events config", async () => {
+  it("allows public user to emit event listed in mobile_emit_public_events config", async () => {
     await getState().setConfig("mobile_emit_public_events", [
       "CustomerEnquiry",
     ]);
-    const publicJwt = await getPublicJwt();
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/api/emit-event/CustomerEnquiry")
-      .set("Authorization", `jwt ${publicJwt}`)
       .send({ payload: {} })
       .expect(succeedJsonWith((success) => success === true));
   });
 
-  it("blocks public JWT user from emitting event not listed in mobile_emit_public_events config", async () => {
+  it("blocks public user from emitting event not listed in mobile_emit_public_events config", async () => {
     await getState().setConfig("mobile_emit_public_events", [
       "CustomerEnquiry",
     ]);
-    const publicJwt = await getPublicJwt();
     const app = await getApp({ disableCsrf: true });
     await request(app)
       .post("/api/emit-event/OtherEvent")
-      .set("Authorization", `jwt ${publicJwt}`)
-      .send({ payload: {} })
-      .expect(notAuthorized);
-  });
-
-  // --- no token ---
-
-  it("blocks request with no JWT at all", async () => {
-    const app = await getApp({ disableCsrf: true });
-    await request(app)
-      .post("/api/emit-event/ReceiveMobileShareData")
       .send({ payload: {} })
       .expect(notAuthorized);
   });
@@ -1473,12 +1446,11 @@ describe("API insert with ownership_formula", () => {
 });
 
 describe("API CSRF protection", () => {
-  let adminToken, adminJwt;
+  let adminToken;
 
   beforeAll(async () => {
     const admin = await User.findOne({ email: "admin@foo.com" });
     adminToken = await admin.getNewAPIToken();
-    adminJwt = await getAdminJwt();
     await Trigger.create({
       action: "run_js_code",
       when_trigger: "API call",
@@ -1525,17 +1497,6 @@ describe("API CSRF protection", () => {
           (resp) => resp?.data?.foo === "bar" && resp.success === true
         )
       );
-  });
-
-  it("should allow POST with valid JWT and no CSRF token", async () => {
-    const app = await getApp({ disableCsrf: false });
-    await request(app)
-      .post("/api/books/")
-      .set("Authorization", `jwt ${adminJwt}`)
-      .send({ author: "JWT No CSRF", pages: 3 })
-      .set("Content-Type", "application/json")
-      .set("Accept", "application/json")
-      .expect(succeedJsonWith((resp) => resp && typeof resp === "number"));
   });
 
   it("should not bypass CSRF by appending a fake ?jwt= query parameter", async () => {

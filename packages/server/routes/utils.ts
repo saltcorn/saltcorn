@@ -114,7 +114,7 @@ function isAdmin(req: Req, res: Res, next: any) {
 }
 
 /**
- * Reject a request whose session/JWT identity was authenticated in a different
+ * Reject a request whose session identity was authenticated in a different
  * tenant than the one resolved for this request (from the subdomain). The
  * session store and cookie are shared across all tenants, so without this a
  * session minted in tenant A could be replayed against tenant B and have its

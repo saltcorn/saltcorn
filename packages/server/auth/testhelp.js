@@ -381,47 +381,6 @@ const getAdminLoginCookie = async () => {
   return resToLoginCookie(res);
 };
 
-const getAdminJwt = async () => {
-  const app = await getApp({ disableCsrf: true });
-  const headers = {
-    "X-Requested-With": "XMLHttpRequest",
-    "X-Saltcorn-Client": "mobile-app",
-  };
-  const res = await request(app)
-    .post("/auth/login-with/jwt")
-    .set(headers)
-    .send({ email: "admin@foo.com", password: "AhGGr6rhu45" });
-  if (res.statusCode !== 200) console.log(res.text);
-  return res.body;
-};
-
-const getStaffJwt = async () => {
-  const app = await getApp({ disableCsrf: true });
-  const headers = {
-    "X-Requested-With": "XMLHttpRequest",
-    "X-Saltcorn-Client": "mobile-app",
-  };
-  const res = await request(app)
-    .post("/auth/login-with/jwt")
-    .set(headers)
-    .send({ email: "staff@foo.com", password: "ghrarhr54hg" });
-  if (res.statusCode !== 200) console.log(res.text);
-  return res.body;
-};
-
-const getUserJwt = async () => {
-  const app = await getApp({ disableCsrf: true });
-  const headers = {
-    "X-Requested-With": "XMLHttpRequest",
-    "X-Saltcorn-Client": "mobile-app",
-  };
-  const res = await request(app)
-    .post("/auth/login-with/jwt")
-    .set(headers)
-    .send({ email: "user@foo.com", password: "GFeggwrwq45fjn" });
-  if (res.statusCode !== 200) console.log(res.text);
-  return res.body;
-};
 
 /**
  *
@@ -660,9 +619,6 @@ export {
   getStaffLoginCookie,
   getAdminLoginCookie,
   getUserLoginCookie,
-  getAdminJwt,
-  getStaffJwt,
-  getUserJwt,
   prepScreenInfoCookie,
   prepUserAgent,
   itShouldRedirectUnauthToLogin,

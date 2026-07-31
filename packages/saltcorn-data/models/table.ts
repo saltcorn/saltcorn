@@ -2059,24 +2059,18 @@ class Table implements AbstractTable {
       if (this.versioned) {
         const existing1 = await db.selectOne(this.name, { [pk_name]: id });
         if (!existing) existing = existing1;
-        //store all changes EXCEPT users with only last_mobile_login
-        if (!(
-          this.name === "users" &&
-          Object.keys(v_in).length == 1 &&
-          v_in.last_mobile_login
-        ))
-          await this.insert_history_row({
-            ...existing1,
-            ...v,
-            [pk_name]: id,
-            _version: {
-              next_version_by_id: id,
-              pk_name,
-            },
-            _time: new Date(),
-            _userid: use_user?.id,
-            _restore_of_version: restore_of_version || null,
-          });
+        await this.insert_history_row({
+          ...existing1,
+          ...v,
+          [pk_name]: id,
+          _version: {
+            next_version_by_id: id,
+            pk_name,
+          },
+          _time: new Date(),
+          _userid: use_user?.id,
+          _restore_of_version: restore_of_version || null,
+        });
       }
       if (typeof existing === "undefined") {
         const triggers = await Trigger.getTableTriggers("Update", this);
@@ -2178,7 +2172,6 @@ class Table implements AbstractTable {
     calcFields.forEach((f) => {
       // delete v1[f.name];
     });
-    if (this.name === "users") delete v1.last_mobile_login;
 
     this.prepare_row_for_writing(v1);
 
@@ -3133,10 +3126,6 @@ class Table implements AbstractTable {
         new Field({ name: "api_token", type: "String" }),
         new Field({ name: "verification_token", type: "String" }),
         new Field({ name: "verified_on", type: "Date" })
-
-        // Not last_mobile_login - we do not want to store this in history.
-        // Deleted in Table.insert_history_row instead
-        //new Field({ name: "last_mobile_login", type: "Date" })
       );
     const flds = fields
       .filter((f) => !f.calculated || f.stored)
@@ -4237,8 +4226,11 @@ ${rejectDetails}`,
           )
             rec[f.name] = JSON.stringify(rec[f.name]);
         });
-        if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)
-          rec.role_id = rec.role_id * 10;
+        if (this.name === "users") {
+          if (rec.role_id < 11 && rec.role_id > 1) rec.role_id = rec.role_id * 10;
+          // Backups made before last_mobile_login was dropped still have it.
+          delete rec.last_mobile_login;
+        }
         await db.insert(this.name, rec, { noid: true, client, pk_name });
       } catch (e) {
         await client.query("ROLLBACK");

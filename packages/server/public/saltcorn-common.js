@@ -2882,12 +2882,9 @@ function get_shared_socket() {
   let socket = window.sharedSocket || null;
   if (!socket) {
     if (parent?.saltcorn?.data?.state) {
-      const { server_path, jwt } =
+      const { server_path } =
         parent.saltcorn.data.state.getState().mobileConfig;
-      socket = io(server_path, {
-        query: `jwt=${jwt}`,
-        transports: ["websocket"],
-      });
+      socket = io(server_path, { transports: ["websocket"] });
     } else socket = io({ transports: ["websocket"] });
     window.sharedSocket = socket;
   }

@@ -151,7 +151,7 @@ const getFlashes = (req: Req) =>
     })
     .filter((a: any) => a.msg && a.msg.length && a.msg.length > 0);
 
-// Reject sessions/JWTs minted in another tenant before any data is served.
+// Reject sessions minted in another tenant before any data is served.
 router.use(rejectTenantDrift);
 
 router.use(
@@ -262,7 +262,7 @@ router.post(
   "/upload-files",
   error_catcher(async (req: Req, res: Res, next: any) => {
     await passport.authenticate(
-      ["api-bearer", "jwt"],
+      ["api-bearer"],
       { session: false },
       async function (err: any, user: any, info: any) {
         const authUser = req.user || user;
@@ -454,7 +454,7 @@ router.get(
       : offset && +offset;
 
     await passport.authenticate(
-      ["api-bearer", "jwt"],
+      ["api-bearer"],
       { session: false },
       async function (err: any, user: any, info: any) {
         if (potentiallyAccessAllowedRead(req, user, table, true)) {
@@ -559,7 +559,7 @@ router.get(
       return;
     }
     await passport.authenticate(
-      ["api-bearer", "jwt"],
+      ["api-bearer"],
       { session: false },
       async function (err: any, user: any, info: any) {
         if (potentiallyAccessAllowedRead(req, user, table)) {
@@ -836,7 +836,7 @@ router.post(
       return;
     }
     await passport.authenticate(
-      ["api-bearer", "jwt"],
+      ["api-bearer"],
       { session: false },
       async function (err: any, user: any, info: any) {
         if (potentiallyAccessAllowedWrite(req, user, table)) {

@@ -47,8 +47,6 @@ import { h1 } from "@saltcorn/markup/tags";
 import Trigger from "@saltcorn/data/models/trigger";
 import s3storage from "./s3storage.js";
 import { Strategy as TotpStrategy } from "passport-totp";
-import { Strategy as JwtStrategy } from "passport-jwt";
-import { ExtractJwt as ExtractJwt } from "passport-jwt";
 import cors from "cors";
 import api from "./routes/api.js";
 import scapi from "./routes/scapi.js";
@@ -66,20 +64,6 @@ const MOBILE_APP_ORIGINS = new Set([
   "https://localhost", // Android
   "saltcornmobileapp://localhost", // iOS
 ]);
-
-// jwt config
-const jwt_secret = db.connectObj.jwt_secret;
-const jwt_extractor = ExtractJwt.fromExtractors([
-  ExtractJwt.fromAuthHeaderWithScheme("jwt"),
-  ExtractJwt.fromUrlQueryParameter("jwt"),
-]);
-const jwtOpts = {
-  jwtFromRequest: jwt_extractor,
-  secretOrKey: jwt_secret,
-  issuer: "saltcorn@saltcorn",
-  audience: "saltcorn-mobile-app",
-  passReqToCallback: true,
-};
 
 const disabledCsurf = (req, res, next) => {
   req.csrfToken = () => "";
@@ -262,21 +246,8 @@ const getApp = async (opts = {}) => {
   // Bind tenant context before passport reads or trusts any session state.
   app.use(setTenant);
   app.use(passport.initialize());
-  app.use(passport.authenticate(["jwt", "session"]));
+  app.use(passport.authenticate(["session"]));
   app.use(applyUserLocale);
-  const isPlaywright = process.env.SALTCORN_SERVE_MOBILE_TEST_BUILD?.length > 0;
-  app.use((req, res, next) => {
-    // no jwt and session id at the same time
-    if (
-      !(req.jwtAuthenticated && req.cookies && req.cookies["connect.sid"]) ||
-      isPlaywright
-    )
-      next();
-    else
-      res.status(400).json({
-        error: "Cannot authenticate with both JWT and session cookie",
-      });
-  });
   app.use(flash());
 
   //static serving
@@ -399,40 +370,6 @@ const getApp = async (opts = {}) => {
     })
   );
   passport.use(
-    new JwtStrategy(jwtOpts, async (req, jwt_payload, done) => {
-      const userCheck = async () => {
-        if (jwt_payload.sub === "public") {
-          req.jwtAuthenticated = true;
-          return done(null, { role_id: 100 });
-        }
-        const u = await User.findOne({ email: jwt_payload.sub });
-        if (
-          u &&
-          !u.disabled &&
-          !u._attributes?.totp_enabled &&
-          u.last_mobile_login &&
-          (typeof u.last_mobile_login === "string"
-            ? new Date(u.last_mobile_login).valueOf()
-            : u.last_mobile_login) <= jwt_payload.iat
-        ) {
-          req.jwtAuthenticated = true;
-          return done(null, u.session_object);
-        } else {
-          return done(null, false);
-        }
-      };
-      if (
-        db.is_it_multi_tenant() &&
-        jwt_payload.tenant?.length > 0 &&
-        jwt_payload.tenant !== db.connectObj.default_schema
-      ) {
-        return await db.runWithTenant(jwt_payload.tenant, userCheck);
-      } else {
-        return await userCheck();
-      }
-    })
-  );
-  passport.use(
     new TotpStrategy(function (user, done) {
       // setup function, supply key and period to done callback
       User.findOne({ id: user.pending_user.id }).then((u) => {
@@ -499,10 +436,7 @@ const getApp = async (opts = {}) => {
           req.url.startsWith(url_prefix)
         ) ||
         (req.smr &&
-          (req.url.startsWith("/api/") ||
-            req.url === "/auth/login-with/jwt" ||
-            req.url === "/auth/signup")) ||
-        req.jwtAuthenticated ||
+          (req.url.startsWith("/api/") || req.url === "/auth/signup")) ||
         req.headers.authorization?.toLowerCase().startsWith("bearer ") ||
         req.url === "/auth/callback/saml" ||
         req.url.startsWith("/notifications/share-handler") ||
