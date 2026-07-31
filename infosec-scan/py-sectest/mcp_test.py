@@ -104,7 +104,7 @@ class Test:
     def test_no_token_is_rejected(self):
         """Requests without a bearer token must be rejected with 401."""
         async def run():
-            async with streamable_http_client(MCP_URL) as (read, write, _):
+            async with streamable_http_client(MCP_URL) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
 
@@ -121,7 +121,7 @@ class Test:
         async def run():
             async with streamable_http_client(
                 MCP_URL, http_client=httpx.AsyncClient(headers={"Authorization": "Bearer invalid-token"})
-            ) as (read, write, _):
+            ) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
 
@@ -137,7 +137,7 @@ class Test:
         async def run():
             async with streamable_http_client(
                 MCP_URL, http_client=auth_client(self.__class__.api_token)
-            ) as (read, write, _):
+            ) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
 
@@ -152,7 +152,7 @@ class Test:
         async def run():
             async with streamable_http_client(
                 MCP_URL, http_client=auth_client(self.__class__.api_token)
-            ) as (read, write, _):
+            ) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
 
@@ -173,7 +173,7 @@ class Test:
         async def run():
             async with streamable_http_client(
                 MCP_URL, http_client=auth_client(self.__class__.staff_api_token)
-            ) as (read, write, _):
+            ) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
 
@@ -194,7 +194,7 @@ class Test:
         async def run():
             async with streamable_http_client(
                 MCP_URL, http_client=auth_client(self.__class__.api_token)
-            ) as (read, write, _):
+            ) as (read, write):
                 async with ClientSession(read, write) as session:
                     await session.initialize()
 
