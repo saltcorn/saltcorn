@@ -557,6 +557,33 @@ const tenant_letsencrypt_name = async (subdomain: string) => {
   return altname;
 };
 
+/**
+ * Optional ACME directory URL, from SALTCORN_ACME_DIRECTORY_URL. Unset means
+ * Let's Encrypt production. Must be passed to `greenlock.manager.defaults()`,
+ * not `Greenlock.create()` - the create-time option is silently ignored.
+ * @returns {string|undefined}
+ */
+const acme_directory_url = (): string | undefined =>
+  process.env.SALTCORN_ACME_DIRECTORY_URL || undefined;
+
+/**
+ * Sink for greenlock's events, which otherwise go straight to the console.
+ * Adding a site triggers a certificate order that cannot succeed until the
+ * server is restarted onto port 80, so that failure is expected and belongs
+ * in the log rather than on stdout.
+ * @param {string} ev
+ * @param {object} args
+ * @returns {void}
+ */
+const greenlock_notify = (ev: string, args: any): void => {
+  const detail =
+    typeof args === "string"
+      ? args
+      : args?.message || args?.detail || args?.subject || "";
+  // errors are worth seeing at normal verbosity, progress events are not
+  getState()?.log(ev === "error" ? 3 : 6, `greenlock ${ev}: ${detail}`);
+};
+
 const admin_config_route = ({
   router,
   path,
@@ -877,5 +904,7 @@ export {
   getEligiblePage,
   getRandomPage,
   tenant_letsencrypt_name,
+  acme_directory_url,
+  greenlock_notify,
   checkEditPermission,
 };

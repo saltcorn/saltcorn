@@ -23,6 +23,7 @@ run_tests_sqlite:
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
     NODE_OPTIONS: --max-old-space-size=4096
     SALTCORN_JWT_SECRET: "2f75ade09981d68f366a4e577025440d10b735cc270fc2092077140f98a41dab331589c79364601150816d9a3c6f34abf881019e2097e21a24963c56b9135bbb"
+    SALTCORN_ACME_DIRECTORY_URL: "https://127.0.0.1:1/dir"
     # workaround for prepareQueryEnviroment()
     JSON_WEB_TOKEN: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBmb28uY29tIiwicm9sZV9pZCI6MSwiaXNzIjoic2FsdGNvcm5Ac2FsdGNvcm4iLCJhdWQiOiJzYWx0Y29ybi1tb2JpbGUtYXBwIiwiaWF0IjoxOTI0OTA1NjAwMDAwLCJleHAiOjE5MjQ5MDU2MDAwMDB9.eE370EdQr90y9woWDzeDzZgGVsUSlfAmtykeAJ_gJjA"
           
@@ -63,6 +64,7 @@ run_tests_postgres:
     SALTCORN_MULTI_TENANT: true
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
     NODE_OPTIONS: --max-old-space-size=4096 --enable-source-maps --require /opt/saltcorn/deploy/whale-ci/trc-stack-hook.js
+    SALTCORN_ACME_DIRECTORY_URL: "https://127.0.0.1:1/dir"
 
 run_tests_mysql_db:
   image: mysql:8
@@ -99,6 +101,7 @@ run_tests_mysql:
     PGPASSWORD: mysql
     PGDATABASE: saltcorn_test
     SALTCORN_DEFAULT_SCHEMA: saltcorn_test
+    SALTCORN_ACME_DIRECTORY_URL: "https://127.0.0.1:1/dir"
     CI: true
     SALTCORN_MULTI_TENANT: true
     SALTCORN_SESSION_SECRET: "rehjtyjrtjr"
@@ -114,9 +117,6 @@ email_tests_db:
     POSTGRES_DB: saltcorn_test
     POSTGRES_USER: postgres
 
-# SMTP + IMAP server for the email tests. GreenMail creates a mailbox on first
-# delivery, with login and password both set to the recipient address, so the
-# tests can read back mail sent to any address without provisioning it.
 email-tests-smtp:
   image: greenmail/standalone:2.1.11
   service: true
