@@ -2172,6 +2172,8 @@ class Table implements AbstractTable {
     calcFields.forEach((f) => {
       // delete v1[f.name];
     });
+    // users__history has no such column, but sqlite rows may still have it.
+    if (this.name === "users") delete v1.last_mobile_login;
 
     this.prepare_row_for_writing(v1);
 

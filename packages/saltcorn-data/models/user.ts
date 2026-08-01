@@ -54,8 +54,9 @@ const safeUserFields = (o: UserCfg | User): any => {
     reset_password_token,
     reset_password_expiry,
     role_id,
+    last_mobile_login, // dropped column, still on sqlite rows - discard it
     ...rest
-  } = o;
+  } = o as any;
   return rest;
 };
 
