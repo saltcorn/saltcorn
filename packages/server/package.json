@@ -52,6 +52,7 @@
     "@aws-sdk/client-s3": "3.1057.0",
     "@aws-sdk/s3-request-presigner": "3.1057.0",
     "@dr.pogodin/csurf": "1.15.0",
+    "@root/encoding": "^1.0.1",
     "@saltcorn/admin-models": "1.7.0-alpha.0",
     "@saltcorn/base-plugin": "1.7.0-alpha.0",
     "@saltcorn/builder": "1.7.0-alpha.0",
