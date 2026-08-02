@@ -1,6 +1,21 @@
 /*eslint-env browser*/
 /*global $, KTDrawer, reload_embedded_view, submitWithEmptyAction, is_paging_param, bootstrap, common_done, unique_field_from_rows, inline_submit_success, get_current_state_url, initialize_page, reset_spinners */
 
+// Tapping a javascript: link silently does nothing on iOS, so we run the
+// code ourselves instead of relying on the link to do it.
+document.addEventListener("click", function (event) {
+  const link =
+    event.target.closest && event.target.closest("a[href^='javascript:']");
+  if (!link) return;
+  event.preventDefault();
+  const code = link.getAttribute("href").slice("javascript:".length);
+  try {
+    (0, eval)(code);
+  } catch (error) {
+    console.error("Error executing javascript: link:", error);
+  }
+});
+
 function combineFormAndQuery(form, query) {
   let paramsList = [];
   const formData = new FormData(form[0]);
@@ -87,7 +102,10 @@ async function formSubmit(e, urlSuffix, viewname, noSubmitCb, matchingState) {
     const urlParams = new URLSearchParams();
     const data = matchingState ? {} : null;
     for (const entry of new FormData(e).entries()) {
-      if (entry[1] instanceof File) files[entry[0]] = entry[1];
+      // cordova-plugin-file replaces window.File with its own class, so a
+      // real picked file no longer passes "instanceof File" - Blob still
+      // works, since every File is also a Blob.
+      if (entry[1] instanceof Blob) files[entry[0]] = entry[1];
       else {
         // is there a hidden input with a filename?
         const domEl = $(e).find(
@@ -431,22 +449,50 @@ async function pjax_to(href, query, e) {
     await parent.saltcorn.mobileApp.navigation.handleRoute(safeHref, query);
   else
     try {
-      const headers = {
-        pjaxpageload: "true",
-      };
-      if (localizer.length) headers.localizedstate = "true";
-      const result = await parent.saltcorn.mobileApp.api.apiCall({
-        path: path,
-        method: "GET",
-        additionalHeaders: headers,
-      });
+      const { isOfflineMode } =
+        parent.saltcorn.data.state.getState().mobileConfig;
+      let content;
+      if (isOfflineMode) {
+        const page = await parent.saltcorn.mobileApp.navigation.router.resolve(
+          {
+            pathname: `get${safeHref}`,
+            query: query,
+          }
+        );
+        if (page.redirect) {
+          const { path: redirectPath, query: redirectQuery } =
+            parent.saltcorn.mobileApp.navigation.splitPathQuery(
+              page.redirect
+            );
+          await parent.saltcorn.mobileApp.navigation.handleRoute(
+            redirectPath.startsWith("/") && redirectPath.length > 1
+              ? `get${redirectPath}`
+              : redirectPath,
+            redirectQuery
+          );
+          return;
+        }
+        content = typeof page === "string" ? page : page.content;
+      } else {
+        const headers = {
+          pjaxpageload: "true",
+        };
+        if (localizer.length) headers.localizedstate = "true";
+        const result = await parent.saltcorn.mobileApp.api.apiCall({
+          path: path,
+          method: "GET",
+          additionalHeaders: headers,
+          responseType: "text",
+        });
+        content = result.data;
+      }
       if (!inModal && !localizer.length) {
         // not sure for mobile
         // window.history.pushState({ url: href }, "", href);
       }
       if (inModal && !localizer.length)
         $(".sc-modal-linkout").attr("href", path);
-      $dest.html(result.data);
+      $dest.html(content);
       if (localizer.length) localizer.attr("data-sc-local-state", path);
       initialize_page();
     } catch (error) {
@@ -675,17 +721,16 @@ async function make_unique_field(
   }
 }
 
-function openFile(fileId) {
+async function openFile(fileId) {
   const config = parent.saltcorn.data.state.getState().mobileConfig;
   const serverPath = config.server_path;
-  const token = config.jwt;
-  const url = `${serverPath}/files/serve/${encodeURIComponent(
-    fileId
-  )}?jwt=${token}`;
+  const url = `${serverPath}/files/serve/${encodeURIComponent(fileId)}`;
   parent.cordova.InAppBrowser.open(
     url,
     "_blank",
-    "clearcache=yes,clearsessioncache=yes,location=no,toolbar=yes,toolbarposition=top"
+    // No clearcache - it clears cookies app-wide (Android's cookie store
+    // isn't scoped per tab), which would log the main app out too.
+    "location=no,toolbar=yes,toolbarposition=top"
   );
 }
 
@@ -695,7 +740,9 @@ function openInAppBrowser(url, domId) {
     const ref = parent.cordova.InAppBrowser.open(
       url,
       "_blank",
-      "clearcache=yes,clearsessioncache=yes,location=no,toolbar=yes,toolbarposition=top"
+      // No clearcache - it clears cookies app-wide (Android's cookie store
+      // isn't scoped per tab), which would log the main app out too.
+      "location=no,toolbar=yes,toolbarposition=top"
     );
     ref.addEventListener("exit", function () {
       $(`#${domId}`).find(".spinner-border").addClass("d-none");

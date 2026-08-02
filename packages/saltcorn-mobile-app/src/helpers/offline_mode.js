@@ -59,11 +59,11 @@ const insertRemoteData = async (table, rows, syncTimestamp) => {
     const ref = _sync_info_tbl_ref_,
       last_modified = _sync_info_tbl_last_modified_;
     await saltcorn.data.db.insert(tblName, rest, { replace: true });
-    const infos = await saltcorn.data.db.select(
-      `${saltcorn.data.db.sqlsanitize(tblName)}_sync_info`,
-      {
-        ref: String(rest[pkName]),
-      }
+    // ref is inlined as a literal, not passed as a param, so numeric-looking
+    // refs like "19" don't get silently turned into "19.0" on iOS.
+    const { rows: infos } = await saltcorn.data.db.query(
+      `select 1 from "${saltcorn.data.db.sqlsanitize(tblName)}_sync_info"
+         where ref=${sqlRef(rest[pkName])}`
     );
     if (infos.length > 0) {
       await saltcorn.data.db.query(
@@ -72,14 +72,10 @@ const insertRemoteData = async (table, rows, syncTimestamp) => {
                where ref=${sqlRef(rest[pkName])}`
       );
     } else {
-      await saltcorn.data.db.insert(
-        `${saltcorn.data.db.sqlsanitize(tblName)}_sync_info`,
-        {
-          ref: String(ref),
-          last_modified: syncTimestamp,
-          deleted: false,
-          modified_local: false,
-        }
+      await saltcorn.data.db.query(
+        `insert into "${saltcorn.data.db.sqlsanitize(tblName)}_sync_info"
+           (ref, last_modified, deleted, modified_local)
+           values (${sqlRef(ref)}, ${syncTimestamp}, false, false)`
       );
     }
   }

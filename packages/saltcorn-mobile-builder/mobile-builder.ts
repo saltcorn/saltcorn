@@ -95,7 +95,6 @@ type MobileBuilderConfig = {
   keyStorePassword?: string;
   googleServicesFile?: string;
   buildType: "debug" | "release";
-  allowClearTextTraffic?: boolean;
 };
 
 /**
@@ -140,7 +139,6 @@ export class MobileBuilder {
   isUnsecureKeyStore: boolean;
   googleServicesFile?: string;
   buildType: "debug" | "release";
-  allowClearTextTraffic: boolean;
   iosParams?: IosCfg;
   apnsKeyId?: string;
   pushNotificationsEnabled: boolean;
@@ -206,7 +204,6 @@ export class MobileBuilder {
     }
     this.googleServicesFile = cfg.googleServicesFile;
     this.buildType = cfg.buildType;
-    this.allowClearTextTraffic = !!cfg.allowClearTextTraffic;
     this.iosParams = cfg.iosParams;
     this.capacitorHelper = new CapacitorHelper({
       ...this,
@@ -248,8 +245,6 @@ export class MobileBuilder {
         appName: this.appName,
         appId: this.appId !== appIdDefault ? this.appId : undefined,
         appVersion: this.appVersion,
-        unsecureNetwork:
-          this.serverURL.startsWith("http://") || !this.serverURL,
         keystorePath: this.keyStorePath,
         keystoreAlias: this.keyStoreAlias,
         keystorePassword: this.keyStorePassword,
@@ -274,7 +269,7 @@ export class MobileBuilder {
         buildDir: this.buildDir,
         entryPoint: this.entryPoint,
         entryPointType: this.entryPointType,
-        serverPath: this.serverURL ? this.serverURL : "http://10.0.2.2:3000", // host localhost of the android emulator
+        serverPath: this.serverURL,
         synchedTables: this.synchedTables,
         tenantAppName: this.tenantAppName,
         autoPublicLogin: this.autoPublicLogin,
@@ -370,8 +365,8 @@ export class MobileBuilder {
       this.allowShareTo,
       this.backgroundSyncEnabled,
       this.pushSync,
-      this.allowClearTextTraffic,
-      this.backgroundFetchEnabled
+      this.backgroundFetchEnabled,
+      this.serverURL
     );
     if (this.pushSync) {
       writeEntitlementsPlist(
@@ -420,15 +415,10 @@ export class MobileBuilder {
       this.buildDir,
       this.allowShareTo,
       !!this.googleServicesFile,
-      hasAuthMethod(this.includedPlugins),
-      this.allowClearTextTraffic
+      hasAuthMethod(this.includedPlugins)
     );
     writeDataExtractionRules(this.buildDir);
-    writeNetworkSecurityConfig(
-      this.buildDir,
-      this.serverURL,
-      this.allowClearTextTraffic
-    );
+    writeNetworkSecurityConfig(this.buildDir);
     modifyGradleConfig(
       this.buildDir,
       this.appVersion,

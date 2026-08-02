@@ -32,6 +32,18 @@ class BuildAppCommand extends Command {
     if (!flags.platforms) {
       throw new Error("Please specify a platform (android or iOS)");
     }
+    // Only the native builds need the mobile-app cookie exemptions
+    // (WKAppBoundDomains, CapacitorCookies, etc.), which require HTTPS -
+    // the "web" platform is a plain webpage with no native WebView involved.
+    if (
+      flags.platforms.some((p) => p === "android" || p === "ios") &&
+      (!flags.serverURL || !flags.serverURL.startsWith("https://"))
+    ) {
+      throw new Error(
+        "Please specify a server URL starting with https:// (-s/--serverURL) - " +
+          "session-cookie auth requires HTTPS for android/ios builds"
+      );
+    }
     for (const platform of flags.platforms)
       if (!this.supportedPlatforms.includes(platform))
         throw new Error(`The platform '${platform}' is not supported`);
@@ -152,7 +164,6 @@ class BuildAppCommand extends Command {
         iosParams: iosParams,
         tenantAppName: flags.tenantAppName,
         buildType: flags.buildType,
-        allowClearTextTraffic: flags.allowClearTextTraffic,
         keyStorePath: flags.androidKeystore,
         keyStoreAlias: flags.androidKeyStoreAlias,
         keyStorePassword: flags.androidKeystorePassword,
@@ -292,7 +303,7 @@ BuildAppCommand.flags = {
   serverURL: Flags.string({
     name: "server URL",
     char: "s",
-    description: "URL to a saltcorn server",
+    description: "URL to a saltcorn server, must start with https://",
   }),
   splashPage: Flags.string({
     name: "splash page",
@@ -377,13 +388,6 @@ BuildAppCommand.flags = {
     name: "build type",
     string: "buildType",
     description: "debug or release build",
-  }),
-  allowClearTextTraffic: Flags.boolean({
-    name: "allow clear text traffic",
-    string: "allowClearTextTraffic",
-    description:
-      "Enable this to allow unsecure HTTP connections. Useful for local testing.",
-    default: false,
   }),
   androidKeystore: Flags.string({
     name: "android key store",

@@ -99,7 +99,6 @@
     "passport": "^0.7.0",
     "passport-custom": "1.1.1",
     "passport-http-bearer": "^1.0.1",
-    "passport-jwt": "4.0.1",
     "passport-totp": "0.0.2",
     "pg": "^8.13.1",
     "pluralize": "^8.0.0",
@@ -107,6 +106,7 @@
     "resize-with-sharp-or-jimp": "0.1.9",
     "semver": "^7.6.3",
     "socket.io": "4.8.1",
+    "socket.io-adapter": "~2.5.2",
     "systeminformation": "^5.25.11",
     "thirty-two": "1.0.2",
     "tmp-promise": "^3.0.3",
@@ -123,6 +123,9 @@
   },
   "repository": "github:saltcorn/saltcorn",
   "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/jsonwebtoken": "^9.0.0",
+    "@types/semver": "^7.7.1",
     "supertest-fetch": "^2.0.0"
   },
   "scripts": {

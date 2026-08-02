@@ -964,8 +964,17 @@ function doMobileTransforms() {
       }
     } else if (path.includes("/files/serve/")) {
       const tokens = path.split("/files/serve/");
-      if (tokens.length > 1)
-        $(this).attr("href", `javascript:openFile('${tokens[1]}')`);
+      // href is already percent-encoded (e.g. spaces as %20) - decode before
+      // handing it to openFile(), which encodes it itself, once, from raw.
+      if (tokens.length > 1) {
+        let decoded;
+        try {
+          decoded = decodeURIComponent(tokens[1]);
+        } catch {
+          decoded = tokens[1]; // malformed sequence - use as-is rather than break the loop
+        }
+        $(this).attr("href", `javascript:openFile('${decoded}')`);
+      }
     } else if (path.includes("/files/download/")) {
       const tokens = path.split("/files/download/");
       if (tokens.length > 1)
@@ -2873,12 +2882,9 @@ function get_shared_socket() {
   let socket = window.sharedSocket || null;
   if (!socket) {
     if (parent?.saltcorn?.data?.state) {
-      const { server_path, jwt } =
+      const { server_path } =
         parent.saltcorn.data.state.getState().mobileConfig;
-      socket = io(server_path, {
-        query: `jwt=${jwt}`,
-        transports: ["websocket"],
-      });
+      socket = io(server_path, { transports: ["websocket"] });
     } else socket = io({ transports: ["websocket"] });
     window.sharedSocket = socket;
   }

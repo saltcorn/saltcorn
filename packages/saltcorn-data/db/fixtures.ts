@@ -400,24 +400,20 @@ export default async (): Promise<void> => {
     patient_id: michael_id,
     normalised: false,
   });
-  const now = new Date();
   await User.create({
     email: "admin@foo.com",
     password: "AhGGr6rhu45",
     role_id: 1,
-    last_mobile_login: db.stores_dates_as_text ? now.valueOf() : now,
   });
   await User.create({
     email: "staff@foo.com",
     password: "ghrarhr54hg",
     role_id: 40,
-    last_mobile_login: db.stores_dates_as_text ? now.valueOf() : now,
   });
   await User.create({
     email: "user@foo.com",
     password: "GFeggwrwq45fjn",
     role_id: 80,
-    last_mobile_login: db.stores_dates_as_text ? now.valueOf() : now,
   });
   await File.ensure_file_store();
   const mv = async (fnm: string) => {

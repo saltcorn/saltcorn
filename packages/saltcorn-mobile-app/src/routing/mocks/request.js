@@ -29,7 +29,7 @@ export function MobileRequest({
       }),
     isAuthenticated: () => {
       const mobileCfg = saltcorn.data.state.getState().mobileConfig;
-      return mobileCfg && mobileCfg.jwt && !mobileCfg.isPublicUser;
+      return mobileCfg && mobileCfg.hasSession && !mobileCfg.isPublicUser;
     },
     getLocale: () => {
       const mobileCfg = saltcorn.data.state.getState().mobileConfig;

@@ -3,7 +3,7 @@
 import { wrapContents } from "../utils";
 import { MobileRequest } from "../mocks/request";
 
-import { checkJWT } from "../../helpers/auth.js";
+import { checkSession } from "../../helpers/auth.js";
 import { apiCall } from "../../helpers/api";
 
 const buildErrMsg = (msg) => {
@@ -29,8 +29,7 @@ export const postShare = async (context) => {
   const mobileCfg = saltcorn.data.state.getState().mobileConfig;
   if (mobileCfg.networkState === "none")
     content = buildErrMsg("No network connection");
-  else if (!(await checkJWT(mobileCfg.jwt)))
-    content = buildErrMsg("Not authenticated");
+  else if (!(await checkSession())) content = buildErrMsg("Not authenticated");
   else {
     const response = await apiCall({
       method: "POST",

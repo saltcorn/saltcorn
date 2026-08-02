@@ -54,9 +54,9 @@ const safeUserFields = (o: UserCfg | User): any => {
     reset_password_token,
     reset_password_expiry,
     role_id,
-    last_mobile_login,
+    last_mobile_login, // dropped column, still on sqlite rows - discard it
     ...rest
-  } = o;
+  } = o as any;
   return rest;
 };
 
@@ -92,7 +92,6 @@ class User {
   reset_password_token?: string | null; // 10 chars length
   reset_password_expiry?: Date | null;
   role_id: number;
-  last_mobile_login?: Date | null;
   [key: string]: any;
 
   /**
@@ -118,7 +117,6 @@ class User {
     this.reset_password_token = o.reset_password_token || null;
     this.reset_password_expiry = convertDateParam(o.reset_password_expiry);
     this.role_id = o.role_id ? +o.role_id : 80;
-    this.last_mobile_login = convertDateParam(o.last_mobile_login);
     Object.assign(this, safeUserFields(o));
   }
 
@@ -151,7 +149,6 @@ class User {
     this.password = password;
     const upd: Partial<User> = { password };
     if (expireToken) upd.reset_password_token = null;
-    upd.last_mobile_login = null;
     if (getState()!.getConfig("plain_password_triggers", false))
       await this.update(upd, newpw);
     else await this.update(upd);
@@ -801,19 +798,6 @@ class User {
         resolve();
       });
     });
-  }
-
-  /**
-   * update 'last_mobile_login' columnwill
-   * @param date new login_date or null for logout (invalidates all jwts)
-   */
-  async updateLastMobileLogin(date: Date | null): Promise<void> {
-    const dateVal = !date
-      ? date
-      : db.stores_dates_as_text
-        ? date.valueOf()
-        : date.toISOString();
-    await this.update({ last_mobile_login: dateVal as unknown as Date });
   }
 
   /**

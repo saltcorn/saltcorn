@@ -128,17 +128,25 @@ const fileviews = {
     description: "Link to download file",
     run: (filePath: string, file_name: string, cfg: GenObj = {}) => {
       if (!filePath) return "";
+      // javascript: hrefs are unreliable to click in the mobile app's
+      // WKWebView - route the mobile branch through onclick instead.
+      const isNodeEnv = isNode();
       return link(
-        isNode()
+        isNodeEnv
           ? buildNodeFileUrl(filePath, cfg, {
               download: true,
               filename: file_name,
             })
-          : `javascript:notifyAlert('File donwloads are not supported.')`,
+          : "javascript:void(0)",
         path.basename(filePath) || "Download",
-        cfg?.button_style && cfg?.button_style !== " "
-          ? { class: cfg?.button_style }
-          : undefined
+        {
+          ...(cfg?.button_style && cfg?.button_style !== " "
+            ? { class: cfg?.button_style }
+            : undefined),
+          ...(isNodeEnv
+            ? undefined
+            : { onclick: "notifyAlert('File donwloads are not supported.')" }),
+        }
       );
     },
   },
@@ -157,18 +165,20 @@ const fileviews = {
     ],
     description: "Link to open file",
 
-    run: (filePath: string, file_name: string, cfg: GenObj = {}) =>
-      !filePath
-        ? ""
-        : link(
-            isNode()
-              ? buildNodeFileLinkUrl(filePath, cfg)
-              : `javascript:openFile('${filePath}')`,
-            path.basename(filePath) || "Open",
-            cfg?.button_style && cfg?.button_style !== " "
-              ? { class: cfg?.button_style }
-              : undefined
-          ),
+    run: (filePath: string, file_name: string, cfg: GenObj = {}) => {
+      if (!filePath) return "";
+      const isNodeEnv = isNode();
+      return link(
+        isNodeEnv ? buildNodeFileLinkUrl(filePath, cfg) : "javascript:void(0)",
+        path.basename(filePath) || "Open",
+        {
+          ...(cfg?.button_style && cfg?.button_style !== " "
+            ? { class: cfg?.button_style }
+            : undefined),
+          ...(isNodeEnv ? undefined : { onclick: `openFile('${filePath}')` }),
+        }
+      );
+    },
   },
 
   // Link (new tab)
@@ -185,18 +195,21 @@ const fileviews = {
         },
       },
     ],
-    run: (filePath: string, file_name: string, cfg: GenObj = {}) =>
-      !filePath
-        ? ""
-        : link(
-            isNode()
-              ? buildNodeFileLinkUrl(filePath, cfg)
-              : `javascript:openFile('${filePath}')`,
-            path.basename(filePath) || "Open",
-            cfg?.button_style && cfg?.button_style !== " "
-              ? { target: "_blank", class: cfg?.button_style }
-              : { target: "_blank" }
-          ),
+    run: (filePath: string, file_name: string, cfg: GenObj = {}) => {
+      if (!filePath) return "";
+      const isNodeEnv = isNode();
+      return link(
+        isNodeEnv ? buildNodeFileLinkUrl(filePath, cfg) : "javascript:void(0)",
+        path.basename(filePath) || "Open",
+        {
+          target: "_blank",
+          ...(cfg?.button_style && cfg?.button_style !== " "
+            ? { class: cfg?.button_style }
+            : undefined),
+          ...(isNodeEnv ? undefined : { onclick: `openFile('${filePath}')` }),
+        }
+      );
+    },
   },
   // Show Image
   "Show Image": {

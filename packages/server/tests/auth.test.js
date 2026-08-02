@@ -760,28 +760,8 @@ describe("AuthTest Allowed login methods", () => {
   });
 });
 
-describe("JWT login rate limiting", () => {
-  it("should rate-limit GET /auth/login-with/jwt after repeated failed attempts", async () => {
-    const app = await getApp({ disableCsrf: true });
-    // Send many failed login attempts via the JWT endpoint
-    // The normal POST /auth/login is rate-limited to 3 attempts per 5 minutes per user,
-    // but GET /auth/login-with/jwt bypasses this rate limiting entirely.
-    // This test asserts that the JWT endpoint is also rate-limited.
-    let rateLimited = false;
-    for (let i = 0; i < 10; i++) {
-      const res = await request(app)
-        .get("/auth/login-with/jwt")
-        .query({ email: "user@foo.com", password: `wrongpassword${i}` });
-
-      if (res.statusCode === 429 || res.headers["x-ratelimit-redirect"]) {
-        rateLimited = true;
-        break;
-      }
-    }
-    expect(rateLimited).toBe(true);
-  });
-
-  it("should rate-limit POST /auth/login-with/jwt after repeated failed attempts", async () => {
+describe("Session login rate limiting", () => {
+  it("should rate-limit POST /auth/login-with/session after repeated failed attempts", async () => {
     const app = await getApp({ disableCsrf: true });
     const headers = {
       "X-Requested-With": "XMLHttpRequest",
@@ -790,7 +770,7 @@ describe("JWT login rate limiting", () => {
     let rateLimited = false;
     for (let i = 0; i < 10; i++) {
       const res = await request(app)
-        .post("/auth/login-with/jwt")
+        .post("/auth/login-with/session")
         .set(headers)
         .send({ email: "user@foo.com", password: `wrongpassword${i}` });
 
@@ -803,8 +783,8 @@ describe("JWT login rate limiting", () => {
   });
 });
 
-describe("JWT login disabled user bypass", () => {
-  let testUserEmail = "disabled-jwt-test@foo.com";
+describe("Disabled user login rejection", () => {
+  let testUserEmail = "disabled-login-test@foo.com";
   let testUserPassword = "TestPassword123!";
 
   beforeAll(async () => {
@@ -842,22 +822,19 @@ describe("JWT login disabled user bypass", () => {
       .expect(toRedirect("/auth/login"));
   });
 
-  it("should reject disabled user on JWT login", async () => {
+  it("should reject disabled user on session login", async () => {
     const app = await getApp({ disableCsrf: true });
     const headers = {
       "X-Requested-With": "XMLHttpRequest",
       "X-Saltcorn-Client": "mobile-app",
     };
     const res = await request(app)
-      .post("/auth/login-with/jwt")
+      .post("/auth/login-with/session")
       .set(headers)
       .send({ email: testUserEmail, password: testUserPassword });
 
-    // A disabled user should NOT receive a valid JWT token.
-    // The response should contain an error, not a token string.
-    const body = res.body;
-    const isToken = typeof body === "string" && body.includes(".");
-    expect(isToken).toBe(false);
+    expect(res.statusCode).toBe(401);
+    expect(res.body?.success).toBeFalsy();
   });
 });
 

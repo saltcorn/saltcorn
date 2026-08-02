@@ -50,9 +50,6 @@ import type {
   AbstractView,
 } from "@saltcorn/types/model-abstracts/abstract_view";
 import type { AbstractTable } from "@saltcorn/types/model-abstracts/abstract_table";
-import axiosLib from "axios";
-const axios: any = axiosLib; // NodeNext default-import interop: axios types resolve to the module namespace
-import { jwtDecode } from "jwt-decode";
 import { AbstractTag } from "@saltcorn/types/model-abstracts/abstract_tag";
 import bcryptjs from "bcryptjs";
 const { hash } = bcryptjs;
@@ -603,85 +600,39 @@ class View implements AbstractView {
           const headers: any = {
             "X-Requested-With": "XMLHttpRequest",
             "X-Saltcorn-Client": "mobile-app",
+            "Content-Type": "application/json",
           };
-          let token = state.mobileConfig?.jwt;
-          if (token) {
-            const goToLogin = async () => {
-              state.mobileConfig!.jwt = undefined;
-              await db.deleteWhere("jwt_table", {});
-              const mobileNav = (globalThis as any).saltcorn?.mobileApp
-                ?.navigation;
-              if (mobileNav) {
-                mobileNav.clearHistory();
-                const page = await mobileNav.router.resolve({
-                  pathname: "get/auth/login",
-                  alerts: [
-                    {
-                      type: "warning",
-                      msg: "Your session has expired, please log in again.",
-                    },
-                  ],
-                });
-                await mobileNav.replaceIframe(page.content);
-              }
-            };
-            try {
-              const decoded = jwtDecode(token) as any;
-              const now = Date.now() / 1000;
-              if (decoded.exp && decoded.exp < now) {
-                console.log("JWT is expired, redirecting to login.");
-                return await goToLogin();
-              } else if (decoded.exp && decoded.exp - now < 7 * 24 * 3600) {
-                console.log("JWT is about to expire, attempting renewal.");
-                try {
-                  const renewResponse = await axios.post(
-                    `${base_url}/auth/renew-jwt`,
-                    {},
-                    { headers }
-                  );
-                  if (typeof renewResponse.data === "string") {
-                    try {
-                      jwtDecode(renewResponse.data);
-                      token = renewResponse.data;
-                      state.mobileConfig!.jwt = token;
-                      await db.deleteWhere("jwt_table", {});
-                      await db.insert("jwt_table", { jwt: token });
-                    } catch {
-                      console.error(
-                        "Renewed token is not a valid JWT, redirecting to login."
-                      );
-                      await goToLogin();
-                      return;
-                    }
-                  }
-                } catch (renewError: any) {
-                  console.error(`JWT renewal failed: ${renewError.message}`);
-                }
-              }
-            } catch (decodeError: any) {
-              console.error(`JWT decode failed: ${decodeError.message}`);
-            }
-            headers.Authorization = `jwt ${token}`;
-          }
+          if (state.mobileConfig?.csrfToken)
+            headers["CSRF-Token"] = state.mobileConfig.csrfToken;
+          // Only set in Node test runs (remote_query_helper.ts) - Node's
+          // fetch has no cookie jar, so the session cookie is replayed by hand.
+          if (state.mobileConfig?.cookie)
+            headers["Cookie"] = state.mobileConfig.cookie;
           try {
-            let response = await axios.post(
-              url,
-              { args },
-              {
-                headers,
-              }
-            );
-            for (const { type, msg } of response.data.alerts)
-              req?.flash(type, msg);
-            const result = Array.isArray(response.data.success)
-              ? prepMobileRows(response.data.success, fields)
-              : response.data.success;
+            const res = await fetch(url, {
+              method: "POST",
+              headers,
+              credentials: "include",
+              body: JSON.stringify({ args }),
+            });
+            if (!res.ok) {
+              const error: any = new Error(
+                `Request failed with status code ${res.status}`
+              );
+              error.response = { status: res.status };
+              throw error;
+            }
+            const data = await res.json();
+            for (const { type, msg } of data.alerts) req?.flash(type, msg);
+            const result = Array.isArray(data.success)
+              ? prepMobileRows(data.success, fields)
+              : data.success;
             if (cacheable && state.queriesCache)
               state.queriesCache[hashedArgs] = result;
             return result;
           } catch (error: any) {
             state.log(1, `Query error: ${k}in ${this.name}: ${error.message}`);
-            if (error.request?.status === 401)
+            if (error.response?.status === 401)
               error.message = req?.__("Not authorized");
             else
               error.message = `Unable to call POST ${url}:\n${error.message}`;

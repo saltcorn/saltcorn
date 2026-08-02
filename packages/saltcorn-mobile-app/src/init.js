@@ -11,9 +11,9 @@ import {
   createSyncInfoTables,
   dbUpdateNeeded,
   updateDb,
-  createJwtTable,
+  createSessionTable,
 } from "./helpers/db_schema.js";
-import { publicLogin, checkJWT } from "./helpers/auth.js";
+import { publicLogin, checkSession } from "./helpers/auth.js";
 import { router } from "./routing/index.js";
 import {
   replaceIframe,
@@ -30,7 +30,6 @@ import { readJSONCordova, readTextCordova } from "./helpers/file_system.js";
 
 import i18next from "i18next";
 import i18nextSprintfPostProcessor from "i18next-sprintf-postprocessor";
-import { jwtDecode } from "jwt-decode";
 
 import { Network } from "@capacitor/network";
 import { App } from "@capacitor/app";
@@ -152,19 +151,30 @@ const handlePluginHeaders = async (plugins) => {
   }
 };
 
-const getJwt = async () => {
-  const rows = await saltcorn.data.db.select("jwt_table");
-  return rows?.length > 0 ? rows[0].jwt : null;
+const getSession = async () => {
+  const rows = await saltcorn.data.db.select("session_table");
+  return rows?.length > 0 ? rows[0] : null;
 };
 
-const initJwt = async () => {
-  if (!(await saltcorn.data.db.tableExists("jwt_table"))) {
-    await createJwtTable();
+const initSession = async () => {
+  if (!(await saltcorn.data.db.tableExists("session_table"))) {
+    await createSessionTable();
   } else {
-    const jwt = await getJwt();
-    if (jwt) {
+    const row = await getSession();
+    if (row?.csrfToken) {
       const state = saltcorn.data.state.getState();
-      state.mobileConfig.jwt = jwt;
+      state.mobileConfig.csrfToken = row.csrfToken;
+      state.mobileConfig.isPublicUser = !!row.isPublicUser;
+      state.mobileConfig.hasSession = true;
+      if (row.isPublicUser) {
+        state.mobileConfig.user = { role_id: 100, email: "public", language: "en" };
+      } else if (row.userJson) {
+        try {
+          state.mobileConfig.user = JSON.parse(row.userJson);
+        } catch {
+          // corrupted local row, fall back to a network check
+        }
+      }
     }
   }
 };
@@ -210,7 +220,7 @@ const showErrorPage = async (error) => {
 const onResume = async () => {
   if (typeof saltcorn === "undefined") return;
   const mobileConfig = saltcorn.data.state.getState().mobileConfig;
-  if (mobileConfig?.jwt) {
+  if (mobileConfig?.hasSession) {
     const netStatus = await Network.getStatus();
     mobileConfig.networkState = netStatus.connectionType;
     if (
@@ -226,8 +236,8 @@ const onResume = async () => {
         await showErrorPage(error);
       }
     } else if (mobileConfig.networkState !== "none") {
-      if (!mobileConfig.isOfflineMode && !isPublicJwt(mobileConfig.jwt)) {
-        await checkJWT(mobileConfig.jwt);
+      if (!mobileConfig.isOfflineMode && !mobileConfig.isPublicUser) {
+        await checkSession();
       }
       if (mobileConfig.allowOfflineMode && mobileConfig.syncOnAppResume) {
         try {
@@ -237,21 +247,6 @@ const onResume = async () => {
         }
       }
     }
-  }
-};
-
-const isPublicJwt = (jwt) => {
-  try {
-    if (!jwt) return false;
-    const decoded = jwtDecode(jwt);
-    return decoded.sub === "public";
-  } catch (error) {
-    console.log(
-      `Unable to inspect '${jwt}': ${
-        error.message ? error.message : "Unknown error"
-      }`
-    );
-    return false;
   }
 };
 
@@ -390,7 +385,7 @@ export async function init(mobileConfig) {
       try {
         const url = event.url;
         if (url.startsWith("mobileapp://auth/callback")) {
-          const token = new URL(url).searchParams.get("token");
+          const token = new URL(url).searchParams.get("code");
           const method = new URL(url).searchParams.get("method");
           const methods = saltcorn.data.state.getState().auth_methods;
           if (!methods[method])
@@ -429,7 +424,7 @@ export async function init(mobileConfig) {
       await updateDb(tablesJSON);
     }
     await createSyncInfoTables(mobileConfig.synchedTables);
-    await initJwt();
+    await initSession();
     await state.refresh_tables();
     await state.refresh_views();
     await state.refresh_pages();
@@ -455,14 +450,16 @@ export async function init(mobileConfig) {
     Network.addListener("networkStatusChange", networkChangeCallback);
 
     const networkDisabled = state.mobileConfig.networkState === "none";
-    const jwt = state.mobileConfig.jwt;
+    const hasSession = !!state.mobileConfig.hasSession;
+    const isPublicUser = !!state.mobileConfig.isPublicUser;
     const alerts = [];
-    if ((networkDisabled && jwt) || (await checkJWT(jwt))) {
-      // already logged in, continue
+    if (
+      hasSession &&
+      !isPublicUser &&
+      (networkDisabled || (await checkSession()))
+    ) {
+      // already logged in, continue - mobileConfig.user was restored by initSession()
       const mobileConfig = state.mobileConfig;
-      const decodedJwt = jwtDecode(mobileConfig.jwt);
-      mobileConfig.user = decodedJwt.user;
-      mobileConfig.isPublicUser = false;
       await i18next.changeLanguage(mobileConfig.user.language);
       if (mobileConfig.allowOfflineMode) {
         const { offlineUser } = (await getLastOfflineSession()) || {};
@@ -536,11 +533,9 @@ export async function init(mobileConfig) {
         });
       }
       if (page.content) await replaceIframe(page.content, page.isFile);
-    } else if (isPublicJwt(jwt)) {
+    } else if (hasSession && isPublicUser) {
       // already logged in as public
       const config = state.mobileConfig;
-      config.user = { role_id: 100, email: "public", language: "en" };
-      config.isPublicUser = true;
       i18next.changeLanguage(config.user.language);
       const entryPoint = getEntryPoint(100, state, state.mobileConfig);
       if (!entryPoint) await showLogin(alerts);

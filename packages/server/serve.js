@@ -845,7 +845,7 @@ const setupSocket = (subdomainOffset, pruneSessionInterval, ...servers) => {
     //io.of(namespace).use(wrap(setTenant));
     io.of(namespace).use(wrap(sessionStore));
     io.of(namespace).use(wrap(passportInit));
-    io.of(namespace).use(wrap(passport.authenticate(["jwt", "session"])));
+    io.of(namespace).use(wrap(passport.authenticate(["session"])));
   };
   setupNamespace("/");
   setupNamespace("/datastream");

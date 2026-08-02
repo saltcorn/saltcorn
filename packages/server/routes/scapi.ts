@@ -38,7 +38,7 @@ import { Req, Res } from "@saltcorn/types/base_types";
 const router = Router();
 export default router;
 
-// Reject sessions/JWTs minted in another tenant before any data is served.
+// Reject sessions minted in another tenant before any data is served.
 router.use(rejectTenantDrift);
 
 /**

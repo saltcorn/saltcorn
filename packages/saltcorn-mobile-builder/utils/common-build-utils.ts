@@ -63,6 +63,7 @@ export function prepareBuildDir(
     "@capacitor/core@7.4.5",
     "@capacitor/assets@3.0.5",
     "@capacitor/filesystem@7.1.6",
+    "@capacitor/file-transfer@1.0.12",
     "@capacitor/camera@7.0.3",
     "@capacitor/network@7.0.3",
     "@capacitor-community/sqlite@7.0.3",
@@ -110,7 +111,6 @@ export interface ScCapacitorConfig {
   appName: string;
   appId?: string;
   appVersion: string;
-  unsecureNetwork: boolean;
   keystorePath?: string;
   keystoreAlias?: string;
   keystorePassword?: string;
@@ -135,9 +135,8 @@ const config: CapacitorConfig  = {
   appId: '${config.appId ? config.appId : "com.saltcorn.mobile.app"}',
   appName: '${config.appName ? config.appName : "SaltcornMobileApp"}',
   webDir: "www",
-  ios: {
-    scheme: "SaltcornMobileApp",
-  },
+  // ios.limitsNavigationsToAppBoundDomains was dropped - it caused noisy
+  // script-injection warnings and wasn't needed for the cookie fix to work.
   android: {
     buildOptions: {
       ${
@@ -151,17 +150,21 @@ const config: CapacitorConfig  = {
       }
       releaseType: '${config.buildType === "release" ? "AAB" : "APK"}',
     },
-    ${config.unsecureNetwork ? "allowMixedContent: true," : ""}
   },
-  ${
-    config.unsecureNetwork
-      ? `server: {
-    cleartext: true,
-    androidScheme: 'http',
-  },`
-      : ""
-  }
+  server: {
+    // App's origin on iOS - must match MOBILE_APP_ORIGINS in server/app.js.
+    iosScheme: 'SaltcornMobileApp',
+  },
   plugins: {
+    // Needed together with WKAppBoundDomains (see modifyInfoPlist) to
+    // exempt the remote server's session cookie from iOS's third-party
+    // cookie blocking.
+    CapacitorHttp: {
+      enabled: true,
+    },
+    CapacitorCookies: {
+      enabled: true,
+    },
     CapacitorSQLite: {
       iosDatabaseLocation: 'Library/CapacitorDatabase',
       iosIsEncryption: true,
@@ -256,14 +259,12 @@ export function androidFeatures() {
  * @param allowShareTo add share-to intent filter
  * @param allowFCM add FCM push notification support
  * @param allowAuthIntent add authentication intent
- * @param allowClearTextTraffic allow HTTP cleartext traffic
  */
 export async function modifyAndroidManifest(
   buildDir: string,
   allowShareTo: boolean,
   allowFCM: boolean,
-  allowAuthIntent: boolean,
-  allowClearTextTraffic: boolean
+  allowAuthIntent: boolean
 ) {
   console.log("modifyAndroidManifest");
   try {
@@ -293,9 +294,6 @@ export async function modifyAndroidManifest(
       "android:fullBackupContent": "false",
       "android:dataExtractionRules": "@xml/data_extraction_rules",
       "android:networkSecurityConfig": "@xml/network_security_config",
-      ...(allowClearTextTraffic
-        ? { "android:usesCleartextTraffic": "true" }
-        : {}),
     };
 
     if (allowFCM) {
@@ -481,18 +479,11 @@ export function extractDomain(url: string) {
 }
 
 /**
- * Write the Android network security config.
- * When `allowClearTextTraffic` is true, permits HTTP for the server domain.
- * Otherwise writes a restrictive config (HTTPS only).
+ * Write the Android network security config. HTTPS is required, so this is
+ * always the restrictive (no cleartext) version.
  * @param buildDir directory where the app will be built
- * @param serverPath server URL used to extract the allowed domain
- * @param allowClearTextTraffic permit HTTP cleartext traffic to the server domain
  */
-export function writeNetworkSecurityConfig(
-  buildDir: string,
-  serverPath: string,
-  allowClearTextTraffic: boolean
-) {
+export function writeNetworkSecurityConfig(buildDir: string) {
   console.log("writeNetworkSecurityConfig");
   const networkSecurityConfig = join(
     buildDir,
@@ -504,14 +495,7 @@ export function writeNetworkSecurityConfig(
     "xml",
     "network_security_config.xml"
   );
-  const content = allowClearTextTraffic
-    ? `<?xml version="1.0" encoding="utf-8"?>
-<network-security-config>
-  <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="true">${extractDomain(serverPath)}</domain>
-  </domain-config>
-</network-security-config>`
-    : `<?xml version="1.0" encoding="utf-8"?>
+  const content = `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <base-config cleartextTrafficPermitted="false" />
 </network-security-config>`;
@@ -713,19 +697,28 @@ export function prepareExportOptionsPlist({ buildDir, appId, iosParams }: any) {
  * @param allowShareTo add URL scheme for share-to integration
  * @param backgroundSyncEnabled background sync task is scheduled
  * @param pushSyncEnabled add remote-notification background mode
- * @param allowClearTextTraffic allow arbitrary HTTP loads
  * @param backgroundFetchEnabled background.js is included (sync or heartbeat configured)
+ * @param serverURL server URL, added to WKAppBoundDomains for the iOS cookie
+ * fix - changing servers (e.g. a new ngrok URL) needs a rebuild to apply.
  */
 export function modifyInfoPlist(
   buildDir: string,
   allowShareTo: boolean,
   backgroundSyncEnabled: boolean,
   pushSyncEnabled: boolean,
-  allowClearTextTraffic: boolean,
-  backgroundFetchEnabled: boolean = false
+  backgroundFetchEnabled: boolean = false,
+  serverURL?: string
 ) {
   const infoPlist = join(buildDir, "ios", "App", "App", "Info.plist");
   const content = readFileSync(infoPlist, "utf8");
+  let appBoundHostname: string | undefined;
+  if (serverURL) {
+    try {
+      appBoundHostname = new URL(serverURL).hostname;
+    } catch {
+      // invalid/missing URL - skip WKAppBoundDomains rather than write a broken plist
+    }
+  }
 
   const backgroundModes = [
     ...(backgroundFetchEnabled ? ["fetch", "processing"] : []),
@@ -735,7 +728,9 @@ export function modifyInfoPlist(
   const taskIds = [
     "com.transistorsoft.fetch",
     ...(backgroundSyncEnabled ? ["com.transistorsoft.background_sync"] : []),
-    ...(backgroundFetchEnabled ? ["com.transistorsoft.push_sync_heartbeat"] : []),
+    ...(backgroundFetchEnabled
+      ? ["com.transistorsoft.push_sync_heartbeat"]
+      : []),
   ];
 
   const newCfgs = `
@@ -773,6 +768,14 @@ export function modifyInfoPlist(
   <key>LSSupportsOpeningDocumentsInPlace</key>
   <true/>
   ${
+    appBoundHostname
+      ? `<key>WKAppBoundDomains</key>
+  <array>
+    <string>${appBoundHostname}</string>
+  </array>`
+      : ""
+  }
+  ${
     allowShareTo
       ? `<key>CFBundleURLTypes</key>
   <array>
@@ -787,15 +790,6 @@ export function modifyInfoPlist(
       </array>
     </dict>
   </array>`
-      : ""
-  }
-  ${
-    allowClearTextTraffic
-      ? `<key>NSAppTransportSecurity</key>
-  <dict>
-    <key>NSAllowsArbitraryLoads</key>
-    <true/>
-  </dict>`
       : ""
   }
 `;
@@ -1143,7 +1137,10 @@ export function copyServerFiles(buildDir: string) {
   if (!existsSync(assetsDst)) {
     mkdirSync(assetsDst, { recursive: true });
   }
-  const serverRoot = join(require.resolve("@saltcorn/server/package.json"), "..");
+  const serverRoot = join(
+    require.resolve("@saltcorn/server/package.json"),
+    ".."
+  );
   const srcPrefix = join(serverRoot, "public");
   const srcAssests = [
     "jquery-3.6.0.min.js",
@@ -1543,6 +1540,7 @@ export function writePodfile(
     pod 'CapacitorCommunitySqlite', :path => '../../node_modules/@capacitor-community/sqlite'
     pod 'CapacitorCamera', :path => '../../node_modules/@capacitor/camera'
     pod 'CapacitorFilesystem', :path => '../../node_modules/@capacitor/filesystem'
+    pod 'CapacitorFileTransfer', :path => '../../node_modules/@capacitor/file-transfer'
     ${
       hasGeolocation
         ? `pod 'CapacitorGeolocation', :path => '../../node_modules/@capacitor/geolocation'`

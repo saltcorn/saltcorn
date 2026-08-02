@@ -158,6 +158,11 @@ const get_extra_menu = (
                 ? req.__(item.label)
                 : item.label;
 
+        // javascript: links don't work reliably as <a href> taps on mobile,
+        // so use onclick - isWeb(req) also catches server-rendered mobile menus.
+        const isMobileJsLink =
+          !isWeb(req) && typeof link === "string" && link.startsWith("javascript:");
+
         return {
           label: translated_label,
           icon: item.icon,
@@ -170,7 +175,10 @@ const get_extra_menu = (
           mobile_item_html: item.mobile_item_html,
           tooltip: item.tooltip,
           altlinks: get_altlinks(item),
-          link,
+          link: isMobileJsLink ? "javascript:void(0)" : link,
+          ...(isMobileJsLink
+            ? { onclick: link.slice("javascript:".length) }
+            : {}),
           ...(item.shortcut ? { shortcut: item.shortcut } : {}),
           ...(item.subitems ? { subitems: transform(item.subitems) } : {}),
         };

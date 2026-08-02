@@ -60,6 +60,7 @@ type SectionOpts = {
   location: string;
   subitems: SectionOpts[];
   link: string;
+  onclick?: string;
   items?: SectionOpts[];
   type?: string;
   icon?: string;
@@ -147,6 +148,7 @@ const navSubItemsIterator = (si: SectionOpts): string =>
           {
             class: ["dropdown-item", si.style || "", si.class],
             href: si.link,
+            onclick: si.onclick,
             target: si.target_blank ? "_blank" : undefined,
             ...(si.tooltip ? makeTooltip(si.tooltip) : {}),
           },
@@ -220,6 +222,7 @@ const rightNavBar = (currentUrl: string, sections: SectionOpts[]): string =>
                     {
                       class: ["nav-link js-scroll-trigger", s.style || ""],
                       href: text(s.link),
+                      onclick: s.onclick ? text(s.onclick) : undefined,
                       target: s.target_blank ? "_blank" : undefined,
                       ...(s.tooltip ? makeTooltip(s.tooltip) : {}),
                     },
@@ -309,6 +312,7 @@ const mobileBottomNavBar = (
                     {
                       class: [s.style || "", clsLink],
                       href: text(s.link),
+                      onclick: s.onclick ? text(s.onclick) : undefined,
                       target: s.target_blank ? "_blank" : undefined,
                     },
                     show_icon(s.icon, "fa-lg", true),

@@ -1,67 +1,87 @@
-import db from "../db/index.js";
-import jsonwebtoken from "jsonwebtoken";
-const { sign } = jsonwebtoken;
-import axiosLib from "axios";
-const axios: any = axiosLib;
-import User from "../models/user.js";
 import * as State from "../db/state.js";
 
 declare let global: any;
 
+const baseURL = "http://localhost:3000";
+
+// Node's fetch has no browser cookie jar, so the session cookie has to be
+// tracked and attached by hand, and stashed on mobileConfig.cookie so it
+// also covers view.ts's/file.ts's own internal fetch calls for remote
+// queries and file uploads.
+let sessionCookie: string | undefined;
+
+const captureSessionCookie = (res: Response) => {
+  const setCookie = res.headers.get("set-cookie");
+  if (setCookie) sessionCookie = setCookie.split(";")[0];
+};
+
+const withCookie = (headers: Record<string, string> = {}) => ({
+  ...(sessionCookie ? { Cookie: sessionCookie } : {}),
+  ...headers,
+});
+
+const fetchCsrfToken = async (): Promise<string> => {
+  const res = await fetch(`${baseURL}/auth/csrf-token`, {
+    headers: withCookie(),
+  });
+  captureSessionCookie(res);
+  const data = await res.json();
+  return data.csrfToken;
+};
+
 export const prepareQueryEnviroment = async () => {
-  const user = await User.findOne({ email: "admin@foo.com" });
-  const token = process.env.JSON_WEB_TOKEN
-    ? process.env.JSON_WEB_TOKEN
-    : sign(
-        {
-          sub: "admin@foo.com",
-          role_id: 1,
-          iss: "saltcorn@saltcorn",
-          aud: "saltcorn-mobile-app",
-          iat: user?.last_mobile_login?.valueOf(),
-        },
-        db.connectObj.jwt_secret
-      );
-  global.window = {
-    localStorage: {
-      getItem: (item: string) => {
-        if (item === "auth_jwt") return token;
-        return undefined;
-      },
-    },
-  };
+  // isNode() checks for the absence of a global `window`, which is how view
+  // templates decide to render mobile-style markup (e.g. execLink onclick
+  // instead of a plain href) - set it to simulate the mobile/webview context
+  // these remote-query tests are meant to exercise.
+  global.window = {};
+  const csrfToken = await fetchCsrfToken();
+  const loginRes = await fetch(`${baseURL}/auth/login-with/session`, {
+    method: "POST",
+    headers: withCookie({
+      "Content-Type": "application/json",
+      "CSRF-Token": csrfToken,
+    }),
+    body: JSON.stringify({ email: "admin@foo.com", password: "AhGGr6rhu45" }),
+  });
+  captureSessionCookie(loginRes);
+  const loginData = await loginRes.json();
+  if (!loginData.success) throw new Error("Test admin login failed");
+  // req.login() regenerates the session, so the pre-login CSRF token is stale.
   const state = await State.getState();
-  state!.mobileConfig = { jwt: token } as any;
+  state!.mobileConfig = {
+    hasSession: true,
+    csrfToken: await fetchCsrfToken(),
+    cookie: sessionCookie,
+  } as any;
 };
 
 export const sendViewToServer = async (view: any) => {
   let copy = JSON.parse(JSON.stringify(view));
   copy.id = undefined;
-  const url = `http://localhost:3000/viewedit/test/inserter`;
-  const token = global.window.localStorage.getItem("auth_jwt");
-  await axios.post(url, copy, {
-    headers: {
-      Authorization: `jwt ${token}`,
+  const state = await State.getState();
+  await fetch(`${baseURL}/viewedit/test/inserter`, {
+    method: "POST",
+    headers: withCookie({
+      "Content-Type": "application/json",
       "X-Requested-With": "XMLHttpRequest",
-      "X-Saltcorn-Client": "mobile-app",
-    },
+      "CSRF-Token": state!.mobileConfig?.csrfToken || "",
+    }),
+    body: JSON.stringify(copy),
   });
 };
 
 export const deleteViewFromServer = async (id: number) => {
-  const url = `http://localhost:3000/viewedit/delete/${id}`;
-  const token = global.window.localStorage.getItem("auth_jwt");
-  await axios.post(
-    url,
-    {},
-    {
-      headers: {
-        Authorization: `jwt ${token}`,
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Saltcorn-Client": "mobile-app",
-      },
-    }
-  );
+  const state = await State.getState();
+  await fetch(`${baseURL}/viewedit/delete/${id}`, {
+    method: "POST",
+    headers: withCookie({
+      "Content-Type": "application/json",
+      "X-Requested-With": "XMLHttpRequest",
+      "CSRF-Token": state!.mobileConfig?.csrfToken || "",
+    }),
+    body: JSON.stringify({}),
+  });
 };
 
 export const renderEditInEditConfig = {

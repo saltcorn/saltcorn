@@ -1,7 +1,7 @@
 /*global saltcorn */
 
 const historyFile = "update_history";
-const jwtTableName = "jwt_table";
+const sessionTableName = "session_table";
 
 import { readFile, fileExists, writeJSON } from "./file_system";
 import { Directory } from "@capacitor/filesystem";
@@ -206,8 +206,10 @@ export async function updateDb(tablesJSON) {
   });
 }
 
-export async function createJwtTable() {
-  await saltcorn.data.db.query(`CREATE TABLE IF NOT EXISTS ${jwtTableName} (
-    jwt VARCHAR(500)
+export async function createSessionTable() {
+  await saltcorn.data.db.query(`CREATE TABLE IF NOT EXISTS ${sessionTableName} (
+    csrfToken VARCHAR(500),
+    userJson VARCHAR(2000),
+    isPublicUser BOOLEAN
   )`);
 }

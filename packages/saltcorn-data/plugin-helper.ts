@@ -150,11 +150,15 @@ const link_view = (
       },
       label
     );
-  } else
+  } else {
+    // javascript: links don't reliably work as <a href> taps in the mobile
+    // app, so run them via onclick instead.
+    const isJsLink = url.startsWith("javascript:");
+    const jsCode = isJsLink ? url.slice("javascript:".length) : undefined;
     return a(
       {
         ...(label_attr ? { "data-link-label": text_attr(label) } : {}),
-        href: url,
+        href: isJsLink ? "javascript:void(0)" : url,
         class: [
           textStyle,
           link_style,
@@ -165,11 +169,16 @@ const link_view = (
         ],
         style,
         title: link_title,
-        onclick: in_row_click ? "event.stopPropagation()" : undefined,
+        onclick: isJsLink
+          ? `${jsCode}${in_row_click ? ";event.stopPropagation()" : ""}`
+          : in_row_click
+            ? "event.stopPropagation()"
+            : undefined,
         target: link_target_blank ? "_blank" : undefined,
       },
       show_icon_and_label(link_icon, label)
     );
+  }
 };
 
 /**

@@ -469,14 +469,12 @@ const getAuthLinks = (current: string, noMethods?: boolean, req?: Req) => {
     );
   return links;
 };
+
 /**
- * Login with jwt
- * @param {*} email
- * @param {*} password
- * @param {*} saltcornApp
- * @param {*} res
+ * Establishes a session-cookie based login for the mobile app, given
+ * already-verified credentials (used to auto-login right after signup).
  */
-const loginWithJwt = async (
+const loginWithSession = async (
   email: string,
   password: string,
   saltcornApp: string,
@@ -484,61 +482,30 @@ const loginWithJwt = async (
   req: Req
 ) => {
   const loginFn = async () => {
-    const jwt_secret = db.connectObj.jwt_secret;
-    if (email !== undefined && password !== undefined) {
-      // with credentials
-      const user = (await User.findOne({ email }))!;
-      if (
-        user &&
-        !user.disabled &&
-        user.auth_method_allowed("Password") &&
-        user.checkPassword(password) &&
-        !user._attributes.totp_enabled
-      ) {
-        const now = new Date();
-        const pushEnabled = !!user._attributes?.notify_push;
-        const tokenUser = { ...user.session_object };
-        if (tokenUser.attributes)
-          tokenUser.attributes.notify_push = pushEnabled;
-        else tokenUser._attributes = { notify_push: pushEnabled };
-        const token = jwt.sign(
-          {
-            sub: email,
-            user: tokenUser,
-            iss: "saltcorn@saltcorn",
-            aud: "saltcorn-mobile-app",
-            iat: now.valueOf(),
-            exp: Math.floor(now.valueOf() / 1000) + 30 * 24 * 3600,
-            tenant: db.getTenantSchema(),
-          },
-          jwt_secret
-        );
-        if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
-        res.json(token);
-      } else {
-        res.json({
-          alerts: [
-            { type: "danger", msg: req.__("Incorrect user or password") },
-          ],
-        });
-      }
+    const user = (await User.findOne({ email }))!;
+    if (
+      user &&
+      !user.disabled &&
+      user.auth_method_allowed("Password") &&
+      user.checkPassword(password) &&
+      !user._attributes.totp_enabled
+    ) {
+      req.login(user.session_object, async (loginErr: any) => {
+        if (loginErr) {
+          res.status(500).json({ error: req.__("Login failed") });
+          return;
+        }
+        // see the matching note in the /login-with/session route
+        if (req.mobileCrossOrigin && req.session?.cookie) {
+          req.session.cookie.sameSite = "none";
+          req.session.cookie.secure = true;
+        }
+        res.json({ success: true, user: user.session_object });
+      });
     } else {
-      // public login
-      const token = jwt.sign(
-        {
-          sub: "public",
-          user: {
-            role_id: 100,
-            language: "en",
-          },
-          iss: "saltcorn@saltcorn",
-          aud: "saltcorn-mobile-app",
-          iat: new Date().valueOf(),
-          tenant: db.getTenantSchema(),
-        },
-        jwt_secret
-      );
-      res.json(token);
+      res.status(401).json({
+        error: req.__("Incorrect user or password"),
+      });
     }
   };
   if (saltcornApp && saltcornApp !== db.connectObj.default_schema) {
@@ -604,27 +571,27 @@ router.get(
  * @memberof module:auth/routes~routesRouter
  */
 router.get("/logout", async (req: Req, res: Res, next: any) => {
-  if (req.smr && req.user?.id) {
-    const user = (await User.findOne({ id: req.user!.id }))!;
-    await user.updateLastMobileLogin(null);
-    res.json({ success: true });
-  } else if (req.logout) {
+  if (req.logout) {
     req.logout(function (err: any) {
       const destination = getState()!.getConfig("logout_url", "/auth/login");
+      const respond = () =>
+        req.smr ? res.json({ success: true }) : res.redirect(destination);
       if (req.session.destroy)
         req.session.destroy((err: any) => {
           if (err) return next(err);
           req.logout(() => {
-            res.redirect(destination);
+            respond();
           });
         });
       else {
         req.logout(function (err: any) {
           req.session = null;
-          res.redirect(destination);
+          respond();
         });
       }
     });
+  } else if (req.smr) {
+    res.json({ success: true });
   }
 });
 
@@ -1460,7 +1427,7 @@ router.post(
         const u: any = await User.create(form.values);
         await send_verification_email(u, req);
         if (req.smr)
-          await loginWithJwt(
+          await loginWithSession(
             email,
             password,
             req.headers["x-saltcorn-app"],
@@ -1547,11 +1514,6 @@ router.post(
     res?.cookie?.("loggedin", "true", maxAge ? { maxAge } : undefined);
     if (!own_welcome)
       req.flash("success", req.__("Welcome, %s!", req.user!.email));
-    if (req.smr) {
-      const dbUser = (await User.findOne({ id: req.user!.id }))!;
-      if (!dbUser.last_mobile_login)
-        await dbUser.updateLastMobileLogin(new Date());
-    }
     if (getState()!.get2FApolicy(req.user!) === "Mandatory") {
       res.redirect("/auth/twofa/setup/totp");
     } else if (req.body?.dest) {
@@ -1573,101 +1535,101 @@ router.get(
   userLimiter,
   error_catcher(async (req: Req, res: Res, next: any) => {
     const { method } = req.params;
-    if (method === "jwt") {
-      const { email, password } = req.query;
-      await loginWithJwt(
-        email,
-        password,
-        req.headers["x-saltcorn-app"],
-        res,
-        req
-      );
+    const auth = getState()!.auth_methods[method];
+    if (auth) {
+      if (req.query?.dest) res.cookie("login_dest", req.query.dest);
+      const passportParams =
+        typeof auth.parameters === "function"
+          ? auth.parameters(req)
+          : auth.parameters;
+      passport.authenticate(method, passportParams)(req, res, next);
     } else {
-      const auth = getState()!.auth_methods[method];
-      if (auth) {
-        if (req.query?.dest) res.cookie("login_dest", req.query.dest);
-        const passportParams =
-          typeof auth.parameters === "function"
-            ? auth.parameters(req)
-            : auth.parameters;
-        passport.authenticate(method, passportParams)(req, res, next);
-      } else {
-        req.flash(
-          "danger",
-          req.__("Unknown authentication method %s", text(method))
-        );
-        res.redirect("/");
-      }
+      req.flash(
+        "danger",
+        req.__("Unknown authentication method %s", text(method))
+      );
+      res.redirect("/");
     }
   })
 );
 
 /**
- * @name post/login-with/jwt
+ * Session-based login for the mobile app. Logs in like a normal web
+ * session, but replies with JSON. Needs a CSRF token from GET /auth/csrf-token first.
+ * @name post/login-with/session
  * @function
  * @memberof module:auth/routes~routesRouter
  */
 router.post(
-  "/login-with/jwt",
+  "/login-with/session",
   ipLimiter,
   userLimiter,
-  error_catcher(async (req: Req, res: Res) => {
-    const { email, password } = req.body;
-    await loginWithJwt(
-      email,
-      password,
-      req.headers["x-saltcorn-app"],
-      res,
-      req
-    );
-  })
+  setOldSessionID,
+  (req: Req, res: Res, next: any) => {
+    passport.authenticate("local", (err: any, user: any) => {
+      if (err) return next(err);
+      if (!user) {
+        return res
+          .status(401)
+          .json({ error: req.__("Incorrect user or password") });
+      }
+      if (user.pending_user) {
+        return res.status(401).json({
+          error: req.__(
+            "Two-factor authentication is not yet supported for the mobile app"
+          ),
+        });
+      }
+      req.login(user, async (loginErr: any) => {
+        if (loginErr) return next(loginErr);
+        // req.login() regenerates the session, undoing app.js's cookie
+        // override - reapply it, but only for genuinely cross-origin requests.
+        if (req.mobileCrossOrigin && req.session?.cookie) {
+          req.session.cookie.sameSite = "none";
+          req.session.cookie.secure = true;
+        }
+        ipLimiter.resetKey(req.ip);
+        userLimiter.resetKey(userIdKey(req.body || {}));
+        res.json({ success: true, user });
+      });
+    })(req, res, next);
+  }
 );
 
 /**
- * @name post/renew-jwt
+ * Redeems the short-lived code an OAuth-provider mobile login (Google etc.)
+ * was handed off with, and logs the app's own WebView in with a session -
+ * see the matching note above mintOAuthSessionCode.
+ * @name post/session-from-code
  * @function
  * @memberof module:auth/routes~routesRouter
  */
 router.post(
-  "/renew-jwt",
-  passport.authenticate("jwt", { session: false }),
+  "/session-from-code",
+  ipLimiter,
+  setOldSessionID,
   error_catcher(async (req: Req, res: Res) => {
-    if (!req.user?.email) {
-      return res.status(401).json({ error: req.__("Not authenticated") });
+    const email = verifyOAuthSessionCode(req.body?.code);
+    if (!email) {
+      return res.status(401).json({ error: req.__("Invalid or expired code") });
     }
-    const renewFn = async () => {
-      const user = (await User.findOne({ email: req.user!.email }))!;
-      if (!user || user.disabled)
-        return res.status(401).json({ error: req.__("User not found") });
-      if (user._attributes?.totp_enabled)
-        return res
-          .status(401)
-          .json({ error: req.__("Two-factor authentication is enabled") });
-      const now = new Date();
-      const pushEnabled = !!user._attributes?.notify_push;
-      const tokenUser = { ...user.session_object };
-      if (tokenUser.attributes) tokenUser.attributes.notify_push = pushEnabled;
-      else tokenUser._attributes = { notify_push: pushEnabled };
-      const token = jwt.sign(
-        {
-          sub: user.email,
-          user: tokenUser,
-          iss: "saltcorn@saltcorn",
-          aud: "saltcorn-mobile-app",
-          iat: now.valueOf(),
-          exp: Math.floor(now.valueOf() / 1000) + 30 * 24 * 3600,
-          tenant: db.getTenantSchema(),
-        },
-        db.connectObj.jwt_secret
-      );
-      res.json(token);
-    };
-    const saltcornApp = req.headers["x-saltcorn-app"];
-    if (saltcornApp && saltcornApp !== db.connectObj.default_schema) {
-      await db.runWithTenant(saltcornApp, renewFn);
-    } else {
-      await renewFn();
+    const user = await User.findOne({ email });
+    if (!user || user.disabled) {
+      return res.status(401).json({ error: req.__("User not found") });
     }
+    req.login(user.session_object, async (loginErr: any) => {
+      if (loginErr) {
+        res.status(500).json({ error: req.__("Login failed") });
+        return;
+      }
+      // see the matching note in the /login-with/session route
+      if (req.mobileCrossOrigin && req.session?.cookie) {
+        req.session.cookie.sameSite = "none";
+        req.session.cookie.secure = true;
+      }
+      ipLimiter.resetKey(req.ip);
+      res.json({ success: true, user: user.session_object });
+    });
   })
 );
 
@@ -1679,6 +1641,19 @@ router.get(
   error_catcher((req: Req, res: Res, next: any) => {
     const isAuth = req.user && req.user!.id ? true : false;
     res.json({ authenticated: isAuth });
+  })
+);
+
+/**
+ * Returns a CSRF token for clients that can't get one from a rendered
+ * page, like the mobile app. Re-fetch after login/logout.
+ * @name get/csrf-token
+ */
+router.get(
+  "/csrf-token",
+  error_catcher(async (req: Req, res: Res) => {
+    const token = req.csrfToken ? req.csrfToken() : "";
+    res.json({ csrfToken: token });
   })
 );
 
@@ -1715,22 +1690,26 @@ router.post(
   })
 );
 
-const generateTokenForUser = async (user: any, now: Date) => {
-  const userDb = (await User.findOne({ email: user.email }))!;
-  const tokenUser = { ...userDb.session_object };
-  const token = jwt.sign(
-    {
-      sub: user.email,
-      user: tokenUser,
-      iss: "saltcorn@saltcorn",
-      aud: "saltcorn-mobile-app",
-      iat: now.valueOf(),
-      tenant: db.getTenantSchema(),
-    },
-    db.connectObj.jwt_secret
-  );
-  return token;
+// Hands off an OAuth-provider mobile login (Google etc.) to the app's own
+// WebView: the callback above runs in the system browser, whose session
+// cookie the app can't see, so a short-lived signed code stands in for it -
+// redeemed once, right after the deep link, at POST /auth/session-from-code.
+const OAUTH_CODE_TTL = "60s";
+
+const mintOAuthSessionCode = (email: string): string =>
+  jwt.sign({ email }, db.connectObj.jwt_secret, {
+    expiresIn: OAUTH_CODE_TTL,
+  });
+
+const verifyOAuthSessionCode = (code: string): string | null => {
+  try {
+    const payload: any = jwt.verify(code, db.connectObj.jwt_secret);
+    return payload.email || null;
+  } catch {
+    return null; // invalid signature or expired
+  }
 };
+
 /**
  * @param {object} req
  * @param {object} res
@@ -1774,13 +1753,10 @@ const loginCallback = (req: Req, res: Res, method: string) => async () => {
     }
     const source = req.query.state;
     if (source === "mobile_app") {
-      const now = new Date();
       const user = (await User.findOne({ email: req.user!.email }))!;
-      if (!user.last_mobile_login) await user.updateLastMobileLogin(now);
       res.redirect(
-        `mobileapp://auth/callback?token=${await generateTokenForUser(
-          req.user as any,
-          now
+        `mobileapp://auth/callback?code=${mintOAuthSessionCode(
+          user.email
         )}&method=${encodeURIComponent(method)}`
       );
     } else res.redirect("/");
@@ -2517,7 +2493,6 @@ router.post(
     console.log("TOTP return ", rv);
     user._attributes.totp_enabled = true;
     await user.update({ _attributes: user._attributes });
-    await user.updateLastMobileLogin(null);
     req.flash(
       "success",
       req.__(

@@ -38,9 +38,6 @@ import type {
   Row,
   PartialSome,
 } from "@saltcorn/db-common/internal";
-import axiosLib from "axios";
-const axios: any = axiosLib; // NodeNext default-import interop: axios types resolve to the module namespace
-import FormData from "form-data";
 import { renameSync, statSync, existsSync } from "fs";
 import mimeTypes from "mime-types";
 const { lookup } = mimeTypes;
@@ -67,6 +64,18 @@ function xattr_get(fp: string, attrName: string): Promise<string> {
 const dirCache: Record<string, File[] | null | "building"> = {};
 const enableDirCache: Record<string, boolean> = {};
 const DEFAULT_MIN_ROLE_READ = 100;
+
+// mobile-app helper: @capacitor/filesystem's writeFile() takes base64 data.
+const blobToBase64 = (blob: Blob): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const result = reader.result as string;
+      resolve(result.substring(result.indexOf(",") + 1));
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
 
 /**
  * File Descriptor class
@@ -569,7 +578,7 @@ class File {
   static subClassIfTenant(): typeof File {
     const tenant = db.getTenantSchema();
     const isRoot = tenant === db.connectObj.default_schema;
-    
+
     if (isRoot) return File;
 
     const fileStoreBase = path.join(db.connectObj.file_store, tenant);
@@ -1216,22 +1225,55 @@ class File {
    * @param file file to upload
    * @returns JSON response from POST 'file/upload'
    */
-  static async upload(file: { blob: Blob; fileObj: any }): Promise<any> {
+  static async upload(
+    file: { blob: Blob; fileObj: any } | (Blob & { name?: string })
+  ): Promise<any> {
     const state = getState()!;
     const base_url = state.getConfig("base_url") || "http://10.0.2.2:3000";
     const url = `${base_url}/files/upload`;
-    const token = state.mobileConfig!.jwt;
-    const formData = new FormData();
-    formData.append("file", file.blob, file.fileObj.name);
-    const response = await axios.post(url, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `jwt ${token}`,
-        "X-Requested-With": "XMLHttpRequest",
-        "X-Saltcorn-Client": "mobile-app",
-      },
+    const csrfToken = state.mobileConfig?.csrfToken;
+    // camera-captured files arrive wrapped as {blob, fileObj}; files picked
+    // directly via <input type=file> are a plain Blob/File.
+    const isWrapped = "blob" in file;
+    const blob = isWrapped ? (file as any).blob : file;
+    const filename = isWrapped
+      ? (file as any).fileObj.name
+      : (file as any).name;
+    const headers: any = {
+      "X-Requested-With": "XMLHttpRequest",
+      "X-Saltcorn-Client": "mobile-app",
+    };
+    if (csrfToken) headers["CSRF-Token"] = csrfToken;
+    // Uploaded via @capacitor/file-transfer, not fetch, to avoid a plugin
+    // conflict that breaks file uploads. It needs a file on disk, so we
+    // write the blob to a temp file and remove it once the upload is done.
+    const { Filesystem, FileTransfer } = (globalThis as any).Capacitor.Plugins;
+    const tmpPath = `upload_${Date.now()}_${filename}`;
+    await Filesystem.writeFile({
+      path: tmpPath,
+      data: await blobToBase64(blob),
+      directory: "CACHE", // Directory.Cache
     });
-    return response.data.success;
+    try {
+      const { uri } = await Filesystem.getUri({
+        path: tmpPath,
+        directory: "CACHE",
+      });
+      const result = await FileTransfer.uploadFile({
+        url,
+        path: uri,
+        fileKey: "file",
+        mimeType: blob.type,
+        headers,
+        webFetchExtra: { credentials: "include" },
+      });
+      const data = JSON.parse(result.response || "{}");
+      return data.success;
+    } finally {
+      await Filesystem.deleteFile({ path: tmpPath, directory: "CACHE" }).catch(
+        () => {}
+      );
+    }
   }
 
   static async set_xattr_of_existing_file(

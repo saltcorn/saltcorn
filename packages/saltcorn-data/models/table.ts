@@ -145,6 +145,9 @@ const transposeObjects = (objs: Row[]): Row => {
   }
   return res;
 };
+// Inline refs as literals, not params, so numeric-looking refs like "19"
+// don't get silently turned into "19.0" on iOS.
+const sqlTextLiteral = (v: any): string => `'${String(v).replace(/'/g, "''")}'`;
 // todo support also other date formats https://momentjs.com/docs/
 const dateFormats = [moment.ISO_8601];
 // todo refactor - move to separated data utils module?
@@ -1270,14 +1273,10 @@ class Table implements AbstractTable {
             );
           } else {
             const pkVals = ids.map((row) => String(row[pkName]));
-            const placeholders = pkVals
-              .map((_: any, i: number) => `$${i + 1}`)
-              .join(",");
             await db.query(
               `update "${db.sqlsanitize(this.name)}_sync_info"
            set deleted = true, modified_local = true
-           where ref in (${placeholders})`,
-              pkVals
+           where ref in (${pkVals.map(sqlTextLiteral).join(",")})`
             );
           }
         }
@@ -2060,24 +2059,18 @@ class Table implements AbstractTable {
       if (this.versioned) {
         const existing1 = await db.selectOne(this.name, { [pk_name]: id });
         if (!existing) existing = existing1;
-        //store all changes EXCEPT users with only last_mobile_login
-        if (!(
-          this.name === "users" &&
-          Object.keys(v_in).length == 1 &&
-          v_in.last_mobile_login
-        ))
-          await this.insert_history_row({
-            ...existing1,
-            ...v,
-            [pk_name]: id,
-            _version: {
-              next_version_by_id: id,
-              pk_name,
-            },
-            _time: new Date(),
-            _userid: use_user?.id,
-            _restore_of_version: restore_of_version || null,
-          });
+        await this.insert_history_row({
+          ...existing1,
+          ...v,
+          [pk_name]: id,
+          _version: {
+            next_version_by_id: id,
+            pk_name,
+          },
+          _time: new Date(),
+          _userid: use_user?.id,
+          _restore_of_version: restore_of_version || null,
+        });
       }
       if (typeof existing === "undefined") {
         const triggers = await Trigger.getTableTriggers("Update", this);
@@ -2179,6 +2172,7 @@ class Table implements AbstractTable {
     calcFields.forEach((f) => {
       // delete v1[f.name];
     });
+    // users__history has no such column, but sqlite rows may still have it.
     if (this.name === "users") delete v1.last_mobile_login;
 
     this.prepare_row_for_writing(v1);
@@ -2277,8 +2271,7 @@ class Table implements AbstractTable {
           await db.query(
             `insert into "${db.sqlsanitize(this.name)}_sync_info"
          (ref, modified_local, deleted)
-         values(CAST($1 AS TEXT), true, false)`,
-            [id]
+         values(${sqlTextLiteral(id)}, true, false)`
           );
         }
       },
@@ -2334,8 +2327,8 @@ class Table implements AbstractTable {
             `update "${db.sqlsanitize(
               this.name
             )}_sync_info" set modified_local = true
-         where ref = CAST($1 AS TEXT) and last_modified = $2`,
-            [id, oldLastModified ? oldLastModified.valueOf() : null]
+         where ref = ${sqlTextLiteral(id)} and last_modified = $1`,
+            [oldLastModified ? oldLastModified.valueOf() : null]
           );
         }
       },
@@ -2766,8 +2759,7 @@ class Table implements AbstractTable {
               await db.query(
                 `insert into "${db.sqlsanitize(this.name)}_sync_info"
            (last_modified, ref, modified_local, deleted)
-           values(NULL, CAST($1 AS TEXT), true, false)`,
-                [id]
+           values(NULL, ${sqlTextLiteral(id)}, true, false)`
               );
             }
           },
@@ -3136,10 +3128,6 @@ class Table implements AbstractTable {
         new Field({ name: "api_token", type: "String" }),
         new Field({ name: "verification_token", type: "String" }),
         new Field({ name: "verified_on", type: "Date" })
-
-        // Not last_mobile_login - we do not want to store this in history.
-        // Deleted in Table.insert_history_row instead
-        //new Field({ name: "last_mobile_login", type: "Date" })
       );
     const flds = fields
       .filter((f) => !f.calculated || f.stored)
@@ -4240,8 +4228,11 @@ ${rejectDetails}`,
           )
             rec[f.name] = JSON.stringify(rec[f.name]);
         });
-        if (this.name === "users" && rec.role_id < 11 && rec.role_id > 1)
-          rec.role_id = rec.role_id * 10;
+        if (this.name === "users") {
+          if (rec.role_id < 11 && rec.role_id > 1) rec.role_id = rec.role_id * 10;
+          // Backups made before last_mobile_login was dropped still have it.
+          delete rec.last_mobile_login;
+        }
         await db.insert(this.name, rec, { noid: true, client, pk_name });
       } catch (e) {
         await client.query("ROLLBACK");

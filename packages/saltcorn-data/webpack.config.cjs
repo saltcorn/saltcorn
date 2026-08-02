@@ -138,14 +138,19 @@ module.exports = {
       stream: require.resolve("stream-browserify"),
       http: require.resolve("stream-http"),
       https: require.resolve("https-browserify"),
-      util: require.resolve("util"),
+      util: require.resolve("util/"),
       os: require.resolve("os-browserify/browser"),
       vm: require.resolve("vm-browserify"),
       zlib: require.resolve("browserify-zlib"),
       constants: require.resolve("constants-browserify"),
+      events: require.resolve("events/"),
+      string_decoder: require.resolve("string_decoder/"),
+      // The $ marks an exact match - otherwise webpack turns a request for
+      // "process/browser" into "<target>/browser", doubling the suffix.
+      "process$": require.resolve("process/browser"),
+      "process/browser$": require.resolve("process/browser"),
     },
     alias: {
-      process: "process/browser",
       ...withJsVariants(nodeMocks),
       ...withJsVariants(npmMocks),
       ...withJsVariants(saltcornMocks),

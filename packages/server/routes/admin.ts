@@ -118,6 +118,7 @@ import {
   dataModulePath,
   imageAvailable,
   isTest,
+  decodeProvisioningProfile,
 } from "@saltcorn/data/utils";
 import stream from "stream";
 import Crash from "@saltcorn/data/models/crash";
@@ -3518,7 +3519,8 @@ router.get(
                           id: "serverURLInputId",
                           value: builderSettings.serverURL || "",
                           placeholder: getState()!.getConfig("base_url") || "",
-                        })
+                        }),
+                        i(req.__("Must start with https://"))
                       )
                     ),
                     // app icon
@@ -3639,35 +3641,6 @@ router.get(
                         i(
                           req.__(
                             "When enabled, the login screen shows you a link to login as public user."
-                          )
-                        )
-                      )
-                    ),
-
-                    // allow clear text traffic
-                    div(
-                      { class: "row pb-2" },
-                      div(
-                        { class: "col-sm-10" },
-                        input({
-                          type: "checkbox",
-                          id: "allowClearTextTrafficId",
-                          class: "form-check-input me-2 mb-0 ",
-                          name: "allowClearTextTraffic",
-                          checked:
-                            builderSettings.allowClearTextTraffic === "on",
-                        }),
-                        label(
-                          {
-                            for: "allowClearTextTrafficId",
-                            class: "form-label fw-bold mb-0",
-                          },
-                          req.__("Allow clear text traffic")
-                        ),
-                        div(),
-                        i(
-                          req.__(
-                            "Enable this to allow unsecure HTTP connections. Useful for local testing."
                           )
                         )
                       )
@@ -4813,7 +4786,6 @@ router.post(
       apnSigningKey,
       apnSigningKeyId,
       buildType,
-      allowClearTextTraffic,
       keystoreFile,
       keystoreAlias,
       keystorePassword,
@@ -4865,9 +4837,11 @@ router.post(
     if (!serverURL || serverURL.length === 0) {
       serverURL = getState()!.getConfig("base_url") || "";
     }
-    if (!serverURL.startsWith("http")) {
+    if (!serverURL.startsWith("https://")) {
       return res.json({
-        error: req.__("Please enter a valid server URL."),
+        error: req.__(
+          "Please enter a server URL starting with https:// - session-cookie auth requires HTTPS."
+        ),
       });
     }
     if (
@@ -4982,7 +4956,6 @@ router.post(
     }
 
     if (buildType) spawnParams.push("--buildType", buildType);
-    if (allowClearTextTraffic) spawnParams.push("--allowClearTextTraffic");
     if (keystoreFile) spawnParams.push("--androidKeystore", keystoreFile);
     if (keystoreAlias)
       spawnParams.push("--androidKeyStoreAlias", keystoreAlias);
@@ -5148,6 +5121,29 @@ router.post(
         )
         .map((plugin: any) => plugin.name);
       newCfg.excludedPlugins = excludedPlugins;
+      if (newCfg.provisioningProfile) {
+        // Extract the Team ID once here and save it, so sending push
+        // notifications later never needs to redo this (e.g. on a Linux server).
+        const oldCfg = getState()!.getConfig("mobile_builder_settings", {});
+        if (
+          newCfg.provisioningProfile === oldCfg.provisioningProfile &&
+          oldCfg.teamId
+        ) {
+          newCfg.teamId = oldCfg.teamId;
+        } else {
+          try {
+            newCfg.teamId = (
+              await decodeProvisioningProfile(newCfg.provisioningProfile)
+            ).teamId;
+          } catch (e: any) {
+            getState()!.log(
+              1,
+              `Unable to decode provisioning profile to get the Team ID: ${e.message}`
+            );
+            newCfg.teamId = oldCfg.teamId;
+          }
+        }
+      }
       await getState()!.setConfig("mobile_builder_settings", newCfg);
       await getState()!.setConfig("firebase_json_key", newCfg.firebaseJSONKey);
       await getState()!.setConfig(
