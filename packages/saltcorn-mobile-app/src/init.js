@@ -166,7 +166,9 @@ const initSession = async () => {
       state.mobileConfig.csrfToken = row.csrfToken;
       state.mobileConfig.isPublicUser = !!row.isPublicUser;
       state.mobileConfig.hasSession = true;
-      if (!row.isPublicUser && row.userJson) {
+      if (row.isPublicUser) {
+        state.mobileConfig.user = { role_id: 100, email: "public", language: "en" };
+      } else if (row.userJson) {
         try {
           state.mobileConfig.user = JSON.parse(row.userJson);
         } catch {

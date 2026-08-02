@@ -604,6 +604,8 @@ class View implements AbstractView {
           };
           if (state.mobileConfig?.csrfToken)
             headers["CSRF-Token"] = state.mobileConfig.csrfToken;
+          // Only set in Node test runs (remote_query_helper.ts) - Node's
+          // fetch has no cookie jar, so the session cookie is replayed by hand.
           if (state.mobileConfig?.cookie)
             headers["Cookie"] = state.mobileConfig.cookie;
           try {
