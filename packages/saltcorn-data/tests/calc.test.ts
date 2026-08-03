@@ -163,6 +163,14 @@ describe("get_expression_function", () => {
       getState()!.codepage_context = {};
     }
   });
+  it("allows eval in on user", () => {
+    // eval is enabled in vm2 for the root (default) tenant only
+    expect(db.getTenantSchema()).toBe(db.connectObj.default_schema);
+    const f = get_expression_function(`eval("user.id + x") + y`, [
+      new Field({ name: "x", type: "Integer" }),
+    ]);
+    expect(f({ x: 5, y: 2 }, {id: 1})).toBe(8);
+  });
   if (db.supports_multiple_schemas)
     it("disallows eval in a sub tenant", async () => {
       add_tenant("subtenant1");
