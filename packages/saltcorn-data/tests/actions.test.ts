@@ -18,7 +18,14 @@ const {
   sleep,
 } = mocks;
 import { assertIsRow, assertIsSet } from "../tests/assertions.js";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 import baseactions from "../base-plugin/actions.js";
 const {
   duplicate_row,
@@ -34,12 +41,49 @@ import * as utils from "../utils.js";
 import Notification from "../models/notification.js";
 import { run_action_column } from "../plugin-helper.js";
 const { applyAsync, mergeActionResults } = utils;
+import { createServer, Server } from "http";
+import type { AddressInfo } from "net";
+
+// Stand-in for the endpoint the webhook action posts to. These tests used to
+// post to an external request bin, so any network hiccup left the row
+// untouched and failed the assertion.
+let webhookServer: Server;
+let webhookUrl: string;
+const webhookRequests: Array<{ method: string; body: string }> = [];
 
 afterAll(db.close);
 
 beforeAll(async () => {
   await resetSchemaMod();
   await fixturesMod();
+  // the webhook action sends everything through HTTPS_PROXY when it is set,
+  // which cannot reach the loopback server below. Test files get their own
+  // process, so this only affects this suite.
+  delete process.env.HTTPS_PROXY;
+  webhookServer = createServer((req, res) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      webhookRequests.push({ method: req.method!, body });
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ success: true }));
+    });
+  });
+  await new Promise<void>((resolve) =>
+    webhookServer.listen(0, "127.0.0.1", resolve)
+  );
+  webhookUrl = `http://127.0.0.1:${
+    (webhookServer.address() as AddressInfo).port
+  }`;
+});
+
+afterAll(async () => {
+  webhookServer.closeAllConnections();
+  await new Promise<void>((resolve, reject) =>
+    webhookServer.close((e) => (e ? reject(e) : resolve()))
+  );
 });
 
 jest.setTimeout(20000);
@@ -156,9 +200,7 @@ describe("Action and Trigger model", () => {
       table_id: table.id,
       when_trigger: "Update",
       configuration: {
-        // from https://requestbin.com/
-        // to inspect https://pipedream.com/sources/dc_jku44wk
-        url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
+        url: webhookUrl,
       },
     });
     const row = await table.getRow({ author: "Giuseppe Tomasi" });
@@ -209,9 +251,7 @@ describe("Action and Trigger model", () => {
       table_id: table.id,
       when_trigger: "Insert",
       configuration: {
-        // from https://requestbin.com/
-        // to inspect https://pipedream.com/sources/dc_jku44wk
-        url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
+        url: webhookUrl,
         body: "{foo: author}",
         response_field: "author",
       },
@@ -222,7 +262,10 @@ describe("Action and Trigger model", () => {
       {}
     );
     const row = await table.getRow({ id });
-    expect(['{"success":true}', "Error in workflow"]).toContain(row?.author);
+    expect(row?.author).toBe('{"success":true}');
+    const request = webhookRequests[webhookRequests.length - 1];
+    expect(request.method).toBe("POST");
+    expect(JSON.parse(request.body)).toStrictEqual({ foo: "NK Jemisin" });
   });
   it("should run triggerwith table.run_trigger", async () => {
     getState()!.registerPlugin("mock_plugin", plugin_with_routes());
