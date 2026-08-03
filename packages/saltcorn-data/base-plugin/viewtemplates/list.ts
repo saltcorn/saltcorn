@@ -2013,7 +2013,7 @@ export = {
       const rowCount = default_state?._hide_pagination
         ? undefined
         : q.limit && rows.length < q.limit
-          ? rows.length
+          ? (q.offset || 0) + rows.length
           : await table.countRows(whereForCount, {
               forPublic: !req.user,
               forUser: req.user,
