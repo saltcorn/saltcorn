@@ -328,7 +328,7 @@ function jsexprToWhere(
             ],
           };
         if ((field.type as any)?.name === "String")
-         return {
+          return {
             and: [
               { not: { [field.name]: null } },
               { not: { [field.name]: "" } },
@@ -772,6 +772,7 @@ function get_expression_function(
   fields: Array<Field>
 ): Function {
   const field_names = fields.map((f) => f.name).filter(isValidJsIdentifier);
+  const { getState } = require("../db/state");
   const f = vmRun(
     scoped_expression_code(expression, field_names),
     getState()!.eval_context
