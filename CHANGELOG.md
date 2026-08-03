@@ -1,5 +1,29 @@
 # Notable changes
 
+## 1.7.0 - In development
+
+* Remove JWT authentication. Mobile applications now use the same authentication as the web application, reducing the attack surface
+
+* Tiered backup retention with GFS retention policies.
+
+* Database drivers can now be provided by out-of-tree code. A MySQL driver is provided in the @saltcorn/mysql-backend npm package; see its [README](https://github.com/saltcorn/mysql-backend/blob/main/README.md) for how to use this
+
+* A mutex is available for workflows and run_js_code actions. This ensures that a sequence of steps or a code segment is only run one at a time across a multi-node Saltcorn deployment
+
+* `eval` can be used in interpolations, in the root tenant only.
+
+* Backup restore from the "Create first user" screen is now asyncronous, meaning it will not time out, and will give better feedback during long restores. 
+
+* Continuous integration is now done with [whale-ci](https://github.com/saltcorn/whale-ci), to ensure that the tests can be run in identical environments locally. 
+
+* Hooks for modules to allow or deny access to views, triggers, pages and API calls
+
+* Table authorization is now optionally implmented with Row-level security on PostgreSQL. 
+
+* Large amounts of code have been converted from JavaScript and CommonJS modules to TypeScript and ESM modules. Tests run on the node test runner instead of jest
+
+* Mobile: silent push sync on ios, offline mode only with pg, re-register heartbeat
+
 ## 1.6.0 - Released 24 June 2026
 
 * When generating run_js_code code with AI, show a preview first the user can approve or reject.
