@@ -163,7 +163,7 @@ describe("get_expression_function", () => {
       getState()!.codepage_context = {};
     }
   });
-  it("allows eval in on user", () => {
+  it("allows eval on user", () => {
     // eval is enabled in vm2 for the root (default) tenant only
     expect(db.getTenantSchema()).toBe(db.connectObj.default_schema);
     const f = get_expression_function(`eval("user.id + x") + y`, [
