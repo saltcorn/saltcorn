@@ -84,6 +84,7 @@ import {
   displayType,
 } from "../../plugin-helper.js";
 import { PrimaryKeyValue, Row } from "@saltcorn/db-common/dbtypes";
+import { search_bar } from "@saltcorn/markup/helpers";
 const { validID } = layoutUtilsPkg;
 
 const create_db_view = async (context: GenObj, req: Req) => {
@@ -922,6 +923,13 @@ const configuration_workflow = (req: Req) =>
             class: "validate-expression",
           });
           formfields.push({
+            name: "_fts_search_bar",
+            label: req.__("Search bar"),
+            sublabel: req.__("Full-text search bar above the table"),
+            type: "Bool",
+            tab: "Functionality",
+          });
+          formfields.push({
             name: "_subtotals",
             label: req.__("Show subtotals"),
             sublabel: req.__(
@@ -1559,6 +1567,14 @@ const run = async (
     extraOpts.isPreview && default_state?._rows_per_page > 50
       ? i("Preview limited to 50 rows")
       : "";
+
+  let fts_search_bar = "";
+  if (default_state?._fts_search_bar) {
+    const stVar = `_fts_${table.santized_name}`;
+    fts_search_bar = search_bar(stVar, state[stVar], {
+      stateField: stVar,
+    });
+  }
   return div(
     {
       "data-sc-state-hash": statehash,
@@ -1566,8 +1582,8 @@ const run = async (
       "data-sc-total-rows": rowCount !== undefined ? String(rowCount) : false,
     },
     istop
-      ? create_link_div + tableHtml + previewNote
-      : tableHtml + previewNote + create_link_div
+      ? create_link_div + fts_search_bar + tableHtml + previewNote
+      : fts_search_bar + tableHtml + previewNote + create_link_div
   );
 };
 
@@ -1819,7 +1835,7 @@ const createBasicView = async ({
   // list layout settings
   if (template_view && template_view.configuration.default_state) {
     copy_cfg(
-      "_rows_per_page _full_page_count _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _table_layout _subtotals _grand_total",
+      "_rows_per_page _full_page_count _hide_pagination transpose transpose_width transpose_width_units _omit_header hide_null_columns _hover_rows _striped_rows _card_rows _borderless _cell_valign _header_filters _header_filters_toggle _header_filters_dropdown _responsive_collapse _sticky_header _collapse_breakpoint_px _row_color_formula _fts_search_bar _table_layout _subtotals _grand_total",
       "default_state"
     );
   }
@@ -1874,6 +1890,7 @@ export default {
       _header_filters_toggle,
       _header_filters_dropdown,
       _row_color_formula,
+      _fts_search_bar,
       _sticky_header,
       _subtotals,
       _grand_total,
