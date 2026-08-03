@@ -1,6 +1,10 @@
 # Notable changes
 
-## 1.6.1 - In Development
+## 1.6.2 - In development
+
+* List views can now have a full-text search bar above, if you do not want to create a separate filter
+
+## 1.6.1 - Released July 2026
 
 * fix form_action save when there are protected fields
 * Fix TOTP with leading 0
