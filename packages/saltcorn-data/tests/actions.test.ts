@@ -18,7 +18,14 @@ const {
   sleep,
 } = mocks;
 import { assertIsRow, assertIsSet } from "../tests/assertions.js";
-import { afterAll, describe, it, expect, beforeAll, jest } from "@saltcorn/db-common/test_expect";
+import {
+  afterAll,
+  describe,
+  it,
+  expect,
+  beforeAll,
+  jest,
+} from "@saltcorn/db-common/test_expect";
 import baseactions from "../base-plugin/actions.js";
 const {
   duplicate_row,
@@ -34,12 +41,50 @@ import * as utils from "../utils.js";
 import Notification from "../models/notification.js";
 import { run_action_column } from "../plugin-helper.js";
 const { applyAsync, mergeActionResults } = utils;
+import { createServer, Server } from "http";
+import type { AddressInfo } from "net";
+import type { Where } from "@saltcorn/db-common/internal";
+
+// Stand-in for the endpoint the webhook action posts to. These tests used to
+// post to an external request bin, so any network hiccup left the row
+// untouched and failed the assertion.
+let webhookServer: Server;
+let webhookUrl: string;
+const webhookRequests: Array<{ method: string; body: string }> = [];
 
 afterAll(db.close);
 
 beforeAll(async () => {
   await resetSchemaMod();
   await fixturesMod();
+  // the webhook action sends everything through HTTPS_PROXY when it is set,
+  // which cannot reach the loopback server below. Test files get their own
+  // process, so this only affects this suite.
+  delete process.env.HTTPS_PROXY;
+  webhookServer = createServer((req, res) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      webhookRequests.push({ method: req.method!, body });
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ success: true }));
+    });
+  });
+  await new Promise<void>((resolve) =>
+    webhookServer.listen(0, "127.0.0.1", resolve)
+  );
+  webhookUrl = `http://127.0.0.1:${
+    (webhookServer.address() as AddressInfo).port
+  }`;
+});
+
+afterAll(async () => {
+  webhookServer.closeAllConnections();
+  await new Promise<void>((resolve, reject) =>
+    webhookServer.close((e) => (e ? reject(e) : resolve()))
+  );
 });
 
 jest.setTimeout(20000);
@@ -156,9 +201,7 @@ describe("Action and Trigger model", () => {
       table_id: table.id,
       when_trigger: "Update",
       configuration: {
-        // from https://requestbin.com/
-        // to inspect https://pipedream.com/sources/dc_jku44wk
-        url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
+        url: webhookUrl,
       },
     });
     const row = await table.getRow({ author: "Giuseppe Tomasi" });
@@ -209,9 +252,7 @@ describe("Action and Trigger model", () => {
       table_id: table.id,
       when_trigger: "Insert",
       configuration: {
-        // from https://requestbin.com/
-        // to inspect https://pipedream.com/sources/dc_jku44wk
-        url: "https://b6af540a71dce96ec130de5a0c47ada6.m.pipedream.net",
+        url: webhookUrl,
         body: "{foo: author}",
         response_field: "author",
       },
@@ -222,7 +263,10 @@ describe("Action and Trigger model", () => {
       {}
     );
     const row = await table.getRow({ id });
-    expect(['{"success":true}', "Error in workflow"]).toContain(row?.author);
+    expect(row?.author).toBe('{"success":true}');
+    const request = webhookRequests[webhookRequests.length - 1];
+    expect(request.method).toBe("POST");
+    expect(JSON.parse(request.body)).toStrictEqual({ foo: "NK Jemisin" });
   });
   it("should run triggerwith table.run_trigger", async () => {
     getState()!.registerPlugin("mock_plugin", plugin_with_routes());
@@ -528,6 +572,23 @@ describe("run_js_code", () => {
   });
 });
 
+// Trigger.emitEvent is fire-and-forget: it works off a setTimeout and does not
+// await the EventLog write. Poll for the expected number of log rows rather
+// than sleeping a fixed time, which a slow database driver will overrun. On
+// timeout return whatever is there, so the caller's assertion reports it.
+const waitForEventLogs = async (
+  where: Where,
+  count: number,
+  timeout_ms: number = 10000
+): Promise<EventLog[]> => {
+  const start = Date.now();
+  while (true) {
+    const evs = await EventLog.find(where, { orderBy: "id" });
+    if (evs.length >= count || Date.now() - start > timeout_ms) return evs;
+    await sleep(50);
+  }
+};
+
 describe("Events and eventlog", () => {
   it("should add custom event", async () => {
     await getState()!.setConfig("custom_events", [
@@ -552,10 +613,9 @@ describe("Events and eventlog", () => {
   it("should emit custom event", async () => {
     const evs = await EventLog.find({ event_type: "FooHappened" });
     expect(evs.length).toBe(0);
-    await Trigger.emitEvent("FooHappened");
+    Trigger.emitEvent("FooHappened");
 
-    await sleep(200);
-    const evs1 = await EventLog.find({ event_type: "FooHappened" });
+    const evs1 = await waitForEventLogs({ event_type: "FooHappened" }, 1);
     expect(evs1.length).toBe(1);
   });
   it("should find with user", async () => {
@@ -567,12 +627,13 @@ describe("Events and eventlog", () => {
   it("should emit custom event with channel", async () => {
     const evs = await EventLog.find({ event_type: "BarWasHere" });
     expect(evs.length).toBe(0);
-    await Trigger.emitEvent("BarWasHere");
-    await Trigger.emitEvent("BarWasHere", "Zap");
-    await Trigger.emitEvent("BarWasHere", "Baz");
+    Trigger.emitEvent("BarWasHere");
+    Trigger.emitEvent("BarWasHere", "Zap");
+    Trigger.emitEvent("BarWasHere", "Baz");
 
-    await sleep(100);
-    const evs1 = await EventLog.find({ event_type: "BarWasHere" });
+    // only the Baz channel is in event_log_settings. It is emitted last, so
+    // once it has been logged the other two have already been discarded
+    const evs1 = await waitForEventLogs({ event_type: "BarWasHere" }, 1);
     expect(evs1.length).toBe(1);
   });
   it("should emit custom event with array payload", async () => {
@@ -580,10 +641,9 @@ describe("Events and eventlog", () => {
 
     Trigger.emitEvent("BarWasHere", "Baz", {}, [{ x: 1 }, { x: 2 }]);
 
-    await sleep(200);
-    const evs1 = await EventLog.find(
+    const evs1 = await waitForEventLogs(
       { event_type: "BarWasHere" },
-      { orderBy: "id" }
+      evs.length + 1
     );
     expect(evs1.length).toBe(evs.length + 1);
 
@@ -594,10 +654,9 @@ describe("Events and eventlog", () => {
 
     Trigger.emitEvent("BarWasHere", "Baz", {}, { x: 1 });
 
-    await sleep(200);
-    const evs1 = await EventLog.find(
+    const evs1 = await waitForEventLogs(
       { event_type: "BarWasHere" },
-      { orderBy: "id" }
+      evs.length + 1
     );
     expect(evs1.length).toBe(evs.length + 1);
 
@@ -608,10 +667,9 @@ describe("Events and eventlog", () => {
 
     Trigger.emitEvent("BarWasHere", "Baz", {}, "Hello!");
 
-    await sleep(200);
-    const evs1 = await EventLog.find(
+    const evs1 = await waitForEventLogs(
       { event_type: "BarWasHere" },
-      { orderBy: "id" }
+      evs.length + 1
     );
     expect(evs1.length).toBe(evs.length + 1);
 
@@ -622,10 +680,9 @@ describe("Events and eventlog", () => {
 
     Trigger.emitEvent("BarWasHere", "Baz", {}, null);
 
-    await sleep(200);
-    const evs1 = await EventLog.find(
+    const evs1 = await waitForEventLogs(
       { event_type: "BarWasHere" },
-      { orderBy: "id" }
+      evs.length + 1
     );
     expect(evs1.length).toBe(evs.length + 1);
 
@@ -636,10 +693,9 @@ describe("Events and eventlog", () => {
 
     Trigger.emitEvent("BarWasHere", "Baz", {}, true);
 
-    await sleep(200);
-    const evs1 = await EventLog.find(
+    const evs1 = await waitForEventLogs(
       { event_type: "BarWasHere" },
-      { orderBy: "id" }
+      evs.length + 1
     );
     expect(evs1.length).toBe(evs.length + 1);
 
@@ -652,9 +708,8 @@ describe("Events and eventlog", () => {
     // emit is a race - the log write can land before the find() resolves.
     const evs = await EventLog.find({ event_type: "Insert" });
     expect(evs.length).toBe(0);
-    await Trigger.emitEvent("Insert", "readings");
-    await sleep(100);
-    const evs1 = await EventLog.find({ event_type: "Insert" });
+    Trigger.emitEvent("Insert", "readings");
+    const evs1 = await waitForEventLogs({ event_type: "Insert" }, 1);
     expect(evs1.length).toBe(1);
   });
   it("should run emit_event action", async () => {
@@ -671,16 +726,12 @@ describe("Events and eventlog", () => {
       user: { id: 1, role_id: 1 },
     });
 
-    await sleep(100);
-
-    const ev = await EventLog.findOne({
-      event_type: "BarWasHere",
-      channel: "oldbooks",
-    });
-
-    assertIsSet(ev);
-
-    expect(ev.payload.pages).toBe(967);
+    const evs = await waitForEventLogs(
+      { event_type: "BarWasHere", channel: "oldbooks" },
+      1
+    );
+    expect(evs.length).toBe(1);
+    expect(evs[0].payload.pages).toBe(967);
   });
 });
 
