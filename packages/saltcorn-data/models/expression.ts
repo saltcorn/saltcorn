@@ -772,12 +772,47 @@ function get_expression_function(
   fields: Array<Field>
 ): Function {
   const field_names = fields.map((f) => f.name).filter(isValidJsIdentifier);
-  const args = field_names.includes("user")
-    ? `row, {${field_names.join()}}`
-    : `row, {${field_names.join()}}, user`;
-  const { getState } = require("../db/state");
-  const f = vmRun(`(${args})=>(${expression})`, getState().eval_context);
-  return (row: any, user: any) => f(row, row, user);
+  const f = vmRun(
+    scoped_expression_code(expression, field_names),
+    getState()!.eval_context
+  );
+  return (row: any, user: any) => f(row, user);
+}
+
+/**
+ * Build the code for a function `(row, user) => value` evaluating an expression
+ * with the row fields, `row` and `user` in scope.
+ *
+ * The scope is a plain object entered with `with` rather than destructured
+ * function arguments, so that it is also visible to `eval` in the expression.
+ * vm2 does not expose the intrinsic `eval` on its sandbox: every `eval` call
+ * in sandboxed code is therefore an indirect eval, which is evaluated in the
+ * global scope and cannot see any surrounding lexical scope. We shadow `eval`
+ * with a wrapper that evaluates the code as the body of a function which is
+ * applied to the same scope object; the wrapper is itself put on the scope so
+ * that nested evals keep the scope too.
+ *
+ * @param {string} expression
+ * @param {string[]} field_names - valid identifiers, in scope even if absent from the row
+ * @returns {string}
+ */
+function scoped_expression_code(
+  expression: string,
+  field_names: Array<string>
+): string {
+  const undefined_fields = field_names.map((nm) => `${nm}: undefined`).join();
+  return `(function (__realEval) {
+  const __mkEval = (__scope) => (__code) =>
+    __realEval("(__s)=>{with(__s){return (" + __code + ")}}")(__scope);
+  return (row, user) => {
+    const __scope = {${undefined_fields}};
+    __scope.row = row;
+    Object.assign(__scope, row);
+    ${field_names.includes("user") ? "" : "__scope.user = user;"}
+    __scope.eval = __mkEval(__scope);
+    with (__scope) return (${expression});
+  };
+})(eval)`;
 }
 
 /**
