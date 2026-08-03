@@ -14,77 +14,32 @@ const removePluginsDir = () => {
     fs.rmSync(pluginsPath, { force: true, recursive: true });
 };
 
-const writeJestConfigIntoPluginDir = (location, plugin) => {
+// Plugin dependencies live outside node_modules, so symlink them in
+// to keep them requireable during the test run.
+const linkPluginDependencies = (location, plugin) => {
   const state = getState();
   const modName = state.plugin_module_names[plugin.name];
   const module = state.plugins[modName];
-  fs.writeFileSync(
-    path.join(location, "jest.config.js"),
-    `const sqliteDir = process.env.JEST_SC_SQLITE_DIR;
-const dbCommonDir = process.env.JEST_SC_DB_COMMON_DIR;
-const dataDir = process.env.JEST_SC_DATA_DIR;
-const typesDir = process.env.JEST_SC_TYPES_DIR;
-const markupDir = process.env.JEST_SC_MARKUP_DIR;
-const adminModelsDir = process.env.JEST_SC_ADMIN_MODELS_DIR;
-const modulePath = process.env.TEST_PLUGIN_PACKAGES_DIR;
-const config = {
-  moduleNameMapper: {
-    "mjml": "${path.join(location, "mjml.js")}",
-    "@saltcorn/sqlite/(.*)": sqliteDir + "/$1",
-    "@saltcorn/db-common/(.*)": dbCommonDir + "/$1",
-    "@saltcorn/data/(.*)": dataDir + "/$1",
-    "@saltcorn/types/(.*)": typesDir + "/$1",
-    "@saltcorn/markup$": markupDir,
-    "@saltcorn/markup/(.*)": markupDir + "/$1",
-    "@saltcorn/admin-models/(.*)": adminModelsDir + "/$1",
-    ${(module?.dependencies || [])
-      .map((dep) => {
-        let pluginLocation = state.plugin_locations[dep];
-        if (!pluginLocation) {
-          // try without org
-          const orgRemoved = dep.replace(/^@[^/]+\//, "");
-          pluginLocation = state.plugin_locations[orgRemoved];
-        }
-        return pluginLocation ? `"${dep}": "${pluginLocation}",` : "";
-      })
-      .join("\n    ")}
-  },
-  modulePaths: [modulePath],
-};
-module.exports = config;`
-  );
-};
-
-const writeMockFilesIntoPluginDir = (location) => {
-  const mjmlPath = path.join(location, "mjml.js");
-  if (!fs.existsSync(mjmlPath)) fs.writeFileSync(mjmlPath, "");
+  for (const dep of module?.dependencies || []) {
+    let depLocation = state.plugin_locations[dep];
+    if (!depLocation) {
+      // try without org
+      const orgRemoved = dep.replace(/^@[^/]+\//, "");
+      depLocation = state.plugin_locations[orgRemoved];
+    }
+    if (!depLocation) continue;
+    const linkPath = path.join(location, "node_modules", dep);
+    fs.mkdirSync(path.dirname(linkPath), { recursive: true });
+    if (fs.existsSync(linkPath))
+      fs.rmSync(linkPath, { force: true, recursive: true });
+    fs.symlinkSync(depLocation, linkPath, "dir");
+  }
 };
 
 const spawnTest = async (installDir, env) => {
-  const scEnvVars = {};
-  for (const pckName of [
-    "sqlite",
-    "db-common",
-    "data",
-    "types",
-    "markup",
-    "admin-models",
-  ]) {
-    scEnvVars[`JEST_SC_${pckName.toUpperCase().replace("-", "_")}_DIR`] =
-      path.dirname(require.resolve(`@saltcorn/${pckName}`));
-  }
-  scEnvVars.TEST_PLUGIN_PACKAGES_DIR = path.join(
-    __dirname,
-    "test_plugin_packages"
-  );
   const ret = spawnSync("npm", ["run", "test"], {
     stdio: "inherit",
-    env: !env
-      ? {
-          ...process.env,
-          ...scEnvVars,
-        }
-      : { ...env, ...scEnvVars },
+    env: env || process.env,
     cwd: installDir,
   });
   return ret.status;
@@ -102,8 +57,7 @@ const preparePlugin = async (plugin, overwrites) => {
     overwrites
   );
   const location = getPluginLocation(plugin.name);
-  writeMockFilesIntoPluginDir(location);
-  writeJestConfigIntoPluginDir(location, plugin);
+  linkPluginDependencies(location, plugin);
   return location;
 };
 
