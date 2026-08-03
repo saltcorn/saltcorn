@@ -32,6 +32,7 @@ describe("kahnSort", () => {
     );
     expect(result.indexOf("publishers")).toBeLessThan(result.indexOf("books"));
   });
+  
 
   test("three-level chain is ordered correctly", () => {
     // chapters -> books -> publishers
