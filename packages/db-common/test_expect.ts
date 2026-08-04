@@ -15,9 +15,9 @@ import { createRequire } from "node:module";
 // suites that call jest.mock.
 const require = createRequire(import.meta.url);
 import {
-  describe,
-  it,
-  test,
+  describe as nodeDescribe,
+  it as nodeIt,
+  test as nodeTest,
   before,
   after,
   beforeEach as nodeBeforeEach,
@@ -30,6 +30,78 @@ const beforeAll = (fn: any) => before(fn);
 const afterAll = (fn: any) => after(fn);
 const beforeEach = (fn: any) => nodeBeforeEach(fn);
 const afterEach = (fn: any) => nodeAfterEach(fn);
+
+// ---------------------------------------------------------------------------
+// .each() table tests
+// ---------------------------------------------------------------------------
+// jest interpolates the title with printf tokens (%s, %d, %j, ... and %# for
+// the row index) or, for object rows, with $property references.
+const eachTitle = (title: string, args: any[], index: number): string => {
+  let argIx = 0;
+  const withTokens = String(title).replace(
+    /%[sdifjoOp#%]/g,
+    (token: string) => {
+      if (token === "%%") return "%";
+      if (token === "%#") return String(index);
+      if (argIx >= args.length) return token;
+      const arg = args[argIx++];
+      switch (token) {
+        case "%s":
+          return typeof arg === "string" ? arg : inspect(arg, { depth: 3 });
+        case "%d":
+        case "%f":
+          return String(Number(arg));
+        case "%i":
+          return String(parseInt(arg, 10));
+        case "%j":
+          return JSON.stringify(arg);
+        default:
+          return inspect(arg, { depth: 3 });
+      }
+    }
+  );
+  const row = args.length === 1 ? args[0] : undefined;
+  if (row == null || typeof row !== "object") return withTokens;
+  return withTokens.replace(/\$([\w.]+)/g, (whole: string, path: string) => {
+    let value: any = row;
+    for (const key of path.split(".")) {
+      if (value == null || typeof value !== "object") return whole;
+      value = value[key];
+    }
+    return typeof value === "string" ? value : inspect(value, { depth: 3 });
+  });
+};
+
+const eachFor =
+  (runner: any) =>
+  (table: any[]) =>
+  (title: string, fn: (...args: any[]) => any, ..._rest: any[]) => {
+    table.forEach((row, index) => {
+      const args = Array.isArray(row) ? row : [row];
+      runner(eachTitle(title, args, index), () => fn(...args));
+    });
+  };
+
+// node:test's describe/it/test have no .each, and their exports cannot be
+// mutated from here (this module is ESM), so wrap them.
+const withEach = (base: any): any => {
+  const wrapped: any = (...args: any[]) => base(...args);
+  for (const key of Object.getOwnPropertyNames(base)) {
+    if (key === "length" || key === "name" || key === "prototype") continue;
+    const variant = (base as any)[key];
+    if (typeof variant === "function") {
+      const wrappedVariant: any = (...args: any[]) => variant(...args);
+      wrappedVariant.each = eachFor(variant);
+      wrapped[key] = wrappedVariant;
+    } else wrapped[key] = variant;
+  }
+  wrapped.each = eachFor(base);
+  return wrapped;
+};
+
+const describe = withEach(nodeDescribe);
+const it = withEach(nodeIt);
+const test = withEach(nodeTest);
 
 export {
   describe,
@@ -300,6 +372,28 @@ class Expectation {
     this.assertPass(this.actual <= n, `expected ${this.show(this.actual)} <= ${n}`);
   }
 
+  // path is a dotted string ("a.b.0.c") or an array of keys; the expected
+  // value is optional - with no second argument only presence is checked.
+  toHaveProperty(path: string | (string | number)[], ...rest: any[]): void {
+    const keys = Array.isArray(path) ? path : String(path).split(".");
+    let value: any = this.actual;
+    let found = true;
+    for (const key of keys) {
+      if (value == null || !(String(key) in Object(value))) {
+        found = false;
+        break;
+      }
+      value = value[key as any];
+    }
+    const pass = found && (rest.length === 0 || looseEqual(value, rest[0]));
+    this.assertPass(
+      pass,
+      `expected ${this.show(this.actual)} to have property ${keys.join(".")}${
+        rest.length ? " = " + this.show(rest[0]) : ""
+      }`
+    );
+  }
+
   toBeInstanceOf(cls: any): void {
     this.assertPass(
       this.actual instanceof cls,
@@ -330,6 +424,29 @@ class Expectation {
   // jest alias for toHaveBeenCalled
   toBeCalled(): void {
     this.toHaveBeenCalled();
+  }
+
+  // args may contain asymmetric matchers (expect.objectContaining etc); the
+  // arity must match exactly, as in jest.
+  toHaveBeenCalledWith(...expected: any[]): void {
+    const calls: any[][] = this.actual?.mock?.calls ?? [];
+    this.assertPass(
+      calls.some((call) => looseEqual(call, expected)),
+      `expected mock to have been called with:\n  ${this.show(
+        expected
+      )}\nactual calls:\n  ${this.show(calls)}`
+    );
+  }
+
+  toHaveBeenLastCalledWith(...expected: any[]): void {
+    const calls: any[][] = this.actual?.mock?.calls ?? [];
+    const last = calls[calls.length - 1];
+    this.assertPass(
+      calls.length > 0 && looseEqual(last, expected),
+      `expected mock's last call to be:\n  ${this.show(
+        expected
+      )}\nactual:\n  ${this.show(last)}`
+    );
   }
 
   toHaveBeenCalledTimes(n: number): void {
@@ -491,27 +608,40 @@ function mockFn(name: string, factory?: () => any) {
   const callerFile = stack[0]?.getFileName();
   const scopedRequire = callerFile ? createRequire(callerFile) : require;
   const mod = scopedRequire(name);
-  if (factory) {
-    const replacement = factory();
-    for (const key of Object.keys(replacement)) {
-      try {
-        mod[key] = replacement[key];
-      } catch {
-        // non-writable export; skip
-      }
+  const replacement: any = factory ? factory() : autoMock(mod);
+  let mutationFailed = false;
+  for (const key of Object.keys(replacement)) {
+    try {
+      mod[key] = replacement[key];
+    } catch {
+      // non-writable export
     }
-    return;
+    if (mod[key] !== replacement[key]) mutationFailed = true;
   }
-  for (const key of Object.keys(mod)) {
-    if (typeof mod[key] === "function") {
-      try {
-        mod[key] = fn();
-      } catch {
-        // non-writable export; skip
-      }
+  // Bundled packages (esbuild/tsup output such as the `ai` package) expose
+  // their exports as getter-only, non-configurable properties, so the
+  // assignments above silently do nothing. Fall back to swapping the module's
+  // require-cache entry for a plain object, which every require() made after
+  // this call - notably the system under test - then receives. Only done when
+  // mutating in place actually failed, so modules that hold a reference to the
+  // original exports object keep seeing the mocks wherever that still works.
+  if (mutationFailed && mod && typeof mod === "object") {
+    try {
+      const entry = scopedRequire.cache[scopedRequire.resolve(name)];
+      if (entry) entry.exports = { ...mod, ...replacement };
+    } catch {
+      // not resolvable/cacheable (builtin, ESM); nothing more we can do
     }
   }
 }
+
+// jest.mock without a factory: replace every function export with a mock.
+const autoMock = (mod: any): any => {
+  const replacement: any = {};
+  for (const key of Object.keys(mod))
+    if (typeof mod[key] === "function") replacement[key] = fn();
+  return replacement;
+};
 
 // ---------------------------------------------------------------------------
 // jest object: setTimeout (no-op; node:test has no default timeout), fn, mock
