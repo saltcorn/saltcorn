@@ -48,7 +48,7 @@ import type { Where } from "@saltcorn/db-common/internal";
 // Stand-in for the endpoint the webhook action posts to. These tests used to
 // post to an external request bin, so any network hiccup left the row
 // untouched and failed the assertion.
-let webhookServer: Server;
+let webhookServer: Server | undefined;
 let webhookUrl: string;
 const webhookRequests: Array<{ method: string; body: string }> = [];
 
@@ -61,7 +61,7 @@ beforeAll(async () => {
   // which cannot reach the loopback server below. Test files get their own
   // process, so this only affects this suite.
   delete process.env.HTTPS_PROXY;
-  webhookServer = createServer((req, res) => {
+  const server = createServer((req, res) => {
     let body = "";
     req.on("data", (chunk) => {
       body += chunk;
@@ -72,18 +72,19 @@ beforeAll(async () => {
       res.end(JSON.stringify({ success: true }));
     });
   });
-  await new Promise<void>((resolve) =>
-    webhookServer.listen(0, "127.0.0.1", resolve)
-  );
-  webhookUrl = `http://127.0.0.1:${
-    (webhookServer.address() as AddressInfo).port
-  }`;
+  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+  webhookServer = server;
+  webhookUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
 
 afterAll(async () => {
-  webhookServer.closeAllConnections();
+  // beforeAll runs lazily, so with a --test-name-pattern that matches nothing
+  // in this file the server was never started but this hook still runs
+  const server = webhookServer;
+  if (!server) return;
+  server.closeAllConnections();
   await new Promise<void>((resolve, reject) =>
-    webhookServer.close((e) => (e ? reject(e) : resolve()))
+    server.close((e) => (e ? reject(e) : resolve()))
   );
 });
 

@@ -1945,6 +1945,11 @@ const save_menu_items = async (menu_items: any[]): Promise<void> => {
  * @param {string} pkg
  * @returns {Promise<string>}
  */
+// Overridable so that a mirror - or a test serving a fake registry on
+// loopback - can be used instead of the public npm registry
+const npm_registry_url = (pkg: string) =>
+  `${process.env.SALTCORN_NPM_REGISTRY || "https://registry.npmjs.org"}/${pkg}`;
+
 const get_latest_npm_version = async (
   pkg: string,
   timeout_ms?: number
@@ -1961,7 +1966,7 @@ const get_latest_npm_version = async (
   const guess = stored[pkg]?.version || ""; //default return
   try {
     const fetch_it = async () => {
-      const response = await fetch(`https://registry.npmjs.org/${pkg}`);
+      const response = await fetch(npm_registry_url(pkg));
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.statusText}`);
       }
@@ -2008,7 +2013,7 @@ const get_saltcorn_npm_versions = async (
   const guess: string[] = stored?.versions || []; //default return
   try {
     const fetch_it = async () => {
-      const response = await fetch(`https://registry.npmjs.org/${pkg}`);
+      const response = await fetch(npm_registry_url(pkg));
       if (!response.ok) {
         throw new Error(`Failed to fetch data: ${response.statusText}`);
       }
