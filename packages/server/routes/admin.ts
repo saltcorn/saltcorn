@@ -20,6 +20,8 @@ import {
   admin_config_route,
   get_sys_info,
   tenant_letsencrypt_name,
+  acme_directory_url,
+  greenlock_notify,
   isAdminOrHasConfigMinRole,
   checkEditPermission,
   addOnDoneRedirect,
@@ -2284,6 +2286,7 @@ router.post(
           packageRoot: path.resolve(__dirname, "..", ".."),
           configDir: path.join(file_store, "greenlock.d"),
           maintainerEmail: admin_users[0].email,
+          notify: greenlock_notify,
         });
 
         await greenlock.sites.add({
@@ -2362,11 +2365,14 @@ router.post(
           packageRoot: path.resolve(__dirname, "..", ".."),
           configDir: path.join(file_store, "greenlock.d"),
           maintainerEmail: admin_users[0].email,
+          notify: greenlock_notify,
         });
 
+        const directoryUrl = acme_directory_url();
         await greenlock.manager.defaults({
           subscriberEmail: admin_users[0].email,
           agreeToTerms: true,
+          ...(directoryUrl ? { directoryUrl } : {}),
         });
         await greenlock.sites.add({
           subject: domain,
