@@ -1573,6 +1573,7 @@ const run = async (
     const stVar = `_fts_${table.santized_name}`;
     fts_search_bar = search_bar(stVar, state[stVar], {
       stateField: stVar,
+      placeHolder: extraOpts?.req?.__?.("Search for...") || "Search for...",
     });
   }
   return div(
