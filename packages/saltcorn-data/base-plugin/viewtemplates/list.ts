@@ -91,7 +91,6 @@ const {
 const { validID } = require("@saltcorn/markup/layout_utils");
 const { search_bar } = require("@saltcorn/markup/helpers");
 
-
 const create_db_view = async (context: GenObj, req: Req) => {
   const table = Table.findOne({ id: context.table_id })!;
   const fields = table.getFields();
@@ -194,7 +193,8 @@ const configuration_workflow = (req: Req) =>
                 { mode: "list", req }
               );
             }
-            if (action.description) actionDescriptions[name] = action.description;
+            if (action.description)
+              actionDescriptions[name] = action.description;
           }
           const workflowActions = Trigger.trigger_actions({
             tableTriggers: table.id,
@@ -931,7 +931,7 @@ const configuration_workflow = (req: Req) =>
             sublabel: req.__("Full-text search bar above the table"),
             type: "Bool",
             tab: "Functionality",
-          });        
+          });
 
           if (!db.isSQLite && !table.external)
             formfields.push({
@@ -1554,6 +1554,7 @@ const run = async (
     const stVar = `_fts_${table.santized_name}`;
     fts_search_bar = search_bar(stVar, state[stVar], {
       stateField: stVar,
+      placeHolder: extraOpts?.req?.__?.("Search for...") || "Search for...",
     });
   }
   return div(
