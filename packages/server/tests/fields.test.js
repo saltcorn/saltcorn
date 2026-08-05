@@ -2,6 +2,7 @@ import { request as request } from "../auth/testhelp.js";
 import getApp from "../app.js";
 import Field from "@saltcorn/data/models/field";
 import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
 
 import {
   getStaffLoginCookie,
@@ -625,5 +626,111 @@ describe("Fieldview config", () => {
           `<div><label for="inputpx_height">Height in px</label></div><div><input type="number" class="form-control  item-menu" data-fieldname="px_height" name="px_height" id="inputpx_height" step="1"></div>`
         )
       );
+  });
+});
+
+describe("Click to edit save", () => {
+  const origAuthorListCfg = () =>
+    View.findOne({ name: "authorlist" }).configuration;
+  let savedCfg;
+
+  beforeAll(async () => {
+    savedCfg = origAuthorListCfg();
+    const view = View.findOne({ name: "authorlist" });
+    await View.update(
+      {
+        configuration: {
+          columns: [
+            { type: "Field", field_name: "author", state_field: "on" },
+            {
+              type: "Field",
+              field_name: "pages",
+              fieldview: "show",
+              click_to_edit: true,
+            },
+            {
+              type: "JoinField",
+              join_field: "publisher.name",
+              fieldview: "as_text",
+              click_to_edit: true,
+            },
+          ],
+        },
+      },
+      view.id
+    );
+  });
+  afterAll(async () => {
+    const view = View.findOne({ name: "authorlist" });
+    await View.update({ configuration: savedCfg }, view.id);
+  });
+
+  // find the fielddata payload the list view puts on click-to-edit cells
+  const getFieldData = async (app, loginCookie, pred) => {
+    const res = await request(app)
+      .get("/view/authorlist")
+      .set("Cookie", loginCookie);
+    const matches = [
+      ...res.text.matchAll(/data-inline-edit-fielddata="([^"]*)"/g),
+    ].map((m) => m[1]);
+    const found = matches.find((fd) =>
+      pred(JSON.parse(decodeURIComponent(fd)))
+    );
+    expect(found).toBeDefined();
+    return found;
+  };
+
+  it("should save click-to-edit field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const books = Table.findOne({ name: "books" });
+    const book = await books.getRow({ author: "Herman Melville" });
+    expect(book.pages).toBe(967);
+
+    const fielddata = await getFieldData(
+      app,
+      loginCookie,
+      (fd) => fd.field_name === "pages" && fd.pk === book.id
+    );
+
+    await request(app)
+      .post("/field/save-click-edit")
+      .set("Cookie", loginCookie)
+      .send(`_fielddata=${encodeURIComponent(fielddata)}&pages=1024`)
+      .expect(toInclude("1024"));
+
+    const updated = await books.getRow({ id: book.id });
+    expect(updated.pages).toBe(1024);
+  });
+
+  it("should save click-to-edit join field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const books = Table.findOne({ name: "books" });
+    const publishers = Table.findOne({ name: "publisher" });
+    const book = await books.getRow({ author: "Leo Tolstoy" });
+    const akpress = await publishers.getRow({ name: "AK Press" });
+    const nostarch = await publishers.getRow({ name: "No starch" });
+    expect(book.publisher).toBe(akpress.id);
+
+    const fielddata = await getFieldData(
+      app,
+      loginCookie,
+      (fd) =>
+        fd.field_name === "publisher" &&
+        fd.join_field === "name" &&
+        fd.pk === book.id
+    );
+
+    await request(app)
+      .post("/field/save-click-edit")
+      .set("Cookie", loginCookie)
+      .send(
+        `_fielddata=${encodeURIComponent(fielddata)}&publisher=${nostarch.id}`
+      )
+      .expect(toInclude("No starch"));
+
+    const updated = await books.getRow({ id: book.id });
+    expect(updated.publisher).toBe(nostarch.id);
   });
 });
