@@ -2,10 +2,13 @@ import { request as request } from "../auth/testhelp.js";
 import getApp from "../app.js";
 import Field from "@saltcorn/data/models/field";
 import Table from "@saltcorn/data/models/table";
+import View from "@saltcorn/data/models/view";
+import User from "@saltcorn/data/models/user";
 
 import {
   getStaffLoginCookie,
   getAdminLoginCookie,
+  getUserLoginCookie,
   itShouldRedirectUnauthToLogin,
   toInclude,
   toBeTrue,
@@ -604,6 +607,76 @@ describe("Field Endpoints", () => {
   });
 });
 
+describe("show-calculated ownership checks", () => {
+  const SECRET = "the eagle has landed";
+  const mkOwnedTable = async () => {
+    const tbl = await Table.create("ownedsecrets", {
+      min_role_read: 40,
+      min_role_write: 40,
+    });
+    await Field.create({
+      table: tbl,
+      name: "owner",
+      label: "Owner",
+      type: "Key",
+      reftable_name: "users",
+      attributes: { summary_field: "email" },
+      required: false,
+    });
+    await Field.create({
+      table: tbl,
+      name: "secret",
+      label: "Secret",
+      type: "String",
+    });
+    await tbl.update({ ownership_formula: "owner === user.id" });
+    const owned = Table.findOne({ name: "ownedsecrets" });
+    const admin = await User.findOne({ email: "admin@foo.com" });
+    const id = await owned.insertRow({
+      owner: admin.id,
+      secret: SECRET,
+    });
+    return { table: owned, id };
+  };
+
+  const shouldNotLeak = (res) => {
+    if (res.text.includes(SECRET))
+      throw new Error(
+        `Expected secret to be absent, but was present (status ${res.statusCode})`
+      );
+  };
+
+  it("should not show field value of row not owned", async () => {
+    const { id } = await mkOwnedTable();
+    const loginCookie = await getUserLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+
+    await request(app)
+      .post("/field/show-calculated/ownedsecrets/secret/show")
+      .set("Cookie", loginCookie)
+      .send({ id })
+      .expect(401)
+      .expect(shouldNotLeak);
+  });
+
+  it("should not allow ownership formula to be spoofed by posted values", async () => {
+    const user = await User.findOne({ email: "user@foo.com" });
+    const owned = Table.findOne({ name: "ownedsecrets" });
+    const [row] = await owned.getRows({});
+    const loginCookie = await getUserLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+
+    // user@foo.com does not own this row, but posts a spoofed value for the
+    // field the ownership formula is based on. The posted values must not be
+    // able to satisfy the ownership check for the stored row.
+    await request(app)
+      .post("/field/show-calculated/ownedsecrets/secret/show")
+      .set("Cookie", loginCookie)
+      .send({ id: row.id, owner: user.id })
+      .expect(shouldNotLeak);
+  });
+});
+
 describe("Fieldview config", () => {
   //itShouldRedirectUnauthToLogin("/field/2");
   it("should return fieldview options", async () => {
@@ -625,5 +698,131 @@ describe("Fieldview config", () => {
           `<div><label for="inputpx_height">Height in px</label></div><div><input type="number" class="form-control  item-menu" data-fieldname="px_height" name="px_height" id="inputpx_height" step="1"></div>`
         )
       );
+  });
+});
+
+describe("Click to edit save", () => {
+  const origAuthorListCfg = () =>
+    View.findOne({ name: "authorlist" }).configuration;
+  let savedCfg;
+
+  beforeAll(async () => {
+    savedCfg = origAuthorListCfg();
+    const view = View.findOne({ name: "authorlist" });
+    await View.update(
+      {
+        configuration: {
+          columns: [
+            { type: "Field", field_name: "author", state_field: "on" },
+            {
+              type: "Field",
+              field_name: "pages",
+              fieldview: "show",
+              click_to_edit: true,
+            },
+            {
+              type: "JoinField",
+              join_field: "publisher.name",
+              fieldview: "as_text",
+              click_to_edit: true,
+            },
+          ],
+        },
+      },
+      view.id
+    );
+  });
+  afterAll(async () => {
+    const view = View.findOne({ name: "authorlist" });
+    await View.update({ configuration: savedCfg }, view.id);
+  });
+
+  // find the fielddata payload the list view puts on click-to-edit cells
+  const getFieldData = async (app, loginCookie, pred) => {
+    const res = loginCookie
+      ? await request(app).get("/view/authorlist").set("Cookie", loginCookie)
+      : await request(app).get("/view/authorlist");
+    const matches = [
+      ...res.text.matchAll(/data-inline-edit-fielddata="([^"]*)"/g),
+    ].map((m) => m[1]);
+    const found = matches.find((fd) =>
+      pred(JSON.parse(decodeURIComponent(fd)))
+    );
+    expect(found).toBeDefined();
+    return found;
+  };
+
+  it("should save click-to-edit field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const books = Table.findOne({ name: "books" });
+    const book = await books.getRow({ author: "Herman Melville" });
+    expect(book.pages).toBe(967);
+
+    const fielddata = await getFieldData(
+      app,
+      loginCookie,
+      (fd) => fd.field_name === "pages" && fd.pk === book.id
+    );
+
+    await request(app)
+      .post("/field/save-click-edit")
+      .set("Cookie", loginCookie)
+      .send(`_fielddata=${encodeURIComponent(fielddata)}&pages=1024`)
+      .expect(toInclude("1024"));
+
+    const updated = await books.getRow({ id: book.id });
+    expect(updated.pages).toBe(1024);
+  });
+
+  it("should save click-to-edit join field", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const books = Table.findOne({ name: "books" });
+    const publishers = Table.findOne({ name: "publisher" });
+    const book = await books.getRow({ author: "Leo Tolstoy" });
+    const akpress = await publishers.getRow({ name: "AK Press" });
+    const nostarch = await publishers.getRow({ name: "No starch" });
+    expect(book.publisher).toBe(akpress.id);
+
+    const fielddata = await getFieldData(
+      app,
+      loginCookie,
+      (fd) =>
+        fd.field_name === "publisher" &&
+        fd.join_field === "name" &&
+        fd.pk === book.id
+    );
+
+    await request(app)
+      .post("/field/save-click-edit")
+      .set("Cookie", loginCookie)
+      .send(
+        `_fielddata=${encodeURIComponent(fielddata)}&publisher=${nostarch.id}`
+      )
+      .expect(toInclude("No starch"));
+
+    const updated = await books.getRow({ id: book.id });
+    expect(updated.publisher).toBe(nostarch.id);
+  });
+  it("should not save click-to-edit field if unauthenticated", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const books = Table.findOne({ name: "books" });
+    const book = await books.getRow({ author: "Herman Melville" });
+    await books.updateRow({ pages: 967 }, book.id);
+
+    const fielddata = await getFieldData(
+      app,
+      loginCookie,
+      (fd) => fd.field_name === "pages" && fd.pk === book.id
+    );
+
+    const r=await request(app)
+      .post("/field/save-click-edit")
+      .send(`_fielddata=${encodeURIComponent(fielddata)}&pages=1024`)
+      .expect(toInclude("Not authorized", 401));
+    const updated = await books.getRow({ id: book.id });
+    expect(updated.pages).toBe(967);
   });
 });

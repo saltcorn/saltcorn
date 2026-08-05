@@ -736,6 +736,22 @@ describe("Events and eventlog", () => {
   });
 });
 
+// A scheduler tick runs a dozen queries before it gets to the trigger, so how
+// long it takes to increment the counter depends on the database. Poll rather
+// than sleeping a fixed time a slow driver will overrun. On timeout return the
+// current value, so the caller's assertion reports it.
+const waitForActionCounter = async (
+  count: number,
+  timeout_ms: number = 10000
+): Promise<number> => {
+  const start = Date.now();
+  while (true) {
+    const n = getActionCounter();
+    if (n >= count || Date.now() - start > timeout_ms) return n;
+    await sleep(50);
+  }
+};
+
 describe("Scheduler", () => {
   it("should run and tick", async () => {
     getState()!.registerPlugin("mock_plugin", plugin_with_routes());
@@ -747,19 +763,21 @@ describe("Scheduler", () => {
       when_trigger: "Often",
     });
     let stopSched = false;
-    runScheduler({
+    const schedulerDone = runScheduler({
       stop_when: () => stopSched,
       tickSeconds: 1,
       watchReaper: undefined,
       port: undefined,
       disableScheduler: undefined,
     });
-    await sleep(500);
-    expect(getActionCounter()).toBe(1);
-    await sleep(1200);
-    expect(getActionCounter() > 1).toBe(true);
+    // first tick
+    expect((await waitForActionCounter(1)) >= 1).toBe(true);
+    // it keeps ticking
+    expect((await waitForActionCounter(2)) > 1).toBe(true);
     stopSched = true;
-    await sleep(1200);
+    // await the loop rather than sleeping: it only checks stop_when at the top
+    // of the next tick, which can be later than any fixed sleep
+    await schedulerDone;
   });
 });
 

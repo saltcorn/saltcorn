@@ -1172,8 +1172,11 @@ router.post(
     }
     //console.log(joinFields, row);
     const id = req.query.id || row.id;
+    //ownership must be decided on the stored row, never on posted values
+    let ownershipRow = row;
     if (id) {
       let [dbrow] = await table.getJoinedRows({ where: { id }, joinFields });
+      if (dbrow) ownershipRow = dbrow;
       row = { ...dbrow, ...row };
       //prevent overwriting ownership field
       if (table.ownership_field_id) {
@@ -1210,9 +1213,9 @@ router.post(
     }
     if (
       role > table.min_role_read &&
-      !(req.user && table.is_owner(req.user, row))
+      !(req.user && table.is_owner(req.user, ownershipRow))
     ) {
-      //console.log("not owner", row, table.is_owner(req.user, row));
+      //console.log("not owner", row, table.is_owner(req.user, ownershipRow));
       res.status(401).send("");
       return;
     }
@@ -1684,9 +1687,18 @@ router.post(
         : field.type === "Key" && req.body[field_name] === ""
           ? null
           : req.body[field_name];
-    await db.withTransaction(async () => {
-      await table.updateRow({ [field_name]: val }, pk, req.user);
+    const updres = await db.withTransaction(async () => {
+      return await table.updateRow(
+        { [field_name]: val },
+        pk,
+        req.user || { role_id: 100 }
+      );
     });
+    if (updres === "Not authorized") {
+      res.status(401).send("Not authorized");
+      return;
+    }
+
     let fv: any;
     let blank = false;
     if (field.is_fkey) {
