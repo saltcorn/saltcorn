@@ -362,7 +362,7 @@ class SyncHelper {
             const result = await table.updateRow(
               row,
               row[pkName],
-              this.user,
+              this.user || { role_id: 100 },
               true,
               undefined,
               undefined,
