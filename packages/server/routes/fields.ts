@@ -1684,9 +1684,18 @@ router.post(
         : field.type === "Key" && req.body[field_name] === ""
           ? null
           : req.body[field_name];
-    await db.withTransaction(async () => {
-      await table.updateRow({ [field_name]: val }, pk, req.user);
+    const updres = await db.withTransaction(async () => {
+      return await table.updateRow(
+        { [field_name]: val },
+        pk,
+        req.user || { role_id: 100 }
+      );
     });
+    if (updres === "Not authorized") {
+      res.status(401).send("Not authorized");
+      return;
+    }
+
     let fv: any;
     let blank = false;
     if (field.is_fkey) {
