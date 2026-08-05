@@ -3,6 +3,7 @@ import getApp from "../app.js";
 import Field from "@saltcorn/data/models/field";
 import Table from "@saltcorn/data/models/table";
 import View from "@saltcorn/data/models/view";
+import User from "@saltcorn/data/models/user";
 
 import {
   getStaffLoginCookie,
