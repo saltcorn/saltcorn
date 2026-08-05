@@ -667,9 +667,9 @@ describe("Click to edit save", () => {
 
   // find the fielddata payload the list view puts on click-to-edit cells
   const getFieldData = async (app, loginCookie, pred) => {
-    const res = await request(app)
-      .get("/view/authorlist")
-      .set("Cookie", loginCookie);
+    const res = loginCookie
+      ? await request(app).get("/view/authorlist").set("Cookie", loginCookie)
+      : await request(app).get("/view/authorlist");
     const matches = [
       ...res.text.matchAll(/data-inline-edit-fielddata="([^"]*)"/g),
     ].map((m) => m[1]);
@@ -732,5 +732,25 @@ describe("Click to edit save", () => {
 
     const updated = await books.getRow({ id: book.id });
     expect(updated.publisher).toBe(nostarch.id);
+  });
+  it("should not save click-to-edit field if unauthenticated", async () => {
+    const loginCookie = await getAdminLoginCookie();
+    const app = await getApp({ disableCsrf: true });
+    const books = Table.findOne({ name: "books" });
+    const book = await books.getRow({ author: "Herman Melville" });
+    await books.updateRow({ pages: 967 }, book.id);
+
+    const fielddata = await getFieldData(
+      app,
+      loginCookie,
+      (fd) => fd.field_name === "pages" && fd.pk === book.id
+    );
+
+    const r=await request(app)
+      .post("/field/save-click-edit")
+      .send(`_fielddata=${encodeURIComponent(fielddata)}&pages=1024`)
+      .expect(toInclude("Not authorized", 401));
+    const updated = await books.getRow({ id: book.id });
+    expect(updated.pages).toBe(967);
   });
 });
